@@ -8,7 +8,8 @@
   their phone in their hand and they may not be at their email." A prospect with a real Australian
   mobile has it on their login, so the button opens the sign-in on the mobile option with their number
   filled in, and the email says we will text them a code. With no mobile, the button is the one-click
-  link (migration 123), or the email sign-in. It never tells a "this link works once, next time sign in
+  link (migration 123); without one, /app/go offers to email them a link. Never the email-code sign-in
+  (Dean, 29 Oct 2026: "it's got to be phone number"); after the link, the app asks their name and mobile. It never tells a "this link works once, next time sign in
   with your email" story. Still short and in Dean's voice, the favour he promised (dean-sales-reply-tone).
   Everything else (the Terms tick, their TV, a first game, their card) lives in the app's first-run setup.
   It is transactional: they asked for it. Who we are and how to stop product emails are in the footer.
@@ -18,7 +19,9 @@
   Merge fields:
     {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told)
     {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
-    {{support_tel}} {{unsubscribe_url}}
+    {{support_tel}} {{unsubscribe_url}} {{signoff}} (Dean, 29 Oct 2026: "Cheers," then whoever's mailbox the venue
+    wrote to (sender_name from the autopilot), then VenuePlay, then venueplay.com.au; "The VenuePlay team"
+    without one. The email itself always comes from hello@ and replies go to hello@.)
   NOT A SIGN-UP THAT STARTS BILLING (Dean, 29 Oct 2026), worded to what the code does: a prospect's account has no
   Stripe customer or subscription, so neither Worker can charge it (the game Worker's overage returns early with no
   customer; nothing is invoiced). The 30-day trial starts on the add-card page, the day they add a card. With no
@@ -57,7 +60,7 @@
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The button below opens your account for you. No password, and no app to download.</p>
 <!--ENDIF:oneclick-->
 <!--IF:nooneclick-->
-            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Sign in with {{login_email}} and we'll email you a code. No password.</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we'll email {{login_email}} a link that opens your account. No password, and no app to download.</p>
 <!--ENDIF:nooneclick-->
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
               <td><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your VenuePlay</a></td>
@@ -75,7 +78,7 @@
 <!--ENDIF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is set up for {{player_count}} players to start with, and you can change that any time.</p>
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There&#39;s no card on your account, so nothing can be charged. If you decide to keep going, you add a card in the app and your free month starts that day. If it&#39;s not for you, no problem at all, there&#39;s nothing you need to do.</p>
-        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Cheers,<br>Dean<br>VenuePlay</p>
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">
         <p style="margin:0 0 10px;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>

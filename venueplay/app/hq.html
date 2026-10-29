@@ -2262,6 +2262,9 @@
            fires once, at creation, and there was no second chance: the only fix was to
            delete the venue and build it again. */
         (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
+        /* A fresh one-tap sign-in link to the venue's own login (Dean, 29 Oct 2026). Any older unused link
+           stops working, so only the newest one opens their account. */
+        (canBilling() ? '<button class="mini" data-signinlink="'+esc(v.id)+'">Resend sign-in link</button>' : '')+
         // Marks it ours. Off every count and chase list, still reachable under Test venues.
         '<button class="mini" data-testflag="'+esc(v.id)+'">'+(isTest(v)?"Not a test venue":"Mark as a test venue")+'</button>'+
         '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
@@ -2410,6 +2413,21 @@
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
   $("showLeft").addEventListener("change", function(){ S.showLeft=this.checked; renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
+  /* "Resend sign-in link" (Dean, 29 Oct 2026: "otherwise we can resend it"). One shared function: the Venues
+     row and HQ > Prospects (vp-prospects-hq.js) both call it, so the two buttons cannot say different things. */
+  function hqSigninLink(id, btn){
+    var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||"this venue";
+    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, for 14 days, and any older link stops working.").then(function(ok){ if(!ok) return null;
+      var was=btn.textContent; btn.disabled=true; btn.textContent="Sending...";
+      return workerPost("/admin/signin-link", { venue_id:id }).then(function(r){
+        btn.disabled=false; btn.textContent=was;
+        if(r.error){ vpTell(r.error); return r; }
+        vpTell("Sent to "+r.to+". One tap opens their account."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
+        return r;
+      });
+    });
+  }
+  window.hqSigninLink=hqSigninLink;
   $("venueRows").addEventListener("click", function(e){
     var va=e.target.closest("button[data-viewas]");
     if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
@@ -2431,6 +2449,8 @@
       });
       return;
     }
+    var sl=e.target.closest("button[data-signinlink]");
+    if(sl){ hqSigninLink(sl.getAttribute("data-signinlink"), sl); return; }
     var dt=e.target.closest("button[data-details]");
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
     var dc=e.target.closest("button[data-compliance]");

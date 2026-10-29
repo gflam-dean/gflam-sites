@@ -293,8 +293,8 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('ONE audit row: who set it up, the venue, compliance pending, the slides, the website and that the email went',
     au.length === 1 && au[0].actor_admin === ADMIN && au[0].actor_label === 'Dean' && au[0].target === 'venue:' + v.id && ad.compliance === 'pending' && ad.terms_required === true &&
     ad.slides === 2 && ad.website === 'https://cazreitop.com.au' && ad.welcome_sent === true && ad.email === 'cazreitop@gmail.com' && ad.players === 60, au);
-  check('ONE email, to the contact, from Dean on the transactional sender, replies to support, subject "Your VenuePlay account for <venue>"', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
-    sent[0].from === 'Dean at VenuePlay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au' && sent[0].subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets", sent[0] && [sent[0].from, sent[0].subject]);
+  check('ONE email, to the contact, from VenuePlay hello@ on the transactional sender, replies to hello@ (Dean, 29 Oct 2026: "it all should come from hello"), subject "Your VenuePlay account for <venue>"', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
+    sent[0].from === 'VenuePlay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'hello@venueplay.com.au' && sent[0].subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets", sent[0] && [sent[0].from, sent[0].subject]);
   var due = sent[0] && Date.parse(sent[0].scheduled_at);
   check('it is BOOKED for 90 minutes on (the default), not sent at once: Resend holds it (scheduled_at)', sent[0] && typeof sent[0].scheduled_at === 'string' && Math.abs(due - Date.now() - 90 * 60000) < 60000, sent[0] && sent[0].scheduled_at);
   check('HQ is told when it goes', r.body.welcome && r.body.welcome.status === 'scheduled' && Date.parse(r.body.welcome.send_at) === due, r.body.welcome);
@@ -378,7 +378,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     }
     check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
     check(c[0] + ': the price in one line: $2.50 a player a month on your usual crowd, first month free, no lock-in', /It's \$2\.50 a player a month on your usual crowd while the November offer runs, first month free, no lock-in\./.test(txt), txt);
-    check(c[0] + ': signed by Dean, from VenuePlay', /Cheers, Dean VenuePlay/.test(txt), txt);
+    check(c[0] + ': with no sender given (HQ), signed by the VenuePlay team with the website', /Cheers, The VenuePlay team venueplay\.com\.au/.test(txt) && !/Cheers, Dean/.test(txt), txt);
     check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
     check(c[0] + ': on brand (version 3): the VenuePlay logo in the dark header, as every VenuePlay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
       /background:#12101a[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay_primary_rebuilt\.png"[^>]*alt="VenuePlay"/.test(html));

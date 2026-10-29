@@ -3586,11 +3586,18 @@ def local_checks(which):
              'games, or a database blip stops every game in the country'),
             # D86: "Open your VenuePlay", the one-time sign-in link in the prospect welcome (Dean, 28 Oct
             # 2026; migration 123), branch feature/one-click-signin-28-oct.
-            ('D86. The prospect welcome signs them in with one tap, once, and the sign-in page opens on email for an email login',
+            ('D86. The prospect welcome signs them in with one tap, once, and the sign-in page always opens on the mobile',
              'test-one-click-signin.js',
-             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; email first for an email-only login; a session already on the device (an HQ one) is dropped, so a venue link never lands in HQ', 56,
+             'only the hash of a 32-byte random token is stored; one use, 14 days, one winner of two at once; unknown, used, expired and removed all get one identical answer; rate-limited, never logged; nothing sent before a tap; the 4 hour sign-out still applies; a spent link offers a new one, never an email form; /app opens on the mobile whatever the link or device says; a session already on the device (an HQ one) is dropped, so a venue link never lands in HQ', 58,
              'A sign-in link that works twice, for ever, for a stranger who guessed it, or for a mail scanner; a '
-             'token readable from the database or a log; or an email-only prospect left waiting for a text'),
+             'token readable from the database or a log; or a host sent to an email box they never gave us'),
+            # D90: sign in with the mobile; the one-off link asks name and mobile first; resend (Dean, 29 Oct
+            # 2026), branch feature/phone-signin-29oct.
+            ('D90. A login with no mobile is asked its name and mobile first, and a spent link can be sent again',
+             'test-phone-signin.js',
+             'a login with no mobile is asked its name and mobile first, the mobile only through a verified phone change in the sign-in format; carry on for this sign-in only; a new link goes to the login\'s own email, retires older ones, one answer whatever happens, limited per network and per login; HQ resend is owner or accounts only; a login names only itself; the prospect welcome comes from and replies to hello@, signed by the sender_name the autopilot gives (checked: a plain name, one of our own mailboxes) or the team', 77,
+             'A typo saved as the key to a venue\'s account, a host who can never sign in again after the 4 hour '
+             'sign-out, a stranger told which addresses have a login, or one login renaming every member of staff'),
             # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
             ('D87. A prospect\'s welcome waits for HQ\'s delay and can be stopped, and the app walks them through setup one step at a time',
              'test-prospect-welcome-v2.js',

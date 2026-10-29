@@ -54,6 +54,9 @@ class BillingWorker(object):
     def seed(self, table, rows):
         return self._send({'ask': 'seed', 'table': table, 'rows': rows})['body']
 
+    def sent(self):
+        return self._send({'ask': 'sent'})['body']
+
     def stored(self):
         return self._send({'ask': 'stored'})['body']
 
@@ -199,6 +202,8 @@ class Site(object):
                     base, p = 'touring', p[len('/touring'):]
                 if p in ('/app', '/app/'):
                     p = '/app/index.html'
+                elif not os.path.splitext(p)[1] and not p.endswith('/'):
+                    p = p + '.html'   # Pages serves /app/go from go.html (the one-off sign-in link, 29 Oct 2026)
                 f = os.path.normpath(os.path.join(site.root, base, p.lstrip('/')))
                 if not f.startswith(os.path.join(site.root, base)) or not os.path.isfile(f):
                     return self.send(404, 'not here', 'text/plain')
@@ -207,6 +212,10 @@ class Site(object):
                     text = io.open(f, encoding='utf-8').read()
                     if ext == '.html':
                         text = site.rewrite(text, urllib.parse.parse_qs(u.query).get('as', ['owner'])[0])
+                    elif ext == '.js':
+                        # A shared script that calls the billing Worker itself (vp-oneclick.js, vp-about-you.js,
+                        # vp-prospects-hq.js) talks to THIS rig's Worker, never the live one (29 Oct 2026).
+                        text = text.replace('https://venueplay-api.dean-tindale.workers.dev', '/__api')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
                              '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')

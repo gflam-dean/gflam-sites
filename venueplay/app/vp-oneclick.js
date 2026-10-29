@@ -17,16 +17,21 @@
    sign-in here starts the shift clock exactly as a typed code does (vpShiftStart), and
    vp-session.js enforces it on every page from then on.
 
+   AFTER THE TAP (Dean, 29 Oct 2026: "it's got to be phone number"): the console's first screen asks
+   their name and mobile (vp-about-you.js), and from then on they sign in with a text code. Nothing
+   here records "email" as this device's way in any more; the old key is cleared.
+
    Anything that goes wrong (used, expired, unknown, removed from the venue, a network fault) ends
-   in the same place: the sign-in page, on the EMAIL option, with their address filled in and
-   "That link has been used or has expired". Never an error code. */
+   on THIS page, never on an email form: "That sign-in link has already been used or has expired",
+   with "Send me a new link" (POST /auth/one-click/resend, the old token and the address it went to;
+   the Worker sends to the login's own email and answers the same whether or not anything exists)
+   and "Sign in with my mobile instead". Never an error code. */
 (function (root) {
   "use strict";
   var API = "https://venueplay-api.dean-tindale.workers.dev";
   var SUPA_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co";
   var SUPA_ANON = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
-  var METHOD_KEY = "vpSignInWith";      // this device's last way in: "email" | "sms" (index.html reads it)
-  var PREFILL_KEY = "vpSignInPrefill";  // sessionStorage, read once by index.html and removed
+  var METHOD_KEY = "vpSignInWith";      // RETIRED 29 Oct 2026: it made the sign-in page open on email. Cleared, never written.
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   function parse(hash) {
@@ -42,7 +47,7 @@
   }
 
   function start(w) {
-    var doc = w.document, ls = w.localStorage, ss = w.sessionStorage;
+    var doc = w.document, ls = w.localStorage;
     function $(id) { return doc.getElementById(id); }
     var got = parse(w.location.hash);
     // Out of the address bar, the history and any screenshot before anything else happens.
@@ -60,12 +65,53 @@
         return (p && p.then) ? p.then(function () {}, function () {}) : Promise.resolve();
       } catch (e) { return Promise.resolve(); }
     }
-    function toEmailSignIn() {
-      try { ls.setItem(METHOD_KEY, "email"); } catch (e) {}
-      try { if (got.e) ss.setItem(PREFILL_KEY, got.e); } catch (e) {}
-      return leaveOtherSession().then(function () { w.location.replace("/app/?signin=email&gone=1"); });
+    try { ls.removeItem(METHOD_KEY); } catch (e) {}
+
+    /* THE LINK IS SPENT: say so, and offer a new one. The session this device had is dropped first
+       (as before), so "Sign in with my mobile instead" can never land an HQ session in HQ. */
+    var goneShown = false;
+    function showGone() {
+      if (goneShown) return Promise.resolve();
+      goneShown = true;
+      return leaveOtherSession().then(function () {
+        $("goReady").hidden = true; $("goGone").hidden = false;
+        if (!got.t) {
+          $("goneTitle").textContent = "Let's get you in";
+          $("goneSub").textContent = got.e ? "Tap below and we will email you a link that opens your account. No password." : "Sign in with a text code to your mobile.";
+          $("resendBtn").textContent = "Send me a sign-in link";
+        }
+        if (!got.t && !got.e) {
+          $("resendBtn").hidden = true;
+          $("mobileLink").textContent = "Sign in with my mobile";
+          $("goneNote").textContent = "No mobile on your login yet? Email support@venueplay.com.au and we will send you a new link.";
+        }
+      });
     }
-    if (!got.t) { toEmailSignIn(); return "no-token"; }
+    function resend() {
+      var rb = $("resendBtn"), rm = $("resendMsg");
+      if (rb.disabled) return Promise.resolve(null);
+      rb.disabled = true; rb.textContent = "Sending..."; rm.className = "okmsg"; rm.textContent = "";
+      return w.fetch(API + "/auth/one-click/resend", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ t: got.t || undefined, e: got.e || undefined }) })
+        .then(function (res) {
+          if (res.status === 429) {
+            rb.disabled = false; rb.textContent = got.t ? "Send me a new link" : "Send me a sign-in link";
+            rm.className = "okmsg warn"; rm.textContent = "Lots of tries from this network just now. Wait a few minutes, then tap again.";
+            return "busy";
+          }
+          // One answer whatever happened, so this page never says whether an address has a login.
+          rb.hidden = true;
+          rm.textContent = "Done. If " + (got.e ? got.e : "that address") + " is on a VenuePlay login, a new link is on its way. It can take a minute, so check your junk folder too.";
+          return "sent";
+        })
+        .catch(function () {
+          rb.disabled = false; rb.textContent = got.t ? "Send me a new link" : "Send me a sign-in link";
+          rm.className = "okmsg warn"; rm.textContent = "We could not reach VenuePlay. Check your connection and try again.";
+          return "offline";
+        });
+    }
+    $("resendBtn").addEventListener("click", resend);
+    if (!got.t) { showGone(); return "no-token"; }
 
     var btn = $("goBtn"), msg = $("goMsg");
     var busy = false;
@@ -84,21 +130,20 @@
             msg.textContent = "Lots of tries from this network just now. Wait a few minutes, then tap again.";
             return null;
           }
-          if (!d || d.ok !== true || !d.token_hash) { toEmailSignIn(); return null; }
+          if (!d || d.ok !== true || !d.token_hash) { showGone(); return null; }
           return leaveOtherSession().then(function () { return sb().auth.verifyOtp({ token_hash: d.token_hash, type: d.type === "email" ? "email" : "magiclink" })
             .then(function (r) {
-              if (!r || r.error || !r.data || !r.data.session) { toEmailSignIn(); return; }
+              if (!r || r.error || !r.data || !r.data.session) { showGone(); return; }
               try { ls.setItem("vpShiftStart", String(Date.now())); } catch (e) {}   // a fresh 4h shift starts now
-              try { ls.setItem(METHOD_KEY, "email"); } catch (e) {}                  // next time, the email option first
               try { if (d.venue_id) ls.setItem("vpCurrentVenue", String(d.venue_id)); ls.removeItem("vpVenuePick"); } catch (e) {}
               w.location.replace("/app/");
             });
           });
         })
-        .catch(function () { toEmailSignIn(); });
+        .catch(function () { showGone(); });
     });
     return "ready";
   }
 
-  root.VPOneClick = { start: start, parse: parse, METHOD_KEY: METHOD_KEY, PREFILL_KEY: PREFILL_KEY };
+  root.VPOneClick = { start: start, parse: parse, METHOD_KEY: METHOD_KEY };
 })(typeof window !== "undefined" ? window : this);

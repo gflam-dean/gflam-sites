@@ -13,7 +13,8 @@
  *
  * Supabase Send SMS Hook payload shape:
  *   { "user": { "phone": "+61412345678", ... }, "sms": { "otp": "123456" } }
- * We read user.phone and sms.otp, and are defensive about alternative shapes.
+ * We read user.phone (or, for a login adding its first mobile, the pending user.new_phone)
+ * and sms.otp, and are defensive about alternative shapes.
  *
  * Environment variables (set as Cloudflare Worker secrets)
  * -------------------------------------------------------
@@ -77,7 +78,7 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '21 Oct 2026, 00:54 · 024535ef';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Oct 2026, 10:29 · c77ac881';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
@@ -117,9 +118,17 @@ export default {
         return new Response("Bad Request", { status: 400 });
       }
 
-      // Be defensive about where the phone and otp live.
+      /* Be defensive about where the phone and otp live.
+         A PHONE CHANGE FOR A LOGIN WITH NO MOBILE (29 Oct 2026). The first screen after the one-off
+         sign-in link adds the person's mobile with Auth's own phone change (updateUser, then verifyOtp
+         "phone_change"). For that text Auth hands this hook the user as it stands: user.phone is still
+         EMPTY (an email login) and the number being added is pending, as user.new_phone (Auth's JSON
+         name for phone_change). Reading only user.phone answered 400 and no code was ever sent.
+         The pending number is used ONLY when the login has no mobile at all, so a sign-in code for a
+         login that has one always goes to that number, never to a number someone asked to change to. */
+      const u = payload.user || {};
       const phone =
-        (payload.user && payload.user.phone) || payload.phone || "";
+        u.phone || u.new_phone || u.phone_change || payload.phone || "";
       const otp =
         (payload.sms && payload.sms.otp) || payload.otp || "";
 

@@ -42,7 +42,7 @@ if (typeof crypto === 'undefined') {
     var b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), out = new Uint8Array(32), h = 2166136261 >>> 0;
     for (var i = 0; i < b.length; i++) { h ^= b[i]; h = Math.imul(h, 16777619) >>> 0; out[i % 32] ^= h & 255; }
     return Promise.resolve(out.buffer);
-  } }, getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = (i * 2654435761) & 255; return a; } };
+  } }, getRandomValues: (function () { var n = 0; return function (a) { n++; for (var i = 0; i < a.length; i++) a[i] = (i * 2654435761 + n * 40503) & 255; return a; }; })() };   // different bytes each call, so two sign-in links differ
 }
 /* 29 Oct 2026: the invite-back email (HQ "Reactivate") is marketing and must carry a one-click
    unsubscribe, so the Worker refuses to send it when VP_UNSUB_SECRET is unset. The live Worker has
@@ -56,6 +56,17 @@ var STORED = [];
 var _rf = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url), m = String((opts && opts.method) || 'GET').toUpperCase();
+  /* THE ONE-OFF SIGN-IN LINK, end to end in Chrome (29 Oct 2026): Auth's generate_link answers with a hashed
+     token (it sends nothing), and the link's one conditional PATCH hands back the row it marked, as
+     PostgREST does when asked for return=representation. */
+  if (/\/auth\/v1\/admin\/generate_link/.test(u)) {
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({ hashed_token: 'rig-hashed-token', verification_type: 'magiclink' }); } });
+  }
+  if (/\/rest\/v1\/vp_signin_links\?/.test(u) && m === 'PATCH' && /return=representation/.test(((opts && opts.headers) || {}).Prefer || '')) {
+    var q = parseQ(u.split('?')[1] || ''), set = JSON.parse(opts.body), got = [];
+    tbl('vp_signin_links').forEach(function (r) { if (match(r, q)) { for (var k in set) r[k] = set[k]; got.push({ auth_user_id: r.auth_user_id, venue_id: r.venue_id }); } });
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(got); } });
+  }
   if (/\/storage\/v1\//.test(u)) {
     if (m === 'POST' && /\/storage\/v1\/object\//.test(u)) {
       var b = opts.body, n = b && (b.length || b.byteLength) || 0, head = [];
@@ -73,6 +84,7 @@ for (;;) {
   if (!line) break;
   var rq = JSON.parse(line), out = null;
   if (rq.ask === 'stored') { print(JSON.stringify({ status: 200, body: STORED })); continue; }
+  if (rq.ask === 'sent') { print(JSON.stringify({ status: 200, body: sent })); continue; }   // the emails the fake Resend took (29 Oct 2026)
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning

@@ -55,7 +55,9 @@
   .authsub{color:var(--muted);font-size:13.5px;margin-bottom:22px;line-height:1.5}
   .authcard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:22px 20px;text-align:left}
   .flabel{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  input[type=text],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+  /* input.otpin and the email box carry no type=text/tel, so until 29 Oct 2026 the code box and the "Code not
+     arriving?" email box were the browser's own white boxes, wider than the card. */
+  input[type=text],input[type=tel],input[type=email],input.otpin{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:14px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   input.codein{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:center;letter-spacing:.22em;text-transform:uppercase}
@@ -702,6 +704,7 @@
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="vp-firstrun.js"></script>
+<script src="vp-about-you.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
@@ -1009,42 +1012,29 @@
       $("otpIn").focus();
     }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; if(otpSendError(err)==="ours") showEmailAlt(); });
   });
-  /* WHICH WAY IN FIRST (Dean, 28 Oct 2026: "no signing in with an email to confuse them why they then
-     get a text"). The page cannot ask whether a login has a mobile before it is signed in without
-     telling a stranger whose logins exist, so it goes by what it CAN know: a link that asks for the
-     email option (?signin=email, every link in the prospect welcome), or this device's last way in.
-     After a sign-in, rememberSignIn() records "email" for a login with no mobile, so the next visit
-     and the 4 hour sign-out both come back to the email option. A used or expired one-click link
-     lands here with gone=1 and the address it was sent to. */
-  var SIGNIN_KEY="vpSignInWith", SUB_TEXT="Sign in with a text code to your mobile.";
+  /* ALWAYS THE MOBILE FIRST (Dean, 29 Oct 2026: "When you go to venueplay.com.au/app it says email address
+     for your VenuePlay login... we don't actually get the email addresses of the host so it's got to be
+     phone number"). Every visit, every link and every device opens on the mobile number and a text code.
+     Nothing remembers "email" and no link can open the email step first: the old device key that did
+     (vpSignInWith, set for any login with no mobile) is cleared here. The email code is only the small
+     "Code not arriving?" fallback for the night texts stop (21 Oct 2026). A login with no mobile yet is
+     asked for one on its first screen after signing in (vp-about-you.js). The prospect welcome for a
+     mobile login opens ?signin=sms#m=04........: their number filled in, out of the address bar. */
+  var SUB_TEXT="Sign in with a text code to your mobile.";
   function openSignInStep(){
-    var q=String((window.location && window.location.search) || ""), want="";
-    if(/[?&]signin=email(&|$)/.test(q)) want="email";
-    /* THE PROSPECT WELCOME FOR A MOBILE LOGIN (Dean, 29 Oct 2026: "everyone has their phone in their hand")
-       opens ?signin=sms#m=04........: the text-code option, their number filled in, out of the address bar. */
-    if(/[?&]signin=sms(&|$)/.test(q)) want="sms";
-    if(!want){ try{ want=localStorage.getItem(SIGNIN_KEY)||""; }catch(e){} }
-    var prefill=""; try{ prefill=sessionStorage.getItem("vpSignInPrefill")||""; sessionStorage.removeItem("vpSignInPrefill"); }catch(e){}
-    if(want!=="email"){
-      var hm=/[#&]m=(04\d{8})(&|$)/.exec(String((window.location && window.location.hash) || ""));
-      if(hm){
-        var mi=$("mobileIn"); if(mi) mi.value=hm[1].slice(0,4)+" "+hm[1].slice(4,7)+" "+hm[1].slice(7);
-        try{ window.history.replaceState(null, "", window.location.pathname + q); }catch(e){}
-      }
-      return "sms";
+    try{ localStorage.removeItem("vpSignInWith"); sessionStorage.removeItem("vpSignInPrefill"); }catch(e){}
+    var q=String((window.location && window.location.search) || "");
+    var hm=/[#&]m=(04\d{8})(&|$)/.exec(String((window.location && window.location.hash) || ""));
+    if(hm){
+      var mi=$("mobileIn"); if(mi) mi.value=hm[1].slice(0,4)+" "+hm[1].slice(4,7)+" "+hm[1].slice(7);
+      try{ window.history.replaceState(null, "", window.location.pathname + q); }catch(e){}
     }
-    $("stepMobile").classList.add("hidden");
+    $("stepEmail").classList.add("hidden");
     $("stepCode").classList.add("hidden");
     $("emailAlt").classList.add("hidden");
-    $("stepEmail").classList.remove("hidden");
-    $("authSub").textContent = /[?&]gone=1(&|$)/.test(q)
-      ? "That link has been used or has expired. Sign in with your email and we will email you a code."
-      : "Sign in with a code sent to your email.";
-    if(prefill && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefill)) $("emailIn").value=prefill;
-    return "email";
-  }
-  function rememberSignIn(user, mode){
-    try{ localStorage.setItem(SIGNIN_KEY, (user && !user.phone) || mode==="email" ? "email" : "sms"); }catch(e){}
+    $("stepMobile").classList.remove("hidden");
+    $("authSub").textContent=SUB_TEXT;
+    return "sms";
   }
   $("emailAltBtn").addEventListener("click", function(){
     $("stepMobile").classList.add("hidden");
@@ -1113,7 +1103,6 @@
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
       try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
-      rememberSignIn(res && res.data && res.data.user, MODE);
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
@@ -1435,6 +1424,10 @@
     enforceShift();
     updateAccountLink();
     var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
+    /* THEIR NAME AND MOBILE FIRST (Dean, 29 Oct 2026). A venue login with no mobile on it (the one-off link
+       from the welcome signs one in) is asked for both before anything else, and from then on signs in with
+       a text code. "Code not arriving? Carry on for now" lets them in for this sign-in only. */
+    if(window.VPAboutYou && VPAboutYou.wants(__ctx) && window.VP && VP.getClient){ VPAboutYou.open(__ctx, { client:VP.getClient(), onDone:function(){ proceedVenue(); } }); go("vBoot"); return; }
     if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
@@ -4378,7 +4371,7 @@
   });
 
   // ================= INIT =================
-  openSignInStep();   // the email option first when the link asks for it or this device last used it
+  openSignInStep();   // always the mobile and a text code first; the email code is only the "Code not arriving?" fallback
   // (removed "Paired, sign in to start" header chip: the status only shows once actually signed in)
   // Show a neutral splash until auth resolves, THEN route, so the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.

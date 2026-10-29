@@ -167,6 +167,22 @@ function hosts() { return CALLS.map(function (c) { return /clicksend/.test(c.url
   pass("/health never shows a secret", String(r.body).indexOf("mmpass") < 0 && String(r.body).indexOf("mmuser") < 0);
   pass("and sends no text", CALLS.length === 0);
 
+  /* ---- 7. A LOGIN ADDING ITS FIRST MOBILE (29 Oct 2026) ----
+     The first screen after the one-off sign-in link adds their mobile with Auth's phone change. Auth
+     hands the hook the login as it stands: no phone yet, the number being added pending as new_phone. */
+  var NEWNUM = "61452510904";
+  BODY = JSON.stringify({ user: { id: "u1", email: "amit@caz.example", phone: "", new_phone: NEWNUM }, sms: { otp: OTP } });
+  r = await run(MM, MM_OK);
+  var sentTo = CALLS[0] && CALLS[0].body && CALLS[0].body.messages && CALLS[0].body.messages[0] && CALLS[0].body.messages[0].to;
+  pass("an email login adding its first mobile: the code goes to the number being added (new_phone)", r.status === 200 && CALLS.length === 1 && sentTo === NEWNUM, String(r.status) + " " + JSON.stringify(sentTo));
+  BODY = JSON.stringify({ user: { id: "u2", phone: PHONE.replace("+", ""), new_phone: NEWNUM }, sms: { otp: OTP } });
+  r = await run(MM, MM_OK);
+  sentTo = CALLS[0] && CALLS[0].body && CALLS[0].body.messages && CALLS[0].body.messages[0] && CALLS[0].body.messages[0].to;
+  pass("a login that HAS a mobile: its code goes to that mobile, never to a number someone asked to change to", r.status === 200 && sentTo === PHONE.replace("+", ""), JSON.stringify(sentTo));
+  BODY = JSON.stringify({ user: { id: "u3", phone: "" }, sms: { otp: OTP } });
+  r = await run(MM, MM_OK);
+  pass("no number anywhere: refused, nothing sent", r.status === 400 && CALLS.length === 0, String(r.status));
+
   print("");
   print(bad ? (bad + " OF " + ran + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 })();

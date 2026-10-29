@@ -76,7 +76,8 @@
         '<textarea id="prNote" maxlength="500" rows="2" placeholder="e.g. Spoke to Sam, trying it Friday"></textarea>' +
         '<div class="practs"><button type="button" class="btn pink sp" data-pr-save="' + prEsc(p.venue_id) + '">Save as called</button>' +
         '<button type="button" class="mini" data-pr-close="1">Cancel</button></div></div>'
-      : (!p.called ? '<div class="practs"><button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button></div>' : "");
+      : '<div class="practs">' + (!p.called ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
+        '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button></div>';
     return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + '" data-pr-id="' + prEsc(p.venue_id) + '">' +
       '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + flagHtml(p) + "</div>" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
@@ -185,6 +186,8 @@
     var t = e.target.closest && e.target.closest("button"); if (!t) return;
     if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); draw(); if ($("prNote")) $("prNote").focus(); return; }
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
+    // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing.
+    if (t.hasAttribute("data-pr-signin")) { if (typeof root.hqSigninLink === "function") root.hqSigninLink(t.getAttribute("data-pr-signin"), t); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");

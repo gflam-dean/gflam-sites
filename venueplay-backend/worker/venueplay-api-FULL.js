@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Oct 2026, 08:31 · 22fe112f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Oct 2026, 11:04 · be6f0deb';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -135,6 +135,8 @@ export default {
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
       // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
+      // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
+      if (request.method === 'POST' && path === '/auth/one-click/resend' && typeof vpaHandleOneClickResend === 'function') return await vpaHandleOneClickResend(request, env, json);
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
@@ -197,6 +199,8 @@ export default {
       if (request.method === 'POST' && path === '/account/compliance-accept' && typeof vpbAcceptCompliance === 'function') return await vpbAcceptCompliance(request, env, json);
       // The first-run setup's last step, "Add your card when you're ready" (Dean, 28 Oct 2026).
       if (request.method === 'POST' && path === '/account/card-link' && typeof vpbCardLink === 'function') return await vpbCardLink(request, env, json);
+      // The first screen after the one-off link: their name on their venue staff rows (Dean, 29 Oct 2026).
+      if (request.method === 'POST' && path === '/account/my-name' && typeof vpbMyName === 'function') return await vpbMyName(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       // HQ > Venues > Set up a prospect (Dean, 28 Oct 2026): venue, login, slides and ONE welcome, in one go.
@@ -211,6 +215,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/prospect/welcome-cancel' && typeof vpaProspectWelcomeCancel === 'function') return await vpaProspectWelcomeCancel(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-now'   && typeof vpaProspectWelcomeNow === 'function') return await vpaProspectWelcomeNow(request, env, json);
       if (request.method === 'POST' && path === '/admin/resend-welcome'  && typeof vpaResendWelcome === 'function')        return await vpaResendWelcome(request, env, json);
+      if (request.method === 'POST' && path === '/admin/signin-link'     && typeof vpaAdminSigninLink === 'function')      return await vpaAdminSigninLink(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
@@ -2286,6 +2291,12 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   const website = vpaProspectWebsite(b.website);
   if (website === null) return json({ error: 'That website does not look like a web address. Leave it empty or fix it.' + NONE }, 400);
   const firstName = String(b.first_name || '').replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 60);
+  /* WHO SIGNS IT (Dean, 29 Oct 2026): the person whose mailbox the venue wrote to (Harry, Dean...), as the
+     autopilot sends sender_name and sender_email. The email is still FROM and replied to at hello@ ("it all
+     should come from hello, not Dean"): the name is only the sign-off, the address only HQ's record.
+     Both or neither; a bad one refuses the setup, so a typo never reaches a venue. */
+  const sender = vpaProspectSender(b.sender_name, b.sender_email);
+  if (sender.error) return json({ error: sender.error + NONE }, 400);
   /* THE EMAIL GOES ON A DELAY (Dean, 28 Oct 2026: "on a delay, so they don't get it straight away").
      HQ's "Send their email in [90] minutes", 0 to 1440 (a day). 0 sends it now. */
   let delayMin = VPA_PROSPECT_DEFAULT_DELAY_MIN;
@@ -2438,7 +2449,8 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     }
     const render = { foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
       seats: players, state: state, entityType: entityType, slides: slideCount, authUserId: login ? login.id : null,
-      mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null, sameLogin: !!(login && login.existing) };
+      mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null, sameLogin: !!(login && login.existing),
+      senderName: sender.name || null, senderEmail: sender.email || null };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
     if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
@@ -2456,6 +2468,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
     mobile_login: !!(login && login.mobile), login_made: !!login, login_reused: !!(login && login.existing), phone: callPhone || undefined, players: players, state: state, entity_type: entityType,
     website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
+    sender_name: sender.name || undefined, sender_email: sender.email || undefined,
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,
   });
 
@@ -2659,11 +2672,13 @@ async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
   }, false);
   return token;
 }
-/* The email's main button. With a token it signs them in; without one it opens the email-code sign-in.
-   Their own address rides in the fragment too, so a used or expired link opens the email sign-in
-   already filled in. Fragment only: it is never sent to a server. */
+/* The email's main button. With a token it signs them in. Without one (migration 123 missing) it opens the
+   same page with no token, which offers to email them a link (POST /auth/one-click/resend). NEVER the
+   email-code sign-in (Dean, 29 Oct 2026: "it's got to be phone number"). Their own address rides in the
+   fragment so that page knows where to send a new link. Fragment only: it is never sent to a server. */
 function vpaOneClickUrl(site, token, email) {
-  return token ? site + '/app/go#t=' + token + (email ? '&e=' + encodeURIComponent(email) : '') : site + '/app/?signin=email';
+  const e = email ? 'e=' + encodeURIComponent(email) : '';
+  return token ? site + '/app/go#t=' + token + (e ? '&' + e : '') : site + '/app/go' + (e ? '#' + e : '');
 }
 async function vpaHandleOneClick(request, env, json) {
   const GONE = { ok: false };
@@ -2703,6 +2718,156 @@ async function vpaHandleOneClick(request, env, json) {
   const p = (d && (d.properties || d)) || {};
   if (!p.hashed_token || typeof p.hashed_token !== 'string') return json(GONE, 410);
   return json({ ok: true, token_hash: p.hashed_token, type: p.verification_type === 'email' ? 'email' : 'magiclink', venue_id: link.venue_id });
+}
+
+/* ===========================================================================
+ * A NEW LINK WHEN THE OLD ONE IS USED OR EXPIRED (Dean, 29 Oct 2026: "otherwise we can resend it or maybe
+ * they could resend it")
+ *
+ *   self     POST /auth/one-click/resend { t?, e? }   from /app/go when the link is spent. The OLD token
+ *            (used or expired, it does not matter) finds the login it was made for; without one, the
+ *            address from the link's fragment. The new link goes to THAT LOGIN'S OWN EMAIL, never to an
+ *            address the caller chose, so a forwarded or guessed request can only ever reach the owner.
+ *            ONE answer whatever happens ({ ok:true }): no login, no venue, over the limit and sent all
+ *            look the same, so nothing says whether an address or a token exists. Only the per-network
+ *            limit answers differently (429), and that is about the caller, not about any address.
+ *   HQ       POST /admin/signin-link { venue_id }  (owner | accounts): "Resend sign-in link" on the venue
+ *            and on the prospect. Says who it went to, because HQ asked.
+ *   both     vpaSendSigninLink: still staff somewhere, an email on the login, not banned, at most
+ *            VPA_SIGNIN_LINKS_PER_DAY links in 24 hours (the welcome's own link counts); every older
+ *            unused link for that login is retired first, so only the newest works; then a fresh
+ *            14 day, one-use link (vpaMintSigninLink, hash only) and a short email from Dean.
+ * ======================================================================== */
+const VPA_RESEND_PER_IP = 6;             // per hour, per network
+const VPA_SIGNIN_LINKS_PER_DAY = 4;      // per login, self-serve (the welcome's link counts as one)
+const VPA_SIGNIN_LINKS_PER_DAY_HQ = 10;  // per login, when HQ presses the button
+async function vpaSendSigninLink(env, authUserId, venueId, opts) {
+  opts = opts || {};
+  if (!authUserId) return { ok: false, reason: 'no_login' };
+  const user = await vpaAuthGetUser(env, authUserId);
+  const email = user && user.email ? String(user.email).trim().toLowerCase() : '';
+  if (!user || !email) return { ok: false, reason: 'no_email' };
+  if (user.banned_until && Date.parse(user.banned_until) > Date.now()) return { ok: false, reason: 'no_login' };
+  const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=venue_id,role&order=venue_id.asc&limit=50');
+  if (!staff || !staff.length) return { ok: false, reason: 'no_venue' };
+  const RANK = { owner: 0, manager: 1, host: 2 };
+  const pick = staff.find((s) => s.venue_id === venueId) || staff.slice().sort((a, b) => (RANK[a.role] || 9) - (RANK[b.role] || 9))[0];
+  const since = new Date(Date.now() - 86400000).toISOString();
+  const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
+  if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
+  const cap = opts.hq ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
+  if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
+  // Only the newest link works: every unused one for this login is retired before the new one is made.
+  try {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null', {
+      method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+  } catch (_) {}
+  let token;
+  try { token = await vpaMintSigninLink(env, authUserId, pick.venue_id, Date.now()); }
+  catch (e) { return { ok: false, reason: 'no_table' }; }
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1');
+  const venueName = (vs && vs[0] && vs[0].name) || '';
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const url = vpaOneClickUrl(site, token, email);
+  const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
+  const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
+  const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
+    + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
+    + '<p style="' + P + '">Here is a fresh link to open your VenuePlay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in.</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your VenuePlay</a></td></tr></table>'
+    + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
+    + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
+    + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>';
+  let sent = false;
+  try {
+    sent = await vpaSendEmail(env, email, 'Your VenuePlay sign-in link',
+      vpaVenueEmailCard('A fresh link to open your VenuePlay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your VenuePlay sign-in link'), VPA_PROSPECT_REPLY_TO);
+  } catch (_) { sent = false; }
+  if (!sent) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+  return { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone };
+}
+async function vpaHandleOneClickResend(request, env, json) {
+  const SAME = { ok: true };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'oneclick-resend', ip, VPA_RESEND_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json(SAME);
+  const t = String((_b.body && _b.body.t) || '');
+  const e = String((_b.body && _b.body.e) || '').trim().toLowerCase();
+  try {
+    let who = null;
+    if (/^[A-Za-z0-9_-]{43}$/.test(t)) {
+      const rows = await vpaSelect(env, 'vp_signin_links', 'token_hash=eq.' + (await vpaSigninTokenHash(t)) + '&select=auth_user_id,venue_id&limit=1');
+      if (rows && rows[0]) who = { id: rows[0].auth_user_id, venue: rows[0].venue_id };
+    }
+    if (!who && e && e.length <= 200 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+      const u = await vpaFindAuthUser(env, { email: e });
+      if (u && u.id) who = { id: u.id, venue: null };
+    }
+    if (who) {
+      const r = await vpaSendSigninLink(env, who.id, who.venue, {});
+      await vpaAudit(env, { actorId: null, label: 'self (sign-in page)', role: null }, r.ok ? 'signin_link_resent' : 'signin_link_resend_refused',
+        'auth_user:' + who.id, { reason: r.ok ? undefined : r.reason, venue_id: r.venue_id || who.venue || undefined, by_token: !!(t && who.venue) });
+    }
+  } catch (_) {}
+  return json(SAME);
+}
+async function vpaAdminSigninLink(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body && _b.body.venue_id) || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name&limit=1');
+  const venue = vs && vs[0];
+  if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  // Whose link: the prospect's own login first (HQ > Prospects), then the venue's owner, then a manager.
+  const ids = [];
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    if (pr && pr[0] && pr[0].auth_user_id) ids.push(pr[0].auth_user_id);
+  } catch (_) {}
+  const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(venueId) + '&role=in.(owner,manager)&select=auth_user_id,role&limit=20');
+  (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((s) => { if (ids.indexOf(s.auth_user_id) < 0) ids.push(s.auth_user_id); });
+  let r = { ok: false, reason: 'no_login' };
+  for (let i = 0; i < ids.length && i < 6; i++) {
+    r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true });
+    if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
+  }
+  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  if (r.ok) return json({ ok: true, to: r.to, has_mobile: r.has_mobile });
+  const name = venue.name || 'That venue';
+  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
+  if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
+  if (r.reason === 'no_table') return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503);
+  return json({ error: 'Nobody at ' + name + ' has an email on their login, so there is nowhere to send a link. They sign in with their mobile.' }, 400);
+}
+
+/* ===========================================================================
+ * POST /account/my-name { name }   (any venue login, for ITSELF)
+ *
+ * The first screen after the one-off link asks their name and mobile (venueplay/app/vp-about-you.js). The
+ * mobile goes on through Auth's own verified phone change; the name rides with it onto the login
+ * (user_metadata.full_name) and comes here for their venue staff rows, which is what HQ and the Hosts list
+ * show. Only the caller's own rows, by the token's own id: X-VP-Venue and View as change nothing.
+ * ======================================================================== */
+async function vpbMyName(request, env, json) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return json({ error: 'Not signed in.' }, 401);
+  const payload = await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env);
+  if (!payload || !payload.sub) return json({ error: 'Invalid or expired session. Please sign in again.' }, 401);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const name = String((_b.body && _b.body.name) || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (!name) return json({ error: 'Pop your name in first.' }, 400);
+  const mine = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=venue_id&limit=50');
+  if (!mine || !mine.length) return json({ error: 'This login has no venues.' }, 403);
+  const up = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_staff?auth_user_id=eq.' + encodeURIComponent(payload.sub), {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ display_name: name }) });
+  if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
+  return json({ ok: true, name: name });
 }
 
 /* NUMBER BINGO, ONE LINE FOR THE WELCOME, BY STATE AND BY CLUB OR PUB. The words are vp-gaming.js's
@@ -2748,7 +2913,29 @@ function vpaOfferMonthPhrase(env, nowMs) {
    line, the Spam Act footer. Everything else lives in the app's first-run setup. Sent from "Dean at
    VenuePlay" on the transactional domain with a text part, and, when o.sendAtMs is given, held by
    Resend until then (scheduled_at). Returns { ok, id }: id is Resend's, for cancelling it. */
-const VPA_PROSPECT_FROM = 'Dean at VenuePlay <hello@send.venueplay.com.au>';
+/* FROM hello@, REPLIES TO hello@ (Dean, 29 Oct 2026: "it all should come from hello, not Dean"). The address is
+   hello@ on send.venueplay.com.au, the only domain Resend is verified to send from (every VenuePlay email
+   goes from it); replies land in hello@venueplay.com.au. Never a person's or a cold mailbox. */
+const VPA_PROSPECT_FROM = 'VenuePlay <hello@send.venueplay.com.au>';
+const VPA_PROSPECT_REPLY_TO = 'hello@venueplay.com.au';
+/* The domains our own mailboxes live on: venueplay.com.au and the cold-email ones (Instantly). */
+const VPA_OUR_MAIL_DOMAINS = ['venueplay.com.au', 'getvenueplay.com.au', 'getvenueplay.com', 'venueplay.online', 'venueplayhq.com.au',
+  'venueplayhq.com', 'venueplaylive.com.au', 'venueplaygames.com.au', 'venueplaygames.com'];
+function vpaProspectSender(rawName, rawEmail) {
+  const name = String(rawName == null ? '' : rawName).replace(/\s+/g, ' ').trim();
+  const email = String(rawEmail == null ? '' : rawEmail).trim().toLowerCase();
+  if (!name && !email) return {};
+  if (!name || !email) return { error: 'Give both sender_name and sender_email, or neither.' };
+  if (name.length > 40 || !/^[A-Za-z][A-Za-z' .-]*$/.test(name)) return { error: 'sender_name must be a plain name (letters, spaces, apostrophes, hyphens), up to 40 characters.' };
+  const m = /^[a-z0-9._%+-]+@([a-z0-9.-]+)$/.exec(email);
+  if (!m || email.length > 120 || VPA_OUR_MAIL_DOMAINS.indexOf(m[1]) === -1) return { error: 'sender_email must be one of our own mailboxes (' + VPA_OUR_MAIL_DOMAINS.join(', ') + ').' };
+  return { name: name, email: email };
+}
+/* The sign-off: their name, VenuePlay, the website. No phone but the support line, which the footer carries. */
+function vpaProspectSignoff(senderName) {
+  const who = senderName ? vpaEsc(senderName) : 'The VenuePlay team';
+  return 'Cheers,<br>' + who + '<br>' + (senderName ? 'VenuePlay<br>' : '') + '<a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
+}
 function vpaProspectSubject(venueName) { return 'Your VenuePlay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
@@ -2777,7 +2964,9 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
-    .replace(/{{support_email}}/g, 'support@venueplay.com.au');
+    .replace(/{{support_email}}/g, 'support@venueplay.com.au')
+    // The sign-off (and, until the new template is on Pages, the old fixed one in its place).
+    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(vpaProspectSender(o.senderName, o.senderEmail).name));
   return vpaEmailDocument(vpaFillSupport(html), vpaProspectSubject(o.venueName));
 }
 async function vpaFireProspectWelcome(env, o) {
@@ -2787,7 +2976,7 @@ async function vpaFireProspectWelcome(env, o) {
     if (!email) return { ok: false };
     const html = await vpaRenderProspectWelcome(env, o);
     if (!html) return { ok: false };
-    const msg = { from: VPA_PROSPECT_FROM, reply_to: 'support@venueplay.com.au', to: [email],
+    const msg = { from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email],
       subject: vpaProspectSubject(o.venueName),
       html: html, text: helpPlainFromHtml(html) };
     if (o.sendAtMs && o.sendAtMs > Date.now()) msg.scheduled_at = new Date(o.sendAtMs).toISOString();

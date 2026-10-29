@@ -84,6 +84,9 @@
     var every = deps.setInterval || (root.setInterval && root.setInterval.bind(root)), stop = deps.clearInterval || (root.clearInterval && root.clearInterval.bind(root));
     var go = deps.openUrl || function (u) { root.location.href = u; };
     var v = ctx.venue, state = readState(storage, v.id);
+    /* Their mobile is already on (the name-and-mobile screen, vp-about-you.js, asks for it first since
+       29 Oct 2026): the guide starts at the Terms rather than showing a step that is already done. */
+    if (state.step === "mobile" && ctx.user && ctx.user.phone) { state.step = "terms"; state.mobile = "done"; }
     var timers = [];
     var me = { phone: "", email: "", token: "" };
 
