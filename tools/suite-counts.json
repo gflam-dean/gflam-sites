@@ -135,6 +135,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/drag-bingo-clubs-page.test.py": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
  "tools/dropdowns-in-chrome.test.py": {
   "checks": 43,
   "counted_by": "lines"
@@ -145,6 +149,10 @@
  },
  "tools/gate-reliability.test.py": {
   "checks": 53,
+  "counted_by": "lines"
+ },
+ "tools/gflam-unsub.test.py": {
+  "checks": 25,
   "counted_by": "lines"
  },
  "tools/git-shim.test.py": {
@@ -189,6 +197,10 @@
  },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/phone-signin-in-chrome.test.py": {
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/pickup-in-chrome.test.py": {
@@ -399,6 +411,10 @@
   "checks": 68,
   "counted_by": "lines"
  },
+ "tools/test-legal-gaps-28-oct.js": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/test-library-pull-reaches-the-whole-bank.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -471,6 +487,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/test-one-click-signin.js": {
+  "checks": 58,
+  "counted_by": "lines"
+ },
  "tools/test-one-room-one-identity.js": {
   "checks": 39,
   "counted_by": "lines"
@@ -511,6 +531,10 @@
   "checks": 100,
   "counted_by": "lines"
  },
+ "tools/test-phone-signin.js": {
+  "checks": 77,
+  "counted_by": "lines"
+ },
  "tools/test-phones-cannot-be-impersonated.js": {
   "checks": 34,
   "counted_by": "lines"
@@ -549,6 +573,26 @@
  },
  "tools/test-print-problem.js": {
   "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-autopilot.js": {
+  "checks": 38,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-setup.js": {
+  "checks": 112,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-terms-first-game.js": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/test-prospect-welcome-v2.js": {
+  "checks": 98,
+  "counted_by": "lines"
+ },
+ "tools/test-prospects-tab.js": {
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {
@@ -655,8 +699,16 @@
   "checks": 9,
   "counted_by": "lines"
  },
+ "tools/test-terms-acceptance-card.js": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
  "tools/test-terms-put-compliance-on-the-venue.js": {
   "checks": 89,
+  "counted_by": "lines"
+ },
+ "tools/test-touring-cards-loader.js": {
+  "checks": 80,
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
@@ -779,12 +831,20 @@
   "checks": 100,
   "counted_by": "lines"
  },
+ "tools/tv-window-uncovered.test.py": {
+  "checks": 17,
+  "counted_by": "lines"
+ },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 348,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
   "checks": 56,
+  "counted_by": "lines"
+ },
+ "touring-backend/lib/touring-unsubscribe.test.js": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "venueplay-backend/app/billing-hosts.test.js": {
@@ -1024,7 +1084,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/sms-hook-failover.test.js": {
-  "checks": 33,
+  "checks": 36,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/sms-hook-secrets.test.js": {
@@ -1095,60 +1155,8 @@
   "checks": 17,
   "counted_by": "lines"
  },
- "tools/test-touring-cards-loader.js": {
-  "checks": 80,
-  "counted_by": "lines"
- },
- "tools/drag-bingo-clubs-page.test.py": {
-  "checks": 56,
-  "counted_by": "lines"
- },
- "tools/tv-window-uncovered.test.py": {
-  "checks": 17,
-  "counted_by": "lines"
- },
- "tools/test-legal-gaps-28-oct.js": {
-  "checks": 46,
-  "counted_by": "lines"
- },
- "tools/test-terms-acceptance-card.js": {
-  "checks": 56,
-  "counted_by": "lines"
- },
- "tools/test-prospect-setup.js": {
-  "checks": 112,
-  "counted_by": "lines"
- },
- "tools/test-prospect-terms-first-game.js": {
-  "checks": 17,
-  "counted_by": "lines"
- },
- "tools/test-one-click-signin.js": {
-  "checks": 56,
-  "counted_by": "lines"
- },
- "tools/gflam-unsub.test.py": {
-  "checks": 25,
-  "counted_by": "lines"
- },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 50,
-  "counted_by": "lines"
- },
- "touring-backend/lib/touring-unsubscribe.test.js": {
-  "checks": 28,
-  "counted_by": "lines"
- },
- "tools/test-prospect-welcome-v2.js": {
-  "checks": 98,
-  "counted_by": "lines"
- },
- "tools/test-prospect-autopilot.js": {
-  "checks": 38,
-  "counted_by": "lines"
- },
- "tools/test-prospects-tab.js": {
-  "checks": 62,
   "counted_by": "lines"
  }
 }
