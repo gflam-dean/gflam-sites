@@ -7826,6 +7826,12 @@ MUTATIONS = [
      "      if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/review' &&",
      "      if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/reviews' &&",
      'the route is not wired, so every button in every email is a 404'),
+    # The gate line for which venue a public help or sales form means (D95), proven once through the gate.
+    ('a join code, a live code or a whole name',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id, venue_matched_by: matchedBy,",
+     "      venue_id: where.venue_id || b.venue_id || null, room_code: where.room_code, session_id: where.session_id, venue_matched_by: matchedBy,",
+     'a public form files its ticket against whatever venue the page claims'),
     # The gate line for Dean's review buttons (D93), proven once through the gate.
     ('only the Mac\'s key registers, lists and marks',
      'venueplay-backend/worker/venueplay-api-FULL.js',
