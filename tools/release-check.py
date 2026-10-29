@@ -3685,7 +3685,7 @@ def local_checks(which):
             # (Dean's phone test, 29 Oct 2026; migration 129), branch fix/site-mobile-sales-29oct.
             ('D95. A public help or sales form is matched to one venue or none, and a sales enquiry keeps its venue as fields',
              'test-help-desk.js',
-             'a join code, a live code or a whole name (with the suburb or postcode when several share it) matches one venue or nothing; the lookup answers a name only and is limited per network and per device; a venue_id the page sends is ignored; a sales enquiry needs the venue and its suburb or postcode, keeps them and the website as fields, and is still made before migration 129 runs', 306,
+             'a join code, a live code or a whole name (with the suburb or postcode when several share it) matches one venue or nothing; the lookup answers a name only and is limited per network and per device; a venue_id the page sends is ignored; a sales enquiry needs the venue and its suburb or postcode, keeps them and the website as fields, and is still made before migration 129 runs', 312,
              'A ticket filed against the wrong venue on a guess, a lookup that lists other venues or can be '
              'hammered, or a sales lead that a later job cannot set up because its venue is only in the message'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',

@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 228,
+  "checks": 230,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -408,7 +408,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 306,
+  "checks": 312,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {
