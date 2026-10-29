@@ -87,7 +87,7 @@ async function main() {
   await vpaFireInvoiceEmail(ENV, { id: 'in_1', number: 'ABC-0001', customer: 'cus_1', customer_email: 'owner@pub.com', amount_paid: 12000,
     lines: { data: [{ description: '40 x Founding Membership', amount: 12000, quantity: 40 }] } });
   check('receipt: the number, tappable', hasLine(last().html), last().html ? visible(last().html).slice(-300) : 'not sent');
-  check('receipt: and the ABN is still in its small print, after it', (last().html || '').lastIndexOf('Gflam Group, ABN 35 679 383 049') > (last().html || '').indexOf('tel:' + TEL));
+  check('receipt: and the ABN is still in its small print, after it', (last().html || '').lastIndexOf('VenuePlay, ABN 35 679 383 049') > (last().html || '').indexOf('tel:' + TEL));
 
   sent = [];
   await vpaFireUpcomingEmail(ENV, { id: 'in_2', customer: 'cus_1', customer_email: 'owner@pub.com', amount_due: 12000, next_payment_attempt: 1790000000,

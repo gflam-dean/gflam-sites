@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '29 Oct 2026, 00:28 · 250485c7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 08:35 · 0447bfb1';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -54,7 +54,7 @@ function emailShell(opts) {
    Spam Act agrees. Confirmed with him on 12 Sep 2026 that 35 679 383 049 is the right
    number, the same one on terms.html and privacy.html for both products. One shell,
    so this fixes every PartyPlay email at once. */
-'<p style="margin:10px 0 0">PartyPlay is made by Gflam Group Pty Ltd, ABN ' + PP_ABN + ', on the Gold Coast. <a href="' + site + '" style="color:#8A8296">partyplay.com.au</a></p>' +
+'<p style="margin:10px 0 0">PartyPlay, ABN ' + PP_ABN + ', Gold Coast, Queensland. <a href="' + site + '" style="color:#8A8296">partyplay.com.au</a></p>' +
 '</td></tr></table></td></tr></table></body></html>';
 }
 

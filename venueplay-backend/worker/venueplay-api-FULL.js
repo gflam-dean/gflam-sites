@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 08:30 · 0f4e3412';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 11:30 · e7e35823';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6903,7 +6903,7 @@ function vpaSupportPhoneHtml() {
 function vpaVenueEmailFoot(withAbn) {
   return vpaSupportPhoneHtml()
     + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
-    + (withAbn ? ' &middot; Gflam Group, ABN ' + VP_ABN : '') + '</p>';
+    + (withAbn ? ' &middot; VenuePlay, ABN ' + VP_ABN : '') + '</p>';
 }
 
 /* EVERY EMAIL IS A DOCUMENT, NOT A FRAGMENT. Email audit, 23 Oct 2026: the receipt, the
@@ -7024,8 +7024,8 @@ function vpaTaxSummaryHtml(invoice) {
        + row('GST', gst, false)
        + row('Total paid', total, true)
        + '</table>'
-       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Tax invoice. VenuePlay is a Gflam Group '
-       + 'business, ABN ' + VP_ABN + '. Prices include GST.</p>'
+       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Tax invoice. VenuePlay, '
+       + 'ABN ' + VP_ABN + '. Prices include GST.</p>'
        + '</td></tr></table>';
 }
 
@@ -11210,7 +11210,7 @@ async function vpUnsubFooterHtml(env, email, campaign) {
     + ' is the contact on a VenuePlay account. '
     + '<a href="' + vpaEsc(link) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a>'
     + ' from emails like this one. Invoices and account notices are not marketing and still come.</p>'
-    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay is Gflam Group, ABN ' + VP_ABN
+    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay, ABN ' + VP_ABN
     + ' &middot; venueplay.com.au</p>';
 }
 
@@ -11241,7 +11241,7 @@ function vpUnsubPage(title, bodyHtml, status, extra) {
     + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>VenuePlay</div>'
     + '<div id="msg"><h1>' + vpaEsc(title) + '</h1>' + bodyHtml + '</div>'
     + (extra || '')
-    + '<p class="foot">Gflam Group Pty Ltd, ABN ' + VP_ABN + '. Gold Coast, Queensland.<br>'
+    + '<p class="foot">VenuePlay, ABN ' + VP_ABN + '. Gold Coast, Queensland.<br>'
     + 'This only stops marketing email. It does not affect a VenuePlay account, if you have one.</p>'
     + '</main></body></html>';
   return new Response(html, { status: status || 200,
