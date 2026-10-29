@@ -29,7 +29,9 @@
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
-  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  /* SOLID, NOT FROSTED (Dean, 29 Oct 2026, at 390px): the see-through blurred header showed the page's pink
+     buttons and text as blurred blobs and ghosts under it as the page scrolled. */
+  header{border-bottom:1px solid var(--line);background:var(--ink);position:sticky;top:0;z-index:20}
   .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:10px}
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}

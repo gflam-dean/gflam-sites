@@ -1532,6 +1532,13 @@
         // "Run it now" in the builder lands here with ?set=<id>: pick that night without a hunt.
         var want=setFromUrl(), found=false; if(want){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===want){ sel.selectedIndex=k; found=true; break; } } }
         if(want && !found) hostError("That night is not one of this venue's, so it is not in the list. Check which venue you are running.");
+        /* A NEW VENUE STARTS ON GENERAL KNOWLEDGE (Dean, 29 Oct 2026: a brand new venue's console opened on
+           "Anime, Comics & Cartoons", the first title in the library). With no night of their own and no
+           ?set=, pick the biggest library set called General Knowledge; their saved pick (applyTriviaPrefs)
+           still wins after this. */
+        if(!want && !mine.length){ var gk=-1, gkN=-1; for(var j=0;j<sel.options.length;j++){ var oj=sel.options[j];
+          if(/^general knowledge$/i.test(String(oj.getAttribute("data-title")||"").trim())){ var nj=parseInt(oj.getAttribute("data-count"),10)||0; if(nj>gkN){ gk=j; gkN=nj; } } }
+          if(gk>=0) sel.selectedIndex=gk; }
         syncSetCount();
       }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
   }

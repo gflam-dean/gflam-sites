@@ -153,6 +153,10 @@
     ".vpp-field{margin:0 0 10px;min-width:0}.vpp-field label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}" +
     ".vpp-field input{width:100%;box-sizing:border-box;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;margin:0}" +
     ".vpp-two{display:flex;gap:10px;flex-wrap:wrap}.vpp-two .vpp-field{flex:1 1 140px}" +
+    /* iOS Safari keeps a date input at its natural width, off the card's edge at 390px, until its appearance
+       is switched off (Dean, 29 Oct 2026). */
+    ".vpp-field input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;min-height:42px;color-scheme:dark}" +
+    ".vpp-field input[type=date]::-webkit-date-and-time-value{text-align:left}" +
     ".vpp-save{border:none;border-radius:12px;padding:11px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s;" +
     "background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);text-transform:uppercase;letter-spacing:.04em}" +
     ".vpp-save:hover{background:var(--pink-deep)}.vpp-save:disabled{opacity:.5;cursor:not-allowed}" +

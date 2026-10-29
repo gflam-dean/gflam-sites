@@ -28,7 +28,11 @@
 (function (root) {
   "use strict";
   var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
-  var LATER = "vpAboutYouLater:";   // sessionStorage, per login: "carry on for now" holds for this sign-in only
+  var LATER = "vpAboutYouLater:";   // localStorage, per login AND per sign-in: "carry on for now" holds for this sign-in only
+  /* LOCAL, NOT SESSION, STORAGE (Dean, 29 Oct 2026). sessionStorage is one TAB: the card step opened Stripe,
+     Stripe's back arrow came back to /app in a fresh tab, and this screen asked for his name and mobile all
+     over again, empty, which read as being signed out. The value is the sign-in's own start (vpShiftStart),
+     so a new sign-in still asks again, and every tab of THIS sign-in agrees. */
   /* "This sign-in" is this shift: the flag holds the shift's start (vpShiftStart, set at every sign-in), so a
      new sign-in in the same tab, after the 4 hour sign-out, asks again. */
   function shiftNow(shift) {
@@ -72,13 +76,13 @@
   function wants(ctx, storage, shift) {
     if (!ctx || !ctx.authed || ctx.isAdmin || ctx.scope !== "staff" || !ctx.user || !ctx.user.id) return false;
     if (ctx.user.phone) return false;
-    var later = null; try { later = (storage || root.sessionStorage).getItem(LATER + ctx.user.id); } catch (e) {}
+    var later = null; try { later = (storage || root.localStorage).getItem(LATER + ctx.user.id); } catch (e) {}
     return later === null || later !== "shift:" + shiftNow(shift);
   }
 
   function open(ctx, deps) {
     deps = deps || {};
-    var doc = deps.doc || root.document, storage = deps.storage || root.sessionStorage;
+    var doc = deps.doc || root.document, storage = deps.storage || root.localStorage;
     var fetchFn = deps.fetch || (root.fetch && root.fetch.bind(root));
     var client = deps.client;
     var done = typeof deps.onDone === "function" ? deps.onDone : function () {};
@@ -145,6 +149,10 @@
 
     var msg = el("p", "margin:12px 0 0;font-size:14px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); msg.id = "vpAyMsg"; msg.setAttribute("role", "status");
     card.appendChild(msg);
+    var takenWrap = el("div", "display:none;flex-wrap:wrap;gap:8px 18px;margin-top:10px"); takenWrap.id = "vpAyTaken";
+    var other = linkBtn("vpAyOther", "Use a different mobile");
+    var takenLater = linkBtn("vpAyTakenLater", "Carry on for now");
+    takenWrap.appendChild(other); takenWrap.appendChild(takenLater); card.appendChild(takenWrap);
     doc.body.appendChild(shell);
 
     var pending = "", sending = false, verifying = false;
@@ -160,9 +168,14 @@
         sending = false; send.disabled = false; send.textContent = "Text me a code";
         if (r && r.error) {
           var m = String(r.error.message || "") + " " + String(r.error.code || "");
-          msg.textContent = /already|registered|exists/i.test(m)
-            ? "That mobile already signs in to VenuePlay on another login. Call us on 07 5228 3667 or email support@venueplay.com.au and we'll join them up."
+          /* ONE PERSON, TWO VENUES (Dean, 29 Oct 2026): a host at two pubs, a group owner. Putting this venue on
+             their other login is done by us for now (a login change is not rushed); the screen says so kindly
+             and offers the two ways on: use a different mobile here, or carry on and sort it later. */
+          var taken = /already|registered|exists/i.test(m);
+          msg.textContent = taken
+            ? "That mobile already signs in to another VenuePlay venue. If it's yours, we can put " + (v.name || "this venue") + " on the same sign-in so you can switch between them: call us on 07 5228 3667 or email support@venueplay.com.au. Or use a different mobile for " + (v.name || "this venue") + "."
             : "We couldn't text that number just now. Check it and try again.";
+          takenWrap.style.display = taken ? "flex" : "none";
           return false;
         }
         pending = ph;
@@ -205,6 +218,8 @@
     verify.addEventListener("click", confirmCode);
     again.addEventListener("click", function () { pending = ""; codeWrap.style.display = "none"; form.style.display = "block"; code.value = ""; msg.textContent = ""; try { mobile.focus(); } catch (e) {} });
     later.addEventListener("click", carryOn);
+    other.addEventListener("click", function () { mobile.value = ""; msg.textContent = ""; takenWrap.style.display = "none"; try { mobile.focus(); } catch (e) {} });
+    takenLater.addEventListener("click", carryOn);
     mobile.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ask(); } });
     name.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); try { mobile.focus(); } catch (x) {} } });
     code.addEventListener("input", function () { code.value = String(code.value || "").replace(/\D/g, "").slice(0, 6); msg.textContent = ""; });

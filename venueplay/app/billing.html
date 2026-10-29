@@ -26,7 +26,9 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
-  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  /* SOLID, NOT FROSTED (Dean, 29 Oct 2026, at 390px): the see-through blurred header showed the page's pink
+     buttons and text as blurred blobs and ghosts under it as the page scrolled. */
+  header{border-bottom:1px solid var(--line);background:var(--ink);position:sticky;top:0;z-index:20}
   .bar{max-width:680px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:10px}
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
@@ -202,6 +204,17 @@
   .offtv:hover{background:rgba(255,31,142,.08);border-color:var(--pink)}
   .offtv:disabled{opacity:.45;cursor:default}
   .btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  /* THE SHARED INPUT LOOK in a row of controls (Dean, 29 Oct 2026: "Fix a name" and "Take someone off the list" were
+     tiny white browser boxes; the Show select's text was bigger than its box). Same box as every .mdf field. */
+  .btnrow input[type=text]{flex:1 1 140px;min-width:0;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;min-height:44px}
+  .btnrow input[type=text]:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.22)}
+  .btnrow select{border-radius:12px;padding:10px 12px;min-height:44px;font-size:15px;max-width:100%}
+  /* DATES ON AN IPHONE (Dean, 29 Oct 2026: the slide Show from / Show until and the permit Authorised on /
+     Expires ran off the card's right edge). iOS Safari gives a date input a fixed natural width that ignores
+     width:100% until its own appearance is switched off; min-width:0 lets it shrink inside a flex or grid row. */
+  input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;box-sizing:border-box;min-height:40px;color-scheme:dark}
+  input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+  .adline>.adf,.mdgrid>*{min-width:0}
   .addform .go{flex:0 0 auto}
   .flabel{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
   .ffield{display:flex;flex-direction:column}
@@ -595,7 +608,7 @@
       <p class="snote">Every raffle and members draw result for this venue. Keep it for your records.</p>
       <div class="btnrow">
         <label class="flabel" for="dlMonths" style="margin:0 6px 0 0;align-self:center">Show</label>
-        <select id="dlMonths" style="max-width:190px">
+        <select id="dlMonths" style="flex:1 1 170px;max-width:220px">
           <option value="1">The last month</option>
           <option value="3" selected>The last 3 months</option>
           <option value="6">The last 6 months</option>
@@ -664,9 +677,9 @@
         <div class="scardhead" style="font-size:13px">Fix a name</div>
         <p class="snote">A pasted name is split at the first space, so "Mary Anne Smith" is stored with the surname "Anne Smith" and that is what goes on the TV when she wins. Fix it here without taking her off the list.</p>
         <div class="btnrow">
-          <input type="text" id="md-fixnum" class="mono" placeholder="Member number" style="max-width:150px">
-          <input type="text" id="md-fixfirst" placeholder="First name" style="max-width:170px">
-          <input type="text" id="md-fixlast" placeholder="Surname" style="max-width:170px">
+          <input type="text" id="md-fixnum" class="mono" placeholder="Member number" aria-label="Member number">
+          <input type="text" id="md-fixfirst" placeholder="First name" aria-label="First name">
+          <input type="text" id="md-fixlast" placeholder="Surname" aria-label="Surname">
           <button class="go" id="mdFix" type="button">Save name</button>
         </div>
       </div>
@@ -674,7 +687,7 @@
         <div class="scardhead" style="font-size:13px">Take someone off the list</div>
         <p class="snote">If a member leaves, or asks to be taken off, remove them by their member number. Any draws they have already won stay on your records.</p>
         <div class="btnrow">
-          <input type="text" id="md-remove" class="mono" placeholder="Member number" style="max-width:190px">
+          <input type="text" id="md-remove" class="mono" placeholder="Member number" aria-label="Member number to take off">
           <button class="offtv" id="mdRemove" type="button">Remove member</button>
         </div>
       </div>

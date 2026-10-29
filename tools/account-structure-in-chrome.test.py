@@ -329,6 +329,32 @@ try:
        f.get('textR', 9999) <= f.get('cardR', 0) and f.get('esw', 9999) <= f.get('ecw', 0) + 1 and f.get('w', 9999) <= 390 and f.get('sw', 9999) <= 390, f)
     shot(sid, 'billing-marketing-390')
     S.close_tab(tid)
+
+    # Dean's 390px pass of a prospect account (29 Oct 2026): every box on Draws is the shared on-brand box,
+    # every date stays inside its card, the Show select's text fits its box, and the header is solid.
+    print('\nYOUR ACCOUNT > DRAWS at 390 wide: the shared boxes, inside their cards, under a solid header')
+    tid, sid = S.open('/app/billing.html#draws', 390, 844, True)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, '!!document.querySelector("#draws-pane .vpp-card, .vpp-card")', 20)
+    time.sleep(0.8)
+    m = json.loads(S.js(sid, '''(function(){
+      function box(id){var e=document.getElementById(id);if(!e)return null;var cs=getComputedStyle(e),r=e.getBoundingClientRect();
+        return {bg:cs.backgroundColor,h:Math.round(r.height),rad:parseFloat(cs.borderTopLeftRadius)||0,fs:parseFloat(cs.fontSize)||0};}
+      var out={fix:['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box),show:box('dlMonths'),over:[]};
+      [].forEach.call(document.querySelectorAll('input[type=date]'),function(d){if(!d.offsetParent)return;var c=d.closest('.vpp-card,.scard,.card');if(!c)return;
+        var r=d.getBoundingClientRect(),cr=c.getBoundingClientRect();if(r.right>cr.right-1||r.left<cr.left)out.over.push((d.id||d.name||'date')+':'+Math.round(r.right)+'>'+Math.round(cr.right));});
+      var h=getComputedStyle(document.querySelector('header'));out.hdr={bg:h.backgroundColor,bf:h.backdropFilter||h.webkitBackdropFilter||'none'};
+      out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''') or '{}')
+    fx = m.get('fix') or []
+    ok('"Fix a name" and "Take someone off the list": the dark on-brand box, finger height, rounded (not tiny white browser boxes)',
+       len(fx) == 4 and all(b and b['bg'] not in ('rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)') and b['h'] >= 40 and b['rad'] >= 10 for b in fx), fx)
+    sh = m.get('show') or {}
+    ok('the "Show" select\'s text fits its box (a finger-high box, text no taller than it allows)', sh.get('h', 0) >= 40 and sh.get('fs', 99) + 16 <= sh.get('h', 0), sh)
+    ok('every date box (permit Authorised on / Expires) stays inside its card, and nothing scrolls sideways', m.get('over') == [] and m.get('sw', 9999) <= 390, m.get('over'))
+    hd = m.get('hdr') or {}
+    ok('the sticky header is solid, not see-through and blurred over the page', hd.get('bf') in ('none', '', None) and hd.get('bg', '').startswith('rgb(') and not hd.get('bg', '').startswith('rgba('), hd)
+    shot(sid, 'billing-draws-390')
+    S.close_tab(tid)
 finally:
     S.close()
     GW.close()

@@ -346,6 +346,29 @@ runLifted('(function(){ ' + twl + '\n})', { $: function (id) { return { addEvent
 ok('the page saves as the count, time, points and double count are typed', tw.join() === 'cfgCount:input:true,cfgTime:input:true,cfgBase:input:true,cfgDoubleLast:input:true', tw);
 ok('and on the set, the speed bonus and double points', /queueTriviaPrefs\(\); \}\);/.test(PAGES.trivia) && (PAGES.trivia.match(/queueTriviaPrefs\(\);/g) || []).length >= 3);
 ok('it starts once the question sets are in the list', /Promise\.resolve\(loadQuestionSets\(\)\)\.then\(startTriviaPrefs, startTriviaPrefs\)/.test(PAGES.trivia));
+/* A NEW VENUE OPENS ON GENERAL KNOWLEDGE (Dean, 29 Oct 2026: a brand new venue opened on "Anime, Comics &
+   Cartoons", the first library title). The REAL loadQuestionSets, over a fake list and select. */
+function setList(rows, search) {
+  function Opt(tag) { this.tag = tag; this.attrs = {}; this.children = []; this.value = ''; this.textContent = ''; }
+  Opt.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
+  Opt.prototype.getAttribute = function (k) { return k in this.attrs ? this.attrs[k] : null; };
+  Opt.prototype.appendChild = function (c) { this.children.push(c); return c; };
+  var sel = { kids: [], selectedIndex: 0, appendChild: function (c) { this.kids.push(c); return c; } };
+  Object.defineProperty(sel, 'innerHTML', { set: function () { sel.kids = []; sel.selectedIndex = 0; } });
+  Object.defineProperty(sel, 'options', { get: function () { var o = []; sel.kids.forEach(function (k) { if (k.tag === 'option') o.push(k); else o.push.apply(o, k.children); }); return o; } });
+  var q = { select: function () { return q; }, eq: function () { return q; }, then: function (f) { return Promise.resolve(f({ data: rows })); } };
+  var picked = null, sc = { $: function (id) { return id === 'setSel' ? sel : null; }, G: { venueId: VENUE }, client: { from: function () { return q; } },
+    document: { createElement: function (t) { return new Opt(t); } }, setFromUrl: function () { return search || ''; }, hostError: function () {},
+    syncSetCount: function () { var o = sel.options[sel.selectedIndex]; picked = o ? o.getAttribute('data-title') + ':' + o.getAttribute('data-count') : null; } };
+  runLifted(liftFrom(PAGES.trivia, 'loadQuestionSets'), sc)(); flush();
+  return picked;
+}
+var LIB = [{ id: 'a1', title: 'Anime, Comics & Cartoons', question_count: 940, owner_venue_id: null }, { id: 'g1', title: 'General Knowledge', question_count: 477, owner_venue_id: null },
+  { id: 'g2', title: 'General Knowledge', question_count: 1278, owner_venue_id: null }, { id: 'h1', title: 'History', question_count: 2902, owner_venue_id: null }];
+ok('a brand new venue (no nights of its own) opens on General Knowledge, the bigger of the two', setList(LIB) === 'General Knowledge:1278', setList(LIB));
+ok('a venue with its own night still opens on its own first night', setList([{ id: 'm1', title: 'Pub Night', question_count: 20, owner_venue_id: VENUE }].concat(LIB)) === 'Pub Night:20');
+ok('"Run it now" (?set=) still picks the night it was sent with', setList(LIB, 'h1') === 'History:2902');
+ok('no General Knowledge set in the library: the first one, as before', setList([LIB[0], LIB[3]]) === 'Anime, Comics & Cartoons:940');
 ok('the boot no longer fills the setup from the older columns on its own (that would beat game_prefs)', (PAGES.trivia.match(/VP\.loadSettings\(/g) || []).length === 1);
 
 /* ---------------- musical ---------------- */

@@ -115,7 +115,15 @@
 
     // ---------------------------------------------------------------- the frame
     var old = doc.getElementById("vpFirstRun"); if (old && old.parentNode) old.parentNode.removeChild(old);
-    var shell = el("div", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;overflow-y:auto;background:rgba(10,10,11,.97);" + FONT + ";color:" + C.text + ";padding:0 16px;box-sizing:border-box");
+    /* OPAQUE, AND THE PAGE'S HEADER STOOD DOWN WHILE IT IS OPEN (Dean, 29 Oct 2026, at 390px): the console's Help /
+       Setup guide / Account / Sign out showed through behind "Step 2 of 5" and Close. The sticky header is its own
+       layer on an iPhone and can paint through a fixed overlay, so it is hidden until the guide closes. */
+    var pageHeader = doc.querySelector ? doc.querySelector("header") : null;
+    if (pageHeader && pageHeader.style && pageHeader.setAttribute) {
+      if (pageHeader.getAttribute("data-vpfr") === null) pageHeader.setAttribute("data-vpfr", pageHeader.style.visibility || "");   // its own, once, so a second open restores the right one
+      pageHeader.style.visibility = "hidden";
+    }
+    var shell = el("div", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;overflow-y:auto;background:#0A0A0B;" + FONT + ";color:" + C.text + ";padding:0 16px;box-sizing:border-box");
     shell.id = "vpFirstRun"; shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-label", "Getting started");
     var box = el("div", "max-width:480px;margin:0 auto;padding:28px 0 40px");
     shell.appendChild(box);
@@ -145,6 +153,7 @@
       if (finished) state.done = true; else state.dismissed = true;
       save();
       if (shell.parentNode) shell.parentNode.removeChild(shell);
+      if (pageHeader && pageHeader.style && pageHeader.getAttribute) { pageHeader.style.visibility = pageHeader.getAttribute("data-vpfr") || ""; pageHeader.removeAttribute("data-vpfr"); }
       if (typeof deps.onClose === "function") deps.onClose(finished ? "done" : "closed");
     }
 
@@ -276,7 +285,10 @@
          ends) or "Later" (a reminder email comes before it ends). Same size, side by side, no pressure. */
       var choices = el("div", "display:none;gap:10px;flex-wrap:wrap"); choices.id = "vpFrChoices";
       var cardBtn = el("a", BTN_PINK + ";text-decoration:none;text-align:center;flex:1 1 150px", "Add your card now"); cardBtn.id = "vpFrCard";
-      cardBtn.setAttribute("target", "_blank"); cardBtn.setAttribute("rel", "noopener");
+      /* SAME TAB (Dean, 29 Oct 2026): in a new tab, Stripe's back arrow landed on a fresh copy of the console
+         that asked him to sign in all over again. Here Back (and Stripe's own back link, /app/) returns to
+         this console, still signed in, and the guide reopens on this step. */
+      cardBtn.setAttribute("rel", "noopener");
       var later = el("button", BTN_GHOST + ";flex:1 1 150px", "Later"); later.id = "vpFrLater"; later.setAttribute("type", "button");
       choices.appendChild(cardBtn); choices.appendChild(later);
       var cardMsg = msgLine("vpFrCardMsg");

@@ -317,6 +317,11 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('/add-card accepts that link and goes to Stripe', redir && redir.status === 302 && stripeCalls.length === 1, redir);
   check('on STRIPE_PRICE_MONTHLY (the founding $2.50 price), quantity 60, with a trial (the free month starts now)',
     /line_items%5B0%5D%5Bprice%5D=price_F_M/.test(sc) && /line_items%5B0%5D%5Bquantity%5D=60/.test(sc) && /subscription_data%5Btrial_end%5D=\d+/.test(sc) && /client_reference_id=/.test(sc), sc.slice(0, 300));
+  var tEnd = Number((/subscription_data%5Btrial_end%5D=(\d+)/.exec(sc) || [])[1]), nowS = Math.floor(Date.now() / 1000);
+  check('the free month is a whole 30 days: it ends 11:59:59pm Brisbane on the 30th day after today (Stripe says "30 days free", not 29)',
+    tEnd - nowS > 30 * 86400 && tEnd - nowS <= 31 * 86400 && (tEnd + 1 + 10 * 3600) % 86400 === 0, [tEnd, nowS]);
+  check('Stripe\'s back arrow and its Done both return to the signed-in console (/app/), never the homepage or a fresh sign-in',
+    decodeURIComponent((/(?:^|&)cancel_url=([^&]*)/.exec(sc) || [])[1] || '') === 'https://www.venueplay.com.au/app/' && decodeURIComponent((/(?:^|&)success_url=([^&]*)/.exec(sc) || [])[1] || '') === 'https://www.venueplay.com.au/app/?card=added', sc.slice(sc.indexOf('success_url')));
   var clOther = await vpbCardLink(as(VENUEOWNER, { venue_id: v.id }), ENV, J);
   check('another venue\'s owner gets no card link for this venue', clOther.status >= 400 && !(clOther.body && clOther.body.card_url), clOther);
   var clHq = await vpbCardLink(as(ADMIN, { venue_id: v.id }, { 'X-VP-Venue': v.id }), ENV, J);

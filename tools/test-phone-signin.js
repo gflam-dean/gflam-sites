@@ -138,12 +138,24 @@ check('nothing on the screen was ever written as HTML', !anyHtml(A.doc.body));
 
 var B = screen();
 B.$('vpAyName').value = 'Amit'; B.$('vpAyMobile').value = '0400 000 009'; B.$('vpAySend').click(); settle();
-check('a mobile already on another login: says so, with the 07 support line (never a personal mobile), and stays on the form', /already signs in to VenuePlay on another login/.test(B.$('vpAyMsg').textContent) &&
+check('a mobile already on another login: says so kindly, naming this venue, with the 07 support line (never a personal mobile), and stays on the form', /already signs in to another VenuePlay venue\. If it's yours, we can put Caz Reitop's Dirty Secrets on the same sign-in/.test(B.$('vpAyMsg').textContent) &&
   /07 5228 3667/.test(B.$('vpAyMsg').textContent) && shown(B.$('vpAyMobile')) && B.done.length === 0, B.$('vpAyMsg').textContent);
+check('and offers the two ways on: "Use a different mobile" and "Carry on for now"', shown(B.$('vpAyOther')) && shown(B.$('vpAyTakenLater')) && B.$('vpAyOther').textContent === 'Use a different mobile');
+B.$('vpAyOther').click(); settle();
+check('"Use a different mobile" clears the number and the message, ready for another', B.$('vpAyMobile').value === '' && B.$('vpAyMsg').textContent === '' && !shown(B.$('vpAyOther')) && B.done.length === 0);
+var B2 = screen({ shift: shiftA });
+B2.$('vpAyName').value = 'Amit'; B2.$('vpAyMobile').value = '0400 000 009'; B2.$('vpAySend').click(); settle(); B2.$('vpAyTakenLater').click(); settle();
+check('"Carry on for now" lets them in for this sign-in, name saved, nothing put on the login', B2.done.join() === 'later' && B2.fetches.length === 1 && B2.fetches[0].body.name === 'Amit' &&
+  B2.ss.getItem('vpAboutYouLater:u1') === 'shift:1000' && B2.calls.filter(function (c) { return c.fn === 'verifyOtp'; }).length === 0, B2.done);
+/* Every TAB of one sign-in agrees (Dean, 29 Oct 2026: Stripe's back arrow came back to a fresh tab, which asked
+   again, empty). With no storage passed, the screen keeps "carry on" in the browser's localStorage, not the tab's. */
+var W2 = { localStorage: store(), sessionStorage: store() }; (new Function('window', ABOUT))(W2);
+W2.localStorage.setItem('vpAboutYouLater:u1', 'shift:1000');
+check('"carry on" is kept per sign-in in localStorage, so a second tab of the same sign-in is not asked again', W2.VPAboutYou.wants(ctxOf(), undefined, shiftA) === false && W2.VPAboutYou.wants(ctxOf(), undefined, shiftB) === true);
 var C = screen({ shift: shiftA });
 C.$('vpAyName').value = 'Amit Shah'; C.$('vpAyMobile').value = '0452510904'; C.$('vpAySend').click(); settle();
 C.$('vpAyLater').click(); settle();
-check('"Carry on for now": their name is still saved, they are let in, and it holds for this sign-in only (sessionStorage, by shift)', C.fetches.length === 1 && C.fetches[0].body.name === 'Amit Shah' &&
+check('"Carry on for now": their name is still saved, they are let in, and it holds for this sign-in only (by shift)', C.fetches.length === 1 && C.fetches[0].body.name === 'Amit Shah' &&
   C.done.join() === 'later' && C.ss.getItem('vpAboutYouLater:u1') === 'shift:1000' && AY.wants(C.ctx, C.ss, shiftA) === false && AY.wants(C.ctx, C.ss, shiftB) === true &&
   C.calls.filter(function (c) { return c.fn === 'verifyOtp'; }).length === 0, [C.done, C.ss._s]);
 var D = screen();

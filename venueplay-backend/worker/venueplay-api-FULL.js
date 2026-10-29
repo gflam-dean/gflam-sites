@@ -6168,7 +6168,12 @@ async function vpaAddCardRedirect(request, env) {
     const nowTs = Math.floor(Date.now() / 1000);
     // Their free month starts when they add the card, not when HQ built the venue: they have not
     // had the product until now. Stripe rejects a trial_end under ~2 days out.
-    let trialTs = Math.max(nowTs + 30 * 24 * 60 * 60, nowTs + 3 * 24 * 60 * 60);
+    /* A WHOLE 30 DAYS, TO THE END OF THE 30TH DAY IN BRISBANE (Dean, 29 Oct 2026). Exactly now + 30 days was
+       shown by Stripe Checkout as "29 days free" seconds later, beside an app that says the first month is free.
+       Ending at 11:59:59pm Brisbane on the 30th day after today reads "30 days free" and is the same end of
+       day the prospect free month (migration 127) uses. */
+    const bneToday = Math.floor((nowTs + 10 * 3600) / 86400) * 86400 - 10 * 3600;   // 00:00 today, Brisbane
+    let trialTs = Math.max(bneToday + 31 * 24 * 60 * 60 - 1, nowTs + 3 * 24 * 60 * 60);
     /* A prospect's free month started at their first sign-in (migration 127): a card added on day 10 is first
        charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. */
     if (prow && prow.paused_at) trialTs = 0;
@@ -6196,8 +6201,11 @@ async function vpaAddCardRedirect(request, env) {
     form.set('metadata[venue_count]', '1');
     form.set('metadata[hq_onboarded]', '1');
     if (trialTs) form.set('metadata[trial_end]', String(trialTs));
-    form.set('success_url', site + '/?vp=success&session_id={CHECKOUT_SESSION_ID}');
-    form.set('cancel_url', site + '/app');
+    /* BACK TO THE CONSOLE, SIGNED IN (Dean, 29 Oct 2026). Their card link is opened from the signed-in app, so
+       Stripe's back arrow (cancel) and Done (success) both return to /app/, where the sign-in is still held
+       (Supabase keeps it in the browser's local storage). success_url used to be the public homepage. */
+    form.set('success_url', site + '/app/?card=added');
+    form.set('cancel_url', site + '/app/');
 
     const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',

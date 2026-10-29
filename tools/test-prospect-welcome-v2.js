@@ -47,6 +47,7 @@ var USER, AUTH_CALLS, CALLS, OPENED, CLIP, TIMERS, STORE;
 function page(phone) {
   USER = { id: 'u1', email: 'cazreitop@gmail.com', phone: phone || '' }; AUTH_CALLS = []; CALLS = []; OPENED = []; CLIP = []; TIMERS = [];
   var body = new El('body'), wrap = new El('div'); wrap.className = 'wrap'; body.appendChild(wrap);
+  var hdr = new El('header'); hdr.className = 'header'; body.insertBefore ? body.insertBefore(hdr, wrap) : body.appendChild(hdr);   // the console's sticky header (Help, Setup guide, Account, Sign out)
   var document = { body: body, createElement: function (t) { return new El(t); },
     getElementById: function (id) { return walk(body, function (e) { return e.id === id; }); },
     querySelector: function (sel) { var c = sel.replace(/^\./, ''); return walk(body, function (e) { return (' ' + e.className + ' ').indexOf(' ' + c + ' ') >= 0; }); },
@@ -175,7 +176,7 @@ var __rnd = 11;
   check('step 5 asks the billing Worker for THIS venue\'s card link', T(P, 'vpFrTitle') === "Add your card when you're ready" && cl && cl.body.venue_id === 'V1', cl);
   /* Phase 2 (Dean, 29 Oct 2026; migration 127): the free month started at their first sign-in, and ends on a day the Worker gives. */
   check('the price line: $2.50 a player a month on the usual crowd, 60 is $150.00, the free month runs until its day and the card is not charged before then, no lock-in', T(P, 'vpFrPrice') === "It's $2.50 a player a month on your usual crowd: 60 players is $150.00 a month. Your free month runs until Thu 26 Nov, and your card won't be charged before then. No lock-in.", T(P, 'vpFrPrice'));
-  check('two equal choices side by side: "Add your card now" (the card link, a new tab) and "Later"', $(P, 'vpFrCard').getAttribute('href') === 'https://www.venueplay.com.au/add-card?f=F1&t=abc' && $(P, 'vpFrCard').getAttribute('target') === '_blank' &&
+  check('two equal choices side by side: "Add your card now" (the card link, in the SAME tab, so Stripe\'s back arrow returns to this signed-in console) and "Later"', $(P, 'vpFrCard').getAttribute('href') === 'https://www.venueplay.com.au/add-card?f=F1&t=abc' && $(P, 'vpFrCard').getAttribute('target') === null &&
     $(P, 'vpFrChoices').style.display === 'flex' && T(P, 'vpFrCard') === 'Add your card now' && T(P, 'vpFrLater') === 'Later' && /flex:1 1 150px/.test($(P, 'vpFrCard').style.cssText) && /flex:1 1 150px/.test($(P, 'vpFrLater').style.cssText));
   check('the guide started their free month when it opened (/account/prospect-start, this venue)', CALLS.some(function (c) { return /\/account\/prospect-start$/.test(c.url) && c.body.venue_id === 'V1'; }));
   $(P, 'vpFrLater').click(); for (var fl = 0; fl < 6; fl++) await Promise.resolve();
@@ -196,11 +197,15 @@ var __rnd = 11;
   section('1f. Progress per venue, Close, and reopen');
   var P2 = page('61452510904'); var c2 = ctxFor('manager', pv({ compliance_accepted_at: '2026-10-28T02:00:00Z', compliance_accepted_by: 'Amit' }));
   var R2 = P2.FR.open(c2, P2.deps); await R2.ready;
+  var HDR = walk(P2.body, function (e) { return e.tagName === 'HEADER'; });
+  check('open, it covers the page completely: an opaque backdrop, and the page\'s sticky header (Help / Setup guide / Account / Sign out) stood down', HDR && HDR.style.visibility === 'hidden' &&
+    /background:#0A0A0B/.test($(P2, 'vpFirstRun').getAttribute('style')), [HDR && HDR.style.visibility, $(P2, 'vpFirstRun').getAttribute('style')]);
   check('a login that already has its mobile: step 1 says so, Next reads Next', /Done\. 0452 510 904 is on your login/.test(T(P2, 'vpFrBody')) && $(P2, 'vpFrNext').textContent === 'Next' && !$(P2, 'vpFrMobile'), T(P2, 'vpFrBody'));
   await R2.next();
   check('a venue that has already ticked: step 2 says so and Next is open, no card shown again', /Done\. Section 6 of the Terms is accepted for Caz Reitop's Dirty Secrets by Amit\./.test(T(P2, 'vpFrBody')) && !$(P2, 'vpTermsCard') && $(P2, 'vpFrNext').disabled === false, T(P2, 'vpFrBody'));
   await R2.next();
   $(P2, 'vpFrClose').click();
+  check('closed, the header is back exactly as it was', HDR.style.visibility === '' && HDR.getAttribute('data-vpfr') === null, HDR.style.visibility);
   check('Close takes it away, keeps the step, and does not open it again on its own', !$(P2, 'vpFirstRun') && JSON.parse(STORE['vpFirstRun:V1']).step === 'tv' && JSON.parse(STORE['vpFirstRun:V1']).dismissed === true && P2.FR.wants(c2, P2.deps.storage) === false, STORE['vpFirstRun:V1']);
   var R3 = P2.FR.open(c2, P2.deps); await R3.ready;
   check('reopened (Setup guide), it resumes on that step', R3.step() === 'tv' && T(P2, 'vpFrCount') === 'Step 3 of 5');
