@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 07:49 · 51598304';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 08:30 · 0f4e3412';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
