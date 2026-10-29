@@ -384,8 +384,8 @@ def js_prose(path):
 
 def offer_table_source():
     """The monthly offer rows and WRITTEN_FOR. They lived inside venueplay/nsw.html until 29 Oct 2026,
-    when they moved to venueplay/app/vp-offer.js so the homepage could read the same answer (Dean's
-    phone test: the offer page said $2.50, the homepage card said $3 and "it never changes")."""
+    when they moved to venueplay/app/vp-offer.js, which the offer page loads (the homepage never shows
+    an offer: Dean, 29 Oct 2026)."""
     p = os.path.join(ROOT, 'venueplay', 'app', 'vp-offer.js')
     return io.open(p, encoding='utf-8').read() if os.path.isfile(p) else ''
 
@@ -1879,8 +1879,8 @@ def local_checks(which):
         # 20 Oct 2026: the words typed into the file are written for the row WRITTEN_FOR names
         # (the campaign being sent now), not always October. /offer-nov served "31 October" to
         # anything that read the HTML without running the script.
-        # 29 Oct 2026: the rows and WRITTEN_FOR moved to /app/vp-offer.js, which the homepage
-        # reads too. The typed dates are still this file's.
+        # 29 Oct 2026: the rows and WRITTEN_FOR moved to /app/vp-offer.js. The typed dates are
+        # still this file's.
         tsrc = offer_table_source()
         wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", tsrc)
         key = wf.group(1) if wf else 'oct'
@@ -2488,7 +2488,7 @@ def local_checks(which):
     today = _dt.date.today()
     gone, soon = [], []
     for f in files:
-        # The offer rows themselves live in /app/vp-offer.js since 29 Oct 2026 (the homepage reads them too).
+        # The offer rows themselves live in /app/vp-offer.js since 29 Oct 2026.
         if not (f.endswith('.html') or f.endswith(os.path.join('app', 'vp-offer.js'))):
             continue
         for code in sorted(set(re.findall(r'\b(OFFER|[A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):

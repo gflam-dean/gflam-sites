@@ -3,16 +3,14 @@
 
 Two things Dean found on his phone, both of which only a browser laying the page out can see:
 
-  1. THE PRICE. The offer page said "$2.50 a player, if you lock it in by 30 November"; the homepage
-     card said Monthly $3.00 and "Your rate is $3 per player, per month, and it never changes." Both
-     pages now read the month's offer from ONE file, venueplay/app/vp-offer.js. This opens the REAL
-     homepage with the REAL billing Worker behind it (tools/browser-rig/admin_site.py, jsc) and checks
-     that, inside the offer's month with its code live, every price on the page is the offer's, the
-     $3 standard rate is named as the price after the closing day, and a signup sends the code so the
-     Worker charges the offer price (the Stripe price it asks for). Then with the code shut in the
-     Worker (the page goes back to $3 and sends no code), and after the month has ended (the page
-     never offers it). The clock is pinned inside and after the month the FILE names, never read
-     from the machine's own date.
+  1. NO OFFER ON THE HOMEPAGE. Dean, 29 Oct 2026: "Never put offers on the home page unless I say so."
+     The offer page (/nsw, /offer-<mon>) reads its rows from venueplay/app/vp-offer.js; the homepage
+     sells the standard rate. With the month's code LIVE in the REAL billing Worker
+     (tools/browser-rig/admin_site.py, jsc) and the clock pinned inside that month (read from the
+     file, never the machine's date), this opens the homepage and checks it shows no offer price, no
+     closing day and no struck-out price, does not load vp-offer.js or ask the Worker about a code,
+     and that a signup sends no offer code, so the Worker asks Stripe for the STANDARD price. And
+     that the offer page still picks its row from the shared file.
 
   2. THE FOOTER. At 390 px the logo, "Powered by Gflam Touring", the Facebook and Instagram icons and
      the link row did not line up, the links wrapped leaving a dot at the end of a line, and the pink
@@ -51,8 +49,6 @@ OFFER_JS = open(os.path.join(A.root, 'venueplay', 'app', 'vp-offer.js'), encodin
 WF = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", OFFER_JS).group(1)
 ROW = re.search(WF + r":\s*\{\s*code:\s*'(OFFER-([A-Z]{3})-(20\d\d))',\s*date:\s*'([^']+)',\s*day:\s*'([^']+)'", OFFER_JS)
 CODE, MON3, YEAR, DATE, DAY = ROW.group(1), ROW.group(2), int(ROW.group(3)), ROW.group(4), ROW.group(5)
-RATE = lambda kind, plan: float(re.search(kind + r":\s*\{\s*monthly:\s*([\d.]+),\s*annual:\s*([\d.]+)", OFFER_JS).group(1 if plan == 'monthly' else 2))
-OM, OA, SM, SA = RATE('offer', 'monthly'), RATE('offer', 'annual'), RATE('standard', 'monthly'), RATE('standard', 'annual')
 MI = [m.upper()[:3] for m in calendar.month_name].index(MON3)
 END_UTC = datetime.datetime(YEAR + (MI == 12), MI % 12 + 1, 1, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10)
 INSIDE_MS = int((END_UTC - datetime.timedelta(days=5)).timestamp() * 1000)
@@ -131,74 +127,41 @@ def card(S, sid):
 
 S = admin_site.Site(root=A.root, fonts=bool(A.shots))
 try:
-    print('THE HOMEPAGE, INSIDE THE %s OFFER, ITS CODE LIVE IN THE WORKER' % MON3)
+    print('THE HOMEPAGE NEVER SHOWS AN OFFER, EVEN INSIDE THE %s OFFER WITH ITS CODE LIVE' % MON3)
     S.W.env(FOUNDING_CODES=CODE)
     tid, sid = S.open('/index.html', 390, 844, mobile=True, pre=pre(INSIDE_MS))
-    S.until(sid, 'document.documentElement.getAttribute("data-offer")===%s && window.__asked.some(function(u){return /\\/founding\\?code=/.test(u);})' % json.dumps(CODE), 20)
-    time.sleep(1.2)       # the Worker's answer has come back and been acted on
-    c = card(S, sid)
-    ok('the page shows the month\'s offer, and asked the Worker whether %s is open' % CODE,
-       c.get('offer') == CODE and any(('/founding?code=' + CODE) in u for u in (S.js(sid, 'window.__asked') or [])), c.get('offer'))
-    ok('the card: Monthly %s struck to %s, Annual %s struck to %s, and the standard %s named as the price after %s'
-       % (m2(SM), m2(OM), m2(SA), m2(OA), m2(SM), DAY),
-       c.get('rows') == ['Monthly=%s %s' % (m2(SM), m2(OM)), 'Annual=%s %s' % (m2(SA), m2(OA)), 'After %s=%s' % (DAY, m2(SM))], c.get('rows'))
-    ok('the heading and the words beside the card say the offer and its closing day, and $3 as the standard rate',
-       money(OM) in c.get('title', '') and DAY in c.get('title', '') and DATE in c.get('sub', '') and ('standard rate is ' + money(SM)) in c.get('sub', ''), [c.get('title'), c.get('sub')])
-    ok('"it never changes" is gone; the small print says the offer rate is kept while the subscription stays active',
-       'never changes' not in c.get('all', '') and DAY in c.get('foot', '') and 'for as long as your subscription stays active' in c.get('foot', ''), c.get('foot'))
-    ok('the hero, "what you get", both FAQ answers and the plan buttons all say the offer price',
-       money(30 * OM) in c.get('hero', '') and money(OM) in c.get('incl', '') and money(OM) in c.get('faq', '') and m2(OA) in c.get('faq', '')
-       and money(OM) in c.get('bill', '') and c.get('plans') == ['%s / player' % m2(OM), '%s / player' % m2(OA)],
-       [c.get('hero'), c.get('incl'), c.get('faq'), c.get('bill'), c.get('plans')])
-    ok('no price anywhere on the page still says the standard rate is what they will pay',
-       ('pays %s a month' % money(30 * SM)) not in c.get('all', '') and ('%s / player' % m2(SM)) not in c.get('all', ''), '')
+    S.until(sid, '!!document.getElementById("vp-submit") && !!document.querySelector("#offer .price-card")', 20)
+    time.sleep(1.5)
+    h = S.js(sid, ('JSON.stringify({all:document.body.innerText, s:document.querySelectorAll("#offer s, #offer .price-row.list").length,'
+                   'rows:Array.prototype.map.call(document.querySelectorAll("#offer .price-row"),function(r){return r.querySelector("b").textContent+"="+r.querySelector(".pv").textContent.trim();}),'
+                   'scripts:Array.prototype.map.call(document.scripts,function(x){return x.src||"";}).filter(function(x){return /vp-offer/.test(x);}).length,'
+                   'asked:window.__asked.filter(function(u){return /\\/founding/.test(u);}).length, offer:!!window.VPOffer})'))
+    h = json.loads(h) if isinstance(h, str) else {}
+    allt = h.get('all', '')
+    ok('the pricing card is the standard rate: Monthly $3.00, Annual $2.85, nothing struck out',
+       h.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and h.get('s') == 0, h.get('rows'))
+    ok('no offer price and no closing day anywhere on the homepage ($2.50, $2.30, "%s", "%s")' % (DAY, CODE),
+       not re.search(r'\$2\.(50|30)\b', allt) and DAY not in allt and DATE not in allt and CODE not in allt,
+       re.findall(r'.{30}(?:\$2\.50|\$2\.30|%s).{30}' % re.escape(DAY), allt)[:3])
+    ok('the homepage does not load the offer file or ask the Worker about a code',
+       h.get('scripts') == 0 and h.get('asked') == 0 and h.get('offer') is False, h)
     S.js(sid, 'document.getElementById("offer").scrollIntoView({block:"start",behavior:"instant"}); window.scrollBy(0,-60); true')
     time.sleep(0.4)
-    shot(S, sid, 'home-pricing-offer-390')
+    shot(S, sid, 'home-pricing-standard-390')
     S.js(sid, KEEP)
     S.js(sid, FILL)
     time.sleep(0.4)
     est = S.js(sid, 'document.getElementById("vp-estimate").textContent') or ''
-    ok('the estimate prices 80 players at the offer rate', ('80 players × %s' % m2(OM)) in est, est)
+    ok('the estimate prices 80 players at the standard $3.00', '80 players \u00d7 $3.00' in est, est)
     S.js(sid, 'document.getElementById("vp-submit").click(); true')
     S.until(sid, 'window.__checkout.length===1', 15)
     got = S.js(sid, 'JSON.stringify(window.__checkout[0]||null)')
     ck = json.loads(got) if isinstance(got, str) else None
     stripe = [x for x in S.W.stripe() if '/checkout/sessions' in x.get('url', '')]
-    ok('a signup sends the code, and the real Worker asks Stripe for the OFFER price, not the standard one',
-       bool(ck) and ck['sent'].get('founding_code') == CODE and ck['status'] == 200 and bool(stripe)
-       and 'price_F_M' in stripe[-1]['body'] and 'price_S_M' not in stripe[-1]['body'], (ck and ck['sent'].get('founding_code'), stripe[-1:] and stripe[-1]['body'][:300]))
+    ok('a homepage signup sends no offer code, and the real Worker asks Stripe for the STANDARD price',
+       bool(ck) and not ck['sent'].get('founding_code') and ck['status'] == 200 and bool(stripe)
+       and 'price_S_M' in stripe[-1]['body'] and 'price_F_M' not in stripe[-1]['body'], (ck and ck['sent'].get('founding_code'), stripe[-1:] and stripe[-1]['body'][:300]))
     ok('no script error on the homepage', S.js(sid, 'JSON.stringify(window.__errs||[])') == '[]', S.js(sid, 'JSON.stringify(window.__errs||[])'))
-    S.close_tab(tid)
-
-    print('\nTHE SAME MONTH, BUT THE WORKER SAYS THE CODE IS SHUT')
-    S.W.env(FOUNDING_CODES='')
-    tid, sid = S.open('/index.html', 390, 844, mobile=True, pre=pre(INSIDE_MS))
-    S.until(sid, 'window.__asked.some(function(u){return /\\/founding\\?code=/.test(u);})', 20)
-    S.until(sid, '!document.documentElement.getAttribute("data-offer")', 10)
-    time.sleep(0.6)
-    c = card(S, sid)
-    ok('the page goes back to the standard rate, exactly as typed in the file',
-       c.get('offer') is None and c.get('rows') == ['Monthly=%s' % m2(SM), 'Annual=%s' % m2(SA)] and 'never changes' in c.get('foot', '')
-       and c.get('plans') == ['%s / player' % m2(SM), '%s / player' % m2(SA)], [c.get('offer'), c.get('rows'), c.get('foot')])
-    S.js(sid, KEEP)
-    S.js(sid, FILL)
-    S.js(sid, 'document.getElementById("vp-submit").click(); true')
-    S.until(sid, 'window.__checkout.length===1', 15)
-    got = S.js(sid, 'JSON.stringify(window.__checkout[0]||null)')
-    ck = json.loads(got) if isinstance(got, str) else None
-    ok('and a signup sends no code: the venue is told $3 and charged $3', bool(ck) and ck['sent'].get('founding_code') == '', ck and ck['sent'])
-    S.close_tab(tid)
-
-    print('\nAFTER THE MONTH HAS ENDED')
-    S.W.env(FOUNDING_CODES=CODE)
-    tid, sid = S.open('/index.html', 390, 844, mobile=True, pre=pre(AFTER_MS))
-    S.until(sid, '!!document.getElementById("priceRows")', 20)
-    time.sleep(1.5)
-    c = card(S, sid)
-    asked = S.js(sid, 'window.__asked') or []
-    ok('the page never offers an ended month, and does not even ask the Worker about it',
-       c.get('offer') is None and c.get('rows') == ['Monthly=%s' % m2(SM), 'Annual=%s' % m2(SA)] and not any('/founding' in u for u in asked), [c.get('rows'), [u for u in asked if 'founding' in u]])
     S.close_tab(tid)
 
     print('\nTHE OFFER PAGE READS THE SAME FILE')
@@ -243,7 +206,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 29
+EXPECTED = 23
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

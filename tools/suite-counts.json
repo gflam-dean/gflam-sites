@@ -252,7 +252,7 @@
   "counted_by": "lines"
  },
  "tools/site-offer-footer-in-chrome.test.py": {
-  "checks": 29,
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {

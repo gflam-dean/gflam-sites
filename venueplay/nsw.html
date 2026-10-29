@@ -1744,9 +1744,9 @@
 <script src="/app/vp-offer.js"></script>
 <script>
 (function () {
-  /* The rows, WRITTEN_FOR and the prices now live in /app/vp-offer.js, which the homepage reads
-     too (29 Oct 2026: the two pages quoted different prices). This page picks the row its
-     address names, exactly as it did when the table was written out here. */
+  /* The rows and WRITTEN_FOR live in /app/vp-offer.js (29 Oct 2026). This page picks the row its
+     address names, exactly as it did when the table was written out here. The homepage never
+     shows an offer (Dean, 29 Oct 2026). */
   var picked = VPOffer.forPath(location.pathname);
   var o = picked.row;
   window.VP_OFFER = o;
