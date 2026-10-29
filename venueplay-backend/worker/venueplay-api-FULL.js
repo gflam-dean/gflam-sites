@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Oct 2026, 22:29 · f95abac0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Oct 2026, 22:32 · 7b4bbd7f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2575,12 +2575,29 @@ async function vpaProspectsList(request, env, json) {
     (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
       ')&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
   }
-  const out = [];
+  const out = [], cardAdded = [];
   let signedUp = 0;
+  const freeMonthReady = rows.length === 0 || rows.some((r) => 'first_signin_at' in r);
   for (const r of rows) {
     const v = venues[r.venue_id];
     if (vpaProspectGone(v)) continue;
-    if (vpaProspectSignedUp(v, accounts[v.founding_id || r.founding_id])) { signedUp++; continue; }
+    const acct = accounts[v.founding_id || r.founding_id];
+    if (vpaProspectSignedUp(v, acct)) {
+      signedUp++;
+      /* A card came in: off the prospects list (hq.html shows them with Venues) but HQ still sees them
+         here as Card added, so the free month can be followed through. Comp, invoice and grouped are
+         not a card and are only counted. No Auth reads for these: the row has what HQ shows. */
+      if (vpaProspectCardOn(acct)) {
+        const st = vpaProspectStatus(r, true, null, now);
+        cardAdded.push(Object.assign({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
+          source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
+          phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+          website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
+          created_at: r.created_at, days_since_setup: Math.floor((now - Date.parse(r.created_at)) / DAY) || 0,
+          flag: null, called: null }, st));
+      }
+      continue;
+    }
     const users = (staff[r.venue_id] || []).slice();
     if (r.auth_user_id && users.indexOf(r.auth_user_id) === -1) users.push(r.auth_user_id);
     const seen = await vpaProspectLastSignIn(env, users);
@@ -2603,11 +2620,43 @@ async function vpaProspectsList(request, env, json) {
        somebody marks it Called. Otherwise the 3-day no-sign-in flag. */
     const last = out[out.length - 1];
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
+    Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
   }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
+  cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
   return json({ ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
-    follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp });
+    follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp,
+    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS });
+}
+/* A card on file, as opposed to comp, invoice or a group: those are signed up but are not "Card added". */
+function vpaProspectCardOn(founding) {
+  return !!(founding && (founding.stripe_subscription_id || founding.status === 'card_on_file'));
+}
+/* WHERE A PROSPECT IS (Dean, 29 Oct 2026, HQ > Prospects), one answer for the list, worked out on every read:
+     card_added     a card is on file (wins over everything: a paused venue that adds one comes back on)
+     cancelled      they pressed "Cancel, it's not for us" (migration 127 cancelled_at)
+     paused         the free month ran out with no card (paused_at)
+     free_month     somebody has signed in; days_left counts Brisbane days the way the reminder email does
+                    (the last day is 1, so the last three days are 3, 2, 1) and last_days is true on them
+     not_signed_in  nobody at the venue has signed in yet
+   Before migration 127 there is no first_signin_at: a prospect who has signed in is still free_month, with
+   no end date, and the list says the free month is not recorded yet. */
+const VPA_PROSPECT_LAST_DAYS = 3;
+function vpaProspectStatus(r, cardOn, lastSignInMs, nowMs) {
+  const base = { first_signin_at: r.first_signin_at || null, free_month_ends_at: r.free_month_ends_at || null,
+    paused_at: r.paused_at || null, cancelled_at: r.cancelled_at || null, card_choice: r.card_choice || null,
+    offer_rate: Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,
+    reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false };
+  if (cardOn) return Object.assign(base, { status: 'card_added' });
+  if (r.cancelled_at) return Object.assign(base, { status: 'cancelled' });
+  if (r.paused_at) return Object.assign(base, { status: 'paused' });
+  if (!r.first_signin_at && lastSignInMs == null) return Object.assign(base, { status: 'not_signed_in' });
+  const endMs = Date.parse(r.free_month_ends_at || '') || (r.first_signin_at ? vpaFreeMonthEnd(Date.parse(r.first_signin_at)) : NaN);
+  if (!isFinite(endMs)) return Object.assign(base, { status: 'free_month' });
+  if (!base.free_month_ends_at) base.free_month_ends_at = new Date(endMs).toISOString();
+  const left = nowMs > endMs ? 0 : Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(vpaBneDay(nowMs))) / 86400000) + 1;
+  return Object.assign(base, { status: 'free_month', days_left: left, last_days: left <= VPA_PROSPECT_LAST_DAYS });
 }
 async function vpaProspectCalled(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
@@ -2836,7 +2885,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
-    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(''));   // from hello@, signed by the team (Dean, 29 Oct 2026)
+    .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
   const subject = o.kind === 'final' ? 'Last day of your free month at ' + (o.venueName || 'your venue')
     : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + o.endsWords
     : 'How is VenuePlay going at ' + (o.venueName || 'your venue') + '?';

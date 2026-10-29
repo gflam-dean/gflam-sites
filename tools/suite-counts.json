@@ -207,6 +207,10 @@
   "checks": 38,
   "counted_by": "lines"
  },
+ "tools/prospects-status-in-chrome.test.py": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/purchase-raffle-in-chrome.test.py": {
   "checks": 38,
   "counted_by": "lines"

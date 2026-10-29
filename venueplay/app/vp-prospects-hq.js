@@ -20,13 +20,19 @@
 
    It owns its pane (#paneProspects) and its tab's count; hq.html's own pane switcher shows and hides
    the pane like any other ("prospects" is in its PANES). Kept apart from the help desk on purpose.
+   WHERE EACH ONE IS (29 Oct 2026, migration 127): a status chip on every card, from the Worker's own
+   answer (vpaProspectStatus), never worked out here: Not signed in yet / Free month (X days left) /
+   Card added / Paused / Cancelled, with the first sign-in and the free month's end. The last three days
+   of a free month are highlighted. Card added venues come back in their own list (card_added): they are
+   customers now, so isProspect() never names them and hq.html keeps them in Venues. Filter and sort by
+   status here; the default order is the Worker's (who to ring first).
    House rules: no em dashes; a venue never sees this (HQ only, and the Worker answers HQ admins only).
    ========================================================================== */
 (function (root) {
   "use strict";
   var doc = root.document;
   var API = root.VP_PROSPECTS_API || "https://venueplay-api.dean-tindale.workers.dev";
-  var S = { data: null, ids: {}, open: null, loading: false };
+  var S = { data: null, ids: {}, open: null, loading: false, filter: "all", sort: "call" };
 
   function prEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -46,6 +52,48 @@
     if (p.flag === "no_sign_in") return '<span class="badge roll prflag">Call them</span>';
     return "";
   }
+  /* ---- where the prospect is: the Worker says which (p.status), this only words it ---- */
+  var STATUS = {
+    not_signed_in: { label: "Not signed in yet", cls: "prst-none", rank: 0 },
+    free_month: { label: "Free month", cls: "prst-free", rank: 1 },
+    paused: { label: "Paused", cls: "prst-paused", rank: 2 },
+    card_added: { label: "Card added", cls: "prst-card", rank: 3 },
+    cancelled: { label: "Cancelled", cls: "prst-cancel", rank: 4 }
+  };
+  var FILTERS = ["all", "not_signed_in", "free_month", "last_days", "card_added", "paused", "cancelled"];
+  function statusOf(p) { return STATUS[p && p.status] ? p.status : "not_signed_in"; }
+  function daysLeftText(n) {
+    if (n == null) return "";
+    if (n <= 0) return "ended";
+    return n === 1 ? "last day" : n + " days left";
+  }
+  function statusLabel(p) {
+    var st = statusOf(p), t = STATUS[st].label;
+    if (st === "free_month" && p.days_left != null) t += " (" + daysLeftText(p.days_left) + ")";
+    return t;
+  }
+  function statusHtml(p) {
+    var st = statusOf(p);
+    return '<span class="badge prst ' + STATUS[st].cls + (p.last_days && st === "free_month" ? " prst-last" : "") +
+      '" data-pr-status="' + prEsc(st) + '">' + prEsc(statusLabel(p)) + "</span>";
+  }
+  function firstSignInText(p) {
+    if (p.first_signin_at) return when(p.first_signin_at, true);
+    if (statusOf(p) === "not_signed_in") return "Not yet";
+    return p.last_sign_in_at ? "Not recorded (last " + when(p.last_sign_in_at) + ")" : "Not recorded";
+  }
+  function freeMonthText(p) {
+    var st = statusOf(p);
+    if (p.free_month_ends_at) {
+      var d = when(p.free_month_ends_at);
+      if (st === "paused") return "Ended " + d + ", paused " + when(p.paused_at);
+      if (st === "free_month" && p.days_left != null && p.days_left > 0) return d + " (" + daysLeftText(p.days_left) + ")";
+      return (Date.parse(p.free_month_ends_at) < Date.now() ? "Ended " : "") + d;
+    }
+    if (st === "not_signed_in") return "Starts at their first sign-in";
+    if (st === "cancelled") return "Cancelled " + when(p.cancelled_at);
+    return "Not recorded yet";
+  }
   function phoneHtml(p) {
     if (p.phone && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.phone) + "</a>";
     return '<span class="prnophone">No phone, email them</span>';
@@ -64,6 +112,8 @@
   function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : "HQ"; }
   function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/.*$/, ""); }
   function cardHtml(p) {
+    /* Card added is a customer, and Cancelled said no: neither gets a Called button unless they asked for a call. */
+    var st = statusOf(p), done = st === "card_added" || (st === "cancelled" && p.flag !== "call_requested");
     var why = p.flag === "call_requested" ? "They asked us to call them." + (p.phone ? "" : " No number on file: reply to their email for one.")
       : p.flag === "no_sign_in" ? "Nobody has signed in since they were set up " + ago(p.days_since_setup) + "." : "";
     var called = p.called
@@ -76,11 +126,19 @@
         '<textarea id="prNote" maxlength="500" rows="2" placeholder="e.g. Spoke to Sam, trying it Friday"></textarea>' +
         '<div class="practs"><button type="button" class="btn pink sp" data-pr-save="' + prEsc(p.venue_id) + '">Save as called</button>' +
         '<button type="button" class="mini" data-pr-close="1">Cancel</button></div></div>'
-      : '<div class="practs">' + (!p.called ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
-        '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button></div>';
-    return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + '" data-pr-id="' + prEsc(p.venue_id) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + flagHtml(p) + "</div>" +
+      : (function () {
+          // Called while not yet called (and not done); Resend sign-in link (phone sign-in, main) for anyone not cancelled.
+          var acts = (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
+            (st !== "cancelled" ? '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button>' : "");
+          return acts ? '<div class="practs">' + acts + "</div>" : "";
+        })();
+    var last = st === "free_month" && p.last_days;
+    return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") +
+      '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
+      (last ? '<div class="prlast" data-pr-last="1">' + prEsc(p.days_left === 1 ? "Last day of their free month, and no card yet." :
+        p.days_left + " days left in their free month, and no card yet.") + "</div>" : "") +
       '<div class="prgrid">' +
         '<div><span class="k">Contact</span>' + prEsc(p.contact_name || "No name given") + "</div>" +
         '<div><span class="k">Phone</span>' + phoneHtml(p) + "</div>" +
@@ -88,7 +146,9 @@
         '<div><span class="k">Website</span>' + (/^https?:\/\//i.test(String(p.website || "")) ? '<a href="' + prEsc(p.website) + '" target="_blank" rel="noopener">' + prEsc(siteHost(p.website)) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Set up</span>' + prEsc(when(p.created_at)) + " (" + prEsc(ago(p.days_since_setup)) + "), by " + prEsc(sourceText(p)) + "</div>" +
         '<div><span class="k">Welcome email</span>' + prEsc(welcomeText(p.welcome)) + "</div>" +
-        '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>" +
+        (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
+        '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
+        '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
         '<div><span class="k">Where</span>' + prEsc([p.postcode, p.state].filter(Boolean).join(" ") || "Not known") + "</div>" +
       "</div>" + called + form + "</div>";
   }
@@ -99,14 +159,52 @@
       '<button class="btn ghost sp" type="button" id="prRefresh">Refresh</button></div>' +
       '<div class="note" style="margin:0 0 14px">Venues we set up that have not signed up yet. When one adds their card it moves to Venues by itself. ' +
       "Anyone who asked for a call is flagged Call requested, and anyone who has not signed in " + prEsc(d.follow_up_days) +
-      " days after setup is flagged Call them. Mark Called once you have rung them." +
+      " days after setup is flagged Call them. Mark Called once you have rung them. The free month starts at their first sign-in;" +
+      " its last " + prEsc(d.last_days || 3) + " days are highlighted." +
+      (d.free_month_ready === false ? " Free months are not recorded until migration 127 is run." : "") +
       (d.signed_up ? " " + prEsc(d.signed_up) + " earlier prospect" + (d.signed_up === 1 ? " has" : "s have") + " signed up." : "") + "</div>";
+  }
+  /* Everyone the tab can show: the prospects (the Worker's order, who to ring first), then Card added. */
+  function allOf(d) { return (d.prospects || []).concat(d.card_added || []); }
+  function matches(p, f) {
+    if (f === "all") return true;
+    if (f === "last_days") return statusOf(p) === "free_month" && !!p.last_days;
+    return statusOf(p) === f;
+  }
+  function filterLabel(f) { return f === "all" ? "All statuses" : f === "last_days" ? "Last " + ((S.data && S.data.last_days) || 3) + " days of free month" : STATUS[f].label; }
+  function sorted(list, how) {
+    var out = list.map(function (p, i) { return { p: p, i: i }; });
+    var setup = function (x) { return Date.parse(x.p.created_at) || 0; };
+    var cmp = {
+      call: function (a, b) { return a.i - b.i; },
+      status: function (a, b) { return (STATUS[statusOf(a.p)].rank - STATUS[statusOf(b.p)].rank) || (dl(a.p) - dl(b.p)) || a.i - b.i; },
+      days_left: function (a, b) { return (dl(a.p) - dl(b.p)) || (STATUS[statusOf(a.p)].rank - STATUS[statusOf(b.p)].rank) || a.i - b.i; },
+      newest: function (a, b) { return (setup(b) - setup(a)) || a.i - b.i; }
+    }[how] || function (a, b) { return a.i - b.i; };
+    return out.sort(cmp).map(function (x) { return x.p; });
+  }
+  /* Fewest days left first; a prospect with no free month running sorts after every one that has. */
+  function dl(p) { return statusOf(p) === "free_month" && p.days_left != null ? p.days_left : 9999; }
+  function barHtml(all) {
+    var opts = FILTERS.map(function (f) {
+      var n = all.filter(function (p) { return matches(p, f); }).length;
+      return '<option value="' + f + '"' + (S.filter === f ? " selected" : "") + ">" + prEsc(filterLabel(f)) + " (" + n + ")</option>";
+    }).join("");
+    var sorts = [["call", "Who to call first"], ["status", "Status"], ["days_left", "Fewest days left"], ["newest", "Newest set up"]].map(function (o) {
+      return '<option value="' + o[0] + '"' + (S.sort === o[0] ? " selected" : "") + ">" + o[1] + "</option>";
+    }).join("");
+    return '<div class="filterbar prbar"><label class="prlbl" for="prFilter">Show</label><select id="prFilter">' + opts + "</select>" +
+      '<label class="prlbl" for="prSort">Sort by</label><select id="prSort">' + sorts + "</select></div>";
   }
   function listHtml(d) {
     if (d.error) return '<div class="panel pad"><div class="empty" style="border:none;background:none">' + prEsc(d.error) + "</div></div>";
-    var list = d.prospects || [];
-    if (!list.length) return headHtml(d) + '<div class="panel pad"><div class="empty" style="border:none;background:none">No prospects waiting. Set one up from Venues.</div></div>';
-    return headHtml(d) + '<div class="prlist">' + list.map(cardHtml).join("") + "</div>";
+    var all = allOf(d);
+    if (!all.length) return headHtml(d) + '<div class="panel pad"><div class="empty" style="border:none;background:none">No prospects waiting. Set one up from Venues.</div></div>';
+    if (FILTERS.indexOf(S.filter) === -1) S.filter = "all";
+    var list = sorted(all.filter(function (p) { return matches(p, S.filter); }), S.sort);
+    return headHtml(d) + barHtml(all) + (list.length
+      ? '<div class="prlist">' + list.map(cardHtml).join("") + "</div>"
+      : '<div class="panel pad"><div class="empty" style="border:none;background:none">No prospects are ' + prEsc(filterLabel(S.filter)) + ' right now.</div></div>');
   }
 
   /* ---- the Worker ---- */
@@ -154,6 +252,16 @@
       ".prsum{color:var(--roll);letter-spacing:0;text-transform:none;font-weight:700;margin-left:6px}" +
       ".badge.roll{background:rgba(245,165,36,.14);color:var(--roll);border:1px solid rgba(245,165,36,.4)}" +
       ".badge.prreq{background:rgba(229,72,77,.16);color:#FF8A8E;border:1px solid rgba(229,72,77,.55)}.prcard.req{border-left-color:#E5484D}" +
+      ".prbar{margin:0 0 14px}.prbar select{min-width:0;flex:1 1 180px;max-width:280px}.prlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}" +
+      ".badge.prst-none{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.14)}" +
+      ".badge.prst-free{background:rgba(53,208,127,.12);color:var(--win);border:1px solid rgba(53,208,127,.4)}" +
+      ".badge.prst-free.prst-last{background:rgba(245,165,36,.18);color:var(--roll);border-color:rgba(245,165,36,.65)}" +
+      ".badge.prst-card{background:rgba(255,31,142,.12);color:var(--pink);border:1px solid rgba(255,31,142,.45)}" +
+      ".badge.prst-paused{background:rgba(229,72,77,.12);color:#FF8A8E;border:1px solid rgba(229,72,77,.4)}" +
+      ".badge.prst-cancel{background:rgba(154,154,164,.10);color:var(--faint);border:1px solid rgba(154,154,164,.3);text-decoration:line-through}" +
+      ".prcard.last3{border-left-color:var(--roll);box-shadow:inset 0 0 0 1px rgba(245,165,36,.35)}" +
+      ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
+      "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
     host.insertBefore(p, $("paneLive") || null);
     p.addEventListener("click", onClick);
@@ -164,6 +272,8 @@
     body.innerHTML = listHtml(S.data);
     if ($("prNote")) { $("prNote").value = keep; }
     var r = $("prRefresh"); if (r) r.addEventListener("click", function () { load(); });
+    var f = $("prFilter"); if (f) f.addEventListener("change", function () { S.filter = this.value; draw(); });
+    var o = $("prSort"); if (o) o.addEventListener("change", function () { S.sort = this.value; draw(); });
   }
   function load() {
     if (S.loading) return S.loading;
@@ -214,6 +324,6 @@
   }
 
   root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; },
-    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S } };
+    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);
