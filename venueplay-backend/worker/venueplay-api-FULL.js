@@ -157,6 +157,11 @@ export default {
       if (request.method === 'POST' && path === '/admin/help/note')        return await helpAdminNote(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/reply')       return await helpAdminReply(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/log-call')    return await helpAdminLogCall(request, env, json);
+      // Saved replies (Dean, 29 Oct 2026; migration 126). HQ only, like every /admin/help/ route.
+      if (request.method === 'POST' && path === '/admin/help/replies/list')   return await helpAdminRepliesList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/replies/save')   return await helpAdminRepliesSave(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/replies/delete') return await helpAdminRepliesDelete(request, env, json);
+      if (request.method === 'POST' && path === '/admin/help/replies/move')   return await helpAdminRepliesMove(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/report')      return await helpAdminReport(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/push/key')    return await helpAdminPushKey(request, env, json);
       if (request.method === 'POST' && path === '/admin/help/push/subscribe')   return await helpAdminPushSubscribe(request, env, json);
@@ -13061,7 +13066,8 @@ async function helpAdminList(request, env, json) {
   const venues = await helpVenueNames(env, rows.map((r) => r.venue_id));
   const admins = await vpaSelect(env, 'vp_platform_admins', 'select=label&order=label.asc');
   // The venue picker for "Log a call". HQ only, like everything else here; paged and ordered.
-  const all = g.body.with_venues ? await vpaSelectAll(env, 'vp_venues', 'select=id,name&order=name.asc,id.asc') : undefined;
+  // slug too (29 Oct 2026): a saved reply's {tv_link} is the venue's own TV address.
+  const all = g.body.with_venues ? await vpaSelectAll(env, 'vp_venues', 'select=id,name,slug&order=name.asc,id.asc') : undefined;
   return json({ tickets: rows, venues: venues, assignees: (admins || []).map((x) => x.label).filter(Boolean), all_venues: all });
 }
 
@@ -13089,7 +13095,9 @@ async function helpAdminGet(request, env, json) {
     t = Object.assign({}, t, patch);
   }
   const notes = await vpaSelectAll(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) + '&select=*&order=created_at.asc,id.asc');
-  return json({ ticket: t, notes: notes, venue_name: await helpVenueName(env, t.venue_id) });
+  // The venue's slug as well as its name (29 Oct 2026): a saved reply's {tv_link} is that venue's TV address.
+  const v = t.venue_id && HELP_UUID.test(String(t.venue_id)) ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(t.venue_id) + '&select=name,slug&limit=1') : [];
+  return json({ ticket: t, notes: notes, venue_name: (v && v[0] && v[0].name) || '', venue_slug: (v && v[0] && v[0].slug) || '' });
 }
 
 async function helpAdminUpdate(request, env, json) {
@@ -13228,6 +13236,15 @@ async function helpAdminReply(request, env, json) {
   const body = helpText(g.body.body);
   if (!body) return json({ error: 'Type the reply first.' }, 400);
   if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
+  /* A FILL-IN LEFT IN (29 Oct 2026). A saved reply's {first_name} or {tv_link} that the page could not
+     fill must never reach a customer as the braces themselves. */
+  const left = HELP_FILLIN_RE.exec(body);
+  if (left) return json({ error: 'Fill in ' + left[0] + ' before sending.' }, 400);
+  /* THE SUPPORT LINE IS FOR VENUES (Dean, 20 and 23 Oct 2026). The signature already follows it; a
+     reply typed or picked from the saved replies must too: never to a player and never PartyPlay. */
+  if (!helpPhoneAllowed(t) && helpHasSupportPhone(body)) {
+    return json({ error: 'The support line is for venues only. Take the phone number out of this reply before sending.' }, 400);
+  }
   /* AN ADDRESS HQ TYPED IN (a logged call, a manual ticket) was never given to us by that person in
      writing. Brand mail to it needs the owner, or whoever is sending to confirm that exact address,
      so a staff login cannot log a "call" and then send VenuePlay mail to anyone it likes. */
@@ -13244,9 +13261,16 @@ async function helpAdminReply(request, env, json) {
   if (!ok) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
     author: g.admin.label + ' (from ' + f.reply_to + ' to ' + to + (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : '') + ')', author_id: g.admin.actorId }, false);
-  const patch = { updated_at: helpNow() };
-  if (t.status === 'new' || t.status === 'open') patch.status = 'waiting';
+  const patch = { updated_at: helpNow() }, was = t.status;
+  /* "Send and close" (29 Oct 2026): one tap answers and closes, with the close written down as any
+     other status change is. Otherwise a reply leaves the ticket waiting on them, as before. */
+  if (g.body.close === true && t.status !== 'closed') { patch.status = 'closed'; patch.closed_at = helpNow(); }
+  else if (t.status === 'new' || t.status === 'open') patch.status = 'waiting';
   await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), patch);
+  if (patch.status === 'closed') {
+    await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Status: ' + was + ' to closed (sent and closed)',
+      author: g.admin.label, author_id: g.admin.actorId }, false);
+  }
   return json({ ok: true, sent_from: f.reply_to, status: patch.status || t.status });
 }
 
@@ -13292,6 +13316,102 @@ async function helpAdminLogCall(request, env, json) {
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change',
     body: 'Logged by ' + g.admin.label + (t.status === 'closed' ? ', sorted on the call' : ''), author: g.admin.label, author_id: g.admin.actorId }, false);
   return json({ ok: true, ticket: t });
+}
+
+/* SAVED REPLIES (Dean, 29 Oct 2026: "helpdesk needs to be easier to use with templates we can use to
+   reply"). Ready-made answers HQ drops into the reply box, edits if it likes, then sends; HQ adds,
+   changes, deletes and reorders them. Table vp_help_saved_replies, migration 126, service role only.
+
+   audience says which tickets a reply is offered on: 'venue' (a VenuePlay venue, or one that might
+   be), 'player' (a VenuePlay player), 'partyplay' (a PartyPlay buyer or guest), 'any'. The support
+   line may only be in a 'venue' reply (the same rule as helpSignatureHtml), and helpAdminReply checks
+   it again on every send, so a reply edited in the box cannot carry it to a player either.
+
+   BEFORE MIGRATION 126 the list answers {missing: true} and HQ shows the starter set built into
+   vp-helpdesk-hq.js (the same rows the migration seeds; tools/test-help-saved-replies.js holds the two
+   to one answer). Saving says the migration has to run first; nothing is lost or half-written. */
+const HELP_REPLY_AUDIENCES = ['venue', 'player', 'partyplay', 'any'];
+const HELP_FILLIN_RE = /\{[a-z][a-z_]{1,24}\}/;
+function helpPhoneAllowed(t) {
+  return !!t && t.brand !== 'partyplay' && ['venue_support', 'accounts', 'sales'].indexOf(t.category) !== -1;
+}
+function helpHasSupportPhone(text) {
+  const digits = String(text || '').replace(/\D/g, '');
+  return digits.indexOf(VP_SUPPORT_PHONE.replace(/\D/g, '').slice(1)) !== -1 || /\btel:/i.test(String(text || ''));
+}
+function helpTableMissing(status, text) {
+  return status === 404 || /PGRST205|42P01|does not exist|schema cache/i.test(String(text || ''));
+}
+async function helpRepliesRead(env) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_help_saved_replies?select=*&order=position.asc,created_at.asc,id.asc&limit=500',
+    { headers: vpaHeaders(env) });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    if (helpTableMissing(res.status, txt)) return { missing: true, rows: [] };
+    throw new Error('read vp_help_saved_replies: ' + res.status + ' ' + txt.slice(0, 200));
+  }
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error('read vp_help_saved_replies: not a list');
+  return { missing: false, rows: rows };
+}
+const HELP_REPLIES_NOT_YET = 'Saved replies cannot be changed until migration 126 is run. The starter replies still work in every ticket.';
+async function helpAdminRepliesList(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const r = await helpRepliesRead(env);
+  return json({ replies: r.rows, missing: r.missing });
+}
+async function helpAdminRepliesSave(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body;
+  const title = helpLine(b.title, 200), body = helpText(b.body);
+  if (!title) return json({ error: 'Give the saved reply a short name.' }, 400);
+  if (title.length > 80) return json({ error: 'Keep the name under 80 letters.' }, 400);
+  if (!body) return json({ error: 'Type the words of the reply.' }, 400);
+  if (body.length > 4000) return json({ error: 'That reply is too long.' }, 400);
+  if (HELP_REPLY_AUDIENCES.indexOf(b.audience) < 0) return json({ error: 'Pick who the reply is for.' }, 400);
+  if (b.audience !== 'venue' && helpHasSupportPhone(body)) {
+    return json({ error: 'The support line is for venues only. Take the phone number out, or make this a reply for venues.' }, 400);
+  }
+  const r = await helpRepliesRead(env);
+  if (r.missing) return json({ error: HELP_REPLIES_NOT_YET, missing: true }, 409);
+  const row = { title: title, body: body, audience: b.audience, updated_at: helpNow(), updated_by: g.admin.label };
+  if (b.id) {
+    if (!HELP_UUID.test(String(b.id))) return json({ error: 'Which reply?' }, 400);
+    if (!r.rows.some((x) => x.id === b.id)) return json({ error: 'That saved reply is not there any more.' }, 404);
+    await vpaPatch(env, 'vp_help_saved_replies', 'id=eq.' + encodeURIComponent(b.id), row);
+    return json({ ok: true, id: b.id });
+  }
+  row.position = r.rows.reduce((m, x) => Math.max(m, x.position || 0), 0) + 10;
+  const made = await vpaInsert(env, 'vp_help_saved_replies', row);
+  return json({ ok: true, id: made && made.id });
+}
+async function helpAdminRepliesDelete(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  if (!HELP_UUID.test(String(g.body.id || ''))) return json({ error: 'Which reply?' }, 400);
+  const r = await helpRepliesRead(env);
+  if (r.missing) return json({ error: HELP_REPLIES_NOT_YET, missing: true }, 409);
+  const gone = await vpaDelete(env, 'vp_help_saved_replies', 'id=eq.' + encodeURIComponent(g.body.id));
+  if (!gone.length) return json({ error: 'That saved reply is not there any more.' }, 404);
+  return json({ ok: true });
+}
+/* Up or down one place in the list HQ sees (every reply, in order). The whole list is renumbered
+   10, 20, 30 so two replies can never share a place and the order is exactly what HQ last saw. */
+async function helpAdminRepliesMove(request, env, json) {
+  const g = await helpAdmin(request, env, json); if (g.res) return g.res;
+  const b = g.body;
+  if (!HELP_UUID.test(String(b.id || '')) || (b.dir !== 'up' && b.dir !== 'down')) return json({ error: 'Move which reply, which way?' }, 400);
+  const r = await helpRepliesRead(env);
+  if (r.missing) return json({ error: HELP_REPLIES_NOT_YET, missing: true }, 409);
+  const list = r.rows.slice(), i = list.findIndex((x) => x.id === b.id);
+  if (i < 0) return json({ error: 'That saved reply is not there any more.' }, 404);
+  const j = b.dir === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= list.length) return json({ ok: true, unchanged: true });
+  const tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+  for (let k = 0; k < list.length; k++) {
+    const want = (k + 1) * 10;
+    if (list[k].position !== want) await vpaPatch(env, 'vp_help_saved_replies', 'id=eq.' + encodeURIComponent(list[k].id), { position: want });
+  }
+  return json({ ok: true, order: list.map((x) => x.id) });
 }
 
 /* THE REPORT. Pure, so a test can hand it rows and check every number against them. Tickets

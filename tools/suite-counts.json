@@ -160,7 +160,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 216,
+  "checks": 218,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -1165,6 +1165,14 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 50,
+  "counted_by": "lines"
+ },
+ "tools/helpdesk-hq-in-chrome.test.py": {
+  "checks": 78,
+  "counted_by": "lines"
+ },
+ "tools/test-help-saved-replies.js": {
+  "checks": 78,
   "counted_by": "lines"
  }
 }

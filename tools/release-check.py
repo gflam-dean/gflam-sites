@@ -3622,6 +3622,13 @@ def local_checks(which):
              'a phone (mobile or landline) at setup from HQ and the autopilot, a bad one refused with nothing made, a crowd of 10; owner or accounts only; Call requested first, then no sign-in after 3 days; Called with a note and Undo; a card, comp, invoice or group takes them off the list; the HQ pane and the Venues filter; a login reused only when its email and mobile both match', 62,
              'A prospect left on the active list, a venue that never signed in and nobody rang, a call request '
              'nobody saw, their number lost, or another venue handed to a login on one typed fact'),
+            # D91: saved replies and the easier help desk (Dean, 29 Oct 2026; migration 126), branch
+            # feature/helpdesk-easier. D88 and D89 are the prospect autopilot and Prospects tab, D90 is phone sign-in.
+            ('D91. Saved replies: the page and the migration are one starter set, the support line only ever reaches a venue, and Send and close closes',
+             'test-help-saved-replies.js',
+             'the built-in starter replies equal migration 126\'s rows; house rules on every one; fill-ins from the ticket; HQ-only add, change, delete, reorder; before the table exists the list falls back and saving says why; a left-in fill-in or the support line on a player or PartyPlay ticket is refused with no email; send and close closes', 78,
+             'A player or a PartyPlay buyer emailed the venue support line, "Hi {first_name}" reaching a customer, '
+             'a saved reply editable by a venue, or two copies of the starter set saying different things'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

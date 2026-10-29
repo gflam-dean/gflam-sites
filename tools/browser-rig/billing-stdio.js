@@ -53,6 +53,11 @@ if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { t
 if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: k._s }); };
 if (!crypto.subtle.sign) crypto.subtle.sign = function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); };
 var STORED = [];
+/* A TABLE THAT IS NOT THERE YET (29 Oct 2026, tools/helpdesk-hq-in-chrome.test.py): {ask:'missing', table, on}
+   makes every request to it answer the way live PostgREST answered for vp_help_saved_replies before
+   migration 126 (read-only check, 29 Oct 2026): 404, code PGRST205. The fake database would otherwise
+   make any table it is asked for, so "before the migration" could never be seen in a browser. */
+var MISSING = {};
 var _rf = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url), m = String((opts && opts.method) || 'GET').toUpperCase();
@@ -66,6 +71,11 @@ globalThis.fetch = function (url, opts) {
     var q = parseQ(u.split('?')[1] || ''), set = JSON.parse(opts.body), got = [];
     tbl('vp_signin_links').forEach(function (r) { if (match(r, q)) { for (var k in set) r[k] = set[k]; got.push({ auth_user_id: r.auth_user_id, venue_id: r.venue_id }); } });
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(got); } });
+  }
+  var mt = /\/rest\/v1\/([a-z_]+)/.exec(u);
+  if (mt && MISSING[mt[1]]) {
+    var nb = JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public." + mt[1] + "' in the schema cache" });
+    return Promise.resolve({ ok: false, status: 404, json: function () { return Promise.resolve(JSON.parse(nb)); }, text: function () { return Promise.resolve(nb); } });
   }
   if (/\/storage\/v1\//.test(u)) {
     if (m === 'POST' && /\/storage\/v1\/object\//.test(u)) {
@@ -85,6 +95,7 @@ for (;;) {
   var rq = JSON.parse(line), out = null;
   if (rq.ask === 'stored') { print(JSON.stringify({ status: 200, body: STORED })); continue; }
   if (rq.ask === 'sent') { print(JSON.stringify({ status: 200, body: sent })); continue; }   // the emails the fake Resend took (29 Oct 2026)
+  if (rq.ask === 'missing') { MISSING[rq.table] = !!rq.on; print(JSON.stringify({ status: 200, body: { missing: !!rq.on } })); continue; }
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning

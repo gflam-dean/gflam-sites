@@ -423,6 +423,20 @@ public/anon/authenticated: service role only. Run BEFORE the billing Worker; wit
 the phone is on the audit row) and the Prospects tab says "Run migration 125". After running, dump RLS-BASELINE.json (one new
 table). Branch `feature/prospects-tab`. RUN 29 Oct 2026 (RLS-BASELINE.json dumped after). Rollback: in the file.
 
+`venueplay-126-help-saved-replies.sql` (Dean, 29 Oct 2026, "helpdesk needs to be easier to use with templates we can use to
+reply"): table `vp_help_saved_replies` (audience venue|player|partyplay|any, title, body, position, seed_key unique, who changed
+it last) and the 13 starter replies, the same rows as SEED in `venueplay/app/vp-helpdesk-hq.js` (tools/test-help-saved-replies.js,
+D91, fails if they differ). HQ > Help desk > Saved replies adds, changes, deletes and reorders them through the billing Worker's
+`/admin/help/replies/*`; in a ticket, "Use a saved reply" fills {first_name}, {venue}, {ticket_no}, {tv_link}, {party_code}. The
+support line may only be in a venue reply (refused on save, and refused on SEND for a player or PartyPlay ticket). RLS on, no
+policies, revoked from public/anon/authenticated: service role only. Either order with the Worker is safe: without the table the
+list answers `missing` and HQ uses the built-in starter set; saving says to run this first. Seed is `on conflict do nothing`, so
+running it twice never overwrites HQ's edits. After running, dump RLS-BASELINE.json (one new table). 125 is left for
+feature/prospect-autopilot (built from the same base the same night). Branch `feature/helpdesk-easier`. RUN on the live database by Dean,
+29 Oct 2026 (13 saved replies seeded; anon refused with 42501; RLS-BASELINE.json dumped: RLS on, no grants to anon or authenticated).
+FROZEN from then: a change to the starter words needs a new migration (the seed is `on conflict do nothing`, so editing 126 changes
+nothing live) and the same change to SEED in vp-helpdesk-hq.js. Rollback: in the file.
+
 `venueplay-127-prospect-free-month.sql` (Dean, 29 Oct 2026, phase 2: "a prospect's free month starts at their FIRST SIGN-IN ... at
 the end of the free month with no card, PAUSE the account ... Pausing also makes them LOSE whatever deal they had"): columns on
 `vp_prospects` (125): first_signin_at, free_month_ends_at (11:59:59pm Brisbane on the 30th day after it), offer_rate (the price

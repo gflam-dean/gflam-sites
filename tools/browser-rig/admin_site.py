@@ -60,6 +60,14 @@ class BillingWorker(object):
     def stored(self):
         return self._send({'ask': 'stored'})['body']
 
+    def missing(self, table, on=True):
+        """Make a table answer as if its migration had not been run (404, PGRST205), or stop that."""
+        return self._send({'ask': 'missing', 'table': table, 'on': on})['body']
+
+    def sent(self):
+        """Every email the Worker handed the fake Resend."""
+        return self._send({'ask': 'sent'})['body']
+
     def provision(self, session):
         """Run the REAL vpaProvisionFromCheckout on a Stripe checkout session, as the webhook does."""
         return self._send({'ask': 'provision', 'session': session})
@@ -240,7 +248,11 @@ class Site(object):
             '(e.filename||"").split("/").pop()+":"+e.lineno)});window.addEventListener("unhandledrejection",function(e)'
             '{__errs.push("rejected: "+String(e.reason&&e.reason.message||e.reason))});'
             'window.alert=function(m){(window.__alerts=window.__alerts||[]).push(String(m))};'
-            'window.confirm=function(){return true};</script>')
+            'window.confirm=function(){return true};'
+            # The help desk script (app/vp-helpdesk-hq.js) names the billing Worker in a .js file, which
+            # rewrite() below never sees: until 29 Oct 2026 every HQ suite's help desk tab aimed at the
+            # LIVE Worker address. It reads window.VP_HELP_API first, so point it at the rig's Worker.
+            'window.VP_HELP_API="/__api";</script>')
 
     def rewrite(self, text, who):
         if '<head>' in text:

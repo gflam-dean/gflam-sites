@@ -2331,6 +2331,8 @@
         '<b>Total players</b> '+players+' &middot; '+
         '<b>Billing</b> '+billTxt+' &middot; '+
         '<b>Created</b> '+esc(fmtWhen(v.created_at))+
+        /* This venue's help desk tickets (Dean, 29 Oct 2026), filled by vp-helpdesk-hq.js. */
+        '<div class="vphd" data-vphd="'+esc(v.id)+'"></div>'+
         gaming+
         /* The seven controls that used to sit in the row. Here, where somebody is
            already looking at this one venue, rather than repeated 400 times down a
@@ -2342,6 +2344,7 @@
       b.appendChild(dt);
     });
     if(capV.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("venues", capV.hidden, 5, 100));
+    if(S.openVenue && window.VPHelpdesk) window.VPHelpdesk.venueTickets(S.openVenue);
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
 
