@@ -2306,6 +2306,10 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
      Both or neither; a bad one refuses the setup, so a typo never reaches a venue. */
   const sender = vpaProspectSender(b.sender_name, b.sender_email);
   if (sender.error) return json({ error: sender.error + NONE }, 400);
+  /* THE OFFER THEY REPLIED TO (Dean, 29 Oct 2026): offer_code is the code of the campaign's /offer-<mon>
+     link. It names the offer in their email; none given is this month's. See vpaProspectOffer. */
+  const offer = vpaProspectOffer(env, b.offer_code);
+  if (offer.error) return json({ error: offer.error + NONE }, 400);
   /* THE EMAIL GOES ON A DELAY (Dean, 28 Oct 2026: "on a delay, so they don't get it straight away").
      HQ's "Send their email in [90] minutes", 0 to 1440 (a day). 0 sends it now. */
   let delayMin = VPA_PROSPECT_DEFAULT_DELAY_MIN;
@@ -2365,12 +2369,13 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // Every check has passed. A dry run stops here, having made nothing, and says what it would make.
   if (b.dry_run === true) {
     return json({ ok: true, dry_run: true, name: name, postcode: postcode, state: state, entity_type: entityType,
-      players: players, slides: slideFiles.length, mobile: phone ? (sameLogin ? 'their existing login' : phoneTaken ? 'taken' : 'free') : 'none', phone: callPhone || null,
+      players: players, offer_code: offer.code, slides: slideFiles.length, mobile: phone ? (sameLogin ? 'their existing login' : phoneTaken ? 'taken' : 'free') : 'none', phone: callPhone || null,
       welcome_in_minutes: b.send_welcome === false ? null : delayMin });
   }
 
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const warnings = [];
+  if (offer.warning) warnings.push(offer.warning);
   // 1. The account record: a paying founding row with no card, as /admin/venue makes one.
   const founding = await vpaInsert(env, 'venueplay_founding', {
     venue_name: name, contact_email: email, mobile: mobileRaw || null, postcode: postcode,
@@ -2462,7 +2467,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     const render = { foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
       seats: players, state: state, entityType: entityType, slides: slideCount, authUserId: login ? login.id : null,
       mobileLogin: !!(login && login.mobile), mobile: login && login.mobile ? vpaProspectPhone(mobileRaw) : null, sameLogin: !!(login && login.existing),
-      senderName: sender.name || null, senderEmail: sender.email || null };
+      senderName: sender.name || null, senderEmail: sender.email || null, offerCode: offer.code };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
     if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
@@ -2478,7 +2483,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // 6. Who set it up, and what was made.
   await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
     via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
-    mobile_login: !!(login && login.mobile), login_made: !!login, login_reused: !!(login && login.existing), phone: callPhone || undefined, players: players, state: state, entity_type: entityType,
+    mobile_login: !!(login && login.mobile), login_made: !!login, login_reused: !!(login && login.existing), phone: callPhone || undefined, players: players, offer_code: offer.code || undefined, state: state, entity_type: entityType,
     website: website || undefined, slides: slideCount, compliance: 'pending', terms_required: true,
     sender_name: sender.name || undefined, sender_email: sender.email || undefined,
     welcome_sent: welcomeSent, welcome_send_at: welcome ? welcome.send_at : undefined, welcome_delay_min: welcome ? delayMin : undefined,
@@ -2487,7 +2492,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
     tv_url: site + '/tv?' + encodeURIComponent(slug),
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
-    slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null };
+    slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null, offer_code: offer.code || null };
   if (welcome) out.welcome = welcome;
   if (warnings.length) out.warnings = warnings;
   return json(out);
@@ -3234,16 +3239,41 @@ function vpaProspectBingo(state, entityType) {
   return { kind: 'phones', text: 'Open lobby, players join on their phones from the QR on the TV, and you call the numbers. Your console shows ' + place + '\'s rules before every game.' };
 }
 
-/* "while the November offer runs": the month of the latest live founding code, so the email never
-   names a month the card link will not honour. No code with a month: "while our offer runs". */
+/* WHICH OFFER A PROSPECT'S EMAIL NAMES (Dean, 29 Oct 2026). It used to be the LATEST month among the
+   live codes, and FOUNDING_CODES lists every month to March 2027 in advance (a code is honoured from the
+   day it is listed to the end of its month), so a prospect set up on 29 October was told "while the
+   March offer runs". The offer is the one THE CAMPAIGN THEY REPLIED TO carried: the autopilot sends
+   that campaign's code as offer_code (OFFER-NOV-2026 for the /offer-nov link), and it must be a code
+   that is listed and live. Nothing sent (HQ's form): the code for THIS month in Brisbane, never a later
+   one. vpaProspectOffer is the one place that choice is made; the phrase only words it. */
 const VPA_MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-function vpaOfferMonthPhrase(env, nowMs) {
-  let best = -1;
-  vpaLiveCodes(env, nowMs).forEach(function (c) {
-    const m = /-([A-Z]{3})-(20\d\d)$/.exec(c);
-    if (m && (m[1] in VPA_CODE_MONTHS)) best = Math.max(best, Number(m[2]) * 12 + VPA_CODE_MONTHS[m[1]]);
-  });
-  return best < 0 ? 'while our offer runs' : 'while the ' + VPA_MONTH_NAMES[best % 12] + ' offer runs';
+function vpaCodeMonth(code) {
+  const m = /-([A-Z]{3})-(20\d\d)$/.exec(String(code || '').trim().toUpperCase());
+  return (m && (m[1] in VPA_CODE_MONTHS)) ? { y: Number(m[2]), m: VPA_CODE_MONTHS[m[1]] } : null;
+}
+/* { code } (null when no dated offer is running this month), or { error } for a code that was never
+   listed. A listed code whose month has ended falls back to this month's, with a warning, so a reply
+   handled on the 1st still gets its account. */
+function vpaProspectOffer(env, raw, nowMs) {
+  const now = nowMs == null ? Date.now() : nowMs;
+  const live = vpaLiveCodes(env, now);
+  const want = String(raw == null ? '' : raw).trim().toUpperCase();
+  let warning = null;
+  if (want) {
+    if (!/^[A-Z]{2,8}-[A-Z]{3}-20\d\d$/.test(want) || !vpaCodeMonth(want)) return { error: 'offer_code ' + want.slice(0, 40) + ' is not an offer code (like OFFER-NOV-2026).' };
+    if (live.indexOf(want) !== -1) return { code: want };
+    const listed = (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim().toUpperCase(); }).indexOf(want) !== -1;
+    if (!listed) return { error: 'offer_code ' + want + ' is not one of our offers. Leave it out to use this month\'s.' };
+    warning = 'Their campaign\'s offer (' + want + ') has ended, so their email names this month\'s offer instead.';
+  }
+  const b = new Date(now + 10 * 3600 * 1000);   // Brisbane, UTC+10 all year
+  const here = live.filter(function (c) { const cm = vpaCodeMonth(c); return cm && cm.y === b.getUTCFullYear() && cm.m === b.getUTCMonth(); });
+  here.sort(function (a, c) { return (c.indexOf('OFFER-') === 0) - (a.indexOf('OFFER-') === 0); });   // the monthly OFFER- code before a state one
+  return { code: here[0] || null, warning: warning };
+}
+function vpaOfferMonthPhrase(code) {
+  const cm = vpaCodeMonth(code);
+  return cm ? 'while the ' + VPA_MONTH_NAMES[cm.m] + ' offer runs' : 'while our offer runs';
 }
 
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
@@ -3299,7 +3329,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20VenuePlay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
-    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(env))
+    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))

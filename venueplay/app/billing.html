@@ -801,6 +801,8 @@
     }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
   }
   function money(n){ return "$" + (n).toFixed(2); }
+  /* "1 player", never "1 players" (Dean, 29 Oct 2026: "Reducing to 1 players at your next renewal"). */
+  function nPlayers(n){ n = parseInt(n,10) || 0; return n + (n === 1 ? " player" : " players"); }
   /* WHY ARE YOU LEAVING. Built as a real dialog rather than a browser prompt, for the
      same reason the host consoles no longer call alert(): a prompt blocks the whole page
      until it is answered, and this one has a dropdown and a text box in it anyway.
@@ -923,7 +925,7 @@
        we show the Worker's authoritative next-charge amount rather than guess. */
     var nextPlayers = 0;
     (d.venues || []).forEach(function(v){ if (v.cancelling) return; nextPlayers += (v.pending != null ? v.pending : v.players); });
-    $("s-players-next").textContent = nextPlayers;
+    $("s-players-next").textContent = nPlayers(nextPlayers);
     var mtNum = parseFloat(String(d.monthly_total).replace(/[^0-9.]/g, "")) || 0;
     var plainPricing = Math.abs(mtNum - (d.total_players || 0) * rate) < 0.01;
     $("s-total-next").textContent = d.comp ? "On us"
@@ -1021,7 +1023,7 @@
       // Only a REDUCTION is pending, because an increase is applied on the spot. The row said
       // nothing at all in that case, which read as though the save had not worked.
       var pend = (v.pending != null && v.pending !== v.players)
-        ? '<div class="pend">Reducing to ' + v.pending + ' players at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>'
+        ? '<div class="pend">Reducing to ' + nPlayers(v.pending) + ' at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>'
         : '<div class="pendup" style="display:none"></div>';
       row.innerHTML =
         '<div class="nm"><b>' + esc(v.name) + '</b><small>' + v.monthly + ' a month</small>' + pend + '</div>' +
@@ -1073,7 +1075,7 @@
                  (q.plan === "annual" ? ", pro rata to your renewal." : ".") +
                  "\nThe extra players are available straight away." +
                  "\n\nGo ahead?")
-              : ("Change " + v.players + " players to " + n + "?");
+              : ("Change " + nPlayers(v.players) + " to " + nPlayers(n) + "?");
             vpAsk(words).then(function(ok){ if (!ok) return;
             doSavePlayers(n);
             });
@@ -1087,18 +1089,18 @@
         api("/account/players", { venue_id:v.id, players:n }).then(function(r){
           if (r.error){ showMsg(r.error); save.disabled=false; save.textContent="Save"; return; }
           if (r.applied === "next_renewal"){
-            showMsg("Reduction to " + n + " players scheduled for your next renewal. You keep " + v.players + " until then.", true);
+            showMsg("Reduction to " + nPlayers(n) + " scheduled for your next renewal. You keep " + v.players + " until then.", true);
           } else if (r.applied === "cancelled_reduction"){
-            showMsg("Scheduled reduction cancelled. You stay on " + n + " players.", true);
+            showMsg("Scheduled reduction cancelled. You stay on " + nPlayers(n) + ".", true);
           } else if (n < v.players){
             // Annual: the capacity goes now, which is what makes the credit honest.
             var freed = v.players - n;
             if (r.credit_failed){
               // They have given up capacity they paid a year for. Saying nothing about the credit
               // would be taking it silently.
-              showMsg("Reduced to " + n + " players, releasing " + freed + " from today. We could not apply your credit automatically, so we will sort it by hand. Email accounts@venueplay.com.au if you do not see it on your next invoice.", true);
+              showMsg("Reduced to " + nPlayers(n) + ", releasing " + freed + " from today. We could not apply your credit automatically, so we will sort it by hand. Email accounts@venueplay.com.au if you do not see it on your next invoice.", true);
             } else {
-              showMsg("Reduced to " + n + " players, releasing " + freed + " from today." +
+              showMsg("Reduced to " + nPlayers(n) + ", releasing " + freed + " from today." +
                       (r.credit_cents ? " $" + (r.credit_cents/100).toFixed(2) + " credited for the rest of your year; it comes off your next invoice." : ""), true);
             }
           } else if (n > v.players){
@@ -1106,9 +1108,9 @@
             if (r.charge_failed){
               // The capacity IS live; only the one-off top-up failed. Saying "on your next bill"
               // would be a straight untruth about money.
-              showMsg("Increased to " + n + " players and they are available right now, but we could not put the one-off charge through. We will pick it up on your next invoice, or get in touch if you would rather sort it now.", true);
+              showMsg("Increased to " + nPlayers(n) + " and they are available right now, but we could not put the one-off charge through. We will pick it up on your next invoice, or get in touch if you would rather sort it now.", true);
             } else {
-              showMsg("Increased to " + n + " players, up " + extra + ". The extra " + extra +
+              showMsg("Increased to " + nPlayers(n) + ", up " + extra + ". The extra " + extra +
                       (extra === 1 ? " player is" : " players are") + " on your next bill and available right now.", true);
             }
           } else { showMsg("Players updated.", true); }

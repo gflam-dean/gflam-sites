@@ -230,7 +230,7 @@ function world() {
   DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = []; DB.vp_venue_screen = [];
 }
 var CAZ = { name: "Caz Reitop's Dirty Secrets", first_name: 'Amit', email: 'CazReitop@gmail.com ', mobile: '0452 510 904', postcode: '3066',
-            entity_type: 'for_profit', players: 60, website: 'cazreitop.com.au', slides: [slide('png', 1), slide('jpg', 2)] };
+            entity_type: 'for_profit', players: 60, website: 'cazreitop.com.au', slides: [slide('png', 1), slide('jpg', 2)], offer_code: 'NSW-NOV-2099' };
 function with_(o) { var b = {}; for (var k in CAZ) b[k] = CAZ[k]; for (var k2 in (o || {})) b[k2] = o[k2]; return b; }
 function nothingMade() { return DB.vp_venues.length === 0 && DB.venueplay_founding.length === 0 && AUTH_POSTS.length === 0 && STORE.length === 0 && sent.length === 0 && DB.vp_admin_audit.length === 0; }
 function visible(html) { return String(html).replace(/<!--[\s\S]*?-->/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&middot;/g, '.').replace(/&#9835;/g, ' ').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/ ([.,])/g, '$1'); }
@@ -251,6 +251,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     ['no venue name', { name: '  ' }, /venue name/], ['neither club nor pub', { entity_type: 'hotel' }, /club or pub/],
     ['a landline for the mobile', { mobile: '07 5228 3667' }, /not an Australian mobile/], ['a crowd of 0', { players: 0 }, /usual crowd/],
     ['a website that is not one', { website: 'not a site' }, /web address/],
+    ['an offer code that was never one of ours', { offer_code: 'OFFER-APR-2031' }, /is not one of our offers/], ['an offer code that is not a code', { offer_code: 'NOVEMBER' }, /is not an offer code/],
     ['21 slides', { slides: Array.apply(null, Array(21)).map(function (_, i) { return slide('png', i); }) }, /up to 20/],
     ['a GIF slide (PNG or JPEG only)', { slides: [slide('png', 1), slide('gif', 2)] }, /Slide 2 is not a PNG or JPEG/],
     ['a slide labelled PNG that is not one', { slides: ['data:image/png;base64,' + b64([1, 2, 3, 4, 5, 6, 7, 8, 9])] }, /Slide 1 is not a PNG or JPEG/]];
@@ -357,7 +358,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
 
   section('3. The email (version 2, Dean 28 Oct 2026): short, personal, one button; filled for a VIC pub with slides and a QLD club without');
   world();
-  r = await vpaHandleProspect(as(ADMIN, { name: 'Tugun Test Bowls Club', email: 'sec@tuguntest.example', postcode: '4224', entity_type: 'non_profit', players: 120 }), ENV, J);
+  r = await vpaHandleProspect(as(ADMIN, { name: 'Tugun Test Bowls Club', email: 'sec@tuguntest.example', postcode: '4224', entity_type: 'non_profit', players: 120, offer_code: 'nsw-nov-2099' }), ENV, J);
   var QLD_MSG = sent[0] || {}, QLD_HTML = QLD_MSG.html || '';
   var qv = DB.vp_venues[0] || {};
   check('the QLD club: no mobile, no first name, a crowd of 120, no slides, paid entry off (QLD is blocked until OLGR approves the number generator)', r.status === 200 && qv.au_state === 'QLD' && qv.max_players === 120 && qv.paid_entry_enabled === false && r.body.slides === 0, qv);
@@ -392,9 +393,40 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('VIC: Hi Amit, the favour as Dean says it, with the slides from their website', /Hi Amit,/.test(vt) && /As promised, I've set you up an account for Caz Reitop's Dirty Secrets with a few quick slides our marketing team made from your website, so you can see how your TV looks and have a play\./.test(vt), vt.slice(0, 400));
   check('QLD: Hi there, the same favour without the slides line', /Hi there,/.test(qt) && /As promised, I've set you up an account for Tugun Test Bowls Club, so you can see how your TV looks and have a play\./.test(qt) && !/marketing team/.test(qt), qt.slice(0, 300));
   world(); ENV.FOUNDING_CODES = '';
-  await vpaHandleProspect(as(ADMIN, with_({ slides: [] })), ENV, J);
+  await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: '' })), ENV, J);
   var std = sent[0] ? visible(sent[0].html) : '';
   check('with no offer running, the email quotes the standard $3.00 and names no offer month', /It's \$3\.00 a player a month on your usual crowd, first month free, no lock-in\./.test(std) && !/offer runs/.test(std), std);
+
+  /* THE OFFER IS THE CAMPAIGN'S, NEVER THE LATEST LISTED (Dean, 29 Oct 2026: a prospect set up on 29
+     October was told "while the March offer runs", because FOUNDING_CODES lists every month to March in
+     advance). Fixed clocks, the live list's shape. */
+  section('3b. The offer their email names: the campaign\'s code, else this month\'s, never a later one');
+  var LIVE = { FOUNDING_CODES: 'NSW-SEP-2026,NSW-OCT-2026,OFFER-OCT-2026,OFFER-NOV-2026,OFFER-DEC-2026,OFFER-JAN-2027,OFFER-FEB-2027,OFFER-MAR-2027' };
+  var OCT29 = Date.UTC(2026, 9, 29, 9, 0, 0), NOV1 = Date.UTC(2026, 9, 31, 14, 30, 0);   // 7pm 29 Oct; 12:30am 1 Nov, Brisbane
+  var o1 = vpaProspectOffer(LIVE, 'OFFER-NOV-2026', OCT29);
+  check('29 Oct, the reply came from the /offer-nov campaign: OFFER-NOV-2026, "while the November offer runs"', o1.code === 'OFFER-NOV-2026' && !o1.error && vpaOfferMonthPhrase(o1.code) === 'while the November offer runs', o1);
+  var o2 = vpaProspectOffer(LIVE, '', OCT29);
+  check('29 Oct, no code sent: this month\'s (OFFER-OCT-2026, the monthly code before the state one), never March', o2.code === 'OFFER-OCT-2026' && vpaOfferMonthPhrase(o2.code) === 'while the October offer runs', o2);
+  var o3 = vpaProspectOffer(LIVE, 'OFFER-OCT-2026', NOV1);
+  check('1 Nov, the campaign\'s October code has ended: November\'s instead, and HQ is told why', o3.code === 'OFFER-NOV-2026' && /has ended/.test(o3.warning || ''), o3);
+  check('a code never listed is refused; a code-shaped word that is not a code is refused', /not one of our offers/.test(vpaProspectOffer(LIVE, 'OFFER-APR-2027', OCT29).error || '') && /not an offer code/.test(vpaProspectOffer(LIVE, 'MARCH', OCT29).error || ''));
+  check('nothing listed for this month and none sent: "while our offer runs", no month named', vpaProspectOffer({ FOUNDING_CODES: 'OFFER-MAR-2027' }, null, OCT29).code === null && vpaOfferMonthPhrase(null) === 'while our offer runs');
+  world();
+  r = await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: 'QLD-OCT-2099' })), ENV, J);
+  var oct = sent[0] ? visible(sent[0].html) : '';
+  check('end to end: the code sent decides the month in the email (QLD-OCT-2099 while NSW-NOV-2099 is also listed), and is kept on the audit row', /while the October offer runs/.test(oct) && !/November/.test(oct) && r.body.offer_code === 'QLD-OCT-2099' &&
+    DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_set_up' && a.detail.offer_code === 'QLD-OCT-2099'; }), oct.slice(0, 300));
+
+  /* "Reducing to 1 players at your next renewal" (Dean's own test account, 29 Oct 2026). The Account page's
+     player words, run from billing.html itself. */
+  section('3c. The Account page says "1 player", never "1 players"');
+  var BILL = readFile('venueplay/app/billing.html');
+  var nP = (new Function((/function nPlayers\(n\)\{[^\n]*\}/.exec(BILL) || ['function nPlayers(){ return ""; }'])[0] + '\nreturn nPlayers;'))();
+  var pendLine = (/var pend = \(v\.pending != null && v\.pending !== v\.players\)\s*\?\s*('<div class="pend">[^\n]*?<\/div>')/.exec(BILL) || [])[1] || "''";
+  var pendFor = new Function('v', 'nPlayers', 'return ' + pendLine + ';');
+  check('one player is "1 player", ten are "10 players"', nP(1) === '1 player' && nP(10) === '10 players' && nP('2') === '2 players', [nP(1), nP(10)]);
+  check('the scheduled-change line under a venue reads "Reducing to 1 player at your next renewal"', /Reducing to 1 player at your next renewal/.test(pendFor({ pending: 1, players: 10 }, nP)) && /Reducing to 4 players at/.test(pendFor({ pending: 4, players: 10 }, nP)), pendFor({ pending: 1, players: 10 }, nP));
+  check('the Next month players figure and every players message on the page go through the same words', /\$\("s-players-next"\)\.textContent = nPlayers\(nextPlayers\);/.test(BILL) && !/\+ " players/.test(BILL.replace(/\(extra === 1 \? " player is" : " players are"\)/, '')), (BILL.match(/[^\n]{0,40}\+ " players[^\n]{0,20}/g) || []).join(' | '));
 
   section('4. The number bingo line agrees with vp-gaming.js for every state, club and pub');
   var gw = {}; (new Function('window', readFile('venueplay/app/vp-gaming.js')))(gw);
