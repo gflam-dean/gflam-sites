@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Oct 2026, 11:04 · be6f0deb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Oct 2026, 22:29 · f95abac0';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -211,6 +211,10 @@ export default {
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
+      // A prospect's free month (migration 127): it starts at their first sign-in; Now or Later on the card; cancel.
+      if (request.method === 'POST' && path === '/account/prospect-start'       && typeof vpbProspectStart === 'function')      return await vpbProspectStart(request, env, json);
+      if (request.method === 'POST' && path === '/account/card-choice'          && typeof vpbCardChoice === 'function')         return await vpbCardChoice(request, env, json);
+      if ((request.method === 'GET' || request.method === 'POST') && path === '/prospect/cancel' && typeof vpaProspectCancel === 'function') return await vpaProspectCancel(request, env);
       if (request.method === 'POST' && path === '/admin/prospect/welcomes'      && typeof vpaProspectWelcomes === 'function')   return await vpaProspectWelcomes(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-cancel' && typeof vpaProspectWelcomeCancel === 'function') return await vpaProspectWelcomeCancel(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-now'   && typeof vpaProspectWelcomeNow === 'function') return await vpaProspectWelcomeNow(request, env, json);
@@ -299,6 +303,9 @@ export default {
     /* The screen history check (migration 114) rides the same trigger, OUTSIDE the archive's try,
        so a venue's screen is still checked on a night when either sweep above has thrown. */
     try { await vpaScreenHistoryNightly(env); } catch (e3) { /* tomorrow night will look again */ }
+    /* A prospect's card reminders and the pause at the end of their free month (migration 127). Its own try:
+       the sweep keeps its own hours (8am to 5pm Mon to Fri for emails) and remembers what it sent. */
+    try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
   },
 };
 
@@ -851,6 +858,8 @@ async function vpaHandleStripeEvent(env, event) {
     if (typeof vpaProvisionFromCheckout === 'function') {
       await vpaProvisionFromCheckout(env, s);
     }
+    // A prospect the free month had paused comes straight back on with their card (migration 127).
+    if (rowId && typeof vpaProspectCardAdded === 'function') await vpaProspectCardAdded(env, rowId);
   }
   // On each renewal, apply any scheduled player reductions (see the billing screen).
   if (event.type === 'invoice.paid' && typeof vpbApplyPendingOnInvoice === 'function') {
@@ -2400,6 +2409,9 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       source: opts.via === 'autopilot_prospect' ? 'autopilot' : 'hq', contact_name: firstName || null, email: email,
       phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
       call_requested: b.call_requested === true, created_label: actor.label || null }, false);
+    /* THE OFFER THEY WERE SET UP ON (migration 127), kept through their free month even if that month's offer
+       closes; a pause takes it away (vpaProspectPrice). Its own write, so a database without 127 still lists them. */
+    if (vpaFoundingOpenNow(env)) await vpaProspectPatch(env, venue.id, { offer_rate: VPA_OFFER_RATE }).catch(() => false);
   } catch (e) {
     warnings.push('HQ > Prospects cannot list them until migration 125 is run' + (callPhone ? ' (their phone, ' + callPhone + ', is kept on the audit row).' : '.'));
   }
@@ -2619,6 +2631,283 @@ async function vpaProspectCalled(request, env, json) {
   if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
   await vpaAudit(env, actor, undo ? 'prospect_call_undone' : 'prospect_called', 'venue:' + id, undo ? {} : { note: note || undefined });
   return json({ ok: true, called: undo ? null : { at: patch.called_at, by: patch.called_label || '', note: note } });
+}
+
+/* ===========================================================================
+ * A PROSPECT'S FREE MONTH, ITS CARD REMINDERS AND THE PAUSE (Dean, 29 Oct 2026; migration 127)
+ *
+ *   - the free month starts the FIRST TIME anyone at the venue signs in (POST /account/prospect-start
+ *     from the app's setup guide; the hourly sweep also notices a sign-in from Auth), and ends at
+ *     11:59:59pm Brisbane on the 30th day after that (VPA_FREE_MONTH_DAYS)
+ *   - with no card: a reminder on day 3, 10, 17 and 24, then each of the last three days (28, 29, 30),
+ *     only 8am to 5pm Monday to Friday Brisbane. An early one that lands on a weekend goes the next
+ *     Monday; one of the last three goes the Friday before, so the last one always beats the pause.
+ *     A run that finds several due sends only the newest. Each has "Add my card" and "Cancel, it's
+ *     not for us". What has gone is kept in vp_prospects.reminders_sent, so a missed run or a restart
+ *     neither loses one nor sends one twice.
+ *   - a card (or comp, invoice, group) or a cancel stops them all
+ *   - the free month over with no card: the venue PAUSES (status suspended, reason free_month_ended):
+ *     games off, the TV keeps its ads (venueLookupReply keeps a suspended venue's screen). The offer
+ *     price they were set up on (offer_rate) goes with it: a card added after that is at the price of
+ *     that day. A card added after the pause switches the venue straight back on.
+ * ======================================================================== */
+const VPA_FREE_MONTH_DAYS = 30;
+const VPA_REMINDER_DAYS = [3, 10, 17, 24, 28, 29, 30];
+const VPA_LAST_REMINDER_FROM = 28;          // 28, 29, 30 are "the last three days"
+const VPA_STANDARD_RATE = 3.00, VPA_OFFER_RATE = 2.50;
+const VPA_BNE_MS = 10 * 3600000;            // Brisbane, UTC+10, no daylight saving
+function vpaBneDay(ms) { return new Date(ms + VPA_BNE_MS).toISOString().slice(0, 10); }
+function vpaBneDayStartMs(day) { return Date.parse(day + 'T00:00:00Z') - VPA_BNE_MS; }
+function vpaAddDays(day, n) { return new Date(Date.parse(day + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+function vpaWeekday(day) { return new Date(Date.parse(day + 'T00:00:00Z')).getUTCDay(); }   // 0 Sunday .. 6 Saturday
+/* The free month's last moment: 11:59:59pm Brisbane on the 30th day after the first sign-in. */
+function vpaFreeMonthEnd(firstMs) { return vpaBneDayStartMs(vpaAddDays(vpaBneDay(firstMs), VPA_FREE_MONTH_DAYS + 1)) - 1000; }
+/* Which reminder goes on which Brisbane day, from the first sign-in: [{ day: 3, date: '2026-11-02' }, ...]. */
+function vpaReminderPlan(firstMs) {
+  const start = vpaBneDay(firstMs), out = [];
+  VPA_REMINDER_DAYS.forEach(function (n) {
+    let d = vpaAddDays(start, n), wd = vpaWeekday(d);
+    if (n < VPA_LAST_REMINDER_FROM) { while (wd === 0 || wd === 6) { d = vpaAddDays(d, 1); wd = vpaWeekday(d); } }
+    else { while (wd === 0 || wd === 6) { d = vpaAddDays(d, -1); wd = vpaWeekday(d); } }
+    const same = out.filter(function (x) { return x.date === d; })[0];
+    if (same) same.day = Math.max(same.day, n); else out.push({ day: n, date: d });
+  });
+  return out;
+}
+function vpaInSendWindow(ms) {
+  const d = new Date(ms + VPA_BNE_MS), wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
+  return wd >= 1 && wd <= 5 && m >= 8 * 60 && m < 17 * 60;
+}
+/* THE PRICE A PROSPECT'S CARD IS ADDED AT. The offer they were set up on (offer_rate) holds through
+   their free month even if that month's offer has since closed; a pause takes it away, and then it is
+   whatever is open the day they add the card. Not a prospect: as before, whatever is open now. */
+function vpaProspectPrice(env, prow) {
+  if (prow && prow.paused_at) { const open = vpaFoundingOpenNow(env); return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE }; }
+  if (prow && Number(prow.offer_rate) > 0 && Number(prow.offer_rate) < VPA_STANDARD_RATE) return { founding: true, rate: Number(prow.offer_rate) };
+  const open = vpaFoundingOpenNow(env);
+  return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE };
+}
+async function vpaProspectRowFor(env, field, id) {
+  if (!id) return null;
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?' + field + '=eq.' + encodeURIComponent(id) + '&select=*&limit=1', { headers: vpaHeaders(env) });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return (rows && rows[0]) || null;
+  } catch (_) { return null; }
+}
+async function vpaProspectPatch(env, venueId, patch) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(venueId), {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify(patch) });
+  return !!(res && res.ok);
+}
+/* Start the free month, once. A second call (another sign-in, another device) changes nothing. */
+async function vpaProspectStartMonth(env, prow, atMs) {
+  if (!prow || prow.first_signin_at) return prow;
+  const first = new Date(atMs).toISOString(), ends = new Date(vpaFreeMonthEnd(atMs)).toISOString();
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(prow.venue_id) + '&first_signin_at=is.null', {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ first_signin_at: first, free_month_ends_at: ends }) });
+  if (res && res.ok) { prow.first_signin_at = first; prow.free_month_ends_at = ends; }
+  return prow;
+}
+/* POST /account/prospect-start { venue_id }   (the venue's owner or a manager; never HQ View as) */
+async function vpbProspectStart(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (o.actingAsAdmin) return json({ ok: true, prospect: false, view_as: true });   // HQ looking never starts anybody's month
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body && _b.body.venue_id) || '').trim();
+  if (!(o.venues || []).some((v) => v.id === venueId)) return json({ error: 'Pick one of your venues.' }, 400);
+  let prow = await vpaProspectRowFor(env, 'venue_id', venueId);
+  if (!prow || !('first_signin_at' in prow)) return json({ ok: true, prospect: false });
+  prow = await vpaProspectStartMonth(env, prow, Date.now());
+  const price = vpaProspectPrice(env, prow);
+  return json({ ok: true, prospect: true, first_signin_at: prow.first_signin_at, free_month_ends_at: prow.free_month_ends_at,
+    ends_words: vpaBneDateWords(Date.parse(prow.free_month_ends_at)), rate: price.rate, card_choice: prow.card_choice || null,
+    paused: !!prow.paused_at });
+}
+/* POST /account/card-choice { venue_id, choice: 'now' | 'later' }   (owner or manager) */
+async function vpbCardChoice(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (o.actingAsAdmin) return json({ error: 'That is the venue\'s choice. HQ View as cannot make it.' }, 403);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body && _b.body.venue_id) || '').trim();
+  const choice = _b.body && _b.body.choice;
+  if (!(o.venues || []).some((v) => v.id === venueId)) return json({ error: 'Pick one of your venues.' }, 400);
+  if (choice !== 'now' && choice !== 'later') return json({ error: 'Now or later?' }, 400);
+  const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
+  if (!prow) return json({ ok: true, prospect: false });
+  await vpaProspectPatch(env, venueId, { card_choice: choice, card_choice_at: new Date().toISOString() });
+  return json({ ok: true, choice: choice, free_month_ends_at: prow.free_month_ends_at || null });
+}
+/* "Thu 26 Nov", Brisbane. */
+function vpaBneDateWords(ms) {
+  const d = new Date(ms + VPA_BNE_MS);
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + VPA_MONTH_NAMES[d.getUTCMonth()];
+}
+/* The cancel link: signed like the card link, for this account only. */
+async function vpaProspectCancelToken(env, foundingId) {
+  const secret = vpaCardSecret(env);
+  if (!secret || !foundingId) return '';
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode('vp-prospect-cancel:' + foundingId));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+async function vpaProspectCancelLink(env, foundingId) {
+  const t = await vpaProspectCancelToken(env, foundingId);
+  if (!t) return '';
+  const api = (env.API_URL || 'https://venueplay-api.dean-tindale.workers.dev').replace(/\/+$/, '');
+  return api + '/prospect/cancel?f=' + encodeURIComponent(foundingId) + '&t=' + t;
+}
+/* GET /prospect/cancel?f=&t=  asks; POST (the page's own button) does it. A mail scanner opening the
+   link only ever sees the question, so nobody is cancelled by their spam filter. */
+async function vpaProspectCancel(request, env) {
+  const page = (title, body, form) => new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
+    '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#12101a">' +
+    '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
+    '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="VenuePlay" style="display:block;border:0;height:auto"></div>' +
+    '<div style="padding:26px 24px"><h1 style="margin:0 0 12px;font-size:23px;line-height:1.3">' + vpaEsc(title) + '</h1><p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#3a3a44">' + body + '</p>' + (form || '') +
+    '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">Questions? Call 07 5228 3667, between 9am and 5pm Queensland time.</p></div></div></div></body></html>',
+    { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+  const url = new URL(request.url);
+  let f = url.searchParams.get('f') || '', t = url.searchParams.get('t') || '';
+  if (request.method === 'POST') {
+    const form = {};
+    String(await request.text().catch(() => '')).split('&').forEach((kv) => {
+      const i = kv.indexOf('='); if (i < 0) return;
+      try { form[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); } catch (_) {}
+    });
+    f = form.f || f; t = form.t || t;
+  }
+  const want = await vpaProspectCancelToken(env, f);
+  if (!f || !want || !vpaSameSecret(t, want)) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
+  const prow = await vpaProspectRowFor(env, 'founding_id', f);
+  const vr = prow ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(prow.venue_id) + '&select=id,name,status,suspended_reason&limit=1') : [];
+  const v = vr && vr[0];
+  if (!prow || !v) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
+  const name = vpaEsc(v.name || 'your venue');
+  if (prow.cancelled_at) return page('All done', 'VenuePlay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.');
+  if (request.method !== 'POST') {
+    return page('Cancel VenuePlay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
+      '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
+      '<button type="submit" style="display:inline-block;background:#12101a;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
+  }
+  const at = new Date().toISOString();
+  await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
+  if (v.status === 'active') {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id), { method: 'PATCH', headers: vpaHeaders(env),
+      body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled' }) });
+  }
+  await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name });
+  return page('All done', 'VenuePlay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
+}
+/* A card has come in (the Checkout webhook, or the sweep noticing): reminders stop by themselves (the
+   sweep reads the card), and a venue the free month had paused comes straight back on. */
+async function vpaProspectCardAdded(env, foundingId) {
+  const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
+  if (!prow || !prow.paused_at) return false;
+  await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(prow.venue_id) + '&status=eq.suspended&suspended_reason=eq.free_month_ended', {
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'active', suspended_reason: null }) });
+  await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
+  return true;
+}
+/* ONE REMINDER EMAIL, emails/prospect-reminder.html. kind: 'early' (3, 10, 17, 24), 'last' (28, 29), 'final' (30). */
+async function vpaRenderProspectReminder(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const res = await fetch(site + '/emails/prospect-reminder.html');
+  if (!res.ok) return null;
+  const tpl = String(await res.text());
+  let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
+  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: o.offerRate < VPA_STANDARD_RATE, nooffer: !(o.offerRate < VPA_STANDARD_RATE) });
+  html = html
+    .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
+    .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
+    .replace(/{{ends_on}}/g, vpaEsc(o.endsWords))
+    .replace(/{{days_left}}/g, String(o.daysLeft))
+    .replace(/{{offer_rate}}/g, '$' + Number(o.offerRate).toFixed(2))
+    .replace(/{{standard_rate}}/g, '$' + VPA_STANDARD_RATE.toFixed(2))
+    .replace(/{{card_url}}/g, o.cardUrl)
+    .replace(/{{cancel_url}}/g, o.cancelUrl)
+    .replace(/{{terms_url}}/g, site + '/terms')
+    .replace(/{{privacy_url}}/g, site + '/privacy')
+    .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
+    .replace(/{{support_email}}/g, 'support@venueplay.com.au')
+    .replace(/{{signoff}}|Cheers,<br>Dean<br>VenuePlay/g, vpaProspectSignoff(''));   // from hello@, signed by the team (Dean, 29 Oct 2026)
+  const subject = o.kind === 'final' ? 'Last day of your free month at ' + (o.venueName || 'your venue')
+    : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + o.endsWords
+    : 'How is VenuePlay going at ' + (o.venueName || 'your venue') + '?';
+  return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
+}
+/* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
+async function vpaProspectReminderSweep(env, nowMs) {
+  const out = { started: 0, sent: [], paused: [], stopped: 0 };
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }
+  catch (e) { return Object.assign(out, { why: 'migration 127 not run' }); }
+  for (const p of rows) {
+    if (!('first_signin_at' in p)) return Object.assign(out, { why: 'migration 127 not run' });
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id&limit=1');
+    const v = vr && vr[0];
+    if (!v || vpaProspectGone(v)) continue;
+    const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
+    if (vpaProspectSignedUp(v, fr && fr[0])) { out.stopped++; continue; }   // a card, comp, invoice or group: no reminders, no pause
+    if (!p.first_signin_at) {
+      // Signed in without the setup guide telling us (another device, an old page): Auth knows.
+      let seen = null;
+      const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(p.venue_id) + '&select=auth_user_id');
+      const ids = (staff || []).map((s) => s.auth_user_id); if (p.auth_user_id && ids.indexOf(p.auth_user_id) === -1) ids.push(p.auth_user_id);
+      for (const id of ids) { const u = await vpaAuthGetUser(env, id); const t = u && Date.parse(u.last_sign_in_at || ''); if (isFinite(t) && t && (seen == null || t < seen)) seen = t; }
+      if (seen == null) continue;
+      await vpaProspectStartMonth(env, p, Math.min(seen, nowMs));
+      out.started++;
+    }
+    const firstMs = Date.parse(p.first_signin_at), endMs = Date.parse(p.free_month_ends_at) || vpaFreeMonthEnd(firstMs);
+    if (nowMs > endMs) {
+      if (v.status === 'active') {
+        await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id) + '&status=eq.active', {
+          method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'suspended', suspended_reason: 'free_month_ended' }) });
+      }
+      await vpaProspectPatch(env, p.venue_id, { paused_at: new Date(nowMs).toISOString() });
+      await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null });
+      out.paused.push(v.id);
+      continue;
+    }
+    if (!vpaInSendWindow(nowMs)) continue;
+    const sent = Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
+    const today = vpaBneDay(nowMs);
+    const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && sent.indexOf(r.day) === -1);
+    if (!due.length) continue;
+    const r = due[due.length - 1];
+    const email = p.email;
+    if (!email || !env.RESEND_API_KEY) continue;
+    const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
+    const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
+      endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
+      offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
+      cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id) });
+    if (!msg) continue;
+    const res = await fetch('https://api.resend.com/emails', { method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: VPA_PROSPECT_FROM, reply_to: VPA_PROSPECT_REPLY_TO, to: [email], subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+    if (!res || !res.ok) continue;
+    due.forEach((d) => { if (sent.indexOf(d.day) === -1) sent.push(d.day); });
+    await vpaProspectPatch(env, p.venue_id, { reminders_sent: sent });
+    await vpaAudit(env, { actorId: null, label: 'automatic (card reminder)' }, 'prospect_reminder_sent', 'venue:' + v.id, { day: r.day, kind: kind, skipped: due.length - 1 });
+    out.sent.push({ venue: v.id, day: r.day, kind: kind });
+  }
+  // A paused venue whose card has since come in, if the webhook's own switch-on did not land.
+  try {
+    const paused = await vpaSelectAll(env, 'vp_prospects', 'paused_at=not.is.null&cancelled_at=is.null&select=venue_id,founding_id&order=venue_id.asc');
+    for (const p of paused) {
+      const fr = p.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(p.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
+      if (vpaProspectSignedUp(null, fr && fr[0]) && await vpaProspectCardAdded(env, p.founding_id)) out.unpaused = (out.unpaused || 0) + 1;
+    }
+  } catch (_) {}
+  return out;
 }
 
 /* ===========================================================================
@@ -2958,6 +3247,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
     .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
     .replace(/{{player_count}}/g, String(parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS))
+    .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20VenuePlay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(env))
@@ -3110,9 +3400,12 @@ async function vpbCardLink(request, env, json) {
   const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,max_seats,stripe_subscription_id&limit=1');
   const f = fr && fr[0];
   if (!f) return json({ error: 'This venue has no account record yet. Reply to Dean\'s email and he will sort it.' }, 409);
-  const rate = vpaFoundingOpenNow(env) ? 2.50 : 3.00;
+  const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
+  const rate = vpaProspectPrice(env, prow).rate;   // a prospect keeps the offer they were set up on until a pause
   const seats = parseInt(f.max_seats, 10) || parseInt(vr[0].max_players, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
   const out = { ok: true, has_card: !!f.stripe_subscription_id, rate: rate, seats: seats, monthly: Math.round(seats * rate * 100) / 100 };
+  if (prow && prow.free_month_ends_at) { out.free_month_ends_at = prow.free_month_ends_at; out.ends_words = vpaBneDateWords(Date.parse(prow.free_month_ends_at)); }
+  if (prow && prow.paused_at) out.paused = true;
   if (!out.has_card) {
     out.card_url = await vpaCardLink(env, fid);
     if (!out.card_url) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
@@ -5784,7 +6077,10 @@ async function vpaAddCardRedirect(request, env) {
     // Founding vs standard is decided at the moment they add the card, on the SAME rule as a
     // self-serve signup: is the deal open. Not the postcode, which stopped deciding the price at
     // checkout on 17 Sep and left this path quietly charging $3.00 for the same thing.
-    const founding = vpaFoundingOpenNow(env);
+    /* A PROSPECT (migration 127): the offer they were set up on holds through their free month, and a pause
+       takes it away (vpaProspectPrice). Anyone else: is the deal open today, as before. */
+    const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
+    const founding = prow ? vpaProspectPrice(env, prow).founding : vpaFoundingOpenNow(env);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
       : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -5793,13 +6089,17 @@ async function vpaAddCardRedirect(request, env) {
     const nowTs = Math.floor(Date.now() / 1000);
     // Their free month starts when they add the card, not when HQ built the venue: they have not
     // had the product until now. Stripe rejects a trial_end under ~2 days out.
-    const trialTs = Math.max(nowTs + 30 * 24 * 60 * 60, nowTs + 3 * 24 * 60 * 60);
+    let trialTs = Math.max(nowTs + 30 * 24 * 60 * 60, nowTs + 3 * 24 * 60 * 60);
+    /* A prospect's free month started at their first sign-in (migration 127): a card added on day 10 is first
+       charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. */
+    if (prow && prow.paused_at) trialTs = 0;
+    else if (prow && prow.free_month_ends_at) trialTs = Math.max(Math.floor(Date.parse(prow.free_month_ends_at) / 1000), nowTs + 3 * 24 * 60 * 60);
 
     const form = new URLSearchParams();
     form.set('mode', 'subscription');
     form.set('line_items[0][price]', price);
     form.set('line_items[0][quantity]', String(seats));
-    form.set('subscription_data[trial_end]', String(trialTs));
+    if (trialTs) form.set('subscription_data[trial_end]', String(trialTs));
     form.set('subscription_data[metadata][venue]', f.venue_name || '');
     form.set('subscription_data[metadata][row_id]', foundingId);
     form.set('subscription_data[metadata][tier]', founding ? 'founding' : 'standard');
@@ -5816,7 +6116,7 @@ async function vpaAddCardRedirect(request, env) {
     form.set('metadata[is_group]', '0');
     form.set('metadata[venue_count]', '1');
     form.set('metadata[hq_onboarded]', '1');
-    form.set('metadata[trial_end]', String(trialTs));
+    if (trialTs) form.set('metadata[trial_end]', String(trialTs));
     form.set('success_url', site + '/?vp=success&session_id={CHECKOUT_SESSION_ID}');
     form.set('cancel_url', site + '/app');
 

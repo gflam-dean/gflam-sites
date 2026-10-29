@@ -3601,7 +3601,7 @@ def local_checks(which):
             # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
             ('D87. A prospect\'s welcome waits for HQ\'s delay and can be stopped, and the app walks them through setup one step at a time',
              'test-prospect-welcome-v2.js',
-             'a prospect\'s welcome is booked for HQ\'s delay and its link\'s 14 days start when it goes; cancel retires the link, send now sends a new one once; neither after its minute or by staff; the first run: mobile only after the texted code, the Terms tick, their TV and slides, a first game, their card, please call me; kept per venue', 98,
+             'a prospect\'s welcome is booked for HQ\'s delay and its link\'s 14 days start when it goes; cancel retires the link, send now sends a new one once; neither after its minute or by staff; the first run: mobile only after the texted code, the Terms tick, their TV and slides, a first game, their card, please call me; kept per venue', 101,
              'An email that lands the second a venue replied, a cancelled email whose button still signs in, a '
              'mobile put on a login nobody verified, or a guide that lets a venue past the Terms tick'),
             # D88: the prospect autopilot's one door (Dean, 29 Oct 2026), branch feature/prospect-autopilot.
@@ -3610,6 +3610,12 @@ def local_checks(which):
              'off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 30 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off', 38,
              'A guessed key setting up venues, a dry run that made a login, or a welcome that reached a venue '
              'before Dean could stop it'),
+            # D92: a prospect's free month, its card reminders and the pause (Dean, 29 Oct 2026; migration 127).
+            ('D92. A prospect\'s free month starts at first sign-in, reminds them on its days, and pauses with the offer gone if no card',
+             'test-prospect-free-month.js',
+             'the month starts once at the first sign-in (never View as); reminders on day 3, 10, 17, 24, 28, 29, 30 inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 45,
+             'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
+             'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

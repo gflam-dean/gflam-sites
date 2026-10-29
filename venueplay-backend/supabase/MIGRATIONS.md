@@ -422,3 +422,15 @@ each read from the account record. Backfills every earlier `prospect_set_up` aud
 public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it Set up a prospect still works (HQ is told,
 the phone is on the audit row) and the Prospects tab says "Run migration 125". After running, dump RLS-BASELINE.json (one new
 table). Branch `feature/prospects-tab`. RUN 29 Oct 2026 (RLS-BASELINE.json dumped after). Rollback: in the file.
+
+`venueplay-127-prospect-free-month.sql` (Dean, 29 Oct 2026, phase 2: "a prospect's free month starts at their FIRST SIGN-IN ... at
+the end of the free month with no card, PAUSE the account ... Pausing also makes them LOSE whatever deal they had"): columns on
+`vp_prospects` (125): first_signin_at, free_month_ends_at (11:59:59pm Brisbane on the 30th day after it), offer_rate (the price
+open when they were set up, kept through the month), card_choice/_at (Now or Later at the setup guide's card step),
+reminders_sent (jsonb, the days already sent), paused_at, cancelled_at. The billing Worker's hourly sweep
+(`vpaProspectReminderSweep`) sends the reminders on day 3, 10, 17, 24, 28, 29 and 30, 8am to 5pm Mon to Fri Brisbane, and
+pauses the venue (status suspended, reason free_month_ended; the TV keeps its ads) when the month ends with no card; a pause
+drops the offer price, and a card after it switches the venue back on (webhook and sweep). `/account/prospect-start`,
+`/account/card-choice`, `/prospect/cancel`. No new table or grant: RLS-BASELINE.json does not change. Run BEFORE the billing
+Worker; without it the Worker behaves as before (no month starts, no reminders, no pause). Branch `feature/prospects-tab`.
+RUN 29 Oct 2026 by Dean, read back after. Rollback: in the file.

@@ -68,7 +68,7 @@ function page(phone) {
     var c = { url: String(url), opts: opts || {}, body: opts && opts.body ? JSON.parse(opts.body) : null }; CALLS.push(c);
     var ans = { ok: true };
     if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, slides: [{ image_url: 'https://db/storage/v1/object/public/venue-ads/V1/a.png', seconds: 8 }, { image_url: 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg', seconds: 8 }] };
-    if (/\/account\/card-link$/.test(c.url)) ans = { ok: true, has_card: false, card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc', rate: 2.5, seats: 60, monthly: 150 };
+    if (/\/account\/card-link$/.test(c.url)) ans = { ok: true, has_card: false, card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc', rate: 2.5, seats: 60, monthly: 150, ends_words: 'Thu 26 Nov' };
     if (/\/help\/venue\/ticket$/.test(c.url)) ans = { ok: true, ticket_no: 1007 };
     if (/\/account\/compliance-accept$/.test(c.url)) ans = { ok: true, compliance_accepted_at: '2026-10-28T02:00:00.000Z', compliance_accepted_by: 'Amit' };
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(ans); } });
@@ -173,8 +173,16 @@ var __rnd = 11;
   await R.go('card');
   var cl = CALLS.filter(function (c) { return /\/account\/card-link$/.test(c.url); })[0];
   check('step 5 asks the billing Worker for THIS venue\'s card link', T(P, 'vpFrTitle') === "Add your card when you're ready" && cl && cl.body.venue_id === 'V1', cl);
-  check('the price line: $2.50 a player a month on the usual crowd, 60 is $150.00, first month free from the card, no lock-in', T(P, 'vpFrPrice') === "It's $2.50 a player a month on your usual crowd: 60 players is $150.00 a month. Your first month is free and starts the day you add your card. No lock-in.", T(P, 'vpFrPrice'));
-  check('"Add my card" is the card link, opening in a new tab', $(P, 'vpFrCard').getAttribute('href') === 'https://www.venueplay.com.au/add-card?f=F1&t=abc' && $(P, 'vpFrCard').getAttribute('target') === '_blank' && $(P, 'vpFrCard').style.display === 'block');
+  /* Phase 2 (Dean, 29 Oct 2026; migration 127): the free month started at their first sign-in, and ends on a day the Worker gives. */
+  check('the price line: $2.50 a player a month on the usual crowd, 60 is $150.00, the free month runs until its day and the card is not charged before then, no lock-in', T(P, 'vpFrPrice') === "It's $2.50 a player a month on your usual crowd: 60 players is $150.00 a month. Your free month runs until Thu 26 Nov, and your card won't be charged before then. No lock-in.", T(P, 'vpFrPrice'));
+  check('two equal choices side by side: "Add your card now" (the card link, a new tab) and "Later"', $(P, 'vpFrCard').getAttribute('href') === 'https://www.venueplay.com.au/add-card?f=F1&t=abc' && $(P, 'vpFrCard').getAttribute('target') === '_blank' &&
+    $(P, 'vpFrChoices').style.display === 'flex' && T(P, 'vpFrCard') === 'Add your card now' && T(P, 'vpFrLater') === 'Later' && /flex:1 1 150px/.test($(P, 'vpFrCard').style.cssText) && /flex:1 1 150px/.test($(P, 'vpFrLater').style.cssText));
+  check('the guide started their free month when it opened (/account/prospect-start, this venue)', CALLS.some(function (c) { return /\/account\/prospect-start$/.test(c.url) && c.body.venue_id === 'V1'; }));
+  $(P, 'vpFrLater').click(); for (var fl = 0; fl < 6; fl++) await Promise.resolve();
+  check('Later: says plainly a reminder email comes before the free month ends, and records the choice', T(P, 'vpFrCardMsg') === "No problem. We'll send you a reminder email to add your card before your free month ends." &&
+    CALLS.some(function (c) { return /\/account\/card-choice$/.test(c.url) && c.body.choice === 'later' && c.body.venue_id === 'V1'; }), T(P, 'vpFrCardMsg'));
+  $(P, 'vpFrCard').click(); for (var fl2 = 0; fl2 < 6; fl2++) await Promise.resolve();
+  check('Add your card now records the choice too', CALLS.some(function (c) { return /\/account\/card-choice$/.test(c.url) && c.body.choice === 'now'; }));
   check('the last button reads Finish', $(P, 'vpFrNext').textContent === 'Finish');
   check('"Need a hand? Tap here and Dean will call" is there, with nothing to type (their mobile is on the login)', /Need a hand\?/.test(T(P, 'vpFrBody')) && $(P, 'vpFrCall').textContent === 'Tap here and Dean will call' && $(P, 'vpFrCallWrap').style.cssText.indexOf('display:none') !== -1);
   await $(P, 'vpFrCall').click();
@@ -203,7 +211,7 @@ var __rnd = 11;
   check('opened twice, still one guide', n === 1, n);
   var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150 }); } }); };
   var R4 = P4.FR.open(ctxFor('manager'), P4.deps); await R4.ready; await R4.go('card');
-  check('a venue whose card is on: says thank you, no card link', /Your card is on\. Thank you\./.test(T(P4, 'vpFrCardMsg')) && hiddenEl($(P4, 'vpFrCard')));
+  check('a venue whose card is on: says thank you, no card link and no choices', /Your card is on\. Thank you\./.test(T(P4, 'vpFrCardMsg')) && hiddenEl($(P4, 'vpFrChoices')));
   await R4.go('tv');
   check('no slides yet: the TV step says how to add them, no broken image', hiddenEl($(P4, 'vpFrSlide')) && !$(P4, 'vpFrSlide').getAttribute('src') && /No slides yet\. Add your own ads any time under Account/.test(T(P4, 'vpFrCaption')));
   var P5 = page(); var R5 = P5.FR.open(ctxFor('manager'), P5.deps); await R5.go('card');

@@ -1,0 +1,74 @@
+<!--
+  VenuePlay transactional email: A PROSPECT'S CARD REMINDER (Dean, 29 Oct 2026; migration 127).
+  Sent by the billing Worker's hourly sweep (vpaProspectReminderSweep) while a prospect has no card: day 3, 10,
+  17 and 24 of their free month (early), then each of the last three days (last: 28 and 29; final: 30), only
+  8am to 5pm Monday to Friday Brisbane. Their free month started the first time they signed in.
+  WHAT HAPPENS, word for word with the code: there is no card on the account, so nothing can be charged. A card
+  added during the month is first charged when the month ends. With no card at the end the account PAUSES: the
+  games switch off, the TV keeps showing their ads, nothing is lost, and the offer price they were set up on goes
+  (a card added after that is at our price on that day). "Cancel, it's not for us" switches it off and stops
+  these emails; the link opens a page that asks first, so a mail scanner never cancels anybody.
+  Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
+  Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (were they
+  set up on an offer price).
+  Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
+    {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
+    {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
+  House rules: no em dashes, ACT not "the ACT", never "roster".
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your free month of VenuePlay at {{venue_name}} runs until {{ends_on}}.</div>
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <tr><td style="background:#12101a;padding:20px 28px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+      <tr><td style="padding:30px 28px 4px">
+<!--IF:early-->
+        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">How's it going?</h1>
+<!--ENDIF:early-->
+<!--IF:last-->
+        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">{{days_left}} days left of your free month</h1>
+<!--ENDIF:last-->
+<!--IF:final-->
+        <h1 style="margin:0;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Today is the last day of your free month</h1>
+<!--ENDIF:final-->
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{greeting}}</p>
+<!--IF:early-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from VenuePlay. Your free month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your free month ends.</p>
+<!--ENDIF:early-->
+<!--IF:last-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends on {{ends_on}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
+<!--ENDIF:last-->
+<!--IF:final-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends tonight. If you'd like to keep going, add your card today.</p>
+<!--ENDIF:final-->
+      </td></tr>
+      <tr><td style="padding:20px 28px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">If there's no card by the end</p>
+<!--IF:offer-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. The {{offer_rate}} a player offer you were set up on ends with the pause, so a card added after that is at our price on the day.</p>
+<!--ENDIF:offer-->
+<!--IF:nooffer-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on.</p>
+<!--ENDIF:nooffer-->
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
+              <td><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Add my card</a></td>
+            </tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:20px 28px 0">
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">If it's not for you, no problem at all. Tap below and we'll switch it off and stop these emails. Nothing has been charged.</p>
+        <p style="margin:12px 0 0"><a href="{{cancel_url}}" style="display:inline-block;background:#ffffff;color:#12101a;text-decoration:none;font-size:15px;font-weight:700;padding:12px 22px;border-radius:10px;border:1px solid #d8d8e0">Cancel, it's not for us</a></p>
+        <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
+      </td></tr>
+      <tr><td style="padding:26px 28px 26px">
+        <p style="margin:0 0 10px;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:16px">Need a hand? Just reply to this email, or call <a href="tel:{{support_tel}}" style="color:#8a8a95;text-decoration:none">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:#8a8a95">You are getting this because we set up VenuePlay for {{venue_name}} at your request. VenuePlay is made by Gflam Group Pty Ltd, ABN 35 679 383 049. <a href="{{terms_url}}" style="color:#8a8a95">Terms</a> &middot; <a href="{{privacy_url}}" style="color:#8a8a95">Privacy</a> &middot; <a href="{{unsubscribe_url}}" style="color:#8a8a95">Unsubscribe from product emails</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>

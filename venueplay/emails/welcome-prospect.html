@@ -17,16 +17,17 @@
   ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), samelogin (their mobile and email
   are already one VenuePlay login at another venue), founding / standard (offer).
   Merge fields:
-    {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told)
+    {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told) {{cancel_url}}
     {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (Dean, 29 Oct 2026: "Cheers," then whoever's mailbox the venue
     wrote to (sender_name from the autopilot), then VenuePlay, then venueplay.com.au; "The VenuePlay team"
     without one. The email itself always comes from hello@ and replies go to hello@.)
-  NOT A SIGN-UP THAT STARTS BILLING (Dean, 29 Oct 2026), worded to what the code does: a prospect's account has no
-  Stripe customer or subscription, so neither Worker can charge it (the game Worker's overage returns early with no
-  customer; nothing is invoiced). The 30-day trial starts on the add-card page, the day they add a card. With no
-  card the account stays as it is: no sweep stops it and nothing emails them about it. Only the top comment is
-  stripped before sending, so notes go here, never inside the body.
+  NOT A SIGN-UP THAT STARTS BILLING (Dean, 29 Oct 2026, phase 2, migration 127), worded to what the code does: a
+  prospect's account has no Stripe customer or subscription, so nothing can be charged. Their free month starts the
+  first time they sign in (/account/prospect-start). Reminders go on day 3, 10, 17, 24, 28, 29 and 30
+  (prospect-reminder.html). With no card at the end the account pauses (suspended, free_month_ended: games off,
+  TV keeps its ads) and the offer price they were set up on goes. {{cancel_url}} asks before it cancels. Only the
+  top comment is stripped before sending, so notes go here, never inside the body.
   House rules: no em dashes, ACT not "the ACT", never "roster".
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
@@ -77,7 +78,7 @@
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
 <!--ENDIF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is set up for {{player_count}} players to start with, and you can change that any time.</p>
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There&#39;s no card on your account, so nothing can be charged. If you decide to keep going, you add a card in the app and your free month starts that day. If it&#39;s not for you, no problem at all, there&#39;s nothing you need to do.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month is free, and it starts the first time you sign in. There&#39;s no card on your account, so nothing can be charged. You can add your card whenever suits, and we&#39;ll send you a reminder before your free month ends. If you don&#39;t add one, your account simply pauses and the offer price goes with it. If it&#39;s not for you, just hit <a href="{{cancel_url}}" style="color:#12101a;font-weight:700">cancel</a>.</p>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">

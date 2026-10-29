@@ -966,6 +966,17 @@
           : 'Nothing has been lost. Ask the venue owner to update the card on the account page, and everything comes straight back on, exactly as you left it.',
         link: owner ? { href: '/app/billing.html#pastDue', label: 'Update your card' } : null };
     }
+    /* A PROSPECT'S FREE MONTH RAN OUT WITH NO CARD (Dean, 29 Oct 2026; migration 127). Paused, not ended:
+       their TV keeps its ads, nothing is lost, a card switches it straight back on. The offer price they
+       were set up on went with the pause, so a card added now is at the price of the day. */
+    if (r === 'free_month_ended') {
+      return { reason: 'free_month_ended',
+        title: 'Your free month has ended, so your games are paused',
+        text: owner
+          ? 'Your TV keeps showing your ads and nothing has been lost. Add your card and everything comes straight back on, exactly as you left it. The offer price you were set up on ended with your free month, so your card is added at our price on the day you add it. If it is not for you, there is nothing you need to do.'
+          : 'Your TV keeps showing your ads and nothing has been lost. Ask the venue owner or a manager to add a card, and everything comes straight back on.',
+        link: owner ? { href: '#vp-card', label: 'Add your card' } : null };
+    }
     if (r === 'ended' || r === 'cancelled' || isArchived(v)) {
       return { reason: 'ended',
         title: "This venue's subscription has ended",
@@ -1029,6 +1040,22 @@
       }
     } else if (card.parentNode !== document.body) {
       document.body.appendChild(card);
+    }
+    /* The paused prospect's "Add your card" is their own signed card link, fetched for THIS venue
+       (/account/card-link, owner or manager only), never a link written into the page. */
+    var pay = document.getElementById('vpHoldPay');
+    if (pay && w.link && w.link.href === '#vp-card' && ctx && ctx.venue && ctx.venue.id) {
+      pay.setAttribute('aria-disabled', 'true');
+      try {
+        getClient().auth.getSession().then(function (r) {
+          var tok = (r && r.data && r.data.session && r.data.session.access_token) || '';
+          return fetch(BILLING_API + '/account/card-link', { method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'X-VP-Venue': String(ctx.venue.id) },
+            body: JSON.stringify({ venue_id: ctx.venue.id }) }).then(function (res) { return res.json(); });
+        }).then(function (j) {
+          if (j && j.card_url && /^https:\/\//.test(j.card_url)) { pay.setAttribute('href', j.card_url); pay.removeAttribute('aria-disabled'); }
+        }, function () {});
+      } catch (e) {}
     }
     var other = document.getElementById('vpHoldOther');
     if (other && opts && opts.other && typeof opts.other.onClick === 'function') {

@@ -579,6 +579,10 @@
   "checks": 38,
   "counted_by": "lines"
  },
+ "tools/test-prospect-free-month.js": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
  "tools/test-prospect-setup.js": {
   "checks": 112,
   "counted_by": "lines"
@@ -588,7 +592,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 98,
+  "checks": 101,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {

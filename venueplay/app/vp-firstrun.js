@@ -89,6 +89,7 @@
     if (state.step === "mobile" && ctx.user && ctx.user.phone) { state.step = "terms"; state.mobile = "done"; }
     var timers = [];
     var me = { phone: "", email: "", token: "" };
+    var started = null;   // their free month starts the first time they sign in (/account/prospect-start, below)
 
     function el(tag, css, text) { var e = doc.createElement(tag); if (css) e.setAttribute("style", css); if (text != null) e.textContent = text; return e; }
     function clearTimers() { timers.forEach(function (t) { try { stop(t); } catch (e) {} }); timers = []; }
@@ -271,11 +272,23 @@
     STEP.card = function () {
       var price = el("p", TEXT, "Your price is set on your usual crowd, not counted each time you play."); price.id = "vpFrPrice";
       body.appendChild(price);
-      var cardBtn = el("a", BTN_PINK + ";text-decoration:none;text-align:center;width:100%;display:none", "Add my card"); cardBtn.id = "vpFrCard";
+      /* TWO EQUAL CHOICES (Dean, 29 Oct 2026, phase 2): "Add your card now" (not charged until the free month
+         ends) or "Later" (a reminder email comes before it ends). Same size, side by side, no pressure. */
+      var choices = el("div", "display:none;gap:10px;flex-wrap:wrap"); choices.id = "vpFrChoices";
+      var cardBtn = el("a", BTN_PINK + ";text-decoration:none;text-align:center;flex:1 1 150px", "Add your card now"); cardBtn.id = "vpFrCard";
       cardBtn.setAttribute("target", "_blank"); cardBtn.setAttribute("rel", "noopener");
+      var later = el("button", BTN_GHOST + ";flex:1 1 150px", "Later"); later.id = "vpFrLater"; later.setAttribute("type", "button");
+      choices.appendChild(cardBtn); choices.appendChild(later);
       var cardMsg = msgLine("vpFrCardMsg");
-      body.appendChild(cardBtn); body.appendChild(cardMsg);
-      body.appendChild(el("p", "margin:12px 0 22px;font-size:13px;line-height:1.5;color:" + C.faint, "The link is secure and goes to our payment provider, Stripe. Nothing is charged when you add it."));
+      body.appendChild(choices); body.appendChild(cardMsg);
+      cardBtn.addEventListener("click", function () { billing("/account/card-choice", { venue_id: v.id, choice: "now" }); });
+      later.addEventListener("click", function () {
+        billing("/account/card-choice", { venue_id: v.id, choice: "later" });
+        cardMsg.style.color = C.ok;
+        cardMsg.textContent = "No problem. We'll send you a reminder email to add your card before your free month ends.";
+        return true;
+      });
+      body.appendChild(el("p", "margin:12px 0 22px;font-size:13px;line-height:1.5;color:" + C.faint, "The link is secure and goes to our payment provider, Stripe. Nothing is charged when you add it, and nothing until your free month ends."));
       var help = el("div", "border-top:1px solid " + C.line + ";padding-top:18px");
       help.appendChild(el("p", "margin:0 0 10px;font-size:15px;font-weight:700;color:#FFFFFF", "Need a hand?"));
       var callWrap = el("div", "display:none"); callWrap.id = "vpFrCallWrap";
@@ -305,8 +318,9 @@
         var d = a[1];
         if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; return "has_card"; }
         if (!d || !d.ok || !d.card_url) { cardMsg.textContent = (d && d.error) || "The card link could not load. Try again from Setup guide later."; return "error"; }
-        price.textContent = "It's " + money(d.rate) + " a player a month on your usual crowd: " + d.seats + " players is " + money(d.monthly) + " a month. Your first month is free and starts the day you add your card. No lock-in.";
-        cardBtn.setAttribute("href", d.card_url); cardBtn.style.display = "block";
+        price.textContent = "It's " + money(d.rate) + " a player a month on your usual crowd: " + d.seats + " players is " + money(d.monthly) + " a month. " +
+          (d.ends_words ? "Your free month runs until " + d.ends_words + ", and your card won't be charged before then." : "Your first month is free, and your card won't be charged before it ends.") + " No lock-in.";
+        cardBtn.setAttribute("href", d.card_url); choices.style.display = "flex";
         return "link";
       });
     };
@@ -341,6 +355,10 @@
     back.addEventListener("click", function () { api.back(); });
     x.addEventListener("click", function () { api.close(); });
     state.dismissed = false; save();
+    /* THE FREE MONTH STARTS NOW, the first time they are in (Dean, 29 Oct 2026, phase 2; migration 127). The
+       Worker sets it once and never moves it; a second sign-in changes nothing. */
+    started = billing("/account/prospect-start", { venue_id: v.id }).catch(function () { return null; });
+    api.started = started;
     api.ready = api.go(state.step);
     return api;
   }
