@@ -49,7 +49,7 @@ var URL = function (u) { var m = /^(https?:\/\/[^\/?#]+)([^?#]*)(\?[^#]*)?/.exec
 var Response = function (body, init) { this.body = body; this.status = (init && init.status) || 200; this.headers = (init && init.headers) || {}; };
 
 /* The fake database knows nothing of identity columns: number tickets the way Postgres would. */
-var nextNo = 1001, pushes = [], PUSH_STATUS = 201;
+var nextNo = 1001, pushes = [], PUSH_STATUS = 201, NO_MIG129 = false;
 var realFetch = globalThis.fetch;
 var ALLMAIL = [];   // every email the desk handed Resend, whole suite, never cleared
 globalThis.fetch = function (url, opts) {
@@ -77,7 +77,10 @@ globalThis.fetch = function (url, opts) {
     opts = Object.assign({}, opts, { body: JSON.stringify(ps) });
   }
   if (/\/rest\/v1\/vp_help_tickets/.test(url) && (opts.method || 'GET') === 'POST') {
-    var o = JSON.parse(opts.body); o.ticket_no = nextNo++; o.created_at = o.created_at || NOW(); o.updated_at = o.created_at;
+    var o = JSON.parse(opts.body);
+    /* NO_MIG129: the database before migration 129, which refuses a row naming a column it does not have, the way PostgREST does. */
+    var col129 = ['lead_venue_name', 'lead_locality', 'lead_website', 'venue_matched_by'].filter(function (c) { return c in o; })[0];
+    if (NO_MIG129 && col129) return Promise.resolve({ ok: false, status: 400, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{"code":"PGRST204","message":"Could not find the \'' + col129 + '\' column of \'vp_help_tickets\' in the schema cache"}'); } }); o.ticket_no = nextNo++; o.created_at = o.created_at || NOW(); o.updated_at = o.created_at;
     opts = Object.assign({}, opts, { body: JSON.stringify(o) });
   }
   return realFetch(url, opts);
@@ -202,7 +205,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   r = await call(helpPublicTicket, null, VENUE_PUB);
   t = r.body && T(r.body.ticket_no);
   check('a venue on /help makes VENUE support from the web form, VenuePlay', r.status === 200 && t && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'web_form', t);
-  check('the venue it typed is on the ticket for a person to read, and is never matched to a real venue', t && /^Venue help at The Royal Hotel, Tugun: /.test(t.subject) && /^Venue \(as typed\): The Royal Hotel, Tugun\n\nThe TV/.test(t.message) && t.venue_id === null, t);
+  // 29 Oct 2026: the typed venue is soft-matched now (one confident match only). "The Royal Hotel, Tugun" is one venue here.
+  check('the venue it typed is on the ticket for a person to read, and its one matching venue is attached', t && /^Venue help at The Royal Hotel, Tugun: /.test(t.subject) && /^Venue \(as typed\): The Royal Hotel, Tugun\n\nThe TV/.test(t.message) && t.venue_id === VA && t.venue_matched_by === 'name', t);
   check('its alert says Venue support', sent.some(function (m) { return /^\[VenuePlay\] Venue support \[#/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
   r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { category: 'accounts', device: 'v2', email: 'acc@royalhotel.com.au' }));
   check('"Billing or an invoice" on /help makes an ACCOUNTS ticket', r.status === 200 && T(r.body.ticket_no).category === 'accounts', T(r.body.ticket_no));
@@ -213,7 +217,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('PartyPlay has no venues: kind venue is refused there', (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { brand: 'partyplay', device: 'v5', email: 'v5@example.com' }))).status === 400);
   r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: '', venue: 'The Anchor', game: '', device: 'p9', email: 'p9@example.com' }));
   t = T(r.body.ticket_no);
-  check('a player on /help is player support from the patron form, with the venue they typed and no game guessed', r.status === 200 && t.category === 'patron_support' && t.channel === 'patron_form' && /^Player help at The Anchor: /.test(t.subject) && t.venue_id === null, t);
+  check('a player on /help is player support from the patron form, with the venue they typed (matched) and no game guessed', r.status === 200 && t.category === 'patron_support' && t.channel === 'patron_form' && /^Player help at The Anchor: /.test(t.subject) && t.venue_id === VB && t.venue_matched_by === 'name', t);
   check('a venue ticket from /help is still a public form: the honeypot catches a bot on it',
         (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { website: 'x', device: 'v6' }))).body.ticket_no === null);
 
@@ -291,7 +295,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
-  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue/ticket'", publicHelp);
+  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/ticket'", publicHelp);
 
   print('HQ: THE DESK');
   world();
@@ -819,6 +823,64 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var claim = VPF.patron.items.filter(function (i) { return /BINGO/.test(i.q); })[0];
   check('a bingo prize is claimed from the host, never the bar', claim && /claimed from the host, never the bar/.test(claim.a) && !/claim[^.]*from the bar/i.test(allWords.replace('never the bar', '')), claim && claim.a);
   check('each Help panel names its own support address', VPF.support_email === 'support@venueplay.com.au' && PPF.support_email === 'support@partyplay.com.au' && /support@venueplay\.com\.au/.test(words(VPF)) && /support@partyplay\.com\.au/.test(words(PPF)));
+
+  print('WHICH VENUE: THE SOFT MATCH, AND A SALES ENQUIRY NAMES ITS VENUE (29 Oct 2026)');
+  world();
+  DB.vp_venues[0].postcode = '4224'; DB.vp_venues[1].postcode = '4217';
+  DB.vp_venues.push({ id: U(103), name: 'The Royal Hotel', founding_id: 'fC', slug: 'royal-hotel-sydney', join_code: 'RYS111', postcode: '2000', status: 'active', created_at: '2026-01-03T00:00:00Z' });
+  var VM = function (body, ip) { return call(helpVenueMatchRoute, null, Object.assign({ brand: 'venueplay', device: 'vm-' + (ip || 1) }, body), { ip: ip || 40 }); };
+  r = await VM({ venue: 'ryl234' });
+  check('a join code typed into the box is that venue, by name', r.status === 200 && r.body.match === 'The Royal Hotel', r);
+  check('and the answer is the NAME and nothing else: no id, code or postcode', Object.keys(r.body).join() === 'match' && JSON.stringify(r.body).indexOf(VA) === -1 && !/RYL234|4224/.test(JSON.stringify(r.body)), r.body);
+  check('a live session’s code finds its venue too', (await VM({ venue: 'RYL234' })).body.match === 'The Royal Hotel' && (DB.vp_sessions.push({ id: U(202), venue_id: VB, join_code: 'LIVE77', status: 'lobby' }), (await VM({ venue: 'live77' })).body.match === 'The Anchor'));
+  check('a whole name, any case, is matched', (await VM({ venue: 'the ANCHOR' })).body.match === 'The Anchor');
+  check('part of a name is not ("Anchor")', (await VM({ venue: 'Anchor' })).body.match === null);
+  check('a name two venues share is NOT matched on its own', (await VM({ venue: 'The Royal Hotel' })).body.match === null);
+  check('the postcode picks one of them', (await VM({ venue: 'The Royal Hotel', place: '2000' })).body.match === 'The Royal Hotel' && (await VM({ venue: 'The Royal Hotel', place: '4224' })).body.match === 'The Royal Hotel');
+  check('so does a suburb in the venue’s link, typed in the same box', (await VM({ venue: 'The Royal Hotel, Sydney' })).body.match === 'The Royal Hotel');
+  check('a postcode that matches neither is no match', (await VM({ venue: 'The Royal Hotel', place: '3000' })).body.match === null);
+  check('one venue by the name, but a postcode that says otherwise: no match', (await VM({ venue: 'The Anchor', place: '4000' })).body.match === null);
+  check('wildcards typed into the box match nothing ("*", "%")', (await VM({ venue: 'The*' })).body.match === null && (await VM({ venue: '%%%%' })).body.match === null && (await VM({ venue: 'The Anch_r' })).body.match === null);
+  check('PartyPlay asks nothing (it has no venues)', (await VM({ venue: 'The Anchor', brand: 'partyplay' })).body.match === null);
+  var vmHits = 0, vmSlow = null;
+  for (var vi = 0; vi < 45; vi++) { var vr = await call(helpVenueMatchRoute, null, { brand: 'venueplay', venue: 'The Anchor', device: 'flood-' + vi }, { ip: 77 }); if (vr.status === 200 && vr.body.match) vmHits++; else if (!vmSlow) vmSlow = vr; }
+  check('the lookup is rate-limited per network: 40 in ten minutes, then nothing is looked up', vmHits === 40 && vmSlow && vmSlow.status === 429 && vmSlow.body.match === null, [vmHits, vmSlow]);
+  var vmDev = 0;
+  for (var vd = 0; vd < 35; vd++) { var vr2 = await call(helpVenueMatchRoute, null, { brand: 'venueplay', venue: 'The Anchor', device: 'one-phone' }, { ip: 100 + vd }); if (vr2.status === 200 && vr2.body.match) vmDev++; }
+  check('and per device: 30, whichever network it is on', vmDev === 30, vmDev);
+
+  var SALES = { brand: 'venueplay', kind: 'sales', name: 'Kim', email: 'kim@commercial.com.au', phone: '', message: 'Can we try trivia on Thursdays?',
+                venue_name: 'The Commercial Hotel', locality: 'Murwillumbah', venue_site: 'commercialhotel.com.au', device: 's-1' };
+  r = await call(helpPublicTicket, null, SALES);
+  t = r.body && T(r.body.ticket_no);
+  check('a sales enquiry keeps its venue, suburb and website as FIELDS (migration 129)', r.status === 200 && t && t.category === 'sales' && t.lead_venue_name === 'The Commercial Hotel' && t.lead_locality === 'Murwillumbah' && t.lead_website === 'commercialhotel.com.au', t);
+  check('and in the message and subject, for a person reading it', t && /^Venue: The Commercial Hotel\nSuburb or postcode: Murwillumbah\nWebsite: commercialhotel\.com\.au\n\nCan we try/.test(t.message) && /^Enquiry from The Commercial Hotel, Murwillumbah: /.test(t.subject), t && [t.subject, t.message]);
+  check('a venue we do not have is left unmatched', t && t.venue_id === null && !('venue_matched_by' in t), t);
+  var before = DB.vp_help_tickets.length;
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { locality: '', device: 's-2', email: 's2@example.com' }));
+  check('the suburb or postcode is required on the enquiry form', r.status === 400 && /suburb or postcode/.test(r.body.error), r);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { venue_name: ' ', device: 's-3', email: 's3@example.com' }));
+  check('and so is the venue name', r.status === 400, r);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { venue_site: 'javascript:alert(1)', device: 's-4', email: 's4@example.com' }));
+  check('a website that is not a website is refused', r.status === 400 && /website/.test(r.body.error), r);
+  check('refused enquiries made no tickets', DB.vp_help_tickets.length === before, DB.vp_help_tickets.length - before);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { venue_name: 'the royal hotel', locality: '4224', venue_site: '', device: 's-5', email: 's5@example.com' }));
+  t = r.body && T(r.body.ticket_no);
+  check('an enquiry from a venue we DO have attaches it, by name and postcode', r.status === 200 && t && t.venue_id === VA && t.venue_matched_by === 'name' && !t.lead_website, t);
+  r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: '', venue: 'somewhere else', venue_id: VB, game: '', device: 'p-x', email: 'px@example.com' }));
+  t = r.body && T(r.body.ticket_no);
+  check('a venue_id the page sends is ignored: only the Worker’s own match attaches a venue', r.status === 200 && t && t.venue_id === null, t);
+  r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'p-room', email: 'proom@example.com' }));
+  t = r.body && T(r.body.ticket_no);
+  check('a phone with a room code still matches by the room, and says so', t && t.venue_id === VA && t.venue_matched_by === 'room' && t.room_code === 'RYL234', t);
+  NO_MIG129 = true;
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 's-6', email: 's6@example.com' }));
+  t = r.body && T(r.body.ticket_no);
+  NO_MIG129 = false;
+  check('before migration 129 runs, the enquiry is still made, without the fields, and the venue is in the message', r.status === 200 && t && !('lead_venue_name' in t) && /^Venue: The Commercial Hotel\nSuburb or postcode: Murwillumbah/.test(t.message), [r, t]);
+  var srcHT = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  var mig = readFile('venueplay-backend/supabase/venueplay-129-help-ticket-lead-fields.sql');
+  check('every field the Worker writes is a column migration 129 adds', ['lead_venue_name', 'lead_locality', 'lead_website', 'venue_matched_by'].every(function (c) { return new RegExp('add column if not exists ' + c + '\\b').test(mig) && srcHT.indexOf('extra.' + c + ' =') !== -1; }));
 
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};

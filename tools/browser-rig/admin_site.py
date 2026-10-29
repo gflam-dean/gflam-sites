@@ -75,6 +75,14 @@ class BillingWorker(object):
     def table(self, name):
         return self._send({'ask': 'db', 'table': name})['body']
 
+    def env(self, **kv):
+        """Set the Worker's environment, e.g. FOUNDING_CODES (tools/site-offer-footer-in-chrome.test.py)."""
+        return self._send({'ask': 'env', 'set': kv})['body']
+
+    def stripe(self):
+        """Every call the Worker made to the fake Stripe: {url, body}."""
+        return self._send({'ask': 'stripe'})['body']
+
     def close(self):
         try:
             self.p.stdin.close()
@@ -268,9 +276,12 @@ class Site(object):
         return text
 
     # ---- the browser ----
-    def open(self, path, width=1280, height=900, mobile=False):
+    def open(self, path, width=1280, height=900, mobile=False, pre=None):
         tid, sid = self.B.open_tab('about:blank')
         self.B.call('Page.enable', {}, session=sid)
+        if pre:
+            # A script that runs before the page's own, on every document this tab loads (a fixed clock, say).
+            self.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre}, session=sid)
         self.B.call('Emulation.setDeviceMetricsOverride', {'width': width, 'height': height,
                     'deviceScaleFactor': 2 if mobile else 1, 'mobile': mobile}, session=sid)
         if mobile:

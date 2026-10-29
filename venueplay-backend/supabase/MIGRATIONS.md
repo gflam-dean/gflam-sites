@@ -459,3 +459,12 @@ choice. The Mac reads `GET /autopilot/decisions`, applies each with its own appr
 RLS on, no policies, revoked from public/anon/authenticated: service role only. Run BEFORE the billing Worker; without it the
 Mac falls back to the plain review with the command line. After running, dump RLS-BASELINE.json (one new table). Branch
 `feature/review-buttons`. RUN 30 Oct 2026 by Dean (read back: service 200, anon refused). Rollback: in the file.
+
+`venueplay-129-help-ticket-lead-fields.sql` (Dean's phone test, 29 Oct 2026: the "Bring VenuePlay to your venue" form must
+name the venue so a later job can set it up as a prospect): four nullable columns on `vp_help_tickets`, `lead_venue_name`
+(<= 120), `lead_locality` (suburb or postcode, <= 80), `lead_website` (<= 200), written on VenuePlay sales tickets, and
+`venue_matched_by` ('room' | 'code' | 'name'), how a PUBLIC ticket's venue_id was found by the billing Worker's soft match
+(`helpMatchVenue`: a join or live code, or a whole name with the suburb or postcode when several share it; one venue or
+none). One partial index for the sales leads. No new table, policy or grant, so RLS-BASELINE.json does not change. Run BEFORE
+the billing Worker; without it the Worker retries the insert without the four fields (the venue, suburb and website are also in
+the message), so no enquiry is lost. Branch `fix/site-mobile-sales-29oct`. RUN 30 Oct 2026 by Dean (read back: the four columns answer 200). Rollback: in the file.

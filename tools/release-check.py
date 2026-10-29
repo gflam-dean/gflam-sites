@@ -382,6 +382,14 @@ def js_prose(path):
     return '\n'.join(out)
 
 
+def offer_table_source():
+    """The monthly offer rows and WRITTEN_FOR. They lived inside venueplay/nsw.html until 29 Oct 2026,
+    when they moved to venueplay/app/vp-offer.js so the homepage could read the same answer (Dean's
+    phone test: the offer page said $2.50, the homepage card said $3 and "it never changes")."""
+    p = os.path.join(ROOT, 'venueplay', 'app', 'vp-offer.js')
+    return io.open(p, encoding='utf-8').read() if os.path.isfile(p) else ''
+
+
 def local_checks(which):
     head('A. Every script parses')
     files = []
@@ -1871,9 +1879,12 @@ def local_checks(which):
         # 20 Oct 2026: the words typed into the file are written for the row WRITTEN_FOR names
         # (the campaign being sent now), not always October. /offer-nov served "31 October" to
         # anything that read the HTML without running the script.
-        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", src)
+        # 29 Oct 2026: the rows and WRITTEN_FOR moved to /app/vp-offer.js, which the homepage
+        # reads too. The typed dates are still this file's.
+        tsrc = offer_table_source()
+        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", tsrc)
         key = wf.group(1) if wf else 'oct'
-        row = re.search(key + r":\s*\{\s*code:\s*'([A-Z]+)-([A-Z]{3})-(20\d\d)'", src)
+        row = re.search(key + r":\s*\{\s*code:\s*'([A-Z]+)-([A-Z]{3})-(20\d\d)'", tsrc)
         if not row:
             wrong.append('nsw.html has no %s row in OFFERS' % key)
             continue
@@ -1910,9 +1921,10 @@ def local_checks(which):
     if os.path.isfile(offer):
         osrc = io.open(offer, encoding='utf-8').read()
         owrong = []
-        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", osrc)
+        tsrc = offer_table_source()     # the rows and WRITTEN_FOR: /app/vp-offer.js since 29 Oct 2026
+        wf = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", tsrc)
         orow = wf and re.search(wf.group(1) + r":\s*\{\s*code:\s*'OFFER-([A-Z]{3})-(20\d\d)',\s*"
-                                 r"date:\s*'([^']+)',\s*day:\s*'([^']+)'", osrc)
+                                 r"date:\s*'([^']+)',\s*day:\s*'([^']+)'", tsrc)
         if not wf:
             owrong.append('nsw.html does not say which month its typed dates are for (var WRITTEN_FOR)')
         elif not orow:
@@ -2476,7 +2488,8 @@ def local_checks(which):
     today = _dt.date.today()
     gone, soon = [], []
     for f in files:
-        if not f.endswith('.html'):
+        # The offer rows themselves live in /app/vp-offer.js since 29 Oct 2026 (the homepage reads them too).
+        if not (f.endswith('.html') or f.endswith(os.path.join('app', 'vp-offer.js'))):
             continue
         for code in sorted(set(re.findall(r'\b(OFFER|[A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):
             st, mon, yr = code
@@ -3630,9 +3643,9 @@ def local_checks(which):
              'a login with no mobile is asked its name and mobile first, the mobile only through a verified phone change in the sign-in format; carry on for this sign-in only; a new link goes to the login\'s own email, retires older ones, one answer whatever happens, limited per network and per login; HQ resend is owner or accounts only; a login names only itself; the prospect welcome comes from and replies to hello@, signed by the sender_name the autopilot gives (checked: a plain name, one of our own mailboxes) or the team', 77,
              'A typo saved as the key to a venue\'s account, a host who can never sign in again after the 4 hour '
              'sign-out, a stranger told which addresses have a login, or one login renaming every member of staff'),
-            # D92: Dean's Yes / No / Edit buttons on the prospect review email (Dean, 29 Oct 2026; migration 128),
+            # D93: Dean's Yes / No / Edit buttons on the prospect review email (Dean, 29 Oct 2026; migration 128),
             # branch feature/review-buttons. (D91 is claimed by feature/helpdesk-easier and feature/prospects-tab.)
-            ('D92. Dean\'s Yes, No and Edit buttons record his choice once, from a signed link, and a mail scanner\'s GET does nothing',
+            ('D93. Dean\'s Yes, No and Edit buttons record his choice once, from a signed link, and a mail scanner\'s GET does nothing',
              'test-review-buttons.js',
              'only the Mac\'s key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round', 52,
              'A forwarded or guessed link sending a reply Dean never approved, a mail scanner approving a prospect '
@@ -3668,6 +3681,13 @@ def local_checks(which):
              'the built-in starter replies equal migration 126\'s rows; house rules on every one; fill-ins from the ticket; HQ-only add, change, delete, reorder; before the table exists the list falls back and saving says why; a left-in fill-in or the support line on a player or PartyPlay ticket is refused with no email; send and close closes', 78,
              'A player or a PartyPlay buyer emailed the venue support line, "Hi {first_name}" reaching a customer, '
              'a saved reply editable by a venue, or two copies of the starter set saying different things'),
+            # D95: which venue a public help or sales form means, and a sales enquiry that names its venue
+            # (Dean's phone test, 29 Oct 2026; migration 129), branch fix/site-mobile-sales-29oct.
+            ('D95. A public help or sales form is matched to one venue or none, and a sales enquiry keeps its venue as fields',
+             'test-help-desk.js',
+             'a join code, a live code or a whole name (with the suburb or postcode when several share it) matches one venue or nothing; the lookup answers a name only and is limited per network and per device; a venue_id the page sends is ignored; a sales enquiry needs the venue and its suburb or postcode, keeps them and the website as fields, and is still made before migration 129 runs', 306,
+             'A ticket filed against the wrong venue on a guess, a lookup that lists other venues or can be '
+             'hammered, or a sales lead that a later job cannot set up because its venue is only in the message'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,
@@ -5177,6 +5197,8 @@ def founding_windows_are_open():
     shut, unreachable = [], []
     for b in pages:
         src = io.open(os.path.join(root, b), encoding='utf-8').read()
+        if b == 'nsw.html':
+            src += offer_table_source()     # its rows are in /app/vp-offer.js since 29 Oct 2026
         # A state code (NSW-OCT-2026) or a month code (OFFER-NOV-2026, nsw.html, 25 Sep 2026). Read
         # whole: unanchored, OFFER-NOV-2026 came back as FER-NOV-2026, a code nobody could add.
         codes = sorted(set(re.findall(r'(?<![A-Z])(?:OFFER|[A-Z]{2,3})-[A-Z]{3}-20\d\d', src)))

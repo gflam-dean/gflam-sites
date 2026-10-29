@@ -1,0 +1,35 @@
+/* THE PUBLIC FOOTER ON A PHONE. One file for every public page that has the footer (home, the offer
+   page, help, terms, privacy), so it is fixed once and not five times.
+
+   Dean's phone test, 29 Oct 2026: at 390px the logo, "Powered by Gflam Touring", the Facebook and
+   Instagram icons and the link row did not line up (the icons sat off to one side, the links wrapped
+   raggedly with a dot left hanging at the end of a line), and the pink "Get started" / "Lock in your
+   price" bar covered the copyright line.
+
+   Desktop is unchanged: every rule here is inside a phone-width media query. */
+
+/* The link row: the links and the dots between them. On a wide screen it reads as before
+   ("Play · Game modes · Pricing"); on a phone the dots go and the links wrap as centred chips,
+   so a line never ends on a dot. */
+.foot-links{display:inline}
+.foot-links .dot{white-space:pre}
+
+@media (max-width:760px){
+  footer .foot{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px}
+  footer .foot > div:first-child{width:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
+  footer .foot > .foot-meta{width:100%;display:block}
+  footer .foot-brand{justify-content:center;align-items:center;text-align:center}
+  footer .powered{text-align:center;margin-left:auto;margin-right:auto}
+  footer .foot-social{justify-content:center;width:100%}
+  footer .foot-meta{text-align:center}
+  footer .foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;max-width:30ch;margin:0 auto 6px}
+  footer .foot-links .dot{display:none}
+  footer .foot-links + br{display:none}
+}
+
+/* THE STICKY BAR. On a phone the pink bar is fixed to the bottom of the screen (14px off it, about
+   55px tall). A page that has one gets that much more room under the footer, so the copyright line
+   scrolls clear of it instead of sitting underneath. */
+@media (max-width:560px){
+  body:has(.vp-float-cta) footer{padding-bottom:calc(46px + 84px + env(safe-area-inset-bottom, 0px))}
+}

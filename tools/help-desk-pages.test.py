@@ -448,10 +448,32 @@ def help_page_checks(b, VP):
         check(tag + ' sales: under the form, "or call 07 5228 3667", tappable, once, beside sales@venueplay.com.au',
               bool(sr) and sr['href'] == 'tel:+61752283667' and sr['text'] == '07 5228 3667' and sr['shown'] and sr['one'] and sr['line'] == 'Or email sales@venueplay.com.au, or call 07 5228 3667.', sr)
         t.shot('24-help-%s-sales' % tag)
+        # 29 Oct 2026 (Dean's phone test): the enquiry names its venue, as fields a later job can set up as a prospect.
+        labels = t.js('Array.prototype.map.call(document.querySelectorAll("#sales .vph-form label"),function(l){return l.textContent;}).join("|")') or ''
+        check(tag + ' sales: it asks for the venue name and its suburb or postcode, and the website as optional',
+              'Venue name|Suburb or postcode|Venue website (optional)' in labels and all(t.js('!!document.getElementById("%s")' % i) for i in ('vphLeadVenue-sales', 'vphLeadPlace-sales', 'vphLeadSite-sales')), labels)
+        n0 = len([x for x in posts(t) if x['path'] == '/help/ticket'])
         t.js('document.getElementById("vphName-sales").value="Lee";document.getElementById("vphEmail-sales").value="lee@pub.com.au";document.getElementById("vphMsg-sales").value="Pricing for two venues?";document.querySelector("#sales .vph-go").click()')
+        time.sleep(0.3)
+        check(tag + ' sales: no venue named, no send, and it says why',
+              len([x for x in posts(t) if x['path'] == '/help/ticket']) == n0 and 'venue' in (t.js('document.querySelector("#sales .vph-err").textContent') or ''))
+        t.js('window.__routes["/help/venue-match"]={body:{match:"The Royal Hotel"}};'
+             'var v=document.getElementById("vphLeadVenue-sales");v.value="the royal hotel";v.dispatchEvent(new Event("input"));'
+             'var p=document.getElementById("vphLeadPlace-sales");p.value="4224";p.dispatchEvent(new Event("input"));')
+        got = t.until('(document.getElementById("vphGot-sales")||{}).textContent', 6)
+        asked = ([x for x in posts(t) if x['path'] == '/help/venue-match'][-1:] or [{}])[0].get('body', {})
+        check(tag + ' sales: a venue we know shows "Got it: <name>" under the boxes before Send', got == 'Got it: The Royal Hotel', got)
+        check(tag + ' sales: and it asked with what was typed, the venue and the suburb or postcode', asked.get('venue') == 'the royal hotel' and asked.get('place') == '4224' and asked.get('brand') == 'venueplay', asked)
+        t.shot('24b-help-%s-sales-got-it' % tag)
+        t.js('window.__routes["/help/venue-match"]={body:{match:null}};var v=document.getElementById("vphLeadVenue-sales");v.value="The Commercial Hotel";v.dispatchEvent(new Event("input"));')
+        gone = t.until('(document.getElementById("vphGot-sales")||{textContent:"x"}).textContent === "" && document.querySelectorAll("#sales .vph-got").length === 1', 6)
+        check(tag + ' sales: a venue we do not know shows nothing, and nothing stops the send', gone is True, t.js('document.getElementById("vphGot-sales").textContent'))
+        t.js('document.getElementById("vphLeadSite-sales").value="commercialhotel.com.au";document.querySelector("#sales .vph-go").click()')
         t.until('!!document.querySelector("#sales .vph-done")', 8)
         bb = last_ticket(t).get('body', {})
         check(tag + ' sales: the ticket reaches the Worker as a SALES ticket', bb.get('kind') == 'sales' and bb.get('brand') == 'venueplay' and bb.get('name') == 'Lee', bb)
+        check(tag + ' sales: with the venue, suburb or postcode and website as their own fields',
+              bb.get('venue_name') == 'The Commercial Hotel' and bb.get('locality') == '4224' and bb.get('venue_site') == 'commercialhotel.com.au' and 'venue_id' not in bb, bb)
         errs = t.js('window.__errs') or []
         bad = t.js(OWN_FILES_BAD) or []
         check(tag + ': no console errors and none of the site\'s own files failed to load', not errs and not bad, errs + bad)

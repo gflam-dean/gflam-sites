@@ -141,6 +141,8 @@ export default {
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
+      // "Got it: <venue>" on the public forms (29 Oct 2026). Public, rate-limited, answers a venue NAME or nothing.
+      if (request.method === 'POST' && path === '/help/venue-match')       return await helpVenueMatchRoute(request, env, json);
       if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
       if (request.method === 'GET'  && path === '/help/content')           return await helpPublicContent(request, env, json);
       if (request.method === 'GET'  && path === '/help/config')            return json({ turnstile: env.TURNSTILE_SITEKEY || null });
@@ -13140,7 +13142,22 @@ async function helpInsertTicket(env, t) {
   row.contact_typed = !!t.contact_typed;
   if (t.contact_email_pending) row.contact_email_pending = helpLine(t.contact_email_pending, 200).toLowerCase();
   if (row.status === 'closed') row.closed_at = helpNow();
-  return await vpaInsert(env, 'vp_help_tickets', row);
+  /* MIGRATION 129 (29 Oct 2026): a sales enquiry's venue, suburb or postcode and website as their own
+     columns, and how a public ticket's venue was matched. Until the migration has run the database
+     refuses a row that names them, so the row goes again without them: the same words are in the
+     message, and an enquiry is never lost to a column that does not exist yet. */
+  const extra = {};
+  if (t.lead_venue_name) extra.lead_venue_name = helpLine(t.lead_venue_name, 120);
+  if (t.lead_locality) extra.lead_locality = helpLine(t.lead_locality, 80);
+  if (t.lead_website) extra.lead_website = helpLine(t.lead_website, 200);
+  if (row.venue_id && ['room', 'code', 'name'].indexOf(t.venue_matched_by) >= 0) extra.venue_matched_by = t.venue_matched_by;
+  if (!Object.keys(extra).length) return await vpaInsert(env, 'vp_help_tickets', row);
+  try {
+    return await vpaInsert(env, 'vp_help_tickets', Object.assign({}, row, extra));
+  } catch (e) {
+    if (!/lead_venue_name|lead_locality|lead_website|venue_matched_by/.test(String(e && e.message || e))) throw e;
+    return await vpaInsert(env, 'vp_help_tickets', row);
+  }
 }
 
 async function helpVenueName(env, venueId) {
@@ -13251,6 +13268,79 @@ async function helpVenueFromRoom(env, code, slug) {
   return out;
 }
 
+/* WHICH VENUE DID THEY TYPE? (Dean's phone test, 29 Oct 2026.) The public forms' venue was free text
+   that nothing ever looked at. This is a SOFT match, and only a confident one counts:
+     - a six-character code is a venue's join code (one venue), else a live session's code (one session);
+     - anything else is a venue NAME, matched whole and case-insensitively (no partial matches: "Royal"
+       finds nothing), and when several venues share the name, the suburb or postcode picks one or none.
+       "The Royal Hotel, Tugun" in one box is read as a name and a suburb.
+   One venue: { venue_id, name, by }. None, or more than one: null, and the ticket is made unmatched.
+   It never blocks a ticket and never says anything about a venue but its name. */
+const HELP_MATCH_MAX_ROWS = 6;
+function helpMatchKey(s) { return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim(); }
+async function helpMatchVenue(env, typed, place) {
+  let t = helpLine(typed, 120), p = helpLine(place, 80);
+  if (!t) return null;
+  const code = t.toUpperCase().replace(/\s+/g, '');
+  if (/^[A-Z0-9]{6}$/.test(code)) {
+    const v = await vpaSelect(env, 'vp_venues', 'join_code=eq.' + encodeURIComponent(code) + '&select=id,name&limit=2');
+    if (v && v.length === 1) return { venue_id: v[0].id, name: v[0].name || '', by: 'code' };
+    if (!v || !v.length) {
+      const s = await vpaSelect(env, 'vp_sessions', 'join_code=eq.' + encodeURIComponent(code) +
+        '&status=in.(lobby,running,paused)&select=venue_id&limit=2');
+      if (s && s.length === 1 && s[0].venue_id) return { venue_id: s[0].venue_id, name: await helpVenueName(env, s[0].venue_id), by: 'code' };
+    }
+  }
+  const tries = [[t, p]];
+  const comma = t.lastIndexOf(',');
+  if (comma > 0) tries.push([t.slice(0, comma).trim(), p || t.slice(comma + 1).trim()]);
+  for (const [name, where] of tries) {
+    const want = helpMatchKey(name);
+    if (want.length < 3) continue;
+    /* ilike with every wildcard character turned into a one-character wildcard, then compared whole
+       below, so the database can only ever hand back candidates and never decides the match. */
+    const pat = name.replace(/[*%_\\,()"]/g, '_');
+    const rows = await vpaSelect(env, 'vp_venues', 'name=ilike.' + encodeURIComponent(pat) +
+      '&select=id,name,postcode,slug&order=id.asc&limit=' + HELP_MATCH_MAX_ROWS);
+    const same = (rows || []).filter((r) => helpMatchKey(r.name) === want);
+    if (!same.length) continue;
+    const pc = /^\d{4}$/.test(where) ? where : '';
+    const sub = pc ? '' : helpMatchKey(where);
+    const placeOk = (r) => pc ? String(r.postcode || '') === pc
+      : (helpMatchKey(r.name).indexOf(sub) >= 0 || String(r.slug || '').replace(/-/g, ' ').indexOf(sub) >= 0);
+    let pick = null;
+    if (same.length === 1) {
+      // One venue by that name. A postcode that says otherwise makes it a different venue.
+      if (!(pc && same[0].postcode && String(same[0].postcode) !== pc)) pick = same[0];
+    } else if (where && (pc || sub.length >= 3)) {
+      const narrowed = same.filter(placeOk);
+      if (narrowed.length === 1) pick = narrowed[0];
+    }
+    if (pick) return { venue_id: pick.id, name: pick.name || '', by: 'name' };
+    return null;    // the name matched, but not one venue: never guess
+  }
+  return null;
+}
+
+/* POST /help/venue-match {brand, venue, place}. The form asks while the person is typing, so it can say
+   "Got it: The Royal Hotel" before they press Send. Public, so it says as little as it can: the matched
+   venue's NAME or nothing, never an id, a code, a postcode, or how many venues nearly matched. Limited
+   per network and per device, and the ticket route does the match again for itself: nothing the page
+   sends back can attach a ticket to a venue. */
+const HELP_MATCH_PER_IP = 40;     // in ten minutes. A pub's wifi is one address for the whole room.
+async function helpVenueMatchRoute(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'vm', ip, HELP_MATCH_PER_IP, 600))) return json({ match: null, slow: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  if (b.brand === 'partyplay') return json({ match: null });
+  const device = helpLine(b.device, 64);
+  if (device && !(await helpLimit(env, 'vm:dev:' + device, 30, 600))) return json({ match: null, slow: true }, 429);
+  const m = await helpMatchVenue(env, b.venue, b.place);
+  return json({ match: m ? (m.name || 'your venue') : null });
+}
+
 /* ------------------------------ POST /help/ticket (public) ------------------------------
    brand venueplay: kind patron (a phone), venue (the public /help page: someone at a venue who is
    not signed in, so the venue is what they TYPED, never a venue id; category venue_support or
@@ -13272,8 +13362,27 @@ async function helpPublicTicket(request, env, json) {
   const kind = ['patron', 'host', 'sales', 'venue'].indexOf(b.kind) >= 0 ? b.kind : 'patron';
   if (brand === 'venueplay' && kind === 'host') return json({ error: 'Sign in to the console and use Help there.' }, 400);
   if (brand === 'partyplay' && kind === 'venue') return json({ error: 'Which help is this?' }, 400);
-  // The venue as typed on the help page. Words for a person to read, never used to find a venue.
+  // The venue as typed on the help page. Kept as typed for a person to read; since 29 Oct 2026 it is
+  // also SOFT-matched to a venue (helpMatchVenue), which only ever attaches one confident match.
   const typedVenue = brand === 'venueplay' ? helpLine(b.venue, 120) : '';
+  /* A VenuePlay sales enquiry names its venue (Dean, 29 Oct 2026): the venue name and its suburb or
+     postcode are required, its website optional, and they are kept as fields (migration 129) so a
+     later job can set the venue up as a prospect. */
+  let lead = null;
+  if (brand === 'venueplay' && kind === 'sales') {
+    lead = { name: helpLine(b.venue_name, 200), place: helpLine(b.locality, 200), site: helpLine(b.venue_site, 300) };
+    // The enquiry form sends both fields and both are required. The /help venue form's "Bringing
+    // VenuePlay to my venue" has one "Your venue" box ("The Royal Hotel, Tugun"): read it as the two.
+    const asked = b.venue_name !== undefined || b.locality !== undefined;
+    if (!lead.name && typedVenue) {
+      const c = typedVenue.lastIndexOf(',');
+      lead.name = c > 0 ? typedVenue.slice(0, c).trim() : typedVenue;
+      if (!lead.place && c > 0) lead.place = typedVenue.slice(c + 1).trim();
+    }
+    if (asked && (!lead.name || !lead.place)) return json({ error: 'Tell us the venue and its suburb or postcode.' }, 400);
+    if (lead.name.length > 120 || lead.place.length > 80 || lead.site.length > 200) return json({ error: 'The venue details are too long.' }, 400);
+    if (lead.site && !/^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+([\/?#][^\s<>"]*)?$/i.test(lead.site)) return json({ error: 'That website does not look right. Leave it blank if you are not sure.' }, 400);
+  }
   const support = 'support@' + brand + '.com.au';
   const name = helpLine(b.name, 200);
   const email = helpLine(b.email, 300).toLowerCase();
@@ -13294,10 +13403,16 @@ async function helpPublicTicket(request, env, json) {
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
   let where = { venue_id: null, session_id: null, room_code: null };
-  if (brand === 'venueplay' && kind === 'patron') where = await helpVenueFromRoom(env, b.code, b.slug);
+  let matchedBy = null;
+  if (brand === 'venueplay' && kind === 'patron') { where = await helpVenueFromRoom(env, b.code, b.slug); if (where.venue_id) matchedBy = 'room'; }
   else {
     const c = String(b.code || '').trim().toUpperCase();
     if (/^[A-Z0-9]{4,8}$/.test(c)) where.room_code = c;    // a PartyPlay party code, as typed
+  }
+  // Nothing from the room: try what they typed. A confident single venue, or none.
+  if (brand === 'venueplay' && !where.venue_id && (typedVenue || (lead && lead.name))) {
+    const m = await helpMatchVenue(env, lead && lead.name ? lead.name : typedVenue, lead && lead.name ? lead.place : b.place);
+    if (m) { where.venue_id = m.venue_id; matchedBy = m.by; }
   }
   const game = helpLine(b.game, 24).toLowerCase().replace(/[^a-z ]/g, '');
   // From the guided triage: the issue, as the database has it, names the ticket and picks its kind.
@@ -13305,14 +13420,17 @@ async function helpPublicTicket(request, env, json) {
   const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support'
                  : kind === 'venue' ? helpPublicVenueCategory(b.category) : 'patron_support';
   const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
-  const at = typedVenue ? ' at ' + typedVenue : '';
+  const at = typedVenue ? ' at ' + typedVenue : lead && lead.name ? ' from ' + lead.name + (lead.place ? ', ' + lead.place : '') : '';
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: category, channel: kind === 'sales' || kind === 'venue' ? 'web_form' : 'patron_form',
       title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
-      message: (typedVenue ? 'Venue (as typed): ' + typedVenue + '\n\n' : '') + message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
-      venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id,
+      message: (typedVenue ? 'Venue (as typed): ' + typedVenue + '\n\n' : '') +
+               (lead && lead.name && !typedVenue ? 'Venue: ' + lead.name + '\nSuburb or postcode: ' + lead.place + (lead.site ? '\nWebsite: ' + lead.site : '') + '\n\n' : '') +
+               message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
+      venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id, venue_matched_by: matchedBy,
+      lead_venue_name: lead ? lead.name || null : null, lead_locality: lead ? lead.place || null : null, lead_website: lead ? lead.site || null : null,
     });
   } catch (e) {
     return json({ error: 'We could not send that just now. Please email ' + support + '.' }, 503);

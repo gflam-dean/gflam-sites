@@ -248,6 +248,10 @@
   .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:var(--fs-lg)}
   .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
   .price-row.found .pv{color:var(--pink)}
+  /* The rows sit in #priceRows (so the month's offer can replace them), which made the last one :last-child. */
+  #priceRows .price-row:last-child{border-bottom:1px solid var(--line);padding-bottom:14px}
+  .price-row.after .pv{color:#fff}
+  .price-row .pv s{color:var(--muted-2);text-decoration-color:var(--pink);font-weight:500;margin-right:4px}
   .price-foot{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2);margin-top:20px;line-height:1.6}
 
   /* ---------- INCLUDED ---------- */
@@ -564,6 +568,7 @@
      Placed in the head so a bounce still registers. -->
 <script src="/app/vp-analytics.js"></script>
 <script src="/app/vp-pixel.js"></script>
+<link rel="stylesheet" href="/app/vp-footer.css">
 </head>
 <body>
 
@@ -661,7 +666,7 @@
         <a class="btn btn-primary" href="#claim" data-cta="hero-claim">Start your free month</a>
         <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
       </div>
-      <p class="h2-price"><b>First month free.</b> Then a pub with 30 players pays $90 a month. No lock-in, cancel anytime.</p>
+      <p class="h2-price"><b>First month free.</b> <span id="heroRate">Then a pub with 30 players pays $90 a month.</span> No lock-in, cancel anytime.</p>
       <p class="hero-note">Built by Gflam Touring, who run live entertainment nights in venues across Australia.</p>
     </div>
     <div class="h2-show" aria-label="VenuePlay running a sample night">
@@ -835,11 +840,12 @@
       <div class="offer-grid">
         <div>
           <div class="label">Pricing</div>
-          <h2 class="sec-title">$3 per player.<br>Simple and flat.</h2>
-          <p class="sec-sub">One simple rate: $3 per player a month, based on your venue's max players per session. No packs, no add-ons, no lock-in. Pay monthly, or save with annual.</p>
+          <h2 id="offerTitle" class="sec-title">$3 per player.<br>Simple and flat.</h2>
+          <p class="sec-sub" id="offerSub">One simple rate: $3 per player a month, based on your venue's max players per session. No packs, no add-ons, no lock-in. Pay monthly, or save with annual.</p>
         </div>
-        <div class="price-card">
+        <div class="price-card" id="priceCard">
           <div class="price-eyebrow">Per player · per month</div>
+          <div id="priceRows">
           <div class="price-row found">
             <div class="pl"><b>Monthly</b>per player, per month</div>
             <div class="pv">$3.00</div>
@@ -848,7 +854,8 @@
             <div class="pl"><b>Annual</b>billed yearly · best value</div>
             <div class="pv">$2.85</div>
           </div>
-          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is $3 per player, per month, and it never changes.</p>
+          </div>
+          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. <span id="priceFootRate">Your rate is $3 per player, per month, and it never changes.</span></p>
         </div>
       </div>
       <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
@@ -870,7 +877,7 @@
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>A smart TV, a projector, a laptop via HDMI, or a streaming stick, your call.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Run it your way</strong><span>Bingo, raffles and members draws as often as you like. Trivia and musical bingo, a fresh night once a week.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Built for your bar staff</strong><span>Set up and run a round without a tech in the room.</span></div></li>
-      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Simple, flat pricing</strong><span>$3 per player, per month. No packs, no surprises.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Simple, flat pricing</strong><span id="inclPrice">$3 per player, per month. No packs, no surprises.</span></div></li>
     </ul>
   </div>
 </section>
@@ -951,8 +958,8 @@
             <div class="field full">
               <label>Plan</label>
               <div class="seg" id="vp-plan">
-                <button type="button" class="on" data-plan="monthly">Monthly<small>$3.00 / player</small></button>
-                <button type="button" data-plan="annual">Annual<small>$2.85 / player</small></button>
+                <button type="button" class="on" data-plan="monthly">Monthly<small id="planMonthlyRate">$3.00 / player</small></button>
+                <button type="button" data-plan="annual">Annual<small id="planAnnualRate">$2.85 / player</small></button>
               </div>
             </div>
           </div>
@@ -1031,11 +1038,11 @@
     </div>
     <div class="faq">
       <details class="q"><summary>Can I put it on more than one screen?<span class="pm"></span></summary><div class="a">As many as you like, at no extra cost. Open the same screen link on each one and they all show the same thing at the same moment. Worth doing if you have a bistro that cannot see the main bar's telly, or a beer garden with its own screen: people stay in the game instead of drifting off.</div></details><details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Is tonight too soon? You can sign up and start straight away.</div></details>
-      <details class="q"><summary>How much does it cost?<span class="pm"></span></summary><div class="a">$3 per player a month, based on your venue's max players per session. Pay monthly, or save with annual at $2.85 a player. No setup fees, no packs to buy, no lock-in.</div></details>
+      <details class="q"><summary>How much does it cost?<span class="pm"></span></summary><div class="a" id="faqCost">$3 per player a month, based on your venue's max players per session. Pay monthly, or save with annual at $2.85 a player. No setup fees, no packs to buy, no lock-in.</div></details>
       <details class="q"><summary>What about regulars who won't use a phone?<span class="pm"></span></summary><div class="a">They can still play trivia and musical bingo on paper. Print up to ten trivia answer sheets or musical bingo cards a night from the host console, before the night starts. Trivia teams on paper hand their sheet to the host at the end of each round, before the answers go up on the screen, and the host adds their score to the leaderboard. A paper musical bingo card is checked by typing its number into the console. Paper players count towards your players and your bill the same as phones do. Moving a trivia crowd over from paper? In your free month you can print a trivia sheet for every player on your plan, so your regulars can switch across at their own pace. VenuePlay does not print bingo tickets. For bingo, keep using the paper books you already buy, and the host checks those wins against the board.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $3 a player, or yearly for $2.85 a player. New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. <span id="faqBillingRate">Pay monthly at $3 a player, or yearly for $2.85 a player.</span> New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.</div></details>
       <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">Nothing happens without your host. Set your max to your usual room, and the moment a night runs over it your host sees what it costs and taps OK before the game starts, so you are never billed for a night nobody agreed to. Extra players are $2 each for that night. Go over three nights running and that is your crowd, not a big night: the third one is $1 a head and we lift your max to the number you hit all three times, from your next bill. It works out cheaper than paying per head every week. You can drop back any time from your account, and we always email before your bill changes.</div></details>
       <details class="q"><summary>Can I change my max players?<span class="pm"></span></summary><div class="a">Any time, from your account. Adding players applies straight away so you are covered that night, and the extra is on your next bill. Dropping down takes effect at your next renewal, so you keep what you have paid for until then. On an annual plan, added players are charged pro rata to your renewal date, and if you drop your max the unused value is not lost: it is held as a credit against your next renewal.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
@@ -1111,7 +1118,7 @@
       <div class="foot-social"><a href="https://www.facebook.com/people/VenuePlay/61589892656207/" target="_blank" rel="noopener" aria-label="VenuePlay on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.5 1.6-1.5h1.7V4.4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v2.4H7.6V14h2.8v8h3.1z"/></svg></a><a href="https://www.instagram.com/venueplay/" target="_blank" rel="noopener" aria-label="VenuePlay on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm5.9-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0zM12 3.8c2.7 0 3 0 4 .1 1 0 1.5.2 1.9.3.5.2.8.4 1.2.8.4.4.6.7.8 1.2.1.4.3.9.3 1.9.1 1 .1 1.4.1 4s0 3-.1 4c0 1-.2 1.5-.3 1.9-.2.5-.4.8-.8 1.2-.4.4-.7.6-1.2.8-.4.1-.9.3-1.9.3-1 .1-1.4.1-4 .1s-3 0-4-.1c-1 0-1.5-.2-1.9-.3a3.2 3.2 0 0 1-1.2-.8 3.2 3.2 0 0 1-.8-1.2c-.1-.4-.3-.9-.3-1.9-.1-1-.1-1.4-.1-4s0-3 .1-4c0-1 .2-1.5.3-1.9.2-.5.4-.8.8-1.2.4-.4.7-.6 1.2-.8.4-.1.9-.3 1.9-.3 1-.1 1.4-.1 4-.1zM12 2c-2.7 0-3.1 0-4.1.1-1.1 0-1.8.2-2.4.5-.7.2-1.2.6-1.8 1.1-.5.6-.9 1.1-1.1 1.8-.3.6-.5 1.3-.5 2.4C2 8.9 2 9.3 2 12s0 3.1.1 4.1c0 1.1.2 1.8.5 2.4.2.7.6 1.2 1.1 1.8.6.5 1.1.9 1.8 1.1.6.3 1.3.5 2.4.5 1 .1 1.4.1 4.1.1s3.1 0 4.1-.1c1.1 0 1.8-.2 2.4-.5.7-.2 1.2-.6 1.8-1.1.5-.6.9-1.1 1.1-1.8.3-.6.5-1.3.5-2.4.1-1 .1-1.4.1-4.1s0-3.1-.1-4.1c0-1.1-.2-1.8-.5-2.4a4.9 4.9 0 0 0-1.1-1.8 4.9 4.9 0 0 0-1.8-1.1c-.6-.3-1.3-.5-2.4-.5C15.1 2 14.7 2 12 2z"/></svg></a></div>
     </div>
     <div class="foot-meta">
-      <a href="/play">Play</a> · <a href="#modes">Game modes</a> · <a href="#offer">Pricing</a> · <a href="#faq">FAQs</a> · <a href="/help">Help</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
+      <span class="foot-links"><a href="/play">Play</a><span class="dot" aria-hidden="true"> · </span><a href="#modes">Game modes</a><span class="dot" aria-hidden="true"> · </span><a href="#offer">Pricing</a><span class="dot" aria-hidden="true"> · </span><a href="#faq">FAQs</a><span class="dot" aria-hidden="true"> · </span><a href="/help">Help</a><span class="dot" aria-hidden="true"> · </span><a href="#contact">Contact</a><span class="dot" aria-hidden="true"> · </span><a href="/privacy">Privacy</a><span class="dot" aria-hidden="true"> · </span><a href="/terms">Terms</a></span><br>
       <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
       &copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as VenuePlay
     </div>
@@ -1121,6 +1128,7 @@
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
 <script src="/app/vp-trusted.js"></script>
+<script src="/app/vp-offer.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
@@ -1140,7 +1148,16 @@
   var _SBU = 'https://ijkzgmdtwtgfkedqspxm.supabase.co';
   var _SBK = 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
   var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
-  var PRICE = { monthly: 3.00, annual: 2.85 };
+  /* THE PRICE ON THIS PAGE IS THE OFFER PAGE'S PRICE (Dean's phone test, 29 Oct 2026). The offer
+     page said "$2.50 a player, if you lock it in by 30 November" while this card said $3 and "it
+     never changes". Both now read /app/vp-offer.js: while the month's offer is in date this page
+     shows it and sends its code with the signup (so the venue is charged what the card says), and
+     if the billing Worker says the code is shut it goes back to the standard rate (vpOfferShut
+     below). The words typed into this file stay the standard rate: that is what a reader with no
+     JavaScript, and anyone after the offer ends, is told. */
+  var OFFER = (window.VPOffer && VPOffer.current()) || null;
+  var STANDARD = window.VPOffer ? VPOffer.RATES.standard : { monthly: 3.00, annual: 2.85 };
+  var PRICE = OFFER ? VPOffer.RATES.offer : STANDARD;
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
   // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
@@ -1365,7 +1382,7 @@
     var n = venueRows().length;
     var suffix = n > 1 ? ' across ' + n + ' venues' : '';
     if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
-    var tier = groupTier(seats);   // standard pricing, so the volume tiers apply (matches the Worker)
+    var tier = OFFER ? null : groupTier(seats);   // the volume tiers are for standard pricing only (matches the Worker)
     var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
     var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
     var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
@@ -1377,6 +1394,66 @@
     }
   }
   renderEstimate();
+
+  /* ---------- The month's offer, when one is running (/app/vp-offer.js) ----------
+     Every price below is worked out from VPOffer.RATES and the offer row's own dates; nothing here
+     types a price or a date. The originals are kept, so a code the Worker says is shut puts the
+     standard-rate words back exactly as they are typed in this file. */
+  var offerEls = ['heroRate', 'offerTitle', 'offerSub', 'priceRows', 'priceFootRate', 'inclPrice',
+                  'planMonthlyRate', 'planAnnualRate', 'faqCost', 'faqBillingRate'];
+  var offerWas = {};
+  function money(n) { return '$' + (n % 1 ? n.toFixed(2) : String(n)); }
+  function money2(n) { return '$' + n.toFixed(2); }
+  function offerWords(o) {
+    var R = VPOffer.RATES.offer, S = VPOffer.RATES.standard;
+    var row = function (label, sub, was, now, cls) {
+      return '<div class="price-row ' + cls + '"><div class="pl"><b>' + label + '</b>' + sub + '</div><div class="pv">' +
+             (was ? '<s>' + money2(was) + '</s> ' : '') + money2(now) + '</div></div>';
+    };
+    return {
+      heroRate: 'Then a pub with 30 players pays ' + money(30 * R.monthly) + ' a month, if you join by ' + o.day + '.',
+      offerTitle: money(R.monthly) + ' a player,<br>if you join by ' + o.day + '.',
+      offerSub: 'Our standard rate is ' + money(S.monthly) + ' a player a month. Venues that join before ' + o.date +
+                ' lock in ' + money(R.monthly) + ' per player a month for as long as they stay, with the first month free. ' +
+                'After ' + o.day + ' this offer ends, and the rate is ' + money(S.monthly) + '.',
+      priceRows: row('Monthly', 'locked for life', S.monthly, R.monthly, 'found') +
+                 row('Annual', 'billed yearly · best value', S.annual, R.annual, 'found') +
+                 row('After ' + o.day, 'the standard rate', 0, S.monthly, 'after'),
+      priceFootRate: 'Join by ' + o.day + ' and ' + money(R.monthly) + ' a player is your rate for as long as your subscription stays active. ' +
+                     'Cancel and that rate ends for good, so rejoining later is at the standard rate of ' + money(S.monthly) + '.',
+      inclPrice: money(R.monthly) + ' per player, per month, locked in if you join by ' + o.day + '. No packs, no surprises.',
+      planMonthlyRate: money2(R.monthly) + ' / player',
+      planAnnualRate: money2(R.annual) + ' / player',
+      faqCost: money(R.monthly) + ' per player a month if you join by ' + o.day + ', and that stays your rate for as long as you stay ' +
+               '(the standard rate is ' + money(S.monthly) + '). It is based on your venue’s max players per session. Pay monthly, or save with annual at ' +
+               money2(R.annual) + ' a player. No setup fees, no packs to buy, no lock-in.',
+      faqBillingRate: 'Join by ' + o.day + ' and you pay ' + money(R.monthly) + ' a player monthly, or ' + money2(R.annual) + ' a player yearly, for as long as you stay.'
+    };
+  }
+  function putOffer(words) {
+    offerEls.forEach(function (id) {
+      var el = document.getElementById(id); if (!el) return;
+      if (!(id in offerWas)) offerWas[id] = el.innerHTML;
+      el.innerHTML = words ? words[id] : offerWas[id];
+    });
+  }
+  if (OFFER) {
+    putOffer(offerWords(OFFER));
+    document.documentElement.setAttribute('data-offer', OFFER.code);
+    /* Ask the billing Worker, once, whether the code is still open: FOUNDING_CODES decides the price.
+       Shut: back to the standard rate, and the signup stops sending the code. Could not ask: the
+       offer stays, as on the offer page (checkout asks the Worker again and charges what it says). */
+    if (workerReady) fetch(VP_WORKER + '/founding?code=' + encodeURIComponent(OFFER.code))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || d.open !== false) return;
+        OFFER = null; PRICE = STANDARD;
+        putOffer(null);
+        document.documentElement.removeAttribute('data-offer');
+        renderEstimate();
+      })
+      .catch(function () {});
+  }
 
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
@@ -1456,7 +1533,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, compliance_accepted: !!(consentEl && consentEl.checked), embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: OFFER ? OFFER.code : '', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, compliance_accepted: !!(consentEl && consentEl.checked), embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){

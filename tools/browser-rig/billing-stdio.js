@@ -97,6 +97,10 @@ for (;;) {
   if (rq.ask === 'sent') { print(JSON.stringify({ status: 200, body: sent })); continue; }   // the emails the fake Resend took (29 Oct 2026)
   if (rq.ask === 'missing') { MISSING[rq.table] = !!rq.on; print(JSON.stringify({ status: 200, body: { missing: !!rq.on } })); continue; }
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
+  /* The homepage offer (tools/site-offer-footer-in-chrome.test.py, 29 Oct 2026): which month codes the Worker
+     honours (FOUNDING_CODES), and what was asked of Stripe, so a test can see the price a signup was given. */
+  if (rq.ask === 'env') { for (var ek in (rq.set || {})) ENV[ek] = rq.set[ek]; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
+  if (rq.ask === 'stripe') { print(JSON.stringify({ status: 200, body: stripeCalls })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning
      (tools/signup-tick-in-chrome.test.py: a signup made in Chrome, provisioned, then read in HQ). */

@@ -164,6 +164,7 @@
       ".vph .vph-ts{margin-top:12px}.vph .vph-ts:empty{display:none}" +
       ".vph .vph-call{background:#1B1B20;border:1px solid rgba(255,31,142,.35);border-radius:12px;padding:12px 14px;margin:0 0 14px;color:#E7E7EC;font-size:15px;line-height:1.45}" +
       ".vph .vph-call a{color:#FF8AC4;font-weight:800;white-space:nowrap;text-decoration:underline;text-underline-offset:3px}" +
+      ".vph .vph-got{font-size:13.5px;color:#35D07F;margin:6px 0 0;min-height:0}.vph .vph-got:empty{display:none}" +
       ".vph .vph-about{font-size:14px;color:#C9C9D1;background:#1B1B20;border-radius:10px;padding:10px 12px;margin-bottom:4px}" +
       ".vph-inline .vph{background:transparent;box-shadow:none;max-height:none;padding:0;border-radius:0;max-width:none}";
     doc.head.appendChild(s);
@@ -241,6 +242,33 @@
   function field(label, input) { var w = el("div"); var l = el("label", "", label); if (input.id) l.setAttribute("for", input.id); w.appendChild(l); w.appendChild(input); return w; }
   function input(type, id, extra) { var i = el(type === "textarea" ? "textarea" : "input"); if (type !== "textarea") i.type = type; i.id = id; for (var k in (extra || {})) i.setAttribute(k, extra[k]); return i; }
 
+  /* "GOT IT: <VENUE>" (Dean, 29 Oct 2026). While someone types the venue (or the code off the big
+     screen), the Worker is asked, gently, whether that is one of our venues. One confident match
+     shows its name under the box; anything else shows nothing and the message still goes. The page
+     never sends back what it was told: the Worker matches again for itself when the ticket arrives. */
+  function softMatch(f, input, place, sfx) {
+    if (!input) return;
+    var got = el("p", "vph-got"); got.id = "vphGot" + (sfx || ""); got.setAttribute("aria-live", "polite");
+    var after = (place || input).parentNode; after.parentNode.insertBefore(got, after.nextSibling);
+    var timer = null, asked = "", seq = 0;
+    function ask() {
+      var v = String(input.value || "").trim(), p = place ? String(place.value || "").trim() : "";
+      var key = v + "|" + p;
+      if (key === asked) return;
+      asked = key;
+      if (v.length < 3) { got.textContent = ""; return; }
+      var mine = ++seq;
+      root.fetch(API + "/help/venue-match", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand: BRAND, venue: v, place: p, device: deviceId() }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (mine === seq) got.textContent = j && j.match ? "Got it: " + j.match : ""; })
+        .catch(function () { if (mine === seq) got.textContent = ""; });
+    }
+    function soon() { clearTimeout(timer); timer = setTimeout(ask, 700); }
+    on(input, "input", soon); on(input, "blur", ask);
+    if (place) { on(place, "input", soon); on(place, "blur", ask); }
+  }
+
   function buildForm(box, issue, ctx) {
     ctx = ctx || CTX;
     var MODE = ctx.mode, sfx = ctx.sfx || "";
@@ -256,6 +284,7 @@
     var hpw = el("div", "vph-hp"); hpw.appendChild(hp); f.appendChild(hpw);
 
     var name, email, phone, subject, kind, where, pick, replyNeed = false;
+    var leadName, leadPlace, leadSite;
     function kinds(list) {
       kind = el("select"); kind.id = "vphKind" + sfx;
       list.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; kind.appendChild(op); });
@@ -288,6 +317,17 @@
       f.appendChild(field(needName ? "Your name" : "Your name (optional)", name));
       if (pubVenue) { where = input2("text", "vphVenue", { maxlength: "120", autocomplete: "organization", placeholder: "e.g. The Royal Hotel, Tugun" }); f.appendChild(field("Your venue", where)); }
       else if (ctx.page && !sales) { where = input2("text", "vphVenue", { maxlength: "120", placeholder: "Optional: the venue, or the code on the big screen" }); f.appendChild(field("Where were you playing?", where)); }
+      /* A VenuePlay sales enquiry says which venue (Dean, 29 Oct 2026): its name and suburb or postcode,
+         and its website if they like. Only what setting the venue up needs. */
+      if (sales && BRAND === "venueplay") {
+        leadName = input2("text", "vphLeadVenue", { maxlength: "120", autocomplete: "organization", placeholder: "e.g. The Royal Hotel" });
+        f.appendChild(field("Venue name", leadName));
+        leadPlace = input2("text", "vphLeadPlace", { maxlength: "80", autocomplete: "address-level2", placeholder: "e.g. Tugun, or 4224" });
+        f.appendChild(field("Suburb or postcode", leadPlace));
+        leadSite = input2("text", "vphLeadSite", { maxlength: "200", inputmode: "url", autocomplete: "url", placeholder: "Optional" });
+        f.appendChild(field("Venue website (optional)", leadSite));
+      }
+      if (BRAND === "venueplay") softMatch(f, where || leadName, leadPlace, sfx);
       email = input2("email", "vphEmail", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "you@example.com" });
       f.appendChild(field("Your email, so we can reply", email));
       if (sales || pubVenue) { phone = input2("tel", "vphPhone", { maxlength: "30", autocomplete: "tel", placeholder: "Optional" }); f.appendChild(field("Phone (optional)", phone)); }
@@ -358,11 +398,14 @@
         if ((sales || pubVenue) && !String(name.value || "").trim()) { err.textContent = "Put in your name."; name.focus(); return; }
         var w = where ? String(where.value || "").trim() : "";
         if (pubVenue && !w) { err.textContent = "Tell us which venue, so we can look it up."; where.focus(); return; }
+        if (leadName && !String(leadName.value || "").trim()) { err.textContent = "Put in the venue's name."; leadName.focus(); return; }
+        if (leadPlace && !String(leadPlace.value || "").trim()) { err.textContent = "Put in the venue's suburb or postcode."; leadPlace.focus(); return; }
         // A public venue form is "venue" (help or billing) or "sales"; the Worker files it by that.
         var k = pubVenue ? (kind.value === "sales" ? "sales" : "venue") : sales ? "sales" : (MODE === "host" ? "host" : "patron");
         body = { brand: BRAND, kind: k, name: name.value, email: em,
                  phone: phone ? phone.value : "", message: m, code: roomCode(), slug: BRAND === "venueplay" ? venueSlug() : "",
                  game: sales || pubVenue ? "" : gameName(ctx), device: deviceId(), website: hp.value, issue_id: issue ? issue.id : undefined };
+        if (leadName) { body.venue_name = String(leadName.value || "").trim(); body.locality = String(leadPlace.value || "").trim(); body.venue_site = String(leadSite.value || "").trim(); }
         if (pubVenue) { body.category = kind.value; body.venue = w; }
         else if (/^[A-Za-z0-9]{6}$/.test(w)) body.code = w.toUpperCase();   // the code off the big screen
         else if (w) body.venue = w;
