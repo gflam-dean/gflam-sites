@@ -308,5 +308,5 @@ finally:
     S.close()
 
 print('')
-print('PASS %d checks' % PASS[0] if not FAIL[0] else '%d OF %d FAILED' % (FAIL[0], PASS[0] + FAIL[0]))
+print('ALL %d CHECKS PASSED' % PASS[0] if not FAIL[0] else '%d OF %d FAILED' % (FAIL[0], PASS[0] + FAIL[0]))
 sys.exit(1 if FAIL[0] else 0)
