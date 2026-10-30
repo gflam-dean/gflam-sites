@@ -226,8 +226,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', phone: '0400000000', message: 'Pricing for 3 venues?' });
   t = DB.vp_help_tickets[0];
   check('an enquiry is now a VenuePlay sales ticket from the web form', r.status === 200 && t && t.category === 'sales' && t.channel === 'web_form' && t.brand === 'venueplay', t);
-  var enq = sent.filter(function (m) { return m.to.indexOf('dean@venueplay.com.au') !== -1; })[0];
-  check('the enquiry email still goes to Dean, and to sales@, with the ticket number in its subject', !!enq && /\[#1001\]/.test(enq.subject) && enq.to.indexOf('sales@venueplay.com.au') !== -1 && enq.to.indexOf('hello@venueplay.com.au') === -1, sent.map(function (m) { return [m.to, m.subject]; }));
+  var enq = sent.filter(function (m) { return m.to.indexOf('sales@venueplay.com.au') !== -1; })[0];
+  check('the enquiry email goes to sales@ ONLY (one copy: Dean, 30 Oct 2026), with the ticket number in its subject', !!enq && /\[#1001\]/.test(enq.subject) && enq.to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return [m.to, m.subject]; }));
   var enqAck = sent.filter(function (m) { return m.to.join() === 'lee@pub.com.au'; });
   check('the enquirer gets one acknowledgement with the number, from support@, with the phone line (a venue, not a player)', sent.length === 2 && enqAck.length === 1 && /\(ticket 1001, ref /.test(enqAck[0].subject) && enqAck[0].reply_to === 'support@venueplay.com.au' && /07 5228 3667/.test(enqAck[0].html), enqAck.map(function (m) { return m.subject; }));
   world(); FAIL['vp_help_tickets:POST'] = 1;

@@ -464,9 +464,9 @@ MUTATIONS = [
      "  return 'Thanks, we\\'ve got your message' + (t.ticket_no ? ' (ticket ' + t.ticket_no + ')' : '');",
      "the acknowledgement's subject drops the reply secret, so a reply to it starts a new ticket instead of threading"),
     ('tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "      to: ['sales@venueplay.com.au'],",
      "      to: ['dean@venueplay.com.au', 'sales@venueplay.com.au'],",
-     "      to: ['dean@venueplay.com.au', 'hello@venueplay.com.au'],",
-     'website enquiries stop landing in the sales mailbox Dean set up'),
+     'every website enquiry reaches Dean twice again (dean@ and sales@ both land with him)'),
     # HELP DESK EMAIL OUT OF JUNK (Dean, 28 Oct 2026): a text part, a human subject, a person's signature.
     ('tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '                           text: m.text || helpPlainFromHtml(m.html), headers: m.headers || undefined }),',

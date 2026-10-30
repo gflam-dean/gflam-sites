@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 11:30 · e7e35823';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 12:03 · e2bc5f02';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1069,7 +1069,7 @@ async function handleContact(request, env, json) {
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: 'VenuePlay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
-      to: ['dean@venueplay.com.au', 'sales@venueplay.com.au'],   // a sales enquiry lands in the sales mailbox (23 Oct 2026)
+      to: ['sales@venueplay.com.au'],   // ONE copy, the sales mailbox (Dean, 30 Oct 2026: it came twice when it went to dean@ AND sales@)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
       html: html,
