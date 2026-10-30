@@ -468,3 +468,11 @@ name the venue so a later job can set it up as a prospect): four nullable column
 none). One partial index for the sales leads. No new table, policy or grant, so RLS-BASELINE.json does not change. Run BEFORE
 the billing Worker; without it the Worker retries the insert without the four fields (the venue, suburb and website are also in
 the message), so no enquiry is lost. Branch `fix/site-mobile-sales-29oct`. RUN 30 Oct 2026 by Dean (read back: the four columns answer 200). Rollback: in the file.
+
+`venueplay-130-review-edit-boxes.sql` (Dean, 30 Oct 2026, after the Sarah end-to-end test: the review email told him to type
+"--postcode NNNN" and "--club"): four nullable columns on `vp_autopilot_reviews`, `details` (jsonb object <= 20,000: what the
+Mac found, postcode, state, entity_type, login_email, its recommendation "yes" or "edit" with a reason, and its plain-words
+warnings), and Dean's Edit page boxes `edited_postcode` (4 digits), `edited_entity_type` (for_profit | non_profit) and
+`edited_login_email`. No new table, policy or grant, so RLS-BASELINE.json does not change. Run BEFORE the billing Worker;
+without it the Worker retries every write and read without the four (no boxes on the Edit page, no recommendation on the
+pages), so the buttons keep working as before. Branch `feature/review-email-v2-30oct`. NOT RUN. Rollback: in the file.

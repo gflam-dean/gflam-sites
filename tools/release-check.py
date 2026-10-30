@@ -3647,9 +3647,16 @@ def local_checks(which):
             # branch feature/review-buttons. (D91 is claimed by feature/helpdesk-easier and feature/prospects-tab.)
             ('D93. Dean\'s Yes, No and Edit buttons record his choice once, from a signed link, and a mail scanner\'s GET does nothing',
              'test-review-buttons.js',
-             'only the Mac\'s key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round', 52,
+             'only the Mac\'s key registers, lists and marks; links signed over folder, action, expiry and round (Python vector), 7 days; a tampered, expired, old-round or unsigned link records nothing; a GET never writes and says what happens and when; one decision per round, a second tap changes nothing; an edit with a long dash or nothing in it is refused on the page; the Mac sees each decision until marked done, once; a held yes opens a new round; the pages show the Mac\'s recommendation and plain warnings, the Edit page\'s Postcode, Pub / Club and Login email boxes are checked and stored and handed to the Mac, and before migration 130 everything works as it did', 68,
              'A forwarded or guessed link sending a reply Dean never approved, a mail scanner approving a prospect '
              'by fetching the link, or one tap applied twice'),
+            # D97: HQ removes a login that belongs to no other venue (Dean, 30 Oct 2026), branch feature/review-email-v2-30oct.
+            # (D94 and D96 left free: another branch may be holding them.)
+            ('D97. HQ removes a login only when it belongs to no other venue, only on an Owner\'s own tap that names the email',
+             'test-remove-login-hq.js',
+             'owner or accounts see a venue\'s logins and find one by email; only an Owner removes one; a login on another venue or a VenuePlay staff login is refused; the confirm must name its email (or "ending" and its last three digits); the staff row goes, then the Auth user, the row put back if Auth refuses, audited; a failed read never reads as "on no other venue"; the page never removes by itself, Cancel sends nothing, an archive asks about each removable login', 39,
+             'A host at another venue locked out by an old test clean-up, a VenuePlay staff login deleted from a venue page, '
+             'or a login removed without anyone tapping'),
             # D87: the prospect flow, version 2 (Dean, 28 Oct 2026; migration 124), branch feature/prospect-v2-28-oct.
             ('D87. A prospect\'s welcome waits for HQ\'s delay and can be stopped, and the app walks them through setup one step at a time',
              'test-prospect-welcome-v2.js',

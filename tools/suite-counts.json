@@ -167,6 +167,10 @@
   "checks": 15,
   "counted_by": "lines"
  },
+ "tools/helpdesk-hq-in-chrome.test.py": {
+  "checks": 78,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -411,6 +415,10 @@
   "checks": 312,
   "counted_by": "lines"
  },
+ "tools/test-help-saved-replies.js": {
+  "checks": 78,
+  "counted_by": "lines"
+ },
  "tools/test-help-triage-truth.js": {
   "checks": 22,
   "counted_by": "lines"
@@ -627,6 +635,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/test-remove-login-hq.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
  "tools/test-removed-host-loses-the-key.js": {
   "checks": 9,
   "counted_by": "lines"
@@ -636,7 +648,7 @@
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
-  "checks": 52,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/test-room-chatter-14-oct.js": {
@@ -1173,14 +1185,6 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 50,
-  "counted_by": "lines"
- },
- "tools/helpdesk-hq-in-chrome.test.py": {
-  "checks": 78,
-  "counted_by": "lines"
- },
- "tools/test-help-saved-replies.js": {
-  "checks": 78,
   "counted_by": "lines"
  }
 }
