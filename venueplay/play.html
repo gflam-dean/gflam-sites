@@ -43,6 +43,9 @@
   .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  /* NO STATUS BEFORE A CODE IS TRIED (UX audit 4.1, Dean 30 Oct 2026). An amber dot and "No room"
+     on a phone that had not typed anything yet read as "the game is full". */
+  .venue.nostatus .dot{display:none}
 
   .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
   .center{justify-content:center;text-align:center}
@@ -267,7 +270,7 @@
     </div>
     <img id="venueLogo" class="vlogo hidden" alt="">
     <div class="hdrball hidden" id="hdrBall"><b id="hdrBallNum"></b><span id="hdrBallCount">0 of 90</span></div>
-    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
+    <div class="venue nostatus" id="statusLine"><span class="dot" id="statusDot"></span> <span id="statusText"></span><span class="mono hidden" id="roomLabel">------</span></div>
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Easy mode<small>Mark my numbers for me</small></span><input type="checkbox" id="assistChk"></label>
@@ -302,6 +305,7 @@
     <!-- Loading... until the script below has wired Join (the last line of its setup turns it into "Join").
          A tap on slow pub wifi before then is refused visibly, never silently lost (20 Oct 2026). -->
     <div class="field"><button class="btn pink" id="joinBtn" disabled aria-busy="true">Loading...</button></div>
+    <div class="pnote hidden" id="joinHostNote" style="color:var(--gold)">Waiting for the host to open the game. Keep this open.</div>
     <div class="pnote">No app and no account. Your game appears here when the host starts.</div>
   </div>
 
@@ -664,12 +668,18 @@
   // channel, so it can never say "Connected" while nobody is running the game.
   function setConn(state){
     var d=$("statusDot"), t=$("statusText");
+    var sl=$("statusLine");
+    if(state==="none"){ if(sl && sl.classList) sl.classList.add("nostatus"); t.textContent=""; return; }   // no code tried: no status at all
+    if(sl && sl.classList) sl.classList.remove("nostatus");
     if(_paper || state==="paper"){ d.classList.remove("on"); t.textContent="Paper tonight"; return; }   // off the channel on purpose: never "Reconnecting"
     if(state==="live"){ d.classList.add("on"); t.textContent="Connected"; return; }
     d.classList.remove("on");
-    t.textContent = state==="waiting" ? "Waiting for the host" : state==="reconnecting" ? "Reconnecting" : state==="ready" ? "Ready to join" : "Connecting";
+    t.textContent = state==="waiting" ? "Waiting for the host" : state==="reconnecting" ? "Reconnecting" : state==="ready" ? (P.hostSeen ? "Ready to join" : "Waiting for the host") : "Connecting";
   }
-  function markHost(){ P.hostSeen=true; if(P.joined) setConn("live"); }
+  /* "Waiting for the host to open the game. Keep this open." under the name box, until a host is
+     heard on this channel (UX audit 4.3): a QR scanned before the lobby opens must not look dead. */
+  function hostNote(){ var n=$("joinHostNote"); if(n) n.classList.toggle("hidden", !!P.hostSeen || !P.room); }
+  function markHost(){ var was=P.hostSeen; P.hostSeen=true; if(P.joined) setConn("live"); else if(!was) setConn("ready"); hostNote(); }
 
   // ---- player state ----
   // pid/name are only cosmetic (the host roster + count). token/sessionId/gameId
@@ -890,7 +900,7 @@
       show("vLost"); askHowItWent("vLost"); return;
     }
     if(!P.room){ show("vNoRoom"); return; }
-    if(!P.joined){ show("vJoin"); return; }
+    if(!P.joined){ hostNote(); show("vJoin"); return; }
     if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
     $("waitName").textContent=P.name;
     /* On a PAID night a player with no tickets is not waiting for the host, they have not bought
@@ -1333,7 +1343,8 @@
     P.room=""; P.joined=false;
     try{ roomIn.value=c; }catch(e){}
     $("roomErr").textContent="There is no game with the code "+c+" right now. Check the code on the TV and try again.";
-    $("statusText").textContent="No room";
+    setConn("notfound");
+    $("statusText").textContent="Game not found";
     show("vNoRoom");
   }
   function gatherCapture(nm){
@@ -2088,7 +2099,7 @@
     try{ sessionStorage.removeItem("vp-name-"+P.room); }catch(e){}
     try{ localStorage.removeItem("vp-name-"+P.room); }catch(e){}
     P.joined=false; P.cards=[]; P.active=false; P.won=false; P.ended=false; P.claimPending=false;
-    setConn("");
+    setConn("none");
     // A player who scanned the sign on the table has no code and never typed one, so dropping
     // them on "enter the game code" is a dead end. Send them back to the venue's own join screen,
     // ready for the next game. Only someone who actually typed a code gets asked for one.
@@ -2241,7 +2252,9 @@
       run();
       return;                       // never reaches goToCode/watchVenue, so nothing connects
     }
+    /* ?code= as well as ?room= (UX audit 4.3): a code someone types into a link by hand is a code. */
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
+    if(!m) m=/[?&]code=([^&]+)/.exec(window.location.search);
     /* A STRAY "%" THREW HERE, and a throw here is the end of this phone's whole startup: no
        code screen, no venue, nothing. /play?room=ABC234% did it (audit, 27 Sep 2026). A bad
        escape is read as the raw text, which then simply fails the code check below. */
@@ -2250,7 +2263,7 @@
     var slug = room ? "" : venueSlugFromURL();
     if(room && CODE_RE.test(room)){ goToCode(room); }
     else if(slug){ watchVenue(slug); }
-    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+    else { setConn("none"); if(room) try{ roomIn.value=room.replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); }catch(e){} show("vNoRoom"); }
   })();
 })();
 </script>

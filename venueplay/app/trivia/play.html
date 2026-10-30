@@ -38,6 +38,7 @@
   .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
 
   .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
   .center{justify-content:center;text-align:center}
@@ -1071,6 +1072,8 @@
     }
   }
   function connect(room){
+    var _sd=$("statusDot"); if(_sd && _sd.parentNode && _sd.parentNode.classList) _sd.parentNode.classList.remove("nostatus");
+    if($("statusText") && !$("statusText").textContent) $("statusText").textContent="Connecting";
     P.room=room;
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
@@ -1199,7 +1202,7 @@
          screen for the rest of the night. */
       if(window.VPFollow) VPFollow.start({ api: VP_GAME_API, room: room, format: "trivia" });
     }
-    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+    else { $("statusText").textContent=""; var _sd=$("statusDot"); if(_sd && _sd.parentNode && _sd.parentNode.classList) _sd.parentNode.classList.add("nostatus"); show("vNoRoom"); }   // no status until a code is tried (Dean, 30 Oct 2026)
   })();
 })();
 </script>
