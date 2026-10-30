@@ -393,9 +393,15 @@
   /* Group signup: repeatable venue rows */
   #vp-venue-list{display:flex;flex-direction:column;gap:9px}
   .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
-  .venue-row .v-name{flex:2 1 160px;min-width:120px}
-  .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
-  .venue-row .v-seats{flex:1 1 120px;min-width:100px}
+  .venue-row .v-field{display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
+  .venue-row .v-name-f{flex:2 1 200px;min-width:140px}
+  .venue-row .v-postcode-f{flex:1 1 90px;min-width:80px}
+  .venue-row .v-seats-f{flex:1 1 200px;min-width:160px}
+  .venue-row .v-lbl{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;letter-spacing:0;text-transform:none;color:#e8e8ec;line-height:1.3}
+  .venue-row .v-remove{align-self:flex-end;height:52px}
+  #vp-venue-list .venue-row + .venue-row{padding-top:12px;border-top:1px solid var(--line)}
+  .field-hint.body-hint{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);letter-spacing:0;line-height:1.5}
+  .form-next{margin:10px 0 0;text-align:center;font-size:var(--fs-sm);color:#e8e8ec;line-height:1.5}
   .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:var(--fs-lg);line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
   .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
   .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:border-color .15s ease}
@@ -852,7 +858,7 @@
           <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is $3 per player, per month, and it never changes.</p>
         </div>
       </div>
-      <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
+      <div class="offer-cta"><a class="btn btn-primary" href="#claim" data-cta="pricing-claim">Start your free month</a></div>
     
     </div>
   </div>
@@ -903,7 +909,7 @@
 <section class="sec" id="claim">
   <div class="wrap">
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
-      <div class="label" style="justify-content:center">Claim your spot</div>
+      <div class="label" style="justify-content:center">Free first month</div>
       <h2 class="sec-title">Set up your venue</h2>
       <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to get set up. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
     </div>
@@ -947,7 +953,7 @@
                 <p id="vp-nobingo-body"></p>
                 <label class="ck"><input type="checkbox" id="vp-nobingo-ask"> <span>Our bingo is run by a not-for-profit organisation, such as a club or charity. Please look at switching it on for us.</span></label>
               </div>
-              <span class="field-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
+              <span class="field-hint body-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
             </div>
             <div class="field full">
               <label>Plan</label>
@@ -963,7 +969,8 @@
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me VenuePlay news, tips and product updates. You can unsubscribe anytime.</span></label>
           </div>
-          <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
+          <button class="btn btn-primary" id="vp-submit" type="button">Start my free month</button>
+          <p class="form-next" id="vp-next">Next, add your card with Stripe. Nothing is charged today.</p>
           <p class="form-err" id="vp-err"></p>
           <p class="form-fine" id="vp-fine">Secured by Stripe · first month free for new venues · cancel anytime before your first payment</p>
         </div>
@@ -1334,21 +1341,32 @@
     var row = document.createElement('div');
     row.className = 'venue-row';
     var nm = document.createElement('input');
-    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('aria-label', 'Venue name'); nm.setAttribute('autocomplete', 'organization');
+    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'e.g. The Royal Hotel'; nm.setAttribute('autocomplete', 'organization');
     if (name) nm.value = name;
     nm.addEventListener('blur', preselectEntity);
     var pc = document.createElement('input');
-    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('aria-label', 'Postcode'); pc.setAttribute('autocomplete', 'postal-code');
+    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = '4220'; pc.setAttribute('autocomplete', 'postal-code');
     if (postcode) pc.value = postcode;
     pc.addEventListener('input', renderNoBingo);
     var st = document.createElement('input');
-    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players'; st.setAttribute('aria-label', 'Max players on a busy night');
+    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'e.g. 60';
     if (seats) st.value = seats;
     var rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
     rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); renderNoBingo(); });
     st.addEventListener('input', renderEstimate);
-    row.appendChild(nm); row.appendChild(pc); row.appendChild(st); row.appendChild(rm);
+    /* Visible labels, not placeholder text only (UX audit 1.8, 30 Oct 2026): a placeholder
+       disappears the moment someone types, and "Max players" on its own was being read as
+       the usual crowd. Each label wraps its input, so the label names it for screen readers. */
+    function labelled(text, input, cls){
+      var l = document.createElement('label'); l.className = 'v-field ' + cls;
+      var t = document.createElement('span'); t.className = 'v-lbl'; t.textContent = text;
+      l.appendChild(t); l.appendChild(input); return l;
+    }
+    row.appendChild(labelled('Venue name', nm, 'v-name-f'));
+    row.appendChild(labelled('Postcode', pc, 'v-postcode-f'));
+    row.appendChild(labelled('Most players in one game on a busy night', st, 'v-seats-f'));
+    row.appendChild(rm);
     venueList.appendChild(row);
     refreshRemoveButtons();
   }
@@ -1466,12 +1484,12 @@
       if (wantEmbedded && data && data.client_secret) { openEmbeddedCheckout(data.client_secret); return; }
       if (data && data.url) { window.location.href = data.url; return; }
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Hold my spot, add card';
+      submitBtn.textContent = 'Start my free month';
       showErr((data && data.error) ? data.error : 'Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
     })
     .catch(function(){
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Hold my spot, add card';
+      submitBtn.textContent = 'Start my free month';
       showErr('Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
     });
   });
@@ -1483,7 +1501,7 @@
 
   function resetSubmit(){
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Hold my spot, add card';
+    submitBtn.textContent = 'Start my free month';
   }
   function closeEmbeddedCheckout(){
     if (_vpCheckout) { try { _vpCheckout.destroy(); } catch (e) {} _vpCheckout = null; }
@@ -1734,18 +1752,22 @@
   #how .vps-step p{font-size:var(--fs-base)}
   @media (max-width:760px){ #how .vps-steps{grid-template-columns:1fr} #how .vps-step{padding:20px 0;border-bottom:1px solid var(--line)} }
 </style>
-<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Get started">
+<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Start your free month">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
-  Get started
+  Start your free month
 </a>
 <script>
 (function(){
   var cta=document.getElementById('vpFloatCta'); if(!cta) return;
+  /* Never two pink "Start your free month" buttons on screen at once (UX audit 1.7, 30 Oct
+     2026): hidden while the pricing card's own button or the sign-up form is in view. */
   var claim=document.getElementById('claim');
+  var priceCta=document.querySelector('#offer .offer-cta');
+  function onScreen(el){ if(!el) return false; var r=el.getBoundingClientRect(); return r.top < window.innerHeight && r.bottom > 0; }
   function upd(){
     var y=window.pageYOffset||document.documentElement.scrollTop;
     var show=y>560;
-    if(show && claim){ var r=claim.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) show=false; }
+    if(show && (onScreen(claim) || onScreen(priceCta))) show=false;
     cta.classList.toggle('show', show);
   }
   window.addEventListener('scroll', upd, {passive:true});
