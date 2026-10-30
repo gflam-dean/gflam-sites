@@ -80,10 +80,21 @@
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
   .ad .adimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
-  .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
-  .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
-  .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
+  /* #tvFloor IS NOT AN .ad (it must never fade out with the rotation), so it is named beside it here.
+     It was missing, and for the first 10 to 15 seconds on a slow screen the room saw "Game on here"
+     in the browser's plain 16px type (UX audit 3.1, 30 Oct 2026). */
+  .ad .adtag,#tvFloor .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
+  .ad .adbig,#tvFloor .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
+  .ad .adsub,#tvFloor .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
   .ad .adhelp{position:absolute;bottom:3.5cqw;font-family:'Manrope',sans-serif;font-weight:500;font-size:clamp(11px,1.5cqw,17px);color:var(--faint)}
+  /* The support line is for whoever is setting the screen up, not for the room: shown while the
+     address is unconfirmed and for thirty seconds after a mouse move, a touch or a key (Dean, 30 Oct). */
+  .ad .adhelp.sup{display:none}
+  body.tv-sup .ad .adhelp.sup{display:block}
+  /* A NEW VENUE'S OWN LOOP (UX audit 3.2): its logo and its name until it adds slides of its own. */
+  .ad .adlogo{display:block;max-width:min(34cqw,520px);max-height:15cqw;width:auto;height:auto;object-fit:contain;margin:0 auto 1.4cqw;filter:drop-shadow(0 4px 18px rgba(0,0,0,.5))}
+  .ad .adbig.vname{max-width:86cqw;text-wrap:balance;word-break:normal;overflow-wrap:normal;hyphens:none}
+  .ad .adsub.vline{max-width:70cqw;text-wrap:balance;line-height:1.35}
   .ad-a{background:radial-gradient(760px 420px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
   .ad-b{background:radial-gradient(760px 420px at 30% 30%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
   .ad-c{background:radial-gradient(760px 420px at 70% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
@@ -909,7 +920,7 @@
              signature does not change when only its words do, so buildAds() would compare
              equal and leave the old text on the wall. */
           try{ localStorage.setItem("vpTvConfirmed", VENUE_SLUG); }catch(e){}
-          if(!VENUE_CONFIRMED){ VENUE_CONFIRMED=true; if(tvMode==="ads"){ buildAds(true); startAds(); } }
+          if(!VENUE_CONFIRMED){ VENUE_CONFIRMED=true; syncSupport(); if(tvMode==="ads"){ buildAds(true); startAds(); } }
           var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
           /* A SCREEN THAT WAS NOT LISTENING STILL CATCHES UP.
              When an owner saves their slides, billing.html broadcasts screen_refresh and every
@@ -1060,6 +1071,24 @@
     try{ return !!VENUE_SLUG && localStorage.getItem("vpTvConfirmed") === VENUE_SLUG; }
     catch(e){ return false; }
   })();
+  /* The venue's own name, for its default loop while it has no slides (setVenueName fills it). */
+  var holdVenueName="";
+  /* THE SUPPORT LINE, ONLY FOR WHOEVER IS SETTING UP. On while the address is unconfirmed, and for
+     thirty seconds after a pointer move, a touch or a key; otherwise the room never sees an email
+     address on its wall. A class on <body>, so the slides themselves never change and never rebuild. */
+  var SUP_HOLD_MS=30*1000, supUntil=0, supT=null;
+  function syncSupport(){
+    try{
+      var on=!VENUE_CONFIRMED || Date.now()<supUntil;
+      document.body.classList.toggle("tv-sup", on);
+      if(supT){ clearTimeout(supT); supT=null; }
+      if(Date.now()<supUntil) supT=setTimeout(syncSupport, Math.max(50, supUntil-Date.now()));
+    }catch(e){}
+  }
+  ["pointermove","pointerdown","keydown","touchstart"].forEach(function(ev){
+    document.addEventListener(ev, function(){ supUntil=Date.now()+SUP_HOLD_MS; syncSupport(); }, { passive:true });
+  });
+  syncSupport();
   var VENUE_PENDING_MS = 45000;
   var VENUE_PENDING_UNTIL = Date.now() + VENUE_PENDING_MS;
   function venuePending(){
@@ -1100,7 +1129,12 @@
     });
     if(Array.isArray(ADS.draws) && ADS.draws.length) arr.push({type:"auto-draws"});
     if(ADS.raffle) arr.push({type:"auto-raffle"});
-    if(!arr.length) arr.push({type:"holding"});   // never leave the screen blank/black
+    /* never leave the screen blank/black. A venue with nothing of its own yet gets a loop made from
+       its own name and logo (two slides), once the Worker has told us who it is. */
+    if(!arr.length){
+      if(holdVenueName && !venuePending()){ arr.push({type:"holding", v:"venue"}); arr.push({type:"holding", v:"play"}); }
+      else arr.push({type:"holding"});
+    }
     return arr;
   }
   function entryClass(e){
@@ -1109,7 +1143,7 @@
     /* The ordinary holding slide ("Game on here") keeps the gold card: it is a cheerful
        message and gold is ours. The "Setting up" one does not, because it sits under a pink
        mark and the two together looked like two different products. Dean: "very off brand". */
-    if(e.type==="holding") return venuePending() ? "ad-b" : "ad-a";
+    if(e.type==="holding") return venuePending() ? "ad-b" : (e.v==="play" ? "ad-b" : "ad-a");
     return accentClass(e.slide.accent);
   }
   function entryInner(e){
@@ -1152,11 +1186,24 @@
                '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
       }
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
-      // their promos/game did not load, so point them to support rather than only cheering.
+      // their promos/game did not load, so point them to support rather than only cheering. It is
+      // only shown to whoever is setting the screen up (.sup, see syncSupport), never to the room.
+      var help='<div class="adhelp sup">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
+      if(e.v && holdVenueName){
+        var nm=esc(holdVenueName);
+        var line='<div class="adsub vline">Trivia, bingo and musical bingo at '+nm+'. Ask at the bar what&rsquo;s on.</div>';
+        if(e.v==="venue"){
+          var lg=String(venueLogoUrl||"");
+          var logo=(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1)
+            ? '<img class="adlogo" alt="" src="'+esc(lg)+'">' : '';
+          return logo+'<div class="adbig vname">'+nm+'</div>'+line+help;
+        }
+        return '<div class="adtag" style="color:'+accentHex("pink")+'">'+nm+'</div>'+
+               '<div class="adbig">Play on your phone</div>'+line+help;
+      }
       return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
              '<div class="adbig">Game on here</div>'+
-             '<div class="adsub">Grab your phone, the fun starts soon</div>'+
-             '<div class="adhelp">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
+             '<div class="adsub">Grab your phone, the fun starts soon</div>'+help;
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
@@ -2578,6 +2625,7 @@
       // The venue HAS a logo, not "the logo is on screen right now": it is off for the ads,
       // and the caption must not reappear on an ad slide. See applyVenueLogo().
       el.textContent=nm; el.style.display = venueLogoUrl ? "none" : "block";   // the logo wins
+      holdVenueName=nm;   // the default loop for a venue with no slides yet (refreshAds follows in loadScreen)
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }
       var ra=document.getElementById("tvRunAt"), ran=document.getElementById("tvRunAtName");   // the real-balls title

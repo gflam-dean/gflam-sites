@@ -424,7 +424,7 @@ def tv_only_its_own_slides():
         # The Mini Bar has a members draw of its own, so its wall rotates ITS draw board (the holding card
         # only fills an otherwise empty loop); The Average Joe has nothing at all, so it gets the card.
         for slug, name, what, own in (('the-mini-bar', 'The Mini Bar', 'an empty slide list (The Mini Bar after the data fix)', 'members draws'),
-                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Game on here')):
+                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Trivia, bingo and musical bingo at The Average Joe')):
             r.W.calls[:] = []
             tid, tv = r.open('/tv?venue=' + slug, width=1280, height=720)
             ok('%s: the TV loads on the ads' % what, r.until(tv, vis('adsRoot'), 15) is True)
@@ -435,7 +435,7 @@ def tv_only_its_own_slides():
             ok('the wall is captioned with this venue\'s own name', r.until(tv, NAME + '===' + json.dumps(name), 10) is True, r.ask(tv, NAME))
             if slug == 'the-mini-bar':
                 ok('and its own members draw board carries its own numbers (Thursday, $200)', r.until(tv, ADS_HTML + '.indexOf("$200")>=0 && ' + ADS_HTML + '.indexOf("Thursday")>=0', 10) is True)
-                ok('with no holding card beside it (the loop is not empty)', r.ask(tv, ADS_HTML + '.indexOf("Game on here")') == -1)
+                ok('with no holding card beside it (the loop is not empty)', r.ask(tv, '(' + ADS_HTML + '.indexOf("Game on here")===-1 && ' + ADS_HTML + '.indexOf("Ask at the bar")===-1)') is True)
             ok('no script errors on the TV', r.ask(tv, 'window.__errs.length') == 0, r.ask(tv, 'JSON.stringify(window.__errs)'))
             shot(r, tv, 'tv-4-own-slides-' + slug)
             r.close_tab(tid)
