@@ -116,7 +116,7 @@
   "counted_by": "total"
  },
  "tools/account-structure-in-chrome.test.py": {
-  "checks": 54,
+  "checks": 58,
   "counted_by": "lines"
  },
  "tools/add-login-email.test.py": {
@@ -124,11 +124,11 @@
   "counted_by": "lines"
  },
  "tools/caller-winner-in-chrome.test.py": {
-  "checks": 96,
+  "checks": 107,
   "counted_by": "lines"
  },
  "tools/console-in-chrome.test.py": {
-  "checks": 63,
+  "checks": 64,
   "counted_by": "lines"
  },
  "tools/console-paid-and-draw-max-in-chrome.test.py": {
@@ -165,6 +165,10 @@
  },
  "tools/help-seed-matches-faq.test.py": {
   "checks": 15,
+  "counted_by": "lines"
+ },
+ "tools/helpdesk-hq-in-chrome.test.py": {
+  "checks": 78,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -400,7 +404,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 156,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
@@ -409,6 +413,10 @@
  },
  "tools/test-help-desk.js": {
   "checks": 312,
+  "counted_by": "lines"
+ },
+ "tools/test-help-saved-replies.js": {
+  "checks": 78,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {
@@ -540,7 +548,7 @@
   "counted_by": "lines"
  },
  "tools/test-phone-signin.js": {
-  "checks": 77,
+  "checks": 81,
   "counted_by": "lines"
  },
  "tools/test-phones-cannot-be-impersonated.js": {
@@ -588,11 +596,11 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 45,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
-  "checks": 112,
+  "checks": 125,
   "counted_by": "lines"
  },
  "tools/test-prospect-terms-first-game.js": {
@@ -600,7 +608,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 101,
+  "checks": 129,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
@@ -849,6 +857,10 @@
  },
  "tools/tv-window-uncovered.test.py": {
   "checks": 17,
+  "counted_by": "lines"
+ },
+ "tools/ux-fixes-in-chrome.test.py": {
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
@@ -1173,14 +1185,6 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 50,
-  "counted_by": "lines"
- },
- "tools/helpdesk-hq-in-chrome.test.py": {
-  "checks": 78,
-  "counted_by": "lines"
- },
- "tools/test-help-saved-replies.js": {
-  "checks": 78,
   "counted_by": "lines"
  }
 }
