@@ -579,7 +579,9 @@
 
   // ---------------- set up ----------------
   function dayStr(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0"); }
-  function addMonths(s, m){ var p=s.split("-"); var d=new Date(+p[0], +p[1]-1+m, +p[2]); return dayStr(d); }
+  // Six months after 31 Oct is 30 Apr, not 1 May: the day is clamped to the last day of that month (the gate
+  // caught it on 31 Oct 2026, when the default end date came out seven months on).
+  function addMonths(s, m){ var p=s.split("-"), mo=+p[1]-1+m, last=new Date(+p[0], mo+1, 0).getDate(); return dayStr(new Date(+p[0], mo, Math.min(+p[2], last))); }
   function addDays(s, k){ var p=s.split("-"); var d=new Date(+p[0], +p[1]-1, +p[2]+k); return dayStr(d); }
   function localDay(iso){ var tz=(G.venue&&G.venue.timezone)||"Australia/Sydney"; try{ return new Date(iso).toLocaleDateString("en-CA",{ timeZone:tz }); }catch(e){ return String(iso).slice(0,10); } }
   function localTime(iso){ var tz=(G.venue&&G.venue.timezone)||"Australia/Sydney"; try{ return new Date(iso).toLocaleTimeString("en-GB",{ timeZone:tz, hour:"2-digit", minute:"2-digit", hour12:false }); }catch(e){ return "19:00"; } }
