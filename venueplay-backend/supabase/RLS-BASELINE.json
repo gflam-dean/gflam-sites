@@ -1693,6 +1693,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_autopilot_reviews": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_billing_usage": {
    "enabled": true,
    "forced": false
