@@ -3665,7 +3665,7 @@ def local_checks(which):
             # D92: a prospect's free month, its card reminders and the pause (Dean, 29 Oct 2026; migration 127).
             ('D92. A prospect\'s free month starts at first sign-in, reminds them on its days, and pauses with the offer gone if no card',
              'test-prospect-free-month.js',
-             'the month starts once at the first sign-in (never View as); reminders on day 3, 10, 17, 24, 28, 29, 30 inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 45,
+             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.

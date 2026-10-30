@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 12:03 · e2bc5f02';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 14:00 · 7c3fe0b8';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3054,9 +3054,10 @@ async function vpaProspectCalled(request, env, json) {
  *   - the free month starts the FIRST TIME anyone at the venue signs in (POST /account/prospect-start
  *     from the app's setup guide; the hourly sweep also notices a sign-in from Auth), and ends at
  *     11:59:59pm Brisbane on the 30th day after that (VPA_FREE_MONTH_DAYS)
- *   - with no card: a reminder on day 3, 10, 17 and 24, then each of the last three days (28, 29, 30),
- *     only 8am to 5pm Monday to Friday Brisbane. An early one that lands on a weekend goes the next
- *     Monday; one of the last three goes the Friday before, so the last one always beats the pause.
+ *   - with no card: three reminders, no more (Dean, 30 Oct 2026; it was seven): day 3, day 23, and the
+ *     day before the month ends (day 29), only 8am to 5pm Monday to Friday Brisbane. An early one (3, 23)
+ *     that lands on a weekend goes the next Monday; the day-29 one goes the Friday before, so the last one
+ *     always beats the pause.
  *     A run that finds several due sends only the newest. Each has "Add my card" and "Cancel, it's
  *     not for us". What has gone is kept in vp_prospects.reminders_sent, so a missed run or a restart
  *     neither loses one nor sends one twice.
@@ -3067,8 +3068,8 @@ async function vpaProspectCalled(request, env, json) {
  *     that day. A card added after the pause switches the venue straight back on.
  * ======================================================================== */
 const VPA_FREE_MONTH_DAYS = 30;
-const VPA_REMINDER_DAYS = [3, 10, 17, 24, 28, 29, 30];
-const VPA_LAST_REMINDER_FROM = 28;          // 28, 29, 30 are "the last three days"
+const VPA_REMINDER_DAYS = [3, 23, 29];
+const VPA_LAST_REMINDER_FROM = 29;          // 29, the day before the free month ends, is "the last one"
 const VPA_STANDARD_RATE = 3.00, VPA_OFFER_RATE = 2.50;
 const VPA_BNE_MS = 10 * 3600000;            // Brisbane, UTC+10, no daylight saving
 function vpaBneDay(ms) { return new Date(ms + VPA_BNE_MS).toISOString().slice(0, 10); }
@@ -3230,7 +3231,8 @@ async function vpaProspectCardAdded(env, foundingId) {
   await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
   return true;
 }
-/* ONE REMINDER EMAIL, emails/prospect-reminder.html. kind: 'early' (3, 10, 17, 24), 'last' (28, 29), 'final' (30). */
+/* ONE REMINDER EMAIL, emails/prospect-reminder.html. kind: 'early' (3, 23), 'last' (29, the day before it ends).
+   'final' (the last day itself) is no longer on the schedule (Dean, 30 Oct 2026) and is kept only as a template. */
 async function vpaRenderProspectReminder(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const res = await fetch(site + '/emails/prospect-reminder.html');

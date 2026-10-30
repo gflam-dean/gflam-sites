@@ -442,7 +442,7 @@ the end of the free month with no card, PAUSE the account ... Pausing also makes
 `vp_prospects` (125): first_signin_at, free_month_ends_at (11:59:59pm Brisbane on the 30th day after it), offer_rate (the price
 open when they were set up, kept through the month), card_choice/_at (Now or Later at the setup guide's card step),
 reminders_sent (jsonb, the days already sent), paused_at, cancelled_at. The billing Worker's hourly sweep
-(`vpaProspectReminderSweep`) sends the reminders on day 3, 10, 17, 24, 28, 29 and 30, 8am to 5pm Mon to Fri Brisbane, and
+(`vpaProspectReminderSweep`) sends the reminders on day 3, 23 and 29 (three, since 30 Oct 2026; it was day 3, 10, 17, 24, 28, 29 and 30), 8am to 5pm Mon to Fri Brisbane, and
 pauses the venue (status suspended, reason free_month_ended; the TV keeps its ads) when the month ends with no card; a pause
 drops the offer price, and a card after it switches the venue back on (webhook and sweep). `/account/prospect-start`,
 `/account/card-choice`, `/prospect/cancel`. No new table or grant: RLS-BASELINE.json does not change. Run BEFORE the billing
