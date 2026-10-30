@@ -89,7 +89,10 @@
   @media (prefers-reduced-motion:reduce){.qmark i{animation:none;height:60%}}
   .mysub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(13px,2.8cqw,28px);color:var(--text);margin-top:1.2cqw}
   .nowart{width:clamp(84px,15cqw,210px);height:clamp(84px,15cqw,210px);border-radius:2cqw;object-fit:cover;display:block;margin:0 auto 1.2cqw;border:1px solid var(--line-2);box-shadow:0 0 42px rgba(0,0,0,.55);animation:pop .45s ease-out}
-  .nowtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,72px);color:#fff;line-height:1.02;margin:1.2cqw 0 .6cqw;animation:pop .45s ease-out;max-width:92cqw}
+  .nowtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,72px);color:#fff;line-height:1.02;margin:1.2cqw 0 .6cqw;animation:pop .45s ease-out;max-width:92cqw;
+    /* Never split a word, never hyphenate (Dean, 30 Oct 2026). A word too wide for the wall steps the
+       title's type down instead: fitNowTitle() below. */
+    word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;text-wrap:balance}
   .nowartist{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,24px);color:var(--gold);letter-spacing:.02em}
   @keyframes pop{0%{transform:scale(.86);opacity:0}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
   .mpat{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,17px);color:var(--muted);margin-top:1.1cqw;letter-spacing:.02em}
@@ -440,6 +443,25 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      is painted: the mystery panel holds the space, it never goes blank. */
   var _pendingSong=null, _revealMode="legacy";
   var REVEAL_END_FALLBACK_MS=32000;   // a blocked or missing clip has no "ended" to wait for
+  /* THE TITLE FITS THE WALL WHOLE. Every path that puts a title up sets #tvNowTitle's text, so this
+     watches the text (and the layer coming into view, when it can first be measured) and steps the
+     type down 6% at a time while one word is wider than the title's box. Lines only ever break
+     between words. */
+  (function fitNowTitle(){
+    var el=$("tvNowTitle"); if(!el || !window.MutationObserver) return;
+    function fit(){
+      try{
+        el.style.fontSize="";
+        var fs=parseFloat(getComputedStyle(el).fontSize)||72, min=Math.max(14, fs*0.4), n=0;
+        while(el.clientWidth>0 && el.scrollWidth>el.clientWidth+1 && fs>min && n++<40){ fs*=0.94; el.style.fontSize=fs.toFixed(1)+"px"; }
+      }catch(e){}
+    }
+    new MutationObserver(fit).observe(el, { childList:true, characterData:true, subtree:true });
+    var run=$("tvRun"), now=$("tvNow");
+    if(run) new MutationObserver(fit).observe(run, { attributes:true, attributeFilter:["class"] });
+    if(now) new MutationObserver(fit).observe(now, { attributes:true, attributeFilter:["class"] });
+    window.addEventListener("resize", fit);
+  })();
   function doReveal(){
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     if(!_pendingSong) return;
