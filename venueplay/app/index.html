@@ -798,6 +798,9 @@
   // The host's Supabase access token, for the staff-gated private-key fetch.
   function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
 
+  /* ?guide=1 (the welcome emails' "Open your setup guide"): a guide closed earlier on this device opens
+     again for a new venue. Read once at load, because signing in can tidy the address bar. */
+  window.__vpWantGuide = /[?&]guide=1(&|$)/.test(window.location.search||"");
   // ---- read ?tv=CODE from the URL and remember the pairing ----
   (function(){
     var m=/[?&]tv=([^&]+)/.exec(window.location.search);
@@ -1245,8 +1248,8 @@
   // shows for staff who cover more than one venue.
   function updateAccountLink(){
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
-    // A prospect's setup guide opens again from here (vp-firstrun.js, 28 Oct 2026).
-    var fr=$("firstRunBtn"); if(fr) fr.style.display = (window.VPFirstRun && VPFirstRun.isProspect(__ctx)) ? "" : "none";
+    // A new venue's setup guide opens again from here (vp-firstrun.js, 28 Oct 2026; every new venue since 30 Oct).
+    var fr=$("firstRunBtn"); if(fr) fr.style.display = (window.VPFirstRun && (VPFirstRun.offered ? VPFirstRun.offered(__ctx) : VPFirstRun.isProspect(__ctx))) ? "" : "none";
     // An admin can reach every venue, so they always need the switcher, even with no staff rows.
     var multi = !!(__ctx && (__ctx.isAdmin || (__ctx.staff && __ctx.staff.length>1)));
     var sw=$("switchVenue"); if(sw) sw.style.display = multi ? "" : "none";
@@ -1434,9 +1437,20 @@
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
     if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
-    /* A PROSPECT'S FIRST RUN (Dean, 28 Oct 2026): their mobile, the Terms tick, their TV, a first game and
-       their card, one screen at a time, before anything else. Closing it carries on to the console below. */
-    if(window.VPFirstRun && VPFirstRun.wants(__ctx) && window.VP && VP.getClient){ VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:proceedVenue }); go("vBoot"); return; }
+    /* A NEW VENUE'S FIRST RUN (Dean, 28 Oct 2026 for prospects; 30 Oct 2026 for every new venue): their mobile,
+       the Terms tick, their TV, a first game and their card, one screen at a time, before anything else, with
+       the steps already done left out. A venue that is not a prospect gets it until its first game, which
+       VPFirstRun.check() asks the database; if that read fails the console carries straight on. Closing the
+       guide carries on to the console below. */
+    if(window.__vpWantGuide && window.VPFirstRun && VPFirstRun.reopen){ window.__vpWantGuide=false; VPFirstRun.reopen(__ctx); }
+    if(window.VPFirstRun && VPFirstRun.wants(__ctx) && window.VP && VP.getClient){
+      if(!VPFirstRun.check || (VPFirstRun.isProspect && VPFirstRun.isProspect(__ctx))){ VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:proceedVenue }); go("vBoot"); return; }
+      go("vBoot");
+      VPFirstRun.check(__ctx, VP.getClient()).then(function(yes){
+        if(yes) VPFirstRun.open(__ctx, { client:VP.getClient(), VP:VP, onClose:proceedVenue }); else proceedVenue();
+      }, function(){ proceedVenue(); });
+      return;
+    }
     /* A VENUE SET UP FOR A PROSPECT ticks section 6 before its first game: one card in place of the game
        picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
     if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }

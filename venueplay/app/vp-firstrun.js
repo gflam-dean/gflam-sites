@@ -25,6 +25,14 @@
    the step, and "Setup guide" in the console header opens it again. Steps 1 and 2 also read the real
    state (the login's phone, the venue's compliance record), so a step already done says so.
 
+   EVERY NEW VENUE GETS IT, not only a prospect (Dean, 30 Oct 2026; UX audit 2.1). A self sign-up's owner
+   or manager sees it too, from their first sign-in until the venue's first game (a venue under 45 days
+   old with no session yet; a venue with one is never asked again on that device). Steps already done are
+   left out, not shown ticked: a login that has its mobile skips step 1 (audit 2.3), a venue that has
+   ticked the Terms skips step 2, and a venue whose card is on (every self sign-up that added one at
+   Stripe) skips step 5. The card step always shows both Now and Later; Later works without the card
+   link, and a link that will not load says so with a Retry button (audit 2.5).
+
    The 4 hour sign-out still applies: this is a page of the signed-in console, nothing more.
    Everything a person reads is set with textContent; nothing they or HQ typed is ever parsed as HTML. */
 (function (root) {
@@ -47,6 +55,18 @@
     var v = ctx && ctx.venue;
     return !!(v && v.terms_required === true && v.status !== "suspended" && (ctx.role === "owner" || ctx.role === "manager"));
   }
+  /* A NEW VENUE, however it signed up: its owner or a manager, not switched off, and the venue is under
+     NEW_DAYS old. Whether it has run a game yet is asked by check() below, which needs the database. */
+  var NEW_DAYS = 45;
+  function isNew(ctx, now) {
+    var v = ctx && ctx.venue;
+    if (!v || v.status === "suspended" || !(ctx.role === "owner" || ctx.role === "manager")) return false;
+    var t = Date.parse(v.created_at || "");
+    if (!isFinite(t)) return false;
+    return ((now || Date.now()) - t) < NEW_DAYS * 86400000;
+  }
+  function offered(ctx, now) { return isProspect(ctx) || isNew(ctx, now); }
+  var _noGuide = {};   // venues this page has already found have played (or could not ask): never again here
   function readState(storage, venueId) {
     var s = null;
     try { s = JSON.parse(storage.getItem(KEY + venueId) || "null"); } catch (e) { s = null; }
@@ -55,10 +75,37 @@
     return s;
   }
   function writeState(storage, venueId, s) { try { storage.setItem(KEY + venueId, JSON.stringify(s)); } catch (e) {} }
-  function wants(ctx, storage) {
-    if (!isProspect(ctx)) return false;
+  function wants(ctx, storage, now) {
+    if (!offered(ctx, now) || _noGuide[ctx.venue.id]) return false;
     var st = readState(storage || root.localStorage, ctx.venue.id);
     return !st.done && !st.dismissed;
+  }
+  /* "Open your setup guide" in a welcome email (?guide=1): a guide closed on this device opens again.
+     A finished one stays finished, and a venue that is not new is left alone. */
+  function reopen(ctx, storage) {
+    storage = storage || root.localStorage;
+    if (!offered(ctx)) return false;
+    var st = readState(storage, ctx.venue.id);
+    if (st.done || !st.dismissed) return false;
+    st.dismissed = false; writeState(storage, ctx.venue.id, st); return true;
+  }
+  /* Should it open now? A prospect: yes (the card step is theirs). Any other new venue: only until its
+     first game. Trivia and musical bingo stamp the venue row; bingo leaves a session. A venue that has
+     played is marked done on this device. A read that fails opens nothing: a real venue's console must
+     never be held up by a guide it may not need. Resolves true or false, never rejects. */
+  function check(ctx, client, storage) {
+    storage = storage || root.localStorage;
+    if (!wants(ctx, storage)) return Promise.resolve(false);
+    if (isProspect(ctx)) return Promise.resolve(true);
+    var v = ctx.venue;
+    function played() { var st = readState(storage, v.id); st.done = true; writeState(storage, v.id, st); _noGuide[v.id] = true; return false; }
+    if (v.last_trivia_at || v.last_musical_at) return Promise.resolve(played());
+    try {
+      return Promise.resolve(client.from("vp_sessions").select("id").eq("venue_id", v.id).limit(1)).then(function (r) {
+        if (!r || r.error || !Array.isArray(r.data)) { _noGuide[v.id] = true; return false; }
+        return r.data.length ? played() : true;
+      }, function () { _noGuide[v.id] = true; return false; });
+    } catch (e) { _noGuide[v.id] = true; return Promise.resolve(false); }
   }
   /* An Australian mobile as Auth stores it: +614XXXXXXXX. Anything else is refused before a text is sent. */
   function mobileE164(raw) {
@@ -83,10 +130,16 @@
     var origin = deps.origin || (root.location && root.location.origin) || "https://venueplay.com.au";
     var every = deps.setInterval || (root.setInterval && root.setInterval.bind(root)), stop = deps.clearInterval || (root.clearInterval && root.clearInterval.bind(root));
     var go = deps.openUrl || function (u) { root.location.href = u; };
-    var v = ctx.venue, state = readState(storage, v.id);
-    /* Their mobile is already on (the name-and-mobile screen, vp-about-you.js, asks for it first since
-       29 Oct 2026): the guide starts at the Terms rather than showing a step that is already done. */
-    if (state.step === "mobile" && ctx.user && ctx.user.phone) { state.step = "terms"; state.mobile = "done"; }
+    var v = ctx.venue, state = readState(storage, v.id), prospect = isProspect(ctx);
+    /* THE STEPS THIS VENUE STILL NEEDS. Their mobile is already on (the name-and-mobile screen,
+       vp-about-you.js, asks for it first since 29 Oct 2026), the Terms are ticked, or the card is on:
+       that step is left out, not shown as done. The login's phone and the card are confirmed below,
+       before the first step is drawn. */
+    var steps = STEPS.slice();
+    function drop(name) { var i = steps.indexOf(name); if (i >= 0 && steps.length > 1) steps.splice(i, 1); }
+    if (ctx.user && ctx.user.phone) { drop("mobile"); state.mobile = "done"; }
+    if (v.compliance_accepted_at) drop("terms");
+    var cardInfo = null;   // the first /account/card-link answer, which the card step uses rather than asking twice
     var timers = [];
     var me = { phone: "", email: "", token: "" };
     var started = null;   // their free month starts the first time they sign in (/account/prospect-start, below)
@@ -145,6 +198,7 @@
 
     function msgLine(id) { var m = el("p", "margin:8px 0 0;font-size:14px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); m.id = id; m.setAttribute("role", "status"); return m; }
     function setNext(label, enabled) {
+      if (label === "Next" && steps.indexOf(state.step) === steps.length - 1) label = "Finish";   // the last step this venue has
       next.textContent = label; next.disabled = !enabled;
       next.style.opacity = enabled ? "1" : ".45";
     }
@@ -160,7 +214,7 @@
     // ---------------------------------------------------------------- the steps
     var STEP = {};
     STEP.mobile = function () {
-      body.appendChild(el("p", TEXT, "Add your mobile so you can also sign in with a text code, and so we can text you if something at " + (v.name || "your venue") + " needs you."));
+      body.appendChild(el("p", TEXT, "Add your mobile so you can sign in with a text code, and so we can text you if something at " + (v.name || "your venue") + " needs you."));
       setNext("Skip for now", true);
       var holder = el("div", ""); body.appendChild(holder);
       return loadMe().then(function () {
@@ -273,7 +327,7 @@
       body.appendChild(tri); body.appendChild(mus);
       body.appendChild(el("p", "margin:12px 0 0;font-size:13.5px;line-height:1.5;color:" + C.faint, "Musical bingo: pick a playlist, tap Open lobby, then Deal, then Play. Come back to this guide any time from Setup guide at the top."));
       // Leaving for a game moves the guide on, so it reopens on the last step.
-      function leave(path) { state.step = "card"; save(); clearTimers(); go(path + q); }
+      function leave(path) { var gi = steps.indexOf("game"); state.step = steps[gi + 1] || "game"; save(); clearTimers(); go(path + q); }
       tri.addEventListener("click", function () { leave("/app/trivia/host.html"); });
       mus.addEventListener("click", function () { leave("/app/musical/host.html"); });
       setNext("Next", true);
@@ -283,7 +337,8 @@
       body.appendChild(price);
       /* TWO EQUAL CHOICES (Dean, 29 Oct 2026, phase 2): "Add your card now" (not charged until the free month
          ends) or "Later" (a reminder email comes before it ends). Same size, side by side, no pressure. */
-      var choices = el("div", "display:none;gap:10px;flex-wrap:wrap"); choices.id = "vpFrChoices";
+      var choices = el("div", "display:flex;gap:10px;flex-wrap:wrap"); choices.id = "vpFrChoices";   // both, always (audit 2.5)
+      choices.style.display = "flex";
       var cardBtn = el("a", BTN_PINK + ";text-decoration:none;text-align:center;flex:1 1 150px", "Add your card now"); cardBtn.id = "vpFrCard";
       /* SAME TAB (Dean, 29 Oct 2026): in a new tab, Stripe's back arrow landed on a fresh copy of the console
          that asked him to sign in all over again. Here Back (and Stripe's own back link, /app/) returns to
@@ -292,8 +347,15 @@
       var later = el("button", BTN_GHOST + ";flex:1 1 150px", "Later"); later.id = "vpFrLater"; later.setAttribute("type", "button");
       choices.appendChild(cardBtn); choices.appendChild(later);
       var cardMsg = msgLine("vpFrCardMsg");
-      body.appendChild(choices); body.appendChild(cardMsg);
-      cardBtn.addEventListener("click", function () { billing("/account/card-choice", { venue_id: v.id, choice: "now" }); });
+      var retry = el("button", BTN_GHOST + ";display:none;margin:10px 0 0", "Retry"); retry.id = "vpFrRetry"; retry.setAttribute("type", "button");
+      body.appendChild(choices); body.appendChild(cardMsg); body.appendChild(retry);
+      /* Until the link is in, "Add your card now" is dimmed and a tap fetches it again rather than going nowhere. */
+      function linkReady(on) { cardBtn.style.opacity = on ? "1" : ".45"; cardBtn.setAttribute("aria-disabled", on ? "false" : "true"); }
+      linkReady(false);
+      cardBtn.addEventListener("click", function (e) {
+        if (!cardBtn.getAttribute("href")) { if (e && e.preventDefault) e.preventDefault(); return loadLink(true); }
+        billing("/account/card-choice", { venue_id: v.id, choice: "now" });
+      });
       later.addEventListener("click", function () {
         billing("/account/card-choice", { venue_id: v.id, choice: "later" });
         cardMsg.style.color = C.ok;
@@ -316,7 +378,7 @@
         if (!ph) { callWrap.style.display = "block"; call.textContent = "Call me on this number"; callMsg.textContent = cin.value ? "That is not an Australian mobile. It should start 04." : "Pop your mobile in and tap again."; return Promise.resolve(false); }
         call.disabled = true; callMsg.textContent = "";
         return billing("/help/venue/ticket", { venue_id: v.id, subject: "Please call me",
-          message: "Please call me on " + mobileShow(ph) + ". Sent from the setup guide at " + (v.name || "the venue") + ", which HQ set up as a prospect.",
+          message: "Please call me on " + mobileShow(ph) + ". Sent from the setup guide at " + (v.name || "the venue") + (prospect ? ", which HQ set up as a prospect." : ", a new venue."),
           category: "venue_support" }).then(function (j) {
           if (!j || j.error || !j.ok) { call.disabled = false; callMsg.textContent = (j && j.error) || "That did not send. Try again in a minute."; return false; }
           callWrap.style.display = "none";
@@ -326,28 +388,41 @@
           return true;
         });
       });
-      return Promise.all([loadMe(), billing("/account/card-link", { venue_id: v.id })]).then(function (a) {
-        var d = a[1];
-        if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; return "has_card"; }
-        if (!d || !d.ok || !d.card_url) { cardMsg.textContent = (d && d.error) || "The card link could not load. Try again from Setup guide later."; return "error"; }
+      function applyLink(d) {
+        if (d && d.ok && d.has_card) { cardMsg.style.color = C.ok; cardMsg.textContent = "Your card is on. Thank you."; choices.style.display = "none"; retry.style.display = "none"; return "has_card"; }
+        if (!d || !d.ok || !d.card_url) {
+          cardMsg.style.color = C.pinkSoft;
+          cardMsg.textContent = ((d && d.error) || "The card link could not load just now.") + " Tap Retry, or choose Later.";
+          retry.style.display = "inline-block"; linkReady(false);
+          return "error";
+        }
+        retry.style.display = "none"; cardMsg.textContent = "";
         price.textContent = "It's " + money(d.rate) + " a player a month on your usual crowd: " + d.seats + " players is " + money(d.monthly) + " a month. " +
           (d.ends_words ? "Your free month runs until " + d.ends_words + ", and your card won't be charged before then." : "Your first month is free, and your card won't be charged before it ends.") + " No lock-in.";
-        cardBtn.setAttribute("href", d.card_url); choices.style.display = "flex";
+        cardBtn.setAttribute("href", d.card_url); linkReady(true);
         return "link";
-      });
+      }
+      function loadLink(fresh) {
+        var ask = (!fresh && cardInfo) ? Promise.resolve(cardInfo) : billing("/account/card-link", { venue_id: v.id });
+        if (fresh) { retry.disabled = true; cardMsg.style.color = C.faint; cardMsg.textContent = "Getting your card link..."; }
+        return ask.then(function (d) { retry.disabled = false; if (fresh) cardInfo = d; return applyLink(d); });
+      }
+      retry.addEventListener("click", function () { return loadLink(true); });
+      return Promise.all([loadMe(), loadLink(false)]).then(function (a) { return a[1]; });
     };
 
     var api = {
       el: shell,
       step: function () { return state.step; },
+      steps: function () { return steps.slice(); },
       go: function (name) {
-        if (STEPS.indexOf(name) < 0) return null;
+        if (steps.indexOf(name) < 0) return null;
         clearTimers();
         state.step = name; save();
-        var i = STEPS.indexOf(name);
-        count.textContent = "Step " + (i + 1) + " of " + STEPS.length;
+        var i = steps.indexOf(name);
+        count.textContent = "Step " + (i + 1) + " of " + steps.length;
         while (dots.firstChild) dots.removeChild(dots.firstChild);
-        STEPS.forEach(function (s, k) { var d = el("span", "display:inline-block;width:" + (k === i ? "22px" : "8px") + ";height:8px;border-radius:4px;background:" + (k <= i ? C.pink : "rgba(255,255,255,.18)")); d.setAttribute("data-step", s); dots.appendChild(d); });
+        steps.forEach(function (s, k) { var d = el("span", "display:inline-block;width:" + (k === i ? "22px" : "8px") + ";height:8px;border-radius:4px;background:" + (k <= i ? C.pink : "rgba(255,255,255,.18)")); d.setAttribute("data-step", s); dots.appendChild(d); });
         title.textContent = TITLES[name];
         while (body.firstChild) body.removeChild(body.firstChild);
         back.style.visibility = i === 0 ? "hidden" : "visible";
@@ -355,12 +430,12 @@
       },
       next: function () {
         if (next.disabled) return null;
-        var i = STEPS.indexOf(state.step);
+        var i = steps.indexOf(state.step);
         if (state.step === "mobile" && state.mobile !== "done") state.mobile = "skipped";
-        if (i >= STEPS.length - 1) { close(true); return "done"; }
-        return api.go(STEPS[i + 1]);
+        if (i >= steps.length - 1) { close(true); return "done"; }
+        return api.go(steps[i + 1]);
       },
-      back: function () { var i = STEPS.indexOf(state.step); if (i > 0) return api.go(STEPS[i - 1]); return null; },
+      back: function () { var i = steps.indexOf(state.step); if (i > 0) return api.go(steps[i - 1]); return null; },
       close: function () { close(false); }
     };
     next.addEventListener("click", function () { api.next(); });
@@ -369,11 +444,22 @@
     state.dismissed = false; save();
     /* THE FREE MONTH STARTS NOW, the first time they are in (Dean, 29 Oct 2026, phase 2; migration 127). The
        Worker sets it once and never moves it; a second sign-in changes nothing. */
-    started = billing("/account/prospect-start", { venue_id: v.id }).catch(function () { return null; });
+    started = prospect ? billing("/account/prospect-start", { venue_id: v.id }).catch(function () { return null; }) : Promise.resolve(null);
     api.started = started;
-    api.ready = api.go(state.step);
+    /* Where it opens: the step it was on, or the first one after it this venue still needs. */
+    function resumeAt(name) {
+      if (steps.indexOf(name) >= 0) return name;
+      for (var k = STEPS.indexOf(name) + 1; k < STEPS.length; k++) if (steps.indexOf(STEPS[k]) >= 0) return STEPS[k];
+      return steps[steps.length - 1];
+    }
+    count.textContent = ""; title.textContent = "Getting started";
+    api.ready = Promise.all([loadMe(), billing("/account/card-link", { venue_id: v.id })]).then(function (a) {
+      if (me.phone) { drop("mobile"); state.mobile = "done"; }
+      cardInfo = a[1] || null;
+      if (cardInfo && cardInfo.ok && cardInfo.has_card) drop("card");
+    }, function () {}).then(function () { return shell.parentNode ? api.go(resumeAt(state.step)) : null; });
     return api;
   }
 
-  root.VPFirstRun = { open: open, wants: wants, isProspect: isProspect, STEPS: STEPS, KEY: KEY, mobileE164: mobileE164 };
+  root.VPFirstRun = { open: open, wants: wants, check: check, reopen: reopen, offered: offered, isNew: isNew, isProspect: isProspect, STEPS: STEPS, KEY: KEY, mobileE164: mobileE164, NEW_DAYS: NEW_DAYS };
 })(typeof window !== "undefined" ? window : this);
