@@ -737,6 +737,16 @@
       <div id="rpResults" style="margin-top:12px"></div>
     </div>
 
+    <!-- A LOGIN NOBODY NEEDS (Dean, 30 Oct 2026): an old test login blocks a new prospect with the same email.
+         vp-logins-hq.js. Owner only; it names the email before anything goes, and refuses a login on another venue. -->
+    <div class="lblk" style="margin-top:26px">Remove a login</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="note" style="margin:0 0 10px">Type the <b>whole</b> email of a VenuePlay login to see every venue it is on. A login that is on one venue or none can be removed for good, for example an old test login. A login on any other venue, or a VenuePlay staff login, cannot.</div>
+      <input id="rlQuery" type="email" autocomplete="off" placeholder="name@example.com" style="max-width:340px">
+      <button class="btn ghost sp" id="rlFind" style="margin-left:8px">Find the login</button>
+      <div id="rlResults" style="margin-top:12px"></div>
+    </div>
+
     <div class="lblk" style="margin-top:26px">Player data collection, every account</div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Account</th><th>Email</th><th>Venues</th><th>Collecting</th><th>Decision</th></tr></thead>
@@ -756,6 +766,8 @@
 <!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. Before the page's
      own script, which asks it isProspect(); it waits for the page to finish loading before it draws anything. -->
 <script src="vp-prospects-hq.js"></script>
+<!-- Remove a login that belongs to no other venue (vp-logins-hq.js, 30 Oct 2026). HQ only; started by hq.html below. -->
+<script src="vp-logins-hq.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -907,6 +919,8 @@
     });
   }
   function auditBestEffort(action, target, detail){ workerPost("/admin/audit", { action:action, target:target, detail:detail||{} }); }
+  /* Remove a login: this page's own sign-in, questions and owner test, nothing of its own (vp-logins-hq.js). */
+  if(window.VPLogins) window.VPLogins.init({ post:workerPost, ask:vpAsk, tell:vpTell, isOwner:function(){ return S.adminRole==="owner"; } });
 
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
@@ -2333,6 +2347,8 @@
         '<b>Created</b> '+esc(fmtWhen(v.created_at))+
         /* This venue's help desk tickets (Dean, 29 Oct 2026), filled by vp-helpdesk-hq.js. */
         '<div class="vphd" data-vphd="'+esc(v.id)+'"></div>'+
+        /* Its logins, with Remove login for one that belongs to no other venue (Dean, 30 Oct 2026; vp-logins-hq.js). */
+        (canBilling() ? '<div class="vplogins" data-vplogins="'+esc(v.id)+'"></div>' : '')+
         gaming+
         /* The seven controls that used to sit in the row. Here, where somebody is
            already looking at this one venue, rather than repeated 400 times down a
@@ -2345,6 +2361,7 @@
     });
     if(capV.hidden) b.insertAdjacentHTML("beforeend", moreRowHtml("venues", capV.hidden, 5, 100));
     if(S.openVenue && window.VPHelpdesk) window.VPHelpdesk.venueTickets(S.openVenue);
+    if(S.openVenue && window.VPLogins && canBilling()) window.VPLogins.venueBlock(S.openVenue, venueName(S.openVenue));
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
 
@@ -3150,6 +3167,8 @@
       }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id){ S.venues[i].status="suspended"; S.venues[i].suspended_reason="archived"; } }
       renderStats(); renderVenues(); loadAuditOnly();
+      /* Then, and only on Dean's own yes to each, its logins that belong to no other venue (30 Oct 2026). */
+      if(window.VPLogins) window.VPLogins.afterArchive(id, name);
     });
     });
   }

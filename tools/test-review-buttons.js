@@ -36,7 +36,8 @@ crypto = { subtle: {
 var KEY = 'k3y-' + 'abcdefghijklmnopqrstuvwxyz0123456789';   // 40 characters, assembled so it is no key's shape
 var VECTOR = '0d40a8c71578eac85d2a9b3ffed0160e';            // Python: hmac('vp-review:'+KEY, folder|yes|1793000000|1)[:32]
 var FOLDER = '2026-10-29-test-charlie-hotel';
-var ROWS = [], WRITES = [], FAILDB = false, STALE = 0;   // STALE = n: the next n reads see the row before the other tap landed
+var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false;   // NO_V2: the live table before migration 130
+var V2 = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];   // STALE = n: the next n reads see the row before the other tap landed
 var NOW = Date.parse('2026-10-29T08:00:00Z');
 Date.now = function () { return NOW; };
 var rigFetch = globalThis.fetch;
@@ -48,11 +49,17 @@ globalThis.fetch = function (url, opts) {
   if (method !== 'GET') WRITES.push({ method: method, url: u, body: opts && opts.body });
   if (FAILDB) return RS(503, 'down');
   var q = parseQ(m[1]);
+  if (NO_V2 && method === 'GET' && /edited_(postcode|entity_type|login_email)|details/.test(q.select || '')) return RS(400, { code: '42703', message: 'column vp_autopilot_reviews.edited_postcode does not exist' });
+  if (NO_V2 && method !== 'GET' && V2.some(function (k) { return k in JSON.parse(opts.body || '{}'); })) return RS(400, { code: 'PGRST204', message: "Could not find the 'details' column of 'vp_autopilot_reviews' in the schema cache" });
   if (method === 'GET') {
+    // PostgREST returns every column; after migration 130 that includes the four new ones, null until written
+    if (!NO_V2) ROWS.forEach(function (r) { V2.forEach(function (k) { if (!(k in r)) r[k] = null; }); });
     var rows = ROWS.filter(function (r) { return match(r, q); });
     rows.sort(function (a, b) { return String(a.decided_at) < String(b.decided_at) ? -1 : 1; });
     var off = parseInt(q.offset || '0', 10), lim = Math.min(parseInt(q.limit || '1000', 10), 1000);
     var out = JSON.parse(JSON.stringify(rows.slice(off, off + lim)));
+    // select=a,b: only those columns come back, as PostgREST does (30 Oct 2026: the decisions read names the Edit boxes)
+    if (q.select && q.select !== '*') { var cols = q.select.split(','); out = out.map(function (r) { var o = {}; cols.forEach(function (c) { if (c in r) o[c] = r[c]; }); return o; }); }
     if (STALE > 0 && q.folder) { STALE--; out.forEach(function (r) { r.decision = null; r.decided_at = null; }); }
     return RS(200, out);
   }
@@ -81,7 +88,7 @@ var AP = { 'X-Autopilot-Key': KEY };
 var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: VenuePlay turns the TV you already have into a games night, so you can have a play.\n\nCheers,\nHarry Finch\nVenuePlay\nvenueplay.com.au\n';
 var REVIEW = { folder: FOLDER, company: 'Test Charlie <Hotel>', class: 'interested', their_words: 'Yes please, send it through. <b>Mick</b>',
   reply: REPLY, mailbox: 'harry@venueplaylive.com.au', reply_to: 'manager@testcharlie.example' };
-function world() { ROWS = []; WRITES = []; FAILDB = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
+function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
 function pathOf(link) { return link.replace(/^https:\/\/[^/]+/, ''); }
 function swap(link, k, v) { return link.replace(new RegExp('([?&]' + k + '=)[^&]*'), '$1' + v); }
 function form(o) { return Object.keys(o).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(o[k]).replace(/%20/g, '+'); }).join('&'); }
@@ -127,7 +134,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var g = await call(pathOf(L.yes), undefined, {}, 'GET');
   check('Yes page: 200, branded, the venue (escaped), their words (escaped), the reply', g.status === 200 && /VenuePlay prospect review/.test(g.html) &&
     g.html.indexOf('Test Charlie &lt;Hotel&gt;') !== -1 && g.html.indexOf('&lt;b&gt;Mick&lt;/b&gt;') !== -1 && g.html.indexOf('Thanks for getting back to me.') !== -1, g.html.slice(0, 300));
-  check('Yes page: one big "Yes, send it" button that POSTs back to the same signed link', /<form method="POST" action="\/autopilot\/review\?f=2026-10-29-test-charlie-hotel&amp;a=yes&amp;r=1&amp;x=\d+&amp;t=[0-9a-f]{32}"/.test(g.html) && />Yes, send it<\/button>/.test(g.html));
+  check('Yes page: one big "Yes, send the standard reply" button that POSTs back to the same signed link', /<form method="POST" action="\/autopilot\/review\?f=2026-10-29-test-charlie-hotel&amp;a=yes&amp;r=1&amp;x=\d+&amp;t=[0-9a-f]{32}"/.test(g.html) && />Yes, send the standard reply<\/button>/.test(g.html));
   check('Yes page: says exactly what happens and when (5 minutes, the checks, 30 minutes after theirs, 8am to 5pm Monday to Friday, the email back)',
     /Within 5 minutes your Mac/.test(g.html) && /nobody has replied to them since/.test(g.html) && /30 minutes after their email arrived, between 8am and 5pm Monday to Friday/.test(g.html) &&
     /from harry@venueplaylive\.com\.au/.test(g.html) && /why it was held/.test(g.html));
@@ -141,7 +148,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('three GETs (a mail scanner) wrote NOTHING', WRITES.length === 0 && !ROWS[0].decision, WRITES);
   ROWS[0].class = 'question';
   g = await call(pathOf(L.yes), undefined, {}, 'GET');
-  check('a question: the Yes page says to Edit and answer it, or the yes will be held', /does not answer/.test(g.html) && /will be held/.test(g.html));
+  check('a question from a Mac with no recommendation: one neutral line (check the reply answers it, or tap Edit), never "will be held"', /They asked a question\. Check the reply below answers it/.test(g.html) && !/will be held/.test(g.html), g.html.slice(0, 200));
   ROWS[0].class = 'interested';
 
   section('4. BAD LINKS DO NOTHING');
@@ -169,13 +176,13 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
 
   section('5. A TAP RECORDS ONCE');
   var p1 = await call(pathOf(L.yes), undefined, { 'User-Agent': 'iPhone Safari' }, 'POST', '');
-  check('Yes: "Got it", recorded yes with the time and the phone', p1.status === 200 && /Got it: Yes, send it/.test(p1.html) && ROWS[0].decision === 'yes' && !!ROWS[0].decided_at && ROWS[0].decided_agent === 'iPhone Safari', p1.html.slice(-500));
+  check('Yes: "Got it", recorded yes with the time and the phone', p1.status === 200 && /Got it: Yes, send the standard reply/.test(p1.html) && ROWS[0].decision === 'yes' && !!ROWS[0].decided_at && ROWS[0].decided_agent === 'iPhone Safari', p1.html.slice(-500));
   check('the done page says the Mac picks it up within 5 minutes', /picks it up within 5 minutes/.test(p1.html));
   var at = ROWS[0].decided_at; NOW += 60000;
   var p2 = await call(pathOf(L.yes), undefined, {}, 'POST', '');
   check('a second tap on Yes: same "Got it" page, nothing changed', p2.status === 200 && ROWS[0].decided_at === at && ROWS[0].decision === 'yes');
   var p3 = await call(pathOf(L.no), undefined, {}, 'POST', form({ reason: 'changed my mind' }));
-  check('No after Yes: "You already chose: Yes", still yes, no reason written', /You already chose: Yes, send it/.test(p3.html) && ROWS[0].decision === 'yes' && !ROWS[0].reason, p3.html.slice(-500));
+  check('No after Yes: "You already chose: Yes", still yes, no reason written', /You already chose: Yes, send the standard reply/.test(p3.html) && ROWS[0].decision === 'yes' && !ROWS[0].reason, p3.html.slice(-500));
   var p4 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY + 'extra' }));
   check('Edit after Yes: refused the same way, the edited text not stored', /You already chose/.test(p4.html) && !ROWS[0].edited_reply);
   var g2 = await call(pathOf(L.edit), undefined, {}, 'GET');
@@ -227,6 +234,66 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   STALE = 0;
   check('the second tap does not overwrite the first: still no, still its reason, and the page says what was chosen',
     ROWS[0].decision === 'no' && ROWS[0].reason === 'first tap' && /You already chose: No, do not send/.test(race.html), { row: ROWS[0], page: race.html.slice(-400) });
+
+  section('10. THE RECOMMENDATION AND THE EDIT PAGE\'S BOXES (Dean, 30 Oct 2026; migration 130)');
+  world();
+  var SARAH = 'The email sarah+test9@gflam.com.au already has a VenuePlay login from an earlier test. Delete the old login in HQ (open the venue\'s Details, then Remove login), or tap Edit to use a different email.';
+  var V2REV = Object.assign({}, REVIEW, { class: 'question', postcode: '', entity_type: 'for_profit', login_email: 'Sarah+Test9@gflam.com.au', state: '',
+    recommend: 'edit', recommend_why: 'We still need their postcode and the account sorted before it can go. <i>x</i>', warnings: [SARAH, 'We guessed it is a pub from its name. If it is a club, tap Edit and choose Club.'] });
+  r = await call('/autopilot/review/register', V2REV, AP); L = r.body.links || {};
+  check('register keeps what the Mac found, checked: the recommendation, its reason, the plain warnings, the postcode, pub or club and the login email (lower case)',
+    r.status === 200 && ROWS[0].details && ROWS[0].details.recommend === 'edit' && /We still need their postcode/.test(ROWS[0].details.recommend_why) && ROWS[0].details.warnings.length === 2 &&
+    ROWS[0].details.postcode === '' && ROWS[0].details.entity_type === 'for_profit' && ROWS[0].details.login_email === 'sarah+test9@gflam.com.au', ROWS[0].details);
+  var badr = await call('/autopilot/review/register', Object.assign({}, V2REV, { folder: FOLDER + '-b', postcode: '42a17x', entity_type: 'casino', login_email: 'not an email', recommend: 'maybe', warnings: new Array(30).join('w,').split(',') }), AP);
+  var rb = ROWS.filter(function (x) { return x.folder === FOLDER + '-b'; })[0] || {};
+  check('what the Mac sends is never trusted: a bad postcode, pub or club, email or recommendation is dropped, and the warnings are capped at 12',
+    badr.status === 200 && rb.details && rb.details.postcode === '' && rb.details.entity_type === '' && rb.details.login_email === '' && rb.details.recommend === '' && rb.details.warnings.length <= 12, rb.details);
+  g = await call(pathOf(L.yes), undefined, {}, 'GET');
+  check('Yes page: "I recommend: Edit first." with its reason (escaped), then each warning', /<div class="rec edit"><b>I recommend: Edit first\.<\/b><br>We still need their postcode and the account sorted before it can go\. &lt;i&gt;x&lt;\/i&gt;<\/div>/.test(g.html) &&
+    g.html.indexOf('<div class="warn">' + vpaEsc(SARAH) + '</div>') !== -1 && g.html.indexOf('rec edit') < g.html.indexOf(vpaEsc(SARAH)), g.html.slice(g.html.indexOf('<h2>What they wrote'), g.html.indexOf('<h2>What they wrote') + 900));
+  ge = await call(pathOf(L.edit), undefined, {}, 'GET');
+  check('Edit page: a Postcode box, a Pub / Club choice and a Login email box, filled from what the autopilot found, beside the reply',
+    /<input type="text" name="postcode"[^>]*value=""/.test(ge.html) && /<input type="radio" name="entity" value="pub" checked>/.test(ge.html) && /<input type="radio" name="entity" value="club">/.test(ge.html) &&
+    /<input type="email" name="login_email"[^>]*value="sarah\+test9@gflam\.com\.au"/.test(ge.html) && /<textarea name="reply"/.test(ge.html), ge.html.slice(-1800));
+  var FORBID = ['--postcode', '--club', 'reply.txt', '--approve', '409', '+ Add venue'];
+  var seen = FORBID.filter(function (w) { return [g.html, ge.html].some(function (h) { return h.indexOf(w) !== -1; }); });
+  check('nothing on the review or Edit page is a command or a code (' + FORBID.join(', ') + ')', seen.length === 0, seen);
+  WRITES = [];
+  var e4 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: '42 17', entity: 'club', login_email: 'x@y.example' }));
+  check('a postcode that is not 4 numbers: 400, told so, what was typed kept in the boxes, nothing saved', e4.status === 400 && /postcode must be 4 numbers/.test(e4.html) &&
+    /name="postcode"[^>]*value="42 17"/.test(e4.html) && /value="club" checked/.test(e4.html) && !ROWS[0].decision && WRITES.length === 0,
+    { s: e4.status, w: WRITES.length, d: ROWS[0].decision, h: e4.html.slice(e4.html.indexOf('<div class="err">'), e4.html.indexOf('<div class="err">') + 200), b: e4.html.slice(e4.html.indexOf('<h2>Their account'), e4.html.indexOf('<h2>Their account') + 500) });
+  var e5 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: '4217', entity: 'club', login_email: 'not-an-email' }));
+  check('a login email that is not an email: 400, nothing saved', e5.status === 400 && /does not look like an email/.test(e5.html) && !ROWS[0].decision, { s: e5.status, d: ROWS[0].decision, h: e5.html.slice(e5.html.indexOf('<div class="err">'), e5.html.indexOf('<div class="err">') + 200) });
+  var e6 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: ' 4217 ', entity: 'club', login_email: 'Sarah+Test10@GFLAM.com.au' }));
+  check('Save and send: the edit is recorded with the postcode, Club (non_profit) and the email (lower case)', e6.status === 200 && ROWS[0].decision === 'edit' &&
+    ROWS[0].edited_postcode === '4217' && ROWS[0].edited_entity_type === 'non_profit' && ROWS[0].edited_login_email === 'sarah+test10@gflam.com.au', ROWS[0]);
+  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  check('the Mac gets the boxes with the decision', d.status === 200 && d.body.decisions[0].edited_postcode === '4217' && d.body.decisions[0].edited_entity_type === 'non_profit' &&
+    d.body.decisions[0].edited_login_email === 'sarah+test10@gflam.com.au', d.body);
+  await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: SARAH }, AP);
+  re = await call('/autopilot/review/register', Object.assign({ reopen: true }, V2REV), AP);
+  check('a held edit opens a new round with the boxes cleared, so an old answer is never applied twice', re.status === 200 && ROWS[0].round === 2 && ROWS[0].edited_postcode === null &&
+    ROWS[0].edited_entity_type === null && ROWS[0].edited_login_email === null && ROWS[0].decision === null, ROWS[0]);
+  var d2 = await call(pathOf(re.body.links.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: '', login_email: '' }));
+  check('empty boxes are saved as nothing (the Mac then changes nothing but the reply)', d2.status === 200 && ROWS[0].decision === 'edit' && ROWS[0].edited_postcode === null &&
+    ROWS[0].edited_entity_type === null && ROWS[0].edited_login_email === null, ROWS[0]);
+  g3 = await call(pathOf(re.body.links.yes), undefined, {}, 'GET');
+
+  section('11. BEFORE MIGRATION 130: everything works as it did, without the boxes');
+  world(); NO_V2 = true;
+  r = await call('/autopilot/review/register', V2REV, AP); L = r.body.links || {};
+  check('register still saves the review (without what the table cannot hold) and gives the links', r.status === 200 && ROWS.length === 1 && !('details' in ROWS[0]) && !!L.edit, r.body);
+  ge = await call(pathOf(L.edit), undefined, {}, 'GET');
+  check('the Edit page has the reply and no boxes it could not save', ge.status === 200 && /<textarea name="reply"/.test(ge.html) && !/name="postcode"/.test(ge.html), ge.status);
+  var e7 = await call(pathOf(L.edit), undefined, {}, 'POST', form({ reply: REPLY, postcode: '4217' }));
+  check('an edit is still recorded', e7.status === 200 && ROWS[0].decision === 'edit' && !('edited_postcode' in ROWS[0]), ROWS[0]);
+  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  check('and the Mac still sees it, as before', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'edit' && !('edited_postcode' in d.body.decisions[0]), d.body);
+  await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: 'x' }, AP);
+  re = await call('/autopilot/review/register', Object.assign({ reopen: true }, V2REV), AP);
+  check('a held one still reopens (round 2)', re.status === 200 && ROWS[0].round === 2 && ROWS[0].decision === null, re.body);
+  NO_V2 = false;
 
   section('9. NO: the reason is kept');
   world();

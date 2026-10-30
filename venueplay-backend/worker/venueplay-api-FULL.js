@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 14:00 · 7c3fe0b8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '30 Oct 2026, 19:42 · 2b296ead';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -255,6 +255,10 @@ export default {
       if (request.method === 'GET'  && path === '/admin/venue-marketing-export' && typeof vpaHandleVenueMarketingExport === 'function') return await vpaHandleVenueMarketingExport(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
+      // Remove a login that belongs to no other venue (Dean, 30 Oct 2026). HQ only; the delete is owner only, on his own tap.
+      if (request.method === 'POST' && path === '/admin/logins'          && typeof vpaHandleLogins === 'function')         return await vpaHandleLogins(request, env, json);
+      if (request.method === 'POST' && path === '/admin/login-find'      && typeof vpaHandleLoginFind === 'function')      return await vpaHandleLoginFind(request, env, json);
+      if (request.method === 'POST' && path === '/admin/login-remove'    && typeof vpaHandleLoginRemove === 'function')    return await vpaHandleLoginRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
       return json({ error: 'not found' }, 404);
     } catch (err) {
@@ -2353,6 +2357,47 @@ function vpaReviewText(v, max) {
   return String(v == null ? '' : v).replace(/\r\n?/g, '\n').slice(0, max || VPA_REVIEW_MAX);
 }
 
+/* THE EDIT PAGE'S BOXES AND THE RECOMMENDATION (Dean, 30 Oct 2026; migration 130). The Mac sends what it found
+   (postcode, pub or club, login email), its recommendation ("Send the standard reply" or "Edit first") and its
+   warnings, each a plain sentence saying what to tap. They are kept in `details`; Dean's Postcode box, Pub / Club
+   choice and Login email box go in edited_postcode, edited_entity_type and edited_login_email with his Edit.
+   BEFORE MIGRATION 130 those columns do not exist, and PostgREST refuses any write or read naming them. Every
+   write and read here then falls back to exactly what it did before (no boxes, no recommendation on the page),
+   so the Worker can go up before the migration is run and nothing breaks. */
+const VPA_REVIEW_V2_COLS = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];
+function vpaReviewNoV2(e) {
+  return /PGRST204|42703|Could not find the '?(details|edited_\w+)'? column|column [\w.]*(details|edited_\w+) does not exist/.test(String((e && (e.message || e.body)) || e || ''));
+}
+function vpaReviewStrip(o) {
+  const c = Object.assign({}, o);
+  VPA_REVIEW_V2_COLS.forEach(function (k) { delete c[k]; });
+  return c;
+}
+async function vpaReviewPatchV2(env, filter, patch) {
+  try { return await vpaReviewPatch(env, filter, patch); }
+  catch (e) {
+    if (!vpaReviewNoV2(e) || !VPA_REVIEW_V2_COLS.some(function (k) { return k in patch; })) throw e;
+    return await vpaReviewPatch(env, filter, vpaReviewStrip(patch));
+  }
+}
+const VPA_REVIEW_EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
+/* What the Mac found, checked and capped. null when the Mac sent none of it (a Mac from before 30 Oct). */
+function vpaReviewDetails(b) {
+  const keys = ['postcode', 'entity_type', 'login_email', 'state', 'recommend', 'recommend_why', 'warnings'];
+  if (!keys.some(function (k) { return b[k] !== undefined; })) return null;
+  const pc = String(b.postcode == null ? '' : b.postcode).trim();
+  const em = vpaReviewText(b.login_email, 200).trim().toLowerCase();
+  return {
+    postcode: /^\d{4}$/.test(pc) ? pc : '',
+    state: vpaReviewText(b.state, 3).replace(/[^A-Za-z]/g, '').toUpperCase(),
+    entity_type: (b.entity_type === 'for_profit' || b.entity_type === 'non_profit') ? b.entity_type : '',
+    login_email: VPA_REVIEW_EMAIL_RE.test(em) ? em : '',
+    recommend: (b.recommend === 'yes' || b.recommend === 'edit') ? b.recommend : '',
+    recommend_why: vpaReviewText(b.recommend_why, 600).trim(),
+    warnings: (Array.isArray(b.warnings) ? b.warnings : []).slice(0, 12).map(function (w) { return vpaReviewText(w, 600).trim(); }).filter(Boolean),
+  };
+}
+
 /* POST /autopilot/review/register { folder, company, class, their_words, reply, mailbox, reply_to, reopen } */
 async function vpaAutopilotReviewRegister(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
@@ -2369,6 +2414,8 @@ async function vpaAutopilotReviewRegister(request, env, json) {
     their_words: vpaReviewText(b.their_words), reply: reply,
     mailbox: vpaReviewText(b.mailbox, 200), reply_to: vpaReviewText(b.reply_to, 200),
   };
+  const details = vpaReviewDetails(b);
+  if (details) content.details = details;
   const exp = Math.floor(Date.now() / 1000) + VPA_REVIEW_DAYS * 86400;
   const expIso = new Date(exp * 1000).toISOString();
   let row;
@@ -2377,23 +2424,31 @@ async function vpaAutopilotReviewRegister(request, env, json) {
   let round;
   if (!row) {
     round = 1;
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_autopilot_reviews', {
-      method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
-      body: JSON.stringify(Object.assign({ folder: folder, round: round, expires_at: expIso }, content)) });
+    const insert = function (c) {
+      return fetch(env.SUPABASE_URL + '/rest/v1/vp_autopilot_reviews', {
+        method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+        body: JSON.stringify(Object.assign({ folder: folder, round: round, expires_at: expIso }, c)) });
+    };
+    let res = await insert(content);
+    if (!res.ok && content.details) {
+      const t = await res.text().catch(function () { return ''; });
+      if (vpaReviewNoV2(t)) res = await insert(vpaReviewStrip(content));   // before migration 130
+    }
     if (!res.ok) return json({ error: 'Could not save the review (' + res.status + '). Run migration 128 first.' }, 503);
   } else if (!row.decision) {
     // Not decided yet: the content and the links are refreshed, the round stays.
     round = row.round;
-    const got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null',
+    const got = await vpaReviewPatchV2(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null',
       Object.assign({ expires_at: expIso, updated_at: new Date().toISOString() }, content)).catch(function () { return null; });
     if (!got) return json({ error: 'Could not save the review.' }, 503);
     if (!got.length) return json({ error: 'Dean decided while this was being saved. Fetch the decisions first.', decided: true }, 409);
   } else if (b.reopen === true && row.applied_at) {
     // A held decision: a NEW round, so the old links stop working and fresh buttons go to Dean.
     round = (parseInt(row.round, 10) || 1) + 1;
-    const got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + row.round,
+    const got = await vpaReviewPatchV2(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + row.round,
       Object.assign({ round: round, expires_at: expIso, updated_at: new Date().toISOString(), decision: null, decided_at: null,
-        reason: null, edited_reply: null, decided_agent: null, applied_at: null, applied_result: null, applied_note: null }, content)).catch(function () { return null; });
+        reason: null, edited_reply: null, decided_agent: null, applied_at: null, applied_result: null, applied_note: null },
+        ('edited_postcode' in row) ? { edited_postcode: null, edited_entity_type: null, edited_login_email: null } : {}, content)).catch(function () { return null; });
     if (!got) return json({ error: 'Could not save the review.' }, 503);
     if (!got.length) return json({ error: 'The review changed while this was being saved. Try again.' }, 409);
   } else {
@@ -2408,9 +2463,13 @@ async function vpaAutopilotDecisions(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
   if (no) return no;
   let rows;
+  const q = function (extra) {
+    return vpaReadPage(env, 'vp_autopilot_reviews', 'decision=in.(yes,no,edit)&applied_at=is.null'
+      + '&select=folder,round,company,decision,decided_at,reason,edited_reply' + extra + '&order=decided_at.asc&limit=50');
+  };
   try {
-    rows = await vpaReadPage(env, 'vp_autopilot_reviews', 'decision=in.(yes,no,edit)&applied_at=is.null'
-      + '&select=folder,round,company,decision,decided_at,reason,edited_reply&order=decided_at.asc&limit=50');
+    try { rows = await q(',edited_postcode,edited_entity_type,edited_login_email'); }
+    catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: the decisions as before
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
   return json({ ok: true, decisions: rows });
 }
@@ -2456,6 +2515,10 @@ function vpaReviewPage(title, inner, status) {
     + '.err{background:#3A1420;color:#FFB3C8;border-radius:12px;padding:12px 14px;margin:14px 0}'
     + 'textarea{width:100%;min-height:340px;background:#0F0D14;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;line-height:1.5;font-family:inherit}'
     + 'textarea.short{min-height:110px}'
+    + '.rec{border-radius:12px;padding:12px 14px;margin:14px 0;border:2px solid var(--green);background:rgba(29,185,122,.10)}.rec.edit{border-color:var(--pink);background:rgba(255,31,142,.10)}'
+    + '.fields{display:grid;gap:12px}.fields label{display:block;font-size:14px;color:var(--muted)}'
+    + '.fields input[type=text],.fields input[type=email]{display:block;width:100%;margin-top:4px;background:#0F0D14;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:16px}'
+    + '.radios{display:flex;gap:10px;margin-top:4px}.radios label{flex:1;display:flex;align-items:center;gap:8px;background:#0F0D14;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--text);font-size:16px}'
     + '.btn{display:block;width:100%;margin-top:12px;padding:16px;border:0;border-radius:12px;font:inherit;font-size:18px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer}'
     + '.yes{background:var(--green);color:#06140E}.edit{background:var(--pink);color:#fff}.no{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,.35)}'
     + '.others{display:flex;gap:10px;margin-top:6px}.others a{flex:1;font-size:15px;padding:12px}'
@@ -2502,7 +2565,38 @@ function vpaParseForm(text) {
   return out;
 }
 
-const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send it', no: 'No, do not send', edit: 'Edited and send' };
+const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send the standard reply', no: 'No, do not send', edit: 'Edited and send' };
+
+/* The Mac's recommendation and its warnings (migration 130), each a plain sentence with what to tap. A review from
+   before then has neither: a question then gets one neutral line, true whatever the Mac does with a Yes. */
+function vpaReviewAdvice(row) {
+  const d = (row.details && typeof row.details === 'object') ? row.details : null;
+  let out = '';
+  if (d && (d.recommend === 'yes' || d.recommend === 'edit')) {
+    out += '<div class="rec' + (d.recommend === 'edit' ? ' edit' : '') + '"><b>' + (d.recommend === 'yes' ? 'I recommend: Send the standard reply.' : 'I recommend: Edit first.')
+      + '</b>' + (d.recommend_why ? '<br>' + vpaEsc(d.recommend_why) : '') + '</div>';
+  } else if (row.class === 'question') {
+    out += '<div class="warn">They asked a question. Check the reply below answers it. If it does not, tap <b>Edit</b>.</div>';
+  }
+  (d && Array.isArray(d.warnings) ? d.warnings : []).slice(0, 12).forEach(function (w) { out += '<div class="warn">' + vpaEsc(w) + '</div>'; });
+  return out;
+}
+
+/* The Edit page's account boxes, only when the table can hold them (migration 130: the row carries the column). */
+function vpaReviewBoxes(row, form) {
+  if (!('edited_postcode' in row)) return '';
+  const d = (row.details && typeof row.details === 'object') ? row.details : {};
+  const pc = form ? form.postcode : (d.postcode || '');
+  const ent = form ? form.entity : (d.entity_type === 'non_profit' ? 'club' : (d.entity_type === 'for_profit' ? 'pub' : ''));
+  const em = form ? form.email : (d.login_email || '');
+  return '<h2>Their account</h2><div class="fields">'
+    + '<label>Postcode<input type="text" name="postcode" inputmode="numeric" maxlength="4" autocomplete="off" value="' + vpaEsc(pc) + '" aria-label="Postcode"></label>'
+    + '<div><span class="muted" style="font-size:14px">Pub or club</span><div class="radios">'
+    + '<label><input type="radio" name="entity" value="pub"' + (ent === 'pub' ? ' checked' : '') + '> Pub</label>'
+    + '<label><input type="radio" name="entity" value="club"' + (ent === 'club' ? ' checked' : '') + '> Club</label></div></div>'
+    + '<label>Login email<input type="email" name="login_email" autocomplete="off" autocapitalize="off" value="' + vpaEsc(em) + '" aria-label="Login email"></label>'
+    + '</div><p class="muted" style="margin-top:8px">Filled in from what we found. Change anything that is wrong.</p>';
+}
 function vpaReviewDecidedPage(row, sameAsAsked) {
   const when = row.decided_at ? new Date(Date.parse(row.decided_at) + 36000000).toISOString().slice(0, 16).replace('T', ' ') + ' Brisbane' : '';
   const applied = row.applied_at
@@ -2547,10 +2641,9 @@ async function vpaAutopilotReviewPage(request, env) {
 
   const self = '/autopilot/review?f=' + encodeURIComponent(folder) + '&a=' + action + '&r=' + round + '&x=' + exp + '&t=' + tok;
   const links = await vpaReviewLinks(env, folder, exp, round);
-  const question = row.class === 'question';
-  const qWarn = question ? '<div class="warn">They asked something the standard reply does not answer. Tap <b>Edit</b> and answer it; '
-    + 'a Yes on the reply as drafted will be held and not sent.</div>' : '';
-  let form = null, err = '';
+  const qWarn = vpaReviewAdvice(row);
+  const boxes = ('edited_postcode' in row);
+  let form = null, boxForm = null, err = '';
 
   if (isPost) {
     let body = '';
@@ -2561,13 +2654,26 @@ async function vpaAutopilotReviewPage(request, env) {
     if (action === 'no') patch.reason = vpaReviewText(f.reason, 2000).trim() || null;
     if (action === 'edit') {
       const text = vpaReviewText(f.reply, VPA_REVIEW_MAX + 1);
+      const pc = String(f.postcode || '').trim(), entity = String(f.entity || ''), em = String(f.login_email || '').trim().toLowerCase();
+      if (boxes) {
+        boxForm = { postcode: pc.slice(0, 12), entity: entity === 'club' || entity === 'pub' ? entity : '', email: em.slice(0, 200) };
+        if (pc && !/^\d{4}$/.test(pc)) err = 'The postcode must be 4 numbers. Nothing was saved.';
+        else if (em && (em.length > 200 || !VPA_REVIEW_EMAIL_RE.test(em))) err = 'That login email does not look like an email. Fix it or clear the box. Nothing was saved.';
+        else {
+          patch.edited_postcode = pc || null;
+          patch.edited_entity_type = entity === 'club' ? 'non_profit' : (entity === 'pub' ? 'for_profit' : null);
+          patch.edited_login_email = em || null;
+        }
+      }
       /* Only what a phone keyboard does on its own is checked here, so Dean finds out now and not in five
          minutes: iPhones turn "--" into a long dash. Every other rule is the Mac's lint_reply, one copy. */
-      if (text.length > VPA_REVIEW_MAX) err = 'That is too long to send (over 20,000 characters).';
+      if (err) { /* a box was wrong: said above */ }
+      else if (text.length > VPA_REVIEW_MAX) err = 'That is too long to send (over 20,000 characters).';
       else if (text.trim().length < 80) err = 'That is too short to be the reply. Nothing was saved.';
       else if (/[\u2014\u2013]/.test(text)) err = 'Your reply has a long dash in it (your phone may have made one from two hyphens). Change it to a comma or a full stop, then tap Save and send again. Nothing was saved.';
       if (err) form = text;
       else patch.edited_reply = text.trim() + '\n';
+      if (err && boxes && !boxForm) boxForm = { postcode: pc.slice(0, 12), entity: entity, email: em.slice(0, 200) };
     }
     if (!err) {
       let got;
@@ -2592,14 +2698,15 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<p class="muted" style="margin-top:8px">The line saying when their account email comes is matched to when it really goes.</p>'
       + vpaReviewWhatHappens(row, false)
       + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
-      + '<button class="btn yes" name="b" type="submit">Yes, send it</button></form>'
-      + '<div class="others"><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit first</a><a class="btn no" href="' + vpaEsc(links.no) + '">No</a></div>';
+      + '<button class="btn yes" name="b" type="submit">Yes, send the standard reply</button></form>'
+      + '<div class="others"><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit the reply first</a><a class="btn no" href="' + vpaEsc(links.no) + '">No</a></div>';
   } else if (action === 'edit') {
     inner += (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
       + '<h2>The reply: change anything, then tap Save and send</h2>'
       + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
       + '<textarea name="reply" aria-label="The reply" autocapitalize="sentences" spellcheck="true">' + vpaEsc(form != null ? form : row.reply) + '</textarea>'
       + '<p class="muted" style="margin-top:8px">Your signature is at the bottom: leave it there. Plain text; a blank line starts a new paragraph.</p>'
+      + vpaReviewBoxes(row, boxForm)
       + vpaReviewWhatHappens(row, true)
       + '<button class="btn yes" name="b" type="submit">Save and send</button></form>'
       + '<div class="others"><a class="btn no" href="' + vpaEsc(links.no) + '">No, do not send</a></div>';
@@ -5551,6 +5658,132 @@ async function vpaHandleStaff(request, env, json) {
   await vpaAudit(env, actor, 'staff_added', 'admin:' + authUserId, { name: name, mobile: mobile, email: email || null, role: role });
 
   return json({ ok: true, auth_user_id: authUserId });
+}
+
+
+/* ===========================================================================
+ * REMOVE A LOGIN, FROM HQ   (Dean, 30 Oct 2026)
+ *
+ * Sarah's end-to-end test was held because her email "already has a VenuePlay login" from an earlier test,
+ * and the only way to clear it was the Supabase dashboard. HQ can now remove a login that belongs to no other
+ * venue: from a venue's Details (its Logins), from "Remove a login" (find one by email), and HQ offers it
+ * after a venue is archived.
+ *
+ *   POST /admin/logins        { venue_id }        owner or accounts: the venue's logins, each saying whether
+ *                                                 it can be removed and, if not, why
+ *   POST /admin/login-find    { email }           owner or accounts: one login and every venue it is staff at
+ *   POST /admin/login-remove  { auth_user_id, venue_id?, confirm }   OWNER ONLY. A PERMANENT DELETE.
+ *
+ * REFUSED, and nothing changes, when the login is staff at any venue other than venue_id (with no venue_id:
+ * at any venue at all), when it is a VenuePlay staff (HQ) login, when it cannot be looked up, or when confirm
+ * is not that login's own email ("ending" and the last three digits of its mobile, for a mobile-only login). confirm is what the HQ confirm step
+ * names: a stale page, or a tap on the wrong row, can never remove the login next to it.
+ *
+ * NEVER AUTOMATIC. Nothing in this Worker calls vpaRemoveLogin but the one route below, on an owner's own tap.
+ * It reads the facts with vpaReadPage, which THROWS on a database fault: a failed read must never look like
+ * "staff at no other venue" (vpaSelect would return [] and say exactly that).
+ *
+ * The venue's staff rows for it go first, then Supabase's admin delete-user. If the delete fails, the rows
+ * are put back, so a venue is never left with a login it cannot see. Every removal is in the audit log.
+ * ======================================================================== */
+const VPA_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function vpaLoginFacts(env, authUserId, user) {
+  const staff = await vpaReadPage(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=venue_id,role&order=venue_id.asc&limit=200');
+  const admins = await vpaReadPage(env, 'vp_platform_admins', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,role&limit=1');
+  const ids = staff.map(function (r) { return r.venue_id; }).filter(Boolean);
+  const venues = ids.length ? await vpaReadPage(env, 'vp_venues', 'id=in.(' + ids.map(encodeURIComponent).join(',') + ')&select=id,name,status,suspended_reason&limit=200') : [];
+  const byId = {};
+  venues.forEach(function (v) { byId[v.id] = v; });
+  return {
+    auth_user_id: authUserId, email: (user && user.email) || '', phone_end: vpaMaskMobile(user && user.phone),
+    has_phone: !!(user && user.phone), is_admin: admins.length > 0,
+    venues: staff.map(function (r) { const v = byId[r.venue_id] || {}; return { id: r.venue_id, name: v.name || '(a venue that is gone)', role: r.role, status: v.status || null }; }),
+  };
+}
+
+/* Can this login go, seen from venue_id (or from nowhere)? '' = yes, else why not, in words for HQ. */
+function vpaLoginWhyNot(f, venueId) {
+  if (f.is_admin) return 'This is a VenuePlay staff login (HQ). Remove it under VenuePlay staff logins, not here.';
+  const others = f.venues.filter(function (v) { return v.id !== venueId; });
+  if (others.length) return 'It is staff at ' + others.map(function (v) { return v.name; }).slice(0, 3).join(', ')
+    + (others.length > 3 ? ' and ' + (others.length - 3) + ' more' : '') + ', so it cannot be removed. Take it off ' + (others.length === 1 ? 'that venue' : 'those venues') + ' first.';
+  return '';
+}
+
+/* POST /admin/logins { venue_id } */
+async function vpaHandleLogins(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const venueId = String((_b.body || {}).venue_id || '');
+  if (!VPA_UUID_RE.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  let out = [];
+  try {
+    const rows = await vpaReadPage(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id,role&order=auth_user_id.asc&limit=100');
+    for (const r of rows) {
+      if (!r.auth_user_id) continue;
+      const u = await vpaAuthGetUser(env, r.auth_user_id);
+      const f = await vpaLoginFacts(env, r.auth_user_id, u);
+      const why = u ? vpaLoginWhyNot(f, venueId) : 'Its details could not be looked up just now, so it cannot be removed. Try again in a minute.';
+      out.push(Object.assign(f, { role: r.role, can_remove: !why && actor.role === 'owner', why_not: why || (actor.role === 'owner' ? '' : 'Only an Owner can remove a login.') }));
+    }
+  } catch (e) { return json({ error: 'Could not read the logins just now. Nothing was changed.' }, 503); }
+  return json({ ok: true, venue_id: venueId, logins: out });
+}
+
+/* POST /admin/login-find { email } */
+async function vpaHandleLoginFind(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const email = String((_b.body || {}).email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(email)) return json({ error: 'Type the whole email address of the login.' }, 400);
+  let u;
+  try { u = await vpaFindAuthUser(env, { email: email }); } catch (e) { u = null; }
+  if (!u || !u.id) return json({ ok: true, login: null });
+  let f;
+  try { f = await vpaLoginFacts(env, u.id, u); } catch (e) { return json({ error: 'Could not read that login just now. Nothing was changed.' }, 503); }
+  // From here the only venue it can be removed WITH is the one venue it belongs to (or none).
+  const ctx = f.venues.length === 1 ? f.venues[0].id : null;
+  const why = vpaLoginWhyNot(f, ctx);
+  return json({ ok: true, login: Object.assign(f, { venue_id: ctx, can_remove: !why && actor.role === 'owner', why_not: why || (actor.role === 'owner' ? '' : 'Only an Owner can remove a login.') }) });
+}
+
+/* POST /admin/login-remove { auth_user_id, venue_id?, confirm } */
+async function vpaHandleLoginRemove(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const id = String(b.auth_user_id || ''), venueId = b.venue_id ? String(b.venue_id) : null;
+  if (!VPA_UUID_RE.test(id)) return json({ error: 'auth_user_id is required.' }, 400);
+  if (venueId && !VPA_UUID_RE.test(venueId)) return json({ error: 'That venue_id is not a venue.' }, 400);
+  const u = await vpaAuthGetUser(env, id);
+  if (!u || !u.id) return json({ error: 'That login could not be found (it may already be gone). Nothing was changed.' }, 404);
+  let f;
+  try { f = await vpaLoginFacts(env, id, u); } catch (e) { return json({ error: 'Could not check that login just now. Nothing was changed.' }, 503); }
+  const name = String(u.email || '').toLowerCase();
+  const said = String(b.confirm || '').trim().toLowerCase();
+  // The confirm names the email; a mobile-only login is named by its last three digits ("ending 123"), all HQ ever sees.
+  if (!said || !(name ? said === name : (f.phone_end && said === 'ending ' + f.phone_end))) {
+    return json({ error: 'The confirm did not name this login (' + (name || ('the mobile ending ' + (f.phone_end || '?'))) + '). Nothing was changed.' }, 400);
+  }
+  const why = vpaLoginWhyNot(f, venueId);
+  if (why) return json({ error: why + ' Nothing was changed.' }, 409);
+  const removed = venueId ? await vpaDelete(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(id) + '&venue_id=eq.' + encodeURIComponent(venueId)) : [];
+  const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), { method: 'DELETE', headers: vpaHeaders(env) });
+  if (!res.ok) {
+    for (const r of removed) { try { await vpaInsert(env, 'vp_venue_staff', r, false); } catch (e) { /* recorded below */ } }
+    await vpaAudit(env, actor, 'login_remove_failed', 'login:' + id, { email: name || null, venue_id: venueId, status: res.status });
+    return json({ error: 'Supabase did not remove the login (' + res.status + '). Nothing was changed; its venue still has it.' }, 502);
+  }
+  const venueName = venueId ? ((f.venues.filter(function (v) { return v.id === venueId; })[0] || {}).name || null) : null;
+  await vpaAudit(env, actor, 'login_removed', 'login:' + id, { email: name || null, phone_end: f.phone_end, venue_id: venueId, venue_name: venueName, staff_rows: removed.length });
+  return json({ ok: true, removed: name || ('the mobile ending ' + (f.phone_end || '?')), venue_id: venueId });
 }
 
 
