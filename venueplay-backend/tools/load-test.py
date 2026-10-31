@@ -32,7 +32,9 @@ import http.client, urllib.parse, urllib.request, urllib.error
 
 PROD = ('venueplay-game.dean-tindale.workers.dev',
         'venueplay-api.dean-tindale.workers.dev',
-        'partyplay-api.dean-tindale.workers.dev')
+        'partyplay-api.dean-tindale.workers.dev',
+        # the same Workers on their own names (custom domains, 31 Oct 2026)
+        'game.venueplay.com.au', 'api.venueplay.com.au', 'api.partyplay.com.au', 'api.gflamtouring.com.au')
 ALPHA = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'
 UA = {'User-Agent': 'venueplay-load-test/1.0', 'Content-Type': 'application/json'}
 CTX = ssl.create_default_context(); CTX.check_hostname = False; CTX.verify_mode = ssl.CERT_NONE

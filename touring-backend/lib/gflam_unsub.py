@@ -20,7 +20,7 @@ forward to hello@gflam.com.au, and some mail apps only offer mailto.
 """
 import hashlib, hmac, json, os, urllib.parse, urllib.request, urllib.error
 
-WORKER = 'https://touring-api.dean-tindale.workers.dev'
+WORKER = 'https://api.gflamtouring.com.au'
 MAILTO = 'mailto:hello@gflamtouring.com.au?subject=unsubscribe'
 ENV_FILE = os.path.expanduser('~/.gflam-migrate.env')
 PROBE = 'unsub-preflight@gflamtouring.com.au'   # the GET writes nothing, so probing is harmless

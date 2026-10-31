@@ -27,7 +27,7 @@
    textContent; nothing they typed is ever parsed as HTML. No em dashes in anything a person reads. */
 (function (root) {
   "use strict";
-  var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
+  var BILLING_API = "https://api.venueplay.com.au";
   var LATER = "vpAboutYouLater:";   // localStorage, per login AND per sign-in: "carry on for now" holds for this sign-in only
   /* LOCAL, NOT SESSION, STORAGE (Dean, 29 Oct 2026). sessionStorage is one TAB: the card step opened Stripe,
      Stripe's back arrow came back to /app in a fresh tab, and this screen asked for his name and mobile all

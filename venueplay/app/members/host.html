@@ -372,7 +372,7 @@
   // logged. The broadcasts below are only for instant UX on the TV. Members draw is NOT metered
   // and opens no session: it runs off the saved roster + recurring draws. Confirm this matches
   // the deployed venueplay-game Worker URL (same one bingo/trivia/musical/raffle use).
-  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  var VP_GAME_API='https://game.venueplay.com.au';
   function getToken(){
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });

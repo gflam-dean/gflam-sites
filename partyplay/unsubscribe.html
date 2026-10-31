@@ -23,9 +23,9 @@
 
   Under the Spam Act a working unsubscribe is not optional, so this is a
   compliance fix. The page lives here, where the link already points, rather than
-  the link being moved to the Worker: api.partyplay.com.au has no DNS record yet
-  (see lib/pp-config.js) and a workers.dev address in a footer is exactly the
-  kind of link a mail client hides.
+  the link being moved to the Worker: a footer link on partyplay.com.au itself
+  is the kind a mail client trusts. (The Worker answers on api.partyplay.com.au
+  since 31 Oct 2026, see lib/pp-config.js; the one-click header uses that.)
 
   NOTHING HAPPENS ON THE GET. Outlook SafeLinks and Gmail both follow the links
   in a message before a human sees it. The Worker's POST also cancels any album

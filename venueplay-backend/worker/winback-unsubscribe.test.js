@@ -118,7 +118,7 @@ vpaRequireAdmin = async function () { return { actorId: 'admin-1', label: 'Dean'
 
 var SECRET = 'vector-secret-26oct';
 var VECTOR = 'ec1cd32e1edc8fdd2c5d190e1b0ed1a7';   // Python: hmac('vp-unsub:'+secret, 'queen@example.com')[:32]
-var API = 'https://venueplay-api.dean-tindale.workers.dev';
+var API = 'https://api.venueplay.com.au';
 var ENV = { STRIPE_SECRET_KEY: 'x', STRIPE_WEBHOOK_SECRET: 'x', STRIPE_PRICE_MONTHLY: 'x', STRIPE_PRICE_ANNUAL: 'x',
             SUPABASE_URL: 'https://db.example.co', SUPABASE_SERVICE_KEY: 'k', RESEND_API_KEY: 're_x',
             MOBILEMESSAGE_USERNAME: 'u', MOBILEMESSAGE_PASSWORD: 'p', CARD_LINK_SECRET: 'c',

@@ -22,14 +22,11 @@ for p in "" start booked host run tv play album setup terms privacy admin; do
   [ "$c" = "200" ] && printf "  ok   /%s\n" "$p" || { printf "  FAIL /%s -> %s\n" "$p" "$c"; bad=$((bad+1)); }
 done
 echo
-# api.partyplay.com.au has no DNS record and nothing uses it: pp-config.js points
-# at the workers.dev address on purpose. Reporting it as a failure buried the one
-# that mattered, so it is noted, not failed.
+# api.partyplay.com.au is the Worker's custom domain and what the site calls since
+# 31 Oct 2026 (pp-config.js). The workers.dev address is the same Worker and keeps
+# answering for anything cached or already emailed, so both are asked.
 echo "── the Worker ──"
-if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 https://api.partyplay.com.au/health)" = "000" ]; then
-  echo "  note api.partyplay.com.au is still not set up. Nothing uses it, so this is tidy-up."
-fi
-for a in "https://partyplay-api.dean-tindale.workers.dev"; do
+for a in "https://api.partyplay.com.au" "https://partyplay-api.dean-tindale.workers.dev"; do
   c=$(curl -sS -o /tmp/pp-health.json -w "%{http_code}" --max-time 12 "$a/health" 2>/dev/null)
   if [ "$c" = "200" ]; then
     echo "  ok   $a/health"
@@ -46,7 +43,7 @@ done
 # the apex, the site worked on partyplay.com.au and every guest on
 # www.partyplay.com.au got "Load failed" the second they pressed Join.
 echo "── who the Worker lets in ──"
-API="https://partyplay-api.dean-tindale.workers.dev"
+API="https://api.partyplay.com.au"
 for o in "https://partyplay.com.au" "https://www.partyplay.com.au"; do
   got=$(curl -sS -D- -o /dev/null --max-time 12 -X OPTIONS \
         -H "Origin: $o" -H "Access-Control-Request-Method: POST" \

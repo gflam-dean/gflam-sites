@@ -77,7 +77,7 @@ globalThis.fetch = function (url, opts) {
 function req(path, body, headers, method, raw) {
   var h = {}; for (var k in (headers || {})) h[k.toLowerCase()] = headers[k];
   var txt = raw !== undefined ? raw : (body === undefined ? '' : JSON.stringify(body));
-  return { method: method || 'POST', url: 'https://venueplay-api.dean-tindale.workers.dev' + path,
+  return { method: method || 'POST', url: 'https://api.venueplay.com.au' + path,
     headers: { get: function (k) { return h[String(k).toLowerCase()] || null; } },
     text: function () { return Promise.resolve(txt); } };
 }
@@ -120,7 +120,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('200 with round 1 and a link for yes, no and edit', r.status === 200 && r.body.round === 1 && !!L.yes && !!L.no && !!L.edit, r.body);
   check('one row, the reply and their words as given, expiry 7 days on', ROWS.length === 1 && ROWS[0].reply === REPLY && ROWS[0].their_words === REVIEW.their_words &&
     Date.parse(ROWS[0].expires_at) - NOW === 7 * 86400000, ROWS[0]);
-  check('the links point at this Worker\'s review page', /^https:\/\/venueplay-api\.dean-tindale\.workers\.dev\/autopilot\/review\?f=2026-10-29-test-charlie-hotel&a=yes&r=1&x=\d+&t=[0-9a-f]{32}$/.test(L.yes || ''), L.yes);
+  check('the links point at this Worker\'s review page', /^https:\/\/api\.venueplay\.com\.au\/autopilot\/review\?f=2026-10-29-test-charlie-hotel&a=yes&r=1&x=\d+&t=[0-9a-f]{32}$/.test(L.yes || ''), L.yes);
   check('the key itself is in no link and no answer', JSON.stringify(r.body).indexOf(KEY) === -1);
   check('the token is the documented scheme, character for character (Python vector)', (await vpaReviewToken(ENV, FOLDER, 'yes', 1793000000, 1)) === VECTOR);
   var t1 = await vpaReviewToken(ENV, FOLDER, 'yes', 1793000000, 1);

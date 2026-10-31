@@ -790,7 +790,7 @@
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
-  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER = "https://api.venueplay.com.au";
   var $ = function(id){ return document.getElementById(id); };
   var rate = 3.00;   // standard per-player rate; the Worker sends the venue's real rate in render()
 
@@ -2200,7 +2200,7 @@
   }
 
   // ---- Members draws: real settings + members list, wired to the game Worker + vp_member_draws ----
-  var VP_GAME_API = "https://venueplay-game.dean-tindale.workers.dev";
+  var VP_GAME_API = "https://game.venueplay.com.au";
   function gameApi(path, body){
     return tokenThen().then(function(tok){
       var h = { "Content-Type":"application/json" };

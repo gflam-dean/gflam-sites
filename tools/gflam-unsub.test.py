@@ -42,7 +42,7 @@ except RuntimeError:
 # 2. Headers: https first, mailto second, and the RFC 8058 POST header exactly.
 h = U.headers('Queen@Example.com', 'dragbingo-jan27', KEY)
 lu = h.get('List-Unsubscribe', '')
-ok('List-Unsubscribe carries the https link first', lu.startswith('<https://touring-api.dean-tindale.workers.dev/unsubscribe?e=queen%40example.com&t=' + VECTOR + '&c=dragbingo-jan27>'), lu)
+ok('List-Unsubscribe carries the https link first', lu.startswith('<https://api.gflamtouring.com.au/unsubscribe?e=queen%40example.com&t=' + VECTOR + '&c=dragbingo-jan27>'), lu)
 ok('List-Unsubscribe keeps the mailto as a second option', lu.endswith(', <mailto:hello@gflamtouring.com.au?subject=unsubscribe>'))
 ok('List-Unsubscribe-Post is the one-click value', h.get('List-Unsubscribe-Post') == 'List-Unsubscribe=One-Click')
 ok('a campaign tag cannot inject into the link', '&c=abc-def' in U.link('a@b.co', 'ABC-def&t=x"<', KEY))
@@ -112,7 +112,7 @@ out, _ = run([src])
 ok('dry run: the unsubscribed address is skipped and named', 'skipped, unsubscribed: bea@example.com' in out and '1 to send' in out, out.splitlines()[0])
 ok('dry run: suppress.txt and sent.csv still skip (first field of sent.csv)', '2 in suppress.txt or already sent' in out)
 ok('dry run: prints the List-Unsubscribe header with https and mailto',
-   'List-Unsubscribe: <https://touring-api.dean-tindale.workers.dev/unsubscribe?e=ann%40example.com&t=' in out and '<mailto:hello@gflamtouring.com.au?subject=unsubscribe>' in out)
+   'List-Unsubscribe: <https://api.gflamtouring.com.au/unsubscribe?e=ann%40example.com&t=' in out and '<mailto:hello@gflamtouring.com.au?subject=unsubscribe>' in out)
 ok('dry run: prints List-Unsubscribe-Post', 'List-Unsubscribe-Post: List-Unsubscribe=One-Click' in out)
 ok('dry run sends nothing', not SENT)
 

@@ -31,7 +31,7 @@
 (function (root) {
   "use strict";
   var doc = root.document;
-  var API = root.VP_PROSPECTS_API || "https://venueplay-api.dean-tindale.workers.dev";
+  var API = root.VP_PROSPECTS_API || "https://api.venueplay.com.au";
   var S = { data: null, ids: {}, open: null, loading: false, filter: "all", sort: "call" };
 
   function prEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }

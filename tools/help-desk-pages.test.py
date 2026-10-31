@@ -123,7 +123,7 @@ window.__routes = window.__routes || {};
       var r = window.__routes[path] || window.__routes[path.split("?")[0]] || { status: 200, body: { ok: true, ticket_no: 1042 } };
       return Promise.resolve(new Response(JSON.stringify(r.body), { status: r.status || 200, headers: { "Content-Type": "application/json" } }));
     }
-    if (/workers\.dev/.test(u)) return Promise.reject(new Error("the real Worker is never called from this test"));
+    if (/workers\.dev|\/\/(api|game)\.venueplay\.com\.au|\/\/api\.partyplay\.com\.au/.test(u)) return Promise.reject(new Error("the real Worker is never called from this test"));
     return real.apply(this, arguments);
   };
 })();
@@ -162,7 +162,7 @@ class Tab(object):
         b.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre + STAND_IN}, session=self.sid)
         # Third-party scripts the pages load: never needed here, and a slow CDN must not decide a result.
         b.call('Network.enable', session=self.sid)
-        b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*googletagmanager*', '*facebook*', '*workers.dev*']}, session=self.sid)
+        b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*googletagmanager*', '*facebook*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*api.partyplay.com.au*']}, session=self.sid)
 
     def go(self, url):
         self.b.call('Page.navigate', {'url': url}, session=self.sid)
@@ -808,7 +808,7 @@ def main():
 
         def hq_tab(w, h, mobile):
             t = Tab(b, w, h, mobile=mobile, pre=FAKE_HQ_LOGIN, routes=routes)
-            b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*vp-session.js*', '*workers.dev*', '*googletagmanager*', '*facebook*']}, session=t.sid)
+            b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*vp-session.js*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*googletagmanager*', '*facebook*']}, session=t.sid)
             t.go(VP + '/app/hq.html')
             return t
         t = hq_tab(1280, 900, False)

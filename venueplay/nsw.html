@@ -1070,7 +1070,7 @@
         Public by design: it can only read the live counter via the
         venueplay_spots_taken RPC. Never put the service key here.
      ============================================================ */
-  var VP_WORKER = 'https://venueplay-api.dean-tindale.workers.dev';
+  var VP_WORKER = 'https://api.venueplay.com.au';
   /* Stripe PUBLISHABLE key (public by design, safe in the page). When set, signup uses the
      embedded card form on this page; leave it as PASTE_ to fall back to the Stripe redirect. */
   var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
@@ -1780,7 +1780,7 @@
 (function () {
   var OFFER = window.VP_OFFER || { code:'OFFER-OCT-2026', day:'31 October' };
   var CODE = OFFER.code;
-  var API  = 'https://venueplay-api.dean-tindale.workers.dev';
+  var API  = 'https://api.venueplay.com.au';
   if (!CODE || !API || API.indexOf('PASTE_') !== -1) return;
 
   fetch(API + '/founding?code=' + encodeURIComponent(CODE))

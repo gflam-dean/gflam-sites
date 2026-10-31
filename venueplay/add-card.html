@@ -44,7 +44,7 @@
   // what mints the Stripe Checkout (it holds the keys), but a link people are asked to trust with
   // a card should be on our own domain. It hands the whole query string over untouched; the
   // Worker verifies the signature on it and redirects on to Stripe.
-  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER = "https://api.venueplay.com.au";
   var q = window.location.search || "";
   var target = VP_WORKER + "/add-card" + q;
   if (/[?&]f=/.test(q) && /[?&]t=/.test(q)) {

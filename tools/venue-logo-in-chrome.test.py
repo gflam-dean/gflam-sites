@@ -133,7 +133,7 @@ class Site(http.server.BaseHTTPRequestHandler):
             t = io.open(f, encoding='utf-8').read()
             t = t.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js')
             t = t.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
-            t = t.replace('https://venueplay-game.dean-tindale.workers.dev', '/__worker')
+            t = t.replace('https://game.venueplay.com.au', '/__worker')
             return self.send(200, t, {'.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json'}[ext] + '; charset=utf-8')
         ct = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg'}.get(ext, 'application/octet-stream')
         return self.send(200, open(f, 'rb').read(), ct)

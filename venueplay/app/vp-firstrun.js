@@ -37,7 +37,7 @@
    Everything a person reads is set with textContent; nothing they or HQ typed is ever parsed as HTML. */
 (function (root) {
   "use strict";
-  var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
+  var BILLING_API = "https://api.venueplay.com.au";
   var KEY = "vpFirstRun:";
   var STEPS = ["mobile", "terms", "tv", "game", "card"];
   var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", tv: "Your TV", game: "Run your first game", card: "Add your card when you're ready" };

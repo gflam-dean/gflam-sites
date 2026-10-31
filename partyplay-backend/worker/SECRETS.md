@@ -87,18 +87,14 @@ Name the Worker exactly **`partyplay-api`**. Your workers.dev subdomain is
     https://partyplay-api.dean-tindale.workers.dev
 
 That subdomain is per Cloudflare **account**, not per project, which is why both
-VenuePlay Workers use it too. The site has this address baked into
-`lib/pp-config.js`, so a different Worker name means editing that file.
+VenuePlay Workers use it too.
 
-## Two addresses, on purpose
-
-The Worker needs to answer on both:
+## Two addresses (31 Oct 2026)
 
 | Address | Used by | How |
 |---|---|---|
-| `api.partyplay.com.au` | the live site | Worker > Settings > Domains & Routes > Add Custom domain |
-| `partyplay-api.dean-tindale.workers.dev` | pages.dev previews, local testing | free with every Worker |
+| `api.partyplay.com.au` | the site (`lib/pp-config.js`) and the List-Unsubscribe header in every email | Worker > Settings > Domains & Routes > Custom domain (added by Dean 31 Oct 2026) |
+| `partyplay-api.dean-tindale.workers.dev` | anything cached or already emailed before 31 Oct, any webhook set up with it, the deploy tool's /health proof | free with every Worker; never remove it |
 
-`lib/pp-config.js` picks between them from the hostname, so a preview build can
-never quietly take a real payment. **If you only set up one, checkout works in
-one place and fails in the other**, and it will be the live site that fails.
+Dean's rule, 31 Oct 2026: no .dev address in anything a customer sees. Both names
+are the same Worker, so nothing else differs between them.

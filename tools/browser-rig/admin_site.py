@@ -231,7 +231,7 @@ class Site(object):
                     elif ext == '.js':
                         # A shared script that calls the billing Worker itself (vp-oneclick.js, vp-about-you.js,
                         # vp-prospects-hq.js) talks to THIS rig's Worker, never the live one (29 Oct 2026).
-                        text = text.replace('https://venueplay-api.dean-tindale.workers.dev', '/__api')
+                        text = text.replace('https://api.venueplay.com.au', '/__api')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json',
                              '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')
@@ -266,11 +266,11 @@ class Site(object):
         if '<head>' in text:
             text = text.replace('<head>', '<head>' + self.ERRS, 1)
         text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?as=' + who)
-        text = text.replace('https://venueplay-api.dean-tindale.workers.dev', '/__api')
-        text = text.replace('https://venueplay-game.dean-tindale.workers.dev', '/__game')
+        text = text.replace('https://api.venueplay.com.au', '/__api')
+        text = text.replace('https://game.venueplay.com.au', '/__game')
         # The touring show manager (touring/manage.html): its database and its Worker.
         text = text.replace('const SUPABASE_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co";', 'const SUPABASE_URL = "/__sb";')
-        text = text.replace('const TOURING_API = "https://touring-api.dean-tindale.workers.dev";', 'const TOURING_API = "/__touring";')
+        text = text.replace('const TOURING_API = "https://api.gflamtouring.com.au";', 'const TOURING_API = "/__touring";')
         if not self.fonts:
             text = text.replace('https://fonts.googleapis.com/css2', '/__fake/blank.css')
         return text

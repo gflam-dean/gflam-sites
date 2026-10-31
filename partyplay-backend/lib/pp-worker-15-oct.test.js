@@ -247,7 +247,7 @@ ok("the Worker's own page asks first, and its button carries the token", r.statu
 var hdrs = mail ? (JSON.parse(mail.init.body).headers || {}) : {};
 var lu = hdrs["List-Unsubscribe"] || "";
 ok("the follow-up carries List-Unsubscribe with the Worker's https address, the token, and the mailto",
-   lu === "<https://partyplay-api.dean-tindale.workers.dev/unsubscribe?e=host%40example.com&t=" + tok + ">, <mailto:hello@partyplay.com.au?subject=unsubscribe>", lu);
+   lu === "<https://api.partyplay.com.au/unsubscribe?e=host%40example.com&t=" + tok + ">, <mailto:hello@partyplay.com.au?subject=unsubscribe>", lu);
 ok("and List-Unsubscribe-Post: List-Unsubscribe=One-Click", hdrs["List-Unsubscribe-Post"] === "List-Unsubscribe=One-Click", JSON.stringify(hdrs));
 ok("so does the expiry reminder", !!nudge && /headers: await ppUnsubHeaders\(env, l\.buyer_email\)/.test(nudge[0]));
 DB.tables.pp_subscribers = [];
@@ -255,6 +255,22 @@ var oneClick = lu.replace(/^<https:\/\/[^\/]+/, "").replace(/>.*$/, "");
 r = call("POST", oneClick, "List-Unsubscribe=One-Click", { "content-type": "application/x-www-form-urlencoded" });
 ok("the mail app's one-click POST to that address takes them off", r.status === 200 && DB.tables.pp_subscribers.length === 1 &&
    DB.tables.pp_subscribers[0].email === "host@example.com" && DB.tables.pp_subscribers[0].unsubscribed_at, r.text.slice(0, 200));
+
+/* OUR OWN NAME, WHATEVER API_ORIGIN SAYS (31 Oct 2026, Dean: no .dev links in anything a customer sees).
+   The header names the Worker on api.partyplay.com.au; a variable still holding the old workers.dev
+   address, a pages.dev preview or the site itself never reaches an email. */
+function hdrWith(origin) {
+  var e = {}; for (var k in ENV) e[k] = ENV[k]; if (origin !== null) e.API_ORIGIN = origin;
+  var out = null; WK._ppUnsubHeaders(e, "Host@Example.com").then(function (h) { out = h; });
+  for (var i = 0; i < 60; i++) drainMicrotasks();
+  return (out || {})["List-Unsubscribe"] || "";
+}
+[["unset", null, "https://api.partyplay.com.au"], ["the old workers.dev address", "https://partyplay-api.dean-tindale.workers.dev", "https://api.partyplay.com.au"],
+ ["a pages.dev preview", "https://partyplay.pages.dev", "https://api.partyplay.com.au"], ["the site itself", "https://www.partyplay.com.au", "https://api.partyplay.com.au"],
+ ["api.partyplay.com.au/", "https://api.partyplay.com.au/", "https://api.partyplay.com.au"]].forEach(function (c) {
+  var h = hdrWith(c[1]);
+  ok("API_ORIGIN " + c[0] + ": List-Unsubscribe names " + c[2] + " and no .dev host", h.indexOf("<" + c[2] + "/unsubscribe?e=host%40example.com&t=" + tok + ">") === 0 && !/\.dev\b/i.test(h), h);
+});
 
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }

@@ -797,8 +797,8 @@
   function slugify(s){ return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
   function tzShort(tz){ if(!tz) return ""; var p=tz.split("/"); return (p[1]||tz).replace(/_/g," "); }
 
-  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
-  var VP_GAME_WORKER = "https://venueplay-game.dean-tindale.workers.dev";   // sessions live here, not on the billing Worker
+  var VP_WORKER = "https://api.venueplay.com.au";
+  var VP_GAME_WORKER = "https://game.venueplay.com.au";   // sessions live here, not on the billing Worker
 
   function fmtWhen(iso){
     var d=new Date(iso); if(isNaN(d)) return esc(iso||"");

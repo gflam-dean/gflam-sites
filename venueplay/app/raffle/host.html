@@ -336,7 +336,7 @@
   // an unbiased CSPRNG and persisted to vp_raffle_results, so the winning ticket is fair and
   // logged. The broadcasts below are only for instant UX on the TV. Confirm this matches the
   // deployed venueplay-game Worker URL (same one bingo/trivia/musical use).
-  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  var VP_GAME_API='https://game.venueplay.com.au';
   function getToken(){
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });

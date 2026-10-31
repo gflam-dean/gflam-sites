@@ -362,8 +362,8 @@
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function show(id,on){ $(id).classList.toggle("hidden", !on); }
-  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
-  var VP_WORKER='https://venueplay-api.dean-tindale.workers.dev';
+  var VP_GAME_API='https://game.venueplay.com.au';
+  var VP_WORKER='https://api.venueplay.com.au';
   var SUPA_URL='https://ijkzgmdtwtgfkedqspxm.supabase.co';
   var SUPA_ANON='sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);

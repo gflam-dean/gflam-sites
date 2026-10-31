@@ -75,7 +75,7 @@ FAKE_DB = {
 EXTERNAL = [
     ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js'),
     ('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js'),
-    ('https://venueplay-game.dean-tindale.workers.dev', '/__worker'),
+    ('https://game.venueplay.com.au', '/__worker'),
 ]
 ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__errs.push(String(e.message)+" @"+(e.filename||"").split("/").pop()+":"+e.lineno)});'
         'window.addEventListener("unhandledrejection",function(e){__errs.push("rejected: "+String(e.reason&&e.reason.message||e.reason))});</script>')
