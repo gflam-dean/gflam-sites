@@ -164,7 +164,7 @@
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 15,
+  "checks": 16,
   "counted_by": "lines"
  },
  "tools/helpdesk-hq-in-chrome.test.py": {
@@ -612,7 +612,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 129,
+  "checks": 131,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
@@ -861,6 +861,14 @@
  },
  "tools/tv-and-phone-in-chrome.test.py": {
   "checks": 100,
+  "counted_by": "lines"
+ },
+ "tools/tv-app-setup-line.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/tv-landing-in-chrome.test.py": {
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {

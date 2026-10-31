@@ -37,6 +37,7 @@ contract and no setup fee.
 - The venue keeps the opt-in details of players who choose to share them, so a
   quiet Tuesday builds a list the venue owns.
 - Runs on a TV the venue already has, through a browser.
+- Got a TV with Google Play? Get the VenuePlay TV app (https://play.google.com/store/apps/details?id=au.com.venueplay.tv), then put in your screen code.
 
 ## Links
 

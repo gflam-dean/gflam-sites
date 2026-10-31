@@ -476,3 +476,11 @@ warnings), and Dean's Edit page boxes `edited_postcode` (4 digits), `edited_enti
 `edited_login_email`. No new table, policy or grant, so RLS-BASELINE.json does not change. Run BEFORE the billing Worker;
 without it the Worker retries every write and read without the four (no boxes on the Edit page, no recommendation on the
 pages), so the buttons keep working as before. Branch `feature/review-email-v2-30oct`. RUN 30 Oct 2026 by Dean (read back: the four columns answer 200, anon still refused). Rollback: in the file.
+
+`venueplay-131-help-faq-tv-app.sql` (Dean, 31 Oct 2026, "If you have a TV with a Google play store you can download our app...
+It's called VenuePlay TV"): the venue Help answer "Setting up the TV" gets one new first line, "Got a TV with Google Play?
+Download the VenuePlay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser."
+Every word migration 120 wrote stays after it. One update, guarded on 120's words, so it does nothing if the answer was
+edited in HQ, and it must run AFTER `venueplay-120-help-faq-tv-window.sql` (if 120 has not been run, run 120 first, then
+this). Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the
+site. Branch `feature/tv-landing-31oct`. NOT YET RUN. Rollback: in the file.
