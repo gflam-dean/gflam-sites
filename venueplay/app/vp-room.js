@@ -58,7 +58,7 @@
      opening a console as an HQ admin bounces through hq.html and drops the query string.
      With no flag either way, DEFAULT_ON decides.
      Flipping the whole product between roads is this one constant. */
-  var DEFAULT_ON = false;
+  var DEFAULT_ON = true;
   var _by = "";                  // how wanted() last decided: "flag" or "default"
 
   function wanted() {
