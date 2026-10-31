@@ -27,6 +27,8 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  *   API_ORIGIN                  (optional) this Worker's address in emails; https://api.venueplay.com.au
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
+ *   SUBSCRIBE_EMAILS            (optional) 'on' sends the one confirmation email to a new monthly-email
+ *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
 const BUILD = '31 Oct 2026, 14:56 · 329be301';   // tools/stamp-workers.py, do not edit by hand
@@ -135,6 +137,8 @@ export default {
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
       if (request.method === 'GET'  && path === '/add-card' && typeof vpaAddCardRedirect === 'function') return await vpaAddCardRedirect(request, env);
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
+      // The monthly email sign-up on the sales pages (31 Oct 2026; migration 134). Public, rate-limited, honeypot.
+      if (request.method === 'POST' && path === '/subscribe') return await vpsHandleSubscribe(request, env, json);
       // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
@@ -225,6 +229,9 @@ export default {
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
+      // HQ > Subscribers (31 Oct 2026; migration 134): who asked for the monthly email, counts, matches, the CSV.
+      if (request.method === 'POST' && path === '/admin/subscribers')        return await vpsHandleAdminList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/subscribers/export') return await vpsHandleAdminExport(request, env, json);
       // A prospect's free month (migration 127): it starts at their first sign-in; Now or Later on the card; cancel.
       if (request.method === 'POST' && path === '/account/prospect-start'       && typeof vpbProspectStart === 'function')      return await vpbProspectStart(request, env, json);
       if (request.method === 'POST' && path === '/account/card-choice'          && typeof vpbCardChoice === 'function')         return await vpbCardChoice(request, env, json);
@@ -14990,4 +14997,367 @@ async function helpTriageForRange(env, from, to, brand) {
   const issues = await vpaSelect(env, 'vp_help_issues', 'id=in.(' + ids.join(',') + ')&select=id,title,brand,audience');
   const steps = await vpaSelect(env, 'vp_help_steps', 'issue_id=in.(' + ids.join(',') + ')&select=id,body&limit=2000');
   return helpTriageReport(events, issues || [], steps || []);
+}
+
+/* =======================================================================================
+   THE MONTHLY EMAIL SIGN-UP: VENUEPLAY SUBSCRIBERS (31 Oct 2026; migration 134, vp_subscribers).
+
+   WHO IT IS FOR. A venue owner or manager who likes the look of VenuePlay but is not ready to ring
+   us or set up an account. The sales pages (home, the offer page, See a night) carry one small form:
+   their email, and their venue if they like. Nothing else is asked: the email needs nothing else.
+
+   ONE EMAIL A MONTH, AND IT IS THE SAME ONE. Subscribers get the "What's new at VenuePlay" section of
+   the monthly venue email (feature/venue-reports-31oct, migration 133), never a second newsletter.
+   vpsMonthlyRecipients() is the list that sender reads; see the note above it for how they join.
+
+   NEVER A COLD LEAD. A subscriber opted in. Nothing here calls Instantly, a cold campaign, a sales
+   alert or a phone. HQ > Subscribers lists them with any venue or prospect they match, and that is
+   all: nobody is contacted because they matched.
+
+   ROUTES
+     POST /subscribe                    public: {email, venue, source, utm, website, turnstile}
+     POST /admin/subscribers            HQ owner or accounts: the list, counts by week and source, matches
+     POST /admin/subscribers/export     HQ owner or accounts: the CSV, audited
+
+   THE GUARDS, the same kinds the help desk forms use: a durable per-network limit (hashed, never
+   stored as an address), a per-address limit, the `website` honeypot (told it worked, nothing kept),
+   Cloudflare Turnstile when TURNSTILE_SECRET is set (no new captcha: the same widget and key as the
+   help forms), and a daily cap on the confirmation emails, which share the Resend key with invoices.
+
+   NOTHING IS GIVEN AWAY. Every sign-up that is kept answers exactly the same {ok:true}: new, already
+   on the list, or held because the address once unsubscribed. So the form cannot be used to ask
+   whether an address is on our list or on the unsubscribe list (migration 81 keeps that list
+   unreadable to the public for the same reason).
+
+   SOMEONE WHO UNSUBSCRIBED IS NEVER QUIETLY PUT BACK. An address on vp_unsubscribes is kept as HELD:
+   no confirmation email, never on the monthly list, and shown in HQ as held so a person decides.
+   If the unsubscribe list cannot be read, nothing is kept and the form says try again: a sign-up
+   lost to a database blip is a retry, an email to someone who said stop is a Spam Act breach.
+
+   THE CONFIRMATION EMAIL IS OFF until Dean says: env.SUBSCRIBE_EMAILS must be exactly 'on'. Off, the
+   sign-up is kept and nothing is sent. On, one short email from hello@, with an unsubscribe link on
+   venueplay.com.au in the body and List-Unsubscribe headers on api.venueplay.com.au (vpUnsubHeaders).
+
+   BEFORE MIGRATION 134 IS RUN the table is not there: /subscribe answers 503 {not_ready:true} and
+   keeps and sends nothing, and the page tells the person to email hello@ instead. HQ says to run it.
+   ======================================================================================= */
+const VPS_SWITCH = 'on';                 // env.SUBSCRIBE_EMAILS must be exactly this before a confirmation is sent
+const VPS_MAX_PER_IP = 8;                // sign-ups per network per hour. A pub's wifi is one address for the room.
+const VPS_MAX_PER_EMAIL = 4;             // tries per address per hour, so the form cannot be used to flood an inbox
+const VPS_MAX_EMAILS_PER_DAY = 300;      // confirmation emails per day across everyone (the Resend key is shared with invoices)
+const VPS_SOURCES = ['home', 'offer', 'see-a-night'];
+const VPS_CONSENT_VERSION = 'vps-1';
+/* THE CONSENT LINE, word for word as it sits under the button on every page with the form. The page
+   shows it and this is what is kept with each sign-up; tools/subscribe-in-chrome.test.py reads it off
+   each page and holds it to this string, so the two cannot drift. Change both together, and bump the
+   version so a sign-up can always be matched to the words that person saw. */
+const VPS_CONSENT_TEXT = 'One short email a month from VenuePlay to this address. Unsubscribe any time from the link in every email.';
+/* A free or ISP mailbox says nothing about which venue someone is from, so it never links by domain. */
+const VPS_FREE_MAILBOX_RE = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|gmx|bigpond|optusnet|tpg|iinet|internode|westnet|dodo|exemail|ozemail|aapt|adam|iprimus|people|netspace|telstra)\./i;
+
+function vpsNow() { return new Date().toISOString(); }
+function vpsEmailOk(e) { return e.length >= 6 && e.length <= 254 && HELP_EMAIL_RE.test(e) && !/[,;()\\"]/.test(e); }
+function vpsDomain(e) { const i = String(e || '').lastIndexOf('@'); return i < 0 ? '' : String(e).slice(i + 1).toLowerCase(); }
+function vpsSource(s) { s = String(s || '').toLowerCase(); return VPS_SOURCES.indexOf(s) >= 0 ? s : 'site'; }
+function vpsUtm(u) {
+  const out = {};
+  if (!u || typeof u !== 'object' || Array.isArray(u)) return out;
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach((k) => {
+    const v = helpLine(u[k], 80);
+    if (v) out[k] = v;
+  });
+  return out;
+}
+/* Where they signed up from, only as Cloudflare already tells every request: a country and, in
+   Australia, the state. Never the address itself. */
+function vpsWhere(request) {
+  const cf = (request && request.cf) || {};
+  const country = /^[A-Z]{2}$/.test(String(cf.country || '')) ? String(cf.country) : null;
+  const region = country === 'AU' ? (helpLine(cf.regionCode || cf.region, 40) || null) : null;
+  return { country: country, region: region };
+}
+/* The first email lands early next month, in Brisbane's calendar. */
+function vpsNextMonthName(nowMs) {
+  const d = new Date((nowMs || Date.now()) + 10 * 3600 * 1000);
+  return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][(d.getUTCMonth() + 1) % 12];
+}
+
+/* A READ THAT SAYS WHY IT FAILED. vpaSelect answers [] for any failure, which here would read "not
+   on the list" when the truth is "could not ask". Returns {rows} or {missing} or throws. */
+async function vpsRead(env, table, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { headers: vpaHeaders(env) });
+  if (res.ok) {
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error('read ' + table + ': not a list');
+    return { rows: rows };
+  }
+  const t = await res.text().catch(() => '');
+  if (helpTableMissing(res.status, t)) return { missing: true };
+  throw new Error('read ' + table + ': ' + res.status + ' ' + String(t).slice(0, 200));
+}
+/* Is this address on vp_unsubscribes? Asked for that one address case-insensitively (ilike, with any
+   LIKE wildcard in it turned into a one-character one, so the database can only hand back candidates),
+   then compared WHOLE here, lower case to lower case. THROWS when it cannot tell. */
+async function vpsOnUnsubList(env, email) {
+  const pat = String(email).replace(/[*%_\\,()"]/g, '_');
+  const r = await vpsRead(env, 'vp_unsubscribes', 'email=ilike.' + encodeURIComponent(pat) + '&select=email&limit=20');
+  if (r.missing) throw new Error('vp_unsubscribes is not there');
+  const want = String(email).toLowerCase();
+  return r.rows.some((x) => String((x && x.email) || '').trim().toLowerCase() === want);
+}
+
+async function vpsHandleSubscribe(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; only ever a salted hash in the limits table
+  if (!(await helpIpLimit(env, 'sub', ip, VPS_MAX_PER_IP, 3600))) {
+    return json({ error: 'Lots of sign-ups from this network just now. Please try again in a while.' }, 429);
+  }
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  // The honeypot: a field no person sees. Told it worked, and nothing is kept or sent.
+  if (String(b.website || '').trim()) return json({ ok: true });
+  const email = String(b.email == null ? '' : b.email).trim().toLowerCase();
+  if (!email) return json({ error: 'Put in your email first.' }, 400);
+  if (!vpsEmailOk(email)) return json({ error: 'That email address does not look right.' }, 400);
+  const venue = helpLine(b.venue, 200);
+  if (venue.length > 120) return json({ error: 'That venue name is too long.' }, 400);
+  const ts = await helpTurnstile(env, b.turnstile, ip);
+  if (!ts.ok) return json({ error: 'Please complete the check above the button, then try again.', turnstile: true }, 403);
+  if (!(await helpLimit(env, 'sub:em:' + email, VPS_MAX_PER_EMAIL, 3600))) {
+    return json({ error: 'That address has been tried a few times already. Please give it an hour.' }, 429);
+  }
+  const NOT_READY = { error: 'We could not add you just now. Email hello@venueplay.com.au and we will add you by hand.', not_ready: true };
+  const TRY_AGAIN = { error: 'We could not add you just now. Please try again in a minute.' };
+
+  let have;
+  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=id,venue_name,status&limit=1'); }
+  catch (e) { return json(TRY_AGAIN, 503); }
+  if (have.missing) return json(NOT_READY, 503);
+  if (have.rows.length) {
+    // Already on the list. Same answer as a new sign-up, no second email; a venue name they left off before is kept now.
+    const row = have.rows[0];
+    if (venue && !row.venue_name) {
+      await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id), { venue_name: venue, updated_at: vpsNow() }).catch(() => null);
+    }
+    return json({ ok: true });
+  }
+  let stopped;
+  try { stopped = await vpsOnUnsubList(env, email); }
+  catch (e) { return json(TRY_AGAIN, 503); }   // cannot tell whether they asked us to stop: keep nothing, send nothing
+
+  const where = vpsWhere(request);
+  const row = {
+    email: email,
+    venue_name: venue || null,
+    source: vpsSource(b.source),
+    utm: vpsUtm(b.utm),
+    consent_text: VPS_CONSENT_TEXT,
+    consent_version: VPS_CONSENT_VERSION,
+    consent_at: vpsNow(),
+    country: where.country,
+    region: where.region,
+    status: stopped ? 'held' : 'active',
+    held_reason: stopped ? 'unsubscribed' : null,
+  };
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
+    method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(row) });
+  if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    return json(helpTableMissing(res.status, t) ? NOT_READY : TRY_AGAIN, 503);
+  }
+  let made = null;
+  try { const j = await res.json(); made = Array.isArray(j) ? j[0] : j; } catch (e) { made = null; }
+  if (!stopped && String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {
+    await vpsSendConfirmation(env, email, venue, made && made.id).catch(() => null);
+  }
+  return json({ ok: true });
+}
+
+/* THE FOOTER OF ANY EMAIL A SUBSCRIBER GETS: why they are getting it, the unsubscribe link (on
+   venueplay.com.au, never this Worker's own address, as vpUnsubFooterHtml), and who is sending.
+   The monthly sender uses this for subscribers too: vpUnsubFooterHtml says "the contact on a
+   VenuePlay account", which a subscriber is not. */
+function vpsFooterHtml(env, email) {
+  const e = String(email || '').trim().toLowerCase();
+  const page = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
+  return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
+    + ' signed up for the VenuePlay monthly email at venueplay.com.au. '
+    + '<a href="' + vpaEsc(page) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a> any time.</p>'
+    + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay, ABN ' + VP_ABN + ' &middot; venueplay.com.au</p>';
+}
+function vpsConfirmationEmail(env, email, venue, nowMs) {
+  const site = vpaCustomerSite(env);
+  const subject = "You're on the VenuePlay monthly email";
+  const look = site + '/see-a-night?utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
+  const inner = '<p style="font-size:20px;font-weight:800;color:#12101a;margin:0 0 12px">You\'re on the list</p>'
+    + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 14px">Thanks for signing up' + (venue ? ' for ' + vpaEsc(venue) : '')
+    + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with VenuePlay.</p>'
+    + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)
+    + '. Nothing else, and nobody will ring you.</p>'
+    + '<a href="' + vpaEsc(look) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:12px 24px;border-radius:8px">See how a night runs</a>'
+    + '<p style="font-size:13px;line-height:1.5;color:#6a6a75;margin:22px 0 0">Questions? Just reply to this email. Did not sign up? Tap unsubscribe below and you will not hear from us again.</p>'
+    + vpsFooterHtml(env, email);
+  return { subject: subject, html: vpaVenueEmailCard('One short email a month. Here is what to expect.', inner, subject) };
+}
+async function vpsSendConfirmation(env, email, venue, id) {
+  // An unsubscribe that cannot be made is a reason not to send (the win-back's rule).
+  if (!env.VP_UNSUB_SECRET) return false;
+  if (!(await helpLimit(env, 'sub:day:' + helpDayKey(), VPS_MAX_EMAILS_PER_DAY, 86400))) return false;
+  const m = vpsConfirmationEmail(env, email, venue, Date.now());
+  const ok = await vpaSendEmail(env, email, m.subject, m.html, undefined, await vpUnsubHeaders(env, email, 'subscriber'));
+  if (ok && id) await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(id), { confirm_sent_at: vpsNow(), updated_at: vpsNow() }).catch(() => null);
+  return ok;
+}
+
+/* WHICH VENUE OR PROSPECT, IF ANY, A SUBSCRIBER LOOKS LIKE. Pure, so the suite can hand it anything.
+   In order of trust: their exact email is an account's contact or a prospect's email; their email's
+   own domain (never a free mailbox) is an account's or a prospect's; the venue name they typed is the
+   whole name of exactly one venue. One confident match or none, never a guess between two.
+   venues: [{id,name,founding_id,status,suspended_reason}], accounts: [{id,contact_email}],
+   prospects: [{venue_id,email}]. A matched venue that is in prospects is a 'prospect'. */
+function vpsMatch(sub, venues, accounts, prospects) {
+  const email = String((sub && sub.email) || '').toLowerCase();
+  const dom = vpsDomain(email);
+  const byId = {}; (venues || []).forEach((v) => { byId[v.id] = v; });
+  const pro = {}; (prospects || []).forEach((p) => { if (p && p.venue_id) pro[p.venue_id] = p; });
+  const venueOfAccount = (fid) => {
+    const vs = (venues || []).filter((v) => v.founding_id === fid);
+    return vs.filter((v) => v.status === 'active')[0] || vs[0] || null;
+  };
+  const say = (v, by) => v ? { venue_id: v.id, name: v.name || '', kind: pro[v.id] ? 'prospect' : 'venue', by: by,
+    status: v.suspended_reason === 'archived' ? 'archived' : (v.status || '') } : null;
+  const one = (list) => { const ids = list.filter((x, i, a) => x && a.indexOf(x) === i); return ids.length === 1 ? ids[0] : null; };
+  if (email) {
+    const e1 = one((prospects || []).filter((p) => String(p.email || '').toLowerCase() === email).map((p) => byId[p.venue_id]));
+    if (e1) return say(e1, 'email');
+    const e2 = one((accounts || []).filter((a) => String(a.contact_email || '').trim().toLowerCase() === email).map((a) => venueOfAccount(a.id)));
+    if (e2) return say(e2, 'email');
+  }
+  if (dom && !VPS_FREE_MAILBOX_RE.test(dom)) {
+    const d = one([].concat(
+      (prospects || []).filter((p) => vpsDomain(p.email) === dom).map((p) => byId[p.venue_id]),
+      (accounts || []).filter((a) => vpsDomain(String(a.contact_email || '').trim()) === dom).map((a) => venueOfAccount(a.id))));
+    if (d) return say(d, 'domain');
+  }
+  const want = helpMatchKey(sub && sub.venue_name);
+  if (want.length >= 3) {
+    const n = one((venues || []).filter((v) => helpMatchKey(v.name) === want));
+    if (n) return say(n, 'name');
+  }
+  return null;
+}
+
+/* The week a sign-up falls in, as the Monday it starts on, in Brisbane. */
+function vpsWeekOf(iso) {
+  const t = Date.parse(iso || ''); if (!isFinite(t)) return '';
+  const d = new Date(t + 10 * 3600 * 1000);
+  const back = (d.getUTCDay() + 6) % 7;
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
+}
+/* The whole HQ picture, pure: each subscriber's state and match, and the counts. A row is
+   'unsubscribed' when its address is on vp_unsubscribes (whatever the row says), 'held' when it was
+   kept as held, else 'active'. */
+function vpsSummary(subs, unsub, venues, accounts, prospects, nowMs) {
+  const rows = (subs || []).map((s) => {
+    const on = !!unsub[String(s.email || '').toLowerCase()];
+    const state = (on || s.unsubscribed_at) ? 'unsubscribed' : (s.status === 'held' ? 'held' : 'active');
+    return { id: s.id, email: s.email, venue_name: s.venue_name || '', source: s.source || 'site', utm: s.utm || {},
+      region: s.region || '', country: s.country || '', created_at: s.created_at, confirm_sent_at: s.confirm_sent_at || null,
+      state: state, held_reason: state === 'held' ? (s.held_reason || '') : '', match: vpsMatch(s, venues, accounts, prospects) };
+  }).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || String(a.email).localeCompare(String(b.email)));
+  const counts = { total: rows.length, active: 0, held: 0, unsubscribed: 0, matched: 0, by_source: {} };
+  const weeks = {};
+  const now = nowMs || Date.now();
+  const thisWeek = vpsWeekOf(new Date(now).toISOString());
+  rows.forEach((r) => {
+    counts[r.state]++;
+    if (r.match) counts.matched++;
+    counts.by_source[r.source] = (counts.by_source[r.source] || 0) + 1;
+    const w = vpsWeekOf(r.created_at);
+    if (!w) return;
+    const k = weeks[w] || (weeks[w] = { week: w, n: 0, by_source: {} });
+    k.n++; k.by_source[r.source] = (k.by_source[r.source] || 0) + 1;
+  });
+  // The last twelve weeks, newest first, with the empty ones shown as nought rather than left out.
+  const by_week = [];
+  for (let i = 0; i < 12; i++) {
+    const w = new Date(Date.parse(thisWeek + 'T00:00:00Z') - i * 7 * 86400000).toISOString().slice(0, 10);
+    by_week.push(weeks[w] || { week: w, n: 0, by_source: {} });
+  }
+  return { rows: rows, counts: counts, by_week: by_week, sources: VPS_SOURCES.concat(['site']) };
+}
+async function vpsLoad(env) {
+  // Is the table there at all? (Before migration 134 it is not, and that is a message, not an error.)
+  const probe = await vpsRead(env, 'vp_subscribers', 'select=id&limit=1');
+  if (probe.missing) return { missing: true };
+  // PAGED: PostgREST stops at 1000 rows in silence, and a short list here is a short export.
+  const subs = await vpaSelectAll(env, 'vp_subscribers',
+    'select=id,email,venue_name,source,utm,region,country,status,held_reason,confirm_sent_at,unsubscribed_at,created_at&order=created_at.desc,id.asc');
+  const unsub = await vpaUnsubscribedSet(env);   // throws: a list we cannot check is not shown as "active"
+  const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,founding_id,status,suspended_reason&order=id.asc');
+  const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
+  let prospects = [];
+  try { prospects = await vpaSelectAll(env, 'vp_prospects', 'select=venue_id,email&order=venue_id.asc'); } catch (e) { prospects = []; }   // before migration 125
+  return { subs: subs, unsub: unsub, venues: venues, accounts: accounts, prospects: prospects };
+}
+const VPS_NEED_MIGRATION = 'Run migration 134 first (vp_subscribers): the sign-up form keeps nobody until it is run.';
+
+async function vpsHandleAdminList(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let d;
+  try { d = await vpsLoad(env); }
+  catch (e) { return json({ error: 'Could not read the subscribers just now. Try again in a minute.' }, 503); }
+  if (d.missing) return json({ error: VPS_NEED_MIGRATION, need_migration: 134 }, 503);
+  const s = vpsSummary(d.subs, d.unsub, d.venues, d.accounts, d.prospects, Date.now());
+  return json({ ok: true, subscribers: s.rows, counts: s.counts, by_week: s.by_week, sources: s.sources,
+    emails_on: String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH });
+}
+
+async function vpsHandleAdminExport(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let d;
+  try { d = await vpsLoad(env); }
+  catch (e) { return json({ error: 'Could not read the subscribers or the unsubscribe list just now, so nothing was exported.' }, 503); }
+  if (d.missing) return json({ error: VPS_NEED_MIGRATION, need_migration: 134 }, 503);
+  const s = vpsSummary(d.subs, d.unsub, d.venues, d.accounts, d.prospects, Date.now());
+  const header = ['Email', 'Venue (as typed)', 'State', 'Signed up', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
+  const lines = s.rows.map((r) => [r.email, r.venue_name, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at, r.source,
+    (r.utm && r.utm.utm_source) || '', (r.utm && r.utm.utm_campaign) || '', r.region,
+    r.match ? r.match.name : '', r.match ? r.match.kind : '', r.match ? r.match.by : '']);
+  const csv = [header].concat(lines).map((c) => c.map(vpbCsvCell).join(',')).join('\n') + '\n';
+  await vpaAudit(env, actor, 'subscribers_exported', null, { rows: lines.length, active: s.counts.active }).catch(() => null);
+  return json({ ok: true, csv: csv, count: lines.length });
+}
+
+/* THE LIST THE MONTHLY EMAIL READS (feature/venue-reports-31oct, vprMonthlySweep). Every subscriber who
+   should get this month's "What's new at VenuePlay": active, not unsubscribed, not on vp_unsubscribes
+   (checked again here, against the list as it is now, and fails closed: it THROWS when either list
+   cannot be read), and not already the contact on an active venue, who gets the same news inside
+   their own monthly report. One row per address, oldest first, so a batched send is stable.
+
+   HOW THE TWO BRANCHES JOIN (nothing here sends; the sweep stays the one sender):
+     in vprMonthlySweep, once every venue for the month is done (todo empty) and the news is ready:
+       const subs = await vpsMonthlyRecipients(env);                  // throws: then send nothing
+       for each sub not yet audited 'month-news:sub:<id>:<month>' (batch it like the venues):
+         html = vpaVenueEmailCard(preheader, vprNewsHtml(news) + vpsFooterHtml(env, sub.email), subject)
+         vpaSendEmail(env, sub.email, subject, html, undefined, await vpUnsubHeaders(env, sub.email, 'monthly-news'))
+         audit 'monthly_news_sent' with that target
+   Migration 134's view v_vp_subscribers_monthly is the same list in SQL, for a read-only look. */
+async function vpsMonthlyRecipients(env) {
+  const subs = await vpaSelectAll(env, 'vp_subscribers',
+    'status=eq.active&unsubscribed_at=is.null&select=id,email,venue_name,created_at&order=created_at.asc,id.asc');
+  const unsub = await vpaUnsubscribedSet(env);
+  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,founding_id&order=id.asc');
+  const live = {}; venues.forEach((v) => { if (v.founding_id) live[v.founding_id] = true; });
+  const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
+  const contacts = {}; accounts.forEach((a) => { if (live[a.id]) contacts[String(a.contact_email || '').trim().toLowerCase()] = true; });
+  const seen = {};
+  return subs.filter((s) => {
+    const e = String(s.email || '').trim().toLowerCase();
+    if (!e || seen[e] || unsub[e] || contacts[e]) return false;
+    seen[e] = true; return true;
+  }).map((s) => ({ id: s.id, email: String(s.email).trim().toLowerCase(), venue_name: s.venue_name || '' }));
 }

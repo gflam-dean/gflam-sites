@@ -484,3 +484,12 @@ Every word migration 120 wrote stays after it. One update, guarded on 120's word
 edited in HQ, and it must run AFTER `venueplay-120-help-faq-tv-window.sql` (if 120 has not been run, run 120 first, then
 this). Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the
 site. Branch `feature/tv-landing-31oct`. RUN 31 Oct 2026 by Dean (read back: the answer starts with the Google Play line, updated_by migration 131). Migration 120 was already live. Rollback: in the file.
+
+`venueplay-134-subscribers.sql` (31 Oct 2026, the "too scared to call us" sign-up): one new table `vp_subscribers` (email once,
+lower case; venue name as typed, optional; source page; utm; the consent words and version; consent_at; country and AU state
+from Cloudflare, never an IP; status active | held; confirm_sent_at; unsubscribed_at), a trigger on `vp_unsubscribes` that
+stamps unsubscribed_at whichever page or link wrote the opt-out (errors swallowed, so it can never stop an opt-out), and the
+read-only view `v_vp_subscribers_monthly`. RLS on, no policies, anon and authenticated revoked; the trigger function is security
+definer with its own search_path. Either order with the billing Worker: until it is run, POST /subscribe answers not ready and
+keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
+NOT RUN. Rollback: in the file.

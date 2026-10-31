@@ -3701,6 +3701,14 @@ def local_checks(which):
              'A room left on the bingo page while the host runs trivia, a phone bounced between two games, a stale '
              'paper or age answer, or the poll back at four database calls a phone every eight seconds, which is '
              'what capped VenuePlay at about fifteen venues on a busy night'),
+            # D110: the monthly email sign-up on the sales pages, for the venue "too scared to call us" (31 Oct 2026;
+            # migration 134), branch feature/vp-subscribers-31oct. The pages themselves: tools/subscribe-in-chrome.test.py.
+            ('D110. A monthly email sign-up keeps one row with its consent, never re-adds an unsubscribe, and sends nothing until switched on',
+             'test-vp-subscribers.js',
+             'a sign-up keeps one lower-case row with the consent words, page, utm and state, never an address; the same address again is the same answer and no second email; bad addresses, the honeypot, the network and address limits and Turnstile refuse with nothing kept; an address on vp_unsubscribes is held and never emailed, and an unreadable list keeps nothing; nothing is sent unless SUBSCRIBE_EMAILS is on, then one email with a signed one-click unsubscribe and no .dev link; before migration 134 the form is told not ready; HQ owner or accounts only, with states, weekly counts by page, matches never by a free mailbox, and an audited CSV; the monthly list leaves out the unsubscribed and live venue contacts and throws when it cannot check; nothing calls Instantly', 88,
+             'An address that asked us to stop put back on the list by a website form, a confirmation email sent '
+             'before Dean switched it on, the form used to flood an inbox or to ask who is on our list, or a '
+             'subscriber treated as a cold lead'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',
