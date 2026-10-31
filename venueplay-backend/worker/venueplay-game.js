@@ -11948,7 +11948,7 @@ const ROOM_HANDOVER_MS = 6 * 60 * 60 * 1000;
    the time it opens a game, and the Worker hands the venue over to meet it (roomOldConsoleCheck).
    To take a format back off the room: set its line to false and deploy; ROOM_OFF=1 is still the
    switch for everything at once, no deploy. */
-const ROOM_FORMATS_ON = { musical: true, trivia: false, raffle: false, members: false };
+const ROOM_FORMATS_ON = { musical: true, trivia: true, raffle: false, members: false };
 function roomFormatsOn() {
   const o = {};
   for (const k in ROOM_FORMATS_ON) o[k] = ROOM_FORMATS_ON[k] === true;
