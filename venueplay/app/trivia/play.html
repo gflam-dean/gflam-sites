@@ -1107,8 +1107,12 @@
        the channel it is on now, and hanging it up (Leave, typing another code) really ends it.
        Without the script it is the plain channel, as before. */
     if(ch){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
-    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
-                        : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    /* THE ROOM, once the Worker says trivia is on it (1 Nov 2026, /app/vp-room.js): the players'
+       channel is a room, so this phone holds no Supabase connection. The answers room (vpa-, above)
+       is separate and unchanged. Off, it is the channel it always was. */
+    var make=function(){ return window.VPChannel ? VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+                                                 : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } }); };
+    ch=(typeof VPRoom!=="undefined" && VPRoom.venue) ? VPRoom.venue(VP_GAME_API, "").channel("vp-"+room, "phone", make, { fmt:"trivia" }) : make();
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(onChannelStatus);
     if(P.joined) showWait("Watch the big screen. Your questions will pop up here.");

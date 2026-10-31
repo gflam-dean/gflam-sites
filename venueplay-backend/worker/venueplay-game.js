@@ -2368,7 +2368,7 @@ function venueLookupReply(json, v) {
     exists: true,
     /* Which formats are on the room, from the Worker's own constant (no database). A screen that
        decided its roads before a format's flip sees this change and reloads between games. */
-    room_formats: roomFormatsKey(),
+    room_formats: (typeof roomFormatsKey === 'function') ? roomFormatsKey() : '',
     name: v.name || '',
     /* A suspended venue's screen keeps its venue and its advertising. It is the
        lobby and the join code that must not be offered, and /play/live carries

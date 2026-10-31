@@ -761,6 +761,18 @@
      lives in vp-room.js now, so all three pages cannot disagree and the whole product
      changes road by one constant there. */
   var _useRoom=false, _roomTried=false, _room=null, _ear=null, _roomCode="";
+  /* WHICH ROAD THIS CONSOLE IS ON, said to the Worker when it opens a lobby (1 Nov 2026). A console that
+     says nothing is from before the switch, and the Worker hands the venue to Supabase to meet it. */
+  function bingoRoad(){
+    if(_room) return "room";
+    if(_roomTried) return "supabase";
+    try{ return (window.VPRoom && VPRoom.wanted && VPRoom.wanted()) ? "room" : "supabase"; }catch(e){ return "supabase"; }
+  }
+  /* The venue, so a handover this console sends reaches every room the venue has (each format's
+     screen channel as well as bingo's), but only for the venue's own code. */
+  function roomVenueFor(code){
+    try{ var sl=(__ctx && __ctx.venue && __ctx.venue.slug) || ""; return (sl && window.VP && VP.venueCode && VP.venueCode(sl)===code) ? sl : ""; }catch(e){ return ""; }
+  }
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   /* ONE LIVE BINGO NIGHT PER TABLET (15 Oct 2026, /app/vp-onetab.js). Trivia and musical lock
      their whole page to one tab. This page is also the games menu, so bingo locks only once a
@@ -3001,7 +3013,7 @@
       if(G.sessionId && G.joinCode){ sendState(); seatSoon(); return; }
       if(!(window.VP && VP.gameApiPost)) return;
       // caller says whether tonight is real balls: the Worker then tells every phone to use its paper book.
-      VP.gameApiPost("/session", { venue_id: v.id, format: "bingo", caller: !!G.caller }).then(function(r){
+      VP.gameApiPost("/session", { venue_id: v.id, format: "bingo", caller: !!G.caller, road: bingoRoad() }).then(function(r){
         if(!r || r.error || !r.session_id) return;
         G.sessionId = r.session_id;
         G.joinCode  = r.join_code || null;
@@ -4287,6 +4299,7 @@
       try{
         _roomCode=code;
         _room=VPRoom.connect(VP_GAME_API, "vp-"+code, "host", function(payload){ onRoomMsg(payload); }, {
+          venue: roomVenueFor(code),
           /* What the room was still holding goes out on the old road, in order, and the ear is let
              go before the real channel is opened on the same name (vp-room.js, watch). */
           onUnavailable: function(why, pending){ _useRoom=false; _room=null; subscribed=false;

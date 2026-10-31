@@ -668,8 +668,22 @@
     } catch (e) {}
   }
 
+  /* THE THREE CALLS A PAGE MAKES, each safe to call with no venue and never throwing, so a page's
+     one changed line cannot cost it its channel. */
+  function channelFor(apiBase, slug, name, role, make, copts) {
+    try { if (slug) return group(apiBase, slug).channel(name, role, make, copts); } catch (e) {}
+    return make();
+  }
+  function drop(client, c) {
+    try { if (c && c.vpRoom) c.unsubscribe(); else if (client && c) client.removeChannel(c); } catch (e) {}
+  }
+  function roadFor(apiBase, slug, fmt) {
+    try { if (slug) return group(apiBase, slug).road(fmt); } catch (e) {}
+    return "supabase";
+  }
+
   window.VPRoom = { connect: connect, wanted: wanted, watch: watch, sayOnce: sayOnce, oldRoadPeer: oldRoadPeer,
-                    venue: group,
+                    venue: group, channelFor: channelFor, drop: drop, roadFor: roadFor,
                     /* The formats a presence answer put on the room, as one string ("musical,trivia"),
                        the same shape the TV's /venue poll carries as room_formats. */
                     formatsKey: function (d) { var f = (d && d.formats) || {}, o = []; for (var k in f) { if (f[k] === true) o.push(k); } return o.sort().join(","); },
