@@ -236,3 +236,30 @@ game carries on, and nobody in the room sees anything.
     "room_off": true        the switch is on (absent when it is not)
 
 Dean, 10 Sep 2026: "yes a global switch is good hopefully never have to use it."
+
+## 31 Oct 2026: the default, with one road per venue
+
+`var DEFAULT_ON = true;` in `venueplay/app/vp-room.js` (commit 26350ce2), on top of 771f3da0, which
+closes every way a venue could end up split across the two roads once nobody types a flag:
+
+* **Leaving is the room's decision.** A page that gives up on the room by itself (budget spent,
+  or it heard a bingo page on the old road) POSTs `/room/handover?room=vp-XXXX`. The room says
+  `{t:"room_handover"}` to every socket, closes them with **4503**, and answers 503
+  `room handed over` to anyone for **six hours** (a mark on disk). A console still on Supabase
+  re-asserts every two hours for up to twelve. Bingo rooms only, never an answers room.
+* **ROOM_OFF reaches open rooms**: the first message after the switch empties the room the same
+  way, and marks it. Reveal still takes trivia answers a room holds while the switch is on.
+* **One ear on the old road**: the TV (one channel on the connection its router already has) and
+  the console (one connection) listen on the Supabase channel of the same name. A bingo console,
+  TV or signed bingo phone heard there (never `rw`, never another format's `fmt`) hands the room
+  over. A phone that finds the room with no TV and no console listens for 40 seconds.
+* **Budgets are awake time**: tv/host 8 s cold, 6 s warm; phone 8 s / 15 s; answers room 2.5 s / 6 s;
+  a timer that fires 5 s late was a frozen window, so the budget restarts. Heartbeat: `ping` every
+  25 s, answered `pong` by Cloudflare's auto-response; two unanswered is a dead socket.
+* **Mixed versions**: a page takes the room by default only when presence says `handover: true`.
+* **Not moved yet**: musical bingo, trivia, raffle and members draw still meet on Supabase. Bingo
+  is the only format whose phones left it. Moving the others is the next step for connections.
+
+Tests: room-fallback (61), venueplay-room-handover (21), tools/test-room-default-bingo.js (32, the
+real console, phone, vp-room.js and room class together), tools/test-tv-room-default.js (18).
+Test night: `docs/ROOM-SERVER-TEST-NIGHT.md`.
