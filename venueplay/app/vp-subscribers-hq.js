@@ -27,7 +27,7 @@
   var SOURCE = { home: "Home page", offer: "Offer page", "see-a-night": "See a night", site: "Other" };
   var STATE = { active: "On the list", held: "Held", unsubscribed: "Unsubscribed" };
 
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function $(id) { return doc.getElementById(id); }
   /* "Sat 31 Oct, 4:35pm", Brisbane (UTC+10 all year). */
   function when(iso, withTime) {

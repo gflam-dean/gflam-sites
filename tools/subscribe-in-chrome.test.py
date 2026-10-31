@@ -141,7 +141,7 @@ try:
             ok('%s: the consent line is the Worker\'s words exactly, with the Privacy Policy linked' % tag, L.get('consent') == CONSENT and L.get('privacy'), L.get('consent'))
             text = L.get('text') or ''
             ok('%s: no price or offer in the block, no "call you", no em dash' % tag,
-               not re.search(r'\$\d', text) and not re.search(r'call you|we.ll call', text, re.I) and '—' not in text and 'Nobody will ring you' in text, text[:300])
+               not re.search(r'\$\d', text) and not re.search(r'call you|we.ll call', text, re.I) and '\u2014' not in text and 'Nobody will ring you' in text, text[:300])
             ok('%s: no script error' % tag, not L.get('errs'), L.get('errs'))
             shot(S, sid, '%s-%s' % (src, 'phone' if mob else 'desktop'))
             S.close_tab(tid)
