@@ -225,6 +225,7 @@
   "permissions are read per account, most restrictive wins (12 checks)",
   "phone-reconnect.test.js",
   "phone-signin-in-chrome.test.py",
+  "phones asking /join/info inside the window cost no database call; fresh:1 (a pushed or first lookup) reads the database; a game starting, ending or switching reaches every polling phone within one poll plus the window, on one isolate and on two, and no phone is bounced back; a slow read never replaces a newer one; failures, fail-open answers and unknown codes are not kept; kicks and pauses refused at once; the kept answer equals the database in every state, musical bingo never on paper; the real console and phone pages move a room to trivia within a second",
   "pickup-in-chrome.test.py",
   "plan-uplift.test.js",
   "player-data permission needs an explicit tick, in every copy (14 checks)",
