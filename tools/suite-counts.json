@@ -183,6 +183,10 @@
   "checks": 64,
   "counted_by": "lines"
  },
+ "tools/leave-behinds-in-chrome.test.py": {
+  "checks": 127,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"

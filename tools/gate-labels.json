@@ -151,6 +151,7 @@
   "hq-tabs-in-chrome.test.py",
   "it discloses members lists, the browser identifier and the hashed address, and never says \"a name only\"",
   "it does not promise that a venue can remove a player itself, which no screen can do",
+  "leave-behinds-in-chrome.test.py",
   "live-fixes.test.js",
   "livenorm.test.py",
   "logo-tools-in-chrome.test.py",

@@ -83,7 +83,9 @@
   .tick{flex:none;width:16px;height:16px;border-radius:50%;background:var(--wash);
     border:1px solid var(--line-pink);display:flex;align-items:center;justify-content:center;margin-top:1px}
 
-  /* ---- founding offer ---- */
+  /* ---- the price: the STANDARD rate only (1 Nov 2026) ----
+     A handout cannot be taken back off a bar, so it never quotes an offer. Offers live only on
+     the dated /offer-<month> pages, which say when they end. */
   .offer{background:var(--ink);color:#fff;border-radius:13px;padding:15px 17px;margin-bottom:13px}
   .offer .oh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
     border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:10px;margin-bottom:11px;flex-wrap:wrap}
@@ -106,10 +108,8 @@
   .oterms li{font-size:11px;line-height:1.35;color:#D7D7DE;display:flex;gap:8px;align-items:flex-start}
   .oterms li b{color:#fff;font-weight:700}
   .oterms .pk{color:var(--pink);flex:none;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
-  .fineprint{font-size:9.5px;color:#8A8A94;margin-top:10px;line-height:1.4;
-    border-top:1px solid rgba(255,255,255,.1);padding-top:8px}
 
-  /* ---- get started ---- */
+  /* ---- how a night runs ---- */
   .start{margin-bottom:auto}
   .start h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;
     letter-spacing:.11em;text-transform:uppercase;color:var(--ink);margin-bottom:11px}
@@ -118,6 +118,7 @@
   .step .num{font-family:'Anton',sans-serif;font-size:20px;color:var(--pink);line-height:1;margin-bottom:6px}
   .step .st{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;color:var(--ink);margin-bottom:3px}
   .step .sx{font-size:11px;line-height:1.4;color:var(--muted)}
+  .legal{margin-top:10px;font-size:9.5px;line-height:1.45;color:var(--muted)}
 
   /* ---- footer ---- */
   .foot{margin-top:14px;border-top:1px solid var(--line);padding-top:11px;
@@ -151,7 +152,7 @@
   @page{size:A4 portrait;margin:0}
   @media print{
     html,body{background:#fff}
-    .sheet{width:auto;min-height:auto;margin:0;padding:12mm 12mm 9mm;box-shadow:none}
+    .sheet{width:auto;min-height:auto;margin:0;padding:11mm 12mm 8mm;box-shadow:none}
     .offer{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .badge,.tick,.offer .oh h2 span,.price .amt span,.step .num,.hero h1 em,.games .lead .gname{
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -175,7 +176,7 @@
 
   <!-- headline -->
   <div class="hero">
-    <h1>Bring the club together.<br><em>More members</em> in on every draw night.</h1>
+    <h1>Bring the club together.<br><em>More members</em> at every draw.</h1>
     <p class="lede">VenuePlay runs the members draw, raffles, bingo, trivia and musical bingo off your <strong>smart TV, or any screen via a streaming stick or HDMI</strong>, and members join in on their phones. No app to download, no account to make. One platform for every night your community gathers at the club.</p>
   </div>
 
@@ -187,7 +188,7 @@
       <ul class="games">
         <li class="lead"><div class="row"><span class="gname">Members / badge draw</span><span class="gtext">Runs itself on the big screen and brings members in on draw night.</span></div></li>
         <li class="lead"><div class="row"><span class="gname">Raffles / meat trays</span><span class="gtext">Sell and draw your meat trays and raffles live on the TV.</span></div></li>
-        <li class="lead"><div class="row"><span class="gname">Bingo</span><span class="gtext">Full 90-ball bingo nights, members dab along on their phones.</span></div></li>
+        <li class="lead"><div class="row"><span class="gname">Bingo</span><span class="gtext">Full 90-ball nights called on the big screen, and members mark off their own numbers on their phones.</span></div></li>
         <li><div class="row"><span class="gname">Trivia</span><span class="gtext">A friendly quiz night that brings the members together midweek.</span></div></li>
         <li><div class="row"><span class="gname">Musical bingo</span><span class="gtext">Songs instead of numbers, a crowd favourite that packs the room.</span></div></li>
       </ul>
@@ -198,7 +199,7 @@
       <ul class="bens">
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Draws and bingo run themselves</strong> on the big screen, no fiddly gear on the night.</div></li>
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Members join by phone</strong>, scan a code and play, no app and no account.</div></li>
-        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>Need paper? <strong>Print your own cards</strong> straight from the platform.</div></li>
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Fresh every week.</strong> 37,000+ trivia questions and 5,000+ songs, all included. Trivia and musical bingo <strong>print on paper</strong> too.</div></li>
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>It <strong>plays on the screen you've already got</strong>, and runs your own ads there between games, your events, functions and fundraisers, all included. Got a TV with Google Play? Get the VenuePlay TV app, then put in your screen code.</div></li>
         <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>Every night <strong>grows a members list you own</strong>, and you choose which details to collect, with players' consent.</div></li>
       </ul>
@@ -206,64 +207,65 @@
 
   </div>
 
-  <!-- founding offer -->
+  <!-- the price: the standard rate only. Offers live on the dated /offer-<month> pages, never on a handout. -->
   <div class="offer">
     <div class="oh">
-      <h2>The offer <span>Locked for life</span></h2>
-      <span class="badge">Offer ends this month</span>
+      <h2>One simple rate <span>Per player</span></h2>
+      <span class="badge">First month free</span>
     </div>
     <div class="ogrid">
       <div class="price">
         <span class="lbl">Monthly</span>
-        <span class="amt">$2.50<span> /player</span></span>
-        <span class="sub">Billed monthly</span>
+        <span class="amt">$3.00<span> /player</span></span>
+        <span class="sub">A month, billed monthly</span>
       </div>
       <div class="price">
         <span class="lbl">Annual</span>
-        <span class="amt">$2.30<span> /player</span></span>
-        <span class="sub">Best value</span>
+        <span class="amt">$2.85<span> /player</span></span>
+        <span class="sub">A month, billed yearly</span>
       </div>
       <div class="oterms">
         <ul>
           <li><span class="pk">&#10003;</span><div><b>First month free.</b> Go live the day you sign up, first payment a month later.</div></li>
-          <li><span class="pk">&#10003;</span><div><b>Cancel any time before your first payment</b> and you are never charged. No lock-in.</div></li>
-          <li><span class="pk">&#10003;</span><div>Standard price is <b>$3 per player</b>. This rate is offered until the end of the month.</div></li>
+          <li><span class="pk">&#10003;</span><div><b>No lock-in, no setup fee.</b> Cancel any time before your first payment and you are never charged.</div></li>
+          <li><span class="pk">&#10003;</span><div>Priced on your <b>max players per session</b>: an RSL with 30 players pays $90 a month. Prices include GST.</div></li>
+          <li><span class="pk">&#10003;</span><div><b>Big night?</b> $2 per extra player that night, and your host OKs it on screen first.</div></li>
         </ul>
       </div>
     </div>
-    <p class="fineprint">All prices are per player and include GST. Your rate stays locked for as long as you are with us.</p>
   </div>
 
-  <!-- get started -->
+  <!-- how a night runs: the three steps on the DL and A4 flyers (31 Oct 2026) -->
   <div class="start">
-    <h2>How to get started</h2>
+    <h2>How a night runs</h2>
     <div class="steps">
       <div class="step">
         <div class="num">1</div>
-        <div class="st">We set you up</div>
-        <div class="sx">We get the club up and running on VenuePlay before your first night, ready to go.</div>
+        <div class="st">Pick your game</div>
+        <div class="sx">Your members draw, a raffle, bingo, trivia or musical bingo.</div>
       </div>
       <div class="step">
         <div class="num">2</div>
-        <div class="st">We train your staff</div>
-        <div class="sx">A friendly run through, in person or remote, plus short setup videos so any staff member can host a night on their own.</div>
+        <div class="st">Scan the code</div>
+        <div class="sx">Players join on their own phones in seconds. No app, no login.</div>
       </div>
       <div class="step">
         <div class="num">3</div>
-        <div class="st">You run your first night</div>
-        <div class="sx">Put it on the screen, members join on their phones, and away you go.</div>
+        <div class="st">You press go</div>
+        <div class="sx">Any staff member can host. Winner checks are handled for you.</div>
       </div>
     </div>
+    <p class="legal">Your venue runs each game and sets the prizes, and winners claim from your host. VenuePlay supplies the software. Bingo, raffles and members draws follow your state's gaming rules, and we show you what applies when you set up.</p>
   </div>
 
   <!-- footer -->
   <div class="foot">
     <div class="contact">
       <span class="cl">Have a chat</span>
-      <span class="cv">hello@venueplay.com.au</span>
+      <span class="cv">sales@venueplay.com.au</span>
       <span class="cv2">venueplay.com.au</span>
     </div>
-    <div class="built">Built by <b>Gflam Touring</b>, who run bingo, live music and entertainment across Australia.</div>
+    <div class="built">Built by <b>Gflam Touring</b>, who run live entertainment nights in venues across Australia.</div>
   </div>
 
 </div>
