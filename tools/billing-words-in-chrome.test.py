@@ -2,7 +2,8 @@
 """THE ACCOUNT PAGE'S BILLING WORDS, IN A REAL BROWSER (Dean, 30 Oct 2026).
 
 Dean: tax invoices are issued by Stripe and the name a venue deals with is VenuePlay. Never "Gflam
-Group" on anything a venue sees, and never "founding". The emails are run by
+Group" on anything a venue sees, and never "founding". (Our paid-invoice email delivers Stripe's
+tax invoice and says "Tax invoice"; this page hands the invoices over behind "Open".) The emails are run by
 tools/test-receipts-plain-words.js; this is the page: venueplay/app/billing.html (Your account >
 Billing), served by tools/browser-rig/admin_site.py with the REAL billing Worker behind it in jsc.
 
@@ -72,7 +73,10 @@ def main():
                 text = d.get('all', '') + ' ' + d.get('title', '')
                 ok('%s: never "founding"' % where, not re.search(r'founding', text, re.I), re.findall(r'.{0,40}founding.{0,40}', text, re.I)[:2])
                 ok('%s: never Gflam' % where, not re.search(r'gflam', text, re.I), re.findall(r'.{0,40}gflam.{0,40}', text, re.I)[:2])
-                ok('%s: never "tax invoice" (Stripe\'s invoices are behind "Open")' % where, not re.search(r'tax invoice', text, re.I))
+                # "Tax invoice" is right where we deliver Stripe's (Dean, 31 Oct 2026), so it is not banned here:
+                # the page's job is to hand over Stripe's invoices, by name, behind "Open".
+                ok('%s: the invoices card hands over Stripe\'s invoices: "View or download every invoice"' % where,
+                   'View or download every invoice, or update the card we bill.' in text or (st.get('comp') and 'Your invoices' not in text), re.findall(r'.{0,60}invoice.{0,60}', text, re.I)[:3])
                 ok('%s: the plan tile reads "%s", "%s"' % (where, plan, sub), d.get('plan') == plan and d.get('sub') == sub, [d.get('plan'), d.get('sub')])
                 if st.get('past_due'):
                     ok('%s: the notice names the date and amount, in plain words' % where,

@@ -7,8 +7,9 @@
      (a) a Stripe line written from the product name ("1 Player x Founding Membership (Monthly)
          (at $2.50 / month)") is printed in plain words, "VenuePlay plan (monthly)". The Stripe
          product keeps its name; only what our emails print changes (vpaPlainLineDesc).
-     (b) our email is a RECEIPT. "Tax invoice" is gone from it; Stripe's hosted invoice, behind
-         "View invoice", keeps its legal title.
+     (b) the paid-invoice email DELIVERS Stripe's tax invoice (Dean, 31 Oct 2026: "I thought we were
+         delivering the Stripe tax invoice"), so it says "Tax invoice. VenuePlay, ABN ...", its subject
+         is "Your VenuePlay invoice <number> - $x", and "View invoice" opens Stripe's hosted invoice.
      (c) the business name line reads "VenuePlay, ABN 35 679 383 049".
 
    It RUNS the shipped senders (the receipt, the payment reminder, the declined card for a
@@ -37,7 +38,6 @@ var NAME_LINE = 'VenuePlay, ABN 35 679 383 049';
 function clean(where, text) {
   check(where + ': never "founding"', !/founding/i.test(text), (text.match(/.{0,40}founding.{0,40}/i) || [])[0]);
   check(where + ': never Gflam', !/gflam/i.test(text), (text.match(/.{0,40}gflam.{0,40}/i) || [])[0]);
-  check(where + ': never "tax invoice" in our own words', !/tax invoice/i.test(text), (text.match(/.{0,40}tax invoice.{0,40}/i) || [])[0]);
 }
 
 var sent = [];
@@ -85,16 +85,18 @@ async function main() {
   check('the big-night count still reads Stripe\'s own line (12 extra players over 1 night)',
         (function () { var o = vpaOverageFromInvoice(invoice()); return o.nights === 1 && o.players === 12 && o.cents === 2400; })(), vpaOverageFromInvoice(invoice()));
 
-  print('\n(b) and (c) The receipt');
+  print('\n(b) and (c) The paid invoice, delivering Stripe\'s tax invoice');
   sent = [];
   await vpaFireInvoiceEmail(ENV, invoice());
   var r = last(), rt = visible(r.html);
   check('CONTROL: the receipt was sent, with its lines', !!r.html && rt.indexOf('What this is for') !== -1, r.subject);
   clean('receipt', rt + ' ' + (r.subject || ''));
-  check('it calls itself a receipt: "Receipt. VenuePlay, ABN 35 679 383 049. Prices include GST."', rt.indexOf('Receipt. ' + NAME_LINE + '. Prices include GST.') !== -1, rt.slice(-700));
-  check('the subject says receipt and names the invoice: "Your VenuePlay receipt for invoice ABC-0001 - $66.50"', r.subject === 'Your VenuePlay receipt for invoice ABC-0001 - $66.50', r.subject);
-  check('the inbox preview says receipt too', /Paid \$66\.50\. Your receipt for invoice ABC-0001/.test(rt), rt.slice(0, 160));
-  check('the body: "Here is your receipt for invoice ABC-0001"', rt.indexOf('Here is your receipt for invoice ABC-0001') !== -1);
+  check('it is the tax invoice: "Tax invoice. VenuePlay, ABN 35 679 383 049. Prices include GST."', rt.indexOf('Tax invoice. ' + NAME_LINE + '. Prices include GST.') !== -1, rt.slice(-700));
+  check('it is never called a receipt in its own small print', rt.indexOf('Receipt. VenuePlay') === -1);
+  check('the subject: "Your VenuePlay invoice ABC-0001 - $66.50"', r.subject === 'Your VenuePlay invoice ABC-0001 - $66.50', r.subject);
+  check('the inbox preview: "Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside."', rt.indexOf('Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside.') !== -1, rt.slice(0, 160));
+  check('the body: "Here is your invoice ABC-0001, and exactly what it is for."', rt.indexOf('Here is your invoice ABC-0001, and exactly what it is for.') !== -1);
+  check('the page title: "Your VenuePlay invoice"', /<title>Your VenuePlay invoice<\/title>/.test(r.html));
   check('the subscription line reads "1 Player × VenuePlay plan (monthly) (at $2.50 / month)"', rt.indexOf('1 Player × VenuePlay plan (monthly) (at $2.50 / month)') !== -1, rt.slice(0, 600));
   check('the proration line reads "VenuePlay plan (annual)"', rt.indexOf('12 × VenuePlay plan (annual)') !== -1);
   check('the big night is still counted on it: 12 extra players over 1 big night', rt.indexOf('12 extra players') !== -1 && rt.indexOf('1 big night') !== -1);

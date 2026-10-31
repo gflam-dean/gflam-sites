@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 12:21 · cae25044';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 14:20 · b00c9bdb';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7316,9 +7316,7 @@ function vpaTaxSummaryHtml(invoice) {
        + row('GST', gst, false)
        + row('Total paid', total, true)
        + '</table>'
-       /* "Receipt", not "Tax invoice" (Dean, 30 Oct 2026): the tax invoice is the one Stripe issues,
-          linked from this email, and it keeps its legal title. This email is our receipt for it. */
-       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Receipt. VenuePlay, '
+       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Tax invoice. VenuePlay, '
        + 'ABN ' + VP_ABN + '. Prices include GST.</p>'
        + '</td></tr></table>';
 }
@@ -7500,11 +7498,8 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with VenuePlay.</p>'
-      /* OUR RECEIPT, STRIPE'S INVOICE (Dean, 30 Oct 2026). This email is the receipt; the tax invoice
-         is Stripe's, behind "View invoice", and keeps its own title. So the email says receipt and
-         names the invoice it is for. */
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your receipt'
-      + (number ? ' for invoice ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
+      + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
@@ -7544,8 +7539,8 @@ async function vpaFireInvoiceEmail(env, invoice) {
         from: 'VenuePlay <hello@send.venueplay.com.au>',
         reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
         to: [email],
-        subject: 'Your VenuePlay receipt' + (number ? ' for invoice ' + number : '') + ' - ' + amount,
-        html: vpaVenueEmailCard('Paid ' + amount + '. Your receipt' + (number ? ' for invoice ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay receipt'),
+        subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
+        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay invoice'),
       }),
     });
     let resendId = null;
@@ -9783,7 +9778,7 @@ function vpaLeavingHtml(env, opts) {
        requirement on a service notice, and a holding company's name at the bottom of
        "your last night is Friday" reads like a letter from a solicitor. The ABN stays
        where it is actually required, on the receipt, which also carries "Prices include
-       GST" and is the receipt for the tax invoice Stripe issues. */
+       GST" and is a tax invoice. */
     + vpaVenueEmailFoot(false)
     + '</div>', opts.heading);
 }

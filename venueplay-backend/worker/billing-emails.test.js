@@ -74,8 +74,8 @@ pass("GST is the INCLUSIVE component, $0.91 of $10", tax.indexOf("$0.91") !== -1
      "prices include GST, so it is total/11, not 10% added on top");
 pass("the ex-GST subtotal is $9.09", tax.indexOf("$9.09") !== -1);
 pass("the total paid is $10.00", tax.indexOf("$10.00") !== -1);
-/* Our email is the RECEIPT; the tax invoice is Stripe's, and keeps its title (Dean, 30 Oct 2026). */
-pass("it calls itself a receipt, not a tax invoice", tax.indexOf("Receipt. VenuePlay, ABN") !== -1 && tax.toLowerCase().indexOf("tax invoice") === -1);
+/* It delivers Stripe's tax invoice, so it says so (Dean, 31 Oct 2026). */
+pass("it calls itself a tax invoice", tax.indexOf("Tax invoice. VenuePlay, ABN") !== -1);
 pass("the ABN is on it", tax.indexOf(VP_ABN) !== -1);
 
 pass("a $0 trial invoice gets no tax block at all",
@@ -445,7 +445,7 @@ function alertSubjectChecks() {
   var CUSTOMER_SUBJECTS = [
     "Your venues are set up. Welcome to VenuePlay",
     "You are in. Welcome to VenuePlay",
-    "Your VenuePlay receipt",
+    "Your VenuePlay invoice",
     "Your VenuePlay payment is coming up",
     "Your VenuePlay payment did not go through",
     "Your VenuePlay plan has moved up",
