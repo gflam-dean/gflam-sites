@@ -31,7 +31,7 @@
   function $(id) { return doc.getElementById(id); }
   /* "Sat 31 Oct, 4:35pm", Brisbane (UTC+10 all year). */
   function when(iso, withTime) {
-    var t = Date.parse(iso || ""); if (!isFinite(t)) return "";
+    var t = Date.parse(iso || ""); if (!isFinite(t) || t >= 8.64e15 - 864e5) return "";   // an opt-out with no date is the end of time, never shown as one
     var d = new Date(t + 10 * 3600000), h = d.getUTCHours(), m = d.getUTCMinutes();
     var day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getUTCDay()] + " " + d.getUTCDate() + " " + MON[d.getUTCMonth()];
     return withTime ? day + ", " + ((h % 12) || 12) + ":" + ("0" + m).slice(-2) + (h < 12 ? "am" : "pm") : day;
@@ -48,8 +48,8 @@
   }
   function stateHtml(r) {
     return '<span class="badge vpsb-' + esc(r.state) + '" data-vps-state="' + esc(r.state) + '">' + esc(STATE[r.state] || r.state) + "</span>"
-      + (r.state === "resubscribed" ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true)) + ', signed up again ' + esc(when(r.resubscribed_at, true)) + '. Back on for the monthly email only.</div>' : "")
-      + (r.state === "unsubscribed" && r.unsubscribed_at ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true)) + (r.resubscribed_at ? ', after signing up again ' + esc(when(r.resubscribed_at, true)) : "") + '.</div>' : "")
+      + (r.state === "resubscribed" ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true) || "(date not recorded)") + ', signed up again ' + esc(when(r.resubscribed_at, true)) + '. Back on for the monthly email only.</div>' : "")
+      + (r.state === "unsubscribed" && r.unsubscribed_at ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true) || "(date not recorded)") + (r.resubscribed_at ? ', after signing up again ' + esc(when(r.resubscribed_at, true)) : "") + '.</div>' : "")
       + (r.state === "held" ? '<div class="note" style="margin:4px 0 0">Held by hand: kept, and sent nothing.' + (r.held_reason ? " (" + esc(r.held_reason) + ")" : "") + '</div>' : "");
   }
   function utmText(u) {
