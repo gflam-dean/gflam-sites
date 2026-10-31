@@ -628,7 +628,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 131,
+  "checks": 159,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
