@@ -12,19 +12,26 @@ This opens the REAL nsw.html, served at the REAL addresses (venueplay/_redirects
 nsw.html), with the billing Worker's GET /founding answer stubbed, and the REAL billing Worker
 (tools/browser-rig/admin_site.py, jsc) taking the signup:
 
-  1. /nsw and /offer-oct, Worker says open:false, at phone and desktop width: the banner says the
+  1. /nsw and /offer-oct, the October row marked ended: true and the Worker UNREACHABLE (Dean, 1 Nov
+     2026: an ended row shows the standard rate at once, it never waits for the Worker), at phone and
+     desktop width; the page does not even ask: the banner says the
      offer ended on 31 October; no "$2.50", "$2.30", "$75", "lock it in", "lock in", "locked for
      life", "30 November" or "November" anywhere visible (every FAQ opened first); every dollar
      figure on the page is a standard one; the pricing card is the homepage's (Monthly $3.00, Annual
      $2.85); a 30-player pub pays $90 a month; the estimate prices $3.00 and $2.85; and a signup sends
      NO code, so the real Worker asks Stripe for the STANDARD price.
-  2. /offer-nov, Worker says open:true: the November offer exactly as it was, the same words as when
-     the Worker never answers, and the signup sends OFFER-NOV-2026.
-  3. /offer-oct, Worker unreachable (network error, or HTTP 500): the page is left exactly as it is.
+  2. /offer-nov inside November, Worker says open:true: the November offer exactly as it was, the same
+     words as when the Worker never answers, and the signup sends OFFER-NOV-2026.
+  3. /offer-nov inside November, Worker unreachable (network error, or HTTP 500): left exactly as it is.
+  4. /offer-nov inside November, Worker says open:false: a row that is NOT ended still ends on that answer.
+  5. /offer-nov after 30 November (Brisbane), not marked ended, Worker unreachable: ended by the date alone.
+  6. /offer-oct with the clock still inside October, Worker unreachable: ended by the marking alone.
+
+  The clock is pinned (a day inside the WRITTEN_FOR month, and two days after it), never the machine's.
 
     python3 tools/offer-ended-in-chrome.test.py [--shots DIR] [--root CHECKOUT]
 """
-import argparse, json, os, re, sys, time
+import argparse, calendar, datetime, json, os, re, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
@@ -48,13 +55,22 @@ def ok(label, good, detail=''):
 
 
 OFFER_JS = open(os.path.join(A.root, 'venueplay', 'app', 'vp-offer.js'), encoding='utf-8').read()
+WF = re.search(r"var\s+WRITTEN_FOR\s*=\s*'([a-z]{3})'", OFFER_JS).group(1)
+WROW = re.search(WF + r":\s*\{\s*code:\s*'(OFFER-([A-Z]{3})-(20\d\d))',\s*date:\s*'([^']+)',\s*day:\s*'([^']+)'([^}\n]*)\}", OFFER_JS)
+WCODE, WMON, WYEAR, WDAY = WROW.group(1), WROW.group(2), int(WROW.group(3)), WROW.group(5)
+WPATH = '/offer-' + WF
+_MI = [m.upper()[:3] for m in calendar.month_name].index(WMON)
+_END = datetime.datetime(WYEAR + (_MI == 12), _MI % 12 + 1, 1, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10)
+INSIDE_MS = int((_END - datetime.timedelta(days=5)).timestamp() * 1000)
+AFTER_MS = int((_END + datetime.timedelta(days=2)).timestamp() * 1000)
 REDIRECTS = open(os.path.join(A.root, 'venueplay', '_redirects'), encoding='utf-8').read()
 
 
-def pre(mode):
+def pre(mode, clock_ms=None):
     """Before the page's own scripts: GET /founding answers as `mode` says, every other call goes to the rig's
     real Worker, and every address the page asks for and every /checkout it sends is written down."""
-    return ('(function(){var MODE=%s;window.__asked=[];window.__checkout=[];var real=window.fetch;'
+    clock = ('var T=%d,p0=performance.now();Date.now=function(){return T+Math.floor(performance.now()-p0);};' % (clock_ms if clock_ms is not None else INSIDE_MS))
+    return ('(function(){' + clock + 'var MODE=%s;window.__asked=[];window.__checkout=[];var real=window.fetch;'
             'window.fetch=function(u,o){var s=String(u);window.__asked.push(s);'
             ' if(/\\/founding\\?/.test(s)){var code=decodeURIComponent((s.split("code=")[1]||""));'
             '  if(MODE==="down") return Promise.reject(new TypeError("Failed to fetch"));'
@@ -126,10 +142,10 @@ def shot(S, sid, name, scroll_to=None):
     S.shot(sid, os.path.join(A.shots, name + '.png'))
 
 
-def load(S, path, mode, w, h, mobile):
-    tid, sid = S.open(path, w, h, mobile=mobile, pre=pre(mode))
-    S.until(sid, '!!window.VP_OFFER && !!document.getElementById("vp-submit") && window.__asked.some(function(u){return /\\/founding\\?/.test(u);})', 20)
-    if mode == 'closed':
+def load(S, path, mode, w, h, mobile, clock_ms=None, ends=False):
+    tid, sid = S.open(path, w, h, mobile=mobile, pre=pre(mode, clock_ms))
+    S.until(sid, '!!window.VP_OFFER && !!document.getElementById("vp-submit") && (document.documentElement.getAttribute("data-offer")==="ended" || window.__asked.some(function(u){return /\\/founding\\?/.test(u);}))', 20)
+    if ends:
         S.until(sid, 'document.documentElement.getAttribute("data-offer")==="ended"', 10)
     time.sleep(1.2)   # let any answer land and the page do whatever it is going to do
     return tid, sid
@@ -156,12 +172,12 @@ try:
     stripe_before = 0
     for path, w, h, mobile, tag in (('/nsw', 390, 844, True, 'nsw-phone'), ('/offer-oct', 390, 844, True, 'offer-oct-phone'),
                                     ('/offer-oct', 1280, 900, False, 'offer-oct-desktop')):
-        print('\n%s AT %d PX, THE WORKER SAYS THE OCTOBER CODE IS SHUT' % (path, w))
-        tid, sid = load(S, path, 'closed', w, h, mobile)
+        print('\n%s AT %d PX, THE OCTOBER ROW IS MARKED ENDED AND THE WORKER CANNOT BE REACHED' % (path, w))
+        tid, sid = load(S, path, 'down', w, h, mobile, ends=True)
         v = see(S, sid)
         allt = v.get('all', '')
-        ok('%s asked the Worker about OFFER-OCT-2026, and the page knows the offer ended' % tag,
-           v.get('code') == 'OFFER-OCT-2026' and any('OFFER-OCT-2026' in a for a in v.get('asked', [])) and v.get('ended') == 'ended', v.get('asked'))
+        ok('%s is the October row and ended by itself, without asking the Worker' % tag,
+           v.get('code') == 'OFFER-OCT-2026' and not v.get('asked') and v.get('ended') == 'ended', v.get('asked'))
         ok('%s: the banner says "This offer ended on 31 October." and quotes $3.00 a player' % tag,
            v.get('banner', '').startswith('This offer ended on 31 October.') and '$3.00 per player a month' in v.get('banner', ''), v.get('banner'))
         hits = sorted(set(m.group(0) for m in OFFER_WORDS.finditer(allt)))
@@ -219,24 +235,56 @@ try:
     ok('a November signup still sends OFFER-NOV-2026', bool(ck) and ck['sent'].get('founding_code') == 'OFFER-NOV-2026', ck and ck['sent'].get('founding_code'))
     S.close_tab(tid)
 
-    print('\n/offer-oct, THE WORKER CANNOT BE REACHED: THE PAGE IS LEFT AS IT IS')
-    tid, sid = load(S, '/offer-oct', 'never', 390, 844, True)
+    print('\n%s INSIDE ITS MONTH, THE WORKER CANNOT BE REACHED: AN OPEN ROW IS LEFT AS IT IS' % WPATH)
+    tid, sid = load(S, WPATH, 'never', 390, 844, True)
     base = see(S, sid)
     S.close_tab(tid)
     for mode, what in (('down', 'a network error'), ('500', 'HTTP 500')):
-        tid, sid = load(S, '/offer-oct', mode, 390, 844, True)
+        tid, sid = load(S, WPATH, mode, 390, 844, True)
         v = see(S, sid)
         ok('%s: no banner, nothing rewritten, the same words as when the Worker never answers' % what,
            v.get('ended') is None and 'This offer ended' not in v.get('all', '') and v.get('all') == base.get('all')
-           and (v.get('eyebrow') or '').lower().endswith('31 october') and v.get('plans') == ['$2.50 / player', '$2.30 / player'], (v.get('ended'), v.get('eyebrow')))
+           and (v.get('eyebrow') or '').lower().endswith(WDAY.lower()) and v.get('plans') == ['$2.50 / player', '$2.30 / player'], (v.get('ended'), v.get('eyebrow')))
         ok('%s: no script error' % what, not v.get('errs'), v.get('errs'))
         S.close_tab(tid)
+
+    def ended_standard(v, label):
+        allt = v.get('all', '')
+        ok('%s: the banner says "This offer ended on %s."' % (label, WDAY), v.get('ended') == 'ended' and v.get('banner', '').startswith('This offer ended on %s.' % WDAY), v.get('banner'))
+        ok('%s: only the standard rate: no $2.50, $2.30, $75 or lock it in; the card is Monthly $3.00, Annual $2.85' % label,
+           not re.search(r'\$2\.50|\$2\.30|\$75\b|lock it in|\block(?:ed)? in\b|locked for life', allt, re.I)
+           and v.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and v.get('plans') == ['$3.00 / player', '$2.85 / player'] and not v.get('errs'),
+           (re.findall(r'.{30}(?:\$2\.50|lock it in).{20}', allt)[:2], v.get('rows'), v.get('errs')))
+
+    print('\n%s INSIDE ITS MONTH, THE WORKER SAYS ITS CODE IS SHUT: A ROW THAT IS NOT ENDED STILL ENDS ON THAT ANSWER' % WPATH)
+    tid, sid = load(S, WPATH, 'closed', 390, 844, True, ends=True)
+    v = see(S, sid)
+    ok('it asked the Worker about %s' % WCODE, any(WCODE in a for a in v.get('asked', [])), v.get('asked'))
+    ended_standard(v, 'shut by the Worker')
+    S.close_tab(tid)
+
+    print('\n%s TWO DAYS AFTER ITS MONTH (BRISBANE), NOT MARKED ENDED, THE WORKER CANNOT BE REACHED' % WPATH)
+    ok('the %s row is not marked ended, so this is the date alone' % WF, 'ended' not in WROW.group(6), WROW.group(6))
+    tid, sid = load(S, WPATH, 'down', 390, 844, True, clock_ms=AFTER_MS, ends=True)
+    v = see(S, sid)
+    ok('it ended by the date, without asking the Worker', not v.get('asked'), v.get('asked'))
+    ended_standard(v, 'ended by the date')
+    S.close_tab(tid)
+
+    print('\n/offer-oct WITH THE CLOCK STILL INSIDE OCTOBER, THE WORKER CANNOT BE REACHED: THE MARKING ALONE ENDS IT')
+    OCT_INSIDE_MS = int((datetime.datetime(2026, 11, 1, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10, days=5)).timestamp() * 1000)
+    tid, sid = load(S, '/offer-oct', 'down', 390, 844, True, clock_ms=OCT_INSIDE_MS, ends=True)
+    v = see(S, sid)
+    ok('a row marked ended: true shows the standard rate before its month is out, without asking the Worker',
+       v.get('ended') == 'ended' and not v.get('asked') and v.get('banner', '').startswith('This offer ended on 31 October.')
+       and v.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and '$2.50' not in v.get('all', ''), (v.get('ended'), v.get('asked'), v.get('rows')))
+    S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 40
+EXPECTED = 48
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

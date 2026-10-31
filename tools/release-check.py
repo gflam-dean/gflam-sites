@@ -2494,15 +2494,20 @@ def local_checks(which):
     #      fallbacks sent a dead code to checkout and asked the Worker about it on every load);
     #   2. its row is marked `ended: true`, so somebody decided it, rather than the month running out
     #      on a row nobody looked at;
-    #   3. the offer page provably turns every price to standard when the Worker says open:false: the
-    #      closing script calls standardPage() after that answer, the signup sends no code once the
-    #      rate is standard, and tools/offer-ended-in-chrome.test.py (run by this gate) is on disk.
+    #   3. the offer page provably turns every price to standard: by itself for a row marked ended (no
+    #      Worker needed), and when the Worker says open:false; the signup sends no code once the rate
+    #      is standard, and tools/offer-ended-in-chrome.test.py (run by this gate) is on disk.
     # An ended row that is not marked, or a page that does not handle it, stays red.
     _offer_js = os.path.join('app', 'vp-offer.js')
     _ended_rows = set(re.findall(r"\bcode:\s*'([A-Z]+-[A-Z]{3}-20\d\d)'[^}\n]*\bended:\s*true\b", offer_table_source()))
     _nsw_p = os.path.join(ROOT, 'venueplay', 'nsw.html')
     _nsw = io.open(_nsw_p, encoding='utf-8').read() if os.path.isfile(_nsw_p) else ''
-    _page_ends = (bool(re.search(r"d\.open !== false\) return;[\s\S]{0,3000}?\n\s*standardPage\(\);", _nsw))
+    # 1 Nov 2026 (Dean): an ended row shows the standard rate WITHOUT waiting for the Worker, so the
+    # page must also end it by itself (endedNow: marked ended, or its month over by the Brisbane date).
+    _page_ends = (bool(re.search(r"d\.open !== false\) return;[^\n]*\n\s*showEnded\(\);", _nsw))
+                  and bool(re.search(r"function showEnded\(\) \{[\s\S]{0,3000}?\n\s*standardPage\(\);\n\s*\}", _nsw))
+                  and 'if (endedNow(OFFER)) { showEnded(); return; }' in _nsw
+                  and 'if (o.ended === true) return true;' in _nsw
                   and 'function standardPage(' in _nsw
                   and "founding_code: standardRate ? ''" in _nsw
                   and os.path.isfile(os.path.join(ROOT, 'tools', 'offer-ended-in-chrome.test.py')))

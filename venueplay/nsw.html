@@ -1791,7 +1791,9 @@
 
      If the Worker cannot be reached the page is left exactly as it is: a
      venue seeing the offer is better than a venue seeing a scary banner
-     because our API had a bad minute.
+     because our API had a bad minute. EXCEPT for a row that has ended
+     (marked ended: true, or its month over by the Brisbane date): that one
+     shows the standard rate without asking (Dean, 1 Nov 2026).
 
      EVERY PRICE, NOT JUST THE TOP (1 Nov 2026). On 1 November /nsw and
      /offer-oct showed the banner and the $3.00 hero note, and $2.50 "locked
@@ -1870,30 +1872,47 @@
     });
   }
 
+  /* AN ENDED ROW NEEDS NO ANSWER (Dean, 1 Nov 2026). A row marked ended: true in vp-offer.js, or one
+     whose month is over by the Brisbane date (UTC+10, no daylight saving: the same rule as the Worker's
+     vpaCodeInDate), shows the standard rate at once, so a visitor never reads an ended $2.50 because
+     the Worker had a bad minute. Only a row that is NOT ended asks the Worker; open:false still ends it. */
+  function endedNow(o) {
+    if (o.ended === true) return true;
+    var m = /-([A-Z]{3})-(20\d\d)$/.exec(String(o.code || '').toUpperCase());
+    var MON = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
+    if (!m || !(m[1] in MON)) return false;
+    return Date.now() >= Date.UTC(Number(m[2]), MON[m[1]] + 1, 1) - 10 * 3600 * 1000;   // 00:00 on the 1st of the next month, Brisbane
+  }
+
+  function showEnded() {
+    var bar = document.createElement('div');
+    bar.setAttribute('style',
+      'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
+      'font-family:Manrope,system-ui,sans-serif;font-size:var(--fs-base);line-height:1.5;' +
+      'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
+    bar.innerHTML = '<b>This offer ended on ' + OFFER.day + '.</b> ' +
+      'You can still sign up today at the standard rate of $3.00 per player a month, ' +
+      'and everything else works exactly the same.';
+    document.body.insertBefore(bar, document.body.firstChild);
+
+    // Stop the page promising a price it will not be charged.
+    document.querySelectorAll('.hero-note').forEach(function (el) {
+      el.textContent = 'This offer ended on ' + OFFER.day + '. Standard rate, $3.00 per player a month.';
+    });
+    document.querySelectorAll('a.btn-primary').forEach(function (el) {
+      if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
+    });
+    document.title = document.title.replace(/founding/i, 'now open');
+    standardPage();
+  }
+
+  if (endedNow(OFFER)) { showEnded(); return; }
+
   fetch(API + '/founding?code=' + encodeURIComponent(CODE))
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
       if (!d || d.open !== false) return;          // open, or we could not tell
-
-      var bar = document.createElement('div');
-      bar.setAttribute('style',
-        'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
-        'font-family:Manrope,system-ui,sans-serif;font-size:var(--fs-base);line-height:1.5;' +
-        'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
-      bar.innerHTML = '<b>This offer ended on ' + OFFER.day + '.</b> ' +
-        'You can still sign up today at the standard rate of $3.00 per player a month, ' +
-        'and everything else works exactly the same.';
-      document.body.insertBefore(bar, document.body.firstChild);
-
-      // Stop the page promising a price it will not be charged.
-      document.querySelectorAll('.hero-note').forEach(function (el) {
-        el.textContent = 'This offer ended on ' + OFFER.day + '. Standard rate, $3.00 per player a month.';
-      });
-      document.querySelectorAll('a.btn-primary').forEach(function (el) {
-        if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
-      });
-      document.title = document.title.replace(/founding/i, 'now open');
-      standardPage();
+      showEnded();
     })
     .catch(function () {});     // leave the page alone rather than alarm anybody
 })();
