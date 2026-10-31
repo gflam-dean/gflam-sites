@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '30 Oct 2026, 19:42 · 2b296ead';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 10:49 · fe5408b4';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2521,7 +2521,9 @@ function vpaReviewPage(title, inner, status) {
     + '.radios{display:flex;gap:10px;margin-top:4px}.radios label{flex:1;display:flex;align-items:center;gap:8px;background:#0F0D14;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--text);font-size:16px}'
     + '.btn{display:block;width:100%;margin-top:12px;padding:16px;border:0;border-radius:12px;font:inherit;font-size:18px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer}'
     + '.yes{background:var(--green);color:#06140E}.edit{background:var(--pink);color:#fff}.no{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,.35)}'
-    + '.others{display:flex;gap:10px;margin-top:6px}.others a{flex:1;font-size:15px;padding:12px}'
+    + '.btn.small{font-size:16px;font-weight:700;padding:12px}'
+    + '.tag{display:block;font-size:11px;line-height:1.2;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 5px}'
+    + '.top{margin:14px 0 4px}.top .btn{margin-top:0}.top p{margin:8px 0 0;font-size:14px}.choices{margin-top:4px}'
     + '.done{font-size:46px;line-height:1;margin:6px 0 10px}'
     + '.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
     + '</style></head><body><main>'
@@ -2548,11 +2550,51 @@ function vpaReviewWhatHappens(row, edited) {
     + '</ol></div>';
 }
 
-function vpaReviewHead(row) {
+function vpaReviewTitle(row) {
   return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
-    + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>'
-    + '<h2>What they wrote</h2><div class="card words">' + vpaEsc(row.their_words || '(nothing above the quoted email)') + '</div>';
+    + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>';
 }
+function vpaReviewWords(row) {
+  return '<h2>What they wrote</h2><div class="card words">' + vpaEsc(row.their_words || '(nothing above the quoted email)') + '</div>';
+}
+
+/* THE RECOMMENDED BUTTON AT THE TOP, ALL THREE AT THE BOTTOM (Dean, 31 Oct 2026). "what you recommend up the top
+   just the button so if you recommend the normal email that just that one if you recommend edit email, just the
+   edit button at the top." The email has the three buttons at the top and the bottom, the recommended one first;
+   the page it opens now has ONLY the recommended one at the top, labelled Recommended, and all three at the bottom
+   in the email's order (the Mac's button_order: the recommended one first, No always last). No recommendation (a
+   review from before migration 130) means Edit, the safe one.
+   Nothing about recording changes: on its own page a choice is that page's confirm, a submit in the page's one
+   POST form back to the same signed link; anywhere else it is the signed link to its own page, a GET that only
+   shows. So a tap at the top does exactly what the same tap at the bottom does. */
+const VPA_REVIEW_BUTTON_WORDS = { yes: 'Yes, send the standard reply', edit: 'Edit the reply first', no: 'No, do not send' };
+const VPA_REVIEW_CONFIRM_WORDS = { yes: 'Yes, send the standard reply', edit: 'Save and send', no: 'No, do not send' };
+function vpaReviewRecommended(row) {
+  const d = (row.details && typeof row.details === 'object') ? row.details : null;
+  return d && d.recommend === 'yes' ? 'yes' : 'edit';
+}
+function vpaReviewOrder(rec) {
+  return rec === 'yes' ? ['yes', 'edit', 'no'] : ['edit', 'yes', 'no'];
+}
+function vpaReviewChoice(a, action, links, big, tag) {
+  const cls = 'btn ' + a + (big ? '' : ' small');
+  const words = (tag ? '<span class="tag">' + tag + '</span>' : '') + (a === action ? VPA_REVIEW_CONFIRM_WORDS[a] : VPA_REVIEW_BUTTON_WORDS[a]);
+  return a === action
+    ? '<button class="' + cls + '" name="b" type="submit" data-a="' + a + '">' + words + '</button>'
+    : '<a class="' + cls + '" href="' + vpaEsc(links[a]) + '" data-a="' + a + '">' + words + '</a>';
+}
+function vpaReviewTop(rec, action, links) {
+  return '<div class="top" data-vpa="top">' + vpaReviewChoice(rec, action, links, true, 'Recommended')
+    + (rec === 'edit' && action === 'edit' ? '<p class="muted">Change the reply below first: this saves what is in the box.</p>' : '')
+    + '</div>';
+}
+function vpaReviewBottom(rec, action, links) {
+  return '<h2>Your choice</h2><div class="choices" data-vpa="bottom">'
+    + vpaReviewOrder(rec).map(function (a, i) { return vpaReviewChoice(a, action, links, i === 0, i === 0 ? 'Recommended' : ''); }).join('')
+    + '</div>';
+}
+/* Every submit on the page goes quiet on the first tap (there are two when the page is the recommended one). */
+const VPA_REVIEW_ONSUBMIT = "var s=this.querySelectorAll('button[type=submit]');for(var i=0;i<s.length;i++){s[i].disabled=true;s[i].textContent='Saving...'}";
 
 function vpaParseForm(text) {
   const out = {};
@@ -2692,36 +2734,32 @@ async function vpaAutopilotReviewPage(request, env) {
   }
 
   // GET (or an edit sent back to fix): the page. NOTHING is written here.
-  let inner = vpaReviewHead(row);
+  // ONE form, from the top button to the bottom ones: the page's own choice is a submit wherever it is shown.
+  const rec = vpaReviewRecommended(row);
+  let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
+    + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+    + vpaReviewTop(rec, action, links)
+    + vpaReviewWords(row);
   if (action === 'yes') {
-    inner += qWarn + '<h2>The reply they will get</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
+    inner += '<h2>The reply they will get</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
       + '<p class="muted" style="margin-top:8px">The line saying when their account email comes is matched to when it really goes.</p>'
-      + vpaReviewWhatHappens(row, false)
-      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
-      + '<button class="btn yes" name="b" type="submit">Yes, send the standard reply</button></form>'
-      + '<div class="others"><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit the reply first</a><a class="btn no" href="' + vpaEsc(links.no) + '">No</a></div>';
+      + vpaReviewWhatHappens(row, false);
   } else if (action === 'edit') {
-    inner += (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
-      + '<h2>The reply: change anything, then tap Save and send</h2>'
-      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
+    inner += '<h2>The reply: change anything, then tap Save and send</h2>'
       + '<textarea name="reply" aria-label="The reply" autocapitalize="sentences" spellcheck="true">' + vpaEsc(form != null ? form : row.reply) + '</textarea>'
       + '<p class="muted" style="margin-top:8px">Your signature is at the bottom: leave it there. Plain text; a blank line starts a new paragraph.</p>'
       + vpaReviewBoxes(row, boxForm)
-      + vpaReviewWhatHappens(row, true)
-      + '<button class="btn yes" name="b" type="submit">Save and send</button></form>'
-      + '<div class="others"><a class="btn no" href="' + vpaEsc(links.no) + '">No, do not send</a></div>';
+      + vpaReviewWhatHappens(row, true);
   } else {
     inner += '<h2>The reply that will NOT go</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
       + '<div class="what"><b>What happens when you tap it</b><ol>'
       + '<li>Nothing is sent to them and no account is made, now or later.</li>'
       + '<li>Within 5 minutes your Mac marks it rejected and emails you to say so.</li>'
       + '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>'
-      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="this.b.disabled=true;this.b.textContent=\'Saving...\'">'
       + '<h2>Why not? (optional, just for the record)</h2>'
-      + '<textarea class="short" name="reason" aria-label="Why not"></textarea>'
-      + '<button class="btn no" name="b" type="submit">No, do not send</button></form>'
-      + '<div class="others"><a class="btn yes" href="' + vpaEsc(links.yes) + '">Yes after all</a><a class="btn edit" href="' + vpaEsc(links.edit) + '">Edit</a></div>';
+      + '<textarea class="short" name="reason" aria-label="Why not"></textarea>';
   }
+  inner += vpaReviewBottom(rec, action, links) + '</form>';
   const titles = { yes: 'Send this reply?', edit: 'Edit the reply', no: 'Do not send?' };
   return vpaReviewPage(titles[action], inner, err ? 400 : 200);
 }

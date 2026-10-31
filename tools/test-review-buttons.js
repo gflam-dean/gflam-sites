@@ -14,6 +14,8 @@
      5. Edit records the edited text; a long dash or an empty reply is refused on the page, kept, not saved
      6. the Mac sees each decision until it marks it done, and marking is once; a held yes opens a new
         round with new links, and the old links stop
+     7. (31 Oct 2026) each page has ONLY the recommended button at the top (Edit when there is none) and all
+        three at the bottom in the email's order, through the same one form and the same signed links
 
    Run from the repo root:  jsc tools/test-review-buttons.js */
 var ran = 0, bad = 0;
@@ -300,6 +302,108 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   r = await call('/autopilot/review/register', REVIEW, AP); L = r.body.links;
   var n1 = await call(pathOf(L.no), undefined, {}, 'POST', form({ reason: 'They are a restaurant, not a pub' }));
   check('No: recorded no with the reason', n1.status === 200 && ROWS[0].decision === 'no' && ROWS[0].reason === 'They are a restaurant, not a pub' && /Got it: No, do not send/.test(n1.html), ROWS[0]);
+
+  section('12. THE PAGE: ONLY THE RECOMMENDED BUTTON AT THE TOP, ALL THREE AT THE BOTTOM (Dean, 31 Oct 2026)');
+  /* "what you recommend up the top just the button so if you recommend the normal email that just that one if you
+     recommend edit email, just the edit button at the top." Read from the page the Worker serves: the top block and
+     the bottom block, every control in each, what it is (this page's own submit, or a signed link) and its words. */
+  var WORDS = { yes: 'Yes, send the standard reply', edit: 'Edit the reply first', no: 'No, do not send' };
+  var CONFIRM = { yes: 'Yes, send the standard reply', edit: 'Save and send', no: 'No, do not send' };
+  function unesc(x) { return String(x).replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'); }
+  function part(html, name) { var m = new RegExp('<div class="[a-z]+" data-vpa="' + name + '">([\\s\\S]*?)</div>').exec(html); return m ? m[1] : null; }
+  function controls(p) {
+    var out = [], re = /<(button|a)\b([^>]*)>([\s\S]*?)<\/(?:button|a)>/g, m;
+    while ((m = re.exec(p || ''))) {
+      var at = m[2], inner = m[3];
+      var get = function (k) { var x = new RegExp('\\b' + k + '="([^"]*)"').exec(at); return x ? unesc(x[1]) : null; };
+      out.push({ tag: m[1], a: get('data-a'), href: get('href'), type: get('type'), rec: /Recommended/i.test(inner),
+        words: inner.replace(/<span class="tag">[^<]*<\/span>/, '').replace(/<[^>]*>/g, '') });
+    }
+    return out;
+  }
+  function tags(p) { return (String(p || '').match(/<(a|button|input|form|textarea|select)\b/g) || []).length; }
+  /* The one control at the top is the recommended one: on its own page, that page's confirm (a submit); on any other,
+     the signed link to its page, exactly as registered. */
+  function topSays(html, want, action, L) {
+    var p = part(html, 'top'), c = controls(p);
+    if (p === null || tags(p) !== 1 || c.length !== 1) return { ok: false, saw: p };
+    var x = c[0], ok = x.a === want && x.rec && (want === action
+      ? (x.tag === 'button' && x.type === 'submit' && x.words === CONFIRM[want])
+      : (x.tag === 'a' && x.href === L[want] && x.words === WORDS[want]));
+    return { ok: ok, saw: x };
+  }
+  function bottomSays(html, order, action, L) {
+    var p = part(html, 'bottom'), c = controls(p);
+    var ok = p !== null && tags(p) === 3 && c.length === 3 && c.map(function (x) { return x.a; }).join(',') === order.join(',') &&
+      c.every(function (x, i) { return x.rec === (i === 0) && (x.a === action
+        ? (x.tag === 'button' && x.type === 'submit' && x.words === CONFIRM[x.a])
+        : (x.tag === 'a' && x.href === L[x.a] && x.words === WORDS[x.a])); });
+    return { ok: ok, saw: c };
+  }
+  /* One form per page, posting to this page's own signed link, holding the top, the boxes and the bottom, so every
+     submit on the page records through the same POST and nothing else does. */
+  function oneForm(html, action, L) {
+    var fo = html.indexOf('<form '), fc = html.indexOf('</form>');
+    var act = /<form method="POST" action="([^"]*)"/.exec(html);
+    var subs = [], re = /type="submit"/g, m;
+    while ((m = re.exec(html))) subs.push(m.index);
+    var boxes = action === 'edit' ? html.indexOf('<textarea name="reply"') : action === 'no' ? html.indexOf('<textarea class="short" name="reason"') : fo + 1;
+    return (html.match(/<form\b/g) || []).length === 1 && (html.match(/<\/form>/g) || []).length === 1 && !!act && unesc(act[1]) === pathOf(L[action]) &&
+      fo < html.indexOf('data-vpa="top"') && html.indexOf('data-vpa="bottom"') < fc && boxes > fo && boxes < fc &&
+      subs.length >= 1 && subs.every(function (i) { return i > fo && i < fc; });
+  }
+  var CASES = [
+    { name: 'recommend Yes', extra: { recommend: 'yes', recommend_why: 'They said yes and asked nothing else, so the standard reply covers it.' }, rec: 'yes', order: ['yes', 'edit', 'no'] },
+    { name: 'recommend Edit', extra: { recommend: 'edit', recommend_why: 'They asked about trivia teams, which the standard reply does not cover. Tap Edit and answer it.' }, rec: 'edit', order: ['edit', 'yes', 'no'] },
+    { name: 'no recommendation (a Mac from before 30 Oct): Edit, the safe one', extra: {}, rec: 'edit', order: ['edit', 'yes', 'no'] }
+  ];
+  var allPages = [], wroteOnGet = [], firstHtml = {};
+  for (var ci = 0; ci < CASES.length; ci++) {
+    var C = CASES[ci];
+    world();
+    r = await call('/autopilot/review/register', Object.assign({}, REVIEW, C.extra), AP); L = r.body.links || {};
+    WRITES = [];
+    var pages = {};
+    for (var ai = 0; ai < 3; ai++) { var A = ['yes', 'edit', 'no'][ai]; pages[A] = (await call(pathOf(L[A]), undefined, {}, 'GET')).html; allPages.push(pages[A]); }
+    if (WRITES.length || ROWS[0].decision) wroteOnGet.push({ c: C.name, w: WRITES, d: ROWS[0].decision });
+    ['yes', 'edit', 'no'].forEach(function (A) {
+      var t = topSays(pages[A], C.rec, A, L);
+      check(C.name + ', the ' + A + ' page: the top has exactly one button, "' + (C.rec === A ? CONFIRM[C.rec] : WORDS[C.rec]) + '", labelled Recommended, ' +
+        (C.rec === A ? 'this page\'s own confirm' : 'the signed ' + C.rec + ' link'), t.ok, t.saw);
+    });
+    var bad3 = ['yes', 'edit', 'no'].filter(function (A) { return !bottomSays(pages[A], C.order, A, L).ok; });
+    check(C.name + ': the bottom of all three pages has all three, ' + C.order.join(', ') + ' (the email\'s order), only the first labelled Recommended, each the signed link or the page\'s own confirm',
+      bad3.length === 0, bad3.length ? { page: bad3[0], saw: bottomSays(pages[bad3[0]], C.order, bad3[0], L).saw } : '');
+    var badF = ['yes', 'edit', 'no'].filter(function (A) { return !oneForm(pages[A], A, L); });
+    check(C.name + ': one form on each page, to its own signed link, holding the top, the boxes and the bottom', badF.length === 0, badF);
+    firstHtml[C.rec + ci] = pages;
+    if (ci === 0) {
+      var fy = /<form method="POST" action="([^"]*)"/.exec(pages.yes);   // no form: the check below fails, it does not throw
+      var tp = fy ? await call(unesc(fy[1]), undefined, {}, 'POST', '') : { status: 0, html: '' };
+      check('recommend Yes: the top Yes confirm posts to the same signed link and records yes, once', tp.status === 200 && ROWS[0].decision === 'yes' && /Got it: Yes, send the standard reply/.test(tp.html), ROWS[0]);
+    }
+    if (ci === 1) {
+      var fe = /<form method="POST" action="([^"]*)"/.exec(pages.edit);
+      var te = !fe ? { status: 0, html: '' } : await call(unesc(fe[1]), undefined, {}, 'POST', form({ reply: REPLY.replace('Thanks for getting back to me.', 'Thanks Rowan. Teams can be up to six people.'), postcode: '4217', entity: 'pub', login_email: '' }));
+      check('recommend Edit: Save and send from that one form (the top button or the bottom one) records the edited reply and its boxes', te.status === 200 && ROWS[0].decision === 'edit' && /up to six people/.test(ROWS[0].edited_reply || '') && ROWS[0].edited_postcode === '4217', ROWS[0]);
+    }
+  }
+  check('every one of those nine GETs wrote NOTHING (a mail scanner still records nothing)', wroteOnGet.length === 0, wroteOnGet);
+  world(); NO_V2 = true;
+  r = await call('/autopilot/review/register', Object.assign({}, REVIEW, CASES[0].extra), AP); L = r.body.links || {};
+  WRITES = [];
+  var gv = await call(pathOf(L.no), undefined, {}, 'GET');
+  var tv = topSays(gv.html, 'edit', 'no', L);
+  check('before migration 130 (no recommendation kept): the top is Edit, the bottom Edit, Yes, No, nothing written', tv.ok && bottomSays(gv.html, ['edit', 'yes', 'no'], 'no', L).ok && WRITES.length === 0 && !ROWS[0].decision, tv.saw);
+  NO_V2 = false;
+  // The first tap quiets EVERY submit: on the recommended page there are two. Run the page's own onsubmit.
+  var yp = firstHtml.yes0.yes, om = /onsubmit="([^"]*)"/.exec(yp), nsub = (yp.match(/type="submit"/g) || []).length;
+  var btns = []; for (var bi = 0; bi < nsub; bi++) btns.push({ disabled: false, textContent: 'x' });
+  var ranOk = false;
+  try { (new Function(unesc(om ? om[1] : 'throw 1'))).call({ querySelectorAll: function (sel) { return sel === 'button[type=submit]' ? btns : []; } }); ranOk = true; } catch (e) { ranOk = false; }
+  check('the page\'s onsubmit, run: both submits on the recommended page go to "Saving..." and off, so a second tap sends nothing', nsub === 2 && ranOk &&
+    btns.every(function (b) { return b.disabled === true && b.textContent === 'Saving...'; }), { n: nsub, ran: ranOk, btns: btns });
+  check('none of the new pages has an em or en dash, or the word roster', allPages.every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
 
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');
