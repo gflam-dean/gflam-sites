@@ -484,3 +484,11 @@ Every word migration 120 wrote stays after it. One update, guarded on 120's word
 edited in HQ, and it must run AFTER `venueplay-120-help-faq-tv-window.sql` (if 120 has not been run, run 120 first, then
 this). Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the
 site. Branch `feature/tv-landing-31oct`. RUN 31 Oct 2026 by Dean (read back: the answer starts with the Google Play line, updated_by migration 131). Migration 120 was already live. Rollback: in the file.
+
+`venueplay-133-monthly-news.sql` (Dean, 31 Oct 2026: one routine email a month to a venue, "link that with our newsletter"):
+one new table `vp_monthly_news` (month text primary key 'YYYY-MM', items jsonb array of at most four {title, text, link},
+ready boolean, updated_at, updated_by), the "What's new at VenuePlay" words HQ writes once a month in HQ > Reports and the
+monthly report email carries under each venue's own numbers. Keyed by the REPORT month ('2026-10' goes out on 1 November).
+RLS on, no policies, revoked from public/anon/authenticated: service role only. Any order with the billing Worker: without
+it HQ's Save answers "migration 133" and the report goes out without news. After running, dump RLS-BASELINE.json (one new
+table). Branch `feature/venue-reports-31oct`. NOT RUN. Rollback: in the file.

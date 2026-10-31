@@ -29,7 +29,7 @@
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 14:56 · 329be301';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 16:41 · c1b1825c';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -189,6 +189,8 @@ export default {
       if (request.method === 'POST' && path === '/account/marketing-list'   && typeof vpbMarketingList === 'function')   return await vpbMarketingList(request, env, json);
       if (request.method === 'POST' && path === '/account/marketing-remove' && typeof vpbMarketingRemove === 'function') return await vpbMarketingRemove(request, env, json);
       if (request.method === 'POST' && path === '/marketing/summary'        && typeof vpmSummary === 'function')         return await vpmSummary(request, env, json);
+      // The monthly report, one venue of the caller's own (Dean, 31 Oct 2026). Counts only.
+      if (request.method === 'POST' && path === '/account/month-report'     && typeof vpbMonthReport === 'function')     return await vpbMonthReport(request, env, json);
       if (request.method === 'POST' && path === '/account/hosts'       && typeof vpbListHosts === 'function')    return await vpbListHosts(request, env, json);
       if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/host-add'    && typeof vpbAddHost === 'function')      return await vpbAddHost(request, env, json);
@@ -237,6 +239,10 @@ export default {
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
+      // HQ > Reports: every venue's month, the totals and who is trending down (Dean, 31 Oct 2026).
+      if (request.method === 'POST' && path === '/admin/month-report'    && typeof vpaHandleMonthReport === 'function')    return await vpaHandleMonthReport(request, env, json);
+      // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
+      if (request.method === 'POST' && path === '/admin/month-news'      && typeof vpaHandleMonthNews === 'function')      return await vpaHandleMonthNews(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
@@ -324,6 +330,9 @@ export default {
     /* A prospect's card reminders and the pause at the end of their free month (migration 127). Its own try:
        the sweep keeps its own hours (8am to 5pm Mon to Fri for emails) and remembers what it sent. */
     try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
+    /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
+       MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
+    try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
   },
 };
 
@@ -12157,6 +12166,729 @@ async function vpmSummary(request, env, json) {
   return json({ ok: true, role: o.role || 'owner',
     may_see_optins: o.role === 'marketing' ? !!(o.perms && o.perms.players_optin === true) : vpbCan(o, 'players_optin'),
     venues: o.venues.map((v) => ({ id: v.id, name: v.name, slug: v.slug })), stats: stats });
+}
+
+/* =======================================================================================
+   THE MONTHLY REPORT (Dean, 30 to 31 Oct 2026): "make sure that we're capturing those details
+   of how many people have returned ... some sort of reports for us and also for the venue",
+   and "how many times the same person came in a month".
+
+   ONE ANSWER, THREE PLACES. vprMonth adds up a month for any set of venues and nothing else
+   does. The email on the 1st (vprMonthlySweep), the venue's own page (POST /account/month-report,
+   app/report.html) and HQ (POST /admin/month-report, app/vp-reports-hq.js) all read it, so the
+   venue, the email and Dean can never be shown three different numbers for one October.
+
+   WHAT A NIGHT IS. 2am to 2am where the venue is (vprNightKey): a bingo game that ends at 1:30am
+   on the 1st belongs to the 31st, the same boundary the overage streak uses (bingo-not-metered).
+   A night is a night when at least one game ran on it; a console opened and closed is not.
+
+   WHO A PLAYER IS. A phone: vp_players.device_id, which play.html keeps per phone for weeks, so
+   the same phone on a Tuesday and three Tuesdays later is one person who came back. Two rows from
+   one phone on one night (two sessions, a refresh) are one player that night. Test players and
+   kicked players are not counted. When any phone in a session stamped played_at (migration 87,
+   "a player bills once they have shown life"), only those that did count, the billing rule. A
+   printed paper card, or an old row with no device id, counts as a player on its night and is
+   left out of the phone figures (unique, returning, new) because it cannot be followed.
+
+   PER GAME. Trivia: the teams on that game's leaderboard. Musical bingo: the cards dealt for it.
+   Number bingo: the room that night (every phone in a bingo lobby holds a ticket). A bingo game
+   with no session around it (broadcast only) counts with the host's own end-of-game number.
+   Raffles and members draws are drawn FOR the room, not played BY it (VPA_NOT_PLAYED), so they
+   count as nights and games and are left out of every per-game average.
+
+   COUNTS ONLY. Nothing here can name a player. The one name that leaves is a trivia team name,
+   which the venue's own TV already showed the room on the leaderboard. Opt-ins are counted from
+   opted_in_at alone: no email, mobile or name is ever selected.
+
+   COST. One venue's month is about ten paged reads (sessions, games, players, the leaderboard,
+   cards, end reports, opt-ins), whatever the size of the month; HQ's is the same reads with every
+   venue in the in-list, sixty ids to a request. The email run happens on the 1st between 2am and
+   7am Brisbane, a batch a tick, nowhere near a game night. A finished month is kept in this
+   isolate's memory for six hours, so a page opened twice costs one read.
+
+   ADVERTS ARE NOT COUNTED, because nothing records a slide being shown: the TV rotates them in
+   the browser and its 30 second /screen poll writes only a heartbeat. vprMonth says so
+   (ads: null) rather than guessing, and the email and the venue page leave the line out.
+   ======================================================================================= */
+const VPR_NIGHT_STARTS_HOUR = 2;          // a night runs 2am to 2am where the venue is
+const VPR_LOOKBACK_DAYS = 365;            // "new" means a phone not seen at this venue in the year before
+const VPR_SWITCH = 'on';                  // env.MONTHLY_REPORTS must be exactly this before anything is sent
+const VPR_BATCH = 10;                     // venues emailed per scheduled tick
+const VPR_KEEP_MS = 6 * 3600 * 1000;      // a finished month kept in memory
+const VPR_TOP_TEAMS = 5;
+const VPR_KEPT = new Map();
+/* Forget every kept month: a test that changes its fake database between cases must not be answered
+   from the last case. Nothing in the Worker calls it. */
+function vprForget() { VPR_KEPT.clear(); }
+
+/* One name per game, whatever the console wrote: bingo90 and bingo are number bingo, musical and
+   musical_bingo are musical bingo. */
+function vprFormat(f) {
+  const s = String(f || '').toLowerCase();
+  if (s === 'bingo' || s === 'bingo90') return 'bingo90';
+  if (s === 'musical' || s === 'musical_bingo') return 'musical_bingo';
+  return s || 'game';
+}
+function vprNightKey(iso, tz) {
+  const t = Date.parse(iso || '');
+  if (!isFinite(t)) return '';
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .format(new Date(t - VPR_NIGHT_STARTS_HOUR * 3600 * 1000));
+  } catch (e) { return ''; }
+}
+function vprMonthOk(m) { return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(m || '')); }
+function vprPrevMonth(m) {
+  const y = +m.slice(0, 4), mo = +m.slice(5, 7);
+  return mo === 1 ? (y - 1) + '-12' : y + '-' + ('0' + (mo - 1)).slice(-2);
+}
+/* The month the clock is in where Dean is, and the one before it (the one the 1st reports on). */
+function vprThisMonth(nowMs) { return vprNightKey(new Date(nowMs || Date.now()).toISOString(), 'Australia/Brisbane').slice(0, 7); }
+function vprLastMonth(nowMs) { return vprPrevMonth(vprThisMonth(nowMs)); }
+function vprMonthWords(m) {
+  const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return vprMonthOk(m) ? names[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4) : '';
+}
+function vprMonthName(m) { return vprMonthOk(m) ? vprMonthWords(m).split(' ')[0] : ''; }
+function vprWeekday(night) { return night ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(night + 'T12:00:00Z').getUTCDay()] : ''; }
+function vprNightWords(night) {
+  if (!night) return '';
+  return vprWeekday(night) + ' ' + (+night.slice(8, 10)) + ' ' + vprMonthName(night.slice(0, 7));
+}
+/* The UTC window a month and the one before it can sit in, padded two days either side so no
+   timezone and no 2am boundary can push a game outside the read. */
+function vprWindow(month) {
+  const y = +month.slice(0, 4), mo = +month.slice(5, 7);
+  const day = 86400000, iso = (ms) => new Date(ms).toISOString().slice(0, 19) + 'Z';
+  const prevStart = Date.UTC(y, mo - 2, 1), next = Date.UTC(y, mo, 1);
+  return { from: iso(prevStart - 2 * day), to: iso(next + 2 * day), lookFrom: iso(prevStart - VPR_LOOKBACK_DAYS * day) };
+}
+
+/* THE READS, for any set of venues, every one paged (vpaSelectAll throws on a failed page, so a
+   report is never quietly short) and in a stable order. Grouped by venue on the way out. */
+async function vprRead(env, venues, month) {
+  const w = vprWindow(month);
+  const ids = venues.map((v) => v.id);
+  const sessions = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_sessions',
+    'venue_id=in.(' + inl + ')&and=(created_at.gte.' + w.lookFrom + ',created_at.lt.' + w.to + ')'
+    + '&select=id,venue_id,created_at,opened_at,started_at,ended_at&order=id.asc'));
+  const recent = sessions.filter((s) => Date.parse(s.created_at || 0) >= Date.parse(w.from));
+  const games = recent.length ? await vpmInChunks(recent.map((s) => s.id), (inl) => vpaSelectAll(env, 'vp_games',
+    'session_id=in.(' + inl + ')&select=id,session_id,format,started_at&order=id.asc')) : [];
+  /* played_at is migration 87. If a database has not got it the read is refused, so ask again
+     without it and every row counts, which is the rule from before 87. */
+  const playerRead = (cols) => sessions.length ? vpmInChunks(sessions.map((s) => s.id), (inl) => vpaSelectAll(env, 'vp_players',
+    'session_id=in.(' + inl + ')&select=' + cols + '&order=id.asc')) : Promise.resolve([]);
+  let players;
+  try { players = await playerRead('id,session_id,device_id,is_test,kicked,joined_at,played_at'); }
+  catch (e) { players = await playerRead('id,session_id,device_id,is_test,kicked,joined_at'); }
+  const triviaIds = games.filter((g) => vprFormat(g.format) === 'trivia').map((g) => g.id);
+  const boards = triviaIds.length ? await vpmInChunks(triviaIds, (inl) => vpaSelectAll(env, 'v_vp_trivia_leaderboard',
+    'game_id=in.(' + inl + ')&select=game_id,player_id,display_name,points&order=game_id.asc,player_id.asc')) : [];
+  const musicalIds = games.filter((g) => vprFormat(g.format) === 'musical_bingo').map((g) => g.id);
+  const cards = musicalIds.length ? await vpmInChunks(musicalIds, (inl) => vpaSelectAll(env, 'vp_cards',
+    'game_id=in.(' + inl + ')&select=game_id,player_id&order=id.asc')) : [];
+  const reports = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_game_reports',
+    'venue_id=in.(' + inl + ')&and=(created_at.gte.' + w.from + ',created_at.lt.' + w.to + ')'
+    + '&select=id,venue_id,format,players,started_at,ended_at,created_at&order=id.asc'));
+  // opted_in_at only: a COUNT of people who said yes, never who they are.
+  const optins = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'v_vp_player_optins',
+    'venue_id=in.(' + inl + ')&and=(opted_in_at.gte.' + w.from + ',opted_in_at.lt.' + w.to + ')'
+    + '&select=venue_id,opted_in_at&order=opted_in_at.asc,email.asc,mobile.asc'));
+
+  const by = {};
+  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [] }; });
+  const venueOfSession = {}, venueOfGame = {};
+  sessions.forEach((s) => { if (by[s.venue_id]) { by[s.venue_id].sessions.push(s); venueOfSession[s.id] = s.venue_id; } });
+  games.forEach((g) => { const v = venueOfSession[g.session_id]; if (v) { by[v].games.push(g); venueOfGame[g.id] = v; } });
+  players.forEach((p) => { const v = venueOfSession[p.session_id]; if (v) by[v].players.push(p); });
+  boards.forEach((b) => { const v = venueOfGame[b.game_id]; if (v) by[v].boards.push(b); });
+  cards.forEach((c) => { const v = venueOfGame[c.game_id]; if (v) by[v].cards.push(c); });
+  reports.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].reports.push(r); });
+  optins.forEach((o) => { if (by[o.venue_id]) by[o.venue_id].optins.push(o); });
+  return by;
+}
+
+/* ONE VENUE, ONE MONTH, from rows already read. Pure: no database, no clock, so a test can hand
+   it a month and count every number by hand. */
+function vprFigures(venue, rows, month) {
+  const tz = venue.timezone || 'Australia/Brisbane';
+  const sessionAt = {}, sessionRows = {};
+  rows.sessions.forEach((s) => { sessionAt[s.id] = s.started_at || s.opened_at || s.created_at; });
+  const nights = {};       // night -> { formats: {}, games: 0, keys: Set, reported: 0 }
+  const night = (k) => nights[k] || (nights[k] = { formats: {}, games: 0, keys: new Set(), reported: 0 });
+  const games = [];        // { id, format, night, players }
+  rows.games.forEach((g) => {
+    const k = vprNightKey(g.started_at || sessionAt[g.session_id], tz);
+    if (k.slice(0, 7) !== month) return;
+    const f = vprFormat(g.format), n = night(k);
+    n.formats[f] = (n.formats[f] || 0) + 1; n.games++;
+    games.push({ id: g.id, format: f, night: k, players: null });
+  });
+  /* A broadcast-only game: an end-of-game report with no session around it. The host's own
+     number is the only count there is. */
+  reportsOutsideSessions(rows.sessions, rows.reports).forEach((r) => {
+    const k = vprNightKey(r.started_at || r.created_at, tz);
+    if (k.slice(0, 7) !== month) return;
+    const f = vprFormat(r.format), n = night(k);
+    n.formats[f] = (n.formats[f] || 0) + 1; n.games++;
+    n.reported = Math.max(n.reported, parseInt(r.players, 10) || 0);
+    games.push({ id: 'report:' + r.id, format: f, night: k, players: parseInt(r.players, 10) || 0 });
+  });
+
+  /* Who counts. Shown life first: a session where anybody stamped played_at counts only those. */
+  const alive = {};
+  rows.players.forEach((p) => { if (p.played_at) alive[p.session_id] = true; });
+  const counts = (p) => !p.is_test && !p.kicked && (!alive[p.session_id] || !!p.played_at);
+  const phone = (p) => (p.device_id && !/^paper-/.test(p.device_id)) ? p.device_id : null;
+  const keyOf = {};        // player row id -> the person it is, for the per-game counts
+  rows.players.forEach((p) => { sessionRows[p.id] = p; keyOf[p.id] = phone(p) ? 'd:' + phone(p) : 'r:' + p.id; });
+  const monthStart = month + '-01';
+  const seenBefore = new Set(), phoneNights = {};
+  rows.players.forEach((p) => {
+    if (!counts(p)) return;
+    const k = vprNightKey(p.joined_at || sessionAt[p.session_id], tz);
+    if (!k) return;
+    const ph = phone(p);
+    if (k < monthStart) { if (ph) seenBefore.add(ph); return; }
+    if (k.slice(0, 7) !== month || !nights[k]) return;   // a lobby on a night no game ran is not a player
+    nights[k].keys.add(keyOf[p.id]);
+    if (ph) (phoneNights[ph] = phoneNights[ph] || new Set()).add(k);
+  });
+
+  const nightList = Object.keys(nights).sort().map((k) => {
+    const n = nights[k];
+    const fs = Object.keys(n.formats).sort();
+    /* drawn: only raffles or members draws that night, which nobody joins on a phone, so the night
+       is said as drawn for the room rather than "0 players". */
+    return { night: k, weekday: vprWeekday(k), formats: fs, games: n.games,
+             players: Math.max(n.keys.size, n.reported), drawn: fs.every((f) => VPA_NOT_PLAYED.has(f)) };
+  });
+  const playersOn = {}; nightList.forEach((n) => { playersOn[n.night] = n.players; });
+
+  /* Per game: the teams on a trivia board, the cards in a musical game, the room for bingo. */
+  const boardOf = {}, cardsOf = {};
+  rows.boards.forEach((b) => { (boardOf[b.game_id] = boardOf[b.game_id] || []).push(b); });
+  rows.cards.forEach((c) => { (cardsOf[c.game_id] = cardsOf[c.game_id] || new Set()).add(keyOf[c.player_id] || 'p:' + c.player_id); });
+  const realRow = (pid) => { const p = sessionRows[pid]; return !p || (!p.is_test && !p.kicked); };
+  games.forEach((g) => {
+    if (VPA_NOT_PLAYED.has(g.format)) { g.players = null; return; }
+    if (g.players != null) return;                         // a broadcast report already carries its number
+    if (g.format === 'trivia') {
+      const s = new Set(); (boardOf[g.id] || []).forEach((b) => { if (realRow(b.player_id)) s.add(keyOf[b.player_id] || 'p:' + b.player_id); });
+      g.players = s.size;
+    } else if (g.format === 'musical_bingo') {
+      g.players = (cardsOf[g.id] || new Set()).size;
+    } else {
+      g.players = playersOn[g.night] || 0;
+    }
+  });
+
+  const byFormat = {};
+  games.forEach((g) => {
+    const b = byFormat[g.format] = byFormat[g.format] || { nights: new Set(), games: 0, players: 0, played: 0 };
+    b.nights.add(g.night); b.games++;
+    if (g.players != null) { b.players += g.players; b.played++; }
+  });
+  const formats = {};
+  Object.keys(byFormat).forEach((f) => {
+    const b = byFormat[f];
+    formats[f] = { nights: b.nights.size, games: b.games, avg_players: b.played ? Math.round(b.players / b.played) : null };
+  });
+  const played = games.filter((g) => g.players != null);
+  const visits = nightList.reduce((t, n) => t + n.players, 0);
+
+  let busiest = null;
+  nightList.forEach((n) => { if (n.players > 0 && (!busiest || n.players > busiest.players)) busiest = n; });
+  let bestGame = null;
+  played.slice().sort((a, b) => (a.night < b.night ? -1 : a.night > b.night ? 1 : 0))
+    .forEach((g) => { if (g.players > 0 && (!bestGame || g.players > bestGame.players)) bestGame = { format: g.format, night: g.night, weekday: vprWeekday(g.night), players: g.players }; });
+
+  /* CAME BACK. A phone on two or more nights this month, and how many times. */
+  const phones = Object.keys(phoneNights);
+  const times = { two: 0, three: 0, four_plus: 0 };
+  let most = 0, returning = 0, fromBefore = 0;
+  phones.forEach((ph) => {
+    const n = phoneNights[ph].size;
+    if (n >= 2) returning++;
+    if (n === 2) times.two++; else if (n === 3) times.three++; else if (n >= 4) times.four_plus++;
+    if (n > most) most = n;
+    if (seenBefore.has(ph)) fromBefore++;
+  });
+
+  /* TOP TEAMS. Wins (the top score on a game's board, a tie is a win each), then points. One team
+     is one name however it was typed: "The Quizzards" and "the quizzards " are one team. */
+  const teams = {};
+  games.filter((g) => g.format === 'trivia').forEach((g) => {
+    const board = (boardOf[g.id] || []).filter((b) => realRow(b.player_id));
+    const top = board.reduce((m, b) => Math.max(m, parseInt(b.points, 10) || 0), 0);
+    const seen = new Set();
+    board.forEach((b) => {
+      const label = String(b.display_name || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      const key = label.toLowerCase();
+      if (!key || key === 'player' || seen.has(key)) return;
+      seen.add(key);
+      const pts = parseInt(b.points, 10) || 0;
+      const t = teams[key] = teams[key] || { name: label, wins: 0, games: 0, points: 0, best: 0 };
+      t.games++; t.points += pts; if (pts > t.best) t.best = pts;
+      if (top > 0 && pts === top) t.wins++;
+    });
+  });
+  const topTeams = Object.keys(teams).map((k) => teams[k])
+    .sort((a, b) => b.wins - a.wins || b.points - a.points || (a.name < b.name ? -1 : 1)).slice(0, VPR_TOP_TEAMS);
+
+  const optins = rows.optins.filter((o) => vprNightKey(o.opted_in_at, tz).slice(0, 7) === month).length;
+
+  return {
+    month: month,
+    nights: nightList.length,
+    games: games.length,
+    formats: formats,
+    player_visits: visits,
+    avg_per_night: nightList.length ? Math.round(visits / nightList.length) : 0,
+    avg_per_game: played.length ? Math.round(played.reduce((t, g) => t + g.players, 0) / played.length) : 0,
+    unique_phones: phones.length,
+    returning: returning,
+    returning_times: times,
+    most_nights_one_phone: most,
+    new_phones: phones.length - fromBefore,
+    back_from_before: fromBefore,
+    busiest_night: busiest ? { night: busiest.night, weekday: busiest.weekday, players: busiest.players, formats: busiest.formats } : null,
+    busiest_game: bestGame,
+    night_list: nightList,
+    top_teams: topTeams,
+    optins: optins,
+    ads: null,
+  };
+}
+
+function vprCompare(now, was) {
+  const out = {};
+  ['nights', 'games', 'player_visits', 'avg_per_night', 'avg_per_game', 'unique_phones', 'returning', 'new_phones', 'optins'].forEach((k) => {
+    const a = now[k] || 0, b = was[k] || 0;
+    out[k] = { now: a, was: b, diff: a - b, pct: b ? Math.round((a - b) / b * 100) : null };
+  });
+  return out;
+}
+
+/* THE ONE ENTRY POINT. venues: rows with id, name, timezone. Returns a report per venue, each
+   with the month, the month before and the comparison. A finished month is kept in memory. */
+async function vprMonth(env, venues, month, nowMs) {
+  const now = nowMs || Date.now();
+  const key = month + '|' + venues.map((v) => v.id).sort().join(',');
+  const finished = vprFinished(month, now);
+  const kept = VPR_KEPT.get(key);
+  if (finished && kept && kept.until > now) return kept.data;
+  const rows = await vprRead(env, venues, month);
+  const prev = vprPrevMonth(month);
+  const out = {};
+  venues.forEach((v) => {
+    const r = rows[v.id];
+    const a = vprFigures(v, r, month), b = vprFigures(v, r, prev);
+    out[v.id] = { venue_id: v.id, venue_name: v.name || '', month: month, prev_month: prev,
+                  this_month: a, last_month: b, compare: vprCompare(a, b), finished: finished };
+  });
+  if (finished) {
+    if (VPR_KEPT.size > 200) VPR_KEPT.clear();
+    VPR_KEPT.set(key, { until: now + VPR_KEEP_MS, data: out });
+  }
+  return out;
+}
+
+/* Months a venue can look at: from the month it joined to this one, newest first, at most two years. */
+/* A month is finished a day after it ends: by then its last night (until 2am on the 1st) is in. */
+function vprFinished(month, nowMs) { return vprThisMonth((nowMs || Date.now()) - 86400000) > month; }
+function vprMonthsFor(venue, nowMs) {
+  const out = [];
+  let m = vprThisMonth(nowMs);
+  const first = String(venue.created_at || '').slice(0, 7);
+  for (let i = 0; i < 24; i++) { out.push(m); if (!vprMonthOk(first) || m <= first) break; m = vprPrevMonth(m); }
+  return out;
+}
+
+/* --- POST /account/month-report { venue_id, month } : one of the caller's OWN venues.
+   Owner, manager or marketing login (counts only, so the same rule as the Marketing page), and an
+   HQ admin through View as. The venue is looked up in the caller's own venue list, never taken on
+   the browser's word: a venue id that is not theirs is refused, not answered. --- */
+async function vpbMonthReport(request, env, json) {
+  const o = await vpmRequireAny(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const venue = o.venues.find((v) => v.id === String(b.venue_id || '').trim()) || (o.venues.length === 1 && !b.venue_id ? o.venues[0] : null);
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  const now = Date.now();
+  const months = vprMonthsFor(venue, now);
+  let month = String(b.month || '').trim();
+  if (!month) month = months[1] || months[0];
+  if (!vprMonthOk(month) || months.indexOf(month) === -1) return json({ error: 'Pick a month from the list.' }, 400);
+  let rep;
+  try { rep = (await vprMonth(env, [venue], month, now))[venue.id]; }
+  catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
+  return json({ ok: true, venue: { id: venue.id, name: venue.name },
+    venues: o.venues.map((v) => ({ id: v.id, name: v.name })), months: months, report: rep });
+}
+
+/* HQ's test venues: a test slug or name (the homepage rule), or marked test in HQ. */
+async function vprTestVenueIds(env, venues) {
+  const out = new Set();
+  venues.forEach((v) => { if (!vpbTrustedVenueIsReal(v)) out.add(v.id); });
+  const marks = await vpaSelectAll(env, 'vp_admin_audit',
+    'action=in.(venue_marked_test,venue_unmarked_test)&select=action,target,created_at&order=created_at.desc,id.desc');
+  const seen = new Set();
+  marks.forEach((a) => {
+    const id = String(a.target || '').replace(/^venue:/, '');
+    if (!id || seen.has(id)) return; seen.add(id);
+    if (a.action === 'venue_marked_test') out.add(id);
+  });
+  return out;
+}
+
+/* A venue to ring: no night this month after nights last month, or the room shrinking. Only said
+   when there was a real month to compare with, so one quiet week at a new venue is not a fault. */
+function vprTrend(c) {
+  const n = c.nights, p = c.player_visits;
+  if (n.was > 0 && n.now === 0) return { level: 'stopped', words: 'No nights this month, ' + n.was + ' last month' };
+  if (p.was >= 10 && p.now <= p.was * 0.7) return { level: 'down', words: 'Players down ' + Math.abs(p.pct) + '% (' + p.now + ' from ' + p.was + ')' };
+  if (n.was >= 2 && n.now <= n.was / 2) return { level: 'down', words: 'Nights halved (' + n.now + ' from ' + n.was + ')' };
+  if (p.was >= 10 && p.now >= p.was * 1.2) return { level: 'up', words: 'Players up ' + p.pct + '%' };
+  return { level: 'steady', words: '' };
+}
+
+/* --- POST /admin/month-report { month } : HQ, every venue. Counts only. --- */
+async function vpaHandleMonthReport(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const now = Date.now();
+  let month = String(_b.body.month || '').trim() || vprLastMonth(now);
+  if (!vprMonthOk(month) || month > vprThisMonth(now)) return json({ error: 'Pick a month that has started.' }, 400);
+  let venues, reps, tests;
+  try {
+    venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+    reps = await vprMonth(env, venues, month, now);
+    tests = await vprTestVenueIds(env, venues);
+  } catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
+  const rows = [];
+  venues.forEach((v) => {
+    const r = reps[v.id]; if (!r) return;
+    const a = r.this_month, b = r.last_month;
+    if (!a.nights && !b.nights && v.status !== 'active') return;     // gone, and nothing to say
+    rows.push({ venue_id: v.id, name: v.name, slug: v.slug, status: v.status, test: tests.has(v.id),
+      nights: a.nights, games: a.games, player_visits: a.player_visits, avg_per_night: a.avg_per_night,
+      unique_phones: a.unique_phones, returning: a.returning, new_phones: a.new_phones, optins: a.optins,
+      formats: a.formats, busiest_night: a.busiest_night, top_team: a.top_teams[0] ? a.top_teams[0].name : '',
+      last: { nights: b.nights, player_visits: b.player_visits, unique_phones: b.unique_phones, returning: b.returning },
+      trend: vprTrend(r.compare) });
+  });
+  const sum = (list, pick) => list.reduce((t, x) => t + (pick(x) || 0), 0);
+  const real = rows.filter((r) => !r.test);
+  const totals = (key) => {
+    const list = real.map((r) => reps[r.venue_id][key]);
+    const t = { venues_with_nights: list.filter((x) => x.nights > 0).length, nights: sum(list, (x) => x.nights),
+      games: sum(list, (x) => x.games), player_visits: sum(list, (x) => x.player_visits), unique_phones: sum(list, (x) => x.unique_phones),
+      returning: sum(list, (x) => x.returning), new_phones: sum(list, (x) => x.new_phones), optins: sum(list, (x) => x.optins), formats: {} };
+    list.forEach((x) => Object.keys(x.formats).forEach((f) => {
+      const a = t.formats[f] = t.formats[f] || { nights: 0, games: 0 }; a.nights += x.formats[f].nights; a.games += x.formats[f].games; }));
+    t.avg_per_night = t.nights ? Math.round(t.player_visits / t.nights) : 0;
+    t.returning_pct = t.unique_phones ? Math.round(t.returning / t.unique_phones * 100) : 0;
+    let big = null;
+    real.forEach((r) => { const bn = reps[r.venue_id][key].busiest_night; if (bn && (!big || bn.players > big.players)) big = Object.assign({ venue_name: r.name }, bn); });
+    t.biggest_night = big;
+    return t;
+  };
+  const tNow = totals('this_month'), tWas = totals('last_month');
+  const order = { stopped: 0, down: 1, up: 3, steady: 2 };
+  const churn = real.filter((r) => r.status === 'active' && (r.trend.level === 'stopped' || r.trend.level === 'down'))
+    .sort((a, b) => order[a.trend.level] - order[b.trend.level] || b.last.player_visits - a.last.player_visits)
+    .map((r) => ({ venue_id: r.venue_id, name: r.name, level: r.trend.level, words: r.trend.words }));
+  rows.sort((a, b) => b.player_visits - a.player_visits || (a.name < b.name ? -1 : 1));
+  return json({ ok: true, month: month, prev_month: vprPrevMonth(month), finished: vprFinished(month, now),
+    totals: tNow, last_totals: tWas, compare: vprCompare(tNow, tWas), venues: rows, churn: churn,
+    ads: null, ads_note: 'Adverts and slides are not counted yet: nothing records a slide being shown.' });
+}
+
+/* THE EMAIL. Plain English, light card like every other venue email, counts only. */
+async function vprEmailHtml(env, venue, rep, opts) {
+  const o = opts || {};
+  const a = rep.this_month, c = rep.compare;
+  const site = vpaCustomerSite(env);
+  const mName = vprMonthName(rep.month), pName = vprMonthName(rep.prev_month);
+  const n = (x) => Number(x || 0).toLocaleString('en-AU');
+  const plural = (x, one, many) => n(x) + ' ' + (x === 1 ? one : many);
+  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E', LINE = '#ececf1';
+  const delta = (k) => {
+    const d = c[k];
+    if (!d || (!d.now && !d.was)) return '';
+    if (!d.was) return 'new this month';
+    if (d.diff === 0) return 'same as ' + pName;
+    return (d.diff > 0 ? 'up ' : 'down ') + n(Math.abs(d.diff)) + ' on ' + pName;
+  };
+  const tile = (big, label, small) => '<td width="50%" valign="top" style="padding:6px">'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid ' + LINE + ';border-radius:12px">'
+    + '<tr><td style="padding:14px 14px 12px">'
+    + '<div style="font-size:30px;line-height:1;font-weight:800;color:' + INK + '">' + big + '</div>'
+    + '<div style="font-size:13px;color:' + DIM + ';margin-top:6px">' + label + '</div>'
+    + (small ? '<div style="font-size:12px;color:' + PINK + ';margin-top:4px;font-weight:700">' + small + '</div>' : '')
+    + '</td></tr></table></td>';
+  const h2 = (t) => '<p style="margin:24px 0 8px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">' + t + '</p>';
+  const p = (t) => '<p style="margin:0 0 10px;font-size:15px;line-height:1.5;color:' + INK + '">' + t + '</p>';
+  const row = (l, r) => '<tr><td style="padding:9px 0;border-top:1px solid ' + LINE + ';font-size:14px;color:' + INK + '">' + l + '</td>'
+    + '<td align="right" style="padding:9px 0;border-top:1px solid ' + LINE + ';font-size:14px;color:' + INK + ';white-space:nowrap"><b>' + r + '</b></td></tr>';
+  const table = (inner) => '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + inner + '</table>';
+  const fmtList = (fs) => fs.map((f) => vpaFormatWord(f)).join(' and ');
+
+  let body = '<p style="margin:0 0 6px;font-size:16px;color:' + INK + '">' + vpaHello(venue.timezone, o.contactName, venue.name) + '</p>'
+    + p('Here is how ' + vpaEsc(mName) + ' went at ' + vpaEsc(venue.name || 'your venue') + '.');
+  if (!a.nights) {
+    body += p('No games ran in ' + vpaEsc(mName) + '. In ' + vpaEsc(pName) + ' you ran ' + plural(rep.last_month.nights, 'night', 'nights')
+      + ' with ' + plural(rep.last_month.player_visits, 'player', 'players') + '. When you are ready for the next one, your console is at venueplay.com.au/app.');
+  } else {
+    body += table('<tr>' + tile(n(a.nights), a.nights === 1 ? 'night with a game on' : 'nights with a game on', delta('nights'))
+        + tile(n(a.player_visits), 'players across those nights', delta('player_visits')) + '</tr><tr>'
+        + tile(n(a.unique_phones), 'different phones', delta('unique_phones'))
+        + tile(n(a.returning), 'came back for another night', delta('returning')) + '</tr>');
+    body += h2('Your nights');
+    body += table(a.night_list.slice(0, 12).map((x) => row(vpaEsc(vprNightWords(x.night)) + '<br><span style="color:' + DIM + ';font-size:12.5px">'
+      + vpaEsc(fmtList(x.formats)) + '</span>', (x.drawn && !x.players) ? 'drawn for the room' : plural(x.players, 'player', 'players'))).join(''));
+    if (a.night_list.length > 12) body += p('<span style="color:' + DIM + ';font-size:13px">And ' + (a.night_list.length - 12) + ' more in your account.</span>');
+    body += h2('What you ran');
+    body += table(Object.keys(a.formats).sort((x, y) => a.formats[y].games - a.formats[x].games).map((f) => {
+      const x = a.formats[f];
+      const what = plural(x.nights, 'night', 'nights') + (x.games !== x.nights ? ', ' + plural(x.games, 'game', 'games') : '');
+      return row(vpaEsc(vpaFormatWord(f).replace(/^./, (ch) => ch.toUpperCase())) + (x.avg_players != null ? '<br><span style="color:' + DIM + ';font-size:12.5px">about '
+        + plural(x.avg_players, 'player', 'players') + ' a game</span>' : ''), what);
+    }).join(''));
+    const lines = [];
+    if (a.busiest_night) lines.push('Your busiest night was <b>' + vpaEsc(vprNightWords(a.busiest_night.night)) + '</b>, with <b>'
+      + plural(a.busiest_night.players, 'player', 'players') + '</b> for ' + vpaEsc(fmtList(a.busiest_night.formats)) + '.');
+    if (a.busiest_game && a.busiest_game.players) lines.push('Your biggest single game was <b>' + vpaEsc(vpaFormatWord(a.busiest_game.format)) + '</b> on '
+      + vpaEsc(vprNightWords(a.busiest_game.night)) + ', with ' + plural(a.busiest_game.players, 'player', 'players') + '.');
+    if (a.avg_per_game) lines.push('On average a game had <b>' + plural(a.avg_per_game, 'player', 'players') + '</b>, and a night had ' + plural(a.avg_per_night, 'player', 'players') + '.');
+    if (lines.length) { body += h2('The big ones'); lines.forEach((l) => { body += p(l); }); }
+    if (a.unique_phones) {
+      body += h2('Your regulars');
+      if (a.returning) {
+        const t = a.returning_times, bits = [];
+        if (t.two) bits.push(n(t.two) + ' came twice');
+        if (t.three) bits.push(n(t.three) + ' came three times');
+        if (t.four_plus) bits.push(n(t.four_plus) + ' came four times or more');
+        body += p('<b>' + plural(a.returning, 'phone', 'phones') + '</b> came back for more than one night: ' + bits.join(', ') + '.'
+          + (a.most_nights_one_phone >= 3 ? ' Your most loyal player came ' + a.most_nights_one_phone + ' times.' : ''));
+      } else {
+        body += p('Nobody came to more than one night this month. A regular night, same day, same time, is what builds a crowd that comes back.');
+      }
+      body += p('<b>' + plural(a.new_phones, 'phone was', 'phones were') + '</b> new to you, and ' + n(a.back_from_before)
+        + ' had played with you before ' + vpaEsc(mName) + '.');
+    }
+    if (a.top_teams.length) {
+      body += h2('Top trivia teams');
+      body += table(a.top_teams.map((t, i) => row((i + 1) + '. ' + vpaEsc(t.name), t.wins ? plural(t.wins, 'win', 'wins') : n(t.points) + ' points')).join(''));
+    }
+    if (a.optins) {
+      body += h2('Your list');
+      body += p('<b>' + plural(a.optins, 'player', 'players') + '</b> said yes to hearing from you this month. They are in your account, under Marketing.');
+    }
+    body += h2('Compared with ' + vpaEsc(pName));
+    const cmp = (label, k) => { const d = c[k]; return row(label, n(d.now) + ' <span style="color:' + DIM + ';font-weight:400">(' + n(d.was) + ')</span>'); };
+    body += table(cmp('Nights', 'nights') + cmp('Players', 'player_visits') + cmp('Different phones', 'unique_phones')
+      + cmp('Came back', 'returning') + cmp('New phones', 'new_phones') + cmp('Average a night', 'avg_per_night')
+      + (c.optins.now || c.optins.was ? cmp('Opt-ins', 'optins') : ''));
+  }
+  const link = site + '/app/report.html?venue=' + encodeURIComponent(venue.id) + '&month=' + rep.month;
+  body += '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 4px"><tr><td style="background:' + PINK + ';border-radius:999px">'
+    + '<a href="' + vpaEsc(link) + '" style="display:inline-block;padding:13px 24px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none">See any month in your account</a>'
+    + '</td></tr></table>';
+  body += '<p style="margin:12px 0 0;font-size:12.5px;color:' + DIM + '">A night runs until 2am. Players are counted by phone, so the same phone on two nights is one person who came back. Test players are left out.</p>';
+  body += vprNewsHtml(o.news);
+  body += '<p style="margin:22px 0 0;font-size:12.5px;color:' + DIM + '">This is the one email we send you each month. Your report for any month is always in your account, whether or not you get this email.</p>';
+  body += vpaSupportPhoneHtml();
+  body += o.to ? await vpUnsubFooterHtml(env, o.to, 'monthly-report') : '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">VenuePlay, ABN ' + VP_ABN + ' &middot; venueplay.com.au</p>';
+  const subject = 'Your ' + mName + ' at ' + (venue.name || 'your venue');
+  const pre = a.nights ? (plural(a.player_visits, 'player', 'players') + ' over ' + plural(a.nights, 'night', 'nights') + ', ' + n(a.returning) + ' came back.')
+                       : ('No games in ' + mName + '.');
+  return { subject: subject, preheader: pre, html: vpaVenueEmailCard(pre, body, subject) };
+}
+
+/* =======================================================================================
+   WHAT'S NEW AT VENUEPLAY: THE NEWS IN THE MONTHLY EMAIL (Dean, 31 Oct 2026: "link that with our
+   newsletter so then... we are only sending it once a month... we don't send too many emails").
+
+   ONE ROUTINE EMAIL A MONTH TO A VENUE. Their report at the top, then a short "What's new at
+   VenuePlay" that HQ writes once a month (HQ > Reports), the same words in every venue's email.
+   There was no venue newsletter before this (31 Oct 2026): the only marketing email a venue could
+   get was HQ's one-off win-back to a venue that is leaving, which stays as it is. Receipts,
+   reminders, failed payments, sign-in, help desk and alerts are separate and untouched.
+
+   SERVICE AND MARKETING. The report on its own is about the venue's own account, which is a
+   service message. The news promotes our features, so the email as a whole is a commercial
+   message under the Spam Act and is sent as one: to our own customers only (inferred consent),
+   naming VenuePlay and its ABN, with a working unsubscribe in the body and the one-click
+   List-Unsubscribe headers on api.venueplay.com.au, and never to an address on vp_unsubscribes.
+   Unsubscribing stops this email; the report is always in their account (app/report.html).
+
+   Stored in vp_monthly_news (migration 133), keyed by the REPORT month: the news written for
+   "2026-10" goes out with October's report on 1 November. Until 133 is run there is simply no
+   news: the report still goes, and HQ's Save says why it cannot keep the words yet.
+   ======================================================================================= */
+const VPR_NEWS_MAX_ITEMS = 4;
+
+/* What HQ typed, made safe for every venue's inbox, or the reason it cannot be. House rules are
+   enforced here, not hoped for: no em dashes, never Gflam, links only to our own site. */
+function vprNewsClean(items) {
+  if (!Array.isArray(items)) return { error: 'Send the news as a list of items.' };
+  const out = [];
+  for (const raw of items.slice(0, 10)) {
+    const it = raw || {};
+    const title = String(it.title || '').replace(/\s+/g, ' ').trim();
+    const text = String(it.text || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').trim();
+    const link = String(it.link || '').trim();
+    if (!title && !text && !link) continue;
+    if (!title) return { error: 'Every news item needs a heading.' };
+    if (title.length > 80) return { error: 'Keep each heading under 80 characters.' };
+    if (text.length > 400) return { error: 'Keep each item under 400 characters. Short is read; long is skipped.' };
+    const all = title + ' ' + text;
+    if (/[\u2014\u2013]/.test(all)) return { error: 'No long dashes, please: use a comma or a full stop instead.' };
+    if (/gflam/i.test(all + link)) return { error: 'VenuePlay emails never mention Gflam.' };
+    if (/\.dev\b/i.test(all + link)) return { error: 'No .dev addresses in anything a venue reads.' };
+    if (link && !/^https:\/\/(www\.)?venueplay\.com\.au(\/[^\s"<>]*)?$/.test(link)) return { error: 'Links must go to venueplay.com.au.' };
+    out.push({ title: title, text: text, link: link });
+  }
+  if (out.length > VPR_NEWS_MAX_ITEMS) return { error: 'Four items at most. One email a month, kept short.' };
+  return { items: out };
+}
+
+/* The news for a report month. { items, ready, missing } and never throws: a report must still
+   go out when the news cannot be read, it just goes without it. */
+async function vprNewsRead(env, month) {
+  try {
+    const rows = await vpaReadPage(env, 'vp_monthly_news', 'month=eq.' + encodeURIComponent(month) + '&select=month,items,ready,updated_at,updated_by&limit=1');
+    const r = rows[0];
+    return { items: (r && Array.isArray(r.items)) ? r.items : [], ready: !!(r && r.ready), updated_at: (r && r.updated_at) || null, updated_by: (r && r.updated_by) || null, missing: false };
+  } catch (e) {
+    return { items: [], ready: false, missing: e && e.status === 404, failed: !(e && e.status === 404) };
+  }
+}
+
+function vprNewsHtml(items) {
+  const clean = vprNewsClean(items || []);
+  if (clean.error || !clean.items.length) return '';
+  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E';
+  let h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;border-top:2px solid ' + PINK + '"><tr><td style="padding:18px 0 0">'
+    + '<p style="margin:0 0 12px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">What\'s new at VenuePlay</p>';
+  clean.items.forEach((it) => {
+    h += '<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:' + INK + '">' + vpaEsc(it.title) + '</p>';
+    if (it.text) h += '<p style="margin:0 0 ' + (it.link ? '4' : '14') + 'px;font-size:14px;line-height:1.5;color:' + DIM + '">' + vpaEsc(it.text).replace(/\n+/g, '<br>') + '</p>';
+    if (it.link) h += '<p style="margin:0 0 14px;font-size:14px"><a href="' + vpaEsc(it.link) + '" style="color:' + PINK + ';font-weight:700;text-decoration:none">Find out more</a></p>';
+  });
+  return h + '</td></tr></table>';
+}
+
+/* --- POST /admin/month-news { action: 'get' | 'save' | 'preview', month, items, ready, venue_id }
+   get and preview: any HQ login. save: owner or accounts. preview renders the REAL email for one
+   venue (Test Alpha unless another is named) with the words as typed, saved or not. --- */
+async function vpaHandleMonthNews(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const now = Date.now();
+  const month = String(b.month || '').trim() || vprLastMonth(now);
+  if (!vprMonthOk(month)) return json({ error: 'Pick a month.' }, 400);
+  const action = String(b.action || 'get');
+  if (action === 'get') {
+    const n = await vprNewsRead(env, month);
+    return json({ ok: true, month: month, items: n.items, ready: n.ready, updated_at: n.updated_at, updated_by: n.updated_by,
+      missing: n.missing, note: n.missing ? 'The news cannot be saved until migration 133 is run. The report goes out without it until then.' : '' });
+  }
+  const clean = vprNewsClean(b.items === undefined ? [] : b.items);
+  if (clean.error) return json({ error: clean.error }, 400);
+  if (action === 'save') {
+    if (['owner', 'accounts'].indexOf(actor.role) === -1) return json({ error: 'Only an owner or accounts login can change the news.' }, 403);
+    const row = { month: month, items: clean.items, ready: b.ready === true && clean.items.length > 0, updated_at: new Date(now).toISOString(), updated_by: actor.label };
+    try {
+      const had = await vpaReadPage(env, 'vp_monthly_news', 'month=eq.' + encodeURIComponent(month) + '&select=month&limit=1');
+      if (had.length) await vpaPatch(env, 'vp_monthly_news', 'month=eq.' + encodeURIComponent(month), row);
+      else await vpaInsert(env, 'vp_monthly_news', row, false);
+    } catch (e) {
+      if (e && e.status === 404) return json({ error: 'Not saved: the news table is not there yet (migration 133). The report goes out without news until it is run.' }, 409);
+      return json({ error: 'Not saved: the database did not answer. Please try again.' }, 503);
+    }
+    await vpaAudit(env, actor, 'monthly_news_saved', 'month-news:' + month, { items: clean.items.length, ready: row.ready });
+    return json({ ok: true, month: month, items: clean.items, ready: row.ready });
+  }
+  if (action === 'preview') {
+    let venue = null;
+    try {
+      const vs = b.venue_id
+        ? await vpaReadPage(env, 'vp_venues', 'id=eq.' + encodeURIComponent(String(b.venue_id)) + '&select=id,name,slug,status,timezone,founding_id,created_at&limit=1')
+        : await vpaReadPage(env, 'vp_venues', 'slug=eq.test-alpha&select=id,name,slug,status,timezone,founding_id,created_at&limit=1');
+      venue = vs[0] || null;
+      if (!venue) return json({ error: 'No venue to preview with.' }, 404);
+      const rep = (await vprMonth(env, [venue], month, now))[venue.id];
+      const mail = await vprEmailHtml(env, venue, rep, { to: 'preview@venueplay.com.au', news: clean.items });
+      return json({ ok: true, month: month, venue_name: venue.name, subject: mail.subject, html: mail.html });
+    } catch (e) { return json({ error: 'Could not build the preview just now. Please try again.' }, 503); }
+  }
+  return json({ error: 'Unknown action.' }, 400);
+}
+
+/* THE SENDER, OFF UNTIL DEAN SAYS. env.MONTHLY_REPORTS must be exactly 'on'. Even then it only
+   acts on the 1st to the 3rd of a month, 2am to 7am Brisbane, a batch a tick, and each venue once
+   a month (the audit row is the record, written before the next venue is started). It reads
+   nothing at all while the switch is off, so turning the feature on costs a variable, not a deploy.
+   Skips: a test venue, a venue that ran nothing in either month, a contact who unsubscribed. */
+async function vprMonthlySweep(env, nowMs, opts) {
+  const o = opts || {};
+  if (String(env.MONTHLY_REPORTS || '').trim() !== VPR_SWITCH) return { off: true, sent: 0 };
+  const now = nowMs || Date.now();
+  const bris = new Date(now + 10 * 3600 * 1000);
+  if (!o.anyTime && (bris.getUTCDate() > 3 || bris.getUTCHours() < 2 || bris.getUTCHours() >= 7)) return { off: false, waiting: true, sent: 0 };
+  const month = vprLastMonth(now);
+  const batch = parseInt(env.MONTHLY_REPORTS_BATCH, 10) > 0 ? parseInt(env.MONTHLY_REPORTS_BATCH, 10) : VPR_BATCH;
+  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+  const tests = await vprTestVenueIds(env, venues);
+  const done = new Set((await vpaSelectAll(env, 'vp_admin_audit',
+    'action=in.(monthly_report_sent,monthly_report_skipped)&target=like.' + encodeURIComponent('month-report:*:' + month) + '&select=target&order=id.asc'))
+    .map((r) => String(r.target || '').split(':')[1]));
+  const todo = venues.filter((v) => !done.has(v.id)).slice(0, batch);
+  const out = { month: month, sent: 0, skipped: 0, left: Math.max(0, venues.filter((v) => !done.has(v.id)).length - todo.length) };
+  if (!todo.length) return out;
+  const unsub = await vpaUnsubscribedSet(env);
+  const reps = await vprMonth(env, todo, month, now);
+  /* The news HQ wrote for this month, only once it is marked ready. Not ready, or not readable: the
+     report goes without it rather than waiting (the email is the report first). */
+  const newsRow = await vprNewsRead(env, month);
+  const news = newsRow.ready ? newsRow.items : [];
+  const actor = { actorId: null, label: 'automatic (monthly report)' };
+  for (const v of todo) {
+    const target = 'month-report:' + v.id + ':' + month;
+    const r = reps[v.id];
+    let why = '';
+    let acct = null;
+    if (tests.has(v.id)) why = 'test venue';
+    else if (!r.this_month.nights && !r.last_month.nights) why = 'no nights in either month';
+    else {
+      acct = ((await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1')) || [])[0] || null;
+      const to = acct && String(acct.contact_email || '').trim().toLowerCase();
+      if (!to) why = 'no contact email';
+      else if (unsub[to]) why = 'unsubscribed';
+    }
+    if (why) {
+      await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_skipped', target: target, detail: { month: month, why: why } }, false);
+      out.skipped++; continue;
+    }
+    const to = String(acct.contact_email).trim().toLowerCase();
+    const mail = await vprEmailHtml(env, v, r, { to: to, contactName: acct.contact_name, news: news });
+    const accepted = await vpaSendEmail(env, to, mail.subject, mail.html, null, await vpUnsubHeaders(env, to, 'monthly-report')).catch(() => false);
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: actor.label, action: 'monthly_report_sent', target: target,
+      detail: { month: month, accepted: !!accepted, nights: r.this_month.nights, players: r.this_month.player_visits, news: news.length } }, false);
+    out.sent++;
+  }
+  return out;
 }
 
 /* --- POST /account/optin-export : CSV of marketing opt-ins, STRICTLY the caller's own venues.

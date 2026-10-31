@@ -308,6 +308,8 @@
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
+    <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): every venue's month, who is trending down, and the news in the monthly email. -->
+    <button data-pane="reports">Reports</button>
     <button data-pane="team">Team</button>
     <button data-pane="flagged">Flagged</button>
     <button data-pane="audit">Audit</button>
@@ -620,6 +622,9 @@
     <div class="note">Counted live from the sessions themselves, the same way an overage charge is counted, so a figure here cannot disagree with an invoice. Peak rule: the biggest metered night sets the month, so two busy Saturdays are one charge and not two. Raffles and members draws mint no players and never count. A phone that opened the page but was never dealt in is not billed.</div>
   </div>
 
+  <!-- ============ REPORTS (vp-reports-hq.js builds it) ============ -->
+  <div id="paneReports" class="hidden"></div>
+
   <!-- ============ TEAM ============ -->
   <div id="paneTeam" class="hidden">
     <div class="lblk">VenuePlay staff logins</div>
@@ -768,6 +773,8 @@
 <script src="vp-prospects-hq.js"></script>
 <!-- Remove a login that belongs to no other venue (vp-logins-hq.js, 30 Oct 2026). HQ only; started by hq.html below. -->
 <script src="vp-logins-hq.js"></script>
+<!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): the monthly report for every venue and the news. HQ only; started by hq.html below. -->
+<script src="vp-reports-hq.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -921,6 +928,8 @@
   function auditBestEffort(action, target, detail){ workerPost("/admin/audit", { action:action, target:target, detail:detail||{} }); }
   /* Remove a login: this page's own sign-in, questions and owner test, nothing of its own (vp-logins-hq.js). */
   if(window.VPLogins) window.VPLogins.init({ post:workerPost, ask:vpAsk, tell:vpTell, isOwner:function(){ return S.adminRole==="owner"; } });
+  /* HQ > Reports: this page's own sign-in, owner test and Show-test switch (vp-reports-hq.js). */
+  if(window.VPReports) window.VPReports.init({ post:workerPost, isOwner:function(){ return S.adminRole==="owner"||S.adminRole==="accounts"; }, showTest:function(){ return !!S.showTest; } });
 
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
@@ -1262,7 +1271,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","prospects","live","quiet","cancelled","billing","groups","usage","team","flagged","audit"];
+  var PANES=["venues","prospects","live","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
   document.addEventListener("vp-prospects", function(){ if(S.venues){ renderStats(); renderVenues(); } });
@@ -1278,6 +1287,7 @@
     if(pane==="quiet") loadQuiet();
     if(pane==="cancelled") loadCancelled();
     if(pane==="audit") runAuditSearch(!AU.loaded);
+    if(pane==="reports" && window.VPReports) window.VPReports.open();
     /* THE METER IS ASKED FOR HERE, not inside renderBilling. It used to be kicked off by the
        billing tab alone, so opening Usage first sat on "Reading the meter..." for ever and
        there was no way to tell that from a slow request. Two screens need it; the pane switch
@@ -1295,6 +1305,7 @@
   $("showTest").addEventListener("change", function(){
     S.showTest = this.checked;
     renderStats(); renderVenues(); renderBilling(); renderUsage(); renderLive();
+    if(window.VPReports) window.VPReports.repaint();
     S.cancelAudit=null;
     if(!document.getElementById("paneCancelled").classList.contains("hidden")) loadCancelled(true);
     if(!document.getElementById("paneQuiet").classList.contains("hidden")) loadQuiet();

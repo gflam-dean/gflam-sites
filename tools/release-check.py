@@ -3709,6 +3709,13 @@ def local_checks(which):
              'nobody saw, their number lost, or another venue handed to a login on one typed fact'),
             # D91: saved replies and the easier help desk (Dean, 29 Oct 2026; migration 126), branch
             # feature/helpdesk-easier. D88 and D89 are the prospect autopilot and Prospects tab, D90 is phone sign-in.
+            # D106: the monthly venue report and the one email a month (Dean, 30 to 31 Oct 2026; migration 133),
+            # branch feature/venue-reports-31oct.
+            ('D106. The monthly report counts a month by hand, a venue sees only its own, and the one monthly email waits for its switch',
+             'test-monthly-report.js',
+             'nights 2am to 2am where the venue is, players by phone, came back and how many times across weeks, new against the year before, per-game players, top teams, opt-ins, the month before, paged past 1,000; a venue, a manager or a marketing login sees only its own, View as only the venue viewed; HQ totals leave test venues out and name who is trending down; the email carries no player detail, no .dev link and never Gflam; off unless MONTHLY_REPORTS is on, then only 2am to 7am on the 1st to the 3rd, once per venue, never to an unsubscribed contact; the news HQ writes goes under the report only when ready, and before migration 133 the report still goes', 105,
+             'A venue told the wrong number of regulars, shown another pub\'s players, a bingo night at 1am counted on the wrong day, '
+             'a report quietly short past the first thousand rows, or an email a month going out before Dean has switched it on'),
             ('D91. Saved replies: the page and the migration are one starter set, the support line only ever reaches a venue, and Send and close closes',
              'test-help-saved-replies.js',
              'the built-in starter replies equal migration 126\'s rows; house rules on every one; fill-ins from the ticket; HQ-only add, change, delete, reorder; before the table exists the list falls back and saving says why; a left-in fill-in or the support line on a player or PartyPlay ticket is refused with no email; send and close closes', 78,

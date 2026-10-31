@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VenuePlay · Your month</title>
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!-- THE MONTHLY REPORT, a venue's own page for any month (Dean, 31 Oct 2026). The numbers are the
+     billing Worker's vprMonth, the same function that writes the email on the 1st and HQ's Reports,
+     so the page, the email and HQ can never disagree. Counts only: nothing here names a player. -->
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --gold:#FFC24B; --win:#35D07F;
+         --text:#E7E7EC; --muted:#A6A6B0; --faint:#8A8A94; --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);color:var(--text);
+       font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:760px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .hactions{margin-left:auto;display:flex;gap:8px}
+  .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer}
+  .hact:hover{border-color:var(--pink);color:#fff}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 90px}
+  h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:32px;color:#fff;line-height:1.04;margin:14px 0 6px;overflow-wrap:anywhere}
+  .lede{color:var(--muted);margin-bottom:16px}
+  .label{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--faint);margin:28px 0 10px}
+  .picks{display:grid;gap:10px;grid-template-columns:1fr;margin:0 0 6px}
+  @media (min-width:560px){ .picks{grid-template-columns:1fr 1fr} }
+  .pick{background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);border-radius:14px;padding:12px 14px}
+  .pick label{display:block;margin:0 0 6px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--pink)}
+  .pick select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font:inherit}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;min-width:0}
+  .stat .n{font-family:'Anton',sans-serif;font-size:36px;color:#fff;line-height:1}
+  .stat .k{color:var(--muted);font-size:13px;margin-top:6px}
+  .stat .d{font-size:12px;margin-top:4px;color:var(--faint)} .stat .d.up{color:var(--win)} .stat .d.down{color:var(--gold)}
+  .list{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+  .li:first-child{border-top:0}
+  .li .l{min-width:0} .li .l b{color:#fff;font-weight:700;display:block;overflow-wrap:anywhere} .li .l small{color:var(--muted);font-size:12.5px}
+  .li .r{font-family:'JetBrains Mono',ui-monospace,monospace;color:#fff;font-weight:700;white-space:nowrap;text-align:right}
+  .li .r small{display:block;color:var(--faint);font-weight:500;font-size:11px}
+  .facts{list-style:none;display:grid;gap:8px} .facts li{background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:15px}
+  .facts b{color:#fff}
+  .meter{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--ink-3);margin:12px 0 8px}
+  .meter span{display:block;height:100%}
+  .key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+  .key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .card p{color:var(--muted);font-size:14.5px} .card p b{color:#fff}
+  .fine{color:var(--faint);font-size:12.5px;margin-top:22px}
+  .msg{min-height:20px;font-size:14px;color:var(--gold);margin-top:10px}
+  .hidden{display:none!important}
+</style>
+<link rel="stylesheet" href="/app/vp-select.css">
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand">
+    <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="div"></span><span class="word">VenuePlay</span>
+  </div>
+  <span class="tag">Your month</span>
+  <span class="hactions">
+    <a class="hact" id="toAccount" href="billing.html">Account</a>
+    <button type="button" class="hact" id="signout">Sign out</button>
+  </span>
+</div></header>
+
+<div class="wrap">
+  <h1 id="title">Your month</h1>
+  <p class="lede" id="lede">Adding it up&hellip;</p>
+  <p class="lede hidden" id="demoNote" style="color:var(--gold)">Sample numbers, to show what this page looks like. Yours appear once you are signed in.</p>
+
+  <div class="picks hidden" id="picks">
+    <div class="pick hidden" id="venueWrap"><label for="venuePick">Venue</label><select id="venuePick"></select></div>
+    <div class="pick"><label for="monthPick">Month</label><select id="monthPick"></select></div>
+  </div>
+
+  <div id="body" class="hidden">
+    <div class="label" id="tilesLabel">At a glance</div>
+    <div class="grid" id="tiles"></div>
+
+    <div id="nightsWrap"><div class="label">Your nights</div><div class="list" id="nights"></div></div>
+    <div id="formatsWrap"><div class="label">What you ran</div><div class="list" id="formats"></div></div>
+    <div id="bigWrap"><div class="label">The big ones</div><ul class="facts" id="big"></ul></div>
+    <div id="regularsWrap"><div class="label">Your regulars</div><div class="card" id="regulars"></div></div>
+    <div id="teamsWrap"><div class="label">Top trivia teams</div><div class="list" id="teams"></div></div>
+    <div id="optinWrap"><div class="label">Your list</div><div class="card"><p id="optins"></p></div></div>
+    <div><div class="label" id="cmpLabel">Compared with last month</div><div class="list" id="compare"></div></div>
+    <p class="fine">A night runs until 2am, so a game that finishes after midnight counts on the night it started. Players are counted by phone: the same phone on two nights is one person who came back. A printed card or team counts as a player but not as a phone. Test players are left out.</p>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>if(window.VP && VP.guardShift) VP.guardShift();</script>
+<script>
+(function(){
+  "use strict";
+  var VP_WORKER = "https://api.venueplay.com.au";
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function tokenThen(){ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||null; }); }
+  function api(path, body){
+    return tokenThen().then(function(tok){
+      var h={ "Content-Type":"application/json" }; if(tok) h["Authorization"]="Bearer "+tok;
+      try{ var imp=JSON.parse(localStorage.getItem("vpImpersonate")||"null"); if(imp&&imp.id) h["X-VP-Venue"]=imp.id; }catch(e){}
+      return fetch(VP_WORKER+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); });
+    }).catch(function(){ return { error:"Something went wrong. Check your connection and try again." }; });
+  }
+  var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var WORDS={ bingo90:"bingo", musical_bingo:"musical bingo", trivia:"trivia", raffle:"raffle", members_draw:"members draw" };
+  var COLOURS={ trivia:"#FF1F8E", bingo90:"#FFC24B", musical_bingo:"#8B7BFF", raffle:"#35D07F", members_draw:"#4FC3F7" };
+  function n(x){ return Number(x||0).toLocaleString("en-AU"); }
+  function plural(x, one, many){ return n(x)+" "+(x===1?one:many); }
+  function word(f){ return WORDS[f] || String(f||"").replace(/_/g," "); }
+  function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+  function monthName(m){ return m ? MONTHS[+m.slice(5,7)-1] : ""; }
+  function monthWords(m){ return m ? monthName(m)+" "+m.slice(0,4) : ""; }
+  function nightWords(d){ if(!d) return ""; return DAYS[new Date(d+"T12:00:00Z").getUTCDay()]+" "+(+d.slice(8,10))+" "+monthName(d.slice(0,7)); }
+  function list(fs){ return (fs||[]).map(word).join(" and "); }
+
+  /* VIEWED FROM HQ: say so, and say whose (the gate's rule for any page that sends X-VP-Venue). */
+  (function viewingAsBanner(){
+    var imp=null; try{ imp=JSON.parse(localStorage.getItem("vpImpersonate")||"null"); }catch(e){}
+    if(!imp || !imp.id || document.getElementById("vpImpBar")) return;
+    var bar=document.createElement("div"); bar.id="vpImpBar";
+    bar.style.cssText="background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.innerHTML='<span>The monthly report for <b>'+esc(imp.name||"this venue")+'</b>, viewed from VenuePlay Admin</span><a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
+    if(window.VP && VP.statusBar) VP.statusBar("viewas", bar); else document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("vpImpBack").addEventListener("click", function(){ try{ localStorage.removeItem("vpImpersonate"); }catch(e){} window.location.href="hq.html"; });
+  })();
+
+  function delta(d, prevName){
+    if(!d || (!d.now && !d.was)) return "";
+    if(!d.was) return '<div class="d up">new this month</div>';
+    if(d.diff===0) return '<div class="d">same as '+esc(prevName)+'</div>';
+    return '<div class="d '+(d.diff>0?"up":"down")+'">'+(d.diff>0?"&#9650; up ":"&#9660; down ")+n(Math.abs(d.diff))+' on '+esc(prevName)+'</div>';
+  }
+  function row(l, sub, r, rsub){ return '<div class="li"><div class="l"><b>'+l+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div><div class="r">'+r+(rsub?'<small>'+rsub+'</small>':'')+'</div></div>'; }
+  function show(id, on){ $(id).classList.toggle("hidden", !on); }
+
+  function render(d){
+    var rep=d.report, a=rep.this_month, b=rep.last_month, c=rep.compare;
+    var mName=monthName(rep.month), pName=monthName(rep.prev_month);
+    $("title").textContent=mName+" at "+d.venue.name;
+    $("lede").textContent = a.nights
+      ? plural(a.player_visits,"player","players")+" over "+plural(a.nights,"night","nights")+(rep.finished?"":" so far")+". Here is how "+monthWords(rep.month)+" went."
+      : (rep.finished ? "No games ran in "+monthWords(rep.month)+"." : "No games yet in "+monthWords(rep.month)+".")+(b.nights?" In "+pName+" you ran "+plural(b.nights,"night","nights")+" with "+plural(b.player_visits,"player","players")+".":"");
+    $("tiles").innerHTML=[
+      [n(a.nights), a.nights===1?"night with a game on":"nights with a game on", delta(c.nights,pName)],
+      [n(a.player_visits), "players across those nights", delta(c.player_visits,pName)],
+      [n(a.unique_phones), "different phones", delta(c.unique_phones,pName)],
+      [n(a.returning), "came back for another night", delta(c.returning,pName)]
+    ].map(function(t){ return '<div class="stat"><div class="n">'+t[0]+'</div><div class="k">'+t[1]+'</div>'+t[2]+'</div>'; }).join("");
+
+    show("nightsWrap", a.nights>0);
+    $("nights").innerHTML=(a.night_list||[]).map(function(x){ return (x.drawn && !x.players) ? row(esc(nightWords(x.night)), esc(cap(list(x.formats))), "Drawn", "for the room")
+      : row(esc(nightWords(x.night)), esc(cap(list(x.formats))), n(x.players), x.players===1?"player":"players"); }).join("");
+
+    var fk=Object.keys(a.formats||{}).sort(function(x,y){ return a.formats[y].games-a.formats[x].games; });
+    show("formatsWrap", fk.length>0);
+    $("formats").innerHTML=fk.map(function(f){ var x=a.formats[f];
+      return row(esc(cap(word(f))), x.avg_players!=null ? "about "+esc(plural(x.avg_players,"player","players"))+" a game" : "drawn for the room",
+                 plural(x.nights,"night","nights"), x.games!==x.nights ? plural(x.games,"game","games") : ""); }).join("");
+
+    var big=[];
+    if(a.busiest_night) big.push("Your busiest night was <b>"+esc(nightWords(a.busiest_night.night))+"</b>, with <b>"+esc(plural(a.busiest_night.players,"player","players"))+"</b> for "+esc(list(a.busiest_night.formats))+".");
+    if(a.busiest_game && a.busiest_game.players) big.push("Your biggest single game was <b>"+esc(word(a.busiest_game.format))+"</b> on "+esc(nightWords(a.busiest_game.night))+", with "+esc(plural(a.busiest_game.players,"player","players"))+".");
+    if(a.avg_per_game) big.push("On average a game had <b>"+esc(plural(a.avg_per_game,"player","players"))+"</b>, and a night had "+esc(plural(a.avg_per_night,"player","players"))+".");
+    show("bigWrap", big.length>0); $("big").innerHTML=big.map(function(x){ return "<li>"+x+"</li>"; }).join("");
+
+    show("regularsWrap", a.unique_phones>0);
+    var t=a.returning_times||{}, once=Math.max(0,a.unique_phones-a.returning), tot=a.unique_phones||1;
+    var parts=[["once",once,"#6b6b78"],["twice",t.two||0,"#FF1F8E"],["three times",t.three||0,"#FFC24B"],["four or more",t.four_plus||0,"#35D07F"]];
+    $("regulars").innerHTML='<p>'+(a.returning
+        ? '<b>'+esc(plural(a.returning,"phone","phones"))+'</b> came back for more than one night.'+(a.most_nights_one_phone>=3?' Your most loyal player came '+a.most_nights_one_phone+' times.':'')
+        : 'Nobody came to more than one night this month. A regular night, same day, same time, is what builds a crowd that comes back.')+'</p>'
+      +'<div class="meter" role="img" aria-label="How many nights each phone came">'+parts.map(function(p){ return p[1]?'<span style="width:'+(p[1]/tot*100)+'%;background:'+p[2]+'"></span>':""; }).join("")+'</div>'
+      +'<div class="key">'+parts.map(function(p){ return '<span><i style="background:'+p[2]+'"></i>'+esc(cap(p[0]))+': <b style="color:#fff">'+n(p[1])+'</b></span>'; }).join("")+'</div>'
+      +'<p style="margin-top:12px"><b>'+esc(plural(a.new_phones,"phone was","phones were"))+'</b> new to you, and '+n(a.back_from_before)+' had played with you before '+esc(mName)+'.</p>';
+
+    show("teamsWrap", (a.top_teams||[]).length>0);
+    $("teams").innerHTML=(a.top_teams||[]).map(function(x,i){ return row((i+1)+". "+esc(x.name), esc(plural(x.games,"game","games"))+", "+esc(n(x.points))+" points", x.wins?plural(x.wins,"win","wins"):"", ""); }).join("");
+
+    show("optinWrap", a.optins>0);
+    $("optins").innerHTML='<b>'+esc(plural(a.optins,"player","players"))+'</b> said yes to hearing from you this month. Your list is on the <a href="marketing.html" style="color:#FF1F8E">Marketing page</a>.';
+
+    $("cmpLabel").textContent="Compared with "+monthWords(rep.prev_month);
+    var cmp=[["Nights","nights"],["Players","player_visits"],["Different phones","unique_phones"],["Came back","returning"],["New phones","new_phones"],["Average a night","avg_per_night"],["Opt-ins","optins"]];
+    $("compare").innerHTML=cmp.filter(function(k){ return k[1]!=="optins" || c.optins.now || c.optins.was; })
+      .map(function(k){ var x=c[k[1]]; return row(esc(k[0]), "", n(x.now), pName+" "+n(x.was)); }).join("");
+    $("body").classList.remove("hidden");
+  }
+
+  var STATE={ venue:null, month:null };
+  function fillMonths(d){
+    $("monthPick").innerHTML=d.months.map(function(m,i){ return '<option value="'+esc(m)+'"'+(m===d.report.month?" selected":"")+'>'+esc(monthWords(m))+(i===0?" (so far)":"")+'</option>'; }).join("");
+    if(d.venues && d.venues.length>1){
+      $("venuePick").innerHTML=d.venues.map(function(v){ return '<option value="'+esc(v.id)+'"'+(v.id===d.venue.id?" selected":"")+'>'+esc(v.name)+'</option>'; }).join("");
+      $("venueWrap").classList.remove("hidden");
+    }
+    $("picks").classList.remove("hidden");
+  }
+  function load(){
+    $("msg").textContent=""; $("lede").textContent="Adding it up…";
+    return api("/account/month-report", { venue_id:STATE.venue||undefined, month:STATE.month||undefined }).then(function(d){
+      if(!d || d.error){ $("lede").textContent=""; $("msg").textContent=(d&&d.error)||"Could not load that month."; return; }
+      STATE.venue=d.venue.id; STATE.month=d.report.month;
+      try{ history.replaceState(null,"","?venue="+encodeURIComponent(STATE.venue)+"&month="+STATE.month); }catch(e){}
+      fillMonths(d); render(d);
+    });
+  }
+  $("monthPick").addEventListener("change", function(){ STATE.month=this.value; load(); });
+  $("venuePick").addEventListener("change", function(){ STATE.venue=this.value; load(); });
+  $("signout").addEventListener("click", function(){ VP.signOut(); });
+
+  var q=location.search||"";
+  var mv=/[?&]venue=([^&]+)/.exec(q), mm=/[?&]month=(\d{4}-\d{2})/.exec(q);
+  if(mv) STATE.venue=decodeURIComponent(mv[1]); if(mm) STATE.month=mm[1];
+
+  /* ?demo=1: sample numbers and no sign-in. It asks the Worker nothing. */
+  if(/[?&]demo=1\b/.test(q)){
+    var S={ ok:true, venue:{ id:"demo", name:"The Royal Hotel" }, venues:[{ id:"demo", name:"The Royal Hotel" }], months:["2026-11","2026-10","2026-09"],
+      report:{ month:"2026-10", prev_month:"2026-09", finished:true,
+        this_month:{ nights:5, games:9, player_visits:182, avg_per_night:36, avg_per_game:31, unique_phones:118, returning:41, returning_times:{ two:24, three:12, four_plus:5 }, most_nights_one_phone:5, new_phones:63, back_from_before:55,
+          formats:{ trivia:{ nights:4, games:4, avg_players:34 }, bingo90:{ nights:2, games:3, avg_players:29 }, raffle:{ nights:2, games:2, avg_players:null } },
+          busiest_night:{ night:"2026-10-23", players:47, formats:["trivia","raffle"] }, busiest_game:{ format:"trivia", night:"2026-10-23", players:45 },
+          night_list:[{ night:"2026-10-02", formats:["trivia"], players:31 },{ night:"2026-10-09", formats:["trivia","bingo90"], players:38 },{ night:"2026-10-16", formats:["trivia"], players:33 },{ night:"2026-10-23", formats:["trivia","raffle"], players:47 },{ night:"2026-10-30", formats:["bingo90","raffle"], players:33 }],
+          top_teams:[{ name:"The Quizzards", wins:2, games:4, points:212 },{ name:"Pub Legends", wins:1, games:4, points:198 },{ name:"Les Quizerables", wins:1, games:3, points:150 }], optins:17 },
+        last_month:{ nights:4, player_visits:139 },
+        compare:{ nights:{ now:5, was:4, diff:1 }, player_visits:{ now:182, was:139, diff:43 }, unique_phones:{ now:118, was:97, diff:21 }, returning:{ now:41, was:30, diff:11 }, new_phones:{ now:63, was:58, diff:5 }, avg_per_night:{ now:36, was:35, diff:1 }, optins:{ now:17, was:11, diff:6 } } } };
+    $("demoNote").classList.remove("hidden"); fillMonths(S); render(S); return;
+  }
+  VP.requireAuth({}).then(function(){ return load(); });
+})();
+</script>
+</body>
+</html>
