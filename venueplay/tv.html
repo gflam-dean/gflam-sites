@@ -2363,7 +2363,7 @@
       nm.textContent=String(o.name || VENUE_SLUG);
       ln.textContent="venueplay.com.au/tv?"+VENUE_SLUG;
       var done=false, t=null, w=null;
-      function off(){
+      var off=function(){
         if(done) return; done=true;
         box.classList.add("hidden");
         if(t) clearTimeout(t); if(w) clearInterval(w);
@@ -2415,7 +2415,7 @@
        person standing at a venue's TV; on a page a prospect is reading they are noise, and the
        pairing panel carries a code nobody can pair with. Kept hidden however the modes flip. */
     (function hideSetup(){
-      function off(){ ["pairPanel","tvFsBtn"].forEach(function(id){ var n=document.getElementById(id); if(n && n.style.display!=="none") n.style.display="none"; }); }
+      var off=function(){ ["pairPanel","tvFsBtn"].forEach(function(id){ var n=document.getElementById(id); if(n && n.style.display!=="none") n.style.display="none"; }); }
       off(); new MutationObserver(off).observe(document.body, { childList:true, subtree:true });
     })();
   }
