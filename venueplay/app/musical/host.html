@@ -151,13 +151,21 @@
   .vbadge.invalid{background:rgba(245,165,36,.14);color:var(--roll)}
   .claimsub{font-size:11px;color:var(--faint);margin-top:12px;text-align:center}
 
-  .mini5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%}
+  /* minmax(0,1fr), not 1fr: a 1fr column is never narrower than its longest word, so one long title
+     ("Supercalifragilisticexpialidocious") used to widen its column and squeeze the other four. */
+  .mini5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%}
   /* This is the card the host reads to judge a win, so the song titles have to be legible.
      Square cells at 7px with overflow hidden clipped every title to a stub, which is why the
      check "did not show the whole card". Titles need width and a couple of lines, not squares. */
   .mc{border:1px solid var(--line);border-radius:6px;font-size:10px;line-height:1.2;display:flex;
     align-items:center;justify-content:center;text-align:center;padding:5px 3px;min-height:46px;
-    color:var(--text);background:var(--ink-2);overflow-wrap:anywhere;hyphens:auto}
+    color:var(--text);background:var(--ink-2);min-width:0;overflow:hidden;
+    /* A SONG TITLE NEVER BREAKS IN THE MIDDLE OF A WORD (Dean, 31 Oct 2026; the phone card and the TV
+       were fixed on 30 Oct, e646efe7). Lines break only between words, and no hyphens either. A word
+       too wide for its square is fitted by fitMini() below, the same way the phone card does it: the
+       type steps down, and as a last resort the word is narrowed as a whole, never split. */
+    word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none}
+  .mc .ct{display:block;transform-origin:center}   /* a flex item: as wide as its longest word, centred */
   .mc.hit{background:rgba(53,208,127,.16);border-color:rgba(53,208,127,.4);color:var(--win);font-weight:700}
   .mc.free{background:rgba(255,194,75,.14);color:var(--gold);border-color:rgba(255,194,75,.3);font-family:'Hanken Grotesk',sans-serif;font-weight:700;letter-spacing:.04em}
 
@@ -1424,11 +1432,39 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         var cobj=(cells && cells[i]!=null) ? cells[i] : null;
         var t=cobj ? cellTitle(cobj) : "";
         var hit=cobj ? !!G.played[songKey(typeof cobj==="object" ? cobj : { title:t })] : false;
-        cell.className="mc"+(hit?" hit":""); cell.textContent=t||"\u2014";
+        cell.className="mc"+(hit?" hit":"");
+        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=t||"\u2014";   // measured by fitMini
+        cell.appendChild(ct);
       }
       container.appendChild(cell);
     }
+    fitMini(container);
   }
+  /* ONE WORD WIDER THAN ITS SQUARE ("Supercalifragilisticexpialidocious", "Californication"). It is
+     never broken, so the type steps down half a pixel at a time from 10px to 8px, and a word still too
+     wide after that is narrowed whole (a slightly condensed word reads; a split one does not). The
+     same rule as fitCells() on the phone card (app/musical/play.html). A card that is not on screen
+     (width 0) is left alone and fitted when it is: on resize, and once the web fonts have arrived. */
+  var MINI_SIZE=10, MINI_FLOOR=8;
+  function fitMini(container){
+    if(!container) return;
+    var cells=container.querySelectorAll(".mc:not(.free)");
+    for(var i=0;i<cells.length;i++){
+      var el=cells[i], sp=el.querySelector(".ct");
+      if(!sp) continue;
+      sp.style.transform=""; el.style.fontSize="";
+      if(!(el.clientWidth>0)) continue;
+      var cs=getComputedStyle(el), avail=el.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);
+      var size=MINI_SIZE;
+      while(size>MINI_FLOOR && sp.offsetWidth>avail){ size-=0.5; el.style.fontSize=size+"px"; }
+      if(sp.offsetWidth>avail){
+        sp.style.transform="scaleX("+Math.max(0.3, (avail-1)/sp.offsetWidth).toFixed(3)+")";
+      }
+    }
+  }
+  function refitMinis(){ var cs=document.querySelectorAll("#claimQueue .mini5"); for(var i=0;i<cs.length;i++) fitMini(cs[i]); }
+  window.addEventListener("resize", refitMinis);
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(refitMinis); }catch(e){}
   function renderClaimQueue(fresh){
     var q=$("claimQueue"), head=$("claimHead");
     var n=G.claims.length;

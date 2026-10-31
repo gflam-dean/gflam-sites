@@ -123,6 +123,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "tools/billing-words-in-chrome.test.py": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/caller-winner-in-chrome.test.py": {
   "checks": 107,
   "counted_by": "lines"
@@ -193,6 +197,10 @@
  },
  "tools/move-show-images.test.py": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/musical-host-titles-in-chrome.test.py": {
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/night-pass-hq-in-chrome.test.py": {
@@ -637,6 +645,10 @@
  },
  "tools/test-raffle-unsold-server.js": {
   "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-receipts-plain-words.js": {
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-remove-a-player.js": {

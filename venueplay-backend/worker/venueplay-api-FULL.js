@@ -29,7 +29,7 @@
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 12:20 · 0656dfc7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 14:56 · 329be301';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7191,8 +7191,9 @@ function vpaSupportPhoneHtml() {
     + '. If a game is on right now, press 2.</p>';
 }
 /* THE FOOTER OF EVERY EMAIL A VENUE GETS FROM THIS WORKER. The support line, then the small
-   print. withAbn: a receipt, a reminder or a plan change carries the ABN; the leaving emails do
-   not (Dean's call, see vpaLeavingHtml). */
+   print. withAbn: a receipt, a reminder, a failed payment or a plan change carries the business
+   name line, "VenuePlay, ABN 35 679 383 049" (Dean, 30 Oct 2026: never Gflam Group); the leaving
+   emails do not (Dean's call, see vpaLeavingHtml). */
 function vpaVenueEmailFoot(withAbn) {
   return vpaSupportPhoneHtml()
     + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
@@ -7322,12 +7323,32 @@ function vpaTaxSummaryHtml(invoice) {
        + '</td></tr></table>';
 }
 
+/* WHAT A VENUE READS FOR A STRIPE LINE (Dean, 30 Oct 2026: never "founding" on anything a venue sees,
+   never Gflam Group). Stripe writes each subscription line from its PRODUCT name, "1 Player x Founding
+   Membership (Monthly) (at $2.50 / month)", and that product name is deliberate and stays in Stripe.
+   Where WE print a line (the receipt, the payment reminder, the declined-card email) it is said in plain
+   words: "1 Player x VenuePlay plan (monthly) (at $2.50 / month)". Only the words change: quantity,
+   rate and dates are Stripe's own. The raw description is still what vpaOverageFromInvoice and
+   vpaUpliftNoticeHtml read, so nothing that judges a line depends on this. */
+function vpaPlainLineDesc(desc) {
+  return String(desc == null ? '' : desc)
+    .replace(/\b(?:VenuePlay\s+)?Founding\s+Membership\b(?:\s*\((Monthly|Annual|Yearly)\))?/gi,
+      function (m, per) { return 'VenuePlay plan' + (per ? ' (' + per.toLowerCase() + ')' : ''); })
+    .replace(/\b(?:VenuePlay\s+)?Founding\s+(Monthly|Annual|Yearly)\b/gi,
+      function (m, per) { return 'VenuePlay plan (' + per.toLowerCase() + ')'; })
+    .replace(/\b(?:(?:the|your|a)\s+)?founding\s+(rate|price)\b/gi, function (m, w) { return 'your ' + w.toLowerCase(); })
+    .replace(/\bGflam\s+Group(?:\s+Pty\.?\s+Ltd\.?)?/gi, 'VenuePlay')
+    .replace(/\s*\bfounding\b\s*/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function vpaInvoiceLinesHtml(invoice) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
   const rows = lines.map(function (l) {
     const amt = Number(l.amount || 0);
-    const desc = String((l && l.description) || 'VenuePlay');
+    const desc = vpaPlainLineDesc((l && l.description) || 'VenuePlay') || 'VenuePlay';
     return '<tr>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
@@ -8007,7 +8028,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
     const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
     const what = /^subscription/.test(reason) || !firstLine || !firstLine.description
       ? 'your VenuePlay subscription'
-      : String(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
+      : vpaPlainLineDesc(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const billing = site + '/app/billing.html';
     /* Send them to STRIPE'S invoice page, not ours. Our Account page needs them to sign in with a
@@ -8022,7 +8043,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
-      + vpaVenueEmailFoot(false)
+      + vpaVenueEmailFoot(true)   // a billing email: "VenuePlay, ABN ..." like the receipt (Dean, 30 Oct 2026)
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

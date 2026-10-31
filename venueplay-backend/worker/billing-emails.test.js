@@ -21,6 +21,7 @@ eval(lift(BILL,"vpaVenueEmailFoot"));
 eval(lift(BILL,"vpaEmailDocument"));
 eval(lift(BILL,"vpaVenueEmailCard"));
 eval(lift(BILL,"vpaEsc"));
+eval(lift(BILL,"vpaPlainLineDesc"));   // the lines in plain words (31 Oct 2026)
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
 eval(lift(BILL,"vpaTaxSummaryHtml"));
 /* The receipt and the helpers it calls. These must be lifted at TOP LEVEL: an eval inside a
@@ -56,7 +57,9 @@ var jess = { amount_paid: 1000, number: "9FGBRAJG-0008", lines: { data: [
 var lines = vpaInvoiceLinesHtml(jess);
 pass("every line on her bill is listed", (lines.match(/full month/g)||[]).length === 3,
      "found " + ((lines.match(/full month/g)||[]).length) + " of the 3 extra-player lines");
-pass("the subscription line is there too", lines.indexOf("Founding Membership") !== -1);
+/* In plain words since 31 Oct 2026 (Dean: never "founding" on anything a venue sees). Stripe's
+   product keeps its name; tools/test-receipts-plain-words.js runs the rest of that rule. */
+pass("the subscription line is there too, in plain words", lines.indexOf("VenuePlay plan (monthly)") !== -1 && !/founding/i.test(lines));
 pass("each venue is named, which is what a group account needs", lines.indexOf("Not jess") !== -1 && lines.indexOf("The Jolly Jess") !== -1);
 /* Count the AMOUNT CELLS, not the string. The subscription line's own description
    contains "(at $2.50 / month)", so a naive search finds five and the check failed on
@@ -71,7 +74,8 @@ pass("GST is the INCLUSIVE component, $0.91 of $10", tax.indexOf("$0.91") !== -1
      "prices include GST, so it is total/11, not 10% added on top");
 pass("the ex-GST subtotal is $9.09", tax.indexOf("$9.09") !== -1);
 pass("the total paid is $10.00", tax.indexOf("$10.00") !== -1);
-pass("it calls itself a tax invoice", tax.toLowerCase().indexOf("tax invoice") !== -1);
+/* It delivers Stripe's tax invoice, so it says so (Dean, 31 Oct 2026). */
+pass("it calls itself a tax invoice", tax.indexOf("Tax invoice. VenuePlay, ABN") !== -1);
 pass("the ABN is on it", tax.indexOf(VP_ABN) !== -1);
 
 pass("a $0 trial invoice gets no tax block at all",
