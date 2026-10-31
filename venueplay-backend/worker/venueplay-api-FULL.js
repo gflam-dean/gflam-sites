@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 11:12 · bb09825e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 12:21 · cae25044';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7189,8 +7189,9 @@ function vpaSupportPhoneHtml() {
     + '. If a game is on right now, press 2.</p>';
 }
 /* THE FOOTER OF EVERY EMAIL A VENUE GETS FROM THIS WORKER. The support line, then the small
-   print. withAbn: a receipt, a reminder or a plan change carries the ABN; the leaving emails do
-   not (Dean's call, see vpaLeavingHtml). */
+   print. withAbn: a receipt, a reminder, a failed payment or a plan change carries the business
+   name line, "VenuePlay, ABN 35 679 383 049" (Dean, 30 Oct 2026: never Gflam Group); the leaving
+   emails do not (Dean's call, see vpaLeavingHtml). */
 function vpaVenueEmailFoot(withAbn) {
   return vpaSupportPhoneHtml()
     + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au'
@@ -7315,9 +7316,31 @@ function vpaTaxSummaryHtml(invoice) {
        + row('GST', gst, false)
        + row('Total paid', total, true)
        + '</table>'
-       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Tax invoice. VenuePlay, '
+       /* "Receipt", not "Tax invoice" (Dean, 30 Oct 2026): the tax invoice is the one Stripe issues,
+          linked from this email, and it keeps its legal title. This email is our receipt for it. */
+       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Receipt. VenuePlay, '
        + 'ABN ' + VP_ABN + '. Prices include GST.</p>'
        + '</td></tr></table>';
+}
+
+/* WHAT A VENUE READS FOR A STRIPE LINE (Dean, 30 Oct 2026: never "founding" on anything a venue sees,
+   never Gflam Group). Stripe writes each subscription line from its PRODUCT name, "1 Player x Founding
+   Membership (Monthly) (at $2.50 / month)", and that product name is deliberate and stays in Stripe.
+   Where WE print a line (the receipt, the payment reminder, the declined-card email) it is said in plain
+   words: "1 Player x VenuePlay plan (monthly) (at $2.50 / month)". Only the words change: quantity,
+   rate and dates are Stripe's own. The raw description is still what vpaOverageFromInvoice and
+   vpaUpliftNoticeHtml read, so nothing that judges a line depends on this. */
+function vpaPlainLineDesc(desc) {
+  return String(desc == null ? '' : desc)
+    .replace(/\b(?:VenuePlay\s+)?Founding\s+Membership\b(?:\s*\((Monthly|Annual|Yearly)\))?/gi,
+      function (m, per) { return 'VenuePlay plan' + (per ? ' (' + per.toLowerCase() + ')' : ''); })
+    .replace(/\b(?:VenuePlay\s+)?Founding\s+(Monthly|Annual|Yearly)\b/gi,
+      function (m, per) { return 'VenuePlay plan (' + per.toLowerCase() + ')'; })
+    .replace(/\b(?:(?:the|your|a)\s+)?founding\s+(rate|price)\b/gi, function (m, w) { return 'your ' + w.toLowerCase(); })
+    .replace(/\bGflam\s+Group(?:\s+Pty\.?\s+Ltd\.?)?/gi, 'VenuePlay')
+    .replace(/\s*\bfounding\b\s*/gi, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function vpaInvoiceLinesHtml(invoice) {
@@ -7325,7 +7348,7 @@ function vpaInvoiceLinesHtml(invoice) {
   if (!Array.isArray(lines) || lines.length < 1) return '';
   const rows = lines.map(function (l) {
     const amt = Number(l.amount || 0);
-    const desc = String((l && l.description) || 'VenuePlay');
+    const desc = vpaPlainLineDesc((l && l.description) || 'VenuePlay') || 'VenuePlay';
     return '<tr>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
@@ -7477,8 +7500,11 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with VenuePlay.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
-      + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
+      /* OUR RECEIPT, STRIPE'S INVOICE (Dean, 30 Oct 2026). This email is the receipt; the tax invoice
+         is Stripe's, behind "View invoice", and keeps its own title. So the email says receipt and
+         names the invoice it is for. */
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your receipt'
+      + (number ? ' for invoice ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
@@ -7518,8 +7544,8 @@ async function vpaFireInvoiceEmail(env, invoice) {
         from: 'VenuePlay <hello@send.venueplay.com.au>',
         reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
         to: [email],
-        subject: 'Your VenuePlay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
-        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay invoice'),
+        subject: 'Your VenuePlay receipt' + (number ? ' for invoice ' + number : '') + ' - ' + amount,
+        html: vpaVenueEmailCard('Paid ' + amount + '. Your receipt' + (number ? ' for invoice ' + number : '') + ' and what it covers are inside.', html, 'Your VenuePlay receipt'),
       }),
     });
     let resendId = null;
@@ -8005,7 +8031,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
     const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
     const what = /^subscription/.test(reason) || !firstLine || !firstLine.description
       ? 'your VenuePlay subscription'
-      : String(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
+      : vpaPlainLineDesc(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const billing = site + '/app/billing.html';
     /* Send them to STRIPE'S invoice page, not ours. Our Account page needs them to sign in with a
@@ -8020,7 +8046,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
-      + vpaVenueEmailFoot(false)
+      + vpaVenueEmailFoot(true)   // a billing email: "VenuePlay, ABN ..." like the receipt (Dean, 30 Oct 2026)
       + '</div>';
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -9757,7 +9783,7 @@ function vpaLeavingHtml(env, opts) {
        requirement on a service notice, and a holding company's name at the bottom of
        "your last night is Friday" reads like a letter from a solicitor. The ABN stays
        where it is actually required, on the receipt, which also carries "Prices include
-       GST" and is a tax invoice. */
+       GST" and is the receipt for the tax invoice Stripe issues. */
     + vpaVenueEmailFoot(false)
     + '</div>', opts.heading);
 }

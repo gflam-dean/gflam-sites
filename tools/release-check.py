@@ -2622,9 +2622,9 @@ def local_checks(which):
     # "VenuePlay · ABN 35 679 383 049" and PartyPlay's "PartyPlay · ABN ...". Read: every template in
     # venueplay/emails and partyplay/emails (comments removed, so a note about history is not copy),
     # and the strings the help desk's email builders in the billing Worker write. The help desk's
-    # rendered emails are also run and read by tools/test-help-desk.js. One sentence is allowed (below). Not covered here, on purpose
-    # until Dean decides: the billing Worker's receipts and tax invoices, and the PartyPlay Worker's
-    # emailShell, which still name Gflam Group Pty Ltd as the supplier.
+    # rendered emails are also run and read by tools/test-help-desk.js. One sentence is allowed (below). The billing
+    # Worker's receipts, reminders, declined-card and plan emails are run and read by tools/test-receipts-plain-words.js
+    # (D99, 31 Oct 2026): "VenuePlay, ABN 35 679 383 049", never Gflam. Not covered here: the PartyPlay Worker's emailShell.
     gflam_hits = []
     for top in ('venueplay', 'partyplay'):
         ed = os.path.join(ROOT, top, 'emails')
@@ -3682,6 +3682,14 @@ def local_checks(which):
              'every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; only the win-back\'s one-click List-Unsubscribe header names the Worker; opening the cancel page never POSTs, only its button does, once, with the token', 56,
              'A welcome bounced by a mail provider\'s content filter never reaches the venue, and nobody hears '
              'why; a cancel page that POSTs on load lets a mail scanner switch a venue off'),
+            # D99: receipts and billing emails in plain words (Dean, 30 Oct 2026: tax invoices are Stripe's, the
+            # name is "VenuePlay, ABN 35 679 383 049", never Gflam Group, never founding), branch
+            # fix/receipts-and-host-titles-31oct. The billing page's words: tools/billing-words-in-chrome.test.py.
+            ('D99. Receipts and billing emails say VenuePlay plan, Receipt and "VenuePlay, ABN", never founding, Gflam or tax invoice',
+             'test-receipts-plain-words.js',
+             'Stripe\'s "Founding Membership" lines are printed as "VenuePlay plan (monthly)" with Stripe\'s quantity, rate and dates; the receipt calls itself a receipt in its subject, preview, body and small print, and Stripe\'s invoice keeps its title behind View invoice; the receipt, reminder, declined card (both kinds), plan moved up and welcome carry the "VenuePlay, ABN 35 679 383 049" line and no founding, Gflam or tax invoice; the big-night count still reads Stripe\'s own line', 46,
+             'A venue reading "Founding Membership" or Gflam Group on its receipt, or our email posing as the tax '
+             'invoice Stripe issues'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

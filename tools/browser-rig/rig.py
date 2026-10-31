@@ -67,10 +67,14 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class Rig(object):
-    def __init__(self, hold=None):
+    def __init__(self, hold=None, host_pages=()):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
-        as slow pub wifi does, so a test can look at a page whose scripts have not all arrived."""
+        as slow pub wifi does, so a test can look at a page whose scripts have not all arrived.
+        `host_pages` adds pages served with the host signed in, beside /app/index.html and the purchase
+        raffle (e.g. '/app/musical/host.html', 31 Oct 2026). Default: none, so every suite that does not
+        ask sees exactly what it saw before."""
         self.hold = dict(hold or {})
+        self.host_pages = tuple(host_pages or ())
         self.W = Worker()
         W = self.W
         self.db = {
@@ -124,7 +128,7 @@ class Rig(object):
                 ext = os.path.splitext(f)[1].lower()
                 if ext in ('.html', '.js', '.json', '.css', '.txt'):
                     text = io.open(f, encoding='utf-8').read()
-                    host_page = p in ('/app/index.html', '/app/purchase-raffle/index.html')   # pages that need a signed-in host
+                    host_page = p in ('/app/index.html', '/app/purchase-raffle/index.html') or p in rig.host_pages   # pages that need a signed-in host
                     if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
                     text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
                     text = text.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
