@@ -43,7 +43,7 @@ import argparse, json, secrets, sys, time, urllib.request, urllib.error, urllib.
 from pathlib import Path
 from vp_live import live, read_env
 
-GAME = 'https://venueplay-game.dean-tindale.workers.dev'
+GAME = 'https://game.venueplay.com.au'
 TEST_HOST_EMAIL = 'test-host@venueplay.invalid'
 PASS_FILE = Path.home() / '.gflam-migrate' / 'test-host.pass'
 ADMIN_LABEL = 'VenuePlay test host (TEMPORARY, live-overage-test.py)'

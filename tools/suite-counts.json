@@ -108,7 +108,7 @@
   "counted_by": "total"
  },
  "partyplay-backend/lib/pp-worker-15-oct.test.js": {
-  "checks": 39,
+  "checks": 44,
   "counted_by": "lines"
  },
  "partyplay-backend/worker/partyplay-api.test.js": {
@@ -197,6 +197,10 @@
  },
  "tools/night-pass-hq-in-chrome.test.py": {
   "checks": 13,
+  "counted_by": "lines"
+ },
+ "tools/no-dev-links.test.py": {
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
@@ -496,7 +500,7 @@
   "counted_by": "lines"
  },
  "tools/test-no-workersdev-links.js": {
-  "checks": 56,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/test-olgr-audit-19-oct.js": {

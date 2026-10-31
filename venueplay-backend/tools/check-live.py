@@ -19,8 +19,8 @@ import urllib.request
 
 SITE = "https://www.venueplay.com.au"
 APEX = "https://venueplay.com.au"
-GAME = "https://venueplay-game.dean-tindale.workers.dev"
-BILLING = "https://venueplay-api.dean-tindale.workers.dev"
+GAME = "https://game.venueplay.com.au"
+BILLING = "https://api.venueplay.com.au"
 TIMEOUT = 15
 
 results = []

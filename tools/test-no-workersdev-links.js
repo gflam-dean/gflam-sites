@@ -14,8 +14,12 @@
         failed payment, the plan uplift, the leaving emails, a help desk reply, the win-back) carries no
         workers.dev address in its body or subject
      2. the cancel link is on https://venueplay.com.au/, signed, and lands on a page that exists
-     3. the one Worker address left in any email is the win-back's List-Unsubscribe HEADER: a mail app's
-        one-click button POSTs to it and Cloudflare Pages cannot answer a POST
+     3. NO .dev HOST ANYWHERE, headers included (Dean, 31 Oct 2026: "Don't put any .dev links into anything
+        marketing or website or email customer facing"). The win-back's List-Unsubscribe header has to name
+        the Worker (a mail app's one-click button POSTs to it and Cloudflare Pages cannot answer a POST), and
+        it names it as https://api.venueplay.com.au, the Worker's custom domain, whatever API_ORIGIN holds.
+        The review buttons in Dean's prospect emails are on api.venueplay.com.au too, and the staff welcome
+        text names venueplay.com.au even with SITE_URL on a .dev preview
      4. venueplay/prospect/cancel/: its own script, run with a fake page and a fake network. Opening it
         never POSTs (a mail scanner that runs JavaScript cancels nobody); only the button does, once,
         with the signed token; it shows what the Worker answers
@@ -44,12 +48,18 @@ var fails = 0, ran = 0;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { fails++; print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); } }
 function drain() { if (typeof drainMicrotasks === 'function') drainMicrotasks(); }
 
-var WD = 'https://venueplay-api.dean-tindale.workers.dev';
+var WD = 'https://venueplay-api.dean-tindale.workers.dev';   // the old address, as a variable might still hold it
+var API = 'https://api.venueplay.com.au';                      // the Worker's own name on our domain (31 Oct 2026)
+/* Any host ending in .dev: workers.dev, pages.dev, web.dev, a staging.dev. Not a CSS class (.dev-tv) or prose (".dev links"). */
+var DEV_HOST = /(^|[^a-z0-9.-])((?:[a-z0-9-]+\.)+dev)(?![a-z0-9-])/i;
+function devHit(s) { var m = DEV_HOST.exec(String(s || '')); return m ? m[2] : ''; }
+var sms = [];
 var sent = [];
 fetch = function (url, opts) {
   url = String(url);
   var m = /\/emails\/([a-z-]+\.html)$/.exec(url);
   if (m) { var tpl = readFile('venueplay/emails/' + m[1]); return Promise.resolve({ ok: true, status: 200, text: function () { return Promise.resolve(tpl); } }); }
+  if (/api\.mobilemessage\.com\.au/.test(url)) { sms.push(JSON.parse(opts.body)); return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } }); }
   if (/api\.resend\.com/.test(url)) { sent.push(JSON.parse(opts.body)); return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({ id: 'e1' }); }, text: function () { return Promise.resolve('{}'); } }); }
   return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve([]); }, text: function () { return Promise.resolve('[]'); } });
 };
@@ -71,6 +81,7 @@ var ENVS = [
 ];
 function emailOf(m) { return { subject: m.subject || '', html: m.html || '', text: m.text || '', headers: m.headers || {} }; }
 function bodyHas(m, s) { return (m.subject + '\n' + m.html + '\n' + m.text).indexOf(s) !== -1; }
+function bodyDev(m) { return devHit(m.subject) || devHit(m.html) || devHit(m.text); }
 function headerHits(m, s) { var out = []; for (var k in m.headers) if (String(m.headers[k]).indexOf(s) !== -1) out.push(k); return out; }
 
 /* Every builder, as a venue receives it. Each returns the emails it produced. */
@@ -115,14 +126,46 @@ async function main() {
     for (var i = 0; i < list.length; i++) {
       var name = list[i][0], got = [];
       try { got = await list[i][1](); } catch (x) { got = []; print('  (' + name + ' threw: ' + x + ')'); }
-      var bad = got.filter(function (m) { return bodyHas(m, 'workers.dev'); });
-      check(name + ': built, and no workers.dev in its subject, html or text', got.length > 0 && got.every(function (m) { return m.html.length > 200; }) && !bad.length,
-        got.length ? (bad[0] ? bad[0].html.slice(Math.max(0, bad[0].html.indexOf('workers.dev') - 160), bad[0].html.indexOf('workers.dev') + 60) : got.map(function (m) { return m.html.length; })) : 'nothing was built');
-      got.forEach(function (m) { headerHits(m, 'workers.dev').forEach(function (h) { headerOnly.push(name + ' / ' + h); }); });
+      var bad = got.filter(function (m) { return bodyHas(m, 'workers.dev') || bodyDev(m); });
+      check(name + ': built, and no workers.dev or other .dev host in its subject, html or text', got.length > 0 && got.every(function (m) { return m.html.length > 200; }) && !bad.length,
+        got.length ? (bad[0] ? (bodyDev(bad[0]) || bad[0].html.slice(Math.max(0, bad[0].html.indexOf('workers.dev') - 160), bad[0].html.indexOf('workers.dev') + 60)) : got.map(function (m) { return m.html.length; })) : 'nothing was built');
+      got.forEach(function (m) { for (var k in m.headers) if (devHit(m.headers[k]) || String(m.headers[k]).indexOf('workers.dev') !== -1) headerOnly.push(name + ' / ' + k + ': ' + m.headers[k]); });
     }
-    check('the only Worker address left in any email is the win-back\'s one-click List-Unsubscribe header (a mail app POSTs to it; Pages cannot answer a POST)',
-      headerOnly.length === 1 && headerOnly[0] === 'win-back (marketing) / List-Unsubscribe', headerOnly);
+    check('no email carries a .dev host in any header either (the List-Unsubscribe exception is gone: the header names api.venueplay.com.au)',
+      headerOnly.length === 0, headerOnly);
+    var wb = await vpUnsubHeaders(ENV, 'Owner@Pub.com', 'winback');
+    check('the win-back\'s one-click List-Unsubscribe header is the Worker on https://api.venueplay.com.au/unsubscribe, with the token, then the mailto',
+      /^<https:\/\/api\.venueplay\.com\.au\/unsubscribe\?e=owner%40pub\.com&t=[0-9a-f]{32}&c=winback>, <mailto:hello@venueplay\.com\.au\?subject=unsubscribe>$/.test(wb['List-Unsubscribe'] || '') &&
+      wb['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click', wb);
+    var rv = await vpaReviewLinks(ENV, '2026-10-31-test-alpha', 1790000000, 1);
+    var rvBad = Object.keys(rv).filter(function (k) { return rv[k].indexOf(API + '/autopilot/review?f=2026-10-31-test-alpha&a=' + k + '&r=1&x=1790000000&t=') !== 0 || devHit(rv[k]); });
+    check('the Yes / No / Edit buttons in Dean\'s prospect review emails are on api.venueplay.com.au, never a .dev address',
+      Object.keys(rv).length === 3 && rvBad.length === 0, rv);
   }
+
+  print(''); print('API_ORIGIN is only ever a venueplay.com.au API host');
+  [['the old workers.dev address', WD, API], ['a pages.dev preview', 'https://abc123.venueplay.pages.dev', API],
+   ['the site itself (Pages cannot answer the one-click POST)', 'https://www.venueplay.com.au', API],
+   ['api.venueplay.com.au with a trailing slash', 'https://api.venueplay.com.au/', API],
+   ['another venueplay.com.au API host (a staging name)', 'https://api-staging.venueplay.com.au', 'https://api-staging.venueplay.com.au'],
+   ['nothing set', '', API]].forEach(function (c) {
+    check('API_ORIGIN = ' + c[0] + ': the Worker is named as ' + c[2], vpUnsubApi(envWith(c[1] ? { API_ORIGIN: c[1] } : {})) === c[2], vpUnsubApi(envWith(c[1] ? { API_ORIGIN: c[1] } : {})));
+  });
+
+  print(''); print('The text a new host or manager gets');
+  /* jsc has no timers, AbortController or btoa: stand-ins, so the Worker's own code runs as it does on Cloudflare. */
+  if (typeof AbortController === 'undefined') AbortController = function () { this.signal = {}; this.abort = function () {}; };
+  if (typeof setTimeout === 'undefined') { setTimeout = function () { return 0; }; clearTimeout = function () {}; }
+  if (typeof btoa === 'undefined') btoa = function (x) { return 'b64:' + x; };
+  [['SITE_URL on www', 'https://www.venueplay.com.au'], ['SITE_URL on a .dev preview', 'https://abc123.venueplay.pages.dev'], ['no SITE_URL', '']].forEach(function (c) {
+    sms = [];
+    var e = envWith({ MOBILEMESSAGE_USERNAME: 'u', MOBILEMESSAGE_PASSWORD: 'p' }); if (c[1]) e.SITE_URL = c[1];
+    var fin = false; vpaSendStaffWelcomeSms(e, '+61412345678', { venueName: 'The Royal Hotel', slug: 'the-royal-hotel-4220' }).then(function () { fin = true; });
+    for (var i = 0; i < 50 && !fin; i++) drain();
+    var msg = (((sms[0] || {}).messages || [])[0] || {}).message || '';
+    check('with ' + c[0] + ': "To sign in visit venueplay.com.au/app", the TV link on venueplay.com.au, no .dev host',
+      msg === 'The Royal Hotel has set you up on VenuePlay. To sign in visit venueplay.com.au/app. TV URL: venueplay.com.au/tv?the-royal-hotel-4220' && !devHit(msg), msg);
+  });
 
   print(''); print('The cancel link');
   var a = await vpaProspectCancelLink(envWith({ API_URL: WD, API_ORIGIN: WD }), FID);
@@ -147,6 +190,7 @@ async function main() {
   var html = readFile('venueplay/prospect/cancel/index.html');
   var scripts = html.match(/<script>([\s\S]*?)<\/script>/g) || [];
   var code = scripts.length ? scripts[scripts.length - 1].replace(/^<script>|<\/script>$/g, '') : '';
+  check('the page asks the Worker on api.venueplay.com.au and names no .dev host anywhere in it, comments included', code.indexOf('var VP_WORKER = "' + API + '";') !== -1 && !devHit(html) && html.indexOf('workers.dev') === -1, devHit(html) || 'no VP_WORKER line');
   check('the page has its one inline script and loads nothing else (no analytics: the token is in the address)', scripts.length === 1 && !/<script[^>]+src=/i.test(html) && !/gtag|googletagmanager|fbq\(/.test(html), scripts.length);
   function run(search, answers) {
     var els = {}, calls = [], queue = (answers || []).slice();
@@ -171,14 +215,14 @@ async function main() {
   var P = run(q, [ASK, DONE]);
   var posts = function (r) { return r.calls.filter(function (c) { return c.method !== 'GET'; }); };
   check('opening the page sends NO POST, only one GET asking the Worker what to say (reply=json)',
-    posts(P).length === 0 && P.calls.length === 1 && P.calls[0].url === WD + '/prospect/cancel?f=' + FID + '&t=0123456789abcdef0123456789abcdef&reply=json', P.calls);
+    posts(P).length === 0 && P.calls.length === 1 && P.calls[0].url === API + '/prospect/cancel?f=' + FID + '&t=0123456789abcdef0123456789abcdef&reply=json', P.calls);
   check('it shows the Worker\'s question and keeps the button', P.els.head.textContent === ASK.title && P.els.lede.textContent === ASK.text && P.els.ask.className === '', [P.els.head.textContent, P.els.ask.className]);
   check('nothing on the page clicks the button for them (no POST however long it sits open)', posts(P).length === 0 && P.calls.length === 1);
   P.click();
   var post = posts(P)[0] || {};
   var form = {}; String(post.body || '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) form[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); });
   check('the button sends ONE POST to the Worker\'s /prospect/cancel, as a form (no preflight), with the account, its signature and reply=json',
-    posts(P).length === 1 && post.url === WD + '/prospect/cancel' && post.headers['Content-Type'] === 'application/x-www-form-urlencoded' &&
+    posts(P).length === 1 && post.url === API + '/prospect/cancel' && post.headers['Content-Type'] === 'application/x-www-form-urlencoded' &&
     form.f === FID && form.t === '0123456789abcdef0123456789abcdef' && form.reply === 'json', post);
   check('and shows what the Worker answered, with the button gone', P.els.head.textContent === 'All done' && P.els.lede.textContent === DONE.text && P.els.ask.className === 'hidden', [P.els.head.textContent, P.els.ask.className]);
 

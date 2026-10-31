@@ -127,7 +127,7 @@ check('a wrong code: "That code didn\'t match", not saved, still on the code box
 A.$('vpAyCode').value = '123456'; A.$('vpAyVerify').click(); settle();
 var vo = A.calls.filter(function (c) { return c.fn === 'verifyOtp'; }).pop();
 check('the right code is verified as a PHONE CHANGE for that same number (Auth puts it on the login only now)', vo && vo.args.type === 'phone_change' && vo.args.phone === '+61452510904' && vo.args.token === '123456', vo);
-check('then their name goes to /account/my-name on the billing Worker, signed in as them', A.fetches.length === 1 && /venueplay-api\.dean-tindale\.workers\.dev\/account\/my-name$/.test(A.fetches[0].url) &&
+check('then their name goes to /account/my-name on the billing Worker, signed in as them', A.fetches.length === 1 && /api\.venueplay\.com\.au\/account\/my-name$/.test(A.fetches[0].url) &&
   A.fetches[0].headers.Authorization === 'Bearer TOKEN-1' && A.fetches[0].body.name === 'Amit bShah/b', A.fetches);
 check('"All set": from now on they sign in with that mobile by text code, one button on', /^All set, Amit$/.test(A.$('vpAyTitle').textContent) &&
   /From now on, sign in with 0452 510 904 and we'll text you a code/.test(A.$('vpAySub').textContent) && !!A.$('vpAyGo') && A.done.length === 0, [A.$('vpAyTitle').textContent, A.$('vpAySub').textContent]);

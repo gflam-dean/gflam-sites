@@ -128,7 +128,7 @@ class Rig(object):
                     if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
                     text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
                     text = text.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
-                    text = text.replace('https://venueplay-game.dean-tindale.workers.dev', '/__worker')
+                    text = text.replace('https://game.venueplay.com.au', '/__worker')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')
                 ctype = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')

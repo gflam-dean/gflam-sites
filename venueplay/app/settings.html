@@ -245,7 +245,7 @@
      Your account > Draws, which holds the raffle and members-draw permits). Only bingo is asked
      for here. VPPermits drops the bingo card itself where number bingo is hidden (an SA or NT
      pub, migration 116), so an empty wrap is the right answer for them. */
-  var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER="https://api.venueplay.com.au";
   function paintPermits(ctx){
     var wrap=$("permitsWrap"); if(!wrap || !window.VPPermits) return;
     var kinds=VPPermits.paint({ wrap:wrap, venue:ctx.venue||{}, kinds:["bingo"], worker:VP_WORKER, venueId:venueId });

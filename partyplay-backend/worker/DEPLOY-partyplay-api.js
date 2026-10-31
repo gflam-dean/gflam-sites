@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 30 Oct 2026, 08:35:17   fingerprint a505a889a3e3
+   Built 31 Oct 2026, 12:20:27   fingerprint 2f7cddbbe9d4
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '30 Oct 2026, 08:35 · 1a56577b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 12:20 · 9a123a43';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1622,10 +1622,14 @@ async function runPhotoSweep(env) {
    https address in List-Unsubscribe (RFC 8058), so the address in the header must be this
    WORKER, not the page: Pages answers a POST it has no route for with the homepage. The POST
    below needs only e and t in the query, which this carries. The mailto stays as the fallback
-   for mail apps that only do mailto. api.partyplay.com.au has no DNS yet (lib/pp-config.js), so
-   the workers.dev address is the default until API_ORIGIN is set. */
+   for mail apps that only do mailto. The address is api.partyplay.com.au, the Worker's custom domain
+   (live 31 Oct 2026; Dean: no .dev links in anything a customer sees). API_ORIGIN is used only when
+   it is a partyplay.com.au API host, so a variable still holding the old Cloudflare address never
+   reaches an email. The old address keeps answering, so headers already sent still work. */
+const PP_API_ORIGIN = 'https://api.partyplay.com.au';
 async function ppUnsubHeaders(env, email) {
-  const api = (env.API_ORIGIN || 'https://partyplay-api.dean-tindale.workers.dev').replace(/\/$/, '');
+  const o = String(env.API_ORIGIN || '').replace(/\/+$/, '');
+  const api = /^https:\/\/(?!www\.)[a-z0-9-]+\.partyplay\.com\.au$/.test(o) ? o : PP_API_ORIGIN;
   const url = api + '/unsubscribe?e=' + encodeURIComponent(String(email || '').trim().toLowerCase()) +
               '&t=' + (await unsubToken(env, email));
   return { 'List-Unsubscribe': '<' + url + '>, <mailto:hello@partyplay.com.au?subject=unsubscribe>',
@@ -2949,6 +2953,8 @@ function missingSecrets(env) {
 export default {
   // exposed so the test runner can check the allow-list directly
   _allowedOrigin: allowedOrigin,
+  // and the one-click unsubscribe header, so a test can hand it any API_ORIGIN (31 Oct 2026)
+  _ppUnsubHeaders: ppUnsubHeaders,
 
   /* NOTHING RAN ON A SCHEDULE.
 

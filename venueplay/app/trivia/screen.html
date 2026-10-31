@@ -287,7 +287,7 @@
 <script>
 (function(){
   "use strict";
-  var VP_SCREEN_API='https://venueplay-game.dean-tindale.workers.dev';
+  var VP_SCREEN_API='https://game.venueplay.com.au';
   function $(id){ return document.getElementById(id); }
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -331,7 +331,7 @@
     try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VENUE_UNREAD=!!VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} return s; } }catch(e){}
     return "";
   })();
-  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  var VP_GAME_API='https://game.venueplay.com.au';
   // Verify host broadcasts (migrations 38/49): fetch this venue's PUBLIC key; vpGate drops forged
   // messages in enforce mode, and delivers as before when enforce is off or the script is absent.
   if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }

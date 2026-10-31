@@ -18,10 +18,11 @@
 <!--
   THE CANCEL LINK IN A PROSPECT'S EMAILS LANDS HERE, ON venueplay.com.au (31 Oct 2026).
 
-  It used to go straight to the billing Worker on workers.dev, and the welcome to a venue on Ozemail
-  bounced: "550 5.7.1 Policy-DT510: Rejected content policy violation". A plain reply with only
-  venueplay.com.au links went through. So no email a venue or a player gets carries a workers.dev
-  address, and this page does the asking. Old links (to the Worker) still work there.
+  It used to go straight to the billing Worker on its old Cloudflare address, and the welcome to a
+  venue on Ozemail bounced: "550 5.7.1 Policy-DT510: Rejected content policy violation". A plain reply
+  with only venueplay.com.au links went through. So no email a venue or a player gets carries that
+  address, and this page does the asking. Old links (to the Worker) still work there. The page asks
+  the Worker on its own name, api.venueplay.com.au (31 Oct 2026).
 
   OPENING THIS PAGE NEVER CANCELS ANYTHING. Mail scanners open every link in an email, and
   Microsoft's run the page's JavaScript too. On load the page only ASKS the Worker (a GET, which
@@ -65,7 +66,7 @@
   </main>
 <script>
 (function () {
-  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER = "https://api.venueplay.com.au";
   function $(id) { return document.getElementById(id); }
   /* The same param() as /unsubscribe, letter for letter (tools/check-twins.py). */
   function param(n) {

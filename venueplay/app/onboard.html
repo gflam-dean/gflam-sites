@@ -288,7 +288,7 @@
      page uses: it creates the Auth login from the mobile, texts them their sign-in link, and
      writes the permissions object. X-VP-Venue is how an HQ admin tells the Worker which account
      they are acting on (View as). */
-  var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER="https://api.venueplay.com.au";
   /* The HQ admin's own token; /admin/venue checks it is an owner or accounts admin. */
   function workerPost(path, body){
     return client.auth.getSession().then(function(r){

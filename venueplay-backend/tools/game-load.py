@@ -36,7 +36,9 @@ WORK = Path.home() / '.gflam-migrate'
 ENV_FILE = Path.home() / '.gflam-migrate.env'
 PASS_FILE = WORK / 'load-host.pass'
 PG = '/Applications/Postgres.app/Contents/Versions/latest/bin'
-PROD = ('venueplay-game.dean-tindale.workers.dev', 'venueplay-api.dean-tindale.workers.dev', 'partyplay-api.dean-tindale.workers.dev')
+PROD = ('venueplay-game.dean-tindale.workers.dev', 'venueplay-api.dean-tindale.workers.dev', 'partyplay-api.dean-tindale.workers.dev',
+        # the same Workers on their own names (custom domains, 31 Oct 2026)
+        'game.venueplay.com.au', 'api.venueplay.com.au', 'api.partyplay.com.au', 'api.gflamtouring.com.au')
 UA = {'User-Agent': 'venueplay-game-load/2.0', 'Content-Type': 'application/json'}
 CTX = ssl.create_default_context()
 LIVE_REF = 'ijkzgmdtwtgfkedqspxm'

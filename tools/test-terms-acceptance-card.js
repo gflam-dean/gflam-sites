@@ -141,7 +141,7 @@ ANSWER = 'offline'; CALLS.length = 0; qgo.click(); drainMicrotasks(); drainMicro
 check('no network says so in words and the button comes back', /Could not reach VenuePlay/.test(qmsg.textContent) && qgo.disabled === false, qmsg.textContent);
 ANSWER = null; CALLS.length = 0; qgo.click(); drainMicrotasks(); drainMicrotasks(); drainMicrotasks();
 var call = CALLS[0] || { opts: { headers: {} } };
-check('it posts to the billing Worker\'s /account/compliance-accept', CALLS.length === 1 && call.url === 'https://venueplay-api.dean-tindale.workers.dev/account/compliance-accept', call.url);
+check('it posts to the billing Worker\'s /account/compliance-accept', CALLS.length === 1 && call.url === 'https://api.venueplay.com.au/account/compliance-accept', call.url);
 check('signed in as the person ticking, naming the venue', call.opts.headers.Authorization === 'Bearer TOKEN-1' && call.opts.headers['X-VP-Venue'] === 'V1', call.opts.headers);
 check('the body is the venue, accepted:true and the trimmed name', call.body && call.body.venue_id === 'V1' && call.body.accepted === true && call.body.by === 'Jane Smith', call.body);
 var qt = card(Q) ? allText(card(Q)) : '';

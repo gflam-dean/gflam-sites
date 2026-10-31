@@ -28,7 +28,7 @@ code the console displays.
 """
 import argparse, json, sys, time, urllib.request, urllib.error
 
-GAME = 'https://venueplay-game.dean-tindale.workers.dev'
+GAME = 'https://game.venueplay.com.au'
 SITE = 'https://venueplay.com.au'
 # NO HAND-MAINTAINED LIST. This said ['the-average-joe'] while SEVENTEEN venues were
 # active, so the daily audit cleared the fleet every morning having looked at one pub.

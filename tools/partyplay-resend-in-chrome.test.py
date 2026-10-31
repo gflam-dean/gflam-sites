@@ -91,7 +91,7 @@ srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Site)
 srv.socket.listen(128)   # Python's default queue of 5 drops scripts when a page asks for many at once (browser-rig/rig.py Server, 26 Oct 2026)
 BASE = 'http://127.0.0.1:%d' % srv.server_address[1]
 EXTERNAL = [
-    ("'https://partyplay-api.dean-tindale.workers.dev'", "'%s/__worker'" % BASE),
+    ("'https://api.partyplay.com.au'", "'%s/__worker'" % BASE),
     ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js'),
     ('https://www.googletagmanager.com/gtag/js?id=G-73XKQG9TBN', '/__blank.js'),
     ('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap', '/__blank.css'),

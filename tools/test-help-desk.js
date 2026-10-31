@@ -528,7 +528,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('with no VAPID keys set the ticket and its email still go, and no push is tried', pushes.length === 0 && sent.some(function (m) { return /\[#\d+\]/.test(m.subject); }));
 
   print('PARTYPLAY\'S PAGES MAY POST HERE, FOR THE HELP DESK ONLY');
-  async function preflight(path, origin) { var r = await _d.fetch({ url: 'https://venueplay-api.dean-tindale.workers.dev' + path, method: 'OPTIONS', headers: hdr({ Origin: origin }) }, ENV); return r.headers['Access-Control-Allow-Origin']; }
+  async function preflight(path, origin) { var r = await _d.fetch({ url: 'https://api.venueplay.com.au' + path, method: 'OPTIONS', headers: hdr({ Origin: origin }) }, ENV); return r.headers['Access-Control-Allow-Origin']; }
   check('partyplay.com.au may post to /help/ticket', (await preflight('/help/ticket', 'https://partyplay.com.au')) === 'https://partyplay.com.au');
   check('www.partyplay.com.au too', (await preflight('/help/ticket', 'https://www.partyplay.com.au')) === 'https://www.partyplay.com.au');
   check('but not to anything else in this Worker', (await preflight('/account/summary', 'https://partyplay.com.au')) !== 'https://partyplay.com.au');

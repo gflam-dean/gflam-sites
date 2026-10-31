@@ -28,7 +28,7 @@
    and "Sign in with my mobile instead". Never an error code. */
 (function (root) {
   "use strict";
-  var API = "https://venueplay-api.dean-tindale.workers.dev";
+  var API = "https://api.venueplay.com.au";
   var SUPA_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co";
   var SUPA_ANON = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
   var METHOD_KEY = "vpSignInWith";      // RETIRED 29 Oct 2026: it made the sign-in page open on email. Cleared, never written.

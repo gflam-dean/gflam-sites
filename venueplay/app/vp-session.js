@@ -664,7 +664,7 @@
      runs trivia AND musical on the same night has TWO open sessions, and the old
      single "vpOpenSession" key silently overwrote the first, leaving it unclosable.
      ------------------------------------------------------------------------ */
-  var GAME_API   = "https://venueplay-game.dean-tindale.workers.dev";
+  var GAME_API   = "https://game.venueplay.com.au";
   var OPEN_KEY   = "vpOpenSessions";   // JSON array of {id, venue}
   var LEGACY_KEY = "vpOpenSession";    // the old single-object key; still drained so nothing is orphaned
   var SHIFT_KEY  = "vpShiftStart";
@@ -1084,7 +1084,7 @@
      reached) is never asked, and a switched-off venue shows its hold card instead.
      TERMS_TICK is VPA_COMPLIANCE_TICK in the billing Worker word for word, and TERMS_EFFECTIVE the
      date on terms.html: tools/test-terms-acceptance-card.js holds all three equal. */
-  var BILLING_API = "https://venueplay-api.dean-tindale.workers.dev";
+  var BILLING_API = "https://api.venueplay.com.au";
   var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.";
   var TERMS_EFFECTIVE = "28 October 2026";
   function termsMode(ctx) {

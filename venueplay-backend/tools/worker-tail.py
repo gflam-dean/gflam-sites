@@ -37,7 +37,7 @@ async def main():
                 ev = json.loads(raw)
                 url = (ev.get('event') or {}).get('request', {}).get('url', '') if isinstance(ev.get('event'), dict) else ''
                 cron = (ev.get('event') or {}).get('cron') if isinstance(ev.get('event'), dict) else None
-                head = url.replace('https://venueplay-game.dean-tindale.workers.dev', '') or (('cron ' + cron) if cron else str(ev.get('scriptName')))
+                head = url.replace('https://venueplay-game.dean-tindale.workers.dev', '').replace('https://game.venueplay.com.au', '') or (('cron ' + cron) if cron else str(ev.get('scriptName')))
                 lines = [' '.join(str(m) for m in l.get('message', [])) for l in ev.get('logs', [])]
                 excs = ['EXCEPTION %s: %s' % (x.get('name'), x.get('message')) for x in ev.get('exceptions', [])]
                 if not lines and not excs and not want:

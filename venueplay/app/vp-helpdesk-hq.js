@@ -41,7 +41,7 @@
 (function (root) {
   "use strict";
   var doc = root.document;
-  var API = root.VP_HELP_API || "https://venueplay-api.dean-tindale.workers.dev";
+  var API = root.VP_HELP_API || "https://api.venueplay.com.au";
   var CAT = { sales: "Sales", venue_support: "Venue support", patron_support: "Player support", accounts: "Accounts", general: "General" };
   var CAT_PP = { venue_support: "Host support", patron_support: "Guest support" };
   var CH = { patron_form: "Phone form", venue_form: "Venue form", web_form: "Website form", email: "Email", phone: "Phone call", manual: "Added by hand" };

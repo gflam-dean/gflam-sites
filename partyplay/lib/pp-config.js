@@ -17,28 +17,18 @@
   var isProd = /(^|\.)partyplay\.com\.au$/.test(host);
 
   root.PPConfig = {
-    /* The Worker. On the real domain it answers on its own subdomain; anywhere
-       else (a pages.dev preview, or localhost) it is the workers.dev address, so
-       a preview build is never quietly talking to production.
+    /* The Worker, on its own name on our domain: api.partyplay.com.au, a custom domain on the
+       partyplay-api Worker (live 31 Oct 2026, /health answers there). ONE address everywhere.
 
-       The workers.dev subdomain is dean-tindale, NOT gflam. It is per Cloudflare
-       ACCOUNT, not per project, which is why VenuePlay's two Workers use the same
-       one. Check an existing Worker rather than guessing from the business name:
-       guessing is how this was wrong the first time. */
-    /* ONE address for now, on purpose.
-       api.partyplay.com.au has no DNS record: the Worker custom domain has not
-       been added yet, so a browser on partyplay.com.au had nowhere to send the
-       request and checkout failed on the live site while working on previews.
-       The workers.dev address is the Worker's own and always exists.
+       Dean, 31 Oct 2026: "Don't put any .dev links into anything marketing or website or email
+       customer facing." The Worker's old Cloudflare address still answers, so a page cached
+       before this change keeps working, but nothing served here names it.
 
-       TO SWITCH LATER: add api.partyplay.com.au under the Worker's Domains and
-       Routes, confirm https://api.partyplay.com.au/health answers, then restore
-       the split below. Not before: a split that points half the traffic at a
-       name that does not resolve is worse than no split at all.
-
-         API: isProd ? 'https://api.partyplay.com.au'
-                     : 'https://partyplay-api.dean-tindale.workers.dev', */
-    API: 'https://partyplay-api.dean-tindale.workers.dev',
+       There used to be a split here (this address on partyplay.com.au, the Cloudflare one
+       anywhere else) so a preview "never quietly talked to production". Both names are the
+       SAME Worker, so the split never did that, and a preview origin is refused by the
+       Worker's CORS anyway (allowedOrigin). One address is the honest version. */
+    API: 'https://api.partyplay.com.au',
 
     /* THE URL AND THE KEY HAVE TO BE FROM THE SAME PROJECT, and for a while they were not.
 

@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from vp_live import live
 
 SUPA = 'https://ijkzgmdtwtgfkedqspxm.supabase.co'
-GAME = 'https://venueplay-game.dean-tindale.workers.dev'
+GAME = 'https://game.venueplay.com.au'
 UA   = 'VenuePlay-check-signing/1.0'
 ENV  = Path.home() / '.gflam-migrate.env'
 PASS = Path.home() / '.gflam-migrate' / 'test-host.pass'

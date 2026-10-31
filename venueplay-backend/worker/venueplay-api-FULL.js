@@ -25,9 +25,11 @@
  *   SITE_URL                    https://www.venueplay.com.au
  *   LAUNCH_TS                   unix seconds for first charge (24 Sep 2026 00:00 Brisbane = 1790172000)
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
+ *   API_ORIGIN                  (optional) this Worker's address in emails; https://api.venueplay.com.au
+ *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 11:12 · bb09825e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 12:20 · 0656dfc7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -11451,9 +11453,16 @@ const VP_UNSUB_EMAIL_RE = /^[^@\s"<>,;()\\]+@[^@\s"<>,;()\\]+\.[^@\s"<>,;()\\]+$
 const VP_UNSUB_MAILTO = 'mailto:hello@venueplay.com.au?subject=unsubscribe';
 
 /* The https address in List-Unsubscribe must be THIS Worker, not the Pages site: a mail app's
-   Unsubscribe button POSTs straight to it, and Pages answers a POST with the homepage. */
+   Unsubscribe button POSTs straight to it, and Pages answers a POST with the homepage.
+   OUR OWN NAME FOR IT, api.venueplay.com.au (Dean, 31 Oct 2026: "Don't put any .dev links into
+   anything marketing or website or email customer facing"). The Worker answers there as a custom
+   domain, and on its old Cloudflare address too, so links already sent keep working. API_ORIGIN is
+   used only when it is a venueplay.com.au API host: a variable still holding the old Cloudflare
+   address, or the site itself, never reaches an email. The review links Dean gets use this too. */
+const VPA_API_ORIGIN = 'https://api.venueplay.com.au';
 function vpUnsubApi(env) {
-  return (env.API_ORIGIN || 'https://venueplay-api.dean-tindale.workers.dev').replace(/\/+$/, '');
+  const s = String(env.API_ORIGIN || '').replace(/\/+$/, '');
+  return /^https:\/\/(?!www\.)[a-z0-9-]+\.venueplay\.com\.au$/.test(s) ? s : VPA_API_ORIGIN;
 }
 
 async function vpUnsubToken(env, email) {
@@ -11496,8 +11505,8 @@ async function vpUnsubHeaders(env, email, campaign) {
 /* The footer of a marketing email: who is sending (name, ABN, site) and the link. The link in the BODY is
    venueplay.com.au/unsubscribe (31 Oct 2026), the page the welcome emails already link, which writes to the
    same vp_unsubscribes list on its button: a workers.dev address in an email body is what Ozemail's content
-   filter bounced. Only the List-Unsubscribe header still names this Worker, because a mail app POSTs to it
-   and Pages cannot answer a POST (vpUnsubApi). */
+   filter bounced. Only the List-Unsubscribe header names this Worker, because a mail app POSTs to it and
+   Pages cannot answer a POST, and since 31 Oct 2026 it names it as api.venueplay.com.au (vpUnsubApi). */
 async function vpUnsubFooterHtml(env, email, campaign) {
   const e = String(email || '').trim().toLowerCase();
   const link = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
@@ -12888,7 +12897,9 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     // Drop the www as well as the scheme. SITE_URL carries it, that is 8 characters twice, and
     // it was enough on its own to push a normal venue over 160 and into a second segment. The
     // TV lobby already shows players the apex, so this is the address the room sees anyway.
-    const site = (env.SITE_URL || 'https://venueplay.com.au')
+    // vpaCustomerSite: only ever venueplay.com.au, so a SITE_URL left on a preview or .dev address
+    // never goes out in a text (Dean, 31 Oct 2026: no .dev links in anything a customer sees).
+    const site = vpaCustomerSite(env)
       .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
     const venue = String((opts && opts.venueName) || 'Your venue').slice(0, 24);
     const slug = (opts && opts.slug) || '';

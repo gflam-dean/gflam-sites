@@ -245,7 +245,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   F.row().first_signin_at = new Date(fs).toISOString(); F.row().free_month_ends_at = new Date(vpaFreeMonthEnd(fs)).toISOString();
   var link = await vpaProspectCancelLink(ENV, F.v.founding_id);
   var q = link.split('?')[1];
-  function creq(method, qs, bodyTxt) { return { method: method, url: 'https://venueplay-api.dean-tindale.workers.dev/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function () { return null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
+  function creq(method, qs, bodyTxt) { return { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function () { return null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
   var g = await vpaProspectCancel(creq('GET', q), ENV);
   check('opening the link only ASKS (a mail scanner opening it cancels nothing)', /Cancel VenuePlay for/.test(g.body) && /Yes, cancel it/.test(g.body) && !F.row().cancelled_at && F.v.status === 'active', g.body.slice(0, 200));
   var bad = await vpaProspectCancel(creq('POST', '', 'f=' + F.v.founding_id + '&t=' + new Array(33).join('0')), ENV);
@@ -262,7 +262,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var F2 = await prospect({ name: 'Lakeside Test Tavern' });
   var q2 = (await vpaProspectCancelLink(ENV, F2.v.founding_id)).split('?')[1];
   function rreq(method, qs, bodyTxt) { var h = { origin: 'https://venueplay.com.au', 'content-type': 'application/x-www-form-urlencoded' };
-    return { method: method, url: 'https://venueplay-api.dean-tindale.workers.dev/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function (k) { return h[String(k).toLowerCase()] || null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
+    return { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function (k) { return h[String(k).toLowerCase()] || null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
   async function rcall(method, qs, bodyTxt) { var r = await _d.fetch(rreq(method, qs, bodyTxt), ENV); var b = null; try { b = JSON.parse(r.body); } catch (e) {} return { status: r.status, body: b, raw: r.body, headers: r.headers || {} }; }
   var ja = await rcall('GET', q2 + '&reply=json');
   check('the page\'s GET (reply=json) only ASKS: the Worker page\'s own question and words, the button kept, nothing written',

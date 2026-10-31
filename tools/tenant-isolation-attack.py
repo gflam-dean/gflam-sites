@@ -33,7 +33,7 @@ UA = 'VenuePlay-tenant-attack/1.0 (contact: dean.tindale@outlook.com)'
 # REASON. The first run of this file reported the Worker refusing a made-up venue; it
 # was Cloudflare refusing Python. A test that passes because it never arrived is worse
 # than no test.
-GAME = 'https://venueplay-game.dean-tindale.workers.dev'
+GAME = 'https://game.venueplay.com.au'
 EMAIL = 'test-host@venueplay.invalid'
 
 bad = 0

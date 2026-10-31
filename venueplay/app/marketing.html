@@ -130,7 +130,7 @@
 <script>
 (function(){
   "use strict";
-  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var VP_WORKER = "https://api.venueplay.com.au";
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function tokenThen(){ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||null; }); }

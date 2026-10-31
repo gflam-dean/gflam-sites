@@ -314,9 +314,8 @@ blocker 1, and it is about forty lines.
 - `handleCheckout` writes the pending licence row, then calls Stripe, then patches the
   session id. If Stripe fails, the pending row is orphaned. `checkout.session.expired`
   cleans up sessions that were created, not this case.
-- `api.partyplay.com.au` still has no DNS record. `lib/pp-config.js` points the site at
-  `partyplay-api.dean-tindale.workers.dev` on purpose and the comment explains why. Nothing
-  is broken, it is just not the address you would want on a live product.
+- DONE 31 Oct 2026: `api.partyplay.com.au` is the Worker's custom domain and `lib/pp-config.js`
+  points the site at it. The old `partyplay-api.dean-tindale.workers.dev` address keeps answering.
 
 ---
 

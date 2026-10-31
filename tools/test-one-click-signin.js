@@ -84,7 +84,7 @@ check('the token leaves the address bar before anything else (history.replaceSta
 check('NOTHING is sent on page load, so a mail scanner opening the link cannot use it', G1.calls.length === 0 && G1.result === 'ready', G1.calls);
 G1.els.goBtn.click(); G1.els.goBtn.click(); settle();
 check('a tap posts the token, in the body, to the billing Worker\'s /auth/one-click (twice tapped, one request)',
-  G1.calls.length === 1 && G1.calls[0].method === 'POST' && /venueplay-api\.dean-tindale\.workers\.dev\/auth\/one-click$/.test(G1.calls[0].url) && G1.calls[0].body.t === TOKEN_A && G1.calls[0].url.indexOf(TOKEN_A) === -1, G1.calls);
+  G1.calls.length === 1 && G1.calls[0].method === 'POST' && /api\.venueplay\.com\.au\/auth\/one-click$/.test(G1.calls[0].url) && G1.calls[0].body.t === TOKEN_A && G1.calls[0].url.indexOf(TOKEN_A) === -1, G1.calls);
 check('the hash the Worker returns is exchanged with verifyOtp, as the email code is', G1.verifies.length === 1 && G1.verifies[0].token_hash === 'pkce_HASH' && G1.verifies[0].type === 'magiclink', G1.verifies);
 var shiftAt = parseInt(G1.ls.vpShiftStart, 10);
 check('a fresh 4 hour shift starts now (vpShiftStart), exactly as a typed code starts one', shiftAt > 0 && Math.abs(Date.now() - shiftAt) < 60000, G1.ls);
@@ -107,7 +107,7 @@ check('a used link drops the session already on this device before it shows that
 G2.els.resendBtn.click(); G2.els.resendBtn.click(); settle();
 var rq = G2.calls.filter(function (c) { return /\/auth\/one-click\/resend$/.test(c.url); });
 check('Send me a new link: ONE request (twice tapped) to the billing Worker with the old token and the address it went to', rq.length === 1 && rq[0].method === 'POST' &&
-  /venueplay-api\.dean-tindale\.workers\.dev\/auth\/one-click\/resend$/.test(rq[0].url) && rq[0].body.t === TOKEN_A && rq[0].body.e === 'amit@caz.example', rq);
+  /api\.venueplay\.com\.au\/auth\/one-click\/resend$/.test(rq[0].url) && rq[0].body.t === TOKEN_A && rq[0].body.e === 'amit@caz.example', rq);
 var sentMsg = G2.els.resendMsg.textContent;
 check('it says a new link is on its way IF that address has a login (never whether it has), and the button goes', /If amit@caz\.example is on a VenuePlay login, a new link is on its way/.test(sentMsg) && G2.els.resendBtn.hidden === true, sentMsg);
 var G2b = goPage('#t=' + TOKEN_A + '&e=amit%40caz.example', { status: 410, body: { ok: false } }); G2b.resendAnswer = { status: 200, body: { ok: false, anything: 'else' } };

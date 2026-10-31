@@ -3677,9 +3677,11 @@ def local_checks(which):
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
+            # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers
+            # had their own names: api.venueplay.com.au, game.venueplay.com.au, api.partyplay.com.au, api.gflamtouring.com.au.
             ('D98. No email a venue gets carries a workers.dev address, and the cancel link asks on venueplay.com.au',
              'test-no-workersdev-links.js',
-             'every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; only the win-back\'s one-click List-Unsubscribe header names the Worker; opening the cancel page never POSTs, only its button does, once, with the token', 56,
+             'every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; no .dev host in any header, the win-back\'s one-click List-Unsubscribe and Dean\'s review buttons on api.venueplay.com.au, the staff text on venueplay.com.au; opening the cancel page never POSTs, only its button does, once, with the token', 70,
              'A welcome bounced by a mail provider\'s content filter never reaches the venue, and nobody hears '
              'why; a cancel page that POSTs on load lets a mail scanner switch a venue off'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
@@ -4263,9 +4265,17 @@ def local_checks(which):
 
 VP = 'https://venueplay.com.au'
 PP = 'https://partyplay.com.au'
-VP_GAME = 'https://venueplay-game.dean-tindale.workers.dev'
-VP_API  = 'https://venueplay-api.dean-tindale.workers.dev'
-PP_API  = 'https://partyplay-api.dean-tindale.workers.dev'
+# The Workers on their own names (custom domains, Dean 31 Oct 2026), which is what every page calls.
+# Their old Cloudflare addresses still answer for the TV app, old emails and cached pages, and
+# each_worker_is_the_right_worker asks those too, so neither name can quietly stop working.
+VP_GAME = 'https://game.venueplay.com.au'
+VP_API  = 'https://api.venueplay.com.au'
+PP_API  = 'https://api.partyplay.com.au'
+TOURING_API = 'https://api.gflamtouring.com.au'
+OLD_WORKER_ADDRESSES = (('billing (old address)', 'https://venueplay-api.dean-tindale.workers.dev', 'venueplay-api'),
+                        ('game (old address)', 'https://venueplay-game.dean-tindale.workers.dev', 'venueplay-game'),
+                        ('partyplay (old address)', 'https://partyplay-api.dean-tindale.workers.dev', 'partyplay-api'),
+                        ('touring (old address)', 'https://touring-api.dean-tindale.workers.dev', 'touring-api'))
 
 # path -> a string that only appears when the page is genuinely there and current.
 # A page answering 200 with the site's fallback HTML will not contain these.
@@ -5071,7 +5081,11 @@ def each_worker_is_the_right_worker():
                              # confused with its sibling -- but it CAN be handed a
                              # VenuePlay file, which is exactly what happened in
                              # the other direction on 31 Aug.
-                             ('partyplay', PP_API, 'partyplay-api')):
+                             ('partyplay', PP_API, 'partyplay-api'),
+                             ('touring', TOURING_API, 'touring-api')) + OLD_WORKER_ADDRESSES:
+        # BOTH NAMES FOR EACH WORKER (31 Oct 2026). The pages call the custom domains; the TV app
+        # (Venue.GAME_API), every email sent before 31 Oct and any cached page call the old ones.
+        # A route or custom domain removed in the dashboard would break one set silently.
         status, body, _ = get(url + '/health')
         try:
             got = (json.loads(body) or {}).get('worker')
@@ -5087,8 +5101,10 @@ def each_worker_is_the_right_worker():
         # name. Saying "the wrong file was pasted" there would be a lie, and a
         # check that cries wolf is one people learn to push past.
         if got is None:
-            ok('the %s URL names itself' % label, True, 'no name yet, so this build predates it',
-               why='')
+            # Not answering at all is not "an old build": a custom domain or route taken away in
+            # the dashboard answers with an error page, and that must be red.
+            ok('the %s URL names itself' % label, status == 200, 'no name yet, so this build predates it',
+               why='%s/health answered HTTP %s, so nothing calling this address reaches the Worker' % (url, status))
         else:
             ok('the %s URL is answering as %s' % (label, want), got == want, got,
                why='it is answering as "%s". The wrong file was pasted into this Worker: '

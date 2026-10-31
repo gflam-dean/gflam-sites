@@ -681,7 +681,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // re-derivable from /snapshot. AUDIO STAYS ON THIS DEVICE: the ~30s preview clip is played
   // by the audio engine further down; the Worker only tracks which song was played. Confirm
   // this matches the deployed venueplay-game Worker URL.
-  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  var VP_GAME_API='https://game.venueplay.com.au';
   function getToken(){
     var c=(window.VP&&VP.getClient)?VP.getClient():client;
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });

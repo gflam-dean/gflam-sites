@@ -155,7 +155,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 src = io.open(PAGE, encoding='utf-8').read()
 A = 'const SUPABASE_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co";'
-B = 'const TOURING_API = "https://touring-api.dean-tindale.workers.dev";'
+B = 'const TOURING_API = "https://api.gflamtouring.com.au";'
 if A not in src or B not in src:
     print('the page no longer names its two addresses the way this test expects; nothing was run')
     print('0 of 1 checks passed')

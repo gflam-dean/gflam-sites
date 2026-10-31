@@ -56,7 +56,7 @@
   var MOUNT = attr("data-mount", "");
   /* The help desk is one desk for both brands, on the VenuePlay billing Worker. Overridable for a
      test page with window.VP_HELP_API. */
-  var API = root.VP_HELP_API || "https://venueplay-api.dean-tindale.workers.dev";
+  var API = root.VP_HELP_API || "https://api.venueplay.com.au";
   var SUPPORT = "support@" + BRAND + ".com.au";
   var NAME = BRAND === "partyplay" ? "PartyPlay" : "VenuePlay";
   var FAQ_KEY = { patron: "patron", venue: "venue", guest: "guest", host: "host" }[MODE] || "";
