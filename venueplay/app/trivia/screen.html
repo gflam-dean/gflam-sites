@@ -279,6 +279,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/topanswers/pr-board.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
@@ -703,6 +704,9 @@
   if(window.VPScreenRouter && VENUE_SLUG){
     _router = VPScreenRouter.start({
       client: client, self: "trivia", slug: VENUE_SLUG, venueCode: venueCode, gate: vpGate,
+      channel: function(name, game){ var make=function(){ return client.channel(name, { config:{ broadcast:{ self:false } } }); };
+        try{ if(window.VPRoom && VPRoom.venue && !VP_DEMO) return VPRoom.venue(VP_GAME_API, VENUE_SLUG).channel(name, "tv", make, { fmt:(game==="bingo" ? null : game), mark:false }); }catch(e){}
+        return make(); },
       busy: function(){ return state.phase && state.phase !== "lobby"; }
     });
   }
@@ -710,8 +714,14 @@
      CLOSED and never tried again, so one blip left this wall deaf for the night (audit, 27 Sep
      2026). /app/vp-channel.js rebuilds it with a backoff and is shaped like a channel, so
      nothing below changed. Without the script it is the plain channel, as before. */
-  var ch=window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
-                          : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+  /* ON THE ROOM WHEN THE WORKER SAYS THIS FORMAT IS (1 Nov 2026, /app/vp-room.js): the venue's room
+     for this channel, in one venue group with the router's, so the screen holds no Supabase
+     connection; otherwise, or if anything about that fails, the page's own channel as before. */
+  var ch=(function(make){
+    try{ if(window.VPRoom && VPRoom.venue && typeof VENUE_SLUG!=="undefined" && VENUE_SLUG && !VP_DEMO) return VPRoom.venue(VP_GAME_API, VENUE_SLUG).channel("vp-"+CODE, "tv", make, { fmt:"trivia" }); }catch(e){}
+    return make();
+  })(function(){ return window.VPChannel ? VPChannel.keep(client, "vp-"+CODE, { config:{ broadcast:{ self:false } } })
+                                         : client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } }); });
   var tvSubscribed=false;
   /* The try/catch is not decoration: ch.send throws once the socket is gone, and
      this is called from repaint paths. Unguarded it takes the whole render with it

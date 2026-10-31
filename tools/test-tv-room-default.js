@@ -95,13 +95,15 @@ var VPRoom = window.VPRoom;
 /* ---- what connectRealtime() reads from the page around it ---- */
 var VP_GAME_API = 'https://game.venueplay.com.au', CODE = 'ACDEFG', SUPA_URL = 'https://x.supabase.co', SUPA_ANON = 'anon';
 var _rtTries = 0, client = null, ch = null, tvSubscribed = false;
-var _useRoom = false, _roomTried = false, _room = null, _roomClient = false, _ear = null;
+var _useRoom = false, _roomTried = false, _room = null, _roomClient = false, _ear = null, _roomVenue = false;
+var VENUE_SLUG = 'test-alpha';
 var got = [], deaf = {}, statusShown = [], asked = 0;
 function vpGate(p, cb) { if (p && p.forged) return; cb(p); }
 function onMsg(m) { got.push(m); }
 function noteDeaf(n, d) { deaf[n] = d; }
 function tvStatus(c) { statusShown.push(!!c); }
 window.__vpTvAsk = function () { asked++; };
+eval(lift(TV, 'tvVenueGroup'));
 eval(lift(TV, 'tvSend'));
 eval(lift(TV, 'connectRealtime'));
 
@@ -148,11 +150,32 @@ ok('tvSend now speaks Supabase', main[0].sent.some(function (m) { return m.t ===
 print('\n== the room closes the TV with 4503 (ROOM_OFF, or another page handed it over) ==');
 clients = []; socks = []; posts = []; got = []; attrs = {};
 client = null; ch = null; tvSubscribed = false; _useRoom = true; _roomTried = false; _room = null; _roomClient = false; _ear = null;
+eval(ROOMJS); VPRoom = window.VPRoom;      // a reloaded page: a fresh vp-room.js, so a fresh venue group
 connectRealtime(); tick(100);
 ok('control: in the room', socks.length === 1 && attrs['data-vp-transport'] === 'room');
 socks[0].readyState = 3; socks[0].onclose({ code: 4503 });
 tick(500);
-ok('it goes to Supabase at once, telling nobody', attrs['data-vp-transport'] === 'supabase' && posts.length === 0 && socks.length === 1);
+/* 1 Nov 2026: it no longer tells nobody. The room that sent it across may have been handed over by
+   a phone that knows no venue, so the TV passes the word to the venue's other rooms, SOFTLY (an
+   existing mark is not pushed later). It never hands a room over hard on the room's own say so. */
+ok('it goes to Supabase at once; the only word it sends is the soft pass-on to the venue\'s rooms',
+   attrs['data-vp-transport'] === 'supabase' && socks.length === 1 && posts.length === 1 && /&venue=test-alpha&soft=1$/.test(posts[0]), posts.join(','));
+
+print('\n== 1 Nov 2026: a Worker that hands the whole venue over, and hears old consoles itself ==');
+clients = []; socks = []; posts = []; got = []; attrs = {};
+client = null; ch = null; tvSubscribed = false; _useRoom = true; _roomTried = false; _room = null; _roomClient = false; _ear = null; _roomVenue = false;
+eval(ROOMJS); VPRoom = window.VPRoom;
+presence = { total: 0, answers: true, handover: true, pong: true, venue: true, formats: { musical: true, trivia: false, raffle: false, members: false } };
+connectRealtime(); tick(100);
+ok('control: in the room', socks.length === 1 && attrs['data-vp-transport'] === 'room');
+var anyChan = clients.length ? clients[0].chans.filter(function (c) { return !c.gone; }).length : 0;
+ok('NO ear on the old road: the TV holds no Supabase channel at all while the venue is on the room', anyChan === 0, anyChan + ' channel(s)');
+socks[0].readyState = 3; socks[0].onclose({ code: 4503 });
+tick(500);
+var bingoNow = clients[0].chans.filter(function (c) { return c.name === 'vp-' + CODE && !c.gone; });
+ok('and when the room sends it across it goes to Supabase on bingo\'s channel, one channel', attrs['data-vp-transport'] === 'supabase' && bingoNow.length === 1, bingoNow.length);
+ok('it passes the word on to the venue\'s other rooms, softly, naming the venue',
+   posts.some(function (u) { return /\/room\/handover\?room=vp-ACDEFG&venue=test-alpha&soft=1/.test(u); }), posts.join(','));
 
 print('');
 print(bad ? (bad + ' OF ' + ran + ' CHECKS FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));

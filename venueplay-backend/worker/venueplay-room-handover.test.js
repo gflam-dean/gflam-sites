@@ -152,6 +152,97 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
   var pres = await handleRoomPresence(new Request('https://w/room/presence?room=vp-ABC123'), { ROOM: ns503 }, json);
   ok('the Worker passes a handed-over room\'s 503 on, instead of answering it 200', pres.status === 503 && pres._json.handed_over === true);
 
+  print('\n== 1 Nov 2026: a venue is five rooms, and goes as one ==');
+  /* The same hash four ways: the TV's venueCode, vp-session.js's VP.venueCode, the game Worker's
+     fnvVenueCode and the room's own. A room name built one way and handed over another is a venue
+     that never moves. */
+  function liftFn(text, name) {
+    var i = text.indexOf('function ' + name + '(');
+    if (i < 0) throw new Error('cannot find ' + name);
+    var d = 0, k = text.indexOf('{', i);
+    do { if (text[k] === '{') d++; else if (text[k] === '}') d--; k++; } while (d > 0 && k < text.length);
+    return text.slice(i, k);
+  }
+  var tvCode = new Function(liftFn(find('venueplay/tv.html'), 'venueCode') + '; return venueCode;')();
+  var wCode = new Function(liftFn(find('venueplay-backend/worker/venueplay-game.js'), 'fnvVenueCode') + '; return fnvVenueCode;')();
+  var sess = find('venueplay/app/vp-session.js');
+  var sx = /venueCode\s*[:=]\s*function\s*\(([^)]*)\)\s*\{/.exec(sess);
+  var sCode = null;
+  if (sx) { var si = sx.index + sx[0].length - 1, sd = 0, sk = si; do { if (sess[sk] === '{') sd++; else if (sess[sk] === '}') sd--; sk++; } while (sd > 0); sCode = new Function(sx[1], sess.slice(si + 1, sk - 1)); }
+  else { try { sCode = new Function(liftFn(sess, 'venueCode') + '; return venueCode;')(); } catch (e) { sCode = null; } }
+  var slugs = ['test-alpha', 'the-mini-bar', 'tugun-bowls', 'musical-test-alpha', 'trivia-hello-hotel', 'raffle-gen-hotel', 'members-x', 'a', 'gen-hotel-4210'];
+  var agree = slugs.every(function (sl) { var c = roomVenueCode(sl); return c === tvCode(sl) && c === wCode(sl) && (!sCode || c === sCode(sl)); });
+  ok('the room\'s venue code is the same hash as the TV\'s, vp-session.js\'s and the game Worker\'s', agree && !!sCode, sCode ? '' : 'could not lift VP.venueCode');
+  var five = roomVenueRooms('test-alpha');
+  ok('a venue is five rooms: bingo, then trivia, musical, raffle and members screen channels',
+     five.length === 5 && five[0] === 'vp-' + tvCode('test-alpha') && five[2] === 'vp-' + tvCode('musical-test-alpha') && five[4] === 'vp-' + tvCode('members-test-alpha'), five.join(','));
+  ok('a slug that is not a slug names no rooms', roomVenueRooms('../x').length === 0 && roomVenueRooms('').length === 0);
+
+  var calls = [];
+  var nsV = { idFromName: function (n) { return n; },
+              get: function (id) { return { fetch: function (u) { calls.push(id + ' ' + u); return Promise.resolve(json({ ok: true, closed: 1 })); } }; } };
+  var rv = await handleRoomHandover(new Request('https://w/room/handover?room=' + five[2] + '&venue=test-alpha', { method: 'POST' }), { ROOM: nsV }, json);
+  ok('a handover naming the venue reaches all five rooms', rv.status === 200 && rv._json.rooms === 5 && calls.length === 5 &&
+     five.every(function (n) { return calls.some(function (c) { return c.indexOf(n + ' https://room/handover') === 0; }); }), calls.join(' | '));
+  ok('and counts the sockets it closed across them', rv._json.closed === 5, JSON.stringify(rv._json));
+  calls = [];
+  await handleRoomHandover(new Request('https://w/room/handover?room=vp-ZZZZZZ&venue=test-alpha&soft=1', { method: 'POST' }), { ROOM: nsV }, json);
+  ok('a players\' room on a join code of its own goes with them, and soft is passed to each room',
+     calls.length === 6 && calls[0].indexOf('vp-ZZZZZZ ') === 0 && calls.every(function (c) { return /\?soft=1$/.test(c); }), calls.join(' | '));
+  calls = [];
+  var rb = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123&venue=..%2Fetc', { method: 'POST' }), { ROOM: nsV }, json);
+  ok('a venue that is not a slug is refused and reaches nothing', rb.status === 400 && calls.length === 0);
+
+  print('\n== soft: the word passed on does not push a mark later ==');
+  sockets.length = 0; STORE.clear();
+  var r3 = new VenueRoom(state, {});
+  var s1 = (await join(r3, 'tv')).webSocket.of;
+  var pv = (await r3.fetch(new Request('https://room/presence')))._json;
+  ok('presence says venue: true, which is how a page of another format knows it may take the room by default', pv.venue === true, JSON.stringify(pv));
+  await r3.fetch(new Request('https://room/handover?soft=1', { method: 'POST' }));
+  ok('a soft handover of an open room still empties it, 4503', s1.closed && s1.closed[0] === 4503);
+  var until1 = STORE.get('ho');
+  ok('and marks it, because it was not marked', until1 > NOW);
+  NOW += 60 * 60 * 1000;
+  await r3.fetch(new Request('https://room/handover?soft=1', { method: 'POST' }));
+  ok('a second soft handover an hour later leaves the mark where it was', STORE.get('ho') === until1, STORE.get('ho') - until1);
+  await r3.fetch(new Request('https://room/handover', { method: 'POST' }));
+  ok('a hard one (a console still on Supabase saying so again) extends it', STORE.get('ho') > until1);
+
+  print('\n== a console from before the switch opens a game ==');
+  calls = [];
+  var looked = 0;
+  function slugOf() { looked++; return Promise.resolve('test-alpha'); }
+  var n0 = await roomOldConsoleCheck({ ROOM: nsV }, 'room', 'musical', slugOf);
+  var n1 = await roomOldConsoleCheck({ ROOM: nsV }, 'off', 'musical', slugOf);
+  ok('a console on the room, or on a format not on the room yet, costs nothing: no lookup, no room touched', n0 === 0 && n1 === 0 && looked === 0 && calls.length === 0);
+  await roomOldConsoleCheck({ ROOM: nsV }, undefined, 'musical', slugOf);
+  ok('one that says nothing is from before the switch: the whole venue is handed over, hard', looked === 1 && calls.length === 5 && calls.every(function (c) { return !/soft/.test(c); }), calls.join(' | '));
+  calls = [];
+  await roomOldConsoleCheck({ ROOM: nsV }, 'supabase', 'musical', slugOf);
+  ok('one that already left the room passes the word on softly', calls.length === 5 && calls.every(function (c) { return /soft=1/.test(c); }));
+  calls = [];
+  var nb = await roomOldConsoleCheck({}, undefined, 'musical', slugOf);
+  ok('no binding: nothing at all', nb === 0 && calls.length === 0 && looked === 2);
+  print('\n== which formats are on the room is the Worker\'s answer ==');
+  var allOff = Object.keys(ROOM_FORMATS_ON).every(function (k) { return ROOM_FORMATS_ON[k] === false; });
+  ok('presence carries formats, one line per format', ['musical', 'trivia', 'raffle', 'members'].every(function (k) { return typeof pv.formats[k] === 'boolean'; }), JSON.stringify(pv.formats));
+  ok('roomFormatsKey is the formats that are on, sorted and comma joined (the TV compares it)',
+     roomFormatsKey() === Object.keys(ROOM_FORMATS_ON).filter(function (k) { return ROOM_FORMATS_ON[k]; }).sort().join(','), roomFormatsKey());
+  var keep = {}; for (var kk in ROOM_FORMATS_ON) keep[kk] = ROOM_FORMATS_ON[kk];
+  ROOM_FORMATS_ON.musical = true; ROOM_FORMATS_ON.trivia = true;
+  ok('two formats on reads "musical,trivia", in that order whatever order they were switched on', roomFormatsKey() === 'musical,trivia', roomFormatsKey());
+  calls = []; looked = 0;
+  await roomOldConsoleCheck({ ROOM: nsV }, 'off', 'musical', slugOf);
+  ok('a console that was told musical was off, opening musical once it is on, decided before the flip: the venue moves to meet it',
+     looked === 1 && calls.length === 5 && calls.every(function (c) { return !/soft/.test(c); }), calls.join(' | '));
+  calls = []; looked = 0;
+  await roomOldConsoleCheck({ ROOM: nsV }, 'off', 'raffle', slugOf);
+  ok('the same word for a format that is still off is still true: nothing', looked === 0 && calls.length === 0);
+  for (var kk2 in keep) ROOM_FORMATS_ON[kk2] = keep[kk2];
+  var thrown = await roomOldConsoleCheck({ ROOM: nsV }, undefined, 'musical', function () { return Promise.reject(new Error('db down')); });
+  ok('a database that fails the lookup never fails the console\'s request', thrown === 0);
+
   print('');
   print(bad ? (bad + ' OF ' + ran + ' CHECKS FAILED') : ('ALL ' + ran + ' CHECKS PASSED'));
   if (bad) throw new Error('room handover: ' + bad + ' failed');

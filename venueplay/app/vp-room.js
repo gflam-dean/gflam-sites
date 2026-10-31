@@ -63,6 +63,15 @@
   var DEFAULT_ON = false;
   var _by = "";                  // how wanted() last decided: "flag" or "default"
 
+  /* THE OTHER FORMATS, ONE FLIP EACH, AND THE WORKER SAYS WHICH (1 Nov 2026). Bingo moved first and
+     alone. Musical bingo, trivia, the raffle and the members draw each move when the game Worker's
+     presence answer says so (formats: {musical: true, ...}, ROOM_FORMATS_ON in venueplay-room.js),
+     so a release day puts one format on the room at a time by deploying the Worker, and EVERY page
+     follows that one server-side answer: a console cached from yesterday asks the same Worker as a
+     TV loaded this minute. A format's flip moves every page of that format together: its console,
+     its screen, its phones, and the TV's router channel that follows it. Off, a format is exactly
+     as it was: Supabase for everything. ?roomserver=1 / 0 still decides every format for that
+     browser, on purpose, for test nights. */
   function wanted() {
     try {
       var m = /[?&]roomserver=([01])/.exec(location.search);
@@ -119,6 +128,11 @@
        asks and goes the old way unless the room says handover: true. ?roomserver=1 is a person
        choosing the room on purpose and keeps the old rule. */
     var needsHandover = venueRoom && _by === "default";
+    /* THE WHOLE VENUE, NOT JUST THIS ROOM (1 Nov 2026). venue: the slug, so a handover this page
+       sends reaches every room the venue has (each format's screen channel as well as bingo's).
+       group: the page's other rooms at the same venue, which go to Supabase with this one. */
+    var venueSlug = String(opts.venue || "");
+    var grp = opts.group || null;
     var st = { state: "checking", ws: null, queue: [], backoff: BACKOFF_MIN, closed: false, timer: null,
                downSince: now(), everOpen: false, tries: 0, due: 0, why: "",
                pingT: null, misses: 0, pongSeen: false, tellT: null, tellI: -1, reT: null,
@@ -152,6 +166,12 @@
             /* NOT OURS. A captive portal answers 200 as well, with its own page. */
             if (!d || typeof d !== "object" || typeof d.total !== "number") { retry(); return; }
             if (needsHandover && d.handover !== true) { unavailable("worker too old"); return; }
+            /* A format that moved after bingo needs a Worker that hands the whole venue over; one
+               that only hands a room over would leave this format's other rooms behind. */
+            if (needsHandover && opts.requires && d[opts.requires] !== true) { unavailable("worker too old"); return; }
+            /* THIS FORMAT IS NOT ON THE ROOM YET: its channel stays on Supabase, as it always was.
+               Only this channel: bingo's room at the same venue is a separate decision. */
+            if (needsHandover && opts.fmt && !(d.formats && d.formats[opts.fmt] === true)) { unavailable("format off"); return; }
             if (opts.onPresence) { try { opts.onPresence(d); } catch (e) {} }
             open();
           });
@@ -180,10 +200,15 @@
            ROOM_OFF was set stays across when it is cleared, and keeps the mark for a long
            night. A TV or a phone that was simply told "not enabled" has nothing to add. */
         if (leftOnItsOwn || (role === "host" && why === "not enabled")) tell(0);
-        if (role === "host" && why !== "worker too old") reassert(now());
+        if (role === "host" && why !== "worker too old" && why !== "format off") reassert(now());
       }
       if (opts.onUnavailable) { try { opts.onUnavailable(why, pending); } catch (e) {} }
+      /* THE PAGE'S OTHER ROOMS GO TOO. "worker too old" is about this room's format alone (the
+         Worker can carry bingo but not the format that moved later), and "venue" is the group
+         itself moving this one, so neither is passed on. */
+      if (grp && why !== "worker too old" && why !== "venue" && why !== "format off") { try { grp.fallen(why, me); } catch (e) {} }
     }
+    function venueQ() { return venueSlug ? "&venue=" + encodeURIComponent(venueSlug) : ""; }
 
     /* TELL THE ROOM, SO EVERYONE ELSE COMES TOO. Best effort, a few times: the page that gave up
        is often the one on the bad network, and the moment it can reach us again is the moment
@@ -195,7 +220,7 @@
       st.tellI = i;
       st.tellT = setTimeout(function () {
         st.tellI = -1;
-        post(api + "/room/handover?room=" + encodeURIComponent(roomName))
+        post(api + "/room/handover?room=" + encodeURIComponent(roomName) + venueQ())
           .then(function (r) { if (!r || (r.status >= 500 && r.status !== 503)) tell(i + 1); })
           .catch(function () { tell(i + 1); });
       }, TELL_RETRY[i]);
@@ -204,7 +229,7 @@
       clearTimeout(st.reT);
       st.reT = setTimeout(function () {
         if (now() - since > REASSERT_FOR_MS) return;
-        post(api + "/room/handover?room=" + encodeURIComponent(roomName)).catch(function () {});
+        post(api + "/room/handover?room=" + encodeURIComponent(roomName) + venueQ()).catch(function () {});
         reassert(since);
       }, REASSERT_MS);
     }
@@ -407,10 +432,165 @@
       setState("closed");
     }
 
-    probe();
-    return { send: send, close: close, state: function () { return st.state; },
-             handover: function (why) { if (!st.closed) unavailable(why || "peer"); },
-             why: function () { return st.why; } };
+    var me = { send: send, close: close, state: function () { return st.state; },
+               handover: function (why) { if (!st.closed) unavailable(why || "peer"); },
+               why: function () { return st.why; }, name: roomName };
+    if (grp) grp.add(me);
+    /* A venue that has already moved: this room goes straight across, on the next turn, so the
+       page has its handle on this connection before it hears about it. */
+    if (grp && grp.fell) setTimeout(function () { if (!st.closed) unavailable("venue"); }, 0);
+    else probe();
+    return me;
+  }
+
+  /* ONE VENUE ON A PAGE, ONE ROAD (1 Nov 2026). A TV listens in five rooms (bingo and the four
+     formats' screen channels), a musical or trivia console talks in two (its screen and its
+     players). If one of them goes to Supabase and the rest stay, that page is on both roads at
+     once and the half it left is talking to nobody. So every room a page holds at a venue is in
+     one group, and the group moves as one: the first room to go takes the rest with it, and the
+     word is passed on to the venue's other rooms (softly: an existing mark is not pushed later). */
+  var GROUPS = {};
+  function group(apiBase, slug) {
+    var api = String(apiBase || "").replace(/\/+$/, "");
+    var key = api + "|" + String(slug || "");
+    if (slug && GROUPS[key]) return GROUPS[key];
+    var g = { api: api, slug: String(slug || ""), fell: false, why: "", conns: [], off: {} };
+    g.add = function (c) { g.conns.push(c); };
+    g.fallen = function (why, from) {
+      if (g.fell) return;
+      g.fell = true; g.why = why || "";
+      var all = g.conns.slice();
+      for (var i = 0; i < all.length; i++) { if (all[i] !== from) { try { all[i].handover("venue"); } catch (e) {} } }
+      /* The room that told us may have been handed over by a page that did not know the venue (a
+         phone): pass it on to all five rooms. Rooms that are simply off need nothing. */
+      if (g.slug && from && why === "handed over") {
+        post(g.api + "/room/handover?room=" + encodeURIComponent(from.name) + "&venue=" + encodeURIComponent(g.slug) + "&soft=1").catch(function () {});
+      }
+    };
+    /* What a console tells the Worker when it opens a game: "room", "supabase" (this venue left
+       the room, or this browser is not using it), or "off" (the Worker said this format is not on
+       the room when this page asked). A console that says nothing is from before the switch, and
+       one that says "off" for a format the Worker has since turned on decided before the flip:
+       either way the Worker moves the venue to meet it. */
+    g.road = function (fmt) {
+      if (!wanted()) return "supabase";
+      if (g.fell) return "supabase";
+      if (fmt && g.off[fmt]) return "off";
+      return "room";
+    };
+    g.channel = function (name, role, make, copts) { return channel(g, name, role, make, copts); };
+    if (slug) GROUPS[key] = g;
+    return g;
+  }
+
+  /* A CHANNEL THAT IS A ROOM UNTIL THE VENUE SAYS OTHERWISE. Shaped like a Supabase channel (on,
+     subscribe, send, unsubscribe), so a page swaps the one line that made its channel and nothing
+     else changes: its handlers, its own "subscribed" flag, its queue, its signing. In the room the
+     page is told SUBSCRIBED each time the socket opens and nothing while it reconnects (vp-room.js
+     owns that, on its budget, and hands back what was waiting). When the venue goes to Supabase,
+     make() builds the page's own channel exactly as before, the page's handlers are put on it,
+     what the room was still holding goes out first, and from then on every status is the real
+     channel's. Nothing touches Supabase until then, which is the point: a TV, a screen or a phone
+     in the room holds no Supabase connection at all.
+     copts.ear: { client: fn, gate: fn, hello: fn(say) } listens on the old road for EAR_MS after
+     the room first opens, for a TV or screen still running from before the switch. */
+  var EAR_MS = 60000;
+  function channel(g, name, role, make, copts) {
+    copts = copts || {};
+    var hs = [], statusCb = null, room = null, real = null, dead = false, started = false, ear = null, earT = null, mine = false;
+    function deliver(payload) {
+      for (var i = 0; i < hs.length; i++) {
+        var f = hs[i].filter;
+        if (f && f.event && f.event !== "msg") continue;
+        try { hs[i].cb({ type: "broadcast", event: "msg", payload: payload }); } catch (e) {}
+      }
+    }
+    function status(s) { if (statusCb && !dead) { try { statusCb(s); } catch (e) {} } }
+    function mark(road) {
+      if (copts.mark === false) return;
+      try { document.documentElement.setAttribute("data-vp-transport", road); console.log("[VenuePlay] transport: " + road + " (" + name + ")"); } catch (e) {}
+    }
+    function dropEar() {
+      clearTimeout(earT); earT = null;
+      var e = ear; ear = null;
+      return e ? e.release() : Promise.resolve();
+    }
+    function goReal(pending) {
+      if (dead || real) return;
+      room = null;
+      try { real = make(); } catch (e) { real = null; }
+      if (!real) return;
+      for (var i = 0; i < hs.length; i++) { try { real.on(hs[i].type, hs[i].filter, hs[i].cb); } catch (e) {} }
+      var flushed = false, me = real;
+      me.subscribe(function (s) {
+        if (dead || real !== me) return;
+        if (s === "SUBSCRIBED") {
+          mark("supabase");
+          if (!flushed) {
+            flushed = true;
+            for (var j = 0; pending && j < pending.length; j++) { try { me.send({ type: "broadcast", event: "msg", payload: pending[j] }); } catch (e) {} }
+          }
+        }
+        status(s);
+      });
+    }
+    var shim = {
+      vpRoom: true,
+      on: function (type, filter, cb) {
+        hs.push({ type: type, filter: filter, cb: cb });
+        if (real) { try { real.on(type, filter, cb); } catch (e) {} }
+        return shim;
+      },
+      subscribe: function (cb) {
+        statusCb = cb;
+        if (started) return shim;
+        started = true;
+        /* Not using the room in this browser (?roomserver=0, or the product switched off), or the
+           venue already moved: the page's own channel, straight away. */
+        if (g.fell || !wanted()) { goReal([]); return shim; }
+        room = connect(g.api, name, role, deliver, {
+          venue: g.slug, group: g, requires: "venue", fmt: copts.fmt,
+          onPresence: function (d) { mine = !!(d && d.venue === true); if (copts.onPresence) { try { copts.onPresence(d); } catch (e) {} } },
+          onUnavailable: function (why, pending) {
+            room = null;
+            if (why === "format off" && copts.fmt) g.off[copts.fmt] = true;
+            dropEar().then(function () { goReal(pending || []); }, function () { goReal(pending || []); });
+          },
+          onState: function (s) {
+            if (s !== "open") return;
+            mark("room");
+            status("SUBSCRIBED");
+            if (!ear && !earT && copts.ear && mine) {
+              var cl = null;
+              try { cl = typeof copts.ear.client === "function" ? copts.ear.client() : copts.ear.client; } catch (e) { cl = null; }
+              if (cl) {
+                var r = room;
+                ear = watch(cl, name, { gate: copts.ear.gate, hello: copts.ear.hello,
+                                        onPeer: function () { if (r) r.handover("peer"); } });
+                earT = setTimeout(function () { earT = -1; dropEar(); }, EAR_MS);
+              }
+            }
+          }
+        });
+        return shim;
+      },
+      send: function (msg) {
+        if (dead) return Promise.resolve("error");
+        if (room) { room.send(msg && msg.payload); return Promise.resolve("ok"); }
+        if (real) return real.send(msg);
+        return Promise.resolve("error");
+      },
+      unsubscribe: function () {
+        dead = true;
+        var r = room, c = real; room = null; real = null;
+        dropEar();
+        if (r) { try { r.close(); } catch (e) {} }
+        if (c) { try { return c.unsubscribe(); } catch (e) {} }
+        return Promise.resolve("ok");
+      },
+      road: function () { return real ? "supabase" : (room ? "room" : (dead ? "closed" : "none")); }
+    };
+    return shim;
   }
 
   /* ONE EAR ON THE OLD ROAD. A page in the room listens, and only listens, on the Supabase
@@ -489,6 +669,10 @@
   }
 
   window.VPRoom = { connect: connect, wanted: wanted, watch: watch, sayOnce: sayOnce, oldRoadPeer: oldRoadPeer,
+                    venue: group,
+                    /* The formats a presence answer put on the room, as one string ("musical,trivia"),
+                       the same shape the TV's /venue poll carries as room_formats. */
+                    formatsKey: function (d) { var f = (d && d.formats) || {}, o = []; for (var k in f) { if (f[k] === true) o.push(k); } return o.sort().join(","); },
                     defaultOn: function () { return DEFAULT_ON; },
                     byDefault: function () { return _by === "default"; } };
 })();

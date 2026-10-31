@@ -966,7 +966,7 @@
      tell them apart without walking into the pub. The screen now says which build it
      is, on the request it already makes, so "Screen ok" can mean "and it is current".
      A screen that sends no version at all is, by that silence, an old one. */
-  var TV_BUILD = "2026-09-08a";
+  var TV_BUILD = "2026-11-01-room-formats";
   /* THE SLUG GOES WITH THE CODE. CODE is a hash of the slug, and since migration
      68 the code a venue is issued can be changed by its owner; once it is, the
      hash on its own no longer names this venue, and two exists:false answers in a
@@ -1078,6 +1078,15 @@
                 return;
               }
             }
+          }
+          /* A FORMAT WENT ON (OR OFF) THE ROOM AFTER THIS SCREEN DECIDED ITS ROADS (1 Nov 2026). A
+             console opened tonight follows the Worker's answer as it is now, so this screen follows
+             it too: at once on the ads, otherwise the moment the game ends, like a deployment. */
+          if(d.room_formats!=null && _formatsAtLoad!=null && String(d.room_formats)!==_formatsAtLoad && !_formatsReloadAsked){
+            _formatsReloadAsked=true;
+            try{ sessionStorage.setItem("vpTvReloadWhy","room-formats"); }catch(e){}
+            if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("room-formats"); else location.reload(); return; }
+            reloadWhenIdle=true; armStuckReload();
           }
           if(d.reload_at){
             var asked = Date.parse(d.reload_at);
@@ -2215,7 +2224,15 @@
      road the console takes but the TV does not is a host talking into an empty room. It
      lives in vp-room.js now, so all three pages cannot disagree and the whole product
      changes road by one constant there. */
-  var _useRoom=false, _roomTried=false, _room=null, _roomClient=false, _ear=null;
+  var _useRoom=false, _roomTried=false, _room=null, _roomClient=false, _ear=null, _roomVenue=false;
+  /* WHICH FORMATS THE WORKER HAD ON THE ROOM WHEN THIS SCREEN DECIDED its router's roads. The poll
+     carries the Worker's answer now (room_formats); when it differs, this screen decided before a
+     format's flip and is following that format on the old road, so it reloads (between games). */
+  var _formatsAtLoad=null, _formatsReloadAsked=false;
+  function noteRoomFormats(d){ try{ if(_formatsAtLoad===null && d && d.formats && window.VPRoom && VPRoom.formatsKey) _formatsAtLoad=VPRoom.formatsKey(d); }catch(e){} }
+  /* ONE VENUE, ONE ROAD, FOR EVERY ROOM THIS SCREEN IS IN (1 Nov 2026). Bingo's channel and the
+     router's four (one per format, once that format is on the room) go to Supabase together. */
+  function tvVenueGroup(){ try{ return (window.VPRoom && VPRoom.venue && VENUE_SLUG) ? VPRoom.venue(VP_GAME_API, VENUE_SLUG) : null; }catch(e){ return null; } }
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   /* DECLARED OUT HERE, NOT INSIDE connectRealtime's first if.
 
@@ -2293,12 +2310,18 @@
            `ch` is the room: every tv_here this screen says reaches the console, not just the
            first. It was the first only. */
         var roomCh={ room:true, send:function(m){ if(_room && m) _room.send(m.payload); } };
+        var _grp=tvVenueGroup();
         _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){
           /* The Worker's own words (HQ reload and commands) are {type:...}, which this page never
              read, so "screens reload now" was a promise nobody kept. They mean "ask now". */
           if(payload && !payload.t && typeof payload.type==="string"){ if(window.__vpTvAsk) window.__vpTvAsk(); return; }
           vpGate(payload, onMsg);
         }, {
+          venue: VENUE_SLUG, group: _grp,
+          /* A Worker that hands the whole venue over also hears a console from before the switch
+             when it opens a game, so this screen needs no ear on the old road, and holds no
+             Supabase connection while the venue is on the room. An older Worker: the ear stays. */
+          onPresence: function(d){ _roomVenue = !!(d && d.venue===true); },
           onUnavailable: function(){ _useRoom=false; _room=null; if(ch && ch.room) ch=null; tvSubscribed=false;
             var ear=_ear; _ear=null;
             (ear ? ear.release() : Promise.resolve()).then(function(){ setTimeout(connectRealtime, 0); }, function(){ setTimeout(connectRealtime, 0); }); },
@@ -2310,7 +2333,7 @@
               /* ONE EAR ON THE OLD ROAD: a console on Supabase (cached from before the switch, or
                  one that left the room on its own) says host_here every 30 seconds. Hearing it,
                  the room is handed over and this screen goes to meet it (vp-room.js). */
-              if(!_ear && client){ _ear=VPRoom.watch(client, "vp-"+CODE, { gate: vpGate, onPeer: function(){ if(_room) _room.handover("peer"); } }); }
+              if(!_ear && client && !_roomVenue){ _ear=VPRoom.watch(client, "vp-"+CODE, { gate: vpGate, onPeer: function(){ if(_room) _room.handover("peer"); } }); }
             }
             else { tvSubscribed=false; tvStatus(false); }
           }
@@ -2739,8 +2762,21 @@
       if(m.t==="state") return m.active===true || m.playing===true;
       return true;
     }
+    /* A FORMAT ON THE ROOM IS FOLLOWED IN THE ROOM (1 Nov 2026). Each format's channel is a room
+       once that format's flip is on (vp-room.js FORMATS), in the same venue group as bingo's, so
+       the screen holds no Supabase connection for it; off, it is the Supabase channel it always
+       was. Shaped like a channel either way, so everything below is unchanged. */
+    function gameChannel(game){
+      var name="vp-"+venueCode(game+"-"+VENUE_SLUG);
+      var make=function(){ return client.channel(name, { config:{ broadcast:{ self:false } } }); };
+      try{
+        var g=tvVenueGroup();
+        if(g && g.channel) return g.channel(name, "tv", make, { mark:false, fmt:game, onPresence:noteRoomFormats });
+      }catch(e){}
+      return make();
+    }
     GAMES.forEach(function(game){
-      var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
+      var c=gameChannel(game);
       // Named, because re-subscribing after a dropped socket has to reattach it.
       function onGameMsg(e){ vpGate(e.payload, function(m){
         if(!m) return;
@@ -2805,9 +2841,8 @@
                  the flap. The first attempt at this fix had the guard and not this line, and
                  the test reproduced all 3,600 re-joins regardless. */
               var old = c; c = null;
-              try{ client.removeChannel(old); }catch(e){}
-              c = client.channel("vp-" + venueCode(game + "-" + VENUE_SLUG),
-                                 { config:{ broadcast:{ self:false } } });
+              try{ if(old && old.vpRoom) old.unsubscribe(); else client.removeChannel(old); }catch(e){}
+              c = gameChannel(game);
               c.on("broadcast", { event:"msg" }, onGameMsg);
               join();
             }, wait);
