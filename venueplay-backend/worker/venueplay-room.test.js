@@ -394,8 +394,13 @@ async function answersInTheRoom() {
   ok('with no room binding the Worker takes nothing and nothing throws', none[0] === null && none[1] === 0);
   var ns = { idFromName: function (n) { return 'id:' + n; },
              get: function () { return { fetch: function () { return Promise.resolve(roomJson({ ok: true, answers: [{ h: H1, i: 1, at: 5 }] })); } }; } };
-  ok('the global off switch stops the Worker asking a room for answers at all',
-     (await roomAnswersTake({ ROOM: ns, ROOM_OFF: '1' }, G, 1)) === null);
+  /* REVERSED 31 Oct 2026, on purpose. This used to say the switch stops the Worker asking a room
+     for its answers at all, which meant turning ROOM_OFF on mid-question threw away every answer
+     the room was already holding for it: the punters had been told "Answer in!" and scored
+     nothing. The switch stops pages USING the room; what a room holds is still handed over. */
+  var offGot = await roomAnswersTake({ ROOM: ns, ROOM_OFF: '1' }, G, 1);
+  ok('the global off switch does NOT strand answers a room is already holding: Reveal still takes them',
+     offGot && offGot.length === 1 && offGot[0].h === H1, JSON.stringify(offGot));
   var got = await roomAnswersTake({ ROOM: ns }, G, 1);
   ok('with the binding on, it returns exactly what the room handed over',
      got && got.length === 1 && got[0].h === H1, JSON.stringify(got));

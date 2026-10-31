@@ -7,8 +7,15 @@
    "Reconnecting" indefinitely with the host's balls piling up in a queue, and
    nothing ever decided to go back to Supabase.
 
+   31 Oct 2026, the room becomes the DEFAULT, and a second promise is added: ONE ROAD
+   PER VENUE. A page that leaves the room on its own hands the room over, so everybody
+   else follows; a page told "handed over" (by word or by close code 4503) goes at once
+   and tells nobody; a frozen window is not a failed room; a dead socket is found by the
+   heartbeat; a new page meeting an old Worker stays on Supabase; and what was queued
+   when the room went is handed back to the page, not thrown away.
+
    This runs the REAL vp-room.js against a fake WebSocket, a fake fetch and a
-   VIRTUAL CLOCK, so six seconds of pub time costs nothing and the budgets are
+   VIRTUAL CLOCK, so minutes of pub time cost nothing and the budgets are
    tested as budgets rather than as constants that happen to be written down.
 
    Run: jsc venueplay-backend/app/room-fallback.test.js
@@ -26,7 +33,7 @@ function find(rel) {
 var SRC = find("venueplay/app/vp-room.js");
 
 /* ---- the fake world ---------------------------------------------------- */
-var NOW, timers, nextId, sockets, fetchPlan, unavailReasons, states, delivered, store;
+var NOW, timers, nextId, sockets, fetchPlan, unavailReasons, pendings, states, delivered, store, posts, listeners, serverPongs;
 
 function installClock() {
   NOW = 1000; timers = []; nextId = 1;
@@ -37,151 +44,336 @@ function installClock() {
 // Run every timer due by NOW+ms, in order, letting promises settle between each.
 function tick(ms) {
   var end = NOW + ms;
-  for (var guard = 0; guard < 10000; guard++) {
+  for (var guard = 0; guard < 20000; guard++) {
     /* SETTLE PROMISES BEFORE LOOKING FOR TIMERS. The probe is a fetch, and the socket is
-       not created until its .then runs, so a tick that went straight to the timer list
-       found nothing to do and the client looked stuck at "connecting". That was this
-       harness, not the client: two checks went red while the rest of the suite proved the
-       same client was working perfectly. */
+       not created until its .then runs. */
     drainMicrotasks();
     timers.sort(function (a, b) { return a.at - b.at; });
     var next = timers.length ? timers[0] : null;
     if (!next || next.at > end) break;
-    NOW = next.at; timers.shift();
-    try { next.fn(); } catch (e) {}
+    NOW = Math.max(NOW, next.at); timers.shift();
+    try { next.fn(); } catch (e) { print("  [timer threw] " + e); }
     drainMicrotasks();
   }
   NOW = end; drainMicrotasks();
 }
+/* A FROZEN PAGE: the clock moves, no timer runs. That is a covered Chrome window or a locked
+   phone. When it thaws, every overdue timer runs at once, late. */
+function freeze(ms) { NOW += ms; }
 
 function FakeWS(url) {
   this.url = url; this.readyState = 0; this.sent = [];
   sockets.push(this);
   var self = this;
-  // A browser opens a socket asynchronously; so does this.
   setTimeout(function () {
     if (FakeWS.hangNext) return;          // neither opens nor fails: it just never answers
-    if (self.plannedFail) { self.die(); } else { self.readyState = 1; if (self.onopen) self.onopen(); }
+    if (FakeWS.failNext) { self.die(1006); return; }
+    self.readyState = 1; if (self.onopen) self.onopen();
   }, 10);
 }
-FakeWS.prototype.send = function (s) { if (this.readyState !== 1) throw new Error("not open"); this.sent.push(s); };
-FakeWS.prototype.close = function () { this.readyState = 3; };
-FakeWS.prototype.die = function () { this.readyState = 3; if (this.onclose) this.onclose(); };
+FakeWS.prototype.send = function (s) {
+  if (this.readyState !== 1) throw new Error("not open");
+  this.sent.push(s);
+  var self = this;
+  if (s === "ping" && serverPongs) setTimeout(function () { if (self.readyState === 1 && self.onmessage) self.onmessage({ data: "pong" }); }, 30);
+};
+FakeWS.prototype.close = function () { this.readyState = 3; var self = this; setTimeout(function () { if (self.onclose) self.onclose({ code: 1000 }); }, 5); };
+FakeWS.prototype.die = function (code) { this.readyState = 3; if (this.onclose) this.onclose({ code: code || 1006 }); };
+function openSockets() { return sockets.filter(function (s) { return s.readyState === 1; }); }
 
-function setup(plan) {
+var PRESENCE_NEW = { total: 0, answers: true, handover: true, pong: true };
+var PRESENCE_OLD = { total: 0, answers: true };
+function ok200(body) { return { status: 200, body: body || PRESENCE_NEW }; }
+
+function setup(plan, opts) {
+  opts = opts || {};
   installClock();
-  FakeWS.hangNext = false;
-  sockets = []; unavailReasons = []; states = []; delivered = []; store = {};
-  fetchPlan = plan;                       // function(url) -> {status} or "throw"
+  FakeWS.hangNext = false; FakeWS.failNext = false;
+  sockets = []; unavailReasons = []; pendings = []; states = []; delivered = []; store = {}; posts = []; listeners = {};
+  serverPongs = true;
+  fetchPlan = plan;                       // function(url) -> {status, body} or "throw"
   globalThis.sessionStorage = {
     getItem: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
     setItem: function (k, v) { store[k] = String(v); }
   };
-  globalThis.location = { search: "" };
+  globalThis.location = { search: opts.search || "" };
   globalThis.WebSocket = FakeWS;
-  globalThis.fetch = function (url) {
+  globalThis.fetch = function (url, init) {
+    if (init && init.method === "POST") {
+      posts.push(url);
+      var pr = opts.postPlan ? opts.postPlan(url) : { status: 200, body: { ok: true } };
+      if (pr === "throw") return Promise.reject(new Error("network"));
+      return Promise.resolve({ status: pr.status, json: function () { return Promise.resolve(pr.body); } });
+    }
     var r = fetchPlan(url);
     if (r === "throw") return Promise.reject(new Error("network"));
-    return Promise.resolve({ status: r.status });
+    if (r === "hang") return new Promise(function () {});
+    return Promise.resolve({ status: r.status, ok: r.status >= 200 && r.status < 300,
+      json: function () { return r.html ? Promise.reject(new Error("not json")) : Promise.resolve(r.body); } });
   };
-  globalThis.window = {};
-  eval(SRC);
-  return globalThis.window.VPRoom;
+  function on(ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); }
+  globalThis.document = { visibilityState: "visible", addEventListener: on };
+  globalThis.window = { addEventListener: on };
+  var src = SRC;
+  if (opts.defaultOn) src = src.replace("var DEFAULT_ON = false;", "var DEFAULT_ON = true;");
+  eval(src);
+  var V = globalThis.window.VPRoom;
+  V.wanted();                             // every page asks first; it records how it decided
+  return V;
 }
-function connect(VPRoom) {
-  return VPRoom.connect("https://api.test", "vp-ABC123", "tv",
+function fire(ev) { (listeners[ev] || []).forEach(function (f) { try { f(); } catch (e) {} }); }
+function connect(V, role, name) {
+  return V.connect("https://api.test", name || "vp-ABC123", role || "tv",
     function (p) { delivered.push(p); },
-    { onUnavailable: function (why) { unavailReasons.push(why || "?"); },
+    { onUnavailable: function (why, pending) { unavailReasons.push(why || "?"); pendings.push(pending || []); },
       onState: function (s) { states.push(s); } });
 }
+function handovers() { return posts.filter(function (u) { return /\/room\/handover\?room=/.test(u); }).length; }
 
+/* ======================================================================== */
 print("\nA HEALTHY ROOM IS LEFT ALONE");
-var VPRoom = setup(function () { return { status: 200 }; });
-var r = connect(VPRoom);
+var V = setup(function () { return ok200(); });
+var r = connect(V);
 tick(100);
 pass("it opens", r.state() === "open", "states: " + states.join(" -> "));
 pass("and it does NOT hand the page to Supabase", unavailReasons.length === 0);
-tick(60000);
-pass("still open a minute later, with no handover", r.state() === "open" && unavailReasons.length === 0);
+tick(5 * 60000);
+pass("still open five minutes later, through the heartbeats, with no handover",
+     r.state() === "open" && unavailReasons.length === 0 && sockets.length === 1 && handovers() === 0,
+     "sockets " + sockets.length + ", pings " + sockets[0].sent.filter(function (s) { return s === "ping"; }).length);
+pass("the heartbeat really did run (or that line proves nothing)",
+     sockets[0].sent.filter(function (s) { return s === "ping"; }).length >= 10);
 
 print("\nTHE WORKER SAYS THE ROOM IS OFF (ROOM_OFF=1, or no binding)");
-VPRoom = setup(function () { return { status: 503 }; });
-r = connect(VPRoom);
+V = setup(function () { return { status: 503, body: { error: "room server not enabled" } }; });
+r = connect(V, "tv");
 tick(50);
 pass("it goes straight to Supabase", unavailReasons.length === 1 && unavailReasons[0] === "not enabled");
 pass("and opens no socket at all", sockets.length === 0);
+pass("a TV told \"off\" has nothing to tell the room", handovers() === 0);
+V = setup(function () { return { status: 503, body: { error: "room server not enabled" } }; });
+connect(V, "host"); tick(50);
+pass("a CONSOLE told \"off\" marks its venue's room, so clearing the switch mid-night does not split it",
+     unavailReasons[0] === "not enabled" && handovers() === 1);
+
+print("\nTHE ROOM HAS BEEN HANDED OVER ALREADY (a late phone, a reload)");
+V = setup(function () { return { status: 503, body: { error: "room handed over", handed_over: true } }; });
+r = connect(V, "phone"); tick(50);
+pass("a late phone goes to Supabase, where everyone else already is", unavailReasons[0] === "handed over" && sockets.length === 0);
+pass("and does not ask for a handover that already happened", handovers() === 0);
 
 print("\nIT CANNOT REACH CLOUDFLARE AT ALL (cold: nothing is in flight)");
-VPRoom = setup(function () { return "throw"; });
-r = connect(VPRoom);
-tick(2000);
-pass("it does not give up too early: Supabase is not called at 2.0s", unavailReasons.length === 0,
-     "a slow first connect is not a broken one");
-tick(600);
-pass("but it HAS given up by 2.6s, so a screen is never held up", unavailReasons.length === 1,
-     unavailReasons.join(",") + " (budget is 2.5s, and a backoff must never sleep past it)");
+V = setup(function () { return "throw"; });
+r = connect(V, "tv");
+tick(7000);
+pass("it does not give up too early: Supabase is not called at 7s", unavailReasons.length === 0,
+     "a slow first connect on pub wifi is not a broken one, and leaving now would move the venue");
+tick(1600);
+pass("but it HAS given up by 8.6s", unavailReasons.length === 1 && unavailReasons[0] === "no answer",
+     unavailReasons.join(",") + " (budget is 8s, and a backoff must never sleep past it)");
+pass("and it HANDS THE ROOM OVER, so the console and phones in it come to Supabase too", handovers() >= 1);
+
+print("\nA PRESENCE CHECK THAT NEVER ANSWERS (a dead route, a stuck proxy)");
+V = setup(function () { return "hang"; });
+r = connect(V, "tv");
+tick(12000);
+pass("a hung probe is a failed probe, and the budget still decides", unavailReasons.length === 1,
+     "states: " + states.slice(-3).join(" -> "));
 
 print("\nTHE ROOM DIES MID-QUESTION (warm: a game is on)");
-VPRoom = setup(function () { return { status: 200 }; });
-r = connect(VPRoom);
+V = setup(function () { return ok200(); });
+r = connect(V, "host");
 tick(100);
 pass("it was open first", r.state() === "open");
-var host = sockets[0];
 fetchPlan = function () { return "throw"; };      // Cloudflare has gone
-host.die();
-drainMicrotasks();
+sockets[0].die(1006);
+r.send({ t: "ball", n: 7 }); r.send({ t: "ball", n: 8 }); r.send({ t: "ball", n: 9 });
 tick(4000);
 pass("it keeps trying for a few seconds rather than abandoning a live game", unavailReasons.length === 0,
      "4s in, still trying");
 tick(2200);
 pass("but by 6.2s it has handed the night to Supabase", unavailReasons.length === 1 && unavailReasons[0] === "lost",
      "budget is 6s once it has been open, and a doubling backoff must not overshoot it");
+pass("the three balls called while it was down are handed back to the page, in order",
+     pendings[0].length === 3 && pendings[0][0].n === 7 && pendings[0][2].n === 9, JSON.stringify(pendings[0]));
+pass("and the room is told, so the TV and phones still in it follow", handovers() >= 1);
 
 print("\nGIVING UP IS FINAL, OR EVERY BALL IS CALLED TWICE");
 var socketsAtHandover = sockets.length;
-fetchPlan = function () { return { status: 200 }; };   // Cloudflare comes back
+fetchPlan = function () { return ok200(); };   // Cloudflare comes back
 tick(120000);
 pass("it never reconnects after handing over", sockets.length === socketsAtHandover,
      "a room that came back would deliver every message down BOTH roads");
 pass("and it only ever tells the page once", unavailReasons.length === 1);
 
-print("\nA MESSAGE STILL ARRIVES THE ORDINARY WAY");
-VPRoom = setup(function () { return { status: 200 }; });
-r = connect(VPRoom); tick(100);
-sockets[0].onmessage({ data: JSON.stringify({ t: "ball", n: 42 }) });
-pass("a game message reaches the page", delivered.length === 1 && delivered[0].n === 42);
-sockets[0].onmessage({ data: "not json" });
-pass("junk reaches nobody, and does not break the socket", delivered.length === 1);
+print("\nTHE TELL IS RETRIED UNTIL THE WORKER HEARS IT");
+V = setup(function () { return "throw"; }, { postPlan: function () { return "throw"; } });
+r = connect(V, "tv"); tick(9000);
+var tries1 = handovers();
+tick(10 * 60000);
+pass("a page that cannot reach us keeps asking for a while (it is the one on the bad network)", handovers() > tries1 && handovers() <= 6,
+     handovers() + " tries");
+
+print("\nA PHONE LOSES SIGNAL FOR TEN SECONDS (walking to the bar)");
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(100);
+fetchPlan = function () { return "throw"; };
+sockets[0].die(1006);
+tick(10000);
+fetchPlan = function () { return ok200(); };
+tick(6000);
+pass("it comes back INTO THE ROOM, rather than moving the whole venue to Supabase",
+     r.state() === "open" && unavailReasons.length === 0 && handovers() === 0,
+     "state " + r.state() + ", reasons " + unavailReasons.join(","));
+
+print("\nROOM_OFF IS SET MID-GAME: THE ROOM SENDS EVERYONE ACROSS");
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(100);
+r.send({ t: "claim", n: 1 });
+sockets[0].die(4503);
+tick(50);
+pass("close code 4503 sends the page to Supabase AT ONCE, with no retries", unavailReasons[0] === "handed over" && sockets.length === 1);
+pass("and it tells nobody: the room already knows", handovers() === 0);
+V = setup(function () { return ok200(); });
+r = connect(V, "tv"); tick(100);
+sockets[0].onmessage({ data: JSON.stringify({ t: "room_handover" }) });
+tick(50);
+pass("the room saying so in words does the same, for a close code that got lost", unavailReasons[0] === "handed over" && delivered.length === 0);
+
+print("\nA COVERED TV WINDOW (Chrome freezes its timers) IS NOT A FAILED ROOM");
+V = setup(function () { return ok200(); });
+r = connect(V, "tv"); tick(100);
+fetchPlan = function () { return "throw"; };
+sockets[0].die(1006);                 // the venue router blinks while the window is covered
+freeze(90000);                        // ninety seconds frozen
+tick(1500);                           // it thaws; the first look fails, the network is still coming up
+fetchPlan = function () { return ok200(); };
+tick(3000);
+pass("after the thaw it reconnects to the room, instead of spending the frozen minute as failure",
+     r.state() === "open" && unavailReasons.length === 0 && handovers() === 0,
+     "state " + r.state() + ", reasons " + unavailReasons.join(","));
+V = setup(function () { return "throw"; });
+r = connect(V, "tv"); tick(100);
+freeze(200000);
+document.visibilityState = "visible";
+fetchPlan = function () { return ok200(); };
+fire("visibilitychange");
+tick(200);
+pass("and the window coming into view looks at once, with a fresh budget", r.state() === "open" && unavailReasons.length === 0,
+     "state " + r.state());
+
+print("\nA SOCKET THAT IS OPEN BUT DEAD (a router cut it between games)");
+V = setup(function () { return ok200(); });
+r = connect(V, "tv"); tick(30000);
+pass("the room has answered a ping", sockets[0].sent.indexOf("ping") >= 0);
+serverPongs = false;                 // half open: nothing comes back, nothing says closed
+tick(3 * 25000 + 1000);
+pass("two pings with no answer and it hangs up and reconnects", sockets.length === 2 && r.state() === "open",
+     sockets.length + " sockets, state " + r.state());
+pass("without leaving the room for Supabase", unavailReasons.length === 0);
+V = setup(function () { return ok200(); });
+serverPongs = false;                 // an OLDER Worker: it has never answered a ping
+r = connect(V, "tv"); tick(10 * 60000);
+pass("a Worker that never answers pings is not hung up on every minute", sockets.length === 1 && r.state() === "open");
 
 print("\nA SOCKET THAT HANGS (a captive portal, or wifi dropping mid handshake)");
-VPRoom = setup(function () { return { status: 200 }; });
+V = setup(function () { return ok200(); });
 FakeWS.hangNext = true;
-r = connect(VPRoom);
+r = connect(V, "tv");
 tick(500);
-pass("it is still waiting on the handshake, as a browser would be", r.state() === "connecting",
-     "state: " + r.state());
-tick(5000);
-pass("but silence is treated as failure, and the page goes to Supabase",
-     unavailReasons.length === 1,
-     "it used to sit on \"connecting\" for ever, because every budget is armed by onclose "
-     + "or onerror and a hang fires neither");
+pass("it is still waiting on the handshake, as a browser would be", r.state() === "connecting", "state: " + r.state());
+tick(12000);
+pass("but silence is treated as failure, and the page goes to Supabase", unavailReasons.length === 1,
+     "it used to sit on \"connecting\" for ever, because every budget is armed by onclose or onerror and a hang fires neither");
 FakeWS.hangNext = false;
+V = setup(function () { return { status: 200, html: true }; });
+r = connect(V, "phone"); tick(500);
+pass("a captive portal's own 200 page is not taken for the room", sockets.length === 0 && r.state() !== "open");
+tick(9000);
+pass("and the portal is a failed look, so the budget still ends it on Supabase rather than stuck",
+     unavailReasons.length === 1 && unavailReasons[0] === "no answer", unavailReasons.join(","));
+
+print("\nMIXED VERSIONS: THE ROOM BY DEFAULT ONLY WHERE THE WORKER CAN HAND IT OVER");
+V = setup(function () { return ok200(PRESENCE_OLD); }, { defaultOn: true });
+pass("with DEFAULT_ON and no flag, the page wants the room", V.wanted() === true && V.byDefault() === true);
+r = connect(V, "tv"); tick(100);
+pass("an OLD Worker (no handover) keeps a new page on Supabase, where an old console is",
+     unavailReasons[0] === "worker too old" && sockets.length === 0 && handovers() === 0);
+V = setup(function () { return ok200(PRESENCE_NEW); }, { defaultOn: true });
+r = connect(V, "tv"); tick(100);
+pass("the new Worker: into the room", r.state() === "open");
+V = setup(function () { return ok200(PRESENCE_OLD); }, { search: "?roomserver=1" });
+r = connect(V, "tv"); tick(100);
+pass("?roomserver=1 is a person choosing the room, and it still works against the old Worker", r.state() === "open");
+
+print("\nAN ANSWERS ROOM IS NOT A VENUE: IT MOVES NOBODY");
+V = setup(function () { return "throw"; });
+r = connect(V, "phone", "vpa-11111111-1111-4111-8111-111111111111");
+tick(2000);
+pass("not given up at 2.0s", unavailReasons.length === 0);
+tick(700);
+pass("given up by 2.7s: the HTTP road is right there", unavailReasons.length === 1);
+pass("and an answers room is never handed over", handovers() === 0);
 
 print("\nWHICH ROAD, DECIDED IN ONE PLACE");
-VPRoom = setup(function () { return { status: 200 }; });
-pass("with no flag it follows the default", VPRoom.wanted() === VPRoom.defaultOn(),
-     "DEFAULT_ON is currently " + VPRoom.defaultOn());
+V = setup(function () { return ok200(); });
+pass("with no flag it follows the default", V.wanted() === V.defaultOn(), "DEFAULT_ON is currently " + V.defaultOn());
 globalThis.location.search = "?roomserver=1";
-pass("?roomserver=1 turns it on", VPRoom.wanted() === true);
+pass("?roomserver=1 turns it on", V.wanted() === true && V.byDefault() === false);
 globalThis.location.search = "";
-pass("and it STICKS, because opening a console bounces through hq.html and loses the query",
-     VPRoom.wanted() === true);
+pass("and it STICKS, because opening a console bounces through hq.html and loses the query", V.wanted() === true);
 globalThis.location.search = "?roomserver=0";
-pass("?roomserver=0 turns it off again", VPRoom.wanted() === false);
+pass("?roomserver=0 turns it off again", V.wanted() === false);
 globalThis.location.search = "";
-pass("and that sticks too", VPRoom.wanted() === false);
+pass("and that sticks too", V.wanted() === false);
 globalThis.sessionStorage = { getItem: function () { throw new Error("blocked"); }, setItem: function () { throw new Error("blocked"); } };
-pass("a browser with storage blocked does not throw, it just goes the old way", VPRoom.wanted() === false);
+pass("a browser with storage blocked does not throw, and follows the default", V.wanted() === V.defaultOn());
+
+print("\nWHO IS ON THE OLD ROAD");
+V = setup(function () { return ok200(); });
+var P = V.oldRoadPeer;
+pass("a bingo TV saying tv_here on Supabase is a peer", P({ t: "tv_here" }) === true);
+pass("a bingo console saying host_here on Supabase is a peer", P({ t: "host_here", _sig: "x" }) === true);
+pass("a page in the room saying host_here there (rw) is NOT", P({ t: "host_here", rw: 1 }) === false);
+pass("a musical or trivia console on the same channel name is NOT", P({ t: "host_here", fmt: "musical" }) === false && P({ t: "state", fmt: "trivia" }) === false);
+pass("a bingo phone's signed join is a peer", P({ t: "join", pid: "k1_abc", pk: "x", sig: "y" }) === true);
+pass("a musical or trivia phone's unsigned join is NOT", P({ t: "join", pid: "abc" }) === false);
+pass("Venue settings' screen_refresh is NOT", P({ t: "screen_refresh" }) === false);
+
+print("\nTHE EAR: LISTENS ON THE OLD ROAD, HEARS A PEER ONCE, LETS GO PROPERLY");
+V = setup(function () { return ok200(); });
+var chans = [], heardPeers = [];
+var fakeClient = {
+  channel: function (name) {
+    var c = { name: name, sent: [], h: null, s: null, gone: false,
+      on: function (a, b, fn) { this.h = fn; return this; },
+      subscribe: function (fn) { this.s = fn; var me = this; setTimeout(function () { fn("SUBSCRIBED"); }, 5); return this; },
+      send: function (m) { this.sent.push(m); } };
+    chans.push(c); return c;
+  },
+  removeChannel: function (c) { setTimeout(function () { c.gone = true; }, 400); return Promise.resolve("ok"); },
+  getChannels: function () { return chans.filter(function (c) { return !c.gone; }); }
+};
+var ear = V.watch(fakeClient, "vp-ABC123", {
+  gate: function (p, cb) { if (p && p.forged) return; cb(p); },
+  onPeer: function (m) { heardPeers.push(m.t); },
+  hello: function (say) { say({ t: "host_here", rw: 1 }); }
+});
+tick(50);
+pass("it says the console's hello on the old road, stamped rw", chans[0].sent.length === 1 && chans[0].sent[0].payload.rw === 1);
+chans[0].h({ payload: { t: "host_here", rw: 1 } });
+chans[0].h({ payload: { t: "host_here", forged: true } });
+chans[0].h({ payload: { t: "host_here", fmt: "trivia" } });
+pass("another page's ear, a forged message and another game's console are all ignored", heardPeers.length === 0);
+chans[0].h({ payload: { t: "tv_here" } });
+chans[0].h({ payload: { t: "tv_here" } });
+pass("an old TV answering is heard, once", heardPeers.length === 1 && ear.heard() === true);
+var released = false;
+ear.release().then(function () { released = true; });
+tick(200);
+pass("letting go waits while the library still holds the channel", released === false);
+tick(500);
+pass("and is done once it has really gone, so the page's own channel can take the name", released === true);
 
 print("");
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));

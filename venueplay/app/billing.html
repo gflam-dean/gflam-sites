@@ -787,6 +787,7 @@
 <script src="/app/vp-logo.js"></script>
 <script src="/app/vp-gaming.js"></script>
 <script src="/app/vp-permits.js"></script>
+<script src="/app/vp-room.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -2074,6 +2075,9 @@
         });
         setTimeout(drop, 8000);   // backstop: a join that never lands still gets cleaned up
       });
+      /* AND INTO THE ROOM. A bingo TV on the room server does not hear Supabase at all, so the
+         same word goes into the venue's room too. A room that is off simply refuses it. */
+      try{ if(window.VPRoom && VPRoom.sayOnce) VPRoom.sayOnce((typeof VP_GAME_API!=="undefined" && VP_GAME_API) || "https://game.venueplay.com.au", "vp-" + VP.venueCode(slug), { t:"screen_refresh" }); }catch(e){}
     }catch(e){}
   }
   /* THE VENUE THIS PAGE IS ABOUT. Three panels here (Screen, Raffles, Members draw) each have

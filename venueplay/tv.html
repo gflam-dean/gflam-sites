@@ -1075,6 +1075,7 @@
       }catch(e){}
     }
     ask();
+    window.__vpTvAsk = ask;   // the room says "ask now" (an HQ reload or command), the poll answers
     setInterval(ask, 30000);
     /* AND WHEN THE WINDOW CLOSES, repaint. Without this the deadline is only consulted the
        next time something happens to rebuild the ads, so a screen whose Worker never answered
@@ -2061,7 +2062,7 @@
      road the console takes but the TV does not is a host talking into an empty room. It
      lives in vp-room.js now, so all three pages cannot disagree and the whole product
      changes road by one constant there. */
-  var _useRoom=false, _roomTried=false, _room=null;
+  var _useRoom=false, _roomTried=false, _room=null, _roomClient=false, _ear=null;
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   /* DECLARED OUT HERE, NOT INSIDE connectRealtime's first if.
 
@@ -2130,13 +2131,33 @@
     if(_useRoom && window.VPRoom && !_roomTried){
       _roomTried=true;
       try{
-        _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){ vpGate(payload, onMsg); }, {
-          onUnavailable: function(){ _useRoom=false; _room=null; setTimeout(connectRealtime, 0); },
+        /* THE ROOM STILL NEEDS A SUPABASE CLIENT. The unified router (it follows trivia, musical,
+           raffle and members, which are still on Supabase) waits for `client`, and on the room
+           nothing ever made one: a TV on the room sat on bingo and the ads all night while the
+           host ran a quiz. One client, one connection, shared with the router and the ear below. */
+        if(!client){ client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined); _roomClient=true; }
+        /* tvSend() is kept byte-identical in five pages and speaks through `ch`, so on the room
+           `ch` is the room: every tv_here this screen says reaches the console, not just the
+           first. It was the first only. */
+        var roomCh={ room:true, send:function(m){ if(_room && m) _room.send(m.payload); } };
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){
+          /* The Worker's own words (HQ reload and commands) are {type:...}, which this page never
+             read, so "screens reload now" was a promise nobody kept. They mean "ask now". */
+          if(payload && !payload.t && typeof payload.type==="string"){ if(window.__vpTvAsk) window.__vpTvAsk(); return; }
+          vpGate(payload, onMsg);
+        }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; if(ch && ch.room) ch=null; tvSubscribed=false;
+            var ear=_ear; _ear=null;
+            (ear ? ear.release() : Promise.resolve()).then(function(){ setTimeout(connectRealtime, 0); }, function(){ setTimeout(connectRealtime, 0); }); },
           onState: function(st){
             noteDeaf("main", st!=="open");   // the room is this screen's bingo road: it counts
-            if(st==="open"){ tvSubscribed=true; tvStatus(true);
+            if(st==="open"){ ch=roomCh; tvSubscribed=true; tvStatus(true);
               try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){};
-              try{ _room.send({ t:"tv_here", hello:true }); }catch(e){}   // tvSend() only speaks down the Supabase channel, and it is one of the three kept byte-identical
+              tvSend({ t:"tv_here", hello:true });
+              /* ONE EAR ON THE OLD ROAD: a console on Supabase (cached from before the switch, or
+                 one that left the room on its own) says host_here every 30 seconds. Hearing it,
+                 the room is handed over and this screen goes to meet it (vp-room.js). */
+              if(!_ear && client){ _ear=VPRoom.watch(client, "vp-"+CODE, { gate: vpGate, onPeer: function(){ if(_room) _room.handover("peer"); } }); }
             }
             else { tvSubscribed=false; tvStatus(false); }
           }
@@ -2148,7 +2169,8 @@
       /* ONE BINGO CHANNEL AT A TIME. This function runs again after a throw below; hang up the
          last one first, so its retries stop and its CLOSED is not news. */
       if(ch && ch.unsubscribe){ try{ ch.unsubscribe(); }catch(e){} ch=null; }
-      client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
+      if(!_roomClient || !client) client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.clientOptions) ? VPChannel.clientOptions() : undefined);   // the room's client is kept: the router's channels are on it
+      _roomClient=false;   // worker heartbeat: a covered window keeps its socket (vp-channel.js, rule 6)
       /* AND IT COMES BACK. This said Reconnecting after a CLOSED and never tried again: a bingo
          wall deaf for the night, and not counted by the watchdog either (audit, 27 Sep 2026).
          /app/vp-channel.js rebuilds it with a backoff; without the script it is the plain

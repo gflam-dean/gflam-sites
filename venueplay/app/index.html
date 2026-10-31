@@ -764,7 +764,7 @@
      road the console takes but the TV does not is a host talking into an empty room. It
      lives in vp-room.js now, so all three pages cannot disagree and the whole product
      changes road by one constant there. */
-  var _useRoom=false, _roomTried=false, _room=null;
+  var _useRoom=false, _roomTried=false, _room=null, _ear=null, _roomCode="";
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   /* ONE LIVE BINGO NIGHT PER TABLET (15 Oct 2026, /app/vp-onetab.js). Trivia and musical lock
      their whole page to one tab. This page is also the games menu, so bingo locks only once a
@@ -4136,6 +4136,9 @@
 
   // ================= CONNECT =================
   function connect(code){
+    /* The last venue's channel is hung up when the host moves to another venue, or its phones
+       go on reaching this console. */
+    if(ch && G.code && G.code!==code){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
     G.code=code;
     $("headerTag").textContent="Bingo";
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
@@ -4153,11 +4156,21 @@
     } else {
       restoreGame(code);
     }
+    /* ANOTHER VENUE IS ANOTHER ROOM. A host with two venues who switched kept talking into the
+       first venue's room, because the room was only ever tried once per page. */
+    if(_room && _roomCode!==code){ try{ _room.close(); }catch(e){} _room=null; if(_ear){ try{ _ear.release(); }catch(e){} _ear=null; } }
+    if(!_room && _useRoom) _roomTried=false;
     if(_useRoom && window.VPRoom && !_roomTried){
       _roomTried=true;
       try{
+        _roomCode=code;
         _room=VPRoom.connect(VP_GAME_API, "vp-"+code, "host", function(payload){ onRoomMsg(payload); }, {
-          onUnavailable: function(){ _useRoom=false; _room=null; connect(code); },
+          /* What the room was still holding goes out on the old road, in order, and the ear is let
+             go before the real channel is opened on the same name (vp-room.js, watch). */
+          onUnavailable: function(why, pending){ _useRoom=false; _room=null; subscribed=false;
+            for(var pq=0; pending && pq<pending.length; pq++) sendQueue.push(pending[pq]);
+            var ear=_ear; _ear=null;
+            (ear ? ear.release() : Promise.resolve()).then(function(){ if(G.code===code) connect(code); }, function(){ if(G.code===code) connect(code); }); },
           onState: function(st){
             if(st==="open"){
               subscribed=true;
@@ -4167,6 +4180,21 @@
               $("pairedChip").innerHTML="&middot; ready";
               reassertToTv();
               if(gameOpenHere()) send({ t:"rollcall" });   // a console in setup has nobody to call back (14 Oct)
+              /* ONE EAR ON THE OLD ROAD. A TV or phones still on Supabase (open since before the
+                 switch, or gone back on their own) cannot hear this room. Say host_here there once,
+                 stamped rw so no other ear takes it for a peer; an old TV answers tv_here, old phones
+                 answer a rollcall with join, a console there says host_here every 30 seconds. Any of
+                 those and the room is handed over, so the whole venue is on one road. */
+              if(!_ear && client){
+                _ear=VPRoom.watch(client, "vp-"+code, {
+                  onPeer: function(){ if(_room) _room.handover("peer"); },
+                  hello: function(say){
+                    var hi={ t:"host_here", rw:1 };
+                    if(window.VPSign){ VPSign.signSend(hi, say); } else { say(hi); }
+                    if(gameOpenHere()){ var rc={ t:"rollcall", rw:1 }; if(window.VPSign){ VPSign.signSend(rc, say); } else { say(rc); } }
+                  }
+                });
+              }
             } else {
               subscribed=false;
               $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
@@ -4182,6 +4210,7 @@
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true;
+        try{document.documentElement.setAttribute("data-vp-transport","supabase");}catch(e){}   // both roads recorded, not only the room
         send({ t:"host_here" });   // announce to the TV; it replies with tv_here
         flushQueue();
         // the TV runs on its own screen; the host console is ready to go regardless
