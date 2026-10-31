@@ -10,7 +10,7 @@
    Instantly campaign, and nothing on this tab does any of those.
 
    The billing Worker decides everything (POST /admin/subscribers, owner or accounts only): each
-   row's state (active, held because the address had unsubscribed before, or unsubscribed since),
+   row's state (on the list; re-subscribed, back after an unsubscribe, with both dates; unsubscribed; held by hand),
    its match, and the counts. Export CSV is POST /admin/subscribers/export, audited.
 
    It owns its pane (#paneSubscribers) and its tab's count (sign-ups in the last 7 days); hq.html's
@@ -25,7 +25,7 @@
   var S = { data: null, loading: false, filter: "all" };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var SOURCE = { home: "Home page", offer: "Offer page", "see-a-night": "See a night", site: "Other" };
-  var STATE = { active: "On the list", held: "Held", unsubscribed: "Unsubscribed" };
+  var STATE = { active: "On the list", resubscribed: "Re-subscribed", held: "Held", unsubscribed: "Unsubscribed" };
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -48,7 +48,9 @@
   }
   function stateHtml(r) {
     return '<span class="badge vpsb-' + esc(r.state) + '" data-vps-state="' + esc(r.state) + '">' + esc(STATE[r.state] || r.state) + "</span>"
-      + (r.state === "held" ? '<div class="note" style="margin:4px 0 0">This address unsubscribed before, so it was kept off the list and sent nothing. If they really want back on, ask them to email hello@ first.</div>' : "");
+      + (r.state === "resubscribed" ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true)) + ', signed up again ' + esc(when(r.resubscribed_at, true)) + '. Back on for the monthly email only.</div>' : "")
+      + (r.state === "unsubscribed" && r.unsubscribed_at ? '<div class="note" data-vps-dates style="margin:4px 0 0">Unsubscribed ' + esc(when(r.unsubscribed_at, true)) + (r.resubscribed_at ? ', after signing up again ' + esc(when(r.resubscribed_at, true)) : "") + '.</div>' : "")
+      + (r.state === "held" ? '<div class="note" style="margin:4px 0 0">Held by hand: kept, and sent nothing.' + (r.held_reason ? " (" + esc(r.held_reason) + ")" : "") + '</div>' : "");
   }
   function utmText(u) {
     if (!u) return "";
@@ -77,7 +79,7 @@
     if (d.error) return '<div class="panel pad"><div class="empty" style="border:none;background:none" id="vpsErr">' + esc(d.error) + "</div></div>";
     var c = d.counts || {};
     var rows = (d.subscribers || []).filter(function (r) {
-      return S.filter === "all" ? true : S.filter === "matched" ? !!r.match : r.state === S.filter;
+      return S.filter === "all" ? true : S.filter === "matched" ? !!r.match : S.filter === "active" ? (r.state === "active" || r.state === "resubscribed") : r.state === S.filter;
     });
     return '<div class="rowbetween" style="margin-bottom:12px"><div class="lblk" style="margin:0">Monthly email subscribers</div>'
       + '<span class="sp"></span><button class="btn ghost" id="vpsExport">Export CSV</button> <button class="btn ghost" id="vpsRefresh">Refresh</button></div>'
@@ -86,13 +88,13 @@
       + (d.emails_on ? "" : " The welcome email is <b>off</b> (SUBSCRIBE_EMAILS), so new sign-ups are kept and sent nothing yet.") + "</div>"
       + '<div class="stats" style="margin-bottom:14px">'
       + '<div class="scard"><div class="k">On the list</div><div class="v g" id="vpsActive">' + (c.active || 0) + '</div><div class="d">get the monthly email</div></div>'
-      + '<div class="scard"><div class="k">Held</div><div class="v" id="vpsHeld">' + (c.held || 0) + '</div><div class="d">unsubscribed before</div></div>'
+      + '<div class="scard"><div class="k">Re-subscribed</div><div class="v" id="vpsResub">' + (c.resubscribed || 0) + '</div><div class="d">back after unsubscribing</div></div>'
       + '<div class="scard"><div class="k">Unsubscribed</div><div class="v" id="vpsUnsub">' + (c.unsubscribed || 0) + '</div><div class="d">since signing up</div></div>'
       + '<div class="scard"><div class="k">Matched</div><div class="v" id="vpsMatched">' + (c.matched || 0) + '</div><div class="d">look like a venue or prospect</div></div>'
       + "</div>"
       + weeksHtml(d)
       + '<div class="filterbar" style="margin:14px 0 10px"><select id="vpsFilter">'
-      + [["all", "Everyone"], ["active", "On the list"], ["held", "Held"], ["unsubscribed", "Unsubscribed"], ["matched", "Matched to a venue or prospect"]]
+      + [["all", "Everyone"], ["active", "On the list"], ["resubscribed", "Re-subscribed"], ["unsubscribed", "Unsubscribed"], ["held", "Held"], ["matched", "Matched to a venue or prospect"]]
         .map(function (o) { return '<option value="' + o[0] + '"' + (S.filter === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("")
       + '</select><span class="note" id="vpsMsg" style="margin:0"></span></div>'
       + (rows.length
@@ -123,7 +125,7 @@
   function setCount(d) {
     var b = $("vpsTab"); if (!b) return;
     var week = Date.now() - 7 * 86400000;
-    var n = ((d && d.subscribers) || []).filter(function (r) { return Date.parse(r.created_at) >= week && r.state === "active"; }).length;
+    var n = ((d && d.subscribers) || []).filter(function (r) { return Date.parse(r.created_at) >= week && (r.state === "active" || r.state === "resubscribed"); }).length;
     var sp = b.querySelector(".tabcount");
     if (!sp) { sp = doc.createElement("span"); sp.className = "hdbadge tabcount"; b.appendChild(sp); }
     sp.textContent = n > 99 ? "99+" : String(n);
@@ -137,6 +139,7 @@
     p.innerHTML = "<style>"
       + ".badge.vpsb-active{background:rgba(53,208,127,.12);color:var(--win);border:1px solid rgba(53,208,127,.4)}"
       + ".badge.vpsb-held{background:rgba(245,165,36,.14);color:var(--roll);border:1px solid rgba(245,165,36,.4)}"
+      + ".badge.vpsb-resubscribed{background:rgba(53,208,127,.12);color:var(--win);border:1px dashed rgba(53,208,127,.55)}"
       + ".badge.vpsb-unsubscribed{background:rgba(154,154,164,.10);color:var(--faint);border:1px solid rgba(154,154,164,.3)}"
       + ".badge.vpsb-pro{background:rgba(255,31,142,.12);color:var(--pink);border:1px solid rgba(255,31,142,.45)}"
       + ".badge.vpsb-ven{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.18)}"

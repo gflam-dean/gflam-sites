@@ -9,8 +9,9 @@
      3. a bad address or an over-long venue is refused with nothing kept
      4. the honeypot: told it worked, nothing kept, nothing sent
      5. the limits: per network and per address
-     6. an address on vp_unsubscribes is HELD, never emailed, and answers exactly like a new sign-up;
-        an unsubscribe list that cannot be read keeps nothing and sends nothing
+     6. an address on vp_unsubscribes that signs up again is BACK ON (Dean, 31 Oct 2026): fresh consent,
+        resubscribed_at, its opt-out row kept as the record and still read by every other check; a later
+        unsubscribe wins again, from either record, a tie is a stop; an unreadable list keeps nothing
      7. THE OFF SWITCH: nothing is sent unless SUBSCRIBE_EMAILS is exactly 'on'; on, one email from
         hello@, a real signed one-click List-Unsubscribe on api.venueplay.com.au, the unsubscribe link
         on venueplay.com.au, no .dev anywhere, no Gflam, no em dash, the venue's name escaped
@@ -154,23 +155,58 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   check('one address can be tried ' + VPS_MAX_PER_EMAIL + ' times an hour from anywhere, then 429 (the form cannot flood an inbox)',
     es.slice(0, VPS_MAX_PER_EMAIL).every(function (s) { return s === 200; }) && es[VPS_MAX_PER_EMAIL] === 429, es);
 
-  section('6. SOMEONE WHO UNSUBSCRIBED IS NEVER QUIETLY PUT BACK');
+  section('6. SOMEONE WHO UNSUBSCRIBED AND SIGNS UP AGAIN IS BACK ON, AND A LATER UNSUBSCRIBE WINS AGAIN');
   world(); ENV.SUBSCRIBE_EMAILS = 'on';
   DB.vp_unsubscribes = [{ id: 'u1', email: 'Stop@PubOnTheCorner.com.au', source: 'link', created_at: '2026-10-01T00:00:00Z' },
-                        { id: 'u2', email: 'a_b@corner.com.au', source: 'manual' }];
+                        { id: 'u2', email: 'a_b@corner.com.au', source: 'manual', created_at: '2026-09-01T00:00:00Z' }];
+  var u1Before = JSON.stringify(DB.vp_unsubscribes[0]);
   var fresh = await sub({ email: 'fresh@pubonthecorner.com.au' });
-  var held = await sub({ email: 'stop@pubonthecorner.com.au', venue: 'Pub on the Corner' });
+  var back = await sub({ email: 'stop@pubonthecorner.com.au', venue: 'Pub on the Corner' });
   check('an address on vp_unsubscribes (stored in another case) gets exactly the answer a new sign-up gets',
-    JSON.stringify(held) === JSON.stringify(fresh) && held.status === 200, [held, fresh]);
+    JSON.stringify(back) === JSON.stringify(fresh) && back.status === 200, [back, fresh]);
   var h = rows().filter(function (x) { return x.email === 'stop@pubonthecorner.com.au'; })[0] || {};
-  check('it is kept as HELD, reason "unsubscribed", so a person can see it', h.status === 'held' && h.held_reason === 'unsubscribed', h);
-  check('and it is sent nothing (the new one alongside it got its one email)', sent.length === 1 && sent[0].to[0] === 'fresh@pubonthecorner.com.au', sent.map(function (s) { return s.to; }));
-  DB.vp_unsubscribes.push({ id: 'u3', email: 'axb@corner.com.au', source: 'manual' });
+  check('it is ACTIVE with fresh consent: a new consent_at after the unsubscribe, and a resubscribed_at', h.status === 'active' && !h.held_reason
+    && Date.parse(h.consent_at) > Date.parse('2026-10-01T00:00:00Z') && h.resubscribed_at === h.consent_at && h.consent_text === VPS_CONSENT_TEXT, h);
+  check('a first-time sign-up has no resubscribed_at', (rows().filter(function (x) { return x.email === 'fresh@pubonthecorner.com.au'; })[0] || {}).resubscribed_at === null);
+  check('their vp_unsubscribes row is kept exactly as it was, as the record', DB.vp_unsubscribes.length === 2 && JSON.stringify(DB.vp_unsubscribes[0]) === u1Before, DB.vp_unsubscribes);
+  check('with the switch on they get the one welcome, like anyone new', sent.length === 2 && sent[1].to[0] === 'stop@pubonthecorner.com.au', sent.map(function (x) { return x.to; }));
+  var mlist = (await vpsMonthlyRecipients(ENV)).map(function (x) { return x.email; });
+  check('they are on the monthly list', mlist.indexOf('stop@pubonthecorner.com.au') >= 0 && mlist.indexOf('fresh@pubonthecorner.com.au') >= 0, mlist);
+  check('every other check still leaves them out: vp_unsubscribes still names them for the win-back, the venue export and cold outreach',
+    (await vpaUnsubscribedSet(ENV))['stop@pubonthecorner.com.au'] === true);
+  check('and the report sender is told they are back on for the monthly email (vpsBackOn)', (await vpsBackOn(ENV))['stop@pubonthecorner.com.au'] === true && !(await vpsBackOn(ENV))['fresh@pubonthecorner.com.au']);
+  // A LATER UNSUBSCRIBE WINS AGAIN. Through the Worker's own one-click route, then dated so the order is plain.
+  var tokS = await vpUnsubToken(ENV, 'stop@pubonthecorner.com.au');
+  var uq = await _d.fetch({ method: 'POST', url: 'https://api.venueplay.com.au/unsubscribe?e=stop%40pubonthecorner.com.au&t=' + tokS + '&c=monthly-news',
+    headers: { get: function () { return null; } }, text: function () { return Promise.resolve('List-Unsubscribe=One-Click'); } }, ENV);
+  var t0 = Date.now();
+  h.consent_at = h.resubscribed_at = new Date(t0 - 120000).toISOString();
+  DB.vp_unsubscribes.filter(function (x) { return x.email === 'stop@pubonthecorner.com.au'; }).forEach(function (x) { x.created_at = new Date(t0 - 60000).toISOString(); });
+  mlist = (await vpsMonthlyRecipients(ENV)).map(function (x) { return x.email; });
+  check('they unsubscribe again (one-click, 200): off the monthly list straight away', uq.status === 200 && mlist.indexOf('stop@pubonthecorner.com.au') < 0, [uq.status, mlist]);
+  check('and vpsBackOn no longer names them', !(await vpsBackOn(ENV))['stop@pubonthecorner.com.au']);
+  sent.length = 0;
+  await sub({ email: 'stop@pubonthecorner.com.au' });
+  h = rows().filter(function (x) { return x.email === 'stop@pubonthecorner.com.au'; })[0] || {};
+  mlist = (await vpsMonthlyRecipients(ENV)).map(function (x) { return x.email; });
+  check('and a third time signing up brings them back again, consent now later than the latest stop, still one row',
+    rows().filter(function (x) { return x.email === 'stop@pubonthecorner.com.au'; }).length === 1 && Date.parse(h.consent_at) >= t0 && mlist.indexOf('stop@pubonthecorner.com.au') >= 0 && sent.length === 1, [h, mlist]);
+  // The latest stop is whichever record says later: the first row's last_unsubscribed_at, or the subscriber row's own unsubscribed_at.
+  var later = new Date(Date.parse(h.consent_at) + 1000).toISOString();
+  DB.vp_unsubscribes.forEach(function (x) { if (x.email === 'Stop@PubOnTheCorner.com.au') x.last_unsubscribed_at = later; });
+  check('a repeat opt-out noted on the first row (last_unsubscribed_at, the trigger) after their consent: off again', (await vpsMonthlyRecipients(ENV)).every(function (x) { return x.email !== 'stop@pubonthecorner.com.au'; }));
+  DB.vp_unsubscribes.forEach(function (x) { delete x.last_unsubscribed_at; });
+  var fr = rows().filter(function (x) { return x.email === 'fresh@pubonthecorner.com.au'; })[0];
+  fr.unsubscribed_at = new Date(Date.parse(fr.consent_at) + 1000).toISOString();
+  check('the subscriber row\'s own unsubscribed_at after its consent: off as well, with nothing on vp_unsubscribes', (await vpsMonthlyRecipients(ENV)).every(function (x) { return x.email !== 'fresh@pubonthecorner.com.au'; }));
+  fr.unsubscribed_at = fr.consent_at;
+  check('a tie between consent and unsubscribe is a stop', (await vpsMonthlyRecipients(ENV)).every(function (x) { return x.email !== 'fresh@pubonthecorner.com.au'; }));
+  DB.vp_unsubscribes.push({ id: 'u3', email: 'axb@corner.com.au', source: 'manual', created_at: '2026-09-01T00:00:00Z' });
   await sub({ email: 'A_B@corner.com.au' });
   await sub({ email: 'a.b@corner.com.au' });
   var ab = rows().filter(function (x) { return x.email === 'a_b@corner.com.au'; })[0] || {}, adot = rows().filter(function (x) { return x.email === 'a.b@corner.com.au'; })[0] || {};
-  check('the match is the whole address, any case: a_b@ on the list is held; the _ is never a wildcard (axb@ on the list does not hold a.b@)',
-    ab.status === 'held' && adot.status === 'active' && sent.length === 2, [ab.status, adot.status, sent.length]);
+  check('the match is the whole address, any case: a_b@ on the list comes back as re-subscribed; the _ is never a wildcard (axb@ on the list says nothing about a.b@)',
+    !!ab.resubscribed_at && adot.status === 'active' && adot.resubscribed_at === null, [ab.resubscribed_at, adot.resubscribed_at]);
   sent.length = 0; FAIL['vp_unsubscribes:GET'] = 1;
   var down = await sub({ email: 'unsure@pub.com.au' });
   check('an unsubscribe list that cannot be read: 503, try again', down.status === 503 && /try again/i.test(down.body.error || ''), down);
@@ -239,26 +275,29 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
                            { id: 'f3', contact_email: 'boss@kirraprospect.com.au' }, { id: 'f4', contact_email: 'a@twinpines1.com.au' }, { id: 'f5', contact_email: 'b@twinpines2.com.au' }];
   DB.vp_prospects = [{ venue_id: V3, email: 'boss@kirraprospect.com.au' }];
   var now = Date.now(), WK = 7 * 86400000;
-  function seedSub(id, email, extra) { DB.vp_subscribers.push(Object.assign({ id: id, email: email, venue_name: null, source: 'home', utm: {}, status: 'active', created_at: new Date(now - 3600000).toISOString() }, extra || {})); }
+  function seedSub(id, email, extra) { var r = Object.assign({ id: id, email: email, venue_name: null, source: 'home', utm: {}, status: 'active', created_at: new Date(now - 3600000).toISOString() }, extra || {});
+    if (!r.consent_at) r.consent_at = r.created_at; DB.vp_subscribers.push(r); }
   seedSub('s1', 'olive@deepwaterhotel.com.au');                                              // exact contact email
   seedSub('s2', 'bar.manager@kirraprospect.com.au', { source: 'offer' });                    // a prospect's domain
   seedSub('s3', 'someone@gmail.com', { venue_name: '  the ROYAL arms ', source: 'see-a-night' }); // free mailbox, the venue by its whole name
   seedSub('s4', 'royal.fan@gmail.com');                                                       // gmail, like f2's contact: never by domain
-  seedSub('s5', 'held@pub.com.au', { status: 'held', held_reason: 'unsubscribed', created_at: new Date(now - WK - 3600000).toISOString() });
+  seedSub('s5', 'held@pub.com.au', { status: 'held', held_reason: 'by hand', created_at: new Date(now - WK - 3600000).toISOString() });
   seedSub('s6', 'later.stop@pub.com.au', { created_at: new Date(now - 2 * WK - 3600000).toISOString() });
   seedSub('s7', 'twins@hotmail.com', { venue_name: 'Twin Pines' });                           // two venues share the name: no guess
-  DB.vp_unsubscribes = [{ email: 'Later.Stop@Pub.com.au' }];
+  seedSub('s9', 'came.back@pub.com.au', { resubscribed_at: new Date(now - 3600000).toISOString() });   // unsubscribed in September, signed up again
+  DB.vp_unsubscribes = [{ email: 'Later.Stop@Pub.com.au', created_at: new Date(now - 3600000).toISOString() }, { email: 'came.back@pub.com.au', created_at: '2026-09-01T00:00:00Z' }];
   var nob = await call('/admin/subscribers', {});
   var stf = await call('/admin/subscribers', {}, AS(STAFF));
   var own = await call('/admin/subscribers', {}, AS(OWNER));
   check('no sign-in 401; an HQ staff role 403; a venue owner who is not HQ 403', nob.status === 401 && stf.status === 403 && own.status === 403, [nob.status, stf.status, own.status]);
   var L = await call('/admin/subscribers', {}, AS(ADMIN));
   var A = await call('/admin/subscribers', {}, AS(ACCTS));
-  check('the owner and accounts roles get the list', L.status === 200 && L.body.ok && A.status === 200 && (L.body.subscribers || []).length === 7, [L.status, A.status]);
+  check('the owner and accounts roles get the list', L.status === 200 && L.body.ok && A.status === 200 && (L.body.subscribers || []).length === 8, [L.status, A.status]);
   var by = {}; (L.body.subscribers || []).forEach(function (x) { by[x.id] = x; });
-  check('states: on the list, held (unsubscribed before), unsubscribed since (vp_unsubscribes, any case)',
-    by.s1.state === 'active' && by.s5.state === 'held' && by.s5.held_reason === 'unsubscribed' && by.s6.state === 'unsubscribed', [by.s1.state, by.s5.state, by.s6.state]);
-  check('counts: 5 active, 1 held, 1 unsubscribed', L.body.counts.active === 5 && L.body.counts.held === 1 && L.body.counts.unsubscribed === 1, L.body.counts);
+  check('states: on the list, held by hand, unsubscribed since (vp_unsubscribes, any case, later than their consent)',
+    by.s1.state === 'active' && by.s5.state === 'held' && by.s5.held_reason === 'by hand' && by.s6.state === 'unsubscribed', [by.s1.state, by.s5.state, by.s6.state]);
+  check('back after an unsubscribe: "resubscribed", with both dates for HQ to show', by.s9.state === 'resubscribed' && by.s9.unsubscribed_at === '2026-09-01T00:00:00.000Z' && by.s9.resubscribed_at === by.s9.consent_at, by.s9);
+  check('counts: 6 on the list (1 of them re-subscribed), 1 held, 1 unsubscribed', L.body.counts.active === 6 && L.body.counts.resubscribed === 1 && L.body.counts.held === 1 && L.body.counts.unsubscribed === 1, L.body.counts);
   check('the exact email of an account\'s contact matches its venue, by email', by.s1.match && by.s1.match.venue_id === V1 && by.s1.match.by === 'email' && by.s1.match.kind === 'venue', by.s1.match);
   check('an address at a prospect\'s own domain matches that prospect, by domain', by.s2.match && by.s2.match.venue_id === V3 && by.s2.match.by === 'domain' && by.s2.match.kind === 'prospect', by.s2.match);
   check('a gmail address with a venue typed in any case matches that venue by its whole name', by.s3.match && by.s3.match.venue_id === V2 && by.s3.match.by === 'name', by.s3.match);
@@ -267,8 +306,8 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   check('matched count is 3', L.body.counts.matched === 3, L.body.counts.matched);
   var wk = L.body.by_week || [];
   check('twelve weeks, newest first, each starting on a Monday', wk.length === 12 && wk.every(function (w) { return new Date(w.week + 'T00:00:00Z').getUTCDay() === 1; }) && wk[0].week > wk[1].week, wk.slice(0, 3));
-  check('this week by page: 5 sign-ups, 3 home, 1 offer, 1 See a night', wk[0].n === 5 && wk[0].by_source.home === 3 && wk[0].by_source.offer === 1 && wk[0].by_source['see-a-night'] === 1, wk[0]);
-  check('last week 1, the week before 1, and the by-page totals add up', wk[1].n === 1 && wk[2].n === 1 && L.body.counts.by_source.home === 5, [wk[1], wk[2], L.body.counts.by_source]);
+  check('this week by page: 6 sign-ups, 4 home, 1 offer, 1 See a night', wk[0].n === 6 && wk[0].by_source.home === 4 && wk[0].by_source.offer === 1 && wk[0].by_source['see-a-night'] === 1, wk[0]);
+  check('last week 1, the week before 1, and the by-page totals add up', wk[1].n === 1 && wk[2].n === 1 && L.body.counts.by_source.home === 6, [wk[1], wk[2], L.body.counts.by_source]);
   check('it says whether the welcome email is on (it is off here)', L.body.emails_on === false);
   check('newest first', (L.body.subscribers || [])[(L.body.subscribers || []).length - 1].id === 's6', (L.body.subscribers || []).map(function (x) { return x.id; }));
   FAIL['vp_unsubscribes:GET'] = 1;
@@ -278,16 +317,17 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
     JSON.stringify(vpsMatch({ email: 'olive@deepwaterhotel.com.au' }, DB.vp_venues, DB.venueplay_founding, DB.vp_prospects)) === JSON.stringify(by.s1.match));
 
   section('11. THE CSV');
-  DB.vp_subscribers.push({ id: 's8', email: 'formula@pub.com.au', venue_name: '=HYPERLINK("http://x","click")', source: 'home', utm: { utm_source: 'fb' }, status: 'active', created_at: new Date(now).toISOString() });
+  DB.vp_subscribers.push({ id: 's8', email: 'formula@pub.com.au', venue_name: '=HYPERLINK("http://x","click")', source: 'home', utm: { utm_source: 'fb' }, status: 'active', created_at: new Date(now).toISOString(), consent_at: new Date(now).toISOString() });
   var ex0 = await call('/admin/subscribers/export', {}, AS(STAFF));
   check('HQ staff role: 403 and no file', ex0.status === 403 && !ex0.body.csv, ex0.status);
   var X = await call('/admin/subscribers/export', {}, AS(ACCTS));
   var lines = String(X.body.csv || '').trim().split('\n');
-  check('the accounts role gets every row plus a header', X.status === 200 && X.body.count === 8 && lines.length === 9 && /^Email,Venue \(as typed\),State,Signed up,Source/.test(lines[0]), lines[0]);
+  check('the accounts role gets every row plus a header', X.status === 200 && X.body.count === 9 && lines.length === 10 && /^Email,Venue \(as typed\),State,Signed up,Consent given,Last unsubscribed,Re-subscribed,Source/.test(lines[0]), lines[0]);
   check('each row says its state and its match', lines.some(function (l) { return /^olive@deepwaterhotel\.com\.au,,active,.*,Deepwater Hotel,venue,email$/.test(l); })
-    && lines.some(function (l) { return /^held@pub\.com\.au,,held \(unsubscribed\),/.test(l); }), lines.slice(0, 4));
+    && lines.some(function (l) { return /^held@pub\.com\.au,,held \(by hand\),/.test(l); })
+    && lines.some(function (l) { return /^came\.back@pub\.com\.au,,resubscribed,[^,]+,([^,]+),2026-09-01T00:00:00\.000Z,\1,/.test(l); }), lines.slice(0, 4));
   check('a formula in a typed venue name is defused for the spreadsheet', lines.some(function (l) { return l.indexOf('"\'=HYPERLINK(""http://x"",""click"")"') >= 0; }), lines.filter(function (l) { return /formula/.test(l); }));
-  check('the export is audited, with no addresses in the audit', DB.vp_admin_audit.some(function (a) { return a.action === 'subscribers_exported' && a.detail && a.detail.rows === 8; })
+  check('the export is audited, with no addresses in the audit', DB.vp_admin_audit.some(function (a) { return a.action === 'subscribers_exported' && a.detail && a.detail.rows === 9; })
     && JSON.stringify(DB.vp_admin_audit).indexOf('@') < 0, DB.vp_admin_audit);
   FAIL['vp_unsubscribes:GET'] = 1;
   var Xd = await call('/admin/subscribers/export', {}, AS(ADMIN));
@@ -298,23 +338,26 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   DB.vp_venues = [{ id: V1, name: 'Deepwater Hotel', founding_id: 'f1', status: 'active' }, { id: V2, name: 'Closed Pub', founding_id: 'f2', status: 'cancelled' }];
   DB.venueplay_founding = [{ id: 'f1', contact_email: ' Olive@DeepwaterHotel.com.au' }, { id: 'f2', contact_email: 'left@closedpub.com.au' }];
   DB.vp_subscribers = [
-    { id: 'm1', email: 'keen@pub.com.au', venue_name: 'Keen Pub', status: 'active', created_at: '2026-10-01T00:00:00Z' },
-    { id: 'm2', email: 'held@pub.com.au', status: 'held', held_reason: 'unsubscribed', created_at: '2026-10-02T00:00:00Z' },
-    { id: 'm3', email: 'stopped@pub.com.au', status: 'active', created_at: '2026-10-03T00:00:00Z' },
-    { id: 'm4', email: 'olive@deepwaterhotel.com.au', status: 'active', created_at: '2026-10-04T00:00:00Z' },
-    { id: 'm5', email: 'left@closedpub.com.au', status: 'active', created_at: '2026-10-05T00:00:00Z' },
-    { id: 'm6', email: 'gone@pub.com.au', status: 'active', unsubscribed_at: '2026-10-20T00:00:00Z', created_at: '2026-10-06T00:00:00Z' }];
-  DB.vp_unsubscribes = [{ email: 'STOPPED@pub.com.au' }];
+    { id: 'm1', email: 'keen@pub.com.au', venue_name: 'Keen Pub', status: 'active', consent_at: '2026-10-01T00:00:00Z', created_at: '2026-10-01T00:00:00Z' },
+    { id: 'm2', email: 'held@pub.com.au', status: 'held', held_reason: 'by hand', consent_at: '2026-10-02T00:00:00Z', created_at: '2026-10-02T00:00:00Z' },
+    { id: 'm3', email: 'stopped@pub.com.au', status: 'active', consent_at: '2026-10-03T00:00:00Z', created_at: '2026-10-03T00:00:00Z' },
+    { id: 'm4', email: 'olive@deepwaterhotel.com.au', status: 'active', consent_at: '2026-10-04T00:00:00Z', created_at: '2026-10-04T00:00:00Z' },
+    { id: 'm5', email: 'left@closedpub.com.au', status: 'active', consent_at: '2026-10-05T00:00:00Z', created_at: '2026-10-05T00:00:00Z' },
+    { id: 'm6', email: 'gone@pub.com.au', status: 'active', unsubscribed_at: '2026-10-20T00:00:00Z', consent_at: '2026-10-06T00:00:00Z', created_at: '2026-10-06T00:00:00Z' },
+    { id: 'm7', email: 'back@pub.com.au', status: 'active', consent_at: '2026-10-25T00:00:00Z', resubscribed_at: '2026-10-25T00:00:00Z', created_at: '2026-10-07T00:00:00Z' },
+    { id: 'm8', email: 'again@pub.com.au', status: 'active', consent_at: '2026-10-07T00:00:00Z', created_at: '2026-10-08T00:00:00Z' }];
+  DB.vp_unsubscribes = [{ email: 'STOPPED@pub.com.au' }, { email: 'back@pub.com.au', created_at: '2026-10-10T00:00:00Z' },
+                        { email: 'again@pub.com.au', created_at: '2026-09-01T00:00:00Z', last_unsubscribed_at: '2026-10-15T00:00:00Z' }];
   var mr = await vpsMonthlyRecipients(ENV);
-  check('active subscribers only: never held, never on vp_unsubscribes (any case), never stamped unsubscribed',
-    JSON.stringify(mr.map(function (x) { return x.id; })) === '["m1","m5"]', mr);
+  check('only consent later than the latest unsubscribe: never held, never stopped since (any case, either record, an undated stop always wins); a re-subscriber is in',
+    JSON.stringify(mr.map(function (x) { return x.id; })) === '["m1","m5","m7"]', mr);
   check('a live venue\'s contact is left out (their report carries the news); a cancelled venue\'s contact is not', !mr.some(function (x) { return x.id === 'm4'; }) && mr.some(function (x) { return x.id === 'm5'; }), mr);
   check('each comes back as id, email and venue', JSON.stringify(mr[0]) === '{"id":"m1","email":"keen@pub.com.au","venue_name":"Keen Pub"}', mr[0]);
   var threw = false; FAIL['vp_unsubscribes:GET'] = 1;
   try { await vpsMonthlyRecipients(ENV); } catch (x) { threw = true; }
   check('an unsubscribe list that cannot be read THROWS: the sender sends nobody', threw);
   world(); DB.vp_subscribers = [];
-  for (var q = 0; q < 1200; q++) DB.vp_subscribers.push({ id: 'p' + q, email: 'p' + ('0000' + q).slice(-4) + '@pub.com.au', status: 'active', created_at: new Date(Date.UTC(2026, 9, 1) + q * 1000).toISOString() });
+  for (var q = 0; q < 1200; q++) { var cq = new Date(Date.UTC(2026, 9, 1) + q * 1000).toISOString(); DB.vp_subscribers.push({ id: 'p' + q, email: 'p' + ('0000' + q).slice(-4) + '@pub.com.au', status: 'active', consent_at: cq, created_at: cq }); }
   DB.vp_unsubscribes = [{ email: 'p1150@pub.com.au' }];
   var big = await vpsMonthlyRecipients(ENV);
   check('1,200 subscribers (the fake stops at 1,000 a page like PostgREST): 1,199 come back, the stopped one past row 1,000 left out',
@@ -336,12 +379,14 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   world(); ENV.SUBSCRIBE_EMAILS = 'on';
   await sub({ email: 'cols@pub.com.au', venue: 'Cols', utm: { utm_source: 'x' } }, null, { country: 'AU', regionCode: 'NSW' });
   var keys = Object.keys(rows()[0] || {}).filter(function (k2) { return k2 !== 'id' && k2 !== 'created_at'; });
-  check('every field the Worker writes (and patches) is a column of vp_subscribers', keys.length >= 10 && keys.concat(['confirm_sent_at', 'updated_at', 'unsubscribed_at']).every(function (k2) { return cols.indexOf(k2) >= 0; }), [keys, cols]);
+  check('every field the Worker writes (and patches) is a column of vp_subscribers', keys.length >= 10 && keys.concat(['confirm_sent_at', 'updated_at', 'unsubscribed_at', 'resubscribed_at']).every(function (k2) { return cols.indexOf(k2) >= 0; }), [keys, cols]);
   check('the table is locked: RLS on and anon and authenticated revoked, the view and the trigger function too',
     /alter table public\.vp_subscribers enable row level security;/.test(sql) && /revoke all on public\.vp_subscribers from public, anon, authenticated;/.test(sql)
     && /revoke all on public\.v_vp_subscribers_monthly from public, anon, authenticated;/.test(sql)
     && /revoke all on function public\.vp_subscribers_mark_unsubscribed\(\) from public, anon, authenticated;/.test(sql) && !/create policy/i.test(sql));
-  check('the unsubscribe trigger can never stop an opt-out being written (it swallows its own errors)', /exception when others then\s+null;/.test(sql) && /after insert on public\.vp_unsubscribes/.test(sql));
+  check('the unsubscribe trigger can never stop an opt-out being written (it swallows its own errors), runs before the insert so a repeat is dated on the first row, and never deletes',
+    /exception when others then\s+null;/.test(sql) && /before insert on public\.vp_unsubscribes/.test(sql) && /set last_unsubscribed_at = now\(\)/.test(sql)
+    && /add column if not exists last_unsubscribed_at/.test(sql) && !/delete from public\.vp_unsubscribes/i.test(sql));
   check('the routes are in the router, /subscribe public and both HQ routes behind vpaRequireAdmin(owner, accounts)',
     /path === '\/subscribe'\) return await vpsHandleSubscribe/.test(SRC) && /async function vpsHandleAdminList[^]*?vpaRequireAdmin\(request, env, \['owner', 'accounts'\]\)/.test(SRC));
 

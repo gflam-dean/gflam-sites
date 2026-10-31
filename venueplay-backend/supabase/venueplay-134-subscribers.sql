@@ -25,11 +25,21 @@
 -- (optional), which page and which utm tags, the exact consent words shown
 -- under the button and their version, when, and the country and Australian
 -- state Cloudflare puts on the request (never an IP address).
---   status 'active'  on the list
---   status 'held'    the address was on vp_unsubscribes when it signed up:
---                    kept so HQ can see it, never emailed (held_reason says why)
---   unsubscribed_at  set by the trigger below the moment the address lands on
---                    vp_unsubscribes, from whichever page or link wrote it
+--   status 'active'  on the list (whether they get the email is the rule below)
+--   status 'held'    kept but never emailed (held_reason says why); nothing
+--                    holds a row today, it is there for HQ to use by hand
+--   consent_at       when they last said yes: a new sign-up after an
+--                    unsubscribe sets it again, and resubscribed_at with it
+--   unsubscribed_at  their LATEST unsubscribe, set by the trigger below from
+--                    whichever page or link wrote it
+--
+-- THE RULE (Dean, 31 Oct 2026: someone who unsubscribed and signs up again is
+-- added automatically). A subscriber gets the monthly email only while
+-- consent_at is LATER than their latest unsubscribe, from either record. The
+-- old vp_unsubscribes row is never deleted: it stays the record of the first
+-- request, and every other check that reads it (the win-back, the venue
+-- marketing export, cold outreach) still leaves the address out. A later
+-- unsubscribe wins again.
 --
 -- LOCKED. Only the service role (the billing Worker) reaches a row: RLS on,
 -- no policies, and anon/authenticated named in the revoke (Supabase grants
@@ -53,6 +63,7 @@ create table if not exists public.vp_subscribers (
   held_reason      text check (held_reason is null or char_length(held_reason) <= 60),
   confirm_sent_at  timestamptz,
   unsubscribed_at  timestamptz,
+  resubscribed_at  timestamptz,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -67,26 +78,39 @@ revoke all on public.vp_subscribers from public, anon, authenticated;
 grant select, insert, update, delete on public.vp_subscribers to service_role;
 
 -- ---------------------------------------------------------------------
--- WHEN SOMEONE UNSUBSCRIBES, THEIR ROW SAYS SO. vp_unsubscribes is written by
--- the public venueplay.com.au/unsubscribe page (anon insert, migration 81) and
--- by the Worker's one-click link, so the stamp is a trigger on that table and
--- covers both. The monthly list does not depend on it: the view below and the
--- Worker both check vp_unsubscribes itself.
--- It can never stop an unsubscribe being recorded: any error inside is
--- swallowed and the opt-out row is written regardless.
+-- A REPEAT UNSUBSCRIBE MUST COUNT. vp_unsubscribes has one row per address
+-- (a unique index on lower(email), migration 81), so a second opt-out used to
+-- bounce off it as a 409 and leave no date. Now that a sign-up can bring
+-- someone back, the LATEST opt-out is what decides, so:
+--   last_unsubscribed_at  on the first row, the date of the latest repeat
+-- and a BEFORE INSERT trigger that, for an address already on the list, writes
+-- that date on the first row and skips the duplicate (the first row is never
+-- changed otherwise, and never deleted). For every opt-out it also stamps the
+-- subscriber's own unsubscribed_at. It is written by the public
+-- venueplay.com.au/unsubscribe page (anon insert) and by the Worker's one-click
+-- link, so it lives in the database and covers both.
+-- IT CAN NEVER STOP AN UNSUBSCRIBE BEING RECORDED: any error inside is
+-- swallowed and the insert goes ahead exactly as it did before this ran.
 -- ---------------------------------------------------------------------
+alter table public.vp_unsubscribes add column if not exists last_unsubscribed_at timestamptz;
+
 create or replace function public.vp_subscribers_mark_unsubscribed()
 returns trigger
 language plpgsql
 security definer
 set search_path = public, pg_temp
 as $fn$
+declare
+  e text := lower(btrim(new.email));
 begin
   begin
     update public.vp_subscribers
-       set unsubscribed_at = coalesce(unsubscribed_at, now()), updated_at = now()
-     where email = lower(btrim(new.email))
-       and unsubscribed_at is null;
+       set unsubscribed_at = now(), updated_at = now()
+     where email = e;
+    if exists (select 1 from public.vp_unsubscribes u where lower(u.email) = e) then
+      update public.vp_unsubscribes set last_unsubscribed_at = now() where lower(email) = e;
+      return null;   -- already on the list: the first row stays the record, with this date on it
+    end if;
   exception when others then
     null;
   end;
@@ -98,15 +122,8 @@ revoke all on function public.vp_subscribers_mark_unsubscribed() from public, an
 
 drop trigger if exists vp_subscribers_mark_unsubscribed on public.vp_unsubscribes;
 create trigger vp_subscribers_mark_unsubscribed
-  after insert on public.vp_unsubscribes
+  before insert on public.vp_unsubscribes
   for each row execute function public.vp_subscribers_mark_unsubscribed();
-
--- Anyone already on the unsubscribe list when this runs (there are no subscribers yet, so this
--- is for a re-run).
-update public.vp_subscribers s
-   set unsubscribed_at = coalesce(s.unsubscribed_at, now()), updated_at = now()
- where s.unsubscribed_at is null
-   and exists (select 1 from public.vp_unsubscribes u where lower(btrim(u.email)) = s.email);
 
 -- ---------------------------------------------------------------------
 -- THE MONTHLY LIST IN SQL, for a read-only look (the Worker's
@@ -120,8 +137,10 @@ create or replace view public.v_vp_subscribers_monthly
   select s.id, s.email, s.venue_name, s.source, s.created_at
     from public.vp_subscribers s
    where s.status = 'active'
-     and s.unsubscribed_at is null
-     and not exists (select 1 from public.vp_unsubscribes u where lower(btrim(u.email)) = s.email);
+     and s.consent_at > coalesce(s.unsubscribed_at, '-infinity'::timestamptz)
+     and not exists (select 1 from public.vp_unsubscribes u
+                      where lower(btrim(u.email)) = s.email
+                        and greatest(u.created_at, coalesce(u.last_unsubscribed_at, u.created_at)) >= s.consent_at);
 
 revoke all on public.v_vp_subscribers_monthly from public, anon, authenticated;
 grant select on public.v_vp_subscribers_monthly to service_role;
@@ -138,3 +157,4 @@ comment on table public.vp_subscribers is
 --   drop trigger if exists vp_subscribers_mark_unsubscribed on public.vp_unsubscribes;
 --   drop function if exists public.vp_subscribers_mark_unsubscribed();
 --   drop table if exists public.vp_subscribers;
+--   alter table public.vp_unsubscribes drop column if exists last_unsubscribed_at;

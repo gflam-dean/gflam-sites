@@ -14,8 +14,9 @@ HQ's /admin/subscribers answered by the REAL venueplay-api-FULL.js in jsc, and:
   3. SIGN UP from the home page with utm tags: the success message (next month named), the row the
      Worker kept (source, utm, the consent words), and with the switch off NO email
   4. the same address again: success again, one row; a bad address: the error, no row; the honeypot:
-     "success", no row; an address that unsubscribed before: the same success, kept HELD, no email
-     even with the switch on; the same address over and over: the limit says so
+     "success", no row; an address that unsubscribed before: the same success, back on with a
+     resubscribed_at and its old opt-out row kept (Dean, 31 Oct 2026); the same address over and over:
+     the limit says so
   5. switch ON: one email from See a night's form, rendered in Chrome and looked at (screenshot)
   6. before migration 134: the form tells the person to email hello@, never a dead button
   7. HQ > Subscribers as an owner admin: the rows, held shown as held, a match, counts, Export CSV
@@ -192,9 +193,11 @@ try:
     wait_vps(S, sid)
     fill_and_send(S, sid, 'stopped@thepub.com.au', 'The Pub')
     st = settle(S, sid)
-    held = [x for x in subs(S) if x.get('email') == 'stopped@thepub.com.au']
+    back = [x for x in subs(S) if x.get('email') == 'stopped@thepub.com.au']
     ok('an address that unsubscribed before: the same success on screen', st.get('done') and "You're on the list" in st.get('doneText', ''), st)
-    ok('kept HELD, and sent nothing even with the switch on', held and held[0].get('status') == 'held' and not S.W.sent(), [held, len(S.W.sent())])
+    ok('back on (Dean: add them automatically): active with a resubscribed_at, the old opt-out row kept, and like anyone new one welcome with the switch on',
+       back and back[0].get('status') == 'active' and back[0].get('resubscribed_at') and len(S.W.table('vp_unsubscribes') or []) == 1
+       and [x.get('to') for x in S.W.sent()] == [['stopped@thepub.com.au']], [back, [x.get('to') for x in S.W.sent()]])
     S.close_tab(tid)
     S.W.env(SUBSCRIBE_EMAILS='off')
     last = {}
@@ -213,7 +216,7 @@ try:
     wait_vps(S, sid)
     fill_and_send(S, sid, 'jo@thebowlo.com.au', "Jo's Bowlo")
     st = settle(S, sid)
-    sent = S.W.sent()
+    sent = [x for x in S.W.sent() if x.get('to') != ['stopped@thepub.com.au']]
     ok('See a night: success, and exactly one email, to jo@thebowlo.com.au', st.get('done') and len(sent) == 1 and sent[0].get('to') == ['jo@thebowlo.com.au'], [st, [x.get('to') for x in sent]])
     S.close_tab(tid)
     S.W.env(SUBSCRIBE_EMAILS='off')
@@ -269,13 +272,15 @@ try:
     S.until(sid, '!!document.getElementById("vpsRows")', 15)
     time.sleep(0.4)
     H = j(S.js(sid, 'JSON.stringify({rows:[].map.call(document.querySelectorAll("#vpsRows tr"),function(r){return r.getAttribute("data-vps-row")+"|"+((r.querySelector("[data-vps-state]")||{}).getAttribute?r.querySelector("[data-vps-state]").getAttribute("data-vps-state"):"")+"|"+r.querySelector("[data-vps-match]").innerText.replace(/\\s+/g," ");}),'
-                     'active:(document.getElementById("vpsActive")||{}).textContent,held:(document.getElementById("vpsHeld")||{}).textContent,'
+                     'active:(document.getElementById("vpsActive")||{}).textContent,resub:(document.getElementById("vpsResub")||{}).textContent,'
+                     'dates:((document.querySelector(\'#vpsRows tr[data-vps-row="stopped@thepub.com.au"] [data-vps-dates]\')||{}).innerText||""),'
                      'week:(document.querySelector(".vpsweeks tbody tr")||{}).innerText,shown:!document.getElementById("paneSubscribers").classList.contains("hidden"),'
                      'text:document.getElementById("paneSubscribers").innerText,errs:window.__errs||[]})'))
     rows = H.get('rows') or []
     ok('the pane is open and lists every sign-up kept (4: not the bot, not the one before migration 134)', H.get('shown') and len(rows) == 4, rows)
-    ok('the held address shows as held', any(r.startswith('stopped@thepub.com.au|held|') for r in rows), rows)
-    ok('counts: 3 on the list, 1 held, and this week counted by page', H.get('active') == '3' and H.get('held') == '1' and re.search(r'\b4\b', H.get('week') or ''), [H.get('active'), H.get('held'), H.get('week')])
+    ok('the address that came back shows as re-subscribed, with when it unsubscribed and when it signed up again',
+       any(r.startswith('stopped@thepub.com.au|resubscribed|') for r in rows) and re.search(r'^Unsubscribed \w{3} \d+ \w{3}, .+, signed up again \w{3} \d+ \w{3}, ', H.get('dates') or ''), [rows, H.get('dates')])
+    ok('counts: 4 on the list (1 re-subscribed), and this week counted by page', H.get('active') == '4' and H.get('resub') == '1' and re.search(r'\b4\b', H.get('week') or ''), [H.get('active'), H.get('resub'), H.get('week')])
     ok('it says plainly they are not cold leads and never go into Instantly', 'Not cold leads' in (H.get('text') or '') and 'Instantly' in (H.get('text') or ''))
     ok('no script error in HQ', not H.get('errs'), H.get('errs'))
     S.js(sid, 'document.getElementById("vpsExport").click();true')

@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 17:00 · 6f55dd54';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 17:12 · 420bac05';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15025,12 +15025,18 @@ async function helpTriageForRange(env, from, to, brand) {
    help forms), and a daily cap on the confirmation emails, which share the Resend key with invoices.
 
    NOTHING IS GIVEN AWAY. Every sign-up that is kept answers exactly the same {ok:true}: new, already
-   on the list, or held because the address once unsubscribed. So the form cannot be used to ask
-   whether an address is on our list or on the unsubscribe list (migration 81 keeps that list
-   unreadable to the public for the same reason).
+   on the list, or back after an unsubscribe. So the form cannot be used to ask whether an address is
+   on our list or on the unsubscribe list (migration 81 keeps that list unreadable to the public for
+   the same reason).
 
-   SOMEONE WHO UNSUBSCRIBED IS NEVER QUIETLY PUT BACK. An address on vp_unsubscribes is kept as HELD:
-   no confirmation email, never on the monthly list, and shown in HQ as held so a person decides.
+   SOMEONE WHO UNSUBSCRIBED AND SIGNS UP AGAIN IS BACK ON (Dean, 31 Oct 2026: "add them automatically").
+   The new sign-up is fresh consent: the row is active with a new consent_at and a resubscribed_at, and
+   their vp_unsubscribes row stays where it is as the record of the first request (never deleted).
+   They count as subscribed ONLY for this one monthly email, and only while their consent is LATER than
+   their latest unsubscribe (vpsConsentBeats). Every other check that reads vp_unsubscribes (the
+   win-back, the venue marketing export, cold outreach) still leaves them out. A later unsubscribe wins
+   again: migration 134's trigger notes a repeat opt-out on the first row (last_unsubscribed_at) and on
+   their subscriber row, so the latest date always beats an older consent.
    If the unsubscribe list cannot be read, nothing is kept and the form says try again: a sign-up
    lost to a database blip is a retry, an email to someone who said stop is a Spam Act breach.
 
@@ -15095,15 +15101,38 @@ async function vpsRead(env, table, query) {
   if (helpTableMissing(res.status, t)) return { missing: true };
   throw new Error('read ' + table + ': ' + res.status + ' ' + String(t).slice(0, 200));
 }
-/* Is this address on vp_unsubscribes? Asked for that one address case-insensitively (ilike, with any
-   LIKE wildcard in it turned into a one-character one, so the database can only hand back candidates),
-   then compared WHOLE here, lower case to lower case. THROWS when it cannot tell. */
-async function vpsOnUnsubList(env, email) {
+/* WHEN DID THIS ADDRESS LAST ASK US TO STOP? Milliseconds, or 0 for never. Asked of vp_unsubscribes for
+   that one address case-insensitively (ilike, with any LIKE wildcard in it turned into a one-character
+   one, so the database can only hand back candidates), compared WHOLE here. A repeat opt-out is noted
+   on the first row as last_unsubscribed_at (migration 134), so the latest of the two dates counts.
+   THROWS when it cannot tell. */
+const VPS_UNDATED_STOP = 8.64e15;   // the last moment a Date can hold: an opt-out with no date is never beaten
+function vpsStopMs(r) {
+  return Math.max(Date.parse((r && r.created_at) || '') || 0, Date.parse((r && r.last_unsubscribed_at) || '') || 0);
+}
+async function vpsLatestStop(env, email) {
   const pat = String(email).replace(/[*%_\\,()"]/g, '_');
-  const r = await vpsRead(env, 'vp_unsubscribes', 'email=ilike.' + encodeURIComponent(pat) + '&select=email&limit=20');
+  const r = await vpsRead(env, 'vp_unsubscribes', 'email=ilike.' + encodeURIComponent(pat) + '&select=email,created_at,last_unsubscribed_at&limit=20');
   if (r.missing) throw new Error('vp_unsubscribes is not there');
   const want = String(email).toLowerCase();
-  return r.rows.some((x) => String((x && x.email) || '').trim().toLowerCase() === want);
+  return r.rows.filter((x) => String((x && x.email) || '').trim().toLowerCase() === want)
+    .reduce((m, x) => Math.max(m, vpsStopMs(x) || VPS_UNDATED_STOP), 0);   // a row with no readable date is a stop nothing beats
+}
+/* EVERY ADDRESS THAT HAS ASKED US TO STOP, with its latest date: {email: ms}. Paged and THROWS, like
+   vpaUnsubscribedSet (which stays the yes-or-no list everything else uses). */
+async function vpsStopTimes(env) {
+  const rows = await vpaSelectAll(env, 'vp_unsubscribes', 'select=email,created_at,last_unsubscribed_at&order=email.asc');
+  if (!Array.isArray(rows)) throw new Error('the unsubscribe list did not come back as a list');
+  const out = Object.create(null);
+  rows.forEach((r) => { const e = String((r && r.email) || '').trim().toLowerCase(); if (e) out[e] = Math.max(out[e] || 0, vpsStopMs(r) || VPS_UNDATED_STOP); });
+  return out;
+}
+/* THE ONE RULE: a subscriber gets the monthly email only while their consent is LATER than their latest
+   unsubscribe, from either record. A tie is a stop. */
+function vpsConsentBeats(sub, stopMs) {
+  const consent = Date.parse((sub && sub.consent_at) || '') || 0;
+  const stop = Math.max(stopMs || 0, Date.parse((sub && sub.unsubscribed_at) || '') || 0);
+  return consent > 0 && consent > stop;
 }
 
 async function vpsHandleSubscribe(request, env, json) {
@@ -15130,35 +15159,42 @@ async function vpsHandleSubscribe(request, env, json) {
   const TRY_AGAIN = { error: 'We could not add you just now. Please try again in a minute.' };
 
   let have;
-  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=id,venue_name,status&limit=1'); }
+  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=id,venue_name,status,consent_at,unsubscribed_at&limit=1'); }
   catch (e) { return json(TRY_AGAIN, 503); }
   if (have.missing) return json(NOT_READY, 503);
+  let lastStop;
+  try { lastStop = await vpsLatestStop(env, email); }
+  catch (e) { return json(TRY_AGAIN, 503); }   // cannot tell whether they asked us to stop: keep nothing, send nothing
+  const now = vpsNow();
+  const fresh = { consent_text: VPS_CONSENT_TEXT, consent_version: VPS_CONSENT_VERSION, consent_at: now, status: 'active', held_reason: null };
   if (have.rows.length) {
-    // Already on the list. Same answer as a new sign-up, no second email; a venue name they left off before is kept now.
     const row = have.rows[0];
-    if (venue && !row.venue_name) {
-      await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id), { venue_name: venue, updated_at: vpsNow() }).catch(() => null);
+    if (row.status === 'active' && vpsConsentBeats(row, lastStop)) {
+      // Already on the list. Same answer as a new sign-up, no second email; a venue name they left off before is kept now.
+      if (venue && !row.venue_name) {
+        await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id), { venue_name: venue, updated_at: now }).catch(() => null);
+      }
+      return json({ ok: true });
     }
+    // They unsubscribed since (or were held): this sign-up is fresh consent, so they are back on.
+    try {
+      await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id),
+        Object.assign({}, fresh, { resubscribed_at: now, venue_name: row.venue_name || venue || null, updated_at: now }));
+    } catch (e) { return json(TRY_AGAIN, 503); }
+    if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) await vpsSendConfirmation(env, email, venue || row.venue_name, row.id).catch(() => null);
     return json({ ok: true });
   }
-  let stopped;
-  try { stopped = await vpsOnUnsubList(env, email); }
-  catch (e) { return json(TRY_AGAIN, 503); }   // cannot tell whether they asked us to stop: keep nothing, send nothing
 
   const where = vpsWhere(request);
-  const row = {
+  const row = Object.assign({
     email: email,
     venue_name: venue || null,
     source: vpsSource(b.source),
     utm: vpsUtm(b.utm),
-    consent_text: VPS_CONSENT_TEXT,
-    consent_version: VPS_CONSENT_VERSION,
-    consent_at: vpsNow(),
     country: where.country,
     region: where.region,
-    status: stopped ? 'held' : 'active',
-    held_reason: stopped ? 'unsubscribed' : null,
-  };
+    resubscribed_at: lastStop ? now : null,     // on vp_unsubscribes before: back on, with the old row kept as the record
+  }, fresh);
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
     method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(row) });
   if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
@@ -15168,7 +15204,7 @@ async function vpsHandleSubscribe(request, env, json) {
   }
   let made = null;
   try { const j = await res.json(); made = Array.isArray(j) ? j[0] : j; } catch (e) { made = null; }
-  if (!stopped && String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {
+  if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {
     await vpsSendConfirmation(env, email, venue, made && made.id).catch(() => null);
   }
   return json({ ok: true });
@@ -15255,23 +15291,26 @@ function vpsWeekOf(iso) {
   const back = (d.getUTCDay() + 6) % 7;
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
 }
-/* The whole HQ picture, pure: each subscriber's state and match, and the counts. A row is
-   'unsubscribed' when its address is on vp_unsubscribes (whatever the row says), 'held' when it was
-   kept as held, else 'active'. */
-function vpsSummary(subs, unsub, venues, accounts, prospects, nowMs) {
+/* The whole HQ picture, pure: each subscriber's state and match, and the counts. stops is {email: ms}
+   from vpsStopTimes. A row is 'unsubscribed' when its latest stop is not earlier than its consent,
+   'resubscribed' when it came back after a stop (both dates shown), 'held' if it was ever kept as held,
+   else 'active'. On the list = active + resubscribed. */
+function vpsSummary(subs, stops, venues, accounts, prospects, nowMs) {
+  const iso = (ms) => ms ? new Date(ms).toISOString() : null;
   const rows = (subs || []).map((s) => {
-    const on = !!unsub[String(s.email || '').toLowerCase()];
-    const state = (on || s.unsubscribed_at) ? 'unsubscribed' : (s.status === 'held' ? 'held' : 'active');
+    const stop = Math.max((stops || {})[String(s.email || '').toLowerCase()] || 0, Date.parse(s.unsubscribed_at || '') || 0);
+    const state = s.status === 'held' ? 'held' : !vpsConsentBeats(s, stop) ? 'unsubscribed' : (s.resubscribed_at && stop ? 'resubscribed' : 'active');
     return { id: s.id, email: s.email, venue_name: s.venue_name || '', source: s.source || 'site', utm: s.utm || {},
-      region: s.region || '', country: s.country || '', created_at: s.created_at, confirm_sent_at: s.confirm_sent_at || null,
+      region: s.region || '', country: s.country || '', created_at: s.created_at, consent_at: s.consent_at || null,
+      confirm_sent_at: s.confirm_sent_at || null, unsubscribed_at: iso(stop), resubscribed_at: s.resubscribed_at || null,
       state: state, held_reason: state === 'held' ? (s.held_reason || '') : '', match: vpsMatch(s, venues, accounts, prospects) };
   }).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || String(a.email).localeCompare(String(b.email)));
-  const counts = { total: rows.length, active: 0, held: 0, unsubscribed: 0, matched: 0, by_source: {} };
+  const counts = { total: rows.length, active: 0, resubscribed: 0, held: 0, unsubscribed: 0, matched: 0, by_source: {} };
   const weeks = {};
   const now = nowMs || Date.now();
   const thisWeek = vpsWeekOf(new Date(now).toISOString());
   rows.forEach((r) => {
-    counts[r.state]++;
+    if (r.state === 'resubscribed') { counts.resubscribed++; counts.active++; } else counts[r.state]++;
     if (r.match) counts.matched++;
     counts.by_source[r.source] = (counts.by_source[r.source] || 0) + 1;
     const w = vpsWeekOf(r.created_at);
@@ -15293,8 +15332,8 @@ async function vpsLoad(env) {
   if (probe.missing) return { missing: true };
   // PAGED: PostgREST stops at 1000 rows in silence, and a short list here is a short export.
   const subs = await vpaSelectAll(env, 'vp_subscribers',
-    'select=id,email,venue_name,source,utm,region,country,status,held_reason,confirm_sent_at,unsubscribed_at,created_at&order=created_at.desc,id.asc');
-  const unsub = await vpaUnsubscribedSet(env);   // throws: a list we cannot check is not shown as "active"
+    'select=id,email,venue_name,source,utm,region,country,status,held_reason,consent_at,confirm_sent_at,unsubscribed_at,resubscribed_at,created_at&order=created_at.desc,id.asc');
+  const unsub = await vpsStopTimes(env);   // throws: a list we cannot check is not shown as "active"
   const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,founding_id,status,suspended_reason&order=id.asc');
   const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
   let prospects = [];
@@ -15323,8 +15362,9 @@ async function vpsHandleAdminExport(request, env, json) {
   catch (e) { return json({ error: 'Could not read the subscribers or the unsubscribe list just now, so nothing was exported.' }, 503); }
   if (d.missing) return json({ error: VPS_NEED_MIGRATION, need_migration: 134 }, 503);
   const s = vpsSummary(d.subs, d.unsub, d.venues, d.accounts, d.prospects, Date.now());
-  const header = ['Email', 'Venue (as typed)', 'State', 'Signed up', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
-  const lines = s.rows.map((r) => [r.email, r.venue_name, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at, r.source,
+  const header = ['Email', 'Venue (as typed)', 'State', 'Signed up', 'Consent given', 'Last unsubscribed', 'Re-subscribed', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
+  const lines = s.rows.map((r) => [r.email, r.venue_name, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at,
+    r.consent_at || '', r.unsubscribed_at || '', r.resubscribed_at || '', r.source,
     (r.utm && r.utm.utm_source) || '', (r.utm && r.utm.utm_campaign) || '', r.region,
     r.match ? r.match.name : '', r.match ? r.match.kind : '', r.match ? r.match.by : '']);
   const csv = [header].concat(lines).map((c) => c.map(vpbCsvCell).join(',')).join('\n') + '\n';
@@ -15333,23 +15373,27 @@ async function vpsHandleAdminExport(request, env, json) {
 }
 
 /* THE LIST THE MONTHLY EMAIL READS (feature/venue-reports-31oct, vprMonthlySweep). Every subscriber who
-   should get this month's "What's new at VenuePlay": active, not unsubscribed, not on vp_unsubscribes
-   (checked again here, against the list as it is now, and fails closed: it THROWS when either list
-   cannot be read), and not already the contact on an active venue, who gets the same news inside
-   their own monthly report. One row per address, oldest first, so a batched send is stable.
+   should get this month's "What's new at VenuePlay": active, with consent LATER than their latest
+   unsubscribe (vpsConsentBeats: a re-subscriber is in, a later unsubscribe wins again), checked against
+   the list as it is now, and fails closed: it THROWS when either list cannot be read. Never the contact
+   on an active venue, who gets the same news inside their own monthly report. One row per address,
+   oldest first, so a batched send is stable.
 
    HOW THE TWO BRANCHES JOIN (nothing here sends; the sweep stays the one sender):
      in vprMonthlySweep, once every venue for the month is done (todo empty) and the news is ready:
-       const subs = await vpsMonthlyRecipients(env);                  // throws: then send nothing
+       const subs = await vpsMonthlyRecipients(env);                  // throws: then send nobody
        for each sub not yet audited 'month-news:sub:<id>:<month>' (batch it like the venues):
          html = vpaVenueEmailCard(preheader, vprNewsHtml(news) + vpsFooterHtml(env, sub.email), subject)
          vpaSendEmail(env, sub.email, subject, html, undefined, await vpUnsubHeaders(env, sub.email, 'monthly-news'))
          audit 'monthly_news_sent' with that target
-   Migration 134's view v_vp_subscribers_monthly is the same list in SQL, for a read-only look. */
+     and for a venue contact who unsubscribed and then signed up here again (Dean: they are back on for
+     the monthly email): const back = await vpsBackOn(env); then skip as unsubscribed only when
+     unsub[to] && !back[to].
+   Migration 134's view v_vp_subscribers_monthly is the same rule in SQL, for a read-only look. */
 async function vpsMonthlyRecipients(env) {
   const subs = await vpaSelectAll(env, 'vp_subscribers',
-    'status=eq.active&unsubscribed_at=is.null&select=id,email,venue_name,created_at&order=created_at.asc,id.asc');
-  const unsub = await vpaUnsubscribedSet(env);
+    'status=eq.active&select=id,email,venue_name,consent_at,unsubscribed_at,created_at&order=created_at.asc,id.asc');
+  const stops = await vpsStopTimes(env);
   const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,founding_id&order=id.asc');
   const live = {}; venues.forEach((v) => { if (v.founding_id) live[v.founding_id] = true; });
   const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
@@ -15357,7 +15401,16 @@ async function vpsMonthlyRecipients(env) {
   const seen = {};
   return subs.filter((s) => {
     const e = String(s.email || '').trim().toLowerCase();
-    if (!e || seen[e] || unsub[e] || contacts[e]) return false;
+    if (!e || seen[e] || contacts[e] || !vpsConsentBeats(s, stops[e])) return false;
     seen[e] = true; return true;
   }).map((s) => ({ id: s.id, email: String(s.email).trim().toLowerCase(), venue_name: s.venue_name || '' }));
+}
+/* {email: true} for every address on vp_unsubscribes whose monthly-email sign-up here is LATER than its
+   latest unsubscribe: back on for the monthly email only. THROWS when it cannot tell. */
+async function vpsBackOn(env) {
+  const subs = await vpaSelectAll(env, 'vp_subscribers', 'status=eq.active&select=email,consent_at,unsubscribed_at&order=email.asc');
+  const stops = await vpsStopTimes(env);
+  const out = Object.create(null);
+  subs.forEach((s) => { const e = String(s.email || '').trim().toLowerCase(); if (e && stops[e] && vpsConsentBeats(s, stops[e])) out[e] = true; });
+  return out;
 }

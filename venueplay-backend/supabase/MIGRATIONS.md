@@ -487,9 +487,12 @@ site. Branch `feature/tv-landing-31oct`. RUN 31 Oct 2026 by Dean (read back: the
 
 `venueplay-134-subscribers.sql` (31 Oct 2026, the "too scared to call us" sign-up): one new table `vp_subscribers` (email once,
 lower case; venue name as typed, optional; source page; utm; the consent words and version; consent_at; country and AU state
-from Cloudflare, never an IP; status active | held; confirm_sent_at; unsubscribed_at), a trigger on `vp_unsubscribes` that
-stamps unsubscribed_at whichever page or link wrote the opt-out (errors swallowed, so it can never stop an opt-out), and the
-read-only view `v_vp_subscribers_monthly`. RLS on, no policies, anon and authenticated revoked; the trigger function is security
+from Cloudflare, never an IP; status active | held; confirm_sent_at; unsubscribed_at = the latest opt-out; resubscribed_at),
+a new column `vp_unsubscribes.last_unsubscribed_at`, a BEFORE INSERT trigger on `vp_unsubscribes` that stamps the
+subscriber's unsubscribed_at and, for an address already on the list, writes the repeat's date on the first row and skips the
+duplicate (errors swallowed, so it can never stop an opt-out; a repeat now answers 201 instead of 409, both treated as done),
+and the read-only view `v_vp_subscribers_monthly`. Dean, 31 Oct 2026: someone who unsubscribed and signs up again is back on;
+they get the monthly email only while consent_at is later than their latest opt-out, and every other check still leaves them out. RLS on, no policies, anon and authenticated revoked; the trigger function is security
 definer with its own search_path. Either order with the billing Worker: until it is run, POST /subscribe answers not ready and
 keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
 NOT RUN. Rollback: in the file.
