@@ -210,6 +210,9 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
   ok('a hard one (a console still on Supabase saying so again) extends it', STORE.get('ho') > until1);
 
   print('\n== a console from before the switch opens a game ==');
+  /* Whatever the shipped flips say, these scenes start with every format off and switch on what
+     they need: the flip commits change ROOM_FORMATS_ON, and a suite must not change with them. */
+  var shippedFlips = {}; for (var sf in ROOM_FORMATS_ON) { shippedFlips[sf] = ROOM_FORMATS_ON[sf]; ROOM_FORMATS_ON[sf] = false; }
   calls = [];
   var looked = 0;
   function slugOf() { looked++; return Promise.resolve('test-alpha'); }
@@ -225,7 +228,6 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
   var nb = await roomOldConsoleCheck({}, undefined, 'musical', slugOf);
   ok('no binding: nothing at all', nb === 0 && calls.length === 0 && looked === 2);
   print('\n== which formats are on the room is the Worker\'s answer ==');
-  var allOff = Object.keys(ROOM_FORMATS_ON).every(function (k) { return ROOM_FORMATS_ON[k] === false; });
   ok('presence carries formats, one line per format', ['musical', 'trivia', 'raffle', 'members'].every(function (k) { return typeof pv.formats[k] === 'boolean'; }), JSON.stringify(pv.formats));
   ok('roomFormatsKey is the formats that are on, sorted and comma joined (the TV compares it)',
      roomFormatsKey() === Object.keys(ROOM_FORMATS_ON).filter(function (k) { return ROOM_FORMATS_ON[k]; }).sort().join(','), roomFormatsKey());
@@ -240,6 +242,7 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
   await roomOldConsoleCheck({ ROOM: nsV }, 'off', 'raffle', slugOf);
   ok('the same word for a format that is still off is still true: nothing', looked === 0 && calls.length === 0);
   for (var kk2 in keep) ROOM_FORMATS_ON[kk2] = keep[kk2];
+  for (var sf2 in shippedFlips) ROOM_FORMATS_ON[sf2] = shippedFlips[sf2];
   var thrown = await roomOldConsoleCheck({ ROOM: nsV }, undefined, 'musical', function () { return Promise.reject(new Error('db down')); });
   ok('a database that fails the lookup never fails the console\'s request', thrown === 0);
 
