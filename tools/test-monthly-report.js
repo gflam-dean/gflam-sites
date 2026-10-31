@@ -220,7 +220,8 @@ function world() {
   check('a manager sees the counts', (await call(vpbMonthReport, MANAGER, { venue_id: VA, month: '2026-10' })).status === 200);
   var mk = await call(vpbMonthReport, MKT, { venue_id: VA, month: '2026-10' });
   check('a marketing login sees the counts, the same numbers', mk.status === 200 && mk.body.report.this_month.player_visits === 50, mk.body);
-  check('a host is refused', (await call(vpbMonthReport, HOST, { venue_id: VA, month: '2026-10' })).status === 403);
+  var hr = await call(vpbMonthReport, HOST, { venue_id: VA, month: '2026-10' });
+  check('a host is refused, and told who the report is for', hr.status === 403 && /owner, managers and marketing/.test(hr.body.error) && !hr.body.report, hr.body);
   check('a stranger is refused', (await call(vpbMonthReport, U(77), { venue_id: VA, month: '2026-10' })).status === 403);
   var va = await call(vpbMonthReport, ADMIN, { venue_id: VZ, month: '2026-10' }, { 'X-VP-Venue': VZ });
   check('HQ through View as gets the venue it is viewing', va.status === 200 && va.body.report.venue_id === VZ, va.body);

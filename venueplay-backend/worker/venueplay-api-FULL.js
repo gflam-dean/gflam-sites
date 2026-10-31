@@ -29,7 +29,7 @@
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 16:41 · c1b1825c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 16:43 · 20412a21';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12512,6 +12512,7 @@ function vprMonthsFor(venue, nowMs) {
    the browser's word: a venue id that is not theirs is refused, not answered. --- */
 async function vpbMonthReport(request, env, json) {
   const o = await vpmRequireAny(request, env);
+  if (o.error && o.status === 403) return json({ error: 'The monthly report is for the venue\'s owner, managers and marketing login. Ask your venue for it.' }, 403);
   if (o.error) return json({ error: o.error }, o.status);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
