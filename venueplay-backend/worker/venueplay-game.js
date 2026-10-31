@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 15:28 · 821c3bf4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 15:42 · 55e404a1';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1230,8 +1230,12 @@ async function handleCreateSession(request, env, json) {
    such code".
 
    The venue's NAME, state, permits and collect_* switches change from the account page, not
-   during a game, so they are kept for JOIN_INFO_STATIC_TTL_MS: a lookup that does go to the
-   database then costs two calls instead of four. */
+   during a game, so the ROUTINE repeats keep them for JOIN_INFO_STATIC_TTL_MS: a routine lookup
+   that does go to the database then costs two calls instead of four. A fresh:1 lookup (the join
+   screen, a page that has just loaded, every lookup a console's message asked for) skips that copy
+   too: it reads the venue row and its settings from the database and refreshes both copies, so
+   the name, state, permits, age tick, paper rule and collect_* switches it acts on are always the
+   current ones (Dean, 31 Oct 2026). Only the 8 s repeats ever see the 30 s copy. */
 const JOIN_INFO_TTL_MS = 4000;
 const JOIN_INFO_STATIC_TTL_MS = 30000;
 const JOIN_INFO_CACHE_MAX = 2000;      // codes kept in this isolate; past that the oldest go first
@@ -1246,10 +1250,10 @@ function joinInfoKeep(map, key, value) {
   map.delete(key);                     // re-inserted last, so the oldest entry is always first
   map.set(key, value);
 }
-async function joinInfoStaticRead(key, load) {
+async function joinInfoStaticRead(key, load, fresh) {
   const now = Date.now();
   const hit = joinInfoStatic.get(key);
-  if (hit && hit.until > now) return hit.data;
+  if (!fresh && hit && hit.until > now) return hit.data;   // fresh:1 always reads the database
   const data = await load();           // throws on a database fault: nothing is kept
   joinInfoKeep(joinInfoStatic, key, { until: now + JOIN_INFO_STATIC_TTL_MS, data: data });
   return data;
@@ -1259,18 +1263,19 @@ async function handleJoinInfo(request, env, json) {
   const code = String(b.code || '').trim().toUpperCase();
   if (!code) return json({ collect: null, exists: false });
   const now = Date.now();
-  if (b.fresh !== 1 && b.fresh !== true) {
+  const fresh = b.fresh === 1 || b.fresh === true;
+  if (!fresh) {
     const hit = joinInfoCache.get(code);
     if (hit && hit.until > now) return json(hit.body);
   }
   // Stamped from BEFORE the lookup, so a copy never outlives the moment it was read by more than the
   // window, and never replaces a copy read after it (a slow lookup finishing behind a fresh one).
-  const out = await joinInfoLookup(env, code);
+  const out = await joinInfoLookup(env, code, fresh);
   const until = now + JOIN_INFO_TTL_MS, prev = joinInfoCache.get(code);
   if (out.keep && !(prev && prev.until > until)) joinInfoKeep(joinInfoCache, code, { until: until, body: out.body });
   return json(out.body);
 }
-async function joinInfoLookup(env, code) {
+async function joinInfoLookup(env, code, fresh) {
   let venueId = null;
   /* WHICH GAME is this code for? Every printed sign says venueplay.com.au/play, so /play has to
      be able to resolve ANY code the room is shown: a bingo venue code, or the random join code a
@@ -1364,7 +1369,7 @@ async function joinInfoLookup(env, code) {
     const rows = await sbGet(env, 'vp_venue_settings',
       'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
     return (rows && rows[0]) || {};
-  });
+  }, fresh);
   /* The venue's NAME, so the join screen can say who is asking for these details. A collection
      notice that cannot name the recipient is not much of a notice. Name only: no slug, no id, no
      other venue data, so this stays what it has always been, a public lookup for one join code. */
@@ -1385,7 +1390,7 @@ async function joinInfoLookup(env, code) {
   let venueReadOk = false;   // a copy is only kept of an answer built on the venue row actually read
   try {
     const vrows = await joinInfoStaticRead('v:' + venueId,
-      () => sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug,permits&limit=1'));
+      () => sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug,permits&limit=1'), fresh);
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
     if (vrows && vrows[0] && vrows[0].slug) channel = fnvVenueCode(vrows[0].slug);
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand

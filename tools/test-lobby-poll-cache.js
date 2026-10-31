@@ -54,7 +54,11 @@ fetch = async function (url, opts) {
     var b = JSON.parse(opts.body); (Array.isArray(b) ? b : [b]).forEach(function (r) { if (r.kicked == null) r.kicked = false; });
     opts = Object.assign({}, opts, { body: JSON.stringify(b) });
   }
-  return _rigFetch(url, opts);
+  /* PostgREST sends new JSON on every call. The rig hands back its own row objects, so a row edited
+     in place would also edit whatever the Worker kept, and a stale copy would look fresh. Clone. */
+  var res = await _rigFetch(url, opts), _j = res.json;
+  res.json = async function () { var v = await _j.call(res); return v == null ? v : JSON.parse(JSON.stringify(v)); };
+  return res;
 };
 
 /* A SECOND ISOLATE: the same shipped source, its own memory. Cloudflare answers one room from
@@ -110,7 +114,7 @@ function startTrivia() { DB.vp_games.push({ id: 'g-triv', session_id: S1, seq: 1
   check('one routine poll later (8 s, the shortest gap any page polls at) the database is read again', later.cost > 0, later.cost + ' calls');
   check('and that read is only the live part: the venue row and its settings come from the 30 s copy', later.cost === 2, later.cost + ' calls');
   var fr = await ask(VCODE, { fresh: true });
-  check('fresh:1 is answered from the database even with a copy in date', fr.cost > 0 && same(fr.body, first.body), fr.cost + ' calls');
+  check('fresh:1 is answered from the database even with a copy in date, the venue row and settings included', fr.cost === first.cost && fr.cost >= 4 && same(fr.body, first.body), fr.cost + ' calls');
 
   print('a game starting reaches the phones');
   world('QLD', 'bingo90');
@@ -250,7 +254,20 @@ function startTrivia() { DB.vp_games.push({ id: 'g-triv', session_id: S1, seq: 1
   DB.vp_venue_settings[0].collect_email = true;
   NOWMS += 34000;
   var s1 = await ask(VCODE);
-  check('the owner turns on email: phones are asked for it within 30 s plus the window', s0.body.collect.email === false && s1.body.collect.email === true, [s0.body.collect.email, s1.body.collect.email]);
+  check('the owner turns on email: routine polls ask for it within 30 s plus the window', s0.body.collect.email === false && s1.body.collect.email === true, [s0.body.collect.email, s1.body.collect.email]);
+  /* fresh:1 SKIPS THE 30 s COPY TOO (Dean, 31 Oct 2026): the join screen, a page just loaded and a
+     console's message always act on the venue as it is now, not as it was up to half a minute ago. */
+  world('QLD', 'bingo90');
+  var v0 = await ask(VCODE);
+  DB.vp_venue_settings[0].collect_email = true; DB.vp_venues[0].name = 'The Renamed Pub'; DB.vp_venues[0].au_state = 'SA';
+  NOWMS += 5000;                                          // past the 4 s answer copy, well inside the 30 s venue copy
+  var vRoutine = await ask(VCODE);
+  var vFresh = await ask(VCODE, { fresh: true });
+  var vAfter = await ask(VCODE);
+  check('CONTROL: a routine poll inside the 30 s copy still has the venue as it was', vRoutine.body.collect.email === false && vRoutine.body.venue_name === 'Test Pub' && vRoutine.body.paper_bingo === false, vRoutine.body);
+  check('the very next fresh:1 lookup sees the new settings, name, state and paper rule (SA bingo is on paper)',
+        vFresh.body.collect.email === true && vFresh.body.venue_name === 'The Renamed Pub' && vFresh.body.paper_bingo === true && vFresh.body.paper_reason === 'state', vFresh.body);
+  check('and it refreshes both copies: the room\'s next routine poll sees the same, at no cost', same(vAfter.body, vFresh.body) && vAfter.cost === 0, [vAfter.cost, vAfter.body.venue_name]);
 
   /* ======================= PART TWO: the trivia and musical watcher ======================= */
   print('\npart two: the real vp-follow.js, against the real Worker');

@@ -3697,7 +3697,7 @@ def local_checks(which):
             # database gateway at about 43 calls a second), branch fix/lobby-poll-31oct.
             ('D100. A lobby full of phones costs the database one read per few seconds, and still moves with the host',
              'test-lobby-poll-cache.js',
-             'phones asking /join/info inside the window cost no database call; fresh:1 (a pushed or first lookup) reads the database; a game starting, ending or switching reaches every polling phone within one poll plus the window, on one isolate and on two, and no phone is bounced back; a slow read never replaces a newer one; failures, fail-open answers and unknown codes are not kept; kicks and pauses refused at once; the kept answer equals the database in every state, musical bingo never on paper; the real console and phone pages move a room to trivia within a second', 39,
+             'phones asking /join/info inside the window cost no database call; fresh:1 (a pushed or first lookup) reads the database; a game starting, ending or switching reaches every polling phone within one poll plus the window, on one isolate and on two, and no phone is bounced back; a slow read never replaces a newer one; failures, fail-open answers and unknown codes are not kept; kicks and pauses refused at once; the kept answer equals the database in every state, musical bingo never on paper; the real console and phone pages move a room to trivia within a second', 42,
              'A room left on the bingo page while the host runs trivia, a phone bounced between two games, a stale '
              'paper or age answer, or the poll back at four database calls a phone every eight seconds, which is '
              'what capped VenuePlay at about fifteen venues on a busy night'),
