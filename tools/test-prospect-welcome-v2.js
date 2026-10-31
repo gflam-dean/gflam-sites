@@ -356,13 +356,13 @@ function b64(bytes) { var s = ''; for (var i = 0; i < bytes.length; i += 3) { va
   s += B64[(nn >> 18) & 63] + B64[(nn >> 12) & 63] + (i + 1 < bytes.length ? B64[(nn >> 6) & 63] : '=') + (i + 2 < bytes.length ? B64[nn & 63] : '='); } return s; }
 if (typeof URL === 'undefined') { URL = function (u) { var q = u.indexOf('?'), sp = {}; if (q >= 0) u.slice(q + 1).split('&').forEach(function (p) { var i = p.indexOf('='); sp[decodeURIComponent(p.slice(0, i))] = decodeURIComponent(p.slice(i + 1)); }); this.searchParams = { get: function (k) { return k in sp ? sp[k] : null; } }; }; }
 if (typeof Response === 'undefined') { Response = function (body, init) { this.body = body; this.status = (init && init.status) || 200; this.headers = (init && init.headers) || {}; }; Response.redirect = function (u, s) { return { redirect: u, status: s }; }; }
-  var AUTH = [], CANCELS = [], RESEND_IDS = 0, CANCEL_OK = true, MIG124 = true, TICKET_NO = 1001;
+  var AUTH = [], CANCELS = [], RESEND_IDS = 0, CANCEL_OK = true, MIG124 = true, TICKET_NO = 1001, RESEND_DOWN = false;
   function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
   var rigFetch = globalThis.fetch;
   globalThis.fetch = function (url, opts) {
     var u = String(url), method = (opts && opts.method) || 'GET';
     if (/api\.resend\.com\/emails\/[^/]+\/cancel$/.test(u)) { CANCELS.push(u.split('/emails/')[1].split('/')[0]); return RS(CANCEL_OK ? 200 : 422, CANCEL_OK ? { object: 'email', id: 'x' } : { message: 'cannot cancel' }); }
-    if (u.indexOf('api.resend.com/emails') !== -1 && method === 'POST') { sent.push(JSON.parse(opts.body)); RESEND_IDS++; return RS(200, { id: 're_' + RESEND_IDS }); }
+    if (u.indexOf('api.resend.com/emails') !== -1 && method === 'POST') { if (RESEND_DOWN) return RS(500, { message: 'down' }); sent.push(JSON.parse(opts.body)); RESEND_IDS++; return RS(200, { id: 're_' + RESEND_IDS }); }
     if (u.indexOf('/auth/v1/admin/users') !== -1) {
       var one = /\/auth\/v1\/admin\/users\/([0-9a-fA-F-]{36})/.exec(u);
       if (method === 'POST') { var b = JSON.parse(opts.body); var nu = { id: newId(), email: b.email || '', phone: b.phone ? b.phone.replace('+', '') : '' }; AUTH.push(nu); return RS(200, nu); }
@@ -378,7 +378,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   function as(user, body) { var h = { Authorization: user ? 'Bearer ' + user : '' }; var txt = JSON.stringify(body || {});
     return { url: 'https://api/x', headers: { get: function (k) { return h[k] || ''; } }, text: function () { return Promise.resolve(txt); }, json: function () { return Promise.resolve(JSON.parse(txt)); } }; }
   function world() {
-    DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; AUTH = []; CANCELS = []; CANCEL_OK = true; MIG124 = true; RESEND_IDS = 0; TICKET_NO = 1001;
+    DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; AUTH = []; CANCELS = []; CANCEL_OK = true; MIG124 = true; RESEND_IDS = 0; TICKET_NO = 1001; RESEND_DOWN = false;
     ENV.FOUNDING_CODES = 'NSW-NOV-2099,QLD-OCT-2099';
     DB.vp_platform_admins = [{ auth_user_id: ADMIN, label: 'Dean', role: 'owner' }, { auth_user_id: STAFFADMIN, label: 'Staffer', role: 'staff' }];
     DB.vp_venues = []; DB.venueplay_founding = []; DB.vp_venue_staff = []; DB.vp_admin_audit = []; DB.vp_venue_settings = []; DB.vp_screens = []; DB.vp_venue_screen = []; DB.vp_signin_links = []; DB.vp_prospect_welcomes = [];
@@ -482,6 +482,173 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   r = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);
   check('the prospect is still set up and the email still BOOKED for later', r.status === 200 && sent.length === 1 && typeof sent[0].scheduled_at === 'string' && r.body.welcome.status === 'scheduled', r.body);
   check('and HQ is told it cannot cancel it or send it early until migration 124 is run', (r.body.warnings || []).some(function (w) { return /cannot cancel it or send it early until migration 124 is run/.test(w); }), r.body.warnings);
+
+  /* RESEND WELCOME SENDS A PROSPECT ITS OWN EMAIL (Dean, 31 Oct 2026). Lakeside Tavern's welcome bounced and
+     Lunatic Hotel's was cancelled; HQ's Resend welcome could only send the add-your-card email. Run on the real
+     POST /admin/resend-welcome (vpaResendWelcome), the HQ button's confirm (hq.html hqResendWelcome) and the
+     Prospects card (vp-prospects-hq.js). */
+  section('2e. Resend welcome: a prospect gets their account email again, with a fresh sign-in; anyone else the card email');
+  function prospectNamed(o) { return vpaHandleProspect(as(ADMIN, with_(Object.assign({ send_in_minutes: 0 }, o || {}))), ENV, J); }
+  function resend(body, who) { return vpaResendWelcome(as(who || ADMIN, body), ENV, J); }
+  function onlyTo(m, addr) { return !!m && Array.isArray(m.to) && m.to.length === 1 && m.to[0] === addr && !m.cc && !m.bcc; }
+  function vis(html) { return String(html || '').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' '); }
+  function linksIn(html) { var out = [], re = /href="([^"]+)"/g, mm; while ((mm = re.exec(String(html || '')))) out.push(mm[1]); return out; }
+
+  world();
+  r = await prospectNamed({ sender_name: 'Harry', sender_email: 'harry@venueplaygames.com.au' });
+  v = DB.vp_venues[0] || {};
+  var firstMail = sent[0] || {}, oldTok = tokenOf(firstMail), login = AUTH[0] || {};
+  // Since setup they have three slides on their screen (marketing added one more).
+  DB.vp_venue_screen.push({ venue_id: v.id, slug: v.slug, slides: [{ image_url: 'https://db/a.png', seconds: 8 }, { image_url: 'https://db/b.png', seconds: 8 }, { image_url: 'https://db/c.png', seconds: 8 }] });
+  check('(the setup sent its one email, with a one-click link, signed Harry)', r.status === 200 && sent.length === 1 && !!oldTok && /Cheers, Harry VenuePlay/.test(vis(firstMail.html)), r.body);
+  var st0 = await resend({ venue_id: v.id }, STAFFADMIN);
+  check('a staff admin cannot resend (owner or accounts only), and nothing goes', st0.status === 403 && sent.length === 1, st0);
+  var dr = await resend({ venue_id: v.id, dry_run: true });
+  check('dry run: says the PROSPECT email, to the contact, the subject, a one-click sign-in, signed Harry, 3 slides, and sends and mints nothing',
+    dr.status === 200 && dr.body.dry_run === true && dr.body.template === 'prospect' && dr.body.to === 'cazreitop@gmail.com' && dr.body.subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets" &&
+    dr.body.signin === 'one_click' && dr.body.sender === 'Harry' && dr.body.slides === 3 && sent.length === 1 && DB.vp_signin_links.length === 1, dr.body);
+  t0 = Date.now();
+  var rw = await resend({ venue_id: v.id });
+  var again = sent[1] || {}, newTok2 = tokenOf(again), newL = await linkFor(newTok2), oldL = await linkFor(oldTok), txt2 = vis(again.html);
+  check('it sends the PROSPECT welcome, not the card email: "Your VenuePlay account for <venue>", from hello@', rw.status === 200 && rw.body.template === 'prospect' && rw.body.sent === true && sent.length === 2 &&
+    again.subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets" && again.from === 'VenuePlay <hello@send.venueplay.com.au>' && again.reply_to === 'hello@venueplay.com.au' &&
+    !/One thing left|add-card|Add my card/i.test(again.html), [rw.body, again.subject]);
+  check('to the account\'s own contact email and nobody else (one address, no cc, no bcc)', onlyTo(again, 'cazreitop@gmail.com'), again.to);
+  check('a FRESH one-click sign-in for their own login: a new token, unused, 14 days from now, and the old link is retired',
+    !!newTok2 && newTok2 !== oldTok && newL && newL.auth_user_id === login.id && newL.venue_id === v.id && !newL.used_at && Math.abs(Date.parse(newL.expires_at) - t0 - 14 * 86400000) < 5000 && oldL && !!oldL.used_at, [newL, oldL]);
+  check('signed by whoever signed the original (Harry, from the setup\'s audit row), with VenuePlay and the site', /Cheers, Harry VenuePlay venueplay\.com\.au/.test(txt2) && !/VenuePlay team/.test(txt2), txt2.slice(-400));
+  check('it counts the slides on their screen now (the "few quick slides" line), and greets them by name', /Hi Amit,/.test(txt2) && /a few quick slides our marketing team made from your website/.test(txt2) && rw.body.slides === 3, txt2.slice(0, 400));
+  check('no workers.dev or any .dev link, no Gflam, no em dash, nothing left unfilled', linksIn(again.html).every(function (h) { return !/\.dev(\/|$|\?|#)/.test(h.replace(/^mailto:.*/, '')); }) && !/workers\.dev/.test(again.html) &&
+    !/Gflam/i.test(again.html) && !/[—–]|&mdash;|&ndash;/.test(again.html) && again.html.indexOf('{{') === -1, linksIn(again.html));
+  var ra = DB.vp_admin_audit.filter(function (a) { return a.action === 'welcome_resent'; });
+  check('audited as welcome_resent, naming the template that went, who to, the sign-in and the sender', ra.length === 1 && ra[0].detail.template === 'prospect' && ra[0].detail.to === 'cazreitop@gmail.com' &&
+    ra[0].detail.sent === true && ra[0].detail.signin === 'one_click' && ra[0].detail.sender_name === 'Harry' && ra[0].actor_admin === ADMIN, ra);
+  check('HQ\'s audit sentence says which email went', vpaAuditSentence(ra[0], 'Caz') === 'Sent Caz their account email again (sign-in link).', ra[0] && vpaAuditSentence(ra[0], 'Caz'));
+  var rec2 = DB.vp_prospect_welcomes[DB.vp_prospect_welcomes.length - 1] || {};
+  check('recorded with the other prospect welcomes (HQ > Prospects shows it), with the new link\'s hash only', DB.vp_prospect_welcomes.length === 2 && rec2.status === 'sent' && rec2.signin_token_hash === newL.token_hash &&
+    JSON.stringify(DB.vp_prospect_welcomes).indexOf(newTok2) === -1, rec2);
+
+  world();
+  r = await prospectNamed({ mobile: '0452 510 904' });
+  v = DB.vp_venues[0] || {};
+  rw = await resend({ venue_id: v.id });
+  again = sent[1] || {};
+  check('a login with their mobile: the text-code sign-in with their number, no one-click link at all, signed by the team when no sender was given',
+    rw.status === 200 && rw.body.signin === 'sms' && /href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=sms#m=0452510904"/.test(again.html) && again.html.indexOf('/app/go') === -1 &&
+    /Cheers, The VenuePlay team/.test(vis(again.html)) && onlyTo(again, 'cazreitop@gmail.com') && DB.vp_signin_links.length === 0, [rw.body, linksIn(again.html)]);
+
+  world();
+  r = await prospectNamed({});
+  v = DB.vp_venues[0] || {};
+  var fr = DB.venueplay_founding[0];
+  fr.contact_email = 'newboss@caz.example';
+  var linksBefore = DB.vp_signin_links.length;
+  rw = await resend({ venue_id: v.id });
+  again = sent[1] || {};
+  check('the contact email changed in HQ: it goes to the NEW contact only, and carries no link that signs into a login with another address',
+    rw.status === 200 && onlyTo(again, 'newboss@caz.example') && rw.body.signin === 'link_request' && DB.vp_signin_links.length === linksBefore && !/#t=/.test(again.html) &&
+    (rw.body.warnings || []).some(function (w) { return /No login on .* uses newboss@caz\.example/.test(w); }), [rw.body, again.to]);
+
+  world();
+  r = await prospectNamed({});
+  v = DB.vp_venues[0] || {};
+  DB.vp_prospects = [];   // the HQ > Prospects row never made (migration 125 missing that day): the setup's audit row still says prospect
+  rw = await resend({ venue_id: v.id });
+  check('a prospect with no vp_prospects row is still known by its prospect_set_up audit row, and gets the prospect email', rw.status === 200 && rw.body.template === 'prospect' && (sent[1] || {}).subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets", rw.body);
+
+  world();
+  r = await prospectNamed({});
+  v = DB.vp_venues[0] || {};
+  DB.vp_prospects[0].cancelled_at = '2026-10-30T02:00:00Z';
+  rw = await resend({ venue_id: v.id });
+  check('a prospect who pressed Cancel: refused, saying so, and nothing goes', rw.status === 409 && /Cancel/.test(rw.body.error) && sent.length === 1, rw.body);
+  DB.vp_prospects[0].cancelled_at = null; DB.vp_prospects[0].paused_at = '2026-11-28T14:00:00Z';
+  rw = await resend({ venue_id: v.id });
+  check('a prospect whose free month ran out (paused) gets the add-your-card email, the card being what brings them back', rw.status === 200 && rw.body.template === 'card' && (sent[1] || {}).subject === 'Your VenuePlay account is ready. One thing left.', rw.body);
+  DB.vp_prospects[0].paused_at = null; DB.venueplay_founding[0].stripe_subscription_id = 'sub_1';
+  var n0 = sent.length;
+  rw = await resend({ venue_id: v.id });
+  check('a prospect who has added a card is a customer: refused as before (nothing to chase), nothing goes', rw.status === 400 && /already has a card/.test(rw.body.error) && sent.length === n0, rw.body);
+
+  world();
+  r = await prospectNamed({});
+  v = DB.vp_venues[0] || {};
+  var linksAt = DB.vp_signin_links.length, oldTok3 = tokenOf(sent[0]);
+  t0 = Date.now();
+  var at3 = new Date(t0 + 3 * 3600000).toISOString();
+  rw = await resend({ venue_id: v.id, send_at: at3 });
+  again = sent[1] || {};
+  var bookedL = await linkFor(tokenOf(again)), rec3 = DB.vp_prospect_welcomes[DB.vp_prospect_welcomes.length - 1] || {};
+  check('send_at: Resend holds it until then (scheduled_at), it is recorded as scheduled so HQ can still cancel it, and its link\'s 14 days start then',
+    rw.status === 200 && again.scheduled_at === at3 && rw.body.send_at === at3 && rec3.status === 'scheduled' && rec3.send_at === at3 && bookedL && Date.parse(bookedL.expires_at) === Date.parse(at3) + 14 * 86400000, [rw.body, rec3]);
+  var bad1 = await resend({ venue_id: v.id, send_at: new Date(t0 + 2 * 86400000).toISOString() }), bad2 = await resend({ venue_id: v.id, send_at: 'monday' }), bad3 = await resend({ venue_id: v.id, send_at: new Date(t0 - 60000).toISOString() });
+  check('send_at two days out, not a time, or already past: refused, nothing goes', [bad1, bad2, bad3].every(function (x) { return x.status === 400 && /next 24 hours/.test(x.body.error); }) && sent.length === 2, [bad1.body, bad2.body]);
+
+  world();
+  r = await prospectNamed({});
+  v = DB.vp_venues[0] || {};
+  var oldTok4 = tokenOf(sent[0]);
+  RESEND_DOWN = true;
+  rw = await resend({ venue_id: v.id });
+  var deadLinks = DB.vp_signin_links.filter(function (l) { return !l.used_at; });
+  check('Resend down: HQ is told it did not send, the link it made is retired, the old one is left as it was', rw.status === 200 && rw.body.sent === false && deadLinks.length === 1 && deadLinks[0].token_hash === (await linkFor(oldTok4)).token_hash &&
+    DB.vp_admin_audit.some(function (a) { return a.action === 'welcome_resent' && a.detail.sent === false && a.detail.template === 'prospect'; }), [rw.body, DB.vp_signin_links]);
+  RESEND_DOWN = false;
+
+  /* A venue that is NOT a prospect: built from HQ's + Add venue (no prospect rows), still no card. */
+  world();
+  DB.vp_venues = [{ id: U(201), name: 'The Ordinary Arms', slug: 'the-ordinary-arms', postcode: '4000', founding_id: U(202), entity_type: 'for_profit', venue_kind: 'pub', au_state: 'QLD', status: 'active' }];
+  DB.venueplay_founding = [{ id: U(202), contact_email: 'owner@ordinary.example', max_seats: 40, plan: 'monthly', status: 'active' }];
+  DB.vp_venue_staff = [{ auth_user_id: U(203), venue_id: U(201), role: 'owner' }];
+  AUTH.push({ id: U(203), email: 'owner@ordinary.example', phone: '' });
+  var dc = await resend({ venue_id: U(201), dry_run: true });
+  rw = await resend({ venue_id: U(201) });
+  again = sent[0] || {};
+  check('an ordinary account still gets the add-your-card email ("One thing left."), with its card link, to its contact only, and the dry run said so first',
+    dc.status === 200 && dc.body.template === 'card' && dc.body.subject === 'Your VenuePlay account is ready. One thing left.' && rw.status === 200 && rw.body.template === 'card' && sent.length === 1 &&
+    again.subject === 'Your VenuePlay account is ready. One thing left.' && onlyTo(again, 'owner@ordinary.example') && /\/add-card\?f=/.test(again.html) && /\/add-card\?f=/.test(rw.body.card_url || ''), [dc.body, rw.body, again.subject]);
+  check('and no sign-in link is made for it, the audit row says the card template', DB.vp_signin_links.length === 0 && DB.vp_admin_audit.some(function (a) { return a.action === 'welcome_resent' && a.detail.template === 'card'; }) &&
+    vpaAuditSentence(DB.vp_admin_audit.filter(function (a) { return a.action === 'welcome_resent'; })[0], 'Ordinary') === 'Sent Ordinary the add-your-card email again.');
+  var sa = await resend({ venue_id: U(201), send_at: new Date(Date.now() + 3600000).toISOString() });
+  check('only a prospect\'s email can be booked: the card email with send_at is refused, nothing goes', sa.status === 400 && /Only a prospect/.test(sa.body.error) && sent.length === 1, sa.body);
+
+  /* HQ: the button's words and its confirm, run from hq.html and vp-prospects-hq.js themselves. */
+  function liftFn(src, name) {
+    var i = src.indexOf('function ' + name + '(');
+    if (i < 0) throw new Error('cannot find ' + name + ': a test that cannot find its subject cannot fail');
+    var d = 0, k = src.indexOf('{', i);
+    do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0 && k < src.length);
+    return src.slice(i, k);
+  }
+  var HQ = readFile('venueplay/app/hq.html');
+  var POSTS = [], ASKED = [], TOLD = [], ANSWER = false, PROSPECT_IDS = { P1: true };
+  var hqWin = { VPProspects: { isProspect: function (id) { return !!PROSPECT_IDS[id]; } } };
+  var fakePost = function (path, body) { POSTS.push({ path: path, body: body });
+    if (body.dry_run) return Promise.resolve(body.venue_id === 'P1' ? { ok: true, dry_run: true, template: 'prospect', to: 'laketavern@ozemail.com.au', subject: 'Your VenuePlay account for Lakeside Tavern', signin: 'one_click', sender: 'Harry', slides: 4 }
+      : { ok: true, dry_run: true, template: 'card', to: 'owner@ordinary.example', subject: 'Your VenuePlay account is ready. One thing left.', comp: false });
+    return Promise.resolve({ ok: true, sent: true, template: 'prospect', to: 'laketavern@ozemail.com.au' }); };
+  var hqFns = (new Function('window', 'S', 'workerPost', 'vpAsk', 'vpTell',
+    liftFn(HQ, 'resendLabel') + '\n' + liftFn(HQ, 'resendSignInWords') + '\n' + liftFn(HQ, 'hqResendWelcome') + '\nreturn { label: resendLabel, go: hqResendWelcome };'))(
+    hqWin, { venues: [{ id: 'P1', name: 'Lakeside Tavern' }, { id: 'C1', name: 'The Ordinary Arms' }] }, fakePost,
+    function (q) { ASKED.push(q); return Promise.resolve(ANSWER); }, function (m) { TOLD.push(m); });
+  check('HQ\'s Venues button says which email: "Resend their account email (sign-in link)" for a prospect, "Resend the add-your-card email" otherwise',
+    hqFns.label('P1') === 'Resend their account email (sign-in link)' && hqFns.label('C1') === 'Resend the add-your-card email', [hqFns.label('P1'), hqFns.label('C1')]);
+  var hqBtn = { textContent: 'x', disabled: false };
+  await hqFns.go('P1', hqBtn);
+  check('pressing it asks the Worker first (dry run) and the confirm names the account email, the address, the sign-in, the slides and the sender; No sends nothing',
+    POSTS.length === 1 && POSTS[0].body.dry_run === true && /their account email again/.test(ASKED[0]) && /laketavern@ozemail\.com\.au/.test(ASKED[0]) && /Your VenuePlay account for Lakeside Tavern/.test(ASKED[0]) &&
+    /one-tap sign-in link/.test(ASKED[0]) && /4 slides/.test(ASKED[0]) && /signed Harry/.test(ASKED[0]) && !/card/i.test(ASKED[0]), [POSTS, ASKED[0]]);
+  ANSWER = true;
+  await hqFns.go('C1', hqBtn);
+  check('for an ordinary venue the confirm names the add-your-card email, and Yes then sends it (no dry run)', /the add-your-card email again/.test(ASKED[1]) && /One thing left/.test(ASKED[1]) &&
+    POSTS.length === 3 && POSTS[2].path === '/admin/resend-welcome' && !POSTS[2].body.dry_run && POSTS[2].body.venue_id === 'C1' && /Sent to/.test(TOLD[0] || ''), [ASKED[1], POSTS, TOLD]);
+  var PANE2 = readFile('venueplay/app/vp-prospects-hq.js');
+  var PW = { VP: null, fetch: function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };
+  PW.document = { readyState: 'complete', getElementById: function () { return null; }, addEventListener: function () {} };
+  (new Function('window', PANE2))(PW);
+  var prow0 = { venue_id: U(301), name: 'Lunatic Hotel & Motel', email: 'x@lunatic.example', source: 'autopilot', created_at: '2026-10-31T00:00:00Z', days_since_setup: 0, welcome: { status: 'cancelled', send_at: '2026-10-31T01:00:00Z' }, last_sign_in_at: null, sign_in_known: true, flag: null, called: null };
+  var hNot = PW.VPProspects._t.cardHtml(prow0), hCx = PW.VPProspects._t.cardHtml(Object.assign({}, prow0, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' }));
+  check('HQ > Prospects: each prospect card has "Resend their account email"; one who cancelled does not', /data-pr-welcome="[^"]+">Resend their account email<\/button>/.test(hNot) && !/data-pr-welcome/.test(hCx), hNot);
 
   section('3. "Please call me": the exact request the first run sends, through the real /help/venue/ticket');
   world();

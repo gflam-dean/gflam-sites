@@ -129,7 +129,10 @@
       : (function () {
           // Called while not yet called (and not done); Resend sign-in link (phone sign-in, main) for anyone not cancelled.
           var acts = (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
-            (st !== "cancelled" ? '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button>' : "");
+            (st !== "cancelled" ? '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button>' : "") +
+            /* Their account email again, with a fresh sign-in (31 Oct 2026: a bounced or cancelled welcome). Not after
+               Cancel (they said no) or a pause (the card email is what brings them back, from Venues > Details). */
+            (st !== "cancelled" && st !== "paused" && st !== "card_added" ? '<button type="button" class="mini" data-pr-welcome="' + prEsc(p.venue_id) + '">Resend their account email</button>' : "");
           return acts ? '<div class="practs">' + acts + "</div>" : "";
         })();
     var last = st === "free_month" && p.last_days;
@@ -298,6 +301,8 @@
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
     // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing.
     if (t.hasAttribute("data-pr-signin")) { if (typeof root.hqSigninLink === "function") root.hqSigninLink(t.getAttribute("data-pr-signin"), t); return; }
+    // The same function as the Venues row's button (hq.html hqResendWelcome): it asks the Worker which email goes first.
+    if (t.hasAttribute("data-pr-welcome")) { if (typeof root.hqResendWelcome === "function") root.hqResendWelcome(t.getAttribute("data-pr-welcome"), t); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");
