@@ -71,7 +71,9 @@ claim, win. Close the TV tab afterwards: `?roomserver=0` sticks for that tab.
 
 ## 4. The other formats follow the one TV link (Test Charlie)
 
-Musical bingo, trivia, raffle and members draw are still on Supabase (only bingo moved). What
+Before any format flip (branch `feature/room-trivia-musical-1nov` with every line of
+`ROOM_FORMATS_ON` false), musical bingo, trivia, raffle and members draw are still on Supabase (only
+bingo moved). What
 changed is the TV: on the room it now makes the Supabase client the router needs, so it must
 still follow every game. Musical bingo is not regulated bingo and is played exactly as before.
 
@@ -101,6 +103,58 @@ During a game on Test Alpha: call the next ball. Every screen moves to Supabase 
 ball may be replayed from the board), and the game carries on. Presence answers 503. Any room
 that carried a message while the switch was on stays on Supabase for six hours after it is
 cleared, on purpose, so a late phone never lands in an empty room.
+
+## 7. Each format on the room, one flip at a time (1 Nov 2026 branch)
+
+Release order: the game Worker with every format still off first (it carries the venue-wide
+handover, `formats` in presence, `room_formats` on the poll and the old-console check), then the
+site. Nothing moves until a format's flip. Then ONE format per morning, before any venue plays:
+its line in `ROOM_FORMATS_ON` (venueplay-backend/worker/venueplay-room.js) to `true`, re-copy into
+venueplay-game.js, stamp, deploy the game Worker, and run this section for that format. TVs reload
+onto the flip by themselves within a minute or two while they are on the ads.
+
+**Finding a format's room.** On any VenuePlay console tab, DevTools Console:
+`VP.venueCode("musical-test-charlie")` (or trivia-, raffle-, members-). Presence for it:
+`https://game.venueplay.com.au/room/presence?room=vp-<that code>`. It should now also answer
+`"venue":true` and `"formats":{...}` with the flipped format `true`.
+
+For the flipped format, on Test Charlie (The Mini Bar if the once-a-week banner shows), no
+`?roomserver=` on any link:
+
+- TV `https://venueplay.com.au/tv?venue=test-charlie`, console
+  `https://venueplay.com.au/app/<format>/host.html?venue=test-charlie`, and for musical or trivia two
+  phones from the TV's QR (one on mobile data).
+- **All in the room:** `document.documentElement.dataset.vpTransport` says `"room"` on the console,
+  the phones and (inside the TV's game frame) the screen. Presence for the format's room shows
+  tv 2 (the TV's router and its game screen) and host 1; presence for `vp-<venue code>` shows the
+  phones (musical and trivia players meet there).
+- **No Supabase connection:** after a minute (the console's ear lets go), Supabase dashboard,
+  Realtime, Inspector, shows no client for Test Charlie's TV, screen or phones. With EVERY format
+  flipped, the TV shows none at all, all evening.
+- **Play it:** musical, 3 songs, a phone claims, host confirms; trivia, 3 questions, Reveal scores
+  right; raffle, one prize drawn (QLD rules screen is Dean's to accept); members, one draw. The TV
+  goes to the game's screen and back to the ads after End game.
+- **Phone drop (musical, trivia):** airplane mode 10 s, back: still `room`, next song or question
+  arrives, presence for the format's room did NOT go 503.
+- **Console reload:** reload the console mid-game: back in the room, next message reaches TV and phones.
+- **Late phone:** a third phone joins mid-game, straight into the room, gets the next message.
+- **Format switch mid-night:** bingo (section 1), End game, then this format's lobby: the TV
+  leaves bingo for this format's screen; end it, open another flipped format: the TV follows.
+
+**Old page drills (Test Bravo, which then sits on Supabase for six hours):**
+- *Old TV:* TV `https://venueplay.com.au/tv?venue=test-bravo&roomserver=0`, then the format's
+  console normally. Within a second of the console opening (musical, trivia: of Open lobby) the
+  console says `supabase`, presence for the format's room answers 503 `room handed over`, and the
+  TV still follows the game.
+- *Old console:* console with `&roomserver=0` (it says road "supabase" when it opens the game), TV
+  and phones normal: when it opens the game every one of Test Bravo's five rooms answers 503 and
+  the TV, screen and phones follow it on Supabase.
+
+**ROOM_OFF mid-game** (section 6) once per flipped format: the whole venue, bingo's room as well,
+goes across together and the next song, question or draw reaches everyone.
+
+**Taking a format back off:** its line to `false` and a Worker deploy (TVs reload onto it between
+games), or `ROOM_OFF=1` for everything at once with no deploy.
 
 ## Rollback
 
