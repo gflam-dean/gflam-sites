@@ -396,8 +396,10 @@ function startTrivia() { DB.vp_games.push({ id: 'g-triv', session_id: S1, seq: 1
   for (var q = 0; q < 12; q++) { phones.push(bootPhone3('P' + q)); await advance(650); }
   await advance(10000);
   check('twelve real phone pages are in the lobby and asking /join/info', INFO.asks >= 12, INFO.asks);
-  var shapes = phones.map(function (ph) { var a = ASKS_BY[ph.name] || []; return a.length >= 3 && a[0] === 'fresh' && a[1] === 'fresh' && a.slice(2).every(function (x) { return x === 'routine'; }); });
-  check('each phone asks the database on loading (the join screen and its first lookup), and the copy after that',
+  /* The join screen and the first lookup ask in the same moment, and since 31 Oct 2026 (the join made
+     cheaper, tools/test-join-cost.js) they share ONE fresh ask. */
+  var shapes = phones.map(function (ph) { var a = ASKS_BY[ph.name] || []; return a.length >= 2 && a[0] === 'fresh' && a.slice(1).every(function (x) { return x === 'routine'; }); });
+  check('each phone asks the database on loading (the join screen and its first lookup share one ask), and the copy after that',
         shapes.every(Boolean), phones.map(function (ph) { return (ASKS_BY[ph.name] || []).slice(0, 4).join(','); }));
   INFO = { asks: 0, cost: 0, fresh: 0 };
   await advance(120000);

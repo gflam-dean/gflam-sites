@@ -3701,6 +3701,14 @@ def local_checks(which):
              'A room left on the bingo page while the host runs trivia, a phone bounced between two games, a stale '
              'paper or age answer, or the poll back at four database calls a phone every eight seconds, which is '
              'what capped VenuePlay at about fifteen venues on a busy night'),
+            # D101: the join made cheaper (31 Oct 2026, step 4 of the 12 Sep plan for 1,000+ venues; migration 132),
+            # branch fix/join-cache-31oct.
+            ('D101. A phone joining costs the database about a third less (half with migration 132), and every join check still bites',
+             'test-join-cost.js',
+             'the real phone pages from the TV QR and a table talker to a seat in bingo, trivia and musical bingo, counted call by call against the measured before and pinned; /play/live kept 4 s per code, fresh=1 for the console takeover question and the trivia and musical TVs, a slow read never replaces a newer one, failures and unknown codes not kept, the kept answer equals the database in every state and musical bingo is never on paper or age-gated; the one-trip join (migration 132) and the old reads give the same replies, rows and TV events for new, returning, kicked, paper-id, paused venue, paused group, no session, collect switches, over the plan, trivia and musical; one probe then the old reads when 132 is not run', 55,
+             'A phone told a closed night is open (or the TV sent to the ads for a lobby that has just opened), a '
+             'kicked, paused or over-collected player let through by the one-trip join, or the join creeping back '
+             'up the database calls that cap how many venues can play at once'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

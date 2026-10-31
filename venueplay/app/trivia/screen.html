@@ -796,7 +796,9 @@
     if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
     if(_asking) return;
     _asking=true;
-    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+    /* fresh=1 (31 Oct 2026): a no sends the wall to the ads, so it is asked of the database, never the
+       few-seconds copy the Worker keeps for phones. A lobby opened a moment ago is a yes. */
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG))+"&fresh=1")
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         _asking=false;

@@ -36,7 +36,11 @@ function night(st, format, status, lobbyFormat) {   // a session at that venue; 
 }
 function clearNights() { DB.vp_sessions = []; DB.vp_games = []; }
 venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(String(code)); return m ? V[m[1]] : null; };
-async function live(st) { var r = await handlePlayLive({ url: 'https://w/play/live?code=VENUE-' + st, headers: { get: function () { return ''; } } }, ENV, json); return r.body; }
+/* Since 31 Oct 2026 /play/live asks for the venue and its row together (venueRowByCode); this rig's
+   codes name a state, so the row is found the way that function's fallback finds it: the id, then the row. */
+venueRowByCode = async function (env, code, select) { var id = await venueByCode(env, code); if (!id) return null; var rows = await sbGet(env, 'vp_venues', 'id=eq.' + id + '&select=id,' + select + '&limit=1'); return rows[0] || null; };
+/* fresh=1: /play/live is kept a few seconds per code too (tools/test-join-cost.js), and this clock stands still. */
+async function live(st) { var r = await handlePlayLive({ url: 'https://w/play/live?code=VENUE-' + st + '&fresh=1', headers: { get: function () { return ''; } } }, ENV, json); return r.body; }
 /* fresh:1 (31 Oct 2026): the Worker keeps this answer a few seconds for the whole room, and this rig's clock
    stands still, so each scenario asks the database the way a phone's first lookup does. The copy itself is
    tested in tools/test-lobby-poll-cache.js. */
@@ -326,6 +330,8 @@ else {
   (0, eval)(PLAY.slice(k0, k1));
   function playingHere() { return false; }
   function playerPost(path, body) { calls2.push(path + ':' + body.code); return Promise.resolve(answer); }
+  // play.html asks through askJoinInfo since 31 Oct 2026 (one ask shared by the join screen and this loop).
+  function askJoinInfo(c, fresh) { return playerPost('/join/info', fresh ? { code: c, fresh: 1 } : { code: c }); }
   function unknownCode() { unknowns++; }
   function rehome(c, shown) { rehomes.push(c); }
   function playerAppFor(format) { var f = String(format || ''); return f.indexOf('trivia') === 0 ? '/app/trivia/play' : f.indexOf('musical') === 0 ? '/app/musical/play' : ''; }

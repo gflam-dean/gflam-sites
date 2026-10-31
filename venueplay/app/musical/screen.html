@@ -694,7 +694,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
           return !!(open && g && g.format==="musical_bingo" && (!_gameId || !g.game_id || g.game_id===_gameId));
         });
     }
-    return fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+    /* fresh=1 (31 Oct 2026): a no sends the wall to the ads, so both questions here are asked of the
+       database, never the few-seconds copy the Worker keeps for phones. */
+    return fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG))+"&fresh=1")
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){ if(!d) return null; return !!(d.live && d.format==="musical_bingo"); });
   }
@@ -732,7 +734,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
        is no session" sends the screen back to the ads. No answer at all changes
        nothing, because an unreachable Worker is a bad reason to clear a wall. */
     _asking=true;
-    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG))+"&fresh=1")
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         _asking=false;
