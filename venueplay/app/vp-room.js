@@ -129,10 +129,16 @@
       function done() { if (settled) return false; settled = true; clearTimeout(late); return !st.closed; }
       fetch(api + "/room/presence?room=" + encodeURIComponent(roomName))
         .then(function (r) {
-          if (!done()) return;
+          var first = done();
+          if (st.closed) return;
+          /* AN ANSWER IS AN ANSWER, HOWEVER LATE. "Not enabled" arriving after this look was given up
+             on still means not enabled, and acting on it now beats spending the whole budget asking
+             again: on a slow line (or a loaded test machine) every look timed out and every page
+             waited eight seconds for an answer it had already been given. */
           if (r.status === 503 || r.status === 404) {
             return readJson(r).then(function (d) { unavailable(d && d.handed_over ? "handed over" : "not enabled"); });
           }
+          if (!first) return;                                      // a late yes: the next look will see it
           if (r.status !== 200) { retry(); return; }               // the room is unwell; the budget decides
           return readJson(r).then(function (d) {
             if (st.closed) return;

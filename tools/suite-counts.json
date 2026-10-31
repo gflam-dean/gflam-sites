@@ -988,7 +988,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-fallback.test.js": {
-  "checks": 61,
+  "checks": 62,
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-optin.test.js": {

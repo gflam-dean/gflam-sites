@@ -180,6 +180,17 @@ tick(12000);
 pass("a hung probe is a failed probe, and the budget still decides", unavailReasons.length === 1,
      "states: " + states.slice(-3).join(" -> "));
 
+var slowOff = [];
+V = setup(function () { return "slow503"; });
+globalThis.fetch = (function (orig) { return function (url, init) {
+  if (!(init && init.method === "POST") && fetchPlan(url) === "slow503") {
+    return new Promise(function (res) { setTimeout(function () { res({ status: 503, json: function () { return Promise.resolve({ error: "room server not enabled" }); } }); }, 6000); });
+  }
+  return orig(url, init); }; })(globalThis.fetch);
+r = connect(V, "phone"); tick(6100);
+pass("an \"off\" that arrives after the look timed out is still believed, at once, not after the whole budget",
+     unavailReasons.length === 1 && unavailReasons[0] === "not enabled" && NOW < 1000 + 8000, unavailReasons.join(",") + " at " + (NOW - 1000) + "ms");
+
 print("\nTHE ROOM DIES MID-QUESTION (warm: a game is on)");
 V = setup(function () { return ok200(); });
 r = connect(V, "host");

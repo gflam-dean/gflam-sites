@@ -1801,6 +1801,9 @@ MUTATIONS = [
     # ---- 31 Oct 2026: the room server as the DEFAULT, one road per venue. Each broken by hand
     # in the working copy first and watched go red before it was written here.
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
+     '          var first = done();\n          if (st.closed) return;', '          var first = done();\n          if (!first) return;',
+     'a late "not enabled" is thrown away and every page on a slow line waits out the whole budget before Supabase'),
+    ('room-fallback.test.js', 'venueplay/app/vp-room.js',
      'if (now() - st.due > SLEPT_MS) { st.downSince = now(); st.tries = 0; }', '',
      'a TV in a covered window spends its frozen minute as failure and moves the whole venue to Supabase'),
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
