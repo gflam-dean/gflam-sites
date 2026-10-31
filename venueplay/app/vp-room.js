@@ -492,12 +492,22 @@
      what the room was still holding goes out first, and from then on every status is the real
      channel's. Nothing touches Supabase until then, which is the point: a TV, a screen or a phone
      in the room holds no Supabase connection at all.
-     copts.ear: { client: fn, gate: fn, hello: fn(say) } listens on the old road for EAR_MS after
-     the room first opens, for a TV or screen still running from before the switch. */
+     copts.ear: { client: fn, gate: fn, hello: fn(say), name } listens on the old road for EAR_MS after
+     the room first opens, for a TV or screen still running from before the switch (on this
+     channel's own name, or on `name`: the venue's bingo channel, where an old TV answers a
+     host_here with tv_here). */
   var EAR_MS = 60000;
   function channel(g, name, role, make, copts) {
     copts = copts || {};
     var hs = [], statusCb = null, room = null, real = null, dead = false, started = false, ear = null, earT = null, mine = false;
+    /* THE PAGE'S LAST WORD ON WHAT IS ON AIR. A console says mode once, when its game goes up, and a
+       screen that was on the other road all along (the old TV whose answer moved the venue) never
+       heard it, so the wall stayed on the ads with the lobby open. When the venue moves, the last
+       mode this channel said in the room is said again on the new road, unless an idle came after
+       it. It is the page's own signed message, unchanged; a screen that already had it drops the
+       repeat as it would any repeat. */
+    var lastAir = null;
+    var AIR = { mode: 1, idle: 1, to_ads: 1 };
     function deliver(payload) {
       for (var i = 0; i < hs.length; i++) {
         var f = hs[i].filter;
@@ -528,7 +538,12 @@
           mark("supabase");
           if (!flushed) {
             flushed = true;
-            for (var j = 0; pending && j < pending.length; j++) { try { me.send({ type: "broadcast", event: "msg", payload: pending[j] }); } catch (e) {} }
+            var again = (lastAir && lastAir.t === "mode") ? lastAir : null, againS = again ? JSON.stringify(again) : "";
+            for (var j = 0; pending && j < pending.length; j++) {
+              if (again && JSON.stringify(pending[j]) === againS) again = null;   // it is going out anyway
+              try { me.send({ type: "broadcast", event: "msg", payload: pending[j] }); } catch (e) {}
+            }
+            if (again) { try { me.send({ type: "broadcast", event: "msg", payload: again }); } catch (e) {} }
           }
         }
         status(s);
@@ -565,7 +580,7 @@
               try { cl = typeof copts.ear.client === "function" ? copts.ear.client() : copts.ear.client; } catch (e) { cl = null; }
               if (cl) {
                 var r = room;
-                ear = watch(cl, name, { gate: copts.ear.gate, hello: copts.ear.hello,
+                ear = watch(cl, copts.ear.name || name, { gate: copts.ear.gate, hello: copts.ear.hello,
                                         onPeer: function () { if (r) r.handover("peer"); } });
                 earT = setTimeout(function () { earT = -1; dropEar(); }, EAR_MS);
               }
@@ -576,7 +591,9 @@
       },
       send: function (msg) {
         if (dead) return Promise.resolve("error");
-        if (room) { room.send(msg && msg.payload); return Promise.resolve("ok"); }
+        var pl = msg && msg.payload;
+        if (room && pl && typeof pl === "object" && AIR[pl.t]) lastAir = pl;
+        if (room) { room.send(pl); return Promise.resolve("ok"); }
         if (real) return real.send(msg);
         return Promise.resolve("error");
       },

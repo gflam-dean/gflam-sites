@@ -1109,7 +1109,11 @@
        itself, and this console only reopened one on a tab switch, so a draw stopped reaching the TV until
        the host went away and came back. Same helper as the TV and every phone. */
     var make=function(){ return window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } }); };   // same convention as trivia/musical so the unified TV finds it
-    ch=(typeof VPRoom!=="undefined" && VPRoom.channelFor && ownScreen(code)) ? VPRoom.channelFor(VP_GAME_API, _roomSlug, "vp-"+code, "host", make, { fmt:"raffle" }) : make();
+    ch=(typeof VPRoom!=="undefined" && VPRoom.channelFor && ownScreen(code)) ? VPRoom.channelFor(VP_GAME_API, _roomSlug, "vp-"+code, "host", make, { fmt:"raffle",
+      /* For a minute after it opens, one ear on the venue's bingo channel on the old road: a TV from before
+         the switch answers this host_here there, and the venue is handed over to meet it. */
+      ear: { name: "vp-"+VP.venueCode(_roomSlug), client: client, gate: (window.VPSign ? function(p, cb){ VPSign.gate(p, cb); } : null),
+             hello: function(say){ var hi={ t:"host_here", rw:1, fmt:"raffle" }; if(window.VPSign){ VPSign.signSend(hi, say); } else { say(hi); } } } }) : make();
     var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){

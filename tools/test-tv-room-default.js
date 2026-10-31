@@ -139,7 +139,7 @@ tick(50);
 ok('another game\'s console and another page\'s ear are not mistaken for it', socks[0].readyState === 1 && posts.length === 0);
 ear[0].h({ payload: { t: 'host_here' } });
 tick(10);
-ok('a bingo console there: the TV hands the room over', posts.length === 1 && /\/room\/handover\?room=vp-ACDEFG/.test(posts[0]), posts.join(','));
+ok('a bingo console there: the TV hands the room over, naming the venue so every room of it goes (1 Nov 2026)', posts.length === 1 && /\/room\/handover\?room=vp-ACDEFG&venue=test-alpha$/.test(posts[0]), posts.join(','));
 tick(500);
 var main = clients[0].chans.filter(function (c) { return c.name === 'vp-' + CODE && !c.gone; });
 ok('and moves to Supabase on the SAME client, after the ear has let go of the name', clients.length === 1 && main.length === 1 && main[0] !== ear[0],
