@@ -43,11 +43,13 @@ function as(user, body, extra) { var h = { Authorization: 'Bearer ' + user }; fo
 async function call(fn, user, body, extra) { try { return await fn(as(user, body, extra), ENV, J); } catch (e) { return { status: 'THREW', body: { error: String(e) } }; } }
 var READS = 0;
 var RIG_FETCH = globalThis.fetch;
-var NEWS_TABLE_MISSING = false;
+var NEWS_TABLE_MISSING = false, SHOWS_TABLE_MISSING = false, STORED_TABLE_MISSING = false;
 globalThis.fetch = function (url, opts) {
   if (String(url).indexOf('/rest/v1/') !== -1) READS++;
   /* Before migration 133 the live database answers 404 for vp_monthly_news. */
-  if (NEWS_TABLE_MISSING && String(url).indexOf('/rest/v1/vp_monthly_news') !== -1)
+  var u = String(url);
+  if ((NEWS_TABLE_MISSING && u.indexOf('/rest/v1/vp_monthly_news') !== -1) || (SHOWS_TABLE_MISSING && u.indexOf('/rest/v1/vp_screen_shows') !== -1)
+      || (STORED_TABLE_MISSING && u.indexOf('/rest/v1/vp_month_reports') !== -1))
     return Promise.resolve({ ok: false, status: 404, json: function () { return Promise.resolve({ code: 'PGRST205' }); }, text: function () { return Promise.resolve('relation does not exist'); } });
   return RIG_FETCH(url, opts);
 };
@@ -141,6 +143,17 @@ function world() {
                         // inside S1's window: already S1's game, must not be counted twice
                         { id: 'rep2', venue_id: VA, format: 'bingo', players: 99, started_at: '2026-10-02T09:30:00Z', created_at: '2026-10-02T09:30:00Z' }];
   DB.vp_bingo_tickets = [];
+  /* Slides counted by the TVs (migration 135): the Royal's two screens, October and September. Running
+     totals per screen per night, so the month is the sum of the rows. */
+  DB.vp_venue_screen = [{ venue_id: VA, slides: [{ head: 'Parma night, $22', image_url: 'https://db/storage/v1/object/public/vp/royal/parma-1.jpg' }, { tag: 'Live', head: 'Live music Saturday' }] }];
+  DB.vp_screen_shows = [
+    { venue_id: VA, night: '2026-10-02', screen_id: 'tvAAAAAA', slide_key: 'i:parma-1.jpg', shows: 120, seconds: 840 },
+    { venue_id: VA, night: '2026-10-02', screen_id: 'tvBBBBBB', slide_key: 'i:parma-1.jpg', shows: 100, seconds: 700 },
+    { venue_id: VA, night: '2026-10-02', screen_id: 'tvAAAAAA', slide_key: 't:Live music Saturday', shows: 80, seconds: 560 },
+    { venue_id: VA, night: '2026-10-09', screen_id: 'tvAAAAAA', slide_key: 'auto:draws', shows: 50, seconds: 500 },
+    { venue_id: VA, night: '2026-10-09', screen_id: 'tvAAAAAA', slide_key: 'i:old-promo.jpg', shows: 10, seconds: 70 },
+    { venue_id: VA, night: '2026-09-20', screen_id: 'tvAAAAAA', slide_key: 'i:parma-1.jpg', shows: 40, seconds: 280 },
+    { venue_id: VZ, night: '2026-10-05', screen_id: 'tvZZZZZZ', slide_key: 't:Anchor Secret Promo', shows: 999, seconds: 9990 }];
   DB.v_vp_player_optins = [{ venue_id: VA, first_name: 'Opted', email: 'optedin1@example.com', mobile: '0411111111', opted_in_at: '2026-10-05T10:00:00Z' },
                            { venue_id: VA, first_name: 'Opted', email: 'optedin2@example.com', mobile: '0411111112', opted_in_at: '2026-10-20T10:00:00Z' },
                            { venue_id: VA, first_name: 'Opted', email: 'optedin3@example.com', mobile: '0411111113', opted_in_at: '2026-10-31T15:00:00Z' },  // 1am on 1 Nov: October's night
@@ -185,10 +198,19 @@ function world() {
         tt === 'The Quizzards:2:55|Pub Legends:1:45|Paper Tigers:0:15|Trivia Newbies:0:10|Late Crew:0:5', tt);
   check('a test player\'s team is not a team and its 99 is not the winning score', tt.indexOf('Dean Testing') === -1);
   check('3 opt-ins in October (the one at 1am on 1 Nov is October\'s night), 1 in September', o.optins === 3 && s.optins === 1, [o.optins, s.optins]);
-  check('adverts: not counted, and said so rather than guessed', o.ads === null);
+  check('slides shown: 360 times over 2 nights, on up to 2 screens, 45 minutes (2,670 seconds)', o.ads && o.ads.shows === 360 && o.ads.nights === 2 && o.ads.screens === 2 && o.ads.minutes === 45, o.ads);
+  var sl = (o.ads.slides || []).map(function (x) { return x.label + ':' + x.shows; }).join('|');
+  check('per slide, named in the venue\'s own words: the Parma picture 220 (two screens add up), Live music 80, the draws board 50, a removed picture 10',
+        sl === 'Parma night, $22:220|Live music Saturday:80|Members draws board:50|A picture slide no longer on your screen:10', sl);
+  check('September\'s 40 are September\'s, and the comparison says so', s.ads.shows === 40 && rep.compare.ad_shows.now === 360 && rep.compare.ad_shows.was === 40);
+  check('another venue\'s slides are not in it', JSON.stringify(rep).indexOf('Anchor Secret Promo') === -1);
   var drawnOnly = vprFigures({ id: 'x', timezone: 'Australia/Brisbane' }, { sessions: [{ id: 'R1', created_at: '2026-10-07T08:00:00Z' }],
     games: [{ id: 'gr', session_id: 'R1', format: 'raffle', started_at: '2026-10-07T09:00:00Z' }], players: [], boards: [], cards: [], reports: [], optins: [] }, '2026-10');
   check('a night of only a raffle is a night, said as drawn for the room, and in no per-game average', drawnOnly.nights === 1 && drawnOnly.night_list[0].drawn === true && drawnOnly.avg_per_game === 0, drawnOnly.night_list);
+  vprForget(); SHOWS_TABLE_MISSING = true;
+  var noTable = (await vprMonth(ENV, [A], '2026-10', NOW))[VA].this_month;
+  check('before migration 135 the report still adds up, and adverts say not counted (null), never 0', noTable.ads === null && noTable.player_visits === 50 && noTable.ad_shows === 0, noTable.ads);
+  SHOWS_TABLE_MISSING = false;
   print('the month before, from the same reads');
   check('September: 12 Sep and the musical at 1:30am on 1 Oct (30 Sep\'s night)', s.nights === 2 && s.night_list.map(function (n) { return n.night; }).join() === '2026-09-12,2026-09-30', s.night_list);
   check('September: 4 players, 4 phones, nobody back twice, all 4 new (August\'s d4 did not play in September)', s.player_visits === 4 && s.unique_phones === 4 && s.returning === 0 && s.new_phones === 4, [s.player_visits, s.unique_phones, s.returning, s.new_phones]);
@@ -236,9 +258,12 @@ function world() {
   print('HQ: every venue, the totals and who is trending down');
   world();
   check('a venue login cannot open it', (await call(vpaHandleMonthReport, OWNER, { month: '2026-10' })).status === 403);
-  var hq = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10' });
+  var first = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10' });
+  check('opening HQ with no stored copy says so and adds nothing up', first.status === 200 && first.body.stored === false && !first.body.totals && /Refresh/.test(first.body.note), first.body);
+  check('an HQ staff login cannot refresh it', (await call(vpaHandleMonthReport, STAFF_ADMIN, { month: '2026-10', refresh: true })).status === 403);
+  var hq = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10', refresh: true });
   var hb = hq.body || {};
-  check('HQ answers', hq.status === 200 && hb.ok, hb.error);
+  check('an owner\'s Refresh works it out and keeps it', hq.status === 200 && hb.ok && hb.stored === true && DB.vp_month_reports.length === 1 && hb.made_by === 'Dean', hb.error || hb.note);
   var byId = {}; (hb.venues || []).forEach(function (v) { byId[v.venue_id] = v; });
   check('a row for every venue that ran something, test venues marked', byId[VA] && byId[VZ] && byId[VP] && byId[VT] && byId[VT].test === true && byId[VA].test === false, Object.keys(byId));
   check('totals leave the test venue out: 50 + 4 + 1,500 players, 4 + 1 + 1 nights', hb.totals.player_visits === 1554 && hb.totals.nights === 6 && hb.totals.venues_with_nights === 3, hb.totals);
@@ -246,11 +271,32 @@ function world() {
   var churn = (hb.churn || []).map(function (c) { return c.venue_id + ':' + c.level; }).join();
   check('the Quiet Inn stopped (a night in September, none in October) and the Anchor is down (30 to 4)', churn === VQ + ':stopped,' + VZ + ':down', hb.churn);
   check('the Sydney venue\'s 1:30am bingo is on its October night', byId[VZ].nights === 1 && byId[VZ].player_visits === 4, byId[VZ]);
-  check('it says adverts are not counted', hb.ads === null && /not counted/.test(hb.ads_note || ''));
+  check('slides shown in the totals: 360 at the Royal, the Anchor\'s 999, test venues out', hb.totals.ad_shows === 1359 && hb.totals.ad_venues === 2 && byId[VA].ads.shows === 360, [hb.totals.ad_shows, hb.totals.ad_venues]);
+  READS = 0;
+  var again = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10' });
+  check('opening HQ again reads the login and ONE stored row, and it is the same answer', READS === 2 && again.body.stored === true && again.body.totals.player_visits === 1554, [READS, again.body.stored]);
+  check('a staff login can open the stored copy', (await call(vpaHandleMonthReport, STAFF_ADMIN, { month: '2026-10' })).body.totals.player_visits === 1554);
+  vprForget();
   DB.vp_admin_audit.push({ id: 'a1', action: 'venue_marked_test', target: 'venue:' + VP, created_at: '2026-10-01T00:00:00Z' });
   vprForget();
-  var hq2 = (await call(vpaHandleMonthReport, ADMIN, { month: '2026-10' })).body;
-  check('a venue marked test in HQ comes out of the totals too', hq2.totals.player_visits === 54, hq2.totals.player_visits);
+  var hq2 = (await call(vpaHandleMonthReport, ADMIN, { month: '2026-10', refresh: true })).body;
+  check('a venue marked test in HQ comes out of the totals too, and Refresh replaced the one stored row', hq2.totals.player_visits === 54 && DB.vp_month_reports.length === 1 && DB.vp_month_reports[0].data.totals.player_visits === 54, hq2.totals.player_visits);
+  print('the stored copy is made on the 1st, once, and nothing is read outside those hours');
+  world();
+  READS = 0;
+  check('mid month: nothing read', (await vprStoreHqMonth(ENV, Date.parse('2026-11-12T17:00:00Z'))).waiting === true && READS === 0, READS);
+  check('the 1st at 8pm: nothing read', (await vprStoreHqMonth(ENV, Date.parse('2026-11-01T10:00:00Z'))).waiting === true && READS === 0, READS);
+  var made = await vprStoreHqMonth(ENV, Date.parse('2026-10-31T17:00:00Z'));
+  check('3am on the 1st: October is made and kept, with the MONTHLY_REPORTS switch off', made.made === '2026-10' && DB.vp_month_reports.length === 1 && DB.vp_month_reports[0].data.totals.player_visits === 1554 && sent.length === 0, made);
+  READS = 0;
+  check('the next tick reads one row and adds nothing up', (await vprStoreHqMonth(ENV, Date.parse('2026-10-31T18:00:00Z'))).already === true && READS === 1, READS);
+  world(); STORED_TABLE_MISSING = true;
+  check('before migration 136 the 1st does nothing more than one read', (await vprStoreHqMonth(ENV, Date.parse('2026-10-31T17:00:00Z'))).missing === true);
+  var nostore = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10' });
+  check('and HQ says the stored copy needs migration 136', nostore.body.stored === false && /migration 136/.test(nostore.body.note), nostore.body);
+  var ref136 = await call(vpaHandleMonthReport, ADMIN, { month: '2026-10', refresh: true });
+  check('Refresh still works it out, and says it could not keep it', ref136.status === 200 && ref136.body.stored === false && ref136.body.totals.player_visits === 1554 && /136/.test(ref136.body.note), ref136.body.note);
+  STORED_TABLE_MISSING = false;
 
   print('the email');
   world();
@@ -265,6 +311,12 @@ function world() {
   check('the busiest night in words', /Friday 16 October<\/b>, with <b>40 players/.test(h));
   check('top team, by name, which the TV already showed', /1\. The Quizzards/.test(h));
   check('opt-ins as a count', /3 players<\/b> said yes to hearing from you/.test(h));
+  check('the screen: 360 times, 45 minutes, 2 nights, 2 screens, the Parma picture first', /on screen <b>360 times<\/b>, about <b>45 minutes<\/b> in all, across 2 days and up to 2 screens/.test(h) && /Parma night, \$22[\s\S]{0,200}220 times/.test(h));
+  var noName = await vprEmailHtml(ENV, DB.vp_venues[0], repA, { to: 'owner@royalhotel.com.au', contactName: 'Manager' });
+  check('with no first name the greeting still reads naturally', /Good (morning|afternoon|evening), team at The Royal Hotel\./.test(noName.html));
+  var emptyNight = JSON.parse(JSON.stringify(repA)); emptyNight.this_month.night_list[0].players = 0;
+  var en = await vprEmailHtml(ENV, DB.vp_venues[0], emptyNight, { to: 'owner@royalhotel.com.au' });
+  check('a night nobody joined says so in grey, not "0 players"', /no players joined/.test(en.html) && !/>0 players</.test(en.html));
   check('compared with September', /Compared with September/.test(h) && /50 <span[^>]*>\(4\)/.test(h));
   check('no player\'s name, email or mobile anywhere in it', !/Private|Person|example\.com|04000000|0411111|Opted/.test(h));
   check('no em dash', h.indexOf('\u2014') === -1 && mail.subject.indexOf('\u2014') === -1);

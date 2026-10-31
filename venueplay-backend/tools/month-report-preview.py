@@ -106,6 +106,12 @@ def main():
         news = get_all(L, 'vp_monthly_news', 'month=eq.%s&select=month,items,ready&order=month.asc' % month)
     except Exception:
         news = []                                                 # migration 133 not run yet
+    # the slide tally (migration 135) and the venue's own slide headings; before 135 there is no table
+    try:
+        shows = get_all(L, 'vp_screen_shows', 'venue_id=eq.%s&and=(night.gte.%s,night.lte.%s)&select=venue_id,night,screen_id,slide_key,shows,seconds&order=night.asc,screen_id.asc,slide_key.asc' % (v['id'], frm[:10], to[:10]))
+    except Exception:
+        shows = None
+    screens = get_all(L, 'vp_venue_screen', 'venue_id=eq.%s&select=venue_id,slides&order=venue_id.asc' % v['id']) if shows else []
     if '--news' in sys.argv:
         with open(os.path.expanduser(arg('--news', ''))) as f:
             news = [{'month': month, 'items': json.load(f), 'ready': True}]
@@ -118,7 +124,7 @@ def main():
         with open(snap, 'w') as f:
             json.dump({'month': month, 'venue': v, 'tables': {'vp_venues': [v], 'vp_sessions': sessions, 'vp_games': games, 'vp_players': players,
                        'v_vp_trivia_leaderboard': boards, 'vp_cards': cards, 'vp_game_reports': reports, 'v_vp_player_optins': optins,
-                       'vp_monthly_news': news}}, f)
+                       'vp_monthly_news': news, 'vp_screen_shows': shows, 'vp_venue_screen': screens}}, f)
         driver = os.path.join(tmp, 'driver.js')
         with open(driver, 'w') as f:
             f.write(DRIVER)
@@ -150,6 +156,14 @@ if (typeof crypto === 'undefined') crypto = { subtle: { importKey: function (f, 
   sign: function (a, key, data) { return Promise.resolve(fnv(new Uint8Array(data), 3 + key.k).buffer); } } };
 var snap = JSON.parse(readFile(arguments[0]));
 DB = snap.tables;
+var SHOWS_MISSING = DB.vp_screen_shows === null;      // migration 135 not run: answer 404 as the live database does
+if (SHOWS_MISSING) delete DB.vp_screen_shows;
+var RIG_FETCH = globalThis.fetch;
+globalThis.fetch = function (url, opts) {
+  if (SHOWS_MISSING && String(url).indexOf('/rest/v1/vp_screen_shows') !== -1)
+    return Promise.resolve({ ok: false, status: 404, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('missing'); } });
+  return RIG_FETCH(url, opts);
+};
 (async function () {
   var v = snap.venue;
   var rep = (await vprMonth(ENV, [v], snap.month, Date.now()))[v.id];

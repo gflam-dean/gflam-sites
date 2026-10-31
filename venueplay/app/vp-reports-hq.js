@@ -9,6 +9,9 @@
 
    The numbers are the billing Worker's (POST /admin/month-report, vprMonth): the same function
    that writes each venue's email and its own report page, so HQ and a venue cannot disagree.
+   HQ shows the STORED copy (migration 136), made at 2am on the 1st, so opening this tab during a
+   game night reads one row, never 13 months of every venue (Dean, 31 Oct 2026). "Refresh this month"
+   (owner or accounts) works it out again on that tap and keeps it.
    Test venues (a test name or slug, or marked test in HQ) are left out of every total and shown
    in the table only when the header's "Show test venues" is ticked. Counts only, no player.
    The news: POST /admin/month-news (get, save, preview); saving is owner or accounts only, and
@@ -56,8 +59,22 @@
     S.month = $("rpMonth").value;
   }
 
+  function madeLine(d) {
+    var when = "";
+    try { when = new Date(d.made_at).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) {}
+    return '<div class="rowbetween" style="margin:0 0 12px"><div class="note" style="margin:0">'
+      + (d.stored ? "Stored copy, made " + rpEsc(when) + (d.made_by ? " by " + rpEsc(d.made_by) : "") + "." : (d.totals ? "Worked out just now, " + rpEsc(when) + "." : ""))
+      + (d.note ? ' <span style="color:var(--gold)">' + rpEsc(d.note) + '</span>' : "") + '</div>'
+      + (d.can_refresh ? '<button class="mini sp" id="rpRemake" title="Reads every venue: best outside game nights">Refresh this month</button>' : "") + '</div>';
+  }
+  function bindRemake() { var b = $("rpRemake"); if (b) b.addEventListener("click", function () { load(true); }); }
   function render() {
     var d = S.data, box = $("rpBody"); if (!d || !box) return;
+    if (!d.totals) {
+      box.innerHTML = madeLine(d) + '<div class="panel pad"><p class="note" style="margin:0">Nothing stored for ' + rpEsc(monthWords(d.month)) + ' yet.'
+        + (d.can_refresh ? ' Refresh this month works it out now (it reads every venue, so it is best outside a game night).' : ' An owner or accounts login can make it with Refresh this month.') + '</p></div>';
+      bindRemake(); return;
+    }
     var t = d.totals, c = d.compare;
     var tiles = [
       ["Venues with a night", n(t.venues_with_nights), "ran at least one game"],
@@ -65,7 +82,8 @@
       ["Players", n(t.player_visits), delta(c.player_visits)],
       ["Different phones", n(t.unique_phones), delta(c.unique_phones)],
       ["Came back", n(t.returning), t.returning_pct + "% of phones, 2+ nights"],
-      ["Opt-ins", n(t.optins), delta(c.optins)]
+      ["Opt-ins", n(t.optins), delta(c.optins)],
+      ["Slides shown", t.ads_counted ? n(t.ad_shows) : "&ndash;", t.ads_counted ? n(t.ad_venues) + " venues, about " + n(Math.round((t.ad_minutes || 0) / 60)) + " hours" : "not counted yet"]
     ];
     var fk = Object.keys(t.formats || {}).sort(function (a, b) { return t.formats[b].nights - t.formats[a].nights; });
     var sales = [];
@@ -80,31 +98,32 @@
       var col = v.trend.level === "stopped" ? "var(--roll)" : v.trend.level === "down" ? "var(--gold)" : v.trend.level === "up" ? "var(--win)" : "var(--muted)";
       return '<span style="color:' + col + ';font-weight:700">' + rpEsc(v.trend.level === "steady" ? "steady" : v.trend.level) + '</span>' + (v.trend.words ? '<div class="vt">' + rpEsc(v.trend.words) + '</div>' : "");
     };
-    box.innerHTML =
+    box.innerHTML = madeLine(d) +
       '<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">' + tiles.map(function (x) { return '<div class="scard"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="d">' + x[2] + '</div></div>'; }).join("") + '</div>'
       + '<div class="lblk">For sales</div><div class="panel pad">' + (sales.length ? sales.map(function (s) { return '<p style="margin:0 0 8px">' + s + '</p>'; }).join("") : '<p class="note" style="margin:0">Nothing ran in this month.</p>') + '</div>'
       + '<div class="lblk">Worth a call: trending down</div><div class="panel pad">'
       + ((d.churn || []).length ? d.churn.map(function (x) { return '<p style="margin:0 0 8px"><b>' + rpEsc(x.name) + '</b> <span style="color:' + (x.level === "stopped" ? "var(--roll)" : "var(--gold)") + '">' + rpEsc(x.words) + '</span></p>'; }).join("") : '<p class="note" style="margin:0">Nobody is trending down against last month.</p>')
       + '</div>'
       + '<div class="lblk">Every venue' + (show ? ", test venues included" : "") + '</div>'
-      + '<div class="panel"><div class="tscroll"><table><thead><tr><th>Venue</th><th>Nights</th><th>Players</th><th>A night</th><th>Phones</th><th>Came back</th><th>New</th><th>Opt-ins</th><th>Trend</th><th>Top team</th></tr></thead><tbody>'
+      + '<div class="panel"><div class="tscroll"><table><thead><tr><th>Venue</th><th>Nights</th><th>Players</th><th>A night</th><th>Phones</th><th>Came back</th><th>New</th><th>Opt-ins</th><th>Slides</th><th>Trend</th><th>Top team</th></tr></thead><tbody>'
       + (rows.length ? rows.map(function (v) {
           return '<tr><td><div class="vn">' + rpEsc(v.name) + (v.test ? ' <span class="vt">(test)</span>' : '') + '</div><div class="vt">' + rpEsc(Object.keys(v.formats || {}).map(function (f) { return WORDS[f] || f; }).join(", ")) + '</div></td>'
             + '<td class="mono">' + n(v.nights) + '<div class="vt">was ' + n(v.last.nights) + '</div></td><td class="mono">' + n(v.player_visits) + '<div class="vt">was ' + n(v.last.player_visits) + '</div></td>'
-            + '<td class="mono">' + n(v.avg_per_night) + '</td><td class="mono">' + n(v.unique_phones) + '</td><td class="mono">' + n(v.returning) + '</td><td class="mono">' + n(v.new_phones) + '</td><td class="mono">' + n(v.optins) + '</td>'
+            + '<td class="mono">' + n(v.avg_per_night) + '</td><td class="mono">' + n(v.unique_phones) + '</td><td class="mono">' + n(v.returning) + '</td><td class="mono">' + n(v.new_phones) + '</td><td class="mono">' + n(v.optins) + '</td><td class="mono">' + (v.ads ? n(v.ads.shows) : "&ndash;") + '</td>'
             + '<td>' + trend(v) + '</td><td>' + rpEsc(v.top_team || "") + '</td></tr>';
-        }).join("") : '<tr><td colspan="10" class="note">No venue ran a game in this month.</td></tr>')
+        }).join("") : '<tr><td colspan="11" class="note">No venue ran a game in this month.</td></tr>')
       + '</tbody></table></div></div>'
       + '<div class="note">A night runs 2am to 2am where the venue is. Players are counted by phone, so one phone on two nights is one person who came back; printed cards count as players, not phones. Test players and test venues are left out of every total. '
-      + rpEsc(d.ads_note || "") + ' Counting them would mean the TV keeping a tally and sending it on the poll it already makes every 30 seconds, so it costs no extra database call.</div>';
+      + rpEsc(d.ads_note || "") + '</div>';
+    bindRemake();
   }
 
-  function load() {
+  function load(remake) {
     if (!H.post || !S.month) return;
-    var box = $("rpBody"); if (box) box.innerHTML = '<div class="note">Adding it up&hellip;</div>';
+    var box = $("rpBody"); if (box) box.innerHTML = '<div class="note">' + (remake ? "Working the month out across every venue&hellip;" : "Opening the stored report&hellip;") + '</div>';
     S.loading = true;
     var want = S.month;
-    return H.post("/admin/month-report", { month: want }).then(function (r) {
+    return H.post("/admin/month-report", remake ? { month: want, refresh: true } : { month: want }).then(function (r) {
       S.loading = false;
       if (want !== S.month) return;
       if (!r || r.error) { if (box) box.innerHTML = '<div class="note">' + rpEsc((r && r.error) || "Could not load the report.") + '</div>'; return; }

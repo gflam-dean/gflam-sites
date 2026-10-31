@@ -492,3 +492,21 @@ monthly report email carries under each venue's own numbers. Keyed by the REPORT
 RLS on, no policies, revoked from public/anon/authenticated: service role only. Any order with the billing Worker: without
 it HQ's Save answers "migration 133" and the report goes out without news. After running, dump RLS-BASELINE.json (one new
 table). Branch `feature/venue-reports-31oct`. NOT RUN. Rollback: in the file.
+
+`venueplay-135-screen-shows.sql` (Dean, 30 to 31 Oct 2026: "can we tell how much advertising is displayed", with no extra
+database call at peak): one new table `vp_screen_shows` (venue_id, night, screen_id, slide_key, shows, seconds; primary key on
+the first four) and one new definer function `vp_screen_poll_shown(p_slug, p_code, p_version, p_shown jsonb)`, which returns
+exactly what `vp_screen_poll` (migration 72) returns and keeps the TV's running slide totals for tonight in the same call
+(greatest of what it had and what came; tonight or last night on the venue's clock; at most 40 slides a call and 12 screens a
+venue a night; its own exception block, so a bad tally never costs a screen its answer). Service role only. Any order with
+the game Worker and tv.html: without it the Worker gets a 404, falls back to `vp_screen_poll` in the same request and stops
+asking, and the monthly report says slides are not counted yet. After running, dump RLS-BASELINE.json (one table, one
+function). tv.html changed, so `python3 tools/verify-live.py --stamp` after the release. Branch `feature/venue-reports-31oct`.
+NOT RUN. Rollback: in the file.
+
+`venueplay-136-month-reports-stored.sql` (Dean, 31 Oct 2026: HQ Reports shows "a stored copy made on the 1st" so opening HQ
+during a game night never reads 13 months of every venue): one new table `vp_month_reports` (month text primary key, data jsonb,
+made_at, made_by), written by the billing Worker's scheduled run between 2am and 7am Brisbane on the 1st and by HQ's
+"Refresh this month" (owner or accounts). Service role only. Any order with the billing Worker: without it HQ says the stored
+copy needs migration 136 and Refresh works the month out without keeping it. After running, dump RLS-BASELINE.json (one
+table). Branch `feature/venue-reports-31oct`. NOT RUN. Rollback: in the file.

@@ -29,7 +29,7 @@
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 16:43 · 20412a21';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 18:45 · 0b1b71ca';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -333,6 +333,8 @@ export default {
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
+    /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
+    try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
   },
 };
 
@@ -12206,9 +12208,12 @@ async function vpmSummary(request, env, json) {
    7am Brisbane, a batch a tick, nowhere near a game night. A finished month is kept in this
    isolate's memory for six hours, so a page opened twice costs one read.
 
-   ADVERTS ARE NOT COUNTED, because nothing records a slide being shown: the TV rotates them in
-   the browser and its 30 second /screen poll writes only a heartbeat. vprMonth says so
-   (ads: null) rather than guessing, and the email and the venue page leave the line out.
+   ADVERTS AND SLIDES (migration 135, 31 Oct 2026). Each TV keeps a running total per slide for
+   tonight and sends it on the /venue poll it already makes; the game Worker keeps it in the same
+   database call (vp_screen_poll_shown) in vp_screen_shows. Read here per venue and night. Before
+   135 is run the table is not there: ads is null and every page says not counted yet. A slide's
+   key is its uploaded file name or its heading (vprSlideKey, the same rule as tv.html's
+   tvShownKey), so the venue's own heading goes next to each count.
    ======================================================================================= */
 const VPR_NIGHT_STARTS_HOUR = 2;          // a night runs 2am to 2am where the venue is
 const VPR_LOOKBACK_DAYS = 365;            // "new" means a phone not seen at this venue in the year before
@@ -12296,8 +12301,24 @@ async function vprRead(env, venues, month) {
     'venue_id=in.(' + inl + ')&and=(opted_in_at.gte.' + w.from + ',opted_in_at.lt.' + w.to + ')'
     + '&select=venue_id,opted_in_at&order=opted_in_at.asc,email.asc,mobile.asc'));
 
+  /* The slide tally (migration 135). A 404 is the table not being there yet: no counts, said so. */
+  let shows = null, screens = [];
+  try {
+    shows = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_screen_shows',
+      'venue_id=in.(' + inl + ')&and=(night.gte.' + w.from.slice(0, 10) + ',night.lte.' + w.to.slice(0, 10) + ')'
+      + '&select=venue_id,night,screen_id,slide_key,shows,seconds&order=venue_id.asc,night.asc,screen_id.asc,slide_key.asc'));
+  } catch (e) {
+    if (!/: 404 /.test(String((e && e.message) || ''))) throw e;
+    shows = null;
+  }
+  if (shows && shows.length) {
+    const withShows = Array.from(new Set(shows.map((r) => r.venue_id)));
+    screens = await vpmInChunks(withShows, (inl) => vpaSelectAll(env, 'vp_venue_screen',
+      'venue_id=in.(' + inl + ')&select=venue_id,slides&order=venue_id.asc'));
+  }
   const by = {};
-  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [] }; });
+  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [],
+                                       shows: shows ? [] : null, labels: {} }; });
   const venueOfSession = {}, venueOfGame = {};
   sessions.forEach((s) => { if (by[s.venue_id]) { by[s.venue_id].sessions.push(s); venueOfSession[s.id] = s.venue_id; } });
   games.forEach((g) => { const v = venueOfSession[g.session_id]; if (v) { by[v].games.push(g); venueOfGame[g.id] = v; } });
@@ -12306,7 +12327,49 @@ async function vprRead(env, venues, month) {
   cards.forEach((c) => { const v = venueOfGame[c.game_id]; if (v) by[v].cards.push(c); });
   reports.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].reports.push(r); });
   optins.forEach((o) => { if (by[o.venue_id]) by[o.venue_id].optins.push(o); });
+  if (shows) shows.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].shows.push(r); });
+  screens.forEach((sc) => {
+    if (!by[sc.venue_id] || !Array.isArray(sc.slides)) return;
+    sc.slides.forEach((sl) => { const k = vprSlideKey(sl); if (k) by[sc.venue_id].labels[k] = String((sl && (sl.head || sl.tag)) || '').trim(); });
+  });
   return by;
+}
+
+/* A slide's key: its uploaded file's name, or its heading for a text slide. The same rule as
+   tv.html's tvShownKey, which is what the TV counts under. */
+function vprSlideKey(sl) {
+  if (!sl || typeof sl !== 'object') return '';
+  if (sl.image_url) { const f = String(sl.image_url).split('?')[0].split('#')[0].split('/').pop() || ''; return f ? 'i:' + f.slice(-80) : ''; }
+  const h = String(sl.head || sl.tag || '').replace(/\s+/g, ' ').trim();
+  return h ? 't:' + h.slice(0, 80) : '';
+}
+function vprSlideLabel(key, labels) {
+  if (key === 'auto:draws') return 'Members draws board';
+  if (key === 'auto:raffle') return 'Raffle card';
+  if (labels && labels[key]) return labels[key];
+  if (key.indexOf('t:') === 0) return key.slice(2);
+  return 'A picture slide no longer on your screen';
+}
+/* The month's slide counts, or null when nothing can count them yet (migration 135 not run). */
+function vprAds(rows, month) {
+  if (!rows.shows) return null;
+  const byKey = {}, nights = {}, perNightScreens = {};
+  let shows = 0, secs = 0;
+  rows.shows.forEach((r) => {
+    const n = String(r.night || '').slice(0, 10);
+    if (n.slice(0, 7) !== month) return;
+    const a = parseInt(r.shows, 10) || 0, b = parseInt(r.seconds, 10) || 0;
+    if (!a) return;
+    shows += a; secs += b; nights[n] = (nights[n] || 0) + a;
+    (perNightScreens[n] = perNightScreens[n] || new Set()).add(r.screen_id);
+    const k = byKey[r.slide_key] = byKey[r.slide_key] || { key: r.slide_key, shows: 0, seconds: 0 };
+    k.shows += a; k.seconds += b;
+  });
+  const slides = Object.keys(byKey).map((k) => byKey[k]).sort((x, y) => y.shows - x.shows || (x.key < y.key ? -1 : 1))
+    .slice(0, 8).map((x) => ({ key: x.key, label: vprSlideLabel(x.key, rows.labels), shows: x.shows, minutes: Math.round(x.seconds / 60) }));
+  let screens = 0;
+  Object.keys(perNightScreens).forEach((n) => { if (perNightScreens[n].size > screens) screens = perNightScreens[n].size; });
+  return { counted: true, shows: shows, minutes: Math.round(secs / 60), nights: Object.keys(nights).length, screens: screens, slides: slides };
 }
 
 /* ONE VENUE, ONE MONTH, from rows already read. Pure: no database, no clock, so a test can hand
@@ -12438,6 +12501,7 @@ function vprFigures(venue, rows, month) {
     .sort((a, b) => b.wins - a.wins || b.points - a.points || (a.name < b.name ? -1 : 1)).slice(0, VPR_TOP_TEAMS);
 
   const optins = rows.optins.filter((o) => vprNightKey(o.opted_in_at, tz).slice(0, 7) === month).length;
+  const ads = vprAds(rows, month);
 
   return {
     month: month,
@@ -12458,13 +12522,14 @@ function vprFigures(venue, rows, month) {
     night_list: nightList,
     top_teams: topTeams,
     optins: optins,
-    ads: null,
+    ads: ads,
+    ad_shows: ads ? ads.shows : 0,
   };
 }
 
 function vprCompare(now, was) {
   const out = {};
-  ['nights', 'games', 'player_visits', 'avg_per_night', 'avg_per_game', 'unique_phones', 'returning', 'new_phones', 'optins'].forEach((k) => {
+  ['nights', 'games', 'player_visits', 'avg_per_night', 'avg_per_game', 'unique_phones', 'returning', 'new_phones', 'optins', 'ad_shows'].forEach((k) => {
     const a = now[k] || 0, b = was[k] || 0;
     out[k] = { now: a, was: b, diff: a - b, pct: b ? Math.round((a - b) / b * 100) : null };
   });
@@ -12557,21 +12622,13 @@ function vprTrend(c) {
   return { level: 'steady', words: '' };
 }
 
-/* --- POST /admin/month-report { month } : HQ, every venue. Counts only. --- */
-async function vpaHandleMonthReport(request, env, json) {
-  const actor = await vpaRequireAdmin(request, env);
-  if (actor.error) return json({ error: actor.error }, actor.status);
-  const _b = await vpaBody(request, json);
-  if (!_b.ok) return _b.res;
-  const now = Date.now();
-  let month = String(_b.body.month || '').trim() || vprLastMonth(now);
-  if (!vprMonthOk(month) || month > vprThisMonth(now)) return json({ error: 'Pick a month that has started.' }, 400);
-  let venues, reps, tests;
-  try {
-    venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
-    reps = await vprMonth(env, venues, month, now);
-    tests = await vprTestVenueIds(env, venues);
-  } catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
+/* HQ's month, every venue, worked out from scratch. Reads 13 months of every venue, so it runs
+   on the 1st between 2am and 7am (vprStoreHqMonth) and on an owner's Refresh, never just because
+   somebody opened HQ (Dean, 31 Oct 2026). Throws when the reads fail. Counts only. */
+async function vprHqReport(env, month, now) {
+  const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+  const reps = await vprMonth(env, venues, month, now);
+  const tests = await vprTestVenueIds(env, venues);
   const rows = [];
   venues.forEach((v) => {
     const r = reps[v.id]; if (!r) return;
@@ -12581,6 +12638,7 @@ async function vpaHandleMonthReport(request, env, json) {
       nights: a.nights, games: a.games, player_visits: a.player_visits, avg_per_night: a.avg_per_night,
       unique_phones: a.unique_phones, returning: a.returning, new_phones: a.new_phones, optins: a.optins,
       formats: a.formats, busiest_night: a.busiest_night, top_team: a.top_teams[0] ? a.top_teams[0].name : '',
+      ads: a.ads ? { shows: a.ads.shows, minutes: a.ads.minutes, nights: a.ads.nights } : null,
       last: { nights: b.nights, player_visits: b.player_visits, unique_phones: b.unique_phones, returning: b.returning },
       trend: vprTrend(r.compare) });
   });
@@ -12590,7 +12648,9 @@ async function vpaHandleMonthReport(request, env, json) {
     const list = real.map((r) => reps[r.venue_id][key]);
     const t = { venues_with_nights: list.filter((x) => x.nights > 0).length, nights: sum(list, (x) => x.nights),
       games: sum(list, (x) => x.games), player_visits: sum(list, (x) => x.player_visits), unique_phones: sum(list, (x) => x.unique_phones),
-      returning: sum(list, (x) => x.returning), new_phones: sum(list, (x) => x.new_phones), optins: sum(list, (x) => x.optins), formats: {} };
+      returning: sum(list, (x) => x.returning), new_phones: sum(list, (x) => x.new_phones), optins: sum(list, (x) => x.optins),
+      ad_shows: sum(list, (x) => x.ad_shows), ad_minutes: sum(list, (x) => (x.ads ? x.ads.minutes : 0)),
+      ad_venues: list.filter((x) => x.ads && x.ads.shows > 0).length, ads_counted: list.some((x) => !!x.ads), formats: {} };
     list.forEach((x) => Object.keys(x.formats).forEach((f) => {
       const a = t.formats[f] = t.formats[f] || { nights: 0, games: 0 }; a.nights += x.formats[f].nights; a.games += x.formats[f].games; }));
     t.avg_per_night = t.nights ? Math.round(t.player_visits / t.nights) : 0;
@@ -12606,9 +12666,88 @@ async function vpaHandleMonthReport(request, env, json) {
     .sort((a, b) => order[a.trend.level] - order[b.trend.level] || b.last.player_visits - a.last.player_visits)
     .map((r) => ({ venue_id: r.venue_id, name: r.name, level: r.trend.level, words: r.trend.words }));
   rows.sort((a, b) => b.player_visits - a.player_visits || (a.name < b.name ? -1 : 1));
-  return json({ ok: true, month: month, prev_month: vprPrevMonth(month), finished: vprFinished(month, now),
+  return { ok: true, month: month, prev_month: vprPrevMonth(month), finished: vprFinished(month, now),
     totals: tNow, last_totals: tWas, compare: vprCompare(tNow, tWas), venues: rows, churn: churn,
-    ads: null, ads_note: 'Adverts and slides are not counted yet: nothing records a slide being shown.' });
+    ads_note: tNow.ads_counted ? 'Slides are counted by each TV while it shows the advertising, and sent on the poll it already makes.'
+                               : 'Adverts and slides are not counted yet: migration 135 has not been run, or no TV has the new page yet.' };
+}
+
+/* The stored copy of a month (migration 136). { row } or { missing: true } when the table is not there. */
+async function vprStoredRead(env, month) {
+  try {
+    const rows = await vpaReadPage(env, 'vp_month_reports', 'month=eq.' + encodeURIComponent(month) + '&select=month,data,made_at,made_by&limit=1');
+    return { row: rows[0] || null };
+  } catch (e) {
+    if (e && e.status === 404) return { missing: true, row: null };
+    throw e;
+  }
+}
+async function vprStoredWrite(env, month, data, who) {
+  const row = { month: month, data: data, made_at: new Date().toISOString(), made_by: who };
+  const had = await vpaReadPage(env, 'vp_month_reports', 'month=eq.' + encodeURIComponent(month) + '&select=month&limit=1');
+  if (had.length) await vpaPatch(env, 'vp_month_reports', 'month=eq.' + encodeURIComponent(month), row);
+  else await vpaInsert(env, 'vp_month_reports', row, false);
+  return row;
+}
+
+/* --- POST /admin/month-report { month, refresh } : HQ, every venue, from the STORED copy.
+   Opening HQ reads one row. refresh:true (owner or accounts) works the month out again and keeps it:
+   that is the 13-months-of-every-venue read, so it only ever happens on that tap. --- */
+async function vpaHandleMonthReport(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const now = Date.now();
+  let month = String(_b.body.month || '').trim() || vprLastMonth(now);
+  if (!vprMonthOk(month) || month > vprThisMonth(now)) return json({ error: 'Pick a month that has started.' }, 400);
+  const canRefresh = ['owner', 'accounts'].indexOf(actor.role) !== -1;
+  if (_b.body.refresh === true) {
+    if (!canRefresh) return json({ error: 'Only an owner or accounts login can refresh the report.' }, 403);
+    let data;
+    try { data = await vprHqReport(env, month, now); }
+    catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
+    let stored = null, note = '';
+    try { stored = await vprStoredWrite(env, month, data, actor.label); }
+    catch (e) { note = (e && e.status === 404) ? 'Worked out but not kept: the stored copy needs migration 136.' : 'Worked out but not kept: the database did not answer.'; }
+    await vpaAudit(env, actor, 'month_report_refreshed', 'month-report:' + month, { kept: !!stored });
+    return json(Object.assign({}, data, { stored: !!stored, made_at: stored ? stored.made_at : new Date(now).toISOString(),
+      made_by: actor.label, can_refresh: canRefresh, note: note }));
+  }
+  let got;
+  try { got = await vprStoredRead(env, month); }
+  catch (e) { return json({ error: 'Could not read the stored report just now. Please try again.' }, 503); }
+  if (!got.row) {
+    return json({ ok: true, month: month, stored: false, can_refresh: canRefresh,
+      note: got.missing ? 'The stored report needs migration 136. Until then Refresh works the month out each time.'
+                        : 'No stored copy of ' + vprMonthWords(month) + ' yet. Last month is made at 2am on the 1st; Refresh makes one now.' });
+  }
+  return json(Object.assign({}, got.row.data, { stored: true, made_at: got.row.made_at, made_by: got.row.made_by, can_refresh: canRefresh }));
+}
+
+/* LAST MONTH'S STORED COPY, MADE ON THE 1ST. 2am to 7am Brisbane on the 1st to the 3rd, once: it
+   reads nothing outside those hours, one row inside them, and the full month only when that row is
+   not there yet. Sends nothing, so it does not wait for the MONTHLY_REPORTS switch. */
+async function vprStoreHqMonth(env, nowMs) {
+  const now = nowMs || Date.now();
+  const bris = new Date(now + 10 * 3600 * 1000);
+  if (bris.getUTCDate() > 3 || bris.getUTCHours() < 2 || bris.getUTCHours() >= 7) return { waiting: true };
+  const month = vprLastMonth(now);
+  const got = await vprStoredRead(env, month);
+  if (got.missing) return { missing: true };
+  if (got.row) return { already: true };
+  const data = await vprHqReport(env, month, now);
+  await vprStoredWrite(env, month, data, 'automatic (1st of the month)');
+  return { made: month };
+}
+
+/* "Good morning, Sam." or, with no first name to use, "Good morning, team at The Royal Hotel."
+   (Dean, 31 Oct 2026: with no name the greeting must still read naturally.) */
+function vprHello(venue, contactName) {
+  const first = vpaFirstName(contactName, venue && venue.name);
+  const hi = vpaGreeting(venue && venue.timezone);
+  if (first) return hi + ', ' + vpaEsc(first) + '.';
+  return hi + ', team at ' + vpaEsc((venue && venue.name) || 'your venue') + '.';
 }
 
 /* THE EMAIL. Plain English, light card like every other venue email, counts only. */
@@ -12641,7 +12780,7 @@ async function vprEmailHtml(env, venue, rep, opts) {
   const table = (inner) => '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + inner + '</table>';
   const fmtList = (fs) => fs.map((f) => vpaFormatWord(f)).join(' and ');
 
-  let body = '<p style="margin:0 0 6px;font-size:16px;color:' + INK + '">' + vpaHello(venue.timezone, o.contactName, venue.name) + '</p>'
+  let body = '<p style="margin:0 0 6px;font-size:16px;color:' + INK + '">' + vprHello(venue, o.contactName) + '</p>'
     + p('Here is how ' + vpaEsc(mName) + ' went at ' + vpaEsc(venue.name || 'your venue') + '.');
   if (!a.nights) {
     body += p('No games ran in ' + vpaEsc(mName) + '. In ' + vpaEsc(pName) + ' you ran ' + plural(rep.last_month.nights, 'night', 'nights')
@@ -12653,7 +12792,8 @@ async function vprEmailHtml(env, venue, rep, opts) {
         + tile(n(a.returning), 'came back for another night', delta('returning')) + '</tr>');
     body += h2('Your nights');
     body += table(a.night_list.slice(0, 12).map((x) => row(vpaEsc(vprNightWords(x.night)) + '<br><span style="color:' + DIM + ';font-size:12.5px">'
-      + vpaEsc(fmtList(x.formats)) + '</span>', (x.drawn && !x.players) ? 'drawn for the room' : plural(x.players, 'player', 'players'))).join(''));
+      + vpaEsc(fmtList(x.formats)) + '</span>', (x.drawn && !x.players) ? 'drawn for the room'
+      : (!x.players ? '<span style="color:' + DIM + ';font-weight:400">no players joined</span>' : plural(x.players, 'player', 'players')))).join(''));
     if (a.night_list.length > 12) body += p('<span style="color:' + DIM + ';font-size:13px">And ' + (a.night_list.length - 12) + ' more in your account.</span>');
     body += h2('What you ran');
     body += table(Object.keys(a.formats).sort((x, y) => a.formats[y].games - a.formats[x].games).map((f) => {
@@ -12688,6 +12828,13 @@ async function vprEmailHtml(env, venue, rep, opts) {
       body += h2('Top trivia teams');
       body += table(a.top_teams.map((t, i) => row((i + 1) + '. ' + vpaEsc(t.name), t.wins ? plural(t.wins, 'win', 'wins') : n(t.points) + ' points')).join(''));
     }
+    if (a.ads && a.ads.shows) {
+      body += h2('Your screen');
+      const onFor = a.ads.minutes >= 90 ? 'about <b>' + plural(Math.round(a.ads.minutes / 60), 'hour', 'hours') + '</b>' : 'about <b>' + plural(a.ads.minutes, 'minute', 'minutes') + '</b>';
+      body += p('Your adverts and slides were on screen <b>' + n(a.ads.shows) + ' times</b>, ' + onFor + ' in all, across '
+        + plural(a.ads.nights, 'day', 'days') + (a.ads.screens > 1 ? ' and up to ' + a.ads.screens + ' screens' : '') + '.');
+      body += table(a.ads.slides.slice(0, 5).map((x) => row(vpaEsc(x.label), n(x.shows) + ' times')).join(''));
+    }
     if (a.optins) {
       body += h2('Your list');
       body += p('<b>' + plural(a.optins, 'player', 'players') + '</b> said yes to hearing from you this month. They are in your account, under Marketing.');
@@ -12696,7 +12843,8 @@ async function vprEmailHtml(env, venue, rep, opts) {
     const cmp = (label, k) => { const d = c[k]; return row(label, n(d.now) + ' <span style="color:' + DIM + ';font-weight:400">(' + n(d.was) + ')</span>'); };
     body += table(cmp('Nights', 'nights') + cmp('Players', 'player_visits') + cmp('Different phones', 'unique_phones')
       + cmp('Came back', 'returning') + cmp('New phones', 'new_phones') + cmp('Average a night', 'avg_per_night')
-      + (c.optins.now || c.optins.was ? cmp('Opt-ins', 'optins') : ''));
+      + (c.optins.now || c.optins.was ? cmp('Opt-ins', 'optins') : '')
+      + (c.ad_shows.now || c.ad_shows.was ? cmp('Slides shown', 'ad_shows') : ''));
   }
   const link = site + '/app/report.html?venue=' + encodeURIComponent(venue.id) + '&month=' + rep.month;
   body += '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 4px"><tr><td style="background:' + PINK + ';border-radius:999px">'

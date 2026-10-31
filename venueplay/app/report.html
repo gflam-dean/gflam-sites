@@ -94,9 +94,10 @@
     <div id="bigWrap"><div class="label">The big ones</div><ul class="facts" id="big"></ul></div>
     <div id="regularsWrap"><div class="label">Your regulars</div><div class="card" id="regulars"></div></div>
     <div id="teamsWrap"><div class="label">Top trivia teams</div><div class="list" id="teams"></div></div>
+    <div id="adsWrap"><div class="label">Your screen</div><div class="card" id="adsLine"></div><div class="list" id="ads" style="margin-top:10px"></div></div>
     <div id="optinWrap"><div class="label">Your list</div><div class="card"><p id="optins"></p></div></div>
     <div><div class="label" id="cmpLabel">Compared with last month</div><div class="list" id="compare"></div></div>
-    <p class="fine">A night runs until 2am, so a game that finishes after midnight counts on the night it started. Players are counted by phone: the same phone on two nights is one person who came back. A printed card or team counts as a player but not as a phone. Test players are left out.</p>
+    <p class="fine">A night runs until 2am, so a game that finishes after midnight counts on the night it started. Players are counted by phone: the same phone on two nights is one person who came back. A printed card or team counts as a player but not as a phone. Test players are left out. Slides are counted by your TV while it shows your advertising.</p>
   </div>
   <div class="msg" id="msg"></div>
 </div>
@@ -167,7 +168,8 @@
 
     show("nightsWrap", a.nights>0);
     $("nights").innerHTML=(a.night_list||[]).map(function(x){ return (x.drawn && !x.players) ? row(esc(nightWords(x.night)), esc(cap(list(x.formats))), "Drawn", "for the room")
-      : row(esc(nightWords(x.night)), esc(cap(list(x.formats))), n(x.players), x.players===1?"player":"players"); }).join("");
+      : (!x.players ? row(esc(nightWords(x.night)), esc(cap(list(x.formats))), '<span style="color:var(--faint);font-weight:500">none</span>', "no players joined")
+      : row(esc(nightWords(x.night)), esc(cap(list(x.formats))), n(x.players), x.players===1?"player":"players")); }).join("");
 
     var fk=Object.keys(a.formats||{}).sort(function(x,y){ return a.formats[y].games-a.formats[x].games; });
     show("formatsWrap", fk.length>0);
@@ -194,12 +196,20 @@
     show("teamsWrap", (a.top_teams||[]).length>0);
     $("teams").innerHTML=(a.top_teams||[]).map(function(x,i){ return row((i+1)+". "+esc(x.name), esc(plural(x.games,"game","games"))+", "+esc(n(x.points))+" points", x.wins?plural(x.wins,"win","wins"):"", ""); }).join("");
 
+    /* Slides counted by the TV (migration 135). null = not counted yet: the section stays away rather than saying 0. */
+    var ad=a.ads;
+    show("adsWrap", !!(ad && ad.shows));
+    if(ad && ad.shows){
+      var onFor = ad.minutes>=90 ? plural(Math.round(ad.minutes/60),"hour","hours") : plural(ad.minutes,"minute","minutes");
+      $("adsLine").innerHTML='<p>Your adverts and slides were on screen <b>'+n(ad.shows)+' times</b>, about <b>'+esc(onFor)+'</b> in all, across '+esc(plural(ad.nights,"day","days"))+(ad.screens>1?' and up to '+ad.screens+' screens':'')+'.</p>';
+      $("ads").innerHTML=(ad.slides||[]).map(function(x){ return row(esc(x.label), "about "+esc(x.minutes>=90 ? plural(Math.round(x.minutes/60),"hour","hours") : plural(x.minutes,"minute","minutes"))+" on screen", n(x.shows), "times"); }).join("");
+    }
     show("optinWrap", a.optins>0);
     $("optins").innerHTML='<b>'+esc(plural(a.optins,"player","players"))+'</b> said yes to hearing from you this month. Your list is on the <a href="marketing.html" style="color:#FF1F8E">Marketing page</a>.';
 
     $("cmpLabel").textContent="Compared with "+monthWords(rep.prev_month);
-    var cmp=[["Nights","nights"],["Players","player_visits"],["Different phones","unique_phones"],["Came back","returning"],["New phones","new_phones"],["Average a night","avg_per_night"],["Opt-ins","optins"]];
-    $("compare").innerHTML=cmp.filter(function(k){ return k[1]!=="optins" || c.optins.now || c.optins.was; })
+    var cmp=[["Nights","nights"],["Players","player_visits"],["Different phones","unique_phones"],["Came back","returning"],["New phones","new_phones"],["Average a night","avg_per_night"],["Opt-ins","optins"],["Slides shown","ad_shows"]];
+    $("compare").innerHTML=cmp.filter(function(k){ return (k[1]!=="optins" && k[1]!=="ad_shows") || (c[k[1]] && (c[k[1]].now || c[k[1]].was)); })
       .map(function(k){ var x=c[k[1]]; return row(esc(k[0]), "", n(x.now), pName+" "+n(x.was)); }).join("");
     $("body").classList.remove("hidden");
   }
@@ -238,9 +248,10 @@
           formats:{ trivia:{ nights:4, games:4, avg_players:34 }, bingo90:{ nights:2, games:3, avg_players:29 }, raffle:{ nights:2, games:2, avg_players:null } },
           busiest_night:{ night:"2026-10-23", players:47, formats:["trivia","raffle"] }, busiest_game:{ format:"trivia", night:"2026-10-23", players:45 },
           night_list:[{ night:"2026-10-02", formats:["trivia"], players:31 },{ night:"2026-10-09", formats:["trivia","bingo90"], players:38 },{ night:"2026-10-16", formats:["trivia"], players:33 },{ night:"2026-10-23", formats:["trivia","raffle"], players:47 },{ night:"2026-10-30", formats:["bingo90","raffle"], players:33 }],
-          top_teams:[{ name:"The Quizzards", wins:2, games:4, points:212 },{ name:"Pub Legends", wins:1, games:4, points:198 },{ name:"Les Quizerables", wins:1, games:3, points:150 }], optins:17 },
+          top_teams:[{ name:"The Quizzards", wins:2, games:4, points:212 },{ name:"Pub Legends", wins:1, games:4, points:198 },{ name:"Les Quizerables", wins:1, games:3, points:150 }], optins:17,
+          ads:{ counted:true, shows:4180, minutes:487, nights:31, screens:2, slides:[{ label:"Parma night, $22", shows:1520, minutes:177 },{ label:"Members draws board", shows:1350, minutes:157 },{ label:"Live music Saturday", shows:1310, minutes:153 }] } },
         last_month:{ nights:4, player_visits:139 },
-        compare:{ nights:{ now:5, was:4, diff:1 }, player_visits:{ now:182, was:139, diff:43 }, unique_phones:{ now:118, was:97, diff:21 }, returning:{ now:41, was:30, diff:11 }, new_phones:{ now:63, was:58, diff:5 }, avg_per_night:{ now:36, was:35, diff:1 }, optins:{ now:17, was:11, diff:6 } } } };
+        compare:{ nights:{ now:5, was:4, diff:1 }, player_visits:{ now:182, was:139, diff:43 }, unique_phones:{ now:118, was:97, diff:21 }, returning:{ now:41, was:30, diff:11 }, new_phones:{ now:63, was:58, diff:5 }, avg_per_night:{ now:36, was:35, diff:1 }, optins:{ now:17, was:11, diff:6 }, ad_shows:{ now:4180, was:3900, diff:280 } } } };
     $("demoNote").classList.remove("hidden"); fillMonths(S); render(S); return;
   }
   VP.requireAuth({}).then(function(){ return load(); });

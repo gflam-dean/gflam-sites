@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 15:42 · 55e404a1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 18:45 · 0d3ad8e1';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2139,6 +2139,30 @@ async function handleVenueLike(request, env, json) {
 }
 
 let screenPollRpcMissing = false;   // per isolate: once PostgREST says the function is not there, stop asking
+let screenShownRpcMissing = false;  // the same, for vp_screen_poll_shown (migration 135)
+
+/* The TV's &shown= value, made safe or refused (null). {"n":"YYYY-MM-DD","s":"<screen id>",
+   "c":{"<slide key>":[shows,seconds],...}}, at most 40 slides; the database bounds it again. */
+function screenShownTally(raw) {
+  if (!raw || raw.length > 4000) return null;
+  let o;
+  try { o = JSON.parse(raw); } catch (e) { return null; }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(o.n || '')) || !/^[A-Za-z0-9_-]{6,40}$/.test(String(o.s || ''))) return null;
+  if (!o.c || typeof o.c !== 'object' || Array.isArray(o.c)) return null;
+  const c = {};
+  let n = 0;
+  for (const k of Object.keys(o.c)) {
+    if (n >= 40) break;
+    const v = o.c[k];
+    if (!/^(i|t|auto):.{1,80}$/.test(k) || !Array.isArray(v)) continue;
+    const shows = Math.min(20000, Math.max(0, Math.floor(Number(v[0]) || 0)));
+    const secs = Math.min(86400, Math.max(0, Math.floor(Number(v[1]) || 0)));
+    if (!shows) continue;
+    c[k] = [shows, secs]; n++;
+  }
+  return n ? { n: o.n, s: o.s, c: c } : null;
+}
 
 async function handleVenueLookup(request, env, json) {
   const url = new URL(request.url);
@@ -2181,12 +2205,29 @@ async function handleVenueLookup(request, env, json) {
      one: the unit suite passed while probe=1 still wrote, because it exercised the
      fallback and the fleet uses the RPC. */
   let v = null;
+  /* TONIGHT'S SLIDE TALLY RIDES THIS SAME CALL (migration 135, Dean 31 Oct 2026: "can we tell how
+     much advertising is displayed"). Every few minutes the TV adds &shown= to this poll, its running
+     total per slide for tonight. Then the one database call is vp_screen_poll_shown, which answers
+     exactly as vp_screen_poll does and keeps the tally in the same trip: no extra call at peak. A
+     probe never sends one and is never believed if it does. Before 135 is run the function 404s,
+     this isolate stops asking for it, and the screen is answered by vp_screen_poll as before. */
+  const shown = (!isProbe && !screenShownRpcMissing) ? screenShownTally(url.searchParams.get('shown')) : null;
   if (!screenPollRpcMissing && !isProbe) {
     const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 6);
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
-      method: 'POST', headers: sbHeaders(env),
-      body: JSON.stringify({ p_slug: slugOk ? slug : '', p_code: code, p_version: ver }),
+    const fn = shown ? 'vp_screen_poll_shown' : 'vp_screen_poll';
+    const body = { p_slug: slugOk ? slug : '', p_code: code, p_version: ver };
+    if (shown) body.p_shown = shown;
+    let res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+      method: 'POST', headers: sbHeaders(env), body: JSON.stringify(body),
     }).catch(() => null);
+    if (shown && res && res.status === 404) {
+      screenShownRpcMissing = true;
+      console.warn('vp_screen_poll_shown missing (migration 135 not run); the slide tally is not kept');
+      res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
+        method: 'POST', headers: sbHeaders(env),
+        body: JSON.stringify({ p_slug: slugOk ? slug : '', p_code: code, p_version: ver }),
+      }).catch(() => null);
+    }
     if (res && res.status === 404) {
       screenPollRpcMissing = true;
       console.warn('vp_screen_poll missing (migration 72 not run); polling the slow way');

@@ -120,6 +120,8 @@ eval(liftLine(/^const AMBIGUOUS[^\n]*/m));
 eval(lift('refreshVenueCodes'));
 eval(lift('venueByCode'));
 eval(liftLine(/^let screenPollRpcMissing[^\n]*/m));
+eval(liftLine(/^let screenShownRpcMissing[^\n]*/m));   // the slide tally (migration 135) rides the same poll
+eval(lift('screenShownTally'));
 eval(lift('handleVenueLookup'));
 eval(lift('venueLookupThreeTrips'));
 eval(lift('venueLookupReply'));
