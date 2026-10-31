@@ -108,14 +108,47 @@
   .wkjack{font-family:'Anton',sans-serif;font-size:clamp(20px,4.4cqw,40px);color:var(--gold);line-height:1}
   .wktime{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2.2cqw,20px);color:var(--muted);min-width:70px;text-align:right}
 
-  /* ---- pair panel (ads mode only) ---- */
-  .pairpanel{position:absolute;right:2.4cqw;bottom:2.4cqw;z-index:7;display:flex;align-items:center;gap:1.4cqw;background:rgba(0,0,0,.5);border:1px solid var(--line-2);border-radius:1.4cqw;padding:1.2cqw 1.8cqw 1.2cqw 1.2cqw;backdrop-filter:blur(6px)}
-  .pairpanel .qrp{width:clamp(74px,11cqw,150px);height:clamp(74px,11cqw,150px);background:#fff;border-radius:.8cqw;padding:.5cqw;flex:none}
-  .pairpanel .qrp canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .pairtxt{text-align:left}
-  .pt-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:clamp(10px,1.5cqw,15px);color:#fff}
-  .pt-lbl{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(9px,1.4cqw,14px);color:var(--muted);margin-top:.4cqw;max-width:24cqw}
+  /* ---- SET UP THIS SCREEN (no venue linked; ads mode only) ----
+     Dean, 31 Oct 2026: "venueplay.com.au/tv ... has a link to the app download for Google play and
+     also has a option to enter your code". This was a small corner panel saying "Link this screen"
+     in 14px type, which nobody can read from the far side of a bar while holding a remote. It is
+     now a card in the middle of the wall, at television size, with the two ways in: the VenuePlay
+     TV app for a TV with Google Play, and the screen code for this TV's own browser. Same element
+     (#pairPanel), so every place that hides it for a game or a demo still does. */
+  .pairpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;width:min(84cqw,1240px);max-height:94cqh;overflow:auto;
+    background:rgba(10,10,11,.95);border:1px solid var(--line);border-radius:2cqw;padding:2.4cqw 3cqw 2.6cqw;text-align:center;backdrop-filter:blur(6px)}
+  .pairpanel .bvmark{margin-bottom:.8em}
+  .su-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,4.2cqw,64px);color:#fff;line-height:1.05;margin:0 0 1.8cqw}
+  .su-ways{display:flex;flex-wrap:wrap;justify-content:center;gap:2cqw;text-align:left}
+  .su-way{flex:1 1 30cqw;min-width:260px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:1.4cqw;padding:1.8cqw 2cqw;display:flex;flex-direction:column;align-items:flex-start;gap:1cqw}
+  .su-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,2.5cqw,40px);line-height:1.15;color:#fff}
+  .su-head b{color:var(--pink);font-weight:800}
+  .su-text{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,1.75cqw,28px);line-height:1.4;color:var(--text)}
+  .su-text b{color:#fff}
+  .su-alt{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.35cqw,22px);line-height:1.4;color:var(--muted);margin-top:.4cqw}
+  .su-alt b{font-family:'JetBrains Mono',monospace;color:#fff;font-weight:700}
+  /* "Get it on Google Play", built here in CSS: words and a plain play shape, not Google's artwork. */
+  .gplay{display:inline-flex;align-items:center;gap:1cqw;text-decoration:none;background:#000;color:#fff;border:2px solid #A6A6A6;border-radius:1cqw;padding:.8cqw 1.6cqw .8cqw 1.2cqw;margin-top:.4cqw}
+  .gplay .gp-tri{width:0;height:0;border-top:clamp(11px,1.3cqw,22px) solid transparent;border-bottom:clamp(11px,1.3cqw,22px) solid transparent;border-left:clamp(18px,2.1cqw,36px) solid #fff;flex:none}
+  .gplay .gp-words{display:flex;flex-direction:column;line-height:1.05}
+  .gplay .gp-small{font-family:'Manrope',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(10px,1.1cqw,18px)}
+  .gplay .gp-big{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(18px,2.3cqw,38px)}
+  .su-btn{display:inline-block;text-decoration:none;background:var(--pink);color:#fff;border-radius:1cqw;padding:1cqw 2cqw;margin-top:.4cqw;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(16px,2cqw,32px)}
+  /* A TV remote moves focus from link to link, so the one it is on has to be obvious across a room. */
+  .gplay:focus,.su-btn:focus,.gplay:hover,.su-btn:hover{outline:.35cqw solid var(--gold);outline-offset:.3cqw}
   .pt-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.9cqw,18px);color:var(--gold);letter-spacing:.1em;margin-top:.6cqw}
+
+  /* ---- "SAVE THIS PAGE" (a screen that was just set up by its code) ----
+     Top centre, under where the connection pill sits, only over the venue's own advertising: it goes
+     the moment a game takes the wall, after twenty seconds, or on any key or click. */
+  .savenote{position:absolute;left:50%;top:6.5cqw;transform:translateX(-50%);z-index:30;width:max-content;max-width:min(80cqw,1300px);
+    background:rgba(10,10,11,.94);border:1px solid rgba(255,31,142,.6);border-radius:1.4cqw;padding:1.2cqw 2cqw;text-align:center;
+    box-shadow:0 0 30px rgba(0,0,0,.6);pointer-events:none}
+  .savenote .sn-text{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,1.8cqw,30px);line-height:1.4;color:var(--text)}
+  .savenote .sn-text b{color:#fff;font-weight:800}
+  .savenote .sn-link{display:block;margin-top:.5cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(15px,2.1cqw,34px);color:var(--gold);word-break:break-all}
+  .savenote .sn-hint{margin-top:.5cqw;font-family:'Manrope',sans-serif;font-size:clamp(11px,1.2cqw,18px);color:var(--muted)}
 
   /* ---- wrong-link prompt (full overlay) ---- */
   .badvenue{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,5,6,.93);backdrop-filter:blur(4px);padding:6cqw}
@@ -411,14 +444,34 @@
        natively above this. -->
   <iframe id="gameFrame" title="Live game" allow="fullscreen; autoplay" style="display:none;position:fixed;inset:0;width:100%;height:100%;border:0;z-index:40;background:#000"></iframe>
 
-  <!-- NO-VENUE PROMPT (only shows when this screen has no venue linked) -->
+  <!-- NO-VENUE PROMPT: SET UP THIS SCREEN (only shows when this screen has no venue linked).
+       venueplay.com.au/tv on a TV or a laptop before any venue is chosen. Two ways in, side by side:
+       the VenuePlay TV app for a TV with Google Play, and the screen code for this browser (the same
+       keypad as before, askCode). The Google Play badge is our own CSS and words, not Google's art. -->
   <div class="pairpanel hidden" id="pairPanel">
     <canvas id="qrPair" style="display:none"></canvas>
-    <div class="pairtxt">
-      <div class="pt-head">Link this screen</div>
-      <div class="pt-lbl">Open <b style="color:#fff">venueplay.com.au/tv?venue=your-venue</b> on this screen once. It remembers after that.</div>
-      <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
+    <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
+    <div class="su-title">Set up this screen</div>
+    <div class="su-ways">
+      <div class="su-way" id="suApp">
+        <div class="su-head">Got a TV with Google Play? <b>Get the VenuePlay TV app</b></div>
+        <div class="su-text">Search for <b>VenuePlay TV</b> in the Play Store on this TV, open it and put in your screen code.</div>
+        <a class="gplay" id="tvPlayLink" href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener"><span class="gp-tri" aria-hidden="true"></span><span class="gp-words"><span class="gp-small">Get it on</span> <span class="gp-big">Google Play</span></span></a>
+      </div>
+      <div class="su-way" id="suCode">
+        <div class="su-head">Or use this TV&rsquo;s web browser</div>
+        <div class="su-text">Put in the six-character screen code from your host console.</div>
+        <a class="su-btn" id="tvSetupCode" href="#">Put in the screen code</a>
+        <div class="su-alt">Or open <b>venueplay.com.au/tv?your-venue</b> on this screen once. It remembers after that.</div>
+      </div>
     </div>
+    <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
+  </div>
+
+  <!-- SAVE THIS PAGE: shown once, on a screen that was just set up by keying in its code. -->
+  <div class="savenote hidden" id="tvSaveNote" role="status" aria-live="polite">
+    <div class="sn-text">Save this page as a bookmark or favourite so this TV opens straight to <b id="snVenue"></b> next time:<span class="sn-link" id="snLink"></span></div>
+    <div class="sn-hint">Press any key to close this</div>
   </div>
 
   <!-- WRONG-LINK PROMPT (screen link doesn't match a venue) -->
@@ -620,6 +673,11 @@
      nothing, or another pub's name, and a scannable code belonging to a real room. So a
      demo forgets the browser entirely. Found 12 Sep 2026 by opening it. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
+  /* INSIDE THE VENUEPLAY TV APP (Android TV / Google TV). The app adds "VenuePlayTV/<version>" to its
+     WebView's user agent (ScreenActivity.java, setUserAgentString) and always opens the full
+     /tv?venue=<slug> link itself, so it never needs the "get the app" line or the "save this page"
+     note: it already remembers its venue. */
+  var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || ""); }catch(e){ return false; } })();
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();
@@ -804,7 +862,7 @@
           fetch(VP_GAME_API + "/venue?code=" + encodeURIComponent(code))
             .then(function(r){ return r.ok ? r.json() : null; })
             .then(function(d){
-              if(d && d.exists && d.slug){ showChosen({ slug: d.slug, name: d.name || d.slug, postcode: "", state: "" }); }
+              if(d && d.exists && d.slug){ cameByCode(d.slug, d.name || d.slug); showChosen({ slug: d.slug, name: d.name || d.slug, postcode: "", state: "" }); }
               else { typed = ""; err = "No screen with that code. Check the console and try again."; draw(); }
             })
             .catch(function(){ typed=""; err="Could not check that code just now."; draw(); });
@@ -812,6 +870,15 @@
       };
     }
     draw();
+  }
+  /* A SCREEN SET UP BY ITS CODE IS TOLD TO SAVE ITS LINK (Dean, 31 Oct 2026: "if they enter their code
+     it says save this link so you don't have to enter the code every time"). Written for THIS tab
+     only (sessionStorage), the moment the code is accepted; the venue screen reads it once, after
+     showChosen has moved this tab on to /tv?venue=<slug>, and removes it. A TV opened straight at its
+     own /tv?<slug> link never has it, so it never sees the note. */
+  var BY_CODE_KEY = "vpTvByCode";
+  function cameByCode(slug, name){
+    try{ sessionStorage.setItem(BY_CODE_KEY, JSON.stringify({ slug: String(slug), name: String(name || slug), at: Date.now() })); }catch(e){}
   }
 
   function showMatches(m, state){
@@ -2254,6 +2321,50 @@
   buildAds();
   enterAds(); // ads up FIRST, before anything external can fail - the screen is never black
   buildBoard();
+  /* THE SET UP CARD'S TWO WAYS IN (no venue linked). "Put in the screen code" opens the same keypad
+     the venue picker has always offered (askCode); Go back closes it again. Inside the app the
+     "get the app" half is pointless, so it comes off. Wrapped: nothing here may stop the screen. */
+  (function setupCard(){
+    try{
+      var b=$("tvSetupCode");
+      if(b) b.addEventListener("click", function(ev){
+        ev.preventDefault();
+        askCode(function(){ var p=$("venuePick"); if(p) p.classList.add("hidden"); });
+      });
+      if(IN_APP){ var a=$("suApp"); if(a) a.style.display="none"; }
+    }catch(e){}
+  })();
+  /* "SAVE THIS PAGE", once, on the venue screen a code just chose (see cameByCode). Never inside the
+     app, never on a TV that opened at its own link, never over a game: it shows only while the venue's
+     advertising is up, and goes after twenty seconds, on any key or click, or when a game takes the
+     wall. pointer-events:none, so it can never be the thing a remote's press lands on. */
+  var SAVE_NOTE_MS = 20000;
+  (function saveLinkNote(){
+    try{
+      if(!VENUE_SLUG || VP_DEMO || IN_APP) return;
+      var raw=null;
+      try{ raw=sessionStorage.getItem(BY_CODE_KEY); if(raw) sessionStorage.removeItem(BY_CODE_KEY); }catch(e){ return; }
+      if(!raw) return;
+      var o=null; try{ o=JSON.parse(raw); }catch(e){ return; }
+      if(!o || o.slug!==VENUE_SLUG) return;                              // a code for some other venue
+      if(!(Date.now()-(+o.at||0) < 10*60*1000)) return;                  // a stale one, from long ago
+      var box=$("tvSaveNote"), nm=$("snVenue"), ln=$("snLink");
+      if(!box || !nm || !ln) return;
+      nm.textContent=String(o.name || VENUE_SLUG);
+      ln.textContent="venueplay.com.au/tv?"+VENUE_SLUG;
+      var done=false, t=null, w=null;
+      function off(){
+        if(done) return; done=true;
+        box.classList.add("hidden");
+        if(t) clearTimeout(t); if(w) clearInterval(w);
+        ["keydown","pointerdown","click","touchstart"].forEach(function(ev){ document.removeEventListener(ev, off, true); });
+      }
+      ["keydown","pointerdown","click","touchstart"].forEach(function(ev){ document.addEventListener(ev, off, true); });
+      t=setTimeout(off, SAVE_NOTE_MS);
+      w=setInterval(function(){ if(tvMode!=="ads") off(); }, 250);   // a game on the wall: the note is gone
+      if(tvMode==="ads") box.classList.remove("hidden"); else off();
+    }catch(e){}
+  })();
   $("pairCode").textContent=CODE;
   $("lobbyCode").textContent=joinCode;
   $("tvJoinCode").textContent=joinCode;

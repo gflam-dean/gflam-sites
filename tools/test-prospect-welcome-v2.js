@@ -151,6 +151,13 @@ var __rnd = 11;
   await R.next();
   check('step 3: "Your TV", their exact TV address', T(P, 'vpFrTitle') === 'Your TV' && T(P, 'vpFrTvUrl') === 'www.venueplay.com.au/tv?caz-reitop-s-dirty-secrets', T(P, 'vpFrTvUrl'));
   check('it says to open it on the TV\'s browser and leave it running', /Open this address in your TV's web browser/.test(T(P, 'vpFrBody')) && /leave it running/.test(T(P, 'vpFrBody')));
+  // Dean, 31 Oct 2026: the VenuePlay TV app, for a TV with Google Play, in every setup guide.
+  var playP = $(P, 'vpFrPlay'), playA = playP && walk(playP, function (e) { return e.tagName === 'A'; });
+  check('it names the VenuePlay TV app for a TV with Google Play, then the TV\'s web browser otherwise (one line)',
+        T(P, 'vpFrPlay') === "Got a TV with Google Play? Download the VenuePlay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser." && !!playP && inDoc(playP, P.body), T(P, 'vpFrPlay'));
+  check('and "VenuePlay TV app" links to the app\'s Google Play page, opened on its own',
+        !!playA && playA.textContent === 'VenuePlay TV app' && playA.getAttribute('href') === 'https://play.google.com/store/apps/details?id=au.com.venueplay.tv' && playA.getAttribute('target') === '_blank',
+        playA && [playA.textContent, playA.getAttribute('href')]);
   await $(P, 'vpFrCopy').click();
   check('Copy puts the whole address on the clipboard and says Copied', CLIP.length === 1 && CLIP[0] === 'https://www.venueplay.com.au/tv?caz-reitop-s-dirty-secrets' && $(P, 'vpFrCopy').textContent === 'Copied', CLIP);
   var sg = CALLS.filter(function (c) { return /\/account\/screen-get$/.test(c.url); })[0];

@@ -288,6 +288,16 @@
     STEP.tv = function () {
       var url = origin.replace(/\/+$/, "") + "/tv?" + encodeURIComponent(v.slug || "");
       body.appendChild(el("p", TEXT, "Open this address in your TV's web browser (or on a laptop or streaming stick plugged into the TV) and leave it running."));
+      /* THE APP, FOR A TV WITH GOOGLE PLAY (Dean, 31 Oct 2026). One line, the same words as the welcome
+         emails and the Help answer, with the app's store page as its link. */
+      var play = el("p", TEXT); play.id = "vpFrPlay";
+      play.appendChild(el("span", "", "Got a TV with Google Play? Download the "));
+      var playA = el("a", "color:#FF8AC4;font-weight:700;text-decoration:underline", "VenuePlay TV app");
+      playA.setAttribute("href", "https://play.google.com/store/apps/details?id=au.com.venueplay.tv");
+      playA.setAttribute("target", "_blank"); playA.setAttribute("rel", "noopener");
+      play.appendChild(playA);
+      play.appendChild(el("span", "", " and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser."));
+      body.appendChild(play);
       var row = el("div", "display:flex;gap:8px;align-items:stretch;margin:0 0 16px");
       var addr = el("div", "flex:1;min-width:0;padding:11px 14px;border-radius:10px;border:1px solid " + C.line + ";background:" + C.ink + ";color:#FFFFFF;font:600 15px/1.4 ui-monospace,Menlo,monospace;word-break:break-all", url.replace(/^https?:\/\//, ""));
       addr.id = "vpFrTvUrl";

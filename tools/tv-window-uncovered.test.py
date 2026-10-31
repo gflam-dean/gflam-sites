@@ -75,8 +75,13 @@ check('it is one update of vp_help_faq', len(ups) == 1, len(ups))
 up = ups[0] if ups else ''
 new_answer, rid, guard = quoted(up, r'set\s+answer\s*='), quoted(up, r'where\s+id\s*='), quoted(up, r'and\s+answer\s*=')
 check('it names the "Setting up the TV" row migration 106 seeded', rid == '67840db0-6bea-52b6-81aa-249e2cf977f8', rid)
-check('the words it writes are the JSON\'s, word for word, line breaks included', new_answer == answer and bool(answer),
-      [new_answer[:80] if new_answer else None, answer[:80]])
+# Migration 131 (31 Oct 2026) puts one line in FRONT of these words, naming the VenuePlay TV app, and
+# keeps every word below it; tools/tv-app-setup-line.test.py holds 131 to that. So the JSON is 120's
+# words with that one line first.
+APP_LINE = "Got a TV with Google Play? Download the VenuePlay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser.\n"
+before_131 = answer[len(APP_LINE):] if answer.startswith(APP_LINE) else answer
+check('the words it writes are the JSON\'s, word for word, line breaks included (less the app line 131 puts first)', new_answer == before_131 and bool(answer),
+      [new_answer[:80] if new_answer else None, before_131[:80]])
 seed = read('venueplay-backend/supabase/venueplay-106-help-desk.sql')
 m106 = re.search(r"'67840db0-6bea-52b6-81aa-249e2cf977f8', 'venueplay', 'venue', 20, 'Setting up the TV', '((?:[^']|'')*)'", seed)
 seeded = m106.group(1).replace("''", "'") if m106 else None
