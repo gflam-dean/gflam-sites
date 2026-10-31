@@ -217,16 +217,26 @@ def main():
         B.ask(phone, 'document.getElementById("nameIn").value="Own domain test"; document.getElementById("joinBtn").click(); true')
         ok('THE PHONE JOINS: it is in, waiting for the game', B.until(phone, VISIBLE + '("vWait")', 25) is True,
            B.ask(phone, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
-        ok('the TV shows the lobby with the venue\'s code', B.until(tv, VISIBLE + '("tvLobby") && document.body.innerText.indexOf(%s) !== -1' % json.dumps(code), 40) is True,
+        # The lobby QR goes up when the HOST CONSOLE tells the screens (Supabase channel); a lobby opened
+        # by API alone leaves the TV on the venue's own screen, which is what this asks for.
+        ok('the TV loads Test Alpha\'s own screen from the game Worker', B.until(tv, 'document.body.innerText.toUpperCase().indexOf(%s) !== -1' % json.dumps(venue['name'].upper()), 40) is True,
            B.ask(tv, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+        # THE ROOM SERVER (Durable Object over a WebSocket) is off by default (vp-room.js DEFAULT_ON) and
+        # switched on per page with ?roomserver=1. A second phone asks for it, so the upgrade path on
+        # game.venueplay.com.au is played for real too.
+        phone2 = B.tab(SITE + '/play?room=' + code + '&roomserver=1', mobile=True)
+        ok('a second phone, with the room server on, is ready to take a name', B.until(phone2, ready, 60) is True)
+        B.ask(phone2, 'document.getElementById("nameIn").value="Own domain room"; document.getElementById("joinBtn").click(); true')
+        ok('and joins too', B.until(phone2, VISIBLE + '("vWait")', 25) is True, B.ask(phone2, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+        B.until(phone2, '(window.__ws||[]).some(function(w){return w.open && /\\/room\\/ws/.test(w.u)})', 20)
         time.sleep(4)
-        for name, t in (('phone', phone), ('TV', tv)):
+        for name, t in (('phone', phone), ('TV', tv), ('room-server phone', phone2)):
             net = B.ask(t, 'window.__net') or []
             api = [u for u in net if re.match(r'https://[^/]*(workers\.dev|venueplay\.com\.au)/', u) and not u.startswith(SITE + '/') and not u.startswith('https://www.venueplay.com.au/')]
             ok('every Worker call the %s made is on game.venueplay.com.au or api.venueplay.com.au (%d calls), none on workers.dev' % (name, len(api)),
                api and all(re.match(r'https://(game|api)\.venueplay\.com\.au/', u) for u in api), [u for u in api if 'workers.dev' in u][:3] or api[:3])
-        wss = B.ask(phone, 'window.__ws') or []
-        ok('the phone\'s room socket is wss://game.venueplay.com.au/room/ws and it opened',
+        wss = B.ask(phone2, 'window.__ws') or []
+        ok('the room-server phone\'s socket is wss://game.venueplay.com.au/room/ws and it opened (the Durable Object upgrade on the new name)',
            any(w['u'].startswith('wss://game.venueplay.com.au/room/ws?room=') and w['open'] for w in wss), wss)
         room = next((urllib.parse.parse_qs(urllib.parse.urlparse(w['u']).query).get('room', [''])[0] for w in wss if 'room=' in w['u']), '')
         if room:
