@@ -186,7 +186,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('each to their email, from and replying to hello@ (never Dean), signed by the VenuePlay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'VenuePlay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, The VenuePlay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
   var early = got[0].msg, mid23 = got[1] && got[1].msg, last = got[2] && got[2].msg;
   check('day 3: friendly, the end date, the card not charged until then, Add my card and Cancel', /Your free month at Walk The Month Hotel runs until Wed 2 December\. Whenever suits, you can add your card, and it won't be charged until your free month ends\./.test(early.text) &&
-    /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/venueplay-api\.dean-tindale\.workers\.dev\/prospect\/cancel\?f=/.test(early.text), early.text.slice(0, 900));
+    /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=/.test(early.text) && !/workers\.dev/.test(early.html + early.text), early.text.slice(0, 900));
   check('day 23: the same friendly note, with the end date', !!mid23 && /How's it going\?/.test(mid23.text) && /runs until Wed 2 December/.test(mid23.text), mid23 && mid23.text.slice(0, 500));
   check('day 29, the day before it ends: "2 days left of your free month", ends on Wed 2 December', !!last && /2 days left of your free month/.test(last.text) && /ends on Wed 2 December/.test(last.text), last && last.text.slice(0, 500));
   check('and exactly what happens with no card: paused, games off, the TV keeps the ads, nothing lost, the $2.50 offer goes, our price on the day after that',
@@ -255,7 +255,31 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
     F.v.status === 'suspended' && F.v.suspended_reason === 'cancelled' && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_cancelled'; }), [F.v.status, F.v.suspended_reason]);
   await walk(fs, bne(2026, 12, 4, 12, 0), 6 * 3600000);
   check('a cancelled prospect gets no reminders and is never paused', REM().length === 0 && !F.row().paused_at, REM().length);
-  check('the cancel link is the same Worker that answers it, signed per account', /^https:\/\/venueplay-api\.dean-tindale\.workers\.dev\/prospect\/cancel\?f=[^&]+&t=[0-9a-f]{32}$/.test(link) && link !== await vpaProspectCancelLink(ENV, U(4242)), link);
+  check('the cancel link is our own page on venueplay.com.au (never workers.dev: Ozemail bounced it, 31 Oct 2026), signed per account', /^https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&]+&t=[0-9a-f]{32}$/.test(link) && link !== await vpaProspectCancelLink(ENV, U(4242)), link);
+
+  /* THE venueplay.com.au PAGE ASKS THE WORKER IN JSON (31 Oct 2026), through the real router, from our origin.
+     The same rules: a GET only asks, the POST needs the signed token, and the answer carries CORS for our site. */
+  var F2 = await prospect({ name: 'Lakeside Test Tavern' });
+  var q2 = (await vpaProspectCancelLink(ENV, F2.v.founding_id)).split('?')[1];
+  function rreq(method, qs, bodyTxt) { var h = { origin: 'https://venueplay.com.au', 'content-type': 'application/x-www-form-urlencoded' };
+    return { method: method, url: 'https://venueplay-api.dean-tindale.workers.dev/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function (k) { return h[String(k).toLowerCase()] || null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
+  async function rcall(method, qs, bodyTxt) { var r = await _d.fetch(rreq(method, qs, bodyTxt), ENV); var b = null; try { b = JSON.parse(r.body); } catch (e) {} return { status: r.status, body: b, raw: r.body, headers: r.headers || {} }; }
+  var ja = await rcall('GET', q2 + '&reply=json');
+  check('the page\'s GET (reply=json) only ASKS: the Worker page\'s own question and words, the button kept, nothing written',
+    ja.status === 200 && ja.body && ja.body.state === 'ask' && ja.body.title === 'Cancel VenuePlay for Lakeside Test Tavern?' &&
+    ja.body.text === 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.' &&
+    !F2.row().cancelled_at && F2.v.status === 'active', ja.raw);
+  check('the answer is readable by venueplay.com.au (CORS reflects our origin)', ja.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', ja.headers);
+  var jb = await rcall('POST', '', 'f=' + encodeURIComponent(F2.v.founding_id) + '&t=' + new Array(33).join('0') + '&reply=json');
+  check('the page\'s POST with a wrong token cancels nothing and says the link has not worked', jb.body && jb.body.state === 'bad' && /has not worked/.test(jb.body.title) && !F2.row().cancelled_at && F2.v.status === 'active', jb.raw);
+  var jn = await rcall('POST', '', 'f=' + encodeURIComponent(F2.v.founding_id) + '&reply=json');
+  check('the page\'s POST with no token at all cancels nothing', jn.body && jn.body.state === 'bad' && !F2.row().cancelled_at, jn.raw);
+  var jc = await rcall('POST', '', q2 + '&reply=json');
+  check('the page\'s button (POST, reply=json, signed): cancelled, switched off, audited, "All done", CORS for our site',
+    jc.body && jc.body.state === 'done' && jc.body.title === 'All done' && /Nothing was ever charged/.test(jc.body.text) && !!F2.row().cancelled_at &&
+    F2.v.status === 'suspended' && F2.v.suspended_reason === 'cancelled' && jc.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', jc.raw);
+  var jd = await rcall('GET', q2 + '&reply=json');
+  check('opening it again says it is done, with no button', jd.body && jd.body.state === 'done', jd.raw);
 
   section('7. A missed week sends one reminder, not a pile; a sign-in the guide never reported is found in Auth');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';

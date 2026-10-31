@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 10:49 · fe5408b4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 11:12 · bb09825e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -226,7 +226,7 @@ export default {
       // A prospect's free month (migration 127): it starts at their first sign-in; Now or Later on the card; cancel.
       if (request.method === 'POST' && path === '/account/prospect-start'       && typeof vpbProspectStart === 'function')      return await vpbProspectStart(request, env, json);
       if (request.method === 'POST' && path === '/account/card-choice'          && typeof vpbCardChoice === 'function')         return await vpbCardChoice(request, env, json);
-      if ((request.method === 'GET' || request.method === 'POST') && path === '/prospect/cancel' && typeof vpaProspectCancel === 'function') return await vpaProspectCancel(request, env);
+      if ((request.method === 'GET' || request.method === 'POST') && path === '/prospect/cancel' && typeof vpaProspectCancel === 'function') return await vpaProspectCancel(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcomes'      && typeof vpaProspectWelcomes === 'function')   return await vpaProspectWelcomes(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-cancel' && typeof vpaProspectWelcomeCancel === 'function') return await vpaProspectWelcomeCancel(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/welcome-now'   && typeof vpaProspectWelcomeNow === 'function') return await vpaProspectWelcomeNow(request, env, json);
@@ -3318,24 +3318,41 @@ async function vpaProspectCancelToken(env, foundingId) {
   const mac = await crypto.subtle.sign('HMAC', key, enc.encode('vp-prospect-cancel:' + foundingId));
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
+/* NO EMAIL A VENUE OR A PLAYER GETS CARRIES A workers.dev ADDRESS (31 Oct 2026). The prospect welcome to
+   laketavern@ozemail.com.au bounced "550 5.7.1 Policy-DT510: Rejected content policy violation" (Ozemail /
+   Vocus). Its one link on another domain was this cancel link, on workers.dev, a host spam filters see
+   abused every day; a plain reply to the same address with only venueplay.com.au links was delivered. So a
+   link in an email is always on our own site: SITE_URL when it is venueplay.com.au, else the apex. */
+function vpaCustomerSite(env) {
+  const s = String(env.SITE_URL || '').replace(/\/+$/, '');
+  return /^https:\/\/(www\.)?venueplay\.com\.au$/.test(s) ? s : 'https://venueplay.com.au';
+}
+/* The cancel link goes to venueplay/prospect/cancel/ on our site, which asks the same question and only on
+   its button POSTs to /prospect/cancel here. Links already sent (to this Worker) keep working. */
 async function vpaProspectCancelLink(env, foundingId) {
   const t = await vpaProspectCancelToken(env, foundingId);
   if (!t) return '';
-  const api = (env.API_URL || 'https://venueplay-api.dean-tindale.workers.dev').replace(/\/+$/, '');
-  return api + '/prospect/cancel?f=' + encodeURIComponent(foundingId) + '&t=' + t;
+  return vpaCustomerSite(env) + '/prospect/cancel/?f=' + encodeURIComponent(foundingId) + '&t=' + t;
 }
 /* GET /prospect/cancel?f=&t=  asks; POST (the page's own button) does it. A mail scanner opening the
-   link only ever sees the question, so nobody is cancelled by their spam filter. */
-async function vpaProspectCancel(request, env) {
-  const page = (title, body, form) => new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
+   link only ever sees the question, so nobody is cancelled by their spam filter.
+   reply=json (in the query, or in the POSTed form) is the venueplay.com.au page asking: the same
+   answers as JSON, with the CORS headers, so the page can show them. Same token check, same rule:
+   only a POST cancels. */
+async function vpaProspectCancel(request, env, json) {
+  const FOOT = 'Questions? Call 07 5228 3667, between 9am and 5pm Queensland time.';
+  let asJson = false;
+  const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
+  const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
     '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#12101a">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
     '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="VenuePlay" style="display:block;border:0;height:auto"></div>' +
     '<div style="padding:26px 24px"><h1 style="margin:0 0 12px;font-size:23px;line-height:1.3">' + vpaEsc(title) + '</h1><p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#3a3a44">' + body + '</p>' + (form || '') +
-    '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">Questions? Call 07 5228 3667, between 9am and 5pm Queensland time.</p></div></div></div></body></html>',
+    '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">' + FOOT + '</p></div></div></div></body></html>',
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
   const url = new URL(request.url);
   let f = url.searchParams.get('f') || '', t = url.searchParams.get('t') || '';
+  asJson = url.searchParams.get('reply') === 'json';
   if (request.method === 'POST') {
     const form = {};
     String(await request.text().catch(() => '')).split('&').forEach((kv) => {
@@ -3343,6 +3360,7 @@ async function vpaProspectCancel(request, env) {
       try { form[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); } catch (_) {}
     });
     f = form.f || f; t = form.t || t;
+    if (form.reply === 'json') asJson = true;
   }
   const want = await vpaProspectCancelToken(env, f);
   if (!f || !want || !vpaSameSecret(t, want)) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
@@ -11475,10 +11493,14 @@ async function vpUnsubHeaders(env, email, campaign) {
   };
 }
 
-/* The footer of a marketing email: who is sending (name, ABN, site) and the link. */
+/* The footer of a marketing email: who is sending (name, ABN, site) and the link. The link in the BODY is
+   venueplay.com.au/unsubscribe (31 Oct 2026), the page the welcome emails already link, which writes to the
+   same vp_unsubscribes list on its button: a workers.dev address in an email body is what Ozemail's content
+   filter bounced. Only the List-Unsubscribe header still names this Worker, because a mail app POSTs to it
+   and Pages cannot answer a POST (vpUnsubApi). */
 async function vpUnsubFooterHtml(env, email, campaign) {
   const e = String(email || '').trim().toLowerCase();
-  const link = await vpUnsubLink(env, e, campaign);
+  const link = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
   return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
     + ' is the contact on a VenuePlay account. '
     + '<a href="' + vpaEsc(link) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a>'

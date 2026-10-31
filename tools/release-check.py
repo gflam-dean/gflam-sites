@@ -3675,6 +3675,13 @@ def local_checks(which):
              'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
+            # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
+            # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
+            ('D98. No email a venue gets carries a workers.dev address, and the cancel link asks on venueplay.com.au',
+             'test-no-workersdev-links.js',
+             'every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; only the win-back\'s one-click List-Unsubscribe header names the Worker; opening the cancel page never POSTs, only its button does, once, with the token', 56,
+             'A welcome bounced by a mail provider\'s content filter never reaches the venue, and nobody hears '
+             'why; a cancel page that POSTs on load lets a mail scanner switch a venue off'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

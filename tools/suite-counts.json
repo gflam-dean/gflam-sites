@@ -495,6 +495,10 @@
   "checks": 39,
   "counted_by": "lines"
  },
+ "tools/test-no-workersdev-links.js": {
+  "checks": 56,
+  "counted_by": "lines"
+ },
  "tools/test-olgr-audit-19-oct.js": {
   "checks": 28,
   "counted_by": "lines"
@@ -596,7 +600,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 48,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -1188,7 +1192,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
-  "checks": 50,
+  "checks": 51,
   "counted_by": "lines"
  }
 }

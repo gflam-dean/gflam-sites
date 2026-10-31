@@ -106,6 +106,7 @@
   "every console says it is there, and only a lobby times out fast (18 checks)",
   "every decade pack holds only its decade",
   "every deployed data file is one something reads",
+  "every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; only the win-back's one-click List-Unsubscribe header names the Worker; opening the cancel page never POSTs, only its button does, once, with the token",
   "every email sender has been judged marketing or not",
   "every file checked is one git tracks",
   "every format the product offers has a name",
