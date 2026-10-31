@@ -9030,7 +9030,7 @@ MUTATIONS = [
      '- Get our app (',
      'llms.txt stops telling AI search about the VenuePlay TV app'),
     # The monthly email sign-up (31 Oct 2026; migration 134), branch feature/vp-subscribers-31oct (D110).
-    ('nothing is sent unless SUBSCRIBE_EMAILS is on', 'venueplay-backend/worker/venueplay-api-FULL.js',
+    ('a sign-up keeps one lower-case row with the consent words', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {\n    await vpsSendConfirmation(env, email, venue, made && made.id).catch(() => null);",
      '  if (true) {\n    await vpsSendConfirmation(env, email, venue, made && made.id).catch(() => null);',
      'every sign-up is emailed before Dean has switched the confirmation on'),
