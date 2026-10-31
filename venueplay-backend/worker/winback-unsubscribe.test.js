@@ -255,7 +255,10 @@ step(function () {
     ok('List-Unsubscribe carries the mailto fallback too', /<mailto:hello@venueplay\.com\.au\?subject=unsubscribe>/.test(lu), lu);
     ok('List-Unsubscribe-Post is the RFC 8058 value', (m.headers || {})['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click');
     var html = m.html || '';
-    ok('the footer has the same https link, as a link', html.indexOf('href="' + API + '/unsubscribe?e=queen%40example.com&amp;t=' + VECTOR + '&amp;c=winback"') >= 0);
+    // 31 Oct 2026: the BODY carries no workers.dev address (Ozemail's filter bounced one). The footer link is our own
+    // venueplay.com.au/unsubscribe page, which writes to the same list; only the header names the Worker.
+    ok('the footer link is venueplay.com.au/unsubscribe for that address, as a link', html.indexOf('href="https://venueplay.com.au/unsubscribe?e=queen%40example.com"') >= 0, html.slice(-700));
+    ok('the email body names no workers.dev address', html.indexOf('workers.dev') < 0 && String(m.text || '').indexOf('workers.dev') < 0);
     ok('the footer says who is sending (ABN)', /ABN 35 679 383 049/.test(html));
     ok('the email is a whole document', /^<!doctype html>/i.test(html));
     ok('the email has no em dash', html.indexOf('—') < 0);
