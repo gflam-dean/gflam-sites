@@ -8680,6 +8680,12 @@ MUTATIONS = [
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '  function hostNote(){ var n=$("joinHostNote"); if(n) n.classList.toggle("hidden", !!P.hostSeen || !P.room); }', '  function hostNote(){ }', 'a QR scanned before the lobby says nothing about waiting for the host'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', 'state==="ready" ? (P.hostSeen ? "Ready to join" : "Waiting for the host")', 'state==="ready" ? "Ready to join"', 'the phone says "Ready to join" with no host there'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '    $("statusText").textContent="Game not found";', '    $("statusText").textContent="No room";', 'a code nobody holds says "No room", not "Game not found"'),
+    # The Chrome rig's Worker clock runs (31 Oct 2026): frozen, the 4 s lobby copy never ran out and a phone that can
+    # only poll never followed the room (console-in-chrome went red at the release gate).
+    ('console-in-chrome.test.py', 'tools/browser-rig/worker-stdio.js',
+     "function rigClock() { return _rigAt + (_D.now() - _wallAt); }",
+     "function rigClock() { return _rigAt; }",
+     'the Chrome rig\'s Worker clock stands still, so the lobby copy never expires and a phone in its own browser never follows the room to musical bingo'),
     # THE LOBBY POLL FROM MEMORY (31 Oct 2026, fix/lobby-poll-31oct). D100, the gate's own line first, then the suite.
     ('phones asking /join/info inside the window cost no database call', 'venueplay-backend/worker/venueplay-game.js',
      "    if (hit && hit.until > now) return json(hit.body);\n",

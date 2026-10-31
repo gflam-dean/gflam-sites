@@ -8,6 +8,18 @@
 
    Run by the test, from the repo root:  jsc tools/browser-rig/worker-stdio.js */
 load('tools/rig-game-worker.js');
+/* THE WORKER'S CLOCK RUNS, AS IT DOES ON CLOUDFLARE (31 Oct 2026). rig-game-worker.js stands the clock
+   still at NOWMS, which is right for a jsc suite that steps time itself and wrong for a page in Chrome
+   that waits in real seconds. The game Worker now keeps the lobby poll's answer for 4 s in memory
+   (handleJoinInfo); on a clock that never moves, that copy never ran out, so a phone that could only
+   follow the room by polling (in its own browser, where no console message reaches it) was told the
+   first answer for ever and never followed the room to musical bingo (console-in-chrome, release gate,
+   31 Oct 2026). So the clock starts on the rig's fixed day and moves with real time; a scene that needs
+   a given day still sets it with {now}, and the clock runs on from there. */
+var _wallAt = _D.now(), _rigAt = NOWMS;
+function rigClock() { return _rigAt + (_D.now() - _wallAt); }
+Date = function (v) { return arguments.length ? new _D(v) : new _D(rigClock()); };
+Date.now = rigClock; Date.parse = _D.parse; Date.UTC = _D.UTC; Date.prototype = _D.prototype;
 globalThis.crypto.getRandomValues = function (b) { for (var i = 0; i < b.length; i++) b[i] = (b instanceof Uint32Array) ? Math.floor(Math.random() * 4294967296) : Math.floor(Math.random() * 256); return b; };
 sha256Hex = async function (s) { return 'h-' + s; };
 /* A handler may hand the regulated handler a request it has already read (handleBingoDrawStartForVenue,
@@ -64,7 +76,7 @@ for (;;) {
   if (rq.seed) { DB[rq.seed] = (rq.replace ? [] : (DB[rq.seed] || [])).concat(rq.rows || []); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   if (rq.table) { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
   /* The Worker's clock, for a scene that has to happen on a given day (the purchase raffle's dates). */
-  if (rq.now) { NOWMS = +rq.now; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
+  if (rq.now) { NOWMS = +rq.now; _rigAt = NOWMS; _wallAt = _D.now(); print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   var h = rq.headers || {};
   var req = { method: rq.method || 'GET', url: 'https://game.test' + rq.path, _body: rq.body || {},
               headers: { get: function (k) { for (var x in h) { if (x.toLowerCase() === String(k).toLowerCase()) return h[x]; } return null; } } };
