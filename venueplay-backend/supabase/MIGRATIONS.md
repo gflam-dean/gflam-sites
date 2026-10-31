@@ -483,4 +483,4 @@ Download the VenuePlay TV app and put in your screen code. Otherwise open venuep
 Every word migration 120 wrote stays after it. One update, guarded on 120's words, so it does nothing if the answer was
 edited in HQ, and it must run AFTER `venueplay-120-help-faq-tv-window.sql` (if 120 has not been run, run 120 first, then
 this). Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the
-site. Branch `feature/tv-landing-31oct`. NOT YET RUN. Rollback: in the file.
+site. Branch `feature/tv-landing-31oct`. RUN 31 Oct 2026 by Dean (read back: the answer starts with the Google Play line, updated_by migration 131). Migration 120 was already live. Rollback: in the file.

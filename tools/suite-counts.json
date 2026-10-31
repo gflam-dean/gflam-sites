@@ -868,7 +868,7 @@
   "counted_by": "lines"
  },
  "tools/tv-landing-in-chrome.test.py": {
-  "checks": 42,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {

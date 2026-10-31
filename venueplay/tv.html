@@ -115,25 +115,35 @@
      now a card in the middle of the wall, at television size, with the two ways in: the VenuePlay
      TV app for a TV with Google Play, and the screen code for this TV's own browser. Same element
      (#pairPanel), so every place that hides it for a game or a demo still does. */
-  .pairpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;width:min(84cqw,1240px);max-height:94cqh;overflow:auto;
-    background:rgba(10,10,11,.95);border:1px solid var(--line);border-radius:2cqw;padding:2.4cqw 3cqw 2.6cqw;text-align:center;backdrop-filter:blur(6px)}
+  .pairpanel{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);z-index:7;width:min(84cqw,1240px);max-height:94cqh;overflow:auto;
+    background:rgba(10,10,11,.95);border:1px solid var(--line);border-radius:2cqw;padding:1.8cqw 3cqw 1.8cqw;text-align:center;backdrop-filter:blur(6px)}
   .pairpanel .bvmark{margin-bottom:.8em}
-  .su-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,4.2cqw,64px);color:#fff;line-height:1.05;margin:0 0 1.8cqw}
+  .su-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,4.2cqw,64px);color:#fff;line-height:1.05;margin:0 0 1.3cqw}
   .su-ways{display:flex;flex-wrap:wrap;justify-content:center;gap:2cqw;text-align:left}
-  .su-way{flex:1 1 30cqw;min-width:260px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:1.4cqw;padding:1.8cqw 2cqw;display:flex;flex-direction:column;align-items:flex-start;gap:1cqw}
+  /* The two halves match (Dean, 31 Oct 2026: "make them like similar size and position so the screen looks more centred"):
+     both centred, words on top, and the button the same size at the same height at the foot of each card. */
+  .su-way{flex:1 1 30cqw;min-width:260px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:1.4cqw;padding:1.8cqw 2cqw;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1cqw}
+  .su-way .su-go{margin-top:auto;padding-top:.6cqw;display:flex;justify-content:center;width:100%}
+  .su-go > a{box-sizing:border-box;width:min(26cqw,400px);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}
   .su-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,2.5cqw,40px);line-height:1.15;color:#fff}
   .su-head b{color:var(--pink);font-weight:800}
   .su-text{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,1.75cqw,28px);line-height:1.4;color:var(--text)}
   .su-text b{color:#fff}
-  .su-alt{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.35cqw,22px);line-height:1.4;color:var(--muted);margin-top:.4cqw}
+  .su-alt{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.35cqw,22px);line-height:1.4;color:var(--muted);margin-top:1.4cqw;text-align:center}
   .su-alt b{font-family:'JetBrains Mono',monospace;color:#fff;font-weight:700}
-  /* "Get it on Google Play", built here in CSS: words and a plain play shape, not Google's artwork. */
-  .gplay{display:inline-flex;align-items:center;gap:1cqw;text-decoration:none;background:#000;color:#fff;border:2px solid #A6A6A6;border-radius:1cqw;padding:.8cqw 1.6cqw .8cqw 1.2cqw;margin-top:.4cqw}
+  /* "Get it on Google Play": Google's own badge, unchanged, from Google's own address (Dean, 31 Oct 2026: the plain
+     triangle did not show the logo properly). If it cannot load, the words version below stands in. */
+  .gplay{display:inline-flex;align-items:center;gap:1cqw;text-decoration:none;background:#000;color:#fff;border:2px solid #A6A6A6;border-radius:1cqw;padding:.8cqw 1.6cqw .8cqw 1.2cqw}
+  .gplay.has-badge{background:none;border:0;padding:0}
+  .gplay .gp-badge{height:150%;width:auto;max-width:none;display:block}   /* Google's file has clear space round the badge: 150% makes the badge itself the button's size */
+  .gplay.has-badge .gp-text{display:none}
+  .gplay:not(.has-badge) .gp-badge{display:none}
+  .gplay .gp-text{display:inline-flex;align-items:center;gap:1cqw}
   .gplay .gp-tri{width:0;height:0;border-top:clamp(11px,1.3cqw,22px) solid transparent;border-bottom:clamp(11px,1.3cqw,22px) solid transparent;border-left:clamp(18px,2.1cqw,36px) solid #fff;flex:none}
   .gplay .gp-words{display:flex;flex-direction:column;line-height:1.05}
   .gplay .gp-small{font-family:'Manrope',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(10px,1.1cqw,18px)}
   .gplay .gp-big{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(18px,2.3cqw,38px)}
-  .su-btn{display:inline-block;text-decoration:none;background:var(--pink);color:#fff;border-radius:1cqw;padding:1cqw 2cqw;margin-top:.4cqw;
+  .su-btn{display:inline-block;text-decoration:none;background:var(--pink);color:#fff;border-radius:1cqw;padding:1cqw 2cqw;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(16px,2cqw,32px)}
   /* A TV remote moves focus from link to link, so the one it is on has to be obvious across a room. */
   .gplay:focus,.su-btn:focus,.gplay:hover,.su-btn:hover{outline:.35cqw solid var(--gold);outline-offset:.3cqw}
@@ -456,15 +466,15 @@
       <div class="su-way" id="suApp">
         <div class="su-head">Got a TV with Google Play? <b>Get the VenuePlay TV app</b></div>
         <div class="su-text">Search for <b>VenuePlay TV</b> in the Play Store on this TV, open it and put in your screen code.</div>
-        <a class="gplay" id="tvPlayLink" href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener"><span class="gp-tri" aria-hidden="true"></span><span class="gp-words"><span class="gp-small">Get it on</span> <span class="gp-big">Google Play</span></span></a>
+        <div class="su-go"><a class="gplay has-badge" id="tvPlayLink" href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener"><img class="gp-badge" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" onerror="this.parentNode.classList.remove('has-badge')"><span class="gp-text"><span class="gp-tri" aria-hidden="true"></span><span class="gp-words"><span class="gp-small">Get it on</span> <span class="gp-big">Google Play</span></span></span></a></div>
       </div>
       <div class="su-way" id="suCode">
         <div class="su-head">Or use this TV&rsquo;s web browser</div>
         <div class="su-text">Put in the six-character screen code from your host console.</div>
-        <a class="su-btn" id="tvSetupCode" href="#">Put in the screen code</a>
-        <div class="su-alt">Or open <b>venueplay.com.au/tv?your-venue</b> on this screen once. It remembers after that.</div>
+        <div class="su-go"><a class="su-btn" id="tvSetupCode" href="#">Put in the screen code</a></div>
       </div>
     </div>
+    <div class="su-alt">Or open <b>venueplay.com.au/tv?your-venue</b> on this screen once. It remembers after that.</div>
     <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
   </div>
 

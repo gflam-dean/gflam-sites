@@ -112,7 +112,25 @@ def no_venue():
                          'bg:getComputedStyle(a).backgroundImage}:null;})()') or {}
         ok('the "Get it on Google Play" badge is a real link to the VenuePlay TV app\'s store page',
            link.get('tag') == 'A' and link.get('href') == PLAY and link.get('text') == 'Get it on Google Play', link)
-        ok('drawn in CSS and words, not Google\'s artwork (no image of any kind in it)', link.get('imgs') == 0 and link.get('bg') == 'none', link)
+        badge = r.ask(tv, '(function(){var i=document.querySelector("#tvPlayLink img.gp-badge");return i?{src:i.getAttribute("src"),alt:i.alt,loaded:i.complete&&i.naturalWidth>0,'
+                          'shown:getComputedStyle(i).display!=="none",fallback:getComputedStyle(document.querySelector("#tvPlayLink .gp-text")).display}:null;})()') or {}
+        ok('the badge is Google\'s own "Get it on Google Play" badge, unchanged, from Google\'s address (Dean, 31 Oct 2026: the logo did not show properly)',
+           badge.get('src') == 'https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' and badge.get('alt') == 'Get it on Google Play'
+           and badge.get('shown') and badge.get('fallback') == 'none', badge)
+        fb = r.ask(tv, '(function(){var a=document.getElementById("tvPlayLink"),i=a.querySelector("img");var h=i.getAttribute("onerror");'
+                       'new Function(h).call(i);var t=a.querySelector(".gp-text");var out={img:getComputedStyle(i).display,text:getComputedStyle(t).display,words:t.textContent.replace(/\\s+/g," ").trim()};'
+                       'a.classList.add("has-badge");return out;})()') or {}
+        ok('if Google\'s badge cannot load, the words version stands in (no broken image on a venue\'s TV)',
+           fb.get('img') == 'none' and fb.get('text') != 'none' and fb.get('words') == 'Get it on Google Play', fb)
+        geo = r.ask(tv, '(function(){function b(id){var e=document.getElementById(id).getBoundingClientRect();return {l:e.left,t:e.top,w:e.width,h:e.height};}'
+                        'function c(id){var e=document.getElementById(id).getBoundingClientRect();return {l:e.left,w:e.width,t:e.top,h:e.height};}'
+                        'return {a:b("tvPlayLink"),c:b("tvSetupCode"),ca:c("suApp"),cc:c("suCode")};})()') or {}
+        a_, c_, ca_, cc_ = geo.get('a') or {}, geo.get('c') or {}, geo.get('ca') or {}, geo.get('cc') or {}
+        ok('the two buttons match: the same size, at the same height on the screen (Dean, 31 Oct 2026: "similar size and position")',
+           a_ and c_ and abs(a_['w'] - c_['w']) <= 2 and abs(a_['h'] - c_['h']) <= 2 and abs(a_['t'] - c_['t']) <= 2, geo)
+        ok('each button is centred in its own card, and the two cards are the same size', a_ and c_ and ca_ and cc_ and
+           abs((a_['l'] + a_['w'] / 2) - (ca_['l'] + ca_['w'] / 2)) <= 3 and abs((c_['l'] + c_['w'] / 2) - (cc_['l'] + cc_['w'] / 2)) <= 3 and
+           abs(ca_['w'] - cc_['w']) <= 3 and abs(ca_['h'] - cc_['h']) <= 3, geo)
         ok('the badge is on screen, inside the wall, and nothing covers it', r.ask(tv, on_top('tvPlayLink')) is True, r.ask(tv, on_top('tvPlayLink')))
         ok('"Put in the screen code" is there too, on screen and not covered', r.ask(tv, on_top('tvSetupCode')) is True and 'Put in the screen code' in card,
            r.ask(tv, on_top('tvSetupCode')))
