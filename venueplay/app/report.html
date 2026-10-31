@@ -157,7 +157,7 @@
     var mName=monthName(rep.month), pName=monthName(rep.prev_month);
     $("title").textContent=mName+" at "+d.venue.name;
     $("lede").textContent = a.nights
-      ? plural(a.player_visits,"player","players")+" over "+plural(a.nights,"night","nights")+(rep.finished?"":" so far")+". Here is how "+monthWords(rep.month)+" went."
+      ? plural(a.player_visits,"player","players")+" over "+plural(a.nights,"night","nights")+(rep.finished?". Here is how "+monthWords(rep.month)+" went.":" so far. Here is how "+monthWords(rep.month)+" is going.")
       : (rep.finished ? "No games ran in "+monthWords(rep.month)+"." : "No games yet in "+monthWords(rep.month)+".")+(b.nights?" In "+pName+" you ran "+plural(b.nights,"night","nights")+" with "+plural(b.player_visits,"player","players")+".":"");
     $("tiles").innerHTML=[
       [n(a.nights), a.nights===1?"night with a game on":"nights with a game on", delta(c.nights,pName)],
