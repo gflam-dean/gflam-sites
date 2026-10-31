@@ -1078,6 +1078,12 @@
   var _SBK = 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
   var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
   var PRICE = { monthly: 2.50, annual: 2.30 };
+  /* THE OFFER HAS ENDED (1 Nov 2026). When the billing Worker says this page's code is shut, the
+     script at the bottom of the page calls window.VPStandardRate(): from then on the estimate and the
+     plan buttons price the STANDARD rate, with the volume tiers, exactly as the homepage does, and the
+     signup sends no code, so checkout charges what the page says. */
+  var standardRate = false;
+  var SUBMIT_TEXT = 'Hold my spot, add card';
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
   // "Trusted by" strip: the billing Worker names the live, paying venues that agreed to be shown;
@@ -1287,7 +1293,8 @@
     var n = venueRows().length;
     var suffix = n > 1 ? ' across ' + n + ' venues' : '';
     if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
-    var tier = null;   // founding link: the Worker applies no volume tier on top of a founding rate
+    // Founding link: the Worker applies no volume tier on top of a founding rate. Standard: it does.
+    var tier = standardRate ? groupTier(seats) : null;
     var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
     var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
     var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
@@ -1299,6 +1306,16 @@
     }
   }
   renderEstimate();
+  window.VPStandardRate = function(){
+    standardRate = true;
+    PRICE.monthly = 3.00; PRICE.annual = 2.85;   // the homepage's rates (index.html)
+    var sm = planWrap.querySelectorAll('button small');
+    if (sm[0]) sm[0].textContent = '$3.00 / player';
+    if (sm[1]) sm[1].textContent = '$2.85 / player';
+    SUBMIT_TEXT = 'Start my free month';
+    if (!submitBtn.disabled) submitBtn.textContent = SUBMIT_TEXT;
+    renderEstimate();
+  };
 
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
@@ -1378,7 +1395,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: (window.VP_OFFER || {}).code || 'OFFER-OCT-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, compliance_accepted: !!(consentEl && consentEl.checked), embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: standardRate ? '' : ((window.VP_OFFER || {}).code || ''), venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, compliance_accepted: !!(consentEl && consentEl.checked), embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -1387,12 +1404,12 @@
       if (wantEmbedded && data && data.client_secret) { openEmbeddedCheckout(data.client_secret); return; }
       if (data && data.url) { window.location.href = data.url; return; }
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Hold my spot, add card';
+      submitBtn.textContent = SUBMIT_TEXT;
       showErr((data && data.error) ? data.error : 'Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
     })
     .catch(function(){
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Hold my spot, add card';
+      submitBtn.textContent = SUBMIT_TEXT;
       showErr('Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
     });
   });
@@ -1404,7 +1421,7 @@
 
   function resetSubmit(){
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Hold my spot, add card';
+    submitBtn.textContent = SUBMIT_TEXT;
   }
   function closeEmbeddedCheckout(){
     if (_vpCheckout) { try { _vpCheckout.destroy(); } catch (e) {} _vpCheckout = null; }
@@ -1775,13 +1792,83 @@
      If the Worker cannot be reached the page is left exactly as it is: a
      venue seeing the offer is better than a venue seeing a scary banner
      because our API had a bad minute.
+
+     EVERY PRICE, NOT JUST THE TOP (1 Nov 2026). On 1 November /nsw and
+     /offer-oct showed the banner and the $3.00 hero note, and $2.50 "locked
+     for life" everywhere below them: the eyebrow, $75 for 30 players, the
+     pricing card, "Add your card to lock in $2.50", the plan buttons and the
+     FAQ. Dean's rule: an ended month's link says the offer ended and quotes
+     the standard rate, never a quiet roll-over to next month's offer. So
+     every offer price and promise is put back to the homepage's own words
+     (index.html), and the signup sends no code. Proved in Chrome by
+     tools/offer-ended-in-chrome.test.py.
      =================================================================== -->
 <script>
 (function () {
-  var OFFER = window.VP_OFFER || { code:'OFFER-OCT-2026', day:'31 October' };
+  /* No hard-coded fallback month: a page without its row has no code to ask about. */
+  var OFFER = window.VP_OFFER;
+  if (!OFFER) return;
   var CODE = OFFER.code;
   var API  = 'https://api.venueplay.com.au';
   if (!CODE || !API || API.indexOf('PASTE_') !== -1) return;
+
+  /* The standard rate, in the homepage's words (index.html), on every part of the page that sold the offer. */
+  function standardPage() {
+    document.documentElement.setAttribute('data-offer', 'ended');
+    if (window.VPStandardRate) window.VPStandardRate();      // estimate, plan buttons, and no code at checkout
+    function all(sel, fn) { var els = document.querySelectorAll(sel); for (var i = 0; i < els.length; i++) fn(els[i]); }
+    function html(sel, h) { all(sel, function (el) { el.innerHTML = h; }); }
+    function faq(start, q, a) {
+      all('#faq details.q', function (d) {
+        var s = d.querySelector('summary');
+        if (!s || s.textContent.indexOf(start) !== 0) return;
+        if (q) s.firstChild.nodeValue = q;
+        d.querySelector('.a').innerHTML = a;
+      });
+    }
+    var STD = "One simple rate: $3 per player a month, based on your venue's max players per session. No packs, no add-ons, no lock-in. Pay monthly, or save with annual.";
+    var meta = 'Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Simple pricing: $3 per player, per month.';
+    all('meta[name="description"]', function (m) { m.setAttribute('content', meta); });
+    all('meta[property="og:description"]', function (m) { m.setAttribute('content', 'One pub, one platform. Every format, one screen. Simple pricing: $3 per player, per month.'); });
+
+    // The hero: the offer badge goes (the banner says it ended), and the price line is the homepage's.
+    all('#top .eyebrow', function (el) { el.hidden = true; el.style.display = 'none'; });
+    html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $90 a month. No lock-in, cancel anytime.');
+
+    // The pricing section.
+    html('#offer .label', 'Pricing');
+    html('#offer .sec-title', '$3 per player.<br>Simple and flat.');
+    html('#offer .offer-grid .sec-sub', STD);
+    all('#offer .offer-cta a', function (a) { a.textContent = 'Start your free month'; });
+    html('#offer .price-card',
+      '<div class="price-eyebrow">Per player \u00b7 per month</div>' +
+      '<div class="price-row found"><div class="pl"><b>Monthly</b>per player, per month</div><div class="pv">$3.00</div></div>' +
+      '<div class="price-row found"><div class="pl"><b>Annual</b>billed yearly \u00b7 best value</div><div class="pv">$2.85</div></div>' +
+      '<p class="price-foot">Priced per player, on your venue\'s max players per session. Go over on a big night and it\'s just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is $3 per player, per month, and it never changes.</p>');
+
+    // What you get.
+    all('#included .incl li > div', function (d) {
+      var st = d.querySelector('strong');
+      if (st && /price, locked/i.test(st.textContent)) d.innerHTML = '<strong>Simple, flat pricing</strong><span>$3 per player, per month. No packs, no surprises.</span>';
+    });
+
+    // The signup.
+    html('#claim .sec-head .label', 'Free first month');
+    html('#claim .sec-head .sec-title', 'Set up your venue');
+    html('#claim .sec-head .sec-sub', 'Add your card to get set up. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.');
+    html('#vp-success > p:not(.success-fine)', 'Everything is set up and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.');
+
+    // The questions.
+    faq('What does locked for life', 'How much does it cost?', "$3 per player a month, based on your venue's max players per session. Pay monthly, or save with annual at $2.85 a player. No setup fees, no packs to buy, no lock-in.");
+    faq('How does billing work', null, "A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $3 a player, or yearly for $2.85 a player. New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.");
+    faq('Is there a lock-in contract', null, "No lock-in. It's a rolling subscription you can cancel anytime. Your rate stays the same for as long as you're with us, and if you cancel before your first payment, you're never charged.");
+
+    // The floating button.
+    all('#vpFloatCta', function (a) {
+      a.setAttribute('aria-label', 'Start your free month');
+      for (var n = a.lastChild; n; n = n.previousSibling) if (n.nodeType === 3 && n.nodeValue.trim()) { n.nodeValue = ' Start your free month\n'; break; }
+    });
+  }
 
   fetch(API + '/founding?code=' + encodeURIComponent(CODE))
     .then(function (r) { return r.ok ? r.json() : null; })
@@ -1806,6 +1893,7 @@
         if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
       });
       document.title = document.title.replace(/founding/i, 'now open');
+      standardPage();
     })
     .catch(function () {});     // leave the page alone rather than alarm anybody
 })();

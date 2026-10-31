@@ -12,10 +12,16 @@
    A new month is a new row here, its code added to FOUNDING_CODES on the day its campaign starts,
    and WRITTEN_FOR moved together with the vpc-date / vpc-day spans typed into nsw.html (the gate
    holds those to this row). Each code ENDS by itself at the end of its month, Brisbane time, in the
-   Worker (vpaCodeInDate). */
+   Worker (vpaCodeInDate).
+
+   ENDED ROWS STAY (1 Nov 2026). /nsw and /offer-oct are already in venues' inboxes, so an ended
+   month keeps its row and is marked `ended: true` once its month is out. The page still asks the
+   Worker, which answers open:false, and the page then says "This offer ended on <day>" and quotes
+   only the standard rate (nsw.html, tools/offer-ended-in-chrome.test.py). The gate's "no founding
+   page has outlived its own deadline" stays red for a row whose month has ended and is NOT marked. */
 (function (root) {
   var OFFERS = {
-    oct: { code: 'OFFER-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October'  },
+    oct: { code: 'OFFER-OCT-2026',    date: '31 October 2026',  day: '31 October',  month: 'October',  ended: true },
     nov: { code: 'OFFER-NOV-2026',  date: '30 November 2026', day: '30 November', month: 'November' },
     dec: { code: 'OFFER-DEC-2026',  date: '31 December 2026', day: '31 December', month: 'December' },
     jan: { code: 'OFFER-JAN-2027',  date: '31 January 2027',  day: '31 January',  month: 'January'  },

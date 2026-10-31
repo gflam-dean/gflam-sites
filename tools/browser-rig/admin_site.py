@@ -214,6 +214,9 @@ class Site(object):
                     return self.send(200, '', 'text/css')
                 p = u.path
                 base = 'venueplay'
+                # A 200 rewrite in venueplay/_redirects is served as Pages serves it: /offer-oct is
+                # nsw.html with the address left as /offer-oct (tools/offer-ended-in-chrome.test.py, 1 Nov 2026).
+                p = site.rewrites().get(p, p)
                 if p.startswith('/touring/'):
                     base, p = 'touring', p[len('/touring'):]
                 if p in ('/app', '/app/'):
@@ -244,6 +247,18 @@ class Site(object):
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         self.B = VL.Browser()
+
+    def rewrites(self):
+        """The exact-path 200 rewrites in venueplay/_redirects ("/offer-oct  /nsw  200"), read once."""
+        if getattr(self, '_rw', None) is None:
+            self._rw = {}
+            f = os.path.join(self.root, 'venueplay', '_redirects')
+            if os.path.isfile(f):
+                for line in io.open(f, encoding='utf-8'):
+                    bits = line.split('#', 1)[0].split()
+                    if len(bits) == 3 and bits[2] == '200' and '*' not in bits[0] and ':' not in bits[0]:
+                        self._rw[bits[0]] = bits[1]
+        return self._rw
 
     def game_table(self, name):
         """A table from the game Worker rig's database (worker-stdio.js answers {table})."""

@@ -1140,9 +1140,21 @@ MUTATIONS = [
      'should be, because nothing in the Worker fills that name'),
 
     ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
-     '<<ANY:OFFER-OCT-2026>>', 'OFFER-JAN-2026',
+     "founding_code: standardRate ? '' : ((window.VP_OFFER || {}).code || ''),",
+     "founding_code: standardRate ? '' : ((window.VP_OFFER || {}).code || 'OFFER-JAN-2026'),",
      'the page promises a founding code that expired months ago, so either the discount '
      'runs past the date we published or a venue reads $2.50 and is charged $3'),
+    # 1 Nov 2026: an ended month keeps its row in vp-offer.js only when the row is MARKED ended and the
+    # page turns every price to standard. Unmark the row, or stop the page doing that, and it is red.
+    ('no founding page has outlived its own deadline', 'venueplay/app/vp-offer.js',
+     "month: 'October',  ended: true },", "month: 'October' },",
+     'October ended on 31 October and nobody marked its row ended, so nothing says the page was '
+     'checked: /nsw and /offer-oct could be selling $2.50 the Worker no longer honours'),
+    ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
+     "      document.title = document.title.replace(/founding/i, 'now open');\n      standardPage();\n",
+     "      document.title = document.title.replace(/founding/i, 'now open');\n",
+     'the October link says the offer ended in a banner and goes on promising $2.50 locked for life '
+     'everywhere below it, which is what venues saw on 1 November 2026'),
 
     ('no printed handout carries a date that can go stale', 'venueplay/leave-behind-club.html',
      'Go live the day you sign up, first payment a month later.',
@@ -8632,6 +8644,19 @@ MUTATIONS = [
      'body.venue_name = String(leadName.value || "").trim(); ',
      '',
      'the venue name typed on the sales form never reaches the Worker'),
+    # 1 Nov 2026: an ended month's link (/nsw, /offer-oct) quotes ONLY the standard rate, everywhere.
+    ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
+     "html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $90 a month.",
+     "html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $75 a month.",
+     'the October link says the offer ended and still tells a 30-player pub it pays $75 a month'),
+    ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
+     "    founding_code: standardRate ? '' : ((window.VP_OFFER || {}).code || ''),".strip(),
+     "founding_code: ((window.VP_OFFER || {}).code || ''),",
+     'the ended page quotes $3 and the signup still sends the dead October code'),
+    ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
+     "  /* No hard-coded fallback month: a page without its row has no code to ask about. */\n  var OFFER = window.VP_OFFER;\n  if (!OFFER) return;\n",
+     "  var OFFER = window.VP_OFFER;\n  if (!OFFER) return;\n  if (/offer-nov/.test(location.pathname)) OFFER = { code: 'OFFER-OCT-2026', day: '31 October' };\n",
+     'the November page asks about the wrong code and tells a November venue its offer ended'),
     # Dean, 29 Oct 2026: "Never put offers on the home page unless I say so."
     ('site-offer-footer-in-chrome.test.py', 'venueplay/index.html',
      '            <div class="pl"><b>Monthly</b>per player, per month</div>\n            <div class="pv">$3.00</div>',
@@ -9211,7 +9236,8 @@ MUTATIONS_LIVE = [
     # The rows moved to /app/vp-offer.js on 29 Oct 2026; the check reads nsw.html and that file together.
     ('all 1 founding page(s) have a live code',
      'venueplay/app/vp-offer.js',
-     "oct: { code: 'OFFER-OCT-2026',", "oct: { code: 'OFFER-OCT-2027',",
+     # On the November row since 1 Nov 2026: October is marked ended, and an ended row is not asked about.
+     "nov: { code: 'OFFER-NOV-2026',", "nov: { code: 'OFFER-NOV-2027',",
      'a founding page offers a code env.FOUNDING_CODES has never heard of, so the venue is '
      'quoted one price and charged another with no error and no explanation'),
 ]

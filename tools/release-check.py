@@ -2486,10 +2486,29 @@ def local_checks(which):
     import calendar as _cal
     _MON = {m.upper()[:3]: i for i, m in enumerate(_cal.month_name) if m}
     today = _dt.date.today()
-    gone, soon = [], []
+    gone, soon, kept = [], [], []
+    # AN ENDED MONTH KEEPS ITS ROW (1 Nov 2026). /nsw and /offer-oct are in venues' inboxes, so the
+    # October row stays in /app/vp-offer.js after 31 October, and the page says the offer ended and
+    # quotes the standard rate. Such a code passes here ONLY when all three hold:
+    #   1. it is in /app/vp-offer.js, never typed into a page (nsw.html's hard-coded OFFER-OCT
+    #      fallbacks sent a dead code to checkout and asked the Worker about it on every load);
+    #   2. its row is marked `ended: true`, so somebody decided it, rather than the month running out
+    #      on a row nobody looked at;
+    #   3. the offer page provably turns every price to standard when the Worker says open:false: the
+    #      closing script calls standardPage() after that answer, the signup sends no code once the
+    #      rate is standard, and tools/offer-ended-in-chrome.test.py (run by this gate) is on disk.
+    # An ended row that is not marked, or a page that does not handle it, stays red.
+    _offer_js = os.path.join('app', 'vp-offer.js')
+    _ended_rows = set(re.findall(r"\bcode:\s*'([A-Z]+-[A-Z]{3}-20\d\d)'[^}\n]*\bended:\s*true\b", offer_table_source()))
+    _nsw_p = os.path.join(ROOT, 'venueplay', 'nsw.html')
+    _nsw = io.open(_nsw_p, encoding='utf-8').read() if os.path.isfile(_nsw_p) else ''
+    _page_ends = (bool(re.search(r"d\.open !== false\) return;[\s\S]{0,3000}?\n\s*standardPage\(\);", _nsw))
+                  and 'function standardPage(' in _nsw
+                  and "founding_code: standardRate ? ''" in _nsw
+                  and os.path.isfile(os.path.join(ROOT, 'tools', 'offer-ended-in-chrome.test.py')))
     for f in files:
         # The offer rows themselves live in /app/vp-offer.js since 29 Oct 2026.
-        if not (f.endswith('.html') or f.endswith(os.path.join('app', 'vp-offer.js'))):
+        if not (f.endswith('.html') or f.endswith(_offer_js)):
             continue
         for code in sorted(set(re.findall(r'\b(OFFER|[A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):
             st, mon, yr = code
@@ -2500,11 +2519,19 @@ def local_checks(which):
             left = (end - today).days
             tag = '%s-%s-%s on %s' % (st, mon, yr, short(f))
             if left < 0:
-                gone.append(tag + ' ended %d days ago' % -left)
+                full = '%s-%s-%s' % code
+                if f.endswith(_offer_js) and full in _ended_rows and _page_ends:
+                    kept.append(full)
+                    continue
+                why_not = ('typed into a page' if not f.endswith(_offer_js) else
+                           'its row is not marked ended: true' if full not in _ended_rows else
+                           'nsw.html does not turn every price to standard when the Worker says open:false')
+                gone.append(tag + ' ended %d days ago (%s)' % (-left, why_not))
             elif left <= 21:
                 soon.append(tag + ' ends in %d days' % left)
     ok('no founding page has outlived its own deadline', not gone,
-       detail=('; '.join(soon[:3]) if soon else 'none close'),
+       detail=('; '.join(soon[:3]) if soon else 'none close') +
+              (('; ended and marked, the page quotes standard: ' + ', '.join(sorted(set(kept)))) if kept else ''),
        why='; '.join(gone[:4]) + '. Update the page AND env.FOUNDING_CODES together')
 
     # THE PRIVACY PAGE PROMISES PLAYER DATA IS DELETED WITHIN 90 DAYS OF AN ACCOUNT
@@ -5242,6 +5269,11 @@ def founding_windows_are_open():
     if not pages:
         return
     shut, unreachable = [], []
+    # A row marked `ended: true` in /app/vp-offer.js is a month that is over (1 Nov 2026): its code is
+    # SUPPOSED to be shut, and the page then quotes the standard rate. The local gate holds that marking
+    # to a month that has really ended and to a page that handles it ("no founding page has outlived
+    # its own deadline"), so here it is not asked about.
+    ended_rows = set(re.findall(r"\bcode:\s*'([A-Z]+-[A-Z]{3}-20\d\d)'[^}\n]*\bended:\s*true\b", offer_table_source()))
     for b in pages:
         src = io.open(os.path.join(root, b), encoding='utf-8').read()
         if b == 'nsw.html':
@@ -5255,6 +5287,8 @@ def founding_windows_are_open():
         # and taking codes[0] would have declared it healthy while six states were
         # shut and being charged $3.00 against a page promising $2.50.
         for code in codes:
+            if b == 'nsw.html' and code in ended_rows:
+                continue
             status, body, _ = get(VP_API + '/founding?code=' + code)
             # AN UNANSWERED QUESTION IS NOT A NO. /founding lives on the billing
             # Worker, so when the wrong file is pasted into that slot the route 404s

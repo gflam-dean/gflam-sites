@@ -211,6 +211,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/offer-ended-in-chrome.test.py": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"

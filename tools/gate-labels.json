@@ -197,6 +197,7 @@
   "nothing claims the bingo cards mark themselves",
   "nothing is written to the album without a date it goes",
   "off until PROSPECT_AUTOPILOT_KEY is set; a wrong or missing key makes nothing; a dry run makes nothing; the same setup as HQ, recorded as the autopilot; its welcome booked 30 minutes out or more and cancellable in HQ; an existing login refused, a used mobile left off",
+  "offer-ended-in-chrome.test.py",
   "one email, one bill, and the promised free month (46 checks)",
   "one-answer.test.js",
   "one-game.test.js",
