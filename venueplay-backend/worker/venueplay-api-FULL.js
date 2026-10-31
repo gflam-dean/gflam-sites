@@ -29,7 +29,7 @@
  *                               when unset, and only ever a venueplay.com.au API host (vpUnsubApi)
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 14:56 · 329be301';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 08:57 · 9887ef87';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3342,7 +3342,8 @@ async function vpaProspectCancelLink(env, foundingId) {
    answers as JSON, with the CORS headers, so the page can show them. Same token check, same rule:
    only a POST cancels. */
 async function vpaProspectCancel(request, env, json) {
-  const FOOT = 'Questions? Call 07 5228 3667, between 9am and 5pm Queensland time.';
+  // Dean, 1 Nov 2026: more professional, and the line is staffed Monday to Friday only.
+  const FOOT = 'Need a hand? Call us on 07 5228 3667, Monday to Friday, 9am to 5pm (Brisbane time).';
   let asJson = false;
   const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
   const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
