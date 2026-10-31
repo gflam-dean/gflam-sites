@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Oct 2026, 06:10 · 5351db0b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 15:28 · 821c3bf4';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1202,10 +1202,75 @@ async function handleCreateSession(request, env, json) {
    body: { code }  -> { collect: {first_name,last_name,postcode,email,mobile,marketing_optin} }
    The Worker reads vp_venue_settings with the service key (the anon player can't), and returns
    ONLY the collect_* flags, never any venue data. */
+/* THE LOBBY POLL IS ANSWERED FROM MEMORY FOR A FEW SECONDS (31 Oct 2026).
+
+   Every phone waiting in a lobby asks this every eight seconds, and every answer used to cost
+   four database calls (five or six on the venue's own code). The live ramp of 30 Oct 2026 bent
+   the database gateway at about 43 calls a second, which is about fifteen venues on a busy night,
+   and this poll was most of it: forty phones in one lobby was twenty calls a second for one pub.
+
+   The answer is the same for every phone holding the same code (nothing in it is about the
+   player), so this isolate keeps it for JOIN_INFO_TTL_MS and every other phone in the room that
+   asks inside that window costs no database call at all. Two rules keep it honest:
+
+   1. PLAIN DATA ONLY, never a shared promise: a Worker may not await another request's I/O (the
+      same rule as the trivia score cache). Two phones that miss together both ask; that is rare
+      and costs what it always did.
+   2. THE CACHE IS SHORTER THAN THE SHORTEST ROUTINE POLL (8 s, play.html and vp-follow.js). So a
+      phone's next routine answer is always newer than the last one it saw, whichever isolate
+      answers it, and a phone can never bounce back to a game it has just been moved out of.
+      A game starting, ending or switching reaches a polling phone within one poll plus at most
+      this window. A phone that has just been TOLD something (a console's mode or started
+      message, or a page that has just loaded after a hop) asks with fresh:1 and is answered from
+      the database, as before; its answer then refreshes the copy for everybody else.
+
+   Kicks and suspensions do not live here: a kicked token and a suspended venue are refused on the
+   player's own routes (verifyPlayerToken, assertVenueActive), which read the database every time.
+   A failed lookup is never kept, so a database blip cannot stick to a room, and neither is "no
+   such code".
+
+   The venue's NAME, state, permits and collect_* switches change from the account page, not
+   during a game, so they are kept for JOIN_INFO_STATIC_TTL_MS: a lookup that does go to the
+   database then costs two calls instead of four. */
+const JOIN_INFO_TTL_MS = 4000;
+const JOIN_INFO_STATIC_TTL_MS = 30000;
+const JOIN_INFO_CACHE_MAX = 2000;      // codes kept in this isolate; past that the oldest go first
+const joinInfoCache = new Map();       // typed code -> { until, body }
+const joinInfoStatic = new Map();      // 'v:' / 's:' + venue id -> { until, data }
+function joinInfoKeep(map, key, value) {
+  if (map.size >= JOIN_INFO_CACHE_MAX) {
+    const now = Date.now();
+    for (const [k, v] of map) { if (v.until <= now) map.delete(k); }
+    while (map.size >= JOIN_INFO_CACHE_MAX) map.delete(map.keys().next().value);
+  }
+  map.delete(key);                     // re-inserted last, so the oldest entry is always first
+  map.set(key, value);
+}
+async function joinInfoStaticRead(key, load) {
+  const now = Date.now();
+  const hit = joinInfoStatic.get(key);
+  if (hit && hit.until > now) return hit.data;
+  const data = await load();           // throws on a database fault: nothing is kept
+  joinInfoKeep(joinInfoStatic, key, { until: now + JOIN_INFO_STATIC_TTL_MS, data: data });
+  return data;
+}
 async function handleJoinInfo(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
   if (!code) return json({ collect: null, exists: false });
+  const now = Date.now();
+  if (b.fresh !== 1 && b.fresh !== true) {
+    const hit = joinInfoCache.get(code);
+    if (hit && hit.until > now) return json(hit.body);
+  }
+  // Stamped from BEFORE the lookup, so a copy never outlives the moment it was read by more than the
+  // window, and never replaces a copy read after it (a slow lookup finishing behind a fresh one).
+  const out = await joinInfoLookup(env, code);
+  const until = now + JOIN_INFO_TTL_MS, prev = joinInfoCache.get(code);
+  if (out.keep && !(prev && prev.until > until)) joinInfoKeep(joinInfoCache, code, { until: until, body: out.body });
+  return json(out.body);
+}
+async function joinInfoLookup(env, code) {
   let venueId = null;
   /* WHICH GAME is this code for? Every printed sign says venueplay.com.au/play, so /play has to
      be able to resolve ANY code the room is shown: a bingo venue code, or the random join code a
@@ -1290,12 +1355,16 @@ async function handleJoinInfo(request, env, json) {
       // venueByCode reads a failed lookup as "no venue", so prove the database is answering
       // before a phone is told its code does not exist. One row, any row.
       if (!held) await sbGet(env, 'vp_venues', 'select=id&limit=1');
-    } catch (e) { return json({ collect: null, format: '' }); }
-    return json({ collect: null, format: '', exists: !!held });
+    } catch (e) { return { keep: false, body: { collect: null, format: '' } }; }
+    // "No such code" is not kept: the phone stops asking on it anyway, and a copy is only worth
+    // having for a room full of phones that keep asking about a code that exists.
+    return { keep: !!held, body: { collect: null, format: '', exists: !!held } };
   }
-  const rows = await sbGet(env, 'vp_venue_settings',
-    'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
-  const cfg = (rows && rows[0]) || {};
+  const cfg = await joinInfoStaticRead('s:' + venueId, async () => {
+    const rows = await sbGet(env, 'vp_venue_settings',
+      'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+    return (rows && rows[0]) || {};
+  });
   /* The venue's NAME, so the join screen can say who is asking for these details. A collection
      notice that cannot name the recipient is not much of a notice. Name only: no slug, no id, no
      other venue data, so this stays what it has always been, a public lookup for one join code. */
@@ -1313,8 +1382,10 @@ async function handleJoinInfo(request, env, json) {
      where the room actually is. It is the hash of a public slug that /venue already
      returns, so nothing new is exposed. */
   let channel = '';
+  let venueReadOk = false;   // a copy is only kept of an answer built on the venue row actually read
   try {
-    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug,permits&limit=1');
+    const vrows = await joinInfoStaticRead('v:' + venueId,
+      () => sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug,permits&limit=1'));
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
     if (vrows && vrows[0] && vrows[0].slug) channel = fnvVenueCode(vrows[0].slug);
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
@@ -1352,20 +1423,21 @@ async function handleJoinInfo(request, env, json) {
     /* The age tick rides beside the paper flag, because this is the call the phone page acts on
        before it shows a ticket. Decided here, not on the phone, for the same reason as paper. */
     if (liveNow && vrows && vrows[0]) ageGate = await ageGateNow(env, venueId, vrows[0].au_state, format, vrows[0].permits);
+    venueReadOk = true;
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
   /* CALLER MODE: a bingo night called with real balls is a paper night in every state. Outside the
      try above, so a failed venue read cannot hand a phone a ticket on a paper-book night. */
   if (liveNow && (!format || format.indexOf('bingo') === 0) && callerBingoNight(liveSession)) {
     paperBingo = true; paperReason = CALLER_REASON;
   }
-  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, paper_reason: paperReason, age_gate: ageGate, collect: {
+  return { keep: venueReadOk, body: { format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, paper_reason: paperReason, age_gate: ageGate, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
     email: !!cfg.collect_email,
     mobile: !!cfg.collect_mobile,
     marketing_optin: !!cfg.collect_marketing_optin,
-  } });
+  } } };
 }
 
 /* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a

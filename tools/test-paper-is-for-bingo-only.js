@@ -33,7 +33,10 @@ function lobby(st) {   // a bingo lobby: a session open, no game row yet, no lob
 venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(code); return m ? V[m[1]] : null; };   // the venue's own code
 
 (async function () {
-  async function paper(code) { BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
+  /* fresh:1 (31 Oct 2026): the Worker keeps this answer a few seconds for the whole room, and this rig's clock
+     stands still, so each scenario asks the database the way a phone's first lookup does. The copy itself is
+     tested in tools/test-lobby-poll-cache.js. */
+  async function paper(code) { BODY = { code: code, fresh: 1 }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
   print('the three paper states, while a bingo lobby is open');
   /* QUIET FIRST (live audit, 16 Oct 2026): with nothing on, '' was read as bingo and an idle phone
      was blanked before the host had opened anything. The flag is for the game that is ON. */

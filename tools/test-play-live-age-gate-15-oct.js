@@ -37,7 +37,10 @@ function night(st, format, status, lobbyFormat) {   // a session at that venue; 
 function clearNights() { DB.vp_sessions = []; DB.vp_games = []; }
 venueByCode = async function (env, code) { var m = /^VENUE-(\w+)$/.exec(String(code)); return m ? V[m[1]] : null; };
 async function live(st) { var r = await handlePlayLive({ url: 'https://w/play/live?code=VENUE-' + st, headers: { get: function () { return ''; } } }, ENV, json); return r.body; }
-async function info(code) { BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
+/* fresh:1 (31 Oct 2026): the Worker keeps this answer a few seconds for the whole room, and this rig's clock
+   stands still, so each scenario asks the database the way a phone's first lookup does. The copy itself is
+   tested in tools/test-lobby-poll-cache.js. */
+async function info(code) { BODY = { code: code, fresh: 1 }; var r = await handleJoinInfo({}, ENV, json); return r.body; }
 
 (async function () {
   print('/play/live on a QUIET night (no session open): nothing is on, so nothing is asked');
@@ -166,6 +169,7 @@ async function info(code) { BODY = { code: code }; var r = await handleJoinInfo(
   var tr = await info(night('VIC', 'trivia'));
   show('VIC trivia: neither', tr.format === 'trivia' && tr.age_gate === false && tr.paper_bingo === false, JSON.stringify(tr).slice(0, 160));
   clearNights(); night('VIC', null, 'lobby', null);   // a bingo lobby IS open, so a false here is the fail-open, not the quiet night
+  NOWMS += 31000;   // past the Worker's 30 s copy of the venue row (31 Oct 2026), so this lookup really reads it
   var realFetch = fetch;
   fetch = async function (u, o) { if (/vp_venues\?id=eq/.test(String(u))) return { ok: false, status: 503, json: async function () { return {}; }, text: async function () { return 'down'; } }; return realFetch(u, o); };
   r = await info('VENUE-VIC');
@@ -312,7 +316,7 @@ else {
 /* ---- part four: a phone that TYPED the code keeps asking /join/info, and acts on the flags each time ---- */
 print('play.html: the typed-code lookup acts on both flags every time, and keeps asking after a paper notice');
 // Since 20 Oct 2026 the loop is three functions over one timer: lookLater, lookNow and look.
-var k0 = PLAY.indexOf('    var tries=0, lookT=0, lastPush=0;'), k1 = k0 < 0 ? -1 : PLAY.indexOf('    look();\n  }', k0);
+var k0 = PLAY.indexOf('    var tries=0, lookT=0, lastPush=0;'), k1 = k0 < 0 ? -1 : PLAY.indexOf('    look(true);\n  }', k0);
 if (k0 < 0 || k1 < 0) { print('  FAIL the look() loop is not where this test lifts it from'); bad++; }
 else {
   var timers = [], cleared = 0, unknowns = 0, rehomes = [], answer = null, calls2 = [], hops2 = [];

@@ -126,7 +126,16 @@ eval(lift('venueLookupReply'));
 /* Caller mode (17 Oct 2026): both phone answers read the night's real-balls flag. */
 eval(liftLine(/^const CALLER_REASON[^\n]*/m));
 eval(lift('callerBingoNight'));
+/* The lobby poll's copy (31 Oct 2026): handleJoinInfo answers from it, joinInfoLookup is the lookup. */
+eval(liftLine(/^const JOIN_INFO_TTL_MS[^\n]*/m));
+eval(liftLine(/^const JOIN_INFO_STATIC_TTL_MS[^\n]*/m));
+eval(liftLine(/^const JOIN_INFO_CACHE_MAX[^\n]*/m));
+eval(liftLine(/^const joinInfoCache[^\n]*/m));
+eval(liftLine(/^const joinInfoStatic[^\n]*/m));
+eval(lift('joinInfoKeep'));
+eval(lift('joinInfoStaticRead'));
 eval(lift('handleJoinInfo'));
+eval(lift('joinInfoLookup'));
 eval(lift('handlePlayLive'));
 
 /* The three copies of the hash the pages carry. They must equal the Worker's. */

@@ -10,7 +10,10 @@ function reset(lobby){
          vp_venues:[{ id:VENUE, name:'Test Venue', slug:'test-venue', au_state:'NSW', status:'active' }],
          vp_venue_settings:[], vp_games:[], vp_players:[] };
 }
-async function info(code){ BODY = { code: code }; var r = await handleJoinInfo({}, ENV, json); return r.body.format; }
+/* fresh:1 (31 Oct 2026): the Worker keeps this answer a few seconds for the whole room, and this rig's clock
+   stands still, so each scenario asks the database the way a phone's first lookup does. The copy itself is
+   tested in tools/test-lobby-poll-cache.js. */
+async function info(code){ BODY = { code: code, fresh: 1 }; var r = await handleJoinInfo({}, ENV, json); return r.body.format; }
 (async function(){
   reset('bingo90');
   DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'trivia', status:'finished' });

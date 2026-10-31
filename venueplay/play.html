@@ -1280,7 +1280,10 @@
   function loadJoinInfo(){
     if(!P.room) return;
     ageAsk();                      // hold any ticket request until the Worker says whether to ask
-    playerPost("/join/info",{ code:P.room }).then(function(r){
+    /* fresh:1 (31 Oct 2026): the Worker answers the lobby poll from a copy a few seconds old. This
+       is the page's FIRST question, the one the paper notice and the age tick hang on, so it is
+       asked of the database itself. The repeats below are the ones the copy is for. */
+    playerPost("/join/info",{ code:P.room, fresh:1 }).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       /* PAPER-TICKET STATES. South Australia, Victoria and Tasmania expect a printed ticket in
@@ -1964,8 +1967,13 @@
     function lookLater(){ clearTimeout(lookT); tries++; lookT=setTimeout(look, tries<225 ? 8000 : 30000); }
     /* A push (a console announcing its mode) asks now, at most once every two seconds, and never adds
        a second chain: look() replaces the pending timer with its own single next one. */
-    function lookNow(){ if(Date.now()-lastPush<2000) return; lastPush=Date.now(); look(); }
-    function look(){
+    function lookNow(){ if(Date.now()-lastPush<2000) return; lastPush=Date.now(); look(true); }
+    /* THE REPEATS ARE ANSWERED FROM THE WORKER'S COPY, THE PUSHED ONES ARE NOT (31 Oct 2026).
+       The Worker keeps this answer for four seconds and hands it to every phone in the room, which
+       is what makes a full lobby cheap. A lookup a console's message has just asked for, and the
+       first one after this page loads, say fresh:1 so the phone moves on what is true now and not
+       on the copy from just before the host pressed the button. */
+    function look(fresh){
       clearTimeout(lookT); lookT=0;
       VP_LOOK_NOW = lookNow;   // a console announcing its mode moves this phone now, as on a ?venue link
       /* "Already in a game here" must mean a game, not a remembered name. connect() sets
@@ -1976,7 +1984,7 @@
       // Busy with bingo: ask again later rather than stop asking. Returning here ended the lookup
       // for the night, so a phone could never follow the room to trivia (14 Oct 2026).
       if(playingHere()){ lookLater(); return; }   // see watchVenue
-      playerPost("/join/info",{ code:code })
+      playerPost("/join/info", fresh===true ? { code:code, fresh:1 } : { code:code })
         .then(function(r){
           /* The paper notice and the age tick follow the Worker's answer EACH time (16 Oct 2026):
              a flag that arrives once a bingo lobby opens is acted on, and one that clears later
@@ -2004,7 +2012,7 @@
         })
         .catch(function(){ lookLater(); });  // worker blip: bingo still works
     }
-    look();
+    look(true);
   }
   function rehome(channel, shown){
     // Carry this phone's identity across, so a regular is the same player to the host either way.

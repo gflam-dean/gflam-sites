@@ -3693,6 +3693,14 @@ def local_checks(which):
              'Stripe\'s "Founding Membership" lines are printed as "VenuePlay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. VenuePlay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "VenuePlay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
              'A venue reading "Founding Membership" or Gflam Group on its tax invoice email, or that email no longer '
              'saying it is the tax invoice it delivers'),
+            # D100: the lobby poll answered from the Worker's memory (31 Oct 2026, after the 30 Oct live ramp bent the
+            # database gateway at about 43 calls a second), branch fix/lobby-poll-31oct.
+            ('D100. A lobby full of phones costs the database one read per few seconds, and still moves with the host',
+             'test-lobby-poll-cache.js',
+             'phones asking /join/info inside the window cost no database call; fresh:1 (a pushed or first lookup) reads the database; a game starting, ending or switching reaches every polling phone within one poll plus the window, on one isolate and on two, and no phone is bounced back; a slow read never replaces a newer one; failures, fail-open answers and unknown codes are not kept; kicks and pauses refused at once; the kept answer equals the database in every state, musical bingo never on paper; the real console and phone pages move a room to trivia within a second', 39,
+             'A room left on the bingo page while the host runs trivia, a phone bounced between two games, a stale '
+             'paper or age answer, or the poll back at four database calls a phone every eight seconds, which is '
+             'what capped VenuePlay at about fifteen venues on a busy night'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',

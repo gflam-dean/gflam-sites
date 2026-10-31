@@ -53,7 +53,7 @@
     var every = opts.every || 8000;
     if (!api || !room || !mine) return;
 
-    var hopped = false, settled = 0, timer = null;
+    var hopped = false, settled = 0, timer = null, asked = false;
 
     /* EVERY PHONE IN THE ROOM RUNS THIS. Asking every eight seconds for the whole
        night is a lot of Worker and database traffic for a question whose answer is
@@ -70,10 +70,18 @@
 
     function look() {
       if (hopped) return;
+      /* THE FIRST QUESTION IS ASKED OF THE DATABASE (31 Oct 2026). The Worker answers this poll
+         from a copy up to four seconds old, shared by the whole room, which is what makes it
+         cheap. This page has just loaded because the room moved, so its first look says fresh:1:
+         a copy from before the move would send the phone straight back where it came from. The
+         repeats come at least eight seconds apart, longer than the copy lives, so each is newer
+         than the last. */
+      var body = asked ? { code: room } : { code: room, fresh: 1 };
+      asked = true;
       fetch(api + "/join/info", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: room })
+        body: JSON.stringify(body)
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
