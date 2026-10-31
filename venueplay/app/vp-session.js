@@ -13,7 +13,7 @@
    management layer (sign-in routing, Gflam HQ, onboarding, settings).
 
    HOW TO LOAD (match existing pages, no build step):
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
      <script src="../vp-session.js"></script>   // path relative to the page
    then use the global  VP  object below.
 

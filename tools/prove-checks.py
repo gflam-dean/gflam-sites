@@ -6126,6 +6126,13 @@ MUTATIONS = [
     ('tv.html, the four game screens and the three phones size the logo by its shape', 'venueplay/app/index.html',
      '<script src="/app/vp-venuelogo.js"></script>\n', '',
      'the console calls the sizing rule and never loads it'),
+    # EVERY CDN SCRIPT IS PINNED, 1 Nov 2026: supabase-js@2 was whatever 2.x jsdelivr called newest that day.
+    ('pinned-cdn.test.py', 'venueplay/app/go.html',
+     'npm/@supabase/supabase-js@2.118.0"', 'npm/@supabase/supabase-js@2"',
+     'one page goes back to loading "the newest 2.x", so a release nobody made can change it overnight'),
+    ('pinned-cdn.test.py', 'tools/browser-rig/rig.py',
+     'npm/@supabase/supabase-js@2.118.0', 'npm/@supabase/supabase-js@2.117.0',
+     'the Chrome rig swaps an address the pages no longer load, so its tests would load the real library'),
     ('venue-logo-in-chrome.test.py', 'venueplay/app/musical/play.html',
      '  .ptop{padding:16px 72px;', '  .ptop{padding:16px;',
      'at 320 wide "VenuePlay Musical Bingo" runs under the menu button again'),

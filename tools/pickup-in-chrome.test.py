@@ -73,7 +73,7 @@ FAKE_DB = {
 }
 
 EXTERNAL = [
-    ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js'),
+    ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0', '/__fake/supabase.js'),
     ('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js'),
     ('https://game.venueplay.com.au', '/__worker'),
 ]
