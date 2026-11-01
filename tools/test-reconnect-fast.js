@@ -262,7 +262,10 @@ CASES.forEach(function (c) {
   var r = playRoom(c[1], c[2], c[3]);
   TIMES.push(["room", c[0], r.ms]);
   print("  time " + c[0] + ": back in " + fmt(r.ms) + (r.gone.length ? "  (gave the room up: " + r.gone.join(",") + ")" : ""));
-  pass("room, " + c[0] + ": back on the room within " + (TARGET_MS / 1000) + " s of the signal", r.ms >= 0 && r.ms <= TARGET_MS && !r.gone.length, fmt(r.ms));
+  /* A phone that HEARS the signal come back (an online event, or navigator.onLine turning true after an
+     offline) is back at once, inside 1.5 s (navigator.onLine is looked at once a second): it looks the moment it knows, whatever look was in flight. */
+  var lim = c[2] ? 1500 : TARGET_MS;
+  pass("room, " + c[0] + ": back on the room within " + (lim / 1000) + " s of the signal", r.ms >= 0 && r.ms <= lim && !r.gone.length, fmt(r.ms));
 });
 
 print("\nTHE SUPABASE ROAD (" + CHAN_FILE + ")");

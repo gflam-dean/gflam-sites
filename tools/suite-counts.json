@@ -540,7 +540,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
-  "checks": 38,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-musical-print.js": {
@@ -705,6 +705,10 @@
  },
  "tools/test-receipts-plain-words.js": {
   "checks": 42,
+  "counted_by": "lines"
+ },
+ "tools/test-reconnect-fast.js": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/test-remove-a-player.js": {
@@ -1100,7 +1104,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-logo.test.js": {
-  "checks": 17,
+  "checks": 19,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-screen.test.js": {
@@ -1220,7 +1224,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/shift-timer.test.js": {
-  "checks": 34,
+  "checks": 46,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {
@@ -1296,7 +1300,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room.test.js": {
-  "checks": 66,
+  "checks": 75,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/webhook-ledger.test.js": {
