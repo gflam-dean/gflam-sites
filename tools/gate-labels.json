@@ -380,6 +380,7 @@
   "tv-ads-rebuild.test.js",
   "tv-and-phone-in-chrome.test.py",
   "tv-app-setup-line.test.py",
+  "tv-bare-setup-in-chrome.test.py",
   "tv-landing-in-chrome.test.py",
   "tv-logo.test.js",
   "tv-screen.test.js",

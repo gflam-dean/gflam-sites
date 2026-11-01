@@ -10098,6 +10098,20 @@ MUTATIONS = [
      '<p class="shell foot">Stuck? Email',
      '<p class="shell foot">Call <a href="tel:0752283667">07 5228 3667</a>. Stuck? Email',
      'the support phone number appears on a public page'),
+    # ---- 1 Nov 2026, live fault (Dean, ~9pm): bare /tv put another pub's advertising up full screen with no
+    # setup panel, because the browser remembered the last venue it had opened. Each broken by hand first.
+    ('tv-bare-setup-in-chrome.test.py', 'venueplay/tv.html',
+     'TV_LAST=s; } }catch(e){}', 'return s; } }catch(e){}',
+     'bare /tv shows whichever venue this browser last opened, its slides full screen, and no setup panel'),
+    ('tv-bare-setup-in-chrome.test.py', 'venueplay/tv.html',
+     '  body.tv-bare #adsRoot{display:none!important}\n', '',
+     'the setup screen has a holding advert (Game on here) painted behind it'),
+    ('tv-bare-setup-in-chrome.test.py', 'venueplay/tv.html',
+     '    offerLastVenue();\n  }', '  }',
+     "a venue's own TV opened at bare /tv has no way back to its screen but typing the address"),
+    ('tv-bare-setup-in-chrome.test.py', 'venueplay/tv.html',
+     '<canvas id="qrPair" style="display:none"></canvas>\n    <div class="bvmark">', '<canvas id="qrPair" style="display:none"></canvas>\n    <div class="bvmark"><span>VENUEPLAY</span>',
+     'the setup panel carries the old uppercase VENUEPLAY'),
 ]
 
 

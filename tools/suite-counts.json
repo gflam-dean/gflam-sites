@@ -959,6 +959,10 @@
   "checks": 33,
   "counted_by": "lines"
  },
+ "tools/tv-bare-setup-in-chrome.test.py": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
  "tools/tv-landing-in-chrome.test.py": {
   "checks": 45,
   "counted_by": "lines"
@@ -1008,7 +1012,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/demo-hermetic.test.js": {
-  "checks": 77,
+  "checks": 78,
   "counted_by": "lines"
  },
  "venueplay-backend/app/hop-name.test.js": {
