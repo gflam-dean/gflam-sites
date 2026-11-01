@@ -62,6 +62,10 @@ def scripts_of(page):
     for i, m in enumerate(re.finditer(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', s, re.S)):
         out.append(('%s inline script %d' % (page, i + 1), m.group(1)))
     for m in re.finditer(r'<script[^>]*\bsrc="(/app/[^"]+\.js)"', s):
+        if m.group(1).startswith('/app/vendor/'):
+            # somebody else's minified library, the exact bytes the pinned CDN address served
+            # (held to its sha256 by pinned-cdn.test.py); it was never parsed here when it came from the CDN
+            continue
         f = os.path.join(SITE, m.group(1).lstrip('/'))
         if os.path.isfile(f):
             out.append((m.group(1), io.open(f, encoding='utf-8').read()))
