@@ -1129,7 +1129,7 @@
      win now has its own pinned banner (renderStageWin); this line only says what is being
      played for. */
   function idleMsg(){
-    var pn=patName(P.pattern, "the pattern"), many=P.cards.length>1;
+    var pn=patName(P.pattern, "the pattern"), many=(P.cards||[]).length>1;
     var one = many ? " It has to be on one ticket: numbers on different tickets do not add up." : "";
     if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>"+(many?" on one ticket":"")+"."+one;
     return "Mark off your numbers as they are called. Hit BINGO when "+(many?"one of your tickets":"your ticket")+" completes <b>"+esc(pn)+"</b>."+one;

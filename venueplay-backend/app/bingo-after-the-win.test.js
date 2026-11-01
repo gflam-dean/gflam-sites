@@ -88,7 +88,7 @@ var NEED = ["isCustomKey", "customById", "patInfo", "patName", "rememberPat", "p
                the same verdict, the same queue, labelled. bingo-server-tickets.js runs the server half. */
             "dealPending", "claimsChecking", "claimRef", "ticketOf", "claimCheck", "claimShown", "claimDone",
             "claimShow", "claimRefuse", "claimVerdict", "claimOnTablet", "claimRetrySoon", "recordDecision",
-            "flushClaimLog", "finishDrawRecord", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer"];
+            "flushClaimLog", "finishDrawRecord", "ticketToGo", "handProgress", "prizeFor", "claimHolders", "notePrize", "cryptoInt", "isRefusal", "serverRefused", "tabletMayStandIn", "standInOrWait", "claimRefusedByServer"];
 /* onMsg is now a gate in front of onPhoneMsg (vp-phonekey.js, 20 Sep 2026). This suite is about
    what happens AFTER a message is believed, so there is no VPPhoneKey here and the gate hands
    everything straight through, exactly as the page does when that script fails to load.
@@ -97,6 +97,7 @@ var window = this, _phoneChain = Promise.resolve();
 /* Seating (14 Oct 2026): this room has no server session, so every phone is seated, which is the
    console with the Worker down. Asking the server is seatTick's business, not this suite's. */
 function seatSoon(){}
+var BPRIZES = {};   // the venue's saved prize per pattern (1 Nov 2026); none saved here
 var TIMERS = [];
 var setTimeout = function(f, ms){ TIMERS.push({ f:f, ms:ms }); return TIMERS.length; };   // held, run by hand below
 var clearTimeout = function(){};
