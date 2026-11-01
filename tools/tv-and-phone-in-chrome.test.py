@@ -200,7 +200,7 @@ def phone_paper(entry):
            r.ask(phone, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
         shot(r, phone, 'phone-2-after-end-%s' % entry.replace(' ', '-'))
         res = r.W.ask('POST', '/session', {'venue_id': r.W.info['venue'], 'format': 'musical_bingo'}, {})
-        ok('CONTROL: a musical bingo lobby is now open at the venue', res.get('status') == 200 and r.W.ask('GET', '/play/live?code=' + r.W.info['code'])['body'].get('format') == 'musical_bingo', res)
+        ok('CONTROL: a musical bingo lobby is now open at the venue', res.get('status') == 200 and r.W.ask('GET', '/play/live?code=' + r.W.info['code'] + '&fresh=1')['body'].get('format') == 'musical_bingo', res)
         ok('THE PHONE FOLLOWS THE ROOM TO MUSICAL BINGO', r.until(phone, '/\\/app\\/musical\\/play/.test(location.pathname)', 15) is True,
            r.ask(phone, 'location.pathname + " | " + document.body.innerText.replace(/\\s+/g," ").slice(0,150)'))
     finally:
