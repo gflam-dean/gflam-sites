@@ -2669,12 +2669,12 @@ def local_checks(which):
 
     # NEVER GFLAM IN A VENUEPLAY OR PARTYPLAY EMAIL (Dean, 29 Oct 2026: "Help emails still come out
     # and say that it's provided by Gflam"). VenuePlay is its own business; its emails say
-    # "VenuePlay · ABN 35 679 383 049" and PartyPlay's "PartyPlay · ABN ...". Read: every template in
+    # "venueplay · ABN 35 679 383 049" (lowercase since the 2 Nov release) and PartyPlay's "PartyPlay · ABN ...". Read: every template in
     # venueplay/emails and partyplay/emails (comments removed, so a note about history is not copy),
     # and the strings the help desk's email builders in the billing Worker write. The help desk's
     # rendered emails are also run and read by tools/test-help-desk.js. One sentence is allowed (below). The billing
     # Worker's tax invoice, reminder, declined-card and plan emails are run and read by tools/test-receipts-plain-words.js
-    # (D99, 31 Oct 2026): "VenuePlay, ABN 35 679 383 049", never Gflam. Not covered here: the PartyPlay Worker's emailShell.
+    # (D99, 31 Oct 2026): "venueplay, ABN 35 679 383 049", never Gflam. Not covered here: the PartyPlay Worker's emailShell.
     gflam_hits = []
     for top in ('venueplay', 'partyplay'):
         ed = os.path.join(ROOT, top, 'emails')
@@ -3450,6 +3450,8 @@ def local_checks(which):
            why='extras are $2 each for that night, host approved. The plan rate is per MONTH')
         terms = io.open(os.path.join(ROOT, 'venueplay', 'terms.html'), encoding='utf-8').read()
         starts = re.findall(r'<(?:h2|p)[^>]*>\s*(?:\d+\.\s*)?([a-z][a-z]+)', terms)
+        # "venueplay" is the name, written lowercase even at a sentence start (Dean, 1 Nov 2026).
+        starts = [w for w in starts if w != 'venueplay']
         ok('no heading or paragraph of the Terms starts with a lower-case word',
            len(re.findall(r'<h2', terms)) >= 8 and not starts, detail=', '.join(starts[:4]),
            why='a sentence that starts in lower case in a contract has had its subject deleted. '
@@ -3734,13 +3736,13 @@ def local_checks(which):
              'every email a venue gets, its subject, html and text, carries no workers.dev address with API_URL and API_ORIGIN set to it or unset; the cancel link is signed on https://venueplay.com.au/prospect/cancel/, a page that exists; no .dev host in any header, the win-back\'s one-click List-Unsubscribe and Dean\'s review buttons on api.venueplay.com.au, the staff text on venueplay.com.au; opening the cancel page never POSTs, only its button does, once, with the token', 70,
              'A welcome bounced by a mail provider\'s content filter never reaches the venue, and nobody hears '
              'why; a cancel page that POSTs on load lets a mail scanner switch a venue off'),
-            # D99: billing emails in plain words (Dean, 30 Oct 2026: the name is "VenuePlay, ABN 35 679 383 049",
+            # D99: billing emails in plain words (Dean, 30 Oct 2026: the name is "venueplay, ABN 35 679 383 049" since 2 Nov,
             # never Gflam Group, never founding; 31 Oct: the paid-invoice email delivers Stripe's tax invoice and
             # says "Tax invoice"), branch
             # fix/receipts-and-host-titles-31oct. The billing page's words: tools/billing-words-in-chrome.test.py.
-            ('D99. Billing emails say VenuePlay plan and "VenuePlay, ABN", never founding or Gflam; the paid-invoice email says Tax invoice',
+            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email says Tax invoice',
              'test-receipts-plain-words.js',
-             'Stripe\'s "Founding Membership" lines are printed as "VenuePlay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. VenuePlay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "VenuePlay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
+             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
              'A venue reading "Founding Membership" or Gflam Group on its tax invoice email, or that email no longer '
              'saying it is the tax invoice it delivers'),
             # D100: the lobby poll answered from the Worker's memory (31 Oct 2026, after the 30 Oct live ramp bent the
