@@ -189,8 +189,10 @@ pass("the host device stops with the room",
    End game had no confirm at all, and the song list had no hold, so two quick taps
    marked two songs played while the room heard one. A card could then be certified
    on a song nobody heard. */
+/* 2 Nov 2026: the "End this game?" dialog became two taps on the button itself (f4067ef7, the bingo
+   console's way); the first tap only arms it, so it still asks first. */
 pass("End game asks first",
-     /vpAsk\("End this game\?/.test(hostSrc),
+     /var END_ARM_MS=15000/.test(hostSrc) && /function endGame\(\)\{[\s\S]{0,400}?if\(!G\._endAsked \|\| \(now-G\._endAsked\)>END_ARM_MS\)\{\s*G\._endAsked=now;/.test(hostSrc),
      "one stray tap clears the game and sends the TV back to the ads mid-round");
 pass("the song list has the same hold as the big button",
      /VP_HOLD\.busy\(_hb\)/.test(hostSrc) && /Stop \\"/.test(hostSrc),
