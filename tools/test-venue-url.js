@@ -129,9 +129,14 @@ RUNS.forEach(function(r){
   warned = [];
   var win = load(); win.location = { search: r[0] };
   var got;
-  try { got = (new Function("window", "VPVenueURL", "localStorage", "console", tvBody + "; return VENUE_SLUG;"))(win, win.VPVenueURL, store(MEM), win.console); }
+  var last = "";
+  try { var both = (new Function("window", "VPVenueURL", "localStorage", "console", tvBody + "; return [VENUE_SLUG, TV_LAST];"))(win, win.VPVenueURL, store(MEM), win.console); got = both[0]; last = both[1]; }
   catch (e) { got = "THREW " + e; }
-  ok("tv.html " + (r[0] || "(nothing)") + " shows " + r[1] + (r[2] ? " and warns" : ""), got === r[1] && (r[2] ? warned.length === 1 : warned.length === 0), got + " warned=" + warned.length);
+  /* BARE /tv NEVER SHOWS THE REMEMBERED VENUE BY ITSELF (live fault, 1 Nov 2026): where the game screens fall
+     back to memory, tv.html reads NO venue and only offers the remembered one on its setup panel (TV_LAST). */
+  var want = r[1] === MEM ? "" : r[1];
+  ok("tv.html " + (r[0] || "(nothing)") + " shows " + (want || "the setup screen") + (want ? "" : ", offering " + MEM) + (r[2] ? " and warns" : ""),
+     got === want && (want ? true : last === MEM) && (r[2] ? warned.length === 1 : warned.length === 0), got + " last=" + last + " warned=" + warned.length);
 });
 
 // play.html: the bingo phone's venue link
