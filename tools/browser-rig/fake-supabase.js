@@ -1,6 +1,6 @@
 /* A STAND-IN FOR supabase-js, FOR THE REAL PAGES IN A REAL BROWSER (tools/test-console-in-chrome.py).
 
-   Served in place of https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0 by the test's local server, and
+   Served in place of /app/vendor/supabase-js-2.118.0.min.js by the test's local server, and
    nothing else on the page is changed. It gives the pages exactly what they use:
      auth      a signed-in host (the console) or nobody (a phone)
      from()    the few tables vp-session.js reads, answered from window.__FAKE_DB (written by the server)

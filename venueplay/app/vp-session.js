@@ -13,7 +13,7 @@
    management layer (sign-in routing, Gflam HQ, onboarding, settings).
 
    HOW TO LOAD (match existing pages, no build step):
-     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+     <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
      <script src="../vp-session.js"></script>   // path relative to the page
    then use the global  VP  object below.
 
@@ -287,7 +287,8 @@
   }
 
   /* THE CDN CAN FAIL, AND IT MUST NOT KILL THE CONSOLE SILENTLY.
-     getClient() throws synchronously when cdn.jsdelivr.net has not delivered supabase-js, and
+     getClient() throws synchronously when supabase-js has not loaded (served from
+     /app/vendor/ since 1 Nov 2026, from cdn.jsdelivr.net before that), and
      build() used to call it at the top, OUTSIDE any promise. So the throw escaped before a promise
      existed and every .catch() on every console never ran: the host sat on the boot splash
      forever with no error, no retry and nothing to tell them why, then reloaded into the same

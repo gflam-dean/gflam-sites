@@ -1,0 +1,29 @@
+{
+ "_why": "Third-party scripts we serve ourselves, byte for byte what the address in \"from\" served on the day copied. tools/pinned-cdn.test.py checks every one against its sha256 and its licence file. To upgrade: copy the new file under a new versioned name, add it here, move every page to it, delete the old one.",
+ "files": {
+  "venueplay/app/vendor/qrcode-1.4.4.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js",
+   "sha256": "0e1769a0feb8c5c87f16bcfc0a2050135d9e9f9e4d5fe46194f19183a2969b9b",
+   "licence": "venueplay/app/vendor/qrcode-1.4.4.LICENSE.txt",
+   "copied": "2026-11-01"
+  },
+  "venueplay/app/vendor/supabase-js-2.118.0.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0",
+   "sha256": "bee24fc29228ed5a370f76a2ba1ca3c399549edad2fef23453c80148856a49af",
+   "licence": "venueplay/app/vendor/supabase-js-2.118.0.LICENSE.txt",
+   "copied": "2026-11-01"
+  },
+  "partyplay/vendor/qrcode-1.4.4.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js",
+   "sha256": "0e1769a0feb8c5c87f16bcfc0a2050135d9e9f9e4d5fe46194f19183a2969b9b",
+   "licence": "partyplay/vendor/qrcode-1.4.4.LICENSE.txt",
+   "copied": "2026-11-01"
+  },
+  "partyplay/vendor/supabase-js-2.118.0.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0",
+   "sha256": "bee24fc29228ed5a370f76a2ba1ca3c399549edad2fef23453c80148856a49af",
+   "licence": "partyplay/vendor/supabase-js-2.118.0.LICENSE.txt",
+   "copied": "2026-11-01"
+  }
+ }
+}

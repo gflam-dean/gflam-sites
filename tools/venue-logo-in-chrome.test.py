@@ -131,8 +131,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         ext = os.path.splitext(f)[1].lower()
         if ext in ('.html', '.js', '.css', '.json'):
             t = io.open(f, encoding='utf-8').read()
-            t = t.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0', '/__fake/supabase.js')
-            t = t.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
+            t = t.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js')
+            t = t.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
             t = t.replace('https://game.venueplay.com.au', '/__worker')
             return self.send(200, t, {'.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json'}[ext] + '; charset=utf-8')
         ct = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg'}.get(ext, 'application/octet-stream')

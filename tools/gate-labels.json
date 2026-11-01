@@ -261,6 +261,7 @@
   "pp-worker-15-oct.test.js",
   "prospects-status-in-chrome.test.py",
   "purchase-raffle-in-chrome.test.py",
+  "qr-fallback-in-chrome.test.py",
   "redirect-verdict.test.py",
   "redraw-confirm.test.js",
   "regulated.test.py",
