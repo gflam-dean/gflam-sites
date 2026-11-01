@@ -259,5 +259,36 @@ ok('a mobile typed in shows in the preview and the copy, as M with a tel: link',
 var s3 = sigPage({ mb: '   ' });
 ok('a mobile that is only spaces counts as empty: no mobile line', !hasM(s3.pv) && !hasM(s3.copied), s3.pv.slice(0, 120));
 
+/* 12. THE ACKNOWLEDGEMENT OF COUNTRY IN THE SITE FOOTER (Dean, 2 Nov 2026): the same words as the foot of
+   the help desk emails (helpCountry in the billing Worker), one quiet line at the bottom of the shared
+   footer on every public page that loads /app/vp-footer.css, and on no game screen, TV, phone or console.
+   jsc cannot list a folder, so every page of the site is named here (git ls-files 'venueplay/**.html',
+   less the email templates, on 2 Nov 2026). A new page goes in this list. */
+print('\nTHE ACKNOWLEDGEMENT OF COUNTRY IN THE SITE FOOTER');
+var COUNTRY_LINE = 'venueplay and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+var SITE_PAGES = ['venueplay/404.html','venueplay/add-card.html','venueplay/app/billing.html','venueplay/app/go.html','venueplay/app/hq.html','venueplay/app/index.html','venueplay/app/marketing.html','venueplay/app/members/host.html','venueplay/app/members/screen.html','venueplay/app/musical/host.html','venueplay/app/musical/play.html','venueplay/app/musical/screen.html','venueplay/app/onboard.html','venueplay/app/purchase-raffle/index.html','venueplay/app/raffle/host.html','venueplay/app/raffle/screen.html','venueplay/app/report.html','venueplay/app/settings.html','venueplay/app/topanswers/screen.html','venueplay/app/trivia/builder.html','venueplay/app/trivia/host.html','venueplay/app/trivia/play.html','venueplay/app/trivia/screen.html','venueplay/email/signature.html','venueplay/help.html','venueplay/index.html','venueplay/leave-behind-club.html','venueplay/leave-behind-pub.html','venueplay/leave-behind-rsl.html','venueplay/leave-behind.html','venueplay/live-here-now.html','venueplay/nsw.html','venueplay/play.html','venueplay/privacy.html','venueplay/prospect/cancel/index.html','venueplay/screen-check.html','venueplay/see-a-night.html','venueplay/signage.html','venueplay/terms.html','venueplay/training.html','venueplay/tv.html','venueplay/unsubscribe.html'];
+var footPages = [], wrongFoot = [], strays = [];
+SITE_PAGES.forEach(function (rel) {
+  var src = read(rel), uses = /<link rel="stylesheet" href="\/app\/vp-footer\.css">/.test(src);
+  var foot = (/<footer>[\s\S]*?<\/footer>/.exec(src) || [''])[0];
+  if (uses) {
+    footPages.push(rel.replace('venueplay/', ''));
+    var tag = '<p class="wrap foot-country">' + COUNTRY_LINE + '</p>';
+    if (foot.split(tag).length !== 2 || foot.lastIndexOf(tag) + tag.length + '\n</footer>'.length !== foot.length) wrongFoot.push(rel);
+  } else if (src.indexOf('acknowledge the Traditional Owners') !== -1) strays.push(rel);
+});
+var mainEmail = read('venueplay-backend/worker/venueplay-api-FULL.js');
+ok('every page with the shared footer (home, the offer and state page, help, terms, privacy) is found, so the next check is not checked against nothing',
+   ['index.html', 'nsw.html', 'help.html', 'terms.html', 'privacy.html'].every(function (p) { return footPages.indexOf(p) !== -1; }), footPages.join(', '));
+ok('...and each carries the Acknowledgement of Country once, word for word, as the last line inside its footer', footPages.length >= 5 && wrongFoot.length === 0, wrongFoot.join(', '));
+ok('the words are the help desk email\'s own, so the site and the email cannot drift apart',
+   mainEmail.indexOf("(pp ? 'PartyPlay' : 'venueplay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.'") !== -1);
+ok('no game screen, TV, phone, console or HQ page carries it (only the public footer does)', strays.length === 0 && SITE_PAGES.length >= 40, strays.join(', '));
+var FCSS = read('venueplay/app/vp-footer.css');
+var fc = (/footer \.foot-country\{([^}]*)\}/.exec(FCSS) || ['', ''])[1];
+ok('the line is small, quiet, centred and in normal case at every width (the rule sits outside the phone-width query)',
+   /text-align:center/.test(fc) && /text-transform:none/.test(fc) && /font-size:12px/.test(fc) && /color:#8E8E98/.test(fc) && /margin:30px auto 0/.test(fc)
+   && FCSS.indexOf('footer .foot-country{') < FCSS.indexOf('@media'), fc);
+
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' platform checks failed');

@@ -3222,6 +3222,12 @@ MUTATIONS = [
     ('test-platform-15-oct.js', 'venueplay/app/vp-analytics.js', '    waiting.push(fn);\n  }', '    try { fn(); } catch (e) {}\n  }', 'the shared gate stops waiting for a person, so both tags count every scanner that opens a link'),
     ('test-platform-15-oct.js', 'venueplay/404.html', '<meta name="robots" content="noindex,nofollow">', '', 'the not-found page can be indexed by search engines'),
     ('test-platform-15-oct.js', 'venueplay/_redirects', '/offer-oct  /nsw  200', '/offer-oct  /nsw-retired  200', 'a link already in inboxes now lands on the not-found page'),
+    # 2 Nov 2026 (Dean: yes to the lowercase Acknowledgement of Country, and put it in the site footer too).
+    ('test-platform-15-oct.js', 'venueplay/terms.html', '  <p class="wrap foot-country">venueplay and The Gflam Group of Companies acknowledge', '  <p class="wrap foot-country-gone">venueplay and The Gflam Group of Companies acknowledge', 'the Terms page footer loses the Acknowledgement of Country'),
+    ('test-platform-15-oct.js', 'venueplay/privacy.html', 'We pay our respects to Elders past and present.</p>', 'We pay our respects to Elders past, present and emerging.</p>', 'one page words the Acknowledgement of Country differently from the email and the other pages'),
+    ('test-platform-15-oct.js', 'venueplay/index.html', '<link rel="stylesheet" href="/app/vp-footer.css">', '<link rel="stylesheet" href="/app/vp-footer-old.css">', 'the homepage stops loading the shared footer, so the Acknowledgement check reads one page fewer'),
+    ('test-platform-15-oct.js', 'venueplay/tv.html', '</body>', '<p>venueplay and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create.</p>\n</body>', 'the Acknowledgement of Country is painted on the venue TV'),
+    ('test-platform-15-oct.js', 'venueplay/app/vp-footer.css', 'margin:30px auto 0;text-align:center;', 'margin:30px auto 0;', 'the Acknowledgement of Country line sits off to one side instead of centred'),
     # 2 Nov 2026: the signature maker's Mobile is optional, starts empty, and empty means no M line.
     ('test-platform-15-oct.js', 'venueplay/email/signature.html', '    if(mob) rows+=', '    rows+=', 'the signature maker prints an empty mobile line when nobody typed a mobile'),
     ('test-platform-15-oct.js', 'venueplay/email/signature.html', '<input id="mb" type="tel" value=""', '<input id="mb" type="tel" value="0400 000 000"', 'the signature maker fills in a mobile number nobody typed'),
