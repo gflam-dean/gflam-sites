@@ -308,6 +308,8 @@ def phone_header(label, path, w, h):
 # 300 ms apart must agree before one is believed. The wall width travels with the reading.
 MARK = r'''(function(W){
   if(innerWidth!==W || document.readyState!=="complete" || document.fonts.status!=="loaded") return null;
+  // the start-of-game show (on by default, 2 Nov 2026) hides the corner while its own logo flies there: read the corner once it has landed
+  if(document.getElementById("vpSting") || (window.VPSting && VPSting.stats && VPSting.stats().playing)) return null;
   var vn=document.querySelector(".tv-corner .vn"), cor=vn&&vn.parentNode; if(!vn) return null;
   var s=getComputedStyle(vn), cs=getComputedStyle(cor), br=document.getElementById("ballReveal"), tv=document.querySelector(".tv");
   var op=1, e=vn; while(e && e.nodeType===1){ op*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
@@ -316,7 +318,7 @@ MARK = r'''(function(W){
     svg:cor.querySelector("svg").getBoundingClientRect().width, logo:(document.getElementById("venueLogo")||{}).offsetHeight||0,
     sting: cor.classList.contains("vp-sting-mark"),
     nm: (function(n){ if(!n) return null; var r=n.getBoundingClientRect(), o=1, e=n; while(e && e.nodeType===1){ o*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
-      return {w:r.width, h:r.height, op:o, shown:getComputedStyle(n).display!=="none"}; })(cor.querySelector(".vp-newmark")),
+      return {w:r.width, h:r.height, op:o, shown:getComputedStyle(n).display!=="none"}; })(document.querySelector(".vp-sting-mark .vp-newmark")),
     wall: tv ? tv.clientWidth : innerWidth});
 })(%d)'''
 
