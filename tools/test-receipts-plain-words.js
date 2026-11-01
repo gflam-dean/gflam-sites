@@ -1,16 +1,16 @@
 /* RECEIPTS AND BILLING EMAILS IN PLAIN WORDS, RUN (Dean, 30 Oct 2026).
 
-   Dean: tax invoices are issued by Stripe, and the name a venue deals with is "VenuePlay, ABN
+   Dean: tax invoices are issued by Stripe, and the name a venue deals with is "venueplay, ABN
    35 679 383 049". Never "Gflam Group" on anything a venue sees, and never "founding".
 
    Three rules, each checked on the html the billing Worker hands to Resend:
      (a) a Stripe line written from the product name ("1 Player x Founding Membership (Monthly)
-         (at $2.50 / month)") is printed in plain words, "VenuePlay plan (monthly)". The Stripe
+         (at $2.50 / month)") is printed in plain words, "venueplay plan (monthly)". The Stripe
          product keeps its name; only what our emails print changes (vpaPlainLineDesc).
      (b) the paid-invoice email DELIVERS Stripe's tax invoice (Dean, 31 Oct 2026: "I thought we were
-         delivering the Stripe tax invoice"), so it says "Tax invoice. VenuePlay, ABN ...", its subject
-         is "Your VenuePlay invoice <number> - $x", and "View invoice" opens Stripe's hosted invoice.
-     (c) the business name line reads "VenuePlay, ABN 35 679 383 049".
+         delivering the Stripe tax invoice"), so it says "Tax invoice. venueplay, ABN ...", its subject
+         is "Your venueplay invoice <number> - $x", and "View invoice" opens Stripe's hosted invoice.
+     (c) the business name line reads "venueplay, ABN 35 679 383 049".
 
    It RUNS the shipped senders (the receipt, the payment reminder, the declined card for a
    subscription and for an extras invoice, the plan moved up, the welcome) with only fetch and the
@@ -34,7 +34,7 @@ function visible(html) {
     .replace(/&middot;/g, '·').replace(/&times;/g, '×').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ').trim();
 }
-var NAME_LINE = 'VenuePlay, ABN 35 679 383 049';
+var NAME_LINE = 'venueplay, ABN 35 679 383 049';
 function clean(where, text) {
   check(where + ': never "founding"', !/founding/i.test(text), (text.match(/.{0,40}founding.{0,40}/i) || [])[0]);
   check(where + ': never Gflam', !/gflam/i.test(text), (text.match(/.{0,40}gflam.{0,40}/i) || [])[0]);
@@ -75,12 +75,12 @@ function invoice(extra) {
 async function main() {
   print('(a) A Stripe line is printed in plain words');
   var P = vpaPlainLineDesc;
-  check('the subscription line: "1 Player × VenuePlay plan (monthly) (at $2.50 / month)"', P(MONTHLY) === '1 Player × VenuePlay plan (monthly) (at $2.50 / month)', P(MONTHLY));
-  check('a proration line keeps its quantity and its date', P(PRORATE) === 'Remaining time on 12 × VenuePlay plan (annual) after 01 Oct 2026', P(PRORATE));
+  check('the subscription line: "1 Player × venueplay plan (monthly) (at $2.50 / month)"', P(MONTHLY) === '1 Player × venueplay plan (monthly) (at $2.50 / month)', P(MONTHLY));
+  check('a proration line keeps its quantity and its date', P(PRORATE) === 'Remaining time on 12 × venueplay plan (annual) after 01 Oct 2026', P(PRORATE));
   check('the other product names Stripe has had: "Founding Monthly", "VenuePlay Founding Membership"',
-        P('3 × Founding Monthly') === '3 × VenuePlay plan (monthly)' && P('VenuePlay Founding Membership') === 'VenuePlay plan', [P('3 × Founding Monthly'), P('VenuePlay Founding Membership')]);
+        P('3 × Founding Monthly') === '3 × venueplay plan (monthly)' && P('VenuePlay Founding Membership') === 'venueplay plan', [P('3 × Founding Monthly'), P('VenuePlay Founding Membership')]);
   check('"founding rate" reads "your rate"; a stray "founding" goes', P('Held at the founding rate') === 'Held at your rate' && !/founding/i.test(P('Founding venue discount')), [P('Held at the founding rate'), P('Founding venue discount')]);
-  check('"Gflam Group Pty Ltd" in a description reads VenuePlay', P('Gflam Group Pty Ltd subscription') === 'VenuePlay subscription', P('Gflam Group Pty Ltd subscription'));
+  check('"Gflam Group Pty Ltd" in a description reads venueplay', P('Gflam Group Pty Ltd subscription') === 'venueplay subscription', P('Gflam Group Pty Ltd subscription'));
   check('a line with nothing to change is left exactly as Stripe wrote it', P(BIGNIGHT) === BIGNIGHT && P('The Jolly Jess: 1 extra player, full month') === 'The Jolly Jess: 1 extra player, full month');
   check('the big-night count still reads Stripe\'s own line (12 extra players over 1 night)',
         (function () { var o = vpaOverageFromInvoice(invoice()); return o.nights === 1 && o.players === 12 && o.cents === 2400; })(), vpaOverageFromInvoice(invoice()));
@@ -91,14 +91,14 @@ async function main() {
   var r = last(), rt = visible(r.html);
   check('CONTROL: the receipt was sent, with its lines', !!r.html && rt.indexOf('What this is for') !== -1, r.subject);
   clean('receipt', rt + ' ' + (r.subject || ''));
-  check('it is the tax invoice: "Tax invoice. VenuePlay, ABN 35 679 383 049. Prices include GST."', rt.indexOf('Tax invoice. ' + NAME_LINE + '. Prices include GST.') !== -1, rt.slice(-700));
-  check('it is never called a receipt in its own small print', rt.indexOf('Receipt. VenuePlay') === -1);
-  check('the subject: "Your VenuePlay invoice ABC-0001 - $66.50"', r.subject === 'Your VenuePlay invoice ABC-0001 - $66.50', r.subject);
+  check('it is the tax invoice: "Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST."', rt.indexOf('Tax invoice. ' + NAME_LINE + '. Prices include GST.') !== -1, rt.slice(-700));
+  check('it is never called a receipt in its own small print', rt.indexOf('Receipt. venueplay') === -1);
+  check('the subject: "Your venueplay invoice ABC-0001 - $66.50"', r.subject === 'Your venueplay invoice ABC-0001 - $66.50', r.subject);
   check('the inbox preview: "Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside."', rt.indexOf('Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside.') !== -1, rt.slice(0, 160));
   check('the body: "Here is your invoice ABC-0001, and exactly what it is for."', rt.indexOf('Here is your invoice ABC-0001, and exactly what it is for.') !== -1);
-  check('the page title: "Your VenuePlay invoice"', /<title>Your VenuePlay invoice<\/title>/.test(r.html));
-  check('the subscription line reads "1 Player × VenuePlay plan (monthly) (at $2.50 / month)"', rt.indexOf('1 Player × VenuePlay plan (monthly) (at $2.50 / month)') !== -1, rt.slice(0, 600));
-  check('the proration line reads "VenuePlay plan (annual)"', rt.indexOf('12 × VenuePlay plan (annual)') !== -1);
+  check('the page title: "Your venueplay invoice"', /<title>Your venueplay invoice<\/title>/.test(r.html));
+  check('the subscription line reads "1 Player × venueplay plan (monthly) (at $2.50 / month)"', rt.indexOf('1 Player × venueplay plan (monthly) (at $2.50 / month)') !== -1, rt.slice(0, 600));
+  check('the proration line reads "venueplay plan (annual)"', rt.indexOf('12 × venueplay plan (annual)') !== -1);
   check('the big night is still counted on it: 12 extra players over 1 big night', rt.indexOf('12 extra players') !== -1 && rt.indexOf('1 big night') !== -1);
   check('Stripe\'s own invoice keeps its title: "View invoice" opens the hosted invoice', /<a href="https:\/\/invoice\.stripe\.com\/i\/acct_x\/test_1"[^>]*>View invoice<\/a>/.test(r.html));
   check('the business name line in the small print: "' + NAME_LINE + '"', rt.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, rt.slice(-300));
@@ -109,7 +109,7 @@ async function main() {
   var u = last(), ut = visible(u.html);
   check('CONTROL: the reminder was sent', !!u.html, u.subject);
   clean('payment reminder', ut + ' ' + (u.subject || ''));
-  check('its lines are in plain words', ut.indexOf('1 Player × VenuePlay plan (monthly) (at $2.50 / month)') !== -1);
+  check('its lines are in plain words', ut.indexOf('1 Player × venueplay plan (monthly) (at $2.50 / month)') !== -1);
   check('the business name line: "' + NAME_LINE + '"', ut.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, ut.slice(-300));
 
   print('\nThe declined card');
@@ -124,7 +124,7 @@ async function main() {
   await vpaFirePaymentFailedEmail(ENV, invoice({ billing_reason: 'manual', lines: { data: [{ description: '2 × Founding Membership (Monthly) (at $2.50 / month)', amount: 500 }] } }), { moved: false }, { code: 'insufficient_funds', message: '' });
   var f2 = last(), f2t = visible(f2.html);
   clean('declined card (a line named from the product)', f2t);
-  check('a charge named by its line names it in plain words: "for 2 × VenuePlay plan (monthly)"', f2t.indexOf('for 2 × VenuePlay plan (monthly) (at $2.50 / month)') !== -1, f2t.slice(0, 300));
+  check('a charge named by its line names it in plain words: "for 2 × venueplay plan (monthly)"', f2t.indexOf('for 2 × venueplay plan (monthly) (at $2.50 / month)') !== -1, f2t.slice(0, 300));
 
   print('\nThe plan moved up');
   sent = [];
@@ -141,7 +141,7 @@ async function main() {
   var w = last(), wt = visible(w.html);
   check('CONTROL: the welcome was sent', !!w.html, w.subject);
   clean('welcome', wt + ' ' + (w.subject || ''));
-  check('it names VenuePlay and the ABN', /VenuePlay · ABN 35 679 383 049|VenuePlay, ABN 35 679 383 049/.test(wt), wt.slice(-300));
+  check('it names venueplay and the ABN', /venueplay · ABN 35 679 383 049|venueplay, ABN 35 679 383 049/.test(wt), wt.slice(-300));
 
   print('');
   print(fails ? (fails + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));

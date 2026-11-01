@@ -14,8 +14,10 @@ venue how to set up its TV carries one line, word for word:
     step's existing words (any TV works, the RECONNECTING line) still there
   - the venue Help FAQ "Setting up the TV" (venueplay/data/help-faq.json, what /help and the console
     Help panel fall back on), as its first line, with every word migration 120 wrote after it
-  - migration 131, which writes those same words live: one update of that row, the JSON's words
-    exactly, guarded on the words 120 wrote, so it lands on the live row instead of matching nothing
+  - migration 131, which wrote the line live with "VenuePlay TV app" (run 31 Oct): one update of
+    that row, guarded on the words 120 wrote, so it lands on the live row instead of matching nothing
+  - migration 138, which lowercases the name in it (Dean, 1 Nov 2026): one update of that row, the
+    JSON's words exactly, guarded on the words 131 wrote
   - the setup guide's TV step (vp-firstrun.js) is RUN, not read, in tools/test-prospect-welcome-v2.js
 
 Run from the repo root:  python3 tools/tv-app-setup-line.test.py
@@ -68,9 +70,10 @@ for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
           words.startswith('Any TV works') and 'RECONNECTING' in words and not EM_DASH.search(words), words[:120])
 
 # ---------------------------------------------------------------- the Help FAQ
-# The Help answer is a database row (migration 131, run 31 Oct), so it keeps "VenuePlay" until a migration
-# lowercases it; the 1 Nov lowercase release changed the emails, pages and handouts only.
-HELP_LINE = LINE.replace('venueplay TV app', 'VenuePlay TV app')
+# The Help answer is a database row: migration 131 (run 31 Oct) wrote the line with "VenuePlay TV app",
+# and migration 138 lowercases it, so the JSON (what the database holds after 138) carries LINE itself.
+HELP_LINE = LINE
+LINE_131 = LINE.replace('venueplay TV app', 'VenuePlay TV app')
 faq = json.loads(read('venueplay/data/help-faq.json'))
 tv = [it for it in faq['venue']['items'] if it['q'] == 'Setting up the TV']
 answer = tv[0]['a'] if len(tv) == 1 else ''
@@ -89,11 +92,17 @@ def quoted(stmt, after):
     return m.group(1).replace("''", "'") if m else None
 
 
-def faq_update(rel):
+TV_ROW = '67840db0-6bea-52b6-81aa-249e2cf977f8'
+
+
+def faq_update(rel, row=None):
+    """The one update of vp_help_faq in a migration (or, given row, the one update of that row)."""
     if not os.path.isfile(os.path.join(ROOT, rel)):
         return None, 'missing'
     st, fault = cmp_.scan(read(rel))
     ups = [b for _, b in (st or []) if re.match(r'update\s+public\.vp_help_faq\b', b, re.I)]
+    if row is not None:
+        ups = [b for b in ups if quoted(b, r'where\s+id\s*=') == row]
     return (ups[0] if len(ups) == 1 else None), (fault or (None if len(ups) == 1 else '%d updates' % len(ups)))
 
 
@@ -105,14 +114,26 @@ check('migration 131 exists, reads cleanly through the gate\'s SQL reader, and i
 new131 = quoted(up131 or '', r'set\s+answer\s*=')
 rid131 = quoted(up131 or '', r'where\s+id\s*=')
 guard131 = quoted(up131 or '', r'and\s+answer\s*=')
-check('it names the "Setting up the TV" row', rid131 == '67840db0-6bea-52b6-81aa-249e2cf977f8', rid131)
-check('the words it writes are the JSON\'s, word for word, line breaks included', bool(answer) and new131 == answer,
-      [new131 and new131[:80], answer[:80]])
+check('it names the "Setting up the TV" row', rid131 == TV_ROW, rid131)
 new120 = quoted(up120 or '', r'set\s+answer\s*=')
 check('its guard is the words migration 120 wrote, so it changes the live row instead of silently matching nothing',
       bool(new120) and guard131 == new120, [guard131 and guard131[:80], new120 and new120[:80]])
 check('and it only puts the line in front: every word 120 wrote is still there after it',
-      bool(new120) and bool(new131) and new131 == HELP_LINE + '\n' + new120)
+      bool(new120) and bool(new131) and new131 == LINE_131 + '\n' + new120)
+
+# ---------------------------------------------------------------- migration 138 lowercases the name in it
+M138 = 'venueplay-backend/supabase/venueplay-138-help-faq-lowercase-name.sql'
+up138, f138 = faq_update(M138, TV_ROW)
+check('migration 138 exists, reads cleanly through the gate\'s SQL reader, and updates the "Setting up the TV" row once',
+      up138 is not None and f138 is None, f138)
+new138 = quoted(up138 or '', r'set\s+answer\s*=')
+guard138 = quoted(up138 or '', r'and\s+answer\s*=')
+check('the words it writes are the JSON\'s, word for word, line breaks included', bool(answer) and new138 == answer,
+      [new138 and new138[:80], answer[:80]])
+check('its guard is the words migration 131 wrote, so it changes the live row instead of silently matching nothing',
+      bool(new131) and guard138 == new131, [guard138 and guard138[:80], new131 and new131[:80]])
+check('and it changes only the name: 131\'s words with "VenuePlay TV app" in lowercase, nothing else',
+      bool(new131) and bool(new138) and new138 == new131.replace(LINE_131, LINE, 1) and new138 != new131)
 
 # ---------------------------------------------------------------- the how-it-works pages and the marketing
 # Dean, 31 Oct 2026: "We also need to add Google play store app thing into all of our how do we play it?

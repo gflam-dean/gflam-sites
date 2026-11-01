@@ -78,7 +78,8 @@ check('it names the "Setting up the TV" row migration 106 seeded', rid == '67840
 # Migration 131 (31 Oct 2026) puts one line in FRONT of these words, naming the VenuePlay TV app, and
 # keeps every word below it; tools/tv-app-setup-line.test.py holds 131 to that. So the JSON is 120's
 # words with that one line first.
-APP_LINE = "Got a TV with Google Play? Download the VenuePlay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser.\n"
+APP_LINE = "Got a TV with Google Play? Download the venueplay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser.\n"
+# (lowercase since migration 138, 1 Nov 2026, which changes only the name in that line)
 before_131 = answer[len(APP_LINE):] if answer.startswith(APP_LINE) else answer
 check('the words it writes are the JSON\'s, word for word, line breaks included (less the app line 131 puts first)', new_answer == before_131 and bool(answer),
       [new_answer[:80] if new_answer else None, before_131[:80]])

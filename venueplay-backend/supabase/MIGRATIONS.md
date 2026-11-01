@@ -530,3 +530,15 @@ they get the monthly email only while consent_at is later than their latest opt-
 definer with its own search_path. Either order with the billing Worker: until it is run, POST /subscribe answers not ready and
 keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
 NOT RUN. Rollback: in the file.
+
+(137 is spent: the end-screen ratings work, `feature/end-screen-ratings-1nov`, claims "migration 137" in its Worker code, not yet
+committed on 1 Nov 2026. 138 is the next free number on every branch.)
+
+`venueplay-138-help-faq-lowercase-name.sql` (Dean, 1 Nov 2026: the name is "venueplay", lowercase, in all customer text): two
+Help answers that live only in the database get the name in lowercase, one word each. The venue answer "Setting up the TV"
+(row 67840db0, written by 131) reads "Download the venueplay TV app", every other word 131 wrote unchanged; the player answer
+"Who gives out the prizes?" (row 2717ff1f, seeded by 106) reads "venueplay supplies the game software only". Each update is
+guarded on the exact words it replaces, so an answer Dean has edited in HQ is left alone; run AFTER 131. The same words are in
+`venueplay/data/help-faq.json` (tools/help-seed-matches-faq.test.py and tools/tv-app-setup-line.test.py hold them together).
+Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the site.
+The help desk's saved replies (126) still say "VenuePlay". Branch `feature/lowercase-legal-2nov`. NOT RUN. Rollback: in the file.

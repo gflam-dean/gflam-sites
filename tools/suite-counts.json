@@ -168,7 +168,7 @@
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 16,
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/helpdesk-hq-in-chrome.test.py": {
@@ -944,7 +944,7 @@
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
-  "checks": 30,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/tv-landing-in-chrome.test.py": {
