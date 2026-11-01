@@ -3788,6 +3788,13 @@ def local_checks(which):
              'a slide is counted when the rotation moves on to it, only in ads mode on a visible page, per night from 2am on the venue\'s clock; the running total goes on the /venue poll every five minutes, at most 40 slides; a probe and the demo count nothing; a broken tally never stops the rotation or the heartbeat; the game Worker makes ONE call either way, vp_screen_poll_shown with the tally or vp_screen_poll without, and falls back in the same request before migration 135; the report names a slide by the same key the TV counts it under', 35,
              'A second database call on every screen poll at peak, a wall that stops rotating or stops reporting in because of a count, '
              'adverts counted while a game is on, or a venue told its slides were shown when nobody could see them'),
+            # D111: what kind of TV each venue screen is (Dean, 1 Nov 2026; migration 138), branch feature/tv-type-2nov.
+            # venueplay/app/vp-tvtype.js is the one list; tv.html sends a code once per page load on the poll it already makes.
+            ('D111. Each venue screen says what kind of TV it is, once per page load, on the poll it already makes, and HQ counts them',
+             'test-tv-type.js',
+             'the shared table names Samsung, LG, Fire TV, Google TV, Chromecast, the other sets, our own app, a PC and a phone from real user agents; only a code and a random id leave the TV, never the user agent; once per page load, three tries at most, never with the slide tally; the game Worker makes ONE call, vp_screen_poll_kind, and falls back in the same request before migration 138; the setup card shows the line for that TV; HQ counts TVs by type (test venues left out) and shows each venue\'s; anon and venue logins cannot read the table', 109,
+             'A second database call on every screen poll, a browser\'s full user agent kept about a venue\'s TV, a Samsung told to open '
+             'Google Play, or HQ deciding whether to build a TV app on counts that include our own laptops'),
             ('D91. Saved replies: the page and the migration are one starter set, the support line only ever reaches a venue, and Send and close closes',
              'test-help-saved-replies.js',
              'the built-in starter replies equal migration 126\'s rows; house rules on every one; fill-ins from the ticket; HQ-only add, change, delete, reorder; before the table exists the list falls back and saving says why; a left-in fill-in or the support line on a player or PartyPlay ticket is refused with no email; send and close closes', 78,

@@ -851,6 +851,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-tv-type.js": {
+  "checks": 109,
+  "counted_by": "lines"
+ },
  "tools/test-tv-watchdog-runs.js": {
   "checks": 12,
   "counted_by": "lines"
