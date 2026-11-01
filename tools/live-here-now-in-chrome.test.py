@@ -205,13 +205,14 @@ def state(t):
     return json.loads(v) if isinstance(v, str) else {'__bad': v}
 
 
-def clear_storage(b, base):
+def clear_storage(b, base, seen=None):
     """Forget what this phone has seen, from a page of the same site (Storage.clearDataForOrigin
        answered "Internal error" on this Chrome, 1 Nov 2026, and so cleared nothing)."""
     tid = b.call('Target.createTarget', {'url': base + '/llms.txt', 'newWindow': True})['targetId']
     sid = b.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
     for _ in range(50):
-        r = b.call('Runtime.evaluate', {'expression': 'location.href.indexOf("/llms.txt")>0 && document.readyState==="complete" && (localStorage.clear(), localStorage.length===0)',
+        put = '' if seen is None else ', localStorage.setItem("vp-lhn-seen", %s)' % json.dumps(json.dumps(seen))
+        r = b.call('Runtime.evaluate', {'expression': 'location.href.indexOf("/llms.txt")>0 && document.readyState==="complete" && (localStorage.clear()%s, localStorage.length===%d)' % (put, 0 if seen is None else 1),
                                         'returnByValue': True}, session=sid)
         if r.get('result', {}).get('value') is True:
             break
@@ -443,12 +444,19 @@ def main():
               and 'VPVenueURL.slug' in io.open(os.path.join(ROOT, 'venueplay', 'play.html'), encoding='utf-8').read())
 
         print('\nFOUR PHONES: 320, 375, 390 AND 430 WIDE')
+        # The question with the LONGEST answer in the file comes up first at every width: the phone is
+        # told it has seen every other one, so the hour's order has to start with it. A short random
+        # set would let a layout that only fails on long answers through.
+        LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
+        others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
         for w, h in ((320, 568), (375, 667), (390, 844), (430, 932)):
-            clear_storage(b, base)
+            clear_storage(b, base, seen=others)
             tf = Tab(b, base, w=w, h=h)
             tf.go('/live-here-now')
             s = wait_question(tf)
             btns = s.get('btns', [])
+            check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)),
+                  s.get('id') == LONG[0], s.get('id'))
             f = json.loads(tf.js(FIT))
             check('%d px, a question: nothing scrolls sideways, nothing sits off the screen or is cut off in its box' % w,
                   f['sw'] <= w and not f['out'] and not f['clipped'], f)

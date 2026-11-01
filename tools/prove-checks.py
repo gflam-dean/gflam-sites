@@ -9865,8 +9865,18 @@ MUTATIONS = [
      "if (U) slug = raw ? raw : U.slug(location.search || '');",
      'a venue name with spaces or capitals goes into the link uncleaned'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
-     '    if (results.length > at) return;     // one answer a question, however fast the thumb\n',
-     '',
+     # Two locks keep one answer a question: this guard and the buttons going disabled. Each alone
+     # holds, so the proof takes both out (the suite's late second tap must then show).
+     '    if (results.length > at) return;     // one answer a question, however fast the thumb\n'
+     '    results.push(good);\n'
+     '    if (good) right++;\n'
+     '    if (results.length === round.length) { stoppedAt = Date.now(); paintClock(); }\n'
+     '    for (var k = 0; k < btns.length; k++) {\n'
+     '      btns[k].disabled = true;\n',
+     '    results.push(good);\n'
+     '    if (good) right++;\n'
+     '    if (results.length === round.length) { stoppedAt = Date.now(); paintClock(); }\n'
+     '    for (var k = 0; k < btns.length; k++) {\n',
      'a second tap on an answered question changes the answer'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
      "    x.open('GET', '/data/live-here-now.json', true);",
