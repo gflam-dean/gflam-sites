@@ -3900,6 +3900,13 @@ def local_checks(which):
              'A venue, a host, a PartyPlay host or a stranger reading tickets is every customer\'s '
              'email and complaint handed out; a report that miscounts, or an alert that carries a '
              'customer\'s name through Google or Apple, is the same fault more quietly'),
+            # D101: the venue screens on an older television (1 Nov 2026). venueplay/app/vp-oldtv.js; the same
+            # file is run in a real Chrome on every screen by tools/old-tv-in-chrome.test.py.
+            ('D101. An older television (no container units) is handed CSS it can read; a modern one is left alone',
+             'test-old-tv-css.js',
+             'older TV engines get the walls in pixels they can read, and a modern one gets the page exactly as shipped', 100,
+             'Samsung sets before 2024 and LG sets before webOS 24 drop every cqw, clamp(), inset and flex gap: '
+             'the wall falls back to 16px browser defaults. Or the fallback touches a modern TV it must leave alone'),
             ('D15. A refused "Keep this venue" leaves the venue exactly as it was',
              'test-undo-cancel-rolls-back.js',
              'a refused undo puts back every field it wrote, the 90-day clock included', 12,

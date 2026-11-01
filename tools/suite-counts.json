@@ -219,6 +219,14 @@
   "checks": 48,
   "counted_by": "lines"
  },
+ "tools/old-tv-in-chrome.test.py": {
+  "checks": 472,
+  "counted_by": "lines"
+ },
+ "tools/old-tv-syntax.test.py": {
+  "checks": 90,
+  "counted_by": "lines"
+ },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -521,6 +529,10 @@
  },
  "tools/test-no-workersdev-links.js": {
   "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/test-old-tv-css.js": {
+  "checks": 107,
   "counted_by": "lines"
  },
  "tools/test-olgr-audit-19-oct.js": {
