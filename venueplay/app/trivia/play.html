@@ -214,7 +214,7 @@
     window.supabase={ createClient:function(){ return { channel:function(){ return { on:function(){ return this; }, subscribe:function(){ return this; }, send:function(){}, unsubscribe:function(){} }; }, removeChannel:function(){}, auth:{ getSession:function(){ return Promise.resolve({ data:{ session:null } }); } } }; } };
   }
 </script>
-<script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>'); }</script>
+<script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="/app/vendor/supabase-js-2.118.0.min.js"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-room.js"></script>

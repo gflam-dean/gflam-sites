@@ -280,7 +280,7 @@ class Site(object):
     def rewrite(self, text, who):
         if '<head>' in text:
             text = text.replace('<head>', '<head>' + self.ERRS, 1)
-        text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?as=' + who)
+        text = text.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js?as=' + who)
         text = text.replace('https://api.venueplay.com.au', '/__api')
         text = text.replace('https://game.venueplay.com.au', '/__game')
         # The touring show manager (touring/manage.html): its database and its Worker.

@@ -69,8 +69,8 @@ FAKE_DB = {
 
 # ---------------- the local site ----------------
 EXTERNAL = [
-    ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', None),            # replaced per page below
-    ('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js'),
+    ('/app/vendor/supabase-js-2.118.0.min.js', None),            # replaced per page below
+    ('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js'),
     ('https://game.venueplay.com.au', '/__worker'),
 ]
 ERRS = ('<script>window.__errs=[];window.addEventListener("error",function(e){__errs.push(String(e.message)+" @"+(e.filename||"").split("/").pop()+":"+e.lineno)});'

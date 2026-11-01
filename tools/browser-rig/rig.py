@@ -130,8 +130,8 @@ class Rig(object):
                     text = io.open(f, encoding='utf-8').read()
                     host_page = p in ('/app/index.html', '/app/purchase-raffle/index.html') or p in rig.host_pages   # pages that need a signed-in host
                     if '<head>' in text: text = text.replace('<head>', '<head>' + ERRS, 1)
-                    text = text.replace('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
-                    text = text.replace('https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js', '/__fake/qrcode.js')
+                    text = text.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js?host=%d' % (1 if host_page else 0))
+                    text = text.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
                     text = text.replace('https://game.venueplay.com.au', '/__worker')
                     ctype = {'.html': 'text/html', '.js': 'application/javascript', '.json': 'application/json', '.css': 'text/css'}.get(ext, 'text/plain')
                     return self.send(200, text, ctype + '; charset=utf-8')

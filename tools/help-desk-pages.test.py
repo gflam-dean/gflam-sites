@@ -162,7 +162,7 @@ class Tab(object):
         b.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre + STAND_IN}, session=self.sid)
         # Third-party scripts the pages load: never needed here, and a slow CDN must not decide a result.
         b.call('Network.enable', session=self.sid)
-        b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*googletagmanager*', '*facebook*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*api.partyplay.com.au*']}, session=self.sid)
+        b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*/vendor/supabase-js-*', '*googletagmanager*', '*facebook*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*api.partyplay.com.au*']}, session=self.sid)
 
     def go(self, url):
         self.b.call('Page.navigate', {'url': url}, session=self.sid)
@@ -808,7 +808,7 @@ def main():
 
         def hq_tab(w, h, mobile):
             t = Tab(b, w, h, mobile=mobile, pre=FAKE_HQ_LOGIN, routes=routes)
-            b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*vp-session.js*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*googletagmanager*', '*facebook*']}, session=t.sid)
+            b.call('Network.setBlockedURLs', {'urls': ['*cdn.jsdelivr.net*', '*/vendor/supabase-js-*', '*vp-session.js*', '*workers.dev*', '*api.venueplay.com.au*', '*game.venueplay.com.au*', '*googletagmanager*', '*facebook*']}, session=t.sid)
             t.go(VP + '/app/hq.html')
             return t
         t = hq_tab(1280, 900, False)

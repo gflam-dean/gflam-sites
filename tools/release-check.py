@@ -397,6 +397,11 @@ def local_checks(which):
         for d, _, fs in os.walk(os.path.join(ROOT, 'venueplay')):
             if 'emails' in d:
                 continue
+            # Third-party libraries we serve ourselves (app/vendor/, 1 Nov 2026) are somebody else's
+            # minified code: not ours to hold to the house rules or the definition check. They are
+            # held instead to the exact bytes copied, by sha256, in tools/pinned-cdn.test.py.
+            if os.sep + 'vendor' in d[len(ROOT):]:
+                continue
             for f in fs:
                 if f.endswith('.html') or (f.endswith('.js') and not f.endswith('.test.js')):
                     files.append(os.path.join(d, f))

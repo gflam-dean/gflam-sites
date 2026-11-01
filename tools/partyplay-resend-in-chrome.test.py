@@ -92,7 +92,7 @@ srv.socket.listen(128)   # Python's default queue of 5 drops scripts when a page
 BASE = 'http://127.0.0.1:%d' % srv.server_address[1]
 EXTERNAL = [
     ("'https://api.partyplay.com.au'", "'%s/__worker'" % BASE),
-    ('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', '/__fake/supabase.js'),
+    ('/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js'),
     ('https://www.googletagmanager.com/gtag/js?id=G-73XKQG9TBN', '/__blank.js'),
     ('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap', '/__blank.css'),
 ]
