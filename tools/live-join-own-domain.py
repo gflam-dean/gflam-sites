@@ -221,9 +221,9 @@ def main():
         # by API alone leaves the TV on the venue's own screen, which is what this asks for.
         ok('the TV loads Test Alpha\'s own screen from the game Worker', B.until(tv, 'document.body.innerText.toUpperCase().indexOf(%s) !== -1' % json.dumps(venue['name'].upper()), 40) is True,
            B.ask(tv, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
-        # THE ROOM SERVER (Durable Object over a WebSocket) is the default since 31 Oct 2026 (vp-room.js
-        # DEFAULT_ON) wherever the Worker can hand a room over; ?roomserver=1 asks for it outright. A second
-        # phone asks for it, so the upgrade path on game.venueplay.com.au is played for real too.
+        # THE ROOM SERVER (Durable Object over a WebSocket) is off by default (vp-room.js DEFAULT_ON) and
+        # switched on per page with ?roomserver=1. A second phone asks for it, so the upgrade path on
+        # game.venueplay.com.au is played for real too.
         phone2 = B.tab(SITE + '/play?room=' + code + '&roomserver=1', mobile=True)
         ok('a second phone, with the room server on, is ready to take a name', B.until(phone2, ready, 60) is True)
         B.ask(phone2, 'document.getElementById("nameIn").value="Own domain room"; document.getElementById("joinBtn").click(); true')
