@@ -340,9 +340,9 @@ def help_page_checks(b, VP):
         loaded = t.until('document.readyState==="complete" && !!document.querySelector("[data-path=venue]")', 15)
         check(tag + ': /help loads the help page (a clean URL, as Pages serves it)', bool(loaded) and 'Help' in (t.js('document.title') or ''), t.js('location.pathname'))
         check(tag + ': in the site\'s look: the home page\'s header logo, its footer with Help in it, its black',
-              t.js('(function(){var w=document.querySelector("header .logo .word");return !!w && w.textContent==="VenuePlay" && !!document.querySelector("footer .foot-meta a[href=\'/help\']") && getComputedStyle(document.body).backgroundColor==="rgb(10, 10, 11)" && getComputedStyle(document.querySelector("h1")).fontFamily.indexOf("Anton")>=0;})()') is True)
+              t.js('(function(){var w=document.querySelector("header .logo .word");return !!w && !!w.querySelector(\'svg[data-vp-mark="wordmark"]\') && !!document.querySelector("footer .foot-meta a[href=\'/help\']") && getComputedStyle(document.body).backgroundColor==="rgb(10, 10, 11)" && getComputedStyle(document.querySelector("h1")).fontFamily.indexOf("Anton")>=0;})()') is True)
         check(tag + ': two clear ways in at the top, "I\'m a venue" and "I\'m a player", and the sales way',
-              t.js('Array.prototype.map.call(document.querySelectorAll("[data-path]"),function(x){return x.getAttribute("data-path")+":"+(x.querySelector(".t,b")||{}).textContent;}).join("|")') == "venue:I'm a venue|player:I'm a player|sales:Sales: bring VenuePlay to your venue",
+              t.js('Array.prototype.map.call(document.querySelectorAll("[data-path]"),function(x){return x.getAttribute("data-path")+":"+(x.querySelector(".t,b")||{}).textContent;}).join("|")') == "venue:I'm a venue|player:I'm a player|sales:Sales: bring venueplay to your venue",
               t.js('Array.prototype.map.call(document.querySelectorAll("[data-path]"),function(x){return x.getAttribute("data-path")+":"+(x.querySelector(".t,b")||{}).textContent;}).join("|")'))
         check(tag + ': nothing is open until they choose, and the page says so', t.js('document.getElementById("venue").hidden && document.getElementById("player").hidden && document.getElementById("sales").hidden && !document.getElementById("pickHint").hidden') is True)
         check(tag + ': no sideways scrolling', t.js('document.documentElement.scrollWidth<=window.innerWidth') is True, [t.js('document.documentElement.scrollWidth'), t.js('window.innerWidth')])
@@ -826,7 +826,7 @@ def main():
         time.sleep(0.5)   # HQ's pills fade their colour over 0.15s: measure and photograph after it
         check('hq: the tab shows the desk and hides the other panes', rows == 3 and t.js('document.getElementById("paneVenues").classList.contains("hidden") && !document.getElementById("paneHelpdesk").classList.contains("hidden")') is True)
         check('hq: the Help desk pill is the pink one now, and Venues is not', t.js('getComputedStyle(document.getElementById("hdTab")).backgroundColor') == 'rgb(255, 31, 142)' and t.js('getComputedStyle(document.querySelector("[data-pane=venues]")).backgroundColor') != 'rgb(255, 31, 142)')
-        check('hq: every ticket shows its brand (All: the most recently touched first)', t.js('Array.prototype.map.call(document.querySelectorAll("#hdRows .hdbrand"),function(x){return x.textContent}).join()') == 'PartyPlay,VenuePlay,VenuePlay')
+        check('hq: every ticket shows its brand (All: the most recently touched first)', t.js('Array.prototype.map.call(document.querySelectorAll("#hdRows .hdbrand"),function(x){return x.textContent}).join()') == 'PartyPlay,venueplay,venueplay')
         check('hq: a PartyPlay ticket says host support, not venue support', 'Host support' in (t.js('document.getElementById("hdRows").textContent') or ''))
         check('hq: every request carries the HQ login', all((p.get('headers') or {}).get('Authorization') == 'Bearer hq-admin-token' for p in (t.js('window.__posts') or [])))
         light = t.js(LIGHT + '("#paneHelpdesk input:not([type=radio]):not([type=checkbox]), #paneHelpdesk select, #paneHelpdesk textarea")')

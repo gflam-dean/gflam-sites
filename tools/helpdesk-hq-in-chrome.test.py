@@ -310,7 +310,7 @@ try:
     S.until(sid, '!!document.getElementById("hsNotYet")', 8)
     ok('before migration 126 it says so, plainly', 'Migration 126 has not been run yet' in (js(sid, 'document.getElementById("hsNotYet").textContent') or ''))
     ok('...and shows every starter reply, read-only, grouped by who they are for', js(sid, 'document.querySelectorAll("#hsBox .hsitem").length') == len(SEED)
-       and js(sid, 'document.querySelectorAll("#hsBox [data-hs]").length') == 0 and 'VenuePlay players' in text(sid, 'document.getElementById("hsBox").textContent'))
+       and js(sid, 'document.querySelectorAll("#hsBox [data-hs]").length') == 0 and 'venueplay players' in text(sid, 'document.getElementById("hsBox").textContent'))
     time.sleep(0.4)   # HQ's pills fade their colour over 0.15s: photograph after it
     shot(sid, '03-saved-replies-before', full=True)
     # "Run" migration 126: the table appears, seeded the way the migration seeds it.
