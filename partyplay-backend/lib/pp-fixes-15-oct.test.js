@@ -239,6 +239,16 @@ print("\n== the words (finding 11) ==");
 var idx = PPRig.src("partyplay/index.html");
 ok("the header button cannot wrap", /nav \.go,\.navr \.signin\{white-space:nowrap\}/.test(idx));
 ok("the footer no longer says to pick a date", !/Pick the date later/.test(idx));
+/* The other brand's name is written in lowercase, "venueplay" (Dean, 1 Nov 2026). Only text a person
+   reads is looked at: comments are stripped first, so the notes that mention VenuePlay stay. */
+var pp_said = [];
+["partyplay/index.html", "partyplay/start.html", "partyplay/terms.html", "partyplay/privacy.html", "partyplay/host.html"].forEach(function (f) {
+  var s = PPRig.src(f).replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  if (/VenuePlay/.test(s)) pp_said.push(f);
+});
+ok("the pages a person reads say \"venueplay\" in lowercase, never \"VenuePlay\"", !pp_said.length && /Head to venueplay<\/a>/.test(idx), pp_said.join(", "));
+ok("the trivia credit the host is shown names venueplay in lowercase",
+   /venueplay original content for venueplay-authored questions/.test(JSON.parse(PPRig.src("partyplay/data/trivia/index.json")).license || ""));
 var icons = {}, dupe = [];
 PPGames.formats().forEach(function (f) { var i = PPGames.icon(f); if (icons[i]) dupe.push(icons[i] + "/" + f); icons[i] = f; });
 ok("every game has its own icon", !dupe.length, dupe.join(", "));
