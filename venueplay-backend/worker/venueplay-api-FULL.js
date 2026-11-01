@@ -2874,7 +2874,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // A double click, or the same reply handled twice, must not build the venue twice.
   const twin = await vpaSelect(env, 'vp_venues', 'name=eq.' + encodeURIComponent(name) + '&postcode=eq.' + postcode + '&select=id,slug&limit=1');
   if (twin && twin.length) {
-    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send their email again, use Resend welcome on the venue.' + NONE }, 409);
+    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send their email again, use Resend their account email on their card in HQ > Prospects.' + NONE }, 409);
   }
 
   /* AN EMAIL THAT ALREADY SIGNS IN IS REFUSED, not linked (security review, 28 Oct 2026). Giving an
@@ -2930,7 +2930,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       display_name: firstName || 'Manager' }, false);
   } catch (e) {
     login = null;
-    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend welcome.');
+    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend their account email (HQ > Prospects).');
   }
 
   /* 3b. HQ > Prospects (migration 125): their row, so they are listed apart from the active venues and
@@ -2996,7 +2996,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       senderName: sender.name || null, senderEmail: sender.email || null, offerCode: offer.code };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
-    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend welcome on the venue, or send it by hand.');
+    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend their account email on their card in HQ > Prospects, or send it by hand.');
     else {
       welcome = { send_at: new Date(sendAtMs).toISOString(), status: delayMin > 0 ? 'scheduled' : 'sent', id: null };
       const rec = await vpaProspectWelcomeRecord(env, actor, venue.id, r.id, sendAtMs, welcome.status,
@@ -3995,7 +3995,7 @@ async function vpaProspectWelcomeNow(request, env, json) {
   const at = new Date().toISOString();
   if (!r.ok) {
     await vpaProspectWelcomeMark(env, g.row, { status: 'failed', changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });
-    return json({ error: 'The booked email was cancelled but the new one did not send. Use Resend welcome on the venue.' }, 502);
+    return json({ error: 'The booked email was cancelled but the new one did not send. Use Resend their account email on their card in HQ > Prospects.' }, 502);
   }
   await vpaProspectWelcomeMark(env, g.row, { status: 'sent_now', send_at: at, resend_id: r.id || null,
     signin_token_hash: token ? await vpaSigninTokenHash(token) : null, changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });
@@ -4146,8 +4146,12 @@ async function vpaHandleVenueCompliance(request, env, json) {
 
 /* ===========================================================================
  * POST /admin/resend-welcome   (owner | accounts)
- *   body: { venue_id }
- *   -> { ok:true, sent:bool, card_url, comp:bool, has_card:bool }
+ *   body: { venue_id, dry_run?, send_at? }
+ *   -> { ok:true, sent:bool, template:'card', card_url, comp:bool, has_card:bool }
+ *   -> { ok:true, sent:bool, template:'prospect', to, subject, signin, sender, slides }   for a prospect
+ *
+ * A PROSPECT (31 Oct 2026) gets its own account email again, with a fresh sign-in: see
+ * vpaResendWhich and vpaResendProspectWelcome below. Everyone else gets the card email, as here.
  *
  * A venue onboarded from HQ that never added a card has, until now, been
  * unreachable: the welcome email carrying the card link fires exactly once, at
@@ -4170,7 +4174,7 @@ async function vpaResendWelcome(request, env, json) {
   if (!venueId) return json({ error: 'Which venue?' }, 400);
 
   const vs = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,founding_id,group_id,entity_type,venue_kind&limit=1');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,founding_id,group_id,entity_type,venue_kind,au_state&limit=1');
   const venue = vs && vs[0];
   if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
   // The HQ number bingo switch, read on its own so a database before migration 116 still resends.
@@ -4182,7 +4186,7 @@ async function vpaResendWelcome(request, env, json) {
 
   const fs = await vpaSelect(env, 'venueplay_founding',
     'id=eq.' + encodeURIComponent(venue.founding_id) +
-    '&select=id,contact_email,max_seats,plan,status,stripe_subscription_id&limit=1');
+    '&select=id,contact_email,max_seats,plan,status,stripe_subscription_id,bill_by_invoice&limit=1');
   const f = fs && fs[0];
   if (!f) return json({ error: 'No billing account behind that venue.' }, 404);
   if (!f.contact_email) return json({ error: 'That account has no contact email, so there is nowhere to send it. Add one first.' }, 400);
@@ -4193,6 +4197,22 @@ async function vpaResendWelcome(request, env, json) {
   // worried phone call. Say so rather than sending it.
   if (hasCard && !comp) {
     return json({ error: (venue.name || 'That venue') + ' already has a card on file, so there is nothing to chase. Their billing page is where changes belong.' }, 400);
+  }
+
+  /* A PROSPECT GETS ITS OWN EMAIL BACK (31 Oct 2026). See vpaResendWhich for how one is told apart. */
+  const which = await vpaResendWhich(env, venue, f);
+  if (which.cancelled) {
+    return json({ error: (venue.name || 'That venue') + ' pressed "Cancel, it\'s not for us" on ' + vpaBneDateWords(Date.parse(which.cancelled)) +
+      ', so nothing was sent. If they have changed their mind, give them a call first.' }, 409);
+  }
+  if (which.kind === 'prospect') return await vpaResendProspectWelcome(env, actor, venue, f, which, b, json);
+  if (b.send_at != null && b.send_at !== '') {
+    return json({ error: 'Only a prospect\'s account email can be booked for later. ' + (venue.name || 'This venue') + ' gets the add-your-card email, which goes straight away.' }, 400);
+  }
+  const cardSubject = comp ? 'Your VenuePlay account is ready, and it is on us' : 'Your VenuePlay account is ready. One thing left.';
+  const askOnly = b.dry_run === true;   // HQ asking which email would go: nothing sent
+  if (askOnly) {
+    return json({ ok: true, dry_run: true, template: 'card', to: f.contact_email, subject: cardSubject, comp: comp });
   }
 
   const sent = await vpaFireHqWelcome(env, {
@@ -4211,10 +4231,152 @@ async function vpaResendWelcome(request, env, json) {
 
   const cardUrl = comp ? '' : await vpaCardLink(env, f.id);
   await vpaAudit(env, actor, 'welcome_resent', 'venue:' + venue.id, {
-    name: venue.name, to: f.contact_email, comp: comp, sent: sent,
+    name: venue.name, to: f.contact_email, comp: comp, sent: sent, template: 'card', subject: cardSubject,
   });
-  return json({ ok: true, sent: sent, comp: comp, has_card: hasCard, card_url: cardUrl,
+  return json({ ok: true, sent: sent, template: 'card', subject: cardSubject, comp: comp, has_card: hasCard, card_url: cardUrl,
                 to: f.contact_email });
+}
+
+/* WHICH EMAIL "RESEND" SENDS (Dean, 31 Oct 2026: Lakeside Tavern's prospect welcome bounced, Lunatic Hotel's
+   was cancelled, and HQ's Resend welcome could only send the add-your-card email, which is the wrong email
+   for a prospect and pushier than the favour it was set up as).
+
+   A PROSPECT is a venue the prospect setup built (vpaProspectSetUp, HQ's "Set up a prospect" or the
+   autopilot), and that has not signed up since. Two records say it was built that way, and only that code
+   writes either: its vp_prospects row (migration 125, the row HQ > Prospects lists, so HQ's button label and
+   this answer come from the same place) and its prospect_set_up audit row (vp_admin_audit, written on every
+   setup, kept for ever, writable by no venue). Either one counts, so a setup whose vp_prospects insert failed
+   is still a prospect. Signed up (a card, comp, invoiced or in a group: vpaProspectSignedUp, the same answer
+   HQ > Prospects uses) is a customer and gets the card email path as before. A prospect whose free month ran
+   out (paused_at) needs a card to come back on, so it gets the card email too. A prospect who pressed Cancel
+   gets nothing: { cancelled }.
+
+   Also returned, for the email itself: the setup's audit detail (who signed it, their first name, the offer,
+   the slides) and the newest vp_prospect_welcomes detail (what the last welcome was made from). */
+async function vpaResendWhich(env, venue, f) {
+  const prow = await vpaProspectRowFor(env, 'venue_id', venue.id);
+  const au = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venue.id) +
+    '&action=eq.prospect_set_up&select=detail,created_at&order=created_at.desc&limit=1');
+  const setup = (au && au[0] && au[0].detail && typeof au[0].detail === 'object') ? au[0].detail : null;
+  let last = null;
+  try {
+    const w = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&select=detail,send_at&order=send_at.desc&limit=1');
+    last = (w && w[0] && w[0].detail && typeof w[0].detail === 'object') ? w[0].detail : null;
+  } catch (_) { last = null; }
+  const out = { kind: 'card', prow: prow, setup: setup, last: last };
+  if (!prow && !setup) return out;
+  if (vpaProspectSignedUp(venue, f)) return out;
+  if (prow && prow.cancelled_at) return Object.assign(out, { cancelled: prow.cancelled_at });
+  if (prow && prow.paused_at) return out;
+  out.kind = 'prospect';
+  return out;
+}
+
+/* THE PROSPECT'S WELCOME, AGAIN: the same email the setup sent (vpaFireProspectWelcome, "Your VenuePlay account
+   for <venue>"), made from what the venue is now, with a FRESH sign-in.
+     to        the account's contact email (venueplay_founding.contact_email), never anyone else
+     sign-in   the venue's own login whose email IS that contact email (their prospect login first, then the
+               owner, then a manager). A mobile on it: the text-code sign-in with their number, as at setup.
+               No mobile: a NEW one-click link (14 days, one use, from when the email goes), and after it is
+               sent every older unused link on that login is retired, so only the newest one works. No such
+               login: the button opens /app/go for their address, which offers to email them a link, and HQ
+               is told.
+     sender    who signed the original (the setup's audit row, else the last welcome's), else the team
+     slides    how many are on their screen now
+     send_at   optional, an ISO time in the next 24 hours: Resend holds it until then (scheduled_at), and it
+               is recorded in vp_prospect_welcomes so HQ can still cancel it or send it now
+   { dry_run: true } works all of that out, mints nothing and sends nothing, so HQ can say which email will go. */
+async function vpaResendProspectWelcome(env, actor, venue, f, which, b, json) {
+  const now = Date.now();
+  let sendAtMs = null;
+  if (b.send_at != null && b.send_at !== '') {
+    const t = Date.parse(String(b.send_at));
+    if (!isFinite(t) || t <= now || t > now + VPA_PROSPECT_MAX_DELAY_MIN * 60000) {
+      return json({ error: 'send_at must be a time in the next 24 hours, like 2026-11-02T09:20:00+10:00. Leave it out to send it now.' }, 400);
+    }
+    if (t - now > 60000) sendAtMs = t;   // under a minute away is now
+  }
+  const email = String(f.contact_email || '').trim();
+  const want = email.toLowerCase();
+  const setup = which.setup || {}, last = which.last || {}, prow = which.prow || {};
+  const warnings = [];
+
+  // Their login: on this venue's staff (owner or manager), with the contact email on it.
+  const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&role=in.(owner,manager)&select=auth_user_id,role&limit=20');
+  const onStaff = (staff || []).slice().sort((x, y) => (x.role === 'owner' ? 0 : 1) - (y.role === 'owner' ? 0 : 1)).map((s) => s.auth_user_id);
+  const ids = [];
+  [prow.auth_user_id, last.authUserId].concat(onStaff).forEach((id) => { if (id && onStaff.indexOf(id) !== -1 && ids.indexOf(id) === -1) ids.push(id); });
+  let login = null;
+  for (let i = 0; i < ids.length && i < 6; i++) {
+    const u = await vpaAuthGetUser(env, ids[i]);
+    if (!u || !u.email || String(u.email).trim().toLowerCase() !== want) continue;
+    if (u.banned_until && Date.parse(u.banned_until) > now) continue;
+    login = u; break;
+  }
+  const mobile = login ? vpaProspectPhone(login.phone) : null;
+  const sms = !!(mobile && mobile.indexOf('04') === 0);
+  const signin = sms ? 'sms' : login ? 'one_click' : 'link_request';
+  if (!login) warnings.push('No login on ' + (venue.name || 'this venue') + ' uses ' + email + ', so their button asks for a sign-in link instead of signing them straight in. Check their Hosts.');
+
+  // Who signed the original, else the team.
+  let sender = vpaProspectSender(setup.sender_name, setup.sender_email);
+  if (sender.error || !sender.name) sender = vpaProspectSender(last.senderName, last.senderEmail);
+  if (sender.error || !sender.name) sender = {};
+
+  // Their slides as they are now; the setup's count if the screen cannot be read.
+  const scr = await vpbReadScreen(env, venue.id);
+  const slides = scr.ok ? (scr.row && Array.isArray(scr.row.slides) ? scr.row.slides.length : 0) : (parseInt(setup.slides, 10) || parseInt(last.slides, 10) || 0);
+
+  // The offer they were set up on, or this month's once it has ended.
+  const code0 = setup.offer_code !== undefined ? setup.offer_code : last.offerCode;
+  let offer = vpaProspectOffer(env, code0);
+  if (offer.error) offer = vpaProspectOffer(env);
+  if (offer.warning) warnings.push(offer.warning);
+
+  const subject = vpaProspectSubject(venue.name);
+  const senderSays = sender.name || 'The VenuePlay team';
+  const askOnly = b.dry_run === true;   // HQ asking which email would go: nothing minted, nothing sent
+  if (askOnly) {
+    return json({ ok: true, dry_run: true, template: 'prospect', to: email, subject: subject, signin: signin,
+      mobile: sms ? mobile : null, sender: senderSays, slides: slides, warnings: warnings.length ? warnings : undefined });
+  }
+
+  let token = null;
+  if (login && !sms) {
+    try { token = await vpaMintSigninLink(env, login.id, venue.id, sendAtMs || now); }
+    catch (e) { token = null; warnings.push('The one-click sign-in was not made (migration 123), so their button asks for a sign-in link instead.'); }
+  }
+  const render = { foundingId: f.id, email: email, firstName: String(prow.contact_name || setup.first_name || last.firstName || '').trim().slice(0, 60),
+    venueName: venue.name, slug: venue.slug, seats: f.max_seats, state: venue.au_state || setup.state || last.state || null,
+    entityType: venue.entity_type || setup.entity_type || last.entityType || null, slides: slides,
+    authUserId: login ? login.id : null, mobileLogin: sms, mobile: sms ? mobile : null, sameLogin: !!(setup.login_reused || last.sameLogin),
+    senderName: sender.name || null, senderEmail: sender.email || null, offerCode: offer.code };
+  const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: token, sendAtMs: sendAtMs }, render));
+  const hash = token ? await vpaSigninTokenHash(token) : null;
+  let rec = null;
+  if (!r.ok) {
+    await vpaProspectRetireLink(env, hash);   // an email that did not go leaves no live link behind
+  } else {
+    if (hash) {
+      // Only the newest link works: every other unused one on this login stops now.
+      try {
+        await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(login.id) + '&used_at=is.null&token_hash=neq.' + encodeURIComponent(hash), {
+          method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+      } catch (_) {}
+    }
+    rec = await vpaProspectWelcomeRecord(env, actor, venue.id, r.id, sendAtMs || now, sendAtMs ? 'scheduled' : 'sent', hash, render);
+    if (!rec && sendAtMs) warnings.push('It is booked for ' + vpaBrisbaneTime(sendAtMs) + ', but HQ cannot cancel it or send it early until migration 124 is run.');
+  }
+  await vpaAudit(env, actor, 'welcome_resent', 'venue:' + venue.id, {
+    name: venue.name, to: email, sent: !!r.ok, template: 'prospect', subject: subject, signin: signin,
+    sender_name: sender.name || undefined, slides: slides, offer_code: offer.code || undefined,
+    send_at: sendAtMs ? new Date(sendAtMs).toISOString() : undefined,
+  });
+  const out = { ok: true, sent: !!r.ok, template: 'prospect', to: email, subject: subject, signin: signin,
+    mobile: sms ? mobile : null, sender: senderSays, slides: slides };
+  if (sendAtMs && r.ok) { out.send_at = new Date(sendAtMs).toISOString(); out.when = vpaBrisbaneTime(sendAtMs); }
+  if (warnings.length) out.warnings = warnings;
+  return json(out);
 }
 
 /* ===========================================================================
@@ -11275,7 +11437,7 @@ const VPA_AUDIT_SAY = {
   signup_flagged: function (d, at) { return 'A signup was held for review: ' + at + (d.email ? ' (' + d.email + ')' : '') + '.'; },
   email_bounced: function (d, at) { return 'An email to ' + at + ' bounced' + (d.to ? ' (' + d.to + ')' : '') + '.'; },
   email_marked_spam: function (d, at) { return at + ' marked one of our emails as spam.'; },
-  welcome_resent: function (d, at) { return 'Sent ' + at + ' their welcome email again.'; },
+  welcome_resent: function (d, at) { return (d.sent === false ? 'Tried to send ' : 'Sent ') + at + (d.template === 'prospect' ? ' their account email again (sign-in link)' : d.template === 'card' ? ' the add-your-card email again' : ' their welcome email again') + (d.send_at ? ', booked for ' + vpaBrisbaneTime(Date.parse(d.send_at)) : '') + (d.sent === false ? ', and it did not send.' : '.'); },
 };
 function vpaAuditSentence(row, at) {
   const d = (row.detail && typeof row.detail === 'object') ? row.detail : {};

@@ -2291,7 +2291,10 @@
         /* For a venue that was onboarded here and never added a card. The welcome email
            fires once, at creation, and there was no second chance: the only fix was to
            delete the venue and build it again. */
-        (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
+        /* Which email it sends is the Worker's answer (vpaResendWhich): a prospect gets their account email
+           with a fresh sign-in, everyone else the card email. The label follows HQ > Prospects' list, and the
+           confirm asks the Worker first, so it always names the email that will actually go (31 Oct 2026). */
+        (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">'+resendLabel(v.id)+'</button>' : '')+
         /* A fresh one-tap sign-in link to the venue's own login (Dean, 29 Oct 2026). Any older unused link
            stops working, so only the newest one opens their account. */
         (canBilling() ? '<button class="mini" data-signinlink="'+esc(v.id)+'">Resend sign-in link</button>' : '')+
@@ -2464,27 +2467,50 @@
     });
   }
   window.hqSigninLink=hqSigninLink;
+  /* RESEND THEIR EMAIL (31 Oct 2026). One shared function: the Venues row and HQ > Prospects both call it.
+     It asks the Worker which email would go (dry_run) and to whom, says exactly that, and only then sends. */
+  function resendLabel(id){
+    return (window.VPProspects && window.VPProspects.isProspect(id)) ? "Resend their account email (sign-in link)" : "Resend the add-your-card email";
+  }
+  window.hqResendLabel=resendLabel;
+  function resendSignInWords(r){
+    return r.signin==="sms" ? "a sign-in by text code to their mobile, "+r.mobile
+      : r.signin==="one_click" ? "a new one-tap sign-in link (any older link stops working)"
+      : "a button that asks us for a sign-in link";
+  }
+  function hqResendWelcome(id, btn){
+    var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||"this venue";
+    var was=btn.textContent;
+    btn.disabled=true; btn.textContent="Checking...";
+    return workerPost("/admin/resend-welcome", { venue_id:id, dry_run:true }).then(function(d){
+      btn.disabled=false; btn.textContent=was;
+      if(d.error){ vpTell(d.error); return d; }
+      var q = d.template==="prospect"
+        ? "Send "+name+" their account email again?\n\nTo "+d.to+": \""+d.subject+"\", with "+resendSignInWords(d)+", their "+d.slides+" slide"+(d.slides===1?"":"s")+", signed "+d.sender+"."
+        : "Send "+name+" the add-your-card email again?\n\nTo "+d.to+": \""+d.subject+"\"."+(d.comp?" This is a comp venue, so it carries no card link.":" It carries the secure link to add their card.");
+      if(d.warnings && d.warnings.length) q += "\n\n"+d.warnings.join("\n");
+      return vpAsk(q).then(function(ok){ if(!ok) return null;
+        btn.disabled=true; btn.textContent="Sending...";
+        return workerPost("/admin/resend-welcome", { venue_id:id }).then(function(r){
+          btn.disabled=false; btn.textContent=was;
+          if(r.error){ vpTell(r.error); return r; }
+          var msg = r.sent ? ("Sent to "+r.to+(r.when?", booked for "+r.when:"")+".") : ("The email did NOT send. Nothing has reached "+r.to+".");
+          // The card link is worth having on screen whether or not the email went: it is pasteable into a text message.
+          if(r.card_url) msg += "\n\nTheir card link, if you would rather send it yourself:\n"+r.card_url;
+          else if(r.comp) msg += "\n\nThis is a comp venue, so the email carries no card link.";
+          if(r.warnings && r.warnings.length) msg += "\n\n"+r.warnings.join("\n");
+          vpTell(msg);
+          return r;
+        });
+      });
+    });
+  }
+  window.hqResendWelcome=hqResendWelcome;
   $("venueRows").addEventListener("click", function(e){
     var va=e.target.closest("button[data-viewas]");
     if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
     var rs=e.target.closest("button[data-resend]");
-    if(rs){
-      var rid=rs.getAttribute("data-resend"), rname=(S.venues.filter(function(x){return x.id===rid;})[0]||{}).name||"this venue";
-      vpAsk("Send "+rname+" their welcome email again?\n\nIf they have not added a card it carries the secure link to do it.").then(function(ok){ if (!ok) return;
-      rs.disabled=true; rs.textContent="Sending\u2026";
-      workerPost("/admin/resend-welcome", { venue_id: rid }).then(function(r){
-        rs.disabled=false; rs.textContent="Resend welcome";
-        if(r.error){ vpTell(r.error); return; }
-        // The link is worth having on screen whether or not the email went: a publican who
-        // ignored one email will ignore the second, and this is pasteable into a text message.
-        var msg = r.sent ? ("Sent to "+r.to+".") : ("The email did NOT send. Nothing has reached "+r.to+".");
-        if(r.card_url) msg += "\n\nTheir card link, if you would rather send it yourself:\n"+r.card_url;
-        else if(r.comp) msg += "\n\nThis is a comp venue, so the email carries no card link.";
-        vpTell(msg);
-      });
-      });
-      return;
-    }
+    if(rs){ hqResendWelcome(rs.getAttribute("data-resend"), rs); return; }
     var sl=e.target.closest("button[data-signinlink]");
     if(sl){ hqSigninLink(sl.getAttribute("data-signinlink"), sl); return; }
     var dt=e.target.closest("button[data-details]");
