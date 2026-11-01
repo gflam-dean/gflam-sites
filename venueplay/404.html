@@ -51,11 +51,14 @@
   header{padding-top:env(safe-area-inset-top)}
   .nav{height:64px;display:flex;align-items:center}
   .nav a{display:flex;color:#fff}
-  main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding-top:8px;padding-bottom:28px}
+  main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding-top:20px;padding-bottom:24px}
 
   /* ---------- THE TOP: a big neon triangle, gone a little off course ---------- */
   .hero{position:relative}
-  .neon{display:block;width:92px;height:106px;margin:0 0 22px -4px;transform:rotate(-12deg);overflow:visible;
+  /* The neon triangle sits up in the top right, beside the logo and the 404 line and clear of the
+     headline: it costs no height, so the way into a game stays on the first screen. */
+  .hero h1,.hero p{position:relative}
+  .neon{position:absolute;right:0;top:-84px;width:86px;height:99px;transform:rotate(-12deg);overflow:visible;pointer-events:none;opacity:.9;
     filter:drop-shadow(0 0 10px rgba(255,31,142,.85)) drop-shadow(0 0 26px rgba(255,31,142,.45));animation:flicker 5s linear infinite}
   @keyframes flicker{0%,91%,95%,100%{opacity:1}92%,94%{opacity:.55}}
   .eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
@@ -67,7 +70,7 @@
   .lede{margin-top:16px;color:#D8D8DD;font-size:17px;font-weight:500;max-width:34ch}
 
   /* ---------- JOINING A GAME: first, because that is who scanned a code ---------- */
-  .join{margin-top:28px;padding:20px 18px 18px;border-radius:22px;
+  .join{margin-top:24px;padding:18px 18px 18px;border-radius:22px;
     background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 62%),var(--ink-2);border:1px solid rgba(255,31,142,.3)}
   .join h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.015em;line-height:1.2}
   .join p{margin-top:4px;color:#C9C9D0;font-size:15px}
@@ -81,10 +84,9 @@
     -webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .row button:active{background:var(--pink-deep)}
   .found{margin-top:10px;font-size:14px;color:#FF8AC4;font-weight:600}
-  .hint{margin-top:10px;font-size:13px;color:var(--muted)}
 
   /* ---------- THE OTHER WAYS BACK ---------- */
-  .ways{margin-top:14px;display:grid;gap:10px}
+  .ways{margin-top:12px;display:grid;gap:10px}
   .way{display:flex;align-items:center;gap:14px;min-height:66px;padding:12px 16px 12px 12px;border-radius:18px;background:var(--ink-2);
     border:1px solid var(--line-2);-webkit-tap-highlight-color:transparent}
   .way:active{border-color:var(--pink)}
@@ -101,14 +103,14 @@
 
   @media(max-width:360px){
     .shell{padding:0 16px}
-    .neon{width:72px;height:83px;margin-bottom:16px}
+    .neon{width:66px;height:76px;top:-74px}
     .lede{font-size:16px}
     .join{padding:18px 14px 16px;margin-top:22px}
     .row input{font-size:21px;letter-spacing:.18em}
     .row button{padding:0 16px}
     .way{min-height:62px}
   }
-  @media(min-height:900px){ .neon{margin-bottom:28px} .join{margin-top:34px} }
+  @media(min-height:900px){ .join{margin-top:34px} }
   @media(prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
@@ -124,18 +126,17 @@
     <svg class="neon" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FF1F8E" stroke-width="1.7" stroke-linejoin="round"/><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FFD1E8" stroke-width=".55" stroke-linejoin="round"/></svg>
     <p class="eyebrow">404 &middot; Page not found</p>
     <h1>That page is not <span class="accent">on tonight.</span></h1>
-    <p class="lede">The link may be mistyped, or the page has moved. Here is the quickest way back.</p>
+    <p class="lede">The link may be wrong, or the page has moved. Here is the quickest way back.</p>
   </div>
 
   <form class="join" id="join" action="/play" method="get" autocomplete="off">
     <h2><label for="code">Joining a game?</label></h2>
     <p>Type the code from the TV screen.</p>
     <div class="row">
-      <input id="code" name="code" inputmode="text" maxlength="6" placeholder="ABC234" autocapitalize="characters" autocorrect="off" spellcheck="false" aria-describedby="joinHint">
+      <input id="code" name="code" inputmode="text" placeholder="ABC234" autocapitalize="characters" autocorrect="off" spellcheck="false">
       <button type="submit" id="go">Join</button>
     </div>
     <p class="found" id="found" hidden></p>
-    <p class="hint" id="joinHint">Scanned a code on a table? The code on the TV works too.</p>
   </form>
 
   <nav class="ways" aria-label="Other ways back">
@@ -146,7 +147,7 @@
     </a>
     <a class="way" href="/">
       <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4.5V15h-5v5.5H5a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
-      <span class="tx"><b>Go to the venueplay homepage</b><small>Live games for pubs and clubs</small></span>
+      <span class="tx"><b>The venueplay homepage</b><small>Live games for pubs and clubs</small></span>
       <svg class="go" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
     <a class="way" href="/see-a-night">

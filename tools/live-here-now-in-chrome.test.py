@@ -205,6 +205,16 @@ def state(t):
     return json.loads(v) if isinstance(v, str) else {'__bad': v}
 
 
+def clear_storage(b, base):
+    """Forget what this phone has seen. Chrome answers "Internal error" when the origin has no
+       storage yet (nothing opened there in this browser), which is the same as already clear."""
+    try:
+        b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+    except OSError as e:
+        if 'Internal error' not in str(e):
+            raise
+
+
 def wait_question(t, not_id=None, secs=15):
     """The next question is on screen (a different one from not_id), its four buttons laid out."""
     end = time.time() + secs
@@ -280,11 +290,11 @@ def main():
     text = re.sub(r'<[^>]+>', ' ', text) + ' '.join(re.findall(r"'([^']{3,})'", re.search(r'<script>\s*\(function[\s\S]*</script>', HTML).group(0)))
     check('no em dash, no "roster", no price or offer, no phone number',
           u'—' not in HTML and 'roster' not in HTML.lower() and not re.search(r'\$\s?\d|\boffer\b|\bprice', text, re.I)
-          and not re.search(r'\b0\d[\s\d]{8,}', text), re.findall(r'.{20}(?:—|\$\d|offer|0\d \d{4}).{20}', HTML)[:3])
+          and not re.search(r'\b0\d(?:[ -]?\d){8}\b|tel:', text + HTML), re.findall(r'.{20}(?:—|\$\d|offer|0\d \d{4}).{20}', HTML)[:3])
     check('the soft call to action is on the page, for the room and then for an owner: "Want this on the big screen?", '
-          '"Ask the bar.", "Run a venue? See how venueplay works" to the homepage',
+          '"Ask the bar.", "Run a venue? See how it works" to the homepage',
           'Want this on the big screen?' in text and 'Ask the bar.' in text
-          and re.search(r'<a class="owner" id="ownerLink" href="/">Run a venue\? See how venueplay works</a>', HTML) is not None)
+          and re.search(r'<a class="owner" id="ownerLink" href="/">Run a venue\? See how it works</a>', HTML) is not None)
     check('nothing on the page collects anything: no form, no input, no Meta pixel; analytics is the site\'s own vp-analytics.js',
           not re.search(r'<(form|input|textarea|select)\b', HTML) and 'vp-pixel' not in HTML and 'fbq(' not in HTML
           and '<script src="/app/vp-analytics.js" defer></script>' in HTML)
@@ -322,7 +332,7 @@ def main():
 
         print('\nA PHONE SCANS THE COASTER (375 x 740)')
         t = Tab(b, base)
-        b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+        clear_storage(b, base)
         t.go('/live-here-now')
         s = wait_question(t)
         check('a question is on screen straight away, with nothing to type (no name, no code)',
@@ -380,7 +390,7 @@ def main():
 
         print('\nTHE HOUR CHANGES THE SET')
         def first_five(clock, slug=''):
-            b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+            clear_storage(b, base)
             tt = Tab(b, base, clock=clock)
             tt.go('/live-here-now' + slug)
             ids, last, _ = play_round(tt, [True] * 5, 'first five')
@@ -425,7 +435,7 @@ def main():
 
         print('\nFOUR PHONES: 320, 375, 390 AND 430 WIDE')
         for w, h in ((320, 568), (375, 667), (390, 844), (430, 932)):
-            b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+            clear_storage(b, base)
             tf = Tab(b, base, w=w, h=h)
             tf.go('/live-here-now')
             s = wait_question(tf)
@@ -452,7 +462,7 @@ def main():
 
         if A.shots:
             # The picture for a person to look at: a wrong answer, so both colours are on screen.
-            b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+            clear_storage(b, base)
             tp = Tab(b, base)
             tp.go('/live-here-now')
             s = wait_question(tp)
