@@ -362,7 +362,8 @@
   function absUrl(rel){ try{ return new URL(rel, window.location.href).href; }catch(e){ return rel; } }
   var hostURL=absUrl("host.html?tv="+CODE);      // the host opens this to run the quiz on this screen
   var joinCode="";                                // the real DB join code, handed over once the host opens a session
-  function playURLFor(code){ return absUrl("play.html?room="+code); }
+  var DEMO_JOIN_CODE="VENUE2";   /* a code the alphabet allows; DEMO24 was refused (no O), 2 Nov 2026 */
+  function playURLFor(code){ return VP_DEMO ? absUrl("play.html?demo=1") : absUrl("play.html?room="+code); }   // a demo QR opens the demo phone, which joins nothing
   // The address on every printed sign and table talker.
   function ORIGIN_PLAY(){ try{ return window.location.origin + "/play"; }catch(e){ return "https://venueplay.com.au/play"; } }
 
@@ -956,7 +957,7 @@
          pairing lobby, and on a sales page that is the first frame a visitor sees, which is the
          one they photograph. tv.html learned this the same way. */
       at(0, function(){
-        m({ t:"session", session_id:"demo", join_code:"DEMO24", title:"Trivia Night" });
+        m({ t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE, title:"Trivia Night" });
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
       });

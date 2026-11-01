@@ -63,6 +63,10 @@
      its backoff stops at 2 s, and every wake-up looks NOW, abandoning a look that is still waiting.
      Pings are answered by Cloudflare without waking the room, so they cost nothing in room time. */
   var PHONE_PING_MS = 10000, PONG_WAIT_MS = 4000, PHONE_BACKOFF_MAX = 2000;
+  /* And a phone that was in the room gives a look 2 s, not 5, before trying again, and the time that look
+     spent counts as its wait: a look sent into a dead line hangs, and the line coming back must not wait
+     out a five second hang plus a backoff. */
+  var PHONE_PROBE_MS = 2000, LINE_CHECK_MS = 1000;
   var TELL_RETRY = [0, 5000, 15000, 45000, 120000, 300000];
   var REASSERT_MS = 2 * 60 * 60 * 1000, REASSERT_FOR_MS = 12 * 60 * 60 * 1000;
 
@@ -142,7 +146,7 @@
     var st = { state: "checking", ws: null, queue: [], backoff: BACKOFF_MIN, closed: false, timer: null,
                downSince: now(), everOpen: false, tries: 0, due: 0, why: "",
                pingT: null, misses: 0, pongSeen: false, tellT: null, tellI: -1, reT: null,
-               lastIn: 0, hiddenAt: 0, checkT: null, gen: 0, looking: false };
+               lastIn: 0, hiddenAt: 0, checkT: null, gen: 0, looking: false, lookSpent: 0, lineT: null };
     var phone = (role === "phone");
     var backoffMax = !venueRoom ? BACKOFF_MAX : phone ? PHONE_BACKOFF_MAX : ROOM_BACKOFF_MAX;
     /* ONE SOCKET PER PAGE, HOWEVER OFTEN IT RECONNECTS (1 Nov 2026: presence counted Dean's one phone
@@ -161,7 +165,8 @@
       var gen = ++st.gen;                              // a wake-up that starts a new look makes this one history
       st.looking = true;
       var settled = false;
-      var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; retry(); }, PROBE_MS);
+      var lookMs = (phone && venueRoom && st.everOpen) ? PHONE_PROBE_MS : PROBE_MS;
+      var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; st.lookSpent = lookMs; retry(); }, lookMs);
       function done() { if (settled) return false; settled = true; clearTimeout(late); if (gen === st.gen) st.looking = false; return !st.closed && gen === st.gen; }
       fetch(api + "/room/presence?room=" + encodeURIComponent(roomName))
         .then(function (r) {
@@ -349,6 +354,7 @@
       clearTimeout(st.timer);
       // Never sleep past the budget: a 30 second backoff would decide 24 seconds too late.
       var wait = Math.min(st.backoff, Math.max(0, st.downSince + b2 - t));
+      if (st.lookSpent) { wait = Math.max(0, wait - st.lookSpent); st.lookSpent = 0; }   // a hung look already waited
       st.due = t + wait;
       st.timer = setTimeout(function () {
         st.timer = null;
@@ -401,6 +407,7 @@
         .catch(function () { tell(i + 1); });
     }
     function backOnline() {
+      clearTimeout(st.lineT); st.lineT = null;
       if (st.closed) {
         /* A handover that could not be told while the network was down is told now. */
         if (st.tellI >= 0) { var i = st.tellI; clearTimeout(st.tellT); tellNow(i); }
@@ -428,8 +435,20 @@
     /* THE NETWORK WENT. Nothing can be sent or heard, and the socket the browser still calls open will
        never say so. Let it go now, so the room is not left counting it and the page is already waiting
        to look when the network comes back. Time offline is not spent from the budget (retry). */
+    /* "OFFLINE" WITHOUT "ONLINE". A phone that says the network went does not always say when it is back,
+       so after an offline the page looks at navigator.onLine once a second and acts on it itself. */
+    function watchLine() {
+      clearTimeout(st.lineT);
+      st.lineT = setTimeout(function () {
+        st.lineT = null;
+        if (st.closed) return;
+        if (!offline()) { backOnline(); return; }
+        watchLine();
+      }, LINE_CHECK_MS);
+    }
     function wentOffline() {
       if (st.closed || !venueRoom) return;
+      watchLine();
       var ws = st.ws;
       if (!ws) return;
       st.ws = null;
@@ -469,7 +488,7 @@
 
     function close() {
       st.closed = true;
-      clearTimeout(st.timer); clearTimeout(st.pingT); clearTimeout(st.tellT); clearTimeout(st.reT); clearTimeout(st.checkT);
+      clearTimeout(st.timer); clearTimeout(st.pingT); clearTimeout(st.tellT); clearTimeout(st.reT); clearTimeout(st.checkT); clearTimeout(st.lineT);
       if (st.ws) { var w = st.ws; st.ws = null; try { w.close(1000, "page"); } catch (e) {} }
       setState("closed");
     }

@@ -98,7 +98,9 @@ function loadRoom() {
   globalThis.sessionStorage = { getItem: function () { return "1"; }, setItem: function () {} };
   globalThis.location = { search: "?roomserver=1" };
   globalThis.fetch = function (url, init) {
-    if (!NET.up) return new Promise(function (res, rej) { setTimeout_(function () { rej(new Error("offline")); }, 30); });
+    /* A look sent while the line is down HANGS (a dead route, a radio that has not given up yet) rather than
+       failing at once: the client's own five second limit is what ends it, and a wake-up must not wait on it. */
+    if (!NET.up) return new Promise(function () {});
     if (init && init.method === "POST") return Promise.resolve({ status: 200, json: function () { return Promise.resolve({ ok: true }); } });
     return new Promise(function (res) {
       setTimeout_(function () { res({ status: 200, ok: true, json: function () { return Promise.resolve({ total: 3, host: 1, tv: 1, phone: 1, answers: true, handover: true, pong: true }); } }); }, 150);

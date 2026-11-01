@@ -329,7 +329,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function absUrl(rel){ try{ return new URL(rel, window.location.href).href; }catch(e){ return rel; } }
   var hostURL=absUrl("host.html?tv="+CODE);   // the host opens this to run the game on this screen
   var joinCode="";                            // the real DB join code, handed over once a session opens
-  function playURLFor(code){ return absUrl("play.html?room="+code); }
+  var DEMO_JOIN_CODE="VENUE2";   /* a code the alphabet allows; DEMO24 was refused (no O), 2 Nov 2026 */
+  function playURLFor(code){ return VP_DEMO ? absUrl("play.html?demo=1") : absUrl("play.html?room="+code); }   // a demo QR opens the demo phone, which joins nothing
   // The address on every printed sign and table talker.
   function ORIGIN_PLAY(){ try{ return window.location.origin + "/play"; }catch(e){ return "https://venueplay.com.au/play"; } }
 
@@ -1019,7 +1020,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       /* Real artwork, from the same library the host uses, so the demo wall looks like a real wall. */
       var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"}, {"title": "Dancing Queen", "artist": "ABBA", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"}, {"title": "Khe Sanh", "artist": "Cold Chisel", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"}, {"title": "Mr. Brightside", "artist": "The Killers", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"}, {"title": "The Horses", "artist": "Daryl Braithwaite", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"}];
       at(0, function(){
-        m({ t:"session", join_code:"DEMO24" });
+        m({ t:"session", join_code:DEMO_JOIN_CODE });
         m({ t:"mode" });
         /* "one", a PATTERN_NAMES key, so the wall reads "One line across" and not a raw slug.
            I wrote "one_line" first and the wall printed it verbatim. tv.html's demo carries the

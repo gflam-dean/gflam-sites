@@ -592,7 +592,7 @@
     <div class="wname" id="winName">Player</div>
     <div class="winslabel" id="winsLabel">Wins</div>
     <div class="winprize" id="winPrizeVal">the prize</div>
-    <div class="jsub" id="winSubPhone">Card <b id="winCard">#000</b> &middot; show your phone to the host</div>
+    <div class="jsub" id="winSubPhone"><span id="winCardPart">Card <b id="winCard"></b> &middot; </span>show your phone to the host</div>
     <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">See the host to collect your prize</div>
   </div>
 
@@ -746,7 +746,12 @@
   // a session through the game Worker. Until then it defaults to this screen's code.
   var joinCode=CODE;
   var sessionId="";
-  function playURLFor(code){ return ORIGIN+"/play?room="+code; }
+  /* A DEMO WALL'S QR GOES TO THE DEMO PHONE (2 Nov 2026). The demo announced DEMO24, which the code check
+     refused (no O in the alphabet), so the lobby showed a code this browser invented and its QR led to a room
+     that does not exist: the one thing the demo comment above promises never to show. Now a valid demo code,
+     and a QR that opens the demo phone, which plays a night by itself and joins nothing. */
+  var DEMO_JOIN_CODE="VENUE2";
+  function playURLFor(code){ return VP_DEMO ? ORIGIN+"/play?demo=1" : ORIGIN+"/play?room="+code; }
   var playURL=playURLFor(joinCode);
 
   // If this screen has a venue link, check it maps to a real venue. If not, the venue almost
@@ -1855,9 +1860,11 @@
     // sends none, so the game prize stands in, exactly as before.
     $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
     // One card number reads as one winner. With a tie, list them all.
-    $("winCard").textContent = ws.length>1
-      ? ws.map(function(w){ return "#"+(w.cardNo||"000"); }).join(" &middot; ").replace(/&middot;/g,"·")
-      : ("#"+(ws[0].cardNo||"000"));
+    /* NO "#000" (2 Nov 2026: the demo winner read "Card #000"). A winner message with no card number says
+       nothing about the card rather than inventing one: the line is just "show your phone to the host". */
+    var nos=ws.map(function(w){ return w.cardNo; }).filter(function(n){ return n!=null && n!=="" && +n>0; });
+    $("winCard").textContent = nos.map(function(n){ return "#"+n; }).join(" \u00b7 ");
+    $("winCardPart").style.display = nos.length ? "" : "none";
   }
 
   // ---- confetti ----
@@ -2645,14 +2652,14 @@
          thing this demo promises it will never show. Three hundred milliseconds is not long,
          but it is the first frame, which is the one people photograph. A zero timeout still
          runs after this script finishes parsing, so the page is ready either way. */
-      at(0,    function(){ m({t:"session", session_id:"demo", join_code:"DEMO24"}); m({t:"mode", mode:"bingo"}); });
+      at(0,    function(){ m({t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE}); m({t:"mode", mode:"bingo"}); });
       // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
       at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
       BALLS.forEach(function(n,i){
         at(FIRST + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
       });
-      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4"}); });
-      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", prize:"$50 bar tab"}); });
+      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4", cardNo:47}); });
+      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", cardNo:47, prize:"$50 bar tab"}); });   // a believable card, not #000
       at(FIRST + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
 
       /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
