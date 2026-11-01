@@ -277,7 +277,7 @@ function screenRig() {
   r = screenRig(); r.now = 0; r.api.noteHost();   // a screen that never heard the session
   r.answer = { status: 200, body: { exists: true, live: false } };
   r.now = 120000; r.api.tick(); drainMicrotasks();
-  ok('without a session id it asks /play/live, and "nothing on" leaves', /\/play\/live\?code=CODE$/.test(r.asked[0] || '') && r.went === '/tv?venue=test-charlie');
+  ok('without a session id it asks /play/live of the database (fresh=1), and "nothing on" leaves', /\/play\/live\?code=CODE&fresh=1$/.test(r.asked[0] || '') && r.went === '/tv?venue=test-charlie');
 
   ok('the screen learns the session from the console', /if\(typeof m\.session_id==="string" && m\.session_id\) _sessionId=m\.session_id;/.test(MSCREEN));
   ok('and the game from started/state', /if\(typeof m\.game_id==="string" && m\.game_id && \(m\.t==="started" \|\| m\.t==="state"\)\) _gameId=m\.game_id;/.test(MSCREEN));

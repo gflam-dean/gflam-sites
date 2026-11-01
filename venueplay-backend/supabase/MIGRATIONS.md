@@ -484,3 +484,13 @@ Every word migration 120 wrote stays after it. One update, guarded on 120's word
 edited in HQ, and it must run AFTER `venueplay-120-help-faq-tv-window.sql` (if 120 has not been run, run 120 first, then
 this). Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the
 site. Branch `feature/tv-landing-31oct`. RUN 31 Oct 2026 by Dean (read back: the answer starts with the Google Play line, updated_by migration 131). Migration 120 was already live. Rollback: in the file.
+
+`venueplay-132-one-trip-join-context.sql` (31 Oct 2026, step 4 of the 12 Sep plan for 1,000+ venues: the join made
+cheaper): one read-only function, `vp_join_context(p_code text, p_device text)`, returning in ONE call what POST /join
+read in six (the open session for the code, the venue's status, group and slug, the group's status, the six collect
+switches, the phone's earliest not-kicked row, the running games). It decides nothing: every refusal, the collection gate
+and the dedup stay in the game Worker, on its rows, in the same words. Security definer, service role only (anon and
+authenticated revoked). A new join goes from 8 database calls to 4, a re-join from 7 to 3. Any order with the Worker: without
+it the Worker gets a 404 once per isolate and joins the old way. After running it, re-dump the baseline
+(`python3 venueplay-backend/tools/dump-rls-baseline.py`) and commit RLS-BASELINE.json, which gains this function with anon
+and authenticated both false. Branch `fix/join-cache-31oct`. NOT RUN. Rollback: in the file.

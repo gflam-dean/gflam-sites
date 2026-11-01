@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Oct 2026, 15:42 · 55e404a1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Oct 2026, 16:23 · 308e54f6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1509,7 +1509,30 @@ async function venueByCode(env, code, opts) {
     'join_code=eq.' + enc(code) + (includeSuspended ? '' : '&status=neq.suspended') + '&select=id&limit=2').catch(() => null);
   if (hit && hit.length === 1) return hit[0].id;
   if (hit && hit.length > 1) return null;          // should be impossible; refuse rather than guess
-
+  return await venueByCodeNotIssued(env, code, includeSuspended);
+}
+/* THE VENUE ROW FOR A CODE, IN ONE READ WHEN IT CAN BE (31 Oct 2026, the join made cheaper).
+   Every caller of venueByCode that wanted more than the id then read the row again by that id: two
+   gateway calls where one does, because the issued code is unique by constraint (migration 68) and
+   the row can be asked for by it directly. The rules are venueByCode's, word for word: a suspended
+   venue only with includeSuspended, two rows is refused, a failed read is not an answer, and a code
+   that is no venue's issued code (a venue from before migration 68, or a screen's derived code)
+   takes venueByCode's own fallback and is then read by id, exactly as before. `select` names the
+   columns wanted besides id. Answers the row, or null. */
+async function venueRowByCode(env, code, select, opts) {
+  code = String(code || '').trim().toUpperCase();
+  if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
+  const includeSuspended = !!(opts && opts.includeSuspended);
+  const hit = await sbGet(env, 'vp_venues',
+    'join_code=eq.' + enc(code) + (includeSuspended ? '' : '&status=neq.suspended') + '&select=id,' + select + '&limit=2').catch(() => null);
+  if (hit && hit.length === 1) return hit[0];
+  if (hit && hit.length > 1) return null;
+  const id = await venueByCodeNotIssued(env, code, includeSuspended);
+  if (!id) return null;
+  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(id) + '&select=id,' + select + '&limit=1');
+  return (rows && rows[0]) || null;
+}
+async function venueByCodeNotIssued(env, code, includeSuspended) {
   /* Nothing stored under that code. It may still be a venue that predates the
      migration and is only reachable through the derived code, so fall back to
      the map - which is the slow path now, taken once per isolate, and only for
@@ -1903,12 +1926,7 @@ async function signingVenueForReceiver(env, url) {
     return (rows && rows[0]) || null;
   }
   const code = String(url.searchParams.get('code') || '').trim();
-  if (code) {
-    const id = await venueByCode(env, code);
-    if (!id) return null;
-    const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(id) + '&select=id,broadcast_enforce&limit=1');
-    return (rows && rows[0]) || null;
-  }
+  if (code) return await venueRowByCode(env, code, 'broadcast_enforce');   // one read, not two (31 Oct 2026)
   const session = String(url.searchParams.get('session') || '').trim();
   if (session) {
     if (!/^[0-9a-fA-F-]{36}$/.test(session)) return null;
@@ -2758,13 +2776,51 @@ async function handleScreen(request, env, json) {
   });
 }
 
+/* /play/live FROM WORKER MEMORY, the lobby poll's twin (31 Oct 2026).
+
+   Who asks this, and what each can live with:
+     phones      play.html: claiming a server identity on load (the join code is the venue's own, so
+                 an answer a few seconds old names the same code), the table-talker page's 30 s poll
+                 and its paper and age rules (already 30 s apart). A copy up to PLAY_LIVE_TTL_MS old
+                 is fine for all of it, and the same answer goes to every phone in the room. The page's
+                 first look after loading and every look a console's message asked for send fresh=1.
+     consoles    vp-session.js "a game is already open on another device": must see a lobby opened
+                 a second ago, so it asks fresh=1.
+     TVs         the trivia and musical screens' "is the night still open" checks, which send the
+                 wall back to the ads on a no: fresh=1, so a lobby that has just opened is never
+                 mistaken for none. They ask rarely (after minutes of host silence).
+     HQ          does not call it.
+   fresh=1 always reads the database and refreshes the copy. Built exactly like the /join/info copy:
+   plain data never a shared promise, stamped from before the read so a slow read never replaces a
+   newer copy, and nothing kept from a failure or an unknown code. A paused (suspended) venue's
+   answer is kept the same few seconds, which only delays the wall clearing: the join, the claim
+   and every other road that costs money read the venue's status from the database every time. */
+const PLAY_LIVE_TTL_MS = 4000;
+const playLiveCache = new Map();       // code -> { until, body }
 async function handlePlayLive(request, env, json) {
   const url = new URL(request.url);
+  const code = String(url.searchParams.get('code') || '').trim().toUpperCase();
+  const fresh = url.searchParams.get('fresh') === '1';
+  const now = Date.now();
+  if (fresh !== true) {
+    const kept = playLiveCache.get(code);
+    if (kept && kept.until > now) return json(kept.body);   // the room's copy, under PLAY_LIVE_TTL_MS old
+  }
+  const out = await playLiveLookup(env, code);
+  // Stamped from BEFORE the read, and never laid over a copy read after it (a slow read finishing late).
+  const until = now + PLAY_LIVE_TTL_MS, was = playLiveCache.get(code);
+  if (out.keep && !(was && was.until > until)) joinInfoKeep(playLiveCache, code, { until: until, body: out.body });
+  return json(out.body);
+}
+async function playLiveLookup(env, code) {
+  const json = function (body) { return { keep: body.exists === true, body: body }; };
   /* includeSuspended, or the suspended branch below is unreachable: the default
-     lookup answers null for a suspended venue and this returned exists:false first. */
-  const venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
-  if (!venueId) return json({ exists: false, live: false });
-  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status,au_state,permits&limit=1');
+     lookup answers null for a suspended venue and this returned exists:false first.
+     One read for the venue and its row together (venueRowByCode), where this was two. */
+  const vrow = await venueRowByCode(env, code, 'name,status,au_state,permits', { includeSuspended: true });
+  if (!vrow) return json({ exists: false, live: false });
+  const venueId = vrow.id;
+  const vrows = [vrow];
   const name = (vrows && vrows[0] && vrows[0].name) || '';
   /* paper_bingo and age_gate here as well as on /join/info (15 Oct 2026): the state's rules for
      the phone, decided by the Worker for whichever format is on tonight. Same two helpers as
@@ -2902,6 +2958,26 @@ async function handleReport(request, env, json) {
   return json({ ok: true, id: newId });
 }
 
+/* vp_join_context (migration 132): the session for a join code and everything /join reads about
+   it, in one call. Answers the function's object, or null when the function is not in this
+   database (404), after which this isolate does not ask again. Any other failure is a database
+   fault and throws, as each of the reads it replaces would have. */
+let joinContextMissing = false;
+async function joinContext(env, code, device) {
+  if (joinContextMissing) return null;
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_join_context', {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify({ p_code: code, p_device: device || '' }),
+  });
+  if (res.status === 404) {
+    joinContextMissing = true;
+    console.warn('vp_join_context missing (migration 132 not run); joining the slow way');
+    return null;
+  }
+  if (!res.ok) throw dbError('rpc', 'vp_join_context', await res.text());
+  const out = await res.json();
+  if (!out || typeof out !== 'object') throw dbError('rpc', 'vp_join_context', 'unexpected reply');
+  return out;
+}
 async function handleJoin(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
@@ -2928,6 +3004,31 @@ async function handleJoin(request, env, json) {
     if (!rl.ok) return json({ error: 'Too many joins from this device right now, please wait a moment' }, 429);
   }
 
+  const devId = String(b.pid || '').trim();
+  /* A pid starting 'paper-' is refused: that prefix belongs to printed cards (PAPER_MAX), and a
+     phone sending it would be handed the paper player's row, its card and its claims. */
+  const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId) && !isPaperDevice(devId);
+  const name = cleanName(b.name);
+
+  /* ONE TRIP FIRST (migration 132, 31 Oct 2026). vp_join_context reads the session for this code,
+     its venue and group, the venue's collect settings, this phone's earlier row and the running
+     games in ONE gateway call, where the reads below are five or six. It reads and decides nothing:
+     every refusal, the collection gate and the dedup are made here on its rows, in the same order
+     and the same words. Not there yet (404): the reads below, and this isolate stops asking. */
+  const ctx = await joinContext(env, code, devIdValid ? devId : '');
+  let session, venueCheck, cfgRow, byDeviceRows = null, running = null, joinCtx = null;
+  if (ctx) {
+    if (!ctx.session) return json({ error: 'No active game with that code' }, 404);
+    session = ctx.session;
+    assertUuid(session.venue_id, 'venue_id');
+    venueCheck = Promise.resolve(assertVenueRowsActive(ctx.venue, ctx.group));   // throws a paused venue or group out, as below
+    cfgRow = ctx.settings || {};
+    byDeviceRows = ctx.prior_id ? [{ id: ctx.prior_id }] : [];
+    running = Array.isArray(ctx.running) ? ctx.running : [];
+    joinCtx = { session: session, venueCheck: venueCheck, cfgRow: cfgRow };
+  } else {
+  /* The reads vp_join_context replaces, exactly as they were (block scoped, so the names below are
+     this path's own, and both paths hand the same three things on). */
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*');
   if (!sessions.length) return json({ error: 'No active game with that code' }, 404);
   const session = sessions[0];
@@ -2938,15 +3039,16 @@ async function handleJoin(request, env, json) {
   /* The venue kill-switch and the device dedup below both need only the session, so they
      are asked together (assertVenueActive throws, and Promise.all lets the throw through). */
   const venueCheck = assertVenueActive(env, session.venue_id);
-
-  const name = cleanName(b.name);
+  joinCtx = { session: session, venueCheck: venueCheck, cfgRow: await venueCollectCfg(env, session.venue_id) };
+  }
+  session = joinCtx.session; venueCheck = joinCtx.venueCheck; cfgRow = joinCtx.cfgRow;
 
   /* Optional player data, gated on what the VENUE has agreed to collect, not on what the join
      screen happened to render. This used to trust the request: the screen only shows the fields a
      venue has enabled, so it looked right, but a crafted POST wrote an email, a mobile, a
      postcode and a marketing_optin with a consent timestamp for a venue that collects none of it.
      Same rules as /capture now, out of one function, so the two cannot drift apart again. */
-  const cap = gatedCapture(await venueCollectCfg(env, session.venue_id), b);
+  const cap = gatedCapture(cfgRow, b);
 
   // Soft dedup (LIVE only with env.RL): a rapid re-join from the same network +
   // device hint reuses that device's existing player row instead of minting a new
@@ -2967,10 +3069,6 @@ async function handleJoin(request, env, json) {
      retrying or refreshing sends the same pid and is correctly reused; two different phones can
      never collide, whatever network they share. No pid (an older page) means no dedup, which is
      the safe direction: a spare row costs a metered player, a collision costs somebody's game. */
-  const devId = String(b.pid || '').trim();
-  /* A pid starting 'paper-' is refused: that prefix belongs to printed cards (PAPER_MAX), and a
-     phone sending it would be handed the paper player's row, its card and its claims. */
-  const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId) && !isPaperDevice(devId);
   const dedupKey = (env.RL && devIdValid)
     ? 'joindedup:' + session.id + ':' + devId
     : null;
@@ -2982,10 +3080,11 @@ async function handleJoin(request, env, json) {
     /* The cache and the durable column are read at the same time, alongside the venue check:
        three trips that used to queue behind each other. The database row wins when it exists
        (it already proves session + not kicked); the cache only matters in the seconds before
-       the row is visible. */
+       the row is visible. The one-trip read has already brought the durable row (same session,
+       same device, not kicked, earliest first). */
     const [cached, byDevice] = await Promise.all([
       dedupKey ? env.RL.get(dedupKey).catch(function () { rlWarn(); return null; }) : null,
-      sbGet(env, 'vp_players',
+      byDeviceRows || sbGet(env, 'vp_players',
         'session_id=eq.' + enc(session.id) + '&device_id=eq.' + enc(devId) +
         '&kicked=eq.false&select=id&order=joined_at.asc&limit=1'),
       venueCheck,
@@ -3000,9 +3099,10 @@ async function handleJoin(request, env, json) {
         const token = randomTokenHex(32);            // fresh 256-bit token onto the SAME row
         const patch = { token_hash: await sha256Hex(token), last_seen_at: new Date().toISOString() };
         if (name) patch.display_name = name;
+        const venueRow = await venueCheck;   // already settled above; the row it read carries the slug
         const [, snapshot] = await Promise.all([
           sbPatch(env, 'vp_players', 'id=eq.' + enc(priorId), patch),
-          getPublicSnapshot(env, session.id),
+          getPublicSnapshot(env, session.id, { session: session, slug: venueRow && venueRow.slug, running: running }),
         ]);
         return json({ token, snapshot });
       }
@@ -3010,6 +3110,7 @@ async function handleJoin(request, env, json) {
   } else {
     await venueCheck;
   }
+  const venueRow = await venueCheck;           // settled: the kill-switch passed, and its row has the slug
 
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
   const tokenHash = await sha256Hex(token);    // only the hash is stored
@@ -3047,13 +3148,16 @@ async function handleJoin(request, env, json) {
   // migration for a read that costs a few milliseconds.
   // The TV's welcome ticker (count, then the event) and the phone's snapshot do not
   // depend on each other, so they run side by side.
-  const ticker = sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id')
-    .then(function (players) {
-      const payload = { player_count: countPlayers(players) };   // the number the host is billed on
-      if (name) payload.display_name = name;       // name on TV only if the player gave one
-      return emitEvent(env, session, 'player.joined', payload, 'system');
-    });
-  const [, snapshot] = await Promise.all([ticker, getPublicSnapshot(env, session.id)]);
+  /* ONE READ OF THE ROOM, FOR BOTH (31 Oct 2026). The ticker and the snapshot each read every
+     player in the session, the same rows with the same select, one after the other's heels. Now
+     the ticker's read is handed to the snapshot, and the snapshot's session and slug come from the
+     rows this request already holds, so a join is three gateway calls lighter and says the same. The
+     event goes first, so the state_version the phone is handed is the one the join itself made. */
+  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
+  const payload = { player_count: countPlayers(players) };   // the number the host is billed on
+  if (name) payload.display_name = name;       // name on TV only if the player gave one
+  await emitEvent(env, session, 'player.joined', payload, 'system');
+  const snapshot = await getPublicSnapshot(env, session.id, { session: session, players: players, slug: venueRow && venueRow.slug, running: running });
   return json({ token, snapshot });
 }
 
@@ -10271,13 +10375,28 @@ async function assertVenueActive(env, venueId, audience) {
     ? 'Your tab has run a bit long. Settle up on your account page and we will get your games going again.'
     : 'Games are paused here tonight. Have a word with the staff.';
   assertUuid(venueId, 'venue_id');   // re-derived per request; never trusted raw
-  const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=status,group_id');
+  const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=status,group_id,slug');
   if (!venues.length) throw httpError(403, 'Venue not available');
   if (venues[0].status !== 'active') throw httpError(403, suspended);
   if (venues[0].group_id) {
     const groups = await sbGet(env, 'vp_venue_groups', 'id=eq.' + enc(venues[0].group_id) + '&select=status');
     if (groups.length && groups[0].status !== 'active') throw httpError(403, suspended);
   }
+  /* The row it read, slug included, so a caller that also needs the slug (the /join snapshot) does
+     not ask the database for the same row again (31 Oct 2026). Callers that only want the check
+     ignore it. */
+  return venues[0];
+}
+/* THE SAME KILL-SWITCH ON ROWS ALREADY READ (31 Oct 2026). The one-trip join (migration 132) reads
+   the venue and its group in the same call as the session, so the check is made on those rows: the
+   same order, the same refusals, the same player wording as assertVenueActive above (a group that is
+   not found passes, as there). venue is { status, group_id } or null; group is { status } or null. */
+function assertVenueRowsActive(venue, group) {
+  const suspended = 'Games are paused here tonight. Have a word with the staff.';
+  if (!venue) throw httpError(403, 'Venue not available');
+  if (venue.status !== 'active') throw httpError(403, suspended);
+  if (venue.group_id && group && group.status !== 'active') throw httpError(403, suspended);
+  return venue;
 }
 
 /* A VENUE SET UP FOR A PROSPECT ACCEPTS SECTION 6 OF THE TERMS BEFORE ITS FIRST GAME (Dean, 28 Oct
@@ -10347,8 +10466,14 @@ async function emitEvent(env, session, type, payload, actor) {
  * SNAPSHOT  (public projection only)
  * ===================================================================== */
 
-async function getPublicSnapshot(env, sessionId) {
+async function getPublicSnapshot(env, sessionId, pre) {
   assertUuid(sessionId, 'session');   // the ?session= query param is validated here before any PostgREST use
+  /* `pre` (31 Oct 2026): rows THIS request has already read, so the snapshot does not ask for them
+     again. /join has the session row (it found the session by its code), the venue's slug (the
+     kill-switch read it) and, for a new player, the session's players (the TV's count read them).
+     Each is used only when it is for this session; anything absent is read here as always. */
+  pre = pre || {};
+  const preSession = pre.session && pre.session.id === sessionId ? pre.session : null;
   /* Three reads that only need the session id go out together, and every running game
      of the session comes back in one read instead of one read per format. Measured 8 Sep
      2026: a lobby snapshot was six trips one after another (session, slug, players, then
@@ -10356,9 +10481,9 @@ async function getPublicSnapshot(env, sessionId) {
      0.15 s each, so the join answered in over a second. The result is byte-for-byte what it
      was: the same fields, the same one-game-wins-in-this-order rule below. */
   const [sessions, players, running] = await Promise.all([
-    sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=id,venue_id,status,state_version,join_code,plan_cap_at_start,title'),
-    sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id'),
-    sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running&select=id,seq,format,config,status&order=seq.desc'),
+    preSession ? [preSession] : sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=id,venue_id,status,state_version,join_code,plan_cap_at_start,title'),
+    pre.players || sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id'),
+    Array.isArray(pre.running) ? pre.running : sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running&select=id,seq,format,config,status&order=seq.desc'),
   ]);
   if (!sessions.length) throw httpError(404, 'Session not found');
   const s = sessions[0];
@@ -10368,7 +10493,8 @@ async function getPublicSnapshot(env, sessionId) {
      to find the venue's realtime channel, which is named from the slug. Without this the phone
      would know its session and not know which room it is in. */
   let venueSlug = null;
-  try {
+  if (typeof pre.slug === 'string' && pre.slug) venueSlug = pre.slug;
+  else try {
     const vs = await sbGet(env, 'vp_venues', 'id=eq.' + enc(s.venue_id) + '&select=slug&limit=1');
     venueSlug = (vs && vs[0] && vs[0].slug) || null;
   } catch (e) { venueSlug = null; }

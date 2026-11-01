@@ -884,7 +884,9 @@
       var done = false;
       function finish(v) { if (!done) { done = true; resolve(v); } }
       setTimeout(function () { finish(true); }, 3000);
-      fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)))
+      /* fresh=1 (31 Oct 2026): the Worker keeps /play/live a few seconds for the room's phones. This
+         question is "did another tablet open a lobby a second ago", so it is asked of the database. */
+      fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)) + "&fresh=1")
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (done) return;

@@ -1283,7 +1283,7 @@
     /* fresh:1 (31 Oct 2026): the Worker answers the lobby poll from a copy a few seconds old. This
        is the page's FIRST question, the one the paper notice and the age tick hang on, so it is
        asked of the database itself. The repeats below are the ones the copy is for. */
-    playerPost("/join/info",{ code:P.room, fresh:1 }).then(function(r){
+    askJoinInfo(P.room, true).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       /* PAPER-TICKET STATES. South Australia, Victoria and Tasmania expect a printed ticket in
@@ -1387,12 +1387,35 @@
      twice. It DID both, for as long as this call left the pid out, and the comment
      here said otherwise the whole time. */
   var _namePushed="";
+  /* ONE QUESTION, ASKED ONCE (31 Oct 2026, the join made cheaper). A page that has just loaded asked
+     the Worker the same thing from two places in the same moment: /join/info from the join screen and
+     from the code lookup, /play/live from the identity claim and from the table-talker lookup. Each was
+     a full set of database reads. An ask made within a quarter of a second of the same ask now shares
+     its answer, so that first moment costs one. A fresh ask is never answered by a routine one, and any
+     later ask (a console's message, the next poll) asks again, so nothing here holds an answer back. */
+  var _shared={};
+  function askOnce(key, fresh, go){
+    var s=_shared[key], now=Date.now();
+    if(s && now-s.at<250 && (s.fresh || !fresh)) return s.p;
+    var p=go(); _shared[key]={ at:now, fresh:!!fresh, p:p }; return p;
+  }
+  function askJoinInfo(code, fresh){ return askOnce("ji:"+code, fresh, function(){ return playerPost("/join/info", fresh ? { code:code, fresh:1 } : { code:code }); }); }
+  function askLive(code, fresh){ return askOnce("pl:"+code, fresh, function(){ return fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code)+(fresh?"&fresh=1":"")).then(function(r){ return r.ok?r.json():null; }); }); }
+  var _liveCode="";   // the code of the live session this phone holds a server identity in (noteJoined)
+  var _claimP=null;   // the identity claim made on load, while it is still settling (claimIdentity)
   function pushNameToServer(){
     if(!P.name || _namePushed===P.name) return;
     var code=P.room; if(!code) return;
     _namePushed=P.name;
-    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
-      .then(function(r){ return r.ok?r.json():null; })
+    /* A phone that already holds an identity in tonight's session knows its code: the name goes
+       straight onto that row. Asking /play/live first was a second set of reads for an answer this
+       page already had. A session that has closed since answers the /join with a 404, which resets
+       this the same way "not live" did. */
+    /* And a name typed while the identity claim made on load is still on its way waits for it, so the
+       name lands on the row that claim makes instead of racing it with a second join. */
+    Promise.resolve(_claimP).catch(function(){}).then(function(){
+      return (P.token && _liveCode) ? { live:true, join_code:_liveCode } : askLive(code, false);
+    })
       .then(function(d){
         // Not live yet (a regular scanning the table talker before the lobby opens): forget that
         // we tried, so the join code arriving on the first state message can carry the name in.
@@ -1420,9 +1443,9 @@
      the meter counted one (audit, 14 Oct 2026). The console now sends the session id with every
      state message, and that is what this remembers. A /join answers with the session it joined
      (its snapshot), so the identity claimed at page load is remembered the same way. */
-  var _joinedFor="", _joinBusy=false;
+  var _joinedFor="", _joinBusy=false, _joinedAt=0;
   function noteJoined(j, code){
-    P.token=j.token;
+    P.token=j.token; if(code) _liveCode=code; _joinedAt=Date.now();
     var sid=(j.snapshot && j.snapshot.session_id) || "";
     var fresh=_joinedFor!==(sid||code);
     _joinedFor=sid||code;
@@ -1431,6 +1454,11 @@
   function joinServerSession(joinCode, sessionId, now){
     if(!joinCode || _joinBusy || !P.room || _paper) return;
     if(!now && _joinedFor===(sessionId||joinCode) && P.token) return;
+    /* A console's "check in" that crossed this phone's own join on the way (31 Oct 2026): the console
+       asked who was seated a moment before the join landed. Joining again was a second whole join
+       for a row that is already there; the console asks again in three seconds and finds it. Only
+       inside ten seconds of a join to this very session: after that a check-in always joins. */
+    if(now && sessionId && _joinedFor===sessionId && P.token && Date.now()-_joinedAt<10000) return;
     _joinBusy=true;
     /* Every phone in the room gets this same message on the same tick. Sixty of them calling
        at once is sixty requests in one second, and the database sits behind a per-second
@@ -1519,8 +1547,8 @@
        {t:"started", question_count} arrives on this channel too. This page took it for a bingo
        round, called itself busy, and its lookup stopped for good: phones sent here sat on bingo
        through every later round (break test, 14 Oct 2026). Ask where to go instead. */
-    if(m && m.fmt && m.fmt!=="bingo" && m.t!=="mode"){ if(m.t==="started" && typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // mode still runs below, as it always has   // tagged by its console
-    if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(); return; }   // a console from before the tag
+    if(m && m.fmt && m.fmt!=="bingo" && m.t!=="mode"){ if(m.t==="started" && typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(true); return; }   // mode still runs below, as it always has   // tagged by its console
+    if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(true); return; }   // a console from before the tag
     if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
     if(m.pats) notePats(m.pats);   // the venue's own patterns this message names
@@ -1552,7 +1580,7 @@
       P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; P.shared=false; P.sharedWith=[];
       clearWin(P.room); clearStage(P.room); P.lostBy=""; route();
     }
-    if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(); }
+    if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(true); }   // a pushed look reads the database (31 Oct 2026)
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
     if(typeof m.allowEarly==="boolean"){ P.allowEarly=m.allowEarly; }
@@ -1899,16 +1927,26 @@
   }
   function savedToken(code){ try{ return localStorage.getItem("vp-token-"+code)||""; }catch(e){ return ""; } }
 
-  function claimIdentity(code){
+  function claimIdentity(code, fresh){
     if(P.token) return;
     // A token we already hold is this phone's identity for the night. Reusing it is
     // what stops a refresh looking like a new arrival.
     var had=savedToken(code);
     if(had){ P.token=had; if(P.capture) saveCapture(); return; }
-    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
-      .then(function(r){ return r.ok?r.json():null; })
+    var mine=false;
+    _claimP=askLive(code, fresh===true)
       .then(function(d){
         if(!d || !d.live || !d.join_code || P.token) return;
+        /* TRIVIA OR MUSICAL IS ON: this page is about to move the phone to that game's own page, and
+           that page joins for itself (31 Oct 2026). Joining here first was a whole join, eight
+           database calls, for a token the next page re-mints a moment later on the same row. A phone
+           that stays here after all (it is playing bingo) is asked to check in by the console, and
+           joins then. */
+        if(playerAppFor(d.format)) return;
+        /* One join in flight at a time: a console's state message arriving now waits for this one
+           rather than sending a second join for the same row (31 Oct 2026). */
+        if(_joinBusy) return;
+        _joinBusy=true; mine=true;
         return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "", pid: deviceId() })
           .then(function(j){
             if(j && j.token){
@@ -1920,7 +1958,8 @@
             }
           });
       })
-      .catch(function(){});
+      .catch(function(){})
+      .then(function(){ if(mine) _joinBusy=false; });
   }
 
   /* THE NAME GOES WITH THE PLAYER. This page shows the bingo name box straight away and asks the
@@ -1984,7 +2023,7 @@
       // Busy with bingo: ask again later rather than stop asking. Returning here ended the lookup
       // for the night, so a phone could never follow the room to trivia (14 Oct 2026).
       if(playingHere()){ lookLater(); return; }   // see watchVenue
-      playerPost("/join/info", fresh===true ? { code:code, fresh:1 } : { code:code })
+      askJoinInfo(code, fresh===true)
         .then(function(r){
           /* The paper notice and the age tick follow the Worker's answer EACH time (16 Oct 2026):
              a flag that arrives once a bingo lobby opens is acted on, and one that clears later
@@ -2138,9 +2177,12 @@
     P.venueSlug=slug;
     var code=venueCode(slug);
     connect(code);                              // broadcast bingo is live on this code right now
-    claimIdentity(code);                        // and quietly pick up a server identity if one is going
+    claimIdentity(code, true);                  // and quietly pick up a server identity if one is going (the same fresh ask as the first look below)
     var hopped=false;
-    function look(){
+    /* fresh (31 Oct 2026): the Worker keeps /play/live a few seconds and hands it to the room. The first
+       look after this page loads and every look a console's message asked for read the database; the
+       thirty second repeats take the copy. */
+    function look(fresh){
       /* P.active, NOT P.joined. connect() sets P.joined the moment loadName() finds a saved name,
          and that name lives in localStorage keyed by the venue's PERMANENT code, so every regular
          who has ever played bingo here has it forever. They scanned the trivia QR, this lookup
@@ -2155,8 +2197,7 @@
          than once a minute; an abandoned game says nothing at all. */
       if(hopped || playingHere()) return;
       try{
-        fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
-          .then(function(r){ return r.ok?r.json():null; })
+        askLive(code, fresh===true)
           .then(function(d){
             if(!d || hopped) return;
             /* THE STATE'S PHONE RULES, ON EVERY POLL (16 Oct 2026). A phone off a table talker sat
@@ -2202,8 +2243,8 @@
 
        This is why the edge cache is not the answer. Caching made the same volume of asking
        cheaper; this asks far less and answers instantly. */
-    VP_LOOK_NOW = look;
-    look(); setInterval(look, 30000);
+    VP_LOOK_NOW = look;           // a console's message calls it with true: a fresh look
+    look(true); setInterval(look, 30000);
   }
 
   // ---- init: read ?room, or a permanent ?venue link off a printed sign ----
