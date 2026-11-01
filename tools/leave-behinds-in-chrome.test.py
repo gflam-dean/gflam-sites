@@ -86,7 +86,7 @@ SEE = r'''(function(){
     panelBg: panel ? getComputedStyle(panel).backgroundColor : "",
     panelExact: panel ? (getComputedStyle(panel).printColorAdjust || getComputedStyle(panel).webkitPrintColorAdjust || "") : "",
     mark: vis(mark) && !!mark.querySelector("path"),
-    word: t(document.querySelector(".top .logo .word")),
+    word: !!document.querySelector('.top .logo .word svg[data-vp-mark="wordmark"]'),   // the drawn wordmark (1 Nov 2026), not typed text
     sheetH: document.querySelector(".sheet").getBoundingClientRect().height,
     sheetW: document.querySelector(".sheet").getBoundingClientRect().width,
     sw: document.documentElement.scrollWidth, vw: innerWidth,
@@ -139,7 +139,7 @@ def same_copy(tag, v, path):
        v.get('legal') == LEGAL and 'musical' not in v.get('legal', '').lower(), v.get('legal'))
     phones = re.findall(r'(?<![\d$.])(?:\+?61\s?|0)[2-478](?:[\s-]?\d){8}\b', allt)
     ok('%s: no phone number but the 07 landline' % tag, all(re.sub(r'\D', '', p) == re.sub(r'\D', '', LANDLINE) for p in phones), phones)
-    ok('%s: the VenuePlay mark and word are in the header' % tag, v.get('mark') and v.get('word') == 'VenuePlay', (v.get('mark'), v.get('word')))
+    ok('%s: the venueplay mark and wordmark are in the header' % tag, v.get('mark') and v.get('word') is True, (v.get('mark'), v.get('word')))
     if path == '/leave-behind-pub':
         ok('%s: leads with "Run a packed Tuesday. Every Tuesday."' % tag, (v.get('h1') or '').lower() == 'run a packed tuesday. every tuesday.', v.get('h1'))
 
