@@ -206,13 +206,20 @@ def state(t):
 
 
 def clear_storage(b, base):
-    """Forget what this phone has seen. Chrome answers "Internal error" when the origin has no
-       storage yet (nothing opened there in this browser), which is the same as already clear."""
-    try:
-        b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
-    except OSError as e:
-        if 'Internal error' not in str(e):
-            raise
+    """Forget what this phone has seen, from a page of the same site (Storage.clearDataForOrigin
+       answered "Internal error" on this Chrome, 1 Nov 2026, and so cleared nothing)."""
+    tid = b.call('Target.createTarget', {'url': base + '/llms.txt', 'newWindow': True})['targetId']
+    sid = b.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
+    for _ in range(50):
+        r = b.call('Runtime.evaluate', {'expression': 'location.href.indexOf("/llms.txt")>0 && document.readyState==="complete" && (localStorage.clear(), localStorage.length===0)',
+                                        'returnByValue': True}, session=sid)
+        if r.get('result', {}).get('value') is True:
+            break
+        time.sleep(0.1)
+    else:
+        b.close_tab(tid)
+        raise RuntimeError('could not clear the phone\'s storage')
+    b.close_tab(tid)
 
 
 def wait_question(t, not_id=None, secs=15):
@@ -250,6 +257,8 @@ def play_round(t, pattern, label):
         while time.time() < end:
             after = state(t)
             if after.get('verdict'):
+                time.sleep(0.3)          # the colour fades in over 0.12 s: read it once it has landed
+                after = state(t)
                 break
             time.sleep(0.03)
         # A second, late tap on another answer must change nothing.
@@ -457,6 +466,7 @@ def main():
                 check('%d px: Play again and "Want this on the big screen?" are both on the first screen of the score' % w,
                       0 < s['again']['y'] < h and f['bigBottom'] <= h, (s['again'], f['bigBottom']))
             if A.shots and w in (320, 430):
+                time.sleep(0.5)      # the score fades in over 0.35 s
                 tf.shot(os.path.join(A.shots, 'live-here-now-score-%d.png' % w))
             tf.close()
 

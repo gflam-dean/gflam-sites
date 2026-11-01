@@ -187,6 +187,10 @@
   "checks": 127,
   "counted_by": "lines"
  },
+ "tools/live-here-now-in-chrome.test.py": {
+  "checks": 63,
+  "counted_by": "lines"
+ },
  "tools/livenorm.test.py": {
   "checks": 8,
   "counted_by": "lines"
@@ -213,6 +217,10 @@
  },
  "tools/no-dev-links.test.py": {
   "checks": 36,
+  "counted_by": "lines"
+ },
+ "tools/not-found-in-chrome.test.py": {
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
