@@ -984,7 +984,7 @@
     var strikes=0, lastContentAt=null;
     function ask(){
       try{
-        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":""))
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":"")+(typeof tvShownParam==="function" ? tvShownParam(Date.now()) : ""))
           .then(function(r){ return r.ok?r.json():null; }).then(function(d){
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){
@@ -1096,6 +1096,78 @@
   // Today's weekday in the venue's time. Computed fresh each render so an always-on TV updates at midnight.
   function todayAU(){ try{ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:VENUE_TZ}).toLowerCase(); }catch(e){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); } }
   function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
+  /* ADVERTS COUNTED (migration 135, Dean 31 Oct 2026: "can we tell how much advertising is displayed").
+     Every time the rotation moves on to a slide while this wall is showing the advertising and the
+     page is visible, that slide's count for TONIGHT goes up by one and its seconds by its slot. The
+     running total rides the /venue poll this page already makes every 30 seconds, once every five
+     minutes, so the count costs the database nothing extra (vp_screen_poll_shown keeps it in the same
+     call). Running totals, not additions: a lost or repeated poll cannot double count, and the tally
+     sits in localStorage so a reload carries on. One id per tab (sessionStorage), so two TVs in one
+     room add up. A probe and the ?demo=1 page count nothing and send nothing.
+     A slide's key is its uploaded file name, or its heading for a text slide; the draws board and
+     the raffle card are auto:draws and auto:raffle. The billing Worker's report uses the same rule
+     (vprSlideKey) to put the venue's own heading next to each count. */
+  var TV_SHOWN_SEND_MS = 5 * 60 * 1000;
+  var tvShownLastSent = 0;
+  var TV_SHOWN_OFF = VP_DEMO || /[?&]probe=1(&|$)/.test(window.location.search || "");
+  var tvShownSid = (function(){
+    var id = "";
+    try { id = sessionStorage.getItem("vpTvSid") || ""; } catch (e) {}
+    if (!/^[A-Za-z0-9_-]{6,40}$/.test(id)) {
+      try { var b = new Uint8Array(9); crypto.getRandomValues(b); id = "tv" + Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }
+      catch (e) { id = "tv" + String(Date.now()); }
+      try { sessionStorage.setItem("vpTvSid", id); } catch (e) {}
+    }
+    return id;
+  })();
+  var tvShown = (function(){ try { var o = JSON.parse(localStorage.getItem("vpTvShown:" + tvShownSid) || "null"); if (o && o.n && o.c) return o; } catch (e) {} return { n: "", c: {} }; })();
+  function tvShownKey(e){
+    if (!e) return "";
+    if (e.type === "slide" && e.slide) {
+      var sl = e.slide;
+      if (sl.image_url) { var f = String(sl.image_url).split("?")[0].split("#")[0].split("/").pop() || ""; return f ? "i:" + f.slice(-80) : ""; }
+      var h = String(sl.head || sl.tag || "").replace(/\s+/g, " ").trim();
+      return h ? "t:" + h.slice(0, 80) : "";
+    }
+    if (e.type === "auto-draws") return "auto:draws";
+    if (e.type === "auto-raffle") return "auto:raffle";
+    return "";
+  }
+  /* Tonight on the VENUE's clock, 2am to 2am, the monthly report's rule. */
+  function tvShownNight(ms){
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone: VENUE_TZ || "Australia/Brisbane", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms - 2 * 3600 * 1000)); }
+    catch (e) { return new Date(ms + 8 * 3600 * 1000).toISOString().slice(0, 10); }
+  }
+  function tvShownCount(entry, slotMs){
+    try { tvShownAdd(entry, slotMs); } catch (e) {}   // counting must never stop the rotation
+  }
+  function tvShownAdd(entry, slotMs){
+    if (TV_SHOWN_OFF || tvMode !== "ads" || !tvShown) return;
+    try { if (document.visibilityState && document.visibilityState !== "visible") return; } catch (e) {}
+    var k = tvShownKey(entry); if (!k) return;
+    var night = tvShownNight(Date.now());
+    if (tvShown.n !== night) {
+      try { localStorage.removeItem("vpTvShown:" + tvShownSid); } catch (e) {}
+      tvShown = { n: night, c: {} };
+    }
+    var r = tvShown.c[k] || (tvShown.c[k] = [0, 0]);
+    r[0] = Math.min(20000, r[0] + 1);
+    r[1] = Math.min(86400, r[1] + Math.round((slotMs || 0) / 1000));
+    try { localStorage.setItem("vpTvShown:" + tvShownSid, JSON.stringify(tvShown)); } catch (e) {}
+  }
+  /* The piece of the /venue address that carries the tally, or "" when there is nothing new to say. */
+  function tvShownParam(nowMs){
+    try { return tvShownBuild(nowMs); } catch (e) { return ""; }   // the heartbeat goes whatever happens here
+  }
+  function tvShownBuild(nowMs){
+    if (TV_SHOWN_OFF || !tvShown || !tvShown.n) return "";
+    var keys = Object.keys(tvShown.c);
+    if (!keys.length || nowMs - tvShownLastSent < TV_SHOWN_SEND_MS) return "";
+    keys.sort(function(a, b){ return tvShown.c[b][0] - tvShown.c[a][0]; });
+    var c = {}; keys.slice(0, 40).forEach(function(k){ c[k] = tvShown.c[k]; });
+    tvShownLastSent = nowMs;
+    return "&shown=" + encodeURIComponent(JSON.stringify({ n: tvShown.n, s: tvShownSid, c: c }));
+  }
   /* A venue-linked screen does not need pairing: its code comes from the slug and the console
      connects on its own. But the console's pairing screen still says the code is on the TV, and
      a venue that lands there (or is setting up a second screen) has to be able to read it. So:
@@ -1449,6 +1521,7 @@
       var out = slides[adIdx];
       adIdx = now.i;
       var into = slides[adIdx];
+      try{ if(typeof tvShownCount==="function") tvShownCount(entries[adIdx], durs[adIdx]); }catch(e){}   // a slide the room can now see (migration 135); never stops the rotation
       /* THE STACK IS HELD, NOT BORROWED FOR THE SWAP.
          This used to give the incoming slide z-index 2 and then CLEAR it once the
          handover was done. Clearing it hands the stacking order back to DOM order,

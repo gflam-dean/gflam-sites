@@ -3754,6 +3754,19 @@ def local_checks(which):
              'nobody saw, their number lost, or another venue handed to a login on one typed fact'),
             # D91: saved replies and the easier help desk (Dean, 29 Oct 2026; migration 126), branch
             # feature/helpdesk-easier. D88 and D89 are the prospect autopilot and Prospects tab, D90 is phone sign-in.
+            # D106: the monthly venue report and the one email a month (Dean, 30 to 31 Oct 2026; migration 133),
+            # branch feature/venue-reports-31oct.
+            ('D106. The monthly report counts a month by hand, a venue sees only its own, and the one monthly email waits for its switch',
+             'test-monthly-report.js',
+             'nights 2am to 2am where the venue is, players by phone, came back and how many times across weeks, new against the year before, per-game players, top teams, opt-ins, the month before, paged past 1,000; a venue, a manager or a marketing login sees only its own, View as only the venue viewed; HQ totals leave test venues out and name who is trending down; the email carries no player detail, no .dev link and never Gflam; off unless MONTHLY_REPORTS is on, then only 2am to 7am on the 1st to the 3rd, once per venue, never to an unsubscribed contact; the news HQ writes goes under the report only when ready, and before migration 133 the report still goes; slides shown per venue, per slide and in the totals, null before migration 135; HQ opens a stored copy (migration 136) made at 2am on the 1st and works a month out only on an owner\'s Refresh', 123,
+             'A venue told the wrong number of regulars, shown another pub\'s players, a bingo night at 1am counted on the wrong day, '
+             'a report quietly short past the first thousand rows, or an email a month going out before Dean has switched it on'),
+            # D107: slides counted on the TV and kept inside the poll it already makes (Dean, 31 Oct 2026; migration 135).
+            ('D107. The TV counts each slide the room sees and the count rides the poll it already makes, in the same database call',
+             'test-screen-shows.js',
+             'a slide is counted when the rotation moves on to it, only in ads mode on a visible page, per night from 2am on the venue\'s clock; the running total goes on the /venue poll every five minutes, at most 40 slides; a probe and the demo count nothing; a broken tally never stops the rotation or the heartbeat; the game Worker makes ONE call either way, vp_screen_poll_shown with the tally or vp_screen_poll without, and falls back in the same request before migration 135; the report names a slide by the same key the TV counts it under', 35,
+             'A second database call on every screen poll at peak, a wall that stops rotating or stops reporting in because of a count, '
+             'adverts counted while a game is on, or a venue told its slides were shown when nobody could see them'),
             ('D91. Saved replies: the page and the migration are one starter set, the support line only ever reaches a venue, and Send and close closes',
              'test-help-saved-replies.js',
              'the built-in starter replies equal migration 126\'s rows; house rules on every one; fill-ins from the ticket; HQ-only add, change, delete, reorder; before the table exists the list falls back and saving says why; a left-in fill-in or the support line on a player or PartyPlay ticket is refused with no email; send and close closes', 78,

@@ -511,6 +511,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-monthly-report.js": {
+  "checks": 123,
+  "counted_by": "lines"
+ },
  "tools/test-musical-15-oct.js": {
   "checks": 70,
   "counted_by": "lines"
@@ -741,6 +745,10 @@
  },
  "tools/test-screen-key-rotates.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-screen-shows.js": {
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
