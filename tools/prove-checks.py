@@ -2828,6 +2828,20 @@ MUTATIONS = [
     ('tv-sting-in-chrome.test.py', 'venueplay/app/musical/play.html', '    if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(', '    if(false){ try{ VPSting.forGame(', 'in Chrome: the musical bingo phone never plays its show'),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '      if(first[m.t]){ seenContent=true; if(playing) finish("content"); return; }', '      if(first[m.t]){ seenContent=true; return; }', 'in Chrome: the first question or song is hidden behind the show'),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '      if(!drawSeen && !stats.plays && (m.t==="state" || m.t==="host_here"))', '      if((m.t==="state" || m.t==="host_here"))', 'in Chrome: a draw screen plays the show again after the draw'),
+    # 2 Nov 2026 release: the show is ON by default everywhere, ?sting=0 is the per-screen off switch, and a TV
+    # hands its ?sting=0 on to the game screen in its frame (Dean: "yes let's play ready for tomorrow").
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '  var ON = !/[?&]sting=0(&|$)/.test(location.search || "");', '  var ON = /[?&]sting=1(&|$)/.test(location.search || "");', 'in Chrome: a plain TV or phone is back to no show unless its address has ?sting=1'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '  var ON = !/[?&]sting=0(&|$)/.test(location.search || "");', '  var ON = true || !/[?&]sting=0(&|$)/.test(location.search || "");', 'in Chrome: ?sting=0 no longer switches the show off on a TV, game screen or phone'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/index.html', '  var VP_STING=!/[?&]sting=0(&|$)/.test(location.search||""), STING_HOLD_SECONDS=4;', '  var VP_STING=/[?&]sting=1(&|$)/.test(location.search||""), STING_HOLD_SECONDS=4;', 'in Chrome: a plain console no longer holds its first ball for the show'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/tv.html', '    if(window.VPSting && !VPSting.on) url+="&sting=0";', '    if(false) url+="&sting=0";', 'in Chrome: a TV with ?sting=0 hands no off switch to its game screen, which plays the show anyway'),
+    # 2 Nov 2026: the sales-page demos let the show play in full before their first ball, question or song.
+    ('tv-sting-in-chrome.test.py', 'venueplay/tv.html', '      var FIRST=5400;', '      var FIRST=2600;', 'in Chrome: the sales-page bingo demo cuts the start-of-game show short with its first ball'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/trivia/screen.html', '      t = 4200;\n', '      t = 900;\n', 'in Chrome: the sales-page trivia demo cuts the start-of-game show short with its first question'),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/musical/screen.html', '      var t=4200, played=[];\n', '      var t=1200, played=[];\n', 'in Chrome: the sales-page musical bingo demo cuts the start-of-game show short with its first song'),
+    # 2 Nov 2026 (Dean): the phone show lands in the page's own header logo, measured where it is painted.
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', 'ox:r.left+(r.width-4676*k)/2+1*k,', 'ox:r.left+(r.width-4676*k)/2+1*k+6,', "in Chrome: the phone show's wordmark lands beside the header logo instead of on it"),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    headBack();   // the phone\'s header mark is always given back, however the show ended\n', '', "in Chrome: a phone show cut short leaves the header logo hidden"),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    PH.head = REDUCED ? null : headMark();', '    PH.head = headMark();', "in Chrome: under reduced motion the phone show still flies into the header"),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    var gt=$("greetToast"); if(gt) gt.classList.remove("show");   // a toast left from the last call must not sit over this winner\n', '', 'in Chrome: "Nothing was recorded" sits over the next winner on a phone'),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    send({ t:"resume" });   // every TV back to the board', '', 'in Chrome: Not a win leaves the TV on BINGO?'),
     # 24 Oct 2026: a venue's own named bingo patterns (VP-DRAW-1.2, migration 118), and Back to the last game after a New game tapped by mistake.
@@ -6394,6 +6408,9 @@ MUTATIONS = [
      '    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:6px;row-gap:3px;text-align:center;min-width:0;max-width:100%}',
      '    text-align:left}',
      'at 320 wide the musical phone header puts "Musical Bingo" hard against the left gutter, off-centre under the wordmark'),
+    ('venue-logo-in-chrome.test.py', 'venueplay/app/vp-sting.js',
+     '.vp-sting-mark .vp-newmark{display:block}', '.vp-sting-mark .vp-newmark{display:none}',
+     'after the start-of-game show the corner hides the old mark and shows nothing in its place'),
     ('venue-logo-in-chrome.test.py', 'venueplay/tv.html',
      'el.id="venueLogo"; el.setAttribute("data-fit-avoid","");', 'el.id="venueLogo";',
      'the bigger logo on the bingo TV is painted over the wall instead of the wall moving out from under it'),

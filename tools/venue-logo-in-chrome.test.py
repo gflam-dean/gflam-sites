@@ -257,6 +257,10 @@ PHONE_BOX = r'''(function(){
   var brand=null; if(word&&svg){ var a=svg.getBoundingClientRect(), c=word.getBoundingClientRect();
     brand={l:Math.min(a.left,c.left),t:Math.min(a.top,c.top),r:Math.max(a.right,c.right),b:Math.max(a.bottom,c.bottom)}; }
   var out={logo:R(lg), brand:brand, menu:R(document.getElementById("menuBtn")), ball:R(document.getElementById("hdrBall")), W:innerWidth};
+  /* the header's own text lane: its content box. Whatever the brand line says (a longer format name, a
+     bigger font), it is laid out inside this, so this is what must stay clear of the menu button. */
+  var pt=document.querySelector(".ptop"); if(pt){ var pb=pt.getBoundingClientRect(), ps=getComputedStyle(pt);
+    out.lane={l:pb.left+parseFloat(ps.paddingLeft), r:pb.right-parseFloat(ps.paddingRight)}; }
   if(lg && lg.complete && lg.naturalWidth) out.want=VPVenueLogo.box(lg.naturalWidth, lg.naturalHeight, VPVenueLogo.limits("phone", innerWidth, innerHeight));
   return JSON.stringify(out);
 })()'''
@@ -292,6 +296,11 @@ def phone_header(label, path, w, h):
         if m.get('ball'):
             ok(tag + ': nor under the called-ball chip', not hits(Bx, m['ball']) and Bx['l'] - m['ball']['r'] >= 8, (Bx, m['ball']))
         ok(tag + ': and stays on the screen', Bx['l'] >= 0 and Bx['r'] <= m['W'], Bx)
+        # 2 Nov 2026: the lowercase wordmark made the line short enough to clear the button at 320 by itself,
+        # so the line alone no longer says whether the header keeps the button's space. Measure the lane.
+        L = m.get('lane')
+        ok(tag + ': the header keeps a lane clear of the menu button, so a longer brand line can never run under it',
+           bool(L) and L['r'] <= m['menu']['l'] - 8, (L, m['menu']))
         shot(sid, 'chrome-header-%s-%d' % (label.replace('/', '-'), w))
     finally:
         B.close_tab(tid)
@@ -360,12 +369,17 @@ def phone_name_whole(label, path, w, h):
 # 300 ms apart must agree before one is believed. The wall width travels with the reading.
 MARK = r'''(function(W){
   if(innerWidth!==W || document.readyState!=="complete" || document.fonts.status!=="loaded") return null;
+  // the start-of-game show (on by default, 2 Nov 2026) hides the corner while its own logo flies there: read the corner once it has landed
+  if(document.getElementById("vpSting") || (window.VPSting && VPSting.stats && VPSting.stats().playing)) return null;
   var vn=document.querySelector(".tv-corner .vn"), cor=vn&&vn.parentNode; if(!vn) return null;
   var s=getComputedStyle(vn), cs=getComputedStyle(cor), br=document.getElementById("ballReveal"), tv=document.querySelector(".tv");
   var op=1, e=vn; while(e && e.nodeType===1){ op*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
   return JSON.stringify({size:parseFloat(s.fontSize), color:s.color, weight:s.fontWeight, opacity:op, shadow:s.textShadow,
     z:parseInt(cs.zIndex,10)||0, dimZ: br ? (parseInt(getComputedStyle(br).zIndex,10)||0) : null,
     svg:cor.querySelector("svg").getBoundingClientRect().width, logo:(document.getElementById("venueLogo")||{}).offsetHeight||0,
+    sting: cor.classList.contains("vp-sting-mark"),
+    nm: (function(n){ if(!n) return null; var r=n.getBoundingClientRect(), o=1, e=n; while(e && e.nodeType===1){ o*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
+      return {w:r.width, h:r.height, op:o, shown:getComputedStyle(n).display!=="none"}; })(document.querySelector(".vp-sting-mark .vp-newmark")),
     wall: tv ? tv.clientWidth : innerWidth});
 })(%d)'''
 
@@ -389,6 +403,16 @@ def mark_check(label, path, w, h, has_dim):
         tag = '%s VenuePlay mark at %d' % (label, w)
         if not m:
             ok(tag + ': is on the wall', False, 'no settled reading at %d wide (viewport %s)' % (w, ask(sid, 'innerWidth'))); return
+        if m.get('sting'):
+            # The start-of-game show has played (on by default from 2 Nov 2026): it hides the old mark and
+            # lands the NEW wordmark in the corner. Judge what the room actually sees, the new mark.
+            nm = m.get('nm') or {}
+            ok(tag + ': after the show, the new wordmark is in the corner, shown at full opacity', bool(nm) and nm.get('shown') and nm.get('op', 0) >= 0.99, nm)
+            ok(tag + ': and a legible size for a TV, 100px wide or more at 1920', bool(nm) and nm.get('w', 0) * 1920.0 / max(1, m['wall']) >= 100, (nm, m['wall']))
+            ok(tag + ': and still secondary: smaller than the venue logo', not m['logo'] or (nm.get('h', 0) < m['logo']), (nm, m['logo']))
+            if has_dim:
+                ok(tag + ': above the bingo call\'s dimmer, not behind it', m['dimZ'] is not None and m['z'] > m['dimZ'], (m['z'], m['dimZ']))
+            return
         ok(tag + ': full opacity, white, bold (not dull)', m['opacity'] >= 0.99 and m['color'] in ('rgb(255, 255, 255)',) and int(m['weight']) >= 700, m)
         ok(tag + ': a legible size for a TV, 24px or more at 1920', m['size'] >= 24 and m['svg'] >= 20, m)
         ok(tag + ': with a dark halo so it reads on any slide', 'rgba(0, 0, 0' in (m['shadow'] or ''), m['shadow'])
@@ -758,6 +782,10 @@ try:
     tv('bingo', '/tv?demo=1', 1920, 1080, 8, ['square', 'wide', 'round', 'tall', 'red', 'navy'])
     mark_check('bingo', '/tv?demo=1', 1920, 1080, True)
     mark_check('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, False)
+    # Before the first show of the night (and on a ?sting=0 screen) the OLD mark is the one in the corner,
+    # so it is judged too (2 Nov 2026: with the show on by default the line above only sees the new one).
+    mark_check('bingo before the show', '/tv?demo=1&sting=0', 1920, 1080, True)
+    mark_check('trivia before the show', '/app/trivia/screen.html?demo=1&sting=0', 1920, 1080, False)
     tv('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('musical', '/app/musical/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('bingo', '/tv?demo=1', 1280, 720, 8, ['square', 'wide'])
