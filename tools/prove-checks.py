@@ -1151,8 +1151,8 @@ MUTATIONS = [
      'October ended on 31 October and nobody marked its row ended, so nothing says the page was '
      'checked: /nsw and /offer-oct could be selling $2.50 the Worker no longer honours'),
     ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
-     "      document.title = document.title.replace(/founding/i, 'now open');\n      standardPage();\n",
-     "      document.title = document.title.replace(/founding/i, 'now open');\n",
+     "    document.title = document.title.replace(/founding/i, 'now open');\n    standardPage();\n",
+     "    document.title = document.title.replace(/founding/i, 'now open');\n",
      'the October link says the offer ended in a banner and goes on promising $2.50 locked for life '
      'everywhere below it, which is what venues saw on 1 November 2026'),
 
@@ -8645,6 +8645,18 @@ MUTATIONS = [
      '',
      'the venue name typed on the sales form never reaches the Worker'),
     # 1 Nov 2026: an ended month's link (/nsw, /offer-oct) quotes ONLY the standard rate, everywhere.
+    # 1 Nov 2026 (Dean): an ended row shows the standard rate without waiting for the Worker.
+    ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
+     '  if (endedNow(OFFER)) { showEnded(); return; }\n', '',
+     'the October row is marked ended and the page still waits for the Worker, so a bad minute '
+     'on the API shows a venue the ended $2.50 offer'),
+    ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
+     '    if (o.ended === true) return true;\n', '',
+     'a row marked ended still shows $2.50 whenever the Worker cannot be reached'),
+    ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
+     '    return Date.now() >= Date.UTC(Number(m[2]), MON[m[1]] + 1, 1) - 10 * 3600 * 1000;',
+     '    return false;',
+     'a month that is over by the Brisbane date, not yet marked, shows $2.50 whenever the Worker cannot be reached'),
     ('offer-ended-in-chrome.test.py', 'venueplay/nsw.html',
      "html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $90 a month.",
      "html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $75 a month.",
