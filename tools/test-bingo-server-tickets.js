@@ -391,8 +391,30 @@ function frontOfDraw(numbers) {
   var qh = queueHtml(host).replace(/<[^>]+>/g, ' ');
   check('the console\'s card says she holds two tickets and how far each is, not just "not complete on card #"', /not complete on any of their tickets/.test(qh) &&
         qh.indexOf('2 tickets: #' + ann.P.cards[0].cardNo + ' needs 1 more, #' + ann.P.cards[1].cardNo + ' needs 1 more') >= 0 && /A win has to be on one ticket/.test(qh), qh.slice(0, 500));
-  host.hostReject(0); await advance(2500);
+  /* PLAY ON MUST RELEASE THE PHONE, EVEN IF ITS MESSAGE IS LOST (Dean, Test Alpha, 1 Nov 2026: after Play on
+     his phone stayed on "the host is checking your ticket" with BINGO greyed out, through a real win on his
+     other ticket). The answer is dropped on the way to her phone here, twice: once the next state message
+     must free her, once the next number. */
+  function dropFor(ph, type) {
+    var held = [];
+    Object.keys(BUS).forEach(function (k) { BUS[k].forEach(function (sb) { if (sb.who === 'phone:' + ph.name) { var cb = sb.cb; held.push([sb, cb]); sb.cb = function (e) { if (e && e.payload && e.payload.t === type) return; cb(e); }; } }); });
+    return function () { held.forEach(function (x) { x[0].cb = x[1]; }); };
+  }
+  var undrop = dropFor(ann, 'resume');
+  host.hostReject(0); await advance(300);
+  check('CONTROL: the Play on never reaches her phone, which still says the host is checking', ann.P.claimPending === true && ann.$('bingoBtn').disabled === true, ann.$('pMsg').innerHTML);
+  undrop(); await advance(4500);
+  host.$('allowEarlyLive')._on.change.forEach(function (f) { f.call({ checked: true }); }); await drain(); await advance(300); await drain(); await advance(300);   // any state message from the console
+  check('the console\'s next state message names no claim of hers, so her phone lets BINGO go and says not a win yet',
+        ann.P.claimPending === false && ann.$('bingoBtn').disabled === false && /Not a win yet/.test(ann.$('pMsg').innerHTML), [ann.P.claimPending, ann.$('pMsg').innerHTML]);
+  ann.pressBingo(); await drain(); await advance(800);   // early again: still one number on each ticket
+  check('CONTROL: she can call again, and it is held for the host', ann.P.claimPending === true && host.G.claims.length === 1, host.G.claims.length);
+  undrop = dropFor(ann, 'resume');
+  host.hostReject(0); await advance(3000);
+  undrop();
   await callBalls(host, 1);
+  check('PLAY ON THAT NEVER ARRIVED: the next number unlocks BINGO, says not a win yet, and lights the real win', ann.P.claimPending === false && ann.$('bingoBtn').disabled === false &&
+        /Not a win yet/.test(ann.$('pMsg').innerHTML), [ann.P.claimPending, ann.$('bingoBtn').disabled, ann.$('pMsg').innerHTML]);
   ann.pressBingo(); await drain(); await advance(800);
   var d3 = lastClaim(ann.P.pid);
   check('the second number on her SECOND ticket: Any 2 on ticket 2 is a win', !!d3 && d3.verdict === 'win' && d3.card_no === ann.P.cards[1].cardNo, d3);

@@ -1118,6 +1118,7 @@
     updateTension(set);
     renderStageWin();
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
+    else if(P.relUntil && Date.now()<P.relUntil){ $("bingoBtn").disabled=false; setMsg("Not a win yet. Keep playing!","no"); }   // said for a few seconds, then the usual line
     else { $("bingoBtn").disabled=false; setMsg(idleMsg(),""); }
   }
   /* The resting message under the tickets. It used to be one fixed sentence, and it was also
@@ -1490,8 +1491,14 @@
     var win=winningCardNo();
     if(!win && !P.allowEarly){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
     var claimNo = win || (P.cards[0] && P.cards[0].cardNo) || 0;   // early-call venues: claim on their first ticket
-    P.claimPending=true; P.wonCardNo=claimNo; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
+    P.claimPending=true; P.claimAt=Date.now(); P.wonCardNo=claimNo; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
     send({ t:"claim", pid:P.pid, name:P.name, cardNo:claimNo });
+  }
+  // The host is not holding our BINGO any more: the button comes back, and says so.
+  function releaseClaim(){
+    P.claimPending=false; P.claimAt=0; P.relUntil=Date.now()+8000;
+    var b=$("bingoBtn"); if(b) b.disabled=false;
+    setMsg("Not a win yet. Keep playing!","no");
   }
   // ---- ticket count picker + host default ----
   function renderPicker(){
@@ -1633,6 +1640,9 @@
       P.active=true; autoDaub(); route();
     }
     else if(m.t==="state"){
+      /* The console names whose BINGO it is holding (claims, since 1 Nov 2026). A phone waiting on a claim the
+         console does not hold missed its answer: same as a new ball above. An older console sends no list. */
+      if(P.claimPending && Array.isArray(m.claims) && m.claims.indexOf(P.pid)<0 && P.claimAt && Date.now()-P.claimAt>4000) releaseClaim();
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
@@ -1671,7 +1681,14 @@
       route();
     }
     else if(m.t==="ball"){
+      var _was=P.called.length;
       P.called=m.called?cleanCalled(m.called):P.called; P.active=true;
+      /* A NEW NUMBER MEANS THE HOST HAS NO CLAIM OF OURS IN HAND (Dean, Test Alpha, 1 Nov 2026). The console
+         cannot call a ball while a BINGO is waiting or being checked, so a phone still on "the host is
+         checking your ticket" when the next number lands missed the answer (a Play on or a "not yet" that
+         never reached it). It sat locked, BINGO greyed out, through a real win on its other ticket. It lets
+         itself go now. The 2.5 seconds cover a BINGO pressed just as the host tapped Next number. */
+      if(P.claimPending && P.called.length>_was && P.claimAt && Date.now()-P.claimAt>2500) releaseClaim();
       autoDaub();
       if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
     }

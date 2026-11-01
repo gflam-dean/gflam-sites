@@ -2562,7 +2562,16 @@
   /* caller rides on every mode, started and state message: a real-balls night has no join code,
      QR or "scan to play" on the TV (tv.html), and a TV that joins late learns it from
      whichever of these it hears first. */
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null), session_id:(G.sessionId||null), caller:!!G.caller }); }
+  /* Whose BINGO this console is holding: queued, being checked out of sight, or confirmed and not yet
+     announced. A phone waiting on a claim that is not in here missed its answer and unlocks (1 Nov 2026). */
+  function claimHolders(){
+    var out=[], k;
+    (G.claims||[]).forEach(function(c){ if(c && c.pid && out.indexOf(c.pid)<0) out.push(c.pid); });
+    (G.lastWins||[]).forEach(function(w){ if(w && w.pid && out.indexOf(w.pid)<0) out.push(w.pid); });
+    for(k in (G._checking||{})) if(out.indexOf(k)<0) out.push(k);
+    return out.slice(0, 40);
+  }
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null), session_id:(G.sessionId||null), caller:!!G.caller, claims:claimHolders() }); }
 
   /* ASKING THE SERVER WHO IS SEATED. Batched, and each unseated phone is asked about on a backoff
      (three seconds, five times, then doubling to a minute), so a stranger on the channel costs a
@@ -3536,7 +3545,7 @@
       }
     }
     G._endAsked=0;
-    clearTimeout(G._endBtnT); var _eb2=$("endGameBtn"); if(_eb2) _eb2.textContent="End game / Back to ads";
+    if(G._endBtnT){ clearTimeout(G._endBtnT); G._endBtnT=0; var _eb2=$("endGameBtn"); if(_eb2) _eb2.textContent="End game / Back to ads"; }
     finishDrawRecord();
     clearCallGuards();
     if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted
