@@ -670,6 +670,15 @@
   var LEGACY_KEY = "vpOpenSession";    // the old single-object key; still drained so nothing is orphaned
   var SHIFT_KEY  = "vpShiftStart";
   var SHIFT_MAX  = 4 * 3600 * 1000;
+  /* A WARNING, NOT A SURPRISE (live test night, 1 Nov 2026). Dean's HQ "View as" console signed itself
+     out mid-game at about 6:15pm: his HQ sign-in had started the 4 hour clock early that afternoon, and
+     the clock is ONE shift for every page in the browser (vpShiftStart), so the console was cut off
+     with no notice. The sign-out stays exactly on time: it is a compliance control (opt-in player
+     details sit behind this login) and it is never deferred here. What changes is that it is never a
+     surprise: for the last 15 minutes every signed-in page says when it will happen and offers to
+     sign in again NOW, between games, which starts a fresh 4 hours. A live night is left open either
+     way, so signing back in picks the same game up where it was. */
+  var SHIFT_WARN = 15 * 60 * 1000;
 
   function readOpenSessions() {
     var out = [], seen = {};
@@ -822,7 +831,9 @@
       try { localStorage.setItem(SHIFT_KEY, String(Date.now())); } catch (e) {}
       return;
     }
-    if ((Date.now() - start) <= SHIFT_MAX) return;
+    var left = SHIFT_MAX - (Date.now() - start);
+    if (left > 0) { if (left <= SHIFT_WARN) shiftNotice(start + SHIFT_MAX); return; }
+    shiftNotice(0);
     if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
     // Close the night BEFORE signing out. signOut() clears the local session, and after a 4 hour
     // shift the access token has expired, so getSession() has to hit the network to refresh it:
@@ -845,6 +856,50 @@
     if (_shiftSignOutOnly) { finish(); return; }
     setTimeout(finish, 2500);
     closeOpenSessions().then(finish, finish);
+  }
+
+  /* The notice for the last 15 minutes. One bar in the shared status area (statusBar 'shift'), built
+     once and updated in place. "Sign in again now" is the timed sign-out brought forward by the host:
+     the shift ends, no night is closed, and the sign-in screen starts a fresh 4 hours. 0 takes the
+     bar away. */
+  var _shiftBar = null, _shiftShown = 0;
+  function clockWords(ms) {
+    var d = new Date(ms), h = d.getHours(), m = d.getMinutes();
+    return (h % 12 || 12) + ":" + (m < 10 ? "0" : "") + m + (h < 12 ? "am" : "pm");
+  }
+  function signInAgainNow() {
+    /* NEVER CLOSES A NIGHT. This button is on every signed-in page, HQ included, and HQ cannot see a
+       console in another tab mid-game (the same reason checkShift only signs a data page out). So it
+       ends the shift and signs out, and the night stays open for the console that runs it. */
+    if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
+    try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
+    signOut();
+  }
+  /* WRAPPED, AND IT HAS TO BE: it runs inside checkShift, just before the sign-out, and a notice that
+     threw would stop the compliance sign-out happening at all. */
+  function shiftNotice(deadline) {
+    try { shiftNoticeNow(deadline); } catch (e) {}
+  }
+  function shiftNoticeNow(deadline) {
+    if (typeof document === 'undefined' || !document.body || !document.createElement) return;
+    if (!deadline) { if (_shiftBar) { statusBar('shift', null); _shiftBar = null; _shiftShown = 0; } return; }
+    if (_shiftBar && _shiftShown === deadline) return;
+    var bar = _shiftBar || document.createElement('div');
+    bar.setAttribute('role', 'status');
+    bar.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;padding:9px 14px;' +
+      'background:#2A1F05;color:#FFE2A3;border-bottom:1px solid rgba(255,176,32,.45);font:600 14px/1.35 system-ui,-apple-system,sans-serif;text-align:center';
+    while (bar.firstChild) bar.removeChild(bar.firstChild);
+    var words = document.createElement('span');
+    words.textContent = 'Your sign-in ends at ' + clockWords(deadline) + '. Sign-ins last 4 hours to keep player details safe. ' +
+      'Sign in again between games to carry on without a break. A game that is running stays where it is.';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Sign in again now';
+    btn.style.cssText = 'font:700 13px/1 system-ui,-apple-system,sans-serif;padding:8px 12px;border-radius:8px;border:0;background:#FFB020;color:#1A1405;cursor:pointer';
+    btn.onclick = signInAgainNow;
+    bar.appendChild(words); bar.appendChild(btn);
+    _shiftBar = bar; _shiftShown = deadline;
+    statusBar('shift', bar);
   }
 
   /* THE SHIFT CLOCK ON EVERY PAGE THAT HOLDS PLAYER DATA, not only the consoles. Found 14 Oct
@@ -923,7 +978,7 @@
      Now every bar goes through here: one column in normal flow at the top of the page, in this
      fixed order, nothing sticky, so every bar is readable and none covers another or the header.
      Pass null to take a slot's bar away. */
-  var STATUS_ORDER = ['hold', 'sign', 'viewas', 'link'];
+  var STATUS_ORDER = ['hold', 'sign', 'viewas', 'link', 'shift'];
   var _statusBars = {};
   function statusBar(slot, el) {
     if (STATUS_ORDER.indexOf(slot) < 0) throw new Error('statusBar: unknown slot ' + slot);

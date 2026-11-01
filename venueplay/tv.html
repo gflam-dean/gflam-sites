@@ -36,6 +36,13 @@
      read as unrelated to it. As a wrapped second line inside this block the gap is
      one small margin instead of a number that has to be re-guessed per screen size. */
   .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.8cqw;z-index:16;max-width:40cqw}   /* above the ball reveal's dimmer (15), as the venue logo is: the dim put the mark "behind everything" on every call */
+  /* THE VENUE'S NAME, TOP LEFT, WHEN IT HAS NO LOGO (Dean, 1 Nov 2026). It sat under the venueplay mark in
+     the right corner, small, as a caption to OUR name. Top left is where a venue's logo goes, so a venue
+     without one has its name there instead, in plain text, in cqw like the corner, and a keep-out for
+     vp-fit so no wall runs under it. A logo wins: the two never show together. Identical in tv.html and
+     the four game screens, so a game embedded on the TV paints it in exactly the same place. */
+  .venuename-left{position:absolute;top:2cqw;left:2.4cqw;max-width:34cqw;z-index:16;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(13px,1.6cqw,30px);line-height:1.2;letter-spacing:.01em;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.85),0 0 10px rgba(0,0,0,.6);pointer-events:none}
+  .venuename-left[hidden]{display:none}
   .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
   /* THE VENUEPLAY MARK, SECONDARY BUT CRISP (Dean, 21 Oct 2026: it looked "dull and behind everything").
      It was 20px at most on any TV, at 92% opacity, with a fixed 18px arrow: tiny and soft on a 1920 wall
@@ -1946,7 +1953,10 @@
          uploaded a logo has already chosen how it is named on the wall, and a caption that
          appears only on the ad slides is worse than none. It lives inside #tvCorner, which
          enterAds hides anyway, so this is belt and braces. */
-      if(venueLogoUrl){ var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none"; }
+      /* The name, top left (2 Nov 2026): on screen wherever the logo would be, which is everywhere but
+         the ads, and only for a venue with no logo. */
+      var nt=document.getElementById("venueNameTag");
+      if(nt) nt.style.display=(!venueLogoUrl && nt.textContent && tvMode!=="ads") ? "block" : "none";
     }catch(e){}
   }
   var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
@@ -2935,16 +2945,15 @@
       if(!nm){ if(el) el.style.display="none"; return; }
       if(!el){
         el=document.createElement("div"); el.id="venueNameTag";
-        el.className="venuename"; el.style.pointerEvents="none";
+        el.className="venuename-left"; el.setAttribute("data-fit-avoid","");   /* top left, where a logo goes (2 Nov 2026) */
         /* INSIDE the corner, not floating near it. All the styling lives in the
            .tv-corner .venuename rule so there is one place to change it and no
            inline top: to drift away from the wordmark on a different screen. */
-        var corner=document.getElementById("tvCorner");
-        (corner||document.getElementById("tv")||document.body).appendChild(el);
+        (document.getElementById("tv")||document.body).appendChild(el);
       }
       // The venue HAS a logo, not "the logo is on screen right now": it is off for the ads,
       // and the caption must not reappear on an ad slide. See applyVenueLogo().
-      el.textContent=nm; el.style.display = venueLogoUrl ? "none" : "block";   // the logo wins
+      el.textContent=nm; applyVenueLogo();   // the logo wins, and the ads never carry it
       holdVenueName=nm;   // the default loop for a venue with no slides yet (refreshAds follows in loadScreen)
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }

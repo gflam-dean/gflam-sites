@@ -82,20 +82,31 @@ pass("and it warns first when a game is live", /liveNightElsewhere\(\)/.test(bin
   for (var k = j; k < SHARED.length; k++) { if (SHARED[k] === "{") depth++; else if (SHARED[k] === "}") { depth--; if (!depth) break; } }
   var fn = SHARED.slice(i, k + 1);
   var store = {}, signedOut = 0, now = 1700000000000;
-  var sandbox = "var SHIFT_KEY='vpShiftStart', SHIFT_MAX=" + limit + ", _shiftIv=null;"
+  var mw = /var SHIFT_WARN\s*=\s*([^;]+);/.exec(SHARED);
+  var warnMs = mw ? (0, eval)(mw[1]) : NaN;
+  var notices = [];
+  var sandbox = "var SHIFT_KEY='vpShiftStart', SHIFT_MAX=" + limit + ", SHIFT_WARN=" + warnMs + ", _shiftIv=null;"
+    + "function shiftNotice(d){ notices.push(d); }"
     + "var localStorage={getItem:function(k){return store[k]==null?null:store[k];},setItem:function(k,v){store[k]=v;},removeItem:function(k){delete store[k];}};"
     + "var Date={now:function(){return now;}};"
     + "function clearInterval(){} function setTimeout(f){f();}"
     + "function signOut(){signedOut++;} function gameIsLive(){return true;} function closeOpenSessions(){return {then:function(a){a();}};}"
     + fn + "; return checkShift;";
   var ref = { n: 0 };
-  var checkShift = new Function("store", "signedOutRef", "now", "return (function(){" + sandbox.replace(/signedOut\+\+/, "signedOutRef.n++") + "})()")(store, ref, now);
+  var checkShift = new Function("store", "signedOutRef", "now", "notices", "return (function(){" + sandbox.replace(/signedOut\+\+/, "signedOutRef.n++") + "})()")(store, ref, now, notices);
+  /* THE WARNING (1 Nov 2026: an HQ View-as console was signed out mid-game at 6:15pm with no notice). */
+  pass("the warning starts 15 minutes before, no sooner", warnMs === 15 * 60 * 1000, "SHIFT_WARN = " + warnMs);
+  store.vpShiftStart = String(now - (3 * 3600 + 40 * 60) * 1000);
+  checkShift();
+  pass("3h40m into a shift: signed in, and no warning yet", ref.n === 0 && notices.length === 0, JSON.stringify(notices));
   store.vpShiftStart = String(now - (3 * 3600 + 59 * 60) * 1000);
   checkShift();
   pass("3h59m into a shift the host is still signed in", ref.n === 0 && store.vpShiftStart, "signOut calls: " + ref.n);
+  pass("and is told the exact moment the sign-in ends", notices.length === 1 && notices[0] === Number(store.vpShiftStart) + limit, JSON.stringify(notices));
   store.vpShiftStart = String(now - (4 * 3600 + 60) * 1000);
   checkShift();
   pass("4h01m into a shift the host is signed out", ref.n === 1, "signOut calls: " + ref.n);
+  pass("the sign-out is NOT deferred for a live game (it is compliance); the warning bar is taken down", notices[notices.length - 1] === 0, JSON.stringify(notices));
   pass("and the shift start is cleared so the next sign-in starts a fresh clock", store.vpShiftStart === undefined, JSON.stringify(store));
   store.vpShiftStart = String(now + 60000);
   checkShift();
@@ -131,7 +142,7 @@ print("\nTHE PAGES WITH PLAYER DATA SIGN OUT TOO, AND NEVER CLOSE A NIGHT");
       + "var localStorage={getItem:function(k){return store[k]==null?null:store[k];},setItem:function(k,v){store[k]=v;},removeItem:function(k){delete store[k];}};"
       + "var Date={now:function(){return now;}};"
       + "function clearInterval(){} function setTimeout(f){} function setInterval(){return 1;}"
-      + "function signOut(){r.out++;} function gameIsLive(){return false;} function retryPendingCloses(){}"
+      + "function signOut(){r.out++;} function gameIsLive(){return false;} function retryPendingCloses(){} var SHIFT_WARN=900000; function shiftNotice(){}"
       + "function closeOpenSessions(){r.closed++; return {then:function(a){a();}};}"
       + "var _client={auth:{getSession:function(){return {then:function(cb){cb({data:{session:{}}}); return {catch:function(){}};}};}}}; function getClient(){return _client;}"
       + lift("enforceShift") + lift("checkShift") + lift("guardShift")
@@ -144,6 +155,51 @@ print("\nTHE PAGES WITH PLAYER DATA SIGN OUT TOO, AND NEVER CLOSE A NIGHT");
   pass("and does NOT close the night a console in another tab may be running", page.closed === 0, JSON.stringify(page));
   var con = run(false);
   pass("a console past 4h with no game on still closes its night (unchanged)", con.closed === 1 && con.out === 1, JSON.stringify(con));
+})();
+
+print("\nTHE WARNING BAR, RUN: it says the time, and its button signs in again without closing a live night");
+(function () {
+  function lift(name) {
+    var i = SHARED.indexOf("function " + name + "(");
+    if (i < 0) return "";
+    var depth = 0, j = SHARED.indexOf("{", i), k;
+    for (k = j; k < SHARED.length; k++) { if (SHARED[k] === "{") depth++; else if (SHARED[k] === "}") { depth--; if (!depth) break; } }
+    return SHARED.slice(i, k + 1);
+  }
+  var fns = ["clockWords", "signInAgainNow", "shiftNotice", "shiftNoticeNow"].map(lift);
+  pass("the notice functions are in vp-session.js", fns.every(Boolean));
+  function node(tag) { return { tag: tag, kids: [], style: {}, attrs: {}, textContent: "", firstChild: null,
+    setAttribute: function (k, v) { this.attrs[k] = v; },
+    appendChild: function (c) { this.kids.push(c); this.firstChild = this.kids[0]; return c; },
+    removeChild: function (c) { this.kids = this.kids.filter(function (x) { return x !== c; }); this.firstChild = this.kids[0] || null; } }; }
+  var r = { bars: [], ended: 0, closed: 0, out: 0, order: [] };
+  var f = new Function("r", "node",
+    "var document={body:{},createElement:function(t){return node(t);}};"
+    + "var _shiftBar=null,_shiftShown=0;"
+    + "function statusBar(slot,el){ r.bars.push([slot, el]); }"
+    + "var _shiftIv=null, SHIFT_KEY='vpShiftStart'; function clearInterval(){}"
+    + "var localStorage={removeItem:function(k){ r.order.push('clear:'+k); }};"
+    + "function endShift(){ r.order.push('endShift'); return Promise.resolve(0); } function closeOpenSessions(){ r.order.push('close'); }"
+    + "function signOut(){ r.order.push('signOut'); r.out++; }"
+    + fns.join("\n") + "; return { notice: shiftNotice };");
+  var api = f(r, node);
+  var deadline = new Date(2026, 10, 1, 18, 15, 0).getTime();
+  api.notice(deadline);
+  var bar = r.bars.length && r.bars[r.bars.length - 1][1];
+  var words = bar && bar.kids[0] && bar.kids[0].textContent, btn = bar && bar.kids[1];
+  pass("a bar goes into the shared status area, in the 'shift' slot", r.bars.length === 1 && r.bars[0][0] === "shift" && !!bar);
+  pass("it says when, in the venue's clock: 6:15pm", /ends at 6:15pm\./.test(words || ""), words);
+  pass("and why, and what to do, in plain words with no dash", /4 hours to keep player details safe/.test(words) && /Sign in again between games/.test(words) && !/\u2014|\u2013/.test(words), words);
+  api.notice(deadline);
+  pass("asked again every 30 s, it is not rebuilt (no flicker)", r.bars.length === 1);
+  btn.onclick();
+  if (typeof drainMicrotasks === "function") drainMicrotasks();
+  pass("Sign in again now: clears the shift and signs out, and closes NO night (HQ cannot see a console mid-game in another tab)", r.order.join(",") === "clear:vpShiftStart,signOut", r.order.join(","));
+  /* A notice that cannot be drawn (no DOM, a CSP, an old browser) must never stand between the clock and the sign-out. */
+  var g = new Function("return (function(){ function shiftNoticeNow(){ throw new Error('no DOM'); } " + lift("shiftNotice") + " try { shiftNotice(123); return 'swallowed'; } catch (e) { return 'threw'; } })();")();
+  pass("a notice that throws is swallowed, so the 4 hour sign-out still happens", g === "swallowed", g);
+  api.notice(0);
+  pass("at the sign-out the bar is taken down", r.bars[r.bars.length - 1][0] === "shift" && r.bars[r.bars.length - 1][1] === null);
 })();
 
 print("\n" + (bad ? bad + " FAILED, " + ran + " run" : "ALL " + ran + " CHECKS PASSED"));

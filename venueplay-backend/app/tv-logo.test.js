@@ -65,6 +65,7 @@ var document = {
 };
 made.venueNameTag = el();
 made.tvCorner = el();
+made.tv = { appendChild: function(n){ made[n.id] = n; } };
 made.lobbyAt = el();
 made.lobbyAtName = el();
 function $(id){ return made[id] || (made[id] = el()); }
@@ -106,15 +107,22 @@ ok("loading the screen while the ads are up leaves nothing over the slide",
    "loadScreen sets the logo then the name, and both must respect the ads state");
 
 print("== a venue with no logo ==");
-made = { venueNameTag: el(), tvCorner: el(), lobbyAt: el(), lobbyAtName: el() };
+made = { tvCorner: el(), lobbyAt: el(), lobbyAtName: el(), tv: { appendChild: function(n){ made[n.id] = n; } } };
 venueLogoUrl = ""; tvMode = "ads";
 setVenueLogo("");
 setVenueName("The Average Joe");
+/* 2 Nov 2026: the name moved out of the VenuePlay corner to the top left, where a logo goes. The corner
+   used to hide it on the ads for free; on its own it has to follow the ads rule itself, like the logo. */
+ok("on the ads, the name is off the slide, as a logo would be", !captionShown(),
+   "an ad slide is the venue's own artwork");
+tvMode = "bingo"; applyVenueLogo();
 ok("the caption names the venue when there is no logo", captionShown(),
    "a TV pointed at the wrong venue is otherwise only noticeable by its sound");
-tvMode = "bingo"; applyVenueLogo();
 ok("no logo means nothing to show in a game either", !logoShown());
-ok("and the caption is still there", captionShown());
+ok("the name sits top left, where a logo goes, and vp-fit keeps the wall out from under it",
+   made.venueNameTag.className === "venuename-left" && made.venueNameTag.attrs["data-fit-avoid"] === "", made.venueNameTag.className);
+tvMode = "ads"; applyVenueLogo();
+ok("and back to the ads, it comes off again", !captionShown());
 
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
