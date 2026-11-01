@@ -10217,7 +10217,7 @@ MUTATIONS = [
      '".brand .venue{position:absolute;', '".brand .venue{position:static;',
      'the status takes a line of its own again and pushes the game down'),
     ('reconnect-layout-in-chrome.test.py', 'venueplay/tv.html',
-     '.venuename-left{position:absolute;top:2cqw;left:2.4cqw;', '.venuename-left{position:absolute;top:2cqw;right:2.4cqw;',
+     '.venuename-left{position:absolute;top:14px;left:14px;', '.venuename-left{position:absolute;top:14px;right:14px;',
      'a venue with no logo has its name in the right corner again'),
     ('reconnect-layout-in-chrome.test.py', 'venueplay/tv.html',
      'background:#0A0A0B;border:1px solid var(--line);border-radius:2cqw;padding:1.8cqw 3cqw 1.8cqw;text-align:center}',
