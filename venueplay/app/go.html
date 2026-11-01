@@ -28,6 +28,9 @@
   .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.big{width:100%;padding:16px;font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  /* The name stays lowercase, "venueplay" (Dean, 1 Nov 2026), so this button is not set in capitals:
+     uppercase would print OPEN MY VENUEPLAY. vp-oneclick.js rewrites its words, so it is the button, not a span. */
+  #goBtn{text-transform:none;letter-spacing:0}
   .btn:disabled{opacity:.7;cursor:default}
   .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
   .note{font-size:12.5px;color:var(--faint);line-height:1.5;margin-top:12px}

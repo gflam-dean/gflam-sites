@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 16:51 · 41227be1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 21:11 · 1e2f16fc';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -8924,7 +8924,7 @@ async function openInvoice(env, acct, idemKey, why) {
     customer: acct.stripe_customer_id,
     auto_advance: false,                      // finalised by hand in settleInvoice, never by Stripe's clock
     pending_invoice_items_behavior: 'exclude',
-    description: why || 'VenuePlay extras',
+    description: why || 'venueplay extras',
   };
   if (byInvoice) {
     body.collection_method = 'send_invoice';
