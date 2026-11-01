@@ -318,6 +318,15 @@ var cl = cleanGamePrefs('bingo', { prizes: lots }).prizes || {};
 ok('the Worker keeps at most 12, only real pattern keys, only text, each cut to 60 characters', Object.keys(cl).length === 12 && !('bogus' in cl) && !('two' in cl) &&
    Object.keys(cl).every(function (k) { return cl[k].length <= 60; }), cl);
 ok('and a save of every prize stays under the size cap', JSON.stringify(cleanGamePrefs('bingo', { pattern: 'one', prize: 'y'.repeat(120), cards: 6, caller: true, allow_early: true, prizes: lots })).length < 2000);   // GAME_PREFS_MAX_CHARS in the game Worker
+// A pattern made in the editor from the setup list is the one chosen, and saved as the venue's choice.
+resetDb({}); POSTS = [];
+var p3 = bingoTablet(); p3.startBingoPrefs(); flush();
+var K9 = 'c:99999999-9999-4999-8999-000000000009';
+p3.els.patternSel.opts = PAT.concat([K9]); p3.els.patternSel.id = 'patternSel';
+p3.fillPatternSelect = function () {}; p3.openPatternEditor = function (edit, done) { done(K9); };
+p3.patternPicked = runLifted(liftFrom(PAGES.bingo, 'patternPicked'), p3);
+p3.els.patternSel.value = '__newpat'; p3.patternPicked(p3.els.patternSel, function () {}); flush();
+ok('a pattern made with "Custom pattern..." is saved as the venue\'s pattern, so a reload opens on it', p3.els.patternSel.value === K9 && (saved('bingo') || {}).pattern === K9, saved('bingo'));
 ok('it starts once the venue\'s own patterns are in the list', /Promise\.resolve\(loadCustomPatterns\(\)\)\.then\(startBingoPrefs, startBingoPrefs\)/.test(liftFrom(PAGES.bingo, 'selectGame')));
 
 /* ---------------- trivia ---------------- */

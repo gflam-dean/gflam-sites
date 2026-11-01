@@ -1627,7 +1627,10 @@
     if(!sel) return;
     if(sel.value===NEW_PAT){
       var back=sel._prev||"one"; sel.value=back;
-      openPatternEditor(null, function(k){ fillPatternSelect(sel); sel.value=k; sel._prev=k; rememberPat(k); syncPatEdit(); if(after) after(); });
+      /* A pattern made here is the one chosen, so it is saved as the venue's choice too. It was not: the list
+         was set by hand, no change event ran, and after a reload the setup was back on One line with the new
+         pattern sitting unnoticed in the list ("they don't seem to save", Dean, 1 Nov 2026). */
+      openPatternEditor(null, function(k){ fillPatternSelect(sel); sel.value=k; sel._prev=k; rememberPat(k); syncPatEdit(); if(after) after(); if(sel.id==="patternSel") queueBingoPrefs(); });
       return;
     }
     sel._prev=sel.value; rememberPat(sel.value); syncPatEdit();
