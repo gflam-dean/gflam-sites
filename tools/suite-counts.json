@@ -960,7 +960,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 388,
+  "checks": 396,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
