@@ -619,7 +619,7 @@
   .h2-phone.off{opacity:0;transform:translateY(10px);pointer-events:none}
   .h2-phonebox{position:relative;aspect-ratio:390/844;overflow:hidden;border-radius:18px;border:3px solid #26262c;background:#0A0A0B radial-gradient(60% 40% at 50% 8%, rgba(255,31,142,.22), transparent 70%);box-shadow:0 18px 40px -12px rgba(0,0,0,.9)}
   /* While the phone page fetches its fonts the frame shows the mark, not a black hole. */
-  .h2-phonebox::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M2 3 L24 15 L2 27 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.6' stroke-linejoin='round'/></svg>") center 42%/26% no-repeat;opacity:.9}
+  .h2-phonebox::before{content:"";position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 30'><path d='M1.12 27.35C1.12 27.92 1.42 28.44 1.91 28.72C2.40 29 3.01 28.99 3.49 28.70L24.12 16.35C24.59 16.06 24.88 15.55 24.88 15C24.88 14.45 24.59 13.94 24.12 13.65L3.49 1.30C3.01 1.01 2.40 1 1.91 1.28C1.42 1.56 1.12 2.08 1.12 2.65L1.12 27.35Z' fill='%23FF1F8E'/></svg>") center 42%/26% no-repeat;opacity:.9}
   .h2-phonebox iframe{position:absolute;top:0;left:0;width:390px;height:844px;border:0;transform-origin:top left;pointer-events:none;z-index:1;background:transparent}
   .h2-modes{display:flex;flex-wrap:nowrap;gap:6px;margin-top:14px}
   .h2-modes button{flex:1 1 0;min-width:0;font:700 var(--fs-xs) 'Manrope',system-ui,sans-serif;color:var(--muted);background:var(--ink-3,#17171A);border:1px solid var(--line,rgba(255,255,255,.1));border-radius:999px;padding:8px 6px;cursor:pointer;transition:all .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -809,7 +809,7 @@
      look and the rule live in that one file, shared with the other landing page. -->
 <section class="sec" id="trusted" style="display:none">
   <div class="wrap">
-    <div class="sec-head"><div class="label">Trusted by</div><h2 class="sec-title">Venues already running venueplay</h2></div>
+    <div class="sec-head"><div class="label">Trusted by</div><h2 class="sec-title">Venues already running <span style="text-transform:none">venueplay</span></h2></div>
     <div class="marquee"><div class="track" id="trustedTrack"></div></div>
   </div>
 </section>
@@ -1003,7 +1003,7 @@
 <div id="vp-embed-overlay" role="dialog" aria-modal="true" aria-label="Secure card details">
   <div class="vp-embed-card">
     <div class="vp-embed-head">
-      <div class="vp-embed-brand"><span class="vp-embed-tri"></span> <b>venueplay</b> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
+      <div class="vp-embed-brand"><svg class="vp-embed-wm" width="96" height="19" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" style="display:block;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
       <button type="button" id="vp-embed-close" aria-label="Close">&times;</button>
     </div>
     <div id="vp-embedded"></div>
@@ -1019,7 +1019,7 @@
     padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
   .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:var(--fs-base);color:#16141d}
   .vp-embed-brand b{letter-spacing:-.01em}
-  .vp-embed-tri{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #FF1F8E}
+  /* the 1 Nov 2026 wordmark (letters take the dark text colour, triangle pink in the a); it replaced a CSS triangle beside the word, the old logo */
   .vp-embed-lock{font-size:var(--fs-xs);color:#6a6875;margin-left:2px}
   #vp-embed-close{border:0;background:none;font-size:var(--fs-lg);line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
   #vp-embed-close:hover{background:#efeef4;color:#16141d}
