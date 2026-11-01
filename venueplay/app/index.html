@@ -2482,6 +2482,39 @@
       clearTimeout(_logT); _logT=setTimeout(flushClaimLog, 15000);
     }, function(){ _logBusy=false; clearTimeout(_logT); _logT=setTimeout(flushClaimLog, 15000); });
   }
+  /* HOW FAR EACH TICKET IS FROM THE PATTERN, for the claim card only (1 Nov 2026). Dean's phone held two
+     tickets, one number of "Any 2 Numbers" on each, and the card named one ticket and said "not complete",
+     which read like the console had lost a number. A win has to be on ONE ticket; the card now says how far
+     every ticket the player holds is. Display only: the verdict is checkPattern's and the server's (VP-DRAW). */
+  function ticketToGo(card){
+    if(!card || !card[0]) return 99;
+    function on(v){ return !!(v && G.called[v]); }
+    var flat=[].concat(card[0], card[1], card[2]);
+    if(isCustomKey(G.pattern)){
+      var info=patInfo(G.pattern), rule=info && info.rule; if(!rule) return 99;
+      if(rule.type==="any"){ var have=0; flat.forEach(function(v){ if(on(v)) have++; }); return Math.max(0, (parseInt(rule.n,10)||0)-have); }
+      if(rule.type==="shape"){ var need=0, miss=0; (rule.cells||[]).forEach(function(ix){ var v=flat[ix]; if(!v) return; need++; if(!on(v)) miss++; }); return need ? miss : 99; }
+      return 99;
+    }
+    function rowMiss(r){ var m=0; for(var c=0;c<9;c++){ var v=card[r][c]; if(v && !on(v)) m++; } return m; }
+    if(G.pattern==="top") return rowMiss(0);
+    if(G.pattern==="middle") return rowMiss(1);
+    if(G.pattern==="bottom") return rowMiss(2);
+    if(G.pattern==="corners"){ var m=0; [0,2].forEach(function(r){ var row=card[r], first=0, last=0; for(var c=0;c<9;c++){ if(row[c]){ if(!first) first=row[c]; last=row[c]; } } if(first && !on(first)) m++; if(last && last!==first && !on(last)) m++; }); return m; }
+    var ms=[rowMiss(0), rowMiss(1), rowMiss(2)].sort(function(a,b){ return a-b; });
+    if(G.pattern==="one") return ms[0];
+    if(G.pattern==="two") return ms[0]+ms[1];
+    if(G.pattern==="full") return ms[0]+ms[1]+ms[2];
+    return 99;
+  }
+  // "2 tickets: #320 needs 1 more, #485 needs 1 more." for a player holding more than one, else "".
+  function handProgress(pid){
+    var p=G.players[pid], cards=(p && p.cards) || [];
+    if(cards.length<2) return "";
+    var parts=cards.slice(0, 12).map(function(t){ var n=ticketToGo(t.card);
+      return "#"+esc(String(t.cardNo))+(n===0 ? " has it" : (n>=99 ? "" : " needs "+n+" more")); });
+    return cards.length+" tickets: "+parts.join(", ")+(cards.length>12 ? ", ..." : "")+". A win has to be on one ticket.";
+  }
   // The claim rule is the regulated one in /app/vp-draw.js, the same rule the server applies.
   function checkPattern(card){
     if(isCustomKey(G.pattern)){ var i=patInfo(G.pattern); return window.VPDraw.cardWins(card, G.called, "custom", i && i.rule); }
@@ -2525,7 +2558,16 @@
   /* caller rides on every mode, started and state message: a real-balls night has no join code,
      QR or "scan to play" on the TV (tv.html), and a TV that joins late learns it from
      whichever of these it hears first. */
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null), session_id:(G.sessionId||null), caller:!!G.caller }); }
+  /* Whose BINGO this console is holding: queued, being checked out of sight, or confirmed and not yet
+     announced. A phone waiting on a claim that is not in here missed its answer and unlocks (1 Nov 2026). */
+  function claimHolders(){
+    var out=[], k;
+    (G.claims||[]).forEach(function(c){ if(c && c.pid && out.indexOf(c.pid)<0) out.push(c.pid); });
+    (G.lastWins||[]).forEach(function(w){ if(w && w.pid && out.indexOf(w.pid)<0) out.push(w.pid); });
+    for(k in (G._checking||{})) if(out.indexOf(k)<0) out.push(k);
+    return out.slice(0, 40);
+  }
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null), session_id:(G.sessionId||null), caller:!!G.caller, claims:claimHolders() }); }
 
   /* ASKING THE SERVER WHO IS SEATED. Batched, and each unseated phone is asked about on a backoff
      (three seconds, five times, then doubling to a minute), so a stranger on the channel costs a
@@ -3159,7 +3201,8 @@
               : valid ? '<span class="vbadge valid">'+(onTablet?'Valid on this tablet':'Valid')+'</span>'
                       : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
       var sub=valid ? (esc(patName(G.pattern))+' &middot; '+(checking ? 'the server is checking it against ' : (onTablet ? 'checked on this tablet against ' : 'checked by the server against '))+nCalled+' called numbers &middot; card #'+c.cardNo)
-                    : ('Called early &middot; '+esc(patName(G.pattern))+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
+                    : ('Called early &middot; '+esc(patName(G.pattern))+' is not complete on '+(((G.players[c.pid]||{}).cards||[]).length>1 ? 'any of their tickets' : 'card #'+c.cardNo)+'. Wave it off to keep the game moving.');
+      var _hand=handProgress(c.pid); if(_hand) sub+='<br>'+_hand;
       if(onTablet) sub+='<br><b style="color:var(--roll)">The server could not check this one, so this tablet checked the ticket.</b> It goes on the record when the server is back.';
       if(c.by==="waiting") sub+='<br><b style="color:var(--roll)">The server is not answering, and this venue does not let the tablet decide.</b> Waiting for the server.';
       if(c.by==="refused") sub+='<br><b style="color:var(--roll)">The server refused to check this claim.</b> See the message above.';
@@ -3482,6 +3525,16 @@
         var _who=G.claims.map(function(c){ return c.name||"A player"; }).join(" and ");
         showToast(_who+(G.claims.length>1?" have":" has")+" called BINGO and the ticket has not been checked. Check it first, or tap End game again to end without it.");
         try{ renderClaimQueue(); }catch(e){}
+        /* SAID ON THE BUTTON TOO (Dean, Test Alpha, 1 Nov 2026: "the host couldn't even end the game"). The
+           only sign that a second tap was needed was a toast, easy to miss on a phone, so the first tap looked
+           like End game did nothing. The button now says what the next tap does, for the fifteen seconds it
+           counts, then goes back. */
+        var _eb=$("endGameBtn");
+        if(_eb){
+          _eb.textContent="Tap again to end without checking";
+          clearTimeout(G._endBtnT);
+          G._endBtnT=setTimeout(function(){ var b=$("endGameBtn"); if(b) b.textContent="End game / Back to ads"; }, 15000);
+        }
         return;
       }
       for(var _c=0;_c<G.claims.length;_c++){
@@ -3490,6 +3543,7 @@
       }
     }
     G._endAsked=0;
+    if(G._endBtnT){ clearTimeout(G._endBtnT); G._endBtnT=0; var _eb2=$("endGameBtn"); if(_eb2) _eb2.textContent="End game / Back to ads"; }
     finishDrawRecord();
     clearCallGuards();
     if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted

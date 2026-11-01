@@ -351,10 +351,80 @@ function frontOfDraw(numbers) {
   check('two lines, using two numbers from before the play on, is a WIN on the server', !!poTwo && poTwo.verdict === 'win' && poTwo.pattern === 'two' && poTwo.balls === poBall0 + 10, poTwo);
   check('and the host sees it valid, checked by the server, with Confirm live', host.G.claims.length === 1 && host.G.claims[0].valid === true && host.G.claims[0].by === 'server' && !confirmDisabled(host),
         host.G.claims.map(function (c) { return { v: c.valid, by: c.by }; }));
+  host.endGame(); await advance(100);
+  check('End game with that claim unchecked: the game stays up, and the BUTTON says the next tap ends it', host.G.status === 'running' && host.$('endGameBtn').textContent === 'Tap again to end without checking',
+        [host.G.status, host.$('endGameBtn').textContent]);
+  await advance(16000);
+  check('fifteen seconds later the button reads End game again', host.$('endGameBtn').textContent === 'End game / Back to ads', host.$('endGameBtn').textContent);
   host.hostConfirm(0); await advance(500);
   check('the host\'s Confirm of the two lines goes on the record', lastClaim(ann.P.pid).status === 'confirmed', lastClaim(ann.P.pid));
   host.finishGame(); await advance(300);
   host.endGame(); await advance(3000);
+
+  /* DEAN'S GAME, Test Alpha, 1 Nov 2026: two tickets each, early calls allowed, "Any 1 number" then "Any 2
+     numbers". Any 1 was won on his SECOND ticket; for Any 2 the next number landed on his FIRST ticket, so his
+     phone showed two marks, on two tickets, and the claim was rightly not a win. Nothing said a win has to be
+     on one ticket, and the console's card named one ticket. */
+  print('two tickets: a pattern has to be on ONE ticket, and every screen says so');
+  var DA1 = 'dddd0001-0000-4000-8000-000000000001', DA2 = 'dddd0002-0000-4000-8000-000000000002';
+  DB.vp_bingo_patterns.push({ id: DA1, venue_id: VENUE, name: 'Any 1 Numbers', rule: { type: 'any', n: 1 }, deleted_at: null, created_at: '2026-11-01T00:00:00Z' });
+  DB.vp_bingo_patterns.push({ id: DA2, venue_id: VENUE, name: 'Any 2 Numbers', rule: { type: 'any', n: 2 }, deleted_at: null, created_at: '2026-11-01T00:00:01Z' });
+  host.loadCustomPatterns(); await drain(); await advance(500);
+  host.G.allowEarly = true;
+  host.$('prizeInput').value = 'Tab'; host.$('patternSel').value = 'c:' + DA1; host.$('cardsSel').value = '2'; host.$('paidSel').value = '';
+  host.openLobby(); await advance(9000); host.startGame(); await advance(3000);
+  ann.P.assist = true;   // Easy mode
+  var dt1 = nums(ann.P.cards[0].cells), dt2 = nums(ann.P.cards[1].cells);
+  var only1 = dt1.filter(function (n) { return dt2.indexOf(n) < 0; }), only2 = dt2.filter(function (n) { return dt1.indexOf(n) < 0; });
+  frontOfDraw([only2[0], only1[0], only2[1]]);
+  await callBalls(host, 1);
+  ann.pressBingo(); await drain(); await advance(800);
+  var d1 = lastClaim(ann.P.pid);
+  check('CONTROL: Any 1 on her SECOND ticket is a win: the phone claims that ticket and the server agrees', !!d1 && d1.verdict === 'win' && d1.card_no === ann.P.cards[1].cardNo && d1.card_no_called === ann.P.cards[1].cardNo, d1);
+  host.hostConfirm(0); await advance(500);
+  host.$('nextPatternSel').value = 'c:' + DA2; host.keepPlaying(); await advance(300);
+  check('the phone says the pattern has to be on one ticket', /one of your tickets|on one ticket/.test(ann.$('pMsg').innerHTML) && /do not add up/.test(ann.$('pMsg').innerHTML), ann.$('pMsg').innerHTML);
+  await callBalls(host, 1);
+  ann.pressBingo(); await drain(); await advance(800);
+  var d2 = lastClaim(ann.P.pid);
+  check('CONTROL: one number on each ticket is not Any 2: the server says not yet', !!d2 && d2.verdict === 'not_yet', d2);
+  var qh = queueHtml(host).replace(/<[^>]+>/g, ' ');
+  check('the console\'s card says she holds two tickets and how far each is, not just "not complete on card #"', /not complete on any of their tickets/.test(qh) &&
+        qh.indexOf('2 tickets: #' + ann.P.cards[0].cardNo + ' needs 1 more, #' + ann.P.cards[1].cardNo + ' needs 1 more') >= 0 && /A win has to be on one ticket/.test(qh), qh.slice(0, 500));
+  /* PLAY ON MUST RELEASE THE PHONE, EVEN IF ITS MESSAGE IS LOST (Dean, Test Alpha, 1 Nov 2026: after Play on
+     his phone stayed on "the host is checking your ticket" with BINGO greyed out, through a real win on his
+     other ticket). The answer is dropped on the way to her phone here, twice: once the next state message
+     must free her, once the next number. */
+  function dropFor(ph, type) {
+    var held = [];
+    Object.keys(BUS).forEach(function (k) { BUS[k].forEach(function (sb) { if (sb.who === 'phone:' + ph.name) { var cb = sb.cb; held.push([sb, cb]); sb.cb = function (e) { if (e && e.payload && e.payload.t === type) return; cb(e); }; } }); });
+    return function () { held.forEach(function (x) { x[0].cb = x[1]; }); };
+  }
+  var undrop = dropFor(ann, 'resume');
+  host.hostReject(0); await advance(300);
+  check('CONTROL: the Play on never reaches her phone, which still says the host is checking', ann.P.claimPending === true && ann.$('bingoBtn').disabled === true, ann.$('pMsg').innerHTML);
+  undrop(); await advance(4500);
+  host.$('allowEarlyLive')._on.change.forEach(function (f) { f.call({ checked: true }); }); await drain(); await advance(300); await drain(); await advance(300);   // any state message from the console
+  check('the console\'s next state message names no claim of hers, so her phone lets BINGO go and says not a win yet',
+        ann.P.claimPending === false && ann.$('bingoBtn').disabled === false && /Not a win yet/.test(ann.$('pMsg').innerHTML), [ann.P.claimPending, ann.$('pMsg').innerHTML]);
+  ann.pressBingo(); await drain(); await advance(800);   // early again: still one number on each ticket
+  check('CONTROL: she can call again, and it is held for the host', ann.P.claimPending === true && host.G.claims.length === 1, host.G.claims.length);
+  undrop = dropFor(ann, 'resume');
+  host.hostReject(0); await advance(3000);
+  undrop();
+  await callBalls(host, 1);
+  check('PLAY ON THAT NEVER ARRIVED: the next number unlocks BINGO, says not a win yet, and lights the real win', ann.P.claimPending === false && ann.$('bingoBtn').disabled === false &&
+        /Not a win yet/.test(ann.$('pMsg').innerHTML), [ann.P.claimPending, ann.$('bingoBtn').disabled, ann.$('pMsg').innerHTML]);
+  ann.pressBingo(); await drain(); await advance(800);
+  var d3 = lastClaim(ann.P.pid);
+  check('the second number on her SECOND ticket: Any 2 on ticket 2 is a win', !!d3 && d3.verdict === 'win' && d3.card_no === ann.P.cards[1].cardNo, d3);
+  check('and the console\'s card says which ticket has it', queueHtml(host).replace(/<[^>]+>/g, ' ').indexOf('#' + ann.P.cards[1].cardNo + ' has it') >= 0, queueHtml(host).replace(/<[^>]+>/g, ' ').slice(0, 400));
+  host.hostConfirm(0); await advance(500); host.finishGame(); await advance(300);
+  host.endGame(); await advance(3000);
+  host.G.allowEarly = false; ann.P.assist = false; host.$('cardsSel').value = '3'; host.$('patternSel').value = 'one'; host.$('prizeInput').value = 'Meat tray';
+  // Leave the venue as the later scenes expect it: none of its own patterns yet.
+  DB.vp_bingo_patterns = DB.vp_bingo_patterns.filter(function (r) { return r.id !== DA1 && r.id !== DA2; });
+  host.CUSTOM.list = []; host.CUSTOM.loaded = false; host.CUSTOM.available = false; host.CUSTOM.canEdit = false;
 
   print('GAME TWO: a paid night, tickets bought one at a time');
   host.$('paidSel').value = 'ticket'; host.$('paidSel')._on.change && host.$('paidSel')._on.change.forEach(function (f) { f(); });
