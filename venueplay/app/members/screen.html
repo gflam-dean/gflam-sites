@@ -196,6 +196,7 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -619,6 +620,8 @@
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
+    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
+    if(window.VPSting && VPSting.on && m.t!=="tv_here"){ try{ VPSting.forDraw(m, { line:"MEMBERS DRAW <i>TIME</i>" }); }catch(e){} }
     // Any word from the host means pairing is done: never put the setup line back on the wall.
     state.hostSeen=true;
     // The host tapped "Back to ads". Go now rather than wait for a timeout.

@@ -376,6 +376,7 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -1554,6 +1555,9 @@
     if(m && m.t==="started" && m.question_count!=null){ if(typeof VP_LOOK_NOW==="function") VP_LOOK_NOW(true); return; }   // a console from before the tag
     if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
+    /* The start-of-game show on the phone (/app/vp-sting.js, off unless ?sting=1): bingo's "started" plays
+       it with the player's own name, and a ball stops it at once, so the card is never hidden. */
+    if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.onMsg(m, { layout:"phone", phase:(P.won||P.ended)?"done":(P.called.length?"running":"lobby"), words:VPSting.phoneWords("BINGO", P.name) }); }catch(e){ console.warn("[sting]", e && e.message); } }
     if(m.pats) notePats(m.pats);   // the venue's own patterns this message names
     /* A GAME HAS GONE ON AIR AND THIS PHONE IS ALREADY LISTENING.
 

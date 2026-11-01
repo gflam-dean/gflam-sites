@@ -608,6 +608,7 @@
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -2271,6 +2272,9 @@
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings
+    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). It hears every message first: a
+       "started" with no ball in the last two minutes plays it, and a ball mid-show stops it at once. */
+    if(window.VPSting && VPSting.on){ try{ VPSting.onMsg(m, { phase:state.phase, lastBallAt:lastBingoAt }); }catch(e){ console.warn("[sting]", e && e.message); } }
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
     // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
     if(m.t==="screen_refresh"){

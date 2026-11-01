@@ -3239,6 +3239,7 @@
     sendState();
     saveGame();
     renderConsole();
+    stingHold();   // the TV is putting on its start-of-game show: the first ball waits for it
   }
   /* A new game asks what it is FOR before the tickets go out. The old New game kept the last
      game's pattern and prize, so a host who wanted a different prize for game two had to End game
@@ -3324,6 +3325,7 @@
     sendState();
     saveGame();
     renderConsole();
+    stingHold();   // the TV is putting on its start-of-game show: the first ball waits for it
   }
   // Everything a game is, for putting it back. JSON, so nothing the new game does can reach into it.
   function gameSnapshot(){
@@ -3521,6 +3523,15 @@
     nightReset();
   }
   var BALL_HOLD_SECONDS=5;
+  /* THE START-OF-GAME SHOW (1 Nov 2026, off unless the console's address has ?sting=1, like the TV's).
+     The TV plays a 4 second show when a game starts (/app/vp-sting.js). Dean: "make the show look
+     good", so the first Next number waits for it, counting down, and no ball can land mid-show.
+     Not on a real-balls night: the host calls from the barrel, and the TV stops the show for a ball. */
+  var VP_STING=/[?&]sting=1(&|$)/.test(location.search||""), STING_HOLD_SECONDS=4;
+  function stingHold(){
+    if(!VP_STING || G.caller) return;
+    VP_HOLD.hold($("nextBtn"), STING_HOLD_SECONDS, function(left){ return "Starting the show... "+left; }, syncNextBtn);
+  }
   function nextBall(){
     if(G.status!=="running" || G.draw.length>=90) return;
     if(G.caller) return;   // real balls: the numbers come off the grid (callerCall), never from a draw
