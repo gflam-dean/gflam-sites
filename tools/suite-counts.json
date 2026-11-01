@@ -20,7 +20,7 @@
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-fixes-15-oct.test.js": {
-  "checks": 60,
+  "checks": 62,
   "counted_by": "lines"
  },
  "partyplay-backend/lib/pp-gm-boards.test.js": {
