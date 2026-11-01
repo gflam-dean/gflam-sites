@@ -240,7 +240,7 @@ try:
             if w == 390:
                 t = E.get('text', '')
                 ok('it reads: on the list, for Jo\'s Bowlo, one email a month, nobody will ring, ABN, unsubscribe',
-                   "You're on the list" in t and "Jo's Bowlo" in t and 'Once a month' in t and 'nobody will ring you' in t and 'VenuePlay, ABN 35 679 383 049' in t and 'Unsubscribe' in t, t[:800])
+                   "You're on the list" in t and "Jo's Bowlo" in t and 'Once a month' in t and 'nobody will ring you' in t and 'venueplay, ABN 35 679 383 049' in t and 'Unsubscribe' in t, t[:800])
                 links = E.get('links') or []
                 ok('every link in it is on venueplay.com.au (no .dev), and one is the unsubscribe page', links and all(re.match(r'^https://(www\.)?venueplay\.com\.au/', l) for l in links)
                    and any('/unsubscribe?e=jo%40thebowlo.com.au' in l for l in links), links)

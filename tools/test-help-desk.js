@@ -28,9 +28,10 @@ function oneLogo(html, pp) {
     && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;
 }
 function brandFoot(html, pp) {
-  var b = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
-  return h.indexOf(b + ' &middot; ABN 35 679 383 049.') !== -1 && h.indexOf(b + COUNTRY) !== -1
-    && !/gflam/i.test(h.split(b + COUNTRY).join('')) && !/Gold Coast/.test(h) && h.indexOf('<strong>CONFIDENTIAL EMAIL:</strong>') !== -1;
+  /* The footer's name is lowercase since the 2 Nov release; the Acknowledgement of Country keeps "VenuePlay". */
+  var b = pp ? 'PartyPlay' : 'venueplay', c = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
+  return h.indexOf(b + ' &middot; ABN 35 679 383 049.') !== -1 && h.indexOf(c + COUNTRY) !== -1
+    && !/gflam/i.test(h.split(c + COUNTRY).join('')) && !/Gold Coast/.test(h) && h.indexOf('<strong>CONFIDENTIAL EMAIL:</strong>') !== -1;
 }
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); fails++; } }
 vpaVerifyJWT = async function (t) { return t ? { sub: t } : null; };
@@ -143,7 +144,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('it comes from venueplay Support, replies go to support@, the subject carries the number and the reply secret', acks[0] && acks[0].from === 'venueplay Support <support@send.venueplay.com.au>' && acks[0].reply_to === 'support@venueplay.com.au' && acks[0].subject === 'Thanks, we\'ve got your message (ticket 1001, ref ' + helpRef(t.reply_token) + ')' && /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(helpRef(t.reply_token)), acks[0] && [acks[0].from, acks[0].reply_to, acks[0].subject]);
   check('it says, in plain words: thanks, the number, a person replies the same business day, reply to add anything', acks[0] && acks[0].text.indexOf('Hi Jo,') === 0 && acks[0].text.indexOf('Thanks, we\'ve got your message (ticket 1001). Someone from our team will read it and reply by email, usually the same business day.') !== -1 && acks[0].text.indexOf('To add anything, just reply to this email.') !== -1 && !/What happens next|we have got it/.test(acks[0].html), acks[0] && acks[0].text);
   check('it is signed by a person over the brand\'s support, with the support address, and the venueplay logo on the dark band over the pink rule and the square logo in Dean\'s Outlook signature (P, E, W)', acks[0] && /\nKind Regards\n\nDean\nvenueplay\n\nE support@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(acks[0].text) && oneLogo(acks[0].html, false), acks[0] && acks[0].text);
-  check('its footer is "VenuePlay \u00b7 ABN 35 679 383 049." and Gflam is nowhere in it but the Acknowledgement of Country (VenuePlay is its own business)', acks[0] && brandFoot(acks[0].html, false) && /\nVenuePlay - ABN 35 679 383 049\.\n$/.test(acks[0].text), acks[0] && acks[0].text);
+  check('its footer is "venueplay \u00b7 ABN 35 679 383 049." and Gflam is nowhere in it but the Acknowledgement of Country (VenuePlay is its own business)', acks[0] && brandFoot(acks[0].html, false) && /\nvenueplay - ABN 35 679 383 049\.\n$/.test(acks[0].text), acks[0] && acks[0].text);
   check('it has a text part made from the same words as the HTML, with no tags or entities left in it', acks[0] && typeof acks[0].text === 'string' && typeof acks[0].html === 'string' && !/[<>]|&[a-z#0-9]+;/i.test(acks[0].text) && acks[0].text === helpPlainFromHtml(acks[0].html), acks[0] && acks[0].text);
   check('it never quotes what they wrote (a public form can be pointed at any address)', acks[0] && acks[0].html.indexOf('My tickets are not showing') === -1);
   check('a player is not given the venue phone line', acks[0] && acks[0].html.indexOf('07 5228 3667') === -1 && acks[0].html.indexOf('tel:') === -1);
@@ -342,7 +343,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
     && helpPlainFromHtml(lk).indexOf('On the TV, open venueplay.com.au/tv?royal-hotel. Or https://example.com/a?b=1&c=2, or email jo@example.com.\n<b>not markup</b> www.x.com.') === 0, helpPlainFromHtml(lk).slice(0, 200));
   check('a reply ending "Cheers," gets no "Kind Regards" under it; one that does not sign off gets it', lk.indexOf('Kind Regards') === -1 && /Cheers,\n\nDean\nvenueplay\n/.test(helpPlainFromHtml(lk)) && m.text.indexOf('Kind Regards') !== -1);
   check('every link in the signature and the acknowledgement is pink and underlined, none plain', (m.html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('class="hd-a" style="color:#C70F69;text-decoration:underline"') !== -1; }) && (acks[0].html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('text-decoration:underline') !== -1; }), m.html.match(/<a\b[^>]*>/g));
-  check('the reply is a whole document in the VenuePlay card, ending on the ticket line and "VenuePlay \u00b7 ABN", with no Gflam', m && /^<!doctype html>/i.test(m.html) && brandFoot(m.html, false) && /Ticket 1002 \(ref [A-Z0-9-]+\)\. To add anything, just reply to this email\.\nVenuePlay - ABN 35 679 383 049\.\n$/.test(m.text), m && m.text);
+  check('the reply is a whole document in the VenuePlay card, ending on the ticket line and "venueplay \u00b7 ABN", with no Gflam', m && /^<!doctype html>/i.test(m.html) && brandFoot(m.html, false) && /Ticket 1002 \(ref [A-Z0-9-]+\)\. To add anything, just reply to this email\.\nvenueplay - ABN 35 679 383 049\.\n$/.test(m.text), m && m.text);
   check('it carries the ABN and a way to reach us', m && /ABN 35 679 383 049/.test(m.html) && /accounts@venueplay\.com\.au/.test(m.html));
   check('the reply is recorded on the ticket, which now waits on them', notesOf(T(1002)).some(function (n) { return n.kind === 'reply' && /Refunded/.test(n.body); }) && T(1002).status === 'waiting');
   sent.length = 0;

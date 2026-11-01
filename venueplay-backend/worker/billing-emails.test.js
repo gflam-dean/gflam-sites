@@ -59,7 +59,7 @@ pass("every line on her bill is listed", (lines.match(/full month/g)||[]).length
      "found " + ((lines.match(/full month/g)||[]).length) + " of the 3 extra-player lines");
 /* In plain words since 31 Oct 2026 (Dean: never "founding" on anything a venue sees). Stripe's
    product keeps its name; tools/test-receipts-plain-words.js runs the rest of that rule. */
-pass("the subscription line is there too, in plain words", lines.indexOf("VenuePlay plan (monthly)") !== -1 && !/founding/i.test(lines));
+pass("the subscription line is there too, in plain words", lines.indexOf("venueplay plan (monthly)") !== -1 && !/founding/i.test(lines));
 pass("each venue is named, which is what a group account needs", lines.indexOf("Not jess") !== -1 && lines.indexOf("The Jolly Jess") !== -1);
 /* Count the AMOUNT CELLS, not the string. The subscription line's own description
    contains "(at $2.50 / month)", so a naive search finds five and the check failed on
@@ -75,7 +75,7 @@ pass("GST is the INCLUSIVE component, $0.91 of $10", tax.indexOf("$0.91") !== -1
 pass("the ex-GST subtotal is $9.09", tax.indexOf("$9.09") !== -1);
 pass("the total paid is $10.00", tax.indexOf("$10.00") !== -1);
 /* It delivers Stripe's tax invoice, so it says so (Dean, 31 Oct 2026). */
-pass("it calls itself a tax invoice", tax.indexOf("Tax invoice. VenuePlay, ABN") !== -1);
+pass("it calls itself a tax invoice", tax.indexOf("Tax invoice. venueplay, ABN") !== -1);
 pass("the ABN is on it", tax.indexOf(VP_ABN) !== -1);
 
 pass("a $0 trial invoice gets no tax block at all",
@@ -445,7 +445,7 @@ function alertSubjectChecks() {
   var CUSTOMER_SUBJECTS = [
     "Your venues are set up. Welcome to venueplay",
     "You are in. Welcome to venueplay",
-    "Your VenuePlay invoice",
+    "Your venueplay invoice",
     "Your venueplay payment is coming up",
     "Your venueplay payment did not go through",
     "Your venueplay plan has moved up",

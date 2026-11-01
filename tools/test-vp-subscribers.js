@@ -235,7 +235,7 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   check('the body links unsubscribe on venueplay.com.au and says why they got it', /href="https:\/\/www\.venueplay\.com\.au\/unsubscribe\?e=jo%40thebowlo\.com\.au"/.test(e.html || '')
     && /signed up for the venueplay monthly email/.test(e.html || ''), (e.html || '').slice(-700));
   check('no .dev address anywhere: subject, html, text or headers', !/\.dev\b/i.test(all) && !/workers\.dev/i.test(all));
-  check('"VenuePlay, ABN 35 679 383 049", never Gflam', /VenuePlay, ABN 35 679 383 049/.test(e.html || '') && !/gflam/i.test(all));
+  check('"venueplay, ABN 35 679 383 049", never Gflam', /venueplay, ABN 35 679 383 049/.test(e.html || '') && !/gflam/i.test(all));
   check('no em dash, no "call you", and it says nobody will ring them', !/\u2014|&mdash;/.test(all) && !/call you/i.test(all) && /nobody will ring you/i.test(e.html || ''));
   check('the venue name they typed is escaped, never markup', /for &lt;b&gt;Jo&#39;s&lt;\/b&gt; &amp; Bowlo/.test(e.html || '') && (e.html || '').indexOf('<b>Jo') < 0, (e.html || '').slice(0, 900));
   check('it has a plain-text part and a subject under 45 characters', !!e.text && e.text.length > 100 && (e.subject || '').length <= 45 && !!e.subject, [e.subject, (e.text || '').length]);

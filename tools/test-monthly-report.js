@@ -320,7 +320,7 @@ function world() {
   check('compared with September', /Compared with September/.test(h) && /50 <span[^>]*>\(4\)/.test(h));
   check('no player\'s name, email or mobile anywhere in it', !/Private|Person|example\.com|04000000|0411111|Opted/.test(h));
   check('no em dash', h.indexOf('\u2014') === -1 && mail.subject.indexOf('\u2014') === -1);
-  check('VenuePlay, ABN, and never Gflam', /VenuePlay, ABN 35 679 383 049/.test(h) && !/gflam/i.test(h));
+  check('venueplay, ABN, and never Gflam', /venueplay, ABN 35 679 383 049/.test(h) && !/gflam/i.test(h));
   var links = (h.match(/href="[^"]+"/g) || []).map(function (x) { return x.slice(6, -1); });
   check('every link is our own domain, none .dev', links.length >= 3 && links.every(function (l) { return /^(https:\/\/(www\.)?venueplay\.com\.au\/|https:\/\/api\.venueplay\.com\.au\/|tel:)/.test(l); }) && !/\.dev\b|workers\.dev/.test(h), links);
   check('the button opens that month for that venue in their account', h.indexOf('https://www.venueplay.com.au/app/report.html?venue=' + VA + '&amp;month=2026-10') !== -1);

@@ -308,7 +308,7 @@ step(function () {
 // 13. A transactional send is untouched: no headers key unless a sender passes some.
 step(function () {
   SENT = [];
-  return vpaSendEmail(env(), 'queen@example.com', 'Your VenuePlay invoice', '<p>receipt</p>').then(function (went) {
+  return vpaSendEmail(env(), 'queen@example.com', 'Your venueplay invoice', '<p>receipt</p>').then(function (went) {
     ok('a plain send still goes', went === true && SENT.length === 1);
     ok('a plain send carries no List-Unsubscribe', SENT.length === 1 && !('headers' in SENT[0]), JSON.stringify(Object.keys(SENT[0] || {})));
   });
