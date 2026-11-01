@@ -22,8 +22,10 @@
 # therefore outside this Pages project. The layout there mirrors this one, so the
 # scripts' data paths still resolve.
 #
-# venueplay/data/ keeps only the three files the site actually fetches at
-# runtime: musical-library.json, trivia-count.json and music-count.json.
+# venueplay/data/ keeps only the files the site actually fetches at runtime:
+# musical-library.json, trivia-count.json, music-count.json and (2 Nov 2026)
+# live-here-now.json, the coaster page's 900 questions, public on purpose: a
+# quiz played in the phone has to hand the phone its questions.
 #
 # If you add anything private in future: put it in venueplay-backend/, not here,
 # and do not rely on a rule in this file to hide it.
@@ -62,3 +64,8 @@
 # THE HELP PAGE (21 Oct 2026). /help is help.html; /support is the other word people try.
 /support      /help  301
 /support.html /help  301
+
+# THE DRINK COASTER (2 Nov 2026). The QR opens /live-here-now; /live is the short one printed under
+# it ("or go to venueplay.com.au/live"). A 301, so the address bar shows the real page.
+/live         /live-here-now  301
+/live.html    /live-here-now  301

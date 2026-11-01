@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""THE DRINK-COASTER PAGE, PLAYED IN A REAL BROWSER AT PHONE WIDTH (/live-here-now, 31 Oct 2026).
+"""THE DRINK-COASTER PAGE, PLAYED IN A REAL BROWSER AT PHONE WIDTH (/live-here-now, 31 Oct 2026;
+finished 1 Nov 2026 for the Mon 2 Nov release: the coaster reads "Scan for 60 seconds of trivia while
+you wait for your drink", and /live is the short address printed under the QR).
 
 Dean's brief: "Opens straight into a question. No name, no sign-up, no room code. Four big buttons,
 tap to answer, instant right/wrong in pink or yellow. Five questions per scan, then a score screen:
@@ -8,28 +10,37 @@ line ... The question bank changes every hour automatically, and the phone remem
 questions it has already shown, so the same person scanning again gets fresh ones."
 
 Every one of those is a thing the page DOES, so this opens the real venueplay/live-here-now.html,
-served from this checkout the way Cloudflare Pages serves it (/live-here-now is live-here-now.html),
-in headless Chrome as a 375 by 740 phone, and plays it by tapping the screen:
+served from this checkout the way Cloudflare Pages serves it (tools/pagesim.py: clean addresses, the
+real _redirects, the real 404.html), in headless Chrome as a phone, and plays it by tapping the screen:
+
+  - /live answers 301 to /live-here-now (the real _redirects line), and a phone that types /live
+    lands on the game
 
   - the first question is up with nothing typed: no input anywhere, four buttons a thumb can hit,
     no sideways scroll, and the same at 320 px
   - a right tap paints the button PINK and says so; a wrong tap paints it YELLOW and shows the
     right one in pink; a second tap on an answered question changes nothing
-  - five questions, then "3/5. Beat the table?", Play again, and the next-night link
+  - five questions, then "3/5. Beat the table?", how long it took, Play again, "Game on the TV?
+    Join it", and the soft call to action: "Want this on the big screen? ... Ask the bar." with a
+    light "Run a venue?" link to the homepage. No price, no offer, no phone number, no form
+  - at 320, 375, 390 and 430 wide: no sideways scroll, every button and line inside the screen and
+    nothing cut off inside its own box, on the question and on the score
   - Play again: five more, none of them seen. A fresh scan (reload) in the same hour: five more again
   - two phones in the same hour get the same five (a fair "Beat the table?"); the next hour, a
     different five. The clock is pinned inside the page, never read from this machine
   - storage blocked (private mode): still plays, and Play again is still fresh
-  - ?v=<slug> sends the next-night line to that venue's page, /play?venue=<slug>; none, to
-    venueplay.com.au
+  - ?v=<slug> sends "Game on the TV? Join it" to that venue's page, /play?venue=<slug>; none, to
+    /play (type the code from the TV)
   - the question file is the build script's output exactly, every question traces to an easy
     "VenuePlay Original" in the trivia bank, and it is small enough for pub wifi
 
-Nothing leaves this machine: fonts, analytics and the pixel are blocked in the browser.
+Nothing leaves this machine: fonts and analytics are blocked in the browser. The page loads the
+site's analytics (vp-analytics.js) and nothing else that counts people: no Meta pixel, no form.
+Chrome runs under /tmp/vp-heavy.lock (VP_WAIT_LOCK=<seconds> to wait for it).
 
     python3 tools/live-here-now-in-chrome.test.py [--shots DIR]
 """
-import argparse, base64, functools, http.server, importlib.util, io, json, os, re, socketserver, sys, threading, time
+import argparse, base64, http.client, importlib.util, io, json, os, re, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
@@ -45,6 +56,8 @@ def _load(name, rel):
 
 
 vl = _load('verify_live', 'tools/verify-live.py')
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import gatelib, pagesim
 bankbuild = _load('live_here_now_bank', 'tools/live-here-now-bank.py')
 
 fails = 0
@@ -72,21 +85,18 @@ T0 = HOUR * 3600000 + 20 * 60000
 
 
 def serve(folder):
-    class H(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *a):
-            pass
+    return pagesim.serve(folder)
 
-        def do_GET(self):
-            p = self.path.split('?')[0]
-            # Clean URLs, the way Cloudflare Pages serves them (/live-here-now is live-here-now.html).
-            if p != '/' and not os.path.splitext(p)[1] and os.path.isfile(os.path.join(folder, p.lstrip('/') + '.html')):
-                self.path = p + '.html' + self.path[len(p):]
-            return super().do_GET()
-    srv = socketserver.ThreadingTCPServer(('127.0.0.1', 0), functools.partial(H, directory=folder))
-    srv.socket.listen(128)
-    srv.daemon_threads = True
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv, 'http://127.0.0.1:%d' % srv.server_address[1]
+
+def no_follow(base, path):
+    """(status, Location) for one GET, redirects NOT followed."""
+    host = base.split('//', 1)[1]
+    c = http.client.HTTPConnection(host, timeout=10)
+    c.request('GET', path)
+    r = c.getresponse()
+    r.read()
+    c.close()
+    return r.status, r.getheader('Location')
 
 
 def pre(clock_ms, block_storage=False):
@@ -161,15 +171,32 @@ STATE = r'''(function(){
   });
   var qr=q.getBoundingClientRect();
   return JSON.stringify({id:q.getAttribute("data-id"), q:q.hidden?"":q.textContent, qRight:qr.right, btns:btns,
-    count:document.getElementById("count").textContent, verdict:document.getElementById("verdict").textContent,
+    count:document.getElementById("count").textContent.replace(/\s+/g," ").trim(), verdict:document.getElementById("verdict").textContent,
     verdictColor:getComputedStyle(document.getElementById("verdict")).color,
     score:sc.hidden?"":document.getElementById("scoreLine").textContent.replace(/\s+/g," ").trim(),
     scoreShown:!sc.hidden && sc.getBoundingClientRect().height>0,
     again:(function(){var a=document.getElementById("again"),r=a.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height,shown:!sc.hidden};})(),
-    next:document.getElementById("nextNight").getAttribute("href"), nextText:document.getElementById("nextNight").textContent,
+    next:document.getElementById("joinGame").getAttribute("href"), nextText:document.getElementById("joinGame").textContent,
+    sub:document.getElementById("scoreSub").textContent, clock:document.getElementById("clock").textContent,
     failed:!document.getElementById("failed").hidden,
     inputs:document.querySelectorAll("input,textarea,select").length,
     vw:innerWidth, sw:document.documentElement.scrollWidth, errs:window.__errs||[]});
+})()'''
+
+
+FIT = r'''(function(){
+  var vw=innerWidth, out=[], clipped=[];
+  Array.prototype.forEach.call(document.querySelectorAll("header *, main *, footer *"),function(e){
+    var r=e.getBoundingClientRect(); if(!r.width||!r.height) return;
+    var cs=getComputedStyle(e); if(cs.visibility==="hidden") return;
+    if(r.left<-0.5||r.right>vw+0.5) out.push((e.id||e.className||e.tagName)+" "+Math.round(r.left)+".."+Math.round(r.right));
+    if(/^(BUTTON|A|H1|H2|P|SPAN)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1 && cs.overflow!=="visible")
+      clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
+    if(/^(BUTTON|A)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" text wider than its button");
+  });
+  var big=document.querySelector(".bigscreen"), bb=big?big.getBoundingClientRect():null;
+  return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6),
+    bigBottom: bb && bb.height ? bb.bottom : -1});
 })()'''
 
 
@@ -254,12 +281,42 @@ def main():
     check('no em dash, no "roster", no price or offer, no phone number',
           u'—' not in HTML and 'roster' not in HTML.lower() and not re.search(r'\$\s?\d|\boffer\b|\bprice', text, re.I)
           and not re.search(r'\b0\d[\s\d]{8,}', text), re.findall(r'.{20}(?:—|\$\d|offer|0\d \d{4}).{20}', HTML)[:3])
+    check('the soft call to action is on the page, for the room and then for an owner: "Want this on the big screen?", '
+          '"Ask the bar.", "Run a venue? See how venueplay works" to the homepage',
+          'Want this on the big screen?' in text and 'Ask the bar.' in text
+          and re.search(r'<a class="owner" id="ownerLink" href="/">Run a venue\? See how venueplay works</a>', HTML) is not None)
+    check('nothing on the page collects anything: no form, no input, no Meta pixel; analytics is the site\'s own vp-analytics.js',
+          not re.search(r'<(form|input|textarea|select)\b', HTML) and 'vp-pixel' not in HTML and 'fbq(' not in HTML
+          and '<script src="/app/vp-analytics.js" defer></script>' in HTML)
+    check('the name is written "venueplay" in what a punter reads (the copyright line keeps the registered VenuePlay)',
+          'VenuePlay' not in re.sub(r'trading as VenuePlay', '', text) and 'venueplay' in text)
+    check('the header carries the new wordmark, drawn by tools/sync-brand-mark.py (data-vp-mark="wordmark")',
+          'data-vp-mark="wordmark"' in HTML and 'href="/" aria-label="venueplay home"' in HTML)
+    red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
+           if l.strip() and not l.lstrip().startswith('#')]
+    check('_redirects sends /live (and /live.html) to /live-here-now with a 301',
+          ['/live', '/live-here-now', '301'] in red and ['/live.html', '/live-here-now', '301'] in red, [r for r in red if 'live' in ' '.join(r)])
     sm = io.open(os.path.join(ROOT, 'venueplay', 'sitemap.xml'), encoding='utf-8').read()
     check('the sitemap lists https://venueplay.com.au/live-here-now', '<loc>https://venueplay.com.au/live-here-now</loc>' in sm)
 
     srv, base = serve(os.path.join(ROOT, 'venueplay'))
+    print('\nTHE SHORT ADDRESS UNDER THE QR')
+    st, loc = no_follow(base, '/live')
+    check('/live answers 301 to /live-here-now (Pages reading the real _redirects)', st == 301 and loc == '/live-here-now', (st, loc))
+    st2, _ = no_follow(base, '/live-here-now')
+    check('/live-here-now answers 200, and a made-up address beside it answers a real 404 (the control)',
+          st2 == 200 and no_follow(base, '/live-here-not')[0] == 404, st2)
+    if not gatelib.hold_lock_or_refuse('live-here-now-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
+        check('the heavy lock is free for Chrome', False)
+        return
     b = vl.Browser()
     try:
+        tl = Tab(b, base, w=390, h=844)
+        tl.go('/live')
+        landed = tl.until('document.getElementById("q").getAttribute("data-id") && location.pathname', 15)
+        check('a phone that types venueplay.com.au/live lands on /live-here-now with a question up', landed == '/live-here-now', landed)
+        tl.close()
+
         print('\nA PHONE SCANS THE COASTER (375 x 740)')
         t = Tab(b, base)
         b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
@@ -295,8 +352,10 @@ def main():
         check('the score screen reads "3/5. Beat the table?"', s.get('scoreShown') and s.get('score') == '3/5. Beat the table?', s.get('score'))
         check('a Play again button a thumb can hit, on screen',
               s.get('again', {}).get('shown') and s['again']['h'] >= 56 and 0 < s['again']['y'] < 740, s.get('again'))
-        check('"Find out when the next trivia night is" goes to venueplay.com.au when the coaster names no venue',
-              s.get('next') == 'https://venueplay.com.au' and s.get('nextText') == 'Find out when the next trivia night is', s.get('next'))
+        check('"Game on the TV? Join it" goes to /play (type the code from the TV) when the coaster names no venue',
+              s.get('next') == '/play' and s.get('nextText') == 'Game on the TV? Join it', s.get('next'))
+        check('the score says how long the round took: "Done in N seconds." (the clock counts up, never down)',
+              re.match(r'^Done in \d+ seconds?\. ', s.get('sub') or '') is not None, s.get('sub'))
         if A.shots:
             t.shot(os.path.join(A.shots, 'live-here-now-score-375.png'))
 
@@ -347,30 +406,46 @@ def main():
         check('no script error with storage blocked', not s.get('errs'), s.get('errs'))
         tb.close()
 
-        print('\nTHE NEXT-NIGHT LINE FOR A VENUE')
+        print('\n"GAME ON THE TV? JOIN IT" FOR A VENUE')
         for q, want in (('?v=tugun-bowls-club', '/play?venue=tugun-bowls-club'),
                         ('?v=Tugun%20Bowls%20Club', '/play?venue=tugun-bowls-club'),
-                        ('?v=', 'https://venueplay.com.au')):
+                        ('?v=', '/play')):
             tv = Tab(b, base)
             tv.go('/live-here-now' + q)
             tv.until('!!document.getElementById("q").getAttribute("data-id")', 15)
-            got = tv.js('document.getElementById("nextNight").getAttribute("href")')
-            check('%s links the next-night line to %s' % (q, want), got == want, got)
+            got = tv.js('document.getElementById("joinGame").getAttribute("href")')
+            check('%s links "Game on the TV? Join it" to %s' % (q, want), got == want, got)
             tv.close()
         check('/play?venue=<slug> is a page in this site (play.html reads the venue through vp-venueurl.js)',
               os.path.isfile(os.path.join(ROOT, 'venueplay', 'play.html'))
               and 'VPVenueURL.slug' in io.open(os.path.join(ROOT, 'venueplay', 'play.html'), encoding='utf-8').read())
 
-        print('\nTHE SMALLEST PHONE (320 x 568)')
-        b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
-        ts = Tab(b, base, w=320, h=568)
-        ts.go('/live-here-now')
-        s = wait_question(ts)
-        btns = s.get('btns', [])
-        check('at 320 px nothing scrolls sideways and the question and all four buttons fit across',
-              s.get('sw', 999) <= 320 and s.get('qRight', 999) <= 320 and len(btns) == 4
-              and all(x['left'] >= 0 and x['right'] <= 320 and x['h'] >= 56 for x in btns), (s.get('sw'), [(x['left'], x['right'], x['h']) for x in btns]))
-        ts.close()
+        print('\nFOUR PHONES: 320, 375, 390 AND 430 WIDE')
+        for w, h in ((320, 568), (375, 667), (390, 844), (430, 932)):
+            b.call('Storage.clearDataForOrigin', {'origin': base, 'storageTypes': 'local_storage'})
+            tf = Tab(b, base, w=w, h=h)
+            tf.go('/live-here-now')
+            s = wait_question(tf)
+            btns = s.get('btns', [])
+            f = json.loads(tf.js(FIT))
+            check('%d px, a question: nothing scrolls sideways, nothing sits off the screen or is cut off in its box' % w,
+                  f['sw'] <= w and not f['out'] and not f['clipped'], f)
+            check('%d px: four answer buttons a thumb can hit (56 px tall or more, the full width less the margins)' % w,
+                  len(btns) == 4 and all(x['h'] >= 56 and x['w'] >= w - 40 and x['left'] >= 0 and x['right'] <= w for x in btns),
+                  [(round(x['left']), round(x['right']), round(x['h'])) for x in btns])
+            if h >= 667:
+                check('%d px: the question and all four answers are on the first screen, no scrolling to answer' % w,
+                      all(x['bottom'] <= h for x in btns), [round(x['bottom']) for x in btns])
+            _, s, _ = play_round(tf, [True, False, True, True, False], 'fit %d' % w)
+            f = json.loads(tf.js(FIT))
+            check('%d px, the score: "3/5. Beat the table?", nothing sideways, nothing off the screen or cut off' % w,
+                  s.get('score') == '3/5. Beat the table?' and f['sw'] <= w and not f['out'] and not f['clipped'], (s.get('score'), f))
+            if h >= 844:
+                check('%d px: Play again and "Want this on the big screen?" are both on the first screen of the score' % w,
+                      0 < s['again']['y'] < h and f['bigBottom'] <= h, (s['again'], f['bigBottom']))
+            if A.shots and w in (320, 430):
+                tf.shot(os.path.join(A.shots, 'live-here-now-score-%d.png' % w))
+            tf.close()
 
         if A.shots:
             # The picture for a person to look at: a wrong answer, so both colours are on screen.
