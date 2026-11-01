@@ -119,6 +119,7 @@ eval(liftLine(/^let _vcDupes[^\n]*/m));
 eval(liftLine(/^const AMBIGUOUS[^\n]*/m));
 eval(lift('refreshVenueCodes'));
 eval(lift('venueByCode'));
+eval(lift('venueByCodeNotIssued'));   // the slow fallback, split out of venueByCode by the cheaper join (31 Oct 2026)
 eval(liftLine(/^let screenPollRpcMissing[^\n]*/m));
 eval(liftLine(/^let screenShownRpcMissing[^\n]*/m));   // the slide tally (migration 135) rides the same poll
 eval(lift('screenShownTally'));
@@ -138,7 +139,12 @@ eval(lift('joinInfoKeep'));
 eval(lift('joinInfoStaticRead'));
 eval(lift('handleJoinInfo'));
 eval(lift('joinInfoLookup'));
+/* /play/live keeps its answer a few seconds (the cheaper join, 31 Oct 2026): the cache, then the lookup. */
+eval(liftLine(/^const PLAY_LIVE_TTL_MS[^\n]*/m));
+eval(liftLine(/^const playLiveCache[^\n]*/m));
 eval(lift('handlePlayLive'));
+eval(lift('playLiveLookup'));
+eval(lift('venueRowByCode'));
 
 /* The three copies of the hash the pages carry. They must equal the Worker's. */
 var tvVenueCode = (function () { eval(liftFrom(TV, 'venueCode', 'tv.html')); return venueCode; })();
@@ -243,15 +249,15 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
   LOBBY = { code: royalHash, format: 'trivia' };
   return handlePlayLive(get('/play/live?code=' + royalHash), {}, json).then(function (r) {
     ok('/play/live names a trivia lobby before round one', r._json.live === true && r._json.format === 'trivia', JSON.stringify(r._json));
-    LOBBY = { code: royalHash, format: 'musical_bingo' };
+    playLiveCache.clear(); LOBBY = { code: royalHash, format: 'musical_bingo' };
     return handlePlayLive(get('/play/live?code=' + royalHash), {}, json);
   }).then(function (r) {
     ok('/play/live names a musical lobby before round one', r._json.format === 'musical_bingo', JSON.stringify(r._json));
-    LOBBY = { code: royalHash, format: 'bingo90' };
+    playLiveCache.clear(); LOBBY = { code: royalHash, format: 'bingo90' };
     return handlePlayLive(get('/play/live?code=' + royalHash), {}, json);
   }).then(function (r) {
     ok('/play/live leaves a bingo lobby as bingo (no format, the phone stays put)', r._json.live === true && r._json.format === '', JSON.stringify(r._json));
-    LOBBY = null;
+    playLiveCache.clear(); LOBBY = null;   // each room is a new state: drop the 4-second copy /play/live keeps
     /* The phone half: the REAL watchVenue from play.html, told trivia is live on its own code. */
     function phoneHears(answer) {
       var went = null, done = null, wait = new Promise(function (res) { done = res; });
@@ -264,6 +270,9 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
       function setInterval() {}
       var fetch = function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve(answer); } }); };
       eval(liftFrom(PLAY, 'venueCode', 'play.html'));
+      var _shared = {};   // askOnce shares one /play/live ask between callers 250 ms apart (31 Oct 2026)
+      eval(liftFrom(PLAY, 'askOnce', 'play.html'));
+      eval(liftFrom(PLAY, 'askLive', 'play.html'));
       eval(liftFrom(PLAY, 'watchVenue', 'play.html'));
       watchVenue(ROYAL.slug);
       setTimeout(function () { done(went); }, 0);
