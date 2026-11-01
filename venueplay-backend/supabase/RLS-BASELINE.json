@@ -700,6 +700,7 @@
   "vp_raffle_schedules authenticated TRIGGER",
   "vp_raffle_schedules authenticated TRUNCATE",
   "vp_raffle_schedules authenticated UPDATE",
+  "vp_screen_devices authenticated SELECT",
   "vp_screen_slides anon DELETE",
   "vp_screen_slides anon INSERT",
   "vp_screen_slides anon REFERENCES",
@@ -1395,6 +1396,13 @@
    "using": "(venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
   },
+  "vp_screen_devices.HQ reads screen devices": {
+   "cmd": "SELECT",
+   "permissive": "PERMISSIVE",
+   "roles": "authenticated",
+   "using": "vp_is_platform_admin()",
+   "with_check": ""
+  },
   "vp_screen_slides.vp_screen_slides_admin_all": {
    "cmd": "ALL",
    "permissive": "PERMISSIVE",
@@ -1841,6 +1849,14 @@
    "enabled": true,
    "forced": false
   },
+  "vp_month_reports": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_monthly_news": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_music_games": {
    "enabled": true,
    "forced": false
@@ -1929,6 +1945,14 @@
    "enabled": true,
    "forced": false
   },
+  "vp_screen_devices": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_screen_shows": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_screen_slides": {
    "enabled": true,
    "forced": false
@@ -1954,6 +1978,10 @@
    "forced": false
   },
   "vp_stripe_events": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_subscribers": {
    "enabled": true,
    "forced": false
   },
@@ -2087,6 +2115,10 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_join_context(p_code text, p_device text)": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_members_draw(p_draw_id uuid, p_auth_user_id uuid, p_rand bigint[], p_hold_default integer, p_hold_lo integer, p_hold_hi integer)": {
    "anon": false,
    "authenticated": false
@@ -2107,6 +2139,14 @@
    "anon": false,
    "authenticated": false
   },
+  "vp_screen_poll_kind(p_slug text, p_code text, p_version text, p_kind text, p_device text)": {
+   "anon": false,
+   "authenticated": false
+  },
+  "vp_screen_poll_shown(p_slug text, p_code text, p_version text, p_shown jsonb)": {
+   "anon": false,
+   "authenticated": false
+  },
   "vp_set_game_prefs(p_venue_id uuid, p_game text, p_prefs jsonb)": {
    "anon": false,
    "authenticated": false
@@ -2118,6 +2158,10 @@
   "vp_staff_venue_ids()": {
    "anon": true,
    "authenticated": true
+  },
+  "vp_subscribers_mark_unsubscribed()": {
+   "anon": false,
+   "authenticated": false
   },
   "vp_venue_screen_capture()": {
    "anon": false,
@@ -2142,6 +2186,7 @@
   "v_vp_screen_draws",
   "v_vp_session_metering",
   "v_vp_song_flag_counts",
+  "v_vp_subscribers_monthly",
   "v_vp_trivia_leaderboard",
   "v_vp_trusted"
  ]
