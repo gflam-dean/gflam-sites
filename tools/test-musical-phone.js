@@ -100,8 +100,9 @@ print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)"
   pass("onMsg is lifted from the page", !!fn);
   var $ = els(), routed = 0, sent = [];
   var P = { pid: "pid-jo", joined: true, won: false, ended: false, cells: [1] };
-  var api = (new Function("P", "$", "send", "deviceId", "fetchCard", "route", "celebrate", "closePlayedSheet",
-    fn + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){});
+  /* window: onMsg asks window.VPSting for the start-of-game show (1 Nov 2026); none is loaded here. */
+  var api = (new Function("P", "$", "send", "deviceId", "fetchCard", "route", "celebrate", "closePlayedSheet", "window",
+    fn + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){}, {});
   api({ t: "winner", pid: "pid-sam", name: "Phone Sam" });
   pass("the losing phone names the winner, then the page says \"took this one.\" (no \"won\" in front of it)", P.ended === true && $("lostName").textContent === "Phone Sam", $("lostName").textContent);
   pass("the line under it is the one that says what happened", /<div class="psub">took this one\. Nice game!<\/div>/.test(play));
