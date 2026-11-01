@@ -61,7 +61,7 @@ BANNED = re.compile(r'\$2\.50|\$2\.30|\block(?:ed|ing)?\s+(?:it\s+|your\s+\w+\s+
 STANDARD_DOLLARS = {'$3.00', '$2.85', '$2', '$90'}
 BUSY = '$2 per extra player that night, and your host OKs it on screen first.'
 STEPS = ['Pick your game', 'Scan the code', 'You press go']
-LEGAL = ("Your venue runs each game and sets the prizes, and winners claim from your host. VenuePlay supplies "
+LEGAL = ("Your venue runs each game and sets the prizes, and winners claim from your host. venueplay supplies "
          "the software. Bingo, raffles and members draws follow your state's gaming rules, and we show you what "
          "applies when you set up.")
 LANDLINE = '07 5228 3667'

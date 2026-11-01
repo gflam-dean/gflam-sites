@@ -244,7 +244,7 @@ try:
     after = S.W.sent()
     ok('Send me a new link: it says one is on its way if that address has a login, and the button goes', 'on its way' in text(sid, 'resendMsg') and not visible(sid, 'resendBtn'), text(sid, 'resendMsg'))
     ok('and the REAL Worker sent a new link to the login\'s own address', len(after) == before + 1 and after[-1].get('to') == ['owner@test.local'] and
-       after[-1].get('subject') == 'Your VenuePlay sign-in link' and '/app/go#t=' in after[-1].get('html', ''), after[-1:] and after[-1].get('to'))
+       after[-1].get('subject') == 'Your venueplay sign-in link' and '/app/go#t=' in after[-1].get('html', ''), after[-1:] and after[-1].get('to'))
     shot(sid, '8-go-new-link-sent')
     mob = js(sid, 'document.getElementById("mobileLink").getAttribute("href")')
     ok('"Sign in with my mobile instead" goes to /app/ (the mobile sign-in)', mob == '/app/', mob)

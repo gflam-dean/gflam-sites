@@ -11,7 +11,7 @@ LOOKED AT, not read. Each scene opens the real venueplay/tv.html in headless Chr
 (tools/browser-rig/rig.py), and judges what is painted:
 
   1. /tv with no venue: the "Set up this screen" card is on the wall; "Got a TV with Google Play?
-     Get the VenuePlay TV app" at TV size; the Get it on Google Play badge is a real link to the
+     Get the venueplay TV app" at TV size; the Get it on Google Play badge is a real link to the
      app's store page, on screen and not covered, drawn in CSS (no image); "Put in the screen code"
      opens the same keypad as ever (29 keys, Delete, Go back) and Go back closes it
   2. the code typed on that keypad: the screen is set, Start now, and the venue screen shows "Save
@@ -105,7 +105,7 @@ def no_venue():
         time.sleep(1.0)
         shot(r, tv, 'tv-landing-1-no-venue')
         card = words(r, tv, 'pairPanel') or ''
-        ok('it says "Got a TV with Google Play? Get the VenuePlay TV app"', 'Got a TV with Google Play? Get the VenuePlay TV app' in card, card[:240])
+        ok('it says "Got a TV with Google Play? Get the venueplay TV app"', 'Got a TV with Google Play? Get the venueplay TV app' in card, card[:240])
         head = r.ask(tv, '(function(){var e=document.querySelector("#suApp .su-head");return e?parseFloat(getComputedStyle(e).fontSize):0;})()') or 0
         ok('at a size read from across a room (the line is at least 24px on a 1280 wall)', head >= 24, head)
         link = r.ask(tv, '(function(){var a=document.getElementById("tvPlayLink");return a?{tag:a.tagName,href:a.getAttribute("href"),text:a.textContent.replace(/\\s+/g," ").trim(),imgs:a.querySelectorAll("img,svg,picture").length,'

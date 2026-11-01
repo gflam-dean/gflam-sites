@@ -174,7 +174,7 @@ try:
     ok('picking it searches that venue on the server', q.get('venue') == TUGUN, q)
     ok('and every entry is about Tugun', rows and all('Tugun' in r['say'] for r in rows), [r['say'] for r in rows])
     out = [r for r in rows if r['key'].startswith('h')]
-    ok('the screen row deleted straight in the database is there, marked as outside VenuePlay', out and 'NOT through VenuePlay' in out[0]['who'] and 'DELETED' in out[0]['say'], out)
+    ok('the screen row deleted straight in the database is there, marked as outside VenuePlay', out and 'NOT through venueplay' in out[0]['who'] and 'DELETED' in out[0]['say'], out)
     shot(sid, 'audit-venue-tugun-desktop')
     n = len(searches())
     click(sid, '[data-aukey="%s"] button[data-auscreen]' % out[0]['key'])
