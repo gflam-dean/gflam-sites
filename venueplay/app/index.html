@@ -3484,6 +3484,16 @@
         var _who=G.claims.map(function(c){ return c.name||"A player"; }).join(" and ");
         showToast(_who+(G.claims.length>1?" have":" has")+" called BINGO and the ticket has not been checked. Check it first, or tap End game again to end without it.");
         try{ renderClaimQueue(); }catch(e){}
+        /* SAID ON THE BUTTON TOO (Dean, Test Alpha, 1 Nov 2026: "the host couldn't even end the game"). The
+           only sign that a second tap was needed was a toast, easy to miss on a phone, so the first tap looked
+           like End game did nothing. The button now says what the next tap does, for the fifteen seconds it
+           counts, then goes back. */
+        var _eb=$("endGameBtn");
+        if(_eb){
+          _eb.textContent="Tap again to end without checking";
+          clearTimeout(G._endBtnT);
+          G._endBtnT=setTimeout(function(){ var b=$("endGameBtn"); if(b) b.textContent="End game / Back to ads"; }, 15000);
+        }
         return;
       }
       for(var _c=0;_c<G.claims.length;_c++){
@@ -3492,6 +3502,7 @@
       }
     }
     G._endAsked=0;
+    clearTimeout(G._endBtnT); var _eb2=$("endGameBtn"); if(_eb2) _eb2.textContent="End game / Back to ads";
     finishDrawRecord();
     clearCallGuards();
     if(G.callerWin) callerWinSettle();   // a confirmed win is already on the record; an unchecked book never counted

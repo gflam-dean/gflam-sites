@@ -351,6 +351,11 @@ function frontOfDraw(numbers) {
   check('two lines, using two numbers from before the play on, is a WIN on the server', !!poTwo && poTwo.verdict === 'win' && poTwo.pattern === 'two' && poTwo.balls === poBall0 + 10, poTwo);
   check('and the host sees it valid, checked by the server, with Confirm live', host.G.claims.length === 1 && host.G.claims[0].valid === true && host.G.claims[0].by === 'server' && !confirmDisabled(host),
         host.G.claims.map(function (c) { return { v: c.valid, by: c.by }; }));
+  host.endGame(); await advance(100);
+  check('End game with that claim unchecked: the game stays up, and the BUTTON says the next tap ends it', host.G.status === 'running' && host.$('endGameBtn').textContent === 'Tap again to end without checking',
+        [host.G.status, host.$('endGameBtn').textContent]);
+  await advance(16000);
+  check('fifteen seconds later the button reads End game again', host.$('endGameBtn').textContent === 'End game / Back to ads', host.$('endGameBtn').textContent);
   host.hostConfirm(0); await advance(500);
   check('the host\'s Confirm of the two lines goes on the record', lastClaim(ann.P.pid).status === 'confirmed', lastClaim(ann.P.pid));
   host.finishGame(); await advance(300);
