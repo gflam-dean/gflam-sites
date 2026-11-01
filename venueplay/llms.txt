@@ -5,7 +5,7 @@
 > venue's existing TV. Players join from their own phone by scanning a QR code:
 > no app to download, no account to create.
 
-VenuePlay is made by Gflam Group (ABN 35 679 383 049) and operates in Australia.
+venueplay is made by Gflam Group Pty Ltd (ABN 35 679 383 049) and operates in Australia.
 
 ## What it is
 
@@ -47,7 +47,6 @@ contract and no setup fee.
 - Contact: https://venueplay.com.au/#contact
 - Support (venues): support@venueplay.com.au; billing: accounts@venueplay.com.au; sales: sales@venueplay.com.au. The support phone is on the help page.
 - Help for venues and players: https://venueplay.com.au/help
-- Help: https://venueplay.com.au/help
 - Terms: https://venueplay.com.au/terms
 - Privacy: https://venueplay.com.au/privacy
 
