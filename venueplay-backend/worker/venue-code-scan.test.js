@@ -16,7 +16,7 @@ var sbGetAll=function(){ scans++; return Promise.resolve(DB); };
 var enc=encodeURIComponent;
 var sbGet=function(e,t,q){ points++; var m=/join_code=eq\.([A-Z0-9]+)/.exec(q);
   return Promise.resolve(DB.filter(function(r){return r.join_code===(m&&m[1]);})); };
-eval(lift('fnvVenueCode')+lift('refreshVenueCodes')+lift('venueByCode'));
+eval(lift('fnvVenueCode')+lift('refreshVenueCodes')+lift('venueByCode')+lift('venueByCodeNotIssued'));
 venueByCode({}, '3A7TES').then(function(h){
   print('  lookup returned: ' + (h||'nothing'));
   print('  full table scans (sbGetAll): ' + scans + (scans===0?'   <- the 11-second path is gone':'   <- STILL SCANNING'));
