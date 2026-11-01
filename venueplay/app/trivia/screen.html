@@ -953,7 +953,8 @@
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
       });
-      t = 900;
+      /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
+      t = 4200;
       Q.forEach(function(q, i){
         at(t, function(){
           m({ t:"question", qseq:i+1, qi:i+1, qtotal:Q.length, text:q.text,

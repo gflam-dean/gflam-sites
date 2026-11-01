@@ -1019,7 +1019,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
            same note for the same reason. */
         m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"$50 bar tab", played:[] });
       });
-      var t=1200, played=[];
+      /* The first song waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first song makes it give way, so at 1.2 s the sales-page demo cut it off. */
+      var t=4200, played=[];
       SONGS.forEach(function(sg, i){
         at(t, function(){
           /* played is a list of TITLES, not song objects: renderBoard paints each entry straight

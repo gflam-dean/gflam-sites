@@ -21,7 +21,8 @@ PLAIN (no switch in its address) unless it is testing the off switch. On the rig
      Names on the real phone page: none (plain words), a long one (cut with an ellipsis, fits the screen),
      a team name, and one made of HTML (shown as text, never made into elements). A draw says GOOD LUCK.
   6. The other games' real screens and phones, in their own demo scripts: trivia and musical bingo play
-     the show on "started" and give way to the first question or song. The raffle and members draw
+     the show on "started"; their sales-page demos (and the bingo TV's) let it play in full, then the first
+     question, song or ball comes in. The raffle and members draw
      screens play "IT'S RAFFLE TIME" / "MEMBERS DRAW TIME" once, before the first draw, and give way to it.
      A trivia screen and a trivia phone with ?sting=0 never play it.
 
@@ -194,15 +195,36 @@ def other_games():
     print('\n6. The other games: their real screens and phones, in their own demo scripts')
     r = RIG.Rig()
     try:
+        # the bingo TV's own sales-page demo (/tv?demo=1): its first ball waits for the show (2 Nov 2026)
+        _, b1 = r.open('/tv?demo=1', width=1280, height=720)
+        ok('bingo demo TV: "started" plays the show', r.until(b1, 'window.VPSting && VPSting.stats().plays===1', 15) is True, r.ask(b1, STATS))
+        ok('bingo demo TV: the show plays in full, never cut short by the first ball',
+           r.until(b1, 'VPSting.stats().last==="done"', 8) is True and r.ask(b1, 'VPSting.stats().cutShort===0') is True, r.ask(b1, STATS))
+        ok('bingo demo TV: then the first ball lands, and the show does not play again',
+           r.until(b1, '/1 of 90/.test((document.getElementById("tvBallCount")||{}).textContent||"")', 8) is True and r.ask(b1, 'VPSting.stats().plays===1') is True,
+           [balls_on_tv(r, b1), r.ask(b1, STATS)])
+        ARRIVED = {'question': '/Olympics/.test((document.getElementById("tvQText")||{}).textContent||"")',
+                   'song': '((document.getElementById("tvBoard")||{}).children||[]).length>0'}
         for path, words, first in (('/app/trivia/screen?demo=1', 'TRIVIA', 'question'), ('/app/musical/screen?demo=1', 'MUSICAL BINGO', 'song')):
             _, s1 = r.open(path, width=1280, height=720)
             ok(words + ' TV: "started" plays the show', r.until(s1, 'window.VPSting && VPSting.stats().plays===1', 15) is True, r.ask(s1, STATS))
-            ok(words + ' TV: the first ' + first + ' makes it give way, and it does not play again',
-               r.until(s1, 'VPSting.stats().last==="content"', 8) is True and r.ask(s1, '!document.getElementById("vpSting") && VPSting.stats().plays===1') is True, r.ask(s1, STATS))
+            # the sales-page demo waits for the show (2 Nov 2026): it plays to the end, then the first content comes
+            ok(words + ' demo TV: the show plays in full, never cut short, and is gone before the first ' + first,
+               r.until(s1, 'VPSting.stats().last==="done"', 8) is True and r.ask(s1, '!document.getElementById("vpSting") && VPSting.stats().plays===1 && VPSting.stats().cutShort===0') is True, r.ask(s1, STATS))
+            ok(words + ' demo TV: the first ' + first + ' then comes in, and the show does not play again',
+               r.until(s1, ARRIVED[first], 8) is True and r.ask(s1, 'VPSting.stats().plays===1') is True, r.ask(s1, STATS))
+            # the demo no longer sends content mid-show, so the give-way is asked for directly, on this real page:
+            # a new "started", then the first %s while the show is still up (a quick host, a phone that lags)
+            FIRSTS = {'question': '{question:1, ta_board:1}', 'song': '{played:1}'}
+            r.ask(s1, 'VPSting.forGame({t:"started"}, {l1:"LET\u2019S PLAY", l2:"X"}, %s); true' % FIRSTS[first])
+            ok(words + ' TV: a new "started" plays the show again', r.ask(s1, 'VPSting.playing() && VPSting.stats().plays===2') is True, r.ask(s1, STATS))
+            r.ask(s1, 'VPSting.forGame({t:%s}, {}, %s); true' % (json.dumps('question' if first == 'question' else 'played'), FIRSTS[first]))
+            ok(words + ' TV: the first ' + first + ' arriving mid-show makes it give way at once',
+               r.ask(s1, '!VPSting.playing() && VPSting.stats().last==="content" && !document.getElementById("vpSting")') is True, r.ask(s1, STATS))
         for path, words in (('/app/trivia/play?demo=1', ['LET\u2019S PLAY, DRE!', 'TRIVIA']), ('/app/musical/play?demo=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
             _, p1 = r.open(path, width=390, height=844)
             ok(words[1] + ' phone: the show with the player\'s name', r.until(p1, 'window.VPSting && VPSting.playing()', 15) is True and r.ask(p1, 'VPSting.shown()') == words, r.ask(p1, 'VPSting.shown()'))
-            ok(words[1] + ' phone: gives way to the first question or song', r.until(p1, '!VPSting.playing() && VPSting.stats().plays===1', 8) is True, r.ask(p1, STATS))
+            ok(words[1] + ' phone: done before the first question or song', r.until(p1, '!VPSting.playing() && VPSting.stats().plays===1', 8) is True, r.ask(p1, STATS))
         # the off switch on a game screen and a phone: the same demo scripts, which do send "started"
         for path, what in (('/app/trivia/screen?demo=1&sting=0', 'trivia TV'), ('/app/trivia/play?demo=1&sting=0', 'trivia phone')):
             _, o1 = r.open(path, width=1280 if 'screen' in path else 390, height=720 if 'screen' in path else 844)

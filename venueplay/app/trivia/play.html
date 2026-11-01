@@ -1167,12 +1167,13 @@
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
       _dt=[]; P.total=0; P.rank=0; P.ended=false;
       fire({ t:"started" });
-      /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 900ms and
-         then every 13200ms, reveals at +6200, and runs a 56600ms lap. This used to run its own
+      /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
+         then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own
          clock and a 50000ms lap, so the phone answered questions the wall had not asked yet.
          Dean, 22 Sep 2026: "the tv and phone seem to be unsynced". The numbers below are the
          wall's; change both. */
-      var T0=900, GAP=13200, REV=6200;
+      // T0 was 900: the first question waits for the start-of-game show, as on the wall (screen.html t = 4200, 2 Nov 2026)
+      var T0=4200, GAP=13200, REV=6200;
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
       d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], demoPts:130 }); });

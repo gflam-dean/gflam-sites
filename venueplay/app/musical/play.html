@@ -1079,7 +1079,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
       fire({ t:"started", pattern:"one", prize:"$50 bar tab", played:[] });
       P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
-      var t=1200, played=[], ids=[];
+      var t=4200, played=[], ids=[];   // was 1200: the first song waits for the start-of-game show, as on the wall (screen.html, 2 Nov 2026)
       ORDER.forEach(function(title, i){
         d(t, function(){ played.push(title); ids.push(IDS[title]); fire({ t:"played", title:title, played:played.slice(), played_ids:ids.slice(), reveal:false }); });
         d(t+3600, function(){ tapSong(title); });

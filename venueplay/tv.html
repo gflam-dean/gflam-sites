@@ -2525,6 +2525,11 @@
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
+      /* THE FIRST BALL WAITS FOR THE START-OF-GAME SHOW (2 Nov 2026, Dean: the show is on for every venue).
+         "started" lands at 1.2 s and the show runs about 4 s (/app/vp-sting.js), so a first ball at
+         2.6 s cut it off after 1.4 s on every lap of the sales-page demo. 5.4 s lets it play in full,
+         as the real console's hold does (index.html STING_HOLD_SECONDS). */
+      var FIRST=5400;
       var called=[];
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[];
@@ -2542,11 +2547,11 @@
       // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
       at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
       BALLS.forEach(function(n,i){
-        at(2600 + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
+        at(FIRST + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
       });
-      at(2600 + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4"}); });
-      at(2600 + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", prize:"$50 bar tab"}); });
-      at(2600 + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
+      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4"}); });
+      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", prize:"$50 bar tab"}); });
+      at(FIRST + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
 
       /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
          venue and no session behind it, so a prospect who scans the QR would be told
@@ -2565,7 +2570,7 @@
         timers.forEach(clearTimeout); timers=[];
         steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
         // Loop for as long as the page is open. A sales page is left sitting on a desk.
-        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
+        timers.push(setTimeout(run, FIRST + BALLS.length*2100 + 14000));
       }
       run();
     })();
