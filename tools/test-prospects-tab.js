@@ -295,6 +295,50 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('a list the Worker could not give says why', /Run migration 125/.test(T.listHtml({ error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.' })));
   check('no em or en dash in anything the pane says', !/[\u2014\u2013]/.test(PANE));
 
+  /* VIEW AS FROM A PROSPECT CARD (Dean, 1 Nov 2026: "until they actually add a credit card number, we can't login to view
+     them as themselves"). The card's button, pressed through the pane's own click handler, runs hq.html's own viewAs. */
+  var HQV = readFile('venueplay/app/hq.html');
+  var vaCalls = { venue: [], audit: [], store: {} };
+  var vaWin = { location: { href: 'hq.html' } };
+  var fakeVPva = { setCurrentVenue: function (id) { vaCalls.venue.push(id); return Promise.resolve({ currentVenueId: id }); } };
+  var vaStore = { setItem: function (k, v) { vaCalls.store[k] = v; }, getItem: function (k) { return vaCalls.store[k] || null; }, removeItem: function (k) { delete vaCalls.store[k]; } };
+  var vaVenues = [{ id: U(1), name: 'Sam\'s Bar & Grill' }, { id: U(2), name: 'Quiet Arms' }];
+  (new Function('window', 'VP', 'localStorage', 'auditBestEffort', 'venueName', 'document',
+    lift(HQV, 'viewAsSay') + '\n' + lift(HQV, 'viewAs') + '\n' +
+    /* the export line exactly as hq.html has it, or nothing: a page that stops sharing viewAs leaves the card dead */
+    ((/\n\s*window\.hqViewAs=viewAs;/.exec(HQV) || [''])[0])))(
+    vaWin, fakeVPva, vaStore, function (a, t, d) { vaCalls.audit.push({ action: a, target: t, detail: d }); },
+    function (id) { for (var i = 0; i < vaVenues.length; i++) if (vaVenues[i].id === id) return vaVenues[i].name; return '(unknown venue)'; },
+    { createElement: function () { return { style: {} }; } });
+  W.hqViewAs = vaWin.hqViewAs;
+  check('hq.html shares its own viewAs (the Venues row\'s) as window.hqViewAs', typeof vaWin.hqViewAs === 'function' && /function viewAs\(id, btn\)/.test(String(vaWin.hqViewAs)), typeof vaWin.hqViewAs);
+  var vaRe = function (id) { return new RegExp('<button type="button" class="mini" data-pr-viewas="' + id + '">View as</button>'); };
+  var sts = ['not_signed_in', 'free_month', 'paused', 'card_added', 'cancelled'];
+  var vaAll = sts.map(function (st) { return T.cardHtml(Object.assign({}, row2, { status: st, cancelled_at: st === 'cancelled' ? '2026-10-31T02:00:00Z' : null })); });
+  check('every prospect card has View as for its own venue: not signed in, free month, paused, card added, and cancelled too',
+    vaAll.every(function (h) { return vaRe(U(2)).test(h); }) && vaRe(U(1)).test(h1) && vaRe(U(3)).test(h3), vaAll.filter(function (h) { return !vaRe(U(2)).test(h); })[0]);
+  check('a card with no venue row to view has no View as', !/data-pr-viewas/.test(T.cardHtml(Object.assign({}, row2, { venue_id: '' }))));
+  function fakeBtn(html, attr) {
+    var m = new RegExp('<button([^>]*' + attr + '="[^"]*"[^>]*)>([^<]*)</button>').exec(html); if (!m) return null;
+    var at = {}; m[1].replace(/([\w-]+)="([^"]*)"/g, function (_, k, v) { at[k] = v.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&'); });
+    var b = { textContent: m[2], disabled: false, parentNode: null, hasAttribute: function (k) { return k in at; }, getAttribute: function (k) { return k in at ? at[k] : null; } };
+    b.closest = function () { return b; };
+    return b;
+  }
+  var vb = fakeBtn(T.cardHtml(Object.assign({}, row1, { status: 'not_signed_in' })), 'data-pr-viewas');
+  T.onClick({ target: vb });
+  check('pressing it switches HQ to THAT venue (VP.setCurrentVenue with its id) and says Opening while it loads',
+    vaCalls.venue.length === 1 && vaCalls.venue[0] === U(1) && vb.disabled === true && /Opening/.test(vb.textContent), [vaCalls.venue, vb.textContent]);
+  for (var vq = 0; vq < 6; vq++) await Promise.resolve();
+  var imp = JSON.parse(vaCalls.store.vpImpersonate || 'null');
+  check('then it is the Venues tab\'s View as: the impersonation flag names that venue, the audit row is view_as on it, and it opens their own pages',
+    imp && imp.id === U(1) && imp.name === 'Sam\'s Bar & Grill' && vaCalls.audit.length === 1 && vaCalls.audit[0].action === 'view_as' &&
+    vaCalls.audit[0].target === 'venue:' + U(1) && vaWin.location.href === 'index.html', [imp, vaCalls.audit, vaWin.location.href]);
+  var vb2 = fakeBtn(T.cardHtml(Object.assign({}, row2, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' })), 'data-pr-viewas');
+  T.onClick({ target: vb2 });
+  check('a cancelled prospect\'s View as opens theirs the same way', vaCalls.venue[1] === U(2), vaCalls.venue);
+  check('the pane has no View as of its own (no second switch, no second impersonation flag)', !/setCurrentVenue|vpImpersonate/.test(PANE));
+
   var HQ = readFile('venueplay/app/hq.html');
   var S = { vSearch: '', vFilter: 'all', showLeft: false, live: {} };
   var PROSPECTS = { P1: true };
@@ -309,6 +353,21 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('a search still finds a prospect (where did it go is one search away)', passes(pv) === true);
   S.vSearch = ''; delete PROSPECTS.P1;
   check('the moment the Worker stops listing them (they signed up), they are back on the active list', passes(pv) === true);
+  /* THE VENUES FILTER "Prospects" (Dean, 1 Nov 2026): the same rule as HQ > Prospects (VPProspects.isProspect), turned round. */
+  PROSPECTS.P1 = true;
+  var hiddenTest = { id: 'P2', name: 'Test Prospect', slug: 'test-prospect', au_state: 'QLD' }; PROSPECTS.P2 = true;
+  var leftP = { id: 'P3', name: 'Cancelled Prospect Club', slug: 'cancelled-prospect', au_state: 'QLD', status: 'suspended' }; PROSPECTS.P3 = true;
+  var passes2 = mk(S, { VPProspects: VPP }, function (v) { return v.status === 'suspended'; }, no, no, function (v) { return v.id === 'P2'; }, function (v) { return v.id === 'P2' && !S.showTest; }, function (v) { return !v.au_state; });
+  S.vFilter = 'prospects';
+  check('Venues > Prospects shows a prospect and not a paying venue', passes2(pv) === true && passes2(cv) === false, [passes2(pv), passes2(cv)]);
+  check('it shows a cancelled prospect too (as HQ > Prospects does), and hides a test one unless tests are shown', passes2(leftP) === true && passes2(hiddenTest) === false, [passes2(leftP), passes2(hiddenTest)]);
+  S.vSearch = 'cancelled';
+  check('the search narrows it', passes2(leftP) === true && passes2(pv) === false && passes2(cv) === false);
+  S.vSearch = ''; delete PROSPECTS.P1;
+  check('a prospect who signs up leaves the Prospects filter by itself', passes2(pv) === false);
+  S.vFilter = 'all';
+  check('the drop-down offers it: "Prospects", after Needs a state, and the heading says so',
+    /<option value="needsstate">Needs a state<\/option>[\s\S]{0,400}<option value="prospects">Prospects<\/option>\s*<\/select>/.test(HQ) && /prospects:"Prospects"/.test(lift(HQ, 'renderVenues')));
   var stats = lift(HQ, 'renderStats');
   check('the headline Venues count leaves prospects out too', /!hasLeft\(v\) && !hideAsTest\(v\) && !isProspect\(v\)/.test(stats), stats.slice(0, 300));
 
