@@ -149,7 +149,8 @@ if(ROAD==="room"){
     { onState:function(s){ window.__state=s; }, onUnavailable:function(w){ window.__gone=w||"?"; } });
 } else {
   /* exactly what the phone pages hand createClient: nothing before, phoneOptions() after */
-  var opts = (VER==="after" && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : undefined;
+  var opts = (VER==="after" && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : { realtime: {} };
+  window.__rtlog=[]; opts.realtime.logger=function(k,m){ try{ window.__rtlog.push([Date.now(), k, String(m).slice(0,90)]); }catch(e){} };
   var client=supabase.createClient("%(supa)s", "%(anon)s", opts);
   var ch=VPChannel.keep(client, NAME, { config:{ broadcast:{ self:false } } });
   ch.on("broadcast", { event:"msg" }, function(e){ heard(e.payload); });
@@ -219,7 +220,9 @@ def browser_via(proxy_port):
     def P(args, **kw):
         if args and args[0] == VL.CHROME:
             # Loopback (this script's own page server) is never proxied: Chrome's implicit bypass.
-            args = args[:-1] + ['--proxy-server=http://127.0.0.1:%d' % proxy_port] + args[-1:]
+            # --disable-web-security: the game Worker answers CORS only for venueplay.com.au origins, and this
+            # harness is served from 127.0.0.1. A throwaway profile, for this measurement only.
+            args = args[:-1] + ['--proxy-server=http://127.0.0.1:%d' % proxy_port, '--disable-web-security'] + args[-1:]
         return orig(args, **kw)
     VL.subprocess.Popen = P
     try:
@@ -300,6 +303,9 @@ def main():
                     gone = ev(B, s, 'window.__gone')
                     results[(scene,) + k] = v
                     print('  time %-9s %-6s back in %s%s' % (k[0], k[1], ('%.2f s' % v) if v is not None else 'NOT within 90 s', ('  (left the room: %s)' % gone) if gone else ''))
+                    if k[0] == 'supabase':
+                        log = ev(B, s, '(window.__rtlog||[]).filter(function(x){return x[0]>window.__back-3000;}).slice(0,25).map(function(x){return ((x[0]-window.__back)/1000).toFixed(2)+" "+x[1]+" "+x[2];})') or []
+                        for line in log: print('        ' + line)
                 for road in ('room', 'supabase'):
                     v = got.get((road, 'after'))
                     ok('%s, %s: this checkout hears the game again within %.1f s of the signal (target %.0f s)' % (road, scene, PASS_S, TARGET_S),

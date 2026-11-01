@@ -19,7 +19,9 @@
 (function (root) {
   "use strict";
   var CSS =
-    ".brand{position:relative}" +
+    /* The brand row hugs the mark (it was the full header width, so the dot hung at the far right, under
+       the menu button), and stays centred. */
+    ".brand{position:relative;width:-webkit-fit-content;width:fit-content;margin-left:auto;margin-right:auto}" +
     /* The dot hangs just right of the mark, out of the flow, so the mark stays centred. */
     ".brand .venue{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin:0 0 0 8px;gap:0}" +
     ".brand .venue .dot{width:8px;height:8px}" +

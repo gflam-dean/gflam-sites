@@ -145,7 +145,8 @@ def main():
             r.close_tab(tid)
 
         print('\nTRIVIA GAME SCREEN, NO LOGO (the screen the TV embeds)')
-        tid, sc = r.open('/app/trivia/screen?venue=' + r.W.info['slug'], width=1920, height=1080)
+        # A game screen opened on its own bounces to /tv; the TV embeds it with this hop mark set.
+        tid, sc = r.open('/app/trivia/screen?venue=' + r.W.info['slug'], before='sessionStorage.setItem("vpTvHop", %s);' % json.dumps(r.W.info['slug']), width=1920, height=1080)
         ok('the trivia screen names the venue top left', r.until(sc, '(function(){var e=document.getElementById("venueNameTag");return !!e&&!e.hidden&&e.textContent.length>0;})()', 30) is True)
         n = tv_name(r, sc)
         ok('top left, inside the screen, the same place tv.html paints it', n and n['vis'] and n['l'] <= 96 and n['t'] <= 65, n)
@@ -187,13 +188,13 @@ def main():
             r.close_tab(tid)
 
         print('\nTHE BINGO TV DEMO (/tv?demo=1)')
-        QR = r'''(function(){ window.__qr=[]; var v; Object.defineProperty(window,"VPQR",{configurable:true,get:function(){return v;},set:function(x){ v=x; if(x&&x.draw){ var d=x.draw; x.draw=function(el,url){ window.__qr.push(String(url)); return d.apply(this,arguments); }; } }}); })();'''
+        QR = r'''(function(){ window.__qr=[]; var v; Object.defineProperty(window,"VPQR",{configurable:true,get:function(){return v;},set:function(x){ v=x; if(x&&x.draw){ var d=x.draw; x.draw=function(el,url){ if(el && (el.id==="qrBig"||el.id==="qrMini")) window.__qr.push(String(url)); return d.apply(this,arguments); }; } }}); })();'''
         tid, tv = r.open('/tv?demo=1', before=QR, width=1280, height=720)
         ok('the demo lobby is up', r.until(tv, '(function(){var c=document.getElementById("lobbyCode");return !!c&&c.textContent.length===6;})()', 20) is True)
         code = r.ask(tv, 'document.getElementById("lobbyCode").textContent')
         ok('the lobby shows the demo\'s own code, one the code alphabet allows (not a code this browser invented)', code == 'VENUE2', code)
         qrs = r.ask(tv, 'window.__qr') or []
-        ok('every QR it draws opens the demo phone, never a room', len(qrs) > 0 and all(q.endswith('/play?demo=1') for q in qrs), qrs)
+        ok('every QR on the wall (lobby and join corner) opens the demo phone, never a room', len(qrs) > 0 and all(q.endswith('/play?demo=1') for q in qrs), qrs)
         shot(r, tv, 'tv-demo-lobby-1280')
         ok('the demo plays to a winner', r.until(tv, '(function(){var w=document.getElementById("tvWin");return !!w&&!w.classList.contains("hidden")&&w.getBoundingClientRect().height>0;})()', 60) is True)
         time.sleep(0.6)
