@@ -740,7 +740,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 67,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {

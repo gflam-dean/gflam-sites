@@ -3222,6 +3222,10 @@ MUTATIONS = [
     ('test-platform-15-oct.js', 'venueplay/app/vp-analytics.js', '    waiting.push(fn);\n  }', '    try { fn(); } catch (e) {}\n  }', 'the shared gate stops waiting for a person, so both tags count every scanner that opens a link'),
     ('test-platform-15-oct.js', 'venueplay/404.html', '<meta name="robots" content="noindex,nofollow">', '', 'the not-found page can be indexed by search engines'),
     ('test-platform-15-oct.js', 'venueplay/_redirects', '/offer-oct  /nsw  200', '/offer-oct  /nsw-retired  200', 'a link already in inboxes now lands on the not-found page'),
+    # 2 Nov 2026: the signature maker's Mobile is optional, starts empty, and empty means no M line.
+    ('test-platform-15-oct.js', 'venueplay/email/signature.html', '    if(mob) rows+=', '    rows+=', 'the signature maker prints an empty mobile line when nobody typed a mobile'),
+    ('test-platform-15-oct.js', 'venueplay/email/signature.html', '<input id="mb" type="tel" value=""', '<input id="mb" type="tel" value="0400 000 000"', 'the signature maker fills in a mobile number nobody typed'),
+    ('test-platform-15-oct.js', 'venueplay/email/signature.html', '    if(mob) rows+=', '    if(false) rows+=', 'a mobile typed into the signature maker never reaches the signature'),
     ('test-platform-15-oct.js', 'venueplay/sitemap.xml', '<loc>https://venueplay.com.au/</loc>', '<loc>https://www.venueplay.com.au/</loc>', 'the sitemap sends search engines to an address that only redirects'),
     ('test-platform-15-oct.js', 'venueplay/llms.txt', 'https://venueplay.com.au/#offer', 'https://venueplay.com.au/pricing', 'llms.txt points assistants at a pricing page that does not exist'),
     ('test-platform-15-oct.js', 'venueplay/training.html', '<meta name="robots" content="noindex,nofollow">', '', 'the training simulator can turn up in search results (was the Jag check page, gone 19 Oct 2026)'),

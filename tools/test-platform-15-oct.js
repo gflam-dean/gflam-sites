@@ -222,6 +222,42 @@ function bingoFirst(src) {
 });
 ok('control: the scan finds a bingo-first list when there is one', bingoFirst('<p>Bingo, trivia and raffles.</p>').length === 1 && bingoFirst('<p>Musical bingo is not bingo, like trivia.</p>').length === 0);
 ok('see-a-night: the venueplay in the capitals heading stays lowercase', /\.vp-h1 \.accent \{ text-transform: none; \}/.test(SAN.replace(/\/\*[\s\S]*?\*\//g, '')) && /<h1 class="vp-h1">See a night on <span class="accent">venueplay<\/span><\/h1>/.test(SAN));
+/* 12. THE EMAIL SIGNATURE MAKER (/email/signature), 2 Nov 2026: Mobile is an OPTIONAL field. It starts
+   empty, nobody's number is ever filled in, and with it empty the preview and the copied signature have
+   no mobile line at all. The page's own script is RUN against a stub page, typing into the fields. */
+print('\nTHE EMAIL SIGNATURE MAKER: MOBILE IS OPTIONAL AND STARTS EMPTY');
+var SIG = read('venueplay/email/signature.html');
+var mbTag = (/<input id="mb"[^>]*>/.exec(SIG) || [''])[0];
+ok('the Mobile field says it is optional, starts with an empty value and has no number in it, not even as a hint',
+   /<label for="mb">Mobile \(optional\)<\/label>/.test(SIG) && / value=""/.test(mbTag) && !/\d/.test(mbTag) && / autocomplete="off"/.test(mbTag), mbTag);
+function sigPage(values) {
+  var els = {}, CLIP = [];
+  function el(id) { return els[id] || (els[id] = { id: id, value: '', innerHTML: '', textContent: '', className: '', style: {}, on: {},
+    addEventListener: function (t, f) { this.on[t] = f; } }); }
+  ['nm', 'rl', 'em'].forEach(function (id) { var m = new RegExp('<input id="' + id + '" value="([^"]*)"').exec(SIG); el(id).value = m ? m[1] : ''; });
+  var mv = / value="([^"]*)"/.exec(mbTag); el('mb').value = mv ? mv[1] : '';
+  var document = { getElementById: el };
+  var window = { ClipboardItem: function (o) { this.o = o; } };
+  var navigator = { clipboard: { write: function (items) { CLIP.push(items[0].o); return { then: function (f) { f(); } }; } } };
+  var Blob = function (parts) { this.text = parts.join(''); };
+  var Image = function () {}; var setTimeout = function () {};
+  var code = SIG.slice(SIG.lastIndexOf('<script>') + 8, SIG.lastIndexOf('</script>'));
+  (new Function('document', 'window', 'navigator', 'Blob', 'ClipboardItem', 'Image', 'setTimeout', code))(document, window, navigator, Blob, window.ClipboardItem, Image, setTimeout);
+  var startMb = el('mb').value, startPv = el('pv').innerHTML;
+  Object.keys(values || {}).forEach(function (id) { el(id).value = values[id]; el(id).on.input && el(id).on.input(); });
+  el('copy').on.click && el('copy').on.click();
+  return { startMb: startMb, startPv: startPv, pv: el('pv').innerHTML, copied: CLIP.length ? CLIP[0]['text/html'].text : '' };
+}
+var s0 = sigPage();
+var hasM = function (h) { return /tel:/.test(h) || />M<\/span>/.test(h); };
+ok('opened as it is: Mobile is empty and the preview has no mobile line', s0.startMb === '' && s0.startPv.length > 200 && !hasM(s0.startPv), s0.startPv.slice(0, 120));
+ok('...and the copied signature has no mobile line either, while E and W are there',
+   s0.copied.length > 200 && !hasM(s0.copied) && />E<\/span>/.test(s0.copied) && />W<\/span>/.test(s0.copied), s0.copied.slice(0, 120));
+var s1 = sigPage({ mb: '0400 123 456' });
+ok('a mobile typed in shows in the preview and the copy, as M with a tel: link',
+   hasM(s1.pv) && s1.pv.indexOf('tel:0400123456') !== -1 && s1.copied.indexOf('0400 123 456') !== -1, s1.pv.slice(0, 120));
+var s3 = sigPage({ mb: '   ' });
+ok('a mobile that is only spaces counts as empty: no mobile line', !hasM(s3.pv) && !hasM(s3.copied), s3.pv.slice(0, 120));
 
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' platform checks failed');
