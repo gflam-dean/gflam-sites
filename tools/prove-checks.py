@@ -9652,7 +9652,7 @@ MUTATIONS = [
      ' onerror="this.parentNode.classList.remove(\'has-badge\')"', '',
      'if Google\'s badge cannot load, the TV shows a broken image instead of the words version'),
     ('tv-landing-in-chrome.test.py', 'venueplay/tv.html',
-     '  .su-go > a{box-sizing:border-box;width:min(26cqw,400px);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}',
+     '  .su-go > a{box-sizing:border-box;width:min(26cqw,440px);height:clamp(48px,5.6cqw,86px);display:flex;align-items:center;justify-content:center}',
      '  .su-go > a{box-sizing:border-box;display:flex;align-items:center;justify-content:center}',
      'the two buttons on /tv are different sizes again (Dean, 31 Oct 2026: "similar size and position")'),
     ('tv-landing-in-chrome.test.py', 'venueplay/tv.html',
