@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<rect width="512" height="512" fill="#0A0A0B"/>
-<svg x="56" y="56" width="400" height="400" viewBox="0 0 128 128">
-  <defs>
-    <filter id="vgm" x="-70%" y="-70%" width="240%" height="240%">
-      <feGaussianBlur stdDeviation="4.5" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <g filter="url(#vgm)">
-    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="10" stroke-linejoin="round" opacity=".5"/>
-    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FFD9EC" stroke-width="1.7" stroke-linejoin="round"/>
-  </g>
-</svg>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -1000 1000 1000"><rect x="0" y="-1000" width="1000" height="1000" fill="#0A0A0B"/><path fill="#FF1F8E" d="M295.61 -251.58C295.61 -240.21 301.73 -229.71 311.62 -224.10C321.52 -218.50 333.66 -218.64 343.42 -224.49L758.16 -472.91C767.68 -478.61 773.51 -488.90 773.51 -500C773.51 -511.10 767.68 -521.39 758.16 -527.09L343.42 -775.51C333.66 -781.36 321.52 -781.50 311.62 -775.90C301.73 -770.29 295.61 -759.79 295.61 -748.42L295.61 -251.58Z"/></svg>

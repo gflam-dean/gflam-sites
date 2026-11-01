@@ -5,7 +5,9 @@ The pink play triangle beside the word "VenuePlay" was pasted into 38 places acr
 headers and footers, phone pages, host consoles, HQ, leave-behinds, the printed signs). Changing the logo
 meant finding all of them by hand.
 
-The drawing now lives in ONE file, venueplay/brand/vp-mark.svg, as two groups:
+THE F4 LOGO (1 Nov 2026): the headers now carry the whole lowercase wordmark (letters in currentColor, the
+pink triangle in the a), not a triangle beside the word. The drawing lives in ONE file,
+venueplay/brand/vp-mark.svg, as groups (wordmark, wordmark-print, and the triangle on its own):
 
     <g id="mark">        the mark on screens
     <g id="mark-print">  the printed signs (signage.html), a heavier stroke for paper
@@ -39,7 +41,7 @@ import io, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = os.path.join(ROOT, 'venueplay')
 SOURCE = os.path.join(SITE, 'brand', 'vp-mark.svg')
-NAMES = ('mark', 'mark-print')
+NAMES = ('wordmark', 'wordmark-print', 'mark', 'mark-print')   # the F4 logo (1 Nov 2026), and the triangle on its own
 
 COPY = re.compile(r'(<svg\b[^>]*?\bdata-vp-mark="([a-z-]+)"[^>]*>)(.*?)(</svg>)', re.S)
 

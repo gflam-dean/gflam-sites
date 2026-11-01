@@ -4092,8 +4092,8 @@ MUTATIONS = [
      '</body>', '<a href="/a-page-that-does-not-exist">x</a></body>',
      'a link on our own site goes nowhere'),
     ('every copy of the VenuePlay mark matches venueplay/brand/vp-mark.svg', 'venueplay/app/hq.html',
-     'data-vp-mark="mark"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E"',
-     'data-vp-mark="mark"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF0000"',
+     'data-vp-mark="wordmark"><path fill="currentColor" d="',
+     'data-vp-mark="wordmark"><path fill="#FF0000" d="',
      'one copy of the VenuePlay mark is redrawn by hand and no longer matches the brand file'),
 
     # ---- the pasted Workers ----
