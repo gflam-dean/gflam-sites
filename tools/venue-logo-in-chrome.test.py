@@ -314,6 +314,9 @@ MARK = r'''(function(W){
   return JSON.stringify({size:parseFloat(s.fontSize), color:s.color, weight:s.fontWeight, opacity:op, shadow:s.textShadow,
     z:parseInt(cs.zIndex,10)||0, dimZ: br ? (parseInt(getComputedStyle(br).zIndex,10)||0) : null,
     svg:cor.querySelector("svg").getBoundingClientRect().width, logo:(document.getElementById("venueLogo")||{}).offsetHeight||0,
+    sting: cor.classList.contains("vp-sting-mark"),
+    nm: (function(n){ if(!n) return null; var r=n.getBoundingClientRect(), o=1, e=n; while(e && e.nodeType===1){ o*=parseFloat(getComputedStyle(e).opacity); e=e.parentElement; }
+      return {w:r.width, h:r.height, op:o, shown:getComputedStyle(n).display!=="none"}; })(cor.querySelector(".vp-newmark")),
     wall: tv ? tv.clientWidth : innerWidth});
 })(%d)'''
 
@@ -337,6 +340,16 @@ def mark_check(label, path, w, h, has_dim):
         tag = '%s VenuePlay mark at %d' % (label, w)
         if not m:
             ok(tag + ': is on the wall', False, 'no settled reading at %d wide (viewport %s)' % (w, ask(sid, 'innerWidth'))); return
+        if m.get('sting'):
+            # The start-of-game show has played (on by default from 2 Nov 2026): it hides the old mark and
+            # lands the NEW wordmark in the corner. Judge what the room actually sees, the new mark.
+            nm = m.get('nm') or {}
+            ok(tag + ': after the show, the new wordmark is in the corner, shown at full opacity', bool(nm) and nm.get('shown') and nm.get('op', 0) >= 0.99, nm)
+            ok(tag + ': and a legible size for a TV, 100px wide or more at 1920', bool(nm) and nm.get('w', 0) * 1920.0 / max(1, m['wall']) >= 100, (nm, m['wall']))
+            ok(tag + ': and still secondary: smaller than the venue logo', not m['logo'] or (nm.get('h', 0) < m['logo']), (nm, m['logo']))
+            if has_dim:
+                ok(tag + ': above the bingo call\'s dimmer, not behind it', m['dimZ'] is not None and m['z'] > m['dimZ'], (m['z'], m['dimZ']))
+            return
         ok(tag + ': full opacity, white, bold (not dull)', m['opacity'] >= 0.99 and m['color'] in ('rgb(255, 255, 255)',) and int(m['weight']) >= 700, m)
         ok(tag + ': a legible size for a TV, 24px or more at 1920', m['size'] >= 24 and m['svg'] >= 20, m)
         ok(tag + ': with a dark halo so it reads on any slide', 'rgba(0, 0, 0' in (m['shadow'] or ''), m['shadow'])
