@@ -258,8 +258,8 @@ function bingoTablet() {
               allowEarlyChk: new E(), allowEarlyLive: new E(), paidSel: new Sel(['', 'card', 'sheet']) };
   var sc = { G: { status: 'setup', allowEarly: false }, $: function (id) { return els[id] || null; }, NEW_PAT: '__newpat',
     __ctx: { venue: { id: VENUE } }, vpHostToken: getToken, rememberPat: function () {}, syncPatEdit: function () {}, renderConsole: function () {},
-    VP: vpWith({}) };
-  tablet('bingo', sc, ['clampCards', 'bingoPrefs', 'applyBingoPrefs'], '_bingoPrefs', ['queueBingoPrefs', 'startBingoPrefs']);
+    VP: vpWith({}), BPRIZES: {} };
+  tablet('bingo', sc, ['clampCards', 'prizeFor', 'notePrize', 'prizeFollows', 'bingoPrefs', 'applyBingoPrefs'], '_bingoPrefs', ['queueBingoPrefs', 'startBingoPrefs']);
   sc._bingoPrefsFor = ''; sc.els = els; return sc;
 }
 section('3. bingo: every setting round-trips through /host/game-prefs, as a Host login');
@@ -293,7 +293,31 @@ ok('a pattern of their own that has since been deleted falls back to One line', 
 var wired = [], wl = lineWith(PAGES.bingo, '["callerChk","patternSel","cardsSel","allowEarlyChk","allowEarlyLive"].forEach');
 runLifted('(function(){ ' + wl + '\n})', { $: function (id) { return { addEventListener: function (ev, f) { wired.push(id + ':' + ev + ':' + (f === 'Q')); } }; }, queueBingoPrefs: 'Q' })();
 ok('the page saves on a change to real balls, pattern, tickets each player and both early-call ticks', wired.join() === 'callerChk:change:true,patternSel:change:true,cardsSel:change:true,allowEarlyChk:change:true,allowEarlyLive:change:true', wired);
-ok('and as the prize is typed', /\$\("prizeInput"\)\.addEventListener\("input", queueBingoPrefs\);/.test(PAGES.bingo));
+ok('and as the prize is typed, remembered against the pattern it is typed for', /\$\("prizeInput"\)\.addEventListener\("input", function\(\)\{ var pi=\$\("prizeInput"\); pi\._auto=null; notePrize\(\$\("patternSel"\)\.value, pi\.value\); queueBingoPrefs\(\); \}\);/.test(PAGES.bingo));
+
+section('3b. bingo: a prize for EACH pattern, saved for the venue (Dean, 1 Nov 2026: "prizes don\'t seem to be saving per venue")');
+resetDb({}); POSTS = []; ROUTE = 'up';
+var p1 = bingoTablet(); p1.startBingoPrefs(); flush();
+function typePrize(t, pat, prize) { t.els.patternSel.value = pat; t.prizeFollows(t.els.patternSel, t.els.prizeInput); t.els.prizeInput.value = prize; t.els.prizeInput._auto = null; t.notePrize(pat, prize); }
+typePrize(p1, 'one', '$20 bar tab'); typePrize(p1, 'two', '$50 meat tray'); typePrize(p1, 'full', '$100 house'); flush();
+var sp = (saved('bingo') || {}).prizes || {};
+ok('a line, two lines and the house each keep their own prize, on the server', sp.one === '$20 bar tab' && sp.two === '$50 meat tray' && sp.full === '$100 house', saved('bingo'));
+var p2 = bingoTablet(); p2.startBingoPrefs(); flush();
+ok('another tablet opens on the last pattern WITH that pattern\'s prize', p2.els.patternSel.value === 'full' && p2.els.prizeInput.value === '$100 house', [p2.els.patternSel.value, p2.els.prizeInput.value]);
+p2.els.patternSel.value = 'one'; p2.prizeFollows(p2.els.patternSel, p2.els.prizeInput);
+ok('choosing One line there puts the line prize in the box', p2.els.prizeInput.value === '$20 bar tab', p2.els.prizeInput.value);
+p2.els.patternSel.value = 'corners'; p2.prizeFollows(p2.els.patternSel, p2.els.prizeInput);
+ok('a pattern with no prize yet leaves the box empty, not the last one\'s prize', p2.els.prizeInput.value === '', p2.els.prizeInput.value);
+p2.els.prizeInput.value = 'Chook raffle ticket'; p2.els.prizeInput._auto = null; p2.els.patternSel.value = 'two'; p2.prizeFollows(p2.els.patternSel, p2.els.prizeInput);
+ok('a prize the host typed is never replaced by changing the pattern', p2.els.prizeInput.value === 'Chook raffle ticket', p2.els.prizeInput.value);
+var nb = POSTS.length; p2.notePrize('two', '$50 meat tray'); p2.notePrize('__newpat', 'x'); p2.notePrize('one', '   '); flush();
+ok('the same prize again, "Custom pattern..." or a blank saves nothing', POSTS.length === nb, POSTS.length - nb);
+var lots = {}; for (var q = 0; q < 20; q++) lots['c:4444444' + (q % 10) + '-4444-4444-8444-44444444444' + (q < 10 ? 'a' : 'b')] = 'Prize ' + q + ' ' + 'z'.repeat(70);
+lots.one = 'x'.repeat(200); lots.bogus = 'no'; lots.two = 7;
+var cl = cleanGamePrefs('bingo', { prizes: lots }).prizes || {};
+ok('the Worker keeps at most 12, only real pattern keys, only text, each cut to 60 characters', Object.keys(cl).length === 12 && !('bogus' in cl) && !('two' in cl) &&
+   Object.keys(cl).every(function (k) { return cl[k].length <= 60; }), cl);
+ok('and a save of every prize stays under the size cap', JSON.stringify(cleanGamePrefs('bingo', { pattern: 'one', prize: 'y'.repeat(120), cards: 6, caller: true, allow_early: true, prizes: lots })).length < 2000);   // GAME_PREFS_MAX_CHARS in the game Worker
 ok('it starts once the venue\'s own patterns are in the list', /Promise\.resolve\(loadCustomPatterns\(\)\)\.then\(startBingoPrefs, startBingoPrefs\)/.test(liftFrom(PAGES.bingo, 'selectGame')));
 
 /* ---------------- trivia ---------------- */

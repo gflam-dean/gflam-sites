@@ -316,6 +316,44 @@ function frontOfDraw(numbers) {
   var DN = lastDraw().id;
   check('then the server\'s new tickets arrive, on the new game\'s draw', DN !== D1 && phones.every(function (ph) { return phoneMatchesRecord(ph, DN); }) && ann.P.cards.map(function (c) { return c.cardNo; }).join(',') !== oldNos);
   SLOW = {};
+
+  /* PLAY ON KEEPS EVERY NUMBER (Dean, 1 Nov 2026, Test Alpha: "when you play on the first numbers don't seem to
+     be recognised when the same player wins"). Two of the numbers Ann needs for her SECOND line come out
+     before she wins the first; the host keeps playing for two lines; the rest of that line comes out. The
+     numbers called before the play on must count, on her phone, on the console and on the server. */
+  print('play on: a line, then two lines made with numbers called BEFORE the play on');
+  host.newGame({ pattern: 'one', prize: 'Meat tray' }); await advance(4000);
+  check('CONTROL: a fresh game for One line, every phone dealt by the server', host.G.pattern === 'one' && phones.every(function (ph) { return ph.P.cards.length > 0; }), host.G.pattern);
+  var poTop = nums(ann.P.cards[0].cells[0]), poMid = nums(ann.P.cards[0].cells[1]);
+  frontOfDraw([poMid[0], poMid[1]].concat(poTop, poMid.slice(2)));
+  var poBall0 = host.G.draw.length;
+  await callBalls(host, 7);
+  ann.pressBingo(); await drain(); await advance(800);
+  var poLine = lastClaim(ann.P.pid);
+  check('CONTROL: her line is a win on the server, on seven balls', !!poLine && poLine.verdict === 'win' && poLine.pattern === 'one' && poLine.balls === poBall0 + 7, poLine);
+  host.hostConfirm(0); await advance(500);
+  var setupPrize = host.$('prizeInput').value;
+  host.$('nextPatternSel').value = 'two'; host.$('nextPrizeIn').value = '$50 meat tray'; host.keepPlaying(); await advance(300);
+  check('Keep playing: the phone is told two lines, and still holds every number called', ann.P.pattern === 'two' && poMid.slice(0, 2).every(function (n) { return ann.P.called.indexOf(n) >= 0; }) && ann.P.called.length === poBall0 + 7,
+        { pattern: ann.P.pattern, called: ann.P.called.length });
+  check('the setup prize box keeps the prize the game opened on, not the stage prize', host.$('prizeInput').value === setupPrize && host.G.prize === '$50 meat tray', [host.$('prizeInput').value, host.G.prize]);
+  await callBalls(host, 1);
+  function missedCount() { var m = /Missed (\d+) called numbers|Missed ([\d, ]+)\./.exec(ann.$('tension').innerHTML || ''); return !m ? 0 : (m[1] ? +m[1] : m[2].split(',').length); }
+  var mBefore = missedCount();
+  // Ann marks one of the numbers called BEFORE the play on, the way a finger does: a tap on its square.
+  var sq = ann.dom.document.createElement('div'); sq.setAttribute('data-card', '0'); sq.setAttribute('data-n', String(poMid[0]));
+  ann.$('cardStack')._on.click[0]({ target: { closest: function (q) { return q === '.cc' ? sq : null; } } });
+  check('CONTROL: two away, the phone names the called numbers she has not marked', mBefore >= 2, ann.$('tension').innerHTML);
+  check('marking one of them takes it off the "Missed" list at once, not at the next ball', ann.P.cards[0].daubs[poMid[0]] === true && missedCount() === mBefore - 1, [mBefore, ann.$('tension').innerHTML]);
+  await callBalls(host, 2);
+  ann.pressBingo(); await drain(); await advance(800);
+  var poTwo = lastClaim(ann.P.pid);
+  check('two lines, using two numbers from before the play on, is a WIN on the server', !!poTwo && poTwo.verdict === 'win' && poTwo.pattern === 'two' && poTwo.balls === poBall0 + 10, poTwo);
+  check('and the host sees it valid, checked by the server, with Confirm live', host.G.claims.length === 1 && host.G.claims[0].valid === true && host.G.claims[0].by === 'server' && !confirmDisabled(host),
+        host.G.claims.map(function (c) { return { v: c.valid, by: c.by }; }));
+  host.hostConfirm(0); await advance(500);
+  check('the host\'s Confirm of the two lines goes on the record', lastClaim(ann.P.pid).status === 'confirmed', lastClaim(ann.P.pid));
+  host.finishGame(); await advance(300);
   host.endGame(); await advance(3000);
 
   print('GAME TWO: a paid night, tickets bought one at a time');
@@ -425,6 +463,14 @@ function frontOfDraw(numbers) {
 
   print('GAME FIVE: phones play the venue\'s own pattern, "Any 3 numbers"');
   DB.vp_bingo_patterns.push({ id: 'cccccccc-0000-4000-8000-000000000003', venue_id: VENUE, name: 'Any 3 & up', rule: { type: 'any', n: 3 }, deleted_at: null, created_at: '2026-10-24T00:00:00Z' });
+  /* SAVED PATTERNS COME BACK (Dean, 1 Nov 2026: he saved two and "they don't seem to save"). The list was asked
+     for once, when Bingo opened; an answer that never came left the picker without them all session. */
+  SLOW['/host/bingo/patterns'] = DEAD;
+  host.loadCustomPatterns(); await drain(); await advance(6500);
+  check('CONTROL: the server does not answer, so the venue\'s patterns are not in the list yet', host.CUSTOM.loaded === false && host.CUSTOM.list.length === 0, host.CUSTOM);
+  SLOW = {};
+  await advance(6000); await drain(); await advance(500);
+  check('A LIST THAT DID NOT ARRIVE IS ASKED FOR AGAIN: seconds later the venue\'s saved pattern is in the list, without a reload', host.CUSTOM.loaded === true && host.CUSTOM.list.length === 1 && host.CUSTOM.list[0].name === 'Any 3 & up', host.CUSTOM);
   host.loadCustomPatterns(); await drain(); await advance(500);
   check('the console loads the venue\'s patterns and may edit them', host.CUSTOM.available === true && host.CUSTOM.canEdit === true && host.CUSTOM.list.length === 1, host.CUSTOM);
   var K3 = 'c:cccccccc-0000-4000-8000-000000000003';
