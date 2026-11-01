@@ -334,6 +334,7 @@ export default {
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
       if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresence(request, env, json);
+      if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json);
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
@@ -11843,6 +11844,21 @@ const ROOM_HASH_RE  = /^[0-9a-f]{64}$/;              // sha256 of the phone's pl
 const ROOM_TAKE_MS  = 1500;                          // the host's Reveal never waits longer than this on a room
 const ROOM_ANSWER_TTL_MS = 6 * 60 * 60 * 1000;       // three times the longest trivia night: nothing live is ever swept
 
+/* ONE ROAD PER ROOM, DECIDED HERE (31 Oct 2026, making the room the default).
+   A room and a Supabase channel do not cross: a console in the room and a TV on Supabase is a
+   host talking to nobody, and it looks exactly like a working night. While the room was opt in
+   that was a matter of putting the flag on all three links. As the DEFAULT it can happen on
+   its own: one screen's socket drops for longer than its budget and it goes back to Supabase
+   alone, or a page cached from before the switch is still open. So the fallback is no longer
+   one page's private decision. A page that leaves the room HANDS IT OVER: the room tells
+   every socket in it to go to Supabase too (and closes them with 4503), and for the next six
+   hours answers 503 to anybody who asks, so a phone that joins late, a console that reloads
+   or a TV that comes back all land on the same road as everyone else. Six hours is longer
+   than any night; a console still open after that asks again (vp-room.js).
+   The mark is the room's own, on disk, so it survives the room being evicted. */
+const ROOM_HANDOVER_MS = 6 * 60 * 60 * 1000;
+const ROOM_HANDOVER_CLOSE = 4503;                    // "go to Supabase": the page does not retry the room
+
 function roomJson(obj, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'Content-Type': 'application/json' } });
 }
@@ -11855,11 +11871,59 @@ export class VenueRoom {
        storage listing per message. It is a cache of what storage says, never the record
        itself: after an eviction it is empty and gets counted again from storage. */
     this.counts = new Map();
+    /* Until when this room is handed to Supabase (ms), read from storage once per wake. */
+    this.hoUntil = null;
+    /* A HEARTBEAT THAT DOES NOT WAKE THE ROOM. A socket that is idle for an hour between games
+       can be cut by the venue's router without either end hearing a thing, and the TV would sit
+       there "connected" to nothing when the first ball is called. Supabase has a heartbeat for
+       exactly that reason; this is ours. The page sends "ping" and Cloudflare answers "pong"
+       itself, without waking this object, so it costs nothing in room time. Guarded, because
+       the test rig and an older runtime do not have it; webSocketMessage answers instead. */
+    try {
+      if (typeof WebSocketRequestResponsePair === 'function' && state && typeof state.setWebSocketAutoResponse === 'function') {
+        state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
+      }
+    } catch (e) {}
+  }
+
+  async handedOver() {
+    if (this.hoUntil == null) {
+      let v = 0;
+      try { v = (await this.state.storage.get('ho')) || 0; } catch (e) { v = 0; }
+      this.hoUntil = v;
+    }
+    return this.hoUntil > Date.now();
+  }
+
+  /* EVERYONE GOES TO SUPABASE TOGETHER. Marked (mark=true) when a page handed the room over,
+     so late arrivals follow for the next six hours; also called with the mark when the global
+     switch ROOM_OFF is found on, so a room that keeps its sockets through the switch still
+     sends them all the same way. Every socket hears it in words first, then by close code, so
+     a page that misses one still gets the other. */
+  async handover(mark) {
+    if (mark) {
+      this.hoUntil = Date.now() + ROOM_HANDOVER_MS;
+      try { await this.state.storage.put('ho', this.hoUntil); } catch (e) {}
+    }
+    const all = this.state.getWebSockets();
+    const word = JSON.stringify({ t: 'room_handover' });
+    let n = 0;
+    for (let i = 0; i < all.length; i++) {
+      try { all[i].send(word); } catch (e) {}
+      try { all[i].close(ROOM_HANDOVER_CLOSE, 'handed over'); n += 1; } catch (e) {}
+    }
+    return roomJson({ ok: true, closed: n, until: this.hoUntil || 0 });
   }
 
   async fetch(request) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '');
+    if (path === '/handover' && request.method === 'POST') return await this.handover(true);
+    /* A room that has been handed over takes nobody in and says so in the same 503 words a
+       Worker with no room answers, which is the answer every page already falls back on. */
+    if ((path === '/ws' || path === '/presence') && await this.handedOver()) {
+      return roomJson({ error: 'room handed over', handed_over: true, until: this.hoUntil }, 503);
+    }
     if (path === '/ws') return this.connect(request, url);
     if (path === '/publish' && request.method === 'POST') return this.publish(request);
     if (path === '/presence') return roomJson(this.presence());
@@ -11891,6 +11955,12 @@ export class VenueRoom {
   // Something in the room spoke: hand it to everyone else in the room.
   async webSocketMessage(ws, message) {
     if (typeof message !== 'string') return;                 // binary is not a game message
+    if (message === 'ping') { try { ws.send('pong'); } catch (e) {} return; }   // where the auto-response is not available
+    /* THE GLOBAL SWITCH REACHES A ROOM THAT IS ALREADY OPEN. ROOM_OFF used to stop only NEW
+       sockets, so the screens already in a room stayed there while every page that reloaded,
+       and every phone that joined late, went to Supabase: half a venue on each road. The first
+       message after the switch now sends the whole room across, together. */
+    if (roomOff(this.env)) { await this.handover(true); return; }
     if (message.length > ROOM_MAX_MSG_CHARS) return;
     const a = ws.deserializeAttachment() || { role: 'phone', since: 0, win: 0, n: 0 };
     const win = Math.floor(Date.now() / 1000);
@@ -11915,6 +11985,9 @@ export class VenueRoom {
        about would hand that token to thirty strangers' phones. Belt and braces: no page
        sends one today, and the answer below carries a hash, never the token itself. */
     if (obj.tok || obj.token) return;
+    /* Only the room says "hand over". Relayed from a phone, it would send a whole venue to
+       Supabase on one stranger's say so. */
+    if (obj.t === 'room_handover') return;
     /* A trivia answer is HELD, not relayed. The other phones must never learn what this one
        picked, and the TV's "answered" ticker is a separate cosmetic message the phone sends
        once the answer is in. */
@@ -12060,7 +12133,10 @@ export class VenueRoom {
        page will be talking to the old Worker. Without this flag that phone would post its
        answer into a room that only knows how to relay, nothing would write it, and the
        punter would lose the question. It is a boolean, never a count of anything. */
-    const out = { total: 0, answers: true };
+    /* handover: true says this room hands a venue over as a whole (above). A page uses the room
+       BY DEFAULT only when it says so, so a new page against an old Worker stays on Supabase,
+       which is where the whole venue is. pong: true, the heartbeat is answered. */
+    const out = { total: 0, answers: true, handover: true, pong: true };
     for (let i = 0; i < ROOM_ROLES.length; i++) {
       const n = this.state.getWebSockets(ROOM_ROLES[i]).length;
       out[ROOM_ROLES[i]] = n;
@@ -12102,6 +12178,25 @@ function roomOff(env) {
   const v = String(env.ROOM_OFF == null ? '' : env.ROOM_OFF).trim().toLowerCase();
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
+/* POST /room/handover?room=vp-XXXXXX : a page has gone back to Supabase, so the whole room does.
+   No sign in, on purpose. The page that calls it may be a TV, which has no key, and the worst
+   anybody can do with it is put a venue on the road every venue used before 31 Oct 2026 for
+   six hours. It works with ROOM_OFF on as well, so a venue that went across while the switch
+   was on stays across when it is turned off again, instead of late phones finding an empty
+   room. Bingo rooms only: an answers room (vpa-) is per game and is never handed over. */
+async function handleRoomHandover(request, env, json) {
+  if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  if (!ROOM_NAME_RE.test(name) || !/^vp-/.test(name)) return json({ error: 'bad room' }, 400);
+  try {
+    const res = await roomStub(env, name).fetch('https://room/handover', { method: 'POST' });
+    return json(await res.json());
+  } catch (e) {
+    return json({ error: 'the room did not answer' }, 502);
+  }
+}
+
 async function handleRoomSocket(request, env, json) {
   if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
@@ -12120,7 +12215,7 @@ async function handleRoomPresence(request, env, json) {
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
   const res = await roomStub(env, name).fetch('https://room/presence');
-  return json(await res.json());
+  return json(await res.json(), res.status);
 }
 
 // Drop a message into a room from the Worker. Returns how many screens heard it.
@@ -12167,8 +12262,11 @@ function roomRace(p, ms) {
 
 // Close the question in the room and take every answer it holds for it. Null means
 // "no room, or the room did not answer in time", and the caller carries on regardless.
+/* NOT STOPPED BY ROOM_OFF. The switch stops pages using the room; it must not strand the answers
+   a room is already holding. Before 31 Oct 2026 turning the switch on mid-question meant Reveal
+   never asked the room, and every answer it held for that question scored nothing. */
 async function roomAnswersTake(env, gameId, qseq) {
-  if (!env.ROOM || roomOff(env)) return null;
+  if (!env.ROOM) return null;
   const name = roomAnswerName(gameId);
   if (!ROOM_NAME_RE.test(name) || !(qseq >= 1)) return null;
   try {
@@ -12186,7 +12284,7 @@ async function roomAnswersTake(env, gameId, qseq) {
 
 // They are in the database now, so the room may forget them. Never throws.
 async function roomAnswersAck(env, gameId, qseq, hashes) {
-  if (!env.ROOM || roomOff(env) || !hashes || !hashes.length) return 0;
+  if (!env.ROOM || !hashes || !hashes.length) return 0;
   const name = roomAnswerName(gameId);
   if (!ROOM_NAME_RE.test(name)) return 0;
   try {
@@ -12201,3 +12299,4 @@ async function roomAnswersAck(env, gameId, qseq, hashes) {
     return 0;
   }
 }
+

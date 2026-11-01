@@ -401,6 +401,7 @@
   "venueplay-api-FULL.js is whole",
   "venueplay-game.js carries its own fingerprint",
   "venueplay-game.js is whole",
+  "venueplay-room-handover.test.js",
   "venueplay-room.test.js",
   "venueplay-sms-hook.js carries its own fingerprint",
   "venueplay/ holds nothing internal",

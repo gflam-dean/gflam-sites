@@ -20,7 +20,8 @@ var TV = find('venueplay/tv.html');
 var CONSOLE = find('venueplay/app/index.html');
 var PLAY = find('venueplay/play.html');
 var CLIENT = find('venueplay/app/vp-room.js');
-var EXPECT = 41;
+var BILLING = find('venueplay/app/billing.html');
+var EXPECT = 47;
 var ran = 0, bad = 0;
 function ok(n, c, extra) {
   ran++;
@@ -89,7 +90,7 @@ print('== a room that is not there must send the page back to Supabase ==');
 ok('the client treats 503 as not enabled', /r\.status === 503/.test(CLIENT));
 ok('and tells the page so', /onUnavailable/.test(CLIENT));
 [['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
-  ok(p[0] + ' has an onUnavailable that reconnects', /onUnavailable: function\(\)\{ _useRoom=false; _room=null;/.test(p[1]));
+  ok(p[0] + ' has an onUnavailable that reconnects', /onUnavailable: function\([^)]*\)\{ _useRoom=false; _room=null;/.test(p[1]));
 });
 
 print('== nothing is sent into a socket the page does not have ==');
@@ -118,9 +119,15 @@ ok('the phone flush stops instead of dropping what it cannot send',
    /flushQueue\(\)\{ while\(sendQueue\.length && \(ch \|\| _room\)\)[\s\S]{0,200}break;/.test(PLAY));
 ok('the console flush puts back what it cannot send', /sendQueue\.unshift\(p\); break;/.test(CONSOLE));
 
-print('== the TV still says hello, and not through a shared function it cannot use ==');
-ok('the TV greets the room down the socket', /_room\.send\(\{ t:"tv_here"/.test(TV),
-   'tvSend only speaks Supabase and is one of the three kept byte-identical');
+print('== the TV says hello, and every tv_here after it, down the room ==');
+/* 31 Oct 2026. This used to require the TV to greet the room with its own _room.send, because
+   tvSend() only spoke Supabase. So the FIRST hello reached the console and every tv_here after it
+   (the reply to a console arriving, the ten-second "I am here") went nowhere. tvSend is still one
+   function kept byte-identical in five pages, so on the room `ch` IS the room. */
+ok('on the room, the TV\'s ch is the room and tvSend greets through it',
+   /send:function\(m\)\{ if\(_room && m\) _room\.send\(m\.payload\); \}/.test(TV) &&
+   /ch=roomCh; tvSubscribed=true;[\s\S]{0,300}tvSend\(\{ t:"tv_here", hello:true \}\)/.test(TV),
+   'a TV whose tvSend speaks only Supabase answers a console in the room once, then never again');
 
 print('== the host announces itself in the room, or the TV never learns it is there ==');
 ok('the console sends host_here on open', /if\(st==="open"\)\{[\s\S]{0,200}t:"host_here"/.test(CONSOLE));
@@ -145,6 +152,24 @@ ok('the console only opens a Supabase channel when it is not in a room',
    thing inside if(!_room){, which is what this asks. */
 ok('the phone only opens a Supabase channel when it is not in a room',
    /if\(!_room\)\{\s*ch=(?:window\.VPChannel \? VPChannel\.keep\(client, "vp-"\+room, \{ config:\{ broadcast:\{ self:false \} \} \}\)\s*:\s*)?client\.channel/.test(PLAY));
+
+print('== falling back keeps what was waiting, and says which road it is on ==');
+/* 31 Oct 2026. The room client hands back what it was still holding when it gives up
+   (room-fallback.test.js runs that). The page has to take it: a claim a phone sent while its
+   socket was down, a ball the console called. */
+ok('the console puts what the room was holding into its own queue',
+   /onUnavailable: function\(why, pending\)\{[^}]*for\(var pq=0; pending && pq<pending\.length; pq\+\+\) sendQueue\.push\(pending\[pq\]\);/.test(CONSOLE));
+ok('so does the phone',
+   /onUnavailable: function\(why, pending\)\{[^}]*for\(var pq=0; pending && pq<pending\.length; pq\+\+\) sendQueue\.push\(pending\[pq\]\);/.test(PLAY));
+ok('the console records BOTH roads', /setAttribute\("data-vp-transport","supabase"\)/.test(CONSOLE) && /setAttribute\("data-vp-transport","room"\)/.test(CONSOLE),
+   'a console handed back to Supabase still read "room" to anyone checking');
+ok('the phone records BOTH roads', /setAttribute\("data-vp-transport","supabase"\)/.test(PLAY) && /setAttribute\("data-vp-transport","room"\)/.test(PLAY));
+
+print('== Venue settings reaches a TV that is in the room ==');
+ok('billing.html loads vp-room.js', /<script src="\/app\/vp-room\.js"><\/script>/.test(BILLING),
+   'a slide uploaded while the TV is on the room server would not show until the TV next reloads');
+ok('and says screen_refresh into the venue\'s room as well as on Supabase',
+   /VPRoom\.sayOnce\([^;]*"vp-" \+ VP\.venueCode\(slug\), \{ t:"screen_refresh" \}\)/.test(BILLING));
 
 if (ran !== EXPECT) { print('\nONLY ' + ran + ' OF ' + EXPECT + ' CHECKS RAN.'); throw new Error('incomplete'); }
 if (bad) { print('\n' + bad + ' OF ' + EXPECT + ' FAILED'); throw new Error(bad + ' failed'); }

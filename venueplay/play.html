@@ -592,7 +592,7 @@
      road the console takes but the TV does not is a host talking into an empty room. It
      lives in vp-room.js now, so all three pages cannot disagree and the whole product
      changes road by one constant there. */
-  var _useRoom=false, _roomTried=false, _room=null;
+  var _useRoom=false, _roomTried=false, _room=null, _roomName="", _phoneEar=null;
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   function wireOut(obj){
     if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
@@ -653,6 +653,9 @@
   function onChannelStatus(status){
     if(status==="SUBSCRIBED"){
       subscribed=true; flushQueue();
+      /* BOTH ROADS ARE RECORDED. Only the room was, so a phone handed back to Supabase still read
+         "room" to anyone checking, which is the one moment the answer matters. */
+      try{document.documentElement.setAttribute("data-vp-transport","supabase");}catch(e){}
       // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
       if(P.joined){ sendJoin(); setConn("waiting"); }
       else { setConn("ready"); }
@@ -1791,6 +1794,12 @@
        Reconnecting on the screen the phone had moved to. Without the script it is the plain
        channel, as before. */
     if(ch){ try{ ch.unsubscribe(); }catch(e){} ch=null; subscribed=false; }
+    /* THE ROOM IS RE-TRIED TOO, ON THE CODE THE PHONE IS NOW ON. A code hop kept the room of the
+       OLD code open and sent this phone's join into it, and coming back from the paper-ticket
+       notice (which closes the room) went to Supabase for good, alone, while the console stayed
+       in the room. Only a page that has given the room up (_useRoom false) stays off it. */
+    if(_room && _roomName!==room){ try{ _room.close(); }catch(e){} _room=null; }
+    if(!_room && _useRoom) _roomTried=false;
     P.room=room;
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
@@ -1828,10 +1837,28 @@
     if(_useRoom && window.VPRoom && !_roomTried){
       _roomTried=true;
       try{
+        _roomName=room;
         _room=VPRoom.connect(VP_GAME_API, "vp-"+room, "phone", function(payload){
           if(window.VPSign){ VPSign.gate(payload, onMsg); } else { onMsg(payload); }
         }, {
-          onUnavailable: function(){ _useRoom=false; _room=null; connect(room); },
+          /* Whatever was waiting to go out (a join, a claim) goes on the old road instead. */
+          onUnavailable: function(why, pending){ _useRoom=false; _room=null; subscribed=false;
+            for(var pq=0; pending && pq<pending.length; pq++) sendQueue.push(pending[pq]);
+            var ear=_phoneEar; _phoneEar=null;
+            (ear ? ear.release() : Promise.resolve()).then(function(){ connect(room); }, function(){ connect(room); }); },
+          /* AN EMPTY ROOM IS A QUESTION. No console and no TV in the room is normal before the night
+             starts, and it is also exactly what a phone sees when the console and the TV were both
+             opened before the room became the default and are still on Supabase. So for forty
+             seconds (a console there says host_here every thirty) this phone listens on the old
+             road too, and if a bingo console or TV is there it hands the room over and goes to
+             meet them. Only a phone that finds the room empty pays the one extra connection. */
+          onPresence: function(d){
+            if(!d || d.host || d.tv || _phoneEar || !client || !window.VPRoom || !VPRoom.watch) return;
+            var mine=_room;
+            _phoneEar=VPRoom.watch(client, "vp-"+room, { gate: window.VPSign ? function(p, cb){ VPSign.gate(p, cb); } : null,
+              onPeer: function(){ if(_room && _room===mine) _room.handover("peer"); } });
+            setTimeout(function(){ var e=_phoneEar; _phoneEar=null; if(e){ try{ e.release(); }catch(x){} } }, 40000);
+          },
           onState: function(st){
             if(st==="open"){
               subscribed=true; flushQueue();

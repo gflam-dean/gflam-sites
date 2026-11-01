@@ -58,7 +58,7 @@ function tv(opts) {
     'var tvMode = "ads", lastHostAt = Date.now(), lastBingoAt = 0, adBuilt = true;\n' +
     'var gameChannelsDeafSince = 0, anyChannelDeafSince = 0, channelDeafSince = {};\n' +
     (NOTEDEAF || 'function noteDeaf(){}') + '\n' +
-    'var client = null, ch = null, tvSubscribed = false, _rtTries = 0, _useRoom = false, _roomTried = false, _room = null;\n' +
+    'var client = null, ch = null, tvSubscribed = false, _rtTries = 0, _useRoom = false, _roomTried = false, _room = null, _roomClient = false, _ear = null;\n' +
     TVSEND + '\n' + TVSTATUS + '\n' + CONNECT + '\n' +
     'connectRealtime();\n' +
     'var VENUE_SLUG = "the-pub"; function venueCode(s){ return "C-" + s; }\n' +
