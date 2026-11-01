@@ -2413,6 +2413,10 @@ MUTATIONS = [
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'paint(true, null); };', 'paint(true, 0); };', 'a phone that cannot reach the server shows +0 for a right answer'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'restored:(typeof m.endsAt!=="number" || !!m.to)', 'restored:false', 'a phone restored into a question is treated as if it watched it live'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'if(m.fmt!=="trivia") return;', 'if(false) return;', 'a bingo phone answering the rollcall is counted as a trivia team (Bingo Betty)'),
+    # 1 Nov 2026 (queued fault): a phone on last night's final screen stayed on the closed night's token through the next lobby.
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'gsend({ t:"rollcall", session_id:G.sessionId });', 'gsend({ t:"rollcall" });', "Open lobby's rollcall does not say which night, so no phone can re-join it in the lobby"),
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', '        if(nightChanged(m)){ stopCd(); P.q=null;', '        if(false){ stopCd(); P.q=null;', "a phone hears the new lobby's rollcall and stays on the closed night's token and final screen"),
+    ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', '    if(!P.sessionId && !P.token) return false;', '    if(!P.sessionId) return false;', 'a token with no night on record is kept on trust and answers go to a closed session'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/host.html', 'var nm=uniqueTeamName(m.pid, String(m.name||"Player"));', 'var nm=String(m.name||"Player");', 'two teams with one name are two identical chips and rows'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'send({ t:"join", pid:P.pid, name:P.name, fmt:"trivia" })', 'send({ t:"join", pid:P.pid, name:P.name })', 'trivia phones stop counting on the console'),
     ('test-trivia-15-oct.js', 'venueplay/app/trivia/play.html', 'playerPost("/join",{ code:P.room, name:nm, pid:deviceId() })', 'Promise.resolve({})', 'a renamed phone keeps its old name on the leaderboard'),

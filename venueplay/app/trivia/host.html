@@ -414,7 +414,7 @@
   var HEARTBEAT_MS = 30000;
   var _leaving=false;   // set as the page is left, so closing its channel is not reported as a drop
   setInterval(function(){
-    if(G.status && G.status !== "setup") bcast({ t:"host_here", cid:G.consoleId });
+    if(G.status && G.status !== "setup") bcast(G.sessionId ? { t:"host_here", cid:G.consoleId, session_id:G.sessionId } : { t:"host_here", cid:G.consoleId });   // which night: a phone that missed the rollcall re-joins on this (trivia/play.html)
   }, HEARTBEAT_MS);
   var LOST_MSG="Lost the connection to the players' phones. Reconnecting: hold off on the next question for a moment.";
   var gRetryT=null, gTries=0, gLostT=null, gLostShown=false;
@@ -438,7 +438,7 @@
          a reload closes it). */
       if(mine!==gch || _leaving) return;
       if(status==="SUBSCRIBED"){
-        gsub=true; gTries=0; gflush(); gsend({ t:"rollcall" });   // ask connected players to re-announce so the roster rebuilds
+        gsub=true; gTries=0; gflush(); gsend(G.sessionId ? { t:"rollcall", session_id:G.sessionId } : { t:"rollcall" });   // ask connected players to re-announce so the roster rebuilds
         if(gLostT){ clearTimeout(gLostT); gLostT=null; }
         if(gRetryT){ clearTimeout(gRetryT); gRetryT=null; }      // healed by itself: do not tear down a working channel
         /* it came back: take OUR warning down, and only ours. A later, unrelated error (a blocked
@@ -1004,7 +1004,9 @@
       releasePodium();                                         // the last round's winners give way to this lobby
       G.status="lobby";
       startLobbyWatch();
-      gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
+      /* session_id: the lobby is a NEW night on the same code, so a phone still holding the last night's
+         token re-joins this one now, in the lobby, not at "started" (trivia/play.html, 1 Nov 2026). */
+      gsend({ t:"rollcall", session_id:G.sessionId });   // new round: pull the still-connected players back onto the roster
       bcast({ t:"players", count:playerCount() });
     }).catch(function(e){ hostError(e.message); }).then(function(){
       G.busy=false; if(btn){ btn.disabled=false; } renderConsole();
