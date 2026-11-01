@@ -223,7 +223,7 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   await sub({ email: 'Jo@TheBowlo.com.au', venue: '<b>Jo\'s</b> & Bowlo' });
   var e = sent[0] || {}, all = JSON.stringify(e);
   check('on: exactly one email, to the address that signed up', sent.length === 1 && JSON.stringify(e.to) === '["jo@thebowlo.com.au"]', sent.map(function (s) { return s.to; }));
-  check('from hello@ on our own sending domain, replies to hello@venueplay.com.au', e.from === 'VenuePlay <hello@send.venueplay.com.au>' && e.reply_to === 'hello@venueplay.com.au', [e.from, e.reply_to]);
+  check('from hello@ on our own sending domain, replies to hello@venueplay.com.au', e.from === 'venueplay <hello@send.venueplay.com.au>' && e.reply_to === 'hello@venueplay.com.au', [e.from, e.reply_to]);
   var lu = (e.headers || {})['List-Unsubscribe'] || '';
   var tok = await vpUnsubToken(ENV, 'jo@thebowlo.com.au');
   check('List-Unsubscribe is a SIGNED one-click on api.venueplay.com.au, plus the mailto', lu.indexOf('<https://api.venueplay.com.au/unsubscribe?e=jo%40thebowlo.com.au&t=' + tok + '&c=subscriber>') === 0
@@ -233,7 +233,7 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
     headers: { get: function () { return null; } }, text: function () { return Promise.resolve('List-Unsubscribe=One-Click'); } }, ENV); return res; })();
   check('and pressing it really records the opt-out (the route accepts that token)', unsubPost.status === 200 && DB.vp_unsubscribes.some(function (x) { return x.email === 'jo@thebowlo.com.au'; }), unsubPost.status);
   check('the body links unsubscribe on venueplay.com.au and says why they got it', /href="https:\/\/www\.venueplay\.com\.au\/unsubscribe\?e=jo%40thebowlo\.com\.au"/.test(e.html || '')
-    && /signed up for the VenuePlay monthly email/.test(e.html || ''), (e.html || '').slice(-700));
+    && /signed up for the venueplay monthly email/.test(e.html || ''), (e.html || '').slice(-700));
   check('no .dev address anywhere: subject, html, text or headers', !/\.dev\b/i.test(all) && !/workers\.dev/i.test(all));
   check('"VenuePlay, ABN 35 679 383 049", never Gflam', /VenuePlay, ABN 35 679 383 049/.test(e.html || '') && !/gflam/i.test(all));
   check('no em dash, no "call you", and it says nobody will ring them', !/\u2014|&mdash;/.test(all) && !/call you/i.test(all) && /nobody will ring you/i.test(e.html || ''));

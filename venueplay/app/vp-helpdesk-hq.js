@@ -46,9 +46,9 @@
   var CAT_PP = { venue_support: "Host support", patron_support: "Guest support" };
   var CH = { patron_form: "Phone form", venue_form: "Venue form", web_form: "Website form", email: "Email", phone: "Phone call", manual: "Added by hand" };
   var ST = { "new": "New", open: "Needs reply", waiting: "Waiting on them", closed: "Closed" };
-  var BR = { venueplay: "VenuePlay", partyplay: "PartyPlay" };
+  var BR = { venueplay: "venueplay", partyplay: "PartyPlay" };
   var VIEWS = [["needs", "Needs reply", ["new", "open"]], ["waiting", "Waiting on them", ["waiting"]], ["closed", "Closed", ["closed"]], ["all", "All", null]];
-  var AUD = { venue: "VenuePlay venues", player: "VenuePlay players", partyplay: "PartyPlay", any: "Everyone" };
+  var AUD = { venue: "venueplay venues", player: "venueplay players", partyplay: "PartyPlay", any: "Everyone" };
   function catLabel(c, b) { return (b === "partyplay" && CAT_PP[c]) || CAT[c] || c; }
   function hdEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -322,7 +322,7 @@
       /* HELP WORDS */
       '<div id="hdSecWords" class="hidden">' +
       '<div class="panel pad"><div class="filterbar">' +
-        '<select id="hwSet"><option value="venueplay:patron">VenuePlay players</option><option value="venueplay:venue">VenuePlay venues</option>' +
+        '<select id="hwSet"><option value="venueplay:patron">venueplay players</option><option value="venueplay:venue">venueplay venues</option>' +
         '<option value="partyplay:guest">PartyPlay guests</option><option value="partyplay:host">PartyPlay hosts</option></select>' +
         '<button class="btn pink" id="hwGo">Open</button>' +
       '</div><div class="note" style="margin-top:9px">What the Help panel shows, for each brand and who is asking. Changes show on phones straight away. ' +
@@ -647,7 +647,7 @@
       '<div class="hdgrid">' +
       fld("Brand", '<select id="hdcBrand">' + opts(BR) + "</select>") +
       fld("What kind of call", '<select id="hdcCat">' + opts(CAT, "Pick one") + "</select>") +
-      fld("Venue (VenuePlay)", '<select id="hdcVenue"><option value="">None</option>' + vOpts + "</select>") +
+      fld("Venue (venueplay)", '<select id="hdcVenue"><option value="">None</option>' + vOpts + "</select>") +
       fld("Party code (PartyPlay)", '<input type="text" id="hdcCode" maxlength="8" class="mono">') +
       fld("Their name", '<input type="text" id="hdcName">') + fld("Their phone", '<input type="text" id="hdcPhone" inputmode="tel">') +
       fld("Their email", '<input type="email" id="hdcEmail">') +

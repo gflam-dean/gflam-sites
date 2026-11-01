@@ -431,7 +431,7 @@
         var judge = function (m) {
           if (done || heard || !oldRoadPeer(m)) return;
           heard = true;
-          try { console.log("[VenuePlay] heard " + m.t + " on the old road: handing the room over"); } catch (x) {}
+          try { console.log("[venueplay] heard " + m.t + " on the old road: handing the room over"); } catch (x) {}
           if (opts.onPeer) { try { opts.onPeer(m); } catch (x) {} }
         };
         if (opts.gate) { try { opts.gate(p, judge); } catch (x) {} } else { judge(p); }

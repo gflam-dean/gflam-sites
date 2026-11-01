@@ -83,7 +83,7 @@
     });
     return '<div class="rowbetween" style="margin-bottom:12px"><div class="lblk" style="margin:0">Monthly email subscribers</div>'
       + '<span class="sp"></span><button class="btn ghost" id="vpsExport">Export CSV</button> <button class="btn ghost" id="vpsRefresh">Refresh</button></div>'
-      + '<div class="note" style="margin:0 0 12px">People who asked for the one VenuePlay email a month from the website. They get the "What\'s new at VenuePlay" news with the monthly report, nothing else. '
+      + '<div class="note" style="margin:0 0 12px">People who asked for the one venueplay email a month from the website. They get the "What\'s new at venueplay" news with the monthly report, nothing else. '
       + "<b>Not cold leads:</b> never add them to Instantly, and a match is for knowing who they are, not a reason to contact them."
       + (d.emails_on ? "" : " The welcome email is <b>off</b> (SUBSCRIBE_EMAILS), so new sign-ups are kept and sent nothing yet.") + "</div>"
       + '<div class="stats" style="margin-bottom:14px">'

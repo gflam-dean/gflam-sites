@@ -78,7 +78,7 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '29 Oct 2026, 10:29 · c77ac881';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 13:09 · 8a1d3ef9';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
@@ -145,7 +145,7 @@ export default {
 
       // Build the message. We avoid logging the full code anywhere.
       const message =
-        "Your VenuePlay code is " + otp + ". It expires in a few minutes.";
+        "Your venueplay code is " + otp + ". It expires in a few minutes.";
 
       // Both providers accept E.164, so pass Supabase's value through unchanged.
       const to = String(phone).trim();

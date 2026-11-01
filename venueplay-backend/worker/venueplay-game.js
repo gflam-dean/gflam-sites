@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 12:49 · 64b6b3c9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 13:09 · 68d4857e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4662,7 +4662,7 @@ function membersNextJackpot(outcome, jackpotAtDraw, startingCents, incrementCent
  * read here: only balls actually called leave the database. The Queensland OLGR RNG
  * submission (rng-certification) points at this file as the bingo draw record.
  */
-const DRAWS_EXPORT_RETENTION_NOTE = '# VenuePlay draw record. Keep this file for at least 7 years: the venue is the conductor of every draw and keeps the winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14). Times are UTC.';
+const DRAWS_EXPORT_RETENTION_NOTE = '# venueplay draw record. Keep this file for at least 7 years: the venue is the conductor of every draw and keeps the winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14). Times are UTC.';
 const DRAWS_EXPORT_HEADER = ['when_utc', 'game', 'draw_name', 'number', 'winner', 'prize', 'outcome', 'draw_id', 'call_order', 'source'];
 function csvCell(v) {
   const s = (v == null) ? '' : String(v);
@@ -9486,7 +9486,7 @@ async function applyOverageCharge(env, o) {
   let opened = { ok: false, reason: 'not billing now' };
   if (billNow) {
     opened = await openInvoice(env, acct, o.idemKey,
-      'VenuePlay: big night extra players, ' + (venue.name || 'venue') + ' ' + when);
+      'venueplay: big night extra players, ' + (venue.name || 'venue') + ' ' + when);
   }
   if (opened.ok) item.invoice = opened.invoice.id;
   else item.subscription = acct.stripe_subscription_id;
@@ -9901,7 +9901,7 @@ function purchaseRaffleTerms(r, venue) {
     lines.push('6. The prizes, drawn in this order, are: ' + prizes.map(function (p, i) { return (i + 1) + ') ' + prizeWords(p); }).join('; ') + '.');
   }
   lines.push('7. The draw takes place at ' + where + ' on ' + praffleLocalWords(r.draw_at, tz, true) +
-    '. It is drawn by computer on the VenuePlay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
+    '. It is drawn by computer on the venueplay server: every entry has an equal chance, so each entrant\'s chance is in proportion to their entries. ' +
     (prizes.length > 1 ? 'Each entrant can win only one prize.' : 'There is one winner.'));
   lines.push('8. Winners will be contacted by phone and email within 2 business days of the draw, and the winner\'s first name and last initial may be shown in the venue.');
   lines.push('9. If a winner cannot be contacted within 14 days, or is not eligible, the prize is redrawn at the same place at the same time 14 days after the draw.');
@@ -9924,12 +9924,12 @@ async function praffleGate(env, authUserId, venueId, manage) {
   try {
     rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=id,name,slug,timezone,purchase_raffle_on');
   } catch (e) {
-    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. VenuePlay turns it on for you.');
+    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. venueplay turns it on for you.');
   }
   const venue = rows[0];
   if (!venue) throw httpError(404, 'Venue not found');
   if (venue.purchase_raffle_on !== true) {
-    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. VenuePlay turns it on for you.');
+    throw httpError(409, 'The purchase raffle is not switched on for this venue yet. venueplay turns it on for you.');
   }
   const canManage = staff.role === 'owner' || (staff.role === 'manager' && staffCan(staff, 'draws_raffles'));
   if (manage && !canManage) throw httpError(403, 'Only the owner or a manager can do that. Adding entries is open to every staff login.');
@@ -9937,7 +9937,7 @@ async function praffleGate(env, authUserId, venueId, manage) {
 }
 async function praffleStaffName(env, staff) {
   if (!staff) return 'unknown';
-  if (staff.is_admin) return 'VenuePlay HQ';
+  if (staff.is_admin) return 'venueplay HQ';
   try {
     const r = await sbGet(env, 'vp_venue_staff', 'id=eq.' + enc(staff.id) + '&select=display_name&limit=1');
     const n = r[0] && r[0].display_name ? String(r[0].display_name).trim() : '';

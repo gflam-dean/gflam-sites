@@ -1,6 +1,6 @@
 /* SIGN IN WITH THE MOBILE, AND A ONE-OFF LINK THAT ASKS NAME AND MOBILE FIRST (Dean, 29 Oct 2026), RUN.
 
-   "When you go to venueplay.com.au/app it says email address for your VenuePlay login... we don't actually
+   "When you go to venueplay.com.au/app it says email address for your venueplay login... we don't actually
    get the email addresses of the host so it's got to be phone number... when they sign up on boarding they
    get a link that is a one off link that gets them to ask the first question name and phone number...
    Automatic sign in they click it once that's it otherwise we can resend it or maybe they could resend it."
@@ -138,7 +138,7 @@ check('nothing on the screen was ever written as HTML', !anyHtml(A.doc.body));
 
 var B = screen();
 B.$('vpAyName').value = 'Amit'; B.$('vpAyMobile').value = '0400 000 009'; B.$('vpAySend').click(); settle();
-check('a mobile already on another login: says so kindly, naming this venue, with the 07 support line (never a personal mobile), and stays on the form', /already signs in to another VenuePlay venue\. If it's yours, we can put Caz Reitop's Dirty Secrets on the same sign-in/.test(B.$('vpAyMsg').textContent) &&
+check('a mobile already on another login: says so kindly, naming this venue, with the 07 support line (never a personal mobile), and stays on the form', /already signs in to another venueplay venue\. If it's yours, we can put Caz Reitop's Dirty Secrets on the same sign-in/.test(B.$('vpAyMsg').textContent) &&
   /07 5228 3667/.test(B.$('vpAyMsg').textContent) && shown(B.$('vpAyMobile')) && B.done.length === 0, B.$('vpAyMsg').textContent);
 check('and offers the two ways on: "Use a different mobile" and "Carry on for now"', shown(B.$('vpAyOther')) && shown(B.$('vpAyTakenLater')) && B.$('vpAyOther').textContent === 'Use a different mobile');
 B.$('vpAyOther').click(); settle();
@@ -281,7 +281,7 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   check('a used link: { ok:true }, and ONE email, to the LOGIN\'S OWN address (never the address the caller put beside it)', r.status === 200 && JSON.stringify(r.body) === '{"ok":true}' &&
     sent.length === 1 && mail.to && mail.to.length === 1 && mail.to[0] === 'amit@caz.example', [r, sent.map(function (m) { return m.to; })]);
   check('the email is a short "Your sign-in link" with one button, a fresh one-off link for their venue, and no email-code sign-in anywhere',
-    mail.subject === 'Your VenuePlay sign-in link' && /Open your VenuePlay<\/a>/.test(html) && /^[A-Za-z0-9_-]{43}$/.test(fresh) && fresh !== spent &&
+    mail.subject === 'Your venueplay sign-in link' && /Open your venueplay<\/a>/.test(html) && /^[A-Za-z0-9_-]{43}$/.test(fresh) && fresh !== spent &&
     hrefs(html).every(function (h) { return h.indexOf('signin=email') === -1; }) && /Hi Amit,/.test(html) && /for Caz Reitop/.test(html) && /pop in your mobile/i.test(html) && !/[\u2014\u2013]/.test(html), html.slice(0, 300));
   var row = DB.vp_signin_links[DB.vp_signin_links.length - 1];
   check('only its hash is kept, for this login and the venue the old link was for, 14 days, unused', row.token_hash === await vpaSigninTokenHash(fresh) && row.auth_user_id === AMIT && row.venue_id === V1 &&
@@ -378,12 +378,12 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   var BASE = { name: 'The Harbour Tavern', first_name: 'Sam', email: 'sam@harbour.example', postcode: '4217', entity_type: 'for_profit' };
   function prospectWorld() { world(); DB.vp_venues = []; DB.vp_venue_staff = []; DB.vp_prospects = []; DB.venueplay_founding = []; DB.vp_prospect_welcomes = []; DB.auth = []; }
   prospectWorld();
-  var pr = await vpaAutopilotProspect(auto(Object.assign({ sender_name: 'Harry', sender_email: 'Harry@VenuePlay.online' }, BASE)), ENV, J);
+  var pr = await vpaAutopilotProspect(auto(Object.assign({ sender_name: 'Harry', sender_email: 'Harry@venueplay.online' }, BASE)), ENV, J);
   var wm = sent[0] || {}, wtxt = visibleText(wm.html);
   check('the autopilot with sender_name and sender_email: set up, ONE welcome', pr.status === 200 && pr.body.ok === true && sent.length === 1, pr.body);
-  check('it is FROM VenuePlay hello@ and replies go to hello@venueplay.com.au, never Harry\'s cold mailbox', wm.from === 'VenuePlay <hello@send.venueplay.com.au>' && wm.reply_to === 'hello@venueplay.com.au' &&
+  check('it is FROM venueplay hello@ and replies go to hello@venueplay.com.au, never Harry\'s cold mailbox', wm.from === 'venueplay <hello@send.venueplay.com.au>' && wm.reply_to === 'hello@venueplay.com.au' &&
     JSON.stringify(wm).indexOf('harry@venueplay.online') === -1, [wm.from, wm.reply_to]);
-  check('signed "Cheers, Harry", then VenuePlay, then venueplay.com.au', signoffOf(wm.html) === 'Cheers, Harry VenuePlay venueplay.com.au', signoffOf(wm.html));
+  check('signed "Cheers, Harry", then venueplay, then venueplay.com.au', signoffOf(wm.html) === 'Cheers, Harry venueplay venueplay.com.au', signoffOf(wm.html));
   check('no Dean, no Gflam Group line and no phone in the sign-off, and no em dash anywhere', !/Dean|Gflam|\d{4} ?\d{3}/.test(signoffOf(wm.html)) && !/[\u2014\u2013]/.test(wtxt), signoffOf(wm.html));
   check('the only phone number anywhere in it is 07 5228 3667', (wtxt.match(/\b0\d[\d ]{7,11}\d\b/g) || []).every(function (n) { return n.replace(/ /g, '') === '0752283667'; }), wtxt.match(/\b0\d[\d ]{7,11}\d\b/g));
   var aud = DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_set_up'; })[0] || {};
@@ -392,7 +392,7 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
     aud.detail && aud.detail.sender_name === 'Harry' && aud.detail.sender_email === 'harry@venueplay.online' && wrow.detail && wrow.detail.senderName === 'Harry', [aud.detail, wrow.detail]);
   prospectWorld();
   await vpaAutopilotProspect(auto(BASE), ENV, J);
-  check('no sender given: the team sign-off ("Cheers, The VenuePlay team", venueplay.com.au), still from and to hello@', signoffOf((sent[0] || {}).html) === 'Cheers, The VenuePlay team venueplay.com.au' &&
+  check('no sender given: the team sign-off ("Cheers, The venueplay team", venueplay.com.au), still from and to hello@', signoffOf((sent[0] || {}).html) === 'Cheers, The venueplay team venueplay.com.au' &&
     (sent[0] || {}).reply_to === 'hello@venueplay.com.au', signoffOf((sent[0] || {}).html));
   var BAD = [
     [{ sender_name: 'Harry' }, 'a name with no address'],
@@ -418,10 +418,10 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   TPL['welcome-prospect.html'] = OLD_TPL.replace('>{{signoff}}</p>', '>Cheers,<br>Dean<br>VenuePlay</p>');
   var oldHtml = await vpaRenderProspectWelcome(ENV, { email: 'a@b.example', venueName: 'X', senderName: 'Harry', senderEmail: 'harry@venueplay.online', slides: 0, seats: 10 });
   TPL['welcome-prospect.html'] = OLD_TPL;
-  check('a new Worker with the page still on the old template (Worker first, Pages minutes later): the old fixed sign-off is replaced too', signoffOf(oldHtml) === 'Cheers, Harry VenuePlay venueplay.com.au', signoffOf(oldHtml));
+  check('a new Worker with the page still on the old template (Worker first, Pages minutes later): the old fixed sign-off is replaced too', signoffOf(oldHtml) === 'Cheers, Harry venueplay venueplay.com.au', signoffOf(oldHtml));
   world();
   await vpaSendSigninLink(ENV, AMIT, V1, {});
-  check('the sign-in link email also replies to hello@ and is signed by the team, not Dean', (sent[0] || {}).reply_to === 'hello@venueplay.com.au' && /Cheers, The VenuePlay team venueplay\.com\.au/.test(visibleText((sent[0] || {}).html)) &&
+  check('the sign-in link email also replies to hello@ and is signed by the team, not Dean', (sent[0] || {}).reply_to === 'hello@venueplay.com.au' && /Cheers, The venueplay team venueplay\.com\.au/.test(visibleText((sent[0] || {}).html)) &&
     !/Dean/.test(visibleText((sent[0] || {}).html)), (sent[0] || {}).reply_to);
 
   section('3e. Nothing anywhere opens the email-code sign-in first');

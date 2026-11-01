@@ -96,7 +96,7 @@
       FOUND = (r && r.login) || null;
       if (!out) return r;
       if (!r || r.error) { out.innerHTML = '<div class="note">' + esc((r && r.error) || "Could not look that up.") + '</div>'; return r; }
-      if (!FOUND) { out.innerHTML = '<div class="note">No VenuePlay login has that email.</div>'; return r; }
+      if (!FOUND) { out.innerHTML = '<div class="note">No venueplay login has that email.</div>'; return r; }
       var vs = FOUND.venues || [];
       out.innerHTML = rowHtml(FOUND, FOUND.venue_id) + '<div class="note" style="margin:2px 0 0">'
         + (vs.length ? 'Staff at: ' + vs.map(function (v) { return esc(v.name) + (v.role ? ' (' + esc(v.role) + ')' : ''); }).join(', ') : 'Not on any venue.')

@@ -87,7 +87,7 @@ async function call(path, body, headers, method, raw) {
   return { status: res.status, body: parsed || {}, html: typeof res.body === 'string' ? res.body : '', headers: res.headers || {} };
 }
 var AP = { 'X-Autopilot-Key': KEY };
-var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: VenuePlay turns the TV you already have into a games night, so you can have a play.\n\nCheers,\nHarry Finch\nVenuePlay\nvenueplay.com.au\n';
+var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: venueplay turns the TV you already have into a games night, so you can have a play.\n\nCheers,\nHarry Finch\nvenueplay\nvenueplay.com.au\n';
 var REVIEW = { folder: FOLDER, company: 'Test Charlie <Hotel>', class: 'interested', their_words: 'Yes please, send it through. <b>Mick</b>',
   reply: REPLY, mailbox: 'harry@venueplaylive.com.au', reply_to: 'manager@testcharlie.example' };
 function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
@@ -134,7 +134,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   section('3. A GET NEVER WRITES, and says what happens and when');
   WRITES = [];
   var g = await call(pathOf(L.yes), undefined, {}, 'GET');
-  check('Yes page: 200, branded, the venue (escaped), their words (escaped), the reply', g.status === 200 && /VenuePlay prospect review/.test(g.html) &&
+  check('Yes page: 200, branded, the venue (escaped), their words (escaped), the reply', g.status === 200 && /venueplay prospect review/.test(g.html) &&
     g.html.indexOf('Test Charlie &lt;Hotel&gt;') !== -1 && g.html.indexOf('&lt;b&gt;Mick&lt;/b&gt;') !== -1 && g.html.indexOf('Thanks for getting back to me.') !== -1, g.html.slice(0, 300));
   check('Yes page: one big "Yes, send the standard reply" button that POSTs back to the same signed link', /<form method="POST" action="\/autopilot\/review\?f=2026-10-29-test-charlie-hotel&amp;a=yes&amp;r=1&amp;x=\d+&amp;t=[0-9a-f]{32}"/.test(g.html) && />Yes, send the standard reply<\/button>/.test(g.html));
   check('Yes page: says exactly what happens and when (5 minutes, the checks, 30 minutes after theirs, 8am to 5pm Monday to Friday, the email back)',

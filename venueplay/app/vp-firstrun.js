@@ -155,7 +155,7 @@
       return token().then(function (tok) {
         return fetchFn(BILLING_API + path, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok, "X-VP-Venue": String(v.id) }, body: JSON.stringify(body || {}) })
           .then(function (res) { return res.json().catch(function () { return { error: "Something went wrong at our end. Try again in a minute." }; }); });
-      }).catch(function () { return { error: "Could not reach VenuePlay. Check your connection and try again." }; });
+      }).catch(function () { return { error: "Could not reach venueplay. Check your connection and try again." }; });
     }
     function loadMe() {
       if (!client || !client.auth || !client.auth.getUser) return Promise.resolve(me);
@@ -240,7 +240,7 @@
           send.disabled = true; msg.textContent = "";
           return client.auth.updateUser({ phone: ph }).then(function (r) {
             send.disabled = false;
-            if (r && r.error) { msg.textContent = /already|registered|exists/i.test(String(r.error.message || "")) ? "That mobile is already on another VenuePlay login. Use another, or skip this for now." : "We could not text that number just now. Check it and try again."; return false; }
+            if (r && r.error) { msg.textContent = /already|registered|exists/i.test(String(r.error.message || "")) ? "That mobile is already on another venueplay login. Use another, or skip this for now." : "We could not text that number just now. Check it and try again."; return false; }
             pending = ph; codeWrap.style.display = "block"; send.textContent = "Text me another code";
             msg.textContent = "Code sent to " + mobileShow(ph) + ". It can take a minute.";
             return true;
@@ -275,7 +275,7 @@
           "Done. Section 6 of the Terms is accepted for " + (v.name || "your venue") + (v.compliance_accepted_by ? " by " + v.compliance_accepted_by : "") + "."));
         done(); return;
       }
-      body.appendChild(el("p", TEXT, "One tick, once. It confirms your venue runs its own games under the gaming laws that apply to it. VenuePlay supplies the software."));
+      body.appendChild(el("p", TEXT, "One tick, once. It confirms your venue runs its own games under the gaming laws that apply to it. venueplay supplies the software."));
       setNext("Next", false);
       if (VP && VP.termsCard) {
         VP.termsCard(ctx);
@@ -292,7 +292,7 @@
          emails and the Help answer, with the app's store page as its link. */
       var play = el("p", TEXT); play.id = "vpFrPlay";
       play.appendChild(el("span", "", "Got a TV with Google Play? Download the "));
-      var playA = el("a", "color:#FF8AC4;font-weight:700;text-decoration:underline", "VenuePlay TV app");
+      var playA = el("a", "color:#FF8AC4;font-weight:700;text-decoration:underline", "venueplay TV app");
       playA.setAttribute("href", "https://play.google.com/store/apps/details?id=au.com.venueplay.tv");
       playA.setAttribute("target", "_blank"); playA.setAttribute("rel", "noopener");
       play.appendChild(playA);
@@ -318,7 +318,7 @@
       return billing("/account/screen-get", { venue_id: v.id }).then(function (d) {
         var slides = ((d && d.slides) || []).filter(function (s) { return s && /^https:\/\//.test(String(s.image_url || "")); });
         if (!slides.length) {
-          empty.textContent = "Your TV shows the VenuePlay screen";
+          empty.textContent = "Your TV shows the venueplay screen";
           cap.textContent = "No slides yet. Add your own ads any time under Account and they show on the TV straight away.";
           return 0;
         }

@@ -306,7 +306,7 @@ function permit(over) { var p = { number: '', holder: 'venue', npo_name: '', aut
   ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (f) {
     var page = readFile(f);
     var label = (page.match(/<label class="ck"><input type="checkbox" id="vp-consent">[\s\S]*?<\/label>/) || [''])[0];
-    check(f + ': the consent tick carries the compliance sentence, verbatim', label.indexOf('We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.') !== -1, label.slice(0, 200));
+    check(f + ': the consent tick carries the compliance sentence, verbatim', label.indexOf('We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.') !== -1, label.slice(0, 200));
     /* The refusal when the tick is off, scoped to the one statement that reads the tick (live audit,
        16 Oct 2026: it said "agree to the Terms" and nothing about what the tick also confirms). */
     var refusal = (page.match(/if \(consentEl && !consentEl\.checked\) \{ showErr\('([^']*)'\); return; \}/) || [])[1] || '';

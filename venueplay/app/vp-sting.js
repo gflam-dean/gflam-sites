@@ -66,7 +66,7 @@
   function wordSvg(w){   // the solid logo for the corner, same geometry as the kit file
     // inline size: the screens' own ".tv-corner svg" rule squeezes any svg there to the old 24px mark
     var h=w*936/4676;
-    return '<svg class="vp-newmark" xmlns="'+NS+'" viewBox="-1 -729 4676 936" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" style="width:'+w.toFixed(1)+'px;height:'+h.toFixed(1)+'px;max-width:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))" aria-label="VenuePlay">'+
+    return '<svg class="vp-newmark" xmlns="'+NS+'" viewBox="-1 -729 4676 936" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" style="width:'+w.toFixed(1)+'px;height:'+h.toFixed(1)+'px;max-width:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))" aria-label="venueplay">'+
       '<path fill="#fff" d="'+REST+'"/><path fill="#fff" d="'+ANEON+'"/><path fill="#FF1F8E" transform="translate('+CX+' '+CY+')" d="'+off(RO)+'"/></svg>';
   }
   function measureCorner(){

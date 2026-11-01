@@ -76,7 +76,7 @@
       for (var j = i; j < Math.min(i + 2, cards.length); j++) {
         var c = cards[j];
         html += '<div class="card"><div class="head"><div class="brand">Musical bingo' + (o.venue ? ' at ' + esc(o.venue) : '') +
-          ' <b>VenuePlay</b></div><div class="num">Card ' + esc(c.no) + '</div></div>' +
+          ' <b>venueplay</b></div><div class="num">Card ' + esc(c.no) + '</div></div>' +
           '<p class="how">Mark a square when you hear that song. When you have the pattern the host calls, call out and <b>show this card to the host</b>. ' +
           'The host checks it by typing in card number <b>' + esc(c.no) + '</b>.' + (o.playlist ? ' Playlist: ' + esc(o.playlist) + '.' : '') + '</p><div class="grid">';
         for (var k = 0; k < 25; k++) {
@@ -99,7 +99,7 @@
         var from = (r - 1) * rs + 1, to = Math.min(r * rs, qn);
         if (r > 1) html += '<hr class="cut">';
         html += '<div class="strip"><div class="head"><div class="brand">Trivia' + (o.venue ? ' at ' + esc(o.venue) : '') +
-          ' <b>VenuePlay</b></div><div class="num">Team ' + t + ' &middot; Round ' + r + '</div></div>' +
+          ' <b>venueplay</b></div><div class="num">Team ' + t + ' &middot; Round ' + r + '</div></div>' +
           '<p class="team">Team name: <span>&nbsp;</span></p>' +
           '<p class="how">Tick one box for each question. When the TV says <b>Paper teams, hand in your sheets</b>, tear off this round and give it to the host. ' +
           'The answers go up on the TV once the host has every sheet, and your score goes on the leaderboard.</p><table>';

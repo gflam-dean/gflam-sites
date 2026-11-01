@@ -71,7 +71,7 @@
 
   function backoff(tries) { return Math.min(MAX_MS, MIN_MS * Math.pow(2, Math.min(tries, 4))); }
   function isDrop(s) { return s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED"; }
-  function log(msg) { try { root.console && root.console.log("[VenuePlay] " + msg); } catch (e) {} }
+  function log(msg) { try { root.console && root.console.log("[venueplay] " + msg); } catch (e) {} }
 
   /* Rule 7. One listener per event, installed on the first keep(); a page with no document or
      no addEventListener (the test rigs, a worker) simply never pokes. */
@@ -148,7 +148,7 @@
           retryT = setTimeout(function () { retryT = null; if (stopped) return; try { build(); } catch (e) { schedule(); } }, LINGER_MS);
           return;
         }
-        gone = null; throw new Error("VenuePlay: " + name + " was never released by the library");
+        gone = null; throw new Error("venueplay: " + name + " was never released by the library");
       }
       gone = null;
       cur = mine;
@@ -179,7 +179,7 @@
         return kept;
       },
       send: function (msg) {
-        if (!cur) throw new Error("VenuePlay: " + name + " has no channel right now");
+        if (!cur) throw new Error("venueplay: " + name + " has no channel right now");
         return cur.send(msg);
       },
       unsubscribe: function () {

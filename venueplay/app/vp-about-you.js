@@ -113,12 +113,12 @@
       path.setAttribute("d", "M2 3 L24 15 L2 27 Z"); path.setAttribute("fill", "none"); path.setAttribute("stroke", "#FF1F8E"); path.setAttribute("stroke-width", "2.6"); path.setAttribute("stroke-linejoin", "round");
       mark.appendChild(path); logo.appendChild(mark);
     }
-    logo.appendChild(el("span", "font-family:" + HEAD + ";font-weight:800;font-size:22px;color:#FFFFFF", "VenuePlay"));
+    logo.appendChild(el("span", "font-family:" + HEAD + ";font-weight:800;font-size:22px;color:#FFFFFF", "venueplay"));
     box.appendChild(logo);
     var title = el("h1", "margin:0 0 10px;font-family:Anton,sans-serif;font-weight:400;text-transform:uppercase;font-size:32px;line-height:1.05;color:#FFFFFF;text-align:center", "You're in");
     title.id = "vpAyTitle";
     var sub = el("p", "margin:0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted + ";text-align:center",
-      "Welcome to VenuePlay" + (v.name ? " at " + v.name : "") + ". Two quick things, then you're done: your name, and the mobile you'll sign in with from now on.");
+      "Welcome to venueplay" + (v.name ? " at " + v.name : "") + ". Two quick things, then you're done: your name, and the mobile you'll sign in with from now on.");
     sub.id = "vpAySub";
     box.appendChild(title); box.appendChild(sub);
     var card = el("div", "background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:22px 20px");
@@ -173,7 +173,7 @@
              and offers the two ways on: use a different mobile here, or carry on and sort it later. */
           var taken = /already|registered|exists/i.test(m);
           msg.textContent = taken
-            ? "That mobile already signs in to another VenuePlay venue. If it's yours, we can put " + (v.name || "this venue") + " on the same sign-in so you can switch between them: call us on 07 5228 3667 or email support@venueplay.com.au. Or use a different mobile for " + (v.name || "this venue") + "."
+            ? "That mobile already signs in to another venueplay venue. If it's yours, we can put " + (v.name || "this venue") + " on the same sign-in so you can switch between them: call us on 07 5228 3667 or email support@venueplay.com.au. Or use a different mobile for " + (v.name || "this venue") + "."
             : "We couldn't text that number just now. Check it and try again.";
           takenWrap.style.display = taken ? "flex" : "none";
           return false;

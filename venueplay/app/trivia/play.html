@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay Trivia: Play</title>
+<title>venueplay Trivia: Play</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -374,7 +374,7 @@
       '<div style="font-size:14px;color:#9A9AA4;max-width:22em">The venue wifi is being slow. This will keep trying.</div>';
     (document.body||document.documentElement).appendChild(_rc);
     setTimeout(function(){ location.reload(); }, 4000);
-    throw new Error("VenuePlay: Realtime library not loaded yet");
+    throw new Error("venueplay: Realtime library not loaded yet");
   }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];

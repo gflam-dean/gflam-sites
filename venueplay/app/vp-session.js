@@ -307,7 +307,7 @@
         'font-family:-apple-system,Segoe UI,sans-serif';
       d.innerHTML = '<div style="max-width:420px">' +
         '<p style="margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF1F8E;font-weight:800">Cannot start</p>' +
-        '<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25">VenuePlay could not finish loading</h1>' +
+        '<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25">venueplay could not finish loading</h1>' +
         '<p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#9A9AA4">Part of the app is served from the internet and it did not arrive. This is almost always the venue wifi, or a network that blocks it. Your game and your players are fine.</p>' +
         '<button id="vpCdnRetry" style="font:inherit;font-size:15px;font-weight:700;background:#FF1F8E;color:#fff;border:0;border-radius:10px;padding:12px 24px;cursor:pointer">Try again</button>' +
         '<p style="margin:14px 0 0;font-size:12.5px;color:#8A8A94">Still stuck? Use your phone hotspot, or call us on the number in your welcome email.</p>' +
@@ -1088,7 +1088,7 @@
      TERMS_TICK is VPA_COMPLIANCE_TICK in the billing Worker word for word, and TERMS_EFFECTIVE the
      date on terms.html: tools/test-terms-acceptance-card.js holds all three equal. */
   var BILLING_API = "https://api.venueplay.com.au";
-  var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.";
+  var TERMS_TICK = "We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.";
   var TERMS_EFFECTIVE = "28 October 2026";
   function termsMode(ctx) {
     var v = ctx && ctx.venue;
@@ -1159,10 +1159,10 @@
     } else {
       if (block) {
         card.appendChild(termsEl("h2", TITLE, "One tick and your games are ready, " + name));
-        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. Tick it once and every game is ready to start. Your TV keeps showing your ads either way."));
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and venueplay supplies the software. Tick it once and every game is ready to start. Your TV keeps showing your ads either way."));
       } else {
         card.appendChild(termsEl("h2", TITLE, "Please accept the updated Terms for " + name));
-        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and VenuePlay supplies the software. We have no record of " +
+        card.appendChild(termsEl("p", TEXT, "Section 6 of our Terms says who is responsible for the games you run: your venue conducts every game, and venueplay supplies the software. We have no record of " +
           name + " accepting it, so we are asking once. Nothing else changes, and your games run as normal."));
       }
       var rp = termsEl("p", "margin:0 0 16px;font-size:14.5px"); rp.appendChild(read); card.appendChild(rp);
@@ -1202,7 +1202,7 @@
     if (!tick.checked) { msg.textContent = "Tick the box to accept section 6 of the Terms."; return Promise.resolve(false); }
     if (!who) { msg.textContent = "Enter your name, so the record says who accepted it."; return Promise.resolve(false); }
     go.disabled = true; msg.textContent = "";
-    var c; try { c = getClient(); } catch (e) { go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return Promise.resolve(false); }
+    var c; try { c = getClient(); } catch (e) { go.disabled = false; msg.textContent = "Could not reach venueplay. Check your connection and try again."; return Promise.resolve(false); }
     return c.auth.getSession().then(function (r) {
       var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
       return fetch(BILLING_API + "/account/compliance-accept", { method: "POST",
@@ -1231,7 +1231,7 @@
       card.appendChild(done);
       return true;
     }, function () {
-      go.disabled = false; msg.textContent = "Could not reach VenuePlay. Check your connection and try again."; return false;
+      go.disabled = false; msg.textContent = "Could not reach venueplay. Check your connection and try again."; return false;
     });
   }
 

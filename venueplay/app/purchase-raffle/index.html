@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay Purchase Raffle</title>
+<title>venueplay Purchase Raffle</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -163,7 +163,7 @@
 
   <div id="offView" class="hidden" style="max-width:520px;margin:6vh auto 0;text-align:center">
     <div class="h1" style="margin-bottom:10px">Purchase raffle</div>
-    <p class="sub" id="offText">The purchase raffle is not switched on for this venue yet. VenuePlay turns it on for you.</p>
+    <p class="sub" id="offText">The purchase raffle is not switched on for this venue yet. venueplay turns it on for you.</p>
   </div>
 
   <div id="mainView" class="hidden">
@@ -342,7 +342,7 @@
             <button type="button" class="btn ghost" id="downloadRecordBtn">Download the draw record</button>
             <div class="note" id="downloadRecordMsg" style="margin-top:6px">Every draw at this venue, for your records. Keep it for 7 years.</div>
           </div>
-          <p class="note" style="margin-top:14px">The draw runs on the VenuePlay server. Every live entry is one equal ticket, so a person with 12 entries is 12 times as likely as a person with one. Each person can win one prize. If a winner cannot be reached, redraw with the reason; it stays on the record.</p>
+          <p class="note" style="margin-top:14px">The draw runs on the venueplay server. Every live entry is one equal ticket, so a person with 12 entries is 12 times as likely as a person with one. Each person can win one prize. If a winner cannot be reached, redraw with the reason; it stays on the record.</p>
         </div>
       </div>
     </section>
@@ -378,7 +378,7 @@
       var o={ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
       if(ac) o.signal=ac.signal;
       return fetch(VP_GAME_API+path, o).then(function(r){ clearTimeout(to); return r; },
-        function(){ clearTimeout(to); var e=new Error("The VenuePlay server did not answer. Check the venue wifi and try again."); e.status=0; e.body={}; throw e; });
+        function(){ clearTimeout(to); var e=new Error("The venueplay server did not answer. Check the venue wifi and try again."); e.status=0; e.body={}; throw e; });
     }).then(function(r){
       return r.json().catch(function(){ return {}; }).then(function(d){
         if(!r.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(r.status,d&&d.error):(d&&d.error))||("Something went wrong ("+r.status+")")); e.status=r.status; e.body=d||{}; throw e; }
@@ -677,7 +677,7 @@
   }
   $("drawBtn").addEventListener("click", function(){
     if(G.busy || !G.raffle) return;
-    vpAsk("Draw now?\n\nThe winner is picked on the VenuePlay server from "+n((G.totals||{}).entries)+" entries and shown on the TV. It is recorded and cannot be undone.", { yes:"Draw", no:"Not yet" }).then(function(yes){
+    vpAsk("Draw now?\n\nThe winner is picked on the venueplay server from "+n((G.totals||{}).entries)+" entries and shown on the TV. It is recorded and cannot be undone.", { yes:"Draw", no:"Not yet" }).then(function(yes){
       if(!yes) return;
       G.busy=true; renderDraw(); $("drawMsg").textContent="Drawing…"; $("drawMsg").style.color="var(--muted)"; show("winnerCard",false);
       var spinSecs=6, t0=Date.now();

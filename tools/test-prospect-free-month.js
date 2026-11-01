@@ -132,7 +132,7 @@ async function prospect(o) {
 }
 function bne(y, mo, d, h, mi) { return Date.UTC(y, mo - 1, d, h - 10, mi || 0); }   // a Brisbane wall-clock time as epoch ms
 function day(ms) { return vpaBneDay(ms); }
-var REM = function () { return sent.filter(function (m) { return /free month|How is VenuePlay going/.test(m.subject || ''); }); };
+var REM = function () { return sent.filter(function (m) { return /free month|How is venueplay going/.test(m.subject || ''); }); };
 async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t <= toMs; t += (stepMs || 3600000)) { var before = sent.length; await vpaProspectReminderSweep(ENV, t); for (var i = before; i < sent.length; i++) out.push({ at: t, msg: sent[i] }); } return out; }
 
 (async function () {
@@ -183,7 +183,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var days = got.map(function (g) { return day(g.at); }).join(' ');
   check('three reminders, one on each planned day: 5 Nov, 25 Nov, 1 Dec (none on 12, 19, 26, 30 Nov or 2 Dec)', days === '2026-11-05 2026-11-25 2026-12-01', days);
   check('every one went 8am to 5pm Brisbane, Monday to Friday', got.every(function (g) { return vpaInSendWindow(g.at); }), got.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
-  check('each to their email, from and replying to hello@ (never Dean), signed by the VenuePlay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'VenuePlay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, The VenuePlay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
+  check('each to their email, from and replying to hello@ (never Dean), signed by the venueplay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'venueplay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, The venueplay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
   var early = got[0].msg, mid23 = got[1] && got[1].msg, last = got[2] && got[2].msg;
   check('day 3: friendly, the end date, the card not charged until then, Add my card and Cancel', /Your free month at Walk The Month Hotel runs until Wed 2 December\. Whenever suits, you can add your card, and it won't be charged until your free month ends\./.test(early.text) &&
     /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=/.test(early.text) && !/workers\.dev/.test(early.html + early.text), early.text.slice(0, 900));
@@ -247,7 +247,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var q = link.split('?')[1];
   function creq(method, qs, bodyTxt) { return { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function () { return null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
   var g = await vpaProspectCancel(creq('GET', q), ENV);
-  check('opening the link only ASKS (a mail scanner opening it cancels nothing)', /Cancel VenuePlay for/.test(g.body) && /Yes, cancel it/.test(g.body) && !F.row().cancelled_at && F.v.status === 'active', g.body.slice(0, 200));
+  check('opening the link only ASKS (a mail scanner opening it cancels nothing)', /Cancel venueplay for/.test(g.body) && /Yes, cancel it/.test(g.body) && !F.row().cancelled_at && F.v.status === 'active', g.body.slice(0, 200));
   var bad = await vpaProspectCancel(creq('POST', '', 'f=' + F.v.founding_id + '&t=' + new Array(33).join('0')), ENV);
   check('a wrong token cancels nothing', /has not worked/.test(bad.body) && !F.row().cancelled_at);
   var ok = await vpaProspectCancel(creq('POST', '', q), ENV);
@@ -266,7 +266,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   async function rcall(method, qs, bodyTxt) { var r = await _d.fetch(rreq(method, qs, bodyTxt), ENV); var b = null; try { b = JSON.parse(r.body); } catch (e) {} return { status: r.status, body: b, raw: r.body, headers: r.headers || {} }; }
   var ja = await rcall('GET', q2 + '&reply=json');
   check('the page\'s GET (reply=json) only ASKS: the Worker page\'s own question and words, the button kept, nothing written',
-    ja.status === 200 && ja.body && ja.body.state === 'ask' && ja.body.title === 'Cancel VenuePlay for Lakeside Test Tavern?' &&
+    ja.status === 200 && ja.body && ja.body.state === 'ask' && ja.body.title === 'Cancel venueplay for Lakeside Test Tavern?' &&
     ja.body.text === 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.' &&
     !F2.row().cancelled_at && F2.v.status === 'active', ja.raw);
   check('the answer is readable by venueplay.com.au (CORS reflects our origin)', ja.headers['Access-Control-Allow-Origin'] === 'https://venueplay.com.au', ja.headers);

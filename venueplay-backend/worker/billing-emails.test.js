@@ -336,7 +336,7 @@ function extrasChecks() {
       return vpaFirePaymentFailedEmail(envR, subInv);
     }).then(function () {
       var h = sent[2] && sent[2].body.html;
-      pass("REAL email, subscription: for your VenuePlay subscription, the pause warning, the button", !!h && /for your VenuePlay subscription/.test(h) && /games will pause/.test(h) && /Pay now/.test(h));
+      pass("REAL email, subscription: for your venueplay subscription, the pause warning, the button", !!h && /for your venueplay subscription/.test(h) && /games will pause/.test(h) && /Pay now/.test(h));
       /* ACCOUNTS ANSWERS BILLS (help desk, 19 Oct 2026). A reply to a payment email reaches accounts@,
          which Migadu copies to the help desk as an accounts ticket. */
       pass("REAL email: a payment email replies to accounts@ and names it", sent[2] && sent[2].body.reply_to === "accounts@venueplay.com.au" && /accounts@venueplay\.com\.au/.test(h) && !/hello@venueplay\.com\.au/.test(h), sent[2] && sent[2].body.reply_to);
@@ -443,12 +443,12 @@ function alertSubjectChecks() {
      or on the customer list below by name. A fifth alert added next month is on neither,
      and this check goes red until somebody decides which it is. */
   var CUSTOMER_SUBJECTS = [
-    "Your venues are set up. Welcome to VenuePlay",
-    "You are in. Welcome to VenuePlay",
+    "Your venues are set up. Welcome to venueplay",
+    "You are in. Welcome to venueplay",
     "Your VenuePlay invoice",
-    "Your VenuePlay payment is coming up",
-    "Your VenuePlay payment did not go through",
-    "Your VenuePlay plan has moved up",
+    "Your venueplay payment is coming up",
+    "Your venueplay payment did not go through",
+    "Your venueplay plan has moved up",
     // The prospect's welcome, version 2 (28 Oct 2026): "Your VenuePlay account for <venue>", built in one place.
     "vpaProspectSubject(o.venueName)",
   ];

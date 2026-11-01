@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay: Play</title>
+<title>venueplay: Play</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
@@ -572,7 +572,7 @@
       '<div style="font-size:14px;color:#9A9AA4;max-width:22em">The venue wifi is being slow. This will keep trying.</div>';
     (document.body||document.documentElement).appendChild(_rc);
     setTimeout(function(){ location.reload(); }, 4000);
-    throw new Error("VenuePlay: Realtime library not loaded yet");
+    throw new Error("venueplay: Realtime library not loaded yet");
   }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
@@ -1869,7 +1869,7 @@
               else { setConn("ready"); }
               // say it out loud: a phone in a room and a host that is not is the one
               // failure this feature keeps producing, and it looks identical to working.
-              try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){}
+              try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[venueplay] transport: "+"room");}catch(e){}
             } else { subscribed=false; setConn("reconnecting"); }
           }
         });

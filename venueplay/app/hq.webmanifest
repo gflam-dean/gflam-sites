@@ -1,7 +1,7 @@
 {
-  "name": "VenuePlay HQ",
+  "name": "venueplay HQ",
   "short_name": "HQ",
-  "description": "VenuePlay and PartyPlay HQ, with the help desk.",
+  "description": "venueplay and PartyPlay HQ, with the help desk.",
   "start_url": "/app/hq.html",
   "scope": "/app/",
   "display": "standalone",

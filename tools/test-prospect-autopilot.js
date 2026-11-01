@@ -173,7 +173,7 @@ var AP = { 'X-Autopilot-Key': KEY };
   world();
   AUTH.push({ id: U(50), email: 'manager@testcharlie.example', phone: '' });
   r = await call('/autopilot/prospect', with_({ dry_run: true }), AP);
-  check('an email that already signs in: the dry run refuses it (409), nothing made', r.status === 409 && /already has a VenuePlay login/.test(r.body.error) && DB.vp_venues.length === 0 && sent.length === 0, r.body);
+  check('an email that already signs in: the dry run refuses it (409), nothing made', r.status === 409 && /already has a venueplay login/.test(r.body.error) && DB.vp_venues.length === 0 && sent.length === 0, r.body);
   r = await call('/autopilot/prospect', CENTRE, AP);
   check('and so does the real one: the existing login untouched, no venue, no email', r.status === 409 && AUTH.length === 1 && AUTH[0].phone === '' && DB.vp_venues.length === 0 && sent.length === 0 && DB.vp_venue_staff.length === 0, r.body);
   world();
@@ -182,7 +182,7 @@ var AP = { 'X-Autopilot-Key': KEY };
   check('a mobile already on a login: the dry run says "taken" and makes nothing', r.status === 200 && r.body.mobile === 'taken' && DB.vp_venues.length === 0 && AUTH.length === 1, r.body);
   r = await call('/autopilot/prospect', CENTRE, AP);
   check('the real one sets them up on email only, the other login untouched, and says so', r.status === 200 && AUTH.length === 2 && AUTH[1].phone === '' && AUTH[0].phone === '61400111222' &&
-    (r.body.warnings || []).some(function (w) { return /mobile already has a VenuePlay login/.test(w); }), [AUTH, r.body.warnings]);
+    (r.body.warnings || []).some(function (w) { return /mobile already has a venueplay login/.test(w); }), [AUTH, r.body.warnings]);
   r = await call('/autopilot/prospect', with_({ email: 'other@testcharlie.example' }), AP);
   check('the same venue twice (a re-run of an approval): refused, nothing more made', r.status === 409 && /already set up/.test(r.body.error) && DB.vp_venues.length === 1 && AUTH.length === 2, r.body);
 

@@ -109,7 +109,7 @@ var rq = G2.calls.filter(function (c) { return /\/auth\/one-click\/resend$/.test
 check('Send me a new link: ONE request (twice tapped) to the billing Worker with the old token and the address it went to', rq.length === 1 && rq[0].method === 'POST' &&
   /api\.venueplay\.com\.au\/auth\/one-click\/resend$/.test(rq[0].url) && rq[0].body.t === TOKEN_A && rq[0].body.e === 'amit@caz.example', rq);
 var sentMsg = G2.els.resendMsg.textContent;
-check('it says a new link is on its way IF that address has a login (never whether it has), and the button goes', /If amit@caz\.example is on a VenuePlay login, a new link is on its way/.test(sentMsg) && G2.els.resendBtn.hidden === true, sentMsg);
+check('it says a new link is on its way IF that address has a login (never whether it has), and the button goes', /If amit@caz\.example is on a venueplay login, a new link is on its way/.test(sentMsg) && G2.els.resendBtn.hidden === true, sentMsg);
 var G2b = goPage('#t=' + TOKEN_A + '&e=amit%40caz.example', { status: 410, body: { ok: false } }); G2b.resendAnswer = { status: 200, body: { ok: false, anything: 'else' } };
 G2b.els.goBtn.click(); settle(); G2b.els.resendBtn.click(); settle();
 check('whatever the Worker\'s 200 says, the page says exactly the same words', G2b.els.resendMsg.textContent === sentMsg, G2b.els.resendMsg.textContent);
@@ -118,7 +118,7 @@ G2c.els.goBtn.click(); settle(); G2c.els.resendBtn.click(); settle();
 check('too many tries from this network: told to wait, the button comes back', /Wait a few minutes/.test(G2c.els.resendMsg.textContent) && G2c.els.resendBtn.disabled === false && G2c.els.resendBtn.hidden === false, G2c.els.resendMsg.textContent);
 var G2d = goPage('#t=' + TOKEN_A, { status: 410, body: { ok: false } }); G2d.resendAnswer = 'offline';
 G2d.els.goBtn.click(); settle(); G2d.els.resendBtn.click(); settle();
-check('no connection: says so, and the button comes back', /could not reach VenuePlay/.test(G2d.els.resendMsg.textContent) && G2d.els.resendBtn.disabled === false, G2d.els.resendMsg.textContent);
+check('no connection: says so, and the button comes back', /could not reach venueplay/.test(G2d.els.resendMsg.textContent) && G2d.els.resendBtn.disabled === false, G2d.els.resendMsg.textContent);
 var G3 = goPage('#t=' + TOKEN_A, undefined, { data: null, error: { message: 'Token has expired or is invalid' } });
 G3.els.goBtn.click(); settle();
 check('Auth refuses the exchange: the same friendly page, no shift started, no error code shown', gone(G3) && G3.replaced === null && !G3.ls.vpShiftStart && G3.els.goMsg.textContent === '', G3.replaced);
@@ -308,9 +308,9 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
     Date.parse(row.expires_at) === due + 14 * 86400000, [life, row.expires_at, sent[0] && sent[0].scheduled_at]);
   var L = hrefs(html), txt = visible(html);
   var main = L.filter(function (h) { return h.indexOf('/app/go#') !== -1; });
-  check('the email\'s main button "Open your VenuePlay" is the one-click link, with the token and their address in the fragment',
+  check('the email\'s main button "Open your venueplay" is the one-click link, with the token and their address in the fragment',
     main.length === 1 && main[0] === 'https://www.venueplay.com.au/app/go#t=' + token + '&e=cazreitop%40gmail.com' &&
-    new RegExp('<a href="' + main[0].replace(/[.?*+^$()|[\]\\]/g, '\\$&') + '"[^>]*>Open your VenuePlay</a>').test(html), main);
+    new RegExp('<a href="' + main[0].replace(/[.?*+^$()|[\]\\]/g, '\\$&') + '"[^>]*>Open your venueplay</a>').test(html), main);
   /* Version 3 (Dean, 29 Oct 2026): no "this link works once, next time sign in with your email" story. */
   check('it says the button opens their account, with no "works once, next time your email" story', /The button below opens your account for you\. No password, and no app to download\./.test(txt) &&
     !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 900));
@@ -366,7 +366,7 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   var h2 = sent[0] ? sent[0].html : '', L2 = hrefs(h2), t3 = visible(h2);
   check('set up and sent, HQ told why there is no one-click button', r.status === 200 && r.body.welcome_sent === true && (r.body.warnings || []).some(function (w) { return /one-click sign-in button was not made \(run migration 123\)/.test(w); }), r.body);
   check('the main button opens /app/go with their address (it offers "Send me a sign-in link"), with no token and no ?signin=email anywhere',
-    /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#e=cazreitop%40gmail\.com"[^>]*>Open your VenuePlay<\/a>/.test(h2) && L2.every(function (h) { return h.indexOf('#t=') === -1 && h.indexOf('signin=email') === -1; }) &&
+    /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#e=cazreitop%40gmail\.com"[^>]*>Open your venueplay<\/a>/.test(h2) && L2.every(function (h) { return h.indexOf('#t=') === -1 && h.indexOf('signin=email') === -1; }) &&
     /Tap the button below and we'll email cazreitop@gmail\.com a link that opens your account\./.test(t3) && !/email you a code/.test(t3), L2);
 
   if (bad) throw new Error('one-click sign-in: ' + bad + ' of ' + ran + ' failed');

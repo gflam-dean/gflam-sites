@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay Trivia: Host Console</title>
+<title>venueplay Trivia: Host Console</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,7 +195,7 @@
       <div class="big">Sign in to run trivia</div>
       <div class="sub" id="signinSub">You need your venue host login to start a live quiz.</div>
       <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
-      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay Trivia Library. The answers are held on the server and never reach a phone before you reveal.</p>
+      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the venueplay Trivia Library. The answers are held on the server and never reach a phone before you reveal.</p>
     </div>
   </div>
 
@@ -1527,7 +1527,7 @@
         sel.innerHTML="";
         if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
         if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
-        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="venueplay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
         // "Run it now" in the builder lands here with ?set=<id>: pick that night without a hunt.
         var want=setFromUrl(), found=false; if(want){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===want){ sel.selectedIndex=k; found=true; break; } } }
         if(want && !found) hostError("That night is not one of this venue's, so it is not in the list. Check which venue you are running.");

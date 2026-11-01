@@ -1,6 +1,6 @@
 /* NO EMAIL A VENUE OR A PLAYER GETS CARRIES A workers.dev ADDRESS, RUN (31 Oct 2026).
 
-   The fault: the prospect welcome "Your VenuePlay account for Lakeside Tavern" to a venue on Ozemail
+   The fault: the prospect welcome "Your venueplay account for Lakeside Tavern" to a venue on Ozemail
    bounced, "smtp; 550 5.7.1 Policy-DT510: Rejected content policy violation" (Ozemail / Vocus content
    filter, verified in Resend). A plain reply to the same address with only venueplay.com.au links was
    delivered. The welcome's one link on another domain was "Cancel, it's not for us", on
@@ -108,11 +108,11 @@ function BUILDERS(ENV) {
     ['payment failed', function () { return lastSent(function () { return vpaFirePaymentFailedEmail(ENV, { id: 'in_3', customer_email: 'owner@pub.com', amount_due: 12000, billing_reason: 'subscription_cycle', hosted_invoice_url: 'https://pay.example/y', lines: { data: [{ description: '40 x Founding Membership', amount: 12000 }] } }); }); }],
     ['plan moved up', function () { return lastSent(function () { return vpaFirePlanUpliftEmail(ENV, 'cus_1'); }); }],
     ['cancellation confirmed', function () { return lastSent(function () { return vpaFireCancelConfirm(ENV, { venueId: 'v1', name: 'The Royal Hotel', ends: '18 September 2026', account: { contact_email: 'owner@pub.com' } }); }); }],
-    ['last day (leaving)', async function () { return asEmail('Friday is your last day on VenuePlay', vpaGoodbyeHtml(ENV, { hello: 'Hi Sam,', name: 'The Royal Hotel', day: 'Friday', dated: '24 October 2026', rate: '$2.50', founding: true })); }],
+    ['last day (leaving)', async function () { return asEmail('Friday is your last day on venueplay', vpaGoodbyeHtml(ENV, { hello: 'Hi Sam,', name: 'The Royal Hotel', day: 'Friday', dated: '24 October 2026', rate: '$2.50', founding: true })); }],
     ['help desk reply', async function () { return asEmail('Re: help', helpReplyHtml({ brand: 'venueplay', category: 'venue_support', ticket_no: 1042 }, 'Sorted.', 'support@venueplay.com.au')); }],
     ['win-back (marketing)', async function () {
-      var html = '<p>Keep The Royal Hotel on VenuePlay?</p>' + (await vpUnsubFooterHtml(ENV, 'owner@pub.com', 'winback'));
-      return asEmail('Keep The Royal Hotel on VenuePlay?', vpaEmailDocument(html, 'Keep The Royal Hotel on VenuePlay?'), await vpUnsubHeaders(ENV, 'owner@pub.com', 'winback'));
+      var html = '<p>Keep The Royal Hotel on venueplay?</p>' + (await vpUnsubFooterHtml(ENV, 'owner@pub.com', 'winback'));
+      return asEmail('Keep The Royal Hotel on venueplay?', vpaEmailDocument(html, 'Keep The Royal Hotel on venueplay?'), await vpUnsubHeaders(ENV, 'owner@pub.com', 'winback'));
     }],
   ]);
 }
@@ -164,7 +164,7 @@ async function main() {
     for (var i = 0; i < 50 && !fin; i++) drain();
     var msg = (((sms[0] || {}).messages || [])[0] || {}).message || '';
     check('with ' + c[0] + ': "To sign in visit venueplay.com.au/app", the TV link on venueplay.com.au, no .dev host',
-      msg === 'The Royal Hotel has set you up on VenuePlay. To sign in visit venueplay.com.au/app. TV URL: venueplay.com.au/tv?the-royal-hotel-4220' && !devHit(msg), msg);
+      msg === 'The Royal Hotel has set you up on venueplay. To sign in visit venueplay.com.au/app. TV URL: venueplay.com.au/tv?the-royal-hotel-4220' && !devHit(msg), msg);
   });
 
   print(''); print('The cancel link');
@@ -179,7 +179,7 @@ async function main() {
   check('signed per account: another account gets another signature', d.split('&t=')[1] !== a.split('&t=')[1] && /&t=[0-9a-f]{32}$/.test(d), [a, d]);
   var path = a.replace(/^https:\/\/venueplay\.com\.au/, '').split('?')[0];
   var page = ''; try { page = readFile('venueplay' + path + 'index.html'); } catch (x) {}
-  check('the link lands on a page that exists in the site (venueplay' + path + 'index.html)', page.indexOf('Cancel VenuePlay for your venue?') !== -1, path);
+  check('the link lands on a page that exists in the site (venueplay' + path + 'index.html)', page.indexOf('Cancel venueplay for your venue?') !== -1, path);
   var w = await vpaRenderProspectWelcome(ENVS[0].env, { email: 'laketavern@example.com.au', venueName: 'Lakeside Tavern', foundingId: FID });
   var href = (/href="([^"]*prospect\/cancel[^"]*)"/.exec(w || '') || [])[1] || '';
   check('the prospect welcome\'s Cancel button is that link', href.replace(/&amp;/g, '&') === a, href);
@@ -209,8 +209,8 @@ async function main() {
     for (var i = 0; i < 50; i++) drain();
     return { els: els, calls: calls, click: function () { els.go.on.click(); for (var i = 0; i < 50; i++) drain(); } };
   }
-  var ASK = { ok: true, state: 'ask', title: 'Cancel VenuePlay for Lakeside Tavern?', text: 'No problem at all.', foot: 'Questions? Call us.' };
-  var DONE = { ok: true, state: 'done', title: 'All done', text: 'VenuePlay for Lakeside Tavern is cancelled.' };
+  var ASK = { ok: true, state: 'ask', title: 'Cancel venueplay for Lakeside Tavern?', text: 'No problem at all.', foot: 'Questions? Call us.' };
+  var DONE = { ok: true, state: 'done', title: 'All done', text: 'venueplay for Lakeside Tavern is cancelled.' };
   var q = '?f=' + FID + '&t=0123456789abcdef0123456789abcdef';
   var P = run(q, [ASK, DONE]);
   var posts = function (r) { return r.calls.filter(function (c) { return c.method !== 'GET'; }); };
@@ -235,7 +235,7 @@ async function main() {
   O.click();
   check('a POST that fails says so and gives the button back', posts(O).length === 1 && O.els.go.disabled === false && O.els.err.className === 'err' && /did not go through/.test(O.els.err.textContent), [O.els.go.disabled, O.els.err.className]);
   var pageText = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script>[\s\S]*?<\/script>/g, '');
-  check('the page\'s own words: the Worker\'s question, "Yes, cancel it", no em dash', /<h1 id="head">Cancel VenuePlay for your venue\?<\/h1>/.test(pageText) &&
+  check('the page\'s own words: the Worker\'s question, "Yes, cancel it", no em dash', /<h1 id="head">Cancel venueplay for your venue\?<\/h1>/.test(pageText) &&
     pageText.indexOf('No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.') !== -1 &&
     />Yes, cancel it</.test(pageText) && !/[\u2014\u2013]/.test(html));
 

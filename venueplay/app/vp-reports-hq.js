@@ -52,7 +52,7 @@
       + '<select id="rpMonth" class="sp" aria-label="Month">' + months.map(function (m, i) { return '<option value="' + m + '"' + (i === 1 ? " selected" : "") + '>' + rpEsc(monthWords(m)) + (i === 0 ? " (so far)" : "") + '</option>'; }).join("") + '</select>'
       + '<button class="mini" id="rpRefresh">Refresh</button></div>'
       + '<div id="rpBody"><div class="note">Adding it up&hellip;</div></div>'
-      + '<div class="lblk">What\'s new at VenuePlay, in every venue\'s email</div>'
+      + '<div class="lblk">What\'s new at venueplay, in every venue\'s email</div>'
       + '<div class="panel pad" id="rpNews"><div class="note" style="margin:0">Loading&hellip;</div></div>';
     $("rpMonth").addEventListener("change", function () { S.month = this.value; load(); loadNews(); });
     $("rpRefresh").addEventListener("click", function () { load(); });

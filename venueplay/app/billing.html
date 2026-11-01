@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VenuePlay · Account</title>
+<title>venueplay · Account</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -706,7 +706,7 @@
 
     <div class="tabpanel" id="tp-screen">
     <div class="label">Advertising</div>
-    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">VenuePlay TV app</a>, then put in your screen code.</p>
+    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">venueplay TV app</a>, then put in your screen code.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
       <label class="flabel" for="screenVenue">You are editing the TV at</label>
       <select id="screenVenue"></select>
@@ -846,7 +846,7 @@
         '<label class="flabel" for="whyPick">Before you go, why?</label>' +
         '<select id="whyPick">' +
           '<option value="" selected disabled>Pick one&hellip;</option>' +
-          '<option value="expensive">VenuePlay is too expensive</option>' +
+          '<option value="expensive">venueplay is too expensive</option>' +
           '<option value="trial">We just wanted to trial it</option>' +
           '<option value="dislike">We do not like it</option>' +
           '<option value="other">Something else</option>' +
@@ -3134,9 +3134,9 @@
       "border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;" +
       "padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
     bar.innerHTML = '<span>Billing for <b>' + esc(imp.name || "this venue") +
-      '</b>, viewed from VenuePlay Admin</span>' +
+      '</b>, viewed from venueplay Admin</span>' +
       '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;' +
-      'cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
+      'cursor:pointer;font-weight:700">Back to venueplay Admin</a>';
     // In the one status area (VP.statusBar), under the unpaid bar, never painted over it (28 Oct 2026).
     if (window.VP && VP.statusBar) VP.statusBar("viewas", bar); else document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){

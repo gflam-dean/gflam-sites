@@ -89,13 +89,13 @@ check('it links to the Terms', !!walk(c, function (e) { return e.tagName === 'A'
 var tick = P.document.getElementById('vpTermsTick'), by = P.document.getElementById('vpTermsBy'), go = P.document.getElementById('vpTermsGo');
 check('there is a tick box, a name field and an Accept button', !!tick && tick.getAttribute('type') === 'checkbox' && !!by && !!go && go.textContent === 'Accept');
 check('the tick names section 6, the date and the venue, then the onboarding sentence word for word',
-  /I accept section 6 of the Terms \(effective 28 October 2026\) for Tugun Bowls Club\. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules\. VenuePlay supplies the software only\./.test(t), t);
+  /I accept section 6 of the Terms \(effective 28 October 2026\) for Tugun Bowls Club\. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules\. venueplay supplies the software only\./.test(t), t);
 check('the name starts as the staff member\'s own name where we have one', by.value === 'Jane Smith', by.value);
 check('the tick starts unticked: an acceptance is an act, never a default', tick.checked === false);
 check('the card sits at the top of the page content, above the game picker', P.wrap.children[0] === c && P.wrap.children[1] === P.view);
 check('it hides nothing: the game picker is still displayed', P.view.style.display !== 'none' && !P.view.getAttribute('data-vp-held'));
 check('controls are a thumb\'s width (44px) like the shared hold card', /min-height:44px/.test(go.style.cssText) && /min-height:44px/.test(by.style.cssText), go.style.cssText);
-check('on-brand: Manrope, the VenuePlay pink, a rounded card', /Manrope/.test(c.style.cssText) && /#FF1F8E/.test(go.style.cssText) && /border-radius:16px/.test(c.style.cssText));
+check('on-brand: Manrope, the venueplay pink, a rounded card', /Manrope/.test(c.style.cssText) && /#FF1F8E/.test(go.style.cssText) && /border-radius:16px/.test(c.style.cssText));
 check('it fits a phone: no fixed width wider than the screen', /width:calc\(100% - 32px\)/.test(c.style.cssText) && /max-width:560px/.test(c.style.cssText));
 P.VP.termsCard(ctxFor('owner', null, 'Jane Smith'));
 var n = 0; walk(P.body, function (e) { if (e.id === 'vpTermsCard') n++; return false; });
@@ -138,7 +138,7 @@ check('ticked with no name sends nothing and asks for the name', CALLS.length ==
 qby.value = '  Jane Smith  '; ANSWER = { error: 'Pick one of your venues.' }; qgo.click(); drainMicrotasks(); drainMicrotasks();
 check('a refusal is shown in the card and the button comes back', /Pick one of your venues\./.test(qmsg.textContent) && qgo.disabled === false && !!card(Q), qmsg.textContent);
 ANSWER = 'offline'; CALLS.length = 0; qgo.click(); drainMicrotasks(); drainMicrotasks();
-check('no network says so in words and the button comes back', /Could not reach VenuePlay/.test(qmsg.textContent) && qgo.disabled === false, qmsg.textContent);
+check('no network says so in words and the button comes back', /Could not reach venueplay/.test(qmsg.textContent) && qgo.disabled === false, qmsg.textContent);
 ANSWER = null; CALLS.length = 0; qgo.click(); drainMicrotasks(); drainMicrotasks(); drainMicrotasks();
 var call = CALLS[0] || { opts: { headers: {} } };
 check('it posts to the billing Worker\'s /account/compliance-accept', CALLS.length === 1 && call.url === 'https://api.venueplay.com.au/account/compliance-accept', call.url);

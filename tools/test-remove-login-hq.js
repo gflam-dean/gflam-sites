@@ -1,13 +1,13 @@
 /* HQ: REMOVE A LOGIN THAT BELONGS TO NO OTHER VENUE, RUN AND NOT READ (Dean, 30 Oct 2026).
 
-   Sarah's end-to-end test was held because her email already had a VenuePlay login from an earlier test,
+   Sarah's end-to-end test was held because her email already had a venueplay login from an earlier test,
    and the only way to clear it was the Supabase dashboard. This runs the REAL billing Worker
    (tools/rig-billing-worker.js) through vpaHandleLogins, vpaHandleLoginFind and vpaHandleLoginRemove
    against a fake PostgREST and a fake Supabase Auth that records every delete, and the REAL
    venueplay/app/vp-logins-hq.js against a fake page. It proves:
 
      1. only HQ sees logins (owner or accounts); only an OWNER removes one
-     2. a login on any other venue, or a VenuePlay staff login, is refused and nothing changes
+     2. a login on any other venue, or a venueplay staff login, is refused and nothing changes
      3. the confirm must name that login's own email ("ending 123" for a mobile-only login)
      4. the removal deletes the venue's staff row then the Auth user, puts the row back if Auth
         refuses, is audited, and a failed read never reads as "on no other venue"
@@ -70,7 +70,7 @@ function byId(list, id) { return (list || []).filter(function (l) { return l.aut
   check('Dean sees the venue\'s four logins, each with whether it can go', r.status === 200 && L.length === 4, r.body);
   check('Sarah\'s login, on this venue only: can be removed', byId(L, SARAH).can_remove === true && byId(L, SARAH).email === 'sarah@gflam.com.au' && byId(L, SARAH).why_not === '', byId(L, SARAH));
   check('a login also on Deepwater Hotel: cannot, and it says where', byId(L, HOST2).can_remove === false && /Deepwater Hotel/.test(byId(L, HOST2).why_not), byId(L, HOST2));
-  check('a VenuePlay staff login: cannot, and it says why', byId(L, ADMINLOGIN).can_remove === false && /VenuePlay staff login/.test(byId(L, ADMINLOGIN).why_not), byId(L, ADMINLOGIN));
+  check('a venueplay staff login: cannot, and it says why', byId(L, ADMINLOGIN).can_remove === false && /venueplay staff login/.test(byId(L, ADMINLOGIN).why_not), byId(L, ADMINLOGIN));
   check('a mobile-only login is shown by its last three digits, never the whole number', byId(L, PHONEONLY).phone_end === '678' && JSON.stringify(r.body).indexOf('400333678') === -1, byId(L, PHONEONLY));
   r = await LOGINS(ACCOUNTS, { venue_id: BAR });
   check('accounts sees them, but none says it can be removed: only an Owner', r.status === 200 && r.body.logins.every(function (l) { return !l.can_remove; }) && /Only an Owner/.test(byId(r.body.logins, SARAH).why_not), r.body);
@@ -103,7 +103,7 @@ function byId(list, id) { return (list || []).filter(function (l) { return l.aut
   check('a login that is staff at another venue: 409, still on both venues, not deleted', r.status === 409 && /Deepwater Hotel/.test(r.body.error) && !DELETES.length &&
     staffOf(HOST2).length === 2 && hasAuth(HOST2), r.body);
   r = await REMOVE(DEAN, { auth_user_id: ADMINLOGIN, venue_id: BAR, confirm: 'harry@gflam.com.au' });
-  check('a VenuePlay staff login: 409, not deleted', r.status === 409 && !DELETES.length && hasAuth(ADMINLOGIN), r.body);
+  check('a venueplay staff login: 409, not deleted', r.status === 409 && !DELETES.length && hasAuth(ADMINLOGIN), r.body);
   r = await REMOVE(DEAN, { auth_user_id: SARAH, confirm: 'sarah@gflam.com.au' });
   check('Sarah\'s login with no venue named: it IS on a venue, so 409, nothing changed', r.status === 409 && !DELETES.length && staffOf(SARAH).length === 1, r.body);
   FAIL['vp_venue_staff:GET'] = 1;

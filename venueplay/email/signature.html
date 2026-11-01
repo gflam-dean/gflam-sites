@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>VenuePlay email signature</title>
+<title>venueplay email signature</title>
 <style>
   body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,system-ui,-apple-system,sans-serif;padding:32px 18px 80px}
   .wrap{max-width:760px;margin:0 auto}
@@ -24,7 +24,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>VenuePlay email signature</h1>
+  <h1>venueplay email signature</h1>
   <p>Fill in your details, check the preview, then <b>Copy signature</b> and paste it into Outlook: Settings, Mail, Compose and reply, Email signature. The logo is hosted on venueplay.com.au, so it shows for everyone you email.</p>
   <div class="row">
     <div class="fld"><label for="nm">Name</label><input id="nm" value="Dean Tindale"></div>
@@ -57,7 +57,7 @@
     if(em)  rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">E</span> <a href="'+("mailto:"+esc(em))+'" style="color:'+mute+';text-decoration:none">'+esc(em)+'</a></td></tr>';
     rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">W</span> <a href="https://venueplay.com.au" style="color:'+mute+';text-decoration:none">venueplay.com.au</a></td></tr>';
     return '<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>'
-      +'<td style="padding:0 18px 0 0;vertical-align:middle"><a href="https://venueplay.com.au" style="text-decoration:none"><img src="'+LOGO+'" width="96" height="96" alt="VenuePlay" style="display:block;border:0;border-radius:14px"></a></td>'
+      +'<td style="padding:0 18px 0 0;vertical-align:middle"><a href="https://venueplay.com.au" style="text-decoration:none"><img src="'+LOGO+'" width="96" height="96" alt="venueplay" style="display:block;border:0;border-radius:14px"></a></td>'
       +'<td style="padding:0 18px 0 0;vertical-align:middle;border-left:2px solid #FF1F8E"></td>'
       +'<td style="vertical-align:middle"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">'
       +'<tr><td style="padding:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:'+ink+'">'+esc(name)+'</td></tr>'
@@ -73,7 +73,7 @@
     function done(){ $("ok").textContent="Copied. Paste it into Outlook's signature box."; setTimeout(function(){ $("ok").textContent=""; }, 5000); }
     try{
       if(navigator.clipboard && window.ClipboardItem){
-        navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([h],{type:"text/html"}), "text/plain": new Blob([$("nm").value+" | VenuePlay | venueplay.com.au"],{type:"text/plain"}) })]).then(done, fallback);
+        navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([h],{type:"text/html"}), "text/plain": new Blob([$("nm").value+" | venueplay | venueplay.com.au"],{type:"text/plain"}) })]).then(done, fallback);
       } else fallback();
     }catch(e){ fallback(); }
     function fallback(){ var r=document.createRange(); r.selectNodeContents($("pv")); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); try{ document.execCommand("copy"); done(); }catch(e){ $("ok").textContent="Select the preview and copy it by hand."; } s.removeAllRanges(); }

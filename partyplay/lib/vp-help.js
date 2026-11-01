@@ -58,7 +58,7 @@
      test page with window.VP_HELP_API. */
   var API = root.VP_HELP_API || "https://api.venueplay.com.au";
   var SUPPORT = "support@" + BRAND + ".com.au";
-  var NAME = BRAND === "partyplay" ? "PartyPlay" : "VenuePlay";
+  var NAME = BRAND === "partyplay" ? "PartyPlay" : "venueplay";
   var FAQ_KEY = { patron: "patron", venue: "venue", guest: "guest", host: "host" }[MODE] || "";
   /* THE SUPPORT PHONE (Dean, 20 Oct 2026). VenuePlay VENUES only: the console, settings and the
      account page, and the venue part of the public help page. Never a player (they use this Help,
@@ -295,7 +295,7 @@
       subject = input2("text", "vphSubject", { maxlength: "200", placeholder: "e.g. TV not showing the game" });
       if (issue) subject.value = issue.title;
       f.appendChild(field("What is it about?", subject));
-      kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"]]);
+      kinds([["venue_support", "Help with venueplay"], ["accounts", "Billing or an invoice"]]);
       /* WHICH VENUE. Normally the one this console or account page is on, never asked. Only when the
          page genuinely has none (an HQ login on the account page, say) is the person asked, from a
          list: The Mini Bar's group owner was told "pick your venue first" with nothing to pick from. */
@@ -311,7 +311,7 @@
         });
       }
     } else {
-      if (pubVenue) kinds([["venue_support", "Help with VenuePlay"], ["accounts", "Billing or an invoice"], ["sales", "Bringing VenuePlay to my venue"]]);
+      if (pubVenue) kinds([["venue_support", "Help with venueplay"], ["accounts", "Billing or an invoice"], ["sales", "Bringing venueplay to my venue"]]);
       var needName = sales || pubVenue;
       name = input2("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: needName ? "Your name" : "Optional" });
       f.appendChild(field(needName ? "Your name" : "Your name (optional)", name));

@@ -16,16 +16,16 @@
 load('tools/rig-billing-worker.js');
 var fails = 0, ran = 0;
 /* The help emails' images are the brand's own logo on its band (Dean, 29 Oct 2026: "a little prettier
-   and branded") and the square logo in the signature, which copies his Outlook one (VenuePlay's is the
+   and branded") and the square logo in the signature, which copies his Outlook one (venueplay's is the
    glowing GIF). The footer is the brand and its ABN. Gflam appears once only: the Acknowledgement of
    Country in the signature, worded as Dean's own. */
 var COUNTRY = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 function oneLogo(html, pp) {
   var imgs = String(html || '').match(/<img\b[^>]*>/gi) || [];
   return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay_primary_rebuilt.png') !== -1
-    && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#12101a;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
+    && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#12101a;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
     && imgs[1].indexOf(pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif') !== -1
-    && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '"') !== -1;
+    && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;
 }
 function brandFoot(html, pp) {
   var b = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
@@ -129,20 +129,20 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var t = r.body && T(r.body.ticket_no);
   check('a patron gets a ticket number back', r.status === 200 && r.body.ticket_no === 1001, r);
   check('and nothing else: no ticket data comes back to a patron', Object.keys(r.body).sort().join() === 'ok,ticket_no', Object.keys(r.body));
-  check('it is player support, from the patron form, VenuePlay', t && t.brand === 'venueplay' && t.category === 'patron_support' && t.channel === 'patron_form' && t.status === 'new', t);
+  check('it is player support, from the patron form, venueplay', t && t.brand === 'venueplay' && t.category === 'patron_support' && t.channel === 'patron_form' && t.status === 'new', t);
   check('the venue, the room code and the live session are attached from the code on the phone', t && t.venue_id === VA && t.room_code === 'RYL234' && t.session_id === U(201), t);
   check('the email is kept in lower case for the reply', t && t.contact_email === 'jo@example.com', t && t.contact_email);
-  var alert = sent.filter(function (m) { return /HELP|\[VenuePlay\]/.test(m.subject); })[0];
-  check('staff are emailed, subject starting [VenuePlay], the kind and the number', alert && /^\[VenuePlay\] Player support \[#1001\]/.test(alert.subject), alert && alert.subject);
+  var alert = sent.filter(function (m) { return /HELP|\[venueplay\]/.test(m.subject); })[0];
+  check('staff are emailed, subject starting [venueplay], the kind and the number', alert && /^\[venueplay\] Player support \[#1001\]/.test(alert.subject), alert && alert.subject);
   check('the alert goes to the staff address, never to the patron', alert && alert.to.join() === 'hello@venueplay.com.au', alert && alert.to);
   check('the alert carries the header that stops it coming back in as a ticket', alert && alert.headers && alert.headers['X-VP-Help'] === 'alert');
   /* THE ACKNOWLEDGEMENT (Dean, 23 Oct 2026). Until then this check said nothing at all was emailed to
      the address the patron typed; now exactly one thing is, and it carries nothing they wrote. */
   var acks = sent.filter(function (m) { return m.to.indexOf('jo@example.com') !== -1; });
   check('the patron gets one acknowledgement and nothing else', acks.length === 1 && sent.length === 2, sent.map(function (m) { return [m.to, m.subject]; }));
-  check('it comes from VenuePlay Support, replies go to support@, the subject carries the number and the reply secret', acks[0] && acks[0].from === 'VenuePlay Support <support@send.venueplay.com.au>' && acks[0].reply_to === 'support@venueplay.com.au' && acks[0].subject === 'Thanks, we\'ve got your message (ticket 1001, ref ' + helpRef(t.reply_token) + ')' && /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(helpRef(t.reply_token)), acks[0] && [acks[0].from, acks[0].reply_to, acks[0].subject]);
+  check('it comes from venueplay Support, replies go to support@, the subject carries the number and the reply secret', acks[0] && acks[0].from === 'venueplay Support <support@send.venueplay.com.au>' && acks[0].reply_to === 'support@venueplay.com.au' && acks[0].subject === 'Thanks, we\'ve got your message (ticket 1001, ref ' + helpRef(t.reply_token) + ')' && /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(helpRef(t.reply_token)), acks[0] && [acks[0].from, acks[0].reply_to, acks[0].subject]);
   check('it says, in plain words: thanks, the number, a person replies the same business day, reply to add anything', acks[0] && acks[0].text.indexOf('Hi Jo,') === 0 && acks[0].text.indexOf('Thanks, we\'ve got your message (ticket 1001). Someone from our team will read it and reply by email, usually the same business day.') !== -1 && acks[0].text.indexOf('To add anything, just reply to this email.') !== -1 && !/What happens next|we have got it/.test(acks[0].html), acks[0] && acks[0].text);
-  check('it is signed by a person over the brand\'s support, with the support address, and the VenuePlay logo on the dark band over the pink rule and the square logo in Dean\'s Outlook signature (P, E, W)', acks[0] && /\nKind Regards\n\nDean\nVenuePlay\n\nE support@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(acks[0].text) && oneLogo(acks[0].html, false), acks[0] && acks[0].text);
+  check('it is signed by a person over the brand\'s support, with the support address, and the venueplay logo on the dark band over the pink rule and the square logo in Dean\'s Outlook signature (P, E, W)', acks[0] && /\nKind Regards\n\nDean\nvenueplay\n\nE support@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(acks[0].text) && oneLogo(acks[0].html, false), acks[0] && acks[0].text);
   check('its footer is "VenuePlay \u00b7 ABN 35 679 383 049." and Gflam is nowhere in it but the Acknowledgement of Country (VenuePlay is its own business)', acks[0] && brandFoot(acks[0].html, false) && /\nVenuePlay - ABN 35 679 383 049\.\n$/.test(acks[0].text), acks[0] && acks[0].text);
   check('it has a text part made from the same words as the HTML, with no tags or entities left in it', acks[0] && typeof acks[0].text === 'string' && typeof acks[0].html === 'string' && !/[<>]|&[a-z#0-9]+;/i.test(acks[0].text) && acks[0].text === helpPlainFromHtml(acks[0].html), acks[0] && acks[0].text);
   check('it never quotes what they wrote (a public form can be pointed at any address)', acks[0] && acks[0].html.indexOf('My tickets are not showing') === -1);
@@ -160,7 +160,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('a bad email, no ticket', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { email: 'jo@nowhere' }))).status === 400);
   check('a message over 4,000 characters is refused', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { message: new Array(4002).join('x') }))).status === 400);
   check('a message of exactly 4,000 is taken', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { message: new Array(4001).join('y') }))).status === 200);
-  check('a VenuePlay host cannot use the public form: they are signed in, so they use the console', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { kind: 'host' }))).status === 400);
+  check('a venueplay host cannot use the public form: they are signed in, so they use the console', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { kind: 'host' }))).status === 400);
   r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: 'ZZZ999', slug: 'anchor', device: 'dev-x', email: 'x@example.com' }));
   check('an unknown code still makes the ticket, matched by the venue slug instead', r.status === 200 && T(r.body.ticket_no).venue_id === VB, r.body);
   r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: 'ZZZ999', slug: '', device: 'dev-y', email: 'y@example.com' }));
@@ -204,16 +204,16 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
                     venue: 'The Royal Hotel, Tugun', message: 'The TV shows a black screen', device: 'v1' };
   r = await call(helpPublicTicket, null, VENUE_PUB);
   t = r.body && T(r.body.ticket_no);
-  check('a venue on /help makes VENUE support from the web form, VenuePlay', r.status === 200 && t && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'web_form', t);
+  check('a venue on /help makes VENUE support from the web form, venueplay', r.status === 200 && t && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'web_form', t);
   // 29 Oct 2026: the typed venue is soft-matched now (one confident match only). "The Royal Hotel, Tugun" is one venue here.
   check('the venue it typed is on the ticket for a person to read, and its one matching venue is attached', t && /^Venue help at The Royal Hotel, Tugun: /.test(t.subject) && /^Venue \(as typed\): The Royal Hotel, Tugun\n\nThe TV/.test(t.message) && t.venue_id === VA && t.venue_matched_by === 'name', t);
-  check('its alert says Venue support', sent.some(function (m) { return /^\[VenuePlay\] Venue support \[#/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
+  check('its alert says Venue support', sent.some(function (m) { return /^\[venueplay\] Venue support \[#/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
   r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { category: 'accounts', device: 'v2', email: 'acc@royalhotel.com.au' }));
   check('"Billing or an invoice" on /help makes an ACCOUNTS ticket', r.status === 200 && T(r.body.ticket_no).category === 'accounts', T(r.body.ticket_no));
   r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { category: 'sales', device: 'v3', email: 'v3@royalhotel.com.au' }));
   check('anything else the page could send as a venue category is venue support, never sales or a made-up kind', r.status === 200 && T(r.body.ticket_no).category === 'venue_support', T(r.body.ticket_no));
   r = await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { kind: 'sales', category: 'sales', device: 'v4', email: 'v4@royalhotel.com.au' }));
-  check('"Bringing VenuePlay to my venue" is a SALES ticket from the web form, and keeps the venue it typed', r.status === 200 && T(r.body.ticket_no).category === 'sales' && T(r.body.ticket_no).channel === 'web_form' && / at The Royal Hotel, Tugun/.test(T(r.body.ticket_no).subject), T(r.body.ticket_no));
+  check('"Bringing venueplay to my venue" is a SALES ticket from the web form, and keeps the venue it typed', r.status === 200 && T(r.body.ticket_no).category === 'sales' && T(r.body.ticket_no).channel === 'web_form' && / at The Royal Hotel, Tugun/.test(T(r.body.ticket_no).subject), T(r.body.ticket_no));
   check('PartyPlay has no venues: kind venue is refused there', (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { brand: 'partyplay', device: 'v5', email: 'v5@example.com' }))).status === 400);
   r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { code: '', venue: 'The Anchor', game: '', device: 'p9', email: 'p9@example.com' }));
   t = T(r.body.ticket_no);
@@ -225,7 +225,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   world();
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', phone: '0400000000', message: 'Pricing for 3 venues?' });
   t = DB.vp_help_tickets[0];
-  check('an enquiry is now a VenuePlay sales ticket from the web form', r.status === 200 && t && t.category === 'sales' && t.channel === 'web_form' && t.brand === 'venueplay', t);
+  check('an enquiry is now a venueplay sales ticket from the web form', r.status === 200 && t && t.category === 'sales' && t.channel === 'web_form' && t.brand === 'venueplay', t);
   var enq = sent.filter(function (m) { return m.to.indexOf('sales@venueplay.com.au') !== -1; })[0];
   check('the enquiry email goes to sales@ ONLY (one copy: Dean, 30 Oct 2026), with the ticket number in its subject', !!enq && /\[#1001\]/.test(enq.subject) && enq.to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return [m.to, m.subject]; }));
   var enqAck = sent.filter(function (m) { return m.to.join() === 'lee@pub.com.au'; });
@@ -243,7 +243,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   t = DB.vp_help_tickets[0];
   check('a host at the venue can raise one', r.status === 200 && t && t.venue_id === VA && t.channel === 'venue_form' && t.category === 'venue_support' && t.brand === 'venueplay', r);
   check('it answers with the number and nothing else (not even the account email it will reply to)', Object.keys(r.body).sort().join() === 'ok,ticket_no', r.body);
-  check('a game is open at the venue, so it is URGENT without anyone ticking anything, and the alert says so', t.priority === 'urgent' && sent.some(function (m) { return /^\[VenuePlay\] URGENT Venue support/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
+  check('a game is open at the venue, so it is URGENT without anyone ticking anything, and the alert says so', t.priority === 'urgent' && sent.some(function (m) { return /^\[venueplay\] URGENT Venue support/.test(m.subject); }), sent.map(function (m) { return m.subject; }));
   check('and HQ is told why: a note on the ticket says a game was open', notesOf(t).some(function (n) { return /Urgent because a game was open at The Royal Hotel/.test(n.body); }), notesOf(t));
   check('the reply goes to the address the host gave; the host\'s mobile is attached', t.contact_email === 'hayley@example.com' && t.contact_phone === '+61400000002' && t.contact_name === 'Hayley', t);
   DB.auth.push({ id: MKT_A, email: 'mkt@royalhotel.com.au' });
@@ -331,23 +331,23 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   sent.length = 0;
   var rp = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Refunded the second charge.' });
   var m = sent[0];
-  check('an accounts reply goes from VenuePlay accounts, replies to accounts@', rp.status === 200 && m && m.from === 'VenuePlay Accounts <accounts@send.venueplay.com.au>' && m.reply_to === 'accounts@venueplay.com.au', m && [m.from, m.reply_to]);
+  check('an accounts reply goes from venueplay accounts, replies to accounts@', rp.status === 200 && m && m.from === 'venueplay Accounts <accounts@send.venueplay.com.au>' && m.reply_to === 'accounts@venueplay.com.au', m && [m.from, m.reply_to]);
   check('to the contact, the subject a person would write: "Re: <their subject> (ticket 1002, ref XXXX-XXXX)", the reference made from its secret', m && m.to.join() === 'owner@royalhotel.com.au' && m.subject === 'Re: ' + T(1002).subject + ' (ticket 1002, ref ' + helpRef(T(1002).reply_token) + ')' && m.subject.indexOf(T(1002).reply_token) === -1 && T(1002).reply_token.length === 12 && helpRef(T(1002).reply_token) !== helpRef(T(1001).reply_token), m && [m.subject, T(1002).reply_token]);
-  check('the reply has a text part beside the HTML, the same words, signed by the admin who sent it', m && m.text === helpPlainFromHtml(m.html) && m.text.indexOf('Refunded the second charge.') === 0 && /\nKind Regards\n\nDean\nVenuePlay\n\nP 07 5228 3667\nE accounts@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(m.text) && oneLogo(m.html, false), m && m.text);
+  check('the reply has a text part beside the HTML, the same words, signed by the admin who sent it', m && m.text === helpPlainFromHtml(m.html) && m.text.indexOf('Refunded the second charge.') === 0 && /\nKind Regards\n\nDean\nvenueplay\n\nP 07 5228 3667\nE accounts@venueplay\.com\.au\nW venueplay\.com\.au\n/.test(m.text) && oneLogo(m.html, false), m && m.text);
   /* Links look like links, and a reply that signs off itself gets no second sign-off (Dean, 29 Oct 2026). */
   var lk = helpReplyHtml(T(1002), 'On the TV, open venueplay.com.au/tv?royal-hotel. Or https://example.com/a?b=1&c=2, or email jo@example.com.\n<b>not markup</b> www.x.com.\n\nCheers,', 'support@venueplay.com.au', 'Dean');
   check('a web address or email address in a reply is a pink underlined link; what was typed stays the words; nothing typed becomes markup', lk.indexOf('<a href="https://venueplay.com.au/tv?royal-hotel" class="hd-a" style="color:#C70F69;text-decoration:underline">venueplay.com.au/tv?royal-hotel</a>.') !== -1
     && lk.indexOf('<a href="https://example.com/a?b=1&amp;c=2" class="hd-a"') !== -1 && lk.indexOf('>https://example.com/a?b=1&amp;c=2</a>,') !== -1
     && lk.indexOf('<a href="mailto:jo@example.com" class="hd-a"') !== -1 && lk.indexOf('&lt;b&gt;not markup&lt;/b&gt;') !== -1 && lk.indexOf('<a href="https://www.x.com" class="hd-a"') !== -1
     && helpPlainFromHtml(lk).indexOf('On the TV, open venueplay.com.au/tv?royal-hotel. Or https://example.com/a?b=1&c=2, or email jo@example.com.\n<b>not markup</b> www.x.com.') === 0, helpPlainFromHtml(lk).slice(0, 200));
-  check('a reply ending "Cheers," gets no "Kind Regards" under it; one that does not sign off gets it', lk.indexOf('Kind Regards') === -1 && /Cheers,\n\nDean\nVenuePlay\n/.test(helpPlainFromHtml(lk)) && m.text.indexOf('Kind Regards') !== -1);
+  check('a reply ending "Cheers," gets no "Kind Regards" under it; one that does not sign off gets it', lk.indexOf('Kind Regards') === -1 && /Cheers,\n\nDean\nvenueplay\n/.test(helpPlainFromHtml(lk)) && m.text.indexOf('Kind Regards') !== -1);
   check('every link in the signature and the acknowledgement is pink and underlined, none plain', (m.html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('class="hd-a" style="color:#C70F69;text-decoration:underline"') !== -1; }) && (acks[0].html.match(/<a\b[^>]*>/g) || []).every(function (a) { return a.indexOf('text-decoration:underline') !== -1; }), m.html.match(/<a\b[^>]*>/g));
   check('the reply is a whole document in the VenuePlay card, ending on the ticket line and "VenuePlay \u00b7 ABN", with no Gflam', m && /^<!doctype html>/i.test(m.html) && brandFoot(m.html, false) && /Ticket 1002 \(ref [A-Z0-9-]+\)\. To add anything, just reply to this email\.\nVenuePlay - ABN 35 679 383 049\.\n$/.test(m.text), m && m.text);
   check('it carries the ABN and a way to reach us', m && /ABN 35 679 383 049/.test(m.html) && /accounts@venueplay\.com\.au/.test(m.html));
   check('the reply is recorded on the ticket, which now waits on them', notesOf(T(1002)).some(function (n) { return n.kind === 'reply' && /Refunded/.test(n.body); }) && T(1002).status === 'waiting');
   sent.length = 0;
   await call(helpAdminReply, ADMIN, { id: T(1001).id, body: 'Fixed.' });
-  check('a support reply goes from VenuePlay support', sent[0] && sent[0].from === 'VenuePlay Support <support@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au');
+  check('a support reply goes from venueplay support', sent[0] && sent[0].from === 'venueplay Support <support@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au');
   sent.length = 0;
   await call(helpAdminReply, ADMIN, { id: T(1003).id, body: 'Try the code again.' });
   check('a PartyPlay reply goes from PartyPlay support, in PartyPlay branding', sent[0] && sent[0].from === 'PartyPlay Support <support@send.partyplay.com.au>' && sent[0].reply_to === 'support@partyplay.com.au' && /PartyPlay/.test(sent[0].html) && !/VenuePlay/.test(sent[0].html), sent[0] && sent[0].from);
@@ -408,7 +408,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   async function inbound(to, raw) { return await helpInboundEmail({ to: to, from: 'bounce@srs.migadu.com', raw: raw }, ENV); }
   var e1 = await inbound('support@help.venueplay.com.au', mail({}));
   t = DB.vp_help_tickets[0];
-  check('support@ makes a VenuePlay venue-support ticket from the email', e1.action === 'ticket' && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'email' && t.source_address === 'support@venueplay.com.au', t);
+  check('support@ makes a venueplay venue-support ticket from the email', e1.action === 'ticket' && t.brand === 'venueplay' && t.category === 'venue_support' && t.channel === 'email' && t.source_address === 'support@venueplay.com.au', t);
   check('the sender comes from the From header, not the forwarded envelope', t.contact_email === 'jo@example.com' && t.contact_name === 'Jo Bloggs', t);
   check('the same email delivered twice is one ticket (Message-ID)', (await inbound('support@help.venueplay.com.au', mail({}))).action === 'duplicate' && DB.vp_help_tickets.length === 1);
   check('accounts@ is accounts', (await inbound('accounts@help.venueplay.com.au', mail({ mid: '<m2@x>' }))).action === 'ticket' && DB.vp_help_tickets[1].category === 'accounts');
@@ -425,7 +425,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var wrongTok = await inbound('support@help.venueplay.com.au', mail({ mid: '<r00@x>', subject: 'Re: [#' + first.ticket_no + '-AAAAAAAAAAAA]' }));
   check('a made-up secret starts a new ticket too', wrongTok.action === 'ticket' && notesOf(first).filter(function (x) { return x.kind === 'email_in'; }).length === 0, wrongTok);
   var re = await inbound('support@help.venueplay.com.au', mail({ mid: '<r1@x>', subject: 'Re: Help with the TV [#' + first.ticket_no + '-' + first.reply_token + ']',
-    body: 'Still blank after a restart.\r\n\r\nOn Mon, 19 Oct 2026 at 10:02, VenuePlay Support <support@send.venueplay.com.au> wrote:\r\n> Try turning it off and on.' }));
+    body: 'Still blank after a restart.\r\n\r\nOn Mon, 19 Oct 2026 at 10:02, venueplay Support <support@send.venueplay.com.au> wrote:\r\n> Try turning it off and on.' }));
   var n = notesOf(first).filter(function (x) { return x.kind === 'email_in'; })[0];
   check('a reply quoting the number and the secret goes onto that ticket as a note', re.action === 'note' && n && DB.vp_help_tickets.length === 8, re);
   check('a new ticket by email was acknowledged once; a reply onto a ticket is not acknowledged again', sent.filter(function (m) { return m.to.join() === 'jo@example.com' && m.subject.indexOf('Thanks, we\'ve got your message (ticket ' + first.ticket_no + ', ref ') === 0; }).length === 1, sent.filter(function (m) { return m.to.join() === 'jo@example.com'; }).map(function (m) { return m.subject; }));
@@ -534,7 +534,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('but not to anything else in this Worker', (await preflight('/account/summary', 'https://partyplay.com.au')) !== 'https://partyplay.com.au');
   check('nor to /admin/help', (await preflight('/admin/help/list', 'https://partyplay.com.au')) !== 'https://partyplay.com.au');
   check('a look-alike domain is not let in', (await preflight('/help/ticket', 'https://partyplay.com.au.evil.example')) !== 'https://partyplay.com.au.evil.example');
-  check('VenuePlay pages still are', (await preflight('/help/ticket', 'https://www.venueplay.com.au')) === 'https://www.venueplay.com.au');
+  check('venueplay pages still are', (await preflight('/help/ticket', 'https://www.venueplay.com.au')) === 'https://www.venueplay.com.au');
 
   print('HELP CONTENT: THE WORDS A PANEL GETS');
   function contentWorld() {
@@ -746,7 +746,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   world();
   var CENV = Object.assign({}, ENV, { HELP_ALERT_DAILY_CAP: '3' });
   for (i = 0; i < 5; i++) await helpPublicTicket(req(null, Object.assign({}, PATRON, { device: 'cap-' + i, email: 'cap' + i + '@example.com' }), { ip: 60 + i }), CENV, J);
-  var alerts = sent.filter(function (m2) { return /^\[VenuePlay\]/.test(m2.subject); }), paused = sent.filter(function (m2) { return /Alerts paused/.test(m2.subject); });
+  var alerts = sent.filter(function (m2) { return /^\[venueplay\]/.test(m2.subject); }), paused = sent.filter(function (m2) { return /Alerts paused/.test(m2.subject); });
   var capAcks = sent.filter(function (m2) { return /^Thanks, we've got your message/.test(m2.subject); });
   check('five tickets on a day capped at three: three alerts, then one "alerts paused" email, three acknowledgements (their own cap), and no more', alerts.length === 3 && paused.length === 1 && capAcks.length === 3 && sent.length === 7, sent.map(function (m2) { return m2.subject; }));
   check('every one of the five tickets was still made', DB.vp_help_tickets.length === 5);
@@ -813,7 +813,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   print('ONE WIDGET, TWO SITES; AND THE WORDS');
   check('partyplay/lib/vp-help.js is byte for byte venueplay/app/vp-help.js', readFile('partyplay/lib/vp-help.js') === readFile('venueplay/app/vp-help.js'));
   var VPF = JSON.parse(readFile('venueplay/data/help-faq.json')), PPF = JSON.parse(readFile('partyplay/data/help-faq.json'));
-  check('the VenuePlay FAQ has its patron and venue sections', VPF.patron.items.length >= 6 && VPF.venue.items.length >= 6);
+  check('the venueplay FAQ has its patron and venue sections', VPF.patron.items.length >= 6 && VPF.venue.items.length >= 6);
   check('the PartyPlay FAQ has its guest and host sections', PPF.guest.items.length >= 5 && PPF.host.items.length >= 5);
   function words(f) { var out = []; ['patron', 'venue', 'guest', 'host'].forEach(function (k) { (f[k] && f[k].items || []).forEach(function (i) { out.push(i.q + ' ' + i.a); }); }); return out.join('\n'); }
   var allWords = words(VPF) + '\n' + words(PPF);

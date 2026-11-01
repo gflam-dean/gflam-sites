@@ -61,7 +61,7 @@
   function fellBack(search, remembered) {
     if (search == null) search = (root.location && root.location.search) || "";
     if (!unread(search)) return false;
-    try { root.console.warn("VenuePlay: no venue could be read from the address \"" + search + "\", so this screen is showing the venue this browser remembered: " + remembered + ". Open /tv?venue=<your-venue> to choose."); } catch (e) {}
+    try { root.console.warn("venueplay: no venue could be read from the address \"" + search + "\", so this screen is showing the venue this browser remembered: " + remembered + ". Open /tv?venue=<your-venue> to choose."); } catch (e) {}
     return true;
   }
   root.VPVenueURL = { slug: slug, unread: unread, fellBack: fellBack };

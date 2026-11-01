@@ -356,7 +356,7 @@ function world() {
   check('a batch of one does one venue a tick', afterOne === 1, afterOne);
 
 
-  print('what\'s new at VenuePlay: written once in HQ, in every venue\'s one email');
+  print('what\'s new at venueplay: written once in HQ, in every venue\'s one email');
   world();
   var GOOD = [{ title: 'Custom bingo patterns', text: 'Draw your own pattern for the last game.', link: 'https://venueplay.com.au/help' },
               { title: 'Melbourne Cup is on 3 November', text: 'Run a sweep with a raffle.' }];
@@ -376,11 +376,11 @@ function world() {
   check('saving again changes the one row, now ready', sv2.status === 200 && DB.vp_monthly_news.length === 1 && DB.vp_monthly_news[0].ready === true && DB.vp_monthly_news[0].items.length === 3, DB.vp_monthly_news);
   check('reading it back gives what was saved', (await call(vpaHandleMonthNews, ADMIN, { action: 'get', month: '2026-10' })).body.items.length === 3);
   var pv = await call(vpaHandleMonthNews, ADMIN, { action: 'preview', month: '2026-10', items: GOOD });
-  check('the preview is the real email for Test Alpha, with the words as typed', pv.status === 200 && pv.body.venue_name === 'Test Alpha' && /What's new at VenuePlay/.test(pv.body.html) && /Custom bingo patterns/.test(pv.body.html), pv.body.error);
+  check('the preview is the real email for Test Alpha, with the words as typed', pv.status === 200 && pv.body.venue_name === 'Test Alpha' && /What's new at venueplay/.test(pv.body.html) && /Custom bingo patterns/.test(pv.body.html), pv.body.error);
   var ENVON2 = Object.assign({}, ENV, { MONTHLY_REPORTS: 'on', VP_UNSUB_SECRET: 'u' });
   await vprMonthlySweep(ENVON2, Date.parse('2026-10-31T17:00:00Z'));
   var rm = sent.filter(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; })[0];
-  check('one email: the report first, then the news', rm && rm.html.indexOf('Compared with September') !== -1 && rm.html.indexOf('What\'s new at VenuePlay') > rm.html.indexOf('Compared with September'), rm && rm.subject);
+  check('one email: the report first, then the news', rm && rm.html.indexOf('Compared with September') !== -1 && rm.html.indexOf('What\'s new at venueplay') > rm.html.indexOf('Compared with September'), rm && rm.subject);
   check('the same news in every venue\'s email (four venues: the test venue is left out)', sent.every(function (m) { return m.html.indexOf('Melbourne Cup is on 3 November') !== -1; }) && sent.length === 4);
   check('what HQ typed is escaped, never run', rm.html.indexOf('<script>') === -1 && rm.html.indexOf('&lt;script&gt;') !== -1);
   check('it says it is the one email a month, and the report is always in the account', /the one email we send you each month/.test(rm.html) && /always in your account/.test(rm.html));

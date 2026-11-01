@@ -118,7 +118,7 @@ async function main() {
   var f = last(), ft = visible(f.html);
   check('CONTROL: the declined-card email was sent', !!f.html, f.subject);
   clean('declined card (subscription)', ft + ' ' + (f.subject || ''));
-  check('a subscription invoice says "for your VenuePlay subscription"', ft.indexOf('for your VenuePlay subscription') !== -1, ft.slice(0, 300));
+  check('a failed payment says "for your venueplay subscription" (it is not a receipt, so the name is lowercase)', ft.indexOf('for your venueplay subscription') !== -1, ft.slice(0, 300));
   check('it carries the business name line now: "' + NAME_LINE + '"', ft.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, ft.slice(-300));
   sent = [];
   await vpaFirePaymentFailedEmail(ENV, invoice({ billing_reason: 'manual', lines: { data: [{ description: '2 × Founding Membership (Monthly) (at $2.50 / month)', amount: 500 }] } }), { moved: false }, { code: 'insufficient_funds', message: '' });

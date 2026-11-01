@@ -101,12 +101,12 @@
           }
           // One answer whatever happened, so this page never says whether an address has a login.
           rb.hidden = true;
-          rm.textContent = "Done. If " + (got.e ? got.e : "that address") + " is on a VenuePlay login, a new link is on its way. It can take a minute, so check your junk folder too.";
+          rm.textContent = "Done. If " + (got.e ? got.e : "that address") + " is on a venueplay login, a new link is on its way. It can take a minute, so check your junk folder too.";
           return "sent";
         })
         .catch(function () {
           rb.disabled = false; rb.textContent = got.t ? "Send me a new link" : "Send me a sign-in link";
-          rm.className = "okmsg warn"; rm.textContent = "We could not reach VenuePlay. Check your connection and try again.";
+          rm.className = "okmsg warn"; rm.textContent = "We could not reach venueplay. Check your connection and try again.";
           return "offline";
         });
     }
@@ -126,7 +126,7 @@
         })
         .then(function (d) {
           if (d && d.busy) {
-            busy = false; btn.disabled = false; btn.textContent = "Open my VenuePlay";
+            busy = false; btn.disabled = false; btn.textContent = "Open my venueplay";
             msg.textContent = "Lots of tries from this network just now. Wait a few minutes, then tap again.";
             return null;
           }

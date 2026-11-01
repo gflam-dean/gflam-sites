@@ -164,7 +164,7 @@
       free: { all: ['In Victoria a free-entry draw is a trade promotion: no permit.'],
               /* Dean's ruling (28 Oct 2026, over the letter's table p.8): free number bingo may be run AND
                  advertised. Only PAID bingo is restricted, and only a non-profit may charge for it here. */
-              bingo: ['Free-entry bingo needs no permit (s8.2.4A): entry is free, and in Victoria every ticket is a printed ticket. The calling and the big screen run on VenuePlay as normal.',
+              bingo: ['Free-entry bingo needs no permit (s8.2.4A): entry is free, and in Victoria every ticket is a printed ticket. The calling and the big screen run on venueplay as normal.',
                       'No minors may take part in bingo in Victoria, free or paid, and players must be physically present.'],
               raffle: ['A free-entry raffle is a trade promotion: no permit, and entry is free apart from goods or services at their normal price.'],
               members: ['A members draw is a trade promotion: no permit, entry free.'] },
@@ -200,7 +200,7 @@
       phones: { bingo: true },
       /* Anisimoff, 1 Oct 2026, point 4: the certification is the applicant's to provide, from a
          university or a reputable accounting firm, and we can lodge ours with the Commission once. */
-      warn: 'A raffle drawn by our number generator needs independent certification that it picks at random, from a university or a reputable accounting firm, before the Commission grants the permit. The applicant provides it, and VenuePlay can lodge ours with the Commission (rgl@lgirs.wa.gov.au) once so that venues do not each have to. Ask us where that is up to before you apply.',
+      warn: 'A raffle drawn by our number generator needs independent certification that it picks at random, from a university or a reputable accounting firm, before the Commission grants the permit. The applicant provides it, and venueplay can lodge ours with the Commission (rgl@lgirs.wa.gov.au) once so that venues do not each have to. Ask us where that is up to before you apply.',
       for_profit: {
         bingo:  { paid: 'no', notes: ['No private gain is permitted at all in WA, so a for-profit venue cannot charge for entry. Free entry as a trade promotion is open to you, with any electronic entry cost capped at 55c.'] },
         raffle: { paid: 'cause', notes: ['No private gain is permitted. A pub can host a raffle for a cause, but the permitted body conducts it and holds the permit.'] },
@@ -703,7 +703,7 @@
   function declaration(venueName) {
     return 'I confirm that ' + (venueName || 'this venue') + ' is the conductor of this game. ' +
            'We provide the prize, we handle any ticket sales and we keep the proceeds. ' +
-           'VenuePlay supplies the software only. We are responsible for meeting the rules ' +
+           'venueplay supplies the software only. We are responsible for meeting the rules ' +
            'for our category, including any licence, and with every law that applies to this ' +
            'game, including permits, attendance and age rules.';
   }

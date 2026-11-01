@@ -29,7 +29,7 @@ self.addEventListener("push", function (e) {
   e.waitUntil(whatArrived().then(function (d) {
     var title = "Help desk", body = "Something new has come in.", url = "/app/hq.html#helpdesk";
     if (d && d.ticket_no) {
-      title = "[" + (d.brand === "partyplay" ? "PartyPlay" : "VenuePlay") + "] " + (d.urgent ? "URGENT " : "") + (d.label || "New ticket");
+      title = "[" + (d.brand === "partyplay" ? "PartyPlay" : "venueplay") + "] " + (d.urgent ? "URGENT " : "") + (d.label || "New ticket");
       body = "Ticket #" + d.ticket_no + (d.count > 1 ? " and " + (d.count - 1) + " more" : "") + ". Tap to open it.";
       url = "/app/hq.html#help-" + d.ticket_no;
     }

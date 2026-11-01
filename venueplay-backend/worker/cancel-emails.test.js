@@ -216,7 +216,7 @@ await vpaFireCancelConfirm(env, {venueId:"v1", name:"The Pub", ends:"18 Septembe
   players:20, rateCents:250, rate:"$2.50", founding:true, contactName:"Dean Tindale"});
 var near=SENT[0]||{subject:"",html:""};
 pass("cancelling one day out sends the GOODBYE, not the confirmation",
-     near.subject.indexOf("last day on VenuePlay")!==-1, near.subject);
+     near.subject.indexOf("last day on venueplay")!==-1, near.subject);
 /* Dean, 17 Sep 2026: "just send the second one if they are inside the window." ONE email,
    not both. Two arriving a second apart, one of them saying less than the other, reads as a
    system with a stutter and buries the one that matters. */
@@ -242,11 +242,11 @@ pass("and it wishes them well",
    quietly record no deliveries at all and look identical to a webhook nobody configured. */
 eval("var VPA_LEAVING_SUBJECT=" + (/const VPA_LEAVING_SUBJECT = (\/.*\/i);/.exec(BILL)||[,"/$^/"])[1] + ";");
 pass("the leaving-subject pattern matches BOTH real subjects",
-     VPA_LEAVING_SUBJECT.test("Friday is your last day on VenuePlay")
-     && VPA_LEAVING_SUBJECT.test("Your VenuePlay cancellation is confirmed - last day 19 September 2026"));
+     VPA_LEAVING_SUBJECT.test("Friday is your last day on venueplay")
+     && VPA_LEAVING_SUBJECT.test("Your venueplay cancellation is confirmed - last day 19 September 2026"));
 pass("and does not match the everyday mail",
      !VPA_LEAVING_SUBJECT.test("Your VenuePlay receipt")
-     && !VPA_LEAVING_SUBJECT.test("Welcome to VenuePlay")
+     && !VPA_LEAVING_SUBJECT.test("Welcome to venueplay")
      && !VPA_LEAVING_SUBJECT.test("Your upcoming payment"));
 pass("the webhook records delivery for a leaving email, and ignores the rest",
      /email\.delivered/.test(BILL) && /venue_leaving_email_delivered/.test(BILL)
@@ -302,7 +302,7 @@ var r1=await sweepWith("2026-09-18",8,false);
 pass("two days out at 8am, they are told", r1.sent===1 && SENT.length===2, "sent "+SENT.length+" email(s)");
 var d=SENT[0]||{subject:"",html:""};
 pass("the subject NAMES THE DAY, which is what a publican plans around",
-     d.subject==="Friday is your last day on VenuePlay", d.subject);
+     d.subject==="Friday is your last day on venueplay", d.subject);
 pass("the body names the day too", d.html.indexOf("Friday is your last day")!==-1);
 pass("it says they keep that night in full, right through to close",
      d.html.indexOf("keep that night in full")!==-1);

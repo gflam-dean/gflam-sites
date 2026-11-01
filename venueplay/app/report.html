@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>VenuePlay · Your month</title>
+<title>venueplay · Your month</title>
 <link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,7 +66,7 @@
 <header><div class="bar">
   <div class="brand">
     <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
-    <span class="div"></span><span class="word">VenuePlay</span>
+    <span class="div"></span><span class="word">venueplay</span>
   </div>
   <span class="tag">Your month</span>
   <span class="hactions">
@@ -138,7 +138,7 @@
     if(!imp || !imp.id || document.getElementById("vpImpBar")) return;
     var bar=document.createElement("div"); bar.id="vpImpBar";
     bar.style.cssText="background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
-    bar.innerHTML='<span>The monthly report for <b>'+esc(imp.name||"this venue")+'</b>, viewed from VenuePlay Admin</span><a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
+    bar.innerHTML='<span>The monthly report for <b>'+esc(imp.name||"this venue")+'</b>, viewed from venueplay Admin</span><a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to venueplay Admin</a>';
     if(window.VP && VP.statusBar) VP.statusBar("viewas", bar); else document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ try{ localStorage.removeItem("vpImpersonate"); }catch(e){} window.location.href="hq.html"; });
   })();

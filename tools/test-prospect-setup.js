@@ -294,8 +294,8 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   check('ONE audit row: who set it up, the venue, compliance pending, the slides, the website and that the email went',
     au.length === 1 && au[0].actor_admin === ADMIN && au[0].actor_label === 'Dean' && au[0].target === 'venue:' + v.id && ad.compliance === 'pending' && ad.terms_required === true &&
     ad.slides === 2 && ad.website === 'https://cazreitop.com.au' && ad.welcome_sent === true && ad.email === 'cazreitop@gmail.com' && ad.players === 60, au);
-  check('ONE email, to the contact, from VenuePlay hello@ on the transactional sender, replies to hello@ (Dean, 29 Oct 2026: "it all should come from hello"), subject "Your VenuePlay account for <venue>"', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
-    sent[0].from === 'VenuePlay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'hello@venueplay.com.au' && sent[0].subject === "Your VenuePlay account for Caz Reitop's Dirty Secrets", sent[0] && [sent[0].from, sent[0].subject]);
+  check('ONE email, to the contact, from venueplay hello@ on the transactional sender, replies to hello@ (Dean, 29 Oct 2026: "it all should come from hello"), subject "Your venueplay account for <venue>"', sent.length === 1 && sent[0].to[0] === 'cazreitop@gmail.com' &&
+    sent[0].from === 'venueplay <hello@send.venueplay.com.au>' && sent[0].reply_to === 'hello@venueplay.com.au' && sent[0].subject === "Your venueplay account for Caz Reitop's Dirty Secrets", sent[0] && [sent[0].from, sent[0].subject]);
   var due = sent[0] && Date.parse(sent[0].scheduled_at);
   check('it is BOOKED for 90 minutes on (the default), not sent at once: Resend holds it (scheduled_at)', sent[0] && typeof sent[0].scheduled_at === 'string' && Math.abs(due - Date.now() - 90 * 60000) < 60000, sent[0] && sent[0].scheduled_at);
   check('HQ is told when it goes', r.body.welcome && r.body.welcome.status === 'scheduled' && Date.parse(r.body.welcome.send_at) === due, r.body.welcome);
@@ -339,7 +339,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   var before = snap();
   r = await vpaHandleProspect(as(ACCOUNTS, with_({ slides: [] })), ENV, J);
   check('an email that already signs in: refused with a reason HQ can act on, and NOTHING created',
-    r.status === 409 && /already has a VenuePlay login/.test(r.body.error) && /Nothing was created/.test(r.body.error) &&
+    r.status === 409 && /already has a venueplay login/.test(r.body.error) && /Nothing was created/.test(r.body.error) &&
     DB.vp_venues.length === 0 && DB.venueplay_founding.length === 0 && sent.length === 0 && AUTH_POSTS.length === 0, r.body);
   check('that login is untouched and gets no new venue', snap() === before && AUTH_PUTS.length === 0 &&
     DB.vp_venue_staff.filter(function (x) { return x.auth_user_id === U(50); }).length === 1, DB.vp_venue_staff);
@@ -354,7 +354,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     AUTH_PUTS.length === 0 && JSON.stringify(AUTH.filter(function (x) { return x.id === U(51); })) === JSON.stringify(JSON.parse(before)) && st3.auth_user_id !== U(51), [AUTH_PUTS, st3]);
   check('instead a separate email-only login is made for the prospect, without the mobile',
     AUTH_POSTS.length === 1 && made.email === 'cazreitop@gmail.com' && made.email_confirm === true && !made.phone && !made.phone_confirm && st3.auth_user_id === AUTH[1].id, made);
-  check('and HQ is told, in words it can act on', (r.body.warnings || []).indexOf('This mobile already has a VenuePlay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.') !== -1 &&
+  check('and HQ is told, in words it can act on', (r.body.warnings || []).indexOf('This mobile already has a venueplay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.') !== -1 &&
     r.body.login && r.body.login.email === 'cazreitop@gmail.com' && !r.body.login.mobile, r.body);
   check('and the email says nothing about signing in by mobile', sent.length === 1 && !/by text/.test(visible(sent[0].html)), sent[0] && visible(sent[0].html).slice(0, 100));
   world();
@@ -373,24 +373,24 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
     check(c[0] + ': it is a whole document with nothing left unfilled', /^<!doctype html>/i.test(html) && html.indexOf('{{') === -1 && html.indexOf('<!--IF:') === -1 && html.indexOf('ENDIF') === -1, (html.match(/\{\{[a-z_]+\}\}/g) || []).join(' '));
     if (c[0] === 'VIC') {
       /* VERSION 3 (Dean, 29 Oct 2026): a prospect with a mobile on their login signs in by a texted code. */
-      check(c[0] + ': ONE button, "Open your VenuePlay", and with a mobile on the login it opens the TEXT-CODE sign-in with their number filled in (no one-click link)', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
-        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=sms#m=0452510904"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('/app/go') === -1, L);
+      check(c[0] + ': ONE button, "Open your venueplay", and with a mobile on the login it opens the TEXT-CODE sign-in with their number filled in (no one-click link)', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
+        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=sms#m=0452510904"[^>]*>Open your venueplay<\/a>/.test(html) && html.indexOf('/app/go') === -1, L);
       check(c[0] + ': it says sign in with your mobile and we will text a code, and tells no "link works once, then your email" story', /It's your mobile, 0452 510 904\. Sign in with your mobile and we'll text you a code\./.test(txt) &&
         !/works once|straight in, once|email you a code|Next time/i.test(txt), txt.slice(0, 700));
     } else {
-      check(c[0] + ': ONE button, "Open your VenuePlay", and with no mobile it is the one-click link for their address', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
-        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}&e=[^"]+"[^>]*>Open your VenuePlay<\/a>/.test(html) && html.indexOf('&e=' + encodeURIComponent(c[2])) !== -1, L);
+      check(c[0] + ': ONE button, "Open your venueplay", and with no mobile it is the one-click link for their address', L.filter(function (h) { return /^https:\/\/www\.venueplay\.com\.au\/app\//.test(h); }).length === 1 &&
+        /<a href="https:\/\/www\.venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}&e=[^"]+"[^>]*>Open your venueplay<\/a>/.test(html) && html.indexOf('&e=' + encodeURIComponent(c[2])) !== -1, L);
       check(c[0] + ': and no "this link works once, next time sign in with your email" story', !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 700));
     }
     check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
     check(c[0] + ': the price in one line: $2.50 a player a month on your usual crowd, first month free, no lock-in', /It's \$2\.50 a player a month on your usual crowd while the November offer runs, first month free, no lock-in\./.test(txt), txt);
-    check(c[0] + ': with no sender given (HQ), signed by the VenuePlay team with the website', /Cheers, The VenuePlay team venueplay\.com\.au/.test(txt) && !/Cheers, Dean/.test(txt), txt);
+    check(c[0] + ': with no sender given (HQ), signed by the venueplay team with the website', /Cheers, The venueplay team venueplay\.com\.au/.test(txt) && !/Cheers, Dean/.test(txt), txt);
     check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
-    check(c[0] + ': on brand (version 3): the VenuePlay logo in the dark header, as every VenuePlay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
-      /background:#12101a[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay_primary_rebuilt\.png"[^>]*alt="VenuePlay"/.test(html));
-    check(c[0] + ': who we are (VenuePlay and its ABN, never Gflam: Dean, 29 Oct 2026), the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up VenuePlay for/.test(txt) && /VenuePlay\s*\.\s*ABN 35 679 383 049/.test(txt) && !/Gflam/i.test(html) &&
+    check(c[0] + ': on brand (version 3): the venueplay logo in the dark header, as every venueplay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
+      /background:#12101a[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay_primary_rebuilt\.png"[^>]*alt="venueplay"/.test(html));
+    check(c[0] + ': who we are (VenuePlay and its ABN, never Gflam: Dean, 29 Oct 2026), the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up venueplay for/.test(txt) && /VenuePlay\s*\.\s*ABN 35 679 383 049/.test(txt) && !/Gflam/i.test(html) &&
       L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[2])) !== -1 && L.indexOf('tel:+61752283667') !== -1 && L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1, L);
-    check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your VenuePlay (https://www.venueplay.com.au/app/' + (c[0] === 'VIC' ? '?signin=sms#m=0452510904' : 'go#t=')) !== -1, msg.text);
+    check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your venueplay (https://www.venueplay.com.au/app/' + (c[0] === 'VIC' ? '?signin=sms#m=0452510904' : 'go#t=')) !== -1, msg.text);
     check(c[0] + ': no em dash or en dash anywhere in what they read', !/[—–]/.test(txt) && !/&mdash;|&ndash;/.test(html) && !/[—–]/.test(msg.text || ''));
     check(c[0] + ': no urgency or push (Dean, 28 Oct 2026)', !/don't miss|do not miss|hurry|limited time|act now|today only|last chance|before it's gone|spots? left|we have set you up/i.test(txt), txt.slice(0, 300));
   });

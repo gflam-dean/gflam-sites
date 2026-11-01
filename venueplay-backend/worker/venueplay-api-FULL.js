@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 12:34 · 08ffdfc7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 13:09 · 2b1a8daf';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -573,7 +573,7 @@ async function handleCheckout(request, env, json) {
        mistake; or they have moved pubs and are using the same address for the new one, which is
        the one case where "add a venue" is the WRONG advice, because they do not want their old
        pub on their new bill. */
-    return json({ error: 'That email already has a VenuePlay account with billing set up'
+    return json({ error: 'That email already has a venueplay account with billing set up'
       + (live.venue_name ? ' (' + live.venue_name + ')' : '') + '. '
       + 'If this is another venue for the same group, sign in and use Add a venue, so it all '
       + 'stays on one bill. If you have moved to a new venue and that account belongs to the old '
@@ -626,7 +626,7 @@ async function handleCheckout(request, env, json) {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            from: 'VenuePlay <hello@send.venueplay.com.au>',
+            from: 'venueplay <hello@send.venueplay.com.au>',
             to: ['dean@venueplay.com.au'],
             reply_to: email,
             subject: vpaAlertSubject('check', venues[0].name + ' (' + email + ')'),
@@ -1082,7 +1082,7 @@ async function handleContact(request, env, json) {
 
   const esc = (s) => String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const html =
-    '<h2>New VenuePlay enquiry' + (ticketNo ? ' (ticket #' + ticketNo + ')' : '') + '</h2>' +
+    '<h2>New venueplay enquiry' + (ticketNo ? ' (ticket #' + ticketNo + ')' : '') + '</h2>' +
     '<p><b>Name:</b> ' + esc(name) + '</p>' +
     '<p><b>Email:</b> ' + esc(email) + '</p>' +
     (phone ? '<p><b>Phone:</b> ' + esc(phone) + '</p>' : '') +
@@ -1092,7 +1092,7 @@ async function handleContact(request, env, json) {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'VenuePlay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
+      from: 'venueplay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
       to: ['sales@venueplay.com.au'],   // ONE copy, the sales mailbox (Dean, 30 Oct 2026: it came twice when it went to dean@ AND sales@)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
@@ -1873,7 +1873,7 @@ const VPA_VENUE_KINDS = ['pub', 'hotel', 'club', 'rsl', 'charity', 'association'
 const VPA_PERMIT_KINDS = ['bingo', 'raffle', 'members'];
 /* The tick, word for word. The two onboarding pages show this sentence and a suite checks they
    show THIS one, because a tick that reads differently from the record of it is not a record. */
-const VPA_COMPLIANCE_TICK = 'We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. VenuePlay supplies the software only.';
+const VPA_COMPLIANCE_TICK = 'We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.';
 /* The Terms a console acceptance is of: the effective date on venueplay/terms.html. A suite holds
    the two equal, so the record never names a version the page is not showing. */
 const VPA_TERMS_EFFECTIVE = '28 October 2026';
@@ -1984,7 +1984,7 @@ async function vpaHandleVenue(request, env, json) {
      before this line passes, so a refusal here leaves no half-made venue. */
   const comp = (b.compliance && typeof b.compliance === 'object') ? b.compliance : {};
   if (comp.accepted !== true) {
-    return json({ error: 'Tick the compliance line first. The venue must accept that it is responsible for the gaming laws that apply to it; VenuePlay supplies the software only. Nothing was created.' }, 400);
+    return json({ error: 'Tick the compliance line first. The venue must accept that it is responsible for the gaming laws that apply to it; venueplay supplies the software only. Nothing was created.' }, 400);
   }
   const acceptedBy = String(comp.by || '').trim().slice(0, 120);
   if (!acceptedBy) return json({ error: 'Enter the name of the person at the venue who accepted the compliance line, so the record says who said it.' }, 400);
@@ -2518,7 +2518,7 @@ function vpaReviewPage(title, inner, status) {
   const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">'
-    + '<title>' + vpaEsc(title) + ' | VenuePlay</title>'
+    + '<title>' + vpaEsc(title) + ' | venueplay</title>'
     + '<style>'
     + ':root{--bg:#0B0A0F;--card:#15131C;--card2:#1C1925;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E;--green:#1DB97A;--warn:#FFCF8A;--warnbg:#3A2A12}'
     + '*{box-sizing:border-box}html,body{margin:0}'
@@ -2548,7 +2548,7 @@ function vpaReviewPage(title, inner, status) {
     + '.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
     + '</style></head><body><main>'
     + '<div class="brand"><svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true">'
-    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>VenuePlay prospect review</div>'
+    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>venueplay prospect review</div>'
     + inner
     + '<p class="foot">Only you get these links. Nothing is sent to a venue from this page: your Mac does that, '
     + 'after every check, and emails you what it did.</p>'
@@ -2888,7 +2888,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   const byEmail = await vpaFindAuthUser(env, { email: email });
   const sameLogin = !!(byEmail && phone && String(byEmail.phone || '').replace(/[^\d]/g, '') === String(phone).replace(/[^\d]/g, ''));
   if (byEmail && !sameLogin) {
-    return json({ error: 'That email already has a VenuePlay login, so it cannot be set up as a new prospect from here. Check it is theirs, then add this venue from their own account (or + Add venue).' + NONE }, 409);
+    return json({ error: 'That email already has a venueplay login, so it cannot be set up as a new prospect from here. Check it is theirs, then add this venue from their own account (or + Add venue).' + NONE }, 409);
   }
   const phoneTaken = !sameLogin && !!(phone && await vpaFindAuthUser(env, { phone: phone }));
 
@@ -2925,7 +2925,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   let login = null;
   try {
     login = sameLogin ? { id: byEmail.id, mobile: true, existing: true } : await vpaProspectLogin(env, email, phoneTaken ? null : phone, name);
-    if (phoneTaken) warnings.push('This mobile already has a VenuePlay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.');
+    if (phoneTaken) warnings.push('This mobile already has a venueplay login; the prospect was set up with an email login only. Add their mobile after they confirm it is theirs.');
     await vpaInsert(env, 'vp_venue_staff', { venue_id: venue.id, auth_user_id: login.id, role: 'manager',
       display_name: firstName || 'Manager' }, false);
   } catch (e) {
@@ -3367,7 +3367,7 @@ async function vpaProspectCancel(request, env, json) {
   const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
     '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#12101a">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
-    '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="VenuePlay" style="display:block;border:0;height:auto"></div>' +
+    '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
     '<div style="padding:26px 24px"><h1 style="margin:0 0 12px;font-size:23px;line-height:1.3">' + vpaEsc(title) + '</h1><p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#3a3a44">' + body + '</p>' + (form || '') +
     '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">' + FOOT + '</p></div></div></div></body></html>',
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
@@ -3390,9 +3390,9 @@ async function vpaProspectCancel(request, env, json) {
   const v = vr && vr[0];
   if (!prow || !v) return page('That link has not worked', 'Call us on 07 5228 3667 and we will sort it out for you.');
   const name = vpaEsc(v.name || 'your venue');
-  if (prow.cancelled_at) return page('All done', 'VenuePlay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.');
+  if (prow.cancelled_at) return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again.');
   if (request.method !== 'POST') {
-    return page('Cancel VenuePlay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
+    return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
       '<button type="submit" style="display:inline-block;background:#12101a;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
   }
@@ -3403,7 +3403,7 @@ async function vpaProspectCancel(request, env, json) {
       body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled' }) });
   }
   await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name });
-  return page('All done', 'VenuePlay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
+  return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
 }
 /* A card has come in (the Checkout webhook, or the sweep noticing): reminders stop by themselves (the
    sweep reads the card), and a venue the free month had paused comes straight back on. */
@@ -3440,7 +3440,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
   const subject = o.kind === 'final' ? 'Last day of your free month at ' + (o.venueName || 'your venue')
     : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + o.endsWords
-    : 'How is VenuePlay going at ' + (o.venueName || 'your venue') + '?';
+    : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
   return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
 }
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
@@ -3663,15 +3663,15 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
-    + '<p style="' + P + '">Here is a fresh link to open your VenuePlay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in.</p>'
-    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your VenuePlay</a></td></tr></table>'
+    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in.</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>'
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
     + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>';
   let sent = false;
   try {
-    sent = await vpaSendEmail(env, email, 'Your VenuePlay sign-in link',
-      vpaVenueEmailCard('A fresh link to open your VenuePlay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your VenuePlay sign-in link'), VPA_PROSPECT_REPLY_TO);
+    sent = await vpaSendEmail(env, email, 'Your venueplay sign-in link',
+      vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO);
   } catch (_) { sent = false; }
   if (!sent) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
   return { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone };
@@ -3774,14 +3774,14 @@ function vpaProspectBingo(state, entityType) {
     return { kind: 'off', text: 'In ' + place + ', only a not-for-profit organisation may run number bingo, so it is switched off for pubs and you will not see it. If a club or charity runs number bingo at your venue, reply and tell us who, and we will switch it on once we have seen their approval.' };
   }
   if (st === 'VIC') {
-    return { kind: 'paper', text: 'In Victoria a phone cannot be used as a ticket, so number bingo is played on printed tickets: hand them out and run the calling and the big screen from VenuePlay. Free entry needs no permit; ' +
+    return { kind: 'paper', text: 'In Victoria a phone cannot be used as a ticket, so number bingo is played on printed tickets: hand them out and run the calling and the big screen from venueplay. Free entry needs no permit; ' +
       (entityType === 'non_profit' ? 'charging for entry needs a minor gaming permit, recorded on your account page first.' : 'charging for entry is for non-profits with a permit.') };
   }
   if (st === 'SA') {
-    return { kind: 'paper', text: 'In South Australia number bingo is played on paper sheets from a licensed supplier (phones cannot be tickets there): run the calling and the big screen from VenuePlay.' };
+    return { kind: 'paper', text: 'In South Australia number bingo is played on paper sheets from a licensed supplier (phones cannot be tickets there): run the calling and the big screen from venueplay.' };
   }
   if (st === 'TAS') {
-    return { kind: 'paper', text: 'In Tasmania number bingo is played on printed tickets: hand them out and run the calling and the big screen from VenuePlay.' };
+    return { kind: 'paper', text: 'In Tasmania number bingo is played on printed tickets: hand them out and run the calling and the big screen from venueplay.' };
   }
   return { kind: 'phones', text: 'Open lobby, players join on their phones from the QR on the TV, and you call the numbers. Your console shows ' + place + '\'s rules before every game.' };
 }
@@ -3831,7 +3831,7 @@ function vpaOfferMonthPhrase(code) {
 /* FROM hello@, REPLIES TO hello@ (Dean, 29 Oct 2026: "it all should come from hello, not Dean"). The address is
    hello@ on send.venueplay.com.au, the only domain Resend is verified to send from (every VenuePlay email
    goes from it); replies land in hello@venueplay.com.au. Never a person's or a cold mailbox. */
-const VPA_PROSPECT_FROM = 'VenuePlay <hello@send.venueplay.com.au>';
+const VPA_PROSPECT_FROM = 'venueplay <hello@send.venueplay.com.au>';
 const VPA_PROSPECT_REPLY_TO = 'hello@venueplay.com.au';
 /* The domains our own mailboxes live on: venueplay.com.au and the cold-email ones (Instantly). */
 const VPA_OUR_MAIL_DOMAINS = ['venueplay.com.au', 'getvenueplay.com.au', 'getvenueplay.com', 'venueplay.online', 'venueplayhq.com.au',
@@ -3848,10 +3848,10 @@ function vpaProspectSender(rawName, rawEmail) {
 }
 /* The sign-off: their name, VenuePlay, the website. No phone but the support line, which the footer carries. */
 function vpaProspectSignoff(senderName) {
-  const who = senderName ? vpaEsc(senderName) : 'The VenuePlay team';
-  return 'Cheers,<br>' + who + '<br>' + (senderName ? 'VenuePlay<br>' : '') + '<a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
+  const who = senderName ? vpaEsc(senderName) : 'The venueplay team';
+  return 'Cheers,<br>' + who + '<br>' + (senderName ? 'venueplay<br>' : '') + '<a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
 }
-function vpaProspectSubject(venueName) { return 'Your VenuePlay account for ' + (venueName || 'your venue'); }
+function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const email = String(o.email || '').trim();
@@ -3873,7 +3873,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
     .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
     .replace(/{{player_count}}/g, String(parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS))
-    .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20VenuePlay')
+    .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
@@ -4209,7 +4209,7 @@ async function vpaResendWelcome(request, env, json) {
   if (b.send_at != null && b.send_at !== '') {
     return json({ error: 'Only a prospect\'s account email can be booked for later. ' + (venue.name || 'This venue') + ' gets the add-your-card email, which goes straight away.' }, 400);
   }
-  const cardSubject = comp ? 'Your VenuePlay account is ready, and it is on us' : 'Your VenuePlay account is ready. One thing left.';
+  const cardSubject = comp ? 'Your venueplay account is ready, and it is on us' : 'Your venueplay account is ready. One thing left.';
   const askOnly = b.dry_run === true;   // HQ asking which email would go: nothing sent
   if (askOnly) {
     return json({ ok: true, dry_run: true, template: 'card', to: f.contact_email, subject: cardSubject, comp: comp });
@@ -4334,7 +4334,7 @@ async function vpaResendProspectWelcome(env, actor, venue, f, which, b, json) {
   if (offer.warning) warnings.push(offer.warning);
 
   const subject = vpaProspectSubject(venue.name);
-  const senderSays = sender.name || 'The VenuePlay team';
+  const senderSays = sender.name || 'The venueplay team';
   const askOnly = b.dry_run === true;   // HQ asking which email would go: nothing minted, nothing sent
   if (askOnly) {
     return json({ ok: true, dry_run: true, template: 'prospect', to: email, subject: subject, signin: signin,
@@ -4481,7 +4481,7 @@ async function vpaHandleDiscount(request, env, json) {
         const coupon = await vpbStripePost(env, 'coupons', Object.assign({
           percent_off: value,
           duration: months ? 'repeating' : 'forever',
-          name: 'VenuePlay: ' + (target.name || 'venue') + ' ' + value + '% off',
+          name: 'venueplay: ' + (target.name || 'venue') + ' ' + value + '% off',
         }, months ? { duration_in_months: months } : {}),
         'coup:' + targetType + ':' + targetId + ':' + value + ':' + (months || 0) + ':' + coupDay);
         if (!coupon || coupon.error || !coupon.id) {
@@ -4521,7 +4521,7 @@ async function vpaHandleDiscount(request, env, json) {
         const discDay = new Date().toISOString().slice(0, 10);
         const txn = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
           amount: -cents, currency: 'aud',
-          description: 'VenuePlay discount' + (note ? ': ' + note : ''),
+          description: 'venueplay discount' + (note ? ': ' + note : ''),
         }, 'disc:' + target.customer + ':' + cents + ':' + discDay);
         if (!txn || txn.error || !txn.id) {
           return json({ error: 'Stripe would not add that credit: ' + ((txn && txn.error && txn.error.message) || 'unknown error') }, 502);
@@ -4568,7 +4568,7 @@ async function vpaHandleDiscount(request, env, json) {
          reversals of one $200 credit leaves the venue $200 in the hole on their next
          invoice, for a discount they were promised. One reversal per credit, ever. */
       await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions',
-        { amount: back, currency: 'aud', description: 'VenuePlay discount reversed (could not be recorded)' },
+        { amount: back, currency: 'aud', description: 'venueplay discount reversed (could not be recorded)' },
         'discrb:' + stripeTxnId).catch(() => {});
     }
     return json({ error: 'Could not record that discount, so it has been undone in Stripe and nothing was charged. Please try again. (' + String((e && e.message) || e).slice(0, 160) + ')' }, 500);
@@ -4665,7 +4665,7 @@ async function vpaHandleDiscountRemove(request, env, json) {
              remove), and sharing a key with different amounts would make Stripe refuse a
              legitimate reversal outright. */
           const back = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
-            amount: cents, currency: 'aud', description: 'VenuePlay discount reversed',
+            amount: cents, currency: 'aud', description: 'venueplay discount reversed',
           }, 'discrev:' + row.stripe_txn_id);
           if (back && back.error) {
             return json({ error: 'Could not take that credit back off their account: ' + (back.error.message || 'unknown error') + '. The discount has been left in place.' }, 502);
@@ -5802,7 +5802,7 @@ async function vpaHandlePlayerRemove(request, env, json) {
         const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#12101a;max-width:560px">'
           + '<p>Hi' + ((!mk.length && acct[0] && acct[0].contact_name) ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
           + '<p>Somebody who played at <strong>' + vpaEsc(v.venue_name) + '</strong> has asked to be removed from your players list: <strong>' + vpaEsc(who) + '</strong>.</p>'
-          + '<p>We have removed them from VenuePlay, so they will not be in any list you download from now on.</p>'
+          + '<p>We have removed them from venueplay, so they will not be in any list you download from now on.</p>'
           + '<p>You downloaded your list on ' + vpaFmtDate(Math.floor(Date.parse(v.downloaded_at) / 1000)) + ', after they joined, so they are probably in that copy. '
           + '<strong>Please delete them from that file and from anything you loaded it into</strong> (your email or SMS tool, a spreadsheet, a CRM), and do not contact them again. '
           + 'The Spam Act gives a business five working days to act on a request like this.</p>'
@@ -5943,7 +5943,7 @@ async function vpaLoginFacts(env, authUserId, user) {
 
 /* Can this login go, seen from venue_id (or from nowhere)? '' = yes, else why not, in words for HQ. */
 function vpaLoginWhyNot(f, venueId) {
-  if (f.is_admin) return 'This is a VenuePlay staff login (HQ). Remove it under VenuePlay staff logins, not here.';
+  if (f.is_admin) return 'This is a venueplay staff login (HQ). Remove it under venueplay staff logins, not here.';
   const others = f.venues.filter(function (v) { return v.id !== venueId; });
   if (others.length) return 'It is staff at ' + others.map(function (v) { return v.name; }).slice(0, 3).join(', ')
     + (others.length > 3 ? ' and ' + (others.length - 3) + ' more' : '') + ', so it cannot be removed. Take it off ' + (others.length === 1 ? 'that venue' : 'those venues') + ' first.';
@@ -6812,11 +6812,11 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        from: 'venueplay <hello@send.venueplay.com.au>',
         reply_to: support, // a reply to the welcome is a setup question: the help desk's inbox
         to: [email],
-        subject: isGroup ? 'Your venues are set up. Welcome to VenuePlay' : 'You are in. Welcome to VenuePlay',
-        html: vpaEmailDocument(html, 'Welcome to VenuePlay'),
+        subject: isGroup ? 'Your venues are set up. Welcome to venueplay' : 'You are in. Welcome to venueplay',
+        html: vpaEmailDocument(html, 'Welcome to venueplay'),
       }),
     });
     let id = null;
@@ -7098,7 +7098,7 @@ function vpaAlertSubject(kind, rest) {
 async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
   if (!env.RESEND_API_KEY || !to) return false;
   const msg = {
-    from: 'VenuePlay <hello@send.venueplay.com.au>',
+    from: 'venueplay <hello@send.venueplay.com.au>',
     reply_to: replyTo || 'hello@venueplay.com.au',
     to: [to],
     subject: subject,
@@ -7175,9 +7175,9 @@ async function vpaFireHqWelcome(env, o) {
     html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
-      comp ? 'Your VenuePlay account is ready, and it is on us'
-           : 'Your VenuePlay account is ready. One thing left.',
-      vpaEmailDocument(html, 'Your VenuePlay account is ready'), 'support@venueplay.com.au');
+      comp ? 'Your venueplay account is ready, and it is on us'
+           : 'Your venueplay account is ready. One thing left.',
+      vpaEmailDocument(html, 'Your venueplay account is ready'), 'support@venueplay.com.au');
   } catch (_) { return false; }
 }
 
@@ -7289,7 +7289,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        from: 'venueplay <hello@send.venueplay.com.au>',
         reply_to: contactEmail || 'hello@venueplay.com.au',  // reply goes straight to the venue
         to: [to],
         // Flag the ones needing a decision in the subject, so it is actionable from the inbox list.
@@ -7399,7 +7399,7 @@ function vpaEmailDocument(html, title) {
   return '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="x-apple-disable-message-reformatting">'
-    + '<title>' + vpaEsc(title || 'VenuePlay') + '</title></head>'
+    + '<title>' + vpaEsc(title || 'venueplay') + '</title></head>'
     + '<body style="margin:0;padding:0;background:#f4f4f7;-webkit-text-size-adjust:100%">' + s + '</body></html>';
 }
 /* brand: 'partyplay' puts the PartyPlay logo on the dark band (the help desk acknowledges both
@@ -7414,7 +7414,7 @@ function vpaVenueEmailCard(preheader, inner, title, brand) {
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
     + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:#12101a;padding:20px 32px">'
-    + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'VenuePlay') + '" style="display:block;border:0;height:auto"></td></tr>'
+    + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'venueplay') + '" style="display:block;border:0;height:auto"></td></tr>'
     + '<tr><td style="padding:28px 28px 30px">' + String(inner || '') + '</td></tr>'
     + '</table></td></tr></table>', title);
 }
@@ -7636,8 +7636,8 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       + 'See your plan</a></p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
-    const ok = await vpaSendEmail(env, email, 'Your VenuePlay plan has moved up',
-      vpaVenueEmailCard((venue.name || 'Your venue') + ' moved from ' + d.from + ' to ' + d.to + ' players. Nothing extra is charged today.', html, 'Your VenuePlay plan has moved up'));
+    const ok = await vpaSendEmail(env, email, 'Your venueplay plan has moved up',
+      vpaVenueEmailCard((venue.name || 'Your venue') + ' moved from ' + d.from + ' to ' + d.to + ' players. Nothing extra is charged today.', html, 'Your venueplay plan has moved up'));
     await say(ok ? 'sent' : 'not sent: Resend refused it',
               { uplift_row: up.id, to: email, venue: venue.name || null,
                 from_players: d.from, to_players: d.to, nights: nights, sent: !!ok });
@@ -7780,7 +7780,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your VenuePlay subscription.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your venueplay subscription.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount due</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
@@ -7810,11 +7810,11 @@ async function vpaFireUpcomingEmail(env, invoice) {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        from: 'venueplay <hello@send.venueplay.com.au>',
         reply_to: 'accounts@venueplay.com.au',
         to: [email],
-        subject: 'Your VenuePlay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
-        html: vpaVenueEmailCard(amount + (when ? ' on ' + when : ' shortly') + '. Nothing to do unless you want to change your plan.', html, 'Your VenuePlay payment is coming up'),
+        subject: 'Your venueplay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
+        html: vpaVenueEmailCard(amount + (when ? ' on ' + when : ' shortly') + '. Nothing to do unless you want to change your plan.', html, 'Your venueplay payment is coming up'),
       }),
     });
     let resendId = null;
@@ -8030,7 +8030,7 @@ async function vpaClearCreditOnEnd(env, customerId, eventId) {
        on every delivery of the same event, which is exactly the guarantee needed here. */
     await vpbStripePost(env, 'customers/' + encodeURIComponent(customerId) + '/balance_transactions', {
       amount: -bal, currency: 'aud',
-      description: 'Credit closed with the subscription (VenuePlay terms: credit does not carry beyond the subscription)',
+      description: 'Credit closed with the subscription (venueplay terms: credit does not carry beyond the subscription)',
     }, 'credend:' + (eventId || (customerId + ':' + (-bal))));
     await vpaInsert(env, 'vp_admin_audit', {
       action: 'credit_cleared_on_subscription_end',
@@ -8208,7 +8208,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
     const reason = String(invoice.billing_reason || '');
     const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
     const what = /^subscription/.test(reason) || !firstLine || !firstLine.description
-      ? 'your VenuePlay subscription'
+      ? 'your venueplay subscription'
       : vpaPlainLineDesc(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const billing = site + '/app/billing.html';
@@ -8230,11 +8230,11 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        from: 'venueplay <hello@send.venueplay.com.au>',
         reply_to: 'accounts@venueplay.com.au',
         to: [email],
-        subject: 'Your VenuePlay payment did not go through',
-        html: vpaVenueEmailCard('We could not charge ' + amount + '. Your games are running as normal. Here is what happens next.', html, 'Your VenuePlay payment did not go through'),
+        subject: 'Your venueplay payment did not go through',
+        html: vpaVenueEmailCard('We could not charge ' + amount + '. Your games are running as normal. Here is what happens next.', html, 'Your venueplay payment did not go through'),
       }),
     });
     /* RECORD WHAT WAS SAID. Nobody here can read Resend's outbox, and on 11 Sep 2026 this email
@@ -8375,7 +8375,7 @@ async function vpbRequireOwner(request, env) {
   } else if (staff && staff.length) {
     ids = staff.map((s) => s.venue_id);
   } else if (adminRow) {
-    return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
+    return { error: 'Open this from venueplay HQ using View as, so we know which venue you mean.', status: 400 };
   } else {
     return { error: 'This login has no venues.', status: 403 };
   }
@@ -9397,7 +9397,7 @@ const VPA_CANCEL_ALERTS = ['dean@venueplay.com.au', 'hello@venueplay.com.au'];
    than rejected: a venue must ALWAYS be able to leave, and a cancellation is never
    refused because a form field did not validate. */
 const VPA_CANCEL_REASONS = {
-  expensive: 'VenuePlay is too expensive',
+  expensive: 'venueplay is too expensive',
   trial: 'We just wanted to trial it',
   dislike: 'We do not like it',
   other: 'Something else',
@@ -10036,7 +10036,7 @@ function vpaGoodbyeHtml(env, o) {
   const day = o.day, dated = o.dated;
   const when = day ? (day + ', ' + dated) : dated;
   return vpaLeavingHtml(env, {
-    heading: day ? (day + ' is your last day on VenuePlay.') : 'Your last day on VenuePlay.',
+    heading: day ? (day + ' is your last day on venueplay.') : 'Your last day on venueplay.',
     preheader: 'Everything you ran with us, and one tap to keep ' + (o.name || 'the venue') + ' going.',
     /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. A venue that has been with us a
        year should not get the same opening line as one that lasted a fortnight, and "the last
@@ -10108,7 +10108,7 @@ async function vpaFireCancelConfirm(env, opts) {
       const del = [], ref = [];
       for (const addr of to) {
         const sent = await vpaSendEmail(env, addr,
-          (day ? day + ' is your last day on VenuePlay' : 'Your last day on VenuePlay'),
+          (day ? day + ' is your last day on venueplay' : 'Your last day on venueplay'),
           html2).catch(() => false);
         (sent ? del : ref).push(addr);
       }
@@ -10162,7 +10162,7 @@ async function vpaFireCancelConfirm(env, opts) {
        anything. */
     const delivered = [], refused = [];
     for (const addr of to) {
-      const ok = await vpaSendEmail(env, addr, 'Your VenuePlay cancellation is confirmed'
+      const ok = await vpaSendEmail(env, addr, 'Your venueplay cancellation is confirmed'
         + (ends ? ' - last day ' + ends : ''), html).catch(() => false);
       (ok ? delivered : refused).push(addr);
     }
@@ -10333,7 +10333,7 @@ async function vpaLastDaySweep(env) {
       });
       const delivered = [], refused = [];
       for (const addr of to) {
-        const ok = await vpaSendEmail(env, addr, day + ' is your last day on VenuePlay', html)
+        const ok = await vpaSendEmail(env, addr, day + ' is your last day on venueplay', html)
           .catch(() => false);
         (ok ? delivered : refused).push(addr);
       }
@@ -10831,7 +10831,7 @@ async function vpbLogoRemove(request, env, json) {
    owner and accounts admins only). This answers 410 for any page still open from before the
    release, and writes nothing. */
 async function vpbLogoSite(request, env, json) {
-  return json({ error: 'VenuePlay now chooses which venue logos appear on its website. Nothing was changed.' }, 410);
+  return json({ error: 'venueplay now chooses which venue logos appear on its website. Nothing was changed.' }, 410);
 }
 
 /* ---------------------------------------------------------------------------------------
@@ -11002,7 +11002,7 @@ function vpaScreenChanges(op, o, n) {
   if (op === 'delete') return ['The whole screen row was DELETED. It held ' + what(o) + '.'];
   if (op === 'vanished') return ['The screen row DISAPPEARED with no record of a delete (found by the nightly check). It last held ' + what(o) + '.'];
   const out = [];
-  if (op === 'drift') out.push('Changed outside VenuePlay with no record (found by the nightly check).');
+  if (op === 'drift') out.push('Changed outside venueplay with no record (found by the nightly check).');
   const ol = (o && o.logo_url) || null, nl = (n && n.logo_url) || null;
   if (!ol && nl) out.push('Logo added.');
   else if (ol && !nl) out.push('Logo removed.');
@@ -11033,7 +11033,7 @@ function vpaScreenWho(h) {
     case 'hq_restore':    return (label || 'Gflam admin') + ' (HQ, Restore this version)';
     case 'migration':     return 'Migration 114, when this record began';
     case 'nightly-check': return 'The nightly check';
-    case 'direct':        return 'NOT through VenuePlay: a direct database change (' + vpaDirectDoor(h) + ')';
+    case 'direct':        return 'NOT through venueplay: a direct database change (' + vpaDirectDoor(h) + ')';
     default:              return label || String((h && h.via) || 'unknown');
   }
 }
@@ -11232,7 +11232,7 @@ const VPA_AUDIT_WHO = [
   { key: 'venue', label: 'A venue (owner, manager, host)' },
   { key: 'system', label: 'Automatic (Stripe, nightly jobs)' },
   { key: 'migration', label: 'A database migration' },
-  { key: 'outside', label: 'Outside VenuePlay (straight in the database)' },
+  { key: 'outside', label: 'Outside venueplay (straight in the database)' },
 ];
 const VPA_VENUE_LOGIN_LABELS = ['owner', 'manager', 'marketing', 'host'];
 const VPA_SYSTEM_LABELS = ['system', 'stripe', 'game Worker'];
@@ -11369,14 +11369,14 @@ function vpaSummaryWords(s) {
 const VPA_AUDIT_SAY = {
   logo_set: function (d, at) { return 'Put up a new logo for ' + at + '.'; },
   logo_removed: function (d, at) { return 'Took the logo off ' + at + '\'s screens.'; },
-  logo_on_site: function (d, at) { return (d.show ? 'Agreed to show ' : 'Stopped showing ') + at + '\'s logo on the VenuePlay website.'; },
+  logo_on_site: function (d, at) { return (d.show ? 'Agreed to show ' : 'Stopped showing ') + at + '\'s logo on the venueplay website.'; },
   slide_uploaded: function (d, at) { return 'Uploaded an advertising slide for ' + at + '.'; },
   screen_updated: function (d, at) {
     const b = vpaSummaryWords(d.before), a = vpaSummaryWords(d.after);
     return 'Changed ' + at + '\'s screen' + (b && a && b !== a ? ' (' + b + ' before, ' + a + ' after)' : '') + '.';
   },
   screen_restored: function (d, at) { return 'Put back an earlier version of ' + at + '\'s screen settings.'; },
-  screen_history_drift: function (d) { return 'The nightly check found screen settings changed outside VenuePlay (' + (d.drift || 0) + ' changed, ' + (d.vanished || 0) + ' gone).'; },
+  screen_history_drift: function (d) { return 'The nightly check found screen settings changed outside venueplay (' + (d.drift || 0) + ' changed, ' + (d.vanished || 0) + ' gone).'; },
   screen_command: function (d, at) { return 'Sent a command to ' + at + '\'s screens.'; },
   screen_reload_requested: function (d, at) { return 'Asked ' + at + '\'s screens to reload.'; },
   payment_failed_email: function (d, at) {
@@ -11414,8 +11414,8 @@ const VPA_AUDIT_SAY = {
   venue_quiet_contacted: function (d, at) { return 'Contacted ' + at + ' because they had gone quiet.'; },
   venue_subscription_ended: function (d, at) { return at + '\'s subscription ended.'; },
   venue_invited_back: function (d, at) {
-    if (d.held === 'unsubscribed') return 'Did not email ' + at + (d.to ? ' (' + d.to + ')' : '') + ': that address has unsubscribed from VenuePlay marketing email.';
-    return 'Emailed ' + at + ' an invitation to keep or come back to VenuePlay' + (d.to ? ' (' + d.to + ')' : '') + '.';
+    if (d.held === 'unsubscribed') return 'Did not email ' + at + (d.to ? ' (' + d.to + ')' : '') + ': that address has unsubscribed from venueplay marketing email.';
+    return 'Emailed ' + at + ' an invitation to keep or come back to venueplay' + (d.to ? ' (' + d.to + ')' : '') + '.';
   },
   venue_marked_test: function (d, at) { return 'Marked ' + at + ' as a test venue.'; },
   venue_unmarked_test: function (d, at) { return 'Marked ' + at + ' as a real venue again.'; },
@@ -11451,7 +11451,7 @@ function vpaWhoWords(kind, label) {
   if (kind === 'hq') return String(label || 'HQ');
   if (kind === 'venue') return 'The venue (' + String(label || 'login') + ')';
   if (kind === 'migration') return 'A database migration';
-  if (kind === 'outside') return 'Outside VenuePlay';
+  if (kind === 'outside') return 'Outside venueplay';
   const l = String(label || '');
   if (l === 'stripe') return 'Automatic (Stripe)';
   if (/^automatic/i.test(l)) return 'Automatic (' + l.replace(/^automatic\s*\(?|\)$/gi, '') + ')';
@@ -11713,7 +11713,7 @@ async function vpUnsubFooterHtml(env, email, campaign) {
   const e = String(email || '').trim().toLowerCase();
   const link = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
   return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
-    + ' is the contact on a VenuePlay account. '
+    + ' is the contact on a venueplay account. '
     + '<a href="' + vpaEsc(link) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a>'
     + ' from emails like this one. Invoices and account notices are not marketing and still come.</p>'
     + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay, ABN ' + VP_ABN
@@ -11731,7 +11731,7 @@ function vpUnsubPage(title, bodyHtml, status, extra) {
   const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="robots" content="noindex,nofollow">'
-    + '<title>' + vpaEsc(title) + ' | VenuePlay</title>'
+    + '<title>' + vpaEsc(title) + ' | venueplay</title>'
     + '<style>'
     + ':root{--bg:#0B0A0F;--card:#15131C;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E}'
     + '*{box-sizing:border-box}html,body{margin:0}'
@@ -11744,11 +11744,11 @@ function vpUnsubPage(title, bodyHtml, status, extra) {
     + '.foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}'
     + '</style></head><body><main class="card">'
     + '<div class="brand"><svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true">'
-    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>VenuePlay</div>'
+    + '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>venueplay</div>'
     + '<div id="msg"><h1>' + vpaEsc(title) + '</h1>' + bodyHtml + '</div>'
     + (extra || '')
     + '<p class="foot">VenuePlay, ABN ' + VP_ABN + '. Gold Coast, Queensland.<br>'
-    + 'This only stops marketing email. It does not affect a VenuePlay account, if you have one.</p>'
+    + 'This only stops marketing email. It does not affect a venueplay account, if you have one.</p>'
     + '</main></body></html>';
   return new Response(html, { status: status || 200,
     headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
@@ -11802,8 +11802,8 @@ async function vpHandleUnsubscribe(request, env, url) {
   // GET: the page. Nothing is written until it posts back.
   const action = '/unsubscribe?e=' + encodeURIComponent(email) + '&t=' + tok + (camp ? '&c=' + camp : '');
   const DONE_H = "You're off the list";
-  const DONE_P = 'We will not send ' + vpaEsc(email) + ' any more marketing email from VenuePlay. '
-    + 'If you have a VenuePlay account, its invoices and account notices still come.';
+  const DONE_P = 'We will not send ' + vpaEsc(email) + ' any more marketing email from venueplay. '
+    + 'If you have a venueplay account, its invoices and account notices still come.';
   const form = '<form id="f" method="POST" action="' + vpaEsc(action) + '">'
     + '<input type="hidden" name="via" value="page"><noscript><button type="submit">Yes, take me off the list</button></noscript></form>'
     + '<script>(function(){var m=document.getElementById("msg");'
@@ -11862,15 +11862,15 @@ async function vpaHandleInviteBack(request, env, json) {
   if (optedOut) {
     await vpaAudit(env, actor, 'venue_invited_back', 'venue:' + venueId,
       { name: v.name, to: to, accepted: false, held: 'unsubscribed', archived: archived });
-    return json({ error: to + ' has unsubscribed from VenuePlay marketing email, so this cannot be sent. Ring them instead.' }, 409);
+    return json({ error: to + ' has unsubscribed from venueplay marketing email, so this cannot be sent. Ring them instead.' }, 409);
   }
 
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const link = site + '/app/billing.html';
-  const subject = 'Keep ' + v.name + ' on VenuePlay?';
+  const subject = 'Keep ' + v.name + ' on venueplay?';
   const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-    + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
-    + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on VenuePlay?</p>'
+    + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="venueplay" width="150" style="display:block;margin:0 0 24px">'
+    + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on venueplay?</p>'
     + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + (acct.contact_name ? 'Hi ' + vpaEsc(String(acct.contact_name).split(' ')[0]) + ', thanks' : 'Thanks')
     + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
     + 'Nothing changes and nothing is charged unless you do.</p>'
@@ -13096,7 +13096,7 @@ function vprNewsHtml(items) {
   if (clean.error || !clean.items.length) return '';
   const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E';
   let h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;border-top:2px solid ' + PINK + '"><tr><td style="padding:18px 0 0">'
-    + '<p style="margin:0 0 12px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">What\'s new at VenuePlay</p>';
+    + '<p style="margin:0 0 12px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">What\'s new at venueplay</p>';
   clean.items.forEach((it) => {
     h += '<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:' + INK + '">' + vpaEsc(it.title) + '</p>';
     if (it.text) h += '<p style="margin:0 0 ' + (it.link ? '4' : '14') + 'px;font-size:14px;line-height:1.5;color:' + DIM + '">' + vpaEsc(it.text).replace(/\n+/g, '<br>') + '</p>';
@@ -13981,7 +13981,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     // Nothing about manager vs host here: they will see what they can do the moment they sign in,
     // and the words would mean nothing to them before then.
     const message =
-      venue + ' has set you up on VenuePlay. To sign in visit ' + site + '/app.' + tv;
+      venue + ' has set you up on venueplay. To sign in visit ' + site + '/app.' + tv;
     const basicAuth = 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD);
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 10000);
@@ -14286,7 +14286,7 @@ const HELP_STATUSES   = ['new', 'open', 'waiting', 'closed'];
 const HELP_PRIORITIES = ['normal', 'urgent'];
 const HELP_ADMIN_ROLES = ['owner', 'accounts', 'staff'];
 const HELP_STAFF_ROLES = ['owner', 'manager', 'host', 'marketing'];
-const HELP_BRAND_LABEL = { venueplay: 'VenuePlay', partyplay: 'PartyPlay' };
+const HELP_BRAND_LABEL = { venueplay: 'venueplay', partyplay: 'PartyPlay' };
 function helpCategoryLabel(category, brand) {
   // PartyPlay has hosts and guests, not venues and patrons.
   if (brand === 'partyplay') return ({ sales: 'Sales', venue_support: 'Host support', patron_support: 'Guest support', accounts: 'Accounts', general: 'General' })[category] || 'General';
@@ -14384,7 +14384,7 @@ function helpCountry(pp) {
 }
 function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const pp = ticket.brand === 'partyplay';
-  const brand = pp ? 'PartyPlay' : 'VenuePlay';
+  const brand = pp ? 'PartyPlay' : 'venueplay';
   const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
   const icon = pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif';
   const phone = !pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1;
@@ -14564,7 +14564,7 @@ async function helpSendEmail(env, m) {
    and the send. domain stop this alert, copied from hello@ to the help subdomain, coming straight
    back in as a ticket of its own. */
 function helpAlertSubject(ticket, lead) {
-  return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'VenuePlay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
+  return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'venueplay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
          helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90);
 }
 /* A DAILY CAP ON ALERT EMAILS. The alerts go out on the same Resend account as every invoice and
@@ -15055,7 +15055,7 @@ function helpBrandFooter(pp) {
   return (pp ? 'PartyPlay' : 'VenuePlay') + ' &middot; ABN ' + VP_ABN;
 }
 function helpEmailCard(pp, inner, foot, title, preheader) {
-  const brand = pp ? 'PartyPlay' : 'VenuePlay';
+  const brand = pp ? 'PartyPlay' : 'venueplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
   const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
   /* PartyPlay's email logo is drawn on white, so its band is white; on the dark band it would sit
@@ -15231,7 +15231,7 @@ async function helpAdminLogCall(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const b = g.body;
   if (HELP_CATEGORIES.indexOf(b.category) < 0) return json({ error: 'Pick what kind of call it was.' }, 400);
-  if (HELP_BRANDS.indexOf(b.brand) < 0) return json({ error: 'Pick VenuePlay or PartyPlay.' }, 400);
+  if (HELP_BRANDS.indexOf(b.brand) < 0) return json({ error: 'Pick venueplay or PartyPlay.' }, 400);
   const subject = helpLine(b.subject, 300), message = helpText(b.message);
   if (!subject) return json({ error: 'Give the call a short subject.' }, 400);
   if (subject.length > 200 || message.length > 8000) return json({ error: 'That is too long.' }, 400);
@@ -16101,7 +16101,7 @@ const VPS_CONSENT_VERSION = 'vps-1';
    shows it and this is what is kept with each sign-up; tools/subscribe-in-chrome.test.py reads it off
    each page and holds it to this string, so the two cannot drift. Change both together, and bump the
    version so a sign-up can always be matched to the words that person saw. */
-const VPS_CONSENT_TEXT = 'One short email a month from VenuePlay to this address. Unsubscribe any time from the link in every email.';
+const VPS_CONSENT_TEXT = 'One short email a month from venueplay to this address. Unsubscribe any time from the link in every email.';
 /* A free or ISP mailbox says nothing about which venue someone is from, so it never links by domain. */
 const VPS_FREE_MAILBOX_RE = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|gmx|bigpond|optusnet|tpg|iinet|internode|westnet|dodo|exemail|ozemail|aapt|adam|iprimus|people|netspace|telstra)\./i;
 
@@ -16262,17 +16262,17 @@ function vpsFooterHtml(env, email) {
   const e = String(email || '').trim().toLowerCase();
   const page = vpaCustomerSite(env) + '/unsubscribe?e=' + encodeURIComponent(e);
   return '<p style="font-size:12px;color:#9a9aa4;margin:22px 0 0">You are getting this because ' + vpaEsc(e)
-    + ' signed up for the VenuePlay monthly email at venueplay.com.au. '
+    + ' signed up for the venueplay monthly email at venueplay.com.au. '
     + '<a href="' + vpaEsc(page) + '" style="color:#9a9aa4;text-decoration:underline">Unsubscribe</a> any time.</p>'
     + '<p style="font-size:12px;color:#c2c2cc;margin:8px 0 0">VenuePlay, ABN ' + VP_ABN + ' &middot; venueplay.com.au</p>';
 }
 function vpsConfirmationEmail(env, email, venue, nowMs) {
   const site = vpaCustomerSite(env);
-  const subject = "You're on the VenuePlay monthly email";
+  const subject = "You're on the venueplay monthly email";
   const look = site + '/see-a-night?utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
   const inner = '<p style="font-size:20px;font-weight:800;color:#12101a;margin:0 0 12px">You\'re on the list</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 14px">Thanks for signing up' + (venue ? ' for ' + vpaEsc(venue) : '')
-    + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with VenuePlay.</p>'
+    + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with venueplay.</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)
     + '. Nothing else, and nobody will ring you.</p>'
     + '<a href="' + vpaEsc(look) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:12px 24px;border-radius:8px">See how a night runs</a>'

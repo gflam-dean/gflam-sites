@@ -197,8 +197,8 @@ if (typeof crypto === 'undefined') {
   r = await getHistory(DEAN);
   var e = r.body.entries || [];
   check('Dean reads it, newest first', r.status === 200 && e.length === 3 && e[0].op === 'delete' && e[2].op === 'update' && e[0].id > e[1].id, e);
-  check('the delete says DELETED, what it held, and that it did NOT come through VenuePlay',
-    /DELETED/.test(e[0].changes.join(' ')) && /a logo, 2 slides/.test(e[0].changes.join(' ')) && /NOT through VenuePlay/.test(e[0].who) && /Supabase dashboard or SQL editor/.test(e[0].who) && !/postgres/.test(e[0].who), e[0]);
+  check('the delete says DELETED, what it held, and that it did NOT come through venueplay',
+    /DELETED/.test(e[0].changes.join(' ')) && /a logo, 2 slides/.test(e[0].changes.join(' ')) && /NOT through venueplay/.test(e[0].who) && /Supabase dashboard or SQL editor/.test(e[0].who) && !/postgres/.test(e[0].who), e[0]);
   check('...and the version it stands for is what was lost, restorable', e[0].version && e[0].version.logo_url === LOGO_OLD && e[0].version.slides.length === 2 && e[0].restorable === true, e[0].version);
   check('the logo change reads "Logo added." by the venue\'s own login', e[1].changes.join(' ') === 'Logo added.' && /venue's own login/.test(e[1].who), e[1]);
   check('the slide save reads "Slides 1 to 2 (1 added)."', e[2].changes.join(' ') === 'Slides 1 to 2 (1 added).', e[2].changes);
@@ -270,7 +270,7 @@ if (typeof crypto === 'undefined') {
   RPC_ANSWER = { checked: 40, drift: 1, vanished: 2 };
   await _d.scheduled({}, ENV, {});
   a = last(audits('screen_history_drift'));
-  check('the nightly job runs it, and a vanished row or a change outside VenuePlay is audited with the counts',
+  check('the nightly job runs it, and a vanished row or a change outside venueplay is audited with the counts',
     RPC.length === 3 && a.detail && a.detail.vanished === 2 && a.detail.drift === 1 && a.detail.checked === 40, [RPC.length, a]);
   tbl('vp_venue_screen_history').push({ id: ++HID, venue_id: TUGUN, slug: 'tugun-bowls', op: 'vanished',
     old_row: { venue_id: TUGUN, slug: 'tugun-bowls', slides: [{ image_url: AD1, seconds: 7 }], draws: [], raffle: null, logo_url: LOGO_OLD }, new_row: null,
@@ -310,7 +310,7 @@ if (typeof crypto === 'undefined') {
   tbl('vp_venue_screen_history')[0].new_row.slides.push({ image_url: 'javascript:alert(1)', seconds: 7 });
   r = await getHistory(DEAN); card.render(TUGUN, r.body);
   check('owner admins see "Restore this version" on each version', (OUT.innerHTML.match(/Restore this version/g) || []).length === 2, OUT.innerHTML.slice(0, 300));
-  check('the delete is marked DELETED and as a change that did not come through VenuePlay', /DELETED/.test(OUT.innerHTML) && /NOT through VenuePlay/.test(OUT.innerHTML));
+  check('the delete is marked DELETED and as a change that did not come through venueplay', /DELETED/.test(OUT.innerHTML) && /NOT through venueplay/.test(OUT.innerHTML));
   check('the logo is shown as a picture', OUT.innerHTML.indexOf('<img src="' + LOGO_OLD + '"') !== -1);
   check('an address that is not https is never painted', OUT.innerHTML.indexOf('javascript:') === -1);
   r = await getHistory(STAFFADMIN); card.render(TUGUN, r.body);

@@ -1,4 +1,4 @@
-# VenuePlay
+# venueplay
 
 > Live game nights for Australian pubs, clubs and bowls clubs. Bingo, musical
 > bingo, trivia, raffles and members draws all run from one platform onto the
@@ -37,7 +37,7 @@ contract and no setup fee.
 - The venue keeps the opt-in details of players who choose to share them, so a
   quiet Tuesday builds a list the venue owns.
 - Runs on a TV the venue already has, through a browser.
-- Got a TV with Google Play? Get the VenuePlay TV app (https://play.google.com/store/apps/details?id=au.com.venueplay.tv), then put in your screen code.
+- Got a TV with Google Play? Get the venueplay TV app (https://play.google.com/store/apps/details?id=au.com.venueplay.tv), then put in your screen code.
 
 ## Links
 
@@ -57,5 +57,5 @@ Gaming and raffle rules differ by Australian state and territory. Trivia is a
 game of skill and is treated differently from a game of chance. A venue should
 confirm its own obligations with its state regulator (in Queensland, the Office
 of Liquor and Gaming Regulation) before running a format that awards prizes by
-chance. Do not state that VenuePlay is approved or licensed in a particular
+chance. Do not state that venueplay is approved or licensed in a particular
 state unless the site says so.

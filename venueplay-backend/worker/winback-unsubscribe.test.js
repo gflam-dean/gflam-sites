@@ -151,7 +151,7 @@ step(function () {
   UNSUB = []; calls = [];
   return worker.fetch(req('GET', link('queen@example.com', VECTOR, '&c=winback')), env()).then(function (r) {
     ok('GET valid link answers 200', r.status === 200, String(r.status));
-    ok('the page is branded VenuePlay', /VenuePlay<\/div>/.test(r.body) && /<title>[^<]*\| VenuePlay<\/title>/.test(r.body));
+    ok('the page is branded venueplay', /venueplay<\/div>/.test(r.body) && /<title>[^<]*\| venueplay<\/title>/.test(r.body));
     ok('the page posts back to the same signed URL', r.body.indexOf('method:"POST"') >= 0 && r.body.indexOf(VECTOR) >= 0 && r.body.indexOf('&c=winback') >= 0);
     ok('the page says "You\'re off the list" once it has posted', /You&#39;re off the list/.test(r.body));
     ok('the page has a no-script button that does the same', /<noscript><button type="submit">/.test(r.body));
@@ -249,7 +249,7 @@ step(function () {
     var b = parse(r), m = SENT[0] || {};
     ok('HQ invite-back answers ok', r.status === 200 && b.ok === true, r.status + ' ' + r.body);
     ok('one email went to the contact, lower-cased', SENT.length === 1 && m.to && m.to[0] === 'queen@example.com', JSON.stringify(m.to));
-    ok('the subject is the win-back', m.subject === 'Keep The Test Tavern on VenuePlay?', m.subject);
+    ok('the subject is the win-back', m.subject === 'Keep The Test Tavern on venueplay?', m.subject);
     var lu = (m.headers || {})['List-Unsubscribe'] || '';
     ok('List-Unsubscribe carries the Worker https link with the token', lu.indexOf('<' + API + '/unsubscribe?e=queen%40example.com&t=' + VECTOR + '&c=winback>') === 0, lu);
     ok('List-Unsubscribe carries the mailto fallback too', /<mailto:hello@venueplay\.com\.au\?subject=unsubscribe>/.test(lu), lu);
