@@ -23,6 +23,8 @@
         asked once per game
      3. the three player pages each load vp-feedback.js and ask (the one-line hooks)
      5. the REAL game Worker: POST /feedback hands back the rating's id
+     6. the host consoles (bingo, musical, trivia) say "9 players loved tonight" through /app/vp-loved.js,
+        from a tally that answers only { loved, good }: never Not for me, a total or a percentage
 
    The paint at 390 and 375 wide is run in Chrome by tools/feedback-followup-in-chrome.test.py; the
    billing Worker's side (the email, the HQ alert at 2, the venue counts) by test-feedback-consent.js.
@@ -213,6 +215,28 @@ function btn(host, word) { return host.querySelectorAll('button').filter(functio
     }
     check('POST /feedback answers the id of the rating it kept, for Loved it, Good and Not for me alike',
           ids.every(function (x, k) { return typeof x === 'string' && x.length >= 30 && DB.vp_game_feedback.some(function (row) { return row.id === x && row.rating === [3, 2, 1][k]; }); }), ids);
+
+    print('\n6. THE HOST CONSOLES: "9 PLAYERS LOVED TONIGHT", FAVOURABLE COUNTS ONLY (Dean, 1 Nov 2026; Tue 10 Nov)');
+    for (var i2 = 0; i2 < 4; i2++) {
+      BODY = { code: 'QWERTY', rating: [3, 1, 1, 2][i2], source: 'player', session_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', format: 'trivia' };
+      await handleFeedback(req('/feedback'), ENV, json);
+    }
+    var t = await handleFeedbackTally(req('/feedback/tally?session=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), ENV, json);
+    check('the tally the consoles read: 2 loved, 2 good, as true counts (the Not for me ratings in the room are not in it)', t.body.loved === 2 && t.body.good === 2, t.body);
+    check('and nothing about "Not for me", no total, no percentage', Object.keys(t.body).sort().join() === 'good,loved', t.body);
+    var t0 = await handleFeedbackTally(req('/feedback/tally?session='), ENV, json);
+    check('no session: zero of each, still nothing else', Object.keys(t0.body).sort().join() === 'good,loved' && t0.body.loved === 0 && t0.body.good === 0, t0.body);
+    var LW = { fetch: function () {}, document: document };
+    (new Function('window', readFile('venueplay/app/vp-loved.js')))(LW);
+    var W = LW.VPLoved.words;
+    check('the words: "9 players loved tonight, and 4 said it was good."', W({ loved: 9, good: 4 }) === '9 players loved tonight, and 4 said it was good.', W({ loved: 9, good: 4 }));
+    check('one player: "1 player loved tonight."', W({ loved: 1, good: 0 }) === '1 player loved tonight.', W({ loved: 1 }));
+    check('only good: "3 players said tonight was good."', W({ loved: 0, good: 3 }) === '3 players said tonight was good.', W({ good: 3 }));
+    check('nobody: nothing at all, and an old tally\'s "poor" or percentage is never words', W({}) === '' && W({ poor: 5, positive_pct: 20 }) === '', W({ poor: 5 }));
+    [['venueplay/app/index.html', 'bingo', 'VPLoved.show(VP_GAME_API, sessionId, _lv)'], ['venueplay/app/musical/host.html', 'musical', 'VPLoved.show(VP_GAME_API, sid, $("fbSummary"))'], ['venueplay/app/trivia/host.html', 'trivia', 'VPLoved.show(VP_GAME_API, G.sessionId, lv)']].forEach(function (c) {
+      var h = readFile(c[0]);
+      check(c[1] + ' console: loads /app/vp-loved.js and shows the room\'s verdict through it, never a percentage', h.indexOf('<script src="/app/vp-loved.js"></script>') >= 0 && h.indexOf(c[2]) >= 0 && !/positive_pct|% positive|\.poor\b/.test(h), c[0]);
+    });
   } catch (e) { check('the scenes ran without throwing', false, String(e && e.stack || e)); }
   print('');
   print(bad ? (bad + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));

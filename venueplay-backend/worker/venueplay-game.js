@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 09:59 · 7cd05677';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 11:32 · 325506e3';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1782,19 +1782,16 @@ async function handleFeedback(request, env, json) {
 async function handleFeedbackTally(request, env, json) {
   const url = new URL(request.url);
   const sessionId = String(url.searchParams.get('session') || '').trim();
-  if (!sessionId) return json({ ratings: 0 });
+  if (!sessionId) return json({ loved: 0, good: 0 });
   assertUuid(sessionId, 'session');
+  /* ONLY THE FAVOURABLE, AS TRUE COUNTS (Dean, 1 Nov 2026). A venue's console reads this, so it never
+     says how many tapped "Not for me", and never a percentage: a share worked out from the good ones
+     alone would be a number that misleads. HQ sees everything, in HQ > Feedback. One indexed read. */
   const rows = await sbGet(env, 'vp_game_feedback',
-    'session_id=eq.' + enc(sessionId) + '&source=eq.player&select=rating&limit=2000');
-  const n = rows.length;
-  const loved = rows.filter((r) => r.rating === 3).length;
-  const ok = rows.filter((r) => r.rating === 2).length;
+    'session_id=eq.' + enc(sessionId) + '&source=eq.player&rating=in.(2,3)&select=rating&limit=2000');
   return json({
-    ratings: n,
-    loved,
-    ok,
-    poor: n - loved - ok,
-    positive_pct: n ? Math.round((100 * (loved + ok)) / n) : null,
+    loved: rows.filter((r) => r.rating === 3).length,
+    good: rows.filter((r) => r.rating === 2).length,
   });
 }
 

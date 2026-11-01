@@ -720,6 +720,7 @@
     <div class="vp-h" style="margin-bottom:4px">Tonight at a glance</div>
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">The TV is back on your ads. Here is how the night went.</div>
     <div class="stat" id="nightStats"></div>
+    <div id="nightLoved" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.28);color:var(--win);font-weight:700;font-size:14px"></div>
     <div id="nightPrizes" style="font-size:13.5px;color:var(--text);line-height:1.6"></div>
     <div class="vp-row" style="margin-top:18px">
       <button type="button" id="nightDone" class="btn pink big vp-grow">Done</button>
@@ -738,6 +739,7 @@
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <!-- The venue's logo in the console header, sized by its shape like the player phones (27 Oct 2026). -->
 <script src="/app/vp-venuelogo.js"></script>
@@ -3683,7 +3685,13 @@
     h+='<div id="nightCounted" style="font-size:12px;color:var(--faint);margin-top:12px">Counted on this tablet. Extra players over your plan are worked out on the bill from the server count.</div>';
     $("nightPrizes").innerHTML=h;
     m.classList.remove("hidden");
-    $("nightDone").onclick=function(){ m.classList.add("hidden"); };
+    /* THE ROOM'S VERDICT, favourable only and as true counts (/app/vp-loved.js): "9 players loved tonight".
+       The ratings land as the phones reach their end screens, so it asks again every 15 seconds while
+       the card is open, one small read each time, and says nothing until somebody has. */
+    var _lv=$("nightLoved"), _lvT=null;
+    function _lvAsk(){ if(window.VPLoved && sessionId) VPLoved.show(VP_GAME_API, sessionId, _lv); }
+    _lvAsk(); _lvT=setInterval(function(){ if(m.classList.contains("hidden")){ clearInterval(_lvT); return; } _lvAsk(); }, 15000);
+    $("nightDone").onclick=function(){ m.classList.add("hidden"); clearInterval(_lvT); };
     /* Up straight away on the tablet's figure, then the server's the moment it lands, which is
        usually well inside a second. Nothing is held up waiting for it. If it never lands the
        tablet number stays and so does the line explaining it. */
