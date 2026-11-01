@@ -2834,6 +2834,10 @@ MUTATIONS = [
     ('tv-sting-in-chrome.test.py', 'venueplay/tv.html', '      var FIRST=5400;', '      var FIRST=2600;', 'in Chrome: the sales-page bingo demo cuts the start-of-game show short with its first ball'),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/trivia/screen.html', '      t = 4200;\n', '      t = 900;\n', 'in Chrome: the sales-page trivia demo cuts the start-of-game show short with its first question'),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/musical/screen.html', '      var t=4200, played=[];\n', '      var t=1200, played=[];\n', 'in Chrome: the sales-page musical bingo demo cuts the start-of-game show short with its first song'),
+    # 2 Nov 2026 (Dean): the phone show lands in the page's own header logo, measured where it is painted.
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', 'ox:r.left+(r.width-4676*k)/2+1*k,', 'ox:r.left+(r.width-4676*k)/2+1*k+6,', "in Chrome: the phone show's wordmark lands beside the header logo instead of on it"),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    headBack();   // the phone\'s header mark is always given back, however the show ended\n', '', "in Chrome: a phone show cut short leaves the header logo hidden"),
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    PH.head = REDUCED ? null : headMark();', '    PH.head = headMark();', "in Chrome: under reduced motion the phone show still flies into the header"),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    var gt=$("greetToast"); if(gt) gt.classList.remove("show");   // a toast left from the last call must not sit over this winner\n', '', 'in Chrome: "Nothing was recorded" sits over the next winner on a phone'),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    send({ t:"resume" });   // every TV back to the board', '', 'in Chrome: Not a win leaves the TV on BINGO?'),
     # 24 Oct 2026: a venue's own named bingo patterns (VP-DRAW-1.2, migration 118), and Back to the last game after a New game tapped by mistake.

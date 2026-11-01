@@ -257,6 +257,10 @@ PHONE_BOX = r'''(function(){
   var brand=null; if(word&&svg){ var a=svg.getBoundingClientRect(), c=word.getBoundingClientRect();
     brand={l:Math.min(a.left,c.left),t:Math.min(a.top,c.top),r:Math.max(a.right,c.right),b:Math.max(a.bottom,c.bottom)}; }
   var out={logo:R(lg), brand:brand, menu:R(document.getElementById("menuBtn")), ball:R(document.getElementById("hdrBall")), W:innerWidth};
+  /* the header's own text lane: its content box. Whatever the brand line says (a longer format name, a
+     bigger font), it is laid out inside this, so this is what must stay clear of the menu button. */
+  var pt=document.querySelector(".ptop"); if(pt){ var pb=pt.getBoundingClientRect(), ps=getComputedStyle(pt);
+    out.lane={l:pb.left+parseFloat(ps.paddingLeft), r:pb.right-parseFloat(ps.paddingRight)}; }
   if(lg && lg.complete && lg.naturalWidth) out.want=VPVenueLogo.box(lg.naturalWidth, lg.naturalHeight, VPVenueLogo.limits("phone", innerWidth, innerHeight));
   return JSON.stringify(out);
 })()'''
@@ -292,6 +296,11 @@ def phone_header(label, path, w, h):
         if m.get('ball'):
             ok(tag + ': nor under the called-ball chip', not hits(Bx, m['ball']) and Bx['l'] - m['ball']['r'] >= 8, (Bx, m['ball']))
         ok(tag + ': and stays on the screen', Bx['l'] >= 0 and Bx['r'] <= m['W'], Bx)
+        # 2 Nov 2026: the lowercase wordmark made the line short enough to clear the button at 320 by itself,
+        # so the line alone no longer says whether the header keeps the button's space. Measure the lane.
+        L = m.get('lane')
+        ok(tag + ': the header keeps a lane clear of the menu button, so a longer brand line can never run under it',
+           bool(L) and L['r'] <= m['menu']['l'] - 8, (L, m['menu']))
         shot(sid, 'chrome-header-%s-%d' % (label.replace('/', '-'), w))
     finally:
         B.close_tab(tid)
@@ -721,6 +730,10 @@ try:
     tv('bingo', '/tv?demo=1', 1920, 1080, 8, ['square', 'wide', 'round', 'tall', 'red', 'navy'])
     mark_check('bingo', '/tv?demo=1', 1920, 1080, True)
     mark_check('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, False)
+    # Before the first show of the night (and on a ?sting=0 screen) the OLD mark is the one in the corner,
+    # so it is judged too (2 Nov 2026: with the show on by default the line above only sees the new one).
+    mark_check('bingo before the show', '/tv?demo=1&sting=0', 1920, 1080, True)
+    mark_check('trivia before the show', '/app/trivia/screen.html?demo=1&sting=0', 1920, 1080, False)
     tv('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('musical', '/app/musical/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('bingo', '/tv?demo=1', 1280, 720, 8, ['square', 'wide'])

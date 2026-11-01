@@ -952,7 +952,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 61,
+  "checks": 86,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {
@@ -964,7 +964,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 348,
+  "checks": 361,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

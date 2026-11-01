@@ -201,13 +201,48 @@
     PH={ W:W, H:H, kw:W*0.62/INKW, tx:W/2, ty:H*0.27, th:Math.min(W*0.30,H*0.17) };
     PH.ox=W/2-(INKW/2+INKL)*PH.kw; PH.oy=H*0.56+261*PH.kw;
     el.vppWg.setAttribute("transform","translate("+f(PH.ox)+" "+f(PH.oy)+") scale("+PH.kw.toFixed(6)+")");
+    /* WHERE IT LANDS (Dean, 2 Nov 2026: "land where the logo actually sits", as the TV's flies to its corner).
+       The page's own header wordmark, measured where it is painted, never a hard-coded spot. If the page
+       has none on screen, the show ends as it always did, with a fade. Under reduced motion: the fade. */
+    PH.head = REDUCED ? null : headMark();
+    if(PH.head && !landing()) PH.head=null;
+    PH.land=!!PH.head;
+    if(PH.head){ PH.headVis=PH.head.style.visibility; PH.head.style.visibility="hidden"; PH.hid=true; }   // ours stands in for it until the hand-over
   }
-  var PH=null, L1S=1;
+  var PH=null, L1S=1, PFLY0=1.95, PFLY1=2.50, PHAND=2.55, PLAND=2.75;
+  function headMark(){ return document.querySelector('.brand svg[data-vp-mark="wordmark"]') || document.querySelector("svg.vp-wm"); }
+  /* The header mark's own box mapped into the show's units: the same viewBox (-1 -729 4676 936), drawn
+     xMidYMid meet, so the landing is exact rather than eyeballed. Measured every frame of the flight, so a
+     page that scrolls or turns still gets it right. null when it is not on the screen. */
+  function landing(){
+    var h=PH && PH.head; if(!h || !h.isConnected) return null;
+    var r=h.getBoundingClientRect(), cs=getComputedStyle(h);
+    if(!r.width || !r.height || cs.display==="none" || r.bottom<0 || r.top>innerHeight || r.right<0 || r.left>innerWidth) return null;
+    var k=Math.min(r.width/4676, r.height/936);
+    return { kw:k, ox:r.left+(r.width-4676*k)/2+1*k, oy:r.top+(r.height-936*k)/2+729*k, color:cs.color };
+  }
+  function headBack(){ if(PH && PH.head && PH.hid){ PH.head.style.visibility=PH.headVis||""; PH.hid=false; } }
+  function rgb(c){ var m=/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/.exec(c||""); return m ? [+m[1],+m[2],+m[3]] : [255,255,255]; }
   function renderPhone(t){
-    var W=PH.W, H=PH.H, kw=PH.kw, FX=PH.ox+CX*kw, FY=PH.oy+CY*kw;
-    var bgA=eout(seg(t,0,0.15))*(1-eio(seg(t,1.95,2.30)));
+    var W=PH.W, H=PH.H, kw=PH.kw, ox=PH.ox, oy=PH.oy;
+    /* THE LANDING: from 1.95 s the wordmark shrinks and flies into the header's own wordmark, lines up with it
+       (and takes its colour, for a light header), and at 2.55 s hands over: the real header mark comes back
+       underneath, exactly where ours is, and ours goes. The dark fades as it flies, so the page is there. */
+    var L=t>=PFLY0 && PH.head ? landing() : null;
+    if(PH.head && t>=PFLY0 && !L){ headBack(); PH.head=null; }   // the header went off the screen mid-flight: just fade
+    if(L){
+      var j=eio(seg(t,PFLY0,PFLY1)), cx0=ox+(INKL+INKW/2)*kw, cy0=oy-261*kw, cx1=L.ox+(INKL+INKW/2)*L.kw, cy1=L.oy-261*L.kw;
+      kw=Math.exp(lerp(Math.log(kw),Math.log(L.kw),j));
+      ox=lerp(cx0,cx1,j)-(INKL+INKW/2)*kw; oy=lerp(cy0,cy1,j)+261*kw;
+      el.vppWg.setAttribute("transform","translate("+f(ox)+" "+f(oy)+") scale("+kw.toFixed(6)+")");
+      var c0=[255,255,255], c1=rgb(L.color), cc=c0.map(function(v,i){ return Math.round(lerp(v,c1[i],j)); });
+      [].forEach.call(el.vppWg.querySelectorAll("path"), function(pa){ pa.setAttribute("fill","rgb("+cc.join(",")+")"); });
+      if(t>=PHAND) headBack();
+    }
+    var FX=ox+CX*kw, FY=oy+CY*kw;
+    var bgA=eout(seg(t,0,0.15))*(1-eio(L ? seg(t,2.00,2.45) : seg(t,1.95,2.30)));
     root.style.background="rgba(5,5,6,"+(0.93*bgA).toFixed(3)+")";
-    var fade=1-eio(seg(t,1.95,2.30));
+    var fade=L ? 1-seg(t,PHAND,PLAND) : 1-eio(seg(t,1.95,2.30));
     if(REDUCED){   // a simple fade: the words and the finished logo, no movement
       var a=eout(seg(t,0,0.3))*fade;
       el.vppL1.style.opacity=el.vppL2.style.opacity=clamp(a*(1-seg(t,0.9,1.1)));
@@ -223,7 +258,7 @@
     else { slam(el.vppL1,seg(t,0.20,0.34),1.4,1); slam(el.vppL2,seg(t,0.30,0.46),1.6,L2S); }
     var wf=eout(seg(t,1.00,1.18)); el.vppWg.setAttribute("opacity",(wf*fade).toFixed(3));
     var lit=strike(t,0.05), p0=PH.th/(HT*kw), g=eio(seg(t,1.05,1.40)), p=lerp(p0,1,g);
-    var x=lerp(PH.tx,FX,g), y=lerp(PH.ty,FY,g*g);
+    var x=lerp(PH.tx,FX,g), y=lerp(PH.ty,FY,g*g); if(L){ x=FX; y=FY; p=1; }
     var k=kw*p, fill=eio(seg(t,1.45,1.65));
     el.vppTg.setAttribute("transform","translate("+f(x)+" "+f(y)+") scale("+k.toFixed(6)+")");
     el.vppBand.setAttribute("d",band(RO,RO-lerp(28*T,SOLID,fill))); el.vppBand.setAttribute("fill",lit<0.3?"#5a1438":"#FF1F8E");
@@ -237,13 +272,14 @@
     playing=false; if(raf) window.cancelAnimationFrame(raf); raf=0;
     var c=LAYOUT==="tv" && cornerEl();
     if(c && corner){ if(!c.querySelector(".vp-newmark")) c.insertAdjacentHTML("afterbegin", wordSvg(corner.cssW)); c.classList.add("vp-sting-mark"); }
+    headBack();   // the phone's header mark is always given back, however the show ended
     if(root && root.parentNode) root.parentNode.removeChild(root);
     root=null; el={};
     stats.last=how; if(how==="ball"||how==="content") stats.cutShort++;
     window.removeEventListener("resize",fit);
   }
   var LAYOUT="tv";
-  function dur(){ return LAYOUT==="phone" ? PDUR : DUR; }
+  function dur(){ return LAYOUT==="phone" ? (PH && PH.land ? PLAND : PDUR) : DUR; }
   function loop(now){ if(!playing) return; var t=(now-t0)/1000; if(t>=dur()){ render(dur()); finish("done"); return; } render(t); raf=requestAnimationFrame(loop); }
   function play(opts){
     if(playing) return;

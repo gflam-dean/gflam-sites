@@ -25,6 +25,9 @@ PLAIN (no switch in its address) unless it is testing the off switch. On the rig
      question, song or ball comes in. The raffle and members draw
      screens play "IT'S RAFFLE TIME" / "MEMBERS DRAW TIME" once, before the first draw, and give way to it.
      A trivia screen and a trivia phone with ?sting=0 never play it.
+  7. The phone show ends in the page's own header logo (bingo, trivia, musical bingo; 320, 375, 390, 430
+     wide and sideways): the wordmark lands on it within 2px, then hands over to it; cut short, the
+     header logo is given back; under prefers-reduced-motion it is the simple fade.
 
     python3 tools/tv-sting-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -246,10 +249,80 @@ def other_games():
         r.close()
 
 
+LAND_SIZES = ((320, 568), (375, 667), (390, 844), (430, 932), (844, 390))
+LAND_PAGES = (('/play?demo=1', 'bingo'), ('/app/trivia/play?demo=1', 'trivia'), ('/app/musical/play?demo=1', 'musical bingo'))
+# ours: the show's wordmark group; theirs: the header's own wordmark path (the white letters, triangle apart)
+LAND = r"""(function(){
+  var g=document.getElementById("vppWg"), h=document.querySelector('.brand svg[data-vp-mark="wordmark"]');
+  if(!g||!h) return {missing:[!!g,!!h]};
+  var a=g.getBoundingClientRect(), b=h.querySelector("path").getBoundingClientRect();
+  var d=Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.right-b.right),Math.abs(a.bottom-b.bottom));
+  return {d:Math.round(d*100)/100, ours:[a.left,a.top,a.width,a.height].map(Math.round), head:[b.left,b.top,b.width,b.height].map(Math.round),
+          hidden:getComputedStyle(h).visibility==="hidden"};
+})()"""
+HEAD_SHOWN = '(function(h){return !!h && getComputedStyle(h).visibility!=="hidden";})(document.querySelector(\'.brand svg[data-vp-mark="wordmark"]\'))'
+
+def phone_show_ready(r, sid):
+    """The page's own show if its demo starts one, else started by hand; the clock is the test's (manual)."""
+    r.until(sid, 'document.readyState==="complete" && !!window.VPSting', 15); time.sleep(1.5)
+    if not r.ask(sid, 'VPSting.playing()'):
+        r.ask(sid, 'VPSting.start({layout:"phone", words:VPSting.phoneWords("BINGO","Sam")}); true')
+    return r.ask(sid, 'VPSting.playing()') is True
+
+def phone_landing():
+    print('\n7. The phone show lands in the page\'s own header logo (Dean, 2 Nov 2026), at every size')
+    r = RIG.Rig()
+    try:
+        for path, what in LAND_PAGES:
+            for w, h in LAND_SIZES:
+                tag = '%s phone at %dx%d' % (what, w, h)
+                tid, sid = r.open(path, before='window.__vpStingManual=true;', width=w, height=h)
+                try:
+                    if not phone_show_ready(r, sid):
+                        ok(tag + ': the show starts', False, r.ask(sid, STATS)); continue
+                    r.ask(sid, 'VPSting.frame(1.0); VPSting.frame(2.0); true')
+                    mid = r.ask(sid, LAND) or {}
+                    r.ask(sid, 'VPSting.frame(2.52); true')
+                    v = r.ask(sid, LAND) or {}
+                    ok(tag + ': the wordmark lands on the header logo, within 2px, while the real one waits hidden',
+                       isinstance(v.get('d'), (int, float)) and v['d'] <= 2 and v.get('hidden') is True and (mid.get('d') or 0) > 10, [v, mid])
+                    if w == 390 and h == 844:
+                        r.ask(sid, 'VPSting.frame(2.6); true')
+                        ok(tag + ': then hands over: the header logo is back, exactly under ours', r.ask(sid, HEAD_SHOWN) is True and (r.ask(sid, LAND) or {}).get('d', 99) <= 2,
+                           r.ask(sid, LAND))
+                        r.ask(sid, 'VPSting.frame(9); true')
+                        ok(tag + ': and the show is gone, played to the end, the header logo showing',
+                           r.ask(sid, '!document.getElementById("vpSting") && VPSting.stats().last==="done"') is True and r.ask(sid, HEAD_SHOWN) is True, r.ask(sid, STATS))
+                        # cut short mid-flight (a ball, a question, a song): the header logo is never left hidden
+                        r.ask(sid, 'VPSting.start({layout:"phone", words:VPSting.phoneWords("BINGO","Sam")}); VPSting.frame(1.0); VPSting.frame(2.2); true')
+                        hid = r.ask(sid, '!(%s)' % HEAD_SHOWN)
+                        r.ask(sid, 'VPSting.stop("content"); true')
+                        ok(tag + ': cut short mid-flight, the show goes at once and the header logo is given back',
+                           hid is True and r.ask(sid, '!document.getElementById("vpSting") && !VPSting.playing()') is True and r.ask(sid, HEAD_SHOWN) is True, [hid, r.ask(sid, STATS)])
+                finally:
+                    r.close_tab(tid)
+        # prefers-reduced-motion: the simple fade, no flight, and the header logo is never hidden
+        tid, sid = r.open('/app/trivia/play?demo=1', before='window.__vpStingManual=true;', width=390, height=844)
+        r.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]}, session=sid)
+        r.B.call('Page.reload', {}, session=sid)
+        time.sleep(1)
+        if phone_show_ready(r, sid):
+            r.ask(sid, 'VPSting.frame(1.0); VPSting.frame(2.0); VPSting.frame(2.2); true')   # its fade ends at 2.3 s
+            v = r.ask(sid, LAND) or {}
+            ok('reduced motion: no flight, the header logo is not hidden, and the show is a fade',
+               r.ask(sid, 'matchMedia("(prefers-reduced-motion: reduce)").matches') is True and v.get('hidden') is False and (v.get('d') or 0) > 10, v)
+        else:
+            ok('reduced motion: the show starts', False, r.ask(sid, STATS))
+        r.close_tab(tid)
+    finally:
+        r.close()
+
+
 if __name__ == '__main__':
     full_show()
     ball_mid_show()
     other_games()
+    phone_landing()
     # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)
