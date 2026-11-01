@@ -356,7 +356,7 @@
   "counted_by": "lines"
  },
  "tools/test-bingo-server-tickets.js": {
-  "checks": 80,
+  "checks": 103,
   "counted_by": "lines"
  },
  "tools/test-bingo-tab-15-oct.js": {
@@ -448,7 +448,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 160,
+  "checks": 169,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
@@ -949,6 +949,10 @@
  },
  "tools/tv-landing-in-chrome.test.py": {
   "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/tv-sting-in-chrome.test.py": {
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {
