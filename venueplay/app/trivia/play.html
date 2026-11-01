@@ -220,7 +220,7 @@
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/topanswers/pr-phone.js"></script>
@@ -774,7 +774,7 @@
   var _prPhone=null;   // Punters Reckon, mounted on first use
   function onMsg(m){
     if(!m||!m.t) return;
-    /* The start-of-game show on the phone (/app/vp-sting.js, off unless ?sting=1), with the name it joined with. */
+    /* The start-of-game show on the phone (/app/vp-sting.js, on unless ?sting=0), with the name it joined with. */
     if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords(/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA", P.name), { question:1, ta_board:1 }, "phone"); }catch(e){} }
     if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
       if(!P.joined) return;
