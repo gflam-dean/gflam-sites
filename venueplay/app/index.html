@@ -543,7 +543,7 @@
                 <div class="fieldnote vp-fine" style="margin-top:5px">Everyone gets this many tickets this game.</div>
               </div>
               <div class="field" id="allowEarlyField">
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" autocomplete="off" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
                 <div class="fieldnote vp-fine" style="margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
               </div>
               <div class="patedit" id="patEditRow"><button type="button" class="btn ghost" id="patEditBtn">Edit this pattern</button></div>
@@ -560,7 +560,7 @@
 
         <div id="liveBlock" class="hidden">
           <label id="allowEarlyLiveRow" style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
-            <input type="checkbox" id="allowEarlyLive" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+            <input type="checkbox" id="allowEarlyLive" autocomplete="off" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
           <div class="stat" id="liveStats">
             <div class="box"><div class="k">Called</div><div class="v" id="liveCount">0 of 90</div></div>
             <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line</div></div>
@@ -4367,11 +4367,22 @@
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
   // The same setting in two places, because the host needs it before the game AND during it.
+  /* A HOST SETTING NEVER CHANGES BY ITSELF ACROSS A RELOAD (live test night, 1 Nov 2026: the box
+     was unticked when the game started and showed TICKED after the console was reloaded mid-game,
+     with nobody touching it). Two holes, both closed here:
+       - the browser restores a checkbox it remembers from before the reload, after the page has
+         put the game's own value on it (autocomplete="off" on both boxes stops that, and on
+         pageshow the boxes are put back to what the game says, so what the host sees is always
+         what the game does);
+       - a change made during a game was only saved with the next ball, so a reload straight
+         after a tick or an untick brought the old value back. It is saved now. */
+  function syncEarlyBoxes(){ var a=$("allowEarlyChk"), b=$("allowEarlyLive"), v=!!G.allowEarly; if(a) a.checked=v; if(b) b.checked=v; }
   (function(){
     var a=$("allowEarlyChk"), b=$("allowEarlyLive");
-    function set(v){ G.allowEarly=v; if(a) a.checked=v; if(b) b.checked=v; sendState(); }
+    function set(v){ G.allowEarly=v; if(a) a.checked=v; if(b) b.checked=v; sendState(); if(G.status==="running" || G.status==="lobby") saveGame(); }
     if(a) a.addEventListener("change", function(){ set(this.checked); });
     if(b) b.addEventListener("change", function(){ set(this.checked); });
+    window.addEventListener("pageshow", syncEarlyBoxes);
   })();
   $("nextBtn").addEventListener("click", nextBall);
   /* The real-balls grid. A tap calls; a press held CALLER_HOLD_MS takes back the last call, and
