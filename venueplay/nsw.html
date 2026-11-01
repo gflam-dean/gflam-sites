@@ -1049,7 +1049,7 @@
 
 <!-- ===================== THE MONTHLY EMAIL (31 Oct 2026) =====================
      For the venue that is not ready to talk to us yet: one email a month, nothing else asked but
-     the address (the venue is optional). Sits right after "Talk to us" as the softer choice, in this
+     the address, the venue name and its postcode (2 Nov 2026: offers go by state). Sits right after "Talk to us" as the softer choice, in this
      page's own pieces; /app/vp-subscribe.js makes it work and /app/vp-subscribe.css lays it out.
      Never an offer here: the same standard sign-up on every page that has it. -->
 <section class="sec sec-tight" id="monthly">
@@ -1067,9 +1067,15 @@
               <label for="vps-email">Email</label>
               <input id="vps-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required>
             </div>
-            <div class="field">
-              <label for="vps-venue">Venue <span class="vps-opt">(optional)</span></label>
-              <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120">
+            <div class="vps-pair">
+              <div class="field">
+                <label for="vps-venue">Venue name</label>
+                <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required>
+              </div>
+              <div class="field">
+                <label for="vps-postcode">Postcode</label>
+                <input id="vps-postcode" name="postcode" type="text" placeholder="4217" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+              </div>
             </div>
           </div>
           <div class="vps-hp" aria-hidden="true"><label for="vps-website">Leave this empty</label><input id="vps-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>

@@ -17875,7 +17875,21 @@ async function helpTriageForRange(env, from, to, brand) {
 
    WHO IT IS FOR. A venue owner or manager who likes the look of VenuePlay but is not ready to ring
    us or set up an account. The sales pages (home, the offer page, See a night) carry one small form:
-   their email, and their venue if they like. Nothing else is asked: the email needs nothing else.
+   their email, their venue's name and its postcode. Nothing else is asked.
+
+   THE VENUE AND THE POSTCODE ARE NEEDED (Dean, 2 Nov 2026; migration 141). The venue so we know who
+   we are writing to; the postcode so an offer only goes to the state it is for (a Queensland offer is
+   never sent to a NSW venue). The state is worked out here from the postcode by vpaStateFromPostcode,
+   the same map that sets a venue's gaming rules, and kept beside it (au_state). Both are checked
+   here as well as on the page.
+   TWO GAPS THIS HAS TO SURVIVE, so no sign-up is ever dropped by the change itself:
+     - BEFORE MIGRATION 141 the columns are not there and PostgREST refuses any write naming them.
+       Every write here then tries again without them (vpsNoPc / vpsStripPc), so the person is still
+       on the list; HQ shows that row with no postcode.
+     - THE PAGE LAGS THE WORKER by 3 to 25 minutes on a release, and a page loaded before it is still
+       open somewhere. An old form sends no `postcode` key at all, so a request without one is kept
+       on the old rules (venue optional, no postcode). The new form always sends the key, even empty,
+       and is held to the new rules. Remove the old-form path once the release has settled (9 Nov 2026).
 
    ONE EMAIL A MONTH, AND IT IS THE SAME ONE. Subscribers get the "What's new at VenuePlay" section of
    the monthly venue email (feature/venue-reports-31oct, migration 133), never a second newsletter.
@@ -17886,7 +17900,7 @@ async function helpTriageForRange(env, from, to, brand) {
    all: nobody is contacted because they matched.
 
    ROUTES
-     POST /subscribe                    public: {email, venue, source, utm, website, turnstile}
+     POST /subscribe                    public: {email, venue, postcode, source, utm, website, turnstile}
      POST /admin/subscribers            HQ owner or accounts: the list, counts by week and source, matches
      POST /admin/subscribers/export     HQ owner or accounts: the CSV, audited
 
@@ -17933,6 +17947,36 @@ const VPS_CONSENT_TEXT = 'One short email a month from venueplay to this address
 const VPS_FREE_MAILBOX_RE = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|gmx|bigpond|optusnet|tpg|iinet|internode|westnet|dodo|exemail|ozemail|aapt|adam|iprimus|people|netspace|telstra)\./i;
 
 function vpsNow() { return new Date().toISOString(); }
+/* THE POSTCODE COLUMNS (migration 141). Before it is run, any write or read naming them is refused
+   (PGRST204 on a write, 42703 on a read), and each one here falls back to what it did before. */
+const VPS_PC_COLS = ['postcode', 'au_state'];
+function vpsNoPc(e) {
+  return /PGRST204|42703|Could not find the '?(postcode|au_state)'? column|column [\w.]*(postcode|au_state) does not exist/.test(String((e && (e.message || e.body)) || e || ''));
+}
+function vpsStripPc(o) {
+  const c = Object.assign({}, o);
+  VPS_PC_COLS.forEach(function (k) { delete c[k]; });
+  return c;
+}
+async function vpsPatch(env, id, obj) {
+  try { await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(id), obj); }
+  catch (e) {
+    if (!vpsNoPc(e) || !VPS_PC_COLS.some(function (k) { return k in obj; })) throw e;
+    await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(id), vpsStripPc(obj));
+  }
+}
+/* A venue's postcode: four digits, in a range one Australian state or territory owns. Returns
+   {postcode, state} or {error}, in the same words the page uses. */
+const VPS_PC_NEED = "Put in your venue's postcode, so we only send you what applies in your state.";
+const VPS_PC_BAD = "That postcode does not look right. Use your venue's 4-digit postcode.";
+const VPS_VENUE_NEED = "Put in your venue's name, so we know who we are writing to.";
+function vpsPostcode(v) {
+  const pc = String(v == null ? '' : v).replace(/\s+/g, '');
+  if (!pc) return { error: VPS_PC_NEED };
+  if (!/^\d{4}$/.test(pc)) return { error: VPS_PC_BAD };
+  const st = vpaStateFromPostcode(pc);
+  return st ? { postcode: pc, state: st } : { error: VPS_PC_BAD };
+}
 function vpsEmailOk(e) { return e.length >= 6 && e.length <= 254 && HELP_EMAIL_RE.test(e) && !/[,;()\\"]/.test(e); }
 function vpsDomain(e) { const i = String(e || '').lastIndexOf('@'); return i < 0 ? '' : String(e).slice(i + 1).toLowerCase(); }
 function vpsSource(s) { s = String(s || '').toLowerCase(); return VPS_SOURCES.indexOf(s) >= 0 ? s : 'site'; }
@@ -18021,6 +18065,14 @@ async function vpsHandleSubscribe(request, env, json) {
   if (!vpsEmailOk(email)) return json({ error: 'That email address does not look right.' }, 400);
   const venue = helpLine(b.venue, 200);
   if (venue.length > 120) return json({ error: 'That venue name is too long.' }, 400);
+  // The new form always sends `postcode` (even empty); a page loaded before 2 Nov 2026 sends none.
+  const newForm = Object.prototype.hasOwnProperty.call(b, 'postcode');
+  let pc = { postcode: null, state: null };
+  if (newForm) {
+    if (!venue) return json({ error: VPS_VENUE_NEED }, 400);
+    pc = vpsPostcode(b.postcode);
+    if (pc.error) return json({ error: pc.error }, 400);
+  }
   const ts = await helpTurnstile(env, b.turnstile, ip);
   if (!ts.ok) return json({ error: 'Please complete the check above the button, then try again.', turnstile: true }, 403);
   if (!(await helpLimit(env, 'sub:em:' + email, VPS_MAX_PER_EMAIL, 3600))) {
@@ -18030,7 +18082,7 @@ async function vpsHandleSubscribe(request, env, json) {
   const TRY_AGAIN = { error: 'We could not add you just now. Please try again in a minute.' };
 
   let have;
-  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=id,venue_name,status,consent_at,unsubscribed_at&limit=1'); }
+  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=*&limit=1'); }   // *: with or without migration 141's columns
   catch (e) { return json(TRY_AGAIN, 503); }
   if (have.missing) return json(NOT_READY, 503);
   let lastStop;
@@ -18042,15 +18094,19 @@ async function vpsHandleSubscribe(request, env, json) {
     const row = have.rows[0];
     if (row.status === 'active' && vpsConsentBeats(row, lastStop)) {
       // Already on the list. Same answer as a new sign-up, no second email; a venue name they left off before is kept now.
-      if (venue && !row.venue_name) {
-        await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id), { venue_name: venue, updated_at: now }).catch(() => null);
+      const fill = {};
+      if (venue && !row.venue_name) fill.venue_name = venue;
+      if (pc.postcode && !row.postcode) { fill.postcode = pc.postcode; fill.au_state = pc.state; }
+      if (Object.keys(fill).length) {
+        await vpsPatch(env, row.id, Object.assign(fill, { updated_at: now })).catch(() => null);
       }
       return json({ ok: true });
     }
     // They unsubscribed since (or were held): this sign-up is fresh consent, so they are back on.
     try {
-      await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id),
-        Object.assign({}, fresh, { resubscribed_at: now, venue_name: row.venue_name || venue || null, updated_at: now }));
+      const keepPc = row.postcode ? {} : (pc.postcode ? { postcode: pc.postcode, au_state: pc.state } : {});
+      await vpsPatch(env, row.id,
+        Object.assign({}, fresh, keepPc, { resubscribed_at: now, venue_name: row.venue_name || venue || null, updated_at: now }));
     } catch (e) { return json(TRY_AGAIN, 503); }
     if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) await vpsSendConfirmation(env, email, venue || row.venue_name, row.id).catch(() => null);
     return json({ ok: true });
@@ -18065,14 +18121,17 @@ async function vpsHandleSubscribe(request, env, json) {
     country: where.country,
     region: where.region,
     resubscribed_at: lastStop ? now : null,     // on vp_unsubscribes before: back on, with the old row kept as the record
-  }, fresh);
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
-    method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(row) });
-  if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
-  if (!res.ok) {
-    const t = await res.text().catch(() => '');
-    return json(helpTableMissing(res.status, t) ? NOT_READY : TRY_AGAIN, 503);
+  }, fresh, pc.postcode ? { postcode: pc.postcode, au_state: pc.state } : {});   // an old form's row names no new column
+  const insert = (obj) => fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
+    method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(obj) });
+  let res = await insert(row), t = '';
+  if (!res.ok && res.status !== 409) {
+    t = await res.text().catch(() => '');
+    // Before migration 141: keep the sign-up without the postcode rather than lose the person.
+    if (vpsNoPc(t)) { res = await insert(vpsStripPc(row)); t = res.ok ? '' : await res.text().catch(() => ''); }
   }
+  if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
+  if (!res.ok) return json(helpTableMissing(res.status, t) ? NOT_READY : TRY_AGAIN, 503);
   let made = null;
   try { const j = await res.json(); made = Array.isArray(j) ? j[0] : j; } catch (e) { made = null; }
   if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {
@@ -18171,7 +18230,8 @@ function vpsSummary(subs, stops, venues, accounts, prospects, nowMs) {
   const rows = (subs || []).map((s) => {
     const stop = Math.max((stops || {})[String(s.email || '').toLowerCase()] || 0, Date.parse(s.unsubscribed_at || '') || 0);
     const state = s.status === 'held' ? 'held' : !vpsConsentBeats(s, stop) ? 'unsubscribed' : (s.resubscribed_at && stop ? 'resubscribed' : 'active');
-    return { id: s.id, email: s.email, venue_name: s.venue_name || '', source: s.source || 'site', utm: s.utm || {},
+    return { id: s.id, email: s.email, venue_name: s.venue_name || '', postcode: s.postcode || '', au_state: s.au_state || '',
+      source: s.source || 'site', utm: s.utm || {},
       region: s.region || '', country: s.country || '', created_at: s.created_at, consent_at: s.consent_at || null,
       confirm_sent_at: s.confirm_sent_at || null, unsubscribed_at: iso(stop), resubscribed_at: s.resubscribed_at || null,
       state: state, held_reason: state === 'held' ? (s.held_reason || '') : '', match: vpsMatch(s, venues, accounts, prospects) };
@@ -18202,8 +18262,11 @@ async function vpsLoad(env) {
   const probe = await vpsRead(env, 'vp_subscribers', 'select=id&limit=1');
   if (probe.missing) return { missing: true };
   // PAGED: PostgREST stops at 1000 rows in silence, and a short list here is a short export.
-  const subs = await vpaSelectAll(env, 'vp_subscribers',
-    'select=id,email,venue_name,source,utm,region,country,status,held_reason,consent_at,confirm_sent_at,unsubscribed_at,resubscribed_at,created_at&order=created_at.desc,id.asc');
+  const cols = 'id,email,venue_name,source,utm,region,country,status,held_reason,consent_at,confirm_sent_at,unsubscribed_at,resubscribed_at,created_at';
+  const order = '&order=created_at.desc,id.asc';
+  let subs;
+  try { subs = await vpaSelectAll(env, 'vp_subscribers', 'select=' + cols + ',postcode,au_state' + order); }
+  catch (e) { if (!vpsNoPc(e)) throw e; subs = await vpaSelectAll(env, 'vp_subscribers', 'select=' + cols + order); }   // before migration 141
   const unsub = await vpsStopTimes(env);   // throws: a list we cannot check is not shown as "active"
   const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,founding_id,status,suspended_reason&order=id.asc');
   const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
@@ -18233,8 +18296,8 @@ async function vpsHandleAdminExport(request, env, json) {
   catch (e) { return json({ error: 'Could not read the subscribers or the unsubscribe list just now, so nothing was exported.' }, 503); }
   if (d.missing) return json({ error: VPS_NEED_MIGRATION, need_migration: 134 }, 503);
   const s = vpsSummary(d.subs, d.unsub, d.venues, d.accounts, d.prospects, Date.now());
-  const header = ['Email', 'Venue (as typed)', 'State', 'Signed up', 'Consent given', 'Last unsubscribed', 'Re-subscribed', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
-  const lines = s.rows.map((r) => [r.email, r.venue_name, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at,
+  const header = ['Email', 'Venue (as typed)', 'Postcode', 'Venue state', 'State', 'Signed up', 'Consent given', 'Last unsubscribed', 'Re-subscribed', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
+  const lines = s.rows.map((r) => [r.email, r.venue_name, r.postcode, r.au_state, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at,
     r.consent_at || '', r.unsubscribed_at || '', r.resubscribed_at || '', r.source,
     (r.utm && r.utm.utm_source) || '', (r.utm && r.utm.utm_campaign) || '', r.region,
     r.match ? r.match.name : '', r.match ? r.match.kind : '', r.match ? r.match.by : '']);

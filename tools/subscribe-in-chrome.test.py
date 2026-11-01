@@ -72,10 +72,12 @@ LAYOUT = r'''(function(){
   var f = fs[0]; f.scrollIntoView({block: "center", behavior: "instant"});
   var box = f.closest(".vps-card") || f.closest(".vp-mail") || f;
   function R(el){ if(!el) return null; var r = el.getBoundingClientRect(); return {l:r.left, r:r.right, t:r.top, b:r.bottom, w:r.width, h:r.height}; }
-  var em = f.querySelector('input[name="email"]'), ve = f.querySelector('input[name="venue"]'), bt = f.querySelector('button[type="submit"]'), hp = f.querySelector('input[name="website"]');
+  var em = f.querySelector('input[name="email"]'), ve = f.querySelector('input[name="venue"]'), pc = f.querySelector('input[name="postcode"]'), bt = f.querySelector('button[type="submit"]'), hp = f.querySelector('input[name="website"]');
   var rb = R(bt), hit = rb ? document.elementFromPoint(rb.l + rb.w / 2, rb.t + rb.h / 2) : null;
   var cons = f.querySelector("[data-vps-consent-text]"), priv = f.querySelector('a[href="/privacy"]');
-  return JSON.stringify({ forms: 1, vw: innerWidth, sw: document.documentElement.scrollWidth, box: R(box), em: R(em), ve: R(ve), bt: R(bt), hp: R(hp),
+  return JSON.stringify({ forms: 1, vw: innerWidth, sw: document.documentElement.scrollWidth, box: R(box), em: R(em), ve: R(ve), pc: R(pc), pcReq: !!(pc && pc.required), veReq: !!(ve && ve.required),
+    pcLabel: pc && pc.labels && pc.labels[0] ? pc.labels[0].innerText : "", veLabel: ve && ve.labels && ve.labels[0] ? ve.labels[0].innerText : "",
+    pcMode: pc ? pc.getAttribute("inputmode") : "", bt: R(bt), hp: R(hp),
     hpTab: hp ? hp.tabIndex : null, covered: !!(hit && hit !== bt && !bt.contains(hit)), coveredBy: hit ? (hit.className || hit.tagName) : "",
     consent: cons ? cons.textContent : null, privacy: !!priv, text: box.innerText, source: f.getAttribute("data-source"),
     errs: window.__errs || [] });
@@ -86,10 +88,12 @@ def wait_vps(S, sid):
     return S.until(sid, '!!document.querySelector("form[data-vps][data-vps-wired]")', 20)
 
 
-def fill_and_send(S, sid, email, venue='', website=''):
+def fill_and_send(S, sid, email, venue='', website='', postcode='4217'):
+    # The postcode box (2 Nov 2026) is filled with a real one unless a test says otherwise.
     S.js(sid, ('(function(){var f=document.querySelector("form[data-vps]");f.querySelector(\'input[name="email"]\').value=%s;'
                'f.querySelector(\'input[name="venue"]\').value=%s;f.querySelector(\'input[name="website"]\').value=%s;'
-               'f.querySelector(\'button[type="submit"]\').click();return true;})()') % (json.dumps(email), json.dumps(venue), json.dumps(website)))
+               'var p=f.querySelector(\'input[name="postcode"]\');if(p)p.value=%s;'
+               'f.querySelector(\'button[type="submit"]\').click();return true;})()') % (json.dumps(email), json.dumps(venue), json.dumps(website), json.dumps(postcode)))
 
 
 STATE = r'''(function(){ var f=document.querySelector("form[data-vps]"), d=f.parentNode.querySelector("[data-vps-done]"), e=f.querySelector("[data-vps-err]");
@@ -122,7 +126,7 @@ try:
 
     print('1 and 2. HOW IT LOOKS AND WHAT IT SAYS, ON EACH PAGE, AT PHONE AND DESKTOP WIDTH')
     for page, src in PAGES:
-        for w, h, mob in ((390, 844, True), (1280, 900, False)):
+        for w, h, mob in ((375, 812, True), (390, 844, True), (1280, 900, False)):
             tid, sid = S.open(page, w, h, mobile=mob)
             wait_vps(S, sid)
             time.sleep(0.8)
@@ -137,6 +141,14 @@ try:
             ok('%s: the email, venue and button are at least 44 px tall and do not overlap' % tag,
                em.get('h', 0) >= 44 and ve.get('h', 0) >= 44 and bt.get('h', 0) >= 44
                and (ve['t'] >= em['b'] - 0.5 or ve['l'] >= em['r'] - 0.5) and bt['t'] >= max(em['b'], ve['b']) - 0.5, [em, ve, bt])
+            pc = L.get('pc') or {}
+            ok('%s: the venue name and the postcode are both asked for, needed, and the postcode box gives a number pad' % tag,
+               L.get('veReq') and L.get('pcReq') and 'optional' not in (L.get('veLabel') or '').lower() and 'postcode' in (L.get('pcLabel') or '').lower()
+               and L.get('pcMode') == 'numeric', [L.get('veLabel'), L.get('pcLabel'), L.get('veReq'), L.get('pcReq'), L.get('pcMode')])
+            ok('%s: the postcode box is at least 44 px tall and wide enough for 4 digits, inside the form, overlapping nothing' % tag,
+               pc.get('h', 0) >= 44 and pc.get('w', 0) >= 72 and pc['l'] >= box['l'] - 0.5 and pc['r'] <= box['r'] + 0.5
+               and (pc['t'] >= max(em['b'], ve['b']) - 0.5 or (pc['l'] >= ve['r'] - 0.5 and pc['t'] >= em['b'] - 0.5) or (pc['l'] >= em['r'] - 0.5 and ve['l'] >= em['r'] - 0.5))
+               and bt['t'] >= pc['b'] - 0.5, [em, ve, pc, bt])
             ok('%s: nothing sits over the button (no sticky bar, no strip)' % tag, not L.get('covered'), L.get('coveredBy'))
             ok('%s: the honeypot is off the screen and out of the tab order' % tag, hp and hp['r'] <= 0 and L.get('hpTab') == -1, [hp, L.get('hpTab')])
             ok('%s: the consent line is the Worker\'s words exactly, with the Privacy Policy linked' % tag, L.get('consent') == CONSENT and L.get('privacy'), L.get('consent'))
@@ -144,7 +156,7 @@ try:
             ok('%s: no price or offer in the block, no "call you", no em dash' % tag,
                not re.search(r'\$\d', text) and not re.search(r'call you|we.ll call', text, re.I) and '\u2014' not in text and 'Nobody will ring you' in text, text[:300])
             ok('%s: no script error' % tag, not L.get('errs'), L.get('errs'))
-            shot(S, sid, '%s-%s' % (src, 'phone' if mob else 'desktop'))
+            shot(S, sid, '%s-%s' % (src, ('phone-%d' % w) if mob else 'desktop'))
             S.close_tab(tid)
 
     print('\n3. SIGN UP FROM THE HOME PAGE, WITH UTM TAGS, THE SWITCH OFF')
@@ -158,7 +170,34 @@ try:
     ok('a bad address: "does not look right", nothing kept', 'does not look right' in st.get('err', '') and not subs(S), st)
     S.js(sid, 'document.querySelector("form[data-vps]").scrollIntoView({block:"center",behavior:"instant"});true')
     shot(S, sid, 'home-error-phone')
-    fill_and_send(S, sid, 'Kim@KirraBeachHotel.com.au', 'Kirra Beach Hotel')
+    # THE VENUE NAME AND THE POSTCODE ARE NEEDED (2 Nov 2026): said on the page, in the Worker's words, before anything is sent.
+    fill_and_send(S, sid, 'kim@kirrabeachhotel.com.au', '  ')
+    st = state(S, sid)
+    ok('no venue name: "Put in your venue\'s name", the venue box has the focus, nothing kept', "Put in your venue's name" in st.get('err', '') and not subs(S)
+       and S.js(sid, 'document.activeElement && document.activeElement.name') == 'venue', st)
+    S.js(sid, 'document.querySelector("form[data-vps]").scrollIntoView({block:"center",behavior:"instant"});true')
+    shot(S, sid, 'home-no-venue-phone')
+    fill_and_send(S, sid, 'kim@kirrabeachhotel.com.au', 'Kirra Beach Hotel', postcode='')
+    st = state(S, sid)
+    ok('no postcode: asked for it and told it is so offers fit their state, the postcode box has the focus, nothing kept',
+       "Put in your venue's postcode" in st.get('err', '') and 'state' in st.get('err', '') and not subs(S)
+       and S.js(sid, 'document.activeElement && document.activeElement.name') == 'postcode', st)
+    bad_seen = []
+    for bad_pc in ('421', '42a7', '42170'):
+        fill_and_send(S, sid, 'kim@kirrabeachhotel.com.au', 'Kirra Beach Hotel', postcode=bad_pc)
+        bad_seen.append(state(S, sid).get('err', ''))
+    ok('a bad postcode (3 digits, a letter, 5 digits): "That postcode does not look right", nothing kept',
+       all('That postcode does not look right' in e for e in bad_seen) and not subs(S), bad_seen)
+    S.js(sid, 'document.querySelector("form[data-vps]").scrollIntoView({block:"center",behavior:"instant"});true')
+    shot(S, sid, 'home-bad-postcode-phone')
+    # Past the page's own check, the Worker says no too, in the same words, and keeps nothing. (/__api is where
+    # tools/browser-rig/admin_site.py serves the real billing Worker; it rewrites the pages, not this line.)
+    srv = j(S.js(sid, ('(async function(){var r=await fetch("/__api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},'
+                       'body:JSON.stringify({email:"kim@kirrabeachhotel.com.au",venue:"Kirra Beach Hotel",postcode:"0001",source:"home",website:""})});'
+                       'var b=await r.json().catch(function(){return {};});return JSON.stringify({status:r.status,error:b.error||""});})()'), wait=True))
+    ok('the Worker refuses a postcode no state owns (0001) sent round the page, in the same words, and keeps nothing',
+       srv.get('status') == 400 and 'That postcode does not look right' in srv.get('error', '') and not subs(S), srv)
+    fill_and_send(S, sid, 'Kim@KirraBeachHotel.com.au', 'Kirra Beach Hotel', postcode='4217')
     st = settle(S, sid)
     ok('a good one: the form gives way to "You\'re on the list"', st.get('done') and not st.get('formShown') and "you're on the list" in st.get('doneText', '').lower(), st)
     ok('the success names the month the first email lands in, and says nobody will ring', re.search(r'lands early (%s)\.' % '|'.join(MONTHS), st.get('doneText', '')) and 'Nobody will ring you' in st.get('doneText', ''), st.get('doneText'))
@@ -166,6 +205,7 @@ try:
     r0 = rows[0] if rows else {}
     ok('the Worker kept one row: the address lower-cased, the venue, source "home"', len(rows) == 1 and r0.get('email') == 'kim@kirrabeachhotel.com.au'
        and r0.get('venue_name') == 'Kirra Beach Hotel' and r0.get('source') == 'home', rows)
+    ok('and the postcode as typed, with the state worked out from it (4217 is QLD)', r0.get('postcode') == '4217' and r0.get('au_state') == 'QLD', r0)
     ok('with the utm tags the visit came in on, and the consent words shown', r0.get('utm') == {'utm_source': 'instantly', 'utm_medium': 'email', 'utm_campaign': 'nov-offer'}
        and r0.get('consent_text') == CONSENT, r0)
     ok('the switch is off: no email was sent', not S.W.sent(), S.W.sent())
@@ -177,13 +217,13 @@ try:
     print('\n4. AGAIN, BAD, BOT, UNSUBSCRIBED, AND THE LIMIT')
     tid, sid = S.open('/nsw.html', 390, 844, mobile=True)
     wait_vps(S, sid)
-    fill_and_send(S, sid, 'KIM@kirrabeachhotel.com.au', '')
+    fill_and_send(S, sid, 'KIM@kirrabeachhotel.com.au', 'Kirra Beach Hotel', postcode='2000')
     st = settle(S, sid)
     ok('the same address again (offer page, other case): the same success, still one row', st.get('done') and len(subs(S)) == 1 and subs(S)[0].get('source') == 'home', [st, len(subs(S))])
     S.close_tab(tid)
     tid, sid = S.open('/index.html', 1280, 900)
     wait_vps(S, sid)
-    fill_and_send(S, sid, 'bot@spam.example', '', 'http://spam.example')
+    fill_and_send(S, sid, 'bot@spam.example', 'Spam', 'http://spam.example')
     st = settle(S, sid)
     ok('a filled honeypot: shown success (the bot learns nothing), nothing kept', st.get('done') and not [x for x in subs(S) if x.get('email') == 'bot@spam.example'], st)
     S.close_tab(tid)
@@ -204,7 +244,7 @@ try:
     for n in range(5):
         tid, sid = S.open('/index.html', 1280, 900)
         wait_vps(S, sid)
-        fill_and_send(S, sid, 'again@and-again.com.au', '')
+        fill_and_send(S, sid, 'again@and-again.com.au', 'Again Pub')
         last = settle(S, sid)
         S.close_tab(tid) if n < 4 else None
     ok('the same address a fifth time in an hour: the page says it has been tried a few times', 'tried a few times' in last.get('err', '') and last.get('formShown'), last)
@@ -255,7 +295,7 @@ try:
     S.W.missing('vp_subscribers', True)
     tid, sid = S.open('/index.html', 390, 844, mobile=True)
     wait_vps(S, sid)
-    fill_and_send(S, sid, 'early@pub.com.au', '')
+    fill_and_send(S, sid, 'early@pub.com.au', 'Early Pub')
     st = settle(S, sid)
     ok('the form says email hello@ and we will add you by hand, with a mailto link, and stays on screen',
        'hello@venueplay.com.au' in st.get('err', '') and 'by hand' in st.get('err', '') and st.get('errLink', '').startswith('mailto:hello@venueplay.com.au') and st.get('formShown') and not st.get('done'), st)
@@ -287,10 +327,12 @@ try:
     ok('counts: 4 on the list (1 re-subscribed), and this week counted by page', H.get('active') == '4' and H.get('resub') == '1' and re.search(r'\b4\b', H.get('week') or ''), [H.get('active'), H.get('resub'), H.get('week')])
     ok('it says plainly they are not cold leads and never go into Instantly', 'Not cold leads' in (H.get('text') or '') and 'Instantly' in (H.get('text') or ''))
     ok('no script error in HQ', not H.get('errs'), H.get('errs'))
+    where = S.js(sid, '(document.querySelector(\'#vpsRows tr[data-vps-row="kim@kirrabeachhotel.com.au"] [data-vps-where]\')||{}).innerText||""')
+    ok('HQ shows each sign-up\'s postcode and state (what an offer by state goes on)', isinstance(where, str) and re.search(r'4217\s+QLD', where), where)
     S.js(sid, 'document.getElementById("vpsExport").click();true')
     csv = S.until(sid, '(window.VPSubscribers && VPSubscribers._t.S.lastCsv) || ""', 10)
     lines = (csv or '').strip().split('\n') if isinstance(csv, str) else []
-    ok('Export CSV hands over a header and the 4 rows, audited', len(lines) == 5 and lines[0].startswith('Email,Venue (as typed),State')
+    ok('Export CSV hands over a header and the 4 rows, audited', len(lines) == 5 and lines[0].startswith('Email,Venue (as typed),Postcode,Venue state,State')
        and any(a.get('action') == 'subscribers_exported' for a in (S.W.table('vp_admin_audit') or [])), lines[:2])
     shot(S, sid, 'hq-desktop', full=True)
     S.close_tab(tid)

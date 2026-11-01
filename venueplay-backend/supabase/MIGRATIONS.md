@@ -630,3 +630,15 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+`venueplay-141-subscriber-postcode.sql` (Dean, 2 Nov 2026: the monthly email sign-up asks for the venue's name and
+postcode, needed, "so offers can be sent by state. We won't send a Queensland offer to a NSW venue"): two new columns on
+134's `vp_subscribers`, `postcode` (4 digits, checked) and `au_state` (ACT | NSW | NT | QLD | SA | TAS | VIC | WA, checked,
+indexed), the state worked out by the billing Worker from the postcode with `vpaStateFromPostcode`, and 134's view
+`v_vp_subscribers_monthly` recreated with the two columns added at the end. Guarded: does nothing (with a notice) if 134 has
+not been run, so run 134 first. Columns only, no new table, policy or grant: RLS-BASELINE.json records views by name, so a
+re-dump after running shows no change from this one (134's own additions aside). Either order with the billing Worker:
+before it is run, every write naming the columns is retried without them, so sign-ups are kept with no postcode and HQ
+shows "No postcode". NUMBER: 137 to 139 spent, 140 earmarked for the help saved-reply lowercase fix, checked every branch
+and worktree 2 Nov 2026. Branch `fix/signup-postcode-2nov`. NOT RUN. Rollback: in the file.
+Brought back 6 Nov 2026 on `fix/recover-3nov-10nov` for the Tue 10 Nov release (Dean's yes); 134 is live (RLS-BASELINE.json
+lists `vp_subscribers` and `v_vp_subscribers_monthly`). Still NOT RUN: run it before or with the billing Worker that carries it.
