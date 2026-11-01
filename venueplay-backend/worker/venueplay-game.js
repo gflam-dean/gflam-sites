@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 12:38 · 4fc6e84f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 12:49 · 64b6b3c9';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3600,6 +3600,7 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
    dropped. NEVER here: paid or free for the night (a compliance choice made each night), unsold
    tickets, or permits (vp_venues.permits). Another game joins by adding its own row to the table. */
 const GAME_PREFS_MAX_CHARS = 2000;
+const GP_BINGO_PRIZES = 12;   // prizes remembered per bingo pattern; 12 keeps a full save well under GAME_PREFS_MAX_CHARS
 const GP_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const gpBool = (v) => (typeof v === 'boolean') ? v : undefined;
 const gpText = (n) => (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, n) : undefined;
@@ -3613,6 +3614,20 @@ const GAME_PREFS_KEYS = {
     pattern:       (v) => ({ one: 1, two: 1, full: 1, corners: 1, top: 1, middle: 1, bottom: 1 }[v] ||
                            (typeof v === 'string' && /^c:/.test(v) && GP_UUID.test(v.slice(2)))) ? v : undefined,
     prize:         gpText(120),
+    /* THE PRIZE FOR EACH PATTERN (Dean, 1 Nov 2026: "prizes don't seem to be saving per venue"). One prize
+       was kept, so a line, two lines and the house went back to whatever was typed last. A map of pattern
+       to prize, at most GP_BINGO_PRIZES of them, each in the pattern words the console uses. */
+    prizes:        (v) => {
+      if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+      const out = {}; let n = 0;
+      for (const k of Object.keys(v)) {
+        if (n >= GP_BINGO_PRIZES) break;
+        const ok = { one: 1, two: 1, full: 1, corners: 1, top: 1, middle: 1, bottom: 1 }[k] || (/^c:/.test(k) && GP_UUID.test(k.slice(2)));
+        const p = (typeof v[k] === 'string' && v[k].trim()) ? v[k].trim().slice(0, 60) : '';
+        if (ok && p) { out[k] = p; n++; }
+      }
+      return out;
+    },
     cards:         gpInt(1, 6),
     allow_early:   gpBool,
   },

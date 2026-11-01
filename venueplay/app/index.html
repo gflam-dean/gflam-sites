@@ -1514,6 +1514,28 @@
      the rule saved for the venue (VP-DRAW customTicketWins), never on the one this console holds. Until
      migration 118 is run the list answers available:false and none of this shows. */
   var CUSTOM={ available:false, canEdit:false, list:[], loaded:false };
+  /* THE PRIZE FOR EACH PATTERN, SAVED FOR THE VENUE (Dean, 1 Nov 2026: "prizes don't seem to be saving per
+     venue"). One prize was kept, and Keep playing wrote each stage's prize over it, so the next game opened
+     on the house prize for a line. Now every prize the host plays for is remembered against its pattern
+     (game_prefs.bingo.prizes on the server, through VP.gamePrefs) and offered again whenever that pattern
+     is chosen: the setup, the next pattern after a win, the New game box and the real-balls next prize. */
+  var BPRIZES={};
+  function prizeFor(pat){ return (pat && Object.prototype.hasOwnProperty.call(BPRIZES, pat)) ? BPRIZES[pat] : ""; }
+  function notePrize(pat, prize){
+    prize=String(prize==null?"":prize).trim().slice(0,60);
+    if(!pat || pat===NEW_PAT || !prize || prize==="the prize" || BPRIZES[pat]===prize) return;
+    delete BPRIZES[pat]; BPRIZES[pat]=prize;   // the newest last, so the oldest goes first past twelve
+    var ks=Object.keys(BPRIZES); while(ks.length>12){ delete BPRIZES[ks.shift()]; }
+    if(typeof queueBingoPrefs==="function") queueBingoPrefs();
+  }
+  // A prize box that was filled for a pattern (not typed into) follows the pattern when it changes.
+  function prizeFollows(sel, input){
+    if(!sel || !input || sel.value===NEW_PAT) return;
+    var cur=String(input.value||"").trim();
+    if(cur && cur!==input._auto) return;   // the host typed this one: leave it
+    var w=prizeFor(sel.value); if(!w && !cur) return;
+    input.value=w; input._auto=w;
+  }
   var NEW_PAT="__newpat";
   function isCustomKey(k){ return /^c:[0-9a-fA-F-]{36}$/.test(String(k||"")); }
   function customById(k){ for(var i=0;i<CUSTOM.list.length;i++){ if("c:"+CUSTOM.list[i].id===k) return CUSTOM.list[i]; } return null; }
@@ -1562,25 +1584,49 @@
       row.classList.toggle("on", !!(CUSTOM.canEdit && isCustomKey(sel.value) && customById(sel.value)));
     });
   }
+  /* THE LIST IS ASKED FOR AGAIN UNTIL IT ARRIVES, AND IT BELONGS TO ONE VENUE (1 Nov 2026: Dean saved two
+     patterns and "they don't seem to save"). It was asked for once, when Bingo opened, and a slow or failed
+     answer, or a venue not known yet, left the picker without them for the rest of the session. Now: a
+     venue not known yet is waited for; a failed answer is asked again (5, 15, 45 s, and whenever a pattern
+     list is opened); and a different venue's list is never shown under this one. */
+  var _cpRetryT=0, _cpTries=0;
   function loadCustomPatterns(){
     var v=__ctx && __ctx.venue;
+    if((!v || !v.id) && window.VP && VP.ready){
+      return VP.ready().then(function(c){ if(!__ctx && c) __ctx=c; return (__ctx && __ctx.venue && __ctx.venue.id) ? loadCustomPatterns() : false; }, function(){ return false; });
+    }
     if(!v || !v.id || !(window.VP && VP.gameApiCall)) return Promise.resolve(false);
+    if(CUSTOM.venueId!==v.id){
+      CUSTOM.venueId=v.id; CUSTOM.list=[]; CUSTOM.loaded=false; CUSTOM.available=false; CUSTOM.canEdit=false; _cpTries=0;
+      fillPatternSelect($("patternSel")); fillPatternSelect($("ngPattern"));
+    }
+    var forVenue=v.id;
+    function again(){
+      if(_cpRetryT || _cpTries>=3) return false;
+      var wait=[5000,15000,45000][_cpTries++];
+      _cpRetryT=setTimeout(function(){ _cpRetryT=0; if(!CUSTOM.loaded && __ctx && __ctx.venue && __ctx.venue.id===forVenue) loadCustomPatterns(); }, wait);
+      return false;
+    }
     return VP.gameApiCall("/host/bingo/patterns", { venue_id:v.id }, 6000).then(function(r){
       var j=r && r.json;
-      if(!(r && r.status===200 && j)) return false;
+      if(!(__ctx && __ctx.venue && __ctx.venue.id===forVenue)) return false;   // the venue changed while we asked
+      if(!(r && r.status===200 && j)) return again();
       CUSTOM.available=!!j.available; CUSTOM.canEdit=!!(j.available && j.can_edit); CUSTOM.loaded=true;
       CUSTOM.list=Array.isArray(j.patterns) ? j.patterns.filter(function(x){ return x && x.id && x.name && x.rule; }) : [];
       fillPatternSelect($("patternSel")); fillPatternSelect($("ngPattern"));
       if(G.status==="running") renderClaimQueue();
       return true;
-    }, function(){ return false; });
+    }, function(){ return (__ctx && __ctx.venue && __ctx.venue.id===forVenue) ? again() : false; });
   }
   // The pattern list's own change: "Custom pattern..." opens the editor and the list keeps its last real choice.
   function patternPicked(sel, after){
     if(!sel) return;
     if(sel.value===NEW_PAT){
       var back=sel._prev||"one"; sel.value=back;
-      openPatternEditor(null, function(k){ fillPatternSelect(sel); sel.value=k; sel._prev=k; rememberPat(k); syncPatEdit(); if(after) after(); });
+      /* A pattern made here is the one chosen, so it is saved as the venue's choice too. It was not: the list
+         was set by hand, no change event ran, and after a reload the setup was back on One line with the new
+         pattern sitting unnoticed in the list ("they don't seem to save", Dean, 1 Nov 2026). */
+      openPatternEditor(null, function(k){ fillPatternSelect(sel); sel.value=k; sel._prev=k; rememberPat(k); syncPatEdit(); if(after) after(); if(sel.id==="patternSel") queueBingoPrefs(); });
       return;
     }
     sel._prev=sel.value; rememberPat(sel.value); syncPatEdit();
@@ -1677,7 +1723,9 @@
     function editFor(selId){ return function(){ var s=$(selId), c=s && customById(s.value); if(c) openPatternEditor(c, function(k){ s.value=k; }); }; }
     $("patEditBtn").addEventListener("click", editFor("patternSel"));
     $("ngEditBtn").addEventListener("click", editFor("ngPattern"));
-    $("ngPattern").addEventListener("change", function(){ patternPicked($("ngPattern")); });
+    $("ngPattern").addEventListener("change", function(){ prizeFollows($("ngPattern"), $("ngPrize")); patternPicked($("ngPattern")); });
+    // A list that never arrived is asked for again the moment somebody opens it.
+    ["patternSel","ngPattern"].forEach(function(id){ var s=$(id); if(s) s.addEventListener("focus", function(){ if(!CUSTOM.loaded){ _cpTries=0; loadCustomPatterns(); } }); });
   })();
 
   // Broadcast bingo has no game server, so once a game finishes the host posts its figures
@@ -2810,7 +2858,7 @@
     clearCallGuards();
     G.pattern=$("patternSel").value; rememberPat(G.pattern);
     var _p=requirePrize(); if(_p===null) return;
-    G.prize=_p;
+    G.prize=_p; notePrize(G.pattern, G.prize);
     G.defaultCards=clampCards($("cardsSel").value);
     G.caller=callerChosen();
     G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
@@ -2843,8 +2891,10 @@
       return;
     }
     sel._prev=sel.value; G._nextPick=sel.value;
+    if(G._nextPrize==null){ var np=$("nextPrizeIn"); if(np) np.value=prizeFor(sel.value) || G.prize; }   // not typed into: it follows the pattern
   });
-  $("patternSel").addEventListener("change", function(){ patternPicked($("patternSel"), lobbyEdited); });
+  $("claimQueue").addEventListener("input", function(e){ if(e.target && e.target.id==="nextPrizeIn") G._nextPrize=e.target.value; });
+  $("patternSel").addEventListener("change", function(){ prizeFollows($("patternSel"), $("prizeInput")); patternPicked($("patternSel"), lobbyEdited); });
   $("cardsSel").addEventListener("change", lobbyEdited);
   $("prizeInput").addEventListener("input", lobbyEdited);
 
@@ -2860,14 +2910,19 @@
     var pz=String((pi && pi.value)||"").trim(); if(pz) p.prize=pz.slice(0,120);
     if(cs) p.cards=clampCards(cs.value);
     p.allow_early=!!G.allowEarly;
+    if(Object.keys(BPRIZES).length) p.prizes=Object.assign({}, BPRIZES);
     return p;
   }
   function applyBingoPrefs(p){
+    if(p && p.prizes && typeof p.prizes==="object"){   // known for the whole night, even in a game brought back
+      Object.keys(p.prizes).forEach(function(k){ if(typeof p.prizes[k]==="string" && p.prizes[k] && !Object.prototype.hasOwnProperty.call(BPRIZES, k)) BPRIZES[k]=p.prizes[k]; });
+    }
     if(!p || G.status!=="setup") return;   // a lobby or game brought back keeps its own choices
     if(typeof p.caller==="boolean"){ var cc=$("callerChk"); if(cc && !cc.disabled) cc.checked=p.caller; }
     if(p.pattern){ var ps=$("patternSel"), k=String(p.pattern).replace(/"/g,"");
       if(ps && ps.querySelector('option[value="'+k+'"]')){ ps.value=k; ps._prev=k; rememberPat(k); } }   // a deleted pattern of their own: One line
-    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()) pi.value=p.prize; }
+    var _pz=prizeFor(($("patternSel")||{}).value) || p.prize;
+    if(_pz){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=_pz; pi._auto=_pz; } }
     if(p.cards!=null){ var cs=$("cardsSel"); if(cs) cs.value=String(clampCards(p.cards)); }
     if(typeof p.allow_early==="boolean"){ G.allowEarly=p.allow_early; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=p.allow_early; if(b) b.checked=p.allow_early; }
     syncPatEdit(); renderConsole();
@@ -2884,7 +2939,7 @@
     return _bingoPrefs.start();
   }
   ["callerChk","patternSel","cardsSel","allowEarlyChk","allowEarlyLive"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("change", queueBingoPrefs); });
-  $("prizeInput").addEventListener("input", queueBingoPrefs);
+  $("prizeInput").addEventListener("input", function(){ var pi=$("prizeInput"); pi._auto=null; notePrize($("patternSel").value, pi.value); queueBingoPrefs(); });
   if(window.VP && VP.advanced) VP.advanced($("bingoAdv"), "bingo");   // closed unless this browser left it open
 
   /* THE SERVER SESSION. Broadcast bingo ran without one for a long time and paid for it twice
@@ -3066,7 +3121,7 @@
         'Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
         '<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
           '<div><label for="nextPatternSel" style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Next pattern</label><select id="nextPatternSel">'+opts+'</select></div>'+
-          '<div><label for="nextPrizeIn" style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Prize for it</label><input type="text" class="hostinput" id="nextPrizeIn" value="'+esc(G.prize)+'" placeholder="e.g. $100 house"></div>'+
+          '<div><label for="nextPrizeIn" style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Prize for it</label><input type="text" class="hostinput" id="nextPrizeIn" value="'+esc(G._nextPrize!=null ? G._nextPrize : (prizeFor(nxt) || G.prize))+'" placeholder="e.g. $100 house"></div>'+
         '</div>'+
         '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="keepplaying">Keep playing</button>'+
         '<button class="btn ghost" data-act="finish">Finish game</button></div></div>';
@@ -3216,7 +3271,7 @@
     clearCallGuards();
     G.pattern=$("patternSel").value; rememberPat(G.pattern);
     var _p=requirePrize(); if(_p===null) return;
-    G.prize=_p;
+    G.prize=_p; notePrize(G.pattern, G.prize);
     G.paidMode=$("paidSel").value;
     G.defaultCards=clampCards($("cardsSel").value);
     G.caller=callerChosen();
@@ -3265,7 +3320,9 @@
     $("ngPattern").value=G.pattern||"one";
     if($("ngPattern").value!==(G.pattern||"one")) $("ngPattern").value="one";
     $("ngPattern")._prev=$("ngPattern").value; syncPatEdit();
-    $("ngPrize").value=(G.prize && G.prize!=="the prize") ? G.prize : "";
+    var _ngp=$("ngPattern").value;
+    $("ngPrize").value=prizeFor(_ngp) || ((_ngp===G.pattern && G.prize && G.prize!=="the prize") ? G.prize : "");
+    $("ngPrize")._auto=$("ngPrize").value;
     $("ngNote").textContent = G.caller
       ? ((G.idx>=0 && !G.won) ? "This game is still going. The "+(G.idx+1)+" numbers called so far are cleared off the TV for a fresh game." : "The TV board is cleared for the next game. Everyone turns to a fresh page of their book.")
       : (G.idx>=0 && !G.won)
@@ -3280,6 +3337,7 @@
       var pz=($("ngPrize").value||"").trim();
       if(!pz){ showToast("Put in what they are playing for first."); try{ $("ngPrize").focus(); }catch(e){} return; }
       var np=$("ngPattern").value||"one"; if(np===NEW_PAT) np="one";
+      notePrize(np, pz);
       m.classList.add("hidden");
       newGame({ pattern:np, prize:pz });
     };
@@ -3812,7 +3870,7 @@
       return true;
     }
     var pin=$("cwNextPrize"), np=String(pin ? pin.value : "").trim().slice(0,120);
-    G.pattern=nxt; if(np) G.prize=np;
+    G.pattern=nxt; if(np){ G.prize=np; notePrize(nxt, np); }
     var ps=$("patternSel"); if(ps) ps.value=nxt;
     var pi=$("prizeInput"); if(pi) pi.value=G.prize;
     sendState();            // every TV and phone: the new pattern and its prize
@@ -3846,7 +3904,7 @@
           : ('Finish this game<span class="cwp">The winner stays on the TV. Then New game, or End game</span>');
         box.appendChild(b);
       });
-      var pin=$("cwNextPrize"); if(pin) pin.value=(G.prize && G.prize!=="the prize") ? G.prize : "";
+      var _first=opts[0], pin=$("cwNextPrize"); if(pin) pin.value=prizeFor(_first) || ((G.prize && G.prize!=="the prize") ? G.prize : "");
     }
   }
   // New game or End game in the middle of a win: a confirmed win is already on the record, and a book
@@ -3932,8 +3990,10 @@
     rememberPat(nxt); G._nextPick=null;
     var pin=$("nextPrizeIn"), nextPrize=(pin && pin.value.trim()) || G.prize;
     announce(true, nxt, nextPrize);   // records the stage just won against ITS prize, before the swap
-    G.pattern=nxt; G.prize=nextPrize; G.won=false;
-    var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+    G.pattern=nxt; G.prize=nextPrize; G.won=false; G._nextPrize=null;
+    notePrize(nxt, nextPrize);
+    /* The setup box keeps the prize the game OPENED on. Writing each stage's prize into it put the house
+       prize up for the next game's line (1 Nov 2026); the stage prize lives in G.prize and on every screen. */
     sendState();   // the TV and every phone show the new pattern and prize straight away
     saveGame(); renderConsole(); syncNextBtn();
   }
