@@ -273,11 +273,11 @@ def sign_out():
     key(host, 'Escape')
     ok('Escape answers no: the question goes and the host is still signed in',
        until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host) and
-       not ask(host, '/Thanks for using VenuePlay/.test(document.body.innerText)'))
+       not ask(host, '/Thanks for using venueplay/.test(document.body.innerText)'))
     tap(host, 'document.getElementById("signoutBtn").click();')
     asked(host, 'Sign out anyway')
     key(host, 'Enter')
-    ok('Enter answers yes: the host is signed out', until(host, '/Thanks for using VenuePlay/.test(document.body.innerText)', 6) is True and alive(host),
+    ok('Enter answers yes: the host is signed out', until(host, '/Thanks for using venueplay/.test(document.body.innerText)', 6) is True and alive(host),
        ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     B.close_tab(ctid)
 
