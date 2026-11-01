@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 30" width="26" height="30" role="img" aria-label="VenuePlay">
+<!--
+  THE VENUEPLAY MARK, ONCE (31 Oct 2026). The small pink play triangle beside the word "VenuePlay"
+  in the header of every site page, phone page, host console, HQ, leave-behind and printed sign.
+
+    #mark        the mark on screens: stroke 2.6
+    #mark-print  the printed signs (signage.html): the same triangle, stroke 3, a touch heavier for paper
+
+  This file is the SOURCE. The pages carry the drawing inline, in every <svg data-vp-mark="mark">
+  (or "mark-print"), and tools/sync-brand-mark.py copies it there:
+
+    python3 tools/sync-brand-mark.py --write     after changing this file
+    python3 tools/sync-brand-mark.py             check every copy matches (exit 1 if not)
+
+  Inline rather than <use href="/brand/vp-mark.svg#mark">: measured on a slow connection, a referenced
+  file painted the triangle after the rest of the header, and never if its one request failed.
+
+  A NEW LOGO: replace what is inside both groups, keep the ids, and draw it in the 0 0 26 30 box (a
+  transform on the group is fine). No single quotes and no id attributes inside the groups; the tool
+  refuses both and says why. Each page keeps its own size and its own CSS glow.
+  Opened on its own (an image) this file paints #mark.
+-->
+<defs>
+<g id="mark"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></g>
+<g id="mark-print"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="3" stroke-linejoin="round"/></g>
+</defs>
+<use href="#mark"/>
+</svg>

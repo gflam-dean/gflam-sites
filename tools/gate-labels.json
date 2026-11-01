@@ -119,6 +119,7 @@
   "every function is declared where it will actually be bound",
   "every host route checks the login and the venue, draws use crypto, big tables are paged",
   "every link on our own pages goes somewhere",
+  "every copy of the VenuePlay mark matches venueplay/brand/vp-mark.svg",
   "every loading line has something that will finish it",
   "every logo and slide write names who wrote it and is audited before and after; HQ reads the history, never a venue; owner/accounts restore exactly; nothing deletes a stored file",
   "every merge tag in a live email gets filled in",

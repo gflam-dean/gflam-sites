@@ -667,6 +667,19 @@ def local_checks(which):
            re.sub(r'\033\[[0-9;]*m', '', summary),
            why='; '.join(re.sub(r'\033\[[0-9;]*m', '', b).strip() for b in broken[:3]))
 
+    """THE VENUEPLAY MARK IS DRAWN ONCE (31 Oct 2026, ahead of a new logo).
+
+    The pink triangle beside "VenuePlay" sits inline in 29 pages, each copy marked data-vp-mark, and
+    tools/sync-brand-mark.py writes it there from venueplay/brand/vp-mark.svg. A copy edited by hand,
+    or a brand file changed without --write, is the old fault again: one copy fixed, the rest left."""
+    sp = os.path.join(ROOT, 'tools', 'sync-brand-mark.py')
+    if which in ('both', 'venueplay') and os.path.isfile(sp):
+        r = subprocess.run([sys.executable, sp], capture_output=True, text=True, cwd=ROOT)
+        out = [l.strip() for l in (r.stdout + r.stderr).strip().splitlines() if l.strip()]
+        ok('every copy of the VenuePlay mark matches venueplay/brand/vp-mark.svg', r.returncode == 0,
+           out[-1] if out else 'no output',
+           why='; '.join(l for l in out if l.startswith(('DIFFERS', 'NO ', 'UNKNOWN', 'the "')))[:400])
+
     # The trivia pack suite used to be run by name here, because the loop above
     # only knew about the OTHER working copy and would never have found it. The
     # loop reads the repo now, so it picks the suite up like every other one and

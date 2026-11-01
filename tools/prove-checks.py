@@ -3955,6 +3955,10 @@ MUTATIONS = [
     ('every link on our own pages goes somewhere', 'venueplay/index.html',
      '</body>', '<a href="/a-page-that-does-not-exist">x</a></body>',
      'a link on our own site goes nowhere'),
+    ('every copy of the VenuePlay mark matches venueplay/brand/vp-mark.svg', 'venueplay/app/hq.html',
+     'data-vp-mark="mark"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E"',
+     'data-vp-mark="mark"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF0000"',
+     'one copy of the VenuePlay mark is redrawn by hand and no longer matches the brand file'),
 
     # ---- the pasted Workers ----
     ('venueplay-api-FULL.js is whole', 'venueplay-backend/worker/venueplay-api-FULL.js',
