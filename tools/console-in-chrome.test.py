@@ -249,6 +249,17 @@ def key(sid, k):
         B.call('Input.dispatchKeyEvent', {'type': t, 'key': k, 'code': k, 'windowsVirtualKeyCode': code}, session=sid)
 def asked(sid, words):
     return until(sid, '!!document.getElementById("vpAsk") && /%s/.test(document.getElementById("vpAsk").innerText)' % words, 6)
+SHOTS = os.environ.get('VP_SHOTS', '')
+def shot(sid, name):
+    """A screenshot to $VP_SHOTS when it is set; nothing otherwise."""
+    if not SHOTS: return
+    try:
+        import base64
+        r = B.call('Page.captureScreenshot', {'format': 'jpeg', 'quality': 70}, session=sid)
+        with open(os.path.join(SHOTS, name + '.jpg'), 'wb') as f: f.write(base64.b64decode(r['data']))
+    except Exception:
+        pass
+
 def tap(sid, expr):
     """Click in a timer, so a native dialog it opens cannot hold the evaluation that clicked."""
     return ask(sid, 'setTimeout(function(){ %s }, 0); true' % expr)
@@ -300,20 +311,21 @@ def musical_end():
     time.sleep(2)
     ok('CONTROL: a musical game is running, with End game on screen', musical_running(host) and visible(host, 'endGameBtn'),
        ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
-    tap(host, 'document.getElementById("endGameBtn").click();')
+    # 1 Nov 2026: End game takes two taps on the button itself, as on the bingo console, never a dialog.
+    LABEL = 'document.getElementById("endGameBtn").textContent'
+    tap(host, 'var b=document.getElementById("endGameBtn"); b.click(); b.click();')   # one finger's double tap
     time.sleep(1)
-    ok('after End game the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
+    ok('after a double tap on End game the console still answers inside 6 seconds', alive(host), 'the page did not answer within 6 seconds')
     ok('no native browser dialog is holding it', no_native(host), 'a native dialog was open')
-    ok('End this game? is asked on the page', asked(host, 'End this game') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
-    tap(host, 'document.getElementById("vpAskCancel").click();')
-    ok('Cancel leaves the game alone and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host)
-       and ask(host, RUNNING) is True)
+    ok('and no dialog on the page either', ask(host, '!document.getElementById("vpAsk")') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
+    ok('a double tap does not end the game: it is still running', ask(host, RUNNING) is True)
+    ok('the button says what the next tap does: Tap again to end the game', ask(host, LABEL) == 'Tap again to end the game', ask(host, LABEL))
+    ask(host, 'document.getElementById("endGameBtn").scrollIntoView({block:"center"}); true'); time.sleep(0.3)
+    shot(host, 'musical-endgame-armed')
     tap(host, 'document.getElementById("endGameBtn").click();')
-    asked(host, 'End this game')
-    tap(host, 'document.getElementById("vpAskGo").click();')
-    ok('End game, answered yes on the page, goes through and the console answers', until(host, '!document.getElementById("vpAsk")', 4) is True and alive(host)
-       and until(host, '!(' + RUNNING + ')', 6) is True
+    ok('a second, deliberate tap ends the game and the console answers', until(host, '!(' + RUNNING + ')', 6) is True and alive(host)
        and not ask(host, '(window.__errs||[]).join(" | ")'), ask(host, '(window.__errs||[]).join(" | ")'))
+    ok('and the button reads End game again for the next game', ask(host, LABEL) == 'End game', ask(host, LABEL))
     B.close_tab(ctid)
 
 def raffle_settings():
@@ -397,9 +409,9 @@ def done_closes_the_night():
     ok('CONTROL: a second musical lobby is live again, still no takeover question', until_live(True) and not ask(host, '!!document.getElementById("vpTakeover")'))
     tap(host, 'document.getElementById("startBtn").click();')   # Start game: End game is the running game's control
     until(host, RUNNING, 15)
-    tap(host, 'document.getElementById("endGameBtn").click();')
-    asked(host, 'End this game')
-    tap(host, 'document.getElementById("vpAskGo").click();')
+    tap(host, 'document.getElementById("endGameBtn").click();')   # arms End game ("Tap again to end the game")
+    time.sleep(1)
+    tap(host, 'document.getElementById("endGameBtn").click();')   # and the second tap ends it
     ok('musical End game closes the night', until_live(False))
     B.close_tab(ctid)
 

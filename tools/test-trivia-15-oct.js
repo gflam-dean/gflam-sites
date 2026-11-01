@@ -480,6 +480,82 @@ await (async function () {
   show('l. and the question replayed to one phone that announced itself', rp.length === 1 && rp[0].session_id === 's-new', JSON.stringify(rp));
 })();
 
+/* ---- A NEW LOBBY ON THE SAME CODE, WHILE THE PHONE SITS ON LAST NIGHT'S FINAL SCREEN (queued fault, 1 Nov 2026) ----
+   The block above re-joins on "started" and on a question. Before either, the host taps Open lobby: a NEW
+   session, and the console's rollcall pulls the phones still on the channel back onto its Players box. The
+   phone answered that rollcall with the closed night's token still in hand and its old final screen still
+   up, so through the whole lobby it was not a player of tonight's session: the console's "N phones have
+   scanned in" (read from the server) left it out, and the phone still read last night's podium. The bingo
+   phone joins a new session the moment a message names one (play.html joinServerSession); this is the same
+   rule. RUN the real openLobby out of host.html, feed every message it sends to the real onMsg out of
+   play.html, and look at the phone. */
+print('\nA NEW LOBBY ON THE SAME CODE: the phone re-joins tonight\'s session while the lobby is open, and leaves last night\'s final screen');
+await (async function () {
+  var store = { 'vp-ttoken-72USMR': 'old-token', 'vp-tsess-72USMR': 's-old' };
+  var ls = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
+  var P = { room: '72USMR', pid: 'p1', prPid: '', name: 'Test team', joined: true, token: 'old-token', sessionId: 's-old', gameId: 'g-old',
+            colour: true, total: 148, rank: 1, playersCount: 1, q: null, choice: null, locked: false, lastPts: 0, cdTimer: null, ended: true };
+  var AR = { room: null, hash: 'oldhash', gameId: '', waiting: {}, n: 0, off: true, asking: false };
+  var joins = 0, joinedTo = [], announced = 0, waits = [], dom = makeDom(), H = { sid: 's-new' };
+  function ensureJoined() {
+    joins++;
+    return Promise.resolve().then(function () { P.token = 'tok-' + H.sid; P.sessionId = H.sid; joinedTo.push(H.sid); store['vp-ttoken-72USMR'] = P.token; store['vp-tsess-72USMR'] = H.sid; });
+  }
+  var src = 'var _prPhone=null, _rejoinP=null;\n' + liftAll(PLAY, ['onMsg', 'nightChanged', 'dropStaleJoin', 'rejoinNow'], 'trivia/play.html') +
+            '\n; return { onMsg: onMsg };';
+  var env = { P: P, AR: AR, $: dom.$, window: {}, localStorage: ls, ensureJoined: ensureJoined,
+              prForMe: function () { return true; }, announce: function () { announced++; }, takeName: function () {}, useGame: function (id) { if (id) P.gameId = id; },
+              showWait: function (m) { waits.push(m); }, sayAlive: function () {}, stopCd: function () {}, lockOut: function () {}, unpick: function () {}, tickCd: function () {},
+              showResult: function () {}, pullScore: function () {}, showFinal: function () {}, paintPicked: function () {}, send: function () {},
+              renderQuestion: function () {}, setTimeout: function (f) { f(); return 0; } };
+  var names = Object.keys(env);
+  var phone = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
+
+  // The console: the real openLobby, its session opened by a stub that does what openSession does.
+  var G = { venueId: 'v1', sessionId: '', joinCode: '', status: 'setup', busy: false, setTitle: 'Anime', colour: true };
+  var toPhones = [];
+  var hsrc = lift(HOSTP, 'openLobby', 'trivia/host.html') + '\n; return openLobby;';
+  var henv = { G: G, $: dom.$, clearErrForAction: function () {}, readSettings: function () {}, hostError: function (e) { throw new Error('hostError: ' + e); },
+               openSession: function () { G.sessionId = H.sid; G.joinCode = '72USMR'; return Promise.resolve({ session_id: G.sessionId, join_code: G.joinCode }); },
+               bcast: function (m) { toPhones.push(m); }, gsend: function (m) { toPhones.push(m); }, send: function () {},
+               releasePodium: function () {}, startLobbyWatch: function () {}, playerCount: function () { return 0; }, renderConsole: function () {} };
+  var hn = Object.keys(henv);
+  var openLobby = new Function(hn.join(','), hsrc).apply(null, hn.map(function (k) { return henv[k]; }));
+  openLobby(); await flush();
+  var rc = toPhones.filter(function (m) { return m.t === 'rollcall'; });
+  show('a. Open lobby\'s rollcall to the phones says which night the lobby is for (session_id)', rc.length === 1 && rc[0].session_id === 's-new', JSON.stringify(rc));
+  toPhones.forEach(function (m) { phone.onMsg(m); });
+  await flush();
+  show('b. the phone on last night\'s final screen re-joins TONIGHT\'s session during the lobby, once, before any "started"',
+       joins === 1 && JSON.stringify(joinedTo) === '["s-new"]' && P.token === 'tok-s-new' && P.sessionId === 's-new' && AR.hash === '',
+       JSON.stringify({ joins: joins, to: joinedTo, token: P.token, sess: P.sessionId }));
+  show('c. and leaves last night\'s final screen for the lobby wait, its old total and place cleared',
+       P.ended === false && P.total === 0 && P.rank === 0 && waits.length === 1 && /Watch the big screen/.test(waits[0]), JSON.stringify({ ended: P.ended, total: P.total, rank: P.rank, waits: waits }));
+  show('d. it still answers the rollcall, so the console\'s Players box has it', announced === 1, announced);
+  phone.onMsg({ t: 'host_here', fmt: 'trivia', cid: 'c1', session_id: 's-new' });
+  phone.onMsg({ t: 'rollcall', fmt: 'trivia', session_id: 's-new' });
+  await flush();
+  show('e. CONTROL: the console\'s heartbeat and a second rollcall for the SAME night re-join nothing', joins === 1 && P.token === 'tok-s-new' && waits.length === 1, JSON.stringify({ joins: joins, waits: waits.length }));
+  phone.onMsg({ t: 'rollcall', fmt: 'trivia' });
+  await flush();
+  show('f. CONTROL: an older console\'s rollcall that names no night leaves the phone exactly as it is', joins === 1 && P.token === 'tok-s-new' && announced === 4, JSON.stringify({ joins: joins, announced: announced }));
+  // The heartbeat is how a phone that missed the rollcall learns of the new night.
+  H.sid = 's-third';
+  phone.onMsg({ t: 'host_here', fmt: 'trivia', cid: 'c1', session_id: 's-third' });
+  await flush();
+  show('g. the console\'s heartbeat naming another night is enough on its own to re-join it', joins === 2 && P.sessionId === 's-third', JSON.stringify({ joins: joins, sess: P.sessionId }));
+  // A token this phone holds with no record of which night it came from (written by another page).
+  P.sessionId = ''; store['vp-tsess-72USMR'] = undefined; delete store['vp-tsess-72USMR']; P.token = 'from-another-page'; H.sid = 's-fourth';
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-4', session_id: 's-fourth', question_count: 3, colour: true });
+  await flush();
+  show('h. a token held with no night on record is re-joined when the console names its night, not kept on trust', joins === 3 && P.token === 'tok-s-fourth' && P.sessionId === 's-fourth',
+       JSON.stringify({ joins: joins, token: P.token, sess: P.sessionId }));
+  P.joined = false; P.token = ''; P.sessionId = '';
+  phone.onMsg({ t: 'rollcall', fmt: 'trivia', session_id: 's-fifth' });
+  await flush();
+  show('i. CONTROL: a phone on the name screen (not joined) is not joined by a rollcall', joins === 3, joins);
+})();
+
 // YOUR OWN: the set's questions say which came from the library
 reset();
 var MINE = '88888888-8888-4888-8888-888888888888';

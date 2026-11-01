@@ -787,7 +787,16 @@
       return;
     }
     if(m.t==="rollcall" || m.t==="host_here"){
-      if(P.joined){ announce(); }
+      /* A NEW LOBBY ON THE SAME CODE (queued fault, 1 Nov 2026). Open lobby opens a new session and its
+         rollcall, like the console's heartbeat, now says which one. A phone still holding last night's
+         token re-joins it here, in the lobby, the way the bingo phone joins any session a message names
+         (play.html joinServerSession), and leaves last night's final screen for the lobby wait. A phone
+         with no token yet joins the night it has just been told about. */
+      if(P.joined){
+        if(nightChanged(m)){ stopCd(); P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0; showWait("Watch the big screen. Your questions will pop up here."); }
+        else if(m.session_id && !P.token) rejoinNow();
+        announce();
+      }
       return;
     }
     if(m.t==="rename"){ if(P.joined && m.to===P.pid) takeName(m.name); return; }   // only ever aimed at one phone
@@ -933,7 +942,10 @@
      before it answers (answer() waits for the re-join). An older console that says no night, and a
      phone that has not joined, are left exactly as before. */
   function nightChanged(m){
-    if(!P.joined || !m || !m.session_id || !P.sessionId || m.session_id===P.sessionId) return false;
+    if(!P.joined || !m || !m.session_id || m.session_id===P.sessionId) return false;
+    /* A token with no night on record (another page wrote it) is not trusted as tonight's: re-join the
+       night the console names, same pid, so one row. With neither held, the caller's own join covers it. */
+    if(!P.sessionId && !P.token) return false;
     dropStaleJoin();
     rejoinNow();
     return true;

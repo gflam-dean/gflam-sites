@@ -281,42 +281,66 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   pass("a pid seen first without a device id is not counted twice once it sends one", api.count() === 4, api.count());
 })();
 
-/* 7. END GAME, TAPPED TWICE (live play at Test Charlie, 27 Oct 2026). vpAsk queues a question asked while
-   one is open, so a double tap on End game put a second "End this game?" up AFTER the first OK had
-   already ended the game. The real endGame runs against a vpAsk that behaves like the shipped one:
-   each call is a prompt, answered by the test in order. */
+/* 7. END GAME, ONE DELIBERATE WAY ON BOTH CONSOLES (1 Nov 2026; first found at Test Charlie, 27 Oct 2026).
+   End game put up an "End this game?" dialog, so the second tap had to land on another button, and a
+   double tap on End game was eaten or queued a second dialog. The bingo console's End game works on the
+   button itself ("Tap again to end without checking"). The real endGame and endBtnReset run here, with a
+   clock the test moves, a button whose label the test reads, and timers the test fires. */
 (function(){
-  var fn = grab("endGame", host);
-  pass("End game is where this test lifts it from", !!fn);
-  var prompts = [], ended = 0;
-  function vpAsk(msg){ var t = { msg: msg, then: function(ok, no){ t.ok = ok; t.no = no; return t; } }; prompts.push(t); return t; }
-  function answer(v){ var t = prompts.shift(); if (!t) throw new Error("no prompt open to answer"); t.ok(v); }
-  var G = { busy: false, status: "running", gameId: "g1" };
-  var env = { G: G, vpAsk: vpAsk, endGameAsked: function(){ ended++; G.status = "setup"; G.gameId = ""; } };
+  var fn = grab("endGame", host), rs = grab("endBtnReset", host);
+  pass("End game and its reset are where this test lifts them from", !!fn && !!rs);
+  if (!fn || !rs) return;
+  var decl = (host.match(/var END_ARM_MS=[^;]+;/) || [""])[0];
+  pass("the arming window and the double-tap floor are declared beside it", !!decl, decl);
+  var t = 1000000, timers = [], ended = 0, prompts = 0, btn = { textContent: "End game" };
+  var G = { busy: false, status: "running", gameId: "g1", claims: [] };
+  var env = { G: G, $: function(id){ return id === "endGameBtn" ? btn : null; },
+    Date: { now: function(){ return t; } },
+    setTimeout: function(f, ms){ timers.push({ f: f, ms: ms }); return timers.length; }, clearTimeout: function(){},
+    vpAsk: function(){ prompts++; return { then: function(){ return this; } }; },
+    endGameAsked: function(){ ended++; G.status = "setup"; G.gameId = ""; } };
   var names = Object.keys(env);
-  var endGame = (new Function(names.join(","), fn + "\n return endGame;")).apply(null, names.map(function(k){ return env[k]; }));
-  endGame(); endGame(); endGame();
-  pass("three taps on End game open ONE prompt", prompts.length === 1 && prompts[0].msg.indexOf("End this game?") === 0, prompts.length);
-  answer(true);
-  pass("OK ends the game once", ended === 1 && G.status === "setup", ended);
-  endGame();
-  pass("a tap after the game has ended does nothing: no second prompt", prompts.length === 0 && ended === 1, prompts.length);
-  /* and it must not make End game dead: Cancel, then a second thought */
-  G.status = "running"; G.gameId = "g2";
-  endGame();
-  pass("CONTROL: with a game running the prompt comes up", prompts.length === 1, prompts.length);
-  answer(false);
-  pass("CONTROL: Cancel leaves the game running", ended === 1 && G.status === "running", G.status);
-  endGame();
-  pass("CONTROL: and End game can be asked again after a Cancel", prompts.length === 1, prompts.length);
-  answer(true);
-  pass("CONTROL: the second time it is confirmed, the game ends", ended === 2 && G.status === "setup", ended);
-  /* a prompt that the game outlives (a full house ended it from the carry-on modal while the question was open) */
-  G.status = "running"; G.gameId = "g3";
-  endGame();
-  G.status = "setup"; G.gameId = "";   // endGameNow() ran meanwhile
-  answer(true);
-  pass("an OK on a prompt the game outlived ends nothing twice", ended === 2, ended);
+  var api = (new Function(names.join(","), decl + "\n" + rs + "\n" + fn + "\n return { end: endGame };")).apply(null, names.map(function(k){ return env[k]; }));
+  api.end();
+  pass("a. the first tap does not end the game and opens no dialog", ended === 0 && prompts === 0 && G.status === "running", [ended, prompts]);
+  pass("b. the button now says what the next tap does: Tap again to end the game", btn.textContent === "Tap again to end the game", btn.textContent);
+  t += 150; api.end();
+  pass("c. one finger's double tap (0.15 s later) does NOT end the game", ended === 0 && G.status === "running", ended);
+  t += 1500; api.end();
+  pass("d. a second, deliberate tap inside the window ends it, once, with no dialog", ended === 1 && prompts === 0 && G.status === "setup", [ended, prompts]);
+  pass("e. and the button is back to End game for the next game", btn.textContent === "End game", btn.textContent);
+  t += 1000; api.end();
+  pass("f. a tap after the game has ended does nothing", ended === 1 && btn.textContent === "End game", [ended, btn.textContent]);
+  /* the window runs out: the button goes back and the next tap only arms it again */
+  G.status = "running"; G.gameId = "g2"; timers = [];
+  api.end();
+  var tm = timers[timers.length - 1];
+  pass("g. the armed label is put back after fifteen seconds", !!tm && tm.ms === 15000, tm && tm.ms);
+  if (tm) tm.f();
+  pass("h. when it runs out the button reads End game again", btn.textContent === "End game", btn.textContent);
+  t += 16000; api.end();
+  pass("i. and a tap after the window only arms it again: the game is still running", ended === 1 && G.status === "running" && btn.textContent === "Tap again to end the game", [ended, btn.textContent]);
+  t += 2000; api.end();
+  pass("j. CONTROL: the tap after that ends it", ended === 2 && G.status === "setup", ended);
+  /* a BINGO not yet checked: say so, as bingo does */
+  G.status = "running"; G.gameId = "g3"; G.claims = [{ name: "Ann" }];
+  t += 60000; api.end();
+  pass("k. with a claim unchecked the button says Tap again to end without checking (the bingo console's words)", btn.textContent === "Tap again to end without checking" && ended === 2, btn.textContent);
+  G.busy = true; t += 2000; api.end();
+  pass("l. CONTROL: while the console is busy a tap ends nothing and the button goes back", ended === 2 && btn.textContent === "End game", [ended, btn.textContent]);
+})();
+
+/* 8. A GAME ENDED ANOTHER WAY LEAVES NO ARMED BUTTON BEHIND: the full-house path (endGameNow) resets it,
+   so the next game's first tap only arms End game again. */
+(function(){
+  var fn = grab("endGameNow", host);
+  pass("endGameNow is where this test lifts it from", !!fn);
+  var calls = [];
+  var env = { G: { gameId: "", status: "running" }, endBtnReset: function(){ calls.push("reset"); }, postMusicReport: function(){}, clearMusic: function(){}, stopAudio: function(){},
+    $: function(){ return { classList: { add: function(){} } }; }, bcast: function(){}, sendState: function(){}, send: function(){}, closeNight: function(){}, apiPost: function(){}, renderConsole: function(){} };
+  var names = Object.keys(env);
+  (new Function(names.join(","), fn + "\n endGameNow();")).apply(null, names.map(function(k){ return env[k]; }));
+  pass("a full-house end resets End game", calls.length === 1, calls);
 })();
 
 print("");

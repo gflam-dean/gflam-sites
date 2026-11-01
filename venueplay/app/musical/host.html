@@ -1639,19 +1639,34 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; } renderConsole();   // re-sync the button label to G.status (e.g. still 'lobby' after a cancelled/failed start)
     });
   }
+  /* END GAME TAKES TWO TAPS, AND THE BUTTON SAYS SO (1 Nov 2026). It used to put up an "End this game?"
+     dialog: a second tap had to be on a different button somewhere else on the screen, and a double tap
+     on End game was either eaten or queued a second dialog (27 Oct 2026). The bingo console's End game
+     already works on the button itself ("Tap again to end without checking", Dean, Test Alpha, 1 Nov
+     2026), so musical does the same, one way on both consoles: the first tap only arms it and the button
+     reads what the next tap does, for fifteen seconds; a second tap inside that ends the game. One
+     finger's double tap (under 0.6 s) is not a second thought, so it does not count: a stray tap or a
+     double tap never ends a round in front of the room. */
+  var END_ARM_MS=15000, END_BOUNCE_MS=600, END_LABEL="End game";
+  function endBtnReset(){
+    G._endAsked=0;
+    if(G._endBtnT){ clearTimeout(G._endBtnT); G._endBtnT=0; }
+    var b=$("endGameBtn"); if(b) b.textContent=END_LABEL;
+  }
   function endGame(){
-    if(G.busy || G.endAsking || G.status!=="running") return;
-    /* Same guard as New game. One stray tap here used to clear the songs, close every card and
-       send the TV back to the ads mid-round, in front of the room.
-       ONE PROMPT, HOWEVER MANY TAPS. vpAsk queues a question asked while one is open, so a double
-       tap put a second "End this game?" up after the first OK had already ended the game (live
-       play, Test Charlie, 27 Oct 2026). endAsking holds the button while the question is open, and
-       a stale OK does nothing once the game is no longer running. */
-    G.endAsking=true;
-    vpAsk("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.").then(function(ok){
-      G.endAsking=false;
-      if(ok && !G.busy && G.status==="running") endGameAsked();
-    }, function(){ G.endAsking=false; });
+    if(G.busy || G.status!=="running"){ endBtnReset(); return; }
+    var now=Date.now();
+    if(!G._endAsked || (now-G._endAsked)>END_ARM_MS){
+      G._endAsked=now;
+      var b=$("endGameBtn");
+      if(b) b.textContent=(G.claims && G.claims.length) ? "Tap again to end without checking" : "Tap again to end the game";
+      if(G._endBtnT) clearTimeout(G._endBtnT);
+      G._endBtnT=setTimeout(endBtnReset, END_ARM_MS);
+      return;
+    }
+    if((now-G._endAsked)<END_BOUNCE_MS) return;
+    endBtnReset();
+    endGameAsked();
   }
   function endGameAsked(){
     clearErrForAction();
@@ -1794,6 +1809,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }catch(e){}
   }
   function endGameNow(){
+    endBtnReset();   // a game ended another way (full house, the carry-on modal) leaves no armed End game behind
     postMusicReport(G.gameId);
     G.won=true; G.status="setup"; clearMusic(); stopAudio();
     $("carryModal").classList.add("hidden");

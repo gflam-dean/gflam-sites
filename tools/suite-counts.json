@@ -132,7 +132,7 @@
   "counted_by": "lines"
  },
  "tools/console-in-chrome.test.py": {
-  "checks": 64,
+  "checks": 66,
   "counted_by": "lines"
  },
  "tools/console-paid-and-draw-max-in-chrome.test.py": {
@@ -528,7 +528,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
-  "checks": 74,
+  "checks": 81,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -816,7 +816,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 86,
+  "checks": 95,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -968,7 +968,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 348,
+  "checks": 396,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
