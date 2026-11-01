@@ -187,7 +187,8 @@ def other_games():
             ok(words[1] + ' phone: the show with the player\'s name', r.until(p1, 'window.VPSting && VPSting.playing()', 15) is True and r.ask(p1, 'VPSting.shown()') == words, r.ask(p1, 'VPSting.shown()'))
             ok(words[1] + ' phone: gives way to the first question or song', r.until(p1, '!VPSting.playing() && VPSting.stats().plays===1', 8) is True, r.ask(p1, STATS))
         for path, line in (('/app/raffle/screen?venue=' + r.W.info['slug'] + '&sting=1', 'IT\u2019S RAFFLE TIME'), ('/app/members/screen?venue=' + r.W.info['slug'] + '&sting=1', 'MEMBERS DRAW TIME')):
-            _, d1 = r.open(path, width=1280, height=720)
+            # a game screen opened on its own bounces to /tv; /tv leaves this marker when it hops a TV into the game
+            _, d1 = r.open(path, before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){}' % json.dumps(r.W.info['slug']), width=1280, height=720)
             r.until(d1, 'document.readyState==="complete" && !!window.VPSting', 15); time.sleep(1)
             r.ask(d1, 'VPSting.forDraw({t:"state"}, {line:%s}); true' % json.dumps(line.replace('IT’S', '<i>IT’S</i>').replace('TIME', '<i>TIME</i>')))
             ok(line + ': the first word from the host plays it, on the screen\'s own corner',

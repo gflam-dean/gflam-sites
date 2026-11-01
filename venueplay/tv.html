@@ -1898,6 +1898,9 @@
     // No .html: Pages 308s it, and the iframe was paying a redirect before the
     // game screen even started loading, with the wall holding on a card.
     var url="/app/"+game+"/screen?venue="+encodeURIComponent(VENUE_SLUG);
+    /* The start-of-game show (1 Nov 2026) is switched on per TV by ?sting=1 on /tv: the game screen
+       inside the frame reads its own address, so hand the switch on or it never plays there. */
+    if(window.VPSting && VPSting.on) url+="&sting=1";
     var fresh = f.getAttribute("src")!==url;
     if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
