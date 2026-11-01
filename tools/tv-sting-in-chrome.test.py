@@ -205,5 +205,6 @@ if __name__ == '__main__':
     full_show()
     ball_mid_show()
     other_games()
-    print('\n%s %d checks' % ('PASS' if not bad else 'FAILED', ran))
+    # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
+    print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)
