@@ -129,6 +129,7 @@
   .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,194,75,.75)}
   body.light .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,31,142,.55)}
   .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
+  .ticket .tklabel.tkdone{color:var(--win)}   /* this ticket has the pattern: press BINGO */
 
   /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
      The first attempt put all six on one screen as thumbnails. At phone width that is a 9px cell
@@ -1026,6 +1027,7 @@
       if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
         // Always show the card number: it is how the host and the TV identify a winning ticket.
         lab.textContent = "Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo;
+        lab.setAttribute("data-base", lab.textContent);
         tk.appendChild(lab); }
       var grid=document.createElement("div"); grid.className="card9";
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
@@ -1099,6 +1101,19 @@
         var ce=tb2[t2].querySelector(".pcount"); if(ce) ce.textContent=cnt||"";
       }
     }
+    /* EACH TICKET'S OWN PROGRESS, with more than one (Dean, Test Alpha, 1 Nov 2026: one number of "Any 2
+       Numbers" on each of two tickets, two marks on the phone, and "not a win"). A pattern has to be on ONE
+       ticket, so each ticket's label says how far that ticket is, worked out from the called numbers. */
+    if(P.cards.length>1){
+      var labs=stack.querySelectorAll(".tklabel");
+      for(var li=0; li<labs.length; li++){
+        var tkEl=labs[li].parentNode, ti=tkEl ? +tkEl.getAttribute("data-ti") : li, tcd=P.cards[ti];
+        if(!tcd) continue;
+        var togo=cardShort(tcd.cells, set), base=labs[li].getAttribute("data-base") || labs[li].textContent;
+        labs[li].textContent = base + (togo===0 ? " · complete" : (togo<99 ? " · "+togo+" to go" : ""));
+        labs[li].classList.toggle("tkdone", togo===0);
+      }
+    }
     markCalledTab(last);
     updateTension(set);
     renderStageWin();
@@ -1110,9 +1125,10 @@
      win now has its own pinned banner (renderStageWin); this line only says what is being
      played for. */
   function idleMsg(){
-    var pn=patName(P.pattern, "the pattern");
-    if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>.";
-    return "Mark off your numbers as they are called. Hit BINGO when your ticket completes <b>"+esc(pn)+"</b>.";
+    var pn=patName(P.pattern, "the pattern"), many=P.cards.length>1;
+    var one = many ? " It has to be on one ticket: numbers on different tickets do not add up." : "";
+    if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>"+(many?" on one ticket":"")+"."+one;
+    return "Mark off your numbers as they are called. Hit BINGO when "+(many?"one of your tickets":"your ticket")+" completes <b>"+esc(pn)+"</b>."+one;
   }
   function nameList(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
   function renderStageWin(){
