@@ -376,7 +376,7 @@
     setTimeout(function(){ location.reload(); }, 4000);
     throw new Error("venueplay: Realtime library not loaded yet");
   }
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : undefined);   // the quicker socket (vp-channel.js, rule 10)
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){
     if(obj && obj.t==="join" && P.prPid) obj.prk=P.prPid;   // tells the console which signing pid holds this phone's Punters Reckon guesses (see sendPR)

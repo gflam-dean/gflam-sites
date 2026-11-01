@@ -52,6 +52,17 @@
   var SLEPT_MS = 5000;           // a timer this late was frozen: the page was asleep, not the room
   var PROBE_MS = 5000;           // a presence check that has not answered by now has failed
   var PING_MS = 25000, PING_MISSES = 2;
+  /* A PHONE IS BACK IN SECONDS, NOT AFTER THE BACKOFF (live flight-mode test, 1 Nov 2026: 4 s back after a
+     25 s drop, FORTY seconds after a one-minute one). Two things made the minute cost forty seconds:
+       1. the browser kept the dead socket "open" and only the heartbeat found it, two missed 25 s pings
+          later, and
+       2. a wake-up (the network back, the screen back on) did nothing while a look at the room was
+          already in flight, which is exactly when the network comes back: that look hung on a line that
+          had just gone, for its full five seconds, and then the backoff had its turn.
+     So a phone checks its socket every 10 s and calls it dead when a ping gets nothing back in 4 s,
+     its backoff stops at 2 s, and every wake-up looks NOW, abandoning a look that is still waiting.
+     Pings are answered by Cloudflare without waking the room, so they cost nothing in room time. */
+  var PHONE_PING_MS = 10000, PONG_WAIT_MS = 4000, PHONE_BACKOFF_MAX = 2000;
   var TELL_RETRY = [0, 5000, 15000, 45000, 120000, 300000];
   var REASSERT_MS = 2 * 60 * 60 * 1000, REASSERT_FOR_MS = 12 * 60 * 60 * 1000;
 
@@ -77,6 +88,15 @@
   }
 
   function now() { return Date.now(); }
+  function makeCid() {
+    var out = "";
+    try {
+      var c = (typeof crypto !== "undefined" && crypto && crypto.getRandomValues) ? crypto : null;
+      if (c) { var a = new Uint8Array(12); c.getRandomValues(a); for (var i = 0; i < a.length; i++) out += ("0" + a[i].toString(16)).slice(-2); }
+    } catch (e) { out = ""; }
+    while (out.length < 24) out += Math.floor(Math.random() * 16).toString(16);
+    return out;
+  }
   function offline() {
     try { return typeof navigator !== "undefined" && !!navigator && navigator.onLine === false; } catch (e) { return false; }
   }
@@ -122,8 +142,15 @@
     var st = { state: "checking", ws: null, queue: [], backoff: BACKOFF_MIN, closed: false, timer: null,
                downSince: now(), everOpen: false, tries: 0, due: 0, why: "",
                pingT: null, misses: 0, pongSeen: false, tellT: null, tellI: -1, reT: null,
-               lastIn: 0, hiddenAt: 0, checkT: null };
-    var backoffMax = venueRoom ? ROOM_BACKOFF_MAX : BACKOFF_MAX;
+               lastIn: 0, hiddenAt: 0, checkT: null, gen: 0, looking: false };
+    var phone = (role === "phone");
+    var backoffMax = !venueRoom ? BACKOFF_MAX : phone ? PHONE_BACKOFF_MAX : ROOM_BACKOFF_MAX;
+    /* ONE SOCKET PER PAGE, HOWEVER OFTEN IT RECONNECTS (1 Nov 2026: presence counted Dean's one phone
+       twice). A socket the phone gave up on in flight mode cannot say goodbye, so the room kept it until
+       Cloudflare noticed, and counted it beside the new one. Every socket this page opens carries the same
+       random cid, and the room closes any older socket with it. Random and never relayed, deliberately NOT
+       the pid: the host reads every pid out to the room, so a pid would let any phone close anyone else's. */
+    var cid = makeCid();
     function setState(s) { st.state = s; if (opts.onState) { try { opts.onState(s); } catch (e) {} } }
 
     // Ask over HTTPS first: a WebSocket cannot tell a 503 from a dead network, and the
@@ -131,9 +158,11 @@
     function probe() {
       if (st.closed) return;
       st.tries++;
+      var gen = ++st.gen;                              // a wake-up that starts a new look makes this one history
+      st.looking = true;
       var settled = false;
-      var late = setTimeout(function () { if (settled) return; settled = true; retry(); }, PROBE_MS);
-      function done() { if (settled) return false; settled = true; clearTimeout(late); return !st.closed; }
+      var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; retry(); }, PROBE_MS);
+      function done() { if (settled) return false; settled = true; clearTimeout(late); if (gen === st.gen) st.looking = false; return !st.closed && gen === st.gen; }
       fetch(api + "/room/presence?room=" + encodeURIComponent(roomName))
         .then(function (r) {
           var first = done();
@@ -148,7 +177,7 @@
           if (!first) return;                                      // a late yes: the next look will see it
           if (r.status !== 200) { retry(); return; }               // the room is unwell; the budget decides
           return readJson(r).then(function (d) {
-            if (st.closed) return;
+            if (st.closed || gen !== st.gen) return;
             /* NOT OURS. A captive portal answers 200 as well, with its own page. */
             if (!d || typeof d !== "object" || typeof d.total !== "number") { retry(); return; }
             if (needsHandover && d.handover !== true) { unavailable("worker too old"); return; }
@@ -214,7 +243,8 @@
       setState("connecting");
       var ws;
       try {
-        ws = new WebSocket(wsBase + "/room/ws?room=" + encodeURIComponent(roomName) + "&role=" + encodeURIComponent(role));
+        ws = new WebSocket(wsBase + "/room/ws?room=" + encodeURIComponent(roomName) + "&role=" + encodeURIComponent(role) +
+                           (venueRoom ? "&cid=" + cid : ""));
       } catch (e) { retry(); return; }
       st.ws = ws;
       /* A SOCKET THAT NEITHER OPENS NOR FAILS. Every budget below is armed by onclose or
@@ -256,7 +286,7 @@
         clearTimeout(handshake);
         if (st.ws !== ws) return;                     // a socket we already let go of
         st.ws = null;
-        clearTimeout(st.pingT);
+        clearTimeout(st.pingT); clearTimeout(st.checkT);
         if (ev && ev.code === 4503) { unavailable("handed over"); return; }   // the room sent everyone across
         if (!st.closed) retry();
       };
@@ -272,6 +302,18 @@
        wakes once a minute is not mistaken for a dead room. */
     function beat() {
       clearTimeout(st.pingT);
+      if (phone && venueRoom) {
+        /* A PHONE ASKS MORE OFTEN AND WAITS LESS. Not while the page is hidden: a locked phone is frozen,
+           and the wake-up below looks the moment it is seen again. */
+        st.pingT = setTimeout(function () {
+          var ws = st.ws;
+          if (st.closed || !ws || ws.readyState !== 1) return;
+          if (!st.pongSeen) { try { ws.send("ping"); } catch (e) {} }   // an older Worker never answers: it is never judged
+          else if (!hiddenNow()) checkAlive(PONG_WAIT_MS);
+          beat();
+        }, PHONE_PING_MS);
+        return;
+      }
       st.pingT = setTimeout(function () {
         var ws = st.ws;
         if (st.closed || !ws || ws.readyState !== 1) return;
@@ -322,9 +364,16 @@
 
     /* THE WINDOW IS SEEN AGAIN, THE PHONE IS UNLOCKED, THE WIFI IS BACK: look now, with a fresh
        budget, instead of whenever the frozen timer gets round to it. */
+    function hiddenNow() {
+      try { return typeof document !== "undefined" && !!document && document.visibilityState === "hidden"; } catch (e) { return false; }
+    }
     function wake() {
-      if (st.closed || !st.timer) return;             // open, opening, or a look already in flight
-      try { if (document.visibilityState === "hidden") return; } catch (e) {}
+      if (st.closed || st.ws) return;                 // open or opening: nothing to wake
+      if (!st.timer && !st.looking) return;           // nothing waiting (closed for good, or not started)
+      if (hiddenNow()) return;
+      /* A LOOK STILL IN FLIGHT IS ABANDONED, NOT WAITED ON. It left while the line was down and can hang
+         for its whole five seconds; the network that just came back answers a new one in a fraction of
+         that. Its answer, if it ever comes, is history (st.gen). */
       clearTimeout(st.timer); st.timer = null;
       st.downSince = now(); st.tries = 0; st.backoff = BACKOFF_MIN;
       probe();
@@ -363,13 +412,30 @@
     /* BACK INTO VIEW AFTER A WHILE: ask the room if it is still there. A ping that gets nothing at
        all in four seconds means the socket died while the page was away, and it is replaced now
        rather than after two missed heartbeats (most of a minute of balls). */
-    function checkAlive() {
+    function checkAlive(waitMs) {
       var ws = st.ws;
       if (st.closed || !ws || ws.readyState !== 1 || !st.pongSeen) return;
       var asked = now();
       try { ws.send("ping"); } catch (e) { recycle(); return; }
       clearTimeout(st.checkT);
-      st.checkT = setTimeout(function () { if (st.ws === ws && !(st.lastIn >= asked)) recycle(); }, CHECK_MS);
+      st.checkT = setTimeout(function () {
+        if (st.ws !== ws || st.lastIn >= asked) return;
+        /* A TIMER THAT FIRED LATE IS A FROZEN PAGE, NOT A DEAD SOCKET. Ask again rather than hang up. */
+        if (now() - asked > (waitMs || CHECK_MS) + SLEPT_MS) return;
+        recycle();
+      }, waitMs || CHECK_MS);
+    }
+    /* THE NETWORK WENT. Nothing can be sent or heard, and the socket the browser still calls open will
+       never say so. Let it go now, so the room is not left counting it and the page is already waiting
+       to look when the network comes back. Time offline is not spent from the budget (retry). */
+    function wentOffline() {
+      if (st.closed || !venueRoom) return;
+      var ws = st.ws;
+      if (!ws) return;
+      st.ws = null;
+      clearTimeout(st.pingT); clearTimeout(st.checkT);
+      try { ws.close(); } catch (e) {}
+      retry();
     }
     function onVisibility() {
       var hidden = false;
@@ -377,7 +443,7 @@
       if (hidden) { st.hiddenAt = now(); return; }
       var away = st.hiddenAt ? now() - st.hiddenAt : 0;
       st.hiddenAt = 0;
-      if (away >= CHECK_AFTER_HIDDEN_MS) checkAlive();
+      if (away >= CHECK_AFTER_HIDDEN_MS) checkAlive(phone ? PONG_WAIT_MS : CHECK_MS);
       wake();
     }
     try {
@@ -387,6 +453,7 @@
       if (typeof window !== "undefined" && window && typeof window.addEventListener === "function") {
         window.addEventListener("pageshow", wake);
         window.addEventListener("online", backOnline);
+        window.addEventListener("offline", wentOffline);
         window.addEventListener("focus", wake);
       }
     } catch (e) {}

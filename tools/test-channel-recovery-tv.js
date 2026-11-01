@@ -179,9 +179,14 @@ function winWith(worker) {
 }
 var made = 0;
 var o6 = RIG.loadHelper(winWith(function () { made++; this.terminate = function () {}; })).clientOptions();
-check('a browser with Worker, Blob and URL.createObjectURL gets the worker heartbeat, every 15 s', JSON.stringify(o6) === JSON.stringify({ realtime: { worker: true, heartbeatIntervalMs: 15000 } }) && made === 1, o6);
-check('a browser with no Worker gets the plain client (createClient would THROW if asked for a worker it cannot make)', JSON.stringify(RIG.loadHelper(fakeWin()).clientOptions()) === '{}');
-check('a browser whose blob worker is refused (a CSP, a kiosk) gets the plain client too', JSON.stringify(RIG.loadHelper(winWith(function () { throw new Error('SecurityError'); })).clientOptions()) === '{}');
+/* Since 2 Nov 2026 every answer also carries the quicker socket (rule 10): reconnectAfterMs, a function, so
+   JSON.stringify leaves it out of the comparison and it is checked on its own. */
+function quick(o) { return !!(o && o.realtime && typeof o.realtime.reconnectAfterMs === 'function' && o.realtime.reconnectAfterMs(1) < 400); }
+check('a browser with Worker, Blob and URL.createObjectURL gets the worker heartbeat, every 15 s', JSON.stringify(o6) === JSON.stringify({ realtime: { heartbeatIntervalMs: 15000, worker: true } }) && quick(o6) && made === 1, o6);
+var o6b = RIG.loadHelper(fakeWin()).clientOptions();
+check('a browser with no Worker gets no worker heartbeat (createClient would THROW if asked for a worker it cannot make)', JSON.stringify(o6b) === JSON.stringify({ realtime: { heartbeatIntervalMs: 15000 } }) && quick(o6b), o6b);
+var o6c = RIG.loadHelper(winWith(function () { throw new Error('SecurityError'); })).clientOptions();
+check('a browser whose blob worker is refused (a CSP, a kiosk) gets no worker heartbeat either', JSON.stringify(o6c) === JSON.stringify({ realtime: { heartbeatIntervalMs: 15000 } }) && quick(o6c), o6c);
 ['venueplay/tv.html', 'venueplay/app/trivia/screen.html', 'venueplay/app/musical/screen.html', 'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html'].forEach(function (f) {
   var src = readFile(f);
   check(f + ' hands clientOptions() to createClient, guarded, and loads the script that makes it',

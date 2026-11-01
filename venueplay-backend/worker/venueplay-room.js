@@ -68,6 +68,15 @@ const ROOM_ANSWER_TTL_MS = 6 * 60 * 60 * 1000;       // three times the longest 
 const ROOM_HANDOVER_MS = 6 * 60 * 60 * 1000;
 const ROOM_HANDOVER_CLOSE = 4503;                    // "go to Supabase": the page does not retry the room
 
+/* ONE PAGE, ONE SOCKET (live flight-mode test, 1 Nov 2026: presence said phone:2 for Dean's one phone).
+   A phone that loses signal cannot close its socket, so the room keeps it until Cloudflare notices, which
+   can be minutes, and the phone's new socket is counted beside it. Every page now sends a random cid with
+   its socket, the same one on every reconnect, and a new socket closes any older one carrying it. The cid
+   is random and never relayed or reported. It is deliberately NOT the phone's pid: the host reads every
+   pid out to the room, so a pid here would let any phone close anybody else's socket. */
+const ROOM_CID_RE = /^[0-9a-f]{16,64}$/;
+const ROOM_REPLACED_CLOSE = 4000;                    // "a newer socket from your page took over": history to the page
+
 function roomJson(obj, status) {
   return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'Content-Type': 'application/json' } });
 }
@@ -150,6 +159,9 @@ export class VenueRoom {
     if (request.headers.get('Upgrade') !== 'websocket') return roomJson({ error: 'expected a websocket' }, 426);
     const role = String(url.searchParams.get('role') || 'phone');
     if (ROOM_ROLES.indexOf(role) < 0) return roomJson({ error: 'bad role' }, 400);
+    const cidIn = String(url.searchParams.get('cid') || '');
+    const cid = ROOM_CID_RE.test(cidIn) ? cidIn : '';
+    if (cid) this.replaceOlder(cid);
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server, [role]);
@@ -157,8 +169,24 @@ export class VenueRoom {
        nothing to relay, so nothing in it is ever relayed. Marked on the socket at connect,
        because a Durable Object is not told its own name; the Worker passes it (roomConnect). */
     const answersOnly = /^vpa-/.test(String(url.searchParams.get('room') || ''));
-    server.serializeAttachment({ role: role, since: Date.now(), win: 0, n: 0, ao: answersOnly });
+    const att = { role: role, since: Date.now(), win: 0, n: 0, ao: answersOnly };
+    if (cid) att.cid = cid;
+    server.serializeAttachment(att);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  /* The same page has come back on a new socket: its old one is closed and stops counting at once, even
+     before Cloudflare's own close lands (gone, in its attachment, is what presence and relay skip). */
+  replaceOlder(cid) {
+    const all = this.state.getWebSockets();
+    for (let i = 0; i < all.length; i++) {
+      let a = null;
+      try { a = all[i].deserializeAttachment(); } catch (e) { a = null; }
+      if (!a || a.cid !== cid || a.gone) continue;
+      a.gone = true;
+      try { all[i].serializeAttachment(a); } catch (e) {}
+      try { all[i].close(ROOM_REPLACED_CLOSE, 'replaced'); } catch (e) {}
+    }
   }
 
   // Something in the room spoke: hand it to everyone else in the room.
@@ -172,6 +200,7 @@ export class VenueRoom {
     if (roomOff(this.env)) { await this.handover(true); return; }
     if (message.length > ROOM_MAX_MSG_CHARS) return;
     const a = ws.deserializeAttachment() || { role: 'phone', since: 0, win: 0, n: 0 };
+    if (a.gone) return;                                      // a socket a newer one from the same page replaced
     const win = Math.floor(Date.now() / 1000);
     if (a.win !== win) { a.win = win; a.n = 0; }
     a.n += 1;
@@ -345,9 +374,20 @@ export class VenueRoom {
     /* handover: true says this room hands a venue over as a whole (above). A page uses the room
        BY DEFAULT only when it says so, so a new page against an old Worker stays on Supabase,
        which is where the whole venue is. pong: true, the heartbeat is answered. */
+    /* A replaced socket is not counted, and two sockets with one cid are one page. Presence is a
+       look at who is in the room, never billing: players are counted by the Worker's /join. */
     const out = { total: 0, answers: true, handover: true, pong: true };
     for (let i = 0; i < ROOM_ROLES.length; i++) {
-      const n = this.state.getWebSockets(ROOM_ROLES[i]).length;
+      const socks = this.state.getWebSockets(ROOM_ROLES[i]);
+      const seen = {};
+      let n = 0;
+      for (let j = 0; j < socks.length; j++) {
+        let a = null;
+        try { a = socks[j].deserializeAttachment(); } catch (e) { a = null; }
+        if (a && a.gone) continue;
+        if (a && a.cid) { if (seen[a.cid]) continue; seen[a.cid] = 1; }
+        n += 1;
+      }
       out[ROOM_ROLES[i]] = n;
       out.total += n;
     }
@@ -360,6 +400,9 @@ export class VenueRoom {
     let n = 0;
     for (let i = 0; i < all.length; i++) {
       if (all[i] === except) continue;
+      let a = null;
+      try { a = all[i].deserializeAttachment(); } catch (e) { a = null; }
+      if (a && a.gone) continue;
       try { all[i].send(str); n += 1; } catch (e) {}
     }
     return n;
@@ -414,7 +457,10 @@ async function handleRoomSocket(request, env, json) {
   const role = String(url.searchParams.get('role') || 'phone');
   if (ROOM_ROLES.indexOf(role) < 0) return json({ error: 'bad role' }, 400);
   if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
-  return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role) + '&room=' + encodeURIComponent(name), request));
+  /* The page's cid goes through (ONE PAGE, ONE SOCKET, above); the room checks its shape. */
+  const cid = String(url.searchParams.get('cid') || '');
+  return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role) + '&room=' + encodeURIComponent(name) +
+                                               (ROOM_CID_RE.test(cid) ? '&cid=' + cid : ''), request));
 }
 
 // GET /room/presence?room=vp-XXXXXX  -> {total, tv, host, phone, hq}

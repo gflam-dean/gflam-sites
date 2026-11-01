@@ -575,7 +575,7 @@
     setTimeout(function(){ location.reload(); }, 4000);
     throw new Error("venueplay: Realtime library not loaded yet");
   }
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : undefined);   // the quicker socket (vp-channel.js, rule 10)
   var ch=null, subscribed=false, sendQueue=[];
   /* ?roomserver=1 puts THIS phone on the room server instead of Supabase Realtime.
      NOT ?room=1: ?room= is this page's own game-code parameter, and ?room=1 made it show

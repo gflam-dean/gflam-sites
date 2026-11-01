@@ -298,6 +298,7 @@
 </script>
 <script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="/app/vendor/supabase-js-2.118.0.min.js"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-channel.js"></script>   <!-- the channel comes back by itself, the moment the signal does (2 Nov 2026) -->
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
@@ -367,7 +368,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     setTimeout(function(){ location.reload(); }, 4000);
     throw new Error("venueplay: Realtime library not loaded yet");
   }
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : undefined);   // the quicker socket (vp-channel.js, rule 10)
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
@@ -963,10 +964,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      Worker had the claim and the host never heard about it. Now any drop queues sends, shows
      Reconnecting, and rebuilds the channel with a backoff; when it is back, a BINGO still waiting
      on the host is said again (the host ignores a claim it already has). */
+  /* THE REBUILD IS /app/vp-channel.js NOW (live flight-mode test, 2 Nov 2026). This page kept its own copy
+     of the backoff, and the copy never heard the network come back: after a drop it waited out a 2 to 30
+     second timer whatever the phone did. The shared helper rebuilds with the same backoff AND runs the
+     moment the signal, the screen or the tab returns, and wakes the socket under it. Without the script
+     the page keeps its own retry, as before. */
   var chRetryT=null, chTries=0;
   function openChannel(room){
-    if(ch){ var old=ch; ch=null; subscribed=false; try{ client.removeChannel(old); }catch(e){} }   // let go first: removing reports CLOSED to the old one
-    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    if(ch){ var old=ch; ch=null; subscribed=false;   // let go first: removing reports CLOSED to the old one
+      try{ if(old.current) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
+    var kept=!!(window.VPChannel && window.VPChannel.keep);
+    ch=kept ? window.VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+            : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){
@@ -983,7 +992,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
         subscribed=false;
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
-        if(!chRetryT){
+        if(!kept && !chRetryT){
           var wait=Math.min(30000, 2000*Math.pow(2, Math.min(chTries,4))); chTries++;
           chRetryT=setTimeout(function(){ chRetryT=null; if(P.room===room) openChannel(room); }, wait);
         }

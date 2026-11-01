@@ -22,7 +22,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var src = find('venueplay-backend/worker/venueplay-room.js');
-var EXPECT = 66;
+var EXPECT = 75;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -238,6 +238,8 @@ join('tv').then(function (r) { tv = r.webSocket.of; ok('the TV is accepted with 
 }).then(function (rs) {
   ok('with the binding: a bad room name is refused, a publish reports what the room said', rs[0].s === 400 && rs[1] === 2);
   return answersInTheRoom();
+}).then(function () {
+  return onePageOneSocket();
 }).catch(function (e) {
   bad++; print('  FAIL a chain rejected: ' + (e && (e.message + ' ' + e.stack) || e));
 }).then(function () {
@@ -409,4 +411,49 @@ async function answersInTheRoom() {
   ok('a room that never answers does not hold the host\'s reveal up',
      (await roomAnswersTake(deaf, G, 1)) === null,
      'the reveal goes ahead with what the database has, which is what a venue with no room does');
+}
+
+/* ONE PAGE, ONE SOCKET (live flight-mode test, 1 Nov 2026: presence said phone:2 for one phone). A phone that
+   lost its signal never closed its socket, the room kept it, and the phone's new socket was counted beside it.
+   The page sends a random cid with every socket; a new socket closes the older one carrying the same cid. */
+async function onePageOneSocket() {
+  print('\n== one page, one socket ==');
+  sockets.length = 0;
+  var r2 = new VenueRoom(state, {});
+  function joinCid(role, cid) {
+    return r2.fetch(new Request('https://room/ws?role=' + role + (cid ? '&cid=' + cid : ''), { headers: { Upgrade: 'websocket' } }));
+  }
+  var CID = 'a1b2c3d4e5f6a7b8c9d0e1f2';
+  var host2 = (await joinCid('host', 'ffffeeeeddddccccbbbbaaaa')).webSocket.of;
+  var old = (await joinCid('phone', CID)).webSocket.of;
+  var other = (await joinCid('phone', '0123456789abcdef01234567')).webSocket.of;
+  ok('two phones, two sockets, presence counts two', r2.presence().phone === 2, JSON.stringify(r2.presence()));
+  var fresh = (await joinCid('phone', CID)).webSocket.of;
+  var pr = r2.presence();
+  ok('the same page back on a new socket counts ONCE, not twice', pr.phone === 2 && pr.total === 3, JSON.stringify(pr));
+  ok('its old socket is closed by the room, with the "replaced" code the page treats as history',
+     old.closed && old.closed[0] === 4000, JSON.stringify(old.closed));
+  ok('the new socket and the other phone are left open', !fresh.closed && !other.closed && !host2.closed);
+  host2.got = []; old.got = []; fresh.got = [];
+  await r2.webSocketMessage(host2, JSON.stringify({ t: 'ball', n: 7 }));
+  ok('a ball reaches the new socket and NOT the replaced one, even before Cloudflare drops it',
+     fresh.got.length === 1 && old.got.length === 0, JSON.stringify([fresh.got, old.got]));
+  other.got = [];
+  await r2.webSocketMessage(old, JSON.stringify({ t: 'join', pid: 'x' }));
+  ok('and nothing the replaced socket says is passed on', other.got.length === 0 && host2.got.length === 0);
+  /* THE CID IS NOT THE PID, AND NOT ANYTHING A STRANGER CAN NAME. A cid of the wrong shape is ignored, so it
+     can close nothing, and a socket with no cid at all (an older page) is counted exactly as before. */
+  var noCid = (await joinCid('phone', '')).webSocket.of;
+  var junk = (await joinCid('phone', 'k1_' + CID)).webSocket.of;
+  ok('an older page with no cid, or a cid of the wrong shape, closes nothing and is counted',
+     !fresh.closed && !noCid.closed && !junk.closed && r2.presence().phone === 4, JSON.stringify(r2.presence()));
+  ok('the cid is never handed to anyone: not in presence, not relayed', JSON.stringify(r2.presence()).indexOf(CID) < 0 &&
+     JSON.stringify(other.got).indexOf(CID) < 0);
+  /* The Worker passes the cid through to the room, checked for shape first. */
+  var seen = null;
+  var envW = { ROOM: { idFromName: function (n) { return n; }, get: function () { return { fetch: function (rq) { seen = rq.url; return Promise.resolve(new Response(null, { status: 101 })); } }; } } };
+  await handleRoomSocket(new Request('https://game/room/ws?room=vp-ABC234&role=phone&cid=' + CID, { headers: { Upgrade: 'websocket' } }), envW, roomJson);
+  var seenOk = seen && seen.indexOf('cid=' + CID) > 0;
+  await handleRoomSocket(new Request('https://game/room/ws?room=vp-ABC234&role=phone&cid=%3Cscript%3E', { headers: { Upgrade: 'websocket' } }), envW, roomJson);
+  ok('the Worker forwards a well-formed cid to the room and drops anything else', seenOk && seen.indexOf('cid=') < 0, seen);
 }

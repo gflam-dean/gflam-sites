@@ -93,6 +93,48 @@ print("3. A DROPPED CHANNEL IS NOTICED, REBUILT, AND A BINGO IS SAID AGAIN");
 })();
 
 print("");
+print("3a. WITH THE SHARED HELPER LOADED (as the page ships since 2 Nov 2026): the same drop, rebuilt by /app/vp-channel.js, and the moment the signal returns");
+(function(){
+  var a = play.indexOf("  var chRetryT=null, chTries=0;");
+  var SRC = a > 0 ? grab("openChannel", play.slice(a)) : "";
+  var send = grab("send", play), flush = grab("flushQueue", play);
+  pass("the page loads /app/vp-channel.js", /<script src="\/app\/vp-channel\.js"><\/script>/.test(play));
+  pass("and gives its client the quicker socket", play.indexOf("supabase.createClient(SUPA_URL, SUPA_ANON, (window.VPChannel && VPChannel.phoneOptions) ? VPChannel.phoneOptions() : undefined)") > 0);
+  var timers = [], tid = 0, chans = [], sent = [], listeners = {};
+  function st(fn, ms){ var t = { fn: fn, ms: ms, id: ++tid }; timers.push(t); return t.id; }
+  function ct(id){ timers = timers.filter(function(t){ return t.id !== id; }); }
+  var hwin = { console: { log: function(){} }, document: { visibilityState: "visible", addEventListener: function(ev, fn){ (listeners[ev] = listeners[ev] || []).push(fn); } },
+               addEventListener: function(ev, fn){ (listeners[ev] = listeners[ev] || []).push(fn); } };
+  var H = (new Function("window", "setTimeout", "clearTimeout", readFile("venueplay/app/vp-channel.js") + "\nreturn window.VPChannel;"))(hwin, st, ct);
+  var client = { channel: function(name){ var c = { name: name, on: function(){ return c; }, subscribe: function(cb){ c.cb = cb; return c; },
+                   send: function(m){ if (c.dead) return; sent.push(m.payload); } }; chans.push(c); return c; },
+                 removeChannel: function(c){ c.dead = true; if (c && c.cb) c.cb("CLOSED"); } };
+  var P = { room: "ABC123", pid: "pid1", name: "Sam", joined: true, claimPending: false, claimId: "", claimMsg: null, won: false, ended: false };
+  var $ = els();
+  var env = { client: client, P: P, $: $, window: { VPChannel: H }, fetchCard: function(){}, onMsg: function(){}, deviceId: function(){ return "devsam000001"; },
+              setTimeout: st, clearTimeout: ct };
+  var names = Object.keys(env);
+  var api = (new Function(names.join(","), "var ch=null, subscribed=false, sendQueue=[];" + send + flush + "var chRetryT=null, chTries=0;" + SRC +
+    "; return { open: openChannel, send: send, cur: function(){ return ch && ch.current ? ch.current() : ch; }, kept: function(){ return ch; }, sub: function(){ return subscribed; } };")).apply(null, names.map(function(k){ return env[k]; }));
+  api.open("ABC123");
+  pass("the channel is the helper's kept channel, not a bare one", !!(api.kept() && api.kept().poke));
+  api.cur().cb("SUBSCRIBED");
+  pass("connected: green, and the seat is announced", $("statusDot").classList.on && sent.some(function(m){ return m.t === "join"; }));
+  var first = api.cur(); sent.length = 0;
+  first.cb("CLOSED");
+  pass("a drop says Reconnecting and books ONE rebuild (the helper's, not the page's own)", $("statusText").textContent === "Reconnecting" && timers.length === 1 && api.sub() === false, JSON.stringify(timers.map(function(t){ return t.ms; })));
+  P.claimPending = true; P.claimId = "claim-1"; P.claimMsg = { t: "claim", claim_id: "claim-1", pid: "pid1", name: "Sam" };
+  (listeners.online || []).forEach(function(f){ f({}); });
+  pass("the signal comes back: the rebuild runs NOW, not when its timer says", chans.length === 2 && timers.length === 0, chans.length + " channels, " + timers.length + " timers");
+  api.cur().cb("SUBSCRIBED");
+  pass("back: the seat is announced again and the waiting BINGO is said again", sent.some(function(m){ return m.t === "join"; }) && sent.filter(function(m){ return m.t === "claim"; }).length === 1, JSON.stringify(sent));
+  first.cb("SUBSCRIBED");
+  pass("the replaced channel speaking up later is history", api.cur() !== first && chans.length === 2);
+  var k = api.kept(); api.open("ABC123");
+  pass("opening again hangs the old kept channel up for good (no rebuild of it after this)", api.kept() !== k && (k.retrying ? !k.retrying() : true));
+})();
+
+print("");
 print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)");
 (function(){
   /* The other phone read "PHONE SAM WON / took this one." The real onMsg runs the winner message. */
