@@ -224,7 +224,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
-  "checks": 90,
+  "checks": 98,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
