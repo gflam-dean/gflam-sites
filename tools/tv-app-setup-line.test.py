@@ -6,7 +6,7 @@ can download our app... It's called VenuePlay TV." The Android TV / Google TV ap
 Play (au.com.venueplay.tv) and pairs by the six-character screen code. So every place that tells a
 venue how to set up its TV carries one line, word for word:
 
-    Got a TV with Google Play? Download the VenuePlay TV app and put in your screen code.
+    Got a TV with Google Play? Download the venueplay TV app and put in your screen code.
     Otherwise open venueplay.com.au/tv in the TV's web browser.
 
   - the four emails a new venue gets (welcome, welcome-group, welcome-hq, venue-onboarding): in the
@@ -39,7 +39,7 @@ def read(rel):
         return f.read()
 
 
-LINE = ("Got a TV with Google Play? Download the VenuePlay TV app and put in your screen code. "
+LINE = ("Got a TV with Google Play? Download the venueplay TV app and put in your screen code. "
         "Otherwise open venueplay.com.au/tv in the TV's web browser.")
 PLAY = 'https://play.google.com/store/apps/details?id=au.com.venueplay.tv'
 EM_DASH = re.compile(r'[—–]')
@@ -61,18 +61,21 @@ for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     words = text(body)
     check('email %s: the "Set up your screen" step carries the app line, word for word' % t,
           LINE in words, words[:260])
-    link = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*VenuePlay TV app\s*</a>', body)
+    link = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*venueplay TV app\s*</a>', body)
     check('email %s: "VenuePlay TV app" links to the app\'s Google Play page' % t,
           bool(link) and link.group(1) == PLAY, link and link.group(1))
     check('email %s: the step keeps its own words (any TV works, and the RECONNECTING line), no long dash' % t,
           words.startswith('Any TV works') and 'RECONNECTING' in words and not EM_DASH.search(words), words[:120])
 
 # ---------------------------------------------------------------- the Help FAQ
+# The Help answer is a database row (migration 131, run 31 Oct), so it keeps "VenuePlay" until a migration
+# lowercases it; the 1 Nov lowercase release changed the emails, pages and handouts only.
+HELP_LINE = LINE.replace('venueplay TV app', 'VenuePlay TV app')
 faq = json.loads(read('venueplay/data/help-faq.json'))
 tv = [it for it in faq['venue']['items'] if it['q'] == 'Setting up the TV']
 answer = tv[0]['a'] if len(tv) == 1 else ''
 check('the venue Help answer "Setting up the TV" opens with the app line, on a line of its own',
-      answer.startswith(LINE + '\n'), answer[:200])
+      answer.startswith(HELP_LINE + '\n'), answer[:200])
 check('and it never says roster and has no long dash', bool(answer) and 'roster' not in answer.lower() and not EM_DASH.search(answer))
 
 # ---------------------------------------------------------------- migration 131 writes it live
@@ -109,16 +112,16 @@ new120 = quoted(up120 or '', r'set\s+answer\s*=')
 check('its guard is the words migration 120 wrote, so it changes the live row instead of silently matching nothing',
       bool(new120) and guard131 == new120, [guard131 and guard131[:80], new120 and new120[:80]])
 check('and it only puts the line in front: every word 120 wrote is still there after it',
-      bool(new120) and bool(new131) and new131 == LINE + '\n' + new120)
+      bool(new120) and bool(new131) and new131 == HELP_LINE + '\n' + new120)
 
 # ---------------------------------------------------------------- the how-it-works pages and the marketing
 # Dean, 31 Oct 2026: "We also need to add Google play store app thing into all of our how do we play it?
 # Guides and our marketing too." The short form, wherever a page tells a venue how the game gets on its TV.
-SHORT = 'Got a TV with Google Play? Get the VenuePlay TV app, then put in your screen code.'
+SHORT = 'Got a TV with Google Play? Get the venueplay TV app, then put in your screen code.'
 
 
 def linked(html):
-    m = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*VenuePlay TV app\s*</a>', html)
+    m = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*venueplay TV app\s*</a>', html)
     return m.group(1) if m else None
 
 
@@ -154,7 +157,7 @@ check('the Account page\'s TV note (where the TV link is) names the VenuePlay TV
 
 ll = read('venueplay/llms.txt')
 check('llms.txt (what AI search reads about VenuePlay) names the VenuePlay TV app and its Google Play page',
-      re.search(r'^- Got a TV with Google Play\? Get the VenuePlay TV app \(' + re.escape(PLAY) + r'\), then put in your screen code\.$', ll, re.M) is not None)
+      re.search(r'^- Got a TV with Google Play\? Get the venueplay TV app \(' + re.escape(PLAY) + r'\), then put in your screen code\.$', ll, re.M) is not None)
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))
