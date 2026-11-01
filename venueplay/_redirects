@@ -65,7 +65,10 @@
 /support      /help  301
 /support.html /help  301
 
-# THE DRINK COASTER (2 Nov 2026). The QR opens /live-here-now; /live is the short one printed under
-# it ("or go to venueplay.com.au/live"). A 301, so the address bar shows the real page.
+# THE DRINK COASTER (2 Nov 2026). The QR opens /live-here-now; /here is the short one printed under
+# it ("or go to venueplay.com.au/here", Dean 1 Nov). /live is a second spelling people may try. A 301,
+# so the address bar shows the real page.
+/here         /live-here-now  301
+/here.html    /live-here-now  301
 /live         /live-here-now  301
 /live.html    /live-here-now  301

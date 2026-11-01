@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """THE DRINK-COASTER PAGE, PLAYED IN A REAL BROWSER AT PHONE WIDTH (/live-here-now, 31 Oct 2026;
 finished 1 Nov 2026 for the Mon 2 Nov release: the coaster reads "Scan for 60 seconds of trivia while
-you wait for your drink", and /live is the short address printed under the QR).
+you wait for your drink", and venueplay.com.au/here is the short address printed under the QR).
 
 Dean's brief: "Opens straight into a question. No name, no sign-up, no room code. Four big buttons,
 tap to answer, instant right/wrong in pink or yellow. Five questions per scan, then a score screen:
@@ -13,8 +13,8 @@ Every one of those is a thing the page DOES, so this opens the real venueplay/li
 served from this checkout the way Cloudflare Pages serves it (tools/pagesim.py: clean addresses, the
 real _redirects, the real 404.html), in headless Chrome as a phone, and plays it by tapping the screen:
 
-  - /live answers 301 to /live-here-now (the real _redirects line), and a phone that types /live
-    lands on the game
+  - /here (the short address on the coaster) and /live answer 301 to /live-here-now (the real
+    _redirects lines), and a phone that types /here lands on the game
 
   - the first question is up with nothing typed: no input anywhere, four buttons a thumb can hit,
     no sideways scroll, and the same at 320 px
@@ -294,15 +294,18 @@ def main():
           'data-vp-mark="wordmark"' in HTML and 'href="/" aria-label="venueplay home"' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
            if l.strip() and not l.lstrip().startswith('#')]
-    check('_redirects sends /live (and /live.html) to /live-here-now with a 301',
+    check('_redirects sends /here (and /here.html), the address printed on the coaster, to /live-here-now with a 301',
+          ['/here', '/live-here-now', '301'] in red and ['/here.html', '/live-here-now', '301'] in red, [r for r in red if 'here' in ' '.join(r)])
+    check('and /live (and /live.html), the other spelling people try, with a 301 too',
           ['/live', '/live-here-now', '301'] in red and ['/live.html', '/live-here-now', '301'] in red, [r for r in red if 'live' in ' '.join(r)])
     sm = io.open(os.path.join(ROOT, 'venueplay', 'sitemap.xml'), encoding='utf-8').read()
     check('the sitemap lists https://venueplay.com.au/live-here-now', '<loc>https://venueplay.com.au/live-here-now</loc>' in sm)
 
     srv, base = serve(os.path.join(ROOT, 'venueplay'))
     print('\nTHE SHORT ADDRESS UNDER THE QR')
-    st, loc = no_follow(base, '/live')
-    check('/live answers 301 to /live-here-now (Pages reading the real _redirects)', st == 301 and loc == '/live-here-now', (st, loc))
+    for short in ('/here', '/live'):
+        st, loc = no_follow(base, short)
+        check('%s answers 301 to /live-here-now (Pages reading the real _redirects)' % short, st == 301 and loc == '/live-here-now', (st, loc))
     st2, _ = no_follow(base, '/live-here-now')
     check('/live-here-now answers 200, and a made-up address beside it answers a real 404 (the control)',
           st2 == 200 and no_follow(base, '/live-here-not')[0] == 404, st2)
@@ -312,9 +315,9 @@ def main():
     b = vl.Browser()
     try:
         tl = Tab(b, base, w=390, h=844)
-        tl.go('/live')
+        tl.go('/here')
         landed = tl.until('document.getElementById("q").getAttribute("data-id") && location.pathname', 15)
-        check('a phone that types venueplay.com.au/live lands on /live-here-now with a question up', landed == '/live-here-now', landed)
+        check('a phone that types venueplay.com.au/here lands on /live-here-now with a question up', landed == '/live-here-now', landed)
         tl.close()
 
         print('\nA PHONE SCANS THE COASTER (375 x 740)')

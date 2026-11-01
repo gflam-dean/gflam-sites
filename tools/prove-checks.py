@@ -9891,9 +9891,17 @@ MUTATIONS = [
     # Finished 1 Nov 2026 for the Mon 2 Nov release (branch feature/coaster-404-2nov): /live, the call to
     # action, the clock, nothing collected, and the fit at 320/375/390/430.
     ('live-here-now-in-chrome.test.py', 'venueplay/_redirects',
+     '/here         /live-here-now  301',
+     '/here         /live-here-now  302',
+     'the short address printed under the QR (/here) is a temporary redirect, not a 301'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/_redirects',
+     '/here         /live-here-now  301\n',
+     '',
+     'the short address printed on the coaster (/here) is a 404'),
+    ('live-here-now-in-chrome.test.py', 'venueplay/_redirects',
      '/live         /live-here-now  301',
      '/live         /live-here-now  302',
-     'the short address printed under the QR is a temporary redirect, not a 301'),
+     'the second spelling (/live) is a temporary redirect, not a 301'),
     ('live-here-now-in-chrome.test.py', 'venueplay/live-here-now.html',
      'with everyone playing on their phone. Ask the bar.</p>',
      'with everyone playing on their phone.</p>',
