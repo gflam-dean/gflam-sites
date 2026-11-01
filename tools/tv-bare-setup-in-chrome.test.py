@@ -48,7 +48,7 @@ def take_lock(tool='tv-bare-setup-in-chrome'):
             print('  heavy lock held by pid %s ("%s"); gave up waiting' % (pid, text[:80])); return False
         if not said:
             print('  heavy lock held by pid %s ("%s"), waiting' % (pid, text[:80])); said = True
-        time.sleep(2)
+        time.sleep(0.5)
 
 SAMPLE = 'Tuesday Parmy Night'
 WALL = ('(function(){var p=document.getElementById("pairPanel"),b=p.getBoundingClientRect(),cs=getComputedStyle(p);'
