@@ -302,6 +302,9 @@
          button and one pane (#prTab, #paneProspects), so when HQ gets its sub menus it moves under Sales
          (prospects / call requested / cancelled / flagged) by moving this line. -->
     <button data-pane="prospects" id="prTab" hidden>Prospects</button>
+    <!-- HQ > Subscribers (31 Oct 2026; migration 134): the monthly email sign-ups from the website. Its pane and
+         count are vp-subscribers-hq.js's own; it moves under Sales with Prospects when HQ gets its sub menus. -->
+    <button data-pane="subscribers" id="vpsTab" hidden>Subscribers</button>
     <button data-pane="live">Live now</button>
     <button data-pane="quiet">Quiet</button>
     <button data-pane="cancelled">Cancelled</button>
@@ -775,6 +778,8 @@
 <script src="vp-logins-hq.js"></script>
 <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): the monthly report for every venue and the news. HQ only; started by hq.html below. -->
 <script src="vp-reports-hq.js"></script>
+<!-- HQ > Subscribers (vp-subscribers-hq.js, 31 Oct 2026): the monthly email sign-ups. HQ only; it draws its own pane. -->
+<script src="vp-subscribers-hq.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -1271,7 +1276,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","prospects","live","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
+  var PANES=["venues","prospects","subscribers","live","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
   document.addEventListener("vp-prospects", function(){ if(S.venues){ renderStats(); renderVenues(); } });

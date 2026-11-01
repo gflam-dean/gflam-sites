@@ -1569,6 +1569,30 @@ block (all classes prefixed .vpa-)
   .vp-next-go{background:#FF1F8E;color:#fff;box-shadow:0 10px 30px -12px rgba(255,31,142,.9)}
   .vp-next-alt{background:transparent;color:#E9E4F0;border:1px solid rgba(255,255,255,.22)}
   .vp-next-fine{color:#8E869E;font-size:13.5px;margin:20px 0 0}
+  /* The monthly email, inside the way out (31 Oct 2026): quieter than the two buttons above it. */
+  .vp-mail{margin:28px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.12);max-width:560px}
+  .vp-mail-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin:0 0 6px}
+  .vp-mail-sub{color:#B9B2C7;font-size:14.5px;margin:0 0 16px}
+  .vp-mail-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+  .vp-mail-f{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#B9B2C7;font-family:'JetBrains Mono',monospace}
+  .vp-mail-f em{font-style:normal;text-transform:none;letter-spacing:0;color:#8E869E}
+  .vp-mail-f input{background:#0B0A0F;border:1px solid rgba(255,255,255,.18);border-radius:11px;color:#fff;font-family:'Manrope',sans-serif;
+    font-size:16px;letter-spacing:0;text-transform:none;padding:13px 14px;width:100%}
+  .vp-mail-f input::placeholder{color:#8E869E}
+  .vp-mail-f input:focus{outline:none;border-color:#FF1F8E;box-shadow:0 0 0 3px rgba(255,31,142,.18)}
+  .vp-mail-hp{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+  .vp-mail-ts:empty{display:none}
+  .vp-mail-ts{margin-top:12px}
+  .vp-mail-go{margin-top:14px;width:100%;border:1px solid rgba(255,31,142,.6);background:transparent;color:#fff;border-radius:12px;padding:14px 20px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  .vp-mail-go:hover{background:rgba(255,31,142,.12)}
+  .vp-mail-go:disabled{opacity:.6;cursor:default}
+  .vp-mail-err{display:none;color:#FF6FB4;font-size:14px;margin:10px 0 0}
+  .vp-mail-err.show{display:block}
+  .vp-mail-err a,.vp-mail-fine a{color:#FF6FB4}
+  .vp-mail-fine{color:#8E869E;font-size:12.5px;line-height:1.5;margin:12px 0 0}
+  .vp-mail-done{padding:4px 0}
+  @media (max-width:560px){ .vp-mail-row{grid-template-columns:1fr} }
   /* THE BAR THAT IS ALWAYS THERE. Dean, 26 Sep 2026. Both real visitors in a week played with this
      demo for minutes and never scrolled to the block above, so a next step only at the bottom was
      never seen. Pinned to the bottom of the screen, under the demo's own pop-up (z 50). */
@@ -1828,7 +1852,29 @@ block (all classes prefixed .vpa-)
     <a class="vp-next-alt" id="vpNextTalk" href="/#contact">Talk to us first</a>
   </div>
   <p class="vp-next-fine">Not sure it suits your room, or stuck getting started? Send us a message and a real person will get back to you. Runs on the telly you already have.</p>
+  <!-- NOT READY YET (31 Oct 2026): the quiet third choice, after they have seen the thing and before
+       they are ready to start or talk. One email a month; /app/vp-subscribe.js makes it work. -->
+  <div class="vp-mail">
+    <h3 class="vp-mail-h">Not ready yet? Get one email a month.</h3>
+    <p class="vp-mail-sub">New games, tips for a fuller room, and what other venues are doing. Nobody will ring you.</p>
+    <form class="vp-mail-form" data-vps data-source="see-a-night" novalidate>
+      <div class="vp-mail-row">
+        <label class="vp-mail-f"><span>Email</span><input name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required></label>
+        <label class="vp-mail-f"><span>Venue <em>(optional)</em></span><input name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120"></label>
+      </div>
+      <div class="vp-mail-hp" aria-hidden="true"><label>Leave this empty <input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+      <div class="vp-mail-ts" data-vps-ts></div>
+      <button class="vp-mail-go" type="submit">Send me the monthly email</button>
+      <p class="vp-mail-err" data-vps-err role="alert"></p>
+      <p class="vp-mail-fine"><span data-vps-consent-text>One short email a month from VenuePlay to this address. Unsubscribe any time from the link in every email.</span> <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
+    </form>
+    <div class="vp-mail-done" data-vps-done hidden>
+      <p class="vp-mail-h">You're on the list</p>
+      <p class="vp-mail-sub">Your first email lands early <span data-vps-month>next month</span>. Nobody will ring you.</p>
+    </div>
+  </div>
 </div>
+<script src="/app/vp-subscribe.js"></script>
 <script>
 (function(){
   /* SEND THEM BACK TO THE OFFER THEY CAME FROM, AT THE PRICE THEY WERE SHOWN. The offer page

@@ -571,6 +571,7 @@
 <script src="/app/vp-analytics.js"></script>
 <script src="/app/vp-pixel.js"></script>
 <link rel="stylesheet" href="/app/vp-footer.css">
+<link rel="stylesheet" href="/app/vp-subscribe.css">
 </head>
 <body>
 
@@ -1108,6 +1109,48 @@
   </div>
 </section>
 
+<!-- ===================== THE MONTHLY EMAIL (31 Oct 2026) =====================
+     For the venue that is not ready to talk to us yet: one email a month, nothing else asked but
+     the address (the venue is optional). Sits right after "Talk to us" as the softer choice, in this
+     page's own pieces; /app/vp-subscribe.js makes it work and /app/vp-subscribe.css lays it out.
+     Never an offer here: the same standard sign-up on every page that has it. -->
+<section class="sec sec-tight" id="monthly">
+  <div class="wrap">
+    <div class="vps-card">
+      <div>
+        <div class="label">Not ready to chat?</div>
+        <h2 class="vps-title">Get one email a month</h2>
+        <p class="vps-sub">New games, tips for a fuller room, and what other venues are doing. Nobody will ring you.</p>
+      </div>
+      <div>
+        <form class="vps-form" data-vps data-source="home" novalidate>
+          <div class="vps-fields">
+            <div class="field">
+              <label for="vps-email">Email</label>
+              <input id="vps-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required>
+            </div>
+            <div class="field">
+              <label for="vps-venue">Venue <span class="vps-opt">(optional)</span></label>
+              <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120">
+            </div>
+          </div>
+          <div class="vps-hp" aria-hidden="true"><label for="vps-website">Leave this empty</label><input id="vps-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <div class="vps-ts" data-vps-ts></div>
+          <button class="btn btn-primary" type="submit">Send me the monthly email</button>
+          <p class="form-err" data-vps-err role="alert"></p>
+          <p class="vps-consent"><span data-vps-consent-text>One short email a month from VenuePlay to this address. Unsubscribe any time from the link in every email.</span> <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
+        </form>
+        <div class="success vps-done" data-vps-done>
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>You're on the list</h3>
+          <p>Your first email lands early <span data-vps-month>next month</span>. Nobody will ring you.</p>
+          <p><a href="/see-a-night">While you wait, see how a night runs</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== FOOTER ===================== -->
 <footer>
   <div class="wrap foot">
@@ -1129,6 +1172,7 @@
 <!-- ===================== SCRIPT ===================== -->
 <!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
 <script src="/app/vp-trusted.js"></script>
+<script src="/app/vp-subscribe.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){

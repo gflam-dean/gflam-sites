@@ -3746,6 +3746,14 @@ def local_checks(which):
              'A phone told a closed night is open (or the TV sent to the ads for a lobby that has just opened), a '
              'kicked, paused or over-collected player let through by the one-trip join, or the join creeping back '
              'up the database calls that cap how many venues can play at once'),
+            # D110: the monthly email sign-up on the sales pages, for the venue "too scared to call us" (31 Oct 2026;
+            # migration 134), branch feature/vp-subscribers-31oct. The pages themselves: tools/subscribe-in-chrome.test.py.
+            ('D110. A monthly email sign-up keeps one row with its consent, lets a later unsubscribe win, and sends nothing until switched on',
+             'test-vp-subscribers.js',
+             'a sign-up keeps one lower-case row with the consent words, page, utm and state, never an address; the same address again is the same answer and no second email; bad addresses, the honeypot, the network and address limits and Turnstile refuse with nothing kept; an address on vp_unsubscribes that signs up again is back on with fresh consent for the monthly email only, its opt-out row kept, and a later unsubscribe wins again; an unreadable list keeps nothing; nothing is sent unless SUBSCRIBE_EMAILS is on, then one email with a signed one-click unsubscribe and no .dev link; before migration 134 the form is told not ready; HQ owner or accounts only, with states, weekly counts by page, matches never by a free mailbox, and an audited CSV; the monthly list leaves out anyone whose latest unsubscribe is not before their consent and live venue contacts, and throws when it cannot check; nothing calls Instantly', 100,
+             'An unsubscribe that stops counting once someone has signed up, a confirmation email sent '
+             'before Dean switched it on, the form used to flood an inbox or to ask who is on our list, or a '
+             'subscriber treated as a cold lead'),
             # D89: HQ > Prospects (Dean, 29 Oct 2026; migration 125), branch feature/prospects-tab.
             ('D89. HQ lists prospects apart from active venues, flags who to call, and asks for a phone at setup',
              'test-prospects-tab.js',
