@@ -403,6 +403,10 @@
   "checks": 24,
   "counted_by": "lines"
  },
+ "tools/test-early-bingo-restore.js": {
+  "checks": 8,
+  "counted_by": "lines"
+ },
  "tools/test-email-outcomes-recorded.js": {
   "checks": 10,
   "counted_by": "lines"

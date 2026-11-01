@@ -77,6 +77,16 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # 1 Nov 2026, live test night: "Allow early BINGO calls" showed ticked after a mid-game reload.
+    ('test-early-bingo-restore.js', 'venueplay/app/index.html',
+     '    window.addEventListener("pageshow", syncEarlyBoxes);\n', '',
+     'a box the browser restores after a reload shows early calls allowed when the game does not allow them'),
+    ('test-early-bingo-restore.js', 'venueplay/app/index.html',
+     ' if(G.status==="running" || G.status==="lobby") saveGame(); }', ' }',
+     'a tick or untick during a game is undone by a reload before the next ball'),
+    ('test-early-bingo-restore.js', 'venueplay/app/index.html',
+     '<input type="checkbox" id="allowEarlyLive" autocomplete="off" ', '<input type="checkbox" id="allowEarlyLive" ',
+     'the browser is free to restore the in-game early-calls box from before the reload'),
     # SETTING A WORKER SECRET BY NAME, 27 Oct 2026 (tools/set-worker-secret.py, run against a fake Cloudflare).
     ('set-worker-secret.test.py', 'tools/set-worker-secret.py',
      '    if worker not in LIVE:',
