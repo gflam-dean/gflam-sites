@@ -161,6 +161,7 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -544,6 +545,8 @@
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     if(m.t==="tv_here") return;                       // ignore our own presence pings
+    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
+    if(window.VPSting && VPSting.on){ try{ VPSting.forDraw(m, { line:"<i>IT\u2019S</i> RAFFLE <i>TIME</i>" }); }catch(e){} }
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
