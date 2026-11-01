@@ -443,6 +443,7 @@
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
 </style>
 <script src="/app/vp-oldtv.js"></script>
+<script src="/app/vp-tvapp.js"></script>   <!-- the Samsung and LG apps (&app=tizen|webos); does nothing anywhere else -->
 </head>
 <body>
 <div class="tv" id="tv">
@@ -640,6 +641,7 @@
 </div>
 
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
+<script src="/app/vp-supabase-oldtv.js"></script>   <!-- older TVs (Tizen 5.5/6, webOS 5/6): an ES2017 supabase-js when the one above cannot parse -->
 <script src="/app/vendor/qrcode-1.4.4.min.js"></script>
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -730,8 +732,11 @@
   /* INSIDE THE VENUEPLAY TV APP (Android TV / Google TV). The app adds "VenuePlayTV/<version>" to its
      WebView's user agent (ScreenActivity.java, setUserAgentString) and always opens the full
      /tv?venue=<slug> link itself, so it never needs the "get the app" line or the "save this page"
-     note: it already remembers its venue. */
-  var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || ""); }catch(e){ return false; } })();
+     note: it already remembers its venue.
+     The Samsung (Tizen) and LG (webOS) apps cannot change the user agent, so they say so in the
+     address instead (&app=tizen|webos&appv=<version>) and /app/vp-tvapp.js sets window.VP_TV_APP
+     (2 Nov 2026). */
+  var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || "") || !!(window.VP_TV_APP && window.VP_TV_APP.platform); }catch(e){ return false; } })();
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();

@@ -289,7 +289,17 @@ export default {
     // Safe with no env var set: venueplay.com.au origins are reflected, anything else gets the
     // canonical site (which the browser will refuse), never a wildcard. ALLOW_ORIGIN is now
     // purely additive, for a staging or preview host.
-    const origin = originOk ? reqOrigin : (allowList[0] || CANONICAL);
+    /* THE SAMSUNG AND LG TV APPS (2 Nov 2026). A TV web app runs from the TV's own storage, so
+       its requests carry Origin: null (or file://, app://), and a browser refuses the canonical
+       answer above. The app asks only the two read-only screen set-up lookups (no cookies, no
+       tokens, rate limited, the same answers tv.html already shows a stranger who types a code),
+       so those two answer any origin. Everything else keeps the venueplay.com.au reflection.
+       Not done with ALLOW_ORIGIN: "null" there would open every game route to any sandboxed page. */
+    const corsUrl = new URL(request.url);
+    const corsPath = corsUrl.pathname.replace(/\/+$/, '');
+    const publicLookup = (request.method === 'GET' || request.method === 'OPTIONS') &&
+      (corsPath === '/venues/like' || (corsPath === '/venue' && corsUrl.searchParams.get('probe') === '1'));
+    const origin = publicLookup && !originOk ? '*' : (originOk ? reqOrigin : (allowList[0] || CANONICAL));
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
