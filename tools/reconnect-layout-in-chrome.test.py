@@ -51,7 +51,7 @@ def take_lock(tool='reconnect-layout-in-chrome'):
             return False
         if not said:
             print('  heavy lock held by pid %s ("%s"), waiting' % (pid, text[:80])); said = True
-        time.sleep(5)
+        time.sleep(0.5)
 
 RECT = '(function(e){if(!e)return null;var b=e.getBoundingClientRect(),s=getComputedStyle(e);return {l:Math.round(b.left),t:Math.round(b.top),r:Math.round(b.right),b:Math.round(b.bottom),w:Math.round(b.width),h:Math.round(b.height),vis:s.display!=="none"&&s.visibility!=="hidden"&&!e.hidden&&b.width>0&&b.height>0};})'
 def rect(r, sid, sel):

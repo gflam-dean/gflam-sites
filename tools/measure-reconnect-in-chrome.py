@@ -68,7 +68,7 @@ def take_lock(tool='reconnect-in-chrome'):
             print('  heavy lock held by pid %s ("%s"); gave up waiting' % (pid, text[:80])); return False
         if not said:
             print('  heavy lock held by pid %s ("%s"), waiting' % (pid, text[:80])); said = True
-        time.sleep(5)
+        time.sleep(0.5)
 
 # ------------------------------------------------------------------ the phone's network
 class Net(object):
