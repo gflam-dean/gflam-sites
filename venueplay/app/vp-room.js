@@ -12,7 +12,7 @@
  *
  *                  never open   was open
  *   tv, host          8s          6s      a game is running: less than one bingo ball
- *   phone             8s         15s      a phone walking to the bar loses signal; it
+ *   phone             8s         30s      a phone walking to the bar loses signal; it
  *                                         comes back to the room rather than move a venue
  *   answers (vpa-)  2.5s          6s      the HTTP road is right there and nothing moves
  *
@@ -44,7 +44,9 @@
   "use strict";
   var MAX_QUEUE = 50;
   var BACKOFF_MIN = 1000, BACKOFF_MAX = 30000;
-  var BUDGETS = { tv: [8000, 6000], host: [8000, 6000], hq: [8000, 6000], phone: [8000, 15000] };
+  var BUDGETS = { tv: [8000, 6000], host: [8000, 6000], hq: [8000, 6000], phone: [8000, 30000] };
+  var ROOM_BACKOFF_MAX = 8000;   // a venue's room: once it is back, the page is back within seconds
+  var CHECK_AFTER_HIDDEN_MS = 20000, CHECK_MS = 4000;
   var ANSWERS_BUDGET = [2500, 6000];
   var MIN_TRIES = 2;             // never give up on a single failed look
   var SLEPT_MS = 5000;           // a timer this late was frozen: the page was asleep, not the room
@@ -75,6 +77,9 @@
   }
 
   function now() { return Date.now(); }
+  function offline() {
+    try { return typeof navigator !== "undefined" && !!navigator && navigator.onLine === false; } catch (e) { return false; }
+  }
 
   /* WHO IS ON THE OLD ROAD. Only bingo talks on a venue's main channel by the room's rules,
      but musical and trivia consoles and phones share that channel NAME on Supabase (their
@@ -116,7 +121,9 @@
     var needsHandover = venueRoom && _by === "default";
     var st = { state: "checking", ws: null, queue: [], backoff: BACKOFF_MIN, closed: false, timer: null,
                downSince: now(), everOpen: false, tries: 0, due: 0, why: "",
-               pingT: null, misses: 0, pongSeen: false, tellT: null, reT: null };
+               pingT: null, misses: 0, pongSeen: false, tellT: null, tellI: -1, reT: null,
+               lastIn: 0, hiddenAt: 0, checkT: null };
+    var backoffMax = venueRoom ? ROOM_BACKOFF_MAX : BACKOFF_MAX;
     function setState(s) { st.state = s; if (opts.onState) { try { opts.onState(s); } catch (e) {} } }
 
     // Ask over HTTPS first: a WebSocket cannot tell a 503 from a dead network, and the
@@ -183,8 +190,11 @@
        the rest of the venue needs to move. 503, 404 and 400 are answers, not failures. */
     function tell(i) {
       clearTimeout(st.tellT);
+      st.tellI = -1;
       if (i >= TELL_RETRY.length) return;
+      st.tellI = i;
       st.tellT = setTimeout(function () {
+        st.tellI = -1;
         post(api + "/room/handover?room=" + encodeURIComponent(roomName))
           .then(function (r) { if (!r || (r.status >= 500 && r.status !== 503)) tell(i + 1); })
           .catch(function () { tell(i + 1); });
@@ -234,6 +244,7 @@
       ws.onmessage = function (ev) {
         if (st.ws !== ws) return;
         st.misses = 0;                                // anything at all is proof of life
+        st.lastIn = now();
         if (ev.data === "pong") { st.pongSeen = true; return; }
         var obj;
         try { obj = JSON.parse(ev.data); } catch (e) { return; }
@@ -280,6 +291,13 @@
       if (st.closed) return;
       var t = now();
       if (!st.downSince) { st.downSince = t; st.tries = 0; }
+      /* OFFLINE IS NOT A BROKEN ROOM. A phone in flight mode, or one that has lost all signal,
+         cannot reach Supabase either, so leaving the room gains nothing and leaving ALONE is the
+         one thing that strands it: on 1 Nov 2026 Dean's phone went to flight mode for 25 seconds
+         mid-game, gave the room up after six, came back on Supabase by itself, and sat on
+         "waiting for the host" while the console carried on in the room. Time with no network at
+         all is not spent from the budget; the browser's online event brings it straight back. */
+      if (offline()) { st.downSince = t; st.tries = 0; }
       var b2 = st.everOpen ? budget[1] : budget[0];
       /* THE DECISION THAT WAS MISSING. Trying for ever is not "safe by default", it is a
          screen that says Reconnecting all night while the host wonders why the wall is
@@ -299,7 +317,7 @@
         if (now() - st.due > SLEPT_MS) { st.downSince = now(); st.tries = 0; }
         probe();
       }, wait);
-      st.backoff = Math.min(BACKOFF_MAX, st.backoff * 2);
+      st.backoff = Math.min(backoffMax, st.backoff * 2);
     }
 
     /* THE WINDOW IS SEEN AGAIN, THE PHONE IS UNLOCKED, THE WIFI IS BACK: look now, with a fresh
@@ -311,13 +329,64 @@
       st.downSince = now(); st.tries = 0; st.backoff = BACKOFF_MIN;
       probe();
     }
+    /* A SOCKET THAT LIVED THROUGH "NO NETWORK" IS NOT TO BE TRUSTED. A phone in flight mode often
+       never hears its socket close: the browser still calls it open, the room still counts it,
+       and nothing more arrives down it. So when the network comes back, an open socket is
+       replaced at once, and the page announces itself again on the new one (onState "open"),
+       which is what makes the host send it the game as it stands. */
+    function recycle() {
+      var ws = st.ws;
+      if (st.closed || !ws) return;
+      st.ws = null;
+      clearTimeout(st.pingT); clearTimeout(st.checkT);
+      try { ws.close(); } catch (e) {}
+      st.downSince = now(); st.tries = 0; st.backoff = BACKOFF_MIN;
+      setState("reconnecting");
+      clearTimeout(st.timer); st.timer = null;
+      probe();
+    }
+    function tellNow(i) {
+      st.tellI = -1;
+      post(api + "/room/handover?room=" + encodeURIComponent(roomName))
+        .then(function (r) { if (!r || (r.status >= 500 && r.status !== 503)) tell(i + 1); })
+        .catch(function () { tell(i + 1); });
+    }
+    function backOnline() {
+      if (st.closed) {
+        /* A handover that could not be told while the network was down is told now. */
+        if (st.tellI >= 0) { var i = st.tellI; clearTimeout(st.tellT); tellNow(i); }
+        return;
+      }
+      if (st.ws && (st.ws.readyState === 1 || st.ws.readyState === 0)) { recycle(); return; }
+      wake();
+    }
+    /* BACK INTO VIEW AFTER A WHILE: ask the room if it is still there. A ping that gets nothing at
+       all in four seconds means the socket died while the page was away, and it is replaced now
+       rather than after two missed heartbeats (most of a minute of balls). */
+    function checkAlive() {
+      var ws = st.ws;
+      if (st.closed || !ws || ws.readyState !== 1 || !st.pongSeen) return;
+      var asked = now();
+      try { ws.send("ping"); } catch (e) { recycle(); return; }
+      clearTimeout(st.checkT);
+      st.checkT = setTimeout(function () { if (st.ws === ws && !(st.lastIn >= asked)) recycle(); }, CHECK_MS);
+    }
+    function onVisibility() {
+      var hidden = false;
+      try { hidden = document.visibilityState === "hidden"; } catch (e) {}
+      if (hidden) { st.hiddenAt = now(); return; }
+      var away = st.hiddenAt ? now() - st.hiddenAt : 0;
+      st.hiddenAt = 0;
+      if (away >= CHECK_AFTER_HIDDEN_MS) checkAlive();
+      wake();
+    }
     try {
       if (typeof document !== "undefined" && document && typeof document.addEventListener === "function") {
-        document.addEventListener("visibilitychange", wake);
+        document.addEventListener("visibilitychange", onVisibility);
       }
       if (typeof window !== "undefined" && window && typeof window.addEventListener === "function") {
         window.addEventListener("pageshow", wake);
-        window.addEventListener("online", wake);
+        window.addEventListener("online", backOnline);
         window.addEventListener("focus", wake);
       }
     } catch (e) {}
@@ -333,7 +402,7 @@
 
     function close() {
       st.closed = true;
-      clearTimeout(st.timer); clearTimeout(st.pingT); clearTimeout(st.tellT); clearTimeout(st.reT);
+      clearTimeout(st.timer); clearTimeout(st.pingT); clearTimeout(st.tellT); clearTimeout(st.reT); clearTimeout(st.checkT);
       if (st.ws) { var w = st.ws; st.ws = null; try { w.close(1000, "page"); } catch (e) {} }
       setState("closed");
     }

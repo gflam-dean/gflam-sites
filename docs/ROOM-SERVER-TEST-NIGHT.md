@@ -46,8 +46,10 @@ Then the same night in **caller mode** (real balls, 1 to 90 grid): tap 10 number
 
 ## 2. The drops (still Test Alpha, game running)
 
-- **Phone loses signal**: airplane mode on phone 2 for 10 seconds, then off. It comes back on its
-  ticket and gets the next ball. Presence still shows tv 1 and host 1 (the venue did NOT move).
+- **Flight mode (the 1 Nov fault)**: flight mode on an iPhone for 25 seconds while you call 8 or 9
+  balls, then off. Within a couple of seconds, with no reload, the phone shows its ticket with every
+  missed ball marked and gets the next one. Presence still shows tv 1 and host 1 (the venue did NOT
+  move), and the phone says `room`. Then once more for a full minute.
 - **Phone locked**: lock phone 1 for two minutes, unlock. Same result.
 - **Console reload**: reload the console tab mid-game. The game comes back, the next ball reaches
   the TV and both phones.

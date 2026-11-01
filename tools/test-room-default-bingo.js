@@ -56,7 +56,8 @@ ServerSocket.prototype.deserializeAttachment = function () { return this.att ? J
 ServerSocket.prototype.send = function (s) {
   if (this.gone) throw new Error('gone');
   var b = this.peer; if (!b) return;
-  fSetTimeout(function () { if (b.readyState === 1 && b.onmessage) b.onmessage({ data: s }); }, 1);
+  if (b.dead) return;                                   // half open: the room thinks it sent it
+  fSetTimeout(function () { if (b.readyState === 1 && !b.dead && b.onmessage) b.onmessage({ data: s }); }, 1);
 };
 ServerSocket.prototype.close = function (code, why) {
   if (this.gone) return; this.gone = true;
@@ -70,9 +71,24 @@ var ROOMSRC = readFile('venueplay-backend/worker/venueplay-room.js');
 eval(ROOMSRC.replace(/^export \{[\s\S]*?\};?\s*$/m, '').replace(/^export /mg, '')
             .replace(/^const /mg, 'var ').replace(/^class VenueRoom /m, 'var VenueRoom = class VenueRoom '));
 
-var ENV, ROOMS, STORES, WORKER_OLD;
+var ENV, ROOMS, STORES, WORKER_OLD, PAGES = [];
+/* EVERY SCENARIO IS ITS OWN NIGHT. The rig keeps each page's objects alive, and every scenario's
+   pages meet on the same venue code, so a console left running from scenario D (on Supabase, saying
+   host_here every 30 seconds) was heard by scenario J's console as a real peer on the old road and
+   the room was handed over. Correct behaviour, wrong night: the pages of a finished scenario are
+   switched off, their timers cleared, before the next one starts. */
+function endPages() {
+  PAGES.forEach(function (sb) {
+    sb.setTimeout = sb.setInterval = function () { return 0; };
+    sb.fetch = function () { return new Promise(function () {}); };
+    sb.WebSocket = function () { return { readyState: 0, send: function () {}, close: function () {} }; };
+  });
+  PAGES = [];
+  TIMERS = [];
+}
 function freshWorld(opts) {
   opts = opts || {};
+  endPages();
   ROOMS = {}; STORES = {}; WORKER_OLD = !!opts.oldWorker;
   BUS = {}; QUEUE = []; LOG = [];
   ENV = { ROOM_OFF: opts.off ? '1' : '' };
@@ -122,6 +138,7 @@ function BrowserWS(url) {
 }
 BrowserWS.prototype.send = function (s) {
   if (this.readyState !== 1) throw new Error('not open');
+  if (this.dead) return;                                // half open: the browser thinks it sent it
   var srv = this.server, room = this.room;
   if (s === 'ping') { srv.send('pong'); return; }        // Cloudflare's auto-response
   fSetTimeout(function () { if (!srv.gone) room.obj.webSocketMessage(srv, s); }, 1);
@@ -143,11 +160,24 @@ var SOCKETS = [];
 var _baseSandbox = baseSandbox;
 baseSandbox = function (dom, who) {
   var sb = _baseSandbox(dom, who);
-  sb.fetch = workerFetch;
-  sb.WebSocket = function (u) { var w = new BrowserWS(u); w.who = who; SOCKETS.push(w); return w; };
+  PAGES.push(sb);
+  /* Each page has its own network: flight mode is one phone's, not the venue's. */
+  sb.navigator = { onLine: true };
+  sb.fetch = function (u, i) { if (sb.navigator.onLine === false) return Promise.reject(new TypeError('offline')); return workerFetch(u, i); };
+  sb.WebSocket = function (u) {
+    if (sb.navigator.onLine === false) {
+      var dud = { url: u, readyState: 0, send: function () { throw new Error('not open'); }, close: function () { this.readyState = 3; } };
+      fSetTimeout(function () { dud.readyState = 3; if (dud.onclose) dud.onclose({ code: 1006 }); }, 5);
+      return dud;
+    }
+    var w = new BrowserWS(u); w.who = who; SOCKETS.push(w); return w;
+  };
   sb.Date = Date;
   if (NEXT_ROOM_SRC) {
-    var proxy = new Proxy(sb, { has: function () { return true; }, get: function (t, k) { if (k === Symbol.unscopables) return undefined; if (k in t) return t[k]; return globalThis[k]; }, set: function (t, k, v) { t[k] = v; return true; } });
+    /* The room client keeps its budgets by Date.now(). It gets the rig's VIRTUAL clock, or forty
+       seconds of flight mode would pass in two real ones and no budget could ever run out. */
+    var roomClock = { now: function () { return 1700000000000 + NOW; } };
+    var proxy = new Proxy(sb, { has: function () { return true; }, get: function (t, k) { if (k === Symbol.unscopables) return undefined; if (k === 'Date') return roomClock; if (k in t) return t[k]; return globalThis[k]; }, set: function (t, k, v) { t[k] = v; return true; } });
     (new Function('__sb', 'with(__sb){\n' + NEXT_ROOM_SRC + '\n}'))(proxy);
     sb.VPRoom = dom.window.VPRoom;     // in a browser a window property is a global; the pages call VPRoom bare
   }
@@ -245,6 +275,51 @@ async function startGame(host, ph) {
   check('and did not move the venue: the console is still in the room', socketsOf('host').length === 1);
   b1 = call(host); await advance(200);
   check('the next ball reaches it, on the same ticket', heardBall(ann, b1) && dealt(ann));
+
+  print('\nJ. FLIGHT MODE MID-GAME, THE WAY AN iPHONE DOES IT (1 Nov 2026, Dean, Test Alpha)');
+  /* The phone's socket is never closed: the browser still calls it open and the room still counts
+     it, and nothing passes either way. Nine balls are called over 25 seconds. Then flight mode
+     comes off. Live, on the opt-in build, the phone came back on Supabase alone and sat on
+     "waiting for the host" until it was reloaded. */
+  function goOffline(ph) { ph.sb.navigator.onLine = false; (ph.dom.window._on.offline || []).forEach(function (f) { f(); }); }
+  function goOnline(ph) { ph.sb.navigator.onLine = true; (ph.dom.window._on.online || []).forEach(function (f) { f(); }); }
+  var away = [];
+  goOffline(ann);
+  socketsOf('phone:Ann').forEach(function (w) { w.dead = true; });
+  for (var k = 0; k < 9; k++) { away.push(call(host)); await advance(2800); }
+  check('control: none of the nine balls reached the phone while it was away',
+        away.every(function (n) { return !heardBall(ann, n); }), ann.P.called.slice(-3));
+  goOnline(ann);
+  await advance(3000);
+  check('back online, it is in the room on a NEW socket, without a reload',
+        socketsOf('phone:Ann').filter(function (w) { return !w.dead; }).length === 1 && road(ann) === 'room');
+  check('and shows the game with ALL NINE balls it missed marked',
+        away.every(function (n) { return heardBall(ann, n); }) && dealt(ann) && viewOf(ann) === 'vCard',
+        { view: viewOf(ann), missing: away.filter(function (n) { return !heardBall(ann, n); }) });
+  b1 = call(host); await advance(300);
+  check('and the next ball after that', heardBall(ann, b1));
+  check('the venue never moved: the console is still in the room', socketsOf('host').length === 1 && road(host) === 'room');
+
+  print('\nK. FLIGHT MODE THAT DOES CLOSE THE SOCKET, FOR LONGER THAN ANY BUDGET');
+  goOffline(ann);
+  socketsOf('phone:Ann').forEach(dropSocket);
+  away = [];
+  for (var k2 = 0; k2 < 8; k2++) { away.push(call(host)); await advance(5000); }   // forty seconds
+  check('forty seconds with no network and the phone has NOT given the room up', road(ann) === 'room' && socketsOf('host').length === 1,
+        [road(ann), socketsOf('host').length]);
+  goOnline(ann);
+  await advance(3000);
+  check('back online, it is in the room again and caught up on all eight', socketsOf('phone:Ann').length === 1 &&
+        away.every(function (n) { return heardBall(ann, n); }) && viewOf(ann) === 'vCard',
+        { sockets: socketsOf('phone:Ann').length, missing: away.filter(function (n) { return !heardBall(ann, n); }) });
+
+  print('\nL. A PHONE THAT SCANS THE TV\'S QR MID-GAME (no flag in the link)');
+  var cat = bootPhone('Cat'); await advance(500);
+  check('the QR link (?room=CODE, nothing else) puts it in the room with everyone', socketsOf('phone:Cat').length === 1 && road(cat) === 'room', road(cat));
+  cat.$('nameIn').value = 'Cat'; cat.join(); await advance(400);
+  check('its join reaches the console in the room', !!host.G.players[cat.P.pid], Object.keys(host.G.players).length);
+  b1 = call(host); await advance(300);
+  check('and it hears the next ball', heardBall(cat, b1), cat.P.called.slice(-2));
 
   print('\nF. THE CONSOLE IS RELOADED MID-GAME');
   var saved = host.dom.localStorage._s;

@@ -684,7 +684,7 @@
   "counted_by": "lines"
  },
  "tools/test-room-default-bingo.js": {
-  "checks": 32,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-router-heals-after-a-blip.js": {
@@ -988,7 +988,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-fallback.test.js": {
-  "checks": 62,
+  "checks": 67,
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-optin.test.js": {

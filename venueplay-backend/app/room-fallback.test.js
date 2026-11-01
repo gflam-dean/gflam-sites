@@ -287,6 +287,46 @@ serverPongs = false;                 // an OLDER Worker: it has never answered a
 r = connect(V, "tv"); tick(10 * 60000);
 pass("a Worker that never answers pings is not hung up on every minute", sockets.length === 1 && r.state() === "open");
 
+print("\nBACK IN VIEW AFTER HALF A MINUTE: IS THE SOCKET STILL THERE?");
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(30000);                // a pong has been heard
+document.visibilityState = "hidden"; fire("visibilitychange");
+serverPongs = false;                                 // it died while the phone was in a pocket
+tick(31000);
+document.visibilityState = "visible"; fire("visibilitychange");
+tick(4500);
+pass("a socket that does not answer a ping within four seconds of the phone coming back is replaced",
+     sockets.length === 2 && r.state() === "open", sockets.length + " sockets");
+
+print("\nFLIGHT MODE: NO NETWORK IS NOT A BROKEN ROOM");
+V = setup(function () { return ok200(); });
+globalThis.navigator = { onLine: true };
+r = connect(V, "tv"); tick(100);
+globalThis.navigator.onLine = false;
+fetchPlan = function () { return "throw"; };
+sockets[0].die(1006);
+tick(60000);
+pass("a full minute with no network and even a TV has not given the room up", unavailReasons.length === 0 && handovers() === 0,
+     unavailReasons.join(","));
+globalThis.navigator.onLine = true;
+fetchPlan = function () { return ok200(); };
+fire("online"); tick(200);
+pass("and the moment the network is back it is in the room again", r.state() === "open");
+V = setup(function () { return ok200(); });
+globalThis.navigator = { onLine: true };
+r = connect(V, "phone"); tick(100);
+var firstSock = sockets[0];
+globalThis.navigator.onLine = false; firstSock.readyState = 1;   // the browser still calls it open
+globalThis.navigator.onLine = true; fire("online"); tick(200);
+pass("a socket that lived through no network is replaced the moment it comes back", sockets.length === 2 && sockets[1].readyState === 1 && firstSock.readyState === 3);
+V = setup(function () { return "throw"; }, { postPlan: function () { return "throw"; } });
+globalThis.navigator = { onLine: true };
+r = connect(V, "tv"); tick(9000);
+var before = handovers();
+fire("online"); tick(10);
+pass("a handover that could not be told is told the moment the network is back, not at the next retry", handovers() === before + 1, before + " -> " + handovers());
+delete globalThis.navigator;
+
 print("\nA SOCKET THAT HANGS (a captive portal, or wifi dropping mid handshake)");
 V = setup(function () { return ok200(); });
 FakeWS.hangNext = true;
