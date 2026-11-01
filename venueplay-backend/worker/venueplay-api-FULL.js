@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 13:09 · 2b1a8daf';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 13:12 · f49a0f1f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5807,7 +5807,7 @@ async function vpaHandlePlayerRemove(request, env, json) {
           + '<strong>Please delete them from that file and from anything you loaded it into</strong> (your email or SMS tool, a spreadsheet, a CRM), and do not contact them again. '
           + 'The Spam Act gives a business five working days to act on a request like this.</p>'
           + '<p>Nothing else is needed, and you do not need to reply. If you have a question, just answer this email.</p>'
-          + '<p>VenuePlay<br>hello@venueplay.com.au</p>' + vpaSupportPhoneHtml() + '</div>';
+          + '<p>venueplay<br>hello@venueplay.com.au</p>' + vpaSupportPhoneHtml() + '</div>';
         emailed = 'sent';
         for (const addr of recipients) {
           try { if (!(await vpaSendEmail(env, addr, 'Please remove one person from your ' + v.venue_name + ' players list',
