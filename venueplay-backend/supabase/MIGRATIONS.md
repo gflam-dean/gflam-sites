@@ -530,3 +530,16 @@ they get the monthly email only while consent_at is later than their latest opt-
 definer with its own search_path. Either order with the billing Worker: until it is run, POST /subscribe answers not ready and
 keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
 NOT RUN. Rollback: in the file.
+
+`venueplay-138-screen-devices.sql` (Dean, 1 Nov 2026: "we do not know what TVs our venues use"): one new table
+`vp_screen_devices` (venue_id, device_id, kind, first_seen_at, last_seen_at; primary key on the first two) and one new
+definer function `vp_screen_poll_kind(p_slug, p_code, p_version, p_kind, p_device)`, which returns exactly what
+`vp_screen_poll` (migration 72) returns and keeps the TV's coarse type code (from `venueplay/app/vp-tvtype.js`, never the
+user agent) and its random device id in the same call. The TV sends it once per page load, never on the same poll as the
+slide tally of 135. Bounds: code and id shapes checked, at most 20 recent screens a venue, rows unseen for 180 days
+cleared, its own exception block. anon nothing; authenticated SELECT with one policy, `vp_is_platform_admin()`, so only
+HQ reads it; the function is service role only; a self-check refuses to commit otherwise. Any order with the game Worker
+and tv.html: without it the Worker gets a 404, falls back to `vp_screen_poll` in the same request and stops asking, and HQ
+says TV types start when 138 is run. After running, dump RLS-BASELINE.json (one table, one policy, one function).
+NUMBER: 136 was the highest on any branch on 1 Nov; 137 was left for feature/lowercase-legal-2nov. Renumber if it clashes.
+Branch `feature/tv-type-2nov`. NOT RUN. Rollback: in the file.
