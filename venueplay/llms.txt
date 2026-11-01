@@ -43,6 +43,7 @@ contract and no setup fee.
 
 - Home: https://venueplay.com.au
 - How a night runs: https://venueplay.com.au/see-a-night
+- 60-second trivia (the drink-coaster QR, five questions, no sign-up; venueplay.com.au/here is the short address): https://venueplay.com.au/live-here-now
 - Pricing: https://venueplay.com.au/#offer
 - Contact: https://venueplay.com.au/#contact
 - Support (venues): support@venueplay.com.au; billing: accounts@venueplay.com.au; sales: sales@venueplay.com.au. The support phone is on the help page.

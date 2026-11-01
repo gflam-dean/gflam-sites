@@ -2,8 +2,9 @@
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A0A0B">
 <title>Page not found | venueplay</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -12,7 +13,7 @@
 <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!--
-  A REAL NOT-FOUND PAGE (14 Oct 2026 audit).
+  A REAL NOT-FOUND PAGE (14 Oct 2026 audit; redesigned for phones 1 Nov 2026).
 
   Without a 404.html at the root, Cloudflare Pages treats the site as a single-page app and
   answers ANY unknown address with the homepage and a 200. So a mistyped link looked like the
@@ -22,39 +23,177 @@
 
   Every link and asset here is absolute (/...), because this page is served AT the missing
   address, which can be several folders deep.
+
+  WHO LANDS HERE (1 Nov 2026, Dean: "needs redoing to make it prettier on mobile"). Mostly a
+  phone that scanned an old or wrong QR code, or typed an address off a sign. So the first thing
+  on the screen is the way into a game: the code from the TV, typed right here, which goes to
+  /play?code=XXXXXX (a plain form, so it works with no script at all). If the missing address
+  itself ends in something shaped like a game code (/ABC234, /play/abc234), it is filled in
+  already. Then the coaster trivia, the homepage and See a night. No phone number (public page).
+  Tested in Chrome at 320, 375, 390 and 430 wide, with a real 404 status, by
+  tools/not-found-in-chrome.test.py.
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@800&family=Manrope:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
-  :root{--bg:#0B0A0F;--card:#15131C;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;
-       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px 16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;padding:32px 26px}
-  .brand{display:flex;align-items:center;gap:9px;margin-bottom:22px;color:var(--text);text-decoration:none}
-  .brand span{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.01em}
-  h1{font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:24px;line-height:1.25;margin:0 0 10px}
-  p{margin:0 0 14px;color:var(--muted)}
-  .go{display:flex;flex-direction:column;gap:10px;margin-top:22px}
-  .go a{display:block;padding:13px 16px;border-radius:10px;text-decoration:none;font-weight:700;text-align:center}
-  .go a.main{background:var(--pink);color:#fff}
-  .go a.alt{border:1px solid var(--line);color:var(--text)}
-  .go a.alt:hover{border-color:rgba(255,31,142,.55)}
-  .foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
-  .foot a{color:var(--text)}
+  :root{--ink:#0A0A0B;--ink-2:#121214;--ink-3:#17171B;--pink:#FF1F8E;--pink-deep:#C70F69;--muted:#9A9AA4;
+    --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.14);--glow:rgba(255,31,142,.55)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:clip;-webkit-text-size-adjust:100%}
+  body{background:radial-gradient(560px 420px at 92% 4%, rgba(255,31,142,.18), transparent 62%),
+    radial-gradient(480px 360px at -12% 100%, rgba(255,31,142,.08), transparent 70%), var(--ink);background-color:var(--ink);
+    color:#fff;font:16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  [hidden]{display:none!important}
+  .shell{width:100%;max-width:540px;margin:0 auto;padding:0 22px}
+  header{padding-top:env(safe-area-inset-top)}
+  .nav{height:64px;display:flex;align-items:center}
+  .nav a{display:flex;color:#fff}
+  main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;padding-top:20px;padding-bottom:24px}
+
+  /* ---------- THE TOP: a big neon triangle, gone a little off course ---------- */
+  .hero{position:relative}
+  /* The neon triangle sits up in the top right, beside the logo and the 404 line and clear of the
+     headline: it costs no height, so the way into a game stays on the first screen. */
+  .hero h1,.hero p{position:relative}
+  .neon{position:absolute;right:0;top:-84px;width:86px;height:99px;transform:rotate(-12deg);overflow:visible;pointer-events:none;opacity:.9;
+    filter:drop-shadow(0 0 10px rgba(255,31,142,.85)) drop-shadow(0 0 26px rgba(255,31,142,.45));animation:flicker 5s linear infinite}
+  @keyframes flicker{0%,91%,95%,100%{opacity:1}92%,94%{opacity:.55}}
+  .eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
+    display:flex;align-items:center;gap:12px}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--pink)}
+  h1{font-family:Anton,Impact,'Arial Narrow',sans-serif;font-weight:400;text-transform:uppercase;line-height:.93;letter-spacing:.005em;
+    font-size:clamp(46px,14.2vw,72px);margin-top:14px}
+  h1 .accent{color:var(--pink)}
+  .lede{margin-top:16px;color:#D8D8DD;font-size:17px;font-weight:500;max-width:34ch}
+
+  /* ---------- JOINING A GAME: first, because that is who scanned a code ---------- */
+  .join{margin-top:24px;padding:18px 18px 18px;border-radius:22px;
+    background:linear-gradient(160deg,rgba(255,31,142,.14),rgba(255,31,142,.03) 62%),var(--ink-2);border:1px solid rgba(255,31,142,.3)}
+  .join h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.015em;line-height:1.2}
+  .join p{margin-top:4px;color:#C9C9D0;font-size:15px}
+  .row{display:flex;gap:10px;margin-top:14px}
+  .row input{flex:1;min-width:0;height:58px;border-radius:16px;border:2px solid var(--line-2);background:#0A0A0B;color:#fff;
+    font-family:'JetBrains Mono',ui-monospace,monospace;font-size:24px;letter-spacing:.24em;text-transform:uppercase;text-align:center;padding:0 8px;outline:none}
+  .row input::placeholder{color:#4A4A52;letter-spacing:.24em}
+  .row input:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(255,31,142,.18)}
+  .row button{flex:none;height:58px;padding:0 22px;border:0;border-radius:16px;background:var(--pink);color:#0A0A0B;cursor:pointer;
+    font-family:Manrope,system-ui,sans-serif;font-weight:700;font-size:18px;box-shadow:0 10px 26px -8px rgba(255,31,142,.65);
+    -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .row button:active{background:var(--pink-deep)}
+  .found{margin-top:10px;font-size:14px;color:#FF8AC4;font-weight:600}
+
+  /* ---------- THE OTHER WAYS BACK ---------- */
+  .ways{margin-top:12px;display:grid;gap:10px}
+  .way{display:flex;align-items:center;gap:14px;min-height:66px;padding:12px 16px 12px 12px;border-radius:18px;background:var(--ink-2);
+    border:1px solid var(--line-2);-webkit-tap-highlight-color:transparent}
+  .way:active{border-color:var(--pink)}
+  .way .ico{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,31,142,.12);color:var(--pink)}
+  .way .ico svg{display:block}
+  .way .tx{flex:1;min-width:0}
+  .way b{display:block;font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.25}
+  .way small{display:block;color:var(--muted);font-size:13.5px;line-height:1.35;margin-top:2px}
+  .way .go{flex:none;color:#6E6E78}
+
+  footer{border-top:1px solid var(--line);padding:20px 0 calc(24px + env(safe-area-inset-bottom))}
+  .foot{font-size:14px;color:var(--muted);text-align:center}
+  .foot a{color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,31,142,.6);overflow-wrap:anywhere}
+
+  @media(max-width:360px){
+    .shell{padding:0 16px}
+    .neon{width:66px;height:76px;top:-74px}
+    .lede{font-size:16px}
+    .join{padding:18px 14px 16px;margin-top:22px}
+    .row input{font-size:21px;letter-spacing:.18em}
+    .row button{padding:0 16px}
+    .way{min-height:62px}
+  }
+  @media(min-height:900px){ .join{margin-top:34px} }
+  @media(prefers-reduced-motion:reduce){ *{animation:none!important} }
 </style>
 </head>
 <body>
-<main class="card">
-  <a class="brand" href="/">
-    <span><svg class="vp-wm" height="17.8" width="88.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
-  </a>
-  <h1>We could not find that page</h1>
-  <p>The address may be mistyped, or the page has moved.</p>
-  <div class="go">
-    <a class="main" href="/play">Joining a game? Enter the code</a>
-    <a class="alt" href="/">Go to the venueplay homepage</a>
-    <a class="alt" href="/see-a-night">See how a night runs</a>
+<header>
+  <div class="shell nav">
+    <a href="/" aria-label="venueplay home"><svg class="vp-wm" height="23" width="114.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></a>
   </div>
-  <p class="foot">Stuck? Email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a> and we will sort it out.</p>
+</header>
+
+<main class="shell">
+  <div class="hero">
+    <svg class="neon" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FF1F8E" stroke-width="1.7" stroke-linejoin="round"/><path d="M2.6 3.4 L23.4 15 L2.6 26.6 Z" stroke="#FFD1E8" stroke-width=".55" stroke-linejoin="round"/></svg>
+    <p class="eyebrow">404 &middot; Page not found</p>
+    <h1>That page is not <span class="accent">on tonight.</span></h1>
+    <p class="lede">The link may be wrong, or the page has moved. Here is the quickest way back.</p>
+  </div>
+
+  <form class="join" id="join" action="/play" method="get" autocomplete="off">
+    <h2><label for="code">Joining a game?</label></h2>
+    <p>Type the code from the TV screen.</p>
+    <div class="row">
+      <input id="code" name="code" inputmode="text" placeholder="ABC234" autocapitalize="characters" autocorrect="off" spellcheck="false">
+      <button type="submit" id="go">Join</button>
+    </div>
+    <p class="found" id="found" hidden></p>
+  </form>
+
+  <nav class="ways" aria-label="Other ways back">
+    <a class="way" href="/live-here-now">
+      <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.3-2.7 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="currentColor"/></svg></span>
+      <span class="tx"><b>Play 60 seconds of trivia</b><small>Five quick questions while you wait</small></span>
+      <svg class="go" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="way" href="/">
+      <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4.5V15h-5v5.5H5a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+      <span class="tx"><b>The venueplay homepage</b><small>Live games for pubs and clubs</small></span>
+      <svg class="go" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="way" href="/see-a-night">
+      <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 8.6v5l4.2-2.5z" fill="currentColor"/><path d="M8 20.5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+      <span class="tx"><b>See how a night runs</b><small>The TV, the phones and the host</small></span>
+      <svg class="go" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </nav>
 </main>
+
+<footer>
+  <p class="shell foot">Stuck? Email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a> and we will sort it out.</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  /* The game-code alphabet, the same as play.html's CODE_RE: no B, I, L, O, 0, 1 or 8. */
+  var ALPHA = /[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g, CODE = /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  var input = document.getElementById('code'), form = document.getElementById('join');
+  function clean(s) { return String(s || '').toUpperCase().replace(ALPHA, '').slice(0, 6); }
+  input.addEventListener('input', function () {
+    var c = clean(input.value);
+    if (c !== input.value) input.value = c;
+  });
+  form.addEventListener('submit', function (e) {
+    var c = clean(input.value);
+    if (!c) { e.preventDefault(); input.focus(); return; }
+    input.value = c;
+  });
+  /* An address that ends in a game code (someone typed the code after the slash, or an old
+     link): fill it in, so one tap joins. */
+  var seg = '';
+  try { seg = decodeURIComponent((location.pathname || '').replace(/\/+$/, '').split('/').pop() || ''); } catch (e) {}
+  seg = seg.replace(/\.html?$/i, '');
+  /* A word like /venues is code-shaped too, so a code needs a digit in it, or to have been typed
+     in capitals the way the TV shows it. */
+  var looks = /[0-9]/.test(seg) || seg === seg.toUpperCase();
+  seg = seg.toUpperCase();
+  if (looks && CODE.test(seg)) {
+    input.value = seg;
+    var f = document.getElementById('found');
+    f.textContent = 'That address looks like a game code: ' + seg + '. Tap Join.';
+    f.hidden = false;
+  }
+})();
+</script>
 </body>
 </html>
