@@ -282,6 +282,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -817,6 +818,10 @@
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA" }, { question:1, ta_board:1 }); }catch(e){} }
+    /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it,
+       and it plays only for a game this screen saw being played (a podium replayed to a TV that reloaded
+       after the night is not a second goodbye). */
+    if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="question" || m.t==="reveal" || m.t==="ta_board" || m.t==="closed") _endSaw=true; }catch(e){} }
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     /* PUNTERS RECKON rounds. The board is its own layer, painted by the shared pr-board.js; the
@@ -831,7 +836,7 @@
     if(m.t==="started"){ if(typeof m.title==="string") state.title=m.title; state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); return; }
     // The host tapped "Back to ads". Go now rather than sit through the 18 second
     // wind-down: they have finished and the room should be looking at the venue again.
-    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
+    if(m.t==="to_ads"){ if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }   // after the end-of-game show, if one is on
     if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="players"){ return; }   // the wall does not show the player count
     if(m.t==="state"){
@@ -879,16 +884,17 @@
          were painted and replaced by the score list in the same frame: the podium was never
          actually seen. Hold the leaderboard back while the podium is up and show it after. */
       if(state.phase==="podium"){
-        var _rows=m.rows||[], _title=m.title||"Final scores";
+        var _rows=m.rows||[], _title=m.title||"Final scores", _hold=9000+((window.VPEndShow && VPEndShow.playing()) ? VPEndShow.left() : 0);   // the podium keeps its 9 s after the end-of-game show
         setTimeout(function(){
           if(state.phase!=="podium") return;
           state.phase="leaderboard";
           if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
           show("tvBoard");
           renderBoardPaged(_title, _rows);
-        }, 9000);
+        }, _hold);
         return;
       }
+      if(/^final/i.test(String(m.title||""))) triviaEndShow(m.rows, "FINAL SCORES");   // Punters Reckon ends on its final scores, with no podium
       state.phase="leaderboard";
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
       show("tvBoard");
@@ -897,8 +903,26 @@
     else if(m.t==="podium"){
       state.phase="podium";
       renderPodium(m.top||[], m.rows);
+      triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
     }
   }
+  /* THE END-OF-GAME SHOW (2 Nov 2026): the top three teams and their scores, a tie sharing its place, then
+     THANKS FOR PLAYING and the venue. Only for a game this screen watched being played; once per game. */
+  var _endSaw=false;
+  function triviaEndShow(top, eye){
+    if(!(window.VPEndShow && VPEndShow.on) || !_endSaw) return;
+    _endSaw=false;
+    var rows=[], rank=0, last=null;
+    (top||[]).slice(0,3).forEach(function(p, i){
+      if(!p) return;
+      var pts=Number(p.points)||0;   // numeric: arrives over a public channel
+      if(last===null || pts!==last) rank=i+1; last=pts;
+      rows.push({ lead:String(rank), main:p.name, tail:String(pts), num:true });
+    });
+    try{ VPEndShow.play({ kind:"trivia", eye:eye, rows:rows }); }catch(e){}
+  }
+  /* "Back to ads" waits for the end-of-game show to finish, if one is playing. */
+  function endShowThen(go){ if(window.VPEndShow && VPEndShow.playing()) VPEndShow.after(go); else go(); }
   function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
 
   // ---- init ----

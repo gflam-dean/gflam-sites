@@ -615,6 +615,7 @@
 <script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -1977,6 +1978,7 @@
     /* The start-of-game show (1 Nov 2026) is on by default and switched off per TV by ?sting=0 on /tv: the
        game screen inside the frame reads its own address, so hand the off switch on or it plays there anyway. */
     if(window.VPSting && !VPSting.on) url+="&sting=0";
+    if(window.VPEndShow && VPEndShow.on) url+="&endshow=1";   // and the end-of-game show's switch (2 Nov 2026)
     var fresh = f.getAttribute("src")!==url;
     if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
@@ -2353,6 +2355,8 @@
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). It hears every message first: a
        "started" with no ball in the last two minutes plays it, and a ball mid-show stops it at once. */
     if(window.VPSting && VPSting.on){ try{ VPSting.onMsg(m, { phase:state.phase, lastBallAt:lastBingoAt }); }catch(e){ console.warn("[sting]", e && e.message); } }
+    /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it. */
+    if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); }catch(e){} }
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
     // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
     if(m.t==="screen_refresh"){
@@ -2423,7 +2427,10 @@
        talking to nobody: it is not in HOST_TYPES and matched nothing, and was
        dropped silently. It means the same thing as idle on this channel - the
        host has finished with the room - so it lands in the same place. */
-    if(m.t==="idle" || m.t==="to_ads"){ state.caller=false; enterAds(); return; }   // the next bingo night says again whether it is real balls
+    if(m.t==="idle" || m.t==="to_ads"){
+      if(embedEndShowWait()){ state.caller=false; return; }   // the game screen in the frame may be saying goodbye; the ads come up as it ends
+      if(m.t==="idle") bingoEndShow();  // End game on a bingo game that ran: the end-of-game show, over the ads
+      state.caller=false; enterAds(); return; }   // the next bingo night says again whether it is real balls
     if(m.pats) notePats(m.pats);   // the names of the venue's own patterns this message mentions
 
     if(m.t==="state"){
@@ -2455,6 +2462,7 @@
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=[]; state.winner=null; ballInFlight=false; stopCelebrate(); state.celebrated=false;
+      endWins=[];   // a new game: its own winners for the end-of-game show
       state.phase="lobby"; applyBingo();
     }
     else if(m.t==="ball"){
@@ -2494,6 +2502,7 @@
       var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
       state.winner=m;
       if(again){ applyBingo(); return; }
+      noteEndWin(m);   // for the end-of-game show
       if(m.cont && m.next) state.pattern=m.next;   // game plays on for the next prize
       if(m.cont && typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
       state.phase="win"; state.celebrated=false; applyBingo();
@@ -2501,6 +2510,53 @@
       // (the next called ball also brings the board back, whichever comes first)
       if(m.cont){ setTimeout(function(){ if(tvMode==="bingo" && state.phase==="win"){ state.phase="running"; applyBingo(); } }, 7000); }
     }
+  }
+
+  /* THE END-OF-GAME SHOW (/app/vp-endshow.js, off unless ?endshow=1; 2 Nov 2026). This game's confirmed
+     wins, as the wall announced them: who (or, on a real-balls night, which stage), and for what. */
+  var endWins=[];
+  function noteEndWin(m){
+    var paper=!!m.caller, ws=(m.winners&&m.winners.length) ? m.winners : [{ name:m.name }];
+    var prize=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
+    endWins.push({ paper:paper, who:paper ? "" : joinNames(ws.map(function(w){ return w.name; })),
+                   stage:patName(m.pattern||state.pattern)||"Bingo", prize:(prize && prize!=="the prize") ? prize : "" });
+  }
+  /* End game, on a game that called at least one ball: the wins (one big, or the last three as rows, the
+     last stage won first), then THANKS FOR PLAYING and the venue. It plays over the ads, which go up
+     underneath as they always did, so the wall is simply there when it fades. */
+  function bingoEndShow(){
+    var ws=endWins; endWins=[];
+    if(!(window.VPEndShow && VPEndShow.on) || tvMode!=="bingo" || !(state.called && state.called.length)) return;
+    /* The venue's name as the screen has it; the sales-page demo's venue is Tugun Bowls Club, as on the other demo screens */
+    var o={ kind:"bingo", venue:holdVenueName || (VP_DEMO ? "Tugun Bowls Club" : "") }, one=function(w){ return [w.stage, w.prize].filter(Boolean).join(" \u00b7 "); };
+    if(ws.length===1){
+      var w=ws[0];
+      if(w.paper){ o.eye="BINGO!"; o.big="WE HAVE A WINNER"; }
+      else { o.eye="WE HAVE A WINNER"; o.big=w.who; }
+      o.sub=one(w);
+    } else if(ws.length>1){
+      o.eye="THIS GAME\u2019S WINNERS";
+      o.rows=ws.slice(-3).reverse().map(function(w){ return w.paper ? { main:w.stage, tail:w.prize } : { main:w.who, tail:one(w) }; });
+    }
+    try{ VPEndShow.play(o); }catch(e){ console.warn("[endshow]", e && e.message); }
+  }
+  /* A game screen in the frame playing its own end-of-game show holds the wall until it has finished: an
+     idle on this channel (a console whose session code is the venue's own) would otherwise tear the frame
+     down mid-show. Nothing to do when the switch is off or no show is playing. */
+  function embedEndShowWait(){
+    if(!(window.VPEndShow && VPEndShow.on) || tvMode!=="embed") return false;
+    /* The frame hears the same idle on its own socket and may not have had it yet: give it a beat to
+       start its show, then either wait for the show or go to the ads as before. */
+    var f=document.getElementById("gameFrame"), src=f && f.getAttribute("src");
+    setTimeout(function(){ if(tvMode==="embed" && f.getAttribute("src")===src && !embedEndShowHolds()) enterAds(); }, 600);
+    return true;
+  }
+  function embedEndShowHolds(){
+    if(tvMode!=="embed") return false;
+    var f=document.getElementById("gameFrame"), w=null, src=f && f.getAttribute("src");
+    try{ w=f && f.contentWindow; if(!(w && w.VPEndShow && w.VPEndShow.playing())) return false; }catch(e){ return false; }
+    w.VPEndShow.after(function(){ if(tvMode==="embed" && f.getAttribute("src")===src) enterAds(); });
+    return true;
   }
 
   // ================= INIT =================

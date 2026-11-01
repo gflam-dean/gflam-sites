@@ -249,6 +249,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -855,6 +856,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
+    /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it. */
+    if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="played" && !m.replay) _endArmed=true; }catch(e){} }
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
@@ -863,8 +866,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view
     // The host tapped "Back to ads". Go now rather than sit through the 18 second
     // wind-down: they have finished and the room should be looking at the venue again.
-    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
-    if(m.t==="idle"){ stopClip(); state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
+    if(m.t==="to_ads"){ if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }   // after the end-of-game show, if one is on
+    if(m.t==="idle"){ musicalEndShow(); stopClip(); state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       /* An OPEN LOBBY is not an ended night. Both look like idle-then-state from here,
@@ -923,6 +926,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.played=[]; state.winner=null; stopCelebrate();
+      _endWins=[];   // a new game: its own winners for the end-of-game show
       state.phase="running"; showReady();
     }
     else if(m.t==="played"){
@@ -970,6 +974,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     else if(m.t==="winner"){
       stopClip();
       state.winner=m; state.phase="win"; show("tvWin");
+      _endWins.push({ who:m.name||"Player", prize:(state.prize && state.prize!=="the prize") ? state.prize : "" });   // for the end-of-game show
       $("winName").textContent=m.name||"Player";
       $("winPrizeVal").textContent=state.prize;
       /* A SPLIT: two people got there on the same song, so the wall names both cards and says
@@ -992,6 +997,21 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       show("tvRun"); renderRun();
     }
   }
+
+  /* THE END-OF-GAME SHOW (2 Nov 2026). End game on a game that played at least one song: the winner (or the
+     last three, the last prize first), then THANKS FOR PLAYING and the venue. A lobby closed before any
+     song is not a game, and says nothing. Musical bingo is its own game, in every state. */
+  var _endWins=[], _endArmed=false;   // armed by a song this screen played; one goodbye per game
+  function musicalEndShow(){
+    var ws=_endWins, armed=_endArmed; _endWins=[]; _endArmed=false;
+    if(!(window.VPEndShow && VPEndShow.on) || !armed) return;
+    var o={ kind:"musical" };
+    if(ws.length===1){ o.eye="WE HAVE A WINNER"; o.big=ws[0].who; o.sub=ws[0].prize; }
+    else if(ws.length>1){ o.eye="THIS GAME\u2019S WINNERS"; o.rows=ws.slice(-3).reverse().map(function(w){ return { main:w.who, tail:w.prize }; }); }
+    try{ VPEndShow.play(o); }catch(e){}
+  }
+  /* "Back to ads" waits for the end-of-game show to finish, if one is playing. */
+  function endShowThen(go){ if(window.VPEndShow && VPEndShow.playing()) VPEndShow.after(go); else go(); }
 
   // ---- init ----
   function drawQR(el, url, size){ VPQR.draw(el, url, size); }
