@@ -224,7 +224,7 @@
   "counted_by": "lines"
  },
  "tools/prospects-status-in-chrome.test.py": {
-  "checks": 34,
+  "checks": 41,
   "counted_by": "lines"
  },
  "tools/purchase-raffle-in-chrome.test.py": {
@@ -632,7 +632,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
-  "checks": 62,
+  "checks": 74,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {

@@ -26,6 +26,8 @@
    of a free month are highlighted. Card added venues come back in their own list (card_added): they are
    customers now, so isProspect() never names them and hq.html keeps them in Venues. Filter and sort by
    status here; the default order is the Worker's (who to ring first).
+   VIEW AS (1 Nov 2026): every card with a venue row has View as, which calls hq.html's own viewAs (window.hqViewAs),
+   the one the Venues row uses, so a prospect with no card opens as themselves exactly as a customer does.
    House rules: no em dashes; a venue never sees this (HQ only, and the Worker answers HQ admins only).
    ========================================================================== */
 (function (root) {
@@ -128,7 +130,11 @@
         '<button type="button" class="mini" data-pr-close="1">Cancel</button></div></div>'
       : (function () {
           // Called while not yet called (and not done); Resend sign-in link (phone sign-in, main) for anyone not cancelled.
-          var acts = (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
+          /* View as (Dean, 1 Nov 2026: "we can't login to view them as themselves" until they add a card). The SAME
+             function as the Venues row's View as (hq.html viewAs, as window.hqViewAs), so the same rules hold: every
+             prospect with a venue row, Cancelled and Card added too, opens their own pages as them. */
+          var acts = (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "") +
+            (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
             (st !== "cancelled" ? '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button>' : "") +
             /* Their account email again, with a fresh sign-in (31 Oct 2026: a bounced or cancelled welcome). Not after
                Cancel (they said no) or a pause (the card email is what brings them back, from Venues > Details). */
@@ -299,6 +305,8 @@
     var t = e.target.closest && e.target.closest("button"); if (!t) return;
     if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); draw(); if ($("prNote")) $("prNote").focus(); return; }
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
+    // View as: hq.html's own viewAs (window.hqViewAs), the one the Venues row calls. Never a second copy here.
+    if (t.hasAttribute("data-pr-viewas")) { if (typeof root.hqViewAs === "function") root.hqViewAs(t.getAttribute("data-pr-viewas"), t); return; }
     // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing.
     if (t.hasAttribute("data-pr-signin")) { if (typeof root.hqSigninLink === "function") root.hqSigninLink(t.getAttribute("data-pr-signin"), t); return; }
     // The same function as the Venues row's button (hq.html hqResendWelcome): it asks the Worker which email goes first.
@@ -329,6 +337,6 @@
   }
 
   root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; },
-    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel } };
+    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);

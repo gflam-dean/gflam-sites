@@ -334,6 +334,9 @@
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
           <option value="needsstate">Needs a state</option>
+          <!-- Set up as prospects, not signed up yet (Dean, 1 Nov 2026): the same list as HQ > Prospects
+               (VPProspects.isProspect), so owner and accounts only, like that tab. -->
+          <option value="prospects">Prospects</option>
         </select>
         <!-- Venues that have LEFT (ended, cancelled, archived) are off the list unless this is ticked.
              The search box still finds them. Unpaid venues stay: they need chasing (Dean, 19 Oct 2026). -->
@@ -1265,7 +1268,13 @@
   var PANES=["venues","prospects","live","quiet","cancelled","billing","groups","usage","team","flagged","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
-  document.addEventListener("vp-prospects", function(){ if(S.venues){ renderStats(); renderVenues(); } });
+  /* Venues > Prospects reads that same list, which the Worker gives owner and accounts only. So the option is taken out
+     here, before anything has loaded, and put back the first time the list arrives: an HQ role the Worker refuses is
+     never offered a filter that could only ever be empty. */
+  var prOpt=document.querySelector('#venueFilter option[value="prospects"]');
+  if(prOpt) prOpt.parentNode.removeChild(prOpt);
+  function prOptBack(){ var sel=$("venueFilter"); if(prOpt && sel && !prOpt.parentNode) sel.appendChild(prOpt); }
+  document.addEventListener("vp-prospects", function(){ prOptBack(); if(S.venues){ renderStats(); renderVenues(); } });
   /* Switching pane was only ever done inline by the nav's own click handler, so nothing else could
      send you to a pane. Now anything can, and the tab highlights correctly when it does. */
   function goPane(pane){
@@ -2155,6 +2164,16 @@
        up on the active list are they?"). They are on the Prospects tab until they sign up, when the Worker
        stops listing them and they come back here by themselves. A search still finds one, badged. */
     var prospect = !!(v && typeof window!=="undefined" && window.VPProspects && window.VPProspects.isProspect(v.id));   // isProspect(), inline: other suites lift this function alone
+    /* "Prospects" (Dean, 1 Nov 2026) is that same rule, from that same place, turned round: only the venues HQ > Prospects
+       lists (cancelled ones too, as that tab shows them), each with its own View as. The search still narrows it. */
+    if(S.vFilter==="prospects"){
+      if(!prospect || hideAsTest(v)) return false;
+      if(searching){
+        var qp=S.vSearch.toLowerCase();
+        return String(v.name||"").toLowerCase().indexOf(qp)>=0 || String(v.slug||"").toLowerCase().indexOf(qp)>=0;
+      }
+      return true;
+    }
     if(prospect && !searching && S.vFilter!=="test" && S.vFilter!=="needsstate") return false;
     /* NEEDS A STATE (legal compliance matrix G19, 28 Oct 2026). A venue with no state is shown no
        state's rules and cannot charge for a game (vp-gaming.js assess), so it is a job to fix: every
@@ -2207,7 +2226,7 @@
        a filter doing its job. */
     var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
                independent:"Independent venues", live:"Live now", suspended:"Suspended venues",
-               test:"Test venues", needsstate:"Venues that need a state" };
+               test:"Test venues", needsstate:"Venues that need a state", prospects:"Prospects" };
     var lbl=FLBL[S.vFilter] || "All venues";
     $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
@@ -3176,6 +3195,9 @@
       give("Could not open "+name+": "+((e&&e.message)||"the venue would not load")+".");
     });
   }
+  /* HQ > Prospects (vp-prospects-hq.js) calls this same function from each prospect card (Dean, 1 Nov 2026), so a
+     prospect who has not added a card yet opens as themselves exactly as a Venues row does. One View as, not two. */
+  window.hqViewAs=viewAs;
 
   /* ---- SUSPEND / REACTIVATE (Worker) ---- */
   function archiveVenue(id, btn){

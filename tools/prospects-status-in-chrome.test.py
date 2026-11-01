@@ -252,6 +252,33 @@ try:
        shown_ids(sid) == [vid(FINAL), vid(LAST3), vid(FRESH)], shown_ids(sid))
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error on the page', errs == '[]', errs)
+
+    print('\nView as from a prospect card, and Venues > Prospects (Dean, 1 Nov 2026)')
+    choose(sid, 'prFilter', 'all')
+    va = S.js(sid, '[].map.call(document.querySelectorAll("#paneProspects .prcard"),function(c){var b=c.querySelector("button[data-pr-viewas]");'
+              'return [c.getAttribute("data-pr-id"), b?b.getAttribute("data-pr-viewas"):null, b?b.textContent:""];})') or []
+    ok('every one of the eight cards has View as for its own venue, Cancelled and Card added included',
+       len(va) == 8 and all(r[1] == r[0] and r[2] == 'View as' for r in va), va)
+    S.js(sid, 'document.querySelector("#hqNav [data-pane=venues]").click(); true')
+    time.sleep(0.3)
+    opt = S.js(sid, '(document.querySelector("#venueFilter option[value=prospects]")||{}).textContent||""')
+    ok('the Venues filter offers "Prospects" (owner)', opt == 'Prospects', opt)
+    choose(sid, 'venueFilter', 'prospects')
+    rows = S.js(sid, '[].map.call(document.querySelectorAll("#venueRows button[data-viewas]"),function(b){return b.getAttribute("data-viewas");})') or []
+    want_p = sorted(vid(n) for n in NAMES if n != CARD)
+    ok('Venues > Prospects lists exactly the seven prospects (the cancelled one too), not the paying Card Club Hotel, each row with its View as',
+       sorted(rows) == want_p and vid(CARD) not in rows, sorted(rows))
+    lbl = S.js(sid, 'document.getElementById("venuesLbl").textContent')
+    ok('...and the heading says "Prospects (7)"', lbl == 'Prospects (7)', lbl)
+    S.js(sid, 'document.querySelector("#hqNav [data-pane=prospects]").click(); true')
+    S.until(sid, '!!document.querySelector("#paneProspects .prcard button[data-pr-viewas]")', 10)
+    S.js(sid, 'document.querySelector(\'#paneProspects .prcard[data-pr-id="%s"] button[data-pr-viewas]\').click(); true' % vid(NOSIGN))
+    S.until(sid, '/\\/app\\/index\\.html/.test(location.pathname)', 25)
+    imp = S.js(sid, 'localStorage.getItem("vpImpersonate")') or ''
+    ok('pressing View as on Never Signed Arms (no card) opens their own pages as them, by HQ\'s own View as',
+       S.js(sid, 'location.pathname').endswith('/app/index.html') and ('"id":"%s"' % vid(NOSIGN)) in imp and 'Never Signed Arms' in imp, imp)
+    aud = [a for a in (S.W.table('vp_admin_audit') or []) if a.get('action') == 'view_as']
+    ok('...and the audit row is view_as on that venue, as from Venues', any(a.get('target') == 'venue:' + vid(NOSIGN) for a in aud), aud)
     S.close_tab(tid)
 
     print('\nphone width')
@@ -279,6 +306,8 @@ try:
     time.sleep(4)
     seen = S.js(sid, '({hidden:document.getElementById("prTab").hidden,cards:document.querySelectorAll("#paneProspects .prcard").length})')
     ok('the Prospects tab stays hidden and no prospect is drawn', isinstance(seen, dict) and seen.get('hidden') is True and seen.get('cards') == 0, seen)
+    ok('...and the Venues filter has no Prospects option for them (it would always be empty)',
+       S.js(sid, '!document.querySelector("#venueFilter option[value=prospects]")') is True)
     S.close_tab(tid)
 finally:
     S.close()
@@ -291,7 +320,7 @@ ok('its --user-data-dir is removed', not os.path.exists(PROFILE), PROFILE)
 
 total = PASS[0] + FAIL[0]
 print('\n%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 34
+EXPECTED = 41
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
