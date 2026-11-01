@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 14:45 · df16274c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Nov 2026, 16:51 · 41227be1';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2159,6 +2159,17 @@ async function handleVenueLike(request, env, json) {
 
 let screenPollRpcMissing = false;   // per isolate: once PostgREST says the function is not there, stop asking
 let screenShownRpcMissing = false;  // the same, for vp_screen_poll_shown (migration 135)
+let screenKindRpcMissing = false;   // the same, for vp_screen_poll_kind (migration 139)
+
+/* The TV's &tvk= (what kind of TV, a code from venueplay/app/vp-tvtype.js) and &tvd= (a random id for
+   that TV), made safe or refused (null). Only the SHAPE is checked here: the list of codes lives in
+   vp-tvtype.js alone, and HQ names an unknown code "Unknown". Never a user agent. */
+function screenKindParam(url) {
+  const k = String(url.searchParams.get('tvk') || '');
+  const d = String(url.searchParams.get('tvd') || '');
+  if (!/^[a-z]{2,12}$/.test(k) || !/^[A-Za-z0-9_-]{6,40}$/.test(d)) return null;
+  return { k: k, d: d };
+}
 
 /* The TV's &shown= value, made safe or refused (null). {"n":"YYYY-MM-DD","s":"<screen id>",
    "c":{"<slide key>":[shows,seconds],...}}, at most 40 slides; the database bounds it again. */
@@ -2231,17 +2242,32 @@ async function handleVenueLookup(request, env, json) {
      probe never sends one and is never believed if it does. Before 135 is run the function 404s,
      this isolate stops asking for it, and the screen is answered by vp_screen_poll as before. */
   const shown = (!isProbe && !screenShownRpcMissing) ? screenShownTally(url.searchParams.get('shown')) : null;
+  /* WHAT KIND OF TV (migration 139, Dean 1 Nov 2026). Once per page load the TV adds &tvk=&tvd= to this
+     poll; then the one call is vp_screen_poll_kind, vp_screen_poll's answer with the TV's type kept in
+     the same trip. The TV never sends it with a tally; if one ever does, the tally wins and the type
+     waits for the next page load. Before 139 is run: 404, the same request falls back to
+     vp_screen_poll, and this isolate stops asking. */
+  const kind = (!isProbe && !shown && !screenKindRpcMissing) ? screenKindParam(url) : null;
   if (!screenPollRpcMissing && !isProbe) {
     const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 6);
     const fn = shown ? 'vp_screen_poll_shown' : 'vp_screen_poll';
     const body = { p_slug: slugOk ? slug : '', p_code: code, p_version: ver };
     if (shown) body.p_shown = shown;
-    let res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    if (kind) { body.p_kind = kind.k; body.p_device = kind.d; }
+    let res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + (kind ? 'vp_screen_poll_kind' : fn), {
       method: 'POST', headers: sbHeaders(env), body: JSON.stringify(body),
     }).catch(() => null);
     if (shown && res && res.status === 404) {
       screenShownRpcMissing = true;
       console.warn('vp_screen_poll_shown missing (migration 135 not run); the slide tally is not kept');
+      res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
+        method: 'POST', headers: sbHeaders(env),
+        body: JSON.stringify({ p_slug: slugOk ? slug : '', p_code: code, p_version: ver }),
+      }).catch(() => null);
+    }
+    if (kind && res && res.status === 404) {
+      screenKindRpcMissing = true;
+      console.warn('vp_screen_poll_kind missing (migration 139 not run); the TV type is not kept');
       res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
         method: 'POST', headers: sbHeaders(env),
         body: JSON.stringify({ p_slug: slugOk ? slug : '', p_code: code, p_version: ver }),
@@ -8898,7 +8924,7 @@ async function openInvoice(env, acct, idemKey, why) {
     customer: acct.stripe_customer_id,
     auto_advance: false,                      // finalised by hand in settleInvoice, never by Stripe's clock
     pending_invoice_items_behavior: 'exclude',
-    description: why || 'venueplay extras',
+    description: why || 'VenuePlay extras',
   };
   if (byInvoice) {
     body.collection_method = 'send_invoice';

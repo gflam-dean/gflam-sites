@@ -607,6 +607,7 @@
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
+<script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026) -->
 <script>
 (function(){
@@ -984,8 +985,9 @@
     var strikes=0, lastContentAt=null;
     function ask(){
       try{
-        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":"")+(typeof tvShownParam==="function" ? tvShownParam(Date.now()) : ""))
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD)+(/[?&]probe=1(&|$)/.test(location.search)?"&probe=1":"")+(typeof tvKindParam==="function" ? tvKindParam() : "")+(typeof tvShownParam==="function" ? tvShownParam(Date.now()) : ""))
           .then(function(r){ return r.ok?r.json():null; }).then(function(d){
+          try{ if(typeof tvKindAnswered==="function") tvKindAnswered(!!d); }catch(e){}
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){
             strikes++;
@@ -1158,6 +1160,7 @@
   }
   /* The piece of the /venue address that carries the tally, or "" when there is nothing new to say. */
   function tvShownParam(nowMs){
+    if (typeof tvKindThisPoll !== "undefined" && tvKindThisPoll) return "";   // this poll is carrying the TV type; the tally goes on the next one
     try { return tvShownBuild(nowMs); } catch (e) { return ""; }   // the heartbeat goes whatever happens here
   }
   function tvShownBuild(nowMs){
@@ -1168,6 +1171,44 @@
     var c = {}; keys.slice(0, 40).forEach(function(k){ c[k] = tvShown.c[k]; });
     tvShownLastSent = nowMs;
     return "&shown=" + encodeURIComponent(JSON.stringify({ n: tvShown.n, s: tvShownSid, c: c }));
+  }
+  /* WHAT KIND OF TV THIS IS (Dean, 1 Nov 2026: "we do not know what TVs our venues use"; migration 139).
+     The type is worked out HERE from this browser by the one shared table in /app/vp-tvtype.js, and only
+     its short code leaves the screen (for example "samsung"), never the user agent itself. With it goes a
+     random id for this TV (localStorage vpTvDev, nothing about a person) so two screens at a venue count
+     as two. It rides the /venue poll this page already makes: ONCE per page load, on the first poll that
+     gets an answer, at most three tries, and never on the same poll as the slide tally (that waits thirty
+     seconds for the next one), so the Worker still makes one database call. A probe and the demo send
+     nothing. */
+  var TV_KIND = (function(){
+    try { return (window.VPTvType && window.VPTvType.detect(navigator.userAgent, navigator.userAgentData, navigator.maxTouchPoints)) || "unknown"; }
+    catch (e) { return "unknown"; }
+  })();
+  var tvKindDev = (function(){
+    var id = "";
+    try { id = localStorage.getItem("vpTvDev") || ""; } catch (e) {}
+    if (!/^d[0-9a-f]{18}$/.test(id)) {
+      try { var b = new Uint8Array(9); crypto.getRandomValues(b); id = "d" + Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }
+      catch (e) { return ""; }   // no good random number: send nothing rather than a guessable id
+      try { localStorage.setItem("vpTvDev", id); } catch (e) {}
+    }
+    return id;
+  })();
+  var tvKindTries = 0, tvKindDone = false, tvKindThisPoll = false;
+  /* The piece of the /venue address that carries the TV type, or "" once it has been said. */
+  function tvKindParam(){
+    tvKindThisPoll = false;
+    try {
+      if (TV_SHOWN_OFF || tvKindDone || tvKindTries >= 3 || !tvKindDev || !/^[a-z]{2,12}$/.test(TV_KIND)) return "";
+      tvKindTries++;
+      tvKindThisPoll = true;
+      return "&tvk=" + TV_KIND + "&tvd=" + tvKindDev;
+    } catch (e) { return ""; }
+  }
+  /* The poll answered (ok) or did not. Said once it has been answered; tried again on the next poll if not. */
+  function tvKindAnswered(ok){
+    if (ok && tvKindThisPoll) tvKindDone = true;
+    tvKindThisPoll = false;
   }
   /* A venue-linked screen does not need pairing: its code comes from the slug and the console
      connects on its own. But the console's pairing screen still says the code is on the TV, and
@@ -2433,6 +2474,21 @@
   buildAds();
   enterAds(); // ads up FIRST, before anything external can fail - the screen is never black
   buildBoard();
+  /* THE SETUP LINE THAT FITS THIS TV (1 Nov 2026). A Samsung or LG set has no Google Play, so the
+     "get the app" half comes off and the browser half says which app to use; a Google TV keeps the app
+     line first. The words are VPTvType.setup's, one table for every page. Anything it cannot read
+     leaves the card exactly as written. */
+  function tvSetupFits(kind){
+    var s = null;
+    try { s = window.VPTvType ? window.VPTvType.setup(kind) : null; } catch (e) { s = null; }
+    if (!s) return;
+    var app = $("suApp"), code = $("suCode");
+    if (app && s.app === "hide") app.style.display = "none";
+    if (app && s.appHead) { var ah = app.querySelector(".su-head"); if (ah) ah.innerHTML = s.appHead; }
+    if (code && s.head) { var h = code.querySelector(".su-head"); if (h) h.innerHTML = s.head; }
+    if (code && s.text) { var t = code.querySelector(".su-text"); if (t) t.innerHTML = s.text; }
+    var p = $("pairPanel"); if (p) p.setAttribute("data-tv-kind", kind || "unknown");
+  }
   /* THE SET UP CARD'S TWO WAYS IN (no venue linked). "Put in the screen code" opens the same keypad
      the venue picker has always offered (askCode); Go back closes it again. Inside the app the
      "get the app" half is pointless, so it comes off. Wrapped: nothing here may stop the screen. */
@@ -2444,6 +2500,7 @@
         askCode(function(){ var p=$("venuePick"); if(p) p.classList.add("hidden"); });
       });
       if(IN_APP){ var a=$("suApp"); if(a) a.style.display="none"; }
+      tvSetupFits(TV_KIND);
     }catch(e){}
   })();
   /* "SAVE THIS PAGE", once, on the venue screen a code just chose (see cameByCode). Never inside the

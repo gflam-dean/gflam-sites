@@ -454,6 +454,8 @@
         <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>3am</b> is the safe default: it is stored as a time, so each screen acts when it gets there and no room is interrupted.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
+      <!-- TVs BY TYPE (migration 139, Dean 1 Nov 2026): what kind of television each venue screen is. -->
+      <div id="tvTypesOut" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)"><span class="note">TVs by type: loading&hellip;</span></div>
     </div>
     <div class="panel"><div class="tscroll"><table class="vtable">
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
@@ -772,6 +774,7 @@
 <script src="vp-session.js"></script>
 <!-- The state rules, for the SA and NT number bingo note (one rule, VPGaming.numberBingoHidden). -->
 <script src="vp-gaming.js"></script>
+<script src="/app/vp-tvtype.js"></script>   <!-- the TV type names, one list (1 Nov 2026) -->
 <script src="vp-permits.js"></script>
 <!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. Before the page's
      own script, which asks it isProspect(); it waits for the page to finish loading before it draws anything. -->
@@ -974,6 +977,75 @@
     loadAll();
   });
 
+  /* TVs BY TYPE (migration 139, Dean 1 Nov 2026: "we do not know what TVs our venues use").
+     Each venue screen says once per page load what kind of TV it is (a code from /app/vp-tvtype.js,
+     never the browser's own description), and vp_screen_devices keeps one row per TV. Here: every
+     TV heard from in the last 30 days, counted by type across venues (test venues left out, so
+     Dean's own laptop does not decide whether a Samsung app is worth building) and per venue,
+     beside that venue's screen badge. Its own paged read, after the venue list: before migration
+     139 is run the table is not there and this says so, and nothing else on the page is touched. */
+  var TV_TYPES_DAYS = 30;
+  function tvTypeLabel(code){
+    try { if (window.VPTvType) return window.VPTvType.label(code); } catch (e) {}
+    return String(code || "Unknown");
+  }
+  function tvTypesSummary(rows, isTestId, nowMs){
+    var since = nowMs - TV_TYPES_DAYS * 86400000;
+    var byKind = {}, perVenue = {}, venues = {}, total = 0;
+    (rows || []).forEach(function(x){
+      if (!x || !x.venue_id) return;
+      var at = Date.parse(x.last_seen_at); if (!(at >= since)) return;
+      var k = String(x.kind || "unknown");
+      var pv = perVenue[x.venue_id] || (perVenue[x.venue_id] = {});
+      pv[k] = (pv[k] || 0) + 1;
+      if (isTestId && isTestId(x.venue_id)) return;
+      byKind[k] = (byKind[k] || 0) + 1; venues[x.venue_id] = true; total++;
+    });
+    var order = []; try { order = (window.VPTvType ? window.VPTvType.LABELS : []).map(function(l){ return l[0]; }); } catch (e) {}
+    var rank = function(k){ var i = order.indexOf(k); return i < 0 ? 999 : i; };
+    var list = Object.keys(byKind).sort(function(a, b){ return (byKind[b] - byKind[a]) || (rank(a) - rank(b)); })
+      .map(function(k){ return [k, tvTypeLabel(k), byKind[k]]; });
+    return { total: total, venues: Object.keys(venues).length, byKind: list, perVenue: perVenue };
+  }
+  function tvTypesHtml(sum){
+    if (!sum) return '<span class="note">TVs by type start when migration 139 is run.</span>';
+    if (!sum.total) return '<b>TVs by type</b> <span class="note">&middot; no venue screen has said yet in the last ' + TV_TYPES_DAYS + ' days (each one says when its page next loads).</span>';
+    return '<b>TVs by type</b> <span class="note">&middot; ' + sum.total + ' screen' + (sum.total === 1 ? '' : 's') + ' at ' + sum.venues + ' venue' + (sum.venues === 1 ? '' : 's') +
+      ', last ' + TV_TYPES_DAYS + ' days, test venues left out</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' +
+      sum.byKind.map(function(r){ return '<span class="badge indep" data-tvkind="' + esc(r[0]) + '">' + esc(r[1]) + ' <b class="mono" style="color:#fff">' + r[2] + '</b></span>'; }).join('') + '</div>';
+  }
+  function tvTypeBadge(pv){
+    if (!pv) return "";
+    var ks = Object.keys(pv).sort(function(a, b){ return pv[b] - pv[a]; });
+    if (!ks.length) return "";
+    var words = ks.map(function(k){ return tvTypeLabel(k) + (pv[k] > 1 ? ' x' + pv[k] : ''); }).join(', ');
+    return '<span class="badge indep" title="What kind of TV this venue&rsquo;s screens are, from the screens themselves, last ' + TV_TYPES_DAYS + ' days.">TV: ' + esc(words) + '</span>';
+  }
+  /* Paged until an EMPTY page, never a short one: PostgREST stops at 1,000 rows, silently. */
+  function loadTvTypes(){
+    var out = $("tvTypesOut"), c;
+    try { c = VP.getClient(); } catch (e) { return; }
+    var since = new Date(Date.now() - TV_TYPES_DAYS * 86400000).toISOString(), rows = [], PAGE = 1000;
+    function page(from){
+      return c.from("vp_screen_devices").select("venue_id,device_id,kind,last_seen_at").gte("last_seen_at", since)
+        .order("venue_id").order("device_id").range(from, from + PAGE - 1).then(function(r){
+          if (!r || r.error || !Array.isArray(r.data)) throw new Error((r && r.error && r.error.message) || "no answer");
+          if (!r.data.length || from > 50000) return rows;
+          rows = rows.concat(r.data);
+          return page(from + r.data.length);
+        });
+    }
+    return page(0).then(function(all){
+      S.tvTypes = tvTypesSummary(all, function(id){ return !!(S.testFlag && S.testFlag[id]); }, Date.now());
+      if (out) out.innerHTML = tvTypesHtml(S.tvTypes);
+      var spans = document.querySelectorAll("[data-tvtype]");
+      for (var i = 0; i < spans.length; i++) spans[i].innerHTML = tvTypeBadge(S.tvTypes.perVenue[spans[i].getAttribute("data-tvtype")]);
+    }, function(){
+      S.tvTypes = null;
+      if (out) out.innerHTML = tvTypesHtml(null);
+    });
+  }
+
   /* "SCREEN OK" WAS A READING FROM WHENEVER THIS PAGE WAS OPENED. Nothing on this page ever
      refreshed, so a tab left open said "Screen ok, polled us within the last two minutes" about
      a screen that had been silent for 29 hours. Dean, 21 Sep 2026, looking at exactly that:
@@ -1137,7 +1209,7 @@
       S.usageMonth = null;
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
-    renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
+    renderStats(); renderVenues(); loadTvTypes(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
     if(canBilling() && !S.healthAsked){ S.healthAsked=true; loadHealth(); }   // the Groups rows show a failing payment too
     loadTabBadges();
     }).catch(function(e){
@@ -2290,6 +2362,7 @@
       /* Its own span, so the minute-by-minute refresh below can repaint JUST this badge without
          re-rendering a table somebody may be half way through using. */
       statusCell += testBadge + ' <span data-screenbadge="'+esc(v.id)+'">' + screenBadge(v) + '</span>';
+      statusCell += ' <span data-tvtype="'+esc(v.id)+'">' + tvTypeBadge(S.tvTypes && S.tvTypes.perVenue[v.id]) + '</span>';
       /* TWO BUTTONS PER ROW, NOT NINE.
          At 400 venues a row of nine controls is 3,600 buttons on one page: unusable,
          and worse than unusable for the dangerous ones, which sat one careless click

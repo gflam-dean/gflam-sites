@@ -542,3 +542,17 @@ guarded on the exact words it replaces, so an answer Dean has edited in HQ is le
 `venueplay/data/help-faq.json` (tools/help-seed-matches-faq.test.py and tools/tv-app-setup-line.test.py hold them together).
 Words only, no new table, policy or grant, so RLS-BASELINE.json does not change; any order with the Workers and the site.
 The help desk's saved replies (126) still say "VenuePlay". Branch `feature/lowercase-legal-2nov`. NOT RUN. Rollback: in the file.
+
+`venueplay-139-screen-devices.sql` (Dean, 1 Nov 2026: "we do not know what TVs our venues use"): one new table
+`vp_screen_devices` (venue_id, device_id, kind, first_seen_at, last_seen_at; primary key on the first two) and one new
+definer function `vp_screen_poll_kind(p_slug, p_code, p_version, p_kind, p_device)`, which returns exactly what
+`vp_screen_poll` (migration 72) returns and keeps the TV's coarse type code (from `venueplay/app/vp-tvtype.js`, never the
+user agent) and its random device id in the same call. The TV sends it once per page load, never on the same poll as the
+slide tally of 135. Bounds: code and id shapes checked, at most 20 recent screens a venue, rows unseen for 180 days
+cleared, its own exception block. anon nothing; authenticated SELECT with one policy, `vp_is_platform_admin()`, so only
+HQ reads it; the function is service role only; a self-check refuses to commit otherwise. Any order with the game Worker
+and tv.html: without it the Worker gets a 404, falls back to `vp_screen_poll` in the same request and stops asking, and HQ
+says TV types start when 139 is run. After running, dump RLS-BASELINE.json (one table, one policy, one function).
+NUMBER: written as 138 on 1 Nov, renumbered 139 when merged into release/mon-2nov (138 is the help-FAQ lowercase
+migration above; 137 stays spent by the end-screen ratings work).
+Branch `feature/tv-type-2nov`. NOT RUN. Rollback: in the file.

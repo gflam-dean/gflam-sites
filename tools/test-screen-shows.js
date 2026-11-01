@@ -102,8 +102,9 @@ function fetch(url, opts) {
 }
 function venueLookupThreeTrips() { CALLS.push({ fn: 'three-trips' }); return Promise.resolve(null); }
 function venueLookupReply(j, v) { return j({ exists: true, name: v.name }); }
-var screenPollRpcMissing = false, screenShownRpcMissing = false;
+var screenPollRpcMissing = false, screenShownRpcMissing = false, screenKindRpcMissing = false;   // 139's TV type rides the same poll
 eval(liftFrom(GAME, 'screenShownTally', 'venueplay-game.js'));
+eval(liftFrom(GAME, 'screenKindParam', 'venueplay-game.js'));
 eval(liftFrom(GAME, 'handleVenueLookup', 'venueplay-game.js'));
 function req(q) { return { url: 'https://api/venue?' + q }; }
 var TALLY = enc(JSON.stringify({ n: '2026-10-09', s: 'tvABCDEF12', c: { 'i:parma-1.jpg': [3, 21], 'bad key': [1, 1], 't:Zero': [0, 0], 'auto:draws': ['12', '120'] } }));

@@ -123,6 +123,8 @@ eval(lift('venueByCodeNotIssued'));   // the slow fallback, split out of venueBy
 eval(liftLine(/^let screenPollRpcMissing[^\n]*/m));
 eval(liftLine(/^let screenShownRpcMissing[^\n]*/m));   // the slide tally (migration 135) rides the same poll
 eval(lift('screenShownTally'));
+eval(liftLine(/^let screenKindRpcMissing[^\n]*/m));    // the TV type (migration 139) rides it too
+eval(lift('screenKindParam'));
 eval(lift('handleVenueLookup'));
 eval(lift('venueLookupThreeTrips'));
 eval(lift('venueLookupReply'));
