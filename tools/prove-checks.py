@@ -6386,6 +6386,11 @@ MUTATIONS = [
     ('venue-logo-in-chrome.test.py', 'venueplay/app/musical/play.html',
      '  .ptop{padding:16px 72px;', '  .ptop{padding:16px;',
      'at 320 wide "VenuePlay Musical Bingo" runs under the menu button again'),
+    # 1 Nov 2026 (queued fault): at 320 wide "Musical Bingo" wrapped hard left under the new wordmark.
+    ('venue-logo-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:6px;row-gap:3px;text-align:center;min-width:0;max-width:100%}',
+     '    text-align:left}',
+     'at 320 wide the musical phone header puts "Musical Bingo" hard against the left gutter, off-centre under the wordmark'),
     ('venue-logo-in-chrome.test.py', 'venueplay/tv.html',
      'el.id="venueLogo"; el.setAttribute("data-fit-avoid","");', 'el.id="venueLogo";',
      'the bigger logo on the bingo TV is painted over the wall instead of the wall moving out from under it'),

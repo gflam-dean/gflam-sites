@@ -320,6 +320,7 @@ def musical_end():
     ok('and no dialog on the page either', ask(host, '!document.getElementById("vpAsk")') is True, ask(host, 'document.body.innerText.replace(/\\s+/g," ").slice(0,200)'))
     ok('a double tap does not end the game: it is still running', ask(host, RUNNING) is True)
     ok('the button says what the next tap does: Tap again to end the game', ask(host, LABEL) == 'Tap again to end the game', ask(host, LABEL))
+    ask(host, 'document.getElementById("endGameBtn").scrollIntoView({block:"center"}); true'); time.sleep(0.3)
     shot(host, 'musical-endgame-armed')
     tap(host, 'document.getElementById("endGameBtn").click();')
     ok('a second, deliberate tap ends the game and the console answers', until(host, '!(' + RUNNING + ')', 6) is True and alive(host)

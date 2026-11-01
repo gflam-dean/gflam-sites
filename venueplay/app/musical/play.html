@@ -31,8 +31,15 @@
   .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
   .brand{display:flex;align-items:center;justify-content:center;gap:8px}
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
-  .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
+  /* THE GAME NAME IS NEVER CUT (queued fault, 1 Nov 2026). With the new wordmark the brand was one line of
+     inline text, and at 320 wide (176px between the corners) "Musical Bingo" was cut. The wordmark and the
+     name are now two whole pieces that sit side by side when they fit and stack, centred, when they do not,
+     and the name steps its type down a little on the narrowest phones rather than ever being clipped. */
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:6px;row-gap:3px;text-align:center;min-width:0;max-width:100%}
+  .brand .word svg{flex:none}
+  .brand .nw{white-space:nowrap;flex:none}   /* the game name is one whole piece, never split or ellipsed */
+  @media (max-width:340px){ .brand .nw{font-size:15px} }
   .brand .div{width:1px;height:16px;background:var(--line)}
   .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
   .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
