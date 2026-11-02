@@ -274,7 +274,9 @@ def main():
         for (w, h) in RING_SIZES:
             for mode, q in (('a new set', ''), ('an old set (?oldtv=68)', '&oldtv=68')):
                 print('\nTRIVIA COUNTDOWN RING at %dx%d, %s' % (w, h, mode))
-                got = load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + q, w, h, [('question', 7300, 'tvQ')], probe=RING_PROBE)
+                # 3.5 s (3 Nov 2026): with ?sting=0 the demo's first question is up 0.9 s to 6.1 s and the reveal
+                # lands at 7.1 s, so the old 7.3 s photographed the reveal once the show went off by default.
+                got = load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + q, w, h, [('question', 3500, 'tvQ')], probe=RING_PROBE)
                 m = got.get('question', (b'', {}))[1]
                 tag = 'trivia countdown, %dx%d, %s' % (w, h, mode)
                 ok(tag + ': the question wall is on air', 'tvQ' in (m.get('layers') or []), m.get('layers'))
