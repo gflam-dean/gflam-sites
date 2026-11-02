@@ -146,6 +146,9 @@ new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.add
 def handover(r, pending_pos):
     print('\n3. HANDOVER: a real venue\'s first load, "Setting up this screen" to the venue\'s name')
     slug = r.W.info['slug']
+    # The venue has a logo of its own, so the card can be seen NOT to carry it (Dean's open question, default off).
+    r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': slug, 'slides': [], 'raffle': None,
+                                  'logo_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg'}], replace=True)
     tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=W, height=H)
     ok('CONTROL: the wall comes up on the holding card', r.until(t, '!!document.querySelector("#tvAds .ad.show .tvhold")', 25) is True)
     got = r.until(t, '(function(){var s=document.querySelector("#tvAds .ad.show .tvline:not(.out)");return s&&s.textContent==="Test Alpha"&&!document.querySelector(".tvline.out")?s.textContent:"";})()', 30)
@@ -166,8 +169,9 @@ def handover(r, pending_pos):
     ok('the old idle card is gone: no Anton venue name, no "Ask at the bar what\'s on", no "Play on your phone"',
        r.ask(t, '!document.querySelector("#tvAds .vname,#tvAds .adbig,#tvAds .vline") && document.getElementById("tvAds").innerText.indexOf("Ask at the bar")<0 && document.getElementById("tvAds").innerText.indexOf("Play on your phone")<0') is True)
     f = look(r, t, '#tvFloor')
-    ok('the floor under the slides is the same logo in the same place, still, with nothing under it',
-       f.get('logo') and v.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(f['logo'], v['logo'])) and f.get('anim') == 'none' and f.get('line') == '' and f.get('bgc') == 'rgb(10, 10, 11)', f)
+    ok('the floor under the slides is the same logo in the same place, still, with the venue\'s name under it',
+       f.get('logo') and v.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(f['logo'], v['logo'])) and f.get('anim') == 'none' and f.get('line') == 'Test Alpha' and f.get('bgc') == 'rgb(10, 10, 11)', f)
+    ok('the venue\'s own logo is not on the card or the floor (HOLD_VENUE_LOGO, off until Dean says)', r.ask(t, '!document.querySelector(".tvh-vlogo")') is True)
     shot(r, t, 'tv-logo-3-venue-name')
     ok('no script errors on the TV', r.ask(t, 'window.__errs.length') == 0, r.ask(t, 'JSON.stringify(window.__errs)'))
     r.close_tab(tid)
