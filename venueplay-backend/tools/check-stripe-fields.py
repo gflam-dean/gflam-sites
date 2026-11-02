@@ -267,6 +267,22 @@ def scan(files, real):
                 continue
             if kind not in real:
                 continue
+            # AN ARROW-FUNCTION PARAMETER IS ITS OWN VARIABLE, NOT A STRIPE OBJECT.
+            # 2 Nov 2026: the monthly report's "What you ran" table capitalised a word with
+            # .replace(/^./, (ch) => ch.toUpperCase()) and this check called it a read of
+            # charge.toUpperCase, so the live gate went red on a string. When the name is
+            # bound as an arrow parameter just before the read, it is a charge only if what
+            # the callback runs over says so (charges.data.map((ch) => ch.amount) still counts).
+            arrow_head = src[max(0, m.start() - 160):m.start()]
+            bind = None
+            for bm in re.finditer(r'(?:\(\s*(?:[A-Za-z_$][\w$]*\s*,\s*)*' + re.escape(var)
+                                  + r'\s*(?:,\s*[A-Za-z_$][\w$]*\s*)*\)|\b' + re.escape(var)
+                                  + r')\s*=>', arrow_head):
+                bind = bm
+            if bind is not None:
+                before = arrow_head[max(0, bind.start() - 60):bind.start()]
+                if kind not in before.lower():
+                    continue
             checked += 1
             keys_any = set().union(*[set(r) for r in real[kind]])
             if field not in keys_any:

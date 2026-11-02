@@ -14592,7 +14592,7 @@ async function vprEmailHtml(env, venue, rep, opts) {
     body += table(Object.keys(a.formats).sort((x, y) => a.formats[y].games - a.formats[x].games).map((f) => {
       const x = a.formats[f];
       const what = plural(x.nights, 'night', 'nights') + (x.games !== x.nights ? ', ' + plural(x.games, 'game', 'games') : '');
-      return row(vpaEsc(vpaFormatWord(f).replace(/^./, (ch) => ch.toUpperCase())) + (x.avg_players != null ? '<br><span style="color:' + DIM + ';font-size:12.5px">about '
+      return row(vpaEsc(vpaFormatWord(f).replace(/^./, (c) => c.toUpperCase())) + (x.avg_players != null ? '<br><span style="color:' + DIM + ';font-size:12.5px">about '
         + plural(x.avg_players, 'player', 'players') + ' a game</span>' : ''), what);
     }).join(''));
     const lines = [];
