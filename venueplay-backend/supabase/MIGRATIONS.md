@@ -368,7 +368,9 @@ console shows no custom option. After running, dump RLS-BASELINE.json (one new l
 Bingo email): `gflam_customers.unsubscribe_source` (text) and a partial index on `unsubscribed_at`. `gflam_customers` itself
 was created by hand on 24 Oct 2026 from ~/venue-enrich/oztix/RUN-ME-gflam-customers.sql (not in this folder; RLS on, no
 policies, service role only, unchanged here). Run BEFORE the touring-api build carrying `/unsubscribe` (it writes the column).
-No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature/gflam-one-click-unsub`. NOT RUN.
+No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature/gflam-one-click-unsub`, released on the
+unsubscribe train (train/unsub-27-oct). RUN on the live database: the 28 Oct unsubscribe audit found it live, and on 3 Nov 2026
+`gflam_customers?select=unsubscribe_source` answered 200 to the service key (one transaction, so the index came with it).
 Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
 (117 is fix/multi-raffle, unmerged; 118 is on main, above.)
 
