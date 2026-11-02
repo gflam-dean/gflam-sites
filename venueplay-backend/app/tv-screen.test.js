@@ -75,7 +75,7 @@ function grabBranch(marker){
 var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntries","entryClass","entryInner",
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
-            "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
+            "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","alignCorner","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
             "enterHolding","notePats","patName"];   // patName: the board names a venue's own pattern (24 Oct 2026)
 var SRC = {}, missing = [];

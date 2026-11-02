@@ -1,5 +1,5 @@
 {
-  "screens_fingerprint": "c9ffadd7de31",
+  "screens_fingerprint": "66a512db192c",
   "checked_on": "2026-11-02",
   "screens": [
     "venueplay/tv.html",
@@ -9,7 +9,7 @@
     "venueplay/app/members/screen.html"
   ],
   "per_screen": {
-    "venueplay/tv.html": "87a69713bc83",
+    "venueplay/tv.html": "48ade9e04a75",
     "venueplay/app/trivia/screen.html": "2e1111604ca9",
     "venueplay/app/musical/screen.html": "6af50139f119",
     "venueplay/app/raffle/screen.html": "747bb453c2b2",
