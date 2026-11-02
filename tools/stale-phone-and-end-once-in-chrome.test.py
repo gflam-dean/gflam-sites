@@ -54,7 +54,9 @@ SAY = r'''(function(code, payload){
   return true;
 })'''
 VIEW = '(function(){var v=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal"];for(var i=0;i<v.length;i++){var e=document.getElementById(v[i]);if(e&&!e.classList.contains("hidden"))return v[i];}return "";})()'
-STATUS = '(document.getElementById("pStatus")||{}).textContent||""'
+# In brackets, so STATUS==="..." compares the text. Without them it read as text||(""==="..."), the text itself,
+# which until() took as a pass the moment the phone said "Sending your answer" and ok() then failed (3 Nov 2026).
+STATUS = '((document.getElementById("pStatus")||{}).textContent||"")'
 
 
 def night(r, sid, gid, status_s, status_g, question=True):
