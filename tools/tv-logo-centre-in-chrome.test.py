@@ -25,6 +25,9 @@ game Worker in jsc, supabase-js stood in) and checks:
           own logo, the show landing on it, a wide logo putting it back, the square one again. The shared
           code is VPVenueLogo.alignMark in /app/vp-venuelogo.js; raffle and members draw call it the same way.
 
+The pages that play the start show are opened with &sting=1, so this holds whether the show is on or off
+by default (it is off by default from hotfix/sting-off-2nov).
+
 Takes the repo's heavy lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
     VP_SHOTS=/some/dir python3 tools/tv-logo-centre-in-chrome.test.py
@@ -142,7 +145,7 @@ def real():
         r.close_tab(t0)
 
         screen(r.base + '/logos/venue-tugun-bowls.png')
-        t1, tv1 = first_tv(r, '/tv?venue=' + slug, before='window.__vpStingManual=true;')
+        t1, tv1 = first_tv(r, '/tv?venue=' + slug + '&sting=1', before='window.__vpStingManual=true;')
         ok('SQUARE: the TV joins the lobby', lobby_up(r, tv1) is True, r.ask(tv1, MEASURE))
         r.until(tv1, '!!document.getElementById("tvCorner").getAttribute("data-drop")', 10)
         time.sleep(1.0)
@@ -172,7 +175,7 @@ def games():
     r = RIG.Rig()
     CORNER = '(document.querySelector(".tv-corner")||{getAttribute:function(){return null;}})'
     try:
-        for path, tag in (('/app/trivia/screen?demo=1', 'TRIVIA'), ('/app/musical/screen?demo=1', 'MUSICAL BINGO')):
+        for path, tag in (('/app/trivia/screen?demo=1&sting=1', 'TRIVIA'), ('/app/musical/screen?demo=1&sting=1', 'MUSICAL BINGO')):
             for (w, h) in ((1920, 1080), (1280, 720)):
                 print('\n%s: the game screen\'s own demo, Tugun\'s square crest, %dx%d' % (tag, w, h))
                 tid, sid = r.open(path, before='window.__vpStingManual=true;', width=w, height=h)
@@ -205,7 +208,7 @@ def demo(none_mark):
     try:
         for (w, h) in ((1920, 1080), (1280, 720)):
             print('\nDEMO: the sales-page demo TV, Tugun\'s square crest, %dx%d' % (w, h))
-            tid, sid = first_tv(r, '/tv?demo=1', before='window.__vpStingManual=true;', w=w, h=h)
+            tid, sid = first_tv(r, '/tv?demo=1&sting=1', before='window.__vpStingManual=true;', w=w, h=h)
             ok('%d: the logo is up and the corner moved before the show' % w, r.until(sid, '!!document.getElementById("tvCorner").getAttribute("data-drop")', 10) is True, r.ask(sid, MEASURE))
             pre = r.ask(sid, MEASURE) or {}
             ok('%d: "started" plays the show' % w, r.until(sid, 'window.VPSting && VPSting.playing()', 10) is True, r.ask(sid, '(window.VPSting?VPSting.stats():null)'))
