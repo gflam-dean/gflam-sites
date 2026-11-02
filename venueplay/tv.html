@@ -1661,13 +1661,27 @@
        its 0.8 s: GAME ON HERE flashing up mid-rotation every time a picture failed or the slides
        changed (Dean, 2 Nov 2026). The slide that should be on screen goes straight to full; only the
        hand-over between two slides, in advance(), fades, and it fades OVER the old one. */
+    /* AND A HAND-OVER ALREADY UNDER WAY IS LEFT TO FINISH. A rebuild that lands inside advance()'s
+       0.8 s fade (the screen refresh, the poll, the tab coming forward) found the new slide half way in
+       and took the old one away under it, so both sat at about half opacity and the floor showed through
+       (tools/tv-first-slide-in-chrome.test.py ROTATION, 2 Nov 2026). So while the slide on screen is
+       still arriving, the one it is fading in over stays lit underneath until it has. */
+    var arriving = false;
+    try{ arriving = !!slides[cur] && slides[cur].classList.contains("show") && +getComputedStyle(slides[cur]).opacity < 0.99; }catch(e){}
+    var under = [];
     slides.forEach(function(s,i){
       var on = (i===cur);
       if(on && !s.classList.contains("show")){
         try{ s.style.transition="none"; s.classList.add("show"); void s.offsetWidth; s.style.transition=""; }catch(e){ s.classList.add("show"); }
-      } else s.classList.toggle("show", on);
+      } else if(!on && arriving && s.classList.contains("show")) under.push(s);
+      else s.classList.toggle("show", on);
       s.style.zIndex = (on ? "2" : "1");
     });
+    if(under.length){
+      setTimeout(function(){   // its own timer: advance() and stopAds() own adFadeTimer
+        under.forEach(function(s){ if(s.style.zIndex!=="2") s.classList.remove("show"); });   // never one that has since come on top
+      }, 860);
+    }
     if(slides.length<2) return;
     /* CROSS-FADE, not fade-out-then-in.
        Both slides used to transition at the same moment: the outgoing fell from

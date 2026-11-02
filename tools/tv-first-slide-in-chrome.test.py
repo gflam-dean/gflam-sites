@@ -17,6 +17,9 @@ Worker in jsc, supabase-js stood in) at 1920x1080 and checks:
   ROTATION a broken picture, a good picture and a text slide, 3 s each: the same, over several laps, both
            good slides take their turn, the broken one is never lit and never rejoins the loop, and halfway
            through the venue edits a slide: the swap to the new set must not show the floor either.
+  REBUILD  a good picture and a text slide, 3 s each, and the wall rebuilt (buildAds + startAds, as the
+           screen refresh, the poll and the tab coming forward do) 60 ms into every hand-over, while the new
+           slide is still fading in: the floor must never show through (it did, on the ROTATION run, 2 Nov).
   SLOW     the venue's screen takes 6 s to answer: until it does, the wall and the floor under it say
            "Getting your screen ready", not the finished screen's line; then the venue's slide arrives.
   NO LINE  the venue's screen never answers: "Getting your screen ready" is gone by 23 s (time boxed, never
@@ -74,7 +77,8 @@ WATCH = r'''
     var what=lit.map(function(a){var i=a.querySelector(".adimg");return i?("IMG "+(i.style.backgroundImage||"")):("TEXT "+a.innerText.replace(/\s+/g," ").trim());}).join(" | ");
     var fl=document.getElementById("tvFloor"), fw="";
     if(fl){ fw=[].filter.call(fl.querySelectorAll(".fl-load,.fl-done"),function(e){return getComputedStyle(e).display!=="none";}).map(function(e){return e.innerText.replace(/\s+/g," ").trim();}).join(" | ") || fl.innerText.replace(/\s+/g," ").trim(); }
-    window.__wall.push([Math.round(performance.now()), what, fw]);
+    var see=1; [].forEach.call(document.querySelectorAll("#tvAds .ad"),function(a){ see*=1-(+getComputedStyle(a).opacity||0); });
+    window.__wall.push([Math.round(performance.now()), what, fw, Math.round((1-see)*100)/100]);   // [3]: how much of the wall the slides cover
   }catch(e){} }, 100);
 })();'''
 # The two ten minute timers behind the 4:20pm floor, run every few seconds: the broken picture's retry
@@ -83,6 +87,18 @@ FAST_TIMERS = r'''
 (function(){ var st=window.setTimeout, si=window.setInterval;
   window.setTimeout=function(f,ms){ try{ if(ms===600000 && typeof f==="function" && /retryBadImg|BAD_IMG/.test(String(f)+(f.name||""))) ms=2500; }catch(e){} return st.apply(this,[f,ms].concat([].slice.call(arguments,2))); };
   window.setInterval=function(f,ms){ try{ if(ms===600000 && typeof f==="function" && /loadScreen\(/.test(String(f))) ms=3500; }catch(e){} return si.apply(this,[f,ms].concat([].slice.call(arguments,2))); };
+})();'''
+# 60 ms into every hand-over (a slide given "show" while it is still see-through), the wall is rebuilt the
+# way the tab coming forward rebuilds it: tv.html's visibilitychange runs buildAds() and startAds().
+MID_FADE = r'''
+(function(){ window.__midFade=0;
+  document.addEventListener("DOMContentLoaded", function(){ try{
+    new MutationObserver(function(ms){ ms.forEach(function(m){ var a=m.target;
+      if(!a.classList || !a.classList.contains("ad") || !a.classList.contains("show") || /show/.test(m.oldValue||"")) return;
+      if(+getComputedStyle(a).opacity > 0.3) return;
+      setTimeout(function(){ if(+getComputedStyle(a).opacity < 0.9){ window.__midFade++; document.dispatchEvent(new Event("visibilitychange")); } }, 60);
+    }); }).observe(document.getElementById("tvAds"), { subtree:true, attributes:true, attributeFilter:["class"], attributeOldValue:true });
+  }catch(e){} });
 })();'''
 CONFIRMED = 'try{localStorage.setItem("vpTvVenue",%s);localStorage.setItem("vpTvConfirmed",%s);}catch(e){}'
 
@@ -102,20 +118,20 @@ def main():
         good = r.base + '/logos/ad-slides/tugun-tuesday.jpg'
         broken = r.base + '/logos/ad-slides/no-such-picture-here.jpg'
 
-        def watch_scene(name, slides, secs, want_both=False, change=None):
+        def watch_scene(name, slides, secs, want_both=False, change=None, extra='', broken=True):
             row = lambda sl: [{'venue_id': r.W.info['venue'], 'slug': slug, 'logo_url': None, 'raffle': None, 'slides': sl}]
             r.W.seed('vp_venue_screen', row(slides), replace=True)
-            tid, sid = r.open('/tv?venue=' + slug, before=FAST_TIMERS + WATCH, width=1920, height=1080)
+            tid, sid = r.open('/tv?venue=' + slug, before=FAST_TIMERS + WATCH + extra, width=1920, height=1080)
             if change:   # the venue edits its slides mid-rotation: the next screen refresh swaps the new set in
                 time.sleep(secs / 2.0); r.W.seed('vp_venue_screen', row(change), replace=True); time.sleep(secs / 2.0)
             else:
                 time.sleep(secs)
             w = wall(r, sid)
             first = next((x[0] for x in w if own(x[1])), None)
-            gaps = [x for x in w if first is not None and x[0] >= first and not own(x[1])]
+            gaps = [x for x in w if first is not None and x[0] >= first and (not own(x[1]) or x[3] < 0.9)]   # a slide lit, and the floor not showing through
             print('  %s: first of the venue\'s own slides lit at %s ms (limit %d), %d samples over %.0f s' % (name, first, FIRST_LIMIT_MS, len(w), secs))
             ok('%s: one of the venue\'s own slides is lit within %d ms of load' % (name, FIRST_LIMIT_MS), first is not None and first <= FIRST_LIMIT_MS, [first, w[:2]])
-            ok('%s: once a slide has painted, the floor never shows again (and nothing else stands in)' % name,
+            ok('%s: once a slide has painted, the floor never shows again, not even through a fade (and nothing else stands in)' % name,
                len(w) > secs * 7 and first is not None and not gaps, [len(w), gaps[:3]])
             ok('%s: the broken picture is never the slide lit' % name, not any('no-such-picture-here' in x[1] for x in w),
                [x for x in w if 'no-such-picture-here' in x[1]][:2])
@@ -127,8 +143,12 @@ def main():
                first is not None and not [t for t in bad_in if t > first], [first, bad_in])
             if change:
                 ok('%s: the edited slides went up (the refresh swapped them in)' % name, any('THURSDAY' in x[1].upper() for x in w), sorted(set(x[1][:50] for x in w)))
-            retried = r.ask(sid, 'performance.getEntriesByType("resource").filter(function(e){return /no-such-picture-here/.test(e.name);}).length')
-            ok('%s: the broken picture was tried again in that time (the retry ran)' % name, isinstance(retried, int) and retried >= 2, retried)
+            if extra:
+                n = r.ask(sid, 'window.__midFade||0')
+                ok('%s: the wall really was rebuilt mid hand-over, again and again' % name, isinstance(n, int) and n >= 3, n)
+            if broken:
+              retried = r.ask(sid, 'performance.getEntriesByType("resource").filter(function(e){return /no-such-picture-here/.test(e.name);}).length')
+              ok('%s: the broken picture was tried again in that time (the retry ran)' % name, isinstance(retried, int) and retried >= 2, retried)
             ok('%s: no script errors on the TV' % name, r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-first-slide-%s-1920.jpg' % name.lower()))
             r.close_tab(tid)
@@ -143,6 +163,9 @@ def main():
                     change=[{'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 3},
                             {'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 3},
                             {'head': 'Trivia every Thursday', 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 3}])
+        print('\nREBUILD: the wall rebuilt 60 ms into every hand-over, while the new slide is still fading in')
+        watch_scene('REBUILD', [{'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 3},
+                                {'head': TEXT_HEAD, 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 3}], 16, want_both=True, extra=MID_FADE, broken=False)
         r.close()
 
         print('\nSLOW: the venue\'s screen takes 6 seconds to answer')
