@@ -300,6 +300,8 @@
     try { w.addEventListener("vp-sting-done", go); } catch (e) {}
     try { w.addEventListener("resize", go, { passive: true }); } catch (e) {}
     try { if (img) img.addEventListener("load", go); } catch (e) {}
+    /* and when the web fonts land: the corner's rows re-flow and the mark inside it moves a few px */
+    try { if (d.fonts) { d.fonts.addEventListener("loadingdone", go); if (d.fonts.ready) d.fonts.ready.then(go); } } catch (e) {}
   }
   function keepAligned(img, corner, has) {
     var go = function () { alignMark(corner, img, typeof has === "function" ? has() : true); };
