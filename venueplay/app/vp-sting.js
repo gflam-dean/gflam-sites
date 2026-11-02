@@ -3,7 +3,9 @@
    played out of place live (on the home page demo TV "LET'S PLAY" sat off to the right and "TRIVIA" was
    huge and clipped off the frame; Dean saw it wrong on a real show the same night: "This is embarrassing
    now"). It plays only where a page's address has ?sting=1 (a TV with ?sting=1 passes it on to the game
-   screen in its frame), until its layout is fixed and Dean says it goes back on.
+   screen in its frame), until Dean says it goes back on. The layout fault is fixed (3 Nov 2026: fit() scaled
+   el.stage, which never existed, so the 1920x1080 stage was never fitted to the window; tools/tv-sting-in-chrome
+   section 8 measures the painted words inside the window at four sizes).
 
    One copy for every screen. A page calls VPSting.start({words, layout}) when its game starts and
    VPSting.stop("why") when its first real content arrives (a ball, a question, a song, a draw);
@@ -90,7 +92,7 @@
   function fit(){
     var W=innerWidth, H=innerHeight, s=Math.min(W/1920,H/1080);
     stage={ s:s, x:(W-1920*s)/2, y:(H-1080*s)/2 };
-    if(el.stage) el.stage.style.transform="translate("+stage.x+"px,"+stage.y+"px) scale("+s+")";
+    if(el.vpsStage) el.vpsStage.style.transform="translate("+stage.x+"px,"+stage.y+"px) scale("+s+")";   // el keys are the element ids (build); el.stage never existed, so the 1920x1080 stage went unscaled on every other size until 3 Nov 2026
   }
   function build(){
     root=document.createElement("div"); root.id="vpSting";
