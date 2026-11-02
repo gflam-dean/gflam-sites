@@ -30,6 +30,11 @@ to play nothing and behave as they did before the show. On the rig in tools/brow
   7. The phone show (?sting=1) ends in the page's own header logo (bingo, trivia, musical bingo; 320, 375, 390, 430
      wide and sideways): the wordmark lands on it within 2px, then hands over to it; cut short, the
      header logo is given back; under prefers-reduced-motion it is the simple fade.
+  8. The TV show fits the screen it is on (3 Nov 2026: the stage was never scaled, so on any window that was
+     not exactly 1920x1080 "LET'S PLAY" sat off to the right and "TRIVIA" was huge and clipped). On the real
+     trivia screen and bingo TV demos at 1280x720, 1920x969 (a 1080p browser window), 1920x1080 and 390x844,
+     and the phone show at 390x844: the painted LET'S PLAY and game-name text sit wholly inside the window,
+     centred, and the 16:9 stage is painted as the biggest box that fits, centred.
 
     python3 tools/tv-sting-in-chrome.test.py       screenshots go to $VP_SHOTS if set
 """
@@ -337,11 +342,78 @@ def phone_landing():
         r.close()
 
 
+FIT_SIZES = ((1280, 720), (1920, 969), (1920, 1080), (390, 844))
+FIT_PAGES = (('/app/trivia/screen?demo=1&sting=1', 'trivia screen', 'TRIVIA'), ('/tv?demo=1&sting=1', 'bingo TV', 'BINGO'))
+# The painted text, not the boxes around it: a Range over each line's text gives the rect the glyphs occupy,
+# after every transform (the stage's scale and the line's own slam). Read at 0.9 s, when both lines are in.
+FIT = r"""(function(ids){
+  function box(e){ if(!e) return null; var g=document.createRange(); g.selectNodeContents(e); var b=g.getBoundingClientRect();
+    return {text:e.textContent.replace(/\s+/g," ").trim(), l:b.left, t:b.top, r:b.right, b:b.bottom, w:b.width, h:b.height,
+            op:+getComputedStyle(e.closest(".vps-t,.vpp-t")||e).opacity}; }
+  var W=innerWidth, H=innerHeight, out={W:W, H:H, lines:ids.map(function(i){ return box(document.getElementById(i)); })};
+  var st=document.getElementById("vpsStage"); if(st){ var b=st.getBoundingClientRect(); out.stage=[b.left,b.top,b.width,b.height]; }
+  return out;
+})(%s)"""
+
+def fit_verdict(v, want_text, phone=False):
+    """'' when every line is painted, visible, inside the window and centred (and the stage is the fitted box), else why."""
+    if not isinstance(v, dict) or not v.get('lines'): return 'nothing measured'
+    W, H = v['W'], v['H']
+    for ln, want in zip(v['lines'], want_text):
+        if not ln: return 'a line is missing'
+        if want and ln['text'] != want: return 'shows %r, wanted %r' % (ln['text'], want)
+        if ln['w'] < 10 or ln['h'] < 10 or ln['op'] < 0.5: return '%r is not painted (%sx%s, opacity %s)' % (ln['text'], round(ln['w']), round(ln['h']), ln['op'])
+        if ln['l'] < -1 or ln['t'] < -1 or ln['r'] > W + 1 or ln['b'] > H + 1:
+            return '%r runs off the %dx%d window: left %d top %d right %d bottom %d' % (ln['text'], W, H, ln['l'], ln['t'], ln['r'], ln['b'])
+        if abs((ln['l'] + ln['r']) / 2 - W / 2) > W * 0.02:
+            return '%r is off centre: its middle at %d, the window\'s at %d' % (ln['text'], (ln['l'] + ln['r']) / 2, W / 2)
+    if not phone:
+        s = min(W / 1920.0, H / 1080.0); want = [(W - 1920 * s) / 2, (H - 1080 * s) / 2, 1920 * s, 1080 * s]
+        got = v.get('stage') or []
+        if len(got) != 4 or any(abs(a - b) > 2 for a, b in zip(got, want)):
+            return 'the 1920x1080 stage is painted at %s, the fitted box is %s' % ([round(x) for x in got], [round(x) for x in want])
+    return ''
+
+def show_fits():
+    print('\n8. The TV show fits the window it is on, at every size (3 Nov 2026)')
+    r = RIG.Rig()
+    try:
+        for path, what, game in FIT_PAGES:
+            for w, h in FIT_SIZES:
+                tag = '%s at %dx%d' % (what, w, h)
+                tid, sid = r.open(path, before='window.__vpStingManual=true;', width=w, height=h)
+                try:
+                    if r.until(sid, 'window.VPSting && VPSting.playing()', 15) is not True:
+                        ok(tag + ': the show starts', False, r.ask(sid, STATS)); continue
+                    # one ask: step to 0.9 s and measure before the demo's first content can end the show
+                    v = r.ask(sid, 'VPSting.frame(0.9) && ' + FIT % json.dumps(['vpsL1', 'vpsL2s']))
+                    why = fit_verdict(v, ['LET\u2019S PLAY', game])
+                    ok(tag + ': LET\'S PLAY and ' + game + ' are painted wholly inside the window, centred, on the fitted stage', why == '', why + '   ' + json.dumps(v)[:200])
+                    shot(r, sid, 'sting-8-%s-%dx%d' % (what.replace(' ', '-'), w, h))
+                finally:
+                    r.close_tab(tid)
+        # the phone's own show (portrait, laid out from the window), on the bingo phone's demo, at 390x844
+        tid, sid = r.open('/play?demo=1&sting=1', before='window.__vpStingManual=true;', width=390, height=844)
+        try:
+            r.until(sid, 'document.readyState==="complete" && !!window.VPSting', 15); time.sleep(1.5)
+            if not r.ask(sid, 'VPSting.playing()'):
+                r.ask(sid, 'VPSting.start({layout:"phone", words:VPSting.phoneWords("TRIVIA","")}); true')
+            v = r.ask(sid, 'VPSting.playing() && VPSting.frame(0.8) && ' + FIT % json.dumps(['vppL1', 'vppL2s']))
+            why = fit_verdict(v, ['', ''], phone=True)
+            ok('phone show at 390x844: both lines are painted wholly inside the screen, centred', why == '', why + '   ' + json.dumps(v)[:200])
+            shot(r, sid, 'sting-8-phone-390x844')
+        finally:
+            r.close_tab(tid)
+    finally:
+        r.close()
+
+
 if __name__ == '__main__':
     full_show()
     ball_mid_show()
     other_games()
     phone_landing()
+    show_fits()
     # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)

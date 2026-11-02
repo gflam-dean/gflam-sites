@@ -980,7 +980,7 @@
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 93,
+  "checks": 102,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {

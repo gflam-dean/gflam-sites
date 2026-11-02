@@ -2907,6 +2907,9 @@ MUTATIONS = [
     ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', 'ox:r.left+(r.width-4676*k)/2+1*k,', 'ox:r.left+(r.width-4676*k)/2+1*k+6,', "in Chrome: the phone show's wordmark lands beside the header logo instead of on it"),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    headBack();   // the phone\'s header mark is always given back, however the show ended\n', '', "in Chrome: a phone show cut short leaves the header logo hidden"),
     ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    PH.head = REDUCED ? null : headMark();', '    PH.head = headMark();', "in Chrome: under reduced motion the phone show still flies into the header"),
+    # 3 Nov 2026: the TV show's stage is scaled to the window (fit() wrote el.stage; build() stores el.vpsStage), so on any
+    # window but 1920x1080 LET'S PLAY sat off to the right and the game name was huge and clipped. The bug, restored:
+    ('tv-sting-in-chrome.test.py', 'venueplay/app/vp-sting.js', '    if(el.vpsStage) el.vpsStage.style.transform=', '    if(el.stage) el.stage.style.transform=', "in Chrome: the TV show's LET'S PLAY and game name run off any window that is not 1920x1080"),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    var gt=$("greetToast"); if(gt) gt.classList.remove("show");   // a toast left from the last call must not sit over this winner\n', '', 'in Chrome: "Nothing was recorded" sits over the next winner on a phone'),
     ('caller-winner-in-chrome.test.py', 'venueplay/app/index.html', '    send({ t:"resume" });   // every TV back to the board', '', 'in Chrome: Not a win leaves the TV on BINGO?'),
     # 24 Oct 2026: a venue's own named bingo patterns (VP-DRAW-1.2, migration 118), and Back to the last game after a New game tapped by mistake.
