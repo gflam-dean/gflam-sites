@@ -66,6 +66,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         if u.path == '/__fake/supabase.js':
             pre = 'window.__FAKE_DB={};window.__FAKE_SIGNED_IN=false;window.__FAKE_UID="x";\n'
             return self.send(200, pre + io.open(os.path.join(ROOT, 'tools/browser-rig/fake-supabase.js'), encoding='utf-8').read(), 'application/javascript')
+        if u.path == '/__fixture/wrap.html':
+            return self.send(200, WRAP_FIXTURE, 'text/html; charset=utf-8')
         if u.path == '/__fake/qrcode.js':
             return self.send(200, 'window.QRCode={toCanvas:function(c,t,o,cb){if(typeof o==="function")o(null);else if(cb)cb(null);},toDataURL:function(t,o,cb){var f=typeof o==="function"?o:cb;if(f)f(null,"data:,");return Promise.resolve("data:,");}};', 'application/javascript')
         p = u.path
@@ -101,6 +103,19 @@ SCREENS = [
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),
 ]
 SIZES = [(1920, 1080), (1280, 720)]
+
+# A WRAPPING ROW, ON PURPOSE (3 Nov 2026). No wall wraps a flex row onto a second line at the sizes above
+# (checked at 1920, 1280 and 1024), so the fallback's line-break finder (fixWraps) had nothing to be judged
+# on: its mutation only ever went red because the Punters Reckon board's paint flickered. This is the
+# smallest wall that needs it: seven chips in a wrapping row with a row gap and a column gap, sized in cqw.
+WRAP_FIXTURE = '''<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#000}
+.wall{container-type:inline-size;width:100vw;height:100vh}
+.row{display:flex;flex-wrap:wrap;gap:2cqw 3cqw;width:46cqw;padding:2cqw}
+.chip{width:11cqw;height:5cqw;background:#FF1F8E}
+</style>
+<script src="/app/vp-oldtv.js"></script>
+</head><body><div class="wall"><div class="row" id="wrapRow">''' + ''.join('<div class="chip" id="chip%d"></div>' % i for i in range(7)) + '''</div></div></body></html>'''
 T0 = 1793500000000          # a fixed instant (Tue 3 Nov 2026), never the real clock
 
 # Math.random and crypto.getRandomValues seeded, the same in every load: the confetti, the raffle's
@@ -111,6 +126,16 @@ SEED = r'''(function(){ var s=20261101; function n(){ s=(s*1103515245+12345)%214
   var raf=0; window.requestAnimationFrame=function(cb){ raf++; return setTimeout(function(){ cb(performance.now()); }, 16); };
   window.cancelAnimationFrame=function(id){ clearTimeout(id); };
   try{ var C=window.crypto; C.getRandomValues=function(a){ for(var i=0;i<a.length;i++) a[i]=(n()*2+(n()&1))%Math.pow(2,8*a.BYTES_PER_ELEMENT); return a; }; }catch(e){}
+  /* NO CSS TRANSITIONS, IN EVERY LOAD ALIKE (3 Nov 2026). A transition runs on the compositor's real
+     clock, not the virtual one, and where it ends on a 3D layer is rasterised one of two ways at random:
+     the Punters Reckon board's flipped card backs (preserve-3d rotateX) painted their text a sub-pixel
+     apart from load to load, before and modern alike, with a warm reference and with a 3 s settle
+     (flake log 1 to 2 Nov, on main too; 8 loads in a row came out in two variants). Every state here is
+     read after the transition would have ended (FREEZE finishes them anyway), so the frames are the same
+     frames, and before, modern, units and old all get this, so the comparison stays to the pixel. No wall
+     waits on transitionend (checked 3 Nov). */
+  document.addEventListener("DOMContentLoaded", function(){ var s=document.createElement("style");
+    s.textContent="*,*::before,*::after{transition:none!important}"; document.head.appendChild(s); });
 })();'''
 
 FREEZE = r'''(function(){ var a=document.getAnimations?document.getAnimations():[];
@@ -227,9 +252,14 @@ def main():
                         # between two loads of ITSELF. A difference it does make anyway is not ours.
                         again = before2(name)
                         n2, bb2 = pixels_differ(pb, again) if again else (-1, None)
+                        # Modern equal TO THE PIXEL to a second load of the old page: the first reference
+                        # was the odd paint, not modern (3 Nov 2026). Still pixel-exact, against a real load.
+                        n3, _bb3 = pixels_differ(again, pm) if again else (-1, None)
                         inside = bool(bb and bb2 and bb[0] >= bb2[0] and bb[1] >= bb2[1] and bb[2] <= bb2[2] and bb[3] <= bb2[3])
                         ok(tag + ': a modern Chrome paints the page it painted before (it differs from itself only at %s)' % (bb2,),
-                           n2 > 0 and inside, '%s pixels differ in %s; two loads of the old page differ by %s in %s' % (n, bb, n2, bb2))
+                           n3 == 0 or (n2 > 0 and inside),
+                           '%s pixels differ in %s; two loads of the old page differ by %s in %s; modern vs the second load differ by %s'
+                           % (n, bb, n2, bb2, n3))
                     else:
                         ok(tag + ': a modern Chrome paints exactly the page it painted before (pixel diff 0)', True)
                     ok(tag + ': and the fallback did nothing there', (mm.get('old') or {}).get('active') is False, mm.get('old'))
@@ -258,6 +288,19 @@ def main():
                     if SHOTS and po:
                         open(os.path.join(SHOTS, 'oldtv-%s-%s-%d.png' % (label.split(',')[0].replace(' ', '-'), name.replace(' ', '-'), w)), 'wb').write(po)
                         open(os.path.join(SHOTS, 'modern-%s-%s-%d.png' % (label.split(',')[0].replace(' ', '-'), name.replace(' ', '-'), w)), 'wb').write(pm)
+        # THE WRAPPING ROW: an old set's margins must put every chip where the gaps put it on a new set.
+        for (w, h) in SIZES:
+            tag = 'a wrapping row of chips, %dx%d' % (w, h)
+            st = [('wrap', 500, None)]
+            pm, mm = load(B, base, '/__fixture/wrap.html', w, h, st)['wrap']
+            po, mo = load(B, base, '/__fixture/wrap.html?oldtv=68', w, h, st)['wrap']
+            chips = [e for e in (mm.get('els') or []) if e and str(e[6]).startswith('#chip')]
+            ok(tag + ': the row really wraps on a new set (three lines)', len(set(e[1] for e in chips)) == 3, sorted(set(e[1] for e in chips)))
+            ok(tag + ': ?oldtv=68 ran', (mo.get('old') or {}).get('force') == '68', mo.get('old'))
+            rows = [r for r in compare(mm, mo) if str(r[1]).startswith('#chip')]
+            far = [r for r in rows if r[2] > 1.0]
+            ok(tag + ': every chip of the second and third lines sits within 1px of where the gap puts it',
+               len(rows) == 7 and not far, ['%s %.1fpx' % (r[1], r[2]) for r in far[:4]] or len(rows))
     finally:
         try: B.close()
         except Exception: pass

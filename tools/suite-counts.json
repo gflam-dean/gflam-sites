@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
-  "checks": 472,
+  "checks": 478,
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {

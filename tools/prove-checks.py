@@ -6442,7 +6442,7 @@ MUTATIONS = [
      'aspect-ratio is dropped with nothing in its place, so the QR square and the bingo balls lose their height'),
     ('old-tv-in-chrome.test.py', 'venueplay/app/vp-oldtv.js',
      'if (prev && (r.left < prev.left - 0.5 || r.top >= prev.bottom - 0.5)) {', 'if (prev && !w) {',
-     'a wrapping row never finds its line breaks: the set-up card\'s second half sits indented against the first'),
+     'a wrapping row never finds its line breaks: the second line of a wrapping row sits indented against the first'),
     ('old-tv-in-chrome.test.py', 'venueplay/app/raffle/screen.html',
      '</style>\n<script src="/app/vp-oldtv.js"></script>\n', '</style>\n',
      'the raffle wall stops loading the fallback, so an old set draws it unstyled'),
