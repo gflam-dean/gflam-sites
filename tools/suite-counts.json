@@ -840,7 +840,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 105,
+  "checks": 111,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {

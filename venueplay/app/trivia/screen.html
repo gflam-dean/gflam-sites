@@ -577,7 +577,7 @@
       row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
       container.appendChild(row);
     }
-    if(!n){ container.appendChild(el("div","jsub","No scores yet")); }
+    /* No scores: the strip stays empty. Never empty-state words on a venue TV (Dean, 3 Nov 2026). */
   }
 
   /* FULL STANDINGS, A PAGE AT A TIME. Six rows fit a 1080p wall, so with 15 teams the ones in
@@ -601,7 +601,7 @@
         row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
         box.appendChild(row);
       }
-      if(!rows.length){ box.appendChild(el("div","jsub","No scores yet")); }
+      /* No rows: the board stays empty under its title, with no empty-state words on the wall. */
       var ph=$("tvBoardPage");
       if(ph){ if(pages>1){ ph.textContent="Teams "+(start+1)+" to "+end+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
     }
