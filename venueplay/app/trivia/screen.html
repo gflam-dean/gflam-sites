@@ -1043,12 +1043,13 @@
   }
   function paintVenueLogo(url){
     var el=document.getElementById("venueLogo");
-    if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
+    if(!url){ if(el) el.style.display="none"; try{ VPVenueLogo.alignMark(document.querySelector(".tv-corner"), el, false); }catch(e){} return; }   // logo removed: take it off the wall, and the venueplay mark back to its place
     if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
       el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
       document.body.appendChild(el); }
     el.src=url; el.style.display="block";
     if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+    try{ VPVenueLogo.keepAligned(el, document.querySelector(".tv-corner"), function(){ return el.style.display!=="none"; }); }catch(e){}   /* the venueplay mark centred on a square logo (2 Nov 2026) */
   }
   (function venueLogo(){
     if(!VENUE_SLUG) return;

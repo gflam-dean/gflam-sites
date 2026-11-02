@@ -2048,6 +2048,13 @@
          enterAds hides anyway, so this is belt and braces. */
       if(venueLogoUrl){ var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none"; }
     }catch(e){}
+    alignCorner();
+  }
+  /* THE TWO LOGOS SIT ON ONE LINE (Dean, 2 Nov 2026): the venueplay mark drops to be centred on a square or
+     tall venue logo. The measuring is VPVenueLogo.alignMark in /app/vp-venuelogo.js, the one copy every TV
+     screen uses. Here on every mode change (applyVenueLogo) and every time the logo is sized. */
+  function alignCorner(){
+    try{ if(typeof VPVenueLogo==="object") VPVenueLogo.alignMark(document.getElementById("tvCorner"), document.getElementById("venueLogo"), !!venueLogoUrl); }catch(e){}
   }
   var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
   function gameLabel(k){
@@ -3008,6 +3015,8 @@
           document.body.appendChild(el); }
         el.src=venueLogoUrl;
         if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+        if(!el.__vpAlignWired){ el.__vpAlignWired=true;   /* after vp-venuelogo has sized it: the two logos on one line */
+          try{ el.addEventListener("vp-logo-sized", alignCorner); }catch(e){} }
       }
       /* A logo says which venue this is better than a caption does, so the small name under the
          VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the
