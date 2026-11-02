@@ -258,7 +258,7 @@ def the_show():
         k = r.ask(s, '[].map.call(document.querySelectorAll(".vpe-row"), function(r){ return +r.getAttribute("data-k"); })') or []
         ok('a long team name is scaled down to fit its row, a short one is not', len(k) == 3 and k[0] < 0.99 and k[1] == 1, k)
         sh = r.ask(s, SHOWN) or {}
-        ok('a tie shares its place: 1, 2, 2', [x[0] for x in sh.get('rows', [])] == ['1', '2', '2'], sh)
+        ok('each row keeps the place it was given, a tie included: 1, 2, 2', [x[0] for x in sh.get('rows', [])] == ['1', '2', '2'], sh)
         ok('a long venue name is cut to fit with an ellipsis', (sh.get('venue') or '').endswith('…') and len(sh.get('venue') or '') <= 40, sh.get('venue'))
         r.ask(s, 'VPEndShow.stop("test"); true')
         r.ask(s, 'VPEndShow.play({kind:"bingo", big:"<img src=x onerror=window.__pwn=1>", sub:"<b>x</b>", venue:"<script>x</script>"}); VPEndShow.frame(1.9); true')
