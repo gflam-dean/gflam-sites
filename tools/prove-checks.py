@@ -6468,6 +6468,16 @@ MUTATIONS = [
     ('old-tv-in-chrome.test.py', 'venueplay/app/raffle/screen.html',
      '</style>\n<script src="/app/vp-oldtv.js"></script>\n', '</style>\n',
      'the raffle wall stops loading the fallback, so an old set draws it unstyled'),
+    # THE TRIVIA COUNTDOWN SAYS "SECS", 2 Nov 2026 (Dean): the label must sit inside the ring's inner circle.
+    ('old-tv-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     "letter-spacing:.14em;font-size:1.1cqw;line-height:1;color:var(--faint);margin-top:.35cqw", "letter-spacing:.14em;font-size:2.6cqw;line-height:1;color:var(--faint);margin-top:.35cqw",
+     'the SECS label under the trivia countdown is set so big it runs into the ring\'s stroke'),
+    ('old-tv-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     '<span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span>', '<span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl"></span>',
+     'the trivia countdown goes back to a bare number with no SECS under it'),
+    ('old-tv-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     '.ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;', '.ringwrap .rnum{position:absolute;inset:0;display:flex;',
+     'SECS sits beside the number instead of under it'),
     # EVERY CDN SCRIPT IS PINNED, 1 Nov 2026: supabase-js@2 was whatever 2.x jsdelivr called newest that day.
     ('pinned-cdn.test.py', 'venueplay/app/go.html',
      '"/app/vendor/supabase-js-2.118.0.min.js"', '"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"',

@@ -160,7 +160,7 @@ MEASURE = r'''(function(){
 })()'''
 
 
-def load(B, base, path, w, h, states):
+def load(B, base, path, w, h, states, probe=None):
     """One tab under the virtual clock: advance to each state's moment, paint it, measure it."""
     tid = B.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
     sid = B.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
@@ -188,10 +188,57 @@ def load(B, base, path, w, h, states):
             png = base64.b64decode(B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)['data'])
             r = B.evaluate(sid, MEASURE, 30)
             m = json.loads(r['result']['value']) if r and r.get('result', {}).get('value') else {}
+            if probe:
+                r = B.evaluate(sid, probe, 30)
+                m['probe'] = json.loads(r['result']['value']) if r and r.get('result', {}).get('value') else None
             out[name] = (png, m)
     finally:
         B.close_tab(tid)
     return out
+
+
+# THE TRIVIA COUNTDOWN SAYS "SECS" (Dean, 2 Nov 2026). A bare "13" in a ring did not read as a timer,
+# so the ring now holds the number with "SECS" under it. Both must sit inside the ring's inner circle
+# (the circle is r=44 of a 100 viewBox with an 8 stroke, so its inner edge is 40% of the ring's width
+# from the centre) on every wall a venue has: 1920x1080, 1280x720 and an old 1024x768 set, on a new
+# engine and through the old-engine fallback, in the normal layout and the picture round's smaller ring.
+RING_SIZES = [(1920, 1080), (1280, 720), (1024, 768)]
+RING_PROBE = r'''(function(){
+  var q=document.getElementById("tvQ"), out={}, had=q.classList.contains("pic");
+  function box(e){ var r=e.getBoundingClientRect(); return [r.left,r.top,r.right,r.bottom]; }
+  function m(){ var s=document.querySelector("#tvQ .ringwrap svg"), n=document.getElementById("tvCdNum"), l=document.getElementById("tvCdLbl");
+    if(!s||!n||!l) return null; var cs=getComputedStyle(l);
+    return {ring:box(s), num:box(n), lbl:box(l), text:(l.textContent||"").trim(), tt:cs.textTransform, ff:cs.fontFamily,
+            shown:cs.display!=="none"&&cs.visibility!=="hidden"&&parseFloat(cs.opacity)>0, numtext:n.textContent}; }
+  q.classList.remove("pic"); out.plain=m();
+  q.classList.add("pic"); out.pic=m();
+  if(!had) q.classList.remove("pic");
+  return JSON.stringify(out);
+})()'''
+
+
+def ring_checks(tag, p):
+    """The SECS label and the number, against the ring's inner circle, for one measured wall."""
+    for lay in ('plain', 'pic'):
+        g = (p or {}).get(lay)
+        t = '%s, %s layout' % (tag, 'picture round' if lay == 'pic' else 'question')
+        ok(t + ': the ring has its number and a SECS label', bool(g) and g['text'].lower() == 'secs' and g['tt'] == 'uppercase'
+           and 'Hanken' in g['ff'] and g['shown'], g)
+        if not g: continue
+        L, T, R, Bm = g['ring']; cx, cy = (L + R) / 2, (T + Bm) / 2; inner = 0.40 * (R - L)
+        def corners_in(b):
+            return max(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 for x in (b[0], b[2]) for y in (b[1], b[3]))
+        for what, b in (('the SECS label', g['lbl']), ('the number', g['num'])):
+            far = corners_in(b)
+            ok(t + ": %s sits wholly inside the ring's inner circle (corner %.1fpx from centre, inner edge %.1fpx)" % (what, far, inner),
+               b[2] > b[0] and b[3] > b[1] and far <= inner - 1, b)
+        n, lb = g['num'], g['lbl']
+        ok(t + ': SECS sits under the number, not over it', lb[1] >= n[3] - 0.5, 'number %s, label %s' % (n, lb))
+        tol = max(1.5, 0.02 * (R - L))
+        ok(t + ': the number and SECS are centred across the ring', abs((n[0] + n[2]) / 2 - cx) <= tol and abs((lb[0] + lb[2]) / 2 - cx) <= tol,
+           'centre %.1f, number %.1f, label %.1f' % (cx, (n[0] + n[2]) / 2, (lb[0] + lb[2]) / 2))
+        ok(t + ': and centred as a pair top to bottom', abs((n[1] + lb[3]) / 2 - cy) <= tol,
+           'pair middle %.1f, ring centre %.1f' % ((n[1] + lb[3]) / 2, cy))
 
 
 def pixels_differ(a, b):
@@ -224,6 +271,14 @@ def main():
     base = 'http://127.0.0.1:%d' % srv.server_address[1]
     B = VL.Browser()
     try:
+        for (w, h) in RING_SIZES:
+            for mode, q in (('a new set', ''), ('an old set (?oldtv=68)', '&oldtv=68')):
+                print('\nTRIVIA COUNTDOWN RING at %dx%d, %s' % (w, h, mode))
+                got = load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + q, w, h, [('question', 7300, 'tvQ')], probe=RING_PROBE)
+                m = got.get('question', (b'', {}))[1]
+                tag = 'trivia countdown, %dx%d, %s' % (w, h, mode)
+                ok(tag + ': the question wall is on air', 'tvQ' in (m.get('layers') or []), m.get('layers'))
+                ring_checks(tag, m.get('probe'))
         for label, path, states in SCREENS:
             for (w, h) in SIZES:
                 print('\n%s at %dx%d' % (label.upper(), w, h))
