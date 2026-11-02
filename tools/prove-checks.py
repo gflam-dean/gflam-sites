@@ -10300,6 +10300,21 @@ MUTATIONS = [
     ('reconnect-layout-in-chrome.test.py', 'venueplay/tv.html',
      'm({t:"winner", name:"Table 4", cardNo:47, prize:"$50 bar tab"});', 'm({t:"winner", name:"Table 4", prize:"$50 bar tab"});',
      'the demo winner screen says Card #000'),
+    # 3 Nov 2026: the live gate was red on main with "charge.toUpperCase is read but Stripe never
+    # sends it", a .replace(/^./, (ch) => ch.toUpperCase()) in the monthly venue report. The
+    # detector now knows a .replace callback's parameter is text. Proven both ways: the fix
+    # undone brings the false alarm back, and widening it or blinding the detector hides a real
+    # missing field.
+    ('stripe-fields-detector.test.py', 'venueplay-backend/tools/check-stripe-fields.py',
+     '                if bound_as_string_callback_param(src, m.start(), var):\n                    continue\n',
+     '',
+     'the gate goes red on main again because a .replace callback named ch is read as a Stripe charge'),
+    ('stripe-fields-detector.test.py', 'venueplay-backend/tools/check-stripe-fields.py',
+     "r'\\.replace(?:All)?\\s*\\('", "r'\\.(?:replace|map|forEach)(?:All)?\\s*\\('",
+     'every callback parameter is excused, so charges.data.map((ch) => ch.gone) reads as clean'),
+    ('stripe-fields-detector.test.py', 'venueplay-backend/tools/check-stripe-fields.py',
+     '            if field not in keys_any:\n', '            if False:\n',
+     'the detector reports no missing field at all, invoice.paid included, and the gate stays green'),
 ]
 
 
@@ -10354,6 +10369,15 @@ UNPROVABLE = {
 }
 
 MUTATIONS_LIVE = [
+    # A bare read of the field Stripe stopped sending (invoice.paid), put back into the billing
+    # Worker in the copy: the live Stripe sweep must name it. The sweep reads Stripe with the
+    # read-only key; nothing is deployed. (3 Nov 2026, after the venue report false alarm.)
+    ('no field is read that Stripe no longer sends',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    const lines = [];\n',
+     '    const lines = [];\n    const inv = a.invoice; const wasPaid = inv.paid; void wasPaid;\n',
+     'a bare invoice.paid read, null on every invoice since Basil, ships with a green gate'),
+
     # A policy vanishes from the BASELINE (the reading end), so live no longer matches it.
     ('row security, policies, grants and definer functions match RLS-BASELINE.json',
      'venueplay-backend/supabase/RLS-BASELINE.json',

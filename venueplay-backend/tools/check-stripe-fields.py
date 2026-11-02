@@ -209,38 +209,50 @@ def strip_comments(src):
     return ''.join(out)
 
 
-def main():
-    k = key()
-    real, notes = samples(k)
-    print()
-    print('EVERY STRIPE FIELD THIS CODE READS, AGAINST REAL OBJECTS')
-    for kind in sorted(set(list(real) + list(notes))):
-        if kind in real:
-            print('%s  %-16s %d real example(s), %d distinct key(s)%s'
-                  % (DIM, kind, len(real[kind]), len(set().union(*[set(r) for r in real[kind]])), OFF))
-        else:
-            print('%s  %-16s NOT CHECKED: %s%s' % (YEL, kind, notes[kind], OFF))
-    print()
+def bound_as_string_callback_param(src, pos, var):
+    """IS THIS NAME A STRING HERE, BECAUSE IT IS A .replace() CALLBACK'S OWN PARAMETER?
 
-    # THE PROBE. A field we KNOW Stripe no longer sends must be caught, or this tool is
-    # reporting a clean bill of health it never earned.
-    if 'invoice' in real:
-        inv_keys = set().union(*[set(r) for r in real['invoice']])
-        if 'paid' in inv_keys:
-            print('%sPROBE FAILED%s: invoice.paid is present on this API version, so the known '
-                  'case this tool was written for no longer applies. Re-aim it before trusting it.'
-                  % (RED, OFF))
-            return 2
-        print('%s  probe verified%s  invoice.paid really is absent, so a missing field is detectable'
-              % (DIM, OFF))
-    print()
+    3 Nov 2026: the monthly venue report capitalises a word with
+        vpaFormatWord(f).replace(/^./, (ch) => ch.toUpperCase())
+    and this tool read `ch` as a Stripe charge and turned the release gate red with
+    "charge.toUpperCase is read but Stripe never sends it". The callback of .replace() and
+    .replaceAll() is handed the MATCHED TEXT by the language itself, so a name bound as its
+    parameter is a string whatever it is called, and nothing read off it is a Stripe field.
 
+    DELIBERATELY NARROW. A name bound as the parameter of any OTHER callback is still judged:
+    charges.data.map((ch) => ch.amount) really is a Stripe charge, and skipping every arrow
+    parameter would have hidden exactly the reads this tool exists for. The rule is only
+    "we are still inside the arguments of a .replace( call, and one of its callback's
+    parameters is this name". Proven both ways in tools/stripe-fields-detector.test.py.
+    """
+    start = max(0, pos - 400)
+    head = src[start:pos]
+    for m in reversed(list(re.finditer(r'\.replace(?:All)?\s*\(', head))):
+        inner = head[m.end():]
+        depth, inside = 1, True
+        for c in inner:
+            if c in '([{':
+                depth += 1
+            elif c in ')]}':
+                depth -= 1
+                if depth == 0:
+                    inside = False
+                    break
+        if not inside:
+            continue        # that .replace( call closed before this read: not its callback
+        v = re.escape(var)
+        if re.search(r'(?:\(\s*(?:[A-Za-z_$][\w$]*\s*,\s*)*' + v + r'\s*(?:,[^()]*)?\)|(?<![\w$.])' + v + r')\s*=>', inner) \
+                or re.search(r'\bfunction\b\s*[\w$]*\s*\([^()]*(?<![\w$])' + v + r'(?![\w$])[^()]*\)', inner):
+            return True
+    return False
+
+
+def scan(files, real):
+    """Every bare read of a field Stripe does not send. files = [(rel, source text)];
+    real = {kind: [real objects]}. Pure, so tools/stripe-fields-detector.test.py can feed it
+    the exact shapes that once fooled it, with no Stripe call."""
     findings, checked = [], 0
-    for rel in SOURCES:
-        full = os.path.join(ROOT, rel)
-        if not os.path.isfile(full):
-            continue
-        raw = open(full, encoding='utf-8', errors='replace').read()
+    for rel, raw in files:
         # TWO PASSES, because the two ways of reading a field need OPPOSITE treatment.
         # inv.paid          -> judge on the string-stripped source ('invoice.paid' is an event)
         # inv.get('paid')   -> judge on the comment-stripped source ('paid' is the field)
@@ -281,10 +293,44 @@ def main():
                 assigned = tail.lstrip().startswith('=') and not tail.lstrip().startswith('==')
                 if guarded or assigned:
                     continue
+                if bound_as_string_callback_param(src, m.start(), var):
+                    continue
                 line = src.count('\n', 0, m.start()) + 1
                 seen.setdefault((kind, field), []).append(line)
         for (kind, field), lines in sorted(seen.items()):
             findings.append((rel, kind, field, lines))
+    return findings, checked
+
+
+def main():
+    k = key()
+    real, notes = samples(k)
+    print()
+    print('EVERY STRIPE FIELD THIS CODE READS, AGAINST REAL OBJECTS')
+    for kind in sorted(set(list(real) + list(notes))):
+        if kind in real:
+            print('%s  %-16s %d real example(s), %d distinct key(s)%s'
+                  % (DIM, kind, len(real[kind]), len(set().union(*[set(r) for r in real[kind]])), OFF))
+        else:
+            print('%s  %-16s NOT CHECKED: %s%s' % (YEL, kind, notes[kind], OFF))
+    print()
+
+    # THE PROBE. A field we KNOW Stripe no longer sends must be caught, or this tool is
+    # reporting a clean bill of health it never earned.
+    if 'invoice' in real:
+        inv_keys = set().union(*[set(r) for r in real['invoice']])
+        if 'paid' in inv_keys:
+            print('%sPROBE FAILED%s: invoice.paid is present on this API version, so the known '
+                  'case this tool was written for no longer applies. Re-aim it before trusting it.'
+                  % (RED, OFF))
+            return 2
+        print('%s  probe verified%s  invoice.paid really is absent, so a missing field is detectable'
+              % (DIM, OFF))
+    print()
+
+    findings, checked = scan(
+        [(rel, open(os.path.join(ROOT, rel), encoding='utf-8', errors='replace').read())
+         for rel in SOURCES if os.path.isfile(os.path.join(ROOT, rel))], real)
 
     if not checked:
         print('%sNOTHING WAS CHECKED%s. Either the sources moved or the pattern matches nothing, '

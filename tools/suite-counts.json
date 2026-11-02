@@ -303,6 +303,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/stripe-fields-detector.test.py": {
+  "checks": 14,
+  "counted_by": "lines"
+ },
  "tools/subscribe-in-chrome.test.py": {
   "checks": 74,
   "counted_by": "lines"
