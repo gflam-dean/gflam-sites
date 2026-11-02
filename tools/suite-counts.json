@@ -724,7 +724,7 @@
   "counted_by": "lines"
  },
  "tools/test-review-buttons.js": {
-  "checks": 89,
+  "checks": 107,
   "counted_by": "lines"
  },
  "tools/test-room-chatter-14-oct.js": {
