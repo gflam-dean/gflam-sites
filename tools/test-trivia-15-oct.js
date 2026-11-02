@@ -556,6 +556,98 @@ await (async function () {
   show('i. CONTROL: a phone on the name screen (not joined) is not joined by a rollcall', joins === 3, joins);
 })();
 
+/* ---- NOT TOLD THE NIGHT CHANGED: THE WORKER SAYS SO, AND THE PHONE HEALS (job list row 39, 3 Nov 2026) ----
+   The blocks above heal when the console names the night. A phone that was NOT told (a console page older
+   than those messages, a "started" it missed) still answered with the closed night's token: straight to the
+   Worker it was refused "Player is not in this game" and said so for the rest of the quiz; through the
+   answers room it was told "Answer in!" and dropped at Reveal. RUN the real answer, ansRoom, nightChanged,
+   dropStaleJoin and rejoinNow out of play.html against a Worker stub that refuses last night's token the
+   way the real one now does (403, rejoin:true; tools/test-stale-phone-and-end-once.js runs that half). */
+print('\nNOT TOLD THE NIGHT CHANGED: a refused stale token re-joins and the same tap goes again; the answers room is not used with one');
+await (async function () {
+  var store = { 'vp-ttoken-72USMR': 'old-token', 'vp-tsess-72USMR': 's-old' };
+  var ls = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
+  var P = { room: '72USMR', pid: 'p1', prPid: '', name: 'Test team', joined: true, token: 'old-token', sessionId: 's-old', gameId: 'g-new',
+            colour: true, total: 0, rank: 0, playersCount: 1, q: null, choice: null, locked: false, lastPts: 0, cdTimer: null, ended: false };
+  var AR = { room: null, hash: 'oldhash', gameId: '', waiting: {}, n: 0, off: false, asking: false };
+  var joins = 0, posts = [], dom = makeDom(), kicked = false, presenceAsked = [], connects = [], closed = 0;
+  function ensureJoined() {
+    joins++;
+    return Promise.resolve().then(function () { P.token = 'new-token'; P.sessionId = 's-new'; store['vp-ttoken-72USMR'] = 'new-token'; store['vp-tsess-72USMR'] = 's-new'; });
+  }
+  // The Worker, as it now answers: last night's token is refused with rejoin:true, tonight's is recorded.
+  function sendAnswer(gameId, i, qseq) {
+    posts.push({ game: gameId, i: i, qseq: qseq, token: P.token });
+    if (kicked) { var k = new Error('You have been removed from this game'); k.status = 403; return Promise.reject(k); }
+    if (P.token !== 'new-token') { var e = new Error('Player is not in this game'); e.status = 403; e.rejoin = true; return Promise.reject(e); }
+    return Promise.resolve({ ok: true, recorded: true });
+  }
+  var presence = { s_new: true };
+  function fetch(url) {
+    presenceAsked.push(url);
+    var s = (/[?&]s=([^&]+)/.exec(url) || [])[1];
+    var body = { answers: true };
+    if (s) body.session_ok = (s === 's-new');
+    return Promise.resolve({ ok: true, json: function () { return Promise.resolve(body); } });
+  }
+  var VPRoom = { connect: function (api, name) { connects.push({ name: name, token: P.token }); return { close: function () { closed++; }, state: function () { return 'open'; } }; } };
+  var src = 'var _prPhone=null, _rejoinP=null;\n' + liftAll(PLAY, ['onMsg', 'nightChanged', 'dropStaleJoin', 'rejoinNow', 'answer', 'ansRoom'], 'trivia/play.html') +
+            '\n; return { onMsg: onMsg, answer: answer, ansRoom: ansRoom };';
+  var env = { P: P, AR: AR, $: dom.$, window: { VPRoom: VPRoom }, VPRoom: VPRoom, VP_GAME_API: 'https://game.test', fetch: fetch, localStorage: ls, ensureJoined: ensureJoined,
+              ansHash: function () { if (P.token) AR.hash = 'h-' + P.token; },
+              prForMe: function () { return true; }, announce: function () {}, takeName: function () {}, useGame: function (id) { if (id) P.gameId = id; },
+              showWait: function () {}, sayAlive: function () {}, stopCd: function () {}, lockOut: function () {}, unpick: function () {}, tickCd: function () {},
+              showResult: function () {}, pullScore: function () {}, showFinal: function () {}, paintPicked: function () {}, send: function () {},
+              renderQuestion: function (m) { P.q = { qseq: m.qseq, options: m.options || [], endsAt: m.endsAt, restored: false }; P.choice = null; P.locked = false; },
+              sendAnswer: sendAnswer, loadAns: function () { return null; }, saveAns: function () {}, setTimeout: function (f) { f(); return 0; } };
+  var names = Object.keys(env);
+  var phone = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
+
+  // An older console: no session_id on "started" or the question, so nightChanged cannot fire.
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-new', question_count: 3, colour: true });
+  phone.onMsg({ t: 'question', fmt: 'trivia', game_id: 'g-new', qseq: 1, qi: 1, qtotal: 3, text: 'Q1', options: ['A', 'B', 'C', 'D'], endsAt: Date.now() + 20000 });
+  show('a. CONTROL: an older console\'s messages leave the closed night\'s token in place (nothing told the phone)', joins === 0 && P.token === 'old-token', JSON.stringify({ joins: joins, token: P.token }));
+  phone.answer(2);
+  await flush();
+  show('b. the Worker refuses last night\'s token, the phone re-joins tonight\'s session ONCE (same pid)', joins === 1 && P.token === 'new-token' && P.sessionId === 's-new', JSON.stringify({ joins: joins, token: P.token, sess: P.sessionId }));
+  show('c. and the SAME tap goes again with tonight\'s token: two posts, the second recorded', posts.length === 2 && posts[0].token === 'old-token' && posts[1].token === 'new-token' && posts[1].i === 2 && posts[1].qseq === 1 && posts[1].game === 'g-new',
+       JSON.stringify(posts));
+  show('d. and the phone says "Answer in!", not "Player is not in this game"', dom.$('pStatus').textContent === 'Answer in! Good luck.', dom.$('pStatus').textContent);
+
+  // A second refusal of the same kind is shown, not looped on.
+  P.token = 'old-token'; P.sessionId = 's-old'; posts = [];
+  phone = new Function(names.join(','), src).apply(null, names.map(function (k) { return k === 'ensureJoined' ? function () { joins++; P.token = 'still-old'; return Promise.resolve(); } : env[k]; }));
+  phone.onMsg({ t: 'question', fmt: 'trivia', game_id: 'g-new', qseq: 2, qi: 2, qtotal: 3, text: 'Q2', options: ['A', 'B', 'C', 'D'], endsAt: Date.now() + 20000 });
+  var j0 = joins;
+  phone.answer(1);
+  await flush();
+  show('e. a re-join that does not cure it is tried ONCE: two posts, one re-join, then the refusal is shown', posts.length === 2 && joins === j0 + 1 && dom.$('pStatus').textContent === 'Player is not in this game',
+       JSON.stringify({ posts: posts.length, joins: joins - j0, said: dom.$('pStatus').textContent }));
+  kicked = true; posts = []; P.token = 'new-token'; P.sessionId = 's-new'; j0 = joins;
+  phone.onMsg({ t: 'question', fmt: 'trivia', game_id: 'g-new', qseq: 3, qi: 3, qtotal: 3, text: 'Q3', options: ['A', 'B', 'C', 'D'], endsAt: Date.now() + 20000 });
+  phone.answer(0);
+  await flush();
+  show('f. CONTROL: a removed player is NOT re-joined (one post, no join, "removed" shown)', posts.length === 1 && joins === j0 && /removed/.test(dom.$('pStatus').textContent), JSON.stringify({ posts: posts.length, said: dom.$('pStatus').textContent }));
+  kicked = false;
+
+  // THE ROOM ROAD: the phone names its night when it asks the answers room; a stale one re-joins first.
+  phone = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));   // env.ensureJoined: the real-shaped re-join to s-new
+  P.token = 'old-token'; P.sessionId = 's-old'; P.gameId = 'g-new'; AR.room = null; AR.gameId = ''; AR.off = false; AR.asking = false; AR.staleFor = undefined; presenceAsked = []; connects = [];
+  var jr = joins;
+  phone.ansRoom();
+  await flush();
+  show('g. the answers room is asked with the night this phone\'s token came from (s=s-old)', /[?&]s=s-old\b/.test(presenceAsked[0] || '') && /room=vpa-g-new/.test(presenceAsked[0] || ''), JSON.stringify(presenceAsked));
+  show('h. told that is not this game\'s night, it does NOT take the room with the stale token, and re-joins', connects.every(function (c) { return c.token !== 'old-token'; }) && joins === jr + 1 && P.token === 'new-token',
+       JSON.stringify({ connects: connects, joins: joins - jr, token: P.token }));
+  show('i. then asks again as tonight\'s night (s=s-new) and takes the room with tonight\'s token', presenceAsked.length === 2 && /[?&]s=s-new\b/.test(presenceAsked[1]) && connects.length === 1 && connects[0].token === 'new-token' && AR.gameId === 'g-new',
+       JSON.stringify({ asked: presenceAsked, connects: connects }));
+  // A socket open under the old token goes when the token goes (the room keeps a socket to its first hash).
+  var c0 = closed;
+  phone.onMsg({ t: 'started', fmt: 'trivia', game_id: 'g-next', session_id: 's-third', question_count: 3 });
+  await flush();
+  show('j. a night change closes the socket the old token answered on', closed === c0 + 1, closed - c0);
+})();
+
 // YOUR OWN: the set's questions say which came from the library
 reset();
 var MINE = '88888888-8888-4888-8888-888888888888';

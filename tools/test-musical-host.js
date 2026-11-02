@@ -337,10 +337,73 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   pass("endGameNow is where this test lifts it from", !!fn);
   var calls = [];
   var env = { G: { gameId: "", status: "running" }, endBtnReset: function(){ calls.push("reset"); }, postMusicReport: function(){}, clearMusic: function(){}, stopAudio: function(){},
-    $: function(){ return { classList: { add: function(){} } }; }, bcast: function(){}, sendState: function(){}, send: function(){}, closeNight: function(){}, apiPost: function(){}, renderConsole: function(){} };
+    $: function(){ return { classList: { add: function(){} } }; }, bcast: function(){}, sendState: function(){}, send: function(){}, closeNight: function(){}, apiPost: function(){}, renderConsole: function(){},
+    endBtnHold: function(){} };
   var names = Object.keys(env);
   (new Function(names.join(","), fn + "\n endGameNow();")).apply(null, names.map(function(k){ return env[k]; }));
   pass("a full-house end resets End game", calls.length === 1, calls);
+})();
+
+/* 9. ONE END PER GAME, HOWEVER IT IS ENDED (job list row 40, 3 Nov 2026). A double tap on the carry-on
+   modal's End game ran endGameNow twice: a second /host/game/end for the same game, idle and to_ads sent
+   twice. And the timer a last-pattern win sets nine seconds out ended WHATEVER game was on when it fired,
+   so a host who ended the game and started the next one inside those nine seconds had the new game ended
+   under them. The real endGameNow, endGameAsked, endBtnHold and afterWin run here, with timers the test
+   fires and an apiPost that records every End. */
+(function(){
+  var names9 = ["endGameNow", "endGameAsked", "afterWin"], src = "";
+  for (var i = 0; i < names9.length; i++) { var f = grab(names9[i], host); pass(names9[i] + " is where this test lifts it from", !!f); if (!f) return; src += f + "\n"; }
+  // the button hold is checked by what it does (c, d), so a console without one fails there, not here
+  src += (grab("endBtnHold", host) || "function endBtnHold(){}") + "\n";
+  var ends = [], said = [], timers = [], btn = { disabled: false, textContent: "End game" };
+  var modal = { classList: { add: function(){}, remove: function(){} } }, field = { value: "", innerHTML: "" };
+  var G = { busy: false, status: "running", gameId: "g1", pattern: "one", prize: "Bar tab", prizesWon: [], playedOrder: [], claims: [] };
+  var env = { G: G, PATTERN_NAMES: { one: "One line" },
+    $: function(id){ return id === "endGameBtn" ? btn : (id === "carryModal" ? modal : field); },
+    apiPost: function(path, body){ if (path === "/host/game/end") ends.push(body.game_id); return Promise.resolve({}); },
+    bcast: function(m){ said.push(m.t); }, send: function(m){ said.push(m.t); }, sendState: function(){},
+    closeNight: function(){}, renderConsole: function(){}, clearErrForAction: function(){}, clearMusic: function(){}, stopAudio: function(){},
+    postMusicReport: function(){}, clearClaims: function(){}, showRoomVerdict: function(){}, hostError: function(){},
+    endBtnReset: function(){}, nextPat: function(){ return null; }, joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; },
+    setTimeout: function(f, ms){ timers.push({ f: f, ms: ms }); return timers.length; } };
+  var keys = Object.keys(env);
+  var api = (new Function(keys.join(","), src + "\n return { now: endGameNow, asked: endGameAsked, won: afterWin, hold: endBtnHold };")).apply(null, keys.map(function(k){ return env[k]; }));
+  function idles(){ return said.filter(function(t){ return t === "idle"; }).length; }
+
+  // a. the carry-on modal's End game, tapped twice
+  api.now(); api.now();
+  pass("a. a double tap on the carry-on modal's End game sends ONE End for the game, not two", JSON.stringify(ends) === '["g1"]', JSON.stringify(ends));
+  pass("b. and tells the room once (one idle)", idles() === 1, idles());
+  pass("c. and the End button is held dead until the next game", btn.disabled === true, btn.disabled);
+
+  // the next game starts (beginRound sets these and releases the button)
+  G.status = "running"; G.gameId = "g2"; api.hold(false);
+  pass("d. CONTROL: the next game gets its End button back", btn.disabled === false, btn.disabled);
+
+  // e. the last pattern is won: the timer is set to end THIS game in nine seconds
+  api.won([{ name: "Ann", pid: "p1", cardNo: "007" }]);
+  var tm = timers[timers.length - 1];
+  pass("e. CONTROL: a last-pattern win sets the nine second end", !!tm && tm.ms === 9000, tm && tm.ms);
+  // the host ends it themselves inside the nine seconds, and starts the next game
+  api.asked();
+  pass("f. CONTROL: the host's own End ends g2, once", JSON.stringify(ends) === '["g1","g2"]', JSON.stringify(ends));
+  var idlesG = idles();
+  api.asked();
+  pass("g. a second End from the button for the same game sends nothing more, and does not tell the room again", JSON.stringify(ends) === '["g1","g2"]' && idles() === idlesG, JSON.stringify({ ends: ends, idles: idles() - idlesG }));
+  G.status = "running"; G.gameId = "g3"; api.hold(false);
+  var idleBefore = idles();
+  if (tm) tm.f();
+  pass("h. the old game's nine second timer does NOT end the game started after it", G.status === "running" && G.gameId === "g3" && JSON.stringify(ends) === '["g1","g2"]' && idles() === idleBefore,
+       JSON.stringify({ status: G.status, game: G.gameId, ends: ends }));
+
+  // i. CONTROL: left alone, the timer still ends the game it was set for, once
+  timers = [];
+  api.won([{ name: "Bo", pid: "p2", cardNo: "008" }]);
+  tm = timers[timers.length - 1];
+  if (tm) tm.f();
+  pass("i. CONTROL: left alone, the nine second timer ends the game it was set for (g3), once", G.status === "setup" && JSON.stringify(ends) === '["g1","g2","g3"]', JSON.stringify({ status: G.status, ends: ends }));
+  if (tm) tm.f();
+  pass("j. and firing again ends nothing more", JSON.stringify(ends) === '["g1","g2","g3"]', JSON.stringify(ends));
 })();
 
 print("");

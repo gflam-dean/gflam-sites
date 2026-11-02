@@ -999,7 +999,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         G.nowSong=_last ? (G.byId[_last.song_id]||G.byTitle[normTitle(_last.title)]||findSong(_last.title)) : null;
         G.hostNow=G.nowSong;
         G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
-        G.won=false; clearClaims(); G.status="running";
+        G.won=false; clearClaims(); G.status="running"; endBtnHold(false);
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel
         VP_HOLD.release($("playNextBtn")); $("playNextBtn").disabled=false; syncPlayBtn();
         $("statusText").textContent="Recovered your live game";
@@ -1640,6 +1640,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; clearClaims();
       G.startedAt=Date.now(); G.peak=playerCount(); G.prizesWon=[]; G._reportedGid=""; G.revealed=false;
       G.status="running";
+      endBtnHold(false);   // the last game's End went dead when it ended it; this game has its own
       saveMusic();
       stopAudio();
       VP_HOLD.release($("playNextBtn")); $("playNextBtn").disabled=false; syncPlayBtn();
@@ -1680,7 +1681,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     endBtnReset();
     endGameAsked();
   }
+  /* THE END BUTTON GOES DEAD THE MOMENT IT HAS ENDED THE GAME (3 Nov 2026), and comes back with the next
+     game: a finger still on it cannot send a second End (the Worker ignores one now anyway). */
+  function endBtnHold(on){ var b=$("endGameBtn"); if(b) b.disabled=!!on; }
   function endGameAsked(){
+    if(G.status!=="running") return;   // ONE END PER GAME: already ended, by this tap or another way
+    endBtnHold(true);
     clearErrForAction();
     clearMusic();
     var gid=G.gameId;
@@ -1765,7 +1771,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          the screen handles by clearing the winner and returning to the lobby. Called here it
          wiped the winner card milliseconds after it appeared. Wait for the screen's own
          celebration (celebrate(9000)) to finish, then release the room. */
-      setTimeout(endGameNow, 9000);
+      var _gidWon=G.gameId;
+      setTimeout(function(){ endGameNow(_gidWon); }, 9000);
     }
   }
   function hostConfirm(idx){
@@ -1820,7 +1827,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       apiPost("/report", body).catch(function(){});
     }catch(e){}
   }
-  function endGameNow(){
+  /* ONE END PER GAME (3 Nov 2026). This runs from the carry-on modal's End game, where a double tap ran
+     it twice (a second /host/game/end, idle and to_ads sent twice), and from the timer a last-pattern win
+     sets nine seconds out. That timer ended WHATEVER game was on when it fired: a host who ended the game
+     and started the next one inside those nine seconds had the new game ended under them. So the timer
+     names the game it was set for (forGid), and nothing ends a game that is not running. */
+  function endGameNow(forGid){
+    if(G.status!=="running") return;
+    if(typeof forGid==="string" && forGid!==G.gameId) return;
+    endBtnHold(true);
     endBtnReset();   // a game ended another way (full house, the carry-on modal) leaves no armed End game behind
     postMusicReport(G.gameId);
     G.won=true; G.status="setup"; clearMusic(); stopAudio();

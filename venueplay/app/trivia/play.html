@@ -260,7 +260,7 @@
   // broadcast, not in /snapshot while asking, and the anon key cannot read
   // vp_questions at all (RLS). Must match the deployed venueplay-game Worker URL.
   var VP_GAME_API='https://game.venueplay.com.au';
-  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; if(d&&d.rejoin===true) e.rejoin=true; throw e; } return d; }); }
   var _alive=false;
   function sayAlive(){ if(_alive || !P.token || /[?&]demo=1/.test(location.search)) return; _alive=true; try{ playerPost("/player/alive",{}).catch(function(){}); }catch(e){} }   // holding a question: billable (migration 87)
   /* A token the Worker no longer knows (another page re-minted it, or the night moved on) is
@@ -323,12 +323,22 @@
     if(AR.room){ try{ AR.room.close(); }catch(e){} AR.room=null; }
     var game=P.gameId;
     AR.asking=true;
-    fetch(VP_GAME_API+"/room/presence?room="+encodeURIComponent("vpa-"+game))
+    /* s: THE NIGHT THIS PHONE'S TOKEN BELONGS TO (3 Nov 2026). The answers room takes any phone's answer
+       and acknowledges it; only the Worker, at Reveal, knows a token of another night and drops it. So a
+       phone still holding a closed night's token was told "Answer in!" and scored nothing. The Worker now
+       says whether this game is that night (session_ok); when it is not, the stale token goes and the
+       phone re-joins, same pid, before it is let into the room. Once per game: if the re-joined night is
+       still not this game's, the phone answers the Worker directly, which is the judge. */
+    fetch(VP_GAME_API+"/room/presence?room="+encodeURIComponent("vpa-"+game)+(P.sessionId ? "&s="+encodeURIComponent(P.sessionId) : ""))
       .then(function(r){ return r.ok ? r.json() : null; })
       .catch(function(){ return null; })
       .then(function(d){
         AR.asking=false;
         if(!d || d.answers!==true){ AR.off=true; return; }   // no room server, or one too old to hold answers
+        if(d.session_ok===false){
+          if(AR.staleFor!==game && P.gameId===game){ AR.staleFor=game; dropStaleJoin(); rejoinNow().then(function(){ ansRoom(); }); }
+          return;
+        }
         if(AR.room || P.gameId!==game) return;
         AR.gameId=game;
         AR.room = VPRoom.connect(VP_GAME_API, "vpa-"+game, "phone", function(m){
@@ -564,8 +574,9 @@
     if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq }); sayIn(); return; }
     /* A re-join in flight (a new night, see nightChanged) finishes first, so the answer goes out
        with tonight's token rather than none: "Missing X-Player-Token" is a 401 that cannot heal. */
-    var endsAt=P.q.endsAt, ready=_rejoinP||Promise.resolve();
-    ready.then(function(){ return sendAnswer(P.gameId, i, qseq, endsAt); }).then(function(r){
+    var endsAt=P.q.endsAt, ready=_rejoinP||Promise.resolve(), healed=false;
+    function go(){ return ready.then(function(){ return sendAnswer(P.gameId, i, qseq, endsAt); }).then(landed).catch(refused); }
+    function landed(r){
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
       send({ t:"answer", pid:P.pid, qseq:qseq });
@@ -576,8 +587,21 @@
       }
       saveAns(qseq, i);
       sayIn();
-    }).catch(function(e){
+    }
+    function refused(e){
       var st=(e && e.status)||0, msg=(e && e.message)||"";
+      /* A TOKEN OF ANOTHER NIGHT (3 Nov 2026). The Worker refuses it ("Player is not in this game",
+         rejoin:true). This used to end here, "Player is not in this game" on the phone for the rest of
+         the quiz, whenever the phone had not been told the night changed (a console page older than
+         the session_id messages, or a message it missed). Now the stale token goes, the phone re-joins
+         tonight's session with the same pid and name, and the SAME tap is sent once more, while the
+         question is still open. Once: a second refusal is shown as before. */
+      if(st===403 && !healed && (e.rejoin===true || /not in this game/i.test(msg)) && P.joined){
+        healed=true;
+        dropStaleJoin();
+        ready=rejoinNow();
+        if(P.q && P.q.qseq===qseq && P.q.endsAt-Date.now()>0) return go();
+      }
       if(st===401 || st===403){   // token gone or the player was removed: tapping again cannot help
         P.choice=null;
         $("pStatus").className="pstatus warn"; $("pStatus").textContent=msg||"Your phone lost its place. Reload this page.";
@@ -591,7 +615,8 @@
         return;
       }
       sayRetry();   // wifi drop, rate limit, server hiccup: let them tap again while time remains
-    });
+    }
+    go();
   }
   function lockOut(){
     if(P.q && !P.locked){
@@ -930,6 +955,8 @@
      (joinServerSession); this is the same rule. Same pid, so the Worker keeps one player. */
   function dropStaleJoin(){
     P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
+    // and a socket keeps the first hash it answered with, so the old token's socket goes too (ansRoom reopens one)
+    if(AR.room){ try{ AR.room.close(); }catch(e){} AR.room=null; AR.gameId=""; }
     try{ localStorage.removeItem("vp-ttoken-"+P.room); localStorage.removeItem("vp-tsess-"+P.room); }catch(e){}
   }
   /* A NEW NIGHT ON THE SAME CODE, WHILE THIS PHONE STAYED CONNECTED. The rule above only ran when the

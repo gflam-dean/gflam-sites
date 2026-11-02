@@ -32,7 +32,10 @@ readJson = async function (req) {
 };
 verifyPlayerToken = async function (req) {
   var t = req.headers.get('X-Player-Token') || '';
-  var p = DB.vp_players.filter(function (r) { return r.token === t || ('tok-' + r.id) === t; })[0];
+  /* A token /join really handed out is known by its hash, as on Cloudflare (sha256Hex above is 'h-'+s).
+     Without that every real phone's /player/alive and /player/score was a 401, and the phone dropped its
+     token and re-joined over and over (stale-phone-and-end-once-in-chrome, 3 Nov 2026). */
+  var p = DB.vp_players.filter(function (r) { return r.token === t || ('tok-' + r.id) === t || (!!t && r.token_hash === 'h-' + t); })[0];
   if (!p) { var e = new Error('Invalid player token'); e.status = 401; throw e; }
   return p;
 };

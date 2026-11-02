@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '2 Nov 2026, 23:32 · baffc911';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 02:15 · d7388bb6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -333,7 +333,7 @@ export default {
          binding, and every page falls back to Supabase Realtime on a 503, so a
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
-      if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresence(request, env, json);
+      if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
       if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json);
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
@@ -6585,6 +6585,32 @@ async function roomGameContext(env, gameId) {
   return roomCachePut(roomGameCache, gameId, { session_id: games[0].session_id });
 }
 
+/* IS THIS GAME THE NIGHT THE PHONE'S TOKEN BELONGS TO? (3 Nov 2026) GET /room/presence, as the router
+   runs it. The room server's own answer (handleRoomPresence, in the ROOM SERVER copy below, which must
+   stay byte for byte venueplay-room.js) comes back untouched, and for an answers room ("vpa-<game>")
+   this adds session_ok. An answers room acknowledges any phone's answer and the Worker drops one from
+   another night's token only at Reveal, so a phone left on a finished quiz was told "Answer in!" all
+   through the next one and scored nothing. A trivia phone asks here once per game before it uses the
+   room, naming the session its token came from (s); session_ok:false sends it to re-join first
+   (trivia/play.html ansRoom). The game's session is fixed for its life and cached (roomGameContext),
+   so this costs at most one read per game per isolate, never one per phone. It is advice, not a lock:
+   the Reveal still checks every answer against the player rows. Any failure says nothing, and the
+   phone behaves exactly as before. */
+async function handleRoomPresenceNight(request, env, json) {
+  let out = null, status = 200;
+  await handleRoomPresence(request, env, function (o, st) { out = o; status = st == null ? 200 : st; return null; });
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  const sIn = String(url.searchParams.get('s') || '');
+  if (status >= 200 && status < 300 && out && typeof out === 'object' && /^vpa-/.test(name) && UUID_RE.test(sIn) && UUID_RE.test(name.slice(4))) {
+    try {
+      const ctx = await roomGameContext(env, name.slice(4));
+      if (ctx && ctx.session_id) out.session_ok = (ctx.session_id === sIn);
+    } catch (e) { /* cannot tell: say nothing */ }
+  }
+  return json(out, status);
+}
+
 /* THE ONE QUESTION, NOT THE SET.
  * This first read the whole set in one go and kept a seq -> id map, which is fewer calls
  * and wrong twice over. A venue's question bank is one SET, not one night: the load
@@ -8226,11 +8252,17 @@ async function handlePlayerAnswer(request, env, json) {
   if (status === 'not_trivia') {
     const own = rows[0] && rows[0].session_id;
     const g = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=session_id&limit=1');
-    if (!g.length || !own || g[0].session_id !== own) return json({ error: ANSWER_STATUS.wrong_game[1] }, ANSWER_STATUS.wrong_game[0]);
+    if (!g.length || !own || g[0].session_id !== own) return json({ error: ANSWER_STATUS.wrong_game[1], rejoin: true }, ANSWER_STATUS.wrong_game[0]);
   }
   const reply = ANSWER_STATUS[status];
   if (!reply) throw dbError('rpc', 'vp_player_answer', 'unexpected status ' + status);
-  return json({ error: reply[1] }, reply[0]);
+  /* rejoin: A TOKEN OF ANOTHER NIGHT (3 Nov 2026). A phone left open on a finished quiz still holds
+     that night's token; the next quiz on the same code is a new session, so its answer is refused
+     here, and the phone used to sit on "Player is not in this game" all night. The flag tells it to
+     drop the token, re-join the code's current night (same device, so one player row) and send the
+     tap again (trivia/play.html answer). Nothing is recorded and nothing about the game is revealed:
+     the phone only learns that its token is not this game's, which is what the error already said. */
+  return json(status === 'wrong_game' ? { error: reply[1], rejoin: true } : { error: reply[1] }, reply[0]);
 }
 
 // The pre-71 path, kept only as the fallback above. `pre` carries the body already read
@@ -8252,7 +8284,7 @@ async function handlePlayerAnswerEightTrips(request, env, json, pre) {
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
   // Membership FIRST, as in the one-trip path (migration 99): the format is not another venue's business.
-  if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+  if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game', rejoin: true }, 403);   // a token of another night: see rejoin above
   if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
   if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
   const session = await getSession(env, game.session_id);
@@ -8759,10 +8791,20 @@ async function handleGameEnd(request, env, json) {
   const session = await getSession(env, games[0].session_id);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
 
+  /* ONE END PER GAME (3 Nov 2026). A double tap on End game (or the carry-on modal's End game, or the
+     full-house timer landing after the host ended it) sent a second End for the same game, and this
+     wrote a second game.ended into the night's event log every time; two Ends at the same moment both
+     read 'running', so a trivia night was also noted twice. The flip is now a compare-and-set on
+     status=running: only the End that actually finished the game notes it and emits game.ended. Any
+     other End for it is answered the same way (finished), marked already, and changes nothing. */
+  let flipped = false;
   if (games[0].status === 'running') {
-    await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { status: 'finished', ended_at: new Date().toISOString() });
-    if (games[0].format === 'trivia') await noteTriviaNight(env, session.id, games[0]);
+    const rows = await sbPatchReturning(env, 'vp_games', 'id=eq.' + enc(gameId) + '&status=eq.running',
+      { status: 'finished', ended_at: new Date().toISOString() });
+    flipped = Array.isArray(rows) && rows.length > 0;
+    if (flipped && games[0].format === 'trivia') await noteTriviaNight(env, session.id, games[0]);
   }
+  if (!flipped) return json({ game_id: gameId, status: 'finished', already: true });
   await emitEvent(env, session, 'game.ended', { game_id: gameId }, actorRef(staff));
   return json({ game_id: gameId, status: 'finished' });
 }
