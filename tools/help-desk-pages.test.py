@@ -583,7 +583,11 @@ def main():
             t = Tab(b, routes=down)
             t.go(VP + path)
             t.until('!!document.getElementById("vphLink")', 15)
-            time.sleep(1.5)
+            # The start-of-game show (on by default since 2 Nov) plays over the demo for about 2.5 s and
+            # then takes itself off the page. Measure the game the player is left with, after it.
+            check(name + ': the start-of-game show finishes and leaves the page',
+                  t.until('!document.getElementById("vpSting") && !(window.VPSting && VPSting.playing())', 10) is True)
+            time.sleep(0.5)
             link_checks(t, name)
             t.shot(('05-' if 'musical' in name else '06-') + name.replace(' ', '-'))
             check(name + ': Help is in the phone menu too', t.js('!!document.getElementById("vphMenu")') is True)
