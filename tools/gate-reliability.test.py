@@ -173,6 +173,66 @@ try:
     ok('held by our parent: a child tool sees it as its own', child.stdout.strip() == 'mine', child.stdout.strip() or child.stderr[-200:])
     shutil.rmtree(gatelib.HEAVY_LOCK, ignore_errors=True)
 
+    # THE TAKE RACE (3 Nov 2026): a lock directory with no owner file yet is somebody mid-take, not
+    # stale. Before the fix a second run read it as "STALE, its owner (pid None) is gone", cleared it,
+    # took it, and two heavy Chrome runs overlapped (load 51 in the hotfix release gate).
+    os.mkdir(gatelib.HEAVY_LOCK)
+    said = []
+    taken = gatelib.hold_lock_or_refuse('test', say=said.append, wait_s=0)
+    ok('a lock with no owner file YET (being taken): not cleared, not taken, refused',
+       not taken and os.path.isdir(gatelib.HEAVY_LOCK) and not any('STALE' in x for x in said), said[:2])
+    old = time.time() - 60
+    os.utime(gatelib.HEAVY_LOCK, (old, old))
+    said = []
+    ok('the same ownerless lock a minute old: cleared as stale, and taken',
+       gatelib.hold_lock_or_refuse('test', say=said.append) and any('STALE' in x for x in said)
+       and io.open(os.path.join(gatelib.HEAVY_LOCK, 'owner')).read().startswith('pid=%d ' % os.getpid()), said[:2])
+    gatelib._release_lock()
+    # a clearer that judged a DEAD owner never removes the live lock somebody took after it looked
+    live = subprocess.Popen(['/bin/sleep', '60'])
+    os.mkdir(gatelib.HEAVY_LOCK)
+    io.open(os.path.join(gatelib.HEAVY_LOCK, 'owner'), 'w').write('pid=%d fresh\n' % live.pid)
+    cleared = gatelib._clear_stale('pid=999999 dead long ago')
+    ok('a stale clear that finds a NEW owner puts the lock back untouched',
+       not cleared and 'pid=%d fresh' % live.pid in io.open(os.path.join(gatelib.HEAVY_LOCK, 'owner')).read())
+    # and a holder whose lock is no longer its own does not remove the new owner's at exit
+    gatelib._LOCK_TAKEN_BY_ME = True
+    gatelib._release_lock()
+    ok('release removes only a lock that still names us', os.path.isdir(gatelib.HEAVY_LOCK)
+       and 'pid=%d fresh' % live.pid in io.open(os.path.join(gatelib.HEAVY_LOCK, 'owner')).read())
+    live.kill(); live.wait()
+    shutil.rmtree(gatelib.HEAVY_LOCK, ignore_errors=True)
+    # Six runs at once, each owner write slowed by 0.3 s (the window the race lived in): no two
+    # may ever hold the lock together, and nobody may clear a lock as "pid None".
+    log = os.path.join(TMP, 'holds.log')
+    racer = textwrap.dedent('''
+        import io as _io, os, sys, time; sys.path.insert(0, %r); import gatelib
+        gatelib.HEAVY_LOCK = %r
+        class SlowIO(object):
+            def __getattr__(self, k): return getattr(_io, k)
+            def open(self, path, mode='r', *a, **kw):
+                if 'w' in mode and str(path).endswith('owner'): time.sleep(0.3)
+                return _io.open(path, mode, *a, **kw)
+        gatelib.io = SlowIO()
+        said = []
+        for _ in range(3):
+            if gatelib.hold_lock_or_refuse('racer', say=said.append, wait_s=60):
+                t0 = time.time(); time.sleep(0.4); t1 = time.time()
+                with open(%r, 'a') as fh: fh.write('%%d %%.4f %%.4f\\n' %% (os.getpid(), t0, t1))
+                gatelib._release_lock()
+            time.sleep(0.05)
+        for x in said:
+            if 'STALE' in x: print(x)
+    ''' % (TOOLS, gatelib.HEAVY_LOCK, log))
+    procs = [subprocess.Popen([sys.executable, '-c', racer], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) for _ in range(6)]
+    outs = [p.communicate(timeout=180)[0] for p in procs]
+    holds = sorted(tuple(float(v) for v in l.split()[1:]) for l in io.open(log) if l.strip()) if os.path.isfile(log) else []
+    overlap = [(a, b) for a, b in zip(holds, holds[1:]) if b[0] < a[1]]
+    ok('six runs racing for the lock (slow owner writes): every one held it 3 times', len(holds) == 18, '%d holds; %s' % (len(holds), [o[-200:] for o in outs if o.strip()][:2]))
+    ok('and no two ever held it at the same time', holds and not overlap, overlap[:2])
+    ok('and nobody cleared a lock that was only being taken', not any('STALE' in o for o in outs), [o[:160] for o in outs if 'STALE' in o][:2])
+    shutil.rmtree(gatelib.HEAVY_LOCK, ignore_errors=True)
+
     print('\n5. verify-live\'s Browser ends its Chrome on SIGTERM and at exit')
     stand_in = textwrap.dedent('''
         import importlib.util, os, subprocess, sys, tempfile, time

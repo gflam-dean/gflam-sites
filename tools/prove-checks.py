@@ -178,6 +178,15 @@ MUTATIONS = [
      '    if passed(first) or not chrome:',
      '    if passed(first) or True:',
      'a Chrome suite that fails once under load is red at once, never retried on a quiet machine'),
+    # THE HEAVY LOCK'S TAKE RACE, 3 Nov 2026: an ownerless lock is mid-take, not stale; a take is atomic.
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     '        if age is not None and age < LOCK_GRACE_S:\n',
+     '        if False:\n',
+     'a lock being taken (no owner file yet) is cleared as stale and a second heavy run starts beside the first'),
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     "        shutil.rmtree(tmp, ignore_errors=True)\n        return False\n    return _owner_text(HEAVY_LOCK)",
+     "        shutil.rmtree(tmp, ignore_errors=True)\n        return True\n    return _owner_text(HEAVY_LOCK)",
+     'a take overwrites a lock somebody else already holds, so two runs hold it at once'),
     # A SUITE MAY NOT PUSH (27 Oct 2026, the "three" incident: tools/git-shim/git, gatelib.suite_env, the hook's unset).
     ('no suite tried to push, fetch, pull or clone anywhere but a local path', 'tools/git-shim/git',
      'if is_local_path "$url"; then\n  exec "$real" "$@"',

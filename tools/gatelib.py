@@ -124,6 +124,68 @@ def lock_holder():
     return None, text.strip() or '(no owner file)'
 
 
+LOCK_GRACE_S = 10
+
+
+def _lock_age():
+    try:
+        return time.time() - os.stat(HEAVY_LOCK).st_mtime
+    except Exception:
+        return None
+
+
+def _owner_text(d):
+    try:
+        return io.open(os.path.join(d, 'owner'), encoding='utf-8', errors='replace').read().strip()
+    except Exception:
+        return ''
+
+
+def _take_atomically(tool):
+    """The lock appears WITH its owner file or not at all: the owner is written into a private
+    directory first, which is then renamed onto the lock path. Returns True only when the lock
+    on disk names this process afterwards."""
+    tmp = '%s.taking-%d-%d' % (HEAVY_LOCK, os.getpid(), int(time.time() * 1000))
+    try:
+        os.mkdir(tmp)
+        with io.open(os.path.join(tmp, 'owner'), 'w', encoding='utf-8') as fh:
+            fh.write('pid=%d %s %s\n' % (os.getpid(), tool, time.strftime('%a %d %b %Y %H:%M:%S')))
+    except Exception:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return False
+    try:
+        # rename() replaces an EMPTY directory, which would be a hand taker between its mkdir and
+        # its owner write: never rename onto anything that exists.
+        if os.path.lexists(HEAVY_LOCK):
+            raise OSError('exists')
+        os.rename(tmp, HEAVY_LOCK)
+    except OSError:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return False
+    return _owner_text(HEAVY_LOCK).startswith('pid=%d ' % os.getpid())
+
+
+def _clear_stale(judged_text):
+    """Clear a stale lock so that only ONE clearer wins, and never a lock somebody took after we
+    looked: the directory is renamed to a private grave first (atomic), and if the owner in the grave
+    is not the one we judged dead it is put back. Returns True when the lock path is free."""
+    grave = '%s.stale-%d-%d' % (HEAVY_LOCK, os.getpid(), int(time.time() * 1000))
+    try:
+        os.rename(HEAVY_LOCK, grave)
+    except OSError:
+        return not os.path.lexists(HEAVY_LOCK)     # somebody else cleared (or retook) it first
+    now = _owner_text(grave)
+    if now and now != judged_text.strip() and now != '(no owner file)':
+        try:
+            if not os.path.lexists(HEAVY_LOCK):
+                os.rename(grave, HEAVY_LOCK)
+                return False
+        except OSError:
+            pass
+    shutil.rmtree(grave, ignore_errors=True)
+    return True
+
+
 def lock_state():
     """'free', 'mine' (held by this process or an ancestor), 'stale' (owner pid is dead or
     unreadable) or 'held' (a live pid that is not ours)."""
@@ -131,6 +193,13 @@ def lock_state():
     if not os.path.isdir(HEAVY_LOCK):
         return 'free', pid, text
     if pid is None:
+        # AN OWNERLESS LOCK IS NOT STALE UNTIL IT HAS HAD TIME TO GET ITS OWNER (3 Nov 2026). A taker
+        # that makes the directory and then writes the owner file (a hand-taken lock, or gatelib before
+        # this fix) leaves a moment with no owner; reading that as stale cleared a live lock and let a
+        # second heavy run start beside the first ("STALE, its owner (pid None) is gone").
+        age = _lock_age()
+        if age is not None and age < LOCK_GRACE_S:
+            return 'starting', pid, text
         return 'stale', pid, text
     if pid in my_ancestors():
         return 'mine', pid, text
@@ -142,12 +211,15 @@ def lock_state():
 def _release_lock():
     global _LOCK_TAKEN_BY_ME
     if _LOCK_TAKEN_BY_ME:
-        try:
-            for n in os.listdir(HEAVY_LOCK):
-                os.remove(os.path.join(HEAVY_LOCK, n))
-            os.rmdir(HEAVY_LOCK)
-        except Exception:
-            pass
+        # Only a lock that still names us: if ours was ever taken from under us, the one on disk now
+        # belongs to somebody else's live run and is theirs to remove.
+        if _owner_text(HEAVY_LOCK).startswith('pid=%d ' % os.getpid()):
+            grave = '%s.done-%d-%d' % (HEAVY_LOCK, os.getpid(), int(time.time() * 1000))
+            try:
+                os.rename(HEAVY_LOCK, grave)
+                shutil.rmtree(grave, ignore_errors=True)
+            except Exception:
+                pass
         _LOCK_TAKEN_BY_ME = False
 
 
@@ -162,6 +234,7 @@ def hold_lock_or_refuse(tool, say=print, wait_s=0):
     global _LOCK_TAKEN_BY_ME
     deadline = time.time() + wait_s
     said = False
+    misses = 0
     while True:
         state, pid, text = lock_state()
         if state == 'mine':
@@ -169,21 +242,17 @@ def hold_lock_or_refuse(tool, say=print, wait_s=0):
             return True
         if state == 'stale':
             say('  heavy lock: STALE, its owner (pid %s) is gone: "%s". Clearing it.' % (pid, text[:100]))
-            try:
-                for n in os.listdir(HEAVY_LOCK):
-                    os.remove(os.path.join(HEAVY_LOCK, n))
-                os.rmdir(HEAVY_LOCK)
-            except Exception as e:
-                say('  could not clear it (%s); refusing' % e)
-                return False
+            if not _clear_stale(text):
+                continue        # somebody took it between the look and the clear; look again
             state = 'free'
         if state == 'free':
-            try:
-                os.mkdir(HEAVY_LOCK)
-            except FileExistsError:
-                continue        # somebody took it between the look and the mkdir; look again
-            with io.open(os.path.join(HEAVY_LOCK, 'owner'), 'w', encoding='utf-8') as fh:
-                fh.write('pid=%d %s %s\n' % (os.getpid(), tool, time.strftime('%a %d %b %Y %H:%M:%S')))
+            if not _take_atomically(tool):
+                misses += 1
+                if misses > 50 and not os.path.lexists(HEAVY_LOCK):
+                    say('  could not take /tmp/vp-heavy.lock (nobody holds it, the take keeps failing); refusing')
+                    return False
+                time.sleep(0.05)
+                continue        # somebody took it between the look and the take; look again
             _LOCK_TAKEN_BY_ME = True
             atexit.register(_release_lock)
             say('  heavy lock: taken by %s (pid %d)' % (tool, os.getpid()))
