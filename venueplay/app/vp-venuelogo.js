@@ -80,6 +80,7 @@
     s.objectFit = "contain";
     if (kind !== "phone") { s.top = L.inset + "px"; s.left = L.inset + "px"; }
     try { if (w.VP_FIT) w.VP_FIT(); } catch (e) {}
+    sized(img);
     return b;
   }
 
@@ -230,6 +231,12 @@
       s.background = "rgba(255,255,255,.8)";
     }
     try { if (kind !== "phone" && w.VP_FIT) w.VP_FIT(); } catch (e) {}
+    sized(img);
+  }
+  /* "vp-logo-sized" on the <img> whenever its box changes here (sized, or given a plate), so a page that
+     lines something up with the logo (tv.html's venueplay mark) measures the box as finally drawn. */
+  function sized(img) {
+    try { var ev = d.createEvent("Event"); ev.initEvent("vp-logo-sized", false, false); img.dispatchEvent(ev); } catch (e) {}
   }
 
   /* Size this <img> now, again when its picture arrives (that is when its shape is known), and,
@@ -249,5 +256,64 @@
     return size(img, kind);
   }
 
-  w.VPVenueLogo = { box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  /* THE TWO LOGOS SIT ON ONE LINE, ON EVERY TV SCREEN (Dean, 2 Nov 2026: with a square or tall venue
+     logo, drop the venueplay mark down so the two are vertically centred on each other). A wordmark is
+     short, but a square crest is 134px tall on a 1920 TV, so its middle sat about 35px below the venueplay
+     mark's, top right. alignMark(corner, img, has) measures what is DRAWN, the logo's box (plate and all)
+     and the mark that is showing in the corner (the old one, or the new logo the start show leaves there),
+     and moves the whole corner down by the difference. Only for a logo that is not wide: a wordmark
+     (isWide, the one shape rule the printed signs use too) leaves the corner exactly where it always was,
+     and so does no logo (has false). Never up. When either one is not on screen (the ads, or mid-show)
+     nothing is measured and nothing moves, and the page measures again on its next change. The start
+     show (/app/vp-sting.js) measures the corner as it plays, so it lands on the mark where it now is.
+     ONE copy, here: tv.html (its #tvCorner) and the trivia, musical bingo, raffle and members draw
+     screens (their .tv-corner) all call it. keepAligned wires a logo so every resize of it (the
+     "vp-logo-sized" event, fired by size() and plate()) lines the corner up again. */
+  function alignMark(corner, img, has) {
+    try {
+      if (!corner) return;
+      var cur = parseFloat(corner.getAttribute("data-drop")) || 0, want = 0;
+      if (has && img) {
+        if (!img.complete) return;                              /* its shape is not known yet: vp-logo-sized comes back */
+        var wide = !img.naturalWidth || isWide(img.naturalWidth / img.naturalHeight);   /* a broken picture: as no logo */
+        if (!wide) {
+          var a = img.getBoundingClientRect(); if (!a.height) return;   /* not on screen */
+          var mk = null, svs = corner.querySelectorAll("svg");
+          for (var i = 0; i < svs.length && !mk; i++) { var q = svs[i].getBoundingClientRect(); if (q.height) mk = q; }
+          if (!mk) return;                                      /* the mark is off (ads) or mid-show */
+          var dy = (a.top + a.height / 2) - ((mk.top + mk.height / 2) - cur);
+          want = dy > 0 ? Math.round(dy * 10) / 10 : 0;
+        }
+      }
+      if (Math.abs(want - cur) < 0.05) return;
+      corner.style.transform = want ? "translateY(" + want + "px)" : "";
+      if (want) corner.setAttribute("data-drop", String(want)); else corner.removeAttribute("data-drop");
+    } catch (e) {}
+  }
+  /* MEASURE AGAIN WHEN THE PICTURE CHANGES UNDER IT (2 Nov 2026, the trivia demo: the wordmark sat ~90px
+     above Tugun's crest). alignMark measures only what is drawn, so whenever it ran while the start show
+     (/app/vp-sting.js) had the mark hidden, it changed nothing, and nothing asked again: the show ending puts
+     a new mark in the corner without anything else happening. So again when the show ends ("vp-sting-done",
+     fired by vp-sting.js on window however it ended), when the logo's picture finishes loading, and when the
+     screen changes size (the corner is sized in cqw). tv.html wires its alignCorner here too. */
+  function watch(img, go) {
+    try { w.addEventListener("vp-sting-done", go); } catch (e) {}
+    try { w.addEventListener("resize", go, { passive: true }); } catch (e) {}
+    try { if (img) img.addEventListener("load", go); } catch (e) {}
+    /* and when the web fonts land: the corner's rows re-flow and the mark inside it moves a few px */
+    try { if (d.fonts) { d.fonts.addEventListener("loadingdone", go); if (d.fonts.ready) d.fonts.ready.then(go); } } catch (e) {}
+  }
+  function keepAligned(img, corner, has) {
+    var go = function () { alignMark(corner, img, typeof has === "function" ? has() : true); };
+    if (!img || !corner) return go;
+    if (!img.__vpMarkWired) {
+      img.__vpMarkWired = true;
+      try { img.addEventListener("vp-logo-sized", go); } catch (e) {}
+      watch(img, go);
+    }
+    go();
+    return go;
+  }
+
+  w.VPVenueLogo = { alignMark: alignMark, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

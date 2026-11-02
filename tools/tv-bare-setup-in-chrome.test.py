@@ -11,8 +11,8 @@ Worker in jsc, supabase-js stood in) and checks, at 1920x1080 and 1280x720:
   CLEAN    a browser that has never opened a venue: the setup panel, the lowercase venueplay wordmark,
            no advertising painted, no scrollbar.
   MEMORY   the same browser after it HAS shown a venue's screen (with slides): bare /tv is still the
-           setup panel and paints none of that venue's slides; it offers "Show it again" for that venue,
-           and that button opens the venue's own screen.
+           setup panel and paints none of that venue's slides, and it does NOT offer that venue (no "last used
+           for", no "Show it again": Dean, 2 Nov 2026, a venue puts its screen code in again).
   HOST     with a host console signed in, in another window of the same browser: the same.
   CONTROL  /tv?venue=<slug> still shows the venue's advertising and no panel.
 
@@ -55,28 +55,27 @@ WALL = ('(function(){var p=document.getElementById("pairPanel"),b=p.getBoundingC
         'var m=p.querySelector(".bvmark svg[data-vp-mark=wordmark]"),mb=m?m.getBoundingClientRect():null;'
         'var ads=document.getElementById("adsRoot"),as=getComputedStyle(ads),ab=ads.getBoundingClientRect();'
         'var painted=[].filter.call(document.querySelectorAll("#adsRoot *"),function(e){var r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=="hidden"&&+s.opacity>0&&e.children.length===0&&(e.textContent||"").trim();}).map(function(e){return e.textContent.trim().slice(0,30);});'
-        'var last=document.getElementById("suLast");'
+        'var pt=p.innerText||"",offer=/last used for|show it again/i.test(pt)||[].some.call(p.querySelectorAll("a[href]"),function(a){return /[?&]venue=/.test(a.getAttribute("href"));});'
         'return {panel:!p.classList.contains("hidden")&&cs.display!=="none"&&b.width>0&&b.height>0,'
         'inside:b.top>=0&&b.left>=0&&b.bottom<=innerHeight&&b.right<=innerWidth,scroll:p.scrollHeight-p.clientHeight,'
         'wordmark:!!mb&&mb.width>60,oldWord:/VENUEPLAY/.test(p.innerText),title:(p.querySelector(".su-title")||{}).textContent,'
         'adsShown:as.display!=="none"&&ab.width>0&&ab.height>0,painted:painted,sample:document.body.innerText.toUpperCase().indexOf(%s.toUpperCase())>=0,'
-        'last:last&&!last.hidden?last.innerText:"",lastHref:(document.getElementById("suLastGo")||{}).getAttribute?document.getElementById("suLastGo").getAttribute("href"):""};})()' % json.dumps(SAMPLE))
+        'offer:offer,named:%s.some(function(n){return pt.toLowerCase().indexOf(n.toLowerCase())>=0;}),'
+        'code:(function(){var c=document.getElementById("tvSetupCode");if(!c)return false;var q=c.getBoundingClientRect();return q.width>0&&q.height>0&&/Put in the screen code/.test(c.textContent);})()};})()' % (json.dumps(SAMPLE), '__NAMES__'))
 
-def look(r, sid, w, h, label, expect_last=None):
+def look(r, sid, w, h, label, names=()):
     ok('%s (%dx%d): the setup panel is on the wall' % (label, w, h),
        r.until(sid, '(function(){var p=document.getElementById("pairPanel");return !!p&&!p.classList.contains("hidden")&&p.getBoundingClientRect().height>0;})()', 20) is True,
        r.ask(sid, 'document.getElementById("pairPanel").className'))
     time.sleep(3)   # past the moment the remembered venue's slides used to arrive
-    v = r.ask(sid, WALL) or {}
+    v = r.ask(sid, WALL.replace('__NAMES__', json.dumps(list(names) or ['\u0000']))) or {}
     ok('%s (%dx%d): still there after 3 s, inside the screen, no scrollbar' % (label, w, h), v.get('panel') and v.get('inside') and v.get('scroll', 9) <= 0, v)
     ok('%s (%dx%d): headed by the lowercase venueplay wordmark, never an uppercase VENUEPLAY' % (label, w, h), v.get('wordmark') and not v.get('oldWord'), v)
     ok('%s (%dx%d): no advertising painted behind it, and no sample pub anywhere' % (label, w, h),
        not v.get('adsShown') and not v.get('painted') and not v.get('sample'), [v.get('adsShown'), v.get('painted'), v.get('sample')])
-    if expect_last:
-        ok('%s (%dx%d): it offers the venue it remembers, by name, as one button to its own screen' % (label, w, h),
-           expect_last in (v.get('last') or '') and 'Show it again' in (v.get('last') or '') and v.get('lastHref', '').startswith('/tv?venue='), [v.get('last'), v.get('lastHref')])
-    else:
-        ok('%s (%dx%d): and offers no venue (this browser has none)' % (label, w, h), not v.get('last'), v.get('last'))
+    ok('%s (%dx%d): it offers no remembered venue: no "last used for", no "Show it again", no link to a venue\'s screen' % (label, w, h),
+       not v.get('offer') and not v.get('named'), [v.get('offer'), v.get('named')])
+    ok('%s (%dx%d): "Put in the screen code" is on the card, so the venue keys its code in again' % (label, w, h), v.get('code') is True, v.get('code'))
     if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-bare-%s-%d.jpg' % (label.split()[0].lower(), w)))
     return v
 
@@ -103,18 +102,9 @@ def main():
         ok('CONTROL: and the browser now remembers that venue', r.ask(sid, 'localStorage.getItem("vpTvVenue")') == slug)
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-bare-control-venue-1920.jpg'))
         r.close_tab(tid)
-        name = None
         for w, h in ((1920, 1080), (1280, 720)):
             tid, sid = r.open('/tv', width=w, height=h)
-            v = look(r, sid, w, h, 'MEMORY', expect_last='Show it again')
-            name = v.get('last')
-            if w == 1280:
-                href = v.get('lastHref') or ''
-                ok('MEMORY: "Show it again" goes to that venue\'s own address', href == '/tv?venue=' + slug, href)
-                r.ask(sid, 'document.getElementById("suLastGo").click(); true')
-                ok('MEMORY: pressing it puts the venue\'s own screen back, advertising and all',
-                   r.until(sid, '(function(){var a=document.getElementById("adsRoot");return /[?&]venue=/.test(location.search)&&a.textContent.indexOf(%s)>=0&&getComputedStyle(a).display!=="none";})()' % json.dumps(SAMPLE), 25) is True,
-                   r.ask(sid, '[location.href, document.body.innerText.slice(0,160)]'))
+            look(r, sid, w, h, 'MEMORY', names=(slug, SAMPLE))
             r.close_tab(tid)
 
         print('\nHOST: a host console signed in, in another window of the same browser')
@@ -122,7 +112,7 @@ def main():
         r.until(host, 'document.readyState==="complete"', 30)
         time.sleep(3)
         tid, sid = r.open('/tv', width=1920, height=1080)
-        look(r, sid, 1920, 1080, 'HOST', expect_last='Show it again')
+        look(r, sid, 1920, 1080, 'HOST', names=(slug, SAMPLE))
         r.close_tab(tid); r.close_tab(htid)
     finally:
         r.close()

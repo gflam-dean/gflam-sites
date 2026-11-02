@@ -50,11 +50,11 @@ function resolveWith(demo, remembered, urlSlug) {
 }
 
 /* REVERSED 1 Nov 2026 (live fault, Dean): bare /tv in a browser that remembered a venue put that pub's
-   advertising up as though this screen were theirs. Bare /tv is the setup screen; the remembered venue is
-   only OFFERED there (TV_LAST, "Show it again"). */
+   advertising up as though this screen were theirs. Bare /tv is the setup screen. It used to OFFER the
+   remembered venue ("Show it again"); Dean, 2 Nov 2026, took that out, so it neither runs nor offers it. */
 var rem = resolveWith(false, "wellshot-hotel", null);
-pass("a browser with a remembered venue does NOT run it by itself at bare /tv: it offers it",
-     rem.slug === "" && rem.last === "wellshot-hotel", JSON.stringify(rem));
+pass("a browser with a remembered venue does NOT run it at bare /tv, and does not offer it either",
+     rem.slug === "" && rem.last === "", JSON.stringify(rem));
 pass("and the same venue in the address runs normally",
      resolveWith(false, "wellshot-hotel", "wellshot-hotel").slug === "wellshot-hotel");
 pass("a demo on that same browser borrows nothing, which is the live fault",

@@ -83,6 +83,30 @@
   /* The branded floor sits under the ad rotation. Nothing ever clears #adsRoot, so if the
      rotation renders nothing, the room sees this rather than a black screen. */
   #tvFloor{z-index:0}
+  #tvFloor .fl-load{display:none}
+  body.tv-loading #tvFloor .fl-load{display:block}
+  body.tv-loading #tvFloor .fl-done{display:none}
+  /* THE BRAND SCREEN (Dean, 2 Nov 2026: "game on here shouldnt exist. We should build it into something more
+     brand worthy"). What the room sees whenever no advert is up: the floor under the rotation and the
+     holding card of a venue with nothing of its own yet. The neon play triangle from the start show
+     (vp-sting.js), breathing slowly, the venue's own logo or name when the TV knows it, and the venueplay
+     wordmark as the signature. Built by brandScreen(); the markup in #tvFloor is the same thing for a page
+     whose script never runs. LIGHT ON AN OLD TV: the only thing that moves is the OPACITY of the glow
+     layer, which a television composites without redrawing; nothing is blurred or filtered as it moves. */
+  .vpb{background:radial-gradient(60cqw 42cqw at 50% 34%, rgba(255,31,142,.16), transparent 62%), linear-gradient(170deg,#11050c,#050506 70%)}
+  .vpb-tri{display:block;width:clamp(80px,11cqw,240px);height:auto;overflow:visible;margin:0 auto 2.4cqw}
+  .vpb-glow{opacity:.6;animation:vpbBreath 6s ease-in-out infinite}
+  @keyframes vpbBreath{0%,100%{opacity:.35}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){ .vpb-glow{animation:none} }
+  .vpb-logo{display:block;max-width:min(32cqw,600px);max-height:13cqw;width:auto;height:auto;object-fit:contain;margin:0 auto 1.6cqw;filter:drop-shadow(0 4px 18px rgba(0,0,0,.5))}
+  .vpb-hi{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,1.9cqw,30px);color:var(--pink)}
+  .vpb-name{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,6.4cqw,124px);line-height:1;color:#fff;margin:.9cqw 0 1.4cqw;max-width:86cqw;text-wrap:balance}
+  .vpb-line{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,2.3cqw,42px);color:var(--text);max-width:78cqw;text-wrap:balance;line-height:1.3}
+  .vpb-line.scan{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.04em;color:#fff}
+  .vpb-mark{margin-top:3cqw;line-height:0}
+  .vpb-mark svg{height:clamp(20px,2.4cqw,46px);width:auto;color:#fff;overflow:visible;filter:drop-shadow(0 0 .3cqw rgba(255,31,142,.45))}
+  .vpb.solo .vpb-mark{margin-top:0;margin-bottom:2.2cqw}
+  .vpb.solo .vpb-mark svg{height:clamp(30px,5.2cqw,100px)}
   #tvAds{z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
@@ -130,8 +154,6 @@
   /* BARE /tv IS A SETUP SCREEN, NOTHING ELSE (live fault, Dean, 1 Nov 2026). No advertising behind the panel:
      the plain venueplay background. */
   body.tv-bare #adsRoot{display:none!important}
-  .su-last{margin:0 0 1.4cqw;font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,1.6cqw,26px);color:var(--text)}
-  .su-last a{margin-left:.7em;padding:.5cqw 1.3cqw;font-size:clamp(14px,1.5cqw,26px);vertical-align:middle}   /* a line, not a third card */
   .pairpanel .bvmark{margin-bottom:.8em}
   .su-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,4.2cqw,64px);color:#fff;line-height:1.05;margin:0 0 1.3cqw}
   .su-ways{display:flex;flex-wrap:wrap;justify-content:center;gap:2cqw;text-align:left}
@@ -445,11 +467,19 @@
          so it never covers anything. It costs nothing and it has already been the
          difference twice. Checked by tools/check-tv-watchdog.py
          ====================================================================== -->
-    <div id="tvFloor" class="layer ad-a" aria-hidden="true">
-      <div class="admark still"><svg viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
-      <div class="adbig">Game on here</div>
-      <div class="adsub">Grab your phone, the fun starts soon</div>
+    <div id="tvFloor" class="layer vpb solo" aria-hidden="true" data-vpb="floor">
+      <svg class="vpb-tri" viewBox="-130 -160 280 320" aria-hidden="true"><g class="vpb-glow"><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="30" stroke-linejoin="round" opacity=".35"/><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g><polygon points="-85,-118 112,0 -85,118" fill="rgba(255,31,142,.10)" stroke="#FF1F8E" stroke-width="9" stroke-linejoin="round"/><polygon class="vpb-core" points="-85,-118 112,0 -85,118" fill="none" stroke="#FFD3EA" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <div class="vpb-mark"><svg viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+      <div class="vpb-line fl-done">Trivia, musical bingo and bingo, played on your phone</div>
+      <div class="vpb-line fl-load">Getting your screen ready</div>
     </div>
+    <script>
+      /* WHILE IT LOADS, THE FLOOR SAYS SO, FROM THE FIRST FRAME, on a screen with a venue in its address (2 Nov
+         2026): "Getting your screen ready" in place of its ordinary line. The main script clears it when the venue's screen answers. This clears it at 25 s on its own, so even
+         a page whose main script never runs is not left saying "Loading" for ever. */
+      (function(){ try{ if(/[?&]venue=|^\?[A-Za-z0-9]/.test(location.search||"")){ document.body.classList.add("tv-loading");
+        setTimeout(function(){ document.body.classList.remove("tv-loading"); }, 25000); } }catch(e){} })();
+    </script>
     <div id="tvAds" style="position:absolute;inset:0"></div>
     <!-- Fullscreen setup control: lives inside adsRoot so it only shows on the
          idle/advertising and pairing states (adsRoot is hidden during a game). -->
@@ -474,7 +504,6 @@
     <canvas id="qrPair" style="display:none"></canvas>
     <div class="bvmark"><svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
     <div class="su-title">Set up this screen</div>
-    <div class="su-last" id="suLast" hidden>This screen was last used for <b id="suLastName"></b>.<a class="su-btn" id="suLastGo" href="#">Show it again</a></div>
     <div class="su-ways">
       <div class="su-way" id="suApp">
         <div class="su-head">Got a TV with Google Play? <b>Get the venueplay TV app</b></div>
@@ -516,7 +545,7 @@
         <div class="bvissuelbl">This screen is set to</div>
         <div class="bvaddr" id="bvAddr"></div>
       </div>
-      <div class="bvtext">Check that against the address in your setup email. If it is wrong, change it on the screen and it will connect itself. If it looks right, email <b>hello@venueplay.com.au</b> and we will sort it out.</div>
+      <div class="bvtext">Check that against the address in your setup email. If it is wrong, change it on the screen and it will connect itself. If it looks right, email <b>support@venueplay.com.au</b> and we will sort it out.</div>
     </div>
   </div>
 
@@ -703,21 +732,17 @@
      /tv?venue=<slug> link itself, so it never needs the "get the app" line or the "save this page"
      note: it already remembers its venue. */
   var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || ""); }catch(e){ return false; } })();
-  var TV_LAST="";                               // the venue a bare /tv remembers: offered, never shown by itself
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();
     if(fromUrl){ rememberVenue(fromUrl); return fromUrl; }
-    // memory: fellBack says so in the console if the address held something it could not read.
-    // Its own try, so a warning that cannot run never costs the screen its remembered venue.
-    /* BARE /tv NEVER SHOWS A REMEMBERED VENUE BY ITSELF (live fault, Dean, 1 Nov 2026). Our emails send a new
-       venue to venueplay.com.au/tv, and a browser that had once opened any venue's screen (Dean's own, after
-       making a prospect's slides) put THAT pub's advertising on the wall full screen, with no way to set the
-       screen up. Bare /tv is now always the setup screen; a venue it remembers is offered on it as one button
-       ("Show it again"), so a TV that really is that venue's is one press of OK from its own screen. A screen
-       with its venue in the address (/tv?venue=..., the TV app, a saved bookmark) is unchanged. */
-    try{ var s=localStorage.getItem("vpTvVenue"); if(s){ try{ VPVenueURL.fellBack(window.location.search||"", s); }catch(e){} TV_LAST=s; } }catch(e){}
-    return "";
+    /* BARE /tv NEVER SHOWS A REMEMBERED VENUE (live fault, Dean, 1 Nov 2026). Our emails send a new venue to
+       venueplay.com.au/tv, and a browser that had once opened any venue's screen (Dean's own, after making a
+       prospect's slides) put THAT pub's advertising on the wall full screen, with no way to set the screen up.
+       Bare /tv is always the setup screen. It used to offer the remembered venue as a "Show it again" button;
+       Dean, 2 Nov 2026, took that out: a venue puts its screen code in again. So bare /tv does not read the
+       memory at all. A screen with its venue in the address (/tv?venue=..., the TV app, a bookmark) is unchanged. */
+    return "";   // bare /tv: the setup screen, with no remembered venue read or offered
   })();
   function rememberVenue(slug){
     try{ if(slug) localStorage.setItem("vpTvVenue", slug); }catch(e){}
@@ -1255,26 +1280,6 @@
     if(VENUE_SLUG){ hidePairPanel(); return; }
     var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR();
     try{ document.body.classList.add("tv-bare"); }catch(e){}
-    offerLastVenue();
-  }
-  /* "This screen was last used for <venue>. Show it again": its own address, so from then on it is an
-     ordinary venue screen. Named by the venue's name once /screen answers, its address until then. */
-  var lastOffered=false;
-  function offerLastVenue(){
-    if(lastOffered || !TV_LAST || VP_DEMO) return;
-    lastOffered=true;
-    var box=$("suLast"), nm=$("suLastName"), go=$("suLastGo");
-    if(!box || !nm || !go) return;
-    nm.textContent=TV_LAST;
-    go.setAttribute("href", "/tv?venue="+encodeURIComponent(TV_LAST));
-    box.hidden=false;
-    try{ go.focus(); }catch(e){}   // a TV remote's OK goes back to its own venue in one press
-    try{
-      fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(TV_LAST))
-        .then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(d){ if(d && d.exists && d.name) nm.textContent=String(d.name); else if(d && d.exists===false) box.hidden=true; })
-        .catch(function(){});
-    }catch(e){}
   }
   function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
   function markHostConnected(){ hostConnected=true; hidePairPanel(); }
@@ -1341,12 +1346,61 @@
   function venuePending(){
     return !!VENUE_SLUG && !VENUE_CONFIRMED && Date.now() < VENUE_PENDING_UNTIL;
   }
+  /* STILL LOADING THIS VENUE'S SLIDES? (Dean, 2 Nov 2026: the wall said GAME ON HERE for a minute
+     and he thought it had not loaded at all.) "Game on here" reads as a finished screen, so until
+     the venue's own screen has answered once, the holding card and the floor under it say the
+     screen is loading instead. TIME BOXED like VENUE_PENDING above, so a screen that cannot reach
+     us goes back to the ordinary floor and is never stuck saying "Loading". The body class is set
+     by the small script under #tvFloor, so the floor is right from the first frame. */
+  var SCREEN_LOAD_MS = 20000;
+  var screenLoadingNow = !!VENUE_SLUG;
+  function screenLoading(){ return screenLoadingNow; }
+  function screenLoaded(){
+    if(!screenLoadingNow) return;
+    screenLoadingNow = false;
+    try{ document.body.classList.remove("tv-loading"); }catch(e){}
+    try{ syncFloor(); }catch(e){}
+  }
+  if(!VENUE_SLUG){ try{ document.body.classList.remove("tv-loading"); }catch(e){} }
+  setTimeout(function(){
+    if(!screenLoadingNow) return;
+    screenLoaded();
+    try{ if(tvMode==="ads"){ buildAds(); startAds(); } }catch(e){}   // the card's words change: show the new ones
+  }, SCREEN_LOAD_MS);
   /* THE VENUEPLAY MARK, once. It was drawn inline in #tvCorner and nowhere else, so the two
      screens a venue sees when something is wrong had no logo on them at all and did not read
      as our product. Same path, same pink, one place to change it. */
   /* THE F4 WORDMARK (1 Nov 2026): the lowercase venueplay with the triangle in the a, from
      venueplay/brand/vp-mark.svg by tools/sync-brand-mark.py, not the old triangle over an uppercase word. */
   var VP_MARK_SVG = '<svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg>';
+  /* THE BRAND SCREEN, ONE BUILDER (see .vpb in the styles). o.loading: the venue's screen has not answered
+     yet. o.name / o.logo: the venue, when the TV knows it. o.scan: a join code is on the wall, so the line
+     says "Scan to play". With no venue it is the wordmark and the triangle, never words about a fault. */
+  var VPB_TRI = '<svg class="vpb-tri" viewBox="-130 -160 280 320" aria-hidden="true"><g class="vpb-glow"><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="30" stroke-linejoin="round" opacity=".35"/><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g><polygon points="-85,-118 112,0 -85,118" fill="rgba(255,31,142,.10)" stroke="#FF1F8E" stroke-width="9" stroke-linejoin="round"/><polygon class="vpb-core" points="-85,-118 112,0 -85,118" fill="none" stroke="#FFD3EA" stroke-width="2.6" stroke-linejoin="round"/></svg>';
+  var VPB_LINE = 'Trivia, musical bingo and bingo, played on your phone', VPB_READY = 'Getting your screen ready';
+  function brandScreen(o){
+    o=o||{};
+    var nm=String(o.name||"").trim(), lg=String(o.logo||"");
+    var logo=(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1) ? '<img class="vpb-logo" alt="" src="'+esc(lg)+'">' : '';
+    var venue = logo ? logo : (nm ? '<div class="vpb-hi">Welcome to</div><div class="vpb-name">'+esc(nm)+'</div>' : '');
+    var line = o.both
+      ? '<div class="vpb-line fl-done'+(o.scan?' scan':'')+'">'+(o.scan?'Scan to play':VPB_LINE)+'</div><div class="vpb-line fl-load">'+VPB_READY+'</div>'
+      : '<div class="vpb-line'+(o.scan&&!o.loading?' scan':'')+'">'+(o.loading?VPB_READY:(o.scan?'Scan to play':VPB_LINE))+'</div>';
+    var mark='<div class="vpb-mark">'+VP_MARK_SVG+'</div>';
+    return { solo: !venue, html: VPB_TRI + (venue ? venue + line + mark : mark + line) };
+  }
+  /* The floor follows what the TV knows: the venue's logo or name once /screen has said, and "Scan to play"
+     while a join code is on the wall. Called wherever those change; costs one innerHTML on a hidden layer. */
+  var floorSig="";
+  function syncFloor(){
+    try{
+      var fl=document.getElementById("tvFloor"); if(!fl) return;
+      var j=document.getElementById("tvJoinCorner");
+      var b=brandScreen({ both:true, name:holdVenueName, logo:venueLogoUrl, scan: !!(j && !j.classList.contains("hidden")) });
+      if(b.html===floorSig) return; floorSig=b.html;
+      fl.innerHTML=b.html; fl.classList.toggle("solo", b.solo);
+    }catch(e){}
+  }
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
   var ACCENT_COLOR={pink:"#FF1F8E",gold:"#FFC24B",green:"#35D07F",blue:"#4C8DFF"};
   function accentClass(a){ return ACCENT[a]||"ad-b"; }
@@ -1391,7 +1445,7 @@
     /* The ordinary holding slide ("Game on here") keeps the gold card: it is a cheerful
        message and gold is ours. The "Setting up" one does not, because it sits under a pink
        mark and the two together looked like two different products. Dean: "very off brand". */
-    if(e.type==="holding") return venuePending() ? "ad-b" : (e.v==="play" ? "ad-b" : "ad-a");
+    if(e.type==="holding") return venuePending() ? "ad-b" : (e.v==="play" ? "ad-b" : (e.v ? "ad-a" : "vpb solo"));   // no venue loop yet: the brand screen
     return accentClass(e.slide.accent);
   }
   function entryInner(e){
@@ -1436,10 +1490,13 @@
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
       // their promos/game did not load, so point them to support rather than only cheering. It is
       // only shown to whoever is setting the screen up (.sup, see syncSupport), never to the room.
-      var help='<div class="adhelp sup">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
+      var help='<div class="adhelp sup">Screen not showing your promos or game? Email support@venueplay.com.au</div>';
+      if(!e.v && screenLoading()){   // the venue's own screen has not answered yet: say so, do not look finished
+        return '<div class="vpb-in" data-vpb="loading">'+brandScreen({ loading:true }).html+'</div>';
+      }
       if(e.v && holdVenueName){
         var nm=esc(holdVenueName);
-        var line='<div class="adsub vline">Trivia, bingo and musical bingo at '+nm+'. Ask at the bar what&rsquo;s on.</div>';
+        var line='<div class="adsub vline">Trivia, musical bingo and bingo at '+nm+'. Ask at the bar what&rsquo;s on.</div>';
         if(e.v==="venue"){
           var lg=String(venueLogoUrl||"");
           var logo=(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1)
@@ -1449,9 +1506,7 @@
         return '<div class="adtag" style="color:'+accentHex("pink")+'">'+nm+'</div>'+
                '<div class="adbig">Play on your phone</div>'+line+help;
       }
-      return '<div class="admark still">' + VP_MARK_SVG + '</div>'+
-             '<div class="adbig">Game on here</div>'+
-             '<div class="adsub">Grab your phone, the fun starts soon</div>'+help;
+      return '<div class="vpb-in" data-vpb="holding">'+brandScreen({}).html+'</div>'+help;
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
@@ -1479,15 +1534,35 @@
      event, so a deleted or mistyped image painted a near-black wall for its whole turn, every
      other slide, and the watchdog called it healthy (break test, 14 Oct 2026). Each picture is
      loaded once on the side; one that fails is left out and the slides are rebuilt without it. */
-  var BAD_IMG={}, _probed={};
+  var BAD_IMG={}, _probed={}, IMG_RETRY_MS=600000;
+  /* THE RETRY IS TRIED OFF THE WALL. It used to clear BAD_IMG after ten minutes and let the next
+     rebuild put the slide back, so every ten minutes the broken slide rejoined the loop, failed
+     again, and the rebuild that dropped it left nothing lit: the floor, mid-rotation, until the
+     watchdog. Dean saw exactly that on Test Charlie at 4:20pm, 2 Nov 2026, an hour into a wall
+     that had been fine. Now the picture is loaded on the side first and the slide only comes back
+     once it really loads; a picture that still fails is tried again in another ten minutes. */
+  function imgRetry(u){
+    try{
+      var t=new Image();
+      t.onload=function(){ delete BAD_IMG[u]; try{ buildAds(); if(tvMode==="ads") startAds(); }catch(e){} };
+      t.onerror=function(){ setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS); };
+      t.src=u;
+    }catch(e){}
+  }
   function probeImg(u){
     if(_probed[u]) return; _probed[u]=1;
     try{
       var im=new Image();
       im.onerror=function(){
         BAD_IMG[u]=1;
-        try{ buildAds(true); }catch(e){}
-        setTimeout(function(){ delete BAD_IMG[u]; delete _probed[u]; }, 600000);   // a wifi blip is retried in 10 minutes
+        /* AND START THE ROTATION AGAIN. This used to be buildAds(true) alone, and buildAds hands back
+           a set of slides with nothing lit. So on any venue with one broken picture, the good slides
+           were built and none was shown: the wall sat on the bare floor until the watchdog's second
+           strike repaired it, 40 to 60 seconds after the page loaded. Dean, 2 Nov 2026, Test Charlie
+           ("Show it again", then about a minute of GAME ON HERE before the first slide). Only while
+           the ads are up: a game on screen gets the fresh set from enterAds when it ends. */
+        try{ buildAds(true); if(tvMode==="ads") startAds(); }catch(e){}
+        setTimeout(function retryBadImg(){ imgRetry(u); }, IMG_RETRY_MS);   // a wifi blip is retried in 10 minutes
       };
       im.src=u;
     }catch(e){}
@@ -1602,7 +1677,32 @@
     adIdx=cur;
     // The one on screen starts on top of the stack and stays there, so a rebuild or a
     // resume cannot leave a later slide painting over the visible one. See advance().
-    slides.forEach(function(s,i){ s.classList.toggle("show", i===cur); s.style.zIndex = (i===cur ? "2" : "1"); });
+    /* LIT AT ONCE, NOT FADED IN FROM NOTHING. A rebuild swaps in fresh slides at opacity 0 and takes
+       the old ones away in the same moment, so a fade-in here let the floor show through for most of
+       its 0.8 s: GAME ON HERE flashing up mid-rotation every time a picture failed or the slides
+       changed (Dean, 2 Nov 2026). The slide that should be on screen goes straight to full; only the
+       hand-over between two slides, in advance(), fades, and it fades OVER the old one. */
+    /* AND A HAND-OVER ALREADY UNDER WAY IS LEFT TO FINISH. A rebuild that lands inside advance()'s
+       0.8 s fade (the screen refresh, the poll, the tab coming forward) found the new slide half way in
+       and took the old one away under it, so both sat at about half opacity and the floor showed through
+       (tools/tv-first-slide-in-chrome.test.py ROTATION, 2 Nov 2026). So while the slide on screen is
+       still arriving, the one it is fading in over stays lit underneath until it has. */
+    var arriving = false;
+    try{ arriving = !!slides[cur] && slides[cur].classList.contains("show") && +getComputedStyle(slides[cur]).opacity < 0.99; }catch(e){}
+    var under = [];
+    slides.forEach(function(s,i){
+      var on = (i===cur);
+      if(on && !s.classList.contains("show")){
+        try{ s.style.transition="none"; s.classList.add("show"); void s.offsetWidth; s.style.transition=""; }catch(e){ s.classList.add("show"); }
+      } else if(!on && arriving && s.classList.contains("show")) under.push(s);
+      else s.classList.toggle("show", on);
+      s.style.zIndex = (on ? "2" : "1");
+    });
+    if(under.length){
+      setTimeout(function(){   // its own timer: advance() and stopAds() own adFadeTimer
+        under.forEach(function(s){ if(s.style.zIndex!=="2") s.classList.remove("show"); });   // never one that has since come on top
+      }, 860);
+    }
     if(slides.length<2) return;
     /* CROSS-FADE, not fade-out-then-in.
        Both slides used to transition at the same moment: the outgoing fell from
@@ -1684,7 +1784,7 @@
   }
   function showBingoLayer(which){
     for(var i=0;i<BLAYERS.length;i++){ $(BLAYERS[i]).classList.toggle("hidden", BLAYERS[i]!==which); }
-    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun"); syncFloor();
   }
 
   // Apply the real DB join code the host handed us: update the on-screen code and
@@ -1974,6 +2074,13 @@
       var nt=document.getElementById("venueNameTag");
       if(nt) nt.style.display=(!venueLogoUrl && nt.textContent && tvMode!=="ads") ? "block" : "none";
     }catch(e){}
+    alignCorner();
+  }
+  /* THE TWO LOGOS SIT ON ONE LINE (Dean, 2 Nov 2026): the venueplay mark drops to be centred on a square or
+     tall venue logo. The measuring is VPVenueLogo.alignMark in /app/vp-venuelogo.js, the one copy every TV
+     screen uses. Here on every mode change (applyVenueLogo) and every time the logo is sized. */
+  function alignCorner(){
+    try{ if(typeof VPVenueLogo==="object") VPVenueLogo.alignMark(document.getElementById("tvCorner"), document.getElementById("venueLogo"), !!venueLogoUrl); }catch(e){}
   }
   var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
   function gameLabel(k){
@@ -2546,6 +2653,7 @@
   // ================= INIT =================
   function drawQR(el, url, size){ VPQR.draw(el, url, size); }
 
+  syncFloor();
   buildAds();
   enterAds(); // ads up FIRST, before anything external can fail - the screen is never black
   buildBoard();
@@ -2959,6 +3067,9 @@
           document.body.appendChild(el); }
         el.src=venueLogoUrl;
         if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+        if(!el.__vpAlignWired){ el.__vpAlignWired=true;   /* after vp-venuelogo has sized it: the two logos on one line */
+          try{ el.addEventListener("vp-logo-sized", alignCorner); }catch(e){}
+          try{ VPVenueLogo.watch(el, alignCorner); }catch(e){} }   /* and again when the start show ends, the picture loads, the screen resizes */
       }
       /* A logo says which venue this is better than a caption does, so the small name under the
          VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the
@@ -2966,6 +3077,7 @@
          than none. Without a logo at all the name stays, because a TV pointed at the wrong
          venue is otherwise only noticeable by its sound. One or the other, never both. */
       applyVenueLogo();
+      syncFloor();
     }
     /* The venue's NAME in plain text, so anyone glancing at a screen can see WHICH venue it is
        showing (a TV pointed at the wrong venue is otherwise only noticeable by its sound).
@@ -2997,6 +3109,7 @@
       // and the caption must not reappear on an ad slide. See applyVenueLogo().
       el.textContent=nm; applyVenueLogo();   // the logo wins, and the ads never carry it
       holdVenueName=nm;   // the default loop for a venue with no slides yet (refreshAds follows in loadScreen)
+      syncFloor();
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }
       var ra=document.getElementById("tvRunAt"), ran=document.getElementById("tvRunAtName");   // the real-balls title
@@ -3015,7 +3128,8 @@
       fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug))
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(d){
-          if(!d || !d.exists){ askWhichVenue(); return; }
+          screenLoaded();   // an answer of any kind: the floor and the holding card stop saying "Loading"
+          if(!d || !d.exists){ askWhichVenue(); refreshAds(); return; }
           rememberVenue(slug);   // confirmed real: safe to keep on this screen
           /* THE VENUE'S OWN CODE, NOT ONE DERIVED HERE.
              CODE stays the broadcast channel, which is derived from the slug on
@@ -3042,7 +3156,7 @@
                      time:x.draw_time||"" };
           });
           refreshAds();
-        }).catch(function(){});
+        }).catch(function(){ screenLoaded(); try{ refreshAds(); }catch(e){} });   // unreachable: the ordinary floor, never stuck on "Loading"
     }
     // A venue that uploads a slide or a logo should see it on the wall now, not after the next
     // four hourly reload. billing.html broadcasts t:"screen_refresh" the moment it saves.

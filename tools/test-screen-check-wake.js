@@ -33,7 +33,7 @@ function wall(secs){
   var slides = secs.map(function(s){
     var cls = {};
     return { cls: cls, style: {},
-             classList: { toggle: function(c, on){ if (on) cls[c] = 1; else delete cls[c]; }, add: function(c){ cls[c] = 1; }, remove: function(c){ delete cls[c]; } } };
+             classList: { toggle: function(c, on){ if (on) cls[c] = 1; else delete cls[c]; }, add: function(c){ cls[c] = 1; }, remove: function(c){ delete cls[c]; }, contains: function(c){ return !!cls[c]; } } };
   });
   var env = {
     window: {}, adBuilt: true, adIdx: 0, adTimer: null, adFadeTimer: null,

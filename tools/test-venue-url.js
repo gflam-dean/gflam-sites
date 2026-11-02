@@ -129,14 +129,14 @@ RUNS.forEach(function(r){
   warned = [];
   var win = load(); win.location = { search: r[0] };
   var got;
-  var last = "";
-  try { var both = (new Function("window", "VPVenueURL", "localStorage", "console", tvBody + "; return [VENUE_SLUG, TV_LAST];"))(win, win.VPVenueURL, store(MEM), win.console); got = both[0]; last = both[1]; }
+  try { got = (new Function("window", "VPVenueURL", "localStorage", "console", tvBody + "; return VENUE_SLUG;"))(win, win.VPVenueURL, store(MEM), win.console); }
   catch (e) { got = "THREW " + e; }
-  /* BARE /tv NEVER SHOWS THE REMEMBERED VENUE BY ITSELF (live fault, 1 Nov 2026): where the game screens fall
-     back to memory, tv.html reads NO venue and only offers the remembered one on its setup panel (TV_LAST). */
+  /* BARE /tv NEVER SHOWS THE REMEMBERED VENUE (live fault, 1 Nov 2026), and since 2 Nov 2026 does not even offer
+     it ("Show it again" is gone; a venue keys its screen code in again). Where the game screens fall back to
+     memory, tv.html reads NO venue and never reads the memory, so it has nothing to warn about either. */
   var want = r[1] === MEM ? "" : r[1];
-  ok("tv.html " + (r[0] || "(nothing)") + " shows " + (want || "the setup screen") + (want ? "" : ", offering " + MEM) + (r[2] ? " and warns" : ""),
-     got === want && (want ? true : last === MEM) && (r[2] ? warned.length === 1 : warned.length === 0), got + " last=" + last + " warned=" + warned.length);
+  ok("tv.html " + (r[0] || "(nothing)") + " shows " + (want || "the setup screen") + ", never the remembered " + MEM,
+     got === want && got !== MEM && warned.length === 0, got + " warned=" + warned.length);
 });
 
 // play.html: the bingo phone's venue link

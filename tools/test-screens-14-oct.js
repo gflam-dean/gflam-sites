@@ -106,12 +106,14 @@ print('\n== 5. a slide whose picture fails is dropped from the rotation ==');
   function buildAds() { rebuilt++; }
   function setTimeout() {}
   function Image() { made.push(this); }
-  var BAD_IMG = {}, _probed = {};
+  var BAD_IMG = {}, _probed = {}, IMG_RETRY_MS = 600000, tvMode = 'ads', started = 0;
+  function startAds() { started++; }
   eval(lift(TV, 'probeImg', 'tv.html'));
   probeImg('https://x/missing.png'); probeImg('https://x/missing.png');
   ok('each picture is loaded once', made.length === 1 && made[0].src === 'https://x/missing.png');
   made[0].onerror();
   ok('a failed picture is marked bad and the slides rebuilt', BAD_IMG['https://x/missing.png'] === 1 && rebuilt === 1);
+  ok('and the rotation is started again, so a slide is lit, not the floor (live fault, 2 Nov 2026)', started === 1, 'startAds ran ' + started + ' times');
   ok('the slide list leaves a bad picture out', /slideVisible\(s\) && !\(s\.image_url && BAD_IMG\[String\(s\.image_url\)\]\)/.test(TV));
   ok('an image slide asks for its picture to be checked', /probeImg\(u\);\s*return '<div class="adimg"/.test(TV));
 })();

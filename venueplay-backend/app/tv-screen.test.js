@@ -27,6 +27,7 @@
 
    Run: jsc venueplay-backend/app/tv-screen.test.js
 */
+function syncFloor(){}   // tv.html's brand floor (2 Nov 2026): a hidden layer, nothing this suite looks at
 
 var bad = 0, pass = 0;
 function ok(n, c, extra){
@@ -74,7 +75,7 @@ function grabBranch(marker){
 var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntries","entryClass","entryInner",
             "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
-            "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","stopCelebrate",
+            "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","alignCorner","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
             "enterHolding","notePats","patName"];   // patName: the board names a venue's own pattern (24 Oct 2026)
 var SRC = {}, missing = [];

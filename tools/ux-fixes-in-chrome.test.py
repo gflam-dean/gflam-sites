@@ -19,7 +19,7 @@ swapped for the rig's stand-in):
      fits its square or the wall. The BINGO button is on screen without scrolling at 390 x 690.
   4. THE TV: the floor under the slides is styled from the first frame (it showed the browser's plain
      16px "Game on here" for 10 to 15 seconds on a slow screen), and a new venue with no slides gets a
-     loop of its own name ("Trivia, bingo and musical bingo at <venue>. Ask at the bar what's on.")
+     loop of its own name ("Trivia, musical bingo and bingo at <venue>. Ask at the bar what's on.")
      with the support email only for whoever is setting the screen up.
 
     python3 tools/ux-fixes-in-chrome.test.py            screenshots go to $VP_SHOTS if set
@@ -204,12 +204,12 @@ def tv(r):
     r.W.seed('vp_venues', [{'id': NB, 'name': 'The Average Joe', 'slug': 'the-average-joe', 'status': 'active', 'join_code': fnv_code('the-average-joe'),
                             'au_state': 'QLD', 'max_players': 100, 'created_at': '2026-10-28T00:00:00Z', 'suspended_reason': None}])
     tid, t = r.open('/tv?venue=the-average-joe', width=1920, height=1080)
-    fl = J(r.until(t, ('(function(){var b=document.querySelector("#tvFloor .adbig");if(!b||document.readyState==="loading")return "";var c=getComputedStyle(b);'
-                       'return JSON.stringify({ff:c.fontFamily,fs:parseFloat(c.fontSize),tt:c.textTransform});})()'), 20))
-    ok('the floor under the slides is styled (Anton, uppercase, big), never the browser\'s plain 16px',
-       'Anton' in (fl.get('ff') or '') and fl.get('fs', 0) >= 34 and fl.get('tt') == 'uppercase', fl)
+    fl = J(r.until(t, ('(function(){var b=document.querySelector("#tvFloor .vpb-line"),g=document.querySelector("#tvFloor .vpb-tri");if(!b||!g||document.readyState==="loading")return "";var c=getComputedStyle(b);'
+                       'return JSON.stringify({ff:c.fontFamily,fs:parseFloat(c.fontSize),tri:g.getBoundingClientRect().width});})()'), 20))
+    ok('the floor under the slides is the styled brand screen (Manrope line, the neon triangle at size), never the browser\'s plain 16px',
+       'Manrope' in (fl.get('ff') or '') and fl.get('fs', 0) >= 30 and fl.get('tri', 0) >= 150, fl)
     LIT = '(function(){var s=document.querySelector("#tvAds .ad.show");return s?s.textContent.replace(/\\s+/g," ").trim():"";})()'
-    LINE = 'Trivia, bingo and musical bingo at The Average Joe. Ask at the bar what’s on.'
+    LINE = 'Trivia, musical bingo and bingo at The Average Joe. Ask at the bar what’s on.'
     lit = r.until(t, '(function(){var t=%s;return t.indexOf(%s)>=0?t:"";})()' % (LIT, json.dumps(LINE)), 30)
     ok('no slides yet: the wall shows the venue\'s own loop, "%s"' % LINE, isinstance(lit, str) and LINE in lit and 'The Average Joe' in lit, r.ask(t, LIT))
     n = r.ask(t, 'document.querySelectorAll("#tvAds .ad").length')
