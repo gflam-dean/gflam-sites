@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Nov 2026, 14:45 · 988ef400';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '2 Nov 2026, 18:53 · 4e5db93b';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -227,6 +227,10 @@ export default {
       if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/review' && typeof vpaAutopilotReviewPage === 'function') return await vpaAutopilotReviewPage(request, env);
       if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
+      // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
+      if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
+      if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/help/reply'         && typeof vpaAutopilotHelpReply === 'function')   return await vpaAutopilotHelpReply(request, env, json);
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
@@ -2513,6 +2517,112 @@ async function vpaAutopilotDecisionDone(request, env, json) {
   return json({ ok: true, marked: got.length === 1, already: got.length === 0 });
 }
 
+/* ===========================================================================
+ * WEBSITE SALES ENQUIRIES FOR THE PROSPECT AUTOPILOT   (Dean, 2 Nov 2026)
+ *
+ * "I am extremely happy to have all the sales prospects go through the same process ... if it's
+ * obvious I don't wanna see it ... if it could be wrong or needs editing, that's when I wanna see it
+ * ... I especially cannot have any errors on this."
+ *
+ * The website's two sales forms (the home page's Talk to us, POST /contact, and the help page's
+ * "Bringing venueplay to my venue", POST /help/ticket kind=sales) each make a venueplay sales ticket
+ * from channel web_form. The Mac job reads them here and answers through the help desk, so the
+ * conversation stays on the ticket in HQ and their answer threads back onto it.
+ *
+ *   GET  /autopilot/help/sales-tickets?since=ISO  X-Autopilot-Key  the website sales tickets since then
+ *   GET  /autopilot/help/ticket?id=UUID           X-Autopilot-Key  one again, just before a reply goes
+ *   POST /autopilot/help/reply { id, body, signer } X-Autopilot-Key  the reply, by helpSendTicketReply
+ *
+ * Read only, except the reply. The same key and door as every /autopilot/ route. Each ticket comes
+ * with what the Mac must know before it could ever send by itself: replies HQ has already sent on it
+ * and every other ticket from the same address. A read that fails says so (503); it never looks like
+ * "no history". The reply is refused when HQ has replied already, the ticket is closed, the address
+ * was typed in by HQ, or there is nothing to send to: the Mac checks these too; this is the last word.
+ * ======================================================================== */
+const VPA_WEB_LOOKBACK_DAYS = 30;
+async function vpaWebTicketFacts(env, t) {
+  const replies = await vpaReadPage(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id)
+    + '&kind=eq.reply&select=created_at,author&order=created_at.desc&limit=20');
+  const email = String(t.contact_email || '').toLowerCase();
+  const others = email ? await vpaReadPage(env, 'vp_help_tickets', 'contact_email=eq.' + encodeURIComponent(email)
+    + '&id=neq.' + encodeURIComponent(t.id) + '&select=ticket_no,created_at,category,channel,status&order=created_at.desc&limit=20') : [];
+  return {
+    id: t.id, ticket_no: t.ticket_no, created_at: t.created_at, status: t.status, subject: t.subject || '',
+    message: t.message || '', contact_name: t.contact_name || '', contact_email: email, contact_phone: t.contact_phone || '',
+    contact_typed: !!t.contact_typed, venue_id: t.venue_id || null, venue_matched_by: t.venue_matched_by || null,
+    lead_venue_name: t.lead_venue_name || '', lead_locality: t.lead_locality || '', lead_website: t.lead_website || '',
+    staff_replies: replies.length, last_staff_reply_at: replies.length ? replies[0].created_at : null,
+    earlier_tickets: others,
+  };
+}
+function vpaWebTicketIsSale(t) {
+  return !!t && t.brand === 'venueplay' && t.category === 'sales' && t.channel === 'web_form';
+}
+async function vpaAutopilotHelpTickets(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const url = new URL(request.url);
+  const floor = Date.now() - VPA_WEB_LOOKBACK_DAYS * 86400000;
+  const asked = Date.parse(url.searchParams.get('since') || '');
+  const since = new Date(isFinite(asked) && asked > floor ? asked : floor).toISOString();
+  try {
+    const rows = await vpaReadPage(env, 'vp_help_tickets', 'brand=eq.venueplay&category=eq.sales&channel=eq.web_form'
+      + '&created_at=gte.' + encodeURIComponent(since) + '&select=*&order=created_at.asc,id.asc&limit=100');
+    const out = [];
+    for (const t of rows) out.push(await vpaWebTicketFacts(env, t));
+    return json({ ok: true, since: since, tickets: out });
+  } catch (e) {
+    return json({ error: 'Could not read the help desk: ' + String(e && e.message || e).slice(0, 200) }, 503);
+  }
+}
+async function vpaAutopilotHelpTicket(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const id = new URL(request.url).searchParams.get('id') || '';
+  if (!HELP_UUID.test(id)) return json({ error: 'id must be a ticket id.' }, 400);
+  try {
+    const rows = await vpaReadPage(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(id) + '&select=*&limit=1');
+    if (!rows.length || !vpaWebTicketIsSale(rows[0])) return json({ error: 'That is not a website sales ticket.' }, 404);
+    return json({ ok: true, ticket: await vpaWebTicketFacts(env, rows[0]) });
+  } catch (e) {
+    return json({ error: 'Could not read the help desk: ' + String(e && e.message || e).slice(0, 200) }, 503);
+  }
+}
+async function vpaAutopilotHelpReply(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  if (!HELP_UUID.test(String(b.id || ''))) return json({ error: 'id must be a ticket id.' }, 400);
+  let t, facts;
+  try {
+    const rows = await vpaReadPage(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(b.id) + '&select=*&limit=1');
+    t = rows[0];
+    if (!vpaWebTicketIsSale(t)) return json({ error: 'That is not a website sales ticket.' }, 404);
+    facts = await vpaWebTicketFacts(env, t);
+  } catch (e) {
+    return json({ error: 'Could not read the help desk, so nothing was sent.' }, 503);
+  }
+  if (facts.staff_replies) return json({ error: 'Someone has already replied on this ticket, so nothing was sent.', answered: true }, 409);
+  if (t.status === 'closed') return json({ error: 'The ticket is closed, so nothing was sent.', closed: true }, 409);
+  if (t.contact_typed) return json({ error: 'The address on this ticket was typed in by HQ, so the autopilot does not send to it.' }, 409);
+  if (!t.contact_email || !HELP_EMAIL_RE.test(String(t.contact_email))) return json({ error: 'This ticket has no email address to reply to.' }, 400);
+  const body = helpText(b.body);
+  if (body.length < 80) return json({ error: 'The reply is missing or too short.' }, 400);
+  if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
+  if (/[\u2014\u2013]/.test(body)) return json({ error: 'The reply has a long dash in it.' }, 400);
+  const leftIn = HELP_FILLIN_RE.exec(body);
+  if (leftIn) return json({ error: 'Fill in ' + leftIn[0] + ' before sending.' }, 400);
+  const signer = helpSigner(env, b.signer);
+  const sentFrom = await helpSendTicketReply(env, t, body, signer, 'Prospect autopilot, signed ' + signer, '', null);
+  if (!sentFrom) return json({ error: 'The email did not send, so nothing was recorded.' }, 502);
+  if (t.status === 'new' || t.status === 'open') {
+    await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), { status: 'waiting', updated_at: helpNow() }).catch(() => null);
+  }
+  return json({ ok: true, id: t.id, ticket_no: t.ticket_no, sent_from: sentFrom });
+}
+
 /* ---- the page ------------------------------------------------------------- */
 function vpaReviewPage(title, inner, status) {
   const html = '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
@@ -2560,6 +2670,17 @@ function vpaReviewPage(title, inner, status) {
 
 /* Exactly what happens, and when (Dean: confirm pages say exactly what will happen and when). */
 function vpaReviewWhatHappens(row, edited) {
+  if (row.class === 'web form') {
+    // A website enquiry (2 Nov 2026): the reply goes through the help desk, on their ticket.
+    return '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+      + '<li>It checks again that nobody has replied on their help desk ticket since, that they have not asked us to stop, and that their account can be made.</li>'
+      + '<li>If all is well, the reply' + (edited ? ', with your changes,' : '') + ' goes through the help desk from hello@venueplay.com.au, on their ticket, '
+      + '30 minutes after they filled in the form, between 8am and 5pm Monday to Friday. Their answer comes back onto the ticket in HQ. '
+      + 'Their account email follows 30 minutes after the reply, and you can still cancel it in HQ until it goes.</li>'
+      + '<li>If something is not right, you get an email saying why it was held. Nothing goes to them if it is held.</li>'
+      + '</ol></div>';
+  }
   return '<div class="what"><b>What happens when you tap it</b><ol>'
     + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
     + '<li>It checks again that nobody has replied to them since, that they have not asked us to stop, and that their account can be made.</li>'
@@ -2571,6 +2692,10 @@ function vpaReviewWhatHappens(row, edited) {
 }
 
 function vpaReviewTitle(row) {
+  if (row.class === 'web form') {
+    return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+      + '<p class="muted">Filled in the form on our website' + (row.reply_to ? ', from ' + vpaEsc(row.reply_to) : '') + '.</p>';
+  }
   return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
     + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>';
 }
@@ -2666,7 +2791,8 @@ function vpaReviewDecidedPage(row, sameAsAsked) {
     : '<p>Your Mac picks it up within 5 minutes and emails you what it did.</p>';
   return vpaReviewPage(sameAsAsked ? 'Got it' : 'Already decided',
     '<div class="done" aria-hidden="true">' + (row.decision === 'no' ? '&#10005;' : '&#10003;') + '</div>'
-    + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision) + '</h1>'
+    + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(row.class === 'switch' ? (row.decision === 'yes' ? 'turn it on' : 'leave it off')
+                                                                                  : (VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision)) + '</h1>'
     + '<p class="muted">' + vpaEsc(row.company || row.folder) + (when ? ', ' + vpaEsc(when) : '') + '.</p>'
     + applied
     + (sameAsAsked ? '' : '<p class="muted">Only the first choice counts, so nothing changed. To change your mind, tell Claude.</p>'), 200);
@@ -2754,6 +2880,20 @@ async function vpaAutopilotReviewPage(request, env) {
   }
 
   // GET (or an edit sent back to fix): the page. NOTHING is written here.
+  if (row.class === 'switch') {
+    /* A SETTING, NOT A REPLY (2 Nov 2026): the Mac asks Dean once, after 14 days of web form enquiries in
+       shadow mode with no disagreement, whether to let the obvious ones go by themselves. One button. */
+    const sw = '<h1>' + vpaEsc(row.company || 'Turn this on?') + '</h1>'
+      + '<div class="card words">' + vpaEsc(row.reply || '') + '</div>'
+      + (row.their_words ? '<h2>The last 14 days</h2><div class="card words">' + vpaEsc(row.their_words) + '</div>' : '')
+      + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+      + (action === 'yes'
+          ? '<button class="btn yes" name="b" type="submit" data-a="yes">Yes, turn it on</button>'
+            + '<p class="muted" style="margin-top:8px">Within 5 minutes your Mac switches it on. Anything that could be wrong still comes to you first.</p>'
+          : '<button class="btn no" name="b" type="submit" data-a="no">Leave it off</button>')
+      + '</form>';
+    return vpaReviewPage(action === 'yes' ? 'Turn this on?' : 'Leave it off?', sw, 200);
+  }
   // ONE form, from the top button to the bottom ones: the page's own choice is a submit wherever it is shown.
   const rec = vpaReviewRecommended(row);
   let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
@@ -2775,7 +2915,8 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<div class="what"><b>What happens when you tap it</b><ol>'
       + '<li>Nothing is sent to them and no account is made, now or later.</li>'
       + '<li>Within 5 minutes your Mac marks it rejected and emails you to say so.</li>'
-      + '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>'
+      + (row.class === 'web form' ? '<li>Their ticket stays in HQ > Help desk, so you can still answer it there by hand.</li></ol></div>'
+                                  : '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>')
       + '<h2>Why not? (optional, just for the record)</h2>'
       + '<textarea class="short" name="reason" aria-label="Why not"></textarea>';
   }
@@ -14258,8 +14399,10 @@ async function vpbMyVenues(request, env, json) {
    for either brand, not even their own. Every route here that returns ticket data starts with
    helpAdmin(), which is vpaRequireAdmin with HELP_ADMIN_ROLES. The one exception is
    /help/push/peek, which answers a staff device's own push secret with brand, category and
-   ticket number only (see there). The tables are service role only, so this file is the only
-   door.
+   ticket number only (see there). The other is the prospect autopilot (2 Nov 2026,
+   /autopilot/help/*): the Mac job's own key, website SALES tickets only, so it can answer an
+   enquiry from the website the way it answers an Instantly reply (see vpaAutopilotHelpTickets).
+   The tables are service role only, so this file is the only door.
 
    HELP_ADMIN_ROLES is owner, accounts AND staff. 'staff' is the existing Gflam staff role in
    vp_platform_admins (HQ already hides Audit and Flagged from it, and the game Worker refuses it
@@ -15160,6 +15303,23 @@ async function helpAcknowledge(env, t) {
     return ok;
   } catch (e) { return false; }
 }
+/* THE ONE PLACE A REPLY ON A TICKET IS SENT AND WRITTEN DOWN: HQ's Reply (helpAdminReply) and the
+   prospect autopilot's reply to a website enquiry (vpaAutopilotHelpReply, 2 Nov 2026). From the
+   category's address on the send. subdomain, Reply-To the real mailbox, the ticket's reference in the
+   subject so their answer threads back onto the ticket, and the reply kept as a note so HQ sees it.
+   Returns the Reply-To it went from, or '' when Resend did not take it (then nothing is recorded). */
+async function helpSendTicketReply(env, t, body, signer, authorLabel, authorExtra, authorId) {
+  const to = String(t.contact_email || '').toLowerCase();
+  const f = helpFromFor(t.category, t.brand);
+  const subj = helpBareSubject(t.subject).replace(/^(re|fw|fwd):\s*/i, '') || 'Your request';
+  const ok = await helpSendEmail(env, { to: to, from: f.from, reply_to: f.reply_to,
+    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpReplyTag(t),
+    html: helpReplyHtml(t, body, f.reply_to, signer) });
+  if (!ok) return '';
+  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
+    author: authorLabel + ' (from ' + f.reply_to + ' to ' + to + (authorExtra || '') + ')', author_id: authorId || null }, false);
+  return f.reply_to;
+}
 async function helpAdminReply(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const t = await helpFindTicket(env, g.body.id);
@@ -15185,14 +15345,10 @@ async function helpAdminReply(request, env, json) {
     return json({ error: 'This address was typed in by HQ, not given to us by the customer. Check it is right, then confirm to send.',
                   confirm_needed: true, address: to }, 409);
   }
-  const f = helpFromFor(t.category, t.brand);
-  const subj = helpBareSubject(t.subject).replace(/^(re|fw|fwd):\s*/i, '') || 'Your request';
-  const ok = await helpSendEmail(env, { to: to, from: f.from, reply_to: f.reply_to,
-    subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpReplyTag(t),
-    html: helpReplyHtml(t, body, f.reply_to, helpSigner(env, g.admin.label)) });
-  if (!ok) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
-  await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
-    author: g.admin.label + ' (from ' + f.reply_to + ' to ' + to + (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : '') + ')', author_id: g.admin.actorId }, false);
+  const sentFrom = await helpSendTicketReply(env, t, body, helpSigner(env, g.admin.label),
+    g.admin.label, (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : ''), g.admin.actorId);
+  if (!sentFrom) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
+  const f = { reply_to: sentFrom };
   const patch = { updated_at: helpNow() }, was = t.status;
   /* "Send and close" (29 Oct 2026): one tap answers and closes, with the close written down as any
      other status change is. Otherwise a reply leaves the ticket waiting on them, as before. */
