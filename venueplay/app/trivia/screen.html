@@ -126,7 +126,7 @@
      Same family as the ANSWERED label beside it. The number and label are centred as one pair,
      and both sit well inside the ring's inner circle (radius 40% of the ring) at every size;
      tools/old-tv-in-chrome.test.py measures that at 1920, 1280 and 1024 wide, new and old sets. */
-  .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.1cqw;line-height:1;color:var(--faint);margin-top:.35cqw;padding-left:.14em}
+  .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:1.2cqw;line-height:1;color:rgba(255,255,255,.78);margin-top:.35cqw;padding-left:.14em}
   .answered{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--text)}
   .answered b{color:var(--gold)}
   .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
@@ -948,7 +948,7 @@
         { name:"Two Beers or Not",      points:615 },
         { name:"The Ring Ins",          points:540 }
       ];
-      var SECS = 15, steps = [], t = 0;
+      var SECS = 20, steps = [], t = 0;   // the demo counts down from 20, like a real night (Dean, 3 Nov 2026)
       function at(ms, fn){ steps.push([ms, fn]); }
 
       /* AT ZERO, not after a pause. Until the first message lands this page shows its ordinary
@@ -963,7 +963,7 @@
       t = 4200;
       Q.forEach(function(q, i){
         at(t, function(){
-          m({ t:"question", qseq:i+1, qi:i+1, qtotal:Q.length, text:q.text,
+          m({ t:"question", qseq:i+1, qi:i+3, qtotal:20, text:q.text,   // reads "Question 3 of 20": a night already under way (Dean, 3 Nov 2026)
               options:q.options, secs:SECS, endsAt:Date.now()+SECS*1000 });
         });
         // The count climbing is what makes a still screen look like a room full of people.
@@ -975,7 +975,7 @@
           m({ t:"reveal", correctIndex:q.correct, options:q.options, split:q.split });
         });
         at(t + 9400, function(){
-          m({ t:"leaderboard", title:"After question "+(i+1), rows:BOARD.slice(0, 5) });
+          m({ t:"leaderboard", title:"After question "+(i+3), rows:BOARD.slice(0, 5) });
         });
         t += 13200;
       });
