@@ -3809,6 +3809,13 @@ def local_checks(which):
              'a join code, a live code or a whole name (with the suburb or postcode when several share it) matches one venue or nothing; the lookup answers a name only and is limited per network and per device; a venue_id the page sends is ignored; a sales enquiry needs the venue and its suburb or postcode, keeps them and the website as fields, and is still made before migration 129 runs', 312,
              'A ticket filed against the wrong venue on a guess, a lookup that lists other venues or can be '
              'hammered, or a sales lead that a later job cannot set up because its venue is only in the message'),
+            # D113: the prospect autopilot reads and answers website sales enquiries through the help desk
+            # (Dean, 2 Nov 2026), branch feature/webform-autopilot-2nov. The Mac side is ~/venue-enrich/prospect-autopilot.py.
+            ('D113. The prospect autopilot reads website sales tickets only, by its own key, and answers them through the help desk',
+             'test-help-desk.js',
+             'the autopilot routes read venueplay website sales tickets and nothing else, behind the autopilot key; each carries its replies and earlier tickets; a read fault is a 503, never "no history"; the reply goes from hello@ on the ticket, noted, and is refused once anyone has replied, on a closed or typed-in ticket, or with a long dash or a fill-in', 329,
+             'A key on a Mac reading players\' and PartyPlay tickets, a second standard reply after a person has '
+             'answered, or a reply HQ cannot see on the ticket'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

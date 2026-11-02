@@ -405,6 +405,61 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
     btns.every(function (b) { return b.disabled === true && b.textContent === 'Saving...'; }), { n: nsub, ran: ranOk, btns: btns });
   check('none of the new pages has an em or en dash, or the word roster', allPages.every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
 
+  section('8. A CHECKED REPLY (Dean, 2 Nov 2026): Approved (green) and Edit (amber), Edit holds it, "Don\'t send this" on the Edit page');
+  world();
+  var CA = Object.assign({}, REVIEW, { folder: 'checked-one', recommend: 'yes', recommend_why: 'x', checked_auto: true });
+  r = await call('/autopilot/review/register', CA, AP); var LC = r.body.links || {};
+  var rowC = function () { return ROWS.filter(function (x) { return x.folder === 'checked-one'; })[0] || {}; };
+  check('register keeps that it is a checked reply', r.status === 200 && rowC().details && rowC().details.checked_auto === true, rowC().details);
+  WRITES = [];
+  var gy = await call(pathOf(LC.yes), undefined, {}, 'GET');
+  var ge = await call(pathOf(LC.edit), undefined, {}, 'GET');
+  check('opening either page writes NOTHING (a mail scanner fetching the links holds nothing)', WRITES.length === 0 && !(rowC().details || {}).hold_at, WRITES);
+  check('the green page: "Approved" in white on solid green #0E7A4F, posting to its own signed link, and says it still goes at its planned time',
+    /<button type="submit" name="b" data-a="yes" class="btn" style="background:#0E7A4F;color:#fff">Approved<\/button>/.test(gy.html) && /still goes at its planned time, as it would anyway/.test(gy.html)
+    && /<form method="POST" action="\/autopilot\/review\?f=checked-one&amp;a=yes/.test(gy.html), gy.html.slice(0, 200));
+  check('the Edit page: the reply to change, "Save and send" in white on solid amber #B45309, and it says nothing goes until Save',
+    /<textarea name="reply"/.test(ge.html) && /style="background:#B45309;color:#fff">Save and send<\/button>/.test(ge.html) && /Nothing goes to them until you tap Save and send/.test(ge.html), ge.html.slice(0, 200));
+  var dsf = /<form method="POST" action="([^"]*)"[^>]*>\s*<input type="hidden" name="reason" value="Don&#39;t send this, from the Edit page">\s*<button type="submit" data-a="no" style="background:none[^"]*">Don&#39;t send this<\/button>/.exec(ge.html)
+         || /<form method="POST" action="([^"]*)"[^>]*><input type="hidden" name="reason" value="Don[^"]*"><button type="submit" data-a="no" style="background:none[^"]*">Don[^<]*t send this<\/button>/.exec(ge.html);
+  check('"Don\'t send this" is a plain underlined line under Save (no red button), posting to the signed No link', !!dsf && ge.html.indexOf(dsf[0]) > ge.html.indexOf('Save and send') && !/#(d|D)[0-9a-fA-F]2[0-9a-fA-F]{3}|background:red/.test(ge.html)
+    && dsf && unesc(dsf[1]) === LC.no, dsf && dsf[1]);
+  check('the Edit page holds the reply from the page itself as it opens (a script posting hold=1 to its own link), not from the GET',
+    /<script>fetch\(location\.href,\{method:"POST"[^<]*body:"hold=1"/.test(ge.html));
+  var hz = await call('/autopilot/holds', undefined, AP, 'GET');
+  check('before the page runs, the Mac sees no hold', hz.status === 200 && hz.body.holds.length === 0, hz.body);
+  var hp = await call(pathOf(LC.edit), undefined, { 'Content-Type': 'application/x-www-form-urlencoded' }, 'POST', 'hold=1');
+  check('the page\'s hold=1: 204, the hold time kept, and NO decision (his decision is still his Save)', hp.status === 204 && !!rowC().details.hold_at && !rowC().decision, rowC());
+  var hs = await call('/autopilot/holds', undefined, AP, 'GET');
+  check('the Mac sees the hold (folder, round, when)', hs.status === 200 && hs.body.holds.length === 1 && hs.body.holds[0].folder === 'checked-one' && hs.body.holds[0].round === 1 && !!hs.body.holds[0].hold_at, hs.body);
+  check('the holds door takes the key and nothing else', (await call('/autopilot/holds', undefined, {}, 'GET')).status === 401);
+  r = await call('/autopilot/review/register', Object.assign({}, CA, { reply: REPLY + '\nPS\n' }), AP);
+  check('the Mac refreshing the row (the digest does) keeps the hold', r.status === 200 && !!rowC().details.hold_at && (await call('/autopilot/holds', undefined, AP, 'GET')).body.holds.length === 1, rowC().details);
+  var saved = await call(pathOf(LC.edit), undefined, {}, 'POST', form({ reply: REPLY.replace('Thanks for getting back to me.', 'Thanks Rowan, yes it does trivia teams of six.') }));
+  check('Save and send records his words as the edit; the hold is no longer listed (it is a decision now)', saved.status === 200 && rowC().decision === 'edit' && /teams of six/.test(rowC().edited_reply || '')
+    && (await call('/autopilot/holds', undefined, AP, 'GET')).body.holds.length === 0, rowC());
+  world();
+  r = await call('/autopilot/review/register', CA, AP); LC = r.body.links || {};
+  ge = await call(pathOf(LC.edit), undefined, {}, 'GET');
+  dsf = /<form method="POST" action="([^"]*)"[^>]*>\s*<input type="hidden" name="reason"/.exec(ge.html);
+  var dn = dsf ? await call(pathOf(unesc(dsf[1])), undefined, {}, 'POST', form({ reason: "Don't send this, from the Edit page" })) : { status: 0 };
+  check('"Don\'t send this" records No, once', dn.status === 200 && rowC().decision === 'no' && /Edit page/.test(rowC().reason || ''), rowC());
+  world();
+  r = await call('/autopilot/review/register', CA, AP); LC = r.body.links || {};
+  var gs = await call(pathOf(LC.yes), undefined, {}, 'POST', '');
+  check('"Approved" records Yes, and the page says it goes at its time', gs.status === 200 && rowC().decision === 'yes' && /Got it: Approved, it goes at its time/.test(gs.html), rowC());
+  world();
+  r = await call('/autopilot/review/register', REVIEW, AP); L = r.body.links || {};
+  WRITES = [];
+  await call(pathOf(L.edit), undefined, {}, 'POST', 'hold=1');
+  check('a hold=1 on an ordinary review (not a checked reply) writes nothing', WRITES.length === 0 && !(ROWS[0].details || {}).hold_at, WRITES);
+  var oe = await call(pathOf(L.edit), undefined, {}, 'GET');
+  check('an ordinary review keeps its own Edit page (no hold script, no Approved)', oe.status === 200 && !/hold=1/.test(oe.html) && !/>Approved</.test(oe.html));
+  world(); NO_V2 = true;
+  check('before migration 130 there are no holds: an empty list, not an error', (await call('/autopilot/holds', undefined, AP, 'GET')).body.holds.length === 0);
+  NO_V2 = false;
+  allPages.push(gy.html, ge.html);
+
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { bad++; print('  FAIL the suite threw: ' + (e && e.stack || e)); print('FAILED: threw'); });

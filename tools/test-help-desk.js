@@ -231,6 +231,28 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the enquiry email goes to sales@ ONLY (one copy: Dean, 30 Oct 2026), with the ticket number in its subject', !!enq && /\[#1001\]/.test(enq.subject) && enq.to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return [m.to, m.subject]; }));
   var enqAck = sent.filter(function (m) { return m.to.join() === 'lee@pub.com.au'; });
   check('the enquirer gets one acknowledgement with the number, from support@, with the phone line (a venue, not a player)', sent.length === 2 && enqAck.length === 1 && /\(ticket 1001, ref /.test(enqAck[0].subject) && enqAck[0].reply_to === 'support@venueplay.com.au' && /07 5228 3667/.test(enqAck[0].html), enqAck.map(function (m) { return m.subject; }));
+  /* THE VENUE AND POSTCODE FIELDS (Dean, 2 Nov 2026): so the prospect autopilot can find the venue on our lists. */
+  world();
+  r = await call(handleContact, null, { name: 'Lee', email: 'lee@commercial.com.au', venue: 'The Commercial Hotel', postcode: '2484', message: 'How much is it?' });
+  t = DB.vp_help_tickets[0];
+  check('the form\'s venue and postcode go on the ticket as its venue and place (the fields the autopilot reads)', r.status === 200 && t && t.lead_venue_name === 'The Commercial Hotel' && t.lead_locality === '2484' && t.venue_id === null, t);
+  check('and into the message and the title the way the help page form writes them', t && /^Venue: The Commercial Hotel\nSuburb or postcode: 2484\n\nHow much is it\?$/.test(t.message) && t.subject === 'Website enquiry from The Commercial Hotel, 2484: How much is it?', t && [t.message, t.subject]);
+  check('the sales@ email names the venue and postcode', sent.some(function (m) { return m.to.join() === 'sales@venueplay.com.au' && /<b>Venue:<\/b> The Commercial Hotel, 2484/.test(m.html); }), sent.map(function (m) { return m.to; }));
+  world();
+  r = await call(handleContact, null, { name: 'Ann', email: 'ann@royal.com.au', venue: 'The Royal Hotel', postcode: '42x4', message: 'Tell me more' });
+  t = DB.vp_help_tickets[0];
+  check('a venue already on venueplay is matched (so the autopilot asks Dean first), and a postcode that is not 4 numbers is dropped', r.status === 200 && t && t.venue_id === VA && t.venue_matched_by === 'name' && !t.lead_locality && !/Suburb or postcode/.test(t.message), t);
+  world();
+  r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', message: 'From a page loaded before the venue field' });
+  t = DB.vp_help_tickets[0];
+  check('a page from before the venue field still sends: no venue, no place, the message as typed', r.status === 200 && t && !t.lead_venue_name && t.message === 'From a page loaded before the venue field' && /^Website enquiry: /.test(t.subject), t);
+  ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (pg) {
+    var src = readFile(pg);
+    check(pg + ': Venue name (required) and Postcode (optional, 4 numbers) on the Talk to us form, sent to /contact', /<label for="ct-venue">Venue name<\/label>/.test(src) && /<label for="ct-postcode">Postcode<\/label>/.test(src)
+          && /if \(!venue\) \{ ctErr\.textContent = 'Please enter your venue name\.'/.test(src) && /if \(postcode && !\/\^\\d\{4\}\$\/\.test\(postcode\)\)/.test(src)
+          && /JSON\.stringify\(\{ name: name, email: email, phone: phone, venue: venue, postcode: postcode, message: message \}\)/.test(src));
+  });
+
   world(); FAIL['vp_help_tickets:POST'] = 1;
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', message: 'Before the migration' });
   check('before the migration is run (no table), the enquiry still goes out exactly as before, and the enquirer is still acknowledged, without a number', r.status === 200 && sent.length === 2 && DB.vp_help_tickets.length === 0 && sent.some(function (m) { return m.to.join() === 'lee@pub.com.au' && m.subject === 'Thanks, we\'ve got your message' && m.html.indexOf('(ticket') === -1; }), [r, sent.map(function (m) { return [m.to, m.subject]; })]);
@@ -295,8 +317,15 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('every submit route (patron, PartyPlay host, venue) answers only ok and a number', pubKeys.every(function (k) { return k === 'ok,ticket_no'; }), pubKeys);
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
-  var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
+  var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\/|'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
   check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/ticket'", publicHelp);
+  /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its three
+     routes are exactly these, and each one's first line is the autopilot key's door. */
+  var apHelp = routes.filter(function (p) { return /'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
+  var srcW = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  var doors = ['vpaAutopilotHelpTickets', 'vpaAutopilotHelpTicket', 'vpaAutopilotHelpReply'].filter(function (fn) {
+    var m = new RegExp('async function ' + fn + '\\(request, env, json\\) \\{\\n  const no = vpaAutopilotKeyRefusal\\(request, env, json\\);\\n  if \\(no\\) return no;').exec(srcW); return !m; });
+  check('the autopilot help routes are only these three, each behind the autopilot key first', apHelp === "'/autopilot/help/reply','/autopilot/help/sales-tickets','/autopilot/help/ticket'" && doors.length === 0, [apHelp, doors]);
 
   print('HQ: THE DESK');
   world();
@@ -882,6 +911,73 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var srcHT = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   var mig = readFile('venueplay-backend/supabase/venueplay-129-help-ticket-lead-fields.sql');
   check('every field the Worker writes is a column migration 129 adds', ['lead_venue_name', 'lead_locality', 'lead_website', 'venue_matched_by'].every(function (c) { return new RegExp('add column if not exists ' + c + '\\b').test(mig) && srcHT.indexOf('extra.' + c + ' =') !== -1; }));
+
+  print('THE PROSPECT AUTOPILOT READS AND ANSWERS WEBSITE SALES ENQUIRIES (Dean, 2 Nov 2026)');
+  world();
+  var APKEY = 'ap-' + 'q'.repeat(40);
+  ENV.PROSPECT_AUTOPILOT_KEY = APKEY;
+  function apReq(path, body, key) { var h = { 'Content-Type': 'application/json' }; if (key !== null) h['X-Autopilot-Key'] = key === undefined ? APKEY : key;
+    return { url: 'https://api.example' + path, method: body ? 'POST' : 'GET', headers: hdr(h), text: function () { return Promise.resolve(JSON.stringify(body || {})); } }; }
+  async function ap(fn, path, body, key) { try { return await fn(apReq(path, body, key), ENV, J); } catch (e) { return { status: 'THREW', body: { error: String(e && e.stack || e) } }; } }
+  r = await call(handleContact, null, { name: 'Mick Jones', email: 'Mick@ShipInn.com.au', phone: '0400 111 222', message: 'Keen to hear more about trivia nights.' });
+  var webT = T(r.body.ticket_no);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 'ap-1', email: 'sue@commercial.com.au' }));
+  var helpT = T(r.body.ticket_no);
+  await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'ap-2', email: 'player@example.com' }));
+  await call(helpPublicTicket, null, { brand: 'partyplay', kind: 'sales', name: 'Pat', email: 'pat2@example.com', message: 'Party for 30?', device: 'ap-3' });
+  var lst = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets?since=2000-01-01T00:00:00Z');
+  var nos = lst.body && lst.body.tickets ? lst.body.tickets.map(function (x) { return x.ticket_no; }) : null;
+  check('the autopilot reads the venueplay website sales tickets (both forms), and no patron or PartyPlay ticket', lst.status === 200 && nos && nos.join() === [webT.ticket_no, helpT.ticket_no].join(), [lst.status, nos, lst.body && lst.body.error]);
+  var w0 = lst.body.tickets[0], w1 = lst.body.tickets[1];
+  check('each comes with what the Mac needs: name, email, phone, message, and none replied to yet, no earlier tickets', w0 && w0.contact_name === 'Mick Jones' && w0.contact_email === 'mick@shipinn.com.au' && w0.contact_phone === '0400 111 222' && /trivia nights/.test(w0.message) && w0.staff_replies === 0 && w0.earlier_tickets.length === 0, w0);
+  check('the help page form also gives the venue, the suburb and the website', w1 && w1.lead_venue_name === 'The Commercial Hotel' && /Murwillumbah/.test(w1.lead_locality), w1);
+  var noKey = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets', null, null), badKey = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets', null, 'wrong-' + 'x'.repeat(40));
+  var noKeyR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: webT.id, body: 'x'.repeat(100) }, null);
+  check('no key, or the wrong key: refused, nothing read and nothing sent', noKey.status === 401 && badKey.status === 401 && noKeyR.status === 401 && !/mick/i.test(JSON.stringify([noKey.body, badKey.body])), [noKey.status, badKey.status, noKeyR.status]);
+  var offKey = ENV.PROSPECT_AUTOPILOT_KEY; ENV.PROSPECT_AUTOPILOT_KEY = '';
+  var off = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets', null, '');
+  ENV.PROSPECT_AUTOPILOT_KEY = offKey;
+  check('no key set on the Worker: the routes are off (503), never "any key will do"', off.status === 503, off.status);
+  var one = await ap(vpaAutopilotHelpTicket, '/autopilot/help/ticket?id=' + webT.id);
+  var pat = DB.vp_help_tickets.filter(function (x) { return x.category === 'patron_support'; })[0];
+  var notSale = await ap(vpaAutopilotHelpTicket, '/autopilot/help/ticket?id=' + pat.id);
+  check('one ticket again by id; a ticket that is not a website sale is not served', one.status === 200 && one.body.ticket.ticket_no === webT.ticket_no && notSale.status === 404, [one.status, notSale.status]);
+  var REPLY = 'Hi Mick,\n\nThanks for filling in the form on our website. In short: venueplay turns the TV you already have into a games night.\n\nCheers,';
+  sent.length = 0;
+  var rp = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: webT.id, body: REPLY, signer: 'Dean' });
+  var m = sent.filter(function (x) { return x.to && x.to.join() === 'mick@shipinn.com.au'; })[0];
+  var nts = notesOf(T(webT.ticket_no)).filter(function (n) { return n.kind === 'reply'; });
+  check('the reply goes through the help desk: from hello@send, Reply-To hello@, to them, with the ticket reference in the subject', rp.status === 200 && m && /<hello@send\.venueplay\.com\.au>/.test(m.from) && m.reply_to === 'hello@venueplay.com.au' && /\(ticket \d+, ref [A-Z2-9]{4}-[A-Z2-9]{4}\)$/.test(m.subject), [rp, m && [m.from, m.reply_to, m.subject]]);
+  check('signed Dean in the help desk signature, with no second sign-off under its own "Cheers,"', m && /Dean<\/strong>/.test(m.html) && !/Kind Regards/.test(m.html) && m.html.indexOf('Cheers,') !== -1, m && m.html.slice(-1200));
+  check('the reply is on the ticket as a reply note, written by the autopilot, and the ticket waits on them', nts.length === 1 && nts[0].body === REPLY && /^Prospect autopilot, signed Dean \(from hello@venueplay\.com\.au to mick@shipinn\.com\.au\)$/.test(nts[0].author) && T(webT.ticket_no).status === 'waiting', [nts, T(webT.ticket_no).status]);
+  sent.length = 0;
+  var again = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: webT.id, body: REPLY, signer: 'Dean' });
+  check('a second reply on the same ticket is refused (someone has replied), and nothing is sent', again.status === 409 && again.body.answered === true && sent.length === 0, again);
+  var facts = await ap(vpaAutopilotHelpTicket, '/autopilot/help/ticket?id=' + webT.id);
+  check('and the ticket now says it has a staff reply, so the Mac holds anything still queued', facts.body.ticket.staff_replies === 1 && facts.body.ticket.last_staff_reply_at, facts.body.ticket);
+  r = await call(handleContact, null, { name: 'Mick', email: 'mick@shipinn.com.au', message: 'Following up on my enquiry.' });
+  lst = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets?since=2000-01-01T00:00:00Z');
+  var w2 = lst.body.tickets.filter(function (x) { return x.ticket_no === r.body.ticket_no; })[0];
+  check('a second enquiry from the same address carries the earlier ticket, so the Mac sees the history', w2 && w2.earlier_tickets.length === 1 && w2.earlier_tickets[0].ticket_no === webT.ticket_no, w2);
+  var shortR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: 'Hi' });
+  var dashR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: REPLY + ' — ok' });
+  var fillR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: REPLY + ' {first_name}' });
+  var patR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: pat.id, body: REPLY });
+  check('a reply too short, with a long dash, a fill-in left in, or to a ticket that is not a website sale: refused, nothing sent', shortR.status === 400 && dashR.status === 400 && fillR.status === 400 && patR.status === 404 && notesOf(T(helpT.ticket_no)).filter(function (n) { return n.kind === 'reply'; }).length === 0, [shortR.status, dashR.status, fillR.status, patR.status]);
+  T(helpT.ticket_no).status = 'closed';
+  var closedR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: REPLY });
+  T(helpT.ticket_no).status = 'new'; T(helpT.ticket_no).contact_typed = true;
+  var typedR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: REPLY });
+  T(helpT.ticket_no).contact_typed = false;
+  check('a closed ticket, or an address HQ typed in: refused', closedR.status === 409 && typedR.status === 409, [closedR.status, typedR.status]);
+  FAIL['vp_help_ticket_notes:GET'] = 5;
+  var blip = await ap(vpaAutopilotHelpTickets, '/autopilot/help/sales-tickets?since=2000-01-01T00:00:00Z');
+  var blipR = await ap(vpaAutopilotHelpReply, '/autopilot/help/reply', { id: helpT.id, body: REPLY });
+  FAIL = {};
+  check('a database blip is a 503, never a list that looks like "no replies yet", and no reply goes', blip.status === 503 && blipR.status === 503 && !blip.body.tickets, [blip.status, blipR.status]);
+  sent.length = 0;
+  var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.' });
+  check('HQ\'s own Reply still works through the same one sender, and is noted as Dean\'s', hq.status === 200 && sent.length === 1 && notesOf(T(helpT.ticket_no)).some(function (n) { return n.kind === 'reply' && /^Dean \(from hello@venueplay\.com\.au to /.test(n.author); }), [hq, notesOf(T(helpT.ticket_no))]);
 
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};
