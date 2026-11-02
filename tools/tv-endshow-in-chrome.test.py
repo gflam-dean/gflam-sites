@@ -7,7 +7,7 @@ OFF unless ?endshow=1 on the TV's address (a TV hands the switch on to the game 
 
 On the rig in tools/browser-rig/rig.py (the repo's pages, the real game Worker in jsc, headless Chrome):
   1. BINGO, a real-balls night on the real console and the real TV: Winner, Confirm, Finish this game
-     plays nothing; End game plays the show over the ads ("BINGO!", "WE HAVE A WINNER", "One line ·
+     plays nothing (the start-of-game show is switched off with ?sting=0 here, so the two never mix); End game plays the show over the ads ("BINGO!", "WE HAVE A WINNER", "One line ·
      Meat tray", THANKS FOR PLAYING, TEST ALPHA), then it goes and the ads are up. A TV without the
      switch shows nothing new. A second game: the next game's first word stops the show at once.
   2. The sales-page bingo demo (tv.html?demo=1): a phone winner is named, "TABLE 4".
@@ -16,7 +16,10 @@ On the rig in tools/browser-rig/rig.py (the repo's pages, the real game Worker i
      finished, then the ads. The musical demo: its winner, named.
   4. TRIVIA, the demo: the podium plays the top three teams with their scores, the podium is still up
      after the show (the final scores wait for it).
-  5. RAFFLE, the demo: two draws, so the winning tickets as rows, once the last celebration is over.
+  5. RAFFLE, the real raffle screen hearing a host's draws on its own channel: two prizes drawn and claimed,
+     so the winning tickets as rows with their prizes, once the last claim's celebration is over; a prize
+     with more to come plays nothing; Back to ads waits for the show. (The sales-page raffle demo loops
+     before its last celebration ends, so it never reaches the end of a raffle.)
   6. The show itself on a real screen, stepped frame by frame: every line inside the screen at
      1920x1080, 1280x720, 1024x768 and a portrait 1080x1920; long names scaled to fit; a name made of
      HTML shown as text; lowercase venueplay inside a venue's name; reduced motion: nothing moves and
@@ -74,7 +77,7 @@ def outside(m):
 
 # ======================================================================================
 def console(r):
-    tid, host = r.open('/app/', width=1024, height=1100)
+    tid, host = r.open('/app/?sting=0', width=1024, height=1100)
     ok('the console loads, signed in, on the games menu', r.until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 25) is True)
     r.ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
     r.until(host, '!document.getElementById("setupBlock").classList.contains("hidden")')
@@ -96,7 +99,7 @@ def start_caller_night(r, host, pattern, prize, numbers):
     return up
 
 def tv(r, endshow=True, width=1280, height=720):
-    _, sid = r.open('/tv?venue=' + r.W.info['slug'] + ('&endshow=1' if endshow else ''), width=width, height=height)
+    _, sid = r.open('/tv?venue=' + r.W.info['slug'] + '&sting=0' + ('&endshow=1' if endshow else ''), width=width, height=height)
     ok('the TV loads on the ads' + ('' if endshow else ' (no switch)'), r.until(sid, vis('adsRoot'), 15) is True)
     time.sleep(1.5)
     return sid
@@ -176,20 +179,71 @@ def demos():
            s.get('eye') == 'FINAL SCORES' and s.get('rows') == [['1', 'THE QUIZTOPHER NOLANS', '840'], ['2', 'TABLE 6', '790'], ['3', "NAN'S ARMY", '735']], s)
         time.sleep(1.6); shot(r, tr, 'endshow-4-trivia-result')
         m = r.ask(tr, BOXES)
-        ok('trivia: the three rows are on the screen', m and len([b for b in m['boxes'] if 'vpe-row' in b[0]]) == 3 and not outside(m), outside(m) or m)
+        ok('trivia: the three rows are on the screen', m and len([b for b in m['boxes'] if re.match(r'^vpeRow\d$', b[0])]) == 3 and not outside(m), outside(m) or m)
         ok('trivia: the show finishes', r.until(tr, 'VPEndShow.stats().last==="done"', 8) is True, r.ask(tr, STATS))
         ok('trivia: and the podium is still up after it, not cut short by the final scores', r.ask(tr, vis('tvPodium')) is True and r.ask(tr, vis('tvBoard')) is False)
 
-        print('\n5. RAFFLE (demo)')
-        _, ra = r.open('/app/raffle/screen?demo=1&endshow=1', width=1280, height=720)
-        ok('raffle: the last draw done, the show plays', r.until(ra, 'window.VPEndShow && VPEndShow.playing()', 75) is True, r.ask(ra, STATS))
-        s = r.ask(ra, SHOWN) or {}
-        rows = s.get('rows') or []
-        ok('raffle: RAFFLE DRAWN, both draws as rows, the first ticket 147, the second two tickets',
-           s.get('eye') == 'RAFFLE DRAWN' and len(rows) == 2 and rows[0][0] == 'TICKET 147' and rows[1][0].startswith('TICKETS '), s)
-        time.sleep(1.6); shot(r, ra, 'endshow-5-raffle')
-        ok('no page errors on the demo screens', all(not (r.ask(x, 'window.__errs') or []) for x in (d, mu, tr, ra)),
-           [r.ask(x, 'window.__errs') for x in (d, mu, tr, ra)])
+        ok('no page errors on the demo screens', all(not (r.ask(x, 'window.__errs') or []) for x in (d, mu, tr)),
+           [r.ask(x, 'window.__errs') for x in (d, mu, tr)])
+    finally:
+        r.close()
+
+
+# The raffle screen on a venue's channel, hearing a host: the fake realtime is a BroadcastChannel per channel name
+BC_BEFORE = ('(function(){var B=window.BroadcastChannel;if(!B)return;window.__bcNames=[];'
+             'var W=function(n){window.__bcNames.push(String(n));return new B(n);};W.prototype=B.prototype;window.BroadcastChannel=W;})();')
+HOST_SAYS = r'''(function(msgs){
+  /* ONLY the raffle's own channel (its code is on the wall): a draw on another game's channel would hop this screen to that game */
+  var code=(document.getElementById("hostLineCode")||{}).textContent||"";
+  var names=(window.__bcNames||[]).filter(function(n){return n==="fake-rt:vp-"+code;}), seen={};
+  names.forEach(function(n){ if(seen[n]) return; seen[n]=1; var b=new BroadcastChannel(n);
+    msgs.forEach(function(m){ b.postMessage({event:"msg", payload:m}); }); setTimeout(function(){ try{ b.close(); }catch(e){} }, 500); });
+  return Object.keys(seen).length;
+})'''
+def raffle_screen(r, before='', width=1280, height=720):
+    slug = r.W.info['slug']
+    _, s = r.open('/app/raffle/screen?venue=' + slug + '&sting=0&endshow=1', width=width, height=height,
+                  before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){};' % json.dumps(slug) + BC_BEFORE + before)
+    r.until(s, 'document.readyState==="complete" && !!window.VPEndShow && (window.__bcNames||[]).some(function(n){return /^fake-rt:vp-/.test(n);})', 20)
+    time.sleep(1.5)
+    return s
+def host_says(r, s, msgs):
+    n = r.ask(s, HOST_SAYS + '(%s)' % json.dumps(msgs)); time.sleep(0.6); return n
+def two_draws(r, s):
+    host_says(r, s, [{'t': 'state', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 200}])
+    host_says(r, s, [{'t': 'drawing', 'prizeLabel': 'Meat tray', 'spinSecs': 1}]); time.sleep(1.2)
+    host_says(r, s, [{'t': 'winner', 'prizeLabel': 'Meat tray', 'numbers': [42], 'time': 0}])
+    host_says(r, s, [{'t': 'claimed', 'prizeLabel': 'Meat tray', 'numbers': [42]}])
+    host_says(r, s, [{'t': 'idle', 'next': True, 'prizeLabel': '$50 bar tab', 'pad': 3, 'min': 1, 'max': 200}])
+    host_says(r, s, [{'t': 'drawing', 'prizeLabel': '$50 bar tab', 'spinSecs': 1}]); time.sleep(1.2)
+    host_says(r, s, [{'t': 'winner', 'prizeLabel': '$50 bar tab', 'numbers': [7, 118], 'time': 0}])
+    host_says(r, s, [{'t': 'claimed', 'prizeLabel': '$50 bar tab', 'numbers': [7, 118]}])
+    host_says(r, s, [{'t': 'idle', 'next': False, 'prizeLabel': '', 'pad': 3, 'min': 1, 'max': 200}])
+
+def raffle():
+    print('\n5. RAFFLE: the real raffle screen, hearing a host draw two prizes')
+    r = RIG.Rig()
+    try:
+        s = raffle_screen(r)
+        two_draws(r, s)
+        ok('CONTROL: the second claim is celebrated on the wall', r.ask(s, vis('tvResult')) is True)
+        ok('during the last claim\'s celebration, no show yet (the room is cheering the ticket)', (r.ask(s, STATS) or {}).get('plays') == 0, r.ask(s, STATS))
+        ok('once the celebration is over, the last draw done: the show plays', r.until(s, 'VPEndShow.playing()', 40) is True, r.ask(s, STATS))
+        sh = r.ask(s, SHOWN) or {}
+        ok('RAFFLE DRAWN, both prizes as rows: TICKET 042 Meat tray, TICKETS 007, 118 $50 bar tab',
+           sh.get('eye') == 'RAFFLE DRAWN' and sh.get('rows') == [['TICKET 042', 'Meat tray'], ['TICKETS 007, 118', '$50 bar tab']], sh)
+        time.sleep(1.4); shot(r, s, 'endshow-5-raffle')
+        host_says(r, s, [{'t': 'to_ads'}])
+        ok('Back to ads waits for the show', r.ask(s, 'VPEndShow.playing() && /\\/app\\/raffle\\//.test(location.pathname)') is True, r.ask(s, 'location.pathname'))
+        ok('then goes to the venue\'s TV page', r.until(s, '/^\\/tv/.test(location.pathname)', 10) is True, r.ask(s, 'location.pathname'))
+
+        s2 = raffle_screen(r)
+        host_says(r, s2, [{'t': 'state', 'prizeLabel': 'Meat tray', 'pad': 3}, {'t': 'drawing', 'prizeLabel': 'Meat tray', 'spinSecs': 1}]); time.sleep(1.2)
+        host_says(r, s2, [{'t': 'winner', 'prizeLabel': 'Meat tray', 'numbers': [9], 'time': 0}, {'t': 'claimed', 'prizeLabel': 'Meat tray', 'numbers': [9]}])
+        host_says(r, s2, [{'t': 'idle', 'next': True, 'prizeLabel': 'Bar tab'}])
+        time.sleep(32)
+        ok('a prize drawn with more still to come plays no show', (r.ask(s2, STATS) or {}).get('plays') == 0 and r.ask(s2, vis('tvIdle')) is True, [r.ask(s2, STATS), text(r, s2, 'idleEye')])
+        ok('no page errors on the raffle screens', not (r.ask(s2, 'window.__errs') or []), r.ask(s2, 'window.__errs'))
     finally:
         r.close()
 
@@ -199,7 +253,7 @@ def musical_live():
     r = RIG.Rig(host_pages=('/app/musical/host.html',))
     try:
         t1 = tv(r)
-        _, h = r.open('/app/musical/host.html', width=1024, height=900)
+        _, h = r.open('/app/musical/host.html?sting=0', width=1024, height=900)
         ok('CONTROL: the musical console loads, signed in', r.until(h, 'document.readyState==="complete" && !!document.getElementById("startBtn")', 40) is True)
         time.sleep(3)
         r.ask(h, 'document.getElementById("prizeInput").value="Bar tab"; true')
@@ -329,11 +383,9 @@ def io_read(p):
 if __name__ == '__main__':
     if not gatelib.hold_lock_or_refuse('tv-endshow-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         sys.exit(2)
-    same_logo()
-    the_show()
-    bingo()
-    demos()
-    musical_live()
+    only = sys.argv[1:]   # a section by name, for working on one; the gate runs them all
+    for part in (same_logo, the_show, bingo, demos, raffle, musical_live):
+        if not only or part.__name__ in only: part()
     # the gate reads the last line: "ALL n CHECKS PASSED" is a pass (release-check suite_passed)
     print('\nALL %d CHECKS PASSED' % ran if not bad else '\n%d OF %d CHECKS FAILED' % (bad, ran))
     sys.exit(1 if bad else 0)

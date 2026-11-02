@@ -108,6 +108,7 @@
       ".vpe-sub{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:60px;letter-spacing:.01em;color:rgba(255,255,255,.9);text-shadow:0 3px 18px rgba(0,0,0,.7)}"+
       ".vpe-sweep{color:transparent!important;text-shadow:none!important}.vpe-sweep span{background:linear-gradient(100deg,rgba(255,255,255,0) 40%,rgba(255,214,234,.85) 50%,rgba(255,255,255,0) 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent}"+
       ".vpe-row{position:absolute;left:180px;width:1560px;height:150px;box-sizing:border-box;display:flex;align-items:center;gap:36px;padding:0 54px 0 28px;border-radius:30px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.10);opacity:0;transform-origin:50% 50%}"+
+      ".vpe-row.nolead{padding-left:54px}"+
       ".vpe-row.first{border-color:rgba(255,31,142,.85);box-shadow:0 0 40px rgba(255,31,142,.35),inset 0 0 24px rgba(255,31,142,.12)}"+
       ".vpe-lead{flex:0 0 108px;height:108px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Anton,Impact,sans-serif;font-size:76px;line-height:1;color:#FF1F8E;border:4px solid #FF1F8E;box-shadow:0 0 22px rgba(255,31,142,.55),inset 0 0 14px rgba(255,31,142,.35);text-shadow:0 0 18px rgba(255,31,142,.6)}"+
       ".vpe-main{flex:1 1 auto;min-width:0;overflow:visible;white-space:nowrap;font-family:Anton,Impact,sans-serif;font-size:104px;line-height:1;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.6)}"+
@@ -133,7 +134,8 @@
     }
     el.rows=[];
     (o.rows||[]).forEach(function(r,i){
-      var row=div("vpeRow"+(i+1),"vpe-row"+(i===0?" first":""),"top:"+(430+i*176)+"px");
+      var n=(o.rows||[]).length, top0=430+(3-n)*88;   // fewer than three rows sit in the middle of the space
+      var row=div("vpeRow"+(i+1),"vpe-row"+(i===0?" first":"")+(r.lead?"":" nolead"),"top:"+(top0+i*176)+"px");
       if(r.lead){ var ld=div("","vpe-lead"); ld.textContent=r.lead; row.appendChild(ld); }
       var mn=div("","vpe-main"); mn.appendChild(span(r.main)); row.appendChild(mn);
       if(r.tail){ var tl=div("","vpe-tail"+(r.num?" num":"")); tl.appendChild(span(r.tail)); row.appendChild(tl); }
