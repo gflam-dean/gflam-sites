@@ -49,6 +49,15 @@ var anyChannelDeafSince = 0, channelDeafSince = {};
 })();
 function venueCode(s) { return 'C-' + s; }
 function onGameMsg() {}
+/* tv.html's own gameChannel(), which the retry inside the block now builds its next channel with
+   (1 Nov 2026). With no vp-room.js here it is the plain Supabase channel. */
+(function () {
+  var i = html.indexOf('function gameChannel(game){');
+  if (i < 0) throw new Error('cannot find gameChannel in tv.html');
+  var d = 0, j = html.indexOf('{', i), k;
+  for (k = j; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (!d) break; } }
+  (0, eval)(html.slice(i, k + 1));
+})();
 var GAMES = ['trivia', 'musical', 'raffle', 'members'];
 GAMES.forEach(function (game) {
   var c = client.channel('vp-' + venueCode(game + '-' + VENUE_SLUG));

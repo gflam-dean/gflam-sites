@@ -66,6 +66,27 @@ const ROOM_ANSWER_TTL_MS = 6 * 60 * 60 * 1000;       // three times the longest 
    than any night; a console still open after that asks again (vp-room.js).
    The mark is the room's own, on disk, so it survives the room being evicted. */
 const ROOM_HANDOVER_MS = 6 * 60 * 60 * 1000;
+
+/* WHICH FORMATS ARE ON THE ROOM, DECIDED HERE AND NOWHERE ELSE (1 Nov 2026). Bingo is on the room
+   by default (vp-room.js DEFAULT_ON). The other four move one at a time, each by its own line here
+   and a Worker deploy, and every page asks: presence answers formats, and the TV's /venue poll
+   carries the same answer as room_formats, so a screen that decided before a flip reloads onto it
+   between games. A console that decided before a flip says road:"off" for a format that is on by
+   the time it opens a game, and the Worker hands the venue over to meet it (roomOldConsoleCheck).
+   To take a format back off the room: set its line to false and deploy; ROOM_OFF=1 is still the
+   switch for everything at once, no deploy. */
+const ROOM_FORMATS_ON = { musical: true, trivia: true, raffle: true, members: true };
+function roomFormatsOn() {
+  const o = {};
+  for (const k in ROOM_FORMATS_ON) o[k] = ROOM_FORMATS_ON[k] === true;
+  return o;
+}
+// The same answer as one string, "musical,trivia": the TV compares it, so the order is fixed.
+function roomFormatsKey() {
+  const f = roomFormatsOn(), out = [];
+  for (const k in f) { if (f[k]) out.push(k); }
+  return out.sort().join(',');
+}
 const ROOM_HANDOVER_CLOSE = 4503;                    // "go to Supabase": the page does not retry the room
 
 /* ONE PAGE, ONE SOCKET (live flight-mode test, 1 Nov 2026: presence said phone:2 for Dean's one phone).
@@ -118,8 +139,12 @@ export class VenueRoom {
      switch ROOM_OFF is found on, so a room that keeps its sockets through the switch still
      sends them all the same way. Every socket hears it in words first, then by close code, so
      a page that misses one still gets the other. */
-  async handover(mark) {
-    if (mark) {
+  async handover(mark, soft) {
+    /* SOFT: "the venue has moved, make sure this room knows", said by a page passing the word on
+       from one of the venue's other rooms (1 Nov 2026, every format on the room). It marks a room
+       that is not marked yet and leaves an existing mark where it is, so a venue that keeps
+       getting new pages does not keep pushing its own six hours further out. */
+    if (mark && !(soft && await this.handedOver())) {
       this.hoUntil = Date.now() + ROOM_HANDOVER_MS;
       try { await this.state.storage.put('ho', this.hoUntil); } catch (e) {}
     }
@@ -136,7 +161,7 @@ export class VenueRoom {
   async fetch(request) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '');
-    if (path === '/handover' && request.method === 'POST') return await this.handover(true);
+    if (path === '/handover' && request.method === 'POST') return await this.handover(true, url.searchParams.get('soft') === '1');
     /* A room that has been handed over takes nobody in and says so in the same 503 words a
        Worker with no room answers, which is the answer every page already falls back on. */
     if ((path === '/ws' || path === '/presence') && await this.handedOver()) {
@@ -376,7 +401,10 @@ export class VenueRoom {
        which is where the whole venue is. pong: true, the heartbeat is answered. */
     /* A replaced socket is not counted, and two sockets with one cid are one page. Presence is a
        look at who is in the room, never billing: players are counted by the Worker's /join. */
-    const out = { total: 0, answers: true, handover: true, pong: true };
+    /* venue: true, this Worker hands a WHOLE venue over (every format's rooms together, and when a
+       console from before the switch opens a game), so a page of another format may take the room
+       by default, and a TV in it needs no ear on the old road (1 Nov 2026). */
+    const out = { total: 0, answers: true, handover: true, pong: true, venue: true, formats: roomFormatsOn() };
     for (let i = 0; i < ROOM_ROLES.length; i++) {
       const socks = this.state.getWebSockets(ROOM_ROLES[i]);
       const seen = {};
@@ -436,13 +464,90 @@ function roomOff(env) {
    six hours. It works with ROOM_OFF on as well, so a venue that went across while the switch
    was on stays across when it is turned off again, instead of late phones finding an empty
    room. Bingo rooms only: an answers room (vpa-) is per game and is never handed over. */
+/* ONE VENUE IS FIVE ROOMS (1 Nov 2026, every format on the room). Bingo meets on "vp-" + the
+   venue's code, and musical bingo, trivia, raffle and the members draw each have a screen channel
+   of their own, "vp-" + the code of "<format>-<slug>", which the TV's router listens on all day.
+   The players' channel for musical and trivia is the session's join code, which is the venue's
+   own code, so it is the first room here. The same hash every page uses (venueCode in tv.html,
+   VP.venueCode in vp-session.js, fnvVenueCode in the game Worker); a test holds all four to it. */
+const ROOM_FORMATS = ['trivia', 'musical', 'raffle', 'members'];
+const ROOM_SLUG_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
+function roomVenueCode(slug) {
+  let s = String(slug || '').toLowerCase().replace(/[^a-z0-9]/g, ''), h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const A = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'; let out = '', x = h || 1;
+  for (let j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }
+  return out;
+}
+function roomVenueRooms(slug) {
+  const s = String(slug || '').trim().toLowerCase();
+  if (!ROOM_SLUG_RE.test(s)) return [];
+  const out = ['vp-' + roomVenueCode(s)];
+  for (let i = 0; i < ROOM_FORMATS.length; i++) out.push('vp-' + roomVenueCode(ROOM_FORMATS[i] + '-' + s));
+  return out;
+}
+
+/* Hand every named room over, side by side. Returns how many sockets were closed; never throws.
+   A room that does not answer is left: the pages in it hear the word from the venue's other rooms
+   (any page in two of them passes it on) or are turned away when they next ask. */
+async function roomHandOverAll(env, names, soft) {
+  if (!env.ROOM || !names || !names.length) return 0;
+  const results = await Promise.all(names.map(function (n) {
+    return roomStub(env, n).fetch('https://room/handover' + (soft ? '?soft=1' : ''), { method: 'POST' })
+      .then(function (r) { return r.json(); }).catch(function () { return null; });
+  }));
+  let closed = 0;
+  for (let i = 0; i < results.length; i++) closed += (results[i] && results[i].closed) || 0;
+  return closed;
+}
+
+/* A CONSOLE FROM BEFORE THE SWITCH OPENS A GAME. It is on Supabase and will stay there, and a TV
+   in the room no longer keeps an ear on the old road to hear it (that ear was one Supabase
+   connection per TV, all day, which is what the room exists to save). So the Worker hears it
+   instead: every console new enough to know about the room says which road it is on when it opens
+   a game (road: "room", "supabase", or "off" for a format not on the room yet). One that says
+   nothing is from before the switch, so the whole venue is handed over to meet it. "supabase" is a
+   console that already handed the venue over itself; the word is passed on softly in case that
+   did not land. Called from POST /session and the members draw with the format the console is
+   opening; best effort, never throws, and costs nothing for a console on the room. */
+async function roomOldConsoleCheck(env, road, fmt, slugOf) {
+  if (!env.ROOM) return 0;
+  const r = String(road == null ? '' : road);
+  if (r === 'room' || r === 'checking') return 0;
+  /* "off": the Worker said this format was not on the room when the console asked. Still true,
+     nothing to do. On since then, the console is on the old road with the format's room open to
+     everyone else, so it is handled as a console from before the switch. */
+  if (r === 'off' && !(fmt && roomFormatsOn()[fmt] === true)) return 0;
+  try {
+    const slug = await slugOf();
+    const names = roomVenueRooms(slug);
+    if (!names.length) return 0;
+    return (await roomRace(roomHandOverAll(env, names, r === 'supabase'), ROOM_TAKE_MS)) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+/* venue=<slug> hands over every room of that venue, not just the one named (1 Nov 2026): a
+   musical console that gives up must take the TV's router with it, and the raffle room nobody is
+   in yet must turn the raffle console away when it opens tonight. soft=1 passes the word on
+   without pushing an existing mark further out (see VenueRoom.handover). */
 async function handleRoomHandover(request, env, json) {
   if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name) || !/^vp-/.test(name)) return json({ error: 'bad room' }, 400);
+  const soft = url.searchParams.get('soft') === '1';
+  const venue = url.searchParams.get('venue');
+  if (venue != null && venue !== '') {
+    const names = roomVenueRooms(venue);
+    if (!names.length) return json({ error: 'bad venue' }, 400);
+    if (names.indexOf(name) < 0) names.unshift(name);       // a players' room on a join code of its own
+    const closed = await roomHandOverAll(env, names, soft);
+    return json({ ok: true, rooms: names.length, closed: closed });
+  }
   try {
-    const res = await roomStub(env, name).fetch('https://room/handover', { method: 'POST' });
+    const res = await roomStub(env, name).fetch('https://room/handover' + (soft ? '?soft=1' : ''), { method: 'POST' });
     return json(await res.json());
   } catch (e) {
     return json({ error: 'the room did not answer' }, 502);
@@ -555,4 +660,4 @@ async function roomAnswersAck(env, gameId, qseq, hashes) {
   }
 }
 
-export { handleRoomSocket, handleRoomPresence, handleRoomHandover, ROOM_HANDOVER_MS, ROOM_HANDOVER_CLOSE, roomPublish, roomOff, roomAnswerName, roomAnswersTake, roomAnswersAck, ROOM_NAME_RE, ROOM_ROLES, ROOM_MAX_PER_SEC, ROOM_MAX_MSG_CHARS, ROOM_MAX_ANSWERS_PER_Q, ROOM_TAKE_MS };
+export { handleRoomSocket, handleRoomPresence, handleRoomHandover, roomFormatsOn, roomFormatsKey, ROOM_FORMATS_ON, roomVenueCode, roomVenueRooms, roomHandOverAll, roomOldConsoleCheck, ROOM_FORMATS, ROOM_HANDOVER_MS, ROOM_HANDOVER_CLOSE, roomPublish, roomOff, roomAnswerName, roomAnswersTake, roomAnswersAck, ROOM_NAME_RE, ROOM_ROLES, ROOM_MAX_PER_SEC, ROOM_MAX_MSG_CHARS, ROOM_MAX_ANSWERS_PER_Q, ROOM_TAKE_MS };

@@ -739,6 +739,14 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/test-room-formats.js": {
+  "checks": 197,
+  "counted_by": "lines"
+ },
+ "tools/test-room-old-console.js": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/test-router-heals-after-a-blip.js": {
   "checks": 23,
   "counted_by": "lines"
@@ -856,7 +864,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-room-default.js": {
-  "checks": 18,
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/test-tv-slides-in-step.js": {
@@ -1296,7 +1304,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room-handover.test.js": {
-  "checks": 21,
+  "checks": 43,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room.test.js": {

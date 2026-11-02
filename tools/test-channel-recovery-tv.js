@@ -26,13 +26,13 @@ check('tv.html loads /app/vp-channel.js in a real script tag', RIG.loadsScript(H
 function piece(name) { var s = RIG.lift(HTML, name); if (!s) print('  (tv.html has no ' + name + ')'); return s; }
 var NOTEDEAF = piece('noteDeaf');
 check('noteDeaf() is in tv.html: every channel keeps its own clock', !!NOTEDEAF);
-var TVSTATUS = piece('tvStatus'), TVSEND = piece('tvSend'), CONNECT = piece('connectRealtime');
+var TVSTATUS = piece('tvStatus'), TVSEND = piece('tvSend'), CONNECT = piece('connectRealtime'), GAMECHANNEL = piece('gameChannel');
 var a = HTML.indexOf('var tries = 0, retryT = null;');
 var b = HTML.indexOf('\n      join();\n', a);
 var BLOCK = HTML.slice(a, b + '\n      join();\n'.length);
 var w0 = HTML.indexOf('(function watchdog(){');
 var WATCHDOG = HTML.slice(w0, RIG.braceEnd(HTML, HTML.indexOf('{', w0)) + 1) + ')();';
-if (!TVSTATUS || !TVSEND || !CONNECT || a < 0 || b < 0 || w0 < 0) throw new Error('cannot assemble the TV from tv.html');
+if (!TVSTATUS || !TVSEND || !CONNECT || !GAMECHANNEL || a < 0 || b < 0 || w0 < 0) throw new Error('cannot assemble the TV from tv.html');
 
 /* One TV per scenario. */
 function tv(opts) {
@@ -62,6 +62,9 @@ function tv(opts) {
     TVSEND + '\n' + TVSTATUS + '\n' + CONNECT + '\n' +
     'connectRealtime();\n' +
     'var VENUE_SLUG = "the-pub"; function venueCode(s){ return "C-" + s; }\n' +
+    /* The retry inside the block builds its next channel with tv.html's own gameChannel() (1 Nov 2026);
+       with no vp-room.js here it is the plain Supabase channel. */
+    GAMECHANNEL + '\n' +
     '["trivia","musical","raffle","members"].forEach(function(game){\n' +
     '  var c = client.channel("vp-" + venueCode(game + "-" + VENUE_SLUG), { config:{ broadcast:{ self:false } } });\n' +
     '  function onGameMsg(e){ lastHostAt = Date.now(); }\n' +

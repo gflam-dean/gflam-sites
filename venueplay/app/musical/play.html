@@ -299,6 +299,7 @@
 <script>if(!/[?&]demo=1\b/.test(location.search)){ document.write('<script src="/app/vendor/supabase-js-2.118.0.min.js"><\/script>'); }</script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>   <!-- the channel comes back by itself, the moment the signal does (2 Nov 2026) -->
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
@@ -973,10 +974,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var chRetryT=null, chTries=0;
   function openChannel(room){
     if(ch){ var old=ch; ch=null; subscribed=false;   // let go first: removing reports CLOSED to the old one
-      try{ if(old.current) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
+      try{ if(old.vpRoom || old.current) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
+    /* THE ROOM, once the Worker says musical is on it (1 Nov 2026, /app/vp-room.js): the players'
+       channel is a room, so this phone holds no Supabase connection. A room this phone cannot keep is
+       handed over for the whole venue, never left alone; off, it is the channel it always was, kept
+       by /app/vp-channel.js when that script is there. */
+    var make=function(){ return (window.VPChannel && window.VPChannel.keep) ? window.VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
+                                                                           : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } }); };
     var kept=!!(window.VPChannel && window.VPChannel.keep);
-    ch=kept ? window.VPChannel.keep(client, "vp-"+room, { config:{ broadcast:{ self:false } } })
-            : client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    ch=(typeof VPRoom!=="undefined" && VPRoom.venue) ? VPRoom.venue(VP_GAME_API, "").channel("vp-"+room, "phone", make, { fmt:"musical" }) : make();
     var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){

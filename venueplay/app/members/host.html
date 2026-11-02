@@ -321,6 +321,7 @@
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-drawrecord.js"></script>
 <script>
@@ -728,7 +729,7 @@
     send({ t:"drawing", drawName:d.name, minNumber:lo, maxNumber:hi, spinSecs:Math.round(len/1000) }); sendState();
 
     var wait=new Promise(function(res){ setTimeout(res, len); });
-    apiPost("/host/members/draw", { draw_id:d.id })
+    apiPost("/host/members/draw", { draw_id:d.id, road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "members") : "supabase") })
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealWinner(r); })
       .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); rulesAgain(e); });
@@ -982,6 +983,11 @@
      CLOSED channel does not rejoin by itself. So: let go of the old channel BEFORE removing it,
      ignore anything a replaced channel says, keep quiet while leaving, and open a fresh channel
      on return if this one was closed underneath us. */
+  /* THE ROOM, ONCE THE WORKER SAYS THE MEMBERS DRAW IS ON IT (1 Nov 2026, /app/vp-room.js): the venue's own
+     screen channel is a room, in the venue's group, so it goes to Supabase with the TV. Off, with no
+     venue, or a screen paired by a typed code, it is the channel it always was. */
+  var _roomSlug="";
+  function ownScreen(code){ return !!(_roomSlug && window.VP && VP.venueCode && code===VP.venueCode("members-"+_roomSlug)); }
   var _leaving=false, _closed=false;
   function openChannel(code){
     if(ch){ var old=ch; ch=null; subscribed=false; try{ if(old.unsubscribe) old.unsubscribe(); else client.removeChannel(old); }catch(e){} }
@@ -989,7 +995,12 @@
     /* Rebuilt by /app/vp-channel.js after a drop (review, 28 Sep 2026): a CLOSED channel never rejoins by
        itself, and this console only reopened one on a tab switch, so a draw stopped reaching the TV until
        the host went away and came back. Same helper as the TV and every phone. */
-    ch=window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
+    var make=function(){ return window.VPChannel ? VPChannel.keep(client, "vp-"+code, { config:{ broadcast:{ self:false } } }) : client.channel("vp-"+code, { config:{ broadcast:{ self:false } } }); };   // same convention as trivia/musical so the unified TV finds it
+    ch=(typeof VPRoom!=="undefined" && VPRoom.channelFor && ownScreen(code)) ? VPRoom.channelFor(VP_GAME_API, _roomSlug, "vp-"+code, "host", make, { fmt:"members",
+      /* For a minute after it opens, one ear on the venue's bingo channel on the old road: a TV from before
+         the switch answers this host_here there, and the venue is handed over to meet it. */
+      ear: { name: "vp-"+VP.venueCode(_roomSlug), client: client, gate: (window.VPSign ? function(p, cb){ VPSign.gate(p, cb); } : null),
+             hello: function(say){ var hi={ t:"host_here", rw:1, fmt:"members" }; if(window.VPSign){ VPSign.signSend(hi, say); } else { say(hi); } } } }) : make();
     var mine=ch;
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
@@ -1143,6 +1154,7 @@
         var tv=tvFromUrl();
         var _slug=(ctx.venue && ctx.venue.slug) || "";
         if(_slug && window.VPSign){ VPSign.initHost(VP_GAME_API, _slug, vpHostToken); }   // this venue's signing key
+        _roomSlug=_slug;
         if(tv){ connect(tv); }
         else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ connect(VP.venueCode("members-"+ctx.venue.slug)); }
         else { $("connectView").classList.remove("hidden"); }

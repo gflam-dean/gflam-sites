@@ -135,7 +135,10 @@
          telly on a wall has to heal itself. Backing off to a minute so a genuinely dead
          channel does not hammer anything all night. */
       function watch() {
-        var mine = client.channel("vp-" + name, { config: { broadcast: { self: false } } });
+        /* opts.channel, when the page gives one, makes a channel that is a room while the venue and
+           the watched format are on it (vp-room.js); it is shaped like a channel either way. */
+        var mine = opts.channel ? opts.channel("vp-" + name, game)
+                                : client.channel("vp-" + name, { config: { broadcast: { self: false } } });
         c = mine;
         mine.on("broadcast", { event: "msg" }, onMsg);
         mine.subscribe(function (status) {
@@ -155,7 +158,7 @@
                handled twice, and one more channel for every blip. Found 20 Sep 2026 by giving
                the test's fake the real library's behaviour, which the first version lacked. */
             if (c === mine) c = null;
-            try { client.removeChannel(mine); } catch (e) {}
+            try { if (mine && mine.vpRoom) mine.unsubscribe(); else client.removeChannel(mine); } catch (e) {}
             try { watch(); } catch (e) {
               // Whatever goes wrong building the next one, keep trying: a throw here used to
               // be the end of this channel for the night.

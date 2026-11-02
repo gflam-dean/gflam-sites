@@ -263,3 +263,87 @@ closes every way a venue could end up split across the two roads once nobody typ
 Tests: room-fallback (61), venueplay-room-handover (21), tools/test-room-default-bingo.js (32, the
 real console, phone, vp-room.js and room class together), tools/test-tv-room-default.js (18).
 Test night: `docs/ROOM-SERVER-TEST-NIGHT.md`.
+
+## 1 Nov 2026: every format on the room, one flip each, the Worker decides
+
+Branch `feature/room-trivia-musical-1nov`, on top of the bingo default above.
+
+**The channels, as they are on Supabase today** (CODE = the FNV hash of a slug, the same in tv.html,
+vp-session.js, the game Worker and the room):
+
+| channel | who talks | who listens |
+|---|---|---|
+| `vp-<CODE(slug)>` (bingo's, and the musical/trivia players' channel: the session join code is the venue code) | bingo console, bingo phones; musical/trivia consoles' `gsend` (stamped `fmt`); musical/trivia phones (join, claim, answered) | TV (bingo), game screens' router, phones, consoles |
+| `vp-<CODE(musical-slug)>` | musical console (screen channel, `send`) | musical screen, TV router, other screens' routers |
+| `vp-<CODE(trivia-slug)>` | trivia console | trivia screen, TV router, other screens' routers |
+| `vp-<CODE(raffle-slug)>` | raffle console | raffle screen, TV router, other screens' routers |
+| `vp-<CODE(members-slug)>` | members console | members screen, TV router, other screens' routers |
+| `vpa-<game id>` (room only) | trivia phones' answers | the Worker at Reveal (untouched by this branch) |
+| HQ reload / command | the Worker (`roomPublish` into bingo's room; the `/venue` poll as well) | the TV |
+
+Signing is unchanged: every console signs (`VPSign.signSend`), every receiver runs its own
+`VPSign.gate`, and the room relays the signed object untouched.
+
+**What moved.** Each of those Supabase channels is now a room of the same name, in the format's
+own flip. A page swaps the one line that made its channel for `VPRoom.venue(api, slug).channel(...)`,
+which is shaped like a Supabase channel (on, subscribe, send, unsubscribe) and builds the page's own
+Supabase channel, exactly as before, the moment the venue goes back. In the room nothing touches
+Supabase, so a TV, a screen, a phone or a console holds no Supabase connection at all.
+
+* **The Worker decides which formats are on.** `ROOM_FORMATS_ON` in venueplay-room.js (all false).
+  `/room/presence` answers `formats` and `venue: true`; the TV's `/venue` poll carries the same
+  answer as `room_formats`. Every page follows that one answer, so a console cached from yesterday
+  and a TV loaded this minute cannot disagree. A TV that decided its roads before a flip sees
+  `room_formats` change and reloads between games.
+* **One venue, one road, for every room a page holds.** A page's rooms at one venue are one group:
+  the first to go takes the rest, and the word is passed to all five of the venue's rooms
+  (`POST /room/handover?room=..&venue=<slug>`, `soft=1` when passing it on, so an existing six hour
+  mark is not pushed later). Any handover a page sends names the venue.
+* **Old cached pages.** A TV on the room keeps NO ear on Supabase any more (that ear was one
+  connection per TV, all day). Instead every console says `road` when it opens a game (`POST
+  /session`, and the members draw): `room`, `supabase`, or `off` (the Worker said its format was
+  off). The Worker hands the whole venue over for a console that says nothing (from before the
+  switch), or `off` for a format that has since gone on (decided before the flip). An OLD TV is
+  heard by the consoles: musical and trivia keep a one-minute ear on the players' channel, raffle
+  and members on the venue's bingo channel, each saying `host_here` (rw) so an old TV answers.
+  Old TVs also reload themselves within about ten minutes (TV_BUILD changed).
+* **What the room was holding goes out first** on the new road, and so does the last `mode` the
+  console said in the room (unless an `idle` came after), so a wall that was on the other road
+  still follows the game.
+* **Untouched:** the trivia answers room (vpa-), every game rule, billing, max players, overage
+  approve-on-screen, kicked players and paused venues (all the Worker's, unchanged), the regulated
+  module VP-DRAW. Musical bingo is not bingo and is never restricted like it.
+
+**Flip one format:** set its line in `ROOM_FORMATS_ON` to true in venueplay-room.js, re-copy into
+venueplay-game.js (the gate checks they match), stamp, deploy the game Worker. Do it in the morning:
+a phone that joins a musical night already running when the flip lands goes into the room while the
+console that opened before it is still on Supabase. **Take one back off:** the same line to false
+and a deploy, or `ROOM_OFF=1` for everything at once, no deploy.
+
+Tests: tools/test-room-formats.js (the whole shipped TV, consoles, screens and phones with the real
+vp-room.js and the real room class), tools/test-room-old-console.js (the real POST /session and
+members draw), venueplay-room-handover.test.js (venue fan-out, soft, formats),
+tools/test-tv-room-default.js (no ear when the Worker hears old consoles).
+
+### Supabase live connections at 1,000 venues, before and after
+
+Same assumptions as the 30 Oct capacity plan: 40 phones a room, 25% of venues live at the peak
+(250 rooms), one TV per venue all evening, Pro includes 500 connections, then US$10 per 1,000,
+A$1.53 to the US dollar. "Before" is this branch's base (bingo on the room, the rest on Supabase).
+
+| | Queensland-like (every live room musical or trivia) | Half bingo |
+|---|---|---|
+| TVs (one connection each, all evening: router plus ear) | 1,000 | 1,000 |
+| live non-bingo rooms: console 1 + embedded screen 1 + phones 40 | 250 x 42 = 10,500 | 125 x 42 = 5,250 |
+| live bingo rooms: the console's ear | 0 | 125 |
+| **before, at peak** | **11,500** | **6,375** |
+| over 500, billed per 1,000 | 11 blocks: US$110 = **A$168.30 a month** | 6 blocks: US$60 = **A$91.80 a month** |
+| **after, every format on** | **0** steady (each console's one-minute ear at lobby open; at most a few dozen at once) | **125** (the bingo console's ear, unchanged) plus the same short ears |
+| over 500 | none: **A$0** | none: **A$0** |
+
+The 500 included connections then carry the consoles' ears with room to spare, so Supabase
+Realtime stops being what caps Queensland (it was about 45 venues on today's code). The next wall
+is the database itself (the join, ~15 calls a phone), the same as the 30 Oct plan says.
+Durable Objects cost for this [A]: a TV holds five sockets that ping every 25 s (answered by
+Cloudflare without waking the room); at 1,000 venues that is about 26 million requests a month at
+the 20:1 WebSocket rate, about US$4 (A$6) a month on top of the Workers Paid plan.
