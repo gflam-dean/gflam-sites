@@ -110,6 +110,21 @@ cap = re.search(r'cap:"The venue TV is opened once at your venue\'s own link[^"]
 check('the training walkthrough\'s first caption says the TV is kept full screen with nothing over it',
       bool(cap) and 'full screen with nothing over it' in cap.group(0), cap and cap.group(0)[-120:])
 
+# ---------------------------------------------------------------- the one-line tip (Dean's job list, 2 Nov 2026)
+# "Help page + Fire Stick guide: add keep the TV window uncovered or fullscreen." Where a venue sets up
+# a TV in a computer browser: the /help venue panel (on show, not inside a closed answer), the TV's own
+# "Set up this screen" card on a laptop or PC (vp-tvtype.js), and the console setup guide's TV step.
+TIP = 'Keep the venueplay screen full screen, or at least never covered by another window. A covered browser window slows down and the TV can fall behind.'
+venue = re.search(r'<div class="panel" id="venue".*?(?=<div class="panel" id="player")', h, re.S)
+check('/help: the venue panel shows the tip in its own note, outside the FAQ', bool(venue) and re.search(r'<div class="note" id="tvWindowTip">.*?' + re.escape(TIP), venue.group(0), re.S) is not None)
+tt = read('venueplay/app/vp-tvtype.js')
+pc = re.search(r'case "pc":[^\n]*', tt)
+# The card is short on purpose: it has to fit a 1280x720 TV beside the Google Play half
+# (tv-bare-setup-in-chrome.test.py), so it carries the tip in fewer words.
+check('the TV setup card on a laptop or PC carries the tip', bool(pc) and 'Keep this screen full screen, never covered by another window, or the TV can fall behind.' in pc.group(0), pc and pc.group(0)[-200:])
+fr = read('venueplay/app/vp-firstrun.js')
+check('the console setup guide\'s TV step carries the tip after "leave it running"', ('leave it running. ' + TIP) in fr)
+
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))
 sys.exit(1 if fails else 0)
