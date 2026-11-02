@@ -536,7 +536,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {
-  "checks": 81,
+  "checks": 94,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -807,6 +807,10 @@
   "checks": 30,
   "counted_by": "lines"
  },
+ "tools/test-stale-phone-and-end-once.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-status-moves-the-clock.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -836,7 +840,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 95,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
