@@ -74,8 +74,10 @@ ok('the page no longer says "re-secure" anywhere a person reads it', !/re-secur/
 ok('the question is the plain one, asked on the page',
    SCRIPT.indexOf('vpAsk("Lock old devices out of your TVs?\\n\\nOnly devices signed in right now will be able to control your screens.') >= 0);
 ok('the done message says what changed', SCRIPT.indexOf('"Done. Old devices can no longer control your TVs at "') >= 0);
-ok('removing a host says what happened to their devices',
-   SCRIPT.indexOf('" has been removed. Their login no longer works, and devices they used can no longer control your TVs. Your screens reconnect by themselves within a few minutes."') >= 0);
+/* 2 Nov 2026, Dean's job list: no lock-out-of-devices wording on the venue side. The card above is
+   HQ's; this message is the venue's, so it says only what the venue needs to know. */
+ok('removing a host says it plainly, with no talk of devices being locked out',
+   SCRIPT.indexOf('" has been removed. Their login no longer works. Your TV screens reconnect by themselves within a few minutes."') >= 0);
 ok('no em dash in any of it', !/—/.test(card));
 
 if (bad) { print(bad + ' OF ' + ran + ' FAILED'); throw new Error(bad + ' failed'); }

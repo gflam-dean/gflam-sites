@@ -972,7 +972,7 @@
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {
-  "checks": 17,
+  "checks": 20,
   "counted_by": "lines"
  },
  "tools/ux-fixes-in-chrome.test.py": {

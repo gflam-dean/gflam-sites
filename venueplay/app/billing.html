@@ -1466,7 +1466,7 @@
           rm.disabled = true; rm.textContent = "Removing…";
           api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
             if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
-            showMsg((h.label || "That person") + " has been removed. Their login no longer works, and devices they used can no longer control your TVs. Your screens reconnect by themselves within a few minutes.", true); loadHosts();
+            showMsg((h.label || "That person") + " has been removed. Their login no longer works. Your TV screens reconnect by themselves within a few minutes.", true); loadHosts();
           });
           });
         });

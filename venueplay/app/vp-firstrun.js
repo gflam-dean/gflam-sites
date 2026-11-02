@@ -287,7 +287,7 @@
     };
     STEP.tv = function () {
       var url = origin.replace(/\/+$/, "") + "/tv?" + encodeURIComponent(v.slug || "");
-      body.appendChild(el("p", TEXT, "Open this address in your TV's web browser (or on a laptop or streaming stick plugged into the TV) and leave it running."));
+      body.appendChild(el("p", TEXT, "Open this address in your TV's web browser (or on a laptop or streaming stick plugged into the TV) and leave it running. Keep the venueplay screen full screen, or at least never covered by another window. A covered browser window slows down and the TV can fall behind."));
       /* THE APP, FOR A TV WITH GOOGLE PLAY (Dean, 31 Oct 2026). One line, the same words as the welcome
          emails and the Help answer, with the app's store page as its link. */
       var play = el("p", TEXT); play.id = "vpFrPlay";

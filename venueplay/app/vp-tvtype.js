@@ -109,7 +109,7 @@
       case "tcl":        return browser("On this TCL TV, use its web browser");
       case "othertv":    return browser("On this smart TV, use its web browser");
       case "apple":      return { app: "hide", head: "Showing this through AirPlay?", text: "Put in the six-character screen code from your host console, and keep the device you are sharing from awake and plugged in." };
-      case "pc":         return { app: "show", head: "Or use this computer&rsquo;s browser", text: "Put in the six-character screen code from your host console. If this computer is plugged into the TV, go fullscreen." };
+      case "pc":         return { app: "show", head: "Or use this computer&rsquo;s browser", text: "Put in the six-character screen code from your host console. If this computer is plugged into the TV, keep the venueplay screen full screen, or at least never covered by another window. A covered browser window slows down and the TV can fall behind." };
       case "mobile":     return { app: "show", head: "On a phone or tablet?", text: "This page is for the TV. Open venueplay.com.au/tv on the TV itself, or put in the screen code here to try it." };
       default:           return { app: "show", head: null, text: null };
     }
