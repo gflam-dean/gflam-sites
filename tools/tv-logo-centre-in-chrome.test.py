@@ -25,6 +25,10 @@ game Worker in jsc, supabase-js stood in) and checks:
           own logo, the show landing on it, a wide logo putting it back, the square one again. The shared
           code is VPVenueLogo.alignMark in /app/vp-venuelogo.js; raffle and members draw call it the same way.
 
+  LIVE    the real trivia demo on its own clock (no hand on the show): the painted wordmark's middle within 3px
+          of Tugun's crest's middle with the show off (the default), and with ?sting=1 once the show has ended
+          (the mark is re-measured on "vp-sting-done", the picture's load and a resize).
+
 The pages that play the start show are opened with &sting=1, so this holds whether the show is on or off
 by default (it is off by default from hotfix/sting-off-2nov).
 
@@ -40,6 +44,7 @@ import gatelib
 
 SHOTS = os.environ.get('VP_SHOTS', '')
 TOL = 2.0
+TOL_LIVE = 3.0   # the real trivia demo on its own clock: a few px
 ran = bad = 0
 def ok(name, cond, saw=''):
     global ran, bad
@@ -244,9 +249,44 @@ def demo(none_mark):
     finally:
         r.close()
 
+def trivia_live():
+    """THE TRIVIA DEMO, PLAYED FOR REAL (2 Nov 2026). The checks above drive the show by hand, so the logo
+    is always measured BEFORE the show hides the mark. On the real sales-page trivia demo the show could
+    hide the mark while the crest was still loading: alignMark measured nothing, and nothing asked again
+    when the show ended, so the wordmark sat ~90px above Tugun's crest. Here the page runs on its own
+    clock (no __vpStingManual): the show off (the default), then ?sting=1 once the show has finished on its
+    own. Measured as painted: the corner's showing wordmark against the venue logo, middles within TOL_LIVE."""
+    import rig as RIG
+    r = RIG.Rig()
+    try:
+        for path, tag, shotname in (('/app/trivia/screen?demo=1', 'TRIVIA DEMO show off', 'trivia-demo-tugun-show-off-1920'),
+                                    ('/app/trivia/screen?demo=1&sting=1', 'TRIVIA DEMO after the show', 'trivia-demo-tugun-after-show-1920')):
+            print('\n%s: the real trivia demo on its own clock, Tugun\'s crest, 1920x1080' % tag)
+            tid, sid = r.open(path, width=1920, height=1080)
+            ok(tag + ': Tugun\'s crest has loaded', r.until(sid, '(function(l){return !!l && l.complete && l.naturalWidth===480;})(document.getElementById("venueLogo"))', 15) is True, r.ask(sid, MEASURE))
+            if 'sting=1' in path:
+                ok(tag + ': the show played on its own and finished', r.until(sid, 'window.VPSting && VPSting.stats().plays>=1 && !VPSting.playing()', 20) is True, r.ask(sid, '(window.VPSting?VPSting.stats():null)'))
+                ok(tag + ': its new mark is in the corner', r.ask(sid, '!!document.querySelector(".tv-corner .vp-newmark")') is True, r.ask(sid, MEASURE))
+            else:
+                ok(tag + ': no show played', r.ask(sid, '!window.VPSting || VPSting.stats().plays===0') is True, r.ask(sid, '(window.VPSting?VPSting.stats():null)'))
+            r.until(sid, '!!document.querySelector(".tv-corner").getAttribute("data-drop")', 6)
+            time.sleep(1.0)
+            m = r.ask(sid, MEASURE) or {}
+            lg, mk = m.get('logo'), m.get('mark')
+            ok(tag + ': the crest and the painted wordmark are both on screen', bool(lg) and bool(mk) and m.get('cornerOn'), m)
+            if lg and mk:
+                print('  %s: crest middle %.1f, wordmark middle %.1f (off by %.1f), corner moved %s' % (tag, lg['cy'], mk['cy'], mk['cy'] - lg['cy'], m.get('drop') or 0))
+                ok(tag + ': the wordmark\'s painted middle is on the crest\'s middle (within %dpx)' % TOL_LIVE, abs(lg['cy'] - mk['cy']) <= TOL_LIVE, [lg, mk])
+            shot(r, sid, shotname)
+            ok(tag + ': no script errors on the screen', r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
+            r.close_tab(tid)
+    finally:
+        r.close()
+
 def main():
     if not take_lock():
         return 2
+    trivia_live()
     none = real()
     demo((none or {}).get('mark'))
     games()

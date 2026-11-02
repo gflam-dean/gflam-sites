@@ -3016,7 +3016,8 @@
         el.src=venueLogoUrl;
         if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
         if(!el.__vpAlignWired){ el.__vpAlignWired=true;   /* after vp-venuelogo has sized it: the two logos on one line */
-          try{ el.addEventListener("vp-logo-sized", alignCorner); }catch(e){} }
+          try{ el.addEventListener("vp-logo-sized", alignCorner); }catch(e){}
+          try{ VPVenueLogo.watch(el, alignCorner); }catch(e){} }   /* and again when the start show ends, the picture loads, the screen resizes */
       }
       /* A logo says which venue this is better than a caption does, so the small name under the
          VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the

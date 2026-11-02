@@ -279,6 +279,9 @@
     root=null; el={};
     stats.last=how; if(how==="ball"||how==="content") stats.cutShort++;
     window.removeEventListener("resize",fit);
+    /* "the show is over" for anything that measures the corner (VPVenueLogo.alignMark: the mark it hid is
+       back, as the new mark, so the two logos are lined up again now, not never). */
+    try{ var ev=document.createEvent("Event"); ev.initEvent("vp-sting-done", false, false); window.dispatchEvent(ev); }catch(e){}
   }
   var LAYOUT="tv";
   function dur(){ return LAYOUT==="phone" ? (PH && PH.land ? PLAND : PDUR) : DUR; }

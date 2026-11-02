@@ -290,13 +290,28 @@
       if (want) corner.setAttribute("data-drop", String(want)); else corner.removeAttribute("data-drop");
     } catch (e) {}
   }
+  /* MEASURE AGAIN WHEN THE PICTURE CHANGES UNDER IT (2 Nov 2026, the trivia demo: the wordmark sat ~90px
+     above Tugun's crest). alignMark measures only what is drawn, so whenever it ran while the start show
+     (/app/vp-sting.js) had the mark hidden, it changed nothing, and nothing asked again: the show ending puts
+     a new mark in the corner without anything else happening. So again when the show ends ("vp-sting-done",
+     fired by vp-sting.js on window however it ended), when the logo's picture finishes loading, and when the
+     screen changes size (the corner is sized in cqw). tv.html wires its alignCorner here too. */
+  function watch(img, go) {
+    try { w.addEventListener("vp-sting-done", go); } catch (e) {}
+    try { w.addEventListener("resize", go, { passive: true }); } catch (e) {}
+    try { if (img) img.addEventListener("load", go); } catch (e) {}
+  }
   function keepAligned(img, corner, has) {
     var go = function () { alignMark(corner, img, typeof has === "function" ? has() : true); };
     if (!img || !corner) return go;
-    if (!img.__vpMarkWired) { img.__vpMarkWired = true; try { img.addEventListener("vp-logo-sized", go); } catch (e) {} }
+    if (!img.__vpMarkWired) {
+      img.__vpMarkWired = true;
+      try { img.addEventListener("vp-logo-sized", go); } catch (e) {}
+      watch(img, go);
+    }
     go();
     return go;
   }
 
-  w.VPVenueLogo = { alignMark: alignMark, keepAligned: keepAligned, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { alignMark: alignMark, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);
