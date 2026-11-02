@@ -48,7 +48,7 @@
     ' .tvhold-card{position:absolute;inset:0;z-index:12;background:#0A0A0B}' +
     ' .tvhold-card[hidden]{display:none}' +
     ' body.tvhold-on .tv-corner{visibility:hidden}';
-  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   /* line: the words under the logo, HTML-escaped by the caller (or one of LINES). o.scan: they are "Scan to
      play". o.kind: data-vpb, what this card is. breathe: the triangle's glow breathes. */
   function html(line, breathe, o) {
