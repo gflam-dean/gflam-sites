@@ -89,7 +89,13 @@ world();
 var roomAsked = 0;
 ENV.ROOM = { idFromName: function (n) { return n; }, get: function () { return { fetch: async function () { roomAsked++; return new Response(JSON.stringify({ total: 3, phone: 2, answers: true }), { status: 200 }); } }; } };
 LOG.length = 0;
-function presence(q) { return call(handleRoomPresence, {}, {}, 'https://w/room/presence?' + q); }
+// Through __worker.fetch, as Cloudflare calls it: the route table picks the handler, so a route still
+// pointing at the room server's bare presence answer is caught here, not only a handler that changed.
+async function presence(q) {
+  var res = await __worker.fetch({ method: 'GET', url: 'https://game.test/room/presence?' + q, headers: { get: function () { return null; } } }, ENV);
+  var b = null; try { b = JSON.parse(res._b); } catch (e) { b = res._b; }
+  return { status: res.status, body: b || {} };
+}
 r = await presence('room=vpa-' + G2 + '&s=' + S1);
 show('h. a phone naming LAST night\'s session for tonight\'s game: session_ok:false (and the room\'s own answer is kept)',
      r.status === 200 && r.body.session_ok === false && r.body.answers === true && r.body.total === 3, JSON.stringify(r.body));

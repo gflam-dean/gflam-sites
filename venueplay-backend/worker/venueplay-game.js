@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 00:24 · ed7ea262';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 02:15 · d7388bb6';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -333,7 +333,7 @@ export default {
          binding, and every page falls back to Supabase Realtime on a 503, so a
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
-      if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresence(request, env, json);
+      if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
       if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json);
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
@@ -6585,6 +6585,32 @@ async function roomGameContext(env, gameId) {
   return roomCachePut(roomGameCache, gameId, { session_id: games[0].session_id });
 }
 
+/* IS THIS GAME THE NIGHT THE PHONE'S TOKEN BELONGS TO? (3 Nov 2026) GET /room/presence, as the router
+   runs it. The room server's own answer (handleRoomPresence, in the ROOM SERVER copy below, which must
+   stay byte for byte venueplay-room.js) comes back untouched, and for an answers room ("vpa-<game>")
+   this adds session_ok. An answers room acknowledges any phone's answer and the Worker drops one from
+   another night's token only at Reveal, so a phone left on a finished quiz was told "Answer in!" all
+   through the next one and scored nothing. A trivia phone asks here once per game before it uses the
+   room, naming the session its token came from (s); session_ok:false sends it to re-join first
+   (trivia/play.html ansRoom). The game's session is fixed for its life and cached (roomGameContext),
+   so this costs at most one read per game per isolate, never one per phone. It is advice, not a lock:
+   the Reveal still checks every answer against the player rows. Any failure says nothing, and the
+   phone behaves exactly as before. */
+async function handleRoomPresenceNight(request, env, json) {
+  let out = null, status = 200;
+  await handleRoomPresence(request, env, function (o, st) { out = o; status = st == null ? 200 : st; return null; });
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  const sIn = String(url.searchParams.get('s') || '');
+  if (status >= 200 && status < 300 && out && typeof out === 'object' && /^vpa-/.test(name) && UUID_RE.test(sIn) && UUID_RE.test(name.slice(4))) {
+    try {
+      const ctx = await roomGameContext(env, name.slice(4));
+      if (ctx && ctx.session_id) out.session_ok = (ctx.session_id === sIn);
+    } catch (e) { /* cannot tell: say nothing */ }
+  }
+  return json(out, status);
+}
+
 /* THE ONE QUESTION, NOT THE SET.
  * This first read the whole set in one go and kept a seq -> id map, which is fewer calls
  * and wrong twice over. A venue's question bank is one SET, not one night: the load
@@ -12464,24 +12490,7 @@ async function handleRoomPresence(request, env, json) {
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
   const res = await roomStub(env, name).fetch('https://room/presence');
-  const out = await res.json();
-  /* IS THIS GAME THE NIGHT THE PHONE'S TOKEN BELONGS TO? (3 Nov 2026) An answers room ("vpa-<game>")
-     acknowledges any phone's answer and the Worker drops one from another night's token only at
-     Reveal, so a phone left on a finished quiz was told "Answer in!" all through the next one and
-     scored nothing. A trivia phone asks here once per game before it uses the room, naming the
-     session its token came from (s); session_ok:false sends it to re-join first (trivia/play.html
-     ansRoom). The game's session is fixed for its life and cached (roomGameContext), so this costs
-     at most one read per game per isolate, never one per phone. It is advice, not a lock: the
-     Reveal still checks every answer against the player rows. Any failure says nothing, and the
-     phone behaves exactly as before. */
-  const sIn = String(url.searchParams.get('s') || '');
-  if (res.ok && out && typeof out === 'object' && /^vpa-/.test(name) && UUID_RE.test(sIn) && UUID_RE.test(name.slice(4))) {
-    try {
-      const ctx = await roomGameContext(env, name.slice(4));
-      if (ctx && ctx.session_id) out.session_ok = (ctx.session_id === sIn);
-    } catch (e) { /* cannot tell: say nothing */ }
-  }
-  return json(out, res.status);
+  return json(await res.json(), res.status);
 }
 
 // Drop a message into a room from the Worker. Returns how many screens heard it.
