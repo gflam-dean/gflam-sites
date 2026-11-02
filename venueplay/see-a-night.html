@@ -2029,6 +2029,7 @@ block (all classes prefixed .vpa-)
   }
   function realScreen(view) {
     var src = realScreenSrc(view);
+    if (src.indexOf("?demo=1") < 0) return "";   // a sales page only ever embeds a page in its ?demo=1 mode
     var title = view === "tv"        ? "The venue screen, running a bingo night"
               : view === "ads-tv"    ? "The venue screen, running its screen ads"
               : /^[a-z]+-tv$/.test(view)
@@ -2071,6 +2072,7 @@ block (all classes prefixed .vpa-)
     var box = document.getElementById("vpSceneTv");
     if (!box) return;
     var src = realScreenSrc(sceneTvView(mode)), f = box.querySelector("iframe");
+    if (src.indexOf("?demo=1") < 0) return;   // only ever a demo wall in the room scene
     if (f && f.getAttribute("src") === src) return;
     box.innerHTML = '<iframe class="vp-scene-live" src="' + src + '" title="The venue screen in the room" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>';
     sceneTvFit();
