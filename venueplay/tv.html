@@ -776,6 +776,7 @@
      that does not exist: the one thing the demo comment above promises never to show. Now a valid demo code,
      and a QR that opens the demo phone, which plays a night by itself and joins nothing. */
   var DEMO_JOIN_CODE="VENUE2";
+  if(VP_DEMO) joinCode=DEMO_JOIN_CODE;   // from the first frame: the lobby never shows a code this browser invented, even for the moment before the script's session lands (3 Nov 2026)
   function playURLFor(code){ return VP_DEMO ? ORIGIN+"/play?demo=1" : ORIGIN+"/play?room="+code; }
   var playURL=playURLFor(joinCode);
 
