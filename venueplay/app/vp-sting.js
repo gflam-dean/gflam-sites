@@ -82,6 +82,10 @@
     var sv=c.querySelector("svg:not(.vp-newmark)"), vn=c.querySelector(".vn");
     var a=sv&&sv.getBoundingClientRect(), b=vn&&vn.getBoundingClientRect();
     if(a && b && b.width){ return { right:b.right, top:Math.min(a.top,b.top), width:b.right-a.left }; }
+    /* No name beside it (a venue with a logo hides it): the mark's own box, not the corner's. The corner is
+       a little taller than the mark it centres, so its top sat 2.8px above the mark and the new mark landed
+       that much high (2 Nov 2026, tv-logo-centre-in-chrome). */
+    if(a && a.width && a.height){ return { right:a.right, top:a.top, width:a.width }; }
     var r=c.getBoundingClientRect(); if(!r.width) return null;
     return { right:r.right, top:r.top, width:r.width };
   }

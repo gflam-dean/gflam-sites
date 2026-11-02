@@ -10193,8 +10193,8 @@ MUTATIONS = [
      '    try{ VPVenueLogo.keepAligned(el, document.querySelector(".tv-corner"), function(){ return el.style.display!=="none"; }); }catch(e){}   /* the venueplay mark centred on a square logo (2 Nov 2026) */\n', '',
      'the musical bingo screen keeps its venueplay mark at the top over a square logo'),
     ('tv-logo-centre-in-chrome.test.py', 'venueplay/app/vp-sting.js',
-     'return { right:b.right, top:Math.min(a.top,b.top), width:b.right-a.left }; }',
-     'return { right:b.right, top:Math.min(a.top,b.top)-(parseFloat(c.getAttribute("data-drop"))||0), width:b.right-a.left }; }',
+     'if(a && a.width && a.height){ return { right:a.right, top:a.top, width:a.width }; }',
+     'if(a && a.width && a.height){ return { right:a.right, top:a.top-(parseFloat(c.getAttribute("data-drop"))||0), width:a.width }; }',
      'the start show lands where the mark used to be, not on the moved mark'),
     # ---- 2 Nov 2026, the trivia demo: the mark was measured while the start show hid it, and never again,
     # so the wordmark sat ~90px above Tugun's crest. Re-measured when the show ends (and on load, resize).
