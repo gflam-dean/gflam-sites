@@ -248,7 +248,7 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -853,7 +853,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                 // ignore our own presence pings
-    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
+    /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
     if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
@@ -1020,7 +1020,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"$50 bar tab", played:[] });
       });
       /* The first song waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first song makes it give way, so at 1.2 s the sales-page demo cut it off. */
-      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[];   // 1200 as before the show, when it is off (the default since the 2 Nov hotfix)
+      var t=4200, played=[];
       SONGS.forEach(function(sg, i){
         at(t, function(){
           /* played is a list of TITLES, not song objects: renderBoard paints each entry straight

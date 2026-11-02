@@ -3631,12 +3631,11 @@
     nightReset();
   }
   var BALL_HOLD_SECONDS=5;
-  /* THE START-OF-GAME SHOW (1 Nov 2026; off unless the console's address has ?sting=1, like the TV's: on by default for the
-     2 Nov 2026 midday release, off by default again in that evening's hotfix because it played out of place live).
+  /* THE START-OF-GAME SHOW (1 Nov 2026; on by default from 2 Nov 2026, off when the console's address has ?sting=0, like the TV's).
      The TV plays a 4 second show when a game starts (/app/vp-sting.js). Dean: "make the show look
      good", so the first Next number waits for it, counting down, and no ball can land mid-show.
      Not on a real-balls night: the host calls from the barrel, and the TV stops the show for a ball. */
-  var VP_STING=/[?&]sting=1(&|$)/.test(location.search||""), STING_HOLD_SECONDS=4;
+  var VP_STING=!/[?&]sting=0(&|$)/.test(location.search||""), STING_HOLD_SECONDS=4;
   function stingHold(){
     if(!VP_STING || G.caller) return;
     VP_HOLD.hold($("nextBtn"), STING_HOLD_SECONDS, function(left){ return "Starting the show... "+left; }, syncNextBtn);
