@@ -91,6 +91,7 @@
   .layer.pic .qfoot{margin-top:1.4cqw;gap:4cqw}
   .layer.pic .ringwrap{width:8cqw;height:8cqw}
   .layer.pic .ringwrap .rnum{font-size:3cqw}
+  .layer.pic .ringwrap .rlbl{font-size:.8cqw;margin-top:.25cqw}
   .layer.pic .answered{font-size:2.6cqw}
   .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
   .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
@@ -120,7 +121,12 @@
   .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
   .ringwrap .rbg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:8}
   .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
-  .ringwrap .rnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.4cqw;color:#fff}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.4cqw;line-height:1;color:#fff}
+  /* "SECS" under the number (Dean, 2 Nov 2026): a bare "13" in a ring did not read as a timer.
+     Same family as the ANSWERED label beside it. The number and label are centred as one pair,
+     and both sit well inside the ring's inner circle (radius 40% of the ring) at every size;
+     tools/old-tv-in-chrome.test.py measures that at 1920, 1280 and 1024 wide, new and old sets. */
+  .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.1cqw;line-height:1;color:var(--faint);margin-top:.35cqw;padding-left:.14em}
   .answered{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--text)}
   .answered b{color:var(--gold)}
   .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
@@ -231,7 +237,7 @@
     <div class="qfoot">
       <div class="ringwrap">
         <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
-        <div class="rnum" id="tvCdNum">20</div>
+        <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span></div>
       </div>
       <div class="answered"><b id="tvAnsCount">0</b><span class="sub">answered</span></div>
     </div>
