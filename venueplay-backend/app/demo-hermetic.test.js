@@ -312,6 +312,46 @@ pass("the one buzz asks whether the page is a demo first",
        "PAGE_EXT is empty on Pages; a hardcoded .html 404s in production and works locally");
 })();
 
+/* THE TV IN THE ROOM SCENE IS THE REAL WALL (Dean, 3 Nov 2026). It was the last drawing on the page:
+   "QUESTION 3 OF 10", no SECS, a code nobody could join. RUN the real realScreenSrc, sceneTvView and
+   paintSceneTv out of see-a-night.html against a fake box and read the iframe it puts in the TV. */
+(function () {
+  var san = find("venueplay/see-a-night.html");
+  function lift(name) {
+    var i = san.indexOf("function " + name + "(");
+    if (i < 0) throw new Error("cannot find " + name + " in see-a-night.html - a test that cannot find its subject cannot fail");
+    var d = 0, k = san.indexOf("{", i);
+    do { if (san[k] === "{") d++; else if (san[k] === "}") d--; k++; } while (d > 0 && k < san.length);
+    return san.slice(i, k) + "\n";
+  }
+  var m = /var SCENE_TV_VIEW = (\{[^}]*\});/.exec(san);
+  pass("see-a-night: the scene TV has a game-to-wall table", !!m);
+  var box = { innerHTML: "", clientWidth: 336, clientHeight: 186, querySelector: function () { return null; } };
+  var doc = { getElementById: function (id) { return id === "vpSceneTv" ? box : null; } };
+  var fx = new Function("document", "PAGE_EXT", "var SCENE_TV_VIEW = " + (m ? m[1] : "{}") + ";\n" +
+    lift("realScreenSrc") + lift("sceneTvView") + lift("sceneTvFit") + lift("paintSceneTv") + "; return paintSceneTv;");
+  function srcFor(mode, ext) { box.innerHTML = ""; fx(doc, ext)(mode); var s = /src="([^"]*)"/.exec(box.innerHTML); return s ? s[1] : ""; }
+  pass("see-a-night: on trivia the TV in the room holds the real trivia wall in demo mode",
+       srcFor("trivia", "") === "/app/trivia/screen?demo=1", srcFor("trivia", ""));
+  pass("see-a-night: off a plain file server the same wall keeps its .html",
+       srcFor("trivia", ".html") === "/app/trivia/screen.html?demo=1", srcFor("trivia", ".html"));
+  pass("see-a-night: each game puts its own real wall in the TV",
+       srcFor("musical", "") === "/app/musical/screen?demo=1" && srcFor("bingo", "") === "/tv?demo=1" &&
+       srcFor("raffle", "") === "/app/raffle/screen?demo=1" && srcFor("members", "") === "/app/members/screen?demo=1" &&
+       srcFor("ads", "") === "/tv?demo=1&ads=1",
+       [srcFor("musical", ""), srcFor("bingo", ""), srcFor("raffle", ""), srcFor("members", ""), srcFor("ads", "")].join(" "));
+  pass("see-a-night: an unknown mode falls back to trivia, never a blank TV", srcFor("nope", "") === "/app/trivia/screen?demo=1", srcFor("nope", ""));
+  pass("see-a-night: the scene TV is an iframe that takes no tab stop", /<iframe [^>]*tabindex="-1"/.test(box.innerHTML), box.innerHTML);
+  var noComments = san.replace(/<!--[\s\S]*?-->/g, "");
+  var i0 = noComments.indexOf('<div class="vp-scene" id="vpScene">'), i1 = noComments.indexOf('class="vp-hotspot"', i0);
+  var scene = i0 >= 0 && i1 > i0 ? noComments.slice(i0, i1) : "";
+  pass("see-a-night: the room scene draws no screen of its own (no words drawn in the svg, no QUESTION 3 OF 10, no made-up code)",
+       scene.length > 2000 && !/<text\b/.test(scene) && scene.indexOf("QUESTION") < 0 && scene.indexOf("TQ7M4C") < 0, scene.length + " chars");
+  pass("see-a-night: the scene holds the box the real wall goes in, and the page paints it at load and on every game picked",
+       /<div class="vp-scene-tv" id="vpSceneTv"/.test(noComments) && /\n  paintSceneTv\(currentMode\);\n/.test(san) &&
+       /aria-selected", modeOpts\[i\] === opt \? "true" : "false"\);\n    \}\n    paintSceneTv\(currentMode\);/.test(san));
+})();
+
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
 ["venueplay/tv.html", "venueplay/play.html", "venueplay/app/index.html"].forEach(function (rel) {
   var src = find(rel);
