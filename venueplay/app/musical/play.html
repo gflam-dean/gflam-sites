@@ -40,6 +40,11 @@
   .brand .word svg{flex:none}
   .brand .nw{white-space:nowrap;flex:none}   /* the game name is one whole piece, never split or ellipsed */
   @media (max-width:340px){ .brand .nw{font-size:15px} }
+  /* ON THE NARROWEST PHONES THE TWO PIECES ARE STACKED ON PURPOSE (3 Nov 2026). Left to wrap, the brand row
+     measured itself at its one-line width (the whole 176px between the corners) while drawing two short lines,
+     so the status dot, which hangs just right of the brand (vp-connbar.js), landed under the menu button at
+     320 wide. A column measures as its widest piece, so the dot sits beside the name. */
+  @media (max-width:339px){ .brand .word{flex-direction:column} }
   .brand .div{width:1px;height:16px;background:var(--line)}
   .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
   .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */

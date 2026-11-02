@@ -350,14 +350,14 @@ def tv_embed_members():
         # channels before judging anything the scripts did: on a loaded Mac that took over 15 s (23 Oct 2026).
         ok('CONTROL: the TV is on its bingo channel and the four game channels', r.until(tv, 'Object.keys(window.__subs).length===5', 90) is True, r.ask(tv, 'JSON.stringify(window.__subs)'))
         ok('the TV handed supabase.createClient the worker heartbeat (vp-channel.js rule 6)',
-           r.until(tv, 'JSON.stringify(window.__opts)==="{\\"realtime\\":{\\"worker\\":true,\\"heartbeatIntervalMs\\":15000}}"', 30) is True, r.ask(tv, 'JSON.stringify(window.__opts)'))
+           r.until(tv, 'JSON.stringify(window.__opts)==="{\\"realtime\\":{\\"heartbeatIntervalMs\\":15000,\\"worker\\":true}}"', 30) is True, r.ask(tv, 'JSON.stringify(window.__opts)'))
         ok('and the ads include this week\'s members draws (the slide The Mini Bar idles on)',
            r.until(tv, '/members draws/i.test(document.getElementById("tvAds").textContent)', 60) is True, r.ask(tv, 'document.getElementById("tvAds").textContent.slice(0,120)'))
         r.ask(tv, 'window.postMessage({vp:"show-game",game:"members"}, location.origin); true')
         ok('the members screen is embedded in the frame', r.until(tv, '(function(){var f=document.getElementById("gameFrame");return !!f&&f.style.display==="block"&&/members\/screen/.test(f.getAttribute("src")||"");})()', 30) is True)
         FR = 'document.getElementById("gameFrame").contentWindow'
         ok('the embedded screen made its own client, with the worker heartbeat too',
-           r.until(tv, 'JSON.stringify(%s.__opts)==="{\\"realtime\\":{\\"worker\\":true,\\"heartbeatIntervalMs\\":15000}}"' % FR, 15) is True, r.ask(tv, 'JSON.stringify(%s.__opts)' % FR))
+           r.until(tv, 'JSON.stringify(%s.__opts)==="{\\"realtime\\":{\\"heartbeatIntervalMs\\":15000,\\"worker\\":true}}"' % FR, 15) is True, r.ask(tv, 'JSON.stringify(%s.__opts)' % FR))
         ok('and it joined the members channel and the four it watches, the bingo topic among them',
            r.until(tv, '(function(w){var k=Object.keys(w.__subs||{});return k.length===5&&k.indexOf("vp-%s")>=0;})(%s)' % (r.W.info['code'], FR), 15) is True, r.ask(tv, 'JSON.stringify(%s.__subs)' % FR))
         shot(r, tv, 'tv-4-members-embedded')

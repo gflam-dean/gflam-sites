@@ -1318,5 +1318,9 @@
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 51,
   "counted_by": "lines"
+ },
+ "tools/reconnect-layout-in-chrome.test.py": {
+  "checks": 115,
+  "counted_by": "lines"
  }
 }

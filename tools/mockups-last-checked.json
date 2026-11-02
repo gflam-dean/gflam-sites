@@ -1,6 +1,6 @@
 {
-  "screens_fingerprint": "c9ffadd7de31",
-  "checked_on": "2026-11-02",
+  "screens_fingerprint": "ebca318b240e",
+  "checked_on": "2026-11-03",
   "screens": [
     "venueplay/tv.html",
     "venueplay/app/trivia/screen.html",
@@ -9,16 +9,20 @@
     "venueplay/app/members/screen.html"
   ],
   "per_screen": {
-    "venueplay/tv.html": "87a69713bc83",
-    "venueplay/app/trivia/screen.html": "2e1111604ca9",
-    "venueplay/app/musical/screen.html": "6af50139f119",
-    "venueplay/app/raffle/screen.html": "747bb453c2b2",
-    "venueplay/app/members/screen.html": "f371036591e7"
+    "venueplay/tv.html": "c23f3422f725",
+    "venueplay/app/trivia/screen.html": "74c785982ddf",
+    "venueplay/app/musical/screen.html": "396c50af055e",
+    "venueplay/app/raffle/screen.html": "78ae8c50c17b",
+    "venueplay/app/members/screen.html": "96a035dd6e20"
   },
   "accepted": {
     "by": "Gflam AI Team",
-    "on": "2026-11-02",
+    "on": "2026-11-03",
     "changed": [
+      "venueplay/app/members/screen.html",
+      "venueplay/app/musical/screen.html",
+      "venueplay/app/raffle/screen.html",
+      "venueplay/app/trivia/screen.html",
       "venueplay/tv.html"
     ]
   }
