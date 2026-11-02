@@ -1704,7 +1704,7 @@
      deliberately left alone: centring three or four lines of running text inside a box is the
      one place this stops looking designed and starts looking like a school project. */
   .hero > .wrap{text-align:center}
-  .hero .lede{margin-left:auto;margin-right:auto;max-width:62ch}
+  .hero:not(.hero2) .lede{margin-left:auto;margin-right:auto;max-width:62ch}
   .hero-cta{justify-content:center}
   .sec-head{text-align:center}
   .sec-sub{margin-left:auto;margin-right:auto}
@@ -1739,8 +1739,13 @@
      breaks. It never re-centres the box afterwards, so once the text inside was centred the
      balanced heading still sat about 175px left of true centre while everything around it was
      dead centre, which is the kind of near-miss that looks worse than no centring at all.
-     Any capped-width block inside a centred head gets its box centred too. */
-  .hero h1{margin-left:auto;margin-right:auto}
+     Any capped-width block inside a centred head gets its box centred too.
+     NOT the two-column hero (.hero2, "Run a packed Tuesday"): beside the demo its copy is LEFT
+     aligned, and centring the 14ch heading box in that column pushed the heading about 54px in
+     from the wordmark, the lede and the buttons, all of which start hard left (Dean, 2 Nov 2026:
+     "looks out of alignment with a logo in the corner"). On a phone .hero2 centres its own
+     heading in its 900px media block. */
+  .hero:not(.hero2) h1{margin-left:auto;margin-right:auto}
   .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:auto;margin-right:auto}
   .offer-grid > div:first-child .sec-title{margin-left:auto;margin-right:auto}
 

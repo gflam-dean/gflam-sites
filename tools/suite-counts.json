@@ -211,6 +211,10 @@
   "checks": 78,
   "counted_by": "lines"
  },
+ "tools/home-hero-in-chrome.test.py": {
+  "checks": 24,
+  "counted_by": "lines"
+ },
  "tools/hq-lists-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -384,7 +388,7 @@
   "counted_by": "lines"
  },
  "tools/subscribe-in-chrome.test.py": {
-  "checks": 74,
+  "checks": 122,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -1076,7 +1080,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
-  "checks": 100,
+  "checks": 114,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {

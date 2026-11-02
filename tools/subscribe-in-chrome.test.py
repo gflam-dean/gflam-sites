@@ -354,7 +354,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 74
+EXPECTED = 122
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
