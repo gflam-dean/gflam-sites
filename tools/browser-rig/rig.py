@@ -96,6 +96,8 @@ class Rig(object):
                 self.send_header('Cache-Control', 'no-store')
                 self.end_headers(); self.wfile.write(b)
             def worker(self, method):
+                wp = urllib.parse.urlparse(self.path).path
+                if wp in rig.hold: time.sleep(rig.hold[wp])   # e.g. {'/__worker/screen': 6}: a slow or unreachable Worker (2 Nov 2026)
                 n = int(self.headers.get('Content-Length') or 0)
                 body = json.loads(self.rfile.read(n) or b'{}') if n else {}
                 path = self.path[len('/__worker'):] or '/'
