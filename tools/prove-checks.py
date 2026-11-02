@@ -6509,7 +6509,7 @@ MUTATIONS = [
      '    text-align:left}',
      'at 320 wide the musical phone header puts "Musical Bingo" hard against the left gutter, off-centre under the wordmark'),
     ('venue-logo-in-chrome.test.py', 'venueplay/app/vp-sting.js',
-     '.vp-sting-mark .vp-newmark{display:block}', '.vp-sting-mark .vp-newmark{display:none}',
+     '.vp-sting-mark>.vp-newmark{display:block}.vp-sting-mark>.vn.vp-keepline>.vp-newmark{display:inline-block;vertical-align:middle}', '.vp-sting-mark>.vp-newmark{display:none}.vp-sting-mark>.vn.vp-keepline>.vp-newmark{display:none}',
      'after the start-of-game show the corner hides the old mark and shows nothing in its place'),
     ('venue-logo-in-chrome.test.py', 'venueplay/tv.html',
      'el.id="venueLogo"; el.setAttribute("data-fit-avoid","");', 'el.id="venueLogo";',

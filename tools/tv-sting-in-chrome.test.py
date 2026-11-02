@@ -124,7 +124,7 @@ def full_show():
            (r.ask(t1, STATS) or {}).get('cutShort') == 0, r.ask(t1, STATS))
         ok('the show is gone from the screen', r.ask(t1, '!document.getElementById("vpSting")') is True)
         ok('the corner mark is the new logo now, the old one hidden',
-           r.ask(t1, '(function(c){var n=c&&c.querySelector(".vp-newmark"),o=c&&c.querySelector(".vn");return !!n&&n.getBoundingClientRect().width>100&&(!o||getComputedStyle(o).display==="none");})(document.getElementById("tvCorner"))') is True)
+           r.ask(t1, '(function(c){var n=c&&c.querySelector(".vp-newmark"),olds=c?[].slice.call(c.querySelectorAll("svg:not(.vp-newmark)")):[];return !!n&&n.getBoundingClientRect().width>100&&olds.every(function(o){return o.getBoundingClientRect().width===0;});})(document.getElementById("tvCorner"))') is True)
         ok('after the show the console is ready: Next number is live',
            r.until(host, '!/Starting the show/.test(document.getElementById("nextBtn").textContent) && !document.getElementById("nextBtn").disabled', 3) is True, text(r, host, 'nextBtn'))
         click(r, host, 'nextBtn')

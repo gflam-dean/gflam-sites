@@ -83,7 +83,7 @@
        wider. The new logo takes the old mark's width and right edge, and its top. */
     var sv=c.querySelector("svg:not(.vp-newmark)"), vn=c.querySelector(".vn");
     var a=sv&&sv.getBoundingClientRect(), b=vn&&vn.getBoundingClientRect();
-    if(a && b && b.width){ return { right:b.right, top:Math.min(a.top,b.top), width:b.right-a.left }; }
+    if(a && b && b.width){ return { right:b.right, top:a.top, width:b.right-a.left }; }   // the mark's own top: its .vn wrapper is a line box 2.8px taller (3 Nov 2026)
     /* No name beside it (a venue with a logo hides it): the mark's own box, not the corner's. The corner is
        a little taller than the mark it centres, so its top sat 2.8px above the mark and the new mark landed
        that much high (2 Nov 2026, tv-logo-centre-in-chrome). */
@@ -117,7 +117,7 @@
     var st=document.createElement("style"); st.id="vpStingCss";
     st.textContent=".vps-t{position:absolute;left:0;width:1920px;display:flex;justify-content:center;font-family:Anton,Impact,sans-serif;font-weight:400;white-space:nowrap;line-height:1;transform-origin:960px 50%;opacity:0}"+
       ".vps-t i{font-style:normal;color:#FF1F8E;text-shadow:0 0 30px rgba(255,31,142,.55)}.vps-sweep i{color:transparent!important;text-shadow:none!important}.vps-sweep{color:transparent!important;text-shadow:none!important}.vps-sweep span{background:linear-gradient(100deg,rgba(255,255,255,0) 40%,rgba(255,214,234,.85) 50%,rgba(255,255,255,0) 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent}"+
-      ".vp-sting-mark>svg:not(.vp-newmark),.vp-sting-mark>.vn{display:none!important}.vp-sting-mark .vp-newmark{display:block}";
+      ".vp-sting-mark>svg:not(.vp-newmark),.vp-sting-mark>.vn:not(.vp-keepline){display:none!important}.vp-sting-mark>.vn.vp-keepline>svg:not(.vp-newmark){display:none!important}.vp-sting-mark>.vp-newmark{display:block}.vp-sting-mark>.vn.vp-keepline>.vp-newmark{display:inline-block;vertical-align:middle}";
     document.head.appendChild(st);
     document.body.appendChild(root);
     ["vpsBack","vpsStage","vpsAmb","vpsL1","vpsL2","vpsL2s","vpsL2w","vpsL2ws","vpsL3","vpsL3s","vpsL3w","vpsL3ws","vpsWord","vpsWg","vpsTri","vpsTg","vpsBand","vpsCore","vpsGh1","vpsGh2","vpsGh3"].forEach(function(i){ el[i]=document.getElementById(i); });
@@ -279,7 +279,7 @@
     if(!playing) return;
     playing=false; if(raf) window.cancelAnimationFrame(raf); raf=0;
     var c=LAYOUT==="tv" && cornerEl();
-    if(c && corner){ if(!c.querySelector(".vp-newmark")) c.insertAdjacentHTML("afterbegin", wordSvg(corner.cssW)); c.classList.add("vp-sting-mark"); }
+    if(c && corner){ if(!c.querySelector(".vp-newmark")) (function(){ var v=c.querySelector(".vn"); var host=(v && v.querySelector("svg:not(.vp-newmark)")) ? v : c; if(host!==c) v.classList.add("vp-keepline"); host.insertAdjacentHTML("afterbegin", wordSvg(corner.cssW)); })(); c.classList.add("vp-sting-mark"); }   // inside the .vn wrapper when there is one, so the new mark keeps the old mark's line and does not sit 2.8px high (3 Nov 2026)
     headBack();   // the phone's header mark is always given back, however the show ended
     if(root && root.parentNode) root.parentNode.removeChild(root);
     root=null; el={};

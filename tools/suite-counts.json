@@ -263,6 +263,10 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/reconnect-layout-in-chrome.test.py": {
+  "checks": 115,
+  "counted_by": "lines"
+ },
  "tools/redirect-verdict.test.py": {
   "checks": 12,
   "counted_by": "lines"
@@ -301,6 +305,10 @@
  },
  "tools/site-offer-footer-in-chrome.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/stale-phone-and-end-once-in-chrome.test.py": {
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/stripe-fields-detector.test.py": {
@@ -811,6 +819,10 @@
   "checks": 30,
   "counted_by": "lines"
  },
+ "tools/test-stale-phone-and-end-once.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-status-moves-the-clock.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -979,8 +991,16 @@
   "checks": 29,
   "counted_by": "lines"
  },
+ "tools/tv-first-slide-in-chrome.test.py": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/tv-landing-in-chrome.test.py": {
   "checks": 45,
+  "counted_by": "lines"
+ },
+ "tools/tv-logo-centre-in-chrome.test.py": {
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
@@ -1321,18 +1341,6 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 51,
-  "counted_by": "lines"
- },
- "tools/reconnect-layout-in-chrome.test.py": {
-  "checks": 115,
-  "counted_by": "lines"
- },
- "tools/stale-phone-and-end-once-in-chrome.test.py": {
-  "checks": 27,
-  "counted_by": "lines"
- },
- "tools/test-stale-phone-and-end-once.js": {
-  "checks": 21,
   "counted_by": "lines"
  }
 }
