@@ -614,7 +614,7 @@
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
 <script>
 (function(){
   "use strict";
@@ -1974,9 +1974,9 @@
     // No .html: Pages 308s it, and the iframe was paying a redirect before the
     // game screen even started loading, with the wall holding on a card.
     var url="/app/"+game+"/screen?venue="+encodeURIComponent(VENUE_SLUG);
-    /* The start-of-game show (1 Nov 2026) is on by default and switched off per TV by ?sting=0 on /tv: the
-       game screen inside the frame reads its own address, so hand the off switch on or it plays there anyway. */
-    if(window.VPSting && !VPSting.on) url+="&sting=0";
+    /* The start-of-game show (1 Nov 2026) is off by default (2 Nov 2026 hotfix) and switched on per TV by ?sting=1
+       on /tv: the game screen inside the frame reads its own address, so hand the switch on or it never plays there. */
+    if(window.VPSting && VPSting.on) url+="&sting=1";
     var fresh = f.getAttribute("src")!==url;
     if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
@@ -2350,7 +2350,7 @@
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings
-    /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). It hears every message first: a
+    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). It hears every message first: a
        "started" with no ball in the last two minutes plays it, and a ball mid-show stops it at once. */
     if(window.VPSting && VPSting.on){ try{ VPSting.onMsg(m, { phase:state.phase, lastBallAt:lastBingoAt }); }catch(e){ console.warn("[sting]", e && e.message); } }
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
@@ -2621,7 +2621,7 @@
          "started" lands at 1.2 s and the show runs about 4 s (/app/vp-sting.js), so a first ball at
          2.6 s cut it off after 1.4 s on every lap of the sales-page demo. 5.4 s lets it play in full,
          as the real console's hold does (index.html STING_HOLD_SECONDS). */
-      var FIRST=5400;
+      var FIRST=(window.VPSting && VPSting.on) ? 5400 : 2600;   // 2600 as before the show, when it is off (the default since the 2 Nov hotfix)
       var called=[];
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[];

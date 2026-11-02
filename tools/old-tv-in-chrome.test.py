@@ -88,14 +88,14 @@ class Site(http.server.BaseHTTPRequestHandler):
 
 
 # Each screen, and the moments of its own demo worth a look: (state, virtual ms after load, the layer on air)
-# 2 Nov 2026: the demos wait for the start-of-game show, so bingo's moments are 2.8 s later, trivia's 3.3 s, musical's 3.0 s.
-# The show itself is off here (&sting=0): this suite is about old-TV layout; tv-sting-in-chrome covers the show.
+# The start-of-game show is off by default (2 Nov 2026 hotfix), so the demos run on their own clocks again;
+# tv-sting-in-chrome covers the show and the demos' later timings under ?sting=1.
 SCREENS = [
     ('bingo TV, no venue (set up this screen)', '/tv', [('setup', 4000, None)]),
-    ('bingo TV', '/tv?demo=1&sting=0', [('lobby', 1500, 'tvLobby'), ('game', 17800, 'tvRun'), ('claim', 32300, 'tvClaim'), ('win', 35800, 'tvWin')]),
-    ('trivia', '/app/trivia/screen.html?demo=1&sting=0', [('lobby', 900, 'tvLobby'), ('question', 7300, 'tvQ'), ('reveal', 12300, 'tvReveal'),
-                                                  ('board', 15800, 'tvBoard'), ('podium', 47300, 'tvPodium')]),
-    ('musical bingo', '/app/musical/screen.html?demo=1&sting=0', [('game', 18000, 'tvRun'), ('claim', 31800, 'tvClaim'), ('win', 36000, 'tvWin'), ('lobby', 42000, 'tvLobby')]),
+    ('bingo TV', '/tv?demo=1', [('lobby', 1500, 'tvLobby'), ('game', 15000, 'tvRun'), ('claim', 29500, 'tvClaim'), ('win', 33000, 'tvWin')]),
+    ('trivia', '/app/trivia/screen.html?demo=1', [('lobby', 900, 'tvLobby'), ('question', 4000, 'tvQ'), ('reveal', 9000, 'tvReveal'),
+                                                  ('board', 12500, 'tvBoard'), ('podium', 44000, 'tvPodium')]),
+    ('musical bingo', '/app/musical/screen.html?demo=1', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
     ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 4700, 'tvDraw'), ('win', 8000, 'tvWin'), ('result', 13000, 'tvResult')]),
     ('members draw', '/app/members/screen.html?demo=1', [('draw', 6000, 'tvDraw'), ('win', 10000, 'tvWin'), ('result', 17000, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),

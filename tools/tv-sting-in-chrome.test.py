@@ -2,21 +2,22 @@
 """THE START-OF-GAME SHOW, PLAYED FOR REAL: console presses start, the TV puts on the show, then ball one
 (Dean, 1 Nov 2026: "it will take 3 seconds right? I don't care about the balls, make the show look good").
 
-The TV's show is /app/vp-sting.js. Since the 2 Nov 2026 release it is ON by default on every TV, console,
-game screen and phone (Dean: "yes let's play ready for tomorrow"); ?sting=0 on an address switches it off for
-that one screen, and a TV hands its ?sting=0 on to the game screen in its frame. So every page below is opened
-PLAIN (no switch in its address) unless it is testing the off switch. On the rig in tools/browser-rig/rig.py
+The TV's show is /app/vp-sting.js. It was ON by default for the 2 Nov 2026 midday release and is OFF by
+default again since that evening's hotfix (it played out of place live: Dean, "This is embarrassing now").
+?sting=1 on an address switches it on for that one screen, and a TV hands its ?sting=1 on to the game screen
+in its frame. So every page below that plays the show is opened WITH ?sting=1, and the plain pages are checked
+to play nothing and behave as they did before the show. On the rig in tools/browser-rig/rig.py
 (the repo's pages, the real game Worker in jsc, headless Chrome):
-  1. A plain console opens a bingo lobby and starts the game; a plain /tv plays the show once, in full.
+  1. A ?sting=1 console opens a bingo lobby and starts the game; a ?sting=1 /tv plays the show once, in full.
      The console's first Next number is held for the length of the show ("Starting the show..."), so a
      tap mid-show calls nothing. The show finishes, the corner mark is the new logo, and the first ball
      then lands on the TV straight after, with no second show.
   2. A TV that joins the game once it is running hears "state", not "started": it never plays the show.
-  3. A console with ?sting=0 (so no hold) and a plain TV: a ball that arrives mid-show stops the
+  3. A plain console (so no hold) and a ?sting=1 TV: a ball that arrives mid-show stops the
      show at once and the number is shown. The room's number always wins over the show.
-  4. A TV with ?sting=0: no show, the old corner mark, and the game screen it hops into gets &sting=0 and
-     stays off too. A plain TV hands no switch on, and its game screen has the show on.
-  5. A plain player's phone (/play, joined as Sam) plays its own short show on the same start:
+  4. A plain TV: no show, the old corner mark, and the game screen it hops into gets no switch and
+     stays off too. A ?sting=1 TV hands &sting=1 on, and its game screen has the show on.
+  5. A ?sting=1 player's phone (/play, joined as Sam) plays its own short show on the same start:
      "LET'S PLAY, SAM!" over "BINGO", done before the first ball, and the ticket is there for ball one.
      Names on the real phone page: none (plain words), a long one (cut with an ellipsis, fits the screen),
      a team name, and one made of HTML (shown as text, never made into elements). A draw says GOOD LUCK.
@@ -24,8 +25,9 @@ PLAIN (no switch in its address) unless it is testing the off switch. On the rig
      the show on "started"; their sales-page demos (and the bingo TV's) let it play in full, then the first
      question, song or ball comes in. The raffle and members draw
      screens play "IT'S RAFFLE TIME" / "MEMBERS DRAW TIME" once, before the first draw, and give way to it.
-     A trivia screen and a trivia phone with ?sting=0 never play it.
-  7. The phone show ends in the page's own header logo (bingo, trivia, musical bingo; 320, 375, 390, 430
+     A plain trivia screen and a plain trivia phone never play it, and their demos ask the first
+     question at 0.9 s, as they did before the show.
+  7. The phone show (?sting=1) ends in the page's own header logo (bingo, trivia, musical bingo; 320, 375, 390, 430
      wide and sideways): the wordmark lands on it within 2px, then hands over to it; cut short, the
      header logo is given back; under prefers-reduced-motion it is the simple fade.
 
@@ -50,7 +52,7 @@ def click(r, sid, i): r.ask(sid, 'setTimeout(function(){ document.getElementById
 STATS = '(window.VPSting ? VPSting.stats() : null)'
 
 def console(r, sting=True):
-    tid, host = r.open('/app/' + ('' if sting else '?sting=0'), width=1024, height=1100)
+    tid, host = r.open('/app/' + ('?sting=1' if sting else ''), width=1024, height=1100)
     ok('the console loads, signed in, on the games menu', r.until(host, '!!document.querySelector(\'[data-game="bingo"]\') && document.querySelector(\'[data-game="bingo"]\').offsetParent!==null', 25) is True)
     r.ask(host, 'document.querySelector(\'[data-game="bingo"]\').click(); true')
     r.until(host, '!document.getElementById("setupBlock").classList.contains("hidden")')
@@ -69,16 +71,16 @@ def open_lobby(r, host):
     return False
 
 def tv(r, sting=True):
-    tid, sid = r.open('/tv?venue=' + r.W.info['slug'] + ('' if sting else '&sting=0'), width=1280, height=720)
+    tid, sid = r.open('/tv?venue=' + r.W.info['slug'] + ('&sting=1' if sting else ''), width=1280, height=720)
     r.until(sid, '!!document.getElementById("adsRoot")', 15); time.sleep(1.5)
     return tid, sid
 
 def balls_on_tv(r, sid): return text(r, sid, 'tvBallCount')
 
 def phone(r, name):
-    _, ph = r.open('/play?room=' + r.W.info['code'], width=390, height=844)   # plain: no switch in the address
+    _, ph = r.open('/play?room=' + r.W.info['code'] + '&sting=1', width=390, height=844)   # the switch in the address
     r.phone_ready(ph)
-    ok('a plain phone (/play, no switch in its address) has the show on by default', r.ask(ph, '!!(window.VPSting && VPSting.on)') is True)
+    ok('a phone with ?sting=1 (/play) has the show on', r.ask(ph, '!!(window.VPSting && VPSting.on)') is True)
     r.ask(ph, 'document.getElementById("nameIn").value=%s; document.getElementById("joinBtn").click(); true' % json.dumps(name))
     ok('the phone joins as ' + name, r.until(ph, '!document.getElementById("vWait").classList.contains("hidden")', 25) is True,
        r.ask(ph, 'document.body.innerText.replace(/\\s+/g," ").slice(0,160)'))
@@ -90,7 +92,7 @@ def full_show():
     r = RIG.Rig()
     try:
         _, t1 = tv(r)
-        ok('a plain /tv (no switch in its address) has the show on by default', r.ask(t1, '!!(window.VPSting && VPSting.on) && !/sting/.test(location.search)') is True,
+        ok('a /tv with ?sting=1 has the show on', r.ask(t1, '!!(window.VPSting && VPSting.on) && /sting=1/.test(location.search)') is True,
            r.ask(t1, 'location.search'))
         _, host = console(r)
         ok('the console opens the lobby', open_lobby(r, host) is True, text(r, host, 'startBtn'))
@@ -137,7 +139,7 @@ def full_show():
         time.sleep(2)
         ok('it shows the running game, and never plays the show', (r.ask(t2, STATS) or {}).get('plays') == 0 and r.ask(t2, '!document.getElementById("vpSting")') is True,
            [balls_on_tv(r, t2), r.ask(t2, STATS)])
-        print('\n4. A TV with ?sting=0')
+        print('\n4. A plain TV (the default since the 2 Nov hotfix)')
         _, t3 = tv(r, sting=False)
         time.sleep(2)
         ok('no show, and the corner still has the old mark', r.ask(t3, 'window.VPSting && VPSting.on') is False and
@@ -145,13 +147,13 @@ def full_show():
         # the hop the TV makes when a host puts another game on air (tv.html enterEmbed), asked for the way
         # an embedded screen asks for it; then the game screen's own VPSting is read from inside the frame
         FRAME = '(function(f){var w=f&&f.contentWindow;return {src:f&&f.getAttribute("src"),on:!!(w&&w.VPSting)?w.VPSting.on:null};})(document.getElementById("gameFrame"))'
-        for sid, label, want_on in ((t3, 'a TV with ?sting=0', False), (t2, 'a plain TV', True)):
+        for sid, label, want_on in ((t3, 'a plain TV', False), (t2, 'a TV with ?sting=1', True)):
             r.ask(sid, 'window.postMessage({vp:"show-game", game:"trivia"}, location.origin); true')
             r.until(sid, '(function(f){var w=f&&f.contentWindow;return !!(w&&w.VPSting);})(document.getElementById("gameFrame"))', 15)
             v = r.ask(sid, FRAME) or {}
             src = v.get('src') or ''
-            ok(label + ': its trivia game screen ' + ('has the show on, and no switch is handed on' if want_on else 'is handed &sting=0 and has the show off'),
-               '/app/trivia/screen' in src and v.get('on') is want_on and (('sting' not in src) if want_on else ('&sting=0' in src)), v)
+            ok(label + ': its trivia game screen ' + ('is handed &sting=1 and has the show on' if want_on else 'has the show off, and no switch is handed on'),
+               '/app/trivia/screen' in src and v.get('on') is want_on and (('&sting=1' in src) if want_on else ('sting' not in src)), v)
         print('\n5. Names on the real phone page')
         def say(words_js):
             r.ask(ph, 'VPSting.start({layout:"phone", words:%s}); true' % words_js)
@@ -177,7 +179,7 @@ def full_show():
 
 
 def ball_mid_show():
-    print('\n3. A console with ?sting=0: a ball arrives mid-show on a plain TV and the show stops for it')
+    print('\n3. A plain console: a ball arrives mid-show on a ?sting=1 TV and the show stops for it')
     r = RIG.Rig()
     try:
         _, t1 = tv(r)
@@ -186,7 +188,7 @@ def ball_mid_show():
         time.sleep(1.5)
         click(r, host, 'startBtn')
         ok('the TV starts the show', r.until(t1, 'window.VPSting && VPSting.playing()', 6) is True, r.ask(t1, STATS))
-        ok('this console does not hold Next (?sting=0)', not r.ask(host, '/Starting the show/.test(document.getElementById("nextBtn").textContent)'), text(r, host, 'nextBtn'))
+        ok('a plain console does not hold Next (the show is off by default)', not r.ask(host, '/Starting the show/.test(document.getElementById("nextBtn").textContent)'), text(r, host, 'nextBtn'))
         click(r, host, 'nextBtn')
         ok('the ball stops the show at once', r.until(t1, 'VPSting.stats().last==="ball"', 6) is True and r.ask(t1, '!document.getElementById("vpSting")') is True, r.ask(t1, STATS))
         ok('and the number is on the TV', r.until(t1, '/1 of 90/.test((document.getElementById("tvBallCount")||{}).textContent||"")', 8) is True, balls_on_tv(r, t1))
@@ -198,8 +200,16 @@ def other_games():
     print('\n6. The other games: their real screens and phones, in their own demo scripts')
     r = RIG.Rig()
     try:
-        # the bingo TV's own sales-page demo (/tv?demo=1): its first ball waits for the show (2 Nov 2026)
-        _, b1 = r.open('/tv?demo=1', width=1280, height=720)
+        # the plain bingo demo TV (/tv?demo=1, the sales page's own): no show, and its first ball at 2.6 s as before the show
+        _, b0 = r.open('/tv?demo=1', width=1280, height=720)
+        r.until(b0, 'document.readyState==="complete" && !!window.VPSting', 15)
+        t_b = time.time()
+        got = r.until(b0, '/1 of 90/.test((document.getElementById("tvBallCount")||{}).textContent||"")', 10)
+        ok('plain bingo demo TV: the first ball lands without waiting for a show (2.6 s, as before it)', got is True and time.time() - t_b < 4.5, [got, round(time.time() - t_b, 2)])
+        ok('plain bingo demo TV: the show never plays, and the corner keeps the old mark',
+           r.ask(b0, 'VPSting.on===false && VPSting.stats().plays===0 && !document.getElementById("vpSting") && !document.querySelector(".vp-sting-mark") && !!document.querySelector("#tvCorner .vn")') is True, r.ask(b0, STATS))
+        # the bingo TV's own sales-page demo with ?sting=1: its first ball waits for the show (2 Nov 2026)
+        _, b1 = r.open('/tv?demo=1&sting=1', width=1280, height=720)
         ok('bingo demo TV: "started" plays the show', r.until(b1, 'window.VPSting && VPSting.stats().plays===1', 15) is True, r.ask(b1, STATS))
         ok('bingo demo TV: the show plays in full, never cut short by the first ball',
            r.until(b1, 'VPSting.stats().last==="done"', 8) is True and r.ask(b1, 'VPSting.stats().cutShort===0') is True, r.ask(b1, STATS))
@@ -208,7 +218,7 @@ def other_games():
            [balls_on_tv(r, b1), r.ask(b1, STATS)])
         ARRIVED = {'question': '/Olympics/.test((document.getElementById("tvQText")||{}).textContent||"")',
                    'song': '((document.getElementById("tvBoard")||{}).children||[]).length>0'}
-        for path, words, first in (('/app/trivia/screen?demo=1', 'TRIVIA', 'question'), ('/app/musical/screen?demo=1', 'MUSICAL BINGO', 'song')):
+        for path, words, first in (('/app/trivia/screen?demo=1&sting=1', 'TRIVIA', 'question'), ('/app/musical/screen?demo=1&sting=1', 'MUSICAL BINGO', 'song')):
             _, s1 = r.open(path, width=1280, height=720)
             ok(words + ' TV: "started" plays the show', r.until(s1, 'window.VPSting && VPSting.stats().plays===1', 15) is True, r.ask(s1, STATS))
             # the sales-page demo waits for the show (2 Nov 2026): it plays to the end, then the first content comes
@@ -224,17 +234,26 @@ def other_games():
             r.ask(s1, 'VPSting.forGame({t:%s}, {}, %s); true' % (json.dumps('question' if first == 'question' else 'played'), FIRSTS[first]))
             ok(words + ' TV: the first ' + first + ' arriving mid-show makes it give way at once',
                r.ask(s1, '!VPSting.playing() && VPSting.stats().last==="content" && !document.getElementById("vpSting")') is True, r.ask(s1, STATS))
-        for path, words in (('/app/trivia/play?demo=1', ['LET\u2019S PLAY, DRE!', 'TRIVIA']), ('/app/musical/play?demo=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
+        for path, words in (('/app/trivia/play?demo=1&sting=1', ['LET\u2019S PLAY, DRE!', 'TRIVIA']), ('/app/musical/play?demo=1&sting=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
             _, p1 = r.open(path, width=390, height=844)
             ok(words[1] + ' phone: the show with the player\'s name', r.until(p1, 'window.VPSting && VPSting.playing()', 15) is True and r.ask(p1, 'VPSting.shown()') == words, r.ask(p1, 'VPSting.shown()'))
             ok(words[1] + ' phone: done before the first question or song', r.until(p1, '!VPSting.playing() && VPSting.stats().plays===1', 8) is True, r.ask(p1, STATS))
-        # the off switch on a game screen and a phone: the same demo scripts, which do send "started"
-        for path, what in (('/app/trivia/screen?demo=1&sting=0', 'trivia TV'), ('/app/trivia/play?demo=1&sting=0', 'trivia phone')):
+        # plain (the default since the 2 Nov hotfix) on a game screen and a phone: the same demo scripts, which do send "started"
+        for path, what in (('/app/trivia/screen?demo=1', 'plain trivia TV'), ('/app/trivia/play?demo=1', 'plain trivia phone'), ('/play?demo=1', 'plain bingo phone')):
             _, o1 = r.open(path, width=1280 if 'screen' in path else 390, height=720 if 'screen' in path else 844)
-            r.until(o1, 'document.readyState==="complete" && !!window.VPSting', 15); time.sleep(6)
-            ok(what + ' with ?sting=0: the demo starts its game and the show never plays',
+            r.until(o1, 'document.readyState==="complete" && !!window.VPSting', 15)
+            if 'screen' in path:
+                # as before the show: the demo's first question is on the wall at 0.9 s, not held for a show
+                t_q = time.time()
+                got = r.until(o1, '/Olympics/.test((document.getElementById("tvQText")||{}).textContent||"")', 8)
+                ok(what + ': the first question is on the wall straight away (0.9 s, not held for the show)', got is True and time.time() - t_q < 3.0,
+                   [got, round(time.time() - t_q, 2)])
+            time.sleep(6)
+            ok(what + ': the demo starts its game and the show never plays',
                r.ask(o1, 'VPSting.on===false && VPSting.stats().plays===0 && !document.getElementById("vpSting")') is True, r.ask(o1, STATS))
-        for path, line in (('/app/raffle/screen?venue=' + r.W.info['slug'], 'IT\u2019S RAFFLE TIME'), ('/app/members/screen?venue=' + r.W.info['slug'], 'MEMBERS DRAW TIME')):
+            ok(what + ': nothing is hidden for the show (no .vp-sting-mark, no new mark in the corner)',
+               r.ask(o1, '!document.querySelector(".vp-sting-mark") && !document.querySelector(".vp-newmark") && !document.getElementById("vpStingCss")') is True)
+        for path, line in (('/app/raffle/screen?venue=' + r.W.info['slug'] + '&sting=1', 'IT\u2019S RAFFLE TIME'), ('/app/members/screen?venue=' + r.W.info['slug'] + '&sting=1', 'MEMBERS DRAW TIME')):
             # a game screen opened on its own bounces to /tv; /tv leaves this marker when it hops a TV into the game
             _, d1 = r.open(path, before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){}' % json.dumps(r.W.info['slug']), width=1280, height=720)
             r.until(d1, 'document.readyState==="complete" && !!window.VPSting', 15); time.sleep(1)
@@ -250,7 +269,7 @@ def other_games():
 
 
 LAND_SIZES = ((320, 568), (375, 667), (390, 844), (430, 932), (844, 390))
-LAND_PAGES = (('/play?demo=1', 'bingo'), ('/app/trivia/play?demo=1', 'trivia'), ('/app/musical/play?demo=1', 'musical bingo'))
+LAND_PAGES = (('/play?demo=1&sting=1', 'bingo'), ('/app/trivia/play?demo=1&sting=1', 'trivia'), ('/app/musical/play?demo=1&sting=1', 'musical bingo'))
 # ours: the show's wordmark group; theirs: the header's own wordmark path (the white letters, triangle apart)
 LAND = r"""(function(){
   var g=document.getElementById("vppWg"), h=document.querySelector('.brand svg[data-vp-mark="wordmark"]');
@@ -302,7 +321,7 @@ def phone_landing():
                 finally:
                     r.close_tab(tid)
         # prefers-reduced-motion: the simple fade, no flight, and the header logo is never hidden
-        tid, sid = r.open('/app/trivia/play?demo=1', before='window.__vpStingManual=true;', width=390, height=844)
+        tid, sid = r.open('/app/trivia/play?demo=1&sting=1', before='window.__vpStingManual=true;', width=390, height=844)
         r.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]}, session=sid)
         r.B.call('Page.reload', {}, session=sid)
         time.sleep(1)
