@@ -15,7 +15,10 @@ in jsc, supabase-js stood in) at 1920 x 1080 and looks at what is painted:
   1. SETTING UP   an address nobody has confirmed: the logo, "Setting up this screen", the breath
   2. STILL        the same with prefers-reduced-motion: no animation, the kit's own glow
   3. HANDOVER     a real venue's first load: "Setting up this screen" cross-fades to the venue's name
-                  while the logo stays put, to the pixel; the floor under the slides is the same logo
+                  while the logo stays put, to the pixel; the floor under the slides is the same logo.
+                  The venue's OWN logo is top left (Dean, 3 Nov 2026): it fades in, keeps exactly the box
+                  the trivia and musical bingo screens draw theirs in, into a game and back, fades out for a
+                  show and back, and fades off when the TV loses the venue
   4. STORES       bare /tv as a Samsung, an LG, a Google TV and a TV it cannot tell
   5. GAMES        the live game corner is still the plain venueplay wordmark
 
@@ -146,10 +149,10 @@ new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.add
 def handover(r, pending_pos):
     print('\n3. HANDOVER: a real venue\'s first load, "Setting up this screen" to the venue\'s name')
     slug = r.W.info['slug']
-    # The venue has a logo of its own, so the card can be seen NOT to carry it (Dean's open question, default off).
+    # The venue has a logo of its own: it goes TOP LEFT on the between-games card, as on every game screen (Dean, 3 Nov 2026).
     r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': slug, 'slides': [], 'raffle': None,
                                   'logo_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg'}], replace=True)
-    tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=W, height=H)
+    tid, t = r.open('/tv?venue=' + slug, before=WATCH + LOGO_WATCH, width=W, height=H)
     ok('CONTROL: the wall comes up on the holding card', r.until(t, '!!document.querySelector("#tvAds .ad.show .tvhold")', 25) is True)
     got = r.until(t, '(function(){var s=document.querySelector("#tvAds .ad.show .tvline:not(.out)");return s&&s.textContent==="Test Alpha"&&!document.querySelector(".tvline.out")?s.textContent:"";})()', 30)
     ok('the line ends on the venue\'s own name, "Test Alpha"', got == 'Test Alpha', r.ask(t, 'document.getElementById("tvAds").innerText'))
@@ -171,10 +174,66 @@ def handover(r, pending_pos):
     f = look(r, t, '#tvFloor')
     ok('the floor under the slides is the same logo in the same place, still, with the venue\'s name under it',
        f.get('logo') and v.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(f['logo'], v['logo'])) and f.get('anim') == 'none' and f.get('line') == 'Test Alpha' and f.get('bgc') == 'rgb(10, 10, 11)', f)
-    ok('the venue\'s own logo is not on the card or the floor (HOLD_VENUE_LOGO, off until Dean says)', r.ask(t, '!document.querySelector(".tvh-vlogo")') is True)
+    ok('the venue\'s own logo is never in the centre of the card: the centre is only the venueplay tv logo and its line',
+       r.ask(t, '!document.querySelector("#tvAds .tvhold img,#tvFloor .tvhold img")') is True)
     shot(r, t, 'tv-logo-3-venue-name')
+    corner(r, t)
     ok('no script errors on the TV', r.ask(t, 'window.__errs.length') == 0, r.ask(t, 'JSON.stringify(window.__errs)'))
     r.close_tab(tid)
+
+# Every change to the top-left logo's display and opacity, with the time, from before the page's own script.
+LOGO_WATCH = r'''window.__vpLogo=[];
+new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes||[],function(n){
+  if(n.id!=="venueLogo") return;
+  var rec=function(){ window.__vpLogo.push([Math.round(performance.now()), n.style.display, n.style.opacity]); };
+  rec(); new MutationObserver(rec).observe(n,{attributes:true,attributeFilter:["style"]});
+}); }); }).observe(document,{childList:true,subtree:true});'''
+LBOX = r'''(function(d){ var e=d&&d.getElementById("venueLogo"); if(!e) return null; var s=(d.defaultView||window).getComputedStyle(e), b=e.getBoundingClientRect();
+  return {box:[Math.round(b.left*10)/10,Math.round(b.top*10)/10,Math.round(b.width*10)/10,Math.round(b.height*10)/10], op:s.opacity, disp:s.display, tr:s.transitionDuration+" "+s.transitionProperty};})'''
+def lbox(r, sid, frame=False):
+    v = r.ask(sid, LBOX + ('(document.getElementById("gameFrame").contentDocument)' if frame else '(document)'))
+    return v if isinstance(v, dict) else {}
+
+def corner(r, t):
+    print('\n3b. THE VENUE\'S LOGO, TOP LEFT: on the card, into a game and back, the shows, a lost venue')
+    ok('CONTROL: the TV has the venue\'s logo', r.until(t, '!!document.getElementById("venueLogo") && getComputedStyle(document.getElementById("venueLogo")).opacity==="1"', 15) is True, lbox(r, t))
+    time.sleep(0.6)
+    hold = lbox(r, t)
+    ok('it is up on the between-games card, top left (14 to 40 px in), fully shown', hold.get('disp') == 'block' and hold.get('op') == '1' and hold.get('box') and 10 <= hold['box'][0] <= 40 and 10 <= hold['box'][1] <= 40, hold)
+    seen = r.ask(t, 'window.__vpLogo') or []
+    first_on = next((i for i, x in enumerate(seen) if x[1] == 'block'), None)
+    ok('it faded IN: laid out at opacity 0 first, then 1, over 0.3 s (the line\'s cross-fade), never popped on',
+       first_on is not None and seen[first_on][2] == '0' and any(x[2] == '1' for x in seen[first_on:]) and hold.get('tr') == '0.3s opacity', [seen[:6], hold.get('tr')])
+    for game in ('trivia', 'musical'):
+        r.ask(t, 'window.postMessage({vp:"show-game",game:%s}, location.origin); true' % json.dumps(game))
+        up = r.until(t, '(function(){var f=document.getElementById("gameFrame");try{var e=f.contentDocument.getElementById("venueLogo");return f.style.display==="block"&&!!e&&e.complete&&e.naturalWidth>0&&e.getBoundingClientRect().width>0;}catch(x){return false;}})()', 30)
+        ok('%s: the game screen is in the frame with its own corner logo drawn' % game, up is True)
+        time.sleep(1.0)
+        top, inside = lbox(r, t), lbox(r, t, frame=True)
+        ok('%s: the TV\'s top-left logo did not move, resize or blink going into the game (the same box as on the card, still shown)' % game,
+           top.get('box') == hold.get('box') and top.get('op') == '1', [hold.get('box'), top])
+        ok('%s: and it is exactly the box the game screen draws its own logo in' % game,
+           inside.get('box') and top.get('box') and all(abs(a - b) <= 0.5 for a, b in zip(inside['box'], top['box'])), [inside, top])
+        r.ask(t, 'window.postMessage({vp:"show-game",game:"bingo"}, location.origin); true')
+        ok('%s: back between games, the same box, still shown' % game, r.until(t, '(function(){var f=document.getElementById("gameFrame");return f.style.display==="none";})()', 15) is True and lbox(r, t).get('box') == hold.get('box') and lbox(r, t).get('op') == '1', lbox(r, t))
+    r.ask(t, 'window.dispatchEvent(new Event("vp-sting-start")); true'); time.sleep(0.45)
+    mid = lbox(r, t)
+    ok('a start or end-of-game show: it fades out with the rest, keeping its box', mid.get('op') == '0' and mid.get('disp') == 'block' and mid.get('box') == hold.get('box'), mid)
+    r.ask(t, 'window.dispatchEvent(new Event("vp-sting-done")); true'); time.sleep(0.45)
+    ok('and back in when the show is over', lbox(r, t).get('op') == '1', lbox(r, t))
+    r.ask(t, 'window.postMessage({vp:"sting",on:true}, location.origin); true'); time.sleep(0.45)
+    ok('the game in the frame playing its show says so, and it fades out for that too', lbox(r, t).get('op') == '0', lbox(r, t))
+    r.ask(t, 'window.postMessage({vp:"sting",on:false}, location.origin); true'); time.sleep(0.45)
+    ok('and back in after it', lbox(r, t).get('op') == '1', lbox(r, t))
+    shot(r, t, 'tv-logo-3b-corner-logo')
+    print('  the venue is taken off the books: the TV loses it (two "no such venue" answers, 30 s apart)')
+    r.W.seed('vp_venues', [], replace=True)
+    gone = r.until(t, '!document.getElementById("badVenue").classList.contains("hidden") || !document.getElementById("venuePick").classList.contains("hidden")', 90)
+    ok('CONTROL: the TV says it is not linked (or asks which venue)', gone is True)
+    time.sleep(0.6)
+    lost = lbox(r, t)
+    ok('the venue\'s logo has faded out and is off the wall', lost.get('op') == '0' and lost.get('disp') == 'none', lost)
+    shot(r, t, 'tv-logo-3c-not-linked')
 
 UA = {
     'samsung': 'Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) 76.0.3809.146/6.0 TV Safari/537.36',
@@ -238,9 +297,9 @@ def main():
     try:
         pos = setting_up(r)
         still(r)
-        handover(r, pos)
-        stores(r)
         games(r)
+        stores(r)
+        handover(r, pos)   # last: it ends by taking the venue off the books
     except Exception:
         import traceback; traceback.print_exc()
         global bad; bad += 1

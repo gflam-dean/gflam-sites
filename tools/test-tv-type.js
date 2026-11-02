@@ -183,6 +183,8 @@ C = card(); tvSetupFits('samsung');
 check('a Samsung: the app half says coming soon, not Google Play; the Internet app named, the screen code steps', C.suApp.style.display !== 'none' && /Samsung TVs is <b>coming soon/.test(C.suApp.kids['.su-head'].innerHTML) && /Samsung Apps/.test(C.suApp.kids['.su-text'].innerHTML) && /Samsung TV, use its Internet app/.test(C.suCode.kids['.su-head'].innerHTML) && /screen code/.test(C.suCode.kids['.su-text'].innerHTML) && C.pairPanel.attrs['data-tv-kind'] === 'samsung');
 C = card(); tvSetupFits('lg');
 check('an LG: the same, with the LG Content Store and its Web Browser', C.suApp.style.display !== 'none' && /LG TVs is <b>coming soon/.test(C.suApp.kids['.su-head'].innerHTML) && /LG TV, use its Web Browser/.test(C.suCode.kids['.su-head'].innerHTML));
+C = card(); tvSetupFits('firetv');
+check('a Fire TV: no Google Play and no venueplay app, so the app half comes off and only the browser steps stay', C.suApp.style.display === 'none' && /Fire TV, use its web browser/.test(C.suCode.kids['.su-head'].innerHTML));
 C = card(); tvSetupFits('googletv');
 check('a Google TV: the Google Play line stays and says this TV has it', C.suApp.style.display !== 'none' && /This TV has Google Play/.test(C.suApp.kids['.su-head'].innerHTML));
 C = card(); tvSetupFits('unknown');

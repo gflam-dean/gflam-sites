@@ -288,6 +288,7 @@
     /* "the show is over" for anything that measures the corner (VPVenueLogo.alignMark: the mark it hid is
        back, as the new mark, so the two logos are lined up again now, not never). */
     try{ var ev=document.createEvent("Event"); ev.initEvent("vp-sting-done", false, false); window.dispatchEvent(ev); }catch(e){}
+    if(LAYOUT==="tv") said(false);
   }
   var LAYOUT="tv";
   function dur(){ return LAYOUT==="phone" ? (PH && PH.land ? PLAND : PDUR) : DUR; }
@@ -309,8 +310,16 @@
     try{ var sp=WORDS.line?el.vpsL3s:el.vpsL2s; L2S=Math.min(1,(WORDS.line?1700:1640)/Math.max(1,sp.offsetWidth)); }catch(e){}
     window.addEventListener("resize",fit);
     playing=true; stats.plays++; stats.last="playing";
+    said(true);
     render(0);
     if(!window.__vpStingManual){ t0=performance.now(); raf=requestAnimationFrame(loop); }
+  }
+  /* "a show is on the wall" / "it is over", for anything that should step aside for it (tv.html fades the
+     venue's top-left logo, 3 Nov 2026). Said on this window, and to the TV page when this is the game in its
+     frame. An end-of-game show says the same two things. */
+  function said(on){
+    if(on){ try{ var ev=document.createEvent("Event"); ev.initEvent("vp-sting-start", false, false); window.dispatchEvent(ev); }catch(e){} }   // "done" is vp-sting-done, in finish()
+    try{ if(window.parent && window.parent!==window) window.parent.postMessage({ vp:"sting", on:!!on }, window.location.origin); }catch(e){}
   }
   /* Called by tv.html with every message, before the TV acts on it. info: the TV's own view. */
   function onMsg(m, info){

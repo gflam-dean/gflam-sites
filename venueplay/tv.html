@@ -247,14 +247,14 @@
     font-family:'Hanken Grotesk',sans-serif;font-weight:500;font-size:clamp(16px,2.1cqw,44px);line-height:1.3;color:#8A8A95;
     text-wrap:balance;word-break:normal;overflow-wrap:normal;hyphens:none}
   .tvline.scan{color:#fff;font-weight:700}   /* "Scan to play" while a join code is on the wall: the one line meant to be acted on */
-  /* THE VENUE'S OWN LOGO ON THIS CARD, if Dean wants it (HOLD_VENUE_LOGO in the script, OFF): small, under
-     the line, so it can never move the venueplay tv logo. */
-  .tvhold .tvh-vlogo{position:absolute;left:50%;top:calc(49.8% + 20.4cqw);transform:translateX(-50%);max-width:22cqw;max-height:6cqw;width:auto;height:auto;object-fit:contain}
   @keyframes vpLineIn{from{opacity:0}to{opacity:1}}
   @keyframes vpLineOut{from{opacity:1}to{opacity:0}}
   .tvline.in{animation:vpLineIn .3s ease forwards}
   .tvline.out{animation:vpLineOut .3s ease forwards}
   .ad.snap{transition:none}
+  /* The venue's own logo, top left, fades in and out with the line (applyVenueLogo). A rule here, not in its
+     inline style, so its box stays character for character the one every game screen paints. */
+  #venueLogo{transition:opacity .3s ease}
   .ad .tvhold ~ .adhelp,.ad .tvhold .adhelp{left:0;right:0;text-align:center}
   /* "Setting up this screen" handing over to a set-up card ("Not linked to an account", "Which one is this?"): the card fades in over 0.3 s, it does not snap on. */
   .badvenue:not(.hidden){animation:vpLineIn .3s ease}
@@ -1406,17 +1406,14 @@
   var VP_TV_LOGO = '<svg class="tvl-tri" viewBox="-102 -2148.2 6098 2456.2" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg>'+
                    '<svg class="tvl-word" viewBox="-102 -2148.2 6098 2456.2" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg>';
   var TV_SETUP_LINE = "Setting up this screen";
-  /* OPEN QUESTION FOR DEAN (3 Nov 2026): should the venue's own logo also show on the between-games card,
-     small, under its name? This one switch: false = no (the default until he says), true = yes. */
-  var HOLD_VENUE_LOGO = false;
-  function okLogoUrl(lg){ lg=String(lg||""); return /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1; }
-  /* line: the words under the logo (escaped by the caller). o.scan: they are "Scan to play". o.logo: the
-     venue's logo, shown only when HOLD_VENUE_LOGO is on. o.kind: data-vpb, what this card is. */
+  /* THE VENUE'S OWN LOGO IS NEVER ON THIS CARD (Dean, 3 Nov 2026): it is top left, #venueLogo, the same box
+     as on every game screen (applyVenueLogo). The centre is always the venueplay tv logo and its one line.
+     line: the words under the logo (escaped by the caller). o.scan: they are "Scan to play". o.kind:
+     data-vpb, what this card is. */
   function tvHoldHtml(line, breathe, o){
     o=o||{};
-    var vl=(HOLD_VENUE_LOGO && okLogoUrl(o.logo)) ? '<img class="tvh-vlogo" alt="" src="'+esc(String(o.logo))+'">' : '';
     return '<div class="tvhold"'+(o.kind?' data-vpb="'+o.kind+'"':'')+'><div class="tvlogo'+(breathe?' breathe':'')+'" data-vp-tvlogo="stacked">'+VP_TV_LOGO+'</div>'+
-           '<div class="tvline'+(o.scan?' scan':'')+'">'+line+'</div>'+vl+'</div>';
+           '<div class="tvline'+(o.scan?' scan':'')+'">'+line+'</div></div>';
   }
   /* The floor follows what the TV knows: the venue's name once /screen has said, and "Scan to play" while a
      join code is on the wall. Only its words change: the logo on it never moves or redraws. */
@@ -1426,12 +1423,9 @@
       var fl=document.getElementById("tvFloor"); if(!fl) return;
       var done=fl.querySelector(".fl-done"); if(!done) return;
       var j=document.getElementById("tvJoinCorner"), scan=!!(j && !j.classList.contains("hidden"));
-      var words = scan ? "Scan to play" : String(holdVenueName||"").trim(), sig=(scan?"1":"0")+words+"|"+(HOLD_VENUE_LOGO?venueLogoUrl:"");
+      var words = scan ? "Scan to play" : String(holdVenueName||"").trim(), sig=(scan?"1":"0")+words;
       if(sig===floorSig) return; floorSig=sig;
       done.textContent=words; done.className="tvline fl-done"+(scan?" scan":"");
-      var hold=fl.querySelector(".tvhold"), old=hold&&hold.querySelector(".tvh-vlogo");
-      if(old) old.parentNode.removeChild(old);
-      if(hold && HOLD_VENUE_LOGO && okLogoUrl(venueLogoUrl)){ var im=document.createElement("img"); im.className="tvh-vlogo"; im.alt=""; im.src=String(venueLogoUrl); hold.appendChild(im); }
     }catch(e){}
   }
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
@@ -1525,7 +1519,7 @@
       // their promos/game did not load, so point them to support rather than only cheering. It is
       // only shown to whoever is setting the screen up (.sup, see syncSupport), never to the room.
       var help='<div class="adhelp sup">Screen not showing your promos or game? Email support@venueplay.com.au</div>';
-      if(e.v && holdVenueName) return tvHoldHtml(esc(holdVenueName), true, { kind:"venue", logo:venueLogoUrl })+help;
+      if(e.v && holdVenueName) return tvHoldHtml(esc(holdVenueName), true, { kind:"venue" })+help;
       /* No name yet: "Setting up this screen" until the venue's screen answers (screenLoading, time boxed),
          then nothing under the logo rather than a claim that a game is on. */
       if(screenLoading()) return tvHoldHtml(TV_SETUP_LINE, true, { kind:"loading" })+help;
@@ -1754,6 +1748,7 @@
         under.forEach(function(s){ if(s.style.zIndex!=="2") s.classList.remove("show"); });   // never one that has since come on top
       }, 860);
     }
+    try{ applyVenueLogo(); }catch(e){}   // a holding card or the venue's own slides: the top-left logo follows
     if(slides.length<2) return;
     /* CROSS-FADE, not fade-out-then-in.
        Both slides used to transition at the same moment: the outgoing fell from
@@ -2064,9 +2059,20 @@
 
   /* The embedded game screen has seen another game go on air. It cannot act on
      that itself without putting a television inside this one, so it asks us. */
+  /* THE SHOWS AND THE LOST-VENUE CARDS MOVE THE VENUE'S LOGO (3 Nov 2026): see applyVenueLogo. */
+  function showState(on){ showPlaying=!!on; try{ applyVenueLogo(); }catch(e){} }
+  try{
+    window.addEventListener("vp-sting-start", function(){ showState(true); });
+    window.addEventListener("vp-sting-done", function(){ showState(false); });
+    if(window.MutationObserver) ["badVenue","venuePick"].forEach(function(id){
+      var n=document.getElementById(id);
+      if(n) new MutationObserver(function(){ try{ applyVenueLogo(); }catch(e){} }).observe(n, { attributes:true, attributeFilter:["class"] });
+    });
+  }catch(e){}
   window.addEventListener("message", function(e){
     if(e.origin !== window.location.origin) return;
     var d = e.data;
+    if(d && d.vp === "sting"){ showState(!!d.on); return; }   // the game in the frame is playing its show
     if(!d || d.vp !== "show-game" || !d.game) return;
     if(d.game === "bingo"){ enterAds(); return; }   // bingo is drawn by this page, not in the frame
     enterEmbed(d.game);
@@ -2112,10 +2118,41 @@
      and the logo does not. Wrapped, because this is called from the mode switches and NOTHING
      is allowed to stop enterAds() reaching startAds(): that is how the wall goes black. */
   var venueLogoUrl="";
+  /* THE VENUE'S LOGO, TOP LEFT, ON EVERY TV SCREEN BUT ITS OWN ADVERTISING (Dean, 7 Aug 2026; and 3 Nov 2026:
+     setting up and between games too). ONE element, #venueLogo, in the one box every game screen draws its own
+     in (position:fixed 14px/14px, VPVenueLogo.fit "tv"), so going from the between-games card into a game and
+     back it never moves, resizes or flickers: the game in the frame paints its own logo in exactly that box,
+     under this one. It FADES (0.3 s, the line's cross-fade) and never pops:
+       in   once the TV knows the venue and the venueplay tv card (or a game) is up;
+       out  over the venue's own advertising (its slides are its own), while a start or end-of-game show plays
+            (vp-sting-start / vp-sting-done, from this page or the game in the frame), and the moment the TV
+            loses the venue ("Not linked to an account", "Which one is this?").
+     A show only takes it to transparent, never off the layout, so the corner's centring (alignMark) still
+     measures it while the show runs and the two logos are lined up the moment it ends. */
+  var LOGO_FADE_MS=300, logoOffT=null, showPlaying=false;
+  function venueLost(){
+    var b=document.getElementById("badVenue"), p=document.getElementById("venuePick");
+    return !!((b && !b.classList.contains("hidden")) || (p && !p.classList.contains("hidden")));
+  }
+  function holdingUp(){
+    var lit=document.querySelector("#tvAds .ad.show");
+    return !lit || !!lit.querySelector(".tvhold");   // nothing lit: the floor, which is the same card
+  }
+  function logoWanted(){ return !!venueLogoUrl && !venueLost() && (tvMode!=="ads" || holdingUp()); }
+  function fadeLogo(el, on, keepBox){
+    if(logoOffT){ clearTimeout(logoOffT); logoOffT=null; }
+    if(on){
+      if(el.style.display==="none" || !el.style.display){ el.style.opacity="0"; el.style.display="block"; void el.offsetWidth; }
+      el.style.opacity="1";
+    } else {
+      el.style.opacity="0";
+      if(!keepBox && el.style.display!=="none") logoOffT=setTimeout(function(){ logoOffT=null; if(el.style.opacity==="0") el.style.display="none"; }, LOGO_FADE_MS+40);
+    }
+  }
   function applyVenueLogo(){
     try{
       var el=document.getElementById("venueLogo");
-      if(el) el.style.display=(venueLogoUrl && tvMode!=="ads") ? "block" : "none";
+      if(el){ var want=logoWanted(); fadeLogo(el, want && !showPlaying, want && showPlaying); }
       /* The small venue-name caption does NOT come back when the logo goes. A venue that
          uploaded a logo has already chosen how it is named on the wall, and a caption that
          appears only on the ad slides is worse than none. It lives inside #tvCorner, which
@@ -3144,7 +3181,7 @@
       var el=document.getElementById("venueLogo");
       if(venueLogoUrl){
         if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
-          el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+          el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";   /* the same box as every game screen's, to the character */
           document.body.appendChild(el); }
         el.src=venueLogoUrl;
         if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
