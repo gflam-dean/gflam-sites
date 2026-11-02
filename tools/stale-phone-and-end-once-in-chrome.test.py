@@ -86,7 +86,7 @@ def stale_phone():
         ctid, con = r.open('/__blank')
         ok('CONTROL: the trivia phone is ready for a team name', r.phone_ready(ph) is True, r.ask(ph, VIEW))
         r.ask(ph, 'document.getElementById("nameIn").value="Quiz Kids"; document.getElementById("joinBtn").click(); true')
-        ok('CONTROL: it joins tonight\'s quiz and waits', r.until(ph, VIEW + '==="vWait"', 20) is True, [r.ask(ph, VIEW), r.ask(ph, '(document.getElementById("joinErr")||{}).textContent')])
+        ok('CONTROL: it joins tonight\'s quiz (waiting, or straight into the question already on the wall)', r.until(ph, '(function(v){return v==="vWait"||v==="vQ";})(' + VIEW + ')', 20) is True, [r.ask(ph, VIEW), r.ask(ph, '(document.getElementById("joinErr")||{}).textContent')])
         first = [p for p in table(r, 'vp_players') if p.get('session_id') == S1]
         ok('CONTROL: one player row in the first night', len(first) == 1, first)
         dev = first[0].get('device_id') if first else None

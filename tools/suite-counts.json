@@ -303,6 +303,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/stale-phone-and-end-once-in-chrome.test.py": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
  "tools/subscribe-in-chrome.test.py": {
   "checks": 74,
   "counted_by": "lines"
