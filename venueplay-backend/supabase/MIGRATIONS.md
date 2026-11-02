@@ -556,3 +556,10 @@ says TV types start when 139 is run. After running, dump RLS-BASELINE.json (one 
 NUMBER: written as 138 on 1 Nov, renumbered 139 when merged into release/mon-2nov (138 is the help-FAQ lowercase
 migration above; 137 stays spent by the end-screen ratings work).
 Branch `feature/tv-type-2nov`. NOT RUN. Rollback: in the file.
+
+`venueplay-144-help-alerts-by-team.sql` (Dean, 2 Nov 2026: "every different email needs its own notifications for different
+teams", then "split notifications by brand too"): widens the check on `vp_help_push_subs.filter` so a device can keep a comma
+list of ticks (`venueplay:sales,partyplay:venue_support,...`) as well as the three named sets `all`, `urgent_sales` and
+`bad_feedback`. No new table, column, policy or grant, so RLS-BASELINE.json does not change. Safe to re-run (drop if exists,
+then add). Run AFTER 137. Any order with the billing Worker: until it is run, a device that picks teams is kept on every
+ticket and HQ says why; the named sets keep working. Branch `feature/help-alerts-by-team-2nov`. NOT RUN. Rollback: in the file.

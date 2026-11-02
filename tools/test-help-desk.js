@@ -135,7 +135,8 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the email is kept in lower case for the reply', t && t.contact_email === 'jo@example.com', t && t.contact_email);
   var alert = sent.filter(function (m) { return /HELP|\[venueplay\]/.test(m.subject); })[0];
   check('staff are emailed, subject starting [venueplay], the kind and the number', alert && /^\[venueplay\] Player support \[#1001\]/.test(alert.subject), alert && alert.subject);
-  check('the alert goes to the staff address, never to the patron', alert && alert.to.join() === 'hello@venueplay.com.au', alert && alert.to);
+  // Changed on purpose (Dean, 2 Nov 2026): each team gets its own alert, so a player-support ticket alerts support@ (was hello@).
+  check('the alert goes to the staff address, never to the patron', alert && alert.to.join() === 'support@venueplay.com.au', alert && alert.to);
   check('the alert carries the header that stops it coming back in as a ticket', alert && alert.headers && alert.headers['X-VP-Help'] === 'alert');
   /* THE ACKNOWLEDGEMENT (Dean, 23 Oct 2026). Until then this check said nothing at all was emailed to
      the address the patron typed; now exactly one thing is, and it carries nothing they wrote. */
@@ -414,7 +415,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the same email delivered twice is one ticket (Message-ID)', (await inbound('support@help.venueplay.com.au', mail({}))).action === 'duplicate' && DB.vp_help_tickets.length === 1);
   check('accounts@ is accounts', (await inbound('accounts@help.venueplay.com.au', mail({ mid: '<m2@x>' }))).action === 'ticket' && DB.vp_help_tickets[1].category === 'accounts');
   check('sales@ is sales and hello@ is general', (await inbound('sales@help.venueplay.com.au', mail({ mid: '<m3@x>' }))) && DB.vp_help_tickets[2].category === 'sales' &&
-        (await inbound('hello@help.venueplay.com.au', mail({ mid: '<m4@x>' }))) && DB.vp_help_tickets[3].category === 'general');
+        (await inbound('hello@help.venueplay.com.au', mail({ mid: '<m4@x>', to: 'hello@venueplay.com.au' }))) && DB.vp_help_tickets[3].category === 'general');   // To: hello@ (2 Nov 2026: the hello@ feed reads the original To)
   await inbound('support@help.partyplay.com.au', mail({ mid: '<m5@x>' }));
   check('a PartyPlay address makes a PartyPlay ticket', DB.vp_help_tickets[4].brand === 'partyplay' && DB.vp_help_tickets[4].source_address === 'support@partyplay.com.au', DB.vp_help_tickets[4]);
   await inbound('support@help.venueplay.com.au', mail({ mid: '<m6@x>', from: 'Sam <Owner@RoyalHotel.com.au>' }));

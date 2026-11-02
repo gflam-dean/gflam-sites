@@ -163,6 +163,10 @@
   "checks": 47,
   "counted_by": "lines"
  },
+ "tools/help-alerts-in-chrome.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/help-desk-pages.test.py": {
   "checks": 230,
   "counted_by": "lines"
@@ -461,6 +465,10 @@
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
   "checks": 72,
+  "counted_by": "lines"
+ },
+ "tools/test-help-alerts.js": {
+  "checks": 90,
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
