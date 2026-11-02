@@ -170,6 +170,7 @@
   .pulse{animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 </style>
+<script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
 <body>
@@ -197,7 +198,7 @@
         <div class="lprize hidden" id="lobbyPrize"><span>Playing for</span><b id="lobbyPrizeVal"></b></div>
       </div>
     </div>
-    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="jsub" id="lobbySub">Waiting for the host</div>
     <div class="hostline">Host, open venueplay.com.au/app/musical/host and enter code <b id="hostLineCode">------</b></div>
   </div>
 
@@ -343,6 +344,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function show(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+    if(which!=="tvLobby"){ try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // the waiting card is the lobby's only
   }
 
   // The QR shows the HOST pairing link until a session opens (so the host can scan to set up
@@ -387,9 +389,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var showPz = pz && pz.toLowerCase()!=="the prize";
     $("lobbyPrize").classList.toggle("hidden", !showPz);
     if(showPz) $("lobbyPrizeVal").textContent=pz;
-    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host";
     else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the game&hellip;";
     else $("lobbySub").innerHTML="Grab your phone and join, the game is about to start&hellip;";
+    /* A SCREEN WITH ITS VENUE IN THE ADDRESS, NO HOST YET (Dean, 3 Nov 2026): the venueplay tv card, "Waiting
+       for the host", the same as tv.html between games (/app/vp-tvhold.js). The lobby comes up under it the
+       moment a host is there. A screen paired by code keeps its lobby: it still has to show the pairing line. */
+    try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), !!VENUE_SLUG && !state.hostSeen && !joinCode && state.phase==="lobby"); }catch(e){}
     drawLobbyQR();
   }
   /* NO PLAYER COUNT ON THE WALL. Locked design call: a slow night should not advertise
@@ -873,7 +879,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
     if(typeof m.game_id==="string" && m.game_id && (m.t==="started" || m.t==="state")) _gameId=m.game_id;

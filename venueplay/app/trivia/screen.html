@@ -209,6 +209,7 @@
     font-weight:800;letter-spacing:.12em;text-transform:uppercase;animation:dblpulse 1.6s ease-in-out infinite}
   @keyframes dblpulse{ 0%,100%{box-shadow:0 0 0 0 rgba(255,194,75,.6)} 50%{box-shadow:0 0 2cqw .4cqw rgba(255,194,75,.35)} }
 </style>
+<script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
 <body>
@@ -231,7 +232,7 @@
         <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
       </div>
     </div>
-    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="jsub" id="lobbySub">Waiting for the host</div>
     <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
   </div>
 
@@ -397,6 +398,7 @@
     if(which!=="tvBoard") stopBoardPaging();
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
+    if(which!=="tvLobby"){ try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // the waiting card is the lobby's only
   }
   function renderPaper(m){
     var title=$("tvPaperTitle"), sub=$("tvPaperSub"), list=$("tvPaperList");
@@ -464,9 +466,13 @@
     if(!setupDone) $("hostLineCode").textContent=CODE;
     $("tvJoinCode").textContent = shownCode();
     paintLobbyName();
-    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host";
     else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the quiz&hellip;";
     else $("lobbySub").innerHTML="Grab your phone and join, the quiz is about to start&hellip;";
+    /* A SCREEN WITH ITS VENUE IN THE ADDRESS, NO HOST YET (Dean, 3 Nov 2026): the venueplay tv card, "Waiting
+       for the host", the same as tv.html between games (/app/vp-tvhold.js). The lobby comes up under it the
+       moment a host is there. A screen paired by code keeps its lobby: it still has to show the pairing line. */
+    try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), !!VENUE_SLUG && !state.hostSeen && !joinCode && state.phase==="lobby"); }catch(e){}
     drawLobbyQR();
   }
 
@@ -841,7 +847,7 @@
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA" }, { question:1, ta_board:1 }); }catch(e){} }
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     /* PUNTERS RECKON rounds. The board is its own layer, painted by the shared pr-board.js; the
        leaderboard after a board is the ordinary "leaderboard" message, handled below as for trivia. */

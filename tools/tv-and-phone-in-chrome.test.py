@@ -424,7 +424,7 @@ def tv_only_its_own_slides():
         # The Mini Bar has a members draw of its own, so its wall rotates ITS draw board (the holding card
         # only fills an otherwise empty loop); The Average Joe has nothing at all, so it gets the card.
         for slug, name, what, own in (('the-mini-bar', 'The Mini Bar', 'an empty slide list (The Mini Bar after the data fix)', 'members draws'),
-                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'The Average Joe')):
+                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Waiting for the host')):
             r.W.calls[:] = []
             tid, tv = r.open('/tv?venue=' + slug, width=1280, height=720)
             ok('%s: the TV loads on the ads' % what, r.until(tv, vis('adsRoot'), 15) is True)

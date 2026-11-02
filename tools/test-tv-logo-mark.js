@@ -202,7 +202,7 @@ print('tv.html');
   var LOGO_FADE_MS = 300, logoOffT = null, showPlaying = false;   // the top-left logo fades (3 Nov 2026)
   if (typeof setTimeout === 'undefined') var setTimeout = function () { return 0; };
   if (typeof clearTimeout === 'undefined') var clearTimeout = function () {};
-  eval(lift(TV, 'venueLost', 'tv.html')); eval(lift(TV, 'holdingUp', 'tv.html')); eval(lift(TV, 'logoWanted', 'tv.html')); eval(lift(TV, 'fadeLogo', 'tv.html'));
+  eval(lift(TV, 'venueLost', 'tv.html')); eval(lift(TV, 'holdingUp', 'tv.html')); eval(lift(TV, 'logoWanted', 'tv.html')); eval(lift(TV, 'fadeLogo', 'tv.html')); eval(lift(TV, 'introLogoOk', 'tv.html'));
   eval(lift(TV, 'applyVenueLogo', 'tv.html')); eval(lift(TV, 'setVenueLogo', 'tv.html'));
   setVenueLogo('');
   check('no logo_url: nothing is created on the wall', !made.venueLogo && D.created() === 0, D.created());

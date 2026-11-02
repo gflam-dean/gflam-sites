@@ -20,7 +20,7 @@ swapped for the rig's stand-in):
   4. THE TV: the floor under the slides is laid out from the first frame (it showed the browser's plain
      16px "Game on here" for 10 to 15 seconds on a slow screen; since 3 Nov 2026 it is the "venueplay tv"
      logo, which must be at its full size, not an unstyled drawing), and a new venue with no slides gets
-     its own card: the venueplay tv logo with the venue's name under it, on near-black (Dean, 3 Nov 2026:
+     its own card: the venueplay tv logo with "Waiting for the host" under it, on near-black (Dean, 3 Nov 2026:
      the old gold idle card "needs to go"), with the support email only for whoever is setting it up.
 
     python3 tools/ux-fixes-in-chrome.test.py            screenshots go to $VP_SHOTS if set
@@ -210,9 +210,9 @@ def tv(r):
     ok('the floor under the slides is the venueplay tv logo at its full size (66.65% of the wall), laid out, never an unstyled drawing',
        fl.get('pos') == 'absolute' and abs(fl.get('w', 0) - 1279.7) <= 2 and fl.get('paths', 0) >= 3 and 'Hanken Grotesk' in (fl.get('ff') or '') and fl.get('bg') == 'none', fl)
     LIT = '(function(){var s=document.querySelector("#tvAds .ad.show .tvline");return s?s.textContent.replace(/\\s+/g," ").trim():"";})()'
-    LINE = 'The Average Joe'
+    LINE = 'Waiting for the host'   # set up, no game on (Dean, 3 Nov 2026: "so the venue knows it's on them")
     lit = r.until(t, '(function(){var t=%s;return t===%s?t:"";})()' % (LIT, json.dumps(LINE)), 30)
-    ok('no slides yet: the wall shows the venueplay tv logo with the venue\'s own name under it, "%s"' % LINE, lit == LINE and r.ask(t, '!!document.querySelector("#tvAds .ad.show .tvlogo svg.tvl-word")') is True, r.ask(t, LIT))
+    ok('no slides yet: the wall shows the venueplay tv logo with "%s" under it' % LINE, lit == LINE and r.ask(t, '!!document.querySelector("#tvAds .ad.show .tvlogo svg.tvl-word")') is True, r.ask(t, LIT))
     n = r.ask(t, 'document.querySelectorAll("#tvAds .ad").length')
     card = J(r.ask(t, '(function(){var a=document.querySelector("#tvAds .ad.show"),c=getComputedStyle(a);return JSON.stringify({bg:c.backgroundImage,bgc:c.backgroundColor,t:a.innerText});})()'))
     ok('one card, on near-black: no gold glow, no "Ask at the bar what\'s on", no "Play on your phone"',

@@ -41,7 +41,7 @@ function grab(name){
   return null;
 }
 var fnApply = grab("applyVenueLogo"), fnSetLogo = grab("setVenueLogo"), fnSetName = grab("setVenueName");
-var fnFade = [grab("venueLost"), grab("holdingUp"), grab("logoWanted"), grab("fadeLogo")];
+var fnFade = [grab("venueLost"), grab("holdingUp"), grab("logoWanted"), grab("fadeLogo"), grab("introLogoOk")];
 ok("the logo's fade helpers are still in tv.html", fnFade.every(function(f){ return !!f; }));
 ok("applyVenueLogo is still in tv.html", !!fnApply);
 ok("setVenueLogo is still in tv.html", !!fnSetLogo);

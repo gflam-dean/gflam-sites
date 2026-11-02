@@ -89,7 +89,8 @@ def setting_up(r):
     tid, t = r.open('/tv?venue=no-such-venue-here', before='try{localStorage.removeItem("vpTvConfirmed")}catch(e){}', width=W, height=H)
     ok('CONTROL: the TV is on its holding card', r.until(t, '!!document.querySelector("#tvAds .ad.show .tvhold")', 25) is True,
        r.ask(t, '(document.getElementById("tvAds")||{}).innerHTML.slice(0,300)'))
-    time.sleep(0.8)
+    r.until(t, 'document.documentElement.getAttribute("data-tvi")==="done"', 8)   # the first-load intro is over
+    time.sleep(0.4)
     v = look(r, t)
     ok('the venueplay tv logo is on it: the big triangle and the wordmark with "tv", drawn from the brand file',
        v.get('triMark') and v.get('tvMark') and v.get('label') == 'venueplay tv', v)
@@ -121,6 +122,86 @@ def setting_up(r):
     pos = v.get('logo')
     r.close_tab(tid)
     return pos
+
+# Every step of the intro, from before the page's own script: [ms, tri, word, line, breath, state].
+INTRO_WATCH = r"""window.__vpIntro=[]; (function(){ var h=document.documentElement;
+  function rec(){ window.__vpIntro.push([Math.round(performance.now()), h.getAttribute("data-tvi-tri")||"", h.getAttribute("data-tvi-word")||"", h.getAttribute("data-tvi-line")||"", h.getAttribute("data-tvi-breath")||"", h.getAttribute("data-tvi")||""]); }
+  new MutationObserver(rec).observe(h,{attributes:true}); })();"""
+LUM = {'0': 0.13, 'a': 0.75, 'b': 1.0, 'c': 0.08, 'd': 0.7, '': 1.0}
+
+def intro(r):
+    print('\n0. THE INTRO: the triangle switches on, "venueplay" and "tv" together, the line, then the venue\'s logo')
+    slug = r.W.info['slug']
+    r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': slug, 'slides': [], 'raffle': None,
+                                  'logo_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg'}], replace=True)
+    tid, t = r.open('/tv?venue=' + slug, before=INTRO_WATCH + LOGO_WATCH, width=W, height=H)
+    ok('CONTROL: the intro ran and finished', r.until(t, 'document.documentElement.getAttribute("data-tvi")==="done"', 10) is True, r.ask(t, 'window.__vpIntro'))
+    ev = r.ask(t, 'window.__vpIntro') or []
+    on = [x for x in ev if x[5] == 'on']
+    start = on[0][0] if on else (ev[0][0] if ev else 0)
+    tri = []
+    for x in ev:
+        if not tri or tri[-1][1] != x[1]: tri.append((x[0] - start, x[1]))
+    states = [v for _, v in tri]
+    ok('the big triangle switches on with two catches: unlit, on, out, on, dim, then lit',
+       states[:7] == ['0', 'a', '0', 'b', 'c', 'd', ''] or states[:6] == ['a', '0', 'b', 'c', 'd', ''], tri)
+    lum = [(ms, LUM.get(v, 1.0)) for ms, v in tri]
+    flashes = []   # the turns in brightness (more than a tenth); two turns are one flash
+    for i in range(1, len(lum) - 1):
+        if (lum[i][1] - lum[i - 1][1]) * (lum[i + 1][1] - lum[i][1]) < 0 and abs(lum[i][1] - lum[i - 1][1]) > 0.1: flashes.append(lum[i][0])
+    worst = max([len([f for f in flashes if a <= f < a + 1000]) / 2.0 for a in flashes] or [0])   # a flash is an up and a down
+    ok('never more than 3 flashes in any second (it is %.1f)' % worst, worst <= 3, flashes)
+    wd = next((x[0] - start for x in ev if x[2] == '' and x[0] > start), None)
+    ln = next((x[0] - start for x in ev if x[3] == '' and x[0] > start), None)
+    br = next((x[0] - start for x in ev if x[4] == '' and x[0] > start), None)
+    dn = next((x[0] - start for x in ev if x[5] == 'done'), None)
+    ok('"venueplay" and "tv" come up at the same moment, one drawing (%s ms)' % wd,
+       wd is not None and 650 <= wd <= 900 and r.ask(t, 'document.querySelector("#tvFloor svg.tvl-word").querySelectorAll("path").length') == 3, wd)
+    ok('then the line ("Setting up this screen") at about 1.3 s (%s ms)' % ln, ln is not None and 1150 <= ln <= 1500 and (wd or 0) < ln, ln)
+    ok('the breath only starts once the tube is lit (%s ms)' % br, br is not None and 900 <= br <= 1200, br)
+    ok('all over inside 4 seconds (%s ms)' % dn, dn is not None and dn <= 4000, dn)
+    lg = r.ask(t, 'window.__vpLogo') or []
+    first = next((x[0] for x in lg if x[1] == 'block'), None)
+    ok('a little after the words, the venue\'s own logo arrives top left (%s ms after the intro began)' % (None if first is None else first - start),
+       first is not None and first - start >= 2200, [start, lg[:4]])
+    ok('the intro is silent: nothing on the page makes a sound', r.ask(t, '!document.querySelector("audio,video")') is True)
+    shot(r, t, 'tv-logo-0-intro-end')
+    r.ask(t, 'setTimeout(function(){location.reload();},0); true'); time.sleep(1.2)
+    r.until(t, 'document.readyState==="complete"', 15)
+    ok('once per tab: a reload (the four-hourly one included) does not play it again',
+       r.ask(t, 'document.documentElement.getAttribute("data-tvi")') in (None, '', 'done') and not r.ask(t, 'document.documentElement.getAttribute("data-tvi-tri")'), r.ask(t, 'window.__vpIntro'))
+    r.close_tab(tid)
+    import time as _t
+    tid, t = r.open('/tv?venue=%s&vpi=%d' % (slug, int(_t.time() * 1000) - 1000), before=INTRO_WATCH, width=W, height=H)
+    r.until(t, 'document.documentElement.getAttribute("data-tvi")==="done"', 10)
+    ev = r.ask(t, 'window.__vpIntro') or []
+    ok('handed over by the TV app 1 s in (&vpi=): it carries on from there, the tube already lit and the words up, never from the start',
+       bool(ev) and not any(x[1] == '0' for x in ev) and not any(x[2] == 'hide' for x in ev[1:]), ev[:4])
+    r.close_tab(tid)
+    tid, t = r.open('/tv?venue=' + slug, before=INTRO_WATCH, width=W, height=H)
+    r.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]}, session=t)
+    r.ask(t, 'sessionStorage.removeItem("vpTvIntro"); setTimeout(function(){location.reload();},0); true'); time.sleep(1.2)
+    r.until(t, 'document.readyState==="complete"', 15)
+    ok('reduced motion: no intro at all, the still logo from the first frame',
+       r.ask(t, 'document.documentElement.getAttribute("data-tvi")') == 'done' and not r.ask(t, 'document.documentElement.getAttribute("data-tvi-word")'), r.ask(t, 'window.__vpIntro'))
+    r.close_tab(tid)
+
+def lobbies(r):
+    print('\n6. THE TRIVIA AND MUSICAL BINGO LOBBIES BEFORE THE HOST: the same card, "Waiting for the host"')
+    slug = r.W.info['slug']
+    tid0, t0 = r.open('/tv?venue=' + slug + '&intro=0', width=W, height=H)
+    r.until(t0, '!!document.querySelector("#tvAds .ad.show .tvhold")', 20); time.sleep(0.5)
+    ref = look(r, t0); r.close_tab(tid0)
+    for g in ('trivia', 'musical'):
+        tid, t = r.open('/app/%s/screen?venue=%s' % (g, slug), width=W, height=H)
+        ok('%s: the waiting card is up' % g, r.until(t, '(function(c){return !!c&&!c.hidden&&c.getBoundingClientRect().height>0;})(document.getElementById("tvHoldCard"))', 20) is True)
+        time.sleep(0.5)
+        v = look(r, t, '#tvHoldCard')
+        ok('%s: it says "Waiting for the host", never "Waiting for the host to connect..."' % g, v.get('line') == 'Waiting for the host' and 'connect' not in r.ask(t, 'document.body.innerText'), v.get('line'))
+        ok('%s: the same venueplay tv logo in the same place as tv.html between games' % g, v.get('logo') and ref.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(v['logo'], ref['logo'])), [v.get('logo'), ref.get('logo')])
+        ok('%s: the venueplay corner mark steps aside while the card is up' % g, r.ask(t, 'getComputedStyle(document.querySelector(".tv-corner")).visibility') == 'hidden')
+        shot(r, t, 'tv-logo-6-%s-waiting' % g)
+        r.close_tab(tid)
 
 def still(r):
     print('\n2. STILL: the same screen with reduced motion asked for')
@@ -154,10 +235,10 @@ def handover(r, pending_pos):
                                   'logo_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg'}], replace=True)
     tid, t = r.open('/tv?venue=' + slug, before=WATCH + LOGO_WATCH, width=W, height=H)
     ok('CONTROL: the wall comes up on the holding card', r.until(t, '!!document.querySelector("#tvAds .ad.show .tvhold")', 25) is True)
-    got = r.until(t, '(function(){var s=document.querySelector("#tvAds .ad.show .tvline:not(.out)");return s&&s.textContent==="Test Alpha"&&!document.querySelector(".tvline.out")?s.textContent:"";})()', 30)
-    ok('the line ends on the venue\'s own name, "Test Alpha"', got == 'Test Alpha', r.ask(t, 'document.getElementById("tvAds").innerText'))
+    got = r.until(t, '(function(){var s=document.querySelector("#tvAds .ad.show .tvline:not(.out)");return s&&s.textContent==="Waiting for the host"&&!document.querySelector(".tvline.out")?s.textContent:"";})()', 30)
+    ok('set up, no game on: the line ends on "Waiting for the host" (Dean: "so the venue knows it\'s on them")', got == 'Waiting for the host', r.ask(t, 'document.getElementById("tvAds").innerText'))
     hand = r.ask(t, 'window.__vpHand') or []
-    h = [x for x in hand if x.get('was') == 'Setting up this screen' and x.get('now') == 'Test Alpha']
+    h = [x for x in hand if x.get('was') == 'Setting up this screen' and x.get('now') == 'Waiting for the host']
     ok('it got there by a cross-fade: "Setting up this screen" fading out over the name fading in', len(h) >= 1, hand)
     h = h[0] if h else {}
     ok('both over 0.3 s (vpLineOut, vpLineIn)', h.get('anim') == 'vpLineOut 0.3s' and h.get('animIn') == 'vpLineIn 0.3s', h)
@@ -166,14 +247,14 @@ def handover(r, pending_pos):
     ok('the logo did not move by a pixel: the same box while it changed, after it, and as "Setting up" on its own',
        h.get('logo') and v.get('logo') and pending_pos and all(abs(a - b) <= 0.5 for a, b in zip(h['logo'], v['logo']))
        and all(abs(a - b) <= 0.5 for a, b in zip(v['logo'], pending_pos)), [h.get('logo'), v.get('logo'), pending_pos])
-    ok('the venue\'s own screen breathes too, on near-black, with only its name under the logo',
-       v.get('anim') == 'vpTriBreath' and v.get('bgc') == 'rgb(10, 10, 11)' and v.get('bg') == 'none' and v.get('line') == 'Test Alpha', v)
+    ok('the between-games card breathes too, on near-black, with only "Waiting for the host" under the logo',
+       v.get('anim') == 'vpTriBreath' and v.get('bgc') == 'rgb(10, 10, 11)' and v.get('bg') == 'none' and v.get('line') == 'Waiting for the host', v)
     ok('one card, not a loop of two', r.ask(t, 'document.querySelectorAll("#tvAds .ad").length') == 1, r.ask(t, 'document.querySelectorAll("#tvAds .ad").length'))
     ok('the old idle card is gone: no Anton venue name, no "Ask at the bar what\'s on", no "Play on your phone"',
        r.ask(t, '!document.querySelector("#tvAds .vname,#tvAds .adbig,#tvAds .vline") && document.getElementById("tvAds").innerText.indexOf("Ask at the bar")<0 && document.getElementById("tvAds").innerText.indexOf("Play on your phone")<0') is True)
     f = look(r, t, '#tvFloor')
-    ok('the floor under the slides is the same logo in the same place, still, with the venue\'s name under it',
-       f.get('logo') and v.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(f['logo'], v['logo'])) and f.get('anim') == 'none' and f.get('line') == 'Test Alpha' and f.get('bgc') == 'rgb(10, 10, 11)', f)
+    ok('the floor under the slides is the same logo in the same place, still, with "Waiting for the host" under it',
+       f.get('logo') and v.get('logo') and all(abs(a - b) <= 0.5 for a, b in zip(f['logo'], v['logo'])) and f.get('anim') == 'none' and f.get('line') == 'Waiting for the host' and f.get('bgc') == 'rgb(10, 10, 11)', f)
     ok('the venue\'s own logo is never in the centre of the card: the centre is only the venueplay tv logo and its line',
        r.ask(t, '!document.querySelector("#tvAds .tvhold img,#tvFloor .tvhold img")') is True)
     shot(r, t, 'tv-logo-3-venue-name')
@@ -295,10 +376,12 @@ def main():
     import rig as RIG
     r = RIG.Rig()
     try:
+        intro(r)
         pos = setting_up(r)
         still(r)
         games(r)
         stores(r)
+        lobbies(r)
         handover(r, pos)   # last: it ends by taking the venue off the books
     except Exception:
         import traceback; traceback.print_exc()

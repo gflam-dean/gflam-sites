@@ -21,8 +21,8 @@ Worker in jsc, supabase-js stood in) at 1920x1080 and checks:
            screen refresh, the poll and the tab coming forward do) 60 ms into every hand-over, while the new
            slide is still fading in: the floor must never show through (it did, on the ROTATION run, 2 Nov).
   SLOW     the venue's screen takes 6 s to answer: until it does, the wall and the floor under it say
-           "Setting up this screen" under the venueplay tv logo (Dean, 3 Nov 2026), not the venue's name;
-           then the venue's slide arrives and the floor under it carries the venue's name.
+           "Setting up this screen" under the venueplay tv logo (Dean, 3 Nov 2026), not "Waiting for the host";
+           then the venue's slide arrives and the floor under it says "Waiting for the host".
   NO LINE  the venue's screen never answers: "Setting up this screen" is gone by 23 s (time boxed, never
            stuck), and the wall is still the venueplay tv holding card, never black.
 
@@ -63,7 +63,7 @@ def take_lock(tool='tv-first-slide-in-chrome'):
 
 TEXT_HEAD = 'Trivia every Wednesday'
 READY = 'SETTING UP THIS SCREEN'
-DONE = 'TEST ALPHA'   # the finished floor's line: the venue's own name (3 Nov 2026)
+DONE = 'WAITING FOR THE HOST'   # the finished floor's line once set up (Dean, 3 Nov 2026)
 # Runs in the page before any of its own script: every 100 ms, what is LIT on the wall (opacity over a
 # half, so a slide fading out does not count), and what the floor under it says.
 WATCH = r'''
@@ -183,13 +183,12 @@ def main():
            [x[1] for x in early[:1] + early[-1:]] or w[-3:])
         ok('and the floor under it says so too', len(early) > 10 and all(READY in x[2].upper() for x in early),
            [x[2] for x in early[:1] + early[-1:]] or w[-3:])
-        ok('never the finished screen\'s line (the venue\'s name) while it is still loading', not any(DONE in (x[1] + ' ' + x[2]).upper() for x in w if x[0] <= 5000),
+        ok('never the finished screen\'s line ("Waiting for the host") while it is still loading', not any(DONE in (x[1] + ' ' + x[2]).upper() for x in w if x[0] <= 5000),
            [x for x in w if DONE in (x[1] + ' ' + x[2]).upper()][:2])
         got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show");return !!s&&s.innerText.toUpperCase().indexOf(%s)>=0;})()' % json.dumps(TEXT_HEAD.upper()), 15)
         ok('once it answers, the venue\'s own slide is lit', got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show")&&document.querySelector("#tvAds .ad.show").innerText'))
         fname = r.ask(sid, '(function(){var n=document.querySelector("#tvFloor .fl-done");return n?n.textContent:"";})()')
-        tag = r.ask(sid, '(document.getElementById("venueNameTag")||{}).textContent||""')
-        ok('and the floor under it now carries the venue\'s own name under the logo', bool(tag) and fname == tag, [fname, tag])
+        ok('and the floor under it now says "Waiting for the host" under the logo', fname == 'Waiting for the host', fname)
         ok('and the floor goes on to its finished line', DONE in (wall(r, sid)[-1][2] or '').upper() and READY not in (wall(r, sid)[-1][2] or '').upper(), wall(r, sid)[-1:])
         r.close_tab(tid)
         r.close()
