@@ -28,6 +28,7 @@
 
    Run from the repo root:  jsc tools/test-tv-logo-mark.js
 */
+function syncFloor(){}   // tv.html's brand floor (2 Nov 2026): a hidden layer, nothing this suite looks at
 var fails = 0, ran = 0;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 300))); fails++; } }
 

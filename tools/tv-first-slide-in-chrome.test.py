@@ -9,13 +9,18 @@ lighting any, and nothing was lit again until the watchdog's second strike at 40
 
 This opens the REAL tv.html in headless Chrome (tools/browser-rig/rig.py: the repo's pages, the real game
 Worker in jsc, supabase-js stood in) at 1920x1080 and checks:
-  FAST     a venue with a broken picture, a good picture and a text slide: one of its own slides is lit
-           within FIRST_LIMIT_MS of the page starting to load, and stays lit for the next 12 seconds
-           (sampled every 100 ms inside the page), and the broken one is never the one lit.
+  ONE      Test Charlie's own shape: one good picture and one broken one. A slide of its own is lit within
+           FIRST_LIMIT_MS of the page starting to load and stays lit, the floor never showing again
+           (sampled every 100 ms inside the page), through the broken picture's ten minute retry and the
+           ten minute screen refresh, both run every few seconds here (Dean, 4:20pm 2 Nov 2026: the floor
+           came back mid-rotation, an hour into a wall that had been fine).
+  ROTATION a broken picture, a good picture and a text slide, 3 s each: the same, over several laps, both
+           good slides take their turn, the broken one is never lit and never rejoins the loop, and halfway
+           through the venue edits a slide: the swap to the new set must not show the floor either.
   SLOW     the venue's screen takes 6 s to answer: until it does, the wall and the floor under it say
-           "Loading", never "Game on here"; then the venue's slide arrives.
-  NO LINE  the venue's screen never answers: "Loading" is gone by 23 s (it is time boxed, never stuck),
-           and the wall is still a branded holding card, never black.
+           "Getting your screen ready", not the finished screen's line; then the venue's slide arrives.
+  NO LINE  the venue's screen never answers: "Getting your screen ready" is gone by 23 s (time boxed, never
+           stuck), and the wall is still the branded holding screen, never black.
 
 Takes the repo's heavy lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
@@ -53,10 +58,17 @@ def take_lock(tool='tv-first-slide-in-chrome'):
         time.sleep(0.5)
 
 TEXT_HEAD = 'Trivia every Wednesday'
+READY = 'GETTING YOUR SCREEN READY'
+DONE = 'TRIVIA, MUSICAL BINGO AND BINGO'
 # Runs in the page before any of its own script: every 100 ms, what is LIT on the wall (opacity over a
 # half, so a slide fading out does not count), and what the floor under it says.
 WATCH = r'''
-(function(){ window.__wall=[];
+(function(){ window.__wall=[]; window.__badIn=[];
+  document.addEventListener("DOMContentLoaded", function(){ try{
+    new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes, function(n){
+      if(n.nodeType===1 && /no-such-picture-here/.test(n.innerHTML||"")) window.__badIn.push(Math.round(performance.now())); }); }); })
+      .observe(document.getElementById("tvAds"), { childList:true });
+  }catch(e){} });
   setInterval(function(){ try{
     var lit=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(a){return +getComputedStyle(a).opacity>0.5;});
     var what=lit.map(function(a){var i=a.querySelector(".adimg");return i?("IMG "+(i.style.backgroundImage||"")):("TEXT "+a.innerText.replace(/\s+/g," ").trim());}).join(" | ");
@@ -65,13 +77,20 @@ WATCH = r'''
     window.__wall.push([Math.round(performance.now()), what, fw]);
   }catch(e){} }, 100);
 })();'''
+# The two ten minute timers behind the 4:20pm floor, run every few seconds: the broken picture's retry
+# (setTimeout, named retryBadImg) and the screen refresh (setInterval calling loadScreen). Nothing else moves.
+FAST_TIMERS = r'''
+(function(){ var st=window.setTimeout, si=window.setInterval;
+  window.setTimeout=function(f,ms){ try{ if(ms===600000 && typeof f==="function" && /retryBadImg|BAD_IMG/.test(String(f)+(f.name||""))) ms=2500; }catch(e){} return st.apply(this,[f,ms].concat([].slice.call(arguments,2))); };
+  window.setInterval=function(f,ms){ try{ if(ms===600000 && typeof f==="function" && /loadScreen\(/.test(String(f))) ms=3500; }catch(e){} return si.apply(this,[f,ms].concat([].slice.call(arguments,2))); };
+})();'''
 CONFIRMED = 'try{localStorage.setItem("vpTvVenue",%s);localStorage.setItem("vpTvConfirmed",%s);}catch(e){}'
 
 def wall(r, sid):
     return json.loads(r.ask(sid, 'JSON.stringify(window.__wall||[])') or '[]')
 
 def own(what):
-    return ('tugun-tuesday.jpg' in what) or (('TEXT ' + TEXT_HEAD).upper() in what.upper())
+    return ('tugun-tuesday.jpg' in what) or ('TEXT TRIVIA EVERY ' in what.upper())
 
 def main():
     if not take_lock():
@@ -82,31 +101,48 @@ def main():
         slug = r.W.info['slug']
         good = r.base + '/logos/ad-slides/tugun-tuesday.jpg'
         broken = r.base + '/logos/ad-slides/no-such-picture-here.jpg'
-        r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': slug, 'logo_url': None, 'raffle': None,
-                                     'slides': [{'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 4},
-                                                {'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 4},
-                                                {'head': TEXT_HEAD, 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 4}]}])
 
-        print('\nFAST: a venue with one broken picture among its slides')
-        tid, sid = r.open('/tv?venue=' + slug, before=WATCH, width=1920, height=1080)
-        time.sleep(FIRST_LIMIT_MS / 1000.0 + 12)
-        w = wall(r, sid)
-        lit_ok = [own(x[1]) for x in w]
-        first = None
-        for i in range(len(w)):
-            if all(lit_ok[i:]):
-                first = w[i][0]; break
-        gaps = [x for x in w if first is not None and x[0] >= first and not own(x[1])]
-        print('  first of the venue\'s own slides lit, and staying lit, at %s ms (limit %d)' % (first, FIRST_LIMIT_MS))
-        ok('one of the venue\'s own slides is lit within %d ms of load' % FIRST_LIMIT_MS, first is not None and first <= FIRST_LIMIT_MS,
-           [first, [x for x in w if not own(x[1])][-3:]])
-        ok('and it stays lit: the wall never drops back to the floor in the next 12 seconds', len(w) > 100 and not gaps and first is not None,
-           [len(w), gaps[:3]])
-        ok('the broken picture is never the slide lit', not any('no-such-picture-here' in x[1] for x in w),
-           [x for x in w if 'no-such-picture-here' in x[1]][:2])
-        ok('no script errors on the TV', r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
-        if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-first-slide-fast-1920.jpg'))
-        r.close_tab(tid)
+        def watch_scene(name, slides, secs, want_both=False, change=None):
+            row = lambda sl: [{'venue_id': r.W.info['venue'], 'slug': slug, 'logo_url': None, 'raffle': None, 'slides': sl}]
+            r.W.seed('vp_venue_screen', row(slides), replace=True)
+            tid, sid = r.open('/tv?venue=' + slug, before=FAST_TIMERS + WATCH, width=1920, height=1080)
+            if change:   # the venue edits its slides mid-rotation: the next screen refresh swaps the new set in
+                time.sleep(secs / 2.0); r.W.seed('vp_venue_screen', row(change), replace=True); time.sleep(secs / 2.0)
+            else:
+                time.sleep(secs)
+            w = wall(r, sid)
+            first = next((x[0] for x in w if own(x[1])), None)
+            gaps = [x for x in w if first is not None and x[0] >= first and not own(x[1])]
+            print('  %s: first of the venue\'s own slides lit at %s ms (limit %d), %d samples over %.0f s' % (name, first, FIRST_LIMIT_MS, len(w), secs))
+            ok('%s: one of the venue\'s own slides is lit within %d ms of load' % (name, FIRST_LIMIT_MS), first is not None and first <= FIRST_LIMIT_MS, [first, w[:2]])
+            ok('%s: once a slide has painted, the floor never shows again (and nothing else stands in)' % name,
+               len(w) > secs * 7 and first is not None and not gaps, [len(w), gaps[:3]])
+            ok('%s: the broken picture is never the slide lit' % name, not any('no-such-picture-here' in x[1] for x in w),
+               [x for x in w if 'no-such-picture-here' in x[1]][:2])
+            if want_both:
+                ok('%s: and the loop really turns: both good slides take their turn' % name,
+                   any('tugun-tuesday.jpg' in x[1] for x in w) and any(TEXT_HEAD.upper() in x[1].upper() for x in w), sorted(set(x[1][:60] for x in w)))
+            bad_in = json.loads(r.ask(sid, 'JSON.stringify(window.__badIn||[])') or '[]')
+            ok('%s: after the first slide has painted, the broken picture never comes back into the loop' % name,
+               first is not None and not [t for t in bad_in if t > first], [first, bad_in])
+            if change:
+                ok('%s: the edited slides went up (the refresh swapped them in)' % name, any('THURSDAY' in x[1].upper() for x in w), sorted(set(x[1][:50] for x in w)))
+            retried = r.ask(sid, 'performance.getEntriesByType("resource").filter(function(e){return /no-such-picture-here/.test(e.name);}).length')
+            ok('%s: the broken picture was tried again in that time (the retry ran)' % name, isinstance(retried, int) and retried >= 2, retried)
+            ok('%s: no script errors on the TV' % name, r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
+            if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-first-slide-%s-1920.jpg' % name.lower()))
+            r.close_tab(tid)
+
+        print('\nONE: one good picture and one broken one (Test Charlie)')
+        watch_scene('ONE', [{'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 4},
+                            {'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 4}], 20)
+        print('\nROTATION: a broken picture, a good picture and a text slide, 3 s each')
+        watch_scene('ROTATION', [{'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 3},
+                                 {'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 3},
+                                 {'head': TEXT_HEAD, 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 3}], 24, want_both=True,
+                    change=[{'head': 'Broken', 'accent': 'pink', 'image_url': broken, 'seconds': 3},
+                            {'head': 'Roast night', 'accent': 'gold', 'image_url': good, 'seconds': 3},
+                            {'head': 'Trivia every Thursday', 'sub': 'From 7pm', 'accent': 'blue', 'seconds': 3}])
         r.close()
 
         print('\nSLOW: the venue\'s screen takes 6 seconds to answer')
@@ -119,15 +155,18 @@ def main():
         w = wall(r, sid)
         early = [x for x in w if 1000 <= x[0] <= 4000]
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-first-slide-loading-1920.jpg'))
-        ok('while it waits, the wall says "Loading"', len(early) > 10 and all('LOADING' in x[1].upper() for x in early),
+        ok('while it waits, the wall says "Getting your screen ready"', len(early) > 10 and all(READY in x[1].upper() for x in early),
            [x[1] for x in early[:1] + early[-1:]] or w[-3:])
-        ok('and the floor under it says "Loading" too', len(early) > 10 and all('LOADING' in x[2].upper() for x in early),
+        ok('and the floor under it says so too', len(early) > 10 and all(READY in x[2].upper() for x in early),
            [x[2] for x in early[:1] + early[-1:]] or w[-3:])
-        ok('never "Game on here" while it is still loading', not any('GAME ON HERE' in (x[1] + ' ' + x[2]).upper() for x in w if x[0] <= 5000),
-           [x for x in w if 'GAME ON HERE' in (x[1] + ' ' + x[2]).upper()][:2])
+        ok('never the finished screen\'s line while it is still loading', not any(DONE in (x[1] + ' ' + x[2]).upper() for x in w if x[0] <= 5000),
+           [x for x in w if DONE in (x[1] + ' ' + x[2]).upper()][:2])
         got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show");return !!s&&s.innerText.toUpperCase().indexOf(%s)>=0;})()' % json.dumps(TEXT_HEAD.upper()), 15)
         ok('once it answers, the venue\'s own slide is lit', got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show")&&document.querySelector("#tvAds .ad.show").innerText'))
-        ok('and the floor goes back to its ordinary words', 'GAME ON HERE' in (wall(r, sid)[-1][2] or '').upper(), wall(r, sid)[-1:])
+        fname = r.ask(sid, '(function(){var n=document.querySelector("#tvFloor .vpb-name"),l=document.querySelector("#tvFloor .vpb-logo");return (n?n.textContent:"")+(l?" [logo]":"");})()')
+        tag = r.ask(sid, '(document.getElementById("venueNameTag")||{}).textContent||""')
+        ok('and the floor under it now welcomes the venue by its own name', bool(tag) and fname == tag, [fname, tag])
+        ok('and the floor goes back to its ordinary line', DONE in (wall(r, sid)[-1][2] or '').upper() and READY not in (wall(r, sid)[-1][2] or '').upper(), wall(r, sid)[-1:])
         r.close_tab(tid)
         r.close()
 
@@ -138,9 +177,16 @@ def main():
         time.sleep(23)
         w = wall(r, sid)
         late = [x for x in w if x[0] >= 21500]
-        ok('at first it says "Loading"', any('LOADING' in x[1].upper() for x in w if x[0] < 5000), w[:2])
-        ok('by 23 s it no longer says "Loading" anywhere: the wait is time boxed, never stuck', late and not any('LOADING' in (x[1] + ' ' + x[2]).upper() for x in late), late[-2:])
-        ok('and the wall is a branded holding card, never black', late and all('GAME ON HERE' in x[1].upper() for x in late), late[-2:])
+        ok('at first it says "Getting your screen ready"', any(READY in x[1].upper() for x in w if x[0] < 5000), w[:2])
+        ok('by 23 s it says that nowhere: the wait is time boxed, never stuck', late and not any(READY in (x[1] + ' ' + x[2]).upper() for x in late), late[-2:])
+        ok('and the wall is the branded holding screen, never black', late and all(DONE in x[1].upper() for x in late), late[-2:])
+        BRAND = ('(function(){var c=document.querySelector("#tvAds .ad.show");if(!c)return null;var g=c.querySelector(".vpb-glow"),t=c.querySelector(".vpb-tri"),m=c.querySelector(".vpb-mark svg[data-vp-mark=wordmark]");'
+                 'return {anim:g?getComputedStyle(g).animationName:"",op:g?+getComputedStyle(g).opacity:-1,tri:t?t.getBoundingClientRect().width:0,mark:m?m.getBoundingClientRect().width:0};})()')
+        b1 = r.ask(sid, BRAND) or {}; time.sleep(1.5); b2 = r.ask(sid, BRAND) or {}
+        ok('it is the brand screen: the neon triangle at size and the venueplay wordmark', b1.get('tri', 0) >= 150 and b1.get('mark', 0) >= 150, b1)
+        ok('and the triangle breathes (its glow is moving), so the screen never looks frozen', b1.get('anim') == 'vpbBreath' and abs(b1.get('op', 0) - b2.get('op', 0)) > 0.02, [b1, b2])
+        old = r.ask(sid, '/game on here|grab your phone/i.test(document.body.innerText + " " + document.getElementById("tvFloor").innerHTML)')
+        ok('"Game on here" is gone from the wall and from the floor under it', old is False, old)
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'tv-first-slide-noline-1920.jpg'))
         r.close_tab(tid)
     finally:

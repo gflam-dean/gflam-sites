@@ -16,6 +16,7 @@
 
    Run: jsc venueplay-backend/app/tv-logo.test.js
 */
+function syncFloor(){}   // tv.html's brand floor (2 Nov 2026): a hidden layer, nothing this suite looks at
 var bad = 0, pass = 0;
 function ok(n, c, extra){
   if (c) { pass++; print("  ok   " + n); }
