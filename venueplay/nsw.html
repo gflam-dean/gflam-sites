@@ -1011,6 +1011,14 @@
               <input id="ct-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
             <div class="field">
+              <label for="ct-venue">Venue name</label>
+              <input id="ct-venue" type="text" placeholder="Your venue" autocomplete="organization" maxlength="120">
+            </div>
+            <div class="field">
+              <label for="ct-postcode">Postcode</label>
+              <input id="ct-postcode" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" maxlength="4">
+            </div>
+            <div class="field">
               <label for="ct-phone">Phone</label>
               <input id="ct-phone" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel">
             </div>
@@ -1511,9 +1519,15 @@
     var email = document.getElementById('ct-email').value.trim();
     var phone = document.getElementById('ct-phone').value.trim();
     var message = document.getElementById('ct-message').value.trim();
+    var venue = document.getElementById('ct-venue').value.trim();
+    var postcode = document.getElementById('ct-postcode').value.trim();
 
     if (!name) { ctErr.textContent = 'Please enter your name.'; ctErr.classList.add('show'); return; }
     if (email.indexOf('@') === -1) { ctErr.textContent = 'Please enter a valid email.'; ctErr.classList.add('show'); return; }
+    // Which venue (Dean, 2 Nov 2026), so we can answer for that venue. The postcode is optional: it only tells
+    // two venues with the same name apart, and a wrong one is worse than none.
+    if (!venue) { ctErr.textContent = 'Please enter your venue name.'; ctErr.classList.add('show'); return; }
+    if (postcode && !/^\d{4}$/.test(postcode)) { ctErr.textContent = 'A postcode is 4 numbers. Leave it blank if you are not sure.'; ctErr.classList.add('show'); return; }
     // Optional, but a half-typed number is worse than none: it looks like a way to ring back.
     if (phone && phone.replace(/[^0-9]/g, '').length < 8) { ctErr.textContent = 'That phone number looks too short. Leave it blank if you would rather we emailed.'; ctErr.classList.add('show'); return; }
     if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }
@@ -1529,7 +1543,7 @@
     fetch(VP_WORKER + '/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, phone: phone, message: message })
+      body: JSON.stringify({ name: name, email: email, phone: phone, venue: venue, postcode: postcode, message: message })
     })
     .then(function(r){ if (!r.ok) throw new Error('send failed'); ctDone(); })
     .catch(function(){

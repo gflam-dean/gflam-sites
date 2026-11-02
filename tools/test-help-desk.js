@@ -231,6 +231,28 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('the enquiry email goes to sales@ ONLY (one copy: Dean, 30 Oct 2026), with the ticket number in its subject', !!enq && /\[#1001\]/.test(enq.subject) && enq.to.join() === 'sales@venueplay.com.au', sent.map(function (m) { return [m.to, m.subject]; }));
   var enqAck = sent.filter(function (m) { return m.to.join() === 'lee@pub.com.au'; });
   check('the enquirer gets one acknowledgement with the number, from support@, with the phone line (a venue, not a player)', sent.length === 2 && enqAck.length === 1 && /\(ticket 1001, ref /.test(enqAck[0].subject) && enqAck[0].reply_to === 'support@venueplay.com.au' && /07 5228 3667/.test(enqAck[0].html), enqAck.map(function (m) { return m.subject; }));
+  /* THE VENUE AND POSTCODE FIELDS (Dean, 2 Nov 2026): so the prospect autopilot can find the venue on our lists. */
+  world();
+  r = await call(handleContact, null, { name: 'Lee', email: 'lee@commercial.com.au', venue: 'The Commercial Hotel', postcode: '2484', message: 'How much is it?' });
+  t = DB.vp_help_tickets[0];
+  check('the form\'s venue and postcode go on the ticket as its venue and place (the fields the autopilot reads)', r.status === 200 && t && t.lead_venue_name === 'The Commercial Hotel' && t.lead_locality === '2484' && t.venue_id === null, t);
+  check('and into the message and the title the way the help page form writes them', t && /^Venue: The Commercial Hotel\nSuburb or postcode: 2484\n\nHow much is it\?$/.test(t.message) && t.subject === 'Website enquiry from The Commercial Hotel, 2484: How much is it?', t && [t.message, t.subject]);
+  check('the sales@ email names the venue and postcode', sent.some(function (m) { return m.to.join() === 'sales@venueplay.com.au' && /<b>Venue:<\/b> The Commercial Hotel, 2484/.test(m.html); }), sent.map(function (m) { return m.to; }));
+  world();
+  r = await call(handleContact, null, { name: 'Ann', email: 'ann@royal.com.au', venue: 'The Royal Hotel', postcode: '42x4', message: 'Tell me more' });
+  t = DB.vp_help_tickets[0];
+  check('a venue already on venueplay is matched (so the autopilot asks Dean first), and a postcode that is not 4 numbers is dropped', r.status === 200 && t && t.venue_id === VA && t.venue_matched_by === 'name' && !t.lead_locality && !/Suburb or postcode/.test(t.message), t);
+  world();
+  r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', message: 'From a page loaded before the venue field' });
+  t = DB.vp_help_tickets[0];
+  check('a page from before the venue field still sends: no venue, no place, the message as typed', r.status === 200 && t && !t.lead_venue_name && t.message === 'From a page loaded before the venue field' && /^Website enquiry: /.test(t.subject), t);
+  ['venueplay/index.html', 'venueplay/nsw.html'].forEach(function (pg) {
+    var src = readFile(pg);
+    check(pg + ': Venue name (required) and Postcode (optional, 4 numbers) on the Talk to us form, sent to /contact', /<label for="ct-venue">Venue name<\/label>/.test(src) && /<label for="ct-postcode">Postcode<\/label>/.test(src)
+          && /if \(!venue\) \{ ctErr\.textContent = 'Please enter your venue name\.'/.test(src) && /if \(postcode && !\/\^\\d\{4\}\$\/\.test\(postcode\)\)/.test(src)
+          && /JSON\.stringify\(\{ name: name, email: email, phone: phone, venue: venue, postcode: postcode, message: message \}\)/.test(src));
+  });
+
   world(); FAIL['vp_help_tickets:POST'] = 1;
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', message: 'Before the migration' });
   check('before the migration is run (no table), the enquiry still goes out exactly as before, and the enquirer is still acknowledged, without a number', r.status === 200 && sent.length === 2 && DB.vp_help_tickets.length === 0 && sent.some(function (m) { return m.to.join() === 'lee@pub.com.au' && m.subject === 'Thanks, we\'ve got your message' && m.html.indexOf('(ticket') === -1; }), [r, sent.map(function (m) { return [m.to, m.subject]; })]);

@@ -227,6 +227,7 @@ export default {
       if ((request.method === 'GET' || request.method === 'POST') && path === '/autopilot/review' && typeof vpaAutopilotReviewPage === 'function') return await vpaAutopilotReviewPage(request, env);
       if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
+      if (request.method === 'GET'  && path === '/autopilot/holds'          && typeof vpaAutopilotHolds === 'function')        return await vpaAutopilotHolds(request, env, json);
       // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
@@ -1050,6 +1051,12 @@ async function handleContact(request, env, json) {
   // email body; the enquiry is worth more than a perfectly formatted number.
   const phone = String(b.phone == null ? '' : b.phone).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 30);
   const message = (b.message || '').trim();
+  /* THE VENUE AND ITS POSTCODE (Dean, 2 Nov 2026): the form asks which venue (required on the page) and its
+     postcode (optional), so the prospect autopilot can find the venue on our licensed lists. Kept lenient here:
+     a page loaded before this change sends neither, and its enquiry still goes through as it always did.
+     A postcode is kept only when it is 4 numbers. */
+  const venue = helpLine(String(b.venue == null ? '' : b.venue), 120);
+  const postcode = /^\d{4}$/.test(String(b.postcode == null ? '' : b.postcode).trim()) ? String(b.postcode).trim() : '';
   if (!name || email.indexOf('@') === -1 || !message) return json({ error: 'Missing fields.' }, 400);
   /* CAPS, AND A HONEYPOT. This sends an email per request on the SAME Resend key that sends
      invoices and welcome emails, with the caller choosing the reply-to, and it had no limits
@@ -1058,7 +1065,7 @@ async function handleContact(request, env, json) {
      a field no person ever sees or fills; anything that fills it is told it worked and
      nothing is sent. */
   if (String(b.website || '').trim()) return json({ ok: true });
-  if (name.length > 120 || email.length > 200 || message.length > 4000
+  if (name.length > 120 || email.length > 200 || message.length > 4000 || String(b.venue || '').length > 200
       || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) {
     return json({ error: 'That message is too long or the email address does not look right.' }, 400);
   }
@@ -1069,9 +1076,15 @@ async function handleContact(request, env, json) {
      desk sends no second one; it only pushes to the staff phones that asked. */
   let ticketNo = null, ticket = null;
   try {
+    /* A venue already on venueplay is matched the way the help page's form matches one (never blocks). */
+    let match = null;
+    if (venue) { try { match = await helpMatchVenue(env, venue, postcode); } catch (e) { match = null; } }
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form',
-      title: 'Website enquiry: ' + helpLine(message, 80), message: message, contact_name: name,
-      contact_email: email, contact_phone: phone || null });
+      title: 'Website enquiry' + (venue ? ' from ' + venue + (postcode ? ', ' + postcode : '') : '') + ': ' + helpLine(message, 80),
+      message: (venue ? 'Venue: ' + venue + '\n' + (postcode ? 'Suburb or postcode: ' + postcode + '\n' : '') + '\n' : '') + message,
+      contact_name: name, contact_email: email, contact_phone: phone || null,
+      venue_id: match ? match.venue_id : null, venue_matched_by: match ? match.by : null,
+      lead_venue_name: venue || null, lead_locality: postcode || null });
     ticketNo = t && t.ticket_no;
     ticket = t || null;
     if (t) await helpPushNew(env, t).catch(() => null);
@@ -1090,6 +1103,7 @@ async function handleContact(request, env, json) {
     '<p><b>Name:</b> ' + esc(name) + '</p>' +
     '<p><b>Email:</b> ' + esc(email) + '</p>' +
     (phone ? '<p><b>Phone:</b> ' + esc(phone) + '</p>' : '') +
+    (venue ? '<p><b>Venue:</b> ' + esc(venue) + (postcode ? ', ' + esc(postcode) : '') + '</p>' : '') +
     '<p><b>Message:</b><br>' + esc(message).replace(/\n/g, '<br>') + '</p>';
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -2407,7 +2421,7 @@ async function vpaReviewPatchV2(env, filter, patch) {
 const VPA_REVIEW_EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 /* What the Mac found, checked and capped. null when the Mac sent none of it (a Mac from before 30 Oct). */
 function vpaReviewDetails(b) {
-  const keys = ['postcode', 'entity_type', 'login_email', 'state', 'recommend', 'recommend_why', 'warnings'];
+  const keys = ['postcode', 'entity_type', 'login_email', 'state', 'recommend', 'recommend_why', 'warnings', 'checked_auto'];
   if (!keys.some(function (k) { return b[k] !== undefined; })) return null;
   const pc = String(b.postcode == null ? '' : b.postcode).trim();
   const em = vpaReviewText(b.login_email, 200).trim().toLowerCase();
@@ -2419,6 +2433,9 @@ function vpaReviewDetails(b) {
     recommend: (b.recommend === 'yes' || b.recommend === 'edit') ? b.recommend : '',
     recommend_why: vpaReviewText(b.recommend_why, 600).trim(),
     warnings: (Array.isArray(b.warnings) ? b.warnings : []).slice(0, 12).map(function (w) { return vpaReviewText(w, 600).trim(); }).filter(Boolean),
+    /* A reply already queued to go by itself, one of the first 50 Dean checks (2 Nov 2026): its email has
+       Good to send and Edit, and opening Edit holds it (vpaAutopilotReviewPage, vpaAutopilotHolds). */
+    checked_auto: b.checked_auto === true,
   };
 }
 
@@ -2460,8 +2477,10 @@ async function vpaAutopilotReviewRegister(request, env, json) {
     }
     if (!res.ok) return json({ error: 'Could not save the review (' + res.status + '). Run migration 128 first.' }, 503);
   } else if (!row.decision) {
-    // Not decided yet: the content and the links are refreshed, the round stays.
+    // Not decided yet: the content and the links are refreshed, the round stays. A hold Dean made by opening
+    // Edit stays held: a refresh from the Mac never lets a reply he is editing go by itself.
     round = row.round;
+    if (content.details && row.details && row.details.hold_at) content.details.hold_at = row.details.hold_at;
     const got = await vpaReviewPatchV2(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null',
       Object.assign({ expires_at: expIso, updated_at: new Date().toISOString() }, content)).catch(function () { return null; });
     if (!got) return json({ error: 'Could not save the review.' }, 503);
@@ -2496,6 +2515,24 @@ async function vpaAutopilotDecisions(request, env, json) {
     catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: the decisions as before
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
   return json({ ok: true, decisions: rows });
+}
+
+/* GET /autopilot/holds: the checked replies Dean has opened Edit on and not decided yet (2 Nov 2026). The Mac
+   takes each out of its queue until his edit, or his "Don't send this", arrives as a decision. Before
+   migration 130 there is no details column, so there are no holds: an empty list, never an error. */
+async function vpaAutopilotHolds(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  let rows;
+  try {
+    // Undecided links that have not run out (7 days): a handful of rows, so the hold is picked out here.
+    rows = (await vpaReadPage(env, 'vp_autopilot_reviews', 'decision=is.null&expires_at=gte.' + encodeURIComponent(new Date().toISOString())
+      + '&select=folder,round,details&order=folder.asc&limit=500')).filter(function (r) { return r.details && r.details.hold_at; });
+  } catch (e) {
+    if (vpaReviewNoV2(e)) return json({ ok: true, holds: [] });
+    return json({ error: 'Could not read the holds: ' + String(e.message || e) }, 503);
+  }
+  return json({ ok: true, holds: rows.map(function (r) { return { folder: r.folder, round: r.round, hold_at: (r.details || {}).hold_at || null }; }) });
 }
 
 /* POST /autopilot/decisions/done { folder, round, result, note } */
@@ -2753,6 +2790,7 @@ function vpaParseForm(text) {
 }
 
 const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send the standard reply', no: 'No, do not send', edit: 'Edited and send' };
+const VPA_CHECKED_DECIDED_WORDS = { yes: 'Approved, it goes at its time', no: 'Not sent', edit: 'Your edit goes' };
 
 /* The Mac's recommendation and its warnings (migration 130), each a plain sentence with what to tap. A review from
    before then has neither: a question then gets one neutral line, true whatever the Mac does with a Yes. */
@@ -2792,6 +2830,7 @@ function vpaReviewDecidedPage(row, sameAsAsked) {
   return vpaReviewPage(sameAsAsked ? 'Got it' : 'Already decided',
     '<div class="done" aria-hidden="true">' + (row.decision === 'no' ? '&#10005;' : '&#10003;') + '</div>'
     + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(row.class === 'switch' ? (row.decision === 'yes' ? 'turn it on' : 'leave it off')
+                                                                                  : (row.details && row.details.checked_auto) ? (VPA_CHECKED_DECIDED_WORDS[row.decision] || row.decision)
                                                                                   : (VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision)) + '</h1>'
     + '<p class="muted">' + vpaEsc(row.company || row.folder) + (when ? ', ' + vpaEsc(when) : '') + '.</p>'
     + applied
@@ -2837,6 +2876,19 @@ async function vpaAutopilotReviewPage(request, env) {
     let body = '';
     try { body = await request.text(); } catch (e) { /* read as empty */ }
     const f = vpaParseForm(body);
+    /* EDIT HOLDS IT (Dean, 2 Nov 2026: "tapping Edit stops the 30-minute auto-send even if he doesn't save").
+       The Edit page of a checked reply posts hold=1 from the page itself as it opens. Not on the GET: mail
+       scanners fetch every link in an email, and a hold from a scanner would stop every reply. Records
+       only that he opened it; his decision is still his Save, or "Don't send this". */
+    if (action === 'edit' && f.hold === '1') {
+      if (!(row.details && row.details.checked_auto)) return new Response('', { status: 204 });
+      const det = Object.assign({}, row.details, { hold_at: row.details.hold_at || new Date().toISOString() });
+      try {
+        await vpaReviewPatchV2(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null',
+          { details: det, updated_at: new Date().toISOString() });
+      } catch (e) { return new Response('', { status: 503 }); }
+      return new Response('', { status: 204 });
+    }
     const patch = { decision: action, decided_at: new Date().toISOString(),
                     decided_agent: String(request.headers.get('User-Agent') || '').slice(0, 200) };
     if (action === 'no') patch.reason = vpaReviewText(f.reason, 2000).trim() || null;
@@ -2894,6 +2946,7 @@ async function vpaAutopilotReviewPage(request, env) {
       + '</form>';
     return vpaReviewPage(action === 'yes' ? 'Turn this on?' : 'Leave it off?', sw, 200);
   }
+  if (row.details && row.details.checked_auto && (action === 'yes' || action === 'edit')) return vpaCheckedAutoPage(row, action, self, links, form, boxForm, err);
   // ONE form, from the top button to the bottom ones: the page's own choice is a submit wherever it is shown.
   const rec = vpaReviewRecommended(row);
   let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '') + qWarn
@@ -2923,6 +2976,48 @@ async function vpaAutopilotReviewPage(request, env) {
   inner += vpaReviewBottom(rec, action, links) + '</form>';
   const titles = { yes: 'Send this reply?', edit: 'Edit the reply', no: 'Do not send?' };
   return vpaReviewPage(titles[action], inner, err ? 400 : 200);
+}
+
+/* A CHECKED REPLY (Dean, 2 Nov 2026): one of the first 50 that go by themselves. It is already queued, 30 minutes
+   from his email. Two choices, traffic-light colours with words: GREEN "Approved" (it records that he checked it;
+   the reply still goes at its planned time, for the tally of the first 50) and AMBER "Edit" (it waits while he
+   edits; his saved words are what goes).
+   No red Stop button (Dean): the Edit page has a plain "Don't send this" under Save. White text on a solid
+   colour dark enough to read: green #0E7A4F and amber #B45309 (both above 4.5:1 with white). */
+const VPA_GOOD = '#0E7A4F', VPA_AMBER = '#B45309';
+function vpaCheckedAutoPage(row, action, self, links, form, boxForm, err) {
+  const btn = function (bg, label, attrs) {
+    return '<button type="submit" ' + (attrs || '') + ' class="btn" style="background:' + bg + ';color:#fff">' + label + '</button>';
+  };
+  let inner = vpaReviewTitle(row) + (err ? '<div class="err">' + vpaEsc(err) + '</div>' : '');
+  if (action === 'yes') {
+    inner += '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+      + btn(VPA_GOOD, 'Approved', 'name="b" data-a="yes"')
+      + '<p class="muted" style="margin-top:8px">It still goes at its planned time, as it would anyway. This records that you checked it.</p>'
+      + vpaReviewWords(row)
+      + '<h2>The reply they will get</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
+      + btn(VPA_GOOD, 'Approved', 'name="b" data-a="yes"')
+      + '</form>'
+      + '<p style="margin-top:16px"><a href="' + vpaEsc(links.edit) + '" style="color:var(--text)">Edit it instead</a></p>';
+    return vpaReviewPage('Approve this reply?', inner, 200);
+  }
+  inner += '<div class="rec edit"><b>It is waiting for you.</b> Opening this page stopped it going by itself. '
+    + 'Nothing goes to them until you tap Save and send.</div>'
+    + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+    + vpaReviewWords(row)
+    + '<h2>The reply: change anything, then tap Save and send</h2>'
+    + '<textarea name="reply" aria-label="The reply" autocapitalize="sentences" spellcheck="true">' + vpaEsc(form != null ? form : row.reply) + '</textarea>'
+    + '<p class="muted" style="margin-top:8px">Plain text; a blank line starts a new paragraph.</p>'
+    + vpaReviewBoxes(row, boxForm)
+    + btn(VPA_AMBER, 'Save and send', 'name="b" data-a="edit"')
+    + '<p class="muted" style="margin-top:8px">Your words go within 5 minutes, inside 8am to 5pm Monday to Friday.</p>'
+    + '</form>'
+    + '<form method="POST" action="' + vpaEsc(links.no) + '" style="margin-top:28px" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+    + '<input type="hidden" name="reason" value="Don\'t send this, from the Edit page">'
+    + '<button type="submit" data-a="no" style="background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;font:inherit;cursor:pointer">Don\'t send this</button>'
+    + '</form>'
+    + '<script>fetch(location.href,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"hold=1",credentials:"omit",keepalive:true}).catch(function(){});</script>';
+  return vpaReviewPage('Edit the reply', inner, err ? 400 : 200);
 }
 
 /* THE ONE SETUP, for HQ (vpaHandleProspect) and the autopilot (vpaAutopilotProspect). actor is who it
