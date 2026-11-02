@@ -17,10 +17,11 @@ swapped for the rig's stand-in):
   3. A SONG TITLE NEVER BREAKS INSIDE A WORD, on the musical phone card at 390 x 690 and on the musical
      TV at 1920 and at 390: each word of every title is on one line, nothing hyphenated, and the title
      fits its square or the wall. The BINGO button is on screen without scrolling at 390 x 690.
-  4. THE TV: the floor under the slides is styled from the first frame (it showed the browser's plain
-     16px "Game on here" for 10 to 15 seconds on a slow screen), and a new venue with no slides gets a
-     loop of its own name ("Trivia, musical bingo and bingo at <venue>. Ask at the bar what's on.")
-     with the support email only for whoever is setting the screen up.
+  4. THE TV: the floor under the slides is laid out from the first frame (it showed the browser's plain
+     16px "Game on here" for 10 to 15 seconds on a slow screen; since 3 Nov 2026 it is the "venueplay tv"
+     logo, which must be at its full size, not an unstyled drawing), and a new venue with no slides gets
+     its own card: the venueplay tv logo with the venue's name under it, on near-black (Dean, 3 Nov 2026:
+     the old gold idle card "needs to go"), with the support email only for whoever is setting it up.
 
     python3 tools/ux-fixes-in-chrome.test.py            screenshots go to $VP_SHOTS if set
 """
@@ -204,16 +205,18 @@ def tv(r):
     r.W.seed('vp_venues', [{'id': NB, 'name': 'The Average Joe', 'slug': 'the-average-joe', 'status': 'active', 'join_code': fnv_code('the-average-joe'),
                             'au_state': 'QLD', 'max_players': 100, 'created_at': '2026-10-28T00:00:00Z', 'suspended_reason': None}])
     tid, t = r.open('/tv?venue=the-average-joe', width=1920, height=1080)
-    fl = J(r.until(t, ('(function(){var b=document.querySelector("#tvFloor .vpb-line"),g=document.querySelector("#tvFloor .vpb-tri");if(!b||!g||document.readyState==="loading")return "";var c=getComputedStyle(b);'
-                       'return JSON.stringify({ff:c.fontFamily,fs:parseFloat(c.fontSize),tri:g.getBoundingClientRect().width});})()'), 20))
-    ok('the floor under the slides is the styled brand screen (Manrope line, the neon triangle at size), never the browser\'s plain 16px',
-       'Manrope' in (fl.get('ff') or '') and fl.get('fs', 0) >= 30 and fl.get('tri', 0) >= 150, fl)
-    LIT = '(function(){var s=document.querySelector("#tvAds .ad.show");return s?s.textContent.replace(/\\s+/g," ").trim():"";})()'
-    LINE = 'Trivia, musical bingo and bingo at The Average Joe. Ask at the bar what’s on.'
-    lit = r.until(t, '(function(){var t=%s;return t.indexOf(%s)>=0?t:"";})()' % (LIT, json.dumps(LINE)), 30)
-    ok('no slides yet: the wall shows the venue\'s own loop, "%s"' % LINE, isinstance(lit, str) and LINE in lit and 'The Average Joe' in lit, r.ask(t, LIT))
+    fl = J(r.until(t, ('(function(){var l=document.querySelector("#tvFloor .tvlogo"),w=l&&l.querySelector("svg.tvl-word"),n=document.querySelector("#tvFloor .tvline");if(!l||!w||!n||document.readyState==="loading")return "";'
+                       'var b=l.getBoundingClientRect(),c=getComputedStyle(n);return JSON.stringify({w:b.width,pos:getComputedStyle(l).position,paths:w.querySelectorAll("path").length,ff:c.fontFamily,bg:getComputedStyle(document.getElementById("tvFloor")).backgroundImage});})()'), 20))
+    ok('the floor under the slides is the venueplay tv logo at its full size (66.65% of the wall), laid out, never an unstyled drawing',
+       fl.get('pos') == 'absolute' and abs(fl.get('w', 0) - 1279.7) <= 2 and fl.get('paths', 0) >= 3 and 'Hanken Grotesk' in (fl.get('ff') or '') and fl.get('bg') == 'none', fl)
+    LIT = '(function(){var s=document.querySelector("#tvAds .ad.show .tvline");return s?s.textContent.replace(/\\s+/g," ").trim():"";})()'
+    LINE = 'The Average Joe'
+    lit = r.until(t, '(function(){var t=%s;return t===%s?t:"";})()' % (LIT, json.dumps(LINE)), 30)
+    ok('no slides yet: the wall shows the venueplay tv logo with the venue\'s own name under it, "%s"' % LINE, lit == LINE and r.ask(t, '!!document.querySelector("#tvAds .ad.show .tvlogo svg.tvl-word")') is True, r.ask(t, LIT))
     n = r.ask(t, 'document.querySelectorAll("#tvAds .ad").length')
-    ok('a loop, not one card: two slides, both the venue\'s own', n == 2 and r.ask(t, 'Array.prototype.every.call(document.querySelectorAll("#tvAds .ad"),function(a){return a.textContent.indexOf("The Average Joe")>=0;})') is True, n)
+    card = J(r.ask(t, '(function(){var a=document.querySelector("#tvAds .ad.show"),c=getComputedStyle(a);return JSON.stringify({bg:c.backgroundImage,bgc:c.backgroundColor,t:a.innerText});})()'))
+    ok('one card, on near-black: no gold glow, no "Ask at the bar what\'s on", no "Play on your phone"',
+       n == 1 and card.get('bg') == 'none' and card.get('bgc') == 'rgb(10, 10, 11)' and 'Ask at the bar' not in (card.get('t') or '') and 'Play on your phone' not in (card.get('t') or ''), [n, card])
     SUP = '(function(){var h=document.querySelector("#tvAds .ad.show .adhelp");if(!h)return "none";var b=h.getBoundingClientRect();return (getComputedStyle(h).display!=="none"&&b.height>0)?"shown":"hidden";})()'
     ok('once the screen is confirmed, the room never sees the support email', r.until(t, '!document.body.classList.contains("tv-sup") && %s==="hidden"' % SUP, 20) is True, r.ask(t, SUP))
     shot(r, t, 'tv-noslides-1920')

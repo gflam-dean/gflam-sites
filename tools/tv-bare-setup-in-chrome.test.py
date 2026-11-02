@@ -8,7 +8,7 @@ slides) with no setup panel at all: the page remembered the last venue that brow
 
 This opens the REAL tv.html in headless Chrome (tools/browser-rig/rig.py: the repo's pages, the real game
 Worker in jsc, supabase-js stood in) and checks, at 1920x1080 and 1280x720:
-  CLEAN    a browser that has never opened a venue: the setup panel, the lowercase venueplay wordmark,
+  CLEAN    a browser that has never opened a venue: the setup panel, the lowercase venueplay tv lockup,
            no advertising painted, no scrollbar.
   MEMORY   the same browser after it HAS shown a venue's screen (with slides): bare /tv is still the
            setup panel and paints none of that venue's slides, and it does NOT offer that venue (no "last used
@@ -52,7 +52,7 @@ def take_lock(tool='tv-bare-setup-in-chrome'):
 
 SAMPLE = 'Tuesday Parmy Night'
 WALL = ('(function(){var p=document.getElementById("pairPanel"),b=p.getBoundingClientRect(),cs=getComputedStyle(p);'
-        'var m=p.querySelector(".bvmark svg[data-vp-mark=wordmark]"),mb=m?m.getBoundingClientRect():null;'
+        'var m=p.querySelector(".bvmark svg[data-vp-mark=tv-word]"),mb=m?m.getBoundingClientRect():null;'
         'var ads=document.getElementById("adsRoot"),as=getComputedStyle(ads),ab=ads.getBoundingClientRect();'
         'var painted=[].filter.call(document.querySelectorAll("#adsRoot *"),function(e){var r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=="hidden"&&+s.opacity>0&&e.children.length===0&&(e.textContent||"").trim();}).map(function(e){return e.textContent.trim().slice(0,30);});'
         'var pt=p.innerText||"",offer=/last used for|show it again/i.test(pt)||[].some.call(p.querySelectorAll("a[href]"),function(a){return /[?&]venue=/.test(a.getAttribute("href"));});'
@@ -70,7 +70,7 @@ def look(r, sid, w, h, label, names=()):
     time.sleep(3)   # past the moment the remembered venue's slides used to arrive
     v = r.ask(sid, WALL.replace('__NAMES__', json.dumps(list(names) or ['\u0000']))) or {}
     ok('%s (%dx%d): still there after 3 s, inside the screen, no scrollbar' % (label, w, h), v.get('panel') and v.get('inside') and v.get('scroll', 9) <= 0, v)
-    ok('%s (%dx%d): headed by the lowercase venueplay wordmark, never an uppercase VENUEPLAY' % (label, w, h), v.get('wordmark') and not v.get('oldWord'), v)
+    ok('%s (%dx%d): headed by the lowercase "venueplay tv" lockup (3 Nov 2026), never an uppercase VENUEPLAY' % (label, w, h), v.get('wordmark') and not v.get('oldWord'), v)
     ok('%s (%dx%d): no advertising painted behind it, and no sample pub anywhere' % (label, w, h),
        not v.get('adsShown') and not v.get('painted') and not v.get('sample'), [v.get('adsShown'), v.get('painted'), v.get('sample')])
     ok('%s (%dx%d): it offers no remembered venue: no "last used for", no "Show it again", no link to a venue\'s screen' % (label, w, h),

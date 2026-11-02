@@ -41,7 +41,8 @@ import io, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = os.path.join(ROOT, 'venueplay')
 SOURCE = os.path.join(SITE, 'brand', 'vp-mark.svg')
-NAMES = ('wordmark', 'wordmark-print', 'mark', 'mark-print')   # the F4 logo (1 Nov 2026), and the triangle on its own
+NAMES = ('wordmark', 'wordmark-print', 'mark', 'mark-print',   # the F4 logo (1 Nov 2026), and the triangle on its own
+         'tv-tri', 'tv-word')                                   # "venueplay tv" (3 Nov 2026): TV set-up screens only
 
 COPY = re.compile(r'(<svg\b[^>]*?\bdata-vp-mark="([a-z-]+)"[^>]*>)(.*?)(</svg>)', re.S)
 

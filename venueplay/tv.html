@@ -87,26 +87,8 @@
   body.tv-loading #tvFloor .fl-load{display:block}
   body.tv-loading #tvFloor .fl-done{display:none}
   /* THE BRAND SCREEN (Dean, 2 Nov 2026: "game on here shouldnt exist. We should build it into something more
-     brand worthy"). What the room sees whenever no advert is up: the floor under the rotation and the
-     holding card of a venue with nothing of its own yet. The neon play triangle from the start show
-     (vp-sting.js), breathing slowly, the venue's own logo or name when the TV knows it, and the venueplay
-     wordmark as the signature. Built by brandScreen(); the markup in #tvFloor is the same thing for a page
-     whose script never runs. LIGHT ON AN OLD TV: the only thing that moves is the OPACITY of the glow
-     layer, which a television composites without redrawing; nothing is blurred or filtered as it moves. */
-  .vpb{background:radial-gradient(60cqw 42cqw at 50% 34%, rgba(255,31,142,.16), transparent 62%), linear-gradient(170deg,#11050c,#050506 70%)}
-  .vpb-tri{display:block;width:clamp(80px,11cqw,240px);height:auto;overflow:visible;margin:0 auto 2.4cqw}
-  .vpb-glow{opacity:.6;animation:vpbBreath 6s ease-in-out infinite}
-  @keyframes vpbBreath{0%,100%{opacity:.35}50%{opacity:1}}
-  @media (prefers-reduced-motion:reduce){ .vpb-glow{animation:none} }
-  .vpb-logo{display:block;max-width:min(32cqw,600px);max-height:13cqw;width:auto;height:auto;object-fit:contain;margin:0 auto 1.6cqw;filter:drop-shadow(0 4px 18px rgba(0,0,0,.5))}
-  .vpb-hi{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,1.9cqw,30px);color:var(--pink)}
-  .vpb-name{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,6.4cqw,124px);line-height:1;color:#fff;margin:.9cqw 0 1.4cqw;max-width:86cqw;text-wrap:balance}
-  .vpb-line{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,2.3cqw,42px);color:var(--text);max-width:78cqw;text-wrap:balance;line-height:1.3}
-  .vpb-line.scan{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.04em;color:#fff}
-  .vpb-mark{margin-top:3cqw;line-height:0}
-  .vpb-mark svg{height:clamp(20px,2.4cqw,46px);width:auto;color:#fff;overflow:visible;filter:drop-shadow(0 0 .3cqw rgba(255,31,142,.45))}
-  .vpb.solo .vpb-mark{margin-top:0;margin-bottom:2.2cqw}
-  .vpb.solo .vpb-mark svg{height:clamp(30px,5.2cqw,100px)}
+     brand worthy") IS THE "venueplay tv" SET-UP LOGO since 3 Nov 2026: see .tvhold below. The floor carries
+     both its lines from the first frame and the body class picks one, as before. */
   #tvAds{z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
@@ -184,6 +166,14 @@
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(16px,2cqw,32px)}
   /* A TV remote moves focus from link to link, so the one it is on has to be obvious across a room. */
   .gplay:focus,.su-btn:focus,.gplay:hover,.su-btn:hover{outline:.35cqw solid var(--gold);outline-offset:.3cqw}
+  /* "coming soon" (3 Nov 2026): Samsung Apps and the LG Content Store have no venueplay TV app yet, so they are
+     named, muted, and never a link. The store box is the badge's size, so the two halves still match. */
+  .su-soon{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.35cqw,22px);line-height:1.35;color:var(--muted)}
+  .su-soon[hidden],.su-store[hidden]{display:none}
+  .su-store{box-sizing:border-box;width:min(26cqw,440px);height:clamp(48px,5.6cqw,86px);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:2px solid var(--line);border-radius:1cqw;line-height:1.1}
+  .su-store .ss-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(15px,1.8cqw,30px);color:#fff}
+  .su-store .ss-when{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.2cqw,20px);color:var(--muted)}
   .pt-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.9cqw,18px);color:var(--gold);letter-spacing:.1em;margin-top:.6cqw}
 
   /* ---- "SAVE THIS PAGE" (a screen that was just set up by its code) ----
@@ -215,25 +205,59 @@
      wordmark sits under it as a caption: a lockup rather than a line of text. This is a
      television across a room, and the first thing a venue sees of the product they just
      bought, so it is worth the space. */
-  .bvmark,.admark{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  .bvmark{display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:.5em;margin:0 0 1.15em}
-  /* THE F4 LOGO (1 Nov 2026): the lowercase wordmark, white letters and the pink triangle in the a, in place
-     of the old triangle over a spaced uppercase VENUEPLAY. A soft pink glow lifts it off the black the way
-     the neon logo does on the site. */
-  .bvmark svg,.admark svg{height:clamp(24px,3.4cqw,58px);width:auto;display:block;color:#fff;overflow:visible;
-    filter:drop-shadow(0 0 .25cqw rgba(255,31,142,.55)) drop-shadow(0 0 1.2cqw rgba(255,31,142,.28))}
-  /* A SLOW BREATH WHILE IT IS CHECKING, on the setting-up screen only. This is the one
-     state where the screen genuinely is waiting on something, and a still image on a
-     television is indistinguishable from a frozen one. The error and picker cards do NOT
-     get this: they are finished, not working.
-     It never hides anything. The triangle stays fully visible throughout; only the glow
-     moves, so a screen that stops animating still reads correctly. */
-  @keyframes vpMarkBreath{
-    0%,100%{filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 .6cqw rgba(255,31,142,.25))}
-    50%    {filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 1.6cqw rgba(255,31,142,.6))}
+  /* "venueplay tv" ON THE SET-UP CARDS (Dean, 3 Nov 2026): the horizontal lockup, solid triangle in the a and
+     solid pink "tv". NO GLOW ROUND THE WHOLE LOGO (Dean: "I don't like the glow around the whole screen"),
+     so the soft pink drop-shadow this rule used to carry is gone. */
+  .bvmark svg{height:clamp(24px,3.4cqw,58px);width:auto;display:block;color:#fff;overflow:visible}
+  .bvmark svg.vp-tv-lockup{height:clamp(29px,4.13cqw,70px)}   /* its frame carries the kit margin: the letters stay the size they were */
+
+  /* ---- THE "venueplay tv" SET-UP LOGO (Dean, 3 Nov 2026) ----
+     Every TV set-up and between-games screen: the old "Setting up" card (a whole-word glow), the venue idle
+     card (its name in Anton over a gold glow, "Ask at the bar what's on") and the 2 Nov brand screen all
+     went. In their place the approved lockup (logo kit: vector/venueplay-tv-stacked-neon-triangle.svg): the
+     big neon play triangle on top, the solid wordmark and a solid pink "tv" under it, and ONE line under that.
+     THE LOGO NEVER MOVES. It is placed against the wall, not against the text, at exactly the size and place
+     of the approved render (66.65% of the wall wide, centred 49.8% down), so "Setting up this screen", the
+     venue's name, "Scan to play" and an empty line all leave it where it was, and the TV apps' welcome screen
+     puts it in the same place (~/venueplay-tv-apps shared/css/app.css). Only the line changes, and it
+     cross-fades (buildAds, holdHandover). Two <svg>s in ONE frame (same viewBox, stacked): the triangle's
+     carries the kit glow as a CSS drop-shadow (sigma 3.5px and 10.5px at 1920 wide, the kit's 5 and 15 units
+     scaled with the triangle), so the glow can breathe while the shape, the wordmark and "tv" stay still.
+     Live games keep plain venueplay. */
+  .ad-hold,#tvFloor{background:#0A0A0B}
+  .tvhold{position:absolute;inset:0;pointer-events:none}
+  .tvlogo{position:absolute;left:50%;top:49.8%;width:66.65cqw;transform:translate(-50%,-50%);line-height:0}
+  .tvlogo svg{display:block;width:100%;height:auto;overflow:visible}
+  .tvlogo .tvl-word{color:#fff}
+  .tvlogo .tvl-tri{position:absolute;left:0;top:0;height:100%;
+    filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}
+  /* THE BREATH: the glow only, 2.6 s ease-in-out, the same pulse as the old setting-up mark. It starts and
+     ends on the kit's own glow, so a screen that stops animating still shows the approved logo. */
+  @keyframes vpTriBreath{
+    0%,100%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}
+    50%    {filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 2.2cqw rgba(255,31,142,.9))}
   }
-  .admark:not(.still) svg{animation:vpMarkBreath 2.6s ease-in-out infinite}
-  @media (prefers-reduced-motion:reduce){ .admark svg{animation:none} }
+  .tvlogo.breathe .tvl-tri{animation:vpTriBreath 2.6s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){ .tvlogo .tvl-tri{animation:none!important} }
+  /* The line under it: TV body face, muted. Its top is the logo's bottom edge plus a gap, worked out from
+     the same numbers (49.8% + half of 66.65cqw x 2456.2/6098 + 1.5cqw), so it can never ride up into it. */
+  .tvline{position:absolute;left:6%;right:6%;top:calc(49.8% + 14.92cqw);text-align:center;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:500;font-size:clamp(16px,2.1cqw,44px);line-height:1.3;color:#8A8A95;
+    text-wrap:balance;word-break:normal;overflow-wrap:normal;hyphens:none}
+  .tvline.scan{color:#fff;font-weight:700}   /* "Scan to play" while a join code is on the wall: the one line meant to be acted on */
+  /* THE VENUE'S OWN LOGO ON THIS CARD, if Dean wants it (HOLD_VENUE_LOGO in the script, OFF): small, under
+     the line, so it can never move the venueplay tv logo. */
+  .tvhold .tvh-vlogo{position:absolute;left:50%;top:calc(49.8% + 20.4cqw);transform:translateX(-50%);max-width:22cqw;max-height:6cqw;width:auto;height:auto;object-fit:contain}
+  @keyframes vpLineIn{from{opacity:0}to{opacity:1}}
+  @keyframes vpLineOut{from{opacity:1}to{opacity:0}}
+  .tvline.in{animation:vpLineIn .3s ease forwards}
+  .tvline.out{animation:vpLineOut .3s ease forwards}
+  .ad.snap{transition:none}
+  .ad .tvhold ~ .adhelp,.ad .tvhold .adhelp{left:0;right:0;text-align:center}
+  /* "Setting up this screen" handing over to a set-up card ("Not linked to an account", "Which one is this?"): the card fades in over 0.3 s, it does not snap on. */
+  .badvenue:not(.hidden){animation:vpLineIn .3s ease}
   /* The address, on its own line between the problem and what to do about it, boxed so the eye
      lands on it. Mono so a hyphen or a missing postcode is unmistakable against a printed
      setup sheet, and break-all so a long slug cannot push the card off a narrow screen. */
@@ -467,11 +491,12 @@
          so it never covers anything. It costs nothing and it has already been the
          difference twice. Checked by tools/check-tv-watchdog.py
          ====================================================================== -->
-    <div id="tvFloor" class="layer vpb solo" aria-hidden="true" data-vpb="floor">
-      <svg class="vpb-tri" viewBox="-130 -160 280 320" aria-hidden="true"><g class="vpb-glow"><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="30" stroke-linejoin="round" opacity=".35"/><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g><polygon points="-85,-118 112,0 -85,118" fill="rgba(255,31,142,.10)" stroke="#FF1F8E" stroke-width="9" stroke-linejoin="round"/><polygon class="vpb-core" points="-85,-118 112,0 -85,118" fill="none" stroke="#FFD3EA" stroke-width="2.6" stroke-linejoin="round"/></svg>
-      <div class="vpb-mark"><svg viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
-      <div class="vpb-line fl-done">Trivia, musical bingo and bingo, played on your phone</div>
-      <div class="vpb-line fl-load">Getting your screen ready</div>
+    <!-- "venueplay tv" (3 Nov 2026): the floor is the set-up logo, still, in the same place as every holding
+         card, so a slide or holding card fading in over it never moves or swaps the logo. Its line is
+         "Setting up this screen" while the venue's screen has not answered (body.tv-loading), then the venue's
+         name, or "Scan to play" while a join code is on the wall (syncFloor). -->
+    <div id="tvFloor" class="layer ad-hold" aria-hidden="true" data-vpb="floor">
+      <div class="tvhold"><div class="tvlogo" data-vp-tvlogo="stacked"><svg class="tvl-tri" viewBox="-102 -2148.2 6098 2456.2" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg><svg class="tvl-word" viewBox="-102 -2148.2 6098 2456.2" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg></div><div class="tvline fl-done"></div><div class="tvline fl-load">Setting up this screen</div></div>
     </div>
     <script>
       /* WHILE IT LOADS, THE FLOOR SAYS SO, FROM THE FIRST FRAME, on a screen with a venue in its address (2 Nov
@@ -502,13 +527,14 @@
        keypad as before, askCode). The Google Play badge is our own CSS and words, not Google's art. -->
   <div class="pairpanel hidden" id="pairPanel">
     <canvas id="qrPair" style="display:none"></canvas>
-    <div class="bvmark"><svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+    <div class="bvmark"><svg class="vp-lockup vp-tv-lockup" viewBox="-102 -829 6098 1136" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg></div>
     <div class="su-title">Set up this screen</div>
     <div class="su-ways">
       <div class="su-way" id="suApp">
         <div class="su-head">Got a TV with Google Play? <b>Get the venueplay TV app</b></div>
         <div class="su-text">Search for <b>venueplay TV</b> in the Play Store on this TV, open it and put in your screen code.</div>
-        <div class="su-go"><a class="gplay has-badge" id="tvPlayLink" href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener"><img class="gp-badge" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" onerror="this.parentNode.classList.remove('has-badge')"><span class="gp-text"><span class="gp-tri" aria-hidden="true"></span><span class="gp-words"><span class="gp-small">Get it on</span> <span class="gp-big">Google Play</span></span></span></a></div>
+        <div class="su-soon" id="suSoon">Samsung Apps and LG Content Store: coming soon</div>
+        <div class="su-go"><div class="su-store" id="suStore" hidden><span class="ss-name" id="suStoreName"></span><span class="ss-when">coming soon</span></div><a class="gplay has-badge" id="tvPlayLink" href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener"><img class="gp-badge" alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" onerror="this.parentNode.classList.remove('has-badge')"><span class="gp-text"><span class="gp-tri" aria-hidden="true"></span><span class="gp-words"><span class="gp-small">Get it on</span> <span class="gp-big">Google Play</span></span></span></a></div>
       </div>
       <div class="su-way" id="suCode">
         <div class="su-head">Or use this TV&rsquo;s web browser</div>
@@ -532,7 +558,7 @@
       <!-- THE MARK. Dean, 12 Sep 2026: "it loads the errorscreen no logo or anything". A bare
            card on black does not read as VenuePlay, and this is a screen somebody stares at
            while deciding whether they have been sold something that works. -->
-      <div class="bvmark"><svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+      <div class="bvmark"><svg class="vp-lockup vp-tv-lockup" viewBox="-102 -829 6098 1136" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg></div>
       <div class="bvtitle">Not linked to an account</div>
       <!-- THREE THINGS, IN THE ORDER A PERSON NEEDS THEM. Dean, 12 Sep 2026: "maybe we say its
            not linked to an account and then a new line so it shows the issue then trouble
@@ -558,7 +584,7 @@
            a SETUP state: a new venue whose name is shared with others picking itself off a
            list, on a television, in front of whoever is setting it up. The one card in this
            flow that did not say VenuePlay was the one somebody stares at longest. -->
-      <div class="bvmark"><svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+      <div class="bvmark"><svg class="vp-lockup vp-tv-lockup" viewBox="-102 -829 6098 1136" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg></div>
       <div class="bvtitle" id="vpTitle">Which one is this?</div>
       <div class="bvtext" id="vpText"></div>
       <div class="bvpick" id="vpList"></div>
@@ -1373,32 +1399,39 @@
   /* THE F4 WORDMARK (1 Nov 2026): the lowercase venueplay with the triangle in the a, from
      venueplay/brand/vp-mark.svg by tools/sync-brand-mark.py, not the old triangle over an uppercase word. */
   var VP_MARK_SVG = '<svg class="vp-lockup" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg>';
-  /* THE BRAND SCREEN, ONE BUILDER (see .vpb in the styles). o.loading: the venue's screen has not answered
-     yet. o.name / o.logo: the venue, when the TV knows it. o.scan: a join code is on the wall, so the line
-     says "Scan to play". With no venue it is the wordmark and the triangle, never words about a fault. */
-  var VPB_TRI = '<svg class="vpb-tri" viewBox="-130 -160 280 320" aria-hidden="true"><g class="vpb-glow"><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="30" stroke-linejoin="round" opacity=".35"/><polygon points="-85,-118 112,0 -85,118" fill="none" stroke="#FF1F8E" stroke-width="18" stroke-linejoin="round" opacity=".55"/></g><polygon points="-85,-118 112,0 -85,118" fill="rgba(255,31,142,.10)" stroke="#FF1F8E" stroke-width="9" stroke-linejoin="round"/><polygon class="vpb-core" points="-85,-118 112,0 -85,118" fill="none" stroke="#FFD3EA" stroke-width="2.6" stroke-linejoin="round"/></svg>';
-  var VPB_LINE = 'Trivia, musical bingo and bingo, played on your phone', VPB_READY = 'Getting your screen ready';
-  function brandScreen(o){
+  /* "venueplay tv", THE SET-UP LOGO (Dean, 3 Nov 2026), drawn by tools/sync-brand-mark.py from
+     venueplay/brand/vp-mark.svg (#tv-tri, #tv-word). Every TV set-up and between-games screen shows it through
+     tvHoldHtml(), always in the same place (see .tvlogo): only the line under it changes. It replaces the
+     2 Nov brand screen (brandScreen, VPB_TRI). */
+  var VP_TV_LOGO = '<svg class="tvl-tri" viewBox="-102 -2148.2 6098 2456.2" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg>'+
+                   '<svg class="tvl-word" viewBox="-102 -2148.2 6098 2456.2" fill="none" role="img" aria-label="venueplay tv" data-vp-mark="tv-word"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/><path fill="#FF1F8E" d="M5052 -0L5052 -691L5226 -691L5226 -0L5052 -0ZM4944 -344L4944 -489L5334 -489L5334 -344L4944 -344ZM5542 -0L5343 -489L5529 -489L5656 -77L5585 -77L5711 -489L5895 -489L5696 -0L5542 -0Z"/></svg>';
+  var TV_SETUP_LINE = "Setting up this screen";
+  /* OPEN QUESTION FOR DEAN (3 Nov 2026): should the venue's own logo also show on the between-games card,
+     small, under its name? This one switch: false = no (the default until he says), true = yes. */
+  var HOLD_VENUE_LOGO = false;
+  function okLogoUrl(lg){ lg=String(lg||""); return /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1; }
+  /* line: the words under the logo (escaped by the caller). o.scan: they are "Scan to play". o.logo: the
+     venue's logo, shown only when HOLD_VENUE_LOGO is on. o.kind: data-vpb, what this card is. */
+  function tvHoldHtml(line, breathe, o){
     o=o||{};
-    var nm=String(o.name||"").trim(), lg=String(o.logo||"");
-    var logo=(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1) ? '<img class="vpb-logo" alt="" src="'+esc(lg)+'">' : '';
-    var venue = logo ? logo : (nm ? '<div class="vpb-hi">Welcome to</div><div class="vpb-name">'+esc(nm)+'</div>' : '');
-    var line = o.both
-      ? '<div class="vpb-line fl-done'+(o.scan?' scan':'')+'">'+(o.scan?'Scan to play':VPB_LINE)+'</div><div class="vpb-line fl-load">'+VPB_READY+'</div>'
-      : '<div class="vpb-line'+(o.scan&&!o.loading?' scan':'')+'">'+(o.loading?VPB_READY:(o.scan?'Scan to play':VPB_LINE))+'</div>';
-    var mark='<div class="vpb-mark">'+VP_MARK_SVG+'</div>';
-    return { solo: !venue, html: VPB_TRI + (venue ? venue + line + mark : mark + line) };
+    var vl=(HOLD_VENUE_LOGO && okLogoUrl(o.logo)) ? '<img class="tvh-vlogo" alt="" src="'+esc(String(o.logo))+'">' : '';
+    return '<div class="tvhold"'+(o.kind?' data-vpb="'+o.kind+'"':'')+'><div class="tvlogo'+(breathe?' breathe':'')+'" data-vp-tvlogo="stacked">'+VP_TV_LOGO+'</div>'+
+           '<div class="tvline'+(o.scan?' scan':'')+'">'+line+'</div>'+vl+'</div>';
   }
-  /* The floor follows what the TV knows: the venue's logo or name once /screen has said, and "Scan to play"
-     while a join code is on the wall. Called wherever those change; costs one innerHTML on a hidden layer. */
+  /* The floor follows what the TV knows: the venue's name once /screen has said, and "Scan to play" while a
+     join code is on the wall. Only its words change: the logo on it never moves or redraws. */
   var floorSig="";
   function syncFloor(){
     try{
       var fl=document.getElementById("tvFloor"); if(!fl) return;
-      var j=document.getElementById("tvJoinCorner");
-      var b=brandScreen({ both:true, name:holdVenueName, logo:venueLogoUrl, scan: !!(j && !j.classList.contains("hidden")) });
-      if(b.html===floorSig) return; floorSig=b.html;
-      fl.innerHTML=b.html; fl.classList.toggle("solo", b.solo);
+      var done=fl.querySelector(".fl-done"); if(!done) return;
+      var j=document.getElementById("tvJoinCorner"), scan=!!(j && !j.classList.contains("hidden"));
+      var words = scan ? "Scan to play" : String(holdVenueName||"").trim(), sig=(scan?"1":"0")+words+"|"+(HOLD_VENUE_LOGO?venueLogoUrl:"");
+      if(sig===floorSig) return; floorSig=sig;
+      done.textContent=words; done.className="tvline fl-done"+(scan?" scan":"");
+      var hold=fl.querySelector(".tvhold"), old=hold&&hold.querySelector(".tvh-vlogo");
+      if(old) old.parentNode.removeChild(old);
+      if(hold && HOLD_VENUE_LOGO && okLogoUrl(venueLogoUrl)){ var im=document.createElement("img"); im.className="tvh-vlogo"; im.alt=""; im.src=String(venueLogoUrl); hold.appendChild(im); }
     }catch(e){}
   }
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
@@ -1434,7 +1467,7 @@
     /* never leave the screen blank/black. A venue with nothing of its own yet gets a loop made from
        its own name and logo (two slides), once the Worker has told us who it is. */
     if(!arr.length){
-      if(holdVenueName && !venuePending()){ arr.push({type:"holding", v:"venue"}); arr.push({type:"holding", v:"play"}); }
+      if(holdVenueName && !venuePending()){ arr.push({type:"holding", v:"venue"}); }   // one card: the tv logo and the venue name (3 Nov 2026)
       else arr.push({type:"holding"});
     }
     return arr;
@@ -1445,7 +1478,8 @@
     /* The ordinary holding slide ("Game on here") keeps the gold card: it is a cheerful
        message and gold is ours. The "Setting up" one does not, because it sits under a pink
        mark and the two together looked like two different products. Dean: "very off brand". */
-    if(e.type==="holding") return venuePending() ? "ad-b" : (e.v==="play" ? "ad-b" : (e.v ? "ad-a" : "vpb solo"));   // no venue loop yet: the brand screen
+    /* "venueplay tv" (3 Nov 2026): every holding card is the set-up logo on near-black. No gold glow. */
+    if(e.type==="holding") return "ad-hold";
     return accentClass(e.slide.accent);
   }
   function entryInner(e){
@@ -1476,37 +1510,26 @@
       /* Nobody has confirmed this address yet, so do not tell the room a game is on. Show
          what it is trying instead: a person who has just typed it in can read their own typo
          off the wall, which is the whole difficulty of setting one of these up on a remote. */
+      /* THE "venueplay tv" LOGO, ONE LINE UNDER IT (Dean, 3 Nov 2026). These were: "Setting up" under a
+         glowing wordmark; for a venue with no slides of its own its name in Anton over a gold glow with
+         "Trivia, musical bingo and bingo at <venue>. Ask at the bar what's on."; and the 2 Nov brand screen
+         ("Getting your screen ready", "Welcome to <venue>"). Dean: "the idle screen needs to go". Now: the
+         logo, breathing, and under it "Setting up this screen" while the address is checked or the venue's
+         screen has not answered yet (the address itself stays at the foot, for whoever just typed it), then
+         the venue's own name. Same place every time, so only the line cross-fades. */
       if(venuePending()){
-        /* THE MARK, NOT A GOLD WORD. Dean, 12 Sep 2026: "it comes up with a yellow venueplay
-           wording. very off brand". It was: accentHex("gold") on a page whose brand colour is
-           pink, and a word where every other VenuePlay surface shows the play triangle. This
-           is the first thing a venue sees while setting a screen up, so it should look like
-           the product they bought. Same mark and same pink as #tvCorner. */
-        return '<div class="admark">' + VP_MARK_SVG + '</div>'+
-               '<div class="adbig">Setting up</div>'+
-               '<div class="adsub">Checking this screen&rsquo;s address&hellip;</div>'+
+        return tvHoldHtml(TV_SETUP_LINE, true, { kind:"loading" })+
                '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
       }
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
       // their promos/game did not load, so point them to support rather than only cheering. It is
       // only shown to whoever is setting the screen up (.sup, see syncSupport), never to the room.
       var help='<div class="adhelp sup">Screen not showing your promos or game? Email support@venueplay.com.au</div>';
-      if(!e.v && screenLoading()){   // the venue's own screen has not answered yet: say so, do not look finished
-        return '<div class="vpb-in" data-vpb="loading">'+brandScreen({ loading:true }).html+'</div>';
-      }
-      if(e.v && holdVenueName){
-        var nm=esc(holdVenueName);
-        var line='<div class="adsub vline">Trivia, musical bingo and bingo at '+nm+'. Ask at the bar what&rsquo;s on.</div>';
-        if(e.v==="venue"){
-          var lg=String(venueLogoUrl||"");
-          var logo=(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(lg) && lg.indexOf("&#")===-1)
-            ? '<img class="adlogo" alt="" src="'+esc(lg)+'">' : '';
-          return logo+'<div class="adbig vname">'+nm+'</div>'+line+help;
-        }
-        return '<div class="adtag" style="color:'+accentHex("pink")+'">'+nm+'</div>'+
-               '<div class="adbig">Play on your phone</div>'+line+help;
-      }
-      return '<div class="vpb-in" data-vpb="holding">'+brandScreen({}).html+'</div>'+help;
+      if(e.v && holdVenueName) return tvHoldHtml(esc(holdVenueName), true, { kind:"venue", logo:venueLogoUrl })+help;
+      /* No name yet: "Setting up this screen" until the venue's screen answers (screenLoading, time boxed),
+         then nothing under the logo rather than a claim that a game is on. */
+      if(screenLoading()) return tvHoldHtml(TV_SETUP_LINE, true, { kind:"loading" })+help;
+      return tvHoldHtml("", true, { kind:"holding" })+help;
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
@@ -1602,6 +1625,32 @@
      force: rebuild even on a match. Only the watchdog uses it, because its whole reason for
      calling is that it does not trust the DOM it can see.
      Returns true if the slides were actually replaced. */
+  /* ONE LOGO, ONE LINE, A CROSS-FADE (3 Nov 2026). When the card on the wall and the one replacing it are
+     both the "venueplay tv" holding card ("Setting up this screen" becoming the venue's name), the new card
+     goes up at once, with no 0.8 s slide fade, so the logo does not flicker or move by a pixel; the old line
+     is carried into it and fades out over 0.3 s while the new one fades in. Anything else (a venue's own
+     slides arriving) keeps the ordinary slide fade, over the floor, which is the same logo. Never throws. */
+  function holdHandover(lit, into){
+    try{
+      if(!lit || !into || !lit.querySelector || !into.querySelector) return;
+      var was=lit.querySelector(".tvhold .tvline:not(.out)"), now=into.querySelector(".tvhold .tvline");
+      if(!was || !now) return;
+      into.className+=" snap show"; into.style.zIndex="2";
+      if(was.innerHTML===now.innerHTML) return;
+      var ghost=document.createElement("div");
+      ghost.className="tvline out"; ghost.setAttribute("aria-hidden","true"); ghost.innerHTML=was.innerHTML;
+      now.parentNode.insertBefore(ghost, now); now.className+=" in";
+      setTimeout(function(){ try{ if(ghost.parentNode) ghost.parentNode.removeChild(ghost); now.className=now.className.replace(/\s*\bin\b/g,""); }catch(e){} }, 360);
+    }catch(e){}
+  }
+  /* The breath keeps time with the clock, not with the card: a card rebuilt (or the TV app handing over to
+     this page) picks the pulse up where it was instead of starting it again. */
+  function tvBreathPhase(root){
+    try{
+      var t=root.querySelectorAll(".tvlogo.breathe .tvl-tri"), d="-"+(Date.now()%2600)+"ms";
+      for(var k=0;k<t.length;k++) t[k].style.animationDelay=d;
+    }catch(e){}
+  }
   function buildAds(force){
     var host=$("tvAds"); if(!host) return false;
     var entries=[];
@@ -1619,15 +1668,17 @@
       }catch(err){}
     });
     if(!built){
-      var d=document.createElement("div"); d.className="layer ad ad-a";
+      var d=document.createElement("div"); d.className="layer ad ad-hold";
       d.innerHTML=entryInner({type:"holding"}); pending.appendChild(d);
       sig=null;   // whatever went wrong, do not remember the fallback as the venue's real slides
     }
     /* The swap. New slides in first, old ones out after, so the container is never empty even
        for an instant. replaceChildren() is not on every Fire Stick browser, so it is done by
        hand. The list of old nodes is taken BEFORE appending, or it would include the new ones. */
-    var old=[], i;
-    for(i=0;i<host.childNodes.length;i++) old.push(host.childNodes[i]);
+    var old=[], i, lit=null, fresh=pending.childNodes.length===1 ? pending.firstChild : null;
+    for(i=0;i<host.childNodes.length;i++){ old.push(host.childNodes[i]); if(host.childNodes[i].classList && host.childNodes[i].classList.contains("show")) lit=host.childNodes[i]; }
+    holdHandover(lit, fresh);
+    tvBreathPhase(pending);
     while(pending.firstChild) host.appendChild(pending.firstChild);
     for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
     adBuilt=true; adsSig=sig;
@@ -2670,8 +2721,38 @@
     if (app && s.appHead) { var ah = app.querySelector(".su-head"); if (ah) ah.innerHTML = s.appHead; }
     if (code && s.head) { var h = code.querySelector(".su-head"); if (h) h.innerHTML = s.head; }
     if (code && s.text) { var t = code.querySelector(".su-text"); if (t) t.innerHTML = s.text; }
+    if (app && s.appText) { var at = app.querySelector(".su-text"); if (at) at.innerHTML = s.appText; }
+    tvStoresFit(s.stores);
     var p = $("pairPanel"); if (p) p.setAttribute("data-tv-kind", kind || "unknown");
   }
+  /* WHICH STORE (3 Nov 2026). The first store in the list is the button at the foot of the app half: Google
+     Play's own badge, or for a Samsung or an LG its store's name and "coming soon", never a link that goes
+     nowhere (the apps are not in those stores yet; VPTvType.STORES gets their address the day they are).
+     The others, when the TV could not be told, are named on the line above it. No list: left as written. */
+  function tvStoresFit(st){
+    try{
+      if(!st || !st.length || !window.VPTvType || !window.VPTvType.STORES) return;
+      var S = window.VPTvType.STORES, play = $("tvPlayLink"), box = $("suStore"), nm = $("suStoreName"), line = $("suSoon");
+      var first = S[st[0]] ? st[0] : "play";
+      if (play) play.style.display = first === "play" ? "" : "none";
+      if (box && nm) {
+        if (first === "play") box.hidden = true;
+        else if (S[first].url) {   // live in that store: a real link, in our own button (never Google's badge)
+          box.hidden = true;
+          var go = document.createElement("a"); go.className = "su-btn"; go.setAttribute("href", S[first].url); go.setAttribute("target", "_blank"); go.setAttribute("rel", "noopener");
+          go.textContent = "Get it on " + S[first].name; box.parentNode.insertBefore(go, box);
+        }
+        else { box.hidden = false; nm.textContent = S[first].name; }
+      }
+      if (line) {
+        var later = [];
+        for (var i = 1; i < st.length; i++) if (S[st[i]] && !S[st[i]].url) later.push(S[st[i]].name);
+        line.hidden = !later.length;
+        if (later.length) line.textContent = later.join(" and ") + ": coming soon";
+      }
+    }catch(e){}
+  }
+
   /* THE SET UP CARD'S TWO WAYS IN (no venue linked). "Put in the screen code" opens the same keypad
      the venue picker has always offered (askCode); Go back closes it again. Inside the app the
      "get the app" half is pointless, so it comes off. Wrapped: nothing here may stop the screen. */
