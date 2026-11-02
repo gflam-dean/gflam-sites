@@ -341,21 +341,24 @@ def the_show():
         ok('CONTROL: the page knows the TV asked for reduced motion', r.ask(rm, 'VPEndShow.reduced') is True)
         RM = r'''(function(){
           VPEndShow.play({kind:"trivia", eye:"FINAL SCORES", rows:[{lead:"1",main:"Quiz Wizards",tail:"840",num:true},{lead:"2",main:"Table 6",tail:"790",num:true}], venue:"Test Alpha"});
-          var moved=[], dim=0, core=0, seen={};
+          var moved=[], dim=0, core=0, seen={}, blinks=0, lastA=null;
           for(var i=0;i<=290;i++){ var t=i*0.02; if(!VPEndShow.frame(t)) break;
             var els=document.querySelectorAll("#vpEndShow .vpe-t, #vpEndShow .vpe-row, #vpEndShow .vpe-sub");
             for(var j=0;j<els.length;j++){ var tr=els[j].style.transform||""; if(/translate\(\s*-?[0-9.]*[1-9]/.test(tr)) moved.push([t, els[j].id, tr]);
               var m=/scale\(([0-9.]+)\)/.exec(tr); if(m){ var k=els[j].id||j; seen[k]=seen[k]||{}; seen[k][m[1]]=1; } }
             if(document.getElementById("vpeBand").getAttribute("fill")==="#5a1438") dim++;
             if(document.getElementById("vpeCore").getAttribute("d")) core++;
+            /* a blink: the triangle's light dropping sharply between two frames 20 ms apart (a strike's dim beat); a fade never does */
+            var tri=document.getElementById("vpeTri"), ba=(tri.style.opacity==="0") ? 0 : (+document.getElementById("vpeBand").getAttribute("opacity")||0);
+            if(lastA!==null && lastA-ba>0.3) blinks++; lastA=ba;
           }
           var scales=0; for(var k in seen){ if(Object.keys(seen[k]).length>1) scales++; }
           VPEndShow.stop("test");
-          return { moved:moved.length, scales:scales, dim:dim, core:core };
+          return { moved:moved.length, scales:scales, dim:dim, core:core, blinks:blinks };
         })()'''
         v = r.ask(rm, RM) or {}
         ok('reduced motion: no line shakes, slides or grows; the words fade', v.get('moved') == 0 and v.get('scales') == 0, v)
-        ok('reduced motion: the triangle never flickers (no dim strike, no neon core)', v.get('dim') == 0 and v.get('core') == 0, v)
+        ok('reduced motion: the triangle never flickers (no dim strike, no neon core, its light never blinks)', v.get('dim') == 0 and v.get('core') == 0 and v.get('blinks') == 0, v)
 
         print('\n   without the switch')
         _, off = r.open('/app/raffle/screen?venue=' + slug, before=hop, width=1280, height=720)
