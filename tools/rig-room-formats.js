@@ -20,7 +20,22 @@
 */
 var REPO = '';
 var JS_FILES = {};
-function src(p) { if (!JS_FILES[p]) JS_FILES[p] = readFile(REPO + p); return JS_FILES[p]; }
+/* THE ROOM AS THE PRODUCT DEFAULT (3 Nov 2026). This suite is about a format moving onto the room by
+   default, every page following the Worker's answer with no ?roomserver= in any URL. The shipped
+   vp-room.js may still say DEFAULT_ON = false (the room stays opt-in until Dean has watched a night on
+   it), so the rig turns it on here, the way test-tv-room-default.js and test-room-default-bingo.js do.
+   If the line ever changes shape the rig stops rather than quietly testing the opt-in product. */
+function src(p) {
+  if (!JS_FILES[p]) {
+    var t = readFile(REPO + p);
+    if (/venueplay\/app\/vp-room\.js$/.test(p)) {
+      t = t.replace('var DEFAULT_ON = false;', 'var DEFAULT_ON = true;');
+      if (t.indexOf('var DEFAULT_ON = true;') < 0) throw new Error('rig: cannot find "var DEFAULT_ON = ..." in ' + p);
+    }
+    JS_FILES[p] = t;
+  }
+  return JS_FILES[p];
+}
 function inlineOf(path) {
   var html = src(path), re = /<script>([\s\S]*?)<\/script>/g, m, best = '';
   while ((m = re.exec(html))) { if (m[1].length > best.length) best = m[1]; }
@@ -372,6 +387,11 @@ function bootPage(path, opts) {
   var errors = [];
   scriptsOf(path).forEach(function (s) {
     if (skip[s]) return;
+    /* THE PAGE'S OWN supabase-js NEVER RUNS HERE (3 Nov 2026). Since the 2 Nov release the pages load a
+       vendored copy from /app/vendor/, which the /app/ pattern above picks up; run, it replaces the
+       stand-in (makeSupabase) with the real library, which dies on the rig's URL and leaves every
+       format's page unbooted. The rig's stand-in is the supabase this suite is about. */
+    if (/^\/app\/vendor\/supabase-js-[^\/]*\.js$/.test(s)) return;
     try { runIn(src('venueplay' + s), sb, w); } catch (e) { errors.push(s + ': ' + e); }
   });
   var code = inlineOf(path);
