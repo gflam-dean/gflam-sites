@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>See a night on venueplay</title>
-<meta name="description" content="Tap through a real night on venueplay: the big screen, the host and a player, across bingo, trivia, musical bingo, raffles, members draws and screen ads.">
+<meta name="description" content="Tap through a real night on venueplay: the big screen, the host and a player, across trivia, musical bingo, bingo, raffles, members draws and screen ads.">
 <link rel="canonical" href="https://venueplay.com.au/see-a-night">
 <meta property="og:title" content="See a night on venueplay">
-<meta property="og:description" content="The real venueplay screens playing a sample night: the big screen, the host and a player, across bingo, trivia, musical bingo, raffles and members draws.">
+<meta property="og:description" content="The real venueplay screens playing a sample night: the big screen, the host and a player, across trivia, musical bingo, bingo, raffles and members draws.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://venueplay.com.au/see-a-night">
 <meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png">
@@ -98,6 +98,8 @@
     margin: 0 0 12px;
     line-height: 1.02;
   }
+  /* lowercase venueplay, even in a capitals heading (brand v3.2; Dean, 3 Nov 2026) */
+  .vp-h1 .accent { text-transform: none; }
   .vp-h1 .accent { color: var(--pink); }
 
   .vp-intro {
@@ -1836,7 +1838,7 @@ block (all classes prefixed .vpa-)
   <h2>Like the look of it?</h2>
   <p class="vp-next-price" id="vpNextPrice"><b>Your first month is free.</b> Then $3 per player, per month. You choose how many players. No lock-in,
     no setup fee, and nothing extra per night.</p>
-  <p class="vp-next-sub">Every format on this page is included: bingo, trivia, musical bingo,
+  <p class="vp-next-sub">Every format on this page is included: trivia, musical bingo, bingo,
     raffles, your members draw and your own screen ads.</p>
   <div class="vp-next-btns">
     <a class="vp-next-go" id="vpNextGo" href="/#claim">Get started</a>
@@ -2028,6 +2030,7 @@ block (all classes prefixed .vpa-)
   function realScreen(view) {
     var src = realScreenSrc(view);
     var title = view === "tv"        ? "The venue screen, running a bingo night"
+              : view === "ads-tv"    ? "The venue screen, running its screen ads"
               : /^[a-z]+-tv$/.test(view)
                   ? "The venue screen, running a " + view.replace("-tv","").replace("members","members draw") + " night"
               : /^[a-z]+-phone$/.test(view)
@@ -2983,6 +2986,13 @@ block (all classes prefixed .vpa-)
       if (view === "tv") {
         body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
           realScreen("musical-tv") + '</div><div class="vp-tvstand"></div>';
+      } else if (view === "player") {
+        /* THE MUSICAL BINGO PHONE IS THE REAL PAGE NOW (Dean, 3 Nov 2026), the same way the trivia
+           phone is: app/musical/play.html has a scripted ?demo=1, so this tile cannot go stale. The
+           host tile stays hand-built until the musical console gets a demo mode of its own. */
+        body.innerHTML = '<div class="vp-phoneframe"><div class="vp-live-phone">' +
+          realScreen("musical-phone") + '</div></div>';
+        if (typeof vpFitFrames === "function") { vpFitFrames(); requestAnimationFrame(vpFitFrames); }
       } else {
         body.innerHTML = musicalViews[view] || "";
       }
@@ -3007,7 +3017,15 @@ block (all classes prefixed .vpa-)
         body.innerHTML = membersViews[view] || "";
       }
     } else if (currentMode === "ads") {
-      body.innerHTML = adViews[view] || "";
+      /* THE ADS WALL IS THE REAL PAGE TOO (3 Nov 2026): /tv?demo=1&ads=1 is the invented pub's own
+         advertising loop, the same one the homepage plays. The host and phone tiles stay as the
+         plain cards they are (screen ads have nothing on a phone). */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("ads-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = adViews[view] || "";
+      }
     } else {
       body.innerHTML = placeholderView(view);
     }

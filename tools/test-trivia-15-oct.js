@@ -717,6 +717,42 @@ print('\nNO EMPTY-STATE WORDS: an empty board paints nothing on the venue TV');
   show('f. CONTROL: with scores the leaderboard paints the team', $('tvBoardRows').kids.length === 1 && /Quizzly Bears/.test(words($('tvBoardRows'))), words($('tvBoardRows')));
 })();
 
+/* ---- THE REVEAL KEEPS THE QUESTION, AND THE RIGHT ANSWER LIGHTS IN ITS OWN COLOUR (Dean, 3 Nov 2026) ----
+   RUN the real paintRevQuestion; read renderQuestion/renderReveal and the reveal CSS where they decide it. */
+print('\nTHE REVEAL: the question stays up, the right card lights in its own letter colour, counts in TV body');
+(function () {
+  var els = {};
+  function $(id) { return els[id] || (els[id] = { id: id, textContent: '', className: '' }); }
+  var f = new Function('$', lift(SCREEN, 'paintRevQuestion', 'trivia/screen.html') + '; return paintRevQuestion;');
+  var paint = f($);
+  paint('Which Australian city hosted the 2000 Summer Olympics?');
+  show('a. the reveal paints the question that was asked', $('tvRevQ').textContent === 'Which Australian city hosted the 2000 Summer Olympics?' && !/hidden/.test($('tvRevQ').className), $('tvRevQ').className);
+  paint('');
+  show('b. a screen that never saw the question hides the line rather than showing a blank band', /\bhidden\b/.test($('tvRevQ').className), $('tvRevQ').className);
+  paint(new Array(170).join('x'));
+  show('c. a long question steps down a size, like the question screen', /q-epic/.test($('tvRevQ').className), $('tvRevQ').className);
+  var rq = lift(SCREEN, 'renderQuestion', 'trivia/screen.html'), rr = lift(SCREEN, 'renderReveal', 'trivia/screen.html');
+  show('d. the question screen keeps the text for the reveal, and the reveal paints it', /curQ=\{[^}]*text:m\.text/.test(rq) && /paintRevQuestion\(curQ\.text\|\|m\.text\|\|""\)/.test(rr));
+  show('e. the reveal layer has the line, above the heading', /<div class="revq hidden" id="tvRevQ"><\/div>\s*<div class="revhead" id="tvRevHead">/.test(SCREEN));
+  var css = (SCREEN.match(/<style[^>]*>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  var correct = (css.match(/\n\s*\.ans\.correct\{[^}]*\}/) || [''])[0];
+  show('f. the right card lights in ITS OWN colour (--ac), not pink and not a fixed green', /border-color:rgb\(var\(--ac\)\)/.test(correct) && !/53,208,127|--win|FF1F8E|255,31,142/i.test(correct), correct.trim());
+  show('g. its heading takes the same colour', /\.revhead\{[^}]*color:rgb\(var\(--rc/.test(css) && /setProperty\("--rc", state\.colour && REV_RGB\[ci\]/.test(rr));
+  show('h. the player counts under each card are TV body (Hanken Grotesk), not mono', /\.split \.sc\{font-family:'Hanken Grotesk'/.test(css));
+  show('i. CONTROL: a no-colour night still lights the right card green', /\.answers\.neutral \.ans\.correct\{--ac:53,208,127/.test(css));
+})();
+
+/* ---- THE PUNTERS RECKON BOARD CARRIES THE PLAIN VENUEPLAY CORNER (Dean, 3 Nov 2026) ---- */
+print('\nPUNTERS RECKON: the plain venueplay corner, never "tv"');
+(function () {
+  var PR = readFile('venueplay/app/topanswers/screen.html');
+  var body = PR.replace(/<!--[\s\S]*?-->/g, '');
+  var m = /<div class="tv-corner-wrap">\s*<div class="tv-corner">\s*<span class="vn"><svg class="vp-wm"[^>]*data-vp-mark="wordmark"/.test(body);
+  show('a. the board page carries the venueplay wordmark in the corner, from the one mark file', m);
+  show('b. in its own full-screen layer above the board', /\.tv-corner-wrap\{position:fixed;inset:0;container-type:inline-size;pointer-events:none;z-index:6\}/.test(body) && /\.tv-corner\{position:absolute;top:2cqw;right:2\.4cqw/.test(body));
+  show('c. a live game never says tv in the corner', !/<div class="tv-corner">[\s\S]{0,4000}?>\s*tv\s*</.test(body.slice(body.indexOf('<div class="tv-corner-wrap">'), body.indexOf('<div class="tv-corner-wrap">') + 4000)));
+})();
+
 print('\n' + (bad ? 'FAIL ' + bad + ' of ' + ran : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');
 })().catch(function (e) { print('FAIL the suite threw: ' + e + '\n' + (e && e.stack)); throw e; });

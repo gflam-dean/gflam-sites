@@ -304,6 +304,20 @@ pass("the one buzz asks whether the page is a demo first",
          san.indexOf('realScreen("' + game + '-tv")') >= 0,
          "a hand-drawn replica goes stale the day the real screen changes");
   });
+  /* 3 Nov 2026: every pop-up that has a real ?demo=1 page shows that page. Scoped to the mode's own
+     branch of open(), so a realScreen call elsewhere on the page cannot satisfy it. */
+  function branch(mode) {
+    var i = san.indexOf('} else if (currentMode === "' + mode + '") {');
+    var j = i >= 0 ? san.indexOf("} else if (currentMode ===", i + 10) : -1;
+    if (j < 0 && i >= 0) j = san.indexOf("} else {\n      body.innerHTML = placeholderView", i);
+    return i >= 0 && j > i ? san.slice(i, j) : "";
+  }
+  pass("see-a-night: the musical bingo player pop-up is the real phone page",
+       /view === "player"[\s\S]*?realScreen\("musical-phone"\)/.test(branch("musical")),
+       "app/musical/play.html has a scripted ?demo=1; a hand-built phone goes stale");
+  pass("see-a-night: the screen ads big-screen pop-up is the real ads wall",
+       /view === "tv"[\s\S]*?realScreen\("ads-tv"\)/.test(branch("ads")),
+       "the ads-only demo is the same loop the homepage plays");
   pass("see-a-night hands a wall the box directly rather than a scaling box",
        /var isWall = view === "tv" \|\| \/-tv\$\/\.test\(view\)/.test(san),
        "in a livebox the wall renders full size with only its top-left corner in the bezel");
@@ -350,6 +364,27 @@ pass("the one buzz asks whether the page is a demo first",
   pass("see-a-night: the scene holds the box the real wall goes in, and the page paints it at load and on every game picked",
        /<div class="vp-scene-tv" id="vpSceneTv"/.test(noComments) && /\n  paintSceneTv\(currentMode\);\n/.test(san) &&
        /aria-selected", modeOpts\[i\] === opt \? "true" : "false"\);\n    \}\n    paintSceneTv\(currentMode\);/.test(san));
+})();
+
+/* THE ADS-ONLY DEMO IS NOT A BLACK WALL (3 Nov 2026). A demo has no slug, so showPairPanel put the bare
+   setup look on, and tv-bare hides #adsRoot: the homepage "Ads" chip showed nothing. RUN the real one. */
+(function () {
+  var i = TV.indexOf("function showPairPanel(");
+  var d = 0, k = TV.indexOf("{", i);
+  do { if (TV[k] === "{") d++; else if (TV[k] === "}") d--; k++; } while (d > 0 && k < TV.length);
+  var src = i >= 0 ? TV.slice(i, k) : "";
+  function run(demo) {
+    var cls = {}, hid = 0, el = { classList: { remove: function () {}, add: function () {} }, textContent: "" };
+    var body = { classList: { add: function (c) { cls[c] = 1; } } };
+    var f = new Function("VENUE_SLUG", "VP_DEMO", "hidePairPanel", "$", "CODE", "drawPairQR", "document",
+      src + "; showPairPanel(); ");
+    f("", demo, function () { hid++; }, function () { return el; }, "ABC123", function () {}, { body: body });
+    return { bare: !!cls["tv-bare"], hid: hid };
+  }
+  pass("tv.html: showPairPanel is there to run", src.length > 50);
+  var dm = run(true), real = run(false);
+  pass("tv.html: a demo never takes the bare setup look, so the ads-only demo shows its slides", !dm.bare && dm.hid === 1, JSON.stringify(dm));
+  pass("tv.html: CONTROL: a real screen with no venue link still gets the setup look", real.bare === true, JSON.stringify(real));
 })();
 
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
