@@ -291,7 +291,8 @@ try:
     S.until(sid, '/^https:/.test(document.getElementById("venueLinkVal").textContent)', 20)
     time.sleep(0.8)
     tabs = S.js(sid, '[].map.call(document.querySelectorAll(".tabs button"),function(b){return b.getAttribute("data-tab")+(b.classList.contains("on")?"*":"");}).join(",")')
-    ok('a Marketing tab sits between Draws and Game settings, and #marketing opens on it', tabs == 'billing,nights,screen,draws,marketing*,settings', tabs)
+    # People sits after Billing since 3 Nov 2026 (Dean: hosts and staff in their own section).
+    ok('a Marketing tab sits between Draws and Game settings, and #marketing opens on it', tabs == 'billing,people,nights,screen,draws,marketing*,settings', tabs)
     link = S.js(sid, 'document.getElementById("venueLinkVal").textContent')
     ok('the venue link is the address the table-sign QR encodes, venueplay.com.au/play?venue=<slug>', link == 'https://venueplay.com.au/play?venue=deepwater-hotel', link)
     ok('shown in large monospace, read-only (no input)', S.js(sid, '(function(e){var s=getComputedStyle(e);return parseFloat(s.fontSize)>=18 && /Mono|mono/.test(s.fontFamily) && e.tagName!=="INPUT";})(document.getElementById("venueLinkVal"))') is True)

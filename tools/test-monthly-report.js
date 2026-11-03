@@ -236,6 +236,16 @@ function world() {
   check('nothing of any other venue is in it: no Anchor, no Big Club, no other team', !/Anchor|Big Club|Test Alpha|Secret Team|notyours/.test(j1));
   check('and not one player name, email or mobile', !/Private|Person|example\.com|04000000|0411111|Opted/.test(j1));
   check('it lists the months they can pick, newest first, back to when they joined', r1.body.months[0] === '2026-11' && r1.body.months.indexOf('2026-08') !== -1 && r1.body.months.indexOf('2026-07') === -1, r1.body.months);
+  /* Dean, 3 Nov 2026: with no nights yet, the report said "pick a venue". No venue named is the login's first venue. */
+  var VB2 = 'a0000000-0000-4000-8000-0000000000b2';
+  DB.vp_venues.push({ id: VB2, name: 'The Royal Annex', founding_id: 'f1', slug: 'royal-annex', status: 'active', timezone: 'Australia/Brisbane', created_at: '2026-08-02T00:00:00Z' });
+  DB.vp_venue_staff.push({ id: 's1b', auth_user_id: OWNER, venue_id: VB2, role: 'owner', permissions: null });
+  var r0 = await call(vpbMonthReport, OWNER, { month: '2026-10' });
+  check('CONTROL: this owner has two venues on the account', (r0.body.venues || []).length === 2, r0.body.venues || r0.body);
+  DB.vp_venues = DB.vp_venues.filter(function (v) { return v.id !== VB2; });
+  DB.vp_venue_staff = DB.vp_venue_staff.filter(function (x) { return x.id !== 's1b'; });
+  check('no venue named: the report opens on one of their own venues, never "Pick one of your venues"',
+    r0.status === 200 && !!r0.body.venue && (r0.body.venues || []).some(function (v) { return v.id === r0.body.venue.id; }) && !/Pick one/.test(JSON.stringify(r0.body)), r0.body.error || r0.status);
   var r2 = await call(vpbMonthReport, OWNER, { venue_id: VZ, month: '2026-10' });
   check('another account\'s venue id is refused, not answered', r2.status === 400 && !r2.body.report, r2.body);
   check('the other owner sees their own, and none of the Royal', (await call(vpbMonthReport, OTHER_OWNER, { venue_id: VZ, month: '2026-10' })).body.report.venue_name === 'The Anchor Pub');

@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 14:42 · 484007ac';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 21:30 · f2c7e86a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -228,6 +228,10 @@ export default {
       if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/holds'          && typeof vpaAutopilotHolds === 'function')        return await vpaAutopilotHolds(request, env, json);
+      // The follow-up to a prospect who never signed in (3 Nov 2026): who is quiet, and send on Dean's yes.
+      if (request.method === 'GET'  && path === '/autopilot/prospects/quiet' && typeof vpaAutopilotQuietProspects === 'function') return await vpaAutopilotQuietProspects(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/nudge'  && typeof vpaAutopilotProspectNudge === 'function') return await vpaAutopilotProspectNudge(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/nudge-sms' && typeof vpaAutopilotProspectNudgeSms === 'function') return await vpaAutopilotProspectNudgeSms(request, env, json);
       // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
@@ -2741,7 +2745,28 @@ function vpaReviewPage(title, inner, status) {
 }
 
 /* Exactly what happens, and when (Dean: confirm pages say exactly what will happen and when). */
+const VPA_NUDGE_CLASS = 'nudge';   // the follow-up to a prospect who never signed in (3 Nov 2026)
+const VPA_NUDGE_SMS_CLASS = 'nudge sms';   // the same follow-up by text, its own Yes / Edit / No (3 Nov 2026)
 function vpaReviewWhatHappens(row, edited) {
+  if (row.class === VPA_NUDGE_SMS_CLASS) {
+    return '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+      + '<li>The text' + (edited ? ', with your changes,' : '') + ' waits until the day after the follow-up email, at the other end of the day '
+      + '(email in the morning, text late afternoon, or the other way round), between 9am and 8pm, never on a Sunday.</li>'
+      + '<li>Then it checks again that nobody has signed in, and texts ' + vpaEsc(row.reply_to || 'their mobile') + ' from venueplay with a fresh one-tap sign-in link where {link} is. '
+      + 'Until the SMS provider is switched on, the text stays queued and nothing is sent.</li>'
+      + '<li>If something is not right, you get an email saying why. No Instantly campaign is touched.</li>'
+      + '</ol></div>';
+  }
+  if (row.class === VPA_NUDGE_CLASS) {
+    return '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+      + '<li>It checks again that nobody at the venue has signed in since, that they are still a prospect and have not cancelled.</li>'
+      + '<li>If all is well, this email' + (edited ? ', with your changes,' : '') + ' goes to ' + vpaEsc(row.reply_to || 'their account email')
+      + ' from hello@send.venueplay.com.au (replies come to hello@venueplay.com.au), with a fresh one-tap sign-in button under your words, between 8am and 5pm Monday to Friday.</li>'
+      + '<li>If something is not right, you get an email saying why it was held. Nothing goes to them if it is held. No Instantly campaign is touched.</li>'
+      + '</ol></div>';
+  }
   if (row.class === 'web form') {
     // A website enquiry (2 Nov 2026): the reply goes through the help desk, on their ticket.
     return '<div class="what"><b>What happens when you tap it</b><ol>'
@@ -2764,6 +2789,14 @@ function vpaReviewWhatHappens(row, edited) {
 }
 
 function vpaReviewTitle(row) {
+  if (row.class === VPA_NUDGE_SMS_CLASS) {
+    return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+      + '<p class="muted">The follow-up by text' + (row.reply_to ? ' to ' + vpaEsc(row.reply_to) : '') + ', its own choice, waiting for your yes.</p>';
+  }
+  if (row.class === VPA_NUDGE_CLASS) {
+    return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+      + '<p class="muted">Set up as a prospect and nobody has signed in yet. A follow-up email' + (row.reply_to ? ' to ' + vpaEsc(row.reply_to) : '') + ', waiting for your yes.</p>';
+  }
   if (row.class === 'web form') {
     return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
       + '<p class="muted">Filled in the form on our website' + (row.reply_to ? ', from ' + vpaEsc(row.reply_to) : '') + '.</p>';
@@ -2772,6 +2805,7 @@ function vpaReviewTitle(row) {
     + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>';
 }
 function vpaReviewWords(row) {
+  if (row.class === VPA_NUDGE_CLASS || row.class === VPA_NUDGE_SMS_CLASS) return '<h2>Where they are</h2><div class="card words">' + vpaEsc(row.their_words || '') + '</div>';
   return '<h2>What they wrote</h2><div class="card words">' + vpaEsc(row.their_words || '(nothing above the quoted email)') + '</div>';
 }
 
@@ -3062,7 +3096,8 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<div class="what"><b>What happens when you tap it</b><ol>'
       + '<li>Nothing is sent to them and no account is made, now or later.</li>'
       + '<li>Within 5 minutes your Mac marks it rejected and emails you to say so.</li>'
-      + (row.class === 'web form' ? '<li>Their ticket stays in HQ > Help desk, so you can still answer it there by hand.</li></ol></div>'
+      + ((row.class === VPA_NUDGE_CLASS || row.class === VPA_NUDGE_SMS_CLASS) ? '<li>Their account stays as it is in HQ > Prospects, where you can still ring them or resend their sign-in link.</li></ol></div>'
+         : row.class === 'web form' ? '<li>Their ticket stays in HQ > Help desk, so you can still answer it there by hand.</li></ol></div>'
                                   : '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>')
       + '<h2>Why not? (optional, just for the record)</h2>'
       + '<textarea class="short" name="reason" aria-label="Why not"></textarea>';
@@ -3414,9 +3449,16 @@ async function vpaProspectLastSignIn(env, userIds) {
 async function vpaProspectsList(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error, need_migration: d.need_migration }, d.status);
+  return json(d);
+}
+/* THE ONE READ BEHIND HQ > Prospects AND THE AUTOPILOT'S FOLLOW-UP (3 Nov 2026). Returns the HQ answer
+   ({ ok, prospects, card_added, ... }) or { error, status }. */
+async function vpaProspectsData(env) {
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
-  catch (e) { return json({ error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125 }, 503); }
+  catch (e) { return { error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125, status: 503 }; }
   const now = Date.now(), DAY = 86400000;
   const ids = rows.map((r) => r.venue_id);
   const venues = {}, accounts = {}, staff = {}, welcomes = {};
@@ -3476,9 +3518,13 @@ async function vpaProspectsList(request, env, json) {
       last_sign_in_at: seen.at != null ? new Date(seen.at).toISOString() : null, sign_in_known: seen.known,
       called: r.called_at ? { at: r.called_at, by: r.called_label || '', note: r.call_note || '' } : null,
       call_requested: r.call_requested === true,
-      follow_up: due && seen.known && seen.at == null && !r.called_at });
+      /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
+         phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
+         and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
+      follow_up: due && seen.known && seen.at == null && !r.called_at && !!r.phone,
+      email_follow_up: due && seen.known && seen.at == null && !r.phone && !!r.email });
     /* THE ONE FLAG A ROW SHOWS. They asked for a call: that comes first, whatever else is true, until
-       somebody marks it Called. Otherwise the 3-day no-sign-in flag. */
+       somebody marks it Called. Otherwise the 3-day no-sign-in flag, which needs a phone number. */
     const last = out[out.length - 1];
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
     Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
@@ -3486,9 +3532,159 @@ async function vpaProspectsList(request, env, json) {
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-  return json({ ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
+  return { ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
     follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp,
-    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS });
+    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS };
+}
+
+/* ===========================================================================
+ * THE FOLLOW-UP EMAIL TO A PROSPECT WHO NEVER SIGNED IN (Dean, 3 Nov 2026)
+ *
+ * "If a prospect never signs in, trigger a follow-up email." The standing rule holds: the autopilot sends
+ * NOTHING without Dean. So the Mac (~/venue-enrich/prospect_nudge.py, run by prospect-autopilot.py) asks
+ * this Worker who has gone quiet, drafts the nudge, and sends Dean the usual one-tap Yes / Edit / No review
+ * (class "nudge", the same signed buttons as every other review). Only on his Yes does it call the second
+ * route, which sends the words he approved with a fresh one-tap sign-in link to their account email.
+ *
+ *   GET  /autopilot/prospects/quiet   X-Autopilot-Key  prospects nobody at the venue has signed in to,
+ *                                                      with an email: the same answer HQ > Prospects reads
+ *                                                      (vpaProspectsData), so the two never disagree.
+ *                                                      The Mac decides how many days is quiet
+ *                                                      (NUDGE_AFTER_DAYS, Dean's number).
+ *   POST /autopilot/prospect/nudge    X-Autopilot-Key  { venue_id, text }: checks AGAIN that they are still
+ *                                                      a prospect, still never signed in, not cancelled,
+ *                                                      then sends text (plain words, a blank line between
+ *                                                      paragraphs) with the sign-in button, from the
+ *                                                      transactional address with replies to hello@. The
+ *                                                      sign-in link cap per login per day still applies.
+ * No Instantly campaign is read or touched. Recorded in vp_admin_audit (prospect_nudge_sent / _refused).
+ * ======================================================================== */
+const VPA_NUDGE_TEXT_MAX = 4000;
+function vpaQuietProspect(p) {
+  return !!(p && p.status === 'not_signed_in' && p.sign_in_known !== false && !p.last_sign_in_at && p.email);
+}
+async function vpaAutopilotQuietProspects(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
+    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
+    mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
+    state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
+    called: !!p.called, call_requested: !!p.call_requested }));
+  return json({ ok: true, prospects: quiet });
+}
+/* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
+   their one-tap sign-in link, at a different time from the email". Dean approves it in the same review email, as
+   its own line; the Mac sends it the next day at the other end of the day (prospect_nudge.py plans when).
+   OFF UNTIL THE SMS PROVIDER EXISTS: PROSPECT_SMS_ON must say "on" AND the ClickSend login must be set
+   (CLICKSEND_USERNAME, CLICKSEND_API_KEY). Until then this answers 503 sms_off, sends nothing, and the Mac keeps the
+   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes. The Spam Act
+   needs the sender identified and a way to stop: the text must name venueplay and say "Reply STOP to opt out",
+   or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's, so either one works.
+   NOT BUILT YET, because the provider is not: reading STOP replies back from ClickSend and keeping a do-not-text
+   list. Both are needed before PROSPECT_SMS_ON is set. */
+const VPA_NUDGE_SMS_MAX = 480;
+function vpaSmsOn(env) {
+  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && !!env.CLICKSEND_USERNAME && !!env.CLICKSEND_API_KEY;
+}
+async function vpaSendSms(env, toE164, body) {
+  const auth = 'Basic ' + btoa(String(env.CLICKSEND_USERNAME) + ':' + String(env.CLICKSEND_API_KEY));
+  const res = await fetch('https://rest.clicksend.com/v3/sms/send', { method: 'POST',
+    headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ source: 'venueplay', from: 'venueplay', to: toE164, body: body }] }) });
+  const j = await res.json().catch(() => null);
+  const m = j && j.data && j.data.messages && j.data.messages[0];
+  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id };
+}
+async function vpaAutopilotProspectNudgeSms(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const text = String(b.text || '').replace(/\s+/g, ' ').trim();
+  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !/Reply STOP to opt out/i.test(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
+    return json({ error: 'The text must name venueplay, carry {link} and "Reply STOP to opt out", have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
+  }
+  if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, status) => {
+    await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: why });
+    return json({ error: why, refused: true }, status || 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no text was sent.');
+  if (!vpaQuietProspect(p)) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in since, so no text was sent.');
+  const to = vpaNormaliseMobileAU(p.phone || '');
+  if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  if (!authUserId) return await refuse('Their login could not be found, so no text was sent.', 400);
+  const since = new Date(Date.now() - 86400000).toISOString();
+  const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
+  if (recent && recent.length >= VPA_SIGNIN_LINKS_PER_DAY_HQ) return await refuse('Too many sign-in links went to them in the last day, so no text was sent.', 429);
+  let token;
+  try { token = await vpaMintSigninLink(env, authUserId, venueId, Date.now()); }
+  catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const body = text.replace('{link}', vpaOneClickUrl(site, token, p.email));
+  let r;
+  try { r = await vpaSendSms(env, to, body); } catch (_) { r = { ok: false }; }
+  if (!r.ok) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
+    return json({ error: 'The text did not send (the SMS provider said ' + (r.status || 'nothing') + '). Nothing reached them.' }, 502);
+  }
+  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined });
+  return json({ ok: true, to_last3: to.slice(-3) });
+}
+function vpaNudgeHtml(text) {
+  const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
+  return String(text).split(/\n\s*\n/).map((para) => para.trim()).filter(Boolean)
+    .map((para) => '<p style="' + P + '">' + vpaEsc(para).replace(/\n/g, '<br>') + '</p>').join('');
+}
+async function vpaAutopilotProspectNudge(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const text = String(b.text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim();
+  if (text.length < 20 || text.length > VPA_NUDGE_TEXT_MAX) return json({ error: 'The email needs some words (20 to ' + VPA_NUDGE_TEXT_MAX + ' characters).' }, 400);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, status) => {
+    await vpaAudit(env, actor, 'prospect_nudge_refused', 'venue:' + venueId, { reason: why });
+    return json({ error: why, refused: true }, status || 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so nothing was sent.');
+  if (!vpaQuietProspect(p)) return await refuse(p.last_sign_in_at ? 'Somebody at ' + (p.name || 'the venue') + ' has signed in since, so nothing was sent.'
+    : 'They are not waiting on a first sign-in any more, so nothing was sent.');
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  const r = await vpaSendSigninLink(env, authUserId, venueId, { hq: true, nudge: text, subject: 'Your venueplay is ready when you are' });
+  await vpaAudit(env, actor, r.ok ? 'prospect_nudge_sent' : 'prospect_nudge_refused', 'venue:' + venueId,
+    { name: p.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  if (r.ok) return json({ ok: true, to: r.to });
+  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
+  if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
+  return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
 /* A card on file, as opposed to comp, invoice or a group: those are signed up but are not "Card added". */
 function vpaProspectCardOn(founding) {
@@ -3991,10 +4187,22 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const url = vpaOneClickUrl(site, token, email);
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
+  const BUTTON = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>';
+  /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
+     own hello and sign-off), then the same button. Nothing else on the email changes. */
+  if (opts.nudge) {
+    const nudgeInner = vpaNudgeHtml(opts.nudge) + BUTTON
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else.</p>';
+    const subj = opts.subject || 'Your venueplay sign-in link';
+    let sentN = false;
+    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
+    if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+    return { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone };
+  }
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
     + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in.</p>'
-    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>'
+    + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
     + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>';
@@ -12560,7 +12768,8 @@ async function vpmInChunks(ids, read) {
 
 async function vpmStats(env, venues) {
   const blank = () => ({ games: 0, games_by_type: {}, nights: 0, players: 0, phones: 0, regulars: 0, questions_asked: 0,
-                         answers_given: 0, raffle_draws: 0, member_draws: 0, prizes_given: 0, prizes_value_cents: 0,
+                         answers_given: 0, raffle_draws: 0, member_draws: 0, prizes_given: 0,
+                         prizes_cash_count: 0, prizes_cash_cents: 0, prizes_other_count: 0, prizes_other_cents: 0, prizes_unvalued: 0,
                          opt_ins: 0, biggest_night: null, busiest_day: null, players_this_month: 0, players_last_month: 0,
                          games_this_month: 0, games_last_month: 0 });
   const per = {}; venues.forEach((v) => { per[v.id] = Object.assign({ venue_id: v.id, venue_name: v.name }, blank()); });
@@ -12635,11 +12844,20 @@ async function vpmStats(env, venues) {
     'draw_id=in.(' + inl + ')&select=id,draw_id&order=id.asc'));
     dr.forEach((r) => { const vid = vOfDraw[r.draw_id]; if (vid) per[vid].member_draws++; });
   }
+  /* CASH AND OTHER PRIZES, APART (Dean, 3 Nov 2026). prizes_given_* in the view is EVERY prize it counts
+     and cash_given_* is the cash part of it, so this used to add the two and count the cash twice. Now:
+     cash (count, dollars), other prizes with a value (count, dollars), and prizes with no value at all
+     (count only; migration 150's unvalued_given_count, 0 before it is run). Never one dollar total.
+     select=*: the new column must not break the read before 150 is run. */
   const prizes = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_prizes_given',
-    'venue_id=in.(' + inl + ')&select=venue_id,prizes_given_count,prizes_given_value_cents,cash_given_count,cash_given_value_cents&order=venue_id.asc'));
+    'venue_id=in.(' + inl + ')&select=*&order=venue_id.asc'));
   prizes.forEach((r) => { const p = per[r.venue_id]; if (!p) return;
-    p.prizes_given += (r.prizes_given_count || 0) + (r.cash_given_count || 0);
-    p.prizes_value_cents += (r.prizes_given_value_cents || 0) + (r.cash_given_value_cents || 0); });
+    const all = +r.prizes_given_count || 0, allC = +r.prizes_given_value_cents || 0;
+    const cash = +r.cash_given_count || 0, cashC = +r.cash_given_value_cents || 0, unval = +r.unvalued_given_count || 0;
+    p.prizes_given += all + unval;
+    p.prizes_cash_count += cash; p.prizes_cash_cents += cashC;
+    p.prizes_other_count += Math.max(0, all - cash); p.prizes_other_cents += Math.max(0, allC - cashC);
+    p.prizes_unvalued += unval; });
   // opted_in_at only: a COUNT of people who said yes. Never a name, an address or a number.
   const optins = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_player_optins',
     'venue_id=in.(' + inl + ')&select=venue_id,opted_in_at&order=opted_in_at.asc'));
@@ -12649,7 +12867,7 @@ async function vpmStats(env, venues) {
   const list = venues.map((v) => per[v.id]);
   list.forEach((p) => {
     ['games', 'nights', 'players', 'phones', 'regulars', 'questions_asked', 'answers_given', 'raffle_draws', 'member_draws',
-     'prizes_given', 'prizes_value_cents', 'opt_ins', 'players_this_month', 'players_last_month', 'games_this_month', 'games_last_month']
+     'prizes_given', 'prizes_cash_count', 'prizes_cash_cents', 'prizes_other_count', 'prizes_other_cents', 'prizes_unvalued', 'opt_ins', 'players_this_month', 'players_last_month', 'games_this_month', 'games_last_month']
       .forEach((k) => { total[k] += p[k]; });
     Object.keys(p.games_by_type).forEach((f) => { total.games_by_type[f] = (total.games_by_type[f] || 0) + p.games_by_type[f]; });
     if (p.biggest_night && (!total.biggest_night || p.biggest_night.players > total.biggest_night.players)) {
@@ -13082,7 +13300,10 @@ async function vpbMonthReport(request, env, json) {
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  const venue = o.venues.find((v) => v.id === String(b.venue_id || '').trim()) || (o.venues.length === 1 && !b.venue_id ? o.venues[0] : null);
+  /* No venue named: the login's first venue, never "Pick one of your venues" (Dean, 3 Nov 2026: with no nights yet the
+     report said "pick a venue"). The page then shows the venue drop-down to change it. A venue that is named and is
+     not one of theirs is still refused. */
+  const venue = o.venues.find((v) => v.id === String(b.venue_id || '').trim()) || (!b.venue_id && o.venues.length ? o.venues[0] : null);
   if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
   const now = Date.now();
   const months = vprMonthsFor(venue, now);

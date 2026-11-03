@@ -65,7 +65,9 @@ var NAMES = [
   'initRaffles', 'loadRafflePanel', 'loadDrawLog', 'renderDrawLog', 'dlWhen', 'downloadDrawLog',
   'loadNightsFor', 'initNights',
   // 21 Oct 2026: the screen panel now tracks unsaved changes (a chosen logo saves itself)
-  'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow'
+  'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow',
+  // 3 Nov 2026 (Dean): ONE venue drop-down moves every panel; prizes said as cash and other, apart
+  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines'
 ];
 var SRC = '', MISSING = [];
 /* ...and the two page variables those read, lifted as they are written, never restated here. */
@@ -76,7 +78,8 @@ var SRC = '', MISSING = [];
 });
 NAMES.forEach(function (n) { var s = lift(n); if (s) SRC += s + '\n'; else MISSING.push(n); });
 /* The entry points must exist in ANY version of the page, or this suite tests nothing. */
-['initScreen', 'initRaffles', 'initMembersDraws', 'initNights', 'loadMembersDrawFor', 'saveMembersDraw', 'fillMembersDraw', 'loadRafflesFor']
+['initScreen', 'initRaffles', 'initMembersDraws', 'initNights', 'loadMembersDrawFor', 'saveMembersDraw', 'fillMembersDraw', 'loadRafflesFor',
+ 'switchAccountVenue', 'prizeTallyLines']
   .forEach(function (n) { if (MISSING.indexOf(n) >= 0) throw new Error(n + ' is not in ' + PAGE + ' any more'); });
 
 /* ---------------- a fake DOM, just enough of one ---------------- */
@@ -154,6 +157,7 @@ function makePage(opts) {
   var store = opts.storage || {};
   var localStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
   var window = { location: { origin: 'https://venueplay.com.au' } };
+  if (opts.venuePick) window.VPVenuePick = opts.venuePick;   // the shared current venue (vp-venuepick.js)
   var messages = [], apiCalls = [], gameCalls = [];
   var showMsg = function (t) { messages.push(String(t)); };
   var confirm = function () { return opts.confirm !== false; };
@@ -216,6 +220,10 @@ function makePage(opts) {
   var pmSeq = 0, rfSaved = null, rfPrizeCount = null, mkVenues = [], mkCurrent = null, VENUE_SITE = 'https://venueplay.com.au';
   var dlRows = [], dlVenueName = '';
   var ntVenues = [], ntCurrent = null;
+  var acctPick = null, PANEL_PICKS = ['ntVenue', 'mkVenue', 'rfVenue', 'mdVenue', 'screenVenue'];
+  var lastHosts = null, acctVenues = [], hostRenders = [];
+  var renderHosts = function (h) { hostRenders.push(h); };
+  var buildHostVenuePicker = function () {};
   /* Not under test: how a night is drawn. Record what it was handed. */
   var renderNights = function (n) { $('nights').innerHTML = 'rendered ' + (n || []).length; };
 
@@ -522,6 +530,53 @@ Promise.resolve()
     check('current venue on another account: opens on the venue picked for this one', p.peek('rfCurrent') === 'v-B', p.peek('rfCurrent'));
     check('and with nothing else to go on, the first', q.peek('rfCurrent') === 'v-A', q.peek('rfCurrent'));
   });
+})
+
+/* ======================= Z. ONE VENUE DROP-DOWN, AND PRIZES SAID APART (Dean, 3 Nov 2026) ======================= */
+.then(function () {
+  print('');
+  print('Z. One venue drop-down moves every panel; the current venue comes first; prizes cash and other apart');
+  var p = makePage({ venues: [A, B], tables: okTables(), raffles: {} });
+  p.call('initRaffles'); p.call('initMembersDraws'); p.call('initNights');
+  return settle().then(function () {
+    check('CONTROL: every panel opened on Alpha first', p.peek('rfCurrent') === 'v-A' && p.peek('mdCurrent') === 'v-A' && p.peek('ntCurrent') === 'v-A',
+      [p.peek('rfCurrent'), p.peek('mdCurrent'), p.peek('ntCurrent')]);
+    var ok1 = p.call('switchAccountVenue', 'v-B', 'Bravo Tavern');
+    return settle().then(function () {
+      check('Bravo chosen at the top: Raffles, Members and Nights ALL move to Bravo (the raffle-then-members fault)',
+        ok1 === true && p.peek('rfCurrent') === 'v-B' && p.peek('mdCurrent') === 'v-B' && p.peek('ntCurrent') === 'v-B',
+        [p.peek('rfCurrent'), p.peek('mdCurrent'), p.peek('ntCurrent')]);
+      check('...the members draw shown is Bravo\'s own, not Alpha\'s', p.peek('mdDraw && mdDraw.id') === 'd-bravo', p.peek('mdDraw && mdDraw.id'));
+      check('...the monthly report link names Bravo', /report\.html\?venue=v-B$/.test(p.$('reportLink').href || ''), p.$('reportLink').href);
+    });
+  });
+})
+.then(function () {
+  var picked = [];
+  var VPV = { current: function () { return 'v-B'; }, set: function (id) { picked.push(id); } };
+  var p = makePage({ venues: [A, B], venuePick: VPV, storage: { vpImpersonate: JSON.stringify({ id: 'v-A', name: 'Alpha Hotel' }) }, tables: okTables() });
+  p.call('initRaffles'); p.call('initMembersDraws');
+  return settle().then(function () {
+    check('the venue chosen on another screen (the shared current venue) beats an old View as venue: Raffles and Members open on Bravo',
+      p.peek('rfCurrent') === 'v-B' && p.peek('mdCurrent') === 'v-B', [p.peek('rfCurrent'), p.peek('mdCurrent')]);
+    p.call('switchAccountVenue', 'v-A', 'Alpha Hotel');
+    check('switching writes the choice through the one shared setter', picked.join(',') === 'v-A', picked);
+  });
+})
+.then(function () {
+  var p = makePage({ venues: [A] });
+  var L = function (row) { return p.call('prizeTallyLines', row).join(' | '); };
+  var none = L(null), both = L({ venue_id: 'v-A', prizes_given_count: 5, prizes_given_value_cents: 95000, cash_given_count: 3, cash_given_value_cents: 80000 });
+  check('no prizes: "No prizes recorded yet."', none === 'No prizes recorded yet.', none);
+  check('cash said on its own: $800.00 across 3 prizes', /Cash: \$800\.00 across 3 prizes/.test(both), both);
+  check('other prizes apart: 2 worth $150.00, never the cash counted twice', /Other prizes with a value entered: 2 prizes, worth \$150\.00/.test(both) && both.indexOf('$1,750') < 0 && both.indexOf('1750') < 0, both);
+  check('no line adds them into one dollar total ($950 or "given away in prizes")', both.indexOf('950') < 0 && !/given away in prizes/.test(both), both);
+  check('before migration 150: says a prize with no value is not counted here, and where they all are', /not counted here\. Every one is listed under Draws and raffles: who won what/.test(both), both);
+  var un = L({ venue_id: 'v-A', prizes_given_count: 3, prizes_given_value_cents: 80000, cash_given_count: 3, cash_given_value_cents: 80000, unvalued_given_count: 4 });
+  check('after migration 150: 4 with no value, counted and never priced', /no value entered, like a meat tray: 4 prizes\. They are counted, never priced\./.test(un) && /Other prizes with a value entered: none yet/.test(un), un);
+  var only = L({ venue_id: 'v-A', prizes_given_count: 0, prizes_given_value_cents: 0, cash_given_count: 0, cash_given_value_cents: 0, unvalued_given_count: 2 });
+  check('only meat trays: still counted, not "No prizes recorded yet."', /2 prizes\. They are counted/.test(only), only);
+  check('trivia, bingo and musical bingo prizes are named as not in the figures', /Trivia, bingo and musical bingo prizes are not in these figures/.test(both), both);
 })
 
 .then(function () {

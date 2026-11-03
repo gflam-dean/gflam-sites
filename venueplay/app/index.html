@@ -710,6 +710,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="/app/vp-venuepick.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
 <script src="vp-gaming.js"></script>
@@ -1239,6 +1240,9 @@
 
       box.innerHTML="";
       if(mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }  // only one after all: just go in
+      /* The venue already chosen on another screen (Your account's drop-down, vp-venuepick.js) is offered first. */
+      var _cur=null; try{ _cur=(typeof window!=="undefined" && window.VPVenuePick && window.VPVenuePick.current()) || null; }catch(e){}
+      mine.sort(function(a,b){ return (a.id===_cur?0:1)-(b.id===_cur?0:1); });
       if(!mine.length){
         /* Everything they had is closed. Say so, rather than dropping them on the pair screen with
            no explanation, which reads as a broken login. */
@@ -1255,6 +1259,9 @@
         var b=document.createElement("button"); b.className="btn pink big"; b.textContent=v.name;
         b.addEventListener("click", function(){
           markVenuePick(v.id);
+          /* ONE CURRENT VENUE (Dean, 3 Nov 2026: chose The Mini Bar, Your account opened on Gflam Group). The pick
+             is written where every screen reads it, View as included (vp-venuepick.js). */
+          try{ if(window.VPVenuePick) VPVenuePick.set(v.id, v.name); }catch(e){}
           VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; praffleTile(ctx); updateAccountLink(); var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
         });
         box.appendChild(b);

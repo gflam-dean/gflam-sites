@@ -92,6 +92,8 @@
     .seg .opt{min-height:44px;display:flex;align-items:center;justify-content:center}
   }
 </style>
+<!-- On-brand dropdowns: the venue drop-down (3 Nov 2026). Linked last so it is the answer. -->
+<link rel="stylesheet" href="/app/vp-select.css">
 </head>
 <body>
 <header>
@@ -110,6 +112,9 @@
   <div class="authsub" id="vSub">Loading...</div>
 
   <div id="body" class="hidden">
+    <!-- THE SAME VENUE DROP-DOWN AS EVERY OTHER SCREEN (vp-venuepick.js, Dean 3 Nov 2026). Shown when this login
+         looks after more than one venue. Changing it opens that venue's settings. -->
+    <div id="setPick" hidden style="margin:0 0 6px"></div>
     <div id="migWarn" class="warn hidden">The player-data options are still being switched on for your venue. Until then, only the name style below saves.</div>
 
     <div class="warn" id="ownerOnlyNote" style="display:none">Name display and what players are asked for are set by your account owner. Ask them if you need any of it changed. Your venue code is below.</div>
@@ -164,6 +169,19 @@
         <p class="msg warn hidden" id="optinNoContact">The opt-in tick is on, but you are not collecting an email or a mobile, so there is nothing to add anyone to. Turn on Email or Mobile above, or these opt-ins will not be recorded.</p>
       </div>
 
+      <!-- WHOLE GROUP OR THIS VENUE ONLY (Dean, 3 Nov 2026: "groups have one marketing team"). Only for a login
+           that looks after more than one venue on the account. The name display above and what players are
+           asked for are saved to every venue ticked here; permits are never copied (they belong to one venue). -->
+      <div class="card owneronly hidden" id="scopeCard">
+        <div class="lbl">Save these for</div>
+        <div class="sublbl">The name display and what players are asked for. Your bingo permit below always stays with this venue.</div>
+        <div class="seg" id="scopeSeg">
+          <div class="opt on" data-scope="venue" id="scopeVenue">This venue only</div>
+          <div class="opt" data-scope="group" id="scopeGroup">Whole group</div>
+        </div>
+        <div class="note" id="scopeNote" style="margin-top:8px"></div>
+      </div>
+
       <div class="savebar">
         <button class="btn pink" id="saveBtn">Save settings</button>
         <div class="msg" id="msg"></div>
@@ -188,6 +206,7 @@
 
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="vp-session.js"></script>
+<script src="/app/vp-venuepick.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="vp-permits.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
@@ -233,12 +252,61 @@
     $("vTitle").textContent=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"Venue settings";
     $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
     fill(ctx.settings||{});
+    paintVenuePick(ctx);
     gateMarketing(ctx);
     gateOwnerOnly(ctx);
     paintVenueCode();
     paintPermits(ctx);
     $("body").classList.remove("hidden");
   });
+
+  /* ONE VENUE DROP-DOWN, AND THE GROUP (Dean, 3 Nov 2026). The venues this login may change settings for: an
+     admin, every venue on the same account or group as this one; staff, the venues they OWN (what players are
+     asked is an owner decision, gateOwnerOnly). The drop-down is the shared one; "Whole group" saves to all of them. */
+  var groupVenues=[];
+  function settingsVenues(ctx, vs){
+    var cur=ctx.venue||{}, own={};
+    (ctx.staff||[]).forEach(function(r){ if(r.role==="owner" || r.role==="manager") own[r.venue_id]=true; });   // a restricted manager never sees the choice (.owneronly)
+    return (vs||[]).filter(function(v){
+      if(v.status==="suspended" && String(v.suspended_reason||"").indexOf("archived")===0) return false;
+      if(ctx.isAdmin) return v.id===cur.id || (cur.founding_id && v.founding_id===cur.founding_id) || (cur.group_id && v.group_id===cur.group_id);
+      return !!own[v.id] || v.id===cur.id;
+    });
+  }
+  function paintVenuePick(ctx){
+    if(!VP.listVenues) return;
+    VP.listVenues().then(function(vs){
+      groupVenues=settingsVenues(ctx, vs);
+      if(window.VPVenuePick){
+        VPVenuePick.mount($("setPick"), { venues:groupVenues, value:venueId, label:"Venue",
+          onChange:function(id, name){ VPVenuePick.set(id, name); location.href="settings.html?venue="+encodeURIComponent(id); return true; } });
+      }
+      var many=groupVenues.length>1, card=$("scopeCard");
+      if(card) card.classList.toggle("hidden", !many);
+      if(many){ $("scopeGroup").textContent="Whole group ("+groupVenues.length+" venues)"; paintScope(); }
+    }).catch(function(){});
+  }
+  var scope="venue";
+  function paintScope(){
+    Array.prototype.forEach.call($("scopeSeg").children, function(o){ o.classList.toggle("on", o.getAttribute("data-scope")===scope); });
+    var names=groupVenues.map(function(v){ return v.name; });
+    $("scopeNote").textContent = scope==="group"
+      ? "Saving changes all "+groupVenues.length+": "+names.join(", ")+"."
+      : "Saving changes "+(($("vTitle").textContent)||"this venue")+" only.";
+  }
+  $("scopeSeg").addEventListener("click", function(e){
+    var o=e.target.closest(".opt"); if(!o) return;
+    scope=o.getAttribute("data-scope"); paintScope();
+  });
+  /* The same patch to every other venue in the group. Each one is its own save; the page says how many landed. */
+  function saveToGroup(patch){
+    if(scope!=="group") return Promise.resolve({ others:0, failed:[] });
+    var others=groupVenues.filter(function(v){ return v.id!==venueId; });
+    var failed=[];
+    return Promise.all(others.map(function(v){
+      return VP.saveSettings(v.id, patch).catch(function(){ failed.push(v.name); });
+    })).then(function(){ return { others:others.length-failed.length, failed:failed }; });
+  }
 
   /* PERMITS AND AUTHORITIES: /app/vp-permits.js paints and saves the card (one copy, shared with
      Your account > Draws, which holds the raffle and members-draw permits). Only bingo is asked
@@ -365,8 +433,11 @@
     var patch={ name_display:state.name_display };
     TOGGLES.forEach(function(k){ patch[k]=state[k]; });
 
-    VP.saveSettings(venueId, patch).then(function(){
+    VP.saveSettings(venueId, patch).then(function(){ return saveToGroup(patch); }).then(function(grp){
       btn.disabled=false; btn.textContent="Save settings";
+      var groupWords = (grp && (grp.others || grp.failed.length))
+        ? (" Also saved for "+grp.others+" other venue"+(grp.others===1?"":"s")+" in your group."+(grp.failed.length?" Not saved for "+grp.failed.join(", ")+": try again.":""))
+        : "";
       /* A database trigger (migration 21/28) can silently rewrite the marketing toggles back to
          false when the account is not approved to collect player contact details. This screen
          reported "Saved." either way, so an owner turned Email on, was told it saved, and it was
@@ -405,12 +476,12 @@
           /* Now we know. Lock them, so nobody flicks the same switch twice. */
           mayCollect=false; lockGated();
           msg.className="msg warn";
-          msg.textContent="Saved, but "+refused.join(", ")+" could not be switched on. Collecting player contact details needs your account approved first. Email us and we will sort it.";
+          msg.textContent="Saved, but "+refused.join(", ")+" could not be switched on. Collecting player contact details needs your account approved first. Email us and we will sort it."+groupWords;
         } else {
           if(GATED.some(function(k){ return patch[k]===true; })) { mayCollect=true; lockGated(); }
-          msg.className="msg ok"; msg.textContent="Saved.";
+          msg.className="msg ok"; msg.textContent="Saved."+groupWords;
         }
-      }).catch(function(){ msg.className="msg ok"; msg.textContent="Saved."; });
+      }).catch(function(){ msg.className="msg ok"; msg.textContent="Saved."+groupWords; });
     }).catch(function(e){
       btn.disabled=false; btn.textContent="Save settings";
       var m=(e&&e.message)?e.message:"Could not save.";

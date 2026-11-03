@@ -576,3 +576,11 @@ BEFORE 149: 148 re-creates the check without the three new values. No new table,
 RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the needs-you pages say "not
 switched on yet" and record nothing; the other buttons are unchanged. NUMBER: 140 to 148 are taken on other branches,
 so 149. Branch `fix/autopilot-needs-you-buttons-3nov`. NOT RUN. Rollback: in the file.
+
+`venueplay-150-prizes-unvalued-count.sql` (Dean, 3 Nov 2026: "$800 given away in prizes" left things out): adds ONE column
+at the end of `v_vp_prizes_given`, `unvalued_given_count`, the raffle wins given with no dollar value typed and no jackpot (a
+meat tray). Every existing column is unchanged row for row (the view's live definition, read back 3 Nov 2026, is the first
+two branches). security_invoker, the authenticated grant and the anon revoke are put back exactly as 85 left them, so
+RLS-BASELINE.json does not change. Either order with the site: Your account > Draws reads the new column when it is there and
+says "not counted here" when it is not. NUMBER: 140 to 149 are taken on other branches, so 150. Branch `fix/console-hq-5nov`.
+NOT RUN. Read-back queries in the file.
