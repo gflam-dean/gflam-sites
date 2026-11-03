@@ -1,5 +1,5 @@
 {
-  "screens_fingerprint": "8c7fbc3a1e13",
+  "screens_fingerprint": "656764f9c42b",
   "checked_on": "2026-11-03",
   "screens": [
     "venueplay/tv.html",
@@ -10,7 +10,7 @@
   ],
   "per_screen": {
     "venueplay/tv.html": "285d419bbd8b",
-    "venueplay/app/trivia/screen.html": "31ad036331de",
+    "venueplay/app/trivia/screen.html": "88f771bdaa94",
     "venueplay/app/musical/screen.html": "396c50af055e",
     "venueplay/app/raffle/screen.html": "78ae8c50c17b",
     "venueplay/app/members/screen.html": "96a035dd6e20"
@@ -19,8 +19,7 @@
     "by": "Gflam AI Team",
     "on": "2026-11-03",
     "changed": [
-      "venueplay/app/trivia/screen.html",
-      "venueplay/tv.html"
+      "venueplay/app/trivia/screen.html"
     ]
   }
 }

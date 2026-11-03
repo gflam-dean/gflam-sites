@@ -306,6 +306,38 @@ def phone_header(label, path, w, h):
         B.close_tab(tid)
 
 
+# THE TRIVIA PHONE, OPTION 5 (Dean, 3 Nov 2026): the venue's logo top left in the header, our venueplay
+# wordmark moved to the bottom of the page, under the game. The header's lane still stops short of the menu
+# button, the logo sits in it, and the wordmark is drawn at the bottom at a readable size (120px or more).
+OPT5 = r"""(function(){
+  function R(e){ if(!e) return null; var s=getComputedStyle(e); if(e.classList.contains("hidden")||s.display==="none") return null;
+    var b=e.getBoundingClientRect(); return b.width>0 ? {l:b.left,t:b.top,r:b.right,b:b.bottom,w:b.width,h:b.height} : null; }
+  var pt=document.querySelector(".ptop"), pb=pt.getBoundingClientRect(), ps=getComputedStyle(pt);
+  var lg=document.getElementById("venueLogo");
+  return JSON.stringify({logo:R(lg), menu:R(document.getElementById("menuBtn")), head:R(pt),
+    lane:{l:pb.left+parseFloat(ps.paddingLeft), r:pb.right-parseFloat(ps.paddingRight)},
+    topmark:R(document.querySelector(".ptop svg[data-vp-mark]")), foot:R(document.querySelector(".pfoot svg[data-vp-mark=wordmark]")),
+    view:R([].filter.call(document.querySelectorAll(".view"),function(v){return !v.classList.contains("hidden");})[0]), W:innerWidth,
+    ready: !!(lg && lg.complete && lg.naturalWidth)});
+})()"""
+
+def phone_header_opt5(label, path, w, h):
+    tid, sid = open_page(path, w, h, True)
+    try:
+        v = until(sid, '(function(){var m=JSON.parse(%s);return m.ready && m.logo ? JSON.stringify(m) : "";})()' % OPT5, 30)
+        time.sleep(2)
+        m = json.loads(ask(sid, OPT5) or '{}')
+        tag = '%s header at %d wide' % (label, w)
+        L, M, N = m.get('logo'), m.get('menu'), m.get('lane')
+        ok(tag + ': the venue logo is top left in the header', bool(L) and L['l'] <= 20 and L['t'] >= m['head']['t'] and L['b'] <= m['head']['b'], (L, m.get('head')))
+        ok(tag + ': clear of the menu button, inside a lane that stops 8px short of it', bool(L and M and N) and not hits(L, M) and N['r'] <= M['l'] - 8 and L['r'] <= N['r'], (L, M, N))
+        ok(tag + ': no venueplay mark in the header any more', m.get('topmark') is None, m.get('topmark'))
+        F, V = m.get('foot'), m.get('view')
+        ok(tag + ': our wordmark is at the bottom, under the game, at least 120px wide', bool(F and V) and F['t'] >= V['b'] - 1 and F['w'] >= 120 and F['r'] <= m['W'], (F, V))
+        shot(sid, 'chrome-header-opt5-%s-%d' % (label.replace('/', '-'), w))
+    finally:
+        B.close_tab(tid)
+
 # THE GAME NAME IS WHOLE (queued fault, 1 Nov 2026): at 320 wide the musical phone's header, with the new
 # wordmark, cut "Musical Bingo". Measured where it is painted: the name is one line of its own (one client
 # rect for its text), as wide as the text itself (nothing ellipsed or narrowed), inside the screen and the
@@ -806,7 +838,8 @@ try:
     phone_logo('musical/play', '/app/musical/play.html?room=TUGUN2', 320, 640)
     phone_header('play', '/play?demo=1', 320, 640)
     phone_header('play', '/play?demo=1', 390, 844)
-    phone_header('trivia/play', '/app/trivia/play.html?demo=1', 320, 640)
+    phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 320, 640)
+    phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 390, 844)
     phone_header('musical/play', '/app/musical/play.html?demo=1', 320, 640)
     phone_header('musical/play', '/app/musical/play.html?demo=1', 390, 844)
     print('\nTHE MUSICAL PHONE: the game name whole beside the new wordmark, at every common phone width')

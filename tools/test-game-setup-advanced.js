@@ -318,6 +318,13 @@ var cl = cleanGamePrefs('bingo', { prizes: lots }).prizes || {};
 ok('the Worker keeps at most 12, only real pattern keys, only text, each cut to 60 characters', Object.keys(cl).length === 12 && !('bogus' in cl) && !('two' in cl) &&
    Object.keys(cl).every(function (k) { return cl[k].length <= 60; }), cl);
 ok('and a save of every prize stays under the size cap', JSON.stringify(cleanGamePrefs('bingo', { pattern: 'one', prize: 'y'.repeat(120), cards: 6, caller: true, allow_early: true, prizes: lots })).length < 2000);   // GAME_PREFS_MAX_CHARS in the game Worker
+// 3 Nov 2026: trivia's time's-up buzzer switch is part of the venue's saved trivia setup (a boolean, nothing else).
+ok('trivia keeps the time\'s-up buzzer switch, on or off, and nothing that is not a yes or no',
+   cleanGamePrefs('trivia', { buzzer: false }).buzzer === false && cleanGamePrefs('trivia', { buzzer: true }).buzzer === true &&
+   cleanGamePrefs('trivia', { buzzer: 'off' }).buzzer === undefined);
+ok('trivia keeps where the buzzer plays, the TV or this device, and nothing else',
+   cleanGamePrefs('trivia', { buzzer_where: 'device' }).buzzer_where === 'device' && cleanGamePrefs('trivia', { buzzer_where: 'tv' }).buzzer_where === 'tv' &&
+   cleanGamePrefs('trivia', { buzzer_where: 'phone' }).buzzer_where === undefined);
 // A pattern made in the editor from the setup list is the one chosen, and saved as the venue's choice.
 resetDb({}); POSTS = [];
 var p3 = bingoTablet(); p3.startBingoPrefs(); flush();

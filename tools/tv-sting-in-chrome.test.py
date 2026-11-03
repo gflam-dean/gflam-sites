@@ -277,14 +277,16 @@ LAND_SIZES = ((320, 568), (375, 667), (390, 844), (430, 932), (844, 390))
 LAND_PAGES = (('/play?demo=1&sting=1', 'bingo'), ('/app/trivia/play?demo=1&sting=1', 'trivia'), ('/app/musical/play?demo=1&sting=1', 'musical bingo'))
 # ours: the show's wordmark group; theirs: the header's own wordmark path (the white letters, triangle apart)
 LAND = r"""(function(){
-  var g=document.getElementById("vppWg"), h=document.querySelector('.brand svg[data-vp-mark="wordmark"]');
+  var g=document.getElementById("vppWg"), h=document.querySelector('.brand svg[data-vp-mark="wordmark"]') || document.querySelector("svg.vp-wm");
   if(!g||!h) return {missing:[!!g,!!h]};
   var a=g.getBoundingClientRect(), b=h.querySelector("path").getBoundingClientRect();
   var d=Math.max(Math.abs(a.left-b.left),Math.abs(a.top-b.top),Math.abs(a.right-b.right),Math.abs(a.bottom-b.bottom));
   return {d:Math.round(d*100)/100, ours:[a.left,a.top,a.width,a.height].map(Math.round), head:[b.left,b.top,b.width,b.height].map(Math.round),
           hidden:getComputedStyle(h).visibility==="hidden"};
 })()"""
-HEAD_SHOWN = '(function(h){return !!h && getComputedStyle(h).visibility!=="hidden";})(document.querySelector(\'.brand svg[data-vp-mark="wordmark"]\'))'
+# The mark the show lands on is the page's own (vp-sting headMark): the header's wordmark, or, on the trivia
+# phone since its option 5 header (3 Nov 2026), our wordmark at the bottom of the page.
+HEAD_SHOWN = '(function(h){return !!h && getComputedStyle(h).visibility!=="hidden";})(document.querySelector(\'.brand svg[data-vp-mark="wordmark"]\') || document.querySelector("svg.vp-wm"))'
 
 def phone_show_ready(r, sid):
     """The page's own show if its demo starts one, else started by hand; the clock is the test's (manual)."""

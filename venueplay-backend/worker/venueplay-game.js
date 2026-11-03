@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 02:15 · d7388bb6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 13:51 · b9d68ca9';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3675,6 +3675,8 @@ const GAME_PREFS_KEYS = {
     speed_bonus:   gpBool,
     double_points: gpBool,
     double_last:   gpInt(1, 100),
+    buzzer:        gpBool,   // the time's-up buzzer, OFF unless the venue switches it on (3 Nov 2026)
+    buzzer_where:  (v) => ({ tv: 1, device: 1 }[v] ? v : undefined),   // where it plays: the TV, or the host's own device
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)

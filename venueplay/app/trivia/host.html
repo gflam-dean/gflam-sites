@@ -70,6 +70,8 @@
   .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
   .seg button{flex:1;min-height:44px;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
   .seg button.on{background:var(--pink);color:#0A0A0B}
+  .seg.mini{display:inline-flex;padding:3px;gap:3px;border-radius:9px}
+  .seg.mini button{flex:none;min-height:30px;padding:4px 12px;font-size:12.5px;border-radius:7px}
 
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:80px}
@@ -219,6 +221,17 @@
 
       <!-- left: run -->
       <div class="panel">
+        <!-- THE TIME'S-UP BUZZER (Dean, 3 Nov 2026): a short sound when the question clock reaches 0. A compact
+             row: OFF unless the host switches it on, and WHERE it plays: the TV's own sound (which also covers a
+             soundbar or amp on the TV's HDMI) or this device (a phone or tablet plugged into the venue's PA, the
+             way they play music). Both remembered for the venue between nights. -->
+        <div class="buzzrow" id="buzzerRow" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 14px;font-size:13px;color:var(--muted)">
+          <span style="font-weight:700;color:var(--text)">Time's-up buzzer</span>
+          <span class="seg mini" id="cfgBuzzer" role="group" aria-label="Time's-up buzzer"><button type="button" data-v="on" aria-pressed="false">On</button><button type="button" data-v="off" class="on" aria-pressed="true">Off</button></span>
+          <span id="buzzWhereWrap" style="display:inline-flex;align-items:center;gap:8px">plays on
+            <span class="seg mini" id="cfgBuzzWhere" role="group" aria-label="Where the buzzer plays"><button type="button" data-v="tv" class="on" aria-pressed="true">TV</button><button type="button" data-v="device" aria-pressed="false">This device</button></span></span>
+        </div>
+        <div class="note hidden" id="tvSoundNote" style="margin:-6px 0 12px;color:var(--roll)">TV sound is off: press OK on the TV remote once to turn it on.</div>
         <div id="setupBlock">
           <div class="field">
             <label style="display:flex;justify-content:space-between;align-items:center">Question set
@@ -330,6 +343,7 @@
 <script src="../vp-session.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
@@ -486,7 +500,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, doublePoints:false, doubleLast:10, doubleSeqs:[],
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
@@ -662,9 +676,9 @@
             if(typeof p.cur.ci==="number") G.current.correctIndex=p.cur.ci;
             if(p.cur.pids && typeof p.cur.pids==="object") G.answeredPids=p.cur.pids;
           }
-          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"), imageUrl:G.current.imageUrl, double:isDouble(G.current.qseq) });
           readBoard();   // the scores so far, WITHOUT revealing the open question (see readBoard)
-          if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
+          if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); try{ hostTimesUp(); }catch(e){} } }, 500); }
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0, imageUrl:q.image_url||"" };
@@ -1093,9 +1107,9 @@
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
-        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"", double:isDouble(r.qseq) });
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"), imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
-      G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
+      G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); try{ hostTimesUp(); }catch(e){} } }, 500);
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   /* Refill the leaderboard after a reload. G.board is ONLY ever set from a /host/reveal response,
@@ -1426,7 +1440,7 @@
     if(G.status==="question" && G.current){
       to({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
            text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
-           secs:remainingSecs(), colour:G.colour,
+           secs:remainingSecs(), colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"),
            imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });   // without this a replayed picture round loses its picture
       if(remainingSecs()<=0) to({ t:"lock" });
     } else if(G.defer && G.status==="reveal" && G.current){
@@ -1446,9 +1460,12 @@
   }
     if(m.t==="tv_here"){
       $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      /* The TV says whether its sound could play (the time's-up buzzer). Blocked: one line under the switch. */
+      if(m.sound==="off" || m.sound==="on"){ var _sn=$("tvSoundNote"); if(_sn){ if(m.sound==="off" && tvBuzz()) _sn.textContent="TV sound is off: press OK on the TV remote once to turn it on."; _sn.classList.toggle("hidden", m.sound!=="off" || !tvBuzz()); } }
       if(m.hello){
         // A freshly (re)loaded screen: re-hand the session + replay the running state.
         send({ t:"host_here", cid:G.consoleId });
+        send({ t:"buzzer", on:tvBuzz() });
         if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
         if(G.status!=="setup"){ send({ t:"mode", mode:"trivia", title:G.setTitle }); send({ t:"players", count:playerCount() }); }
         /* REPLAY WHAT IS ACTUALLY ON. trivia/screen.html never calls the game Worker, so a
@@ -1853,6 +1870,48 @@
     document.querySelectorAll("#cfgRoundType button").forEach(function(x){ x.classList.toggle("on", x===b); });
     renderConsole();
   }); });
+  /* The time's-up buzzer switch. Remembered per venue in this browser; the TV is told at once, and every
+     question carries it too, so a TV that reloads picks it up again. */
+  function buzzKey(){ return "vpTriviaBuzzer:"+(G.venueId||""); }
+  function whereKey(){ return "vpTriviaBuzzWhere:"+(G.venueId||""); }
+  /* What the TV is told: sound the buzzer only when it is on AND it plays on the TV. */
+  function tvBuzz(){ return G.buzzer===true && G.buzzWhere!=="device"; }
+  function paintSeg(id, val){ var sg=$(id); if(!sg || !sg.children) return;
+    Array.prototype.forEach.call(sg.children, function(bt){ var on=bt.getAttribute("data-v")===val; bt.classList.toggle("on", on); bt.setAttribute("aria-pressed", on?"true":"false"); }); }
+  function paintBuzzer(){ paintSeg("cfgBuzzer", G.buzzer ? "on" : "off"); paintSeg("cfgBuzzWhere", G.buzzWhere==="device" ? "device" : "tv");
+    var ww=$("buzzWhereWrap"); if(ww && ww.style) ww.style.opacity = G.buzzer ? "1" : ".45"; }
+  /* This console's own note of the switch, read at sign-in; the venue's saved setup (game_prefs "buzzer" and
+     "buzzer_where") then wins, so another tablet at the venue starts the night the same way. OFF unless on. */
+  function loadBuzzer(){
+    try{ G.buzzer = localStorage.getItem(buzzKey())==="1"; }catch(e){ G.buzzer=false; }
+    try{ G.buzzWhere = localStorage.getItem(whereKey())==="device" ? "device" : "tv"; }catch(e){ G.buzzWhere="tv"; }
+    paintBuzzer();
+  }
+  function buzzChanged(save){
+    try{ localStorage.setItem(buzzKey(), G.buzzer?"1":"0"); localStorage.setItem(whereKey(), G.buzzWhere); }catch(e){}
+    paintBuzzer();
+    if(!tvBuzz()){ var sn=$("tvSoundNote"); if(sn) sn.classList.add("hidden"); }
+    send({ t:"buzzer", on:tvBuzz() });
+    if(save) queueTriviaPrefs();
+  }
+  function setBuzzer(on, save){ G.buzzer=!!on; if(G.buzzer && G.buzzWhere==="device") unlockHostAudio(); buzzChanged(save); }
+  function setBuzzWhere(where, save){ G.buzzWhere = where==="device" ? "device" : "tv"; if(G.buzzWhere==="device") unlockHostAudio(); buzzChanged(save); }
+  /* THIS DEVICE: the console plays the buzzer itself when the clock reaches 0 (the TV stays silent). A tap
+     on the console unlocks its sound; if the browser still blocks it, a line under the switch says so. */
+  var _hac=null;
+  function unlockHostAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_hac) _hac=new AC(); if(_hac.state==="suspended") _hac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", function(){ if(G.buzzer && G.buzzWhere==="device") unlockHostAudio(); });
+  function hostTimesUp(){
+    if(G.buzzer!==true || G.buzzWhere!=="device") return false;
+    if(!window.VPBuzzer) return false;
+    unlockHostAudio();
+    window.VPBuzzer.play(_hac, function(sound){ var sn=$("tvSoundNote"); if(!sn) return;
+      if(sound==="off"){ sn.textContent="This device's sound is off: tap the screen once, and check it is not on silent."; sn.classList.remove("hidden"); }
+      else sn.classList.add("hidden"); });
+    return true;
+  }
+  document.querySelectorAll("#cfgBuzzer button").forEach(function(b){ b.addEventListener("click", function(){ setBuzzer(b.getAttribute("data-v")==="on", true); }); });
+  document.querySelectorAll("#cfgBuzzWhere button").forEach(function(b){ b.addEventListener("click", function(){ setBuzzWhere(b.getAttribute("data-v"), true); }); });
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
     document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
@@ -1873,11 +1932,17 @@
     var t=parseInt(($("cfgTime")||{}).value,10); if(t>=5 && t<=60) p.time_s=t;
     var b=parseInt(($("cfgBase")||{}).value,10); if(b>=0 && b<=100000) p.base_points=b;
     p.speed_bonus=!!G.speedBonus;
+    p.buzzer=G.buzzer===true;   // the time's-up buzzer switch (3 Nov 2026), OFF unless switched on
+    p.buzzer_where=G.buzzWhere==="device" ? "device" : "tv";
     p.double_points=!!G.doublePoints;
     p.double_last=Math.max(1, Math.min(100, parseInt(G.doubleLast,10)||10));
     return p;
   }
   function applyTriviaPrefs(p){
+    if(p && (typeof p.buzzer==="boolean" || p.buzzer_where)){   // the venue's own switch, even mid-quiz
+      if(typeof p.buzzer==="boolean") G.buzzer=p.buzzer;
+      if(p.buzzer_where==="tv" || p.buzzer_where==="device") G.buzzWhere=p.buzzer_where;
+      try{ localStorage.setItem(buzzKey(), G.buzzer?"1":"0"); localStorage.setItem(whereKey(), G.buzzWhere); }catch(e){} paintBuzzer(); }
     if(!p || G.status!=="setup") return;   // a quiz brought back keeps its own settings
     var sel=$("setSel");
     if(p.set_id && sel && !setFromUrl()){   // "Run it now" from the builder (?set=) always wins
@@ -1984,6 +2049,7 @@
       if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
+      loadBuzzer();    // the time's-up buzzer switch, as this venue left it (on by default)
       weeklyPreCheck(ctx.venue);
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
@@ -2032,7 +2098,7 @@
     if(G.status==="question" && G.current){
       send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
              text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
-             secs:remainingSecs(), colour:G.colour, imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
+             secs:remainingSecs(), colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"), imageUrl:(G.current.imageUrl||""), double:isDouble(G.current.qseq) });
       if(remainingSecs()<=0) send({ t:"lock" });
     } else if(G.status==="reveal" && G.current){
       send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,

@@ -468,7 +468,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 169,
+  "checks": 171,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
@@ -855,6 +855,10 @@
   "checks": 105,
   "counted_by": "lines"
  },
+ "tools/test-trivia-newlook.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -979,6 +983,10 @@
   "checks": 29,
   "counted_by": "lines"
  },
+ "tools/trivia-newlook-in-chrome.test.py": {
+  "checks": 120,
+  "counted_by": "lines"
+ },
  "tools/tv-and-phone-in-chrome.test.py": {
   "checks": 100,
   "counted_by": "lines"
@@ -1016,7 +1024,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 409,
+  "checks": 414,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

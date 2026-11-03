@@ -582,16 +582,24 @@ def main():
             down = {'/help/content?brand=venueplay&audience=patron': {'status': 500, 'body': {}}} if 'musical' in name else None
             t = Tab(b, routes=down)
             t.go(VP + path)
-            t.until('!!document.getElementById("vphLink")', 15)
+            # The trivia phone keeps Help ONLY in its menu, top right (Dean, 3 Nov 2026: data-menu-only="1").
+            menu_only = 'trivia' in name
+            t.until('!!document.getElementById("%s")' % ('vphMenu' if menu_only else 'vphLink'), 15)
             # The start-of-game show is off by default (2 Nov 2026 hotfix); if a page ever plays it, it must
             # take itself off the page. Measure the game the player is left with, after it.
             check(name + ': the start-of-game show finishes and leaves the page',
                   t.until('!document.getElementById("vpSting") && !(window.VPSting && VPSting.playing())', 10) is True)
             time.sleep(1.5)
-            link_checks(t, name)
+            if menu_only:
+                check(name + ': no Help link at the foot of the page; Help is in the menu at the top right',
+                      t.js('!document.getElementById("vphLink") && !!document.getElementById("vphMenu") && document.getElementById("vphMenu").parentNode.id==="menuPanel"') is True)
+                mb = t.js('(function(){var b=document.getElementById("menuBtn").getBoundingClientRect();return [b.left,b.top,b.right,b.bottom,innerWidth];})()')
+                check(name + ': and that menu button is top right', bool(mb) and mb[1] < 80 and mb[2] >= mb[4] - 24, mb)
+            else:
+                link_checks(t, name)
             t.shot(('05-' if 'musical' in name else '06-') + name.replace(' ', '-'))
             check(name + ': Help is in the phone menu too', t.js('!!document.getElementById("vphMenu")') is True)
-            t.js('document.getElementById("vphLink").click()')
+            t.js('document.getElementById("%s").click()' % ('vphMenu' if menu_only else 'vphLink'))
             t.until('!!document.querySelector(".vph-msg")', 8)
             t.js('document.querySelector(".vph-msg").click()')
             t.until('!!document.getElementById("vphMsg")', 4)

@@ -18,29 +18,32 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:clip}
-  body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+  body{background:var(--ink);
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
     overflow-x:hidden;-webkit-tap-highlight-color:transparent}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
   .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-  /* ROOM EITHER SIDE FOR THE CORNERS (Dean, 21 Oct 2026: the VenuePlay logo "looks crammed into the
-     corner"). The menu button sits top-right and the called-ball chip top-left, both pinned over the
-     header, and the header used to be padded 16px all round, so at 320 wide "VenuePlay Musical Bingo"
-     ran under the menu button. 72px each side keeps the middle clear of both and the brand centred. */
-  .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
-  .brand{display:flex;align-items:center;justify-content:center;gap:8px}
-  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;text-align:left}
-  .brand .nw{white-space:nowrap}   /* a long game name wraps after VenuePlay, never mid-name */
+  /* THE HEADER, OPTION 5 (Dean, 3 Nov 2026): the venue's logo top left (or its name as text when it has
+     none), no player name, and our venueplay logo small at the BOTTOM of the page instead. Island-safe, and only on a phone
+     that has one (Dean, 3 Nov 2026): the header's top padding is max(12px, env(safe-area-inset-top)), the
+     footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
+     island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
+  .ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
+  .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%}
+  .brand .word{display:flex;align-items:center;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
+  .brand .vname{overflow-wrap:break-word;hyphens:manual}
+  .brand .vname.long{font-size:16px}
   .brand .div{width:1px;height:16px;background:var(--line)}
-  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
-  .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .venue{font-size:15px;color:var(--muted);margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px}
+  .vlogo{display:block;margin:0;height:56px;max-width:170px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+  .pfoot{padding:22px 16px max(10px, env(safe-area-inset-bottom, 0px));text-align:center}   /* low, just above the home bar */
+  .pfoot svg{display:inline-block;width:132px;height:auto;color:#fff}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
   .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
 
-  .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
+  .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
   .center{justify-content:center;text-align:center}
   .hidden{display:none!important}
 
@@ -62,54 +65,98 @@
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
 
-  /* question */
-  .pq-count{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--faint);text-align:center;margin-bottom:8px}
-  .pq-text{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;text-align:center;line-height:1.28;margin-bottom:8px;min-height:70px;display:flex;align-items:center;justify-content:center}
-  .pq-cd{text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--gold);margin-bottom:16px}
+  /* THE QUESTION, NEW LOOK (Dean, 3 Nov 2026): one label line, the question left with the clock ring beside
+     it, and the four answers in the TV's colours: coral, blue, amber, violet, as a coloured edge and a
+     letter chip on a dark card. The reveal uses the same layout, so the question does not move. */
+  .pq-count{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:15px;line-height:1.3;color:var(--muted);margin-bottom:12px}
+  .pq-count b{color:#fff;font-weight:700}
+  .pq-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+  .pq-text{flex:1;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
+  .pq-text.long{font-size:19px}
+  .pq-ring{flex:none;position:relative;width:72px;height:72px}
+  .pq-ring svg{position:absolute;left:0;top:0;width:100%;height:100%;transform:rotate(-90deg)}
+  .pq-ring .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
+  .pq-ring .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+  .pq-ring .n{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+  .pq-ring .n b{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1}
+  .pq-ring .n span{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;line-height:1;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+  .pq-ring.done{border:6px solid #1A1A1F;border-radius:50%}
+  .pq-cd{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* the words, for a screen reader; the ring shows the time */
   .panswers{display:flex;flex-direction:column;gap:12px}
-  .pans{--ac:154,154,164;display:flex;align-items:center;gap:14px;width:100%;padding:18px 16px;border-radius:16px;border:2px solid rgba(var(--ac),.6);background:rgba(var(--ac),.14);color:#fff;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;transition:.15s;line-height:1.18}
-  .pans.c0{--ac:255,77,77}
-  .pans.c1{--ac:77,141,255}
-  .pans.c2{--ac:255,194,75}
-  .pans.c3{--ac:53,208,127}
-  .pans.neutral{--ac:154,154,164;background:var(--ink-3);border-color:var(--line)}
-  .pans .pl{font-family:'Anton',sans-serif;font-size:26px;color:rgb(var(--ac));width:28px;text-align:center;flex:none}
+  .pans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:10px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;transition:opacity .15s,box-shadow .15s;line-height:1.12}
+  /* FULL COLOUR (Dean, 3 Nov 2026: players pick by colour at a glance). Each button is filled with its
+     letter's colour, the letter big in Anton and the answer beside it, both near-black (AA on all four). */
+  .pans.c0{--c:#FF5A4E}
+  .pans.c1{--c:#4D8DFF}
+  .pans.c2{--c:#FFA53D}
+  .pans.c3{--c:#A57BFF}
+  .pans.neutral{--c:#3A3A42;color:#fff}
+  .pans .pl{flex:none;min-width:34px;background:none;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1}   /* the letter BIG and bold, as on the old phone (Dean, 3 Nov 2026) */
   .pans.neutral .pl{color:#fff}
-  .pans.picked{outline:3px solid #fff;outline-offset:1px}
+  .pans .pt{min-width:0;overflow-wrap:break-word}
+  .panswers.alen-2 .pans{font-size:21px}
+  .panswers.alen-3 .pans{font-size:18px}
+  /* LOCKED IN: your pick outlined in its own colour and tagged, the others dim. */
+  .pans.picked{box-shadow:0 0 0 3px #0A0A0B,0 0 0 6px var(--c)}   /* the pick stays full colour, ringed */
+  .pans.picked::after{content:"Locked in";position:absolute;left:20px;top:-11px;background:#0A0A0B;color:var(--c);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
   .pans:disabled{cursor:not-allowed}
-  .pans.dim{opacity:.4}
-  .pstatus{text-align:center;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin-top:18px}
-  .pstatus.locked{color:var(--win)}
+  .pans.dim{opacity:.32}
+  .pstatus{text-align:center;font-family:'Manrope',sans-serif;font-weight:600;font-size:16px;color:var(--muted);margin-top:18px}
+  .pstatus.locked{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .pstatus.warn{color:var(--roll)}
+  .plock{display:none;margin-top:18px;border-radius:16px;background:#1A1A1F;padding:16px 18px}
+  .pstatus.locked + .plock{display:block}
+  .plock .l,.pcard .l{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
+  .plock .t,.pcard .t{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1.3;color:var(--muted);margin-top:2px}
 
-  /* result */
-  .presult{text-align:center}
-  .presult .rem{font-size:58px;line-height:1;margin-bottom:8px}
-  .presult .rtag{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;line-height:1;margin-bottom:6px}
-  .presult .rtag.good{color:var(--win)}
-  .presult .rtag.bad{color:#FF4D4D}
-  .presult .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;color:var(--gold);margin:14px 0 4px}
-  .presult .tot{font-size:14px;color:var(--text)}
-  .presult .tot b{color:#fff}
-  .presult .ca{margin:12px auto 0;max-width:340px;background:rgba(53,208,127,.10);border:1px solid rgba(53,208,127,.35);border-radius:12px;padding:10px 14px;font-size:14.5px;color:var(--text);line-height:1.35}
-  .presult .ca b{color:var(--win)}
-  .presult .ca .cl{font-family:'Anton',sans-serif;font-size:18px;color:var(--win);margin-right:6px}
-  .presult .rank{margin-top:14px;display:inline-block;background:rgba(255,31,142,.12);border:1px solid rgba(255,31,142,.3);color:var(--pink);border-radius:20px;padding:7px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px}
+  /* result: the question as it was, the right answer GREEN with a RIGHT ANSWER tag, your wrong pick
+     outlined in its own colour and tagged YOURS, the rest dim, then one card with your points and place */
+  .presult{text-align:left}
+  .presult .rem{display:none}
+  .presult .pq-ring .n b{font-size:30px}
+  .panswers.rv{gap:10px}
+  .panswers.rv .pans{min-height:66px;cursor:default}
+  .panswers.rv .pans .pl{font-size:36px}
+  .pans .cnt{margin-left:auto;padding-left:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:inherit}
+  .pans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
+  .pans.right .pl{color:#0A0A0B}
+  .pans.neutral.right .pl{color:#fff}
+  .pans.right .cnt{color:#0A0A0B;font-size:18px}
+  .pans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}   /* your wrong pick: outlined in its colour */
+  .pans.mine .pl{color:var(--c)}
+  .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
+  .pans.mine .tg{color:var(--c)}
+  .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:14px 18px;display:flex;align-items:center;gap:12px}
+  .pcard .rtag{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
+  .pcard .tot{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);margin-top:2px}
+  .pcard .tot b{color:var(--muted);font-weight:700}
+  .pcard .pts{margin-left:auto;font-family:'Anton',sans-serif;font-size:44px;line-height:1;color:#2FD08A}
+  .pcard .rank{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:#fff}
+  .presult .ca,.presult .rnext{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:22px}
-  .rankline{color:var(--muted);font-size:13px;margin-top:2px}
-  .finalwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(255,194,75,.16), transparent 65%)}
+  .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;font-size:22px}
+  .rankline{color:var(--muted);font-size:15px;margin-top:4px}
+  /* THE FINAL SCREEN (as mocked for the winner, 3 Nov 2026): left aligned, the result big in Anton, a
+     yellow rule for a winner only (yellow is for winning moments), then the points and the place. */
+  .finalwrap{text-align:left;justify-content:flex-start;padding-top:28px}
+  .finalwrap #finalEmoji{display:none}
+  .finalwrap .fk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .finalwrap.winner .fk{color:#FFD93D}
+  .finalwrap #finalBig{font-family:'Anton',sans-serif;font-size:64px;line-height:.98;color:#fff!important;margin:0 0 14px}
+  .finalwrap .frule{display:none;height:6px;background:#FFD93D;box-shadow:0 0 18px rgba(255,217,61,.55);margin:6px 0 18px}
+  .finalwrap.winner .frule{display:block}
+  .finalwrap #finalSub{font-size:18px;color:var(--muted)}
+  .finalwrap .pnote{font-size:16px;color:var(--muted)}
   /* win celebration (shared with bingo/musical) */
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
   @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-  .winner #finalBig{font-size:52px;line-height:1.02;letter-spacing:.01em;text-shadow:0 0 26px rgba(255,194,75,.65);animation:winPulse 1s ease-in-out infinite}
-  .winner #finalEmoji{font-size:78px;animation:winPulse 1.3s ease-in-out infinite}
+  .winner #finalBig{font-size:96px;line-height:.95;letter-spacing:-.01em}
   .winner #finalSub{color:#fff;font-weight:700}
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} .winner #finalBig,.winner #finalEmoji{animation:none} }
   /* menu (top-right): Light mode + Leave */
-  .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
-  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:200px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  .menubtn{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 9px);right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
+  .menupanel{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 54px);right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:200px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
   .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
   .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
@@ -117,18 +164,20 @@
   body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06); background:#F3EFF5 }
   body.light .ptop{ background:rgba(255,255,255,.92) }
   body.light .brand .word, body.light .pbig{ color:#191420 }
+  body.light .plock, body.light .pcard{ background:#FFFFFF; color:#191420 }
+  body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .plock .l, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .pfoot svg{ color:#191420!important }
+  body.light .pans.right{ background:#2FD08A; color:#0A0A0B }
   .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
-    font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+    font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <div class="ptop">
     <div class="brand">
-      <span class="word"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg> <span class="nw">Trivia</span></span>
+      <span class="word"><img id="venueLogo" class="vlogo hidden" alt=""><span class="vname" id="hdrVenueName">Trivia</span></span>
       <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
     </div>
-    <img id="venueLogo" class="vlogo hidden" alt="">
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
@@ -168,39 +217,54 @@
 
   <!-- QUESTION -->
   <div class="view hidden" id="vQ">
-    <div class="pq-count" id="pqCount">Question</div>
-    <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:38vh;object-fit:contain;border-radius:12px;margin:8px auto 0;display:block;background:#000" onerror="this.classList.add('hidden')">
-    <div class="pq-text" id="pqText">Question</div>
+    <div class="pq-count"><span>Trivia</span> &middot; <b id="pqCount">Question</b></div>
+    <div class="pq-head">
+      <div class="pq-text" id="pqText">Question</div>
+      <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
+    </div>
+    <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:30vh;object-fit:contain;border-radius:12px;margin:0 auto 16px;display:block;background:#000" onerror="this.classList.add('hidden')">
     <div class="pq-cd" id="pqCd">Answer in 20s</div>
     <div class="panswers" id="pAnswers"></div>
     <div class="pstatus" id="pStatus">Tap your answer</div>
+    <div class="plock"><div class="l">Locked in</div><div class="t">Watch the TV for the answer</div></div>
   </div>
 
   <!-- PUNTERS RECKON (feature/top-answers, switched off): drawn by /app/topanswers/pr-phone.js -->
   <div class="view hidden" id="vPR"></div>
 
-  <!-- RESULT -->
-  <div class="view center hidden" id="vRes">
+  <!-- RESULT: the question as it was, the answers marked, then your points and place -->
+  <div class="view hidden" id="vRes">
     <div class="presult">
+      <div class="pq-count"><span>Trivia</span> &middot; <b id="pResCount">Question</b></div>
+      <div class="pq-head">
+        <div class="pq-text" id="pResQ"></div>
+        <div class="pq-ring done hidden" id="pResRing"><div class="n"><b id="pResRight">0</b><span>right</span></div></div>
+      </div>
+      <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
-      <div class="rtag" id="pResTag">Correct!</div>
-      <div class="pts" id="pResPts">+130</div>
+      <div class="pcard">
+        <div><div class="rtag" id="pResTag">Correct!</div><div class="tot"><b id="pResTot">130</b> points</div></div>
+        <div class="pts" id="pResPts">+130</div>
+        <div class="rank hidden" id="pResRank">3rd of 11</div>
+      </div>
       <div class="ca hidden" id="pResCa"></div>
-      <div class="tot">Total <b id="pResTot">130</b> points</div>
-      <div><span class="rank hidden" id="pResRank">3rd of 11</span></div>
-      <div class="psub" style="margin-top:16px" id="pResNext">This stays up until the next question starts</div>
+      <div class="rnext" id="pResNext">This stays up until the next question starts</div>
     </div>
   </div>
 
   <!-- FINAL -->
   <div class="view center hidden finalwrap" id="vFinal">
     <div style="font-size:56px" id="finalEmoji">&#127881;</div>
+    <div class="fk">Trivia &middot; final scores</div>
     <div class="pbig" id="finalBig" style="color:var(--gold)">That&#39;s a wrap</div>
+    <div class="frule"></div>
     <div class="psub" id="finalSub">Thanks for playing tonight</div>
     <div class="scorebox" id="finalScore">0 points</div>
     <div class="rankline" id="finalRank"></div>
     <div class="pnote">The winners are up on the big screen.</div>
   </div>
+  <!-- our logo, small, at the bottom (option 5, 3 Nov 2026) -->
+  <div class="pfoot"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-label="venueplay" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
 </div>
 
 <!-- A DEMO DOES NOT WAIT FOR THE REALTIME LIBRARY. It is 219KB from a CDN and this page cannot
@@ -481,11 +545,24 @@
     } else { $("waitScore").classList.add("hidden"); $("waitRank").classList.add("hidden"); }
   }
 
+  /* The question's size rules and the ring, one copy each, used by the question and the result alike. */
+  function phoneQClass(q){ return "pq-text" + (String(q||"").length > 90 ? " long" : ""); }
+  function phoneAnsClass(opts){ var n=0; for(var i=0;i<(opts||[]).length;i++) n=Math.max(n, String(opts[i]==null?"":opts[i]).length);
+    return n>40 ? " alen-3" : n>22 ? " alen-2" : ""; }
+  var PRING_C=2*Math.PI*34;
+  function phoneRing(rem){
+    var r=$("pqRing"), n=$("pqCdNum"); if(!r || !n || !P.q) return;
+    var frac=Math.max(0, Math.min(1, (P.q.endsAt-Date.now())/((P.q.secs||20)*1000)));
+    r.setAttribute("stroke-dasharray", PRING_C); r.setAttribute("stroke-dashoffset", PRING_C*(1-frac));
+    r.style.stroke = rem<=5 ? "var(--roll)" : "var(--pink)";
+    n.textContent = rem;
+  }
   // ---- countdown ----
   function stopCd(){ if(P.cdTimer){ clearInterval(P.cdTimer); P.cdTimer=null; } }
   function tickCd(){
     if(!P.q) return;
     var rem=Math.max(0, Math.ceil((P.q.endsAt-Date.now())/1000));
+    try{ phoneRing(rem); }catch(e){}
     if(P.locked){ $("pqCd").textContent="Answer locked in"; }
     else { $("pqCd").textContent="Answer in "+rem+"s"; }
     if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
@@ -497,7 +574,8 @@
     var endsAt = (typeof m.endsAt==="number") ? m.endsAt : (m.ends_at ? Date.parse(m.ends_at) : (Date.now()+ (m.secs||20)*1000));
     // restored: this phone came back INTO the question (a snapshot, or a replay aimed at it), so at
     // the reveal it may not know whether it answered and asks the server (see showResult).
-    P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt, restored:(typeof m.endsAt!=="number" || !!m.to) };
+    P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt, secs:(Number(m.secs)||Math.max(1, Math.round((endsAt-Date.now())/1000))), text:m.text||"",
+          label:(m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question", restored:(typeof m.endsAt!=="number" || !!m.to) };
     P.choice=null; P.locked=false;
     useGame(m.game_id);
     if(typeof m.colour==="boolean") P.colour=m.colour;
@@ -506,12 +584,14 @@
     if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("pqCount").appendChild(dp); }
     var pqi=$("pqImg"); if(m.imageUrl){ pqi.src=m.imageUrl; pqi.classList.remove("hidden"); } else { pqi.classList.add("hidden"); pqi.removeAttribute("src"); }
     $("pqText").textContent = m.text||"";
+    try{ $("pqText").className = phoneQClass(m.text); }catch(e){}
     var wrap=$("pAnswers"); wrap.innerHTML="";
+    try{ wrap.className = "panswers" + phoneAnsClass(P.q.options); }catch(e){}
     wrap.classList.toggle("neutral", !P.colour);
     for(var i=0;i<P.q.options.length;i++){
       var b=el("button","pans c"+i+(P.colour?"":" neutral")); b.setAttribute("data-i",i);
       b.appendChild(el("span","pl",LETTERS[i]));
-      b.appendChild(el("span",null,esc(P.q.options[i])));
+      b.appendChild(el("span","pt",esc(P.q.options[i])));
       (function(idx){ b.addEventListener("click", function(){ answer(idx); }); })(i);
       wrap.appendChild(b);
     }
@@ -639,12 +719,13 @@
       $("pResTag").className="rtag "+(correct?"good":"bad");
       $("pResTag").textContent = correct ? "Correct!" : (answered ? "Not this time" : "No answer");
       $("pResPts").textContent = pts===null ? "" : ((pts>0)?"+":"")+(pts||0);   // null: the server could not be asked, so no number rather than a wrong one
-      $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
+      $("pResPts").style.color = correct ? "#2FD08A" : "var(--faint)";
       $("pResTot").textContent = P.total;
       var rt=rankText(); $("pResRank").classList.toggle("hidden", !rt); $("pResRank").textContent=rt;
       /* Which one was right. A player who got it wrong learnt nothing before this; the reveal
          broadcast carries the options and the index, so say it: "B  Canberra". */
       var ca=$("pResCa"), opts=Array.isArray(m.options)?m.options:(P.q?P.q.options:[]);
+      try{ paintRevealCards(m, ci, answered ? P.choice : null); }catch(e){}
       if(ca){ if(ci>=0 && opts && opts[ci]!=null){ ca.innerHTML='<span class="cl">'+LETTERS[ci]+'</span>'+(correct?'':'<b>Correct answer:</b> ')+esc(opts[ci]); ca.classList.remove("hidden"); } else ca.classList.add("hidden"); }
     }
     // Optimistic paint from the broadcast, then correct it with the Worker's numbers.
@@ -714,6 +795,29 @@
       });
       })(false);
       }, _wait);
+    }
+  }
+
+  /* THE RESULT, NEW LOOK (3 Nov 2026): the question as the room saw it, the right answer green with a
+     RIGHT ANSWER tag ("RIGHT · YOURS" when it was this phone's), a wrong pick outlined in its own colour
+     and tagged YOURS, the others dim, each with how many picked it when the reveal says. */
+  function paintRevealCards(m, ci, mine){
+    var opts=Array.isArray(m.options)&&m.options.length ? m.options : (P.q ? P.q.options : []);
+    var split=Array.isArray(m.split) ? m.split : null, wrap=$("pResAnswers");
+    $("pResCount").textContent = (P.q && P.q.label) || "Question";
+    var q=$("pResQ"); q.textContent=(P.q && P.q.text) || ""; q.className=phoneQClass(q.textContent);
+    var ring=$("pResRing");
+    if(split && ci>=0){ $("pResRight").textContent=Number(split[ci])||0; ring.classList.remove("hidden"); } else ring.classList.add("hidden");
+    wrap.innerHTML=""; wrap.className="panswers rv"+phoneAnsClass(opts);
+    for(var i=0;i<opts.length;i++){
+      var cls="pans c"+i+(P.colour===false?" neutral":"")+(i===ci?" right":(i===mine?" mine":" dim"));
+      var b=el("div",cls);
+      if(i===ci) b.appendChild(el("span","tg", i===mine ? "Right &middot; yours" : "Right answer"));
+      else if(i===mine) b.appendChild(el("span","tg","Yours"));
+      b.appendChild(el("span","pl",LETTERS[i]));
+      b.appendChild(el("span","pt",esc(opts[i])));
+      if(split) b.appendChild(el("span","cnt",String(Number(split[i])||0)));   // numeric: arrives over a public channel
+      wrap.appendChild(b);
     }
   }
 
@@ -1035,11 +1139,21 @@
       applySnap(r.snapshot);
     });
   }
+  /* The venue's name as text, top left, when it has no logo (option 5). The logo wins: never both.
+     Never cut short: a long name steps down to 16px and wraps. */
+  function headerVenue(logo, name){
+    var vn=$("hdrVenueName"); if(!vn) return;
+    var nm=String(name||"").trim();
+    if(logo){ vn.classList.add("hidden"); return; }
+    if(nm){ vn.textContent=nm; vn.classList.toggle("long", nm.length>24); }
+    vn.classList.remove("hidden");
+  }
   function loadJoinInfo(){
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
+      headerVenue(r&&r.logo_url, r&&r.venue_name);
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
@@ -1143,7 +1257,7 @@
     ch=(typeof VPRoom!=="undefined" && VPRoom.venue) ? VPRoom.venue(VP_GAME_API, "").channel("vp-"+room, "phone", make, { fmt:"trivia" }) : make();
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(onChannelStatus);
-    if(P.joined) showWait("Watch the big screen. Your questions will pop up here.");
+    if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); try{ loadJoinInfo(); }catch(e){} }   // the header's venue logo or name, for a phone that is already in
     else { loadJoinInfo(); show("vJoin"); }
   }
 
@@ -1199,11 +1313,14 @@
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
     P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
+    (function(){ var lg=$("venueLogo"); if(!lg) return; lg.src="/logos/venue-tugun-bowls.png"; lg.classList.remove("hidden");
+      if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); headerVenue(true, "Tugun Bowls Club"); })();
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
     var _dt=[];
     function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
     function q(qi, text, options, secs){
-      return { t:"question", qseq:qi, qi:qi, qtotal:3, text:text, options:options,
+      return { t:"question", qseq:qi, qi:qi+2, qtotal:20, text:text, options:options,   // "Question 3 of 20", the wall's numbers
                secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
     }
     function fire(o){ try{ onMsg(o); }catch(e){} }
@@ -1220,13 +1337,13 @@
       var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 when the show is off (the default since the 2 Nov hotfix)
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
-      d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], demoPts:130 }); });
+      d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
       d(T0+GAP,       function(){ fire(q(2,"What is the only food that never spoils?", ["Rice","Honey","Salt","Tinned fish"],15)); });
       d(T0+GAP+3600,  function(){ answer(2); });
-      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["Rice","Honey","Salt","Tinned fish"], demoPts:0 }); });
+      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["Rice","Honey","Salt","Tinned fish"], split:[7,26,9,1], demoPts:0 }); });
       d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
       d(T0+2*GAP+3400,function(){ answer(0); });
-      d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], demoPts:145 }); });
+      d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
       d(T0+3*GAP,     function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
       d(T0+3*GAP+17000, round);
     }
@@ -1254,6 +1371,6 @@
 })();
 </script>
 <!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->
-<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
+<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay" data-menu-only="1"></script>   <!-- Help in the menu (top right) only (Dean, 3 Nov 2026) -->
 </body>
 </html>

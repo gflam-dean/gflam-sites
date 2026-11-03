@@ -10,6 +10,7 @@
 
      VenuePlay phone pages (play, musical, trivia)
        <script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
+       add data-menu-only="1" for Help in the phone's menu only, no link at the foot (the trivia phone)
      VenuePlay console, settings, account
        <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script>
      PartyPlay guest phone
@@ -662,9 +663,11 @@
     }
     // patron and guest: in the flow at the very end of the page, never over the game.
     var app = doc.getElementById("app") || doc.querySelector(".app");
-    footLink(MODE === "guest" ? doc.body : (app || doc.body));
-    // And in the phone's own menu, which is where people look.
     var menu = doc.getElementById("menuPanel");
+    /* data-menu-only="1" (the trivia phone, Dean 3 Nov 2026): Help lives ONLY in the phone's menu (the top
+       right button), with no link at the foot of the page. Only when that menu is really there. */
+    if (!(attr("data-menu-only", "") === "1" && menu)) footLink(MODE === "guest" ? doc.body : (app || doc.body));
+    // And in the phone's own menu, which is where people look.
     if (menu) {
       var mi = el("button", "menuitem", "Help and contact"); mi.type = "button"; mi.id = "vphMenu";
       on(mi, "click", function () { try { menu.classList.add("hidden"); } catch (e) {} openPanel(); });
