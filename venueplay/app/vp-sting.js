@@ -77,8 +77,17 @@
     return '<svg class="vp-newmark" xmlns="'+NS+'" viewBox="-1 -729 4676 936" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" style="width:'+w.toFixed(1)+'px;height:'+h.toFixed(1)+'px;max-width:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))" aria-label="venueplay">'+
       '<path fill="#fff" d="'+REST+'"/><path fill="#fff" d="'+ANEON+'"/><path fill="#FF1F8E" transform="translate('+CX+' '+CY+')" d="'+off(RO)+'"/></svg>';
   }
+  /* Measured with the show's own hiding lifted for the one read (no frame is painted in between): mid-show the
+     mark is display:none, and the corner can still move under the show when the venue's logo arrives and
+     VPVenueLogo.alignMark drops it to the logo's middle. The flight then lands on the moved mark, instead of
+     the mark and TRIVIA jumping down 35px once the show is over (Dean, 4 Nov 2026). */
   function measureCorner(){
     var c=cornerEl(); if(!c) return null;
+    var hid=c.classList.contains("vp-sting-mark"); if(hid) c.classList.remove("vp-sting-mark");
+    try{ return measureMark(c); } finally{ if(hid) c.classList.add("vp-sting-mark"); }
+  }
+  function cornerDrop(){ var c=cornerEl(); return c ? (c.getAttribute("data-drop")||"")+"|"+(c.style.transform||"") : ""; }
+  function measureMark(c){
     /* The OLD MARK, not the whole corner: the venue's name can sit on a second row of the corner and be
        wider. The new logo takes the old mark's width and right edge, and its top. */
     var sv=c.querySelector("svg:not(.vp-newmark)"), vn=c.querySelector(".vn");
@@ -137,6 +146,7 @@
     el.vpsL2ws.style.backgroundPosition=swv; el.vpsL3ws.style.backgroundPosition=swv;
     if(sw<=0||sw>=1){ el.vpsL2w.style.opacity=0; el.vpsL3w.style.opacity=0; }
     // the wordmark centre stage, then to the corner by its right and top edges
+    if(cornerDrop()!==corner.drop) aimCorner();   // the corner moved under the show (its venue logo arrived): land where it is now
     var j=eio(seg(t,2.55,3.10)), KC=corner.w/INKW;
     var kw=Math.exp(lerp(Math.log(K0),Math.log(KC),j));
     var right=lerp(OX0+(INKW+INKL)*K0,corner.r,j), top=lerp(OY0-ASC*K0,corner.t,j);
@@ -290,6 +300,7 @@
     try{ var ev=document.createEvent("Event"); ev.initEvent("vp-sting-done", false, false); window.dispatchEvent(ev); }catch(e){}
     if(LAYOUT==="tv") said(false);
   }
+  function aimCorner(){ var c=measureCorner(); if(!c) return; var a=toStage(c.right,c.top); corner={ r:a[0], t:a[1], w:c.width/stage.s, cssW:c.width, drop:cornerDrop() }; }
   var LAYOUT="tv";
   function dur(){ return LAYOUT==="phone" ? (PH && PH.land ? PLAND : PDUR) : DUR; }
   function loop(now){ if(!playing) return; var t=(now-t0)/1000; if(t>=dur()){ render(dur()); finish("done"); return; } render(t); raf=requestAnimationFrame(loop); }
@@ -305,7 +316,7 @@
     if(WORDS.line){ el.vpsL3s.innerHTML=WORDS.line; el.vpsL3ws.innerHTML=WORDS.line; }
     else { el.vpsL1.firstChild.textContent=WORDS.l1; el.vpsL2s.textContent=WORDS.l2; el.vpsL2ws.textContent=WORDS.l2; }
     var a=toStage(c.right,c.top);
-    corner={ r:a[0], t:a[1], w:c.width/stage.s, cssW:c.width };
+    corner={ r:a[0], t:a[1], w:c.width/stage.s, cssW:c.width, drop:cornerDrop() };
     var tc=cornerEl(); if(tc){ tc.classList.add("vp-sting-mark"); var old=tc.querySelector(".vp-newmark"); if(old) old.parentNode.removeChild(old); }
     try{ var sp=WORDS.line?el.vpsL3s:el.vpsL2s; L2S=Math.min(1,(WORDS.line?1700:1640)/Math.max(1,sp.offsetWidth)); }catch(e){}
     window.addEventListener("resize",fit);

@@ -269,6 +269,26 @@
      ONE copy, here: tv.html (its #tvCorner) and the trivia, musical bingo, raffle and members draw
      screens (their .tv-corner) all call it. keepAligned wires a logo so every resize of it (the
      "vp-logo-sized" event, fired by size() and plate()) lines the corner up again. */
+  /* THE VENUEPLAY MARK'S BOX, EVEN MID-SHOW (4 Nov 2026, Dean on a real TV: "the logo sat in the middle of the
+     screen and dropped the trivia down"). The start show (/app/vp-sting.js) hides the corner's mark with
+     .vp-sting-mark while it plays, so this measured nothing mid-show and the corner was lined up on the venue's
+     logo only once the show ended: the show's wordmark landed on the un-moved corner, then the mark and the
+     TRIVIA title beside it jumped 35px down in one frame. Mid-show the class is lifted for the one measurement
+     (no frame is painted in between), so the corner moves to its place under the show's dimmed backdrop. */
+  function markBox(corner) {
+    if (!corner) return null;
+    var hid = corner.classList && corner.classList.contains("vp-sting-mark");
+    try {
+      var svs = corner.querySelectorAll("svg"), q;
+      for (var i = 0; i < svs.length; i++) { q = svs[i].getBoundingClientRect(); if (q.height) return q; }
+      if (!hid) return null;
+      corner.classList.remove("vp-sting-mark");
+      svs = corner.querySelectorAll("svg:not(.vp-newmark)");
+      for (var k = 0; k < svs.length; k++) { q = svs[k].getBoundingClientRect(); if (q.height) return q; }
+      return null;
+    } catch (e) { return null; }
+    finally { if (hid && corner.classList) corner.classList.add("vp-sting-mark"); }
+  }
   function alignMark(corner, img, has) {
     try {
       if (!corner) return;
@@ -278,9 +298,8 @@
         if (img.naturalWidth) {                                 /* a broken picture: as no logo */
           var wide = isWide(img.naturalWidth / img.naturalHeight);
           var a = img.getBoundingClientRect(); if (!a.height) return;   /* not on screen */
-          var mk = null, svs = corner.querySelectorAll("svg");
-          for (var i = 0; i < svs.length && !mk; i++) { var q = svs[i].getBoundingClientRect(); if (q.height) mk = q; }
-          if (!mk) return;                                      /* the mark is off (ads) or mid-show */
+          var mk = markBox(corner);
+          if (!mk) return;                                      /* the mark is off (ads) */
           var dy = (a.top + a.height / 2) - ((mk.top + mk.height / 2) - cur);
           if (!wide) want = dy > 0 ? Math.round(dy * 10) / 10 : 0;   /* square or tall: down to its middle, never up */
           /* A WIDE WORDMARK TOO (Dean, 3 Nov 2026: both corner logos and the game's title on ONE line). A short
@@ -319,5 +338,5 @@
     return go;
   }
 
-  w.VPVenueLogo = { alignMark: alignMark, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  w.VPVenueLogo = { alignMark: alignMark, markBox: markBox, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

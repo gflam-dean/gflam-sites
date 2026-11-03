@@ -246,6 +246,30 @@ def by_code():
         time.sleep(1)
         ok('a screen in the app that came from a code still shows no note', r.ask(app, vis('tvSaveNote')) is False)
         r.close_tab(tid)
+
+        # 6c. (4 Nov 2026) A Google Play reviewer saw "GO FULLSCREEN" bottom left of the live venue screen inside
+        # the app: the app hid #tvFsBtn once on load and tv.html showed it again later. Watched every 100 ms on
+        # the set-up card and on the venue's ads, then the page's own code is made to show it (inline display,
+        # the way every later path shows it): in the app it stays off. Outside the app the same push shows it.
+        print('\n6c. inside the VenuePlay TV app (VenuePlayTV/1.2): never the GO FULLSCREEN button')
+        APP12 = IN_APP.replace('VenuePlayTV/1.0', 'VenuePlayTV/1.2')
+        WATCH = ('window.__fsSeen=0;setInterval(function(){var b=document.getElementById("tvFsBtn");'
+                 'if(b){var s=getComputedStyle(b),q=b.getBoundingClientRect();if(s.display!=="none"&&s.visibility!=="hidden"&&q.width>0&&q.height>0)window.__fsSeen++;}},100);')
+        PUSH = '(function(){var b=document.getElementById("tvFsBtn"); if(!b) return "missing"; b.style.display="block"; b.style.visibility="visible"; return true;})()'
+        for path, state, ready in (('/tv', 'the set-up card', vis('pairPanel')), ('/tv?venue=' + slug, 'the venue\'s ads', '!!document.querySelector("#tvAds .ad.show")')):
+            tid, app = r.open(path, before=APP12 + WATCH, width=W, height=H)
+            r.until(app, ready, 20)
+            ok('app 1.2 on ' + state + ': the page reads the app\'s user agent', r.ask(app, '/VenuePlayTV\\/1\\.2/.test(navigator.userAgent)') is True)
+            time.sleep(4)
+            ok('app 1.2 on ' + state + ': GO FULLSCREEN never shown, watched every 100 ms', r.ask(app, 'window.__fsSeen') == 0, r.ask(app, 'window.__fsSeen'))
+            r.ask(app, PUSH); time.sleep(0.3)
+            ok('app 1.2 on ' + state + ': and nothing the page does later can show it', r.ask(app, vis('tvFsBtn')) is False, r.ask(app, 'document.documentElement.className'))
+            r.close_tab(tid)
+        tid, web = r.open('/tv?venue=' + slug, width=W, height=H)
+        r.until(web, '!!document.querySelector("#tvAds .ad.show")', 20)
+        r.ask(web, PUSH); time.sleep(0.3)
+        ok('CONTROL: in a plain browser the same push does show the button (so the check above can see it)', r.ask(web, vis('tvFsBtn')) is True)
+        r.close_tab(tid)
     finally:
         r.close()
 

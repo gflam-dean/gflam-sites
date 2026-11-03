@@ -1060,7 +1060,7 @@
   "counted_by": "lines"
  },
  "tools/tv-logo-centre-in-chrome.test.py": {
-  "checks": 117,
+  "checks": 145,
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
