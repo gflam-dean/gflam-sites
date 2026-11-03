@@ -23,9 +23,10 @@
 
    Anything that goes wrong (used, expired, unknown, removed from the venue, a network fault) ends
    on THIS page, never on an email form: "That sign-in link has already been used or has expired",
-   with "Send me a new link" (POST /auth/one-click/resend, the old token and the address it went to;
-   the Worker sends to the login's own email and answers the same whether or not anything exists)
-   and "Sign in with my mobile instead". Never an error code. */
+   with "Sign in with my mobile" as the pink button (Dean, 3 Nov 2026: a text code to the mobile, never
+   email by default) and "Send me a new link" as the quiet second one (POST /auth/one-click/resend, the old
+   token and the address it went to; the Worker sends to the login's own email and answers the same whether
+   or not anything exists). Never an error code. */
 (function (root) {
   "use strict";
   var API = "https://api.venueplay.com.au";
@@ -68,7 +69,7 @@
     try { ls.removeItem(METHOD_KEY); } catch (e) {}
 
     /* THE LINK IS SPENT: say so, and offer a new one. The session this device had is dropped first
-       (as before), so "Sign in with my mobile instead" can never land an HQ session in HQ. */
+       (as before), so "Sign in with my mobile" can never land an HQ session in HQ. */
     var goneShown = false;
     function showGone() {
       if (goneShown) return Promise.resolve();
@@ -77,13 +78,12 @@
         $("goReady").hidden = true; $("goGone").hidden = false;
         if (!got.t) {
           $("goneTitle").textContent = "Let's get you in";
-          $("goneSub").textContent = got.e ? "Tap below and we will email you a link that opens your account. No password." : "Sign in with a text code to your mobile.";
+          $("goneSub").textContent = "Sign in with a text code to your mobile.";   // phone first, always (Dean, 3 Nov 2026)
           $("resendBtn").textContent = "Send me a sign-in link";
         }
         if (!got.t && !got.e) {
           $("resendBtn").hidden = true;
-          $("mobileLink").textContent = "Sign in with my mobile";
-          $("goneNote").textContent = "No mobile on your login yet? Email support@venueplay.com.au and we will send you a new link.";
+          $("goneNote").textContent = "No mobile on your login yet? Email support@venueplay.com.au and we will get you in.";
         }
       });
     }

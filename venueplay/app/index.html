@@ -33,6 +33,10 @@
      buttons and text as blurred blobs and ghosts under it as the page scrolled. */
   header{border-bottom:1px solid var(--line);background:var(--ink);position:sticky;top:0;z-index:20}
   .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  /* THE ISLAND (Dean, 3 Nov 2026): viewport-fit=cover lets the page draw under it, so the header keeps its
+     logo and buttons out of it, saved to the home screen or sideways. 0 in a normal tab: nothing moves. */
+  header{padding-top:env(safe-area-inset-top,0px)}
+  .bar{padding-left:calc(22px + env(safe-area-inset-left,0px));padding-right:calc(22px + env(safe-area-inset-right,0px))}
   .brand{display:flex;align-items:center;gap:10px}
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}

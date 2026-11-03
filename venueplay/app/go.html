@@ -18,6 +18,9 @@
   body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;padding:0 16px}
   .authwrap{max-width:420px;margin:12vh auto 0;text-align:center}
+  /* THE ISLAND (Dean, 3 Nov 2026): viewport-fit=cover lets the page draw under it, so the sign-in never starts
+     higher than the island plus 16px. A phone with no island (inset 0) keeps the 12vh it always had. */
+  .authwrap{margin-top:max(12vh, calc(env(safe-area-inset-top,0px) + 16px));padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
   /* THE SIGN-IN LOGO SINCE THE NEW WORDMARK (Dean, 3 Nov 2026): the wordmark is a 34px block, not a
      25.5px glyph in a text line (the line box put 5px above it and crowded the heading), and no pink glow:
      the v3.2 logo is never glowed. Logo to heading 30px, heading to sub 10px, sub to card 28px. */
@@ -39,6 +42,7 @@
   .note{font-size:12.5px;color:var(--faint);line-height:1.5;margin-top:12px}
   .btn.ghost{display:block;margin-top:12px;background:rgba(255,255,255,.07);color:var(--text);text-decoration:none;text-align:center;box-sizing:border-box}
   .btn.ghost:hover{background:rgba(255,255,255,.12)}
+  a.btn{display:block;text-decoration:none;text-align:center;box-sizing:border-box}
   .okmsg{font-size:14px;line-height:1.5;min-height:18px;margin-top:12px;color:var(--text)}
   .okmsg.warn{color:var(--roll)}
   [hidden]{display:none!important}
@@ -60,15 +64,17 @@
       </div>
     </div>
     <!-- A used or expired link (or one with no token): never a dead end, and never an email form
-         (Dean, 29 Oct 2026). A new link goes to the address the old one went to. -->
+         (Dean, 29 Oct 2026). PHONE FIRST (Dean, 3 Nov 2026: hosts sign in by a text code to their mobile):
+         the pink button is the mobile sign-in; "Send me a new link" (it goes to the address the old link
+         went to, the resend Dean allowed on 29 Oct) is the quiet second button, never the default. -->
     <div id="goGone" hidden>
       <div class="authbig" id="goneTitle">Let's get you back in</div>
-      <div class="authsub" id="goneSub">That sign-in link has already been used or has expired. Each link works once, to keep your account safe.</div>
+      <div class="authsub" id="goneSub">That sign-in link has already been used or has expired. Sign in with a text code to your mobile.</div>
       <div class="authcard">
-        <button class="btn pink big" id="resendBtn" type="button">Send me a new link</button>
+        <a class="btn pink big" id="mobileLink" href="/app/">Sign in with my mobile</a>
+        <button class="btn ghost big" id="resendBtn" type="button">Send me a new link</button>
         <div class="okmsg" id="resendMsg" role="status"></div>
-        <a class="btn ghost big" id="mobileLink" href="/app/">Sign in with my mobile instead</a>
-        <p class="note" id="goneNote">Already added your mobile? Use the second button and we will text you a code. Stuck? Email support@venueplay.com.au and we will get you in.</p>
+        <p class="note" id="goneNote">No mobile on your login yet? Email support@venueplay.com.au and we will get you in.</p>
       </div>
     </div>
   </div>
