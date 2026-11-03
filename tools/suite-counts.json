@@ -140,7 +140,7 @@
   "counted_by": "lines"
  },
  "tools/console-hq-5nov-in-chrome.test.py": {
-  "checks": 66,
+  "checks": 70,
   "counted_by": "lines"
  },
  "tools/console-in-chrome.test.py": {
