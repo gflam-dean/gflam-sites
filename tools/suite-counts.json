@@ -452,7 +452,7 @@
   "counted_by": "lines"
  },
  "tools/test-consent-split.js": {
-  "checks": 52,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-console-pickup.js": {

@@ -293,7 +293,7 @@
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
-<script src="/app/vp-consent.js"></script>   <!-- "Your details": 18+ and "Keep me posted" as two separate ticks (3 Nov 2026) -->
+<script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
@@ -1189,9 +1189,9 @@
       if(c.email)     h+=f("xEmail","email","Email","email",120);
       if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
       box.innerHTML=h;
-      /* "I'm 18 or over" (needed with the opt-in) and "Keep me posted" (optional) as TWO ticks, never one (3 Nov 2026,
-         Spam Act and APP 7): /app/vp-consent.js, shared by all three phones. */
-      if(typeof VPConsent==="object") VPConsent.render(box, c, { age18:false });
+      /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
+         shared by all three phones. Not ticking it changes nothing about playing. */
+      if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
       /* Collection notice. Australian privacy law wants people told what is being collected and
          who gets it AT THE POINT they are asked, not only in a policy page they never open. This
          screen asked for last name, postcode, email and mobile with no notice and no link to the
@@ -1218,13 +1218,12 @@
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
-    if(typeof VPConsent==="object" && VPConsent.optedIn(cap)) cap.marketing_optin=true;   // the opt-in tick ONLY, and only with a contact method (/app/vp-consent.js)
+    if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }   // the one offers + 18+ tick ONLY, and only with a contact method (/app/vp-consent.js)
     return cap;
   }
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your team name in first."; return; }
-    if(typeof VPConsent==="object" && !VPConsent.ageOk()){ $("joinErr").textContent=VPConsent.AGE_NEEDED; return; }   // the 18+ tick, needed only with "Keep me posted"
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
