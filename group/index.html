@@ -148,7 +148,7 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
 }
 /* ── venueplay BANNER (4 Nov 2026). A venueplay ad sitting on the Gflam page, in venueplay's own
    look (brand guidelines v3.2): near-black #0A0A0B, pink #FF1F8E, Anton / Manrope / JetBrains Mono,
-   the kit's neon logo file, real captures of the live trivia demo (TV and phone). No gradients. ── */
+   the kit's solid on-dark logo file, real captures of the live trivia demo (TV and phone). No gradients. ── */
 .vpb{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"head copy" "shots shots";align-items:end;gap:26px 40px;padding:38px 36px 34px;background:#0A0A0B;border:1px solid rgba(255,31,142,.45);border-radius:16px;color:#fff;text-decoration:none;font-family:"Manrope",sans-serif;transition:border-color .3s cubic-bezier(.22,1,.36,1),transform .3s cubic-bezier(.22,1,.36,1)}
 .vpb:hover{border-color:#FF1F8E;transform:translateY(-3px)}
 .vpb:focus-visible{outline:2px solid #FF1F8E;outline-offset:3px}
@@ -157,24 +157,30 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
 .vpb-label{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8A8A95;margin-bottom:18px}
 .vpb-logo{display:block;width:250px;max-width:100%;height:auto;margin:0 0 20px -6px}
 .vpb-h{font-family:"Anton",sans-serif;font-weight:400;font-size:40px;line-height:1.04;text-transform:uppercase;letter-spacing:.2px;margin:0;color:#fff}
-.vpb-h em{font-style:normal;color:#FF1F8E}
+.vpb-h em{display:block;font-style:normal;color:#FF1F8E}
 .vpb-p{font-size:15px;line-height:1.6;color:rgba(255,255,255,.78);margin:0 0 16px}
 .vpb-games{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding:0}
 .vpb-games li{font-size:12px;font-weight:700;color:#fff;background:#1A1A1F;border-radius:999px;padding:7px 12px}
 .vpb-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;background:#FF1F8E;color:#fff;font-weight:700;font-size:15px;padding:0 22px;border-radius:10px}
 .vpb-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-/* TV and phone side by side at the same height (TV 16:9, phone 390x844), never overlapping */
-.vpb-shots{grid-area:shots;display:flex;align-items:flex-end;gap:14px}
-.vpb-tv{flex:100 1 0;min-width:0;display:block;width:100%;height:auto;border-radius:8px;border:1px solid #26262d}
-.vpb-phone{flex:26 1 0;min-width:0;display:block;width:100%;height:auto;border-radius:12px;border:1px solid #26262d}
+/* TV and phone composed as a product shot (Dean, 4 Nov): the TV tilted slightly, the phone over
+   its lower right corner at a small angle, soft shadows. Plain dark bezels, no device frames. */
+.vpb-shots{grid-area:shots;position:relative;aspect-ratio:100 / 58;margin:4px 0 0}
+.vpb-tv,.vpb-phone{position:absolute;display:block;height:auto;background:#1A1A1F;box-shadow:0 22px 48px rgba(0,0,0,.75),0 4px 12px rgba(0,0,0,.5)}
+.vpb-tv{left:3%;top:3%;width:79%;border:6px solid #1A1A1F;border-radius:10px;transform:rotate(-2deg)}
+.vpb-phone{right:5%;top:22%;width:20%;border:5px solid #1A1A1F;border-radius:20px;transform:rotate(4deg)}
 @media(max-width:760px){
-  .vpb{grid-template-columns:1fr;grid-template-areas:"head" "shots" "copy";gap:22px;padding:28px 18px 24px;text-align:center}
-  .vpb-logo{width:220px;margin:0 auto 16px}
-  .vpb-h{font-size:31px}
-  .vpb-games{justify-content:center}
+  .vpb{grid-template-columns:1fr;grid-template-areas:"head" "shots" "copy";gap:18px;padding:28px 18px 24px;text-align:center}
+  .vpb-label{margin-bottom:14px}
+  .vpb-logo{width:200px;margin:0 auto 14px}
+  .vpb-h{font-size:30px;line-height:1.06}
+  .vpb-shots{margin:4px -4px 0;aspect-ratio:100 / 66}
+  .vpb-tv{left:0;top:3%;width:85%;border-width:4px;border-radius:7px}
+  .vpb-phone{right:2%;top:25%;width:22%;border-width:3px;border-radius:12px}
+  .vpb-p{font-size:15px;margin-bottom:16px}
+  .vpb-games{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .vpb-games li{font-size:13px;padding:9px 10px}
   .vpb-btn{width:100%}
-  .vpb-shots{gap:8px}
-  .vpb-phone{border-radius:7px}
 }
 /* every company, footer list */
 .foot-brands{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-bottom:14px}
@@ -202,7 +208,7 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
     <a class="vpb" href="https://venueplay.com.au" aria-label="venueplay: visit venueplay.com.au">
       <div class="vpb-head">
         <div class="vpb-label">New from Gflam</div>
-        <img class="vpb-logo" src="/assets/venueplay-horizontal-tv-neon.svg" width="250" height="58" alt="venueplay">
+        <img class="vpb-logo" src="/assets/venueplay-horizontal-on-dark.svg" width="250" height="58" alt="venueplay">
         <h2 class="vpb-h">Game night on the TV <em>you already have.</em></h2>
       </div>
       <div class="vpb-copy">
