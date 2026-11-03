@@ -893,6 +893,51 @@ def local_checks(which):
            len(seen) == 1, '%d file(s)' % sum(len(v) for v in seen.values()),
            why='%d version(s); the odd ones out: %s' % (len(seen), ', '.join(odd[:4])))
 
+    """THE TAB ICON IS ONE SET, the one venueplay/index.html links (3 Nov 2026).
+
+    Dean: "The favicon is a different size on the join game screen than the account screen or the
+    setting screen." 23 pages linked one 1024px /logos/venueplay_appicon_rebuilt.png, a different
+    image with different padding, while the website linked the built set (tools/build-favicons.py);
+    two pages had no icon at all and one had half the set. Every served page now carries the
+    index.html block word for word, and a page that drifts, or a new page with no icon, is red here.
+
+    ONE exception, named so it stays a decision: HQ's apple-touch-icon is its Home Screen
+    (app-install) icon, kept with hq.webmanifest on the 1024px file until Dean says otherwise.
+    Email templates (email/, emails/) are not pages a browser tab opens and are not held to it."""
+    if which in ('both', 'venueplay'):
+        def icon_links(src):
+            src = re.sub(r'<!--.*?-->', '', src, flags=re.S)
+            out = []
+            for tag in re.findall(r'<link\b[^>]*>', src, flags=re.I):
+                rel = re.search(r'\brel\s*=\s*["\']?([^"\'>]+)', tag, flags=re.I)
+                if rel and 'icon' in rel.group(1).lower().split():
+                    out.append(('icon', re.sub(r'\s+', ' ', tag.strip())))
+                elif rel and rel.group(1).lower().split() and \
+                        any(t in ('apple-touch-icon', 'apple-touch-icon-precomposed', 'mask-icon')
+                            for t in rel.group(1).lower().split()):
+                    out.append(('apple', re.sub(r'\s+', ' ', tag.strip())))
+            return sorted(out)
+        ICON_EXEMPT = {'venueplay/app/hq.html': {'apple'}}
+        vp = os.path.join(ROOT, 'venueplay')
+        want = icon_links(io.open(os.path.join(vp, 'index.html'), encoding='utf-8').read())
+        pages, odd = 0, []
+        for f in files:
+            rel_f = os.path.relpath(f, ROOT).replace(os.sep, '/')
+            if not (rel_f.startswith('venueplay/') and f.endswith('.html')) or \
+                    rel_f.startswith(('venueplay/email/', 'venueplay/emails/')):
+                continue
+            pages += 1
+            skip = ICON_EXEMPT.get(rel_f, set())
+            got = [x for x in icon_links(io.open(f, encoding='utf-8', errors='replace').read())
+                   if x[0] not in skip]
+            if got != [x for x in want if x[0] not in skip]:
+                odd.append(rel_f[len('venueplay/'):] + (' (no icon)' if not got else ''))
+        ok('every venueplay page links the same tab icon set as index.html',
+           bool(want) and any(k == 'icon' for k, _ in want) and pages >= 20 and not odd,
+           '%d page(s), %d icon link(s) each' % (pages, len(want)),
+           why=('index.html links no icon' if not want else
+                '%d page(s) differ: %s' % (len(odd), ', '.join(odd[:5]))))
+
     """HOW LONG AN UNSTARTED PARTYPLAY CODE KEEPS, written once.
 
     lib/pp-licence.js owns UNUSED_EXPIRY_DAYS and expires codes by it. The Worker
