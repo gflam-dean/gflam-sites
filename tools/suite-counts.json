@@ -612,7 +612,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 62,
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
@@ -724,7 +724,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
-  "checks": 99,
+  "checks": 124,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {

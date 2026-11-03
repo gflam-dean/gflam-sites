@@ -584,3 +584,11 @@ two branches). security_invoker, the authenticated grant and the anon revoke are
 RLS-BASELINE.json does not change. Either order with the site: Your account > Draws reads the new column when it is there and
 says "not counted here" when it is not. NUMBER: 140 to 149 are taken on other branches, so 150. Branch `fix/console-hq-5nov`.
 NOT RUN. Read-back queries in the file.
+
+`venueplay-151-prospect-link-30-days.sql` (Dean, 4 Nov 2026, the two prospect journeys): lifts `vp_signin_links_life` from
+15 to 31 days so a prospect's sign-in link can end 30 days from setup, the same moment every link resent to them ends at,
+and the day-3 and "expires in 3 days" follow-ups say one true number; and adds `vp_prospects.link_from`, when HQ last
+resent their link, which restarts those 30 days and re-dates the follow-ups (automatic follow-ups never set it). No policy
+or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
+and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
+Read-back and rollback in the file.

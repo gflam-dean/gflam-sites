@@ -457,6 +457,145 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   });
 
   if (bad) throw new Error('prospects tab: ' + bad + ' of ' + ran + ' failed');
+
+  /* THE TWO PROSPECT JOURNEYS (Dean, 4 Nov 2026). Journey 1, never signed in: the link lasts 30 days from setup and every
+     follow-up link ends at that same moment, so "expires in {days} days" is one true number; acting on the email (a tap on
+     the link, a sign-in, a card, a cancel) stops the follow-ups AT SEND TIME; after the 30 days no link hands itself out:
+     the sign-in page says the link has ended and a sales ticket opens for Dean; an HQ resend starts a fresh 30 days and
+     re-dates the follow-ups; the automatic follow-ups never reset it. Journey 2 (signed in) is the card reminders. */
+  section('7. The two journeys: a 30-day link from setup, follow-ups that count it down and stop when they act, the ended link, HQ restarting the clock');
+  world();
+  var T7 = Date.now();
+  r = await setUp({ name: 'Journey Arms', send_welcome: true });
+  var jv = DB.vp_venues.filter(function (x) { return x.name === 'Journey Arms'; })[0];
+  var jlink = DB.vp_signin_links.filter(function (l) { return l.venue_id === jv.id; })[0];
+  check('the welcome\'s link lasts 30 days FROM SETUP, not 14 from when the email goes', r.status === 200 && jlink && Math.abs(Date.parse(jlink.expires_at) - T7 - 30 * DAY) < 60000, jlink);
+  age('Journey Arms', 3 * DAY + 3600000);
+  var q7 = await call('/autopilot/prospects/quiet', undefined, AP, 'GET');
+  var j7 = ((q7.body || {}).prospects || []).filter(function (x) { return x.venue_id === jv.id; })[0] || {};
+  check('the quiet list says the link\'s true end and the whole days left (3 days 1 hour in: 27 left), the follow-up day (3), and the Worker\'s 30', q7.body.link_days === 30 && j7.link_days_left === 27 && j7.nudge_day === 3 && Math.abs(Date.parse(j7.link_expires_at) - Date.parse(j7.created_at) - 30 * DAY) < 1000, j7);
+  var DAY3 = 'Hey Sam,\n\nWe noticed you haven\'t logged in yet. Here\'s your sign-in link again. This link expires in {days} days.\n\nCheers,\nDean';
+  var b7 = sent.length;
+  var n7 = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3, subject: 'Your venueplay sign-in link again' }, AP);
+  var m7 = sent[sent.length - 1] || {};
+  var l7 = DB.vp_signin_links.filter(function (l) { return l.venue_id === jv.id && !l.used_at; })[0] || {};
+  check('the day-3 follow-up goes with {days} filled from the link that was minted: "expires in 27 days", and the subject Dean chose', n7.status === 200 && n7.body.days_left === 27 && sent.length === b7 + 1 &&
+    /This link expires in 27 days\./.test(m7.html || '') && (m7.html || '').indexOf('{days}') < 0 && m7.subject === 'Your venueplay sign-in link again', [n7.body, m7.subject]);
+  check('...and that link ends at the SAME 30-day moment from setup as the quiet list says (never 14 days from now)', Math.abs(Date.parse(l7.expires_at) - Date.parse(j7.link_expires_at)) < 1000 && Date.parse(n7.body.expires_at) === Date.parse(l7.expires_at) && Date.parse(l7.expires_at) < Date.now() + 28 * DAY, [l7.expires_at, j7.link_expires_at]);
+  check('...and the email says until when it works, in words', /It works until (Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+\./.test(m7.html || ''), (m7.html || '').slice(-300));
+  var nd = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3, subject: 'Your venueplay \u2014 link' }, AP);
+  var nd2 = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3.replace('venueplay', 'VenuePlay').replace('Hey Sam', 'Hey Sam, VenuePlay here') }, AP);
+  check('a subject or words with a long dash or VenuePlay: refused, nothing sent', nd.status === 400 && nd2.status === 400 && sent.length === b7 + 1, [nd.body, nd2.body]);
+  age('Journey Arms', 29 * DAY + 3600000);
+  var n29 = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3 }, AP);
+  check('on the last day it says "expires in 1 day", singular', n29.status === 200 && n29.body.days_left === 1 && /This link expires in 1 day\./.test((sent[sent.length - 1] || {}).html || ''), [n29.body, ((sent[sent.length - 1] || {}).html || '').slice(0, 400)]);
+  /* The text twin fills {days} the same way, from its own link (which ends at the same moment). */
+  age('Journey Arms', 27 * DAY + 3600000);
+  ENV.PROSPECT_SMS_ON = 'on'; ENV.CLICKSEND_USERNAME = 'rig'; ENV.CLICKSEND_API_KEY = 'rig-key';
+  (row('Journey Arms') || {}).phone = '0432 071 622';
+  var EXP = 'venueplay: Hi Sam, your free trial link for Journey Arms expires in {days} days. Tap to sign in, no password needed: {link} Questions? 07 5228 3667. Reply STOP to opt out';
+  SMS.length = 0;
+  var s7 = await call('/autopilot/prospect/nudge-sms', { venue_id: jv.id, text: EXP }, AP);
+  var sb = ((SMS[0] || {}).body || {}).messages || [];
+  check('the "expires in 3 days" text: {days} filled (3), {link} a real link, STOP kept', s7.status === 200 && sb.length === 1 && /expires in 3 days\./.test(sb[0].body) && sb[0].body.indexOf('{days}') < 0 && /\/app\/go#t=/.test(sb[0].body) && /Reply STOP to opt out$/.test(sb[0].body), sb[0] && sb[0].body);
+  var sl = DB.vp_signin_links.filter(function (l) { return l.venue_id === jv.id && !l.used_at; });
+  var j27 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === jv.id; })[0] || {};
+  var slNew = sl[sl.length - 1] || {};
+  check('the text\'s link ends at the same 30-day moment too (3 days off), and the email\'s link was not retired by it', sl.length >= 2 && Math.abs(Date.parse(slNew.expires_at) - Date.parse(j27.link_expires_at)) < 1000, [slNew.expires_at, j27.link_expires_at]);
+
+  /* THEY ACTED ON THE EMAIL: each action, checked AT SEND TIME. A fresh venue for each, 3 days quiet, then the act, then
+     the follow-up email and text are both refused with nothing sent. */
+  async function actedWorld(name, act) {
+    world(); ENV.PROSPECT_SMS_ON = 'on'; ENV.CLICKSEND_USERNAME = 'rig'; ENV.CLICKSEND_API_KEY = 'rig-key';
+    /* An email login (a mobile login gets no one-click link at all), with a mobile on the prospect row for the text. */
+    var sr = await setUp({ name: name, send_welcome: true });
+    var v = DB.vp_venues.filter(function (x) { return x.name === name; })[0];
+    (row(name) || {}).phone = '0432 071 622';
+    age(name, 3 * DAY + 3600000);
+    var tok = /#t=([A-Za-z0-9_-]{43})/.exec((sent[sent.length - 1] || {}).html || ''); tok = tok && tok[1];
+    var qb = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).some(function (x) { return x.venue_id === v.id; });
+    await act(v, tok);
+    var eb = sent.length; SMS.length = 0;
+    var ne = await call('/autopilot/prospect/nudge', { venue_id: v.id, text: DAY3 }, AP);
+    var ns = await call('/autopilot/prospect/nudge-sms', { venue_id: v.id, text: EXP }, AP);
+    return { quietBefore: qb, email: ne, sms: ns, sentMore: sent.length - eb, texts: SMS.length, sr: sr };
+  }
+  var a1 = await actedWorld('Tapped Arms', async function (v, tok) {
+    /* The tap: Auth's generate_link answers (as Supabase does), the page would then verifyOtp; here the sign-in never finishes. */
+    var plainFetch = globalThis.fetch;
+    globalThis.fetch = function (url, opts) {
+      var u = String(url);
+      if (u.indexOf('/auth/v1/admin/generate_link') !== -1) return RS(200, { properties: { hashed_token: 'h' + Date.now(), verification_type: 'magiclink' } });
+      /* The one conditional UPDATE: token_hash matches, unused, not expired; the rows come back (return=representation). */
+      if (/\/rest\/v1\/vp_signin_links\?/.test(u) && opts && opts.method === 'PATCH' && /return=representation/.test((opts.headers || {}).Prefer || '')) {
+        var qh = /token_hash=eq\.([0-9a-f]{64})/.exec(u), hit = DB.vp_signin_links.filter(function (l) { return qh && l.token_hash === qh[1] && !l.used_at && Date.parse(l.expires_at) > Date.now(); });
+        hit.forEach(function (l) { l.used_at = JSON.parse(opts.body).used_at; });
+        return RS(200, hit.map(function (l) { return { auth_user_id: l.auth_user_id, venue_id: l.venue_id }; }));
+      }
+      return plainFetch(url, opts);
+    };
+    var oc = await call('/auth/one-click', { t: tok });
+    globalThis.fetch = plainFetch;
+    if (oc.status !== 200) throw new Error('the tap did not open the link: ' + oc.status + ' ' + JSON.stringify(oc.body));
+  });
+  check('TAPPED THE LINK (even if the sign-in never finished): on the quiet list before, then the email AND the text are refused at send time, nothing sent', a1.quietBefore && a1.email.status === 409 && /opened their sign-in link/.test(a1.email.body.error) && a1.sms.status === 409 && a1.sentMore === 0 && a1.texts === 0, [a1.email.body, a1.sms.body]);
+  var a2 = await actedWorld('Signed In Arms', async function (v) { var st = DB.vp_venue_staff.filter(function (x) { return x.venue_id === v.id; })[0]; AUTH.filter(function (u) { return u.id === st.auth_user_id; })[0].last_sign_in_at = new Date().toISOString(); });
+  check('SIGNED IN: both refused at send time, nothing sent', a2.quietBefore && a2.email.status === 409 && /signed in since/.test(a2.email.body.error) && a2.sms.status === 409 && a2.sentMore === 0 && a2.texts === 0, [a2.email.body, a2.sms.body]);
+  var a3 = await actedWorld('Card Added Arms', async function (v) { DB.venueplay_founding.filter(function (f) { return f.id === v.founding_id; })[0].stripe_subscription_id = 'sub_card'; });
+  check('ADDED A CARD: both refused at send time, nothing sent', a3.quietBefore && a3.email.status === 409 && /not a prospect any more/.test(a3.email.body.error) && a3.sms.status === 409 && a3.sentMore === 0 && a3.texts === 0, [a3.email.body, a3.sms.body]);
+  var a4 = await actedWorld('Cancelled Arms', async function (v) { (DB.vp_prospects.filter(function (p) { return p.venue_id === v.id; })[0]).cancelled_at = new Date().toISOString(); });
+  check('CANCELLED: both refused at send time, nothing sent', a4.quietBefore && a4.email.status === 409 && a4.sms.status === 409 && a4.sentMore === 0 && a4.texts === 0, [a4.email.body, a4.sms.body]);
+  check('CONTROL: the same world with no action sends both', (await actedWorld('Untouched Arms', async function () {})).email.status === 200);
+
+  /* AFTER THE 30 DAYS: no link by itself. The follow-ups are refused; the sign-in page's "Send me a new link" answers
+     ended, sends nothing, and opens ONE urgent sales ticket for Dean (buzzing like the other sales alerts). */
+  world(); ENV.PROSPECT_SMS_ON = 'on'; ENV.CLICKSEND_USERNAME = 'rig'; ENV.CLICKSEND_API_KEY = 'rig-key';
+  r = await setUp({ name: 'Ended Arms', send_welcome: true });   // an email login: it has a one-click link to tap
+  var ev = DB.vp_venues.filter(function (x) { return x.name === 'Ended Arms'; })[0];
+  (row('Ended Arms') || {}).phone = '0432 071 622';
+  var etok = (/#t=([A-Za-z0-9_-]{43})/.exec((sent[sent.length - 1] || {}).html || '') || [])[1];
+  age('Ended Arms', 31 * DAY);
+  DB.vp_signin_links.forEach(function (l) { if (l.venue_id === ev.id) l.expires_at = new Date(Date.now() - DAY).toISOString(); });
+  var eb2 = sent.length; SMS.length = 0;
+  var en = await call('/autopilot/prospect/nudge', { venue_id: ev.id, text: DAY3 }, AP);
+  var es = await call('/autopilot/prospect/nudge-sms', { venue_id: ev.id, text: EXP }, AP);
+  check('day 31: the follow-up email and text are refused (ended), nothing sent, and the answer says to resend from HQ', en.status === 409 && en.body.ended === true && /Resend from HQ/.test(en.body.error) && es.status === 409 && /Resend from HQ/.test(es.body.error) && sent.length === eb2 && SMS.length === 0, [en.body, es.body]);
+  var oc31 = await call('/auth/one-click', { t: etok });
+  check('the expired link itself: 410, the same as any dead link', oc31.status === 410, oc31.status);
+  DB.vp_help_tickets = DB.vp_help_tickets || [];
+  var emailsTo = function (addr) { return sent.filter(function (m) { return (m.to || []).indexOf(addr) >= 0; }).length; };
+  var theirAddr = (row('Ended Arms') || {}).email, them0 = emailsTo(theirAddr);
+  var rs31 = await call('/auth/one-click/resend', { t: etok });
+  var tk = (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === ev.id; });
+  check('"Send me a new link" after the 30 days: { ok, ended }, NO email to them, and ONE urgent SALES ticket for Dean that names the venue and how to resend, with its staff alert', rs31.status === 200 && rs31.body.ended === true && emailsTo(theirAddr) === them0 && tk.length === 1 && sent.length > eb2 &&
+    tk[0].category === 'sales' && tk[0].priority === 'urgent' && /^Sign-in link ended: Ended Arms/.test(tk[0].subject) && /Resend sign-in link/.test(tk[0].message) && /did not|no link goes by itself/.test(tk[0].message), [rs31.body, tk[0]]);
+  check('...audited as signin_link_ended, with no token in it', DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_ended'; }) && JSON.stringify(DB.vp_admin_audit).indexOf(etok) < 0);
+  await call('/auth/one-click/resend', { t: etok });
+  check('a second tap: still ended, NOT a second ticket, still no email to them', (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === ev.id; }).length === 1 && emailsTo(theirAddr) === them0);
+  var rsE = await call('/auth/one-click/resend', { e: theirAddr });
+  check('by address instead of token: the same, ended and no link', rsE.status === 200 && rsE.body.ended === true && emailsTo(theirAddr) === them0, rsE.body);
+
+  /* HQ RESENDS: a fresh 30 days from the resend, the follow-ups re-dated from there; the automatic follow-ups never reset it. */
+  var T8 = Date.now();
+  var hq = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  var hl = DB.vp_signin_links.filter(function (l) { return l.venue_id === ev.id && !l.used_at; })[0] || {};
+  var ep = row('Ended Arms') || {};
+  check('HQ Resend sign-in link after the 30 days: it goes, lasts a fresh 30 days from NOW, and the prospect is re-dated (link_from)', hq.status === 200 && hq.body.restarted === true && hq.body.redated === true && hq.body.days_left === 30 &&
+    Math.abs(Date.parse(hl.expires_at) - T8 - 30 * DAY) < 60000 && Math.abs(Date.parse(ep.link_from) - T8) < 60000 && emailsTo(theirAddr) === them0 + 1, [hq.body, hl.expires_at, ep.link_from]);
+  var q8 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === ev.id; })[0] || {};
+  check('...so the quiet list counts journey 1 from the resend: day 0, 30 days left, while days_since_setup still says 31', q8.nudge_day === 0 && q8.link_days_left === 30 && q8.days_since_setup === 31 && Math.abs(Date.parse(q8.link_from) - T8) < 60000, q8);
+  var en2 = await call('/autopilot/prospect/nudge', { venue_id: ev.id, text: DAY3 }, AP);
+  var hl2 = DB.vp_signin_links.filter(function (l) { return l.venue_id === ev.id && !l.used_at; })[0] || {};
+  check('...and the follow-up works again, its link ending at the NEW 30-day moment, and it did not move link_from (automatic never resets)', en2.status === 200 && en2.body.days_left === 30 && Math.abs(Date.parse(hl2.expires_at) - T8 - 30 * DAY) < 60000 && (row('Ended Arms') || {}).link_from === ep.link_from, [en2.body, hl2.expires_at]);
+  var hqAgain = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  check('the HQ answer names the real expiry for the page to show', /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+$/.test(hqAgain.body.expires_words || '') && hqAgain.body.days_left === 30, hqAgain.body);
+  FAIL['vp_prospects:PATCH'] = 1;
+  var hq151 = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  check('before migration 151 (link_from cannot be written): the link still goes for 30 days and HQ is told the follow-ups could not be re-dated', hq151.status === 200 && hq151.body.restarted === true && hq151.body.redated === false && /migration 151/.test(hq151.body.note || ''), hq151.body);
+  FAIL = {};
+  /* A login that is not a prospect's keeps the ordinary 14 days: tools/test-phone-signin.js section 3a. */
+  delete ENV.PROSPECT_SMS_ON; delete ENV.CLICKSEND_USERNAME; delete ENV.CLICKSEND_API_KEY;
+
   print(''); print('PASS ' + ran + ' checks');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

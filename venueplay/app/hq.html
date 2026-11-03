@@ -2591,12 +2591,14 @@
      row and HQ > Prospects (vp-prospects-hq.js) both call it, so the two buttons cannot say different things. */
   function hqSigninLink(id, btn){
     var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||"this venue";
-    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, for 14 days, and any older link stops working.").then(function(ok){ if(!ok) return null;
+    /* No number before the Worker has minted the link (Dean, 4 Nov 2026: never print a number that is not the real
+       expiry). A prospect's link ends 30 days from setup, anyone else's 14 days from now; the Worker says which. */
+    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, until it expires, and any older link stops working.").then(function(ok){ if(!ok) return null;
       var was=btn.textContent; btn.disabled=true; btn.textContent="Sending...";
       return workerPost("/admin/signin-link", { venue_id:id }).then(function(r){
         btn.disabled=false; btn.textContent=was;
         if(r.error){ vpTell(r.error); return r; }
-        vpTell("Sent to "+r.to+". One tap opens their account."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
+        vpTell("Sent to "+r.to+". One tap opens their account"+(r.expires_words?", until "+r.expires_words+(r.days_left?" ("+r.days_left+(r.days_left===1?" day":" days")+")":""):"")+"."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
         return r;
       });
     });

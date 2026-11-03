@@ -401,7 +401,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     row.send_at === m.scheduled_at && row.status === 'scheduled' && row.created_by === ADMIN, row);
   var tok = tokenOf(m), link = await linkFor(tok);
   check('the record keeps only the HASH of the sign-in link the email carries, never the link', !!link && row.signin_token_hash === link.token_hash && JSON.stringify(DB.vp_prospect_welcomes).indexOf(tok) === -1, row.signin_token_hash);
-  check('that link\'s 14 days start when the email GOES, not when HQ pressed the button', link && Date.parse(link.expires_at) === Date.parse(m.scheduled_at) + 14 * 86400000, link && [link.created_at, link.expires_at]);
+  check('that link lasts 30 DAYS FROM SETUP (Dean, 4 Nov 2026), the same moment every follow-up link ends at, not 14 days from when the email goes', link && Math.abs(Date.parse(link.expires_at) - t0 - 30 * 86400000) < 5000 && Date.parse(link.expires_at) > Date.parse(m.scheduled_at) + 14 * 86400000, link && [link.created_at, link.expires_at]);
   check('the record holds what the email was made from, so Send now can make it again', row.detail && row.detail.venueName === CAZ.name && row.detail.firstName === 'Amit' && row.detail.authUserId === AUTH[0].id && row.detail.seats === 60, row.detail);
   check('the audit row says when it goes', (DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_set_up'; })[0] || {}).detail.welcome_send_at === m.scheduled_at);
   check('it carries a text part as well as the HTML', typeof m.text === 'string' && m.text.length > 100 && m.text === helpPlainFromHtml(m.html));
@@ -412,12 +412,12 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   world(); t0 = Date.now();
   r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: 0 })), ENV, J);
   var l0 = await linkFor(tokenOf(sent[0]));
-  check('0 minutes: sent now (no scheduled_at), recorded as sent, its link\'s 14 days from now', r.status === 200 && sent.length === 1 && sent[0].scheduled_at === undefined && r.body.welcome.status === 'sent' &&
-    DB.vp_prospect_welcomes[0].status === 'sent' && l0 && Math.abs(Date.parse(l0.expires_at) - t0 - 14 * 86400000) < 5000, [sent[0] && sent[0].scheduled_at, r.body.welcome]);
+  check('0 minutes: sent now (no scheduled_at), recorded as sent, its link 30 days from setup', r.status === 200 && sent.length === 1 && sent[0].scheduled_at === undefined && r.body.welcome.status === 'sent' &&
+    DB.vp_prospect_welcomes[0].status === 'sent' && l0 && Math.abs(Date.parse(l0.expires_at) - t0 - 30 * 86400000) < 5000, [sent[0] && sent[0].scheduled_at, r.body.welcome]);
   world();
   r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: 1440 })), ENV, J);
   var l1 = await linkFor(tokenOf(sent[0]));
-  check('1440 minutes (a day, the most): booked, and its link still fits migration 123\'s 15-day check', r.status === 200 && l1 && Date.parse(l1.expires_at) - Date.parse(l1.created_at) <= 15 * 86400000, l1);
+  check('1440 minutes (a day, the most): booked, and its link still fits migration 151\'s 31-day check (30 days from setup)', r.status === 200 && l1 && Date.parse(l1.expires_at) - Date.parse(l1.created_at) <= 31 * 86400000 && Math.abs(Date.parse(l1.expires_at) - t0 - 30 * 86400000) < 5000, l1);
   var badOnes = [[1441, 'over a day'], [-5, 'negative'], ['soon', 'not a number'], [2.5, 'not whole minutes']];
   for (var bi = 0; bi < badOnes.length; bi++) {
     world(); r = await vpaHandleProspect(as(ADMIN, with_({ send_in_minutes: badOnes[bi][0] })), ENV, J);
