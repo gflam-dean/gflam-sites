@@ -1347,6 +1347,10 @@
   "checks": 16,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/tv-venue-search.test.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/venue-channel.test.js": {
   "checks": 34,
   "counted_by": "lines"

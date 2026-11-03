@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 18:53 · bebbd5cd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 19:37 · 758de98a';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -156,6 +156,7 @@ const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a
  * ------------------------------------------------------------------------- */
 const JOIN_MAX_PER_IP = 300;      // joins per 60s per network. Generous: a whole venue shares one NAT IP. Raise for big venues.
 const LIKE_MAX_PER_IP = 30;      // venue-name searches per 60s per network: a screen setting itself up asks a handful of times.
+const FIND_MAX_PER_IP = 20;      // TV-app name searches (?q=) per 60s per network: one per press of Search on a remote.
 const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
 const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
@@ -2128,8 +2129,95 @@ async function handleVenueCodeRefresh(request, env, json) {
   return json({ error: 'Could not allocate a free code, please try again' }, 409);
 }
 
+/* "SEARCH BY VENUE NAME" ON THE SAMSUNG AND LG APPS: GET /venues/like?q=<what was typed> (4 Nov 2026).
+   ?slug= (below) is the bingo TV finding its own FAMILY of same-named pubs from a slug it already
+   holds: an exact slug or slug-plus-postcode, up to 200. That is the wrong tool for a person typing on
+   a remote, and Dean found both faults in the LG simulator on 3 Nov:
+     - "mini bar" did not find The Mini Bar (only "the mini" did): it was a prefix on the whole name;
+     - "test alph" found nothing until all six-plus letters of "test-alpha" were typed.
+   So ?q= matches WORDS: case and punctuation ignored, a leading "The" ignored on both sides, and
+     (a) every typed word starts a word of the name, in any order ("mini bar", "test al", "tugun"), or
+     (b) the typed letters with the spaces taken out start the name's letters from one of its words
+         ("minibar", "testalpha").
+   What stops anyone listing every venue with three letters at a time, kept from the old six-letter rule:
+     - at least three letters or digits, after a leading "the";
+     - ACTIVE venues only (a suspended or cancelled venue is never offered to a new screen);
+     - at most FIND_LIMIT answers, best first, and only "more": true past that, never a count;
+     - only what a person needs to pick the right one: name, postcode, state, and the slug to save;
+     - FIND_MAX_PER_IP searches a minute per network.
+   Test venues: the same as ?slug=, no rule of their own (Test Alpha is how a TV is tried out). */
+const FIND_MIN_LETTERS = 3;
+const FIND_LIMIT = 5;
+let _findRows = null, _findAt = 0;      // per isolate: the active venues, for 60 s
+
+function venueSearchSplit(s) {
+  return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/['\u2018\u2019`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+}
+function venueSearchWords(name) {
+  const w = venueSearchSplit(name);
+  if (w.length > 1 && w[0] === 'the') w.shift();
+  return w;
+}
+function venueSearchQuery(typed) {
+  const w = venueSearchSplit(typed);
+  if (w[0] === 'the') w.shift();          // "the" on its own is nothing to search for
+  return { words: w, flat: w.join('') };
+}
+/* 0 = the whole name, 1 = from the name's first word, 2 = somewhere in it, -1 = no match. */
+function venueSearchScore(q, name) {
+  const nw = venueSearchWords(name);
+  if (!q.flat || !nw.length) return -1;
+  const flat = nw.join('');
+  if (flat === q.flat) return 0;
+  let at = -1;
+  if (q.words.every((t) => nw.some((n) => n.startsWith(t)))) at = nw[0].startsWith(q.words[0]) ? 1 : 2;
+  for (let i = 0; i < nw.length && at !== 1; i++) {
+    if (nw.slice(i).join('').startsWith(q.flat)) at = i === 0 ? 1 : (at === -1 ? 2 : at);
+  }
+  return at;
+}
+function venueSearch(rows, typed) {
+  const q = venueSearchQuery(typed);
+  if (q.flat.length < FIND_MIN_LETTERS) return { matches: [], why: 'Type at least three letters of the name.' };
+  const hits = [];
+  for (const r of rows || []) {
+    if (!r || !r.slug || r.status !== 'active') continue;
+    const sc = venueSearchScore(q, r.name || r.slug);
+    if (sc >= 0) hits.push({ sc: sc, r: r });
+  }
+  hits.sort((a, b) => (a.sc - b.sc) || String(a.r.name || '').localeCompare(String(b.r.name || '')) ||
+                      String(a.r.au_state || '').localeCompare(String(b.r.au_state || '')));
+  const out = { matches: hits.slice(0, FIND_LIMIT).map((h) => ({
+    slug: h.r.slug, name: h.r.name || h.r.slug, postcode: h.r.postcode || '', state: h.r.au_state || '',
+  })) };
+  if (hits.length > FIND_LIMIT) out.more = true;
+  return out;
+}
+
+async function handleVenueFind(request, env, json, typed) {
+  typed = String(typed || '').slice(0, 80);
+  if (venueSearchQuery(typed).flat.length < FIND_MIN_LETTERS) return json(venueSearch([], typed));
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'find:ip:' + ipHash, FIND_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ matches: [], why: 'Too many searches from this network. Wait a minute and try again.' }, 429);
+  }
+  const now = Date.now();
+  if (!_findRows || now - _findAt > 60000) {
+    try {
+      _findRows = (await sbGetAll(env, 'vp_venues', 'status=eq.active&select=slug,name,postcode,au_state,status&order=slug.asc')) || [];
+      _findAt = now;
+    } catch (e) {
+      return json({ matches: [] });     // a search that fails is not a screen that fails
+    }
+  }
+  return json(venueSearch(_findRows, typed));
+}
+
 async function handleVenueLike(request, env, json) {
   const url = new URL(request.url);
+  if (url.searchParams.get('q') !== null) return handleVenueFind(request, env, json, url.searchParams.get('q'));
   const typed = String(url.searchParams.get('slug') || '').trim().toLowerCase().slice(0, 80);
   if (!typed || !/^[a-z0-9-]+$/.test(typed)) return json({ matches: [] });
   if (typed.length < 6) return json({ matches: [], why: 'too short to search' });
