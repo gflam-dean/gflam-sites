@@ -4334,6 +4334,18 @@ MUTATIONS = [
      'data-vp-mark="wordmark"><path fill="currentColor" d="',
      'data-vp-mark="wordmark"><path fill="#FF0000" d="',
      'one copy of the VenuePlay mark is redrawn by hand and no longer matches the brand file'),
+    # THE TAB ICON IS ONE SET (3 Nov 2026): Dean saw a different-size favicon on the join screen.
+    ('every venueplay page links the same tab icon set as index.html', 'venueplay/tv.html',
+     '<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">',
+     '<link rel="icon" href="/logos/venueplay_appicon_rebuilt.png?v=f4" type="image/png" sizes="48x48">',
+     'the TV page goes back to the 1024px app icon, a different size in the tab from the website'),
+    ('every venueplay page links the same tab icon set as index.html', 'venueplay/unsubscribe.html',
+     '<link rel="icon" href="/favicon.ico?v=f4" sizes="any">\n<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">\n<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">\n<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">\n<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">\n<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">\n', '',
+     'a page ships with no tab icon at all and the browser shows a blank one'),
+    ('every venueplay page links the same tab icon set as index.html', 'venueplay/index.html',
+     '<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">',
+     '<link rel="icon" href="/favicon.svg?v=f5" type="image/svg+xml">',
+     'the home page icon set changes and the other pages are left on the old one'),
 
     # ---- the pasted Workers ----
     ('venueplay-api-FULL.js is whole', 'venueplay-backend/worker/venueplay-api-FULL.js',
