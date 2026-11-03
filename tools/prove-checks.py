@@ -10620,6 +10620,19 @@ MUTATIONS = [
     ('safe-area-in-chrome.test.py', 'venueplay/app/purchase-raffle/index.html',
      "  header{padding-top:env(safe-area-inset-top,0px)}\n", '',
      'the purchase raffle seller (/app/purchase-raffle/) portrait 430x932: nothing sits under the island or the top edge'),
+    # The bingo reveal's rings never show bare over the undimmed board (live fault, 3 Nov 2026).
+    ('bingo-reveal-rings-in-chrome.test.py', 'venueplay/tv.html',
+     '  .ballreveal.live .brrings i{animation:brring .74s ease-out .4s forwards}',
+     '  .ballreveal.live .brrings i{animation:brring 1.1s ease-out forwards}',
+     'a reveal ring is never shown over the undimmed board without the ball'),
+    ('bingo-reveal-rings-in-chrome.test.py', 'venueplay/tv.html',
+     '  .ballreveal.live .brrings i{animation:brring .74s ease-out .4s forwards}',
+     '  .ballreveal.live .brrings i{animation:brring .74s ease-out .4s both}',
+     'a reveal ring is never shown over the undimmed board without the ball'),
+    ('bingo-reveal-rings-in-chrome.test.py', 'venueplay/tv.html',
+     '  .ballreveal.live .brrings i{animation:brring .74s ease-out .4s forwards}',
+     '  .ballreveal.live .brrings i{animation:none}',
+     'the reveal rings still pulse out behind the ball'),
 ]
 
 
