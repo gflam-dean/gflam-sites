@@ -1,7 +1,7 @@
 # venueplay
 
-> Live game nights for Australian pubs, clubs and bowls clubs. Bingo, musical
-> bingo, trivia, raffles and members draws all run from one platform onto the
+> Live game nights for Australian pubs, clubs and bowls clubs. Trivia, musical
+> bingo, bingo, raffles and members draws all run from one platform onto the
 > venue's existing TV. Players join from their own phone by scanning a QR code:
 > no app to download, no account to create.
 

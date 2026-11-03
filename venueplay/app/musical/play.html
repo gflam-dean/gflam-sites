@@ -153,7 +153,15 @@
   /* THE CLAIM IS ALWAYS ON SCREEN (UX audit 4.5, 30 Oct 2026). At 390x690 the BINGO button sat about
      170px below the fold, so a winner had to scroll to claim. It sticks to the bottom of the screen
      while the card scrolls under it, and sits in its normal place once the card ends. */
-  #vCard .bingoBtn{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom, 0px));z-index:5}
+  /* THE ANSWER TO BINGO! IS WHERE THE THUMB IS (live play, Test Alpha, 3 Nov 2026: "tapping BINGO! gives no
+     feedback"). The button stays on screen (sticky) while the card scrolls, but its answer went to #pMsg UNDER
+     the card, off screen at phone height, so a tap that was not yet a line looked like nothing happened. The
+     answer now also shows in a note on top of the button, for a few seconds. */
+  #vCard .bingobar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom, 0px));z-index:5}
+  .bingonote{margin:0 auto 8px;max-width:420px;padding:10px 14px;border-radius:12px;background:var(--ink-2);border:1px solid var(--line);
+    color:var(--text);font-size:14px;line-height:1.4;text-align:center;box-shadow:0 10px 26px -10px rgba(0,0,0,.8)}
+  .bingonote.no{border-color:rgba(245,165,36,.55);color:#FFD9A0}
+  .bingonote.wait{border-color:rgba(255,194,75,.55);color:var(--gold)}
 
   /* THE PRIZE STRIP. What you are playing for, above the card, big enough to read at arm's
      length in a dim room. It used to appear only on the win screen, so a player found out
@@ -217,6 +225,7 @@
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
 </style>
+<link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -276,7 +285,7 @@
     </div>
     <div id="cardWrap"><div class="card5" id="cardGrid"></div></div>
     <div class="pmsg" id="pMsg">Tap a title when you hear it play.</div>
-    <button class="btn pink bingoBtn" id="bingoBtn">BINGO!</button>
+    <div class="bingobar"><div class="bingonote hidden" id="bingoNote" role="status" aria-live="polite"></div><button class="btn pink bingoBtn" id="bingoBtn">BINGO!</button></div>
   </div>
 
   <!-- WON -->
@@ -708,6 +717,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Hit BINGO when you have the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
+  /* The answer to a BINGO! tap: in the line under the card AND in the note on the button, where the player is
+     looking. Never silent. The note goes after a few seconds; a new answer replaces it. */
+  var _noteT=null;
+  function noteBingo(html,cls,ms){
+    setMsg(html,cls);
+    var n=$("bingoNote"); if(!n) return;
+    n.innerHTML=html; n.className="bingonote"+(cls?" "+cls:"");
+    if(_noteT) clearTimeout(_noteT);
+    _noteT=setTimeout(function(){ n.classList.add("hidden"); }, ms||6000);
+  }
+  function hideBingoNote(){ var n=$("bingoNote"); if(n) n.classList.add("hidden"); if(_noteT){ clearTimeout(_noteT); _noteT=null; } }
 
   // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
   var _ac=null;
@@ -896,21 +916,24 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // renderCard FIRST: it writes its own message at the end, so a message set before it is wiped.
     if(P.cells) renderCard();
     if(early.length){
-      setMsg("You have marked "+early.length+" song"+(early.length===1?"":"s")+" that "+(early.length===1?"has":"have")+" not played yet. They are outlined in orange, tap one to unmark it. Keep listening!","no");
+      noteBingo("You have marked "+early.length+" song"+(early.length===1?"":"s")+" that "+(early.length===1?"has":"have")+" not played yet. They are outlined in orange, tap one to unmark it. Keep listening!","no",9000);
       if(_earlyTimer) clearTimeout(_earlyTimer);
       _earlyTimer=setTimeout(function(){
         _showEarly=false;
         if(P.active && P.cells && !P.won && !P.ended) renderCard();
       }, 10000);
     } else {
-      setMsg("Not yet, keep listening. The songs for that pattern have not all been played.","no");
+      noteBingo(markedCount() ? "Not a line yet. The songs for that pattern have not all played. Keep listening!" : "Mark the songs you hear first. Tap a title when it plays.","no");
     }
   }
+  function markedCount(){ var n=0; if(P.daubs) for(var i=0;i<25;i++){ if(i!==12 && P.daubs[i]) n++; } return n; }
   function pressBingo(){
-    if(!P.active || !P.cells || P.claimPending || P.won || !P.gameId) return;
+    if(P.claimPending || P.won) return;   // the button is disabled while a claim is with the host, and gone once won
+    if(!P.active || !P.cells){ noteBingo("The game has not started yet. Your card will be ready when the host starts.","no"); return; }
     // Quick local gate to avoid a needless server call; the Worker is the authority.
     if(!checkPattern()){ sayNotYet(); return; }
-    P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
+    if(!P.gameId){ noteBingo("One moment, your card is still connecting. Try BINGO again in a few seconds.","no"); return; }
+    P.claimPending=true; $("bingoBtn").disabled=true; noteBingo("BINGO sent. The host is checking your card&hellip;","wait");
     playerPost("/player/claim",{ game_id:P.gameId }).then(function(r){
       if(r && r.auto_verdict==="valid"){
         P.claimId=r.claim_id;
@@ -923,7 +946,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       }
     }).catch(function(e){
       P.claimPending=false; $("bingoBtn").disabled=false;
-      setMsg((e && e.status===429) ? "One moment, try that again in a few seconds." : "Could not send that, try again.","no");
+      noteBingo((e && e.status===429) ? "One moment, try that again in a few seconds." : "Could not send that, try again.","no");
     });
   }
 
@@ -948,6 +971,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
+      hideBingoNote();   // a new game: last game's answer goes
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
@@ -974,9 +998,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          a host who had never seen their card. A host still on the old build sends no pid, and
          then the old behaviour is the safe one. */
       if(m.pid && m.pid!==P.pid) return;
-      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host checked your card and it is not a winner yet. Keep playing!","no"); }
+      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; noteBingo("The host checked your card and it is not a winner yet. Keep playing!","no"); }
     }
     else if(m.t==="winner"){
+      hideBingoNote();
       P.claimPending=false;
       // pids carries a split (two people on the same song); pid alone is an older host.
       var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);

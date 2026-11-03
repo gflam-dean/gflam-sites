@@ -1,0 +1,18 @@
+/* THE PHONE'S ISLAND, ROUNDED CORNERS AND HOME BAR (Dean, 3 Nov 2026: "it sits under the island").
+   The player pages ask for viewport-fit=cover, which lets the page draw under the iPhone's island,
+   its rounded corners and its home bar, and then promises to keep its own words out of them. Only the
+   musical bingo button kept that promise, at the bottom. Saved to the home screen (standalone) or turned
+   sideways, the header, the menu button and the called ball sat under the island or the notch.
+
+   One file, loaded by every player phone page that uses the shared header (.ptop): play.html (bingo
+   and the room), /app/musical/play.html, /app/trivia/play.html. The header's own background still runs
+   up under the island, so the page looks whole; only what is IN it moves down. Sideways, the
+   460px column is centred far clear of the notch (an 812 wide phone leaves 176px a side), so only the
+   header's top and the bottom sheet need moving. In a normal Safari tab
+   every inset is 0 and nothing moves. The bottom of the page is the help
+   footer's (/app/vp-help.js .vph-foot), which already pads for the home bar. Checked by tools/safe-area-in-chrome.test.py with real insets. */
+.ptop{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.ptop .menubtn{top:calc(12px + env(safe-area-inset-top,0px))}
+.ptop .menupanel{top:calc(56px + env(safe-area-inset-top,0px))}
+.ptop .hdrball{top:calc(10px + env(safe-area-inset-top,0px))}
+.sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}

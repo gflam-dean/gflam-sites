@@ -81,7 +81,7 @@ def console(label, width=1024, height=900):
 try:
     as_venue(name='Royal Hotel', au_state='QLD', postcode='4000', entity_type='for_profit')
     tid, sid, up = console('qld pub')
-    ok('CONTROL: a Queensland pub\'s games menu has Bingo and all five games', up is True and tiles(r, sid) == 'bingo,trivia,musical-bingo,raffle,members-draw', tiles(r, sid))
+    ok('CONTROL: a Queensland pub\'s games menu has Bingo and all five games, in the game order (trivia first, bingo never first)', up is True and tiles(r, sid) == 'trivia,musical-bingo,bingo,raffle,members-draw', tiles(r, sid))
     shot1(sid, 'console-qld-pub')
     r.close_tab(tid)
 

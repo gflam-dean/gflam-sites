@@ -261,6 +261,7 @@
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
 </style>
+<link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -1518,7 +1519,11 @@
     }catch(e){}
   }
   function pressBingo(){
-    if(!P.active || !P.cards.length || P.claimPending || P.won) return;
+    /* NEVER SILENT (live play, Test Alpha, 3 Nov 2026). A tap that cannot be a claim says why, in the line
+       just above the button; only a claim already with the host, or a win, has nothing new to say. */
+    if(P.claimPending || P.won) return;
+    if(!P.cards.length){ setMsg("Your tickets are still on their way. Try again in a few seconds.","no"); return; }
+    if(!P.active){ setMsg("The game has not started yet. Hang on for the host.","no"); return; }
     // Local gate; the host holds the master copies of our tickets and makes the final call.
     var win=winningCardNo();
     if(!win && !P.allowEarly){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
