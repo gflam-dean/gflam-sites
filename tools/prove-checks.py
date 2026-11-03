@@ -448,7 +448,7 @@ MUTATIONS = [
      '  await helpAnnounce(env, t, who.venue.name);\n',
      'a host at the console hears nothing back'),
     ('tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  await helpAcknowledge(env, t);   // a new ticket by email is acknowledged too; a reply on one is not\n',
+     '  if (!instantlyLead) await helpAcknowledge(env, t);\n',
      '',
      'somebody who emails support@ hears nothing back'),
     ('tickets from every form, rate limits, HQ-only reads, the report, email in, phone alerts', 'venueplay-backend/worker/venueplay-api-FULL.js',

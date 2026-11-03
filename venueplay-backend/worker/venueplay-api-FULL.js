@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 07:11 · a750cb86';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 14:41 · 0c48ef9d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
