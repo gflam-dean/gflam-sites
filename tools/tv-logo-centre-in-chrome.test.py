@@ -18,8 +18,8 @@ game Worker in jsc, supabase-js stood in) and checks:
           (within 2px), and the new mark it leaves there is still centred on the logo.
   DEMO    the sales-page demo TV (/tv?demo=1, Tugun's crest), at 1920x1080 and 1280x720: the show lands
           on the moved mark and the logos stay centred after it. Then the logo is swapped on the live
-          page, the real load-and-size path: a WIDE 4:1 wordmark puts the corner back exactly where a
-          venue with no logo has it; a TALL 1:3 logo centres the two again; the square crest again.
+          page, the real load-and-size path: a WIDE 4:1 wordmark lines the two up too (3 Nov 2026: the mark
+          lifts to its middle); a TALL 1:3 logo centres the two again; the square crest again.
   GAMES   the trivia and musical bingo screens (what tv.html shows in its frame during those games), in
           their own demos with Tugun's crest, at 1920x1080 and 1280x720: the show plays on "started", and once
           it is over their own wordmark is centred on their own logo; a wide logo puts it back, the square one
@@ -206,7 +206,9 @@ def games():
                 r.ask(sid, SWAP % (1200, 300))
                 r.until(sid, '(function(l){return l.naturalWidth===1200;})(document.getElementById("venueLogo"))', 8); time.sleep(0.8)
                 wd = r.ask(sid, MEASURE) or {}
-                ok('%s %d WIDE 4:1: the corner goes back to where it always was (not moved)' % (tag, w), bool(wd.get('logo')) and not wd.get('drop') and not wd.get('tf'), wd)
+                # 3 Nov 2026 (Dean): a wide wordmark is on the same line too; the corner LIFTS to its middle.
+                ok('%s %d WIDE 4:1: the logo is up' % (tag, w), bool(wd.get('logo')), wd)
+                centred(r, sid, '%s %d WIDE 4:1' % (tag, w), want_drop=False)
                 r.ask(sid, 'document.getElementById("venueLogo").src="/logos/venue-tugun-bowls.png"; true')
                 r.until(sid, '(function(l){return l.naturalWidth===480;})(document.getElementById("venueLogo"))', 8); time.sleep(0.8)
                 centred(r, sid, '%s %d SQUARE again' % (tag, w))
@@ -246,9 +248,11 @@ def demo(none_mark):
             r.until(sid, '(function(l){return l.naturalWidth===1200;})(document.getElementById("venueLogo"))', 8); time.sleep(0.8)
             wd = r.ask(sid, MEASURE) or {}
             ok('%d WIDE 4:1: the logo is drawn wide' % w, bool(wd.get('logo')) and (wd['logo']['r'] - wd['logo']['l']) > 3 * wd['logo']['h'], wd)
-            ok('%d WIDE 4:1: the corner goes back to where it always was (not moved)' % w, not wd.get('drop') and not wd.get('tf'), wd)
-            if w == 1920 and none_mark and wd.get('mark'):
-                ok('1920 WIDE 4:1: the mark is exactly where a venue with no logo has it', abs(wd['mark']['t'] - none_mark['t']) <= 0.5 and abs(wd['mark']['r'] - none_mark['r']) <= 0.5, [wd['mark'], none_mark])
+            # 3 Nov 2026 (Dean): both logos on ONE line with a wide wordmark too: the mark lifts to its middle,
+            # never above the wordmark's top, and keeps its right edge.
+            centred(r, sid, '%d WIDE 4:1' % w, want_drop=False)
+            if w == 1920 and none_mark and wd.get('mark') and wd.get('logo'):
+                ok('1920 WIDE 4:1: the mark keeps its right edge, and is not above the wordmark\'s top', abs(wd['mark']['r'] - none_mark['r']) <= 0.5 and wd['mark']['t'] >= wd['logo']['t'] - 0.5, [wd['mark'], wd['logo'], none_mark])
             shot(r, sid, 'tv-logo-centre-demo-wide-%d' % w)
 
             r.ask(sid, SWAP % (300, 900))
