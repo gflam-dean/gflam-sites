@@ -120,6 +120,9 @@ TV_PROBE = r'''(function(){
       out.rows6=[].map.call(box.querySelectorAll(".brow"),R);
       out.bottom6=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2)?b.bottom:0; }).concat([0])); }
     out.clock=R(lay.querySelector(".qfoot")); out.got=R(lay.querySelector(".gotbox"));
+    out.qround=R(lay.querySelector(".qround")); out.qroundText=(lay.querySelector(".qround")||{}).textContent||"";
+    var bt=lay.querySelector(".boardtitle"); out.btitle=bt?bt.textContent.trim():""; out.lblText=(lay.querySelector(".toplbl")||{}).textContent||"";
+    var ws=lay.querySelector(".wintitle span"); out.wcol=ws?getComputedStyle(ws).color:"";
     out.rows=[].map.call(lay.querySelectorAll(".brow"),R);
     out.steps=[].map.call(lay.querySelectorAll(".pcol"),R);
   }
@@ -215,6 +218,9 @@ def title_checks(tag, frames, w):
            g.get('text', '').strip().lower() == 'trivia' and 'Anton' in g.get('ff', '') and g.get('col') in ('rgb(255, 255, 255)',), g)
         ok('%s, %s: and big enough to read from the back of the room (at least 2.4%% of the width)' % (tag, name), g.get('fs', 0) >= 0.024 * w, g.get('fs'))
         L, M, I = x.get('logo'), x.get('mark'), x.get('lblInk')
+        G = (x.get('game') or {}).get('r')
+        ok('%s, %s: TRIVIA is on the same centre line as the corner logos (within 2px of ours)' % (tag, name),
+           bool(G and M) and abs((G[1] + G[3]) / 2 - (M[1] + M[3]) / 2) <= 2, [G, M])
         ok('%s, %s: the top line is clear of the venue\'s logo and of ours' % (tag, name),
            bool(L and M and I) and I[0] >= L[2] + gap and I[2] + gap <= M[0], [L, I, M])
 
@@ -250,8 +256,15 @@ def tv(B, base, w, h, logo=''):
         else:
             still = still and same(a, b)
     ok(tag + ': and so is every answer card (the right one only lifts about its own middle)', still, [qc and [c['r'] for c in qc], rc and [c['r'] for c in rc]])
-    ok(tag + ': "got it right" sits in the clock\'s box', bool(q.get('clock') and rv.get('got')) and abs(q['clock'][0] - rv['got'][0]) <= 1 and abs(q['clock'][2] - rv['got'][2]) <= 1 and abs(q['clock'][1] - rv['got'][1]) <= 1,
-       [q.get('clock'), rv.get('got')])
+    ok(tag + ': the reveal has no "got it right" box in the clock\'s place', rv.get('got') is None, rv.get('got'))
+    rc_ = rv.get('cards') or []
+    lowest = max([c['r'][3] for c in (q.get('cards') or [])] or [0])
+    ok(tag + ': "Question 3 of 20" sits UNDER the four answers, on the countdown and the reveal, in the same place',
+       bool(q.get('qround') and rv.get('qround')) and q['qround'][1] >= lowest and same(q['qround'], rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
+       [lowest, q.get('qround'), rv.get('qround'), q.get('qroundText')])
+    ok(tag + ': the scores: the heading is just "After question 3", and no small "Scores" word', bd.get('btitle', '').lower() == 'after question 3' and 'scores' not in bd.get('lblText', '').lower(),
+       [bd.get('btitle'), bd.get('lblText')])
+    ok(tag + ': the podium: "Winners tonight", with the winning yellow on it', pd.get('btitle', '').lower() == 'winners tonight' and pd.get('wcol') == 'rgb(255, 217, 61)', [pd.get('btitle'), pd.get('wcol')])
     ok(tag + ': the answer letters are big again (at least the old wall\'s 4.5% of the width)', len(qc) == 4 and all(c['lfs'] >= 0.045 * w for c in qc), [c['lfs'] for c in qc])
     ok(tag + ': the letters are WHITE on their colour chips, at least 3:1 (large text), and amber\'s, which cannot be, has a firm dark shadow',
        len(qc) == 4 and all(c['lfg'] == 'rgb(255, 255, 255)' and (contrast(c['lbg'], c['lfg']) >= 3.0 or (i == 2 and 'rgba(0, 0, 0, 0.45)' in c['lts'])) for i, c in enumerate(qc)),

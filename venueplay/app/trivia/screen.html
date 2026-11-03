@@ -89,16 +89,13 @@
      tools/trivia-newlook-in-chrome.test.py. */
   .layer.qgrid{display:block;padding:0;text-align:left}
   /* THE GAME'S NAME, READABLE FROM THE BACK OF THE ROOM (Dean, 3 Nov 2026: "The title of the game needs to
-     be clearer on each TV"). "TRIVIA" in Anton, white, at 2.6cqw (50px on a 1920 set, 33px on 1280), and
-     where the night is up to beside it in Hanken Grotesk ("Question 3 of 20", "Scores", "Final scores").
-     One line, centred between the venue's logo (top left, up to 15% of the width for a wide wordmark) and
-     ours (top right), inside 20cqw to 80cqw so it never crowds either; tools/trivia-newlook-in-chrome.test.py
-     measures that with a round and a wide logo at 1920 and 1280. */
+     be clearer on each TV"). "TRIVIA" in Anton, white, at 2.6cqw (50px on a 1920 set, 33px on 1280), alone
+     in the top line (where the night is up to sits under the answers, .qround), centred between the venue's
+     logo (top left, up to 15% of the width for a wide wordmark) and ours (top right), inside 20cqw to 80cqw,
+     and set on the SAME centre line as the corner logos by alignTitle(). tools/trivia-newlook-in-chrome.test.py
+     measures both with a round and a wide logo at 1920 and 1280. */
   .toplbl{position:absolute;left:calc(20cqw);right:20cqw;top:2.5cqw;display:flex;align-items:baseline;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;color:#fff;line-height:1.15}
   .toplbl .tl-night{font-family:'Anton',sans-serif;font-weight:400;font-size:2.6cqw;letter-spacing:.02em;text-transform:uppercase;color:#fff}
-  .toplbl b,.toplbl em{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.9cqw;letter-spacing:0;text-transform:none;font-style:normal;color:#F2F2F5}
-  .toplbl em{color:#FFD93D}
-  .toplbl .tl-dot{margin:0 1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.9cqw;color:#8A8A95}
   .srt{position:absolute;left:50%;top:50%;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
   /* question layer */
@@ -124,9 +121,7 @@
   .layer.pic .ringwrap{width:10cqw;height:10cqw}
   .layer.pic .ringwrap .rnum{font-size:4.6cqw}
   .layer.pic .ringwrap .rlbl{font-size:1.1cqw;margin-top:.25cqw}
-  .layer.pic .qfoot,.layer.pic .gotbox{width:10cqw}
-  .layer.pic .gotbox{height:10cqw}
-  .layer.pic .gotbox .gc{font-size:4.6cqw}
+  .layer.pic .qfoot{width:10cqw}
   .layer.pic .answered{margin-top:.6cqw}
   .answers{position:absolute;left:calc(6.25cqw);right:6.25cqw;top:25.4cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.3cqw 1.46cqw;gap:1.3cqw 1.46cqw}
   /* The four answer colours (Dean, 3 Nov 2026): coral, blue, amber, violet. None is pink (the brand's
@@ -180,10 +175,11 @@
   .answered{margin-top:.8cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.3cqw;line-height:1;color:#fff}
   .answered b{color:#fff}
   .answered .sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;margin-top:.5cqw;padding-left:.2em}
-  .gotbox{position:absolute;right:6.25cqw;top:6.5cqw;width:13.5cqw;height:13.5cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .gotbox .gc{font-family:'Anton',sans-serif;font-size:6.8cqw;line-height:1;color:#fff;white-space:nowrap}
-  .gotbox .gc span{color:#8A8A95;font-size:.46em}
-  .gotbox .gl{margin-top:.73cqw;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;white-space:nowrap}
+  /* WHERE THE NIGHT IS UP TO, UNDER THE FOUR ANSWERS (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
+     below the cards, the same place on the countdown and the reveal. Clear of the JOIN NOW card (centred). */
+  .qround{position:absolute;left:calc(30cqw);right:30cqw;top:45.1cqw;text-align:center;white-space:nowrap}
+  .qround .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.2cqw;line-height:1.2;color:#F2F2F5}
+  .layer.pic .qround{top:45.1cqw}
 
   /* reveal / board */
   .revboard{display:none}
@@ -199,6 +195,7 @@
   /* THE LEADERBOARD: an Anton title, then rows on dark cards; first place gets a pink edge and a pink
      place number. The board stays right of 23.5cqw, clear of the JOIN NOW card in the bottom-left; TEN rows
      (and a pinned leader on a later page) and the page line end near 50.7cqw, a bottom margin well over the top one. */
+  .wintitle span{color:#FFD93D}   /* "Winners tonight": the winning moment's yellow on "tonight" (Dean, 3 Nov 2026) */
   .layer.qgrid .boardtitle{position:absolute;left:calc(18cqw);right:18cqw;top:7.6cqw;margin:0;text-align:center;font-size:5.42cqw;white-space:nowrap;overflow:hidden}
   .board{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:15cqw;display:flex;flex-direction:column}
   .brow{position:relative;height:2.95cqw;margin-bottom:.42cqw;border-radius:.94cqw;background:#1A1A1F;display:flex;align-items:center;padding:0 2.3cqw;overflow:hidden}
@@ -281,10 +278,11 @@
 
   <!-- question -->
   <div class="layer hidden qgrid" id="tvQ">
-    <div class="toplbl"><span class="tl-night" id="tvQNight">Trivia</span><span class="tl-dot">&middot;</span><b class="qcount" id="tvQCount">Question 1</b></div>
+    <div class="toplbl"><span class="tl-night" id="tvQNight">Trivia</span></div>
     <img class="qimg hidden" id="tvQImg" alt="" onerror="this.classList.add('hidden');var l=this.parentNode;if(l&&l.classList)l.classList.remove('pic')">
     <div class="qtext" id="tvQText">Question</div>
     <div class="answers" id="tvAnswers"></div>
+    <div class="qround"><b class="qcount" id="tvQCount">Question 1</b></div>   <!-- under the four answers (Dean, 3 Nov 2026) -->
     <div class="qfoot">
       <div class="ringwrap">
         <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
@@ -297,12 +295,12 @@
   <!-- reveal: the SAME grid as the question (same label, same question text in the same place, the same
        four cards), so only the state changes; the clock box holds how many got it right -->
   <div class="layer hidden qgrid" id="tvReveal">
-    <div class="toplbl"><span class="tl-night" id="tvRevNight">Trivia</span><span class="tl-dot">&middot;</span><b class="qcount" id="tvRevCount">Question</b></div>
+    <div class="toplbl"><span class="tl-night" id="tvRevNight">Trivia</span></div>
     <img class="qimg hidden" id="tvRevImg" alt="" onerror="this.classList.add('hidden');var l=this.parentNode;if(l&&l.classList)l.classList.remove('pic')">
     <div class="qtext" id="tvRevQText"></div>
     <div class="revhead srt" id="tvRevHead">Correct answer</div>
     <div class="answers" id="tvRevAnswers"></div>
-    <div class="gotbox" id="tvRevGot"><div class="gc"><b id="tvRevRight">0</b><span id="tvRevOf"></span></div><div class="gl">got it right</div></div>
+    <div class="qround"><b class="qcount" id="tvRevCount">Question</b></div>
     <div class="revboard" id="tvRevBoard"></div>
   </div>
 
@@ -317,7 +315,7 @@
   <!-- Punters Reckon (feature/top-answers, switched off): the board is drawn by /app/topanswers/pr-board.js -->
   <div class="layer hidden" id="tvPR" data-fit-self style="padding:0;container-type:inline-size"></div>
   <div class="layer hidden qgrid" id="tvBoard">
-    <div class="toplbl"><span class="tl-night" id="tvBoardNight">Trivia</span><span class="tl-dot">&middot;</span><b>Scores</b></div>
+    <div class="toplbl"><span class="tl-night" id="tvBoardNight">Trivia</span></div>
     <div class="boardtitle" id="tvBoardTitle">Leaderboard</div>
     <div class="board" id="tvBoardRows"></div>
     <div class="boardpage hidden" id="tvBoardPage"></div>
@@ -325,8 +323,8 @@
 
   <!-- podium -->
   <div class="layer hidden qgrid" id="tvPodium">
-    <div class="toplbl"><span class="tl-night" id="tvPodNight">Trivia</span><span class="tl-dot">&middot;</span><em>Final scores</em></div>
-    <div class="boardtitle">Winners tonight</div>
+    <div class="toplbl"><span class="tl-night" id="tvPodNight">Trivia</span></div>
+    <div class="boardtitle wintitle">Winners <span>tonight</span></div>
     <div class="podium" id="tvPodiumCols"></div>
   </div>
 
@@ -451,9 +449,26 @@
     var t="Trivia", ids=["tvQNight","tvRevNight","tvBoardNight","tvPodNight"];
     for(var i=0;i<ids.length;i++){ var n=$(ids[i]); if(n) n.textContent=t; }
   }
+  /* TRIVIA ON THE LOGOS' CENTRE LINE (Dean, 3 Nov 2026). The venueplay mark top right is moved to sit on a
+     square logo's middle (/app/vp-venuelogo.js keepAligned) and stays at the top beside a wide one, so the
+     line the two logos share is the mark's middle. Each top line is set so its middle is on it; measured,
+     never guessed, and written only when it moves. */
+  function alignTitle(){
+    try{
+      var mk=document.querySelector(".tv-corner svg"); if(!mk) return;
+      var mb=mk.getBoundingClientRect(); if(!(mb.height>0)) return;
+      var mid=mb.top+mb.height/2, ls=document.querySelectorAll(".layer .toplbl");
+      for(var i=0;i<ls.length;i++){ var l=ls[i], h=l.offsetHeight; if(!h) continue;
+        var lay=l.parentNode, lt=lay ? lay.getBoundingClientRect().top : 0;
+        var top=Math.round(mid-lt-h/2)+"px"; if(l.style.top!==top) l.style.top=top; }
+    }catch(e){}
+  }
+  window.addEventListener("resize", alignTitle);
+  setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes */
   function show(which){
     if(which!=="tvBoard") stopBoardPaging();
     paintNight();
+    try{ setTimeout(alignTitle, 0); }catch(e){}
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
   }
@@ -622,9 +637,7 @@
     lay.classList.toggle("pic", !!pic);
     var split=m.split||[0,0,0,0], total=0;
     for(var t=0;t<split.length;t++) total+=(Number(split[t])||0);
-    var right=Number(split[ci])||0;
-    $("tvRevRight").textContent=right;                              // numeric: a forged string cannot reach innerHTML
-    $("tvRevOf").textContent = total>0 ? " /"+total : "";
+    /* No "31 /43 got it right" in the clock's place (Dean, 3 Nov 2026): the right card carries its own count. */
     var den = total===0 ? 1 : total;
     var wrap=$("tvRevAnswers"); wrap.className="answers"+ansLenClass(opts); wrap.innerHTML="";
     for(var i=0;i<opts.length;i++){

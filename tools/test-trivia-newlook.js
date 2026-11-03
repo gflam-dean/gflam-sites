@@ -167,13 +167,13 @@ print('\n== 2. the reveal is the question\'s own grid ==');
        [0, 2, 3].every(function (i) { return cards[i].classList.contains('dim') && !cards[i].classList.contains('correct'); }), cards.map(function (c) { return c.className; }).join('|'));
   var tag = all(cards[1]).filter(function (k) { return k.className === 'rtag'; });
   show('the right card carries a RIGHT ANSWER tag', tag.length === 1 && /right answer/i.test(tag[0].textContent), tag.length);
-  show('the clock box says 31 /43 got it right', a.dom.$('tvRevRight').textContent === 31 && a.dom.$('tvRevOf').textContent === ' /43',
-       [a.dom.$('tvRevRight').textContent, a.dom.$('tvRevOf').textContent]);
+  show('no "got it right" count is written in the clock\'s place (the right card carries it)', !a.dom.els.tvRevRight && !a.dom.els.tvRevOf, Object.keys(a.dom.els).join());
   var counts = cards.map(function (c) { return (all(c).filter(function (k) { return k.className === 'sc'; })[0] || {}).textContent; });
   show('each card has its count ("1 player", "31 players")', counts.join('|') === '4 players|31 players|6 players|2 players', counts.join('|'));
   var b = tvRig();
   b.q(liveQ()); b.rev({ t: 'reveal', correctIndex: 0, options: liveQ().options, split: [0, 0, 0, 0] });
-  show('nobody answered: "0" with no "/0"', b.dom.$('tvRevRight').textContent === 0 && b.dom.$('tvRevOf').textContent === '', [b.dom.$('tvRevRight').textContent, b.dom.$('tvRevOf').textContent]);
+  var bc = (all(b.dom.$('tvRevAnswers').children[0]).filter(function (k) { return k.className === 'sc'; })[0] || {}).textContent;
+  show('nobody answered: the right card says "0 players", nothing else is written', bc === '0 players' && !b.dom.els.tvRevOf, bc);
 })();
 
 /* ======================================================================================= 3 */
