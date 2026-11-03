@@ -400,7 +400,7 @@
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": 18+ and "Keep me posted" as two separate ticks (3 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
@@ -1135,7 +1135,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // ---- incoming (broadcasts are cosmetic; the Worker is the source of truth) ----
   function onMsg(m){
     if(!m||!m.t) return;
-    /* The start-of-game show on the phone (/app/vp-sting.js, off unless ?sting=1), with the name it joined with. */
+    /* The start-of-game show on the phone (/app/vp-sting.js, on unless ?sting=0), with the name it joined with. */
     if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords("MUSICAL BINGO", P.name), { played:1 }, "phone"); }catch(e){} }
     if(m.t==="rollcall" || m.t==="host_here"){
       if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, did:deviceId() }); if(!P.cells) fetchCard(); }
@@ -1400,7 +1400,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
       fire({ t:"started", pattern:"one", prize:"Meat tray", played:[] });   // in step with the wall's demo
       P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
-      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[], ids=[];   // the first song waits for the start-of-game show when it is on, as on the wall (screen.html, 2 Nov 2026); 1200 when off, the default since the 2 Nov hotfix
+      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[], ids=[];   // the first song waits for the start-of-game show, as on the wall (screen.html, 2 Nov 2026); 1200 as before the show, on a phone with ?sting=0
       ORDER.forEach(function(title, i){
         d(t, function(){ played.push(title); ids.push(IDS[title]); fire({ t:"played", title:title, played:played.slice(), played_ids:ids.slice(), reveal:false }); });
         d(t+3600, function(){ tapSong(title); });

@@ -585,8 +585,11 @@ def main():
             # The trivia phone keeps Help ONLY in its menu, top right (Dean, 3 Nov 2026: data-menu-only="1").
             menu_only = 'trivia' in name
             t.until('!!document.getElementById("%s")' % ('vphMenu' if menu_only else 'vphLink'), 15)
-            # The start-of-game show is off by default (2 Nov 2026 hotfix); if a page ever plays it, it must
-            # take itself off the page. Measure the game the player is left with, after it.
+            # The start-of-game show (on by default again since 4 Nov) plays over the demo for about 2.5 s and
+            # then takes itself off the page. Measure the game the player is left with, after it. Wait for the show to
+            # have STARTED first (the demo's "started" comes a moment after the page is up), or "it is gone" is read
+            # before it begins and the show is measured as something over the Help link (4 Nov 2026).
+            t.until('!!window.VPSting && (!VPSting.on || VPSting.stats().plays>=1)', 10)
             check(name + ': the start-of-game show finishes and leaves the page',
                   t.until('!document.getElementById("vpSting") && !(window.VPSting && VPSting.playing())', 10) is True)
             time.sleep(1.5)

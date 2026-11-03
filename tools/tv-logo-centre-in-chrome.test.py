@@ -29,11 +29,12 @@ game Worker in jsc, supabase-js stood in) and checks:
           code is VPVenueLogo.alignMark in /app/vp-venuelogo.js; raffle and members draw call it the same way.
 
   LIVE    the real trivia demo on its own clock (no hand on the show): the painted wordmark's middle within 3px
-          of Tugun's crest's middle with the show off (the default), and with ?sting=1 once the show has ended
+          of Tugun's crest's middle with the show off (?sting=0), and with ?sting=1 once the show has ended
           (the mark is re-measured on "vp-sting-done", the picture's load and a resize).
 
 The pages that play the start show are opened with &sting=1, so this holds whether the show is on or off
-by default (it is off by default from hotfix/sting-off-2nov).
+by default (off by default from hotfix/sting-off-2nov, on again from release/4nov), and the show-off
+screen is opened with &sting=0.
 
 Takes the repo's heavy lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
@@ -273,12 +274,12 @@ def trivia_live():
     is always measured BEFORE the show hides the mark. On the real sales-page trivia demo the show could
     hide the mark while the crest was still loading: alignMark measured nothing, and nothing asked again
     when the show ended, so the wordmark sat ~90px above Tugun's crest. Here the page runs on its own
-    clock (no __vpStingManual): the show off (the default), then ?sting=1 once the show has finished on its
+    clock (no __vpStingManual): the show off (?sting=0; it is on by default again from 4 Nov 2026), then ?sting=1 once the show has finished on its
     own. Measured as painted: the corner's showing wordmark against the venue logo, middles within TOL_LIVE."""
     import rig as RIG
     r = RIG.Rig()
     try:
-        for path, tag, shotname in (('/app/trivia/screen?demo=1', 'TRIVIA DEMO show off', 'trivia-demo-tugun-show-off-1920'),
+        for path, tag, shotname in (('/app/trivia/screen?demo=1&sting=0', 'TRIVIA DEMO show off', 'trivia-demo-tugun-show-off-1920'),
                                     ('/app/trivia/screen?demo=1&sting=1', 'TRIVIA DEMO after the show', 'trivia-demo-tugun-after-show-1920')):
             print('\n%s: the real trivia demo on its own clock, Tugun\'s crest, 1920x1080' % tag)
             tid, sid = r.open(path, width=1920, height=1080)

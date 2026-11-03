@@ -1056,11 +1056,11 @@
   "counted_by": "lines"
  },
  "tools/tv-logo-centre-in-chrome.test.py": {
-  "checks": 105,
+  "checks": 117,
   "counted_by": "lines"
  },
  "tools/tv-sting-in-chrome.test.py": {
-  "checks": 102,
+  "checks": 150,
   "counted_by": "lines"
  },
  "tools/tv-window-uncovered.test.py": {

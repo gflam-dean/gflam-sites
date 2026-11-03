@@ -353,7 +353,7 @@ def phone_header_opt5(label, path, w, h):
 # 300 ms apart must agree before one is believed. The wall width travels with the reading.
 MARK = r'''(function(W){
   if(innerWidth!==W || document.readyState!=="complete" || document.fonts.status!=="loaded") return null;
-  // the start-of-game show (with ?sting=1; off by default since the 2 Nov 2026 hotfix) hides the corner while its own logo flies there: read the corner once it has landed
+  // the start-of-game show (on by default, 2 Nov 2026) hides the corner while its own logo flies there: read the corner once it has landed
   if(document.getElementById("vpSting") || (window.VPSting && VPSting.stats && VPSting.stats().playing)) return null;
   var vn=document.querySelector(".tv-corner .vn"), cor=vn&&vn.parentNode; if(!vn) return null;
   var s=getComputedStyle(vn), cs=getComputedStyle(cor), br=document.getElementById("ballReveal"), tv=document.querySelector(".tv");
@@ -388,7 +388,7 @@ def mark_check(label, path, w, h, has_dim):
         if not m:
             ok(tag + ': is on the wall', False, 'no settled reading at %d wide (viewport %s)' % (w, ask(sid, 'innerWidth'))); return
         if m.get('sting'):
-            # The start-of-game show has played (?sting=1): it hides the old mark and
+            # The start-of-game show has played (on by default from 2 Nov 2026): it hides the old mark and
             # lands the NEW wordmark in the corner. Judge what the room actually sees, the new mark.
             nm = m.get('nm') or {}
             ok(tag + ': after the show, the new wordmark is in the corner, shown at full opacity', bool(nm) and nm.get('shown') and nm.get('op', 0) >= 0.99, nm)
@@ -764,13 +764,12 @@ try:
     if os.environ.get('VP_SIGNS_ONLY'): raise SystemExit(print('\n' + (('%d FAILED, %d run' % (bad, ran)) if bad else ('ALL %d CHECKS PASSED (signs only)' % ran))) or (1 if bad else 0))
     print('\nTHE TV: every logo shape, swapped on the live mark')
     tv('bingo', '/tv?demo=1', 1920, 1080, 8, ['square', 'wide', 'round', 'tall', 'red', 'navy'])
-    # With the start-of-game show on (?sting=1) the demo plays it and the NEW mark lands in the corner, so
-    # these two judge the new mark; the plain screens (the show is off by default since the 2 Nov hotfix)
-    # keep the OLD mark all night, and the two after them judge that.
-    mark_check('bingo', '/tv?demo=1&sting=1', 1920, 1080, True)
-    mark_check('trivia', '/app/trivia/screen.html?demo=1&sting=1', 1920, 1080, False)
-    mark_check('bingo before the show', '/tv?demo=1', 1920, 1080, True)
-    mark_check('trivia before the show', '/app/trivia/screen.html?demo=1', 1920, 1080, False)
+    mark_check('bingo', '/tv?demo=1', 1920, 1080, True)
+    mark_check('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, False)
+    # Before the first show of the night (and on a ?sting=0 screen) the OLD mark is the one in the corner,
+    # so it is judged too (2 Nov 2026: with the show on by default the line above only sees the new one).
+    mark_check('bingo before the show', '/tv?demo=1&sting=0', 1920, 1080, True)
+    mark_check('trivia before the show', '/app/trivia/screen.html?demo=1&sting=0', 1920, 1080, False)
     tv('trivia', '/app/trivia/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('musical', '/app/musical/screen.html?demo=1', 1920, 1080, 5, ['square', 'wide', 'tall'])
     tv('bingo', '/tv?demo=1', 1280, 720, 8, ['square', 'wide'])
