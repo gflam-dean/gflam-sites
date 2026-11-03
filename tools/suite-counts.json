@@ -496,7 +496,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 336,
+  "checks": 343,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {

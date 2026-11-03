@@ -14559,6 +14559,15 @@ function helpCategoryForAddress(addr) {
   if (local === 'sales') return 'sales';
   return 'general';
 }
+/* AN INSTANTLY "POSITIVE REPLY" ALERT IS A SALES LEAD (3 Nov 2026). Instantly mails these to
+   hello@partyplay.com.au, so they came in as partyplay / general, and Dean's phone (set to urgent
+   and sales only) never buzzed for #1012 or #1013, two venues asking about trivia. Only Instantly's
+   own notification address counts, never a stranger who writes the same words. */
+function helpIsInstantlyLead(mail) {
+  const from = String((mail && mail.from && mail.from.email) || '').toLowerCase();
+  if (!/^notifications@([a-z0-9-]+\.)*instantly\.ai$/.test(from)) return false;
+  return /positive reply|sales opportunity|interested/i.test(String(mail.title || '') + '\n' + String(mail.text || '').slice(0, 2000));
+}
 function helpBrandForAddress(addr) {
   return /@([a-z0-9-]+\.)*partyplay\.com\.au$/i.test(String(addr || '').trim()) ? 'partyplay' : 'venueplay';
 }
@@ -15911,7 +15920,12 @@ async function helpTicketFromEmail(env, to, mail) {
      nobody checked is our brand's mail going wherever a stranger pointed it. */
   const contact = mail.from;
   const askedElsewhere = (mail.reply_to && mail.reply_to.email && mail.reply_to.email !== mail.from.email) ? mail.reply_to.email : null;
-  const brand = helpBrandForAddress(to);
+  /* An Instantly positive-reply alert is filed as venueplay whichever inbox it reached (Dean, 3 Nov
+     2026): Instantly still mails hello@partyplay.com.au, but the cold campaigns are venueplay's.
+     Everything else to a partyplay address stays partyplay. */
+  const instantlyLead = helpIsInstantlyLead(mail);
+  const inboxBrand = helpBrandForAddress(to);
+  const brand = instantlyLead ? 'venueplay' : inboxBrand;
   /* A reply to one of ours has to quote the ticket's number AND its secret. Since 28 Oct 2026 every
      email we send ends its subject "(ticket 1042, ref K7QP-2XMA)", the reference being made from the
      secret (helpRef); the subject is looked at first, then the body, where a reply quotes ours. The
@@ -15956,9 +15970,9 @@ async function helpTicketFromEmail(env, to, mail) {
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
+      brand: brand, category: instantlyLead ? 'sales' : helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
-      contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
+      contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + inboxBrand + '.com.au' : null, email_message_id: mid,
     });
   } catch (e) {
     // Two deliveries of one message racing each other: the unique Message-ID let only one in.
@@ -15966,7 +15980,8 @@ async function helpTicketFromEmail(env, to, mail) {
     throw e;
   }
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
-  await helpAcknowledge(env, t);   // a new ticket by email is acknowledged too; a reply on one is not
+  // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked.
+  if (!instantlyLead) await helpAcknowledge(env, t);
   return { action: 'ticket', ticket_no: t.ticket_no };
 }
 async function helpInboundEmail(message, env) {
