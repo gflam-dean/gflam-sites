@@ -209,7 +209,7 @@ finally:
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 23
+EXPECTED = 28   # +5: the powered-by line measured on each page (3 Nov 2026 evening)
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
