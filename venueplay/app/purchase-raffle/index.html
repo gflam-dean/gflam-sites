@@ -84,7 +84,8 @@
   .bargrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:18px;align-items:start}
   @media (max-width:820px){ .bargrid{grid-template-columns:1fr} }
   .rname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
-  .phone{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(28px,7vw,44px);letter-spacing:.06em;text-align:center;
+  /* input.phone, not .phone: the plain input[type=tel] rule above outranked .phone and set the typed mobile at 15px (3 Nov 2026) */
+  input.phone{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(28px,7vw,44px);letter-spacing:.06em;text-align:center;
     background:var(--ink-3);border:2px solid var(--line);border-radius:14px;padding:14px 10px;color:#fff;width:100%}
   .phone::placeholder{color:#55555c}
   .phone:focus{border-color:var(--pink)}
@@ -143,6 +144,42 @@
   .dot{width:8px;height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll);flex:none}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
   .warn{padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:14px;line-height:1.5;font-weight:600}
+
+  /* A PHONE TURNED SIDEWAYS AT THE BAR (Dean, 3 Nov 2026: "looks awful in landscape"). 844x390 and 932x430:
+     the portrait stack (header, tabs, three tall stat boxes, then the keypad) put the keypad a whole screen
+     down. Sideways it is one short header on one line, slim tabs, and two columns: the mobile and Add entry
+     beside the keypad on the left, the counts and "Just added" on the right, so the keypad and Add entry
+     are on the first screen. Keys stay thumb-sized (46px), Add entry full size. The island side insets are
+     the .bar/.wrap padding above. Checked by tools/purchase-raffle-in-chrome.test.py at both sizes. */
+  @media (orientation:landscape) and (max-height:500px){
+    header{position:static}
+    .bar{padding-top:7px;padding-bottom:7px;flex-wrap:nowrap;gap:12px}
+    .venue{max-width:30vw}
+    .wrap{padding-top:8px}
+    .tabs{margin-bottom:8px;padding:4px}
+    .tabs button{min-height:34px;padding:5px 12px}
+    #barReady:not(.hidden){display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);grid-template-areas:"main stats" "main side";grid-template-rows:auto 1fr;column-gap:12px;row-gap:10px;align-items:start}
+    #barReady .bargrid{display:contents}
+    #barReady .bargrid>.panel:first-child{grid-area:main;padding:12px 14px}
+    #barReady .bargrid>.panel:last-child{grid-area:side;padding:12px 14px}
+    #barReady>.stats{grid-area:stats;margin-bottom:0;gap:6px}
+    #barReady .stat{padding:7px 9px}
+    #barReady .stat .k{font-size:9.5px;letter-spacing:.06em}
+    #barReady .stat .v{font-size:19px}
+    #barReady .rname{font-size:15px}
+    #barReady #barRaffleWhen{font-size:12px;margin-bottom:6px!important}
+    #stepPhone{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"lbl keys" "phone keys" "add keys" "msg keys";grid-template-rows:auto auto auto 1fr;column-gap:12px}
+    #stepPhone>.lbl{grid-area:lbl;margin-bottom:6px}
+    #stepPhone>.phone{grid-area:phone;font-size:clamp(20px,2.7vw,26px);padding:10px 6px;letter-spacing:.03em}
+    #stepPhone>.keypad{grid-area:keys;margin-top:0;gap:6px}
+    #stepPhone .key{min-height:46px;font-size:22px}
+    #stepPhone>.addbtn{grid-area:add;min-height:58px;font-size:18px}
+    #stepPhone>.msg{grid-area:msg}
+    #barReady .recent li{flex-wrap:wrap;row-gap:2px}
+    #barReady .recent .who{flex-basis:100%}   /* the narrow side column: the name gets its own line, never "Ch..." */
+    .done{padding:16px 12px}
+    .done .tick{width:48px;height:48px;margin-bottom:8px}
+  }
 </style>
 <link rel="stylesheet" href="/app/vp-select.css">
 </head>

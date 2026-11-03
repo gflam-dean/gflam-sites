@@ -878,7 +878,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!P.active || !P.cells){ noteBingo("The game has not started yet. Your card will be ready when the host starts.","no"); return; }
     // Quick local gate to avoid a needless server call; the Worker is the authority.
     if(!checkPattern()){ sayNotYet(); return; }
-    if(!P.gameId){ noteBingo("One moment, your card is still connecting. Try BINGO again in a few seconds.","no"); return; }
+    if(!P.gameId){ noteBingo("One moment, your card is still connecting. Try again in a few seconds.","no"); return; }
     P.claimPending=true; $("bingoBtn").disabled=true; noteBingo("BINGO sent. The host is checking your card&hellip;","wait");
     playerPost("/player/claim",{ game_id:P.gameId }).then(function(r){
       if(r && r.auto_verdict==="valid"){

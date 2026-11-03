@@ -103,6 +103,17 @@ check('used or expired (410): stays on this page and says the link has been used
   gone(G2) && G2.replaced === null && /already been used or has expired/.test(G2.els.goneSub.textContent) && G2.els.resendBtn.hidden === false &&
   G2.els.resendBtn.textContent === 'Send me a new link' && G2.verifies.length === 0 && !G2.ls.vpShiftStart && !('vpSignInWith' in G2.ls), [G2.replaced, G2.els.goneSub.textContent]);
 check('and "Sign in with my mobile instead" is there, to the mobile sign-in', G2.els.mobileLink.hidden === false && /mobile/.test(G2.els.mobileLink.textContent));
+/* PHONE FIRST ON THE SPENT-LINK PAGE (Dean, 3 Nov 2026: hosts sign in by a text code to their mobile; the
+   copy offered email and "we will send you a new link"). The pink button is the mobile sign-in and comes
+   first; the resend is the quiet second button; no default line offers email. */
+var GONE_HTML = GO_HTML.slice(GO_HTML.indexOf('<div id="goGone"'), GO_HTML.indexOf('<script', GO_HTML.indexOf('<div id="goGone"')));
+var firstPink = /<(?:a|button)\b[^>]*class="btn pink[^"]*"[^>]*id="([^"]+)"/.exec(GONE_HTML);
+check('phone first: the spent-link page\'s pink button is "Sign in with my mobile", ahead of the resend, which is the quiet second button',
+  !!firstPink && firstPink[1] === 'mobileLink' && GONE_HTML.indexOf('id="mobileLink"') < GONE_HTML.indexOf('id="resendBtn"') &&
+  /class="btn ghost[^"]*"[^>]*id="resendBtn"/.test(GONE_HTML), [firstPink && firstPink[1]]);
+check('phone first: it says "Sign in with a text code to your mobile." and no line offers email or "we will send you a new link"',
+  /Sign in with a text code to your mobile\.$/.test(G2.els.goneSub.textContent) && !/email/i.test(G2.els.goneSub.textContent) &&
+  !/send you a new link/i.test(G2.els.goneNote.textContent) && !/email you/i.test(GONE_HTML), [G2.els.goneSub.textContent, G2.els.goneNote.textContent]);
 check('a used link drops the session already on this device before it shows that (an HQ one never reaches HQ from here)', JSON.stringify(G2.order) === JSON.stringify(['signout local']), G2.order);
 G2.els.resendBtn.click(); G2.els.resendBtn.click(); settle();
 var rq = G2.calls.filter(function (c) { return /\/auth\/one-click\/resend$/.test(c.url); });
@@ -125,10 +136,13 @@ check('Auth refuses the exchange: the same friendly page, no shift started, no e
 var G4 = goPage('#e=amit%40caz.example'); settle();
 check('no token, their address only (the welcome when migration 123 is missing): "Send me a sign-in link", nothing sent until a tap', G4.result === 'no-token' && gone(G4) && G4.calls.length === 0 &&
   G4.els.resendBtn.textContent === 'Send me a sign-in link' && G4.els.goneTitle.textContent === "Let's get you in", [G4.els.goneTitle.textContent, G4.els.resendBtn.textContent]);
+check('no token, their address only: still the text code to the mobile first, never "we will email you a link"',
+  G4.els.goneSub.textContent === 'Sign in with a text code to your mobile.' && !/send you a new link/i.test(G4.els.goneNote.textContent), [G4.els.goneSub.textContent, G4.els.goneNote.textContent]);
 check('and the session already on this device is dropped first', JSON.stringify(G4.order) === JSON.stringify(['signout local']), G4.order);
 var G5 = goPage('#t=short&e=' + encodeURIComponent('x" onmouseover="y')); settle();
 check('a malformed token or address is not used: nothing sent, no new-link button (nothing to send it to), the mobile sign-in offered', G5.result === 'no-token' && G5.calls.length === 0 &&
   G5.els.resendBtn.hidden === true && G5.els.mobileLink.textContent === 'Sign in with my mobile' && /support@venueplay\.com\.au/.test(G5.els.goneNote.textContent), G5.els);
+check('...and its note never promises to email a new link', !/send you a new link/i.test(G5.els.goneNote.textContent), G5.els.goneNote.textContent);
 var G6 = goPage('#t=' + TOKEN_A, { status: 429, body: {} });
 G6.els.goBtn.click(); settle();
 check('rate-limited: told to wait, the button comes back, the link is not given up on', G6.replaced === null && !gone(G6) && /Wait a few minutes/.test(G6.els.goMsg.textContent) && G6.els.goBtn.disabled === false, G6.els.goMsg.textContent);

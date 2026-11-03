@@ -147,6 +147,59 @@ try:
     line({'now': now_ms()})
     R.close_tab(tid2)
 
+    # SIDEWAYS AT THE BAR (Dean, 3 Nov 2026: "looks awful in landscape"). A real phone shape with the
+    # island's insets set, as Safari reports them saved to the home screen or turned sideways.
+    print('a phone turned sideways (and upright) at the bar: one short header, keypad and Add entry on the first screen')
+    LEAVES = ('(function(root){var out=[];root.querySelectorAll("*").forEach(function(e){var t=e.tagName;'
+              ' if(/^(SCRIPT|STYLE|BR)$/.test(t)||(e.closest("svg")&&!/^svg$/i.test(t))) return;'
+              ' var leaf=/^(BUTTON|INPUT|TEXTAREA|SELECT|svg|SVG)$/.test(t); if(!leaf) for(var c=e.firstChild;c;c=c.nextSibling) if(c.nodeType===3&&c.nodeValue.trim()){leaf=true;break;}'
+              ' if(!leaf) return; var q=e.getBoundingClientRect(); if(q.width<2||q.height<2) return;'
+              ' for(var p=e;p&&p!==document.body;p=p.parentElement){var s=getComputedStyle(p); if(s.display==="none"||s.visibility==="hidden") return;}'
+              ' out.push({n:t.toLowerCase()+(e.id?"#"+e.id:"")+(typeof e.className==="string"&&e.className?"."+e.className.trim().split(/\\s+/).join("."):""),t:q.top,b:q.bottom,l:q.left,r:q.right,h:q.height});});return out;})')
+    for shape, w, h, ins, mob in [('sideways', 844, 390, {'top': 0, 'bottom': 21, 'left': 47, 'right': 47}, '0411100001'),
+                                  ('sideways', 932, 430, {'top': 0, 'bottom': 21, 'left': 59, 'right': 59}, '0411100002'),
+                                  ('upright', 390, 844, {'top': 47, 'bottom': 34, 'left': 0, 'right': 0}, '0411100003')]:
+        tag = '%s %dx%d' % (shape, w, h)
+        t3, s3 = R.open('/__blank')
+        R.B.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': True}, session=s3)
+        R.B.call('Emulation.setSafeAreaInsetsOverride', {'insets': ins}, session=s3)
+        R.B.call('Page.navigate', {'url': R.base + '/app/purchase-raffle/'}, session=s3)
+        ok(tag + ': the bar screen loads', R.until(s3, visible('#keypad') + ' && document.fonts.status==="loaded"', 60) is True)
+        time.sleep(0.6)
+        keypad(s3, mob)   # a mobile nobody has used, so Add entry asks for their details
+        g = js(s3, '''(function(){ var hd=document.querySelector("header").getBoundingClientRect(), keys=[].map.call(document.querySelectorAll(".key"),function(k){return k.getBoundingClientRect();}),
+              a=document.getElementById("addBtn").getBoundingClientRect(), ph=document.getElementById("phoneIn");
+              return {hdr:hd.height, keyMin:Math.min.apply(null,keys.map(function(q){return q.height;})), keyBot:Math.max.apply(null,keys.map(function(q){return q.bottom;})),
+                      addH:a.height, addW:a.width, addBot:a.bottom, phoneFits:ph.scrollWidth<=ph.clientWidth+1, phoneFont:parseFloat(getComputedStyle(ph).fontSize),
+                      sw:document.documentElement.scrollWidth, iw:innerWidth}; })()''') or {}
+        top = js(s3, LEAVES + '(document.getElementById("mainView"))') or []
+        hdr = js(s3, LEAVES + '(document.querySelector("header"))') or []
+        side = [p for p in top + hdr if p['l'] < ins['left'] - 0.5 or p['r'] > w - ins['right'] + 0.5]
+        ok(tag + ': nothing sits under the island or the rounded corners at the sides', bool(top) and not side, side[:4])
+        ok(tag + ': nothing in the header sits under the island at the top', bool(hdr) and not [p for p in hdr if p['t'] < ins['top'] - 0.5], hdr[:3])
+        ok(tag + ': nothing is wider than the phone', g.get('sw', 9999) <= g.get('iw', 0) + 1, g)
+        ok(tag + ': the keys stay thumb-sized and Add entry full size', g.get('keyMin', 0) >= 44 and g.get('addH', 0) >= 56 and g.get('addW', 0) >= 150, g)
+        ok(tag + ': the typed mobile fits its box, big enough to read', g.get('phoneFits') is True and g.get('phoneFont', 0) >= 20, g)
+        if shape == 'sideways':
+            rows = sorted(set(round(p['t'] + p['h'] / 2) for p in hdr))
+            ok(tag + ': the header is one short line, not squashed or wrapped', g.get('hdr', 99) <= 50 and rows and rows[-1] - rows[0] <= 8, [g.get('hdr'), rows])
+            ok(tag + ': the whole keypad and Add entry are on the first screen, above the home bar',
+               max(g.get('keyBot', 9999), g.get('addBot', 9999)) <= h - ins['bottom'] + 0.5, g)
+        shot(s3, '06b-bar-%s-%dx%d.jpg' % (shape, w, h))
+        click(s3, '#addBtn')
+        ok(tag + ': a new mobile opens the details form', R.until(s3, visible('#stepNew'), 15) is True)
+        f = js(s3, '''(function(){ var r=[].map.call(document.querySelectorAll("#stepNew input[type=text],#stepNew input[type=email]"),function(e){var q=e.getBoundingClientRect();return {w:q.width,h:q.height};}),
+              b=[].map.call(document.querySelectorAll("#stepNew .btn"),function(e){return e.getBoundingClientRect().height;}),
+              l=parseFloat(getComputedStyle(document.querySelector("#stepNew .field label")).fontSize);
+              return {minW:Math.min.apply(null,r.map(function(q){return q.w;})), minH:Math.min.apply(null,r.map(function(q){return q.h;})), btnMin:Math.min.apply(null,b), label:l, sw:document.documentElement.scrollWidth, iw:innerWidth}; })()''') or {}
+        ok(tag + ': the details form is readable: wide fields, 12px+ labels, full-size buttons',
+           f.get('minW', 0) >= 150 and f.get('minH', 0) >= 40 and f.get('btnMin', 0) >= 44 and f.get('label', 0) >= 12 and f.get('sw', 9999) <= f.get('iw', 0) + 1, f)
+        form = js(s3, LEAVES + '(document.getElementById("stepNew"))') or []
+        ok(tag + ': the details form keeps clear of the island at the sides', bool(form) and not [p for p in form if p['l'] < ins['left'] - 0.5 or p['r'] > w - ins['right'] + 0.5], form[:3])
+        shot(s3, '06c-new-%s-%dx%d.jpg' % (shape, w, h))
+        ok(tag + ': no errors', errs(s3) == '[]', errs(s3))
+        R.close_tab(t3)
+
     print('the entries list: masked mobiles, the right counts')
     js(sid, 'location.reload()'); time.sleep(1)
     R.until(sid, visible('#barReady'), 60)

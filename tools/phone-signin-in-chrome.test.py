@@ -70,7 +70,7 @@ S.W.seed('vp_prospects', [{'venue_id': VENUE, 'auth_user_id': UID, 'email': 'own
 S.W.seed('vp_signin_links', [])
 
 
-def tab(path, test, width=390, height=844, store=None):
+def tab(path, test, width=390, height=844, store=None, insets=None):
     """A window of its own at phone width, with fake-supabase's per-tab settings (and any localStorage)
     in place before the page's own scripts run."""
     tid, sid = S.B.open_tab('about:blank')
@@ -83,8 +83,20 @@ def tab(path, test, width=390, height=844, store=None):
     for k, v in (store or {}).items():
         pre += 'try{localStorage.setItem(%s,%s)}catch(e){};' % (json.dumps(k), json.dumps(v))
     S.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre}, session=sid)
+    if insets:   # the iPhone's island and home bar, as Safari reports them saved to the home screen
+        S.B.call('Emulation.setSafeAreaInsetsOverride', {'insets': insets}, session=sid)
     S.B.call('Page.navigate', {'url': S.base + path}, session=sid)
     return tid, sid
+
+
+ISLAND = {'top': 59, 'bottom': 34, 'left': 0, 'right': 0}
+# Every painted word, button, box and logo on the page, for "is anything under the island".
+UNDER_ISLAND = r'''(function(top){ var out=[]; document.body.querySelectorAll("*").forEach(function(e){ var t=e.tagName;
+  if(/^(SCRIPT|STYLE|BR|LINK|META)$/.test(t) || (e.closest("svg") && !/^svg$/i.test(t))) return;
+  var leaf=/^(BUTTON|INPUT|A|svg|SVG|IMG)$/.test(t); if(!leaf) for(var c=e.firstChild;c;c=c.nextSibling) if(c.nodeType===3&&c.nodeValue.trim()){leaf=true;break;}
+  if(!leaf) return; var q=e.getBoundingClientRect(); if(q.width<2||q.height<2) return;
+  for(var p=e;p&&p!==document.body;p=p.parentElement){ var s=getComputedStyle(p); if(s.display==="none"||s.visibility==="hidden"||p.hidden) return; }
+  if(q.top<top-0.5 && q.bottom>0) out.push((e.id||t.toLowerCase())+" at "+Math.round(q.top)); }); return out; })(%d)'''
 
 
 def js(sid, e):
@@ -147,6 +159,14 @@ try:
     ok('the old device key that opened the email step is gone', js(sid, 'localStorage.getItem("vpSignInWith")') is None)
     ok('it fits a phone with no sideways scroll, and no script errors', no_sideways(sid) and not errs(sid), errs(sid))
     shot(sid, '1-signin-mobile-first')
+    t9, s9 = tab('/app/', {'signedIn': False}, height=640, insets=ISLAND)   # 640: Safari's own bars up, so 9vh is less than the island
+    S.until(s9, 'document.getElementById("vSignIn") && !document.getElementById("vSignIn").classList.contains("hidden") && document.readyState==="complete"', 20)
+    time.sleep(0.5)
+    env = js(s9, '(function(){var d=document.createElement("div"); d.style.cssText="position:fixed;padding-top:env(safe-area-inset-top,0px)"; document.body.appendChild(d); var v=parseFloat(getComputedStyle(d).paddingTop); d.remove(); return v;})()')
+    under = js(s9, UNDER_ISLAND % ISLAND['top'])
+    ok('390x640 with the island (59px): the island reaches the page, and nothing on the sign-in sits under it', env == ISLAND['top'] and under == [], [env, under])
+    shot(s9, '1b-signin-island')
+    S.close_tab(t9)
     type_in(sid, 'mobileIn', '0452 510 904')
     click(sid, 'sendCodeBtn')
     S.until(sid, '!document.getElementById("stepCode").classList.contains("hidden")', 10)
@@ -236,8 +256,21 @@ try:
     ok('it offers "Send me a new link" and "Sign in with my mobile instead", and no email box', visible(sid, 'resendBtn') and visible(sid, 'mobileLink') and
        js(sid, '!document.querySelector("input[type=email]")'))
     ok('it stayed on this page (no trip to an email sign-in)', js(sid, 'location.pathname') == '/app/go')
+    po = js(sid, '''(function(){ var m=document.getElementById("mobileLink"), r=document.getElementById("resendBtn"); if(!m||!r) return null;
+      var bg=getComputedStyle(m).backgroundColor, rb=getComputedStyle(r).backgroundColor;
+      return {mTop:m.getBoundingClientRect().top, rTop:r.getBoundingClientRect().top, mPink:bg==="rgb(255, 31, 142)", rPink:rb==="rgb(255, 31, 142)", mH:m.getBoundingClientRect().height,
+              sub:document.getElementById("goneSub").innerText, note:document.getElementById("goneNote").innerText}; })()''') or {}
+    ok('phone first (Dean, 3 Nov 2026): "Sign in with my mobile" is the pink button, first; "Send me a new link" is the quiet one below it',
+       po.get('mPink') is True and po.get('rPink') is False and po.get('mTop', 9e9) < po.get('rTop', 0) and po.get('mH', 0) >= 44, po)
+    ok('it says "Sign in with a text code to your mobile." and never offers to email a link by default',
+       po.get('sub', '').endswith('Sign in with a text code to your mobile.') and 'send you a new link' not in po.get('note', '') and 'email you' not in po.get('sub', ''), po)
     ok('fits a phone, no script errors', no_sideways(sid) and not errs(sid), errs(sid))
     shot(sid, '7-go-used')
+    t8, s8 = tab('/app/go' + frag, {'phone': '61452510904'}, insets=ISLAND)
+    S.until(s8, 'document.getElementById("goBtn") && document.readyState==="complete"', 15); time.sleep(0.4)
+    under = js(s8, UNDER_ISLAND % ISLAND['top'])
+    ok('the one-tap link page, 390 wide with the island: nothing sits under it', under == [], under)
+    S.close_tab(t8)
     before = len(S.W.sent())
     click(sid, 'resendBtn')
     S.until(sid, '/on its way/.test(document.getElementById("resendMsg").innerText)', 10)

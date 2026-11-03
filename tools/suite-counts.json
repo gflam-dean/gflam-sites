@@ -248,7 +248,7 @@
   "counted_by": "lines"
  },
  "tools/phone-signin-in-chrome.test.py": {
-  "checks": 46,
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/pickup-in-chrome.test.py": {
@@ -264,7 +264,7 @@
   "counted_by": "lines"
  },
  "tools/purchase-raffle-in-chrome.test.py": {
-  "checks": 38,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/qr-fallback-in-chrome.test.py": {
@@ -608,7 +608,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 58,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
