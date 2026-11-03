@@ -352,7 +352,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer (3 Nov 2026) -->
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
@@ -958,7 +958,7 @@
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                       // ignore our own presence pings
-    /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
+    /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA" }, { question:1, ta_board:1 }); }catch(e){} }
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it,
        and it plays only for a game this screen saw being played (a podium replayed to a TV that reloaded
@@ -1125,7 +1125,7 @@
         m({ t:"started", title:"Trivia Night", colour:true });
       });
       /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
-      t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, when it is off (the default since the 2 Nov hotfix)
+      t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, on a screen with ?sting=0
       Q.forEach(function(q, i){
         at(t, function(){
           m({ t:"question", qseq:i+1, qi:i+3, qtotal:20, text:q.text,   // reads "Question 3 of 20": a night already under way (Dean, 3 Nov 2026)

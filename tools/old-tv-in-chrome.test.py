@@ -90,14 +90,15 @@ class Site(http.server.BaseHTTPRequestHandler):
 
 
 # Each screen, and the moments of its own demo worth a look: (state, virtual ms after load, the layer on air)
-# The start-of-game show is off by default (2 Nov 2026 hotfix), so the demos run on their own clocks again;
-# tv-sting-in-chrome covers the show and the demos' later timings under ?sting=1.
+# The start-of-game show is switched off here (&sting=0; it is on by default again from 4 Nov 2026): this suite is
+# about old-TV layout, and with the show off the demos run on their own clocks, as before it. tv-sting-in-chrome
+# covers the show and the demos' later timings.
 SCREENS = [
     ('bingo TV, no venue (set up this screen)', '/tv', [('setup', 4000, None)]),
-    ('bingo TV', '/tv?demo=1', [('lobby', 1500, 'tvLobby'), ('game', 15000, 'tvRun'), ('claim', 29500, 'tvClaim'), ('win', 33000, 'tvWin')]),
-    ('trivia', '/app/trivia/screen.html?demo=1', [('lobby', 900, 'tvLobby'), ('question', 4000, 'tvQ'), ('reveal', 9000, 'tvReveal'),
+    ('bingo TV', '/tv?demo=1&sting=0', [('lobby', 1500, 'tvLobby'), ('game', 15000, 'tvRun'), ('claim', 29500, 'tvClaim'), ('win', 33000, 'tvWin')]),
+    ('trivia', '/app/trivia/screen.html?demo=1&sting=0', [('lobby', 900, 'tvLobby'), ('question', 4000, 'tvQ'), ('reveal', 9000, 'tvReveal'),
                                                   ('board', 12500, 'tvBoard'), ('podium', 44000, 'tvPodium')]),
-    ('musical bingo', '/app/musical/screen.html?demo=1', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
+    ('musical bingo', '/app/musical/screen.html?demo=1&sting=0', [('game', 15000, 'tvRun'), ('claim', 28800, 'tvClaim'), ('win', 33000, 'tvWin'), ('lobby', 39000, 'tvLobby')]),
     ('raffle', '/app/raffle/screen.html?demo=1', [('draw', 4700, 'tvDraw'), ('win', 8000, 'tvWin'), ('result', 13000, 'tvResult')]),
     ('members draw', '/app/members/screen.html?demo=1', [('draw', 6000, 'tvDraw'), ('win', 10000, 'tvWin'), ('result', 17000, 'tvResult')]),
     ('Punters Reckon board', '/app/topanswers/screen.html?demo=1', [('guessing', 8000, None), ('all shown', 16000, None)]),

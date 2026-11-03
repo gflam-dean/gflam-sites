@@ -1,11 +1,11 @@
-/* THE START-OF-GAME STING ON THE TV AND THE PLAYERS' PHONES (Dean, 1 Nov 2026). OFF by default on every
-   screen and phone since the 2 Nov 2026 evening hotfix: on by default from the 2 Nov midday release, it
-   played out of place live (on the home page demo TV "LET'S PLAY" sat off to the right and "TRIVIA" was
-   huge and clipped off the frame; Dean saw it wrong on a real show the same night: "This is embarrassing
-   now"). It plays only where a page's address has ?sting=1 (a TV with ?sting=1 passes it on to the game
-   screen in its frame), until Dean says it goes back on. The layout fault is fixed (3 Nov 2026: fit() scaled
-   el.stage, which never existed, so the 1920x1080 stage was never fitted to the window; tools/tv-sting-in-chrome
-   section 8 measures the painted words inside the window at four sizes).
+/* THE START-OF-GAME STING ON THE TV AND THE PLAYERS' PHONES (Dean, 1 Nov 2026). ON by default on every
+   screen and phone again since its layout was fixed on 3 Nov 2026; ?sting=0 on a page's address switches it
+   off for that one screen (a TV passes its ?sting=0 on to the game screen in its frame). History: on by
+   default from the 2 Nov midday release, it played out of place live (fit() scaled el.stage, which never
+   existed, so the 1920x1080 stage was never fitted to the window: LET'S PLAY sat off to the right and the
+   game name was huge and clipped), so the 2 Nov evening hotfix turned it off. tools/tv-sting-in-chrome
+   section 8 now measures the painted words, triangle and logo inside the window on trivia, musical bingo,
+   bingo and raffle, from 1280x720 to 3840x2160 (back on from the 4 Nov 2026 release).
 
    One copy for every screen. A page calls VPSting.start({words, layout}) when its game starts and
    VPSting.stop("why") when its first real content arrives (a ball, a question, a song, a draw);
@@ -23,7 +23,7 @@
 
    It never hides a called number. The console holds its first Next number for the length of the show
    (index.html, STING_HOLD_SECONDS), so the first ball lands after it. If a ball arrives anyway (a
-   console without ?sting=1, a real-balls night where the host taps the grid), the show stops at once
+   console with ?sting=0, a real-balls night where the host taps the grid), the show stops at once
    and the ball is shown: the room's number wins over the show, always.
    Plays at the start of a game only: never when a ball has landed in the last two minutes (a repeated
    "started" mid-game), never on a TV that joins a game already running (that hears "state").
@@ -33,7 +33,7 @@
    VPSting.frame(t), so a recording can step the show at exactly 25 frames a second. */
 (function(){
   "use strict";
-  var ON = /[?&]sting=1(&|$)/.test(location.search || "");   // off unless ?sting=1 (2 Nov 2026 hotfix)
+  var ON = !/[?&]sting=0(&|$)/.test(location.search || "");   // on unless ?sting=0
   var DUR = 3.95, PDUR = 2.3;
   var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var REST = "M198.0 -0.0L-1.0 -489.0L185.0 -489.0L312.0 -77.0L241.0 -77.0L367.0 -489.0L551.0 -489.0L352.0 -0.0L198.0 -0.0ZM821.0 11.0Q739.0 11.0 676.0 -21.5Q613.0 -54.0 577.0 -112.0Q541.0 -170.0 541.0 -245.0Q541.0 -319.0 576.0 -376.5Q611.0 -434.0 671.5 -467.5Q732.0 -501.0 808.0 -501.0Q882.0 -501.0 939.5 -469.5Q997.0 -438.0 1029.5 -382.5Q1062.0 -327.0 1062.0 -256.0Q1062.0 -241.0 1060.5 -225.5Q1059.0 -210.0 1054.0 -190.0L623.0 -188.0L623.0 -300.0L985.0 -303.0L907.0 -254.0Q906.0 -295.0 895.0 -321.5Q884.0 -348.0 863.0 -362.0Q842.0 -376.0 810.0 -376.0Q777.0 -376.0 753.0 -360.0Q729.0 -344.0 716.0 -315.0Q703.0 -286.0 703.0 -245.0Q703.0 -203.0 717.0 -173.5Q731.0 -144.0 757.0 -129.0Q783.0 -114.0 821.0 -114.0Q857.0 -114.0 884.5 -126.0Q912.0 -138.0 934.0 -163.0L1025.0 -72.0Q989.0 -31.0 937.5 -10.0Q886.0 11.0 821.0 11.0ZM1429.0 -0.0L1429.0 -276.0Q1429.0 -310.0 1409.0 -329.5Q1389.0 -349.0 1358.0 -349.0Q1337.0 -349.0 1320.5 -340.0Q1304.0 -331.0 1295.0 -315.0Q1286.0 -299.0 1286.0 -276.0L1218.0 -308.0Q1218.0 -367.0 1244.0 -409.5Q1270.0 -452.0 1315.5 -475.5Q1361.0 -499.0 1419.0 -499.0Q1472.0 -499.0 1513.5 -474.5Q1555.0 -450.0 1579.0 -409.0Q1603.0 -368.0 1603.0 -316.0L1603.0 -0.0L1429.0 -0.0ZM1112.0 -0.0L1112.0 -489.0L1286.0 -489.0L1286.0 -0.0L1112.0 -0.0ZM1903.0 11.0Q1834.0 11.0 1780.5 -16.5Q1727.0 -44.0 1696.5 -93.5Q1666.0 -143.0 1666.0 -206.0L1666.0 -489.0L1840.0 -489.0L1840.0 -206.0Q1840.0 -186.0 1848.0 -171.0Q1856.0 -156.0 1870.0 -148.0Q1884.0 -140.0 1903.0 -140.0Q1931.0 -140.0 1948.5 -158.0Q1966.0 -176.0 1966.0 -206.0L1966.0 -489.0L2140.0 -489.0L2140.0 -206.0Q2140.0 -142.0 2110.0 -93.0Q2080.0 -44.0 2026.5 -16.5Q1973.0 11.0 1903.0 11.0ZM2460.0 11.0Q2378.0 11.0 2315.0 -21.5Q2252.0 -54.0 2216.0 -112.0Q2180.0 -170.0 2180.0 -245.0Q2180.0 -319.0 2215.0 -376.5Q2250.0 -434.0 2310.5 -467.5Q2371.0 -501.0 2447.0 -501.0Q2521.0 -501.0 2578.5 -469.5Q2636.0 -438.0 2668.5 -382.5Q2701.0 -327.0 2701.0 -256.0Q2701.0 -241.0 2699.5 -225.5Q2698.0 -210.0 2693.0 -190.0L2262.0 -188.0L2262.0 -300.0L2624.0 -303.0L2546.0 -254.0Q2545.0 -295.0 2534.0 -321.5Q2523.0 -348.0 2502.0 -362.0Q2481.0 -376.0 2449.0 -376.0Q2416.0 -376.0 2392.0 -360.0Q2368.0 -344.0 2355.0 -315.0Q2342.0 -286.0 2342.0 -245.0Q2342.0 -203.0 2356.0 -173.5Q2370.0 -144.0 2396.0 -129.0Q2422.0 -114.0 2460.0 -114.0Q2496.0 -114.0 2523.5 -126.0Q2551.0 -138.0 2573.0 -163.0L2664.0 -72.0Q2628.0 -31.0 2576.5 -10.0Q2525.0 11.0 2460.0 11.0ZM3042.0 10.0Q2995.0 10.0 2955.0 -7.0Q2915.0 -24.0 2889.0 -53.5Q2863.0 -83.0 2857.0 -122.0L2857.0 -360.0Q2863.0 -399.0 2889.5 -430.5Q2916.0 -462.0 2955.5 -480.5Q2995.0 -499.0 3042.0 -499.0Q3113.0 -499.0 3167.0 -466.5Q3221.0 -434.0 3251.5 -376.0Q3282.0 -318.0 3282.0 -244.0Q3282.0 -171.0 3251.5 -113.5Q3221.0 -56.0 3167.0 -23.0Q3113.0 10.0 3042.0 10.0ZM2751.0 207.0L2751.0 -489.0L2925.0 -489.0L2925.0 -366.0L2896.0 -248.0L2921.0 -129.0L2921.0 207.0L2751.0 207.0ZM3009.0 -145.0Q3038.0 -145.0 3060.0 -158.0Q3082.0 -171.0 3094.0 -193.5Q3106.0 -216.0 3106.0 -245.0Q3106.0 -274.0 3094.0 -296.0Q3082.0 -318.0 3060.0 -331.0Q3038.0 -344.0 3010.0 -344.0Q2983.0 -344.0 2961.0 -331.5Q2939.0 -319.0 2927.0 -296.5Q2915.0 -274.0 2915.0 -245.0Q2915.0 -216.0 2927.0 -193.5Q2939.0 -171.0 2960.5 -158.0Q2982.0 -145.0 3009.0 -145.0ZM3338.0 -0.0L3338.0 -729.0L3512.0 -729.0L3512.0 -0.0L3338.0 -0.0ZM4331.0 1.0L4135.0 -489.0L4321.0 -489.0L4441.0 -86.0L4368.0 -86.0L4489.0 -489.0L4675.0 -489.0L4474.0 1.0L4331.0 1.0ZM4215.0 207.0L4360.0 -112.0L4474.0 1.0L4390.0 207.0L4215.0 207.0Z";

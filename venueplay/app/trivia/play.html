@@ -290,7 +290,7 @@
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
+<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonekey.js"></script>
@@ -910,7 +910,7 @@
   var _prPhone=null;   // Punters Reckon, mounted on first use
   function onMsg(m){
     if(!m||!m.t) return;
-    /* The start-of-game show on the phone (/app/vp-sting.js, off unless ?sting=1), with the name it joined with. */
+    /* The start-of-game show on the phone (/app/vp-sting.js, on unless ?sting=0), with the name it joined with. */
     if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords(/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA", P.name), { question:1, ta_board:1 }, "phone"); }catch(e){} }
     if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
       if(!P.joined) return;
@@ -1353,7 +1353,7 @@
          Dean, 22 Sep 2026: "the tv and phone seem to be unsynced". The numbers below are the
          wall's; change both. */
       // T0 was 900: the first question waits for the start-of-game show, as on the wall (screen.html t = 4200, 2 Nov 2026)
-      var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 when the show is off (the default since the 2 Nov hotfix)
+      var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 as before the show, on a phone with ?sting=0
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
       d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
