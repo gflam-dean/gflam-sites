@@ -48,7 +48,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Anton&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--pink:#fe65c3;--dark:#0d0d0d;--dark2:#1a1a1a;--white:#fff;--muted:rgba(255,255,255,0.5);--border:rgba(255,255,255,0.1)}
@@ -146,25 +146,40 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
   .bc{padding:22px 18px}
   .bc-desc{font-size:12px}
 }
-/* ── FEATURED: venueplay (newest product, 4 Nov 2026) ── */
-.feat{grid-column:1 / -1;display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:28px;padding:34px 36px;text-align:left;border-color:rgba(254,101,195,.35);background:linear-gradient(135deg,rgba(254,101,195,.10),rgba(26,26,26,1) 55%)}
-.feat .bc-tag{margin-bottom:16px}
-.feat-logo{display:block;width:260px;max-width:100%;height:auto;margin:0 0 14px}
-.feat-desc{font-size:14px;color:rgba(255,255,255,.62);line-height:1.65}
-.feat-games{list-style:none;display:flex;flex-direction:column;gap:10px}
-.feat-games li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:11px 14px;font-size:14px;font-weight:500;color:#fff}
-.feat-games li::before{content:"";width:0;height:0;border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent var(--pink);flex-shrink:0}
-.feat-cta{display:inline-flex;align-items:center;gap:8px;margin-top:18px;background:var(--pink);color:#fff;font-size:13px;font-weight:600;letter-spacing:.5px;padding:11px 18px;border-radius:8px}
-.feat-cta svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.feat:hover .feat-cta{opacity:.9}
+/* ── venueplay BANNER (4 Nov 2026). A venueplay ad sitting on the Gflam page, in venueplay's own
+   look (brand guidelines v3.2): near-black #0A0A0B, pink #FF1F8E, Anton / Manrope / JetBrains Mono,
+   the kit's neon logo file, real captures of the live trivia demo (TV and phone). No gradients. ── */
+.vpb{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"head copy" "shots shots";align-items:end;gap:26px 40px;padding:38px 36px 34px;background:#0A0A0B;border:1px solid rgba(255,31,142,.45);border-radius:16px;color:#fff;text-decoration:none;font-family:"Manrope",sans-serif;transition:border-color .3s cubic-bezier(.22,1,.36,1),transform .3s cubic-bezier(.22,1,.36,1)}
+.vpb:hover{border-color:#FF1F8E;transform:translateY(-3px)}
+.vpb:focus-visible{outline:2px solid #FF1F8E;outline-offset:3px}
+.vpb-head{grid-area:head}
+.vpb-copy{grid-area:copy}
+.vpb-label{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8A8A95;margin-bottom:18px}
+.vpb-logo{display:block;width:250px;max-width:100%;height:auto;margin:0 0 20px -6px}
+.vpb-h{font-family:"Anton",sans-serif;font-weight:400;font-size:40px;line-height:1.04;text-transform:uppercase;letter-spacing:.2px;margin:0;color:#fff}
+.vpb-h em{font-style:normal;color:#FF1F8E}
+.vpb-p{font-size:15px;line-height:1.6;color:rgba(255,255,255,.78);margin:0 0 16px}
+.vpb-games{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding:0}
+.vpb-games li{font-size:12px;font-weight:700;color:#fff;background:#1A1A1F;border-radius:999px;padding:7px 12px}
+.vpb-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;background:#FF1F8E;color:#fff;font-weight:700;font-size:15px;padding:0 22px;border-radius:10px}
+.vpb-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* TV and phone side by side at the same height (TV 16:9, phone 390x844), never overlapping */
+.vpb-shots{grid-area:shots;display:flex;align-items:flex-end;gap:14px}
+.vpb-tv{flex:100 1 0;min-width:0;display:block;width:100%;height:auto;border-radius:8px;border:1px solid #26262d}
+.vpb-phone{flex:26 1 0;min-width:0;display:block;width:100%;height:auto;border-radius:12px;border:1px solid #26262d}
 @media(max-width:760px){
-  .feat{grid-template-columns:1fr;gap:20px;padding:26px 20px;text-align:center}
-  .feat .bc-tag{margin-inline:auto}
-  .feat-logo{width:210px;margin:0 auto 12px}
-  .feat-games{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .feat-games li{font-size:13px;padding:10px 12px}
-  .feat-cta{justify-content:center}
+  .vpb{grid-template-columns:1fr;grid-template-areas:"head" "shots" "copy";gap:22px;padding:28px 18px 24px;text-align:center}
+  .vpb-logo{width:220px;margin:0 auto 16px}
+  .vpb-h{font-size:31px}
+  .vpb-games{justify-content:center}
+  .vpb-btn{width:100%}
+  .vpb-shots{gap:8px}
+  .vpb-phone{border-radius:7px}
 }
+/* every company, footer list */
+.foot-brands{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-bottom:14px}
+.foot-brands a{color:rgba(255,255,255,.45);font-size:12px;text-decoration:none;transition:color .2s}
+.foot-brands a:hover{color:var(--pink)}
 </style>
 </head>
 <body>
@@ -182,20 +197,25 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
   <!-- Brand Cards -->
   <div class="brands">
 
-    <!-- venueplay: the group's newest product, featured. Logo is the kit file (logo-kit-1nov), never typed. -->
-    <a class="bc feat" href="https://venueplay.com.au">
-      <div>
-        <span class="bc-tag">New from Gflam</span>
-        <h2 style="margin:0"><img class="feat-logo" src="/assets/venueplay-horizontal-on-dark.svg" width="260" height="61" alt="venueplay"></h2>
-        <p class="feat-desc">Live games for pubs, clubs and bowls clubs. The game runs on the TV you already have and everyone plays on their own phone. No app, no login.</p>
-        <span class="feat-cta">Visit venueplay.com.au <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    <!-- venueplay banner: venueplay's own look, the kit's neon logo FILE (never typed), real captures of
+         the live trivia demo (venueplay.com.au/app/trivia/screen?demo=1 and /play?demo=1, 4 Nov 2026). -->
+    <a class="vpb" href="https://venueplay.com.au" aria-label="venueplay: visit venueplay.com.au">
+      <div class="vpb-head">
+        <div class="vpb-label">New from Gflam</div>
+        <img class="vpb-logo" src="/assets/venueplay-horizontal-tv-neon.svg" width="250" height="58" alt="venueplay">
+        <h2 class="vpb-h">Game night on the TV <em>you already have.</em></h2>
       </div>
-      <ul class="feat-games" aria-label="Games">
-        <li>trivia</li>
-        <li>musical bingo</li>
-        <li>bingo</li>
-        <li>raffles</li>
-      </ul>
+      <div class="vpb-copy">
+        <p class="vpb-p">Live games for pubs, clubs and bowls clubs. The host runs the show, the TV shows the game and everyone plays on their own phone. No app, no login.</p>
+        <ul class="vpb-games" aria-label="Games">
+          <li>trivia</li><li>musical bingo</li><li>bingo</li><li>raffles</li>
+        </ul>
+        <span class="vpb-btn">Visit venueplay.com.au <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+      <div class="vpb-shots">
+        <img class="vpb-tv" src="/assets/venueplay-trivia-tv.jpg" width="1280" height="720" alt="The venueplay trivia screen on a venue TV: a question, four answers and a 20 second clock">
+        <img class="vpb-phone" src="/assets/venueplay-trivia-phone.jpg" width="780" height="1688" alt="The same trivia question on a player's phone">
+      </div>
     </a>
 
     <a class="bc" href="https://www.gflamtouring.com.au">
@@ -282,6 +302,15 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
 
   <!-- Footer -->
   <footer class="foot">
+    <nav class="foot-brands" aria-label="Gflam companies">
+      <a href="https://venueplay.com.au">venueplay</a>
+      <a href="https://www.gflamtouring.com.au">Gflam Touring</a>
+      <a href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo">Drag Bingo at the Bowlo</a>
+      <a href="https://partyplay.com.au">PartyPlay</a>
+      <a href="https://www.gflampartyhire.com.au">Gflam Party Hire</a>
+      <a href="https://www.gflamvending.com.au">Gflam Vending</a>
+      <a href="https://www.theminibar.com.au">The Mini Bar</a>
+    </nav>
     <div class="foot-links">
       <a href="https://www.gflamtouring.com.au/privacy-policy">Privacy Policy</a>
       <a href="https://www.gflamtouring.com.au/cookies">Cookies</a>
