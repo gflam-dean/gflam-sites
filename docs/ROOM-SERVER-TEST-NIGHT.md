@@ -51,6 +51,14 @@ Then the same night in **caller mode** (real balls, 1 to 90 grid): tap 10 number
   missed ball marked and gets the next one. Presence still shows tv 1 and host 1 (the venue did NOT
   move), and the phone says `room`. Then once more for a full minute.
 - **Phone locked**: lock phone 1 for two minutes, unlock. Same result.
+- **Wi-Fi off, 4G off, no flight mode (the 4 Nov fix, job list row 60)**: on the iPhone, turn Wi-Fi
+  off and then mobile data off (Control Centre), wait 40 seconds while you call balls, turn them back
+  on. This is the drop the browser is NOT told about. Same result: ticket back with every ball, the
+  status says Connected (never "Waiting for the host"), the phone says `room`, presence still has the
+  host. Then walk the phone from the venue Wi-Fi onto 4G mid-game (a hand-off): no visible gap.
+- **Trivia and musical bingo**: the same Wi-Fi-off drop for 40 seconds while the next question goes up
+  (or a song plays). Back within a few seconds on the question that is up now (or the card with
+  every song played), never "You're in".
 - **Console reload**: reload the console tab mid-game. The game comes back, the next ball reaches
   the TV and both phones.
 - **TV covered**: put another window fully over the TV window for six minutes, call two balls,

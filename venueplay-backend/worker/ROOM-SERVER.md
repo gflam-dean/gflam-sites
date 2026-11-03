@@ -347,3 +347,26 @@ is the database itself (the join, ~15 calls a phone), the same as the 30 Oct pla
 Durable Objects cost for this [A]: a TV holds five sockets that ping every 25 s (answered by
 Cloudflare without waking the room); at 1,000 venues that is about 26 million requests a month at
 the 20:1 WebSocket rate, about US$4 (A$6) a month on top of the Workers Paid plan.
+
+## 4 Nov 2026: a phone back from a dropout, never on "Waiting for the host" (job list row 60)
+
+Dean's 1 Nov test night, Test Alpha on the room: his iPhone came back from a drop on "Waiting for the
+host". a77e3edb fixed the drop the phone SAYS it had (navigator.onLine false). Played every other way in
+tools/test-room-dropout.js (bingo, the real console and phone), tools/test-room-dropout-formats.js
+(musical and trivia) and tools/room-dropout-in-chrome.test.py (both roads, in Chrome), three holes were
+left, all in vp-room.js and all on the room road only:
+
+* **A drop nobody announces** (iOS at times, a Wi-Fi to 4G hand-off always) failed every look with NO
+  answer, spent the phone's 30 s budget on its own dead line, put the phone on Supabase ALONE (card frozen,
+  status "Waiting for the host" for 35 to 45 s after the signal was back) and then moved the whole venue
+  off the room for six hours. Now a look with no answer (rejected or hung) is the phone's line, not the
+  room: not spent from the budget for up to `UNREACHABLE_MS` (120 s), looking every 2 s, so it is back in
+  the room within about 2 s of the signal. Any answer (5xx, a refused socket) is the room's, as before.
+* **A socket half open before its first pong** was never judged, so a phone that dropped in its first
+  seconds said Connected, deaf, all night. Presence says `pong: true`; the phone judges from the start.
+* **A phone that did have to go across** (no answer past 120 s) told the room on a 0/5/15/45 s schedule,
+  so the venue followed up to 45 s late. A phone now tells every 2 s for three minutes.
+
+And the trivia phone asks /snapshot again (2, 4, 6 s) when its one look after a drop is lost, instead of
+sitting on the old question until the next one. The Supabase road (the live default) was already fine:
+played in Chrome it is back on the card or question within seconds of the signal on every drop.

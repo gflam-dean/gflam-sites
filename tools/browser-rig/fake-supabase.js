@@ -114,6 +114,42 @@
       rpc: function () { return Promise.resolve({ data: null, error: null }); },
       channel: function (name) {
         var handlers = [], bc = null, statusCb = null;
+        /* THE LINE (4 Nov 2026, tools/room-dropout-in-chrome.test.py). Only on a page that sets
+           window.__FAKE_LINE_WATCH before its scripts: when window.__lineDown() says the phone has no
+           network, nothing goes out and nothing comes in, a channel cannot join, and a joined one is
+           lost the way supabase-js loses it (at once when the page heard "offline", after a missed
+           heartbeat when it did not) and joins again by itself once the line is back. Every other
+           suite sees exactly the channel it always did. */
+        if (window.__FAKE_LINE_WATCH) {
+          var down = function () { try { return !!(window.__lineDown && window.__lineDown()); } catch (e) { return false; } };
+          var dead = false, joined = false, downFor = 0, watchT = null;
+          var deliver = function (e) { if (down()) return; handlers.forEach(function (h) { if (h.type === 'broadcast' && (!h.ev || h.ev === e.data.event)) { try { h.cb({ event: e.data.event, payload: e.data.payload }); } catch (err) { setTimeout(function () { throw err; }); } } }); };
+          var join = function () {
+            if (dead) return;
+            if (down()) { setTimeout(join, 500); return; }
+            bc = new BroadcastChannel('fake-rt:' + name); bc.onmessage = deliver; joined = true; downFor = 0;
+            setTimeout(function () { if (!dead && statusCb) statusCb('SUBSCRIBED'); }, 5);
+          };
+          var watch = function () {
+            if (dead || !joined) return;
+            if (!down()) { downFor = 0; return; }
+            downFor += 1000;
+            if (downFor >= (navigator.onLine === false ? 1000 : 17000)) {
+              joined = false; try { bc.close(); } catch (e) {} bc = null;
+              if (statusCb) statusCb('CHANNEL_ERROR');
+              setTimeout(join, 1000);
+            }
+          };
+          var lch = {
+            on: function (type, filter, cb) { handlers.push({ type: type, ev: filter && filter.event, cb: cb }); return lch; },
+            subscribe: function (cb) { statusCb = cb; join(); if (!watchT) watchT = setInterval(watch, 1000); return lch; },
+            send: function (m) { if (bc && joined && !down()) bc.postMessage({ event: m.event, payload: JSON.parse(JSON.stringify(m.payload)) }); return Promise.resolve('ok'); },
+            unsubscribe: function () { dead = true; clearInterval(watchT); if (bc) { try { bc.close(); } catch (e) {} bc = null; } if (statusCb) setTimeout(function () { statusCb('CLOSED'); }); return Promise.resolve('ok'); },
+            track: function () { return Promise.resolve('ok'); }
+          };
+          chans.push(lch);
+          return lch;
+        }
         var ch = {
           on: function (type, filter, cb) { handlers.push({ type: type, ev: filter && filter.event, cb: cb }); return ch; },
           subscribe: function (cb) {

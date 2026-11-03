@@ -1837,10 +1837,12 @@ MUTATIONS = [
      'a late "not enabled" is thrown away and every page on a slow line waits out the whole budget before Supabase'),
     # 1 Nov 2026, the live test night: Dean's iPhone in flight mode for 25 s came back on Supabase
     # alone and sat on "waiting for the host" until reloaded.
-    ('test-room-default-bingo.js', 'venueplay/app/vp-room.js',
+    ('room-fallback.test.js',   # 4 Nov 2026: the phone's own no-answer rule and pong check now catch the bingo scene too; the TV and the bare client still need this
+     'venueplay/app/vp-room.js',
      '      if (offline()) { st.downSince = t; st.tries = 0; }\n', '',
      'a phone in flight mode spends the budget, leaves the room alone, and sits on "waiting for the host"'),
-    ('test-room-default-bingo.js', 'venueplay/app/vp-room.js',
+    ('room-fallback.test.js',   # 4 Nov 2026: the phone's own no-answer rule and pong check now catch the bingo scene too; the TV and the bare client still need this
+     'venueplay/app/vp-room.js',
      '      if (st.ws && (st.ws.readyState === 1 || st.ws.readyState === 0)) { recycle(); return; }\n', '',
      'back from flight mode the phone keeps the socket the browser still calls open, and hears nothing more'),
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
@@ -1856,7 +1858,7 @@ MUTATIONS = [
      'if (ev && ev.code === 4503) { unavailable("handed over"); return; }', '',
      'a page the room sent to Supabase (ROOM_OFF, a handover) keeps retrying the room instead of going'),
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
-     'if (st.pongSeen && st.misses >= PING_MISSES) {', 'if (false) {',
+     'if ((st.pongSeen || st.pongKnown) && st.misses >= PING_MISSES) {', 'if (false) {',
      'a socket a venue router cut between games says connected all night and hears no ball'),
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
      'for (var i = 0; i < st.queue.length; i++) { try { pending.push(JSON.parse(st.queue[i])); } catch (e) {} }', '',
@@ -1880,7 +1882,7 @@ MUTATIONS = [
      'if (!d || typeof d !== "object" || typeof d.total !== "number") { retry(); return; }', '',
      "a captive portal's 200 page is taken for the room and the page is stuck, never falling back"),
     ('room-fallback.test.js', 'venueplay/app/vp-room.js',
-     'var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; st.lookSpent = lookMs; retry(); }, lookMs);', 'var late = 0;',
+     'var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; st.lookSpent = lookMs; st.noAnswer = true; retry(); }, lookMs);', 'var late = 0;',
      'a presence check that never answers holds the page on "checking" for ever'),
     ('test-room-default-bingo.js', 'venueplay/app/vp-room.js',
      'if (needsHandover && d.handover !== true) { unavailable("worker too old"); return; }', '',
@@ -10595,6 +10597,29 @@ MUTATIONS = [
      '  function endGameNow(forGid){\n    if(G.status!=="running") return;\n',
      '  function endGameNow(forGid){\n',
      'in Chrome, the carry-on modal\'s End game tapped twice sends two Ends'),
+    # 4 Nov 2026, job list row 60: a phone back from a dropout on "Waiting for the host". Each broken
+    # by hand in the working copy first and watched go red.
+    ('test-room-dropout.js', 'venueplay/app/vp-room.js',
+     '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
+     'a phone whose signal goes without the browser saying so spends its budget on its own dead line, goes to Supabase alone, sits on "Waiting for the host", and moves the venue'),
+    ('test-room-dropout.js', 'venueplay/app/vp-room.js',
+     '            if (d.pong === true) st.pongKnown = true;\n', '',
+     'a phone whose socket went half open before its first pong says Connected, deaf, for the rest of the night'),
+    ('test-room-dropout.js', 'venueplay/app/vp-room.js',
+     '      var sched = phone ? TELL_RETRY_PHONE : TELL_RETRY;', '      var sched = TELL_RETRY;',
+     'a phone that had to go to Supabase waits 35 s or more for its handover to reach the room while the venue is split'),
+    ('test-room-dropout-formats.js', 'venueplay/app/vp-room.js',
+     '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
+     'a musical or trivia phone back from a quiet drop is on Supabase alone, deaf to the next song or question'),
+    ('test-room-dropout-formats.js', 'venueplay/app/trivia/play.html',
+     '        setTimeout(function(){ if(gen===_snapGen) rebuildFromSnapshot(tries+1); }, 2000*(tries+1));\n', '',
+     'a trivia phone whose first look after a drop is lost stays on the old question until the next one goes up'),
+    ('room-fallback.test.js', 'venueplay/app/vp-room.js',
+     '  var UNREACHABLE_MS = 120000;', '  var UNREACHABLE_MS = 1e12;',
+     'a phone that cannot reach the Worker for minutes (the Worker down, Supabase up) waits in a dead room all night'),
+    ('room-dropout-in-chrome.test.py', 'venueplay/app/vp-room.js',
+     '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
+     'in Chrome, a phone back from a quiet drop has left the room alone and taken the whole venue off it'),
 ]
 
 
