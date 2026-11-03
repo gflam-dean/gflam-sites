@@ -27,7 +27,7 @@ CSS |= {w.split("-")[-1] for w in list(CSS) if "-" in w}
 BUILTIN = set("""if for while switch catch function return typeof new delete void do else try
  parseInt parseFloat Number String Boolean Array Object JSON Math Date Promise RegExp Error
  TypeError Intl Blob File FormData URL URLSearchParams Image MediaRecorder Uint8Array Uint32Array
- setTimeout setInterval clearTimeout clearInterval fetch alert confirm prompt requestAnimationFrame
+ setTimeout setInterval clearTimeout clearInterval fetch alert confirm prompt requestAnimationFrame cancelAnimationFrame
  encodeURIComponent decodeURIComponent isNaN isFinite console document window navigator localStorage
  sessionStorage crypto Intl gtag dataLayer supabase
  atob btoa getComputedStyle encodeURI decodeURI structuredClone queueMicrotask
