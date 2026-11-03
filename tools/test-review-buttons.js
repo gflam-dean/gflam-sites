@@ -19,6 +19,8 @@
      8. (3 Nov 2026) a reply that needs Dean: a "needs you" row gets Stop / Draft / Ignore links (never Yes / Edit /
         No), each recorded once; a choice of one kind never lands on a row of the other; before migration 149 the
         table refuses them and the page says so; GET /autopilot/decisions says features: ["needs_you"]
+     9. (3 Nov 2026) Get photos from their socials: a fourth signed link, on the pages only when the slides need
+        photos, recorded once as decision "photos"; before migration 148 it records nothing and says so
 
    Run from the repo root:  jsc tools/test-review-buttons.js */
 var ran = 0, bad = 0;
@@ -41,7 +43,7 @@ crypto = { subtle: {
 var KEY = 'k3y-' + 'abcdefghijklmnopqrstuvwxyz0123456789';   // 40 characters, assembled so it is no key's shape
 var VECTOR = '0d40a8c71578eac85d2a9b3ffed0160e';            // Python: hmac('vp-review:'+KEY, folder|yes|1793000000|1)[:32]
 var FOLDER = '2026-10-29-test-charlie-hotel';
-var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false, NO_149 = false;   // NO_149: the table before migration 149 refuses stop / draft / ignore   // NO_V2: the live table before migration 130
+var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false, NO_148 = false, NO_149 = false;   // NO_148 / NO_149: the table before migration 148 refuses "photos", before 149 stop / draft / ignore   // NO_V2: the live table before migration 130
 var V2 = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];   // STALE = n: the next n reads see the row before the other tap landed
 var NOW = Date.parse('2026-10-29T08:00:00Z');
 Date.now = function () { return NOW; };
@@ -71,6 +73,7 @@ globalThis.fetch = function (url, opts) {
   if (method === 'POST') { var o = JSON.parse(opts.body);
     if (ROWS.some(function (r) { return r.folder === o.folder; })) return RS(409, { code: '23505' });
     ROWS.push(o); return RS(201, ''); }
+  if (method === 'PATCH' && NO_148 && JSON.parse(opts.body).decision === 'photos') return RS(400, { code: '23514', message: 'new row for relation "vp_autopilot_reviews" violates check constraint "vp_autopilot_reviews_decision_check"' });
   if (method === 'PATCH' && NO_149 && /^(stop|draft|ignore)$/.test(JSON.parse(opts.body).decision || '')) return RS(400, { code: '23514', message: 'new row for relation "vp_autopilot_reviews" violates check constraint "vp_autopilot_reviews_decision_check"' });
   if (method === 'PATCH') { var p = JSON.parse(opts.body), hit = ROWS.filter(function (r) { return match(r, q); });
     hit.forEach(function (r) { for (var k in p) r[k] = p[k]; });
@@ -94,7 +97,7 @@ var AP = { 'X-Autopilot-Key': KEY };
 var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: venueplay turns the TV you already have into a games night, so you can have a play.\n\nCheers,\nHarry Finch\nvenueplay\nvenueplay.com.au\n';
 var REVIEW = { folder: FOLDER, company: 'Test Charlie <Hotel>', class: 'interested', their_words: 'Yes please, send it through. <b>Mick</b>',
   reply: REPLY, mailbox: 'harry@venueplaylive.com.au', reply_to: 'manager@testcharlie.example' };
-function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NO_149 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
+function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NO_148 = false; NO_149 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
 function pathOf(link) { return link.replace(/^https:\/\/[^/]+/, ''); }
 function swap(link, k, v) { return link.replace(new RegExp('([?&]' + k + '=)[^&]*'), '$1' + v); }
 function form(o) { return Object.keys(o).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(o[k]).replace(/%20/g, '+'); }).join('&'); }
@@ -474,7 +477,7 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var td = await vpaReviewToken(ENV, NY, 'draft', parseInt(/x=(\d+)/.exec(L.draft || 'x=0')[1], 10), 1);
   check('each signed like the others, the action inside the signature', /&a=draft&r=1&x=\d+&t=[0-9a-f]{32}$/.test(L.draft || '') && (L.draft || '').slice(-32) === td && td !== (L.stop || '').slice(-32), L);
   var ordinary = await call('/autopilot/review/register', REVIEW, AP);
-  check('an ordinary review still gets only yes, edit and no', Object.keys(ordinary.body.links || {}).sort().join(',') === 'edit,no,yes', ordinary.body.links);
+  check('an ordinary review still gets only yes, edit, no and get photos (148), never stop / draft / ignore', Object.keys(ordinary.body.links || {}).sort().join(',') === 'edit,no,photos,yes', ordinary.body.links);
   var yesOnNy = await call(pathOf(swap(swap(ordinary.body.links.yes, 'f', NY), 't', await vpaReviewToken(ENV, NY, 'yes', parseInt(/x=(\d+)/.exec(ordinary.body.links.yes)[1], 10), 1))), undefined, {}, 'POST', '');
   check('a correctly signed Yes on a needs-you row is refused and records nothing', yesOnNy.status === 403 && !ROWS.filter(function (x) { return x.folder === NY; })[0].decision, yesOnNy.status);
   var stopOnOrd = await call(pathOf(swap(swap(L.stop, 'f', FOLDER), 't', await vpaReviewToken(ENV, FOLDER, 'stop', parseInt(/x=(\d+)/.exec(L.stop)[1], 10), 1))), undefined, {}, 'POST', '');
@@ -514,6 +517,56 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   var ord149 = await call('/autopilot/review/register', REVIEW, AP);
   check('and an ordinary review\'s Yes still works then', (await call(pathOf(ord149.body.links.yes), undefined, {}, 'POST', '')).status === 200 && ROWS.filter(function (x) { return x.folder === FOLDER; })[0].decision === 'yes');
   check('none of the needs-you pages has an em or en dash, or the word roster', [gs.html, gdr.html, ps1.html, pi.html, pd.html, p149.html].every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
+  section('15. GET PHOTOS FROM THEIR SOCIALS (Dean, 3 Nov 2026): a fourth signed link, shown when the slides need photos, recorded once');
+  var PH = { recommend: 'yes', recommend_why: 'They said yes and asked nothing else.', warnings: ['No usable photos on their website: tap Get photos from their socials.'], needs_social_photos: true, real_photos: 0 };
+  world();
+  r = await call('/autopilot/review/register', Object.assign({}, REVIEW, PH), AP); L = r.body.links || {};
+  var tp1 = await vpaReviewToken(ENV, FOLDER, 'photos', parseInt(/x=(\d+)/.exec(L.photos || 'x=0')[1], 10), 1);
+  check('register makes a photos link, signed like the others (action photos inside the signature)', r.status === 200 && /&a=photos&r=1&x=\d+&t=[0-9a-f]{32}$/.test(L.photos || '') &&
+    (L.photos || '').slice(-32) === tp1 && tp1 !== (L.yes || '').slice(-32), L);
+  check('the row keeps needs_social_photos and the real photo count in details', ROWS[0].details && ROWS[0].details.needs_social_photos === true && ROWS[0].details.real_photos === 0, ROWS[0].details);
+  var forged = await call(pathOf(swap(L.yes, 'a', 'photos')), undefined, {}, 'POST', '');
+  check('a Yes link edited to say photos is refused and records nothing', forged.status === 403 && !ROWS[0].decision, forged.status);
+  WRITES = [];
+  var gp = await call(pathOf(L.photos), undefined, {}, 'GET');
+  check('GET the photos page writes NOTHING (mail scanners), and says the reply is held, their photos are picked, the review comes back',
+    gp.status === 200 && WRITES.length === 0 && !ROWS[0].decision && /HOLDS this reply\. Nothing goes to them/.test(gp.html) && /Facebook or Instagram/.test(gp.html) && /comes back to you with fresh buttons/.test(gp.html), gp.html.slice(0, 300));
+  var tpc = controls(part(gp.html, 'top'));
+  check('its top is its own confirm, "Yes, get photos from their socials", a submit in the one form', tpc.length === 1 && tpc[0].a === 'photos' && tpc[0].tag === 'button' && tpc[0].type === 'submit' && tpc[0].words === 'Yes, get photos from their socials', tpc);
+  var bpc = controls(part(gp.html, 'bottom'));
+  check('its bottom: Yes (recommended), Edit, Get photos, No: No stays last, each the signed link or this page\'s confirm',
+    bpc.map(function (x) { return x.a; }).join(',') === 'yes,edit,photos,no' && bpc[0].rec && bpc[0].href === L.yes && bpc[3].href === L.no && bpc[2].tag === 'button', bpc);
+  var gy = await call(pathOf(L.yes), undefined, {}, 'GET');
+  var byc = controls(part(gy.html, 'bottom'));
+  check('the Yes page of a review that needs photos: the warning, and Get photos at the bottom (its signed link)', /No usable photos on their website/.test(gy.html) &&
+    byc.map(function (x) { return x.a; }).join(',') === 'yes,edit,photos,no' && byc[2].href === L.photos && byc[2].words === 'Get photos from their socials', byc);
+  var tyc = controls(part(gy.html, 'top'));
+  check('and its top is still only the recommended one (Dean, 31 Oct 2026)', tyc.length === 1 && tyc[0].a === 'yes', tyc);
+  var pp = await call(pathOf(L.photos), undefined, {}, 'POST', '');
+  check('POST records decision photos, once, and says Got it', pp.status === 200 && ROWS[0].decision === 'photos' && /Got it: Get photos from their socials/.test(pp.html), ROWS[0]);
+  var py = await call(pathOf(L.yes), undefined, {}, 'POST', '');
+  check('a Yes after it changes nothing (first choice wins)', ROWS[0].decision === 'photos' && /You already chose: Get photos from their socials/.test(py.html), ROWS[0].decision);
+  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  check('the Mac sees the photos decision', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'photos', d.body);
+  dn = await call('/autopilot/decisions/done', { folder: FOLDER, round: 1, result: 'held', note: 'held for photos from their socials' }, AP);
+  check('and marks it done (held), once', dn.status === 200 && dn.body.marked === true && ROWS[0].applied_result === 'held', dn.body);
+  re = await call('/autopilot/review/register', Object.assign({ reopen: true }, REVIEW, PH, { needs_social_photos: false, real_photos: 3 }), AP);
+  var L3 = re.body.links || {};
+  var g4 = await call(pathOf(L3.yes), undefined, {}, 'GET');
+  check('after the slides are rebuilt: a new round, fresh links, and no Get photos button any more', re.status === 200 && re.body.round === 2 && ROWS[0].decision === null &&
+    controls(part(g4.html, 'bottom')).map(function (x) { return x.a; }).join(',') === 'yes,edit,no', re.body);
+  world();
+  r = await call('/autopilot/review/register', Object.assign({}, REVIEW, PH, { needs_social_photos: 'yes', real_photos: 999 }), AP); L = r.body.links || {};
+  check('only true counts as needs photos; the count is kept between 0 and 20', ROWS[0].details.needs_social_photos === false && ROWS[0].details.real_photos === 20, ROWS[0].details);
+  var gn = await call(pathOf(L.edit), undefined, {}, 'GET');
+  check('so that review\'s pages have no Get photos button', controls(part(gn.html, 'bottom')).every(function (x) { return x.a !== 'photos'; }));
+  world(); NO_148 = true;
+  r = await call('/autopilot/review/register', Object.assign({}, REVIEW, PH), AP); L = r.body.links || {};
+  var p148 = await call(pathOf(L.photos), undefined, {}, 'POST', '');
+  check('before migration 148 the table refuses photos: the page says it is not switched on yet, names what to tell Claude, records nothing',
+    p148.status === 503 && /not switched on yet/.test(p148.html) && /get photos for/.test(p148.html) && !ROWS[0].decision, p148.status);
+  check('and the other buttons still work then', (await call(pathOf(L.yes), undefined, {}, 'POST', '')).status === 200 && ROWS[0].decision === 'yes', ROWS[0].decision);
+  check('none of the photos pages has an em or en dash, or the word roster', [gp.html, gy.html, pp.html, p148.html].every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
 
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');

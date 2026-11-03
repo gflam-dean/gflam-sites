@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 14:41 · 0c48ef9d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 14:42 · 484007ac';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2341,6 +2341,14 @@ async function vpaAutopilotProspect(request, env, json) {
  * its own record, so a decision is applied once, ever. When the Mac HOLDS a yes (a check failed) it
  * opens a new round and emails fresh buttons; links from the old round then say so and do nothing.
  *
+ * GET PHOTOS FROM THEIR SOCIALS (Dean, 3 Nov 2026: slides with no real photos, only drawn icons, are "escalated to
+ * social media" with a button). A fourth signed link, action "photos", made for every review like the other three;
+ * the Mac shows it only when its slides need photos (details.needs_social_photos), and so do these pages. Recorded
+ * the same way, once per round (decision "photos", migration 148). The Mac then HOLDS the reply (it never goes),
+ * writes a job for Claude to pick their own photos from their Facebook or Instagram, rebuilds the slides and sends
+ * the review again in a new round. Before migration 148 the table refuses "photos": the page says so and records
+ * nothing, and Dean can tell Claude instead.
+ *
  * A REPLY THAT NEEDS DEAN (Dean, 3 Nov 2026, on the plain "Instantly: 1 reply need you" email about a wine
  * company's help desk auto-reply: "Has no options that help."). The Mac registers a row of class "needs you"
  * (folder needsyou-...) for a reply it could not sort, and gets three signed links instead of Yes / Edit / No:
@@ -2353,12 +2361,13 @@ async function vpaAutopilotProspect(request, env, json) {
  * sends these buttons to a Worker that has them.
  * ======================================================================== */
 const VPA_REVIEW_DAYS = 7;
-const VPA_REVIEW_ACTIONS = { yes: 'yes', no: 'no', edit: 'edit', stop: 'stop', draft: 'draft', ignore: 'ignore' };
+const VPA_REVIEW_ACTIONS = { yes: 'yes', no: 'no', edit: 'edit', photos: 'photos', stop: 'stop', draft: 'draft', ignore: 'ignore' };
 const VPA_NEEDS_YOU_CLASS = 'needs you';
 const VPA_NEEDS_YOU_ACTIONS = ['draft', 'stop', 'ignore'];
-const VPA_PLAIN_ACTIONS = ['yes', 'no', 'edit'];
-const VPA_REVIEW_DECISIONS_IN = 'decision=in.(yes,no,edit,stop,draft,ignore)';
-/* Which choices a row has: a needs-you row only Stop / Draft / Ignore, every other row only Yes / No / Edit. */
+const VPA_PLAIN_ACTIONS = ['yes', 'no', 'edit', 'photos'];   // photos: Get photos from their socials (migration 148)
+const VPA_REVIEW_DECISIONS_IN = 'decision=in.(yes,no,edit,photos,stop,draft,ignore)';
+/* Which choices a row has: a needs-you row only Stop / Draft / Ignore, every other row only Yes / No / Edit
+   (and Get photos, shown only when its slides need photos). */
 function vpaReviewActionsFor(cls) {
   return cls === VPA_NEEDS_YOU_CLASS ? VPA_NEEDS_YOU_ACTIONS : VPA_PLAIN_ACTIONS;
 }
@@ -2440,7 +2449,7 @@ async function vpaReviewPatchV2(env, filter, patch) {
 const VPA_REVIEW_EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
 /* What the Mac found, checked and capped. null when the Mac sent none of it (a Mac from before 30 Oct). */
 function vpaReviewDetails(b) {
-  const keys = ['postcode', 'entity_type', 'login_email', 'state', 'recommend', 'recommend_why', 'warnings', 'checked_auto'];
+  const keys = ['postcode', 'entity_type', 'login_email', 'state', 'recommend', 'recommend_why', 'warnings', 'checked_auto', 'needs_social_photos'];
   if (!keys.some(function (k) { return b[k] !== undefined; })) return null;
   const pc = String(b.postcode == null ? '' : b.postcode).trim();
   const em = vpaReviewText(b.login_email, 200).trim().toLowerCase();
@@ -2455,7 +2464,14 @@ function vpaReviewDetails(b) {
     /* A reply already queued to go by itself, one of the first 50 Dean checks (2 Nov 2026): its email has
        Good to send and Edit, and opening Edit holds it (vpaAutopilotReviewPage, vpaAutopilotHolds). */
     checked_auto: b.checked_auto === true,
+    needs_social_photos: b.needs_social_photos === true,
+    real_photos: Math.max(0, Math.min(20, parseInt(b.real_photos, 10) || 0)),
   };
+}
+/* The Get photos button shows on a review whose slides need photos, and always on its own page. */
+function vpaReviewWantsPhotos(row) {
+  const d = (row.details && typeof row.details === 'object') ? row.details : null;
+  return !!(d && d.needs_social_photos === true);
 }
 
 /* POST /autopilot/review/register { folder, company, class, their_words, reply, mailbox, reply_to, reopen } */
@@ -2768,14 +2784,15 @@ function vpaReviewWords(row) {
    Nothing about recording changes: on its own page a choice is that page's confirm, a submit in the page's one
    POST form back to the same signed link; anywhere else it is the signed link to its own page, a GET that only
    shows. So a tap at the top does exactly what the same tap at the bottom does. */
-const VPA_REVIEW_BUTTON_WORDS = { yes: 'Yes, send the standard reply', edit: 'Edit the reply first', no: 'No, do not send' };
-const VPA_REVIEW_CONFIRM_WORDS = { yes: 'Yes, send the standard reply', edit: 'Save and send', no: 'No, do not send' };
+const VPA_REVIEW_BUTTON_WORDS = { yes: 'Yes, send the standard reply', edit: 'Edit the reply first', no: 'No, do not send', photos: 'Get photos from their socials' };
+const VPA_REVIEW_CONFIRM_WORDS = { yes: 'Yes, send the standard reply', edit: 'Save and send', no: 'No, do not send', photos: 'Yes, get photos from their socials' };
 function vpaReviewRecommended(row) {
   const d = (row.details && typeof row.details === 'object') ? row.details : null;
   return d && d.recommend === 'yes' ? 'yes' : 'edit';
 }
-function vpaReviewOrder(rec) {
-  return rec === 'yes' ? ['yes', 'edit', 'no'] : ['edit', 'yes', 'no'];
+function vpaReviewOrder(rec, photos) {
+  const o = rec === 'yes' ? ['yes', 'edit', 'no'] : ['edit', 'yes', 'no'];
+  return photos ? o.slice(0, 2).concat(['photos'], o.slice(2)) : o;   // Get photos before No; No always last (the Mac's all_choices)
 }
 function vpaReviewChoice(a, action, links, big, tag) {
   const cls = 'btn ' + a + (big ? '' : ' small');
@@ -2785,13 +2802,15 @@ function vpaReviewChoice(a, action, links, big, tag) {
     : '<a class="' + cls + '" href="' + vpaEsc(links[a]) + '" data-a="' + a + '">' + words + '</a>';
 }
 function vpaReviewTop(rec, action, links) {
+  // The Get photos page leads with its own confirm: it is never the recommended reply, but it is what this page is for.
+  if (action === 'photos') return '<div class="top" data-vpa="top">' + vpaReviewChoice('photos', action, links, true, '') + '</div>';
   return '<div class="top" data-vpa="top">' + vpaReviewChoice(rec, action, links, true, 'Recommended')
     + (rec === 'edit' && action === 'edit' ? '<p class="muted">Change the reply below first: this saves what is in the box.</p>' : '')
     + '</div>';
 }
-function vpaReviewBottom(rec, action, links) {
+function vpaReviewBottom(rec, action, links, photos) {
   return '<h2>Your choice</h2><div class="choices" data-vpa="bottom">'
-    + vpaReviewOrder(rec).map(function (a, i) { return vpaReviewChoice(a, action, links, i === 0, i === 0 ? 'Recommended' : ''); }).join('')
+    + vpaReviewOrder(rec, photos).map(function (a, i) { return vpaReviewChoice(a, action, links, i === 0, i === 0 ? 'Recommended' : ''); }).join('')
     + '</div>';
 }
 /* Every submit on the page goes quiet on the first tap (there are two when the page is the recommended one). */
@@ -2808,7 +2827,7 @@ function vpaParseForm(text) {
   return out;
 }
 
-const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send the standard reply', no: 'No, do not send', edit: 'Edited and send' };
+const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send the standard reply', no: 'No, do not send', edit: 'Edited and send', photos: 'Get photos from their socials' };
 const VPA_CHECKED_DECIDED_WORDS = { yes: 'Approved, it goes at its time', no: 'Not sent', edit: 'Your edit goes' };
 const VPA_NEEDS_YOU_WORDS = { draft: 'Draft me a reply', stop: 'Stop them (not a venue)', ignore: 'Ignore' };
 const VPA_NEEDS_YOU_CONFIRM = { draft: 'Yes, draft me a reply', stop: 'Yes, stop them (not a venue)', ignore: 'Yes, ignore it' };
@@ -2841,6 +2860,10 @@ function vpaNeedsYouPage(row, action, self, links) {
     + '<h2>Your choice</h2><div class="choices" data-vpa="bottom">' + VPA_NEEDS_YOU_ACTIONS.map(function (a, i) { return choice(a, i === 0); }).join('') + '</div>'
     + '</form>';
   return vpaReviewPage({ draft: 'Draft a reply?', stop: 'Stop them?', ignore: 'Ignore it?' }[action], inner, 200);
+}
+/* Before migration 148 the table's check refuses decision "photos" (23514). */
+function vpaReviewNoPhotos(e) {
+  return /23514|vp_autopilot_reviews_decision_check/.test(String((e && (e.message || e.body)) || e || ''));
 }
 
 /* The Mac's recommendation and its warnings (migration 130), each a plain sentence with what to tap. A review from
@@ -2979,6 +3002,10 @@ async function vpaAutopilotReviewPage(request, env) {
           return vpaReviewPage('Not switched on yet', '<h1>These buttons are not switched on yet</h1><p>Nothing was recorded. '
             + 'Tell Claude "' + vpaEsc(VPA_NEEDS_YOU_WORDS[action].toLowerCase()) + '" for ' + vpaEsc(row.reply_to || row.company || folder) + ' and it will do the same.</p>', 503);
         }
+        if (action === 'photos' && vpaReviewNoPhotos(e)) {
+          return vpaReviewPage('Not switched on yet', '<h1>The photos button is not switched on yet</h1><p>Nothing was recorded. '
+            + 'Tell Claude "get photos for ' + vpaEsc(row.company || folder) + '" and it will do the same: hold the reply and get their photos.</p>', 503);
+        }
         return vpaReviewPage('Try again', '<h1>That did not save</h1><p>Nothing was recorded. Please tap the button again in a minute.</p>', 503);
       }
       if (!got.length) {
@@ -3023,6 +3050,13 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<p class="muted" style="margin-top:8px">Your signature is at the bottom: leave it there. Plain text; a blank line starts a new paragraph.</p>'
       + vpaReviewBoxes(row, boxForm)
       + vpaReviewWhatHappens(row, true);
+  } else if (action === 'photos') {
+    inner += '<h2>The reply, held until the slides are fixed</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
+      + '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac HOLDS this reply. Nothing goes to them, and no account is made.</li>'
+      + '<li>Claude picks their own sharp photos from their Facebook or Instagram (never stock, never another venue\'s) and follows them from venueplay.</li>'
+      + '<li>The TV slides are made again with those photos.</li>'
+      + '<li>The review comes back to you with fresh buttons, so you can say yes to the reply then.</li></ol></div>';
   } else {
     inner += '<h2>The reply that will NOT go</h2><div class="card words">' + vpaEsc(row.reply) + '</div>'
       + '<div class="what"><b>What happens when you tap it</b><ol>'
@@ -3033,8 +3067,8 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<h2>Why not? (optional, just for the record)</h2>'
       + '<textarea class="short" name="reason" aria-label="Why not"></textarea>';
   }
-  inner += vpaReviewBottom(rec, action, links) + '</form>';
-  const titles = { yes: 'Send this reply?', edit: 'Edit the reply', no: 'Do not send?' };
+  inner += vpaReviewBottom(rec, action, links, action === 'photos' || vpaReviewWantsPhotos(row)) + '</form>';
+  const titles = { yes: 'Send this reply?', edit: 'Edit the reply', no: 'Do not send?', photos: 'Get photos from their socials?' };
   return vpaReviewPage(titles[action], inner, err ? 400 : 200);
 }
 

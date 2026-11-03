@@ -557,6 +557,15 @@ NUMBER: written as 138 on 1 Nov, renumbered 139 when merged into release/mon-2no
 migration above; 137 stays spent by the end-screen ratings work).
 Branch `feature/tv-type-2nov`. NOT RUN. Rollback: in the file.
 
+`venueplay-148-review-photos-decision.sql` (Dean, 3 Nov 2026: a prospect whose TV slides came back with no real photos, only
+drawn icons, is "escalated to social media" with a button): the check on `vp_autopilot_reviews.decision` (128) also allows
+'photos', so the review's fourth signed link, "Get photos from their socials", records like Yes / Edit / No, once per round.
+The Mac holds the reply, writes a job for Claude to pick the venue's own photos from their Facebook or Instagram, rebuilds the
+slides and sends the review again in a new round. No new table, column, policy or grant, so RLS-BASELINE.json does not change.
+Either order with the billing Worker: before it runs the photos page says "not switched on yet" and records nothing; the other
+buttons are unchanged. NUMBER: 140 to 147 are taken on other branches, so 148. Branch `feature/social-photos-3nov`. NOT RUN.
+Rollback: in the file.
+
 `venueplay-149-review-needs-you-decisions.sql` (Dean, 3 Nov 2026, on the plain "reply needs you" email about a help desk
 auto-reply: "Has no options that help"): the check on `vp_autopilot_reviews.decision` (128) also allows 'stop', 'draft'
 and 'ignore', so a reply that needs Dean comes as its own email with "Stop them (not a venue)", "Draft me a reply" and
