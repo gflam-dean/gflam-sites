@@ -390,6 +390,7 @@
   "tv-and-phone-in-chrome.test.py",
   "tv-app-setup-line.test.py",
   "tv-bare-setup-in-chrome.test.py",
+  "tv-endshow-in-chrome.test.py",
   "tv-first-slide-in-chrome.test.py",
   "tv-landing-in-chrome.test.py",
   "tv-logo-in-chrome.test.py",

@@ -170,6 +170,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
+<script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -232,7 +233,7 @@
   })();
 
   // ---- screen state ----
-  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[],
+  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[], endDrawn:[], endPend:null,   // endDrawn: tonight's winning tickets, for the end-of-game show
           spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null,
           spinSecs:4, redrawTimer:null, holdUntil:0, pendingIdle:null, holdTimer:null };
 
@@ -400,6 +401,7 @@
     S.nextUp=!!m.next; if(Array.isArray(m.prizes)) S.prizes=m.prizes.filter(Boolean).slice(0,12);
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
     S.phase="idle"; renderIdle(); scheduleAdsReturn();
+    if(!m.next) raffleEndShow();   // the last prize is drawn: the end-of-game show
   }
   function renderWinner(nums, allowRedraw, time){
     stopSpin(); stopCountdown(); stopCelebrate(); clearRedraw(); clearHold();
@@ -564,12 +566,14 @@
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     /* The start-of-game show (/app/vp-sting.js, off unless ?sting=1). */
     if(window.VPSting && VPSting.on){ try{ VPSting.forDraw(m, { line:"<i>IT\u2019S</i> RAFFLE <i>TIME</i>" }); }catch(e){} }
+    /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next draw stops it. */
+    if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); }catch(e){} }
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
     // The host tapped "Back to ads". Go now rather than sit through the 18 second
     // wind-down: they have finished and the room should be looking at the venue again.
-    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
+    if(m.t==="to_ads"){ raffleEndShow(); if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }   // the raffle's goodbye first, if it has not had one
     if(m.t==="idle"){ S.nextUp=!!m.next; if(Array.isArray(m.prizes)) S.prizes=m.prizes.filter(Boolean).slice(0,12); }   // showing the next prize after a draw, vs the raffle's first prize; prizes = what is still to win
     // pad() loops on this. It arrives over a public broadcast channel, so an absurd value
     // (or a hostile one) used to spin the render thread forever and freeze the TV.
@@ -594,17 +598,35 @@
        (S.phase==="winner" || S.phase==="result" || S.phase==="drawing" || S.phase==="redraw")) return;
     if(m.t==="idle" && holding()){ S.pendingIdle=m; return; }   // the celebration finishes first; the idle is kept, not lost
     if(m.t==="host_here"){ S.phase="idle"; renderIdle(); return; }
-    if(m.t==="state" || m.t==="idle"){ clearHold(); S.phase="idle"; renderIdle(); if(m.t==="idle") scheduleAdsReturn(); }
+    if(m.t==="state" || m.t==="idle"){ clearHold(); S.phase="idle"; renderIdle(); if(m.t==="idle"){ scheduleAdsReturn(); if(!m.next) raffleEndShow(); } }
     else if(m.t==="drawing"){
       if(typeof m.spinSecs==="number" && m.spinSecs>0) S.spinSecs=Math.min(12, m.spinSecs);
       // Arriving during the redraw notice is the NORMAL path: renderDrawing cancels the notice's
       // own fallback timer, so the spin starts once, here.
       S.phase="drawing"; renderDrawing();
     }
-    else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); }
-    else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); }
-    else if(m.t==="redraw"){ S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }
+    else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); S.endPend={ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }; }
+    else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); S.endPend=null; S.endDrawn.push({ prize:S.prizeLabel, nums:(m.numbers||[]).slice(0,6) }); }
+    else if(m.t==="redraw"){ S.endPend=null; S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }
   }
+
+  /* THE END-OF-GAME SHOW (2 Nov 2026). When the last prize is drawn: every winning ticket this screen saw
+     drawn tonight (one big, or up to three as rows with their prizes), then THANKS FOR PLAYING and the
+     venue. A winning ticket with no claim window counts as drawn; one that went to a redraw does not.
+     It is a draw, not a game: "RAFFLE DRAWN", never a game's words. */
+  function raffleEndShow(){
+    if(S.endPend){ S.endDrawn.push(S.endPend); S.endPend=null; }
+    var ds=S.endDrawn; S.endDrawn=[];
+    if(!(window.VPEndShow && VPEndShow.on) || !ds.length) return;
+    var tk=function(d){ return (d.nums.length>1 ? "TICKETS " : "TICKET ")+d.nums.map(pad).join(", "); };
+    var o={ kind:"raffle" };
+    if(ds.length===1){ o.eye=ds[0].nums.length>1 ? "THE WINNING TICKETS" : "THE WINNING TICKET"; o.big=ds[0].nums.map(pad).join("  "); o.sub=ds[0].prize; }
+    else { o.eye="RAFFLE DRAWN"; o.rows=ds.slice(0,3).map(function(d){ return { main:tk(d), tail:d.prize }; });
+           if(ds.length>3) o.more="and "+(ds.length-3)+" more "+(ds.length-3>1?"prizes":"prize"); }
+    try{ VPEndShow.play(o); }catch(e){}
+  }
+  /* "Back to ads" waits for the end-of-game show to finish, if one is playing. */
+  function endShowThen(go){ if(window.VPEndShow && VPEndShow.playing()) VPEndShow.after(go); else go(); }
 
   // ---- resize keeps big numbers fitted ----
   window.addEventListener("resize", function(){

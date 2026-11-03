@@ -1015,6 +1015,10 @@
   "checks": 29,
   "counted_by": "lines"
  },
+ "tools/tv-endshow-in-chrome.test.py": {
+  "checks": 76,
+  "counted_by": "lines"
+ },
  "tools/tv-first-slide-in-chrome.test.py": {
   "checks": 33,
   "counted_by": "lines"
