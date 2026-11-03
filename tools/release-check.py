@@ -2469,7 +2469,9 @@ def local_checks(which):
     js_hits = []
     ids = r'(xOptin|vp-marketing|"optin"|\bmkt\b|marketing_optin)'
     for f in files:
-        if not f.endswith('.html'):
+        # .js as well (3 Nov 2026): the player phones' opt-in tick is built in /app/vp-consent.js now,
+        # so a page-only scan would have stopped looking at the one box this check was written for.
+        if not (f.endswith('.html') or f.endswith('.js')):
             continue
         text = io.open(f, encoding='utf-8', errors='ignore').read()
         for m in re.finditer(r'(\.checked\s*=\s*true|\.defaultChecked\s*=\s*true|setAttribute\(\s*["\']checked["\'])', text):
@@ -2477,6 +2479,52 @@ def local_checks(which):
             if re.search(ids, near) or re.search(r'send me|marketing|newsletter|keep me (posted|updated)', near, re.I):
                 js_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
     ok('no consent box is ticked from a script', not js_hits, why=', '.join(js_hits[:4]))
+
+    # "I'M 18 OR OVER" AND "KEEP ME POSTED" ARE TWO TICKS, NEVER ONE (3 Nov 2026). The three player phones
+    # shipped ONE tick, "I am 18 or over. Keep me posted on what is on at the venue": a condition of entry
+    # bundled with marketing consent, which must be optional and unbundled (Spam Act 2003, APP 7). The
+    # ticks are now built once, in venueplay/app/vp-consent.js. Two checks:
+    #   1. no shipped page or script, comments stripped, puts "18 or over" and "keep me posted/updated"
+    #      in one line of text a person reads;
+    #   2. every player phone that offers the details step builds it from VPConsent (loads the file,
+    #      loadJoinInfo calls VPConsent.render and draws no checkbox of its own, join() asks
+    #      VPConsent.ageOk() before gatherCapture, and gatherCapture takes the opt-in from
+    #      VPConsent.optedIn), and the three gatherCapture bodies are the same text.
+    bundled = []
+    for f in files:
+        if not (f.endswith('.html') or f.endswith('.js')) or os.sep + 'worker' + os.sep in f:
+            continue
+        text = io.open(f, encoding='utf-8', errors='ignore').read()
+        text = re.sub(r'/\*.*?\*/', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
+        text = re.sub(r'<!--.*?-->', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
+        text = re.sub(r'(^|[^:\\])//[^\n]*', r'\1', text)
+        for i, line in enumerate(text.split('\n')):
+            if re.search(r"18\s*(or|\+)\s*(over|older)?", line, re.I) and re.search(r'keep me (posted|updated)', line, re.I):
+                bundled.append('%s:%d' % (short(f), i + 1))
+    ok('no page bundles the 18+ statement with marketing consent', not bundled,
+       why=', '.join(bundled[:4]) + ': one tick both states the player is 18 or over and consents to '
+           'marketing; marketing consent must be its own optional tick (venueplay/app/vp-consent.js)')
+    phones = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html']
+    wrong, gathers = [], []
+    def _fn(src, head):
+        a = src.find(head)
+        return '' if a < 0 else src[a:src.find('\n  }\n', a)]
+    for rel in phones:
+        _p = os.path.join(ROOT, rel)
+        src = io.open(_p, encoding='utf-8').read() if os.path.isfile(_p) else ''
+        if not src:
+            wrong.append(rel + ' is missing'); continue
+        li, jn, gc = _fn(src, 'function loadJoinInfo(){'), _fn(src, '  function join(){'), _fn(src, '  function gatherCapture(nm){')
+        gathers.append(gc)
+        if '<script src="/app/vp-consent.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-consent.js')
+        if 'VPConsent.render(box, c,' not in li: wrong.append(rel + ' loadJoinInfo does not build the ticks with VPConsent.render')
+        if 'checkbox' in li: wrong.append(rel + ' loadJoinInfo draws a checkbox of its own')
+        a, g = jn.find('VPConsent.ageOk()'), jn.find('gatherCapture(')
+        if a < 0 or g < 0 or g < a: wrong.append(rel + ' join() gathers before asking VPConsent.ageOk()')
+        if 'if(typeof VPConsent==="object" && VPConsent.optedIn(cap)) cap.marketing_optin=true;' not in gc or gc.count('marketing_optin') != 1:
+            wrong.append(rel + ' gatherCapture sets marketing_optin other than from VPConsent.optedIn')
+    if len(set(gathers)) != 1: wrong.append('the three phones\' gatherCapture differ')
+    ok('every player phone builds its details ticks from vp-consent.js', not wrong, why='; '.join(wrong[:3]))
 
     # EVERY MERGE TAG IN AN EMAIL THE WORKER SENDS HAS TO BE FILLED IN BY THE WORKER.
     # {{unsubscribe_url}} sat in four templates and nothing anywhere replaced it, so the

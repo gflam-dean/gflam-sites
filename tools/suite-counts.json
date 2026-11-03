@@ -139,6 +139,10 @@
   "checks": 107,
   "counted_by": "lines"
  },
+ "tools/consent-split-in-chrome.test.py": {
+  "checks": 95,
+  "counted_by": "lines"
+ },
  "tools/console-in-chrome.test.py": {
   "checks": 66,
   "counted_by": "lines"
@@ -445,6 +449,10 @@
  },
  "tools/test-collection-gate.js": {
   "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/test-consent-split.js": {
+  "checks": 50,
   "counted_by": "lines"
  },
  "tools/test-console-pickup.js": {
