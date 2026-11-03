@@ -10576,6 +10576,25 @@ MUTATIONS = [
      '  function endGameNow(forGid){\n    if(G.status!=="running") return;\n',
      '  function endGameNow(forGid){\n',
      'in Chrome, the carry-on modal\'s End game tapped twice sends two Ends'),
+    # ---- 4 Nov 2026 small fixes (fix/small-fixes-4nov). Each broken by hand first and watched go red.
+    # The share card (og:image) leads with trivia, never bingo (Dean, 3 Nov 2026).
+    ('share-card-in-chrome.test.py', 'venueplay/index.html',
+     '<meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png?v=20261104">',
+     '<meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png">',
+     'og:image is the versioned venueplay.com.au card'),
+    ('share-card-in-chrome.test.py', 'venueplay/see-a-night.html',
+     '<meta property="og:image:width" content="1200">\n', '',
+     'og:image:width and :height say 1200 x 630'),
+    ('share-card-in-chrome.test.py', 'venueplay/nsw.html',
+     'content="Trivia, musical bingo, bingo and raffles for', 'content="Bingo, trivia, musical bingo and raffles for',
+     'the preview words name trivia before bingo'),
+    ('share-card-in-chrome.test.py', 'venueplay/index.html',
+     'Trivia, musical bingo and bingo for pubs', 'Bingo, trivia and musical bingo for pubs',
+     'the preview words name trivia before bingo'),
+    ('share-card-in-chrome.test.py', 'tools/build-share-card.py',
+     "games = fit(os.path.join(KIT, 'games-line', 'games-2-lines-lowercase-white.png'), 760)",
+     "games = fit(os.path.join(KIT, 'games-line', 'games-2-lines-white.png'), 760)",
+     'the share card is the one built from the logo kit'),
 ]
 
 
