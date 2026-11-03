@@ -394,6 +394,7 @@
   "tv-stale-screen.test.js",
   "tv-states.test.js",
   "tv-sting-in-chrome.test.py",
+  "tv-venue-search.test.js",
   "tv-window-uncovered.test.py",
   "tv.html, the four game screens and the three phones size the logo by its shape with one rule, untappable, a vp-fit keep-out, and nothing with no logo",
   "tvSend() is the same in all 5 file(s)",
