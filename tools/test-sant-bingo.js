@@ -193,7 +193,7 @@ var PC = { SA: '5000', NT: '0800', QLD: '4000', NSW: '2000', VIC: '3000', WA: '6
   await run(await signup('pat@glenelgtavern.com.au', [{ name: 'Glenelg Tavern', seats: 80, postcode: '5045', entity_type: 'for_profit' }]));
   var e1 = toCustomer('pat@glenelgtavern.com.au')[0];
   check('an SA pub is told, kindly, that number bingo is off in South Australia and why', e1 && bingoNote(e1.html) === 'South Australia' &&
-    /only a not-for-profit organisation may run bingo/.test(e1.html) && /musical bingo, trivia and members draws/.test(e1.html) && /reply to this email/.test(e1.html), e1 && e1.html.slice(0, 200));
+    /only a not-for-profit organisation may run bingo/.test(e1.html) && /trivia, musical bingo and members draws/.test(e1.html) && /reply to this email/.test(e1.html), e1 && e1.html.slice(0, 200));
   check('...and the email has no raw token or marker left in it', !!e1 && clean(e1.html));
   check('...and no em dash anywhere in it', !!e1 && e1.html.indexOf('—') < 0);
   reset();

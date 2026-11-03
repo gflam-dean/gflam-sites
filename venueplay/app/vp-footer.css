@@ -12,6 +12,12 @@
    ("Play · Game modes · Pricing"); on a phone the dots go and the links wrap as centred chips,
    so a line never ends on a dot. */
 .foot-links{display:inline}
+
+/* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"). The supplied
+   brand-kit lockup's own "powered by Gflam." line (logo-kit-1nov/powered-by), cropped from the file,
+   never retyped: small, muted, centred under the wordmark. */
+footer .powered{line-height:0}
+footer .powered img.powered-by{display:block;height:18px;width:auto;opacity:.6;margin:0 auto}
 .foot-links .dot{white-space:pre}
 
 @media (max-width:760px){
