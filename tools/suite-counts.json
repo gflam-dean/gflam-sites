@@ -1159,6 +1159,10 @@
   "checks": 20,
   "counted_by": "total"
  },
+ "venueplay-backend/app/vp-tvapp.test.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
  "venueplay-backend/app/weekly-before-the-room.test.js": {
   "checks": 56,
   "counted_by": "lines"
