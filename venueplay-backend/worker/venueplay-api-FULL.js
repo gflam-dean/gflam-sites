@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 21:40 · e05e29c7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 09:15 · b710dbf2';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -255,6 +255,7 @@ export default {
       // HQ > Reports: every venue's month, the totals and who is trending down (Dean, 31 Oct 2026).
       if (request.method === 'POST' && path === '/admin/month-report'    && typeof vpaHandleMonthReport === 'function')    return await vpaHandleMonthReport(request, env, json);
       // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
+      if (request.method === 'POST' && path === '/admin/signup-sources' && typeof vpaHandleSignupSources === 'function') return await vpaHandleSignupSources(request, env, json);
       if (request.method === 'POST' && path === '/admin/month-news'      && typeof vpaHandleMonthNews === 'function')      return await vpaHandleMonthNews(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
@@ -610,6 +611,24 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'Sorry, we could not save your details just then. Please try again.' }, 502);
   }
 
+  /* WHERE THIS SIGN-UP CAME FROM (Dean, 4 Nov 2026: "is there a way to tell how many people
+     actually sign up through that?"). The page sends the utm tags the visit landed with
+     (vp-subscribe.js keeps them for the visit; venueplay.com.au/gflam tags itself
+     utm_source=gflam.com.au). One vp_admin_audit row per checkout started, so no migration:
+     HQ > Reports counts them against the account row (POST /admin/signup-sources), and a row
+     with a Stripe subscription is a venue that really signed up. Best-effort, never blocks. */
+  const signupUtm = vpsUtm(b.utm);
+  if (signupUtm.utm_source) {
+    try {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'signup_source',
+        target: 'account:' + rowId,
+        detail: Object.assign({}, signupUtm, { venue: venues[0].name, is_group: isGroup,
+          founding_code: (b.founding_code || '').trim().toUpperCase().slice(0, 40) || null }),
+      }, false);
+    } catch (e) { /* the count is best-effort, never block signup */ }
+  }
+
   // OPT-IN GATE (see memory venueplay-optin-gate): if the signup EMAIL does not look like a real
   // venue, it is likely a third-party trivia host, not the venue that owns the players' data. Flag
   // it: email Dean + drop a flag in HQ. Opt-in collection then stays LOCKED (cannot be switched on
@@ -717,6 +736,10 @@ async function handleCheckout(request, env, json) {
      are trying to win back gently. Found by audit, 20 Sep 2026. */
   form.set('metadata[trial_end]', String(trialTs));
   form.set('metadata[returning]', returning ? '1' : '0');
+  /* Where they came from, on the Stripe record too, so a payment can be traced to the link. */
+  form.set('metadata[utm_source]', signupUtm.utm_source || '');
+  form.set('metadata[utm_campaign]', signupUtm.utm_campaign || '');
+  form.set('subscription_data[metadata][utm_source]', signupUtm.utm_source || '');
   // Apply the volume coupon (its Stripe name shows the reason on checkout + the invoice),
   // or disallow promo codes when there is no tier discount (Stripe forbids setting both).
   if (tierCoupon) {
@@ -13284,6 +13307,70 @@ async function vprStoredWrite(env, month, data, who) {
 /* --- POST /admin/month-report { month, refresh } : HQ, every venue, from the STORED copy.
    Opening HQ reads one row. refresh:true (owner or accounts) works the month out again and keeps it:
    that is the 13-months-of-every-venue read, so it only ever happens on that tap. --- */
+/* SIGN-UPS BY WHERE THEY CAME FROM (Dean, 4 Nov 2026). HQ > Reports shows "Signed up from
+   gflam.com.au: N this month, N all time". Counted from the signup_source audit rows handleCheckout
+   writes (one per checkout started with a utm_source) and the account row each one names:
+     started    the venue filled in the form and was sent to the card step
+     signed up  that account has a Stripe subscription (the card went in), same test as the
+                one-account guard in handleCheckout
+   "This month" is the Brisbane calendar month the checkout was started in. Test venues (a test
+   name) are left out. Counts only from rows that exist: before this shipped nothing was tagged,
+   so earlier sign-ups are not in it, and the page says so. Clicks are not counted here: the
+   banner's visits are in Google Analytics under the same utm_source. */
+function vpaSignupSourceKey(src) {
+  const s = String(src || '').trim().toLowerCase().replace(/^www\./, '');
+  return s || 'none';
+}
+function vpaSignupSourceTally(audits, accounts, nowMs) {
+  const byId = {};
+  (accounts || []).forEach(function (a) { if (a && a.id != null) byId[String(a.id)] = a; });
+  const bris = new Date((nowMs == null ? Date.now() : nowMs) + 10 * 3600 * 1000);
+  const thisMonth = bris.toISOString().slice(0, 7);
+  const out = {}, seen = {};
+  (audits || []).forEach(function (r) {
+    const id = String(r && r.target || '').replace(/^account:/, '');
+    if (!id || seen[id]) return;            // one account counts once, whatever retries left behind
+    seen[id] = true;
+    const d = (r && r.detail) || {};
+    const acc = byId[id];
+    if (acc && /\btest\b/i.test(String(acc.venue_name || ''))) return;
+    const key = vpaSignupSourceKey(d.utm_source);
+    const t = Date.parse(r.created_at || '');
+    const month = isFinite(t) ? new Date(t + 10 * 3600 * 1000).toISOString().slice(0, 7) : '';
+    const k = out[key] || (out[key] = { source: key, started: { month: 0, all: 0 }, signed_up: { month: 0, all: 0 }, recent: [] });
+    const done = !!(acc && acc.stripe_subscription_id);
+    k.started.all++; if (month === thisMonth) k.started.month++;
+    if (done) { k.signed_up.all++; if (month === thisMonth) k.signed_up.month++; }
+    if (k.recent.length < 20) k.recent.push({ venue: (acc && acc.venue_name) || d.venue || '', at: r.created_at || null,
+      signed_up: done, campaign: d.utm_campaign || '' });
+  });
+  return { month: thisMonth, sources: Object.keys(out).sort().map(function (k) { return out[k]; }) };
+}
+async function vpaHandleSignupSources(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  /* vpaReadPage, not vpaSelect: vpaSelect answers [] when the database fails, which would show
+     Dean a confident 0. A failed read says so instead. */
+  let audits, accounts = [];
+  try {
+    audits = await vpaReadPage(env, 'vp_admin_audit',
+      'action=eq.signup_source&select=target,detail,created_at&order=created_at.desc&limit=5000');
+    const ids = [];
+    (audits || []).forEach(function (r) {
+      const id = String(r.target || '').replace(/^account:/, '');
+      if (/^[0-9a-f-]{1,40}$/i.test(id) && ids.indexOf(id) === -1) ids.push(id);
+    });
+    for (let i = 0; i < ids.length; i += 100) {
+      const got = await vpaReadPage(env, 'venueplay_founding',
+        'id=in.(' + ids.slice(i, i + 100).join(',') + ')&select=id,venue_name,stripe_subscription_id&limit=100');
+      accounts = accounts.concat(got || []);
+    }
+  } catch (e) {
+    return json({ error: 'Could not count sign-ups just now. Please try again in a moment.' }, 503);
+  }
+  return json(Object.assign({ ok: true }, vpaSignupSourceTally(audits, accounts, Date.now())));
+}
+
 async function vpaHandleMonthReport(request, env, json) {
   const actor = await vpaRequireAdmin(request, env);
   if (actor.error) return json({ error: actor.error }, actor.status);
