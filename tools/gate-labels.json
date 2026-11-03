@@ -86,6 +86,7 @@
   "bingo-console.test.js",
   "bingo-reveal-rings-in-chrome.test.py",
   "bingo-server-draw.test.js",
+  "bingo-tap-feedback-in-chrome.test.py",
   "bingo-win.test.js",
   "caller-winner-in-chrome.test.py",
   "cancel-emails.test.js",

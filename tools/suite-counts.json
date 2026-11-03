@@ -131,6 +131,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/bingo-tap-feedback-in-chrome.test.py": {
+  "checks": 13,
+  "counted_by": "lines"
+ },
  "tools/caller-winner-in-chrome.test.py": {
   "checks": 107,
   "counted_by": "lines"

@@ -9805,7 +9805,7 @@ MUTATIONS = [
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '    word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none}', '    word-break:break-word;hyphens:auto}', 'song titles on the phone card break mid-word again ("Wonderw all")'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '      if(sp && sp.offsetWidth>el.clientWidth-2){', '      if(false){', 'a word wider than its square spills out of it'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '      var floor=10*cz;', '      var floor=6*cz;', 'a long word is shrunk to a size nobody can read'),
-    ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '  #vCard .bingoBtn{position:sticky;', '  #vCard .bingoBtn{position:static;', 'the BINGO button is below the fold at 390 x 690 again'),
+    ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '  #vCard .bingobar{position:sticky;', '  #vCard .bingobar{position:static;', 'the BINGO button is below the fold at 390 x 690 again'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/play.html', '        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=titles[i];   // measured by fitCells\n        cell.appendChild(ct);', '        cell.textContent=titles[i]; throw new Error("card");', 'a script error on the musical phone goes unseen'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/screen.html', '    word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none;text-wrap:balance}', '    text-wrap:balance}', 'the TV title can hyphenate a song title'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/app/musical/screen.html', '        while(el.clientWidth>0 && el.scrollWidth>el.clientWidth+1 && fs>min && n++<40){ fs*=0.94; el.style.fontSize=fs.toFixed(1)+"px"; }', '', 'a long title runs off the TV instead of stepping down'),
@@ -10660,6 +10660,24 @@ MUTATIONS = [
      '        <button type="button" class="pk" data-game="trivia">Trivia<span class="soon">Quiz night</span></button>\n        <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>\n        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>\n',
      '        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>\n        <button type="button" class="pk" data-game="trivia">Trivia<span class="soon">Quiz night</span></button>\n        <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>\n',
      'games menu has Bingo and all five games, in the game order'),
+    # A BINGO! tap on the musical phone is never silent (live play, Test Alpha, 3 Nov 2026).
+    ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '    if(P.claimPending || P.won) return;   // the button is disabled while a claim is with the host, and gone once won\n',
+     '    if(P.claimPending || P.won || !P.gameId) return;\n',
+     'A, scrolled to the top, nothing marked: BINGO! answers on the button itself'),
+    ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '    var n=$("bingoNote"); if(!n) return;\n', '    var n=null; if(!n) return;\n',
+     'A, scrolled to the top, nothing marked: BINGO! answers on the button itself'),
+    ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '      noteBingo(markedCount() ? "Not a line yet. The songs for that pattern have not all played. Keep listening!" : "Mark the songs you hear first. Tap a title when it plays.","no");',
+     '      noteBingo("Not yet, keep listening. The songs for that pattern have not all been played.","no");',
+     'A: the line under the card says the same'),
+    ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '    _noteT=setTimeout(function(){ n.classList.add("hidden"); }, ms||6000);\n', '',
+     'A: the note goes by itself after a few seconds'),
+    ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
+     '      noteBingo("You have marked "', '      setMsg("You have marked "',
+     'B: a song marked that has not played: the note on the button says so'),
 ]
 
 
