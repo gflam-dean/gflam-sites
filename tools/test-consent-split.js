@@ -83,18 +83,33 @@ box = fresh(); VPConsent.render(box, { first_name: true, email: true, mobile: tr
 show('no opt-in collected: neither tick', labels(box).length === 0);
 show('and with no tick shown, Join is allowed', VPConsent.ageOk() === true);
 
-print('vp-consent.js: 18+ is required where shown, and never asked twice');
+print('vp-consent.js: 18+ is needed only with the opt-in (4 Nov 2026), and never asked twice');
+var NEWS = "To get venue news, tick I'm 18 or over.";
+show('the refusal reads "' + NEWS + '"', VPConsent.AGE_NEEDED === NEWS, VPConsent.AGE_NEEDED);
+function grid(age, opt) {   // a fresh step with the ticks set, then: may they join, and are they opted in?
+  var bx = fresh(); VPConsent.render(bx, { email: true, marketing_optin: true });
+  if (age) $('x18').click(); if (opt) $('xOptin').click();
+  return { join: VPConsent.ageOk(), optin: VPConsent.optedIn({ email: 'a@b.co' }) };
+}
+var g = grid(true, true);
+show('opt-in and 18+ ticked: joins, opted in', g.join === true && g.optin === true, g);
+g = grid(false, true);
+show('opt-in ticked, 18+ empty: Join refused', g.join === false, g);
+g = grid(false, false);
+show('neither ticked: joins, not opted in (as joining worked before)', g.join === true && g.optin === false, g);
+g = grid(true, false);
+show('18+ only: joins, not opted in (the 18+ tick is not consent)', g.join === true && g.optin === false, g);
+
 box = fresh(); VPConsent.render(box, { email: true, marketing_optin: true });
-show('the 18+ tick empty: Join refused', VPConsent.ageOk() === false);
-show('the refusal reads "Tick I\'m 18 or over to join."', VPConsent.AGE_NEEDED === "Tick I'm 18 or over to join.", VPConsent.AGE_NEEDED);
 $('xOptin').click();
-show('ticking only the opt-in does not pass the age gate', VPConsent.ageOk() === false);
 $('joinErr').textContent = VPConsent.AGE_NEEDED;
 $('x18').click();
-show('ticking 18+ lets them join', VPConsent.ageOk() === true);
-show('and takes the refusal off the screen', $('joinErr').textContent === '', $('joinErr').textContent);
+show('opt-in then 18+ ticked: the refusal comes off the screen', VPConsent.ageOk() === true && $('joinErr').textContent === '', $('joinErr').textContent);
 $('x18').click();
-show('unticking 18+ again refuses again', VPConsent.ageOk() === false);
+show('unticking 18+ with the opt-in still ticked refuses again', VPConsent.ageOk() === false);
+$('joinErr').textContent = VPConsent.AGE_NEEDED;
+$('xOptin').click();
+show('unticking the opt-in instead lets them join, and takes the refusal down', VPConsent.ageOk() === true && $('joinErr').textContent === '', $('joinErr').textContent);
 
 box = fresh(); VPConsent.render(box, { email: true, marketing_optin: true }, { age18: true });
 show('an age screen ticked earlier tonight: the 18+ tick is never drawn', !$('x18') && labels(box).length === 1 && labels(box)[0].textContent.trim() === OPT);
