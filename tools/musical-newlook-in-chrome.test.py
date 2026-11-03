@@ -78,8 +78,11 @@ SLIDE = ('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><rec
          '<text x="800" y="500" font-family="Arial" font-size="120" fill="#fff" text-anchor="middle">SLIDE %d</text></svg>')
 ART = ('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="%s"/></svg>')
 ROOM = 'K7MQ2P'
-SONGS = ["Bohemian Rhapsody", "Livin' on a Prayer", "Africa", "Mr. Brightside", "The Horses", "Dancing Queen", "Khe Sanh",
-         "Hey Ya!", "Never Gonna Give You Up", "Sweet Caroline", "Beds Are Burning", "Eagle Rock", "September", "Take On Me", "Wonderwall"]
+SONGS = ["Bohemian Rhapsody", "Livin' on a Prayer", "Africa", "Hey Ya!", "Sweet Caroline", "Beds Are Burning", "Eagle Rock",
+         "September", "Take On Me", "Never Gonna Give You Up", "Dancing Queen", "Khe Sanh", "Mr. Brightside", "The Horses", "Wonderwall"]
+# The demo's real library artwork (the wall's own ?demo=1 list), for the review frames only (VP_FIXTURES set); the
+# checks never depend on the picture arriving.
+REAL_ART = {"Never Gonna Give You Up": ["Rick Astley", "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"], "Dancing Queen": ["ABBA", "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"], "Khe Sanh": ["Cold Chisel", "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"], "Mr. Brightside": ["The Killers", "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"], "The Horses": ["Daryl Braithwaite", "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"]}
 CELLS = ["Wonderwall", "Sweet Caroline", "Never Gonna Give You Up", "Don't Stop Believin'", "Beds Are Burning",
          "You're the Voice", "Never Tear Us Apart", "Livin' on a Prayer", "Hey Ya!", "Bohemian Rhapsody",
          "Dancing Queen", "Khe Sanh", "FREE", "Mr. Brightside", "The Horses",
@@ -278,7 +281,8 @@ def tv(B, base, w, h, logo, tag, shots):
         P.js(say(chan, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'played': []}]))
         time.sleep(0.6)
         for i, s in enumerate(played):
-            P.js(say(chan, [{'t': 'played', 'title': s, 'artist': 'Daryl Braithwaite' if s == 'Mr. Brightside' else 'The Band', 'artworkUrl': '/__fixture/art-%02x%02x%02x.svg' % (40 + i * 12, 60, 120 - i * 5), 'played': played[:i + 1], 'reveal': 'instant', 'replay': True}]))
+            ra = REAL_ART.get(s) if FIX else None
+            P.js(say(chan, [{'t': 'played', 'title': s, 'artist': ra[0] if ra else 'The Band', 'artworkUrl': ra[1] if ra else '/__fixture/art-%02x%02x%02x.svg' % (40 + i * 12, 60, 120 - i * 5), 'played': played[:i + 1], 'reveal': 'instant', 'replay': True}]))
             time.sleep(0.08)
         P.js(say(chan, [{'t': 'players', 'count': 32}]))
         time.sleep(1.5)
@@ -310,7 +314,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' now playing: the wall ends inside the screen and vp-fit leaves it alone', (n.get('bottom') or 0) <= h and (n.get('tf') or '') == '', [n.get('bottom'), n.get('tf')])
         ok(tagn + ' now playing: no JOIN NOW card over the strip (the approved wall)', not n.get('joinCorner'))
         # a long title: two lines, still above the artist
-        P.js(say(chan, [{'t': 'played', 'title': 'Never Gonna Give You Up', 'artist': 'Rick Astley', 'artworkUrl': '/__fixture/art-603070.svg', 'played': played + ['Never Gonna Give You Up'], 'reveal': 'instant', 'replay': True}]))
+        P.js(say(chan, [{'t': 'played', 'title': "Don't Dream It's Over", 'artist': 'Crowded House', 'artworkUrl': '/__fixture/art-603070.svg', 'played': played + ["Don't Dream It's Over"], 'reveal': 'instant', 'replay': True}]))
         time.sleep(1.2)
         l2 = P.obj(TV_PROBE) or {}
         P.shot(shots + '-tv-now-playing-two-lines')
@@ -319,8 +323,8 @@ def tv(B, base, w, h, logo, tag, shots):
            bool(t2.get('r')) and (t2['r'][3] - t2['r'][1]) > 1.5 * t2.get('fs', 999) * 0.9 and t2.get('sh', 0) <= t2.get('mh', 0) + 1 and t2.get('fs', 0) >= 0.06 * w, t2)
         ok(tagn + ' two lines: and still sits above the artist and the sentence', bool(t2.get('r') and l2.get('artist')) and t2['r'][3] <= l2['artist'][1] + 1 and (l2.get('wins') or {}).get('r') and l2['wins']['r'][3] <= (l2.get('songno') or {'r': [0, h, 0, h]})['r'][1], [t2.get('r'), l2.get('artist'), (l2.get('wins') or {}).get('r')])
         # listen: song 16 held back
-        allp = played + ['Never Gonna Give You Up', 'Khe Sanh']
-        P.js(say(chan, [{'t': 'played', 'title': 'Khe Sanh', 'artist': 'Cold Chisel', 'artworkUrl': '/__fixture/art-a03030.svg', 'played': allp, 'reveal': 'never', 'replay': True}]))
+        allp = played + ["Don't Dream It's Over", 'Uptown Funk']
+        P.js(say(chan, [{'t': 'played', 'title': 'Uptown Funk', 'artist': 'Mark Ronson', 'artworkUrl': '/__fixture/art-a03030.svg', 'played': allp, 'reveal': 'never', 'replay': True}]))
         time.sleep(1.2)
         L = P.obj(TV_PROBE) or {}
         P.shot(shots + '-tv-listen')
@@ -328,7 +332,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: the neon triangle where the art goes, breathing on its 2.6 s glow', bool(tri.get('r')) and inside(tri['r'], L.get('art'), 2) and tri.get('anim') == 'mTriBreath' and tri.get('dur') == '2.6s', tri)
         ok(tagn + ' listen: LISTEN, then "Name that tune." for a host who reveals by hand', (L.get('listen') or {}).get('text', '').replace('\n', ' ').strip().lower().startswith('listen'), L.get('listen'))
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
-        ok(tagn + ' listen: the song is not named anywhere on the wall', 'khe sanh' not in L.get('text', '').lower(), L.get('text', '')[-200:])
+        ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
         ok(tagn + ' listen: the strip keeps a dashed "Song 16" for it after the four before', (L.get('next') or {}).get('text') == 'Song 16' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
         ok(tagn + ' listen: "Song 16" bottom left, the count still there', (L.get('songno') or {}).get('text') == 'Song 16' and (L.get('playing') or {}).get('text', '').strip() == '32 playing', [L.get('songno'), L.get('playing')])
         # the listen line as most hosts run it

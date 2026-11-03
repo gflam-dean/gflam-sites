@@ -56,12 +56,13 @@ def fnv_code(slug):
 # Every word of every title under `sel` on ONE line (a Range per word, one client rect each), no hyphen
 # added, the no-break rules in force, and the text inside its box (or, for a word wider than a phone's
 # square, narrowed whole by a transform that brings it inside).
-WORDS = r'''(function(sel){
-  var out={n:0, split:[], rules:[], over:[], small:[]};
+WORDS = r'''(function(sel, shy){
+  var out={n:0, split:[], rules:[], over:[], small:[], hyph:[]};
   Array.prototype.forEach.call(document.querySelectorAll(sel), function(el){
     if(el.classList.contains("free")) return;
     var cs=getComputedStyle(el);
-    if(cs.wordBreak!=="normal" || cs.overflowWrap!=="normal" || (cs.hyphens||cs.webkitHyphens)!=="none") out.rules.push([el.textContent, cs.wordBreak, cs.overflowWrap, cs.hyphens]);
+    if(cs.wordBreak!=="normal" || cs.overflowWrap!=="normal" || (cs.hyphens||cs.webkitHyphens)!==(shy ? "manual" : "none")) out.rules.push([el.textContent, cs.wordBreak, cs.overflowWrap, cs.hyphens]);
+    if(shy && ((el.textContent.match(/\u00AD/g)||[]).length>1)) out.rules.push([el.textContent, "more than one hyphen"]);
     var w=document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     while(w.nextNode()){
       var t=w.currentNode, s=t.nodeValue, re=/\S+/g, m;
@@ -69,7 +70,13 @@ WORDS = r'''(function(sel){
         out.n++;
         var rg=document.createRange(); rg.setStart(t, m.index); rg.setEnd(t, m.index+m[0].length);
         var rects=Array.prototype.filter.call(rg.getClientRects(), function(r){ return r.width>0; });
-        if(rects.length!==1) out.split.push(m[0]);
+        /* shy (the musical phone card, Dean 3 Nov 2026 round 4): a long word may break ONCE, at its soft hyphen, onto two lines */
+        if(rects.length!==1){
+          var at=m[0].indexOf("\u00AD");
+          if(shy && at>0 && rects.length===2){ var r2=document.createRange(); r2.setStart(t, m.index); r2.setEnd(t, m.index+at+1);
+            var a2=Array.prototype.filter.call(r2.getClientRects(), function(r){ return r.width>0; }); if(a2.length===1){ out.hyph.push(m[0]); continue; } }
+          out.split.push(m[0]);
+        }
       }
     }
     var box=el.getBoundingClientRect(), inner=el.querySelector(".ct")||el, ib=inner.getBoundingClientRect();
@@ -79,7 +86,7 @@ WORDS = r'''(function(sel){
   });
   return JSON.stringify(out);
 })'''
-def words(r, sid, sel): return J(r.ask(sid, WORDS + '(%s)' % json.dumps(sel)))
+def words(r, sid, sel, shy=False): return J(r.ask(sid, WORDS + '(%s, %s)' % (json.dumps(sel), 'true' if shy else 'false')))
 
 LONG = ['Supercalifragilisticexpialidocious', 'Californication', 'Misunderstanding', 'Wonderwall']
 
@@ -160,8 +167,10 @@ def musical(r):
     tid, m = r.open('/app/musical/play?demo=1', width=390, height=690)
     ok('CONTROL: the musical demo card is dealt, 25 squares', r.until(m, 'document.querySelectorAll("#cardGrid .cc").length===25', 40) is True)
     time.sleep(1.0)
-    w = words(r, m, '#cardGrid .cc')
-    ok('390 x 690: every word of every title on the card sits on one line (word-break, overflow-wrap and hyphens all off)',
+    w = words(r, m, '#cardGrid .cc', True)
+    # 4 Nov 2026 (the new look, Dean's round 4 on 3 Nov): "one hyphen break is allowed for a single long word (Wonder-wall),
+    # never more than one per title". So: no word breaks anywhere but at its one soft hyphen.
+    ok('390 x 690: every word of every title on the card sits on one line, or breaks once at its own hyphen (Wonder-wall), never mid-word',
        w.get('n', 0) >= 40 and not w.get('split') and not w.get('rules'), w)
     ok('and every title fits its square', not w.get('over') and not w.get('small'), w)
     # 3 Nov 2026, Dean: "the small writing", "the size of the buttons", "that 5 played line doesn't need to be there".
@@ -171,14 +180,17 @@ def musical(r):
                      'return JSON.stringify({n:f.length,min:f[0],median:f[Math.floor(f.length/2)],squashed:sq});})()')))
     ok('390 x 690: the song titles are big (half of them 15px or more, none under 11px) and none is squashed sideways',
        sz.get('n') == 24 and sz.get('median', 0) >= 15 and sz.get('min', 0) >= 11 and not sz.get('squashed'), sz)
+    # 4 Nov 2026 (the new look): the size and full screen controls moved into the menu sheet (Text size A / A, Full screen),
+    # and the claim is a pink pill, faint until the player's marks make the pattern (Dean, 3 Nov 2026).
+    r.ask(m, 'document.getElementById("menuBtn").click(); true'); time.sleep(0.4)
     bt = J(r.ask(m, ('(function(){function g(i){var e=document.getElementById(i),c=getComputedStyle(e),b=e.getBoundingClientRect();return {bg:c.backgroundColor,bd:c.borderTopColor,bw:c.borderTopWidth,h:Math.round(b.height),ff:c.fontFamily};}'
-                     'return JSON.stringify({bingo:g("bingoBtn"),out:g("zoomOut"),inn:g("zoomIn"),fs:g("fsBtn")});})()')))
+                     'return JSON.stringify({bingo:g("bingoBtn"),faint:document.getElementById("bingoBtn").classList.contains("faint"),out:g("zoomOut"),inn:g("zoomIn"),fs:g("fsBtn")});})()')))
+    r.ask(m, 'document.getElementById("menuPanel").classList.add("hidden"); true')
     PINK = 'rgb(255, 31, 142)'
-    sizes = [bt.get(k, {}) for k in ('out', 'inn', 'fs')]
-    ok('BINGO! is the one pink-filled button (Manrope); Smaller, Bigger and Full screen are matching 48px pink outlines',
-       bt.get('bingo', {}).get('bg') == PINK and 'Manrope' in bt.get('bingo', {}).get('ff', '') and
-       all(s.get('bd') == PINK and s.get('bg') in ('rgba(0, 0, 0, 0)', 'transparent') and s.get('h', 0) >= 48 and 'Manrope' in s.get('ff', '') for s in sizes) and
-       len(set(s.get('h') for s in sizes)) == 1, bt)
+    sizes = [bt.get(k, {}) for k in ('out', 'inn')]
+    ok('the claim is the one pink pill (Manrope, full pink once the marks make the pattern, a faint pink before); Text size\'s two buttons in the menu match at 48px, and Full screen is a 48px row',
+       bt.get('bingo', {}).get('bg') == (PINK if not bt.get('faint') else 'rgba(255, 31, 142, 0.32)') and 'Manrope' in bt.get('bingo', {}).get('ff', '') and
+       all(s.get('h', 0) >= 48 for s in sizes) and len(set(s.get('h') for s in sizes)) == 1 and bt.get('fs', {}).get('h', 0) >= 48, bt)
     pl = J(r.ask(m, ('(function(){var l=document.getElementById("lastCalled"),inMenu=!!l.closest("#menuPanel");'
                      'var box=Array.prototype.some.call(document.querySelectorAll("#vCard *"),function(e){return /played\\b.*tap it on your card/i.test(e.textContent||"")&&e.children.length===0;});'
                      'l.click();var sh=document.getElementById("playedSheet"),open=!sh.classList.contains("hidden");document.getElementById("sheetClose").click();'
@@ -188,10 +200,10 @@ def musical(r):
     r.ask(m, ('(function(){var c=document.querySelectorAll("#cardGrid .cc:not(.free)"),t=%s;for(var i=0;i<t.length;i++){var sp=c[i].querySelector(".ct");(sp||c[i]).textContent=t[i];}'
               'document.getElementById("zoomIn").click();document.getElementById("zoomOut").click();return true;})()') % json.dumps(LONG))
     time.sleep(0.6)
-    w = words(r, m, '#cardGrid .cc')
+    w = words(r, m, '#cardGrid .cc', True)
     got = r.ask(m, 'Array.prototype.slice.call(document.querySelectorAll("#cardGrid .cc:not(.free)"),0,4).map(function(c){return c.textContent;}).join("|")')
     ok('CONTROL: four long titles are on the card ("Supercalifragilisticexpialidocious", "Californication", "Misunderstanding", "Wonderwall")', got == '|'.join(LONG), got)
-    ok('a word wider than its square is never split: each still on one line, no hyphen', not w.get('split') and not w.get('rules'), w)
+    ok('a word wider than its square is never split mid-word: on one line, or once at its own hyphen', not w.get('split') and not w.get('rules'), w)
     ok('it is fitted whole instead: inside its square, the type no smaller than 10px', not w.get('over') and not w.get('small'), w)
     shot(r, m, 'musical-card-longtitles-390x690')
     r.ask(m, 'window.scrollTo(0,0); true'); time.sleep(0.3)
