@@ -812,6 +812,7 @@
     box.innerHTML = '<div class="cxhead"><span class="cxname">Alerts on this device</span></div>' +
       (can ? "" : '<div class="restrict" style="margin:0 0 12px">This browser cannot take alerts' + (/iPhone|iPad/.test(root.navigator.userAgent) && !standalone ? ". On an iPhone: tap Share, then Add to Home Screen, open HQ from that icon, and come back here." : ".") + "</div>") +
       '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
+      '<div class="note" style="margin:0 0 12px">Sales and urgent alerts stay on screen until the ticket is opened, answered, closed or assigned. On an iPhone that needs one setting: Settings, Notifications, venueplay HQ, then Banner Style: Persistent (and Sounds on).</div>' +
       '<div class="checklist" style="max-width:520px;margin-bottom:12px"><label class="checkitem"><input type="radio" name="hdaF" value="all" checked> Every ticket</label>' +
       '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales</label></div>' +
       '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +

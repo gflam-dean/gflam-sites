@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 14:42 · 484007ac';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 21:40 · e05e29c7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15964,7 +15964,7 @@ async function helpPushPeek(request, env, json) {
   if (!t) return json({ count: 0, handled: handled });
   return json({ count: mine.length, ticket_no: t.ticket_no, brand: t.brand, category: t.category,
                 urgent: t.priority === 'urgent', label: helpCategoryLabel(t.category, t.brand),
-                handled: handled.filter((n) => n !== t.ticket_no) });
+                handled: handled });
 }
 /* Of the ticket numbers a phone says it still shows (at most 20, digits only), the ones that are dealt
    with: status past 'new', assigned to someone, or gone. A ticket still new and nobody's stays up. */
