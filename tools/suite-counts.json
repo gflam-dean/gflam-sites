@@ -1016,7 +1016,7 @@
   "counted_by": "lines"
  },
  "tools/ux-fixes-in-chrome.test.py": {
-  "checks": 35,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {

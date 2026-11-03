@@ -57,34 +57,46 @@
   .hidden{display:none!important}
 
   .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
-  .psub{color:var(--muted);font-size:14px}
-  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .psub{color:var(--muted);font-size:16px}
+  .pnote{font-size:15px;color:var(--faint);margin-top:16px;line-height:1.45}
   .field{margin-top:14px}
   input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
-  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:14px;text-align:left;cursor:pointer}
+  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:15px;text-align:left;cursor:pointer}
   .optin input{width:18px;height:18px;flex:none;accent-color:var(--pink)}
   input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
 
-  .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
-  .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  /* BUTTONS ARE A PINK FILL OR A PINK OUTLINE, MANROPE 700 (brand v3.2; Dean, 3 Nov 2026: "The button
+     shouldn't be like that"). No glow, no gradient, no second colour. */
+  .btn{border:none;border-radius:12px;padding:16px;min-height:52px;font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;cursor:pointer;transition:.15s;letter-spacing:.01em;width:100%}
+  .btn.pink{background:var(--pink);color:#0A0A0B}
   .btn.pink:active{background:var(--pink-deep)}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
-  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+  .cerr{color:var(--roll);font-size:15px;min-height:20px;margin-top:10px}
 
   /* card view */
-  .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-  .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
-  .cardpat{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:7px 13px;border-radius:20px;white-space:nowrap}
+  /* The card gets as much of the phone's width as it can: every pixel across is a bigger song title. */
+  #vCard{padding-left:12px;padding-right:12px}
+  .cardhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+  .cardhead .pn{font-weight:800;color:#fff;font-size:18px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .cardpat{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--pink);background:rgba(255,31,142,.12);padding:7px 13px;border-radius:20px;white-space:nowrap;flex:none}
   .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:calc(100% * var(--cz,1));min-width:0}
-  #cardWrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  /* 44px minimum. These are hit one-handed, in the dark, by people whose eyes are on the card. */
-  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
-  .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
-  .czbtn.fs{font-size:13px;min-width:0}
-  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  /* EDGE TO EDGE (Dean, 3 Nov 2026: "You still can't read the wording"). The card runs to 6px from each
+     side of the phone, and the gaps are 3px, so each square is as wide as a 5 by 5 card can be. */
+  #cardWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px}
+  #vCard .card5{gap:3px}
+  /* THE SIZE ROW IS THREE MATCHING BUTTONS (Dean, 3 Nov 2026: "The size of the buttons"). It was a grey
+     label and three boxes of three different sizes. Now: one row, equal height (48px, the brand's touch
+     target), pink outline, Manrope 700, each saying what it does. */
+  .cardctl{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:8px;margin-bottom:10px}
+  .czbtn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 8px;background:transparent;
+    border:2px solid var(--pink);color:#fff;border-radius:12px;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;line-height:1.1;
+    cursor:pointer;white-space:nowrap;min-width:0}
+  .cardctl.nofs{grid-template-columns:1fr 1fr}
+  .czbtn .czi{font-size:20px;line-height:1;font-weight:700}
+  .czbtn:active{background:rgba(255,31,142,.18)}
+  body.light .czbtn{color:#191420}
   /* TALLER THAN WIDE, ON PURPOSE.
 
      These cells were square, and a square cell on a 390px phone is about 68px
@@ -98,10 +110,15 @@
      text at the same width, so nothing has to scroll sideways - the zoom
      control already existed and costs a second hand to pan, which a punter
      holding a beer does not have. */
+  /* BIG, PLAIN SONG TITLES (Dean, 3 Nov 2026: "the small writing"). Hanken Grotesk 700, the TV body
+     face, white on dark and near-black on pink, each title fitted to the biggest size its square holds
+     (fitCells below): two or three lines, never cut, never "...". */
   .cc{aspect-ratio:1/1.3;display:flex;align-items:center;justify-content:center;text-align:center;
-    font-family:'Manrope',sans-serif;font-weight:600;font-size:11px;line-height:1.12;color:var(--text);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;line-height:1.08;color:#fff;letter-spacing:-.01em;
     background:var(--ink-3);border:1px solid var(--line);border-radius:9px;cursor:pointer;user-select:none;
-    transition:.12s;overflow:hidden;padding:3px 2px;
+    /* Only colour and the press animate. "transition:.12s" animated font-size too, so every size the
+       fitter tried read back as the size before it, and titles came out squashed or spilling over. */
+    transition:background-color .12s,color .12s,border-color .12s,box-shadow .12s,transform .12s;overflow:hidden;padding:4px 1px;
     /* A SONG TITLE NEVER BREAKS IN THE MIDDLE OF A WORD (Dean, 30 Oct 2026: "Wonderw all" on a real
        customer's card). Lines break only between words, and no hyphens either. A word too wide for its
        square is fitted by fitCells() below: the type steps down, and as a last resort the word is
@@ -109,11 +126,13 @@
     word-break:normal;overflow-wrap:normal;hyphens:none;-webkit-hyphens:none}
   .cc .ct{display:block;transform-origin:center}   /* a flex item: as wide as its longest word, centred */
   .cc:active{transform:scale(.94)}
-  .cc.free{cursor:default;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
-    font-family:'Anton',sans-serif;font-size:13px;letter-spacing:.04em;cursor:default}
-  .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
-  /* played songs show via the green daub only - no outline (per Dean) */
-  .cc.free.daub{background:linear-gradient(135deg,var(--pink),var(--pink-deep));box-shadow:none}
+  /* Marked squares are solid pink with near-black type: 5.5 to 1, where white on this pink is 3.6. */
+  .cc.free{cursor:default;background:var(--pink);color:#0A0A0B;border-color:transparent;
+    font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.04em;cursor:default}
+  .cc.daub{background:var(--pink);color:#0A0A0B;border-color:transparent;font-weight:800}
+  .cc.free.daub{background:var(--pink);box-shadow:none}
+  body.light .cc{color:#191420}
+  body.light .cc.daub{color:#0A0A0B}
   /* MARKED BUT NOT PLAYED. The BINGO button is judged against the songs the HOST has played,
      so a player who tapped a square by mistake saw a full line and was told "not yet", which
      reads as broken. These are the squares that are in the way, outlined only while the
@@ -123,11 +142,14 @@
      letting the phone do the work can still see their card moving. */
   .cc.justdone{animation:justdone 1.1s ease-in-out 3}
   @keyframes justdone{0%,100%{box-shadow:0 4px 12px rgba(255,31,142,.3)}50%{box-shadow:0 0 0 4px rgba(255,255,255,.55)}}
-  .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
+  .pmsg{font-size:16px;color:var(--text);text-align:center;margin:16px 0;min-height:44px;line-height:1.4}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
-  .bingoBtn{background:var(--gold);color:#1a1000;box-shadow:0 8px 24px rgba(255,194,75,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
-  .bingoBtn:active{filter:brightness(.95)}
+  /* THE ONE MAIN ACTION: pink fill, Manrope, big. The dark ring keeps it apart from the pink squares
+     that scroll under it while it sticks to the bottom of the screen. */
+  .bingoBtn{font-family:'Manrope',sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;
+    letter-spacing:.05em;padding:18px;min-height:64px;box-shadow:0 0 0 6px var(--ink)}
+  .bingoBtn:active{background:var(--pink-deep)}
   /* THE CLAIM IS ALWAYS ON SCREEN (UX audit 4.5, 30 Oct 2026). At 390x690 the BINGO button sat about
      170px below the fold, so a winner had to scroll to claim. It sticks to the bottom of the screen
      while the card scrolls under it, and sits in its normal place once the card ends. */
@@ -145,12 +167,6 @@
   @keyframes prizeflash{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(255,194,75,.3)}}
   body.light .prizestrip{color:#8a6100}
   body.light .prizestrip b{color:#191420}
-  /* 44px minimum: this is a button now, it opens the list of songs played so far. */
-  .lastcalled{display:block;width:100%;min-height:44px;text-align:center;margin-bottom:14px;padding:11px 12px;
-    background:none;border:1px solid var(--line-2);border-radius:12px;cursor:pointer;
-    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
-  .lastcalled b{color:#fff;font-size:15px}
-  .lastcalled .tap{display:block;font-family:'Manrope',sans-serif;font-size:11.5px;color:var(--faint);margin-top:3px}
   /* The catch-up list. Someone back from the bar cannot see which songs went by, so they miss
      squares or ask the table. Newest first, and one button marks every one that is on the card. */
   .sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:40;display:flex;align-items:flex-end;justify-content:center}
@@ -158,27 +174,27 @@
     border:1px solid var(--line);border-bottom:none;border-radius:16px 16px 0 0;padding:16px 16px 22px}
   .sheet h3{margin:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
   .sheet .sh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
-  .sheet .shsub{font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+  .sheet .shsub{font-size:15px;color:var(--muted);margin:0 0 12px;line-height:1.45}
   .sheetlist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
-  .srow{display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 4px;border-bottom:1px solid var(--line-2);font-size:14.5px;color:var(--text)}
+  .srow{display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 4px;border-bottom:1px solid var(--line-2);font-size:16px;color:var(--text)}
   .srow:last-child{border-bottom:none}
-  .srow .sn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--faint);flex:none;min-width:26px}
+  .srow .sn{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--faint);flex:none;min-width:26px}
   .srow .st{flex:1;line-height:1.3}
-  .srow .sy{flex:none;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--win)}
+  .srow .sy{flex:none;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--win)}
   .srow.mine .st{color:#fff;font-weight:700}
-  .sheetempty{padding:22px 4px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.5}
+  .sheetempty{padding:22px 4px;text-align:center;color:var(--faint);font-size:15px;line-height:1.5}
   .sheet .btn{margin-top:12px}
-  .sheet .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .sheet .btn.ghost{background:transparent;color:var(--text);border:2px solid var(--pink);box-shadow:none}
   .closex{width:44px;height:44px;flex:none;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:12px;font-size:19px;line-height:1;cursor:pointer}
   body.light .sheet h3, body.light .srow.mine .st{color:#191420}
 
   /* menu (top-right of the bar): Easy mode + Light mode + Leave game */
   .menubtn{position:absolute;top:12px;right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
   .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
-  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:16px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
   .menuitem span{display:flex;flex-direction:column;gap:2px}
-  .menuitem small{color:var(--faint);font-size:11.5px}
+  .menuitem small{color:var(--faint);font-size:14px}
   .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
   .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
 
@@ -186,7 +202,7 @@
   body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06);
     background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #F3EFF5; }
   body.light .ptop{ background:rgba(255,255,255,.9) }
-  body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
+  body.light .brand .word, body.light .pbig, body.light .cardhead .pn{ color:#191420 }
   body.light .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
@@ -212,6 +228,9 @@
     <img id="venueLogo" class="vlogo hidden" alt="">
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
+      <!-- THE SONGS PLAYED LIST LIVES IN THE MENU (Dean, 3 Nov 2026: "That 5 played line doesn't need to
+           be there"). The box above the card cost a row of the screen the titles needed. -->
+      <button type="button" class="menuitem" id="lastCalled"><span>Songs played so far<small id="lastCalledSub">No songs played yet</small></span></button>
       <label class="menuitem"><span>Easy mode<small>Mark songs for me as they play</small></span><input type="checkbox" id="assistChk"></label>
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
@@ -250,16 +269,14 @@
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line across</span></div>
     <div class="prizestrip" id="prizeStrip">Playing for <b>the prize</b></div>
-    <button type="button" class="lastcalled" id="lastCalled">No songs played yet</button>
     <div class="cardctl">
-      <span class="czlbl">Size</span>
-      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller">&#8722;</button>
-      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger">&#43;</button>
+      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller card"><span class="czi" aria-hidden="true">&#8722;</span>Smaller</button>
+      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger card"><span class="czi" aria-hidden="true">&#43;</span>Bigger</button>
       <button type="button" id="fsBtn" class="czbtn fs">Full screen</button>
     </div>
     <div id="cardWrap"><div class="card5" id="cardGrid"></div></div>
     <div class="pmsg" id="pMsg">Tap a title when you hear it play.</div>
-    <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
+    <button class="btn pink bingoBtn" id="bingoBtn">BINGO!</button>
   </div>
 
   <!-- WON -->
@@ -506,30 +523,68 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)){ if(!P.daubs[i]) _justDone.push(i); P.daubs[i]=true; } }
   }
   var cz=1;   // card zoom (older players): scales the card width AND the fit-to-cell font cap together
+  /* EVERY TITLE AT THE BIGGEST SIZE ITS SQUARE HOLDS (Dean, 3 Nov 2026: "the small writing").
+
+     The card Dean was looking at drew every title at 12px and then squashed it to a third of its
+     width. That was not the fitter's choice: the card is built while it is still hidden (route()
+     paints it, then shows it), so every square measured 0 wide and every title was "too wide". Now a
+     card that is not on screen is not measured at all, and a watcher on the grid fits it the moment
+     it has a size (shown, turned, zoomed, or the font arriving late).
+
+     Each title is tried from big to small. The first size where it sits inside its square in three
+     lines or fewer wins; a long title that would need tiny type to make three lines may take a
+     fourth line instead, because a bigger word on four lines reads better than a small one on three.
+     A word is never split, so one word wider than its square steps down to 10px and, past that, is
+     narrowed whole. */
+  var FIT_MAX=20, FIT_MIN=12, FIT_LH=1.08, _fitPending=false;
   function fitCells(){
+    var grid=document.getElementById("cardGrid");
+    if(!grid || !grid.clientWidth){ _fitPending=true; return; }   // hidden: fit it when it is shown
+    _fitPending=false;
     var cells=document.querySelectorAll("#cardGrid .cc");
     for(var i=0;i<cells.length;i++){
       var el=cells[i]; if(el.classList.contains("free")) continue;
-      /* The floor was 6px, which is not a size anybody can read across a table.
-         With the taller cells there is room to hold 11px for all but the very
-         longest titles, and a title that still will not fit is better slightly
-         clipped than rendered at a size nobody can use. */
-      var sp=el.querySelector(".ct"); if(sp) sp.style.transform="";
-      var size=12*cz;
-      el.style.fontSize=size+"px";
-      while(size>11 && (el.scrollHeight>el.clientHeight || el.scrollWidth>el.clientWidth)){
-        size-=0.5; el.style.fontSize=size+"px";
+      var sp=el.querySelector(".ct"); if(!sp) continue;
+      sp.style.transform="";
+      var cs=getComputedStyle(el);
+      var W=el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+      var H=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+      var size=FIT_MAX*cz, three=0, four=0;
+      for(; size>=FIT_MIN*cz; size-=0.5){
+        el.style.fontSize=size+"px";
+        if(sp.offsetWidth>W+0.5 || sp.offsetHeight>H+0.5) continue;
+        var lines=Math.round(sp.offsetHeight/(size*FIT_LH));
+        if(!four && lines<=4) four=size;
+        if(lines<=3){ three=size; break; }
       }
-      /* ONE WORD WIDER THAN THE SQUARE ("Misunderstanding", "Californication"). It is never broken,
-         so it steps down one more point, to 10px, and a word still too wide after that is narrowed
-         whole (a slightly condensed word reads; a smaller one does not). */
+      size = (three && (three>=14*cz || !four || three>=four-3)) ? three : (four || FIT_MIN*cz);
+      el.style.fontSize=size+"px";
+      while(size>10*cz && sp.offsetHeight>H+0.5){ size-=0.5; el.style.fontSize=size+"px"; }
+      /* ONE WORD WIDER THAN THE SQUARE ("Misunderstanding", "Californication"): one more step, to
+         10px, and a word still too wide after that is narrowed as a whole. */
       var floor=10*cz;
-      while(size>floor && el.scrollWidth>el.clientWidth){ size-=0.5; el.style.fontSize=size+"px"; }
+      while(size>floor && sp.offsetWidth>W+0.5){ size-=0.5; el.style.fontSize=size+"px"; }
       if(sp && sp.offsetWidth>el.clientWidth-2){
         sp.style.transform="scaleX("+Math.max(0.3, (el.clientWidth-4)/sp.offsetWidth).toFixed(3)+")";
       }
     }
   }
+  (function(){
+    function refit(){ if(P.cells) fitCells(); }
+    var g=document.getElementById("cardGrid"), lastW=0;
+    if(g && window.ResizeObserver){
+      new ResizeObserver(function(){ var w=g.clientWidth; if(w && (w!==lastW || _fitPending)){ lastW=w; refit(); } }).observe(g);
+    }
+    /* The titles are measured in Hanken Grotesk. Measured in the stand-in font before it arrives, a
+       title "fits" and then spills out of its square once the real (wider) face lands, so the card is
+       fitted again whenever a font finishes loading. */
+    if(document.fonts){
+      try{ document.fonts.load('700 20px "Hanken Grotesk"').then(refit, function(){}); document.fonts.load('800 20px "Hanken Grotesk"').then(refit, function(){}); }catch(e){}
+      if(document.fonts.ready) document.fonts.ready.then(refit);
+      if(document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", refit);
+    }
+    window.addEventListener("orientationchange", function(){ setTimeout(refit, 300); });
+  })();
   var _cardSig="";   // the 25 titles as dealt, so a re-render can tell a new card from a repaint
   function askHowItWent(where){
     try{
@@ -596,9 +651,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     renderPrizeStrip();
     // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
-    $("lastCalled").innerHTML = P.played.length
-      ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card<span class=\"tap\">Tap to see every song played</span>")
-      : "No songs played yet<span class=\"tap\">The first song is coming up</span>";
+    var _lcs=$("lastCalledSub");
+    if(_lcs) _lcs.textContent = P.played.length ? (P.played.length===1 ? "1 played. Mark any you missed" : P.played.length+" played. Mark any you missed") : "No songs played yet";
     var set=playedSet();
     var wrap=$("cardGrid");
 
@@ -1040,7 +1094,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   (function(){
     var b=$("fsBtn"); if(!b) return;
     var el=document.documentElement;
-    if(!(el.requestFullscreen||el.webkitRequestFullscreen)) b.style.display="none";   // iPhone has no fullscreen API
+    if(!(el.requestFullscreen||el.webkitRequestFullscreen)){ b.style.display="none"; var row=b.parentNode; if(row && row.classList) row.classList.add("nofs"); }   // iPhone has no fullscreen API: two buttons share the row
   })();
   $("fsBtn").addEventListener("click", function(){
     var d=document, el=d.documentElement, fsel=d.fullscreenElement||d.webkitFullscreenElement;
@@ -1057,7 +1111,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     saveMarks();
   });
   // ---- the catch-up list (tap the "N played" line) ----
-  var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", openPlayedSheet);
+  var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", function(){ var mp=$("menuPanel"); if(mp) mp.classList.add("hidden"); openPlayedSheet(); });
   var _sc=$("sheetClose"); if(_sc) _sc.addEventListener("click", closePlayedSheet);
   var _sd=$("sheetDone"); if(_sd) _sd.addEventListener("click", closePlayedSheet);
   var _mm=$("markMissed"); if(_mm) _mm.addEventListener("click", markMissed);
