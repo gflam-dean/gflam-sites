@@ -240,7 +240,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
-  "checks": 556,
+  "checks": 580,
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
@@ -896,7 +896,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
-  "checks": 48,
+  "checks": 57,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -1028,7 +1028,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-newlook-in-chrome.test.py": {
-  "checks": 120,
+  "checks": 202,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

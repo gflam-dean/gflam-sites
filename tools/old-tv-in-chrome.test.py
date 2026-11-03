@@ -207,10 +207,10 @@ RING_SIZES = [(1920, 1080), (1280, 720), (1024, 768)]
 RING_PROBE = r'''(function(){
   var q=document.getElementById("tvQ"), out={}, had=q.classList.contains("pic");
   function box(e){ var r=e.getBoundingClientRect(); return [r.left,r.top,r.right,r.bottom]; }
-  function m(){ var s=document.querySelector("#tvQ .ringwrap svg"), n=document.getElementById("tvCdNum"), l=document.getElementById("tvCdLbl");
+  function m(){ var s=document.querySelector("#tvQ .ringwrap svg"), n=document.getElementById("tvCdNum"), l=document.getElementById("tvCdLbl"), c=document.querySelector("#tvQ .rcount");
     if(!s||!n||!l) return null; var cs=getComputedStyle(l);
     return {ring:box(s), num:box(n), lbl:box(l), text:(l.textContent||"").trim(), tt:cs.textTransform, ff:cs.fontFamily,
-            shown:cs.display!=="none"&&cs.visibility!=="hidden"&&parseFloat(cs.opacity)>0, numtext:n.textContent}; }
+            shown:cs.display!=="none"&&cs.visibility!=="hidden"&&parseFloat(cs.opacity)>0, numtext:n.textContent, count:(c&&c.getBoundingClientRect().height>0)?box(c):null}; }
   q.classList.remove("pic"); out.plain=m();
   q.classList.add("pic"); out.pic=m();
   if(!had) q.classList.remove("pic");
@@ -229,7 +229,7 @@ def ring_checks(tag, p):
         L, T, R, Bm = g['ring']; cx, cy = (L + R) / 2, (T + Bm) / 2; inner = 0.40 * (R - L)
         def corners_in(b):
             return max(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 for x in (b[0], b[2]) for y in (b[1], b[3]))
-        for what, b in (('the SECS label', g['lbl']), ('the number', g['num'])):
+        for what, b in (('the SECS label', g['lbl']), ('the number', g['num'])) + ((('the answered count', g['count']),) if g.get('count') else ()):
             far = corners_in(b)
             ok(t + ": %s sits wholly inside the ring's inner circle (corner %.1fpx from centre, inner edge %.1fpx)" % (what, far, inner),
                b[2] > b[0] and b[3] > b[1] and far <= inner - 1, b)
@@ -238,8 +238,13 @@ def ring_checks(tag, p):
         tol = max(1.5, 0.02 * (R - L))
         ok(t + ': the number and SECS are centred across the ring', abs((n[0] + n[2]) / 2 - cx) <= tol and abs((lb[0] + lb[2]) / 2 - cx) <= tol,
            'centre %.1f, number %.1f, label %.1f' % (cx, (n[0] + n[2]) / 2, (lb[0] + lb[2]) / 2))
-        ok(t + ': and centred as a pair top to bottom', abs((n[1] + lb[3]) / 2 - cy) <= tol,
-           'pair middle %.1f, ring centre %.1f' % ((n[1] + lb[3]) / 2, cy))
+        # Dean, 3 Nov: the number, SECS and the "41/43" count are ONE block, evenly spaced, centred in the ring
+        bot = (g.get('count') or lb)[3]
+        ok(t + ': and the number, SECS and the count centred as one block top to bottom', abs((n[1] + bot) / 2 - cy) <= tol,
+           'block middle %.1f, ring centre %.1f' % ((n[1] + bot) / 2, cy))
+        if g.get('count'):
+            c_ = g['count']
+            ok(t + ': the count sits under SECS, centred across the ring', c_[1] >= lb[3] - 0.5 and abs((c_[0] + c_[2]) / 2 - cx) <= tol, 'label %s, count %s' % (lb, c_))
 
 
 def pixels_differ(a, b):

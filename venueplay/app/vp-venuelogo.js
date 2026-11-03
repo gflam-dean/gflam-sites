@@ -261,9 +261,9 @@
      short, but a square crest is 134px tall on a 1920 TV, so its middle sat about 35px below the venueplay
      mark's, top right. alignMark(corner, img, has) measures what is DRAWN, the logo's box (plate and all)
      and the mark that is showing in the corner (the old one, or the new logo the start show leaves there),
-     and moves the whole corner down by the difference. Only for a logo that is not wide: a wordmark
-     (isWide, the one shape rule the printed signs use too) leaves the corner exactly where it always was,
-     and so does no logo (has false). Never up. When either one is not on screen (the ads, or mid-show)
+     and moves the whole corner by the difference: down to a square or tall logo's middle (never up), and,
+     since 3 Nov 2026, UP to a wide wordmark's middle (isWide, the one shape rule the printed signs use too),
+     never above the wordmark's top edge. No logo (has false) leaves the corner exactly where it always was. When either one is not on screen (the ads, or mid-show)
      nothing is measured and nothing moves, and the page measures again on its next change. The start
      show (/app/vp-sting.js) measures the corner as it plays, so it lands on the mark where it now is.
      ONE copy, here: tv.html (its #tvCorner) and the trivia, musical bingo, raffle and members draw
@@ -275,14 +275,18 @@
       var cur = parseFloat(corner.getAttribute("data-drop")) || 0, want = 0;
       if (has && img) {
         if (!img.complete) return;                              /* its shape is not known yet: vp-logo-sized comes back */
-        var wide = !img.naturalWidth || isWide(img.naturalWidth / img.naturalHeight);   /* a broken picture: as no logo */
-        if (!wide) {
+        if (img.naturalWidth) {                                 /* a broken picture: as no logo */
+          var wide = isWide(img.naturalWidth / img.naturalHeight);
           var a = img.getBoundingClientRect(); if (!a.height) return;   /* not on screen */
           var mk = null, svs = corner.querySelectorAll("svg");
           for (var i = 0; i < svs.length && !mk; i++) { var q = svs[i].getBoundingClientRect(); if (q.height) mk = q; }
           if (!mk) return;                                      /* the mark is off (ads) or mid-show */
           var dy = (a.top + a.height / 2) - ((mk.top + mk.height / 2) - cur);
-          want = dy > 0 ? Math.round(dy * 10) / 10 : 0;
+          if (!wide) want = dy > 0 ? Math.round(dy * 10) / 10 : 0;   /* square or tall: down to its middle, never up */
+          /* A WIDE WORDMARK TOO (Dean, 3 Nov 2026: both corner logos and the game's title on ONE line). A short
+             wordmark's middle sits about 10px above the venueplay mark's, so the corner lifts to it; never so
+             far that the mark would rise above the wordmark's own top edge. */
+          else { var lift = Math.max(dy, a.top - (mk.top - cur)); want = Math.round(lift * 10) / 10; }
         }
       }
       if (Math.abs(want - cur) < 0.05) return;

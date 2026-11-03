@@ -73,9 +73,16 @@ def phone_scene(r, path, label):
                                       rect(r, sid, '#vpConnBar'), rect(r, sid, '.ptop .brand .word'))
         line = r.ask(sid, '(function(){var t=document.getElementById("statusText"),b=t.getBoundingClientRect();return {w:b.width,h:b.height,txt:t.textContent};})()') or {}
         menu = rect(r, sid, '#menuBtn')
-        ok('%s at %d: a green dot beside the venueplay mark, in the header\'s first row' % (label, w),
-           dot and dot['vis'] and word and dot['l'] >= word['r'] and dot['l'] - word['r'] <= 24 and dot['t'] >= brand['t'] - 2 and dot['b'] <= brand['b'] + 2,
-           [dot, word, brand])
+        if 'trivia' in label:
+            # The trivia phone (Dean, 3 Nov 2026): the green dot sits next to the menu button, top right, level with it.
+            mb = rect(r, sid, '#menuBtn')
+            ok('%s at %d: a green dot next to the menu button, level with it' % (label, w),
+               dot and dot['vis'] and mb and dot['r'] <= mb['l'] and mb['l'] - dot['r'] <= 16 and abs((dot['t'] + dot['b']) / 2 - (mb['t'] + mb['b']) / 2) <= 3,
+               [dot, mb])
+        else:
+            ok('%s at %d: a green dot beside the venueplay mark, in the header\'s first row' % (label, w),
+               dot and dot['vis'] and word and dot['l'] >= word['r'] and dot['l'] - word['r'] <= 24 and dot['t'] >= brand['t'] - 2 and dot['b'] <= brand['b'] + 2,
+               [dot, word, brand])
         ok('%s at %d: the dot is green (Connected) and says so to a screen reader' % (label, w),
            r.ask(sid, 'document.getElementById("statusDot").classList.contains("on") && document.getElementById("statusDot").getAttribute("aria-label")==="Connected"') is True)
         ok('%s at %d: no "Connected" line of its own: the words take no space' % (label, w), line.get('w', 9) <= 1 and line.get('h', 9) <= 1, line)

@@ -700,7 +700,7 @@ print('\nNO EMPTY-STATE WORDS: an empty board paints nothing on the venue TV');
   function esc(s) { return String(s); }
   var timers = [];
   var f = new Function('$', 'el', 'esc', 'TV_BOARD_ROWS', 'setInterval', 'clearInterval',
-    'var boardPageTimer=null;\n' + liftAll(SCREEN, ['sharedRanks', 'renderRows', 'stopBoardPaging', 'renderBoardPaged'], 'trivia/screen.html') +
+    'var boardPageTimer=null;\n' + liftAll(SCREEN, ['sharedRanks', 'renderRows', 'stopBoardPaging', 'boardPages', 'renderBoardPaged'], 'trivia/screen.html') +
     '; return { rows: renderRows, board: renderBoardPaged };');
   var fx = f($, el, esc, 6, function (fn) { timers.push(fn); return timers.length; }, function () {});
   var strip = node('div', '', 'old');

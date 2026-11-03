@@ -190,7 +190,10 @@ print("");
 print("9. THE WALL NEVER SHOWS THE PLAYER COUNT (locked design rule)");
 pass("screen.html has no player count element", screen.indexOf('id="lobbyPlaying"') < 0);
 pass("screen.html does not track a player count at all", screen.indexOf("state.playerCount") < 0);
-pass("a players message is accepted and ignored, so an old host cannot break the wall", screen.indexOf('if(m.t==="players"){ return; }') > 0);
+/* 3 Nov 2026, Dean: the ring shows answered OUT OF the players in ("32/43"), so a players message now sets
+   that number and nothing else: no count element, no "joined" words on the wall. */
+pass("a players message only sets the ring's \"of 43\", so an old host cannot break the wall",
+     screen.indexOf('if(m.t==="players"){ if(typeof m.count==="number") state.players=m.count; paintAnsOf(); return; }') > 0);
 
 print("");
 print("10. EVERY TEAM CAN SEE ITSELF (finding 13)");

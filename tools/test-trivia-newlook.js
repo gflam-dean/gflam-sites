@@ -8,7 +8,8 @@
         console and puts nothing on the wall
      2. the reveal is the question's own grid: the same text with the same size rule, the same answer
         size, the right answer marked correct and the rest dimmed, and "31 /43 got it right"
-     3. no empty-state text: a board with no rows paints nothing ("No scores yet" is gone)
+     3. no empty-state text: a board with no rows paints nothing ("No scores yet" is gone); and with
+        sixteen teams the top ten show, then the rest a page at a time with the leader kept at the top
      4. the podium stands second, first, third
      5. the console's Time's-up buzzer: OFF unless switched on, plays on the TV or on the console itself,
         both remembered for the venue and sent to the TV
@@ -78,12 +79,12 @@ function tvRig(opts) {
     _ac: opts.noCtx ? null : new Ctx(opts.ctxState || 'running', !!opts.resumeOk),
     tvSend: function (o) { sent.push(o); }
   };
-  var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, RING_C=2*Math.PI*44, TV_BOARD_ROWS=6, BOARD_PAGE_MS=4500, boardPageTimer=null;\n' +
+  var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, RING_C=2*Math.PI*44, TV_BOARD_ROWS=' + /var TV_BOARD_ROWS = (\d+);/.exec(SCREEN)[1] + ', BOARD_PAGE_MS=' + /var BOARD_PAGE_MS=(\d+)/.exec(SCREEN)[1] + ', boardPageTimer=null, __iv=null, __ivms=0;\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function show(){} function applyColour(){} function stopBoardPaging(){} function unlockAudio(){} function celebrate(){}\n' +
-    'function setInterval(){ return 0; } function setTimeout(){ return 0; } function clearTimeout(){} function clearInterval(){}\n' +
-    liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
+    'function setInterval(f,ms){ __iv=f; __ivms=ms; return 1; } function setTimeout(){ return 0; } function clearTimeout(){} function clearInterval(){}\n' +
+    liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
                      'buzzSay', 'timesUp'], 'trivia/screen.html') +
-    '; return { q: renderQuestion, rev: renderReveal, rows: renderRows, board: renderBoardPaged, pod: renderPodium, up: timesUp, cur: function(){ return curQ; } };';
+    '; return { q: renderQuestion, rev: renderReveal, rows: renderRows, board: renderBoardPaged, pod: renderPodium, up: timesUp, cur: function(){ return curQ; }, tick: function(){ if(__iv) __iv(); }, ivms: function(){ return __ivms; } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
   api.dom = dom; api.sent = sent; api.env = env; api.starts = function () { return starts; };
@@ -150,7 +151,7 @@ await (async function () {
 /* ======================================================================================= 2 */
 print('\n== 2. the reveal is the question\'s own grid ==');
 (function () {
-  var long = 'In which year did the Sydney Harbour Bridge open to traffic, after eight years of construction work?';
+  var long = 'In which year did the Sydney Harbour Bridge open to traffic, after eight years of construction work that began in 1924, and who cut the ribbon on the day?';
   var a = tvRig();
   a.q(liveQ({ text: long, options: ['1928', '1932', '1936', 'Never Gonna Give You Up and more'] }));
   var qt = a.dom.$('tvQText'), qa = a.dom.$('tvAnswers');
@@ -166,13 +167,14 @@ print('\n== 2. the reveal is the question\'s own grid ==');
        [0, 2, 3].every(function (i) { return cards[i].classList.contains('dim') && !cards[i].classList.contains('correct'); }), cards.map(function (c) { return c.className; }).join('|'));
   var tag = all(cards[1]).filter(function (k) { return k.className === 'rtag'; });
   show('the right card carries a RIGHT ANSWER tag', tag.length === 1 && /right answer/i.test(tag[0].textContent), tag.length);
-  show('the clock box says 31 /43 got it right', a.dom.$('tvRevRight').textContent === 31 && a.dom.$('tvRevOf').textContent === ' /43',
-       [a.dom.$('tvRevRight').textContent, a.dom.$('tvRevOf').textContent]);
+  show('no "got it right" count is written in the clock\'s place (the right card carries it)', !a.dom.els.tvRevRight && !a.dom.els.tvRevOf, Object.keys(a.dom.els).join());
   var counts = cards.map(function (c) { return (all(c).filter(function (k) { return k.className === 'sc'; })[0] || {}).textContent; });
-  show('each card has its count ("1 player", "31 players")', counts.join('|') === '4 players|31 players|6 players|2 players', counts.join('|'));
+  show('no counts on the reveal at all, the right answer included (the question is over)', counts.join('|') === '|||', counts.join('|'));
+  var bars = cards.map(function (c) { return all(c).filter(function (k) { return k.className === 'split'; }).length; });
+  show('and no bars', bars.join() === '0,0,0,0', bars.join());
   var b = tvRig();
   b.q(liveQ()); b.rev({ t: 'reveal', correctIndex: 0, options: liveQ().options, split: [0, 0, 0, 0] });
-  show('nobody answered: "0" with no "/0"', b.dom.$('tvRevRight').textContent === 0 && b.dom.$('tvRevOf').textContent === '', [b.dom.$('tvRevRight').textContent, b.dom.$('tvRevOf').textContent]);
+  show('nobody answered: the reveal still writes no count', all(b.dom.$('tvRevAnswers')).every(function (k) { return k.className !== 'sc'; }));
 })();
 
 /* ======================================================================================= 3 */
@@ -187,6 +189,42 @@ print('\n== 3. no empty-state text on the wall ==');
   a.board('After question 3', [{ name: 'Table 6', points: 790 }, { name: 'Nans', points: 735 }]);
   var r = box.children;
   show('control: two teams are two rows, first marked top1, places without a "#"', r.length === 2 && r[0].classList.contains('top1') && r[0].children[0].textContent === '1', r.length && r[0].children[0].textContent);
+})();
+
+print('\n== 3b. sixteen teams: the top ten, then the rest a page at a time, the leader kept at the top ==');
+(function () {
+  var a = tvRig(), T = [];
+  for (var i = 0; i < 16; i++) T.push({ name: 'Team ' + (i + 1), points: 1000 - i * 10 });
+  a.board('After question 3', T);
+  var box = a.dom.$('tvBoardRows'), pg = a.dom.$('tvBoardPage');
+  function names() { return box.children.map(function (r) { return r.children[1].textContent; }); }
+  show('page one is the top ten', box.children.length === 10 && names()[0] === 'Team 1' && names()[9] === 'Team 10', names().join());
+  show('no page words on the wall ("Page 1 of 2", "Teams 1 to 10 of 16" are gone)', pg.textContent === '' && pg.classList.contains('hidden'), pg.textContent);
+  show('the pages turn every 10 seconds', a.ivms() === 10000, a.ivms());
+  a.tick();
+  show('page two: the leader at the top, then 11 to 16', box.children.length === 7 && names()[0] === 'Team 1' && box.children[0].classList.contains('pinned') &&
+       names()[1] === 'Team 11' && names()[6] === 'Team 16', names().join());
+  a.tick();
+  show('and round again to page one', names()[9] === 'Team 10' && box.children.length === 10, names().join());
+  var b = tvRig(); b.board('Final scores', T.slice(0, 10));
+  show('ten teams or fewer: one page, no page line', b.dom.$('tvBoardRows').children.length === 10 && b.dom.$('tvBoardPage').classList.contains('hidden'));
+  var c = tvRig(), T28 = []; for (var k = 0; k < 28; k++) T28.push({ name: 'T' + (k + 1), points: 999 - k });
+  c.board('Final scores', T28);
+  c.tick(); c.tick();
+  var cn = c.dom.$('tvBoardRows').children.map(function (r) { return r.children[1].textContent; });
+  show('twenty-eight teams: three pages, the last is the leader and 20 to 28', cn.length === 10 && cn[0] === 'T1' && cn[1] === 'T20' && cn[9] === 'T28', cn.join());
+})();
+
+print('\n== 3c. the JOIN NOW card: over the scores, never over the question or its reveal ==');
+(function () {
+  var dom = makeDom();
+  var f = new Function('$', 'paintNight', 'stopBoardPaging', 'setTimeout', 'alignTitle', 'window',
+    'var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
+  var show_ = f(dom.$, function () {}, function () {}, function () {}, function () {}, {});
+  var J = dom.$('tvJoinCorner');
+  var seen = ['tvLobby', 'tvQ', 'tvReveal', 'tvBoard', 'tvPodium'].map(function (w) { show_(w); return w + ':' + (J.classList.contains('hidden') ? 'off' : 'on'); });
+  show('off on the lobby, the question and the reveal; on for the scores and the podium',
+       seen.join() === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:on', seen.join());
 })();
 
 /* ======================================================================================= 4 */
@@ -272,7 +310,7 @@ print('\n== 6. the phone: the result cards and the header ==');
   show('the other two dim, with no tag', [2, 3].every(function (i) { return cards[i].classList.contains('dim') && !tagOf(cards[i]); }));
   var cnt = cards.map(function (c) { return (all(c).filter(function (k) { return k.className === 'cnt'; })[0] || {}).textContent; });
   show('each card shows how many picked it', cnt.join('|') === '33|5|4|1', cnt.join('|'));
-  show('the ring says 33 right', w.$('pResRight').textContent === 33 && !w.$('pResRing').classList.contains('hidden'), w.$('pResRight').textContent);
+  show('the ring stays in its place for the points (never hidden)', w.$('pResRing').style.visibility !== 'hidden');
   show('the question and label are the ones the room saw', w.$('pResQ').textContent === 'Which band released Back in Black?' && w.$('pResCount').textContent === 'Question 3 of 20');
   var r = phone(0), rc = r.$('pResAnswers').children;
   show('a right pick: RIGHT · YOURS on the green card, no separate YOURS', rc[0].classList.contains('right') && /right .* yours/i.test(tagOf(rc[0])) && !rc.some(function (c) { return c.classList.contains('mine'); }), tagOf(rc[0]));
