@@ -2340,9 +2340,28 @@ async function vpaAutopilotProspect(request, env, json) {
  * two phones, record one. The Mac marks a decision applied with a conditional update too, and keeps
  * its own record, so a decision is applied once, ever. When the Mac HOLDS a yes (a check failed) it
  * opens a new round and emails fresh buttons; links from the old round then say so and do nothing.
+ *
+ * A REPLY THAT NEEDS DEAN (Dean, 3 Nov 2026, on the plain "Instantly: 1 reply need you" email about a wine
+ * company's help desk auto-reply: "Has no options that help."). The Mac registers a row of class "needs you"
+ * (folder needsyou-...) for a reply it could not sort, and gets three signed links instead of Yes / Edit / No:
+ * stop ("Stop them (not a venue)"), draft ("Draft me a reply") and ignore ("Ignore"). Recorded the same way, once
+ * per round (migration 149 lets the table hold them). A needs-you link only works on a needs-you row and a
+ * Yes / Edit / No link never does, so no choice can land on the wrong kind of row. The Mac applies them itself:
+ * Stop writes a job for Fable (the only one who touches the Instantly campaigns), Draft prepares a reply and sends
+ * Dean the usual review, Ignore marks it handled. Before migration 149 the table refuses them: the page says
+ * "not switched on yet" and records nothing. GET /autopilot/decisions says features: ["needs_you"], so a Mac only
+ * sends these buttons to a Worker that has them.
  * ======================================================================== */
 const VPA_REVIEW_DAYS = 7;
-const VPA_REVIEW_ACTIONS = { yes: 'yes', no: 'no', edit: 'edit' };
+const VPA_REVIEW_ACTIONS = { yes: 'yes', no: 'no', edit: 'edit', stop: 'stop', draft: 'draft', ignore: 'ignore' };
+const VPA_NEEDS_YOU_CLASS = 'needs you';
+const VPA_NEEDS_YOU_ACTIONS = ['draft', 'stop', 'ignore'];
+const VPA_PLAIN_ACTIONS = ['yes', 'no', 'edit'];
+const VPA_REVIEW_DECISIONS_IN = 'decision=in.(yes,no,edit,stop,draft,ignore)';
+/* Which choices a row has: a needs-you row only Stop / Draft / Ignore, every other row only Yes / No / Edit. */
+function vpaReviewActionsFor(cls) {
+  return cls === VPA_NEEDS_YOU_CLASS ? VPA_NEEDS_YOU_ACTIONS : VPA_PLAIN_ACTIONS;
+}
 const VPA_REVIEW_FOLDER_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
 const VPA_REVIEW_MAX = 20000;
 
@@ -2355,10 +2374,10 @@ async function vpaReviewToken(env, folder, action, exp, round) {
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
 
-async function vpaReviewLinks(env, folder, exp, round) {
+async function vpaReviewLinks(env, folder, exp, round, cls) {
   const base = vpUnsubApi(env) + '/autopilot/review?f=' + encodeURIComponent(folder);
   const out = {};
-  for (const a of Object.keys(VPA_REVIEW_ACTIONS)) {
+  for (const a of vpaReviewActionsFor(cls)) {
     out[a] = base + '&a=' + a + '&r=' + round + '&x=' + exp + '&t=' + (await vpaReviewToken(env, folder, a, exp, round));
   }
   return out;
@@ -2498,7 +2517,7 @@ async function vpaAutopilotReviewRegister(request, env, json) {
     return json({ error: 'Dean has already decided this one (' + row.decision + ')' + (row.applied_at ? '' : ' and the Mac has not applied it yet') + '.',
       decided: true, decision: row.decision }, 409);
   }
-  return json({ ok: true, folder: folder, round: round, expires_at: expIso, links: await vpaReviewLinks(env, folder, exp, round) });
+  return json({ ok: true, folder: folder, round: round, expires_at: expIso, links: await vpaReviewLinks(env, folder, exp, round, content.class) });
 }
 
 /* GET /autopilot/decisions: what Dean chose that the Mac has not applied. Oldest first. */
@@ -2507,14 +2526,14 @@ async function vpaAutopilotDecisions(request, env, json) {
   if (no) return no;
   let rows;
   const q = function (extra) {
-    return vpaReadPage(env, 'vp_autopilot_reviews', 'decision=in.(yes,no,edit)&applied_at=is.null'
+    return vpaReadPage(env, 'vp_autopilot_reviews', VPA_REVIEW_DECISIONS_IN + '&applied_at=is.null'
       + '&select=folder,round,company,decision,decided_at,reason,edited_reply' + extra + '&order=decided_at.asc&limit=50');
   };
   try {
     try { rows = await q(',edited_postcode,edited_entity_type,edited_login_email'); }
     catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: the decisions as before
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
-  return json({ ok: true, decisions: rows });
+  return json({ ok: true, decisions: rows, features: ['needs_you'] });
 }
 
 /* GET /autopilot/holds: the checked replies Dean has opened Edit on and not decided yet (2 Nov 2026). The Mac
@@ -2548,7 +2567,7 @@ async function vpaAutopilotDecisionDone(request, env, json) {
   if (['queued', 'held', 'rejected', 'already', 'failed'].indexOf(result) === -1) return json({ error: 'result must be queued, held, rejected, already or failed.' }, 400);
   let got;
   try {
-    got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=in.(yes,no,edit)&applied_at=is.null',
+    got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&' + VPA_REVIEW_DECISIONS_IN + '&applied_at=is.null',
       { applied_at: new Date().toISOString(), applied_result: result, applied_note: vpaReviewText(b.note, 2000) });
   } catch (e) { return json({ error: 'Could not mark it done: ' + String(e.message || e) }, 503); }
   return json({ ok: true, marked: got.length === 1, already: got.length === 0 });
@@ -2791,6 +2810,38 @@ function vpaParseForm(text) {
 
 const VPA_REVIEW_DECIDED_WORDS = { yes: 'Yes, send the standard reply', no: 'No, do not send', edit: 'Edited and send' };
 const VPA_CHECKED_DECIDED_WORDS = { yes: 'Approved, it goes at its time', no: 'Not sent', edit: 'Your edit goes' };
+const VPA_NEEDS_YOU_WORDS = { draft: 'Draft me a reply', stop: 'Stop them (not a venue)', ignore: 'Ignore' };
+const VPA_NEEDS_YOU_CONFIRM = { draft: 'Yes, draft me a reply', stop: 'Yes, stop them (not a venue)', ignore: 'Yes, ignore it' };
+const VPA_NEEDS_YOU_WHAT = {
+  draft: ['Within 5 minutes your Mac prepares a reply, the same as for any venue that says yes: TV slides from their website, their account checked, a draft written.',
+          'You get the usual review email with Yes / Edit / No. Nothing goes to them until you tap one.'],
+  stop: ['Nothing is sent to them, now or later, from this reply.',
+         'Within 5 minutes your Mac closes it and leaves a job for Fable, who takes them out of every campaign (only Fable touches the campaigns).'],
+  ignore: ['Nothing is sent and nothing changes in Instantly.', 'Within 5 minutes your Mac marks it handled.'] };
+/* Before migration 149 the table's check refuses stop / draft / ignore (23514). */
+function vpaReviewNoNeedsYou(e) {
+  return /23514|vp_autopilot_reviews_decision_check/.test(String((e && (e.message || e.body)) || e || ''));
+}
+/* The page behind a needs-you button: who, why it came to Dean, their words, this choice's confirm and what it
+   does, then all three. NOTHING is written here (a GET). */
+function vpaNeedsYouPage(row, action, self, links) {
+  const choice = function (a, big) {
+    const cls = 'btn ' + (a === 'draft' ? 'edit' : 'no') + (big ? '' : ' small');
+    return a === action
+      ? '<button class="' + cls + '" name="b" type="submit" data-a="' + a + '">' + VPA_NEEDS_YOU_CONFIRM[a] + '</button>'
+      : '<a class="' + cls + '" data-a="' + a + '" href="' + vpaEsc(links[a]) + '">' + VPA_NEEDS_YOU_WORDS[a] + '</a>';
+  };
+  const inner = '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+    + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>'
+    + '<form method="POST" action="' + vpaEsc(self) + '" onsubmit="' + vpaEsc(VPA_REVIEW_ONSUBMIT) + '">'
+    + '<div class="top" data-vpa="top">' + choice(action, true) + '</div>'
+    + '<div class="card words">' + vpaEsc(row.reply || '') + '</div>'
+    + vpaReviewWords(row)
+    + '<div class="what"><b>What happens when you tap it</b><ol>' + VPA_NEEDS_YOU_WHAT[action].map(function (l) { return '<li>' + vpaEsc(l) + '</li>'; }).join('') + '</ol></div>'
+    + '<h2>Your choice</h2><div class="choices" data-vpa="bottom">' + VPA_NEEDS_YOU_ACTIONS.map(function (a, i) { return choice(a, i === 0); }).join('') + '</div>'
+    + '</form>';
+  return vpaReviewPage({ draft: 'Draft a reply?', stop: 'Stop them?', ignore: 'Ignore it?' }[action], inner, 200);
+}
 
 /* The Mac's recommendation and its warnings (migration 130), each a plain sentence with what to tap. A review from
    before then has neither: a question then gets one neutral line, true whatever the Mac does with a Yes. */
@@ -2828,8 +2879,9 @@ function vpaReviewDecidedPage(row, sameAsAsked) {
     ? '<p>Your Mac has dealt with it: <b>' + vpaEsc(row.applied_result || 'done') + '</b>' + (row.applied_note ? '. ' + vpaEsc(row.applied_note) : '') + '</p>'
     : '<p>Your Mac picks it up within 5 minutes and emails you what it did.</p>';
   return vpaReviewPage(sameAsAsked ? 'Got it' : 'Already decided',
-    '<div class="done" aria-hidden="true">' + (row.decision === 'no' ? '&#10005;' : '&#10003;') + '</div>'
+    '<div class="done" aria-hidden="true">' + (row.decision === 'no' || row.decision === 'stop' ? '&#10005;' : '&#10003;') + '</div>'
     + '<h1>' + (sameAsAsked ? 'Got it: ' : 'You already chose: ') + vpaEsc(row.class === 'switch' ? (row.decision === 'yes' ? 'turn it on' : 'leave it off')
+                                                                                  : row.class === VPA_NEEDS_YOU_CLASS ? (VPA_NEEDS_YOU_WORDS[row.decision] || row.decision)
                                                                                   : (row.details && row.details.checked_auto) ? (VPA_CHECKED_DECIDED_WORDS[row.decision] || row.decision)
                                                                                   : (VPA_REVIEW_DECIDED_WORDS[row.decision] || row.decision)) + '</h1>'
     + '<p class="muted">' + vpaEsc(row.company || row.folder) + (when ? ', ' + vpaEsc(when) : '') + '.</p>'
@@ -2864,10 +2916,13 @@ async function vpaAutopilotReviewPage(request, env) {
     return vpaReviewPage('A newer email has the buttons', '<h1>This link is from an older email</h1><p>'
       + vpaEsc(row.company || folder) + ' has a newer review email. Use the buttons in that one.</p>', 409);
   }
+  // A needs-you choice only on a needs-you row, a Yes / Edit / No only on any other (the link is signed, so this
+  // only refuses a mix-up, never a forgery).
+  if (vpaReviewActionsFor(row.class).indexOf(action) === -1) return BAD;
   if (row.decision) return vpaReviewDecidedPage(row, isPost && row.decision === action);
 
   const self = '/autopilot/review?f=' + encodeURIComponent(folder) + '&a=' + action + '&r=' + round + '&x=' + exp + '&t=' + tok;
-  const links = await vpaReviewLinks(env, folder, exp, round);
+  const links = await vpaReviewLinks(env, folder, exp, round, row.class);
   const qWarn = vpaReviewAdvice(row);
   const boxes = ('edited_postcode' in row);
   let form = null, boxForm = null, err = '';
@@ -2920,6 +2975,10 @@ async function vpaAutopilotReviewPage(request, env) {
       try {
         got = await vpaReviewPatch(env, 'folder=eq.' + encodeURIComponent(folder) + '&round=eq.' + round + '&decision=is.null', patch);
       } catch (e) {
+        if (row.class === VPA_NEEDS_YOU_CLASS && vpaReviewNoNeedsYou(e)) {
+          return vpaReviewPage('Not switched on yet', '<h1>These buttons are not switched on yet</h1><p>Nothing was recorded. '
+            + 'Tell Claude "' + vpaEsc(VPA_NEEDS_YOU_WORDS[action].toLowerCase()) + '" for ' + vpaEsc(row.reply_to || row.company || folder) + ' and it will do the same.</p>', 503);
+        }
         return vpaReviewPage('Try again', '<h1>That did not save</h1><p>Nothing was recorded. Please tap the button again in a minute.</p>', 503);
       }
       if (!got.length) {
@@ -2932,6 +2991,7 @@ async function vpaAutopilotReviewPage(request, env) {
   }
 
   // GET (or an edit sent back to fix): the page. NOTHING is written here.
+  if (row.class === VPA_NEEDS_YOU_CLASS) return vpaNeedsYouPage(row, action, self, links);
   if (row.class === 'switch') {
     /* A SETTING, NOT A REPLY (2 Nov 2026): the Mac asks Dean once, after 14 days of web form enquiries in
        shadow mode with no disagreement, whether to let the obvious ones go by themselves. One button. */
