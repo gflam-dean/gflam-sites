@@ -447,6 +447,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-consent-split.js": {
+  "checks": 50,
+  "counted_by": "lines"
+ },
  "tools/test-console-pickup.js": {
   "checks": 53,
   "counted_by": "lines"
