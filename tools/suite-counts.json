@@ -139,6 +139,10 @@
   "checks": 107,
   "counted_by": "lines"
  },
+ "tools/consent-split-in-chrome.test.py": {
+  "checks": 101,
+  "counted_by": "lines"
+ },
  "tools/console-in-chrome.test.py": {
   "checks": 66,
   "counted_by": "lines"
@@ -447,6 +451,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-consent-split.js": {
+  "checks": 52,
+  "counted_by": "lines"
+ },
  "tools/test-console-pickup.js": {
   "checks": 53,
   "counted_by": "lines"
@@ -500,7 +508,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 343,
+  "checks": 382,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {

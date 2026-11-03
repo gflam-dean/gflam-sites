@@ -378,6 +378,7 @@
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-venueurl.js"></script>
+<script src="/app/vp-consent.js"></script>   <!-- "Your details": 18+ and "Keep me posted" as two separate ticks (3 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script>
 (function(){
@@ -483,6 +484,7 @@
     _ageHold=false;
     try{ sessionStorage.setItem(ageKey(),"ok"); }catch(e){}
     if(_ageBox){ try{ _ageBox.remove(); }catch(e){} _ageBox=null; }
+    if(typeof VPConsent==="object") VPConsent.age18Done();   // never asked twice: the details step's 18+ tick comes down
     if(_agePendingJoin){ _agePendingJoin=false; sendJoin(); }
   }
   /* THE ASK WENT AWAY (16 Oct 2026). The Worker now answers age_gate:false once the bingo lobby
@@ -1329,11 +1331,11 @@
       if(c.email)     h+=f("xEmail","email","Email","email",120);
       if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
       box.innerHTML=h;
-      if(c.marketing_optin && (c.email || c.mobile)){   // no point asking to keep them posted with no email or phone
-        var l=document.createElement("label"); l.className="optin";
-        l.innerHTML='<input type="checkbox" id="xOptin"> <span>I am 18 or over. Keep me posted on what is on at the venue</span>';
-        box.appendChild(l);
-      }
+      /* "I'm 18 or over" (needed with the opt-in) and "Keep me posted" (optional) as TWO ticks, never one (3 Nov 2026,
+         Spam Act and APP 7): /app/vp-consent.js, shared by all three phones. Not asked twice: an age
+         screen already ticked for this room tonight leaves the 18+ tick out. */
+      var aged=false; try{ aged=sessionStorage.getItem(ageKey())==="ok"; }catch(e){}
+      if(typeof VPConsent==="object") VPConsent.render(box, c, { age18:aged });
       /* Collection notice. Australian privacy law wants people told what is being collected and
          who gets it AT THE POINT they are asked, not only in a policy page they never open. This
          screen asked for last name, postcode, email and mobile with no notice and no link to the
@@ -1378,13 +1380,14 @@
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
-    var o=$("xOptin"); if(o&&o.checked && (cap.email||cap.mobile)) cap.marketing_optin=true;   // opt-in only counts with a contact method
+    if(typeof VPConsent==="object" && VPConsent.optedIn(cap)) cap.marketing_optin=true;   // the opt-in tick ONLY, and only with a contact method (/app/vp-consent.js)
     return cap;
   }
   // Fetch (or lazily be dealt) this player's ticket for the running game.
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    if(typeof VPConsent==="object" && !VPConsent.ageOk()){ $("joinErr").textContent=VPConsent.AGE_NEEDED; return; }   // the 18+ tick, needed only with "Keep me posted"
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     P.joined=true; saveName(P.room, P.name);
