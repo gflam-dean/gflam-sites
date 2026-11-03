@@ -16,6 +16,9 @@
         round with new links, and the old links stop
      7. (31 Oct 2026) each page has ONLY the recommended button at the top (Edit when there is none) and all
         three at the bottom in the email's order, through the same one form and the same signed links
+     8. (3 Nov 2026) a reply that needs Dean: a "needs you" row gets Stop / Draft / Ignore links (never Yes / Edit /
+        No), each recorded once; a choice of one kind never lands on a row of the other; before migration 149 the
+        table refuses them and the page says so; GET /autopilot/decisions says features: ["needs_you"]
 
    Run from the repo root:  jsc tools/test-review-buttons.js */
 var ran = 0, bad = 0;
@@ -38,7 +41,7 @@ crypto = { subtle: {
 var KEY = 'k3y-' + 'abcdefghijklmnopqrstuvwxyz0123456789';   // 40 characters, assembled so it is no key's shape
 var VECTOR = '0d40a8c71578eac85d2a9b3ffed0160e';            // Python: hmac('vp-review:'+KEY, folder|yes|1793000000|1)[:32]
 var FOLDER = '2026-10-29-test-charlie-hotel';
-var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false;   // NO_V2: the live table before migration 130
+var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false, NO_149 = false;   // NO_149: the table before migration 149 refuses stop / draft / ignore   // NO_V2: the live table before migration 130
 var V2 = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];   // STALE = n: the next n reads see the row before the other tap landed
 var NOW = Date.parse('2026-10-29T08:00:00Z');
 Date.now = function () { return NOW; };
@@ -68,6 +71,7 @@ globalThis.fetch = function (url, opts) {
   if (method === 'POST') { var o = JSON.parse(opts.body);
     if (ROWS.some(function (r) { return r.folder === o.folder; })) return RS(409, { code: '23505' });
     ROWS.push(o); return RS(201, ''); }
+  if (method === 'PATCH' && NO_149 && /^(stop|draft|ignore)$/.test(JSON.parse(opts.body).decision || '')) return RS(400, { code: '23514', message: 'new row for relation "vp_autopilot_reviews" violates check constraint "vp_autopilot_reviews_decision_check"' });
   if (method === 'PATCH') { var p = JSON.parse(opts.body), hit = ROWS.filter(function (r) { return match(r, q); });
     hit.forEach(function (r) { for (var k in p) r[k] = p[k]; });
     return RS(200, JSON.parse(JSON.stringify(hit))); }
@@ -90,7 +94,7 @@ var AP = { 'X-Autopilot-Key': KEY };
 var REPLY = 'Hi Rowan,\n\nThanks for getting back to me.\n\nIn short: venueplay turns the TV you already have into a games night, so you can have a play.\n\nCheers,\nHarry Finch\nvenueplay\nvenueplay.com.au\n';
 var REVIEW = { folder: FOLDER, company: 'Test Charlie <Hotel>', class: 'interested', their_words: 'Yes please, send it through. <b>Mick</b>',
   reply: REPLY, mailbox: 'harry@venueplaylive.com.au', reply_to: 'manager@testcharlie.example' };
-function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
+function world() { ROWS = []; WRITES = []; FAILDB = false; NO_V2 = false; NO_149 = false; NOW = Date.parse('2026-10-29T08:00:00Z'); ENV.PROSPECT_AUTOPILOT_KEY = KEY; }
 function pathOf(link) { return link.replace(/^https:\/\/[^/]+/, ''); }
 function swap(link, k, v) { return link.replace(new RegExp('([?&]' + k + '=)[^&]*'), '$1' + v); }
 function form(o) { return Object.keys(o).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(o[k]).replace(/%20/g, '+'); }).join('&'); }
@@ -459,6 +463,57 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('before migration 130 there are no holds: an empty list, not an error', (await call('/autopilot/holds', undefined, AP, 'GET')).body.holds.length === 0);
   NO_V2 = false;
   allPages.push(gy.html, ge.html);
+
+  section('14. A REPLY THAT NEEDS DEAN (3 Nov 2026: "Has no options that help"): Stop / Draft / Ignore, recorded once');
+  var NY = 'needsyou-winesquad-goodpairdays-com-1a2b3c4d';
+  var NYR = { folder: NY, company: 'Good Pair Days', class: 'needs you', their_words: 'it appears you\'ve contacted our customer service portal. <b>x</b>',
+    reply: 'Why it came to you: not clear. No reply has been drafted yet.', mailbox: 'harry@venueplaylive.com.au', reply_to: 'winesquad@goodpairdays.com' };
+  world();
+  r = await call('/autopilot/review/register', NYR, AP); L = r.body.links || {};
+  check('register a needs-you row: links for draft, stop and ignore only (no yes, edit or no)', r.status === 200 && Object.keys(L).sort().join(',') === 'draft,ignore,stop', L);
+  var td = await vpaReviewToken(ENV, NY, 'draft', parseInt(/x=(\d+)/.exec(L.draft || 'x=0')[1], 10), 1);
+  check('each signed like the others, the action inside the signature', /&a=draft&r=1&x=\d+&t=[0-9a-f]{32}$/.test(L.draft || '') && (L.draft || '').slice(-32) === td && td !== (L.stop || '').slice(-32), L);
+  var ordinary = await call('/autopilot/review/register', REVIEW, AP);
+  check('an ordinary review still gets only yes, edit and no', Object.keys(ordinary.body.links || {}).sort().join(',') === 'edit,no,yes', ordinary.body.links);
+  var yesOnNy = await call(pathOf(swap(swap(ordinary.body.links.yes, 'f', NY), 't', await vpaReviewToken(ENV, NY, 'yes', parseInt(/x=(\d+)/.exec(ordinary.body.links.yes)[1], 10), 1))), undefined, {}, 'POST', '');
+  check('a correctly signed Yes on a needs-you row is refused and records nothing', yesOnNy.status === 403 && !ROWS.filter(function (x) { return x.folder === NY; })[0].decision, yesOnNy.status);
+  var stopOnOrd = await call(pathOf(swap(swap(L.stop, 'f', FOLDER), 't', await vpaReviewToken(ENV, FOLDER, 'stop', parseInt(/x=(\d+)/.exec(L.stop)[1], 10), 1))), undefined, {}, 'POST', '');
+  check('a correctly signed Stop on an ordinary review is refused and records nothing', stopOnOrd.status === 403 && !ROWS.filter(function (x) { return x.folder === FOLDER; })[0].decision, stopOnOrd.status);
+  var forgedNy = await call(pathOf(swap(L.ignore, 'a', 'stop')), undefined, {}, 'POST', '');
+  check('an Ignore link edited to say stop is refused', forgedNy.status === 403, forgedNy.status);
+  WRITES = [];
+  var gs = await call(pathOf(L.stop), undefined, {}, 'GET');
+  var nyRow = function () { return ROWS.filter(function (x) { return x.folder === NY; })[0]; };
+  check('GET the Stop page writes NOTHING, shows who (escaped), why, their words (escaped), and what happens (Fable, nothing sent)',
+    gs.status === 200 && WRITES.length === 0 && !nyRow().decision && /Good Pair Days/.test(gs.html) && /Why it came to you: not clear/.test(gs.html) &&
+    gs.html.indexOf('&lt;b&gt;x&lt;/b&gt;') !== -1 && /Fable/.test(gs.html) && /Nothing is sent to them/.test(gs.html), gs.html.slice(0, 300));
+  var tsc = controls(part(gs.html, 'top')), bsc = controls(part(gs.html, 'bottom'));
+  check('its top is its own confirm, a submit; its bottom is Draft, Stop, Ignore, the others as their signed links',
+    tsc.length === 1 && tsc[0].a === 'stop' && tsc[0].tag === 'button' && tsc[0].type === 'submit' && tsc[0].words === 'Yes, stop them (not a venue)' &&
+    bsc.map(function (x) { return x.a; }).join(',') === 'draft,stop,ignore' && bsc[0].href === L.draft && bsc[0].words === 'Draft me a reply' && bsc[2].href === L.ignore && bsc[2].words === 'Ignore' && bsc[1].tag === 'button', { tsc: tsc, bsc: bsc });
+  var gdr = await call(pathOf(L.draft), undefined, {}, 'GET');
+  check('the Draft page says the usual review comes with Yes / Edit / No and nothing goes without a tap', gdr.status === 200 && /usual review email with Yes \/ Edit \/ No/.test(gdr.html) && /Nothing goes to them until you tap one/.test(gdr.html));
+  var ps1 = await call(pathOf(L.stop), undefined, {}, 'POST', '');
+  check('POST records decision stop, once, and says Got it: Stop them (not a venue)', ps1.status === 200 && nyRow().decision === 'stop' && /Got it: Stop them \(not a venue\)/.test(ps1.html), nyRow());
+  var pi = await call(pathOf(L.ignore), undefined, {}, 'POST', '');
+  check('an Ignore after it changes nothing (first choice wins)', nyRow().decision === 'stop' && /You already chose: Stop them/.test(pi.html), nyRow().decision);
+  d = await call('/autopilot/decisions', undefined, AP, 'GET');
+  check('the Mac sees the stop decision, and the Worker says it has the needs-you buttons', d.status === 200 && d.body.decisions.length === 1 && d.body.decisions[0].decision === 'stop' &&
+    d.body.decisions[0].folder === NY && (d.body.features || []).indexOf('needs_you') !== -1, d.body);
+  dn = await call('/autopilot/decisions/done', { folder: NY, round: 1, result: 'rejected', note: 'stopped, not a venue' }, AP);
+  check('and marks it done (rejected), once', dn.status === 200 && dn.body.marked === true && nyRow().applied_result === 'rejected', dn.body);
+  world();
+  r = await call('/autopilot/review/register', NYR, AP); L = r.body.links || {};
+  var pd = await call(pathOf(L.draft), undefined, {}, 'POST', '');
+  check('Draft records decision draft', pd.status === 200 && nyRow().decision === 'draft' && /Got it: Draft me a reply/.test(pd.html), nyRow());
+  world(); NO_149 = true;
+  r = await call('/autopilot/review/register', NYR, AP); L = r.body.links || {};
+  var p149 = await call(pathOf(L.ignore), undefined, {}, 'POST', '');
+  check('before migration 149 the table refuses them: the page says not switched on yet, what to tell Claude, records nothing',
+    p149.status === 503 && /not switched on yet/.test(p149.html) && /Tell Claude "ignore" for winesquad@goodpairdays.com/.test(p149.html) && !nyRow().decision, p149.html.slice(-400));
+  var ord149 = await call('/autopilot/review/register', REVIEW, AP);
+  check('and an ordinary review\'s Yes still works then', (await call(pathOf(ord149.body.links.yes), undefined, {}, 'POST', '')).status === 200 && ROWS.filter(function (x) { return x.folder === FOLDER; })[0].decision === 'yes');
+  check('none of the needs-you pages has an em or en dash, or the word roster', [gs.html, gdr.html, ps1.html, pi.html, pd.html, p149.html].every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
 
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');

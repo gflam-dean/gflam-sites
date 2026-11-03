@@ -556,3 +556,12 @@ says TV types start when 139 is run. After running, dump RLS-BASELINE.json (one 
 NUMBER: written as 138 on 1 Nov, renumbered 139 when merged into release/mon-2nov (138 is the help-FAQ lowercase
 migration above; 137 stays spent by the end-screen ratings work).
 Branch `feature/tv-type-2nov`. NOT RUN. Rollback: in the file.
+
+`venueplay-149-review-needs-you-decisions.sql` (Dean, 3 Nov 2026, on the plain "reply needs you" email about a help desk
+auto-reply: "Has no options that help"): the check on `vp_autopilot_reviews.decision` (128) also allows 'stop', 'draft'
+and 'ignore', so a reply that needs Dean comes as its own email with "Stop them (not a venue)", "Draft me a reply" and
+"Ignore", recorded like Yes / Edit / No, once per round (a row of class 'needs you'). It keeps 'photos' (148). Run 148
+BEFORE 149: 148 re-creates the check without the three new values. No new table, column, policy or grant, so
+RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the needs-you pages say "not
+switched on yet" and record nothing; the other buttons are unchanged. NUMBER: 140 to 148 are taken on other branches,
+so 149. Branch `fix/autopilot-needs-you-buttons-3nov`. NOT RUN. Rollback: in the file.
