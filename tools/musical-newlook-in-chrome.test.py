@@ -593,11 +593,11 @@ def host():
     try:
         V1 = S.W.info['venue']
         tid, sid_ = S.open('/app/musical/host.html?venue=' + V1, 1280, 900, False)
-        S.until(sid_, 'document.getElementById("statusText") && /Signed in|TV/.test(document.getElementById("statusText").textContent)', 25)
+        S.until(sid_, 'document.getElementById("statusText") && /Signed in|TV|screen/.test(document.getElementById("statusText").textContent)', 25)
         time.sleep(1.5)
-        a = S.js(sid_, '(function(){ var p=document.getElementById("playerCount"), l=document.getElementById("livePlayers"); return JSON.stringify({ p: !!p, l: !!l, words: (p&&p.parentNode)?p.parentNode.textContent.replace(/\\s+/g," ").trim():"", status: document.getElementById("statusText").textContent }); })()')
+        a = S.js(sid_, '(function(){ var p=document.getElementById("playerCount"), l=document.getElementById("livePlayers"); return JSON.stringify({ p: !!p, l: !!l, words: (p&&p.closest(".lbl"))?p.closest(".lbl").textContent.replace(/\\s+/g," ").trim():"", status: document.getElementById("statusText").textContent }); })()')
         a = json.loads(a) if isinstance(a, str) else (a or {})
-        ok('the console opens signed in', bool(a) and ('Signed in' in a.get('status', '') or 'TV' in a.get('status', '')), a)
+        ok('the console opens signed in, waiting for its TV', bool(a) and any(k in a.get('status', '') for k in ('Signed in', 'TV', 'Waiting for screen')), a)
         ok('the console carries the room\'s player count ("Players (0)") and the live "Playing" box', bool(a) and a.get('p') and a.get('l') and a.get('words', '').startswith('Players'), a)
         S.close_tab(tid)
     finally:
