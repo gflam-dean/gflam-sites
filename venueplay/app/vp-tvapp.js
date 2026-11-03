@@ -14,9 +14,14 @@
    This file puts back, on tv.html, the parts of the Android app that must live in the page:
      1. tells tv.html it is in the app (window.VP_TV_APP; tv.html's IN_APP test reads it,
         see IN_APP in tv.html), and hides the "Go fullscreen" button, as ScreenActivity does
-     2. hold BACK (or OK) for 5 seconds: staff settings. A short BACK shows the hint and
-        never closes the screen; a second BACK while the hint is up goes to the TV's home
-        screen (both stores test that BACK leaves the app; the app keeps running)
+     2. hold OK for 5 seconds: staff settings (holding BACK does it too where the TV lets the
+        page see a held BACK). A short BACK shows the hint and never closes the screen; a
+        second BACK while the hint is up goes to the TV's home screen (both stores test that
+        BACK leaves the app; the app keeps running).
+        The words say OK on BOTH TVs (4 Nov 2026): LG keeps a held BACK for itself. In the
+        webOS TV 24 Simulator a BACK held for one second closes the app before the page sees
+        a single key (measured 3 Nov 2026), so "Hold BACK for 5 seconds" could never work
+        on an LG and read as "BACK throws you straight out"
      3. the network drops: a branded "Reconnecting" card over the page, never a blank or a
         browser error; when it comes back after more than two minutes, a clean reopen
      4. a reload while VenuePlay is not answering goes through the app (Reconnecting card,
@@ -38,7 +43,7 @@
   try { document.documentElement.setAttribute("data-vp-tvapp", PLATFORM); } catch (e) {}
 
   var HOLD_MS = 5000, HIDDEN_RELOAD_MS = 30 * 60 * 1000, LONG_OFFLINE_MS = 2 * 60 * 1000;
-  var HOLD_WORDS = PLATFORM === "tizen" ? "Hold OK for 5 seconds for settings" : "Hold BACK for 5 seconds for settings";
+  var HOLD_WORDS = "Hold OK for 5 seconds for settings";   // both TVs: LG takes a held BACK (see 2 above)
   var APP_ID_WEBOS = "au.com.venueplay.tv";
 
   function log(s) { try { console.info("[VenuePlayTV app] " + s); } catch (e) {} }
@@ -173,7 +178,7 @@
     var k = e.keyCode;
     if (!(BACKS[k] || k === 13)) return;
     e.preventDefault();       // no stopPropagation: tv.html's own key listeners (audio unlock) still run
-    if (held === k) return;   // the remote's own key repeat
+    if (held === k) { clearTimeout(holdTimer); holdTick(); return; }   // the remote's own key repeat: also a clock check (see onUp)
     if (BACKS[k] && hintKind === "short") { hideHint(); toTvHome(); return; }
     held = k; heldSince = Date.now(); opened = false;
     clearTimeout(holdTimer); holdTimer = setTimeout(holdTick, 200);
@@ -182,6 +187,11 @@
     if (e.keyCode !== held) return;
     e.preventDefault();
     clearTimeout(holdTimer);
+    /* Held for 5 seconds by the clock, even if the 200 ms ticks were held back: a page the TV
+       treats as hidden (the webOS simulator behind another window, measured 3 Nov 2026) gets
+       its timers slowed to one a second or less, and the countdown stopped at 2. The hold is
+       judged on letting go too, so it never depends on the timers alone. */
+    if (!opened && Date.now() - heldSince >= HOLD_MS) { holdTick(); held = -1; return; }
     var was = opened; held = -1;
     if (!was) showHint("venueplay screen. " + HOLD_WORDS + ". BACK again for the TV home screen.", 3500, "short");
   }
