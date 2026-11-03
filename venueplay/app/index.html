@@ -462,12 +462,14 @@
         </div>
       </div>
       <div id="gamePicker" class="picker">
-        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>
+        <!-- GAME ORDER (Dean, 2 Nov 2026): trivia, musical bingo, bingo, then raffles and the members draw.
+             Bingo never leads. The purchase raffle sits with the raffle it belongs to. -->
         <button type="button" class="pk" data-game="trivia">Trivia<span class="soon">Quiz night</span></button>
         <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>
+        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>
         <button type="button" class="pk" data-game="raffle">Raffle<span class="soon">Prize draw</span></button>
-        <button type="button" class="pk" data-game="members-draw">Members Draw<span class="soon">Members jackpot</span></button>
         <button type="button" class="pk hidden" id="praffleTile" data-game="purchase-raffle">Purchase Raffle<span class="soon">One entry per purchase</span></button>
+        <button type="button" class="pk" data-game="members-draw">Members Draw<span class="soon">Members jackpot</span></button>
       </div>
       <!-- HQ only (View as): why the Bingo tile is not there for this venue. A venue's own staff
            never see this or the tile (Dean, 22 Oct 2026: a dead tile reads as broken). -->

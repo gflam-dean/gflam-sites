@@ -10655,6 +10655,11 @@ MUTATIONS = [
      '  .authlogo{display:flex;align-items:center;justify-content:center;margin-bottom:30px;line-height:0}',
      '  .authlogo{display:flex;align-items:center;justify-content:center;margin-bottom:20px;line-height:0}',
      'logo to heading is 30px'),
+    # The host console's game picker in the game order (live play, Test Alpha, 3 Nov 2026).
+    ('sant-bingo-in-chrome.test.py', 'venueplay/app/index.html',
+     '        <button type="button" class="pk" data-game="trivia">Trivia<span class="soon">Quiz night</span></button>\n        <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>\n        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>\n',
+     '        <button type="button" class="pk" data-game="bingo">Bingo<span class="soon">90-ball</span></button>\n        <button type="button" class="pk" data-game="trivia">Trivia<span class="soon">Quiz night</span></button>\n        <button type="button" class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Name that tune</span></button>\n',
+     'games menu has Bingo and all five games, in the game order'),
 ]
 
 
