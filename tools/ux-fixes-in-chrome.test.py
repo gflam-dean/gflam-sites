@@ -163,6 +163,27 @@ def musical(r):
     ok('390 x 690: every word of every title on the card sits on one line (word-break, overflow-wrap and hyphens all off)',
        w.get('n', 0) >= 40 and not w.get('split') and not w.get('rules'), w)
     ok('and every title fits its square', not w.get('over') and not w.get('small'), w)
+    # 3 Nov 2026, Dean: "the small writing", "the size of the buttons", "that 5 played line doesn't need to be there".
+    sz = J(r.ask(m, ('(function(){var c=Array.prototype.filter.call(document.querySelectorAll("#cardGrid .cc"),function(e){return !e.classList.contains("free");});'
+                     'var f=c.map(function(e){return parseFloat(getComputedStyle(e).fontSize);}).sort(function(a,b){return a-b;});'
+                     'var sq=c.filter(function(e){var s=e.querySelector(".ct");return s&&/scale/.test(s.style.transform);}).map(function(e){return e.textContent;});'
+                     'return JSON.stringify({n:f.length,min:f[0],median:f[Math.floor(f.length/2)],squashed:sq});})()')))
+    ok('390 x 690: the song titles are big (half of them 15px or more, none under 11px) and none is squashed sideways',
+       sz.get('n') == 24 and sz.get('median', 0) >= 15 and sz.get('min', 0) >= 11 and not sz.get('squashed'), sz)
+    bt = J(r.ask(m, ('(function(){function g(i){var e=document.getElementById(i),c=getComputedStyle(e),b=e.getBoundingClientRect();return {bg:c.backgroundColor,bd:c.borderTopColor,bw:c.borderTopWidth,h:Math.round(b.height),ff:c.fontFamily};}'
+                     'return JSON.stringify({bingo:g("bingoBtn"),out:g("zoomOut"),inn:g("zoomIn"),fs:g("fsBtn")});})()')))
+    PINK = 'rgb(255, 31, 142)'
+    sizes = [bt.get(k, {}) for k in ('out', 'inn', 'fs')]
+    ok('BINGO! is the one pink-filled button (Manrope); Smaller, Bigger and Full screen are matching 48px pink outlines',
+       bt.get('bingo', {}).get('bg') == PINK and 'Manrope' in bt.get('bingo', {}).get('ff', '') and
+       all(s.get('bd') == PINK and s.get('bg') in ('rgba(0, 0, 0, 0)', 'transparent') and s.get('h', 0) >= 48 and 'Manrope' in s.get('ff', '') for s in sizes) and
+       len(set(s.get('h') for s in sizes)) == 1, bt)
+    pl = J(r.ask(m, ('(function(){var l=document.getElementById("lastCalled"),inMenu=!!l.closest("#menuPanel");'
+                     'var box=Array.prototype.some.call(document.querySelectorAll("#vCard *"),function(e){return /played\\b.*tap it on your card/i.test(e.textContent||"")&&e.children.length===0;});'
+                     'l.click();var sh=document.getElementById("playedSheet"),open=!sh.classList.contains("hidden");document.getElementById("sheetClose").click();'
+                     'return JSON.stringify({inMenu:inMenu,box:box,open:open});})()')))
+    ok('no "N played" box on the card screen; "Songs played so far" is in the menu and opens the list',
+       pl.get('inMenu') is True and pl.get('box') is False and pl.get('open') is True, pl)
     r.ask(m, ('(function(){var c=document.querySelectorAll("#cardGrid .cc:not(.free)"),t=%s;for(var i=0;i<t.length;i++){var sp=c[i].querySelector(".ct");(sp||c[i]).textContent=t[i];}'
               'document.getElementById("zoomIn").click();document.getElementById("zoomOut").click();return true;})()') % json.dumps(LONG))
     time.sleep(0.6)
