@@ -14559,6 +14559,15 @@ function helpCategoryForAddress(addr) {
   if (local === 'sales') return 'sales';
   return 'general';
 }
+/* AN INSTANTLY "POSITIVE REPLY" ALERT IS A SALES LEAD (3 Nov 2026). Instantly mails these to
+   hello@partyplay.com.au, so they came in as partyplay / general, and Dean's phone (set to urgent
+   and sales only) never buzzed for #1012 or #1013, two venues asking about trivia. Only Instantly's
+   own notification address counts, never a stranger who writes the same words. */
+function helpIsInstantlyLead(mail) {
+  const from = String((mail && mail.from && mail.from.email) || '').toLowerCase();
+  if (!/^notifications@([a-z0-9-]+\.)*instantly\.ai$/.test(from)) return false;
+  return /positive reply|sales opportunity|interested/i.test(String(mail.title || '') + '\n' + String(mail.text || '').slice(0, 2000));
+}
 function helpBrandForAddress(addr) {
   return /@([a-z0-9-]+\.)*partyplay\.com\.au$/i.test(String(addr || '').trim()) ? 'partyplay' : 'venueplay';
 }
@@ -15953,10 +15962,11 @@ async function helpTicketFromEmail(env, to, mail) {
       if (v && v[0]) venueId = v[0].id;
     }
   }
+  const instantlyLead = helpIsInstantlyLead(mail);
   let t;
   try {
     t = await helpInsertTicket(env, {
-      brand: brand, category: helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
+      brand: brand, category: instantlyLead ? 'sales' : helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
       contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
     });
@@ -15966,7 +15976,8 @@ async function helpTicketFromEmail(env, to, mail) {
     throw e;
   }
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
-  await helpAcknowledge(env, t);   // a new ticket by email is acknowledged too; a reply on one is not
+  // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked.
+  if (!instantlyLead) await helpAcknowledge(env, t);
   return { action: 'ticket', ticket_no: t.ticket_no };
 }
 async function helpInboundEmail(message, env) {
