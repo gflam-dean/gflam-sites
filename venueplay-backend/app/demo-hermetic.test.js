@@ -304,12 +304,87 @@ pass("the one buzz asks whether the page is a demo first",
          san.indexOf('realScreen("' + game + '-tv")') >= 0,
          "a hand-drawn replica goes stale the day the real screen changes");
   });
+  /* 3 Nov 2026: every pop-up that has a real ?demo=1 page shows that page. Scoped to the mode's own
+     branch of open(), so a realScreen call elsewhere on the page cannot satisfy it. */
+  function branch(mode) {
+    var i = san.indexOf('} else if (currentMode === "' + mode + '") {');
+    var j = i >= 0 ? san.indexOf("} else if (currentMode ===", i + 10) : -1;
+    if (j < 0 && i >= 0) j = san.indexOf("} else {\n      body.innerHTML = placeholderView", i);
+    return i >= 0 && j > i ? san.slice(i, j) : "";
+  }
+  pass("see-a-night: the musical bingo player pop-up is the real phone page",
+       /view === "player"[\s\S]*?realScreen\("musical-phone"\)/.test(branch("musical")),
+       "app/musical/play.html has a scripted ?demo=1; a hand-built phone goes stale");
+  pass("see-a-night: the screen ads big-screen pop-up is the real ads wall",
+       /view === "tv"[\s\S]*?realScreen\("ads-tv"\)/.test(branch("ads")),
+       "the ads-only demo is the same loop the homepage plays");
   pass("see-a-night hands a wall the box directly rather than a scaling box",
        /var isWall = view === "tv" \|\| \/-tv\$\/\.test\(view\)/.test(san),
        "in a livebox the wall renders full size with only its top-left corner in the bezel");
   pass("and builds the wall path without forcing an extension",
        san.indexOf('"/screen" + PAGE_EXT + "?demo=1"') >= 0,
        "PAGE_EXT is empty on Pages; a hardcoded .html 404s in production and works locally");
+})();
+
+/* THE TV IN THE ROOM SCENE IS THE REAL WALL (Dean, 3 Nov 2026). It was the last drawing on the page:
+   "QUESTION 3 OF 10", no SECS, a code nobody could join. RUN the real realScreenSrc, sceneTvView and
+   paintSceneTv out of see-a-night.html against a fake box and read the iframe it puts in the TV. */
+(function () {
+  var san = find("venueplay/see-a-night.html");
+  function lift(name) {
+    var i = san.indexOf("function " + name + "(");
+    if (i < 0) throw new Error("cannot find " + name + " in see-a-night.html - a test that cannot find its subject cannot fail");
+    var d = 0, k = san.indexOf("{", i);
+    do { if (san[k] === "{") d++; else if (san[k] === "}") d--; k++; } while (d > 0 && k < san.length);
+    return san.slice(i, k) + "\n";
+  }
+  var m = /var SCENE_TV_VIEW = (\{[^}]*\});/.exec(san);
+  pass("see-a-night: the scene TV has a game-to-wall table", !!m);
+  var box = { innerHTML: "", clientWidth: 336, clientHeight: 186, querySelector: function () { return null; } };
+  var doc = { getElementById: function (id) { return id === "vpSceneTv" ? box : null; } };
+  var fx = new Function("document", "PAGE_EXT", "var SCENE_TV_VIEW = " + (m ? m[1] : "{}") + ";\n" +
+    lift("realScreenSrc") + lift("sceneTvView") + lift("sceneTvFit") + lift("paintSceneTv") + "; return paintSceneTv;");
+  function srcFor(mode, ext) { box.innerHTML = ""; fx(doc, ext)(mode); var s = /src="([^"]*)"/.exec(box.innerHTML); return s ? s[1] : ""; }
+  pass("see-a-night: on trivia the TV in the room holds the real trivia wall in demo mode",
+       srcFor("trivia", "") === "/app/trivia/screen?demo=1", srcFor("trivia", ""));
+  pass("see-a-night: off a plain file server the same wall keeps its .html",
+       srcFor("trivia", ".html") === "/app/trivia/screen.html?demo=1", srcFor("trivia", ".html"));
+  pass("see-a-night: each game puts its own real wall in the TV",
+       srcFor("musical", "") === "/app/musical/screen?demo=1" && srcFor("bingo", "") === "/tv?demo=1" &&
+       srcFor("raffle", "") === "/app/raffle/screen?demo=1" && srcFor("members", "") === "/app/members/screen?demo=1" &&
+       srcFor("ads", "") === "/tv?demo=1&ads=1",
+       [srcFor("musical", ""), srcFor("bingo", ""), srcFor("raffle", ""), srcFor("members", ""), srcFor("ads", "")].join(" "));
+  pass("see-a-night: an unknown mode falls back to trivia, never a blank TV", srcFor("nope", "") === "/app/trivia/screen?demo=1", srcFor("nope", ""));
+  pass("see-a-night: the scene TV is an iframe that takes no tab stop", /<iframe [^>]*tabindex="-1"/.test(box.innerHTML), box.innerHTML);
+  var noComments = san.replace(/<!--[\s\S]*?-->/g, "");
+  var i0 = noComments.indexOf('<div class="vp-scene" id="vpScene">'), i1 = noComments.indexOf('class="vp-hotspot"', i0);
+  var scene = i0 >= 0 && i1 > i0 ? noComments.slice(i0, i1) : "";
+  pass("see-a-night: the room scene draws no screen of its own (no words drawn in the svg, no QUESTION 3 OF 10, no made-up code)",
+       scene.length > 2000 && !/<text\b/.test(scene) && scene.indexOf("QUESTION") < 0 && scene.indexOf("TQ7M4C") < 0, scene.length + " chars");
+  pass("see-a-night: the scene holds the box the real wall goes in, and the page paints it at load and on every game picked",
+       /<div class="vp-scene-tv" id="vpSceneTv"/.test(noComments) && /\n  paintSceneTv\(currentMode\);\n/.test(san) &&
+       /aria-selected", modeOpts\[i\] === opt \? "true" : "false"\);\n    \}\n    paintSceneTv\(currentMode\);/.test(san));
+})();
+
+/* THE ADS-ONLY DEMO IS NOT A BLACK WALL (3 Nov 2026). A demo has no slug, so showPairPanel put the bare
+   setup look on, and tv-bare hides #adsRoot: the homepage "Ads" chip showed nothing. RUN the real one. */
+(function () {
+  var i = TV.indexOf("function showPairPanel(");
+  var d = 0, k = TV.indexOf("{", i);
+  do { if (TV[k] === "{") d++; else if (TV[k] === "}") d--; k++; } while (d > 0 && k < TV.length);
+  var src = i >= 0 ? TV.slice(i, k) : "";
+  function run(demo) {
+    var cls = {}, hid = 0, el = { classList: { remove: function () {}, add: function () {} }, textContent: "" };
+    var body = { classList: { add: function (c) { cls[c] = 1; } } };
+    var f = new Function("VENUE_SLUG", "VP_DEMO", "hidePairPanel", "$", "CODE", "drawPairQR", "document",
+      src + "; showPairPanel(); ");
+    f("", demo, function () { hid++; }, function () { return el; }, "ABC123", function () {}, { body: body });
+    return { bare: !!cls["tv-bare"], hid: hid };
+  }
+  pass("tv.html: showPairPanel is there to run", src.length > 50);
+  var dm = run(true), real = run(false);
+  pass("tv.html: a demo never takes the bare setup look, so the ads-only demo shows its slides", !dm.bare && dm.hid === 1, JSON.stringify(dm));
+  pass("tv.html: CONTROL: a real screen with no venue link still gets the setup look", real.bare === true, JSON.stringify(real));
 })();
 
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */

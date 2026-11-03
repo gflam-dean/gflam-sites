@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>See a night on venueplay</title>
-<meta name="description" content="Tap through a real night on venueplay: the big screen, the host and a player, across bingo, trivia, musical bingo, raffles, members draws and screen ads.">
+<meta name="description" content="Tap through a real night on venueplay: the big screen, the host and a player, across trivia, musical bingo, bingo, raffles, members draws and screen ads.">
 <link rel="canonical" href="https://venueplay.com.au/see-a-night">
 <meta property="og:title" content="See a night on venueplay">
-<meta property="og:description" content="The real venueplay screens playing a sample night: the big screen, the host and a player, across bingo, trivia, musical bingo, raffles and members draws.">
+<meta property="og:description" content="The real venueplay screens playing a sample night: the big screen, the host and a player, across trivia, musical bingo, bingo, raffles and members draws.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://venueplay.com.au/see-a-night">
 <meta property="og:image" content="https://venueplay.com.au/logos/venueplay-share.png">
@@ -98,6 +98,8 @@
     margin: 0 0 12px;
     line-height: 1.02;
   }
+  /* lowercase venueplay, even in a capitals heading (brand v3.2; Dean, 3 Nov 2026) */
+  .vp-h1 .accent { text-transform: none; }
   .vp-h1 .accent { color: var(--pink); }
 
   .vp-intro {
@@ -127,6 +129,13 @@
   }
 
   .vp-scene svg { display: block; width: 100%; height: auto; }
+  /* The TV in the room: the screen rect of the svg is x 132, y 67, 336 x 186 of a 1120 x 620 view box.
+     The real wall is laid out at 1920 x 1080 inside it and scaled down (sceneTvFit). It never takes a
+     click: the "The big screen" hotspot sits on top of it and opens the full-size view. */
+  .vp-scene-tv { position: absolute; left: 11.786%; top: 10.806%; width: 30%; height: 30%; overflow: hidden;
+    border-radius: 8px; background: #0A0A0B; pointer-events: none; }
+  .vp-scene-tv iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0;
+    transform-origin: top left; pointer-events: none; background: #0A0A0B; }
 
   /* Hotspots */
   .vp-hotspot {
@@ -1730,24 +1739,10 @@ block (all classes prefixed .vpa-)
         <ellipse cx="300" cy="150" rx="320" ry="200" fill="url(#tvglow)"/>
         <rect x="120" y="55" width="360" height="210" rx="16" fill="#0b0b0d" stroke="#FF1F8E" stroke-width="3"/>
         <rect x="132" y="67" width="336" height="186" rx="10" fill="url(#screen)"/>
-        <!-- Hint of a trivia question on TV (Dean, 27 Sep 2026: "change the tv to trivia straight up").
-             Same four answer colours as the real trivia screen: A red, B blue, C amber, D green. -->
-        <g>
-          <text x="300" y="92" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#9A9AA4" letter-spacing="2">QUESTION 3 OF 10</text>
-          <text x="300" y="113" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#fff">WHICH CITY HOSTED THE 2000 OLYMPICS?</text>
-          <g font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">
-            <rect x="178" y="124" width="116" height="30" rx="6" fill="rgba(255,77,94,0.18)" stroke="#FF4D5E" stroke-width="1.5"/>
-            <text x="236" y="143">A  Melbourne</text>
-            <rect x="306" y="124" width="116" height="30" rx="6" fill="rgba(76,125,255,0.18)" stroke="#4C7DFF" stroke-width="1.5"/>
-            <text x="364" y="143">B  Sydney</text>
-            <rect x="178" y="160" width="116" height="30" rx="6" fill="rgba(245,165,36,0.18)" stroke="#F5A524" stroke-width="1.5"/>
-            <text x="236" y="179">C  Brisbane</text>
-            <rect x="306" y="160" width="116" height="30" rx="6" fill="rgba(46,204,113,0.18)" stroke="#2ECC71" stroke-width="1.5"/>
-            <text x="364" y="179">D  Perth</text>
-          </g>
-          <text x="300" y="215" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#9A9AA4">venueplay.com.au/play</text>
-          <text x="300" y="236" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#FF1F8E" letter-spacing="3">TQ7M4C</text>
-        </g>
+        <!-- THE TV IN THE ROOM SHOWS THE REAL SCREEN (Dean, 3 Nov 2026). This used to be a drawing of a
+             trivia question ("QUESTION 3 OF 10", no SECS, a made-up code) that went stale the day the real
+             wall changed. The screen rect above is only the backdrop now: #vpSceneTv sits over it and holds
+             the real game wall in its ?demo=1 mode, the same safe embed the big-screen view uses. -->
 
         <!-- Bar -->
         <g>
@@ -1804,9 +1799,10 @@ block (all classes prefixed .vpa-)
           </g>
         </g>
       </svg>
+      <div class="vp-scene-tv" id="vpSceneTv" aria-hidden="true"></div>
 
       <!-- Hotspots -->
-      <button class="vp-hotspot" style="left:26.8%; top:26%;" data-view="tv" aria-label="Open the big screen view">
+      <button class="vp-hotspot" style="left:26.8%; top:47%;" data-view="tv" aria-label="Open the big screen view">
         <span class="vp-ring"><span class="core"></span></span>
         <span class="vp-tag">The big screen</span>
       </button>
@@ -1842,7 +1838,7 @@ block (all classes prefixed .vpa-)
   <h2>Like the look of it?</h2>
   <p class="vp-next-price" id="vpNextPrice"><b>Your first month is free.</b> Then $3 per player, per month. You choose how many players. No lock-in,
     no setup fee, and nothing extra per night.</p>
-  <p class="vp-next-sub">Every format on this page is included: bingo, trivia, musical bingo,
+  <p class="vp-next-sub">Every format on this page is included: trivia, musical bingo, bingo,
     raffles, your members draw and your own screen ads.</p>
   <div class="vp-next-btns">
     <a class="vp-next-go" id="vpNextGo" href="/#claim">Get started</a>
@@ -2013,8 +2009,11 @@ block (all classes prefixed .vpa-)
      locally, and the only way to find out would have been to push it live and look.
      So take the style from the page's own address: whatever form loaded this one works. */
   var PAGE_EXT = /\.html($|[?#])/.test(window.location.pathname + window.location.search) ? ".html" : "";
-  function realScreen(view) {
-    var src = view === "tv"        ? "/tv" + PAGE_EXT + "?demo=1"
+  /* ONE PLACE FOR THE ADDRESS. The big-screen view below and the TV in the room scene (sceneTv)
+     both ask this, so the scene can never point at a different page from the one a tap opens. */
+  function realScreenSrc(view) {
+    return    view === "tv"        ? "/tv" + PAGE_EXT + "?demo=1"
+            : view === "ads-tv"    ? "/tv" + PAGE_EXT + "?demo=1&ads=1"
             /* PAGE_EXT, not (PAGE_EXT || ".html"). PAGE_EXT is "" on Cloudflare Pages, which
                rewrites the extension away, so the fallback would have forced .html and 404'd
                in production while working perfectly here. That is the same trap the note above
@@ -2027,7 +2026,12 @@ block (all classes prefixed .vpa-)
                 ? "/app/" + view.replace("-phone","") + "/play" + PAGE_EXT + "?demo=1"
             : view === "host"      ? (PAGE_EXT ? "/app/index.html?demo=1" : "/app/?demo=1")
             :                        "/play" + PAGE_EXT + "?demo=1";
+  }
+  function realScreen(view) {
+    var src = realScreenSrc(view);
+    if (src.indexOf("?demo=1") < 0) return "";   // a sales page only ever embeds a page in its ?demo=1 mode
     var title = view === "tv"        ? "The venue screen, running a bingo night"
+              : view === "ads-tv"    ? "The venue screen, running its screen ads"
               : /^[a-z]+-tv$/.test(view)
                   ? "The venue screen, running a " + view.replace("-tv","").replace("members","members draw") + " night"
               : /^[a-z]+-phone$/.test(view)
@@ -2044,6 +2048,34 @@ block (all classes prefixed .vpa-)
        top-left corner inside the bezel. Seen by opening the page, not by reading this file. */
     var isWall = view === "tv" || /-tv$/.test(view);
     return isWall ? f : '<div class="vp-livebox">' + f + '</div>';
+  }
+
+  /* THE TV IN THE ROOM SCENE IS THE REAL WALL TOO (Dean, 3 Nov 2026). It was the last drawing on this
+     page: a hand-made trivia question that read "QUESTION 3 OF 10" with no SECS and a code nobody
+     could join, and it would have gone on saying that whatever the real screen became. It now holds
+     the game wall for the mode picked above (trivia first), from realScreenSrc, so it is the page a
+     tap on "The big screen" opens, at the size of the drawn TV. Same safe embed: every wall's ?demo=1
+     resolves no venue, opens no channel and hides its join corner (demo-hermetic.test.js).
+     Laid out at 1920 x 1080 and scaled, like the homepage frame, so it is the TV picture shrunk and
+     not a wall re-flowed into a 336 px box. Never takes a click: the hotspot over it does. */
+  var SCENE_TV_VIEW = { trivia: "trivia-tv", musical: "musical-tv", bingo: "tv", raffle: "raffle-tv", members: "members-tv", ads: "ads-tv" };
+  function sceneTvView(mode) { return SCENE_TV_VIEW[mode] || "trivia-tv"; }
+  function sceneTvFit() {
+    var box = document.getElementById("vpSceneTv"), f = box && box.querySelector("iframe");
+    if (!f) return;
+    var w = box.clientWidth, h = box.clientHeight;
+    if (!w || !h) return;
+    var k = Math.min(w / 1920, h / 1080);
+    f.style.transform = "translate(" + ((w - 1920 * k) / 2) + "px," + ((h - 1080 * k) / 2) + "px) scale(" + k + ")";
+  }
+  function paintSceneTv(mode) {
+    var box = document.getElementById("vpSceneTv");
+    if (!box) return;
+    var src = realScreenSrc(sceneTvView(mode)), f = box.querySelector("iframe");
+    if (src.indexOf("?demo=1") < 0) return;   // only ever a demo wall in the room scene
+    if (f && f.getAttribute("src") === src) return;
+    box.innerHTML = '<iframe class="vp-scene-live" src="' + src + '" title="The venue screen in the room" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>';
+    sceneTvFit();
   }
 
   /* SCALE EACH DEVICE SCREEN TO ITS BEZEL. The iframe is laid out at real device pixels, so
@@ -2956,6 +2988,13 @@ block (all classes prefixed .vpa-)
       if (view === "tv") {
         body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
           realScreen("musical-tv") + '</div><div class="vp-tvstand"></div>';
+      } else if (view === "player") {
+        /* THE MUSICAL BINGO PHONE IS THE REAL PAGE NOW (Dean, 3 Nov 2026), the same way the trivia
+           phone is: app/musical/play.html has a scripted ?demo=1, so this tile cannot go stale. The
+           host tile stays hand-built until the musical console gets a demo mode of its own. */
+        body.innerHTML = '<div class="vp-phoneframe"><div class="vp-live-phone">' +
+          realScreen("musical-phone") + '</div></div>';
+        if (typeof vpFitFrames === "function") { vpFitFrames(); requestAnimationFrame(vpFitFrames); }
       } else {
         body.innerHTML = musicalViews[view] || "";
       }
@@ -2980,7 +3019,15 @@ block (all classes prefixed .vpa-)
         body.innerHTML = membersViews[view] || "";
       }
     } else if (currentMode === "ads") {
-      body.innerHTML = adViews[view] || "";
+      /* THE ADS WALL IS THE REAL PAGE TOO (3 Nov 2026): /tv?demo=1&ads=1 is the invented pub's own
+         advertising loop, the same one the homepage plays. The host and phone tiles stay as the
+         plain cards they are (screen ads have nothing on a phone). */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("ads-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = adViews[view] || "";
+      }
     } else {
       body.innerHTML = placeholderView(view);
     }
@@ -3039,6 +3086,7 @@ block (all classes prefixed .vpa-)
     for (var i = 0; i < modeOpts.length; i++) {
       modeOpts[i].setAttribute("aria-selected", modeOpts[i] === opt ? "true" : "false");
     }
+    paintSceneTv(currentMode);   // the TV in the room follows the game picked
   }
   function focusOpt(idx) {
     var n = modeOpts.length;
@@ -3073,6 +3121,9 @@ block (all classes prefixed .vpa-)
   document.addEventListener("click", function (e) {
     if (menuOpen() && !modeBar.contains(e.target)) closeMenu(false);
   });
+
+  paintSceneTv(currentMode);
+  window.addEventListener("resize", sceneTvFit);
 
   // Deep-link: /see-a-night?mode=trivia pre-selects that mode and opens the big screen.
   (function () {

@@ -202,5 +202,26 @@ ok('pressing it writes the opt-out once, lower case, marked as from the link',
 var plain = unsub('');
 ok('control: no address in the link, nothing written and nothing filled in', plain.posts.length === 0 && (plain.els.em || { value: '' }).value === '');
 
+/* 11. TRIVIA FIRST, ON THE TWO PAGES A PROSPECT SEES FIRST (Dean, 3 Nov 2026). Brand v3.2's game order is
+   trivia, musical bingo, bingo, then raffles. The homepage listed "Bingo, trivia, musical bingo" in its
+   title and six more places. Every run of text (between tags or quotes, comments out) that names both
+   trivia and number bingo must name trivia first; a sentence saying musical bingo is "not bingo" is not a list. */
+print('\n11. trivia first, and lowercase venueplay, on the homepage and /see-a-night');
+function bingoFirst(src) {
+  var out = [], txt = src.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  (txt.match(/[^.<>"]*\b[Bb]ingo\b[^.<>"]*/g) || []).forEach(function (seg) {
+    if (/not bingo/i.test(seg)) return;
+    var nb = seg.replace(/[Mm]usical bingo/g, 'musical_x').search(/\b[Bb]ingo\b/), tr = seg.toLowerCase().indexOf('trivia');
+    if (nb >= 0 && tr >= 0 && nb < tr) out.push(seg.trim().slice(0, 80));
+  });
+  return out;
+}
+['venueplay/index.html', 'venueplay/see-a-night.html'].forEach(function (rel) {
+  var b = bingoFirst(read(rel));
+  ok(rel.split('/').pop() + ': every list of games puts trivia before bingo', b.length === 0, b.join(' | '));
+});
+ok('control: the scan finds a bingo-first list when there is one', bingoFirst('<p>Bingo, trivia and raffles.</p>').length === 1 && bingoFirst('<p>Musical bingo is not bingo, like trivia.</p>').length === 0);
+ok('see-a-night: the venueplay in the capitals heading stays lowercase', /\.vp-h1 \.accent \{ text-transform: none; \}/.test(SAN.replace(/\/\*[\s\S]*?\*\//g, '')) && /<h1 class="vp-h1">See a night on <span class="accent">venueplay<\/span><\/h1>/.test(SAN));
+
 print('\n' + (ran - bad) + ' of ' + ran + ' checks passed');
 if (bad) throw new Error(bad + ' platform checks failed');

@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#8A8A95; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -114,14 +114,18 @@
   .answers.neutral .ans .al{color:#fff}
   .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.9cqw;color:#fff;text-align:center;line-height:1.08;word-break:break-word;overflow-wrap:anywhere}
   .answers.rev4 .ans .at{font-size:2.1cqw}
-  .ans.correct{--ac:53,208,127;background:rgba(53,208,127,.22);border-color:var(--win);box-shadow:0 0 5cqw rgba(53,208,127,.4)}
-  .ans.correct .al,.answers.neutral .ans.correct .al{color:var(--win)}
-  .answers.neutral .ans.correct{background:rgba(53,208,127,.22);border-color:var(--win)}
+  /* THE RIGHT ANSWER LIGHTS UP IN ITS OWN COLOUR (Dean, 3 Nov 2026): B is blue on every phone, so
+     the card a table tapped is the card that lights. Not pink, and no longer a green that matches
+     the D card. A no-colour night keeps the green, because there the letters carry no colour. */
+  .ans.correct{background:rgba(var(--ac),.24);border-color:rgb(var(--ac));box-shadow:0 0 5cqw rgba(var(--ac),.45)}
+  .ans.correct .al{color:rgb(var(--ac))}
+  .answers.neutral .ans.correct{--ac:53,208,127;background:rgba(53,208,127,.22);border-color:var(--win)}
+  .answers.neutral .ans.correct .al{color:var(--win)}
   .ans.dim{opacity:.38}
   .split{width:100%;margin-top:.8cqw}
   .split .sbar{height:1.2cqw;border-radius:1cqw;background:rgba(255,255,255,.12);overflow:hidden}
   .split .sfill{height:100%;background:rgb(var(--ac));border-radius:1cqw;transition:width .6s ease}
-  .split .sc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.7cqw;color:var(--text);margin-top:.5cqw}
+  .split .sc{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:1.9cqw;color:var(--text);margin-top:.5cqw}   /* TV body, not a code (3 Nov 2026) */
 
   .qfoot{display:flex;align-items:center;justify-content:center;gap:6cqw;margin-top:3cqw}
   .ringwrap{position:relative;width:12cqw;height:12cqw}
@@ -139,7 +143,13 @@
   .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
 
   /* reveal / board */
-  .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.6cqw,30px);color:var(--win);margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
+  .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.4cqw,28px);color:rgb(var(--rc,53,208,127));margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
+  /* The question stays on the wall at the reveal (Dean, 3 Nov 2026): a table that looked up from its
+     drinks reads what was asked as well as the answer. Same face as the question, a size down. */
+  .revq{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(18px,4.2cqw,46px);color:#fff;line-height:1.04;margin:0 0 1.4cqw;max-width:92cqw}
+  .revq.q-med{font-size:clamp(17px,3.6cqw,40px)}
+  .revq.q-long{font-size:clamp(16px,3cqw,32px);line-height:1.08}
+  .revq.q-epic{font-size:clamp(15px,2.4cqw,26px);line-height:1.12}
   .revboard{width:100%;max-width:70cqw;margin-top:2.6cqw;display:flex;flex-direction:column;gap:.8cqw}
   /* PAPER NIGHT (Dean, 25 Sep 2026): answers held to the end of the round, then listed. */
   .papersub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,3.2cqw,34px);color:var(--muted,#bbb);max-width:80cqw;line-height:1.25}
@@ -253,6 +263,7 @@
 
   <!-- reveal -->
   <div class="layer hidden" id="tvReveal">
+    <div class="revq hidden" id="tvRevQ"></div>
     <div class="revhead" id="tvRevHead">Correct answer</div>
     <div class="answers rev4" id="tvRevAnswers"></div>
     <div class="revboard" id="tvRevBoard"></div>
@@ -512,7 +523,7 @@
   function renderQuestion(m){
     stopRing(); if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
     var dur=m.secs || Math.max(1, Math.round((m.endsAt-Date.now())/1000));
-    curQ={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null };
+    curQ={ qseq:m.qseq, text:m.text||"", options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null };
     answeredPids={};
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
@@ -543,6 +554,15 @@
     ringTimer=setInterval(tickRing, 300); tickRing();
   }
 
+  /* The reveal's own copy of the question. A screen that joined mid-reveal never saw the question,
+     so it has no text and the line stays hidden rather than showing a blank band. */
+  var REV_RGB = ["255,77,77","77,141,255","255,194,75","53,208,127"];   // the .ans.c0 to .c3 colours
+  function paintRevQuestion(q){
+    var rq=$("tvRevQ"); if(!rq) return;
+    q=String(q||"");
+    rq.textContent=q;
+    rq.className="revq" + (!q ? " hidden" : q.length > 150 ? " q-epic" : q.length > 95 ? " q-long" : q.length > 55 ? " q-med" : "");
+  }
   function renderReveal(m){
     stopRing();
     if(!curQ) curQ={ options:m.options||[] };
@@ -551,6 +571,7 @@
     var opts=curQ.options||m.options||[];
     var ci=m.correctIndex;
     $("tvRevHead").textContent="Correct answer: "+LETTERS[ci]+" · "+(opts[ci]||"");
+    paintRevQuestion(curQ.text||m.text||"");
     var split=m.split||[0,0,0,0], total=0;
     for(var t=0;t<split.length;t++) total+=split[t]; if(total===0) total=1;
     var wrap=$("tvRevAnswers"); wrap.className="answers rev4"; wrap.innerHTML="";
@@ -565,6 +586,7 @@
       wrap.appendChild(box);
     }
     applyColour(wrap);
+    $("tvReveal").style.setProperty("--rc", state.colour && REV_RGB[ci] ? REV_RGB[ci] : "53,208,127");   // the heading in the right answer's own colour
     renderRows($("tvRevBoard"), m.leaderboard||[], 5);
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
@@ -583,7 +605,7 @@
       row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
       container.appendChild(row);
     }
-    if(!n){ container.appendChild(el("div","jsub","No scores yet")); }
+    /* No scores: the strip stays empty. Never empty-state words on a venue TV (Dean, 3 Nov 2026). */
   }
 
   /* FULL STANDINGS, A PAGE AT A TIME. Six rows fit a 1080p wall, so with 15 teams the ones in
@@ -607,7 +629,7 @@
         row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
         box.appendChild(row);
       }
-      if(!rows.length){ box.appendChild(el("div","jsub","No scores yet")); }
+      /* No rows: the board stays empty under its title, with no empty-state words on the wall. */
       var ph=$("tvBoardPage");
       if(ph){ if(pages>1){ ph.textContent="Teams "+(start+1)+" to "+end+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
     }
@@ -693,7 +715,7 @@
   if(typeof supabase==="undefined" || !supabase.createClient){
     var _rc=document.createElement("div");
     _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;align-items:center;"+
-      "justify-content:center;background:#0A0A0B;color:#9A9AA4;text-align:center;padding:24px;"+
+      "justify-content:center;background:#0A0A0B;color:#8A8A95;text-align:center;padding:24px;"+
       "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
     _rc.textContent="Reconnecting to venueplay\u2026";
     (document.body||document.documentElement).appendChild(_rc);

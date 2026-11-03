@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#8A8A95; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -244,7 +244,7 @@
   .bvissue[hidden]{display:none}
   .bvissuelbl{font-family:'JetBrains Mono',ui-monospace,monospace;
     font-size:clamp(9px,1.2cqw,15px);letter-spacing:.12em;text-transform:uppercase;
-    color:var(--muted,#9A9AA4);margin:0 0 .35em}
+    color:var(--muted,#8A8A95);margin:0 0 .35em}
   .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
     color:var(--gold,#FFC24B);word-break:break-all;line-height:1.25}
   .bvtext b{color:#fff}
@@ -1295,8 +1295,11 @@
   /* A venue-linked screen shows NO code, ever. Hosts sign in with their phone number, so nothing
      pairs by reading a code off the wall, and the venue's advertising keeps the whole screen.
      The panel below is only for a screen with no venue link at all, which has no other way in. */
+  /* NOR DOES A DEMO (3 Nov 2026). ?demo=1 has no slug, so it came down here, and tv-bare hid #adsRoot:
+     the ads-only demo (the homepage "Ads" chip, ?demo=1&ads=1) was a black wall. A demo never pairs
+     (hideSetup keeps the panel away), so it never needs the bare setup look either. */
   function showPairPanel(){
-    if(VENUE_SLUG){ hidePairPanel(); return; }
+    if(VENUE_SLUG || VP_DEMO){ hidePairPanel(); return; }
     var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR();
     try{ document.body.classList.add("tv-bare"); }catch(e){}
   }

@@ -683,6 +683,76 @@ print('\nEND GAME FROM THE PODIUM resets the console, so the TV is not handed th
   show('d. CONTROL: End game mid-question still ends the round through endRound()', fx2.end() === true && ended === 1, [ended, G2.status]);
 })();
 
+/* ---- NO EMPTY-STATE WORDS ON THE WALL (Dean, 3 Nov 2026) ----
+   "We also shouldn't have something saying no scores yet on our screen." The reveal strip and the full
+   leaderboard both painted "No scores yet" when the board was empty. RUN the real renderRows and
+   renderBoardPaged out of screen.html with an empty board and read every word they paint. */
+print('\nNO EMPTY-STATE WORDS: an empty board paints nothing on the venue TV');
+(function () {
+  function node(tag, cls, html) {
+    return { tag: tag, className: cls || '', innerHTML: html == null ? '' : String(html), textContent: '', kids: [],
+      classList: { add: function () {}, remove: function () {} }, appendChild: function (k) { this.kids.push(k); } };
+  }
+  function words(n) { var t = (n.innerHTML || '') + ' ' + (n.textContent || ''); n.kids.forEach(function (k) { t += ' ' + words(k); }); return t.replace(/\s+/g, ' ').trim(); }
+  var els = {};
+  function $(id) { return els[id] || (els[id] = node('div', '', '')); }
+  function el(tag, cls, html) { return node(tag, cls, html); }
+  function esc(s) { return String(s); }
+  var timers = [];
+  var f = new Function('$', 'el', 'esc', 'TV_BOARD_ROWS', 'setInterval', 'clearInterval',
+    'var boardPageTimer=null;\n' + liftAll(SCREEN, ['sharedRanks', 'renderRows', 'stopBoardPaging', 'renderBoardPaged'], 'trivia/screen.html') +
+    '; return { rows: renderRows, board: renderBoardPaged };');
+  var fx = f($, el, esc, 6, function (fn) { timers.push(fn); return timers.length; }, function () {});
+  var strip = node('div', '', 'old');
+  fx.rows(strip, [], 5);
+  show('a. the reveal strip under the answers paints no words when nobody has scored', words(strip) === '' && strip.kids.length === 0, JSON.stringify(words(strip)));
+  fx.board('Leaderboard', []);
+  show('b. the full leaderboard paints no rows and no words under its title when nobody has scored', words($('tvBoardRows')) === '' && $('tvBoardRows').kids.length === 0, JSON.stringify(words($('tvBoardRows'))));
+  show('c. the title still reads Leaderboard', $('tvBoardTitle').textContent === 'Leaderboard', $('tvBoardTitle').textContent);
+  show('d. no "scores yet" wording anywhere in the shipped trivia TV screen', !/scores yet/i.test(SCREEN));
+  var strip2 = node('div', '', '');
+  fx.rows(strip2, [{ name: 'Quizzly Bears', points: 300 }, { name: 'Team B', points: 100 }], 5);
+  show('e. CONTROL: with scores the strip paints both teams', strip2.kids.length === 2 && /Quizzly Bears/.test(words(strip2)), words(strip2));
+  fx.board('Leaderboard', [{ name: 'Quizzly Bears', points: 300 }]);
+  show('f. CONTROL: with scores the leaderboard paints the team', $('tvBoardRows').kids.length === 1 && /Quizzly Bears/.test(words($('tvBoardRows'))), words($('tvBoardRows')));
+})();
+
+/* ---- THE REVEAL KEEPS THE QUESTION, AND THE RIGHT ANSWER LIGHTS IN ITS OWN COLOUR (Dean, 3 Nov 2026) ----
+   RUN the real paintRevQuestion; read renderQuestion/renderReveal and the reveal CSS where they decide it. */
+print('\nTHE REVEAL: the question stays up, the right card lights in its own letter colour, counts in TV body');
+(function () {
+  var els = {};
+  function $(id) { return els[id] || (els[id] = { id: id, textContent: '', className: '' }); }
+  var f = new Function('$', lift(SCREEN, 'paintRevQuestion', 'trivia/screen.html') + '; return paintRevQuestion;');
+  var paint = f($);
+  paint('Which Australian city hosted the 2000 Summer Olympics?');
+  show('a. the reveal paints the question that was asked', $('tvRevQ').textContent === 'Which Australian city hosted the 2000 Summer Olympics?' && !/hidden/.test($('tvRevQ').className), $('tvRevQ').className);
+  paint('');
+  show('b. a screen that never saw the question hides the line rather than showing a blank band', /\bhidden\b/.test($('tvRevQ').className), $('tvRevQ').className);
+  paint(new Array(170).join('x'));
+  show('c. a long question steps down a size, like the question screen', /q-epic/.test($('tvRevQ').className), $('tvRevQ').className);
+  var rq = lift(SCREEN, 'renderQuestion', 'trivia/screen.html'), rr = lift(SCREEN, 'renderReveal', 'trivia/screen.html');
+  show('d. the question screen keeps the text for the reveal, and the reveal paints it', /curQ=\{[^}]*text:m\.text/.test(rq) && /paintRevQuestion\(curQ\.text\|\|m\.text\|\|""\)/.test(rr));
+  show('e. the reveal layer has the line, above the heading', /<div class="revq hidden" id="tvRevQ"><\/div>\s*<div class="revhead" id="tvRevHead">/.test(SCREEN));
+  var css = (SCREEN.match(/<style[^>]*>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  var correct = (css.match(/\n\s*\.ans\.correct\{[^}]*\}/) || [''])[0];
+  show('f. the right card lights in ITS OWN colour (--ac), not pink and not a fixed green', /border-color:rgb\(var\(--ac\)\)/.test(correct) && !/53,208,127|--win|FF1F8E|255,31,142/i.test(correct), correct.trim());
+  show('g. its heading takes the same colour', /\.revhead\{[^}]*color:rgb\(var\(--rc/.test(css) && /setProperty\("--rc", state\.colour && REV_RGB\[ci\]/.test(rr));
+  show('h. the player counts under each card are TV body (Hanken Grotesk), not mono', /\.split \.sc\{font-family:'Hanken Grotesk'/.test(css));
+  show('i. CONTROL: a no-colour night still lights the right card green', /\.answers\.neutral \.ans\.correct\{--ac:53,208,127/.test(css));
+})();
+
+/* ---- THE PUNTERS RECKON BOARD CARRIES THE PLAIN VENUEPLAY CORNER (Dean, 3 Nov 2026) ---- */
+print('\nPUNTERS RECKON: the plain venueplay corner, never "tv"');
+(function () {
+  var PR = readFile('venueplay/app/topanswers/screen.html');
+  var body = PR.replace(/<!--[\s\S]*?-->/g, '');
+  var m = /<div class="tv-corner-wrap">\s*<div class="tv-corner">\s*<span class="vn"><svg class="vp-wm"[^>]*data-vp-mark="wordmark"/.test(body);
+  show('a. the board page carries the venueplay wordmark in the corner, from the one mark file', m);
+  show('b. in its own full-screen layer above the board', /\.tv-corner-wrap\{position:fixed;inset:0;container-type:inline-size;pointer-events:none;z-index:6\}/.test(body) && /\.tv-corner\{position:absolute;top:2cqw;right:2\.4cqw/.test(body));
+  show('c. a live game never says tv in the corner', !/<div class="tv-corner">[\s\S]{0,4000}?>\s*tv\s*</.test(body.slice(body.indexOf('<div class="tv-corner-wrap">'), body.indexOf('<div class="tv-corner-wrap">') + 4000)));
+})();
+
 print('\n' + (bad ? 'FAIL ' + bad + ' of ' + ran : 'ALL ' + ran + ' CHECKS PASSED'));
 if (bad) throw new Error(bad + ' failed');
 })().catch(function (e) { print('FAIL the suite threw: ' + e + '\n' + (e && e.stack)); throw e; });

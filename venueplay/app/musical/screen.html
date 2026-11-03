@@ -13,7 +13,7 @@
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
     --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#8A8A94;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#8A8A95; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -552,7 +552,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   if(typeof supabase==="undefined" || !supabase.createClient){
     var _rc=document.createElement("div");
     _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;align-items:center;"+
-      "justify-content:center;background:#0A0A0B;color:#9A9AA4;text-align:center;padding:24px;"+
+      "justify-content:center;background:#0A0A0B;color:#8A8A95;text-align:center;padding:24px;"+
       "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
     _rc.textContent="Reconnecting to venueplay\u2026";
     (document.body||document.documentElement).appendChild(_rc);

@@ -644,7 +644,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 63,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -852,7 +852,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-15-oct.js": {
-  "checks": 105,
+  "checks": 123,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -1052,7 +1052,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/demo-hermetic.test.js": {
-  "checks": 78,
+  "checks": 91,
   "counted_by": "lines"
  },
  "venueplay-backend/app/hop-name.test.js": {
