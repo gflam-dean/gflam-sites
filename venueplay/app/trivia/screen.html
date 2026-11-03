@@ -65,19 +65,33 @@
   .hostline b{color:var(--pink)}
 
   /* lobby */
-  /* THE LOBBY (Dean, 3 Nov 2026): the night's name, "Scan to play" and the QR, centred; the address and the
-     code under it; how many have joined small in the bottom-right corner (never "0", nothing until one has). */
-  .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:4.4cqw;line-height:1;color:#fff;margin-top:1.2cqw}
-  .lobbyrow{display:flex;align-items:center;justify-content:center;margin-top:1.8cqw}
-  .joined{position:absolute;right:2.4cqw;bottom:2.2cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.6cqw;color:#F2F2F5;white-space:nowrap}
-  .joined b{color:#FFD93D}
-  .qrbig{width:min(30cqw,46vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  /* THE JOIN SCREEN (Dean, 3 Nov 2026, the approved v5 join): at 1920, the QR 600px at x 204 y 220; SCAN TO PLAY
+     150px Anton from x 895; "or go to venueplay.com.au/play" under it; the code 150px mono in a pink-edged box
+     with CODE inside; the title 72px on the logos' line. The night's own name and the small status line stay in
+     the page for the console and old screens, out of sight on a linked TV. */
+  .layer.join .jtitle .tl-night{font-size:3.75cqw}
+  .layer.join .lobbyname{display:none}
+  .layer.join .lobbyrow{position:absolute;left:calc(10.6cqw);top:11.46cqw;margin:0}
+  .layer.join .qrbig{width:31.25cqw;height:31.25cqw;padding:2.1cqw;border-radius:1.6cqw;box-shadow:none}
+  .layer.join .jright{position:absolute;left:calc(46.6cqw);right:5cqw;top:11.46cqw;height:31.25cqw;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}   /* centred on the QR */
+  .layer.join .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:7.8cqw;line-height:.92;color:#fff;margin:0;white-space:nowrap}
+  .layer.join .joinurl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.5cqw;line-height:1.2;color:#fff;margin-top:1.5cqw}
+  .layer.join .joinurl .jor{color:#8A8A95}
+  .layer.join .joinurl b{font-weight:800}
+  .layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);border-radius:1.15cqw;background:#1A1A1F}
+  .layer.join .codelbl{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.67cqw;color:#8A8A95;margin-right:2.4cqw}
+  .layer.join .codeval{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:7.8cqw;line-height:1;color:#fff;letter-spacing:.06em;background:none;border:none;padding:0;border-radius:0}
+  .layer.join .jsub{position:absolute;left:0;right:0;top:46cqw;margin:0;text-align:center}
+  .layer.join.ready .jsub{display:none}   /* a linked or set-up TV: no tiny "Grab your phone" line */
+  .layer.join .hostline{position:absolute;left:0;right:0;top:49cqw;margin:0;text-align:center}
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
+  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
   .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .lobbytxt{display:flex;align-items:center;justify-content:center;gap:2.4cqw;margin-top:1.6cqw;text-align:center}
-  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(18px,2.8cqw,54px);color:#8A8A95;line-height:1;max-width:70cqw;overflow-wrap:anywhere}
-  .lobbyname.long{font-size:clamp(16px,2.3cqw,44px);line-height:1.04}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,6cqw,64px);color:#fff;line-height:1;max-width:44cqw;overflow-wrap:anywhere}
+  .lobbyname.long{font-size:clamp(18px,4.2cqw,46px);line-height:1.04}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
-  .codebox{display:flex;align-items:center;gap:1.6cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
   .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
 
@@ -107,7 +121,7 @@
   .qcount{font-family:'JetBrains Mono',monospace;font-weight:700}
   /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
      with the length (Hanken 800, 76px at 1920 for a short one, as mocked). */
-  .qtext{position:absolute;left:calc(6.25cqw);top:9.4cqw;width:67.7cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
+  .qtext{position:absolute;left:calc(8.9cqw);top:9.4cqw;width:65.1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
   .qtext.q-med  {font-size:3.3cqw}
   .qtext.q-long {font-size:2.7cqw;line-height:1.14}
   .qtext.q-epic {font-size:2.25cqw;line-height:1.16}
@@ -127,11 +141,11 @@
   .layer.pic .ringwrap .rnum{font-size:4.6cqw}
   .layer.pic .ringwrap .rlbl{font-size:1.1cqw;margin-top:.25cqw}
   .layer.pic .qfoot{width:10cqw}
-  .answers{position:absolute;left:calc(6.25cqw);right:6.25cqw;top:25.4cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.3cqw 1.46cqw;gap:1.3cqw 1.46cqw}
+  .answers{position:absolute;left:calc(8.9cqw);right:8.9cqw;top:27.6cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.46cqw 1.46cqw;gap:1.46cqw 1.46cqw}
   /* The four answer colours (Dean, 3 Nov 2026): coral, blue, amber, violet. None is pink (the brand's
      accent), none is brand yellow (winning moments) and none is green (green is the right answer). The
      colour is a 14px edge and a filled letter chip on a neutral card, the same on the TV and the phone. */
-  .ans{--c:#8A8A95;position:relative;height:8.5cqw;border-radius:1.15cqw;background:#1A1A1F;padding:0 9cqw 0 2.3cqw;display:flex;align-items:center;overflow:hidden;transition:opacity .3s,transform .3s}
+  .ans{--c:#8A8A95;position:relative;height:11.875cqw;border-radius:1.15cqw;background:#1A1A1F;padding:0 2.3cqw 0 2.3cqw;display:flex;align-items:center;overflow:hidden;transition:opacity .3s,transform .3s}
   .ans::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.73cqw;background:var(--c)}
   .ans.c0{--c:#FF5A4E}
   .ans.c1{--c:#4D8DFF}
@@ -165,25 +179,27 @@
 
   /* THE CLOCK (the bold "20 SECS" of 2 Nov 2026, kept): a ring in the top-right box, the seconds in Anton
      with SECS under them, and the answered count below. On the reveal the same box holds "33 /43 got it right". */
-  .qfoot{position:absolute;right:6.25cqw;top:6.5cqw;width:13.5cqw;text-align:center}
-  .ringwrap{position:relative;width:13.5cqw;height:13.5cqw;margin:0 auto}
+  .qfoot{position:absolute;right:8.9cqw;top:9.4cqw;width:14.58cqw;text-align:center}
+  .ringwrap{position:relative;width:14.58cqw;height:14.58cqw;margin:0 auto}
   .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
   .ringwrap .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
   .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
-  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:6.4cqw;line-height:1;color:#fff}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:6.3cqw;line-height:1;color:#fff}
   /* "SECS" under the number (Dean, 2 Nov 2026): a bare "13" in a ring did not read as a timer.
      The number and label are centred as one pair, and both sit well inside the ring's inner circle
      (radius 40% of the ring) at every size; tools/old-tv-in-chrome.test.py measures that at 1920, 1280
      and 1024 wide, new and old sets. */
   .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:1.5cqw;line-height:1;color:#fff;margin-top:.3cqw;padding-left:.16em}
-  .answered{position:absolute;right:2.4cqw;bottom:2.2cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.6cqw;line-height:1;color:#fff;white-space:nowrap}
-  .answered b{color:#fff}
-  .answered .sub{display:inline;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;margin-top:.5cqw;padding-left:.2em}
-  /* WHERE THE NIGHT IS UP TO, UNDER THE FOUR ANSWERS (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
-     below the cards, the same place on the countdown and the reveal. Clear of the JOIN NOW card (centred). */
-  .qround{position:absolute;left:calc(30cqw);right:30cqw;top:45.1cqw;text-align:center;white-space:nowrap}
-  .qround .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.2cqw;line-height:1.2;color:#F2F2F5}
-  .layer.pic .qround{top:45.1cqw}
+  /* ANSWERED / IN THE ROOM, small inside the ring under SECS (Dean, 3 Nov 2026: "32/32"). Placed under the
+     number-and-SECS pair, out of its flow, so the pair stays centred in the ring as before. */
+  .ringwrap .rcount{position:absolute;left:0;right:0;top:calc(50% + 4.2cqw);text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.3cqw;line-height:1;color:#8A8A95;white-space:nowrap}
+  .ringwrap .rcount b{color:#fff;font-weight:700}
+  .layer.pic .ringwrap .rcount{top:calc(50% + 2.75cqw);font-size:.85cqw}
+  /* WHERE THE NIGHT IS UP TO (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
+     under the ring (since the four cards fill the lower half, per the approved mock), the same place on the countdown and the reveal. */
+  .qround{position:absolute;right:8.9cqw;width:14.58cqw;top:24.6cqw;text-align:center;white-space:nowrap}
+  .qround .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;line-height:1.2;color:#F2F2F5}
+  .layer.pic .qround{top:17.4cqw;width:10cqw}
 
   /* reveal / board */
   .revboard{display:none}
@@ -266,19 +282,23 @@
   <div class="venuename-left" id="venueNameTag" data-fit-avoid hidden></div>   <!-- top left, where a logo goes (2 Nov 2026) -->
 
   <!-- lobby -->
-  <div class="layer" id="tvLobby">
+  <!-- THE JOIN SCREEN (Dean, 3 Nov 2026; approved mock new-look-games-3nov/v5/tv/12-join-trivia-tugun.png):
+       the game's title on the logos' line, the QR big on the left, SCAN TO PLAY huge on the right, the address
+       under it, the code in a pink-edged box. No player count (the host console has it). The .join* rules are
+       written to be lifted as they are into the musical bingo and bingo walls. -->
+  <div class="layer qgrid join" id="tvLobby">
+    <div class="toplbl jtitle"><span class="tl-night" id="tvLobbyNight">Trivia</span></div>
     <div class="lobbyname" id="lobbyName">Trivia Night</div>
-    <div class="scanplay">Scan to play</div>
     <div class="lobbyrow">
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
     </div>
-    <div class="lobbytxt">
-      <span class="joinurl" id="lobbyJoinUrl">venueplay.com.au/play</span>
-      <span class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></span>
+    <div class="jright">
+      <div class="scanplay">Scan to play</div>
+      <div class="joinurl"><span class="jor">or go to </span><b id="lobbyJoinUrl">venueplay.com.au/play</b></div>
+      <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
     </div>
     <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
     <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
-    <div class="joined hidden" id="tvJoined"></div>   <!-- how many have joined, bottom right (Dean, 3 Nov 2026) -->
   </div>
 
   <!-- question -->
@@ -291,10 +311,9 @@
     <div class="qfoot">
       <div class="ringwrap">
         <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
-        <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span></div>
+        <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span><span class="rcount"><b id="tvAnsCount">0</b><span id="tvAnsOf"></span></span></div>
       </div>
     </div>
-    <div class="answered"><b id="tvAnsCount">0</b> <span class="sub">answered</span></div>   <!-- bottom right (Dean, 3 Nov 2026); the ring stays -->
   </div>
 
   <!-- reveal: the SAME grid as the question (same label, same question text in the same place, the same
@@ -451,7 +470,7 @@
   /* The label line's first half is the game's name, TRIVIA, the same on every wall. */
   function paintNight(){
     /* The GAME's name, the same on every wall (Dean, 3 Nov 2026); the night's own title is the lobby's. */
-    var t="Trivia", ids=["tvQNight","tvRevNight","tvBoardNight","tvPodNight"];
+    var t="Trivia", ids=["tvQNight","tvRevNight","tvBoardNight","tvPodNight","tvLobbyNight"];
     for(var i=0;i<ids.length;i++){ var n=$(ids[i]); if(n) n.textContent=t; }
   }
   /* TRIVIA ON THE LOGOS' CENTRE LINE (Dean, 3 Nov 2026). The venueplay mark top right is moved to sit on a
@@ -475,7 +494,9 @@
     paintNight();
     try{ setTimeout(alignTitle, 0); }catch(e){}
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
-    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
+    /* THE JOIN NOW CARD: on the scores and the podium, not over the question (Dean, 3 Nov 2026: the four answers
+       fill the lower half of the wall now, as approved), and not on the lobby, which is a join screen itself. */
+    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || which==="tvQ" || which==="tvReveal");
   }
   function renderPaper(m){
     var title=$("tvPaperTitle"), sub=$("tvPaperSub"), list=$("tvPaperList");
@@ -526,6 +547,7 @@
     $("lobbyJoinUrl").textContent = (joinCode || VENUE_SLUG)
       ? "venueplay.com.au/play"
       : "Host, scan to set up this screen";
+    try{ var _or=document.querySelector("#tvLobby .jor"); if(_or) _or.style.display = (joinCode || VENUE_SLUG) ? "" : "none"; }catch(e){}
   }
   function renderLobby(){
     $("lobbyCode").textContent = shownCode();
@@ -539,6 +561,7 @@
        a channel with no game on it. Same fix as the musical screen; raffle and
        members already had it. */
     var setupDone = !!VENUE_SLUG || !!joinCode || !!state.hostSeen;
+    try{ $("tvLobby").classList.toggle("ready", setupDone); }catch(e){}
     $("hostLine").classList.toggle("hidden", setupDone);
     if(!setupDone) $("hostLineCode").textContent=CODE;
     $("tvJoinCode").textContent = shownCode();
@@ -583,7 +606,9 @@
   }
 
   /* One size rule for the question text, used by the question AND its reveal so the two can never differ. */
-  function qClass(q){ q=String(q||""); return "qtext" + (q.length > 150 ? " q-epic" : q.length > 95 ? " q-long" : q.length > 55 ? " q-med" : ""); }
+  /* The question stays BIG (Dean, 3 Nov 2026): 76px at 1920 up to about 110 characters (four lines fit above the
+     answers), then a step down at 160 and 240. */
+  function qClass(q){ q=String(q||""); return "qtext" + (q.length > 240 ? " q-epic" : q.length > 160 ? " q-long" : q.length > 110 ? " q-med" : ""); }
   /* The four answers share one size, set by the longest, on the question and the reveal alike. */
   function ansLenClass(opts){ var n=0; for(var i=0;i<(opts||[]).length;i++) n=Math.max(n, String(opts[i]==null?"":opts[i]).length);
     return n>52 ? " alen-4" : n>24 ? " alen-3" : n>14 ? " alen-2" : ""; }
@@ -650,15 +675,7 @@
       if(i===ci) box.appendChild(el("span","rtag","Right answer"));
       box.appendChild(el("span","al",LETTERS[i]));
       box.appendChild(el("span","at",esc(opts[i])));
-      /* ONLY THE RIGHT ANSWER KEEPS A COUNT (Dean, 3 Nov 2026: the question is over): its players and its bar. */
-      var _sc=Number(split[i])||0;
-      if(i===ci){
-        box.appendChild(el("span","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
-        var sp=el("div","split");
-        var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round(_sc/den*100)+"%"; bar.appendChild(fill);
-        sp.appendChild(bar);
-        box.appendChild(sp);
-      }
+      /* NO COUNTS ON THE REVEAL (Dean, 3 Nov 2026: "33 out of 33" is redundant): the right answer turns green. */
       wrap.appendChild(box);
     }
     applyColour(wrap);
@@ -996,9 +1013,9 @@
     // wind-down: they have finished and the room should be looking at the venue again.
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
-    /* HOW MANY HAVE JOINED, in the lobby only, small in the bottom-right corner (Dean, 3 Nov 2026, reversing
-       the old "the wall never shows the player count" rule): nothing at all until somebody has joined. */
-    if(m.t==="players"){ paintJoined(m.count); return; }
+    /* The lobby never shows how many have joined (Dean, 3 Nov 2026: that stays on the host console). The count
+       is kept only for the ring's "32/32", answered out of the players in. */
+    if(m.t==="players"){ if(typeof m.count==="number") state.players=m.count; paintAnsOf(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(typeof m.colour==="boolean") state.colour=m.colour;
@@ -1069,10 +1086,7 @@
       renderPodium(m.top||[], m.rows);
     }
   }
-  function paintJoined(n){
-    var j=$("tvJoined"); if(!j) return; n=Number(n)||0;
-    if(n>0){ j.innerHTML="<b>"+n+"</b> "+(n===1?"player":"players")+" joined"; j.classList.remove("hidden"); } else { j.textContent=""; j.classList.add("hidden"); }
-  }
+  function paintAnsOf(){ var o=$("tvAnsOf"); if(!o) return; var n=Number(state.players)||0; o.textContent = n>0 ? "/"+n : ""; }
   function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
 
   // ---- init ----
@@ -1103,8 +1117,8 @@
       var Q = [
         { text:"Which Australian city hosted the 2000 Summer Olympics?",
           options:["Melbourne","Sydney","Brisbane","Perth"], correct:1, split:[4,31,6,2] },
-        { text:"What is the only food that never spoils?",
-          options:["Rice","Honey","Salt","Tinned fish"], correct:1, split:[7,26,9,1] },
+        { text:"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?",   // a long one (3 Nov 2026): the wall is seen with two lines and long answers too
+          options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], correct:1, split:[7,26,9,1] },
         { text:"Which band released the album Back in Black?",
           options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], correct:0, split:[33,5,4,1] }
       ];
@@ -1136,7 +1150,7 @@
         m({ t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE, title:"Trivia Night" });
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
-        m({ t:"players", count:23 });   // the lobby's "23 players joined", bottom right
+        m({ t:"players", count:43 });   // the players in, for the ring's "32/43"
       });
       /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
       t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, when it is off (the default since the 2 Nov hotfix)

@@ -151,7 +151,7 @@ await (async function () {
 /* ======================================================================================= 2 */
 print('\n== 2. the reveal is the question\'s own grid ==');
 (function () {
-  var long = 'In which year did the Sydney Harbour Bridge open to traffic, after eight years of construction work?';
+  var long = 'In which year did the Sydney Harbour Bridge open to traffic, after eight years of construction work that began in 1924, and who cut the ribbon on the day?';
   var a = tvRig();
   a.q(liveQ({ text: long, options: ['1928', '1932', '1936', 'Never Gonna Give You Up and more'] }));
   var qt = a.dom.$('tvQText'), qa = a.dom.$('tvAnswers');
@@ -159,7 +159,7 @@ print('\n== 2. the reveal is the question\'s own grid ==');
   a.rev({ t: 'reveal', correctIndex: 1, options: ['1928', '1932', '1936', 'Never Gonna Give You Up and more'], split: [4, 31, 6, 2] });
   var rt = a.dom.$('tvRevQText'), ra = a.dom.$('tvRevAnswers');
   show('the reveal shows the question text', rt.textContent === long, rt.textContent);
-  show('with the same size rule as the question', rt.className === qt.className && /q-long/.test(rt.className), [qt.className, rt.className]);
+  show('with the same size rule as the question', rt.className === qt.className && /q-med/.test(rt.className), [qt.className, rt.className]);
   show('and the answers at the same size as on the question', ra.className === qa.className && /alen-3/.test(ra.className), [qa.className, ra.className]);
   show('the same label line', a.dom.$('tvRevCount').textContent === 'Question 3 of 20', a.dom.$('tvRevCount').textContent);
   var cards = ra.children;
@@ -169,13 +169,12 @@ print('\n== 2. the reveal is the question\'s own grid ==');
   show('the right card carries a RIGHT ANSWER tag', tag.length === 1 && /right answer/i.test(tag[0].textContent), tag.length);
   show('no "got it right" count is written in the clock\'s place (the right card carries it)', !a.dom.els.tvRevRight && !a.dom.els.tvRevOf, Object.keys(a.dom.els).join());
   var counts = cards.map(function (c) { return (all(c).filter(function (k) { return k.className === 'sc'; })[0] || {}).textContent; });
-  show('only the right card keeps a count ("31 players"); the question is over, so the others show none', counts.join('|') === '|31 players||', counts.join('|'));
+  show('no counts on the reveal at all, the right answer included (the question is over)', counts.join('|') === '|||', counts.join('|'));
   var bars = cards.map(function (c) { return all(c).filter(function (k) { return k.className === 'split'; }).length; });
-  show('and only the right card keeps its bar', bars.join() === '0,1,0,0', bars.join());
+  show('and no bars', bars.join() === '0,0,0,0', bars.join());
   var b = tvRig();
   b.q(liveQ()); b.rev({ t: 'reveal', correctIndex: 0, options: liveQ().options, split: [0, 0, 0, 0] });
-  var bc = (all(b.dom.$('tvRevAnswers').children[0]).filter(function (k) { return k.className === 'sc'; })[0] || {}).textContent;
-  show('nobody answered: the right card says "0 players", nothing else is written', bc === '0 players' && !b.dom.els.tvRevOf, bc);
+  show('nobody answered: the reveal still writes no count', all(b.dom.$('tvRevAnswers')).every(function (k) { return k.className !== 'sc'; }));
 })();
 
 /* ======================================================================================= 3 */
@@ -214,6 +213,18 @@ print('\n== 3b. sixteen teams: the top ten, then the rest a page at a time, the 
   c.tick(); c.tick();
   show('twenty-eight teams: three pages, the last is the leader and 20 to 28', /^Page 3 of 3 . teams 20 to 28 of 28$/.test(c.dom.$('tvBoardPage').textContent) &&
        c.dom.$('tvBoardRows').children.length === 10, c.dom.$('tvBoardPage').textContent);
+})();
+
+print('\n== 3c. the JOIN NOW card: over the scores, never over the question or its reveal ==');
+(function () {
+  var dom = makeDom();
+  var f = new Function('$', 'paintNight', 'stopBoardPaging', 'setTimeout', 'alignTitle', 'window',
+    'var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
+  var show_ = f(dom.$, function () {}, function () {}, function () {}, function () {}, {});
+  var J = dom.$('tvJoinCorner');
+  var seen = ['tvLobby', 'tvQ', 'tvReveal', 'tvBoard', 'tvPodium'].map(function (w) { show_(w); return w + ':' + (J.classList.contains('hidden') ? 'off' : 'on'); });
+  show('off on the lobby, the question and the reveal; on for the scores and the podium',
+       seen.join() === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:on', seen.join());
 })();
 
 /* ======================================================================================= 4 */

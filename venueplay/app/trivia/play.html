@@ -30,7 +30,10 @@
      footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
      island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
   .ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
-  .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%}
+  .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
+  /* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
+     static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */
+  .ptop .brand .venue{position:absolute;left:auto;right:62px;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 28px);transform:translateY(-50%);margin:0}
   .brand .word{display:flex;align-items:center;min-height:56px;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
   .brand .vname{overflow-wrap:break-word;hyphens:manual}
   .brand .vname.long{font-size:16px}
@@ -70,8 +73,8 @@
      letter chip on a dark card. The reveal uses the same layout, so the question does not move. */
   .pq-count{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:15px;line-height:1.3;color:var(--muted);margin-bottom:12px}
   .pq-count b{color:#fff;font-weight:700}
-  .pq-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
-  .pq-text{flex:1;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
+  .pq-head{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}   /* the countdown ABOVE the question (Dean, 3 Nov 2026) */
+  .pq-text{align-self:stretch;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
   .pq-text.long{font-size:19px}
   .pq-ring{flex:none;position:relative;width:72px;height:72px}
   .pq-ring svg{position:absolute;left:0;top:0;width:100%;height:100%;transform:rotate(-90deg)}
@@ -108,10 +111,8 @@
   .pstatus{text-align:center;font-family:'Manrope',sans-serif;font-weight:600;font-size:16px;color:var(--muted);margin-top:18px}
   .pstatus.locked{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .pstatus.warn{color:var(--roll)}
-  .plock{display:none;margin-top:18px;border-radius:16px;background:#1A1A1F;padding:16px 18px}
-  .pstatus.locked + .plock{display:block}
-  .plock .l,.pcard .l{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
-  .plock .t,.pcard .t{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1.3;color:var(--muted);margin-top:2px}
+  .pcard .l{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
+  .pcard .t{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1.3;color:var(--muted);margin-top:2px}
 
   /* result: the question as it was, the right answer GREEN with a RIGHT ANSWER tag, your wrong pick
      outlined in its own colour and tagged YOURS, the rest dim, then one card with your points and place */
@@ -166,8 +167,8 @@
   body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06); background:#F3EFF5 }
   body.light .ptop{ background:rgba(255,255,255,.92) }
   body.light .brand .word, body.light .pbig{ color:#191420 }
-  body.light .plock, body.light .pcard{ background:#FFFFFF; color:#191420 }
-  body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .plock .l, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .pfoot svg{ color:#191420!important }
+  body.light .pcard{ background:#FFFFFF; color:#191420 }
+  body.light .pq-text, body.light .pq-count b, body.light .pq-ring .n, body.light .pcard .rtag, body.light .pcard .rank, body.light .finalwrap #finalBig, body.light .pfoot svg{ color:#191420!important }
   body.light .pans.right{ background:#2FD08A; color:#0A0A0B }
   .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
     font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
@@ -219,16 +220,15 @@
 
   <!-- QUESTION -->
   <div class="view hidden" id="vQ">
-    <div class="pq-count"><span>Trivia</span> &middot; <b id="pqCount">Question</b></div>
+    <div class="pq-count"><b id="pqCount">Question</b></div>
     <div class="pq-head">
-      <div class="pq-text" id="pqText">Question</div>
       <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
+      <div class="pq-text" id="pqText">Question</div>
     </div>
     <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:30vh;object-fit:contain;border-radius:12px;margin:0 auto 16px;display:block;background:#000" onerror="this.classList.add('hidden')">
     <div class="pq-cd" id="pqCd">Answer in 20s</div>
     <div class="panswers" id="pAnswers"></div>
     <div class="pstatus" id="pStatus">Tap your answer</div>
-    <div class="plock"><div class="l">Locked in</div><div class="t">Watch the TV for the answer</div></div>
   </div>
 
   <!-- PUNTERS RECKON (feature/top-answers, switched off): drawn by /app/topanswers/pr-phone.js -->
@@ -237,10 +237,10 @@
   <!-- RESULT: the question as it was, the answers marked, then your points and place -->
   <div class="view hidden" id="vRes">
     <div class="presult">
-      <div class="pq-count"><span>Trivia</span> &middot; <b id="pResCount">Question</b></div>
+      <div class="pq-count"><b id="pResCount">Question</b></div>
       <div class="pq-head">
-        <div class="pq-text" id="pResQ"></div>
         <div class="pq-ring done" id="pResRing"><div class="n"><b id="pResRight">0</b><span>right</span></div></div>
+        <div class="pq-text" id="pResQ"></div>
       </div>
       <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
@@ -1344,9 +1344,9 @@
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
       d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
-      d(T0+GAP,       function(){ fire(q(2,"What is the only food that never spoils?", ["Rice","Honey","Salt","Tinned fish"],15)); });
+      d(T0+GAP,       function(){ fire(q(2,"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", ["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"],15)); });
       d(T0+GAP+3600,  function(){ answer(2); });
-      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["Rice","Honey","Salt","Tinned fish"], split:[7,26,9,1], demoPts:0 }); });
+      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], split:[7,26,9,1], demoPts:0 }); });
       d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
       d(T0+2*GAP+3400,function(){ answer(0); });
       d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });

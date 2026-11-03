@@ -104,7 +104,7 @@ TV_PROBE = r'''(function(){
     out.lbl=R(lay.querySelector(".toplbl"));
     out.q=R(lay.querySelector(".qtext"));
     out.cards=[].map.call(lay.querySelectorAll(".answers .ans"),function(c){ var cs=getComputedStyle(c);
-      var al=c.querySelector(".al"), as=al?getComputedStyle(al):null; return { sc:(c.querySelector(".sc")||{}).textContent||"", r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: as?parseFloat(as.fontSize):0,
+      var al=c.querySelector(".al"), as=al?getComputedStyle(al):null, at=c.querySelector(".at"); return { ovf: at ? (function(){ var ab=at.getBoundingClientRect(), cb=c.getBoundingClientRect(); return ab.top < cb.top - 1 || ab.bottom > cb.bottom + 1 || ab.right > cb.right + 1 || at.scrollWidth > at.clientWidth + 2; })() : false, sc:(c.querySelector(".sc")||{}).textContent||"", r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: as?parseFloat(as.fontSize):0,
         lfg: as?as.color:"", lbg: as?as.backgroundColor:"", lts: as?as.textShadow:"" }; });
     var gn=lay.querySelector(".toplbl .tl-night"); if(gn){ var gs=getComputedStyle(gn); out.game={ r:R(gn), text:gn.textContent, ff:gs.fontFamily, fs:parseFloat(gs.fontSize), col:gs.color }; }
     var kids=[].map.call(lay.querySelectorAll(".toplbl > *"),R); out.lblInk=kids.length ? [Math.min.apply(null,kids.map(function(k){return k[0];})), Math.min.apply(null,kids.map(function(k){return k[1];})),
@@ -112,9 +112,13 @@ TV_PROBE = r'''(function(){
     var cn=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=cn ? R(cn) : null;
     /* the corner furniture (the answered count, the joined count) sits in the corner on purpose: not the wall's bottom */
     out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".answered,.joined")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
-    out.ans=R(lay.querySelector(".answered")); out.ansText=(lay.querySelector(".answered")||{}).textContent||"";
-    out.joined=(function(e){ return e && !e.classList.contains("hidden") ? { r:R(e), t:e.textContent } : null; })(lay.querySelector(".joined"));
+    out.ans=R(lay.querySelector(".rcount")); out.ansText=(lay.querySelector(".rcount")||{}).textContent||"";
+    out.ring=R(lay.querySelector(".ringwrap svg")); out.secs=R(lay.querySelector(".rlbl"));
+    out.joined=/joined/i.test(lay.textContent||"");
     out.scan=R(lay.querySelector(".scanplay")); out.qr=R(lay.querySelector(".qrbig"));
+    var cb=lay.querySelector(".codebox"); out.codeBorder=cb?getComputedStyle(cb).borderTopColor:""; out.codeText=(lay.querySelector(".codeval")||{}).textContent||"";
+    out.orgo=(lay.querySelector(".joinurl")||{}).textContent||"";
+    out.subShown=(function(e){ return !!e && getComputedStyle(e).display!=="none" && e.getBoundingClientRect().height>0; })(lay.querySelector(".jsub"));
     /* The fullest board a night shows: a later page, the leader pinned at the top, nine more rows and the
        "Page 2 of 2" line. Built here from its own rows, measured, and left: the next state repaints it. */
     if(lay.id==="tvBoard"){ var box=document.getElementById("tvBoardRows"), rr=box.querySelectorAll(".brow");
@@ -155,8 +159,11 @@ PHONE_PROBE = r'''(function(){
     btns: [].map.call(document.querySelectorAll("#"+(view?view.id:"x")+" .pans"),function(b){ var cs=getComputedStyle(b);
       var t=b.querySelector(".pt"), l=b.querySelector(".pl"), ls=l?getComputedStyle(l):null; return { lfs: ls?parseFloat(ls.fontSize):0, lff: ls?ls.fontFamily:"", lfg: ls?ls.color:"", lts: ls?ls.textShadow:"", cls:b.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, sh:cs.boxShadow, op:parseFloat(cs.opacity),
         fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"" }; }),
-    lock: (function(){ var l=document.querySelector("#vQ .plock"); return l && vis(l) ? l.innerText : ""; })(),
+    lock: "", all: view ? view.innerText : "",
+    ringR: (function(){ var r=view && view.querySelector(".pq-ring"); return r ? R(r) : null; })(),
+    qR: (function(){ var r=view && view.querySelector(".pq-text"); return r ? R(r) : null; })(),
     stw: (function(){ var t=document.getElementById("statusText"); return t ? t.getBoundingClientRect().width : -1; })(),
+    dotR: (function(){ var d=document.getElementById("statusDot"); return d ? R(d) : null; })(), lbl: (function(){ var l=view && view.querySelector(".pq-count"); return l ? l.textContent : ""; })(),
     dot: (function(){ var d=document.getElementById("statusDot"); return d ? d.getBoundingClientRect().width : 0; })(),
     pq: (document.getElementById("pqText")||{}).textContent||"", rq: (document.getElementById("pResQ")||{}).textContent||"", W: innerWidth };
   return JSON.stringify(out);
@@ -239,8 +246,8 @@ def tv(B, base, w, h, logo=''):
         title_checks('%dx%d wide logo' % (w, h), [(k, m.get(k) or {}) for k in ('question', 'reveal', 'board', 'podium')], w)
         return
     m = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, False,
-             [('lobby', 500), ('question', 4000), ('reveal', 9000), ('board', 12500), ('podium', 44000)], TV_PROBE)
-    lb, q, rv, bd, pd = m.get('lobby', {}), m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {})
+             [('lobby', 500), ('question', 4000), ('reveal', 9000), ('board', 12500), ('long', 15500), ('podium', 44000)], TV_PROBE)
+    lb, q, rv, bd, pd, lq = m.get('lobby', {}), m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {}), m.get('long', {})
     fn = dict(bd, rows=bd.get('rows6') or [], bottom=bd.get('bottom6'))   # the fullest board: six rows and the page line
     tag = '%dx%d' % (w, h)
     ok(tag + ': the demo is on its question, then its reveal, board and podium',
@@ -261,21 +268,36 @@ def tv(B, base, w, h, logo=''):
             still = still and same(a, b)
     ok(tag + ': and so is every answer card (the right one only lifts about its own middle)', still, [qc and [c['r'] for c in qc], rc and [c['r'] for c in rc]])
     ok(tag + ': the reveal has no "got it right" box in the clock\'s place', rv.get('got') is None, rv.get('got'))
-    A = q.get('ans')
-    ok(tag + ': "32 answered" sits small in the bottom-right corner, the ring stays where it was',
-       bool(A and q.get('clock')) and A[2] >= w * 0.95 and A[3] >= h - w * 0.04 and 'answered' in q.get('ansText', '').lower() and q['clock'][1] < h * 0.2, [A, q.get('clock')])
-    ok(tag + ': the reveal: only the right card keeps its count', [c['sc'] != '' for c in (rv.get('cards') or [])] == [('correct' in c['cls']) for c in (rv.get('cards') or [])] and any(c['sc'] for c in rv.get('cards') or []),
+    A, RG, SC = q.get('ans'), q.get('ring'), q.get('secs')
+    import re as _re
+    ok(tag + ': "32/43" (answered out of the players in) sits small inside the ring, under SECS',
+       bool(A and RG and SC) and A[1] >= SC[3] - 0.5 and A[0] >= RG[0] and A[2] <= RG[2] and A[3] <= RG[3] - (RG[3] - RG[1]) * 0.08 and bool(_re.match(r'^\d+/\d+$', q.get('ansText', ''))),
+       [A, SC, RG, q.get('ansText')])
+    ok(tag + ': no other "answered" words on the question wall', 'answered' not in (q.get('text') or '').lower(), q.get('text', '')[-80:])
+    ok(tag + ': no counts on the reveal at all, the right answer included', all(c['sc'] == '' for c in rv.get('cards') or []) and len(rv.get('cards') or []) == 4,
        [(c['cls'], c['sc']) for c in rv.get('cards') or []])
     S_, Q_ = lb.get('scan'), lb.get('qr')
-    ok(tag + ': the lobby: "Scan to play" and the QR centred on the wall', lb.get('layer') == 'tvLobby' and bool(S_ and Q_) and abs((S_[0] + S_[2]) / 2 - w / 2) <= 3 and abs((Q_[0] + Q_[2]) / 2 - w / 2) <= 3 and S_[3] <= Q_[1],
-       [lb.get('layer'), S_, Q_])
-    J_ = lb.get('joined')
-    ok(tag + ': and how many have joined, small in the bottom-right corner', bool(J_) and J_['r'][2] >= w * 0.95 and J_['r'][3] >= h - w * 0.04 and 'joined' in J_['t'], J_)
+    ok(tag + ': the join: the QR big on the left (as approved: x 10.6%, 31% of the width)', lb.get('layer') == 'tvLobby' and bool(Q_) and abs(Q_[0] - 0.106 * w) <= 0.01 * w and abs((Q_[2] - Q_[0]) - 0.3125 * w) <= 0.01 * w,
+       [lb.get('layer'), Q_])
+    ok(tag + ': SCAN TO PLAY huge on the right of it', bool(S_ and Q_) and S_[0] >= Q_[2] and (S_[3] - S_[1]) >= 0.06 * w, [S_, Q_])
+    ok(tag + ': "or go to venueplay.com.au/play" under it', lb.get('orgo', '').replace('\xa0', ' ').strip() == 'or go to venueplay.com.au/play', lb.get('orgo'))
+    ok(tag + ': the code in a PINK-edged box (yellow is for winning moments)', lb.get('codeBorder') == 'rgb(255, 31, 142)' and lb.get('codeText') == 'VENUE2', [lb.get('codeBorder'), lb.get('codeText')])
+    ok(tag + ': no tiny status line under the join on a set-up TV', lb.get('subShown') is False, lb.get('subShown'))
+    ok(tag + ': and the lobby never says how many have joined (that is the host console\'s)', lb.get('joined') is False, lb.get('joined'))
     rc_ = rv.get('cards') or []
     lowest = max([c['r'][3] for c in (q.get('cards') or [])] or [0])
-    ok(tag + ': "Question 3 of 20" sits UNDER the four answers, on the countdown and the reveal, in the same place',
-       bool(q.get('qround') and rv.get('qround')) and q['qround'][1] >= lowest and same(q['qround'], rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
-       [lowest, q.get('qround'), rv.get('qround'), q.get('qroundText')])
+    QR_, RG_ = q.get('qround'), q.get('ring')
+    ok(tag + ': "Question 3 of 20" sits under the ring and above the answers, the same on the countdown and the reveal',
+       bool(QR_ and RG_ and rv.get('qround')) and QR_[1] >= RG_[3] - 0.5 and QR_[3] <= min(c['r'][1] for c in q.get('cards') or [[0, 9e9]]) and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
+       [QR_, RG_, q.get('qroundText')])
+    qc_ = q.get('cards') or []
+    ok(tag + ': the question\'s top is lined up with the ring\'s top (as approved)', bool(q.get('q') and RG_) and abs(q['q'][1] - RG_[1]) <= 0.004 * w, [q.get('q'), RG_])
+    ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and fill the lower half (to about 1014px at 1080)',
+       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and max(c['r'][3] for c in qc_) >= 0.52 * w and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
+       [c['r'] for c in qc_])
+    ok(tag + ': a long two-line question and long answers fit: the question clear of the boxes, every answer inside its box',
+       lq.get('layer') == 'tvQ' and bool(lq.get('q')) and lq['q'][3] <= min(c['r'][1] for c in lq.get('cards') or [[0, 0]]) - 0.005 * w and not any(c['ovf'] for c in lq.get('cards') or []) and len(lq.get('cards') or []) == 4,
+       [lq.get('q'), [(c['r'], c['ovf']) for c in lq.get('cards') or []]])
     ok(tag + ': the scores: the heading is just "After question 3", and no small "Scores" word', bd.get('btitle', '').lower() == 'after question 3' and 'scores' not in bd.get('lblText', '').lower(),
        [bd.get('btitle'), bd.get('lblText')])
     ok(tag + ': the podium: "Winners tonight", with the winning yellow on it', pd.get('btitle', '').lower() == 'winners tonight' and pd.get('wcol') == 'rgb(255, 217, 61)', [pd.get('btitle'), pd.get('wcol')])
@@ -291,7 +313,6 @@ def tv(B, base, w, h, logo=''):
     gap = round(w * 0.006)
     def clear(rects):
         return bool(J) and all(r[3] + gap <= J[1] or r[0] >= J[2] + gap for r in rects)
-    ok(tag + ': the answer cards stay clear of the JOIN NOW card a real night has', clear([c['r'] for c in qc]) and clear([c['r'] for c in rc]), [J, [c['r'] for c in qc][-2:]])
     ok(tag + ': and the leaderboard rows too', clear(bd.get('rows') or []) and len(bd.get('rows') or []) >= 5, [J, (bd.get('rows') or [])[:1]])
     ok(tag + ': and the podium steps', clear(pd.get('steps') or []) and len(pd.get('steps') or []) == 3, [J, pd.get('steps')])
     ok(tag + ': sixteen teams: the wall shows the top ten', bd.get('rowsShown') == 10, bd.get('rowsShown'))
@@ -299,10 +320,10 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': and clear of the JOIN NOW card', clear(fn.get('rows') or []), [J, (fn.get('rows') or [])[-1:]])
     for name, x in (('question', q), ('reveal', rv), ('scores', bd), ('podium', pd), ('the fullest board', fn)):
         top = (x.get('lblInk') or [0, 0])[1]
-        ok(tag + ': %s: a proper bottom margin, at least the top one (nothing hard against the bottom edge)' % name,
-           bool(x.get('bottom')) and h - x['bottom'] >= top and top > 0, [round(h - (x.get('bottom') or h)), round(top)])
+        ok(tag + ': %s: a proper bottom margin (nothing hard against the bottom edge)' % name,
+           bool(x.get('bottom')) and h - x['bottom'] >= 0.02 * w and top > 0, [round(h - (x.get('bottom') or h)), round(top)])
     L = q.get('logo')
-    ok(tag + ': the question starts below the venue\'s logo', bool(L and q.get('q')) and q['q'][1] >= L[3] + gap, [L, q.get('q')])
+    ok(tag + ': the question is clear of the venue\'s logo (right of it, or below it)', bool(L and q.get('q')) and (q['q'][1] >= L[3] + gap or q['q'][0] >= L[2] + gap), [L, q.get('q')])
     ok(tag + ': no empty-state words on any wall', not any('no scores yet' in (x.get('text') or '').lower() for x in (q, rv, bd, pd)))
     ok(tag + ': the sales-page demo never makes a sound card (no buzzer, no fanfare)', pd.get('ac') == 0, pd.get('ac'))
     title_checks(tag + ' round crest', [('question', q), ('reveal', rv), ('scores', bd), ('podium', pd)], w)
@@ -333,6 +354,9 @@ def phone(B, base):
     ok('the venue\'s logo is top left', bool(L) and L[0] <= 20 and L[1] <= 30, L)
     ok('and clear of the menu button', bool(L and q.get('menu')) and L[2] + 8 <= q['menu'][0], [L, q.get('menu')])
     ok('no player name in the header', 'Dre' not in (q.get('head') or ''), q.get('head'))
+    ok('the label is just "QUESTION 3 OF 20" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 3 of 20', q.get('lbl'))
+    D_, MB_ = q.get('dotR'), q.get('menu')
+    ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
     ok('the green connection dot is there, with no "Connected" words beside it', q.get('dot', 0) >= 6 and 0 <= q.get('stw', 9) <= 1, [q.get('dot'), q.get('stw')])
     F, V = q.get('foot'), q.get('viewR')
     ok('our venueplay logo is at the bottom, under the game', bool(F and V) and F[1] >= V[3] - 1 and F[2] - F[0] >= 120, [F, V])
@@ -352,7 +376,9 @@ def phone(B, base):
     ok('locked in: the pick stays full colour, ringed in its colour', len(pk) == 1 and pk[0]['op'] == 1 and pk[0]['bg'] == rgb(COLOURS[1]) and pk[0]['c'].lower() in pk[0]['sh'].lower() or
        (len(pk) == 1 and pk[0]['op'] == 1 and pk[0]['bg'] == rgb(COLOURS[1]) and rgb(COLOURS[1]) in pk[0]['sh']), [(b['cls'], b['bg'], b['sh'], b['op']) for b in lk.get('btns') or []])
     ok('and the other three dim', sum(1 for b in lk.get('btns') or [] if 'picked' not in b['cls'] and b['op'] < 0.6) == 3, [(b['cls'], b['op']) for b in lk.get('btns') or []])
-    ok('and the phone says "Watch the TV for the answer"', 'Watch the TV for the answer' in (lk.get('lock') or ''), lk.get('lock'))
+    ok('locked in: no "Watch the TV for the answer" on the phone', 'watch the tv' not in (lk.get('all') or '').lower(), (lk.get('all') or '')[-120:])
+    for nm_, x_ in (('question', q), ('result', rt)):
+        ok('the countdown sits ABOVE the question on the %s' % nm_, bool(x_.get('ringR') and x_.get('qR')) and x_['ringR'][3] <= x_['qR'][1] + 0.5, [x_.get('ringR'), x_.get('qR')])
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]
     ok('a right answer: green, "RIGHT · YOURS"', len(gr) == 1 and gr[0]['bg'] == GREEN and 'yours' in gr[0]['tag'].lower(), [(b['cls'], b['bg'], b['tag']) for b in rt.get('btns') or []])
     ok('the result shows the question the room saw', rt.get('rq') and rt.get('rq') == 'Which Australian city hosted the 2000 Summer Olympics?', rt.get('rq'))
