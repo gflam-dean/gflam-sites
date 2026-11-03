@@ -18,11 +18,14 @@
   body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;padding:0 16px}
   .authwrap{max-width:420px;margin:12vh auto 0;text-align:center}
-  .authlogo{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px}
-  .authlogo svg{filter:drop-shadow(0 0 4px rgba(255,31,142,.9)) drop-shadow(0 0 12px rgba(255,31,142,.4))}
-  .authlogo .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;color:#fff}
-  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:32px;color:#fff;line-height:1.04;margin-bottom:8px}
-  .authsub{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.5}
+  /* THE SIGN-IN LOGO SINCE THE NEW WORDMARK (Dean, 3 Nov 2026): the wordmark is a 34px block, not a
+     25.5px glyph in a text line (the line box put 5px above it and crowded the heading), and no pink glow:
+     the v3.2 logo is never glowed. Logo to heading 30px, heading to sub 10px, sub to card 28px. */
+  .authlogo{display:flex;align-items:center;justify-content:center;margin-bottom:30px;line-height:0}
+  .authlogo .word{display:block;line-height:0;color:#fff}
+  .authlogo svg.vp-wm{display:block;height:34px;width:auto}
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:32px;color:#fff;line-height:1.04;margin-bottom:10px}
+  .authsub{color:var(--muted);font-size:14px;margin-bottom:28px;line-height:1.5}
   .authcard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:22px 20px}
   .btn{border:none;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
   .btn.pink{background:var(--pink);color:#0A0A0B;box-shadow:0 8px 20px rgba(255,31,142,.3)}

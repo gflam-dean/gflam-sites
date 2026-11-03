@@ -10633,6 +10633,28 @@ MUTATIONS = [
      '  .ballreveal.live .brrings i{animation:brring .74s ease-out .4s forwards}',
      '  .ballreveal.live .brrings i{animation:none}',
      'the reveal rings still pulse out behind the ball'),
+    # The sign-in logo and spacing since the new wordmark (Dean, 3 Nov 2026).
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/index.html',
+     '  .authlogo svg.vp-wm{display:block;height:34px;width:auto}\n', '',
+     '/app/ at 390x844: the sign-in wordmark is 34px tall'),
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/go.html',
+     '  .authlogo svg.vp-wm{display:block;height:34px;width:auto}\n',
+     '  .authlogo svg.vp-wm{display:block;height:34px;width:auto;filter:drop-shadow(0 0 4px rgba(255,31,142,.9))!important}\n',
+     '/app/go at 375x812: the sign-in wordmark has no pink glow'),
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/index.html',
+     '  .authwrap{max-width:420px;margin:9vh auto 0;text-align:center}',
+     '  .authwrap{max-width:420px;margin:5vh auto 0;text-align:center}',
+     'the sign-in card sits 9vh down'),
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/index.html',
+     "line-height:1.04;margin-bottom:10px}", "line-height:1.04;margin-bottom:8px}",
+     'heading to sub line is 10px'),
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/go.html',
+     "font-size:14px;margin-bottom:28px;", "font-size:14px;margin-bottom:22px;",
+     '/app/go at 320x640: sub line to card is 28px'),
+    ('signin-logo-in-chrome.test.py', 'venueplay/app/index.html',
+     '  .authlogo{display:flex;align-items:center;justify-content:center;margin-bottom:30px;line-height:0}',
+     '  .authlogo{display:flex;align-items:center;justify-content:center;margin-bottom:20px;line-height:0}',
+     'logo to heading is 30px'),
 ]
 
 
