@@ -71,7 +71,7 @@
   /* THE QUESTION, NEW LOOK (Dean, 3 Nov 2026): one label line, the question left with the clock ring beside
      it, and the four answers in the TV's colours: coral, blue, amber, violet, as a coloured edge and a
      letter chip on a dark card. The reveal uses the same layout, so the question does not move. */
-  .pq-count{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:15px;line-height:1.3;color:var(--muted);margin-bottom:12px}
+  .pq-count{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:15px;line-height:1.3;color:var(--muted);margin:0;text-align:center}   /* centred under the ring (Dean, 3 Nov 2026) */
   .pq-count b{color:#fff;font-weight:700}
   .pq-head{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px}   /* the countdown ABOVE the question (Dean, 3 Nov 2026) */
   .pq-text{align-self:stretch;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;line-height:1.22;overflow-wrap:break-word}
@@ -133,7 +133,10 @@
   .pcard .rtag{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
   .pcard .tot{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);margin-top:2px}
   .pcard .tot b{color:var(--muted);font-weight:700}
-  .pcard .pts{margin-left:auto;font-family:'Anton',sans-serif;font-size:44px;line-height:1;color:#2FD08A}
+  .pq-ring .n .pts{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1;color:#2FD08A}
+  .ptotal{width:max-content;margin:8px 4px 0 auto;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}   /* small, bottom right, in the page's flow so it never sits on the card or the footer */
+  .ptotal b{color:#fff}
+  .pcard .rank{margin-left:auto}
   .pcard .rank{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:#fff}
   .presult .ca,.presult .rnext{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
@@ -220,9 +223,9 @@
 
   <!-- QUESTION -->
   <div class="view hidden" id="vQ">
-    <div class="pq-count"><b id="pqCount">Question</b></div>
     <div class="pq-head">
       <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
+      <div class="pq-count"><b id="pqCount">Question</b></div>
       <div class="pq-text" id="pqText">Question</div>
     </div>
     <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:30vh;object-fit:contain;border-radius:12px;margin:0 auto 16px;display:block;background:#000" onerror="this.classList.add('hidden')">
@@ -237,19 +240,19 @@
   <!-- RESULT: the question as it was, the answers marked, then your points and place -->
   <div class="view hidden" id="vRes">
     <div class="presult">
-      <div class="pq-count"><b id="pResCount">Question</b></div>
       <div class="pq-head">
-        <div class="pq-ring done" id="pResRing"><div class="n"><b id="pResRight">0</b><span>right</span></div></div>
+        <div class="pq-ring done" id="pResRing"><div class="n"><b class="pts" id="pResPts">+130</b></div></div>   <!-- the points just won, where the countdown was (Dean, 3 Nov 2026) -->
+        <div class="pq-count"><b id="pResCount">Question</b></div>
         <div class="pq-text" id="pResQ"></div>
       </div>
       <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
       <div class="pcard">
-        <div><div class="rtag" id="pResTag">Correct!</div><div class="tot"><b id="pResTot">130</b> points</div></div>
-        <div class="pts" id="pResPts">+130</div>
+        <div><div class="rtag" id="pResTag">Correct!</div></div>
         <div class="rank hidden" id="pResRank">3rd of 11</div>
       </div>
       <div class="ca hidden" id="pResCa"></div>
+      <div class="ptotal"><b id="pResTot">130</b> points</div>   <!-- the running total, small, bottom right -->
       <div class="rnext" id="pResNext">This stays up until the next question starts</div>
     </div>
   </div>
@@ -809,8 +812,8 @@
     $("pResCount").textContent = (P.q && P.q.label) || "Question";
     var q=$("pResQ"); q.textContent=(P.q && P.q.text) || ""; q.className=phoneQClass(q.textContent);
     var ring=$("pResRing");
-    /* The ring keeps its place even without a count, so the question never re-wraps under a phone's thumb. */
-    if(split && ci>=0){ $("pResRight").textContent=Number(split[ci])||0; ring.style.visibility=""; } else ring.style.visibility="hidden";
+    /* The ring holds the points just won (showResult paints them); it is always there, so nothing moves. */
+    ring.style.visibility="";
     wrap.innerHTML=""; wrap.className="panswers rv"+phoneAnsClass(opts);
     for(var i=0;i<opts.length;i++){
       var cls="pans c"+i+(P.colour===false?" neutral":"")+(i===ci?" right":(i===mine?" mine":" dim"));

@@ -113,18 +113,17 @@ TV_PROBE = r'''(function(){
     /* the corner furniture (the answered count, the joined count) sits in the corner on purpose: not the wall's bottom */
     out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".answered,.joined")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
     out.ans=R(lay.querySelector(".rcount")); out.ansText=(lay.querySelector(".rcount")||{}).textContent||"";
-    out.ring=R(lay.querySelector(".ringwrap svg")); out.secs=R(lay.querySelector(".rlbl"));
+    out.ring=R(lay.querySelector(".ringwrap svg")); out.secs=R(lay.querySelector(".rlbl")); out.num=R(lay.querySelector("#tvCdNum"));
     out.joined=/joined/i.test(lay.textContent||"");
     out.scan=R(lay.querySelector(".scanplay")); out.qr=R(lay.querySelector(".qrbig"));
-    var cb=lay.querySelector(".codebox"); out.codeBorder=cb?getComputedStyle(cb).borderTopColor:""; out.codeText=(lay.querySelector(".codeval")||{}).textContent||"";
+    var cb=lay.querySelector(".codebox"); out.codeBorder=cb?getComputedStyle(cb).borderTopColor:""; out.cbox=R(cb); out.urlR=R(lay.querySelector(".joinurl")); out.codeText=(lay.querySelector(".codeval")||{}).textContent||"";
     out.orgo=(lay.querySelector(".joinurl")||{}).textContent||"";
     out.subShown=(function(e){ return !!e && getComputedStyle(e).display!=="none" && e.getBoundingClientRect().height>0; })(lay.querySelector(".jsub"));
-    /* The fullest board a night shows: a later page, the leader pinned at the top, nine more rows and the
-       "Page 2 of 2" line. Built here from its own rows, measured, and left: the next state repaints it. */
+    /* The fullest board a night shows: a later page, the leader pinned at the top, nine more rows
+       (no page words: the pages just flip every 10 seconds). Built here from its own rows, measured, and left: the next state repaints it. */
     if(lay.id==="tvBoard"){ var box=document.getElementById("tvBoardRows"), rr=box.querySelectorAll(".brow");
       out.rowsShown=rr.length;
       if(rr.length){ while(box.querySelectorAll(".brow").length<10) box.appendChild(rr[rr.length-1].cloneNode(true)); box.querySelector(".brow").classList.add("pinned"); }
-      var pg=document.getElementById("tvBoardPage"); if(pg){ pg.textContent="Page 2 of 2 \u00B7 teams 11 to 16 of 16"; pg.classList.remove("hidden"); }
       out.rows6=[].map.call(box.querySelectorAll(".brow"),R);
       out.bottom6=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2)?b.bottom:0; }).concat([0])); }
     out.clock=R(lay.querySelector(".qfoot")); out.got=R(lay.querySelector(".gotbox"));
@@ -164,6 +163,9 @@ PHONE_PROBE = r'''(function(){
     qR: (function(){ var r=view && view.querySelector(".pq-text"); return r ? R(r) : null; })(),
     stw: (function(){ var t=document.getElementById("statusText"); return t ? t.getBoundingClientRect().width : -1; })(),
     dotR: (function(){ var d=document.getElementById("statusDot"); return d ? R(d) : null; })(), lbl: (function(){ var l=view && view.querySelector(".pq-count"); return l ? l.textContent : ""; })(),
+    lblR: (function(){ var l=view && view.querySelector(".pq-count"); return l ? R(l) : null; })(),
+    ptsR: (function(){ var e=document.getElementById("pResPts"); return e && view && view.id==="vRes" ? R(e) : null; })(), ptsT: (document.getElementById("pResPts")||{}).textContent||"",
+    totR: (function(){ var e=document.querySelector(".ptotal"); return e && view && view.id==="vRes" ? R(e) : null; })(), totT: (document.querySelector(".ptotal")||{}).textContent||"",
     dot: (function(){ var d=document.getElementById("statusDot"); return d ? d.getBoundingClientRect().width : 0; })(),
     pq: (document.getElementById("pqText")||{}).textContent||"", rq: (document.getElementById("pResQ")||{}).textContent||"", W: innerWidth };
   return JSON.stringify(out);
@@ -248,7 +250,7 @@ def tv(B, base, w, h, logo=''):
     m = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, False,
              [('lobby', 500), ('question', 4000), ('reveal', 9000), ('board', 12500), ('long', 15500), ('podium', 44000)], TV_PROBE)
     lb, q, rv, bd, pd, lq = m.get('lobby', {}), m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {}), m.get('long', {})
-    fn = dict(bd, rows=bd.get('rows6') or [], bottom=bd.get('bottom6'))   # the fullest board: six rows and the page line
+    fn = dict(bd, rows=bd.get('rows6') or [], bottom=bd.get('bottom6'))   # the fullest board: the leader and nine more
     tag = '%dx%d' % (w, h)
     ok(tag + ': the demo is on its question, then its reveal, board and podium',
        (q.get('layer'), rv.get('layer'), bd.get('layer'), pd.get('layer')) == ('tvQ', 'tvReveal', 'tvBoard', 'tvPodium'),
@@ -273,6 +275,12 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': "32/43" (answered out of the players in) sits small inside the ring, under SECS',
        bool(A and RG and SC) and A[1] >= SC[3] - 0.5 and A[0] >= RG[0] and A[2] <= RG[2] and A[3] <= RG[3] - (RG[3] - RG[1]) * 0.08 and bool(_re.match(r'^\d+/\d+$', q.get('ansText', ''))),
        [A, SC, RG, q.get('ansText')])
+    N_ = q.get('num')
+    ok(tag + ': the number, SECS and the count are one block, centred in the ring top to bottom',
+       bool(N_ and A and RG) and abs((N_[1] + A[3]) / 2 - (RG[1] + RG[3]) / 2) <= 0.02 * (RG[2] - RG[0]), [N_, A, RG])
+    RV_ = rv.get('ring')
+    ok(tag + ': the reveal has no countdown ring', RV_ is None or (RV_[2] - RV_[0]) < 1, RV_)
+    ok(tag + ': the scores carry no page words', not any(x in (bd.get('text') or '') for x in ('Page ', 'Teams ')), (bd.get('text') or '')[-80:])
     ok(tag + ': no other "answered" words on the question wall', 'answered' not in (q.get('text') or '').lower(), q.get('text', '')[-80:])
     ok(tag + ': no counts on the reveal at all, the right answer included', all(c['sc'] == '' for c in rv.get('cards') or []) and len(rv.get('cards') or []) == 4,
        [(c['cls'], c['sc']) for c in rv.get('cards') or []])
@@ -280,6 +288,10 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the join: the QR big on the left (as approved: x 10.6%, 31% of the width)', lb.get('layer') == 'tvLobby' and bool(Q_) and abs(Q_[0] - 0.106 * w) <= 0.01 * w and abs((Q_[2] - Q_[0]) - 0.3125 * w) <= 0.01 * w,
        [lb.get('layer'), Q_])
     ok(tag + ': SCAN TO PLAY huge on the right of it', bool(S_ and Q_) and S_[0] >= Q_[2] and (S_[3] - S_[1]) >= 0.06 * w, [S_, Q_])
+    CB_, UR_ = lb.get('cbox'), lb.get('urlR')
+    ok(tag + ': SCAN TO PLAY and the address on the code box\'s centre line',
+       bool(S_ and CB_ and UR_) and abs((S_[0] + S_[2]) / 2 - (CB_[0] + CB_[2]) / 2) <= 3 and abs((UR_[0] + UR_[2]) / 2 - (CB_[0] + CB_[2]) / 2) <= 3,
+       [S_, UR_, CB_])
     ok(tag + ': "or go to venueplay.com.au/play" under it', lb.get('orgo', '').replace('\xa0', ' ').strip() == 'or go to venueplay.com.au/play', lb.get('orgo'))
     ok(tag + ': the code in a PINK-edged box (yellow is for winning moments)', lb.get('codeBorder') == 'rgb(255, 31, 142)' and lb.get('codeText') == 'VENUE2', [lb.get('codeBorder'), lb.get('codeText')])
     ok(tag + ': no tiny status line under the join on a set-up TV', lb.get('subShown') is False, lb.get('subShown'))
@@ -316,7 +328,7 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': and the leaderboard rows too', clear(bd.get('rows') or []) and len(bd.get('rows') or []) >= 5, [J, (bd.get('rows') or [])[:1]])
     ok(tag + ': and the podium steps', clear(pd.get('steps') or []) and len(pd.get('steps') or []) == 3, [J, pd.get('steps')])
     ok(tag + ': sixteen teams: the wall shows the top ten', bd.get('rowsShown') == 10, bd.get('rowsShown'))
-    ok(tag + ': the fullest board (the leader pinned, nine more and the page line) was measured', fn.get('layer') == 'tvBoard' and len(fn.get('rows') or []) == 10, [fn.get('layer'), len(fn.get('rows') or [])])
+    ok(tag + ': the fullest board (the leader pinned and nine more) was measured', fn.get('layer') == 'tvBoard' and len(fn.get('rows') or []) == 10, [fn.get('layer'), len(fn.get('rows') or [])])
     ok(tag + ': and clear of the JOIN NOW card', clear(fn.get('rows') or []), [J, (fn.get('rows') or [])[-1:]])
     for name, x in (('question', q), ('reveal', rv), ('scores', bd), ('podium', pd), ('the fullest board', fn)):
         top = (x.get('lblInk') or [0, 0])[1]
@@ -326,7 +338,11 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the question is clear of the venue\'s logo (right of it, or below it)', bool(L and q.get('q')) and (q['q'][1] >= L[3] + gap or q['q'][0] >= L[2] + gap), [L, q.get('q')])
     ok(tag + ': no empty-state words on any wall', not any('no scores yet' in (x.get('text') or '').lower() for x in (q, rv, bd, pd)))
     ok(tag + ': the sales-page demo never makes a sound card (no buzzer, no fanfare)', pd.get('ac') == 0, pd.get('ac'))
-    title_checks(tag + ' round crest', [('question', q), ('reveal', rv), ('scores', bd), ('podium', pd)], w)
+    title_checks(tag + ' round crest', [('join', lb), ('question', q), ('reveal', rv), ('scores', bd), ('podium', pd)], w)
+    G_ = [(x.get('game') or {}) for x in (lb, q, rv, bd, pd)]
+    ok(tag + ': TRIVIA is the same size, font and place on every wall (join, question, reveal, scores, podium)',
+       all(g.get('fs') for g in G_) and len(set(round(g['fs'], 1) for g in G_)) == 1 and len(set(g.get('ff') for g in G_)) == 1 and max(g['r'][1] for g in G_) - min(g['r'][1] for g in G_) <= 1,
+       [(g.get('fs'), (g.get('r') or [0, 0])[1]) for g in G_])
 
 
 def phone_stable(B, base, logo, tag):
@@ -377,6 +393,14 @@ def phone(B, base):
        (len(pk) == 1 and pk[0]['op'] == 1 and pk[0]['bg'] == rgb(COLOURS[1]) and rgb(COLOURS[1]) in pk[0]['sh']), [(b['cls'], b['bg'], b['sh'], b['op']) for b in lk.get('btns') or []])
     ok('and the other three dim', sum(1 for b in lk.get('btns') or [] if 'picked' not in b['cls'] and b['op'] < 0.6) == 3, [(b['cls'], b['op']) for b in lk.get('btns') or []])
     ok('locked in: no "Watch the TV for the answer" on the phone', 'watch the tv' not in (lk.get('all') or '').lower(), (lk.get('all') or '')[-120:])
+    for nm_, x_ in (('question', q), ('result', rt)):
+        ok('"Question 3 of 20" sits centred under the ring and above the question on the %s' % nm_,
+           bool(x_.get('lblR') and x_.get('ringR') and x_.get('qR')) and x_['lblR'][1] >= x_['ringR'][3] - 0.5 and x_['lblR'][3] <= x_['qR'][1] + 0.5 and abs((x_['lblR'][0] + x_['lblR'][2]) / 2 - (x_['ringR'][0] + x_['ringR'][2]) / 2) <= 2,
+           [x_.get('ringR'), x_.get('lblR'), x_.get('qR')])
+    P_, RR_ = rt.get('ptsR'), rt.get('ringR')
+    ok('the result: the points just won sit in the ring\'s place', bool(P_ and RR_) and P_[0] >= RR_[0] and P_[2] <= RR_[2] and P_[1] >= RR_[1] and P_[3] <= RR_[3] and (rt.get('ptsT') or '').startswith('+'), [P_, RR_, rt.get('ptsT')])
+    T_ = rt.get('totR')
+    ok('and the running total sits small in the bottom-right corner', bool(T_) and T_[0] >= 375 / 2 and T_[2] >= 375 - 24 and T_[3] >= 812 * 0.8 and (T_[3] - T_[1]) <= 24, [T_, rt.get('totT')])
     for nm_, x_ in (('question', q), ('result', rt)):
         ok('the countdown sits ABOVE the question on the %s' % nm_, bool(x_.get('ringR') and x_.get('qR')) and x_['ringR'][3] <= x_['qR'][1] + 0.5, [x_.get('ringR'), x_.get('qR')])
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]

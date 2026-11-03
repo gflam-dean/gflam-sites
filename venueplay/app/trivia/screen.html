@@ -69,11 +69,10 @@
      150px Anton from x 895; "or go to venueplay.com.au/play" under it; the code 150px mono in a pink-edged box
      with CODE inside; the title 72px on the logos' line. The night's own name and the small status line stay in
      the page for the console and old screens, out of sight on a linked TV. */
-  .layer.join .jtitle .tl-night{font-size:3.75cqw}
   .layer.join .lobbyname{display:none}
   .layer.join .lobbyrow{position:absolute;left:calc(10.6cqw);top:11.46cqw;margin:0}
   .layer.join .qrbig{width:31.25cqw;height:31.25cqw;padding:2.1cqw;border-radius:1.6cqw;box-shadow:none}
-  .layer.join .jright{position:absolute;left:calc(46.6cqw);right:5cqw;top:11.46cqw;height:31.25cqw;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}   /* centred on the QR */
+  .layer.join .jright{position:absolute;left:calc(46.6cqw);right:5cqw;top:11.46cqw;height:31.25cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}   /* centred on the QR; SCAN TO PLAY, the address and the code box on one centre line */
   .layer.join .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:7.8cqw;line-height:.92;color:#fff;margin:0;white-space:nowrap}
   .layer.join .joinurl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.5cqw;line-height:1.2;color:#fff;margin-top:1.5cqw}
   .layer.join .joinurl .jor{color:#8A8A95}
@@ -138,7 +137,7 @@
   .layer.pic .ans .sc{top:.5cqw;right:1cqw;font-size:1.1cqw}
   .layer.pic .ans .split{left:1.8cqw;right:1.2cqw;bottom:.6cqw}
   .layer.pic .ringwrap{width:10cqw;height:10cqw}
-  .layer.pic .ringwrap .rnum{font-size:4.6cqw}
+  .layer.pic .ringwrap .rnum{font-size:4.2cqw}
   .layer.pic .ringwrap .rlbl{font-size:1.1cqw;margin-top:.25cqw}
   .layer.pic .qfoot{width:10cqw}
   .answers{position:absolute;left:calc(8.9cqw);right:8.9cqw;top:27.6cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.46cqw 1.46cqw;gap:1.46cqw 1.46cqw}
@@ -184,17 +183,18 @@
   .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
   .ringwrap .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
   .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
-  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:6.3cqw;line-height:1;color:#fff}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:5.8cqw;line-height:1;color:#fff}
   /* "SECS" under the number (Dean, 2 Nov 2026): a bare "13" in a ring did not read as a timer.
      The number and label are centred as one pair, and both sit well inside the ring's inner circle
      (radius 40% of the ring) at every size; tools/old-tv-in-chrome.test.py measures that at 1920, 1280
      and 1024 wide, new and old sets. */
   .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:1.5cqw;line-height:1;color:#fff;margin-top:.3cqw;padding-left:.16em}
-  /* ANSWERED / IN THE ROOM, small inside the ring under SECS (Dean, 3 Nov 2026: "32/32"). Placed under the
-     number-and-SECS pair, out of its flow, so the pair stays centred in the ring as before. */
-  .ringwrap .rcount{position:absolute;left:0;right:0;top:calc(50% + 4.2cqw);text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.3cqw;line-height:1;color:#8A8A95;white-space:nowrap}
+  /* ANSWERED / IN THE ROOM, small inside the ring under SECS (Dean, 3 Nov 2026: "32/32"). The number, SECS and
+     the count are ONE block, centred in the ring with even spacing (Dean: with the count hung below the pair it
+     looked off-centre). tools/old-tv-in-chrome.test.py measures the block against the ring's inner circle. */
+  .ringwrap .rcount{display:block;margin-top:.45cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.3cqw;line-height:1;color:#8A8A95;white-space:nowrap}
   .ringwrap .rcount b{color:#fff;font-weight:700}
-  .layer.pic .ringwrap .rcount{top:calc(50% + 2.75cqw);font-size:.85cqw}
+  .layer.pic .ringwrap .rcount{margin-top:.3cqw;font-size:.85cqw}
   /* WHERE THE NIGHT IS UP TO (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
      under the ring (since the four cards fill the lower half, per the approved mock), the same place on the countdown and the reveal. */
   .qround{position:absolute;right:8.9cqw;width:14.58cqw;top:24.6cqw;text-align:center;white-space:nowrap}
@@ -608,7 +608,10 @@
   /* One size rule for the question text, used by the question AND its reveal so the two can never differ. */
   /* The question stays BIG (Dean, 3 Nov 2026): 76px at 1920 up to about 110 characters (four lines fit above the
      answers), then a step down at 160 and 240. */
-  function qClass(q){ q=String(q||""); return "qtext" + (q.length > 240 ? " q-epic" : q.length > 160 ? " q-long" : q.length > 110 ? " q-med" : ""); }
+  /* Sizes by length so a question always clears the answer boxes: at full size about 30 letters fit a line and
+     three lines fit above the boxes, so past 90 letters step down (3 Nov 2026: a 107-letter question ran to four
+     lines and touched the boxes). */
+  function qClass(q){ q=String(q||""); return "qtext" + (q.length > 200 ? " q-epic" : q.length > 130 ? " q-long" : q.length > 90 ? " q-med" : ""); }
   /* The four answers share one size, set by the longest, on the question and the reveal alike. */
   function ansLenClass(opts){ var n=0; for(var i=0;i<(opts||[]).length;i++) n=Math.max(n, String(opts[i]==null?"":opts[i]).length);
     return n>52 ? " alen-4" : n>24 ? " alen-3" : n>14 ? " alen-2" : ""; }
@@ -703,11 +706,11 @@
      7th to 15th never saw their name. Pages turn every few seconds while the board is up and stop
      the moment another layer shows (show() calls stopBoardPaging). Page one is always painted
      synchronously, so a screen that never turns a page still shows the leaders. */
-  var BOARD_PAGE_MS=4500, boardPageTimer=null;
+  var BOARD_PAGE_MS=10000, boardPageTimer=null;   // a page every 10 s past ten teams (Dean, 3 Nov 2026)
   function stopBoardPaging(){ if(boardPageTimer){ clearInterval(boardPageTimer); boardPageTimer=null; } var ph=$("tvBoardPage"); if(ph) ph.classList.add("hidden"); }
   /* THE TOP TEN, THEN THE REST A PAGE AT A TIME, THE LEADER KEPT AT THE TOP (Dean, 3 Nov 2026). Page one is
      places 1 to 10. Past ten teams, each later page is the leader, then the next nine (11 to 19, 20 to 28...),
-     with "Page 2 of 2 · teams 11 to 16" under the board. The same for the scores between questions and the
+     turning every 10 seconds, with no page words on the wall. The same for the scores between questions and the
      final scores. boardPages() is the arithmetic, kept apart so a suite can run it. */
   function boardPages(n){
     if(n<=TV_BOARD_ROWS) return [{ from:0, to:n, lead:false }];
@@ -734,7 +737,8 @@
       for(var i=pg.from;i<pg.to;i++) addRow(box, i, false);
       /* NO EMPTY-STATE TEXT ON THE WALL (Dean, 3 Nov 2026): a board with no rows yet shows its title and nothing else. */
       var ph=$("tvBoardPage");
-      if(ph){ if(pages>1){ ph.textContent="Page "+(page+1)+" of "+pages+" \u00B7 teams "+(pg.from+1)+" to "+pg.to+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
+      /* No "Page 1 of 2" or "Teams 1 to 10 of 16" on the wall (Dean, 3 Nov 2026): the pages just turn. */
+      if(ph){ ph.textContent=""; ph.classList.add("hidden"); }
     }
     paint();
     if(pages>1){ boardPageTimer=setInterval(function(){ page=(page+1)%pages; paint(); }, BOARD_PAGE_MS); }
