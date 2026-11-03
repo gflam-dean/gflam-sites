@@ -223,6 +223,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/musical-newlook-in-chrome.test.py": {
+  "checks": 239,
+  "counted_by": "lines"
+ },
  "tools/night-pass-hq-in-chrome.test.py": {
   "checks": 13,
   "counted_by": "lines"
@@ -581,6 +585,10 @@
  },
  "tools/test-musical-host.js": {
   "checks": 94,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-newlook.js": {
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -1072,7 +1080,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 414,
+  "checks": 376,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

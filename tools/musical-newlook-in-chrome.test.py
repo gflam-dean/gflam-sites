@@ -34,6 +34,7 @@ Club's round crest and The Pause Bar's 6.6:1 wordmark, at 1920x1080 and 1280x720
   HOST CONSOLE (signed in, on the browser rig)
     - the player count is on the console (the TV's join screen no longer shows one)
 
+The start-of-game show is turned off (?sting=0, on by default since 4 Nov) so it never covers a frame.
 VP_SHOTS=<dir> also writes every frame measured (the before/after review set). Takes /tmp/vp-heavy.lock first
 (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
@@ -253,7 +254,7 @@ def tv(B, base, w, h, logo, tag, shots):
     slug = 'tugun-bowls-club'
     chan = 'vp-' + venue_code('musical-' + slug)
     pre = 'try{ sessionStorage.setItem("vpTvHop","1"); }catch(e){}'
-    P = Page(B, base, '/app/musical/screen.html?venue=' + slug, w, h, False, pre)
+    P = Page(B, base, '/app/musical/screen.html?sting=0&venue=' + slug, w, h, False, pre)
     tagn = '%s %dx%d' % (tag, w, h)
     try:
         P.until('document.getElementById("tvLobby") && window.VPTvGame', 20); time.sleep(1.5)
@@ -407,7 +408,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
     pre = 'try{ localStorage.clear(); sessionStorage.clear(); }catch(e){}'
     print('\nTHE MUSICAL BINGO PHONE, %s, 375x812' % tag)
     if full:
-        P = Page(B, base, '/app/musical/play.html', 375, 812, True, pre)
+        P = Page(B, base, '/app/musical/play.html?sting=0', 375, 812, True, pre)
         try:
             P.until('document.getElementById("vNoRoom") && !document.getElementById("vNoRoom").classList.contains("hidden")', 20); time.sleep(0.8)
             P.js('(function(){ var i=document.getElementById("roomIn"); i.focus(); i.value="K7M"; i.dispatchEvent(new Event("input")); return 1; })()'); time.sleep(0.3)
@@ -424,7 +425,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             P.close()
     # by the QR: straight to the name step
     W['collect'] = {'first_name': True}
-    P = Page(B, base, '/app/musical/play.html?room=' + ROOM, 375, 812, True, pre)
+    P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, 375, 812, True, pre)
     try:
         P.until('document.getElementById("vJoin") && !document.getElementById("vJoin").classList.contains("hidden") && !document.getElementById("venueLogo").classList.contains("hidden")', 20); time.sleep(1)
         P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}])); time.sleep(0.4)
@@ -531,7 +532,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
     finally:
         P.close()
     # a winner's phone
-    P = Page(B, base, '/app/musical/play.html?room=' + ROOM, 375, 812, True, pre)
+    P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, 375, 812, True, pre)
     try:
         P.until('!document.getElementById("vJoin").classList.contains("hidden")', 20); time.sleep(0.6)
         P.js('(function(){ document.getElementById("nameIn").value="Sam"; document.getElementById("joinBtn").click(); return 1; })()')
@@ -550,7 +551,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
     if full:
         # the venue that collects more: YOUR DETAILS and the two ticks
         W['collect'] = {'first_name': True, 'last_name': True, 'postcode': True, 'email': True, 'marketing_optin': True}
-        P = Page(B, base, '/app/musical/play.html?room=' + ROOM, 375, 812, True, pre)
+        P = Page(B, base, '/app/musical/play.html?sting=0&room=' + ROOM, 375, 812, True, pre)
         try:
             P.until('document.getElementById("joinHead").textContent==="Your details"', 20); time.sleep(0.8)
             P.js('(function(){ document.getElementById("nameIn").value="Sam"; return 1; })()')
@@ -567,7 +568,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
 def demo(B, base):
     """The sales-page demos still play (see-a-night and the state pages show them)."""
     print('\nTHE SALES-PAGE DEMOS')
-    P = Page(B, base, '/app/musical/screen.html?demo=1', 1920, 1080, False)
+    P = Page(B, base, '/app/musical/screen.html?demo=1&sting=0', 1920, 1080, False)
     try:
         P.until('!document.getElementById("tvRun").classList.contains("hidden")', 20); time.sleep(4)
         d = P.obj(TV_PROBE) or {}
@@ -576,7 +577,7 @@ def demo(B, base):
         ok('and never names a table: the claim and the winner are a player\'s name', not _re.search(r'name:"Table', io.open(os.path.join(SITE, 'app/musical/screen.html'), encoding='utf-8').read().split('function demoNight')[1].split('hideChrome')[0]))
     finally:
         P.close()
-    P = Page(B, base, '/app/musical/play.html?demo=1', 375, 812, True)
+    P = Page(B, base, '/app/musical/play.html?demo=1&sting=0', 375, 812, True)
     try:
         P.until('document.querySelectorAll("#cardGrid .cc").length===25', 20); time.sleep(3)
         d = P.obj(PHONE_PROBE) or {}

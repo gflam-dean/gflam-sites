@@ -519,11 +519,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var start=Math.max(0, all.length-room), last=all.length-1;
     for(var i=start;i<all.length;i++){
       var d=document.createElement("div"); d.className="ptok"+(i===last && !held?" new":""); d.textContent=all[i];
-      var art=_songArt[all[i]];
+      var art=(typeof _songArt==="object") ? _songArt[all[i]] : null;   // (a suite lifts renderBoard on its own)
       if(art && d.insertBefore){ var im=document.createElement("img"); im.alt=""; im.src=art; d.insertBefore(im, d.firstChild); }
       b.appendChild(d);
     }
-    fitStrip(b);
+    if(typeof fitStrip==="function") fitStrip(b);
     var total=all.length+(held?1:0);
     var more=$("tvBoardMore");
     if(more){ more.classList.toggle("hidden", start<=0); more.textContent="+"+start; }
