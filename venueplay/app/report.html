@@ -30,6 +30,9 @@
   .hact:hover{border-color:var(--pink);color:#fff}
   .wrap{max-width:760px;margin:0 auto;padding:20px 16px 90px}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:32px;color:#fff;line-height:1.04;margin:14px 0 6px;overflow-wrap:anywhere}
+  /* THE TITLE IN TWO LINES (Dean, 3 Nov 2026: "October at Deepwater Hotel" broke mid-name on a phone). The month is
+     the big line; the venue sits under it in the page's own type, so it never splits a pub's name. */
+  h1 .at{display:block;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:6px}
   .lede{color:var(--muted);margin-bottom:16px}
   .label{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--faint);margin:28px 0 10px}
   .picks{display:grid;gap:10px;grid-template-columns:1fr;margin:0 0 6px}
@@ -164,10 +167,15 @@
   function row(l, sub, r, rsub){ return '<div class="li"><div class="l"><b>'+l+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div><div class="r">'+r+(rsub?'<small>'+rsub+'</small>':'')+'</div></div>'; }
   function show(id, on){ $(id).classList.toggle("hidden", !on); }
 
+  /* "October" on the big line, "at Deepwater Hotel" under it: one function, both pages. */
+  function paintTitle(month, venue){
+    var h=$("title"); h.textContent=month;
+    var at=document.createElement("span"); at.className="at"; at.textContent="at "+venue; h.appendChild(at);
+  }
   /* A venue with no nights in this month or the one before gets a finished page, not a wall of zeros. */
   function renderEmpty(d){
     var rep=d.report, mWords=monthWords(rep.month);
-    $("title").textContent=monthName(rep.month)+" at "+d.venue.name;
+    paintTitle(monthName(rep.month), d.venue.name);
     $("lede").textContent="";
     $("emptyState").innerHTML='<b>No nights yet at '+esc(d.venue.name)+'</b>'+
       '<p>'+(rep.finished ? 'No games ran in '+esc(mWords)+'.' : 'No games have run in '+esc(mWords)+' yet.')+
@@ -181,7 +189,7 @@
     var mName=monthName(rep.month), pName=monthName(rep.prev_month);
     if(!a.nights && !(b && b.nights)){ renderEmpty(d); return; }
     $("emptyState").classList.add("hidden");
-    $("title").textContent=mName+" at "+d.venue.name;
+    paintTitle(mName, d.venue.name);
     $("lede").textContent = a.nights
       ? plural(a.player_visits,"player","players")+" over "+plural(a.nights,"night","nights")+(rep.finished?". Here is how "+monthWords(rep.month)+" went.":" so far. Here is how "+monthWords(rep.month)+" is going.")
       : (rep.finished ? "No games ran in "+monthWords(rep.month)+"." : "No games yet in "+monthWords(rep.month)+".")+(b.nights?" In "+pName+" you ran "+plural(b.nights,"night","nights")+" with "+plural(b.player_visits,"player","players")+".":"");

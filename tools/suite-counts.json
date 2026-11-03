@@ -140,7 +140,7 @@
   "counted_by": "lines"
  },
  "tools/console-hq-5nov-in-chrome.test.py": {
-  "checks": 70,
+  "checks": 177,
   "counted_by": "lines"
  },
  "tools/console-in-chrome.test.py": {
@@ -192,7 +192,7 @@
   "counted_by": "lines"
  },
  "tools/hq-tabs-in-chrome.test.py": {
-  "checks": 64,
+  "checks": 82,
   "counted_by": "lines"
  },
  "tools/leave-behinds-in-chrome.test.py": {
@@ -244,7 +244,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
-  "checks": 124,
+  "checks": 140,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/pinned-cdn.test.py": {
-  "checks": 29,
+  "checks": 31,
   "counted_by": "lines"
  },
  "tools/prospects-status-in-chrome.test.py": {
@@ -356,7 +356,7 @@
   "counted_by": "lines"
  },
  "tools/test-add-venue-free-month.js": {
-  "checks": 44,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-added-time-keeps-the-bonus-honest.js": {
@@ -679,6 +679,10 @@
   "checks": 84,
   "counted_by": "lines"
  },
+ "tools/test-players-timing.js": {
+  "checks": 42,
+  "counted_by": "lines"
+ },
  "tools/test-pr-boards-15-oct.js": {
   "checks": 25,
   "counted_by": "lines"
@@ -820,7 +824,7 @@
   "counted_by": "lines"
  },
  "tools/test-screens-14-oct.js": {
-  "checks": 27,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-set-count.js": {

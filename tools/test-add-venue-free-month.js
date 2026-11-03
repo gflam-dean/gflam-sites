@@ -76,7 +76,7 @@ function run(opts) {
   var req = { json: function () { return Promise.resolve(_body); },
               text: function () { return Promise.resolve(JSON.stringify(_body)); } };
   var out = null;
-  vpbAddVenue(req, ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
+  vpbAddVenue(req, opts.env || ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
   drainMicrotasks();
   return out && out.body;
 }
@@ -237,5 +237,53 @@ check('each venue\'s setup charge has a key', !!keyA && !!keyB, [keyA, keyB]);
 check('and they are DIFFERENT keys, or Stripe replays the first charge for the second venue', keyA !== keyB, [keyA, keyB]);
 run({ players: 100, plan: 'monthly', postcode: '4220', newId: 'v_royal_a', periodEnd: PE });
 check('the same venue retried keeps its own key, so a double click charges once', charges()[0].idem === keyA, [charges()[0].idem, keyA]);
+
+/* ---------------------------------------------------------------------------
+   DEAN'S RULE 3 FOR A NEW PUB ON A GROUP (3 Nov 2026), BEHIND VPB_BILLING_RULES_3NOV, OFF.
+   "The first month is free, then it joins the group's ONE billing cycle, with the stub between the
+   end of its free month and the next group bill pro rated." His example, at $3 a player and 30
+   players: the pub joins a week after the bill date, so its free month ends a week after the next
+   bill; that bill charges the pub for the 3 weeks it is paid-active in the cycle ($69), then $90 a
+   month like the others. TODAY (switch off) the pub is charged a month and credited a month, so it
+   is free until the next bill date and a full month from then: that is the gap the switch closes.
+   --------------------------------------------------------------------------- */
+print('rule 3: a new pub on a group, behind VPB_BILLING_RULES_3NOV');
+var ON = { STRIPE_PRICE_MONTHLY: MONTHLY, STRIPE_PRICE_ANNUAL: ANNUAL, STRIPE_SECRET_KEY: 'x', SUPABASE_URL: 'https://example.invalid', VPB_BILLING_RULES_3NOV: '1' };
+var NOW = Math.floor(Date.now() / 1000), DAYS = 86400;
+/* Control: with the switch off, today's path, and the page is told which rule it was. */
+var c0 = run({ players: 30, plan: 'monthly', priceId: 'price_standard' });
+check('switch off: charged a month and credited a month, as today', charges().length === 1 && credits().length === 1 && credits()[0].params.amount === -9000, [charges(), credits()]);
+check('switch off: the page is told the rule was "month"', c0.free_rule === 'month' && c0.free_until === null, c0);
+/* Dean's example: joined a week after the bill date, so 23 days to the next bill. */
+var c1 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 23 * DAYS, env: ON });
+check('switch on, joined a week after the bill date: NOTHING charged for the rest of this cycle', charges().length === 0, charges());
+check('switch on: ONE credit, for the 7 days of the free month that fall inside the next cycle: 30 x $3 x 7/30 = $21.00',
+  credits().length === 1 && credits()[0].params.amount === -2100, credits()[0] && credits()[0].params);
+check('switch on: so the next group bill charges the pub $90 less $21 = $69, the 3 weeks it is paid-active', 9000 + credits()[0].params.amount === 6900);
+check('switch on: still keyed on the venue id, so a double click credits once', credits()[0].idem === 'vfree:v_new', credits()[0].idem);
+check('switch on: the credit line names the pub and the days', /The New Pub - first month free: 7 days of your next bill/.test(credits()[0].params.description), credits()[0].params.description);
+check('switch on: the page is told the rule, the free-until date and the days credited', c1.free_rule === 'prorata' && /\d/.test(c1.free_until || '') && c1.free_days_credited === 7 && c1.free_month_cents === 2100, c1);
+check('switch on: the venue row records the credit', patched.some(function (p) { return p.body.free_month_cents === 2100; }), patched);
+check('switch on: the subscription quantity still rises for the renewal (one bill for the group)', calls.some(function (c) { return /subscription_items/.test(c.path) && c.params.proration_behavior === 'none'; }), calls);
+/* Joined ON the bill date: the free month ends exactly at the next bill, so nothing to credit either. */
+var c2 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 30 * DAYS, env: ON });
+check('switch on, joined on the bill date: nothing charged, nothing credited, the next bill is a full month', charges().length === 0 && credits().length === 0 && c2.free_rule === 'prorata' && c2.free_days_credited === 0, [calls, c2]);
+/* Joined the day before the bill: 29 of the 30 free days fall in the next cycle. */
+var c3 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 1 * DAYS, env: ON });
+check('switch on, joined the day before the bill: 29 days credited, 30 x $3 x 29/30 = $87.00, so that bill charges one day', credits().length === 1 && credits()[0].params.amount === -8700 && c3.free_days_credited === 29, [credits(), c3]);
+/* The cases that keep today's path with the switch on. */
+run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 23 * DAYS, env: ON, status: 'trialing' });
+check('switch on, inside the account\'s own free month: nothing charged and nothing credited', charges().length === 0 && credits().length === 0, calls);
+var c5 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 23 * DAYS, env: ON, postcode: '4220',
+               sameName: [venue({ status: 'suspended', suspended_reason: 'cancelled' })] });
+check('switch on, a pub coming back: charged as today and NO free month, so it is not farmable', charges().length === 1 && credits().length === 0 && c5.free_rule === null, [calls, c5]);
+run({ players: 30, plan: 'annual', priceId: ANNUAL, env: ON });
+check('switch on, a yearly plan: unchanged (pro rata to renewal, one month credited)', charges().length === 1 && credits().length === 1 && credits()[0].params.amount === -6900, [charges(), credits()]);
+run({ players: 30, plan: 'monthly', priceId: null, periodEnd: NOW + 23 * DAYS, env: ON });
+check('switch on, rate unknown: nothing credited rather than a guessed rate', credits().length === 0 && charges().length === 0, calls);
+LOGS = [];
+var c8 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: NOW + 23 * DAYS, env: ON, refuseCredit: true });
+check('switch on, credit refused: logged loudly and the page is not told they got one', LOGS.some(function (l) { return /FREE MONTH CREDIT FAILED/.test(l); }) && c8.free_month_cents === 0, [LOGS, c8]);
+print(fails ? ('FAILED ' + fails) : 'PASS');
 
 if (fails) { throw new Error('add-venue free month: ' + fails + ' failed'); }

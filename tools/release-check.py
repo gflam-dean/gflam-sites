@@ -3816,6 +3816,15 @@ def local_checks(which):
              'the autopilot routes read venueplay website sales tickets and nothing else, behind the autopilot key; each carries its replies and earlier tickets; a read fault is a 503, never "no history"; the reply goes from hello@ on the ticket, noted, and is refused once anyone has replied, on a closed or typed-in ticket, or with a long dash or a fill-in', 329,
              'A key on a Mac reading players\' and PartyPlay tickets, a second standard reply after a person has '
              'answered, or a reply HQ cannot see on the ticket'),
+            # D114: when an added player is charged, and Dean's rules 3 and 4 behind one OFF switch (3 Nov 2026),
+            # branch fix/console-hq-5nov. Rule 2 (a full month on the next bill, a decrease from the next cycle) is what the
+            # Worker already did; this pins it. Rule 3 (a new pub's 30-day free month and the pro rata stub on the next
+            # group bill) is in tools/test-add-venue-free-month.js. Rule 4 is the one-hour undo.
+            ('D114. An added player is a full month on the next bill, a decrease waits for the next cycle, and the one-hour undo and the new pub rule stay OFF until Dean says yes',
+             'test-players-timing.js',
+             'runs vpbSetPlayers: an add with 3 days of the cycle left is still one full month on the next invoice, live tonight, quantity up with no proration; a drop waits for the renewal, refunds and credits nothing, so 30 added for one night cost a month; a quote changes nothing; a pending drop then up charges only the new players; a yearly plan keeps its pro rata and credit; VPB_BILLING_RULES_3NOV is off unless it is the string 1; with it on, an undo within 59 minutes with no game started deletes the invoice line, puts the capacity and quantity back and writes the HQ history row, while 61 minutes, a game started since, a part-way drop, a refused delete, no add on record and a yearly plan all fall back to the ordinary reduction', 40,
+             'A venue charged a month for players it undid within the hour (or let off a month it used), an undo '
+             'that leaves the invoice line standing, or the new rules switched on by a value nobody set'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

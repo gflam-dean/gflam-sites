@@ -270,12 +270,20 @@ ok("bulk + ads is a valid combination (no command-specific branch blocks it)",
    dropdown was on its default of 3am, so the command sat waiting eight hours while we
    both looked for a fault that was not there. command_at read 17:00Z - 3am Brisbane -
    which is the mechanism working exactly as built and the default being wrong.
+
+   REVERSED, Dean, 3 Nov 2026: "default 3am should apply to every screen". From then on the
+   time is 3am Brisbane for BOTH actions, nothing flips it when the action changes, "right
+   now" stays in the list for the night a wall needs fixing this minute, and the confirmation
+   says plainly when it will happen (hq-tabs-in-chrome.test.py presses it and reads the post).
    ========================================================================== */
-ok("the time default follows the action", /function syncWhen\(\)/.test(HQ));
-ok("ads means now", /act\.value === "reload"\) \? "3am" : "now"/.test(HQ),
-   "you press ads BECAUSE a wall is wrong this second");
-ok("and it re-syncs when the action changes", /addEventListener\("change", syncWhen\)/.test(HQ));
-ok("and is applied on load, not only on change", /syncWhen\(\);\s*\}\)\(\);/.test(HQ));
+ok("3am Brisbane is the default for BOTH actions: no script flips the time to now for ads",
+   !/function syncWhen\(\)/.test(HQ) && !/\? "3am" : "now"/.test(HQ),
+   "Dean, 3 Nov 2026: the time he sees is the time it goes");
+ok("right now is still selectable", /<option value="now">right now<\/option>/.test(HQ));
+ok("and the default is applied on load, in the markup itself",
+   /id="reloadScreensWhen">\s*<option value="3am" selected>at 3am Brisbane<\/option>/.test(HQ));
+ok("no change handler on the action touches the time",
+   !/\$\("screensAction"\)\.addEventListener\("change"/.test(HQ) && !/when\.value *= *\(act\.value/.test(HQ));
 
 /* NINE BUTTONS x 400 VENUES IS 3,600 BUTTONS. Two per row, the rest inside the
    Details panel that already existed for each venue. */
