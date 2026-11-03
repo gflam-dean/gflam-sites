@@ -126,6 +126,20 @@ check('venueplay/app/onboard.html shows exactly that sentence beside its tick bo
         /<option value="for_profit">Pub \(hotel or tavern\)<\/option>/.test(fp[1]), fp[0]);
 });
 
+print('the contact lines say venueplay, not Gflam Group; the legal line stays (Dean, 3 Nov 2026 evening)');
+(function () {
+  function contactBlock(src) { var i = src.search(/<h2>\d+\. Contact us<\/h2>/); return i < 0 ? '' : src.slice(i, src.indexOf('</p>', i)); }
+  var priv = readFile('venueplay/privacy.html');
+  [['terms', terms], ['privacy', priv]].forEach(function (x) {
+    var c = contactBlock(x[1]);
+    check(x[0] + ': the Contact us lines name venueplay and the ABN, and not Gflam Group', !!c && /<strong>venueplay<\/strong>/.test(c) && /ABN 35 679 383 049/.test(c) && !/Gflam Group/.test(c), c);
+  });
+  ['index', 'help', 'nsw', 'privacy', 'terms', 'live-here-now'].forEach(function (f) {
+    var src = readFile('venueplay/' + f + '.html') || '';
+    check(f + '.html keeps the legal footer line "© Gflam Group Pty Ltd, trading as VenuePlay"', /&copy; <span id="vp-year"><\/span> Gflam Group Pty Ltd, trading as VenuePlay/.test(src));
+  });
+})();
+
 print('PartyPlay: not at a pub, club or other licensed venue (NSW social housie, 1 Oct point 11)');
 var pp = readFile('partyplay/terms.html');
 var ppPrivate = (function () { var a = pp.indexOf('<h2>Private use only</h2>'); var b = pp.indexOf('<h2>', a + 10); return a >= 0 ? pp.slice(a, b) : ''; })();

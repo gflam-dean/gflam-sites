@@ -109,6 +109,7 @@ FOOT = r'''(function(){
     var yr = f.querySelector("#vp-year"), rr = rg.getClientRects(); oneLine = !!yr && rr.length >= 1 && Math.abs(yr.getBoundingClientRect().top - rr[0].top) <= 4; }
   var bar = document.querySelector(".vp-float-cta.show"), barTop = bar ? bar.getBoundingClientRect().top : innerHeight;
   return JSON.stringify({ vw: innerWidth, sw: document.documentElement.scrollWidth, brand: mid(f.querySelector(".foot-brand")),
+    poweredH: (function (i) { return i ? Math.round(i.getBoundingClientRect().height * 10) / 10 : null; })(f.querySelector(".powered img.powered-by")),
     powered: mid(f.querySelector(".powered")), social: mid(f.querySelector(".foot-social")), lineMids: lineMids, lineCount: lineMids.length,
     links: links.length, dots: dots, copyBottom: cb, oneLine: oneLine, barTop: barTop, bar: !!bar, dir: getComputedStyle(f.querySelector(".foot")).flexDirection });
 })()'''
@@ -185,6 +186,8 @@ try:
         mid = (f.get('vw') or 390) / 2.0
         centred = all(x is not None and abs(x - mid) <= 3 for x in (f.get('brand'), f.get('powered'), f.get('social')))
         ok('%s: the logo, "Powered by Gflam Touring" and the social icons are centred' % name, centred, f)
+        ok('%s: the powered-by Gflam line is the smaller 14px line (Dean, 3 Nov 2026 evening)' % name,
+           f.get('poweredH') is not None and 13 <= f['poweredH'] <= 15, f.get('poweredH'))
         ok('%s: every line of links is centred, and no dot is left at the end of a line' % name,
            f.get('links', 0) >= 4 and f.get('lineCount', 0) >= 1 and all(abs(x - mid) <= 3 for x in f.get('lineMids', [])) and f.get('dots') == 0, f)
         ok('%s: the copyright line is one line ("(c) 2026 Gflam Group..."), wholly above the sticky bar%s, and nothing scrolls sideways' % (name, '' if page in ('/help.html', '/terms.html', '/privacy.html') else ' (shown)'),

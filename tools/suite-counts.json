@@ -864,7 +864,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 89,
+  "checks": 97,
   "counted_by": "lines"
  },
  "tools/test-touring-cards-loader.js": {

@@ -15,9 +15,10 @@
 
 /* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"). The supplied
    brand-kit lockup's own "powered by Gflam." line (logo-kit-1nov/powered-by), cropped from the file,
-   never retyped: small, muted, centred under the wordmark. */
+   never retyped: small, muted, centred under the wordmark. A bit smaller again (Dean, 3 Nov 2026
+   evening): 14px, down from 18. */
 footer .powered{line-height:0}
-footer .powered img.powered-by{display:block;height:18px;width:auto;opacity:.6;margin:0 auto}
+footer .powered img.powered-by{display:block;height:14px;width:auto;opacity:.6;margin:0 auto}
 .foot-links .dot{white-space:pre}
 
 @media (max-width:760px){
