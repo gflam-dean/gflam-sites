@@ -111,11 +111,12 @@ TV_PROBE = r'''(function(){
       Math.max.apply(null,kids.map(function(k){return k[2];})), Math.max.apply(null,kids.map(function(k){return k[3];}))] : null;
     var cn=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=cn ? R(cn) : null;
     out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
-    /* The fullest board a night shows: six rows and the "Teams 1 to 6 of 15" line (the demo's own board has
-       five). Filled in here from its own rows, measured, and left: the next state repaints the board. */
+    /* The fullest board a night shows: a later page, the leader pinned at the top, nine more rows and the
+       "Page 2 of 2" line. Built here from its own rows, measured, and left: the next state repaints it. */
     if(lay.id==="tvBoard"){ var box=document.getElementById("tvBoardRows"), rr=box.querySelectorAll(".brow");
-      if(rr.length){ while(box.querySelectorAll(".brow").length<6) box.appendChild(rr[rr.length-1].cloneNode(true)); }
-      var pg=document.getElementById("tvBoardPage"); if(pg){ pg.textContent="Teams 1 to 6 of 15"; pg.classList.remove("hidden"); }
+      out.rowsShown=rr.length;
+      if(rr.length){ while(box.querySelectorAll(".brow").length<10) box.appendChild(rr[rr.length-1].cloneNode(true)); box.querySelector(".brow").classList.add("pinned"); }
+      var pg=document.getElementById("tvBoardPage"); if(pg){ pg.textContent="Page 2 of 2 \u00B7 teams 11 to 16 of 16"; pg.classList.remove("hidden"); }
       out.rows6=[].map.call(box.querySelectorAll(".brow"),R);
       out.bottom6=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2)?b.bottom:0; }).concat([0])); }
     out.clock=R(lay.querySelector(".qfoot")); out.got=R(lay.querySelector(".gotbox"));
@@ -266,9 +267,10 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the answer cards stay clear of the JOIN NOW card a real night has', clear([c['r'] for c in qc]) and clear([c['r'] for c in rc]), [J, [c['r'] for c in qc][-2:]])
     ok(tag + ': and the leaderboard rows too', clear(bd.get('rows') or []) and len(bd.get('rows') or []) >= 5, [J, (bd.get('rows') or [])[:1]])
     ok(tag + ': and the podium steps', clear(pd.get('steps') or []) and len(pd.get('steps') or []) == 3, [J, pd.get('steps')])
-    ok(tag + ': the fullest board (six rows and the page line) was measured', fn.get('layer') == 'tvBoard' and len(fn.get('rows') or []) == 6, [fn.get('layer'), len(fn.get('rows') or [])])
+    ok(tag + ': sixteen teams: the wall shows the top ten', bd.get('rowsShown') == 10, bd.get('rowsShown'))
+    ok(tag + ': the fullest board (the leader pinned, nine more and the page line) was measured', fn.get('layer') == 'tvBoard' and len(fn.get('rows') or []) == 10, [fn.get('layer'), len(fn.get('rows') or [])])
     ok(tag + ': and clear of the JOIN NOW card', clear(fn.get('rows') or []), [J, (fn.get('rows') or [])[-1:]])
-    for name, x in (('question', q), ('reveal', rv), ('scores', bd), ('podium', pd), ('six rows and the page line', fn)):
+    for name, x in (('question', q), ('reveal', rv), ('scores', bd), ('podium', pd), ('the fullest board', fn)):
         top = (x.get('lblInk') or [0, 0])[1]
         ok(tag + ': %s: a proper bottom margin, at least the top one (nothing hard against the bottom edge)' % name,
            bool(x.get('bottom')) and h - x['bottom'] >= top and top > 0, [round(h - (x.get('bottom') or h)), round(top)])
@@ -338,6 +340,17 @@ def host():
         ok('a compact row, not a hero panel (no taller than 44px)', bool(a) and a['h'] <= 44, a)
         ok('it is OFF by default, playing on the TV', bool(a) and a['on'] == 'Off,TV', a)
         ok('with the choice of where it plays: "TV" or "This device"', bool(a) and 'TV' in a['label'] and 'This device' in a['label'], a)
+        H = S.js(sid, '(function(){function R(e){if(!e)return null;var b=e.getBoundingClientRect();return [b.left,b.top,b.right,b.bottom];}'
+                      'var row=document.getElementById("buzzerRow"), lab=row.querySelector("label"), ctl=row.lastElementChild, f=document.querySelector("#setupBlock .field");'
+                      'var fl=f.querySelector("label"), sel=document.getElementById("setSel");'
+                      'return {lab:R(lab), ctl:R(ctl), fieldLab:R(fl), sel:R(sel), catText:fl.textContent.trim(), nav:(document.querySelector(".vp-navlink")||{}).textContent,'
+                      'status:document.getElementById("statusText").textContent, hint:!document.getElementById("tvHint").classList.contains("hidden")};})()')
+        ok('the buzzer row lines up with the other setting rows: its label where theirs are, its switch at the right edge',
+           bool(H) and abs(H['lab'][0] - H['fieldLab'][0]) <= 1 and abs(H['ctl'][2] - H['sel'][2]) <= 2, H)
+        ok('the picker is a CATEGORY drop-down', bool(H) and H['catText'].startswith('Category'), H and H['catText'])
+        ok('the way back is clearly labelled "All games"', bool(H) and 'All games' in (H['nav'] or ''), H and H['nav'])
+        ok('no TV yet: the console says so in plain words, and how to fix it',
+           bool(H) and (H['status'] != 'TV not connected yet' or H['hint'] is True) and 'Waiting for screen' not in H['status'], H)
         S.js(sid, 'document.querySelector(\'#cfgBuzzer [data-v="on"]\').click(); document.querySelector(\'#cfgBuzzWhere [data-v="device"]\').click(); true')
         time.sleep(0.5)
         S.close_tab(tid)
@@ -347,6 +360,14 @@ def host():
         b = S.js(sid, SEG)
         b = json.loads(b) if isinstance(b, str) else b
         ok('switched On, on this device: still so when the console is opened again', bool(b) and b['on'] == 'On,This device', b)
+        S.close_tab(tid)
+        tid, sid = S.open('/app/trivia/host.html?venue=' + V1, 390, 844, True)
+        S.until(sid, 'document.getElementById("statusText").textContent==="Signed in" || /TV/.test(document.getElementById("statusText").textContent)', 25)
+        time.sleep(1)
+        P = S.js(sid, '(function(){function R(s){var e=document.querySelector(s);if(!e)return null;var b=e.getBoundingClientRect();return [b.left,b.top,b.right,b.bottom];}'
+                      'return {brand:R(".bar>.brand"), who:R(".bar>.who"), nav:R(".bar>.vp-navlink"), end:R("#toAdsBtn"), W:innerWidth};})()')
+        ok('phone width: the venueplay logo, TRIVIA and the TV status on the first row, "All games" and End game under them',
+           bool(P and P['brand'] and P['nav'] and P['end']) and P['nav'][1] >= P['brand'][3] - 1 and P['end'][1] >= P['brand'][3] - 1 and P['brand'][0] <= 30 and P['end'][2] <= P['W'], P)
         S.close_tab(tid)
     finally:
         S.close()

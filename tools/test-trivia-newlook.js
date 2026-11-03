@@ -8,7 +8,8 @@
         console and puts nothing on the wall
      2. the reveal is the question's own grid: the same text with the same size rule, the same answer
         size, the right answer marked correct and the rest dimmed, and "31 /43 got it right"
-     3. no empty-state text: a board with no rows paints nothing ("No scores yet" is gone)
+     3. no empty-state text: a board with no rows paints nothing ("No scores yet" is gone); and with
+        sixteen teams the top ten show, then the rest a page at a time with the leader kept at the top
      4. the podium stands second, first, third
      5. the console's Time's-up buzzer: OFF unless switched on, plays on the TV or on the console itself,
         both remembered for the venue and sent to the TV
@@ -78,12 +79,12 @@ function tvRig(opts) {
     _ac: opts.noCtx ? null : new Ctx(opts.ctxState || 'running', !!opts.resumeOk),
     tvSend: function (o) { sent.push(o); }
   };
-  var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, RING_C=2*Math.PI*44, TV_BOARD_ROWS=6, BOARD_PAGE_MS=4500, boardPageTimer=null;\n' +
+  var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, RING_C=2*Math.PI*44, TV_BOARD_ROWS=' + /var TV_BOARD_ROWS = (\d+);/.exec(SCREEN)[1] + ', BOARD_PAGE_MS=4500, boardPageTimer=null, __iv=null;\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function show(){} function applyColour(){} function stopBoardPaging(){} function unlockAudio(){} function celebrate(){}\n' +
-    'function setInterval(){ return 0; } function setTimeout(){ return 0; } function clearTimeout(){} function clearInterval(){}\n' +
-    liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
+    'function setInterval(f){ __iv=f; return 1; } function setTimeout(){ return 0; } function clearTimeout(){} function clearInterval(){}\n' +
+    liftAll(SCREEN, ['qClass', 'ansLenClass', 'renderQuestion', 'renderReveal', 'renderRows', 'boardPages', 'renderBoardPaged', 'sharedRanks', 'podiumEntries', 'renderPodium',
                      'buzzSay', 'timesUp'], 'trivia/screen.html') +
-    '; return { q: renderQuestion, rev: renderReveal, rows: renderRows, board: renderBoardPaged, pod: renderPodium, up: timesUp, cur: function(){ return curQ; } };';
+    '; return { q: renderQuestion, rev: renderReveal, rows: renderRows, board: renderBoardPaged, pod: renderPodium, up: timesUp, cur: function(){ return curQ; }, tick: function(){ if(__iv) __iv(); } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
   api.dom = dom; api.sent = sent; api.env = env; api.starts = function () { return starts; };
@@ -187,6 +188,30 @@ print('\n== 3. no empty-state text on the wall ==');
   a.board('After question 3', [{ name: 'Table 6', points: 790 }, { name: 'Nans', points: 735 }]);
   var r = box.children;
   show('control: two teams are two rows, first marked top1, places without a "#"', r.length === 2 && r[0].classList.contains('top1') && r[0].children[0].textContent === '1', r.length && r[0].children[0].textContent);
+})();
+
+print('\n== 3b. sixteen teams: the top ten, then the rest a page at a time, the leader kept at the top ==');
+(function () {
+  var a = tvRig(), T = [];
+  for (var i = 0; i < 16; i++) T.push({ name: 'Team ' + (i + 1), points: 1000 - i * 10 });
+  a.board('After question 3', T);
+  var box = a.dom.$('tvBoardRows'), pg = a.dom.$('tvBoardPage');
+  function names() { return box.children.map(function (r) { return r.children[1].textContent; }); }
+  show('page one is the top ten', box.children.length === 10 && names()[0] === 'Team 1' && names()[9] === 'Team 10', names().join());
+  show('with "Page 1 of 2" under it', /^Page 1 of 2 . teams 1 to 10 of 16$/.test(pg.textContent) && !pg.classList.contains('hidden'), pg.textContent);
+  a.tick();
+  show('page two: the leader at the top, then 11 to 16', box.children.length === 7 && names()[0] === 'Team 1' && box.children[0].classList.contains('pinned') &&
+       names()[1] === 'Team 11' && names()[6] === 'Team 16', names().join());
+  show('with "Page 2 of 2 · teams 11 to 16"', /^Page 2 of 2 . teams 11 to 16 of 16$/.test(pg.textContent), pg.textContent);
+  a.tick();
+  show('and round again to page one', names()[9] === 'Team 10' && box.children.length === 10, names().join());
+  var b = tvRig(); b.board('Final scores', T.slice(0, 10));
+  show('ten teams or fewer: one page, no page line', b.dom.$('tvBoardRows').children.length === 10 && b.dom.$('tvBoardPage').classList.contains('hidden'));
+  var c = tvRig(), T28 = []; for (var k = 0; k < 28; k++) T28.push({ name: 'T' + (k + 1), points: 999 - k });
+  c.board('Final scores', T28);
+  c.tick(); c.tick();
+  show('twenty-eight teams: three pages, the last is the leader and 20 to 28', /^Page 3 of 3 . teams 20 to 28 of 28$/.test(c.dom.$('tvBoardPage').textContent) &&
+       c.dom.$('tvBoardRows').children.length === 10, c.dom.$('tvBoardPage').textContent);
 })();
 
 /* ======================================================================================= 4 */

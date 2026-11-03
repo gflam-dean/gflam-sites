@@ -197,17 +197,18 @@
   .prow .pa small{display:block;font-weight:500;font-size:.72em;color:var(--muted,#bbb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .boardtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,58px);color:#fff;line-height:1;margin-bottom:2.4cqw}
   /* THE LEADERBOARD: an Anton title, then rows on dark cards; first place gets a pink edge and a pink
-     place number. The board stays right of 23.5cqw, clear of the JOIN NOW card in the bottom-left, and six
-     rows and the page line end near 50cqw, so the bottom margin is well over the top one (Dean, 3 Nov 2026). */
+     place number. The board stays right of 23.5cqw, clear of the JOIN NOW card in the bottom-left; TEN rows
+     (and a pinned leader on a later page) and the page line end near 50.7cqw, a bottom margin well over the top one. */
   .layer.qgrid .boardtitle{position:absolute;left:calc(18cqw);right:18cqw;top:7.6cqw;margin:0;text-align:center;font-size:5.42cqw;white-space:nowrap;overflow:hidden}
-  .board{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:15.5cqw;display:flex;flex-direction:column}
-  .brow{position:relative;height:4.6cqw;margin-bottom:.7cqw;border-radius:.94cqw;background:#1A1A1F;display:flex;align-items:center;padding:0 2.3cqw;overflow:hidden}
+  .board{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:15cqw;display:flex;flex-direction:column}
+  .brow{position:relative;height:2.95cqw;margin-bottom:.42cqw;border-radius:.94cqw;background:#1A1A1F;display:flex;align-items:center;padding:0 2.3cqw;overflow:hidden}
   .brow.top1::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.52cqw;background:var(--pink)}
-  .brow .r{flex:none;width:5.7cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2cqw;color:#8A8A95}
+  .brow .r{flex:none;width:5.7cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.55cqw;color:#8A8A95}
   .brow.top1 .r{color:var(--pink)}
-  .brow .n{flex:1;min-width:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.45cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .brow .s{flex:none;margin-left:1.6cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.3cqw;color:#fff}
-  .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:48.4cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95}
+  .brow .n{flex:1;min-width:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.85cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .s{flex:none;margin-left:1.6cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75cqw;color:#fff}
+  .brow.pinned{margin-bottom:1.1cqw}   /* the leader kept at the top of a later page, a gap under it */
+  .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:49.3cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95}
 
   /* THE WINNERS SCREEN: three steps, second, first, third, the team names and scores standing on them,
      first in Anton yellow with a yellow top and a soft yellow glow (yellow is for winning moments only).
@@ -433,7 +434,7 @@
 
      top two ranks off the top, ninth and tenth off the bottom. The winner was what got cut. */
 
-  var TV_BOARD_ROWS = 6;
+  var TV_BOARD_ROWS = 10;   // the top ten on the wall (Dean, 3 Nov 2026: with 16 teams only five showed)
 
 
   /* The TV never shows the player count (locked design rule): a room of six should not read
@@ -666,24 +667,36 @@
      synchronously, so a screen that never turns a page still shows the leaders. */
   var BOARD_PAGE_MS=4500, boardPageTimer=null;
   function stopBoardPaging(){ if(boardPageTimer){ clearInterval(boardPageTimer); boardPageTimer=null; } var ph=$("tvBoardPage"); if(ph) ph.classList.add("hidden"); }
+  /* THE TOP TEN, THEN THE REST A PAGE AT A TIME, THE LEADER KEPT AT THE TOP (Dean, 3 Nov 2026). Page one is
+     places 1 to 10. Past ten teams, each later page is the leader, then the next nine (11 to 19, 20 to 28...),
+     with "Page 2 of 2 · teams 11 to 16" under the board. The same for the scores between questions and the
+     final scores. boardPages() is the arithmetic, kept apart so a suite can run it. */
+  function boardPages(n){
+    if(n<=TV_BOARD_ROWS) return [{ from:0, to:n, lead:false }];
+    var out=[{ from:0, to:TV_BOARD_ROWS, lead:false }], per=TV_BOARD_ROWS-1;
+    for(var a=TV_BOARD_ROWS; a<n; a+=per) out.push({ from:a, to:Math.min(n, a+per), lead:true });
+    return out;
+  }
   function renderBoardPaged(title, rows){
     stopBoardPaging();
     rows=Array.isArray(rows)?rows:[];
     $("tvBoardTitle").textContent=title||"Leaderboard";
-    var pages=Math.max(1, Math.ceil(rows.length/TV_BOARD_ROWS)), page=0, ranks=sharedRanks(rows);
+    var plan=boardPages(rows.length), pages=plan.length, page=0, ranks=sharedRanks(rows);
+    function addRow(box, i, pinned){
+      var row=el("div","brow"+(i===0?" top1":"")+(pinned?" pinned":""));
+      row.appendChild(el("span","r",ranks[i]));
+      row.appendChild(el("span","n",esc(rows[i].name)));
+      row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
+      box.appendChild(row);
+    }
     function paint(){
       var box=$("tvBoardRows"); box.innerHTML="";
-      var start=page*TV_BOARD_ROWS, end=Math.min(rows.length, start+TV_BOARD_ROWS);
-      for(var i=start;i<end;i++){
-        var row=el("div","brow"+(i===0?" top1":""));
-        row.appendChild(el("span","r",ranks[i]));
-        row.appendChild(el("span","n",esc(rows[i].name)));
-        row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
-        box.appendChild(row);
-      }
+      var pg=plan[page]||{ from:0, to:0 };
+      if(pg.lead && rows.length) addRow(box, 0, true);
+      for(var i=pg.from;i<pg.to;i++) addRow(box, i, false);
       /* NO EMPTY-STATE TEXT ON THE WALL (Dean, 3 Nov 2026): a board with no rows yet shows its title and nothing else. */
       var ph=$("tvBoardPage");
-      if(ph){ if(pages>1){ ph.textContent="Teams "+(start+1)+" to "+end+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
+      if(ph){ if(pages>1){ ph.textContent="Page "+(page+1)+" of "+pages+" \u00B7 teams "+(pg.from+1)+" to "+pg.to+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
     }
     paint();
     if(pages>1){ boardPageTimer=setInterval(function(){ page=(page+1)%pages; paint(); }, BOARD_PAGE_MS); }
@@ -1074,8 +1087,18 @@
         { name:"Nan's Army",            points:735 },
         { name:"Last Place Again",      points:690 },
         { name:"Two Beers or Not",      points:615 },
-        { name:"The Ring Ins",          points:540 }
-      ];
+        { name:"The Ring Ins",          points:540 },
+        { name:"Quizzly Bears",         points:505 },
+        { name:"Les Quizerables",       points:470 },
+        { name:"Smarty Pints",          points:455 },
+        { name:"The Know It Ales",      points:410 },
+        { name:"Trivia Newton John",    points:385 },
+        { name:"Agatha Quiztie",        points:350 },
+        { name:"Pub Club",              points:320 },
+        { name:"Back Row",              points:290 },
+        { name:"Quiz Khalifa",          points:255 },
+        { name:"Late Arrivals",         points:180 }
+      ];   // sixteen teams, a real night's size: the board shows the top ten and pages the rest (3 Nov 2026)
       var SECS = 20, steps = [], t = 0;   // the demo counts down from 20, like a real night (Dean, 3 Nov 2026)
       function at(ms, fn){ steps.push([ms, fn]); }
 
@@ -1103,7 +1126,7 @@
           m({ t:"reveal", correctIndex:q.correct, options:q.options, split:q.split });
         });
         at(t + 9400, function(){
-          m({ t:"leaderboard", title:"After question "+(i+3), rows:BOARD.slice(0, 5) });
+          m({ t:"leaderboard", title:"After question "+(i+3), rows:BOARD });
         });
         t += 13200;
       });

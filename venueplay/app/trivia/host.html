@@ -30,6 +30,20 @@
   .brand .div{width:1px;height:20px;background:var(--line)}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  /* THE HEADER IN ONE ORDER (Dean, 3 Nov 2026: the logo sat oddly between the buttons and "Games" was not
+     clear). Desk: "< All games", the venueplay logo and TRIVIA, the TV status, End game on the right.
+     Phone: the logo, TRIVIA and the TV status on the first row; "< All games" and End game under them. */
+  .bar>.vp-navlink{order:1}
+  .bar>.brand{order:2}
+  .bar>.tag{order:3}
+  .bar>.who{order:4}
+  .bar>.brk{display:none;order:5}
+  .bar>#toAdsBtn{order:6}
+  @media (max-width:640px){
+    .bar>.brand{order:1} .bar>.tag{order:2} .bar>.who{order:3}
+    .bar>.brk{display:block;flex-basis:100%;height:0}
+    .bar>.vp-navlink{order:6} .bar>#toAdsBtn{order:7;margin-left:auto}
+  }
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
@@ -174,12 +188,13 @@
 <header>
   <div class="bar">
     <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
-    <a class="vp-navlink" href="/app" title="Back to games">&#8592; Games</a>
+    <a class="vp-navlink" href="/app" title="Back to all games">&lsaquo; All games</a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
     <span class="tag">Trivia</span>
     <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+    <span class="brk" aria-hidden="true"></span>
   </div>
   <div class="errbar" id="hostErrBar" role="alert" aria-live="assertive">
     <div class="einner">
@@ -225,19 +240,22 @@
              row: OFF unless the host switches it on, and WHERE it plays: the TV's own sound (which also covers a
              soundbar or amp on the TV's HDMI) or this device (a phone or tablet plugged into the venue's PA, the
              way they play music). Both remembered for the venue between nights. -->
-        <div class="buzzrow" id="buzzerRow" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 14px;font-size:13px;color:var(--muted)">
-          <span style="font-weight:700;color:var(--text)">Time's-up buzzer</span>
-          <span class="seg mini" id="cfgBuzzer" role="group" aria-label="Time's-up buzzer"><button type="button" data-v="on" aria-pressed="false">On</button><button type="button" data-v="off" class="on" aria-pressed="true">Off</button></span>
-          <span id="buzzWhereWrap" style="display:inline-flex;align-items:center;gap:8px">plays on
-            <span class="seg mini" id="cfgBuzzWhere" role="group" aria-label="Where the buzzer plays"><button type="button" data-v="tv" class="on" aria-pressed="true">TV</button><button type="button" data-v="device" aria-pressed="false">This device</button></span></span>
+        <div class="field buzzrow" id="buzzerRow" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px">
+          <label style="margin:0">Time's-up buzzer</label>
+          <span style="display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 10px">
+            <span class="seg mini" id="cfgBuzzer" role="group" aria-label="Time's-up buzzer"><button type="button" data-v="on" aria-pressed="false">On</button><button type="button" data-v="off" class="on" aria-pressed="true">Off</button></span>
+            <span id="buzzWhereWrap" style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)">Plays on
+              <span class="seg mini" id="cfgBuzzWhere" role="group" aria-label="Where the buzzer plays"><button type="button" data-v="tv" class="on" aria-pressed="true">TV</button><button type="button" data-v="device" aria-pressed="false">This device</button></span></span>
+          </span>
         </div>
+        <div class="note hidden" id="tvHint" style="margin:0 0 12px;color:var(--text)">TV not connected yet. On the TV, open your venue's TV link (venueplay.com.au/tv). It connects on its own; nothing to type.</div>
         <div class="note hidden" id="tvSoundNote" style="margin:-6px 0 12px;color:var(--roll)">TV sound is off: press OK on the TV remote once to turn it on.</div>
         <div id="setupBlock">
           <div class="field">
-            <label style="display:flex;justify-content:space-between;align-items:center">Question set
+            <label for="setSel" style="display:flex;justify-content:space-between;align-items:center">Category
               <a href="/app/trivia/builder.html" style="font-size:12px;font-weight:700;color:var(--pink);text-decoration:none">Build a night &rarr;</a>
             </label>
-            <select id="setSel"><option value="">Loading your question sets&hellip;</option></select>
+            <select id="setSel"><option value="">Loading the categories&hellip;</option></select>
             <div class="note" id="setLastNote" style="margin-top:4px;display:none">This is the set your venue played last time. Pick another for a fresh night.</div>
           </div>
           <div class="field">
@@ -1060,7 +1078,7 @@
     stopLobbyWatch();
     if(G.roundType==="pr") return startPR();
     readSettings();
-    if(!G.setId){ hostError("Pick a question set first"); return; }
+    if(!G.setId){ hostError("Pick a category first"); return; }
     G.busy=true;
     var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
     openSession().then(function(){
@@ -1459,7 +1477,7 @@
     }
   }
     if(m.t==="tv_here"){
-      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      $("statusDot").classList.add("on"); $("statusText").textContent="TV connected"; tvHint(false);
       /* The TV says whether its sound could play (the time's-up buzzer). Blocked: one line under the switch. */
       if(m.sound==="off" || m.sound==="on"){ var _sn=$("tvSoundNote"); if(_sn){ if(m.sound==="off" && tvBuzz()) _sn.textContent="TV sound is off: press OK on the TV remote once to turn it on."; _sn.classList.toggle("hidden", m.sound!=="off" || !tvBuzz()); } }
       if(m.hello){
@@ -1519,7 +1537,7 @@
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here", cid:G.consoleId }); flushQueue();
-        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
+        $("statusDot").classList.remove("on"); $("statusText").textContent="TV not connected yet"; tvHint(true);
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
         /* Reset the flag. Without this, send() kept thinking the channel was up and posted into a
            dead socket, so the TV silently stopped updating with nothing on the console to say so.
@@ -1556,9 +1574,13 @@
           o.setAttribute("data-title", s.title||"Trivia Night");
           o.setAttribute("data-own", s.owner_venue_id===G.venueId ? "1" : "0"); return o; }
         sel.innerHTML="";
-        if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
-        if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
-        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="venueplay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No categories found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
+        /* A CATEGORY DROP-DOWN (Dean, 3 Nov 2026): the library's sets ARE its categories (General Knowledge,
+           Sport, Music...), so they are listed A to Z under "Categories", with the venue's own nights first. */
+        function az(a,b){ return String(a.title||"").localeCompare(String(b.title||""), "en", { sensitivity:"base" }); }
+        mine.sort(az); lib.sort(az);
+        if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your own nights"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
+        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="Categories"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
         // "Run it now" in the builder lands here with ?set=<id>: pick that night without a hunt.
         var want=setFromUrl(), found=false; if(want){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===want){ sel.selectedIndex=k; found=true; break; } } }
         if(want && !found) hostError("That night is not one of this venue's, so it is not in the list. Check which venue you are running.");
@@ -1570,7 +1592,7 @@
           if(/^general knowledge$/i.test(String(oj.getAttribute("data-title")||"").trim())){ var nj=parseInt(oj.getAttribute("data-count"),10)||0; if(nj>gkN){ gk=j; gkN=nj; } } }
           if(gk>=0) sel.selectedIndex=gk; }
         syncSetCount();
-      }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
+      }, function(){ sel.innerHTML='<option value="">Could not load the categories</option>'; });
   }
   function syncSetCount(){
     var sel=$("setSel"), opt=sel.options[sel.selectedIndex];
@@ -1872,6 +1894,8 @@
   }); });
   /* The time's-up buzzer switch. Remembered per venue in this browser; the TV is told at once, and every
      question carries it too, so a TV that reloads picks it up again. */
+  /* The one line that tells a host the TV is not with them yet, and how to fix it (Dean, 3 Nov 2026). */
+  function tvHint(show){ var h=$("tvHint"); if(h) h.classList.toggle("hidden", !show); }
   function buzzKey(){ return "vpTriviaBuzzer:"+(G.venueId||""); }
   function whereKey(){ return "vpTriviaBuzzWhere:"+(G.venueId||""); }
   /* What the TV is told: sound the buzzer only when it is on AND it plays on the TV. */
