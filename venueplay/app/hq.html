@@ -86,16 +86,19 @@
   .errflash{font-size:12px;color:var(--roll);font-weight:600;margin-top:10px;display:none;line-height:1.5}
   .errflash.show{display:block}
 
-  .stats{display:grid;gap:13px;margin-bottom:6px;grid-template-columns:repeat(5,1fr)}
-  @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
-  @media (max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
-  .scard{background:linear-gradient(180deg,#141416,#0e0e10);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+  /* ONE RHYTHM DOWN THE PAGE (Dean, 3 Nov 2026: "fix the spacing and centring"). Title, cards, tabs,
+     tools and the list are 20px apart, every card in a row is the same height (grid-auto-rows), and
+     the tools row's controls are one height (.vtools below). Four cards: the "Open now / signed up"
+     card is gone, because two venue numbers at the top of one page read as one number jumping. */
+  .stats{display:grid;gap:12px;margin-bottom:20px;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr}
+  @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .scard{background:linear-gradient(180deg,#141416,#0e0e10);border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;justify-content:space-between}
   .scard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .scard .v{font-family:'Anton',sans-serif;font-size:32px;color:#fff;line-height:1;margin-top:8px}
   .scard .v.g{color:var(--gold)}
-  .scard .d{font-size:11.5px;color:var(--muted);margin-top:6px}
+  .scard .d{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 
-  .navpills{display:flex;gap:7px;flex-wrap:wrap;margin:22px 0 20px}
+  .navpills{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 20px}
   .navpills button{border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:9px;padding:8px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
   .navpills button.on{background:var(--pink);color:#fff;border-color:transparent}
   .navpills button:hover{color:#fff}
@@ -132,6 +135,27 @@
   .filterbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .filterbar input[type=text]{max-width:280px}
   .filterbar select{width:auto;min-width:150px}
+  /* THE VENUES TOOLS ROW: search, the filter, then the three buttons on the right, all 42px tall and
+     on one line; on a phone they stack full width, the buttons in one column (3 Nov 2026). */
+  .vtools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+  .vtools input[type=text]{flex:1 1 220px;max-width:320px}
+  .vtools select{width:auto;min-width:170px;flex:0 0 auto}
+  .vtools .acts{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+  .vtools input[type=text],.vtools select,.vtools .btn{height:42px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+  .vtools .btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
+  @media (max-width:760px){
+    .vtools{flex-direction:column;align-items:stretch}
+    .vtools input[type=text]{max-width:none;flex:none}
+    .vtools select{width:100%}
+    .vtools .acts{margin-left:0;flex-direction:column}
+  }
+  /* SCREENS (its own tab, Dean 3 Nov 2026): one command for every venue screen. */
+  .scrhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px;margin:0 0 6px}
+  .scrrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .scrrow select{width:auto;min-width:200px;flex:0 0 auto}
+  .scrrow select,.scrrow .btn{height:42px;padding-top:0;padding-bottom:0;box-sizing:border-box}
+  .scrrow .btn{display:inline-flex;align-items:center;white-space:nowrap}
+  @media (max-width:600px){.scrrow{flex-direction:column;align-items:stretch}.scrrow select{width:100%}}
 
   .empty{color:var(--faint);font-size:13px;padding:22px;text-align:center;background:var(--ink-2);border:1px dashed var(--line);border-radius:14px}
   .srole{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px}
@@ -284,7 +308,8 @@
   <div class="brand">
     <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
   </div>
-  <span class="tag"><span style="text-transform:none">venueplay</span> Admin</span>
+  <!-- The venueplay logo is right beside it, so the tag is just "admin" (Dean, 3 Nov 2026). -->
+  <span class="tag" id="hqTag">admin</span>
   <div class="who"><span id="whoLabel"></span> <button type="button" class="hact" id="signOut">Sign out</button></div>
 </div></div>
 
@@ -292,12 +317,17 @@
   <div class="titlerow"><div class="h2">venueplay Admin</div></div>
   <div class="subh">Every venueplay venue in one place</div>
 
+  <!-- ONE VENUES NUMBER (Dean, 3 Nov 2026: "the venue count at top left jumps from 'open now' (signed up)
+       back to 10, which is confusing; make it one clear, labelled number"). There were two: this card
+       (the venue list, less test venues, prospects and venues that have left) and an "Open now / signed
+       up" card from venueplay_spots_taken (accounts with a card on file), a different list. The second is
+       gone. This one is painted ONCE, by renderStats, after the venue list AND the prospects list are both
+       known, so it never shows one number and then another. Until then it reads "…". -->
   <div class="stats">
-    <div class="scard"><div class="k">Venues</div><div class="v" id="stVenues">0</div><div class="d" id="stVenuesD">&nbsp;</div></div>
-    <div class="scard"><div class="k">Live now</div><div class="v g" id="stLive">0</div><div class="d">running a game</div></div>
-    <div class="scard"><div class="k">Groups</div><div class="v" id="stGroups">0</div><div class="d">pub / operator groups</div></div>
-    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">0</div><div class="d">kill-switch off</div></div>
-    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>
+    <div class="scard" title="Every venue on the list, not counting test venues, prospects who have not signed up, and venues that have left"><div class="k">Customer venues</div><div class="v" id="stVenues">&hellip;</div><div class="d" id="stVenuesD">&nbsp;</div></div>
+    <div class="scard"><div class="k">Live now</div><div class="v g" id="stLive">&hellip;</div><div class="d">running a game</div></div>
+    <div class="scard"><div class="k">Groups</div><div class="v" id="stGroups">&hellip;</div><div class="d">pub and club groups</div></div>
+    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>
   </div>
 
   <div class="navpills" id="hqNav">
@@ -310,6 +340,9 @@
          count are vp-subscribers-hq.js's own; it moves under Sales with Prospects when HQ gets its sub menus. -->
     <button data-pane="subscribers" id="vpsTab" hidden>Subscribers</button>
     <button data-pane="live">Live now</button>
+    <!-- HQ > Screens (Dean, 3 Nov 2026): one command for every venue screen, and TVs by type. It used to sit
+         inside the Venues list. -->
+    <button data-pane="screens">Screens</button>
     <button data-pane="quiet">Quiet</button>
     <button data-pane="cancelled">Cancelled</button>
     <button data-pane="billing">Billing</button>
@@ -330,8 +363,7 @@
 
   <!-- ============ VENUES ============ -->
   <div id="paneVenues">
-    <div class="rowbetween">
-      <div class="filterbar">
+    <div class="vtools">
         <input type="text" id="venueSearch" placeholder="Search by name or screen address&hellip;">
         <select id="venueFilter">
           <option value="all">All venues</option>
@@ -339,6 +371,11 @@
           <option value="independent">Independent</option>
           <option value="live">Live now</option>
           <option value="cancelling">Cancelling</option>
+          <!-- CANCELLED (Dean, 3 Nov 2026): the venues that have LEFT (ended, cancelled, archived: hasLeft). This
+               option replaces the "Show cancelled" tick that used to sit beside the drop-down, so there is one
+               place to find them. They are off every other filter; the search box still finds them. Unpaid
+               venues are not here: they stay on the list, they need chasing (Dean, 19 Oct 2026). -->
+          <option value="cancelled">Cancelled</option>
           <option value="test">Test venues</option>
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
@@ -347,16 +384,11 @@
                (VPProspects.isProspect), so owner and accounts only, like that tab. -->
           <option value="prospects">Prospects</option>
         </select>
-        <!-- Venues that have LEFT (ended, cancelled, archived) are off the list unless this is ticked.
-             The search box still finds them. Unpaid venues stay: they need chasing (Dean, 19 Oct 2026). -->
-        <label id="showLeftWrap" style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap">
-          <input type="checkbox" id="showLeft" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer">
-          Show cancelled <span id="leftHiddenN"></span>
-        </label>
+      <div class="acts">
+        <button class="btn ghost" id="addVenueToggle">+ Add venue</button>
+        <button class="btn ghost" id="prospectToggle">Set up a prospect</button>
+        <a class="btn pink" href="onboard.html">Full onboarding</a>
       </div>
-      <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
-      <button class="btn ghost sp" id="prospectToggle">Set up a prospect</button>
-      <a class="btn pink" href="onboard.html">Full onboarding</a>
     </div>
 
     <div id="addVenuePanel" class="panel pad hidden" style="margin-bottom:16px">
@@ -444,28 +476,37 @@
       </div>
     </div>
 
-    <div class="lblk" id="venuesLbl">All venues</div>
-    <div class="panel pad" style="margin-bottom:12px">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <select id="screensAction" style="width:auto;min-width:190px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
-          <option value="ads" selected>Put the ads back on</option>
-          <option value="reload">Restart the page</option>
-        </select>
-        <select id="reloadScreensWhen" style="width:auto;min-width:160px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
-          <option value="3am" selected>at 3am Brisbane</option>
-          <option value="now">right now</option>
-        </select>
-        <button class="mini" id="reloadScreens">Apply to every screen</button>
-        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>3am</b> is the safe default: it is stored as a time, so each screen acts when it gets there and no room is interrupted.</span>
-      </div>
-      <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
-      <!-- TVs BY TYPE (migration 139, Dean 1 Nov 2026): what kind of television each venue screen is. -->
-      <div id="tvTypesOut" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)"><span class="note">TVs by type: loading&hellip;</span></div>
-    </div>
+    <div class="lblk" id="venuesLbl" style="margin-top:0">All venues</div>
     <div class="panel"><div class="tscroll"><table class="vtable">
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
       <tbody id="venueRows"></tbody>
     </table></div></div>
+  </div>
+
+  <!-- ============ SCREENS ============
+       Its own tab (Dean, 3 Nov 2026: "default 3am should apply to every screen; maybe move it to its own tab").
+       The block used to sit inside the Venues list. The Worker route and what it does are unchanged. -->
+  <div id="paneScreens" class="hidden">
+    <div class="lblk" style="margin-top:0">Every venue screen</div>
+    <div class="panel pad" style="margin-bottom:12px">
+      <div class="scrhead">One command, every screen</div>
+      <div class="note" style="margin:0" id="screensScope">This applies to every venue screen at once: every TV showing venueplay, at every venue.</div>
+      <div class="scrrow">
+        <select id="screensAction">
+          <option value="ads" selected>Put the ads back on</option>
+          <option value="reload">Restart the page</option>
+        </select>
+        <select id="reloadScreensWhen">
+          <option value="3am" selected>at 3am Brisbane</option>
+          <option value="now">right now</option>
+        </select>
+        <button class="btn pink" id="reloadScreens">Apply to every screen</button>
+      </div>
+      <div class="note" id="reloadScreensOut" style="margin-top:12px"></div>
+      <div class="note" style="margin-top:12px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>At 3am Brisbane</b> is the default for both: it is stored as a time, so each screen acts when it gets there and no room is interrupted. Pick <b>right now</b> only when a wall needs fixing this minute: any game on it will be taken off.</div>
+    </div>
+    <!-- TVs BY TYPE (migration 139, Dean 1 Nov 2026): what kind of television each venue screen is. -->
+    <div class="panel pad" id="tvTypesOut"><span class="note">TVs by type: loading&hellip;</span></div>
   </div>
 
   <!-- ============ LIVE NOW ============ -->
@@ -949,8 +990,10 @@
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
-          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, logoSite:{}, logoUrl:{},
-          testFlag:{}, showTest:false, showLeft:false, quietSince:{},
+          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, logoSite:{}, logoUrl:{},
+          testFlag:{}, showTest:false, quietSince:{},
+          /* The headline cards are painted once both of these are true (renderStats, 3 Nov 2026). */
+          loaded:false, prospectsKnown:false,
           cancelling:{}, cancelAudit:null,
           /* OPENS ON THE ONES THAT NEED DOING. Dean, 12 Sep 2026: "can we have that default
              filter to say not contacted yet when you open that page?" A retention screen is a
@@ -975,7 +1018,7 @@
     // Landing on HQ normally clears any stale impersonation flag.
     try{ localStorage.removeItem("vpImpersonate"); }catch(e){}
     S.ctx=ctx; S.adminRole=ctx.adminRole||"staff";
-    $("whoLabel").innerHTML = "venueplay admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
+    $("whoLabel").innerHTML = "admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
     // Audit is visible only to Owner + Accounts.
     if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ ['audit','flagged'].forEach(function(p){ var _ab=document.querySelector('[data-pane="'+p+'"]'); if(_ab) _ab.style.display="none"; }); }
     $("app").style.display="block";
@@ -1091,7 +1134,9 @@
       c.from("vp_platform_admins").select("*"),
       c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250),
       c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
-      c.rpc("venueplay_spots_taken"),
+      /* Slot 7 was c.rpc("venueplay_spots_taken"), the "Open now / signed up" card. That card is gone
+         (Dean, 3 Nov 2026: one venues number, not two), so nothing is asked and the slots after it stay put. */
+      Promise.resolve({ data:null }),
       c.from("vp_games").select("session_id,format,started_at,status").eq("status","running"),
       /* "Show logo on our website" (migration 102 column, HQ's own switch since migration 111).
          Separate and fault-tolerant on purpose: a column named in listVenues that a database
@@ -1189,7 +1234,6 @@
         var t=Date.parse(x.started_at||x.opened_at||"");
         return isNaN(t) ? 0 : (nowMs-t);
       }
-      S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
       // Built BEFORE liveness is decided, because liveness now depends on it.
       S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
 
@@ -1214,9 +1258,19 @@
       S.usageMonth = null;
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
+    S.loaded=true;
     renderStats(); renderVenues(); loadTvTypes(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderOptin(); renderAudit(); populateGroupSelect();
     if(canBilling() && !S.healthAsked){ S.healthAsked=true; loadHealth(); }   // the Groups rows show a failing payment too
     loadTabBadges();
+    /* THE HEADLINE NUMBER WAITS FOR THE PROSPECTS LIST. It leaves prospects out (isProspect), and that list
+       arrives on its own (vp-prospects-hq.js), so the card used to paint the venue count once and then a
+       smaller number a moment later: the "jump" Dean saw (3 Nov 2026). Now renderStats paints nothing until
+       the list is known: known when "vp-prospects" has fired, or when load() has settled either way (an HQ
+       role the Worker refuses, or no answer), or when there is no prospects script at all. */
+    if(!S.prospectsKnown){
+      var pk=function(){ if(S.prospectsKnown) return; S.prospectsKnown=true; renderStats(); };   // the event may have beaten us to it
+      if(window.VPProspects && VPProspects.load){ try { VPProspects.load().then(pk, pk); } catch(e){ pk(); } } else pk();
+    }
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -1224,6 +1278,9 @@
 
   /* ================= STATS ================= */
   function renderStats(){
+    // ONE NUMBER, PAINTED ONCE: not until the venue list and the prospects list are both known, so it never
+    // shows one count and then another (Dean, 3 Nov 2026). The cards read "…" until then.
+    if(!S.loaded || !S.prospectsKnown) return;
     // Archived venues are not customers, so they are not in any headline number.
     // A test venue is not a customer and was inflating every card at the top of this page.
     // Nor is a venue that has ended or cancelled (hasLeft), the same rule the Venues list uses.
@@ -1237,9 +1294,6 @@
     $("stLive").textContent=liveN;
     $("stGroups").textContent=S.groups.length;
     $("stSusp").textContent=susp;
-    // The countdown to 100 is gone from HQ, but the number itself is still worth having.
-    // venueplay_spots_taken is the count of founding venues signed up.
-    $("stSpots").textContent = (S.spots==null) ? "—" : S.spots;
   }
 
   /* ================= LIVE NOW ================= */
@@ -1355,7 +1409,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","prospects","subscribers","live","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
+  var PANES=["venues","prospects","subscribers","live","screens","quiet","cancelled","billing","groups","usage","reports","team","flagged","audit"];
   /* HQ > Prospects (vp-prospects-hq.js) says when its list has arrived or changed: the Venues list and the
      headline count leave its prospects out, so they are drawn again with it. */
   /* Venues > Prospects reads that same list, which the Worker gives owner and accounts only. So the option is taken out
@@ -1364,7 +1418,7 @@
   var prOpt=document.querySelector('#venueFilter option[value="prospects"]');
   if(prOpt) prOpt.parentNode.removeChild(prOpt);
   function prOptBack(){ var sel=$("venueFilter"); if(prOpt && sel && !prOpt.parentNode) sel.appendChild(prOpt); }
-  document.addEventListener("vp-prospects", function(){ prOptBack(); if(S.venues){ renderStats(); renderVenues(); } });
+  document.addEventListener("vp-prospects", function(){ prOptBack(); S.prospectsKnown=true; if(S.venues){ renderStats(); renderVenues(); } });
   /* Switching pane was only ever done inline by the nav's own click handler, so nothing else could
      send you to a pane. Now anything can, and the tab highlights correctly when it does. */
   function goPane(pane){
@@ -1587,11 +1641,7 @@
         // venue list gives, from the same function.
         var state = stateBadgeFor(mine || { id:v.id, status:v.status, suspended_reason:v.suspended_reason });
         var con=quietContacted(v.id);
-        var conCell = con
-          ? '<span class="badge live">Contacted '+esc(cxWhen(con.created_at))
-            + (con.actor_label ? ' by '+esc(con.actor_label) : '')+'</span>'
-            + ' <button class="mini" data-quncontact="'+esc(v.id)+'">Undo</button>'
-          : '<button class="mini" data-qcontact="'+esc(v.id)+'">Contacted</button>';
+        // (A second, unused copy of the Contacted cell sat here until 4 Nov 2026; the row below is the one.)
         html += '<tr'+(con?' class="qdone"':'')+'><td><b class="vn" style="display:block">'+esc(v.name||"Venue")+'</b><div class="qstate">'+state+(con?' <span class="qcon">Contacted '+esc(cxWhen(con.created_at))+(con.actor_label?' by '+esc(con.actor_label):'')+'</span>':'')+'</div></td>'
               + '<td class="mono">'+quiet+'</td>'
               + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>'
@@ -2246,8 +2296,8 @@
   function isProspect(v){ return !!(v && window.VPProspects && window.VPProspects.isProspect(v.id)); }
   function venuePasses(v, ignoreSearch){
     /* Venues that have LEFT (archived, ended, cancelled) are off the list unless you go looking:
-       tick "Show cancelled", choose Archived or Suspended, or SEARCH. A search finds them whatever
-       the tick says, because "where did that venue go" must always be one search away (Dean,
+       choose Cancelled, Archived or Suspended in the drop-down, or SEARCH. A search finds them whatever
+       the filter says, because "where did that venue go" must always be one search away (Dean,
        19 Oct 2026). They are not customers any more, and leaving them in the main view makes every
        scan slower. Billing still sees them for the month they left, because that month's invoice
        is real; that filtering lives in renderBilling, not here. */
@@ -2279,8 +2329,11 @@
       return true;
     }
     if(S.vFilter==="archived" && !isArchived(v)) return false;
-    if(S.vFilter!=="archived" && S.vFilter!=="suspended" && S.vFilter!=="test" &&
-       hasLeft(v) && !S.showLeft && !searching) return false;
+    /* "Cancelled" in the drop-down is the one place the venues that have LEFT are listed (Dean, 3 Nov 2026).
+       It replaced the "Show cancelled" tick. Off every other filter; a search still finds them. */
+    if(S.vFilter==="cancelled" && !hasLeft(v)) return false;
+    if(S.vFilter!=="archived" && S.vFilter!=="suspended" && S.vFilter!=="test" && S.vFilter!=="cancelled" &&
+       hasLeft(v) && !searching) return false;
     if(S.vFilter==="grouped" && !v.group_id) return false;
     if(S.vFilter==="independent" && v.group_id) return false;
     if(S.vFilter==="live" && !S.live[v.id]) return false;
@@ -2310,13 +2363,13 @@
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(function(v){ return venuePasses(v); });
     var pool=S.venues.filter(function(v){ return venuePasses(v, true); });
-    // Say how many the tick is hiding, so an empty-looking list is never a mystery.
-    var hiddenLeft=S.venues.filter(function(v){ return hasLeft(v) && !hideAsTest(v); }).length;
-    var hn=$("leftHiddenN"); if(hn) hn.textContent = (!S.showLeft && hiddenLeft) ? "("+hiddenLeft+" hidden)" : "";
+    // Say how many have left on the option itself, so an empty-looking list is never a mystery.
+    var leftN=S.venues.filter(function(v){ return hasLeft(v) && !hideAsTest(v); }).length;
+    var co=document.querySelector('#venueFilter option[value="cancelled"]'); if(co) co.textContent = "Cancelled" + (leftN ? " ("+leftN+")" : "");
     /* SAY WHICH FILTER IS ON. Only "archived" ever changed this heading, so choosing
        Cancelling gave "All venues (3 of 17)", which reads as a bug in the count rather than
        a filter doing its job. */
-    var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
+    var FLBL={ archived:"Archived venues", cancelling:"Cancelling", cancelled:"Cancelled venues", grouped:"Grouped venues",
                independent:"Independent venues", live:"Live now", suspended:"Suspended venues",
                test:"Test venues", needsstate:"Venues that need a state", prospects:"Prospects" };
     var lbl=FLBL[S.vFilter] || "All venues";
@@ -2530,34 +2583,26 @@
     var r=$("goRun"); if(r) r.addEventListener("click", runGroupOverage);
     var c=$("goCsv"); if(c) c.addEventListener("click", groupOverageCsv);
   })();
-  /* THE TIME DEFAULT HAS TO FOLLOW THE ACTION.
-     "Ads back on" is what you press BECAUSE a wall is showing something wrong this
-     second. Defaulting it to 3am - which is what the shared dropdown did - meant Dean
-     pressed it, nothing happened, and the command sat waiting eight hours. He then
-     reported the screen still broken, correctly, and we both went looking for a fault
-     that was not there. A restart can wait for 3am; putting the ads back cannot. */
-  (function(){
-    var act=$("screensAction"), when=$("reloadScreensWhen");
-    if(!act || !when) return;
-    function syncWhen(){
-      when.value = (act.value === "reload") ? "3am" : "now";
-    }
-    act.addEventListener("change", syncWhen);
-    syncWhen();
-  })();
+  /* THE TIME DEFAULT IS 3AM BRISBANE FOR BOTH ACTIONS (Dean, 3 Nov 2026: "default 3am should apply
+     to every screen"). Until then "Put the ads back on" flipped the time to "right now" the moment it
+     was chosen, because of one night when Dean pressed it, nothing happened, and the command sat waiting
+     eight hours while we both looked for a fault that was not there. The confirmation now says plainly
+     when it will happen, "right now" is still in the drop-down, and nothing changes the time behind
+     Dean's back: the time he sees is the time it goes. */
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
-  $("showLeft").addEventListener("change", function(){ S.showLeft=this.checked; renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
   /* "Resend sign-in link" (Dean, 29 Oct 2026: "otherwise we can resend it"). One shared function: the Venues
      row and HQ > Prospects (vp-prospects-hq.js) both call it, so the two buttons cannot say different things. */
   function hqSigninLink(id, btn){
     var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||"this venue";
-    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, for 14 days, and any older link stops working.").then(function(ok){ if(!ok) return null;
+    /* No number before the Worker has minted the link (Dean, 4 Nov 2026: never print a number that is not the real
+       expiry). A prospect's link ends 30 days from setup, anyone else's 14 days from now; the Worker says which. */
+    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, until it expires, and any older link stops working.").then(function(ok){ if(!ok) return null;
       var was=btn.textContent; btn.disabled=true; btn.textContent="Sending...";
       return workerPost("/admin/signin-link", { venue_id:id }).then(function(r){
         btn.disabled=false; btn.textContent=was;
         if(r.error){ vpTell(r.error); return r; }
-        vpTell("Sent to "+r.to+". One tap opens their account."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
+        vpTell("Sent to "+r.to+". One tap opens their account"+(r.expires_words?", until "+r.expires_words+(r.days_left?" ("+r.days_left+(r.days_left===1?" day":" days")+")":""):"")+"."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
         return r;
       });
     });
@@ -4175,7 +4220,7 @@
   /* From an audit entry to that venue's screen versions, where Restore lives. */
   function openScreenHistoryFor(id){
     S.openVenue=id; S.vSearch=""; var vs=$("venueSearch"); if(vs) vs.value="";
-    var v=venueById(id); if(v && hasLeft(v)){ S.showLeft=true; var sl=$("showLeft"); if(sl) sl.checked=true; }
+    var v=venueById(id); if(v && hasLeft(v)){ S.vFilter="cancelled"; var vf=$("venueFilter"); if(vf) vf.value="cancelled"; }
     goPane("venues"); renderVenues();
     setTimeout(function(){
       var b=document.querySelector('button[data-scrhist="'+id+'"]');

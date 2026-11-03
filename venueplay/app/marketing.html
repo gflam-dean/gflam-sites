@@ -196,7 +196,7 @@
       [n(s.answers_given), "answers tapped", ""],
       [n(s.raffle_draws), "raffle tickets drawn", ""],
       [n(s.member_draws), "members draws", ""],
-      [n(s.prizes_given), "prizes given away"+(s.prizes_value_cents?'<div class="d">worth '+money(s.prizes_value_cents)+'</div>':""), ""],
+      [n(s.prizes_given), "prizes given away"+(prizeWords(s)?'<div class="d">'+esc(prizeWords(s))+'</div>':""), ""],
       [n(s.opt_ins), "players opted in", (s.players? '<div class="d">'+Math.round(s.opt_ins/s.players*100)+'% of players</div>' : "")]
     ];
     $("stats").innerHTML=cells.map(function(c){ return '<div class="stat"><div class="n">'+c[0]+'</div><div class="k">'+c[1]+'</div>'+c[2]+'</div>'; }).join("");
@@ -205,7 +205,7 @@
     if(s.busiest_day) f.push("<b>"+esc(s.busiest_day)+"</b> is your busiest day.");
     if(s.regulars) f.push("<b>"+n(s.regulars)+" regulars</b> have played on three or more nights. They are who to tell first about a new night.");
     if(s.players_this_month) f.push("<b>"+n(s.players_this_month)+" players</b> so far this month.");
-    if(s.prizes_given) f.push("You have given away <b>"+n(s.prizes_given)+" prizes</b>"+(s.prizes_value_cents?" worth "+money(s.prizes_value_cents):"")+".");
+    if(s.prizes_given) f.push("You have given away <b>"+n(s.prizes_given)+" prizes</b>"+(prizeWords(s)?": "+esc(prizeWords(s)):"")+".");
     if(!f.length) f.push("Nothing to shout about yet. Run a night and the numbers land here by the next morning.");
     $("facts").innerHTML=f.map(function(x){ return "<li>"+x+"</li>"; }).join("");
     var slug=""; var id=$("venuePick").value; var v=DATA.venues.filter(function(x){ return x.id===id; })[0] || DATA.venues[0];
@@ -213,6 +213,15 @@
     fillTilePick(); drawTile();
   }
 
+  /* CASH AND OTHER PRIZES, SAID APART, NEVER ADDED INTO ONE DOLLAR FIGURE (Dean, 3 Nov 2026). The
+     Worker counts cash, other prizes with a value, and prizes with no value (a meat tray) separately. */
+  function prizeWords(s){
+    var bits=[];
+    if(s.prizes_cash_count) bits.push(money(s.prizes_cash_cents||0)+" in cash");
+    if(s.prizes_other_count) bits.push(n(s.prizes_other_count)+" other "+(s.prizes_other_count===1?"prize":"prizes")+" worth "+money(s.prizes_other_cents||0));
+    if(s.prizes_unvalued) bits.push(n(s.prizes_unvalued)+" with no value entered");
+    return bits.join(", ");
+  }
   // ---- the share tile: drawn here, from their own numbers, and downloaded as a PNG ----
   function tileLines(){
     var s=CUR||{}, out=[];
@@ -267,7 +276,7 @@
   var DEMO=/[?&]demo=1\b/.test(location.search||"");
   var SAMPLE={ ok:true, role:"marketing", may_see_optins:false, venues:[{ id:"demo", name:"The Royal Hotel", slug:"" }],
     stats:{ venues:[], total:{ games:64, games_by_type:{ trivia:26, bingo:22, "musical bingo":9, raffle:7 }, nights:41, players:2318, phones:1204, regulars:186,
-      questions_asked:1040, answers_given:38214, raffle_draws:96, member_draws:12, prizes_given:143, prizes_value_cents:612000, opt_ins:412,
+      questions_asked:1040, answers_given:38214, raffle_draws:96, member_draws:12, prizes_given:143, prizes_cash_count:38, prizes_cash_cents:412000, prizes_other_count:41, prizes_other_cents:200000, prizes_unvalued:64, opt_ins:412,
       biggest_night:{ day:"2026-08-28", players:118 }, busiest_day:"Thursday", players_this_month:412, players_last_month:351, games_this_month:11, games_last_month:9 } } };
   (DEMO ? Promise.resolve(SAMPLE) : VP.requireAuth({}).then(function(ctx){
     // Somebody who also runs games gets a way back to them. A marketing-only login does not need one.

@@ -43,6 +43,10 @@
   .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
   .hact:hover{border-color:var(--pink);color:#fff}
+  /* A link and a button in one row are the same box (3 Nov 2026): the anchor was 34px to the buttons' 32. */
+  .hact{display:inline-flex;align-items:center;box-sizing:border-box;height:32px;line-height:1}
+  .hact.hback{color:var(--muted)}
+  @media(max-width:520px){ .bar{gap:10px 12px} .hactions{flex:1 1 100%;justify-content:flex-end} }
   .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
@@ -55,6 +59,17 @@
   .sumgrid .nextrow{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px}
   .sumgrid .nextrow .nl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
   .sumgrid .nextrow b{color:var(--text);font-weight:800;font-size:14px}
+  /* THE BILLING CARD AS ROWS (Dean, 3 Nov 2026): "This month: 2 players" on one line, "Next month:
+     5 players" just below, then "Next payment". Each number sits beside its own label. */
+  .sumrows{display:flex;flex-direction:column;gap:0}
+  .sumrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--line-2)}
+  .sumrow:first-child{border-top:0;padding-top:2px}
+  .sumrow .k{flex:0 0 132px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumrow .v{font-size:17px;font-weight:800;color:#fff}
+  .sumrow .v.pink{color:var(--pink)}
+  .sumrow .sub{font-size:13.5px;color:var(--muted)}
+  /* On a phone the label and its number stay side by side; the money line drops under the number. */
+  @media(max-width:420px){ .sumrow{gap:4px 10px} .sumrow .k{flex:0 0 104px} .sumrow .sub{flex-basis:100%;padding-left:114px} }
   /* Failed payment notice. Loud enough to be believed, quiet enough not to look like an error
      page: the owner needs the date, the amount and one button that fixes it. */
   .pastdue{background:rgba(255,107,107,.10);border:1px solid rgba(255,107,107,.55);border-radius:16px;padding:16px 18px;margin:0 0 16px}
@@ -81,6 +96,18 @@
   .logtable td{padding:9px 12px 9px 0;border-top:1px solid var(--line-2);color:var(--text);vertical-align:top}
   .logtable td b{color:#fff}
   .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  /* THE DRAWS TAB, FOLDED (Dean, 3 Nov 2026: "DRAWS section is huge"). Raffles, Members draws and Permits are
+     three folds; one is open at a time, its heading says what is set in a few words, and the open one is
+     remembered. The headings keep the .label class so a manager's gating (gateSections) still hides a whole fold. */
+  .acchead{display:flex;align-items:center;gap:10px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:10px 0 0;cursor:pointer;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;letter-spacing:.01em;text-transform:none;color:#fff;min-height:52px;user-select:none}
+  .acchead:hover{border-color:var(--line)}
+  .acchead .accsum{flex:1 1 auto;min-width:0;font-family:'Manrope',sans-serif;font-weight:500;font-size:13px;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acchead .accchev{flex:0 0 auto;width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s;margin:0 4px 4px 0}
+  .acchead.open{border-color:rgba(255,31,142,.45)}
+  .acchead.open .accchev{transform:rotate(-135deg);margin:4px 4px 0 0;border-color:var(--pink)}
+  .accbody{display:none;padding:2px 0 8px}
+  .acchead.open + .accbody{display:block}
   .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
   .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
   .tabs button.on{background:var(--pink);color:#fff}
@@ -88,8 +115,18 @@
   .tabpanel{display:none}
   .tabpanel.on{display:block}
   .tabpanel > .label:first-child{margin-top:4px}
-  .venue{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
-  .venue .nm{flex:1 1 150px;min-width:0}
+  /* THE VENUE ROW IS A GRID (Dean, 3 Nov 2026: the spacing on a phone, and the players block out of line on an
+     iPad). The name on the left, the players stepper on the right on the SAME line at every width, Save under
+     the stepper, "Cancel this venue" on its own line under both. Nothing floats and nothing wraps by chance. */
+  .venue{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm step" "nm save" "canx canx";align-items:center;gap:6px 14px;
+    background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
+  .venue .nm{grid-area:nm;min-width:0}
+  .venue .stepper{grid-area:step;justify-self:end}
+  .venue .save{grid-area:save;justify-self:end}
+  .venue .canx{grid-area:canx}
+  .venue .cxbanner{grid-column:1 / -1}
+  a.venue{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm open"}
+  a.venue .canxlink{grid-area:open}
   .venue .nm b{display:block;font-size:16px;color:#fff}
   .venue .nm small{color:var(--muted);font-size:12.5px}
   .venue .pend{color:var(--pink);font-size:12px;margin-top:2px}
@@ -99,11 +136,11 @@
   .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .save{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:none}
   .save.show{display:inline-block}
-  .venue .canx{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:4px}
+  .venue .canx{display:flex;justify-content:flex-end;margin-top:2px}
   .canxlink{background:none;border:0;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit}
   .canxlink:hover{color:var(--pink)}
   .venue.cancelling{opacity:.9}
-  .cxbanner{flex-basis:100%;background:rgba(255,60,120,.08);border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;color:var(--pink);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .cxbanner{background:rgba(255,60,120,.08);border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;color:var(--pink);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .cxbanner .keep{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;font-size:12.5px;font-family:inherit;white-space:nowrap}
   /* WHICH VENUE'S TV AM I EDITING.
      Dean, 17 Sep 2026, after uploading a promo and seeing nothing on the telly: the panel had
@@ -114,6 +151,11 @@
      "maybe that venue picker could be bigger or more noticable" -- so it is now a bar you
      cannot scroll past, and the venue's name is repeated on the save button, which is the last
      thing you look at before you commit. */
+  /* ONE VENUE DROP-DOWN FOR THE WHOLE PAGE (Dean, 3 Nov 2026): #acctPick at the top, from
+     /app/vp-venuepick.js. The panels' own pickers stay in the page as each panel's record of the
+     venue it is showing, and are never shown: two drop-downs that can disagree was the fault. */
+  .screenpick{display:none!important}
+  .acctpick{background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);border-radius:16px;padding:14px 16px 2px;margin:0 0 18px}
   .screenpick{margin:0 0 16px;background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);
     border-radius:14px;padding:13px 15px}
   .screenpick .flabel{display:block;margin:0 0 7px;font-family:'JetBrains Mono',ui-monospace,monospace;
@@ -161,16 +203,27 @@
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .rfx:hover{color:var(--pink)}
-  .adslide{display:flex;gap:14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;flex-wrap:wrap;align-items:flex-start}
-  .adcol{flex:0 0 120px;display:flex;flex-direction:column;gap:6px}
-  .adthumb{width:120px;height:72px;border-radius:8px;background:var(--ink-2);background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center}
-  .adthumbbtns{display:flex;flex-direction:column;gap:4px;align-items:center}
-  .adthumbbtns .ad-change{width:120px}
-  .adfields{flex:1 1 220px;min-width:0}
-  .adline{display:flex;gap:8px;flex-wrap:wrap}
-  .adf{flex:1 1 90px;min-width:0}
-  .adf .flabel{display:block;margin:0 0 4px}
-  .adfields input[type=number],.adfields input[type=date]{width:100%;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:8px 10px;font-size:14px;font-family:'Manrope',sans-serif}
+  /* THE SLIDE ROW, TIDIED (Dean, 3 Nov 2026: "tidy the formatting (image preview and controls)"). The preview is
+     the shape of the TV (16:9) and shows the whole picture on black, as the TV does, instead of a cropped strip;
+     its two buttons sit side by side under it; the three settings line up in one row with their labels, and on a
+     phone the preview goes full width with the settings under it. Every control is the page's own. */
+  .adslide{display:grid;grid-template-columns:200px 1fr;gap:14px 18px;background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;align-items:start;counter-increment:adslide}
+  #slides{counter-reset:adslide}
+  .adcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .adthumb{width:100%;aspect-ratio:16/9;border-radius:10px;background-color:#050506;background-size:contain;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;position:relative}
+  .adthumb::before{content:"Slide " counter(adslide);position:absolute;top:6px;left:6px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
+  .adthumbbtns{display:flex;flex-direction:row;gap:10px;align-items:center;justify-content:space-between}
+  .adthumbbtns .ad-change{flex:1 1 auto;margin:0}
+  .adfields{min-width:0}
+  .adline{display:grid;grid-template-columns:minmax(80px,.7fr) 1fr 1fr;gap:10px}
+  .adf{min-width:0}
+  .adf .flabel{display:block;margin:0 0 5px}
+  @media(max-width:560px){
+    .adslide{grid-template-columns:1fr}
+    .adline{grid-template-columns:1fr 1fr}
+    .adline .adf:first-child{grid-column:1 / -1}
+  }
+  .adfields input[type=number],.adfields input[type=date]{width:100%;min-height:44px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
   .srow .sfull{flex-basis:100%}
@@ -324,12 +377,15 @@
 <body>
 <header>
   <div class="bar">
-    <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
     <span class="tag">Account</span>
+    <!-- BACK, HELP AND SIGN OUT ON ONE LINE (Dean, 3 Nov 2026): the back link is a pill in the same row as the
+         other two, so on a phone it never sits alone beside the logo while the buttons drop a line. vp-help.js
+         puts Help in front of Sign out. -->
     <span class="hactions">
+      <a href="/app" class="hact hback" id="backLink" title="Back to games">&#8592; Games</a>
       <button type="button" class="hact" id="signout">Sign out</button>
     </span>
   </div>
@@ -342,9 +398,13 @@
 
   <div id="loading" class="card">Loading your account…</div>
   <div id="content" style="display:none">
+    <!-- THE ONE VENUE DROP-DOWN (vp-venuepick.js). Every tab below follows it, and so does every other
+         screen: the console, Game settings and the monthly report open on the venue chosen here. -->
+    <div class="acctpick" id="acctPick" hidden></div>
 
     <div class="tabs" role="tablist">
       <button class="on" data-tab="billing">Billing</button>
+      <button data-tab="people">People</button>
       <button data-tab="nights">Nights</button>
       <button data-tab="screen">Screen</button>
       <button data-tab="draws">Draws</button>
@@ -364,23 +424,12 @@
     </div>
 
     <div class="card">
-      <div class="sumgrid">
-        <div>
-          <div class="k">Your plan</div>
-          <div class="v" id="s-plan" style="font-size:18px">–</div><div class="whenlbl" id="s-plan-sub"></div>
-        </div>
-        <div>
-          <div class="k">Total players</div>
-          <div class="v" id="s-players">–</div><div class="whenlbl">this month</div>
-          <div class="nextrow"><span class="nl">Next month</span><b id="s-players-next">–</b></div>
-        </div>
-        <div>
-          <div class="k">Per month</div>
-          <div class="v pink" id="s-total">–</div><div class="whenlbl">this month</div>
-          <div class="nextrow"><span class="nl">Next month</span><b id="s-total-next">–</b></div>
-        </div>
-        <div><div class="k">Next payment</div><div class="v" id="s-next" style="font-size:16px">–</div></div>
-        <div id="s-credit-tile" style="display:none"><div class="k">Credit held</div><div class="v" id="s-credit" style="color:#35D07F">–</div></div>
+      <div class="sumrows">
+        <div class="sumrow"><span class="k">Your plan</span><b class="v" id="s-plan">–</b><span class="sub" id="s-plan-sub"></span></div>
+        <div class="sumrow"><span class="k">This month</span><b class="v" id="s-players">–</b><span class="sub" id="s-total">–</span></div>
+        <div class="sumrow"><span class="k">Next month</span><b class="v" id="s-players-next">–</b><span class="sub" id="s-total-next">–</span></div>
+        <div class="sumrow"><span class="k">Next payment</span><b class="v pink" id="s-next-amt">–</b><span class="sub" id="s-next">–</span></div>
+        <div class="sumrow" id="s-credit-tile" style="display:none"><span class="k">Credit held</span><b class="v" id="s-credit" style="color:#35D07F">–</b></div>
       </div>
       <div class="note" id="s-credit-note" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
     </div>
@@ -396,7 +445,9 @@
       <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
       <button class="go" id="add-go">Add venue</button>
     </div>
-    <p class="note">Adding a venue puts it on this same account and bill, on your current rate. Its first month is free, the same as your first venue, and the credit comes off your next invoice. Two venues can share a name as long as their postcodes differ, and putting a cancelled venue back on is the same form: type its name and it comes back with everything it had.</p>
+    <!-- THE TRUE SENTENCE ABOUT A NEW VENUE (Dean, 3 Nov 2026: "that's not true"). Written by paintAddVenueNote from
+         the Worker's rules, so the page can only ever say what the Worker does. -->
+    <p class="note" id="addVenueNote">Adding a venue puts it on this same account and bill, at your current rate, the same as your first venue.</p>
 
     <div class="label">Payment reminders</div>
     <div class="card toggle">
@@ -411,18 +462,26 @@
     </div>
     <p class="note" id="portalFallback" style="display:none;margin:8px 0 0">Having trouble? <a id="portalLoginLink" href="#" rel="noopener" style="color:var(--pink)">Sign in to Stripe with your email instead</a>. Stripe emails you a code.</p>
 
+    </div><!-- /tp-billing -->
+
+    <!-- PEOPLE (Dean, 3 Nov 2026): "a People section for users (hosts/staff), where you add people per
+         venue". Everyone who signs in for this account, in one tab: hosts, managers and the marketing
+         login. The list shows who can get into the venue chosen at the top of the page, and adding
+         someone starts with that venue ticked. -->
+    <div class="tabpanel" id="tp-people">
+    <div class="label" id="peopleHead">People</div>
+    <!-- ONE SCREEN, PLAIN (Dean, 3 Nov 2026): one sentence on how everyone signs in, then each role says what it can
+         do in one line. "Change the venue at the top" only when there IS a drop-down at the top (peopleVenue). -->
+    <p class="note" style="margin:0 0 10px" id="peopleLede">Everyone signs in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code to their mobile. No app to install.</p>
+    <p class="note" style="margin:0 0 10px;color:var(--text)" id="peopleAt"></p>
     <div class="label">Hosts</div>
-    <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
+    <p class="note" style="margin:0 0 10px"><b style="color:var(--text)">Run the games on the night.</b> Nothing else: billing, settings and your members list stay with you.</p>
     <div id="hosts"></div>
     <button class="addbtn" id="hostToggle">+ Add a host</button>
-    <!-- HQ ONLY (Dean, 20 Oct 2026). Throws away the TV screen key for every venue on the account,
-         so only devices signed in now can control the TVs. Venues do not need it: removing a host
-         above already does this, and a host is signed out by itself after 4 hours. Starts hidden;
-         loadHosts() shows it only while VenuePlay HQ is viewing the account (hqViewing()). -->
-    <div class="card toggle" id="resecureCard" style="margin-top:10px;display:none">
-      <div class="t">Lock old devices out of your TVs (HQ only)<small>After this, only phones and tablets signed in right now can control your TV screens. Use it if a staff member has left (remove them under Hosts too, so their login stops working) or a signed-in device has gone missing (it is signed out by itself within 4 hours). Your TVs reconnect by themselves within a few minutes. A game that is on keeps running, and nobody is signed out.</small></div>
-      <button class="addbtn" id="resecureBtn" style="margin:0;flex:0 0 auto">Lock out old devices</button>
-    </div>
+    <!-- "Lock old devices out of your TVs" was here, HQ only, until 3 Nov 2026. Dean: it cannot be
+         offered from the back end, so it is gone from this page for everyone, HQ included. Removing a
+         person below still signs them out, and every login signs out by itself after 4 hours. The
+         billing Worker's /account/screens-resecure route is untouched (server behaviour unchanged). -->
     <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-name">Name</label>
@@ -446,7 +505,7 @@
 
     <div id="managersSection" style="display:none">
       <div class="label">Managers</div>
-      <p class="note" style="margin:0 0 10px">For groups: a manager runs and sets up the venues you give them. Tick what each can do. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code. Billing and the player-data rules below stay with you.</p>
+      <p class="note" style="margin:0 0 10px"><b style="color:var(--text)">Run and set up the venues you give them.</b> You tick what each one can do: advertising, draws and raffles, adding hosts, player exports. Never billing.</p>
       <div id="managers"></div>
       <button class="addbtn" id="mgrToggle">+ Add a manager</button>
       <div class="addform" id="mgrForm" style="flex-direction:column;align-items:stretch">
@@ -480,7 +539,7 @@
     <!-- THE MARKETING LOGIN. Optional, owner only. Dean, 22 Sep 2026. -->
     <div id="marketingSection" style="display:none">
       <div class="label">Marketing</div>
-      <p class="note" style="margin:0 0 10px">Optional. A login for whoever does your marketing, in house or at an agency. They see your numbers, the brand kit, your signs and your advertising screens at <b style="color:var(--text)">venueplay.com.au/app/marketing</b>. They cannot run games, see billing or change what you collect from players. If a player asks to be taken off your list, this is who we tell.</p>
+      <p class="note" style="margin:0 0 10px"><b style="color:var(--text)">See your numbers, the brand kit, your signs and your TV slides</b> at <b style="color:var(--text)">venueplay.com.au/app/marketing</b>. Optional, for whoever does your marketing. They cannot run games, see billing or change what you collect from players.</p>
       <div id="marketers"></div>
       <button class="addbtn" id="mktToggle">+ Add a marketing login</button>
       <div class="addform" id="mktForm" style="flex-direction:column;align-items:stretch">
@@ -503,14 +562,14 @@
         <button class="go" id="mkt-go" style="align-self:flex-start">Add marketing login</button>
       </div>
     </div>
-    </div><!-- /tp-billing -->
+    </div><!-- /tp-people -->
 
     <!-- Nights. The morning after a night the app showed the game menu and nothing else: nobody
          paying the bill could see whether anyone turned up. -->
     <div class="tabpanel" id="tp-nights">
     <div class="label">Your nights</div>
     <!-- The monthly report (31 Oct 2026): any month, the same numbers as the email on the 1st. -->
-    <p class="note" style="margin:0 0 10px"><a href="report.html" style="color:#FF1F8E;font-weight:700">See your monthly report</a>: nights, players, who came back and your top teams, for any month.</p>
+    <p class="note" style="margin:0 0 10px"><a href="report.html" id="reportLink" style="color:#FF1F8E;font-weight:700">See your monthly report</a>: nights, players, who came back and your top teams, for any month.</p>
     <p class="note" style="margin:0 0 10px">How your recent nights went. "Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
     <!-- Read-only, so nothing can be written to the wrong venue here. It still gets the bar,
          because quietly reading the WRONG venue's numbers and deciding something about your
@@ -566,8 +625,9 @@
     </div><!-- /tp-marketing -->
 
     <div class="tabpanel" id="tp-draws">
-    <div class="label">Raffles</div>
-    <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
+    <div class="label acchead" data-acc="raffles" role="button" tabindex="0" aria-expanded="false">Raffles<span class="accsum" id="rfSum"></span><span class="accchev"></span></div>
+    <div class="accbody" id="acc-raffles">
+    <p class="note" style="margin:8px 0 10px">Set your raffle routine and your usual prizes once. What you have given away shows here too, with cash and other prizes counted apart.</p>
     <!-- Same bar, same reason: the raffle routine also defaults to the first venue. -->
     <div id="rfPickWrap" class="screenpick" style="display:none">
       <label class="flabel" for="rfVenue">You are editing the raffle at</label>
@@ -626,8 +686,10 @@
       <div id="drawLog"><p class="snote">Loading…</p></div>
     </div>
 
-    <div class="label">Members draws</div>
-    <p class="note" style="margin:0 0 10px">Set your members draw once and it runs every week. The live jackpot and the next draw show on your TV automatically.</p>
+    </div><!-- /acc-raffles -->
+    <div class="label acchead" data-acc="members" role="button" tabindex="0" aria-expanded="false">Members draws<span class="accsum" id="mdSum"></span><span class="accchev"></span></div>
+    <div class="accbody" id="acc-members">
+    <p class="note" style="margin:8px 0 10px">Set your members draw once and it runs every week. The live jackpot and the next draw show on your TV automatically.</p>
     <!-- THE SAME TRAP, AND THE WORST PLACE FOR IT. The advertising panel sending a promo to the
          wrong telly is embarrassing. This panel imports a MEMBERS LIST, which is personal
          information one venue holds about its own members, and it defaulted to the first venue
@@ -658,8 +720,7 @@
              the same /host/members/settings field, so setting up a draw asks it in one place. -->
         <div class="mdf"><label class="flabel" for="md-max">Maximum jackpot ($)</label><input type="number" id="md-max" min="0" step="1" inputmode="numeric" placeholder="No maximum"></div>
       </div>
-      <p class="snote" style="margin:8px 0 0">Maximum jackpot: leave it blank for no maximum. Once the jackpot reaches it, the draw keeps running at that figure until it is won, and each week's increase goes into a reserve that seeds the next jackpot.</p>
-      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over, so changing the starting jackpot or the weekly increase does not touch it. Type a new amount to change it.</p>
+      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over. Leave the maximum blank for no maximum; once it is reached, the weekly increase goes into a reserve that seeds the next jackpot.</p>
       <button class="addbtn" id="mdCalcJp" type="button" style="margin-top:8px">Work out the jackpot from the start date</button>
       <div class="btnrow">
         <button class="go" id="mdSave">Save draw</button>
@@ -703,10 +764,13 @@
     <!-- PERMITS FOR DRAWS (Dean, 24 Oct 2026): the raffle and members-draw permits sit with the draws
          they belong to. Painted and saved by /app/vp-permits.js, the one copy the Game settings page
          (the bingo permit) also uses. Follows the raffle venue picker at the top of this tab. -->
-    <div class="label">Permits and authorities for draws</div>
-    <p class="note" style="margin:0 0 10px">Record any permit, licence or authority your venue holds for raffles and members draws, so it is on file. We do not check it, and recording it does not make a draw lawful: that stays with you. Your console reads this before a paid draw. These belong to <b id="pmPickName">the venue picked at the top of this tab</b>. Your bingo permit is under Game settings.</p>
+    </div><!-- /acc-members -->
+    <div class="label acchead" data-acc="permits" role="button" tabindex="0" aria-expanded="false">Permits and authorities for draws<span class="accsum" id="pmSum"></span><span class="accchev"></span></div>
+    <div class="accbody" id="acc-permits">
+    <p class="note" style="margin:8px 0 10px">Record any permit, licence or authority your venue holds for raffles and members draws, so it is on file. We do not check it, and recording it does not make a draw lawful: that stays with you. Your console reads this before a paid draw. These belong to <b id="pmPickName">the venue picked at the top of this tab</b>. Your bingo permit is under Game settings.</p>
     <div id="drawPermitsErr" class="loadfail" hidden></div>
     <div id="drawPermits"></div>
+    </div><!-- /acc-permits -->
     </div><!-- /tp-draws -->
 
     <div class="tabpanel" id="tp-screen">
@@ -790,6 +854,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
 <script src="/app/vp-gaming.js"></script>
 <script src="/app/vp-permits.js"></script>
@@ -916,8 +981,23 @@
   // An error stays up until it is read, so give it a way off the screen.
   (function(){ var m=$("msg"); if(m) m.addEventListener("click", function(){ m.textContent=""; m.className="msg"; }); })();
 
+  /* Dean's billing rules as the Worker reports them (/account/summary `rules`, OFF until he says yes). Every
+     sentence about money on this page is written from these, so the page can only say what the Worker does. */
+  var RULES = { new_pub_free_month: false, undo_hour: false };
+  function paintAddVenueNote(d){
+    var el = $("addVenueNote"); if (!el) return;
+    var base = "Adding a venue puts it on this same account and bill, at your current rate, the same as your first venue. ";
+    var truth = d.comp ? "Nothing on this account is charged."
+      : d.plan === "annual" ? "It is charged pro rata to your renewal, less one month free, and that comes off your next invoice."
+      : RULES.new_pub_free_month
+        ? "Its first month is free. After that it joins your billing cycle: your next bill charges only the days after its free month, then a full month like your other venues."
+        : "It is free until your next bill date, then it is charged a full month like your other venues.";
+    el.textContent = base + truth + " Two venues can share a name if their postcodes differ, and a cancelled venue comes back with the same form.";
+  }
   function render(d){
     rate = d.rate || 3.00;
+    RULES = d.rules || RULES;
+    paintAddVenueNote(d);
     // Credit only exists on annual, and only after a venue has reduced its maximum. Show the
     // tile when there is something in it, and say plainly that it applies itself: a venue seeing
     // a balance with no explanation will email asking how to spend it.
@@ -936,8 +1016,8 @@
       if(_ps) _ps.textContent = d.comp ? "nothing to pay"
         : (money(rate) + " per player" + (d.tier === "standard" ? "" : " · offer rate"));
     }
-    $("s-players").textContent = d.total_players;
-    $("s-total").textContent = d.comp ? "On us" : d.monthly_total;
+    $("s-players").textContent = nPlayers(d.total_players);
+    $("s-total").textContent = d.comp ? "on us" : (d.monthly_total + " a month");
     /* NEXT MONTH. Reductions and cancellations only take effect at the next renewal, so "this month"
        is current cover and "next month" is what it becomes. Players next month = every venue's
        pending figure (or its current one), with cancelling venues dropped. Cost next month: when the
@@ -948,8 +1028,8 @@
     $("s-players-next").textContent = nPlayers(nextPlayers);
     var mtNum = parseFloat(String(d.monthly_total).replace(/[^0-9.]/g, "")) || 0;
     var plainPricing = Math.abs(mtNum - (d.total_players || 0) * rate) < 0.01;
-    $("s-total-next").textContent = d.comp ? "On us"
-      : (plainPricing ? money(nextPlayers * rate) : (d.next_charge_amount || d.monthly_total));
+    var nextMonthly = plainPricing ? money(nextPlayers * rate) : (d.next_charge_amount || d.monthly_total);
+    $("s-total-next").textContent = d.comp ? "on us" : (nextMonthly + " a month");
     // Make it clear when the tiles above show current cover but a change is scheduled: reductions
     // (and a venue you cancel) only take effect at your next renewal, so the totals hold until then.
     var pn = $("players-note");
@@ -968,8 +1048,8 @@
                " per player per month, so the amount depends on how long is left. "
                + "We show you the exact figure first, and it goes on your next bill.")
             : ("Extra players cost a full month at " + money(rate) +
-               " per player from the day you add them. They are available straight away and the "
-               + "amount goes on your next bill."));
+               " per player, whatever day you add them. They are ready to use tonight and the "
+               + "amount goes on your next bill. Lowering the number takes effect from your next bill."));
       if (pending.length){
         note = "The totals above are your current cover. A scheduled change (a player reduction or a venue you cancelled) takes effect at your next renewal" +
                (d.next_charge ? " on " + d.next_charge : "") + ", and the figures update then. Adding players or a venue applies straight away.";
@@ -979,10 +1059,13 @@
     /* "at launch" was pre-launch copy that outlived launch. It is shown whenever there is no
        Stripe period to read, which is now two real cases: an account that is on us, and a venue
        we onboarded from HQ that has not added its card yet. Neither has a payment at launch. */
-    $("s-next").textContent = d.comp ? "Nothing to pay"
-      : d.next_charge ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
-      : d.has_subscription === false ? "When you add your card"
-      : "After your first payment";
+    /* "Next payment: $X per month" (Dean, 3 Nov 2026): the amount beside its label, the date after it. */
+    var nextAmt = d.next_charge_amount || (d.comp ? "" : nextMonthly);
+    $("s-next-amt").textContent = d.comp ? "Nothing to pay" : (nextAmt + (d.plan === "annual" ? " a year" : " per month"));
+    $("s-next").textContent = d.comp ? ""
+      : d.next_charge ? ("on " + d.next_charge)
+      : d.has_subscription === false ? "when you add your card"
+      : "after your first payment";
     /* PAST DUE. Stripe says past_due or unpaid the moment a charge fails, and until now this page
        carried on showing a normal next payment as though nothing had happened. Name the date and
        the amount if we have them, and put the fix one tap away. */
@@ -1089,14 +1172,24 @@
             /* "charged now" was never true: the Worker adds a Stripe invoice item, which is
                picked up by the NEXT invoice, and the success message a minute later said exactly
                that. Two sentences about the owner's money that contradicted each other. */
+            /* THE ADD-PLAYERS QUESTION, SET OUT PROPERLY (Dean, 3 Nov 2026: "not formatted properly").
+               It ran three sentences together as the heading, then "Go ahead?" as the detail, with
+               OK and Cancel. Now: a short question as the heading, the money in one plain
+               paragraph under it, and buttons that say what they do. */
+            var add = n - v.players;
+            /* THE TRUE WORDS (Dean's rule 2, 3 Nov 2026). Monthly: the full rate for one month per player goes on
+               the next bill, whatever day it is; ready tonight; a later decrease counts from the next bill. The
+               one-hour undo line is shown only when the Worker will honour it (rules.undo_hour, OFF until Dean
+               says yes). Yearly: pro rata to the renewal, as the Terms say. */
             var words = cents > 0
-              ? ("Adding " + (n - v.players) + " player" + ((n - v.players) === 1 ? "" : "s") +
-                 " adds " + money(cents / 100) + " to your next bill" +
-                 (q.plan === "annual" ? ", pro rata to your renewal." : ".") +
-                 "\nThe extra players are available straight away." +
-                 "\n\nGo ahead?")
-              : ("Change " + nPlayers(v.players) + " to " + nPlayers(n) + "?");
-            vpAsk(words).then(function(ok){ if (!ok) return;
+              ? ("Add " + nPlayers(add) + " at " + v.name + "?\n\n" +
+                 (q.plan === "annual"
+                   ? (money(cents / 100) + " goes on your next bill, pro rata to your renewal. " + (add === 1 ? "The extra player is" : "The extra players are") + " ready to use tonight.")
+                   : (money(cents / 100) + " goes on your next bill: a full month for " + (add === 1 ? "the extra player" : "each extra player") + ", whatever day you add them. " +
+                      (add === 1 ? "The extra player is" : "They are") + " ready to use tonight. If you lower the number later, that takes effect from your next bill." +
+                      (RULES.undo_hour ? " Changed your mind? You can undo this within an hour, as long as no game has started." : ""))))
+              : ("Change " + v.name + " from " + nPlayers(v.players) + " to " + nPlayers(n) + "?");
+            vpAsk(words, { yes: cents > 0 ? ("Add " + nPlayers(add)) : "Change it", no: "Not now", id: "vpAddPlayers" }).then(function(ok){ if (!ok) return;
             doSavePlayers(n);
             });
           });
@@ -1108,8 +1201,12 @@
         save.disabled = true; save.textContent = "Saving…";
         api("/account/players", { venue_id:v.id, players:n }).then(function(r){
           if (r.error){ showMsg(r.error); save.disabled=false; save.textContent="Save"; return; }
-          if (r.applied === "next_renewal"){
-            showMsg("Reduction to " + nPlayers(n) + " scheduled for your next renewal. You keep " + v.players + " until then.", true);
+          if (r.applied === "undone"){
+            // Rule 4 (behind the switch): within the hour, no game started, so the month is not charged at all.
+            showMsg("Undone. Back to " + nPlayers(n) + " and nothing goes on your bill for the extra " + (r.undone_cents ? "(" + money(r.undone_cents / 100) + " taken off)" : "") + ".", true);
+          } else if (r.applied === "next_renewal"){
+            showMsg("Reduction to " + nPlayers(n) + " scheduled for your next renewal. You keep " + v.players + " until then." +
+                    (r.undo_failed ? " The extra players had already been billed, so that month stands." : ""), true);
           } else if (r.applied === "cancelled_reduction"){
             showMsg("Scheduled reduction cancelled. You stay on " + nPlayers(n) + ".", true);
           } else if (n < v.players){
@@ -1131,7 +1228,8 @@
               showMsg("Increased to " + nPlayers(n) + " and they are available right now, but we could not put the one-off charge through. We will pick it up on your next invoice, or get in touch if you would rather sort it now.", true);
             } else {
               showMsg("Increased to " + nPlayers(n) + ", up " + extra + ". The extra " + extra +
-                      (extra === 1 ? " player is" : " players are") + " on your next bill and available right now.", true);
+                      (extra === 1 ? " player is" : " players are") + " on your next bill and ready to use right now." +
+                      (r.undo_hour ? " Changed your mind? You can undo this within an hour, as long as no game has started." : ""), true);
             }
           } else { showMsg("Players updated.", true); }
           save.disabled=false; save.textContent="Save";
@@ -1210,7 +1308,9 @@
       var labels=$("content").querySelectorAll(".label");
       for (var i=0;i<labels.length;i++){
         var head=labels[i];
-        if (head.textContent.trim().toLowerCase()!==lt) continue;
+        // A folded heading (Draws) carries a summary span after its words; only the words count.
+        var words = (head.firstChild && head.firstChild.nodeType===3) ? head.firstChild.textContent : head.textContent;
+        if (words.trim().toLowerCase()!==lt) continue;
         out.push(head);
         for (var el=head.nextElementSibling; el; el=el.nextElementSibling){
           if (el.classList&&el.classList.contains("label")) break;
@@ -1223,6 +1323,8 @@
     function setSec(labelText, show){ section(labelText).forEach(function(el){ el.style.display = show?"":"none"; }); }
     // Toggle-gated sections.
     setSec("Hosts", p.add_hosts!==false);
+    setSec("People", p.add_hosts!==false);
+    var _pt=document.querySelector('.tabs button[data-tab="people"]'); if(_pt) _pt.style.display = p.add_hosts!==false ? "" : "none";
     /* === true, matching the Worker. Everything else here is true-unless-refused, but the
        export route refuses anything short of an explicit tick, so showing this section as
        available to a manager whose permission was never set told them they had something
@@ -1249,11 +1351,14 @@
        say what this page is for THEM. */
     var openTab = p.advertising!==false ? "screen"
                 : p.draws_raffles!==false ? "draws"
-                : p.add_hosts!==false ? "billing"
+                : p.add_hosts!==false ? "people"
                 : p.players_optin===true ? "marketing" : "billing";
     // First render only: a refresh after a save must not yank them off the tab they are working on.
     if(!gateSections._tabbed){
       gateSections._tabbed = true;
+      // The tab they had open last time wins, if it is one they can use (rememberedTab, 3 Nov 2026).
+      var had = rememberedTab(), hadBtn = had && document.querySelector('.tabs button[data-tab="'+had+'"]');
+      if (hadBtn && hadBtn.style.display !== "none" && had !== "billing") openTab = had;
       var tb=document.querySelector('.tabs button[data-tab="'+openTab+'"]');
       if(tb) tb.click();
     }
@@ -1291,10 +1396,61 @@
           : "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short.");
       render(d);
       renderOtherAccounts(d.other_accounts || []);
+      mountAcctPick(d.venues || []);
     }).catch(function(){
       if ($("content").style.display === "none") $("loading").textContent = "Could not load your billing. Please try again.";
       else showMsg("Could not refresh just now. Please reload the page.");
     });
+  }
+
+  /* THE ONE VENUE DROP-DOWN (Dean, 3 Nov 2026: "Every screen uses the SAME venue drop-down and the
+     same current venue"). It sits above the tabs and every tab follows it: Nights, People, Screen,
+     Draws (raffles, members, permits), Marketing. Each panel still keeps its own hidden select as
+     its record of the venue it is showing, so its loading and its "failed, put it back" rules are
+     unchanged; this only ever moves them all together. The choice is written by window.VPVenuePick.set,
+     so the console, Game settings and the monthly report open on it too. */
+  var acctPick = null;
+  var PANEL_PICKS = ["ntVenue", "mkVenue", "rfVenue", "mdVenue", "screenVenue"];
+  function mountAcctPick(venues){
+    if (!window.VPVenuePick) return;
+    var want = defaultVenue(venues);
+    acctPick = window.VPVenuePick.mount($("acctPick"), { venues: venues, value: want && want.id, label: "You are looking at",
+      note: "Every tab on this page is for this venue, and the console, Game settings and your monthly report open on it too.",
+      onChange: switchAccountVenue });
+    if (want && venues.length > 1) pageVenueId = want.id;
+  }
+  function switchAccountVenue(id, name){
+    function go(){
+      pageVenueId = id;
+      try { if (window.VPVenuePick) window.VPVenuePick.set(id, name); } catch (e) {}
+      PANEL_PICKS.forEach(function(pid){
+        var sel = $(pid);
+        if (!sel || !sel.options || !sel.options.length) return;   // not loaded yet: it opens on this venue by itself
+        if (sel.value === id) return;
+        sel.value = id;
+        if (sel.value === id && typeof sel.onchange === "function") sel.onchange();
+      });
+      if (lastHosts) renderHosts(lastHosts, acctVenues);
+      buildHostVenuePicker(acctVenues);
+      paintNightsLink();
+      return true;
+    }
+    /* Unsaved TV changes: ask once, here, then the Screen panel moves with everything else. */
+    if (typeof logoDirty === "function" && (logoDirty() || screenDirty)){
+      var cur = (screenCurrent && screenCurrent.name) || "this venue";
+      return vpAsk("Leave " + cur + " without saving?\n\nThe changes on the Screen tab are not saved yet, so they would not reach that TV.", { yes:"Leave without saving", no:"Stay" }).then(function(ok){
+        if (!ok) return false;
+        screenDirty = false; logoEd = { orig:null, cut:null, mode:"orig", savedMode:null }; logoEditShow(false); renderUnsaved();
+        return go();
+      });
+    }
+    return go();
+  }
+  /* The monthly report link follows the venue too (Dean, 3 Nov 2026: it said "pick a venue"). */
+  function paintNightsLink(){
+    var a = $("reportLink"); if (!a) return;
+    var id = pageVenueId || (window.VPVenuePick && window.VPVenuePick.current()) || "";
+    a.href = "report.html" + (id ? "?venue=" + encodeURIComponent(id) : "");
   }
 
   // Add venue
@@ -1319,9 +1475,15 @@
          reasonably believe expanding cost them. free_month_cents is 0 when the account is still
          inside its own free month, where there was nothing to charge and nothing to hand back,
          and saying it then would be claiming a discount that did not happen. */
-      var freeBit = (r.free_month_cents > 0)
-        ? (" Its first month is free: $" + (r.free_month_cents/100).toFixed(2) + " credited, and it comes off your next invoice.")
-        : "";
+      /* Dean, 4 Nov 2026: the stub is by days of the month being billed, and the page shows the SAME days
+         and percentage the invoice line carries: "Your next bill charges 23 of 31 days (74%) for it". */
+      var freeBit = r.free_rule === "prorata"
+        ? (" Its first month is free" + (r.free_until ? " until " + r.free_until : "") + ". Your next bill charges " +
+           (r.stub_words ? r.stub_words + " for it" : "only the days after that") +
+           (r.free_month_cents > 0 ? " ($" + (r.free_month_cents/100).toFixed(2) + " comes off it)" : "") + ".")
+        : (r.free_month_cents > 0)
+          ? (" It is free until your next bill date: $" + (r.free_month_cents/100).toFixed(2) + " credited, and it comes off that invoice.")
+          : "";
       /* A venue COMING BACK is not a venue being added, and telling them it was added is how
          somebody ends up with two of the same pub in their head. It is the same venue, the same
          join code and the same telly link as before, which is the useful thing to say. */
@@ -1380,8 +1542,6 @@
 
   // ---- Hosts ----
   var acctVenues = [];
-  /* Is VenuePlay HQ viewing this account ("View as")? The same flag api() sends as X-VP-Venue. */
-  function hqViewing(){ try { var imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); return !!(imp && imp.id); } catch (e) { return false; } }
   function loadHosts(){
     return api("/account/hosts", {}).then(function(d){
       if (d.error){ showMsg("Hosts: " + d.error); return; }   // leave the panel quiet if the endpoint is unavailable
@@ -1391,9 +1551,8 @@
          owner as well: the Worker is still the lock either way. */
       hostsIsOwner = (d.is_owner === undefined) ? true : (d.is_owner === true);
       hostsCanManage = d.can_manage_hosts !== false;
-      // HQ only (Dean, 20 Oct 2026): a venue never sees it. The Worker route still needs the hosts right.
-      var rs = $("resecureCard"); if (rs) rs.style.display = (hqViewing() && hostsCanManage) ? "" : "none";
-      renderHosts(d.hosts || [], acctVenues);
+      lastHosts = d.hosts || [];
+      renderHosts(lastHosts, acctVenues);
       buildHostVenuePicker(acctVenues);
       loadMarketers();
     });
@@ -1438,11 +1597,25 @@
      The buttons also used to be shown to everyone and then refused by the Worker ("Only the
      account owner can do that"), so a manager was invited to press something that could never
      work. They are drawn only for whoever may actually use them. */
-  var hostsCanManage = false, hostsIsOwner = false;
+  var hostsCanManage = false, hostsIsOwner = false, lastHosts = null;
+  /* PEOPLE PER VENUE (Dean, 3 Nov 2026). With more than one venue the list is the people who can get
+     into the venue chosen at the top of the page, under its name; one venue lists everybody. */
+  function peopleVenue(venues){
+    if (!venues || venues.length < 2) return null;
+    var id = pageVenueId || (window.VPVenuePick && window.VPVenuePick.current()) || null;
+    for (var i = 0; i < venues.length; i++){ if (venues[i].id === id) return venues[i]; }
+    return venues[0];
+  }
   function renderHosts(hosts, venues){
     var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
     var wrap = $("hosts"); wrap.innerHTML = "";
-    if (!hosts.length){ wrap.innerHTML = '<p class="note" style="margin:0 0 6px">Just you so far, and you can host every venue.</p>'; return; }
+    var at = peopleVenue(venues);
+    // The drop-down at the top exists exactly when this login holds more than one venue (vp-venuepick.js mounts
+    // nothing for one), so the line follows the venue count rather than racing the summary's render.
+    var pickShown = venues.length > 1;
+    var lede = $("peopleAt"); if (lede) lede.textContent = at ? ("Showing who can sign in at " + at.name + "." + (pickShown ? " Change the venue at the top of the page to see another." : "")) : "";
+    if (at) hosts = hosts.filter(function(h){ return (h.venue_ids || []).indexOf(at.id) >= 0; });
+    if (!hosts.length){ wrap.innerHTML = '<p class="note" style="margin:0 0 6px">' + (at ? ("Just you so far at " + esc(at.name) + ". Add a host below and they can run games there.") : "Just you so far, and you can host every venue.") + '</p>'; return; }
     hosts.forEach(function(h){
       var names = (h.venue_ids || []).map(function(id){ return vmap[id]; }).filter(Boolean);
       var scope = (venues.length && names.length >= venues.length) ? "All venues"
@@ -1479,19 +1652,6 @@
       wrap.appendChild(row);
     });
   }
-  (function(){
-    var b = $("resecureBtn"); if (!b) return;
-    b.addEventListener("click", function(){
-      vpAsk("Lock old devices out of your TVs?\n\nOnly devices signed in right now will be able to control your screens. Your TVs reconnect by themselves within a few minutes. A game that is on keeps running, and nobody is signed out.", { yes: "Lock out old devices" }).then(function(ok){ if (!ok) return;
-      b.disabled = true; b.textContent = "Working…";
-      api("/account/screens-resecure", {}).then(function(r){
-        b.disabled = false; b.textContent = "Lock out old devices";
-        if (r.error){ showMsg(r.error); return; }
-        showMsg("Done. Old devices can no longer control your TVs at " + r.venues + " venue" + (r.venues === 1 ? "" : "s") + ". Your screens reconnect by themselves within a few minutes.", true);
-      });
-      });
-    });
-  })();
   /* What the ticks add up to, in words, and the exact body the page posts. Kept pure and free of the
      DOM so venueplay-backend/app/billing-hosts.test.js can read this very block out of this very file and run
      it: a test that copies the logic instead is a test that goes green after the page has drifted. */
@@ -1559,9 +1719,10 @@
       all.innerHTML = '<input type="checkbox" id="host-all"><span>All venues</span>';
       box.appendChild(all);
     }
+    var at = peopleVenue(venues);   // adding someone starts with the venue chosen at the top ticked
     venues.forEach(function(v){
       var l = document.createElement("label"); l.className = "hostchk";
-      l.innerHTML = '<input type="checkbox" class="host-v" value="' + esc(v.id) + '"' + (single ? " checked" : "") + '><span>' + esc(v.name) + '</span>';
+      l.innerHTML = '<input type="checkbox" class="host-v" value="' + esc(v.id) + '"' + ((single || (at && at.id === v.id)) ? " checked" : "") + '><span>' + esc(v.name) + '</span>';
       if (single) l.style.display = "none";
       box.appendChild(l);
     });
@@ -2028,6 +2189,71 @@
       showMsg(auto===true ? "Slide saved. It shows on your TV within a few seconds." : "Screen saved. It updates on your TV within a few seconds.", true);
     });
   }
+  /* THE OPEN TAB IS REMEMBERED (Dean, 3 Nov 2026). Going to Game settings or the monthly report and
+     coming back used to land on Billing every time. The tab goes in the address (#draws), so a reload
+     keeps it, and in this tab's session, so coming back from another screen keeps it too. */
+  var TAB_KEY = "vpAccountTab", TAB_RE = /^(billing|people|nights|screen|draws|marketing|settings)$/;
+  function rememberTab(id){
+    if (!TAB_RE.test(id || "")) return;
+    try { sessionStorage.setItem(TAB_KEY, id); } catch (e) {}
+    try { if (history.replaceState) history.replaceState(null, "", location.pathname + location.search + "#" + id); } catch (e) {}
+  }
+  /* THE DRAWS FOLDS (Dean, 3 Nov 2026). One open at a time, the open one remembered for this browser, and each
+     heading says in a few words what is set, read off the fold's own list once it has painted (so there is no
+     second copy of the raffle or the draws here). Keyboard: Enter or Space opens a fold. */
+  var ACC_KEY = "vpDrawsFold";
+  function accOpen(name, remember){
+    var heads = document.querySelectorAll("#tp-draws .acchead");
+    for (var i = 0; i < heads.length; i++){
+      var on = heads[i].getAttribute("data-acc") === name;
+      heads[i].classList.toggle("open", on);
+      heads[i].setAttribute("aria-expanded", on ? "true" : "false");
+    }
+    if (remember){ try { localStorage.setItem(ACC_KEY, name); } catch (e) {} }
+  }
+  function accSummaries(){
+    var rf = $("rfSum"), md = $("mdSum"), pm = $("pmSum");
+    if (rf){
+      var row = document.querySelector("#rfList .drow .dn");
+      var nm = row && row.querySelector("b") ? row.querySelector("b").textContent.trim() : "";
+      var when = row && row.querySelector("small") ? row.querySelector("small").textContent.trim() : "";
+      rf.textContent = nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet";
+    }
+    if (md){
+      var n = document.querySelectorAll("#mdList .drow").length;
+      md.textContent = n ? (n + (n === 1 ? " draw" : " draws")) : "No draw yet";
+    }
+    if (pm){
+      // vp-permits.js paints one .vpp-card per kind this venue's state asks about; name them, never claim "on file".
+      var kinds = [].map.call(document.querySelectorAll("#drawPermits .vpp-card[data-kind]"), function(c){
+        var k = c.getAttribute("data-kind") || ""; return k === "members" ? "members draw" : k.replace(/_/g, " "); });
+      pm.textContent = kinds.length ? (kinds.join(", ").replace(/^./, function(ch){ return ch.toUpperCase(); })) : "None asked for in your state";
+    }
+  }
+  (function initFolds(){
+    var heads = document.querySelectorAll("#tp-draws .acchead");
+    if (!heads.length) return;
+    var had = null; try { had = localStorage.getItem(ACC_KEY); } catch (e) {}
+    accOpen(/^(raffles|members|permits)$/.test(had || "") ? had : "raffles", false);
+    for (var i = 0; i < heads.length; i++){
+      (function(h){
+        var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), true); };
+        h.addEventListener("click", go);
+        h.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); go(); } });
+      })(heads[i]);
+    }
+    if (window.MutationObserver){
+      var mo = new MutationObserver(accSummaries);
+      ["rfList", "mdList", "drawPermits"].forEach(function(id){ var el = $(id); if (el) mo.observe(el, { childList: true, subtree: true, characterData: true }); });
+    }
+    accSummaries();
+  })();
+  function rememberedTab(){
+    var h = String(location.hash || "").replace(/^#/, "");
+    if (TAB_RE.test(h)) return h;
+    var s = null; try { s = sessionStorage.getItem(TAB_KEY); } catch (e) {}
+    return TAB_RE.test(s || "") ? s : null;
+  }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.
   (function initTabs(){
@@ -2039,11 +2265,13 @@
         for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a]===this);
         for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
         try{ window.scrollTo(0,0); }catch(e){}
+        rememberTab(id);
       });
     }
     // billing.html#screen opens on that tab (Venue settings links straight to the logo card); #marketing and #draws the same.
-    try{ var h=/^#(screen|nights|draws|marketing|settings|billing)$/.exec(location.hash||"");
-         if(h){ var tb=document.querySelector('.tabs button[data-tab="'+h[1]+'"]'); if(tb) tb.click(); } }catch(e){}
+    // With no #, the tab that was open last time (Dean, 3 Nov 2026: "Drawers reset to the first one every time you switch screens").
+    try{ var want=(location.hash==="#pastDue") ? null : rememberedTab();
+         if(want){ var tb=document.querySelector('.tabs button[data-tab="'+want+'"]'); if(tb) tb.click(); } }catch(e){}
   })();
   /* Tell the venue's TV that its screen content just changed.
      Uploading a slide or a logo wrote to the database and nothing told the screen, so the venue
@@ -2096,6 +2324,9 @@
   var pageVenueId = null;
   function preferredVenueIds(){
     var ids = [];
+    /* The ONE current venue (vp-venuepick.js, 3 Nov 2026) comes first: whatever was last chosen, on
+       this page's drop-down or on any other screen. The rest are the order this page used before. */
+    try { var cur = window.VPVenuePick && window.VPVenuePick.current(); if (cur) ids.push(cur); } catch (e) {}
     try { var imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); if (imp && imp.id) ids.push(imp.id); } catch (e) {}
     if (pageVenueId) ids.push(pageVenueId);
     try { var pk = JSON.parse(localStorage.getItem("vpVenuePick") || "null"); if (pk && pk.id) ids.push(pk.id); } catch (e) {}
@@ -2754,8 +2985,35 @@
       rfSaved = { label: r.label || "", day: r.day || "", time: r.time || "" }; renderRaffleList();
     });
   }
+  /* PRIZES GIVEN AWAY, CASH AND NOT CASH APART (Dean, 3 Nov 2026: "$800 given away in prizes" only
+     counted cash, so it said less than the venue gave, and it said it as a total).
+     What v_vp_prizes_given holds, per venue (one row; every count and sum is claimed or drawn wins only):
+       prizes_given_count / prizes_given_value_cents   EVERY prize it can count: claimed members draws,
+                                                        and raffle wins with a dollar value (or a cash jackpot)
+       cash_given_count / cash_given_value_cents       the cash part of those
+       unvalued_given_count                            raffle wins with NO dollar value typed (a meat tray),
+                                                        from migration 150; absent before it is run
+     This used to add up every column with "cents" in its name, which counted the cash twice. Now cash
+     and other prizes are said apart, a prize with no value is counted but never priced, and no line
+     adds them into one dollar figure. Trivia, bingo and musical bingo prizes are typed as words on
+     the night with no value, so they are not in any of these, and the page says so. */
+  function prizeTallyLines(row){
+    row = row || {};
+    var all = +row.prizes_given_count || 0, allC = +row.prizes_given_value_cents || 0;
+    var cash = +row.cash_given_count || 0, cashC = +row.cash_given_value_cents || 0;
+    var other = Math.max(0, all - cash), otherC = Math.max(0, allC - cashC);
+    var known = ("unvalued_given_count" in row), unval = +row.unvalued_given_count || 0;
+    function pz(n){ return n + (n === 1 ? " prize" : " prizes"); }
+    var out = [];
+    if (!all && !unval) return ["No prizes recorded yet."];
+    out.push("Cash: " + (cash ? (money(cashC / 100) + " across " + pz(cash) + " (members draws and cash raffle prizes).") : "none yet."));
+    out.push("Other prizes with a value entered: " + (other ? (pz(other) + ", worth " + money(otherC / 100) + " between them.") : "none yet."));
+    if (known) out.push("Other prizes with no value entered, like a meat tray: " + (unval ? (pz(unval) + ". They are counted, never priced.") : "none yet."));
+    else out.push("A raffle prize entered with no dollar value, like a meat tray, is not counted here. Every one is listed under Draws and raffles: who won what.");
+    out.push("Trivia, bingo and musical bingo prizes are not in these figures: they are typed as words on the night, with no value.");
+    return out;
+  }
   function loadPrizeTally(venueId){
-    // Prizes-given tally: sum any *_cents field on the venue's rows (defensive about the view's shape).
     $("rfTally").className = "snote"; $("rfTally").textContent = "";
     return VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId).then(function(r){
       if (venueId !== rfCurrent) return;
@@ -2764,9 +3022,13 @@
         showLoadFailed("rfTally", "Could not load the prizes given away. Try again.", function(){ loadPrizeTally(venueId); });
         return;
       }
-      var rows = r.data || [], cents = 0;
-      rows.forEach(function(row){ for (var k in row){ if (/cents/.test(k) && typeof row[k] === "number") cents += row[k]; } });
-      $("rfTally").textContent = cents > 0 ? ("$" + (cents/100).toFixed(2) + " given away in prizes so far.") : "No prizes recorded yet.";
+      var row = (r.data || []).filter(function(x){ return x && x.venue_id === venueId; })[0] || null;
+      var box = $("rfTally"); box.innerHTML = "";
+      prizeTallyLines(row).forEach(function(t, i){
+        var p = document.createElement("p"); p.textContent = t;
+        p.style.margin = i ? "6px 0 0" : "0";
+        box.appendChild(p);
+      });
     });
   }
   function loadRafflesFor(venueId){
@@ -3062,7 +3324,7 @@
       bits.push('<div class="nfig"><b>' + (n.players||0) + '</b><span>player' + ((n.players===1)?"":"s") + '</span></div>');
       if (n.came_back_known) bits.push('<div class="nfig"><b>' + (n.came_back||0) + '</b><span>came back</span></div>');
       bits.push('<div class="nfig"><b>' + (n.games||0) + '</b><span>game' + ((n.games===1)?"":"s") + '</span></div>');
-      if (n.prize_cents) bits.push('<div class="nfig"><b>$' + (n.prize_cents/100).toFixed(2) + '</b><span>given away</span></div>');
+      if (n.prize_cents) bits.push('<div class="nfig"><b>$' + (n.prize_cents/100).toFixed(2) + '</b><span>in cash prizes</span></div>');   // cash only (raffle cash, members draws), and says so
       row.innerHTML = '<div class="nhead"><b>' + esc(nightDate(n.at) || "A night") + '</b><small>' + esc(what) +
         (n.status === "open" ? ' &middot; still open' : '') + '</small></div>' +
         '<div class="nfigs">' + bits.join("") + '</div>';

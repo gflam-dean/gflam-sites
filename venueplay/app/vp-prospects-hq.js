@@ -51,7 +51,9 @@
   /* ---- what one prospect row says, from what the Worker sent ---- */
   function flagHtml(p) {
     if (p.flag === "call_requested") return '<span class="badge prreq prflag">Call requested</span>';
-    if (p.flag === "no_sign_in") return '<span class="badge roll prflag">Call them</span>';
+    /* The yellow "Call them" only when there is a number to ring (Dean, 3 Nov 2026). The Worker only sends the
+       flag with a phone now; this holds the same line if an older Worker still sends it without one. */
+    if (p.flag === "no_sign_in" && p.tel) return '<span class="badge roll prflag">Call them</span>';
     return "";
   }
   /* ---- where the prospect is: the Worker says which (p.status), this only words it ---- */
@@ -117,7 +119,9 @@
     /* Card added is a customer, and Cancelled said no: neither gets a Called button unless they asked for a call. */
     var st = statusOf(p), done = st === "card_added" || (st === "cancelled" && p.flag !== "call_requested");
     var why = p.flag === "call_requested" ? "They asked us to call them." + (p.phone ? "" : " No number on file: reply to their email for one.")
-      : p.flag === "no_sign_in" ? "Nobody has signed in since they were set up " + ago(p.days_since_setup) + "." : "";
+      : (p.flag === "no_sign_in" && p.tel) ? "Nobody has signed in since they were set up " + ago(p.days_since_setup) + "." : "";
+    /* No phone: never yellow. Say what happens instead (the autopilot drafts a follow-up email for Dean's yes). */
+    var quietNoPhone = !p.tel && (p.email_follow_up || (p.flag === "no_sign_in"));
     var called = p.called
       ? '<div class="prcalled">Called ' + prEsc(when(p.called.at, true)) + (p.called.by ? " by " + prEsc(p.called.by) : "") +
         (p.called.note ? ': <span class="prnote">' + prEsc(p.called.note) + "</span>" : "") +
@@ -142,10 +146,13 @@
           return acts ? '<div class="practs">' + acts + "</div>" : "";
         })();
     var last = st === "free_month" && p.last_days;
-    return '<div class="panel pad prcard' + (p.flag ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") +
+    var yellow = p.flag === "call_requested" || (p.flag === "no_sign_in" && p.tel);
+    return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
       '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
+      (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +
+        ". No phone on file, so a follow-up email is drafted for Dean to approve.") + "</div>" : "") +
       (last ? '<div class="prlast" data-pr-last="1">' + prEsc(p.days_left === 1 ? "Last day of their free month, and no card yet." :
         p.days_left + " days left in their free month, and no card yet.") + "</div>" : "") +
       '<div class="prgrid">' +
@@ -168,7 +175,7 @@
       '<button class="btn ghost sp" type="button" id="prRefresh">Refresh</button></div>' +
       '<div class="note" style="margin:0 0 14px">Venues we set up that have not signed up yet. When one adds their card it moves to Venues by itself. ' +
       "Anyone who asked for a call is flagged Call requested, and anyone who has not signed in " + prEsc(d.follow_up_days) +
-      " days after setup is flagged Call them. Mark Called once you have rung them. The free month starts at their first sign-in;" +
+      " days after setup is flagged Call them when we have their phone number. With no number, a follow-up email is drafted for Dean to approve instead. Mark Called once you have rung them. The free month starts at their first sign-in;" +
       " its last " + prEsc(d.last_days || 3) + " days are highlighted." +
       (d.free_month_ready === false ? " Free months are not recorded until migration 127 is run." : "") +
       (d.signed_up ? " " + prEsc(d.signed_up) + " earlier prospect" + (d.signed_up === 1 ? " has" : "s have") + " signed up." : "") + "</div>";
@@ -256,7 +263,7 @@
       ".prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px;margin-top:12px;font-size:13.5px}" +
       ".prgrid > div{min-width:0;overflow-wrap:anywhere}.prgrid .k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}" +
       ".prgrid a{color:var(--text)}.prtel{font-weight:800;color:var(--pink)!important;text-decoration:none;font-size:15px}" +
-      ".prnophone{color:var(--roll)}.prcalled{margin-top:12px;font-size:13px;color:var(--win)}.prnote{color:var(--text)}" +
+      ".prnophone{color:var(--muted)}.prquiet{color:var(--muted);font-size:13px;margin-top:4px}.prcalled{margin-top:12px;font-size:13px;color:var(--win)}.prnote{color:var(--text)}" +
       ".practs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}.prform{margin-top:12px}.prform textarea{width:100%;margin-top:4px}" +
       ".prsum{color:var(--roll);letter-spacing:0;text-transform:none;font-weight:700;margin-left:6px}" +
       ".badge.roll{background:rgba(245,165,36,.14);color:var(--roll);border:1px solid rgba(245,165,36,.4)}" +

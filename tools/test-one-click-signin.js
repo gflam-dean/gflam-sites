@@ -318,8 +318,27 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('the token itself is nowhere in the database (the link rows, the audit row, anything)', token.length === 43 && JSON.stringify(DB).indexOf(token) === -1);
   var life = Date.parse(row.expires_at) - Date.parse(row.created_at);
   var due = Date.parse(sent[0] && sent[0].scheduled_at);
-  check('it lasts 14 days FROM WHEN THE EMAIL GOES (90 minutes on, the default delay), not from when HQ pressed the button', Math.abs(life - (14 * 86400000 + 90 * 60000)) < 5000 &&
-    Date.parse(row.expires_at) === due + 14 * 86400000, [life, row.expires_at, sent[0] && sent[0].scheduled_at]);
+  check('it lasts 30 DAYS FROM SETUP (Dean, 4 Nov 2026), the moment every link resent to them ends at: not 14 days from when the email goes', Math.abs(life - 30 * 86400000) < 5000 &&
+    Date.parse(row.expires_at) > due + 14 * 86400000, [life, row.expires_at, sent[0] && sent[0].scheduled_at]);
+  /* BEFORE MIGRATION 151 the table refuses a life over 15 days. Then the same link is made with 14 days, the
+     welcome still goes, and HQ is told the number the link REALLY has (never a number that is not the real expiry). */
+  world();
+  var strict = globalThis.fetch;
+  globalThis.fetch = function (url, opts) {
+    if (/\/rest\/v1\/vp_signin_links(\?|$)/.test(String(url)) && opts && opts.method === 'POST') {
+      var b = JSON.parse(opts.body);
+      if (Date.parse(b.expires_at) - Date.parse(b.created_at) > 15 * 86400000) return Promise.resolve({ ok: false, status: 400, text: function () { return Promise.resolve('new row for relation "vp_signin_links" violates check constraint "vp_signin_links_life"'); }, json: function () { return Promise.resolve({}); } });
+    }
+    return strict(url, opts);
+  };
+  var r151 = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);
+  var row151 = DB.vp_signin_links[DB.vp_signin_links.length - 1] || {};
+  check('before migration 151: the welcome still goes, with a 14 day link (from when it goes), and HQ is told to run 151', r151.status === 200 && r151.body.welcome_sent === true && DB.vp_signin_links.length === 1 &&
+    Math.abs(Date.parse(row151.expires_at) - Date.parse(row151.created_at) - (14 * 86400000 + 90 * 60000)) < 5000 && (r151.body.warnings || []).some(function (w) { return /14 days, not 30/.test(w) && /migration 151/.test(w); }), [r151.body.warnings, row151]);
+  globalThis.fetch = strict;
+  world();
+  r = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);
+  v = DB.vp_venues[0] || {}; login = AUTH[0] || {}; row = DB.vp_signin_links[0] || {}; html = sent[0] ? sent[0].html : ''; token = tokenOf(html);
   var L = hrefs(html), txt = visible(html);
   var main = L.filter(function (h) { return h.indexOf('/app/go#') !== -1; });
   check('the email\'s main button "Open your venueplay" is the one-click link, with the token and their address in the fragment',

@@ -51,6 +51,7 @@ function arm(opts) {
     return Promise.resolve({
       itemId: 'si_1', priceId: priceId, quantity: 40,
       periodEnd: opts.periodEnd || (Math.floor(Date.now() / 1000) + (opts.plan === 'annual' ? 300 * 86400 : 20 * 86400)),
+      anchor: opts.anchor || null,   // the billing anchor, whose day of the month says where the next cycle ends
       sub: { id: 'sub_1', customer: 'cus_1', status: status },
     });
   };
@@ -76,7 +77,7 @@ function run(opts) {
   var req = { json: function () { return Promise.resolve(_body); },
               text: function () { return Promise.resolve(JSON.stringify(_body)); } };
   var out = null;
-  vpbAddVenue(req, ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
+  vpbAddVenue(req, opts.env || ENV, function (body) { return { body: body }; }).then(function (r) { out = r; });
   drainMicrotasks();
   return out && out.body;
 }
@@ -237,5 +238,124 @@ check('each venue\'s setup charge has a key', !!keyA && !!keyB, [keyA, keyB]);
 check('and they are DIFFERENT keys, or Stripe replays the first charge for the second venue', keyA !== keyB, [keyA, keyB]);
 run({ players: 100, plan: 'monthly', postcode: '4220', newId: 'v_royal_a', periodEnd: PE });
 check('the same venue retried keeps its own key, so a double click charges once', charges()[0].idem === keyA, [charges()[0].idem, keyA]);
+
+/* ---------------------------------------------------------------------------
+   DEAN'S RULE 3 FOR A NEW PUB ON A GROUP (3 Nov 2026), BEHIND VPB_BILLING_RULES_3NOV, OFF.
+   "The first month is free, then it joins the group's ONE billing cycle, with the stub between the
+   end of its free month and the next group bill pro rated." TODAY (switch off) the pub is charged a
+   month and credited a month, so it is free until the next bill date and a full month from then:
+   that is the gap the switch closes.
+
+   DEAN, 4 NOV 2026, "YES TO PRO RATA": the stub is BY DAYS OF THE MONTH BEING BILLED. "3 weeks and 2
+   days is 23 days which is x% of the month being billed." So 23 days of a 31-day cycle is 23/31, of a
+   30-day cycle 23/30, and the money is rounded to the cent once, at the end. The page and the invoice
+   line show the same days and percentage: "23 of 31 days (74%)".
+
+   THE CLOCK IS PINNED (never a fixture from the current clock): each case names the day the pub is
+   added and the group's renewal, in Brisbane, and the free month runs to the same date next month.
+   --------------------------------------------------------------------------- */
+print('rule 3: a new pub on a group, behind VPB_BILLING_RULES_3NOV');
+var ON = { STRIPE_PRICE_MONTHLY: MONTHLY, STRIPE_PRICE_ANNUAL: ANNUAL, STRIPE_SECRET_KEY: 'x', SUPABASE_URL: 'https://example.invalid', VPB_BILLING_RULES_3NOV: '1' };
+var DAYS = 86400;
+/* A Brisbane local time as a unix second (UTC+10, no daylight saving). */
+function bris(y, m, d, h) { return Date.UTC(y, m - 1, d, h || 0) / 1000 - 36000; }
+var _realNow = Date.now;
+function at(unixS) { Date.now = function () { return unixS * 1000; }; }
+function unpin() { Date.now = _realNow; }
+/* Control: with the switch off, today's path, and the page is told which rule it was. */
+var c0 = run({ players: 30, plan: 'monthly', priceId: 'price_standard' });
+check('switch off: charged a month and credited a month, as today', charges().length === 1 && credits().length === 1 && credits()[0].params.amount === -9000, [charges(), credits()]);
+check('switch off: the page is told the rule was "month"', c0.free_rule === 'month' && c0.free_until === null, c0);
+
+/* DEAN'S WORKED EXAMPLE: $2.50 x 10 players, 23 of 31 days. The group renews on the 7th (anchor 7 Oct 9am).
+   The pub is added 15 Nov; its free month runs to 15 Dec. The next bill covers 7 Dec to 7 Jan, 31 days:
+   8 of them are free, the pub pays 23 of 31 (74%). The bill carries the full $25.00 through the quantity,
+   so 10 x $2.50 x 8/31 = $6.45 comes off, and the pub pays $18.55. */
+at(bris(2026, 11, 15, 10));
+var c1 = run({ players: 10, plan: 'monthly', priceId: MONTHLY, periodEnd: bris(2026, 12, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('23 of 31: NOTHING charged for the rest of this cycle', charges().length === 0, charges());
+check('23 of 31: ONE credit for the 8 free days of a 31-day cycle: 10 x $2.50 x 8/31 = $6.45',
+  credits().length === 1 && credits()[0].params.amount === -645, credits()[0] && credits()[0].params);
+check('23 of 31: rounded to the cent ONCE at the end ($6.45), not per player (10 x 65c = $6.50)', credits()[0].params.amount !== -650 && credits()[0].params.amount === -645, credits()[0].params.amount);
+check('23 of 31: so the next group bill charges the pub $25.00 less $6.45 = $18.55, which is 23/31 of $25.00 to the cent',
+  2500 + credits()[0].params.amount === 1855 && Math.round(2500 * 23 / 31) === 1855);
+check('23 of 31: the page is told the stub in days: cycle 31, stub 23, "23 of 31 days (74%)"',
+  c1.cycle_days === 31 && c1.stub_days === 23 && c1.stub_words === '23 of 31 days (74%)' && c1.free_days_credited === 8, c1);
+check('23 of 31: the free month runs to the same date next month: 15 December 2026', c1.free_until === '15 December 2026', c1.free_until);
+check('23 of 31: the invoice line carries the SAME days and percentage as the page',
+  credits()[0].params.description === 'The New Pub - first month free to 15/12/2026: 8 of 31 days (26%) of your next bill taken off, so you pay 23 of 31 days (74%)', credits()[0].params.description);
+check('23 of 31: the page is told the rule and the money', c1.free_rule === 'prorata' && c1.free_month_cents === 645, c1);
+check('23 of 31: still keyed on the venue id, so a double click credits once', credits()[0].idem === 'vfree:v_new', credits()[0].idem);
+check('23 of 31: the venue row records the free month and the credit', patched.some(function (p) { return p.body.free_month_cents === 645 && !!p.body.free_month_at; }), patched);
+check('23 of 31: the subscription quantity still rises for the renewal (one bill for the group)', calls.some(function (c) { return /subscription_items/.test(c.path) && c.params.proration_behavior === 'none'; }), calls);
+check('a NEW PUB is never offered the one-hour undo (Dean, 4 Nov 2026)', c1.undo_hour === false, c1.undo_hour);
+
+/* 23 OF 30: Dean's 3 Nov example at $3 and 30 players. Added 14 Oct, a week after the 7 Oct bill; free to
+   14 Nov; the next bill covers 7 Nov to 7 Dec, 30 days: 7 free, 23 paid (77%), $21.00 off, $69.00 paid. */
+at(bris(2026, 10, 14, 10));
+var c2 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 11, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('23 of 30: 30 x $3 x 7/30 = $21.00 off, so the bill charges $69.00 for the 23 days', credits().length === 1 && credits()[0].params.amount === -2100 && 9000 - 2100 === 6900, credits()[0] && credits()[0].params);
+check('23 of 30: "23 of 30 days (77%)", free to 14 November 2026', c2.stub_words === '23 of 30 days (77%)' && c2.cycle_days === 30 && c2.free_until === '14 November 2026' && c2.free_days_credited === 7, c2);
+check('23 of 30: the line says 7 of 30 days (23%) off and 23 of 30 days (77%) paid', /7 of 30 days \(23%\) of your next bill taken off, so you pay 23 of 30 days \(77%\)$/.test(credits()[0].params.description), credits()[0].params.description);
+
+/* 28 OF 28: added ON the bill date, 7 Jan 2027. Free to 7 Feb, which is exactly the next bill; that bill
+   covers 7 Feb to 7 Mar 2027, 28 days, and the pub pays all 28 (100%). Nothing to credit. */
+at(bris(2027, 1, 7, 12));
+var c3 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2027, 2, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('28 of 28: joined on the bill date: nothing charged, nothing credited, the next bill is the whole 28-day month', charges().length === 0 && credits().length === 0 && c3.free_rule === 'prorata' && c3.free_days_credited === 0, [calls, c3]);
+check('28 of 28: the page says "28 of 28 days (100%)"', c3.stub_words === '28 of 28 days (100%)' && c3.cycle_days === 28 && c3.stub_days === 28, c3);
+check('28 of 28: the free month is still recorded on the venue row (it keeps the undo away), with nothing credited', patched.some(function (p) { return !!p.body.free_month_at && p.body.free_month_cents === 0; }), patched);
+/* 15 OF 28: added 20 Jan 2027, free to 20 Feb: 13 of the 28 days are free, 15 paid (54%). 9000 x 13/28 = 4178.57 -> $41.79. */
+at(bris(2027, 1, 20, 12));
+var c4 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2027, 2, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('15 of 28: 30 x $3 x 13/28 = $41.79 off (one rounding), "15 of 28 days (54%)"', credits()[0] && credits()[0].params.amount === -4179 && c4.stub_words === '15 of 28 days (54%)', [credits(), c4]);
+
+/* A CYCLE THAT CROSSES A MONTH END, anchored on the 31st. Stripe keeps the anchor day: 31 Dec runs to
+   31 Jan, then to 28 Feb (28 days), then to 31 Mar. Added 10 Jan 2027, free to 10 Feb: 10 of 28 free,
+   18 paid (64%). 9000 x 10/28 = 3214.29 -> $32.14. */
+at(bris(2027, 1, 10, 12));
+var c5 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2027, 1, 31, 9), anchor: bris(2026, 12, 31, 9), env: ON });
+check('anchor 31, 31 Jan to 28 Feb: a 28-day cycle, 10 free, "18 of 28 days (64%)", $32.14 off', credits()[0] && credits()[0].params.amount === -3214 && c5.cycle_days === 28 && c5.stub_words === '18 of 28 days (64%)', [credits(), c5]);
+/* ...and the renewal clamped to a short month: anchor 31, renewal 30 Nov, so the NEXT cycle is 30 Nov to
+   31 Dec, 31 days, not 30 Dec. Added 20 Nov, free to 20 Dec: 20 free, 11 paid (35%). 9000 x 20/31 = 5806.45 -> $58.06. */
+at(bris(2026, 11, 20, 12));
+var c6 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 11, 30, 9), anchor: bris(2026, 10, 31, 9), env: ON });
+check('anchor 31, renewal 30 Nov: the next cycle runs to 31 Dec (31 days, the anchor day), "11 of 31 days (35%)", $58.06 off', credits()[0] && credits()[0].params.amount === -5806 && c6.cycle_days === 31 && c6.stub_words === '11 of 31 days (35%)', [credits(), c6]);
+/* The free month itself crossing a month end: added 31 Oct, free to 30 Nov (there is no 31 Nov). Renewal 7 Nov,
+   next cycle 7 Nov to 7 Dec (30 days): 23 free, 7 paid (23%). 9000 x 23/30 = $69.00 off. */
+at(bris(2026, 10, 31, 12));
+var c7 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 11, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('added 31 Oct: free to 30 November 2026, 23 of 30 days off ($69.00), "7 of 30 days (23%)" paid', credits()[0] && credits()[0].params.amount === -6900 && c7.free_until === '30 November 2026' && c7.stub_words === '7 of 30 days (23%)', [credits(), c7]);
+/* Joined the day before the bill: 29 of the 30 free days fall in the next cycle. Added 6 Nov, free to 6 Dec;
+   next cycle 7 Nov to 7 Dec, 30 days: 29 free, 1 paid (3%). 9000 x 29/30 = $87.00 off. */
+at(bris(2026, 11, 6, 12));
+var c8 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 11, 7, 9), anchor: bris(2026, 10, 7, 9), env: ON });
+check('joined the day before the bill: 29 of 30 days credited ($87.00), so that bill charges "1 of 30 days (3%)"', credits().length === 1 && credits()[0].params.amount === -8700 && c8.free_days_credited === 29 && c8.stub_words === '1 of 30 days (3%)', [credits(), c8]);
+
+/* The arithmetic helpers on their own: the clamp and the single rounding. */
+check('vpbMonthOnS: 31 Jan one month on is 28 Feb (no 31 Feb)', vpbMonthOnS(bris(2027, 1, 31, 9)) === bris(2027, 2, 28, 0), vpbMonthOnS(bris(2027, 1, 31, 9)));
+check('vpbMonthOnS: 28 Feb with a 31st anchor lands on 31 Mar, the way Stripe does', vpbMonthOnS(bris(2027, 2, 28, 9), bris(2026, 12, 31, 9)) === bris(2027, 3, 31, 0), vpbMonthOnS(bris(2027, 2, 28, 9), bris(2026, 12, 31, 9)));
+check('vpbCycleDays: 7 Nov to 7 Dec is 30, 7 Dec to 7 Jan is 31, 7 Feb to 7 Mar 2027 is 28',
+  vpbCycleDays(bris(2026, 11, 7, 9), bris(2026, 12, 7, 9)) === 30 && vpbCycleDays(bris(2026, 12, 7, 9), bris(2027, 1, 7, 9)) === 31 && vpbCycleDays(bris(2027, 2, 7, 9), bris(2027, 3, 7, 9)) === 28);
+check('vpbProrataCents rounds once: 10 x $2.50 x 8/31 = 645, and 0 for no days', vpbProrataCents(2.5, 10, 8, 31) === 645 && vpbProrataCents(2.5, 10, 0, 31) === 0 && vpbProrataCents(3, 30, 23, 31) === 6677);
+check('vpbDaysWords: "23 of 31 days (74%)"', vpbDaysWords(23, 31) === '23 of 31 days (74%)' && vpbDaysWords(28, 28) === '28 of 28 days (100%)', vpbDaysWords(23, 31));
+
+/* The cases that keep today's path with the switch on. */
+at(bris(2026, 11, 15, 10));
+run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 12, 7, 9), env: ON, status: 'trialing' });
+check('switch on, inside the account\'s own free month: nothing charged and nothing credited', charges().length === 0 && credits().length === 0, calls);
+var c9 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 12, 7, 9), env: ON, postcode: '4220',
+               sameName: [venue({ status: 'suspended', suspended_reason: 'cancelled' })] });
+check('switch on, a pub coming back: charged as today and NO free month, so it is not farmable', charges().length === 1 && credits().length === 0 && c9.free_rule === null, [calls, c9]);
+run({ players: 30, plan: 'annual', priceId: ANNUAL, env: ON });
+check('switch on, a yearly plan: unchanged (pro rata to renewal, one month credited)', charges().length === 1 && credits().length === 1 && credits()[0].params.amount === -6900, [charges(), credits()]);
+run({ players: 30, plan: 'monthly', priceId: null, periodEnd: bris(2026, 12, 7, 9), env: ON });
+check('switch on, rate unknown: nothing credited rather than a guessed rate', credits().length === 0 && charges().length === 0, calls);
+LOGS = [];
+var c10 = run({ players: 30, plan: 'monthly', priceId: 'price_standard', periodEnd: bris(2026, 12, 7, 9), env: ON, refuseCredit: true });
+check('switch on, credit refused: logged loudly and the page is not told they got one', LOGS.some(function (l) { return /FREE MONTH CREDIT FAILED/.test(l); }) && c10.free_month_cents === 0, [LOGS, c10]);
+check('switch on, credit refused: the venue row still records the free month, with nothing credited', patched.some(function (p) { return !!p.body.free_month_at && p.body.free_month_cents === 0; }), patched);
+unpin();
+print(fails ? ('FAILED ' + fails) : 'PASS');
 
 if (fails) { throw new Error('add-venue free month: ' + fails + ' failed'); }
