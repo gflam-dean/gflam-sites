@@ -194,6 +194,15 @@
   .mart.listening{background:none}
   .mart.listening .mtri{width:9.4cqw;animation:mTriBreath 2.6s ease-in-out infinite}
   .mart.hasart .mtri{display:none}
+  /* THE SALES-PAGE AND STORE DEMO SHOWS NO ALBUM COVERS (Dean, 4 Nov 2026: app store screenshots must not carry
+     third-party artwork; Google Play, LG and Samsung all bar it). The art spot holds OUR venueplay logo tile instead,
+     the same size and place; the strip's small squares hold the play triangle. A real venue's night is unchanged. */
+  .mart .mlogo{display:none;position:absolute;left:12%;right:12%;top:50%;width:76%;height:auto;transform:translateY(-50%);color:#fff;overflow:visible}
+  .mart.vplogo{background:#16161A;box-shadow:inset 0 0 0 .16cqw rgba(255,31,142,.55)}
+  .mart.vplogo .mlogo{display:block}
+  .mart.vplogo .mtri,.mart.vplogo img{display:none}
+  #tvRun .ptok .ptri{flex:none;width:4.4cqw;height:4.4cqw;border-radius:.42cqw;margin-right:.94cqw;background:#16161A;box-shadow:inset 0 0 0 .1cqw rgba(255,31,142,.5);display:flex;align-items:center;justify-content:center}
+  #tvRun .ptok .ptri svg{width:45%;height:auto;overflow:visible}
   @keyframes mTriBreath{0%,100%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}50%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 2.2cqw rgba(255,31,142,.9))}}
   @media (prefers-reduced-motion:reduce){.mart.listening .mtri{animation:none}}
   .mcol{position:absolute;left:calc(43.75cqw);right:6.25cqw;top:9.9cqw;height:31.4cqw;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
@@ -257,7 +266,7 @@
   <!-- running (now playing) -->
   <div class="layer hidden mrun" id="tvRun">
     <div class="toplbl"><span class="tl-night">Musical bingo</span></div>
-    <div class="mart" id="tvArtBox"><img class="nowart hidden" id="tvNowArt" alt=""><svg class="mtri" viewBox="2500 -2020 900 1044" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg></div>
+    <div class="mart" id="tvArtBox"><img class="nowart hidden" id="tvNowArt" alt=""><svg class="vp-wm mlogo" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true"  data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg><svg class="mtri" viewBox="2500 -2020 900 1044" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg></div>
     <div class="mcol">
       <div class="eyebrow" id="tvNowEye">Now playing</div>
       <div class="mystery hidden" id="tvListen">
@@ -495,6 +504,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     renderPlaying();
   }
   var TV_BOARD_MAX=5;   // the last five, with their artwork, as approved (3 Nov 2026)
+  var TRI_MINI='<svg viewBox="2500 -2020 900 1044" aria-hidden="true"><path fill="#FF1F8E" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2Z"/></svg>';
   var _songArt={};       // title -> artwork, for every song this wall has been told about tonight
   function noteArt(title, url){ if(title && url && /^(https:\/\/|\/[^\/])/.test(String(url))) _songArt[title]=String(url); }   // the library's https art, or a file on this site
   /* A LONG TITLE ON THE STRIP STEPS DOWN TO FIT ITS TILE (two or three lines), never cut and never "...". */
@@ -520,7 +530,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     for(var i=start;i<all.length;i++){
       var d=document.createElement("div"); d.className="ptok"+(i===last && !held?" new":""); d.textContent=all[i];
       var art=(typeof _songArt==="object") ? _songArt[all[i]] : null;   // (a suite lifts renderBoard on its own)
-      if(art && d.insertBefore){ var im=document.createElement("img"); im.alt=""; im.src=art; d.insertBefore(im, d.firstChild); }
+      if(typeof VP_DEMO!=="undefined" && VP_DEMO && d.insertBefore){   /* the demo: the play triangle, never a cover (4 Nov 2026) */
+        var tr=document.createElement("span"); tr.className="ptri"; tr.innerHTML=TRI_MINI; d.insertBefore(tr, d.firstChild);
+      } else if(art && d.insertBefore){ var im=document.createElement("img"); im.alt=""; im.src=art; d.insertBefore(im, d.firstChild); }
       b.appendChild(d);
     }
     if(typeof fitStrip==="function") fitStrip(b);
@@ -543,6 +555,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var _shownTitle="";
   function setArt(url){
     var img=$("tvNowArt"), box=$("tvArtBox");
+    if(VP_DEMO){   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */
+      img.removeAttribute("src"); img.classList.add("hidden");
+      if(box){ box.classList.toggle("vplogo", !box.classList.contains("listening")); box.classList.remove("hasart"); }
+      return;
+    }
     if(url){ img.src=url; img.classList.remove("hidden"); }
     else { img.removeAttribute("src"); img.classList.add("hidden"); }
     if(box) box.classList.toggle("hasart", !!url);
@@ -550,7 +567,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   /* LISTEN: the neon triangle breathes where the art goes, and the NOW PLAYING label goes (Dean, 3 Nov late: no
      "Song 15" under the title; the song number is bottom left). */
   function setListening(on){
-    var box=$("tvArtBox"); if(box) box.classList.toggle("listening", !!on);
+    var box=$("tvArtBox"); if(box){ box.classList.toggle("listening", !!on); if(on) box.classList.remove("vplogo"); }
     var eye=$("tvNowEye"); if(eye) eye.classList.toggle("hidden", !!on);
   }
   function showReady(){
@@ -1182,8 +1199,9 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
-      /* Real artwork, from the same library the host uses, so the demo wall looks like a real wall. */
-      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"}, {"title": "Dancing Queen", "artist": "ABBA", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"}, {"title": "Khe Sanh", "artist": "Cold Chisel", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"}, {"title": "Mr. Brightside", "artist": "The Killers", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"}, {"title": "The Horses", "artist": "Daryl Braithwaite", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"}];
+      /* The songs as the library names them. Their artwork is NOT here any more (Dean, 4 Nov 2026): third-party album
+         covers may not appear in store screenshots, so the demo wall shows our venueplay logo tile in the art spot. */
+      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley"}, {"title": "Dancing Queen", "artist": "ABBA"}, {"title": "Khe Sanh", "artist": "Cold Chisel"}, {"title": "Mr. Brightside", "artist": "The Killers"}, {"title": "The Horses", "artist": "Daryl Braithwaite"}];   /* no album covers on a sales page or a store screenshot (Dean, 4 Nov 2026): the wall draws our logo tile */
       at(0, function(){
         m({ t:"session", join_code:DEMO_JOIN_CODE });
         m({ t:"mode" });

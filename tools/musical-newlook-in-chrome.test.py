@@ -80,9 +80,6 @@ ART = ('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect w
 ROOM = 'K7MQ2P'
 SONGS = ["Bohemian Rhapsody", "Livin' on a Prayer", "Africa", "Hey Ya!", "Sweet Caroline", "Beds Are Burning", "Eagle Rock",
          "September", "Take On Me", "Never Gonna Give You Up", "Dancing Queen", "Khe Sanh", "Mr. Brightside", "The Horses", "Wonderwall"]
-# The demo's real library artwork (the wall's own ?demo=1 list), for the review frames only (VP_FIXTURES set); the
-# checks never depend on the picture arriving.
-REAL_ART = {"Never Gonna Give You Up": ["Rick Astley", "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"], "Dancing Queen": ["ABBA", "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"], "Khe Sanh": ["Cold Chisel", "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"], "Mr. Brightside": ["The Killers", "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"], "The Horses": ["Daryl Braithwaite", "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"]}
 CELLS = ["Wonderwall", "Sweet Caroline", "Never Gonna Give You Up", "Don't Stop Believin'", "Beds Are Burning",
          "You're the Voice", "Never Tear Us Apart", "Livin' on a Prayer", "Hey Ya!", "Bohemian Rhapsody",
          "Dancing Queen", "Khe Sanh", "FREE", "Mr. Brightside", "The Horses",
@@ -281,7 +278,7 @@ def tv(B, base, w, h, logo, tag, shots):
         P.js(say(chan, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'played': []}]))
         time.sleep(0.6)
         for i, s in enumerate(played):
-            ra = REAL_ART.get(s) if FIX else None
+            ra = None   # never third-party covers in a frame (Dean, 4 Nov 2026): plain fixture squares
             P.js(say(chan, [{'t': 'played', 'title': s, 'artist': ra[0] if ra else 'The Band', 'artworkUrl': ra[1] if ra else '/__fixture/art-%02x%02x%02x.svg' % (40 + i * 12, 60, 120 - i * 5), 'played': played[:i + 1], 'reveal': 'instant', 'replay': True}]))
             time.sleep(0.08)
         P.js(say(chan, [{'t': 'players', 'count': 32}]))
@@ -577,6 +574,13 @@ def demo(B, base):
         P.until('!document.getElementById("tvRun").classList.contains("hidden")', 20); time.sleep(4)
         d = P.obj(TV_PROBE) or {}
         ok('the wall demo plays its night on the new wall, Tugun\'s crest top left', d.get('layer') == 'tvRun' and bool(d.get('logo')) and (d.get('wins') or {}).get('text') == 'One line wins a Meat tray', [d.get('layer'), d.get('wins')])
+        P.until('document.getElementById("tvArtBox").classList.contains("vplogo")', 15)
+        cv = P.obj('(function(){ var b=document.getElementById("tvArtBox"), l=b.querySelector(".mlogo"), r=l.getBoundingClientRect(), a=b.getBoundingClientRect();'
+                   ' return JSON.stringify({ tile:b.classList.contains("vplogo"), logo:r.width>0 && r.left>=a.left && r.right<=a.right, imgs:[].filter.call(document.querySelectorAll("#tvRun img"),function(i){ return i.getAttribute("src"); }).length,'
+                   ' tris:document.querySelectorAll("#tvBoard .ptok .ptri").length, toks:document.querySelectorAll("#tvBoard .ptok").length }); })()') or {}
+        P.shot('demo-tv-logo-tile')
+        ok('the demo shows NO album covers (store screenshots, Dean 4 Nov 2026): our venueplay logo tile in the art spot, the play triangle on the strip',
+           cv.get('tile') is True and cv.get('logo') is True and cv.get('imgs') == 0 and cv.get('toks', 0) >= 1 and cv.get('tris') == cv.get('toks'), cv)
         import re as _re
         ok('and never names a table: the claim and the winner are a player\'s name', not _re.search(r'name:"Table', io.open(os.path.join(SITE, 'app/musical/screen.html'), encoding='utf-8').read().split('function demoNight')[1].split('hideChrome')[0]))
     finally:

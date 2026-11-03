@@ -11468,7 +11468,13 @@ MUTATIONS = [
     ('test-join-cost.js', 'venueplay/app/musical/play.html',
      '    playerPost("/join/info",{ code:P.room, ad:1 }).then(function(r){', '    playerPost("/join/info",{ code:P.room, ad:1, fresh:1 }).then(function(r){',
      'the musical phone\'s join asks the database afresh for its join answer, a dearer join'),
+    ('test-musical-newlook.js', 'venueplay/app/musical/screen.html',
+     '    if(VP_DEMO){   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */', '    if(false){   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */',
+     'the demo wall paints album covers again (store screenshots may not carry third-party artwork)'),
     # the walls and phones, as Chrome paints them (each row a full run of the suite)
+    ('musical-newlook-in-chrome.test.py', 'venueplay/app/musical/screen.html',
+     '      if(typeof VP_DEMO!=="undefined" && VP_DEMO && d.insertBefore){', '      if(false){',
+     'in Chrome, the demo strip has no venueplay triangle where the covers were'),
     ('musical-newlook-in-chrome.test.py', 'venueplay/app/musical/screen.html',
      '<script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared with trivia (4 Nov 2026) -->', '',
      'in Chrome, the musical bingo join is not trivia\'s join and its title is off the logos\' line'),
