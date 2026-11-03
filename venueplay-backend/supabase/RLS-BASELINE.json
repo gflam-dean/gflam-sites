@@ -889,14 +889,12 @@
   "vp_venues anon SELECT",
   "vp_venues anon TRIGGER",
   "vp_venues anon TRUNCATE",
-  "vp_venues anon UPDATE",
   "vp_venues authenticated DELETE",
   "vp_venues authenticated INSERT",
   "vp_venues authenticated REFERENCES",
   "vp_venues authenticated SELECT",
   "vp_venues authenticated TRIGGER",
-  "vp_venues authenticated TRUNCATE",
-  "vp_venues authenticated UPDATE"
+  "vp_venues authenticated TRUNCATE"
  ],
  "policies": {
   "artists.Public can read artists": {
@@ -1591,13 +1589,6 @@
    "roles": "authenticated",
    "using": "(id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
    "with_check": ""
-  },
-  "vp_venues.vp_venues_manager_update": {
-   "cmd": "UPDATE",
-   "permissive": "PERMISSIVE",
-   "roles": "authenticated",
-   "using": "(EXISTS ( SELECT 1\n   FROM vp_venue_staff s\n  WHERE ((s.venue_id = vp_venues.id) AND (s.auth_user_id = auth.uid()) AND (s.role = ANY (ARRAY['owner'::text, 'manager'::text])))))",
-   "with_check": "(EXISTS ( SELECT 1\n   FROM vp_venue_staff s\n  WHERE ((s.venue_id = vp_venues.id) AND (s.auth_user_id = auth.uid()) AND (s.role = ANY (ARRAY['owner'::text, 'manager'::text])))))"
   }
  },
  "rls": {
@@ -1746,6 +1737,10 @@
    "forced": false
   },
   "vp_discounts": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_feedback_notes": {
    "enabled": true,
    "forced": false
   },
