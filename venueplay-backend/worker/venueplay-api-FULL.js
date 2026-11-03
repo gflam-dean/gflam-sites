@@ -232,6 +232,7 @@ export default {
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/help/reply'         && typeof vpaAutopilotHelpReply === 'function')   return await vpaAutopilotHelpReply(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/help/solve'         && typeof vpaAutopilotHelpSolve === 'function')   return await vpaAutopilotHelpSolve(request, env, json);
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
@@ -2693,6 +2694,96 @@ async function vpaAutopilotHelpReply(request, env, json) {
     await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id), { status: 'waiting', updated_at: helpNow() }).catch(() => null);
   }
   return json({ ok: true, id: t.id, ticket_no: t.ticket_no, sent_from: sentFrom });
+}
+
+/* ===========================================================================
+ * AUTO-SOLVE: THE SALES TICKET CLOSES ITSELF ONCE THE PROSPECT IS ANSWERED   (Dean, 3 Nov 2026)
+ *
+ *   POST /autopilot/help/solve { emails: [..], outcome: 'sent'|'no'|'stop'|'ignore', at: ISO }   X-Autopilot-Key
+ *
+ * The Mac calls this AFTER the reply has really gone (Instantly or the help desk said yes), never on
+ * Dean's tap alone, and after a No, Stop or Ignore he tapped has been applied. Every venueplay SALES
+ * ticket still open for that prospect is closed with a note saying why: one whose contact is that
+ * address (a website form, or they wrote to us), or an Instantly "positive reply" alert naming that
+ * address in its subject or first lines. Only tickets made AT OR BEFORE `at`: if they write back
+ * later, that is a new ticket (or reopens this one) and buzzes as usual. Closing it also moves its
+ * phone alert on (the peek reports it handled; HQ clears it). Never touches Instantly.
+ * ======================================================================== */
+const VPA_SOLVE_WORDS = {
+  sent: 'reply sent',
+  no: 'Dean tapped No on the autopilot review, nothing was sent',
+  stop: 'Dean tapped Stop (not a venue), nothing was sent',
+  ignore: 'Dean tapped Ignore, nothing was sent',
+};
+const VPA_INSTANTLY_FROM = /^notifications@([a-z0-9-]+\.)*instantly\.ai$/;
+function vpaBneWords(ms) {
+  const d = new Date(ms + 10 * 3600 * 1000);   // Brisbane: UTC+10, no daylight saving
+  const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const h = d.getUTCHours(), m = d.getUTCMinutes();
+  return d.getUTCDate() + ' ' + M[d.getUTCMonth()] + ' ' + d.getUTCFullYear() + ', ' + ((h % 12) || 12) + ':' + ('0' + m).slice(-2) + (h < 12 ? 'am' : 'pm');
+}
+function vpaTicketNamesEmail(t, email) {
+  const hay = (String(t.subject || '') + '\n' + String(t.message || '').slice(0, 4000)).toLowerCase();
+  let i = hay.indexOf(email);
+  while (i >= 0) {
+    const before = i ? hay[i - 1] : ' ', after = hay[i + email.length] || ' ';
+    if (!/[a-z0-9._%+-]/.test(before) && !/[a-z0-9-]/.test(after) && !(after === '.' && /[a-z0-9]/.test(hay[i + email.length + 1] || ''))) return true;
+    i = hay.indexOf(email, i + 1);
+  }
+  return false;
+}
+async function vpaAutopilotHelpSolve(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const outcome = String(b.outcome || '');
+  if (!VPA_SOLVE_WORDS[outcome]) return json({ error: 'outcome must be sent, no, stop or ignore.' }, 400);
+  const emails = [];
+  for (const e of (Array.isArray(b.emails) ? b.emails : [b.email]).slice(0, 5)) {
+    const x = String(e || '').trim().toLowerCase();
+    if (HELP_EMAIL_RE.test(x) && !VPA_INSTANTLY_FROM.test(x) && emails.indexOf(x) < 0) emails.push(x);
+  }
+  if (!emails.length) return json({ error: 'emails must hold the prospect\'s address.' }, 400);
+  // When it happened. A time with no zone is Brisbane's (the Mac writes local minutes).
+  let atStr = String(b.at || '');
+  if (/^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?$/.test(atStr)) atStr += '+10:00';
+  const at = Date.parse(atStr);
+  if (!(at > 0)) return json({ error: 'at must be when it happened (ISO).' }, 400);
+  let rows;
+  try {
+    rows = await vpaReadPage(env, 'vp_help_tickets', 'brand=eq.venueplay&category=eq.sales&status=in.(new,open,waiting)'
+      + '&created_at=gte.' + encodeURIComponent(new Date(at - 30 * 86400000).toISOString())
+      + '&select=id,ticket_no,status,subject,message,contact_email,created_at&order=created_at.desc&limit=500');
+  } catch (e) { return json({ error: 'Could not read the help desk: ' + String(e.message || e) }, 503); }
+  const hits = rows.filter(function (t) {
+    if (!(Date.parse(t.created_at) <= at)) return false;           // made after the reply: they wrote back, it stays
+    const c = String(t.contact_email || '').toLowerCase();
+    if (emails.indexOf(c) >= 0) return true;
+    return VPA_INSTANTLY_FROM.test(c) && emails.some(function (e) { return vpaTicketNamesEmail(t, e); });
+  });
+  const solved = [], now = helpNow();
+  for (const t of hits) {
+    /* Only if it is STILL open (the status is in the filter): HQ closing it a second earlier wins. Then read it
+       back: our own closed_at on it means this call closed it, so the note is written once, never doubled. */
+    let mine;
+    const was = t.status;
+    try {
+      await vpaPatch(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id) + '&status=in.(new,open,waiting)',
+        { status: 'closed', closed_at: now, updated_at: now });
+      const back = await vpaReadPage(env, 'vp_help_tickets', 'id=eq.' + encodeURIComponent(t.id) + '&select=status,closed_at&limit=1');
+      mine = !!(back[0] && back[0].status === 'closed' && back[0].closed_at === now);
+    } catch (e) {
+      return json({ error: 'Could not close ticket ' + t.ticket_no + '; closed so far: ' + (solved.join(', ') || 'none') + '.', solved: solved }, 503);
+    }
+    if (!mine) continue;
+    await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change',
+      body: 'Solved automatically: ' + VPA_SOLVE_WORDS[outcome] + (outcome === 'sent' ? ' ' + vpaBneWords(at) : ' (' + vpaBneWords(at) + ')') + '. Status: ' + was + ' to closed',
+      author: 'Prospect autopilot', author_id: null }, false);
+    solved.push(t.ticket_no);
+  }
+  return json({ ok: true, solved: solved });
 }
 
 /* ---- the page ------------------------------------------------------------- */

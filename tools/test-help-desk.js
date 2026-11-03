@@ -319,13 +319,14 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\/|'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
   check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/ticket'", publicHelp);
-  /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its three
-     routes are exactly these, and each one's first line is the autopilot key's door. */
+  /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its four
+     routes are exactly these (3 Nov 2026: + solve, which closes a sales ticket once the prospect is answered),
+     and each one's first line is the autopilot key's door. */
   var apHelp = routes.filter(function (p) { return /'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
   var srcW = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
-  var doors = ['vpaAutopilotHelpTickets', 'vpaAutopilotHelpTicket', 'vpaAutopilotHelpReply'].filter(function (fn) {
+  var doors = ['vpaAutopilotHelpTickets', 'vpaAutopilotHelpTicket', 'vpaAutopilotHelpReply', 'vpaAutopilotHelpSolve'].filter(function (fn) {
     var m = new RegExp('async function ' + fn + '\\(request, env, json\\) \\{\\n  const no = vpaAutopilotKeyRefusal\\(request, env, json\\);\\n  if \\(no\\) return no;').exec(srcW); return !m; });
-  check('the autopilot help routes are only these three, each behind the autopilot key first', apHelp === "'/autopilot/help/reply','/autopilot/help/sales-tickets','/autopilot/help/ticket'" && doors.length === 0, [apHelp, doors]);
+  check('the autopilot help routes are only these four, each behind the autopilot key first', apHelp === "'/autopilot/help/reply','/autopilot/help/sales-tickets','/autopilot/help/solve','/autopilot/help/ticket'" && doors.length === 0, [apHelp, doors]);
 
   print('HQ: THE DESK');
   world();
@@ -1067,6 +1068,57 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   sent.length = 0;
   var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.' });
   check('HQ\'s own Reply still works through the same one sender, and is noted as Dean\'s', hq.status === 200 && sent.length === 1 && notesOf(T(helpT.ticket_no)).some(function (n) { return n.kind === 'reply' && /^Dean \(from hello@venueplay\.com\.au to /.test(n.author); }), [hq, notesOf(T(helpT.ticket_no))]);
+
+  print('AUTO-SOLVE: THE SALES TICKET CLOSES ITSELF ONCE THE PROSPECT IS ANSWERED (Dean, 3 Nov 2026)');
+  world();
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as1@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'drinks@pausebar.com.au may have sent a positive reply', body: 'Hi Dean,\r\n\r\nIt looks like you have a sales opportunity in the Unibox, go check it out!' }));
+  var asInst = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as2@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'bigdrinks@pausebar.com.au may have sent a positive reply', body: 'go check it out' }));
+  var asOther = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  r = await call(handleContact, null, { name: 'Mick Jones', email: 'Mick@ShipInn.com.au', phone: '', message: 'Keen to hear more about trivia nights.' });
+  var asWeb = T(r.body.ticket_no);
+  r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'as-p', email: 'drinks@pausebar.com.au' }));
+  var asPatron = T(r.body.ticket_no);
+  check('set up: the Instantly alert is an open venueplay sales ticket', asInst.category === 'sales' && asInst.brand === 'venueplay' && asInst.status === 'new', [asInst.category, asInst.brand, asInst.status]);
+  var asAt = new Date(Date.parse(DB.vp_help_tickets[DB.vp_help_tickets.length - 1].created_at) + 1000).toISOString();
+  NOW(); NOW();
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as3@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'drinks@pausebar.com.au may have sent a positive reply', body: 'they wrote back' }));
+  var asLater = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  var asNo = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'sent', at: asAt }, null);
+  check('no key: refused, nothing closed', asNo.status === 401 && asInst.status === 'new', asNo.status);
+  check('an outcome that is not sent, no, stop or ignore is refused', (await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'maybe', at: asAt })).status === 400);
+  check('Instantly\'s own address is never a prospect: refused', (await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['notifications@nt1.instantly.ai'], outcome: 'sent', at: asAt })).status === 400);
+  var asOk = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['Drinks@PauseBar.com.au', 'drinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  check('the reply sent: the Instantly alert naming that prospect closes by itself', asOk.status === 200 && asOk.body.solved.join() === String(asInst.ticket_no) && T(asInst.ticket_no).status === 'closed' && !!T(asInst.ticket_no).closed_at, [asOk, T(asInst.ticket_no).status]);
+  var asNote = notesOf(T(asInst.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); });
+  check('with a note on the ticket: "Solved automatically: reply sent <time>", by the autopilot', asNote.length === 1 && /^Solved automatically: reply sent \d{1,2} [A-Z][a-z]{2} 20\d\d, \d{1,2}:\d\d[ap]m\. Status: new to closed$/.test(asNote[0].body) && asNote[0].author === 'Prospect autopilot' && asNote[0].kind === 'change', asNote);
+  check('an alert for a DIFFERENT address that merely contains it (bigdrinks@) stays open', T(asOther.ticket_no).status === 'new');
+  check('a player ticket from the same address stays open (only sales tickets are solved)', T(asPatron.ticket_no).status === 'new');
+  check('an alert made AFTER the reply went (they wrote back) stays open, and so buzzes as usual', T(asLater.ticket_no).status === 'new', T(asLater.ticket_no).status);
+  var asHandled = await helpPushHandled(ENV, [asInst.ticket_no, asOther.ticket_no]);
+  check('and its phone alert moves on: the peek now reports it handled, the other one not', asHandled.join() === String(asInst.ticket_no), asHandled);
+  var asTwice = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  check('solving again (a retry) closes nothing more and writes no second note', asTwice.status === 200 && asTwice.body.solved.length === 0 && notesOf(T(asInst.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); }).length === 1, asTwice.body);
+  var asStop = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['mick@shipinn.com.au'], outcome: 'stop', at: asAt });
+  var asStopNote = notesOf(T(asWeb.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0];
+  check('Stop solves a website-form ticket by its contact address, and the note says Stop and that nothing was sent', asStop.body.solved.join() === String(asWeb.ticket_no) && asStopNote && /^Solved automatically: Dean tapped Stop \(not a venue\), nothing was sent \(/.test(asStopNote.body), [asStop.body, asStopNote]);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 'as-no', email: 'no-thanks@hotel.example.com.au' }));
+  var asNoT = T(r.body.ticket_no);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 'as-ig', email: 'ignore-me@hotel.example.com.au' }));
+  var asIgT = T(r.body.ticket_no);
+  var asNoAt = new Date(Date.parse(asIgT.created_at) + 1000).toISOString();
+  await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['no-thanks@hotel.example.com.au'], outcome: 'no', at: asNoAt });
+  await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['ignore-me@hotel.example.com.au'], outcome: 'ignore', at: asNoAt });
+  var nNote = notesOf(T(asNoT.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0], iNote = notesOf(T(asIgT.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0];
+  check('No and Ignore solve it too, each note saying which', T(asNoT.ticket_no).status === 'closed' && T(asIgT.ticket_no).status === 'closed' && nNote && /Dean tapped No on the autopilot review, nothing was sent/.test(nNote.body) && iNote && /Dean tapped Ignore, nothing was sent/.test(iNote.body), [nNote, iNote]);
+  FAIL['vp_help_tickets:GET'] = 1;
+  var asDown = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['bigdrinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  FAIL['vp_help_tickets:GET'] = 0;
+  check('if the help desk cannot be read it says so (503, so the Mac tries again), never "nothing to solve"', asDown.status === 503 && T(asOther.ticket_no).status === 'new', asDown);
+  check('a time with no zone is read as Brisbane time', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')) === '3 Nov 2026, 2:15pm', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')));
 
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};
