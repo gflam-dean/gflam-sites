@@ -300,6 +300,7 @@
   "signage-logo.test.js",
   "signin-blame.test.js",
   "signin-email-fallback.test.js",
+  "signup-source.test.js",
   "signup-tick-in-chrome.test.py",
   "site-offer-footer-in-chrome.test.py",
   "slug-ladder.test.js",
