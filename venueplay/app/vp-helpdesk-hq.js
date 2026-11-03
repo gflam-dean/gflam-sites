@@ -366,6 +366,7 @@
       if (j.all_venues) { S.allVenues = j.all_venues; var sel = $("hdfVenue"), keep = sel.value;
         sel.innerHTML = '<option value="">Any venue</option>' + S.allVenues.map(function (v) { return '<option value="' + hdEsc(v.id) + '">' + hdEsc(v.name) + "</option>"; }).join(""); sel.value = keep; }
       draw();
+      clearAlerts(handledNos(S.all));
     });
     badge();
     repliesLoad(false);
@@ -423,6 +424,7 @@
     post("/admin/help/get", no ? { ticket_no: no } : { id: id }).then(function (j) {
       if (j.error) { box.innerHTML = '<div class="panel pad"><button class="mini" id="hdBack">Back to tickets</button><div class="note">' + hdEsc(j.error) + "</div></div>"; $("hdBack").addEventListener("click", function () { backToList(false); }); return; }
       var t = j.ticket; S.open = t;
+      clearAlerts([t.ticket_no]);   // opening it is dealing with it: its alert on this device goes
       if (fromList) { try { root.history.pushState({ hd: t.ticket_no }, "", "#help-" + t.ticket_no); } catch (e) {} }
       var known = (S.allVenues || []).filter(function (v) { return v.id === t.venue_id; })[0] || {};
       var ctx = { venue_name: j.venue_name || known.name || S.venues[t.venue_id] || "", venue_slug: j.venue_slug || known.slug || "" };
@@ -810,6 +812,7 @@
     box.innerHTML = '<div class="cxhead"><span class="cxname">Alerts on this device</span></div>' +
       (can ? "" : '<div class="restrict" style="margin:0 0 12px">This browser cannot take alerts' + (/iPhone|iPad/.test(root.navigator.userAgent) && !standalone ? ". On an iPhone: tap Share, then Add to Home Screen, open HQ from that icon, and come back here." : ".") + "</div>") +
       '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
+      '<div class="note" style="margin:0 0 12px">Sales and urgent alerts stay on screen until the ticket is opened, answered, closed or assigned. On an iPhone that needs one setting: Settings, Notifications, venueplay HQ, then Banner Style: Persistent (and Sounds on).</div>' +
       '<div class="checklist" style="max-width:520px;margin-bottom:12px"><label class="checkitem"><input type="radio" name="hdaF" value="all" checked> Every ticket</label>' +
       '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales</label></div>' +
       '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +
@@ -848,6 +851,26 @@
       });
     }).then(function () { say("Alerts are on for this device."); })
       .catch(function (e) { say((e && e.message) || "That did not work. Try again."); });
+  }
+  /* "MOVE IT ON" (Dean, 3 Nov 2026). A sales or urgent alert stays on screen until it is dealt with
+     (vp-help-sw.js). Dealing with it here, on this device, closes it here: opening the ticket, and
+     every list load closes the alerts for tickets past "new" or assigned (a reply, a close or an
+     assign all reload the list). Through the alert worker's own registration; nothing if there is none. */
+  function handledNos(list) {
+    return (list || []).filter(function (t) { return t && (t.status !== "new" || t.assigned_to); }).map(function (t) { return String(t.ticket_no); });
+  }
+  function clearAlerts(nos) {
+    if (!nos || !nos.length) return;
+    try {
+      var sw = root.navigator && root.navigator.serviceWorker; if (!sw || !sw.getRegistration) return;
+      var want = {}; nos.forEach(function (n) { want[String(n)] = true; });
+      sw.getRegistration(SCOPE).then(function (reg) {
+        if (!reg || !reg.getNotifications) return;
+        return reg.getNotifications().then(function (list) {
+          (list || []).forEach(function (n) { if (n.data && want[String(n.data.ticket_no)]) n.close(); });
+        });
+      }).catch(function () {});
+    } catch (e) {}
   }
   function alertOff() {
     root.navigator.serviceWorker.getRegistration(SCOPE).then(function (reg) {
@@ -917,7 +940,7 @@
       })(0);
     });
   }
-  root.VPHelpdesk = { venueTickets: venueTickets };
+  root.VPHelpdesk = { venueTickets: venueTickets, _alerts: { handledNos: handledNos, clearAlerts: clearAlerts } };   // _alerts: run by tools/test-help-desk.js
 
   /* ---- start ---- */
   function start() {

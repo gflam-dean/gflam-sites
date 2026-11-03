@@ -319,13 +319,14 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\/|'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
   check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/ticket'", publicHelp);
-  /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its three
-     routes are exactly these, and each one's first line is the autopilot key's door. */
+  /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its four
+     routes are exactly these (3 Nov 2026: + solve, which closes a sales ticket once the prospect is answered),
+     and each one's first line is the autopilot key's door. */
   var apHelp = routes.filter(function (p) { return /'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
   var srcW = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
-  var doors = ['vpaAutopilotHelpTickets', 'vpaAutopilotHelpTicket', 'vpaAutopilotHelpReply'].filter(function (fn) {
+  var doors = ['vpaAutopilotHelpTickets', 'vpaAutopilotHelpTicket', 'vpaAutopilotHelpReply', 'vpaAutopilotHelpSolve'].filter(function (fn) {
     var m = new RegExp('async function ' + fn + '\\(request, env, json\\) \\{\\n  const no = vpaAutopilotKeyRefusal\\(request, env, json\\);\\n  if \\(no\\) return no;').exec(srcW); return !m; });
-  check('the autopilot help routes are only these three, each behind the autopilot key first', apHelp === "'/autopilot/help/reply','/autopilot/help/sales-tickets','/autopilot/help/ticket'" && doors.length === 0, [apHelp, doors]);
+  check('the autopilot help routes are only these four, each behind the autopilot key first', apHelp === "'/autopilot/help/reply','/autopilot/help/sales-tickets','/autopilot/help/solve','/autopilot/help/ticket'" && doors.length === 0, [apHelp, doors]);
 
   print('HQ: THE DESK');
   world();
@@ -557,10 +558,34 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('an urgent ticket pushes to both devices, marked high urgency', pushes.length === 2 && pushes.every(function (p) { return p.headers.Urgency === 'high'; }), pushes.map(function (p) { return p.url; }));
   var peek = await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: s1.body.token });
   check('the phone asks what woke it and is told brand, kind and number', peek.status === 200 && peek.body.ticket_no === 1002 && peek.body.brand === 'venueplay' && peek.body.category === 'venue_support' && peek.body.urgent === true, peek.body);
-  check('and NOTHING personal: only count, number, brand, kind, label and urgency', Object.keys(peek.body).sort().join() === 'brand,category,count,label,ticket_no,urgent' && !/example|Down|All down|Royal|owner@/.test(JSON.stringify(peek.body)), peek.body);
+  check('and NOTHING personal: only count, number, brand, kind, label, urgency and which of its own alerts are dealt with', Object.keys(peek.body).sort().join() === 'brand,category,count,handled,label,ticket_no,urgent' && !/example|Down|All down|Royal|owner@/.test(JSON.stringify(peek.body)), peek.body);
   check('asking again with nothing new says nothing new', (await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: s1.body.token })).body.count === 0);
   check('the wrong secret is refused', (await pcall(helpPushPeek, null, { endpoint: EP_ALL, token: (s1.body.token.charAt(0) === 'x' ? 'y' : 'x') + s1.body.token.slice(1) })).status === 403);
   check('another device\'s secret is refused', (await pcall(helpPushPeek, null, { endpoint: EP_URG, token: s1.body.token })).status === 403);
+
+  print('STICKY ALERTS MOVE ON: THE PEEK SAYS WHICH ALERTS ON SCREEN ARE DEALT WITH (Dean, 3 Nov 2026)');
+  async function peekShowing(showing) { return (await pcall(helpPushPeek, null, { endpoint: EP_URG, token: s2.body.token, showing: showing })).body; }
+  var hp = await peekShowing([1002]);
+  check('a ticket still new and nobody\'s is NOT dealt with: its alert stays up', Array.isArray(hp.handled) && hp.handled.length === 0, hp);
+  await pcall(helpAdminGet, ADMIN, { ticket_no: 1002 });
+  hp = await peekShowing([1002]);
+  check('once HQ opens it (status past new), the phone is told its alert can go', hp.handled && hp.handled.join() === '1002', hp);
+  var tA = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'assign-1', email: 'assign@example.com' }));
+  var tANo = tA.body.ticket_no;
+  hp = await peekShowing([tANo]);
+  check('a new ticket nobody has touched stays up', hp.handled && hp.handled.length === 0, hp);
+  await pcall(helpAdminUpdate, ADMIN, { id: T(tANo).id, assigned_to: 'Dean' });
+  hp = await peekShowing([tANo]);
+  check('assigning it (still new) also counts as dealt with', T(tANo).status === 'new' && hp.handled && hp.handled.join() === String(tANo), [T(tANo).status, hp]);
+  hp = await peekShowing(['x', '1;drop', 99999, 1002, 1002, { a: 1 }]);
+  check('only ticket numbers it sent come back: junk ignored, a ticket that is not there counts as gone, no repeats', hp.handled && hp.handled.slice().sort().join() === '1002,99999', hp);
+  FAIL['vp_help_tickets:GET'] = 1;
+  hp = await peekShowing([1002]);
+  check('if the tickets cannot be read, NOTHING is cleared (every alert stays up rather than one going wrongly)', hp.handled && hp.handled.length === 0, hp);
+  FAIL['vp_help_tickets:GET'] = 0;
+  var tB = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'newone-1', email: 'newone@example.com', urgent: true }));
+  hp = await peekShowing([1002, tB.body.ticket_no]);
+  check('a peek that reports a new ticket never also tells the phone to close that same ticket', hp.handled && hp.handled.indexOf(tB.body.ticket_no) < 0, hp);
   var un = await pcall(helpAdminPushUnsubscribe, ADMIN, { endpoint: EP_ALL });
   pushes.length = 0;
   await (async function () { await helpPublicTicket(req(null, Object.assign({}, PATRON, { device: 'after', email: 'after@example.com' })), PENV, J); })();
@@ -830,10 +855,14 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   helpNow = realHelpNow;
 
   print('THE PHONE\'S SERVICE WORKER (venueplay/app/vp-help-sw.js), RUN');
-  async function swRun(peekAnswer, peekOk) {
-    var L = {}, shown = [], opened = [], asked = [];
+  async function swRun(peekAnswer, peekOk, already) {
+    var L = {}, shown = [], opened = [], asked = [], closed = [], up = [];
+    function note(title, o) { var n = { title: title, tag: o.tag, data: o.data, opts: o, close: function () { closed.push(n.data && n.data.ticket_no); up = up.filter(function (x) { return x !== n; }); } }; return n; }
+    (already || []).forEach(function (a) { up.push(note('old', { tag: a.tag || 'vp-help-' + a.ticket_no, data: { url: '/app/hq.html#help-' + a.ticket_no, ticket_no: a.ticket_no } })); });
     var self = { addEventListener: function (k, f) { L[k] = f; }, skipWaiting: function () {},
-      registration: { showNotification: function (t, o) { shown.push({ title: t, opts: o }); return Promise.resolve(); } },
+      registration: { showNotification: function (t, o) { shown.push({ title: t, opts: o });
+          up = up.filter(function (x) { return x.tag !== o.tag; }); up.push(note(t, o)); return Promise.resolve(); },
+        getNotifications: function (f) { return Promise.resolve(up.filter(function (x) { return !f || !f.tag || x.tag === f.tag; })); } },
       clients: { claim: function () { return Promise.resolve(); }, openWindow: function (u) { opened.push(u); return Promise.resolve(); } } };
     var caches = { open: function () { return Promise.resolve({ match: function () { return Promise.resolve({ json: function () { return Promise.resolve({ api: 'https://api.test', endpoint: 'https://fcm.googleapis.com/x', token: 'secret-token-0123456789' }); } }); } }); } };
     var fetch = function (u, o) { asked.push({ url: u, body: JSON.parse(o.body) });
@@ -841,8 +870,10 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
       return Promise.resolve({ ok: peekOk, json: function () { return Promise.resolve(peekAnswer); } }); };
     (new Function('self', 'caches', 'fetch', readFile('venueplay/app/vp-help-sw.js')))(self, caches, fetch);
     var waits = []; L.push({ waitUntil: function (p) { waits.push(p); } }); await Promise.all(waits);
+    var upAfterPush = up.map(function (x) { return x.data && x.data.ticket_no; });
+    var closedAfterPush = closed.slice();
     var w2 = []; if (shown[0]) L.notificationclick({ notification: { close: function () {}, data: shown[0].opts.data }, waitUntil: function (p) { w2.push(p); } }); await Promise.all(w2);
-    return { shown: shown, opened: opened, asked: asked };
+    return { shown: shown, opened: opened, asked: asked, closed: closedAfterPush, upAfterPush: upAfterPush, upAfterClick: up.map(function (x) { return x.data && x.data.ticket_no; }) };
   }
   var sw = await swRun({ count: 2, ticket_no: 1042, brand: 'partyplay', category: 'venue_support', urgent: true, label: 'Host support' }, true);
   check('a push asks the Worker what arrived, with this device\'s own endpoint and secret', sw.asked.length === 1 && sw.asked[0].url === 'https://api.test/help/push/peek' && sw.asked[0].body.token === 'secret-token-0123456789', sw.asked);
@@ -854,6 +885,49 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('and it opens the help desk', sw2.opened.join() === '/app/hq.html#helpdesk', sw2.opened);
   var sw3 = await swRun(null, 'offline').catch(function (e) { return { shown: [], err: String(e) }; });
   check('with no signal at all (the question itself fails), a notification still shows', sw3.shown.length === 1 && sw3.shown[0].title === 'Help desk', sw3);
+  print('STICKY SALES AND URGENT ALERTS, IN THE SERVICE WORKER (Dean, 3 Nov 2026)');
+  var o1 = sw.shown[0].opts;
+  check('an URGENT alert stays on screen until dealt with (requireInteraction), under its own ticket tag', o1.requireInteraction === true && o1.tag === 'vp-help-1042', o1);
+  check('and it sounds: renotify on, never silent', o1.renotify === true && o1.silent !== true, o1);
+  check('it carries its ticket number, so it can be found and closed later', o1.data && o1.data.ticket_no === 1042, o1.data);
+  var swS = await swRun({ count: 1, ticket_no: 2001, brand: 'venueplay', category: 'sales', urgent: false, label: 'Sales' }, true);
+  var oS = swS.shown[0].opts;
+  check('a SALES alert (not urgent) is sticky too: requireInteraction, its own tag, renotify, never silent', oS.requireInteraction === true && oS.tag === 'vp-help-2001' && oS.renotify === true && oS.silent !== true, oS);
+  check('with a visible title and body', swS.shown[0].title === '[venueplay] Sales' && /Ticket #2001\. Tap to open it\./.test(oS.body), [swS.shown[0].title, oS.body]);
+  var swP = await swRun({ count: 1, ticket_no: 2002, brand: 'venueplay', category: 'patron_support', urgent: false, label: 'Player help' }, true);
+  var oP = swP.shown[0].opts;
+  check('any other kind keeps today\'s alert: the one shared vp-help tag, not held on screen', oP.tag === 'vp-help' && !oP.requireInteraction && oP.renotify === true, oP);
+  check('the fallback (Worker not reached) is not held on screen either', !sw2.shown[0].opts.requireInteraction && sw2.shown[0].opts.tag === 'vp-help', sw2.shown[0].opts);
+  var swM = await swRun({ count: 1, ticket_no: 2010, brand: 'venueplay', category: 'sales', urgent: false, label: 'Sales', handled: [2003] }, true,
+    [{ ticket_no: 2003 }, { ticket_no: 2004 }]);
+  check('the push tells the Worker which alerts are still on screen', JSON.stringify(swM.asked[0].body.showing) === '[2003,2004]', swM.asked[0].body);
+  check('and the ones the Worker says are dealt with close themselves ("move it on")', swM.closed.join() === '2003', swM.closed);
+  check('the one still waiting stays up, beside the new one', swM.upAfterPush.slice().sort().join() === '2004,2010', swM.upAfterPush);
+  check('tapping the new one opens that ticket and clears it; the other waiting one stays', swM.opened.join() === '/app/hq.html#help-2010' && swM.upAfterClick.join() === '2004', [swM.opened, swM.upAfterClick]);
+  var swD = await swRun({ count: 1, ticket_no: 2011, brand: 'venueplay', category: 'sales', urgent: false, label: 'Sales' }, true, [{ ticket_no: 2011 }]);
+  check('a second alert for the same ticket replaces the first (same tag), never stacks', swD.upAfterPush.join() === '2011', swD.upAfterPush);
+
+  print('"MOVE IT ON" FROM HQ ON THE SAME DEVICE (vp-helpdesk-hq.js, run)');
+  var hqUp = [], hqClosed = [];
+  [3001, 3002, 3003].forEach(function (n) { hqUp.push({ data: { ticket_no: n }, close: function () { hqClosed.push(n); } }); });
+  hqUp.push({ data: { url: '/app/hq.html#helpdesk', ticket_no: null }, close: function () { hqClosed.push('generic'); } });
+  var hqScope = [];
+  var HW = { document: { getElementById: function () { return null; }, addEventListener: function () {}, querySelector: function () { return null; } },
+    location: { hash: '' }, addEventListener: function () {},
+    navigator: { serviceWorker: { getRegistration: function (sc) { hqScope.push(sc); return Promise.resolve({ getNotifications: function () { return Promise.resolve(hqUp); } }); } } } };
+  (new Function('window', 'setTimeout', readFile('venueplay/app/vp-helpdesk-hq.js')))(HW, function () {});
+  var HA = HW.VPHelpdesk && HW.VPHelpdesk._alerts;
+  check('HQ picks out the dealt-with tickets in its list: past new, or assigned', HA && HA.handledNos([{ ticket_no: 3001, status: 'new' }, { ticket_no: 3002, status: 'open' }, { ticket_no: 3003, status: 'new', assigned_to: 'Dean' }, { ticket_no: 3004, status: 'closed' }]).join() === '3002,3003,3004');
+  HA.clearAlerts(['3002', 3003]);
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  check('and closes exactly those alerts on this device, through the alert worker\'s own scope', hqClosed.slice().sort().join() === '3002,3003' && hqScope.join() === '/app/help-push/', [hqClosed, hqScope]);
+  var noSw = { document: HW.document, location: { hash: '' }, addEventListener: function () {}, navigator: {} };
+  (new Function('window', 'setTimeout', readFile('venueplay/app/vp-helpdesk-hq.js')))(noSw, function () {});
+  var threw = null; try { noSw.VPHelpdesk._alerts.clearAlerts([1]); } catch (e) { threw = e; }
+  check('a browser with no service workers: nothing happens, nothing breaks', threw === null, String(threw));
+  check('opening a ticket in HQ clears its alert', /var t = j\.ticket; S\.open = t;\s*\n\s*clearAlerts\(\[t\.ticket_no\]\)/.test(readFile('venueplay/app/vp-helpdesk-hq.js')));
+  check('every ticket list load clears the dealt-with ones (a reply, close or assign reloads it)', /draw\(\);\s*\n\s*clearAlerts\(handledNos\(S\.all\)\);/.test(readFile('venueplay/app/vp-helpdesk-hq.js')));
+
   check('the service worker has no fetch handler, so it can never get between a page and the network', !/addEventListener\(\s*["']fetch["']/.test(readFile('venueplay/app/vp-help-sw.js')));
 
   print('ONE WIDGET, TWO SITES; AND THE WORDS');
@@ -994,6 +1068,57 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   sent.length = 0;
   var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.' });
   check('HQ\'s own Reply still works through the same one sender, and is noted as Dean\'s', hq.status === 200 && sent.length === 1 && notesOf(T(helpT.ticket_no)).some(function (n) { return n.kind === 'reply' && /^Dean \(from hello@venueplay\.com\.au to /.test(n.author); }), [hq, notesOf(T(helpT.ticket_no))]);
+
+  print('AUTO-SOLVE: THE SALES TICKET CLOSES ITSELF ONCE THE PROSPECT IS ANSWERED (Dean, 3 Nov 2026)');
+  world();
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as1@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'drinks@pausebar.com.au may have sent a positive reply', body: 'Hi Dean,\r\n\r\nIt looks like you have a sales opportunity in the Unibox, go check it out!' }));
+  var asInst = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as2@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'bigdrinks@pausebar.com.au may have sent a positive reply', body: 'go check it out' }));
+  var asOther = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  r = await call(handleContact, null, { name: 'Mick Jones', email: 'Mick@ShipInn.com.au', phone: '', message: 'Keen to hear more about trivia nights.' });
+  var asWeb = T(r.body.ticket_no);
+  r = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'as-p', email: 'drinks@pausebar.com.au' }));
+  var asPatron = T(r.body.ticket_no);
+  check('set up: the Instantly alert is an open venueplay sales ticket', asInst.category === 'sales' && asInst.brand === 'venueplay' && asInst.status === 'new', [asInst.category, asInst.brand, asInst.status]);
+  var asAt = new Date(Date.parse(DB.vp_help_tickets[DB.vp_help_tickets.length - 1].created_at) + 1000).toISOString();
+  NOW(); NOW();
+  await inbound('hello@help.partyplay.com.au', mail({ mid: '<as3@x>', from: 'Instantly <notifications@nt1.instantly.ai>',
+    subject: 'drinks@pausebar.com.au may have sent a positive reply', body: 'they wrote back' }));
+  var asLater = DB.vp_help_tickets[DB.vp_help_tickets.length - 1];
+  var asNo = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'sent', at: asAt }, null);
+  check('no key: refused, nothing closed', asNo.status === 401 && asInst.status === 'new', asNo.status);
+  check('an outcome that is not sent, no, stop or ignore is refused', (await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'maybe', at: asAt })).status === 400);
+  check('Instantly\'s own address is never a prospect: refused', (await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['notifications@nt1.instantly.ai'], outcome: 'sent', at: asAt })).status === 400);
+  var asOk = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['Drinks@PauseBar.com.au', 'drinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  check('the reply sent: the Instantly alert naming that prospect closes by itself', asOk.status === 200 && asOk.body.solved.join() === String(asInst.ticket_no) && T(asInst.ticket_no).status === 'closed' && !!T(asInst.ticket_no).closed_at, [asOk, T(asInst.ticket_no).status]);
+  var asNote = notesOf(T(asInst.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); });
+  check('with a note on the ticket: "Solved automatically: reply sent <time>", by the autopilot', asNote.length === 1 && /^Solved automatically: reply sent \d{1,2} [A-Z][a-z]{2} 20\d\d, \d{1,2}:\d\d[ap]m\. Status: new to closed$/.test(asNote[0].body) && asNote[0].author === 'Prospect autopilot' && asNote[0].kind === 'change', asNote);
+  check('an alert for a DIFFERENT address that merely contains it (bigdrinks@) stays open', T(asOther.ticket_no).status === 'new');
+  check('a player ticket from the same address stays open (only sales tickets are solved)', T(asPatron.ticket_no).status === 'new');
+  check('an alert made AFTER the reply went (they wrote back) stays open, and so buzzes as usual', T(asLater.ticket_no).status === 'new', T(asLater.ticket_no).status);
+  var asHandled = await helpPushHandled(ENV, [asInst.ticket_no, asOther.ticket_no]);
+  check('and its phone alert moves on: the peek now reports it handled, the other one not', asHandled.join() === String(asInst.ticket_no), asHandled);
+  var asTwice = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['drinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  check('solving again (a retry) closes nothing more and writes no second note', asTwice.status === 200 && asTwice.body.solved.length === 0 && notesOf(T(asInst.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); }).length === 1, asTwice.body);
+  var asStop = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['mick@shipinn.com.au'], outcome: 'stop', at: asAt });
+  var asStopNote = notesOf(T(asWeb.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0];
+  check('Stop solves a website-form ticket by its contact address, and the note says Stop and that nothing was sent', asStop.body.solved.join() === String(asWeb.ticket_no) && asStopNote && /^Solved automatically: Dean tapped Stop \(not a venue\), nothing was sent \(/.test(asStopNote.body), [asStop.body, asStopNote]);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 'as-no', email: 'no-thanks@hotel.example.com.au' }));
+  var asNoT = T(r.body.ticket_no);
+  r = await call(helpPublicTicket, null, Object.assign({}, SALES, { device: 'as-ig', email: 'ignore-me@hotel.example.com.au' }));
+  var asIgT = T(r.body.ticket_no);
+  var asNoAt = new Date(Date.parse(asIgT.created_at) + 1000).toISOString();
+  await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['no-thanks@hotel.example.com.au'], outcome: 'no', at: asNoAt });
+  await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['ignore-me@hotel.example.com.au'], outcome: 'ignore', at: asNoAt });
+  var nNote = notesOf(T(asNoT.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0], iNote = notesOf(T(asIgT.ticket_no)).filter(function (n) { return /^Solved automatically/.test(n.body); })[0];
+  check('No and Ignore solve it too, each note saying which', T(asNoT.ticket_no).status === 'closed' && T(asIgT.ticket_no).status === 'closed' && nNote && /Dean tapped No on the autopilot review, nothing was sent/.test(nNote.body) && iNote && /Dean tapped Ignore, nothing was sent/.test(iNote.body), [nNote, iNote]);
+  FAIL['vp_help_tickets:GET'] = 1;
+  var asDown = await ap(vpaAutopilotHelpSolve, '/autopilot/help/solve', { emails: ['bigdrinks@pausebar.com.au'], outcome: 'sent', at: asAt });
+  FAIL['vp_help_tickets:GET'] = 0;
+  check('if the help desk cannot be read it says so (503, so the Mac tries again), never "nothing to solve"', asDown.status === 503 && T(asOther.ticket_no).status === 'new', asDown);
+  check('a time with no zone is read as Brisbane time', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')) === '3 Nov 2026, 2:15pm', vpaBneWords(Date.parse('2026-11-03T04:15:00Z')));
 
   print('EVERY HELP DESK EMAIL HAS A TEXT PART (28 Oct 2026: HTML-only mail scores towards junk)');
   var kinds = {};
