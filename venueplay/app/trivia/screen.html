@@ -1010,7 +1010,7 @@
       Q.forEach(function(q, i){
         at(t, function(){
           m({ t:"question", qseq:i+1, qi:i+3, qtotal:20, text:q.text,   // reads "Question 3 of 20": a night already under way (Dean, 3 Nov 2026)
-              options:q.options, secs:SECS, endsAt:Date.now()+SECS*1000 });
+              options:q.options, secs:SECS, endsAt:Date.now()+12*1000 });   // joins a 20-second question at 12 left, so the ring shows the time already gone (Dean, 3 Nov 2026)
         });
         // The count climbing is what makes a still screen look like a room full of people.
         [1,2,3].forEach(function(n, k){
