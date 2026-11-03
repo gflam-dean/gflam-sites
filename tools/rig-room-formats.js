@@ -377,6 +377,10 @@ function bootPage(path, opts) {
     MutationObserver: undefined, ResizeObserver: undefined, IntersectionObserver: undefined, BroadcastChannel: undefined, AbortController: undefined, Worker: undefined,
     crypto: { getRandomValues: function (a) { for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967296) >>> 0; return a; }, randomUUID: function () { return '44444444-4444-4444-8444-' + ('00000000000' + (TID++)).slice(-12); } },
     VPSign: { gate: gate, signSend: function (o, s) { s(o); }, initReceiver: function () {}, initHost: function () {} } };
+  /* window.supabase IS the page's supabase in a browser (3 Nov 2026). /app/vp-supabase-oldtv.js reads
+     window.supabase.createClient to tell a modern engine (returns at once) from an old TV (writes the
+     ES2017 build's tag); without this the rig looked like an old TV and the loader called document.write. */
+  w.supabase = sb.supabase;
   sb.globalThis = w; sb.self = w;          // in a browser both ARE the window (vp-screen-router.js hangs itself on globalThis)
   ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'fetch', 'WebSocket', 'VPSign', 'crypto', 'navigator', 'Audio', 'Date'].forEach(function (k) { w[k] = sb[k]; });
   if (opts.host) { sb.VP = w.VP = makeVP(opts.slug || SLUG); }

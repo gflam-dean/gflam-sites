@@ -232,7 +232,7 @@
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
-  "checks": 98,
+  "checks": 124,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
@@ -1305,6 +1305,10 @@
  },
  "venueplay-backend/worker/trivia-set-delete.test.js": {
   "checks": 24,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/tv-app-cors.test.js": {
+  "checks": 16,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-channel.test.js": {
