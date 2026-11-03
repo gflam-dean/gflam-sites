@@ -15920,7 +15920,12 @@ async function helpTicketFromEmail(env, to, mail) {
      nobody checked is our brand's mail going wherever a stranger pointed it. */
   const contact = mail.from;
   const askedElsewhere = (mail.reply_to && mail.reply_to.email && mail.reply_to.email !== mail.from.email) ? mail.reply_to.email : null;
-  const brand = helpBrandForAddress(to);
+  /* An Instantly positive-reply alert is filed as venueplay whichever inbox it reached (Dean, 3 Nov
+     2026): Instantly still mails hello@partyplay.com.au, but the cold campaigns are venueplay's.
+     Everything else to a partyplay address stays partyplay. */
+  const instantlyLead = helpIsInstantlyLead(mail);
+  const inboxBrand = helpBrandForAddress(to);
+  const brand = instantlyLead ? 'venueplay' : inboxBrand;
   /* A reply to one of ours has to quote the ticket's number AND its secret. Since 28 Oct 2026 every
      email we send ends its subject "(ticket 1042, ref K7QP-2XMA)", the reference being made from the
      secret (helpRef); the subject is looked at first, then the body, where a reply quotes ours. The
@@ -15962,13 +15967,12 @@ async function helpTicketFromEmail(env, to, mail) {
       if (v && v[0]) venueId = v[0].id;
     }
   }
-  const instantlyLead = helpIsInstantlyLead(mail);
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: instantlyLead ? 'sales' : helpCategoryForAddress(to), channel: 'email', title: mail.title || '(no subject)',
       message: mail.text.slice(0, 20000), contact_name: contact.name || null, contact_email: contact.email,
-      contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + brand + '.com.au' : null, email_message_id: mid,
+      contact_email_pending: askedElsewhere, venue_id: venueId, source_address: local ? local + '@' + inboxBrand + '.com.au' : null, email_message_id: mid,
     });
   } catch (e) {
     // Two deliveries of one message racing each other: the unique Message-ID let only one in.
