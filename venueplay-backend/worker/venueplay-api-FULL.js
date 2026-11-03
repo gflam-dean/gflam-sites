@@ -15848,6 +15848,10 @@ async function helpPushPeek(request, env, json) {
   const r = await vpaSelect(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint) + '&select=id,filter,token_hash,last_peek_at&limit=1');
   const sub = r && r[0];
   if (!sub || sub.token_hash !== await helpSha256Hex(token)) return json({ error: 'not allowed' }, 403);
+  /* WHICH ALERTS STILL ON THIS DEVICE CAN GO (Dean, 3 Nov 2026: "keep the banner up, then move it on").
+     The phone sends the ticket numbers of the alerts it still shows; it is told which of those are
+     dealt with: opened (status past new), assigned, or no longer there. Only numbers it sent come back. */
+  const handled = await helpPushHandled(env, _b.body.showing);
   /* THE CURSOR IS THE DATABASE'S CLOCK, never this Worker's: it starts at the database's now() when
      the device signed up (migration 108) and only ever moves to the created_at of a ticket the
      database returned. Two clocks a second apart is how a phone gets told about a ticket twice,
@@ -15857,7 +15861,7 @@ async function helpPushPeek(request, env, json) {
     const newest = await vpaSelect(env, 'vp_help_tickets', 'select=created_at&order=created_at.desc&limit=1');
     since = (newest && newest[0] && newest[0].created_at) || '1970-01-01T00:00:00Z';
     await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: since });
-    return json({ count: 0 });
+    return json({ count: 0, handled: handled });
   }
   const rows = await vpaSelect(env, 'vp_help_tickets', 'created_at=gt.' + encodeURIComponent(since) +
     '&channel=in.(patron_form,venue_form,web_form,email)&select=ticket_no,brand,category,priority,created_at&order=created_at.desc&limit=50');
@@ -15866,9 +15870,28 @@ async function helpPushPeek(request, env, json) {
   const seen = (rows || []).reduce((m, x) => (String(x.created_at) > m ? String(x.created_at) : m), String(since));
   if (seen !== String(since)) await vpaPatch(env, 'vp_help_push_subs', 'id=eq.' + encodeURIComponent(sub.id), { last_peek_at: seen });
   const t = mine[0];
-  if (!t) return json({ count: 0 });
+  if (!t) return json({ count: 0, handled: handled });
   return json({ count: mine.length, ticket_no: t.ticket_no, brand: t.brand, category: t.category,
-                urgent: t.priority === 'urgent', label: helpCategoryLabel(t.category, t.brand) });
+                urgent: t.priority === 'urgent', label: helpCategoryLabel(t.category, t.brand),
+                handled: handled.filter((n) => n !== t.ticket_no) });
+}
+/* Of the ticket numbers a phone says it still shows (at most 20, digits only), the ones that are dealt
+   with: status past 'new', assigned to someone, or gone. A ticket still new and nobody's stays up. */
+async function helpPushHandled(env, showing) {
+  const nos = [];
+  for (const x of (Array.isArray(showing) ? showing : []).slice(0, 20)) {
+    const s = String(x);
+    if (/^\d{1,9}$/.test(s) && nos.indexOf(+s) < 0) nos.push(+s);
+  }
+  if (!nos.length) return [];
+  let rows;
+  /* vpaReadPage THROWS on a failed read (vpaSelect would answer [] and every alert would look "gone"):
+     a read that fails keeps every alert up rather than clearing one wrongly. */
+  try { rows = await vpaReadPage(env, 'vp_help_tickets', 'ticket_no=in.(' + nos.join(',') + ')&select=ticket_no,status,assigned_to&limit=20'); }
+  catch (e) { return []; }
+  const still = {};
+  rows.forEach((r) => { if (r.status === 'new' && !r.assigned_to) still[r.ticket_no] = true; });
+  return nos.filter((n) => !still[n]);
 }
 
 /* ------------------------------ INBOUND EMAIL ------------------------------
