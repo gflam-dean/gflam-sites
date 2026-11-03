@@ -38,7 +38,7 @@
   .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
   /* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
      static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */
-  .ptop .brand .venue{position:absolute;left:auto;right:62px;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 28px);transform:translateY(-50%);margin:0}
+  .ptop .brand .venue{position:absolute;left:auto;right:62px;top:calc(31px + env(safe-area-inset-top, 0px));transform:translateY(-50%);margin:0}   /* level with the menu button, which /app/vp-safe-area.css sets at 12px + the island, 38px tall */
   .brand .word{display:flex;align-items:center;min-height:56px;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
   .brand .vname{overflow-wrap:break-word;hyphens:manual}
   .brand .vname.long{font-size:16px}
