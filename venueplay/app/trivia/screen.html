@@ -487,8 +487,10 @@
      never guessed, and written only when it moves. */
   function alignTitle(){
     try{
-      var mk=document.querySelector(".tv-corner svg"); if(!mk) return;
-      var mb=mk.getBoundingClientRect(); if(!(mb.height>0)) return;
+      /* the mark's box even while the start show hides it (4 Nov 2026), so TRIVIA is on the logos' line before the show ends, not dropped after */
+      var cn=document.querySelector(".tv-corner"), mb=(window.VPVenueLogo && VPVenueLogo.markBox) ? VPVenueLogo.markBox(cn) : null;
+      if(!mb){ var mk=document.querySelector(".tv-corner svg"); if(!mk) return; mb=mk.getBoundingClientRect(); }
+      if(!(mb.height>0)) return;
       var mid=mb.top+mb.height/2, ls=document.querySelectorAll(".layer .toplbl");
       for(var i=0;i<ls.length;i++){ var l=ls[i], h=l.offsetHeight; if(!h) continue;
         var lay=l.parentNode, lt=lay ? lay.getBoundingClientRect().top : 0;
