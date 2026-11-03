@@ -572,7 +572,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
-  "checks": 48,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-musical-print.js": {
