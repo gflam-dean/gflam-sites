@@ -7229,6 +7229,16 @@ MUTATIONS = [
      'involved with the conduct or organisation of any game you run',
      'involved with the conduct or organisation of any gaming activity',
      '"not involved in the conduct" stops reaching musical bingo and trivia'),
+    # 3 Nov 2026 (Dean): jag the joker is a game of chance and sits in "gaming activity" beside the
+    # members draw; punters reckon is a free game of opinion and never appears in section 6.
+    ('test-terms-put-compliance-on-the-venue.js', 'venueplay/terms.html',
+     'members draws, jag the joker and any other game of chance',
+     'members draws and any other game of chance',
+     'jag the joker drops out of "gaming activity" in section 6'),
+    ('test-terms-put-compliance-on-the-venue.js', 'venueplay/terms.html',
+     'members draws, jag the joker and any other game of chance',
+     'members draws, jag the joker, punters reckon and any other game of chance',
+     'punters reckon, a free game of opinion, is put inside "gaming activity"'),
     ('test-terms-put-compliance-on-the-venue.js', 'venueplay/terms.html',
      'Effective date: 28 October 2026',
      'Effective date: 15 October 2026',

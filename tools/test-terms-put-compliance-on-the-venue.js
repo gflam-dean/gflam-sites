@@ -96,8 +96,8 @@ print('section 6 against the standing rulings (28 Oct 2026)');
 var opening = (function () { var a = s6.indexOf('<p>'), b = s6.indexOf('</p>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
 var c65 = (function () { var a = s6.indexOf('<strong>6.5 '), b = s6.indexOf('</li>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
 var c614 = (function () { var a = s6.indexOf('<strong>6.14 '), b = s6.indexOf('</li>', a); return a >= 0 ? s6.slice(a, b) : ''; })();
-check('"gaming activity" is number bingo, raffles and members draws, and never names musical bingo inside it',
-  /"gaming activity" means number bingo, raffles, members draws and any other game of chance/.test(opening) && !/means[^.]*musical bingo/.test(opening), opening.slice(0, 220));
+check('"gaming activity" is number bingo, raffles, members draws and jag the joker, and never names musical bingo or punters reckon (a free game of opinion, Dean 3 Nov 2026) anywhere in section 6',
+  /"gaming activity" means number bingo, raffles, members draws, jag the joker and any other game of chance/.test(opening) && !/means[^.]*musical bingo/.test(opening) && !/punters reckon/i.test(s6), opening.slice(0, 220));
 check('musical bingo is never called regulated gaming or a gaming activity anywhere in section 6',
   !/musical bingo[^.]*regulated/i.test(s6) && !/regulated[^.]*musical bingo/i.test(s6) && /Musical bingo is a music game[^.]*not bingo[^.]*neither is a gaming activity/.test(opening), opening);
 check('the venue still conducts every game, whatever its format, and venueplay is not involved in the conduct of ANY game (1 Oct, point 9)',
