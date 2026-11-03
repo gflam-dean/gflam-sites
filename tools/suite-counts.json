@@ -588,7 +588,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 56,
+  "checks": 58,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
