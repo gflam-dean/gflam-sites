@@ -367,6 +367,8 @@ function bootPage(path, opts) {
   var search = opts.search || '';
   if (opts.flag != null) search += (search ? '&' : '?') + 'roomserver=' + opts.flag;
   var dom = makeDom(search, '/' + path.replace(/^venueplay\//, '').replace(/\.html$/, ''));
+  /* opts.store: what this browser already holds in localStorage (a page RELOADED mid-game, 4 Nov 2026). */
+  if (opts.store) { for (var sk in opts.store) dom.localStorage.setItem(sk, opts.store[sk]); }
   var w = dom.window;
   var gate = function (p, cb) { if (p && p.forged) return; cb(p); };
   var sb = { document: dom.document, window: w, localStorage: dom.localStorage, sessionStorage: dom.sessionStorage, location: w.location, navigator: { onLine: true, userAgent: 'rig', sendBeacon: function () { return true; } },

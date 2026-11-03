@@ -237,6 +237,35 @@ pass("it comes back INTO THE ROOM, rather than moving the whole venue to Supabas
      r.state() === "open" && unavailReasons.length === 0 && handovers() === 0,
      "state " + r.state() + ", reasons " + unavailReasons.join(","));
 
+/* 4 Nov 2026: a look that gets NO answer is the phone's own line and is not spent from the budget (job
+   list row 60), so the budget above is now proven by a room that ANSWERS, badly, for ten seconds. */
+print("\nA PHONE WHOSE ROOM ANSWERS BADLY FOR TEN SECONDS (a Worker hiccup mid-game)");
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(100);
+fetchPlan = function () { return { status: 500, body: { error: "room unwell" } }; };
+sockets[0].die(1006);
+tick(10000);
+fetchPlan = function () { return ok200(); };
+tick(6000);
+pass("it rides out ten seconds of a room that answers badly and comes back INTO THE ROOM",
+     r.state() === "open" && unavailReasons.length === 0 && handovers() === 0,
+     "state " + r.state() + ", reasons " + unavailReasons.join(","));
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(100);
+fetchPlan = function () { return { status: 500, body: { error: "room unwell" } }; };
+sockets[0].die(1006);
+tick(40000);
+pass("but a room that answers badly for longer than the phone's budget is given up, and the room told",
+     unavailReasons.length === 1 && unavailReasons[0] === "lost" && handovers() >= 1, unavailReasons.join(",") + " / " + handovers());
+V = setup(function () { return ok200(); });
+r = connect(V, "phone"); tick(100);
+fetchPlan = function () { return "throw"; };
+sockets[0].die(1006);
+tick(100000);
+pass("a phone that gets NO answer at all for 100 s (its own line) keeps its room", unavailReasons.length === 0 && handovers() === 0, unavailReasons.join(","));
+tick(60000);
+pass("and past two minutes of no answer it goes to Supabase all the same (the Worker itself may be down)", unavailReasons.length === 1, unavailReasons.join(","));
+
 print("\nROOM_OFF IS SET MID-GAME: THE ROOM SENDS EVERYONE ACROSS");
 V = setup(function () { return ok200(); });
 r = connect(V, "phone"); tick(100);
@@ -282,7 +311,9 @@ tick(3 * 25000 + 1000);
 pass("two pings with no answer and it hangs up and reconnects", sockets.length === 2 && r.state() === "open",
      sockets.length + " sockets, state " + r.state());
 pass("without leaving the room for Supabase", unavailReasons.length === 0);
-V = setup(function () { return ok200(); });
+/* An OLDER Worker never answered a ping, and its presence never said pong: true either (4 Nov 2026: a
+   Worker that says pong: true is judged from the first heartbeat, so the fixture says what an old one says). */
+V = setup(function () { return ok200({ total: 0, answers: true, handover: true }); });
 serverPongs = false;                 // an OLDER Worker: it has never answered a ping
 r = connect(V, "tv"); tick(10 * 60000);
 pass("a Worker that never answers pings is not hung up on every minute", sockets.length === 1 && r.state() === "open");

@@ -1114,16 +1114,29 @@
       announce();
     }).catch(function(){ announce(); });
   }
-  function rebuildFromSnapshot(){
+  /* A LOOK THAT IS LOST IS LOOKED AGAIN (job list row 60, 4 Nov 2026). This is asked once, the moment
+     the channel is back, which is also the moment a line that has just come back is least sure of
+     itself. When that one request failed the phone stayed on whatever it was showing before the drop
+     (an old question, or "You're in") until the console's NEXT question, most of a minute away. Now a
+     request that never got an answer is asked again at 2, 4 and 6 s. Only the newest look counts:
+     a reconnect that starts another makes the older one's retries history. */
+  var _snapGen=0;
+  function rebuildFromSnapshot(tries){
+    tries=tries||0;
+    var gen = tries ? _snapGen : ++_snapGen;
     if(!P.sessionId){ rejoinNow().then(applyPending); return; }
     fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(P.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(s){
+        if(gen!==_snapGen) return;
         var live = s && !s.error && (s.status==="lobby" || s.status==="running" || s.status==="paused");
         if(!live){ dropStaleJoin(); return rejoinNow().then(applyPending); }
         applySnap(s);
         applyPending();
-      }).catch(function(){});
+      }).catch(function(){
+        if(gen!==_snapGen || tries>=3 || !P.joined) return;
+        setTimeout(function(){ if(gen===_snapGen) rebuildFromSnapshot(tries+1); }, 2000*(tries+1));
+      });
   }
   // Register with the Worker (mints/reuses a vp_players row + a device token). The
   // team name is stored as the player's display_name, which the leaderboard groups on.

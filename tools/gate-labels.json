@@ -281,6 +281,7 @@
   "release-push.test.py",
   "removal blanks exactly that person, and emails only a venue that downloaded them",
   "rng-evidence.test.js",
+  "room-dropout-in-chrome.test.py",
   "room-fallback.test.js",
   "room-optin.test.js",
   "run.html loads the shared names",

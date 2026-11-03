@@ -68,6 +68,24 @@
      out a five second hang plus a backoff. */
   var PHONE_PROBE_MS = 2000, LINE_CHECK_MS = 1000;
   var TELL_RETRY = [0, 5000, 15000, 45000, 120000, 300000];
+  /* A PHONE THAT CANNOT REACH ANYTHING HAS NOT FOUND A BROKEN ROOM (job list row 60, 4 Nov 2026).
+     Dean's iPhone, Test Alpha, 1 Nov: back from a drop on "Waiting for the host". The fix that day
+     only covered a phone that SAYS it is offline (navigator.onLine false). A phone that loses its
+     signal without saying so (iOS does not always; a Wi-Fi to 4G hand-off never does) failed every
+     look with no answer at all, spent its 30 s budget on its own dead line, went to Supabase ALONE,
+     and sat on "Waiting for the host" with a frozen card until its handover reached the room
+     (35 to 45 s after the signal was back, measured in tools/test-room-dropout.js), and then the
+     whole venue moved off the room for six hours because one phone went out the back for a smoke.
+     A look that gets NO ANSWER (the request failed, or hung) is this phone's line, not the room: it is
+     not spent from the budget, for up to UNREACHABLE_MS, and the phone keeps looking every 2 s, so
+     it is back in the room the moment it can reach it. Any answer at all (a 503, a 500, a socket
+     the room refuses) is the room's, and the budget runs as before. Past UNREACHABLE_MS (the Worker
+     itself down for minutes, with Supabase still up) the phone goes across as it always did, and
+     says so to the room on a quick schedule (TELL_RETRY_PHONE) so the venue follows in seconds. */
+  var UNREACHABLE_MS = 120000;
+  /* Every 2 s for three minutes, then slower. A tell sent with no line fails on the phone itself and
+     costs nobody anything; the one that gets through is the moment the line is back. */
+  var TELL_RETRY_PHONE = (function () { var a = [0]; for (var i = 0; i < 90; i++) a.push(2000); return a.concat([30000, 60000, 120000, 300000]); })();
   var REASSERT_MS = 2 * 60 * 60 * 1000, REASSERT_FOR_MS = 12 * 60 * 60 * 1000;
 
   /* IS THE ROOM SERVER ON? One answer, in one place, for all three pages.
@@ -160,7 +178,8 @@
     var st = { state: "checking", ws: null, queue: [], backoff: BACKOFF_MIN, closed: false, timer: null,
                downSince: now(), everOpen: false, tries: 0, due: 0, why: "",
                pingT: null, misses: 0, pongSeen: false, tellT: null, tellI: -1, reT: null,
-               lastIn: 0, hiddenAt: 0, checkT: null, gen: 0, looking: false, lookSpent: 0, lineT: null };
+               lastIn: 0, hiddenAt: 0, checkT: null, gen: 0, looking: false, lookSpent: 0, lineT: null,
+               noAnswer: false, unreachSince: 0, pongKnown: false };
     var phone = (role === "phone");
     var backoffMax = !venueRoom ? BACKOFF_MAX : phone ? PHONE_BACKOFF_MAX : ROOM_BACKOFF_MAX;
     /* ONE SOCKET PER PAGE, HOWEVER OFTEN IT RECONNECTS (1 Nov 2026: presence counted Dean's one phone
@@ -180,12 +199,13 @@
       st.looking = true;
       var settled = false;
       var lookMs = (phone && venueRoom && st.everOpen) ? PHONE_PROBE_MS : PROBE_MS;
-      var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; st.lookSpent = lookMs; retry(); }, lookMs);
+      var late = setTimeout(function () { if (settled) return; settled = true; if (gen !== st.gen) return; st.looking = false; st.lookSpent = lookMs; st.noAnswer = true; retry(); }, lookMs);
       function done() { if (settled) return false; settled = true; clearTimeout(late); if (gen === st.gen) st.looking = false; return !st.closed && gen === st.gen; }
       fetch(api + "/room/presence?room=" + encodeURIComponent(roomName))
         .then(function (r) {
           var first = done();
           if (st.closed) return;
+          if (first) { st.noAnswer = false; st.unreachSince = 0; }   // an answer: whatever is wrong now is the room's
           /* AN ANSWER IS AN ANSWER, HOWEVER LATE. "Not enabled" arriving after this look was given up
              on still means not enabled, and acting on it now beats spending the whole budget asking
              again: on a slow line (or a loaded test machine) every look timed out and every page
@@ -206,11 +226,15 @@
             /* THIS FORMAT IS NOT ON THE ROOM YET: its channel stays on Supabase, as it always was.
                Only this channel: bingo's room at the same venue is a separate decision. */
             if (needsHandover && opts.fmt && !(d.formats && d.formats[opts.fmt] === true)) { unavailable("format off"); return; }
+            /* The Worker says its rooms answer "ping": judge the socket from the first heartbeat, not only
+               after a pong has been heard. A socket that went half open before its first pong was never
+               judged at all, and the phone said Connected, deaf, for the rest of the night. */
+            if (d.pong === true) st.pongKnown = true;
             if (opts.onPresence) { try { opts.onPresence(d); } catch (e) {} }
             open();
           });
         })
-        .catch(function () { if (done()) retry(); });
+        .catch(function () { if (done()) { st.noAnswer = true; retry(); } });
     }
 
     function unavailable(why) {
@@ -250,14 +274,15 @@
     function tell(i) {
       clearTimeout(st.tellT);
       st.tellI = -1;
-      if (i >= TELL_RETRY.length) return;
+      var sched = phone ? TELL_RETRY_PHONE : TELL_RETRY;
+      if (i >= sched.length) return;
       st.tellI = i;
       st.tellT = setTimeout(function () {
         st.tellI = -1;
         post(api + "/room/handover?room=" + encodeURIComponent(roomName) + venueQ())
           .then(function (r) { if (!r || (r.status >= 500 && r.status !== 503)) tell(i + 1); })
           .catch(function () { tell(i + 1); });
-      }, TELL_RETRY[i]);
+      }, sched[i]);
     }
     function reassert(since) {
       clearTimeout(st.reT);
@@ -296,6 +321,7 @@
         st.backoff = BACKOFF_MIN;
         st.everOpen = true;
         st.downSince = 0;
+        st.noAnswer = false; st.unreachSince = 0;
         st.misses = 0;
         setState("open");
         while (st.queue.length) { try { ws.send(st.queue.shift()); } catch (e) { break; } }
@@ -338,7 +364,7 @@
         st.pingT = setTimeout(function () {
           var ws = st.ws;
           if (st.closed || !ws || ws.readyState !== 1) return;
-          if (!st.pongSeen) { try { ws.send("ping"); } catch (e) {} }   // an older Worker never answers: it is never judged
+          if (!st.pongSeen && !st.pongKnown) { try { ws.send("ping"); } catch (e) {} }   // an older Worker never answers: it is never judged
           else if (!hiddenNow()) checkAlive(PONG_WAIT_MS);
           beat();
         }, PHONE_PING_MS);
@@ -347,7 +373,7 @@
       st.pingT = setTimeout(function () {
         var ws = st.ws;
         if (st.closed || !ws || ws.readyState !== 1) return;
-        if (st.pongSeen && st.misses >= PING_MISSES) {
+        if ((st.pongSeen || st.pongKnown) && st.misses >= PING_MISSES) {
           st.ws = null;
           try { ws.close(); } catch (e) {}
           retry();
@@ -370,6 +396,11 @@
          "waiting for the host" while the console carried on in the room. Time with no network at
          all is not spent from the budget; the browser's online event brings it straight back. */
       if (offline()) { st.downSince = t; st.tries = 0; }
+      /* NO ANSWER AT ALL IS THIS PHONE'S LINE, NOT THE ROOM (UNREACHABLE_MS, above). */
+      if (phone && venueRoom && st.noAnswer) {
+        if (!st.unreachSince) st.unreachSince = t;
+        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }
+      }
       var b2 = st.everOpen ? budget[1] : budget[0];
       /* THE DECISION THAT WAS MISSING. Trying for ever is not "safe by default", it is a
          screen that says Reconnecting all night while the host wonders why the wall is
@@ -446,7 +477,7 @@
        rather than after two missed heartbeats (most of a minute of balls). */
     function checkAlive(waitMs) {
       var ws = st.ws;
-      if (st.closed || !ws || ws.readyState !== 1 || !st.pongSeen) return;
+      if (st.closed || !ws || ws.readyState !== 1 || !(st.pongSeen || st.pongKnown)) return;
       var asked = now();
       try { ws.send("ping"); } catch (e) { recycle(); return; }
       clearTimeout(st.checkT);

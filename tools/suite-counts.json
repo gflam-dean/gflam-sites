@@ -287,6 +287,10 @@
   "checks": 20,
   "counted_by": "lines"
  },
+ "tools/room-dropout-in-chrome.test.py": {
+  "checks": 85,
+  "counted_by": "lines"
+ },
  "tools/safe-area-in-chrome.test.py": {
   "checks": 86,
   "counted_by": "lines"
@@ -771,6 +775,14 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/test-room-dropout-formats.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/test-room-dropout.js": {
+  "checks": 55,
+  "counted_by": "lines"
+ },
  "tools/test-room-formats.js": {
   "checks": 197,
   "counted_by": "lines"
@@ -1128,7 +1140,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-fallback.test.js": {
-  "checks": 67,
+  "checks": 71,
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-optin.test.js": {
