@@ -140,7 +140,7 @@ async function main() {
     var rv = await vpaReviewLinks(ENV, '2026-10-31-test-alpha', 1790000000, 1);
     var rvBad = Object.keys(rv).filter(function (k) { return rv[k].indexOf(API + '/autopilot/review?f=2026-10-31-test-alpha&a=' + k + '&r=1&x=1790000000&t=') !== 0 || devHit(rv[k]); });
     check('the Yes / No / Edit buttons in Dean\'s prospect review emails are on api.venueplay.com.au, never a .dev address',
-      Object.keys(rv).length === 3 && rvBad.length === 0, rv);
+      Object.keys(rv).length === 4 && rvBad.length === 0, rv);   // yes, no, edit and get photos (148; release/4nov)
   }
 
   print(''); print('API_ORIGIN is only ever a venueplay.com.au API host');
