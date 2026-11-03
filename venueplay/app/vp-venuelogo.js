@@ -319,5 +319,16 @@
     return go;
   }
 
-  w.VPVenueLogo = { alignMark: alignMark, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
+  /* THE VENUE'S NAME AS TEXT, TOP LEFT OF A PHONE, WHEN IT HAS NO LOGO (option 5, Dean 3 Nov 2026). The logo wins:
+     never both. Never cut short: a long name steps down to 16px (.vname.long) and wraps. One copy for every player
+     phone (trivia's first, 3 Nov; musical bingo's, 4 Nov). el is the header's .vname. */
+  function headerName(el, logo, name) {
+    if (!el) return;
+    var nm = String(name || "").trim();
+    if (logo) { el.classList.add("hidden"); return; }
+    if (nm) { el.textContent = nm; el.classList.toggle("long", nm.length > 24); }
+    el.classList.remove("hidden");
+  }
+
+  w.VPVenueLogo = { alignMark: alignMark, headerName: headerName, keepAligned: keepAligned, watch: watch, box: box, limits: limits, fit: fit, lightness: lightness, lightShare: lightShare, readTone: readTone, analyse: analyse, isWide: isWide, inkCover: inkCover, isThin: isThin, BAND_RATIO: BAND_RATIO, THIN: THIN, DARK: DARK, LIGHT: LIGHT, TV: TV, PHONE: PHONE };
 })(window, document);

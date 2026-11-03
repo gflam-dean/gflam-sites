@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the shared phone frame: option 5 header, join screens, menu sheet, the venue's ad (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -29,33 +30,8 @@
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
   .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-  /* ROOM EITHER SIDE FOR THE CORNERS (Dean, 21 Oct 2026: the VenuePlay logo "looks crammed into the
-     corner"). The menu button sits top-right and the called-ball chip top-left, both pinned over the
-     header, and the header used to be padded 16px all round, so at 320 wide "VenuePlay Musical Bingo"
-     ran under the menu button. 72px each side keeps the middle clear of both and the brand centred. */
-  .ptop{padding:16px 72px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
-  .brand{display:flex;align-items:center;justify-content:center;gap:8px}
-  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  /* THE GAME NAME IS NEVER CUT (queued fault, 1 Nov 2026). With the new wordmark the brand was one line of
-     inline text, and at 320 wide (176px between the corners) "Musical Bingo" was cut. The wordmark and the
-     name are now two whole pieces that sit side by side when they fit and stack, centred, when they do not,
-     and the name steps its type down a little on the narrowest phones rather than ever being clipped. */
-  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.2;
-    display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:6px;row-gap:3px;text-align:center;min-width:0;max-width:100%}
-  .brand .word svg{flex:none}
-  .brand .nw{white-space:nowrap;flex:none}   /* the game name is one whole piece, never split or ellipsed */
-  @media (max-width:340px){ .brand .nw{font-size:15px} }
-  /* ON THE NARROWEST PHONES THE TWO PIECES ARE STACKED ON PURPOSE (3 Nov 2026). Left to wrap, the brand row
-     measured itself at its one-line width (the whole 176px between the corners) while drawing two short lines,
-     so the status dot, which hangs just right of the brand (vp-connbar.js), landed under the menu button at
-     320 wide. A column measures as its widest piece, so the dot sits beside the name. */
-  @media (max-width:339px){ .brand .word{flex-direction:column} }
-  .brand .div{width:1px;height:16px;background:var(--line)}
-  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
-  .vlogo{display:block;margin:10px auto 2px;height:30px;max-width:150px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
-  .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
+  /* THE HEADER (option 5) and our logo at the foot are /app/vp-phone.css, shared with the trivia phone (4 Nov 2026).
+     The old centred header (the venueplay wordmark and "Musical Bingo" between two 72px gutters) is gone. */
 
   .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
   .center{justify-content:center;text-align:center}
@@ -201,9 +177,7 @@
   .closex{width:44px;height:44px;flex:none;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:12px;font-size:19px;line-height:1;cursor:pointer}
   body.light .sheet h3, body.light .srow.mine .st{color:#191420}
 
-  /* menu (top-right of the bar): Easy mode + Light mode + Leave game */
-  .menubtn{position:absolute;top:12px;right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
-  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  /* the menu's rows (the sheet itself, and the button, are /app/vp-phone.css) */
   .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:16px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
   .menuitem span{display:flex;flex-direction:column;gap:2px}
@@ -229,85 +203,171 @@
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
+
+  /* ============ THE NEW LOOK (Dean, 3 Nov 2026: the musical phone "approved as it looks"; mocks new-look-games-3nov/
+     v5/phone/m1-card, m2-card-wide-logo, m3-menu, j2, j3, f2, j5, a1) ============
+     The frame (header, join screens, menu sheet, the venue's ad) is /app/vp-phone.css, shared. This page's own part:
+     the card, B SOFT TILES: 25 rounded tiles with even 8px gaps and 16px sides, as tall as the screen allows above
+     the claim button (never under 64px); a marked song a pink tint with a pink edge and a small tick in its own
+     corner (the title never sits under it); Free in pink; the claim a pink pill whose words follow the pattern,
+     faint until the player's marks make the pattern. Titles are fitted from 20px down, with ONE hyphen break
+     allowed inside a single long word (Wonder-wall, Sep-tember) and only where the whole word does not fit. The
+     rules above stay for the light screen and the older look's tests; these come later and win. */
+  body{background:var(--ink)}
+  .app{min-height:100vh;min-height:100dvh}
+  .ptop{border-bottom:none}
+  .view{padding:0}
+  #vCard{padding:2px 16px 0;display:flex;flex-direction:column}
+  #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible}
+  #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch}
+  #vCard .cc{aspect-ratio:auto;position:relative;background:#1C1C21;border:2px solid transparent;border-radius:14px;
+    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:27px 3px 8px;
+    word-break:normal;overflow-wrap:normal;hyphens:manual;-webkit-hyphens:manual}
+  #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
+  #vCard .cc.daub::after{content:"";position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px 20px no-repeat}
+  #vCard .cc.free,#vCard .cc.free.daub{background:#0A0A0B;border-color:rgba(255,31,142,.55);color:var(--pink);font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;letter-spacing:0;text-transform:none;padding:0}
+  #vCard .cc.free::after{display:none}
+  #vCard .cc.early{border-color:var(--roll);box-shadow:0 0 0 2px rgba(245,165,36,.22)}
+  #vCard .cc.justdone{animation:justdone 1.1s ease-in-out 3}
+  #vCard .pmsg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;min-height:0}   /* for a screen reader; the answer to a tap is the note on the button */
+  #vCard .bingobar{padding-top:12px}
+  #vCard .bingoBtn{border-radius:999px;min-height:60px;padding:16px 12px;font-size:22px;font-weight:800;color:#fff;box-shadow:0 0 0 6px var(--ink)}
+  #vCard .bingoBtn.faint{background:rgba(255,31,142,.32);color:rgba(255,255,255,.72)}
+  #vCard .bingoBtn:disabled{opacity:.55}
+  body.light #vCard .cc{background:#FFFFFF;color:#191420}
+  body.light #vCard .cc.daub{background:#FFE3F0;color:#191420}
+  body.light #vCard .cc.free{background:#FFFFFF}
+  /* HIGHLIGHT MY LINES (a Menu option, off by default): a finished line gets a solid pink outline in the gutter
+     round its tiles, a line still needed a dashed one; measured from the real tiles (drawLines). */
+  .hl{position:absolute;pointer-events:none;border:2.5px solid var(--pink);border-radius:18px;z-index:2}
+  .hl.need{border-style:dashed;border-color:rgba(255,255,255,.75)}
+  /* the old pieces this look replaces: the name and pill row, the prize strip and the size row live elsewhere now */
+  #vCard .cardhead,#vCard .prizestrip,#vCard .cardctl{display:none}
+  /* the join and lobby screens */
+  #vNoRoom,#vJoin{display:flex;flex-direction:column}
+  #vJoin .optin{margin-top:16px;font-size:17px;color:#fff;align-items:flex-start}
+  #vJoin .optin input{width:26px;height:26px;margin-top:0}
+  #vJoin .cerr{min-height:20px}
+  .vp-notice{font-family:'Manrope',sans-serif;font-size:15px;line-height:1.45;color:#9A9AA4;margin-top:6px}
+  .vp-notice a{color:#fff;text-decoration:underline}
+  /* after the game */
+  .vp-out .yrule{width:100%;max-width:280px;height:6px;background:#FFD93D;box-shadow:0 0 18px rgba(255,217,61,.55);margin:4px auto 16px}
+  .vp-out .wprize{font-family:'Manrope',sans-serif;font-weight:800;font-size:28px;line-height:1.2;color:#fff}
+  .vp-out .wcard{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;color:#8A8A95;margin-top:10px}
+  .vp-out .wcard b{color:#fff}
+  .wonwrap{background:none}
+  .wonwrap .vp-h{color:#fff;animation:none;text-shadow:none}
+  body.light .vp-h,body.light .vp-in .vp-name,body.light .vp-out .wprize,body.light .vp-prize,body.light .vp-pill{color:#191420}
+  body.light .vp-menu .vp-sheet{background:#FFFFFF}
+  body.light .vp-menu .menuitem,body.light .vp-menu h3{color:#191420}
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
 <body>
 <div class="app" id="app">
+  <!-- THE HEADER, OPTION 5 (/app/vp-phone.css): the venue's logo top left (its name when it has none), the green dot
+       and the menu top right. No player name, and our logo at the foot. -->
   <div class="ptop">
     <div class="brand">
-      <span class="word"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg> <span class="nw">Musical Bingo</span></span>
+      <span class="word"><img id="venueLogo" class="vlogo hidden" alt=""><span class="vname" id="hdrVenueName"></span></span>
       <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
     </div>
-    <img id="venueLogo" class="vlogo hidden" alt="">
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
-    <div class="menupanel hidden" id="menuPanel">
-      <!-- THE SONGS PLAYED LIST LIVES IN THE MENU (Dean, 3 Nov 2026: "That 5 played line doesn't need to
-           be there"). The box above the card cost a row of the screen the titles needed. -->
-      <button type="button" class="menuitem" id="lastCalled"><span>Songs played so far<small id="lastCalledSub">No songs played yet</small></span></button>
-      <label class="menuitem"><span>Easy mode<small>Mark songs for me as they play</small></span><input type="checkbox" id="assistChk"></label>
-      <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
-      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+  </div>
+  <!-- ROW TWO: the pattern and the prize, once the night has them -->
+  <div class="vp-row2" id="hdr2" hidden><span class="vp-pill" id="hdrPat">One line across</span><span class="vp-prize" id="hdrPrize"></span></div>
+
+  <!-- NO ROOM: the code, six boxes (a QR scan skips this step) -->
+  <div class="view hidden" id="vNoRoom">
+    <div class="vp-step">
+      <div class="vp-kicker">venueplay.com.au/play</div>
+      <div class="vp-h">Enter the code</div>
+      <p class="vp-sub">It's on the TV. Scanned the QR? You skip this step.</p>
+      <div class="vp-code6" id="codeBoxes"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div>
+        <input id="roomIn" class="code" maxlength="6" aria-label="Game code" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text"></div>
+      <div class="cerr vp-err" id="roomErr"></div>
+      <div class="vp-grow"></div>
+      <button class="vp-cta" id="roomBtn" disabled>Continue</button>
     </div>
   </div>
 
-  <!-- NO ROOM -->
-  <div class="view center hidden" id="vNoRoom">
-    <div class="pbig">Enter the<br>game code</div>
-    <div class="psub">Scan the QR on the big screen, or type the 6-character code shown there.</div>
-    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ACD234" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
-    <div class="cerr" id="roomErr"></div>
-    <div class="field"><button class="btn pink" id="roomBtn">Continue</button></div>
+  <!-- JOIN: your name, or your details when the venue collects more -->
+  <div class="view hidden" id="vJoin">
+    <div class="vp-step">
+      <div class="vp-h" id="joinHead">Your name</div>
+      <p class="vp-notice hidden" id="joinNotice"></p>
+      <input type="text" class="vp-field" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name">
+      <div id="joinExtra"></div>
+      <div class="cerr vp-err" id="joinErr"></div>
+      <div class="vp-grow"></div>
+      <button class="vp-cta" id="joinBtn">Join the game</button>
+      <span class="hidden" id="joinCode">------</span>
+    </div>
   </div>
 
-  <!-- JOIN -->
-  <div class="view center hidden" id="vJoin">
-    <div class="pbig">Join the<br>game</div>
-    <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
-    <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
-    <div id="joinExtra"></div>
-    <div class="cerr" id="joinErr"></div>
-    <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
-    <div class="pnote">No app and no account. Your card of song titles appears here when the host starts.</div>
-  </div>
-
-  <!-- WAIT -->
-  <div class="view center hidden" id="vWait">
-    <div style="font-size:44px">&#127925;</div>
-    <div class="pbig" style="color:var(--gold)">You&#39;re in</div>
-    <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
-    <div class="pnote">Waiting for the host to start the game. Your card will appear here.</div>
+  <!-- WAIT: you're in. The one lobby line every game uses (Dean, 3 Nov 2026 late), then the venue's ad below -->
+  <div class="view hidden" id="vWait">
+    <div class="vp-in">
+      <div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="vp-h">You&#39;re in</div>
+      <div class="vp-name" id="waitName">Player</div>
+      <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div><div class="hidden" id="waitPlayingTile"><div class="k">Playing</div><div class="v" id="waitPlaying">0</div></div></div>
+      <p class="vp-wait">The game will start here when the host is ready.</p>
+    </div>
   </div>
 
   <!-- CARD -->
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line across</span></div>
     <div class="prizestrip" id="prizeStrip">Playing for <b>the prize</b></div>
-    <div class="cardctl">
-      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller card"><span class="czi" aria-hidden="true">&#8722;</span>Smaller</button>
-      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger card"><span class="czi" aria-hidden="true">&#43;</span>Bigger</button>
-      <button type="button" id="fsBtn" class="czbtn fs">Full screen</button>
-    </div>
     <div id="cardWrap"><div class="card5" id="cardGrid"></div></div>
     <div class="pmsg" id="pMsg">Tap a title when you hear it play.</div>
     <div class="bingobar"><div class="bingonote hidden" id="bingoNote" role="status" aria-live="polite"></div><button class="btn pink bingoBtn" id="bingoBtn">I've got a line</button></div>
   </div>
 
-  <!-- WON -->
-  <div class="view center hidden wonwrap" id="vWon">
-    <div class="wonemoji" style="font-size:52px">&#127881;</div>
-    <div class="pbig" style="color:var(--win)">YOU WON!</div>
-    <div class="psub" id="wonSub">Show your card to the host to claim</div>
-    <div class="prizebox" id="wonPrize">the prize</div>
-    <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
+  <!-- WON: the prize, the card number for the host to check, then the venue's ad -->
+  <div class="view hidden wonwrap" id="vWon">
+    <div class="vp-out">
+      <div class="vp-kicker" style="color:#FFD93D">Musical bingo</div>
+      <div class="vp-h">You won</div>
+      <div class="yrule"></div>
+      <div class="wprize" id="wonPrize">the prize</div>
+      <p class="vp-wait" id="wonSub">Show your card to the host to claim</p>
+      <div class="wcard">Card <b id="wonCard">#000</b></div>
+    </div>
   </div>
 
   <!-- LOST (someone else won) -->
-  <div class="view center hidden biglose" id="vLost">
-    <div style="font-size:44px">&#127882;</div>
-    <div class="pbig" id="lostName">Someone</div>
-    <div class="psub">took this one. Nice game!</div>
-    <div class="pnote">Sit tight, the host may start another round.</div>
+  <div class="view hidden biglose" id="vLost">
+    <div class="vp-out">
+      <div class="vp-kicker">That&#39;s the round</div>
+      <div class="vp-h">Not this time</div>
+      <p class="vp-sub" style="font-size:19px"><span id="lostName">Someone</span> <span id="lostWhat">took this one.</span></p>
+      <p class="vp-wait">Sit tight, the host may start another round.</p>
+    </div>
+  </div>
+
+  <!-- THE VENUE'S AD: one place on every screen that shows one, just above our logo (/app/vp-phonead.js) -->
+  <div id="vpAd" hidden></div>
+  <!-- our logo, small, at the bottom (option 5) -->
+  <div class="pfoot"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-label="venueplay" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
+</div>
+
+<!-- THE MENU (one sheet from the bottom, Dean 3 Nov 2026): Help (added by /app/vp-help.js), Songs played, then the
+     display group, then Leave game -->
+<div class="vp-menu hidden" id="menuPanel" role="dialog" aria-label="Menu">
+  <div class="vp-sheet">
+    <div class="grab"></div>
+    <h3>Menu</h3>
+    <div id="menuList">
+      <button type="button" class="menuitem" id="lastCalled"><span>Songs played<small id="lastCalledSub">No songs played yet</small></span><span class="chev">&#8250;</span></button>
+      <div class="menuitem"><span>Text size</span><span class="vp-sizes"><button type="button" id="zoomOut" class="czbtn" aria-label="Smaller text">A</button><button type="button" id="zoomIn" class="czbtn" aria-label="Bigger text">A</button></span></div>
+      <label class="menuitem"><span>Highlight my lines</span><input type="checkbox" class="vp-sw" id="hlChk"></label>
+      <label class="menuitem"><span>Mark songs for me</span><input type="checkbox" class="vp-sw" id="assistChk"></label>
+      <button type="button" class="menuitem fs" id="fsBtn"><span>Full screen</span><input type="checkbox" class="vp-sw" id="fsChk" tabindex="-1" aria-hidden="true"></button>
+      <label class="menuitem"><span>Light screen</span><input type="checkbox" class="vp-sw" id="lightChk"></label>
+      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+    </div>
   </div>
 </div>
 
@@ -343,6 +403,7 @@
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
+<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -519,18 +580,38 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
-  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } frame(which); }
+  /* ROW TWO OF THE HEADER: the pattern pill and the prize, on the lobby, the code-known join steps and the card;
+     never on the code step (no venue yet) and never after the game (Dean, 3 Nov 2026). */
+  function paintRow2(on){
+    var r=$("hdr2"); if(!r) return;
+    var pz=String(P.prize||"").trim(); if(pz.toLowerCase()==="the prize") pz="";
+    $("hdrPat").textContent=PATTERN_NAMES[P.pattern]||"One line across";
+    $("hdrPrize").textContent=pz;
+    r.hidden=!on;
+  }
+  /* THE SCREENS THAT CARRY THE VENUE'S AD (Dean, 3 Nov 2026 late): the lobby and after the game, in one place. */
+  var AD_VIEWS={ vWait:1, vLost:1, vWon:1 };
+  function frame(which){
+    paintRow2(!!P.room && (which==="vWait" || which==="vCard" || which==="vJoin"));
+    try{ if(window.VPPhoneAd) VPPhoneAd.show(!!AD_VIEWS[which]); }catch(e){}
+  }
   function route(){
     /* The end screens are where a punter will actually answer something: the game
        is over and there is nothing to do until the host starts another. One tap,
        asked once per game, and it never blocks the screen if the Worker is away. */
     if(P.won){
-      $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;
+      $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;   // the card number, so the host can check it (two games at once)
       // Two people got there on the same song: say so, so nobody is surprised at the host.
       $("wonSub").textContent = P.split ? "You share this one. Show your card to the host to claim." : "Show your card to the host to claim";
       show("vWon"); askHowItWent("vWon"); return;
     }
-    if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
+    if(P.ended){
+      /* "Not this time. Ann won the meat tray." (the prize as the host typed it); no prize set: "took this one." */
+      var pz=String(P.prize||"").trim(), lw=$("lostWhat");
+      if(lw) lw.textContent = (pz && pz.toLowerCase()!=="the prize") ? ("won the "+pz.charAt(0).toLowerCase()+pz.slice(1)+".") : "took this one.";
+      show("vLost"); askHowItWent("vLost"); return;
+    }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cells){ renderCard(); show("vCard"); return; }
@@ -597,11 +678,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(g && window.ResizeObserver){
       new ResizeObserver(function(){ var w=g.clientWidth; if(w && (w!==lastW || _fitPending)){ lastW=w; refit(); } }).observe(g);
     }
-    /* The titles are measured in Hanken Grotesk. Measured in the stand-in font before it arrives, a
+    /* The titles are measured in Manrope (the new look, 4 Nov 2026; Hanken Grotesk before). Measured in the stand-in font before it arrives, a
        title "fits" and then spills out of its square once the real (wider) face lands, so the card is
        fitted again whenever a font finishes loading. */
     if(document.fonts){
-      try{ document.fonts.load('700 20px "Hanken Grotesk"').then(refit, function(){}); document.fonts.load('800 20px "Hanken Grotesk"').then(refit, function(){}); }catch(e){}
+      try{ document.fonts.load('700 20px "Manrope"').then(refit, function(){}); document.fonts.load('800 20px "Manrope"').then(refit, function(){}); }catch(e){}
       if(document.fonts.ready) document.fonts.ready.then(refit);
       if(document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", refit);
     }
@@ -673,6 +754,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     setClaimWords();
     renderPrizeStrip();
+    paintRow2(true);
     // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
     var _lcs=$("lastCalledSub");
     if(_lcs) _lcs.textContent = P.played.length ? (P.played.length===1 ? "1 played. Mark any you missed" : P.played.length+" played. Mark any you missed") : "No songs played yet";
@@ -698,12 +780,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       wrap.innerHTML="";
       for(var i=0;i<25;i++){
         var cell=document.createElement("div");
-        if(i===12){ cell.className="cc free daub"; cell.textContent="FREE";
+        if(i===12){ cell.className="cc free daub"; cell.textContent="Free";
           cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
           wrap.appendChild(cell); continue; }
         cell.className="cc";
         cell.setAttribute("data-i",i);
-        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=titles[i];   // measured by fitCells
+        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=withSoftBreak(titles[i]);   // measured by fitCells
         cell.appendChild(ct);
         wrap.appendChild(cell);
       }
@@ -729,6 +811,83 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("Sent. The host is checking your card&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Tap the pink button when you have the pattern.",""); }
+    /* FAINT UNTIL THE MARKS MAKE THE PATTERN (Dean, 3 Nov 2026: "the faint I've got a line before a line is possible is
+       fine"). Still a button: a tap says why not yet, as it always has. */
+    $("bingoBtn").classList.toggle("faint", !P.claimPending && !markedPattern());
+    drawLines();
+  }
+  /* THE PATTERN BY THE PLAYER'S OWN MARKS (the Worker judges the claim by the songs played; this only says whether the
+     card LOOKS done, for the faint button and the outlines). Rows, for "one" and "two", as checkPattern. */
+  function rowMarks(r){ var n=0; for(var c=0;c<5;c++){ var i=r*5+c; if(i===12 || P.daubs[i]) n++; } return n; }
+  function markedPattern(){
+    if(!P.cells) return false;
+    var full=0, r; for(r=0;r<5;r++){ if(rowMarks(r)===5) full++; }
+    switch(P.pattern){
+      case "two": return full>=2;
+      case "corners": return !!(P.daubs[0]&&P.daubs[4]&&P.daubs[20]&&P.daubs[24]);
+      case "full": return full===5;
+      default: return full>=1;
+    }
+  }
+  /* HIGHLIGHT MY LINES (Menu, off by default; Dean, 3 Nov 2026): every line the pattern needs. A line the marks have
+     finished: solid pink round its tiles, in the gutter. Lines still needed: dashed, the closest first (so a two-line
+     night outlines the two nearest). Corners: the four corner tiles; full house: the whole card. Measured from the
+     real tiles, so it sits exactly on the card at any size. */
+  var _hl=false;
+  function lineRows(){
+    var need = P.pattern==="two" ? 2 : P.pattern==="full" ? 5 : 1, done=[], rest=[], r;
+    for(r=0;r<5;r++){ (rowMarks(r)===5 ? done : rest).push(r); }
+    rest.sort(function(a,b){ return rowMarks(b)-rowMarks(a) || a-b; });
+    var out=done.slice(0, need).map(function(x){ return { r:x, done:true }; });
+    for(var k=0; out.length<need && k<rest.length; k++) out.push({ r:rest[k], done:false });
+    return out;
+  }
+  function drawLines(){
+    var wrap=$("cardWrap"), grid=$("cardGrid"); if(!wrap || !grid) return;
+    var old=wrap.querySelectorAll(".hl"); for(var o=0;o<old.length;o++) old[o].parentNode.removeChild(old[o]);
+    if(!_hl || !P.cells || !grid.children.length || !wrap.getBoundingClientRect) return;
+    var wb=wrap.getBoundingClientRect(), G=4;
+    function box(cells, done){
+      var L=1e9,T=1e9,R=-1e9,B=-1e9;
+      cells.forEach(function(i){ var c=grid.children[i]; if(!c) return; var b=c.getBoundingClientRect(); L=Math.min(L,b.left); T=Math.min(T,b.top); R=Math.max(R,b.right); B=Math.max(B,b.bottom); });
+      if(R<L) return;
+      var d=document.createElement("div"); d.className="hl"+(done?"":" need");
+      d.style.left=(L-wb.left+wrap.scrollLeft-G)+"px"; d.style.top=(T-wb.top-G)+"px"; d.style.width=(R-L+2*G)+"px"; d.style.height=(B-T+2*G)+"px";
+      wrap.appendChild(d);
+    }
+    if(P.pattern==="corners"){ var cd=!!(P.daubs[0]&&P.daubs[4]&&P.daubs[20]&&P.daubs[24]); [0,4,20,24].forEach(function(i){ box([i], cd); }); return; }
+    lineRows().forEach(function(x){ box([x.r*5,x.r*5+1,x.r*5+2,x.r*5+3,x.r*5+4], x.done); });
+  }
+  window.addEventListener("resize", function(){ if(_hl) drawLines(); });
+  /* ONE HYPHEN, ONLY WHERE A WORD CANNOT FIT WHOLE (Dean, 3 Nov 2026): the longest word of NINE letters or more gets
+     one soft hyphen at a sensible place (Wonder-wall, Sep-tember, Bright-side, Cali-fornia), never more than one per
+     title, shorter words never (as on the approved card, m1: "Sweet Caroline", "Bohemian Rhapsody" and "Blinding
+     Lights" step down a size instead). The browser only breaks there, and shows the hyphen, when the word is
+     wider than its tile at the size being tried. */
+  function softBreak(word){
+    if(word.length<9 || !/^[A-Za-z']+$/.test(word)) return -1;
+    /* Between syllables: before a lone consonant (Cali-fornia), or inside a run of consonants before the longest
+       start a syllable can have (Wonder-wall, Sep-tember, Bright-side, Misunder-standing); the break nearest the
+       middle wins, with three letters at least either side. */
+    var V=/[aeiouy]/i, ON=/^(str|spr|scr|squ|thr|shr|st|sp|sc|sk|sl|sm|sn|sw|tr|pr|br|cr|dr|fr|gr|bl|cl|fl|gl|pl|th|sh|ch|wh|ph|qu|[b-df-hj-np-tv-z])$/i;
+    var best=-1, bd=1e9, mid=word.length/2, i=1;
+    while(i<word.length){
+      if(V.test(word.charAt(i)) || !V.test(word.charAt(i-1))){ i++; continue; }
+      var j=i; while(j<word.length && !V.test(word.charAt(j))) j++;   // word[i..j) is a run of consonants after a vowel
+      if(j<word.length){
+        for(var k=i;k<j;k++){ if(ON.test(word.slice(k,j))){ if(k>=3 && word.length-k>=3){ var dd=Math.abs(k-mid); if(dd<bd){ bd=dd; best=k; } } break; } }
+      }
+      i=j;
+    }
+    return best;
+  }
+  function withSoftBreak(title){
+    var words=String(title||"").split(" "), at=-1, len=0;
+    for(var w=0;w<words.length;w++){ if(words[w].length>len){ len=words[w].length; at=w; } }
+    if(at<0) return title;
+    var cut=softBreak(words[at]); if(cut<0) return title;
+    words[at]=words[at].slice(0,cut)+"\u00AD"+words[at].slice(cut);
+    return words.join(" ");
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
   /* The answer to a BINGO! tap: in the line under the card AND in the note on the button, where the player is
@@ -834,9 +993,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function loadJoinInfo(){
     if(!P.room) return;
-    playerPost("/join/info",{ code:P.room }).then(function(r){
+    playerPost("/join/info",{ code:P.room, ad:1 }).then(function(r){   // ad:1, the venue's slides for its ad too (4 Nov 2026)
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
+      try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
+      /* The venue's own TV slides, for its ad on the lobby and after the game (/app/vp-phonead.js). */
+      try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
@@ -854,18 +1016,25 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          screen asked for last name, postcode, email and mobile with no notice and no link to the
          policy at all, while the policy itself said capturing more than a name was a future
          feature. */
+      /* Collection notice. Australian privacy law wants people told what is being collected and
+         who gets it AT THE POINT they are asked, not only in a policy page they never open. The new look
+         (Dean, 3 Nov 2026): "YOUR DETAILS", then "<venue> would like your details. They go to the venue.
+         Privacy", the link inline with the notice. */
+      var jn=$("joinNotice");
       if(h){
         var vn=(P.venueName||"").trim();
-        var n=document.createElement("p");
-        n.setAttribute("style","font-size:12px;line-height:1.5;color:#8A8A94;margin-top:10px");
-        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
-          ", not to anyone else. You can play with just your name. ";
-        var a=document.createElement("a");
-        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
-        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
-        a.textContent="How your details are handled";
-        n.appendChild(a);
-        box.appendChild(n);
+        $("joinHead").textContent="Your details";
+        if(jn){
+          jn.textContent=(vn||"The venue")+" would like your details. They go to the venue, not to anyone else. You can play with just your name. ";
+          var a=document.createElement("a");
+          a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+          a.textContent="Privacy";
+          jn.appendChild(a);
+          jn.classList.remove("hidden");
+        }
+      } else {
+        $("joinHead").textContent="Your name";
+        if(jn) jn.classList.add("hidden");
       }
     }).catch(function(){});
   }
@@ -1005,6 +1174,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally unless it is my pending
     }
+    else if(m.t==="players"){
+      /* The lobby's PLAYING tile (Dean, 3 Nov 2026); the count is the host's own, never shown on the TV's join screen. */
+      if(typeof m.count==="number" && m.count>0){ $("waitPlaying").textContent=String(m.count); $("waitPlayingTile").classList.remove("hidden"); }
+    }
     else if(m.t==="resume"){
       /* ONLY THE PHONE THE HOST ACTUALLY WAVED OFF. This used to fire on every phone with a
          claim waiting, so a second player who hit BINGO on the same song was told "not yet" by
@@ -1106,7 +1279,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 
   // ---- events ----
   var roomIn=$("roomIn");
-  roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; });
+  /* SIX BOXES, CONTINUE GREY UNTIL ALL SIX ARE IN (Dean, 3 Nov 2026). One real input over the six boxes, so the phone's
+     own keyboard, paste and autofill all work; the boxes only show what it holds. */
+  function paintCode(){
+    var v=roomIn.value, bx=document.querySelectorAll("#codeBoxes .box");
+    for(var i=0;i<bx.length;i++){ bx[i].textContent=v.charAt(i)||""; bx[i].classList.toggle("cur", i===Math.min(v.length,5) && document.activeElement===roomIn); }
+    var rb=$("roomBtn"); if(rb) rb.disabled = !CODE_RE.test(v);
+  }
+  roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; paintCode(); });
+  roomIn.addEventListener("focus", paintCode); roomIn.addEventListener("blur", paintCode);
   roomIn.addEventListener("keydown", function(e){ if(e.key==="Enter") roomGo(); });
   function roomGo(){
     var v=roomIn.value.toUpperCase().trim();
@@ -1134,6 +1315,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var el=document.documentElement;
     if(!(el.requestFullscreen||el.webkitRequestFullscreen)){ b.style.display="none"; var row=b.parentNode; if(row && row.classList) row.classList.add("nofs"); }   // iPhone has no fullscreen API: two buttons share the row
   })();
+  function syncFs(){ var c=$("fsChk"); if(c) c.checked=!!(document.fullscreenElement||document.webkitFullscreenElement); }
+  document.addEventListener("fullscreenchange", syncFs); document.addEventListener("webkitfullscreenchange", syncFs);
   $("fsBtn").addEventListener("click", function(){
     var d=document, el=d.documentElement, fsel=d.fullscreenElement||d.webkitFullscreenElement;
     if(!fsel){ var rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq){ try{ rq.call(el); }catch(e){} } }
@@ -1147,6 +1330,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(P.daubs[i]){ delete P.daubs[i]; cell.classList.remove("daub"); cell.classList.remove("early"); }
     else { P.daubs[i]=true; cell.classList.add("daub"); }
     saveMarks();
+    $("bingoBtn").classList.toggle("faint", !P.claimPending && !markedPattern());
+    drawLines();
   });
   // ---- the catch-up list (tap the "N played" line) ----
   var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", function(){ var mp=$("menuPanel"); if(mp) mp.classList.add("hidden"); openPlayedSheet(); });
@@ -1160,8 +1345,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
   // ---- menu (Easy mode / Light mode / Leave game) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
-  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden"); }); }
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
+  /* ONE SHEET FROM THE BOTTOM (Dean, 3 Nov 2026): a tap on the dark round it closes it. Help (put in by /app/vp-help.js)
+     goes first, as mocked. */
+  if(menuPanel){ menuPanel.addEventListener("click", function(e){ if(e.target===menuPanel) menuPanel.classList.add("hidden"); }); }
+  function helpFirst(){ var h=$("vphMenu"), l=$("menuList"); if(h && l && h.parentNode!==l){ h.innerHTML="<span>Help</span><span class=\"chev\">&#8250;</span>"; l.insertBefore(h, l.firstChild); } }
+  helpFirst(); document.addEventListener("DOMContentLoaded", helpFirst); setTimeout(helpFirst, 0);
+  /* Highlight my lines: off by default, remembered on this phone. */
+  function loadHl(){ try{ return localStorage.getItem("vp-mhl")==="1"; }catch(e){ return false; } }
+  var hlChk=$("hlChk");
+  _hl=loadHl(); if(hlChk){ hlChk.checked=_hl; hlChk.addEventListener("change", function(){ _hl=!!hlChk.checked; try{ localStorage.setItem("vp-mhl", _hl?"1":"0"); }catch(e){} drawLines(); }); }
   function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
   function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
   var lightChk=$("lightChk"); if(lightChk){ lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
@@ -1186,6 +1380,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
     P.joined=true; P.name="Sam"; P.pid="demo"; P.room="VENUE2"; P.cardNo=17; P.pattern="one";
+    /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left. ?logo=/path swaps in another file from
+       this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
+    (function(){ var lg=$("venueLogo"); if(!lg) return;
+      var src="/logos/venue-tugun-bowls.png"; try{ var lq=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lq){ var lu=decodeURIComponent(lq[1]); if(/^\/[^\/]/.test(lu)) src=lu; } }catch(e){}
+      lg.src=src; lg.classList.remove("hidden");
+      if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone");
+      try{ VPVenueLogo.headerName($("hdrVenueName"), src, "Tugun Bowls Club"); }catch(e){} })();
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
     var CELLS=[{"title": "Wonderwall", "song_id": "wonderwall-oasis"}, {"title": "Sweet Caroline", "song_id": "sweet-caroline-neil-diamond"}, {"title": "Never Gonna Give You Up", "song_id": "never-gonna-give-you-up-rick-astley"}, {"title": "Don't Stop Believin'", "song_id": "don-t-stop-believin-journey"}, {"title": "Beds Are Burning", "song_id": "beds-are-burning-midnight-oil"}, {"title": "You're the Voice", "song_id": "you-re-the-voice-john-farnham"}, {"title": "Never Tear Us Apart", "song_id": "never-tear-us-apart-inxs"}, {"title": "Livin' on a Prayer", "song_id": "livin-on-a-prayer-bon-jovi"}, {"title": "Dancing Queen", "song_id": "dancing-queen-abba"}, {"title": "Bohemian Rhapsody", "song_id": "bohemian-rhapsody-queen"}, {"title": "Khe Sanh", "song_id": "khe-sanh-cold-chisel"}, {"title": "Hey Ya!", "song_id": "hey-ya-outkast"}, "FREE", {"title": "Take On Me", "song_id": "take-on-me-a-ha"}, {"title": "Hotel California", "song_id": "hotel-california-remastered-eagles"}, {"title": "Africa", "song_id": "africa-toto"}, {"title": "Mr. Brightside", "song_id": "mr-brightside-the-killers"}, {"title": "Mr. Blue Sky", "song_id": "mr-blue-sky-electric-light-orchestra"}, {"title": "Come On Eileen", "song_id": "come-on-eileen-dexys-midnight-runners"}, {"title": "Don't Dream It's Over", "song_id": "don-t-dream-it-s-over-crowded-house"}, {"title": "Blinding Lights", "song_id": "blinding-lights-the-weeknd"}, {"title": "Uptown Funk", "song_id": "uptown-funk-mark-ronson"}, {"title": "The Horses", "song_id": "the-horses-daryl-braithwaite"}, {"title": "September", "song_id": "september-earth-wind-fire"}, {"title": "Eagle Rock", "song_id": "eagle-rock-daddy-cool"}];
     var IDS={"Never Gonna Give You Up": "never-gonna-give-you-up-rick-astley", "Dancing Queen": "dancing-queen-abba", "Khe Sanh": "khe-sanh-cold-chisel", "Mr. Brightside": "mr-brightside-the-killers", "The Horses": "the-horses-daryl-braithwaite"};
@@ -1197,7 +1398,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     function round(){
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
       _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
-      fire({ t:"started", pattern:"one", prize:"$50 bar tab", played:[] });
+      fire({ t:"started", pattern:"one", prize:"Meat tray", played:[] });   // in step with the wall's demo
       P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
       var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[], ids=[];   // the first song waits for the start-of-game show when it is on, as on the wall (screen.html, 2 Nov 2026); 1200 when off, the default since the 2 Nov hotfix
       ORDER.forEach(function(title, i){
@@ -1234,6 +1435,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 })();
 </script>
 <!-- Help: a short FAQ and a contact form that makes a help desk ticket (vp-help.js, 19 Oct 2026). -->
-<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay"></script>
+<script src="/app/vp-help.js" data-mode="patron" data-brand="venueplay" data-menu-only="1"></script>   <!-- Help in the menu only, first in it (Dean, 3 Nov 2026) -->
 </body>
 </html>

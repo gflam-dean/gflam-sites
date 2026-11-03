@@ -338,57 +338,9 @@ def phone_header_opt5(label, path, w, h):
     finally:
         B.close_tab(tid)
 
-# THE GAME NAME IS WHOLE (queued fault, 1 Nov 2026): at 320 wide the musical phone's header, with the new
-# wordmark, cut "Musical Bingo". Measured where it is painted: the name is one line of its own (one client
-# rect for its text), as wide as the text itself (nothing ellipsed or narrowed), inside the screen and the
-# header, clear of the menu button and the called-ball chip, and not clipped by any box between it and the
-# header. The wordmark stays: drawn, the new mark, at its full 80px.
-NAME = r"""(function(){
-  var nw=document.querySelector(".ptop .brand .nw"), svg=document.querySelector(".ptop .brand svg[data-vp-mark=wordmark]"), h=document.querySelector(".ptop");
-  if(!nw || !h || document.fonts.status!=="loaded") return "";
-  function R(e){ var b=e.getBoundingClientRect(); return {l:b.left,t:b.top,r:b.right,b:b.bottom,w:b.width,h:b.height}; }
-  function vis(e){ if(!e) return null; var s=getComputedStyle(e); if(e.classList.contains("hidden")||s.display==="none") return null; var b=R(e); return b.w>0 ? b : null; }
-  var rg=document.createRange(); rg.selectNodeContents(nw);
-  var lines={}; Array.prototype.forEach.call(rg.getClientRects(), function(r){ if(r.width>0) lines[Math.round(r.top)]=1; });
-  var clip=[], e=nw.parentElement;
-  while(e && e!==h.parentElement){ var cs=getComputedStyle(e), b=R(e), n=R(nw);
-    if((cs.overflow!=="visible" || cs.overflowX!=="visible") && (n.l<b.l-0.5 || n.r>b.r+0.5)) clip.push(e.className||e.tagName);
-    if(cs.textOverflow==="ellipsis") clip.push("ellipsis:"+(e.className||e.tagName));
-    e=e.parentElement; }
-  return JSON.stringify({text:nw.textContent, name:R(nw), lines:Object.keys(lines).length, scroll:[nw.scrollWidth, Math.ceil(nw.getBoundingClientRect().width)],
-    ellipsis:getComputedStyle(nw).textOverflow, clip:clip, head:R(h), menu:vis(document.getElementById("menuBtn")), ball:vis(document.getElementById("hdrBall")),
-    mark: svg ? R(svg) : null, W:innerWidth, docW:document.documentElement.scrollWidth});
-})()"""
-
-def phone_name_whole(label, path, w, h):
-    tid, sid = open_page(path, w, h, True)
-    try:
-        until(sid, 'document.readyState==="complete" && document.fonts.status==="loaded"', 30)
-        time.sleep(3)                       # the demo's first song, so the called-ball chip is up if it shows
-        v = until(sid, NAME, 20)
-        m = json.loads(v) if v else {}
-        tag = '%s header at %d wide' % (label, w)
-        if not m:
-            ok(tag + ': the game name is in the header', False, ask(sid, 'document.querySelector(".ptop")&&document.querySelector(".ptop").outerHTML.slice(0,200)')); return
-        N = m['name']
-        ok(tag + ': "Musical Bingo" is on one line of its own', m['text'] == 'Musical Bingo' and m['lines'] == 1, (m['text'], m['lines']))
-        ok(tag + ': and drawn whole: nothing ellipsed, narrowed or clipped', m['ellipsis'] != 'ellipsis' and m['scroll'][0] <= m['scroll'][1] + 1 and not m['clip'], (m['ellipsis'], m['scroll'], m['clip']))
-        ok(tag + ': inside the screen and the header, and the page does not scroll sideways',
-           N['l'] >= 0 and N['r'] <= m['W'] and N['t'] >= m['head']['t'] and N['b'] <= m['head']['b'] and m['docW'] <= m['W'], (N, m['head'], m['W'], m['docW']))
-        ok(tag + ': clear of the menu button', bool(m['menu']) and m['menu']['l'] - N['r'] >= 8, (N, m['menu']))
-        if m.get('ball'):
-            ok(tag + ': and of the called-ball chip', N['l'] - m['ball']['r'] >= 8 or not hits(N, m['ball']), (N, m['ball']))
-        ok(tag + ': the venueplay wordmark is still there, at its full size', bool(m['mark']) and m['mark']['w'] >= 79, m['mark'])
-        # Before 1 Nov 2026 the name wrapped hard left against the gutter at 320 wide, under a centred page.
-        # One row: the pair is centred. Stacked: each is centred on its own line.
-        c, K = (m['head']['l'] + m['head']['r']) / 2, m['mark'] or N
-        one_row = K['t'] < N['b'] and N['t'] < K['b']
-        mids = [(min(K['l'], N['l']) + max(K['r'], N['r'])) / 2] if one_row else [(N['l'] + N['r']) / 2, (K['l'] + K['r']) / 2]
-        ok(tag + ': the brand is centred in the header (%s), not pushed to one side' % ('one row' if one_row else 'wordmark over the name'),
-           bool(m['mark']) and all(abs(x - c) <= 2 for x in mids), (mids, c))
-        shot(sid, 'chrome-name-%s-%d' % (label.replace('/', '-').replace(' ', '-'), w))
-    finally:
-        B.close_tab(tid)
+# THE GAME NAME IS WHOLE (queued fault, 1 Nov 2026) was checked here until 4 Nov 2026: the musical phone's header
+# carried "Musical Bingo" beside our wordmark. The new look takes the name out of the header (option 5), so the
+# musical phone is measured by phone_header_opt5 above, as the trivia phone is.
 
 # The VenuePlay mark: secondary, but crisp and never under the bingo call's dimmer (Dean, 21 Oct 2026:
 # "dull and behind everything").
@@ -840,12 +792,12 @@ try:
     phone_header('play', '/play?demo=1', 390, 844)
     phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 320, 640)
     phone_header_opt5('trivia/play', '/app/trivia/play.html?demo=1', 390, 844)
-    phone_header('musical/play', '/app/musical/play.html?demo=1', 320, 640)
-    phone_header('musical/play', '/app/musical/play.html?demo=1', 390, 844)
-    print('\nTHE MUSICAL PHONE: the game name whole beside the new wordmark, at every common phone width')
+    # THE MUSICAL PHONE, OPTION 5 TOO (4 Nov 2026, feature/newlook-musical-5nov): the venue's logo top left, our
+    # wordmark at the foot, so there is no game name in the header to keep whole any more (Dean, 3 Nov 2026: the
+    # words "MUSICAL BINGO" are gone from the phone header). The same checks as the trivia phone, at every common width.
+    print('\nTHE MUSICAL PHONE: option 5, at every common phone width')
     for _w, _h in ((320, 640), (360, 740), (375, 667), (390, 844)):
-        phone_name_whole('musical/play', '/app/musical/play.html?demo=1', _w, _h)
-        phone_name_whole('musical/play code screen', '/app/musical/play.html', _w, _h)
+        phone_header_opt5('musical/play', '/app/musical/play.html?demo=1', _w, _h)
 finally:
     B.close()
     srv.shutdown()

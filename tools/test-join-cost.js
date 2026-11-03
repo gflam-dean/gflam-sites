@@ -264,8 +264,11 @@ var BEFORE = { 'qr bingo90': 43, 'qr trivia': 42, 'qr musical_bingo': 61, 'venue
 var BEFORE_ROOM = { 'qr bingo90': 43, 'qr trivia': 42, 'qr musical_bingo': 58.5, 'venue bingo90': 43, 'venue trivia': 42, 'venue musical_bingo': 58.5 };
 /* What this build costs, per road (the run is deterministic: every night starts clean). A rise past these
    is a database call somebody added to the join. */
-var CEIL_OLD = { 'qr bingo90': 28, 'qr trivia': 23, 'qr musical_bingo': 39, 'venue bingo90': 28, 'venue trivia': 23, 'venue musical_bingo': 39 };
-var CEIL_132 = { 'qr bingo90': 20, 'qr trivia': 19, 'qr musical_bingo': 35, 'venue bingo90': 20, 'venue trivia': 19, 'venue musical_bingo': 35 };
+/* Musical bingo +1 on purpose (4 Nov 2026, feature/newlook-musical-5nov): its phone shows the venue's own slides in the
+   lobby and after the game (Dean, 3 Nov 2026), so its /join/info asks ad:1 and the Worker reads vp_venue_screen once
+   per venue per 30 s (never on fresh:1). Cold, as here, that is one more call; in a busy room it is one every 30 s. */
+var CEIL_OLD = { 'qr bingo90': 28, 'qr trivia': 23, 'qr musical_bingo': 40, 'venue bingo90': 28, 'venue trivia': 23, 'venue musical_bingo': 40 };
+var CEIL_132 = { 'qr bingo90': 20, 'qr trivia': 19, 'qr musical_bingo': 36, 'venue bingo90': 20, 'venue trivia': 19, 'venue musical_bingo': 36 };
 
 (async function () {
   /* The isolate the pages talk to has asked for vp_join_context once and been told 404, as a live

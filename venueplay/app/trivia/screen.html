@@ -70,24 +70,7 @@
   .hostline b{color:var(--pink)}
 
   /* lobby */
-  /* THE JOIN SCREEN (Dean, 3 Nov 2026, the approved v5 join): at 1920, the QR 600px at x 204 y 220; SCAN TO PLAY
-     150px Anton from x 895; "or go to venueplay.com.au/play" under it; the code 150px mono in a pink-edged box
-     with CODE inside; the title 72px on the logos' line. The night's own name and the small status line stay in
-     the page for the console and old screens, out of sight on a linked TV. */
-  .layer.join .lobbyname{display:none}
-  .layer.join .lobbyrow{position:absolute;left:calc(10.6cqw);top:11.46cqw;margin:0}
-  .layer.join .qrbig{width:31.25cqw;height:31.25cqw;padding:2.1cqw;border-radius:1.6cqw;box-shadow:none}
-  .layer.join .jright{position:absolute;left:calc(46.6cqw);right:5cqw;top:11.46cqw;height:31.25cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}   /* centred on the QR; SCAN TO PLAY, the address and the code box on one centre line */
-  .layer.join .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:7.8cqw;line-height:.92;color:#fff;margin:0;white-space:nowrap}
-  .layer.join .joinurl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.5cqw;line-height:1.2;color:#fff;margin-top:1.5cqw}
-  .layer.join .joinurl .jor{color:#8A8A95}
-  .layer.join .joinurl b{font-weight:800}
-  .layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);border-radius:1.15cqw;background:#1A1A1F}
-  .layer.join .codelbl{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.67cqw;color:#8A8A95;margin-right:2.4cqw}
-  .layer.join .codeval{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:7.8cqw;line-height:1;color:#fff;letter-spacing:.06em;background:none;border:none;padding:0;border-radius:0}
-  .layer.join .jsub{position:absolute;left:0;right:0;top:46cqw;margin:0;text-align:center}
-  .layer.join.ready .jsub{display:none}   /* a linked or set-up TV: no tiny "Grab your phone" line */
-  .layer.join .hostline{position:absolute;left:0;right:0;top:49cqw;margin:0;text-align:center}
+  /* The join screen's rules (.layer.join) are in /app/vp-tvgame.js, shared with the musical bingo wall (4 Nov 2026). */
   .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
   .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
   .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
@@ -111,16 +94,7 @@
      from the px-anchored logo and the JOIN NOW card is measured at 1920 and 1280 by
      tools/trivia-newlook-in-chrome.test.py. */
   .layer.qgrid{display:block;padding:0;text-align:left}
-  /* THE GAME'S NAME, READABLE FROM THE BACK OF THE ROOM (Dean, 3 Nov 2026: "The title of the game needs to
-     be clearer on each TV"). "TRIVIA" in Anton, white, at 2.6cqw (50px on a 1920 set, 33px on 1280), alone
-     in the top line (where the night is up to sits under the answers, .qround), centred between the venue's
-     logo (top left, up to 15% of the width for a wide wordmark) and ours (top right), inside 20cqw to 80cqw,
-     and set on the SAME centre line as the corner logos by alignTitle(). tools/trivia-newlook-in-chrome.test.py
-     measures both with a round and a wide logo at 1920 and 1280. */
-  .toplbl{position:absolute;left:calc(20cqw);right:20cqw;top:2.5cqw;display:flex;align-items:baseline;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;color:#fff;line-height:1.15}
-  .toplbl .tl-night{font-family:'Anton',sans-serif;font-weight:400;font-size:2.6cqw;letter-spacing:.02em;text-transform:uppercase;color:#fff}
-  .srt{position:absolute;left:50%;top:50%;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-
+  /* The game's name (.toplbl, .tl-night) is in /app/vp-tvgame.js, shared with the musical bingo wall (4 Nov 2026). */
   /* question layer */
   .qcount{font-family:'JetBrains Mono',monospace;font-weight:700}
   /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
@@ -275,6 +249,7 @@
     font-weight:800;letter-spacing:.12em;text-transform:uppercase;animation:dblpulse 1.6s ease-in-out infinite}
   @keyframes dblpulse{ 0%,100%{box-shadow:0 0 0 0 rgba(255,194,75,.6)} 50%{box-shadow:0 0 2cqw .4cqw rgba(255,194,75,.35)} }
 </style>
+<script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared by the game walls (4 Nov 2026) -->
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
@@ -485,16 +460,7 @@
      square logo's middle (/app/vp-venuelogo.js keepAligned) and stays at the top beside a wide one, so the
      line the two logos share is the mark's middle. Each top line is set so its middle is on it; measured,
      never guessed, and written only when it moves. */
-  function alignTitle(){
-    try{
-      var mk=document.querySelector(".tv-corner svg"); if(!mk) return;
-      var mb=mk.getBoundingClientRect(); if(!(mb.height>0)) return;
-      var mid=mb.top+mb.height/2, ls=document.querySelectorAll(".layer .toplbl");
-      for(var i=0;i<ls.length;i++){ var l=ls[i], h=l.offsetHeight; if(!h) continue;
-        var lay=l.parentNode, lt=lay ? lay.getBoundingClientRect().top : 0;
-        var top=Math.round(mid-lt-h/2)+"px"; if(l.style.top!==top) l.style.top=top; }
-    }catch(e){}
-  }
+  function alignTitle(){ try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){} }   /* one copy, in /app/vp-tvgame.js (4 Nov 2026) */
   window.addEventListener("resize", alignTitle);
   setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes */
   function show(which){

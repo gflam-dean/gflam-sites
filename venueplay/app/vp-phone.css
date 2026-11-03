@@ -1,0 +1,115 @@
+/* vp-phone.css  -- THE PLAYER PHONE'S SHARED PIECES, ONE COPY (4 Nov 2026).
+
+   The new look (Dean, 3 Nov 2026; mock-ups in ~/venue-enrich/reports/new-look-games-3nov/v5/phone) gives every
+   game's phone the same frame, so it lives here and not in each page:
+
+     1. THE HEADER, OPTION 5: the venue's logo top left (or its name), the menu button top right with the green
+        connection dot beside it, no player name; our venueplay logo small at the foot (.pfoot). Built first on
+        the trivia phone (feature/newlook-trivia-4nov) and moved here unchanged.
+     2. THE SECOND HEADER ROW (.vp-row2): the pattern pill on the left (neutral: white words, a thin grey edge)
+        and the prize on the right, for the games that have a pattern (musical bingo now, bingo next).
+     3. THE JOIN SCREENS: a mono kicker, the step's name in Anton, six code boxes with Continue grey until all six
+        are in, a pink pill button (.vp-cta), and the "You're in" lobby: a green tick, YOU'RE IN, the name, small
+        info tiles, and the one lobby line every game uses, "The game will start here when the host is ready."
+     4. THE MENU SHEET (.vp-menu): one sheet from the bottom, opened by the menu button: Help, the game's own rows,
+        then a DISPLAY group (Text size, Highlight my lines, Mark for me, Full screen, Light screen), Leave game.
+     5. THE VENUE'S AD (#vpAd): "What's on at <venue>" with the venue's own TV slides, in ONE fixed spot on every
+        screen that shows one: just above our logo at the foot, whatever is above it (Dean, 3 Nov late: "one shared
+        position, not per page"). Drawn by /app/vp-phonead.js.
+
+   Loaded by app/musical/play.html and app/trivia/play.html (the header). Nothing here is under 15px. Measured in
+   Chrome by tools/musical-newlook-in-chrome.test.py and tools/trivia-newlook-in-chrome.test.py. */
+
+/* 1. THE HEADER */
+/* THE HEADER, OPTION 5 (Dean, 3 Nov 2026): the venue's logo top left (or its name as text when it has
+   none), no player name, and our venueplay logo small at the BOTTOM of the page instead. Island-safe, and only on a phone
+   that has one (Dean, 3 Nov 2026): the header's top padding is max(12px, env(safe-area-inset-top)), the
+   footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
+   island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
+.ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
+.ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
+/* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
+   static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */
+.ptop .brand .venue{position:absolute;left:auto;right:62px;top:calc(31px + env(safe-area-inset-top, 0px));transform:translateY(-50%);margin:0}   /* level with the menu button, which /app/vp-safe-area.css sets at 12px + the island, 38px tall */
+.brand .word{display:flex;align-items:center;min-height:56px;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
+.brand .vname{overflow-wrap:break-word;hyphens:manual}
+.brand .vname.long{font-size:16px}
+.brand .div{width:1px;height:16px;background:var(--line)}
+.venue{font-size:15px;color:var(--muted);margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px}
+.vlogo{display:block;margin:0;height:56px;max-width:170px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
+.pfoot{padding:22px 16px max(10px, env(safe-area-inset-bottom, 0px));text-align:center}   /* low, just above the home bar */
+.pfoot svg{display:inline-block;width:132px;height:auto;color:#fff}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+.dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+.venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
+/* the menu button, top right */
+.menubtn{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 9px);right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
+
+/* 2. THE SECOND HEADER ROW */
+.vp-row2{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 16px 10px}
+.vp-row2[hidden]{display:none}
+.vp-pill{flex:none;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;line-height:1.2;color:#fff;border:1.5px solid #3A3A44;border-radius:999px;padding:7px 14px}
+.vp-prize{min-width:0;text-align:right;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;line-height:1.2;color:#fff;overflow-wrap:break-word}
+
+/* 3. THE JOIN SCREENS */
+.vp-step{flex:1;display:flex;flex-direction:column;padding:18px 20px 16px;text-align:left}
+.vp-kicker{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;margin:0 0 6px}
+.vp-h{font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1.02;text-transform:uppercase;color:#fff;margin:0 0 10px}
+.vp-sub{font-family:'Manrope',sans-serif;font-weight:500;font-size:16px;line-height:1.45;color:#9A9AA4;margin:0}
+.vp-sub a{color:#fff;text-decoration:underline}
+.vp-code6{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:26px}
+.vp-code6 .box{height:60px;border-radius:12px;background:#17171A;border:1.5px solid #2A2A31;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;color:#fff}
+.vp-code6 .box.cur{border-color:var(--pink,#FF1F8E)}
+.vp-code6 input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:none;color:transparent;font-size:16px;caret-color:transparent}
+.vp-field{width:100%;margin-top:14px;background:#17171A;border:1.5px solid #2A2A31;color:#fff;border-radius:14px;padding:16px 18px;font-family:'Manrope',sans-serif;font-weight:700;font-size:19px;outline:none;text-align:left}
+.vp-field:focus{border-color:var(--pink,#FF1F8E);box-shadow:none}
+.vp-grow{flex:1;min-height:18px}
+.vp-cta{display:block;width:100%;min-height:56px;border:none;border-radius:999px;background:var(--pink,#FF1F8E);color:#fff;font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;line-height:1.2;padding:16px 18px;cursor:pointer}
+.vp-cta:disabled{background:#2A2A31;color:#8A8A95;cursor:not-allowed;opacity:1}
+.vp-cta:active:not(:disabled){background:var(--pink-deep,#C70F69)}
+.vp-err{min-height:20px;margin-top:10px;font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524}
+.vp-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 20px 8px}
+.vp-tick{width:60px;height:60px;border-radius:50%;border:3px solid #2FD08A;background:rgba(47,208,138,.12);display:flex;align-items:center;justify-content:center;margin:4px 0 14px}
+.vp-tick svg{width:26px;height:26px}
+.vp-in .vp-h{font-size:56px;margin:0}
+.vp-in .vp-name{font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;line-height:1.2;color:#fff;margin:2px 0 14px;overflow-wrap:anywhere}
+.vp-tiles{display:flex;gap:8px;width:100%;justify-content:center}
+.vp-tiles > div{flex:1 1 0;max-width:50%;background:#1A1A1F;border-radius:14px;padding:10px 8px 12px;text-align:center}
+.vp-tiles .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95}
+.vp-tiles .v{font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff;margin-top:3px}
+.vp-wait{font-family:'Manrope',sans-serif;font-weight:500;font-size:17px;line-height:1.45;color:#9A9AA4;margin-top:14px;max-width:22em}
+.vp-out{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 20px 8px}
+.vp-out .vp-h{font-size:58px;margin:4px 0 10px}
+
+/* 4. THE MENU SHEET */
+.vp-menu{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;justify-content:center}
+.vp-menu.hidden{display:none}
+.vp-menu .vp-sheet{width:100%;max-width:460px;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#17171A;border-radius:22px 22px 0 0;padding:10px 20px calc(18px + env(safe-area-inset-bottom,0px))}
+.vp-menu .grab{width:40px;height:5px;border-radius:3px;background:#3A3A44;margin:0 auto 12px}
+.vp-menu h3{font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;color:#fff;margin:4px 0 6px}
+.vp-menu .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:10px 0;background:none;border:none;border-top:1px solid rgba(255,255,255,.08);border-radius:0;color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:18px;text-align:left;cursor:pointer}
+.vp-menu .menuitem:hover{background:none}
+.vp-menu .menuitem small{display:block;font-weight:500;font-size:15px;color:#8A8A95;margin-top:2px}
+.vp-menu .menuitem .chev{color:#8A8A95;font-size:20px;line-height:1}
+.vp-menu .menuleave{color:#F5A524;justify-content:flex-start}
+.vp-menu .vp-sizes{display:flex;gap:8px}
+.vp-menu .vp-sizes button{min-width:62px;min-height:48px;border-radius:12px;border:none;background:#232329;color:#fff;font-family:'Anton',sans-serif;font-size:20px;line-height:1;cursor:pointer}
+.vp-menu .vp-sizes button + button{font-size:28px}
+.vp-sw{-webkit-appearance:none;appearance:none;flex:none;position:relative;width:56px;height:32px;border-radius:999px;background:#33333B;cursor:pointer;margin:0;transition:background .15s}
+.vp-sw::after{content:"";position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .15s}
+.vp-sw:checked{background:var(--pink,#FF1F8E)}
+.vp-sw:checked::after{transform:translateX(24px)}
+.vp-menu .menuitem input.vp-sw{width:56px;height:32px}
+
+/* 5. THE VENUE'S AD: one place, just above our logo at the foot */
+#vpAd{padding:8px 20px 0}
+#vpAd[hidden]{display:none}
+#vpAd .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;text-align:center;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vpAd .rail{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:16px}
+#vpAd .rail::-webkit-scrollbar{display:none}
+#vpAd .slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#141418}
+#vpAd .slide img{display:block;width:100%;height:100%;object-fit:cover}
+#vpAd .dots{display:flex;justify-content:center;gap:6px;margin-top:10px;height:8px}
+#vpAd .dots i{width:7px;height:7px;border-radius:4px;background:#3A3A44}
+#vpAd .dots i.on{width:22px;background:#fff}
+body.light #vpAd .dots i.on{background:#191420}

@@ -149,7 +149,10 @@ print("3b. SOMEONE ELSE'S WIN READS AS A SENTENCE (live play test, 24 Oct 2026)"
     fn + "; return onMsg;"))(P, $, function(m){ sent.push(m); }, function(){ return "devjo0000001"; }, function(){}, function(){ routed++; }, function(){}, function(){}, {}, function(){ noteHidden++; });
   api({ t: "winner", pid: "pid-sam", name: "Phone Sam" });
   pass("the losing phone names the winner, then the page says \"took this one.\" (no \"won\" in front of it)", P.ended === true && $("lostName").textContent === "Phone Sam", $("lostName").textContent);
-  pass("the line under it is the one that says what happened", /<div class="psub">took this one\. Nice game!<\/div>/.test(play));
+  /* The new look (Dean, 3 Nov 2026): NOT THIS TIME, then "<name> won the meat tray." (the prize as typed), or "<name>
+     took this one." with no prize set. route() writes the words after the name. */
+  pass("the line under it is the one that says what happened", /<span id="lostName">Someone<\/span> <span id="lostWhat">took this one\.<\/span>/.test(play) &&
+       /lw\.textContent = \(pz && pz\.toLowerCase\(\)!=="the prize"\) \? \("won the "/.test(play));
   pass("someone else's win also clears the note on the BINGO button", noteHidden === 1, noteHidden);
   api({ t: "rollcall" });
   pass("a rollcall answer carries the device id too", sent.length === 1 && sent[0].t === "join" && sent[0].did === "devjo0000001", JSON.stringify(sent));
