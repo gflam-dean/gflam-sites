@@ -10678,6 +10678,9 @@ MUTATIONS = [
     ('bingo-tap-feedback-in-chrome.test.py', 'venueplay/app/musical/play.html',
      '      noteBingo("You have marked "', '      setMsg("You have marked "',
      'B: a song marked that has not played: the note on the button says so'),
+    ('test-musical-phone.js', 'venueplay/app/musical/play.html',
+     '    else if(m.t==="winner"){\n      hideBingoNote();\n', '    else if(m.t==="winner"){\n',
+     "someone else's win also clears the note on the BINGO button"),
 ]
 
 
