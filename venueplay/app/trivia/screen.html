@@ -65,14 +65,19 @@
   .hostline b{color:var(--pink)}
 
   /* lobby */
-  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
-  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  /* THE LOBBY (Dean, 3 Nov 2026): the night's name, "Scan to play" and the QR, centred; the address and the
+     code under it; how many have joined small in the bottom-right corner (never "0", nothing until one has). */
+  .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:4.4cqw;line-height:1;color:#fff;margin-top:1.2cqw}
+  .lobbyrow{display:flex;align-items:center;justify-content:center;margin-top:1.8cqw}
+  .joined{position:absolute;right:2.4cqw;bottom:2.2cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.6cqw;color:#F2F2F5;white-space:nowrap}
+  .joined b{color:#FFD93D}
+  .qrbig{width:min(30cqw,46vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
   .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .lobbytxt{text-align:left}
-  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,6cqw,64px);color:#fff;line-height:1;max-width:44cqw;overflow-wrap:anywhere}
-  .lobbyname.long{font-size:clamp(18px,4.2cqw,46px);line-height:1.04}
+  .lobbytxt{display:flex;align-items:center;justify-content:center;gap:2.4cqw;margin-top:1.6cqw;text-align:center}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(18px,2.8cqw,54px);color:#8A8A95;line-height:1;max-width:70cqw;overflow-wrap:anywhere}
+  .lobbyname.long{font-size:clamp(16px,2.3cqw,44px);line-height:1.04}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
-  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw}
   .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
 
@@ -122,7 +127,6 @@
   .layer.pic .ringwrap .rnum{font-size:4.6cqw}
   .layer.pic .ringwrap .rlbl{font-size:1.1cqw;margin-top:.25cqw}
   .layer.pic .qfoot{width:10cqw}
-  .layer.pic .answered{margin-top:.6cqw}
   .answers{position:absolute;left:calc(6.25cqw);right:6.25cqw;top:25.4cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.3cqw 1.46cqw;gap:1.3cqw 1.46cqw}
   /* The four answer colours (Dean, 3 Nov 2026): coral, blue, amber, violet. None is pink (the brand's
      accent), none is brand yellow (winning moments) and none is green (green is the right answer). The
@@ -172,9 +176,9 @@
      (radius 40% of the ring) at every size; tools/old-tv-in-chrome.test.py measures that at 1920, 1280
      and 1024 wide, new and old sets. */
   .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:1.5cqw;line-height:1;color:#fff;margin-top:.3cqw;padding-left:.16em}
-  .answered{margin-top:.8cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.3cqw;line-height:1;color:#fff}
+  .answered{position:absolute;right:2.4cqw;bottom:2.2cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.6cqw;line-height:1;color:#fff;white-space:nowrap}
   .answered b{color:#fff}
-  .answered .sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;margin-top:.5cqw;padding-left:.2em}
+  .answered .sub{display:inline;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;margin-top:.5cqw;padding-left:.2em}
   /* WHERE THE NIGHT IS UP TO, UNDER THE FOUR ANSWERS (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
      below the cards, the same place on the countdown and the reveal. Clear of the JOIN NOW card (centred). */
   .qround{position:absolute;left:calc(30cqw);right:30cqw;top:45.1cqw;text-align:center;white-space:nowrap}
@@ -263,17 +267,18 @@
 
   <!-- lobby -->
   <div class="layer" id="tvLobby">
-    <div class="eyebrow">Join the trivia</div>
+    <div class="lobbyname" id="lobbyName">Trivia Night</div>
+    <div class="scanplay">Scan to play</div>
     <div class="lobbyrow">
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
-      <div class="lobbytxt">
-        <div class="lobbyname" id="lobbyName">Trivia Night</div>
-        <div class="joinurl" id="lobbyJoinUrl">venueplay.com.au/play</div>
-        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
-      </div>
+    </div>
+    <div class="lobbytxt">
+      <span class="joinurl" id="lobbyJoinUrl">venueplay.com.au/play</span>
+      <span class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></span>
     </div>
     <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
     <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
+    <div class="joined hidden" id="tvJoined"></div>   <!-- how many have joined, bottom right (Dean, 3 Nov 2026) -->
   </div>
 
   <!-- question -->
@@ -288,8 +293,8 @@
         <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
         <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span></div>
       </div>
-      <div class="answered"><b id="tvAnsCount">0</b><span class="sub">answered</span></div>
     </div>
+    <div class="answered"><b id="tvAnsCount">0</b> <span class="sub">answered</span></div>   <!-- bottom right (Dean, 3 Nov 2026); the ring stays -->
   </div>
 
   <!-- reveal: the SAME grid as the question (same label, same question text in the same place, the same
@@ -645,12 +650,15 @@
       if(i===ci) box.appendChild(el("span","rtag","Right answer"));
       box.appendChild(el("span","al",LETTERS[i]));
       box.appendChild(el("span","at",esc(opts[i])));
+      /* ONLY THE RIGHT ANSWER KEEPS A COUNT (Dean, 3 Nov 2026: the question is over): its players and its bar. */
       var _sc=Number(split[i])||0;
-      box.appendChild(el("span","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
-      var sp=el("div","split");
-      var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round(_sc/den*100)+"%"; bar.appendChild(fill);
-      sp.appendChild(bar);
-      box.appendChild(sp);
+      if(i===ci){
+        box.appendChild(el("span","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
+        var sp=el("div","split");
+        var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round(_sc/den*100)+"%"; bar.appendChild(fill);
+        sp.appendChild(bar);
+        box.appendChild(sp);
+      }
       wrap.appendChild(box);
     }
     applyColour(wrap);
@@ -988,7 +996,9 @@
     // wind-down: they have finished and the room should be looking at the venue again.
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
-    if(m.t==="players"){ return; }   // the wall does not show the player count
+    /* HOW MANY HAVE JOINED, in the lobby only, small in the bottom-right corner (Dean, 3 Nov 2026, reversing
+       the old "the wall never shows the player count" rule): nothing at all until somebody has joined. */
+    if(m.t==="players"){ paintJoined(m.count); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(typeof m.colour==="boolean") state.colour=m.colour;
@@ -1059,6 +1069,10 @@
       renderPodium(m.top||[], m.rows);
     }
   }
+  function paintJoined(n){
+    var j=$("tvJoined"); if(!j) return; n=Number(n)||0;
+    if(n>0){ j.innerHTML="<b>"+n+"</b> "+(n===1?"player":"players")+" joined"; j.classList.remove("hidden"); } else { j.textContent=""; j.classList.add("hidden"); }
+  }
   function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
 
   // ---- init ----
@@ -1122,6 +1136,7 @@
         m({ t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE, title:"Trivia Night" });
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
+        m({ t:"players", count:23 });   // the lobby's "23 players joined", bottom right
       });
       /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
       t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, when it is off (the default since the 2 Nov hotfix)

@@ -31,7 +31,7 @@
      island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
   .ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
   .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%}
-  .brand .word{display:flex;align-items:center;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
+  .brand .word{display:flex;align-items:center;min-height:56px;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
   .brand .vname{overflow-wrap:break-word;hyphens:manual}
   .brand .vname.long{font-size:16px}
   .brand .div{width:1px;height:16px;background:var(--line)}
@@ -118,9 +118,7 @@
   .presult{text-align:left}
   .presult .rem{display:none}
   .presult .pq-ring .n b{font-size:30px}
-  .panswers.rv{gap:10px}
-  .panswers.rv .pans{min-height:66px;cursor:default}
-  .panswers.rv .pans .pl{font-size:36px}
+  .panswers.rv .pans{cursor:default}   /* the same size and place as on the question: nothing jumps (Dean, 3 Nov 2026) */
   .pans .cnt{margin-left:auto;padding-left:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:inherit}
   .pans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
   .pans.right .pl{color:#0A0A0B;text-shadow:none}   /* white on the green would be 1.9:1 */
@@ -242,7 +240,7 @@
       <div class="pq-count"><span>Trivia</span> &middot; <b id="pResCount">Question</b></div>
       <div class="pq-head">
         <div class="pq-text" id="pResQ"></div>
-        <div class="pq-ring done hidden" id="pResRing"><div class="n"><b id="pResRight">0</b><span>right</span></div></div>
+        <div class="pq-ring done" id="pResRing"><div class="n"><b id="pResRight">0</b><span>right</span></div></div>
       </div>
       <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
@@ -811,7 +809,8 @@
     $("pResCount").textContent = (P.q && P.q.label) || "Question";
     var q=$("pResQ"); q.textContent=(P.q && P.q.text) || ""; q.className=phoneQClass(q.textContent);
     var ring=$("pResRing");
-    if(split && ci>=0){ $("pResRight").textContent=Number(split[ci])||0; ring.classList.remove("hidden"); } else ring.classList.add("hidden");
+    /* The ring keeps its place even without a count, so the question never re-wraps under a phone's thumb. */
+    if(split && ci>=0){ $("pResRight").textContent=Number(split[ci])||0; ring.style.visibility=""; } else ring.style.visibility="hidden";
     wrap.innerHTML=""; wrap.className="panswers rv"+phoneAnsClass(opts);
     for(var i=0;i<opts.length;i++){
       var cls="pans c"+i+(P.colour===false?" neutral":"")+(i===ci?" right":(i===mine?" mine":" dim"));
@@ -1318,7 +1317,10 @@
     document.documentElement.setAttribute("data-vp-demo","1");
     P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
-    (function(){ var lg=$("venueLogo"); if(!lg) return; lg.src="/logos/venue-tugun-bowls.png"; lg.classList.remove("hidden");
+    (function(){ var lg=$("venueLogo"); if(!lg) return;
+      /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
+      var src="/logos/venue-tugun-bowls.png"; try{ var lq=/[?&]logo=([^&]+)/.exec(window.location.search||""); if(lq){ var lu=decodeURIComponent(lq[1]); if(/^\/[^\/]/.test(lu)) src=lu; } }catch(e){}
+      lg.src=src; lg.classList.remove("hidden");
       if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); headerVenue(true, "Tugun Bowls Club"); })();
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
     var _dt=[];

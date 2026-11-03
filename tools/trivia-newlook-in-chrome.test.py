@@ -104,13 +104,17 @@ TV_PROBE = r'''(function(){
     out.lbl=R(lay.querySelector(".toplbl"));
     out.q=R(lay.querySelector(".qtext"));
     out.cards=[].map.call(lay.querySelectorAll(".answers .ans"),function(c){ var cs=getComputedStyle(c);
-      var al=c.querySelector(".al"), as=al?getComputedStyle(al):null; return { r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: as?parseFloat(as.fontSize):0,
+      var al=c.querySelector(".al"), as=al?getComputedStyle(al):null; return { sc:(c.querySelector(".sc")||{}).textContent||"", r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: as?parseFloat(as.fontSize):0,
         lfg: as?as.color:"", lbg: as?as.backgroundColor:"", lts: as?as.textShadow:"" }; });
     var gn=lay.querySelector(".toplbl .tl-night"); if(gn){ var gs=getComputedStyle(gn); out.game={ r:R(gn), text:gn.textContent, ff:gs.fontFamily, fs:parseFloat(gs.fontSize), col:gs.color }; }
     var kids=[].map.call(lay.querySelectorAll(".toplbl > *"),R); out.lblInk=kids.length ? [Math.min.apply(null,kids.map(function(k){return k[0];})), Math.min.apply(null,kids.map(function(k){return k[1];})),
       Math.max.apply(null,kids.map(function(k){return k[2];})), Math.max.apply(null,kids.map(function(k){return k[3];}))] : null;
     var cn=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=cn ? R(cn) : null;
-    out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
+    /* the corner furniture (the answered count, the joined count) sits in the corner on purpose: not the wall's bottom */
+    out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".answered,.joined")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
+    out.ans=R(lay.querySelector(".answered")); out.ansText=(lay.querySelector(".answered")||{}).textContent||"";
+    out.joined=(function(e){ return e && !e.classList.contains("hidden") ? { r:R(e), t:e.textContent } : null; })(lay.querySelector(".joined"));
+    out.scan=R(lay.querySelector(".scanplay")); out.qr=R(lay.querySelector(".qrbig"));
     /* The fullest board a night shows: a later page, the leader pinned at the top, nine more rows and the
        "Page 2 of 2" line. Built here from its own rows, measured, and left: the next state repaints it. */
     if(lay.id==="tvBoard"){ var box=document.getElementById("tvBoardRows"), rr=box.querySelectorAll(".brow");
@@ -235,8 +239,8 @@ def tv(B, base, w, h, logo=''):
         title_checks('%dx%d wide logo' % (w, h), [(k, m.get(k) or {}) for k in ('question', 'reveal', 'board', 'podium')], w)
         return
     m = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, False,
-             [('question', 4000), ('reveal', 9000), ('board', 12500), ('podium', 44000)], TV_PROBE)
-    q, rv, bd, pd = m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {})
+             [('lobby', 500), ('question', 4000), ('reveal', 9000), ('board', 12500), ('podium', 44000)], TV_PROBE)
+    lb, q, rv, bd, pd = m.get('lobby', {}), m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {})
     fn = dict(bd, rows=bd.get('rows6') or [], bottom=bd.get('bottom6'))   # the fullest board: six rows and the page line
     tag = '%dx%d' % (w, h)
     ok(tag + ': the demo is on its question, then its reveal, board and podium',
@@ -257,6 +261,16 @@ def tv(B, base, w, h, logo=''):
             still = still and same(a, b)
     ok(tag + ': and so is every answer card (the right one only lifts about its own middle)', still, [qc and [c['r'] for c in qc], rc and [c['r'] for c in rc]])
     ok(tag + ': the reveal has no "got it right" box in the clock\'s place', rv.get('got') is None, rv.get('got'))
+    A = q.get('ans')
+    ok(tag + ': "32 answered" sits small in the bottom-right corner, the ring stays where it was',
+       bool(A and q.get('clock')) and A[2] >= w * 0.95 and A[3] >= h - w * 0.04 and 'answered' in q.get('ansText', '').lower() and q['clock'][1] < h * 0.2, [A, q.get('clock')])
+    ok(tag + ': the reveal: only the right card keeps its count', [c['sc'] != '' for c in (rv.get('cards') or [])] == [('correct' in c['cls']) for c in (rv.get('cards') or [])] and any(c['sc'] for c in rv.get('cards') or []),
+       [(c['cls'], c['sc']) for c in rv.get('cards') or []])
+    S_, Q_ = lb.get('scan'), lb.get('qr')
+    ok(tag + ': the lobby: "Scan to play" and the QR centred on the wall', lb.get('layer') == 'tvLobby' and bool(S_ and Q_) and abs((S_[0] + S_[2]) / 2 - w / 2) <= 3 and abs((Q_[0] + Q_[2]) / 2 - w / 2) <= 3 and S_[3] <= Q_[1],
+       [lb.get('layer'), S_, Q_])
+    J_ = lb.get('joined')
+    ok(tag + ': and how many have joined, small in the bottom-right corner', bool(J_) and J_['r'][2] >= w * 0.95 and J_['r'][3] >= h - w * 0.04 and 'joined' in J_['t'], J_)
     rc_ = rv.get('cards') or []
     lowest = max([c['r'][3] for c in (q.get('cards') or [])] or [0])
     ok(tag + ': "Question 3 of 20" sits UNDER the four answers, on the countdown and the reveal, in the same place',
@@ -294,6 +308,20 @@ def tv(B, base, w, h, logo=''):
     title_checks(tag + ' round crest', [('question', q), ('reveal', rv), ('scores', bd), ('podium', pd)], w)
 
 
+def phone_stable(B, base, logo, tag):
+    """The buttons do not move between the question, locked in and the result, whatever shape the logo."""
+    m = load(B, base, '/app/trivia/play.html?demo=1&sting=0' + ('&logo=' + logo if logo else ''), 375, 812, True,
+             [('question', 3000), ('locked', 6500), ('right', 9500)], PHONE_POS)
+    ps = [m.get(k) or {} for k in ('question', 'locked', 'right')]
+    ok('%s: the four answers are in the same place on the question, locked in and the result' % tag,
+       all(len(p.get('b') or []) == 4 for p in ps) and all(all(same(ps[0]['b'][i], p['b'][i], 1.5) for i in range(4)) for p in ps[1:]),
+       [p.get('b') for p in ps])
+    return ps[0].get('head')
+
+PHONE_POS = r'''(function(){ var v=[].filter.call(document.querySelectorAll(".view"),function(x){return !x.classList.contains("hidden");})[0]; if(!v) return "{}";
+  var b=[].map.call(v.querySelectorAll(".pans"),function(e){ var r=e.getBoundingClientRect(); var s=getComputedStyle(e).transform; return [r.left,r.top,r.right,r.bottom]; });
+  var h=document.querySelector(".ptop").getBoundingClientRect(); return JSON.stringify({ b:b, head:h.height }); })()'''
+
 def phone(B, base):
     print('\nTHE TRIVIA PHONE at 375x812')
     m = load(B, base, '/app/trivia/play.html?demo=1&sting=0', 375, 812, True,
@@ -328,6 +356,9 @@ def phone(B, base):
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]
     ok('a right answer: green, "RIGHT · YOURS"', len(gr) == 1 and gr[0]['bg'] == GREEN and 'yours' in gr[0]['tag'].lower(), [(b['cls'], b['bg'], b['tag']) for b in rt.get('btns') or []])
     ok('the result shows the question the room saw', rt.get('rq') and rt.get('rq') == 'Which Australian city hosted the 2000 Summer Olympics?', rt.get('rq'))
+    h1 = phone_stable(B, base, '', 'phone, Tugun\'s round logo')
+    h2 = phone_stable(B, base, '/__fixture/wide-logo.svg', 'phone, a wide wordmark')
+    ok('the header is the same height with a round logo and a wide one', h1 is not None and h2 is not None and abs(h1 - h2) <= 1, [h1, h2])
     mine = [b for b in wr.get('btns') or [] if 'mine' in b['cls']]
     ok('a wrong answer: the pick is outlined in its colour and tagged YOURS, the right one green',
        len(mine) == 1 and mine[0]['tag'].lower() == 'yours' and 'inset' in mine[0]['sh'] and any(b['bg'] == GREEN for b in wr.get('btns') or []),
