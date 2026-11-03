@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '4 Nov 2026, 02:46 · 8812473a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 07:05 · 59e4eacc';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -9233,6 +9233,12 @@ async function vpbSubItem(env, subId) {
     priceId: item.price && item.price.id,
     quantity: item.quantity,
     periodEnd: sub.current_period_end || item.current_period_end, // moved under items in newer Stripe API
+    /* The start of the cycle and the billing anchor (4 Nov 2026): the pro rata stub for a new pub is
+       counted in the days of the cycle being billed, and the anchor's day of the month is what says
+       where the NEXT cycle ends (Stripe keeps the anchor day: on the 31st, 31 Jan runs to 28 Feb and
+       then to 31 Mar). vpbCycleDays and vpbMonthOnS read these. */
+    periodStart: sub.current_period_start || item.current_period_start || null,
+    anchor: sub.billing_cycle_anchor || null,
     last4: (pm && pm.card && pm.card.last4) || null,
     brand: (pm && pm.card && pm.card.brand) || null,
   };
@@ -9424,11 +9430,25 @@ async function vpbAccountSummary(request, env, json) {
    Rules 3 and 4 sit behind ONE switch on the live Worker, OFF until Dean says yes:
 
         VPB_BILLING_RULES_3NOV = '1'   rule 3: nothing charged for the rest of this cycle; the pub's
-                                       free month runs 30 days from the day it is added; the part of
-                                       those 30 days inside the next cycle comes off the next group
-                                       bill as a credit (so that bill charges only the days after the
-                                       free month, then a full month like the others).
+                                       free month runs to the same date next month (Brisbane); the
+                                       days of that month inside the next cycle come off the next
+                                       group bill as a credit, so that bill charges only the days
+                                       after the free month, then a full month like the others.
                                        rule 4: the one-hour undo in vpbSetPlayers.
+
+   DEAN, 4 NOV 2026, "YES TO PRO RATA", WITH TWO CLARIFICATIONS:
+     - pro rata is BY DAYS OF THE MONTH BEING BILLED: "3 weeks and 2 days is 23 days which is x% of
+       the month being billed". So the stub is (whole Brisbane days the pub is paid for) / (whole days
+       in that billing cycle): 23 of a 31-day cycle is 23/31, 23 of a 30-day cycle is 23/30. The money
+       is rounded to the cent ONCE, at the end. It used to be days / 30 whatever the month was. The
+       helpers below (vpbBrisDays, vpbMonthOnS, vpbCycleDays, vpbProrataCents, vpbDaysWords) are the
+       one place that arithmetic lives, and the words the page and the invoice line show ("23 of 31
+       days (74%)") come from the same numbers.
+     - the one-hour undo is ONLY for an existing venue adding more players outside its free month:
+       never inside the account's own free month (nothing was charged, there is no line to delete),
+       never for a venue still inside the free month a new pub gets (vpbVenueInFreeMonth), never for
+       a new pub being added (vpbAddVenue offers none and writes no players_increased row), and never
+       once a game has started at the venue since the add.
 
    Read in ONE place so the page and the Worker say the same thing: /account/summary sends `rules`. */
 function vpbRules(env) {
@@ -9436,6 +9456,54 @@ function vpbRules(env) {
   return { new_pub_free_month: on, undo_hour: on };
 }
 const VPB_UNDO_WINDOW_S = 3600;   // rule 4: one hour
+
+/* --- Whole Brisbane days, the unit Dean bills in (4 Nov 2026). --- */
+const VPB_BRIS_S = 36000;   // UTC+10, no daylight saving, the same shift vpaFmtDate uses
+/* The Brisbane calendar day a unix second falls on, counted from the epoch. Two instants on the same
+   Brisbane date give the same number, so the difference of two of these is a count of calendar days,
+   which is how a bill is counted: "3 weeks and 2 days is 23 days". */
+function vpbBrisDays(s) { return Math.floor((Number(s) + VPB_BRIS_S) / 86400); }
+/* Midnight Brisbane on the same date ONE MONTH ON, as a unix second. `anchorS` (optional) is an instant
+   whose Brisbane day of the month is the one to land on, for a Stripe billing anchor; without it the
+   day is s's own. A shorter next month lands on its last day, the way Stripe does: anchored on the
+   31st, 31 Jan runs to 28 Feb and then to 31 Mar, not to 28 Mar. */
+function vpbMonthOnS(s, anchorS) {
+  const d = new Date((Number(s) + VPB_BRIS_S) * 1000);
+  const a = (anchorS != null && Number(anchorS) > 0) ? new Date((Number(anchorS) + VPB_BRIS_S) * 1000) : d;
+  const want = a.getUTCDate();
+  const lastOfNext = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 2, 0)).getUTCDate();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, Math.min(want, lastOfNext)) / 1000 - VPB_BRIS_S;
+}
+/* How many whole Brisbane days a billing cycle holds (never below one, so nothing divides by zero). */
+function vpbCycleDays(startS, endS) { return Math.max(1, vpbBrisDays(endS) - vpbBrisDays(startS)); }
+/* players x rate x days / cycleDays, to the cent, rounded ONCE at the end. Rounding per player first
+   is a different number: 10 players at $2.50 for 8 of 31 days is $6.45, not 10 x 65c = $6.50. */
+function vpbProrataCents(rate, players, days, cycleDays) {
+  if (!(rate > 0) || !(players > 0) || !(days > 0) || !(cycleDays > 0)) return 0;
+  return Math.round(rate * 100 * players * days / cycleDays);
+}
+/* The words a venue reads for a pro rata stub, on the page and on the invoice line alike. */
+function vpbDaysWords(days, cycleDays) {
+  return days + ' of ' + cycleDays + ' day' + (cycleDays === 1 ? '' : 's') + ' (' + Math.round(100 * days / Math.max(1, cycleDays)) + '%)';
+}
+/* DD/MM/YYYY in Brisbane, for a Stripe line a bookkeeper reads. */
+function vpbBrisDMY(s) { return new Date((Number(s) + VPB_BRIS_S) * 1000).toISOString().slice(0, 10).split('-').reverse().join('/'); }
+
+/* Is this venue still inside the free month a new pub gets (rule 3)? vp_venues.free_month_at (migration
+   83) is stamped the day the pub is added; the month runs to the same date next month, Brisbane. The
+   only thing this gates is the one-hour undo (Dean, 4 Nov 2026: the undo is for an existing venue
+   OUTSIDE its free month), so when the column cannot be read the answer is "in it": no undo, and a
+   log line, never a free month's players let off a charge because a read failed. */
+async function vpbVenueInFreeMonth(env, venueId) {
+  const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,free_month_at&limit=1');
+  if (!rows || !rows.length) {
+    console.log('[billing] undo: could not read free_month_at for venue ' + venueId + ': treating it as inside its free month (no undo)');
+    return true;
+  }
+  const at = rows[0].free_month_at ? Date.parse(rows[0].free_month_at) : NaN;
+  if (!Number.isFinite(at)) return false;
+  return (Date.now() / 1000) < vpbMonthOnS(Math.floor(at / 1000));
+}
 
 /* How much of an ANNUAL term is still ahead of us, 0..1. An annual venue has already paid for
    the whole year, so both the charge for adding players and the credit for giving them up are
@@ -9676,14 +9744,19 @@ async function vpbSetPlayers(request, env, json) {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
+    /* Rule 4 (behind the switch): the page says "Changed your mind? You can undo this within an hour, as
+       long as no game has started" only when the Worker will honour it: monthly, a real invoice line to
+       delete (so not inside the account's own free month, where nothing is charged), and NOT a venue
+       still inside the free month a new pub gets (Dean, 4 Nov 2026). */
+    let undoOpen = !!(vpbRules(env).undo_hour && !annualPlan && iAdj && iAdj.kind === 'charge' && iAdj.item
+                      && !(info.sub && info.sub.status === 'trialing'));
+    if (undoOpen && await vpbVenueInFreeMonth(env, venueId)) undoOpen = false;
     return json({ ok: true, applied: 'now', players: players,
                   // Name the money. The page could not tell the venue what it had
                   // just been charged, only that something would appear later.
                   charge_cents: (iAdj && iAdj.cents) || 0,
                   charge_failed: (iAdj && iAdj.kind === 'failed') ? true : false,
-                  // Rule 4 (behind the switch): the page says "Changed your mind? You can undo this within
-                  // an hour, as long as no game has started" only when the Worker will honour it.
-                  undo_hour: !!(vpbRules(env).undo_hour && !annualPlan && iAdj && iAdj.kind === 'charge' && iAdj.item) });
+                  undo_hour: undoOpen });
   }
 
   /* THE ONE-HOUR UNDO (Dean's rule 4, 3 Nov 2026, behind VPB_BILLING_RULES_3NOV, see vpbRules). Monthly
@@ -9692,7 +9765,16 @@ async function vpbSetPlayers(request, env, json) {
      at or below the number before that add, the increase is cancelled completely: the invoice item is
      deleted (nothing on the next bill), the capacity goes back now, the quantity goes back now. If
      Stripe will not delete the line (it has already been invoiced), the increase stands and this is an
-     ordinary reduction below, which the page is told (undo_failed). */
+     ordinary reduction below, which the page is told (undo_failed).
+
+     WHO NEVER GETS THE UNDO (Dean, 4 Nov 2026: it is for an existing venue adding players OUTSIDE its
+     free month, and nothing else):
+       - inside the account's own free month: the add charged nothing, so there is no invoice line
+         (`item`) and the test below fails on its own
+       - a new pub being added: vpbAddVenue writes a venue_added row, never players_increased, and
+         answers with no undo, so there is nothing here to read back
+       - a venue still inside the free month a new pub gets: vpbVenueInFreeMonth, read fresh
+       - once a game has STARTED at the venue since the add */
   if (!annualPlan && vpbRules(env).undo_hour) {
     try {
       const lastUp = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
@@ -9703,9 +9785,10 @@ async function vpbSetPlayers(request, env, json) {
       const ageS = Number.isFinite(addedAt) ? (Date.now() - addedAt) / 1000 : Infinity;
       const item = det.billing && det.billing.kind === 'charge' && det.billing.item;
       if (row && ageS >= 0 && ageS < VPB_UNDO_WINDOW_S && item && players <= (parseInt(det.from, 10) || 0)) {
-        const played = await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId)
+        const inFreeMonth = await vpbVenueInFreeMonth(env, venueId);
+        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId)
           + '&started_at=gte.' + encodeURIComponent(new Date(addedAt).toISOString()) + '&select=id&limit=1');
-        if (!(played && played.length)) {
+        if (!inFreeMonth && !(played && played.length)) {
           const del = await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(item));
           if (del && del.deleted === true) {
             await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { max_players: players, pending_players: null });
@@ -9910,10 +9993,11 @@ async function vpbAddVenue(request, env, json) {
     ? Math.max(0, parseInt(twin.max_players, 10) || 0) : 0;
   const chargePlayers = Math.max(0, players - alreadyPaid);
   /* DEAN'S GROUP RULE, BEHIND VPB_NEW_PUB_FREE_MONTH (3 Nov 2026, see vpbRules): a new pub on a paying
-     monthly account is charged NOTHING for the rest of this cycle, its first 30 days are free, and the
-     part of those 30 days that falls inside the next cycle comes off the next bill (the credit below).
-     So a pub added a week after the bill date pays for 3 weeks on the next bill, then a full month
-     like the others. One cycle, one card charge, no separate transaction for the new pub. A venue
+     monthly account is charged NOTHING for the rest of this cycle, its first month is free (to the same
+     date next month), and the days of that month inside the next cycle come off the next bill (the
+     credit below), by days of that cycle (Dean, 4 Nov 2026: 23 of 31 days is 23/31). So a pub added a
+     week after the bill date pays for the 3 weeks and a bit after its free month on the next bill, then
+     a full month like the others. One cycle, one card charge, no separate transaction for the new pub. A venue
      coming back, a yearly plan, and an account still inside its own free month keep today's path. */
   const newVenueProrata = vpbRules(env).new_pub_free_month && o.account.plan !== 'annual' && !reviving
     && !!(billingOk && info && info.sub && info.sub.customer && info.sub.status !== 'trialing');
@@ -9946,32 +10030,50 @@ async function vpbAddVenue(request, env, json) {
      nothing to hand back; crediting then would give away a month they never paid for. kind
      'failed' is a Stripe refusal, and crediting that would turn a failed charge into free money.
      So the test is kind === 'charge', not merely "aAdj exists". */
-  let freeMonth = null, freeUntil = null;
+  let freeMonth = null, freeUntil = null, stub = null;
   if (newVenueProrata) {
-    /* The free month runs 30 days from today. Nothing was charged for this cycle, so the only money
-       move is the credit for the days of the free month that the NEXT bill would otherwise charge:
-       players x rate x (those days / 30). Zero when the free month ends on or before the renewal. */
+    /* DEAN, 4 NOV 2026: PRO RATA IS BY DAYS OF THE MONTH BEING BILLED. The pub's free month runs to the
+       same date next month (Brisbane). Nothing is charged for the rest of this cycle. The next group bill
+       covers the NEXT cycle, from this renewal to the anchor day a month on (30 days from 7 Nov, 31 from
+       7 Dec, 28 from 7 Feb 2027), and the pub pays only the days of it after its free month: added on the
+       15th against a 7 Dec to 7 Jan cycle, the free month ends 15 Dec, 8 of 31 days come off and the pub
+       pays 23 of 31 days (74%). The bill charges the full month through the quantity, so the free days
+       come off as a credit, rounded to the cent ONCE: players x rate x freeDays / cycleDays. Zero when the
+       free month ends on or before the renewal. Used to be days / 30 whatever the month was. */
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);
-    const nowS = Math.floor(Date.now() / 1000), DAY = 86400;
-    freeUntil = nowS + 30 * DAY;
-    const overlap = Math.max(0, Math.min(30 * DAY, freeUntil - (Number(info.periodEnd) || nowS)));
-    const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100 * players * overlap / (30 * DAY));
+    const nowS = Math.floor(Date.now() / 1000);
+    freeUntil = vpbMonthOnS(nowS);
+    const cycleStart = Number(info.periodEnd) || nowS;
+    const cycleEnd = vpbMonthOnS(cycleStart, info.anchor);
+    const cycleDays = vpbCycleDays(cycleStart, cycleEnd);
+    const freeDays = Math.max(0, Math.min(cycleDays, vpbBrisDays(freeUntil) - vpbBrisDays(cycleStart)));
+    const stubDays = cycleDays - freeDays;
+    stub = { cycle_days: cycleDays, free_days: freeDays, stub_days: stubDays,
+             pct: Math.round(100 * stubDays / cycleDays), words: vpbDaysWords(stubDays, cycleDays) };
+    const freeCents = (fRate == null) ? 0 : vpbProrataCents(fRate, players, freeDays, cycleDays);
+    let credited = 0;
     if (freeCents > 0) {
       const fRes = await vpbStripePost(env, 'customers/' + encodeURIComponent(info.sub.customer) + '/balance_transactions', {
         amount: -freeCents, currency: 'aud',
-        description: name + ' - first month free: ' + Math.round(overlap / DAY) + ' days of your next bill',
+        /* The same days and percentage the page shows, so the invoice and the screen cannot disagree. */
+        description: name + ' - first month free to ' + vpbBrisDMY(freeUntil) + ': ' + vpbDaysWords(freeDays, cycleDays)
+                     + ' of your next bill taken off, so you pay ' + stub.words,
       }, 'vfree:' + String(r.venue && r.venue.id));
       if (fRes && !fRes.error && fRes.id) {
-        freeMonth = { cents: freeCents, txn: fRes.id, days: Math.round(overlap / DAY) };
-        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue && r.venue.id),
-          { free_month_at: new Date().toISOString(), free_month_cents: freeCents }).catch(() => {});
+        credited = freeCents;
+        freeMonth = { cents: freeCents, txn: fRes.id, days: freeDays, cycle_days: cycleDays, stub_days: stubDays };
       } else {
         console.log('[billing] FREE MONTH CREDIT FAILED for ' + name + ': ' + ((fRes && fRes.error && fRes.error.message) || 'unknown'));
-        freeMonth = { cents: 0, failed: true, owed_cents: freeCents };
+        freeMonth = { cents: 0, failed: true, owed_cents: freeCents, days: freeDays, cycle_days: cycleDays, stub_days: stubDays };
       }
     } else {
-      freeMonth = { cents: 0, days: 0 };
+      freeMonth = { cents: 0, days: 0, cycle_days: cycleDays, stub_days: stubDays };
     }
+    /* THE FREE MONTH IS RECORDED WHETHER OR NOT MONEY MOVED: free_month_at is what vpbVenueInFreeMonth
+       reads to keep the one-hour undo away from a pub still inside it (Dean, 4 Nov 2026). A pub added on
+       the bill date has nothing to credit and is still in its free month. Best effort, after the money. */
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue && r.venue.id),
+      { free_month_at: new Date().toISOString(), free_month_cents: credited }).catch(() => {});
   }
   /* NOT FOR A VENUE COMING BACK. It had its free month the first time, and without this the
      free month is farmable: cancel a venue, add it again, get another month. That is the exact
@@ -10030,6 +10132,13 @@ async function vpbAddVenue(request, env, json) {
     free_rule: newVenueProrata ? 'prorata' : ((freeMonth && freeMonth.cents > 0) ? 'month' : null),
     free_until: freeUntil ? vpaFmtDate(freeUntil) : null,
     free_days_credited: (freeMonth && freeMonth.days) || 0,
+    /* The stub in days, the same numbers the credit line carries: "23 of 31 days (74%)" (Dean, 4 Nov 2026). */
+    cycle_days: stub ? stub.cycle_days : null,
+    stub_days: stub ? stub.stub_days : null,
+    stub_words: stub ? stub.words : null,
+    /* A NEW PUB IS NEVER OFFERED THE ONE-HOUR UNDO (Dean, 4 Nov 2026): the undo is for an existing venue
+       adding players outside its free month. Said outright so the page cannot assume it. */
+    undo_hour: false,
     venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
 }
 

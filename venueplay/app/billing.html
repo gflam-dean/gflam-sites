@@ -1470,8 +1470,11 @@
          reasonably believe expanding cost them. free_month_cents is 0 when the account is still
          inside its own free month, where there was nothing to charge and nothing to hand back,
          and saying it then would be claiming a discount that did not happen. */
+      /* Dean, 4 Nov 2026: the stub is by days of the month being billed, and the page shows the SAME days
+         and percentage the invoice line carries: "Your next bill charges 23 of 31 days (74%) for it". */
       var freeBit = r.free_rule === "prorata"
-        ? (" Its first month is free" + (r.free_until ? " until " + r.free_until : "") + ". Your next bill charges only the days after that" +
+        ? (" Its first month is free" + (r.free_until ? " until " + r.free_until : "") + ". Your next bill charges " +
+           (r.stub_words ? r.stub_words + " for it" : "only the days after that") +
            (r.free_month_cents > 0 ? " ($" + (r.free_month_cents/100).toFixed(2) + " comes off it)" : "") + ".")
         : (r.free_month_cents > 0)
           ? (" It is free until your next bill date: $" + (r.free_month_cents/100).toFixed(2) + " credited, and it comes off that invoice.")

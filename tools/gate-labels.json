@@ -47,7 +47,7 @@
   "a woken wall rejoins the clock, and the screen check knows a restart from an advance (19 checks)",
   "account-structure-in-chrome.test.py",
   "add-login-email.test.py",
-  "adding a venue charges a month and credits it straight back (61 checks)",
+  "adding a venue charges a month and credits it straight back (80 checks)",
   "after a blip the TV settles on four channels and stops",
   "age_gate and paper_bingo follow the letters on /play/live and /join/info, and the phone holds its ticket until the tick",
   "an answer at second ten scores 125 whether or not the host adds time afterwards",

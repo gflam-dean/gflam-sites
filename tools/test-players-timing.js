@@ -10,6 +10,8 @@
                 and drop them: the 30 still cost a month
      the rule   has no switch, because the code already does it; the only switch in vpbRules is the new
                 pub's free month (tools/test-add-venue-free-month.js), OFF until Dean says yes
+     the undo   (rule 4, behind the switch) is ONLY for an existing venue adding players outside its free
+                month (Dean, 4 Nov 2026): never inside a free month, never a new pub, never after a game
 
    Run:  jsc tools/test-players-timing.js
 */
@@ -59,8 +61,13 @@ function arm(opts) {
   /* Rule 4 reads the last increase's audit row and whether a game has STARTED since. */
   deletes = [];
   vpaSelect = function (env, table, q) {
-    if (table === 'vp_admin_audit') return Promise.resolve(opts.lastUp ? [opts.lastUp] : []);
+    /* The undo asks for the last players_increased row only. A row of another action (a new pub's
+       venue_added, say) is never handed back, the way PostgREST would not hand it back. */
+    if (table === 'vp_admin_audit') return Promise.resolve(opts.lastUp && /action=eq\.players_increased/.test(q) && (opts.lastUp.action || 'players_increased') === 'players_increased' ? [opts.lastUp] : []);
     if (table === 'vp_sessions') return Promise.resolve(opts.played ? [{ id: 's1' }] : []);
+    /* vpbVenueInFreeMonth reads vp_venues.free_month_at (migration 83): null for a venue that never had
+       a new-pub free month, a date for one that did, and no row at all when the read fails. */
+    if (table === 'vp_venues') return Promise.resolve(opts.noVenueRow ? [] : [{ id: VENUE.id, free_month_at: opts.freeMonthAt || null }]);
     return Promise.resolve([]);
   };
   vpbStripeDelete = function (env, path) {
@@ -177,6 +184,30 @@ check('an add that charged nothing (free month) has no line to delete: an ordina
 /* A yearly plan never undoes: its reduction releases and credits today, which is already fair. */
 var u9 = run({ plan: 'annual', priceId: ANNUAL, current: 110, lastUp: lastUp(10, 80, 110) }, { venue_id: 'v1', players: 80 }, ON);
 check('yearly plan: no undo, the yearly release-and-credit path as before', deletes.length === 0 && u9 && u9.applied === 'now' && credits().length === 1, [deletes, u9, calls]);
+
+/* WHO NEVER GETS THE UNDO (Dean, 4 Nov 2026): it is for an existing venue adding more players OUTSIDE its
+   free month. Not inside the account's own free month, not a venue still inside the free month a new pub
+   gets, not a new pub being added, and not after a game has started (u3 above). */
+print('rule 4: the undo is only for an existing venue outside its free month (Dean, 4 Nov 2026)');
+function daysAgo(d) { return new Date(Date.now() - d * 86400000).toISOString(); }
+var f1 = run({ freeMonthAt: daysAgo(5) }, { venue_id: 'v1', players: 110 }, ON);
+check('a pub 5 days into its free month adds 30: charged the month (rule 2) but NOT promised an undo', f1 && f1.applied === 'now' && f1.charge_cents === 7500 && f1.undo_hour === false, f1);
+var f2 = run({ current: 110, lastUp: lastUp(10, 80, 110), freeMonthAt: daysAgo(5) }, { venue_id: 'v1', players: 80 }, ON);
+check('a pub 5 days into its free month drops them 10 minutes later, no game: NO undo, the ordinary reduction', deletes.length === 0 && f2 && f2.applied === 'next_renewal' && f2.pending === 80, [deletes, f2]);
+var f3 = run({ current: 110, lastUp: lastUp(10, 80, 110), freeMonthAt: daysAgo(40) }, { venue_id: 'v1', players: 80 }, ON);
+check('the same pub 40 days on (its free month is over): the undo works again', deletes.length === 1 && f3 && f3.applied === 'undone', [deletes, f3]);
+var f3b = run({ freeMonthAt: daysAgo(40) }, { venue_id: 'v1', players: 110 }, ON);
+check('and an add 40 days on is promised the undo', f3b && f3b.undo_hour === true, f3b);
+var fT = run({ status: 'trialing' }, { venue_id: 'v1', players: 110 }, ON);
+check('inside the account\'s own free month: the add charges nothing and promises no undo', fT && fT.applied === 'now' && fT.charge_cents === 0 && fT.undo_hour === false, fT);
+LOGS = [];
+var f4 = run({ current: 110, lastUp: lastUp(10, 80, 110), noVenueRow: true }, { venue_id: 'v1', players: 80 }, ON);
+check('free_month_at cannot be read: NO undo (the safe answer), and it is logged', deletes.length === 0 && f4 && f4.applied === 'next_renewal' && LOGS.some(function (l) { return /could not read free_month_at/.test(l); }), [deletes, f4, LOGS]);
+var f4b = run({ noVenueRow: true }, { venue_id: 'v1', players: 110 }, ON);
+check('free_month_at cannot be read: the add is charged and promises no undo', f4b && f4b.applied === 'now' && f4b.charge_cents === 7500 && f4b.undo_hour === false, f4b);
+/* A new pub: its only history row is venue_added, which the undo never reads. */
+var f5 = run({ current: 110, lastUp: { action: 'venue_added', created_at: minutesAgo(10), detail: { name: 'Deepwater Hotel', players: 110, billing: { kind: 'charge', cents: 27500, item: 'ii_new' } } } }, { venue_id: 'v1', players: 80 }, ON);
+check('a new pub lowered 10 minutes after it was added: no players_increased row, so an ordinary reduction, nothing deleted', deletes.length === 0 && f5 && f5.applied === 'next_renewal', [deletes, f5]);
 
 print(fails ? ('FAILED ' + fails) : 'PASS');
 if (fails) { throw new Error('players timing: ' + fails + ' failed'); }
