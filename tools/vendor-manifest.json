@@ -24,6 +24,13 @@
    "sha256": "bee24fc29228ed5a370f76a2ba1ca3c399549edad2fef23453c80148856a49af",
    "licence": "partyplay/vendor/supabase-js-2.118.0.LICENSE.txt",
    "copied": "2026-11-01"
+  },
+  "venueplay/app/vendor/supabase-js-2.83.0.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.83.0/dist/umd/supabase.js",
+   "sha256": "0afb25758b577f4691f5c7b51a6d729482d903d5beba537a17ac561a11335374",
+   "licence": "venueplay/app/vendor/supabase-js-2.83.0.LICENSE.txt",
+   "copied": "2026-11-01",
+   "only_for": "older TVs (engines that cannot parse 2.118.0); loaded only by venueplay/app/vp-supabase-oldtv.js"
   }
  }
 }

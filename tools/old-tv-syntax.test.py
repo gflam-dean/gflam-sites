@@ -161,6 +161,48 @@ for page in PAGES:
         api = api_problems(tokens)
         ok('%s: no method or global newer than Chromium 63, unguarded' % name, not api, api[:4])
 
+print('\nTHE LIVE CONNECTION ON AN OLDER TELEVISION (2 Nov 2026)')
+# supabase-js 2.118.0 needs Chromium 85 to parse, so an older set never hears the host. Every screen
+# that loads it loads /app/vp-supabase-oldtv.js straight after it, and that loads an ES2017 build
+# when 2.118.0 did not load. That build is held to the same rules as our own scripts here.
+SUPA_TAG = '<script src="/app/vendor/supabase-js-2.118.0.min.js"></script>'
+OLD_TAG = '<script src="/app/vp-supabase-oldtv.js"></script>'
+supa_pages = 0
+for page in PAGES:
+    s = io.open(os.path.join(SITE, page), encoding='utf-8').read()
+    if SUPA_TAG not in s:
+        continue
+    supa_pages += 1
+    after = s[s.find(SUPA_TAG) + len(SUPA_TAG):]
+    nxt = re.search(r'<script\b[^>]*>', after)
+    ok('%s loads /app/vp-supabase-oldtv.js straight after supabase-js 2.118.0' % page,
+       bool(nxt) and nxt.group(0) == OLD_TAG[:-len('</script>')], nxt.group(0) if nxt else 'no script after it')
+ok('the screens that load supabase-js are found (tv.html and four game screens)', supa_pages >= 5, supa_pages)
+loader = io.open(os.path.join(SITE, 'app', 'vp-supabase-oldtv.js'), encoding='utf-8').read()
+m = re.search(r'var OLD = "(/app/vendor/supabase-js-[0-9.]+(?:\.es2017)?\.min\.js)"', loader)
+ok('the loader names one old-engine supabase-js file', bool(m), 'no var OLD = "/app/vendor/..."')
+if m:
+    old_file = os.path.join(SITE, m.group(1).lstrip('/'))
+    ok('%s is on disk' % m.group(1), os.path.isfile(old_file))
+    if os.path.isfile(old_file):
+        code = io.open(old_file, encoding='utf-8').read()
+        try:
+            tree = esprima.parseScript(code, {'loc': True, 'tokens': True}); perr = ''
+        except Exception as e:
+            tree, perr = None, str(e)
+        ok('%s parses as ECMAScript 2017' % m.group(1), not perr, perr)
+        if tree is not None:
+            ok('%s: no object spread or rest (ES2018)' % m.group(1), not es2018_nodes(tree), es2018_nodes(tree)[:3])
+            rx = ['/%s/%s: %s' % (t.regex.pattern[:40], t.regex.flags, p) for t in tree.tokens
+                  if t.type == 'RegularExpression' for p in regex_problems(t)]
+            ok('%s: no ES2018 regular expression features' % m.group(1), not rx, rx[:3])
+            api = [a for a in api_problems(tree.tokens) if not a.startswith('globalThis ')]
+            ok('%s: nothing newer than Chromium 63 except globalThis' % m.group(1), not api, api[:4])
+    ok('the loader defines globalThis before the old build runs (it reads it; Chromium 71)',
+       'if (!("globalThis" in w))' in loader and 'Object.defineProperty(w, "globalThis"' in loader and loader.find('globalThis') < loader.find('d.write('))
+    ok('the loader does nothing where 2.118.0 loaded (a modern screen is untouched)',
+       re.search(r'if \(loaded && !force\) \{.*?return; \}', loader) is not None)
+
 print('\nEVERY SCREEN LOADS THE OLD-ENGINE CSS FALLBACK IN ITS HEAD')
 for page in PAGES:
     s = io.open(os.path.join(SITE, page), encoding='utf-8').read()

@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 13:51 · b9d68ca9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Nov 2026, 18:53 · bebbd5cd';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -289,7 +289,17 @@ export default {
     // Safe with no env var set: venueplay.com.au origins are reflected, anything else gets the
     // canonical site (which the browser will refuse), never a wildcard. ALLOW_ORIGIN is now
     // purely additive, for a staging or preview host.
-    const origin = originOk ? reqOrigin : (allowList[0] || CANONICAL);
+    /* THE SAMSUNG AND LG TV APPS (2 Nov 2026). A TV web app runs from the TV's own storage, so
+       its requests carry Origin: null (or file://, app://), and a browser refuses the canonical
+       answer above. The app asks only the two read-only screen set-up lookups (no cookies, no
+       tokens, rate limited, the same answers tv.html already shows a stranger who types a code),
+       so those two answer any origin. Everything else keeps the venueplay.com.au reflection.
+       Not done with ALLOW_ORIGIN: "null" there would open every game route to any sandboxed page. */
+    const corsUrl = new URL(request.url);
+    const corsPath = corsUrl.pathname.replace(/\/+$/, '');
+    const publicLookup = (request.method === 'GET' || request.method === 'OPTIONS') &&
+      (corsPath === '/venues/like' || (corsPath === '/venue' && corsUrl.searchParams.get('probe') === '1'));
+    const origin = publicLookup && !originOk ? '*' : (originOk ? reqOrigin : (allowList[0] || CANONICAL));
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
