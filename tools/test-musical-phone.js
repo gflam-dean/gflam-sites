@@ -183,6 +183,30 @@ print("4. A DISCARDED TAB COMES BACK AS THE SAME PLAYER, WITHOUT BEING ASKED FOR
 })();
 
 print("");
+print("7. MUSICAL BINGO IS NOT BINGO: THE CLAIM BUTTON SAYS WHAT THE PLAYER HAS (Dean, 3 Nov 2026)");
+(function(){
+  var a = play.indexOf("  var CLAIM_WORDS=");
+  var words = a > 0 ? play.slice(a, play.indexOf("\n", a)) : "";
+  var cw = grab("claimWords", play), set = grab("setClaimWords", play), rc = grab("renderCard", play);
+  pass("CLAIM_WORDS, claimWords and setClaimWords are lifted from the page", !!words && !!cw && !!set);
+  var btn = { textContent: "" };
+  var P = { pattern: "one" }, $ = function(id){ return id === "bingoBtn" ? btn : null; };
+  var say = (function(){ return (new Function("P", "$", "btn", words + "\n" + cw + "\n" + set + "\nreturn function(p){ P.pattern=p; setClaimWords(); return btn.textContent; };"))(P, $, btn); })();
+  pass("one line: \"I've got a line\"", say("one") === "I've got a line", btn.textContent);
+  pass("two lines: \"I've got two lines\"", say("two") === "I've got two lines", btn.textContent);
+  pass("four corners: \"I've got four corners\"", say("corners") === "I've got four corners", btn.textContent);
+  pass("full house: \"Full house\"", say("full") === "Full house", btn.textContent);
+  pass("a progressive round's new pattern changes the words (two lines, then full house)", say("two") === "I've got two lines" && say("full") === "Full house");
+  pass("no pattern ever makes the musical button say BINGO", ["one", "two", "corners", "full", "", "odd"].every(function(p){ return !/bingo/i.test(say(p)); }));
+  pass("renderCard puts the words on the button every time it draws the card", /\bsetClaimWords\(\);/.test(rc));
+  var mk = /<button[^>]*id="bingoBtn"[^>]*>([^<]*)</.exec(play);
+  pass("the button as the page ships it says \"I've got a line\", never BINGO!", !!mk && mk[1] === "I've got a line", mk && mk[1]);
+  pass("no message on the musical phone tells the player to hit or try BINGO", !/(Hit|Try|tap) BINGO|BINGO sent/.test(play.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "")));
+  var num = readFile("venueplay/play.html"), nb = /<button[^>]*id="bingoBtn"[^>]*>([^<]*)</.exec(num || "");
+  pass("CONTROL: number bingo (/play) keeps BINGO!", !!nb && nb[1] === "BINGO!", nb && nb[1]);
+})();
+
+print("");
 print("5. LAST WEEK'S TOKEN IS NOT THIS WEEK'S NIGHT");
 (function(){
   var fns = ["loadToken", "saveToken", "shareToken", "loadSess", "saveSess", "ensureJoined", "dropStaleJoin", "rejoinNow", "checkStaleJoin", "connect"].map(function(n){ return grab(n, play); });
