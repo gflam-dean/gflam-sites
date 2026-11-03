@@ -1331,7 +1331,7 @@
       if(c.email)     h+=f("xEmail","email","Email","email",120);
       if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
       box.innerHTML=h;
-      /* "I'm 18 or over" (required) and "Keep me posted" (optional) as TWO ticks, never one (3 Nov 2026,
+      /* "I'm 18 or over" (needed with the opt-in) and "Keep me posted" (optional) as TWO ticks, never one (3 Nov 2026,
          Spam Act and APP 7): /app/vp-consent.js, shared by all three phones. Not asked twice: an age
          screen already ticked for this room tonight leaves the 18+ tick out. */
       var aged=false; try{ aged=sessionStorage.getItem(ageKey())==="ok"; }catch(e){}
@@ -1387,7 +1387,7 @@
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
-    if(typeof VPConsent==="object" && !VPConsent.ageOk()){ $("joinErr").textContent=VPConsent.AGE_NEEDED; return; }   // the 18+ tick, where the details step shows it
+    if(typeof VPConsent==="object" && !VPConsent.ageOk()){ $("joinErr").textContent=VPConsent.AGE_NEEDED; return; }   // the 18+ tick, needed only with "Keep me posted"
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     P.joined=true; saveName(P.room, P.name);

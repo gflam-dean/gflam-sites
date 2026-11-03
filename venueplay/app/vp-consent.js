@@ -9,9 +9,15 @@
    Now, wherever the details step offers the opt-in, it shows two ticks, built here ONCE for all three
    phones:
 
-     #x18     "I'm 18 or over"                             REQUIRED to join from this step. A gate on
-                                                           this phone only: nothing new is stored, the
-                                                           Worker is not asked to accept anything.
+     #x18     "I'm 18 or over"                             REQUIRED ONLY WITH THE OPT-IN: a player who
+                                                           ticks "Keep me posted" must tick this too,
+                                                           or Join says "To get venue news, tick I'm
+                                                           18 or over." With the opt-in unticked, Join
+                                                           works without it, exactly as before (4 Nov
+                                                           2026: blocking minors from trivia and
+                                                           musical bingo is Dean's call, not a midnight
+                                                           change). A gate on this phone only: nothing
+                                                           new is stored or sent to the Worker.
      #xOptin  "Keep me posted on what's on at the venue"   OPTIONAL, never ticked by default or by a
                                                            script. marketing_optin is set from this
                                                            tick ONLY, and only with an email or mobile.
@@ -27,7 +33,7 @@
   "use strict";
   var AGE_TEXT = "I'm 18 or over";
   var OPTIN_TEXT = "Keep me posted on what's on at the venue";
-  var AGE_NEEDED = "Tick I'm 18 or over to join.";
+  var AGE_NEEDED = "To get venue news, tick I'm 18 or over.";
   var _ageDone = false;
   /* The ticks this module drew, held here rather than looked up by id: a page (or a test's stand-in
      DOM) that answers any id with an element must not turn "no 18+ tick on this step" into "18+ not
@@ -61,16 +67,19 @@
       var a = tick("x18", AGE_TEXT);
       _ageEl = a.querySelector("input");
       a.className = "optin age18";
-      a.querySelector("input").required = true;
-      a.querySelector("input").addEventListener("change", function () {
-        var e = document.getElementById("joinErr");
-        if (this.checked && e && e.textContent === AGE_NEEDED) e.textContent = "";
-      });
+      _ageEl.addEventListener("change", settled);
       box.appendChild(a);
     }
     var o = tick("xOptin", OPTIN_TEXT);
     _optEl = o.querySelector("input");
+    _optEl.addEventListener("change", settled);
     box.appendChild(o);
+  }
+
+  /* The refusal comes down once it no longer applies: 18+ ticked, or the opt-in unticked. */
+  function settled() {
+    var e = document.getElementById("joinErr");
+    if (ageOk() && e && e.textContent === AGE_NEEDED) e.textContent = "";
   }
 
   /* The age screen was ticked: the 18+ tick on the details step comes down (never asked twice). */
@@ -81,9 +90,11 @@
     _ageEl = null;
   }
 
-  /* May this player continue from the details step? Only with the 18+ tick, where it is shown. */
+  /* May this player continue from the details step? Yes, unless they ticked "Keep me posted" and
+     left the 18+ tick (where it is shown) empty. */
   function ageOk() {
     if (_ageDone) return true;
+    if (!(onPage(_optEl) && _optEl.checked === true)) return true;
     return !onPage(_ageEl) || _ageEl.checked === true;
   }
 

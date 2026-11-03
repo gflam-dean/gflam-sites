@@ -6,8 +6,8 @@ what is on at the venue", which bundled a condition of entry with marketing cons
 consent must be optional and must not be bundled (Spam Act 2003, APP 7). Now the details step shows
 two ticks, built once in venueplay/app/vp-consent.js:
 
-  #x18     "I'm 18 or over"                            REQUIRED to join from this step (a gate on the
-                                                       phone; nothing new is sent to the Worker)
+  #x18     "I'm 18 or over"                            needed ONLY with the opt-in (4 Nov 2026): a gate on
+                                                       the phone; nothing new is sent to the Worker
   #xOptin  "Keep me posted on what's on at the venue"  OPTIONAL, unticked; marketing_optin comes from
                                                        this tick ONLY, and only with an email or mobile
 
@@ -16,7 +16,8 @@ checkout, with the Worker answered here, and plays the details step:
 
   A  two separate ticks, each its own label, both unticked, in that order, the words exact, and no
      label anywhere on the step says both "18" and "posted"
-  B  Join with the 18+ tick left empty: refused with "Tick I'm 18 or over to join.", nothing sent
+  B  opt-in ticked, 18+ left empty: refused with "To get venue news, tick I'm 18 or over.", nothing sent
+  N  neither ticked, email typed: joins, no opt-in (joining works as it did before)
   C  18+ ticked, opt-in left empty, email typed: joins, and what reaches the Worker has NO opt-in
   D  18+ and opt-in ticked, email typed: marketing_optin true reaches the Worker
   E  18+ and opt-in ticked, NO email or mobile typed: no opt-in reaches the Worker
@@ -176,7 +177,7 @@ def sent(code, secs=6):
     return []
 
 PAGES = [('bingo', '/play'), ('musical', '/app/musical/play.html'), ('trivia', '/app/trivia/play.html')]
-AGE_TEXT, OPTIN_TEXT, AGE_NEEDED = "I'm 18 or over", "Keep me posted on what's on at the venue", "Tick I'm 18 or over to join."
+AGE_TEXT, OPTIN_TEXT, AGE_NEEDED = "I'm 18 or over", "Keep me posted on what's on at the venue", "To get venue news, tick I'm 18 or over."
 # A room code is six letters from the code alphabet (no O, 0, 1, I, L, B, 8): three say the scenario,
 # three count, so every page gets codes nobody else used.
 ALPHA = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'
@@ -222,7 +223,7 @@ def page(game, path):
         join(sid, 'Sam', age=False, optin=True, email='sam@example.com')
         time.sleep(0.8)
         err = ask(sid, 'document.getElementById("joinErr").textContent')
-        ok('B %s: Join with the 18+ tick empty is refused: "%s"' % (game, AGE_NEEDED), err == AGE_NEEDED, err)
+        ok('B %s: opt-in ticked, 18+ empty: Join is refused: "%s"' % (game, AGE_NEEDED), err == AGE_NEEDED, err)
         ok('B %s: and nothing was sent to the Worker (no join, no details)' % game, sent(c, 1.5) == [], sent(c, 0.1))
         # then ticking 18+ clears the message and the same press goes through
         ask(sid, 'document.getElementById("x18").click(); true')
@@ -235,14 +236,16 @@ def page(game, path):
         B.close_tab(tid)
 
     # C, D, E: what reaches the Worker comes from the opt-in tick alone, and only with a contact method.
-    for tag, optin, email, want in (('C', False, 'cee@example.com', False), ('D', True, 'dee@example.com', True), ('E', True, '', False)):
+    for tag, age, optin, email, want in (('N', False, False, 'nee@example.com', False), ('C', True, False, 'cee@example.com', False),
+                                         ('D', True, True, 'dee@example.com', True), ('E', True, True, '', False)):
         c = code('PTN'); tid, sid = open_page(path + sep + 'room=' + c, 390, 844)
         try:
             until(sid, READY)
-            join(sid, 'Pat', age=True, optin=optin, email=email)
+            join(sid, 'Pat', age=age, optin=optin, email=email)
             got = sent(c)
             has = any(b.get('marketing_optin') is True for b in got)
-            say = {'C': '18+ ticked, opt-in empty, email typed: joins with NO opt-in',
+            say = {'N': 'neither ticked, email typed: joins with NO opt-in, as joining worked before',
+                   'C': '18+ ticked, opt-in empty, email typed: joins with NO opt-in',
                    'D': '18+ and opt-in ticked, email typed: marketing_optin reaches the Worker',
                    'E': '18+ and opt-in ticked, no email or mobile: NO opt-in (nothing to keep posted by)'}[tag]
             ok('%s %s: %s' % (tag, game, say), bool(got) and has == want, got)
