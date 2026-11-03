@@ -18,10 +18,10 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:clip}
-  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body{background:#0A0A0B;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
-  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .tv{position:fixed;inset:0;container-type:inline-size;background:#0A0A0B;overflow:hidden}   /* flat near-black, no pink haze (new look, 3 Nov 2026) */
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   .hidden{display:none!important}
 
@@ -76,81 +76,116 @@
   .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
 
-  /* question layer */
-  .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
-  /* One fixed size for every question meant a long one was set at the same
-     54px as "WHO WROTE HAMLET" and ran off the bottom of the screen. Anton is a
-     condensed face so the steps can be big without looking odd. */
-  .qtext{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5.4cqw,54px);color:#fff;line-height:1.03;margin:1.6cqw 0 2.4cqw;max-width:92cqw}
-  .qtext.q-med  {font-size:clamp(19px,4.4cqw,44px);line-height:1.06}
-  .qtext.q-long {font-size:clamp(18px,3.6cqw,36px);line-height:1.1}
-  .qtext.q-epic {font-size:clamp(16px,2.9cqw,29px);line-height:1.14}
-  .qimg{max-width:min(54cqw,52vh);max-height:34cqw;object-fit:contain;border-radius:2cqw;margin:1cqw auto 0;display:block;box-shadow:0 0 42px rgba(0,0,0,.55);background:#000}
-  /* PICTURE ROUND. The image is the question, so it gets the height: about 36% of the screen,
-     with the four answers in one compact row underneath and a smaller ring, so on a 1080p wall
-     everything still fits inside the layer (checked: roughly 880px of the 994px available). */
-  .layer.pic .qimg{max-width:min(80cqw,64vh);max-height:36vh;margin:.4cqw auto 0}
-  .layer.pic .qtext{margin:1cqw 0 1.4cqw}
-  .layer.pic .answers{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.4cqw}
-  .layer.pic .ans{min-height:8cqw;padding:1cqw .8cqw;gap:.5cqw}
-  .layer.pic .ans .al{font-size:3cqw}
-  .layer.pic .ans .at{font-size:2cqw}
-  .layer.pic .qfoot{margin-top:1.4cqw;gap:4cqw}
-  .layer.pic .ringwrap{width:8cqw;height:8cqw}
-  .layer.pic .ringwrap .rnum{font-size:3cqw}
-  .layer.pic .ringwrap .rlbl{font-size:.8cqw;margin-top:.25cqw}
-  .layer.pic .answered{font-size:2.6cqw}
-  .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
-  .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
-  .ans{--ac:154,154,164;background:rgba(var(--ac),.12);border:0.32cqw solid rgba(var(--ac),.55);border-radius:2cqw;padding:2cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;min-height:14cqw;overflow:hidden;transition:opacity .3s,box-shadow .3s}
-  .answers.rev4 .ans{min-height:11cqw;padding:1.4cqw 1cqw;gap:.7cqw}
-  .ans.c0{--ac:255,77,77}
-  .ans.c1{--ac:77,141,255}
-  .ans.c2{--ac:255,194,75}
-  .ans.c3{--ac:53,208,127}
-  .answers.neutral .ans{--ac:154,154,164;background:var(--ink-3);border-color:var(--line)}
-  .ans .al{font-family:'Anton',sans-serif;font-size:5cqw;line-height:.9;color:rgb(var(--ac))}
-  .answers.rev4 .ans .al{font-size:3.4cqw}
-  .answers.neutral .ans .al{color:#fff}
-  .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.9cqw;color:#fff;text-align:center;line-height:1.08;word-break:break-word;overflow-wrap:anywhere}
-  .answers.rev4 .ans .at{font-size:2.1cqw}
-  /* THE RIGHT ANSWER LIGHTS UP IN ITS OWN COLOUR (Dean, 3 Nov 2026): B is blue on every phone, so
-     the card a table tapped is the card that lights. Not pink, and no longer a green that matches
-     the D card. A no-colour night keeps the green, because there the letters carry no colour. */
-  .ans.correct{background:rgba(var(--ac),.24);border-color:rgb(var(--ac));box-shadow:0 0 5cqw rgba(var(--ac),.45)}
-  .ans.correct .al{color:rgb(var(--ac))}
-  .answers.neutral .ans.correct{--ac:53,208,127;background:rgba(53,208,127,.22);border-color:var(--win)}
-  .answers.neutral .ans.correct .al{color:var(--win)}
-  .ans.dim{opacity:.38}
-  .split{width:100%;margin-top:.8cqw}
-  .split .sbar{height:1.2cqw;border-radius:1cqw;background:rgba(255,255,255,.12);overflow:hidden}
-  .split .sfill{height:100%;background:rgb(var(--ac));border-radius:1cqw;transition:width .6s ease}
-  .split .sc{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:1.9cqw;color:var(--text);margin-top:.5cqw}   /* TV body, not a code (3 Nov 2026) */
+  /* THE NEW LOOK (Dean, 3 Nov 2026; mock-ups in venue-enrich/reports/new-look-games-3nov). Flat near-black,
+     one label line top centre, and ONE GRID for the question and its reveal: the question text, the clock
+     box and the four answer cards sit in exactly the same place on both walls, so the reveal changes state
+     and never jumps. Every size is in cqw like the rest of the wall (1cqw is 19.2px on a 1920 set), so
+     /app/vp-oldtv.js can work it out on an older television. The cards end at 43.7cqw: that is where the
+     JOIN NOW card in the bottom-left corner starts on a 1280 set, and vp-fit would otherwise scale the
+     whole wall down to clear it. The question starts below the venue logo's tallest box (13% of the height).
+     These are places INSIDE the wall, not corner anchors: their left edges are written calc(Ncqw) so the
+     corner check (no corner mixes cqw and px) does not read them as the logo's corner, and how far they stay
+     from the px-anchored logo and the JOIN NOW card is measured at 1920 and 1280 by
+     tools/trivia-newlook-in-chrome.test.py. */
+  .layer.qgrid{display:block;padding:0;text-align:left}
+  /* THE GAME'S NAME, READABLE FROM THE BACK OF THE ROOM (Dean, 3 Nov 2026: "The title of the game needs to
+     be clearer on each TV"). "TRIVIA" in Anton, white, at 2.6cqw (50px on a 1920 set, 33px on 1280), and
+     where the night is up to beside it in Hanken Grotesk ("Question 3 of 20", "Scores", "Final scores").
+     One line, centred between the venue's logo (top left, up to 15% of the width for a wide wordmark) and
+     ours (top right), inside 20cqw to 80cqw so it never crowds either; tools/trivia-newlook-in-chrome.test.py
+     measures that with a round and a wide logo at 1920 and 1280. */
+  .toplbl{position:absolute;left:calc(20cqw);right:20cqw;top:2.5cqw;display:flex;align-items:baseline;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;color:#fff;line-height:1.15}
+  .toplbl .tl-night{font-family:'Anton',sans-serif;font-weight:400;font-size:2.6cqw;letter-spacing:.02em;text-transform:uppercase;color:#fff}
+  .toplbl b,.toplbl em{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.9cqw;letter-spacing:0;text-transform:none;font-style:normal;color:#F2F2F5}
+  .toplbl em{color:#FFD93D}
+  .toplbl .tl-dot{margin:0 1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.9cqw;color:#8A8A95}
+  .srt{position:absolute;left:50%;top:50%;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-  .qfoot{display:flex;align-items:center;justify-content:center;gap:6cqw;margin-top:3cqw}
-  .ringwrap{position:relative;width:12cqw;height:12cqw}
+  /* question layer */
+  .qcount{font-family:'JetBrains Mono',monospace;font-weight:700}
+  /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
+     with the length (Hanken 800, 76px at 1920 for a short one, as mocked). */
+  .qtext{position:absolute;left:calc(6.25cqw);top:9.4cqw;width:67.7cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
+  .qtext.q-med  {font-size:3.3cqw}
+  .qtext.q-long {font-size:2.7cqw;line-height:1.14}
+  .qtext.q-epic {font-size:2.25cqw;line-height:1.16}
+  .qimg{display:none;position:absolute;left:50%;top:17.6cqw;transform:translateX(-50%);max-width:60cqw;max-height:18.6cqw;object-fit:contain;border-radius:1.2cqw;background:#000;box-shadow:0 0 2.2cqw rgba(0,0,0,.55)}
+  /* PICTURE ROUND. The image is the question, so it gets the middle of the wall; the question text goes
+     smaller in the same place and the four answers sit in one row under the picture. Same on the reveal. */
+  .layer.pic .qimg{display:block}
+  .layer.pic .qimg.hidden{display:none!important}
+  .layer.pic .qtext{font-size:2.5cqw;line-height:1.14}
+  .layer.pic .answers{top:37.6cqw;grid-template-columns:1fr 1fr 1fr 1fr;grid-gap:1.3cqw;gap:1.3cqw}
+  .layer.pic .ans{height:6.3cqw;padding:0 1.2cqw 0 1.8cqw}
+  .layer.pic .ans .al{width:3.6cqw;height:3.6cqw;font-size:3.2cqw;margin-right:1.2cqw}
+  .layer.pic .ans .at,.layer.pic .answers.alen-2 .ans .at,.layer.pic .answers.alen-3 .ans .at{font-size:1.8cqw;padding-right:0}
+  .layer.pic .ans .sc{top:.5cqw;right:1cqw;font-size:1.1cqw}
+  .layer.pic .ans .split{left:1.8cqw;right:1.2cqw;bottom:.6cqw}
+  .layer.pic .ringwrap{width:10cqw;height:10cqw}
+  .layer.pic .ringwrap .rnum{font-size:4.6cqw}
+  .layer.pic .ringwrap .rlbl{font-size:1.1cqw;margin-top:.25cqw}
+  .layer.pic .qfoot,.layer.pic .gotbox{width:10cqw}
+  .layer.pic .gotbox{height:10cqw}
+  .layer.pic .gotbox .gc{font-size:4.6cqw}
+  .layer.pic .answered{margin-top:.6cqw}
+  .answers{position:absolute;left:calc(6.25cqw);right:6.25cqw;top:25.4cqw;display:grid;grid-template-columns:1fr 1fr;grid-gap:1.3cqw 1.46cqw;gap:1.3cqw 1.46cqw}
+  /* The four answer colours (Dean, 3 Nov 2026): coral, blue, amber, violet. None is pink (the brand's
+     accent), none is brand yellow (winning moments) and none is green (green is the right answer). The
+     colour is a 14px edge and a filled letter chip on a neutral card, the same on the TV and the phone. */
+  .ans{--c:#8A8A95;position:relative;height:8.5cqw;border-radius:1.15cqw;background:#1A1A1F;padding:0 9cqw 0 2.3cqw;display:flex;align-items:center;overflow:hidden;transition:opacity .3s,transform .3s}
+  .ans::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.73cqw;background:var(--c)}
+  .ans.c0{--c:#FF5A4E}
+  .ans.c1{--c:#4D8DFF}
+  .ans.c2{--c:#FFA53D}
+  .ans.c3{--c:#A57BFF}
+  .answers.neutral .ans{--c:#3A3A42}
+  .answers.neutral .ans::before{display:none}
+  .ans .al{flex:none;width:5.4cqw;height:5.4cqw;margin-right:1.9cqw;border-radius:.83cqw;background:var(--c);color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:4.8cqw;line-height:1}   /* the letter fills its chip: as big as the old wall's 5cqw letters (Dean, 3 Nov 2026) */
+  .answers.neutral .ans .al{color:#fff}
+  .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.54cqw;line-height:1.05;color:#fff;overflow-wrap:break-word;min-width:0}
+  .answers.alen-2 .ans .at{font-size:2.8cqw;line-height:1.08}
+  .answers.alen-3 .ans .at{font-size:2.2cqw;line-height:1.1}
+  .answers.alen-4 .ans .at{font-size:1.8cqw;line-height:1.12}
+  .ans.dim{opacity:.32}
+  /* THE RIGHT ANSWER TURNS GREEN (Dean's main option, 3 Nov 2026) and lifts a little, with a black
+     RIGHT ANSWER tag. Its letter chip keeps its own colour on black, so a player still sees "it was B". */
+  .ans.correct{background:#2FD08A;transform:scale(1.035);box-shadow:0 0 0 .31cqw #0A0A0B,0 0 3.1cqw -.3cqw rgba(47,208,138,.55);overflow:visible;z-index:2}
+  .ans.correct::before{display:none}
+  .ans.correct .al{background:#0A0A0B;color:var(--c)}
+  .answers.neutral .ans.correct .al{color:#fff}
+  .ans.correct .at{color:#0A0A0B}
+  .ans .rtag{position:absolute;left:2.3cqw;top:-1.15cqw;background:#0A0A0B;color:#fff;border:.16cqw solid #fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.25cqw;line-height:1;letter-spacing:.16em;text-transform:uppercase;padding:.5cqw .83cqw;border-radius:.42cqw;white-space:nowrap}
+  .ans .sc{position:absolute;right:2.3cqw;top:1.3cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.67cqw;line-height:1;color:#8A8A95;white-space:nowrap}
+  .ans.correct .sc{color:#0A0A0B;font-size:2.08cqw;top:1.1cqw}
+  .ans .split{position:absolute;left:2.3cqw;right:2.3cqw;bottom:1cqw}
+  .ans .split .sbar{height:.52cqw;border-radius:.26cqw;background:rgba(255,255,255,.08);overflow:hidden}
+  .ans .split .sfill{height:100%;background:var(--c);border-radius:.26cqw;transition:width .6s ease}
+  .ans.correct .split .sbar{background:rgba(10,10,11,.16)}
+  .ans.correct .split .sfill{background:#0A0A0B}
+
+  /* THE CLOCK (the bold "20 SECS" of 2 Nov 2026, kept): a ring in the top-right box, the seconds in Anton
+     with SECS under them, and the answered count below. On the reveal the same box holds "33 /43 got it right". */
+  .qfoot{position:absolute;right:6.25cqw;top:6.5cqw;width:13.5cqw;text-align:center}
+  .ringwrap{position:relative;width:13.5cqw;height:13.5cqw;margin:0 auto}
   .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
-  .ringwrap .rbg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:8}
-  .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
-  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.4cqw;line-height:1;color:#fff}
+  .ringwrap .rbg{fill:none;stroke:#1A1A1F;stroke-width:6}
+  .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:6.4cqw;line-height:1;color:#fff}
   /* "SECS" under the number (Dean, 2 Nov 2026): a bare "13" in a ring did not read as a timer.
-     Same family as the ANSWERED label beside it. The number and label are centred as one pair,
-     and both sit well inside the ring's inner circle (radius 40% of the ring) at every size;
-     tools/old-tv-in-chrome.test.py measures that at 1920, 1280 and 1024 wide, new and old sets. */
-  .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:1.2cqw;line-height:1;color:rgba(255,255,255,.78);margin-top:.35cqw;padding-left:.14em}
-  .answered{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--text)}
-  .answered b{color:var(--gold)}
-  .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
+     The number and label are centred as one pair, and both sit well inside the ring's inner circle
+     (radius 40% of the ring) at every size; tools/old-tv-in-chrome.test.py measures that at 1920, 1280
+     and 1024 wide, new and old sets. */
+  .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:1.5cqw;line-height:1;color:#fff;margin-top:.3cqw;padding-left:.16em}
+  .answered{margin-top:.8cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.3cqw;line-height:1;color:#fff}
+  .answered b{color:#fff}
+  .answered .sub{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;margin-top:.5cqw;padding-left:.2em}
+  .gotbox{position:absolute;right:6.25cqw;top:6.5cqw;width:13.5cqw;height:13.5cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .gotbox .gc{font-family:'Anton',sans-serif;font-size:6.8cqw;line-height:1;color:#fff;white-space:nowrap}
+  .gotbox .gc span{color:#8A8A95;font-size:.46em}
+  .gotbox .gl{margin-top:.73cqw;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95;white-space:nowrap}
 
   /* reveal / board */
-  .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.4cqw,28px);color:rgb(var(--rc,53,208,127));margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
-  /* The question stays on the wall at the reveal (Dean, 3 Nov 2026): a table that looked up from its
-     drinks reads what was asked as well as the answer. Same face as the question, a size down. */
-  .revq{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(18px,4.2cqw,46px);color:#fff;line-height:1.04;margin:0 0 1.4cqw;max-width:92cqw}
-  .revq.q-med{font-size:clamp(17px,3.6cqw,40px)}
-  .revq.q-long{font-size:clamp(16px,3cqw,32px);line-height:1.08}
-  .revq.q-epic{font-size:clamp(15px,2.4cqw,26px);line-height:1.12}
-  .revboard{width:100%;max-width:70cqw;margin-top:2.6cqw;display:flex;flex-direction:column;gap:.8cqw}
+  .revboard{display:none}
   /* PAPER NIGHT (Dean, 25 Sep 2026): answers held to the end of the round, then listed. */
   .papersub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,3.2cqw,34px);color:var(--muted,#bbb);max-width:80cqw;line-height:1.25}
   .paperlist{width:100%;max-width:84cqw;display:flex;flex-direction:column;gap:.6cqw;margin-top:1cqw;text-align:left}
@@ -160,42 +195,39 @@
   .prow .pa{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.1cqw,24px);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .prow .pa small{display:block;font-weight:500;font-size:.72em;color:var(--muted,#bbb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .boardtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,58px);color:#fff;line-height:1;margin-bottom:2.4cqw}
-  .boardpage{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(10px,1.5cqw,15px);color:var(--muted);margin-top:1.6cqw}
-  .podium.four .pcol{width:19cqw}
-  .board{width:100%;max-width:70cqw;display:flex;flex-direction:column;gap:1cqw}
-  .brow{display:grid;grid-template-columns:7cqw 1fr auto;gap:2cqw;align-items:center;padding:1.3cqw 2.6cqw;border:0.2cqw solid var(--line);border-radius:1.6cqw;background:rgba(255,255,255,.02)}
-  .revboard .brow{padding:.9cqw 2cqw;border-radius:1.2cqw}
-  .brow.top1{border-color:var(--gold);background:rgba(255,194,75,.08)}
-  .brow .r{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.8cqw;color:var(--muted)}
-  .brow.top1 .r{color:var(--gold)}
-  .brow .n{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .brow .s{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3cqw;color:var(--gold)}
-  .revboard .brow .r,.revboard .brow .n,.revboard .brow .s{font-size:2.3cqw}
+  /* THE LEADERBOARD: an Anton title, then rows on dark cards; first place gets a pink edge and a pink
+     place number. The board stays right of 23.5cqw, clear of the JOIN NOW card in the bottom-left, and six
+     rows and the page line end near 50cqw, so the bottom margin is well over the top one (Dean, 3 Nov 2026). */
+  .layer.qgrid .boardtitle{position:absolute;left:calc(18cqw);right:18cqw;top:7.6cqw;margin:0;text-align:center;font-size:5.42cqw;white-space:nowrap;overflow:hidden}
+  .board{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:15.5cqw;display:flex;flex-direction:column}
+  .brow{position:relative;height:4.6cqw;margin-bottom:.7cqw;border-radius:.94cqw;background:#1A1A1F;display:flex;align-items:center;padding:0 2.3cqw;overflow:hidden}
+  .brow.top1::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.52cqw;background:var(--pink)}
+  .brow .r{flex:none;width:5.7cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2cqw;color:#8A8A95}
+  .brow.top1 .r{color:var(--pink)}
+  .brow .n{flex:1;min-width:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.45cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .s{flex:none;margin-left:1.6cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.3cqw;color:#fff}
+  .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:48.4cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95}
 
-  /* THE WINNERS SCREEN. This was three thin columns with medal emoji and near-black bars, and it
-     is the screen a room photographs. Dean, 22 Sep 2026, with a competitor's board that a table
-     had posted to Facebook: bright bands, big place numbers, the winner unmistakable. So: a stack
-     of bands, the place in Anton on the left, the team name as the loudest text on the wall, the
-     score in mono on the right. First is a pink band with the neon glow; second and third are
-     stage-black with a hairline. No emoji. Bands enter one after another, third first, so the
-     winner is the last thing revealed. */
-  .podium{display:flex;flex-direction:column;align-items:stretch;gap:1.6cqw;margin-top:1cqw;width:100%;max-width:78cqw}
-  .podium.four{max-width:82cqw}
-  .pcol{display:grid;grid-template-columns:9cqw 1fr auto;align-items:center;gap:2.4cqw;padding:1.6cqw 3cqw 1.6cqw 2cqw;border-radius:1.6cqw;
-    border:0.2cqw solid var(--line);background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
-    opacity:0;transform:translateX(-3cqw);animation:bandin .55s cubic-bezier(.22,1,.36,1) forwards}
-  .pcol.first{border-color:var(--pink);background:linear-gradient(90deg,rgba(255,31,142,.55),rgba(255,31,142,.18));box-shadow:0 0 3cqw rgba(255,31,142,.45),inset 0 0 0 0.1cqw rgba(255,255,255,.12);animation-delay:.9s;padding:2.2cqw 3cqw 2.2cqw 2cqw}
+  /* THE WINNERS SCREEN: three steps, second, first, third, the team names and scores standing on them,
+     first in Anton yellow with a yellow top and a soft yellow glow (yellow is for winning moments only).
+     The steps stand on a line at 43.6cqw, above the JOIN NOW card. Ties share a step, up to four steps.
+     Steps rise one after another, third first, so the winner is the last thing revealed. No emoji. */
+  .podium{position:absolute;left:calc(4cqw);right:4cqw;top:12.4cqw;height:31.2cqw;display:flex;align-items:flex-end;justify-content:center}
+  .pcol{flex:none;width:24cqw;margin:0 1cqw;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;opacity:0;transform:translateY(2cqw);animation:bandin .55s cubic-bezier(.22,1,.36,1) forwards}
+  .pcol.first{width:27cqw;animation-delay:.9s}
   .pcol.second{animation-delay:.45s} .pcol.third{animation-delay:0s}
-  .pcol .medal{font-family:'Anton',sans-serif;font-size:6cqw;line-height:1;color:var(--muted);text-align:center}
-  .pcol.first .medal{color:#fff;font-size:7.5cqw;text-shadow:0 0 2cqw rgba(255,255,255,.5)}
-  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.6cqw;color:#fff;text-align:left;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pcol.first .pn{font-size:4.6cqw}
-  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--gold);text-align:right}
-  .pcol.first .ps{color:#fff;font-size:4.2cqw}
-  .pcol .bar{display:none}
+  .podium.four .pcol{width:19.5cqw;margin:0 .8cqw}
+  .pcol .pwho{text-align:center;padding:0 1cqw 1.45cqw}
+  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.7cqw;line-height:1.05;color:#fff;overflow-wrap:break-word}
+  .pcol.first .pn{font-size:3.44cqw}
+  .pcol .pn span{color:#8A8A95;font-size:.6em}
+  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.08cqw;line-height:1;color:#8A8A95;margin-top:.73cqw}
+  .pcol.first .ps{color:#FFD93D}
+  .pcol .medal{height:9.5cqw;border-radius:1.15cqw;background:#1A1A1F;border-top:.42cqw solid #2A2A31;display:flex;justify-content:center;padding-top:1cqw;font-family:'Anton',sans-serif;font-size:6.2cqw;line-height:1;color:rgba(255,255,255,.35)}
+  .pcol.second .medal{height:12.5cqw}
+  .pcol.first .medal{height:17cqw;font-size:7.8cqw;color:#FFD93D;border-top-color:#FFD93D;box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,217,61,.55)}
   @keyframes bandin{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.pcol{animation:none;opacity:1;transform:none}}
-
   /* join corner */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
@@ -247,8 +279,8 @@
   </div>
 
   <!-- question -->
-  <div class="layer hidden" id="tvQ">
-    <div class="qcount" id="tvQCount">Question 1</div>
+  <div class="layer hidden qgrid" id="tvQ">
+    <div class="toplbl"><span class="tl-night" id="tvQNight">Trivia</span><span class="tl-dot">&middot;</span><b class="qcount" id="tvQCount">Question 1</b></div>
     <img class="qimg hidden" id="tvQImg" alt="" onerror="this.classList.add('hidden');var l=this.parentNode;if(l&&l.classList)l.classList.remove('pic')">
     <div class="qtext" id="tvQText">Question</div>
     <div class="answers" id="tvAnswers"></div>
@@ -261,11 +293,15 @@
     </div>
   </div>
 
-  <!-- reveal -->
-  <div class="layer hidden" id="tvReveal">
-    <div class="revq hidden" id="tvRevQ"></div>
-    <div class="revhead" id="tvRevHead">Correct answer</div>
-    <div class="answers rev4" id="tvRevAnswers"></div>
+  <!-- reveal: the SAME grid as the question (same label, same question text in the same place, the same
+       four cards), so only the state changes; the clock box holds how many got it right -->
+  <div class="layer hidden qgrid" id="tvReveal">
+    <div class="toplbl"><span class="tl-night" id="tvRevNight">Trivia</span><span class="tl-dot">&middot;</span><b class="qcount" id="tvRevCount">Question</b></div>
+    <img class="qimg hidden" id="tvRevImg" alt="" onerror="this.classList.add('hidden');var l=this.parentNode;if(l&&l.classList)l.classList.remove('pic')">
+    <div class="qtext" id="tvRevQText"></div>
+    <div class="revhead srt" id="tvRevHead">Correct answer</div>
+    <div class="answers" id="tvRevAnswers"></div>
+    <div class="gotbox" id="tvRevGot"><div class="gc"><b id="tvRevRight">0</b><span id="tvRevOf"></span></div><div class="gl">got it right</div></div>
     <div class="revboard" id="tvRevBoard"></div>
   </div>
 
@@ -279,14 +315,16 @@
   <!-- leaderboard -->
   <!-- Punters Reckon (feature/top-answers, switched off): the board is drawn by /app/topanswers/pr-board.js -->
   <div class="layer hidden" id="tvPR" data-fit-self style="padding:0;container-type:inline-size"></div>
-  <div class="layer hidden" id="tvBoard">
+  <div class="layer hidden qgrid" id="tvBoard">
+    <div class="toplbl"><span class="tl-night" id="tvBoardNight">Trivia</span><span class="tl-dot">&middot;</span><b>Scores</b></div>
     <div class="boardtitle" id="tvBoardTitle">Leaderboard</div>
     <div class="board" id="tvBoardRows"></div>
     <div class="boardpage hidden" id="tvBoardPage"></div>
   </div>
 
   <!-- podium -->
-  <div class="layer hidden" id="tvPodium">
+  <div class="layer hidden qgrid" id="tvPodium">
+    <div class="toplbl"><span class="tl-night" id="tvPodNight">Trivia</span><span class="tl-dot">&middot;</span><em>Final scores</em></div>
     <div class="boardtitle">Winners tonight</div>
     <div class="podium" id="tvPodiumCols"></div>
   </div>
@@ -307,6 +345,7 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer (3 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; off unless ?sting=1 (1 Nov 2026; off by default again since the 2 Nov hotfix) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
@@ -406,8 +445,15 @@
 
   // ---- layers ----
   var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];
+  /* The label line's first half is the game's name, TRIVIA, the same on every wall. */
+  function paintNight(){
+    /* The GAME's name, the same on every wall (Dean, 3 Nov 2026); the night's own title is the lobby's. */
+    var t="Trivia", ids=["tvQNight","tvRevNight","tvBoardNight","tvPodNight"];
+    for(var i=0;i<ids.length;i++){ var n=$(ids[i]); if(n) n.textContent=t; }
+  }
   function show(which){
     if(which!=="tvBoard") stopBoardPaging();
+    paintNight();
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
     if(which!=="tvLobby"){ try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // the waiting card is the lobby's only
@@ -521,17 +567,26 @@
     if(remMs<=0){ stopRing(); }
   }
 
+  /* One size rule for the question text, used by the question AND its reveal so the two can never differ. */
+  function qClass(q){ q=String(q||""); return "qtext" + (q.length > 150 ? " q-epic" : q.length > 95 ? " q-long" : q.length > 55 ? " q-med" : ""); }
+  /* The four answers share one size, set by the longest, on the question and the reveal alike. */
+  function ansLenClass(opts){ var n=0; for(var i=0;i<(opts||[]).length;i++) n=Math.max(n, String(opts[i]==null?"":opts[i]).length);
+    return n>52 ? " alen-4" : n>24 ? " alen-3" : n>14 ? " alen-2" : ""; }
   function renderQuestion(m){
     stopRing(); if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
     var dur=m.secs || Math.max(1, Math.round((m.endsAt-Date.now())/1000));
-    curQ={ qseq:m.qseq, text:m.text||"", options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null };
+    curQ={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null, text:m.text||"", imageUrl:"", double:m.double===true,
+           label:(m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question",
+           /* LIVE: the clock was still running when this arrived. A replay to a TV that reloaded after the
+              clock ran out carries secs 0 and is not live, so its "lock" never sounds the buzzer. */
+           live:(typeof m.secs==="number") ? m.secs>1 : ((Number(m.endsAt)||0)-Date.now()>1500), buzzed:false };
     answeredPids={};
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
     if(m.double===true){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvQCount").appendChild(dp); }
     var qi=$("tvQImg"), lay=$("tvQ"), hasPic=!!(m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl)));
-    if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
+    if(hasPic){ qi.src=m.imageUrl; qi.classList.remove("hidden"); curQ.imageUrl=m.imageUrl; } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
     lay.classList.toggle("pic", hasPic);   // picture round layout; a picture that fails to load drops back to this text layout (see onerror)
     /* Size to the question, so it fits the wall instead of running off it. The
        thresholds are character counts because Anton is fixed-width enough at
@@ -539,10 +594,8 @@
        question in the bank. */
     var _qt = $("tvQText"), _q = m.text||"";
     _qt.textContent = _q;
-    _qt.className = "qtext" + (_q.length > 150 ? " q-epic"
-                             : _q.length > 95  ? " q-long"
-                             : _q.length > 55  ? " q-med" : "");
-    var wrap=$("tvAnswers"); wrap.className="answers"; wrap.innerHTML="";
+    _qt.className = qClass(_q);
+    var wrap=$("tvAnswers"); wrap.className="answers"+ansLenClass(curQ.options); wrap.innerHTML="";
     for(var i=0;i<curQ.options.length;i++){
       var box=el("div","ans c"+i);
       box.appendChild(el("span","al",LETTERS[i]));
@@ -555,39 +608,44 @@
     ringTimer=setInterval(tickRing, 300); tickRing();
   }
 
-  /* The reveal's own copy of the question. A screen that joined mid-reveal never saw the question,
-     so it has no text and the line stays hidden rather than showing a blank band. */
-  var REV_RGB = ["255,77,77","77,141,255","255,194,75","53,208,127"];   // the .ans.c0 to .c3 colours
-  function paintRevQuestion(q){
-    var rq=$("tvRevQ"); if(!rq) return;
-    q=String(q||"");
-    rq.textContent=q;
-    rq.className="revq" + (!q ? " hidden" : q.length > 150 ? " q-epic" : q.length > 95 ? " q-long" : q.length > 55 ? " q-med" : "");
-  }
   function renderReveal(m){
     stopRing();
     if(!curQ) curQ={ options:m.options||[] };
     curQ.correct=m.correctIndex;
+    curQ.buzzed=true;                 // the host revealed: a lock arriving after this never sounds
     show("tvReveal");
     var opts=curQ.options||m.options||[];
+    if((!opts || !opts.length) && Array.isArray(m.options)) opts=m.options;
     var ci=m.correctIndex;
     $("tvRevHead").textContent="Correct answer: "+LETTERS[ci]+" · "+(opts[ci]||"");
-    paintRevQuestion(curQ.text||m.text||"");
+    /* THE SAME GRID AS THE QUESTION: label, question text, picture and cards land where they just were. */
+    $("tvRevCount").textContent=curQ.label||"Question";
+    if(curQ.double){ var dp=document.createElement("span"); dp.className="dblpts"; dp.textContent="Double points"; $("tvRevCount").appendChild(dp); }
+    var rq=$("tvRevQText"); rq.textContent=curQ.text||""; rq.className=qClass(curQ.text);
+    var lay=$("tvReveal"), ri=$("tvRevImg"), pic=curQ.imageUrl || ((m.imageUrl && /^https?:\/\//i.test(String(m.imageUrl))) ? m.imageUrl : "");
+    if(pic){ if(ri.getAttribute("src")!==pic) ri.src=pic; ri.classList.remove("hidden"); } else { ri.classList.add("hidden"); ri.removeAttribute("src"); }
+    lay.classList.toggle("pic", !!pic);
     var split=m.split||[0,0,0,0], total=0;
-    for(var t=0;t<split.length;t++) total+=split[t]; if(total===0) total=1;
-    var wrap=$("tvRevAnswers"); wrap.className="answers rev4"; wrap.innerHTML="";
+    for(var t=0;t<split.length;t++) total+=(Number(split[t])||0);
+    var right=Number(split[ci])||0;
+    $("tvRevRight").textContent=right;                              // numeric: a forged string cannot reach innerHTML
+    $("tvRevOf").textContent = total>0 ? " /"+total : "";
+    var den = total===0 ? 1 : total;
+    var wrap=$("tvRevAnswers"); wrap.className="answers"+ansLenClass(opts); wrap.innerHTML="";
     for(var i=0;i<opts.length;i++){
       var box=el("div","ans c"+i+(i===ci?" correct":" dim"));
+      if(i===ci) box.appendChild(el("span","rtag","Right answer"));
       box.appendChild(el("span","al",LETTERS[i]));
       box.appendChild(el("span","at",esc(opts[i])));
+      var _sc=Number(split[i])||0;
+      box.appendChild(el("span","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
       var sp=el("div","split");
-      var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round((split[i]||0)/total*100)+"%"; bar.appendChild(fill);
-      sp.appendChild(bar); var _sc=Number(split[i])||0; sp.appendChild(el("div","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
+      var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round(_sc/den*100)+"%"; bar.appendChild(fill);
+      sp.appendChild(bar);
       box.appendChild(sp);
       wrap.appendChild(box);
     }
     applyColour(wrap);
-    $("tvReveal").style.setProperty("--rc", state.colour && REV_RGB[ci] ? REV_RGB[ci] : "53,208,127");   // the heading in the right answer's own colour
     renderRows($("tvRevBoard"), m.leaderboard||[], 5);
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
@@ -601,7 +659,7 @@
     var n=Math.min(limit, rows.length), ranks=sharedRanks(rows);
     for(var i=0;i<n;i++){
       var row=el("div","brow"+(i===0?" top1":""));
-      row.appendChild(el("span","r",(ranks[i].charAt(0)==="="?"":"#")+ranks[i]));
+      row.appendChild(el("span","r",ranks[i]));
       row.appendChild(el("span","n",esc(rows[i].name)));
       row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
       container.appendChild(row);
@@ -625,12 +683,13 @@
       var start=page*TV_BOARD_ROWS, end=Math.min(rows.length, start+TV_BOARD_ROWS);
       for(var i=start;i<end;i++){
         var row=el("div","brow"+(i===0?" top1":""));
-        row.appendChild(el("span","r",(ranks[i].charAt(0)==="="?"":"#")+ranks[i]));
+        row.appendChild(el("span","r",ranks[i]));
         row.appendChild(el("span","n",esc(rows[i].name)));
         row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
         box.appendChild(row);
       }
       /* No rows: the board stays empty under its title, with no empty-state words on the wall. */
+      /* NO EMPTY-STATE TEXT ON THE WALL (Dean, 3 Nov 2026): a board with no rows yet shows its title and nothing else. */
       var ph=$("tvBoardPage");
       if(ph){ if(pages>1){ ph.textContent="Teams "+(start+1)+" to "+end+" of "+rows.length; ph.classList.remove("hidden"); } else ph.classList.add("hidden"); }
     }
@@ -656,16 +715,20 @@
     var cols=$("tvPodiumCols"); cols.innerHTML="";
     var ents=podiumEntries(top, rows);
     var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"1",2:"2",3:"3"};
-    // Top to bottom, first at the top: it is a leaderboard now, not three columns.
-    var order=ents.slice().sort(function(a,b){ return a.rank-b.rank; });
+    /* On steps: second, first, third (and a tied fourth on the right). Sorted by place first, so a tie
+       for first puts both winners in the middle two steps. */
+    var byRank=ents.slice().sort(function(a,b){ return a.rank-b.rank; });
+    var SPOT={1:[0],2:[1,0],3:[1,0,2],4:[1,0,2,3]}[byRank.length]||[];
+    var order=SPOT.map(function(k){ return byRank[k]; });
     cols.classList.toggle("four", order.length>3);
     var tiedRank={}; ents.forEach(function(e){ tiedRank[e.rank]=(tiedRank[e.rank]||0)+1; });
-    order.forEach(function(o){ if(!o.p) return;
+    order.forEach(function(o){ if(!o || !o.p) return;
       var col=el("div","pcol "+CLS[o.rank]);
+      var who=el("div","pwho");
+      who.appendChild(el("div","pn",esc(o.p.name)+(tiedRank[o.rank]>1?' <span>(tied)</span>':'')));
+      who.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
+      col.appendChild(who);
       col.appendChild(el("div","medal",MEDAL[o.rank]));
-      col.appendChild(el("div","pn",esc(o.p.name)+(tiedRank[o.rank]>1?' <span style="color:var(--muted);font-size:.7em">(tied)</span>':'')));
-      col.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
-      col.appendChild(el("div","bar"));
       cols.appendChild(col);
     });
     celebrate(9000);
@@ -687,6 +750,27 @@
   var _ac=null;
   function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
   document.addEventListener("pointerdown", unlockAudio, { once:true });
+  /* A TV is driven by a REMOTE: its first button press is a key, never a pointer. Any press unlocks sound. */
+  document.addEventListener("keydown", unlockAudio, { once:true });
+
+  /* ---- TIME'S UP: a short buzzer on the TV when the clock reaches 0 (Dean, 3 Nov 2026) ----------------
+     Once per question, at the host's "lock" (the moment the clock hits 0), on this wall only: never on
+     the phones, never on the reveal, never twice, and not when the host reveals early (that sends no
+     lock, and the reveal marks the question done). OFF unless the host switches it on, and silent here when the
+     host has chosen to play it on their own device (the console then sends buzzer:false). A demo is a sales page on somebody's laptop: always silent.
+     The sound is /app/vp-buzzer.js (shared with the host console, which can play it instead): two soft
+     notes, 0.8 s. Blocked sound (a TV browser that has not been pressed yet) fails silently: nothing
+     on the wall, and the console is told once so the host can press OK on the remote. */
+  var BUZZ={ on:false, said:"" };   // OFF until the host switches it on (Dean, 3 Nov 2026: a venue that does not want it just leaves it off)
+  function buzzSay(sound){ if(BUZZ.said===sound) return; BUZZ.said=sound; try{ tvSend({ t:"tv_here", sound:sound }); }catch(e){} }
+  function timesUp(){
+    if(VP_DEMO || !BUZZ.on) return false;
+    if(!curQ || curQ.buzzed || !curQ.live || state.phase!=="question") return false;
+    curQ.buzzed=true;
+    try{ unlockAudio(); }catch(e){}
+    if(window.VPBuzzer) window.VPBuzzer.play(_ac, buzzSay); else buzzSay("off");   /* the one copy of the sound: /app/vp-buzzer.js */
+    return true;
+  }
   function playFanfare(){
     /* One copy, in /app/vp-celebrate.js. This was written out eight times
        across the phones and the screens and had already drifted into three
@@ -811,7 +895,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -900,6 +984,7 @@
     else if(m.t==="question"){
       state.phase="question";
       if(typeof m.colour==="boolean") state.colour=m.colour;
+      if(typeof m.buzzer==="boolean") BUZZ.on=m.buzzer;
       renderQuestion(m);
     }
     else if(m.t==="answer"){
@@ -919,6 +1004,10 @@
     }
     else if(m.t==="lock"){
       stopRing(); setRing(0); $("tvCdNum").textContent="0";
+      if(!m.to) timesUp();                              // the time's-up buzzer, once per question
+    }
+    else if(m.t==="buzzer"){                            // the host's switch on the console
+      if(typeof m.on==="boolean") BUZZ.on=m.on;
     }
     else if(m.t==="reveal"){
       state.phase="reveal";
