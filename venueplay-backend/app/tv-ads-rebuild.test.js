@@ -65,6 +65,9 @@ function classList(node){
 function el(){
   var node = { className:"", style:{}, childNodes:[], live:false };
   node.classList = classList(node);
+  node.attrs = {};   // a holding card is marked data-fit-self (4 Nov 2026)
+  node.setAttribute = function(k, v){ node.attrs[k] = String(v); };
+  node.getAttribute = function(k){ return node.attrs.hasOwnProperty(k) ? node.attrs[k] : null; };
   node.appendChild = function(n){
     // Appending MOVES a node, exactly as a browser does. Without that, draining a detached
     // container with `while (pending.firstChild)` never finishes.

@@ -126,7 +126,10 @@ def setting_up(r):
 # Every step of the intro, from before the page's own script: [ms, tri, word, line, breath, state].
 INTRO_WATCH = r"""window.__vpIntro=[]; (function(){ var h=document.documentElement;
   function rec(){ window.__vpIntro.push([Math.round(performance.now()), h.getAttribute("data-tvi-tri")||"", h.getAttribute("data-tvi-word")||"", h.getAttribute("data-tvi-line")||"", h.getAttribute("data-tvi-breath")||"", h.getAttribute("data-tvi")||""]); }
-  new MutationObserver(rec).observe(h,{attributes:true}); })();"""
+  /* Run before the page has an <html> element (documentElement is null this early, so observing it threw and
+     nothing was ever recorded, 4 Nov 2026): watch the document for attributes and keep the root's. */
+  new MutationObserver(function(ms){ h=document.documentElement; for(var i=0;i<ms.length;i++){ if(ms[i].target===h){ rec(); return; } } })
+    .observe(document,{attributes:true,subtree:true,attributeFilter:["data-tvi","data-tvi-tri","data-tvi-word","data-tvi-line","data-tvi-breath"]}); })();"""
 LUM = {'0': 0.13, 'a': 0.75, 'b': 1.0, 'c': 0.08, 'd': 0.7, '': 1.0}
 
 def intro(r):
@@ -193,7 +196,8 @@ def lobbies(r):
     r.until(t0, '!!document.querySelector("#tvAds .ad.show .tvhold")', 20); time.sleep(0.5)
     ref = look(r, t0); r.close_tab(tid0)
     for g in ('trivia', 'musical'):
-        tid, t = r.open('/app/%s/screen?venue=%s' % (g, slug), width=W, height=H)
+        # as /tv hands over (sessionStorage vpTvHop): a cold open of a game screen is bounced to /tv by its divert guard
+        tid, t = r.open('/app/%s/screen?venue=%s' % (g, slug), before='try{sessionStorage.setItem("vpTvHop", %s)}catch(e){}' % json.dumps(slug), width=W, height=H)
         ok('%s: the waiting card is up' % g, r.until(t, '(function(c){return !!c&&!c.hidden&&c.getBoundingClientRect().height>0;})(document.getElementById("tvHoldCard"))', 20) is True)
         time.sleep(0.5)
         v = look(r, t, '#tvHoldCard')
@@ -209,6 +213,8 @@ def still(r):
     r.B.call('Emulation.setEmulatedMedia', {'features': [{'name': 'prefers-reduced-motion', 'value': 'reduce'}]}, session=t)
     ok('CONTROL: the TV is on its holding card', r.until(t, '!!document.querySelector("#tvAds .ad.show .tvhold")', 25) is True)
     ok('CONTROL: the page sees reduced motion', r.ask(t, 'matchMedia("(prefers-reduced-motion: reduce)").matches') is True)
+    # the intro was armed before reduced motion was asked for (the page opened first): look once it is over
+    r.until(t, 'document.documentElement.getAttribute("data-tvi")==="done"', 8)
     time.sleep(0.5)
     v = look(r, t)
     ok('the triangle is still', v.get('anim') == 'none' and not (r.ask(t, ANIMS) or []), [v.get('anim'), r.ask(t, ANIMS)])
@@ -243,6 +249,8 @@ def handover(r, pending_pos):
     h = h[0] if h else {}
     ok('both over 0.3 s (vpLineOut, vpLineIn)', h.get('anim') == 'vpLineOut 0.3s' and h.get('animIn') == 'vpLineIn 0.3s', h)
     ok('the new card went up at once, not with the 0.8 s slide fade', h.get('snap') is True, h)
+    r.until(t, 'document.documentElement.getAttribute("data-tvi")==="done"', 8)   # the card at rest, after the first-load intro
+    time.sleep(0.4)
     v = look(r, t)
     ok('the logo did not move by a pixel: the same box while it changed, after it, and as "Setting up" on its own',
        h.get('logo') and v.get('logo') and pending_pos and all(abs(a - b) <= 0.5 for a, b in zip(h['logo'], v['logo']))
@@ -266,7 +274,7 @@ def handover(r, pending_pos):
 LOGO_WATCH = r'''window.__vpLogo=[];
 new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes||[],function(n){
   if(n.id!=="venueLogo") return;
-  var rec=function(){ window.__vpLogo.push([Math.round(performance.now()), n.style.display, n.style.opacity]); };
+  var rec=function(){ window.__vpLogo.push([Math.round(performance.now()), n.style.display, n.style.opacity, getComputedStyle(n).opacity]); };
   rec(); new MutationObserver(rec).observe(n,{attributes:true,attributeFilter:["style"]});
 }); }); }).observe(document,{childList:true,subtree:true});'''
 LBOX = r'''(function(d){ var e=d&&d.getElementById("venueLogo"); if(!e) return null; var s=(d.defaultView||window).getComputedStyle(e), b=e.getBoundingClientRect();
@@ -284,7 +292,8 @@ def corner(r, t):
     seen = r.ask(t, 'window.__vpLogo') or []
     first_on = next((i for i, x in enumerate(seen) if x[1] == 'block'), None)
     ok('it faded IN: laid out at opacity 0 first, then 1, over 0.3 s (the line\'s cross-fade), never popped on',
-       first_on is not None and seen[first_on][2] == '0' and any(x[2] == '1' for x in seen[first_on:]) and hold.get('tr') == '0.3s opacity', [seen[:6], hold.get('tr')])
+       # laid out at 0 then set to 1 in one task (fadeLogo) is one record here: the PAINTED opacity is then still ~0, the fade just begun
+       first_on is not None and (seen[first_on][2] == '0' or float(seen[first_on][3] or 1) < 0.5) and any(x[2] == '1' for x in seen[first_on:]) and hold.get('tr') == '0.3s opacity', [seen[:6], hold.get('tr')])
     for game in ('trivia', 'musical'):
         r.ask(t, 'window.postMessage({vp:"show-game",game:%s}, location.origin); true' % json.dumps(game))
         up = r.until(t, '(function(){var f=document.getElementById("gameFrame");try{var e=f.contentDocument.getElementById("venueLogo");return f.style.display==="block"&&!!e&&e.complete&&e.naturalWidth>0&&e.getBoundingClientRect().width>0;}catch(x){return false;}})()', 30)

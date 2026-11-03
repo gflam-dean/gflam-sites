@@ -112,6 +112,8 @@ def centred(r, sid, tag, want_drop=True):
 def first_tv(r, path, before=None, w=1920, h=1080):
     tid, sid = r.open(path, before=before, width=w, height=h)
     r.until(sid, '!!document.getElementById("adsRoot")', 15)
+    # the first-load intro (3 Nov 2026) brings the venue's logo in at 2.3 s: measure the corner after it
+    r.until(sid, '(function(v){return !v||v==="done";})(document.documentElement.getAttribute("data-tvi"))', 8)
     return tid, sid
 
 def lobby_up(r, sid):

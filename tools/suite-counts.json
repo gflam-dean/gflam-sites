@@ -916,7 +916,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-type.js": {
-  "checks": 118,
+  "checks": 120,
   "counted_by": "lines"
  },
  "tools/test-tv-watchdog-runs.js": {

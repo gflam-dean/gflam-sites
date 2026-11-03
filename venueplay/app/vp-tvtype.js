@@ -57,8 +57,10 @@
     // 2. Amazon Fire TV: every Fire TV model code starts AFT (AFTMM, AFTKA, AFTSSS...). The
     //    Kindle Fire TABLETS are KF.. and fall through to a tablet below.
     if (/\bAFT[A-Z0-9]{1,6}\b/.test(ua) || /\bFire ?TV\b/i.test(ua)) return "firetv";
-    // 3. Chromecast: the old cast-only stick (CrKey) and Chromecast with Google TV (model "Chromecast")
-    if (/\bCrKey\//.test(ua) || (android && /;\s*Chromecast\b/.test(ua))) return "chromecast";
+    // 3. Chromecast: ONLY the old cast-only stick (Cast OS says CrKey/). Chromecast with Google TV (Android,
+    //    model "Chromecast" or "Chromecast HD") IS a Google TV, with Google Play, and falls to rule 6 below
+    //    (4 Nov 2026: it was read as "chromecast" here, so a Google TV was counted as a Chromecast).
+    if (/\bCrKey\//.test(ua)) return "chromecast";
     // 4. Samsung Tizen (the TV browser and its web apps)
     if (/\bTizen\b/i.test(ua)) return "samsung";
     // 5. LG webOS ("Web0S" with a zero on the sets) and the NetCast sets before it
@@ -66,7 +68,7 @@
     // 6. anything Android that says it is a television, or is a known TV maker's Android set
     var tvWords = /\b(Android ?TV|Google ?TV|GoogleTV|Smart ?TV|SMART-TV|SmartTV|BRAVIA|SHIELD Android TV|MIBOX\w*|MiTV\w*|AndroidTV|DTV|ATV|HbbTV|TV Safari)\b/i;
     //    (a maker's name alone only counts when the browser does not also say Mobile: Sony and TCL make phones)
-    if (android && (tvWords.test(ua) || /;\s*TV\b/.test(ua) || (/\b(Sony|Philips|Hisense|TCL|Mi Box)\b/i.test(ua) && !/\bMobile\b/.test(ua)))) return "googletv";
+    if (android && (tvWords.test(ua) || /;\s*Chromecast\b/.test(ua) || /;\s*TV\b/.test(ua) || (/\b(Sony|Philips|Hisense|TCL|Mi Box)\b/i.test(ua) && !/\bMobile\b/.test(ua)))) return "googletv";
     // 7. the TV makers' own non-Android systems
     if (/\b(BRAVIA|SonyCEBrowser|SonyDTV|Sony)\b/i.test(ua) && !/\b(Xperia|iPhone|Mobile)\b/.test(ua)) return "sony";
     if (/\b(Philips|NETTV|NetTV|Saphi)\b/i.test(ua)) return "philips";

@@ -126,7 +126,11 @@ def main():
             ok('the TV loads on the ads (%dx%d)' % (w, h), r.until(tv, '!!document.getElementById("venueNameTag") && document.getElementById("venueNameTag").textContent.length>0', 30) is True)
             venue_name = r.ask(tv, 'document.getElementById("venueNameTag").textContent')
             n = tv_name(r, tv)
-            ok('on the venue\'s own advertising the name is NOT painted (%dx%d)' % (w, h), n is not None and not n['vis'], n)
+            # A venue with no slides of its own is on the venueplay tv between-games card, and that card names the venue
+            # top left like every other TV screen (Dean, 3 Nov 2026). Over the venue's own adverts it is still not painted.
+            hold = r.ask(tv, '!!document.querySelector("#tvAds .ad.show .tvhold")') is True
+            ok('on the venue\'s own advertising the name is NOT painted; on the between-games card it is, top left (%dx%d)' % (w, h),
+               n is not None and (n['vis'] and n['l'] <= 40 and n['t'] <= 40 if hold else not n['vis']), [hold, n])
             shot(r, tv, 'tv-nologo-ads-%d' % w)
             r.ask(tv, 'window.__say && window.__say({t:"mode", mode:"bingo"}); true')
             ok('a bingo lobby goes on air (%dx%d)' % (w, h), r.until(tv, '(function(){var c=document.getElementById("tvCorner");return !!c && c.style.display!=="none" && document.getElementById("adsRoot").classList.contains("hidden");})()', 20) is True,
@@ -158,6 +162,7 @@ def main():
         r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': r.W.info['slug'], 'logo_url': r.base + '/logos/venue-tugun-bowls.png', 'slides': [], 'raffle': None, 'name': venue_name}])
         tid, tv = r.open('/tv?venue=' + r.W.info['slug'], before=SAY, width=1920, height=1080)
         r.until(tv, '!!document.getElementById("venueLogo")', 30)
+        r.until(tv, '(function(v){return !v||v==="done";})(document.documentElement.getAttribute("data-tvi"))', 8)   # the intro brings the logo in at 2.3 s
         r.ask(tv, 'window.__say && window.__say({t:"mode", mode:"bingo"}); true')
         r.until(tv, 'document.getElementById("adsRoot").classList.contains("hidden")', 20)
         time.sleep(1.8)
@@ -172,11 +177,11 @@ def main():
             tid, tv = r.open('/tv', width=w, height=h)
             ok('the setup panel is up (%dx%d)' % (w, h), r.until(tv, '(function(){var p=document.getElementById("pairPanel");return !!p&&!p.classList.contains("hidden")&&p.getBoundingClientRect().height>0;})()', 30) is True)
             time.sleep(1.5)
-            info = r.ask(tv, '(function(){var p=document.getElementById("pairPanel"),m=p.querySelector(".bvmark"),svg=m&&m.querySelector("svg[data-vp-mark=wordmark]"),b=p.getBoundingClientRect(),sb=svg?svg.getBoundingClientRect():null,'
+            info = r.ask(tv, '(function(){var p=document.getElementById("pairPanel"),m=p.querySelector(".bvmark"),svg=m&&m.querySelector("svg[data-vp-mark=tv-word]"),b=p.getBoundingClientRect(),sb=svg?svg.getBoundingClientRect():null,'
                              'bg=getComputedStyle(p).backgroundColor;return {wm:!!svg&&sb.width>60&&sb.height>10,oldWord:/VENUEPLAY/.test(m?m.innerText:""),oldTri:!!(m&&m.querySelector("path[stroke]")),'
                              'spanText:m?[].map.call(m.querySelectorAll("span"),function(x){return x.textContent;}).join("|"):"",scroll:p.scrollHeight-p.clientHeight,hscroll:p.scrollWidth-p.clientWidth,'
                              'inside:b.top>=0&&b.left>=0&&b.bottom<=innerHeight&&b.right<=innerWidth,bg:bg,box:[Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]};})()') or {}
-            ok('the new lowercase wordmark heads the panel, not the triangle over a spaced uppercase VENUEPLAY (%dx%d)' % (w, h),
+            ok('the venueplay tv lockup (3 Nov 2026) heads the panel, not the triangle over a spaced uppercase VENUEPLAY (%dx%d)' % (w, h),
                info.get('wm') and not info.get('oldWord') and not info.get('oldTri') and info.get('spanText') == '', info)
             ok('no scrollbar: everything fits inside the panel (%dx%d)' % (w, h), info.get('scroll', 9) <= 0 and info.get('hscroll', 9) <= 0, info)
             ok('and the panel is inside the screen (%dx%d)' % (w, h), info.get('inside') is True, info)
