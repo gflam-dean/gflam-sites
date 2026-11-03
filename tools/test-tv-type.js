@@ -90,10 +90,19 @@ check('hq.html and tv.html both load the one list', /<script src="\/app\/vp-tvty
 check('no other file keeps its own copy of the names', !/"Samsung \(Tizen\)"/.test(HQ) && !/"Samsung \(Tizen\)"/.test(TV) && !/Samsung \(Tizen\)/.test(GAME));
 
 print('the setup line for each TV');
-var allWords = FAMILIES.map(function (f) { var s = T.setup(f); return [s.head, s.text, s.appHead].join(' '); }).join(' ');
-check('Samsung, LG, Fire TV and the other sets have no Google Play: that half comes off and the browser steps say which app',
-      ['samsung', 'lg', 'firetv', 'sony', 'philips', 'hisense', 'tcl', 'othertv'].every(function (f) { var s = T.setup(f); return s.app === 'hide' && /screen code/.test(s.text) && /^On this /.test(s.head); }) &&
+var allWords = FAMILIES.map(function (f) { var s = T.setup(f); return [s.head, s.text, s.appHead, s.appText].join(' '); }).join(' ');
+check('Fire TV and the other sets have no Google Play and no venueplay app: that half comes off and the browser steps say which app',
+      ['firetv', 'sony', 'philips', 'hisense', 'tcl', 'othertv'].every(function (f) { var s = T.setup(f); return s.app === 'hide' && /screen code/.test(s.text) && /^On this /.test(s.head); }) &&
       /Internet app/.test(T.setup('samsung').head) && /LG TV/.test(T.setup('lg').head));
+check('a Samsung and an LG: their own store, "coming soon", never Google Play, and the browser steps beside it (3 Nov 2026)',
+      ['samsung', 'lg'].every(function (f) { var s = T.setup(f); return s.app === 'show' && s.stores.join() === f && /coming soon/.test(s.appHead) && !/Google Play/.test(s.appHead + s.appText) && /screen code/.test(s.text) && /^On this /.test(s.head); }) &&
+      /Samsung Apps/.test(T.setup('samsung').appText) && /LG Content Store/.test(T.setup('lg').appText));
+check('the store table: Google Play is live, Samsung Apps and the LG Content Store have no address yet (so nothing links to them)',
+      T.STORES.play.url === 'https://play.google.com/store/apps/details?id=au.com.venueplay.tv' && T.STORES.samsung.url === '' && T.STORES.lg.url === '' &&
+      T.STORES.samsung.name === 'Samsung Apps' && T.STORES.lg.name === 'LG Content Store');
+check('a TV it cannot tell (and a computer or a phone): all three stores, Google Play first',
+      ['unknown', 'nonsense', 'pc', 'mobile'].every(function (f) { return T.setup(f).stores.join() === 'play,samsung,lg'; }));
+check('a Google TV and a Chromecast: Google Play only; Fire TV and our own app: no store', T.setup('googletv').stores.join() === 'play' && T.setup('chromecast').stores.join() === 'play' && !T.setup('firetv').stores && !T.setup('app').stores);
 check('a Google TV and a Chromecast keep the Google Play line and say so', T.setup('googletv').app === 'show' && /Google Play/.test(T.setup('googletv').appHead) && T.setup('chromecast').app === 'show');
 check('inside our own app the Google Play line comes off', T.setup('app').app === 'hide');
 check('an unknown TV keeps the card exactly as written', T.setup('unknown').app === 'show' && T.setup('unknown').head === null && T.setup('unknown').text === null && T.setup('nonsense').head === null);
@@ -160,6 +169,7 @@ function El() { var e = { style: {}, innerHTML: '', attrs: {}, kids: {} }; e.que
 function card() {
   var app = El(), code = El(), pp = El();
   app.kids['.su-head'] = El(); app.kids['.su-head'].innerHTML = 'Got a TV with Google Play? <b>Get the venueplay TV app</b>';
+  app.kids['.su-text'] = El(); app.kids['.su-text'].innerHTML = 'Search for <b>venueplay TV</b> in the Play Store on this TV, open it and put in your screen code.';
   code.kids['.su-head'] = El(); code.kids['.su-head'].innerHTML = 'Or use this TV&rsquo;s web browser';
   code.kids['.su-text'] = El(); code.kids['.su-text'].innerHTML = 'Put in the six-character screen code from your host console.';
   return { suApp: app, suCode: code, pairPanel: pp };
@@ -167,15 +177,27 @@ function card() {
 var C;
 function $(id) { return C[id] || null; }
 eval(liftFrom(TV, 'tvSetupFits', 'tv.html'));
+eval(liftFrom(TV, 'tvStoresFit', 'tv.html'));
 check('tv.html applies the fitting line inside the set up card, after the app check', /if\(IN_APP\)\{ var a=\$\("suApp"\); if\(a\) a\.style\.display="none"; \}\s*tvSetupFits\(TV_KIND\);/.test(TV));
 C = card(); tvSetupFits('samsung');
-check('a Samsung: no Google Play line, the Internet app named, the screen code steps', C.suApp.style.display === 'none' && /Samsung TV, use its Internet app/.test(C.suCode.kids['.su-head'].innerHTML) && /screen code/.test(C.suCode.kids['.su-text'].innerHTML) && C.pairPanel.attrs['data-tv-kind'] === 'samsung');
+check('a Samsung: the app half says coming soon, not Google Play; the Internet app named, the screen code steps', C.suApp.style.display !== 'none' && /Samsung TVs is <b>coming soon/.test(C.suApp.kids['.su-head'].innerHTML) && /Samsung Apps/.test(C.suApp.kids['.su-text'].innerHTML) && /Samsung TV, use its Internet app/.test(C.suCode.kids['.su-head'].innerHTML) && /screen code/.test(C.suCode.kids['.su-text'].innerHTML) && C.pairPanel.attrs['data-tv-kind'] === 'samsung');
 C = card(); tvSetupFits('lg');
-check('an LG: the same, with its Web Browser', C.suApp.style.display === 'none' && /LG TV, use its Web Browser/.test(C.suCode.kids['.su-head'].innerHTML));
+check('an LG: the same, with the LG Content Store and its Web Browser', C.suApp.style.display !== 'none' && /LG TVs is <b>coming soon/.test(C.suApp.kids['.su-head'].innerHTML) && /LG TV, use its Web Browser/.test(C.suCode.kids['.su-head'].innerHTML));
+C = card(); tvSetupFits('firetv');
+check('a Fire TV: no Google Play and no venueplay app, so the app half comes off and only the browser steps stay', C.suApp.style.display === 'none' && /Fire TV, use its web browser/.test(C.suCode.kids['.su-head'].innerHTML));
 C = card(); tvSetupFits('googletv');
 check('a Google TV: the Google Play line stays and says this TV has it', C.suApp.style.display !== 'none' && /This TV has Google Play/.test(C.suApp.kids['.su-head'].innerHTML));
 C = card(); tvSetupFits('unknown');
 check('an unknown TV: the card is left exactly as written', C.suApp.style.display !== 'none' && /^Got a TV with Google Play/.test(C.suApp.kids['.su-head'].innerHTML) && /^Or use this TV/.test(C.suCode.kids['.su-head'].innerHTML));
+function storeCard() { var c = card(); c.tvPlayLink = El(); c.suStore = El(); c.suStore.hidden = true; c.suStoreName = El(); c.suSoon = El(); return c; }
+C = storeCard(); tvSetupFits('samsung');
+check('a Samsung: the Google Play badge is hidden and the store box says Samsung Apps, coming soon', C.tvPlayLink.style.display === 'none' && C.suStore.hidden === false && C.suStoreName.textContent === 'Samsung Apps' && C.suSoon.hidden === true);
+C = storeCard(); tvSetupFits('lg');
+check('an LG: the LG Content Store', C.tvPlayLink.style.display === 'none' && C.suStore.hidden === false && C.suStoreName.textContent === 'LG Content Store');
+C = storeCard(); tvSetupFits('googletv');
+check('a Google TV: the badge, no store box, no coming-soon line', C.tvPlayLink.style.display === '' && C.suStore.hidden === true && C.suSoon.hidden === true);
+C = storeCard(); tvSetupFits('unknown');
+check('a TV it cannot tell: the badge first, then "Samsung Apps and LG Content Store: coming soon"', C.tvPlayLink.style.display === '' && C.suStore.hidden === true && C.suSoon.hidden === false && C.suSoon.textContent === 'Samsung Apps and LG Content Store: coming soon');
 var savedT = window.VPTvType; window.VPTvType = undefined; C = card();
 check('without the shared script the card is untouched and nothing throws', (function () { try { tvSetupFits('samsung'); return C.suApp.style.display !== 'none'; } catch (e) { return false; } })());
 window.VPTvType = savedT;

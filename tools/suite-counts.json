@@ -871,6 +871,10 @@
   "checks": 11,
   "counted_by": "lines"
  },
+ "tools/test-tv-hold.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/test-tv-logo-mark.js": {
   "checks": 160,
   "counted_by": "lines"
@@ -888,7 +892,7 @@
   "counted_by": "lines"
  },
  "tools/test-tv-type.js": {
-  "checks": 109,
+  "checks": 118,
   "counted_by": "lines"
  },
  "tools/test-tv-watchdog-runs.js": {
@@ -1132,11 +1136,11 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {
-  "checks": 29,
+  "checks": 30,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-logo.test.js": {
-  "checks": 19,
+  "checks": 27,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-screen.test.js": {

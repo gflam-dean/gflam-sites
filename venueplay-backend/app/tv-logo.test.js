@@ -41,6 +41,8 @@ function grab(name){
   return null;
 }
 var fnApply = grab("applyVenueLogo"), fnSetLogo = grab("setVenueLogo"), fnSetName = grab("setVenueName");
+var fnFade = [grab("venueLost"), grab("holdingUp"), grab("logoWanted"), grab("fadeLogo"), grab("introLogoOk")];
+ok("the logo's fade helpers are still in tv.html", fnFade.every(function(f){ return !!f; }));
 ok("applyVenueLogo is still in tv.html", !!fnApply);
 ok("setVenueLogo is still in tv.html", !!fnSetLogo);
 ok("setVenueName is still in tv.html", !!fnSetName);
@@ -63,7 +65,8 @@ function el(){ return { id:"", src:"", style:{ cssText:"", display:"" }, textCon
 var document = {
   getElementById: function(id){ return made[id] || null; },
   createElement: function(){ return el(); },
-  body: { appendChild: function(n){ made[n.id] = n; } }
+  body: { appendChild: function(n){ made[n.id] = n; } },
+  querySelector: function(){ return { querySelector: function(){ return null; } }; }   // the venue's own slide is lit, not a holding card
 };
 made.venueNameTag = el();
 made.tvCorner = el();
@@ -74,9 +77,13 @@ function $(id){ return made[id] || (made[id] = el()); }
 
 var tvMode = "ads";
 var venueLogoUrl = "";
-eval(fnApply); eval(fnSetLogo); eval(fnSetName);
+/* The top-left logo fades (3 Nov 2026): applyVenueLogo calls these, so they come too. */
+var LOGO_FADE_MS = 300, logoOffT = null, showPlaying = false;
+if (typeof setTimeout === "undefined") var setTimeout = function(){ return 0; };
+if (typeof clearTimeout === "undefined") var clearTimeout = function(){};
+eval(fnApply); eval(fnSetLogo); eval(fnSetName); for (var fi = 0; fi < fnFade.length; fi++) eval(fnFade[fi]);
 
-function logoShown(){ var l = made.venueLogo; return !!l && l.style.display === "block"; }
+function logoShown(){ var l = made.venueLogo; return !!l && l.style.display === "block" && l.style.opacity !== "0"; }   // faded out counts as off
 function captionShown(){ return made.venueNameTag.style.display === "block"; }
 
 print("== a venue with a logo ==");
@@ -97,6 +104,28 @@ ok("the logo is back the moment a game starts", logoShown());
 
 tvMode = "embed"; applyVenueLogo();
 ok("the logo is on for an embedded game screen too", logoShown());
+
+/* 3 Nov 2026 (Dean): the venue's logo is top left on the between-games card too, fades with a start or end
+   show, and goes when the TV loses the venue. */
+var litHolding = false, lostCard = false;
+document.querySelector = function(){ return { querySelector: function(){ return litHolding ? {} : null; } }; };
+var realGet = document.getElementById;
+document.getElementById = function(id){ if (id === "badVenue") return { classList: { contains: function(){ return !lostCard; } } }; return realGet(id); };
+tvMode = "ads"; litHolding = true; applyVenueLogo();
+ok("between games (the venueplay tv card lit on the ads) the logo is up, top left", logoShown());
+litHolding = false; applyVenueLogo();
+ok("and off again when the venue's own slide is lit", !logoShown());
+litHolding = true; applyVenueLogo(); showPlaying = true; applyVenueLogo();
+ok("a start or end show fades it out", made.venueLogo.style.opacity === "0");
+ok("but keeps its box (still laid out), so the corner's centring can measure it", made.venueLogo.style.display === "block");
+showPlaying = false; applyVenueLogo();
+ok("and the show over, it fades back in", logoShown());
+tvMode = "bingo"; lostCard = true; applyVenueLogo();
+ok("the TV loses the venue (Not linked to an account): it fades out, even in a game", !logoShown());
+lostCard = false; applyVenueLogo();
+ok("found again: it comes back", logoShown());
+document.getElementById = realGet; delete document.querySelector;
+document.querySelector = function(){ return { querySelector: function(){ return null; } }; };
 
 /* The order the page actually calls these in: the screen loads, the logo is set,
    then the name. The name must not undo the logo's decision. */

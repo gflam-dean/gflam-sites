@@ -167,7 +167,7 @@ function DOM() {
     body: { appendChild: function (n) { made[n.id] = n; } } };
   return { doc: doc, made: made, created: function () { return created; }, el: el };
 }
-function shown(m) { return !!m && m.style.display === 'block'; }
+function shown(m) { return !!m && m.style.display === 'block' && m.style.opacity !== '0'; }   // tv.html fades it (3 Nov 2026): faded out is off
 
 var MARKS = [];
 function inspect(label, m, win) {
@@ -199,6 +199,10 @@ print('tv.html');
   made.venueNameTag = D.el(); made.tvCorner = D.el(); made.lobbyAt = D.el(); made.lobbyAtName = D.el();
   var tvMode = 'bingo', venueLogoUrl = '';
   function $(id) { return made[id] || (made[id] = D.el()); }
+  var LOGO_FADE_MS = 300, logoOffT = null, showPlaying = false;   // the top-left logo fades (3 Nov 2026)
+  if (typeof setTimeout === 'undefined') var setTimeout = function () { return 0; };
+  if (typeof clearTimeout === 'undefined') var clearTimeout = function () {};
+  eval(lift(TV, 'venueLost', 'tv.html')); eval(lift(TV, 'holdingUp', 'tv.html')); eval(lift(TV, 'logoWanted', 'tv.html')); eval(lift(TV, 'fadeLogo', 'tv.html')); eval(lift(TV, 'introLogoOk', 'tv.html'));
   eval(lift(TV, 'applyVenueLogo', 'tv.html')); eval(lift(TV, 'setVenueLogo', 'tv.html'));
   setVenueLogo('');
   check('no logo_url: nothing is created on the wall', !made.venueLogo && D.created() === 0, D.created());

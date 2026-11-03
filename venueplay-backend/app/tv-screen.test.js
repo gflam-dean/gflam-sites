@@ -77,7 +77,8 @@ var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntri
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","alignCorner","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",
-            "enterHolding","notePats","patName"];   // patName: the board names a venue's own pattern (24 Oct 2026)
+            "enterHolding","notePats","patName",   // patName: the board names a venue's own pattern (24 Oct 2026)
+            "holdHandover","tvBreathPhase","tvHoldHtml"];   // the "venueplay tv" holding card and its cross-fade (3 Nov 2026)
 var SRC = {}, missing = [];
 for (var ni = 0; ni < NEED.length; ni++) {
   SRC[NEED[ni]] = grab(NEED[ni]);

@@ -164,12 +164,15 @@ def real():
         shot(r, tv1, 'tv-logo-centre-square-1920')
         r.ask(host, 'setTimeout(function(){ document.getElementById("startBtn").click(); }, 0); true')
         ok('Start: the TV starts the show', r.until(tv1, 'window.VPSting && VPSting.playing()', 8) is True, r.ask(tv1, '(window.VPSting?VPSting.stats():null)'))
+        VL = '(function(e){return e?getComputedStyle(e).opacity:"none";})(document.getElementById("venueLogo"))'
+        ok('SQUARE: the venue\'s top-left logo fades out with the rest for the show (3 Nov 2026)', r.until(tv1, VL + '==="0"', 3) is True, r.ask(tv1, VL))
         land = r.ask(tv1, LANDING)
         mk = sq.get('mark') or {}
         ok('SQUARE: the show\'s wordmark lands on the moved mark (top, bottom and right within %dpx)' % TOL,
            bool(land) and bool(mk) and abs(land['t'] - mk['t']) <= TOL and abs(land['b'] - mk['b']) <= TOL and abs(land['r'] - mk['r']) <= TOL, [land, mk])
         after = r.ask(tv1, MEASURE) or {}
         ok('SQUARE: the show is done and its new mark is in the corner', r.ask(tv1, '!document.getElementById("vpSting")') is True and after.get('newmark'), after)
+        ok('SQUARE: and the venue\'s logo fades back in on the game screen', r.until(tv1, VL + '==="1"', 3) is True, r.ask(tv1, VL))
         centred(r, tv1, 'SQUARE after the show')
         shot(r, tv1, 'tv-logo-centre-square-after-show-1920')
         ok('no script errors on the TV', r.ask(tv1, 'window.__errs.length') == 0, r.ask(tv1, 'JSON.stringify(window.__errs)'))

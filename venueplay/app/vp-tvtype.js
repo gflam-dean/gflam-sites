@@ -88,6 +88,18 @@
     return "unknown";
   }
 
+  /* WHERE THE venueplay TV APP IS (3 Nov 2026). The /tv set-up card shows the store that fits this TV: Google
+     Play for a Google TV, Android TV or Chromecast; Samsung Apps for a Samsung; the LG Content Store for an LG;
+     all three, Google Play first, when it cannot tell. Fire TV has no Google Play and no venueplay app, so it
+     gets the browser steps only, as before. A store with no url is not live yet: the card says "coming soon"
+     and links nowhere. WHEN SAMSUNG OR LG APPROVES THE APP: put its store address here, nothing else. */
+  var STORES = {
+    play:    { name: "Google Play",      url: "https://play.google.com/store/apps/details?id=au.com.venueplay.tv" },
+    samsung: { name: "Samsung Apps",     url: "" },
+    lg:      { name: "LG Content Store", url: "" }
+  };
+  var ALL_STORES = ["play", "samsung", "lg"];
+
   /* THE SETUP LINE THAT FITS (tv.html, the "Set up this screen" card, only on a screen with no
      venue linked). app: "show" or "hide" the Google Play half; head/text: the browser half's
      words, or null to keep what the page already says. House rules: venueplay lowercase, no
@@ -96,25 +108,40 @@
     var browser = function (head) {
       return { app: "hide", head: head, text: "Put in the six-character screen code from your host console, then save this page as the TV&rsquo;s home page or a bookmark." };
     };
+    /* A TV whose own app store will carry venueplay TV (Samsung, LG): the app half stays, says "coming soon"
+       and names the store, with no link to it, until STORES below has the store's address. */
+    var soon = function (s, store, tvs, where, until) {
+      if (STORES[store] && STORES[store].url) {
+        s.app = "show"; s.stores = [store];
+        s.appHead = "This TV has " + STORES[store].name + ". <b>Get the venueplay TV app</b>";
+        s.appText = "Search for <b>venueplay TV</b> in " + STORES[store].name + " on this TV, open it and put in your screen code.";
+        return s;
+      }
+      s.app = "show"; s.stores = [store];
+      s.appHead = "venueplay TV for " + tvs + " is <b>coming soon</b>";
+      s.appText = "It will be in " + where + ". Until then, set this screen up in " + until + ".";
+      return s;
+    };
+    var withStores = function (s, st) { s.stores = st; return s; };
     switch (code) {
       case "app":        return { app: "hide", head: null, text: null };
-      case "googletv":   return { app: "show", head: "Or use this TV&rsquo;s web browser", text: null, appHead: "This TV has Google Play. <b>Get the venueplay TV app</b>" };
-      case "chromecast": return { app: "show", head: "Or use a web browser", text: null, appHead: "This Chromecast has Google Play. <b>Get the venueplay TV app</b>" };
+      case "googletv":   return { app: "show", head: "Or use this TV&rsquo;s web browser", text: null, appHead: "This TV has Google Play. <b>Get the venueplay TV app</b>", stores: ["play"] };
+      case "chromecast": return { app: "show", head: "Or use a web browser", text: null, appHead: "This Chromecast has Google Play. <b>Get the venueplay TV app</b>", stores: ["play"] };
       case "firetv":     return browser("On this Fire TV, use its web browser");
-      case "samsung":    return browser("On this Samsung TV, use its Internet app");
-      case "lg":         return browser("On this LG TV, use its Web Browser");
+      case "samsung":    return soon(browser("On this Samsung TV, use its Internet app"), "samsung", "Samsung TVs", "Samsung Apps", "this TV&rsquo;s Internet app");
+      case "lg":         return soon(browser("On this LG TV, use its Web Browser"), "lg", "LG TVs", "the LG Content Store", "this TV&rsquo;s Web Browser");
       case "sony":       return browser("On this Sony TV, use its web browser");
       case "philips":    return browser("On this Philips TV, use its web browser");
       case "hisense":    return browser("On this Hisense TV, use its web browser");
       case "tcl":        return browser("On this TCL TV, use its web browser");
       case "othertv":    return browser("On this smart TV, use its web browser");
       case "apple":      return { app: "hide", head: "Showing this through AirPlay?", text: "Put in the six-character screen code from your host console, and keep the device you are sharing from awake and plugged in." };
-      case "pc":         return { app: "show", head: "Or use this computer&rsquo;s browser", text: "Put in the six-character screen code from your host console. Keep this screen full screen, never covered by another window, or the TV can fall behind." };
-      case "mobile":     return { app: "show", head: "On a phone or tablet?", text: "This page is for the TV. Open venueplay.com.au/tv on the TV itself, or put in the screen code here to try it." };
-      default:           return { app: "show", head: null, text: null };
+      case "pc":         return withStores({ app: "show", head: "Or use this computer&rsquo;s browser", text: "Put in the six-character screen code from your host console. Keep this screen full screen, never covered by another window, or the TV can fall behind." }, ALL_STORES.slice());
+      case "mobile":     return withStores({ app: "show", head: "On a phone or tablet?", text: "This page is for the TV. Open venueplay.com.au/tv on the TV itself, or put in the screen code here to try it." }, ALL_STORES.slice());
+      default:           return withStores({ app: "show", head: null, text: null }, ALL_STORES.slice());
     }
   }
 
-  var api = { LABELS: LABELS, label: label, isCode: isCode, detect: detect, setup: setup };
+  var api = { LABELS: LABELS, label: label, isCode: isCode, detect: detect, setup: setup, STORES: STORES };
   root.VPTvType = api;
 })(typeof window !== "undefined" ? window : this);
