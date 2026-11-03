@@ -127,6 +127,10 @@
   "checks": 62,
   "counted_by": "lines"
  },
+ "tools/bingo-reveal-rings-in-chrome.test.py": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/caller-winner-in-chrome.test.py": {
   "checks": 107,
   "counted_by": "lines"
@@ -279,6 +283,10 @@
   "checks": 20,
   "counted_by": "lines"
  },
+ "tools/safe-area-in-chrome.test.py": {
+  "checks": 86,
+  "counted_by": "lines"
+ },
  "tools/sant-bingo-in-chrome.test.py": {
   "checks": 38,
   "counted_by": "lines"
@@ -297,6 +305,14 @@
  },
  "tools/settings-and-logos-in-chrome.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/share-card-in-chrome.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/signin-logo-in-chrome.test.py": {
+  "checks": 95,
   "counted_by": "lines"
  },
  "tools/signup-tick-in-chrome.test.py": {
