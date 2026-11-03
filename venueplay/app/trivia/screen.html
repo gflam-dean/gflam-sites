@@ -140,8 +140,9 @@
   .ans.c3{--c:#A57BFF}
   .answers.neutral .ans{--c:#3A3A42}
   .answers.neutral .ans::before{display:none}
-  .ans .al{flex:none;width:5.4cqw;height:5.4cqw;margin-right:1.9cqw;border-radius:.83cqw;background:var(--c);color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:4.8cqw;line-height:1}   /* the letter fills its chip: as big as the old wall's 5cqw letters (Dean, 3 Nov 2026) */
+  .ans .al{flex:none;width:5.4cqw;height:5.4cqw;margin-right:1.9cqw;border-radius:.83cqw;background:var(--c);color:#FFFFFF;text-shadow:0 .1cqw 0 rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:4.8cqw;line-height:1}   /* the letter fills its chip: as big as the old wall's 5cqw letters (Dean, 3 Nov 2026) */
   .answers.neutral .ans .al{color:#fff}
+  .ans.c2 .al{text-shadow:0 .1cqw 0 rgba(0,0,0,.45),0 0 .36cqw rgba(0,0,0,.55)}   /* white on amber is under 3:1: a firm shadow (as on the phone) */
   .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.54cqw;line-height:1.05;color:#fff;overflow-wrap:break-word;min-width:0}
   .answers.alen-2 .ans .at{font-size:2.8cqw;line-height:1.08}
   .answers.alen-3 .ans .at{font-size:2.2cqw;line-height:1.1}
@@ -151,7 +152,7 @@
      RIGHT ANSWER tag. Its letter chip keeps its own colour on black, so a player still sees "it was B". */
   .ans.correct{background:#2FD08A;transform:scale(1.035);box-shadow:0 0 0 .31cqw #0A0A0B,0 0 3.1cqw -.3cqw rgba(47,208,138,.55);overflow:visible;z-index:2}
   .ans.correct::before{display:none}
-  .ans.correct .al{background:#0A0A0B;color:var(--c)}
+  .ans.correct .al{background:#0A0A0B;color:var(--c);text-shadow:none}
   .answers.neutral .ans.correct .al{color:#fff}
   .ans.correct .at{color:#0A0A0B}
   .ans .rtag{position:absolute;left:2.3cqw;top:-1.15cqw;background:#0A0A0B;color:#fff;border:.16cqw solid #fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.25cqw;line-height:1;letter-spacing:.16em;text-transform:uppercase;padding:.5cqw .83cqw;border-radius:.42cqw;white-space:nowrap}

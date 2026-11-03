@@ -104,7 +104,8 @@ TV_PROBE = r'''(function(){
     out.lbl=R(lay.querySelector(".toplbl"));
     out.q=R(lay.querySelector(".qtext"));
     out.cards=[].map.call(lay.querySelectorAll(".answers .ans"),function(c){ var cs=getComputedStyle(c);
-      var al=c.querySelector(".al"); return { r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: al?parseFloat(getComputedStyle(al).fontSize):0 }; });
+      var al=c.querySelector(".al"), as=al?getComputedStyle(al):null; return { r:R(c), cls:c.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, tf:cs.transform, lfs: as?parseFloat(as.fontSize):0,
+        lfg: as?as.color:"", lbg: as?as.backgroundColor:"", lts: as?as.textShadow:"" }; });
     var gn=lay.querySelector(".toplbl .tl-night"); if(gn){ var gs=getComputedStyle(gn); out.game={ r:R(gn), text:gn.textContent, ff:gs.fontFamily, fs:parseFloat(gs.fontSize), col:gs.color }; }
     var kids=[].map.call(lay.querySelectorAll(".toplbl > *"),R); out.lblInk=kids.length ? [Math.min.apply(null,kids.map(function(k){return k[0];})), Math.min.apply(null,kids.map(function(k){return k[1];})),
       Math.max.apply(null,kids.map(function(k){return k[2];})), Math.max.apply(null,kids.map(function(k){return k[3];}))] : null;
@@ -144,7 +145,7 @@ PHONE_PROBE = r'''(function(){
   var out={ view: view ? view.id : null, small: small, head: (document.querySelector(".ptop")||{}).innerText||"",
     logo: (lg && !lg.classList.contains("hidden")) ? R(lg) : null, foot: foot ? R(foot) : null, viewR: view ? R(view) : null, menu: R(menu),
     btns: [].map.call(document.querySelectorAll("#"+(view?view.id:"x")+" .pans"),function(b){ var cs=getComputedStyle(b);
-      var t=b.querySelector(".pt"), l=b.querySelector(".pl"), ls=l?getComputedStyle(l):null; return { lfs: ls?parseFloat(ls.fontSize):0, lff: ls?ls.fontFamily:"", lfg: ls?ls.color:"", cls:b.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, sh:cs.boxShadow, op:parseFloat(cs.opacity),
+      var t=b.querySelector(".pt"), l=b.querySelector(".pl"), ls=l?getComputedStyle(l):null; return { lfs: ls?parseFloat(ls.fontSize):0, lff: ls?ls.fontFamily:"", lfg: ls?ls.color:"", lts: ls?ls.textShadow:"", cls:b.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, sh:cs.boxShadow, op:parseFloat(cs.opacity),
         fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"" }; }),
     lock: (function(){ var l=document.querySelector("#vQ .plock"); return l && vis(l) ? l.innerText : ""; })(),
     stw: (function(){ var t=document.getElementById("statusText"); return t ? t.getBoundingClientRect().width : -1; })(),
@@ -251,6 +252,9 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': "got it right" sits in the clock\'s box', bool(q.get('clock') and rv.get('got')) and abs(q['clock'][0] - rv['got'][0]) <= 1 and abs(q['clock'][2] - rv['got'][2]) <= 1 and abs(q['clock'][1] - rv['got'][1]) <= 1,
        [q.get('clock'), rv.get('got')])
     ok(tag + ': the answer letters are big again (at least the old wall\'s 4.5% of the width)', len(qc) == 4 and all(c['lfs'] >= 0.045 * w for c in qc), [c['lfs'] for c in qc])
+    ok(tag + ': the letters are WHITE on their colour chips, at least 3:1 (large text), and amber\'s, which cannot be, has a firm dark shadow',
+       len(qc) == 4 and all(c['lfg'] == 'rgb(255, 255, 255)' and (contrast(c['lbg'], c['lfg']) >= 3.0 or (i == 2 and 'rgba(0, 0, 0, 0.45)' in c['lts'])) for i, c in enumerate(qc)),
+       [(c['lbg'], c['lfg'], round(contrast(c['lbg'], c['lfg']), 2) if c['lbg'] else None, c['lts'][:40]) for c in qc])
     ok(tag + ': the answer colours are coral, blue, amber and violet', [c['c'].upper() for c in qc] == COLOURS, [c['c'] for c in qc])
     right = [c for c in rc if 'correct' in c['cls']]
     ok(tag + ': on the reveal the right answer is green and the others dim', len(right) == 1 and right[0]['bg'] == GREEN and sum(1 for c in rc if 'dim' in c['cls']) == 3,
@@ -296,7 +300,9 @@ def phone(B, base):
     ok('FULL COLOUR: each answer button is filled with its own colour, so a player can pick by colour at a glance',
        len(qb) == 4 and [b['bg'] for b in qb] == [rgb(c) for c in COLOURS], [b['bg'] for b in qb])
     ok('the letters are BIG and bold, in Anton (at least 36px, the old phone was 26px)', len(qb) == 4 and all(b['lfs'] >= 36 and 'Anton' in b['lff'] for b in qb), [(b['lfs'], b['lff'][:12]) for b in qb])
-    ok('and each letter passes AA contrast on its colour', len(qb) == 4 and all(contrast(b['bg'], b['lfg']) >= 4.5 for b in qb), [(b['bg'], b['lfg'], round(contrast(b['bg'], b['lfg']), 2)) for b in qb])
+    ok('the letters are WHITE, at least 3:1 on their colour (44px Anton is large text), and amber\'s, which cannot be, has a firm dark shadow',
+       len(qb) == 4 and all(b['lfg'] == 'rgb(255, 255, 255)' and (contrast(b['bg'], b['lfg']) >= 3.0 or (i == 2 and 'rgba(0, 0, 0, 0.45)' in b['lts'])) for i, b in enumerate(qb)),
+       [(b['bg'], b['lfg'], round(contrast(b['bg'], b['lfg']), 2), b['lts'][:40]) for b in qb])
     ok('and the words on every colour pass AA contrast (4.5:1)', len(qb) == 4 and all(contrast(b['bg'], b['fg']) >= 4.5 for b in qb),
        [(b['bg'], b['fg'], round(contrast(b['bg'], b['fg']), 2)) for b in qb])
     pk = [b for b in lk.get('btns') or [] if 'picked' in b['cls']]

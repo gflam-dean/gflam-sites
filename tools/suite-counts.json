@@ -984,7 +984,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-newlook-in-chrome.test.py": {
-  "checks": 120,
+  "checks": 122,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

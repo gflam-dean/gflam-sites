@@ -85,14 +85,18 @@
   .panswers{display:flex;flex-direction:column;gap:12px}
   .pans{--c:#8A8A95;position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:92px;padding:10px 16px 10px 14px;border-radius:16px;border:none;background:var(--c);color:#0A0A0B;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:800;font-size:24px;transition:opacity .15s,box-shadow .15s;line-height:1.12}
   /* FULL COLOUR (Dean, 3 Nov 2026: players pick by colour at a glance). Each button is filled with its
-     letter's colour, the letter big in Anton and the answer beside it, both near-black (AA on all four). */
+     letter's colour, the letter big in Anton in white, the answer beside it near-black (AA on all four). */
   .pans.c0{--c:#FF5A4E}
   .pans.c1{--c:#4D8DFF}
   .pans.c2{--c:#FFA53D}
   .pans.c3{--c:#A57BFF}
   .pans.neutral{--c:#3A3A42;color:#fff}
-  .pans .pl{flex:none;min-width:34px;background:none;color:#0A0A0B;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1}   /* the letter BIG and bold, as on the old phone (Dean, 3 Nov 2026) */
+  .pans .pl{flex:none;min-width:34px;background:none;color:#FFFFFF;text-shadow:0 2px 0 rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-weight:400;font-size:44px;line-height:1}   /* the letter BIG and bold, as on the old phone (Dean, 3 Nov 2026) */
   .pans.neutral .pl{color:#fff}
+  /* WHITE LETTERS (Dean, 3 Nov 2026: "so the letters also stand out"). At 44px Anton they are large text,
+     3:1 is the bar: white passes on coral (3.1), blue (3.2) and violet (3.05). On amber it is 1.96, and
+     darkening amber enough would make it brown, so amber's letter gets a firm dark shadow underneath. */
+  .pans.c2 .pl{text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 7px rgba(0,0,0,.55)}
   .pans .pt{min-width:0;overflow-wrap:break-word}
   .panswers.alen-2 .pans{font-size:21px}
   .panswers.alen-3 .pans{font-size:18px}
@@ -119,11 +123,11 @@
   .panswers.rv .pans .pl{font-size:36px}
   .pans .cnt{margin-left:auto;padding-left:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:inherit}
   .pans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
-  .pans.right .pl{color:#0A0A0B}
+  .pans.right .pl{color:#0A0A0B;text-shadow:none}   /* white on the green would be 1.9:1 */
   .pans.neutral.right .pl{color:#fff}
   .pans.right .cnt{color:#0A0A0B;font-size:18px}
   .pans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}   /* your wrong pick: outlined in its colour */
-  .pans.mine .pl{color:var(--c)}
+  .pans.mine .pl{color:var(--c);text-shadow:none}
   .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
   .pans.mine .tg{color:var(--c)}
   .pcard{margin-top:18px;border-radius:16px;background:#1A1A1F;padding:14px 18px;display:flex;align-items:center;gap:12px}
