@@ -116,6 +116,11 @@ try:
           return Promise.resolve(new Response(JSON.stringify({ draw:d }), { status:200, headers:{ "Content-Type":"application/json" } })); }
         return real.apply(this, arguments); }; return true; })()''' % json.dumps(DRAW))
     S.js(sid, 'document.querySelector(\'[data-tab="draws"]\').click(); true')
+    # Since 3 Nov 2026 Draws is three folds (Dean, round 2 F: "DRAWS section is huge"), Raffles open by default:
+    # open Members draws by its heading, as an owner does, before its Edit (a script click on a folded Edit
+    # filled a form nobody could see, and the visibility check below rightly went red).
+    S.js(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]:not(.open)\') && document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').click(); true')
+    S.until(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').classList.contains("open")', 10)
     # Since 24 Oct 2026 every draw is listed with Edit and Remove: open this one with its own Edit.
     S.until(sid, '!!document.querySelector(\'#mdList .drow[data-draw="%s"] .dedit\')' % DRAW['id'], 15)
     S.js(sid, 'document.querySelector(\'#mdList .drow[data-draw="%s"] .dedit\').click(); true' % DRAW['id'])

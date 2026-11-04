@@ -84,8 +84,11 @@ def fill_permit(sid, wrap, kind, number='', holder='venue', npo='', authorised='
     return S.until(sid, '/Saved|Cleared|Could not|permission/.test(document.querySelector(%s+\' .permit[data-kind="%s"] .pmsg\').textContent)' % (json.dumps(wrap), kind), 20)
 
 
+# The reference is the "Name display on the TV" card by name: since 3 Nov 2026 the first .card.owneronly
+# on the page is the "These settings are for" Whole group / This venue switch (Dean, round 2 L), which has
+# no .sublbl, so "the first owner-only card" no longer meant the card the checks below compare against.
 CARD = r'''(function(){
-  var w=document.getElementById("permitsWrap"), ref=document.querySelector("#body .card.owneronly"), out={kinds:[], cards:[]};
+  var w=document.getElementById("permitsWrap"), ref=document.getElementById("nameSeg").closest(".card"), out={kinds:[], cards:[]};
   var cs=function(e){var s=getComputedStyle(e);return {fs:s.fontSize, ls:s.letterSpacing, ff:s.fontFamily.split(",")[0], tt:s.textTransform, col:s.color, pad:s.padding, br:s.borderRadius, bg:s.backgroundColor};};
   out.ref={lbl:cs(ref.querySelector(".lbl")), sub:cs(ref.querySelector(".sublbl")), card:cs(ref), seg:cs(ref.querySelector(".seg .opt"))};
   w.querySelectorAll(".permit").forEach(function(c){
