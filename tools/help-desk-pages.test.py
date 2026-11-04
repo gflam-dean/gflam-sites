@@ -356,6 +356,27 @@ def help_page_checks(b, VP):
         check(tag + ' venue: the venue issues and the venue FAQ (%d), open on the page' % len(vp_faq['venue']['items']),
               got == len(vp_faq['venue']['items']) and t.js('document.getElementById("vphFaq-venue").open') is True and
               t.js('Array.prototype.map.call(document.querySelectorAll("#vphFlow-venue .vph-issue"),function(x){return x.textContent;}).join("|")') == '|'.join(i['title'] for i in ISSUES['venueplay:venue']), got)
+        # THE FAQ MARKERS (4 Nov 2026): the outer "Questions and answers" is open on the page, so it shows
+        # the minus; every question inside it is shut and must show a plus. Until 4 Nov the open outer
+        # details turned every summary inside it to a minus, so a shut question looked open.
+        mk = t.js('(function(){var q=function(e){return getComputedStyle(e,"::after").content;};var o=document.querySelector("#vphFaq-venue>summary");'
+                  'var inner=Array.prototype.map.call(document.querySelectorAll("#vphFaq-venue details:not([open])>summary"),q);'
+                  'return JSON.stringify({outer:o&&q(o),inner:inner});})()')
+        mk = json.loads(mk) if isinstance(mk, str) else {}
+        check(tag + ' venue: the open "Questions and answers" shows a minus and every shut question in it a plus',
+              mk.get('outer') == '"\u2212"' and len(mk.get('inner') or []) == len(vp_faq['venue']['items']) and all(x == '"+"' for x in mk['inner']), mk)
+        # THE LAYOUT (Dean, 4 Nov 2026: "needs formatting properly"): on a wide screen the help sits in a
+        # right-hand column level with the heading, lined up with the right edge of the choices above;
+        # on a phone it is one column, the help card before the email line.
+        lay = t.js('(function(){var R=function(s){var e=document.querySelector(s);if(!e)return null;var r=e.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top),Math.round(r.right),Math.round(r.bottom)];};'
+                   'return JSON.stringify({card:R("#venue > .card"),head:R("#venue .panel-head h2"),reach:R("#venue .reach"),paths:R(".paths"),sw:document.documentElement.scrollWidth,vw:innerWidth});})()')
+        lay = json.loads(lay) if isinstance(lay, str) else {}
+        if tag == 'desktop':
+            check(tag + ' venue: the help card is a right-hand column beside the heading, its right edge on the choices\' right edge',
+                  bool(lay.get('card')) and lay['card'][0] > lay['head'][2] and abs(lay['card'][2] - lay['paths'][2]) <= 2 and abs(lay['card'][1] - lay['head'][1]) <= 40, lay)
+        else:
+            check(tag + ' venue: one column on a phone: the card under the heading, the email line under the card, nothing sideways',
+                  bool(lay.get('card')) and lay['card'][1] > lay['head'][3] and lay['reach'][1] >= lay['card'][3] and lay['sw'] <= lay['vw'], lay)
         check(tag + ' venue: the player panel stays shut, and the address says #venue', t.js('document.getElementById("player").hidden && location.hash==="#venue" && document.querySelector("[data-path=venue]").getAttribute("aria-selected")==="true"') is True)
         # THE SUPPORT PHONE on /help: drawn by the widget into the venue part, as on the console.
         c = page_call(t)

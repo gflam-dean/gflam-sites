@@ -28,8 +28,9 @@ function oneLogo(html, pp) {
     && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;
 }
 function brandFoot(html, pp) {
-  /* The footer's name is lowercase since the 2 Nov release; the Acknowledgement of Country keeps "VenuePlay". */
-  var b = pp ? 'PartyPlay' : 'venueplay', c = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
+  /* The footer's name is lowercase since the 2 Nov release, and the Acknowledgement of Country is lowercase
+     too since Dean's "just make it all lowercase" (4 Nov 2026): "venueplay and The Gflam Group of Companies". */
+  var b = pp ? 'PartyPlay' : 'venueplay', c = pp ? 'PartyPlay' : 'venueplay', h = String(html || '');
   return h.indexOf(b + ' &middot; ABN 35 679 383 049.') !== -1 && h.indexOf(c + COUNTRY) !== -1
     && !/gflam/i.test(h.split(c + COUNTRY).join('')) && !/Gold Coast/.test(h) && h.indexOf('<strong>CONFIDENTIAL EMAIL:</strong>') !== -1;
 }
@@ -932,6 +933,10 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('ONE WIDGET, TWO SITES; AND THE WORDS');
   check('partyplay/lib/vp-help.js is byte for byte venueplay/app/vp-help.js', readFile('partyplay/lib/vp-help.js') === readFile('venueplay/app/vp-help.js'));
+  /* Every saved reply HQ starts with is lowercase venueplay, even at the start of a sentence (Dean, 4 Nov 2026). */
+  (function () { var hq = readFile('venueplay/app/vp-helpdesk-hq.js') || '', bodies = hq.match(/body: "(?:[^"\\]|\\.)*"/g) || [];
+    check('the saved replies HQ starts with (' + bodies.length + ') never say "VenuePlay" in capitals', bodies.length >= 5 && !bodies.some(function (x) { return /VenuePlay/.test(x); }),
+          bodies.filter(function (x) { return /VenuePlay/.test(x); }).map(function (x) { return x.slice(0, 80); })); })();
   var VPF = JSON.parse(readFile('venueplay/data/help-faq.json')), PPF = JSON.parse(readFile('partyplay/data/help-faq.json'));
   check('the venueplay FAQ has its patron and venue sections', VPF.patron.items.length >= 6 && VPF.venue.items.length >= 6);
   check('the PartyPlay FAQ has its guest and host sections', PPF.guest.items.length >= 5 && PPF.host.items.length >= 5);

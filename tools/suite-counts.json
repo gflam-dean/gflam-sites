@@ -180,7 +180,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 230,
+  "checks": 234,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -336,7 +336,7 @@
   "counted_by": "lines"
  },
  "tools/site-offer-footer-in-chrome.test.py": {
-  "checks": 28,
+  "checks": 35,
   "counted_by": "lines"
  },
  "tools/stale-phone-and-end-once-in-chrome.test.py": {
@@ -512,7 +512,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 382,
+  "checks": 383,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
@@ -892,7 +892,7 @@
   "counted_by": "lines"
  },
  "tools/test-terms-put-compliance-on-the-venue.js": {
-  "checks": 97,
+  "checks": 102,
   "counted_by": "lines"
  },
  "tools/test-touring-cards-loader.js": {

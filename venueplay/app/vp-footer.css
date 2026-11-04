@@ -16,12 +16,21 @@
 /* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"). The supplied
    brand-kit lockup's own "powered by Gflam." line (logo-kit-1nov/powered-by), cropped from the file,
    never retyped: small, muted, centred under the wordmark. A bit smaller again (Dean, 3 Nov 2026
-   evening): 14px, down from 18. */
+   evening): 14px, down from 18.
+   THE SAME WIDTH AS THE WORDMARK (Dean, 4 Nov 2026): the lockup is as wide as the venueplay wordmark
+   above it, so the two read as one block. The width is the img's own width attribute on each page
+   (189 under the 46px-high primary logo on home, the offer page and help, whose letters are 189 wide;
+   128 under the 128-wide wordmark on terms and privacy); the height follows from the file. */
 footer .powered{line-height:0}
-footer .powered img.powered-by{display:block;height:14px;width:auto;opacity:.6;margin:0 auto}
+footer .powered img.powered-by{display:block;max-width:100%;height:auto;opacity:.6;margin:0 auto}
+
+/* MORE ROOM ABOVE THE FOOTER (Dean, 4 Nov 2026: "sit a bit lower and more separated from the content
+   above"). This file loads after each page's own styles, so it sets the space for all five pages. */
+footer{margin-top:96px;padding-top:64px;padding-bottom:64px}
 .foot-links .dot{white-space:pre}
 
 @media (max-width:760px){
+  footer{margin-top:64px;padding-top:48px;padding-bottom:48px}
   footer .foot{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px}
   footer .foot > div:first-child{width:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
   footer .foot > .foot-meta{width:100%;display:block}

@@ -15527,7 +15527,7 @@ function helpSigner(env, label) {
    has no line. Links are pink and underlined, so they look like links (Dean, 29 Oct 2026). */
 const HELP_LINK = 'class="hd-a" style="color:#C70F69;text-decoration:underline"';
 function helpCountry(pp) {
-  return (pp ? 'PartyPlay' : 'VenuePlay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+  return (pp ? 'PartyPlay' : 'venueplay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 }
 function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const pp = ticket.brand === 'partyplay';

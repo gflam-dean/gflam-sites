@@ -110,6 +110,12 @@ FOOT = r'''(function(){
   var bar = document.querySelector(".vp-float-cta.show"), barTop = bar ? bar.getBoundingClientRect().top : innerHeight;
   return JSON.stringify({ vw: innerWidth, sw: document.documentElement.scrollWidth, brand: mid(f.querySelector(".foot-brand")),
     poweredH: (function (i) { return i ? Math.round(i.getBoundingClientRect().height * 10) / 10 : null; })(f.querySelector(".powered img.powered-by")),
+    poweredW: (function (i) { return i ? Math.round(i.getBoundingClientRect().width * 10) / 10 : null; })(f.querySelector(".powered img.powered-by")),
+    /* the venueplay letters' own width: the inline wordmark is drawn edge to edge; the primary logo file
+       (viewBox -101 -829 4876 1136) has 100 units of glow room either side of its 4676-unit letters */
+    markW: (function (b) { var i = b && b.querySelector("img[src*='venueplay-primary']"), v = b && b.querySelector("svg[data-vp-mark='wordmark']");
+      if (i) return Math.round(i.getBoundingClientRect().width * 4676 / 4876 * 10) / 10; if (v) return Math.round(v.getBoundingClientRect().width * 10) / 10; return null; })(f.querySelector(".foot-brand")),
+    gapAbove: Math.round(parseFloat(getComputedStyle(f).marginTop)), padTop: Math.round(parseFloat(getComputedStyle(f).paddingTop)),
     powered: mid(f.querySelector(".powered")), social: mid(f.querySelector(".foot-social")), lineMids: lineMids, lineCount: lineMids.length,
     links: links.length, dots: dots, copyBottom: cb, oneLine: oneLine, barTop: barTop, bar: !!bar, dir: getComputedStyle(f.querySelector(".foot")).flexDirection });
 })()'''
@@ -144,6 +150,11 @@ try:
     ok('no offer price and no closing day anywhere on the homepage ($2.50, $2.30, "%s", "%s")' % (DAY, CODE),
        not re.search(r'\$2\.(50|30)\b', allt) and DAY not in allt and DATE not in allt and CODE not in allt,
        re.findall(r'.{30}(?:\$2\.50|\$2\.30|%s).{30}' % re.escape(DAY), allt)[:3])
+    ok('the price words say the per-player rate never changes and only the monthly bill moves, with a plan move up '
+       '(no "the only time your monthly changes" beside "the rate never changes"; Dean, 4 Nov 2026)',
+       'Your rate of $3 per player, per month, never changes. Your monthly bill moves only when your plan moves up.' in allt
+       and 'Your rate per player never changes: that plan move is the only thing that changes your monthly bill.' in allt
+       and 'only time your monthly changes' not in allt, re.findall(r'.{0,60}never changes.{0,80}', allt)[:3])
     ok('the homepage does not load the offer file or ask the Worker about a code',
        h.get('scripts') == 0 and h.get('asked') == 0 and h.get('offer') is False, h)
     S.js(sid, 'document.getElementById("offer").scrollIntoView({block:"start",behavior:"instant"}); window.scrollBy(0,-60); true')
@@ -186,8 +197,10 @@ try:
         mid = (f.get('vw') or 390) / 2.0
         centred = all(x is not None and abs(x - mid) <= 3 for x in (f.get('brand'), f.get('powered'), f.get('social')))
         ok('%s: the logo, "Powered by Gflam Touring" and the social icons are centred' % name, centred, f)
-        ok('%s: the powered-by Gflam line is the smaller 14px line (Dean, 3 Nov 2026 evening)' % name,
-           f.get('poweredH') is not None and 13 <= f['poweredH'] <= 15, f.get('poweredH'))
+        ok('%s: the powered-by Gflam lockup is the same width as the venueplay wordmark above it, to 2px (Dean, 4 Nov 2026)' % name,
+           f.get('poweredW') and f.get('markW') and abs(f['poweredW'] - f['markW']) <= 2 and f.get('poweredH', 0) >= 19, (f.get('poweredW'), f.get('markW'), f.get('poweredH')))
+        ok('%s: the footer sits lower, with more room above it, sized for a phone: 60 to 80px of space and 44 to 56px inside before the logo' % name,
+           60 <= f.get('gapAbove', 0) <= 80 and 44 <= f.get('padTop', 0) <= 56, (f.get('gapAbove'), f.get('padTop')))
         ok('%s: every line of links is centred, and no dot is left at the end of a line' % name,
            f.get('links', 0) >= 4 and f.get('lineCount', 0) >= 1 and all(abs(x - mid) <= 3 for x in f.get('lineMids', [])) and f.get('dots') == 0, f)
         ok('%s: the copyright line is one line ("(c) 2026 Gflam Group..."), wholly above the sticky bar%s, and nothing scrolls sideways' % (name, '' if page in ('/help.html', '/terms.html', '/privacy.html') else ' (shown)'),
@@ -203,13 +216,16 @@ try:
     v = S.js(sid, FOOT)
     f = json.loads(v) if isinstance(v, str) else {}
     ok('desktop: the footer is still a row, with the dots between the links', f.get('dir') == 'row' and f.get('dots') == f.get('links', 0) - 1 and f.get('lineCount') == 1, f)
+    ok('desktop: the footer has 90px or more of space above it and the lockup matches the wordmark width (Dean, 4 Nov 2026)',
+       f.get('gapAbove', 0) >= 90 and f.get('padTop', 0) >= 60 and f.get('poweredW') and f.get('markW') and abs(f['poweredW'] - f['markW']) <= 2,
+       (f.get('gapAbove'), f.get('padTop'), f.get('poweredW'), f.get('markW')))
     S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 28   # +5: the powered-by line measured on each page (3 Nov 2026 evening)
+EXPECTED = 35   # +5: the powered-by line measured on each page (3 Nov 2026 evening); +7 (4 Nov 2026): the footer gap on each page, the desktop footer, the price words
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -81,7 +81,7 @@
     { key: "player-join", audience: "player", title: "Player: can't join or game not showing",
       body: "Hi {first_name},\n\nSorry you had trouble. Here's the quickest way in:\n\n1. Scan the QR code on the venue's big screen with your phone camera, or\n2. Go to venueplay.com.au/play and type the code shown on the screen.\n\nThere's no app to download. If your game isn't showing once the host has started, check the code matches the screen and reload the page. Keep your screen on during the game, as some phones pause the page when they lock.\n\nOn the night, the host in the room is always the quickest help.\n\nCheers," },
     { key: "player-prize", audience: "player", title: "Player: a prize question",
-      body: "Hi {first_name},\n\nThanks for your message. Prizes are offered and given out by the venue running the game, and they're always claimed from the host on the night. VenuePlay supplies the game software only, so the best people to help with a prize are the host or the manager at {venue}.\n\nCheers," },
+      body: "Hi {first_name},\n\nThanks for your message. Prizes are offered and given out by the venue running the game, and they're always claimed from the host on the night. venueplay supplies the game software only, so the best people to help with a prize are the host or the manager at {venue}.\n\nCheers," },
     { key: "player-details", audience: "player", title: "Player: remove my details",
       body: "Hi {first_name},\n\nHappy to help. Could you reply with the name of the venue you played at, and the email or mobile you gave them? Once we have those, we'll take you off that venue's list.\n\nCheers," },
     { key: "pp-lost", audience: "partyplay", title: "PartyPlay: lost party code or email",
