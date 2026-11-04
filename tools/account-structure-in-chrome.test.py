@@ -84,8 +84,11 @@ def fill_permit(sid, wrap, kind, number='', holder='venue', npo='', authorised='
     return S.until(sid, '/Saved|Cleared|Could not|permission/.test(document.querySelector(%s+\' .permit[data-kind="%s"] .pmsg\').textContent)' % (json.dumps(wrap), kind), 20)
 
 
+# The reference is the "Name display on the TV" card by name: since 3 Nov 2026 the first .card.owneronly
+# on the page is the "These settings are for" Whole group / This venue switch (Dean, round 2 L), which has
+# no .sublbl, so "the first owner-only card" no longer meant the card the checks below compare against.
 CARD = r'''(function(){
-  var w=document.getElementById("permitsWrap"), ref=document.querySelector("#body .card.owneronly"), out={kinds:[], cards:[]};
+  var w=document.getElementById("permitsWrap"), ref=document.getElementById("nameSeg").closest(".card"), out={kinds:[], cards:[]};
   var cs=function(e){var s=getComputedStyle(e);return {fs:s.fontSize, ls:s.letterSpacing, ff:s.fontFamily.split(",")[0], tt:s.textTransform, col:s.color, pad:s.padding, br:s.borderRadius, bg:s.backgroundColor};};
   out.ref={lbl:cs(ref.querySelector(".lbl")), sub:cs(ref.querySelector(".sublbl")), card:cs(ref), seg:cs(ref.querySelector(".seg .opt"))};
   w.querySelectorAll(".permit").forEach(function(c){
@@ -147,7 +150,9 @@ try:
     time.sleep(0.8)
     kinds = card_kinds(sid, '#drawPermits')
     ok('a QLD venue: the Draws tab has the raffle permit only (a free members draw is a category 4 game, no licence) and no bingo', kinds == 'raffle', kinds)
-    ok('under a "Permits and authorities for draws" heading at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));var l=ls[ls.length-1];return l&&l.textContent.trim()==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
+    # Since 3 Nov 2026 Draws is three folds (Dean, round 2 F): the heading is the Permits fold's, whose words come before
+    # its summary span (the same reading billing.html's own section() gating uses), so read the words, not the summary.
+    ok('under a "Permits and authorities for draws" heading at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));var l=ls[ls.length-1];var w=l&&l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent.trim():"";return l&&l.getAttribute("data-acc")==="permits"&&w==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
     ok('Game settings on this page says nothing of "Permits" beyond pointing at its own bingo permit', S.js(sid, '!document.querySelector("#tp-settings .permit") && /bingo permit/.test(document.getElementById("tp-settings").innerText)') is True)
     ok('the card names the state the venue is in (Queensland) and no musical bingo', S.js(sid, '/In Queensland/.test(document.getElementById("drawPermits").innerText) && !/musical/i.test(document.getElementById("drawPermits").innerText)') is True)
     headings = S.js(sid, '[].map.call(document.querySelectorAll("#drawPermits .permit .lbl"),function(l){return l.firstChild.textContent.trim();}).join("|")')
@@ -341,17 +346,23 @@ try:
     m = json.loads(S.js(sid, '''(function(){
       function box(id){var e=document.getElementById(id);if(!e)return null;var cs=getComputedStyle(e),r=e.getBoundingClientRect();
         return {bg:cs.backgroundColor,h:Math.round(r.height),rad:parseFloat(cs.borderTopLeftRadius)||0,fs:parseFloat(cs.fontSize)||0};}
-      var out={fix:['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box),show:box('dlMonths'),over:[]};
-      [].forEach.call(document.querySelectorAll('input[type=date]'),function(d){if(!d.offsetParent)return;var c=d.closest('.vpp-card,.scard,.card');if(!c)return;
-        var r=d.getBoundingClientRect(),cr=c.getBoundingClientRect();if(r.right>cr.right-1||r.left<cr.left)out.over.push((d.id||d.name||'date')+':'+Math.round(r.right)+'>'+Math.round(cr.right));});
+      function fold(n){var h=document.querySelector('#tp-draws .acchead[data-acc="'+n+'"]');if(h&&!h.classList.contains('open'))h.click();return !!h&&h.classList.contains('open');}
+      var out={over:[],seen:0,folds:{}};
+      function dates(){[].forEach.call(document.querySelectorAll('input[type=date]'),function(d){if(!d.offsetParent)return;var c=d.closest('.vpp-card,.scard,.card');if(!c)return;out.seen++;
+        var r=d.getBoundingClientRect(),cr=c.getBoundingClientRect();if(r.right>cr.right-1||r.left<cr.left)out.over.push((d.id||d.name||'date')+':'+Math.round(r.right)+'>'+Math.round(cr.right));});}
+      out.folds.raffles=fold('raffles'); out.show=box('dlMonths'); dates();
+      out.folds.members=fold('members'); out.fix=['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box); dates();
+      out.folds.permits=fold('permits'); dates();
       var h=getComputedStyle(document.querySelector('header'));out.hdr={bg:h.backgroundColor,bf:h.backdropFilter||h.webkitBackdropFilter||'none'};
       out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''') or '{}')
+    # Since 3 Nov 2026 Draws is three folds (one open at a time, Dean round 2 F): each box is measured with ITS fold
+    # open, as an owner sees it (Raffles: the Show select; Members draws: Fix a name; every fold: the date boxes).
     fx = m.get('fix') or []
     ok('"Fix a name" and "Take someone off the list": the dark on-brand box, finger height, rounded (not tiny white browser boxes)',
        len(fx) == 4 and all(b and b['bg'] not in ('rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)') and b['h'] >= 40 and b['rad'] >= 10 for b in fx), fx)
     sh = m.get('show') or {}
     ok('the "Show" select\'s text fits its box (a finger-high box, text no taller than it allows)', sh.get('h', 0) >= 40 and sh.get('fs', 99) + 16 <= sh.get('h', 0), sh)
-    ok('every date box (permit Authorised on / Expires) stays inside its card, and nothing scrolls sideways', m.get('over') == [] and m.get('sw', 9999) <= 390, m.get('over'))
+    ok('every date box (permit Authorised on / Expires) stays inside its card, and nothing scrolls sideways', m.get('over') == [] and m.get('seen', 0) >= 1 and m.get('folds') == {'raffles': True, 'members': True, 'permits': True} and m.get('sw', 9999) <= 390, (m.get('over'), m.get('seen'), m.get('folds')))
     hd = m.get('hdr') or {}
     ok('the sticky header is solid, not see-through and blurred over the page', hd.get('bf') in ('none', '', None) and hd.get('bg', '').startswith('rgb(') and not hd.get('bg', '').startswith('rgba('), hd)
     shot(sid, 'billing-draws-390')
