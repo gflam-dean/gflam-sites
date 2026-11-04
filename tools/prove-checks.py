@@ -9633,6 +9633,18 @@ MUTATIONS = [
      '        u.new_phone || u.phone || u.phone_change || payload.phone || "";',
      'a sign-in code goes to a number someone only asked to change to'),
     # HQ > Prospects, 6 Nov release (4 Nov 2026): Edit details, the one send button (email and text), compact rows.
+    ('prospects-edit-in-chrome.test.py', 'venueplay/app/vp-prospects-hq.js',
+     '\'<div class="prmore"\' + (open ? "" : " hidden") + ">"',
+     '\'<div class="prmore">\'',
+     'in the real page every prospect row opens in full: no compact rows'),
+    ('prospects-edit-in-chrome.test.py', 'venueplay/app/hq.html',
+     'vpTell((r.line || ("Sent by email, link works until "',
+     'vpTell(("" || ("Sent by email, link works until "',
+     'in the real page HQ is never told the text did not go (texts switched off)'),
+    ('prospects-edit-in-chrome.test.py', 'venueplay/app/vp-prospects-hq.js',
+     '    post("/admin/prospect/update", body).then(function (j) {',
+     '    Promise.resolve({ ok: true, changed: [] }).then(function (j) {',
+     'in the real page Save details says nothing and saves nothing'),
     # D117's own label (the gate judges it by the suite): the audit row is the one this whole route stands on.
     ('Edit details on a prospect: owner or accounts only', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  await vpaAudit(env, actor, 'prospect_details_changed',",
