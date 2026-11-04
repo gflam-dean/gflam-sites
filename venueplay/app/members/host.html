@@ -87,6 +87,8 @@
   .field{margin-bottom:14px}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .jpline{display:flex;gap:8px;align-items:stretch}.jpline input{flex:1 1 auto;min-width:0}.jpline .btn{flex:0 0 auto;white-space:nowrap}
+  .jpline input[readonly]{opacity:.75}.jpline input.fixing{opacity:1;border-color:var(--pink)}
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
   .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:90px}
   .stat .box .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
@@ -175,7 +177,7 @@
 <header>
   <div class="bar">
     <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
-    <a class="vp-navlink" href="/app" title="Back to games">&#8592; Games</a>
+    <a class="vp-navlink" href="/app" title="Back to Play">&#8592; Play</a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
@@ -271,18 +273,25 @@
                  never here. $("setSince").value threw on EVERY load, which rejected loadAll(), which
                  meant connect() never ran, which left the whole console blank for every venue. The
                  field it wanted is a real one: date_started drives "running since" on the TV. -->
-            <div class="field"><label>Running since</label><input type="date" id="setSince"></div>
+            <!-- S (Dean, 4 Nov 2026): start date, then the draw day, which fills itself from the date and can be
+                 typed over; the same order as Your account > Draws. -->
+            <div class="two">
+              <div class="field"><label>Start date</label><input type="date" id="setSince"></div>
+              <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Fills in from the start date" autocomplete="off"></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>Draw time</label><input type="text" id="setTime" placeholder="7:30pm"></div>
+              <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" id="setClaimHint" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
+            </div>
             <div class="two">
               <div class="field"><label>Starting jackpot ($)</label><input type="number" id="setStart" class="mono" min="0" step="1"></div>
               <div class="field"><label>Weekly increment ($)</label><input type="number" id="setInc" class="mono" min="0" step="1"></div>
             </div>
-            <div class="two">
-              <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
-              <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" id="setClaimHint" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
-            </div>
-            <div class="two">
-              <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
-              <div class="field"><label>Draw time</label><input type="text" id="setTime" placeholder="7:30pm"></div>
+            <!-- T (Dean, 4 Nov 2026): the current jackpot is the draw's running figure (reset on a claim, grown on a
+                 rollover). It reads; "Correct it" opens it for one save, and only then is it sent. -->
+            <div class="field"><label>Current jackpot ($)</label>
+              <div class="jpline"><input type="number" id="setCur" class="mono" min="0" step="1" readonly><button type="button" class="btn ghost" id="setCurFix">Correct it</button></div>
+              <div class="note" id="setCurNote" style="margin-top:4px">Set by the draw: it resets when the jackpot is claimed and grows by the weekly increment when it rolls over.</div>
             </div>
             <!-- Maximum jackpot (migration 101). Anisimoff Legal, 1 Oct 2026 point 10 and 8 Oct 2026
                  point 6: a customer-set maximum, enforced before the draws, with the draw continuing
@@ -553,7 +562,7 @@
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
-    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); renderCapAdvice();
+    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); setCurLock(true); renderCapAdvice();
       var adv=$("membersAdv"); if(adv && !G.loadFailed) adv.open=true;   // creating a draw: the form is the job, so it is never folded away
       return; }   // creating a new draw: blank form
     $("setName").value  = d.name||"";
@@ -561,6 +570,7 @@
     $("setStart").value = d.starting_amount_cents!=null ? Math.round(d.starting_amount_cents/100) : "";
     $("setInc").value   = d.increment_cents!=null ? Math.round(d.increment_cents/100) : "";
     $("setCur").value   = d.current_jackpot_cents!=null ? Math.round(d.current_jackpot_cents/100) : "";
+    setCurLock(true);
     $("setClaim").value = d.time_to_claim_seconds!=null ? d.time_to_claim_seconds : "";
     $("setDay").value   = d.draw_day||"";
     $("setTime").value  = d.draw_time||"";
@@ -615,7 +625,7 @@
     var lock=!G.canManage;
     // setSince was in the clear list but not this one, so a host could type into "Running since"
     // and it silently never saved.
-    ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).disabled=lock; });
+    ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax","setCurFix"].forEach(function(id){ $(id).disabled=lock; });
     $("saveSettingsBtn").disabled=lock || (!!G.loadFailed && !G.draws.length);
     show("settingsLock", lock);
   }
@@ -862,7 +872,9 @@
     }
     var sa=dollarsToCents("setStart"); if(sa!==undefined) body.starting_amount_cents=sa;
     var ic=dollarsToCents("setInc");   if(ic!==undefined) body.increment_cents=ic;
-    var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
+    /* T: the current jackpot goes only when the owner opened it to correct it. An unrelated save never puts
+       back a figure the draw has moved on from (a claim, a rollover) since the page loaded. */
+    if(G.curFixing){ var cj=dollarsToCents("setCur"); if(cj!==undefined) body.current_jackpot_cents=cj; }
     var tc=intOf("setClaim");          if(tc!==undefined) body.time_to_claim_seconds=tc;
     /* The maximum is sent EVERY save, null when blank, so clearing the field clears the maximum
        (the Worker treats "left out" as "leave alone"). */
@@ -1117,6 +1129,21 @@
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);
   ["setMax","setCur","setStart"].forEach(function(id){ $(id).addEventListener("input", renderCapAdvice); });
+  /* S: the draw day fills itself from the start date (and stays typeable). */
+  function dayOf(dateStr){ if(!dateStr) return ""; var p=String(dateStr).split("-"); if(p.length<3) return ""; var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d.getTime())?"":(["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()]||""); }
+  ["input","change"].forEach(function(ev){ $("setSince").addEventListener(ev, function(){ var day=dayOf(this.value); if(day) $("setDay").value=day; }); });
+  /* T: the current jackpot reads until "Correct it"; then it opens for this one save and is sent with it. */
+  function setCurLock(lock){
+    var el=$("setCur"), b=$("setCurFix"), n=$("setCurNote"); if(!el) return;
+    G.curFixing = !lock; el.readOnly = !!lock; el.classList.toggle("fixing", !lock);
+    if(b) b.textContent = lock ? "Correct it" : "Keep what it was";
+    if(n) n.textContent = lock ? "Set by the draw: it resets when the jackpot is claimed and grows by the weekly increment when it rolls over."
+                               : "Type the right amount, then Save settings. It goes on the TV with the save.";
+  }
+  $("setCurFix").addEventListener("click", function(){
+    if($("setCur").readOnly){ setCurLock(false); try{ $("setCur").focus(); $("setCur").select(); }catch(e){} return; }
+    var d=curDraw(); $("setCur").value = (d && d.current_jackpot_cents!=null) ? Math.round(d.current_jackpot_cents/100) : ""; setCurLock(true); renderCapAdvice();
+  });
   /* THE DRAW RECORD, as a file: one copy in /app/vp-drawrecord.js, shared with the raffle console.
      Every members draw and raffle result at this venue, oldest first, 7 year retention note on the
      first line. Any staff member may download it. */

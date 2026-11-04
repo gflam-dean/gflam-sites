@@ -36,7 +36,8 @@
 
   /* SOLID, NOT FROSTED (Dean, 29 Oct 2026, at 390px): the see-through blurred header showed the page's pink
      buttons and text as blurred blobs and ghosts under it as the page scrolled. */
-  header{border-bottom:1px solid var(--line);background:var(--ink);position:sticky;top:0;z-index:20}
+  /* The same header as Your account, Game settings and the game consoles (round 3 U, 4 Nov 2026). */
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
   .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   /* THE ISLAND (Dean, 3 Nov 2026): viewport-fit=cover lets the page draw under it, so the header keeps its
      logo and buttons out of it, saved to the home screen or sideways. 0 in a normal tab: nothing moves. */
@@ -122,8 +123,16 @@
   @media (max-width:900px){ .console{grid-template-columns:1fr} }
   .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px}
 
+  /* PLAY, the main screen's head (round 3, 4 Nov 2026): the same display title every console page has
+     (Your account, Game settings, Your month), and under it, only for a host with a venue to switch to,
+     where tonight's games go with the switch beside it. */
+  .playhead{margin:4px 0 16px}
+  .playtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:0}
+  .playvenue{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--text)}
+  .playvenue .playat{color:var(--muted)}
+  .playvenue b{font-weight:800;color:#fff}
   .picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:8px 0 24px}
-  .pk{padding:22px 20px;min-height:88px;border:1px solid var(--line);background:var(--ink-3);color:#fff;border-radius:15px;
+  .pk{padding:22px 20px;min-height:88px;border:1px solid var(--line);background:var(--ink-3);color:#fff;border-radius:16px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;cursor:pointer;transition:.15s;text-align:left;
     display:flex;flex-direction:column;justify-content:center;gap:3px}
   .pk:hover{color:#fff;border-color:var(--pink)}
@@ -282,7 +291,7 @@
               background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
               border-radius:8px;padding:5px 10px}
   .screencode i{font-style:normal;font-size:12px;letter-spacing:.14em;color:var(--faint)}
-  .screencode b{font-family:'Hanken Grotesk',monospace;font-size:15px;letter-spacing:.18em;
+  .screencode b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:15px;letter-spacing:.18em;
                 color:#fff;font-weight:800}
   .hidden{display:none!important}
 
@@ -333,7 +342,7 @@
 <body>
 <header>
   <div class="bar">
-    <button class="vp-navlink" type="button" id="gamesBack" style="display:none;background:none;border:none;cursor:pointer;padding:0">&#8592; Games</button>
+    <button class="vp-navlink" type="button" id="gamesBack" style="display:none;background:none;border:none;cursor:pointer;padding:0" title="Back to Play">&#8592; Play</button>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
@@ -461,13 +470,17 @@
       <span class="screencode"><i>Screen code</i><b id="roomCode">------</b></span>
     </div>
 
-    <!-- game selection landing: /app opens here, you pick a game, every game has a Games button back -->
+    <!-- PLAY: the main screen (Dean, 4 Nov 2026, round 3 N and O). /app opens here, you pick a game, and every
+         game's back button says "Play" because this is where it goes. The screen is named for what it is. A host
+         with ONE venue gets no venue line and no Switch venue: they have no choice to make. A host with more than
+         one venue (or HQ viewing) sees which venue tonight's games go to, with the switch beside it. -->
     <div id="gameSelect">
-      <div id="venueBanner" style="display:none;margin-top:6px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px">
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif">You are running games at</div>
-        <div style="display:flex;align-items:center;gap:12px;margin-top:3px;flex-wrap:wrap">
-          <span class="vp-h" id="venueBannerName" style="margin-bottom:0"></span>
-          <button type="button" id="venueSwitchInline" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;color:var(--muted)">Not this one? Switch venue</button>
+      <div class="playhead">
+        <h1 class="playtitle">Play</h1>
+        <div id="venueBanner" class="playvenue" style="display:none">
+          <span class="playat">Tonight's games go to</span>
+          <b id="venueBannerName"></b>
+          <button type="button" id="venueSwitchInline" class="hact">Switch venue</button>
         </div>
       </div>
       <div id="gamePicker" class="picker">
@@ -1275,14 +1288,25 @@
   }
   // The Account link is for owners and managers only; a host never sees it. Switch venue only
   // shows for staff who cover more than one venue.
+  /* Does this login have a venue to switch TO? HQ always; staff only when their rows name more than one
+     venue. Two rows at one venue (owner and host at the same pub) is one venue: no switch, no venue line. */
+  function hostHasChoice(ctx){
+    if(!ctx) return false;
+    if(ctx.isAdmin) return true;
+    var seen={}, n=0;
+    (ctx.staff||[]).forEach(function(s){ var id=s&&s.venue_id; if(id && !seen[id]){ seen[id]=1; n++; } });
+    return n>1;
+  }
   function updateAccountLink(){
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
     // A new venue's setup guide opens again from here (vp-firstrun.js, 28 Oct 2026; every new venue since 30 Oct).
     var fr=$("firstRunBtn"); if(fr) fr.style.display = (window.VPFirstRun && (VPFirstRun.offered ? VPFirstRun.offered(__ctx) : VPFirstRun.isProspect(__ctx))) ? "" : "none";
     // An admin can reach every venue, so they always need the switcher, even with no staff rows.
-    var multi = !!(__ctx && (__ctx.isAdmin || (__ctx.staff && __ctx.staff.length>1)));
+    // A host with ONE venue never sees it (Dean, 4 Nov 2026, round 3 M): the count is DISTINCT venues, because an
+    // owner who is also the host at the same pub has two staff rows and nothing to switch to.
+    var multi = hostHasChoice(__ctx);
     var sw=$("switchVenue"); if(sw) sw.style.display = multi ? "" : "none";
-    // Multi-venue hosts: name the venue on the selection screen so they notice a wrong pick.
+    // Multi-venue hosts: name the venue on the Play screen so they notice a wrong pick. One venue: no line at all (N).
     var vname=(__ctx&&__ctx.venue&&__ctx.venue.name)||"";
     var vn=$("venueBannerName"); if(vn) vn.textContent=vname;
     var vb=$("venueBanner"); if(vb) vb.style.display = (multi && vname) ? "" : "none";
@@ -1462,10 +1486,14 @@
        from the welcome signs one in) is asked for both before anything else, and from then on signs in with
        a text code. "Code not arriving? Carry on for now" lets them in for this sign-in only. */
     if(window.VPAboutYou && VPAboutYou.wants(__ctx) && window.VP && VP.getClient){ VPAboutYou.open(__ctx, { client:VP.getClient(), onDone:function(){ proceedVenue(); } }); go("vBoot"); return; }
-    if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
+    /* "Which venue are you at?" only for a host with more than one DISTINCT venue (Dean, 4 Nov 2026, round 3 M/N):
+       two staff rows at one pub (owner and host) is one venue and no question. Written out here, not through
+       hostHasChoice(), because the sign-in tests lift this function on its own. */
+    var seenV={}, nVenues=0; staff.forEach(function(x){ var id=x&&x.venue_id; if(id && !seenV[id]){ seenV[id]=1; nVenues++; } });
+    if(nVenues>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
     /* SWITCHED OFF: one card in place of the game picker, and no TV pairing (28 Oct 2026). A host
        with more than one venue can still choose another one from the card. */
-    if(window.VP && VP.holdGate && VP.holdGate(__ctx, staff.length>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
+    if(window.VP && VP.holdGate && VP.holdGate(__ctx, nVenues>1 ? { other:{ label:"Choose another venue", onClick:showVenuePick } } : null)){ go("vBoot"); return; }
     /* A NEW VENUE'S FIRST RUN (Dean, 28 Oct 2026 for prospects; 30 Oct 2026 for every new venue): their mobile,
        the Terms tick, their TV, a first game and their card, one screen at a time, before anything else, with
        the steps already done left out. A venue that is not a prospect gets it until its first game, which
@@ -4451,7 +4479,7 @@
   function landAfterConnect(){
     if(G.status==="running" || G.status==="lobby"){ selectGame("bingo"); } else if(!_hostPicked){ showGameSelect(); }
   }
-  // The selection landing: /app shows this first, and every game's "Games" button returns here.
+  // The selection landing, PLAY: /app shows this first, and every game's "Play" button returns here.
   function showGameSelect(){
     currentGame="";
     $("gameSelect").classList.remove("hidden");
@@ -4459,7 +4487,7 @@
     if($("bingoSteps")) $("bingoSteps").classList.add("hidden");
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="none";
-    $("headerTag").textContent="";
+    $("headerTag").textContent="Play";
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.remove("on"); }
   }

@@ -180,7 +180,7 @@ function runProceed(ctx, ayWants) {
   R.again = function () { ayWants = false; R.onDone('done'); };
   return R;
 }
-var P1 = runProceed({ venue: { slug: 'x' }, staff: [{}, {}] }, true);
+var P1 = runProceed({ venue: { slug: 'x' }, staff: [{ venue_id: 'a' }, { venue_id: 'b' }] }, true);   // two DISTINCT venues (round 3, 4 Nov 2026: two rows at one pub is one venue)
 check('a login with no mobile: the name-and-mobile screen first, before the venue pick (and nothing else opens behind it)', P1.order.join() === 'aboutyou,go vBoot', P1.order);
 P1.again();
 check('once it is done the console carries on to the venue pick as before', P1.order.slice(2).join() === 'venuepick', P1.order);
