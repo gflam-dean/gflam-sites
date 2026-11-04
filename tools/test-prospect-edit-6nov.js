@@ -118,10 +118,20 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
 
 /* The fake Auth also takes an admin PUT (the login's email or mobile changed), and a PATCH that asks for the rows
    back gets them, as PostgREST does with Prefer: return=representation. */
-var PUTS = [];
+var PUTS = [], MM_STATUS = 'success', MM_HTTP = 200, MM_CALLS = 0;
 var outerFetch = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url), method = (opts && opts.method) || 'GET';
+  /* MOBILE MESSAGE (4 Nov 2026), the provider the sign-in codes use: its answer as its API documents it. Recorded in
+     SMS in the same shape as the ClickSend backup's, with which provider it was. */
+  if (u === 'https://api.mobilemessage.com.au/v1/messages' && method === 'POST') {
+    MM_CALLS++;
+    var mb = JSON.parse(opts.body).messages[0];
+    if (MM_HTTP !== 200 || MM_STATUS !== 'success') { if (MM_STATUS === 'blocked') SMS.push({ mm: true, blocked: true, auth: opts.headers.Authorization, body: { messages: [{ to: mb.to, body: mb.message, from: mb.sender, ref: mb.custom_ref }] } });
+      return RS(MM_HTTP, { status: 'complete', results: [{ status: MM_STATUS, message_id: null }] }); }
+    SMS.push({ mm: true, auth: opts.headers.Authorization, body: { messages: [{ to: mb.to, body: mb.message, from: mb.sender, ref: mb.custom_ref }] } });
+    return RS(200, { status: 'complete', results: [{ status: 'success', message_id: 'mm_' + SMS.length, cost: 1 }] });
+  }
   var one = /\/auth\/v1\/admin\/users\/([0-9a-fA-F-]{36})/.exec(u);
   if (one && method === 'PUT') {
     var b = JSON.parse(opts.body), hit = AUTH.filter(function (x) { return x.id === one[1]; })[0];
@@ -222,10 +232,12 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var q1 = await call('/autopilot/prospects/quiet', undefined, AP, 'GET');
   var qq1 = (q1.body.prospects || []).filter(function (p) { return p.venue_id === small.id; })[0];
   check('the Mac\'s next run sees the mobile, so it plans the text follow-up (prospect_nudge.py reads p.mobile)', qq1 && qq1.mobile === '0412 345 678' && qq1.has_phone === true, qq1);
-  ENV.PROSPECT_SMS_ON = 'on'; ENV.CLICKSEND_USERNAME = 'rig'; ENV.CLICKSEND_API_KEY = 'rig-key'; SMS.length = 0;
+  ENV.PROSPECT_SMS_ON = 'on'; ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; SMS.length = 0;
   var ns = await call('/autopilot/prospect/nudge-sms', { venue_id: small.id, text: 'venueplay: Hi Jo, your venueplay is ready: {link} Reply STOP to opt out' }, AP);
   check('...and the text follow-up, once Dean says yes, goes to that mobile with no other step',
-    ns.status === 200 && SMS.length === 1 && SMS[0].body.messages[0].to === '+61412345678' && /\/app\/go#t=/.test(SMS[0].body.messages[0].body), [ns.body, SMS]);
+    ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /\/app\/go#t=/.test(SMS[0].body.messages[0].body), [ns.body, SMS]);
+  check('...through MOBILE MESSAGE, the sign-in codes\' provider: its own login, sender "venueplay", and "Reply STOP" made its opt-out link ({optout})',
+    SMS[0] && SMS[0].auth === 'Basic ' + btoa('mm-user:mm-pass') && SMS[0].body.messages[0].from === 'venueplay' && /\{optout\}$/.test(SMS[0].body.messages[0].body) && !/Reply STOP/.test(SMS[0].body.messages[0].body), SMS[0]);
   delete ENV.PROSPECT_SMS_ON;
 
   /* A mobile kept on the account but with a landline to ring: the call list rings the landline, the text goes to the mobile. */
@@ -297,9 +309,9 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   check('...two live links, the email\'s and the text\'s, ending at the same moment, a fresh 30 days from now',
     wbLinks.length === 2 && wbLinks[0].expires_at === wbLinks[1].expires_at && Math.abs(Date.parse(wbLinks[0].expires_at) - (CLOCK + 30 * DAY)) < 120000 && tx.body.days_left === 30, wbLinks);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
-  check('...the text is from venueplay, names them and the venue, carries the one-tap link, says until when, and "Reply STOP to opt out", no long dash',
+  check('...the text is from venueplay, names them and the venue, carries the one-tap link, says until when, and the opt-out link ({optout}, Mobile Message\'s), no long dash',
     smsBody.from === 'venueplay' && /^venueplay: Hi Sam, here is your new sign-in link for Weekend Bowls\. /.test(smsBody.body) && /\/app\/go#t=/.test(smsBody.body) &&
-    smsBody.body.indexOf('It works until ' + tx.body.expires_words + '.') !== -1 && /Reply STOP to opt out$/.test(smsBody.body) && !/[—–]/.test(smsBody.body) && smsBody.body.length <= 480, smsBody.body);
+    smsBody.body.indexOf('It works until ' + tx.body.expires_words + '.') !== -1 && /\{optout\}$/.test(smsBody.body) && !/[—–]/.test(smsBody.body) && smsBody.body.length <= 480, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);
 
@@ -336,6 +348,35 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
     tm.status === 200 && SMS.length === 0 && tm.body.line === 'Sent by email only, link works until ' + tm.body.expires_words + '. Add a mobile in Edit details to text it too.', tm.body.line);
   var tw = await call('/admin/signin-link', { venue_id: wb.id }, AS(ADMIN));
   check('a caller that does not ask for the text (text not true) gets the email only, as before', tw.status === 200 && SMS.length === 0 && !tw.body.text, tw.body);
+  section('7b. Opted out, a failing Mobile Message, the backup');
+  CLOCK = bne(3, 12, 0); SMS.length = 0; MM_STATUS = 'blocked'; var mm0 = MM_CALLS;
+  await setUp({ name: 'Opted Out Inn', send_welcome: false });
+  var oo = venueOf('Opted Out Inn');
+  await upd({ venue_id: oo.id, mobile: '0466 111 222' });
+  var to1 = await call('/admin/signin-link', { venue_id: oo.id, text: true }, AS(ADMIN));
+  check('Mobile Message answers "blocked" (they opted out with its link): the email still goes, HQ is told they opted out of texts',
+    to1.status === 200 && to1.body.text.status === 'opted_out' && /they opted out of texts/.test(to1.body.line) && MM_CALLS === mm0 + 1, to1.body);
+  check('...it is recorded as do-not-text for that number (sms_opted_out), and the text\'s link is retired',
+    audits('sms_opted_out').some(function (a) { return a.target === 'sms:+61466111222'; }) &&
+    DB.vp_signin_links.filter(function (l) { return l.venue_id === oo.id && !l.used_at; }).length === 1, audits('sms_opted_out'));
+  MM_STATUS = 'success';
+  var to2 = await call('/admin/signin-link', { venue_id: oo.id, text: true }, AS(ADMIN));
+  check('...and that number is never tried again: the next press does not even call Mobile Message', to2.body.text.status === 'opted_out' && MM_CALLS === mm0 + 1, [to2.body, MM_CALLS]);
+  age('Opted Out Inn', 4 * DAY);
+  var nso = await call('/autopilot/prospect/nudge-sms', { venue_id: oo.id, text: 'venueplay: Hi Sam, sign in: {link} Reply STOP to opt out' }, AP);
+  check('...nor by the follow-up text', nso.status === 409 && /opted out of texts/.test(nso.body.error) && MM_CALLS === mm0 + 1, nso.body);
+  var nsb = await call('/autopilot/prospect/nudge-sms', { venue_id: small.id, text: 'venueplay: Hi Jo, sign in: {link}' }, AP);
+  check('a follow-up text with no opt-out at all is refused before anything happens', nsb.status === 400 && /opt-out/.test(nsb.body.error), nsb.body);
+  MM_HTTP = 500; SMS.length = 0;
+  var tf = await call('/admin/signin-link', { venue_id: wb.id, text: true }, AS(ADMIN));
+  check('Mobile Message failing with no backup set: the email goes, the text did not, HQ is told', tf.body.text.status === 'failed' && SMS.length === 0, tf.body);
+  ENV.CLICKSEND_USERNAME = 'rig'; ENV.CLICKSEND_API_KEY = 'rig-key';
+  var tb = await call('/admin/signin-link', { venue_id: wb.id, text: true }, AS(ADMIN));
+  check('...with the ClickSend backup set, it goes through ClickSend instead (Mobile Message first, always)', tb.body.text.status === 'sent' && SMS.length === 1 && !SMS[0].mm, [tb.body, SMS]);
+  MM_HTTP = 200; delete ENV.CLICKSEND_USERNAME; delete ENV.CLICKSEND_API_KEY;
+  delete ENV.MOBILEMESSAGE_USERNAME; delete ENV.MOBILEMESSAGE_PASSWORD;
+  var tn2 = await call('/admin/signin-link', { venue_id: wb.id, text: true }, AS(ADMIN));
+  check('PROSPECT_SMS_ON on but no provider login at all: texts count as off', tn2.body.text.status === 'sms_off', tn2.body);
   delete ENV.PROSPECT_SMS_ON; delete ENV.CLICKSEND_USERNAME; delete ENV.CLICKSEND_API_KEY; CLOCK = null;
   check('the text hours: Wed noon now; Wed 7am to 9am; Wed 8pm to Thu 9am; Sat 8:30pm and Sun 10am to Mon 9am',
     vpaSmsAllowedAt(bne(3, 12)) === bne(3, 12) && vpaSmsAllowedAt(bne(3, 7)) === bne(3, 9) && vpaSmsAllowedAt(bne(3, 20)) === bne(3, 9) + DAY &&

@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '4 Nov 2026, 11:44 · 0565e638';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 13:24 · c01d7ca5';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3741,25 +3741,68 @@ async function vpaAutopilotQuietProspects(request, env, json) {
 /* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
    their one-tap sign-in link, at a different time from the email". Dean approves it in the same review email, as
    its own line; the Mac sends it the next day at the other end of the day (prospect_nudge.py plans when).
-   OFF UNTIL THE SMS PROVIDER EXISTS: PROSPECT_SMS_ON must say "on" AND the ClickSend login must be set
-   (CLICKSEND_USERNAME, CLICKSEND_API_KEY). Until then this answers 503 sms_off, sends nothing, and the Mac keeps the
-   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes. The Spam Act
-   needs the sender identified and a way to stop: the text must name venueplay and say "Reply STOP to opt out",
-   or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's, so either one works.
-   NOT BUILT YET, because the provider is not: reading STOP replies back from ClickSend and keeping a do-not-text
-   list. Both are needed before PROSPECT_SMS_ON is set. */
+   THE PROVIDER IS MOBILE MESSAGE (Dean, 4 Nov 2026), the same account and credentials the sign-in codes and the
+   staff welcome text use (MOBILEMESSAGE_USERNAME, MOBILEMESSAGE_PASSWORD, already on this Worker). ClickSend is a
+   backup only, tried when Mobile Message fails and its login is set. The switch is PROSPECT_SMS_ON: texts go only
+   when it says "on" (and a provider is set). Off, this answers 503 sms_off, sends nothing, and the Mac keeps the
+   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes.
+   THE SPAM ACT (sender identified, a working way to stop). From the business name "venueplay" nobody can reply, so
+   "Reply STOP" could never work: vpaSendSms swaps it for Mobile Message's {optout}, which becomes their own opt-out
+   link ("OptOut mb.st/XXXXXX"). Mobile Message keeps the unsubscribe list and blocks an opted-out number itself
+   (status "blocked"); we record that as do-not-text (vp_admin_audit, target sms:<number>, action sms_opted_out) and
+   never mint a link or try that number again. The text must still name venueplay and carry an opt-out ("Reply STOP
+   to opt out" or {optout}), or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's,
+   so either one works. */
 const VPA_NUDGE_SMS_MAX = 480;
 function vpaSmsOn(env) {
-  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && !!env.CLICKSEND_USERNAME && !!env.CLICKSEND_API_KEY;
+  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && (vpaHasMobileMessage(env) || vpaHasClickSend(env));
 }
-async function vpaSendSms(env, toE164, body) {
+function vpaHasMobileMessage(env) { return !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD); }
+function vpaHasClickSend(env) { return !!(env.CLICKSEND_USERNAME && env.CLICKSEND_API_KEY); }
+/* The sender Dean registered on Mobile Message (4 Nov 2026): lowercase, the brand. PROSPECT_SMS_SENDER overrides it. */
+function vpaProspectSmsSender(env) { return String(env.PROSPECT_SMS_SENDER || 'venueplay').slice(0, 11); }
+/* A business-name sender cannot take replies: the opt-out is Mobile Message's own link. */
+function vpaSmsOptOutWords(body) {
+  return String(body).replace(/Reply STOP to opt out\.?/i, '{optout}');
+}
+const VPA_SMS_OPTOUT_ACTION = 'sms_opted_out';
+async function vpaSmsOptedOut(env, toE164) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('sms:' + toE164) + '&action=eq.' + VPA_SMS_OPTOUT_ACTION + '&select=id&limit=1');
+    return !!(rows && rows.length);
+  } catch (_) { return false; }
+}
+async function vpaSmsRecordOptOut(env, toE164, venueId) {
+  if (await vpaSmsOptedOut(env, toE164)) return;
+  await vpaAudit(env, { actorId: null, label: 'Mobile Message (opted out)' }, VPA_SMS_OPTOUT_ACTION, 'sms:' + toE164, { venue_id: venueId || undefined, to_last3: String(toE164).slice(-3) });
+}
+/* One text. { ok, id, provider } or { ok:false, blocked?, status }. Mobile Message first, ClickSend only as a backup. */
+async function vpaSendSms(env, toE164, body, ref) {
+  let first = null;
+  if (vpaHasMobileMessage(env)) {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 10000);
+    try {
+      const res = await fetch('https://api.mobilemessage.com.au/v1/messages', { method: 'POST', signal: abort.signal,
+        headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD) },
+        body: JSON.stringify({ messages: [{ to: toE164, message: vpaSmsOptOutWords(body), sender: vpaProspectSmsSender(env), custom_ref: String(ref || 'prospect').slice(0, 64) }] }) });
+      const j = await res.json().catch(() => null);
+      const m = j && Array.isArray(j.results) && j.results[0];
+      const st = String((m && m.status) || '').toLowerCase();
+      if (res.ok && st === 'success') return { ok: true, status: res.status, id: m.message_id, provider: 'mobilemessage' };
+      if (st === 'blocked') return { ok: false, blocked: true, status: 'blocked', provider: 'mobilemessage' };   // they opted out
+      first = { ok: false, status: res.status + (st ? ' ' + st : '') };
+    } catch (e) { first = { ok: false, status: 'unreachable' }; }
+    finally { clearTimeout(timer); }
+  }
+  if (!vpaHasClickSend(env)) return first || { ok: false, status: 'no provider' };
   const auth = 'Basic ' + btoa(String(env.CLICKSEND_USERNAME) + ':' + String(env.CLICKSEND_API_KEY));
   const res = await fetch('https://rest.clicksend.com/v3/sms/send', { method: 'POST',
     headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ source: 'venueplay', from: 'venueplay', to: toE164, body: body }] }) });
+    body: JSON.stringify({ messages: [{ source: 'venueplay', from: vpaProspectSmsSender(env), to: toE164, body: body }] }) });
   const j = await res.json().catch(() => null);
   const m = j && j.data && j.data.messages && j.data.messages[0];
-  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id };
+  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id, provider: 'clicksend' };
 }
 async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
@@ -3770,8 +3813,8 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
-  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !/Reply STOP to opt out/i.test(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
-    return json({ error: 'The text must name venueplay, carry {link} and "Reply STOP to opt out", have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
+  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !(/Reply STOP to opt out/i.test(text) || text.indexOf('{optout}') >= 0) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
+    return json({ error: 'The text must name venueplay, carry {link} and an opt-out ("Reply STOP to opt out" or {optout}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
   }
   if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
   const actor = VPA_AUTOPILOT_ACTOR;
@@ -3786,6 +3829,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (!vpaQuietProspect(p)) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in since, so no text was sent.');
   const to = vpaNormaliseMobileAU(p.mobile || p.phone || '');
   if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
+  if (await vpaSmsOptedOut(env, to)) return await refuse('They opted out of texts, so no text was sent.');
   let authUserId = null;
   try {
     const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
@@ -3806,7 +3850,12 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
   let r;
-  try { r = await vpaSendSms(env, to, body); } catch (_) { r = { ok: false }; }
+  try { r = await vpaSendSms(env, to, body, 'nudge-' + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
+  if (!r.ok && r.blocked) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    await vpaSmsRecordOptOut(env, to, venueId);
+    return await refuse('They opted out of texts (Mobile Message blocked it), so no text was sent and none will be.');
+  }
   if (!r.ok) {
     await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
@@ -4716,9 +4765,9 @@ async function vpaProspectLinkEndedTicket(env, r) {
  * (vpaSendSigninLink, a fresh 30 days) and, when we have their mobile, by TEXT at the same time, on its own
  * one-use link that ends at the same moment as the email's (made after the email's, so neither retires the
  * other). The text keeps the follow-up text's rules (vpaAutopilotProspectNudgeSms):
- *   - texts are OFF until the SMS provider exists (vpaSmsOn: PROSPECT_SMS_ON plus the ClickSend login); then
- *     the email still goes and HQ is told no text went
- *   - from venueplay, says who it is from and "Reply STOP to opt out", no long dash
+ *   - through Mobile Message (ClickSend only as a backup), only while PROSPECT_SMS_ON is "on"; off, the email
+ *     still goes and HQ is told no text went. A number that opted out is never texted (vpaSmsOptedOut)
+ *   - from venueplay, says who it is from, carries Mobile Message's opt-out link ({optout}), no long dash
  *   - 9am to 8pm Brisbane, never a Sunday (vpaSmsAllowedAt). Outside those hours it is QUEUED for the next
  *     allowed time (vp_signin_texts, migration 152) and HQ is shown when; the hourly trigger sends it
  *     (vpaSigninTextSweep), making its link at that moment, still ending with the email's. Before migration
@@ -4742,7 +4791,7 @@ function vpaSigninTextBody(first, venueName, url, expiresMs) {
   const f = String(first || '').trim().split(/\s+/)[0].slice(0, 30);
   const v = String(venueName || '').replace(/\s+/g, ' ').trim().slice(0, 60);
   return 'venueplay: Hi ' + (f || 'there') + ', here is your new sign-in link' + (v ? ' for ' + v : '') + '. Tap to sign in, no password needed: '
-    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';
+    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';   // vpaSendSms makes this Mobile Message's {optout} link
 }
 /* Who to text for this venue's login: the prospect's mobile (Edit details or setup), else the login's own. */
 async function vpaSigninTextTarget(env, venueId, user) {
@@ -4772,8 +4821,12 @@ async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, ex
   const user = await vpaAuthGetUser(env, authUserId);
   const body = vpaSigninTextBody(target.first, venueName, vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);
   let r;
-  try { r = await vpaSendSms(env, target.e164, body); } catch (_) { r = { ok: false }; }
-  if (!r.ok) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token)); return { ok: false, status: r.status || 'unreachable' }; }
+  try { r = await vpaSendSms(env, target.e164, body, 'signin-' + String(venueId).slice(0, 8)); } catch (_) { r = { ok: false }; }
+  if (!r.ok) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));
+    if (r.blocked) await vpaSmsRecordOptOut(env, target.e164, venueId);
+    return { ok: false, status: r.blocked ? 'opted_out' : (r.status || 'unreachable') };
+  }
   return { ok: true, id: r.id, expires_at: new Date(minted.expiresAt).toISOString() };
 }
 /* After HQ's email went (r, vpaSendSigninLink's answer): the text, now, queued, or why not. */
@@ -4783,12 +4836,13 @@ async function vpaHqSigninText(env, actor, venueId, venueName, r) {
   if (!target) return { status: 'no_mobile' };
   const last3 = target.e164.slice(-3);
   if (!vpaSmsOn(env)) return { status: 'sms_off', mobile: target.mobile };
+  if (await vpaSmsOptedOut(env, target.e164)) return { status: 'opted_out', mobile: target.mobile };
   const expiresMs = Date.parse(r.expires_at);
   const now = Date.now(), at = vpaSmsAllowedAt(now);
   if (at <= now) {
     const s = await vpaSigninTextSend(env, r.auth_user_id, venueId, venueName, target, expiresMs);
     await vpaAudit(env, actor, s.ok ? 'signin_text_sent' : 'signin_text_failed', 'venue:' + venueId, { name: venueName, to_last3: last3, id: s.id || undefined, reason: s.ok ? undefined : String(s.status) });
-    return s.ok ? { status: 'sent', mobile: target.mobile } : { status: 'failed', mobile: target.mobile };
+    return s.ok ? { status: 'sent', mobile: target.mobile } : { status: s.status === 'opted_out' ? 'opted_out' : 'failed', mobile: target.mobile };
   }
   try {
     await vpaInsert(env, 'vp_signin_texts', { venue_id: venueId, auth_user_id: r.auth_user_id, to_e164: target.e164,
@@ -4820,7 +4874,7 @@ async function vpaSigninTextSweep(env, nowMs) {
     const mark = (st, extra) => vpaPatch(env, 'vp_signin_texts', 'id=eq.' + encodeURIComponent(q.id), Object.assign({ status: st, sent_at: new Date().toISOString() }, extra || {})).catch(() => null);
     const exp = Date.parse(q.expires_at);
     const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(q.auth_user_id) + '&venue_id=eq.' + encodeURIComponent(q.venue_id) + '&select=role&limit=1');
-    if (!isFinite(exp) || exp <= nowMs + 3600000 || !staff || !staff.length) { await mark('dropped'); continue; }
+    if (!isFinite(exp) || exp <= nowMs + 3600000 || !staff || !staff.length || await vpaSmsOptedOut(env, q.to_e164)) { await mark('dropped'); continue; }
     const d = q.detail || {};
     const s = await vpaSigninTextSend(env, q.auth_user_id, q.venue_id, d.venue_name, { e164: q.to_e164, first: d.first }, exp);
     await mark(s.ok ? 'sent' : 'failed');
@@ -4838,6 +4892,7 @@ function vpaSigninSentLine(r, text) {
   if (st === 'not_queued') return 'Sent by email' + until + '. No text: it is outside texting hours and texts cannot be queued until migration 152 is run. Press again after ' + text.when + ' to text it.';
   if (st === 'sms_off') return 'Sent by email' + until + '. No text went: texts are switched off until the SMS provider is set up.';
   if (st === 'failed') return 'Sent by email' + until + '. The text did not send (the SMS provider said no).';
+  if (st === 'opted_out') return 'Sent by email' + until + '. No text: they opted out of texts.';
   if (st === 'no_mobile') return 'Sent by email only' + until + '. Add a mobile in Edit details to text it too.';
   return 'Sent by email' + until + '.';
 }

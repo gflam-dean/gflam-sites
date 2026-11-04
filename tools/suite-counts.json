@@ -724,7 +724,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-edit-6nov.js": {
-  "checks": 63,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
