@@ -407,6 +407,7 @@
   "tv-logo-centre-in-chrome.test.py",
   "tv-logo-in-chrome.test.py",
   "tv-logo.test.js",
+  "tv-no-counts-in-chrome.test.py",
   "tv-screen.test.js",
   "tv-stale-screen.test.js",
   "tv-states.test.js",

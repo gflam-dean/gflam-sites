@@ -354,10 +354,11 @@
     spin.style.minWidth=(String(r.hi).length+1)+"ch";
     spin.classList.toggle("isphone", state.kind==="entries");
     if(state.kind==="entries"){
-      /* THE PURCHASE RAFFLE: the wall flicks through mobile endings, never a whole number, and says
-         how many entries are in the draw. The winner is already picked on the server. */
+      /* THE PURCHASE RAFFLE: the wall flicks through mobile endings, never a whole number. The winner is
+         already picked on the server. It no longer says "From 214 entries": no counts on the TV (Dean, 4 Nov
+         2026), the host console has the number. The line stays empty (a members-draw jackpot is not this prize). */
       spin.style.minWidth="";
-      $("drawJack").innerHTML=state.entriesTotal>0 ? "From <b>"+state.entriesTotal.toLocaleString("en-AU")+"</b> entries" : "";
+      $("drawJack").innerHTML="";
       var t1=Date.now(), tot=Math.max(2000,(state.spinSecs||4)*1000);
       (function flick(){
         spin.textContent="04xx xxx "+String(cryptoInt(1000)+1000).slice(1);

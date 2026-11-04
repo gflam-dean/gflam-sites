@@ -8,7 +8,8 @@ Tugun Bowls Club's crest), served from this checkout, on Chrome's virtual clock,
   TV (1920x1080 and 1280x720)
     - ONE GRID: the label line, the question text and every answer card are in the same place on the
       countdown and on the reveal (within 1px; the right card only lifts about its own middle), and the
-      reveal's "got it right" sits in the clock's box. No wall is moved or shrunk by vp-fit.
+      reveal has no "got it right" box. NO COUNTS (Dean, 4 Nov 2026): the ring holds the seconds and SECS only,
+      and the phone's result shows no pick counts. No wall is moved or shrunk by vp-fit.
     - the four answer colours are coral, blue, amber and violet, and the right answer turns green
     - the answer cards and the leaderboard stay clear of where the JOIN NOW card sits on a real night,
       and the question starts below the venue's logo
@@ -112,7 +113,7 @@ TV_PROBE = r'''(function(){
     var cn=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=cn ? R(cn) : null;
     /* the corner furniture (the answered count, the joined count) sits in the corner on purpose: not the wall's bottom */
     out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".answered,.joined")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
-    out.ans=R(lay.querySelector(".rcount")); out.ansText=(lay.querySelector(".rcount")||{}).textContent||"";
+    out.ans=R(lay.querySelector(".rcount")); out.ringText=((lay.querySelector(".ringwrap .rnum")||{}).textContent||"").replace(/\s+/g,"");
     out.ring=R(lay.querySelector(".ringwrap svg")); out.secs=R(lay.querySelector(".rlbl")); out.num=R(lay.querySelector("#tvCdNum"));
     out.joined=/joined/i.test(lay.textContent||"");
     out.scan=R(lay.querySelector(".scanplay")); out.qr=R(lay.querySelector(".qrbig"));
@@ -157,7 +158,7 @@ PHONE_PROBE = r'''(function(){
     logo: (lg && !lg.classList.contains("hidden")) ? R(lg) : null, foot: foot ? R(foot) : null, viewR: view ? R(view) : null, menu: R(menu),
     btns: [].map.call(document.querySelectorAll("#"+(view?view.id:"x")+" .pans"),function(b){ var cs=getComputedStyle(b);
       var t=b.querySelector(".pt"), l=b.querySelector(".pl"), ls=l?getComputedStyle(l):null; return { lfs: ls?parseFloat(ls.fontSize):0, lff: ls?ls.fontFamily:"", lfg: ls?ls.color:"", lts: ls?ls.textShadow:"", cls:b.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, sh:cs.boxShadow, op:parseFloat(cs.opacity),
-        fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"" }; }),
+        fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"", txt:b.innerText||"", cnt:!!b.querySelector(".cnt") }; }),
     lock: "", all: view ? view.innerText : "",
     ringR: (function(){ var r=view && view.querySelector(".pq-ring"); return r ? R(r) : null; })(),
     qR: (function(){ var r=view && view.querySelector(".pq-text"); return r ? R(r) : null; })(),
@@ -272,12 +273,13 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the reveal has no "got it right" box in the clock\'s place', rv.get('got') is None, rv.get('got'))
     A, RG, SC = q.get('ans'), q.get('ring'), q.get('secs')
     import re as _re
-    ok(tag + ': "32/43" (answered out of the players in) sits small inside the ring, under SECS',
-       bool(A and RG and SC) and A[1] >= SC[3] - 0.5 and A[0] >= RG[0] and A[2] <= RG[2] and A[3] <= RG[3] - (RG[3] - RG[1]) * 0.08 and bool(_re.match(r'^\d+/\d+$', q.get('ansText', ''))),
-       [A, SC, RG, q.get('ansText')])
+    # NO COUNTS ON THE TV (Dean, 4 Nov 2026): the demo sends "players 43" and the host's "answered" tally, as a
+    # real host does, and the ring must hold the seconds and SECS only. The "32/43" that sat under SECS is gone.
+    ok(tag + ': the ring holds the seconds and SECS only: no "32/43" answered count (the demo sends one)',
+       A is None and bool(RG and SC) and bool(_re.match(r'^\d+secs$', (q.get('ringText') or '').lower())), [A, q.get('ringText')])
     N_ = q.get('num')
-    ok(tag + ': the number, SECS and the count are one block, centred in the ring top to bottom',
-       bool(N_ and A and RG) and abs((N_[1] + A[3]) / 2 - (RG[1] + RG[3]) / 2) <= 0.02 * (RG[2] - RG[0]), [N_, A, RG])
+    ok(tag + ': the number and SECS are one block, centred in the ring top to bottom',
+       bool(N_ and SC and RG) and abs((N_[1] + SC[3]) / 2 - (RG[1] + RG[3]) / 2) <= 0.02 * (RG[2] - RG[0]), [N_, SC, RG])
     RV_ = rv.get('ring')
     ok(tag + ': the reveal has no countdown ring', RV_ is None or (RV_[2] - RV_[0]) < 1, RV_)
     ok(tag + ': the scores carry no page words', not any(x in (bd.get('text') or '') for x in ('Page ', 'Teams ')), (bd.get('text') or '')[-80:])
@@ -405,6 +407,11 @@ def phone(B, base):
         ok('the countdown sits ABOVE the question on the %s' % nm_, bool(x_.get('ringR') and x_.get('qR')) and x_['ringR'][3] <= x_['qR'][1] + 0.5, [x_.get('ringR'), x_.get('qR')])
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]
     ok('a right answer: green, "RIGHT · YOURS"', len(gr) == 1 and gr[0]['bg'] == GREEN and 'yours' in gr[0]['tag'].lower(), [(b['cls'], b['bg'], b['tag']) for b in rt.get('btns') or []])
+    # NO PICK COUNTS ON THE PHONE (Dean, 4 Nov 2026): the demo's reveal carries split [4,31,6,2], which adds up to the room
+    for nm_, x_ in (('right', rt), ('wrong', wr)):
+        bt_ = x_.get('btns') or []
+        ok('the %s result: no card shows how many picked it (no count, no digit; the demo sends them)' % nm_,
+           len(bt_) == 4 and not any(b.get('cnt') or any(ch.isdigit() for ch in b.get('txt', '')) for b in bt_), [(b.get('txt'), b.get('cnt')) for b in bt_])
     ok('the result shows the question the room saw', rt.get('rq') and rt.get('rq') == 'Which Australian city hosted the 2000 Summer Olympics?', rt.get('rq'))
     h1 = phone_stable(B, base, '', 'phone, Tugun\'s round logo')
     h2 = phone_stable(B, base, '/__fixture/wide-logo.svg', 'phone, a wide wordmark')
