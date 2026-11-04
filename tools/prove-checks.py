@@ -11842,8 +11842,8 @@ MUTATIONS = [
      '<b class="pts" id="pResPts">+130</b></div></div>', '</div></div><b class="pts" id="pResPts">+130</b>',
      'in Chrome, the phone\'s points won drop out of the ring\'s place'),
     ('trivia-newlook-in-chrome.test.py', 'venueplay/app/trivia/play.html',
-     "  .ptotal{width:max-content;margin:8px 4px 0 auto;", "  .ptotal{width:max-content;margin:8px 4px 0 0;",
-     'in Chrome, the phone\'s running total leaves the bottom-right corner'),
+     '          <div class="ptotal"><b id="pResTot">130</b> points</div></div>', '        </div></div><div class="ptotal"><b id="pResTot">130</b> points</div>',
+     'in Chrome, the phone\'s running total drops out of the result card onto its own line again'),
     ('trivia-newlook-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '''      <div class="pq-ring" aria-hidden="true"><svg viewBox="0 0 76 76"><circle class="rbg" cx="38" cy="38" r="34"/><circle class="rfg" id="pqRing" cx="38" cy="38" r="34"/></svg><div class="n"><b id="pqCdNum">20</b><span>secs</span></div></div>
       <div class="pq-count"><b id="pqCount">Question</b></div>''',

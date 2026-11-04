@@ -139,7 +139,7 @@
   .pcard .tot{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);margin-top:2px}
   .pcard .tot b{color:var(--muted);font-weight:700}
   .pq-ring .n .pts{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1;color:#2FD08A}
-  .ptotal{width:max-content;margin:8px 4px 0 auto;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}   /* small, bottom right, in the page's flow so it never sits on the card or the footer */
+  .ptotal{width:max-content;margin:2px 0 0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}   /* small, under the verdict, inside the card, so the result is never taller than the phone */
   .ptotal b{color:#fff}
   .pcard .rank{margin-left:auto}
   .pcard .rank{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:#fff}
@@ -254,11 +254,11 @@
       <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
       <div class="pcard">
-        <div><div class="rtag" id="pResTag">Correct!</div></div>
+        <div><div class="rtag" id="pResTag">Correct!</div>
+          <div class="ptotal"><b id="pResTot">130</b> points</div></div>   <!-- the running total, small, under the verdict inside the card: it used to sit on its own line below the card and push our logo off the bottom of an 844px phone (Dean, 4 Nov 2026) -->
         <div class="rank hidden" id="pResRank">3rd of 11</div>
       </div>
       <div class="ca hidden" id="pResCa"></div>
-      <div class="ptotal"><b id="pResTot">130</b> points</div>   <!-- the running total, small, bottom right -->
       <div class="rnext" id="pResNext">This stays up until the next question starts</div>
     </div>
   </div>
@@ -1337,7 +1337,7 @@
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
-    P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    P.joined=true; P.name="Pint Sized"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
     (function(){ var lg=$("venueLogo"); if(!lg) return;
       /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
