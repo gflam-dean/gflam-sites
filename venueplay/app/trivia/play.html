@@ -123,6 +123,12 @@
      outlined in its own colour and tagged YOURS, the rest dim, then one card with your points and place */
   .presult{text-align:left}
   .presult .rem{display:none}
+  /* The result stacks a ring, the question (up to three lines), four answers, the card and our logo. On an 844px phone
+     (and the sales-page demo phone, which is one) the longest of them was 32px too tall and pushed our logo off the
+     bottom, so the result's own gaps are a little tighter than the question's (Dean, 4 Nov 2026). */
+  #vRes{padding-bottom:10px}
+  #vRes .pq-head{margin-bottom:10px}
+  #vRes .pcard{margin-top:10px;padding-top:10px;padding-bottom:10px}
   .presult .pq-ring .n b{font-size:30px}
   .panswers.rv .pans{cursor:default}   /* the same size and place as on the question: nothing jumps (Dean, 3 Nov 2026) */
   .pans .cnt{margin-left:auto;padding-left:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:inherit}
