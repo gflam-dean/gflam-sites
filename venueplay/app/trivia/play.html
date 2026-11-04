@@ -180,6 +180,26 @@
   body.light .pans.right{ background:#2FD08A; color:#0A0A0B }
   .dblpts{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:99px;background:#FFC24B;color:#1a1200;
     font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+  /* THE SCANNED DEMO (Dean, 4 Nov 2026): the start, the end card and the call-back form. Nothing under 15px. */
+  .dgo{margin-top:22px}
+  .dlead{color:var(--muted);font-size:16px;line-height:1.45;margin-top:4px}
+  .dend .scorebox{margin-top:14px}
+  .dend .btn + .btn{margin-top:12px}
+  .dform{text-align:left}
+  .dform .pbig{text-align:center}
+  .dform .dlead{text-align:center}
+  .dform label.dl{display:block;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin:14px 0 6px}
+  .dform label.dl i{font-style:normal;font-weight:600;color:var(--muted)}
+  .dform input[type=text],.dform input[type=email],.dform input[type=tel]{text-align:left;padding:13px 14px}
+  .dtimes{display:flex;gap:8px}
+  .dtimes button{flex:1;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:12px;padding:13px 4px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;cursor:pointer}
+  .dtimes button.on{border-color:var(--pink);background:rgba(255,31,142,.16);box-shadow:0 0 0 2px rgba(255,31,142,.35) inset}
+  .dform .cerr{font-size:15px;min-height:0}
+  .dform .dpriv{font-size:15px;color:var(--muted);line-height:1.4;margin-top:14px;text-align:center}
+  .dform .dpriv a{color:var(--text)}
+  .dhp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+  body.light .dform label.dl, body.light .dform .dpriv a{color:#191420}
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
@@ -260,6 +280,52 @@
       <div class="ca hidden" id="pResCa"></div>
       <div class="ptotal"><b id="pResTot">130</b> points</div>   <!-- the running total, small, bottom right -->
       <div class="rnext" id="pResNext">This stays up until the next question starts</div>
+    </div>
+  </div>
+
+  <!-- THE SCANNED DEMO'S END CARD (Dean, 4 Nov 2026). Only ever shown on ?demo=1 opened on its own
+       (a phone that scanned the demo TV), never in a real game and never in a sales page's frame. -->
+  <div class="view center hidden dend" id="vDemoEnd">
+    <div style="font-size:52px" aria-hidden="true">&#127881;</div>
+    <div class="pbig" style="color:var(--gold)">That&#39;s how it works.</div>
+    <div class="scorebox" id="demoScore">0 points</div>
+    <div class="dlead" id="demoRight"></div>
+    <div class="field" style="margin-top:22px"><button class="btn pink" id="demoWant">Want this at your venue?</button></div>
+    <button class="btn ghost" id="demoAgain">Play again</button>
+  </div>
+
+  <!-- THE CALL-BACK FORM (Dean, 4 Nov 2026): a SALES ticket in HQ's help desk, source demo-phone. -->
+  <div class="view hidden dform" id="vCall">
+    <form id="callForm" novalidate>
+      <div class="pbig">We&#39;ll give you a call</div>
+      <div class="dlead">Leave your details and we&#39;ll call you about running venueplay at your venue. No account, no obligation.</div>
+      <label class="dl" for="cbName">First name</label>
+      <input type="text" id="cbName" maxlength="60" autocomplete="given-name">
+      <label class="dl" for="cbVenue">Venue name</label>
+      <input type="text" id="cbVenue" maxlength="120" autocomplete="organization">
+      <label class="dl" for="cbPlace">Suburb or postcode</label>
+      <input type="text" id="cbPlace" maxlength="80" autocomplete="address-level2">
+      <label class="dl" for="cbMobile">Mobile</label>
+      <input type="tel" id="cbMobile" maxlength="20" autocomplete="tel" inputmode="tel" placeholder="04xx xxx xxx">
+      <label class="dl" for="cbEmail">Email <i>(optional)</i></label>
+      <input type="email" id="cbEmail" maxlength="200" autocomplete="email">
+      <label class="dl" id="cbTimeL">Best time to call</label>
+      <div class="dtimes" id="cbTime" role="radiogroup" aria-labelledby="cbTimeL">
+        <button type="button" role="radio" aria-checked="false" data-t="morning">Morning</button>
+        <button type="button" role="radio" aria-checked="false" data-t="afternoon">Afternoon</button>
+        <button type="button" role="radio" aria-checked="false" data-t="evening">Evening</button>
+      </div>
+      <div class="dhp" aria-hidden="true"><input type="text" id="cbWebsite" name="website" tabindex="-1" autocomplete="off"></div>
+      <div id="cbTs"></div>
+      <div class="cerr" id="cbErr" role="alert"></div>
+      <div class="field"><button type="submit" class="btn pink" id="cbSend">Call me back</button></div>
+      <div class="dpriv">We only use these details to call you back. <a href="/privacy" target="_blank" rel="noopener">Privacy</a></div>
+    </form>
+    <div class="center hidden" id="cbDone" style="text-align:center;padding-top:30px">
+      <div style="font-size:52px" aria-hidden="true">&#128222;</div>
+      <div class="pbig" style="color:var(--win)">Thanks, we&#39;ll give you a call</div>
+      <div class="dlead" id="cbDoneLine">Talk soon.</div>
+      <div class="field" style="margin-top:22px"><button type="button" class="btn ghost" id="cbAgain">Play the demo again</button></div>
     </div>
   </div>
 
@@ -535,7 +601,7 @@
   function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-tsess-"+room, sid); }catch(e){} }
 
   // ---- views ----
-  var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR"];
+  var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"];   // the last two: the scanned demo only (4 Nov 2026)
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
@@ -1333,11 +1399,26 @@
      It taps its own answers, because a phone sitting on "Tap your answer" for the whole
      loop shows the furniture rather than the game. Gets one right, one wrong, one right,
      so the result screen is seen doing both things and nobody is sold a product that only
-     ever congratulates you. */
+     ever congratulates you.
+
+     ONLY WHEN IT IS EMBEDDED (Dean, 4 Nov 2026). The demo TV's QR opens this same address on a real
+     phone, and there the first question "answered itself" before the person could. Somebody who
+     scans it wants to play, not watch it play itself. So the round above plays itself only inside
+     a frame (the sales pages: index.html, nsw.html, see-a-night.html all iframe it). Opened on its
+     own, it is a round of five the person answers (soloIntro below), then an end card with a
+     call-back form. The TV and this phone are not linked (both are scripts joined to nothing), so
+     the phone keeps its own clock and only borrows the wall's first three questions.
+     window.__vpDemoAutoplay is a test's hook, set by script before the page runs (as
+     __vpStingManual is): no address can set it, so a phone that scanned the QR never auto-answers. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
+  var VP_DEMO_AUTO = VP_DEMO && (function(){
+    if(window.__vpDemoAutoplay===true) return true;
+    try{ return window.top!==window.self; }catch(e){ return true; }   // a frame we may not look out of is still a frame
+  })();
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
-    P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    document.documentElement.setAttribute("data-vp-demo-mode", VP_DEMO_AUTO ? "auto" : "solo");
+    P.joined=true; P.name=VP_DEMO_AUTO ? "Dre" : ""; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=VP_DEMO_AUTO ? 42 : 0;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
     (function(){ var lg=$("venueLogo"); if(!lg) return;
       /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
@@ -1345,13 +1426,123 @@
       lg.src=src; lg.classList.remove("hidden");
       if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); headerVenue(true, "Tugun Bowls Club"); })();
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    function fire(o){ try{ onMsg(o); }catch(e){} }
+    if(!VP_DEMO_AUTO){
+      /* THE SCANNED DEMO: the person taps every answer. The normal clock ring, the normal reveal, and
+         the Worker's own points (100, and up to half again for speed: venueplay-game.js). The reveal
+         comes a moment after they tap, as when the whole room is in, or when the clock runs out. */
+      var SOLO=[
+        { text:"Which Australian city hosted the 2000 Summer Olympics?", options:["Melbourne","Sydney","Brisbane","Perth"], ci:1 },
+        { text:"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], ci:1 },
+        { text:"Which band released the album Back in Black?", options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], ci:0 },
+        { text:"How many players does each team have on the field in a game of Australian rules football?", options:["15","16","18","22"], ci:2 },
+        { text:"What is the largest coral reef system in the world?", options:["Ningaloo Reef","The Great Barrier Reef","The Belize Barrier Reef","The Florida Reef"], ci:1 }
+      ];
+      var SOLO_SECS=20, SOLO_AFTER_TAP=1500, SOLO_AFTER_TIME=800, SOLO_RESULT=5000;
+      var _st=[], _poll=null, _right=0;
+      var sd=function(ms, fn){ _st.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); };
+      var soloClear=function(){ for(var i=0;i<_st.length;i++) clearTimeout(_st[i]); _st=[]; if(_poll){ clearInterval(_poll); _poll=null; } };
+      var soloAsk=function(i){
+        var s=SOLO[i], secs=SOLO_SECS, ends=Date.now()+secs*1000, tapAt=0, done=false;
+        fire({ t:"question", qseq:i+1, qi:i+1, qtotal:SOLO.length, text:s.text, options:s.options, secs:secs, endsAt:ends });
+        var reveal=function(){
+          if(done) return; done=true;
+          var pts=0;
+          if(P.choice===s.ci){ var rem=Math.max(0, Math.min(secs, (ends-tapAt)/1000)); pts=100+Math.round(50*(rem/secs)); _right++; }
+          P.total+=pts;
+          fire({ t:"reveal", qseq:i+1, correctIndex:s.ci, options:s.options, demoPts:pts });
+          sd(SOLO_RESULT, function(){ if(i+1<SOLO.length) soloAsk(i+1); else soloEnd(); });
+        };
+        if(_poll) clearInterval(_poll);
+        _poll=setInterval(function(){
+          if(P.locked && P.choice!=null){ tapAt=tapAt||Date.now(); clearInterval(_poll); _poll=null; sd(SOLO_AFTER_TAP, reveal); return; }
+          if(Date.now()>=ends){ clearInterval(_poll); _poll=null; sd(SOLO_AFTER_TIME, reveal); }
+        }, 100);
+      };
+      var soloEnd=function(){
+        soloClear(); stopCd(); P.q=null; P.ended=true;
+        $("demoScore").textContent=P.total+" points";
+        $("demoRight").textContent="You got "+_right+" of "+SOLO.length+" right.";
+        show("vDemoEnd");
+      };
+      var soloStart=function(){
+        var go=$("demoGo"); if(go) go.classList.add("hidden");
+        fire({ t:"started" });     // the start-of-game show, as in a real room, then "The quiz is starting"
+        sd((window.VPSting && VPSting.on) ? 4200 : 900, function(){ soloAsk(0); });
+      };
+      var soloIntro=function(){
+        soloClear(); stopCd(); P.q=null; P.total=0; P.rank=0; P.ended=false; P.choice=null; P.locked=false; _right=0;
+        showWait("Five quick questions, the way a night at your venue plays them. Tap your answer before the clock runs out.", "Have a go");
+        var go=$("demoGo");
+        if(!go){ go=el("button","btn pink dgo"); go.id="demoGo"; go.type="button"; go.textContent="Start the demo"; $("vWait").appendChild(go); go.addEventListener("click", soloStart); }
+        go.classList.remove("hidden");
+        try{ window.scrollTo(0,0); }catch(e){}
+      };
+
+      /* THE CALL-BACK FORM (Dean, 4 Nov 2026). A SALES ticket in HQ's help desk through the public
+         /help/ticket route the website's own enquiry form uses (kind sales), tagged source demo-phone.
+         No account. The Worker rate-limits it; the honeypot and, only when the Worker hands out a key,
+         Turnstile are the same anti-spam as the other forms. No phone number of ours on this page:
+         it is public (the brand rule), so the reply is that WE call THEM. */
+      var CB_API=window.VP_HELP_API || "https://api.venueplay.com.au", cbTime="", cbTs={ on:false, id:null }, cbBusy=false, cbTsP=null;
+      var cbMobile=function(v){ var d=String(v||"").replace(/[\s().-]/g,""); if(/^\+?614\d{8}$/.test(d)) d="0"+d.replace(/^\+?61/,""); return /^04\d{8}$/.test(d) ? d : ""; };
+      var cbTurnstile=function(){
+        if(cbTsP) return cbTsP;
+        cbTsP=fetch(CB_API+"/help/config?brand=venueplay").then(function(r){ return r.json(); }).then(function(j){
+          var key=j && j.turnstile; if(!key) return null;
+          return new Promise(function(res){ var sc=document.createElement("script"); sc.async=true; sc.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+            sc.onload=function(){ res(window.turnstile||null); }; sc.onerror=function(){ res(null); }; document.head.appendChild(sc); })
+            .then(function(T){ if(!T) return; cbTs.id=T.render("#cbTs", { sitekey:key, theme:"dark" }); cbTs.on=true; });
+        }).catch(function(){ return null; });
+        return cbTsP;
+      };
+      var callOpen=function(){
+        show("vCall"); $("callForm").classList.remove("hidden"); $("cbDone").classList.add("hidden"); $("cbErr").textContent="";
+        try{ window.scrollTo(0,0); }catch(e){}
+        cbTurnstile();
+      };
+      [].forEach.call($("cbTime").querySelectorAll("button"), function(b){
+        b.addEventListener("click", function(){
+          cbTime=b.getAttribute("data-t");
+          [].forEach.call($("cbTime").querySelectorAll("button"), function(x){ var on=(x===b); x.classList.toggle("on", on); x.setAttribute("aria-checked", on?"true":"false"); });
+        });
+      });
+      $("callForm").addEventListener("submit", function(e){
+        e.preventDefault(); if(cbBusy) return;
+        var err=$("cbErr"), name=$("cbName").value.trim(), venue=$("cbVenue").value.trim(), place=$("cbPlace").value.trim(),
+            mob=cbMobile($("cbMobile").value), email=$("cbEmail").value.trim();
+        if(!name){ err.textContent="Put in your first name."; return; }
+        if(!venue){ err.textContent="Put in your venue's name."; return; }
+        if(!place){ err.textContent="Put in your venue's suburb or postcode."; return; }
+        if(!mob){ err.textContent="Put in a mobile number, like 0412 345 678."; return; }
+        if(email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)){ err.textContent="That email does not look right. Leave it blank if you like."; return; }
+        if(!cbTime){ err.textContent="Pick the best time to call."; return; }
+        var body={ brand:"venueplay", kind:"sales", source:"demo-phone", name:name, venue_name:venue, locality:place, phone:mob,
+                   email:email, best_time:cbTime, website:$("cbWebsite").value, device:deviceId() };
+        if(cbTs.on){ var tok=""; try{ tok=window.turnstile.getResponse(cbTs.id)||""; }catch(x){} if(!tok){ err.textContent="Tick the check above the button, then try again."; return; } body.turnstile=tok; }
+        cbBusy=true; $("cbSend").disabled=true; $("cbSend").textContent="Sending"; err.textContent="";
+        fetch(CB_API+"/help/ticket", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
+          .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok) throw new Error((j && j.error) || "That did not go through. Please try again."); return j; }); })
+          .then(function(){
+            $("callForm").classList.add("hidden"); $("cbDone").classList.remove("hidden");
+            $("cbDoneLine").textContent="Thanks, "+name+". We’ll call you in the "+cbTime+".";
+            try{ window.scrollTo(0,0); }catch(x){}
+          })
+          .catch(function(x){ err.textContent=(x && x.message) || "That did not go through. Please try again."; })
+          .then(function(){ cbBusy=false; $("cbSend").disabled=false; $("cbSend").textContent="Call me back"; try{ if(cbTs.on) window.turnstile.reset(cbTs.id); }catch(x){} });
+      });
+      $("demoWant").addEventListener("click", callOpen);
+      $("demoAgain").addEventListener("click", function(){ soloIntro(); soloStart(); });
+      $("cbAgain").addEventListener("click", soloIntro);
+      soloIntro();
+      return;                    /* never connect, never follow a host, never touch a venue */
+    }
     var _dt=[];
     function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
     function q(qi, text, options, secs){
       return { t:"question", qseq:qi, qi:qi+2, qtotal:20, text:text, options:options,   // "Question 3 of 20", the wall's numbers
                secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
     }
-    function fire(o){ try{ onMsg(o); }catch(e){} }
     function round(){
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
       _dt=[]; P.total=0; P.rank=0; P.ended=false;

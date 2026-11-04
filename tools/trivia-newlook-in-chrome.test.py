@@ -88,7 +88,9 @@ WIDE_LOGO = ('<svg xmlns="http://www.w3.org/2000/svg" width="660" height="100" v
              'font-weight="900" fill="#fff" text-anchor="middle">PAUSE BAR</text></svg>')
 T0 = 1793500000000          # a fixed instant, never the real clock
 # Counts every sound card the page makes: the sales-page demo must never make one.
-HOOK = r'''(function(){ window.__acMade=0; var A=window.AudioContext||window.webkitAudioContext; if(!A) return;
+# window.__vpDemoAutoplay: the phone plays its scripted round only when embedded in a sales page, or with this
+# hook (Dean, 4 Nov 2026). These measurements are of that sales-page round, so the hook is set.
+HOOK = r'''(function(){ window.__vpDemoAutoplay=true; window.__acMade=0; var A=window.AudioContext||window.webkitAudioContext; if(!A) return;
   function W(){ window.__acMade++; return new A(); } window.AudioContext=W; window.webkitAudioContext=W; })();'''
 FREEZE = r'''(function(){ var a=document.getAnimations?document.getAnimations():[];
   a.forEach(function(x){ try{ var t=x.effect&&x.effect.getComputedTiming(); if(t&&isFinite(t.endTime)) x.finish(); else { x.pause(); x.currentTime=0; } }catch(e){} });
