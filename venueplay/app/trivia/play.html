@@ -35,6 +35,10 @@
      footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
      island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
   .ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
+  /* The sales-page demo phone shows this page inside a rounded bezel. A backdrop-filter layer is not clipped to a
+     rounded parent, so the header's square top corners stuck out of the top of the phone (Dean, 4 Nov 2026). The
+     header is 92% opaque, so without the blur it looks the same. */
+  html[data-vp-demo] .ptop{backdrop-filter:none;-webkit-backdrop-filter:none}
   .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
   /* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
      static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */

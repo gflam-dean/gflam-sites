@@ -41,6 +41,16 @@ FRAME = r'''(function(){ var fr=document.querySelector(".vp-live-phone"), bx=fr&
   return JSON.stringify({ box:[a.left,a.top,a.right,a.bottom], ifr:[b.left,b.top,b.right,b.bottom], clip:getComputedStyle(bx).clipPath, hitIframe: hit===f, fw: fr.getBoundingClientRect().width }); })()'''
 
 
+def corner_px(B, sid, fr, dpr):
+    """The colour painted just inside the phone's top-left and top-right rounded corners, where the screen's own square corner must NOT show."""
+    from PIL import Image
+    import io
+    b = fr.get('box')
+    if not b: return None
+    im = Image.open(io.BytesIO(base64.b64decode(B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)['data']))).convert('RGB')
+    return [im.getpixel((int((b[0] + 2) * dpr), int((b[1] + 2) * dpr))), im.getpixel((int((b[2] - 3) * dpr), int((b[1] + 2) * dpr)))]
+
+
 def watch(B, base, url, w, h, wrap, n):
     """Samples the phone screen every 2.7s for n samples. Returns (samples, frame info)."""
     tid = B.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
@@ -59,10 +69,11 @@ def watch(B, base, url, w, h, wrap, n):
             try: s = json.loads(r['result']['value'])
             except Exception: s = {}
             out.append(s)
-            if wrap and i == 0:
+            if wrap and i == 2:   # after the dialog has finished opening and scrolling
                 r = B.evaluate(sid, FRAME, 30)
                 try: fr = json.loads(r['result']['value'])
                 except Exception: fr = {}
+                fr['corner'] = corner_px(B, sid, fr, 2 if w < 500 else 1)
             if SHOTS:
                 open(os.path.join(SHOTS, 'night-%dx%d-%02d.png' % (w, h, i)), 'wb').write(base64.b64decode(B.call('Page.captureScreenshot', {'format': 'png'}, session=sid)['data']))
             time.sleep(2.7)
@@ -86,6 +97,8 @@ def check(tag, S, fr, real_menu):
         ok('%s: the menu button is exactly where the real player phone puts it' % tag, bool(S) and all(s.get('menu') == real_menu for s in S), [S[0].get('menu') if S else None, real_menu])
     ok('%s: the screen is clipped to the frame\'s rounded corners, so nothing sticks out of the top' % tag,
        bool(fr) and 'round' in (fr.get('clip') or '') and not fr.get('hitIframe'), fr)
+    cp = fr.get('corner') or [(0, 0, 0)]
+    ok('%s: the screen\'s square top corners are not painted outside the frame\'s rounded corners' % tag, all(c[0] >= 18 for c in cp)   # the dialog's own lighter backdrop shows there; the screen's dark square (about 12) must not, cp)
     b, i = fr.get('box') or [0] * 4, fr.get('ifr') or [0] * 4
     ok('%s: the screen sits inside the frame' % tag, bool(fr) and i[0] >= b[0] - 1 and i[1] >= b[1] - 1 and i[2] <= b[2] + 1 and i[3] <= b[3] + 1, [b, i])
 
