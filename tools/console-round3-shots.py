@@ -55,8 +55,13 @@ SCREENS = [
 
 
 def write_index(folder):
-    files = sorted(f for f in os.listdir(folder) if f.endswith('.png'))
-    tags = sorted(set(f.split('-', 1)[0] for f in files))
+    """DIR/index.html. With DIR/before and DIR/after present, the side-by-side of the two; else the PNGs in DIR."""
+    subs = [d for d in ('before', 'after') if os.path.isdir(os.path.join(folder, d))]
+    if subs:
+        files = sorted(d + '/' + f for d in subs for f in os.listdir(os.path.join(folder, d)) if f.endswith('.png'))
+    else:
+        files = sorted(f for f in os.listdir(folder) if f.endswith('.png'))
+    tags = [t for t in ('before', 'after') if any(os.path.basename(f).startswith(t + '-') for f in files)]
     rows = []
     for persona in ('single', 'group'):
         for key, title, letters in SCREENS:
@@ -64,6 +69,7 @@ def write_index(folder):
                 cells = []
                 for tag in tags:
                     f = '%s-%s-%s-%d.png' % (tag, persona, key, w)
+                    if subs: f = tag + '/' + f
                     cells.append('<figure><figcaption>%s</figcaption>%s</figure>' % (
                         tag, ('<img src="%s" loading="lazy">' % f) if f in files else '<div class="none">no picture</div>'))
                 if any('<img' in c for c in cells):
@@ -78,7 +84,7 @@ def write_index(folder):
             'img{width:100%%;display:block;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#000}'
             '.none{border:1px dashed rgba(255,255,255,.2);border-radius:10px;padding:40px;text-align:center;color:#8A8A94}</style></head><body>'
             '<h1>Host console, round 3 (6 Nov release): %s</h1>'
-            '<p>Headless Chrome against the repo rigs, no live data. "single" is the owner of one venue (Test Alpha, QLD); "group" the owner of two '
+            '<p>Headless Chrome against the repo rigs, no live data. "single" is the owner of one venue (Test Alpha, QLD, on the console; Deepwater Hotel, NSW, on the account pages: the two rigs have their own venue); "group" the owner of two '
             '(Deepwater Hotel and The Royal Arms, NSW). 390px is an iPhone, 820px an iPad. Pictures are the full page, so long ones scroll.</p>%s</body></html>'
             % (' and '.join(tags), ' and '.join(tags) if len(tags) > 1 else tags[0] if tags else '', ''.join(rows)))
     io.open(os.path.join(folder, 'index.html'), 'w', encoding='utf-8').write(html)
@@ -117,7 +123,7 @@ def console_shots(persona):
     r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/musical/host.html', '/app/members/host.html', '/app/raffle/host.html'))
     V1 = r.W.info['venue']
     if persona == 'group':
-        V2 = '22222222-2222-4222-8222-222222222222'
+        V2 = '33333333-3333-4333-8333-333333333332'   # never the rig's own venue id (worker-stdio.js VENUE), or two rows name ONE venue
         v2 = {'id': V2, 'name': 'The Royal Arms', 'slug': 'the-royal-arms', 'status': 'active', 'suspended_reason': None,
               'join_code': 'RYL456', 'au_state': 'NSW', 'max_players': 60, 'included_players': None,
               'created_at': '2026-09-02T00:00:00Z', 'postcode': '2000', 'logo_url': None, 'paid_entry_enabled': False}
@@ -185,21 +191,16 @@ def account_shots(persona):
     real_fake_db = admin_site.fake_db
 
     def one_venue_db(info, admin):
+        """The single-venue host on the account pages: the billing Worker's own first venue (Deepwater Hotel, NSW)
+        and nothing else. The Worker's rows are its own, so the page and the Worker must name the same venue."""
         db = real_fake_db(info, admin)
-        db['vp_venues'] = [dict(db['vp_venues'][0], name='Test Alpha', slug='test-alpha', au_state='QLD', postcode='4000')]
+        db['vp_venues'] = [db['vp_venues'][0]]
         db['vp_venue_staff'] = [s for s in db['vp_venue_staff'] if s['venue_id'] == info['venue']]
         return db
     if persona == 'single':
         admin_site.fake_db = one_venue_db
     S = admin_site.Site(root=ROOT, fonts=True)
     V1 = S.W.info['venue']
-    if persona == 'single':
-        # the Worker's own venue row, so Your account and the Worker agree on the name
-        rows = S.W.table('vp_venues') or []
-        for row in rows:
-            if row.get('id') == V1:
-                row.update({'name': 'Test Alpha', 'slug': 'test-alpha', 'au_state': 'QLD', 'postcode': '4000'})
-        S.W.seed('vp_venues', [])
     # prizes recorded, so the Permits fold has a total to weigh against the state's line (Q)
     S.extra_db['v_vp_prizes_given'] = [{'venue_id': V1, 'prizes_given_count': 5, 'prizes_given_value_cents': 95000,
                                         'cash_given_count': 3, 'cash_given_value_cents': 80000}]

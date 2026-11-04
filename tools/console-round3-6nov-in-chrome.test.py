@@ -84,7 +84,7 @@ PLAY = ('JSON.stringify({sw:(function(e){return !!(e&&e.offsetParent)})(document
         'banner:(function(e){return !!(e&&e.offsetParent)})(document.getElementById("venueBanner")),'
         'bname:(document.getElementById("venueBannerName")||{}).textContent,'
         'bbtn:(document.getElementById("venueSwitchInline")||{}).textContent,'
-        'title:(document.querySelector("#gameSelect .playtitle")||{}).textContent,tag:document.getElementById("headerTag").textContent,'
+        'title:(document.querySelector("#playHead .playtitle")||{}).textContent,tag:document.getElementById("headerTag").textContent,'
         'pick:!document.getElementById("vVenuePick").classList.contains("hidden"),'
         'back:document.getElementById("gamesBack").textContent.trim(),backShown:document.getElementById("gamesBack").style.display!=="none"})')
 
@@ -114,7 +114,7 @@ def console_section(kind, label):
                 ok('%s: N. and the Play screen says where tonight\'s games go: Deepwater Hotel, with Switch venue beside it' % where,
                    p.get('banner') is True and p.get('bname') == 'Deepwater Hotel' and p.get('bbtn') == 'Switch venue', p)
                 ok('%s: N. the old "You are running games at ... Not this one?" words are gone' % where,
-                   S.js(sid, '!/running games at|Not this one/.test(document.getElementById("gameSelect").innerText)') is True)
+                   S.js(sid, '!/running games at|Not this one/.test(document.getElementById("vConsole").innerText)') is True)
             ok('%s: N. the screen is named for what it is: the title and the header tag both say Play, and no back button on it' % where,
                p.get('title') == 'Play' and p.get('tag') == 'Play' and p.get('backShown') is False, p)
             # O: pick bingo, the way back says Play

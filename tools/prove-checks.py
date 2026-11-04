@@ -1213,7 +1213,7 @@ MUTATIONS = [
      '    h.textContent=month+" at "+venue;',
      'K: the title is one line again and a pub\'s name splits across lines on a phone'),
     ('console-hq-5nov-in-chrome.test.py', 'venueplay/app/settings.html',
-     '  var scope="group";', '  var scope="venue";',
+     '  var scope="group", venueHere="";', '  var scope="venue", venueHere="";',
      'L: This venue is the default again, so a group owner changes one pub when they meant all of them'),
     ('console-hq-5nov-in-chrome.test.py', 'venueplay/app/settings.html',
      '    var pick=$("setPick"); if(pick) pick.hidden = !(many && scope==="venue");', '',
