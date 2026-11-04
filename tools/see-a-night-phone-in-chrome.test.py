@@ -97,8 +97,9 @@ def check(tag, S, fr, real_menu):
         ok('%s: the menu button is exactly where the real player phone puts it' % tag, bool(S) and all(s.get('menu') == real_menu for s in S), [S[0].get('menu') if S else None, real_menu])
     ok('%s: the screen is clipped to the frame\'s rounded corners, so nothing sticks out of the top' % tag,
        bool(fr) and 'round' in (fr.get('clip') or '') and not fr.get('hitIframe'), fr)
+    # the dialog's own lighter backdrop shows in the cut corner (red 24+); the screen's own dark square (red about 12) must not
     cp = fr.get('corner') or [(0, 0, 0)]
-    ok('%s: the screen\'s square top corners are not painted outside the frame\'s rounded corners' % tag, all(c[0] >= 18 for c in cp)   # the dialog's own lighter backdrop shows there; the screen's dark square (about 12) must not, cp)
+    ok('%s: the screen\'s square top corners are not painted outside the frame\'s rounded corners' % tag, all(c[0] >= 18 for c in cp), cp)
     b, i = fr.get('box') or [0] * 4, fr.get('ifr') or [0] * 4
     ok('%s: the screen sits inside the frame' % tag, bool(fr) and i[0] >= b[0] - 1 and i[1] >= b[1] - 1 and i[2] <= b[2] + 1 and i[3] <= b[3] + 1, [b, i])
 
