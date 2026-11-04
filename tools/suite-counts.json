@@ -491,6 +491,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-email-rebrand.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/test-fail-closed-batch.js": {
   "checks": 28,
   "counted_by": "lines"

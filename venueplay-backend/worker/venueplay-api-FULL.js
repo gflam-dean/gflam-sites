@@ -659,12 +659,12 @@ async function handleCheckout(request, env, json) {
             to: ['dean@venueplay.com.au'],
             reply_to: email,
             subject: vpaAlertSubject('check', venues[0].name + ' (' + email + ')'),
-            html: '<h2>Signup flagged for review</h2>'
+            html: vpaStaffCard('<h2>Signup flagged for review</h2>'
               + '<p>This signup email does not look like a venue, so opt-in collection is <b>LOCKED</b> until you approve it. They can still run games (team names only), but collect no player data.</p>'
               + '<p><b>Venue:</b> ' + vpaEsc(venues[0].name) + '</p>'
               + '<p><b>Email:</b> ' + vpaEsc(email) + '</p>'
               + '<p><b>Players / plan:</b> ' + totalSeats + ' players, ' + plan + '</p>'
-              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>',
+              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>', 'Signup flagged for review'),
           }),
         });
       } catch (e) { /* email is best-effort, never block signup */ }
@@ -1142,7 +1142,7 @@ async function handleContact(request, env, json) {
       to: ['sales@venueplay.com.au'],   // ONE copy, the sales mailbox (Dean, 30 Oct 2026: it came twice when it went to dean@ AND sales@)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
-      html: html,
+      html: vpaStaffCard(html, 'New venueplay enquiry'),
       text: helpPlainFromHtml(html),       // every help desk email carries a text part (28 Oct 2026)
       headers: { 'X-VP-Help': 'alert' },   // so the hello@ copy to the help subdomain is not a second ticket
     }),
@@ -1385,7 +1385,7 @@ async function vpaHandleResendWebhook(request, env, json) {
        a line telling somebody to ring them. */
     const leaving = VPA_LEAVING_SUBJECT.test(subject);
     const head = complained ? 'marked us as spam' : 'bounced';
-    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
       + '<p style="font-size:18px;font-weight:800;color:' + (leaving ? '#b3261e' : '#8a6d00') + ';margin:0 0 10px">'
       +   (leaving ? 'A leaving email ' + head + '. Ring them.' : 'An email ' + head + '.') + '</p>'
       + '<p style="margin:0 0 6px;font-size:14px"><b>Address:</b> ' + vpaEsc(addr) + '</p>'
@@ -1402,7 +1402,7 @@ async function vpaHandleResendWebhook(request, env, json) {
     for (const who of VPA_CANCEL_ALERTS) {
       await vpaSendEmail(env, who,
         (leaving ? 'ACTION NEEDED: leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
-        + (named || addr), html).catch(() => false);
+        + (named || addr), vpaStaffCard(html, 'Email ' + head)).catch(() => false);
     }
     await vpaInsert(env, 'vp_admin_audit', {
       actor_admin: null, actor_label: 'system',
@@ -4051,9 +4051,9 @@ async function vpaProspectCancel(request, env, json) {
   let asJson = false;
   const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
   const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
-    '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#12101a">' +
+    '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0A0A0B">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
-    '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
+    '<div style="background:#0A0A0B;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
     '<div style="padding:26px 24px"><h1 style="margin:0 0 12px;font-size:23px;line-height:1.3">' + vpaEsc(title) + '</h1><p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#3a3a44">' + body + '</p>' + (form || '') +
     '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">' + FOOT + '</p></div></div></div></body></html>',
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
@@ -4080,7 +4080,7 @@ async function vpaProspectCancel(request, env, json) {
   if (request.method !== 'POST') {
     return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
-      '<button type="submit" style="display:inline-block;background:#12101a;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
+      '<button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
   }
   const at = new Date().toISOString();
   await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
@@ -4455,7 +4455,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
-  const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
+  const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
     + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. It works until ' + vpaEsc(expiresWords) + '.</p>'
     + BUTTON
@@ -6619,7 +6619,7 @@ async function vpaHandlePlayerRemove(request, env, json) {
       const to = recipients[0];
       if (to) {
         const who = pq.kind === 'email' ? pq.value : ('the mobile number ending ' + pq.value.slice(-3));
-        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#12101a;max-width:560px">'
+        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#0A0A0B;max-width:560px">'
           + '<p>Hi' + ((!mk.length && acct[0] && acct[0].contact_name) ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
           + '<p>Somebody who played at <strong>' + vpaEsc(v.venue_name) + '</strong> has asked to be removed from your players list: <strong>' + vpaEsc(who) + '</strong>.</p>'
           + '<p>We have removed them from venueplay, so they will not be in any list you download from now on.</p>'
@@ -7580,10 +7580,10 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       for (let i = 0; i < venues.length; i++) {
         const v = venues[i]; const seats = parseInt(v.seats, 10) || 0;
         blocks += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px"><tr><td style="padding:16px 20px">'
-          + '<p style="margin:0;font-size:17px;font-weight:700;color:#12101a">' + vpaEsc(v.name) + '</p>'
+          + '<p style="margin:0;font-size:17px;font-weight:700;color:#0A0A0B">' + vpaEsc(v.name) + '</p>'
           + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + vpaPaymentPhrase(seats * rate, plan) + '</p>'
           + '<a href="' + consoleUrl + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>'
-          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>'
+          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#FF1F8E;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #FF1F8E;padding:8.5px 20px;border-radius:8px">TV screen</a>'
           + '</td></tr></table>';
       }
       /* EVERY occurrence, not the first. A string replace swaps only the FIRST match, and the
@@ -7766,7 +7766,7 @@ async function vpaAddCardRedirect(request, env) {
   const page = (title, body) => new Response(
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>' + title + '</title>'
-    + '<body style="margin:0;background:#12101a;color:#fff;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">'
+    + '<body style="margin:0;background:#0A0A0B;color:#fff;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">'
     + '<div style="max-width:460px;text-align:center">'
     + '<h1 style="font-size:22px;margin:0 0 12px">' + title + '</h1>'
     + '<p style="font-size:16px;line-height:1.6;color:#c9c7d4;margin:0">' + body + '</p>'
@@ -8076,7 +8076,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
     for (let i = 0; i < rows.length; i++) {
       table += '<tr>'
         + '<td style="padding:7px 14px 7px 0;color:#6a6a75;font-size:14px;white-space:nowrap;vertical-align:top">' + rows[i][0] + '</td>'
-        + '<td style="padding:7px 0;color:#12101a;font-size:14px;font-weight:600">' + rows[i][1] + '</td>'
+        + '<td style="padding:7px 0;color:#0A0A0B;font-size:14px;font-weight:600">' + rows[i][1] + '</td>'
         + '</tr>';
     }
 
@@ -8089,17 +8089,17 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
 
     /* Two very different messages. One is a note; the other is a job for a person. */
     const gamingBlock = guessed
-      ? ('<p style="margin:0 0 18px;padding:12px 14px;background:#F4F0F2;border-left:3px solid #9b93a5;font-size:13.5px;color:#12101a;line-height:1.5">'
+      ? ('<p style="margin:0 0 18px;padding:12px 14px;background:#F4F0F2;border-left:3px solid #9b93a5;font-size:13.5px;color:#0A0A0B;line-height:1.5">'
          + 'The name reads as <b>' + (guessed === 'non_profit' ? 'a club (non-profit)' : 'a pub (for-profit)') + '</b>, so that is what we have recorded. '
          + 'Paid entry is still switched off until someone turns it on in HQ.' + stateLine + '</p>')
-      : ('<p style="margin:0 0 18px;padding:12px 14px;background:#FBF2E0;border-left:3px solid #8A5A0B;font-size:13.5px;color:#12101a;line-height:1.5">'
+      : ('<p style="margin:0 0 18px;padding:12px 14px;background:#FBF2E0;border-left:3px solid #8A5A0B;font-size:13.5px;color:#0A0A0B;line-height:1.5">'
          + '<b>Needs a person: we cannot tell if this is a club or a pub.</b> The name does not say, and it decides which gaming rules they get shown '
          + 'and whether they can ever charge for entry. Ask them on the onboarding call, then set it on their row in HQ. '
          + 'Until then they are free-entry only, which is safe everywhere but is not the whole product.' + stateLine + '</p>');
 
-    const html = '<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
       + '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;font-weight:700">New signup</p>'
-      + '<h1 style="margin:0 0 18px;font-size:24px;color:#12101a">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
+      + '<h1 style="margin:0 0 18px;font-size:24px;color:#0A0A0B">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:20px">' + table + '</table>'
       + gamingBlock
       + '<a href="' + site + '/app/hq.html" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open HQ</a>'
@@ -8117,7 +8117,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
                  (isGroup ? list.length + ' venues, ' : '')
                  + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : '')
                  + (guessed ? '' : ' [club or pub?]')),
-        html: html,
+        html: vpaStaffCard(html, 'New signup'),
       }),
     });
   } catch (_) { /* internal notification only; never affect provisioning */ }
@@ -8224,17 +8224,21 @@ function vpaEmailDocument(html, title) {
 }
 /* brand: 'partyplay' puts the PartyPlay logo on the dark band (the help desk acknowledges both
    brands from here); anything else is VenuePlay. */
+/* Emails to our own staff (an enquiry, a flagged signup, a bounce, a help desk alert) wear the same card as the
+   customer ones: venueplay logo on near-black, the pink rule, white page (Dean, 5 Nov 2026: "emails need logo and rebrand too"). */
+function vpaStaffCard(inner, title) { return vpaVenueEmailCard(title, inner, title); }
 function vpaVenueEmailCard(preheader, inner, title, brand) {
   const pp = brand === 'partyplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
-  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay-email-on-dark.png';
   return vpaEmailDocument(
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
     + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
-    + '<tr><td style="background:#12101a;padding:20px 32px">'
+    + '<tr><td style="background:#0A0A0B;padding:20px 32px">'
     + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'venueplay') + '" style="display:block;border:0;height:auto"></td></tr>'
+    + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
     + '<tr><td style="padding:28px 28px 30px">' + String(inner || '') + '</td></tr>'
     + '</table></td></tr></table>', title);
 }
@@ -8268,7 +8272,7 @@ function vpaUpliftNoticeHtml(invoice) {
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px">'
        + '<tr><td style="padding:16px 18px">'
-       + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Your plan has moved up</p>'
+       + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0A0A0B">Your plan has moved up</p>'
        + '<p style="margin:0;font-size:13px;color:#6a6a75">That was your third big night in a row, so those '
        + 'extra players were charged at half price and your plan has moved up to cover the crowd you are '
        + 'actually getting. It takes effect from your next invoice, and your rate per player has not changed. '
@@ -8293,7 +8297,7 @@ async function vpaUpliftWarningHtml(env, customerId) {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
          + 'style="background:#fffaf0;border:1px solid #f3e2bd;border-radius:12px;margin-bottom:22px">'
          + '<tr><td style="padding:16px 18px">'
-         + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Heads-up: one more big night and the plan moves up</p>'
+         + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0A0A0B">Heads-up: one more big night and the plan moves up</p>'
          + '<p style="margin:0;font-size:13px;color:#6a6a75">' + names + ' has gone over the plan two nights running. '
          + 'A third in a row is charged at half price and then the plan moves up permanently to cover that crowd. '
          + 'If you would rather set the number yourself, raise it on your billing page before the next night. '
@@ -8308,8 +8312,8 @@ function vpaTaxSummaryHtml(invoice) {
   const gst = Math.round(total / 11);          // GST-inclusive pricing: the component, not an addition
   const ex = total - gst;
   const row = function (label, cents, strong) {
-    return '<tr><td style="padding:5px 0;font-size:13px;color:' + (strong ? '#12101a' : '#6a6a75') + '">' + label + '</td>'
-         + '<td style="padding:5px 0;font-size:13px;text-align:right;white-space:nowrap;color:#12101a'
+    return '<tr><td style="padding:5px 0;font-size:13px;color:' + (strong ? '#0A0A0B' : '#6a6a75') + '">' + label + '</td>'
+         + '<td style="padding:5px 0;font-size:13px;text-align:right;white-space:nowrap;color:#0A0A0B'
          + (strong ? ';font-weight:700' : '') + '">$' + (cents / 100).toFixed(2) + '</td></tr>';
   };
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
@@ -8351,8 +8355,8 @@ function vpaInvoiceLinesHtml(invoice) {
     const amt = Number(l.amount || 0);
     const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
     return '<tr>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
       + (amt / 100).toFixed(2) + '</td></tr>';
   }).join('');
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
@@ -8440,7 +8444,7 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       ? 'It is charged pro rata to your renewal, on a separate invoice.'
       : 'It starts from your next invoice. Nothing extra is charged today.';
     const html =
-        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+        '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
       + '<h1 style="font-size:20px;margin:0 0 14px">Your plan has moved up</h1>'
       + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">'
       + vpaEsc(venue.name || 'Your venue') + ' has been over its player limit on three nights in a row, '
@@ -8491,7 +8495,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const email = invoice.customer_email;
     if (!email) { await say('not sent: the customer has no email address'); return; }
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_dark.png';
+    const logo = site + '/logos/venueplay-email-on-light.png';
     const amount = '$' + (Number(invoice.amount_paid) / 100).toFixed(2);
     const ov = vpaOverageFromInvoice(invoice);
     const number = invoice.number ? String(invoice.number) : '';
@@ -8499,15 +8503,15 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const pdf = invoice.invoice_pdf || '';
     const btn = view || pdf;
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with venueplay.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
       + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
-      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (ov.nights > 0
-            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#12101a">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#12101a">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
+            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
@@ -8529,8 +8533,8 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
-      + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
-      + '<p style="font-size:13.5px;color:#12101a;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
+      + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#FF1F8E;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #FF1F8E;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
+      + '<p style="font-size:13.5px;color:#0A0A0B;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
       + 'so thank you for backing us early. If there is anything you want the games to do that they do not, tell us.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
@@ -8595,27 +8599,27 @@ async function vpaFireUpcomingEmail(env, invoice) {
     const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
     const when = whenTs ? vpaFmtDate(whenTs) : '';
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_dark.png';
+    const logo = site + '/logos/venueplay-email-on-light.png';
     const billing = site + '/app/billing.html';
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your venueplay subscription.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount due</p>'
-      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
-            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">A busy month: this bill includes extra players.</p>'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">A busy month: this bill includes extra players.</p>'
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper - you can bump it on your billing page before this charge.</p>'
             + '</td></tr></table>'
           : '')
       + (creditApplied > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2fbf6;border:1px solid #c9ecd8;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
-            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Your credit is coming off this bill.</p>'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">Your credit is coming off this bill.</p>'
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">We have applied <b>$' + (creditApplied / 100).toFixed(2) + '</b> from players you released earlier'
             + (creditLeft > 0 ? ', and <b>$' + (creditLeft / 100).toFixed(2) + '</b> stays on your account for next time' : '')
             + '. Nothing to claim, it happens on its own.</p>'
@@ -9039,7 +9043,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
        stays as the second link for anyone who would rather go the long way. */
     const payNow = invoice.hosted_invoice_url || billing;
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + (why.ours ? 'A payment did not go through.' : 'Your card did not go through.') + '</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
@@ -10501,7 +10505,7 @@ async function vpaFireCancelAlert(env, opts) {
         + '<div style="font-size:15px;line-height:1.5">' + vpaEsc(opts.reasonDetail) + '</div></div>'
       : '';
     const html =
-        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+        '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
       + '<h1 style="font-size:20px;margin:0 0 14px">' + vpaEsc(heading) + '</h1>'
       + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">' + lead + '</p>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse;margin:0 0 18px">'
@@ -10512,11 +10516,11 @@ async function vpaFireCancelAlert(env, opts) {
       + '<p style="margin:20px 0"><a href="' + site + '/app/hq" '
       + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
       + 'Open HQ</a></p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; venueplay, ABN ' + VP_ABN + '</p>'
       + '</div>';
     let sent = 0;
     for (const to of VPA_CANCEL_ALERTS) {
-      const ok = await vpaSendEmail(env, to, subject, html).catch(() => false);
+      const ok = await vpaSendEmail(env, to, subject, vpaStaffCard(html, subject)).catch(() => false);
       if (ok) sent++;
     }
     await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
@@ -10836,7 +10840,7 @@ function vpaWrapHtml(stats, opts) {
      paper on ink, with the pink kept for the bars so it still reads as VenuePlay.
      Every email client renders a background colour on a table cell; half of them block
      images, so none of this is a picture. */
-  const PINK = '#FF1F8E', INK = '#12101a', PAPER = '#FFF1E6', DIM = '#9b90ab', TILE = '#1e1a2b';
+  const PINK = '#FF1F8E', INK = '#0A0A0B', PAPER = '#F5F2ED', DIM = '#9b90ab', TILE = '#1e1a2b';
   /* Thousands separators, because these have to hold a real club. A 900 seat venue on a
      grand final night is four figures of phones, and "10000 phones in the room" reads like
      a serial number. Dean, 17 Sep 2026: room for 10,000 phones and 1,000 games. */
@@ -10958,16 +10962,16 @@ function vpaFormatWord(f) { return VPA_FORMAT_WORDS[f] || String(f || '').replac
 
 function vpaLeavingHtml(env, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const logo = site + '/logos/venueplay_primary_dark.png';
+  const logo = site + '/logos/venueplay-email-on-light.png';
   const billing = site + '/app/billing.html';
   return vpaVenueEmailCard(opts.preheader || opts.heading, ''
-    + '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+    + '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + vpaEsc(opts.heading) + '</p>'
     + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + opts.lead + '</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
     +   (opts.rows || []).map((r) =>
           '<p style="margin:0 0 10px;font-size:13px;color:#6a6a75">' + vpaEsc(r[0])
-          + '<br><span style="font-size:15px;font-weight:700;color:#12101a">' + vpaEsc(r[1]) + '</span></p>').join('')
+          + '<br><span style="font-size:15px;font-weight:700;color:#0A0A0B">' + vpaEsc(r[1]) + '</span></p>').join('')
     + '</td></tr></table>'
     /* THE THREE MONTHS IS A PROMISE, not a nicety. venueplay.com.au/privacy already says a
        closed venue's player list is deleted within 90 days, so this matches what is
@@ -10985,7 +10989,7 @@ function vpaLeavingHtml(env, opts) {
        leaving email that nags is one nobody finishes reading. */
     + (opts.priceHold
         ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6;border:1px solid #e8d9a8;border-radius:12px;margin:0 0 22px"><tr><td style="padding:16px 18px">'
-          + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">'
+          + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">'
           + (opts.founding ? 'Worth knowing before then: the rate does not come back.'
                            : 'Worth knowing before then: the price will not wait for you.') + '</p>'
           + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">'
@@ -11049,7 +11053,7 @@ async function vpaFireDeliveryFailure(env, opts) {
     if (!env.RESEND_API_KEY) return;
     const what = opts.kind === 'last_day'
       ? 'their LAST DAY warning' : 'their cancellation confirmation';
-    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
       + '<p style="font-size:18px;font-weight:800;color:#b3261e;margin:0 0 10px">'
       +   'A venue was NOT told. Ring them.</p>'
       + '<p style="margin:0 0 14px;font-size:15px">We could not deliver ' + what + ' to '
@@ -12927,8 +12931,8 @@ async function vpaHandleInviteBack(request, env, json) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const link = site + '/app/billing.html';
   const subject = 'Keep ' + v.name + ' on venueplay?';
-  const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-    + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="venueplay" width="150" style="display:block;margin:0 0 24px">'
+  const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
+    + '<img src="' + site + '/logos/venueplay-email-on-light.png" alt="venueplay" width="150" style="display:block;margin:0 0 24px">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on venueplay?</p>'
     + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + (acct.contact_name ? 'Hi ' + vpaEsc(String(acct.contact_name).split(' ')[0]) + ', thanks' : 'Thanks')
     + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
@@ -14064,7 +14068,7 @@ async function vprEmailHtml(env, venue, rep, opts) {
   const mName = vprMonthName(rep.month), pName = vprMonthName(rep.prev_month);
   const n = (x) => Number(x || 0).toLocaleString('en-AU');
   const plural = (x, one, many) => n(x) + ' ' + (x === 1 ? one : many);
-  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E', LINE = '#ececf1';
+  const INK = '#0A0A0B', DIM = '#6a6a75', PINK = '#FF1F8E', LINE = '#ececf1';
   const delta = (k) => {
     const d = c[k];
     if (!d || (!d.now && !d.was)) return '';
@@ -14230,7 +14234,7 @@ async function vprNewsRead(env, month) {
 function vprNewsHtml(items) {
   const clean = vprNewsClean(items || []);
   if (clean.error || !clean.items.length) return '';
-  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E';
+  const INK = '#0A0A0B', DIM = '#6a6a75', PINK = '#FF1F8E';
   let h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;border-top:2px solid ' + PINK + '"><tr><td style="padding:18px 0 0">'
     + '<p style="margin:0 0 12px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">What\'s new at venueplay</p>';
   clean.items.forEach((it) => {
@@ -15527,7 +15531,7 @@ function helpSigner(env, label) {
    has no line. Links are pink and underlined, so they look like links (Dean, 29 Oct 2026). */
 const HELP_LINK = 'class="hd-a" style="color:#C70F69;text-decoration:underline"';
 function helpCountry(pp) {
-  return (pp ? 'PartyPlay' : 'VenuePlay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+  return (pp ? 'PartyPlay' : 'venueplay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 }
 function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const pp = ticket.brand === 'partyplay';
@@ -15542,7 +15546,7 @@ function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
     + '<img class="hd-sig-img" src="' + icon + '" width="120" height="120" alt="' + brand + '" style="display:block;border:0;width:120px;height:120px;border-radius:12px"></td>'
     + '<td style="width:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td>'
     + '<td class="hd-sig-text" valign="middle" style="padding:0 0 0 16px;font-size:14px;line-height:1.55">'
-    + '<p style="margin:0"><strong class="hd-ink" style="color:#12101a;font-size:18px;line-height:1.3">' + helpHtml(signer || ('The ' + brand + ' team')) + '</strong><br>'
+    + '<p style="margin:0"><strong class="hd-ink" style="color:#0A0A0B;font-size:18px;line-height:1.3">' + helpHtml(signer || ('The ' + brand + ' team')) + '</strong><br>'
     + '<span style="color:#FF1F8E;font-weight:600">' + brand + '</span></p>'
     + '<p style="margin:10px 0 0">'
     + (phone ? L('P', '<a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a>') + '<br>' : '')
@@ -15725,8 +15729,8 @@ async function helpAlertAllowed(env) {
       await helpSendEmail(env, { to: env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au',
         from: 'Help Desk <hello@send.venueplay.com.au>', reply_to: 'hello@venueplay.com.au',
         subject: '[Help desk] Alerts paused for today: ' + cap + ' reached',
-        html: '<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
-              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>',
+        html: vpaStaffCard('<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
+              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>', 'Help desk alerts paused'),
         headers: { 'X-VP-Help': 'alert' } });
     } catch (e) {}
   }
@@ -15751,7 +15755,7 @@ async function helpNotifyStaff(env, ticket, venueName, lead) {
     return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
       reply_to: ticket.contact_email || 'hello@venueplay.com.au',
       subject: helpAlertSubject(ticket, lead),
-      html: html, headers: { 'X-VP-Help': 'alert' } });
+      html: vpaStaffCard(html, helpAlertSubject(ticket, lead)), headers: { 'X-VP-Help': 'alert' } });
   } catch (e) { return false; }
 }
 
@@ -16204,10 +16208,10 @@ function helpBrandFooter(pp) {
 function helpEmailCard(pp, inner, foot, title, preheader) {
   const brand = pp ? 'PartyPlay' : 'venueplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
-  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay-email-on-dark.png';
   /* PartyPlay's email logo is drawn on white, so its band is white; on the dark band it would sit
      in a white box. VenuePlay's logo is drawn for the dark band. */
-  const band = pp ? '#ffffff' : '#12101a';
+  const band = pp ? '#ffffff' : '#0A0A0B';
   const page = pp ? '#F3F0EC' : '#f4f4f7', text = pp ? '#3A3444' : '#3a3a44', mute = pp ? '#8A8296' : '#8a8a95', rule = pp ? '#EDE9E4' : '#eeeeee';
   return '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -16219,7 +16223,7 @@ function helpEmailCard(pp, inner, foot, title, preheader) {
     + '@media (max-width:480px){.hd-sig-icon{width:84px !important;padding-right:12px !important}.hd-sig-img{width:84px !important;height:84px !important;border-radius:10px !important}.hd-sig-text{padding-left:12px !important;font-size:13px !important}}</style>'
     + '</head><body class="hd-page" style="margin:0;padding:0;background:' + page + ';-webkit-text-size-adjust:100%">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
-    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
     + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:' + band + ';padding:20px 28px"><img src="' + logo + '" width="168" alt="' + brand + '" style="display:block;border:0;height:auto;max-width:168px"></td></tr>'
@@ -17459,7 +17463,7 @@ function vpsConfirmationEmail(env, email, venue, nowMs) {
   const site = vpaCustomerSite(env);
   const subject = "You're on the venueplay monthly email";
   const look = site + '/see-a-night?utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
-  const inner = '<p style="font-size:20px;font-weight:800;color:#12101a;margin:0 0 12px">You\'re on the list</p>'
+  const inner = '<p style="font-size:20px;font-weight:800;color:#0A0A0B;margin:0 0 12px">You\'re on the list</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 14px">Thanks for signing up' + (venue ? ' for ' + vpaEsc(venue) : '')
     + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with venueplay.</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)

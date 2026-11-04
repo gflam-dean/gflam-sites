@@ -22,14 +22,14 @@ var fails = 0, ran = 0;
 var COUNTRY = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 function oneLogo(html, pp) {
   var imgs = String(html || '').match(/<img\b[^>]*>/gi) || [];
-  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay_primary_rebuilt.png') !== -1
-    && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#12101a;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
+  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay-email-on-dark.png') !== -1
+    && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#0A0A0B;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
     && imgs[1].indexOf(pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif') !== -1
     && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;
 }
 function brandFoot(html, pp) {
   /* The footer's name is lowercase since the 2 Nov release; the Acknowledgement of Country keeps "VenuePlay". */
-  var b = pp ? 'PartyPlay' : 'venueplay', c = pp ? 'PartyPlay' : 'VenuePlay', h = String(html || '');
+  var b = pp ? 'PartyPlay' : 'venueplay', c = pp ? 'PartyPlay' : 'venueplay', h = String(html || '');
   return h.indexOf(b + ' &middot; ABN 35 679 383 049.') !== -1 && h.indexOf(c + COUNTRY) !== -1
     && !/gflam/i.test(h.split(c + COUNTRY).join('')) && !/Gold Coast/.test(h) && h.indexOf('<strong>CONFIDENTIAL EMAIL:</strong>') !== -1;
 }
