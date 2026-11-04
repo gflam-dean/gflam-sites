@@ -520,3 +520,24 @@ def suite_hygiene(tools_dir=None, today=None):
                 else:
                     out['bad'].append('%s:%d %s: %s%s' % (f, i, name, fix, (' [grandfather ended %s]' % g[0]) if g else ''))
     return out
+
+
+def looks_like_homepage(status, content_type, body):
+    """IS THIS PAGES' HOMEPAGE-INSTEAD-OF-THE-FILE FALLBACK? (4 Nov 2026)
+
+    Cloudflare Pages answers a path it does not have with the site's index and a 200. Until today the
+    gate spotted that with `'<html' in body[:2000]`, which called venueplay/app/vp-tvhold.js the homepage
+    on LIVE because line 21 of its header comment says "<html". Judged now by what the server SAYS it
+    sent (Content-Type text/html is the homepage; nothing else is) and, when it says nothing, by what
+    the body STARTS with after whitespace and a BOM: <!doctype or <html. A script that merely mentions
+    a tag inside a comment is a script. A non-200 is not the fallback (it is its own fault, named by
+    the caller)."""
+    if status != 200:
+        return False
+    ct = (content_type or '').lower()
+    if 'text/html' in ct:
+        return True
+    if 'javascript' in ct or 'ecmascript' in ct or 'text/css' in ct or 'json' in ct:
+        return False
+    head = (body or '').lstrip('\ufeff \t\r\n')[:200].lower()
+    return head.startswith('<!doctype') or head.startswith('<html')

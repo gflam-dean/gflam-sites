@@ -183,6 +183,16 @@ MUTATIONS = [
      '<div><div class="n">245</div>',
      'the proof strip claims 245 tickets (the old ads figure), not the 223 the export records'),
     # THE GATE'S OWN RELIABILITY, 27 Oct 2026 (tools/gatelib.py, verify-live's Browser, the wake check).
+    # THE HOMEPAGE FALLBACK IS STILL SEEN (4 Nov 2026). The live check itself cannot be proven without breaking
+    # production (shared_scripts_live reads the live site); its judgement is a pure function, broken here two ways.
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     "    if 'text/html' in ct:\n        return True",
+     "    if 'text/html' in ct:\n        return False",
+     'Pages\' homepage, served as text/html in place of a script, is called a script: a half-deployed vp-qr.js ships green again'),
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     "    return head.startswith('<!doctype') or head.startswith('<html')",
+     "    return False",
+     'with no Content-Type the homepage body is no longer recognised by how it starts'),
     ('gate-reliability.test.py', 'tools/deploy-worker.py',
      "            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())",
      "            return False",

@@ -161,7 +161,7 @@ try:
     # 16 venues less Ended Bowls and Archived Hotel (left) and Test Alpha (flagged test): 13, of which 5 are grouped.
     ok('the venues number is painted exactly once, after the venue AND prospects lists are known: it cannot be seen to change',
        paints == '["13"]', paints)
-    card = js(sid, '(function(){var c=document.querySelector(".stats .scard[data-stat=\"venues\"]"); return {k:c.querySelector(".k").textContent, v:c.querySelector(".v").textContent, d:c.querySelector(".d").textContent};})()')
+    card = js(sid, '(function(){var c=document.querySelector(".stats .scard[data-stat=venues]"); return {k:c.querySelector(".k").textContent, v:c.querySelector(".v").textContent, d:c.querySelector(".d").textContent};})()')
     ok('it is labelled: "Customer venues 13, 8 independent, 5 grouped"',
        card and card['k'] == 'Customer venues' and card['v'] == '13' and card['d'] == '8 independent, 5 grouped', card)
     ok('there is no second venues number: the "Open now / signed up" card is gone and four cards remain',

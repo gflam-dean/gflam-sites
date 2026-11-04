@@ -391,6 +391,19 @@ try:
     ok('the gate has the red line and pins its label',
        "gatelib.suite_hygiene(os.path.join(ROOT, 'tools'))" in rc_src
        and 'every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour' in io.open(os.path.join(TOOLS, 'gate-labels.json'), encoding='utf-8').read())
+
+    print('\n10. the homepage-instead-of-the-script fallback is told from a script (gatelib.looks_like_homepage, 4 Nov 2026)')
+    home = io.open(os.path.join(ROOT, 'venueplay', 'index.html'), encoding='utf-8', errors='replace').read()
+    tvhold = io.open(os.path.join(ROOT, 'venueplay', 'app', 'vp-tvhold.js'), encoding='utf-8', errors='replace').read()
+    ok('the real homepage served as text/html IS the fallback', gatelib.looks_like_homepage(200, 'text/html; charset=utf-8', home) is True)
+    ok('the real homepage with NO Content-Type is still the fallback, by how the body starts (BOM and whitespace allowed)',
+       gatelib.looks_like_homepage(200, '', '\ufeff \n' + home) is True and gatelib.looks_like_homepage(200, None, home.lstrip()) is True)
+    ok('vp-tvhold.js, whose header comment says "<html", served as application/javascript is a SCRIPT (the 4 Nov live false red)',
+       '<html' in tvhold[:2000].lower() and gatelib.looks_like_homepage(200, 'application/javascript; charset=utf-8', tvhold) is False)
+    ok('the same script with no Content-Type is still a script: a tag mentioned mid-file is not a page',
+       gatelib.looks_like_homepage(200, '', tvhold) is False)
+    ok('a 404 is not called the fallback (it is its own fault, named by the caller)', gatelib.looks_like_homepage(404, 'text/html', home) is False)
+    ok('the gate reads the Content-Type and judges with it', 'get_typed(base + url_prefix + f)' in rc_src and 'gatelib.looks_like_homepage(status, ctype, body)' in rc_src)
 finally:
     shutil.rmtree(TMP, ignore_errors=True)
 
