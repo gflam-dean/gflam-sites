@@ -293,8 +293,13 @@ try:
     n_before = len(S.W.sent())
     js(sid, 'document.querySelector("#venueRows button[data-signinlink]").click()')
     S.until(sid, '!!document.getElementById("vpAskGo")', 5)
-    ok('it asks first, saying what the link does (on a test venue: no real venue name in any fixture)', 'works once, for 14 days' in (js(sid, 'document.body.innerText') or '') and
-       'Email Test Alpha a new sign-in link' in (js(sid, 'document.body.innerText') or '') and 'Deepwater' not in (js(sid, 'document.body.innerText') or ''))
+    # Since the console-hq journeys merge (4 Nov 2026) a prospect's link lasts 30 days from setup and HQ shows the
+    # real expiry, so the ask no longer pins "14 days": it must still say one tap, works once, and when it ends
+    # ("until it expires"), and must not promise a fixed day count the Worker may not give.
+    ask = js(sid, 'document.body.innerText') or ''
+    ok('it asks first, saying what the link does (on a test venue: no real venue name in any fixture)',
+       'One tap opens their account' in ask and 'It works once, until it expires' in ask and 'any older link stops working' in ask and
+       '14 days' not in ask and 'Email Test Alpha a new sign-in link' in ask and 'Deepwater' not in ask, ask[-400:])
     shot(sid, '9-hq-resend-ask')
     click(sid, 'vpAskGo')
     S.until(sid, '/Sent to owner@test\\.local/.test(document.body.innerText)', 10)
