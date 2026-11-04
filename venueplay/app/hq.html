@@ -2443,10 +2443,12 @@
         /* Which email it sends is the Worker's answer (vpaResendWhich): a prospect gets their account email
            with a fresh sign-in, everyone else the card email. The label follows HQ > Prospects' list, and the
            confirm asks the Worker first, so it always names the email that will actually go (31 Oct 2026). */
-        (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">'+resendLabel(v.id)+'</button>' : '')+
-        /* A fresh one-tap sign-in link to the venue's own login (Dean, 29 Oct 2026). Any older unused link
-           stops working, so only the newest one opens their account. */
-        (canBilling() ? '<button class="mini" data-signinlink="'+esc(v.id)+'">Resend sign-in link</button>' : '')+
+        /* A prospect has ONE button, the sign-in link (Dean, 4 Nov 2026: the two looked the same); everyone else keeps
+           the add-your-card email beside it, which is a different email. */
+        (canBilling() && !isProspect(v) ? '<button class="mini" data-resend="'+esc(v.id)+'">'+resendLabel(v.id)+'</button>' : '')+
+        /* A fresh one-tap sign-in link to the venue's own login (Dean, 29 Oct 2026), by email and, with a mobile, text.
+           Any older unused link stops working, so only the newest one opens their account. */
+        (canBilling() ? '<button class="mini" data-signinlink="'+esc(v.id)+'">Send them a new sign-in link</button>' : '')+
         // Marks it ours. Off every count and chase list, still reachable under Test venues.
         '<button class="mini" data-testflag="'+esc(v.id)+'">'+(isTest(v)?"Not a test venue":"Mark as a test venue")+'</button>'+
         '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
@@ -2591,18 +2593,42 @@
      Dean's back: the time he sees is the time it goes. */
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
-  /* "Resend sign-in link" (Dean, 29 Oct 2026: "otherwise we can resend it"). One shared function: the Venues
-     row and HQ > Prospects (vp-prospects-hq.js) both call it, so the two buttons cannot say different things. */
-  function hqSigninLink(id, btn){
-    var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||"this venue";
+  /* "SEND THEM A NEW SIGN-IN LINK" (Dean, 29 Oct 2026: "otherwise we can resend it"; ONE button, 4 Nov 2026). One shared
+     function: the Venues row and HQ > Prospects (vp-prospects-hq.js) both call it, so the two cannot say different things.
+     It used to sit beside "Resend their account email", which looked the same to Dean. Now it is the one way: the link by
+     EMAIL and, when we have their mobile, by TEXT at the same time (Worker /admin/signin-link, text:true), a fresh 30 days
+     for a prospect. The one different case kept behind it: a welcome still BOOKED to go carries their link already, so
+     it offers to send that now (welcome-now) rather than a second link that would stop the booked one's button working.
+     p: the prospect row, when HQ > Prospects has one (their email, mobile and booked welcome). */
+  function hqSigninLink(id, btn, p){
+    p = p || (window.VPProspects && VPProspects.get ? VPProspects.get(id) : null) || null;
+    var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||(p&&p.name)||"this venue";
+    var was=btn.textContent;
+    var busy=function(t){ btn.disabled=true; btn.textContent=t; }, done=function(){ btn.disabled=false; btn.textContent=was; };
+    var w=p&&p.welcome;
+    if(w && w.status==="scheduled" && w.id && Date.parse(w.send_at)>Date.now()){
+      return vpAsk("Their welcome email to "+name+" is booked"+(w.when?" for "+w.when:"")+", and it already carries their sign-in link.\n\nSend it now instead? (A second link now would stop the booked email's button working.)").then(function(ok){ if(!ok) return null;
+        busy("Sending...");
+        return workerPost("/admin/prospect/welcome-now", { id:w.id }).then(function(r){ done();
+          if(r.error){ vpTell(r.error); return r; }
+          vpTell("Their welcome email went now, with their sign-in link."+(p.mobile?" To text it as well, press Send them a new sign-in link again.":""));
+          if(window.VPProspects) VPProspects.load();
+          return r;
+        });
+      });
+    }
+    var how = !p ? "by email, and by text too if their login has a mobile"
+      : p.mobile ? "by email to "+(p.email||"their login")+" and by text to "+p.mobile
+      : "by email only, to "+(p.email||"their login")+" (add a mobile in Edit details to text it too)";
     /* No number before the Worker has minted the link (Dean, 4 Nov 2026: never print a number that is not the real
-       expiry). A prospect's link ends 30 days from setup, anyone else's 14 days from now; the Worker says which. */
-    return vpAsk("Email "+name+" a new sign-in link?\n\nOne tap opens their account. It works once, until it expires, and any older link stops working.").then(function(ok){ if(!ok) return null;
-      var was=btn.textContent; btn.disabled=true; btn.textContent="Sending...";
-      return workerPost("/admin/signin-link", { venue_id:id }).then(function(r){
-        btn.disabled=false; btn.textContent=was;
+       expiry). The Worker's own line says how it went and until when. */
+    return vpAsk("Send "+name+" a new sign-in link?\n\nIt goes "+how+". One tap opens their account"+(p?", for a fresh 30 days":"")+". Any older link stops working.").then(function(ok){ if(!ok) return null;
+      busy("Sending...");
+      return workerPost("/admin/signin-link", { venue_id:id, text:true }).then(function(r){
+        done();
         if(r.error){ vpTell(r.error); return r; }
-        vpTell("Sent to "+r.to+". One tap opens their account"+(r.expires_words?", until "+r.expires_words+(r.days_left?" ("+r.days_left+(r.days_left===1?" day":" days")+")":""):"")+"."+(r.has_mobile?" They can also sign in with their mobile.":" Once they are in, it asks for their name and mobile."));
+        vpTell((r.line || ("Sent by email, link works until "+(r.expires_words||"it expires")+"."))+"\n\nThe email went to "+r.to+(r.text&&r.text.mobile&&(r.text.status==="sent"||r.text.status==="queued")?", the text to "+r.text.mobile:"")+".");
+        if(window.VPProspects && p) VPProspects.load();
         return r;
       });
     });

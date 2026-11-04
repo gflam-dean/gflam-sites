@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '4 Nov 2026, 09:19 · b92cef2d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 11:44 · 0565e638';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -241,6 +241,8 @@ export default {
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
+      // Edit details on a prospect (Dean, 4 Nov 2026): name, email, mobile, phone, with an audit row.
+      if (request.method === 'POST' && path === '/admin/prospect/update'        && typeof vpaProspectUpdate === 'function')     return await vpaProspectUpdate(request, env, json);
       // HQ > Subscribers (31 Oct 2026; migration 134): who asked for the monthly email, counts, matches, the CSV.
       if (request.method === 'POST' && path === '/admin/subscribers')        return await vpsHandleAdminList(request, env, json);
       if (request.method === 'POST' && path === '/admin/subscribers/export') return await vpsHandleAdminExport(request, env, json);
@@ -353,6 +355,8 @@ export default {
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
+    /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
+    try { await vpaSigninTextSweep(env, Date.now()); } catch (e7) { /* the next tick looks again */ }
   },
 };
 
@@ -3353,7 +3357,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // A double click, or the same reply handled twice, must not build the venue twice.
   const twin = await vpaSelect(env, 'vp_venues', 'name=eq.' + encodeURIComponent(name) + '&postcode=eq.' + postcode + '&select=id,slug&limit=1');
   if (twin && twin.length) {
-    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send their email again, use Resend their account email on their card in HQ > Prospects.' + NONE }, 409);
+    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send them their sign-in again, use Send them a new sign-in link on their row in HQ > Prospects.' + NONE }, 409);
   }
 
   /* AN EMAIL THAT ALREADY SIGNS IN IS REFUSED, not linked (security review, 28 Oct 2026). Giving an
@@ -3409,7 +3413,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       display_name: firstName || 'Manager' }, false);
   } catch (e) {
     login = null;
-    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend their account email (HQ > Prospects).');
+    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Send them a new sign-in link (HQ > Prospects).');
   }
 
   /* 3b. HQ > Prospects (migration 125): their row, so they are listed apart from the active venues and
@@ -3481,7 +3485,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       senderName: sender.name || null, senderEmail: sender.email || null, offerCode: offer.code };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
-    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend their account email on their card in HQ > Prospects, or send it by hand.');
+    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Send them a new sign-in link on their row in HQ > Prospects.');
     else {
       welcome = { send_at: new Date(sendAtMs).toISOString(), status: delayMin > 0 ? 'scheduled' : 'sent', id: null };
       const rec = await vpaProspectWelcomeRecord(env, actor, venue.id, r.id, sendAtMs, welcome.status,
@@ -3542,6 +3546,14 @@ function vpaProspectPhone(raw) {
   if (d[1] === '4') return d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7);
   return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + ' ' + d.slice(6);
 }
+/* An Australian MOBILE, spaced '0412 345 678', or null: the account's mobile first, else the number to ring when it
+   is a mobile (a landline can never take a text). One answer for the list, the follow-up text and HQ's resend. */
+function vpaProspectMobile(accountMobile, ringPhone) {
+  const a = vpaProspectPhone(accountMobile);
+  if (a && a.indexOf('04') === 0) return a;
+  const b = vpaProspectPhone(ringPhone);
+  return b && b.indexOf('04') === 0 ? b : null;
+}
 /* Has this prospect become a customer? One answer, used by the list and by nothing else. */
 function vpaProspectSignedUp(venue, founding) {
   if (venue && venue.group_id) return true;
@@ -3589,14 +3601,14 @@ async function vpaProspectsData(env) {
     (await vpaSelectAll(env, 'vp_venue_staff', 'venue_id=in.(' + chunk + ')&select=venue_id,auth_user_id&order=venue_id.asc,auth_user_id.asc'))
       .forEach((s) => { (staff[s.venue_id] = staff[s.venue_id] || []).push(s.auth_user_id); });
     try {
-      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status&order=send_at.desc'))
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=id,venue_id,send_at,status&order=send_at.desc'))
         .forEach((w) => { if (!welcomes[w.venue_id]) welcomes[w.venue_id] = w; });
     } catch (_) { /* migration 124 not run: the column says "not recorded" */ }
   }
   const fids = Object.keys(venues).map((k) => venues[k].founding_id).filter(Boolean);
   for (let i = 0; i < fids.length; i += 100) {
     (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
-      ')&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
+      ')&select=id,status,stripe_subscription_id,bill_by_invoice,mobile&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
   }
   const out = [], cardAdded = [];
   let signedUp = 0;
@@ -3614,7 +3626,8 @@ async function vpaProspectsData(env) {
         const st = vpaProspectStatus(r, true, null, now);
         cardAdded.push(Object.assign({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
           source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
-          phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+          phone: r.phone || null, mobile: vpaProspectMobile(acct && acct.mobile, r.phone),
+          tel: (r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)) ? 'tel:' + String(r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)).replace(/[^\d+]/g, '') : null,
           website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
           created_at: r.created_at, days_since_setup: Math.floor((now - Date.parse(r.created_at)) / DAY) || 0,
           flag: null, called: null }, st));
@@ -3627,12 +3640,17 @@ async function vpaProspectsData(env) {
     const created = Date.parse(r.created_at);
     const days = isFinite(created) ? Math.floor((now - created) / DAY) : 0;
     const w = welcomes[r.venue_id];
-    const welcome = !w ? null : { status: w.status === 'scheduled' && Date.parse(w.send_at) <= now ? 'sent' : w.status,
+    const welcome = !w ? null : { id: w.id || null, status: w.status === 'scheduled' && Date.parse(w.send_at) <= now ? 'sent' : w.status,
       send_at: w.send_at, when: vpaBrisbaneTime(Date.parse(w.send_at)) };
     const due = isFinite(created) && (now - created) >= VPA_PROSPECT_FOLLOWUP_DAYS * DAY;
+    /* THEIR MOBILE (Dean, 4 Nov 2026, HQ > Prospects > Edit details): the account's mobile (venueplay_founding.mobile,
+       set at setup or by Edit details), else the number to ring when that is a mobile. It is what the text follow-up
+       and HQ's "Send them a new sign-in link" text go to, and a prospect with one is on the call list. */
+    const mobile = vpaProspectMobile(acct && acct.mobile, r.phone);
+    const ring = r.phone || mobile;
     out.push({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
       source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
-      phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+      phone: r.phone || null, mobile: mobile, tel: ring ? 'tel:' + String(ring).replace(/[^\d+]/g, '') : null,
       website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
       created_at: r.created_at, days_since_setup: days, welcome: welcome,
       /* Their sign-in link's true end, 30 days from setup or from HQ's last resend (link_from), the whole days
@@ -3647,8 +3665,8 @@ async function vpaProspectsData(env) {
       /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
          phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
          and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
-      follow_up: due && seen.known && seen.at == null && !r.called_at && !!r.phone,
-      email_follow_up: due && seen.known && seen.at == null && !r.phone && !!r.email });
+      follow_up: due && seen.known && seen.at == null && !r.called_at && !!ring,
+      email_follow_up: due && seen.known && seen.at == null && !ring && !!r.email });
     /* THE ONE FLAG A ROW SHOWS. They asked for a call: that comes first, whatever else is true, until
        somebody marks it Called. Otherwise the 3-day no-sign-in flag, which needs a phone number. */
     const last = out[out.length - 1];
@@ -3707,8 +3725,10 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   const d = await vpaProspectsData(env);
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
-    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
-    mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
+    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!(p.phone || p.mobile),
+    /* For the text (3 Nov 2026). Read fresh on every run, so a mobile HQ adds with Edit details (4 Nov 2026) is here
+       on the Mac's next run with nothing else to do. */
+    mobile: p.mobile || (vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null),
     state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
     /* The link's true end (30 days from setup) and the whole days left on it (4 Nov 2026), so the Mac can
        draft "expires in {days} days" and time the "3 days before" follow-up. The Worker fills {days} again
@@ -3764,7 +3784,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const p = (d.prospects || []).find((x) => x.venue_id === venueId);
   if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no text was sent.');
   if (!vpaQuietProspect(p)) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in since, so no text was sent.');
-  const to = vpaNormaliseMobileAU(p.phone || '');
+  const to = vpaNormaliseMobileAU(p.mobile || p.phone || '');
   if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
   let authUserId = null;
   try {
@@ -3897,6 +3917,176 @@ async function vpaProspectCalled(request, env, json) {
   if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
   await vpaAudit(env, actor, undo ? 'prospect_call_undone' : 'prospect_called', 'venue:' + id, undo ? {} : { note: note || undefined });
   return json({ ok: true, called: undo ? null : { at: patch.called_at, by: patch.called_label || '', note: note } });
+}
+
+/* ===========================================================================
+ * POST /admin/prospect/update   (owner | accounts)   HQ > Prospects > Edit details (Dean, 4 Nov 2026)
+ *
+ * "There's no way to add or change a prospect's phone, mobile, contact name or email after it's created."
+ * Dean adds numbers for small venues on a Friday so the follow-ups run over the weekend, so a mobile saved
+ * here is on the call list and in the text follow-up from the next read, with nothing else to do: both read
+ * it fresh from vpaProspectsData (vpaProspectMobile).
+ *
+ * Body: { venue_id, contact_name?, email?, mobile?, phone? }. Only the keys sent change. An empty name,
+ * mobile or phone clears it; the email cannot be cleared (it is their login).
+ *   contact_name  vp_prospects.contact_name (60 characters, no control characters)
+ *   phone         vp_prospects.phone, the number to RING: an Australian mobile or a landline with its area
+ *                 code (vpaProspectPhone, the setup's check), spaced as said
+ *   mobile        venueplay_founding.mobile, an Australian mobile only (04...), spaced as said. With no number
+ *                 to ring it becomes that too, as at setup ("empty falls back to the mobile"). Put on their
+ *                 login for the text-code sign-in too, but only when the login has no mobile yet and the
+ *                 number is nobody else's login (the setup's rule); otherwise it is kept for calls and texts
+ *                 and HQ is told why.
+ *   email         vp_prospects.email, venueplay_founding.contact_email AND their login's email, together, so
+ *                 every sign-in link and the welcome go to the new address (vpaSendSigninLink reads the login,
+ *                 vpaResendWhich matches the contact email to it). Refused when the address is already
+ *                 somebody else's login, or when their login also runs another venue (that is changed from
+ *                 their own account). Every unused sign-in link on the login is retired, so a link that went
+ *                 to the old (perhaps mistyped) address stops working. The login is changed FIRST: if Auth
+ *                 says no, nothing is changed anywhere.
+ * One vp_admin_audit row, prospect_details_changed: who, and each field from and to.
+ * No new column: every field already exists.
+ * ======================================================================== */
+const VPA_PROSPECT_NAME_MAX = 60;
+async function vpaAuthUpdateUser(env, id, body) {
+  const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), {
+    method: 'PUT', headers: vpaHeaders(env), body: JSON.stringify(body) });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data && (data.msg || data.message || data.error_description || data.error)) || ('auth user update failed (' + res.status + ')'));
+  }
+  return await res.json().catch(() => ({}));
+}
+async function vpaProspectUpdate(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const NONE = ' Nothing was changed.';
+  const id = String(b.venue_id || '');
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) return json({ error: 'Which prospect?' }, 400);
+  const has = (k) => Object.prototype.hasOwnProperty.call(b, k) && b[k] !== undefined && b[k] !== null;
+
+  // Every value is checked before anything is written.
+  const want = {};
+  if (has('contact_name')) want.contact_name = String(b.contact_name).replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPA_PROSPECT_NAME_MAX);
+  if (has('phone')) {
+    const raw = String(b.phone).trim();
+    want.phone = raw ? vpaProspectPhone(raw) : '';
+    if (raw && !want.phone) return json({ error: 'That phone does not look like an Australian number (a mobile 04..., or a landline with its area code, 02 / 03 / 07 / 08).' + NONE }, 400);
+  }
+  if (has('mobile')) {
+    const raw = String(b.mobile).trim();
+    const sp = raw ? vpaProspectPhone(raw) : '';
+    if (raw && !(sp && sp.indexOf('04') === 0 && vpaIsAuMobileE164(vpaNormaliseMobileAU(raw)))) {
+      return json({ error: 'That mobile is not an Australian mobile (04...). A landline goes in Phone: it can never receive a text.' + NONE }, 400);
+    }
+    want.mobile = sp;
+  }
+  if (has('email')) {
+    const em = String(b.email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) || em.length > 200) return json({ error: 'Enter their email. It is their login and where their sign-in link goes.' + NONE }, 400);
+    want.email = em;
+  }
+  if (!Object.keys(want).length) return json({ error: 'Nothing to change.' }, 400);
+
+  const pr = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(id) + '&select=*&limit=1', { headers: vpaHeaders(env) });
+  if (!pr.ok) return json({ error: 'Run migration 125 first (vp_prospects).', need_migration: 125 }, 503);
+  const prow = ((await pr.json().catch(() => [])) || [])[0];
+  if (!prow) return json({ error: 'That venue is not on the prospects list.' }, 404);
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(id) + '&select=id,name,founding_id&limit=1');
+  const venue = vs && vs[0];
+  if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  const fid = venue.founding_id || prow.founding_id || null;
+  const fs = fid ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,contact_email,mobile&limit=1') : [];
+  const f = (fs && fs[0]) || null;
+
+  const was = { contact_name: prow.contact_name || '', phone: prow.phone || '', mobile: vpaProspectPhone(f && f.mobile) || (f && f.mobile) || '', email: String(prow.email || (f && f.contact_email) || '').toLowerCase() };
+  // A mobile with no number to ring becomes the number to ring, as at setup.
+  if (want.mobile && !has('phone') && !was.phone) want.phone = want.mobile;
+  const changes = {};
+  Object.keys(want).forEach((k) => { if (String(want[k] || '') !== String(was[k] || '')) changes[k] = { from: was[k] || null, to: want[k] || null }; });
+  if (!Object.keys(changes).length) return json({ ok: true, changed: [], note: 'Nothing was different, so nothing changed.' });
+
+  const warnings = [];
+  const login = prow.auth_user_id ? await vpaAuthGetUser(env, prow.auth_user_id) : null;
+  let soleVenue = false;
+  if (login) {
+    const st = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(login.id) + '&select=venue_id&limit=50');
+    soleVenue = (st || []).every((s) => s.venue_id === id);
+  }
+  let loginEmail = false, loginMobile = false, retired = 0;
+
+  // 1. THE EMAIL, on the login first: a refusal here leaves every record as it was.
+  if (changes.email) {
+    const other = await vpaFindAuthUser(env, { email: want.email });
+    if (other && (!login || other.id !== login.id)) {
+      return json({ error: want.email + ' already has a venueplay login, so it cannot be put on ' + (venue.name || 'this prospect') + '. Check it is theirs, then add this venue from their own account.' + NONE }, 409);
+    }
+    if (prow.auth_user_id && !login) return json({ error: 'Their login could not be read just now, so the email was not changed (it must change on the login too, or their sign-in link would go to the old address). Try again in a minute.' + NONE }, 503);
+    if (login && !soleVenue) {
+      return json({ error: 'Their login also runs another venueplay venue, so its email is changed from their own account, not here.' + NONE }, 409);
+    }
+    if (login && String(login.email || '').toLowerCase() !== want.email) {
+      try { await vpaAuthUpdateUser(env, login.id, { email: want.email, email_confirm: true }); loginEmail = true; }
+      catch (e) { return json({ error: 'Their login would not take the new email (' + String((e && e.message) || e).slice(0, 120) + ').' + NONE }, 502); }
+      // A link that went to the old address stops working: only the new address can sign them in now.
+      try {
+        const rr = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(login.id) + '&used_at=is.null', {
+          method: 'PATCH', headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'return=representation' }), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+        const gone = rr.ok ? await rr.json().catch(() => []) : [];
+        retired = Array.isArray(gone) ? gone.length : 0;
+      } catch (_) {}
+    }
+    if (!login) warnings.push('They have no login yet, so only the records changed. Add them under the venue\'s Hosts.');
+    try {
+      const wl = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(id) + '&status=eq.scheduled&send_at=gt.' + encodeURIComponent(new Date().toISOString()) + '&select=id&limit=1');
+      if (wl && wl.length) warnings.push('Their welcome email is still booked to the old address, and its sign-in button no longer works. Cancel it under Set up a prospect, then Send them a new sign-in link.');
+    } catch (_) {}
+  }
+
+  // 2. The records.
+  const ppatch = {};
+  if (changes.contact_name) ppatch.contact_name = want.contact_name || null;
+  if (changes.phone) ppatch.phone = want.phone || null;
+  if (changes.email) ppatch.email = want.email;
+  if (Object.keys(ppatch).length && !(await vpaProspectPatch(env, id, ppatch))) {
+    return json({ error: 'That did not save. Try again.' + (loginEmail ? ' (Their login already has the new email.)' : '') }, 502);
+  }
+  const fpatch = {};
+  if (changes.email) fpatch.contact_email = want.email;
+  if (changes.mobile) fpatch.mobile = want.mobile || null;
+  if (Object.keys(fpatch).length) {
+    if (!f) warnings.push('There is no account record behind this venue, so ' + (changes.mobile ? 'the mobile' : 'the account email') + ' could not be kept on it.');
+    else {
+      try { await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(f.id), fpatch); }
+      catch (e) { warnings.push('The account record did not take the ' + (changes.mobile ? 'mobile' : 'email') + '. Save it again.'); }
+    }
+  }
+
+  // 3. A new mobile on their login, for the text-code sign-in, only where the setup would have put it.
+  if (changes.mobile && want.mobile && login) {
+    const e164 = vpaNormaliseMobileAU(want.mobile);
+    if (!soleVenue) warnings.push('Their login also runs another venue, so the mobile is kept for calls and texts and not put on the login.');
+    else if (login.phone) {
+      if (String(login.phone).replace(/[^\d]/g, '') !== e164.replace(/[^\d]/g, '')) warnings.push('Their login already signs in with the mobile ending ' + vpaMaskMobile(login.phone) + ', and that stays. The new number is kept for calls and texts.');
+    } else {
+      const taken = await vpaFindAuthUser(env, { phone: e164 });
+      if (taken && taken.id !== login.id) warnings.push('That mobile already has a venueplay login, so it is kept for calls and texts and not put on their login.');
+      else {
+        try { await vpaAuthUpdateUser(env, login.id, { phone: e164, phone_confirm: true }); loginMobile = true; }
+        catch (e) { warnings.push('Their login would not take the mobile, so they sign in with the email link for now. It is kept for calls and texts.'); }
+      }
+    }
+  }
+
+  await vpaAudit(env, actor, 'prospect_details_changed', 'venue:' + id, {
+    name: venue.name, changes: changes, login_email_changed: loginEmail || undefined, login_mobile_added: loginMobile || undefined,
+    links_retired: retired || undefined });
+  const out = { ok: true, changed: Object.keys(changes), login_email_changed: loginEmail, login_mobile_added: loginMobile, links_retired: retired };
+  if (warnings.length) out.warnings = warnings;
+  return json(out);
 }
 
 /* ===========================================================================
@@ -4439,7 +4629,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
   const BUTTON = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>';
-  const done = { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
+  const done = { ok: true, to: email, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
   /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
@@ -4520,6 +4710,138 @@ async function vpaProspectLinkEndedTicket(env, r) {
   if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, name, null).catch(() => null); }
   return t;
 }
+/* ===========================================================================
+ * THE SAME SIGN-IN LINK BY TEXT, FROM HQ (Dean, 4 Nov 2026): "the SIGN-IN LINK is what they need, because they
+ * can't get into their account without it." HQ's one button, "Send them a new sign-in link", sends it by EMAIL
+ * (vpaSendSigninLink, a fresh 30 days) and, when we have their mobile, by TEXT at the same time, on its own
+ * one-use link that ends at the same moment as the email's (made after the email's, so neither retires the
+ * other). The text keeps the follow-up text's rules (vpaAutopilotProspectNudgeSms):
+ *   - texts are OFF until the SMS provider exists (vpaSmsOn: PROSPECT_SMS_ON plus the ClickSend login); then
+ *     the email still goes and HQ is told no text went
+ *   - from venueplay, says who it is from and "Reply STOP to opt out", no long dash
+ *   - 9am to 8pm Brisbane, never a Sunday (vpaSmsAllowedAt). Outside those hours it is QUEUED for the next
+ *     allowed time (vp_signin_texts, migration 152) and HQ is shown when; the hourly trigger sends it
+ *     (vpaSigninTextSweep), making its link at that moment, still ending with the email's. Before migration
+ *     152 there is no queue: nothing is queued, the email has gone, and HQ is told to press again after 9am.
+ * Recorded in vp_admin_audit: signin_text_sent / signin_text_queued / signin_text_failed.
+ * ======================================================================== */
+const VPA_SMS_FIRST_HOUR = 9, VPA_SMS_LAST_HOUR = 20;   // 9am to 8pm Brisbane, the follow-up text's hours
+/* The first moment at or after ms a text may go: 9am to 8pm Brisbane, never a Sunday. */
+function vpaSmsAllowedAt(ms) {
+  let t = Number(ms);
+  for (let i = 0; i < 9; i++) {
+    const d = new Date(t + VPA_BNE_MS), h = d.getUTCHours(), dow = d.getUTCDay();
+    if (dow !== 0 && h >= VPA_SMS_FIRST_HOUR && h < VPA_SMS_LAST_HOUR) return t;
+    const day = d.toISOString().slice(0, 10);
+    const nine = vpaBneDayStartMs(day) + VPA_SMS_FIRST_HOUR * 3600000;
+    t = (dow !== 0 && h < VPA_SMS_FIRST_HOUR) ? nine : nine + 86400000;
+  }
+  return t;
+}
+function vpaSigninTextBody(first, venueName, url, expiresMs) {
+  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 30);
+  const v = String(venueName || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return 'venueplay: Hi ' + (f || 'there') + ', here is your new sign-in link' + (v ? ' for ' + v : '') + '. Tap to sign in, no password needed: '
+    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';
+}
+/* Who to text for this venue's login: the prospect's mobile (Edit details or setup), else the login's own. */
+async function vpaSigninTextTarget(env, venueId, user) {
+  let mobile = null, first = '';
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=phone,contact_name,founding_id&limit=1');
+    const prow = pr && pr[0];
+    if (prow) {
+      first = prow.contact_name || '';
+      const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id&limit=1');
+      const fid = (vs && vs[0] && vs[0].founding_id) || prow.founding_id;
+      const fs = fid ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=mobile&limit=1') : [];
+      mobile = vpaProspectMobile(fs && fs[0] && fs[0].mobile, prow.phone);
+    }
+  } catch (_) {}
+  if (!mobile && user && user.phone) mobile = vpaProspectMobile(user.phone, null);
+  if (!first && user) first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '');
+  const e164 = mobile ? vpaNormaliseMobileAU(mobile) : null;
+  return vpaIsAuMobileE164(e164) ? { mobile: mobile, e164: e164, first: first } : null;
+}
+/* Make the text's own link and send it now. { ok } or { ok:false, status }. */
+async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, expiresMs) {
+  let minted;
+  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs); }
+  catch (e) { return { ok: false, status: 'no_table' }; }
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const user = await vpaAuthGetUser(env, authUserId);
+  const body = vpaSigninTextBody(target.first, venueName, vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);
+  let r;
+  try { r = await vpaSendSms(env, target.e164, body); } catch (_) { r = { ok: false }; }
+  if (!r.ok) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token)); return { ok: false, status: r.status || 'unreachable' }; }
+  return { ok: true, id: r.id, expires_at: new Date(minted.expiresAt).toISOString() };
+}
+/* After HQ's email went (r, vpaSendSigninLink's answer): the text, now, queued, or why not. */
+async function vpaHqSigninText(env, actor, venueId, venueName, r) {
+  const user = await vpaAuthGetUser(env, r.auth_user_id);
+  const target = await vpaSigninTextTarget(env, venueId, user);
+  if (!target) return { status: 'no_mobile' };
+  const last3 = target.e164.slice(-3);
+  if (!vpaSmsOn(env)) return { status: 'sms_off', mobile: target.mobile };
+  const expiresMs = Date.parse(r.expires_at);
+  const now = Date.now(), at = vpaSmsAllowedAt(now);
+  if (at <= now) {
+    const s = await vpaSigninTextSend(env, r.auth_user_id, venueId, venueName, target, expiresMs);
+    await vpaAudit(env, actor, s.ok ? 'signin_text_sent' : 'signin_text_failed', 'venue:' + venueId, { name: venueName, to_last3: last3, id: s.id || undefined, reason: s.ok ? undefined : String(s.status) });
+    return s.ok ? { status: 'sent', mobile: target.mobile } : { status: 'failed', mobile: target.mobile };
+  }
+  try {
+    await vpaInsert(env, 'vp_signin_texts', { venue_id: venueId, auth_user_id: r.auth_user_id, to_e164: target.e164,
+      send_at: new Date(at).toISOString(), expires_at: new Date(expiresMs).toISOString(), status: 'queued',
+      detail: { first: String(target.first || '').slice(0, 60), venue_name: String(venueName || '').slice(0, 120) },
+      created_by: actor.actorId || null, created_label: actor.label || null }, false);
+  } catch (e) {
+    return { status: 'not_queued', mobile: target.mobile, at: new Date(at).toISOString(), when: vpaBrisbaneTime(at) };
+  }
+  await vpaAudit(env, actor, 'signin_text_queued', 'venue:' + venueId, { name: venueName, to_last3: last3, send_at: new Date(at).toISOString() });
+  return { status: 'queued', mobile: target.mobile, at: new Date(at).toISOString(), when: vpaBrisbaneTime(at) };
+}
+/* The hourly trigger: every queued text whose time has come, inside the hours. Each row is claimed (queued to
+   sending) before it is sent, so two ticks never send one twice. Its link ends with the email's (expires_at);
+   once that has passed, or they are no longer on the venue's staff, it is dropped, never sent. */
+async function vpaSigninTextSweep(env, nowMs) {
+  if (!vpaSmsOn(env)) return { sent: 0, off: true };
+  if (vpaSmsAllowedAt(nowMs) > nowMs) return { sent: 0, hours: false };
+  let rows;
+  try { rows = await vpaSelect(env, 'vp_signin_texts', 'status=eq.queued&send_at=lte.' + encodeURIComponent(new Date(nowMs).toISOString()) + '&select=*&order=send_at.asc&limit=25'); }
+  catch (_) { return { sent: 0 }; }
+  let sent = 0;
+  const AUTO = { actorId: null, label: 'automatic (queued sign-in text)' };
+  for (const q of rows || []) {
+    const claim = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_texts?id=eq.' + encodeURIComponent(q.id) + '&status=eq.queued', {
+      method: 'PATCH', headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'return=representation' }), body: JSON.stringify({ status: 'sending' }) });
+    const got = claim.ok ? await claim.json().catch(() => []) : [];
+    if (!Array.isArray(got) || got.length !== 1) continue;
+    const mark = (st, extra) => vpaPatch(env, 'vp_signin_texts', 'id=eq.' + encodeURIComponent(q.id), Object.assign({ status: st, sent_at: new Date().toISOString() }, extra || {})).catch(() => null);
+    const exp = Date.parse(q.expires_at);
+    const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(q.auth_user_id) + '&venue_id=eq.' + encodeURIComponent(q.venue_id) + '&select=role&limit=1');
+    if (!isFinite(exp) || exp <= nowMs + 3600000 || !staff || !staff.length) { await mark('dropped'); continue; }
+    const d = q.detail || {};
+    const s = await vpaSigninTextSend(env, q.auth_user_id, q.venue_id, d.venue_name, { e164: q.to_e164, first: d.first }, exp);
+    await mark(s.ok ? 'sent' : 'failed');
+    await vpaAudit(env, AUTO, s.ok ? 'signin_text_sent' : 'signin_text_failed', 'venue:' + q.venue_id, { name: d.venue_name, to_last3: String(q.to_e164).slice(-3), queued: true, reason: s.ok ? undefined : String(s.status) });
+    if (s.ok) sent++;
+  }
+  return { sent: sent };
+}
+/* The confirmation line HQ shows: "Sent by email and text, link works until Fri 4 Dec." */
+function vpaSigninSentLine(r, text) {
+  const until = r.expires_words ? ', link works until ' + r.expires_words : '';
+  const st = text && text.status;
+  if (st === 'sent') return 'Sent by email and text' + until + '.';
+  if (st === 'queued') return 'Sent by email' + until + '. The text is queued for ' + text.when + ' (texts go 9am to 8pm, not Sundays).';
+  if (st === 'not_queued') return 'Sent by email' + until + '. No text: it is outside texting hours and texts cannot be queued until migration 152 is run. Press again after ' + text.when + ' to text it.';
+  if (st === 'sms_off') return 'Sent by email' + until + '. No text went: texts are switched off until the SMS provider is set up.';
+  if (st === 'failed') return 'Sent by email' + until + '. The text did not send (the SMS provider said no).';
+  if (st === 'no_mobile') return 'Sent by email only' + until + '. Add a mobile in Edit details to text it too.';
+  return 'Sent by email' + until + '.';
+}
+
 async function vpaAdminSigninLink(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
@@ -4544,8 +4866,14 @@ async function vpaAdminSigninLink(request, env, json) {
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
   await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
+  let text = null;
+  if (r.ok && _b.body && _b.body.text === true) {
+    try { text = await vpaHqSigninText(env, actor, venueId, venue.name, r); } catch (e) { text = { status: 'failed' }; }
+  }
   if (r.ok) return json({ ok: true, to: r.to, has_mobile: r.has_mobile, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left,
                           prospect: !!r.prospect, restarted: !!r.restarted, redated: !!r.redated,
+                          text: text || undefined, line: text ? vpaSigninSentLine(r, text) : undefined,
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
@@ -4815,7 +5143,7 @@ async function vpaProspectWelcomeNow(request, env, json) {
   const at = new Date().toISOString();
   if (!r.ok) {
     await vpaProspectWelcomeMark(env, g.row, { status: 'failed', changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });
-    return json({ error: 'The booked email was cancelled but the new one did not send. Use Resend their account email on their card in HQ > Prospects.' }, 502);
+    return json({ error: 'The booked email was cancelled but the new one did not send. Use Send them a new sign-in link on their row in HQ > Prospects.' }, 502);
   }
   await vpaProspectWelcomeMark(env, g.row, { status: 'sent_now', send_at: at, resend_id: r.id || null,
     signin_token_hash: token ? await vpaSigninTokenHash(token) : null, changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });

@@ -648,7 +648,10 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   (new Function('window', PANE2))(PW);
   var prow0 = { venue_id: U(301), name: 'Lunatic Hotel & Motel', email: 'x@lunatic.example', source: 'autopilot', created_at: '2026-10-31T00:00:00Z', days_since_setup: 0, welcome: { status: 'cancelled', send_at: '2026-10-31T01:00:00Z' }, last_sign_in_at: null, sign_in_known: true, flag: null, called: null };
   var hNot = PW.VPProspects._t.cardHtml(prow0), hCx = PW.VPProspects._t.cardHtml(Object.assign({}, prow0, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' }));
-  check('HQ > Prospects: each prospect card has "Resend their account email"; one who cancelled does not', /data-pr-welcome="[^"]+">Resend their account email<\/button>/.test(hNot) && !/data-pr-welcome/.test(hCx), hNot);
+  /* ONE BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same, so a prospect
+     row has only "Send them a new sign-in link" now; one who cancelled has neither. */
+  check('HQ > Prospects: each prospect row has ONE send button, "Send them a new sign-in link", and no "Resend their account email"; one who cancelled has none',
+    /data-pr-signin="[^"]+">Send them a new sign-in link<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
 
   section('3. "Please call me": the exact request the first run sends, through the real /help/venue/ticket');
   world();

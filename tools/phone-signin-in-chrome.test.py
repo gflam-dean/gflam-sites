@@ -284,26 +284,26 @@ try:
     S.close_tab(tid)
 
     # ------------------------------------------------------------------ 4. HQ
-    print('\n4. HQ: Resend sign-in link on the venue')
+    print('\n4. HQ: Send them a new sign-in link on the venue')
     tid, sid = tab('/app/hq.html?as=admin', {}, width=1280, height=900)
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     js(sid, '(function(){var b=document.querySelector("#venueRows button[data-details]"); if(b) b.click();})()')
     S.until(sid, '!!document.querySelector("#venueRows button[data-signinlink]")', 10)
-    ok('the venue\'s Details has "Resend sign-in link" beside Resend welcome', js(sid, '(function(){var b=document.querySelector("#venueRows button[data-signinlink]");return !!b && b.textContent==="Resend sign-in link" && b.getBoundingClientRect().width>0;})()'))
+    ok('the venue\'s Details has "Send them a new sign-in link" beside Resend welcome', js(sid, '(function(){var b=document.querySelector("#venueRows button[data-signinlink]");return !!b && b.textContent==="Send them a new sign-in link" && b.getBoundingClientRect().width>0;})()'))
     n_before = len(S.W.sent())
     js(sid, 'document.querySelector("#venueRows button[data-signinlink]").click()')
     S.until(sid, '!!document.getElementById("vpAskGo")', 5)
     # Since the console-hq journeys merge (4 Nov 2026) a prospect's link lasts 30 days from setup and HQ shows the
-    # real expiry, so the ask no longer pins "14 days": it must still say one tap, works once, and when it ends
-    # ("until it expires"), and must not promise a fixed day count the Worker may not give.
+    # real expiry, so the ask no longer pins "14 days". Since the one send button (4 Nov 2026) it asks "Send ... a new
+    # sign-in link?", says one tap opens their account and any older link stops working, and promises no day count.
     ask = js(sid, 'document.body.innerText') or ''
     ok('it asks first, saying what the link does (on a test venue: no real venue name in any fixture)',
-       'One tap opens their account' in ask and 'It works once, until it expires' in ask and 'any older link stops working' in ask and
-       '14 days' not in ask and 'Email Test Alpha a new sign-in link' in ask and 'Deepwater' not in ask, ask[-400:])
+       'One tap opens their account' in ask and 'Any older link stops working' in ask and
+       '14 days' not in ask and 'Send Test Alpha a new sign-in link' in ask and 'Deepwater' not in ask, ask[-400:])
     shot(sid, '9-hq-resend-ask')
     click(sid, 'vpAskGo')
-    S.until(sid, '/Sent to owner@test\\.local/.test(document.body.innerText)', 10)
-    ok('then it sends through the real Worker and says where it went', 'Sent to owner@test.local' in (js(sid, 'document.body.innerText') or '') and len(S.W.sent()) == n_before + 1)
+    S.until(sid, '/The email went to owner@test\\.local/.test(document.body.innerText)', 10)
+    ok('then it sends through the real Worker and says how and where it went', 'The email went to owner@test.local' in (js(sid, 'document.body.innerText') or '') and len(S.W.sent()) == n_before + 1)
     shot(sid, '10-hq-resend-sent')
     ok('no script errors in HQ', not errs(sid), errs(sid))
     S.close_tab(tid)
