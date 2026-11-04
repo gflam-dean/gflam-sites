@@ -95,11 +95,11 @@ if (fnRankText && fnOrdinal){
   var P = { rank:0, playersCount:0 };
   pass("no rank yet prints nothing at all", rankText() === "", "got '" + rankText() + "'");
   P.rank = 3; P.playersCount = 11;
-  pass("third of eleven reads '3rd of 11'", rankText() === "3rd of 11", rankText());
+  pass("third of eleven reads '3rd', never '3rd of 11' (no player counts anywhere, Dean 4 Nov 2026)", rankText() === "3rd", rankText());
   P.playersCount = 0;
   pass("an unknown field size still names the place", rankText() === "3rd", rankText());
   P.rank = 1; P.playersCount = 2;
-  pass("first reads '1st of 2'", rankText() === "1st of 2", rankText());
+  pass("first reads '1st', never '1st of 2'", rankText() === "1st" && rankText().indexOf(" of ") < 0, rankText());
 }
 
 print("");

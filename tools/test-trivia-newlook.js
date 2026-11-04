@@ -320,6 +320,19 @@ print('\n== 6. the phone: the result cards and the header ==');
   var n = phone(null), nc = n.$('pResAnswers').children;
   show('no answer: the right one green, nothing tagged YOURS', nc[0].classList.contains('right') && !nc.some(function (c) { return c.classList.contains('mine'); }));
 
+  /* NO PLAYER COUNTS ANYWHERE (Dean, 4 Nov 2026): the place is "3rd" or "You finished 7th", never "of 16", though
+     the score reply carries players_count and the phone keeps it. The result card, the wait screen and the final. */
+  function placeOn(rank) {
+    var fd = makeDom(), P = { rank: rank, total: 300, playersCount: 16 };
+    var fns = new Function('P', '$', 'celebrate', 'confettiBurst', 'askHowItWent', liftAll(PLAY, ['ordinal', 'rankText', 'decorateFinal'], 'trivia/play.html') + '; return { rt: rankText, fin: decorateFinal };')(
+      P, fd.$, function () {}, function () {}, function () {});
+    var rt = fns.rt(); fns.fin();
+    return { rt: rt, fin: fd.$('finalRank').textContent };
+  }
+  var p3 = placeOn(3), p7 = placeOn(7);
+  show('the place on the phone is "3rd" and "7th", never "of 16" (the room size)', p3.rt === '3rd' && p7.rt === '7th', JSON.stringify([p3.rt, p7.rt]));
+  show('the final says "You finished 7th" (and "You finished 3rd"), never "of 16"', p7.fin === 'You finished 7th' && p3.fin === 'You finished 3rd' && !/\bof\b|16/.test(p7.fin + p3.fin), JSON.stringify([p3.fin, p7.fin]));
+
   var dom = makeDom();
   var hv = new Function('$', lift(PLAY, 'headerVenue', 'trivia/play.html') + '; return headerVenue;')(dom.$);
   hv('', 'The Pause Bar');

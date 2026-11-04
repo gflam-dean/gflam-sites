@@ -904,7 +904,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
-  "checks": 57,
+  "checks": 59,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {

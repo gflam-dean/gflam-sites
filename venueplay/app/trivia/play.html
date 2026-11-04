@@ -537,7 +537,9 @@
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
-  function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank)+(P.playersCount>0?(" of "+P.playersCount):""); }
+  /* "3rd", never "3rd of 16" (Dean, 4 Nov 2026: "no player counts anywhere"). P.playersCount is still read from the
+     score reply for anything that needs it; it is never written on the phone. */
+  function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank); }
   /* head: a heading for the moment instead of "You're in". Dean, 25 Sep 2026, on a paper round:
      take out the "You're in" above "Answer locked in"; mid-game it reads like a join screen. */
   function showWait(msg, head){
@@ -880,7 +882,7 @@
     } else {
       $("finalEmoji").innerHTML="&#127881;";
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
-      $("finalRank").textContent = r ? ("You finished "+ordinal(r)+(P.playersCount>0?(" of "+P.playersCount):"")) : ""; if(wrap) wrap.classList.remove("winner");
+      $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
     askHowItWent();
   }
