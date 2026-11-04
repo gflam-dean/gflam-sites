@@ -15129,7 +15129,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
           messages: [{
             to: mobile,
             message: message,
-            sender: env.SMS_SENDER || 'VenuePlay',
+            sender: env.SMS_SENDER || 'venueplay',
             custom_ref: 'staff-welcome',
           }],
         }),

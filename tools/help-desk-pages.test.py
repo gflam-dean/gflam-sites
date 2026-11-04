@@ -382,7 +382,7 @@ def help_page_checks(b, VP):
         c = page_call(t)
         check(tag + ' venue: "Call us on 07 5228 3667", a tel:+61752283667 link, above the issues, inside the card, no sideways scroll', call_ok(c), c)
         check(tag + ' venue: the call line is the first thing in the venue help, and there is one of it',
-              t.js('(function(){var f=document.getElementById("vphFlow-venue");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall-venue"&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
+              t.js('(function(){var f=document.getElementById("vphFlow-venue"),c=document.getElementById("vphCall-venue");if(!f||!c)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return first===c&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
         t.shot('21-help-%s-venue' % tag)
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("#vphFlow-venue [data-issue=\'%s\']").click()' % I3['id'])
@@ -529,7 +529,7 @@ def main():
         t.js('document.getElementById("vphLink").scrollIntoView({block:"end"})')
         t.shot('02-bingo-phone-help-link')
         check('bingo phone: Help is also in the phone menu, above Leave game',
-              t.js('(function(){var m=document.getElementById("vphMenu"),l=document.getElementById("leaveBtn");return !!(m&&l&&m.parentNode===l.parentNode&&m.nextElementSibling===l);})()') is True)
+              t.js('(function(){var m=document.getElementById("vphMenu"),l=document.getElementById("leaveBtn");return !!(m&&l&&m.parentNode===l.parentNode&&(m.compareDocumentPosition(l)&Node.DOCUMENT_POSITION_FOLLOWING));})()') is True)
         panel_checks(t, 'bingo phone', len(vp_faq['patron']['items']), 'Help')
         t.shot('03-bingo-phone-help-panel')
         I1 = ISSUES['venueplay:patron'][0]
@@ -641,12 +641,16 @@ def main():
         t.go(VP + '/__fixture/venue.html')
         # Since 3 Nov 2026 Help goes just before Sign out (the last button), so a Back link that sits first stays
         # first: Back, Help, Sign out on one line (Dean, round 2 B). On the console that is Account, Help, Sign out.
-        check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&!!x.previousElementSibling&&x.previousElementSibling.textContent==="Account"&&!!x.nextElementSibling&&x.nextElementSibling.textContent==="Sign out"&&!x.nextElementSibling.nextElementSibling;})()', 8) is True)
+        # By meaning, not by neighbour (NOTES-help-desk-pages.md, 4 Nov 2026): Help is a visible control in the
+        # header actions, on the same row as Account. The header order is Dean's to change.
+        check('venue: a Help control is in the header actions, on the same row as Account', t.until('(function(){var x=document.getElementById("vphLink");if(!x)return false;var a=x.closest(".hactions");'
+              'if(!a)return false;var r=x.getBoundingClientRect();var acct=[].filter.call(a.querySelectorAll("a,button"),function(b){return /^Account$/.test(b.textContent.trim())})[0];'
+              'return r.width>0&&r.height>0&&!!acct&&Math.abs(acct.getBoundingClientRect().top-r.top)<=6;})()', 8) is True)
         panel_checks(t, 'venue', len(vp_faq['venue']['items']), 'venues')
         t.shot('07-venue-help-panel')
         c = t.js(CALL_LINE)
         check('venue: Help opens with "Call us on 07 5228 3667", a tel:+61752283667 link, inside the panel, no sideways scroll', call_ok(c), c)
-        check('venue: the call line is first, above the issues', t.js('(function(){var f=document.getElementById("vphFlow");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall";})()') is True)
+        check('venue: the call line is first, above the issues', t.js('(function(){var f=document.getElementById("vphFlow"),c=document.getElementById("vphCall");if(!f||!c)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return first===c;})()') is True)
         t.js('document.getElementById("vphFaq").open=true;Array.prototype.forEach.call(document.querySelectorAll("#vphFaq details"),function(d){d.open=true;})')
         check('venue: the FAQ says to call 07 5228 3667 and press 2 if a game is on right now',
               'call 07 5228 3667 and press 2' in (t.js('document.getElementById("vphFaq").textContent') or ''))
@@ -727,7 +731,7 @@ def main():
         print('PARTYPLAY HOST CONSOLE')
         t = Tab(b, 390, 800)
         t.go(PP + '/host?code=KFP7QX&key=abc')
-        check('partyplay host: Help sits in the top bar', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="top";})()', 10) is True)
+        check('partyplay host: Help sits in the top bar', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&!!x.closest(".top")&&x.getBoundingClientRect().height>0;})()', 10) is True)
         panel_checks(t, 'partyplay host', len(pp_faq['host']['items']), 'hosts')
         t.shot('09-partyplay-host-panel')
         check('partyplay host: its own issues ("The party screen is blank")', 'The party screen is blank' in (t.js('document.getElementById("vphFlow").textContent') or ''))
