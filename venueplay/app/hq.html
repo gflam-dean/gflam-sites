@@ -2604,7 +2604,8 @@
     p = p || (window.VPProspects && VPProspects.get ? VPProspects.get(id) : null) || null;
     var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||(p&&p.name)||"this venue";
     var was=btn.textContent;
-    var busy=function(t){ btn.disabled=true; btn.textContent=t; }, done=function(){ btn.disabled=false; btn.textContent=was; };
+    var busy=function(t){ btn.disabled=true; btn.textContent=t; };
+    var done=function(){ btn.disabled=false; btn.textContent=was; };
     var w=p&&p.welcome;
     if(w && w.status==="scheduled" && w.id && Date.parse(w.send_at)>Date.now()){
       return vpAsk("Their welcome email to "+name+" is booked"+(w.when?" for "+w.when:"")+", and it already carries their sign-in link.\n\nSend it now instead? (A second link now would stop the booked email's button working.)").then(function(ok){ if(!ok) return null;
