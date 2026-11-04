@@ -137,6 +137,7 @@
   "every script in 142 file(s) parses",
   "every shared script loads before it is used",
   "every song has audio",
+  "every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour",
   "every suite still runs at least the checks the ledger recorded",
   "every test reads the code this repo ships",
   "every venueplay page links the same tab icon set as index.html",

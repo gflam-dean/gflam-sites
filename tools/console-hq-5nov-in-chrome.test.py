@@ -111,7 +111,7 @@ try:
         print('\nYour account, %s' % where)
         tid, sid, up = account(w, h, mob)
         ok('%s: CONTROL: the Billing tab is up, from the real Worker' % where, up is True, S.js(sid, 'document.getElementById("loading").textContent'))
-        rows = json.loads(S.js(sid, ROWS) or '[]')
+        rows = S.json(sid, ROWS, [])
         by = dict((r['k'], r) for r in rows if r['shown'])
         ok('%s: 4. "This month" then "Next month" then "Next payment", in that order' % where,
            [r['k'] for r in rows if r['shown']][:4] == ['Your plan', 'This month', 'Next month', 'Next payment'], rows)
@@ -133,14 +133,14 @@ try:
         shot(sid, 'account-billing-%d' % w)
 
         # B. Back, Help, Sign out on one line, in that order
-        hdr = json.loads(S.js(sid, '(function(){var a=document.querySelector("header .hactions");if(!a)return "{}";var b=[].map.call(a.children,function(e){return {id:e.id,t:e.textContent.trim(),top:Math.round(e.getBoundingClientRect().top),h:Math.round(e.getBoundingClientRect().height)}});'
-                                   'return JSON.stringify({ids:b.map(function(x){return x.id}),tops:b.map(function(x){return x.top}),hs:b.map(function(x){return x.h}),inActs:!!a.querySelector("#backLink")});})()') or '{}')
+        hdr = S.json(sid, '(function(){var a=document.querySelector("header .hactions");if(!a)return "{}";var b=[].map.call(a.children,function(e){return {id:e.id,t:e.textContent.trim(),top:Math.round(e.getBoundingClientRect().top),h:Math.round(e.getBoundingClientRect().height)}});'
+                                   'return JSON.stringify({ids:b.map(function(x){return x.id}),tops:b.map(function(x){return x.top}),hs:b.map(function(x){return x.h}),inActs:!!a.querySelector("#backLink")});})()', {})
         ok('%s: B. the Back link is in the header actions, before Help and Sign out' % where, hdr.get('inActs') and hdr.get('ids') == ['backLink', 'vphLink', 'signout'], hdr)
         ok('%s: B. the three sit on ONE line, the same height' % where, len(set(hdr.get('tops') or [0, 1])) == 1 and len(set(hdr.get('hs') or [0, 1])) == 1, hdr)
 
         # C, E. the venue rows line up at every width
-        rows_geo = json.loads(S.js(sid, """JSON.stringify([].map.call(document.querySelectorAll("#venues .venue"),function(r){var g=function(q){var e=r.querySelector(q);if(!e)return null;var b=e.getBoundingClientRect();return {t:Math.round(b.top),b:Math.round(b.bottom),l:Math.round(b.left),r:Math.round(b.right)}};
-            var rb=r.getBoundingClientRect();return {row:{t:Math.round(rb.top),b:Math.round(rb.bottom),r:Math.round(rb.right)},nm:g(".nm b"),step:g(".stepper"),canx:g(".canx"),pad:parseInt(getComputedStyle(r).paddingRight,10)};}))""") or '[]')
+        rows_geo = S.json(sid, """JSON.stringify([].map.call(document.querySelectorAll("#venues .venue"),function(r){var g=function(q){var e=r.querySelector(q);if(!e)return null;var b=e.getBoundingClientRect();return {t:Math.round(b.top),b:Math.round(b.bottom),l:Math.round(b.left),r:Math.round(b.right)}};
+            var rb=r.getBoundingClientRect();return {row:{t:Math.round(rb.top),b:Math.round(rb.bottom),r:Math.round(rb.right)},nm:g(".nm b"),step:g(".stepper"),canx:g(".canx"),pad:parseInt(getComputedStyle(r).paddingRight,10)};}))""", [])
         ok('%s: C/E. CONTROL: two venue rows' % where, len(rows_geo) == 2, rows_geo)
         ok('%s: C/E. the players stepper sits on the SAME line as the venue name (tops within 14px), right-aligned in the card' % where,
            all(abs(r['step']['t'] - r['nm']['t']) <= 14 and abs((r['row']['r'] - r['pad']) - r['step']['r']) <= 2 for r in rows_geo), rows_geo)
@@ -173,15 +173,15 @@ try:
 
         # 6. People
         tab(sid, 'people')
-        ppl = json.loads(S.js(sid, 'JSON.stringify({on:document.getElementById("tp-people").classList.contains("on"),hosts:!!document.querySelector("#tp-people #hosts"),'
+        ppl = S.json(sid, 'JSON.stringify({on:document.getElementById("tp-people").classList.contains("on"),hosts:!!document.querySelector("#tp-people #hosts"),'
                                     'notInBilling:!document.querySelector("#tp-billing #hosts"),at:document.getElementById("peopleAt").textContent,'
-                                    'ticked:[].map.call(document.querySelectorAll("#host-venues .host-v:checked"),function(c){return c.value})})') or '{}')
+                                    'ticked:[].map.call(document.querySelectorAll("#host-venues .host-v:checked"),function(c){return c.value})})', {})
         cur = S.js(sid, 'document.querySelector("#acctPick select").value')
         ok('%s: 6. a People tab holds the hosts list, and Billing no longer does' % where, ppl.get('on') and ppl.get('hosts') and ppl.get('notInBilling'), ppl)
         ok('%s: 6. it says whose people it is showing: the venue chosen at the top' % where, ('Showing who can sign in at ' in (ppl.get('at') or '')), ppl)
         ok('%s: G. "Change the venue at the top" is said, because there IS a drop-down at the top (two venues)' % where, 'Change the venue at the top of the page' in (ppl.get('at') or ''), ppl)
-        g = json.loads(S.js(sid, """(function(){var t=document.getElementById("tp-people").innerText;var notes=[].map.call(document.querySelectorAll("#tp-people .label:not(#peopleHead) + .note"),function(n){return {b:(n.querySelector("b")||{}).textContent||"",len:n.textContent.length}});
-            return JSON.stringify({signins:(t.match(/with a text code/g)||[]).length,theySign:/They sign in at/.test(t),notes:notes});})()""") or '{}')
+        g = S.json(sid, """(function(){var t=document.getElementById("tp-people").innerText;var notes=[].map.call(document.querySelectorAll("#tp-people .label:not(#peopleHead) + .note"),function(n){return {b:(n.querySelector("b")||{}).textContent||"",len:n.textContent.length}});
+            return JSON.stringify({signins:(t.match(/with a text code/g)||[]).length,theySign:/They sign in at/.test(t),notes:notes});})()""", {})
         ok('%s: G. ONE sign-in sentence for everyone, not one per role' % where, g.get('signins') == 1 and not g.get('theySign'), g)
         ok('%s: G. each role says what it can do in one line, the doing first in bold: Host, Manager, Marketing' % where,
            [n['b'] for n in (g.get('notes') or [])][:3] == ['Run the games on the night.', 'Run and set up the venues you give them.', 'See your numbers, the brand kit, your signs and your TV slides'] and all(n['len'] < 240 for n in (g.get('notes') or [])), g)
@@ -216,7 +216,7 @@ try:
         FOLDS = """JSON.stringify({heads:[].map.call(document.querySelectorAll("#tp-draws .acchead"),function(h){return {acc:h.getAttribute("data-acc"),open:h.classList.contains("open"),sum:(h.querySelector(".accsum")||{}).textContent||"",shown:h.offsetParent!==null}}),
             bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return {id:b.id,shown:b.offsetParent!==null}}),remembered:localStorage.getItem("vpDrawsFold"),
             h:document.getElementById("tp-draws").getBoundingClientRect().height})"""
-        f = json.loads(S.js(sid, FOLDS) or '{}')
+        f = S.json(sid, FOLDS, {})
         ok('%s: F. three folds: Raffles, Members draws, Permits' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits'] and all(x['shown'] for x in f.get('heads', [])), f)
         ok('%s: F. only Raffles is open to start; the other two bodies are folded away' % where,
            [x['open'] for x in f.get('heads', [])] == [True, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False], f)
@@ -224,7 +224,7 @@ try:
            [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', 'No draw yet'], f)
         tall = f.get('h', 0)
         S.js(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').click(); true'); time.sleep(0.4)
-        f2 = json.loads(S.js(sid, FOLDS) or '{}')
+        f2 = S.json(sid, FOLDS, {})
         ok('%s: F. opening Members draws closes Raffles: one fold open at a time' % where,
            [x['open'] for x in f2.get('heads', [])] == [False, True, False] and [b['shown'] for b in f2.get('bodies', [])] == [False, True, False], f2)
         ok('%s: F. the open fold is remembered' % where, f2.get('remembered') == 'members', f2)
@@ -236,13 +236,13 @@ try:
         S.until(sid, UP, 30); time.sleep(1.5)
         ok('%s: 10. after a reload the Draws tab is still the one open' % where,
            S.js(sid, 'document.getElementById("tp-draws").classList.contains("on") && document.querySelector(\'.tabs button[data-tab="draws"]\').classList.contains("on")') is True)
-        f3 = json.loads(S.js(sid, FOLDS) or '{}')
+        f3 = S.json(sid, FOLDS, {})
         ok('%s: F. and after the reload Members draws is still the open fold' % where, [x['open'] for x in f3.get('heads', [])] == [False, True, False], f3)
         S.js(sid, 'localStorage.removeItem("vpDrawsFold"); true')
         tab(sid, 'screen')
         S.js(sid, 'document.getElementById("addSlide").click(); document.getElementById("addSlide").click(); true'); time.sleep(0.6)
-        geo = json.loads(S.js(sid, '(function(){var r=document.querySelector("#slides .adslide"),t=r.querySelector(".adthumb").getBoundingClientRect(),f=r.querySelector(".adfields").getBoundingClientRect(),rr=r.getBoundingClientRect();'
-                                   'return JSON.stringify({ratio:t.width/t.height,tw:t.width,rw:rr.width,fieldsBelow:f.top>=t.bottom-1,label:getComputedStyle(r.querySelector(".adthumb"),"::before").content});})()') or '{}')
+        geo = S.json(sid, '(function(){var r=document.querySelector("#slides .adslide"),t=r.querySelector(".adthumb").getBoundingClientRect(),f=r.querySelector(".adfields").getBoundingClientRect(),rr=r.getBoundingClientRect();'
+                                   'return JSON.stringify({ratio:t.width/t.height,tw:t.width,rw:rr.width,fieldsBelow:f.top>=t.bottom-1,label:getComputedStyle(r.querySelector(".adthumb"),"::before").content});})()', {})
         ok('%s: 10. a slide preview is the shape of the TV (16:9) and numbered' % where, 1.7 < geo.get('ratio', 0) < 1.85 and 'Slide' in (geo.get('label') or ''), geo)
         if w <= 560:   # the phone layout (billing.html's 560px break); an iPad gets the desktop one
             ok('%s: 10. on a phone the preview is full width with the settings under it' % where, geo.get('tw', 0) > geo.get('rw', 1) * 0.85 and geo.get('fieldsBelow'), geo)
@@ -256,15 +256,15 @@ try:
         tid, sid = S.open('/app/report.html', w, h, mob)
         S.until(sid, '!document.getElementById("emptyState").classList.contains("hidden") || !document.getElementById("body").classList.contains("hidden") || document.getElementById("msg").textContent', 25)
         time.sleep(0.8)
-        rep = json.loads(S.js(sid, 'JSON.stringify({msg:document.getElementById("msg").textContent,empty:document.getElementById("emptyState").classList.contains("hidden")?"":document.getElementById("emptyState").innerText,'
-                                   'pick:document.querySelectorAll("#venueWrap select").length,title:document.getElementById("title").textContent})') or '{}')
+        rep = S.json(sid, 'JSON.stringify({msg:document.getElementById("msg").textContent,empty:document.getElementById("emptyState").classList.contains("hidden")?"":document.getElementById("emptyState").innerText,'
+                                   'pick:document.querySelectorAll("#venueWrap select").length,title:document.getElementById("title").textContent})', {})
         ok('%s: 9. no venue in the address: never "Pick one of your venues"' % where, 'Pick one' not in (rep.get('msg') or '') and not rep.get('msg'), rep)
         ok('%s: 9. no nights: a finished "No nights yet at ..." page, with what fills it in' % where,
            (rep.get('empty') or '').startswith('No nights yet at ') and 'Once you run your first game here' in (rep.get('empty') or ''), rep)
         ok('%s: 9. it follows the venue chosen elsewhere (The Royal Arms was last chosen, then Deepwater)' % where, 'Deepwater Hotel' in (rep.get('title') or ''), rep)
         ok('%s: 9. the same venue drop-down as every other screen' % where, rep.get('pick') == 1, rep)
-        kt = json.loads(S.js(sid, """(function(){var h=document.getElementById("title"),a=h.querySelector(".at");if(!a)return "{}";var r=document.createRange();r.setStart(h,0);r.setEnd(a,0);var m=r.getBoundingClientRect(),b=a.getBoundingClientRect();
-            return JSON.stringify({month:h.firstChild.textContent,at:a.textContent,below:b.top>=m.bottom-2,lines:Math.round(m.height/parseFloat(getComputedStyle(h).lineHeight))});})()""") or '{}')
+        kt = S.json(sid, """(function(){var h=document.getElementById("title"),a=h.querySelector(".at");if(!a)return "{}";var r=document.createRange();r.setStart(h,0);r.setEnd(a,0);var m=r.getBoundingClientRect(),b=a.getBoundingClientRect();
+            return JSON.stringify({month:h.firstChild.textContent,at:a.textContent,below:b.top>=m.bottom-2,lines:Math.round(m.height/parseFloat(getComputedStyle(h).lineHeight))});})()""", {})
         ok('%s: K. the title is the month on one line with "at Deepwater Hotel" under it, so the pub\'s name is never split' % where,
            kt.get('month') == 'October' and kt.get('at') == 'at Deepwater Hotel' and kt.get('below') and kt.get('lines') == 1, kt)
         shot(sid, 'report-%d' % w)
@@ -280,9 +280,9 @@ try:
               'v:document.getElementById("scopeVenue").textContent,pickShown:(function(){var p=document.getElementById("setPick");return !!(p&&!p.hidden&&p.offsetParent)})(),'
               'atTop:(function(){var c=document.getElementById("scopeCard"),p=document.getElementById("setPick"),v=document.getElementById("secVenue");return !!(c&&p&&v&&(c.compareDocumentPosition(p)&4)&&(c.compareDocumentPosition(v)&4))})(),'
               'note:document.getElementById("scopeNote").textContent})')
-        st = json.loads(S.js(sid, ST) or '{}')
+        st = S.json(sid, ST, {})
         ok('%s: 13. Game settings has the same venue drop-down, with both venues' % where, st.get('opts') == 2, st)
-        shdr = json.loads(S.js(sid, '(function(){var a=document.querySelector("header .hactions");var b=[].map.call(a.children,function(e){return {id:e.id,top:Math.round(e.getBoundingClientRect().top)}});return JSON.stringify({ids:b.map(function(x){return x.id}),tops:b.map(function(x){return x.top})});})()') or '{}')
+        shdr = S.json(sid, '(function(){var a=document.querySelector("header .hactions");var b=[].map.call(a.children,function(e){return {id:e.id,top:Math.round(e.getBoundingClientRect().top)}});return JSON.stringify({ids:b.map(function(x){return x.id}),tops:b.map(function(x){return x.top})});})()', {})
         ok('%s: B. Game settings too: Back, Help, Sign out on one line' % where, shdr.get('ids') == ['backLink', 'vphLink', 'signOut'] and len(set(shdr.get('tops') or [0, 1])) == 1, shdr)
         ok('%s: L. "Whole group (2 venues)" / "This venue" sits at the TOP of the page, above the drop-down and the venue code' % where,
            st.get('scope') and st.get('atTop') and st.get('g') == 'Whole group (2 venues)' and st.get('v') == 'This venue', st)
@@ -291,7 +291,7 @@ try:
            'save to all 2: ' in (st.get('note') or '') and 'Deepwater Hotel' in (st.get('note') or '') and 'The Royal Arms' in (st.get('note') or '') and 'bingo permit' in (st.get('note') or ''), st)
         shot(sid, 'settings-%d' % w)
         S.js(sid, 'document.getElementById("scopeVenue").click(); true'); time.sleep(0.3)
-        st2 = json.loads(S.js(sid, ST) or '{}')
+        st2 = S.json(sid, ST, {})
         ok('%s: L. This venue shows the drop-down, with both venues on it' % where, st2.get('von') and st2.get('pickShown') and st2.get('opts') == 2, st2)
         shot(sid, 'settings-thisvenue-%d' % w, False)
         S.js(sid, 'window.__saves=[];var f=VP.saveSettings;VP.saveSettings=function(id,p){window.__saves.push(id);return f.apply(this,arguments)};'

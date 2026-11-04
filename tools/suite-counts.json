@@ -168,7 +168,7 @@
   "counted_by": "lines"
  },
  "tools/gate-reliability.test.py": {
-  "checks": 60,
+  "checks": 65,
   "counted_by": "lines"
  },
  "tools/gflam-unsub.test.py": {

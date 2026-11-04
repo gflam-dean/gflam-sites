@@ -6588,8 +6588,8 @@ MUTATIONS = [
      '    var indep=active.length;',
      'the card says 13 independent when 5 of them are grouped'),
     ('hq-tabs-in-chrome.test.py', 'venueplay/app/hq.html',
-     '    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n  </div>',
-     '    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>\n  </div>',
+     '    <div class="scard" data-stat="suspended"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n  </div>',
+     '    <div class="scard" data-stat="suspended"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>\n  </div>',
      'a second "Open now / signed up" venues number is back at the top of the page'),
     ('hq-tabs-in-chrome.test.py', 'venueplay/app/hq.html',
      'co.textContent = "Cancelled" + (leftN ? " ("+leftN+")" : "");',
@@ -11896,6 +11896,21 @@ MUTATIONS = [
     ('room-dropout-in-chrome.test.py', 'venueplay/app/vp-room.js',
      '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
      'in Chrome, a phone back from a quiet drop has left the room alone and taken the whole venue off it'),
+    # SUITES READ THE PAGE ROBUSTLY (4 Nov 2026, gatelib.suite_hygiene). The shape is written into a suite that
+    # is NOT a Chrome suite (livenorm), under `if False:` so the suite itself still passes: only the gate's own
+    # hygiene line may go red. Each of the three shapes that turned the 4 Nov gate red is put back once.
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    g = json.loads(S.js(sid, CARD) or '{}')\n",
+     'a suite parses a raw rig answer with json.loads again: a thrown page expression becomes "the JSON object must be str, not dict" and the reason is lost (account-structure, 4 Nov)'),
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    up = r.until(tv, '(function(){var c=document.getElementById(\"lobbyCode\");return !!c&&c.textContent.length===6;})()', 20)\n",
+     'a suite calls the TV lobby up when six characters are painted, and the six are the ------ placeholder (reconnect-layout, 4 Nov)'),
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    ok(t.until('x.parentNode.className===\"hactions\"&&x.nextElementSibling.textContent===\"Account\"') is True)\n",
+     'a suite pins a header control to its neighbour again, and the next intended re-order of the header turns it red (help-desk-pages, 4 Nov)'),
 ]
 
 

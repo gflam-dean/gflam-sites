@@ -144,7 +144,9 @@ def spread(rs, key):
 
 
 TOOLS = ['#venueSearch', '#venueFilter', '#addVenueToggle', '#prospectToggle', '.vtools a.btn.pink']
-CARDS = ['#app > .stats .scard:nth-child(1)', '#app > .stats .scard:nth-child(2)', '#app > .stats .scard:nth-child(3)', '#app > .stats .scard:nth-child(4)']
+# The four cards BY WHAT THEY ARE (data-stat, 4 Nov 2026), not by nth-child: a card added or reordered at the top of HQ
+# (the menu restructure is queued) must not turn a layout check red or point it at the wrong card.
+CARDS = ['#app > .stats .scard[data-stat="venues"]', '#app > .stats .scard[data-stat="live"]', '#app > .stats .scard[data-stat="groups"]', '#app > .stats .scard[data-stat="suspended"]']
 
 
 try:
@@ -159,7 +161,7 @@ try:
     # 16 venues less Ended Bowls and Archived Hotel (left) and Test Alpha (flagged test): 13, of which 5 are grouped.
     ok('the venues number is painted exactly once, after the venue AND prospects lists are known: it cannot be seen to change',
        paints == '["13"]', paints)
-    card = js(sid, '(function(){var c=document.querySelector(".stats .scard"); return {k:c.querySelector(".k").textContent, v:c.querySelector(".v").textContent, d:c.querySelector(".d").textContent};})()')
+    card = js(sid, '(function(){var c=document.querySelector(".stats .scard[data-stat=\"venues\"]"); return {k:c.querySelector(".k").textContent, v:c.querySelector(".v").textContent, d:c.querySelector(".d").textContent};})()')
     ok('it is labelled: "Customer venues 13, 8 independent, 5 grouped"',
        card and card['k'] == 'Customer venues' and card['v'] == '13' and card['d'] == '8 independent, 5 grouped', card)
     ok('there is no second venues number: the "Open now / signed up" card is gone and four cards remain',
@@ -446,7 +448,7 @@ try:
        len(tr) == 5 and all(tr) and spread(tr, 'h') <= 1 and spread(tr, 't') <= 1 and tr[0]['h'] == 42, tr)
     cr = rects(sid, CARDS) or []
     ok('the four cards are one height on one line', len(cr) == 4 and all(cr) and spread(cr, 'h') <= 1 and spread(cr, 't') <= 1, cr)
-    lr = rects(sid, ['.titlerow .h2', '#app > .stats .scard:nth-child(1)', '#hqNav button[data-pane="venues"]', '#venueSearch', '#paneVenues > .panel:not(.pad)']) or []
+    lr = rects(sid, ['.titlerow .h2', CARDS[0], '#hqNav button[data-pane="venues"]', '#venueSearch', '#paneVenues > .panel:not(.pad)']) or []
     ok('the title, the first card, the first tab, the search and the list share one left edge', len(lr) == 5 and all(lr) and spread(lr, 'l') <= 1, lr)
     shot(sid, 'venues-1100', full=False)
     S.close_tab(tid)

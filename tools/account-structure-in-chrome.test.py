@@ -113,7 +113,7 @@ try:
     tid, sid = S.open('/app/settings.html?venue=' + V1, 390, 844, True)
     S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 25)
     time.sleep(1.0)
-    g = json.loads(S.js(sid, CARD) or '{}')
+    g = S.json(sid, CARD, {})
     cards = g.get('cards') or []
     ok('one permit card on Game settings, and it is the bingo one', g.get('kinds') == ['bingo'], g.get('kinds'))
     c = cards[0] if cards else {}
@@ -343,7 +343,7 @@ try:
     S.until(sid, BILLING_UP, 25)
     S.until(sid, '!!document.querySelector("#draws-pane .vpp-card, .vpp-card")', 20)
     time.sleep(0.8)
-    m = json.loads(S.js(sid, '''(function(){
+    m = S.json(sid, '''(function(){
       function box(id){var e=document.getElementById(id);if(!e)return null;var cs=getComputedStyle(e),r=e.getBoundingClientRect();
         return {bg:cs.backgroundColor,h:Math.round(r.height),rad:parseFloat(cs.borderTopLeftRadius)||0,fs:parseFloat(cs.fontSize)||0};}
       function fold(n){var h=document.querySelector('#tp-draws .acchead[data-acc="'+n+'"]');if(h&&!h.classList.contains('open'))h.click();return !!h&&h.classList.contains('open');}
@@ -354,7 +354,7 @@ try:
       out.folds.members=fold('members'); out.fix=['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box); dates();
       out.folds.permits=fold('permits'); dates();
       var h=getComputedStyle(document.querySelector('header'));out.hdr={bg:h.backgroundColor,bf:h.backdropFilter||h.webkitBackdropFilter||'none'};
-      out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''') or '{}')
+      out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''', {})
     # Since 3 Nov 2026 Draws is three folds (one open at a time, Dean round 2 F): each box is measured with ITS fold
     # open, as an owner sees it (Raffles: the Show select; Members draws: Fix a name; every fold: the date boxes).
     fx = m.get('fix') or []

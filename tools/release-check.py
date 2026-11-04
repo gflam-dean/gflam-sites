@@ -640,6 +640,18 @@ def local_checks(which):
        'every suite ran behind tools/git-shim/git with GIT_DIR scrubbed',
        why='; '.join(a[:160] for a in attempts[:3]))
 
+    """SUITES READ THE PAGE ROBUSTLY (4 Nov 2026). The 4 Nov gate went red on four Chrome suites, none for a
+    product fault: a lobby code read while the TV still painted "------", json.loads() around a rig answer
+    that was a thrown exception (so the one line saying WHY was lost), and a Help button pinned to "its next
+    sibling says Account" the day Help moved on purpose. gatelib.HYGIENE_RULES names each shape by its text;
+    tools/browser-rig/waits.py holds the robust forms (<rig>.json, until_text, settled, reveal, header_control).
+    A file another branch is editing this week may be grandfathered for ONE shape until a DATE
+    (gatelib.HYGIENE_GRANDFATHER); past the date the line is red and says which file and what to change."""
+    hyg = gatelib.suite_hygiene(os.path.join(ROOT, 'tools'))
+    ok('every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour',
+       not hyg['bad'], '%d suite files read%s' % (hyg['files'], ('; grandfathered until a date: %d line(s) in %s' % (len(hyg['grandfathered']), ', '.join(sorted(set(g.split(':')[0] for g in hyg['grandfathered']))))) if hyg['grandfathered'] else ''),
+       why='; '.join(hyg['bad'][:3]))
+
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
         if which in ('both', 'venueplay') and os.path.isfile(p):

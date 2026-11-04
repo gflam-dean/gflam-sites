@@ -97,7 +97,7 @@ SEE = r'''(function(){
   return JSON.stringify({
     all: document.body.innerText,
     ended: document.documentElement.getAttribute("data-offer"),
-    banner: document.body.firstElementChild && document.body.firstElementChild.tagName === "DIV" ? document.body.firstElementChild.innerText : "",
+    banner: (function(){ var b = document.querySelector("[data-offer-banner]"); return b ? b.innerText : ""; })(),   /* by its hook, not "the first DIV on the body" (4 Nov 2026) */
     eyebrow: vis(eb) ? eb.innerText : null,
     heroPrice: (document.querySelector("#top .h2-price") || {}).innerText || "",
     rows: rows,

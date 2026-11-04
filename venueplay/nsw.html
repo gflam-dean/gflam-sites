@@ -1940,6 +1940,7 @@
 
   function showEnded() {
     var bar = document.createElement('div');
+    bar.setAttribute('data-offer-banner', 'ended');   /* the hook tools/offer-ended-in-chrome.test.py reads it by (4 Nov 2026) */
     bar.setAttribute('style',
       'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
       'font-family:Manrope,system-ui,sans-serif;font-size:var(--fs-base);line-height:1.5;' +

@@ -360,6 +360,37 @@ try:
     led = load('led', os.path.join(TOOLS, 'check-suite-ledger.py'), argv=['check-suite-ledger.py', '--reuse', reuse])
     res = led.run(some)
     ok('a Chrome suite with a saved gate output is counted from it, not run', res[0] == 0 and res[1] == ledger[some]['checks'] and some in led.REUSED, (res, some))
+
+    print('\n9. suites read the page robustly (gatelib.suite_hygiene, 4 Nov 2026)')
+    hyg_dir = os.path.join(TMP, 'hyg'); os.makedirs(hyg_dir)
+    # The fragile shapes are ASSEMBLED here (split strings), so this file never contains them whole: the gate's
+    # own hygiene line reads every tools/*.test.py, this one included, and must not find them in a fixture.
+    J, LOBBY, SIB, PAR = 'json.' + 'loads(', 'lobby' + 'Code', 'nextElement' + 'Sibling.textContent', 'parent' + 'Node.className'
+    fake = [
+        'g = ' + J + "S.js(sid, CARD) or '{}')",
+        '# ' + J + 'S.js(sid, X)) talked about in a comment is not a read',
+        "ok('up', r.until(tv, '(function(){var c=document.getElementById(\"" + LOBBY + "\");return !!c&&c.textContent.length===6;})()', 20) is True)",
+        "code = r.ask(tv, 'document.getElementById(\"" + LOBBY + "\").textContent')",
+        "check('help', t.until('x." + PAR + "===\"hactions\"&&x." + SIB + "===\"Account\"') is True)",
+        "fine = S.json(sid, CARD, {})",
+        "ok('up2', r.until(tv, 'c.textContent.length===6&&c.textContent!==\"------\"', 20) is True)",
+    ]
+    io.open(os.path.join(hyg_dir, 'a-in-chrome.test.py'), 'w', encoding='utf-8').write('\n' + '\n'.join(fake) + '\n')
+    io.open(os.path.join(hyg_dir, 'help-desk-pages.test.py'), 'w', encoding='utf-8').write('check(t.js("m.nextElement' + 'Sibling===l"))\n')
+    io.open(os.path.join(hyg_dir, 'not-a-suite.py'), 'w', encoding='utf-8').write(J + 'S.js(sid, X))\n')
+    h = gatelib.suite_hygiene(hyg_dir, today='2026-11-05')
+    kinds = [b.split(' ')[1].rstrip(':') for b in h['bad']]
+    ok('the three fragile shapes are each found once in a suite, by line, and the robust forms and the comment are not',
+       h['files'] == 2 and sorted(kinds) == ['lobby-placeholder', 'neighbour-pin', 'rig-json'] and all(':%d ' % n in ' '.join(h['bad']) for n in (2, 4, 6)), h['bad'])
+    ok('a file that is not a suite is not read', not any('not-a-suite' in b for b in h['bad']))
+    ok('help-desk-pages is grandfathered for the neighbour pin only, and the line says until when and what to do',
+       len(h['grandfathered']) == 1 and 'help-desk-pages.test.py:1 neighbour-pin' in h['grandfathered'][0] and 'until 2026-11-09' in h['grandfathered'][0] and 'header_control' in h['grandfathered'][0], h['grandfathered'])
+    h2 = gatelib.suite_hygiene(hyg_dir, today='2026-11-10')
+    ok('past the date the grandfathered line is red and says the grandfather ended',
+       not h2['grandfathered'] and any('help-desk-pages.test.py:1 neighbour-pin' in b and 'grandfather ended 2026-11-09' in b for b in h2['bad']), h2['bad'])
+    ok('the gate has the red line and pins its label',
+       "gatelib.suite_hygiene(os.path.join(ROOT, 'tools'))" in rc_src
+       and 'every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour' in io.open(os.path.join(TOOLS, 'gate-labels.json'), encoding='utf-8').read())
 finally:
     shutil.rmtree(TMP, ignore_errors=True)
 
