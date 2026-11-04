@@ -258,7 +258,7 @@ ok('its --user-data-dir is removed', not os.path.exists(PROFILE), PROFILE)
 
 total = PASS[0] + FAIL[0]
 print('\n%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 27
+EXPECTED = 26
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

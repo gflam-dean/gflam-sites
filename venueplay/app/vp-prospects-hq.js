@@ -172,7 +172,7 @@
     var yellow = p.flag === "call_requested" || (p.flag === "no_sign_in" && p.tel);
     var open = !!S.expanded[p.venue_id];
     var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
-    return '<div class="panel prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
+    return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
       '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
       '<div class="prmore"' + (open ? "" : " hidden") + ">" +

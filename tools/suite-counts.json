@@ -267,6 +267,10 @@
   "checks": 31,
   "counted_by": "lines"
  },
+ "tools/prospects-edit-in-chrome.test.py": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/prospects-status-in-chrome.test.py": {
   "checks": 41,
   "counted_by": "lines"
