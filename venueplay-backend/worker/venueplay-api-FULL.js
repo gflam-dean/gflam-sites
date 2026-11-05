@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '4 Nov 2026, 09:19 · b92cef2d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 20:30 · 1ce53273';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -937,6 +937,12 @@ async function vpaHandleStripeEvent(env, event) {
   // On every real payment, email the venue a branded invoice.
   if (event.type === 'invoice.paid' && typeof vpaFireInvoiceEmail === 'function') {
     await vpaFireInvoiceEmail(env, event.data.object);
+  }
+  /* A group's draft invoice, said per venue on Stripe's own invoice (INBOX 44b). Behind
+     VPB_GROUP_INVOICE_LINES, default OFF; description and metadata only; never throws. Stripe sends
+     invoice.created only once the endpoint is set to listen for it. */
+  if (event.type === 'invoice.created' && typeof vpbStampInvoiceVenueLines === 'function') {
+    await vpbStampInvoiceVenueLines(env, event.data.object);
   }
   // Ahead of each renewal (Stripe invoice.upcoming), email the venue a heads-up. STRIPE owns the
   // lead time, not us, and it offers 7 days. The email therefore names the DATE and never a number
@@ -8344,22 +8350,217 @@ function vpaPlainLineDesc(desc) {
     .trim();
 }
 
-function vpaInvoiceLinesHtml(invoice) {
+/* `split` (optional) is vpbSplitPlanLine's answer: the ONE plan line Stripe wrote for a group
+   ("45 Players x venueplay plan (monthly)") printed as one row per venue instead, "The Royal Hotel:
+   20 players at $2.50". The rows are the same cents as the line they replace (checked before the split
+   is ever handed here), so the table adds up to exactly what it did before. Every other line, the big
+   nights, added players and prorations, is printed as Stripe wrote it. */
+function vpaInvoiceLinesHtml(invoice, split) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
-  const rows = lines.map(function (l) {
-    const amt = Number(l.amount || 0);
-    const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
+  const cell = function (desc, cents) {
     return '<tr>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
       + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
-      + (amt / 100).toFixed(2) + '</td></tr>';
+      + (cents / 100).toFixed(2) + '</td></tr>';
+  };
+  const rows = lines.map(function (l, i) {
+    if (split && split.index === i && Array.isArray(split.rows) && split.rows.length) {
+      return split.rows.map(function (r) { return cell(r.words, Number(r.cents)); }).join('');
+    }
+    const amt = Number(l.amount || 0);
+    const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
+    return cell(desc, amt);
   }).join('');
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
        + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">What this is for</p>'
        + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>'
        + '</td></tr></table>';
+}
+
+/* ====================== GROUP INVOICES BROKEN DOWN PER VENUE (INBOX 44b, 5 Nov 2026) ======================
+   Dean: a group's invoice and receipt should say "<venue>: N players at $X", without changing what is
+   charged.
+
+   HOW A GROUP IS BILLED TODAY. One Stripe subscription per account, with ONE item whose quantity is the
+   total players across every venue (vpbAccountTotal), so Stripe writes ONE line, "45 Players x venueplay
+   plan (monthly) (at $2.50 / month)". The money is that line, less any coupon, less any credit on the
+   customer (a new pub's free month, an annual reduction), plus any invoice items (a big night, added
+   players), which already name their venue.
+
+   WHAT THIS DOES. It reads that one plan line and says it per venue. Nothing about the money moves:
+     - the split is only ever made when the venues' billed players add up EXACTLY to the line's quantity
+       and the line's amount is exactly quantity x one unit price, so the per-venue rows are the same cents
+       as the line, by construction. Any doubt (drift, a venue part-way through a change, a line we do not
+       recognise, a single venue) and the line is printed as Stripe wrote it, exactly as before;
+     - the receipt and the payment reminder print the rows (no Stripe call at all);
+     - behind VPB_GROUP_INVOICE_LINES (default OFF), Stripe's own draft invoice gets the same rows as its
+       memo (the invoice description) and in its metadata, on invoice.created. Description and metadata
+       ONLY: no amount, quantity, price, item, coupon or line is written. Off, nothing reaches Stripe.
+   The coupon and the credits stay single invoice-level amounts, as Stripe applies them.
+
+   WHO COUNTS. vpbBilledPlayers is the one rule for "how many players is this venue billed for", the same
+   one vpbAccountTotal sums to set the Stripe quantity, so the split and the charge cannot disagree. */
+function vpbBilledPlayers(v) {
+  if (!v || v.cancel_at_period_end) return 0;   // venues cancelling at period end are no longer billed
+  const billed = (v.pending_players != null) ? parseInt(v.pending_players, 10) : parseInt(v.max_players, 10);
+  return billed || 0;
+}
+function vpbGroupInvoiceLinesOn(env) { return !!(env && String(env.VPB_GROUP_INVOICE_LINES || '') === '1'); }
+
+/* The ONE line that is the plan itself: the subscription's own recurring line. A proration, an invoice
+   item (big night, added players, a moved extras charge) or anything we cannot recognise is not it. */
+function vpbPlanLineIndex(invoice) {
+  const lines = (invoice && invoice.lines && invoice.lines.data) || [];
+  if (!Array.isArray(lines)) return -1;
+  const hits = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i] || {};
+    if (l.proration === true) continue;
+    if (l.invoice_item || l.type === 'invoiceitem'
+        || (l.parent && l.parent.type === 'invoice_item_details')) continue;
+    const isSub = l.type === 'subscription' || !!l.subscription_item
+      || !!(l.parent && (l.parent.type === 'subscription_item_details' || l.parent.subscription_item_details))
+      || /^\s*\d+\s+Players?\s*[×x]\s/i.test(String(l.description || ''));
+    if (isSub) hits.push(i);
+  }
+  return hits.length === 1 ? hits[0] : -1;
+}
+
+/* Annual or monthly, from the line itself. Words only: never used to work out an amount. */
+function vpbLineInterval(l) {
+  const iv = (l && ((l.price && l.price.recurring && l.price.recurring.interval) || (l.plan && l.plan.interval))) || '';
+  if (iv === 'year') return 'year';
+  if (iv === 'month') return 'month';
+  return /\b(annual|yearly)\b|\/\s*year\b/i.test(String((l && l.description) || '')) ? 'year' : 'month';
+}
+
+/* PURE. The plan line said per venue, or null when it cannot be said exactly.
+   venues: [{ id, name, postcode, max_players, pending_players, cancel_at_period_end }] from our table, or
+   [{ id, name, players }] when read back from the invoice's own metadata. */
+function vpbSplitPlanLine(invoice, venues) {
+  const idx = vpbPlanLineIndex(invoice);
+  if (idx < 0) return null;
+  const l = invoice.lines.data[idx];
+  const qty = parseInt(l.quantity, 10);
+  const amount = Number(l.amount);
+  if (!(qty > 0) || !Number.isInteger(amount) || !(amount > 0)) return null;
+  const unitFromPrice = l.price && Number.isInteger(l.price.unit_amount) ? l.price.unit_amount : null;
+  const unit = unitFromPrice != null ? unitFromPrice : amount / qty;
+  if (!Number.isInteger(unit) || !(unit > 0) || unit * qty !== amount) return null;   // tiered, or not ours
+  const list = (Array.isArray(venues) ? venues : []).map(function (v) {
+    const players = (v && v.players != null) ? (parseInt(v.players, 10) || 0) : vpbBilledPlayers(v);
+    return { id: (v && v.id) || null, name: String((v && v.name) || '').trim() || 'Your venue',
+             postcode: (v && v.postcode) ? String(v.postcode) : '', players: players };
+  }).filter(function (v) { return v.players > 0; });
+  if (list.length < 2) return null;                        // one venue: Stripe's line already says it
+  const sum = list.reduce(function (n, v) { return n + v.players; }, 0);
+  if (sum !== qty) return null;                            // our table and Stripe disagree: say nothing new
+  // Two pubs with one name (there are about a hundred Royal Hotels): the postcode tells them apart.
+  const seen = {};
+  list.forEach(function (v) { const k = v.name.toLowerCase(); seen[k] = (seen[k] || 0) + 1; });
+  list.sort(function (a, b) { return a.name.localeCompare(b.name) || a.postcode.localeCompare(b.postcode); });
+  const per = vpbLineInterval(l) === 'year' ? ' a year' : '';
+  const rate = '$' + (unit / 100).toFixed(2);
+  const rows = list.map(function (v) {
+    const label = v.name + (seen[v.name.toLowerCase()] > 1 && v.postcode ? ' (' + v.postcode + ')' : '');
+    return { id: v.id, name: v.name, postcode: v.postcode, label: label, players: v.players, cents: v.players * unit,
+             words: label + ': ' + v.players + ' player' + (v.players === 1 ? '' : 's') + ' at ' + rate + per };
+  });
+  // sum === qty and unit * qty === amount above, so these rows add up to the line's amount exactly.
+  return { index: idx, unit_cents: unit, interval: per ? 'year' : 'month', players: qty, cents: amount, rows: rows };
+}
+
+/* The rows Stripe was given (metadata written on invoice.created), when they are there and still exact. */
+function vpbSplitFromMetadata(invoice) {
+  const md = (invoice && invoice.metadata) || {};
+  const n = parseInt(md.vp_lines_n, 10);
+  if (!(n >= 2) || n > 40) return null;
+  const venues = [];
+  for (let i = 1; i <= n; i++) {
+    let o = null;
+    try { o = JSON.parse(String(md['vp_venue_' + i] || '')); } catch (_) { return null; }
+    if (!o || typeof o !== 'object') return null;   // a venue with no players drops out in the split
+    venues.push({ id: o.v || null, name: o.n || '', postcode: o.pc || '', players: parseInt(o.p, 10) });
+  }
+  return vpbSplitPlanLine(invoice, venues);
+}
+
+/* The split for one invoice, for the receipt and the reminder. Stripe's own metadata first (what the
+   invoice itself was told), else our table. NEVER THROWS and never blocks an email: any failure is null,
+   and null prints the invoice exactly as before. */
+async function vpbInvoiceVenueSplit(env, invoice) {
+  try {
+    if (vpbPlanLineIndex(invoice) < 0) return null;
+    const fromMd = vpbSplitFromMetadata(invoice);
+    if (fromMd) return fromMd;
+    const cust = invoice && invoice.customer;
+    if (!cust) return null;
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'stripe_customer_id=eq.' + encodeURIComponent(String(cust)) + '&select=id&limit=1');
+    const acct = accts && accts[0];
+    if (!acct || !acct.id) return null;
+    const venues = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(acct.id)
+      + '&select=id,name,postcode,max_players,pending_players,cancel_at_period_end&order=name.asc&limit=500');
+    return vpbSplitPlanLine(invoice, venues);
+  } catch (_) { return null; }
+}
+
+/* The memo a bookkeeper reads at the top of Stripe's invoice and its PDF. */
+const VPB_MEMO_HEAD = 'Players by venue: ';
+function vpbSplitMemo(split) {
+  let out = VPB_MEMO_HEAD;
+  for (let i = 0; i < split.rows.length; i++) {
+    const r = split.rows[i];
+    const piece = r.words + ' ($' + (r.cents / 100).toFixed(2) + ')' + (i < split.rows.length - 1 ? '; ' : '.');
+    if ((out + piece).length > 1400) {
+      out += 'and ' + (split.rows.length - i) + ' more venue' + (split.rows.length - i === 1 ? '' : 's') + ', listed on your venueplay invoice email.';
+      return out;
+    }
+    out += piece;
+  }
+  return out;
+}
+
+/* invoice.created, behind VPB_GROUP_INVOICE_LINES (default OFF). Writes the split onto Stripe's DRAFT
+   invoice as its description (memo) and metadata, and nothing else. Draft only, because a finalised
+   invoice cannot be changed and must not be. Never throws: while an endpoint listens for invoice.created
+   Stripe holds the invoice back until we answer, so a failure here must still answer, and it is written
+   down instead. */
+async function vpbStampInvoiceVenueLines(env, invoice) {
+  if (!vpbGroupInvoiceLinesOn(env)) return { skipped: 'off' };
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'stripe', action: 'invoice_venue_lines',
+    target: 'customer:' + String((invoice && invoice.customer) || ''),
+    detail: Object.assign({ invoice: (invoice && invoice.id) || null, outcome: why }, extra || {}),
+  }, false).catch(() => {});
+  try {
+    if (!invoice || !invoice.id || invoice.status !== 'draft') return { skipped: 'not a draft' };
+    const split = await vpbInvoiceVenueSplit(env, invoice);
+    if (!split) return { skipped: 'no exact split' };
+    const params = {};
+    const had = String(invoice.description || '');
+    if (!had || had.indexOf(VPB_MEMO_HEAD) === 0) params.description = vpbSplitMemo(split);   // never over someone else's memo
+    if (split.rows.length <= 40) {
+      params['metadata[vp_lines_n]'] = String(split.rows.length);
+      params['metadata[vp_lines_unit]'] = String(split.unit_cents);
+      split.rows.forEach(function (r, i) {
+        // Clipped NAME, never clipped JSON: a cut-off JSON would not read back, and the email would fall back.
+        params['metadata[vp_venue_' + (i + 1) + ']'] = JSON.stringify({ v: r.id, n: r.name.slice(0, 200), p: r.players,
+          pc: r.postcode || undefined });
+      });
+    }
+    if (!Object.keys(params).length) return { skipped: 'nothing to write' };
+    const res = await vpbStripePost(env, 'invoices/' + encodeURIComponent(invoice.id), params, 'vplines:' + invoice.id);
+    if (res && res.error) { await say('not written: ' + String(res.error.message || 'Stripe refused it').slice(0, 120)); return { failed: true }; }
+    await say('written', { venues: split.rows.length, players: split.players, cents: split.cents });
+    return { written: true, params: params };
+  } catch (e) {
+    await say('not written: ' + String((e && e.message) || e).slice(0, 120));
+    return { failed: true };
+  }
 }
 
 function vpaOverageFromInvoice(invoice) {
@@ -8510,7 +8711,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
             ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#12101a">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#12101a">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpbInvoiceVenueSplit(env, invoice))
       /* `customer` did not exist here. It was written on 11 Sep 2026 at 05:34 (0d1f1fd),
          the only `customer` in the file is a const inside the UPCOMING-reminder function,
          and vpaUpliftWarningHtml's own parameter is called customerId. So this line threw
@@ -8606,7 +8807,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpbInvoiceVenueSplit(env, invoice))
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
             + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">A busy month: this bill includes extra players.</p>'
@@ -9449,11 +9650,8 @@ async function vpbAccountTotal(env, foundingId) {
   if (!res.ok) throw new Error('vpbAccountTotal: could not read venues (' + res.status + ')');
   const vs = await res.json();
   if (!Array.isArray(vs)) throw new Error('vpbAccountTotal: unexpected response');
-  return vs.reduce((n, v) => {
-    if (v.cancel_at_period_end) return n; // venues cancelling at period end are no longer billed
-    const billed = (v.pending_players != null) ? parseInt(v.pending_players, 10) : parseInt(v.max_players, 10);
-    return n + (billed || 0);
-  }, 0);
+  // vpbBilledPlayers is the one rule; the per-venue invoice lines (INBOX 44b) read the same one.
+  return vs.reduce((n, v) => n + vpbBilledPlayers(v), 0);
 }
 
 /* Point the Stripe subscription at what this account should actually be paying for.
