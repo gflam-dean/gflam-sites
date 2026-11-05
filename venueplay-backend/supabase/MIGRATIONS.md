@@ -583,14 +583,14 @@ meat tray). Every existing column is unchanged row for row (the view's live defi
 two branches). security_invoker, the authenticated grant and the anon revoke are put back exactly as 85 left them, so
 RLS-BASELINE.json does not change. Either order with the site: Your account > Draws reads the new column when it is there and
 says "not counted here" when it is not. NUMBER: 140 to 149 are taken on other branches, so 150. Branch `fix/console-hq-5nov`.
-NOT RUN. Read-back queries in the file.
+RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50). Read-back queries in the file.
 
 `venueplay-151-prospect-link-30-days.sql` (Dean, 4 Nov 2026, the two prospect journeys): lifts `vp_signin_links_life` from
 15 to 31 days so a prospect's sign-in link can end 30 days from setup, the same moment every link resent to them ends at,
 and the day-3 and "expires in 3 days" follow-ups say one true number; and adds `vp_prospects.link_from`, when HQ last
 resent their link, which restarts those 30 days and re-dates the follow-ups (automatic follow-ups never set it). No policy
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
-and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
+and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50).
 Read-back and rollback in the file.
 
 `venueplay-152-signin-texts-queue.sql` (Dean, 4 Nov 2026, HQ > Prospects: "Send them a new sign-in link" goes by email AND
@@ -600,4 +600,6 @@ that moment (no token is ever stored here). Row security on, service role only. 
 venueplay-backend/tools/dump-rls-baseline.py after running and commit it. Either order with the billing Worker: before it
 runs nothing is queued, the email still goes, and HQ is told no text was queued and to press again after 9am. Texts stay
 off until PROSPECT_SMS_ON and the ClickSend login are set, either way. NUMBER: 140 to 151 are taken, so 152. Branch
-`fix/hq-prospects-6nov`. NOT RUN. Read-back and rollback in the file.
+`fix/hq-prospects-6nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50). Read-back and rollback in the file.
+
+RUN LIVE, Thu 5 Nov 2026 (Dean, read back OK by 20:50): 150, 151, 152, 154 and 161. 154 (`venueplay-154-prospect-details.sql`, branch `fix/prospect-details-10nov`) and 161 (`venueplay-161-venue-ratings.sql`, branch `fix/venue-rating-8nov`) are not in the 6 Nov release: their files and entries come with those branches, and both numbers are TAKEN. RLS-BASELINE.json was dumped after all five (152 and 161 each add one table, RLS on, service role only) and committed with the 6 Nov release.

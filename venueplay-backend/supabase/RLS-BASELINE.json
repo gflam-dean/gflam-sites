@@ -1968,6 +1968,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_signin_texts": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_song_flags": {
    "enabled": true,
    "forced": false
@@ -1993,6 +1997,10 @@
    "forced": false
   },
   "vp_venue_groups": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_venue_ratings": {
    "enabled": true,
    "forced": false
   },
