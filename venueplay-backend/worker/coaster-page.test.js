@@ -119,7 +119,8 @@ pass("nothing on the page is under 15px", small.length === 0, small);
 var text = PAGE.replace(/<!--[\s\S]*?-->/g, "").replace(/<script[\s\S]*?<\/script>/g, function (s) { return s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, ""); });
 pass("'From a venue? Click here' goes to /coaster, today's offer, never the home page", /<a class="owner" id="ownerLink" href="\/coaster">From a venue\? Click here<\/a>/.test(PAGE));
 pass("the games are named in order: trivia, musical bingo, bingo", /Trivia, musical bingo and bingo on the pub TV/.test(PAGE) && !/Trivia, bingo and musical bingo/.test(PAGE));
-pass("'venueplay' is lowercase wherever a person reads it", !/VenuePlay|Venueplay|VENUEPLAY/.test(text.replace(/data-vp-mark="[^"]*"/g, "")));
+/* The one exception is the legal line, the same on every page of the site (test-terms-put-compliance-on-the-venue.js). */
+pass("'venueplay' is lowercase wherever a person reads it (the legal footer line aside)", !/VenuePlay|Venueplay|VENUEPLAY/.test(text.replace("Gflam Group Pty Ltd, trading as VenuePlay", "")));
 pass("no em dash anywhere", PAGE.indexOf("—") < 0);
 pass("no phone number on a public page", !/07 ?5228|5228 ?3667|04\d\d ?\d{3} ?\d{3}/.test(text));
 pass("no .dev or workers.dev address", !/workers\.dev|\.dev\b/.test(PAGE));
