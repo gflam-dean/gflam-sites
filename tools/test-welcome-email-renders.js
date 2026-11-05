@@ -8,8 +8,8 @@
      - the GROUP welcome showed a raw {{VENUE_BLOCKS}} tag and no venues. A string replace
        swaps only the first match, and the first match was in the template's own
        documentation comment
-     - every TV link was a bare /tv with no venue in it, beside copy that says "always use
-       this full link, it is what tells the screen which venue it is"
+     - every TV link was a bare /tv with no venue in it, beside copy that said "always use
+       this full link". (Dean, 5 Nov 2026: the opposite is now right. Bare /tv, plus the screen code.)
 
    This RUNS the shipped vpaFireWelcome against the REAL template files and reads the html
    it hands to Resend. Not a copy of the template, not a model of the sender.
@@ -63,10 +63,11 @@ drain();
 var one = visible(sent && sent.html);
 check('the single-venue welcome is sent at all', !!one, sent);
 check('no raw {{token}} reaches the customer', !/\{\{[^}]+\}\}/.test(one), (one.match(/\{\{[^}]+\}\}/g) || []).slice(0, 5));
-check('the TV link NAMES THE VENUE', one.indexOf('/tv?the-royal-hotel-4220') !== -1,
+check('the TV address is the bare venueplay.com.au/tv with the screen-code words, never a /tv?slug link (Dean, 5 Nov 2026)',
+      /venueplay\.com\.au\/tv<\/a> on your venue screen \(or the venueplay TV app\), then type the six-character screen code from your host console\. The TV remembers your venue after that\./.test(String(sent && sent.html)) && !/\/tv\?/.test(String(sent && sent.html)),
       (one.match(/venueplay\.com\.au\/tv[^"<\s]*/g) || []).slice(0, 4));
-check('and no bare /tv link is handed over as the one to open',
-      !/href="https:\/\/venueplay\.com\.au\/tv"/.test(one), (one.match(/href="[^"]*\/tv[^"]*"/g) || []).slice(0, 4));
+check('the button opens the bare https://venueplay.com.au/tv, and says nothing about a home page',
+      /href="https:\/\/venueplay\.com\.au\/tv"/.test(String(sent && sent.html)) && one.indexOf('home page') === -1, (String(sent && sent.html).match(/href="[^"]*\/tv[^"]*"/g) || []).slice(0, 4));
 
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@group.com', contact_name: 'Sam', plan: 'monthly' },
@@ -78,8 +79,8 @@ check('the group welcome is sent at all', !!grp, sent);
 check('no raw {{VENUE_BLOCKS}} or any other token reaches the customer',
       !/\{\{[^}]+\}\}/.test(grp), (grp.match(/\{\{[^}]+\}\}/g) || []).slice(0, 5));
 check('BOTH venues are actually in the email', grp.indexOf('The Anchor') !== -1 && grp.indexOf('The Crown') !== -1);
-check('each venue gets its OWN screen link',
-      grp.indexOf('/tv?the-anchor-2000') !== -1 && grp.indexOf('/tv?the-crown-3000') !== -1,
+check('every venue card points at the bare /tv, and the group is told to type each venue\'s screen code; no /tv?slug anywhere',
+      grp.indexOf('type that venue\'s six-character screen code from its host console') !== -1 && !/\/tv\?/.test(String(sent && sent.html)) && (String(sent && sent.html).match(/href="https:\/\/venueplay\.com\.au\/tv"/g) || []).length >= 2,
       (grp.match(/\/tv[^"<\s]*/g) || []).slice(0, 6));
 check('the venue cards are VISIBLE, not injected into a comment',
       (String(sent && sent.html).match(/<!--[\s\S]*?-->/g) || []).join('').indexOf('The Anchor') === -1);

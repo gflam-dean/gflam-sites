@@ -258,7 +258,7 @@ var __rnd = 11;
   check('closing it carries on into the console (onClose is proceedVenue), with the venue\'s own client', a1.opened[0] && a1.opened[0].client === 'CLIENT' && typeof a1.opened[0].onClose === 'function' && /proceedVenue/.test(String(INDEX.match(/VPFirstRun\.open\(__ctx, \{ client:VP\.getClient\(\), VP:VP, onClose:proceedVenue \}\)/))), a1.opened[0]);
   check('anyone else goes on exactly as before', a2.log === 'holdGate,wants,termsGate,termsCard,pair', a2.log);
   check('index.html loads vp-firstrun.js after vp-session.js', INDEX.indexOf('<script src="vp-firstrun.js"></script>') > INDEX.indexOf('<script src="vp-session.js"></script>') && INDEX.indexOf('<script src="vp-session.js"></script>') > 0);
-  var ual = lift(INDEX, 'updateAccountLink');
+  var ual = lift(INDEX, 'hostHasChoice') + '\n' + lift(INDEX, 'updateAccountLink');   // round 3 (4 Nov 2026): the switcher asks hostHasChoice
   var btn = { style: { display: 'none' } };
   (new Function('__ctx', 'window', 'VPFirstRun', '$', 'applyNumberBingo', 'document', ual + '\nupdateAccountLink();'))({ role: 'manager', venue: pv() }, { VPFirstRun: { isProspect: function () { return true; } } }, { isProspect: function () { return true; } },
     function (id) { return id === 'firstRunBtn' ? btn : null; }, function () {}, {});
@@ -503,7 +503,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var firstMail = sent[0] || {}, oldTok = tokenOf(firstMail), login = AUTH[0] || {};
   // Since setup they have three slides on their screen (marketing added one more).
   DB.vp_venue_screen.push({ venue_id: v.id, slug: v.slug, slides: [{ image_url: 'https://db/a.png', seconds: 8 }, { image_url: 'https://db/b.png', seconds: 8 }, { image_url: 'https://db/c.png', seconds: 8 }] });
-  check('(the setup sent its one email, with a one-click link, signed Harry)', r.status === 200 && sent.length === 1 && !!oldTok && /Cheers, Harry venueplay/.test(vis(firstMail.html)), r.body);
+  check('(the setup sent its one email, with a one-click link, signed Harry)', r.status === 200 && sent.length === 1 && !!oldTok && /Cheers, Harry the venueplay team/.test(vis(firstMail.html)), r.body);
   var st0 = await resend({ venue_id: v.id }, STAFFADMIN);
   check('a staff admin cannot resend (owner or accounts only), and nothing goes', st0.status === 403 && sent.length === 1, st0);
   var dr = await resend({ venue_id: v.id, dry_run: true });
@@ -519,7 +519,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   check('to the account\'s own contact email and nobody else (one address, no cc, no bcc)', onlyTo(again, 'cazreitop@gmail.com'), again.to);
   check('a FRESH one-click sign-in for their own login: a new token, unused, 14 days from now, and the old link is retired',
     !!newTok2 && newTok2 !== oldTok && newL && newL.auth_user_id === login.id && newL.venue_id === v.id && !newL.used_at && Math.abs(Date.parse(newL.expires_at) - t0 - 14 * 86400000) < 5000 && oldL && !!oldL.used_at, [newL, oldL]);
-  check('signed by whoever signed the original (Harry, from the setup\'s audit row), with venueplay and the site', /Cheers, Harry venueplay venueplay\.com\.au/.test(txt2) && !/venueplay team/.test(txt2), txt2.slice(-400));
+  check('signed by whoever signed the original (Harry, from the setup\'s audit row), with the venueplay team and the site', /Cheers, Harry the venueplay team venueplay\.com\.au/.test(txt2) && !/The venueplay team/.test(txt2), txt2.slice(-400));
   check('it counts the slides on their screen now (the "few quick slides" line), and greets them by name', /Hi Amit,/.test(txt2) && /a few quick slides our marketing team made from your website/.test(txt2) && rw.body.slides === 3, txt2.slice(0, 400));
   check('no workers.dev or any .dev link, no Gflam, no em dash, nothing left unfilled', linksIn(again.html).every(function (h) { return !/\.dev(\/|$|\?|#)/.test(h.replace(/^mailto:.*/, '')); }) && !/workers\.dev/.test(again.html) &&
     !/Gflam/i.test(again.html) && !/[—–]|&mdash;|&ndash;/.test(again.html) && again.html.indexOf('{{') === -1, linksIn(again.html));
@@ -538,7 +538,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   again = sent[1] || {};
   check('a login with their mobile: the text-code sign-in with their number, no one-click link at all, signed by the team when no sender was given',
     rw.status === 200 && rw.body.signin === 'sms' && /href="https:\/\/www\.venueplay\.com\.au\/app\/\?signin=sms#m=0452510904"/.test(again.html) && again.html.indexOf('/app/go') === -1 &&
-    /Cheers, The venueplay team/.test(vis(again.html)) && onlyTo(again, 'cazreitop@gmail.com') && DB.vp_signin_links.length === 0, [rw.body, linksIn(again.html)]);
+    /Cheers, the venueplay team/.test(vis(again.html)) && onlyTo(again, 'cazreitop@gmail.com') && DB.vp_signin_links.length === 0, [rw.body, linksIn(again.html)]);
 
   world();
   r = await prospectNamed({});
@@ -651,7 +651,10 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   (new Function('window', PANE2))(PW);
   var prow0 = { venue_id: U(301), name: 'Lunatic Hotel & Motel', email: 'x@lunatic.example', source: 'autopilot', created_at: '2026-10-31T00:00:00Z', days_since_setup: 0, welcome: { status: 'cancelled', send_at: '2026-10-31T01:00:00Z' }, last_sign_in_at: null, sign_in_known: true, flag: null, called: null };
   var hNot = PW.VPProspects._t.cardHtml(prow0), hCx = PW.VPProspects._t.cardHtml(Object.assign({}, prow0, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' }));
-  check('HQ > Prospects: each prospect card has "Resend their account email"; one who cancelled does not', /data-pr-welcome="[^"]+">Resend their account email<\/button>/.test(hNot) && !/data-pr-welcome/.test(hCx), hNot);
+  /* ONE BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same, so a prospect
+     row has only "Send them a new sign-in link" now; one who cancelled has neither. */
+  check('HQ > Prospects: each prospect row has ONE send button, "Send them a new sign-in link", and no "Resend their account email"; one who cancelled has none',
+    /data-pr-signin="[^"]+">Send them a new sign-in link<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
 
   section('3. "Please call me": the exact request the first run sends, through the real /help/venue/ticket');
   world();
@@ -665,7 +668,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var tkt = DB.vp_help_tickets[0] || {};
   check('a ticket "Please call me", venue support, for that venue, with their mobile in it and on the ticket', hr.status === 200 && tkt.subject === 'Please call me' && tkt.category === 'venue_support' && tkt.venue_id === U(101) &&
     /Please call me on 0452 510 904/.test(tkt.message) && tkt.contact_phone === '+61452510904' && tkt.contact_email === 'cazreitop@gmail.com', tkt);
-  check('staff are alerted, and the venue gets its number back', hr.body.ticket_no && sent.some(function (x) { return /^\[venueplay\] Venue support \[#\d+\]/.test(x.subject); }), sent.map(function (x) { return x.subject; }));
+  check('staff are alerted, and the venue gets its number back', hr.body.ticket_no && sent.some(function (x) { return /^venueplay \u00b7 Action needed: Venue support \[#\d+\]/.test(x.subject); }), sent.map(function (x) { return x.subject; }));
 
   if (bad) throw new Error('prospect welcome v2: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

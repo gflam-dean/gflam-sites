@@ -73,8 +73,9 @@ def phone_scene(r, path, label):
                                       rect(r, sid, '#vpConnBar'), rect(r, sid, '.ptop .brand .word'))
         line = r.ask(sid, '(function(){var t=document.getElementById("statusText"),b=t.getBoundingClientRect();return {w:b.width,h:b.height,txt:t.textContent};})()') or {}
         menu = rect(r, sid, '#menuBtn')
-        if 'trivia' in label:
-            # The trivia phone (Dean, 3 Nov 2026): the green dot sits next to the menu button, top right, level with it.
+        if 'trivia' in label or 'musical' in label:
+            # The trivia phone (Dean, 3 Nov 2026), and the musical bingo phone with the same option 5 header (4 Nov 2026):
+            # the green dot sits next to the menu button, top right, level with it.
             mb = rect(r, sid, '#menuBtn')
             ok('%s at %d: a green dot next to the menu button, level with it' % (label, w),
                dot and dot['vis'] and mb and dot['r'] <= mb['l'] and mb['l'] - dot['r'] <= 16 and abs((dot['t'] + dot['b']) / 2 - (mb['t'] + mb['b']) / 2) <= 3,
