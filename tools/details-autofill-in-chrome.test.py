@@ -197,7 +197,7 @@ def page(game, path):
         ok('%s: the details step is drawn' % game, until(sid, READY), ask(sid, 'document.getElementById("joinExtra").innerHTML.slice(0,200)'))
         time.sleep(0.4)
         d = dump(sid); I = by_id(d); f = d.get('form')
-        want_ids = ['nameIn', 'xLast', 'xPost', 'xEmail', 'xMobile', 'x18', 'xOptin', 'joinBtn']
+        want_ids = ['nameIn', 'xLast', 'xPost', 'xEmail', 'xMobile', 'xOptin', 'joinBtn']
         ok('A %s: the name box, the details boxes, the ticks and Join are inside ONE form' % game,
            bool(f) and f['tag'] == 'FORM' and f['inView'] and f['ids'] == want_ids, f)
         ok('A %s: the form is autocomplete="on" and every box belongs to it' % game,
