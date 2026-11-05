@@ -37,7 +37,7 @@ function drain() { if (typeof drainMicrotasks === 'function') drainMicrotasks();
 function visible(html) {
   return String(html || '').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')
     .replace(/&middot;/g, '·').replace(/&times;/g, '×').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/\s+/g, ' ').replace(/\( /g, '(').replace(/ \)/g, ')').trim();   // "(<b>18</b>)" reads "(18)"
 }
 
 /* THE WRITERS, RUN. Each description expression is lifted out of its Worker and evaluated with

@@ -30,6 +30,8 @@ eval(lift(BILL,"vpaTaxSummaryHtml"));
    forEach callback, which is also a function. Plain statements at top level, like the ones
    above. The failures both times read "not sent: Can't find variable: ...", which was the new
    instrumentation correctly reporting a fault in the suite that was testing it. */
+eval(lift(BILL,"vpaBigNightLine"));        // the line the game Worker writes today (INBOX 94)
+eval(lift(BILL,"vpaOverageRateWords"));
 eval(lift(BILL,"vpaOverageFromInvoice"));
 eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
