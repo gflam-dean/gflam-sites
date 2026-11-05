@@ -1152,7 +1152,7 @@
   "counted_by": "lines"
  },
  "tools/tv-logo-in-chrome.test.py": {
-  "checks": 94,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/tv-no-counts-in-chrome.test.py": {
