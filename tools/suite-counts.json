@@ -540,7 +540,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
-  "checks": 78,
+  "checks": 80,
   "counted_by": "lines"
  },
  "tools/test-help-triage-truth.js": {

@@ -603,3 +603,11 @@ off until PROSPECT_SMS_ON and the ClickSend login are set, either way. NUMBER: 1
 `fix/hq-prospects-6nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50). Read-back and rollback in the file.
 
 RUN LIVE, Thu 5 Nov 2026 (Dean, read back OK by 20:50): 150, 151, 152, 154 and 161. 154 (`venueplay-154-prospect-details.sql`, branch `fix/prospect-details-10nov`) and 161 (`venueplay-161-venue-ratings.sql`, branch `fix/venue-rating-8nov`) are not in the 6 Nov release: their files and entries come with those branches, and both numbers are TAKEN. RLS-BASELINE.json was dumped after all five (152 and 161 each add one table, RLS on, service role only) and committed with the 6 Nov release.
+
+`venueplay-156-saved-reply-lowercase-name.sql` (Dean, 1 and 4 Nov 2026: "venueplay" lowercase in all customer text): one
+word in one help desk saved reply, seed_key 'player-prize' ("venueplay supplies the game software only"), only if it still
+holds the words 126 seeded (an HQ edit is left alone). fix/site-polish-6nov lowercased the built-in starter set in
+vp-helpdesk-hq.js; this brings the live row into line, and tools/test-help-saved-replies.js applies 126 then 156 before
+comparing. No table, policy or grant, so RLS-BASELINE.json does not change. Either order with the site and Workers (HQ shows
+the live row's words until it runs). NUMBER: 150 to 154 and 160 to 169 are taken and 155 is the security fix, so 156
+(release/6nov, 5 Nov 2026). NOT RUN. Optional at the gate, on Dean's yes. Read-back and rollback in the file.
