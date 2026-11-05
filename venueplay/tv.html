@@ -454,6 +454,15 @@
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
   .in-tvapp #tvFsBtn{display:none!important}   /* never in an app: see IN_APP (4 Nov 2026) */
 </style>
+<script src="/app/vp-venueurl.js"></script>   <!-- which venue is in the address: here in <head> so the paired-screen step below can ask it -->
+<script src="/app/vp-tvpaired.js"></script>   <!-- the venue this screen was paired to by its screen code (5 Nov 2026) -->
+<script>
+  /* BARE /tv OPENS THE VENUE THIS SCREEN WAS PAIRED TO, BY ITS OWN SCREEN CODE, AND NO OTHER (Dean, 5 Nov 2026:
+     "I don't want them to ask for the code again on the TV, no way"). Before anything paints: the same page with
+     that venue in its address, so the screen that follows is the ordinary /tv?venue= one. Nothing paired: the
+     setup card, exactly as before. Never a demo or a probe. Why this is not vpTvVenue: /app/vp-tvpaired.js. */
+  (function(){ try{ if(window.VPTvPaired) VPTvPaired.go(); }catch(e){} })();
+</script>
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card and its intro, before vp-oldtv so an older TV rewrites its styles too -->
 <script>
   /* THE INTRO ON FIRST LOAD (Dean, 3 Nov 2026), armed here in <head> so the first frame is already its first
@@ -553,7 +562,7 @@
 
   <!-- SAVE THIS PAGE: shown once, on a screen that was just set up by keying in its code. -->
   <div class="savenote hidden" id="tvSaveNote" role="status" aria-live="polite">
-    <div class="sn-text">Save this page as a bookmark or favourite so this TV opens straight to <b id="snVenue"></b> next time:<span class="sn-link" id="snLink"></span></div>
+    <div class="sn-text">This TV now opens <b id="snVenue"></b> by itself, with no code to type again, at<span class="sn-link" id="snLink"></span></div>
     <div class="sn-hint">Press any key to close this</div>
   </div>
 
@@ -576,7 +585,7 @@
         <div class="bvissuelbl">This screen is set to</div>
         <div class="bvaddr" id="bvAddr"></div>
       </div>
-      <div class="bvtext">Check that against the address in your setup email. If it is wrong, change it on the screen and it will connect itself. If it looks right, email <b>support@venueplay.com.au</b> and we will sort it out.</div>
+      <div class="bvtext">Open <b>venueplay.com.au/tv</b> on this screen and type the screen code from your host console, or use the venueplay TV app. Still stuck? Email <b>support@venueplay.com.au</b> and we will sort it out.</div>
     </div>
   </div>
 
@@ -680,7 +689,6 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
-<script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
@@ -781,7 +789,15 @@
        prospect's slides) put THAT pub's advertising on the wall full screen, with no way to set the screen up.
        Bare /tv is always the setup screen. It used to offer the remembered venue as a "Show it again" button;
        Dean, 2 Nov 2026, took that out: a venue puts its screen code in again. So bare /tv does not read the
-       memory at all. A screen with its venue in the address (/tv?venue=..., the TV app, a bookmark) is unchanged. */
+       memory at all. A screen with its venue in the address (/tv?venue=..., the TV app, a bookmark) is unchanged.
+       TWO KEYS, ON PURPOSE (5 Nov 2026). vpTvVenue is "the last venue screen this browser opened" and is
+       written by any /tv?venue= visit (rememberVenue below): Dean, 1 Nov, the prospect's slides, "it was picking up
+       on the last TV channel it played on, so we thought it was just picking a random person". It is never read
+       here. vpTvPaired is "the venue this screen was set up for by its own screen code" (askCode, and nothing
+       else) and is read in <head>, which moves bare /tv on to that venue's address before this runs: Dean, 5 Nov,
+       every customer text says venueplay.com.au/tv and the screen code, and "I don't want them to ask for the
+       code again on the TV, no way". So by the time this line runs on a bare /tv, nothing was paired. The whole
+       story, and what clears it: /app/vp-tvpaired.js. */
     return "";   // bare /tv: the setup screen, with no remembered venue read or offered
   })();
   function rememberVenue(slug){
@@ -792,6 +808,7 @@
        seconds apart. A single bad read during a Worker deploy must not wipe a
        working screen's memory. */
     try{ localStorage.removeItem("vpTvVenue"); localStorage.removeItem("vpTvConfirmed"); }catch(e){}
+    try{ if(window.VPTvPaired) VPTvPaired.forget(VENUE_SLUG); }catch(e){}   // paired to a venue that is gone: bare /tv is the setup card again
   }
   // ---- stable code, persists across refreshes so the link works forever ----
   var CODE=(function(){
@@ -836,8 +853,9 @@
     if(pickerIsUp()) return;
     var a=$("bvAddr"), box=$("bvIssue");
     if(a && box){
-      if(VENUE_SLUG){ a.textContent=String(ORIGIN).replace(/^https?:\/\//,"")+"/tv?"+VENUE_SLUG; box.hidden=false; }
-      else box.hidden=true;   // nothing to show beats an empty box with a label on it
+      /* No address on the wall (Dean, 5 Nov 2026: customers only ever see venueplay.com.au/tv and the screen
+         code). The card's words say what to do instead. */
+      a.textContent=""; box.hidden=true;
     }
     var el=$("badVenue"); if(el) el.classList.remove("hidden");
   }
@@ -898,13 +916,13 @@
      copied down before the screen goes on with its night. */
   var GO_AFTER = 45;
   function showChosen(v){
-    var link = "venueplay.com.au/tv?venue=" + v.slug;
+    var link = "venueplay.com.au/tv";   // never the slug form (Dean, 5 Nov 2026); the Start now href below stays
     var where = [v.postcode, v.state].filter(Boolean).join(" ");
     pickCard("This screen is set",
       esc(v.name) + (where ? " \u00b7 " + where : ""),
       '<div class="gotlink">' + esc(link) + '</div>' +
-      '<div class="gotnote">Write this down. It is the link for this screen, and for any ' +
-      'other screen in the venue.</div>' +
+      '<div class="gotnote">For any other screen in the venue, open this on it and type the screen code, ' +
+      'or use the venueplay TV app.</div>' +
       '<div class="keyacts"><a href="/tv?venue=' + encodeURIComponent(v.slug) + '">Start now</a></div>' +
       '<div class="cdown"><div class="num" id="vpCount">' + GO_AFTER + '</div>' +
       '<div class="bar"><i id="vpBar"></i></div></div>', true);
@@ -965,6 +983,7 @@
           fetch(VP_GAME_API + "/venue?code=" + encodeURIComponent(code))
             .then(function(r){ return r.ok ? r.json() : null; })
             .then(function(d){
+              if(d && d.exists && d.slug){ try{ if(window.VPTvPaired) VPTvPaired.save(d.slug); }catch(e){} }   /* paired by its own code: bare /tv opens it from now on */
               if(d && d.exists && d.slug){ cameByCode(d.slug, d.name || d.slug); showChosen({ slug: d.slug, name: d.name || d.slug, postcode: "", state: "" }); }
               else { typed = ""; err = "No screen with that code. Check the console and try again."; draw(); }
             })
@@ -1524,7 +1543,7 @@
          the venue's own name. Same place every time, so only the line cross-fades. */
       if(venuePending()){
         return tvHoldHtml(TV_SETUP_LINE, true, { kind:"loading" })+
-               '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
+               '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv</div>';   /* never the slug form (5 Nov 2026) */
       }
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
       // their promos/game did not load, so point them to support rather than only cheering. It is
@@ -2872,6 +2891,18 @@
       tvSetupFits(TV_KIND);
     }catch(e){}
   })();
+  /* A BROWSER TV'S WAY BACK OUT, AND ITS "GET THE APP" (5 Nov 2026, /app/vp-tvpaired.js). Hold OK for five
+     seconds: Screen settings, with Change venue, which forgets the pairing and opens the setup card. And when
+     bare /tv has just opened the paired venue on a TV whose own store has the app, the corner card for 25 s of
+     advertising. Neither inside a TV app (its own settings) nor in a demo. */
+  (function pairedScreen(){
+    try{
+      if(!window.VPTvPaired || !VENUE_SLUG || VP_DEMO) return;   /* in an app, both say no themselves (inApp) */
+      VPTvPaired.staff({ inApp: IN_APP, name: function(){ var n=$("venueNameTag"); return (n && n.textContent) || VENUE_SLUG; }, path: location.pathname || "/tv" });
+      if(VPTvPaired.openedPaired(VENUE_SLUG))
+        VPTvPaired.appPrompt({ kind: TV_KIND, inApp: IN_APP, demo: VP_DEMO, adsUp: function(){ return tvMode==="ads" && !document.hidden; } });
+    }catch(e){}
+  })();
   /* "SAVE THIS PAGE", once, on the venue screen a code just chose (see cameByCode). Never inside the
      app, never on a TV that opened at its own link, never over a game: it shows only while the venue's
      advertising is up, and goes after twenty seconds, on any key or click, or when a game takes the
@@ -2889,7 +2920,7 @@
       var box=$("tvSaveNote"), nm=$("snVenue"), ln=$("snLink");
       if(!box || !nm || !ln) return;
       nm.textContent=String(o.name || VENUE_SLUG);
-      ln.textContent="venueplay.com.au/tv?"+VENUE_SLUG;
+      ln.textContent="venueplay.com.au/tv";   // paired by its code (vp-tvpaired.js): bare /tv is all it ever needs
       var done=false, t=null, w=null;
       var off=function(){
         if(done) return; done=true;
