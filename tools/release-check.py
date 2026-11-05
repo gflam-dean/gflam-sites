@@ -3881,6 +3881,16 @@ def local_checks(which):
              'test-signup-core.js',
              'runs the billing Worker: the five boxes checked, the honeypot and the bot check, eight code requests an hour per network, a 6-digit code texted through the SMS hook and kept only as a hash, five wrong tries spend it; nothing made before the code passes; a venue on our licensed list (name and postcode through vpVenueMatch) gets the prospect account at 10 players with no card, no Stripe and the free month not started; a fake name or the right name at the wrong postcode, a mobile or email already on venueplay (a login, an account typed any way, an earlier sign-up), or a list that will not answer is held for HQ with the same words and one ticket; a login or account read that fails makes nothing; a double tap makes one account; HQ owner or accounts approve (the normal account and welcome) or refuse in one tap; no session, no seats above 10, no uplift on any path; the parked items 60 and 61 are absent', 75,
              'A stranger, a bot or a returning venue given a free month, or a sign-up that reaches Stripe or a bill'),
+            # D160/D161: the try-it demo on the one trivia engine is never billed (Dean, 5 Nov 2026; INBOX 82, 84b; migration 172),
+            # branch fix/try-demo-10nov.
+            ('D160. The try-it demo runs on the real trivia engine and is never billed, never metered and never remembered',
+             'test-try-demo.js',
+             'runs the game Worker: a demo session carries is_demo, a real night never runs on one and a demo never takes over a real night, 3 a day, trivia only; its join screen asks name, email, mobile and the one tick; 50 phones and 10 get in; ticked, the player is on that venue\'s list and nowhere else, not ticked no contact is kept; 5 questions of 30 s whatever is sent, no weekly check or stamp, no asked-question memory, no saved prefs, no 402; never charged with 50 players and approval, the streak untouched; a real night beside it does all of those; metering leaves it out', 46,
+             'A venue billed, moved up a plan or locked out of its trivia night by a demo, a real night run unbilled as a demo, or a demo player\'s details kept without their tick'),
+            ('D161. The billing Worker leaves the try-it demo out of every stats, activity and "has it played" read',
+             'test-try-demo-billing.js',
+             'runs the billing Worker with a demo beside a real night: quiet venues, venue history, auto-archive, set players\' "played since", venue stats, metering stats, the monthly report read, the draw log and the nights list each ask vp_sessions with is_demo=not.is.true and show only the real night; find a person still sees demo players', 22,
+             'A demo counted as a night in a venue\'s stats or report, keeping a cancelling venue alive, or closing the one-hour undo on a players change'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers
