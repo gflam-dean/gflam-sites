@@ -34,7 +34,7 @@ function makeConsole(o) {
   var sent = [], errors = [], timers = [], renders = 0;
   var players = o.players | 0;
   function playerCount() { return players; }
-  function clearTick() {} function clearAuto() {}
+  function clearTick() {} function clearAuto() {} function clearAutoFinish() {} function armAutoFinish() {}
   function clearErrForAction() {}
   function saveTrivia() {}
   function isDouble() { return false; }

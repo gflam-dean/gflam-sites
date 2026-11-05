@@ -13425,6 +13425,18 @@ MUTATIONS = [
     ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/host.html',
      'autoReveal:true, autoSecs:10, endStep:0, allInAt:0, winnersAll:false,', 'autoReveal:true, autoSecs:10, endStep:0, allInAt:0, winnersAll:true,',
      'the winners show all at once by default'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/host.html',
+     '      if(isLast){ armAutoFinish(); renderConsole(); }', '      if(isLast){ renderConsole(); }',
+     'the TV sits on the last answer for ever when the host does not tap'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/host.html',
+     'G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(); } }, AUTO_FINISH_MS);', 'G.finishT=setTimeout(function(){ G.finishT=null; clearAutoFinish(); finish(); }, AUTO_FINISH_MS);',
+     'the 1:30 timer puts the winners up a second time after the host already did'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/host.html',
+     '  function finish(){\n    clearAutoFinish();\n', '  function finish(){\n',
+     'the host taps Reveal leaderboard and the 1:30 timer still fires'),
+    ('test-trivia-live-fixes-6nov.js', 'venueplay/app/trivia/host.html',
+     '  var AUTO_FINISH_MS=90000;', '  var AUTO_FINISH_MS=30000;',
+     'the TV reveals the winners itself after 30 seconds, not 1:30'),
 ]
 
 

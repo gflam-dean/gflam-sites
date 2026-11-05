@@ -168,6 +168,24 @@ ok('the venue\'s ad has its one slot above our logo, and its script is loaded', 
 ok('the ad shows on the waits and the end of the night only, and the venue\'s slides are asked for', /VPPhoneAd\.show\(which==="vWait" \|\| which==="vFinal"\)/.test(PLAY) && /\{ code:P\.room, ad:1 \}/.test(PLAY) && /VPPhoneAd\.set\(/.test(PLAY));
 ok('a heading for any other moment (no game, welcome back, game ended) hides the tick and the chip', /\$\("waitTiles"\)\.classList\.toggle\("hidden", !!head\)/.test(PLAY) && /\$\("waitIcon"\)\.classList\.toggle\("hidden", !!head\)/.test(PLAY));
 
+
+print('THE TV IS NEVER STUCK ON THE LAST ANSWER (INBOX 50/77: "TV reveals by itself in 1:30 if you don\'t tap")');
+var aft = eval(liftFrom(HOST, 'autoFinishText') + ';autoFinishText');
+ok('the console line counts down from 1:30', aft(90000) === "The TV reveals the winners by itself in 1:30 if you don't tap." && aft(9000) === "The TV reveals the winners by itself in 0:09 if you don't tap.", aft(90000));
+(function () {
+  var timers = [], finished = 0, G = { status: 'reveal', busy: false };
+  function setTimeout(f, ms) { timers.push({ f: f, ms: ms }); return 1; } function setInterval() { return 2; } function clearTimeout() {} function clearInterval() {}
+  function finish() { finished++; } function $() { return null; } var AUTO_FINISH_MS = +((HOST.match(/var AUTO_FINISH_MS=(\d+);/) || [])[1]);
+  eval(['clearAutoFinish', 'armAutoFinish', 'autoFinishText'].map(function (n) { return liftFrom(HOST, n); }).join('\n'));
+  armAutoFinish();
+  ok('after the last reveal a 90 second timer is set', timers.length === 1 && timers[0].ms === 90000);
+  timers[0].f();
+  ok('and with no tap it puts the winners up itself', finished === 1);
+  var G2 = G; G.status = 'ended'; timers = []; finished = 0; armAutoFinish(); timers[0].f();
+  ok('but not once the host has already tapped', finished === 0);
+})();
+ok('the last reveal arms it, and the host\'s tap and End round clear it', /if\(isLast\)\{ armAutoFinish\(\); renderConsole\(\); \}/.test(HOST) && /function finish\(\)\{\n    clearAutoFinish\(\);/.test(HOST) && /clearTick\(\); clearAuto\(\); clearAutoFinish\(\);/.test(HOST));
+
 print('THE +10 SECONDS BUTTON IS GONE (Dean, 6 Nov 2026)');
 ok('no "+10 seconds" button on the console', HOST.indexOf('+10 seconds') < 0 && HOST.indexOf('addTimeBtn') < 0);
 ok('no addTime() function and no call to the add-time route from the console', HOST.indexOf('function addTime(') < 0 && HOST.indexOf('/host/question/add-time') < 0);

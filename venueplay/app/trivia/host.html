@@ -924,6 +924,7 @@
         vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
       }); brow.appendChild(endb);
       body.appendChild(brow);
+      if(isLast && G.finishAt){ var afn=el("div","note",autoFinishText(G.finishAt-Date.now())); afn.id="autoFinishNote"; afn.style.margin="8px 0 0"; afn.style.textAlign="center"; body.appendChild(afn); }
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
       return;
     }
@@ -1247,6 +1248,7 @@
       // Between-question leaderboard, but NOT after the last question - there the host reveals
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
+      if(isLast){ armAutoFinish(); renderConsole(); }   // the console shows the 1:30 line
       if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){
         /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
         if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
@@ -1266,7 +1268,20 @@
     return "error";
   }
   var NOBODY_MSG="Nobody has joined this game yet, so there are no scores to show. Players join with the code on the TV.";
+  /* THE TV IS NEVER STUCK ON THE LAST ANSWER (INBOX 50 and 77, Dean 5 Nov 2026: "TV reveals by itself in 1:30 if you don't
+     tap"). After the last question's reveal, if the host has not tapped Reveal leaderboard within 90 seconds, the podium goes
+     up by itself, the same way the tap does: staged (first place covered, silent) unless the venue chose "All at once". */
+  var AUTO_FINISH_MS=90000;
+  function clearAutoFinish(){ if(G.finishT){ clearTimeout(G.finishT); G.finishT=null; } if(G.finishTick){ clearInterval(G.finishTick); G.finishTick=null; } G.finishAt=0; }
+  function armAutoFinish(){
+    clearAutoFinish();
+    G.finishAt=Date.now()+AUTO_FINISH_MS;
+    G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(); } }, AUTO_FINISH_MS);
+    G.finishTick=setInterval(function(){ var n=$("autoFinishNote"); if(n) n.textContent=autoFinishText(G.finishAt-Date.now()); }, 1000);
+  }
+  function autoFinishText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The TV reveals the winners by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+" if you don't tap."; }
   function finish(){
+    clearAutoFinish();
     clearTick();
     G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
@@ -1497,7 +1512,7 @@
     send({ t:"state", phase:"lobby", colour:G.colour });
   }
   function endRound(){
-    clearTick(); clearAuto();
+    clearTick(); clearAuto(); clearAutoFinish();
     clearTrivia();
     var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
     G.status="setup"; G.current=null; G.answeredPids={}; G.endStep=0;
