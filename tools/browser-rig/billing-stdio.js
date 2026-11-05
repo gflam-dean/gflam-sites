@@ -50,9 +50,9 @@ if (typeof crypto === 'undefined') {
 ENV.VP_UNSUB_SECRET = 'billing-rig-test-secret';
 load('partyplay-backend/worker/_test-sha256.js');   // a real HMAC for the unsubscribe token
 if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { this.encode = function (s) { return { _s: String(s) }; }; };
-if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: k._s }); };
+if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: (k && k._s != null) ? k._s : String.fromCharCode.apply(null, Array.prototype.slice.call(k || [])) }); };   // raw bytes too (the no-card start signs its SMS hook call with a base64 secret)
 if (!crypto.subtle.sign) crypto.subtle.sign = function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); };
-var STORED = [];
+var STORED = [], TEXTS = [];
 /* A TABLE THAT IS NOT THERE YET (29 Oct 2026, tools/helpdesk-hq-in-chrome.test.py): {ask:'missing', table, on}
    makes every request to it answer the way live PostgREST answered for vp_help_saved_replies before
    migration 126 (read-only check, 29 Oct 2026): 404, code PGRST205. The fake database would otherwise
@@ -71,6 +71,31 @@ globalThis.fetch = function (url, opts) {
     var q = parseQ(u.split('?')[1] || ''), set = JSON.parse(opts.body), got = [];
     tbl('vp_signin_links').forEach(function (r) { if (match(r, q)) { for (var k in set) r[k] = set[k]; got.push({ auth_user_id: r.auth_user_id, venue_id: r.venue_id }); } });
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(got); } });
+  }
+  /* THE NO-CARD START (6 Nov 2026, tools/signup-start-in-chrome.test.py). Its code goes out through the SMS hook, which
+     this rig takes and keeps ({ask:'texts'}), never sends. Its one-request-wins claim is a conditional PATCH asking for
+     return=representation, answered with the rows it changed, as PostgREST does. Auth's user list is paged as Auth
+     pages it (page from 1, per_page), because the start's strict search reads to an EMPTY page. */
+  if (u.indexOf('sms-hook.rig') !== -1) {
+    TEXTS.push(JSON.parse(opts.body));
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } });
+  }
+  if (/\/rest\/v1\/vp_signup_starts\?/.test(u) && m === 'PATCH' && /return=representation/.test(((opts && opts.headers) || {}).Prefer || '')) {
+    var sq = parseQ(u.split('?')[1] || ''), sset = JSON.parse(opts.body), sgot = [];
+    tbl('vp_signup_starts').forEach(function (r) { if (match(r, sq)) { for (var k in sset) r[k] = sset[k]; sgot.push({ id: r.id }); } });
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(sgot); } });
+  }
+  if (m === 'POST' && /\/auth\/v1\/admin\/users$/.test(u)) {
+    var nb0 = JSON.parse(opts.body), ph0 = nb0.phone ? String(nb0.phone).replace('+', '') : '', em0 = String(nb0.email || '').toLowerCase();
+    var clash = tbl('auth').filter(function (x) { return (ph0 && x.phone === ph0) || (em0 && x.email === em0); })[0];
+    if (clash) return Promise.resolve({ ok: false, status: 422, json: function () { return Promise.resolve({ msg: 'already registered', error_code: ph0 && clash.phone === ph0 ? 'phone_exists' : 'email_exists' }); } });
+    var nu0 = { id: newId(), phone: ph0, email: em0 }; tbl('auth').push(nu0);
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(nu0); } });
+  }
+  if (m === 'GET' && /\/auth\/v1\/admin\/users\?/.test(u)) {
+    var pg = /[?&]page=(\d+)/.exec(u), pp = /[?&]per_page=(\d+)/.exec(u), per = pp ? +pp[1] : 50, from = ((pg ? +pg[1] : 1) - 1) * per;
+    var ul = tbl('auth').slice(from, from + per);
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({ users: ul }); } });
   }
   var mt = /\/rest\/v1\/([a-z_]+)/.exec(u);
   if (mt && MISSING[mt[1]]) {
@@ -94,6 +119,7 @@ for (;;) {
   if (!line) break;
   var rq = JSON.parse(line), out = null;
   if (rq.ask === 'stored') { print(JSON.stringify({ status: 200, body: STORED })); continue; }
+  if (rq.ask === 'texts') { print(JSON.stringify({ status: 200, body: TEXTS })); continue; }   // the codes the no-card start texted (6 Nov 2026)
   if (rq.ask === 'sent') { print(JSON.stringify({ status: 200, body: sent })); continue; }   // the emails the fake Resend took (29 Oct 2026)
   if (rq.ask === 'missing') { MISSING[rq.table] = !!rq.on; print(JSON.stringify({ status: 200, body: { missing: !!rq.on } })); continue; }
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }

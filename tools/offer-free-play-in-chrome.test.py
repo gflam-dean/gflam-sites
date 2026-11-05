@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """THE OFFER PAGE'S "HAVE A PLAY FOR FREE" BUTTON, IN CHROME (Dean, 5 Nov 2026, for the 6 Nov release).
 
-A page-only stopgap until the no-card sign-up: on /offer-nov (venueplay/nsw.html, venueplay/_redirects) the hero's
-FIRST button is "Have a play for free" and "See pricing" is second. It opens the EXISTING "Talk to us" form with the
-topic "Set me up a free account" shown and the message started the same way, and sending it goes through the
+On /offer-nov (venueplay/nsw.html, venueplay/_redirects) the hero's FIRST button is "Have a play for free" and "See
+pricing" is second. Since 6 Nov 2026 (fix/signup-core-10nov) the button goes to the no-card start's five boxes (#start,
+tools/signup-start-in-chrome.test.py), and Friday's stopgap stays as that form's fallback while the start is not switched
+on: window.VPFreeAccountEnquiry opens the EXISTING "Talk to us" form with the topic "Set me up a free account" shown and
+the message started the same way, and sending it goes through the
 existing POST /contact, so the enquiry is an ordinary sales help desk ticket (no new route, no Worker change). The
 thank-you line for this topic says when: "Thanks, we'll set up your free account and send it through, usually within
 one business day." Plain "Talk to us" is unchanged. The home page never carries the button.
@@ -68,18 +70,18 @@ try:
         time.sleep(0.8)
         v = S.json(sid, HERO, {})
         b = v.get('btns') or []
-        ok('%s: the hero\'s first button is "Have a play for free" and opens the Talk to us form' % where,
-           len(b) >= 2 and b[0]['t'] == 'Have a play for free' and b[0]['href'] == '#contact' and b[0]['topic'] == 'free-account', b[:1])
+        ok('%s: the hero\'s first button is "Have a play for free" and goes to the no-card start (#start)' % where,
+           len(b) >= 2 and b[0]['t'] == 'Have a play for free' and b[0]['href'] == '#start', b[:1])
         ok('%s: "See pricing" is the second button' % where, len(b) >= 2 and b[1]['t'] == 'See pricing' and b[1]['href'] == '#offer', b[1:2])
         ok('%s: every hero button sits inside the page (no sideways scroll), at least 44px tall' % where,
            b and all(x['l'] >= 0 and x['r'] <= v.get('vw', 0) and x['h'] >= 44 for x in b), b)
         f = S.json(sid, FORM, {})
         ok('%s: before the button, the form has no topic line and an empty message (plain Talk to us)' % where,
            not f.get('topicShown') and f.get('msg') == '', f)
-        S.js(sid, 'document.querySelector("#top .hero-cta a[data-topic=free-account]").click(); true')
+        S.js(sid, 'window.VPFreeAccountEnquiry({}); true')   # the start's fallback while it is not switched on
         S.until(sid, '!document.getElementById("ct-topic").hidden', 5)
         f = S.json(sid, FORM, {})
-        ok('%s: the button shows the topic "Set me up a free account" on the form' % where,
+        ok('%s: the fallback shows the topic "Set me up a free account" on the form' % where,
            f.get('topicShown') and f.get('topic') == 'Topic: ' + TOPIC, f)
         ok('%s: and starts the message the same way' % where, (f.get('msg') or '').startswith(TOPIC), f.get('msg'))
         S.js(sid, FILL)
