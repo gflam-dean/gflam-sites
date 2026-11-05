@@ -211,15 +211,6 @@ pass("a name that never arrives still reads Trivia Night", screen.indexOf('|| "T
 pass("the builder no longer claims a 37,000 question bank", builder.indexOf("37,000") < 0);
 
 print("");
-print("12. MORE TIME IS ASKED OF THE SERVER, NEVER FAKED (finding 9)");
-pass("the host has a +10 seconds button", host.indexOf('"+10 seconds"') > 0);
-pass("it moves the real deadline through the Worker", host.indexOf('/host/question/add-time') > 0);
-pass("a Worker without the route tells the host plainly instead of lying to the room",
-     host.indexOf("Extra time is not switched on at the server yet") > 0);
-pass("the phone follows the new deadline", play.indexOf('m.t==="time"') > 0);
-pass("the TV ring follows it too", screen.indexOf('m.t==="time"') > 0);
-
-print("");
 print("13. THE BUILDER IS THREE STEPS AND ENDS AT RUN IT NOW (Dean, 9 Sep: 'easier on the host')");
 pass("there are three numbered steps", builder.indexOf('data-step="1"') > 0 && builder.indexOf('data-step="2"') > 0 && builder.indexOf('data-step="3"') > 0);
 pass("one tap on a theme builds a whole night", builder.indexOf("function quickNight(") > 0 && builder.indexOf("count:20") > 0);

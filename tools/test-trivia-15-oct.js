@@ -234,6 +234,7 @@ print('\n== 4. the smaller ones ==');
 })();
 await (async function () {
   // b. a brand-new joiner is "in", not "back in", and gets no "1st of 1"
+  globalThis.clearAuto = function () {}; globalThis.armNoGame = function () {};   // the "no host heard" timer is tested in test-trivia-live-fixes-6nov.js
   var dom = makeDom(), msgs = [], P = { joined: true, gameId: 'g1', q: null, ended: false, total: 0, rank: 0, pendingScore: true, name: 'New' };
   var f = new Function('P', '$', 'show', 'playerGet', 'renderQuestion', 'stopCd', 'lockOut', 'refreshTotals',
     liftAll(PLAY, ['applyPending', 'pullScore', 'showWait', 'rankText', 'ordinal'], 'trivia/play.html') + '; return applyPending;');
@@ -242,7 +243,7 @@ await (async function () {
   show('b. a phone that has just typed its name is told "You’re in", not "You\'re back in"', /^You’re in\./.test(dom.$('waitMsg').textContent), dom.$('waitMsg').textContent);
   show('   and is not told "1st of 1" before it has scored', dom.$('waitRank').classList.contains('hidden') && dom.$('waitScore').classList.contains('hidden'));
   P.pendingScore = true; applyPending(); await flush();
-  show('   control: a phone coming back IS "back in"', /back in/.test(dom.$('waitMsg').textContent));
+  show('   control: a phone coming back is welcomed back, and promised no next question (6 Nov 2026)', dom.$('waitHead').textContent === 'Welcome back' && !/next question coming up/i.test(dom.$('waitMsg').textContent), dom.$('waitHead').textContent + ' / ' + dom.$('waitMsg').textContent);
   P.pendingScore = true; P.total = 0; f(P, dom.$, function () {}, function () { return Promise.resolve({ total: 450, rank: 2, players_count: 5 }); }, function () {}, function () {}, function () {}, function () {})();
   await flush();
   show('   and a phone with points still sees its place', !dom.$('waitRank').classList.contains('hidden') && dom.$('waitRank').textContent === '2nd', dom.$('waitRank').textContent);   // never "2nd of 5" (Dean, 4 Nov 2026)
