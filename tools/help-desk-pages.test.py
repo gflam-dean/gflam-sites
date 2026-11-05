@@ -70,7 +70,7 @@ window.__asked=[];function q(){var o={select:function(c){__asked.push("select "+
 window.VP={ready:function(){return Promise.resolve({currentVenueId:null,venue:null,isAdmin:false,client:{from:q},staff:V.map(function(v){return{venue_id:v.id,role:"owner"};})});},
 getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"group-token",user:{email:"owner@theminibar.com.au"}}}});}}};}};})();</script>
 <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
-    # The account page (billing.html) says which venue it shows. Help must use it, with that venue's TV link.
+    # The account page (billing.html) says which venue it shows. Help says venueplay.com.au/tv and the screen code (Dean, 5 Nov 2026), whichever venue it shows.
     '/__fixture/account-hook.html': '''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body><header><div class="bar"><span class="hactions"><a class="hact" href="#">Account</a></span></div></header>
 <script>window.VP_HELP_VENUES=function(){return[{id:"aaaaaaaa-0000-4000-8000-000000000001",name:"Broadbeach",slug:"mini-bar-broadbeach"},{id:"aaaaaaaa-0000-4000-8000-000000000002",name:"Burleigh",slug:"mini-bar-burleigh"}];};
@@ -318,7 +318,7 @@ def group_checks(b, VP):
     t.until('!!document.querySelector("[data-issue]")', 5)
     t.js('document.querySelector("[data-issue]").click()')
     tvs = t.until('(document.querySelector(".vph-stepbody")||{}).textContent', 5)
-    check("account page: the TV step names the link of the venue the page is showing", tvs == "Check the TV is showing your venue's TV link, venueplay.com.au/tv?mini-bar-burleigh.", tvs)
+    check("account page: the TV step names venueplay.com.au/tv and the screen code, no venue link", tvs == "Check the TV is showing venueplay.com.au/tv (then type the six-character screen code from your host console).", tvs)
     t.js('document.querySelector(".vph-still").click()')
     t.until('!!document.getElementById("vphSubject")', 5)
     check('account page: no picker, the page already said which venue', t.js('!document.getElementById("vphPick")') is True)
@@ -372,7 +372,7 @@ def help_page_checks(b, VP):
             t.until('!!document.querySelector("#vphFlow-venue .vph-still")', 3)
             if k == 1:
                 tvs = t.js('document.querySelector("#vphFlow-venue .vph-stepbody").textContent')
-                check(tag + " venue: signed out, the TV step says where the venue's link is, never a raw {tv_link}", tvs == "Check the TV is showing your venue's TV link (it is on your Account page).", tvs)
+                check(tag + " venue: signed out, the TV step is the same bare address, never a raw {tv_link}", tvs == "Check the TV is showing venueplay.com.au/tv (then type the six-character screen code from your host console)." and "/tv?" not in tvs, tvs)
             t.js('document.querySelector("#vphFlow-venue .vph-still").click()')
         t.until('!!document.getElementById("vphMsg-venue")', 5)
         about = t.js('(document.querySelector("#vphFlow-venue .vph-about")||{}).textContent')
@@ -638,7 +638,7 @@ def main():
                 t.shot('07b-venue-step-1')
             if k == 1:
                 tvs = t.js('document.querySelector(".vph-stepbody").textContent')
-                check("venue: the TV step names this venue's own TV link", tvs == "Check the TV is showing your venue's TV link, venueplay.com.au/tv?royal.", tvs)
+                check("venue: the TV step names venueplay.com.au/tv and the screen code, no venue link", tvs == "Check the TV is showing venueplay.com.au/tv (then type the six-character screen code from your host console).", tvs)
             t.js('document.querySelector(".vph-still").click()')
         t.until('!!document.getElementById("vphSubject")', 5)
         check('venue: after the steps, the form opens with the issue as the subject', t.js('document.getElementById("vphSubject").value') == I3['title'], t.js('document.getElementById("vphSubject").value'))

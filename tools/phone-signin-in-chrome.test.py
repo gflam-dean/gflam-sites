@@ -333,9 +333,9 @@ try:
             S.until(sid, 'document.readyState==="complete"', 10)
             body = js(sid, 'document.body.innerText') or ''
             if name.startswith('11'):
-                ok('the welcome ends "Cheers, Harry", VenuePlay, venueplay.com.au, with no Dean in the sign-off', re.search(r'Cheers,\s*Harry\s*venueplay\s*venueplay\.com\.au', body) is not None, body[-400:])
+                ok('the welcome ends "Cheers, Harry", the venueplay team, venueplay.com.au, with no Dean in the sign-off', re.search(r'Cheers,\s*Harry\s*the venueplay team\s*venueplay\.com\.au', body) is not None, body[-400:])
             else:
-                ok('the new-link email is signed by the VenuePlay team, with one button', 'The venueplay team' in body and 'Open your venueplay' in body, body[:200])
+                ok('the new-link email is signed by the venueplay team, with one button', 'the venueplay team' in body and 'The venueplay team' not in body and 'Open your venueplay' in body, body[:200])
             ok('%s fits a phone with no sideways scroll' % name, no_sideways(sid))
             shot(sid, name)
             S.close_tab(tid)

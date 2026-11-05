@@ -383,7 +383,7 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   check('the autopilot with sender_name and sender_email: set up, ONE welcome', pr.status === 200 && pr.body.ok === true && sent.length === 1, pr.body);
   check('it is FROM venueplay hello@ and replies go to hello@venueplay.com.au, never Harry\'s cold mailbox', wm.from === 'venueplay <hello@send.venueplay.com.au>' && wm.reply_to === 'hello@venueplay.com.au' &&
     JSON.stringify(wm).indexOf('harry@venueplay.online') === -1, [wm.from, wm.reply_to]);
-  check('signed "Cheers, Harry", then venueplay, then venueplay.com.au', signoffOf(wm.html) === 'Cheers, Harry venueplay venueplay.com.au', signoffOf(wm.html));
+  check('signed "Cheers, Harry", then "the venueplay team", then venueplay.com.au', signoffOf(wm.html) === 'Cheers, Harry the venueplay team venueplay.com.au', signoffOf(wm.html));
   check('no Dean, no Gflam Group line and no phone in the sign-off, and no em dash anywhere', !/Dean|Gflam|\d{4} ?\d{3}/.test(signoffOf(wm.html)) && !/[\u2014\u2013]/.test(wtxt), signoffOf(wm.html));
   check('the only phone number anywhere in it is 07 5228 3667', (wtxt.match(/\b0\d[\d ]{7,11}\d\b/g) || []).every(function (n) { return n.replace(/ /g, '') === '0752283667'; }), wtxt.match(/\b0\d[\d ]{7,11}\d\b/g));
   var aud = DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_set_up'; })[0] || {};
@@ -392,7 +392,7 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
     aud.detail && aud.detail.sender_name === 'Harry' && aud.detail.sender_email === 'harry@venueplay.online' && wrow.detail && wrow.detail.senderName === 'Harry', [aud.detail, wrow.detail]);
   prospectWorld();
   await vpaAutopilotProspect(auto(BASE), ENV, J);
-  check('no sender given: the team sign-off ("Cheers, The venueplay team", venueplay.com.au), still from and to hello@', signoffOf((sent[0] || {}).html) === 'Cheers, The venueplay team venueplay.com.au' &&
+  check('no sender given: the team sign-off ("Cheers, The venueplay team", venueplay.com.au), still from and to hello@', signoffOf((sent[0] || {}).html) === 'Cheers, the venueplay team venueplay.com.au' &&
     (sent[0] || {}).reply_to === 'hello@venueplay.com.au', signoffOf((sent[0] || {}).html));
   var BAD = [
     [{ sender_name: 'Harry' }, 'a name with no address'],
@@ -418,10 +418,10 @@ function liveLinks(user) { var now = Date.now(); return DB.vp_signin_links.filte
   TPL['welcome-prospect.html'] = OLD_TPL.replace('>{{signoff}}</p>', '>Cheers,<br>Dean<br>VenuePlay</p>');
   var oldHtml = await vpaRenderProspectWelcome(ENV, { email: 'a@b.example', venueName: 'X', senderName: 'Harry', senderEmail: 'harry@venueplay.online', slides: 0, seats: 10 });
   TPL['welcome-prospect.html'] = OLD_TPL;
-  check('a new Worker with the page still on the old template (Worker first, Pages minutes later): the old fixed sign-off is replaced too', signoffOf(oldHtml) === 'Cheers, Harry venueplay venueplay.com.au', signoffOf(oldHtml));
+  check('a new Worker with the page still on the old template (Worker first, Pages minutes later): the old fixed sign-off is replaced too', signoffOf(oldHtml) === 'Cheers, Harry the venueplay team venueplay.com.au', signoffOf(oldHtml));
   world();
   await vpaSendSigninLink(ENV, AMIT, V1, {});
-  check('the sign-in link email also replies to hello@ and is signed by the team, not Dean', (sent[0] || {}).reply_to === 'hello@venueplay.com.au' && /Cheers, The venueplay team venueplay\.com\.au/.test(visibleText((sent[0] || {}).html)) &&
+  check('the sign-in link email also replies to hello@ and is signed by the team, not Dean', (sent[0] || {}).reply_to === 'hello@venueplay.com.au' && /Cheers, the venueplay team venueplay\.com\.au/.test(visibleText((sent[0] || {}).html)) &&
     !/Dean/.test(visibleText((sent[0] || {}).html)), (sent[0] || {}).reply_to);
 
   section('3e. Nothing anywhere opens the email-code sign-in first');

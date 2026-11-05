@@ -732,7 +732,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
-  "checks": 125,
+  "checks": 129,
   "counted_by": "lines"
  },
  "tools/test-prospect-terms-first-game.js": {
@@ -1060,7 +1060,7 @@
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
-  "checks": 33,
+  "checks": 36,
   "counted_by": "lines"
  },
  "tools/tv-bare-setup-in-chrome.test.py": {

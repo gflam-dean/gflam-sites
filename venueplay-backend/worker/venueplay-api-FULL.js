@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 12:13 · 6447c09f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 13:04 · d0bc1069';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3501,7 +3501,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   });
 
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
-    tv_url: site + '/tv?' + encodeURIComponent(slug),
+    tv_url: site + '/tv',   // bare: the TV asks for the screen code (Dean, 5 Nov 2026), never a /tv?slug link
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
     slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null, offer_code: offer.code || null };
   if (welcome) out.welcome = welcome;
@@ -4644,6 +4644,13 @@ function vpaOfferMonthPhrase(code) {
   return cm ? 'while the ' + VPA_MONTH_NAMES[cm.m] + ' offer runs' : 'while our offer runs';
 }
 
+/* The offer's last day (Dean, 5 Nov 2026): " You just need to start by 30 November." for OFFER-NOV-2026, 31 December for a
+   DEC code. Starts with a space so it sits after a full stop; empty when no month is known. */
+function vpaOfferDeadline(code) {
+  const cm = vpaCodeMonth(code);
+  return cm ? ' You just need to start by ' + new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] + '.' : '';
+}
+
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
    personal, from Dean: as promised, here is your account, ONE button, about 5 minutes, the price in one
    line, the Spam Act footer. Everything else lives in the app's first-run setup. Sent from "Dean at
@@ -4667,10 +4674,11 @@ function vpaProspectSender(rawName, rawEmail) {
   if (!m || email.length > 120 || VPA_OUR_MAIL_DOMAINS.indexOf(m[1]) === -1) return { error: 'sender_email must be one of our own mailboxes (' + VPA_OUR_MAIL_DOMAINS.join(', ') + ').' };
   return { name: name, email: email };
 }
-/* The sign-off: their name, VenuePlay, the website. No phone but the support line, which the footer carries. */
+/* The sign-off: their first name, the venueplay team, the website. No phone but the support line, which the footer carries. */
 function vpaProspectSignoff(senderName) {
-  const who = senderName ? vpaEsc(senderName) : 'The venueplay team';
-  return 'Cheers,<br>' + who + '<br>' + (senderName ? 'venueplay<br>' : '') + '<a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
+  /* Dean, 5 Nov 2026: the sender's FIRST name (never the surname), then "the venueplay team", lowercase t. */
+  const first = String(senderName || '').trim().split(/\s+/)[0];
+  return 'Cheers,<br>' + (first ? vpaEsc(first) + '<br>' : '') + 'the venueplay team<br><a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
 }
 function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
@@ -4697,6 +4705,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
+    .replace(/{{offer_deadline}}/g, vpaOfferDeadline(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
@@ -7559,7 +7568,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
        Found by audit 20 Sep 2026, the day after the copy beside it was changed to say
        "always use this full link". A venue with no slug yet falls back to the bare link,
        which is no worse than before. */
-    const tvFor = (v) => site + '/tv' + (v && v.slug ? ('?' + encodeURIComponent(v.slug)) : '');
+    const tvFor = () => site + '/tv';   // bare (Dean, 5 Nov 2026): venues type the screen code from their host console
     const tvUrl = tvFor(venues && venues[0]);
     /* HELP IS support@ (Dean, 23 Oct 2026: the support, accounts and sales mailboxes exist). The
        welcome's one ask is "if you need any help, let us know", so its address and its reply-to are
@@ -8000,7 +8009,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{monthly_total}}/g, money(seats * rate))
       .replace(/{{card_url}}/g, cardUrl)
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
+      .replace(/{{tv_url}}/g, site + '/tv')
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
@@ -8031,7 +8040,6 @@ async function vpbFireVenueOnboarding(env, o) {
     html = html
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'support@venueplay.com.au');
     html = vpaFillSupport(html);
@@ -15130,7 +15138,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     const slug = (opts && opts.slug) || '';
     // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
     // link and finds their screens from the console rather than a wrong guess.
-    const tv = slug ? (' TV URL: ' + site + '/tv?' + slug) : '';
+    const tv = slug ? (' TV: ' + site + '/tv, then type the screen code from your host console.') : '';
     // Nothing about manager vs host here: they will see what they can do the moment they sign in,
     // and the words would mean nothing to them before then.
     const message =

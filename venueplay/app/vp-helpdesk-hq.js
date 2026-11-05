@@ -108,7 +108,7 @@
       first_name: first || "there",
       venue: ctx.venue_name || (aud === "venue" ? "your venue" : "the venue"),
       ticket_no: t.ticket_no ? String(t.ticket_no) : "",
-      tv_link: ctx.venue_slug ? "your venue's TV link, venueplay.com.au/tv?" + ctx.venue_slug : "your venue's TV link (it is on your Account page)",
+      tv_link: "venueplay.com.au/tv (then type the six-character screen code from your host console)",   // Dean, 5 Nov 2026: never a /tv?slug link
       party_code: t.room_code ? "the party code " + t.room_code : "your party code"
     };
     return String(text || "").replace(/\{([a-z_]+)\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(map, k) && map[k] ? map[k] : m; });

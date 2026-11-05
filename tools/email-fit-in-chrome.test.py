@@ -16,7 +16,7 @@ LONG = 'https://venueplay.com.au/app/go#t=abcdefghijklmnopqrstuvwxyz0123456789ab
 FILL = {'venue_name': 'The Wellshot Hotel and Bowls Club', 'support_email': 'hello@venueplay.com.au', 'player_count': '24', 'host_console_url': LONG,
         'tv_url': LONG, 'support_tel': '+61752283667', 'support_phone': '07 5228 3667', 'unsubscribe_url': LONG, 'terms_url': LONG,
         'privacy_url': LONG, 'player_rate': '$2.50', 'due_date': '12 November 2026', 'cancel_url': LONG, 'greeting': 'Hi Sam,',
-        'signoff': 'Cheers,<br>The venueplay team<br>venueplay.com.au', 'nobingo_places': 'South Australia'}
+        'signoff': 'Cheers,<br>the venueplay team<br>venueplay.com.au', 'nobingo_places': 'South Australia'}
 fails = ran = 0
 def check(name, ok, saw=None):
     global fails, ran

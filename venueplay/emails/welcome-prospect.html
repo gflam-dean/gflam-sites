@@ -18,7 +18,7 @@
   are already one VenuePlay login at another venue), founding / standard (offer).
   Merge fields:
     {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told) {{cancel_url}}
-    {{player_rate}} {{offer_phrase}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
+    {{player_rate}} {{offer_phrase}} {{offer_deadline}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (Dean, 29 Oct 2026: "Cheers," then whoever's mailbox the venue
     wrote to (sender_name from the autopilot), then VenuePlay, then venueplay.com.au; "The VenuePlay team"
     without one. The email itself always comes from hello@ and replies go to hello@.)
@@ -63,8 +63,8 @@
 <!--IF:nooneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we'll email {{login_email}} a link that opens your account. No password, and no app to download.</p>
 <!--ENDIF:nooneclick-->
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
-              <td><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td>
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:16px auto 0"><tr>
+              <td align="center"><a href="{{signin_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td>
             </tr></table>
           </td></tr>
         </table>
@@ -72,7 +72,7 @@
       <tr><td style="padding:22px 28px 0">
         <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">It takes about 5 minutes and walks you through everything.</p>
 <!--IF:founding-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd {{offer_phrase}}, first month free, no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">To lock in the {{player_rate}} deal we have on at the moment, we&#39;ve set your account up at {{player_rate}} a player a month on your usual crowd, and it stays at {{player_rate}} for as long as you&#39;re with us.{{offer_deadline}} Your first month is free, and there&#39;s no lock-in.</p>
 <!--ENDIF:founding-->
 <!--IF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>

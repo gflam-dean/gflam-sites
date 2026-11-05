@@ -12,7 +12,7 @@
   Merge fields:
     {{venue_name}}        the venue we just set up, e.g. "Tugun Surf Club"
     {{host_console_url}}  link to the app host console sign-in
-    {{tv_url}}            that venue's TV screen link (/tv?slug)
+    {{tv_url}}            the TV address, venueplay.com.au/tv (no venue in it)
     {{card_url}}          secure add-your-card link (card flavour only)
     {{player_count}}      players their plan covers, e.g. "80"
     {{player_rate}}       e.g. "$2.50"
@@ -121,7 +121,7 @@
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
             <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your screens</p>
-            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>On the TV:</strong> open <a href="{{tv_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none;word-break:break-all">{{tv_url}}</a> on your venue screen and save it as the TV's home page. Always use this full link: it is what tells the screen which venue it is.</p>
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>On the TV:</strong> open <a href="{{tv_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none;word-break:break-all">venueplay.com.au/tv</a> on your venue screen (or the venueplay TV app), then type the six-character screen code from your host console. The TV remembers your venue after that.</p>
             <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>To sign in:</strong> you, your managers and your hosts all sign in at <a href="{{host_console_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> with a text code to your mobile, no app to install.</p>
           </td></tr>
         </table>

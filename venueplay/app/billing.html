@@ -2089,7 +2089,7 @@
     });
   }
   function setTvLinks(slug){
-    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
+    $("tvLink").textContent = "venueplay.com.au/tv";   // bare (Dean, 5 Nov 2026): venues type the screen code
     $("screenPreview").href = tvHref(slug);
   }
   /* The venue rows this page needs beyond the billing summary: the slug (the venue link), the state
