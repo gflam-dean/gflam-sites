@@ -235,6 +235,17 @@ async function moreSections() {
   var ref = await call('/admin/signup-start/decide', { start_id: wp.id, decision: 'refuse' }, AS(ADMIN));
   check('refuse makes nothing', ref.status === 200 && snapshot().f === s2.f + 1, ref);
 
+  /* HQ's pane draws what a member of the public typed: escaped, with both buttons naming the sign-up. */
+  var PANE = readFile('venueplay/app/vp-prospects-hq.js');
+  var PW = { VP: null, fetch: function () { return Promise.resolve({ status: 200, ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };
+  PW.document = { readyState: 'complete', getElementById: function () { return null; }, addEventListener: function () {} };
+  (new Function('window', PANE))(PW);
+  var hh = PW.VPProspects._t.heldHtml([{ id: U(4242), venue_name: '<img src=x onerror=alert(1)>Arms', postcode: '4217', au_state: 'QLD', contact_name: 'Pat "P" <b>', email: 'p@x.example',
+    mobile: '0412 000 001', created_at: '2026-11-06T00:00:00Z', ticket_no: 1007, why: 'Not on our licensed venues list' }]);
+  check('HQ\'s Sign-ups to check escapes what the public typed (no tag of theirs reaches HQ)', hh.indexOf('<img') === -1 && hh.indexOf('&lt;img') !== -1 && hh.indexOf('<b>') === -1, hh);
+  check('and each row has Approve and Refuse for that sign-up, with why it was held', hh.indexOf('data-st-approve="' + U(4242) + '"') !== -1 && hh.indexOf('data-st-refuse="' + U(4242) + '"') !== -1 && /Not on our licensed venues list/.test(hh), hh);
+  check('nothing held: nothing drawn', PW.VPProspects._t.heldHtml([]) === '');
+
   section('9. A KNOWN PERSON RE-TRYING WITH A NEW EMAIL: held for HQ, no second free month, nothing of theirs shown');
   var s3 = snapshot(), tk3 = tickets().length;
   var kn = await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.new@another.example' });
