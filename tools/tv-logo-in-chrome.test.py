@@ -391,7 +391,7 @@ def setup_slide(r):
         tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=w, height=h)
         ok('%dx%d: NO slides and NO logo: the set-up slide is on the wall' % (w, h), r.until(t, '!!document.querySelector("#tvAds .ad.show .tvsetup")', 40) is True, r.ask(t, probe))
         time.sleep(1.0)
-        v = json.loads(r.ask(t, probe) or '{}') if isinstance(r.ask(t, probe), str) else (r.ask(t, probe) or {})
+        v = r.json(t, probe, {})
         ok('%dx%d: the link is written out in full, the QR is drawn, and it is not the "Waiting for the host" card' % (w, h),
            v.get('link') == 'venueplay.com.au/app/billing#screen' and v.get('canvas') is True and v.get('line') == '', v)
         box = r.ask(t, '(function(){var e=document.querySelector("#tvAds .ad.show .tvs-in"),b=e.getBoundingClientRect(),W=innerWidth,H=innerHeight;return [b.left>=W*0.05,b.right<=W*0.95,b.top>=H*0.05,b.bottom<=H*0.95]})()')

@@ -999,6 +999,10 @@
   "checks": 22,
   "counted_by": "lines"
  },
+ "tools/test-tv-setup-slide.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
  "tools/test-tv-slides-in-step.js": {
   "checks": 10,
   "counted_by": "lines"

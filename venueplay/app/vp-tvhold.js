@@ -78,7 +78,7 @@
     return '<div class="tvhold tvsetup" data-vpb="setup"><div class="tvs-in"><div class="tvs-words"><div class="tvlogo" data-vp-tvlogo="stacked">' + LOGO + '</div>' +
            '<p class="tvs-h">welcome to venueplay</p><p class="tvs-h2">Please set up your screen</p>' +
            '<p class="tvs-step">Scan the code with your phone and sign in. Then open the Screen tab.</p></div>' +
-           '<div class="tvs-qrcol"><div class="tvs-qr" data-vp-setup-qr="1"></div><div class="tvs-link">' + SETUP_SHOWN + '</div></div></div></div>';
+           '<div class="tvs-qrcol"><div class="tvs-qr"><canvas data-vp-setup-qr="1" width="560" height="560"></canvas></div><div class="tvs-link">' + SETUP_SHOWN + '</div></div></div></div>';
   }
   /* draw the code into every set-up slide under root (after the slide is in the page) */
   function drawSetupQr(root) {
