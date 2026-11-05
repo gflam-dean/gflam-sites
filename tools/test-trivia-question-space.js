@@ -32,6 +32,22 @@ var SCREEN = readFile('venueplay/app/trivia/screen.html');
 var STYLE = SCREEN.slice(SCREEN.indexOf('<style'), SCREEN.indexOf('</style>'));
 if (STYLE.length < 1000) throw new Error('cannot find the <style> block in screen.html');
 var CSS = STYLE.replace(/\/\*[\s\S]*?\*\//g, '');
+/* The game's name (.toplbl, .tl-night) and the join layout moved into /app/vp-tvgame.js, shared with the musical bingo
+   wall (feature/newlook-musical-5nov, merged on release/6nov): its CSS string is read too, AFTER the page's own rules,
+   which come first and so still win a selector both have. */
+var TVG = readFile('venueplay/app/vp-tvgame.js');
+var TVG_CSS = (function () {   // the string lines straight after "var CSS =", up to the first line that is not one
+  var lines = TVG.slice(TVG.indexOf('var CSS =') + 9).split('\n'), out = [];
+  for (var i = 0; i < lines.length; i++) {
+    var t = lines[i].trim(); if (!t) continue;
+    var m = /^"((?:[^"\\]|\\.)*)"\s*(\+|;)?\s*$/.exec(t); if (!m) break;
+    out.push(m[1].replace(/\\n/g, '\n').replace(/\\(.)/g, '$1'));
+    if (m[2] !== '+') break;
+  }
+  return out.join('');
+})();
+if (TVG_CSS.indexOf('.toplbl{') < 0) throw new Error('cannot find the shared .toplbl rule in vp-tvgame.js');
+CSS += '\n' + TVG_CSS;
 
 /* The declarations of one CSS rule, by its exact selector (comments stripped; the selector must start a rule). */
 function rule(sel) {
