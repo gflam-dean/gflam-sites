@@ -592,3 +592,5 @@ resent their link, which restarts those 30 days and re-dates the follow-ups (aut
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-169-library-questions-read-only.sql` (Dean, 5 Nov 2026, items 45c and 75d): a venue can no longer edit or delete a copy of a library question straight through the database, and can no longer set its own question set to the library. Adds `vp_questions.from_library` (backfilled for every existing copy by exact words, the Worker's own rule), replaces `vp_questions_host_write` (a venue writes only the questions it created) and `vp_question_sets_host_write` (a venue's own set must be `private`). Library reads, swap and remove are unchanged (the Worker uses the service key). Either order with the Worker. RLS-BASELINE.json policy TEXT changes: re-dump it after this runs. NUMBER: 169 is Dean's. Branch `fix/trivia-library-swap-10nov`. NOT RUN. Read-back and rollback in the file.

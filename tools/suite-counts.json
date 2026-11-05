@@ -1384,7 +1384,7 @@
   "counted_by": "total"
  },
  "venueplay-backend/worker/trivia-library-swap.test.js": {
-  "checks": 31,
+  "checks": 49,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/trivia-reveal.test.js": {

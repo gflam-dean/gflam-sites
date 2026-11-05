@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 20:22 · cb2591e9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 21:07 · 0d3cf77c';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -5764,7 +5764,7 @@ async function libraryTextsAmong(env, texts) {
   const out = new Set();
   const uniq = [...new Set((texts || []).map((t) => String(t || '')))].filter(Boolean);
   if (!uniq.length) return out;
-  const lib = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200');
+  const lib = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id&limit=200');
   if (!lib.length) return out;
   const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
   for (let i = 0; i < uniq.length; i += 20) {
@@ -6054,17 +6054,18 @@ async function handleTriviaAdd(request, env, json) {              // write your 
   const items = (Array.isArray(b.questions) ? b.questions : []).map(sanitizeQuestion).filter(Boolean);
   if (!items.length) return json({ error: 'No valid questions (each needs 4 answers and a correct one)' }, 400);
   let seq = await nextTriviaSeq(env, set.id);
-  const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q));
-  await sbInsert(env, 'vp_questions', rows);
+  /* A question that is ALREADY a library question (an Undo after removing one) goes back marked as a copy, and is not queued for review. */
+  let already = new Set();
+  try { already = await libraryTextsAmong(env, items.map((q) => q.question)); } catch (e) { already = new Set(); }
+  const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q, already.has(q.question) ? { from_library: true } : {}));
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   // Also queue these host-written questions for review so the weekly run can fact-check +
   // improve them and promote the good ones into the shared library. Best-effort (never blocks
   // the host adding their question, and no-ops if the submissions table is not migrated yet).
   try {
     /* A question that is ALREADY a library question (an Undo after removing one) is not a host-written one to review. */
-    let already = new Set();
-    try { already = await libraryTextsAmong(env, rows.map((r) => r.question)); } catch (e) { already = new Set(); }
-    const subs = rows.filter((r) => !already.has(r.question)).map((r) => ({
+    const subs = rows.filter((r) => !r.from_library).map((r) => ({
       venue_id: set.owner_venue_id || null, question: r.question, options: r.options,
       correct_index: r.correct_index, category: r.category || null,
       difficulty: r.difficulty || null, image_url: r.image_url || null, status: 'pending',
@@ -6137,7 +6138,7 @@ async function handleTriviaSwap(request, env, json) {
   }
   const answered = await sbGet(env, 'vp_trivia_answers', 'question_id=eq.' + enc(qid) + '&select=question_id&limit=1');
   if (answered.length) return json({ error: 'This question has already been played in a past round, so it is kept for the results. It cannot be swapped.' }, 409);
-  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200');
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id&limit=200');
   if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
   const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
   const q = 'set_id=in.' + inList + '&parked_at=is.null&category=eq.' + enc(cat) + '&difficulty=eq.' + enc(old.difficulty)
@@ -6266,7 +6267,7 @@ async function handleAdminResolve(request, env, json) {
   // On approve, copy the (weekly-run-improved) question into the named library theme set.
   if (status === 'approved' && b.question && Array.isArray(b.options) && b.options.length === 4 && b.correct_index >= 0 && b.correct_index <= 3) {
     const theme = String(b.theme || 'General Knowledge').trim();
-    const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&title=eq.' + enc(theme) + '&select=id&limit=1');
+    const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&title=eq.' + enc(theme) + '&select=id&limit=1');
     if (libSets.length) {
       const seq = await nextTriviaSeq(env, libSets[0].id);
       await sbInsert(env, 'vp_questions', [{
@@ -6297,13 +6298,23 @@ async function randomWindow(env, table, query, size) {
   return await sbGet(env, table, query + '&order=id.asc&offset=' + start + '&limit=' + size);
 }
 
+/* A copy of a library question is marked from_library (migration 169) so the database itself refuses a venue's direct edit of it.
+   Written only when the column exists: before 169 has run the insert is retried without it (the Worker still judges a copy by its
+   exact words, libraryTextsAmong, either way). */
+async function insertQuestionRows(env, rows) {
+  try { await sbInsert(env, 'vp_questions', rows); }
+  catch (e) {
+    if (!rows.some((r) => r.from_library)) throw e;
+    await sbInsert(env, 'vp_questions', rows.map((r) => { const c = Object.assign({}, r); delete c.from_library; return c; }));
+  }
+}
 async function handleTriviaFromLibrary(request, env, json) {     // copy N library questions into the set
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const set = await triviaSetForVenue(env, b.set_id, authUserId);
   const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
   // library sets are one-per-category, titled by category
-  let setQ = 'visibility=eq.library&select=id';
+  let setQ = 'visibility=eq.library&owner_venue_id=is.null&select=id';
   if (b.category) setQ += '&title=eq.' + enc(String(b.category));
   const libSets = await sbGet(env, 'vp_question_sets', setQ);
   if (!libSets.length) return json({ error: 'No matching library category' }, 404);
@@ -6318,9 +6329,9 @@ async function handleTriviaFromLibrary(request, env, json) {     // copy N libra
   let seq = await nextTriviaSeq(env, set.id);
   const rows = pool.slice(0, count).map((p) => ({
     set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
-    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url, from_library: true,
   }));
-  await sbInsert(env, 'vp_questions', rows);
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length });
 }
@@ -6334,7 +6345,7 @@ async function handleTriviaSearch(request, env, json) {
   const query = String(b.query || '').replace(/[(),]/g, ' ').trim().slice(0, 60);
   if (query.length < 2) return json({ error: 'Type at least 2 characters to search' }, 400);
   const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
-  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id');
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id');
   if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
   const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
   const like = enc('*' + query + '*');
@@ -6349,9 +6360,9 @@ async function handleTriviaSearch(request, env, json) {
   let seq = await nextTriviaSeq(env, set.id);
   const rows = pool.slice(0, count).map((p) => ({
     set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
-    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url, from_library: true,
   }));
-  await sbInsert(env, 'vp_questions', rows);
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length, matched: pool.length });
 }
