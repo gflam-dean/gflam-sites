@@ -80,7 +80,7 @@ pass("each venue is named, which is what a group account needs", lines.indexOf("
 /* Count the AMOUNT CELLS, not the string. The subscription line's own description
    contains "(at $2.50 / month)", so a naive search finds five and the check failed on
    its own sloppiness rather than on anything wrong with the email. */
-var cells = (lines.match(/>\$2\.50<\/td>/g)||[]).length;
+var cells = (lines.match(/, \$2\.50<\/td>/g)||[]).length;   // amounts said in the line since round 8, one column
 pass("the amounts add up to what she paid", cells === 4,
      "found " + cells + " amount cells at $2.50; four of them make the $10.00");
 

@@ -764,7 +764,7 @@
   "counted_by": "lines"
  },
  "tools/test-receipt-survey.js": {
-  "checks": 52,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/test-receipts-plain-words.js": {
@@ -1264,7 +1264,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 91,
+  "checks": 93,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

@@ -65,8 +65,11 @@ TV_STEP = re.compile(r"Put venueplay on (?:your|each|the) TV\. Go to venueplay\.
 for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     s = re.sub(r'<!--.*?-->', ' ', read('venueplay/emails/%s.html' % t), flags=re.S)
     words = text(s)
-    i1, i2, i3 = words.find('1 Sign in on your phone.'), words.find('2 Add '), words.find('3 Put venueplay on ')
-    check('email %s: the steps are in Dean\'s order: 1 sign in, 2 add hosts, 3 the TV' % t,
+    if t == 'venue-onboarding':   # Dean, 5 Nov 2026 round 8: an added venue does its hosts first, then signs in, then the TV
+        i1, i2, i3 = words.find('1 Add your hosts.'), words.find('2 Sign in on your phone.'), words.find('{{tv_step}} Put venueplay on ')
+    else:
+        i1, i2, i3 = words.find('1 Sign in on your phone.'), words.find('2 Add '), words.find('3 Put venueplay on ')
+    check('email %s: the steps are in Dean\'s order (onboarding: hosts, sign in, TV; the welcomes: sign in, hosts, TV)' % t,
           -1 < i1 < i2 < i3, [i1, i2, i3])
     check('email %s: the TV step is venueplay.com.au/tv and the six-character screen code, linked to the bare /tv' % t,
           bool(TV_STEP.search(words)) and re.search(r'<a href="(?:\{\{tv_url\}\}|https://venueplay\.com\.au/tv)"[^>]*>venueplay\.com\.au/tv</a>', s) is not None, words[i3:i3 + 260])
@@ -196,8 +199,8 @@ ob = re.sub(r'<!--.*?-->', ' ', ob_raw, flags=re.S)
 obt = text(ob)
 # The hosts step says what really happens (Dean, 5 Nov 2026: "is not true anymore"): vpbAddHost texts the host the
 # sign-in ADDRESS, venueplay.com.au/app, and they sign in with their own mobile. There is no personal link.
-check('the venue onboarding email says "{{venue_name}} is set up." and tells the owner to add hosts in Account > People, texted where to sign in, signing in with their own mobile',
-      '{{venue_name}} is set up.' in obt and "Add its hosts. In Account > People, add each host's name and mobile and tick {{venue_name}}. We text them where to sign in, and they sign in with their own mobile." in obt
+check('the venue onboarding email says "Your new venue is set up" and tells the owner to add hosts in Account > People, ticked per venue, texted where to sign in, signing in with their own mobile',
+      'Your new venue is set up' in obt and "Add your hosts. In Account > People, add each host's name and mobile and tick the venues they run, {{venue_name}} included. We text them where to sign in, and they sign in with their own mobile." in obt
       and 'own sign-in link' not in obt and 'sign up for' not in obt, obt[:700])
 sms = re.search(r"const message =\s*venue \+ ' has set you up on venueplay\. To sign in visit ' \+ site \+ '/app\.' \+ tv;", read('venueplay-backend/worker/venueplay-api-FULL.js'))
 check('...which is what the host\'s text really says: "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app."', sms is not None)

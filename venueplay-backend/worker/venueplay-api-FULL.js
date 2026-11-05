@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 18:26 · afd7c89c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 19:16 · cece00a2';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4128,10 +4128,8 @@ async function vpaRenderProspectReminder(env, o) {
   const st = (o.kind === 'last' || o.kind === 'final') && o.stats && o.stats.ok ? o.stats : null;
   const ran = !!(st && st.nights > 0 && st.totalGames > 0);
   const fmtN = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const statsLine = ran ? 'In your free month, ' + vpaEsc(o.venueName || 'your venue') + ' ran <b>' + fmtN(st.totalGames) + ' game' + (st.totalGames === 1 ? '' : 's') + '</b>'
-      + (st.totalPlayers > 0 ? ' and <b>' + fmtN(st.totalPlayers) + ' player' + (st.totalPlayers === 1 ? '' : 's') + '</b> joined in' : '') + '.'
-      + (st.biggest && st.biggest.players > 1 && st.nights > 1 ? ' Your biggest night had ' + fmtN(st.biggest.players) + ' players.' : '')
-      + ' Don&#39;t let that stop now.' : '';
+  const statsLine = ran ? (st.biggest && st.biggest.players > 1 && st.nights > 1 ? 'Your biggest night had ' + fmtN(st.biggest.players) + ' players. ' : '')
+      + 'Don&#39;t let that stop now.' : '';
   html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final',
     grace: onOffer && VPA_OFFER_GRACE_LIVE, nograce: onOffer && !VPA_OFFER_GRACE_LIVE, nooffer: !onOffer, keepdays: VPA_PAUSED_KEEP_DAYS > 0,
     stats: ran, nostats: !!st && !ran });
@@ -4143,6 +4141,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{days_left}} days/g, Number(o.daysLeft) === 1 ? '1 day' : o.daysLeft + ' days')   // never "1 days left" (5 Nov 2026)
     .replace(/{{days_left}}/g, String(o.daysLeft))
     .replace(/{{keep_days}}/g, String(VPA_PAUSED_KEEP_DAYS))
+    .replace(/{{stats_tiles}}/g, ran ? vpaStatTilesHtml(st) : '')
     .replace(/{{stats_line}}/g, statsLine)
     .replace(/{{nocard_when}}/g, o.kind === 'final' ? 'tonight' : 'then')
     .replace(/{{pauses}}/g, o.kind === 'final' ? 'pauses tonight' : 'pauses')
@@ -7628,7 +7627,9 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       for (let i = 0; i < venues.length; i++) {
         const v = venues[i]; const seats = parseInt(v.seats, 10) || 0;
         /* "Your venues": each venue's name, one per line (Dean, 5 Nov 2026 round 4). The plan box says the money. */
-        blocks += '<p style="margin:0 0 6px;font-size:16px;line-height:1.5;font-weight:700;color:#0A0A0B">' + vpaEsc(v.name) + '</p>';
+        /* PER VENUE, because the limit is per venue (Dean, 5 Nov 2026 round 8): each venue has its own max_players, a busy
+           night is judged against that venue's own limit, and Stripe bills the group the sum. */
+        blocks += '<p style="margin:0 0 6px;font-size:16px;line-height:1.5;color:#0A0A0B"><strong>' + vpaEsc(v.name) + ':</strong> ' + seats + ' player' + (seats === 1 ? '' : 's') + '</p>';
       }
       /* EVERY occurrence, not the first. A string replace swaps only the FIRST match, and the
          first {{VENUE_BLOCKS}} in the template was inside its documentation comment. So the
@@ -7637,6 +7638,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       html = html.split('{{VENUE_BLOCKS}}').join(blocks)
         .replace(/{{venue_count}}/g, String(venues.length))
         .replace(/{{total_players}}/g, String(total))
+        .replace(/{{venue_limits}}/g, venues.map((v) => vpaEsc(v.name) + ' ' + (parseInt(v.seats, 10) || 0)).join(', '))
         .replace(/{{payment_total}}/g, vpaPaymentPhrase(total * rate, plan))
         .replace(/{{monthly_total}}/g, money(total * rate));
     } else {
@@ -7647,6 +7649,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     }
     html = html.replace(/{{first_charge_date}}/g, firstCharge)
       .replace(/{{free_intro}}/g, freeIntro)
+      .replace(/{{free_title}}/g, returning ? 'Your free month was used on your earlier account' : 'Your first month is free')
       .replace(/{{launch_phrase}}/g, launchPhrase)
       .replace(/{{player_rate}}/g, money(rate))
       .replace(/{{host_console_url}}/g, consoleUrl)
@@ -8073,7 +8076,8 @@ async function vpbFireVenueOnboarding(env, o) {
     let html = await res.text();
     /* "Pick <venue> when it asks which venue you're at" is only true for a login with 2 or more venues: that is when
        the console asks (index.html, staff.length > 1). Unknown means it is left out (Dean, 5 Nov 2026 round 5). */
-    html = vpaTplSections(html, { multivenue: Number(o.loginVenues) > 1 });
+    const multi = Number(o.loginVenues) > 1;
+    html = vpaTplSections(html, { multivenue: multi, singlevenue: !multi }).replace(/{{tv_step}}/g, multi ? '4' : '3');
     html = html
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
@@ -8308,8 +8312,8 @@ function vpaVenueEmailCard(preheader, inner, title, brand) {
    templates under /emails/ carry the same markup by hand; tools/test-receipt-survey.js holds them all to it. */
 function vpaEmailButton(href, label, quiet) {
   const style = quiet
-    ? 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:13px 29px;border-radius:10px;border:1px solid #d8d8e0'
-    : 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px';
+    ? 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:15px 33px;border-radius:10px;border:1px solid #d8d8e0'
+    : 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px';
   return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center">'
     + '<a href="' + href + '" style="' + style + '">' + label + '</a></td></tr></table>';
 }
@@ -8447,27 +8451,28 @@ async function vpaInvoiceVenues(env, customerId) {
   } catch (_) { return []; }
 }
 function vpaInvoiceLinesHtml(invoice, venues) {
+  /* ONE COLUMN, NO REPEATED TOTAL (Dean, 5 Nov 2026 round 8): the amount is already above, so a single plan line is only
+     "24 players at $2.50 each, 4 January to 4 February". A group's split says each venue's own subtotal in the line. */
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
   const money = (c) => '$' + (c / 100).toFixed(2);
-  const row = (words, amt, muted) => '<tr>'
-    + '<td valign="top" style="padding:8px 16px 8px 0;font-size:14px;line-height:1.45;color:' + (muted ? '#6a6a75' : '#0A0A0B') + '">' + words + '</td>'
-    + '<td valign="top" align="right" style="padding:8px 0;width:1%;font-size:14px;line-height:1.45;font-weight:700;color:#0A0A0B;text-align:right;white-space:nowrap">' + (amt == null ? '' : money(amt)) + '</td></tr>';
+  const row = (words, muted) => '<tr><td style="padding:6px 0;font-size:14px;line-height:1.5;color:' + (muted ? '#6a6a75' : '#0A0A0B') + '">' + words + '</td></tr>';
   const vs = Array.isArray(venues) ? venues : [];
+  const several = lines.length > 1;
   const rows = lines.map(function (l) {
     const amt = Number(l.amount || 0);
     const w = vpaLineParts(l);
-    if (!w.plan) return row(vpaEsc(w.what) + (w.covers ? ', ' + vpaEsc(w.covers) : ''), amt);
+    if (!w.plan) return row(vpaEsc(w.what) + (w.covers ? ', ' + vpaEsc(w.covers) : '') + ', ' + money(amt));
     const seats = vs.map((v) => parseInt(v.max_players, 10) || 0);
     const split = vs.length > 1 && seats.reduce((a, b) => a + b, 0) === w.n && Math.round(w.n * w.rate * 100) === amt;
-    if (!split) return row(vpaEsc(w.each) + (w.covers ? ', ' + vpaEsc(w.covers) : ''), amt);
-    return vs.map((v, i) => row('<b>' + vpaEsc(v.name) + ':</b> ' + seats[i] + ' player' + (seats[i] === 1 ? '' : 's') + ' at $' + w.rate.toFixed(2) + ' each', Math.round(seats[i] * w.rate * 100))).join('')
-      + (w.covers ? row(vpaEsc(w.covers), null, true) : '');
+    if (!split) return row(vpaEsc(w.each) + (w.covers ? ', ' + vpaEsc(w.covers) : '') + (several ? ', ' + money(amt) : ''));
+    return vs.map((v, i) => row('<b>' + vpaEsc(v.name) + ':</b> ' + seats[i] + ' player' + (seats[i] === 1 ? '' : 's') + ' at $' + w.rate.toFixed(2) + ' each, ' + money(Math.round(seats[i] * w.rate * 100)))).join('')
+      + (w.covers ? row(vpaEsc(w.covers), true) : '');
   }).join('');
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px 8px">'
+       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px 10px">'
        + '<p style="margin:0 0 2px;font-size:13px;color:#6a6a75">What this is for</p>'
-       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:auto">' + rows + '</table>'
+       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>'
        + '</td></tr></table>';
 }
 
@@ -8618,7 +8623,7 @@ async function vpaRateHtml(env, invoice) {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin:26px 0 0">'
       + '<tr><td style="padding:18px 14px 16px">'
       + '<p style="margin:0 0 4px;padding:0 4px;font-size:15px;font-weight:700;color:#0A0A0B">Let us know how we&#39;re going</p>'
-      + '<p style="margin:0 0 14px;padding:0 4px;font-size:13.5px;color:#6a6a75">Tap a face, add a comment if you like, and send.</p>'
+      + '<p style="margin:0 0 14px;padding:0 4px;font-size:13.5px;color:#6a6a75">Tap a face. Add a comment if you like.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + VPA_RATE_FACES.map(cell).join('') + '</tr></table>'
       + '</td></tr></table>';
   } catch (_) { return ''; }   // a receipt without the survey is still a receipt
@@ -10897,6 +10902,15 @@ async function vpaVenueStats(env, venueId, tz) {
        "you played 0 games" to a venue that played forty is the worst version of this. */
     out.ok = false;
   }
+  /* SUBSCRIBERS: players at this venue who opted in to hear from it, the same count the monthly report reads
+     (v_vp_player_optins: a count, never who they are). null when it cannot be read; shown only when above 0. */
+  out.subscribers = null;
+  if (out.ok) {
+    try {
+      const rows = await vpaSelectAll(env, 'v_vp_player_optins', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=venue_id&order=opted_in_at.asc,email.asc,mobile.asc');
+      out.subscribers = Array.isArray(rows) ? rows.length : null;
+    } catch (_) { out.subscribers = null; }
+  }
   return out;
 }
 
@@ -11279,16 +11293,33 @@ function vpaTimeWithUsHtml(stats, title) {
   const n = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   const li = (t) => '<tr><td valign="top" style="padding:4px 10px 4px 0;font-size:15px;color:#FF1F8E;font-weight:800">&#9656;</td>'
     + '<td style="padding:4px 0;font-size:15px;line-height:1.5;color:#0A0A0B">' + t + '</td></tr>';
-  let rows = li('<b>' + n(stats.totalGames) + '</b> game' + (stats.totalGames === 1 ? '' : 's') + ' over <b>' + n(stats.nights) + '</b> night' + (stats.nights === 1 ? '' : 's'));
-  if (stats.totalPlayers > 0) rows += li('<b>' + n(stats.totalPlayers) + '</b> player' + (stats.totalPlayers === 1 ? '' : 's') + ' joined in');
+  let rows = li('<b>' + n(stats.nights) + '</b> night' + (stats.nights === 1 ? '' : 's') + ' of games');
   if (stats.regulars > 0) rows += li('<b>' + n(stats.regulars) + '</b> regular' + (stats.regulars === 1 ? '' : 's') + ' came back for another night');
   if (stats.biggest && stats.biggest.players > 0) {
     const at = stats.biggest.at && Date.parse(stats.biggest.at) ? ' on ' + vpaFmtDate(Math.floor(Date.parse(stats.biggest.at) / 1000)) : '';
     rows += li('Your biggest night: <b>' + n(stats.biggest.players) + '</b> player' + (stats.biggest.players === 1 ? '' : 's') + at);
   }
-  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin:0 0 18px"><tr><td style="padding:16px 18px">'
-    + '<p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C70F69">' + vpaEsc(title) + '</p>'
-    + '<table role="presentation" cellpadding="0" cellspacing="0">' + rows + '</table></td></tr></table>';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#fff6fb" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin:0 0 18px"><tr><td style="padding:16px 14px">'
+    + '<p style="margin:0 0 10px;padding:0 4px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C70F69">' + vpaEsc(title) + '</p>'
+    + vpaStatTilesHtml(stats)
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 4px 0">' + rows + '</table></td></tr></table>';
+}
+/* THE NUMBERS AS TILES (Dean, 5 Nov 2026 round 8: "a cute infographic"). Email-safe: a table of solid pink cells with big
+   white numbers, no images (half of pub inboxes block them), a solid background so dark mode cannot wash it out, and
+   sized for a 320px phone (24px numbers, 12px lowercase words). Games and players always; subscribers only when the
+   count was read and is above 0. */
+function vpaStatTilesHtml(stats) {
+  if (!stats || !stats.ok || !(stats.totalGames > 0)) return '';
+  const n = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const tiles = [[n(stats.totalGames), stats.totalGames === 1 ? 'game' : 'games']];
+  if (stats.totalPlayers > 0) tiles.push([n(stats.totalPlayers), stats.totalPlayers === 1 ? 'player' : 'players']);
+  if (Number(stats.subscribers) > 0) tiles.push([n(stats.subscribers), Number(stats.subscribers) === 1 ? 'subscriber' : 'subscribers']);
+  const w = Math.floor(100 / tiles.length);
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="4" style="margin:6px 0 0"><tr>'
+    + tiles.map((t) => '<td width="' + w + '%" align="center" bgcolor="#FF1F8E" style="background:#FF1F8E;border-radius:12px;padding:14px 4px">'
+      + '<div style="font-size:24px;line-height:1.1;font-weight:800;color:#ffffff">' + t[0] + '</div>'
+      + '<div style="font-size:12px;line-height:1.3;font-weight:700;color:#ffffff;padding-top:4px">' + t[1] + '</div></td>').join('')
+    + '</tr></table>';
 }
 function vpaGoodbyeHtml(env, o) {
   const site = vpaCustomerSite(env);
@@ -11310,7 +11341,15 @@ function vpaGoodbyeHtml(env, o) {
     + P + 'Your account stays on until <b>' + vpaEsc(when) + '</b>. Keep running games, and your screens keep showing your ads until then.</p>'
     + P + '<b>Changed your mind?</b> You can undo this any time until close on ' + vpaEsc(when) + '.</p>'
     + vpaEmailButton(site + '/app/billing.html#billing', 'Keep my account')
-    + '<p style="font-size:15px;line-height:1.6;color:#3a3a44;margin:26px 0 16px"><b>Nothing is deleted for 90 days.</b> Your members list, ad slides, and raffle and members draw history stay in your account. Come back in that time and everything is where you left it. After 90 days, in line with our <a href="' + site + '/privacy" style="color:#3a3a44">privacy policy</a>, the player data is deleted.</p>'
+    /* WHAT THEY STILL HAVE, IN THE PINK BOX (Dean, 5 Nov 2026 round 8: "important in the cancellation email"). The 90 days
+       is venueplay.com.au/privacy's own number for a closed venue. */
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#fff6fb" style="background:#fff6fb;border:2px solid #FF1F8E;border-radius:12px;margin:26px 0 16px"><tr><td style="padding:18px 20px">'
+    +   '<p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#0A0A0B">Here&#39;s what you still have for 90 days</p>'
+    +   '<table role="presentation" cellpadding="0" cellspacing="0">'
+    +   ['Your members list', 'Your ad slides', 'Your raffle and members draw history', 'Your billing page'].map((x) => '<tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15px;line-height:1.5;color:#3a3a44">' + x + '</td></tr>').join('')
+    +   '</table>'
+    +   '<p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#3a3a44">Come back in that time and everything is where you left it. After 90 days, in line with our <a href="' + site + '/privacy" style="color:#3a3a44">privacy policy</a>, the player data is deleted.</p>'
+    + '</td></tr></table>'
     + P + 'We wish you and ' + name + ' all the very best.</p>'
     + '<p style="font-size:15px;line-height:1.6;color:#3a3a44;margin:0 0 4px">Cheers,<br>the venueplay team</p>'
     + vpaVenueEmailFoot(false)

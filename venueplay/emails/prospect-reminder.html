@@ -54,19 +54,21 @@
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">We&#39;d be sad to see you go.</p>
 <!--ENDIF:final-->
 <!--IF:stats-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">In your free month, {{venue_name}} ran:</p>
+        {{stats_tiles}}
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{stats_line}}</p>
 <!--ENDIF:stats-->
 <!--IF:nostats-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">You haven&#39;t had your first night yet, and there&#39;s still time. Sign in and it walks you through it in about 5 minutes.</p>
-        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open your venueplay</a></td></tr></table>
 <!--ENDIF:nostats-->
 <!--IF:last-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44"><strong>Would you like to keep it going?</strong> Add your card.</p>
 <!--ENDIF:last-->
       </td></tr>
       <tr><td style="padding:20px 28px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
-          <tr><td style="padding:20px 22px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#faf7fb" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td align="center" style="padding:20px 22px;text-align:center">
             <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">If there's no card by {{nocard_when}}</p>
 <!--IF:nograce-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account {{pauses}} and the {{offer_rate}} offer ends. Nothing is lost.</p>
@@ -79,7 +81,7 @@
 <!--ENDIF:nooffer-->
 <!--IF:final-->
             <p style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44"><strong>Here&#39;s what you still have for the next 90 days:</strong></p>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 0">
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:6px auto 0;text-align:left">
               <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your members list</td></tr>
               <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your ad slides</td></tr>
               <tr><td valign="top" style="padding:3px 10px 3px 0;color:#FF1F8E;font-weight:800">&#9656;</td><td style="padding:3px 0;font-size:15.5px;line-height:1.5;color:#3a3a44">Your raffle and members draw history</td></tr>
@@ -89,13 +91,13 @@
 <!--IF:keepdays-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">We keep your paused account for {{keep_days}} days.</p>
 <!--ENDIF:keepdays-->
-            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Add my card</a></td></tr></table>
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Add my card</a></td></tr></table>
           </td></tr>
         </table>
       </td></tr>
       <tr><td style="padding:20px 28px 0">
         <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">If it's not for you, no problem at all. Tap below and we'll switch it off and stop these emails. Nothing has been charged.</p>
-        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{cancel_url}}" style="display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:13px 29px;border-radius:10px;border:1px solid #d8d8e0">Cancel, it's not for us</a></td></tr></table>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{cancel_url}}" style="display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:15px 33px;border-radius:10px;border:1px solid #d8d8e0">Cancel, it's not for us</a></td></tr></table>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">

@@ -72,7 +72,7 @@ async function main() {
   check('the faces fit one line on a 320px phone: 20px faces, 12px words that never wrap, 2px padding', (h.match(/padding:8px 2px[^"]*"><span style="display:block;font-size:20px/g) || []).length === 3 && (h.match(/font-size:12px;line-height:1\.25;font-weight:700;color:#0A0A0B;white-space:nowrap">/g) || []).length === 3);
   check('the GST and ABN line is 12px, under the GST box at full width (one line at 375px: measured 277px of 295)', /<\/table><\/td><\/tr><\/table><p style="margin:0 0 22px;font-size:12px;line-height:1\.4;color:#9a9aa4">Prices include GST\. venueplay, ABN 35 679 383 049\.<\/p>/.test(h));
   check('"Let us know how we\'re going", one tap and an optional comment, then "Thank you for being with us."; the Tuesday line is gone',
-    t.indexOf("Let us know how we're going Tap a face, add a comment if you like, and send.") !== -1 && t.indexOf('Thank you for being with us.') !== -1 && !/Tuesday|backing us early/.test(t), t.slice(-600));
+    t.indexOf("Let us know how we're going Tap a face. Add a comment if you like.") !== -1 && t.indexOf('Thank you for being with us.') !== -1 && !/Tuesday|backing us early/.test(t), t.slice(-600));
   sent = []; await vpaFireInvoiceEmail({ RESEND_API_KEY: 'k', SITE_URL: 'https://venueplay-api.workers.dev', CARD_LINK_SECRET: 's3cret' }, INV);
   check('the faces always point at venueplay.com.au, even when the Worker\'s SITE_URL is a .dev address', /https:\/\/venueplay\.com\.au\/rate\/\?i=in_ABC123/.test((sent[0] || {}).html || '') && !/workers\.dev\/rate/.test((sent[0] || {}).html || ''));
   sent = []; await vpaFireInvoiceEmail({ RESEND_API_KEY: 'k', SITE_URL: 'https://venueplay.com.au' }, INV);
@@ -164,25 +164,25 @@ async function main() {
 
   print('\n4. "What this is for" in two plain lines, with room before the amount');
   var lp = vpaLineParts(INV.lines.data[0]);
-  check('Stripe\'s plan line is one line: "24 players at $2.50 each, 4 December to 4 January" (no "venueplay plan, monthly": the amount already says it)',
-    lp.plan === true && lp.each === '24 players at $2.50 each' && lp.covers === '4 December to 4 January' && visible(vpaInvoiceLinesHtml(INV)).indexOf('What this is for 24 players at $2.50 each, 4 December to 4 January $60.00') !== -1 && !/venueplay plan/.test(vpaInvoiceLinesHtml(INV)), [lp, visible(vpaInvoiceLinesHtml(INV))]);
+  check('Stripe\'s plan line is one line: "24 players at $2.50 each, 4 December to 4 January", and the $60.00 above is not said again (round 8)',
+    lp.plan === true && lp.each === '24 players at $2.50 each' && lp.covers === '4 December to 4 January' && visible(vpaInvoiceLinesHtml(INV)) === 'What this is for 24 players at $2.50 each, 4 December to 4 January' && !/venueplay plan/.test(vpaInvoiceLinesHtml(INV)), [lp, visible(vpaInvoiceLinesHtml(INV))]);
   var G2 = clone(INV, { lines: { data: [{ description: '80 Players × Founding Membership (Monthly) (at $2.50 / month)', amount: 20000, quantity: 80, period: { start: 1796306400, end: 1798984800 } }] } });
   var gv = visible(vpaInvoiceLinesHtml(G2, [{ name: 'The Mini Bar Burleigh', max_players: 30 }, { name: 'The Mini Bar Tugun', max_players: 50 }]));
-  check('a group, venue by venue: "The Mini Bar Burleigh: 30 players at $2.50 each $75.00", "The Mini Bar Tugun: 50 players ... $125.00", then the period',
-    gv.indexOf('What this is for The Mini Bar Burleigh: 30 players at $2.50 each $75.00 The Mini Bar Tugun: 50 players at $2.50 each $125.00 4 December to 4 January') !== -1, gv);
+  check('a group, one line per venue: "The Mini Bar Burleigh: 30 players at $2.50 each, $75.00", "The Mini Bar Tugun: 50 players at $2.50 each, $125.00", then the period',
+    gv === 'What this is for The Mini Bar Burleigh: 30 players at $2.50 each, $75.00 The Mini Bar Tugun: 50 players at $2.50 each, $125.00 4 December to 4 January', gv);
   var bad2 = visible(vpaInvoiceLinesHtml(G2, [{ name: 'A', max_players: 30 }, { name: 'B', max_players: 40 }]));
-  check('a split that does not add up to what Stripe charged is never shown: the one line stands', bad2.indexOf('80 players at $2.50 each, 4 December to 4 January $200.00') !== -1 && bad2.indexOf('A:') === -1, bad2);
+  check('a split that does not add up to what Stripe charged is never shown: the one line stands', bad2 === 'What this is for 80 players at $2.50 each, 4 December to 4 January' && bad2.indexOf('A:') === -1, bad2);
   sent = []; var VSEL = vpaSelect;
   vpaSelect = function (env, table) { if (table === 'venueplay_founding') return Promise.resolve([{ id: 'f1' }]); if (table === 'vp_venues') return Promise.resolve([{ name: 'The Mini Bar Burleigh', max_players: 30, status: 'active' }, { name: 'The Mini Bar Tugun', max_players: 50, status: 'active' }, { name: 'Old Pub', max_players: 20, status: 'archived' }]); return Promise.resolve([]); };
   await vpaFireUpcomingEmail(ENV, clone(G2, { amount_paid: 0, amount_due: 20000 })); var gu = visible((sent[0] || {}).html);
   sent = []; await vpaFireInvoiceEmail(ENV, clone(G2, { amount_paid: 20000 })); var gr = visible((sent[0] || {}).html);
   vpaSelect = VSEL;
-  check('the group\'s upcoming payment and receipt both break it down per venue (an archived venue left out)', gu.indexOf('The Mini Bar Burleigh: 30 players at $2.50 each $75.00 The Mini Bar Tugun: 50 players at $2.50 each $125.00') !== -1 && gr.indexOf('The Mini Bar Tugun: 50 players at $2.50 each $125.00') !== -1 && gu.indexOf('Old Pub') === -1, [gu.slice(0, 600), gr.slice(0, 300)]);
+  check('the group\'s upcoming payment and receipt both break it down per venue (an archived venue left out)', gu.indexOf('The Mini Bar Burleigh: 30 players at $2.50 each, $75.00 The Mini Bar Tugun: 50 players at $2.50 each, $125.00') !== -1 && gr.indexOf('The Mini Bar Tugun: 50 players at $2.50 each, $125.00') !== -1 && gu.indexOf('Old Pub') === -1, [gu.slice(0, 600), gr.slice(0, 300)]);
   var big = vpaLineParts({ description: 'Big night extra players - The Royal - 12 over 100 at $2.00', amount: 2400 });
   check('any other line keeps its own plain words', big.plan === false && big.what === 'Big night extra players - The Royal - 12 over 100 at $2.00' && big.covers === '', big);
   var tbl = vpaInvoiceLinesHtml(INV);
-  check('the words cell keeps 16px clear of the amount, which sits top right on one line',
-    /<td valign="top" style="padding:8px 16px 8px 0;[^"]*">24 players at \$2\.50 each, 4 December to 4 January<\/td>/.test(tbl) && /<td valign="top" align="right" style="padding:8px 0;width:1%;[^"]*white-space:nowrap">\$60\.00<\/td>/.test(tbl), tbl.slice(0, 600));
+  check('one column: the line is its own row, with no amount column repeating the total',
+    /<td style="padding:6px 0;font-size:14px;[^"]*">24 players at \$2\.50 each, 4 December to 4 January<\/td><\/tr><\/table>/.test(tbl) && tbl.indexOf('$60.00') === -1, tbl.slice(0, 600));
 
   print('\n5. The 5-day grace is in the emails, switched OFF until the billing change ships');
   check('VPA_OFFER_GRACE_LIVE is false in the Worker, declared once', (src.match(/const VPA_OFFER_GRACE_LIVE = /g) || []).length === 1 && /const VPA_OFFER_GRACE_LIVE = false;/.test(src));
@@ -220,8 +220,26 @@ async function main() {
   function rem(kind, stats, days) { var out = null; vpaRenderProspectReminder(ENV, clone(R, { kind: kind, daysLeft: days || 8, stats: stats })).then(function (x) { out = visible(x.html); }); drain(); return out; }
   var ST = { ok: true, nights: 4, totalGames: 6, totalPlayers: 148, regulars: 21, biggest: { players: 47, at: '2026-11-27T09:30:00Z' } };
   var wk = rem('last', ST, 8);
-  check('one week out, with numbers: "One week left", then "In your free month, The Royal ran 6 games and 148 players joined in. Your biggest night had 47 players. Don\'t let that stop now." then the ask',
-    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. In your free month, The Royal ran 6 games and 148 players joined in. Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
+  check('one week out, with numbers: "One week left", then "In your free month, The Royal ran:" over the tiles (6 games, 148 players), "Your biggest night had 47 players. Don\'t let that stop now." then the ask',
+    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. In your free month, The Royal ran: 6 games 148 players Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
+  /* SUBSCRIBERS ARE COUNTED FROM THE SAME VIEW THE MONTHLY REPORT READS (v_vp_player_optins), run through vpaVenueStats. */
+  var SEL0 = vpaSelect, SELA0 = vpaSelectAll, asked = [];
+  vpaSelect = function (env, table) {
+    if (table === 'vp_sessions') return Promise.resolve([{ id: 's1', started_at: '2026-11-20T09:00:00Z' }]);
+    if (table === 'vp_games') return Promise.resolve([{ session_id: 's1', format: 'trivia' }]);
+    if (table === 'vp_players') return Promise.resolve([{ session_id: 's1', device_id: 'd1' }, { session_id: 's1', device_id: 'd2' }]);
+    return Promise.resolve([]); };
+  vpaSelectAll = function (env, table, q) { asked.push(table + '?' + q); if (table === 'v_vp_player_optins') return Promise.resolve([{ venue_id: 'v1' }, { venue_id: 'v1' }]); return Promise.resolve([]); };
+  var vs1 = null; vpaVenueStats(ENV, 'v1', 'Australia/Brisbane').then(function (x) { vs1 = x; }); drain();
+  vpaSelectAll = function () { return Promise.reject(new Error('down')); };
+  var vs2 = null; vpaVenueStats(ENV, 'v1', 'Australia/Brisbane').then(function (x) { vs2 = x; }); drain();
+  vpaSelect = SEL0; vpaSelectAll = SELA0;
+  check('subscribers: the venue\'s opt-ins from v_vp_player_optins (2 here), and null, never 0, when that cannot be read',
+    vs1 && vs1.ok && vs1.subscribers === 2 && asked.some(function (a) { return a.indexOf('v_vp_player_optins?venue_id=eq.v1') === 0; }) && vs2 && vs2.subscribers === null, [vs1 && vs1.subscribers, vs2 && vs2.subscribers, asked]);
+  var wkS = null; vpaRenderProspectReminder(ENV, clone(R, { kind: 'last', daysLeft: 8, stats: Object.assign({}, ST, { subscribers: 32 }) })).then(function (x) { wkS = x.html; }); drain();
+  check('the numbers are email-safe tiles: solid pink cells (bgcolor and CSS), big white 24px numbers, 12px words, no images; subscribers get a tile when there are some',
+    (wkS.match(/<td width="33%" align="center" bgcolor="#FF1F8E" style="background:#FF1F8E;border-radius:12px;padding:14px 4px"><div style="font-size:24px;line-height:1\.1;font-weight:800;color:#ffffff">/g) || []).length === 3 &&
+    visible(wkS).indexOf('ran: 6 games 148 players 32 subscribers') !== -1 && (wkS.match(/<img/g) || []).length === 1, visible(wkS).slice(0, 600));
   var wk0 = rem('last', { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 }, 8);
   check('one week out with no games yet: "You haven\'t had your first night yet" and the sign-in button, no numbers',
     wk0.indexOf("You haven't had your first night yet, and there's still time.") !== -1 && /Open your venueplay/.test(wk0) && wk0.indexOf('In your free month') === -1, wk0.slice(0, 700));
@@ -229,7 +247,7 @@ async function main() {
   check('numbers that could not be read say nothing: no stats line and no first-night line', [wkX, wkY].every(function (t) { return t.indexOf('In your free month') === -1 && t.indexOf('first night') === -1; }));
   var fd = rem('final', ST, 1);
   check('the last day: "Today is the last day", "We\'d be sad to see you go.", their numbers, the pause tonight, what they keep for 90 days, Add my card',
-    fd.indexOf("Today is the last day of your free month") !== -1 && fd.indexOf("We'd be sad to see you go. In your free month, The Royal ran 6 games") !== -1 &&
+    fd.indexOf("Today is the last day of your free month") !== -1 && fd.indexOf("We'd be sad to see you go. In your free month, The Royal ran: 6 games 148 players") !== -1 &&
     fd.indexOf("If there's no card by tonight Your account pauses tonight and the $2.50 offer ends. Nothing is lost.") !== -1 &&
     /Here's what you still have for the next 90 days: .*Your members list .*Your ad slides .*Your raffle and members draw history .*Your billing page, ready for your card .*Add my card/.test(fd), fd.slice(0, 1200));
   var e3 = rem('early', ST, 27);
@@ -239,8 +257,8 @@ async function main() {
   /* 7. ONE BUTTON, ONE PLACE (Dean, 5 Nov 2026 round 5). Every button in every email a venue or staff gets is the same
      pink button (or the one quiet "Cancel, it's not for us"), centred in its own table. Rendered, not read. */
   print('\n7. Every button in every email is the same button, centred');
-  var BTN = 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px';
-  var QUIET = 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:13px 29px;border-radius:10px;border:1px solid #d8d8e0';
+  var BTN = 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px';
+  var QUIET = 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:15px 33px;border-radius:10px;border:1px solid #d8d8e0';
   var WRAP = '<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="';
   var mails = {};
   function grab(name) { var m = sent[sent.length - 1]; mails[name] = m ? m.html : ''; sent = []; }
@@ -271,7 +289,7 @@ async function main() {
     bad.length === 0 && count >= 11, [count, bad]);
   check('the reminder\'s only quiet button is "Cancel, it\'s not for us", and nothing else is quiet',
     (mails['prospect-reminder'].match(/background:#ffffff;color:#0A0A0B[^"]*">Cancel, it's not for us</g) || []).length === 1 &&
-    Object.keys(mails).every(function (n) { return (String(mails[n]).match(/background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px/g) || []).length === (n === 'prospect-reminder' ? 1 : 0); }));
+    Object.keys(mails).every(function (n) { return (String(mails[n]).match(/background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:17px/g) || []).length === (n === 'prospect-reminder' ? 1 : 0); }));
   check('the Worker has one button maker, and no hand-made pink button is left in it', /function vpaEmailButton\(href, label, quiet\)/.test(src) &&
     (src.match(/style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:1\dpx;font-weight:700;padding/g) || []).length === 0);
 

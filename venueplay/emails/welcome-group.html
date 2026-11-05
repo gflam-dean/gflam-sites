@@ -52,9 +52,15 @@
         -->
       </td></tr>
 
-      <!-- billing summary -->
-      <tr><td style="padding:22px 32px 0">
-        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">{{free_intro}}, so you are <strong>free until {{first_charge_date}}</strong>. Your first payment then is {{total_players}} players across your group at {{player_rate}} each, {{payment_total}}. Nothing is charged before then, and you can cancel any time before it.</p>
+      <!-- the pink plan box, the same in every welcome (Dean, 5 Nov 2026 round 8) -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#fff6fb" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C70F69">Your plan</p>
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#0A0A0B">{{free_title}}</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">You can enjoy everything venueplay does until <strong>{{first_charge_date}}</strong>. Your first payment then is {{payment_total}} for {{total_players}} players across your venues. Nothing is charged before then, and you can change or cancel any time.</p>
+          </td></tr>
+        </table>
       </td></tr>
 
 <!--IF:nobingo-->
@@ -90,19 +96,19 @@
       </td></tr>
 
       <!-- CTA -->
-      <tr><td align="center" style="padding:30px 32px 4px">
-        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="https://venueplay.com.au/app/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Open your setup guide</a></td></tr></table>
+      <tr><td align="center" style="padding:12px 32px 0">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="https://venueplay.com.au/app/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open your setup guide</a></td></tr></table>
       </td></tr>
-      <tr><td align="center" style="padding:10px 20px 0"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first sign in, we'll walk you through it.</p></td></tr>
+      <tr><td align="center" style="padding:14px 20px 4px"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first sign in, we'll walk you through it.</p></td></tr>
 
       <!-- what you agreed to, in plain terms: once, after the setup -->
       <tr><td style="padding:22px 32px 0">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
           <tr><td style="padding:16px 18px">
             <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">Your plan, in plain terms</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay {{player_rate}} a month for each player in your plan. Your plan is set to {{total_players}} players across your venues, so that&#39;s {{payment_total}}. You can change it any time. Prices include GST.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Busy night?</strong> If more people turn up than your plan covers, each extra player that night is $2, and your host OKs it on screen first. If that happens three nights in a row, the third night&#39;s extras are $1 each and your plan moves up to fit the crowd.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">To change your player number, go to <a href="https://venueplay.com.au/app/billing.html#billing" style="color:#C70F69;font-weight:600">Account &gt; Billing</a>.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay {{player_rate}} a month for each player. Each venue has its own player limit: {{venue_limits}}. That&#39;s {{total_players}} players, so {{payment_total}}. You can change them any time. Prices include GST.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Busy night?</strong> If more people turn up at a venue than its limit covers, each extra player that night is $2, and your host OKs it on screen first. If that happens three nights in a row at the same venue, the third night&#39;s extras are $1 each and that venue&#39;s limit moves up to fit the crowd.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">To change a venue&#39;s player limit, go to <a href="https://venueplay.com.au/app/billing.html#billing" style="color:#C70F69;font-weight:600">Account &gt; Billing</a>.</p>
 <!--IF:annual-->
             <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, added players are pro rata to your renewal. If you drop your maximum part way through the year, the lower maximum starts that day, and the value of the players you release for the rest of the year is held as a credit that comes off your next renewal on its own. There is nothing to claim. Your billing page shows what you are holding.</p>
 <!--ENDIF:annual-->
@@ -114,7 +120,7 @@
 
       <!-- footer: the one ask, then the support line -->
       <tr><td style="padding:28px 32px 34px">
-        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none;font-size:14px;white-space:nowrap">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
         <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
         <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">venueplay &middot; ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
       </td></tr>

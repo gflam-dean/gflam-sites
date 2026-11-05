@@ -35,8 +35,8 @@
 
       <!-- hero -->
       <tr><td style="padding:36px 32px 8px">
-        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#0A0A0B;font-weight:800">{{venue_name}} is set up.</h1>
-        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Everything is ready to play. Here&#39;s how to get your first game on the screen.</p>
+        <h1 style="margin:0;font-size:21px;line-height:1.25;color:#0A0A0B;font-weight:800;white-space:nowrap">You&#39;re all set up</h1>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44"><strong>{{venue_name}}</strong> is ready to play. Here&#39;s how to get your first game on the screen.</p>
       </td></tr>
 
       <!-- login box -->
@@ -95,28 +95,28 @@
       </td></tr>
 
       <!-- CTA -->
-      <tr><td align="center" style="padding:30px 32px 4px">
-        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Open your setup guide</a></td></tr></table>
+      <tr><td align="center" style="padding:12px 32px 0">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open your setup guide</a></td></tr></table>
       </td></tr>
-      <tr><td align="center" style="padding:10px 20px 0"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first sign in, we'll walk you through it.</p></td></tr>
+      <tr><td align="center" style="padding:14px 20px 4px"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first sign in, we'll walk you through it.</p></td></tr>
 
 <!--IF:card-->
       <!-- your plan and the card link: after the setup steps (Dean, 5 Nov 2026: "if they have access, they have the games") -->
       <tr><td style="padding:24px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#fff6fb" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
           <tr><td style="padding:22px 24px">
             <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C70F69">Your plan</p>
             <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#0A0A0B">Your first month is free</p>
-            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">Your plan covers <strong>{{player_count}} players</strong> at {{player_rate}} each, <strong>{{payment_total}}</strong>, GST included. Nothing is charged when you add your card, and your first payment is a month later. No lock-in, and you can cancel any time before then.</p>
-            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Add my card</a></td></tr></table>
-            <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">The link takes you to our payment provider, Stripe. We never see or store your card. Prefer to do it over the phone or by invoice? Just reply and we will sort it out.</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">Your plan covers <strong>{{player_count}} players</strong> at {{player_rate}} each, <strong>{{payment_total}}</strong>, GST included. Nothing is charged when you add your card. Your first payment is a month later. You can change or cancel any time. The link takes you straight to our payment provider, Stripe.</p>
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Add my card</a></td></tr></table>
+            <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">We never see or store your card. Prefer to do it over the phone or by invoice? Just reply and we&#39;ll sort it out.</p>
           </td></tr>
         </table>
       </td></tr>
 <!--ENDIF:card-->
       <!-- footer: the one ask, then the support line -->
       <tr><td style="padding:28px 32px 34px">
-        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none;font-size:14px;white-space:nowrap">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
 <!--IF:card-->
         <p style="margin:14px 0 0;font-size:12.5px;line-height:1.6;color:#b3b3bb">Our <a href="{{terms_url}}" style="color:#b3b3bb">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#b3b3bb">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
 <!--ENDIF:card-->

@@ -43,6 +43,7 @@ eval(lift(BILL,"vpaHello"));
 eval(lift(BILL,"vpaCustomerSite"));
 eval(lift(BILL,"vpaEmailButton"));
 eval(lift(BILL,"vpaTimeWithUsHtml"));
+eval(lift(BILL,"vpaStatTilesHtml"));
 eval(lift(BILL,"vpaGoodbyeHtml"));
 /* THE CONSTANTS TOO, and this is not housekeeping. vpaVenueStats reads VPA_NOT_PLAYED and
    is wrapped in its own try/catch so a goodbye email still goes out when the numbers cannot
@@ -352,9 +353,15 @@ pass("THE FILL BUG: given true, undefined or junk for the rate, the tenure or th
 var none = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", hello: "Hi Sam,", tenure: "7 months", stats: { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 } });
 pass("a venue that never ran a night gets the goodbye without a \"time with venueplay\" box", none.indexOf("Your time with venueplay")===-1 && none.indexOf("for the last 7 months")!==-1);
 var withStats = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", tenure: "7 months",
-  stats: { ok: true, nights: 13, totalGames: 31, totalPlayers: 1204, regulars: 88, biggest: { players: 74, at: "2026-08-14T09:30:00Z" } } }).replace(/<[^>]+>/g," ").replace(/&#9656;/g,"▸").replace(/&#39;/g,"'").replace(/\s+/g," ");
-pass("with their numbers: games over nights, players who joined in, regulars, the biggest night, right after the thank you",
-     withStats.indexOf("for the last 7 months. Your time with venueplay ▸ 31 games over 13 nights ▸ 1,204 players joined in ▸ 88 regulars came back for another night ▸ Your biggest night: 74 players on 14 August 2026") !== -1, withStats.slice(0, 600));
+  stats: { ok: true, nights: 13, totalGames: 31, totalPlayers: 1204, regulars: 88, subscribers: 236, biggest: { players: 74, at: "2026-08-14T09:30:00Z" } } }).replace(/<[^>]+>/g," ").replace(/&#9656;/g,"▸").replace(/&#39;/g,"'").replace(/\s+/g," ");
+/* Round 8: the numbers as tiles (games, players, subscribers), then nights, regulars and the biggest night. */
+pass("with their numbers, right after the thank you: tiles for games, players and subscribers, then nights, regulars and the biggest night",
+     withStats.indexOf("for the last 7 months. Your time with venueplay 31 games 1,204 players 236 subscribers ▸ 13 nights of games ▸ 88 regulars came back for another night ▸ Your biggest night: 74 players on 14 August 2026") !== -1, withStats.slice(0, 600));
+var noSubs = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", tenure: "7 months", stats: { ok: true, nights: 2, totalGames: 3, totalPlayers: 40, subscribers: null } });
+pass("subscribers that could not be read get no tile (never a 0)", noSubs.indexOf("subscriber") === -1 && noSubs.indexOf(">3</div>") !== -1);
+var keep = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub" }).replace(/<[^>]+>/g," ").replace(/&#9656;/g,"▸").replace(/&#39;/g,"'").replace(/\s+/g," ");
+pass("the pink box says what they still have for 90 days: members list, ad slides, draw history, billing page",
+     keep.indexOf("Here's what you still have for 90 days ▸ Your members list ▸ Your ad slides ▸ Your raffle and members draw history ▸ Your billing page Come back in that time and everything is where you left it.") !== -1, keep.slice(0, 900));
 /* Dean: "remove gflam group from the bottom of it." */
 pass("the holding company and the ABN are NOT on a leaving email",
      d.html.indexOf("Gflam Group")===-1 && d.html.indexOf("ABN")===-1);
