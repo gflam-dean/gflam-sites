@@ -843,7 +843,9 @@
     return "";
   }
   function ask(ctx, deps) {
-    try {
+    try { return askInner(ctx, deps || {}); } catch (e) { return Promise.resolve(""); }
+  }
+  function askInner(ctx, deps) {
       deps = deps || {};
       var doc = deps.doc || root.document, storage = deps.storage || root.localStorage, VP = deps.VP || root.VP;
       var sess = deps.session || root.sessionStorage;
@@ -884,7 +886,6 @@
         return skip();
       });
       return Promise.resolve(key);
-    } catch (e) { return Promise.resolve(""); }
   }
 
   root.VPFirstRun = { describe: describeAnswers, ask: ask, nextQuestion: nextQuestion, answersFor: answersFor, cleanAnswers: cleanAnswers, NIGHTS: NIGHTS, GAMES: GAMES, TVS: TVS, open: open, wants: wants, check: check, reopen: reopen, offered: offered, isNew: isNew, isProspect: isProspect, STEPS: STEPS, KEY: KEY, mobileE164: mobileE164, NEW_DAYS: NEW_DAYS };
