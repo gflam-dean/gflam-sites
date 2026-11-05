@@ -1346,7 +1346,7 @@
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
-    P.joined=true; P.name="Table 6"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    P.joined=true; P.name="Pint Sized"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
     (function(){ var lg=$("venueLogo"); if(!lg) return;
       /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
@@ -1363,7 +1363,7 @@
     function fire(o){ try{ onMsg(o); }catch(e){} }
     function round(){
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.total=515; P.rank=0; P.ended=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Table 6's score on the wall's final scores */
+      _dt=[]; P.total=515; P.rank=0; P.ended=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Pint Sized's score on the wall's final scores */
       fire({ t:"started" });
       /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
          then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own

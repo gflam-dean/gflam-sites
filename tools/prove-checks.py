@@ -11851,7 +11851,7 @@ MUTATIONS = [
      '  html[data-vp-demo] .ptop{backdrop-filter:none;-webkit-backdrop-filter:none}', '',
      'in Chrome, the demo phone\'s header corners stick out of the top of the frame again'),
     ('see-a-night-phone-in-chrome.test.py', 'venueplay/app/trivia/play.html',
-     'P.name="Table 6"', 'P.name="Pint Sized"',
+     'P.name="Pint Sized"', 'P.name="Dre"',
      'in Chrome, the demo phone\'s player is no longer a team on the wall\'s final scores'),
     ('see-a-night-phone-in-chrome.test.py', 'venueplay/app/trivia/play.html',
      '  #vRes .pcard{margin-top:10px;padding-top:8px;padding-bottom:8px}', '  #vRes .pcard{margin-top:18px;padding-top:14px;padding-bottom:14px}',

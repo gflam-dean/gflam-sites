@@ -11,7 +11,7 @@ app/trivia/play.html?demo=1) through the countdown, the question, the reveal and
   - the menu button and the venue's logo are in one place on every step, and the menu button is exactly where
     the real player phone (/app/trivia/play) puts it at 390 wide
   - the screen is clipped to the frame's rounded corners, so nothing sticks out of the top of the phone
-  - the demo player has the drink-pun name "Table 6"
+  - the demo player has the drink-pun name "Pint Sized"
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
@@ -121,7 +121,7 @@ def main():
             check('%dx%d' % (w, h), S, fr, rm)
         src = open(os.path.join(ROOT, 'venueplay', 'app', 'trivia', 'play.html'), encoding='utf-8').read()
         wall = open(os.path.join(ROOT, 'venueplay', 'app', 'trivia', 'screen.html'), encoding='utf-8').read()
-        ok('the demo player is "Table 6", the team the wall\'s final scores put 2nd with 790', 'P.name="Table 6"' in src and 'name:"Table 6",               points:790' in wall and wall.index('name:"Table 6"') > wall.index('name:"The Quiztopher Nolans"') and wall.index('name:"Table 6"') < wall.index('name:"Nan\'s Army"'))
+        ok('the demo player is "Pint Sized", the team the wall\'s final scores put 2nd with 790', 'P.name="Pint Sized"' in src and 'name:"Pint Sized",             points:790' in wall and wall.index('name:"Pint Sized"') > wall.index('name:"The Quiztopher Nolans"') and wall.index('name:"Pint Sized"') < wall.index('name:"Nan\'s Army"'))
         ok('and the phone finishes 2nd on 790 points, the same team and score', 'P.total=790; P.rank=2; fire({ t:"podium" })' in src)
     finally:
         B.close(); srv.shutdown()
