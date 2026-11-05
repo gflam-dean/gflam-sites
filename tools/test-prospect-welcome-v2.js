@@ -7,7 +7,7 @@
      1. THE FIRST RUN (venueplay/app/vp-firstrun.js, in a small fake page with the REAL vp-session.js for
         the Terms card): who gets it, the five steps in order with their progress dots, the mobile goes on
         the login ONLY after the texted code is verified (Auth's phone_change), the Terms step waits for
-        the tick, the exact TV address with Copy and the slide preview, the game buttons open that
+        the tick, the screen code and the slide preview, the hosts step, the game buttons open that
         console for their venue, the card link and price, "Please call me", progress kept per venue,
         Close and reopen; and index.html opens it before anything else for a prospect venue
      2. THE DELAYED EMAIL on the REAL billing Worker (tools/rig-billing-worker.js): booked with Resend
@@ -68,7 +68,7 @@ function page(phone) {
   var fetch = function (url, opts) {
     var c = { url: String(url), opts: opts || {}, body: opts && opts.body ? JSON.parse(opts.body) : null }; CALLS.push(c);
     var ans = { ok: true };
-    if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, slides: [{ image_url: 'https://db/storage/v1/object/public/venue-ads/V1/a.png', seconds: 8 }, { image_url: 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg', seconds: 8 }] };
+    if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png', slides: [{ image_url: 'https://db/storage/v1/object/public/venue-ads/V1/a.png', seconds: 8 }, { image_url: 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg', seconds: 8 }] };
     if (/\/account\/card-link$/.test(c.url)) ans = { ok: true, has_card: false, card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc', rate: 2.5, seats: 60, monthly: 150, ends_words: 'Thu 26 Nov' };
     if (/\/help\/venue\/ticket$/.test(c.url)) ans = { ok: true, ticket_no: 1007 };
     if (/\/account\/compliance-accept$/.test(c.url)) ans = { ok: true, compliance_accepted_at: '2026-10-28T02:00:00.000Z', compliance_accepted_by: 'Amit' };
@@ -86,7 +86,7 @@ function page(phone) {
 }
 function tick() { TIMERS.forEach(function (t) { if (t.on) t.fn(); }); }
 function pv(over) { var v = { id: 'V1', name: "Caz Reitop's Dirty Secrets", slug: 'caz-reitop-s-dirty-secrets', status: 'active', terms_required: true, compliance_accepted_at: null, compliance_accepted_by: null }; for (var k in (over || {})) v[k] = over[k]; return v; }
-function ctxFor(role, v) { return { role: role, venue: v || pv(), currentVenueId: 'V1', staff: [{ venue_id: 'V1', role: role, display_name: 'Amit' }] }; }
+function ctxFor(role, v) { return { role: role, venue: v || pv(), currentVenueId: 'V1', staff: [{ venue_id: 'V1', role: role, display_name: 'Amit' }], settings: { setup_answers: { tvs: '1', nights: ['thu'], games: ['trivia'], name_ok: true } } }; }   // the wizard's questions already answered (tools/test-first-run-guide.js runs them)
 function hiddenEl(e) { return !!e && (e.style.display === 'none' || (!e.style.display && /display:none/.test(e.style.cssText || ''))); }
 function $(P, id) { return P.doc.getElementById(id); }
 function T(P, id) { var e = $(P, id); return e ? allText(e) : ''; }
@@ -95,7 +95,7 @@ var __rnd = 11;
 (async function () {
   section('1. THE FIRST RUN: who gets it');
   var P = page();
-  check('vp-firstrun.js exports VPFirstRun with the five steps in order', P.FR && P.FR.STEPS.join() === 'mobile,terms,tv,game,card', P.FR && P.FR.STEPS);
+  check('vp-firstrun.js exports VPFirstRun with the nine steps in order (the questions and About you are left out below: these venues have answered, have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', P.FR && P.FR.STEPS);
   check('a prospect venue (terms_required), its manager: it opens', P.FR.wants(ctxFor('manager'), P.deps.storage) === true);
   check('its owner too', P.FR.wants(ctxFor('owner'), P.deps.storage) === true);
   check('a host: no (the tick and the card are not theirs)', P.FR.wants(ctxFor('host'), P.deps.storage) === false);
@@ -103,11 +103,11 @@ var __rnd = 11;
   check('an ordinary venue (not set up as a prospect): no', P.FR.wants(ctxFor('manager', pv({ terms_required: false })), P.deps.storage) === false);
   check('a switched-off venue: no (its hold card comes first)', P.FR.wants(ctxFor('manager', pv({ status: 'suspended' })), P.deps.storage) === false);
 
-  section('1a. Step 1 of 5: Add your mobile, attached ONLY after the texted code is verified');
+  section('1a. Step 1 of 6: Add your mobile, attached ONLY after the texted code is verified');
   var ctx = ctxFor('manager');
   var R = P.FR.open(ctx, P.deps); await R.ready;
-  check('one guide on the page, a dialog, step 1 of 5, five dots with the first lit', !!$(P, 'vpFirstRun') && $(P, 'vpFirstRun').getAttribute('role') === 'dialog' && T(P, 'vpFrCount') === 'Step 1 of 5' &&
-    $(P, 'vpFrDots').children.length === 5 && /FF1F8E/.test($(P, 'vpFrDots').children[0].style.cssText) && !/FF1F8E/.test($(P, 'vpFrDots').children[1].style.cssText), T(P, 'vpFrCount'));
+  check('one guide on the page, a dialog, step 1 of 6, six dots with the first lit', !!$(P, 'vpFirstRun') && $(P, 'vpFirstRun').getAttribute('role') === 'dialog' && T(P, 'vpFrCount') === 'Step 1 of 6' &&
+    $(P, 'vpFrDots').children.length === 6 && /FF1F8E/.test($(P, 'vpFrDots').children[0].style.cssText) && !/FF1F8E/.test($(P, 'vpFrDots').children[1].style.cssText), T(P, 'vpFrCount'));
   check('it says why: sign in by text, and texts if something needs them', T(P, 'vpFrTitle') === 'Add your mobile' && /sign in with a text code/.test(T(P, 'vpFrBody')) && /text you if something at Caz Reitop's Dirty Secrets needs you/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
   check('it can be skipped (Next reads "Skip for now"), and Back is hidden on step 1', $(P, 'vpFrNext').textContent === 'Skip for now' && !$(P, 'vpFrNext').disabled && $(P, 'vpFrBack').style.visibility === 'hidden');
   $(P, 'vpFrMobile').value = '07 5228 3667';
@@ -132,9 +132,9 @@ var __rnd = 11;
   check('the right code is verified as a PHONE CHANGE for that same number', vo && vo.args.type === 'phone_change' && vo.args.phone === '+61452510904' && vo.args.token === '123456', vo);
   check('only then is it on the login, and the step says so; Next now reads Next', USER.phone === '61452510904' && /Done\. 0452 510 904 is on your login/.test(T(P, 'vpFrBody')) && $(P, 'vpFrNext').textContent === 'Next', [USER.phone, T(P, 'vpFrBody')]);
 
-  section('1b. Step 2 of 5: the Terms tick (the existing blocking card), Next waits for it');
+  section('1b. Step 2 of 6: the Terms tick (the existing blocking card), Next waits for it');
   await R.next();
-  check('step 2 of 5, two dots lit, Back shown', T(P, 'vpFrCount') === 'Step 2 of 5' && /FF1F8E/.test($(P, 'vpFrDots').children[1].style.cssText) && $(P, 'vpFrBack').style.visibility === 'visible');
+  check('step 2 of 6, two dots lit, Back shown', T(P, 'vpFrCount') === 'Step 2 of 6' && /FF1F8E/.test($(P, 'vpFrDots').children[1].style.cssText) && $(P, 'vpFrBack').style.visibility === 'visible');
   var card = $(P, 'vpTermsCard');
   check('the Terms card is INSIDE the guide (not left on the page behind it), with the tick, their name and Accept', card && walk($(P, 'vpFrBody'), function (e) { return e === card; }) && !!$(P, 'vpTermsTick') && $(P, 'vpTermsBy').value === 'Amit' && !!$(P, 'vpTermsGo'), card && card.parentNode && card.parentNode.id);
   check('Next is held until they tick', $(P, 'vpFrNext').disabled === true);
@@ -147,29 +147,32 @@ var __rnd = 11;
   check('Accept records it through the billing Worker in their name, as the console card always has', acc && acc.body.accepted === true && acc.body.venue_id === 'V1' && acc.body.by === 'Amit', acc);
   check('then Next opens, and the card\'s own "Start a game" (a page reload) is hidden: the guide carries on', $(P, 'vpFrNext').disabled === false && (!$(P, 'vpTermsDone') || $(P, 'vpTermsDone').style.display === 'none'));
 
-  section('1c. Step 3 of 5: their TV, exact address, Copy, and a live preview of their slides');
+  section('1c. Step 3 of 6: their TV by screen code, the two ways in, and a live preview of their slides');
   await R.next();
-  check('step 3: "Your TV", their exact TV address', T(P, 'vpFrTitle') === 'Your TV' && T(P, 'vpFrTvUrl') === 'www.venueplay.com.au/tv', T(P, 'vpFrTvUrl'));
-  check('it says to open it on the TV\'s browser and type the screen code from the host console', /Open this address in your TV's web browser/.test(T(P, 'vpFrBody')) && /then type the six-character screen code from your host console\. The TV remembers your venue after that\./.test(T(P, 'vpFrBody')) && T(P, 'vpFrBody').indexOf('/tv?') === -1);
-  // Dean, 31 Oct 2026: the VenuePlay TV app, for a TV with Google Play, in every setup guide.
+  /* Dean, 5 Nov 2026: "Everywhere should say venueplay.com.au/tv" with the screen code, never a slug link.
+     This venue has no join_code of its own, so the code is the derived one, as the console chip shows. */
+  check('step 3: "Your TV", their screen code (the console chip\'s code), and no slug address anywhere', T(P, 'vpFrTitle') === 'Your TV' && T(P, 'vpFrTvCode') === P.VP.venueCode('caz-reitop-s-dirty-secrets') &&
+    !/tv\?/.test(T(P, 'vpFrBody')) && !$(P, 'vpFrTvUrl') && !$(P, 'vpFrCopy'), T(P, 'vpFrTvCode'));
+  check('it says to open venueplay.com.au/tv on the TV\'s browser, go full screen and leave it running', /Go to venueplay\.com\.au\/tv on the TV/.test(T(P, 'vpFrTvWeb')) && /Go full screen and leave it running/.test(T(P, 'vpFrTvWeb')));
+  // Dean, 31 Oct 2026, then 5 Nov: the venueplay TV app, for a Google TV, in every setup guide.
   var playP = $(P, 'vpFrPlay'), playA = playP && walk(playP, function (e) { return e.tagName === 'A'; });
-  check('it names the venueplay TV app for a TV with Google Play, then the TV\'s web browser otherwise (one line)',
-        T(P, 'vpFrPlay') === "Got a TV with Google Play? Download the venueplay TV app and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser." && !!playP && inDoc(playP, P.body), T(P, 'vpFrPlay'));
+  check('it names the venueplay TV app for a Google TV, then the screen code',
+        /^On the TV, open Google Play and get the venueplay TV app/.test(T(P, 'vpFrPlay')) && !!playP && inDoc(playP, P.body) && /Put in your screen code/.test(T(P, 'vpFrTvApp')), T(P, 'vpFrTvApp'));
   check('and "venueplay TV app" links to the app\'s Google Play page, opened on its own',
         !!playA && playA.textContent === 'venueplay TV app' && playA.getAttribute('href') === 'https://play.google.com/store/apps/details?id=au.com.venueplay.tv' && playA.getAttribute('target') === '_blank',
         playA && [playA.textContent, playA.getAttribute('href')]);
-  await $(P, 'vpFrCopy').click();
-  check('Copy puts the whole address on the clipboard and says Copied', CLIP.length === 1 && CLIP[0] === 'https://www.venueplay.com.au/tv' && $(P, 'vpFrCopy').textContent === 'Copied', CLIP);
   var sg = CALLS.filter(function (c) { return /\/account\/screen-get$/.test(c.url); })[0];
   check('the preview reads THEIR screen (screen-get for this venue, signed in)', sg && sg.body.venue_id === 'V1' && sg.opts.headers.Authorization === 'Bearer TOKEN-1', sg);
   check('it shows their first slide in a 16:9 frame, and says how many', $(P, 'vpFrSlide').getAttribute('src') === 'https://db/storage/v1/object/public/venue-ads/V1/a.png' && $(P, 'vpFrSlide').style.display === 'block' && /padding-top:56\.25%/.test($(P, 'vpFrPreview').style.cssText) && /Your 2 slides/.test(T(P, 'vpFrCaption')), T(P, 'vpFrCaption'));
   tick();
   check('and moves to the next one, as the TV does', $(P, 'vpFrSlide').getAttribute('src') === 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg');
 
-  section('1d. Step 4 of 5: run your first game');
+  section('1d. Step 4 of 6: add your hosts (tools/test-first-run-guide.js runs it in full), then step 5 of 6: a first test game');
   await R.next();
-  check('step 4: trivia in three taps, said in words', T(P, 'vpFrTitle') === 'Run your first game' && /Trivia takes three taps: pick a question set, tap Open lobby, then Start/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
+  check('step 4: Add your hosts', T(P, 'vpFrTitle') === 'Add your hosts' && T(P, 'vpFrCount') === 'Step 4 of 6', T(P, 'vpFrTitle'));
   check('leaving step 3 stopped its slideshow', TIMERS.filter(function (t) { return t.on; }).length === 0);
+  await R.next();
+  check('step 5: trivia in three taps, said in words', T(P, 'vpFrTitle') === 'Run your first game' && /Trivia takes three taps: pick a question set, tap Open lobby, then Start/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
   check('musical bingo is offered as musical bingo, never as bingo or gaming', /Or try musical bingo/.test(T(P, 'vpFrMusical')) && !/gaming|permit/i.test(T(P, 'vpFrBody')));
   $(P, 'vpFrTrivia').click();
   check('Open trivia opens the trivia console for THEIR venue', OPENED.length === 1 && OPENED[0] === '/app/trivia/host.html?venue=caz-reitop-s-dirty-secrets', OPENED);
@@ -177,10 +180,10 @@ var __rnd = 11;
   await R.go('game'); $(P, 'vpFrMusical').click();
   check('Or try musical bingo opens that console for their venue', OPENED[1] === '/app/musical/host.html?venue=caz-reitop-s-dirty-secrets', OPENED);
 
-  section('1e. Step 5 of 5: your card when you\'re ready, and "Dean will call"');
+  section('1e. Step 6 of 6: your card when you\'re ready, and "Dean will call"');
   await R.go('card');
   var cl = CALLS.filter(function (c) { return /\/account\/card-link$/.test(c.url); })[0];
-  check('step 5 asks the billing Worker for THIS venue\'s card link', T(P, 'vpFrTitle') === "Add your card when you're ready" && cl && cl.body.venue_id === 'V1', cl);
+  check('step 6 asks the billing Worker for THIS venue\'s card link', T(P, 'vpFrTitle') === "Add your card when you're ready" && cl && cl.body.venue_id === 'V1', cl);
   /* Phase 2 (Dean, 29 Oct 2026; migration 127): the free month started at their first sign-in, and ends on a day the Worker gives. */
   check('the price line: $2.50 a player a month on the usual crowd, 60 is $150.00, the free month runs until its day and the card is not charged before then, no lock-in', T(P, 'vpFrPrice') === "It's $2.50 a player a month on your usual crowd: 60 players is $150.00 a month. Your free month runs until Thu 26 Nov, and your card won't be charged before then. No lock-in.", T(P, 'vpFrPrice'));
   check('two equal choices side by side: "Add your card now" (the card link, in the SAME tab, so Stripe\'s back arrow returns to this signed-in console) and "Later"', $(P, 'vpFrCard').getAttribute('href') === 'https://www.venueplay.com.au/add-card?f=F1&t=abc' && $(P, 'vpFrCard').getAttribute('target') === null &&
@@ -209,22 +212,22 @@ var __rnd = 11;
     /background:#0A0A0B/.test($(P2, 'vpFirstRun').getAttribute('style')), [HDR && HDR.style.visibility, $(P2, 'vpFirstRun').getAttribute('style')]);
   /* STEPS ALREADY DONE ARE LEFT OUT (Dean, 30 Oct 2026; UX audit 2.3): a login with its mobile is never asked for it
      again, and a venue that has ticked the Terms is not shown the tick. */
-  check('a login that already has its mobile, at a venue that has ticked: no mobile step, no Terms step; it opens on Your TV, step 1 of 3',
-    R2.steps().join() === 'tv,game,card' && R2.step() === 'tv' && T(P2, 'vpFrTitle') === 'Your TV' && T(P2, 'vpFrCount') === 'Step 1 of 3' && $(P2, 'vpFrDots').children.length === 3 && !$(P2, 'vpFrMobile') && !$(P2, 'vpTermsCard'), [R2.steps(), T(P2, 'vpFrCount')]);
+  check('a login that already has its mobile, at a venue that has ticked: no mobile step, no Terms step; it opens on Your TV, step 1 of 4',
+    R2.steps().join() === 'tv,hosts,game,card' && R2.step() === 'tv' && T(P2, 'vpFrTitle') === 'Your TV' && T(P2, 'vpFrCount') === 'Step 1 of 4' && $(P2, 'vpFrDots').children.length === 4 && !$(P2, 'vpFrMobile') && !$(P2, 'vpTermsCard'), [R2.steps(), T(P2, 'vpFrCount')]);
   check('so Back is hidden on its first step', $(P2, 'vpFrBack').style.visibility === 'hidden');
   $(P2, 'vpFrClose').click();
   check('closed, the header is back exactly as it was', HDR.style.visibility === '' && HDR.getAttribute('data-vpfr') === null, HDR.style.visibility);
   check('Close takes it away, keeps the step, and does not open it again on its own', !$(P2, 'vpFirstRun') && JSON.parse(STORE['vpFirstRun:V1']).step === 'tv' && JSON.parse(STORE['vpFirstRun:V1']).dismissed === true && P2.FR.wants(c2, P2.deps.storage) === false, STORE['vpFirstRun:V1']);
   var R3 = P2.FR.open(c2, P2.deps); await R3.ready;
-  check('reopened (Setup guide), it resumes on that step', R3.step() === 'tv' && T(P2, 'vpFrCount') === 'Step 1 of 3', T(P2, 'vpFrCount'));
+  check('reopened (Setup guide), it resumes on that step', R3.step() === 'tv' && T(P2, 'vpFrCount') === 'Step 1 of 4', T(P2, 'vpFrCount'));
   var other = ctxFor('manager', pv({ id: 'V2' }));
   check('progress is per venue: another prospect venue on this device starts at step 1', P2.FR.wants(other, P2.deps.storage) === true);
   var P3 = page(); P3.FR.open(ctxFor('manager'), P3.deps); P3.FR.open(ctxFor('manager'), P3.deps);
   var n = 0; walk(P3.body, function (e) { if (e.id === 'vpFirstRun') n++; return false; });
   check('opened twice, still one guide', n === 1, n);
-  var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150 }); } }); };
+  var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150, logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png' }); } }); };
   var R4 = P4.FR.open(ctxFor('manager'), P4.deps); await R4.ready;
-  check('a venue whose card is on (every self sign-up that added one at Stripe): no card step at all', R4.steps().indexOf('card') === -1 && R4.go('card') === null && R4.steps().join() === 'mobile,terms,tv,game', R4.steps());
+  check('a venue whose card is on (every self sign-up that added one at Stripe): no card step at all', R4.steps().indexOf('card') === -1 && R4.go('card') === null && R4.steps().join() === 'mobile,terms,tv,hosts,game', R4.steps());
   await R4.go('game');
   check('and its last step, Run your first game, reads Finish', $(P4, 'vpFrNext').textContent === 'Finish', $(P4, 'vpFrNext').textContent);
   await R4.go('tv');
@@ -293,13 +296,13 @@ var __rnd = 11;
 
   var PSU = page('61452510904');
   PSU.deps.fetch = function (url, opts) { var c = { url: String(url), body: JSON.parse(opts.body) }; CALLS.push(c);
-    var ans = /card-link$/.test(c.url) ? { ok: true, has_card: true, rate: 3, seats: 60, monthly: 180 } : /screen-get$/.test(c.url) ? { ok: true, slides: [] } : { ok: true };
+    var ans = /card-link$/.test(c.url) ? { ok: true, has_card: true, rate: 3, seats: 60, monthly: 180 } : /screen-get$/.test(c.url) ? { ok: true, slides: [], logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png' } : { ok: true };
     return Promise.resolve({ ok: true, json: function () { return Promise.resolve(ans); } }); };
   var RSU = PSU.FR.open(ctxFor('owner', selfV()), PSU.deps); await RSU.ready;
-  check('a self sign-up with its mobile, the Terms ticked at checkout and a card at Stripe: just Your TV and a first game, step 1 of 2',
-    RSU.steps().join() === 'tv,game' && T(PSU, 'vpFrTitle') === 'Your TV' && T(PSU, 'vpFrCount') === 'Step 1 of 2', [RSU.steps(), T(PSU, 'vpFrCount')]);
+  check('a self sign-up with its mobile, the Terms ticked at checkout and a card at Stripe: just Your TV, hosts and a first game, step 1 of 3',
+    RSU.steps().join() === 'tv,hosts,game' && T(PSU, 'vpFrTitle') === 'Your TV' && T(PSU, 'vpFrCount') === 'Step 1 of 3', [RSU.steps(), T(PSU, 'vpFrCount')]);
   check('it never starts a prospect free month for a venue that is not one', !CALLS.some(function (c) { return /prospect-start$/.test(c.url); }));
-  await RSU.next();
+  await RSU.next(); await RSU.next();
   check('Run your first game is the last step and reads Finish', T(PSU, 'vpFrTitle') === 'Run your first game' && $(PSU, 'vpFrNext').textContent === 'Finish');
   await RSU.next();
   check('Finish closes it as done', !$(PSU, 'vpFirstRun') && JSON.parse(STORE['vpFirstRun:V1']).done === true);

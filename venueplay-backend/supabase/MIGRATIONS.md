@@ -611,3 +611,10 @@ vp-helpdesk-hq.js; this brings the live row into line, and tools/test-help-saved
 comparing. No table, policy or grant, so RLS-BASELINE.json does not change. Either order with the site and Workers (HQ shows
 the live row's words until it runs). NUMBER: 150 to 154 and 160 to 169 are taken and 155 is the security fix, so 156
 (release/6nov, 5 Nov 2026). NOT RUN. Optional at the gate, on Dean's yes. Read-back and rollback in the file.
+`venueplay-163-setup-answers.sql` (Dean, 5 Nov 2026, INBOX 44a and 46, the first sign-in setup wizard): adds ONE column,
+`vp_venue_settings.setup_answers` (jsonb object, 2,000 characters at most), holding what a new venue tells the wizard: how
+many TVs, which nights it runs games, which games it plays, and that its name is right. The page writes it with its own
+`VP.saveSettings`, which the existing owner and manager policies (migration 77) already allow, so there is no new policy,
+grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
+answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
+branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
