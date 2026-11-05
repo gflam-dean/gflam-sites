@@ -39,12 +39,41 @@ ok('no deadline known: never', wait(true, 'question', 0, NOW, 10) === -1);
 ok('a silly delay is held to 3 to 60 seconds', wait(true, 'question', NOW, NOW, 0) === 10000 && wait(true, 'question', NOW, NOW, 1) === 3000 && wait(true, 'question', NOW, NOW, 999) === 60000,
    [wait(true, 'question', NOW, NOW, 0), wait(true, 'question', NOW, NOW, 1), wait(true, 'question', NOW, NOW, 999)]);
 ok('it is ON by default, 10 seconds', /autoReveal:true, autoSecs:10/.test(HOST));
-ok('the timer fires reveal() only once the clock has closed (a guard in the callback itself)', /if\(remainingSecs\(\)>0\)\{ scheduleAutoReveal\(\); return; \}/.test(HOST));
+ok('the timer fires reveal() only once the clock has closed or every team is in (a guard in the callback itself)', /if\(remainingSecs\(\)>0 && !allAnswered\(\)\)\{ scheduleAutoReveal\(\); return; \}/.test(HOST));
+print('EVERY TEAM IN: the auto reveal may go early, still after the delay (Dean, 6 Nov 2026 10:00)');
+ok('all in 5 s from now with 20 s on the clock: 15 s from now (all in + 10), not 30', wait(true, 'question', NOW + 20000, NOW, 10, NOW + 5000) === 15000, wait(true, 'question', NOW + 20000, NOW, 10, NOW + 5000));
+ok('all in just now: exactly the delay', wait(true, 'question', NOW + 20000, NOW, 10, NOW) === 10000);
+ok('all in AFTER the close changes nothing: the close counts', wait(true, 'question', NOW + 2000, NOW, 10, NOW + 9000) === 12000, wait(true, 'question', NOW + 2000, NOW, 10, NOW + 9000));
+ok('updateLive starts the early wait the moment the last team answers, once', /if\(G\.status==="question" && p>0 && a>=p && !G\.allInAt\)\{ G\.allInAt=Date\.now\(\); if\(G\.autoReveal\) scheduleAutoReveal\(\); \}/.test(HOST));
+ok('a new question starts with nobody in', (HOST.match(/G\.allInAt=0;/g) || []).length >= 2);
+
+print('THE HOST\'S REVEAL NEEDS TWO TAPS WHILE THE CLOCK RUNS');
+function makeTap(rem, all) {
+  var revealed = 0, timers = [];
+  function remainingSecs() { return rem; } function allAnswered() { return all; } function reveal() { revealed++; }
+  function setTimeout(f, ms) { timers.push({ f: f, ms: ms }); return timers.length; } function clearTimeout() {}
+  var attrs = {}, btn = { textContent: 'Reveal answer', getAttribute: function (k) { return attrs[k] || null; }, setAttribute: function (k, v) { attrs[k] = v; }, removeAttribute: function (k) { delete attrs[k]; } };
+  var REVEAL_ARM_MS = 4000;
+  eval(liftFrom(HOST, 'revealTap'));
+  return { tap: function () { revealTap(btn); }, btn: btn, n: function () { return revealed; }, timers: timers };
+}
+var t1 = makeTap(12, false); t1.tap();
+ok('time running: the first tap does not reveal, it asks "Tap again to reveal now"', t1.n() === 0 && t1.btn.textContent === 'Tap again to reveal now', t1.btn.textContent);
+t1.tap();
+ok('and the second tap reveals', t1.n() === 1);
+var t2 = makeTap(12, false); t2.tap(); t2.timers[0].f(); t2.tap();
+ok('after 4 seconds unanswered the button goes back, and a lone tap asks again', t2.n() === 0 && t2.btn.textContent === 'Tap again to reveal now' && t2.timers[0].ms === 4000);
+var t3 = makeTap(0, false); t3.tap();
+ok('the clock has closed: one tap reveals, as before', t3.n() === 1);
+var t4 = makeTap(9, true); t4.tap();
+ok('every team is in: one tap reveals', t4.n() === 1);
+ok('the Reveal button goes through the two-tap guard', /rv\.addEventListener\("click", function\(\)\{ revealTap\(rv\); \}\)/.test(HOST));
+
 
 print('THE WINNERS: podium first, first place on the host\'s tap, leaderboard last');
 var SRC = ['finishOutcome', 'finishNow', 'endMsg', 'announceFirst', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
-function makeHost(board) {
-  var G = { board: board, status: 'reveal', endStep: 0, noPlayersNote: false };
+function makeHost(board, all) {
+  var G = { board: board, status: 'reveal', endStep: 0, noPlayersNote: false, winnersAll: all === true };
   var sent = [], errors = [];
   function playerCount() { return 3; } function bcast(m) { sent.push(m); } function renderConsole() {} function hostError(m) { errors.push(m); }
   var NOBODY_MSG = 'x';
@@ -65,6 +94,14 @@ ok('and only once', h.sent.length === 2);
 h.showFinalBoard();
 ok('then Show the leaderboard sends the final scores', h.sent.length === 3 && h.sent[2].t === 'leaderboard' && /^final/i.test(h.sent[2].title) && h.sent[2].rows.length === 4, JSON.stringify(h.sent[2]));
 ok('the order on the wire is podium, podium, leaderboard', h.sent.map(function (m) { return m.t; }).join(',') === 'podium,podium,leaderboard');
+var ha = makeHost(B, true);
+ha.finishNow(true);
+ok('"All at once" (Advanced settings): the podium goes up at step 2, all three places and the sound together', ha.sent.length === 1 && ha.sent[0].t === 'podium' && ha.sent[0].step === 2, JSON.stringify(ha.sent));
+ha.announceFirst();
+ok('there is no first place left to announce', ha.sent.length === 1);
+ha.showFinalBoard();
+ok('and the next tap is the leaderboard', ha.sent.length === 2 && ha.sent[1].t === 'leaderboard');
+ok('staged is the default, and the setting is in Advanced settings', /winnersAll:false/.test(HOST) && HOST.indexOf('id="cfgWinners"') > HOST.indexOf('id="triviaAdv"') && HOST.indexOf('id="cfgWinners"') < HOST.indexOf('</details>', HOST.indexOf('id="triviaAdv"')));
 
 print('THE PHONE');
 function makePhone(rank) {
