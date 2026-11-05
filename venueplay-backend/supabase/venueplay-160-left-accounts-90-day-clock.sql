@@ -12,6 +12,18 @@
 -- moment they left (vp_prospects.cancelled_at or paused_at), never from today, and never for a
 -- venue that is back on. Nothing is deleted by this file.
 --
+-- WHAT THE 90 DAYS DO, AND DO NOT DO (Dean, 5 Nov 2026, INBOX item 54, answer 1):
+--   DELETED after 90 days: the PLAYER details (names, emails, mobiles, postcodes, opt-ins, device ids),
+--     the members list names and the winners' names. That is the existing nightly sweep, unchanged.
+--   KEPT, NEVER DELETED: the venue's OWN details: the vp_venues row (name, address, postcode, slug, logo),
+--     its account (venueplay_founding: contact, plan), its settings, its slides, its draws and every count
+--     (players per night, prizes). The sweep never touches them.
+--   HIDDEN after 90 days: the venue's record is HELD. vp_venues.player_data_purged_at (set once by the sweep,
+--     never cleared) is the marker, so no new column is needed and nothing has to deploy in a particular order.
+--     HQ lists and the Account page may hide a venue whose player_data_purged_at is set; a later "rejoin" flow
+--     (a returning venue matched to its held record, offered as a NEW person or manager, never shown the old
+--     contact's personal details) reads the same marker. That flow is a separate job; this keeps it possible.
+--
 -- ORDER: after the billing Worker and the game Worker that carry the change (either order is
 -- safe: before this runs, existing prospects simply keep no clock, as today).
 -- NUMBER: 152 to 154 are on other branches and tonight's Friday/Sunday agents take 155 onwards,
@@ -33,6 +45,9 @@ update vp_venues v
    and v.closed_at is null
    and v.suspended_reason in ('free_month_ended', 'cancelled')
    and coalesce(p.cancelled_at, p.paused_at) is not null;
+
+comment on column vp_venues.player_data_purged_at is
+  'When the nightly retention sweep cleared this venue''s player contact details, 90 days after closed_at. Null means it has not been done. Set once and never cleared: it is the evidence the promise in privacy.html was kept. It also marks the venue''s own record as HELD (kept, never deleted, hidden from lists; Dean, 5 Nov 2026): a returning venue rejoins it through the rejoin flow, as a new person or manager.';
 
 -- Read back: every left prospect now has a clock, and no active venue gained one.
 --   select count(*) from vp_venues where status = 'active' and closed_at is not null;   -- expect 0

@@ -1,5 +1,5 @@
 /* "PRODUCT UPDATES FROM VENUEPLAY?": a small card in the host console after sign-in (Dean, 5 Nov 2026,
-   INBOX item 21a; migration 161).
+   INBOX item 21a; migration 164).
 
    "when a host signs in (by phone), also ask for their EMAIL address, optional, for product updates about
    once a month. It needs a clear opt-in tick, unticked by default (Spam Act ...), and an unsubscribe link in

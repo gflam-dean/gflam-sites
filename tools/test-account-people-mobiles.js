@@ -1,11 +1,11 @@
 /* WHO SEES A HOST'S MOBILE (Dean, 5 Nov 2026, INBOX item 21b).
 
    "PEOPLE tab: the OWNER sees each host's FULL mobile number (not masked). Hosts see only their own. Check the
-   permission rules in the Worker."
+   permission rules in the Worker." And item 54: MANAGERS also see the full mobile.
 
    RUNS the real billing Worker's /account/hosts (tools/rig-billing-worker.js, its own router) and checks:
      - the account owner gets every login's full mobile, written as a person writes it (0400 111 222)
-     - a restricted manager (a permissions object on their staff row) gets the last three digits only
+     - a manager (even a restricted one) gets the full mobile too (Dean, item 54)
      - a host is refused outright: the route takes owner and manager staff rows only, so a host never sees
        anyone else's number (their own is on their own login)
      - vpaShowMobile writes 61400111222, +61400111222 and 0400111222 the same way, and never guesses at others
@@ -49,8 +49,8 @@ check('the owner sees the manager\'s full mobile too (+61 form written the same 
 
 var m = call('/account/hosts', MGR);
 check('a restricted manager gets the list of their venue', m.status === 200 && (m.body.hosts || []).length === 3, m);
-check('a restricted manager sees the last three digits only, never the full number',
-      byName(m, 'Sam Host').mobile_last3 === '222' && !('mobile' in byName(m, 'Sam Host')), byName(m, 'Sam Host'));
+/* Dean, 5 Nov 2026 (INBOX item 54): managers see the full mobile too, "they're above them". */
+check('a manager sees each host\'s full mobile too: 0400 111 222', byName(m, 'Sam Host').mobile === '0400 111 222', byName(m, 'Sam Host'));
 
 var h = call('/account/hosts', HOST);
 check('a host is refused: they never see anyone else\'s number', h.status === 403 && !(h.body && h.body.hosts), h);

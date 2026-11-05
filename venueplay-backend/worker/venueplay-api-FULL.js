@@ -216,7 +216,7 @@ export default {
       if (request.method === 'POST' && path === '/account/card-link' && typeof vpbCardLink === 'function') return await vpbCardLink(request, env, json);
       // The first screen after the one-off link: their name on their venue staff rows (Dean, 29 Oct 2026).
       if (request.method === 'POST' && path === '/account/my-name' && typeof vpbMyName === 'function') return await vpbMyName(request, env, json);
-      // Product updates by email, asked at sign-in at most once a month, a tick unticked by default (Dean, 5 Nov 2026, INBOX 21a; migration 161).
+      // Product updates by email, asked at sign-in at most once a month, a tick unticked by default (Dean, 5 Nov 2026, INBOX 21a; migration 164).
       if (request.method === 'POST' && path === '/account/updates-ask' && typeof vpbUpdatesAsk === 'function') return await vpbUpdatesAsk(request, env, json);
       if (request.method === 'POST' && path === '/account/updates-optin' && typeof vpbUpdatesOptin === 'function') return await vpbUpdatesOptin(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
@@ -4597,7 +4597,7 @@ async function vpbMyName(request, env, json) {
 }
 
 /* ===========================================================================
- * PRODUCT UPDATES FROM VENUEPLAY, ASKED AT SIGN-IN (Dean, 5 Nov 2026, INBOX item 21a; migration 161)
+ * PRODUCT UPDATES FROM VENUEPLAY, ASKED AT SIGN-IN (Dean, 5 Nov 2026, INBOX item 21a; migration 164)
  *
  * "when a host signs in (by phone), also ask for their EMAIL address, optional, for product updates
  * about once a month. It needs a clear opt-in tick, unticked by default ... and an unsubscribe link in
@@ -4612,7 +4612,7 @@ async function vpbMyName(request, env, json) {
  * venueplay/app/vp-updates-optin.js; its tick wording is VPB_HOST_UPDATES_CONSENT, word for word
  * (tools/test-host-updates-optin.js holds the two equal), because the words stored are the words ticked.
  *
- * FAILS CLOSED. If the table cannot be read (migration 161 not run, or a blip) the answer is
+ * FAILS CLOSED. If the table cannot be read (migration 164 not run, or a blip) the answer is
  * { ask: false }: never ask for what we cannot store. An email is ONLY stored with the tick: "Not now",
  * or Save with the tick off, stores asked_at and no email at all, even one typed into the box. The email
  * is never logged. Nothing here sends anything: vpaHostUpdatesRecipients is the list a future send
@@ -15221,10 +15221,10 @@ async function vpbListHosts(request, env, json) {
   // Mobile digits, in parallel and bounded: a slow Auth API costs the digits, never the list.
   const ids = Object.keys(byUser).slice(0, 60);
   const users = await Promise.all(ids.map((id) => vpaAuthGetUser(env, id)));
-  /* THE OWNER SEES EACH HOST'S FULL MOBILE (Dean, 5 Nov 2026, INBOX item 21b): it is their staff and they need to ring
-     them. A restricted manager keeps the last three digits only. A host never reaches this route at all
-     (vpbRequireOwner takes owner and manager staff rows only), so a host sees nobody's number but their own login. */
-  const fullMobiles = vpbIsOwner(o);
+  /* THE OWNER AND THE MANAGERS SEE EACH HOST'S FULL MOBILE (Dean, 5 Nov 2026, INBOX items 21b and 54: managers too,
+     "they're above them"): they need to ring their hosts. A host never reaches this route at all (vpbRequireOwner takes
+     owner and manager staff rows only, and a marketing login neither), so a host sees nobody's number but their own. */
+  const fullMobiles = true;
   users.forEach((u, i) => {
     if (!(u && u.phone)) return;
     byUser[ids[i]].mobile_last3 = vpaMaskMobile(u.phone);

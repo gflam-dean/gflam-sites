@@ -4028,6 +4028,22 @@ MUTATIONS = [
     ('test-account-tabs.js', 'venueplay/app/billing.html',
      '      lede.classList.remove("billonly"); lede.hidden = false;', '      lede.hidden = false;',
      'a manager\'s intro is hidden on every tab but Billing, the one tab they are sent away from'),
+    # The orange bar in each state's own words (Dean, 5 Nov 2026, INBOX item 54 answer 5).
+    ('test-archived-venue-restore.js', 'venueplay/app/vp-session.js',
+     "      : v.suspended_reason === 'free_month_ended'\n", "      : v.suspended_reason === 'free_month_endedX'\n",
+     'a paused prospect is told their games are switched off and we will sort it out'),
+    ('test-archived-venue-restore.js', 'venueplay/app/vp-session.js',
+     "    var owner = !!(ctx && (ctx.role === 'owner' || ctx.role === 'manager' || ctx.isAdmin));", "    var owner = true;",
+     'a host is told to add a card they cannot add'),
+    ('test-archived-venue-restore.js', 'venueplay/app/vp-session.js',
+     "      : (v.suspended_reason === 'cancelled' || v.suspended_reason === 'ended')\n", "      : (false)\n",
+     'a cancelled venue is told we will sort it out'),
+    ('test-archived-venue-restore.js', 'venueplay/app/vp-session.js',
+     "      : 'This venue\\'s games are switched off for now. Nothing has been lost.", "      : 'Your games are on hold for the moment. Nothing has been lost.",
+     'the old "on hold for the moment" words come back'),
+    ('test-archived-venue-restore.js', 'venueplay/app/vp-session.js',
+     "      ? 'This venue\\'s account is closed, so its games are off.", "      ? 'This venue is archived, so its games are off.",
+     'a closed account is told it is "archived", our word, not theirs'),
     # Your account, the full review, in Chrome (Dean, 5 Nov 2026, INBOX items 21, 33, 34, 35).
     ('account-review-in-chrome.test.py', 'venueplay/app/billing.html',
      '    if (left && !applyStanding._tabbed){', '    if (false && left && !applyStanding._tabbed){',
@@ -4060,8 +4076,8 @@ MUTATIONS = [
      'the settings inside Game settings carry a second header and title'),
     # Who sees a host's mobile (Dean, 5 Nov 2026, INBOX item 21b).
     ('test-account-people-mobiles.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
-     '  const fullMobiles = vpbIsOwner(o);', '  const fullMobiles = true;',
-     'a restricted manager is handed every host\'s full mobile'),
+     '  const fullMobiles = true;', '  const fullMobiles = vpbIsOwner(o);',
+     'a manager sees only the last three digits of a host\'s mobile (Dean, item 54: managers see it all)'),
     ('test-account-people-mobiles.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '    if (fullMobiles) byUser[ids[i]].mobile = vpaShowMobile(u.phone);', '',
      'the owner sees only the last three digits again'),
@@ -12012,7 +12028,7 @@ MUTATIONS = [
      '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
      'in Chrome, a phone back from a quiet drop has left the room alone and taken the whole venue off it'),
     # ---- 5 Nov 2026: product updates by email, asked at host sign-in at most once a month, a tick unticked by
-    # default (Dean, INBOX item 21a; migration 161), branch fix/host-updates-optin-8nov.
+    # default (Dean, INBOX item 21a; migration 164), branch fix/host-updates-optin-8nov.
     ('test-host-updates-optin.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '  if (!r) return json({ ask: true });\n',
      '  if (!r) return json({ ask: false });\n',
@@ -12104,7 +12120,7 @@ MUTATIONS = [
     ('test-host-updates-optin.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '    if (!res.ok) return json({ ask: false });\n',
      '    if (!res.ok) return json({ ask: true });\n',
-     'before migration 161 runs every host is asked for an email nobody can store'),
+     'before migration 164 runs every host is asked for an email nobody can store'),
     ('test-host-updates-optin.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '    if (!res.ok) return json({ ask: false });\n    rows = await res.json();',
      '    rows = res.ok ? await res.json() : [];',
