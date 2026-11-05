@@ -992,7 +992,7 @@
   "counted_by": "lines"
  },
  "tools/test-venue-url.js": {
-  "checks": 101,
+  "checks": 139,
   "counted_by": "lines"
  },
  "tools/test-venuepick.js": {
@@ -1056,7 +1056,7 @@
   "counted_by": "lines"
  },
  "tools/tv-bare-setup-in-chrome.test.py": {
-  "checks": 29,
+  "checks": 73,
   "counted_by": "lines"
  },
  "tools/tv-endshow-in-chrome.test.py": {
