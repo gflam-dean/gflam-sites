@@ -57,7 +57,10 @@ var STORED = [];
    makes every request to it answer the way live PostgREST answered for vp_help_saved_replies before
    migration 126 (read-only check, 29 Oct 2026): 404, code PGRST205. The fake database would otherwise
    make any table it is asked for, so "before the migration" could never be seen in a browser. */
-var MISSING = {};
+/* vp_host_updates_optin (migration 161, NOT RUN on 5 Nov 2026) starts missing, as it is live, so the
+   console's product-updates card (vp-updates-optin.js) stays away from every Chrome suite written before it;
+   {ask:'missing', table:'vp_host_updates_optin', on:false} brings it in. */
+var MISSING = { vp_host_updates_optin: true };
 var _rf = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url), m = String((opts && opts.method) || 'GET').toUpperCase();
