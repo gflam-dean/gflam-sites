@@ -232,6 +232,7 @@ export default {
       if (request.method === 'GET'  && path === '/autopilot/prospects/quiet' && typeof vpaAutopilotQuietProspects === 'function') return await vpaAutopilotQuietProspects(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/prospect/nudge'  && typeof vpaAutopilotProspectNudge === 'function') return await vpaAutopilotProspectNudge(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/prospect/nudge-sms' && typeof vpaAutopilotProspectNudgeSms === 'function') return await vpaAutopilotProspectNudgeSms(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/signin-link' && typeof vpaAutopilotThreadSigninLink === 'function') return await vpaAutopilotThreadSigninLink(request, env, json);
       // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
@@ -2577,7 +2578,9 @@ async function vpaAutopilotDecisions(request, env, json) {
     try { rows = await q(',edited_postcode,edited_entity_type,edited_login_email'); }
     catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: the decisions as before
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
-  return json({ ok: true, decisions: rows, features: ['needs_you'] });
+  /* signin_in_reply: /autopilot/prospect hands back the reply's sign-in link (return_signin_link); thread_link:
+     POST /autopilot/prospect/signin-link; delivery: the prospects lists carry delivery (5 Nov 2026). */
+  return json({ ok: true, decisions: rows, features: ['needs_you', 'signin_in_reply', 'thread_link', 'delivery'] });
 }
 
 /* GET /autopilot/holds: the checked replies Dean has opened Edit on and not decided yet (2 Nov 2026). The Mac
@@ -3491,6 +3494,18 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     }
   }
 
+  /* 5b. THE LINK FOR THEIR OWN EMAIL THREAD (Dean, 5 Nov 2026: "I don't want to lose a lead because my email went to
+     junk"). The welcome comes from an address they have never seen, so it can be junked or bounced; the Mac's reply in
+     the thread they wrote to lands. Only for the autopilot, and only when it asks (return_signin_link): the Mac puts
+     this link in that reply. A mobile login signs in by text code, so its link carries no token (the same address as
+     the welcome's button); an email login gets its OWN one-use token, apart from the welcome's, so either one works
+     and the first used does not spend the other. The welcome still goes, as the backup. */
+  let threadLink = null;
+  if (opts.via === 'autopilot_prospect' && b.return_signin_link === true && login) {
+    threadLink = await vpaProspectThreadLink(env, venue.id, login.id, !!login.mobile, mobileRaw, email, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
+    if (!threadLink.url) { warnings.push('No sign-in link could be made for the reply (' + threadLink.reason + '): the reply goes without one and the welcome email carries it.'); threadLink = null; }
+  }
+
   // 6. Who set it up, and what was made.
   await vpaAudit(env, actor, 'prospect_set_up', 'venue:' + venue.id, {
     via: opts.via || 'hq', name: name, slug: slug, founding_id: foundingId, email: email, first_name: firstName || undefined,
@@ -3505,8 +3520,29 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
     slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null, offer_code: offer.code || null };
   if (welcome) out.welcome = welcome;
+  if (threadLink) out.signin = threadLink;
   if (warnings.length) out.warnings = warnings;
   return json(out);
+}
+
+/* The one-tap sign-in for a reply in their own thread (Dean, 5 Nov 2026). The SAME two kinds as the welcome's button
+   (vpaFireProspectWelcome): a mobile login opens the text-code sign-in with their number filled in (no token, nothing
+   to leak), an email login gets a one-use token (vpaMintSigninLinkFor, hash only) that ends with their 30 days.
+   Returns { url, kind: 'sms' | 'link', expires_at, days_left, mobile_ends } or { url: null, reason }. */
+async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobileRaw, email, endMs) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  if (mobileLogin) {
+    const m = vpaProspectPhone(mobileRaw);
+    if (!m || m[1] !== '4') return { url: null, reason: 'no_mobile' };
+    const digits = m.replace(/\D/g, '');
+    return { url: site + '/app/?signin=sms#m=' + digits, kind: 'sms', expires_at: null, days_left: null, mobile_ends: digits.slice(-3) };
+  }
+  if (!authUserId) return { url: null, reason: 'no_login' };
+  try {
+    const m = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), endMs);
+    return { url: vpaOneClickUrl(site, m.token, email), kind: 'link', expires_at: new Date(m.expiresAt).toISOString(),
+             expires_words: vpaBneDateWords(m.expiresAt), days_left: vpaDaysLeft(m.expiresAt, Date.now()) };
+  } catch (e) { return { url: null, reason: 'no_table' }; }
 }
 
 /* ===========================================================================
@@ -3569,13 +3605,14 @@ async function vpaProspectLastSignIn(env, userIds) {
 async function vpaProspectsList(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
-  const d = await vpaProspectsData(env);
+  const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error, need_migration: d.need_migration }, d.status);
   return json(d);
 }
 /* THE ONE READ BEHIND HQ > Prospects AND THE AUTOPILOT'S FOLLOW-UP (3 Nov 2026). Returns the HQ answer
    ({ ok, prospects, card_added, ... }) or { error, status }. */
-async function vpaProspectsData(env) {
+async function vpaProspectsData(env, dopts) {
+  dopts = dopts || {};
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
   catch (e) { return { error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125, status: 503 }; }
@@ -3589,7 +3626,7 @@ async function vpaProspectsData(env) {
     (await vpaSelectAll(env, 'vp_venue_staff', 'venue_id=in.(' + chunk + ')&select=venue_id,auth_user_id&order=venue_id.asc,auth_user_id.asc'))
       .forEach((s) => { (staff[s.venue_id] = staff[s.venue_id] || []).push(s.auth_user_id); });
     try {
-      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status&order=send_at.desc'))
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status,resend_id,email&order=send_at.desc'))
         .forEach((w) => { if (!welcomes[w.venue_id]) welcomes[w.venue_id] = w; });
     } catch (_) { /* migration 124 not run: the column says "not recorded" */ }
   }
@@ -3655,6 +3692,16 @@ async function vpaProspectsData(env) {
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
     Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
   }
+  /* WHERE THE ACCOUNT EMAIL GOT TO (Dean, 5 Nov 2026: "I need to be able to make sure our emails are making it
+     somewhere"). Only when asked (HQ's list and the autopilot's quiet list), never for a send-time check. */
+  if (dopts.delivery) {
+    const welcomeOf = {};
+    Object.keys(welcomes).forEach((k) => { welcomeOf[k] = welcomes[k]; });
+    await Promise.all(out.map(async (p) => {
+      try { p.delivery = await vpaProspectDelivery(env, p, welcomeOf[p.venue_id], now); }
+      catch (_) { p.delivery = { welcome: 'unknown', words: 'Could not check just now' }; }
+    }));
+  }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
@@ -3704,9 +3751,10 @@ async function vpaProspectTappedLink(env, venueId, sinceMs) {
 async function vpaAutopilotQuietProspects(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
   if (no) return no;
-  const d = await vpaProspectsData(env);
+  const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
+    delivery: p.delivery || null,          // where their account email got to, and the link (5 Nov 2026)
     venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
     mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
     state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
@@ -3845,6 +3893,130 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
   return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
+}
+/* ===========================================================================
+ * POST /autopilot/prospect/signin-link   X-Autopilot-Key  { venue_id }   (Dean, 5 Nov 2026)
+ *
+ * "I don't want to have to call these people. I don't want to lose a lead because my email went to junk."
+ * A FRESH sign-in link for a prospect who has never signed in, handed back to the Mac so its reply in the
+ * prospect's OWN Instantly thread (the address they wrote to, which lands) can carry it. Nothing is emailed
+ * from here. Only for Dean's tapped Yes: the Mac calls this at send time, inside 8am to 4:30pm on a weekday.
+ *   - a prospect only, still on the quiet list (never signed in, not cancelled, not paused, not signed up):
+ *     anyone else is refused (409) and nothing is made. A key that leaks can never open a customer's account.
+ *   - a mobile login: the text-code sign-in with their number filled in (no token).
+ *   - an email login: vpaSendSigninLink with returnOnly, the SAME rules as HQ's Resend sign-in link (older
+ *     unused links retired first, so only the newest works; the per-day cap) WITHOUT restarting their 30 days.
+ * Recorded in vp_admin_audit (prospect_thread_link_made / _refused), never the link itself.
+ * ======================================================================== */
+async function vpaAutopilotThreadSigninLink(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, extra) => {
+    await vpaAudit(env, actor, 'prospect_thread_link_refused', 'venue:' + venueId, { reason: why });
+    return json(Object.assign({ error: why, refused: true }, extra || {}), 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no link was made.');
+  if (p.last_sign_in_at) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in already, so no link was made.', { signed_in: true });
+  if (!vpaQuietProspect(p)) return await refuse('They are not waiting on a first sign-in any more, so no link was made.');
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  const user = authUserId ? await vpaAuthGetUser(env, authUserId) : null;
+  if (!user) return await refuse('There is no login on their account, so no link was made.');
+  const win = await vpaProspectLinkWindow(env, venueId);
+  const tapped = await vpaProspectTappedLink(env, venueId, win ? win.from : NaN);
+  let out;
+  if (user.phone) {
+    const t = await vpaProspectThreadLink(env, venueId, authUserId, true, String(user.phone), user.email || '', null);
+    if (!t.url) return await refuse('Their login has a mobile we cannot read, so no link was made.');
+    out = { ok: true, url: t.url, kind: 'sms', mobile_ends: t.mobile_ends, to: user.email || null, tapped: tapped };
+  } else {
+    const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, returnOnly: true });
+    if (!r.ok) {
+      if (r.reason === 'ended') return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so no link was made. Resend from HQ to give them a fresh 30 days.', { ended: true });
+      if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have been made for ' + r.to + ' in the last day, so no more were made.' }, 429);
+      return json({ error: 'No link could be made (' + r.reason + ').' }, r.reason === 'no_table' ? 503 : 400);
+    }
+    out = { ok: true, url: r.url, kind: 'link', to: r.to, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left, tapped: tapped };
+  }
+  await vpaAudit(env, actor, 'prospect_thread_link_made', 'venue:' + venueId, { name: p.name, kind: out.kind, to: out.to || undefined, expires_at: out.expires_at || undefined });
+  return json(out);
+}
+/* WHERE A PROSPECT'S ACCOUNT EMAIL GOT TO, IN PLAIN WORDS (Dean, 5 Nov 2026). Three sources, each said as it is:
+     Resend    the welcome's own record at Resend (GET /emails/{id}, the Worker's full key, never the Mac's
+               send-only one): delivered, bounced, cancelled, still booked, or sent and not confirmed yet.
+               Resend cannot see a junk folder; nothing can. "Delivered" means their mail server took it.
+     webhook   a bounce the Resend webhook recorded (email_bounced), which also carries the reason.
+     our link  signin_link_used (vpaProspectTappedLink's record) and their first sign-in.
+   Returns { welcome, welcome_at, bounce_domain, bounce_reason, link_opened_at, signed_in_at, words }. */
+const VPA_RESEND_STATE = { delivered: 'delivered', opened: 'delivered', clicked: 'delivered', bounced: 'bounced', complained: 'complained',
+  canceled: 'cancelled', cancelled: 'cancelled', scheduled: 'scheduled', sent: 'sent', queued: 'sent', delivery_delayed: 'delayed', failed: 'failed' };
+async function vpaResendLastEvent(env, id) {
+  if (!id || !env.RESEND_API_KEY) return null;
+  try {
+    const res = await fetch('https://api.resend.com/emails/' + encodeURIComponent(id), { headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY } });
+    if (!res || !res.ok) return null;
+    const e = await res.json().catch(() => null);
+    return e && e.last_event ? String(e.last_event).toLowerCase() : null;
+  } catch (_) { return null; }
+}
+async function vpaProspectDelivery(env, p, w, nowMs) {
+  const out = { welcome: 'none', welcome_at: w ? w.send_at : null, bounce_domain: null, bounce_reason: null, link_opened_at: null, signed_in_at: p.last_sign_in_at || null };
+  const addr = String((w && w.email) || p.email || '').trim().toLowerCase();
+  if (w) {
+    if (w.status === 'cancelled') out.welcome = 'cancelled';
+    else if (w.status === 'failed') out.welcome = 'failed';
+    else if (w.status === 'scheduled' && Date.parse(w.send_at) > nowMs) out.welcome = 'scheduled';
+    else {
+      const ev = await vpaResendLastEvent(env, w.resend_id);
+      out.welcome = ev ? (VPA_RESEND_STATE[ev] || 'sent') : 'unknown';
+    }
+  }
+  try {
+    const targets = ['venue:' + p.venue_id].concat(addr ? ['email:' + addr] : []).map((t) => '"' + t.replace(/"/g, '') + '"').join(',');
+    const bounces = await vpaSelect(env, 'vp_admin_audit', 'action=in.(email_bounced,email_marked_spam)&target=in.(' + encodeURIComponent(targets) + ')&select=action,detail,created_at&order=created_at.desc&limit=5');
+    const hit = (bounces || []).find((x) => !addr || !x.detail || !x.detail.address || String(x.detail.address).toLowerCase() === addr);
+    if (hit && out.welcome !== 'cancelled') {
+      out.welcome = hit.action === 'email_marked_spam' ? 'complained' : 'bounced';
+      out.bounce_reason = (hit.detail && hit.detail.reason) ? String(hit.detail.reason).slice(0, 200) : null;
+    }
+  } catch (_) {}
+  if (out.welcome === 'bounced' || out.welcome === 'complained') out.bounce_domain = addr.indexOf('@') > 0 ? addr.split('@')[1] : null;
+  try {
+    const win = vpaProspectWindowFromMs({ link_from: p.link_from, created_at: p.created_at });
+    const taps = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + p.venue_id) + '&action=eq.signin_link_used'
+      + (isFinite(win) ? '&created_at=gt.' + encodeURIComponent(new Date(win).toISOString()) : '') + '&select=created_at&order=created_at.desc&limit=1');
+    if (taps && taps[0]) out.link_opened_at = taps[0].created_at;
+  } catch (_) {}
+  out.words = vpaDeliveryWords(out);
+  return out;
+}
+function vpaDeliveryWords(d) {
+  if (d.signed_in_at) return 'Signed in ' + vpaBneDateWords(Date.parse(d.signed_in_at));
+  if (d.link_opened_at) return 'Link opened ' + vpaBneDateWords(Date.parse(d.link_opened_at)) + ', not signed in yet';
+  switch (d.welcome) {
+    case 'bounced': return 'Bounced' + (d.bounce_domain ? ' at ' + d.bounce_domain : '') + (d.bounce_reason ? ' (' + d.bounce_reason + ')' : '');
+    case 'complained': return 'Marked as spam' + (d.bounce_domain ? ' at ' + d.bounce_domain : '');
+    case 'cancelled': return 'Cancelled, never sent';
+    case 'failed': return 'Did not send';
+    case 'scheduled': return 'Booked, not sent yet';
+    case 'delivered': return 'Delivered, link not opened yet';
+    case 'delayed': return 'Delivery delayed at their end, link not opened yet';
+    case 'sent': return 'Sent, not confirmed delivered yet';
+    case 'unknown': return 'Sent, Resend could not say where it got to';
+    default: return 'No account email recorded';
+  }
 }
 /* A card on file, as opposed to comp, invoice or a group: those are signed up but are not "Card added". */
 function vpaProspectCardOn(founding) {
@@ -4442,6 +4614,10 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const done = { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
+  /* FOR A REPLY IN THEIR OWN THREAD (opts.returnOnly, Dean 5 Nov 2026): the same fresh link, retired-older-first and
+     capped like any other, handed back to the autopilot to put in its Instantly reply. No email from here: the
+     whole point is that our transactional email was junked or bounced. */
+  if (opts.returnOnly) return Object.assign(done, { url: url, kind: 'link' });
   /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
      own hello and sign-off), then the same button. {days} and {expires} in his words are filled from THIS
      link, after it was minted (Dean, 4 Nov 2026: never a number that is not the real expiry). */

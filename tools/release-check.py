@@ -3820,6 +3820,13 @@ def local_checks(which):
              'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
+            # D115: the sign-in link in the prospect's own thread, and where the account email got to (Dean, 5 Nov 2026),
+            # branch feature/signin-in-thread-6nov.
+            ('D115. A prospect\'s sign-in link can go in their own email thread, and HQ shows where the account email got to',
+             'test-signin-in-thread.js',
+             'the autopilot setup hands back the reply\'s own one-use link (or the text-code sign-in for a mobile login) only when asked, never from HQ or a dry run; the thread-link route is the key only, a quiet prospect only, nothing emailed, older links retired, the 30 days not restarted; delivered, bounced at their domain, cancelled, link opened and signed in in plain words, Resend down never read as delivered', 34,
+             'A sign-in link handed out for a customer who already signs in, a link emailed again through the '
+             'address that was junked, or HQ saying delivered when nobody knows'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers

@@ -162,6 +162,11 @@
         '<div><span class="k">Website</span>' + (/^https?:\/\//i.test(String(p.website || "")) ? '<a href="' + prEsc(p.website) + '" target="_blank" rel="noopener">' + prEsc(siteHost(p.website)) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Set up</span>' + prEsc(when(p.created_at)) + " (" + prEsc(ago(p.days_since_setup)) + "), by " + prEsc(sourceText(p)) + "</div>" +
         '<div><span class="k">Welcome email</span>' + prEsc(welcomeText(p.welcome)) + "</div>" +
+        /* Where it got to (Dean, 5 Nov 2026: "make sure our emails are making it somewhere"): the Worker's words, from
+           Resend, the bounce record and their own sign-in link. A bounce or a cancel is red, a sign-in green. */
+        (p.delivery && p.delivery.words ? '<div><span class="k">Delivery</span><span data-pr-delivery="' + prEsc(p.delivery.welcome || "") + '" style="' +
+          (/^(bounced|complained|cancelled|failed)$/.test(p.delivery.welcome || "") && !p.delivery.signed_in_at && !p.delivery.link_opened_at ? "color:#b3261e;font-weight:700" :
+           p.delivery.signed_in_at ? "color:#1b7a3a;font-weight:700" : "") + '">' + prEsc(p.delivery.words) + "</span></div>" : "") +
         (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
