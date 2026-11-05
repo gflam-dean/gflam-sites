@@ -159,6 +159,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/console-round3-6nov-in-chrome.test.py": {
+  "checks": 151,
+  "counted_by": "lines"
+ },
  "tools/details-autofill-in-chrome.test.py": {
   "checks": 92,
   "counted_by": "lines"
@@ -257,6 +261,10 @@
  },
  "tools/offer-ended-in-chrome.test.py": {
   "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/offer-free-play-in-chrome.test.py": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
