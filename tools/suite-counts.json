@@ -1093,7 +1093,7 @@
  },
  "tools/trivia-demo-phone-in-chrome.test.py": {
   "checks": 56,
- "counted_by": "lines"
+  "counted_by": "lines"
  },
  "tools/trivia-empty-room-in-chrome.test.py": {
   "checks": 22,
