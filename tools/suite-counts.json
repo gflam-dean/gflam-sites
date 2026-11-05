@@ -336,7 +336,7 @@
   "counted_by": "lines"
  },
  "tools/site-offer-footer-in-chrome.test.py": {
-  "checks": 35,
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/stale-phone-and-end-once-in-chrome.test.py": {

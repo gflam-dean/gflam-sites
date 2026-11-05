@@ -13,16 +13,14 @@
    so a line never ends on a dot. */
 .foot-links{display:inline}
 
-/* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"). The supplied
-   brand-kit lockup's own "powered by Gflam." line (logo-kit-1nov/powered-by), cropped from the file,
-   never retyped: small, muted, centred under the wordmark. A bit smaller again (Dean, 3 Nov 2026
-   evening): 14px, down from 18.
-   THE SAME WIDTH AS THE WORDMARK (Dean, 4 Nov 2026): the lockup is as wide as the venueplay wordmark
-   above it, so the two read as one block. The width is the img's own width attribute on each page
-   (189 under the 46px-high primary logo on home, the offer page and help, whose letters are 189 wide;
-   128 under the 128-wide wordmark on terms and privacy); the height follows from the file. */
-footer .powered{line-height:0}
-footer .powered img.powered-by{display:block;max-width:100%;height:auto;opacity:.6;margin:0 auto}
+/* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"; 5 Nov 2026: two lines,
+   centred). "powered by" on the first line in the footer's own small muted text, the Gflam. logo on the
+   second, stacked. The logo is cut from the kit's Gflam Touring White file (above the TOURING line), never
+   retyped, saved at 278px wide so it is sharp at 2x. The whole block is about 116px wide (Dean, 5 Nov 2026: 15 to 20% smaller than 139, about 61% of the
+   189px wordmark); max-width:100% keeps it inside a 320px screen. */
+footer .powered{display:flex;flex-direction:column;align-items:center;gap:6px;line-height:1}
+footer .powered .powered-by-text{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs,12px);color:var(--muted);opacity:.85}
+footer .powered img.powered-by{display:block;width:116px;max-width:100%;height:auto;opacity:.6;margin:0 auto}
 
 /* MORE ROOM ABOVE THE FOOTER (Dean, 4 Nov 2026: "sit a bit lower and more separated from the content
    above"). This file loads after each page's own styles, so it sets the space for all five pages. */
@@ -41,6 +39,20 @@ footer{margin-top:96px;padding-top:64px;padding-bottom:64px}
   footer .foot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px;max-width:30ch;margin:0 auto 6px}
   footer .foot-links .dot{display:none}
   footer .foot-links + br{display:none}
+}
+
+/* A PHONE (Dean, 5 Nov 2026), under 480px only; desktop is unchanged.
+   1. A tad less room above the footer: 48px, 25% under the 64px.
+   2. The links on three centred lines, each group a .fg span: line 1 the page links (Play, Game modes,
+      Pricing; Home on terms and privacy), line 2 FAQs, Help, Contact, line 3 Privacy, Terms. Even spacing,
+      no dots, like the chips already.
+   3. The copyright line on ONE line at 375 and 390: 11px. At 320 it wraps, centred, which is tidy. */
+.foot-links .fg{display:contents}
+@media (max-width:480px){
+  footer{margin-top:48px}
+  footer .foot-links{flex-direction:column;flex-wrap:nowrap;align-items:center;max-width:none;gap:6px}
+  footer .foot-links .fg{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px}
+  footer .foot-meta{font-size:11px}
 }
 
 /* THE STICKY BAR. On a phone the pink bar is fixed to the bottom of the screen (14px off it, about
