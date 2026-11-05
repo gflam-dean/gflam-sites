@@ -592,3 +592,15 @@ resent their link, which restarts those 30 days and re-dates the follow-ups (aut
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-153-coaster-boards.sql` (Dean, 4 Nov 2026, /live-here-now v2, the drink-coaster QR page): two tables, both
+service role only (RLS on, no policies, revoked from public/anon/authenticated). `vp_coaster_venues`: places on the coaster
+round that are NOT venueplay venues, kind 'coaster' (a "coaster venue (no emails)" Dean adds in HQ: name, suburb, postcode,
+logo; not a vp_venues row, no login, no email, so no automatic email path can reach it until HQ switches it to a normal
+prospect, which sets venue_id/switched_at) or kind 'lead' (a pub a player typed in, shown in HQ as "coaster players at X, not
+on venueplay"; one row per name). `vp_coaster_plays`: one row per round, first name only, scored and timed by the game Worker
+(the trivia rule, triviaAnswerPoints), boards by the place's local night and week, deleted after 35 days by the game Worker's
+nightly sweep. Run BEFORE the game Worker (/coaster/*) and billing Worker (/admin/coaster/*); before it, both answer "not
+switched on yet" and the page plays as before. After running, dump RLS-BASELINE.json (two new tables). NUMBER: 140 to 152
+are taken on other branches (152 is fix/hq-prospects-6nov), so 153. Branch `feature/live-here-now-v2`. NOT RUN. Read-back and
+rollback in the file.
