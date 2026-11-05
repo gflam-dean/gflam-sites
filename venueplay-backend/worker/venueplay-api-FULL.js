@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 18:27 · b71327d2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 08:38 · 3df78013';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -147,6 +147,8 @@ export default {
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
+      // What the console's Help form fills in for a signed-in host (Dean, 4 Nov 2026): their OWN name, email and phone.
+      if (request.method === 'POST' && path === '/help/venue/me')          return await helpVenueMe(request, env, json);
       // "Got it: <venue>" on the public forms (29 Oct 2026). Public, rate-limited, answers a venue NAME or nothing.
       if (request.method === 'POST' && path === '/help/venue-match')       return await helpVenueMatchRoute(request, env, json);
       if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
@@ -241,6 +243,8 @@ export default {
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
+      // Edit details on a prospect (Dean, 4 Nov 2026): name, email, mobile, phone, with an audit row.
+      if (request.method === 'POST' && path === '/admin/prospect/update'        && typeof vpaProspectUpdate === 'function')     return await vpaProspectUpdate(request, env, json);
       // HQ > Subscribers (31 Oct 2026; migration 134): who asked for the monthly email, counts, matches, the CSV.
       if (request.method === 'POST' && path === '/admin/subscribers')        return await vpsHandleAdminList(request, env, json);
       if (request.method === 'POST' && path === '/admin/subscribers/export') return await vpsHandleAdminExport(request, env, json);
@@ -353,6 +357,8 @@ export default {
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
+    /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
+    try { await vpaSigninTextSweep(env, Date.now()); } catch (e7) { /* the next tick looks again */ }
   },
 };
 
@@ -659,12 +665,12 @@ async function handleCheckout(request, env, json) {
             to: ['dean@venueplay.com.au'],
             reply_to: email,
             subject: vpaAlertSubject('check', venues[0].name + ' (' + email + ')'),
-            html: '<h2>Signup flagged for review</h2>'
+            html: vpaStaffCard('<h2>Signup flagged for review</h2>'
               + '<p>This signup email does not look like a venue, so opt-in collection is <b>LOCKED</b> until you approve it. They can still run games (team names only), but collect no player data.</p>'
               + '<p><b>Venue:</b> ' + vpaEsc(venues[0].name) + '</p>'
               + '<p><b>Email:</b> ' + vpaEsc(email) + '</p>'
               + '<p><b>Players / plan:</b> ' + totalSeats + ' players, ' + plan + '</p>'
-              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>',
+              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>', 'Signup flagged for review', 'action'),
           }),
         });
       } catch (e) { /* email is best-effort, never block signup */ }
@@ -1142,7 +1148,7 @@ async function handleContact(request, env, json) {
       to: ['sales@venueplay.com.au'],   // ONE copy, the sales mailbox (Dean, 30 Oct 2026: it came twice when it went to dean@ AND sales@)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
-      html: html,
+      html: vpaStaffCard(html, 'New venueplay enquiry', 'action'),
       text: helpPlainFromHtml(html),       // every help desk email carries a text part (28 Oct 2026)
       headers: { 'X-VP-Help': 'alert' },   // so the hello@ copy to the help subdomain is not a second ticket
     }),
@@ -1385,7 +1391,7 @@ async function vpaHandleResendWebhook(request, env, json) {
        a line telling somebody to ring them. */
     const leaving = VPA_LEAVING_SUBJECT.test(subject);
     const head = complained ? 'marked us as spam' : 'bounced';
-    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
       + '<p style="font-size:18px;font-weight:800;color:' + (leaving ? '#b3261e' : '#8a6d00') + ';margin:0 0 10px">'
       +   (leaving ? 'A leaving email ' + head + '. Ring them.' : 'An email ' + head + '.') + '</p>'
       + '<p style="margin:0 0 6px;font-size:14px"><b>Address:</b> ' + vpaEsc(addr) + '</p>'
@@ -1401,8 +1407,8 @@ async function vpaHandleResendWebhook(request, env, json) {
       + '</div>';
     for (const who of VPA_CANCEL_ALERTS) {
       await vpaSendEmail(env, who,
-        (leaving ? 'ACTION NEEDED: leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
-        + (named || addr), html).catch(() => false);
+        vpaStaffSubject(leaving ? 'urgent' : 'fyi', (leaving ? 'leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
+        + (named || addr)), vpaStaffCard(html, 'Email ' + head, leaving ? 'urgent' : 'fyi')).catch(() => false);
     }
     await vpaInsert(env, 'vp_admin_audit', {
       actor_admin: null, actor_label: 'system',
@@ -3353,7 +3359,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   // A double click, or the same reply handled twice, must not build the venue twice.
   const twin = await vpaSelect(env, 'vp_venues', 'name=eq.' + encodeURIComponent(name) + '&postcode=eq.' + postcode + '&select=id,slug&limit=1');
   if (twin && twin.length) {
-    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send their email again, use Resend their account email on their card in HQ > Prospects.' + NONE }, 409);
+    return json({ error: name + ' (' + postcode + ') is already set up, at /tv?' + twin[0].slug + '. To send them their sign-in again, use Send them a new sign-in link on their row in HQ > Prospects.' + NONE }, 409);
   }
 
   /* AN EMAIL THAT ALREADY SIGNS IN IS REFUSED, not linked (security review, 28 Oct 2026). Giving an
@@ -3409,7 +3415,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       display_name: firstName || 'Manager' }, false);
   } catch (e) {
     login = null;
-    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Resend their account email (HQ > Prospects).');
+    warnings.push('NOBODY CAN SIGN IN YET: the login was not made (' + String((e && e.message) || e).slice(0, 120) + '). Add them under the venue\'s Hosts, then Send them a new sign-in link (HQ > Prospects).');
   }
 
   /* 3b. HQ > Prospects (migration 125): their row, so they are listed apart from the active venues and
@@ -3481,7 +3487,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       senderName: sender.name || null, senderEmail: sender.email || null, offerCode: offer.code };
     const r = await vpaFireProspectWelcome(env, Object.assign({ signinToken: signinToken, sendAtMs: delayMin > 0 ? sendAtMs : null }, render));
     welcomeSent = !!r.ok;
-    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Resend their account email on their card in HQ > Prospects, or send it by hand.');
+    if (!welcomeSent) warnings.push('THE WELCOME EMAIL DID NOT SEND. Use Send them a new sign-in link on their row in HQ > Prospects.');
     else {
       welcome = { send_at: new Date(sendAtMs).toISOString(), status: delayMin > 0 ? 'scheduled' : 'sent', id: null };
       const rec = await vpaProspectWelcomeRecord(env, actor, venue.id, r.id, sendAtMs, welcome.status,
@@ -3501,7 +3507,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   });
 
   const out = { ok: true, venue: { id: venue.id, name: name, slug: slug }, founding_id: foundingId,
-    tv_url: site + '/tv?' + encodeURIComponent(slug),
+    tv_url: site + '/tv',   // bare: the TV asks for the screen code (Dean, 5 Nov 2026), never a /tv?slug link
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
     slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null, offer_code: offer.code || null };
   if (welcome) out.welcome = welcome;
@@ -3541,6 +3547,14 @@ function vpaProspectPhone(raw) {
   if (!/^0[23478]\d{8}$/.test(d)) return null;
   if (d[1] === '4') return d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7);
   return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + ' ' + d.slice(6);
+}
+/* An Australian MOBILE, spaced '0412 345 678', or null: the account's mobile first, else the number to ring when it
+   is a mobile (a landline can never take a text). One answer for the list, the follow-up text and HQ's resend. */
+function vpaProspectMobile(accountMobile, ringPhone) {
+  const a = vpaProspectPhone(accountMobile);
+  if (a && a.indexOf('04') === 0) return a;
+  const b = vpaProspectPhone(ringPhone);
+  return b && b.indexOf('04') === 0 ? b : null;
 }
 /* Has this prospect become a customer? One answer, used by the list and by nothing else. */
 function vpaProspectSignedUp(venue, founding) {
@@ -3589,14 +3603,14 @@ async function vpaProspectsData(env) {
     (await vpaSelectAll(env, 'vp_venue_staff', 'venue_id=in.(' + chunk + ')&select=venue_id,auth_user_id&order=venue_id.asc,auth_user_id.asc'))
       .forEach((s) => { (staff[s.venue_id] = staff[s.venue_id] || []).push(s.auth_user_id); });
     try {
-      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status&order=send_at.desc'))
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=id,venue_id,send_at,status&order=send_at.desc'))
         .forEach((w) => { if (!welcomes[w.venue_id]) welcomes[w.venue_id] = w; });
     } catch (_) { /* migration 124 not run: the column says "not recorded" */ }
   }
   const fids = Object.keys(venues).map((k) => venues[k].founding_id).filter(Boolean);
   for (let i = 0; i < fids.length; i += 100) {
     (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
-      ')&select=id,status,stripe_subscription_id,bill_by_invoice&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
+      ')&select=id,status,stripe_subscription_id,bill_by_invoice,mobile&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
   }
   const out = [], cardAdded = [];
   let signedUp = 0;
@@ -3614,7 +3628,8 @@ async function vpaProspectsData(env) {
         const st = vpaProspectStatus(r, true, null, now);
         cardAdded.push(Object.assign({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
           source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
-          phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+          phone: r.phone || null, mobile: vpaProspectMobile(acct && acct.mobile, r.phone),
+          tel: (r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)) ? 'tel:' + String(r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)).replace(/[^\d+]/g, '') : null,
           website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
           created_at: r.created_at, days_since_setup: Math.floor((now - Date.parse(r.created_at)) / DAY) || 0,
           flag: null, called: null }, st));
@@ -3627,12 +3642,17 @@ async function vpaProspectsData(env) {
     const created = Date.parse(r.created_at);
     const days = isFinite(created) ? Math.floor((now - created) / DAY) : 0;
     const w = welcomes[r.venue_id];
-    const welcome = !w ? null : { status: w.status === 'scheduled' && Date.parse(w.send_at) <= now ? 'sent' : w.status,
+    const welcome = !w ? null : { id: w.id || null, status: w.status === 'scheduled' && Date.parse(w.send_at) <= now ? 'sent' : w.status,
       send_at: w.send_at, when: vpaBrisbaneTime(Date.parse(w.send_at)) };
     const due = isFinite(created) && (now - created) >= VPA_PROSPECT_FOLLOWUP_DAYS * DAY;
+    /* THEIR MOBILE (Dean, 4 Nov 2026, HQ > Prospects > Edit details): the account's mobile (venueplay_founding.mobile,
+       set at setup or by Edit details), else the number to ring when that is a mobile. It is what the text follow-up
+       and HQ's "Send them a new sign-in link" text go to, and a prospect with one is on the call list. */
+    const mobile = vpaProspectMobile(acct && acct.mobile, r.phone);
+    const ring = r.phone || mobile;
     out.push({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
       source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
-      phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
+      phone: r.phone || null, mobile: mobile, tel: ring ? 'tel:' + String(ring).replace(/[^\d+]/g, '') : null,
       website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
       created_at: r.created_at, days_since_setup: days, welcome: welcome,
       /* Their sign-in link's true end, 30 days from setup or from HQ's last resend (link_from), the whole days
@@ -3647,8 +3667,8 @@ async function vpaProspectsData(env) {
       /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
          phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
          and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
-      follow_up: due && seen.known && seen.at == null && !r.called_at && !!r.phone,
-      email_follow_up: due && seen.known && seen.at == null && !r.phone && !!r.email });
+      follow_up: due && seen.known && seen.at == null && !r.called_at && !!ring,
+      email_follow_up: due && seen.known && seen.at == null && !ring && !!r.email });
     /* THE ONE FLAG A ROW SHOWS. They asked for a call: that comes first, whatever else is true, until
        somebody marks it Called. Otherwise the 3-day no-sign-in flag, which needs a phone number. */
     const last = out[out.length - 1];
@@ -3707,8 +3727,10 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   const d = await vpaProspectsData(env);
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
-    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
-    mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
+    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!(p.phone || p.mobile),
+    /* For the text (3 Nov 2026). Read fresh on every run, so a mobile HQ adds with Edit details (4 Nov 2026) is here
+       on the Mac's next run with nothing else to do. */
+    mobile: p.mobile || (vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null),
     state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
     /* The link's true end (30 days from setup) and the whole days left on it (4 Nov 2026), so the Mac can
        draft "expires in {days} days" and time the "3 days before" follow-up. The Worker fills {days} again
@@ -3721,25 +3743,68 @@ async function vpaAutopilotQuietProspects(request, env, json) {
 /* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
    their one-tap sign-in link, at a different time from the email". Dean approves it in the same review email, as
    its own line; the Mac sends it the next day at the other end of the day (prospect_nudge.py plans when).
-   OFF UNTIL THE SMS PROVIDER EXISTS: PROSPECT_SMS_ON must say "on" AND the ClickSend login must be set
-   (CLICKSEND_USERNAME, CLICKSEND_API_KEY). Until then this answers 503 sms_off, sends nothing, and the Mac keeps the
-   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes. The Spam Act
-   needs the sender identified and a way to stop: the text must name venueplay and say "Reply STOP to opt out",
-   or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's, so either one works.
-   NOT BUILT YET, because the provider is not: reading STOP replies back from ClickSend and keeping a do-not-text
-   list. Both are needed before PROSPECT_SMS_ON is set. */
+   THE PROVIDER IS MOBILE MESSAGE (Dean, 4 Nov 2026), the same account and credentials the sign-in codes and the
+   staff welcome text use (MOBILEMESSAGE_USERNAME, MOBILEMESSAGE_PASSWORD, already on this Worker). ClickSend is a
+   backup only, tried when Mobile Message fails and its login is set. The switch is PROSPECT_SMS_ON: texts go only
+   when it says "on" (and a provider is set). Off, this answers 503 sms_off, sends nothing, and the Mac keeps the
+   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes.
+   THE SPAM ACT (sender identified, a working way to stop). From the business name "venueplay" nobody can reply, so
+   "Reply STOP" could never work: vpaSendSms swaps it for Mobile Message's {optout}, which becomes their own opt-out
+   link ("OptOut mb.st/XXXXXX"). Mobile Message keeps the unsubscribe list and blocks an opted-out number itself
+   (status "blocked"); we record that as do-not-text (vp_admin_audit, target sms:<number>, action sms_opted_out) and
+   never mint a link or try that number again. The text must still name venueplay and carry an opt-out ("Reply STOP
+   to opt out" or {optout}), or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's,
+   so either one works. */
 const VPA_NUDGE_SMS_MAX = 480;
 function vpaSmsOn(env) {
-  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && !!env.CLICKSEND_USERNAME && !!env.CLICKSEND_API_KEY;
+  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && (vpaHasMobileMessage(env) || vpaHasClickSend(env));
 }
-async function vpaSendSms(env, toE164, body) {
+function vpaHasMobileMessage(env) { return !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD); }
+function vpaHasClickSend(env) { return !!(env.CLICKSEND_USERNAME && env.CLICKSEND_API_KEY); }
+/* The sender Dean registered on Mobile Message (4 Nov 2026): lowercase, the brand. PROSPECT_SMS_SENDER overrides it. */
+function vpaProspectSmsSender(env) { return String(env.PROSPECT_SMS_SENDER || 'venueplay').slice(0, 11); }
+/* A business-name sender cannot take replies: the opt-out is Mobile Message's own link. */
+function vpaSmsOptOutWords(body) {
+  return String(body).replace(/Reply STOP to opt out\.?/i, '{optout}');
+}
+const VPA_SMS_OPTOUT_ACTION = 'sms_opted_out';
+async function vpaSmsOptedOut(env, toE164) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('sms:' + toE164) + '&action=eq.' + VPA_SMS_OPTOUT_ACTION + '&select=id&limit=1');
+    return !!(rows && rows.length);
+  } catch (_) { return false; }
+}
+async function vpaSmsRecordOptOut(env, toE164, venueId) {
+  if (await vpaSmsOptedOut(env, toE164)) return;
+  await vpaAudit(env, { actorId: null, label: 'Mobile Message (opted out)' }, VPA_SMS_OPTOUT_ACTION, 'sms:' + toE164, { venue_id: venueId || undefined, to_last3: String(toE164).slice(-3) });
+}
+/* One text. { ok, id, provider } or { ok:false, blocked?, status }. Mobile Message first, ClickSend only as a backup. */
+async function vpaSendSms(env, toE164, body, ref) {
+  let first = null;
+  if (vpaHasMobileMessage(env)) {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 10000);
+    try {
+      const res = await fetch('https://api.mobilemessage.com.au/v1/messages', { method: 'POST', signal: abort.signal,
+        headers: { 'Content-Type': 'application/json', Authorization: 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD) },
+        body: JSON.stringify({ messages: [{ to: toE164, message: vpaSmsOptOutWords(body), sender: vpaProspectSmsSender(env), custom_ref: String(ref || 'prospect').slice(0, 64) }] }) });
+      const j = await res.json().catch(() => null);
+      const m = j && Array.isArray(j.results) && j.results[0];
+      const st = String((m && m.status) || '').toLowerCase();
+      if (res.ok && st === 'success') return { ok: true, status: res.status, id: m.message_id, provider: 'mobilemessage' };
+      if (st === 'blocked') return { ok: false, blocked: true, status: 'blocked', provider: 'mobilemessage' };   // they opted out
+      first = { ok: false, status: res.status + (st ? ' ' + st : '') };
+    } catch (e) { first = { ok: false, status: 'unreachable' }; }
+    finally { clearTimeout(timer); }
+  }
+  if (!vpaHasClickSend(env)) return first || { ok: false, status: 'no provider' };
   const auth = 'Basic ' + btoa(String(env.CLICKSEND_USERNAME) + ':' + String(env.CLICKSEND_API_KEY));
   const res = await fetch('https://rest.clicksend.com/v3/sms/send', { method: 'POST',
     headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ source: 'venueplay', from: 'venueplay', to: toE164, body: body }] }) });
+    body: JSON.stringify({ messages: [{ source: 'venueplay', from: vpaProspectSmsSender(env), to: toE164, body: body }] }) });
   const j = await res.json().catch(() => null);
   const m = j && j.data && j.data.messages && j.data.messages[0];
-  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id };
+  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id, provider: 'clicksend' };
 }
 async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
@@ -3750,8 +3815,8 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
-  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !/Reply STOP to opt out/i.test(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
-    return json({ error: 'The text must name venueplay, carry {link} and "Reply STOP to opt out", have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
+  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !(/Reply STOP to opt out/i.test(text) || text.indexOf('{optout}') >= 0) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
+    return json({ error: 'The text must name venueplay, carry {link} and an opt-out ("Reply STOP to opt out" or {optout}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
   }
   if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
   const actor = VPA_AUTOPILOT_ACTOR;
@@ -3764,8 +3829,9 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const p = (d.prospects || []).find((x) => x.venue_id === venueId);
   if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no text was sent.');
   if (!vpaQuietProspect(p)) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in since, so no text was sent.');
-  const to = vpaNormaliseMobileAU(p.phone || '');
+  const to = vpaNormaliseMobileAU(p.mobile || p.phone || '');
   if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
+  if (await vpaSmsOptedOut(env, to)) return await refuse('They opted out of texts, so no text was sent.');
   let authUserId = null;
   try {
     const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
@@ -3786,7 +3852,12 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
   let r;
-  try { r = await vpaSendSms(env, to, body); } catch (_) { r = { ok: false }; }
+  try { r = await vpaSendSms(env, to, body, 'nudge-' + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
+  if (!r.ok && r.blocked) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    await vpaSmsRecordOptOut(env, to, venueId);
+    return await refuse('They opted out of texts (Mobile Message blocked it), so no text was sent and none will be.');
+  }
   if (!r.ok) {
     await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
@@ -3897,6 +3968,176 @@ async function vpaProspectCalled(request, env, json) {
   if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
   await vpaAudit(env, actor, undo ? 'prospect_call_undone' : 'prospect_called', 'venue:' + id, undo ? {} : { note: note || undefined });
   return json({ ok: true, called: undo ? null : { at: patch.called_at, by: patch.called_label || '', note: note } });
+}
+
+/* ===========================================================================
+ * POST /admin/prospect/update   (owner | accounts)   HQ > Prospects > Edit details (Dean, 4 Nov 2026)
+ *
+ * "There's no way to add or change a prospect's phone, mobile, contact name or email after it's created."
+ * Dean adds numbers for small venues on a Friday so the follow-ups run over the weekend, so a mobile saved
+ * here is on the call list and in the text follow-up from the next read, with nothing else to do: both read
+ * it fresh from vpaProspectsData (vpaProspectMobile).
+ *
+ * Body: { venue_id, contact_name?, email?, mobile?, phone? }. Only the keys sent change. An empty name,
+ * mobile or phone clears it; the email cannot be cleared (it is their login).
+ *   contact_name  vp_prospects.contact_name (60 characters, no control characters)
+ *   phone         vp_prospects.phone, the number to RING: an Australian mobile or a landline with its area
+ *                 code (vpaProspectPhone, the setup's check), spaced as said
+ *   mobile        venueplay_founding.mobile, an Australian mobile only (04...), spaced as said. With no number
+ *                 to ring it becomes that too, as at setup ("empty falls back to the mobile"). Put on their
+ *                 login for the text-code sign-in too, but only when the login has no mobile yet and the
+ *                 number is nobody else's login (the setup's rule); otherwise it is kept for calls and texts
+ *                 and HQ is told why.
+ *   email         vp_prospects.email, venueplay_founding.contact_email AND their login's email, together, so
+ *                 every sign-in link and the welcome go to the new address (vpaSendSigninLink reads the login,
+ *                 vpaResendWhich matches the contact email to it). Refused when the address is already
+ *                 somebody else's login, or when their login also runs another venue (that is changed from
+ *                 their own account). Every unused sign-in link on the login is retired, so a link that went
+ *                 to the old (perhaps mistyped) address stops working. The login is changed FIRST: if Auth
+ *                 says no, nothing is changed anywhere.
+ * One vp_admin_audit row, prospect_details_changed: who, and each field from and to.
+ * No new column: every field already exists.
+ * ======================================================================== */
+const VPA_PROSPECT_NAME_MAX = 60;
+async function vpaAuthUpdateUser(env, id, body) {
+  const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), {
+    method: 'PUT', headers: vpaHeaders(env), body: JSON.stringify(body) });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data && (data.msg || data.message || data.error_description || data.error)) || ('auth user update failed (' + res.status + ')'));
+  }
+  return await res.json().catch(() => ({}));
+}
+async function vpaProspectUpdate(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const NONE = ' Nothing was changed.';
+  const id = String(b.venue_id || '');
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) return json({ error: 'Which prospect?' }, 400);
+  const has = (k) => Object.prototype.hasOwnProperty.call(b, k) && b[k] !== undefined && b[k] !== null;
+
+  // Every value is checked before anything is written.
+  const want = {};
+  if (has('contact_name')) want.contact_name = String(b.contact_name).replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPA_PROSPECT_NAME_MAX);
+  if (has('phone')) {
+    const raw = String(b.phone).trim();
+    want.phone = raw ? vpaProspectPhone(raw) : '';
+    if (raw && !want.phone) return json({ error: 'That phone does not look like an Australian number (a mobile 04..., or a landline with its area code, 02 / 03 / 07 / 08).' + NONE }, 400);
+  }
+  if (has('mobile')) {
+    const raw = String(b.mobile).trim();
+    const sp = raw ? vpaProspectPhone(raw) : '';
+    if (raw && !(sp && sp.indexOf('04') === 0 && vpaIsAuMobileE164(vpaNormaliseMobileAU(raw)))) {
+      return json({ error: 'That mobile is not an Australian mobile (04...). A landline goes in Phone: it can never receive a text.' + NONE }, 400);
+    }
+    want.mobile = sp;
+  }
+  if (has('email')) {
+    const em = String(b.email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) || em.length > 200) return json({ error: 'Enter their email. It is their login and where their sign-in link goes.' + NONE }, 400);
+    want.email = em;
+  }
+  if (!Object.keys(want).length) return json({ error: 'Nothing to change.' }, 400);
+
+  const pr = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(id) + '&select=*&limit=1', { headers: vpaHeaders(env) });
+  if (!pr.ok) return json({ error: 'Run migration 125 first (vp_prospects).', need_migration: 125 }, 503);
+  const prow = ((await pr.json().catch(() => [])) || [])[0];
+  if (!prow) return json({ error: 'That venue is not on the prospects list.' }, 404);
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(id) + '&select=id,name,founding_id&limit=1');
+  const venue = vs && vs[0];
+  if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  const fid = venue.founding_id || prow.founding_id || null;
+  const fs = fid ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,contact_email,mobile&limit=1') : [];
+  const f = (fs && fs[0]) || null;
+
+  const was = { contact_name: prow.contact_name || '', phone: prow.phone || '', mobile: vpaProspectPhone(f && f.mobile) || (f && f.mobile) || '', email: String(prow.email || (f && f.contact_email) || '').toLowerCase() };
+  // A mobile with no number to ring becomes the number to ring, as at setup.
+  if (want.mobile && !has('phone') && !was.phone) want.phone = want.mobile;
+  const changes = {};
+  Object.keys(want).forEach((k) => { if (String(want[k] || '') !== String(was[k] || '')) changes[k] = { from: was[k] || null, to: want[k] || null }; });
+  if (!Object.keys(changes).length) return json({ ok: true, changed: [], note: 'Nothing was different, so nothing changed.' });
+
+  const warnings = [];
+  const login = prow.auth_user_id ? await vpaAuthGetUser(env, prow.auth_user_id) : null;
+  let soleVenue = false;
+  if (login) {
+    const st = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(login.id) + '&select=venue_id&limit=50');
+    soleVenue = (st || []).every((s) => s.venue_id === id);
+  }
+  let loginEmail = false, loginMobile = false, retired = 0;
+
+  // 1. THE EMAIL, on the login first: a refusal here leaves every record as it was.
+  if (changes.email) {
+    const other = await vpaFindAuthUser(env, { email: want.email });
+    if (other && (!login || other.id !== login.id)) {
+      return json({ error: want.email + ' already has a venueplay login, so it cannot be put on ' + (venue.name || 'this prospect') + '. Check it is theirs, then add this venue from their own account.' + NONE }, 409);
+    }
+    if (prow.auth_user_id && !login) return json({ error: 'Their login could not be read just now, so the email was not changed (it must change on the login too, or their sign-in link would go to the old address). Try again in a minute.' + NONE }, 503);
+    if (login && !soleVenue) {
+      return json({ error: 'Their login also runs another venueplay venue, so its email is changed from their own account, not here.' + NONE }, 409);
+    }
+    if (login && String(login.email || '').toLowerCase() !== want.email) {
+      try { await vpaAuthUpdateUser(env, login.id, { email: want.email, email_confirm: true }); loginEmail = true; }
+      catch (e) { return json({ error: 'Their login would not take the new email (' + String((e && e.message) || e).slice(0, 120) + ').' + NONE }, 502); }
+      // A link that went to the old address stops working: only the new address can sign them in now.
+      try {
+        const rr = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(login.id) + '&used_at=is.null', {
+          method: 'PATCH', headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'return=representation' }), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+        const gone = rr.ok ? await rr.json().catch(() => []) : [];
+        retired = Array.isArray(gone) ? gone.length : 0;
+      } catch (_) {}
+    }
+    if (!login) warnings.push('They have no login yet, so only the records changed. Add them under the venue\'s Hosts.');
+    try {
+      const wl = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(id) + '&status=eq.scheduled&send_at=gt.' + encodeURIComponent(new Date().toISOString()) + '&select=id&limit=1');
+      if (wl && wl.length) warnings.push('Their welcome email is still booked to the old address, and its sign-in button no longer works. Cancel it under Set up a prospect, then Send them a new sign-in link.');
+    } catch (_) {}
+  }
+
+  // 2. The records.
+  const ppatch = {};
+  if (changes.contact_name) ppatch.contact_name = want.contact_name || null;
+  if (changes.phone) ppatch.phone = want.phone || null;
+  if (changes.email) ppatch.email = want.email;
+  if (Object.keys(ppatch).length && !(await vpaProspectPatch(env, id, ppatch))) {
+    return json({ error: 'That did not save. Try again.' + (loginEmail ? ' (Their login already has the new email.)' : '') }, 502);
+  }
+  const fpatch = {};
+  if (changes.email) fpatch.contact_email = want.email;
+  if (changes.mobile) fpatch.mobile = want.mobile || null;
+  if (Object.keys(fpatch).length) {
+    if (!f) warnings.push('There is no account record behind this venue, so ' + (changes.mobile ? 'the mobile' : 'the account email') + ' could not be kept on it.');
+    else {
+      try { await vpaPatch(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(f.id), fpatch); }
+      catch (e) { warnings.push('The account record did not take the ' + (changes.mobile ? 'mobile' : 'email') + '. Save it again.'); }
+    }
+  }
+
+  // 3. A new mobile on their login, for the text-code sign-in, only where the setup would have put it.
+  if (changes.mobile && want.mobile && login) {
+    const e164 = vpaNormaliseMobileAU(want.mobile);
+    if (!soleVenue) warnings.push('Their login also runs another venue, so the mobile is kept for calls and texts and not put on the login.');
+    else if (login.phone) {
+      if (String(login.phone).replace(/[^\d]/g, '') !== e164.replace(/[^\d]/g, '')) warnings.push('Their login already signs in with the mobile ending ' + vpaMaskMobile(login.phone) + ', and that stays. The new number is kept for calls and texts.');
+    } else {
+      const taken = await vpaFindAuthUser(env, { phone: e164 });
+      if (taken && taken.id !== login.id) warnings.push('That mobile already has a venueplay login, so it is kept for calls and texts and not put on their login.');
+      else {
+        try { await vpaAuthUpdateUser(env, login.id, { phone: e164, phone_confirm: true }); loginMobile = true; }
+        catch (e) { warnings.push('Their login would not take the mobile, so they sign in with the email link for now. It is kept for calls and texts.'); }
+      }
+    }
+  }
+
+  await vpaAudit(env, actor, 'prospect_details_changed', 'venue:' + id, {
+    name: venue.name, changes: changes, login_email_changed: loginEmail || undefined, login_mobile_added: loginMobile || undefined,
+    links_retired: retired || undefined });
+  const out = { ok: true, changed: Object.keys(changes), login_email_changed: loginEmail, login_mobile_added: loginMobile, links_retired: retired };
+  if (warnings.length) out.warnings = warnings;
+  return json(out);
 }
 
 /* ===========================================================================
@@ -4051,9 +4292,9 @@ async function vpaProspectCancel(request, env, json) {
   let asJson = false;
   const plain = (s) => String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k]));
   const page = (title, body, form) => (asJson && json) ? json({ ok: true, state: form ? 'ask' : (title === 'All done' ? 'done' : 'bad'), title: title, text: plain(body), foot: FOOT }) : new Response('<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">' +
-    '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#12101a">' +
+    '<title>' + vpaEsc(title) + '</title></head><body style="margin:0;background:#f4f4f7;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0A0A0B">' +
     '<div style="max-width:520px;margin:0 auto;padding:24px 16px"><div style="background:#fff;border-radius:14px;overflow:hidden">' +
-    '<div style="background:#12101a;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
+    '<div style="background:#0A0A0B;padding:18px 24px"><img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="150" alt="venueplay" style="display:block;border:0;height:auto"></div>' +
     '<div style="padding:26px 24px"><h1 style="margin:0 0 12px;font-size:23px;line-height:1.3">' + vpaEsc(title) + '</h1><p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#3a3a44">' + body + '</p>' + (form || '') +
     '<p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">' + FOOT + '</p></div></div></div></body></html>',
     { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
@@ -4080,7 +4321,7 @@ async function vpaProspectCancel(request, env, json) {
   if (request.method !== 'POST') {
     return page('Cancel venueplay for ' + (v.name || 'your venue') + '?', 'No problem at all, and thanks for having a look. There is no card on your account, so nothing has been charged and nothing will be. We will switch the account off and stop the reminders.',
       '<form method="post" action=""><input type="hidden" name="f" value="' + vpaEsc(f) + '"><input type="hidden" name="t" value="' + vpaEsc(t) + '">' +
-      '<button type="submit" style="display:inline-block;background:#12101a;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
+      '<button type="submit" style="display:inline-block;background:#0A0A0B;color:#fff;border:0;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px;cursor:pointer">Yes, cancel it</button></form>');
   }
   const at = new Date().toISOString();
   await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
@@ -4114,6 +4355,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
     .replace(/{{ends_on}}/g, vpaEsc(o.endsWords))
+    .replace(/{{days_left}} days/g, Number(o.daysLeft) === 1 ? '1 day' : o.daysLeft + ' days')   // never "1 days left" (5 Nov 2026)
     .replace(/{{days_left}}/g, String(o.daysLeft))
     .replace(/{{offer_rate}}/g, '$' + Number(o.offerRate).toFixed(2))
     .replace(/{{standard_rate}}/g, '$' + VPA_STANDARD_RATE.toFixed(2))
@@ -4439,7 +4681,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
   const BUTTON = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>';
-  const done = { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
+  const done = { ok: true, to: email, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
   /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
@@ -4455,7 +4697,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
-  const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
+  const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
     + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. It works until ' + vpaEsc(expiresWords) + '.</p>'
     + BUTTON
@@ -4520,6 +4762,144 @@ async function vpaProspectLinkEndedTicket(env, r) {
   if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, name, null).catch(() => null); }
   return t;
 }
+/* ===========================================================================
+ * THE SAME SIGN-IN LINK BY TEXT, FROM HQ (Dean, 4 Nov 2026): "the SIGN-IN LINK is what they need, because they
+ * can't get into their account without it." HQ's one button, "Send them a new sign-in link", sends it by EMAIL
+ * (vpaSendSigninLink, a fresh 30 days) and, when we have their mobile, by TEXT at the same time, on its own
+ * one-use link that ends at the same moment as the email's (made after the email's, so neither retires the
+ * other). The text keeps the follow-up text's rules (vpaAutopilotProspectNudgeSms):
+ *   - through Mobile Message (ClickSend only as a backup), only while PROSPECT_SMS_ON is "on"; off, the email
+ *     still goes and HQ is told no text went. A number that opted out is never texted (vpaSmsOptedOut)
+ *   - from venueplay, says who it is from, carries Mobile Message's opt-out link ({optout}), no long dash
+ *   - 9am to 8pm Brisbane, never a Sunday (vpaSmsAllowedAt). Outside those hours it is QUEUED for the next
+ *     allowed time (vp_signin_texts, migration 152) and HQ is shown when; the hourly trigger sends it
+ *     (vpaSigninTextSweep), making its link at that moment, still ending with the email's. Before migration
+ *     152 there is no queue: nothing is queued, the email has gone, and HQ is told to press again after 9am.
+ * Recorded in vp_admin_audit: signin_text_sent / signin_text_queued / signin_text_failed.
+ * ======================================================================== */
+const VPA_SMS_FIRST_HOUR = 9, VPA_SMS_LAST_HOUR = 20;   // 9am to 8pm Brisbane, the follow-up text's hours
+/* The first moment at or after ms a text may go: 9am to 8pm Brisbane, never a Sunday. */
+function vpaSmsAllowedAt(ms) {
+  let t = Number(ms);
+  for (let i = 0; i < 9; i++) {
+    const d = new Date(t + VPA_BNE_MS), h = d.getUTCHours(), dow = d.getUTCDay();
+    if (dow !== 0 && h >= VPA_SMS_FIRST_HOUR && h < VPA_SMS_LAST_HOUR) return t;
+    const day = d.toISOString().slice(0, 10);
+    const nine = vpaBneDayStartMs(day) + VPA_SMS_FIRST_HOUR * 3600000;
+    t = (dow !== 0 && h < VPA_SMS_FIRST_HOUR) ? nine : nine + 86400000;
+  }
+  return t;
+}
+function vpaSigninTextBody(first, venueName, url, expiresMs) {
+  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 30);
+  const v = String(venueName || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return 'venueplay: Hi ' + (f || 'there') + ', here is your new sign-in link' + (v ? ' for ' + v : '') + '. Tap to sign in, no password needed: '
+    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';   // vpaSendSms makes this Mobile Message's {optout} link
+}
+/* Who to text for this venue's login: the prospect's mobile (Edit details or setup), else the login's own. */
+async function vpaSigninTextTarget(env, venueId, user) {
+  let mobile = null, first = '';
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=phone,contact_name,founding_id&limit=1');
+    const prow = pr && pr[0];
+    if (prow) {
+      first = prow.contact_name || '';
+      const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id&limit=1');
+      const fid = (vs && vs[0] && vs[0].founding_id) || prow.founding_id;
+      const fs = fid ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=mobile&limit=1') : [];
+      mobile = vpaProspectMobile(fs && fs[0] && fs[0].mobile, prow.phone);
+    }
+  } catch (_) {}
+  if (!mobile && user && user.phone) mobile = vpaProspectMobile(user.phone, null);
+  if (!first && user) first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '');
+  const e164 = mobile ? vpaNormaliseMobileAU(mobile) : null;
+  return vpaIsAuMobileE164(e164) ? { mobile: mobile, e164: e164, first: first } : null;
+}
+/* Make the text's own link and send it now. { ok } or { ok:false, status }. */
+async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, expiresMs) {
+  let minted;
+  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs); }
+  catch (e) { return { ok: false, status: 'no_table' }; }
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const user = await vpaAuthGetUser(env, authUserId);
+  const body = vpaSigninTextBody(target.first, venueName, vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);
+  let r;
+  try { r = await vpaSendSms(env, target.e164, body, 'signin-' + String(venueId).slice(0, 8)); } catch (_) { r = { ok: false }; }
+  if (!r.ok) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));
+    if (r.blocked) await vpaSmsRecordOptOut(env, target.e164, venueId);
+    return { ok: false, status: r.blocked ? 'opted_out' : (r.status || 'unreachable') };
+  }
+  return { ok: true, id: r.id, expires_at: new Date(minted.expiresAt).toISOString() };
+}
+/* After HQ's email went (r, vpaSendSigninLink's answer): the text, now, queued, or why not. */
+async function vpaHqSigninText(env, actor, venueId, venueName, r) {
+  const user = await vpaAuthGetUser(env, r.auth_user_id);
+  const target = await vpaSigninTextTarget(env, venueId, user);
+  if (!target) return { status: 'no_mobile' };
+  const last3 = target.e164.slice(-3);
+  if (!vpaSmsOn(env)) return { status: 'sms_off', mobile: target.mobile };
+  if (await vpaSmsOptedOut(env, target.e164)) return { status: 'opted_out', mobile: target.mobile };
+  const expiresMs = Date.parse(r.expires_at);
+  const now = Date.now(), at = vpaSmsAllowedAt(now);
+  if (at <= now) {
+    const s = await vpaSigninTextSend(env, r.auth_user_id, venueId, venueName, target, expiresMs);
+    await vpaAudit(env, actor, s.ok ? 'signin_text_sent' : 'signin_text_failed', 'venue:' + venueId, { name: venueName, to_last3: last3, id: s.id || undefined, reason: s.ok ? undefined : String(s.status) });
+    return s.ok ? { status: 'sent', mobile: target.mobile } : { status: s.status === 'opted_out' ? 'opted_out' : 'failed', mobile: target.mobile };
+  }
+  try {
+    await vpaInsert(env, 'vp_signin_texts', { venue_id: venueId, auth_user_id: r.auth_user_id, to_e164: target.e164,
+      send_at: new Date(at).toISOString(), expires_at: new Date(expiresMs).toISOString(), status: 'queued',
+      detail: { first: String(target.first || '').slice(0, 60), venue_name: String(venueName || '').slice(0, 120) },
+      created_by: actor.actorId || null, created_label: actor.label || null }, false);
+  } catch (e) {
+    return { status: 'not_queued', mobile: target.mobile, at: new Date(at).toISOString(), when: vpaBrisbaneTime(at) };
+  }
+  await vpaAudit(env, actor, 'signin_text_queued', 'venue:' + venueId, { name: venueName, to_last3: last3, send_at: new Date(at).toISOString() });
+  return { status: 'queued', mobile: target.mobile, at: new Date(at).toISOString(), when: vpaBrisbaneTime(at) };
+}
+/* The hourly trigger: every queued text whose time has come, inside the hours. Each row is claimed (queued to
+   sending) before it is sent, so two ticks never send one twice. Its link ends with the email's (expires_at);
+   once that has passed, or they are no longer on the venue's staff, it is dropped, never sent. */
+async function vpaSigninTextSweep(env, nowMs) {
+  if (!vpaSmsOn(env)) return { sent: 0, off: true };
+  if (vpaSmsAllowedAt(nowMs) > nowMs) return { sent: 0, hours: false };
+  let rows;
+  try { rows = await vpaSelect(env, 'vp_signin_texts', 'status=eq.queued&send_at=lte.' + encodeURIComponent(new Date(nowMs).toISOString()) + '&select=*&order=send_at.asc&limit=25'); }
+  catch (_) { return { sent: 0 }; }
+  let sent = 0;
+  const AUTO = { actorId: null, label: 'automatic (queued sign-in text)' };
+  for (const q of rows || []) {
+    const claim = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_texts?id=eq.' + encodeURIComponent(q.id) + '&status=eq.queued', {
+      method: 'PATCH', headers: Object.assign({}, vpaHeaders(env), { 'Prefer': 'return=representation' }), body: JSON.stringify({ status: 'sending' }) });
+    const got = claim.ok ? await claim.json().catch(() => []) : [];
+    if (!Array.isArray(got) || got.length !== 1) continue;
+    const mark = (st, extra) => vpaPatch(env, 'vp_signin_texts', 'id=eq.' + encodeURIComponent(q.id), Object.assign({ status: st, sent_at: new Date().toISOString() }, extra || {})).catch(() => null);
+    const exp = Date.parse(q.expires_at);
+    const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(q.auth_user_id) + '&venue_id=eq.' + encodeURIComponent(q.venue_id) + '&select=role&limit=1');
+    if (!isFinite(exp) || exp <= nowMs + 3600000 || !staff || !staff.length || await vpaSmsOptedOut(env, q.to_e164)) { await mark('dropped'); continue; }
+    const d = q.detail || {};
+    const s = await vpaSigninTextSend(env, q.auth_user_id, q.venue_id, d.venue_name, { e164: q.to_e164, first: d.first }, exp);
+    await mark(s.ok ? 'sent' : 'failed');
+    await vpaAudit(env, AUTO, s.ok ? 'signin_text_sent' : 'signin_text_failed', 'venue:' + q.venue_id, { name: d.venue_name, to_last3: String(q.to_e164).slice(-3), queued: true, reason: s.ok ? undefined : String(s.status) });
+    if (s.ok) sent++;
+  }
+  return { sent: sent };
+}
+/* The confirmation line HQ shows: "Sent by email and text, link works until Fri 4 Dec." */
+function vpaSigninSentLine(r, text) {
+  const until = r.expires_words ? ', link works until ' + r.expires_words : '';
+  const st = text && text.status;
+  if (st === 'sent') return 'Sent by email and text' + until + '.';
+  if (st === 'queued') return 'Sent by email' + until + '. The text is queued for ' + text.when + ' (texts go 9am to 8pm, not Sundays).';
+  if (st === 'not_queued') return 'Sent by email' + until + '. No text: it is outside texting hours and texts cannot be queued until migration 152 is run. Press again after ' + text.when + ' to text it.';
+  if (st === 'sms_off') return 'Sent by email' + until + '. No text went: texts are switched off until the SMS provider is set up.';
+  if (st === 'failed') return 'Sent by email' + until + '. The text did not send (the SMS provider said no).';
+  if (st === 'opted_out') return 'Sent by email' + until + '. No text: they opted out of texts.';
+  if (st === 'no_mobile') return 'Sent by email only' + until + '. Add a mobile in Edit details to text it too.';
+  return 'Sent by email' + until + '.';
+}
+
 async function vpaAdminSigninLink(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
@@ -4544,8 +4924,14 @@ async function vpaAdminSigninLink(request, env, json) {
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
   await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
+  let text = null;
+  if (r.ok && _b.body && _b.body.text === true) {
+    try { text = await vpaHqSigninText(env, actor, venueId, venue.name, r); } catch (e) { text = { status: 'failed' }; }
+  }
   if (r.ok) return json({ ok: true, to: r.to, has_mobile: r.has_mobile, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left,
                           prospect: !!r.prospect, restarted: !!r.restarted, redated: !!r.redated,
+                          text: text || undefined, line: text ? vpaSigninSentLine(r, text) : undefined,
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
@@ -4643,6 +5029,13 @@ function vpaOfferMonthPhrase(code) {
   return cm ? 'while the ' + VPA_MONTH_NAMES[cm.m] + ' offer runs' : 'while our offer runs';
 }
 
+/* The offer's last day (Dean, 5 Nov 2026): " You just need to start by 30 November." for OFFER-NOV-2026, 31 December for a
+   DEC code. Starts with a space so it sits after a full stop; empty when no month is known. */
+function vpaOfferDeadline(code) {
+  const cm = vpaCodeMonth(code);
+  return cm ? ' You just need to start by ' + new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] + '.' : '';
+}
+
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
    personal, from Dean: as promised, here is your account, ONE button, about 5 minutes, the price in one
    line, the Spam Act footer. Everything else lives in the app's first-run setup. Sent from "Dean at
@@ -4666,10 +5059,11 @@ function vpaProspectSender(rawName, rawEmail) {
   if (!m || email.length > 120 || VPA_OUR_MAIL_DOMAINS.indexOf(m[1]) === -1) return { error: 'sender_email must be one of our own mailboxes (' + VPA_OUR_MAIL_DOMAINS.join(', ') + ').' };
   return { name: name, email: email };
 }
-/* The sign-off: their name, VenuePlay, the website. No phone but the support line, which the footer carries. */
+/* The sign-off: their first name, the venueplay team, the website. No phone but the support line, which the footer carries. */
 function vpaProspectSignoff(senderName) {
-  const who = senderName ? vpaEsc(senderName) : 'The venueplay team';
-  return 'Cheers,<br>' + who + '<br>' + (senderName ? 'venueplay<br>' : '') + '<a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
+  /* Dean, 5 Nov 2026: the sender's FIRST name (never the surname), then "the venueplay team", lowercase t. */
+  const first = String(senderName || '').trim().split(/\s+/)[0];
+  return 'Cheers,<br>' + (first ? vpaEsc(first) + '<br>' : '') + 'the venueplay team<br><a href="https://venueplay.com.au" style="color:#FF1F8E;text-decoration:none">venueplay.com.au</a>';
 }
 function vpaProspectSubject(venueName) { return 'Your venueplay account for ' + (venueName || 'your venue'); }
 async function vpaRenderProspectWelcome(env, o) {
@@ -4696,6 +5090,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
+    .replace(/{{offer_deadline}}/g, vpaOfferDeadline(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))
     .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
@@ -4815,7 +5210,7 @@ async function vpaProspectWelcomeNow(request, env, json) {
   const at = new Date().toISOString();
   if (!r.ok) {
     await vpaProspectWelcomeMark(env, g.row, { status: 'failed', changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });
-    return json({ error: 'The booked email was cancelled but the new one did not send. Use Resend their account email on their card in HQ > Prospects.' }, 502);
+    return json({ error: 'The booked email was cancelled but the new one did not send. Use Send them a new sign-in link on their row in HQ > Prospects.' }, 502);
   }
   await vpaProspectWelcomeMark(env, g.row, { status: 'sent_now', send_at: at, resend_id: r.id || null,
     signin_token_hash: token ? await vpaSigninTokenHash(token) : null, changed_at: at, changed_by: g.actor.actorId || null, changed_label: g.actor.label || null });
@@ -6619,7 +7014,7 @@ async function vpaHandlePlayerRemove(request, env, json) {
       const to = recipients[0];
       if (to) {
         const who = pq.kind === 'email' ? pq.value : ('the mobile number ending ' + pq.value.slice(-3));
-        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#12101a;max-width:560px">'
+        const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#0A0A0B;max-width:560px">'
           + '<p>Hi' + ((!mk.length && acct[0] && acct[0].contact_name) ? ' ' + vpaEsc(String(acct[0].contact_name).split(' ')[0]) : '') + ',</p>'
           + '<p>Somebody who played at <strong>' + vpaEsc(v.venue_name) + '</strong> has asked to be removed from your players list: <strong>' + vpaEsc(who) + '</strong>.</p>'
           + '<p>We have removed them from venueplay, so they will not be in any list you download from now on.</p>'
@@ -7558,7 +7953,7 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
        Found by audit 20 Sep 2026, the day after the copy beside it was changed to say
        "always use this full link". A venue with no slug yet falls back to the bare link,
        which is no worse than before. */
-    const tvFor = (v) => site + '/tv' + (v && v.slug ? ('?' + encodeURIComponent(v.slug)) : '');
+    const tvFor = () => site + '/tv';   // bare (Dean, 5 Nov 2026): venues type the screen code from their host console
     const tvUrl = tvFor(venues && venues[0]);
     /* HELP IS support@ (Dean, 23 Oct 2026: the support, accounts and sales mailboxes exist). The
        welcome's one ask is "if you need any help, let us know", so its address and its reply-to are
@@ -7580,10 +7975,10 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       for (let i = 0; i < venues.length; i++) {
         const v = venues[i]; const seats = parseInt(v.seats, 10) || 0;
         blocks += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px"><tr><td style="padding:16px 20px">'
-          + '<p style="margin:0;font-size:17px;font-weight:700;color:#12101a">' + vpaEsc(v.name) + '</p>'
+          + '<p style="margin:0;font-size:17px;font-weight:700;color:#0A0A0B">' + vpaEsc(v.name) + '</p>'
           + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + vpaPaymentPhrase(seats * rate, plan) + '</p>'
           + '<a href="' + consoleUrl + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>'
-          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>'
+          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#FF1F8E;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #FF1F8E;padding:8.5px 20px;border-radius:8px">TV screen</a>'
           + '</td></tr></table>';
       }
       /* EVERY occurrence, not the first. A string replace swaps only the FIRST match, and the
@@ -7766,7 +8161,7 @@ async function vpaAddCardRedirect(request, env) {
   const page = (title, body) => new Response(
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>' + title + '</title>'
-    + '<body style="margin:0;background:#12101a;color:#fff;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">'
+    + '<body style="margin:0;background:#0A0A0B;color:#fff;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">'
     + '<div style="max-width:460px;text-align:center">'
     + '<h1 style="font-size:22px;margin:0 0 12px">' + title + '</h1>'
     + '<p style="font-size:16px;line-height:1.6;color:#c9c7d4;margin:0">' + body + '</p>'
@@ -7903,10 +8298,22 @@ const VPA_ALERT_KINDS = {
   check:       'CHECK SIGNUP',
   enquiry:     'ENQUIRY',
 };
+/* EVERY EMAIL TO STAFF SAYS WHAT IT IS AND WHETHER IT NEEDS THEM (Dean, 5 Nov 2026): the subject starts
+   "venueplay · Action needed:", "venueplay · FYI:" or "venueplay · Urgent:", and the card opens with the same words in a pill
+   (pink ACTION NEEDED, grey FOR YOUR INFO, red URGENT). action = a decision or a reply is wanted; fyi = nothing to do;
+   urgent = a live fault. */
+function vpaStaffSubject(kind, subject, brand) {
+  const words = { action: 'Action needed', urgent: 'Urgent' }[kind] || 'FYI';
+  return (brand === 'partyplay' ? 'PartyPlay' : 'venueplay') + ' \u00b7 ' + words + ': ' + String(subject == null ? '' : subject);
+}
+function vpaStaffPill(kind) {
+  const p = { action: ['ACTION NEEDED', '#FF1F8E', '#ffffff'], urgent: ['URGENT', '#D92D20', '#ffffff'] }[kind] || ['FOR YOUR INFO', '#E4E4EA', '#3a3a44'];
+  return '<p style="margin:0 0 16px"><span style="display:inline-block;background:' + p[1] + ';color:' + p[2] + ';font-size:11px;font-weight:800;line-height:1;letter-spacing:.08em;padding:7px 12px;border-radius:999px">' + p[0] + '</span></p>';
+}
 function vpaAlertSubject(kind, rest) {
   const tag = VPA_ALERT_KINDS[kind] || 'VENUEPLAY';
   const tail = String(rest == null ? '' : rest).trim();
-  return tail ? tag + ': ' + tail : tag;
+  return vpaStaffSubject(kind === 'check' || kind === 'enquiry' ? 'action' : 'fyi', tail ? tag + ': ' + tail : tag);
 }
 
 /* One place that actually posts to Resend, so the three emails below cannot
@@ -7987,7 +8394,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{monthly_total}}/g, money(seats * rate))
       .replace(/{{card_url}}/g, cardUrl)
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
+      .replace(/{{tv_url}}/g, site + '/tv')
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
@@ -8018,7 +8425,6 @@ async function vpbFireVenueOnboarding(env, o) {
     html = html
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'support@venueplay.com.au');
     html = vpaFillSupport(html);
@@ -8076,7 +8482,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
     for (let i = 0; i < rows.length; i++) {
       table += '<tr>'
         + '<td style="padding:7px 14px 7px 0;color:#6a6a75;font-size:14px;white-space:nowrap;vertical-align:top">' + rows[i][0] + '</td>'
-        + '<td style="padding:7px 0;color:#12101a;font-size:14px;font-weight:600">' + rows[i][1] + '</td>'
+        + '<td style="padding:7px 0;color:#0A0A0B;font-size:14px;font-weight:600">' + rows[i][1] + '</td>'
         + '</tr>';
     }
 
@@ -8089,17 +8495,17 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
 
     /* Two very different messages. One is a note; the other is a job for a person. */
     const gamingBlock = guessed
-      ? ('<p style="margin:0 0 18px;padding:12px 14px;background:#F4F0F2;border-left:3px solid #9b93a5;font-size:13.5px;color:#12101a;line-height:1.5">'
+      ? ('<p style="margin:0 0 18px;padding:12px 14px;background:#F4F0F2;border-left:3px solid #9b93a5;font-size:13.5px;color:#0A0A0B;line-height:1.5">'
          + 'The name reads as <b>' + (guessed === 'non_profit' ? 'a club (non-profit)' : 'a pub (for-profit)') + '</b>, so that is what we have recorded. '
          + 'Paid entry is still switched off until someone turns it on in HQ.' + stateLine + '</p>')
-      : ('<p style="margin:0 0 18px;padding:12px 14px;background:#FBF2E0;border-left:3px solid #8A5A0B;font-size:13.5px;color:#12101a;line-height:1.5">'
+      : ('<p style="margin:0 0 18px;padding:12px 14px;background:#FBF2E0;border-left:3px solid #8A5A0B;font-size:13.5px;color:#0A0A0B;line-height:1.5">'
          + '<b>Needs a person: we cannot tell if this is a club or a pub.</b> The name does not say, and it decides which gaming rules they get shown '
          + 'and whether they can ever charge for entry. Ask them on the onboarding call, then set it on their row in HQ. '
          + 'Until then they are free-entry only, which is safe everywhere but is not the whole product.' + stateLine + '</p>');
 
-    const html = '<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
       + '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;font-weight:700">New signup</p>'
-      + '<h1 style="margin:0 0 18px;font-size:24px;color:#12101a">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
+      + '<h1 style="margin:0 0 18px;font-size:24px;color:#0A0A0B">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:20px">' + table + '</table>'
       + gamingBlock
       + '<a href="' + site + '/app/hq.html" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open HQ</a>'
@@ -8117,7 +8523,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
                  (isGroup ? list.length + ' venues, ' : '')
                  + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : '')
                  + (guessed ? '' : ' [club or pub?]')),
-        html: html,
+        html: vpaStaffCard(html, 'New signup', guessed ? 'fyi' : 'action'),
       }),
     });
   } catch (_) { /* internal notification only; never affect provisioning */ }
@@ -8224,17 +8630,21 @@ function vpaEmailDocument(html, title) {
 }
 /* brand: 'partyplay' puts the PartyPlay logo on the dark band (the help desk acknowledges both
    brands from here); anything else is VenuePlay. */
+/* Emails to our own staff (an enquiry, a flagged signup, a bounce, a help desk alert) wear the same card as the
+   customer ones: venueplay logo on near-black, the pink rule, white page (Dean, 5 Nov 2026: "emails need logo and rebrand too"). */
+function vpaStaffCard(inner, title, kind) { return vpaVenueEmailCard(title, vpaStaffPill(kind) + inner, title); }
 function vpaVenueEmailCard(preheader, inner, title, brand) {
   const pp = brand === 'partyplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
-  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay-email-on-dark.png';
   return vpaEmailDocument(
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
-    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
-    + '<tr><td style="background:#12101a;padding:20px 32px">'
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<tr><td style="background:#0A0A0B;padding:20px 32px">'
     + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'venueplay') + '" style="display:block;border:0;height:auto"></td></tr>'
+    + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
     + '<tr><td style="padding:28px 28px 30px">' + String(inner || '') + '</td></tr>'
     + '</table></td></tr></table>', title);
 }
@@ -8268,7 +8678,7 @@ function vpaUpliftNoticeHtml(invoice) {
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px">'
        + '<tr><td style="padding:16px 18px">'
-       + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Your plan has moved up</p>'
+       + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0A0A0B">Your plan has moved up</p>'
        + '<p style="margin:0;font-size:13px;color:#6a6a75">That was your third big night in a row, so those '
        + 'extra players were charged at half price and your plan has moved up to cover the crowd you are '
        + 'actually getting. It takes effect from your next invoice, and your rate per player has not changed. '
@@ -8293,7 +8703,7 @@ async function vpaUpliftWarningHtml(env, customerId) {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
          + 'style="background:#fffaf0;border:1px solid #f3e2bd;border-radius:12px;margin-bottom:22px">'
          + '<tr><td style="padding:16px 18px">'
-         + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Heads-up: one more big night and the plan moves up</p>'
+         + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#0A0A0B">Heads-up: one more big night and the plan moves up</p>'
          + '<p style="margin:0;font-size:13px;color:#6a6a75">' + names + ' has gone over the plan two nights running. '
          + 'A third in a row is charged at half price and then the plan moves up permanently to cover that crowd. '
          + 'If you would rather set the number yourself, raise it on your billing page before the next night. '
@@ -8308,8 +8718,8 @@ function vpaTaxSummaryHtml(invoice) {
   const gst = Math.round(total / 11);          // GST-inclusive pricing: the component, not an addition
   const ex = total - gst;
   const row = function (label, cents, strong) {
-    return '<tr><td style="padding:5px 0;font-size:13px;color:' + (strong ? '#12101a' : '#6a6a75') + '">' + label + '</td>'
-         + '<td style="padding:5px 0;font-size:13px;text-align:right;white-space:nowrap;color:#12101a'
+    return '<tr><td style="padding:5px 0;font-size:13px;color:' + (strong ? '#0A0A0B' : '#6a6a75') + '">' + label + '</td>'
+         + '<td style="padding:5px 0;font-size:13px;text-align:right;white-space:nowrap;color:#0A0A0B'
          + (strong ? ';font-weight:700' : '') + '">$' + (cents / 100).toFixed(2) + '</td></tr>';
   };
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
@@ -8351,8 +8761,8 @@ function vpaInvoiceLinesHtml(invoice) {
     const amt = Number(l.amount || 0);
     const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
     return '<tr>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
       + (amt / 100).toFixed(2) + '</td></tr>';
   }).join('');
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
@@ -8440,7 +8850,7 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       ? 'It is charged pro rata to your renewal, on a separate invoice.'
       : 'It starts from your next invoice. Nothing extra is charged today.';
     const html =
-        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+        '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
       + '<h1 style="font-size:20px;margin:0 0 14px">Your plan has moved up</h1>'
       + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">'
       + vpaEsc(venue.name || 'Your venue') + ' has been over its player limit on three nights in a row, '
@@ -8491,7 +8901,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const email = invoice.customer_email;
     if (!email) { await say('not sent: the customer has no email address'); return; }
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_dark.png';
+    const logo = site + '/logos/venueplay-email-on-light.png';
     const amount = '$' + (Number(invoice.amount_paid) / 100).toFixed(2);
     const ov = vpaOverageFromInvoice(invoice);
     const number = invoice.number ? String(invoice.number) : '';
@@ -8499,15 +8909,15 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const pdf = invoice.invoice_pdf || '';
     const btn = view || pdf;
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with venueplay.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
       + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
-      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (ov.nights > 0
-            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#12101a">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#12101a">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
+            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
@@ -8529,8 +8939,8 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
-      + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
-      + '<p style="font-size:13.5px;color:#12101a;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
+      + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#FF1F8E;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #FF1F8E;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
+      + '<p style="font-size:13.5px;color:#0A0A0B;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
       + 'so thank you for backing us early. If there is anything you want the games to do that they do not, tell us.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
@@ -8595,27 +9005,27 @@ async function vpaFireUpcomingEmail(env, invoice) {
     const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
     const when = whenTs ? vpaFmtDate(whenTs) : '';
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_dark.png';
+    const logo = site + '/logos/venueplay-email-on-light.png';
     const billing = site + '/app/billing.html';
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your venueplay subscription.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount due</p>'
-      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
-            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">A busy month: this bill includes extra players.</p>'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">A busy month: this bill includes extra players.</p>'
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper - you can bump it on your billing page before this charge.</p>'
             + '</td></tr></table>'
           : '')
       + (creditApplied > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2fbf6;border:1px solid #c9ecd8;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
-            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Your credit is coming off this bill.</p>'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">Your credit is coming off this bill.</p>'
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">We have applied <b>$' + (creditApplied / 100).toFixed(2) + '</b> from players you released earlier'
             + (creditLeft > 0 ? ', and <b>$' + (creditLeft / 100).toFixed(2) + '</b> stays on your account for next time' : '')
             + '. Nothing to claim, it happens on its own.</p>'
@@ -9039,7 +9449,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
        stays as the second link for anyone who would rather go the long way. */
     const payNow = invoice.hosted_invoice_url || billing;
     const html =
-      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + (why.ours ? 'A payment did not go through.' : 'Your card did not go through.') + '</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
       + vpaPaymentFailedNextStep(moved, payNow, billing)
@@ -10501,7 +10911,7 @@ async function vpaFireCancelAlert(env, opts) {
         + '<div style="font-size:15px;line-height:1.5">' + vpaEsc(opts.reasonDetail) + '</div></div>'
       : '';
     const html =
-        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+        '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
       + '<h1 style="font-size:20px;margin:0 0 14px">' + vpaEsc(heading) + '</h1>'
       + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">' + lead + '</p>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse;margin:0 0 18px">'
@@ -10512,11 +10922,11 @@ async function vpaFireCancelAlert(env, opts) {
       + '<p style="margin:20px 0"><a href="' + site + '/app/hq" '
       + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
       + 'Open HQ</a></p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; venueplay, ABN ' + VP_ABN + '</p>'
       + '</div>';
     let sent = 0;
     for (const to of VPA_CANCEL_ALERTS) {
-      const ok = await vpaSendEmail(env, to, subject, html).catch(() => false);
+      const ok = await vpaSendEmail(env, to, subject, vpaStaffCard(html, subject, 'fyi')).catch(() => false);
       if (ok) sent++;
     }
     await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
@@ -10836,7 +11246,7 @@ function vpaWrapHtml(stats, opts) {
      paper on ink, with the pink kept for the bars so it still reads as VenuePlay.
      Every email client renders a background colour on a table cell; half of them block
      images, so none of this is a picture. */
-  const PINK = '#FF1F8E', INK = '#12101a', PAPER = '#FFF1E6', DIM = '#9b90ab', TILE = '#1e1a2b';
+  const PINK = '#FF1F8E', INK = '#0A0A0B', PAPER = '#F5F2ED', DIM = '#9b90ab', TILE = '#1e1a2b';
   /* Thousands separators, because these have to hold a real club. A 900 seat venue on a
      grand final night is four figures of phones, and "10000 phones in the room" reads like
      a serial number. Dean, 17 Sep 2026: room for 10,000 phones and 1,000 games. */
@@ -10958,16 +11368,16 @@ function vpaFormatWord(f) { return VPA_FORMAT_WORDS[f] || String(f || '').replac
 
 function vpaLeavingHtml(env, opts) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const logo = site + '/logos/venueplay_primary_dark.png';
+  const logo = site + '/logos/venueplay-email-on-light.png';
   const billing = site + '/app/billing.html';
   return vpaVenueEmailCard(opts.preheader || opts.heading, ''
-    + '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+    + '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + vpaEsc(opts.heading) + '</p>'
     + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + opts.lead + '</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
     +   (opts.rows || []).map((r) =>
           '<p style="margin:0 0 10px;font-size:13px;color:#6a6a75">' + vpaEsc(r[0])
-          + '<br><span style="font-size:15px;font-weight:700;color:#12101a">' + vpaEsc(r[1]) + '</span></p>').join('')
+          + '<br><span style="font-size:15px;font-weight:700;color:#0A0A0B">' + vpaEsc(r[1]) + '</span></p>').join('')
     + '</td></tr></table>'
     /* THE THREE MONTHS IS A PROMISE, not a nicety. venueplay.com.au/privacy already says a
        closed venue's player list is deleted within 90 days, so this matches what is
@@ -10985,7 +11395,7 @@ function vpaLeavingHtml(env, opts) {
        leaving email that nags is one nobody finishes reading. */
     + (opts.priceHold
         ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff8e6;border:1px solid #e8d9a8;border-radius:12px;margin:0 0 22px"><tr><td style="padding:16px 18px">'
-          + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">'
+          + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">'
           + (opts.founding ? 'Worth knowing before then: the rate does not come back.'
                            : 'Worth knowing before then: the price will not wait for you.') + '</p>'
           + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">'
@@ -11049,7 +11459,7 @@ async function vpaFireDeliveryFailure(env, opts) {
     if (!env.RESEND_API_KEY) return;
     const what = opts.kind === 'last_day'
       ? 'their LAST DAY warning' : 'their cancellation confirmation';
-    const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
+    const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Arial,sans-serif">'
       + '<p style="font-size:18px;font-weight:800;color:#b3261e;margin:0 0 10px">'
       +   'A venue was NOT told. Ring them.</p>'
       + '<p style="margin:0 0 14px;font-size:15px">We could not deliver ' + what + ' to '
@@ -13007,8 +13417,8 @@ async function vpaHandleInviteBack(request, env, json) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const link = site + '/app/billing.html';
   const subject = 'Keep ' + v.name + ' on venueplay?';
-  const html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-    + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="venueplay" width="150" style="display:block;margin:0 0 24px">'
+  const html = '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
+    + '<img src="' + site + '/logos/venueplay-email-on-light.png" alt="venueplay" width="150" style="display:block;margin:0 0 24px">'
     + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Keep ' + vpaEsc(v.name) + ' on venueplay?</p>'
     + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + (acct.contact_name ? 'Hi ' + vpaEsc(String(acct.contact_name).split(' ')[0]) + ', thanks' : 'Thanks')
     + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
@@ -14144,7 +14554,7 @@ async function vprEmailHtml(env, venue, rep, opts) {
   const mName = vprMonthName(rep.month), pName = vprMonthName(rep.prev_month);
   const n = (x) => Number(x || 0).toLocaleString('en-AU');
   const plural = (x, one, many) => n(x) + ' ' + (x === 1 ? one : many);
-  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E', LINE = '#ececf1';
+  const INK = '#0A0A0B', DIM = '#6a6a75', PINK = '#FF1F8E', LINE = '#ececf1';
   const delta = (k) => {
     const d = c[k];
     if (!d || (!d.now && !d.was)) return '';
@@ -14310,7 +14720,7 @@ async function vprNewsRead(env, month) {
 function vprNewsHtml(items) {
   const clean = vprNewsClean(items || []);
   if (clean.error || !clean.items.length) return '';
-  const INK = '#12101a', DIM = '#6a6a75', PINK = '#FF1F8E';
+  const INK = '#0A0A0B', DIM = '#6a6a75', PINK = '#FF1F8E';
   let h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;border-top:2px solid ' + PINK + '"><tr><td style="padding:18px 0 0">'
     + '<p style="margin:0 0 12px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:' + PINK + ';font-weight:700">What\'s new at venueplay</p>';
   clean.items.forEach((it) => {
@@ -15193,7 +15603,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     const slug = (opts && opts.slug) || '';
     // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
     // link and finds their screens from the console rather than a wrong guess.
-    const tv = slug ? (' TV URL: ' + site + '/tv?' + slug) : '';
+    const tv = slug ? (' TV: ' + site + '/tv, then type the screen code from your host console.') : '';
     // Nothing about manager vs host here: they will see what they can do the moment they sign in,
     // and the words would mean nothing to them before then.
     const message =
@@ -15209,7 +15619,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
           messages: [{
             to: mobile,
             message: message,
-            sender: env.SMS_SENDER || 'VenuePlay',
+            sender: env.SMS_SENDER || 'venueplay',
             custom_ref: 'staff-welcome',
           }],
         }),
@@ -15588,10 +15998,42 @@ function helpBareSubject(s) {
 }
 /* WHO SIGNS. A person, never a department: "Dean" over "VenuePlay support". An HQ reply is signed by
    the admin who sent it when their HQ label is a name; the acknowledgement by HELP_SIGNER, else Dean. */
-function helpSigner(env, label) {
+function helpFirstName(label) {
   const l = helpLine(label, 40);
-  if (/^[A-Za-z][A-Za-z' -]{1,39}$/.test(l)) return l;
-  return helpLine((env && env.HELP_SIGNER) || 'Dean', 40) || 'Dean';
+  return /^[A-Za-z][A-Za-z' -]{1,39}$/.test(l) ? l.split(/\s+/)[0] : '';
+}
+/* FIRST NAME ONLY (Dean, 5 Nov 2026: "Kind regards, Kayla"): the sign-off and the signature's name line never carry a surname. */
+function helpSigner(env, label) {
+  return helpFirstName(label) || helpFirstName((env && env.HELP_SIGNER) || 'Dean') || 'Dean';
+}
+/* THE EARLIER MESSAGES UNDER EVERY REPLY (Dean, 5 Nov 2026), newest first, like an email client: the customer's messages and
+   our earlier replies, never an internal note or a status change. The ticket's own first message is the oldest. About the
+   last 10. Read BEFORE the reply being sent is recorded, so it is never quoted under itself. */
+const HELP_THREAD_MAX = 10;
+function helpThreadDate(iso) {
+  const t = Date.parse(iso); if (!(t > 0)) return '';
+  const d = new Date(t + 10 * 3600 * 1000);   // Brisbane, no daylight saving
+  return d.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}
+async function helpThreadFor(env, t) {
+  const rows = (await vpaSelect(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id)
+    + '&kind=in.(reply,email_in)&select=kind,body,author,created_at&order=created_at.desc&limit=' + HELP_THREAD_MAX)) || [];
+  const theirs = t.contact_name || t.contact_email || 'the customer';
+  const out = rows.filter((r) => r && String(r.body || '').trim()).map((r) => {   // the query already keeps to replies and customer emails
+    if (r.kind === 'email_in') return { who: theirs, at: r.created_at, body: r.body };
+    const a = String(r.author || '').replace(/^Prospect autopilot, signed /, '').replace(/\s*\(from .*$/, '');
+    return { who: helpFirstName(a) || 'venueplay', at: r.created_at, body: r.body };
+  });
+  if (String(t.message || '').trim()) out.push({ who: theirs, at: t.created_at, body: t.message });
+  return out.slice(0, HELP_THREAD_MAX);
+}
+function helpThreadHtml(items) {
+  return (items || []).map((m) => {
+    const when = helpThreadDate(m.at);
+    return '<p class="hd-mute" style="margin:22px 0 6px;font-size:13px;line-height:1.5;color:#8a8a95">' + (when ? 'On ' + when + ', ' : '') + helpHtml(m.who) + ' wrote:</p>'
+      + '<div class="hd-mute" style="border-left:3px solid #d9d9e0;padding:2px 0 2px 12px;font-size:14px;line-height:1.55;color:#6a6a75;white-space:pre-wrap;word-break:break-word">'
+      + helpLinkify(helpHtml(String(m.body).trim().slice(0, 2000))) + '</div>';
+  }).join('');
 }
 /* THE SIGNATURE (Dean, 29 Oct 2026): a copy of his own Outlook signature, so a help desk email signs
    off the way his support@ and hello@ mail does. ONE function, so it can be swapped whole. In order:
@@ -15607,7 +16049,7 @@ function helpSigner(env, label) {
    has no line. Links are pink and underlined, so they look like links (Dean, 29 Oct 2026). */
 const HELP_LINK = 'class="hd-a" style="color:#C70F69;text-decoration:underline"';
 function helpCountry(pp) {
-  return (pp ? 'PartyPlay' : 'VenuePlay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
+  return (pp ? 'PartyPlay' : 'venueplay') + ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 }
 function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const pp = ticket.brand === 'partyplay';
@@ -15616,13 +16058,13 @@ function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const icon = pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif';
   const phone = !pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1;
   const L = (k, v) => '<strong style="color:#FF1F8E">' + k + '</strong>&nbsp;&nbsp;' + v;
-  return (signedOff ? '' : '<p style="margin:22px 0 0">Kind Regards</p>')
+  return (signedOff ? '' : '<p style="margin:22px 0 0">Kind regards,</p>')
     + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;border-collapse:collapse"><tr>'
     + '<td class="hd-sig-icon" valign="top" style="width:120px;padding:0 16px 0 0">'
     + '<img class="hd-sig-img" src="' + icon + '" width="120" height="120" alt="' + brand + '" style="display:block;border:0;width:120px;height:120px;border-radius:12px"></td>'
     + '<td style="width:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td>'
     + '<td class="hd-sig-text" valign="middle" style="padding:0 0 0 16px;font-size:14px;line-height:1.55">'
-    + '<p style="margin:0"><strong class="hd-ink" style="color:#12101a;font-size:18px;line-height:1.3">' + helpHtml(signer || ('The ' + brand + ' team')) + '</strong><br>'
+    + '<p style="margin:0"><strong class="hd-ink" style="color:#0A0A0B;font-size:18px;line-height:1.3">' + helpHtml(signer || ('The ' + brand + ' team')) + '</strong><br>'
     + '<span style="color:#FF1F8E;font-weight:600">' + brand + '</span></p>'
     + '<p style="margin:10px 0 0">'
     + (phone ? L('P', '<a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a>') + '<br>' : '')
@@ -15791,8 +16233,8 @@ async function helpSendEmail(env, m) {
    and the send. domain stop this alert, copied from hello@ to the help subdomain, coming straight
    back in as a ticket of its own. */
 function helpAlertSubject(ticket, lead) {
-  return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'venueplay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
-         helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90);
+  return vpaStaffSubject(ticket.priority === 'urgent' ? 'urgent' : 'action',
+         helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90), ticket.brand);
 }
 /* A DAILY CAP ON ALERT EMAILS. The alerts go out on the same Resend account as every invoice and
    receipt, so a flood of tickets must never become a flood of email. Past the cap the tickets are
@@ -15804,9 +16246,9 @@ async function helpAlertAllowed(env) {
     try {
       await helpSendEmail(env, { to: env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au',
         from: 'Help Desk <hello@send.venueplay.com.au>', reply_to: 'hello@venueplay.com.au',
-        subject: '[Help desk] Alerts paused for today: ' + cap + ' reached',
-        html: '<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
-              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>',
+        subject: vpaStaffSubject('fyi', '[Help desk] Alerts paused for today: ' + cap + ' reached'),
+        html: vpaStaffCard('<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
+              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>', 'Help desk alerts paused', 'fyi'),
         headers: { 'X-VP-Help': 'alert' } });
     } catch (e) {}
   }
@@ -15831,7 +16273,7 @@ async function helpNotifyStaff(env, ticket, venueName, lead) {
     return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
       reply_to: ticket.contact_email || 'hello@venueplay.com.au',
       subject: helpAlertSubject(ticket, lead),
-      html: html, headers: { 'X-VP-Help': 'alert' } });
+      html: vpaStaffCard(html, helpAlertSubject(ticket, lead), ticket.priority === 'urgent' ? 'urgent' : 'action'), headers: { 'X-VP-Help': 'alert' } });
   } catch (e) { return false; }
 }
 
@@ -15991,11 +16433,32 @@ async function helpPublicTicket(request, env, json) {
   const support = 'support@' + brand + '.com.au';
   const name = helpLine(b.name, 200);
   const email = helpLine(b.email, 300).toLowerCase();
-  const phone = helpLine(b.phone, 60);
-  const message = helpText(b.message);
+  let phone = helpLine(b.phone, 60);
+  /* THE DEMO PHONE'S CALL-BACK (Dean, 4 Nov 2026). Somebody who scanned the demo TV, played the five
+     question demo on their own phone and tapped "Want this at your venue?". A SALES ticket like any
+     enquiry, tagged source demo-phone: a first name, the venue and its suburb or postcode (the lead
+     fields above, required), a MOBILE (required: we call them), an email only if they gave one, and
+     the best time to call. The message is written here, never taken from the page. */
+  const demoCall = brand === 'venueplay' && kind === 'sales' && b.source === 'demo-phone';
+  let bestTime = '';
+  if (demoCall) {
+    const digits = phone.replace(/[\s().-]/g, '').replace(/^\+?61(?=4)/, '0');
+    if (!/^04\d{8}$/.test(digits)) return json({ error: 'Put in a mobile number, like 0412 345 678.' }, 400);
+    phone = digits;
+    bestTime = ['morning', 'afternoon', 'evening'].indexOf(b.best_time) >= 0 ? b.best_time : '';
+    if (!bestTime) return json({ error: 'Pick the best time to call.' }, 400);
+    if (!name) return json({ error: 'Put in your first name.' }, 400);
+    if (!lead || !lead.name || !lead.place) return json({ error: 'Tell us the venue and its suburb or postcode.' }, 400);
+    if (email && !HELP_EMAIL_RE.test(email)) return json({ error: 'That email does not look right. Leave it blank if you like.' }, 400);
+    if (!(await helpLimit(env, 'tk:ph:' + digits, 3, 3600))) return json({ error: 'You have sent a few already. Give us a little while to call.' }, 429);
+  }
+  const message = demoCall
+    ? 'Call-back request from the demo phone (they scanned the demo TV and played the demo round).\n'
+      + 'Best time to call: ' + bestTime + '\nMobile: ' + phone + (email ? '\nEmail: ' + email : '\nEmail: none given') + '\nSource: demo-phone'
+    : helpText(b.message);
   if (!message) return json({ error: 'Type your message first.' }, 400);
-  if (!email) return json({ error: 'Put in your email so we can reply.' }, 400);
-  if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || !HELP_EMAIL_RE.test(email)) {
+  if (!email && !demoCall) return json({ error: 'Put in your email so we can reply.' }, 400);
+  if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || (email && !HELP_EMAIL_RE.test(email))) {
     return json({ error: 'That message is too long or the email address does not look right.' }, 400);
   }
   const ts = await helpTurnstile(env, b.turnstile, ip);
@@ -16004,7 +16467,7 @@ async function helpPublicTicket(request, env, json) {
   if (device && !(await helpLimit(env, 'tk:dev:' + device, HELP_MAX_PER_DEVICE, 600))) {
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
-  if (!(await helpLimit(env, 'tk:em:' + email, HELP_MAX_PER_EMAIL, 3600))) {
+  if (email && !(await helpLimit(env, 'tk:em:' + email, HELP_MAX_PER_EMAIL, 3600))) {   // no email (a demo call-back): its mobile was limited above
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
   let where = { venue_id: null, session_id: null, room_code: null };
@@ -16024,16 +16487,17 @@ async function helpPublicTicket(request, env, json) {
   const issue = kind === 'sales' ? null : await helpIssueFor(env, b.issue_id, brand);
   const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support'
                  : kind === 'venue' ? helpPublicVenueCategory(b.category) : 'patron_support';
-  const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
+  const who = demoCall ? 'Call-back (demo-phone)' : kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
   const at = typedVenue ? ' at ' + typedVenue : lead && lead.name ? ' from ' + lead.name + (lead.place ? ', ' + lead.place : '') : '';
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: category, channel: kind === 'sales' || kind === 'venue' ? 'web_form' : 'patron_form',
-      title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : demoCall ? who + at + ': ' + name + ', ' + bestTime
+           : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
       message: (typedVenue ? 'Venue (as typed): ' + typedVenue + '\n\n' : '') +
                (lead && lead.name && !typedVenue ? 'Venue: ' + lead.name + '\nSuburb or postcode: ' + lead.place + (lead.site ? '\nWebsite: ' + lead.site : '') + '\n\n' : '') +
-               message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
+               message, contact_name: name || null, contact_email: email || null, contact_phone: phone || null,
       venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id, venue_matched_by: matchedBy,
       lead_venue_name: lead ? lead.name || null : null, lead_locality: lead ? lead.place || null : null, lead_website: lead ? lead.site || null : null,
     });
@@ -16042,7 +16506,8 @@ async function helpPublicTicket(request, env, json) {
   }
   await helpNoteTicketFromIssue(env, issue);
   await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
-  await helpAcknowledge(env, t);
+  // A call-back is answered by a call: the acknowledgement says "reply by email", so it is not sent.
+  if (!demoCall) await helpAcknowledge(env, t);
   return json({ ok: true, ticket_no: t.ticket_no });
 }
 
@@ -16071,6 +16536,73 @@ async function helpRequireVenueStaff(request, env, venueId) {
   return { authUserId: payload.sub, staff: (staff && staff[0]) || null, admin: admin, venue: v[0] };
 }
 
+/* ------------------------------ what we already know about a venue login ------------------------------
+   Dean, 4 Nov 2026: "A LOGGED-IN venue submitting a support request: auto-fill their name, email and
+   phone. They shouldn't have to type what we already know." ONE answer for both places that need it:
+   POST /help/venue/me fills the console form's boxes with it, and POST /help/venue/ticket falls back
+   to it for any box left blank. So the form shows exactly what the ticket would have used.
+
+     name   the login's name at THIS venue (vp_venue_staff.display_name), unless it is only a role
+            word ("Manager"), then the name on the login itself (Auth user_metadata.full_name)
+     email  the login's own email; for the venue's OWNER only, else the account's contact email,
+            which is theirs. A host who signs in by phone usually has neither, and is asked
+     phone  the login's own number, the one they sign in with by text. Never the support line
+
+   Only ever from the signed-in login, as the verified token says: never from the page, a link or a
+   query string. HQ (an admin login, View as) is given nothing by the route: Dean's own details must
+   never be filled in on a venue's form. */
+function helpPhoneE164(raw, stored) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return null;
+  if (!/^[+0-9 ()\-.]{1,30}$/.test(s)) return null;
+  const plus = s.charAt(0) === '+';
+  const d = s.replace(/[^0-9]/g, '');
+  let e = null;
+  if (plus || stored) e = /^[1-9]\d{7,14}$/.test(d) ? '+' + d : null;     // Auth keeps a number without its +
+  else if (/^0[2-578]\d{8}$/.test(d)) e = '+61' + d.slice(1);           // 04xx xxx xxx, 07 xxxx xxxx
+  else if (/^61[2-578]\d{8}$/.test(d)) e = '+' + d;
+  else if (/^4\d{8}$/.test(d)) e = '+61' + d;                             // a mobile typed without its 0
+  return e;
+}
+function helpPhoneShow(e164) {
+  const d = String(e164 || '').replace(/[^0-9]/g, '');
+  if (/^614\d{8}$/.test(d)) { const l = '0' + d.slice(2); return l.slice(0, 4) + ' ' + l.slice(4, 7) + ' ' + l.slice(7); }
+  if (/^61[2378]\d{8}$/.test(d)) { const l = '0' + d.slice(2); return l.slice(0, 2) + ' ' + l.slice(2, 6) + ' ' + l.slice(6); }
+  return e164 ? String(e164) : '';
+}
+async function helpVenueKnown(env, who) {
+  const u = await vpaAuthGetUser(env, who.authUserId);
+  let email = (u && u.email && HELP_EMAIL_RE.test(String(u.email))) ? String(u.email).toLowerCase() : '';
+  if (!email && who.venue.founding_id && who.staff && who.staff.role === 'owner') {
+    const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
+    const ce = String((acc && acc[0] && acc[0].contact_email) || '').trim().toLowerCase();
+    if (HELP_EMAIL_RE.test(ce)) email = ce;
+  }
+  let phone = helpPhoneE164(u && u.phone, true);
+  if (phone === VP_SUPPORT_TEL) phone = null;
+  const roleWord = /^(owner|manager|host|marketing|staff)$/i;
+  const staffName = helpLine(who.staff && who.staff.display_name, 120);
+  const meta = (u && u.user_metadata) || {};
+  const metaName = helpLine(meta.full_name || meta.name, 120);
+  const name = (staffName && !roleWord.test(staffName) ? staffName : '') || (metaName && !roleWord.test(metaName) ? metaName : '') || staffName || '';
+  return { name: name, email: email, phone: phone };
+}
+
+/* ------------------------------ POST /help/venue/me ------------------------------
+   The signed-in login's own name, email and phone, for the console Help form to fill in. A POST with
+   the venue in its body, so nothing personal is ever in an address. Submit-only rule 3 still holds:
+   this answers about the person asking, never a ticket. */
+async function helpVenueMe(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const who = await helpRequireVenueStaff(request, env, _b.body.venue_id);
+  if (who.error) return json({ error: who.error }, who.status);
+  if (who.admin) return json({ name: '', email: '', phone: '' });
+  if (!(await helpLimit(env, 'me:staff:' + who.authUserId, 120, 3600))) return json({ name: '', email: '', phone: '' }, 429);
+  const k = await helpVenueKnown(env, who);
+  return json({ name: k.name, email: k.email, phone: helpPhoneShow(k.phone) });
+}
+
 /* ------------------------------ POST /help/venue/ticket ------------------------------
    Submit only. It answers with the ticket number and nothing else: not the account's email it
    will reply to, and there is no route that lists a venue's tickets back. */
@@ -16095,15 +16627,16 @@ async function helpVenueTicket(request, env, json) {
      all. The address they typed wins; then the login's own email; then, for the venue's OWNER only,
      the account's contact email, which is theirs. Anyone else with none of those is asked for one:
      before this, a host's request was answered to the owner's inbox. */
-  let contactEmail = replyEmail, contactPhone = null, loginEmail = '';
-  const u = await vpaAuthGetUser(env, who.authUserId);
-  if (u && u.email && HELP_EMAIL_RE.test(String(u.email))) loginEmail = String(u.email).toLowerCase();
-  if (!who.admin) contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
-  if (!contactEmail) contactEmail = loginEmail || null;
-  if (!contactEmail && who.venue.founding_id && who.staff && who.staff.role === 'owner') {
-    const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
-    contactEmail = (acc && acc[0] && acc[0].contact_email) || null;
-  }
+  /* THE PHONE (Dean, 4 Nov 2026). The form now shows the host's own number, filled in, and they may
+     change it: a number they typed wins; a box left blank keeps the login's own number, as before.
+     The support line is ours, never theirs, so it is never kept as a contact. */
+  const typedPhone = helpLine(b.phone, 30);
+  const phoneTyped = typedPhone ? helpPhoneE164(typedPhone, false) : null;
+  if (typedPhone && phoneTyped === null) return json({ error: 'That phone number does not look right.' }, 400);
+  const known = await helpVenueKnown(env, who);
+  let contactEmail = replyEmail || known.email || null;
+  let contactPhone = phoneTyped || (who.admin ? null : known.phone) || null;
+  if (contactPhone === VP_SUPPORT_TEL) contactPhone = null;
   if (!contactEmail) return json({ error: 'Put in an email so we can reply. We answer help requests by email.', need_email: true }, 400);
   /* URGENT IS WORKED OUT, NOT TICKED (Dean, 21 Oct 2026: "if they are contacting us during a game,
      that is why they are contacting us"). A lobby or a game open at this venue right now makes the
@@ -16117,7 +16650,7 @@ async function helpVenueTicket(request, env, json) {
     t = await helpInsertTicket(env, {
       brand: 'venueplay', category: issue ? issue.category : b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
       priority: gameOn ? 'urgent' : 'normal', title: subject, message: message,
-      contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
+      contact_name: helpLine(b.name, 120) || known.name || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
       contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
     });
   } catch (e) {
@@ -16284,10 +16817,10 @@ function helpBrandFooter(pp) {
 function helpEmailCard(pp, inner, foot, title, preheader) {
   const brand = pp ? 'PartyPlay' : 'venueplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
-  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay_primary_rebuilt.png';
+  const logo = pp ? site + '/logos/partyplay-email-logo.png' : site + '/logos/venueplay-email-on-dark.png';
   /* PartyPlay's email logo is drawn on white, so its band is white; on the dark band it would sit
      in a white box. VenuePlay's logo is drawn for the dark band. */
-  const band = pp ? '#ffffff' : '#12101a';
+  const band = pp ? '#ffffff' : '#0A0A0B';
   const page = pp ? '#F3F0EC' : '#f4f4f7', text = pp ? '#3A3444' : '#3a3a44', mute = pp ? '#8A8296' : '#8a8a95', rule = pp ? '#EDE9E4' : '#eeeeee';
   return '<!doctype html><html lang="en-AU"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -16295,13 +16828,13 @@ function helpEmailCard(pp, inner, foot, title, preheader) {
     + '<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">'
     + '<title>' + vpaEsc(title || brand) + '</title>'
     + '<style>@media (prefers-color-scheme: dark){.hd-page{background:#0b0a10 !important}.hd-card{background:#1c1a24 !important}'
-    + '.hd-text{color:#e6e4ec !important}.hd-ink{color:#ffffff !important}.hd-mute{color:#a9a6b4 !important;border-color:#34313f !important}.hd-a{color:#ff6fb5 !important}}'
+    + '.hd-text{color:#e6e4ec !important}.hd-ink{color:#ffffff !important}.hd-mute{color:#a9a6b4 !important;border-color:#34313f !important}.hd-a{color:#ff6fb5 !important}}[data-ogsc] .hd-ink{color:#ffffff !important}[data-ogsc] .hd-text{color:#e6e4ec !important}[data-ogsb] .hd-card{background-color:#1c1a24 !important}[data-ogsb] .hd-page{background-color:#0b0a10 !important}'
     + '@media (max-width:480px){.hd-sig-icon{width:84px !important;padding-right:12px !important}.hd-sig-img{width:84px !important;height:84px !important;border-radius:10px !important}.hd-sig-text{padding-left:12px !important;font-size:13px !important}}</style>'
     + '</head><body class="hd-page" style="margin:0;padding:0;background:' + page + ';-webkit-text-size-adjust:100%">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
-    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
-    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:' + band + ';padding:20px 28px"><img src="' + logo + '" width="168" alt="' + brand + '" style="display:block;border:0;height:auto;max-width:168px"></td></tr>'
     + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
     + '<tr><td class="hd-text" style="padding:28px 28px 8px;font-size:16px;line-height:1.6;color:' + text + '">' + inner + '</td></tr>'
@@ -16311,11 +16844,11 @@ function helpEmailCard(pp, inner, foot, title, preheader) {
 /* The email the contact gets, in the ticket's own brand and card (helpEmailCard). Transactional, so
    it carries the ABN and a way to reach us (as venueplay/emails/*.html do); the reference is in the
    subject so their reply threads back. */
-function helpReplyHtml(ticket, body, replyTo, signer) {
+function helpReplyHtml(ticket, body, replyTo, signer, thread) {
   const pp = ticket.brand === 'partyplay';
   const ref = helpRef(ticket.reply_token);
   return helpEmailCard(pp,
-    '<div style="white-space:pre-wrap">' + helpLinkify(helpHtml(body)) + '</div>' + helpSignatureHtml(ticket, signer || 'Dean', replyTo, helpSignsOff(body)),
+    '<div style="white-space:pre-wrap">' + helpLinkify(helpHtml(body)) + '</div>' + helpSignatureHtml(ticket, signer || 'Dean', replyTo, helpSignsOff(body)) + helpThreadHtml(thread),
     'Ticket ' + ticket.ticket_no + (ref ? ' (ref ' + ref + ')' : '') + '. To add anything, just reply to this email.<br>' + helpBrandFooter(pp) + '.',
     'Ticket ' + ticket.ticket_no);
 }
@@ -16396,9 +16929,10 @@ async function helpSendTicketReply(env, t, body, signer, authorLabel, authorExtr
   const to = String(t.contact_email || '').toLowerCase();
   const f = helpFromFor(t.category, t.brand);
   const subj = helpBareSubject(t.subject).replace(/^(re|fw|fwd):\s*/i, '') || 'Your request';
+  const thread = await helpThreadFor(env, t).catch(() => []);
   const ok = await helpSendEmail(env, { to: to, from: f.from, reply_to: f.reply_to,
     subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpReplyTag(t),
-    html: helpReplyHtml(t, body, f.reply_to, signer) });
+    html: helpReplyHtml(t, body, f.reply_to, signer, thread) });
   if (!ok) return '';
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
     author: authorLabel + ' (from ' + f.reply_to + ' to ' + to + (authorExtra || '') + ')', author_id: authorId || null }, false);
@@ -16409,6 +16943,8 @@ async function helpAdminReply(request, env, json) {
   const t = await helpFindTicket(env, g.body.id);
   if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
   if (!t.contact_email) return json({ error: 'This ticket has no email address to reply to. Add a note instead.' }, 400);
+  /* SIGNED BY A PERSON, BY FIRST NAME (Dean, 5 Nov 2026): no name on the HQ login, no send, and no fallback to a team name. */
+  if (!helpFirstName(g.admin.label)) return json({ error: 'Add your name to your profile first, so your reply can be signed with it. Nothing was sent.', need_name: true }, 400);
   const body = helpText(g.body.body);
   if (!body) return json({ error: 'Type the reply first.' }, 400);
   if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
@@ -17539,7 +18075,7 @@ function vpsConfirmationEmail(env, email, venue, nowMs) {
   const site = vpaCustomerSite(env);
   const subject = "You're on the venueplay monthly email";
   const look = site + '/see-a-night?utm_source=subscriber&utm_medium=email&utm_campaign=welcome';
-  const inner = '<p style="font-size:20px;font-weight:800;color:#12101a;margin:0 0 12px">You\'re on the list</p>'
+  const inner = '<p style="font-size:20px;font-weight:800;color:#0A0A0B;margin:0 0 12px">You\'re on the list</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 14px">Thanks for signing up' + (venue ? ' for ' + vpaEsc(venue) : '')
     + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with venueplay.</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)

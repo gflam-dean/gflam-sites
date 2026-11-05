@@ -95,11 +95,11 @@ if (fnRankText && fnOrdinal){
   var P = { rank:0, playersCount:0 };
   pass("no rank yet prints nothing at all", rankText() === "", "got '" + rankText() + "'");
   P.rank = 3; P.playersCount = 11;
-  pass("third of eleven reads '3rd of 11'", rankText() === "3rd of 11", rankText());
+  pass("third of eleven reads '3rd', never '3rd of 11' (no player counts anywhere, Dean 4 Nov 2026)", rankText() === "3rd", rankText());
   P.playersCount = 0;
   pass("an unknown field size still names the place", rankText() === "3rd", rankText());
   P.rank = 1; P.playersCount = 2;
-  pass("first reads '1st of 2'", rankText() === "1st of 2", rankText());
+  pass("first reads '1st', never '1st of 2'", rankText() === "1st" && rankText().indexOf(" of ") < 0, rankText());
 }
 
 print("");
@@ -190,10 +190,11 @@ print("");
 print("9. THE WALL NEVER SHOWS THE PLAYER COUNT (locked design rule)");
 pass("screen.html has no player count element", screen.indexOf('id="lobbyPlaying"') < 0);
 pass("screen.html does not track a player count at all", screen.indexOf("state.playerCount") < 0);
-/* 3 Nov 2026, Dean: the ring shows answered OUT OF the players in ("32/43"), so a players message now sets
-   that number and nothing else: no count element, no "joined" words on the wall. */
-pass("a players message only sets the ring's \"of 43\", so an old host cannot break the wall",
-     screen.indexOf('if(m.t==="players"){ if(typeof m.count==="number") state.players=m.count; paintAnsOf(); return; }') > 0);
+/* 4 Nov 2026, Dean: NO counts on the TV at all ("how did they know that we only had 12 people rock up today?").
+   The ring's "32/43" went; a players message is host presence only and paints nothing. In Chrome:
+   tools/tv-no-counts-in-chrome.test.py. */
+pass("a players message paints nothing on the wall (no count, no \"joined\"), so an old host cannot put one back",
+     screen.indexOf('if(m.t==="players"){ return; }') > 0 && screen.indexOf("paintAnsOf") < 0 && screen.indexOf("tvAnsCount") < 0 && screen.indexOf("tvAnsOf") < 0);
 
 print("");
 print("10. EVERY TEAM CAN SEE ITSELF (finding 13)");

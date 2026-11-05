@@ -50,6 +50,7 @@
   .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
+  #lede[hidden] ~ #content{margin-top:18px}   /* the billing intro is hidden off the Billing tab: keep the heading clear of what follows */
   .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:18px 20px;margin:12px 0}
   .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
@@ -108,8 +109,13 @@
   .acchead.open .accchev{transform:rotate(-135deg);margin:4px 4px 0 0;border-color:var(--pink)}
   .accbody{display:none;padding:2px 0 8px}
   .acchead.open + .accbody{display:block}
-  .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
-  .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+  /* EVERY TAB FITS, NOTHING SCROLLS SIDEWAYS (Dean, 5 Nov 2026: "the tabs scroll sideways"). Seven tabs at 14px
+     with 16px padding were wider than the 642px column, so on a desktop and an iPad the row scrolled with a
+     scrollbar under it, and on a phone the tabs were 39px tall. Now: the row WRAPS, never scrolls; 15px text;
+     every tab 48px tall (the brand's touch target). On a desktop or iPad that is one row; on a phone it is two
+     even rows, the first four tabs above and Draws, Marketing, Game settings below (the phone rule further down). */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow:visible}
+  .tabs button{flex:1 1 auto;min-width:0;min-height:48px;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:15px;line-height:1.2;padding:8px 10px;border-radius:10px;cursor:pointer;transition:.15s}
   .tabs button.on{background:var(--pink);color:#fff}
   .tabs button:hover:not(.on){color:var(--text)}
   .tabpanel{display:none}
@@ -181,6 +187,8 @@
   .mdf label{display:block;margin:0 0 5px}
   .mdf input,.mdf select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
   .mdf input[readonly]{opacity:.75;cursor:default}
+  .jpline{display:flex;gap:8px;align-items:stretch}.jpline input{flex:1 1 auto;min-width:0}.jpline .addbtn{flex:0 0 auto;white-space:nowrap}
+  .jpline input.fixing{opacity:1;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
   /* Phones: nothing you have to tap is smaller than a fingertip. The plus and minus beside a
      player count decide what a venue is billed, and they were 34px on a phone. */
@@ -190,11 +198,11 @@
     .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
     .canxlink{min-height:44px;display:inline-flex;align-items:center}
     .tabs{top:6px}
-    /* ALL FIVE TABS ON SCREEN (14 Oct 2026 audit). At phone width the strip scrolled sideways
-       with nothing to say so, and "Game settings" sat cut off past the edge: a tab you cannot
-       see is a tab nobody presses. They wrap to a second row instead. */
-    .tabs{flex-wrap:wrap;overflow-x:visible}
-    .tabs button{flex:1 1 auto;padding:10px 12px}
+    /* ALL SEVEN TABS ON SCREEN (14 Oct 2026 audit; two even rows since 5 Nov 2026). The first four take
+       about a quarter each, so a fifth can never join their row, and the last three share the second row.
+       Down to 320px wide: the padding is small so "Game settings" still fits beside the other two. */
+    .tabs button{padding:8px 4px}
+    .tabs button:nth-child(-n+4){flex:1 1 23%}
   }
   /* The "Open it" switch to another account was the browser's default blue underline on a dark
      page (14 Oct 2026 audit). It is the one action on that line, so it looks like one. */
@@ -235,13 +243,13 @@
   .drow{align-items:center}
   .drow label.tn{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;white-space:nowrap;flex:none}
   .drow input[type=text]{flex:1 1 90px}
-  .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+  .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
   .addbtn:hover{border-color:var(--pink);color:#fff}
   .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
   .addform.show{display:flex}
   .addform input{flex:1 1 140px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;font-size:14px;font-family:'Manrope',sans-serif}
   .addform .seats{flex:0 0 120px}
-  .go{background:var(--pink);color:#fff;border:0;border-radius:11px;padding:11px 20px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(255,31,142,.28)}
+  .go{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:11px 20px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(255,31,142,.28)}
   .go:hover{background:var(--pink-deep);box-shadow:0 8px 20px rgba(255,31,142,.34)}
   .go:disabled{opacity:.5;cursor:default;box-shadow:none}
   /* Quiet counterpart to .go, for "take this off the screen" style actions: it has to be
@@ -257,7 +265,7 @@
   .drow .tvtag.on{color:var(--win)}
   .drow.editing{box-shadow:inset 3px 0 0 var(--pink);padding-left:10px}
   .drow .drowbtns{display:flex;gap:8px}
-  .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:11px;
+  .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:12px;
     padding:11px 18px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
   .offtv:hover{background:rgba(255,31,142,.08);border-color:var(--pink)}
   .offtv:disabled{opacity:.45;cursor:default}
@@ -385,14 +393,17 @@
          other two, so on a phone it never sits alone beside the logo while the buttons drop a line. vp-help.js
          puts Help in front of Sign out. -->
     <span class="hactions">
-      <a href="/app" class="hact hback" id="backLink" title="Back to games">&#8592; Games</a>
+      <a href="/app" class="hact hback" id="backLink" title="Back to Play">&#8592; Play</a>
       <button type="button" class="hact" id="signout">Sign out</button>
     </span>
   </div>
 </header>
 <div class="wrap">
   <h1>Your account</h1>
-  <p class="lede" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
+  <!-- The owner's intro is about billing (plan, hosts, next payment), so it shows on the Billing tab only (Dean,
+       5 Nov 2026: "up the top it says we've still got host, next payment and everything on this page"). showTab
+       hides it on every other tab. A manager's intro says what they can do here, so it drops "billonly" and stays. -->
+  <p class="lede billonly" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
   <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
   <p class="lede" id="otherAccounts" hidden></p>
 
@@ -583,6 +594,13 @@
     </div><!-- /tp-nights -->
 
     <div class="tabpanel" id="tp-settings">
+    <!-- ABOUT YOUR VENUE (Dean, 5 Nov 2026, INBOX 44a): what the setup wizard was told (how many TVs, game nights, the
+         games played), read from vp_venue_settings.setup_answers (migration 163). Hidden until the column answers. -->
+    <div id="aboutVenueWrap" style="display:none">
+      <div class="label">About your venue</div>
+      <div id="aboutVenue"></div>
+      <p class="note" style="margin:6px 0 16px">From your setup questions. To change an answer, open Setup guide at the top of the console.</p>
+    </div>
     <div class="label">Player data &amp; name display</div>
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, whether the join screen asks them to opt in to your marketing, how their name shows on the TV (John S, J Smith or John Smith), and your bingo permit. Opens that venue's settings.</p>
     <div id="playerData"></div>
@@ -711,19 +729,25 @@
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
-        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" readonly placeholder="from your start date"></div>
+        <!-- S (Dean, 4 Nov 2026): the draw day fills itself from the start date, and can be typed over. -->
+        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" placeholder="Fills in from your start date" autocomplete="off"></div>
         <div class="mdf"><label class="flabel" for="md-time">Draw time</label><input type="text" id="md-time" placeholder="e.g. 7:30pm"></div>
         <div class="mdf"><label class="flabel" for="md-claim">Time to claim (seconds)</label><input type="number" id="md-claim" min="0" step="1" inputmode="numeric" placeholder="e.g. 120"></div>
         <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
-        <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
+        <!-- T (Dean, 4 Nov 2026): the current jackpot is the draw's own running figure (it resets on a claim and grows
+             on a rollover), so it reads, it is never typed over by accident. "Correct it" unlocks it for one save. -->
+        <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label>
+          <div class="jpline"><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric" readonly aria-describedby="mdCurNote"><button type="button" class="addbtn" id="mdCurFix">Correct it</button></div>
+          <div class="snote" id="mdCurNote" style="margin:5px 0 0">Set by the draw: it resets when the jackpot is claimed and grows by the weekly increase when it rolls over.</div>
+        </div>
         <!-- MAXIMUM JACKPOT (migration 101; state audit C12, 20 Oct 2026). The lawyer "strongly
              recommends" a customer-set maximum before the draws (Anisimoff Legal, 1 Oct 2026 point 10,
              8 Oct 2026 point 6). It was only on the members console; it is here too, saved through
              the same /host/members/settings field, so setting up a draw asks it in one place. -->
         <div class="mdf"><label class="flabel" for="md-max">Maximum jackpot ($)</label><input type="number" id="md-max" min="0" step="1" inputmode="numeric" placeholder="No maximum"></div>
       </div>
-      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over. Leave the maximum blank for no maximum; once it is reached, the weekly increase goes into a reserve that seeds the next jackpot.</p>
+      <p class="snote" style="margin:8px 0 0">The draw day fills in from your start date (change it if your draw runs on another day). Leave the maximum blank for no maximum; once it is reached, the weekly increase goes into a reserve that seeds the next jackpot.</p>
       <button class="addbtn" id="mdCalcJp" type="button" style="margin-top:8px">Work out the jackpot from the start date</button>
       <div class="btnrow">
         <button class="go" id="mdSave">Save draw</button>
@@ -857,6 +881,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
 <script src="/app/vp-gaming.js"></script>
@@ -1263,6 +1288,7 @@
       wrap.appendChild(row);
     });
 
+    renderAbout(d.venues);
     // Player data + name display: reuse the existing per-venue settings page (what players are
     // asked for at join, and how their name shows on the TV). One link per venue.
     var pd = $("playerData");
@@ -1278,6 +1304,28 @@
     }
   }
 
+  /* ABOUT YOUR VENUE: one row per venue from vp_venue_settings.setup_answers. A read that fails (the column is not
+     there until migration 163 runs) leaves the whole card hidden and says nothing. */
+  function renderAbout(venues){
+    var wrap = $("aboutVenueWrap"), box = $("aboutVenue");
+    if (!wrap || !box || !window.VPFirstRun || !VPFirstRun.describe || !venues || !venues.length) return;
+    var ids = venues.map(function(v){ return v.id; });
+    VP.getClient().from("vp_venue_settings").select("venue_id,setup_answers").in("venue_id", ids).then(function(r){
+      if (!r || r.error || !Array.isArray(r.data)) return;
+      var by = {}; r.data.forEach(function(x){ by[x.venue_id] = x.setup_answers; });
+      box.innerHTML = "";
+      venues.forEach(function(v){
+        var w = VPFirstRun.describe(by[v.id]), bits = [];
+        if (w.tvs) bits.push(w.tvs);
+        if (w.nights) bits.push("Games on " + w.nights);
+        if (w.games) bits.push(w.games);
+        var row = document.createElement("div"); row.className = "venue";
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small></div>';
+        box.appendChild(row);
+      });
+      wrap.style.display = "";
+    }, function(){});
+  }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   /* A login with venues on another account gets one line naming those venues and a switch.
      The switch just records that venue as the one picked; every call names it from then on. */
@@ -1367,6 +1415,7 @@
     }
     var lede=$("lede");
     if(lede){
+      lede.classList.remove("billonly"); lede.hidden = false;   // a manager's intro is about the whole page, on every tab
       var canDo=[];
       if(p.advertising!==false) canDo.push("your screen");
       if(p.draws_raffles!==false) canDo.push("draws and raffles");
@@ -2092,7 +2141,7 @@
     });
   }
   function setTvLinks(slug){
-    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
+    $("tvLink").textContent = "venueplay.com.au/tv";   // bare (Dean, 5 Nov 2026): venues type the screen code
     $("screenPreview").href = tvHref(slug);
   }
   /* The venue rows this page needs beyond the billing summary: the slug (the venue link), the state
@@ -2233,7 +2282,9 @@
       // vp-permits.js paints one .vpp-card per kind this venue's state asks about; name them, never claim "on file".
       var kinds = [].map.call(document.querySelectorAll("#drawPermits .vpp-card[data-kind]"), function(c){
         var k = c.getAttribute("data-kind") || ""; return k === "members" ? "members draw" : k.replace(/_/g, " "); });
-      pm.textContent = kinds.length ? (kinds.join(", ").replace(/^./, function(ch){ return ch.toUpperCase(); })) : "None asked for in your state";
+      var below = document.querySelector("#drawPermits .vpp-below");   // the raffle card is under the state's line (Q)
+      pm.textContent = kinds.length ? (kinds.join(", ").replace(/^./, function(ch){ return ch.toUpperCase(); }) + (below ? ", raffle not needed yet" : ""))
+                                    : (below ? "Raffle not needed yet" : "None asked for in your state");
     }
   }
   (function initFolds(){
@@ -2260,6 +2311,15 @@
     var s = null; try { s = sessionStorage.getItem(TAB_KEY); } catch (e) {}
     return TAB_RE.test(s || "") ? s : null;
   }
+  /* Open one tab: its button lit, its panel shown, every other hidden. The billing intro at the top of the page
+     (#lede, while it carries "billonly") shows on the Billing tab only (Dean, 5 Nov 2026); the venue drop-down
+     above the tabs belongs to every tab and is left alone. */
+  function showTab(id){
+    var t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
+    for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a].getAttribute('data-tab')===id);
+    for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
+    var l=$("lede"); if(l) l.hidden = (id!=="billing" && l.classList.contains("billonly"));
+  }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.
   (function initTabs(){
@@ -2267,9 +2327,8 @@
     if(!tabs.length) return;
     for(var i=0;i<tabs.length;i++){
       tabs[i].addEventListener('click', function(){
-        var id=this.getAttribute('data-tab'), t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
-        for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a]===this);
-        for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
+        var id=this.getAttribute('data-tab');
+        showTab(id);
         try{ window.scrollTo(0,0); }catch(e){}
         rememberTab(id);
       });
@@ -2494,6 +2553,7 @@
   var mdMaxTouched = false;
   function fillMembersDraw(d){
     mdCurTouched = false;
+    mdCurLock(true);
     d = d || {};
     $("md-name").value = d.name || "";
     $("md-start").value = d.date_started || "";
@@ -2633,7 +2693,7 @@
       mdKeep(r.draw || mdDraw);
       // Show the jackpot the Worker now holds, and forget the edit: it has been sent.
       if (r.draw && r.draw.current_jackpot_cents != null) $("md-curjp").value = toDollars(r.draw.current_jackpot_cents);
-      mdCurTouched = false;
+      mdCurTouched = false; mdCurLock(true);
       if (r.draw){ $("md-max").value = toDollars(r.draw.max_jackpot_cents); mdMaxTouched = false; }
       pushToScreen(mdCurrent);
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
@@ -3105,12 +3165,20 @@
     showLoadFailed("drawPermitsErr", null);
     wrap.innerHTML = "";
     var nm = $("pmPickName"); if (nm) nm.textContent = rfVenueName() || "the venue picked at the top of this tab";
-    return venueRows([venueId]).then(function(rows){
+    /* Q (Dean, 4 Nov 2026): the raffle card hides while the prizes recorded here are under the state's line
+       (VPPermits.RAFFLE). The total is the venue's valued prizes from v_vp_prizes_given, the same row the tally
+       reads: cash prizes and prizes with a value typed, every draw this venue has run. A read that fails is
+       "unknown", and unknown shows the card. */
+    var prizeRead = VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId)
+      .then(function(r){ if (readFailed(r)) return null; var row=(r.data||[]).filter(function(x){ return x && x.venue_id===venueId; })[0]; return row ? (+row.prizes_given_value_cents || 0) : 0; }, function(){ return null; });
+    return Promise.all([venueRows([venueId]), prizeRead]).then(function(both){
+      var rows = both[0], prizeCents = both[1];
       if (seq !== pmSeq || venueId !== rfCurrent) return;
       if (!rows[0]) throw new Error("no row");
-      var shown = window.VPPermits ? VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId }) : [];
-      /* Only kinds the venue's state needs a permit for get a card (VPPermits.NEEDS). None: say so. */
-      if (!shown.length) wrap.innerHTML = '<p class="note" id="drawPermitsNone">' + esc(rfVenueName() || "This venue") + "'s state does not need a permit for raffles or members draws.</p>";
+      var shown = window.VPPermits ? VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId, rafflePrizeCents: prizeCents }) : [];
+      /* Only kinds the venue's state needs a permit for get a card (VPPermits.NEEDS). None, and no raffle line to
+         explain: say so. */
+      if (!shown.length && !wrap.querySelector(".vpp-below")) wrap.innerHTML = '<p class="note" id="drawPermitsNone">' + esc(rfVenueName() || "This venue") + "'s state does not need a permit for raffles or members draws.</p>";
     }).catch(function(){
       if (seq !== pmSeq) return;
       showLoadFailed("drawPermitsErr", "Could not load the permits for " + (rfVenueName() || "this venue") + ". Try again.", function(){ loadDrawPermits(venueId); });
@@ -3330,8 +3398,22 @@
     vpAsk("Set the current jackpot to $" + amount + "?\n\nThat is the starting jackpot plus " + weeks + " week" + (weeks===1?"":"s") +
                  " of increases since the start date, which is only right if nobody has won it since then. It goes on the TV when you save.").then(function(ok){ if (!ok) return;
     $("md-curjp").value = String(amount);
-    mdCurTouched = true;
+    mdCurTouched = true; mdCurLock(false);
     });
+  }
+  /* T (Dean, 4 Nov 2026): the current jackpot reads until the owner says they are correcting it. Then the box
+     opens for this one save, says what it is doing, and Save draw sends it. Any refill or save locks it again. */
+  function mdCurLock(lock){
+    var el=$("md-curjp"), b=$("mdCurFix"), n=$("mdCurNote"); if(!el) return;
+    el.readOnly = !!lock; el.classList.toggle("fixing", !lock);
+    if(b) b.textContent = lock ? "Correct it" : "Keep what it was";
+    if(n) n.textContent = lock ? "Set by the draw: it resets when the jackpot is claimed and grows by the weekly increase when it rolls over."
+                               : "Type the right amount, then Save draw. It goes on the TV with the save.";
+  }
+  function mdCurFix(){
+    if ($("md-curjp").readOnly){ mdCurLock(false); try{ $("md-curjp").focus(); $("md-curjp").select(); }catch(e){} return; }
+    // Keep what it was: back to the draw's own figure, nothing sent
+    $("md-curjp").value = toDollars(mdDraw && mdDraw.current_jackpot_cents); mdCurTouched = false; mdCurLock(true);
   }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
@@ -3345,6 +3427,7 @@
     ["input","change"].forEach(function(ev){ $("md-curjp").addEventListener(ev, function(){ mdCurTouched = true; }); });
     ["input","change"].forEach(function(ev){ $("md-max").addEventListener(ev, function(){ mdMaxTouched = true; }); });
     $("mdCalcJp").addEventListener("click", mdWorkOutJackpot);
+    $("mdCurFix").addEventListener("click", mdCurFix);
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;
