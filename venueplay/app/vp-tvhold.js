@@ -47,7 +47,20 @@
     /* a game screen's lobby before the host is there: the same card over the wall, the venueplay corner off */
     ' .tvhold-card{position:absolute;inset:0;z-index:12;background:#0A0A0B}' +
     ' .tvhold-card[hidden]{display:none}' +
-    ' body.tvhold-on .tv-corner{visibility:hidden}';
+    ' body.tvhold-on .tv-corner{visibility:hidden}' +
+    /* THE SET-UP SLIDE (Dean, 6 Nov 2026, item 102): for a venue with no slides and no logo. Static. Words left,
+       the QR and the link right, all inside the 6% margins (nothing in the outer 5% overscan). The logo is the
+       same tv lockup, small, still (no breath). */
+    ' .tvsetup .tvs-in{position:absolute;left:6cqw;right:6cqw;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:space-between;gap:5cqw}' +
+    ' .tvsetup .tvs-words{flex:0 0 44cqw;text-align:left;font-family:"Hanken Grotesk",sans-serif;color:#fff}' +
+    ' .tvsetup .tvlogo{position:relative;left:auto;top:auto;transform:none;width:20cqw;margin:0 0 3cqw}' +
+    ' .tvsetup .tvs-h{font-weight:800;font-size:5.4cqw;line-height:1.05;margin:0 0 1.6cqw;text-wrap:balance}' +
+    ' .tvsetup .tvs-h2{font-weight:800;font-size:3.2cqw;line-height:1.15;margin:0 0 2.2cqw;color:#FF1F8E;text-wrap:balance}' +
+    ' .tvsetup .tvs-step{font-weight:600;font-size:2.3cqw;line-height:1.3;margin:0;color:#fff;text-wrap:balance}' +
+    ' .tvsetup .tvs-qrcol{flex:0 0 38cqw;display:flex;flex-direction:column;align-items:center;text-align:center}' +
+    ' .tvsetup .tvs-qr{width:25cqw;height:25cqw;box-sizing:border-box;padding:1.2cqw;background:#fff;border-radius:1.4cqw;line-height:0}' +
+    ' .tvsetup .tvs-qr canvas,.tvsetup .tvs-qr img{display:block;width:100%!important;height:100%!important}' +
+    ' .tvsetup .tvs-link{margin-top:2cqw;font-family:"Hanken Grotesk",sans-serif;font-weight:700;font-size:2cqw;line-height:1.25;color:#fff;white-space:nowrap}';
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   /* line: the words under the logo, HTML-escaped by the caller (or one of LINES). o.scan: they are "Scan to
      play". o.kind: data-vpb, what this card is. breathe: the triangle's glow breathes. */
@@ -55,6 +68,24 @@
     o = o || {};
     return '<div class="tvhold"' + (o.kind ? ' data-vpb="' + esc(o.kind) + '"' : '') + '><div class="tvlogo' + (breathe ? ' breathe' : '') + '" data-vp-tvlogo="stacked">' + LOGO + '</div>' +
            '<div class="tvline' + (o.scan ? ' scan' : '') + '">' + line + '</div></div>';
+  }
+  /* THE SET-UP SLIDE, for a venue with NO slides and NO logo (Dean, 6 Nov 2026, item 102): welcome, please set
+     up your screen, a QR code and the link written out in full under it. tv.html chooses when (loopEntries);
+     this only draws it. The code opens the ordinary sign-in and nothing else: a fixed public address, never
+     built from the venue, its slug, its code or anything typed on this screen. */
+  var SETUP_URL = "https://venueplay.com.au/app/billing#screen", SETUP_SHOWN = "venueplay.com.au/app/billing#screen";
+  function setupHtml() {
+    return '<div class="tvhold tvsetup" data-vpb="setup"><div class="tvs-in"><div class="tvs-words"><div class="tvlogo" data-vp-tvlogo="stacked">' + LOGO + '</div>' +
+           '<p class="tvs-h">welcome to venueplay</p><p class="tvs-h2">Please set up your screen</p>' +
+           '<p class="tvs-step">Scan the code with your phone and sign in. Then open the Screen tab.</p></div>' +
+           '<div class="tvs-qrcol"><div class="tvs-qr" data-vp-setup-qr="1"></div><div class="tvs-link">' + SETUP_SHOWN + '</div></div></div></div>';
+  }
+  /* draw the code into every set-up slide under root (after the slide is in the page) */
+  function drawSetupQr(root) {
+    try {
+      var l = (root || d).querySelectorAll("[data-vp-setup-qr]");
+      for (var i = 0; i < l.length; i++) if (w.VPQR) w.VPQR.draw(l[i], SETUP_URL, 560);
+    } catch (e) {}
   }
   try { if (!d.getElementById("vpTvHoldCss")) { var st = d.createElement("style"); st.id = "vpTvHoldCss"; st.textContent = CSS; (d.head || d.documentElement).appendChild(st); } } catch (e) {}
 
@@ -95,6 +126,7 @@
   }
   w.VPTvHold = {
     lobby: lobby,
+    setupHtml: setupHtml, drawSetupQr: drawSetupQr, SETUP_URL: SETUP_URL, SETUP_SHOWN: SETUP_SHOWN,
     html: html, LINES: LINES, LOGO: LOGO, intro: intro, DONE_AT: DONE_AT, LOGO_AT: LOGO_AT, STEPS: STEPS,
     /* the venue's top-left logo waits for its moment in the intro; at once when there is none */
     logoReady: function () { return logoReady; },
