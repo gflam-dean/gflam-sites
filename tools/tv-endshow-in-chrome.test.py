@@ -176,7 +176,7 @@ def demos():
         ok('trivia: the podium plays the show', r.until(tr, 'window.VPEndShow && VPEndShow.playing()', 70) is True, r.ask(tr, STATS))
         s = r.ask(tr, SHOWN) or {}
         ok('trivia: FINAL SCORES, the top three teams, first at the top, each with its place and score',
-           s.get('eye') == 'FINAL SCORES' and s.get('rows') == [['1', 'THE QUIZTOPHER NOLANS', '840'], ['2', 'TABLE 6', '790'], ['3', "NAN'S ARMY", '735']], s)
+           s.get('eye') == 'FINAL SCORES' and s.get('rows') == [['1', 'THE QUIZTOPHER NOLANS', '840'], ['2', 'SARAH', '790'], ['3', "NAN'S ARMY", '735']], s)
         time.sleep(1.6); shot(r, tr, 'endshow-4-trivia-result')
         m = r.ask(tr, BOXES)
         ok('trivia: the three rows are on the screen', m and len([b for b in m['boxes'] if re.match(r'^vpeRow\d$', b[0])]) == 3 and not outside(m), outside(m) or m)

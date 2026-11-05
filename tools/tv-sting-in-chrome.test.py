@@ -241,7 +241,7 @@ def other_games():
             r.ask(s1, 'VPSting.forGame({t:%s}, {}, %s); true' % (json.dumps('question' if first == 'question' else 'played'), FIRSTS[first]))
             ok(words + ' TV: the first ' + first + ' arriving mid-show makes it give way at once',
                r.ask(s1, '!VPSting.playing() && VPSting.stats().last==="content" && !document.getElementById("vpSting")') is True, r.ask(s1, STATS))
-        for path, words in (('/app/trivia/play?demo=1', ['LET\u2019S PLAY, DRE!', 'TRIVIA']), ('/app/musical/play?demo=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
+        for path, words in (('/app/trivia/play?demo=1', ['LET\u2019S PLAY, SARAH!', 'TRIVIA']), ('/app/musical/play?demo=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
             # the sales-page phone (it plays itself only when embedded, or with this hook: Dean, 4 Nov 2026)
             _, p1 = r.open(path, before='window.__vpDemoAutoplay=true;', width=390, height=844)
             ok(words[1] + ' phone: the show with the player\'s name', r.until(p1, 'window.VPSting && VPSting.playing()', 15) is True and r.ask(p1, 'VPSting.shown()') == words, r.ask(p1, 'VPSting.shown()'))
