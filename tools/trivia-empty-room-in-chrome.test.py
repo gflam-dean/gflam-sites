@@ -103,7 +103,7 @@ def play():
         ok('the TV shows "Thanks for playing" after the 5 second wait, not an empty Leaderboard',
            r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var t=d&&d.getElementById("tvBoardTitle"); return !!t && /Thanks for playing/.test(t.textContent) && !d.getElementById("tvBoard").classList.contains("hidden");})()', 25) is True,
            r.ask(tv, TV))
-        w = json.loads(r.ask(tv, TV))
+        w = r.json(tv, TV)
         ok('  on the board layer, no score rows, the join code for next time in the corner', w.get('layer') == 'tvBoard' and w.get('rows') == 0 and w.get('join') is True
            and len(w.get('joinCode') or '') == 6, w)
         ok('  no error words on the wall', not any(x in (w.get('text') or '').lower() for x in ('could not', 'error', 'failed', 'check your connection')), w.get('text'))
@@ -117,13 +117,13 @@ def play():
         ok('and revealed: the button now reads Reveal leaderboard', wait_btn(r, host, 'Reveal leaderboard', 20) is True, r.ask(host, ERRT))
         click_btn(r, host, 'Reveal leaderboard')
         r.until(host, '!!document.getElementById("noPlayersNote") || document.getElementById("hostErrBar").classList.contains("show")', 15)
-        h = json.loads(r.ask(host, HOSTP))
+        h = r.json(host, HOSTP)
         ok('the host console says it plainly, word for word', h.get('note') == NOBODY, h)
         ok('the line is on screen', h.get('noteShown') is True, h)
         ok('there is NO error: the red bar is down and nothing says "could not be loaded"', h.get('errUp') is False and 'could not be loaded' not in (h.get('errText') or ''), h)
         ok('the host still has Reveal leaderboard to tap (nothing is ended)', 'Reveal leaderboard' in (h.get('btns') or []), h)
         r.until(tv, '(function(){var f=document.getElementById("gameFrame"), d=f&&f.contentDocument; var t=d&&d.getElementById("tvBoardTitle"); return !!t && /Thanks for playing/.test(t.textContent);})()', 15)
-        w = json.loads(r.ask(tv, TV))
+        w = r.json(tv, TV)
         ok('the TV shows "Thanks for playing" with the join code for next time', w.get('layer') == 'tvBoard' and 'Thanks for playing' in (w.get('title') or '') and w.get('join') is True
            and len(w.get('joinCode') or '') == 6, w)
         ok('the TV has no podium and no score rows', w.get('rows') == 0 and w.get('layer') != 'tvPodium', w)
@@ -142,7 +142,7 @@ def play():
         r.ask(host, 'window.__realFetch=window.fetch; window.fetch=function(u,o){ return /host\\/reveal/.test(String(u)) ? Promise.reject(new TypeError("Failed to fetch")) : window.__realFetch.apply(window,arguments); }; true')
         click_btn(r, host, 'Reveal leaderboard')
         r.until(host, 'document.getElementById("hostErrBar").classList.contains("show")', 15)
-        h = json.loads(r.ask(host, HOSTP))
+        h = r.json(host, HOSTP)
         ok('with a player in and the fetch failing, the real "could not be loaded" message is kept',
            h.get('errUp') is True and h.get('errText', '').startswith('Scores could not be loaded, so the podium was not put on the screen.'), h)
         ok('and the "nobody has joined" line is gone', h.get('note') is None, h)
