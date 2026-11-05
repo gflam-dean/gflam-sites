@@ -122,8 +122,8 @@ def account_rows(key):
 HOST_EMAIL_PAGE = """<!DOCTYPE html><html lang="en-AU"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>venueplay demo: the host email card</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
-<style>body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,system-ui,sans-serif}p{max-width:520px;margin:40px auto;padding:0 16px;line-height:1.55;color:#A6A6B0}</style>
-</head><body><p>DEMO ONLY. This is the card a host sees at the bottom of their console after signing in (item 21a). In this demo the
+<style>body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,system-ui,sans-serif}p.demo{max-width:520px;margin:40px auto;padding:0 16px;line-height:1.55;color:#A6A6B0}</style>
+</head><body><p class="demo">DEMO ONLY. This is the card a host sees at the bottom of their console after signing in (item 21a). In this demo the
 Save and Not now buttons go to the local test Worker; nothing is sent and nothing is stored outside this Mac.</p>
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-updates-optin.js"></script>
