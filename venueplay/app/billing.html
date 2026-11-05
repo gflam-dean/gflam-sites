@@ -181,6 +181,8 @@
   .mdf label{display:block;margin:0 0 5px}
   .mdf input,.mdf select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
   .mdf input[readonly]{opacity:.75;cursor:default}
+  .jpline{display:flex;gap:8px;align-items:stretch}.jpline input{flex:1 1 auto;min-width:0}.jpline .addbtn{flex:0 0 auto;white-space:nowrap}
+  .jpline input.fixing{opacity:1;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
   /* Phones: nothing you have to tap is smaller than a fingertip. The plus and minus beside a
      player count decide what a venue is billed, and they were 34px on a phone. */
@@ -235,13 +237,13 @@
   .drow{align-items:center}
   .drow label.tn{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;white-space:nowrap;flex:none}
   .drow input[type=text]{flex:1 1 90px}
-  .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+  .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
   .addbtn:hover{border-color:var(--pink);color:#fff}
   .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
   .addform.show{display:flex}
   .addform input{flex:1 1 140px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 12px;font-size:14px;font-family:'Manrope',sans-serif}
   .addform .seats{flex:0 0 120px}
-  .go{background:var(--pink);color:#fff;border:0;border-radius:11px;padding:11px 20px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(255,31,142,.28)}
+  .go{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:11px 20px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(255,31,142,.28)}
   .go:hover{background:var(--pink-deep);box-shadow:0 8px 20px rgba(255,31,142,.34)}
   .go:disabled{opacity:.5;cursor:default;box-shadow:none}
   /* Quiet counterpart to .go, for "take this off the screen" style actions: it has to be
@@ -257,7 +259,7 @@
   .drow .tvtag.on{color:var(--win)}
   .drow.editing{box-shadow:inset 3px 0 0 var(--pink);padding-left:10px}
   .drow .drowbtns{display:flex;gap:8px}
-  .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:11px;
+  .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:12px;
     padding:11px 18px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
   .offtv:hover{background:rgba(255,31,142,.08);border-color:var(--pink)}
   .offtv:disabled{opacity:.45;cursor:default}
@@ -385,7 +387,7 @@
          other two, so on a phone it never sits alone beside the logo while the buttons drop a line. vp-help.js
          puts Help in front of Sign out. -->
     <span class="hactions">
-      <a href="/app" class="hact hback" id="backLink" title="Back to games">&#8592; Games</a>
+      <a href="/app" class="hact hback" id="backLink" title="Back to Play">&#8592; Play</a>
       <button type="button" class="hact" id="signout">Sign out</button>
     </span>
   </div>
@@ -708,19 +710,25 @@
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
-        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" readonly placeholder="from your start date"></div>
+        <!-- S (Dean, 4 Nov 2026): the draw day fills itself from the start date, and can be typed over. -->
+        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" placeholder="Fills in from your start date" autocomplete="off"></div>
         <div class="mdf"><label class="flabel" for="md-time">Draw time</label><input type="text" id="md-time" placeholder="e.g. 7:30pm"></div>
         <div class="mdf"><label class="flabel" for="md-claim">Time to claim (seconds)</label><input type="number" id="md-claim" min="0" step="1" inputmode="numeric" placeholder="e.g. 120"></div>
         <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
-        <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
+        <!-- T (Dean, 4 Nov 2026): the current jackpot is the draw's own running figure (it resets on a claim and grows
+             on a rollover), so it reads, it is never typed over by accident. "Correct it" unlocks it for one save. -->
+        <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label>
+          <div class="jpline"><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric" readonly aria-describedby="mdCurNote"><button type="button" class="addbtn" id="mdCurFix">Correct it</button></div>
+          <div class="snote" id="mdCurNote" style="margin:5px 0 0">Set by the draw: it resets when the jackpot is claimed and grows by the weekly increase when it rolls over.</div>
+        </div>
         <!-- MAXIMUM JACKPOT (migration 101; state audit C12, 20 Oct 2026). The lawyer "strongly
              recommends" a customer-set maximum before the draws (Anisimoff Legal, 1 Oct 2026 point 10,
              8 Oct 2026 point 6). It was only on the members console; it is here too, saved through
              the same /host/members/settings field, so setting up a draw asks it in one place. -->
         <div class="mdf"><label class="flabel" for="md-max">Maximum jackpot ($)</label><input type="number" id="md-max" min="0" step="1" inputmode="numeric" placeholder="No maximum"></div>
       </div>
-      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date. The current jackpot is the live amount on your TV: it resets to the starting jackpot when someone claims it and grows by the weekly increase when it rolls over. Leave the maximum blank for no maximum; once it is reached, the weekly increase goes into a reserve that seeds the next jackpot.</p>
+      <p class="snote" style="margin:8px 0 0">The draw day fills in from your start date (change it if your draw runs on another day). Leave the maximum blank for no maximum; once it is reached, the weekly increase goes into a reserve that seeds the next jackpot.</p>
       <button class="addbtn" id="mdCalcJp" type="button" style="margin-top:8px">Work out the jackpot from the start date</button>
       <div class="btnrow">
         <button class="go" id="mdSave">Save draw</button>
@@ -2227,7 +2235,9 @@
       // vp-permits.js paints one .vpp-card per kind this venue's state asks about; name them, never claim "on file".
       var kinds = [].map.call(document.querySelectorAll("#drawPermits .vpp-card[data-kind]"), function(c){
         var k = c.getAttribute("data-kind") || ""; return k === "members" ? "members draw" : k.replace(/_/g, " "); });
-      pm.textContent = kinds.length ? (kinds.join(", ").replace(/^./, function(ch){ return ch.toUpperCase(); })) : "None asked for in your state";
+      var below = document.querySelector("#drawPermits .vpp-below");   // the raffle card is under the state's line (Q)
+      pm.textContent = kinds.length ? (kinds.join(", ").replace(/^./, function(ch){ return ch.toUpperCase(); }) + (below ? ", raffle not needed yet" : ""))
+                                    : (below ? "Raffle not needed yet" : "None asked for in your state");
     }
   }
   (function initFolds(){
@@ -2488,6 +2498,7 @@
   var mdMaxTouched = false;
   function fillMembersDraw(d){
     mdCurTouched = false;
+    mdCurLock(true);
     d = d || {};
     $("md-name").value = d.name || "";
     $("md-start").value = d.date_started || "";
@@ -2627,7 +2638,7 @@
       mdKeep(r.draw || mdDraw);
       // Show the jackpot the Worker now holds, and forget the edit: it has been sent.
       if (r.draw && r.draw.current_jackpot_cents != null) $("md-curjp").value = toDollars(r.draw.current_jackpot_cents);
-      mdCurTouched = false;
+      mdCurTouched = false; mdCurLock(true);
       if (r.draw){ $("md-max").value = toDollars(r.draw.max_jackpot_cents); mdMaxTouched = false; }
       pushToScreen(mdCurrent);
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
@@ -3050,12 +3061,20 @@
     showLoadFailed("drawPermitsErr", null);
     wrap.innerHTML = "";
     var nm = $("pmPickName"); if (nm) nm.textContent = rfVenueName() || "the venue picked at the top of this tab";
-    return venueRows([venueId]).then(function(rows){
+    /* Q (Dean, 4 Nov 2026): the raffle card hides while the prizes recorded here are under the state's line
+       (VPPermits.RAFFLE). The total is the venue's valued prizes from v_vp_prizes_given, the same row the tally
+       reads: cash prizes and prizes with a value typed, every draw this venue has run. A read that fails is
+       "unknown", and unknown shows the card. */
+    var prizeRead = VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId)
+      .then(function(r){ if (readFailed(r)) return null; var row=(r.data||[]).filter(function(x){ return x && x.venue_id===venueId; })[0]; return row ? (+row.prizes_given_value_cents || 0) : 0; }, function(){ return null; });
+    return Promise.all([venueRows([venueId]), prizeRead]).then(function(both){
+      var rows = both[0], prizeCents = both[1];
       if (seq !== pmSeq || venueId !== rfCurrent) return;
       if (!rows[0]) throw new Error("no row");
-      var shown = window.VPPermits ? VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId }) : [];
-      /* Only kinds the venue's state needs a permit for get a card (VPPermits.NEEDS). None: say so. */
-      if (!shown.length) wrap.innerHTML = '<p class="note" id="drawPermitsNone">' + esc(rfVenueName() || "This venue") + "'s state does not need a permit for raffles or members draws.</p>";
+      var shown = window.VPPermits ? VPPermits.paint({ wrap: wrap, venue: rows[0], kinds: ["raffle", "members"], worker: VP_WORKER, venueId: venueId, rafflePrizeCents: prizeCents }) : [];
+      /* Only kinds the venue's state needs a permit for get a card (VPPermits.NEEDS). None, and no raffle line to
+         explain: say so. */
+      if (!shown.length && !wrap.querySelector(".vpp-below")) wrap.innerHTML = '<p class="note" id="drawPermitsNone">' + esc(rfVenueName() || "This venue") + "'s state does not need a permit for raffles or members draws.</p>";
     }).catch(function(){
       if (seq !== pmSeq) return;
       showLoadFailed("drawPermitsErr", "Could not load the permits for " + (rfVenueName() || "this venue") + ". Try again.", function(){ loadDrawPermits(venueId); });
@@ -3238,8 +3257,22 @@
     vpAsk("Set the current jackpot to $" + amount + "?\n\nThat is the starting jackpot plus " + weeks + " week" + (weeks===1?"":"s") +
                  " of increases since the start date, which is only right if nobody has won it since then. It goes on the TV when you save.").then(function(ok){ if (!ok) return;
     $("md-curjp").value = String(amount);
-    mdCurTouched = true;
+    mdCurTouched = true; mdCurLock(false);
     });
+  }
+  /* T (Dean, 4 Nov 2026): the current jackpot reads until the owner says they are correcting it. Then the box
+     opens for this one save, says what it is doing, and Save draw sends it. Any refill or save locks it again. */
+  function mdCurLock(lock){
+    var el=$("md-curjp"), b=$("mdCurFix"), n=$("mdCurNote"); if(!el) return;
+    el.readOnly = !!lock; el.classList.toggle("fixing", !lock);
+    if(b) b.textContent = lock ? "Correct it" : "Keep what it was";
+    if(n) n.textContent = lock ? "Set by the draw: it resets when the jackpot is claimed and grows by the weekly increase when it rolls over."
+                               : "Type the right amount, then Save draw. It goes on the TV with the save.";
+  }
+  function mdCurFix(){
+    if ($("md-curjp").readOnly){ mdCurLock(false); try{ $("md-curjp").focus(); $("md-curjp").select(); }catch(e){} return; }
+    // Keep what it was: back to the draw's own figure, nothing sent
+    $("md-curjp").value = toDollars(mdDraw && mdDraw.current_jackpot_cents); mdCurTouched = false; mdCurLock(true);
   }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
@@ -3253,6 +3286,7 @@
     ["input","change"].forEach(function(ev){ $("md-curjp").addEventListener(ev, function(){ mdCurTouched = true; }); });
     ["input","change"].forEach(function(ev){ $("md-max").addEventListener(ev, function(){ mdMaxTouched = true; }); });
     $("mdCalcJp").addEventListener("click", mdWorkOutJackpot);
+    $("mdCurFix").addEventListener("click", mdCurFix);
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;

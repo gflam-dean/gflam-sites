@@ -453,7 +453,7 @@ def host():
         ok('the buzzer row lines up with the other setting rows: its label where theirs are, its switch at the right edge',
            bool(H) and abs(H['lab'][0] - H['fieldLab'][0]) <= 1 and abs(H['ctl'][2] - H['sel'][2]) <= 2, H)
         ok('the picker is a CATEGORY drop-down', bool(H) and H['catText'].startswith('Category'), H and H['catText'])
-        ok('the way back is clearly labelled "All games"', bool(H) and 'All games' in (H['nav'] or ''), H and H['nav'])
+        ok('the way back is clearly labelled "Play", the main screen (Dean, 4 Nov 2026 round 3 O)', bool(H) and (H['nav'] or '').strip().endswith('Play') and 'Games' not in (H['nav'] or ''), H and H['nav'])
         ok('no TV yet: the console says so in plain words, and how to fix it',
            bool(H) and (H['status'] != 'TV not connected yet' or H['hint'] is True) and 'Waiting for screen' not in H['status'], H)
         S.js(sid, 'document.querySelector(\'#cfgBuzzer [data-v="on"]\').click(); document.querySelector(\'#cfgBuzzWhere [data-v="device"]\').click(); true')
@@ -471,7 +471,7 @@ def host():
         time.sleep(1)
         P = S.js(sid, '(function(){function R(s){var e=document.querySelector(s);if(!e)return null;var b=e.getBoundingClientRect();return [b.left,b.top,b.right,b.bottom];}'
                       'return {brand:R(".bar>.brand"), who:R(".bar>.who"), nav:R(".bar>.vp-navlink"), end:R("#toAdsBtn"), W:innerWidth};})()')
-        ok('phone width: the venueplay logo, TRIVIA and the TV status on the first row, "All games" and End game under them',
+        ok('phone width: the venueplay logo, TRIVIA and the TV status on the first row, "Play" and End game under them',
            bool(P and P['brand'] and P['nav'] and P['end']) and P['nav'][1] >= P['brand'][3] - 1 and P['end'][1] >= P['brand'][3] - 1 and P['brand'][0] <= 30 and P['end'][2] <= P['W'], P)
         S.close_tab(tid)
     finally:

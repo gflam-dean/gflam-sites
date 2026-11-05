@@ -26,7 +26,8 @@
    WHY A VENUE WOULD RECORD IT, BY STATE. One line each, from the lawyers' threshold tables
    (Anisimoff Legal 9380: NSW table, 1 Oct 2026; QLD, VIC, ACT and TAS tables, 8 Oct 2026). The
    regulator's name comes from VPGaming.states when that script is loaded, so the two cannot
-   disagree about who to ring. WA, SA and NT have no letter yet, so they get the generic line.
+   disagree about who to ring. WA, SA and NT have no letter yet, so bingo and members there get the
+   generic line; their RAFFLE lines come from the regulators' own pages (4 Nov 2026, RAFFLE below).
 
      VPPermits.paint({ wrap, venue, kinds, worker, venueId, onSaved })
        wrap     the element the cards go in (emptied first)
@@ -47,22 +48,26 @@
 
   var WHY = {
     NSW: { bingo: "In New South Wales, paid housie is for registered clubs (club bingo: no cash prizes, $70 a game) or is run to raise money for a charity (charity housie). Record the club's or the charity's authority here. Social housie needs nothing, and cannot be run at a pub.",
-           raffle: "In New South Wales, a pub may run a paid raffle for a charity under the charity's authority from {reg}, with the charity's written authorisation. Record the charity and the date it authorised you. A club's promotional raffle (up to $5,000, no cash prizes) needs no authority.",
+           raffle: "In New South Wales, a raffle is run for a charity or non-profit. Up to $30,000 in total prizes it needs no authority; over that it is an art union and needs an authority from NSW Fair Trading. Record the charity and the date it authorised you, or the authority. A club's promotional raffle (up to $5,000, no cash prizes) needs none.",
            members: "In New South Wales, a free-entry members draw is a free lottery or a trade promotion. A trade promotion with over $10,000 in prizes needs an authority from {reg}. Record it here." },
     QLD: { bingo: "In Queensland, only an association may conduct bingo, and only a bingo centre needs a licence. Record the association and its category (category 1 up to $2,000 in ticket sales, category 2 up to $20,000) so it is on file.",
-           raffle: "In Queensland, category 1 and 2 raffles (up to $50,000 in ticket sales) need no licence but must be run by an eligible association; category 3 (over $50,000) needs a licence from {reg}. Record the association or the licence.",
+           raffle: "In Queensland, a raffle is run by an eligible association. Up to $50,000 in ticket sales (category 1 and 2) it needs no licence; over $50,000 in ticket sales (category 3) it needs a licence from {reg}. Queensland counts ticket sales, not prizes. Record the association or the licence.",
            members: "In Queensland, a free-entry members draw is a category 4 promotional game, which any business may run with no licence. Nothing to record unless you hold one." },
     VIC: { bingo: "In Victoria, paid bingo is for non-profits declared by {reg} that have notified it. Record your minor gaming permit or VGCCC declaration here: Victorian law bans supplying bingo tickets or a number generator to anyone without one, so we need to know you hold it.",
-           raffle: "In Victoria, raffles are for non-profits; a prize pool over $23,060 needs a permit from {reg}. A for-profit venue needs the non-profit's written permission and a commercial organiser's licence. Record whichever applies.",
+           raffle: "In Victoria, a raffle is run for a declared community or charitable organisation. Over $23,060 in total prizes it needs a minor gaming permit from {reg} (the figure on the VGCCC site; check it there before a big raffle). Record the organisation's written permission or the permit.",
            members: "In Victoria, a free-entry members draw is a trade promotion and needs no permit. A draw run for a non-profit runs under that non-profit's permit; record it here." },
     ACT: { bingo: "In ACT, housie with a prize pool over $1,000 a session needs a permit from {reg}, and no minors may play. Record the permit here.",
-           raffle: "In ACT, a raffle with a prize pool over $2,500 needs a permit from {reg}. Record it here.",
+           raffle: "In ACT, a raffle with over $2,500 in total prizes needs approval from {reg}; up to $2,500 it is an exempt lottery. Record the approval here.",
            members: "In ACT, a free trade promotion with prizes up to $3,000 is exempt. Above that, or a raffle over $2,500, needs a permit from {reg}. Record it here." },
     TAS: { bingo: "In Tasmania, bingo is run for non-profits and needs a minor gaming permit from {reg} unless it is social bingo (one fee a session, entry $30 or less, no prize over $300). Record the permit, and the non-profit it is for.",
-           raffle: "In Tasmania, a raffle with a prize pool over $10,000 needs a minor gaming permit from {reg}; up to $10,000 needs none when the proceeds go to a non-profit. Record the permit or the non-profit.",
+           raffle: "In Tasmania, a raffle with over $10,000 in total prizes needs a minor gaming permit from {reg}; up to $10,000 needs none when the proceeds go to a non-profit (cash prizes up to $5,000). Record the permit or the non-profit.",
            members: "In Tasmania, a members draw is treated like a raffle: over $10,000 in prizes needs a minor gaming permit from {reg}. Record it, or the non-profit the draw is for." }
   };
   var WHY_GENERIC = "Record any permit, licence or authority {reg} has issued your venue for this game, so it is on file if anyone asks.";
+  /* Raffle lines for the states with no lawyer's letter, from the regulators' own pages (4 Nov 2026, see RAFFLE below). */
+  WHY.SA = { raffle: "In South Australia, a raffle is run for a not-for-profit. Up to $5,000 in total prizes it is a minor lottery and needs no licence; over $5,000 it is a major lottery and needs a licence from {reg} before it starts. Record the not-for-profit or the licence." };
+  WHY.WA = { raffle: "In Western Australia, a raffle drawn on the same day and premises as the tickets are sold, with up to $2,000 in prizes, needs no permit; otherwise a standard lottery permit from {reg}, held by a community body. Record the body or the permit." };
+  WHY.NT = { raffle: "In the Northern Territory, a raffle is run by an approved association. Up to $5,000 in ticket sales it needs no permit; over that it is a minor or major lottery and needs a permit from {reg}. The Territory counts ticket sales, not prizes. Record the association or the permit." };
 
   function regulatorFor(state) {
     var st = (root.VPGaming && VPGaming.states && VPGaming.states[state]) || null;
@@ -102,15 +107,55 @@
      raffle above $2,500, a trade promotion above $3,000. TAS: bingo unless social, a raffle or members
      draw above $10,000. WA, SA, NT: no letter yet. */
   var NEEDS = {
-    NSW: { bingo: false,         raffle: true,          members: "conditional" },
+    NSW: { bingo: false,         raffle: "conditional", members: "conditional" },
     QLD: { bingo: "conditional", raffle: "conditional", members: false },
     VIC: { bingo: true,          raffle: "conditional", members: false },
     ACT: { bingo: "conditional", raffle: "conditional", members: "conditional" },
     TAS: { bingo: "conditional", raffle: "conditional", members: "conditional" },
-    WA:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" },
-    SA:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" },
-    NT:  { bingo: "unclear",     raffle: "unclear",     members: "unclear" }
+    WA:  { bingo: "unclear",     raffle: "conditional", members: "unclear" },
+    SA:  { bingo: "unclear",     raffle: "conditional", members: "unclear" },
+    NT:  { bingo: "unclear",     raffle: "conditional", members: "unclear" }
   };
+  /* THE RAFFLE PERMIT LINE, BY STATE (Dean, 4 Nov 2026, round 3 Q: "hide the permit fields until the prize total is
+     over that state's threshold; check each state's real threshold; never guess"). Each figure is from the
+     regulator's own page or the Act, read 4 Nov 2026 (the note with the sources: ~/venue-enrich/reports/
+     console-round3-6nov/raffle-permit-thresholds.md). "measure" says what the law counts, because two states do not
+     count prizes at all: Queensland and the Territory count TICKET SALES. The product only knows prize values
+     (cash prizes and prizes with a value typed), so for those two the card hides while the prizes are under the
+     line and the note says the law counts sales, with "Record a permit anyway" one tap away.
+       NSW  $30,000 total prize value   nsw.gov.au Fair Trading, lotteries and art unions pages (1 Jul 2025 / 2026)
+       QLD  $50,000 ticket sales        business.qld.gov.au OLGR, categories 1 to 3; CNPG Act 1999
+       VIC  $23,060 total prize value   vgccc.vic.gov.au raffle FAQ as read 4 Nov 2026 ($20,000 at 1 Sep 2022; it moves,
+                                         so the card's line says to check the VGCCC figure)
+       SA   $5,000 total prize value    Lotteries Act 2019 (SA) via business.gov.au ABLIS; CBS's own page blocked the read
+       WA   $2,000 total prize value    wa.gov.au Gaming and Wagering Commission, standard lotteries (same day, same premises)
+       TAS  $10,000 total prize value   treasury.tas.gov.au Liquor and Gaming, exempt raffles (from 4 Sep 2024)
+       ACT  $2,500 total prize value    gamblingandracing.act.gov.au raffles; Lotteries Act 1964 s 6 and DI2015-301
+       NT   $5,000 ticket sales         Gaming Control (Community Gaming) Regulations 2006 reg 2 (as made) and ABLIS
+     A state with no row keeps the card (unknown is not "none"). */
+  var RAFFLE = {
+    NSW: { cents: 3000000, measure: "prizes", line: "needs an authority over $30,000 in total prizes" },
+    QLD: { cents: 5000000, measure: "sales",  line: "needs a licence over $50,000 in ticket sales (Queensland counts sales, not prizes)" },
+    VIC: { cents: 2306000, measure: "prizes", line: "needs a permit over $23,060 in total prizes (the VGCCC figure moves; check it before a big raffle)" },
+    SA:  { cents: 500000,  measure: "prizes", line: "needs a licence over $5,000 in total prizes" },
+    WA:  { cents: 200000,  measure: "prizes", line: "needs a permit over $2,000 in prizes, or when the draw is not on the day and premises the tickets are sold" },
+    TAS: { cents: 1000000, measure: "prizes", line: "needs a permit over $10,000 in total prizes" },
+    ACT: { cents: 250000,  measure: "prizes", line: "needs approval over $2,500 in total prizes" },
+    NT:  { cents: 500000,  measure: "sales",  line: "needs a permit over $5,000 in ticket sales (the Territory counts sales, not prizes)" }
+  };
+  function raffleThreshold(state) { return RAFFLE[String(state || "").toUpperCase()] || null; }
+  function dollars(c) { var n = Math.round(c / 100); return "$" + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  /* Is the raffle card asked for at this venue, given what its prizes add up to (cents, or null when unknown)?
+     Hidden (returns a reason) only when the state's line is known, the total is known, and it is at or under the
+     line, and no permit was saved. Everything else shows the card: "we do not know" is not "none needed". */
+  function raffleBelowLine(venue, prizeCents) {
+    var t = raffleThreshold(venue && venue.au_state);
+    if (!t || prizeCents == null || !isFinite(prizeCents)) return null;
+    if (hasSaved(venue, "raffle")) return null;
+    if (prizeCents > t.cents) return null;
+    return { threshold: t, prizeCents: prizeCents,
+             text: "Your state " + t.line + ". The raffle prizes recorded at this venue add up to " + dollars(prizeCents) + ", so there is nothing to record yet." };
+  }
   /* A venue with no state recorded yet is asked about everything: "we do not know" is not "none needed". */
   function needs(state, kind) {
     var row = NEEDS[String(state || "").toUpperCase()];
@@ -132,8 +177,13 @@
   }
   /* The kinds to show a card for: those the venue's state needs (or might), and ANY kind with a permit
      already saved, so saved data is never silently hidden: that card carries the clear note instead. */
-  function kindsFor(venue, kinds) {
-    return (kinds || ORDER).filter(function (k) { return KINDS[k] && (!notNeeded(venue, k) || hasSaved(venue, k)); });
+  function kindsFor(venue, kinds, opts) {
+    opts = opts || {};
+    return (kinds || ORDER).filter(function (k) {
+      if (!KINDS[k]) return false;
+      if (k === "raffle" && !opts.showRaffle && raffleBelowLine(venue, opts.rafflePrizeCents)) return false;
+      return !notNeeded(venue, k) || hasSaved(venue, k);
+    });
   }
   var NOT_NEEDED = { state: "Your state does not need a permit for this. You can clear it.",
                      hidden: "Number bingo is not run at this venue, so no permit is needed. You can clear it." };
@@ -163,6 +213,8 @@
     ".vpp-notneeded{font-size:12px;color:var(--gold);margin:0 0 12px;line-height:1.5}" +
     ".vpp-clear{margin-left:10px;background:none;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 14px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer}" +
     ".vpp-msg{min-height:20px;font-size:12.5px;margin:10px 0 0}.vpp-msg.ok{color:var(--win)}.vpp-msg.err{color:var(--roll)}" +
+    ".vpp-below{font-size:12.5px;color:var(--muted);line-height:1.55;margin:0 0 16px}.vpp-below b{color:var(--text)}" +
+    ".vpp-link{background:none;border:none;padding:0;color:var(--pink);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}" +
     "@media(max-width:640px){.vpp-seg .vpp-opt{min-height:44px}.vpp-save{min-height:44px}}";
   function style() {
     var d = root.document;
@@ -245,10 +297,17 @@
     var v = o.venue || {};
     o.permits = (v.permits && typeof v.permits === "object" && !Array.isArray(v.permits)) ? v.permits : {};
     var state = v.au_state || "";
-    var kinds = kindsFor(v, o.kinds);
+    var kinds = kindsFor(v, o.kinds, { rafflePrizeCents: o.rafflePrizeCents, showRaffle: o.showRaffle });
+    o.hidden = {};
+    var below = (o.kinds || ORDER).indexOf("raffle") >= 0 && !o.showRaffle ? raffleBelowLine(v, o.rafflePrizeCents) : null;
+    if (below) o.hidden.raffle = below;
     wrap.innerHTML = kinds.map(function (kind) {
       return cardHTML(kind, o.permits[kind] || {}, state, isRecorded(o.permits, kind), notNeeded(v, kind));
-    }).join("");
+    }).join("") + (below ? '<div class="vpp-below" data-kind="raffle"><b>Raffle permit: not needed yet.</b> ' + esc(below.text) +
+      ' <button type="button" class="vpp-link pshowraffle">Record a permit anyway</button></div>' : "");
+    /* Record a permit anyway: the card comes up for this venue, whatever the total (a charity's big raffle, say). */
+    var show = wrap.querySelector(".pshowraffle");
+    if (show) show.addEventListener("click", function () { o.showRaffle = true; paint(o); });
     wrap.querySelectorAll(".pholder").forEach(function (seg) {
       seg.addEventListener("click", function (e) {
         var opt = e.target.closest(".opt"); if (!opt) return;
@@ -272,6 +331,6 @@
     return kinds;
   }
 
-  root.VPPermits = { KINDS: KINDS, ORDER: ORDER, WHY: WHY, NEEDS: NEEDS, needs: needs, notNeeded: notNeeded, hasSaved: hasSaved, whyLine: whyLine, kindsFor: kindsFor,
-                     statusText: statusText, permitFrom: permitFrom, paint: paint };
+  root.VPPermits = { KINDS: KINDS, ORDER: ORDER, WHY: WHY, NEEDS: NEEDS, RAFFLE: RAFFLE, needs: needs, notNeeded: notNeeded, hasSaved: hasSaved, whyLine: whyLine, kindsFor: kindsFor,
+                     raffleThreshold: raffleThreshold, raffleBelowLine: raffleBelowLine, statusText: statusText, permitFrom: permitFrom, paint: paint };
 })(window);

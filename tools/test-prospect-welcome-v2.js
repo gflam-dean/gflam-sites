@@ -255,7 +255,7 @@ var __rnd = 11;
   check('closing it carries on into the console (onClose is proceedVenue), with the venue\'s own client', a1.opened[0] && a1.opened[0].client === 'CLIENT' && typeof a1.opened[0].onClose === 'function' && /proceedVenue/.test(String(INDEX.match(/VPFirstRun\.open\(__ctx, \{ client:VP\.getClient\(\), VP:VP, onClose:proceedVenue \}\)/))), a1.opened[0]);
   check('anyone else goes on exactly as before', a2.log === 'holdGate,wants,termsGate,termsCard,pair', a2.log);
   check('index.html loads vp-firstrun.js after vp-session.js', INDEX.indexOf('<script src="vp-firstrun.js"></script>') > INDEX.indexOf('<script src="vp-session.js"></script>') && INDEX.indexOf('<script src="vp-session.js"></script>') > 0);
-  var ual = lift(INDEX, 'updateAccountLink');
+  var ual = lift(INDEX, 'hostHasChoice') + '\n' + lift(INDEX, 'updateAccountLink');   // round 3 (4 Nov 2026): the switcher asks hostHasChoice
   var btn = { style: { display: 'none' } };
   (new Function('__ctx', 'window', 'VPFirstRun', '$', 'applyNumberBingo', 'document', ual + '\nupdateAccountLink();'))({ role: 'manager', venue: pv() }, { VPFirstRun: { isProspect: function () { return true; } } }, { isProspect: function () { return true; } },
     function (id) { return id === 'firstRunBtn' ? btn : null; }, function () {}, {});

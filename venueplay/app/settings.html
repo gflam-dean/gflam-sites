@@ -48,7 +48,8 @@
   .authsub{color:var(--muted);font-size:13px;margin-bottom:28px;line-height:1.5}
   .sec{margin-top:32px}
   .sec:first-of-type{margin-top:0}
-  .sechead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--pink);margin:0 0 12px 2px}
+  /* The section label every console page uses (Your account's .label): mono, quiet, uppercase (round 3 U, 4 Nov 2026). */
+  .sechead{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:400;text-transform:uppercase;letter-spacing:.09em;font-size:11px;color:var(--muted);margin:0 0 10px 2px}
   .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:20px;margin-bottom:12px}
   .card:last-child{margin-bottom:0}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:6px}
@@ -112,12 +113,13 @@
     </div>
     <span class="tag">Settings</span>
     <!-- Back, Help and Sign out on one line (Dean, 3 Nov 2026), the same as Your account. -->
-    <span class="hactions"><a id="backLink" href="index.html" class="hact hback" title="Back to games">&#8592; Games</a><button type="button" class="hact" id="signOut">Sign out</button></span>
+    <span class="hactions"><a id="backLink" href="index.html" class="hact hback" title="Back to Play">&#8592; Play</a><button type="button" class="hact" id="signOut">Sign out</button></span>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="authbig" id="vTitle">Venue settings</div>
+  <!-- The page is named for what it is, the venue under it (round 3 U, 4 Nov 2026): the same shape as Your account and Your month. -->
+  <div class="authbig" id="vTitle">Game settings</div>
   <div class="authsub" id="vSub">Loading...</div>
 
   <div id="body" class="hidden">
@@ -259,8 +261,9 @@
     venueId=ctx.currentVenueId;
     if(!venueId){ $("vSub").textContent="No venue selected."; return; }
     $("backLink").href = ctx.isAdmin ? "hq.html" : "index.html";
-    $("vTitle").textContent=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"Venue settings";
-    $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
+    venueHere=(ctx.venue&&ctx.venue.name)||"";
+    $("vTitle").textContent="Game settings";
+    $("vSub").textContent=(venueHere||"Your venue")+(ctx.isAdmin?", viewed from HQ":(ctx.role?(", "+ctx.role):""));
     fill(ctx.settings||{});
     paintVenuePick(ctx);
     gateMarketing(ctx);
@@ -298,12 +301,12 @@
     }).catch(function(){});
   }
   /* Whole group is the default (Dean, 3 Nov 2026); a login with one venue never sees the choice and saves that venue. */
-  var scope="group";
+  var scope="group", venueHere="";
   function paintScope(){
     var many=groupVenues.length>1;
     Array.prototype.forEach.call($("scopeSeg").children, function(o){ o.classList.toggle("on", o.getAttribute("data-scope")===scope); });
     var names=groupVenues.map(function(v){ return v.name; });
-    var here=($("vTitle").textContent)||"this venue";
+    var here=venueHere||"this venue";
     $("scopeNote").textContent = (many && scope==="group")
       ? "The name display and what players are asked for save to all "+groupVenues.length+": "+names.join(", ")+". The bingo permit below stays with "+here+"."
       : "The name display and what players are asked for save to "+here+" only.";
