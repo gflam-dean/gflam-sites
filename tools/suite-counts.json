@@ -800,7 +800,7 @@
   "counted_by": "lines"
  },
  "tools/test-room-formats.js": {
-  "checks": 233,
+  "checks": 253,
   "counted_by": "lines"
  },
  "tools/test-room-old-console.js": {

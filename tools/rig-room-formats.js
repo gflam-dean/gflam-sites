@@ -122,6 +122,11 @@ function makeSupabase(who) {
     return cl;
   } };
 }
+/* A STRANGER ON THE OLD ROAD: anyone with the public Supabase key can broadcast on a venue's channel.
+   Delivers the payload to every page listening on that channel name, from nobody. */
+function strangerSays(name, payload) {
+  (BUS[name] || []).slice().forEach(function (s) { if (s.live) s.hs.forEach(function (h) { try { h({ type: 'broadcast', event: 'msg', payload: JSON.parse(JSON.stringify(payload)) }); } catch (e) { TIMER_ERRORS.push('stranger: ' + e); } }); });
+}
 function supaConnections(whoRe) {
   return CLIENTS.filter(function (c) { return (!whoRe || whoRe.test(c.who)) && c.chans.some(function (ch) { return ch.live; }); }).length;
 }

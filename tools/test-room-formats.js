@@ -214,6 +214,31 @@ function errorsOf(v) { var e = []; for (var k in v) e = e.concat(v[k].errors.map
     check(F + ': and the screen hears the console again, on the old road', got('screen', t1, 'supabase'));
     CUT = {};
 
+    print('P. ' + F + ': AN UNSIGNED "join" ON THE OLD ROAD, WITHOUT AN ASK (the phonePeer review, 6 Nov 2026)');
+    /* A musical or trivia console takes its own format's unsigned join on the old road for "the phone
+       that left" ONLY for a minute after an ask. Without an ask it must mean nothing, in the first
+       minute (the console's ear is open) and after it. */
+    freshWorld({ formats: on }); v = boot(F); await advance(2000); await openGame(F, v);
+    var fakeJoin = { t: 'join', pid: 'attacker-pid', name: 'x', fmt: (F === 'trivia' ? 'trivia' : undefined) };
+    strangerSays(BINGO, fakeJoin); strangerSays(R, fakeJoin); await advance(2000);
+    check(F + ': a stranger\'s join in the first minute, with no ask, moves nobody', v.host.road() === 'room' && !handedOver(R) && !handedOver(BINGO), [v.host.road(), handedOver(R)]);
+    await advance(61000);
+    strangerSays(BINGO, fakeJoin); strangerSays(R, fakeJoin); await advance(2000);
+    check(F + ': and a minute later, with the console no longer listening, still nobody', v.host.road() === 'room' && !handedOver(R) && !handedOver(BINGO));
+    await workerFetch(API + '/room/handover?room=' + R + '&venue=' + SLUG, { method: 'POST' }, 'stranger');   // the ask, from a stranger
+    await advance(1000);
+    strangerSays(BINGO, { t: 'join', pid: 'attacker-pid', name: 'x', fmt: 'trivia', rw: 1 }); strangerSays(R, { t: 'join', pid: 'attacker-pid', name: 'x', fmt: 'trivia', rw: 1 }); await advance(2000);
+    check(F + ': a join stamped rw (a page in the room) is never a peer, even right after an ask', v.host.road() === 'room' && !handedOver(R));
+    strangerSays(BINGO, { t: 'join', pid: 'attacker-pid', name: 'x', fmt: (F === 'trivia' ? 'musical' : 'trivia') }); strangerSays(R, { t: 'join', pid: 'attacker-pid', name: 'x', fmt: (F === 'trivia' ? 'musical' : 'trivia') }); await advance(2000);
+    check(F + ': and another format\'s join is not this console\'s phone', v.host.road() === 'room' && !handedOver(R));
+    strangerSays(BINGO, fakeJoin); strangerSays(R, fakeJoin); await advance(2000);
+    /* KNOWN LIMIT, written down on purpose: inside the minute after an ask, the console cannot tell a
+       real phone's join from a forged one (no phone signs these two formats' joins). That needs BOTH
+       the ask and a forged broadcast with the public Supabase key; it is the same class as the old
+       unsigned tv_here ear. NOTES.md says so. */
+    if (HAS_PHONE[F]) check(F + ': KNOWN LIMIT: within the minute after an ask, its own format\'s unsigned join does move the venue (ask + forged broadcast needed)', v.host.road() === 'supabase', v.host.road());
+    else check(F + ': a format with no phones has no join to trust: nothing moves, ask or not', v.host.road() === 'room' && !handedOver(R), v.host.road());
+
     print('N. ' + F + ': A STRANGER POSTS A HANDOVER FOR THIS VENUE (F2, the attack)');
     freshWorld({ formats: on }); v = boot(F); await advance(2000); await openGame(F, v);
     var att = await workerFetch(API + '/room/handover?room=' + R + '&venue=' + SLUG, { method: 'POST' }, 'stranger');
