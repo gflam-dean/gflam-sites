@@ -228,7 +228,7 @@
   "counted_by": "lines"
  },
  "tools/musical-newlook-in-chrome.test.py": {
-  "checks": 239,
+  "checks": 250,
   "counted_by": "lines"
  },
  "tools/night-pass-hq-in-chrome.test.py": {
@@ -592,7 +592,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 58,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {

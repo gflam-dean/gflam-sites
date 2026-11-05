@@ -225,8 +225,11 @@
     word-break:normal;overflow-wrap:normal;hyphens:manual;-webkit-hyphens:manual}
   #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
   #vCard .cc.daub::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px 18px no-repeat}   /* in its own corner, above the title's box (padding-top 22px) */
-  #vCard .cc.free,#vCard .cc.free.daub{background:#0A0A0B;border-color:rgba(255,31,142,.55);color:var(--pink);font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;letter-spacing:0;text-transform:none;padding:0}
-  #vCard .cc.free::after{display:none}
+  /* THE FREE SQUARE IS A MARKED SQUARE (Dean, 4 Nov 2026 evening, from the store screenshot review): the near-black
+     tile with a faint pink edge and pink "Free" read as unmarked, which is confusing on a winning card. It is now
+     exactly #vCard .cc.daub: the same fill, the solid pink border, white text and the same pink tick (the
+     .cc.daub::after above, no longer hidden). The light screen matches body.light #vCard .cc.daub below. */
+  #vCard .cc.free,#vCard .cc.free.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em;text-transform:none}
   #vCard .cc.early{border-color:var(--roll);box-shadow:0 0 0 2px rgba(245,165,36,.22)}
   #vCard .cc.justdone{animation:justdone 1.1s ease-in-out 3}
   #vCard .pmsg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;min-height:0}   /* for a screen reader; the answer to a tap is the note on the button */
@@ -236,7 +239,7 @@
   #vCard .bingoBtn:disabled{opacity:.55}
   body.light #vCard .cc{background:#FFFFFF;color:#191420}
   body.light #vCard .cc.daub{background:#FFE3F0;color:#191420}
-  body.light #vCard .cc.free{background:#FFFFFF}
+  body.light #vCard .cc.free{background:#FFE3F0;color:#191420}   /* = body.light #vCard .cc.daub */
   /* HIGHLIGHT MY LINES (a Menu option, off by default): a finished line gets a solid pink outline in the gutter
      round its tiles, a line still needed a dashed one; measured from the real tiles (drawLines). */
   .hl{position:absolute;pointer-events:none;border:2.5px solid var(--pink);border-radius:18px;z-index:2}
@@ -311,7 +314,7 @@
       <div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="vp-h">You&#39;re in</div>
       <div class="vp-name" id="waitName">Player</div>
-      <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div><div class="hidden" id="waitPlayingTile"><div class="k">Playing</div><div class="v" id="waitPlaying">0</div></div></div>
+      <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div></div>
       <p class="vp-wait">The game will start here when the host is ready.</p>
     </div>
   </div>
@@ -1175,8 +1178,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       // another player (or me) claimed; nothing to change locally unless it is my pending
     }
     else if(m.t==="players"){
-      /* The lobby's PLAYING tile (Dean, 3 Nov 2026); the count is the host's own, never shown on the TV's join screen. */
-      if(typeof m.count==="number" && m.count>0){ $("waitPlaying").textContent=String(m.count); $("waitPlayingTile").classList.remove("hidden"); }
+      /* NO PLAYER COUNT ON THE PHONE EITHER (Dean, 4 Nov 2026: "no player counts anywhere"; the trivia phone lost its
+         "of 16" the same night). The lobby's PLAYING tile from the 3 Nov mock is gone; the count is the host console's. */
     }
     else if(m.t==="resume"){
       /* ONLY THE PHONE THE HOST ACTUALLY WAVED OFF. This used to fire on every phone with a

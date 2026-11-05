@@ -182,7 +182,8 @@
      prize ("One line wins a meat tray"). LISTEN: the kit's neon triangle breathing (2.6s, glow only) where the art
      goes, "Know it? Mark it on your card." and the same sentence, with no "Song 15" label (Dean, 3 Nov late). Along the
      bottom: "Song 14" on the left over a played-so-far strip of the last five, with artwork, the current song outlined
-     in pink and "+9" for the earlier ones; "32 playing" small in the bottom-right corner. Sizes in cqw, so
+     in pink and "+9" for the earlier ones. NO player count anywhere on the wall (Dean, 4 Nov 2026 evening: counts
+     stay on the host console). Sizes in cqw, so
      /app/vp-oldtv.js can work them out on an older set; inner places are written calc(Ncqw) so the corner check
      does not read them as a corner. tools/musical-newlook-in-chrome.test.py measures every one of these. */
   .tv{background:#0A0A0B}
@@ -223,8 +224,6 @@
   #tvRun .ptok img{flex:none;width:4.4cqw;height:4.4cqw;border-radius:.42cqw;object-fit:cover;margin-right:.94cqw}
   #tvRun .ptok.new{background:#1A1A1F;border-color:var(--pink);color:#fff;box-shadow:none}
   .mstrip .mnext{flex:0 0 15.36cqw;width:15.36cqw;height:100%;border-radius:.73cqw;border:.16cqw dashed #4A4A55;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.56cqw;color:#8A8A95}
-  .mplaying{position:absolute;right:2.4cqw;bottom:1.9cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.67cqw;line-height:1.2;color:#8A8A95;white-space:nowrap}
-  .mplaying b{color:#fff}
   #tvRun .pblabel,#tvRun .mpat,#tvRun .mprize{display:none}   /* the old pieces, kept for the console's words; the new wall says it in one sentence */
 </style>
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
@@ -288,7 +287,6 @@
       <div class="pboard" id="tvBoard"></div>
       <div class="mnext hidden" id="tvBoardNext"></div>
     </div>
-    <div class="mplaying hidden" id="tvPlaying"><b id="tvPlayingN">0</b> playing</div>
   </div>
 
   <!-- claim suspense -->
@@ -416,7 +414,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function show(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     /* THE JOIN NOW CARD IS OFF THE NEW WALL (Dean's approved mock, 3 Nov 2026): the bottom of the wall is the song
-       number and the played strip now, and "32 playing" the corner. A late arrival joins from the venue code, which
+       number and the played strip now. A late arrival joins from the venue code, which
        is the same code the join screen showed and the one on the table talkers. The card stays in the page (the
        claim and the win never showed it either). */
     $("tvJoinCorner").classList.add("hidden");
@@ -476,8 +474,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), !!VENUE_SLUG && !state.hostSeen && !joinCode && state.phase==="lobby"); }catch(e){}
     drawLobbyQR();
   }
-  /* NO PLAYER COUNT ON THE JOIN SCREEN (Dean, 3 Nov 2026 late: the lobby count is the host console's). While a game
-     plays the wall carries "32 playing", small, bottom right (his approved mock); see renderPlaying. */
+  /* NO PLAYER COUNT ON ANY TV SCREEN (Dean, 3 Nov 2026 late for the join; 4 Nov 2026 evening for every game screen:
+     "I don't want people being like oh how did they know that we only had 12 people rock up today?"). The count
+     the host's "players" message carries is kept in state (the back-to-ads timer reads it) and painted nowhere;
+     the host console shows it. tools/tv-no-counts-in-chrome.test.py and musical-newlook-in-chrome hold it. */
   /* ONE SENTENCE FOR THE PATTERN AND THE PRIZE (Dean, 3 Nov 2026): "One line wins a meat tray". The prize is as the
      host typed it, after "wins" (with "a" or "an" unless it already starts with a word like "the", a number or a
      dollar sign). No prize set yet: the pattern alone, "One line wins". */
@@ -489,19 +489,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(/^(a|an|the|one|two|three|four|five|six|ten|our|your)\b/i.test(pz) || /^[\d$]/.test(pz)) return pat+" wins "+pz;
     return pat+" wins "+(/^[aeiou]/i.test(pz) ? "an " : "a ")+pz;
   }
-  /* PLAYERS, SMALL, BOTTOM RIGHT, WHILE A GAME PLAYS (Dean, 3 Nov 2026: "32 playing", kept in his late notes). Never on
-     the join screen: a lobby count is the host console's (Dean, 3 Nov late). */
-  function renderPlaying(){
-    var n=state.playerCount|0, el=$("tvPlaying");
-    if(!el) return;
-    el.classList.toggle("hidden", !(n>0));
-    $("tvPlayingN").textContent=String(n);
-  }
   function renderMeta(){
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
     $("tvPrize").textContent=state.prize;
     $("tvWins").textContent=winsLine(state.pattern, state.prize);
-    renderPlaying();
   }
   var TV_BOARD_MAX=5;   // the last five, with their artwork, as approved (3 Nov 2026)
   var TRI_MINI='<svg viewBox="2500 -2020 900 1044" aria-hidden="true"><path fill="#FF1F8E" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2Z"/></svg>';
@@ -1121,9 +1112,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
     }
     else if(m.t==="players"){
-      /* "32 playing", small in the bottom-right corner while a game plays (Dean, 3 Nov 2026); never on the join screen. */
+      /* kept, never painted: no player count on the TV (Dean, 4 Nov 2026 evening); the host console has it */
       if(typeof m.count==="number") state.playerCount=m.count;
-      renderPlaying();
     }
     else if(m.t==="claim_pending"){
       try{ clipAudio.pause(); }catch(e){}   // quiet the room while the host checks the claim

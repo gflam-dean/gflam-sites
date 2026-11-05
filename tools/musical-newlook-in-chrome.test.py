@@ -14,7 +14,8 @@ Club's round crest and The Pause Bar's 6.6:1 wordmark, at 1920x1080 and 1280x720
       NO player count and no prize on it (Dean, 3 Nov late)
     - now playing: the artwork big on the left, NOW PLAYING in pink, the title in Anton, the artist, ONE sentence for
       the pattern and the prize ("One line wins a meat tray"), "Song 14" bottom left over the last five with artwork,
-      the current one outlined in pink and "+9" for the rest, "32 playing" small bottom right; a two-line title fits
+      the current one outlined in pink and "+9" for the rest; NO player count anywhere on the wall, though the host
+      sends one (Dean, 4 Nov 2026 evening: counts stay on the host console); a two-line title fits
       above the artist; nothing under either logo, vp-fit leaves the wall alone, no JOIN NOW card
     - listen: the neon triangle breathing (2.6 s) where the art goes, LISTEN, "Know it? Mark it on your card.", NO
       "Song 15" label under the title (Dean, 3 Nov late), a dashed "Song 15" slot on the strip, the song not named
@@ -22,7 +23,7 @@ Club's round crest and The Pause Bar's 6.6:1 wordmark, at 1920x1080 and 1280x720
   PHONE
     - the code: six boxes, Continue grey until all six are in; the name: option 5 header, YOUR NAME; the details:
       YOUR DETAILS naming the venue with Privacy inline, and the two separate ticks (vp-consent.js, rules unchanged)
-    - you're in: the green tick, YOU'RE IN, the name, Up first / Playing, "The game will start here when the host is
+    - you're in: the green tick, YOU'RE IN, the name, Up first (no Playing count: Dean, 4 Nov 2026), "The game will start here when the host is
       ready."; the venue's ad ("What's on at ...") in ONE place, the same on the lobby and after the game
     - the card (B soft tiles): 25 tiles, 8px gaps, 16px sides, never under 64px, fitting the screen with the claim
       button and our logo; a marked song pink-edged with its tick in its own corner; a long word breaks once with a
@@ -40,7 +41,7 @@ VP_SHOTS=<dir> also writes every frame measured (the before/after review set). T
 
     python3 tools/musical-newlook-in-chrome.test.py
 """
-import base64, http.server, importlib.util, io, json, os, sys, threading, time, urllib.parse
+import base64, http.server, re, importlib.util, io, json, os, sys, threading, time, urllib.parse
 
 ROOT = os.environ.get('VP_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # VP_ROOT: another checkout, for "before" frames
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -222,10 +223,10 @@ TV_PROBE = r'''(function(){
     o.tiles=[].map.call(document.querySelectorAll("#tvBoard .ptok"),function(x){ var s=getComputedStyle(x); return { r:R(x), text:x.textContent, cur:x.classList.contains("new"), bc:s.borderTopColor, img:!!x.querySelector("img"), fit:x.scrollHeight<=x.clientHeight+1 && x.scrollWidth<=x.clientWidth+1 }; });
     var mm=document.getElementById("tvBoardMore"); o.more=vis(mm)?{ r:R(mm), text:mm.textContent }:null;
     var nx=document.getElementById("tvBoardNext"); o.next=vis(nx)?{ r:R(nx), text:nx.textContent, bs:getComputedStyle(nx).borderTopStyle }:null;
-    var pl=document.getElementById("tvPlaying"); o.playing=vis(pl)?{ r:R(pl), text:pl.textContent }:null;
+    o.wallText=(lay.innerText||"").replace(/\s+/g," ");
     var tri=document.querySelector("#tvArtBox .mtri"); o.tri=vis(tri)?{ r:R(tri), anim:getComputedStyle(tri).animationName, dur:getComputedStyle(tri).animationDuration }:null;
     var ls=document.getElementById("tvListen"); o.listen=vis(ls)?{ text:ls.innerText }:null;
-    o.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".mplaying")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden"&&getComputedStyle(e).display!=="none")?b.bottom:0; }).concat([0]));
+    o.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden"&&getComputedStyle(e).display!=="none")?b.bottom:0; }).concat([0]));
   }
   o.joinCorner=vis(document.getElementById("tvJoinCorner"));
   return JSON.stringify(o);
@@ -281,7 +282,7 @@ def tv(B, base, w, h, logo, tag, shots):
             ra = None   # never third-party covers in a frame (Dean, 4 Nov 2026): plain fixture squares
             P.js(say(chan, [{'t': 'played', 'title': s, 'artist': ra[0] if ra else 'The Band', 'artworkUrl': ra[1] if ra else '/__fixture/art-%02x%02x%02x.svg' % (40 + i * 12, 60, 120 - i * 5), 'played': played[:i + 1], 'reveal': 'instant', 'replay': True}]))
             time.sleep(0.08)
-        P.js(say(chan, [{'t': 'players', 'count': 32}]))
+        P.js(say(chan, [{'t': 'players', 'count': 4137}]))   # a count nobody would otherwise paint
         time.sleep(1.5)
         n = P.obj(TV_PROBE) or {}
         P.shot(shots + '-tv-now-playing')
@@ -306,7 +307,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' now playing: every tile on the screen, in one row, under "Song 14", the strip within the art\'s margins', bool(T) and all(t['r'] and t['r'][2] <= w - 0.0625 * w + 1 and abs(t['r'][1] - T[0]['r'][1]) <= 1 for t in T) and T[0]['r'][1] >= sn['r'][3], [t['r'] for t in T] + [sn.get('r')])
         ok(tagn + ' now playing: every title whole inside its tile (a long one steps down, never cut)', all(t.get('fit') for t in T), [(t['text'], t.get('fit')) for t in T])
         pl = n.get('playing') or {}
-        ok(tagn + ' now playing: "32 playing" small in the bottom-right corner', pl.get('text', '').strip() == '32 playing' and bool(pl.get('r')) and pl['r'][2] <= w and pl['r'][2] >= w - 0.04 * w and pl['r'][3] <= h and pl['r'][1] >= T[0]['r'][3] - 1, pl)
+        ok(tagn + ' now playing: NO player count on the wall, though the host sent 4137 (Dean, 4 Nov 2026 evening)', bool(n.get('wallText')) and '4137' not in n['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined|in)\b', n['wallText'], re.I), n.get('wallText', '')[-300:])
         ok(tagn + ' now playing: nothing runs under the venue\'s logo or ours', all(apart(r, n.get('logo')) and apart(r, n.get('mark')) for r in [A, tl.get('r'), e.get('r'), sn.get('r')] + [t['r'] for t in T]), [n.get('logo'), n.get('mark')])
         ok(tagn + ' now playing: the wall ends inside the screen and vp-fit leaves it alone', (n.get('bottom') or 0) <= h and (n.get('tf') or '') == '', [n.get('bottom'), n.get('tf')])
         ok(tagn + ' now playing: no JOIN NOW card over the strip (the approved wall)', not n.get('joinCorner'))
@@ -331,7 +332,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
         ok(tagn + ' listen: the strip keeps a dashed "Song 16" for it after the four before', (L.get('next') or {}).get('text') == 'Song 16' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
-        ok(tagn + ' listen: "Song 16" bottom left, the count still there', (L.get('songno') or {}).get('text') == 'Song 16' and (L.get('playing') or {}).get('text', '').strip() == '32 playing', [L.get('songno'), L.get('playing')])
+        ok(tagn + ' listen: "Song 16" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == 'Song 16' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
         # the listen line as most hosts run it
         P.js(say(chan, [{'t': 'played', 'title': 'Sweet Caroline', 'artist': 'Neil Diamond', 'artworkUrl': '/__fixture/art-305080.svg', 'played': allp + ['Sweet Caroline'], 'reveal': 'end', 'replay': True}]))
         time.sleep(1)
@@ -379,7 +380,7 @@ PHONE_PROBE = r'''(function(){
   if(view && view.id==="vCard"){
     var cs=[].slice.call(document.querySelectorAll("#cardGrid .cc"));
     o.cells=cs.map(function(c){ var t=c.querySelector(".ct")||c, tb=t.getBoundingClientRect(), cb=c.getBoundingClientRect(), s=getComputedStyle(c), a=getComputedStyle(c,"::after");
-      return { r:[cb.left,cb.top,cb.right,cb.bottom], t:[tb.left,tb.top,tb.right,tb.bottom], txt:t.textContent, fs:parseFloat(s.fontSize), daub:c.classList.contains("daub"), free:c.classList.contains("free"), bc:s.borderTopColor, tick:a.content!=="none"&&a.content!=="" ? [cb.right-5-parseFloat(a.width), cb.top+5, cb.right-5, cb.top+5+parseFloat(a.height)] : null, sw:t.scrollWidth, cw:t.clientWidth, lines:Math.round(tb.height/(parseFloat(s.fontSize)*1.08)) }; });
+      return { r:[cb.left,cb.top,cb.right,cb.bottom], t:[tb.left,tb.top,tb.right,tb.bottom], txt:t.textContent, fs:parseFloat(s.fontSize), daub:c.classList.contains("daub"), free:c.classList.contains("free"), bc:s.borderTopColor, bg:s.backgroundColor, col:s.color, bs:s.borderTopStyle, tick:a.content!=="none"&&a.content!=="" ? [cb.right-5-parseFloat(a.width), cb.top+5, cb.right-5, cb.top+5+parseFloat(a.height)] : null, sw:t.scrollWidth, cw:t.clientWidth, lines:Math.round(tb.height/(parseFloat(s.fontSize)*1.08)) }; });
     var b=document.getElementById("bingoBtn"); o.btn={ r:R(b), text:b.textContent, faint:b.classList.contains("faint"), dis:b.disabled, bg:getComputedStyle(b).backgroundColor, rad:getComputedStyle(b).borderTopLeftRadius };
     o.note=vis(document.getElementById("bingoNote"))?document.getElementById("bingoNote").textContent:"";
     o.hl=[].map.call(document.querySelectorAll("#cardWrap .hl"),function(e){ return { r:R(e), need:e.classList.contains("need"), bs:getComputedStyle(e).borderTopStyle }; });
@@ -389,6 +390,38 @@ PHONE_PROBE = r'''(function(){
      hl:document.getElementById("hlChk").checked, assist:document.getElementById("assistChk").checked }; }
   return JSON.stringify(o);
 })()'''
+
+
+# MUSICAL BINGO IS NOT BINGO ON THE PLAYER'S CARD (Dean, 5 Nov 2026: "Musical bingo can't say bingo on the customers
+# card. But it's not counted as a game of bingo."). Every phone state this suite reaches is read for the words a player
+# can see or hear: the painted text, aria labels, titles, placeholders, alt text and the tab title. The game's name
+# "musical bingo" is fine; any other "bingo" fails. The TV's winner moment is not the phone and is not read here.
+WORDS_PROBE = r'''(function(){
+  var out=[], seen=function(e){ if(!e || !e.getClientRects().length) return false; try{ return e.checkVisibility({ checkOpacity:true, checkVisibilityCSS:true }); }catch(x){ return true; } };
+  var w=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
+  while((n=w.nextNode())){ var t=(n.nodeValue||"").trim(); if(t && n.parentElement && !/^(SCRIPT|STYLE)$/.test(n.parentElement.tagName) && seen(n.parentElement)) out.push(t); }
+  [].forEach.call(document.querySelectorAll("[aria-label],[title],[placeholder],[alt]"), function(e){ if(!seen(e)) return;
+    ["aria-label","title","placeholder","alt"].forEach(function(k){ var v=e.getAttribute(k); if(v) out.push(v); }); });
+  out.push(document.title||"");
+  return JSON.stringify(out);
+})()'''
+SEEN_WORDS = []
+def pp(P, where=''):
+    """PHONE_PROBE, and the phone's words read for "bingo" on the way (WORDS_PROBE)."""
+    o = P.obj(PHONE_PROBE) or {}
+    try:
+        w = P.obj(WORDS_PROBE) or []
+        SEEN_WORDS.append((where or o.get('view') or '?', w if isinstance(w, list) else []))
+    except Exception:
+        SEEN_WORDS.append((where or '?', []))
+    return o
+def no_bingo_checks(tag, need=6):
+    import re as _re
+    states = [st for st, w in SEEN_WORDS if w]
+    hits = [(st, x) for st, w in SEEN_WORDS for x in w if _re.search(r'bingo', _re.sub(r'(?i)musical[\s\u00a0]+bingo', '', x), _re.I)]
+    ok('%s: every phone state read for its words' % tag, len(states) >= need and len(SEEN_WORDS) == len(states), [st for st, w in SEEN_WORDS])
+    ok('%s: the player\'s phone never says "bingo" in any state, only the game\'s name "musical bingo" (Dean, 5 Nov 2026)' % tag, not hits, hits[:6])
+    del SEEN_WORDS[:]
 
 
 def phone_frame_checks(tag, x, logo_kind):
@@ -413,10 +446,10 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         try:
             P.until('document.getElementById("vNoRoom") && !document.getElementById("vNoRoom").classList.contains("hidden")', 20); time.sleep(0.8)
             P.js('(function(){ var i=document.getElementById("roomIn"); i.focus(); i.value="K7M"; i.dispatchEvent(new Event("input")); return 1; })()'); time.sleep(0.3)
-            c1 = P.obj(PHONE_PROBE) or {}
+            c1 = pp(P) or {}
             P.shot(shots + '-phone-1-code-part')
             P.js('(function(){ var i=document.getElementById("roomIn"); i.value="K7MQ2P"; i.dispatchEvent(new Event("input")); return 1; })()'); time.sleep(0.3)
-            c2 = P.obj(PHONE_PROBE) or {}
+            c2 = pp(P) or {}
             P.shot(shots + '-phone-2-code-full')
             ok('code: six boxes in one row, the letters typed so far in them', len(c1.get('boxes') or []) == 6 and ''.join(b['t'] for b in c1['boxes']) == 'K7M' and len(set(round(b['r'][1]) for b in c1['boxes'])) == 1, c1.get('boxes'))
             ok('code: Continue is grey until all six are in, then pink', c1.get('cont') is True and c2.get('cont') is False and c2.get('contBg') == 'rgb(255, 31, 142)' and c1.get('contBg') != c2.get('contBg'), [c1.get('cont'), c1.get('contBg'), c2.get('cont'), c2.get('contBg')])
@@ -431,7 +464,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.until('document.getElementById("vJoin") && !document.getElementById("vJoin").classList.contains("hidden") && !document.getElementById("venueLogo").classList.contains("hidden")', 20); time.sleep(1)
         P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}])); time.sleep(0.4)
         P.js('(function(){ var i=document.getElementById("nameIn"); i.value="Sam"; i.focus(); return 1; })()'); time.sleep(0.3)
-        nm = P.obj(PHONE_PROBE) or {}
+        nm = pp(P) or {}
         P.shot(shots + '-phone-3-name')
         ok('%s name: by the QR the phone goes straight to YOUR NAME (no code step)' % tag, nm.get('view') == 'vJoin' and nm.get('headWords') == 'Your name', [nm.get('view'), nm.get('headWords')])
         phone_frame_checks(tag + ' name', nm, True)
@@ -440,10 +473,10 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         ok('%s name: no ad on the name step' % tag, nm.get('ad') is None, nm.get('ad'))
         P.js('document.getElementById("joinBtn").click()')
         P.until('!document.getElementById("vWait").classList.contains("hidden")', 15); time.sleep(0.3)
-        P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}, {'t': 'players', 'count': 32}])); time.sleep(1.5)
-        wt = P.obj(PHONE_PROBE) or {}
+        P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}, {'t': 'players', 'count': 4137}])); time.sleep(1.5)
+        wt = pp(P) or {}
         P.shot(shots + '-phone-4-youre-in')
-        ok('%s lobby: YOU\'RE IN, the name, Up first: Musical bingo, Playing: 32' % tag, wt.get('view') == 'vWait' and "you're in" in wt.get('all', '').lower() and 'Sam' in wt.get('all', '') and 'musical bingo' in wt.get('all', '').lower() and '32' in wt.get('all', ''), wt.get('all'))
+        ok('%s lobby: YOU\'RE IN, the name, Up first: Musical bingo, and NO player count though the host sent 4137 (Dean, 4 Nov 2026)' % tag, wt.get('view') == 'vWait' and "you're in" in wt.get('all', '').lower() and 'Sam' in wt.get('all', '') and 'musical bingo' in wt.get('all', '').lower() and '4137' not in wt.get('all', '') and 'playing' not in wt.get('all', '').lower(), wt.get('all'))
         ok('%s lobby: the one lobby line every game uses: "The game will start here when the host is ready."' % tag, 'The game will start here when the host is ready.' in wt.get('all', '') and 'your card appears' not in wt.get('all', '').lower(), wt.get('all'))
         ok('%s lobby: row two keeps the pattern and the prize' % tag, (wt.get('row2') or {}).get('prize') == 'Meat tray', wt.get('row2'))
         ok('%s lobby: the venue\'s ad: "What\'s on at <venue>" and its five slides, above our logo' % tag,
@@ -453,7 +486,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         # the card
         P.js(say('vp-' + ROOM, [{'t': 'started', 'pattern': 'one', 'prize': 'Meat tray', 'game_id': 'g1'}]))
         P.until('!document.getElementById("vCard").classList.contains("hidden") && document.querySelectorAll("#cardGrid .cc").length===25', 15); time.sleep(1.5)
-        cd = P.obj(PHONE_PROBE) or {}
+        cd = pp(P) or {}
         C = cd.get('cells') or []
         ok('%s card: 25 tiles, five across' % tag, len(C) == 25 and len(set(round(c['r'][1]) for c in C[:5])) == 1, len(C))
         if len(C) == 25:
@@ -466,7 +499,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             ww = [c for c in C if c['txt'].replace('­', '') == 'Wonderwall'][0]
             ok('%s card: a long word breaks once, with a hyphen, where it cannot fit whole (Wonder-wall)' % tag, ww['txt'].count('­') == 1 and ww['txt'].index('­') == 6, repr(ww['txt']))
             ok('%s card: titles from 20px down, and no song under 11px' % tag, max(c['fs'] for c in C if not c['free']) <= 20 and min(c['fs'] for c in C if not c['free']) >= 11, sorted(c['fs'] for c in C if not c['free'])[:4])
-            ok('%s card: Free in the middle, in pink' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
+            ok('%s card: Free in the middle' % tag, C[12]['free'] and C[12]['txt'].strip() == 'Free', C[12]['txt'])
         bt = cd.get('btn') or {}
         ok('%s card: the claim is a pink pill saying the pattern, "I\'ve got a line", faint before the marks make a line' % tag, bt.get('text') == "I've got a line" and bt.get('faint') is True and float((bt.get('rad') or '0px').replace('px', '')) >= 28, bt)
         ok('%s card: card, button and our logo all fit the screen, no scrolling' % tag, (cd.get('scrollH') or 9999) <= 812 + 1 and bool(bt.get('r') and cd.get('foot')) and bt['r'][3] <= cd['foot'][1], [cd.get('scrollH'), bt.get('r'), cd.get('foot')])
@@ -485,20 +518,31 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
             P.js('(function(){ var c=[].filter.call(document.querySelectorAll("#cardGrid .cc"),function(x){ return (x.textContent||"").replace(/\\u00AD/g,"")===%s; })[0]; if(c) c.click(); return !!c; })()' % json.dumps(s))
             time.sleep(0.05)
         time.sleep(0.6)
-        k = P.obj(PHONE_PROBE) or {}
+        k = pp(P) or {}
         C = k.get('cells') or []
         mk = [c for c in C if c['daub'] and not c['free']]
         ok('%s card: a marked song: pink edge, a tick in its own corner, the title clear of the tick' % tag,
            len(mk) == 8 and all(c['bc'] == 'rgb(255, 31, 142)' and c['tick'] and apart(c['t'], c['tick']) for c in mk), [(c['txt'], c['bc'], c['tick'], c['t']) for c in mk if not (c['bc'] == 'rgb(255, 31, 142)' and c['tick'] and apart(c['t'], c['tick']))])
+        fr = C[12] if len(C) == 25 else {}
+        ok('%s card: the FREE square looks exactly like a marked one: the same fill, solid pink border, the same text colour and the pink tick (Dean, 4 Nov 2026)' % tag,
+           bool(mk) and fr.get('free') and fr.get('bg') == mk[0]['bg'] == 'rgb(43, 13, 29)' and fr.get('bc') == 'rgb(255, 31, 142)' and fr.get('bs') == 'solid' and fr.get('col') == mk[0]['col'] == 'rgb(255, 255, 255)' and bool(fr.get('tick')),
+           [{k: fr.get(k) for k in ('bg', 'bc', 'bs', 'col', 'tick')}, {k: (mk[0] if mk else {}).get(k) for k in ('bg', 'col')}])
+        P.js('document.body.classList.add("light")'); time.sleep(0.3)
+        kl = pp(P) or {}
+        P.js('document.body.classList.remove("light")'); time.sleep(0.3)
+        CL = kl.get('cells') or []; mkl = [c for c in CL if c['daub'] and not c['free']]; frl = CL[12] if len(CL) == 25 else {}
+        ok('%s card: on the light screen the FREE square matches a marked one too (fill, border, text, tick)' % tag,
+           bool(mkl) and frl.get('bg') == mkl[0]['bg'] == 'rgb(255, 227, 240)' and frl.get('bc') == mkl[0]['bc'] and frl.get('col') == mkl[0]['col'] and bool(frl.get('tick')),
+           [{k: frl.get(k) for k in ('bg', 'bc', 'col', 'tick')}, {k: (mkl[0] if mkl else {}).get(k) for k in ('bg', 'bc', 'col')}])
         ok('%s card: still faint with the middle row one short' % tag, (k.get('btn') or {}).get('faint') is True, k.get('btn'))
         P.js('(function(){ var c=[].filter.call(document.querySelectorAll("#cardGrid .cc"),function(x){ return (x.textContent||"").replace(/\\u00AD/g,"")==="The Horses"; })[0]; c.click(); return 1; })()'); time.sleep(0.4)
-        k2 = P.obj(PHONE_PROBE) or {}
+        k2 = pp(P) or {}
         ok('%s card: the middle row marked: the claim is full pink' % tag, (k2.get('btn') or {}).get('faint') is False and (k2.get('btn') or {}).get('bg') == 'rgb(255, 31, 142)', k2.get('btn'))
         ok('%s card: "Highlight my lines" is off by default: no outlines' % tag, k2.get('hl') == [], k2.get('hl'))
         P.shot(shots + '-phone-6-card-marked')
         # the menu
         P.js('document.getElementById("menuBtn").click()'); time.sleep(0.5)
-        mn = P.obj(PHONE_PROBE) or {}
+        mn = pp(P) or {}
         P.shot(shots + '-phone-7-menu')
         m2 = mn.get('menu2') or {}
         ok('%s menu: one sheet from the bottom of the screen' % tag, bool(m2.get('sheet')) and abs(m2['sheet'][3] - 812) <= 1 and m2['sheet'][0] <= 1, m2.get('sheet'))
@@ -510,7 +554,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         ok('%s menu: Highlight my lines and Mark songs for me start off' % tag, m2.get('hl') is False and m2.get('assist') is False, m2)
         P.js('(function(){ var c=document.getElementById("hlChk"); c.click(); return c.checked; })()'); time.sleep(0.2)
         P.js('(function(){ var m=document.getElementById("menuPanel"); m.dispatchEvent(new MouseEvent("click",{bubbles:true})); return m.classList.contains("hidden"); })()'); time.sleep(0.4)
-        hl = P.obj(PHONE_PROBE) or {}
+        hl = pp(P) or {}
         H = hl.get('hl') or []; C = hl.get('cells') or []
         row = [C[i]['r'] for i in range(10, 15)] if len(C) == 25 else []
         ok('%s highlight: a tap on the dark closes the sheet; the finished middle row gets ONE solid outline, in the gutter round its tiles' % tag,
@@ -519,12 +563,12 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.js('(function(){ localStorage.setItem("vp-mhl","0"); document.getElementById("hlChk").click(); return 1; })()')
         # the claim
         P.js('document.getElementById("bingoBtn").click()'); time.sleep(1)
-        cl = P.obj(PHONE_PROBE) or {}
+        cl = pp(P) or {}
         P.shot(shots + '-phone-9-claim-sent')
         ok('%s claim: "Sent. The host is checking your card" on the button, which waits' % tag, 'The host is checking your card' in (cl.get('note') or '') and (cl.get('btn') or {}).get('dis') is True, [cl.get('note'), cl.get('btn')])
         # after: someone else wins
         P.js(say('vp-' + ROOM, [{'t': 'winner', 'pid': 'someone-else', 'pids': ['someone-else'], 'name': 'Ann'}])); time.sleep(1.5)
-        ls = P.obj(PHONE_PROBE) or {}
+        ls = pp(P) or {}
         P.shot(shots + '-phone-10-not-this-time')
         ok('%s after: NOT THIS TIME, "Ann won the meat tray."' % tag, ls.get('view') == 'vLost' and 'not this time' in ls.get('all', '').lower() and 'Ann won the meat tray.' in ls.get('all', ''), ls.get('all'))
         ok('%s after: no pattern or prize row once the game is over' % tag, ls.get('row2') is None, ls.get('row2'))
@@ -542,7 +586,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.until('document.querySelectorAll("#cardGrid .cc").length===25', 15); time.sleep(0.5)
         pid = P.js('(function(){ return localStorage.getItem("vp-mpid-%s"); })()' % ROOM)
         P.js(say('vp-' + ROOM, [{'t': 'winner', 'pid': pid, 'pids': [pid], 'name': 'Sam'}])); time.sleep(2.5)
-        wn = P.obj(PHONE_PROBE) or {}
+        wn = pp(P) or {}
         P.shot(shots + '-phone-11-you-won')
         ok('%s won: YOU WON, the prize, "Show your card to the host", and the card number for the host to check' % tag,
            wn.get('view') == 'vWon' and 'you won' in wn.get('all', '').lower() and 'Meat tray' in wn.get('all', '') and 'host' in wn.get('all', '').lower() and '#17' in wn.get('all', ''), wn.get('all'))
@@ -556,7 +600,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         try:
             P.until('document.getElementById("joinHead").textContent==="Your details"', 20); time.sleep(0.8)
             P.js('(function(){ document.getElementById("nameIn").value="Sam"; return 1; })()')
-            dt = P.obj(PHONE_PROBE) or {}
+            dt = pp(P) or {}
             P.shot(shots + '-phone-3b-details')
             ok('details: YOUR DETAILS, naming the venue, with Privacy inline', dt.get('headWords') == 'Your details' and dt.get('notice', '').startswith('Tugun Bowls Club would like your details. They go to the venue') and dt.get('privacy'), [dt.get('headWords'), dt.get('notice')])
             ok('details: "I\'m 18 or over" and "Keep me posted" as two separate ticks (vp-consent.js)', dt.get('ticks') == ["I'm 18 or over", "Keep me posted on what's on at the venue"], dt.get('ticks'))
@@ -564,6 +608,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         finally:
             P.close()
         W['collect'] = {'first_name': True}
+    no_bingo_checks(tag + ' phone')
 
 
 def demo(B, base):
@@ -588,10 +633,15 @@ def demo(B, base):
     P = Page(B, base, '/app/musical/play.html?demo=1&sting=0', 375, 812, True)
     try:
         P.until('document.querySelectorAll("#cardGrid .cc").length===25', 20); time.sleep(3)
-        d = P.obj(PHONE_PROBE) or {}
+        d = pp(P, 'demo card') or {}
         ok('the phone demo is on its card, with Tugun\'s crest top left and the prize in row two', d.get('view') == 'vCard' and bool(d.get('logo')) and (d.get('row2') or {}).get('prize') == 'Meat tray', [d.get('view'), d.get('row2')])
+        if P.until('!document.getElementById("vWon").classList.contains("hidden")', 60):   # the demo calls on its fifth song
+            time.sleep(0.5); pp(P, 'demo won')
+        else:
+            SEEN_WORDS.append(('demo won (never reached)', []))
     finally:
         P.close()
+    no_bingo_checks('the phone demo', 2)
 
 
 def host():

@@ -17,6 +17,11 @@
         answers are exactly what they were; pictures only, https only; kept 30 s per venue and never re-read on
         fresh:1; a failed read is no slides, never a failed join; the cached answer gets them too
 
+     7. MUSICAL BINGO IS NOT BINGO ON THE PLAYER'S CARD (Dean, 5 Nov 2026: "Musical bingo can't say bingo on the
+        customers card"): no customer-visible words on app/musical/play.html (its markup, and every sentence its
+        script can write: notes, toasts, the claim, the after screens, aria labels, titles) say "bingo", except the
+        game's own name "musical bingo". tools/musical-newlook-in-chrome.test.py reads the painted phone too.
+
    Run: jsc tools/test-musical-newlook.js   (from the repo root) */
 var ran = 0, bad = 0;
 function show(name, cond, saw) { ran++; if (cond) print('  ok   ' + name); else { bad++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + saw : '')); } }
@@ -176,6 +181,30 @@ await (async function () {
   show('a failed slides read is no slides, and the phone still gets its join answer', down.venue_name === 'Tugun Bowls Club' && down.slides.length === 0 && down.collect.first_name === true, JSON.stringify(down));
   show('eight slides at most', W.p(new Array(20).join('x').split('x').map(function (_, i) { return { image_url: 'https://x/' + i + '.jpg' }; })).length === 8);
   show('rubbish is no slides, never a throw', W.p(null).length === 0 && W.p('x').length === 0 && W.p([null, 3, { image_url: 5 }]).length === 0);
+})();
+
+/* ======================================================================================= 7 */
+print('\n== 7. the player\'s card never says "bingo" (only the game\'s name "musical bingo") ==');
+(function () {
+  /* the page with its comments taken out: what is left is markup and code */
+  var t = PLAY.replace(/<!--[\s\S]*?-->/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:"'\\])\/\/[^\n]*/g, '$1');
+  var body = t.slice(t.indexOf('<body'));
+  /* the words a player can see or hear: text between tags, attribute words (aria-label, title, placeholder, alt,
+     value) and every quoted sentence in the script (a string with a space in it, which is how every note, toast and
+     label on the page is written, and any string that is the word itself, like "BINGO!"; ids and class names like
+     "bingoBtn" are neither) */
+  var words = [];
+  var html = body.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ');
+  html.replace(/>([^<]+)</g, function (_, x) { if (x.trim()) words.push(x.trim()); return _; });
+  html.replace(/\b(aria-label|title|placeholder|alt|value)="([^"]*)"/g, function (_, k, v) { words.push(v); return _; });
+  var head = t.slice(0, t.indexOf('<body')); var tt = head.match(/<title>([^<]*)<\/title>/); if (tt) words.push(tt[1]);
+  var js = (t.match(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/g) || []).join('\n');
+  js.replace(/"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'/g, function (_, a, b2) { var x = a !== undefined ? a : b2; if (/\s/.test(x) || /\bbingo\b/i.test(x)) words.push(x); return _; });
+  var bad7 = words.filter(function (w) { return /bingo/i.test(w.replace(/musical[\s\u00a0]+bingo/ig, '')); });
+  show('the phone page was read: its markup and its script\'s sentences (more than 150 found)', words.length > 150, words.length);
+  show('no customer-visible "bingo" on the musical phone, other than the name "musical bingo"', bad7.length === 0, bad7.slice(0, 6).join(' | '));
+  show('the claim says what the player has, never BINGO: "I\'ve got a line", "I\'ve got two lines", "Full house"',
+       /one:"I've got a line"/.test(PLAY) && /two:"I've got two lines"/.test(PLAY) && /full:"Full house"/.test(PLAY) && /id="bingoBtn">I've got a line</.test(PLAY));
 })();
 
 print('');
