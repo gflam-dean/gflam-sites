@@ -73,9 +73,18 @@ WORDS = r'''(function(sel, shy){
         /* shy (the musical phone card, Dean 3 Nov 2026 round 4): a long word may break ONCE, at its soft hyphen, onto two lines */
         if(rects.length!==1){
           var at=m[0].indexOf("\u00AD");
-          if(shy && at>0 && rects.length===2){ var r2=document.createRange(); r2.setStart(t, m.index); r2.setEnd(t, m.index+at+1);
-            var a2=Array.prototype.filter.call(r2.getClientRects(), function(r){ return r.width>0; }); if(a2.length===1){ out.hyph.push(m[0]); continue; } }
-          out.split.push(m[0]);
+          /* Chrome hands back the painted hyphen as a rect of its own on the first line ("Wonder", "-", then "wall"),
+             so the word is judged by LINES: exactly two, the part up to its one soft hyphen all on the first. */
+          var tops=function(rs){ var o=[]; rs.forEach(function(r){ var y=(r.top+r.bottom)/2; if(!o.some(function(z){ return Math.abs(z-y)<4; })) o.push(y); }); return o; };   // a line = rects whose middles are within 4px (the hyphen glyph's box is not the letters')
+          if(shy && at>0 && tops(rects).length===2){ var r2=document.createRange(); r2.setStart(t, m.index); r2.setEnd(t, m.index+at+1);
+            var a2=Array.prototype.filter.call(r2.getClientRects(), function(r){ return r.width>0; }), t2=tops(a2);
+            var key=function(r){ return [Math.round(r.left),Math.round(r.top),Math.round(r.width)].join(","); }, k2=a2.map(key);
+            var r3=document.createRange(); r3.setStart(t, m.index+at+1); r3.setEnd(t, m.index+m[0].length);
+            /* the rest of the word, less the painted hyphen (Chrome lists that rect in both halves) */
+            var t3=tops(Array.prototype.filter.call(r3.getClientRects(), function(r){ return r.width>0 && k2.indexOf(key(r))<0; }));
+            var all=tops(rects), lo=Math.min.apply(null, all), hi=Math.max.apply(null, all);
+            if(t2.length===1 && Math.abs(t2[0]-lo)<4 && t3.length===1 && Math.abs(t3[0]-hi)<4){ out.hyph.push(m[0]); continue; } }
+          out.split.push(m[0]); (out.at=out.at||[]).push(rects.map(function(r){ return [Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)]; }));
         }
       }
     }

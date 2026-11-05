@@ -180,7 +180,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 230,
+  "checks": 228,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {

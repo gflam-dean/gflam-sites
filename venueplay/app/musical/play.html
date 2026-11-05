@@ -221,10 +221,10 @@
   #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible}
   #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch}
   #vCard .cc{aspect-ratio:auto;position:relative;background:#1C1C21;border:2px solid transparent;border-radius:14px;
-    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:22px 3px 6px;
+    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:19px 3px 3px;
     word-break:normal;overflow-wrap:normal;hyphens:manual;-webkit-hyphens:manual}
   #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
-  #vCard .cc.daub::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px 18px no-repeat}   /* in its own corner, above the title's box (padding-top 22px) */
+  #vCard .cc.daub::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px 16px no-repeat}   /* in its own corner, above the title's box (padding-top 19px). 16px at 2px in (5 Nov 2026): on a short phone (390x690) the 18px tick's 22px reserve left a long title under 11px and most under 15px; three more pixels of height bring them back */
   /* THE FREE SQUARE IS A MARKED SQUARE (Dean, 4 Nov 2026 evening, from the store screenshot review): the near-black
      tile with a faint pink edge and pink "Free" read as unmarked, which is confusing on a winning card. It is now
      exactly #vCard .cc.daub: the same fill, the solid pink border, white text and the same pink tick (the
