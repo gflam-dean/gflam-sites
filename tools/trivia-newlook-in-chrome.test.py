@@ -299,13 +299,17 @@ def tv(B, base, w, h, logo=''):
     rc_ = rv.get('cards') or []
     lowest = max([c['r'][3] for c in (q.get('cards') or [])] or [0])
     QR_, RG_ = q.get('qround'), q.get('ring')
-    ok(tag + ': "Question 3 of 20" sits under the ring and above the answers, the same on the countdown and the reveal',
-       bool(QR_ and RG_ and rv.get('qround')) and QR_[1] >= RG_[3] - 0.5 and QR_[3] <= min(c['r'][1] for c in q.get('cards') or [[0, 9e9]]) and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
-       [QR_, RG_, q.get('qroundText')])
+    # THE FINAL WALL (Dean, 5 Nov 2026, LAYOUT-FINAL.css): "Question N of 20" under the answers on the right; the
+    # question centred on the ring's centre line; the answers at a fixed 24.11% of the width, a normal gap under the
+    # ring. tools/trivia-question-space-in-chrome.test.py measures the gaps and every question length.
     qc_ = q.get('cards') or []
-    ok(tag + ': the question\'s top is lined up with the ring\'s top (as approved)', bool(q.get('q') and RG_) and abs(q['q'][1] - RG_[1]) <= 0.004 * w, [q.get('q'), RG_])
-    ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and fill the lower half (to about 1014px at 1080)',
-       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and max(c['r'][3] for c in qc_) >= 0.52 * w and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
+    ok(tag + ': "Question 3 of 20" sits under the answers on the right, the same on the countdown and the reveal',
+       bool(QR_ and qc_ and rv.get('qround')) and QR_[1] >= max(c['r'][3] for c in qc_) and abs(QR_[2] - max(c['r'][2] for c in qc_)) <= 2 and QR_[3] <= h and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
+       [QR_, qc_ and qc_[-1]['r'], q.get('qroundText')])
+    ok(tag + ': the question is centred on the ring\'s centre line (as approved, 5 Nov)', bool(q.get('q') and RG_) and abs((q['q'][1] + q['q'][3]) / 2 - (RG_[1] + RG_[3]) / 2) <= 0.004 * w, [q.get('q'), RG_])
+    ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and start a normal gap under the ring (463px at 1920)',
+       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and abs(min(c['r'][1] for c in qc_) - 0.2411 * w) <= 0.002 * w
+       and bool(RG_) and min(c['r'][1] for c in qc_) > RG_[3] and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
        [c['r'] for c in qc_])
     ok(tag + ': a long two-line question and long answers fit: the question clear of the boxes, every answer inside its box',
        lq.get('layer') == 'tvQ' and bool(lq.get('q')) and lq['q'][3] <= min(c['r'][1] for c in lq.get('cards') or [[0, 0]]) - 0.005 * w and not any(c['ovf'] for c in lq.get('cards') or []) and len(lq.get('cards') or []) == 4,

@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""THE TRIVIA QUESTION HOLDS ITS SPACE, AS CHROME PAINTS IT (Dean, 5 Nov 2026).
+"""THE FINAL TRIVIA WALL, AS CHROME PAINTS IT: THE QUESTION ON THE RING'S CENTRE LINE (Dean, 5 Nov 2026).
 
-On the TV trivia wall the question area always reserves a TWO-LINE height. A ONE-LINE question sits
-at the BOTTOM of that space, a normal gap above the answers, the spare line above it (Dean, item 17; not on
-the first line with an empty line under it); a two-line question fills it as before; the question is the same size and in the same place on the countdown and the reveal,
-with no flick (Dean, 3 Nov 2026).
+Dean's final layout (reports/fb-cover-6nov/layout/LAYOUT-FINAL.css and FINAL-LAYOUT-*.png, INBOX items 22, 23):
+the timer ring full size and moved up so the gap from the venueplay logo to the ring equals the gap from the
+ring to the answers; the question, one, two or more lines, centred on the ring's centre line; the answers at
+a fixed spot a normal gap under the ring; "Question N of 20" under the answers on the right; the countdown and
+the reveal in identical positions.
 
 This opens the REAL app/trivia/screen.html in its own sales-page demo (?demo=1&sting=0), served from this
-checkout, on Chrome's virtual clock, at 1920x1080 and 1280x720, twice:
+checkout, on Chrome's virtual clock, at 1920x1080 and 1280x720, three times:
 
-  ONE LINE   the demo's first question swapped for a short one by this test's server (?q1=short), so the
-             page's own render code paints it
-  TWO LINES  the demo as shipped (its first question runs to two lines on the wall)
+  ONE LINE    the demo's first question swapped for a short one by this test's server (?q1=short)
+  TWO LINES   the demo as shipped (its first question runs to two lines on the wall)
+  LONG        the library's longest question (188 characters, ?q1=long): three or more lines
 
-and measures the painted text (a Range over the question's text node), the question box, the ring and the
-four answer cards, on the countdown and on the reveal.
+and measures the painted text (a Range over the question's text node), the visible ring (the circle plus
+half its stroke), the venueplay corner logo, the four answer cards and "Question N of 20", on the countdown
+and on the reveal.
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
@@ -33,6 +35,8 @@ SHOTS = os.environ.get('VP_SHOTS', '')
 # a test whose fixture silently fails to apply would measure the two-line question twice and pass.
 DEMO_Q1 = '{ text:"Which Australian city hosted the 2000 Summer Olympics?",'
 SHORT_Q1 = '{ text:"Who wrote Hamlet?",'
+LONG_Q1 = ('{ text:"In Irish legend, the giant Finn McCool is said to have created Lough Neagh, the largest lake in the '
+           'British Isles, by scooping up earth to hurl at a rival. In which country is Lough Neagh?",')
 
 ran = bad = 0
 def ok(name, cond, saw=''):
@@ -71,9 +75,10 @@ class Site(http.server.BaseHTTPRequestHandler):
             t = t.replace('/app/vendor/supabase-js-2.118.0.min.js', '/__fake/supabase.js')
             t = t.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
             t = t.replace('https://game.venueplay.com.au', '/__worker')
-            if ext == '.html' and 'q1=short' in (u.query or ''):
+            q1 = urllib.parse.parse_qs(u.query or '').get('q1', [''])[0]
+            if ext == '.html' and q1 in ('short', 'long'):
                 SWAPPED[0] += t.count(DEMO_Q1)
-                t = t.replace(DEMO_Q1, SHORT_Q1)
+                t = t.replace(DEMO_Q1, SHORT_Q1 if q1 == 'short' else LONG_Q1)
             return self.send(200, t, {'.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json'}[ext] + '; charset=utf-8')
         ct = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
         return self.send(200, open(f, 'rb').read(), ct)
@@ -101,6 +106,13 @@ PROBE = r'''(function(){
         ink = ink ? [Math.min(ink[0],c.left),Math.min(ink[1],c.top),Math.max(ink[2],c.right),Math.max(ink[3],c.bottom)] : [c.left,c.top,c.right,c.bottom]; }); }
     out.lines=tops.length; out.ink=ink; }
   out.ring=R(lay.querySelector(".ringwrap svg"));
+  /* The VISIBLE ring: the circle's geometry plus half its stroke, in screen pixels. */
+  var c=lay.querySelector(".ringwrap .rbg"), sv=lay.querySelector(".ringwrap svg");
+  if(c && sv && sv.getBoundingClientRect().width>0){ var cb=c.getBoundingClientRect(), k=sv.getBoundingClientRect().width/100, hs=parseFloat(getComputedStyle(c).strokeWidth)/2*k;
+    out.ringVis=[cb.left-hs,cb.top-hs,cb.right+hs,cb.bottom+hs]; }
+  var mk=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=mk ? R(mk) : null;
+  var tl=lay.querySelector(".toplbl .tl-night"); out.head=R(tl);
+  out.qround=R(lay.querySelector(".qround")); out.qroundText=(lay.querySelector(".qround")||{}).textContent||"";
   out.cards=[].map.call(lay.querySelectorAll(".answers .ans"),function(c){ return { r:R(c), cls:c.className }; });
   return JSON.stringify(out);
 })()'''
@@ -146,35 +158,38 @@ def wall(B, base, w, h):
     states = [('question', 4000), ('reveal', 9000)]
     n0 = SWAPPED[0]
     one = load(B, base, '/app/trivia/screen.html?demo=1&sting=0&q1=short', w, h, states, 'one-line')
-    ok(tag + ': the short question was swapped into the demo (the fixture applied)', SWAPPED[0] > n0, SWAPPED[0])
+    lng = load(B, base, '/app/trivia/screen.html?demo=1&sting=0&q1=long', w, h, states, 'long')
+    ok(tag + ': the short and the long question were swapped into the demo (the fixtures applied)', SWAPPED[0] >= n0 + 2, SWAPPED[0] - n0)
     two = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, states, 'two-line')
-    oq, orv, tq, trv = one.get('question', {}), one.get('reveal', {}), two.get('question', {}), two.get('reveal', {})
-    ok(tag + ': both demos are on the question, then the reveal',
-       (oq.get('layer'), orv.get('layer'), tq.get('layer'), trv.get('layer')) == ('tvQ', 'tvReveal', 'tvQ', 'tvReveal'),
-       [oq.get('layer'), orv.get('layer'), tq.get('layer'), trv.get('layer')])
+    runs = (('one line', one), ('two lines', two), ('long', lng))
+    ok(tag + ': every demo is on the question, then the reveal',
+       all((r.get('question', {}).get('layer'), r.get('reveal', {}).get('layer')) == ('tvQ', 'tvReveal') for _, r in runs),
+       [(n, r.get('question', {}).get('layer'), r.get('reveal', {}).get('layer')) for n, r in runs])
+    oq, tq, lq = one.get('question', {}), two.get('question', {}), lng.get('question', {})
     ok(tag + ': the short question paints on ONE line', oq.get('lines') == 1 and oq.get('text') == 'Who wrote Hamlet?', [oq.get('lines'), oq.get('text')])
     ok(tag + ': the demo question paints on TWO lines', tq.get('lines') == 2, tq.get('lines'))
-    fs, lh = tq.get('fs') or 0, tq.get('lh') or 0
-    ok(tag + ': both are at the short-question size (3.96% of the width)', abs(fs - 0.0396 * w) <= 0.6 and abs((oq.get('fs') or 0) - fs) < 0.01, [oq.get('fs'), fs])
-    OB, TB = oq.get('box'), tq.get('box')
-    OI, TI = oq.get('ink'), tq.get('ink')
-    ok(tag + ': the question box is two lines tall for ONE line as well as for two', bool(OB and TB) and abs((OB[3] - OB[1]) - 2 * lh) <= 1 and abs((TB[3] - TB[1]) - 2 * lh) <= 1,
-       [OB, TB, lh])
-    ok(tag + ': and in the same place for both (the answers never shift)', same(OB, TB), [OB, TB])
-    # A Range's rects are the font's own height, not the line box: a line sits half a leading inside its line box.
-    ok(tag + ': ONE line sits on the BOTTOM line of the two-line space, the spare line above it',
-       bool(OI and OB and TI) and abs(OI[3] - TI[3]) <= 1 and OB[3] - OI[3] <= 0.2 * lh, [OI, OB, TI])
-    ok(tag + ': and NOT on the first line with an empty line under it', bool(OI and OB) and OI[1] >= OB[1] + 0.4 * lh, [OI, OB, lh])
-    # Two full lines sit half a leading in from the box at the top and the bottom: centred, starting on the first line.
-    ok(tag + ': TWO lines fill the space from its top, as before (centred, the first line at the top)',
-       bool(TI and TB) and abs((TI[1] + TI[3]) / 2 - (TB[1] + TB[3]) / 2) <= 1 and TI[1] - TB[1] <= 0.2 * lh, [TI, TB, lh])
-    RG = tq.get('ring')
-    ok(tag + ': the question box still starts level with the ring (as approved)', bool(TB and RG) and abs(TB[1] - RG[1]) <= 0.004 * w, [TB, RG])
-    for lbl, q, rv in (('one line', oq, orv), ('two lines', tq, trv)):
+    ok(tag + ': the library\'s longest question paints on THREE or more lines', (lq.get('lines') or 0) >= 3, lq.get('lines'))
+    ok(tag + ': the short questions are at the short-question size (3.96% of the width)', abs((tq.get('fs') or 0) - 0.0396 * w) <= 0.6 and oq.get('fs') == tq.get('fs'), [oq.get('fs'), tq.get('fs')])
+
+    RV, MK, HD = tq.get('ringVis'), tq.get('mark'), tq.get('head')
+    cards = tq.get('cards') or []
+    ok(tag + ': the ring is full size (14.58% of the width)', bool(tq.get('ring')) and abs((tq['ring'][2] - tq['ring'][0]) - 0.1458 * w) <= 1.5, tq.get('ring'))
+    top_gap = (RV[1] - MK[3]) if (RV and MK) else None
+    low_gap = (min(c['r'][1] for c in cards) - RV[3]) if (RV and cards) else None
+    ok(tag + ': the gap from the venueplay logo to the ring equals the gap from the ring to the answers (within 3px)',
+       top_gap is not None and low_gap is not None and abs(top_gap - low_gap) <= 3 and top_gap > 0, [top_gap, low_gap, MK, RV])
+    ring_mid = ((RV[1] + RV[3]) / 2) if RV else None
+    for lbl, q in (('one line', oq), ('two lines', tq), ('long', lq)):
+        I = q.get('ink')
+        ok('%s, %s: the question is centred on the ring\'s centre line (within 2px)' % (tag, lbl),
+           bool(I) and ring_mid is not None and abs((I[1] + I[3]) / 2 - ring_mid) <= 2, [I, ring_mid])
+        ok('%s, %s: and clear of the TRIVIA line above and the answers below' % (tag, lbl),
+           bool(I and HD and q.get('cards')) and I[1] > HD[3] and I[3] < min(c['r'][1] for c in q['cards']), [I, HD, (q.get('cards') or [{}])[0].get('r')])
+    for lbl, r in runs:
+        q, rv = r.get('question', {}), r.get('reveal', {})
         ok('%s, %s: the question box is in the same place on the countdown and the reveal' % (tag, lbl), same(q.get('box'), rv.get('box')), [q.get('box'), rv.get('box')])
         ok('%s, %s: and so is the painted text, the same size (no flick)' % (tag, lbl),
-           same(q.get('ink'), rv.get('ink')) and q.get('fs') == rv.get('fs') and q.get('lines') == rv.get('lines'),
-           [q.get('ink'), rv.get('ink'), q.get('fs'), rv.get('fs')])
+           same(q.get('ink'), rv.get('ink')) and q.get('fs') == rv.get('fs') and q.get('lines') == rv.get('lines'), [q.get('ink'), rv.get('ink'), q.get('fs'), rv.get('fs')])
         qc, rc = q.get('cards') or [], rv.get('cards') or []
         still = len(qc) == 4 and len(rc) == 4
         for i in range(min(len(qc), len(rc))):
@@ -184,10 +199,15 @@ def wall(B, base, w, h):
             else:
                 still = still and same(a, b)
         ok('%s, %s: the answers do not move between the countdown and the reveal' % (tag, lbl), still, [[c['r'] for c in qc], [c['r'] for c in rc]])
-        ok('%s, %s: the question ends above the answers' % (tag, lbl), bool(q.get('box') and qc) and q['box'][3] < min(c['r'][1] for c in qc), [q.get('box'), qc[:1]])
-    oc, tc = oq.get('cards') or [], tq.get('cards') or []
-    ok(tag + ': the answer cards sit in the same place for a one-line and a two-line question',
-       len(oc) == 4 and len(tc) == 4 and all(same(oc[i]['r'], tc[i]['r']) for i in range(4)), [[c['r'] for c in oc], [c['r'] for c in tc]])
+        QR, RQ = q.get('qround'), rv.get('qround')
+        ok('%s, %s: "Question N of 20" is under the answers, on the right, the same on the reveal' % (tag, lbl),
+           bool(QR and qc) and QR[1] >= max(c['r'][3] for c in qc) and abs(QR[2] - max(c['r'][2] for c in qc)) <= 2 and QR[3] <= h and same(QR, RQ)
+           and 'Question 3 of 20' in (q.get('qroundText') or ''), [QR, RQ, q.get('qroundText')])
+    oc, tc, lc = oq.get('cards') or [], tq.get('cards') or [], lq.get('cards') or []
+    ok(tag + ': the answers sit at the same fixed spot for every question length',
+       len(oc) == len(tc) == len(lc) == 4 and all(same(oc[i]['r'], tc[i]['r']) and same(lc[i]['r'], tc[i]['r']) for i in range(4)),
+       [[c['r'] for c in oc], [c['r'] for c in tc], [c['r'] for c in lc]])
+    ok(tag + ': the answers start at 24.11% of the width (463px at 1920)', bool(tc) and abs(min(c['r'][1] for c in tc) - 0.2411 * w) <= 1.5, tc and tc[0]['r'])
 
 
 def main():

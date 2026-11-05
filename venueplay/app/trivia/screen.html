@@ -126,16 +126,21 @@
   /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
      with the length (Hanken 800, 76px at 1920 for a short one, as mocked). */
   .qtext{position:absolute;left:calc(8.9cqw);top:9.4cqw;width:65.1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
-  /* THE QUESTION'S PLACE, IN ONE RULE (Dean, 5 Nov 2026). The block always reserves TWO lines at the
-     short-question size. A ONE-LINE question sits at the BOTTOM of that space, a normal gap above the answers:
-     the spare line goes above it, under the TRIVIA header, so it looks central on the wall without floating
-     away from its answers (Dean: "too much of a space between the question and the answers" when centred).
-     Two lines fill it as before; a longer question (smaller type, more lines) grows from the same top as it
-     always did. The countdown and the reveal (#tvQText, #tvRevQText) are both .qgrid, so the question never
-     moves or flicks between them, and the answers never move at all. The text is one text node
-     (textContent), so it is the one flex item. To place the question differently, change THIS rule only.
-     tools/test-trivia-question-space.js and tools/trivia-question-space-in-chrome.test.py measure it. */
-  .qgrid .qtext{display:flex;flex-direction:column;justify-content:flex-end;min-height:calc(3.96cqw * 1.12 * 2)}
+  /* THE FINAL TRIVIA WALL (Dean, 5 Nov 2026; mock reports/fb-cover-6nov/layout/LAYOUT-FINAL.css and FINAL-LAYOUT-*.png).
+     Units are cqw (1cqw = 19.2px on a 1920 set). Picture questions (.layer.pic) keep their own layout, so every
+     rule here skips them. The countdown (#tvQ) and the reveal (#tvReveal) are both .qgrid and share these rules,
+     so nothing moves between them. tools/test-trivia-question-space.js and trivia-question-space-in-chrome measure it.
+     1. The ring stays full size (14.58cqw) and moves up from 9.4cqw to 7.55cqw: the gap from the venueplay
+        corner logo to the ring equals the gap from the ring to the answers (48px at 1920). */
+  .layer.qgrid:not(.pic) .qfoot{top:7.55cqw}
+  /* 2. The question (one, two or three lines) is centred on the ring's centre line, 7.55 + 14.58/2 = 14.84cqw,
+        growing up and down. */
+  .layer.qgrid:not(.pic) .qtext{top:14.84cqw;transform:translateY(-50%)}
+  /* 3. The answers sit at a fixed 24.11cqw, a normal gap (48px at 1920) under the ring's bottom edge, the same for
+        every question, so they never move. */
+  .layer.qgrid:not(.pic) .answers{top:24.11cqw}
+  /* 4. "Question 3 of 20" goes under the answers (which end at 24.11 + 2 x 11.875 + 1.46 = 49.32cqw), right-aligned. */
+  .layer.qgrid:not(.pic) .qround{top:50.1cqw;right:8.9cqw;width:auto;text-align:right}
   .qtext.q-med  {font-size:3.3cqw}
   .qtext.q-long {font-size:2.7cqw;line-height:1.14}
   .qtext.q-epic {font-size:2.25cqw;line-height:1.16}
@@ -144,7 +149,7 @@
      smaller in the same place and the four answers sit in one row under the picture. Same on the reveal. */
   .layer.pic .qimg{display:block}
   .layer.pic .qimg.hidden{display:none!important}
-  .layer.pic .qtext{font-size:2.5cqw;line-height:1.14;min-height:calc(2.5cqw * 1.14 * 2)}   /* two lines at the picture round's size, clear of the picture at 17.6cqw */
+  .layer.pic .qtext{font-size:2.5cqw;line-height:1.14}
   .layer.pic .answers{top:37.6cqw;grid-template-columns:1fr 1fr 1fr 1fr;grid-gap:1.3cqw;gap:1.3cqw}
   .layer.pic .ans{height:6.3cqw;padding:0 1.2cqw 0 1.8cqw}
   .layer.pic .ans .al{width:3.6cqw;height:3.6cqw;font-size:3.2cqw;margin-right:1.2cqw}

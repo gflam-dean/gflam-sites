@@ -916,7 +916,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-question-space.js": {
-  "checks": 25,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
@@ -1052,7 +1052,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-question-space-in-chrome.test.py": {
-  "checks": 40,
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

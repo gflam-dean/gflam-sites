@@ -1,19 +1,22 @@
-/* THE TRIVIA QUESTION HOLDS ITS SPACE ON THE TV (Dean, 5 Nov 2026).
+/* THE FINAL TRIVIA WALL: THE QUESTION ON THE RING'S CENTRE LINE (Dean, 5 Nov 2026).
 
-   The question block on the TV always reserves TWO lines at the short-question size. A one-line question
-   sits at the BOTTOM of that space, a normal gap above the answers, with the spare line above it (not on the
-   first line with an empty line under it); two lines fill it; a longer question grows down from the same top. The countdown and the reveal use the same box and the
-   same size rule, so the question never moves or flicks between them.
+   Dean's final layout (reports/fb-cover-6nov/layout/LAYOUT-FINAL.css, INBOX items 22 and 23):
+     - the timer ring stays full size and moves up, so the gap from the venueplay logo to the ring equals the
+       gap from the ring to the answers
+     - the question, one, two or three lines, is vertically CENTRED on the ring's centre line
+     - the answers sit at a fixed spot a normal gap under the ring, the same for every question
+     - "Question N of 20" goes under the answers, on the right
+     - the countdown and the reveal use identical positions; picture questions keep their own layout
 
-   RUNS the shipped CSS rule and the shipped render code, lifted out of venueplay/app/trivia/screen.html:
-     1. the question's place, one rule (.qgrid .qtext): a flex column, packed to the bottom, its min-height
-        exactly two lines at the short-question size
-     2. the picture round's .qtext: two lines at the picture round's size, still clear of the picture
-     3. a block layout model fed by those numbers: one line at the bottom, two lines fill, three grow from the top,
-        and the answers never covered
-     4. the countdown and the reveal give the same question the same class (so the same size and place)
+   RUNS the shipped CSS rules and render code, lifted out of venueplay/app/trivia/screen.html:
+     1. the four rules carry Dean's numbers, and skip the picture round
+     2. the arithmetic they encode: the question's top is the ring's centre line, the answers clear the ring,
+        "Question N of 20" clears the answers and stays on the wall
+     3. a block model fed by those numbers: 1 to 4 lines centred on the ring, clear of the header and the answers
+     4. the countdown and the reveal give the question the same box (same class, same layer type)
 
-   The real pixels are measured in Chrome by tools/trivia-question-space-in-chrome.test.py.
+   The painted pixels (logo-to-ring gap, the visible ring, the text) are measured in Chrome by
+   tools/trivia-question-space-in-chrome.test.py.
    Run: jsc tools/test-trivia-question-space.js   (from the repo root) */
 var ran = 0, bad = 0;
 function show(name, cond, saw) { ran++; if (cond) print('  ok   ' + name); else { bad++; print('  FAIL ' + name + (saw !== undefined ? '   saw: ' + saw : '')); } }
@@ -28,18 +31,19 @@ function lift(text, name, label) {
 var SCREEN = readFile('venueplay/app/trivia/screen.html');
 var STYLE = SCREEN.slice(SCREEN.indexOf('<style'), SCREEN.indexOf('</style>'));
 if (STYLE.length < 1000) throw new Error('cannot find the <style> block in screen.html');
+var CSS = STYLE.replace(/\/\*[\s\S]*?\*\//g, '');
 
-/* The declarations of one CSS rule, by its exact selector (comments stripped). */
+/* The declarations of one CSS rule, by its exact selector (comments stripped; the selector must start a rule). */
 function rule(sel) {
-  var css = STYLE.replace(/\/\*[\s\S]*?\*\//g, '');
-  var re = new RegExp('(^|[}\\s])' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm');
-  var m = css.match(re);
+  var re = new RegExp('(^|[}\\n])\\s*' + sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}');
+  var m = CSS.match(re);
   if (!m) throw new Error('cannot find the CSS rule "' + sel + '" in screen.html');
   var out = {};
   m[2].split(';').forEach(function (d) { var i = d.indexOf(':'); if (i > 0) out[d.slice(0, i).trim()] = d.slice(i + 1).trim(); });
   return out;
 }
-/* A length in cqw: "3.96cqw", "calc(3.96cqw * 1.12 * 2)", or a unitless number (line-height). Anything else is NaN. */
+/* A length in cqw ("3.96cqw", "calc(3.96cqw * 1.12)") or a unitless number. Only digits, cqw and arithmetic are
+   evaluated (this file's own regex guards the Function), anything else is NaN. */
 function cqw(v) {
   if (v === undefined) return NaN;
   v = String(v).trim();
@@ -47,57 +51,57 @@ function cqw(v) {
   if (!/^[0-9.\scqw*+\-/()]+$/.test(v)) return NaN;
   try { return Number(new Function('return (' + v.replace(/cqw/g, '') + ');')()); } catch (e) { return NaN; }
 }
-function near(a, b) { return Math.abs(a - b) < 0.001; }
+function near(a, b, tol) { return Math.abs(a - b) < (tol || 0.001); }
+
+var Q = rule('.qtext'), RW = rule('.ringwrap'), A = rule('.answers'), ANS = rule('.ans'), TL = rule('.toplbl'), TLN = rule('.toplbl .tl-night');
+var FQ = rule('.layer.qgrid:not(.pic) .qfoot'), FT = rule('.layer.qgrid:not(.pic) .qtext'),
+    FA = rule('.layer.qgrid:not(.pic) .answers'), FR = rule('.layer.qgrid:not(.pic) .qround');
+var ringTop = cqw(FQ['top']), ringH = cqw(RW['height']), ringMid = ringTop + ringH / 2, ringBottom = ringTop + ringH;
+var ansTop = cqw(FA['top']), cardH = cqw(ANS['height']), rowGap = cqw((A['gap'] || '').split(/\s+/)[0]);
+var ansBottom = ansTop + 2 * cardH + rowGap;
+var headerBottom = cqw(TL['top']) + cqw(TLN['font-size']) * 1.15;   // the TRIVIA line: Anton at its size, line-height 1.15
 
 /* ======================================================================================= 1 */
-print('1. the question block holds two lines, and one line sits at the bottom of them');
-var Q = rule('.qtext'), PL = rule('.qgrid .qtext');
-var fs = cqw(Q['font-size']), lh = cqw(Q['line-height']), mh = cqw(PL['min-height']), top = cqw(Q['top']);
-show('the question block is a flex box', PL['display'] === 'flex', PL['display']);
-show('its one text line stacks top to bottom (a column), so the text still wraps as a paragraph', PL['flex-direction'] === 'column', PL['flex-direction']);
-show('the text is packed to the BOTTOM of the block, next to the answers', PL['justify-content'] === 'flex-end', PL['justify-content']);
-show('the block reserves exactly two lines at the short-question size', near(mh, fs * lh * 2), mh + ' vs ' + (fs * lh * 2));
-show('the short-question size is unchanged (76px on a 1920 set)', near(fs, 3.96) && Math.round(fs * 19.2) === 76, fs);
-show('the block keeps its place on the wall (9.4cqw from the top)', near(top, 9.4), top);
+print('1. the final layout rules carry Dean\'s numbers');
+show('the ring moves up to 7.55cqw (145px on a 1920 set)', near(ringTop, 7.55), FQ['top']);
+show('the ring stays full size (14.58cqw, 280px)', near(ringH, 14.58), RW['height']);
+show('the question\'s top is the ring\'s centre line (14.84cqw)', near(cqw(FT['top']), ringMid, 0.006), FT['top'] + ' vs ' + ringMid);
+show('and the question is pulled up by half its own height, so it is CENTRED on that line', /^translateY\(-50%\)$/.test(FT['transform'] || ''), FT['transform']);
+show('the answers sit at a fixed 24.11cqw', near(ansTop, 24.11), FA['top']);
+show('"Question N of 20" sits at 50.1cqw, right-aligned to the answers\' right edge',
+  near(cqw(FR['top']), 50.1) && FR['text-align'] === 'right' && FR['right'] === A['right'] && FR['width'] === 'auto', JSON.stringify(FR));
+show('all four rules skip the picture round (it keeps its own layout)',
+  ['.qfoot', '.qtext', '.answers', '.qround'].every(function (s) { return CSS.indexOf('.layer.qgrid:not(.pic) ' + s + '{') >= 0; }));
+show('the picture round\'s own rules are still there', CSS.indexOf('.layer.pic .qtext{font-size:2.5cqw;line-height:1.14}') >= 0 && CSS.indexOf('.layer.pic .answers{top:37.6cqw;') >= 0);
+show('the mock-only rule that hid the counts did NOT come into the product', CSS.indexOf('.rcount,#tvAnsCount,#tvAnsOf,.cnt{display:none') < 0);
+show('the countdown and the reveal both carry .qgrid, so the rules hold on both',
+  SCREEN.indexOf('<div class="layer hidden qgrid" id="tvQ">') > 0 && SCREEN.indexOf('<div class="layer hidden qgrid" id="tvReveal">') > 0);
 
 /* ======================================================================================= 2 */
-print('2. the picture round');
-var P = rule('.layer.pic .qtext');
-var pfs = cqw(P['font-size']), plh = cqw(P['line-height']), pmh = cqw(P['min-height']);
-var IMG = rule('.layer.pic .qimg'), IMGB = rule('.qimg');
-var imgTop = cqw(IMG['top'] || IMGB['top']);
-show('the picture round reserves two lines at its own smaller size', near(pmh, pfs * plh * 2), pmh + ' vs ' + (pfs * plh * 2));
-show('two picture-round lines end above the picture', top + pmh < imgTop, (top + pmh) + ' vs picture top ' + imgTop);
+print('2. what the numbers add up to');
+var gapUnder = ansTop - ringBottom;
+show('the answers clear the ring\'s box, a normal gap under it (about 2cqw)', gapUnder > 1.5 && gapUnder < 2.6, gapUnder);
+show('"Question N of 20" sits under the answers', cqw(FR['top']) > ansBottom, cqw(FR['top']) + ' vs answers end ' + ansBottom);
+show('and stays on a 16:9 wall (above 56.25cqw less its own line)', cqw(FR['top']) + 2 < 56.25, cqw(FR['top']));
 
 /* ======================================================================================= 3 */
 print('3. where the text lands (the block model, fed by the shipped numbers)');
-var ANS = rule('.answers'), answersTop = cqw(ANS['top']);
-/* A flex column with justify-content:flex-end: the box is max(min-height, content); the content sits at its bottom. */
-function place(lines, size, lineH, minH) {
-  var content = lines * size * lineH, box = Math.max(minH, content);
-  var textTop = top + (box - content);
-  return { textTop: textTop, textBottom: textTop + content, boxBottom: top + box, mid: textTop + content / 2 };
-}
-var boxBottom = top + mh;
-var one = place(1, fs, lh, mh), two = place(2, fs, lh, mh);
-show('one line sits on the BOTTOM line of the two-line space, the spare line above it', near(one.textBottom, boxBottom) && near(one.textTop, top + fs * lh), one.textTop + '..' + one.textBottom);
-show('one line is NOT on the first line with an empty line under it', one.textTop > top + 0.1, one.textTop);
-show('two lines fill the space from the same top as before', near(two.textTop, top) && near(two.textBottom, top + mh), two.textTop + '..' + two.textBottom);
-show('one line ends where two lines end, so its gap to the answers is the normal one', near(one.textBottom, two.textBottom));
-show('the box is the same height for one line and two, so the answers never shift', near(one.boxBottom, two.boxBottom));
+function placed(lines, size, lineH) { var h = lines * size * lineH; return { top: ringMid - h / 2, bottom: ringMid + h / 2, mid: ringMid }; }
+var base = cqw(Q['font-size']), baseLH = cqw(Q['line-height']);
 var Lm = rule('.qtext.q-med'), Ll = rule('.qtext.q-long'), Le = rule('.qtext.q-epic');
-var med = place(2, cqw(Lm['font-size']), lh, mh);
-show('a two-line medium question sits at the bottom of the same space', near(med.textBottom, boxBottom), med.textBottom);
-var lng = place(3, cqw(Ll['font-size']), cqw(Ll['line-height']), mh);
-show('a long question taller than two lines grows down from the same top', near(lng.textTop, top) || lng.textTop >= top, lng.textTop);
-var epicLines = Math.floor((answersTop - top) / (cqw(Le['font-size']) * cqw(Le['line-height'])));
-show('the longest size still has 6 or more lines before the answers', epicLines >= 6, epicLines);
-show('the two-line space ends above the answers', top + mh < answersTop, (top + mh) + ' vs ' + answersTop);
+[[1, base, baseLH, 'one short line'], [2, base, baseLH, 'two short lines'], [3, cqw(Ll['font-size']), cqw(Ll['line-height']), 'three long lines'],
+ [4, cqw(Ll['font-size']), cqw(Ll['line-height']), 'four long lines (the library\'s longest, 188 characters)'],
+ [4, cqw(Le['font-size']), cqw(Le['line-height']), 'four epic lines']].forEach(function (c) {
+  var p = placed(c[0], c[1], c[2]);
+  show(c[3] + ': centred on the ring, clear of the TRIVIA line and of the answers',
+    near(p.mid, ringMid) && p.top > headerBottom && p.bottom < ansTop - 0.5, p.top.toFixed(2) + '..' + p.bottom.toFixed(2) + ' header ' + headerBottom.toFixed(2) + ' answers ' + ansTop);
+});
+show('a two-line medium question is centred on the same line', near(placed(2, cqw(Lm['font-size']), baseLH).mid, ringMid));
 
 /* ======================================================================================= 4 */
 print('4. the countdown and the reveal give the question the same box');
 var qClass = new Function(lift(SCREEN, 'qClass', 'screen.html') + '\nreturn qClass;')();
-var samples = ['What is the capital of Australia?',
+var samples = ['Who wrote Hamlet?',
   'Which Australian band released the album "Back in Black" in 1980, and who was its new singer?',
   new Array(30).join('a long question about the history of the cricket '),
   new Array(10).join('words and more words ')];
@@ -108,8 +112,6 @@ show('the countdown sets the box from the question text', SCREEN.indexOf('_qt.cl
 show('the reveal sets the same box from the same text', SCREEN.indexOf('rq.className=qClass(curQ.text);') > 0);
 show('both screens hold the question in a .qtext element',
   SCREEN.indexOf('<div class="qtext" id="tvQText">') > 0 && SCREEN.indexOf('<div class="qtext" id="tvRevQText">') > 0);
-show('the text goes in as plain text (one text node, so one flex item)',
-  SCREEN.indexOf('_qt.textContent = _q;') > 0 && SCREEN.indexOf('rq.textContent=curQ.text||"";') > 0);
 
 print('\n' + (ran - bad) + '/' + ran + ' passed');
 if (bad) throw new Error(bad + ' failed');
