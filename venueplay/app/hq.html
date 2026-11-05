@@ -442,6 +442,8 @@
          and no game starts until they do (migration 122). Billing Worker POST /admin/prospect. -->
     <div id="prospectPanel" class="panel pad hidden" style="margin-bottom:16px">
       <div class="lblk" style="margin-top:0">Set up a prospect</div>
+      <!-- MAKE A COASTER VENUE A NORMAL PROSPECT (vp-coaster-hq.js, migration 153): this same form, pre-filled, carrying the coaster id. -->
+      <div id="ppCoaster" class="hidden" role="status" style="margin:0 0 14px;padding:12px 14px;border:1px solid rgba(245,165,36,.45);border-radius:10px;background:rgba(245,165,36,.08);font-size:15px;line-height:1.5"></div>
       <p class="note" style="margin:0 0 14px">For a venue that said yes to a cold email. This creates their account and books one short email from Dean with a single "Open your venueplay" button. When they open it, the app walks them through the rest one screen at a time: their mobile, the Terms tick, their TV, a first game and their card. Nothing is charged until they add a card, and their free month starts then.</p>
       <div class="formgrid">
         <div class="field"><label for="ppName">Venue name</label><input type="text" id="ppName" placeholder="e.g. The Royal Hotel" maxlength="120"></div>
@@ -825,6 +827,7 @@
 <!-- HQ > Prospects (vp-prospects-hq.js, 29 Oct 2026): set up, not signed up yet, who to ring. HQ only. Before the page's
      own script, which asks it isProspect(); it waits for the page to finish loading before it draws anything. -->
 <script src="vp-prospects-hq.js"></script>
+<script src="vp-coaster-hq.js"></script>   <!-- HQ > Prospects > Coaster venues (no emails) and coaster leads (migration 153) -->
 <!-- Remove a login that belongs to no other venue (vp-logins-hq.js, 30 Oct 2026). HQ only; started by hq.html below. -->
 <script src="vp-logins-hq.js"></script>
 <!-- HQ > Reports (vp-reports-hq.js, 31 Oct 2026): the monthly report for every venue and the news. HQ only; started by hq.html below. -->
@@ -4550,6 +4553,26 @@
   var PP = { slides: [] };   // data URLs, already fitted to the TV
   var PP_MAX_SLIDES = 20;    // the Worker's VPB_MAX_SLIDES
   $("prospectToggle").addEventListener("click", function(){ var open=$("prospectPanel").classList.contains("hidden"); show("prospectPanel", open); if(open) ppLoadWaiting(); });
+  /* MAKE IT A NORMAL PROSPECT (HQ > Prospects > Coaster venues, vp-coaster-hq.js; migration 153). Opens THIS form
+     on Venues with the name and postcode filled in and the coaster id carried in PP.coasterId. The Worker moves the
+     coaster board only after the prospect is fully set up. From then on it is a normal prospect, emails and all. */
+  function ppCoasterClear(){ PP.coasterId=null; var n=$("ppCoaster"); if(n){ n.textContent=""; show(n,false); } }
+  window.hqProspectPrefill=function(o){
+    o=o||{};
+    goPane("venues");
+    show("prospectPanel", true); ppLoadWaiting();
+    $("ppName").value=String(o.name||""); $("ppPostcode").value=String(o.postcode||"").replace(/[^0-9]/g,"").slice(0,4);
+    ppStateNote();
+    PP.coasterId=o.coaster_id||null;
+    var n=$("ppCoaster");
+    if(n && PP.coasterId){
+      n.innerHTML='Making <b>'+esc(o.name||"this coaster venue")+'</b> a normal prospect. Its coaster board moves to the new venue once it is set up, and from then on it gets the normal prospect emails. <button type="button" class="btn ghost" id="ppCoasterCancel" style="font-size:15px;margin-left:8px">Not now</button>';
+      show(n,true);
+      $("ppCoasterCancel").addEventListener("click", function(){ ppCoasterClear(); });
+    } else ppCoasterClear();
+    try{ $("prospectPanel").scrollIntoView({ behavior:"smooth", block:"start" }); }catch(e){}
+    try{ $("ppEmail").focus(); }catch(e){}
+  };
   /* THE DELAYED WELCOME (Dean, 28 Oct 2026; migration 124). The email is booked for later; until its
      minute HQ can cancel it or send it now. One row per email from the last two days. */
   function ppWhen(iso){
@@ -4652,6 +4675,7 @@
     if(!(Number.isInteger(delay) && delay>=0 && delay<=1440)){ errFlash("ppErr","Send their email in 0 to 1440 minutes (0 sends it now)."); return; }
     var body={ name:name, first_name:$("ppFirst").value.trim(), email:email, mobile:mob, phone:tel, call_requested:$("ppCallReq").checked, postcode:pc, entity_type:kind,
                players:players, website:$("ppWebsite").value.trim(), slides:PP.slides.slice(), send_in_minutes:delay };
+    if(PP.coasterId) body.coaster_id=PP.coasterId;
     var btn=$("ppGo"); btn.disabled=true; btn.textContent="Setting up...";
     show("ppResult", false);
     workerPost("/admin/prospect", body).then(function(res){
@@ -4668,6 +4692,8 @@
       show("ppResult", true);
       ["ppName","ppFirst","ppEmail","ppMobile","ppPhone","ppPostcode","ppWebsite"].forEach(function(id){ $(id).value=""; });
       $("ppCallReq").checked=false;
+      ppCoasterClear();
+      if(window.VPCoaster) window.VPCoaster.load();
       $("ppKind").value=""; $("ppPlayers").value="10"; $("ppDelay").value="90"; PP.slides=[]; ppThumbs(); ppStateNote(); ppPriceNote();
       ppLoadWaiting();
       loadAll();
