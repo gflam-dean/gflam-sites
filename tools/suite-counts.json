@@ -140,7 +140,7 @@
   "counted_by": "lines"
  },
  "tools/consent-split-in-chrome.test.py": {
-  "checks": 101,
+  "checks": 112,
   "counted_by": "lines"
  },
  "tools/console-hq-5nov-in-chrome.test.py": {
@@ -468,7 +468,7 @@
   "counted_by": "lines"
  },
  "tools/test-consent-split.js": {
-  "checks": 52,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-console-pickup.js": {
