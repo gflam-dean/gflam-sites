@@ -164,7 +164,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
@@ -1020,7 +1020,7 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-email-renders.js": {
-  "checks": 22,
+  "checks": 31,
   "counted_by": "lines"
  },
  "tools/test-welcome-is-sent-once.js": {
@@ -1060,7 +1060,7 @@
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
-  "checks": 36,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/tv-bare-setup-in-chrome.test.py": {

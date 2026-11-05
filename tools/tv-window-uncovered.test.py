@@ -97,7 +97,7 @@ w = read('venueplay/app/vp-help.js')
 check('the widget falls back on /data/help-faq.json when the Worker cannot be reached', '/data/help-faq.json' in w)
 
 # ---------------------------------------------------------------- the emails a new venue gets
-LINE = 'Keep that browser window full screen with nothing over it: a TV page hidden behind another window slows down and shows RECONNECTING.'
+LINE = 'then go full screen with nothing covering the window. A page hidden behind another window slows down and shows RECONNECTING.'   # the emails' wording since 5 Nov 2026
 for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     s = re.sub(r'<!--.*?-->', ' ', read('venueplay/emails/%s.html' % t), flags=re.S)
     cell = re.search(r'<strong>Set up (?:your|the|each) screen\.</strong>(.*?)</td>', s, re.S)

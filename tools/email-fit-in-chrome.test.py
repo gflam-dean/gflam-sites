@@ -51,7 +51,8 @@ import html as H
 WRAP = ('<!doctype html><body style="margin:0"><iframe id=f style="width:%dpx;height:900px;border:0" srcdoc="%s"></iframe><script>'
         'setTimeout(function(){var d=document.getElementById("f").contentDocument,e=d.documentElement,m=0,bad="";'
         'd.querySelectorAll("*").forEach(function(x){var r=x.getBoundingClientRect();if(r.width>0&&r.right>m){m=r.right;bad=x.tagName+":"+(x.textContent||"").slice(0,30)}});'
-        'document.body.insertAdjacentHTML("beforeend","<pre id=probe>"+JSON.stringify({sw:e.scrollWidth,cw:e.clientWidth,right:Math.round(m),el:bad})+"</pre>")},800)</script>')
+        'var h=d.querySelector("h1"),hs=h?parseFloat(d.defaultView.getComputedStyle(h).fontSize):0;'
+        'document.body.insertAdjacentHTML("beforeend","<pre id=probe>"+JSON.stringify({sw:e.scrollWidth,cw:e.clientWidth,right:Math.round(m),el:bad,h1h:h?h.getBoundingClientRect().height:0,h1fs:hs})+"</pre>")},800)</script>')
 gatelib.hold_lock_or_refuse('email-fit-in-chrome', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0')))
 prof = tempfile.mkdtemp(prefix='emailfit-chrome-')
 for name, h in pages.items():
@@ -59,11 +60,14 @@ for name, h in pages.items():
     for w in (320, 375, 390):
         path = os.path.join(tmp, re.sub(r'\W+', '-', name) + '-%d.html' % w)
         open(path, 'w', encoding='utf-8').write(WRAP % (w, H.escape(h, quote=True)))
-        r = subprocess.run([CH, '--headless=new', '--disable-gpu', '--allow-file-access-from-files', '--user-data-dir=' + prof, '--window-size=900,900',
+        r = subprocess.run([CH, '--headless=new', '--disable-gpu', '--allow-file-access-from-files', '--hide-scrollbars', '--user-data-dir=' + prof, '--window-size=900,900',
                             '--virtual-time-budget=4000', '--dump-dom', 'file://' + path], capture_output=True, text=True, timeout=120)
         m = re.search(r'<pre id="probe">(.*?)</pre>', r.stdout, re.S)
         j = json.loads(m.group(1).replace('&quot;', '"')) if m else {}
         ok = bool(j) and j['cw'] == w and j['sw'] <= j['cw'] and j['right'] <= j['cw'] + 1
         check('%s fits %d px wide (nothing cut off, no sideways scroll)' % (name, w), ok, j or r.stdout[-200:])
+        # Dean, 5 Nov 2026: "Welcome to venueplay" wrapped to two lines and re-centred oddly. One line at every phone width.
+        if name in ('template welcome.html', 'template welcome-group.html'):
+            check('%s: the "Welcome to venueplay" heading is ONE line at %d px (21px, no wrap)' % (name, w), bool(j) and j['h1fs'] > 0 and j['h1fs'] <= 22 and j['h1h'] <= j['h1fs'] * 1.5, j)
 print('\n%s' % ('ALL %d CHECKS PASSED' % ran if not fails else '%d of %d FAILED' % (fails, ran)))
 sys.exit(1 if fails else 0)

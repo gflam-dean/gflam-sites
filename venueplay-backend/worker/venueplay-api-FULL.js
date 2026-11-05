@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 13:04 · d0bc1069';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 16:30 · 9741dba3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -7583,6 +7583,8 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
        and how to ask if their bingo is run by a not-for-profit. Every other venue gets the
        template with that section stripped. */
     html = vpaNoBingoSection(html, vpaNoBingoPlaces(vpaSignupNoBingoStates(f, venues)));
+    /* THE ANNUAL PARAGRAPH IS FOR ANNUAL CUSTOMERS ONLY (Dean, 5 Nov 2026). welcome.html wraps it in IF:annual. */
+    html = vpaTplSections(html, { annual: plan === 'annual' });
 
     if (isGroup) {
       const total = venues.reduce((n, v) => n + (parseInt(v.seats, 10) || 0), 0);
@@ -8045,8 +8047,8 @@ async function vpbFireVenueOnboarding(env, o) {
     html = vpaFillSupport(html);
 
     return await vpaSendEmail(env, email,
-      'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)',
-      vpaEmailDocument(html, 'Setup guide for ' + (o.venueName || 'your new venue')), 'support@venueplay.com.au');
+      (o.venueName || 'Your new venue') + ' is set up on venueplay',
+      vpaEmailDocument(html, (o.venueName || 'Your new venue') + ' is set up on venueplay'), 'support@venueplay.com.au');
   } catch (_) { return false; }
 }
 

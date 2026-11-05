@@ -51,23 +51,32 @@ def text(html):
     """What a reader sees: no comments, no tags, entities for the apostrophe undone, one space."""
     t = re.sub(r'<!--.*?-->', ' ', html, flags=re.S)
     t = re.sub(r'<[^>]+>', '', t)
-    t = t.replace('&#39;', "'").replace('&rsquo;', "'").replace('&amp;', '&').replace('&nbsp;', ' ')
+    t = t.replace('&#39;', "'").replace('&rsquo;', "'").replace('&gt;', '>').replace('&amp;', '&').replace('&nbsp;', ' ')
     return re.sub(r'\s+', ' ', t).strip()
 
 
 # ---------------------------------------------------------------- the four emails
+# Dean, 5 Nov 2026: the emails' TV step is now two clear cases, not the one line the Help answer and the
+# guide still carry: Google TV / Android TV gets the app and the screen code (that is it); any other TV
+# opens venueplay.com.au/tv, types the code, goes full screen. No "a join code appears" as a TV step.
+APP_STEP = 'Google TV or Android TV: get the venueplay TV app from Google Play, open it and type the six-character screen code from '
+WEB_STEP = re.compile(r"Any other TV, a Fire Stick or a laptop on HDMI: open venueplay\.com\.au/tv in the TV's web browser, type (?:that venue's|the) screen code, then go full screen with nothing covering the window\.")
 for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     s = re.sub(r'<!--.*?-->', ' ', read('venueplay/emails/%s.html' % t), flags=re.S)
     cell = re.search(r'<strong>Set up (?:your|the|each) screen\.</strong>(.*?)</td>', s, re.S)
     body = cell.group(1) if cell else ''
     words = text(body)
-    check('email %s: the "Set up your screen" step carries the app line, word for word' % t,
-          LINE in words, words[:260])
+    check('email %s: the "Set up your screen" step has the Google TV / Android TV case (the app, then the screen code, that is it)' % t,
+          APP_STEP in words and 'That is it, it remembers your venue.' in words, words[:260])
+    check('email %s: ...and the any-other-TV case (venueplay.com.au/tv in the browser, the screen code, full screen)' % t,
+          bool(WEB_STEP.search(words)), words[-300:])
     link = re.search(r'<a\s[^>]*href="([^"]+)"[^>]*>\s*venueplay TV app\s*</a>', body)
-    check('email %s: "VenuePlay TV app" links to the app\'s Google Play page' % t,
+    check('email %s: "venueplay TV app" links to the app\'s Google Play page' % t,
           bool(link) and link.group(1) == PLAY, link and link.group(1))
-    check('email %s: the step keeps its own words (any TV works, and the RECONNECTING line), no long dash' % t,
-          words.startswith('Any TV works') and 'RECONNECTING' in words and not EM_DASH.search(words), words[:120])
+    check('email %s: it keeps the RECONNECTING line, has no long dash, and never says a join code appears as a TV step' % t,
+          'RECONNECTING' in words and not EM_DASH.search(words) and 'join code appears' not in words and 'Any TV works' not in words, words[:120])
+    check('email %s: it points at the in-app guide in one line' % t,
+          "When you first sign in, we'll walk you through it." in text(s) or t == 'welcome-group' and "When you first sign in, we'll walk you through it." in text(s), None)
 
 # ---------------------------------------------------------------- the Help FAQ
 # The Help answer is a database row: migration 131 (run 31 Oct) wrote the line with "VenuePlay TV app",
@@ -180,17 +189,20 @@ ll = read('venueplay/llms.txt')
 check('llms.txt (what AI search reads about VenuePlay) names the VenuePlay TV app and its Google Play page',
       re.search(r'^- Got a TV with Google Play\? Get the venueplay TV app \(' + re.escape(PLAY) + r'\), then put in your screen code\.$', ll, re.M) is not None)
 
-# ---------------------------------------------------------------- the onboarding email's screen box (Dean, 5 Nov 2026)
-# /tv no longer asks anyone to bookmark a venue link: the screen code is quicker. So the venue
-# onboarding email has a "Your screen code" box and no /tv?slug link or "home page" instruction.
+# ---------------------------------------------------------------- the onboarding email, to the OWNER (Dean, 5 Nov 2026)
+# Not a forward-on guide any more ("who's sending it? hosts get a text message"): the venue is set up, add
+# hosts in Account > People, the TV steps, the help line. No screen-link box, no home page, no /tv?slug.
 ob_raw = read('venueplay/emails/venue-onboarding.html')
 ob = re.sub(r'<!--.*?-->', ' ', ob_raw, flags=re.S)
 obt = text(ob)
-check('the venue onboarding email has a "Your screen code" box with the screen-code words, word for word',
-      'Your screen code' in obt and "Open venueplay.com.au/tv on the TV (or the venueplay TV app), then type the six-character screen code from your host console. The TV remembers your venue after that." in obt, obt[-500:])
-check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), and no "home page" instruction',
-      '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt, obt[-500:])
-check('step 1 points at the screen code, not a link below', 'Open the TV link below' not in obt and 'see the box below' in obt, obt[:900])
+check('the venue onboarding email says "{{venue_name}} is set up." and tells the owner to add hosts in Account > People, each host texted their own sign-in link',
+      '{{venue_name}} is set up.' in obt and 'Add your hosts in Account > People. Each host gets a text with their own sign-in link, so there is nothing to forward.' in obt, obt[:500])
+check('the venue onboarding email has no "Ready to forward" banner and no "send it straight on" words',
+      not re.search(r'Ready to forward|straight on to whoever|forward this on', obt, re.I) and 'forwardable' not in ob.lower(), obt[:300])
+check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), no "home page" and no /tv?slug',
+      '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt and '/tv?' not in ob_raw, obt[-500:])
+check('the venue onboarding email carries the host console step with the join code said the right way (host console, and the TV once a game is open)',
+      "Sign in and start a game. On your phone, go to venueplay.com.au/app and we text you a code. Then start a game from the host console. The players' join code shows on the host console, and on the TV once a game is open." in obt, obt[-700:])
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))
