@@ -103,7 +103,7 @@ def console_section(kind, label):
                 S.js(sid, '[].filter.call(document.querySelectorAll("#venuePickList button"),function(b){return b.textContent==="Deepwater Hotel"})[0].click(); true')
             up = S.until(sid, CONSOLE_UP, 30)
             time.sleep(1.0)
-            p = json.loads(S.js(sid, PLAY) or '{}')
+            p = S.json(sid, PLAY, {})
             ok('%s: CONTROL: the console landed on the Play screen' % where, up is True and p.get('title') == 'Play', p)
             if kind != 'group':
                 ok('%s: M. %s: no "Which venue are you at?" question' % (where, label), p.get('pick') is False, p)
@@ -120,10 +120,10 @@ def console_section(kind, label):
             # O: pick bingo, the way back says Play
             S.js(sid, 'document.querySelector(\'#gamePicker .pk[data-game="bingo"]\').click(); true')
             S.until(sid, '!document.getElementById("bingoView").classList.contains("hidden")', 15); time.sleep(0.5)
-            p2 = json.loads(S.js(sid, PLAY) or '{}')
+            p2 = S.json(sid, PLAY, {})
             ok('%s: O. in bingo setup the way back says "Play", not "Games"' % where, p2.get('backShown') is True and p2.get('back').endswith('Play') and 'Games' not in p2.get('back', ''), p2)
             S.js(sid, 'document.getElementById("gamesBack").click(); true'); time.sleep(0.4)
-            ok('%s: O. and it goes back to Play' % where, S.js(sid, CONSOLE_UP) is True and json.loads(S.js(sid, PLAY) or '{}').get('tag') == 'Play')
+            ok('%s: O. and it goes back to Play' % where, S.js(sid, CONSOLE_UP) is True and S.json(sid, PLAY, {}).get('tag') == 'Play')
             ok('%s: no script errors on the console' % where, S.js(sid, '(window.__errs||[]).length') == 0, S.js(sid, 'JSON.stringify(window.__errs||[])'))
             S.close_tab(tid)
     finally:
@@ -160,10 +160,10 @@ try:
             S.until(sid, '!!document.querySelector("#acctPick select")', 10); time.sleep(0.8)
             ok('%s: CONTROL: Your account is up, from the real Worker' % where, up is True)
             # R
-            r = json.loads(S.js(sid, '(function(){var a=document.getElementById("acctPick"),t=document.querySelector(".tabs"),h=document.querySelector("h1");'
+            r = S.json(sid, '(function(){var a=document.getElementById("acctPick"),t=document.querySelector(".tabs"),h=document.querySelector("h1");'
                                      'var between=[];var n=h?h.nextElementSibling:null;while(n&&n!==a&&n.id!=="content"){if(n.offsetParent)between.push(n.tagName+"#"+n.id);n=n.nextElementSibling;}'
                                      'return JSON.stringify({above:!!(a&&t&&(a.compareDocumentPosition(t)&4)),shown:!!(a&&a.offsetParent),label:(a.querySelector(".vp-pick-label,label")||{}).textContent,'
-                                     'between:between,aTop:a?Math.round(a.getBoundingClientRect().top):0,tTop:t?Math.round(t.getBoundingClientRect().top):0});})()') or '{}')
+                                     'between:between,aTop:a?Math.round(a.getBoundingClientRect().top):0,tTop:t?Math.round(t.getBoundingClientRect().top):0});})()', {})
             ok('%s: R. the venue drop-down sits at the TOP of Your account: above the tabs, with only the title and its one line before it' % where,
                r.get('above') and r.get('shown') and r.get('aTop', 1) < r.get('tTop', 0) and all(b.startswith('P#') for b in r.get('between', [])), r)
             ok('%s: O. Your account\'s way back says "Play"' % where, (S.js(sid, 'document.getElementById("backLink").textContent.trim()') or '').endswith('Play'))
@@ -171,10 +171,10 @@ try:
             # S and T, Your account > Draws > Members draws
             tab(S, sid, 'draws'); fold(S, sid, 'members')
             S.until(sid, 'document.getElementById("mdList").textContent.length > 0', 15); time.sleep(0.5)
-            md = json.loads(S.js(sid, '(function(){var d=document.getElementById("md-day"),s=document.getElementById("md-start"),c=document.getElementById("md-curjp");'
+            md = S.json(sid, '(function(){var d=document.getElementById("md-day"),s=document.getElementById("md-start"),c=document.getElementById("md-curjp");'
                                       'var ids=[].map.call(document.querySelectorAll(".mdgrid .mdf label"),function(l){return l.getAttribute("for")});'
                                       'return JSON.stringify({dayTag:d.tagName,dayRO:d.readOnly,order:ids,curRO:c.readOnly,fix:(document.getElementById("mdCurFix")||{}).textContent,'
-                                      'startBeforeDay:ids.indexOf("md-start")>=0&&ids.indexOf("md-start")<ids.indexOf("md-day")});})()') or '{}')
+                                      'startBeforeDay:ids.indexOf("md-start")>=0&&ids.indexOf("md-start")<ids.indexOf("md-day")});})()', {})
             ok('%s: S. Start date comes before Draw day, and Draw day is a typeable box, not a drop-down' % where,
                md.get('startBeforeDay') and md.get('dayTag') == 'INPUT' and md.get('dayRO') is False, md)
             S.js(sid, 'var s=document.getElementById("md-start"); s.value="2026-11-06"; s.dispatchEvent(new Event("input",{bubbles:true})); s.dispatchEvent(new Event("change",{bubbles:true})); true')
@@ -189,7 +189,7 @@ try:
             ok('%s: T. Save draw with the jackpot untouched sends no current_jackpot_cents' % where, len(sent) == 1 and 'current_jackpot_cents' not in sent[0] and sent[0].get('name') == 'Friday Members Draw', sent)
             time.sleep(1.0)
             S.js(sid, 'document.getElementById("mdCurFix").click(); true'); time.sleep(0.2)
-            t2 = json.loads(S.js(sid, 'JSON.stringify({ro:document.getElementById("md-curjp").readOnly,fix:document.getElementById("mdCurFix").textContent,note:document.getElementById("mdCurNote").textContent})') or '{}')
+            t2 = S.json(sid, 'JSON.stringify({ro:document.getElementById("md-curjp").readOnly,fix:document.getElementById("mdCurFix").textContent,note:document.getElementById("mdCurNote").textContent})', {})
             ok('%s: T. "Correct it" opens the box for this one save and says what happens: the amount goes on the TV with the save' % where,
                t2.get('ro') is False and t2.get('fix') == 'Keep what it was' and 'Save draw' in (t2.get('note') or ''), t2)
             S.js(sid, 'var c=document.getElementById("md-curjp"); c.value="275"; c.dispatchEvent(new Event("input",{bubbles:true})); window.__sent=[]; document.getElementById("mdSave").click(); true')
@@ -210,7 +210,7 @@ try:
             kinds = S.js(sid, '[].map.call(document.querySelectorAll("#drawPermits .permit"),function(p){return p.getAttribute("data-kind")}).join(",")')
             ok('%s: Q. "Record a permit anyway" brings the raffle card up (a charity\'s big raffle, say), and nothing is lost' % where, kinds == 'raffle,members', kinds)
             # the table itself, the figures from the regulators' pages
-            T = json.loads(S.js(sid, 'JSON.stringify(VPPermits.RAFFLE)') or '{}')
+            T = S.json(sid, 'JSON.stringify(VPPermits.RAFFLE)', {})
             want = {'NSW': (3000000, 'prizes'), 'QLD': (5000000, 'sales'), 'VIC': (2306000, 'prizes'), 'SA': (500000, 'prizes'),
                     'WA': (200000, 'prizes'), 'TAS': (1000000, 'prizes'), 'ACT': (250000, 'prizes'), 'NT': (500000, 'sales')}
             ok('%s: Q. the table has every state and territory with the researched line: NSW $30,000, QLD $50,000 sales, VIC $23,060, SA $5,000, WA $2,000, TAS $10,000, ACT $2,500, NT $5,000 sales' % where,
@@ -253,9 +253,9 @@ try:
         time.sleep(0.8)
         ok('O. the members console\'s way back says "Play"', (r.ask(sid, 'document.querySelector(".vp-navlink").textContent.trim()') or '').endswith('Play'))
         r.ask(sid, 'document.getElementById("membersAdv").open=true; true')
-        m = json.loads(r.ask(sid, '(function(){var ids=[].map.call(document.querySelectorAll("#membersAdv .field label"),function(l){return l.textContent.trim()});'
+        m = r.json(sid, '(function(){var ids=[].map.call(document.querySelectorAll("#membersAdv .field label"),function(l){return l.textContent.trim()});'
                                   'return JSON.stringify({order:ids,dayTag:document.getElementById("setDay").tagName,dayRO:document.getElementById("setDay").readOnly,'
-                                  'curRO:document.getElementById("setCur").readOnly,fix:document.getElementById("setCurFix").textContent});})()') or '{}')
+                                  'curRO:document.getElementById("setCur").readOnly,fix:document.getElementById("setCurFix").textContent});})()', {})
         order = m.get('order') or []
         ok('S. Advanced settings: Start date, then Draw day, as on Your account; Draw day a typeable box', order[:3] == ['Draw name', 'Start date', 'Draw day'] and m.get('dayTag') == 'INPUT' and m.get('dayRO') is False, m)
         r.ask(sid, 'var s=document.getElementById("setSince"); s.value="2026-11-06"; s.dispatchEvent(new Event("change",{bubbles:true})); true')
