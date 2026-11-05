@@ -216,6 +216,9 @@ export default {
       if (request.method === 'POST' && path === '/account/card-link' && typeof vpbCardLink === 'function') return await vpbCardLink(request, env, json);
       // The first screen after the one-off link: their name on their venue staff rows (Dean, 29 Oct 2026).
       if (request.method === 'POST' && path === '/account/my-name' && typeof vpbMyName === 'function') return await vpbMyName(request, env, json);
+      // Product updates by email, asked at sign-in at most once a month, a tick unticked by default (Dean, 5 Nov 2026, INBOX 21a; migration 161).
+      if (request.method === 'POST' && path === '/account/updates-ask' && typeof vpbUpdatesAsk === 'function') return await vpbUpdatesAsk(request, env, json);
+      if (request.method === 'POST' && path === '/account/updates-optin' && typeof vpbUpdatesOptin === 'function') return await vpbUpdatesOptin(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       // HQ > Venues > Set up a prospect (Dean, 28 Oct 2026): venue, login, slides and ONE welcome, in one go.
@@ -4584,6 +4587,102 @@ async function vpbMyName(request, env, json) {
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ display_name: name }) });
   if (!up.ok) return json({ error: 'That did not save. Try again.' }, 502);
   return json({ ok: true, name: name });
+}
+
+/* ===========================================================================
+ * PRODUCT UPDATES FROM VENUEPLAY, ASKED AT SIGN-IN (Dean, 5 Nov 2026, INBOX item 21a; migration 161)
+ *
+ * "when a host signs in (by phone), also ask for their EMAIL address, optional, for product updates
+ * about once a month. It needs a clear opt-in tick, unticked by default ... and an unsubscribe link in
+ * every update. Store the consent with a timestamp. Hosts who skip it are never asked again on every
+ * sign-in: at most once a month."
+ *
+ *   POST /account/updates-ask             -> { ask: true|false }
+ *   POST /account/updates-optin { email, opt_in }
+ *
+ * Any venue login (a vp_venue_staff row of any role), for ITSELF, by the token's own id: X-VP-Venue and
+ * View as change nothing, and an HQ admin with no staff row is refused. The page is
+ * venueplay/app/vp-updates-optin.js; its tick wording is VPB_HOST_UPDATES_CONSENT, word for word
+ * (tools/test-host-updates-optin.js holds the two equal), because the words stored are the words ticked.
+ *
+ * FAILS CLOSED. If the table cannot be read (migration 161 not run, or a blip) the answer is
+ * { ask: false }: never ask for what we cannot store. An email is ONLY stored with the tick: "Not now",
+ * or Save with the tick off, stores asked_at and no email at all, even one typed into the box. The email
+ * is never logged. Nothing here sends anything: vpaHostUpdatesRecipients is the list a future send
+ * would read, minus vp_unsubscribes, each with its own unsubscribe link.
+ * ======================================================================== */
+const VPB_HOST_UPDATES_CONSENT = 'Yes, email me venueplay product updates, about once a month. I can unsubscribe at any time from any email.';
+const VPB_HOST_UPDATES_EVERY_MS = 30 * 86400000;   // a host who skipped is asked again after 30 days, never sooner
+async function vpbUpdatesWho(request, env, json) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return { res: json({ ask: false, error: 'Not signed in.' }, 401) };
+  const payload = await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env);
+  if (!payload || !payload.sub) return { res: json({ ask: false, error: 'Invalid or expired session. Please sign in again.' }, 401) };
+  const mine = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=venue_id&limit=1');
+  if (!mine || !mine.length) return { res: json({ ask: false, error: 'This login has no venues.' }, 403) };
+  return { uid: String(payload.sub) };
+}
+async function vpbUpdatesAsk(request, env, json) {
+  const who = await vpbUpdatesWho(request, env, json);
+  if (who.res) return who.res;
+  /* Its own fetch: vpaSelect answers [] on an error, which would read as "no row yet" and ask. */
+  let rows;
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_host_updates_optin?auth_user_id=eq.' + encodeURIComponent(who.uid) +
+      '&select=opted_in,asked_at&limit=1', { headers: vpaHeaders(env) });
+    if (!res.ok) return json({ ask: false });
+    rows = await res.json();
+  } catch (e) { return json({ ask: false }); }
+  if (!Array.isArray(rows)) return json({ ask: false });
+  const r = rows[0];
+  if (!r) return json({ ask: true });
+  if (r.opted_in) return json({ ask: false });
+  const at = Date.parse(r.asked_at || '');
+  return json({ ask: !isFinite(at) || (Date.now() - at) > VPB_HOST_UPDATES_EVERY_MS });
+}
+async function vpbUpdatesOptin(request, env, json) {
+  const who = await vpbUpdatesWho(request, env, json);
+  if (who.res) return who.res;
+  if (!rateLimit('host-updates:' + who.uid, 10, 3600)) return json({ error: 'Too many tries. Try again later.' }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const now = new Date().toISOString();
+  let row;
+  if (b.opt_in === true) {
+    const email = String(b.email == null ? '' : b.email).trim().toLowerCase();
+    if (!email || email.length > 254 || !VP_UNSUB_EMAIL_RE.test(email)) return json({ error: 'That email address does not look right. Check it and try again.' }, 400);
+    row = { auth_user_id: who.uid, email: email, opted_in: true, consent_at: now, consent_text: VPB_HOST_UPDATES_CONSENT,
+      source: 'host-sign-in', asked_at: now, updated_at: now };
+  } else {
+    /* Not now, or Save with the tick off: no email is kept, whatever was typed. */
+    row = { auth_user_id: who.uid, email: null, opted_in: false, consent_at: null, consent_text: null, source: null, asked_at: now, updated_at: now };
+  }
+  let ok = false;
+  try {
+    const up = await fetch(env.SUPABASE_URL + '/rest/v1/vp_host_updates_optin?on_conflict=auth_user_id', {
+      method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(row) });
+    ok = !!(up && up.ok);
+  } catch (e) { ok = false; }
+  if (!ok) return json({ error: 'That did not save. Try again later.' }, 503);
+  return json({ ok: true, opted_in: row.opted_in });
+}
+/* WHO A PRODUCT UPDATE MAY GO TO: every host who ticked, minus anyone on vp_unsubscribes (the one list
+   every venueplay email honours), each with their own unsubscribe link (campaign 'host-updates'). THROWS
+   if either list cannot be read in full: a short unsubscribe list means emailing people who said stop.
+   Nothing on this branch calls a send with it. */
+async function vpaHostUpdatesRecipients(env) {
+  const rows = await vpaSelectAll(env, 'vp_host_updates_optin', 'select=auth_user_id,email,consent_at&opted_in=eq.true&order=auth_user_id.asc');
+  const stop = await vpaUnsubscribedSet(env);
+  const seen = Object.create(null), out = [];
+  for (const r of rows) {
+    const e = String((r && r.email) || '').trim().toLowerCase();
+    if (!e || stop[e] || seen[e]) continue;
+    seen[e] = true;
+    out.push({ auth_user_id: r.auth_user_id, email: e, unsubscribe_url: await vpUnsubLink(env, e, 'host-updates') });
+  }
+  return out;
 }
 
 /* NUMBER BINGO, ONE LINE FOR THE WELCOME, BY STATE AND BY CLUB OR PUB. The words are vp-gaming.js's

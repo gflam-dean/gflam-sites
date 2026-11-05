@@ -601,3 +601,13 @@ card brings a paused prospect back, and the sweep now includes `free_month_ended
 grant, so RLS-BASELINE.json does not change. Either order with the Workers. NUMBER: 152 to 154 are on other branches and
 tonight's agents take 155 onwards, so 160 (renumber at merge if taken). Branch `fix/account-review-8nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-161-host-updates-optin.sql` (Dean, 5 Nov 2026, INBOX item 21a, host sign-in asks for an email for product
+updates): one new table, `vp_host_updates_optin`, one row per login (auth_user_id): email, opted_in (default false),
+consent_at, consent_text (the exact tick wording), source ('host-sign-in'), asked_at (so a host who skips is asked at most
+once every 30 days) and updated_at. A check keeps an email only with a tick. RLS on, no policies, revoked from anon and
+authenticated: only the billing Worker's service role reaches it. Unsubscribes stay in `vp_unsubscribes`. RLS-BASELINE.json
+CHANGES (one new table): after it is run, re-dump it with `python3 venueplay-backend/tools/dump-rls-baseline.py` and
+commit (NEEDS DEAN). Either order with the billing Worker: before it runs, /account/updates-ask answers {ask:false} and the
+console shows nothing. NUMBER: 152 to 154 are on other branches, tonight's agents take 155 onwards and 160 is on this
+branch, so 161 (renumber at merge if taken). Branch `fix/host-updates-optin-8nov`. NOT RUN. Read-back and rollback in the file.

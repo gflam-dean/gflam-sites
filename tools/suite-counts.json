@@ -535,6 +535,10 @@
   "checks": 22,
   "counted_by": "lines"
  },
+ "tools/test-host-updates-optin.js": {
+  "checks": 58,
+  "counted_by": "lines"
+ },
  "tools/test-jackpot-cap-15-oct.js": {
   "checks": 68,
   "counted_by": "lines"
