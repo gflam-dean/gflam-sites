@@ -3918,6 +3918,13 @@ def local_checks(which):
              'runs vpbSetPlayers: an add with 3 days of the cycle left is still one full month on the next invoice, live tonight, quantity up with no proration; a drop waits for the renewal, refunds and credits nothing, so 30 added for one night cost a month; a quote changes nothing; a pending drop then up charges only the new players; a yearly plan keeps its pro rata and credit; VPB_BILLING_RULES_3NOV is off unless it is the string 1; with it on, an undo within 59 minutes with no game started deletes the invoice line, puts the capacity and quantity back and writes the HQ history row, while 61 minutes, a game started since, a part-way drop, a refused delete, no add on record and a yearly plan all fall back to the ordinary reduction', 40,
              'A venue charged a month for players it undid within the hour (or let off a month it used), an undo '
              'that leaves the invoice line standing, or the new rules switched on by a value nobody set'),
+            # D123: the first-sign-in setup guide (Dean, 5 Nov 2026, INBOX 13), branch fix/first-run-guide-10nov.
+            # (D115 to D122 left free: other branches hold some of them.)
+            ('D123. A new venue\'s first sign-in walks it through the TV by screen code, adding hosts by text, then a trivia test game',
+             'test-first-run-guide.js',
+             'runs vp-firstrun.js: the TV, hosts, a first game, then the card; the venue\'s own screen code (its join code or the console\'s derived one), the Google TV app linked to its Play page then the code, or venueplay.com.au/tv in the TV\'s browser, the code and full screen, Google TV first, no slug link; hosts at this venue listed, a name and an Australian mobile asked for before anything is sent, /account/host-add for this venue only, the Worker\'s refusal shown, never an email; trivia first and pink, musical bingo never called bingo; nothing under 15px, nothing wider than a phone, the Terms card lifted on a phone; lowercase venueplay, no dashes', 47,
+             'A new venue told to type a slug link the TV no longer takes, a host added to every venue on the account '
+             'or never texted, or a guide too small to read on the owner\'s phone'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

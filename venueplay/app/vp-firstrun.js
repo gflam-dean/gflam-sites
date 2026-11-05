@@ -14,10 +14,15 @@
                           ever writes an unverified number to a login.
      2. The Terms         the existing blocking Terms card (VP.termsCard), as this step. Next waits for
                           the tick; nobody can tick on their behalf.
-     3. Your TV           their exact TV address with Copy, and a live preview of their slides
+     3. Your TV           their screen code, then the two ways in (Dean, 5 Nov 2026, INBOX 13): on a Google TV,
+                          the venueplay TV app and the screen code; or any TV web browser at venueplay.com.au/tv,
+                          the screen code, then full screen. No slug link ("Everywhere should say
+                          venueplay.com.au/tv", Dean 5 Nov). Plus a live preview of their slides
                           (/account/screen-get, the same read Your account > Screen makes).
-     4. A first game      trivia in three taps, or musical bingo, opening that console for their venue.
-     5. Your card         the card link for their own account (/account/card-link) and the price line,
+     4. Your hosts        name and mobile; the billing Worker's /account/host-add makes the login and texts
+                          the host their own sign-in link (the same route as Account > People > Add a host).
+     5. A first game      a test game, trivia first in three taps, or musical bingo, opening that console.
+     6. Your card         the card link for their own account (/account/card-link) and the price line,
                           plus "Need a hand? Tap here and Dean will call": a help desk ticket, "Please
                           call me", with their mobile. No typing needed.
 
@@ -33,14 +38,18 @@
    Stripe) skips step 5. The card step always shows both Now and Later; Later works without the card
    link, and a link that will not load says so with a Retry button (audit 2.5).
 
+   THE FIRST-SIGN-IN SETUP GUIDE (Dean, 5 Nov 2026, INBOX 13): the TV, then hosts, then a first test game,
+   trivia first. Readable at 375px: nothing in the guide is under 15px, and the Terms card it borrows is
+   lifted to 15px inside the guide on a phone.
+
    The 4 hour sign-out still applies: this is a page of the signed-in console, nothing more.
    Everything a person reads is set with textContent; nothing they or HQ typed is ever parsed as HTML. */
 (function (root) {
   "use strict";
   var BILLING_API = "https://api.venueplay.com.au";
   var KEY = "vpFirstRun:";
-  var STEPS = ["mobile", "terms", "tv", "game", "card"];
-  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", tv: "Your TV", game: "Run your first game", card: "Add your card when you're ready" };
+  var STEPS = ["mobile", "terms", "tv", "hosts", "game", "card"];
+  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", tv: "Your TV", hosts: "Add your hosts", game: "Run your first game", card: "Add your card when you're ready" };
 
   var C = { ink: "#0A0A0B", ink2: "#141418", pink: "#FF1F8E", pinkSoft: "#FF8CC6", text: "#E7E7EC", muted: "#C9C9D1", faint: "#8A8A94", line: "rgba(255,255,255,.12)", ok: "#2BD47D" };
   var FONT = "font-family:Manrope,system-ui,sans-serif";
@@ -127,7 +136,6 @@
     var doc = deps.doc || root.document, storage = deps.storage || root.localStorage;
     var fetchFn = deps.fetch || (root.fetch && root.fetch.bind(root));
     var client = deps.client, VP = deps.VP || root.VP;
-    var origin = deps.origin || (root.location && root.location.origin) || "https://venueplay.com.au";
     var every = deps.setInterval || (root.setInterval && root.setInterval.bind(root)), stop = deps.clearInterval || (root.clearInterval && root.clearInterval.bind(root));
     var go = deps.openUrl || function (u) { root.location.href = u; };
     var v = ctx.venue, state = readState(storage, v.id), prospect = isProspect(ctx);
@@ -144,6 +152,12 @@
     var me = { phone: "", email: "", token: "" };
     var started = null;   // their free month starts the first time they sign in (/account/prospect-start, below)
 
+    /* The code a person types on the TV: the venue's own join code, falling back to the derived one exactly as
+       the console's "Screen code" chip does (VP.venueJoinCode in vp-session.js). One answer, one place. */
+    function screenCode() {
+      if (v.join_code) return String(v.join_code);
+      return (VP && VP.venueCode && v.slug) ? String(VP.venueCode(v.slug)) : "";
+    }
     function el(tag, css, text) { var e = doc.createElement(tag); if (css) e.setAttribute("style", css); if (text != null) e.textContent = text; return e; }
     function clearTimers() { timers.forEach(function (t) { try { stop(t); } catch (e) {} }); timers = []; }
     function save() { writeState(storage, v.id, state); }
@@ -178,12 +192,16 @@
     }
     var shell = el("div", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9000;overflow-y:auto;background:#0A0A0B;" + FONT + ";color:" + C.text + ";padding:0 16px;box-sizing:border-box");
     shell.id = "vpFirstRun"; shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-label", "Getting started");
+    /* THE TERMS CARD IT BORROWS (vp-session.js) sets 12 to 14.5px for its own page; inside the guide on a
+       phone it is lifted to 15px, so nothing in the guide reads under 15px at 375px. */
+    var lift = el("style", null, "@media (max-width:600px){#vpFirstRun #vpTermsCard p,#vpFirstRun #vpTermsCard label,#vpFirstRun #vpTermsCard span,#vpFirstRun #vpTermsCard button,#vpFirstRun #vpTermsCard a{font-size:15px!important}}");
+    lift.id = "vpFrLift"; shell.appendChild(lift);
     var box = el("div", "max-width:480px;margin:0 auto;padding:28px 0 40px");
     shell.appendChild(box);
     var top = el("div", "display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px");
     var dots = el("div", "display:flex;gap:8px;align-items:center"); dots.id = "vpFrDots"; dots.setAttribute("aria-hidden", "true");
-    var count = el("p", "margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:" + C.pink + ";font-weight:800"); count.id = "vpFrCount";
-    var x = el("button", BTN_GHOST + ";min-height:40px;padding:8px 14px;font-size:14px", "Close"); x.id = "vpFrClose"; x.setAttribute("type", "button"); x.setAttribute("aria-label", "Close the setup guide");
+    var count = el("p", "margin:0;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:" + C.pink + ";font-weight:800"); count.id = "vpFrCount";
+    var x = el("button", BTN_GHOST + ";min-height:40px;padding:8px 14px;font-size:15px", "Close"); x.id = "vpFrClose"; x.setAttribute("type", "button"); x.setAttribute("aria-label", "Close the setup guide");
     var left = el("div", "display:flex;flex-direction:column;gap:8px"); left.appendChild(count); left.appendChild(dots);
     top.appendChild(left); top.appendChild(x); box.appendChild(top);
     var card = el("div", "background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:22px 20px");
@@ -196,7 +214,7 @@
     foot.appendChild(back); foot.appendChild(next); box.appendChild(foot);
     doc.body.appendChild(shell);
 
-    function msgLine(id) { var m = el("p", "margin:8px 0 0;font-size:14px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); m.id = id; m.setAttribute("role", "status"); return m; }
+    function msgLine(id) { var m = el("p", "margin:8px 0 0;font-size:15px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); m.id = id; m.setAttribute("role", "status"); return m; }
     function setNext(label, enabled) {
       if (label === "Next" && steps.indexOf(state.step) === steps.length - 1) label = "Finish";   // the last step this venue has
       next.textContent = label; next.disabled = !enabled;
@@ -222,12 +240,12 @@
           holder.appendChild(el("p", "margin:0;font-size:15px;line-height:1.55;color:" + C.ok + ";font-weight:700", "Done. " + mobileShow(me.phone) + " is on your login, so you can sign in by text."));
           state.mobile = "done"; save(); setNext("Next", true); return;
         }
-        holder.appendChild(el("p", "margin:0 0 14px;font-size:13.5px;line-height:1.5;color:" + C.faint, "We text it a code first. It only goes on your login once you type that code in."));
-        var lbl = el("label", "display:block;font-size:13px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your mobile"); lbl.setAttribute("for", "vpFrMobile");
+        holder.appendChild(el("p", "margin:0 0 14px;font-size:15px;line-height:1.5;color:" + C.faint, "We text it a code first. It only goes on your login once you type that code in."));
+        var lbl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your mobile"); lbl.setAttribute("for", "vpFrMobile");
         var inp = el("input", INPUT); inp.id = "vpFrMobile"; inp.setAttribute("type", "tel"); inp.setAttribute("inputmode", "tel"); inp.setAttribute("autocomplete", "tel"); inp.setAttribute("placeholder", "04xx xxx xxx");
         var send = el("button", BTN_PINK, "Text me a code"); send.id = "vpFrSend"; send.setAttribute("type", "button");
         var codeWrap = el("div", "display:none;margin-top:14px");
-        var clbl = el("label", "display:block;font-size:13px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "The 6-digit code we texted you"); clbl.setAttribute("for", "vpFrCode");
+        var clbl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "The 6-digit code we texted you"); clbl.setAttribute("for", "vpFrCode");
         var code = el("input", INPUT + ";letter-spacing:.3em"); code.id = "vpFrCode"; code.setAttribute("inputmode", "numeric"); code.setAttribute("autocomplete", "one-time-code"); code.setAttribute("maxlength", "6");
         var verify = el("button", BTN_PINK, "Confirm"); verify.id = "vpFrVerify"; verify.setAttribute("type", "button");
         var msg = msgLine("vpFrMsg");
@@ -286,34 +304,39 @@
       timers.push(t);
     };
     STEP.tv = function () {
-      var url = origin.replace(/\/+$/, "") + "/tv?" + encodeURIComponent(v.slug || "");
-      body.appendChild(el("p", TEXT, "Open this address in your TV's web browser (or on a laptop or streaming stick plugged into the TV) and leave it running. Keep the venueplay screen full screen, or at least never covered by another window. A covered browser window slows down and the TV can fall behind."));
-      /* THE APP, FOR A TV WITH GOOGLE PLAY (Dean, 31 Oct 2026). One line, the same words as the welcome
-         emails and the Help answer, with the app's store page as its link. */
-      var play = el("p", TEXT); play.id = "vpFrPlay";
-      play.appendChild(el("span", "", "Got a TV with Google Play? Download the "));
+      /* THE TV, BY SCREEN CODE (Dean, 5 Nov 2026, INBOX 13). Two ways in, each a short numbered list:
+         a Google TV gets the venueplay TV app; any other TV (or a laptop or stick plugged into it) opens
+         venueplay.com.au/tv in its web browser. Both ask for the same six-character screen code, which
+         is the venue's own join code, the one the console shows beside "Screen code". Never a slug link. */
+      var code = screenCode();
+      body.appendChild(el("p", TEXT, "Get " + (v.name || "your venue") + " on the TV in a couple of minutes. You will need this screen code:"));
+      var codeBox = el("div", "margin:0 0 6px;padding:14px 16px;border-radius:12px;border:1px solid " + C.line + ";background:" + C.ink + ";text-align:center;color:#FFFFFF;font:800 30px/1.2 " + HEAD + ";letter-spacing:.22em", code || "------");
+      codeBox.id = "vpFrTvCode"; codeBox.setAttribute("aria-label", "Your screen code " + String(code || "").split("").join(" "));
+      body.appendChild(codeBox);
+      body.appendChild(el("p", "margin:0 0 18px;font-size:15px;line-height:1.5;color:" + C.faint + ";text-align:center", "It is also at the top of your host console, beside Screen code."));
+      function way(id, head, items) {
+        var w = el("div", "margin:0 0 14px;padding:16px;border-radius:12px;border:1px solid " + C.line + ";background:rgba(255,255,255,.03)"); w.id = id;
+        w.appendChild(el("h3", "margin:0 0 10px;font-size:17px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:" + HEAD, head));
+        var ol = el("ol", "margin:0;padding:0 0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted);
+        items.forEach(function (it) { var li = el("li", "margin:0 0 6px"); if (typeof it === "string") li.textContent = it; else li.appendChild(it); ol.appendChild(li); });
+        w.appendChild(ol); body.appendChild(w); return w;
+      }
+      /* THE APP, FOR A GOOGLE TV (Dean, 31 Oct 2026, then 5 Nov). The store page is the link. */
+      var playLi = el("span", ""); playLi.id = "vpFrPlay";
+      playLi.appendChild(el("span", "", "On the TV, open Google Play and get the "));
       var playA = el("a", "color:#FF8AC4;font-weight:700;text-decoration:underline", "venueplay TV app");
       playA.setAttribute("href", "https://play.google.com/store/apps/details?id=au.com.venueplay.tv");
       playA.setAttribute("target", "_blank"); playA.setAttribute("rel", "noopener");
-      play.appendChild(playA);
-      play.appendChild(el("span", "", " and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser."));
-      body.appendChild(play);
-      var row = el("div", "display:flex;gap:8px;align-items:stretch;margin:0 0 16px");
-      var addr = el("div", "flex:1;min-width:0;padding:11px 14px;border-radius:10px;border:1px solid " + C.line + ";background:" + C.ink + ";color:#FFFFFF;font:600 15px/1.4 ui-monospace,Menlo,monospace;word-break:break-all", url.replace(/^https?:\/\//, ""));
-      addr.id = "vpFrTvUrl";
-      var copy = el("button", BTN_PINK + ";flex:0 0 auto", "Copy"); copy.id = "vpFrCopy"; copy.setAttribute("type", "button");
-      row.appendChild(addr); row.appendChild(copy); body.appendChild(row);
-      copy.addEventListener("click", function () {
-        var clip = deps.clipboard || (root.navigator && root.navigator.clipboard);
-        var p = (clip && clip.writeText) ? clip.writeText(url) : Promise.reject(new Error("no clipboard"));
-        return Promise.resolve(p).then(function () { copy.textContent = "Copied"; return true; }, function () { copy.textContent = "Select and copy"; return false; });
-      });
+      playLi.appendChild(playA); playLi.appendChild(el("span", "", "."));
+      way("vpFrTvApp", "On a Google TV", [playLi, "Open the app.", "Put in your screen code."]);
+      way("vpFrTvWeb", "Or in the TV's web browser", ["Go to venueplay.com.au/tv on the TV (a laptop or streaming stick plugged into it works too).", "Put in your screen code.", "Go full screen and leave it running."]);
+      body.appendChild(el("p", TEXT, "Keep the venueplay screen full screen, or at least never covered by another window. A covered browser window slows down and the TV can fall behind."));
       var frame = el("div", "position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;border:1px solid " + C.line);
       frame.id = "vpFrPreview";
       var img = el("img", "position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;display:none"); img.id = "vpFrSlide"; img.setAttribute("alt", "Your TV slide");
-      var empty = el("p", "position:absolute;top:50%;left:0;right:0;margin:0;transform:translateY(-50%);text-align:center;font-size:14px;color:" + C.faint, "Loading your TV...");
+      var empty = el("p", "position:absolute;top:50%;left:0;right:0;margin:0;transform:translateY(-50%);text-align:center;font-size:15px;color:" + C.faint, "Loading your TV...");
       frame.appendChild(img); frame.appendChild(empty); body.appendChild(frame);
-      var cap = el("p", "margin:10px 0 0;font-size:13.5px;line-height:1.5;color:" + C.faint, ""); cap.id = "vpFrCaption"; body.appendChild(cap);
+      var cap = el("p", "margin:10px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, ""); cap.id = "vpFrCaption"; body.appendChild(cap);
       setNext("Next", true);
       return billing("/account/screen-get", { venue_id: v.id }).then(function (d) {
         var slides = ((d && d.slides) || []).filter(function (s) { return s && /^https:\/\//.test(String(s.image_url || "")); });
@@ -329,13 +352,66 @@
         return slides.length;
       });
     };
+    /* ADD YOUR HOSTS (Dean, 5 Nov 2026, INBOX 13). Name and mobile, one at a time, through the same billing
+       Worker route as Account > People > Add a host (/account/host-add, this venue only). The Worker makes
+       the host's login and texts them their own sign-in link; nothing here sends a text itself. Hosts sign
+       in by mobile, never email (Dean, 29 Oct). Optional: a venue whose owner hosts can skip it. */
+    STEP.hosts = function () {
+      body.appendChild(el("p", TEXT, "Hosts run the games on the night. Add each one with their name and mobile, and we text them their own sign-in link. Nothing to install and no password."));
+      var list = el("div", "margin:0 0 14px"); list.id = "vpFrHostList"; body.appendChild(list);
+      var added = 0;
+      function row(name, sub) {
+        var r = el("div", "display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:10px 12px;margin:0 0 8px;border-radius:10px;border:1px solid " + C.line + ";background:" + C.ink);
+        r.setAttribute("data-host", "1");
+        r.appendChild(el("b", "font-size:15px;color:#FFFFFF;font-weight:700;overflow-wrap:anywhere", name));
+        r.appendChild(el("span", "font-size:15px;color:" + C.faint + ";white-space:nowrap", sub));
+        list.appendChild(r);
+      }
+      var none = el("p", "margin:0;font-size:15px;line-height:1.5;color:" + C.faint, "No hosts yet. If you host every night yourself, skip this."); none.id = "vpFrHostNone";
+      list.appendChild(none);
+      var nl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Host's name"); nl.setAttribute("for", "vpFrHostName");
+      var name = el("input", INPUT); name.id = "vpFrHostName"; name.setAttribute("type", "text"); name.setAttribute("autocomplete", "off"); name.setAttribute("placeholder", "First and last name");
+      var ml = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Their mobile"); ml.setAttribute("for", "vpFrHostMobile");
+      var mob = el("input", INPUT); mob.id = "vpFrHostMobile"; mob.setAttribute("type", "tel"); mob.setAttribute("inputmode", "tel"); mob.setAttribute("autocomplete", "off"); mob.setAttribute("placeholder", "04xx xxx xxx");
+      var add = el("button", BTN_PINK + ";width:100%", "Add host and text them"); add.id = "vpFrHostAdd"; add.setAttribute("type", "button");
+      var msg = msgLine("vpFrHostMsg");
+      body.appendChild(nl); body.appendChild(name); body.appendChild(ml); body.appendChild(mob); body.appendChild(add); body.appendChild(msg);
+      body.appendChild(el("p", "margin:14px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Add or remove hosts any time under Account, then People."));
+      setNext("Skip for now", true);
+      add.addEventListener("click", function () {
+        var nm = String(name.value || "").trim(), ph = mobileE164(mob.value);
+        msg.style.color = C.pinkSoft;
+        if (!nm) { msg.textContent = "Type the host's name first."; return Promise.resolve(false); }
+        if (!ph) { msg.textContent = "That is not an Australian mobile. It should start 04."; return Promise.resolve(false); }
+        add.disabled = true; msg.textContent = "";
+        return billing("/account/host-add", { label: nm.slice(0, 80), mobile: ph, venue_ids: [v.id], all_venues: false }).then(function (r) {
+          add.disabled = false;
+          if (!r || r.error || !r.ok) { msg.textContent = (r && r.error) || "That host could not be added just now. Try again in a minute."; return false; }
+          added++; none.style.display = "none"; row(nm, mobileShow(ph));
+          name.value = ""; mob.value = "";
+          msg.style.color = C.ok; msg.textContent = "Done. We have texted " + nm + " their sign-in link. Add another, or tap Next.";
+          state.hosts = added; save(); setNext("Next", true);
+          return true;
+        });
+      });
+      /* Who is already on (a host added from Account before the guide, or an earlier visit to this step). */
+      return billing("/account/hosts", {}).then(function (d) {
+        var hs = ((d && d.hosts) || []).filter(function (h) { return h && !h.is_owner && h.role === "host" && (h.venue_ids || []).indexOf(v.id) >= 0; });
+        hs.forEach(function (h) { row(String(h.label || "Host"), h.mobile_last3 ? "mobile ending " + h.mobile_last3 : "Host"); });
+        if (hs.length) { none.style.display = "none"; if (!added) setNext("Next", true); }
+        return hs.length;
+      });
+    };
     STEP.game = function () {
       var q = "?venue=" + encodeURIComponent(v.slug || "");
+      /* A TEST GAME, TRIVIA FIRST (Dean, 5 Nov 2026, INBOX 13): try it before the first real night, with the TV
+         on and their own phone as the player. */
+      body.appendChild(el("p", TEXT, "Run a quick test game now, before your first real night. With the TV on, join from your own phone using the QR code on the TV, so you see what your players see."));
       body.appendChild(el("p", TEXT, "Trivia takes three taps: pick a question set, tap Open lobby, then Start once people have joined on their phones from the QR code on the TV."));
       var tri = el("button", BTN_PINK + ";width:100%;margin:0 0 10px", "Open trivia"); tri.id = "vpFrTrivia"; tri.setAttribute("type", "button");
       var mus = el("button", BTN_GHOST + ";width:100%", "Or try musical bingo"); mus.id = "vpFrMusical"; mus.setAttribute("type", "button");
       body.appendChild(tri); body.appendChild(mus);
-      body.appendChild(el("p", "margin:12px 0 0;font-size:13.5px;line-height:1.5;color:" + C.faint, "Musical bingo: pick a playlist, tap Open lobby, then Deal, then Play. Come back to this guide any time from Setup guide at the top."));
+      body.appendChild(el("p", "margin:12px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Musical bingo: pick a playlist, tap Open lobby, then Deal, then Play. Come back to this guide any time from Setup guide at the top."));
       // Leaving for a game moves the guide on, so it reopens on the last step.
       function leave(path) { var gi = steps.indexOf("game"); state.step = steps[gi + 1] || "game"; save(); clearTimers(); go(path + q); }
       tri.addEventListener("click", function () { leave("/app/trivia/host.html"); });
@@ -372,11 +448,11 @@
         cardMsg.textContent = "No problem. We'll send you a reminder email to add your card before your free month ends.";
         return true;
       });
-      body.appendChild(el("p", "margin:12px 0 22px;font-size:13px;line-height:1.5;color:" + C.faint, "The link is secure and goes to our payment provider, Stripe. Nothing is charged when you add it, and nothing until your free month ends."));
+      body.appendChild(el("p", "margin:12px 0 22px;font-size:15px;line-height:1.5;color:" + C.faint, "The link is secure and goes to our payment provider, Stripe. Nothing is charged when you add it, and nothing until your free month ends."));
       var help = el("div", "border-top:1px solid " + C.line + ";padding-top:18px");
       help.appendChild(el("p", "margin:0 0 10px;font-size:15px;font-weight:700;color:#FFFFFF", "Need a hand?"));
       var callWrap = el("div", "display:none"); callWrap.id = "vpFrCallWrap";
-      var clbl = el("label", "display:block;font-size:13px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your mobile, for the call"); clbl.setAttribute("for", "vpFrCallMobile");
+      var clbl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your mobile, for the call"); clbl.setAttribute("for", "vpFrCallMobile");
       var cin = el("input", INPUT); cin.id = "vpFrCallMobile"; cin.setAttribute("type", "tel"); cin.setAttribute("inputmode", "tel"); cin.setAttribute("placeholder", "04xx xxx xxx");
       callWrap.appendChild(clbl); callWrap.appendChild(cin);
       var call = el("button", BTN_GHOST + ";width:100%", "Tap here and Dean will call"); call.id = "vpFrCall"; call.setAttribute("type", "button");
