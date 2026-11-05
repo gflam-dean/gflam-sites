@@ -332,9 +332,9 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   function liftFn(src, name) { var i = src.indexOf('function ' + name + '('); var d = 0, k = src.indexOf('{', i); do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0); return src.slice(i, k); }
   var holdWords = new Function('isArchived', liftFn(SES, 'holdWords') + '\nreturn holdWords;')(function () { return false; });
   var hw = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'owner');
-  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, the offer price is kept for 5 days then ends, nothing to do if it is not for them',
+  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, nothing to do if it is not for them, and the 5-day leeway is NOT announced (INBOX 55c)',
     hw && hw.reason === 'free_month_ended' && /Your free month has ended, so your games are paused/.test(hw.title) && /Your TV keeps showing your ads and nothing has been lost\./.test(hw.text) &&
-    /You have 5 days after your free month ended to add your card and keep the offer price you were set up on\. After that, the offer ends and our standard price applies/.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
+    !/5 days|offer ends|standard price/.test(hw.text) && /If it is not for you, there is nothing you need to do\./.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
   var hh = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'host');
   check('a host is told to ask the owner or a manager, with no card button', hh && !hh.link && /Ask the venue owner or a manager to add a card/.test(hh.text), hh);
   check('the console fetches the venue\'s own card link for that button (never a link written into the page)', /w\.link\.href === '#vp-card'/.test(SES) && /\/account\/card-link/.test(liftFn(SES, 'holdGate')));

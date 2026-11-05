@@ -331,8 +331,8 @@ async function newProspect(name, offerOpen) {
     /your free month ends with no card, your account pauses until you add one/.test(NSW) && !/5 days after your free month/.test(NSW) && !/5 days after your free month/.test(readFile('venueplay/index.html')));
   var Z = await newProspect('Pause Screen Hotel');
   var SES = readFile('venueplay/app/vp-session.js');
-  check('the console\'s pause screen is the one wording (it does not still say the offer ended with the free month)',
-    !/The offer price you were set up on ended with your free month/.test(SES) && /5 days/.test(SES.slice(SES.indexOf("r === 'free_month_ended'"), SES.indexOf("r === 'free_month_ended'") + 1500)));
+  check('the console\'s pause screen does not announce the 5 days (Dean, INBOX 55c), nor say the offer ended with the free month',
+    !/The offer price you were set up on ended with your free month/.test(SES) && SES.indexOf("r === 'free_month_ended'") > 0 && !/5 days/.test(SES.slice(SES.indexOf("r === 'free_month_ended'"), SES.indexOf("r === 'free_month_ended'") + 1500)));
 
   if (badCount()) throw new Error('offer grace: ' + badCount() + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');
