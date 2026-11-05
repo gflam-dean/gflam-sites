@@ -243,6 +243,10 @@
   "checks": 48,
   "counted_by": "lines"
  },
+ "tools/offer-page-start-first.test.py": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/old-tv-in-chrome.test.py": {
   "checks": 580,
   "counted_by": "lines"

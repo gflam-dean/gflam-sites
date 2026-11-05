@@ -186,9 +186,9 @@ try:
         dollars = set(re.findall(r'\$\d(?:[\d,]*\d)?(?:\.\d\d)?', allt))
         ok('%s: every dollar figure on the page is a standard one' % tag, dollars and dollars <= STANDARD_DOLLARS, sorted(dollars - STANDARD_DOLLARS))
         ok('%s: the offer badge is gone and the hero says a 30-player pub pays $90 a month' % tag,
-           v.get('eyebrow') is None and v.get('heroPrice') == 'First month free. Then a pub with 30 players pays $90 a month. No lock-in, cancel anytime.', (v.get('eyebrow'), v.get('heroPrice')))
+           v.get('eyebrow') is None and v.get('heroPrice') == 'Sign up and have a play for a month on us. Nothing is charged today. No lock-in, cancel anytime.', (v.get('eyebrow'), v.get('heroPrice')))
         ok('%s: the pricing card is the homepage\'s: Monthly $3.00, Annual $2.85, under "$3 per player. Simple and flat."' % tag,
-           v.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and re.sub(r'\s+', ' ', v.get('title', '')).lower() == '$3 per player. simple and flat.', (v.get('rows'), v.get('title')))
+           v.get('rows') == ['Per player, per month=$3.00'] and re.sub(r'\s+', ' ', v.get('title', '')).lower() == '$3 per player. simple and flat.', (v.get('rows'), v.get('title')))
         ok('%s: the plan buttons, the FAQ and the page description quote $3 and $2.85' % tag,
            v.get('plans') == ['$3.00 / player', '$2.85 / player'] and 'How much does it cost?' in allt
            and 'Pay monthly at $3 a player, or yearly for $2.85 a player.' in allt
@@ -227,8 +227,8 @@ try:
     ok('/offer-nov reads exactly as when the Worker never answers (the November offer, unchanged)',
        v.get('all') and v.get('all') == base.get('all') and v.get('rows') == base.get('rows'), '')
     ok('/offer-nov still offers $2.50 to 30 November: the badge, $75 for 30 players, the card and the plan buttons',
-       (v.get('eyebrow') or '').lower().endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and '$75 a month' in v.get('heroPrice', '')
-       and v.get('rows') == ['First month=$0', 'Standard=$3.00', 'Monthly=$3.00 $2.50', 'Annual=$2.85 $2.30']
+       (v.get('eyebrow') or '').lower().endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
+       and v.get('rows') == ['Per player, per month=$2.50']
        and v.get('plans') == ['$2.50 / player', '$2.30 / player'] and v.get('submit') == 'Hold my spot, add card', (v.get('eyebrow'), v.get('heroPrice'), v.get('rows'), v.get('plans')))
     shot(S, sid, 'offer-ended-1nov-offer-nov-phone-top')
     ck = signup(S, sid)
@@ -253,7 +253,7 @@ try:
         ok('%s: the banner says "This offer ended on %s."' % (label, WDAY), v.get('ended') == 'ended' and v.get('banner', '').startswith('This offer ended on %s.' % WDAY), v.get('banner'))
         ok('%s: only the standard rate: no $2.50, $2.30, $75 or lock it in; the card is Monthly $3.00, Annual $2.85' % label,
            not re.search(r'\$2\.50|\$2\.30|\$75\b|lock it in|\block(?:ed)? in\b|locked for life', allt, re.I)
-           and v.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and v.get('plans') == ['$3.00 / player', '$2.85 / player'] and not v.get('errs'),
+           and v.get('rows') == ['Per player, per month=$3.00'] and v.get('plans') == ['$3.00 / player', '$2.85 / player'] and not v.get('errs'),
            (re.findall(r'.{30}(?:\$2\.50|lock it in).{20}', allt)[:2], v.get('rows'), v.get('errs')))
 
     print('\n%s INSIDE ITS MONTH, THE WORKER SAYS ITS CODE IS SHUT: A ROW THAT IS NOT ENDED STILL ENDS ON THAT ANSWER' % WPATH)
@@ -277,7 +277,7 @@ try:
     v = see(S, sid)
     ok('a row marked ended: true shows the standard rate before its month is out, without asking the Worker',
        v.get('ended') == 'ended' and not v.get('asked') and v.get('banner', '').startswith('This offer ended on 31 October.')
-       and v.get('rows') == ['Monthly=$3.00', 'Annual=$2.85'] and '$2.50' not in v.get('all', ''), (v.get('ended'), v.get('asked'), v.get('rows')))
+       and v.get('rows') == ['Per player, per month=$3.00'] and '$2.50' not in v.get('all', ''), (v.get('ended'), v.get('asked'), v.get('rows')))
     S.close_tab(tid)
 finally:
     S.close()
