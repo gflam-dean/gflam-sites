@@ -122,6 +122,11 @@ function makeSupabase(who) {
     return cl;
   } };
 }
+/* A STRANGER ON THE OLD ROAD: anyone with the public Supabase key can broadcast on a venue's channel.
+   Delivers the payload to every page listening on that channel name, from nobody. */
+function strangerSays(name, payload) {
+  (BUS[name] || []).slice().forEach(function (s) { if (s.live) s.hs.forEach(function (h) { try { h({ type: 'broadcast', event: 'msg', payload: JSON.parse(JSON.stringify(payload)) }); } catch (e) { TIMER_ERRORS.push('stranger: ' + e); } }); });
+}
 function supaConnections(whoRe) {
   return CLIENTS.filter(function (c) { return (!whoRe || whoRe.test(c.who)) && c.chans.some(function (ch) { return ch.live; }); }).length;
 }
@@ -172,7 +177,7 @@ var ENV, ROOMS, SOCKETS, ROOM_ON, WORKER_POSTS, HANDOVER_DOWN = false;
    Worker has on the room (ROOM_FORMATS_ON), e.g. { musical: true }. */
 function freshWorld(opts) {
   opts = opts || {};
-  HANDOVER_DOWN = false; ROOMS = {}; SOCKETS = []; BUS = {}; SUPA_LOG = []; CLIENTS = []; HEARD = []; PAGES = []; FETCHES = []; WORKER_POSTS = []; TIMERS = []; TIMER_ERRORS = [];
+  HANDOVER_DOWN = false; CUT = {}; ROOMS = {}; SOCKETS = []; BUS = {}; SUPA_LOG = []; CLIENTS = []; HEARD = []; PAGES = []; FETCHES = []; WORKER_POSTS = []; TIMERS = []; TIMER_ERRORS = [];
   ROOM_ON = { musical: false, trivia: false, raffle: false, members: false };
   for (var k in (opts.formats || {})) ROOM_ON[k] = !!opts.formats[k];
   for (var f in ROOM_FORMATS_ON) ROOM_FORMATS_ON[f] = !!ROOM_ON[f];
@@ -206,9 +211,14 @@ function roomIn(name, role) { var r = ROOMS[name]; return r ? r.sockets.filter(f
 function handedOver(name) { var r = ROOMS[name]; return !!(r && r.store.get('ho') > NOW); }
 
 /* What a browser's WebSocket does, wired to the room through the real /room/ws route. */
+/* CUT[who]: that page cannot reach the room at all (no socket opens, no presence answers) while the
+   rest of the Worker still answers it, the way a proxy that blocks WebSockets behaves. The page then
+   gives up on the room by itself, which is the case the F2 ask exists for (6 Nov 2026). */
+var CUT = {};
 function BrowserWS(url, who) {
   var self = this; this.url = url; this.who = who; this.readyState = 0; this.sent = []; this.roomName = (/[?&]room=([^&]+)/.exec(url) || [])[1];
   SOCKETS.push(this);
+  if (CUT[who]) { fSetTimeout(function () { self.readyState = 3; if (self.onclose) self.onclose({ code: 1006 }); }, 5); return; }
   handleRoomSocket(new Request(url.replace(/^ws/, 'http'), { headers: { Upgrade: 'websocket' } }), ENV, wjson).then(function (res) {
     if (self.readyState === 3) return;
     if (!res || res.status !== 101) { self.readyState = 3; if (self.onclose) self.onclose({ code: 1006 }); return; }
@@ -239,6 +249,13 @@ var API = 'https://game.venueplay.com.au';
 var SLUG = 'test-pub';
 function fnv(slug) { return roomVenueCode(slug); }
 var CODE_B = fnv(SLUG);
+/* WHO MAY HAND THE ROOM OVER (6 Nov 2026, F2): the game Worker's roomHandoverAuth, as far as this
+   rig's pages go. The console is signed in (its VP session's token, "tok"); a TV and a phone send no
+   sign in and are only an ask. room-handover-auth.test.js holds the real check to this contract. */
+function RIG_AUTH(request) {
+  var h = (request && request.headers && request.headers.get('Authorization')) || '';
+  return Promise.resolve(h === 'Bearer tok' ? { signed: true, extra: true } : { signed: false });
+}
 var WORKER_REPLY = {};
 function workerFetch(url, init, who) {
   var path = (/^https?:\/\/[^\/]+(\/[^?]*)/.exec(url) || [])[1] || '';
@@ -246,7 +263,7 @@ function workerFetch(url, init, who) {
   if (path === '/room/presence') return handleRoomPresence(new Request(url), ENV, wjson).then(asFetch);
   if (path === '/room/handover' && method === 'POST') {
     if (HANDOVER_DOWN) return Promise.reject(new Error('the network ate it'));
-    return handleRoomHandover(new Request(url, init), ENV, wjson).then(asFetch);
+    return handleRoomHandover(new Request(url, init), ENV, wjson, RIG_AUTH).then(asFetch);
   }
   var body = {}; try { body = JSON.parse((init && init.body) || '{}'); } catch (e) {}
   if (method === 'POST') WORKER_POSTS.push({ who: who, path: path, body: body });
@@ -272,6 +289,7 @@ function pageFetch(who) {
   return function (url, init) {
     url = String(url);
     FETCHES.push(who + ' ' + ((init && init.method) || 'GET') + ' ' + url.replace(API, ''));
+    if (CUT[who] && url.indexOf(API + '/room/presence') === 0) return Promise.reject(new TypeError('the room is out of reach'));
     if (url.indexOf(API) === 0) return workerFetch(url, init, who);
     if (!/^[a-z]+:/.test(url) && url.charAt(0) !== '/') url = '/' + url.replace(/^(\.\.\/|\.\/)+/, '');   // ../../data/x.json from /app/<game>/
     if (/^\//.test(url) && !/^\/\//.test(url)) {

@@ -256,6 +256,15 @@ Your account > Draws for raffles and members draws, HQ reads the same.
                                       seconds whether any mutation has stopped
                                       applying OR matches twice, which is as bad
     tools/stamp-workers.py            BUILD stamps; run before build-worker.py
+    tools/browser-rig/waits.py        how a Chrome suite reads a page without racing it
+                                      (4 Nov 2026): <rig>.json, until_text, settled, reveal,
+                                      header_control. Never json.loads(<rig>.js(...)); never
+                                      "the next sibling says Account"; never a lobby code by
+                                      its length alone. The gate has a red line for each
+    tools/suite-impact.py <base> <branch> [--merge]
+                                      BEFORE a merge: which suites and prove rows still name
+                                      something the branch removes, which Chrome suites open
+                                      the pages it changes, ledger drift, a local trial merge
     venueplay/                        the site, auto-deploys from main
     venueplay-backend/worker/         game + billing Workers, deployed by tools/deploy-worker.py
     venueplay-backend/supabase/       migrations, run by hand, numbered once each

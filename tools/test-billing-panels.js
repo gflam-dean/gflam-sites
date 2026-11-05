@@ -59,6 +59,7 @@ var NAMES = [
   'mdVenueName', 'paintMdVenue', 'toCents', 'toDollars', 'fillMembersDraw', 'renderDrawPicker', 'mdNotReady', 'mdOnTv', 'mdSelect', 'mdKeep', 'mdAddAnother', 'renderRaffleList', 'loadDrawPermits', 'venueLink', 'venueRows',
   'mdCountFailed', 'loadMembersDrawFor', 'saveMembersDraw', 'fixMemberName', 'removeMember', 'importMembers',
   'unquoteCols', 'removeDraw', 'membersDrawOffTv', 'mdWeekday', 'mdWeeksSince', 'mdRecalc', 'mdWorkOutJackpot',
+  'mdCurLock', 'mdCurFix',   // round 3 (4 Nov 2026): the current jackpot reads until "Correct it" (T)
   'initMembersDraws', 'loadMembersPanel',
   'rfVenueName', 'paintRfVenue', 'rfNotReady', 'loadRafflePrizes', 'loadRaffleRoutine', 'loadPrizeTally',
   'loadRafflesFor', 'saveRaffleRoutine', 'clearRaffleRoutine', 'addRafflePrize', 'removeRafflePrize',
@@ -88,7 +89,10 @@ function El(id, tag) {
   this.id = id; this.tagName = String(tag || 'div').toUpperCase();
   this.children = []; this.options = []; this.selectedIndex = -1; this._text = ''; this._html = ''; this._loose = '';
   this.hidden = false; this.className = ''; this.style = {}; this.disabled = false; this.listeners = {}; this.attrs = {};
-  this.href = ''; this.type = ''; this.selected = false; this._value = '';
+  this.href = ''; this.type = ''; this.selected = false; this._value = ''; this.readOnly = false;
+  // classList, just enough (round 3, 4 Nov 2026: mdCurLock toggles "fixing" on the current jackpot box)
+  this.classList = { s: {}, add: function (c) { this.s[c] = 1; }, remove: function (c) { delete this.s[c]; }, contains: function (c) { return !!this.s[c]; },
+                     toggle: function (c, on) { if (on === undefined) on = !this.s[c]; if (on) this.s[c] = 1; else delete this.s[c]; return !!on; } };
   Object.defineProperty(this, 'textContent', {
     get: function () { return self._text + self._html.replace(/<[^>]*>/g, '') + self.children.map(function (c) { return c.textContent; }).join(' '); },
     set: function (v) { self._text = String(v == null ? '' : v); self._html = ''; self.children = []; if (self.tagName === 'SELECT') { self.options = []; self.selectedIndex = -1; } }

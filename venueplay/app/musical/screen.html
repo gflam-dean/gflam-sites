@@ -174,8 +174,60 @@
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
   .pulse{animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+  /* ============ THE NEW LOOK (Dean, 3 Nov 2026; approved mocks new-look-games-3nov/v5/tv/05, 06 and 13) ============
+     Flat near-black, no pink haze. MUSICAL BINGO in the shared title line (/app/vp-tvgame.js), on the corner logos'
+     centre line. The join is the shared join screen. NOW PLAYING: the real artwork big on the left (640px at 1920),
+     on the right a pink NOW PLAYING label, the title in Anton, the artist, and ONE sentence for the pattern and the
+     prize ("One line wins a meat tray"). LISTEN: the kit's neon triangle breathing (2.6s, glow only) where the art
+     goes, "Know it? Mark it on your card." and the same sentence, with no "Song 15" label (Dean, 3 Nov late). Along the
+     bottom: "Song 14" on the left over a played-so-far strip of the last five, with artwork, the current song outlined
+     in pink and "+9" for the earlier ones. NO player count anywhere on the wall (Dean, 4 Nov 2026 evening: counts
+     stay on the host console). Sizes in cqw, so
+     /app/vp-oldtv.js can work them out on an older set; inner places are written calc(Ncqw) so the corner check
+     does not read them as a corner. tools/musical-newlook-in-chrome.test.py measures every one of these. */
+  .tv{background:#0A0A0B}
+  body{background:#0A0A0B}
+  #tvRun.mrun{display:block;padding:0;text-align:left}
+  .mart{position:absolute;left:calc(6.25cqw);top:9.17cqw;width:33.33cqw;height:33.33cqw;border-radius:.94cqw;overflow:hidden;background:#141418}
+  .mart img{display:block;width:100%;height:100%;object-fit:cover;margin:0;border:none;border-radius:0;box-shadow:none;animation:none}
+  .mart .mtri{position:absolute;left:50%;top:50%;width:11cqw;height:auto;transform:translate(-50%,-50%);overflow:visible;filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}
+  .mart.listening{background:none}
+  .mart.listening .mtri{width:9.4cqw;animation:mTriBreath 2.6s ease-in-out infinite}
+  .mart.hasart .mtri{display:none}
+  /* THE SALES-PAGE AND STORE DEMO SHOWS NO ALBUM COVERS (Dean, 4 Nov 2026: app store screenshots must not carry
+     third-party artwork; Google Play, LG and Samsung all bar it). The art spot holds OUR venueplay logo tile instead,
+     the same size and place; the strip's small squares hold the play triangle. A real venue's night is unchanged. */
+  .mart .mlogo{display:none;width:76%;height:auto;color:#fff;overflow:visible}
+  .mart.vplogo{background:#16161A;box-shadow:inset 0 0 0 .16cqw rgba(255,31,142,.55);display:flex;align-items:center;justify-content:center}
+  .mart.vplogo .mlogo{display:block}
+  .mart.vplogo .mtri,.mart.vplogo img{display:none}
+  #tvRun .ptok .ptri{flex:none;width:4.4cqw;height:4.4cqw;border-radius:.42cqw;margin-right:.94cqw;background:#16161A;box-shadow:inset 0 0 0 .1cqw rgba(255,31,142,.5);display:flex;align-items:center;justify-content:center}
+  #tvRun .ptok .ptri svg{width:45%;height:auto;overflow:visible}
+  @keyframes mTriBreath{0%,100%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}50%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 2.2cqw rgba(255,31,142,.9))}}
+  @media (prefers-reduced-motion:reduce){.mart.listening .mtri{animation:none}}
+  .mcol{position:absolute;left:calc(43.75cqw);right:6.25cqw;top:9.9cqw;height:31.4cqw;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+  #tvRun .eyebrow{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.25cqw;line-height:1.2;color:var(--pink);margin:0}
+  #tvRun .nowtitle{font-size:9.9cqw;line-height:1;margin:1cqw 0 0;max-width:none;width:100%;max-height:19.4cqw;overflow:hidden;animation:none;text-wrap:balance}
+  #tvRun .nowartist{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:3.75cqw;line-height:1.15;color:#B4B4BE;letter-spacing:0;margin-top:.8cqw;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  #tvRun .mystery{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+  #tvRun .listen{font-family:'Anton',sans-serif;font-size:9.9cqw;line-height:.95;color:#fff;margin:0;text-shadow:none;animation:none}
+  #tvRun .mysub{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.08;color:#B4B4BE;margin-top:1.2cqw}
+  .mwins{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.7cqw;line-height:1.2;color:#fff;margin-top:2.6cqw;max-width:100%}
+  .mwins:empty{display:none}
+  .msongno{position:absolute;left:calc(6.25cqw);top:42.75cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.77cqw;line-height:1.2;color:#CFCFD6}
+  .mstrip{position:absolute;left:calc(6.25cqw);right:6.25cqw;top:45.2cqw;height:6.1cqw;display:flex}
+  .mstrip .mmore{flex:none;width:5.73cqw;margin-right:.94cqw;border-radius:.73cqw;background:#1A1A1F;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:2.6cqw;color:#8A8A95}
+  #tvRun .pboard{flex:1 1 auto;display:flex;flex-wrap:nowrap;justify-content:flex-start;gap:0;margin:0;max-width:none;max-height:none;height:100%;overflow:visible;min-width:0}
+  #tvRun .ptok{flex:0 0 15.36cqw;width:15.36cqw;height:100%;margin-right:.94cqw;display:flex;align-items:center;padding:0 .9cqw 0 .83cqw;border-radius:.73cqw;background:#1A1A1F;border:.16cqw solid transparent;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.56cqw;line-height:1.08;color:#fff;white-space:normal;max-width:none;overflow:hidden;text-overflow:clip;box-shadow:none;text-align:left}
+  #tvRun .ptok img{flex:none;width:4.4cqw;height:4.4cqw;border-radius:.42cqw;object-fit:cover;margin-right:.94cqw}
+  #tvRun .ptok.new{background:#1A1A1F;border-color:var(--pink);color:#fff;box-shadow:none}
+  .mstrip .mnext{flex:0 0 15.36cqw;width:15.36cqw;height:100%;border-radius:.73cqw;border:.16cqw dashed #4A4A55;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.56cqw;color:#8A8A95}
+  #tvRun .pblabel,#tvRun .mpat,#tvRun .mprize{display:none}   /* the old pieces, kept for the console's words; the new wall says it in one sentence */
 </style>
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
+<script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared with trivia (4 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
 <body>
@@ -192,38 +244,49 @@
   <div class="venuename-left" id="venueNameTag" data-fit-avoid hidden></div>   <!-- top left, where a logo goes (2 Nov 2026) -->
 
   <!-- lobby -->
-  <div class="layer" id="tvLobby">
-    <div class="eyebrow">Join the game</div>
+  <!-- THE JOIN SCREEN (Dean, 3 Nov 2026; approved mock new-look-games-3nov/v5/tv/13-join-musical-tugun.png), the same
+       screen as trivia's (/app/vp-tvgame.js): MUSICAL BINGO on the logos' line, the QR big on the left, SCAN TO PLAY,
+       the address and the code in a pink-edged box. No player count on the wall (Dean, 3 Nov late: the host console
+       has it), and no prize here (the phone's lobby card carries it). -->
+  <div class="layer join" id="tvLobby">
+    <div class="toplbl jtitle"><span class="tl-night">Musical bingo</span></div>
     <div class="lobbyrow">
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
-      <div class="lobbytxt">
-        <div class="lobbyname">Musical Bingo</div>
-        <div class="joinurl">venueplay.com.au/play</div>
-        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
-        <div class="lprize hidden" id="lobbyPrize"><span>Playing for</span><b id="lobbyPrizeVal"></b></div>
-      </div>
+    </div>
+    <div class="jright">
+      <div class="scanplay">Scan to play</div>
+      <div class="joinurl"><span class="jor">or go to </span><b id="lobbyJoinUrl">venueplay.com.au/play</b></div>
+      <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
     </div>
     <div class="jsub" id="lobbySub">Waiting for the host</div>
     <div class="hostline">Host, open venueplay.com.au/app/musical/host and enter code <b id="hostLineCode">------</b></div>
   </div>
 
   <!-- running (now playing) -->
-  <div class="layer hidden" id="tvRun">
-    <div class="eyebrow" id="tvNowEye">Now playing</div>
-    <div class="mystery hidden" id="tvListen">
-      <div class="qmark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="listen pulse">Listen&hellip;</div>
-      <div class="mysub" id="tvListenSub">Know it? Mark it on your card</div>
+  <div class="layer hidden mrun" id="tvRun">
+    <div class="toplbl"><span class="tl-night">Musical bingo</span></div>
+    <div class="mart" id="tvArtBox"><img class="nowart hidden" id="tvNowArt" alt=""><svg class="vp-wm mlogo" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true"  data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg><svg class="mtri" viewBox="2500 -2020 900 1044" fill="none" aria-hidden="true" focusable="false" data-vp-mark="tv-tri"><path fill="#FF1F8E" fill-rule="evenodd" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2L2523.1 -1056.8ZM2627.8 -1142.5L3221.2 -1498.0L2627.8 -1853.5L2627.8 -1142.5Z"/><path fill="#FFD6EA" fill-rule="evenodd" d="M2561.8 -1056.8C2561.8 -1050.5 2565.2 -1044.7 2570.6 -1041.7C2576.1 -1038.6 2582.7 -1038.7 2588.1 -1041.9L3324.7 -1483.1C3330.0 -1486.2 3333.2 -1491.9 3333.2 -1498.0C3333.2 -1504.1 3330.0 -1509.8 3324.7 -1512.9L2588.1 -1954.1C2582.7 -1957.3 2576.1 -1957.4 2570.6 -1954.3C2565.2 -1951.3 2561.8 -1945.5 2561.8 -1939.2L2561.8 -1056.8ZM2589.0 -1074.2L3296.6 -1498.0L2589.0 -1921.8L2589.0 -1074.2Z"/></svg></div>
+    <div class="mcol">
+      <div class="eyebrow" id="tvNowEye">Now playing</div>
+      <div class="mystery hidden" id="tvListen">
+        <div class="listen">Listen</div>
+        <div class="mysub" id="tvListenSub">Know it?<br>Mark it on your card.</div>
+      </div>
+      <div id="tvNow">
+        <div class="nowtitle" id="tvNowTitle">Ready to play</div>
+        <div class="nowartist" id="tvNowArtist">First song coming up</div>
+      </div>
+      <div class="mwins" id="tvWins"></div>
+      <div class="mprize"><span>Playing for</span><b id="tvPrize">the prize</b></div>
+      <div class="mpat">Pattern &middot; <b id="tvPattern">One line across</b></div>
     </div>
-    <div id="tvNow">
-      <img class="nowart hidden" id="tvNowArt" alt="">
-      <div class="nowtitle" id="tvNowTitle">Ready to play</div>
-      <div class="nowartist" id="tvNowArtist">First song coming up</div>
+    <div class="msongno" id="tvSongNo"></div>
+    <div class="mstrip">
+      <div class="mmore hidden" id="tvBoardMore"></div>
+      <div class="pblabel hidden" id="tvBoardLbl">Played so far</div>
+      <div class="pboard" id="tvBoard"></div>
+      <div class="mnext hidden" id="tvBoardNext"></div>
     </div>
-    <div class="mprize"><span>Playing for</span><b id="tvPrize">the prize</b></div>
-    <div class="mpat">Pattern &middot; <b id="tvPattern">One line across</b></div>
-    <div class="pblabel hidden" id="tvBoardLbl">Played so far</div>
-    <div class="pboard" id="tvBoard"></div>
   </div>
 
   <!-- claim suspense -->
@@ -350,9 +413,19 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var LAYERS=["tvLobby","tvRun","tvClaim","tvWin"];
   function show(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
-    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+    /* THE JOIN NOW CARD IS OFF THE NEW WALL (Dean's approved mock, 3 Nov 2026): the bottom of the wall is the song
+       number and the played strip now. A late arrival joins from the venue code, which
+       is the same code the join screen showed and the one on the table talkers. The card stays in the page (the
+       claim and the win never showed it either). */
+    $("tvJoinCorner").classList.add("hidden");
+    try{ setTimeout(alignTitle, 0); }catch(e){}
     if(which!=="tvLobby"){ try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // the waiting card is the lobby's only
   }
+
+  /* THE GAME'S NAME ON THE LOGOS' LINE: one copy, in /app/vp-tvgame.js, shared with trivia (4 Nov 2026). */
+  function alignTitle(){ try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){} }
+  window.addEventListener("resize", alignTitle);
+  setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes */
 
   // The QR shows the HOST pairing link until a session opens (so the host can scan to set up
   // this screen), then flips to the player join link built from the real DB join code.
@@ -390,12 +463,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // Labelled, for the one case it is still shown: nobody should ever read this to the room.
     $("hostLineCode").textContent = CODE;
     $("tvJoinCode").textContent = shownCode();
-    /* Only once the host has actually set one. "the prize" is the placeholder the
-       console starts with, and putting that on a wall tells the room nothing. */
-    var pz=(state.prize||"").trim();
-    var showPz = pz && pz.toLowerCase()!=="the prize";
-    $("lobbyPrize").classList.toggle("hidden", !showPz);
-    if(showPz) $("lobbyPrizeVal").textContent=pz;
+    /* No prize on the join screen (the approved v5 join): the phone's lobby card carries it, and the playing wall
+       says it in one sentence. */
     if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host";
     else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the game&hellip;";
     else $("lobbySub").innerHTML="Grab your phone and join, the game is about to start&hellip;";
@@ -405,28 +474,69 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), !!VENUE_SLUG && !state.hostSeen && !joinCode && state.phase==="lobby"); }catch(e){}
     drawLobbyQR();
   }
-  /* NO PLAYER COUNT ON THE WALL. Locked design call: a slow night should not advertise
-     itself to the room. The count still reaches the host console, which is where it is
-     actually useful. */
+  /* NO PLAYER COUNT ON ANY TV SCREEN (Dean, 3 Nov 2026 late for the join; 4 Nov 2026 evening for every game screen:
+     "I don't want people being like oh how did they know that we only had 12 people rock up today?"). The count
+     the host's "players" message carries is kept in state (the back-to-ads timer reads it) and painted nowhere;
+     the host console shows it. tools/tv-no-counts-in-chrome.test.py and musical-newlook-in-chrome hold it. */
+  /* ONE SENTENCE FOR THE PATTERN AND THE PRIZE (Dean, 3 Nov 2026): "One line wins a meat tray". The prize is as the
+     host typed it, after "wins" (with "a" or "an" unless it already starts with a word like "the", a number or a
+     dollar sign). No prize set yet: the pattern alone, "One line wins". */
+  var PATTERN_SHORT={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  function winsLine(pattern, prize){
+    var pat=PATTERN_SHORT[pattern]||PATTERN_NAMES[pattern]||"One line";
+    var pz=String(prize||"").trim();
+    if(!pz || pz.toLowerCase()==="the prize") return pat+" wins";
+    if(/^(a|an|the|one|two|three|four|five|six|ten|our|your)\b/i.test(pz) || /^[\d$]/.test(pz)) return pat+" wins "+pz;
+    return pat+" wins "+(/^[aeiou]/i.test(pz) ? "an " : "a ")+pz;
+  }
   function renderMeta(){
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
     $("tvPrize").textContent=state.prize;
+    $("tvWins").textContent=winsLine(state.pattern, state.prize);
   }
-  var TV_BOARD_MAX=8;   // the last eight, at a size the back of the room can read
+  var TV_BOARD_MAX=5;   // the last five, with their artwork, as approved (3 Nov 2026)
+  var TRI_MINI='<svg viewBox="2500 -2020 900 1044" aria-hidden="true"><path fill="#FF1F8E" d="M2523.1 -1056.8C2523.1 -1036.6 2533.9 -1017.9 2551.5 -1008.0C2569.1 -998.0 2590.7 -998.3 2608.0 -1008.6L3344.6 -1449.9C3361.6 -1460.0 3371.9 -1478.3 3371.9 -1498.0C3371.9 -1517.7 3361.6 -1536.0 3344.6 -1546.1L2608.0 -1987.4C2590.7 -1997.7 2569.1 -1998.0 2551.5 -1988.0C2533.9 -1978.1 2523.1 -1959.4 2523.1 -1939.2Z"/></svg>';
+  var _songArt={};       // title -> artwork, for every song this wall has been told about tonight
+  function noteArt(title, url){ if(title && url && /^(https:\/\/|\/[^\/])/.test(String(url))) _songArt[title]=String(url); }   // the library's https art, or a file on this site
+  /* A LONG TITLE ON THE STRIP STEPS DOWN TO FIT ITS TILE (two or three lines), never cut and never "...". */
+  function fitStrip(b){
+    try{
+      var ts=b.querySelectorAll ? b.querySelectorAll(".ptok") : [];
+      for(var i=0;i<ts.length;i++){ var t=ts[i]; t.style.fontSize="";
+        var fs=parseFloat(getComputedStyle(t).fontSize)||20, min=fs*0.6, n=0;
+        while(t.clientHeight>0 && t.scrollHeight>t.clientHeight+1 && fs>min && n++<20){ fs*=0.92; t.style.fontSize=fs.toFixed(1)+"px"; } }
+    }catch(e){}
+  }
   function renderBoard(){
     var b=$("tvBoard"); b.innerHTML="";
     var all=state.played||[];
     /* The song still hidden behind "LISTEN... Know it?" is not on the strip yet: it gave the title
        away right under the question mark, on every song (break test, 14 Oct 2026). doReveal
        redraws this once the song is shown. */
-    if(_pendingSong && all.length && all[all.length-1]===_pendingSong.title) all=all.slice(0, -1);
-    var start=Math.max(0, all.length-TV_BOARD_MAX), last=all.length-1;
+    var held=!!(_pendingSong && all.length && all[all.length-1]===_pendingSong.title);
+    if(held) all=all.slice(0, -1);
+    /* While a song is held back the strip keeps one slot for it, dashed, "Song 15": four played and the next. */
+    var room = held ? TV_BOARD_MAX-1 : TV_BOARD_MAX;
+    var start=Math.max(0, all.length-room), last=all.length-1;
     for(var i=start;i<all.length;i++){
-      var d=document.createElement("div"); d.className="ptok"+(i===last?" new":""); d.textContent=all[i]; b.appendChild(d);
+      var d=document.createElement("div"); d.className="ptok"+(i===last && !held?" new":""); d.textContent=all[i];
+      var art=(typeof _songArt==="object") ? _songArt[all[i]] : null;   // (a suite lifts renderBoard on its own)
+      if(typeof VP_DEMO!=="undefined" && VP_DEMO && d.insertBefore){   /* the demo: the play triangle, never a cover (4 Nov 2026) */
+        var tr=document.createElement("span"); tr.className="ptri"; tr.innerHTML=TRI_MINI; d.insertBefore(tr, d.firstChild);
+      } else if(art && d.insertBefore){ var im=document.createElement("img"); im.alt=""; im.src=art; d.insertBefore(im, d.firstChild); }
+      b.appendChild(d);
     }
+    if(typeof fitStrip==="function") fitStrip(b);
+    var total=all.length+(held?1:0);
+    var more=$("tvBoardMore");
+    if(more){ more.classList.toggle("hidden", start<=0); more.textContent="+"+start; }
+    var nx=$("tvBoardNext");
+    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Song "+total; }
+    var no=$("tvSongNo");
+    if(no) no.textContent = total>0 ? ("Song "+total) : "";
     var lbl=$("tvBoardLbl");
     if(lbl){
-      lbl.classList.toggle("hidden", all.length===0);
+      lbl.classList.toggle("hidden", true);   // the song number says it now
       lbl.textContent = all.length>TV_BOARD_MAX ? ("Last "+TV_BOARD_MAX+" of "+all.length+" played") : "Played so far";
     }
   }
@@ -435,15 +545,27 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      told apart from a new one. */
   var _shownTitle="";
   function setArt(url){
-    var img=$("tvNowArt");
+    var img=$("tvNowArt"), box=$("tvArtBox");
+    if(VP_DEMO){   /* the demo draws our logo tile where the cover goes, never a cover (Dean, 4 Nov 2026) */
+      img.removeAttribute("src"); img.classList.add("hidden");
+      if(box){ box.classList.toggle("vplogo", !box.classList.contains("listening")); box.classList.remove("hasart"); }
+      return;
+    }
     if(url){ img.src=url; img.classList.remove("hidden"); }
     else { img.removeAttribute("src"); img.classList.add("hidden"); }
+    if(box) box.classList.toggle("hasart", !!url);
+  }
+  /* LISTEN: the neon triangle breathes where the art goes, and the NOW PLAYING label goes (Dean, 3 Nov late: no
+     "Song 15" under the title; the song number is bottom left). */
+  function setListening(on){
+    var box=$("tvArtBox"); if(box){ box.classList.toggle("listening", !!on); if(on) box.classList.remove("vplogo"); }
+    var eye=$("tvNowEye"); if(eye) eye.classList.toggle("hidden", !!on);
   }
   function showReady(){
     show("tvRun");
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     $("tvNowEye").textContent="Get ready";
-    _pendingSong=null; _revealMode="legacy";
+    _pendingSong=null; _revealMode="legacy"; setListening(false);
     $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
     setArt("");
     _shownTitle="";
@@ -477,6 +599,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         el.style.fontSize="";
         var fs=parseFloat(getComputedStyle(el).fontSize)||72, min=Math.max(14, fs*0.4), n=0;
         while(el.clientWidth>0 && el.scrollWidth>el.clientWidth+1 && fs>min && n++<40){ fs*=0.94; el.style.fontSize=fs.toFixed(1)+"px"; }
+        /* AND THE WHOLE TITLE FITS ITS BOX ABOVE THE ARTIST (new look, 4 Nov 2026): a long title steps down until it sits
+           in the title's height (two lines of Anton at full size), so it never runs over the artist or the strip. */
+        var maxH=parseFloat(getComputedStyle(el).maxHeight)||0;   /* against the box's max height: Anton's capitals overhang a tight line, so scrollHeight always reads a little over clientHeight */
+        while(maxH>0 && el.clientWidth>0 && el.scrollHeight>maxH+1 && fs>min && n++<60){ fs*=0.94; el.style.fontSize=fs.toFixed(1)+"px"; }
       }catch(e){}
     }
     new MutationObserver(fit).observe(el, { childList:true, characterData:true, subtree:true });
@@ -489,6 +615,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     if(!_pendingSong) return;
     var p=_pendingSong; _pendingSong=null;
+    setListening(false);
     $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
     setArt(p.artwork);
     $("tvNowTitle").textContent=p.title||"Now playing"; $("tvNowArtist").textContent=p.artist||"";
@@ -500,12 +627,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     $("tvNowEye").textContent="Now playing";
     _pendingSong={ title:title, artist:artist, artwork:artwork };
+    noteArt(title, artwork);
     if(!mode){ mode="legacy"; }
     _revealMode=mode;
     if(mode==="instant"){ $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden"); renderRun(); doReveal(); return; }
     var sub=$("tvListenSub");
-    if(sub) sub.textContent = (mode==="never") ? "Name that tune" : "Know it? Mark it on your card";
+    if(sub) sub.innerHTML = (mode==="never") ? "Name that tune." : "Know it?<br>Mark it on your card.";
     $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden");
+    setArt(""); setListening(true);
     renderRun();
     if(mode==="legacy") revealTimer=setTimeout(doReveal, 850);
     else if(mode==="15") revealTimer=setTimeout(doReveal, 15000);
@@ -939,7 +1068,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
              A song still waiting to be revealed leaves the mystery panel exactly as it is. */
           if(_pendingSong){
             $("tvNowEye").textContent="Now playing";
-            $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden");
+            $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
           } else if(t !== _shownTitle){
             setArt("");
             $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
@@ -973,6 +1102,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       if(_pendingSong){
         if(m.title) _pendingSong.title=m.title;
         if(typeof m.artist==="string") _pendingSong.artist=m.artist;
+        if(m.artworkUrl){ _pendingSong.artwork=m.artworkUrl; noteArt(_pendingSong.title, m.artworkUrl); }
         doReveal();
       }
     }
@@ -982,7 +1112,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
     }
     else if(m.t==="players"){
-      // kept in state for nothing but the host's own use; the wall never prints it
+      /* kept, never painted: no player count on the TV (Dean, 4 Nov 2026 evening); the host console has it */
       if(typeof m.count==="number") state.playerCount=m.count;
     }
     else if(m.t==="claim_pending"){
@@ -1059,15 +1189,16 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
       var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
-      /* Real artwork, from the same library the host uses, so the demo wall looks like a real wall. */
-      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/600x600bb.jpg"}, {"title": "Dancing Queen", "artist": "ABBA", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/600x600bb.jpg"}, {"title": "Khe Sanh", "artist": "Cold Chisel", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/600x600bb.jpg"}, {"title": "Mr. Brightside", "artist": "The Killers", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/600x600bb.jpg"}, {"title": "The Horses", "artist": "Daryl Braithwaite", "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/600x600bb.jpg"}];
+      /* The songs as the library names them. Their artwork is NOT here any more (Dean, 4 Nov 2026): third-party album
+         covers may not appear in store screenshots, so the demo wall shows our venueplay logo tile in the art spot. */
+      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley"}, {"title": "Dancing Queen", "artist": "ABBA"}, {"title": "Khe Sanh", "artist": "Cold Chisel"}, {"title": "Mr. Brightside", "artist": "The Killers"}, {"title": "The Horses", "artist": "Daryl Braithwaite"}];   /* no album covers on a sales page or a store screenshot (Dean, 4 Nov 2026): the wall draws our logo tile */
       at(0, function(){
         m({ t:"session", join_code:DEMO_JOIN_CODE });
         m({ t:"mode" });
         /* "one", a PATTERN_NAMES key, so the wall reads "One line across" and not a raw slug.
            I wrote "one_line" first and the wall printed it verbatim. tv.html's demo carries the
            same note for the same reason. */
-        m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"$50 bar tab", played:[] });
+        m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"Meat tray", played:[] });   /* a prize as a host types it; no dollar prize on a sales page (3 Nov 2026) */
       });
       /* The first song waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first song makes it give way, so at 1.2 s the sales-page demo cut it off. */
       var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[];   // 1200 as before the show, on a screen with ?sting=0
@@ -1083,8 +1214,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         at(t+3400, function(){ m({ t:"players", count: 22 + i*4 }); });
         t += 5200;
       });
-      at(t,        function(){ m({ t:"claim_pending", name:"Table 4", count:1 }); });
-      at(t+2600,   function(){ m({ t:"winner", name:"Table 4", cardNos:[332] }); });
+      at(t,        function(){ m({ t:"claim_pending", name:"Sam", count:1 });   /* the name a player joined with, never a table (we do not collect tables) */ });
+      at(t+2600,   function(){ m({ t:"winner", name:"Sam", cardNos:[17] });   /* the demo phone's own player and card */ });
       at(t+9000,   function(){ m({ t:"idle" }); });
 
       /* NO JOIN OR PAIRING CORNER ON A SALES PAGE: the code is one this browser invented, so
