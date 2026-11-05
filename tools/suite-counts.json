@@ -908,7 +908,7 @@
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
-  "checks": 28,
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
@@ -1043,16 +1043,16 @@
   "checks": 29,
   "counted_by": "lines"
  },
+ "tools/trivia-empty-room-in-chrome.test.py": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/trivia-join-in-chrome.test.py": {
   "checks": 36,
   "counted_by": "lines"
  },
  "tools/trivia-newlook-in-chrome.test.py": {
   "checks": 202,
-  "counted_by": "lines"
- },
- "tools/trivia-no-players-in-chrome.test.py": {
-  "checks": 22,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

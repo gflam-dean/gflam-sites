@@ -16,7 +16,7 @@ quiz with no phones, and checks what the host reads and what the wall paints:
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 
-    VP_SHOTS=/some/dir python3 tools/trivia-no-players-in-chrome.test.py
+    VP_SHOTS=/some/dir python3 tools/trivia-empty-room-in-chrome.test.py
 """
 import json, os, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -155,7 +155,7 @@ def play():
 
 def main():
     import gatelib
-    if not gatelib.hold_lock_or_refuse('trivia-no-players-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
+    if not gatelib.hold_lock_or_refuse('trivia-empty-room-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
         print('\n0 of 1 checks passed'); sys.exit(1)
     play()
     print('')

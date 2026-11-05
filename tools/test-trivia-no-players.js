@@ -124,8 +124,11 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   print('the TV listens for it');
   var SCREEN = readFile('venueplay/app/trivia/screen.html');
   show('"nobody" is a host message the TV recognises', /HOST_TYPES=\{[^}]*\bnobody:1/.test(SCREEN));
-  show('the TV paints "Thanks for playing" for it', /m\.t==="nobody"[\s\S]{0,400}Thanks for playing/.test(SCREEN));
-  show('and it never paints an error word on the wall for it', !/m\.t==="nobody"[\s\S]{0,700}(could not|error|failed)/i.test(SCREEN));
+  var bi = SCREEN.indexOf('m.t==="nobody"){'), bj = SCREEN.indexOf('else if(m.t==="podium")', bi);
+  var BLOCK = bi < 0 || bj < 0 ? '' : SCREEN.slice(bi, bj).replace(/\/\*[\s\S]*?\*\//g, '');   // the TV's own handler, comments left out
+  show('the TV has a handler for it', BLOCK.length > 50);
+  show('the TV paints "Thanks for playing" for it', /renderBoardPaged\("Thanks for playing", \[\]\)/.test(BLOCK), BLOCK.slice(0, 120));
+  show('and it never paints an error word on the wall for it', !/could not|error|failed|connection/i.test(BLOCK), BLOCK);
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); bad++; });
 drainMicrotasks();
 if (bad) throw new Error('no players: ' + bad + ' of ' + ran + ' failed');
