@@ -200,11 +200,12 @@ try:
     if CHECK:
         print('\nYour account says what happens when you add or lower, in plain words')
         tid, sid = S.open('/app/billing.html')
-        S.until(sid, 'document.getElementById("content").style.display!=="none" && /venues/.test(document.getElementById("lede").textContent)', 20)
-        lede = S.js(sid, 'document.getElementById("lede").textContent')
-        ok('the monthly account intro is the new sentence, word for word',
-           lede == ("Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away. "
-                    "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short."), lede)
+        # The intro under "Your account" was cut (INBOX item 35, 5 Nov 2026); the same plain words live under Your venues.
+        S.until(sid, 'document.getElementById("content").style.display!=="none" && /next bill/.test(document.getElementById("players-note").textContent)', 20)
+        lede = S.js(sid, 'document.getElementById("players-note").textContent')
+        ok('the monthly note under Your venues says adding is straight away and lowering waits, word for word',
+           lede == ("Extra players cost a full month at $2.50 per player, whatever day you add them. They are ready to use tonight and the "
+                    "amount goes on your next bill. Lowering the number takes effect from your next bill."), lede)
         ok('"Reductions" is nowhere on the page', 'Reductions' not in (S.js(sid, 'document.body.innerText') or 'Reductions'))
         S.close_tab(tid)
 

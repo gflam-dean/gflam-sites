@@ -130,7 +130,8 @@ TOURING = {
 
 
 class Site(object):
-    def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None, game=None, game_tables=None):
+    def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None, game=None, game_tables=None,
+                 browser=True, port=0, host='127.0.0.1', page_db=None):
         """game: optionally the REAL game Worker on a pipe (tools/browser-rig/rig.py Worker), answering
         /__game instead of a 404; game_tables: tables the page reads live from THAT Worker's database
         (e.g. vp_member_draws, which the game Worker writes), named in live_tables as well."""
@@ -138,6 +139,7 @@ class Site(object):
         self.game_tables = game_tables or []
         self.root = os.path.abspath(root)
         self.extra_db = extra_db or {}          # more rows for the stand-in supabase-js, by table
+        self.page_db = page_db or {}            # tables that REPLACE the stand-in's own (the demo's accounts)
         self.live_tables = live_tables or []    # tables the page reads from the Worker rig's database
         self.fonts = fonts
         self.W = BillingWorker(self.root)
@@ -206,6 +208,8 @@ class Site(object):
                     db = fake_db(site.W.info, admin)
                     for t, rows in site.extra_db.items():
                         db[t] = (db.get(t) or []) + rows if t != 'vp_venues' else rows
+                    for t, rows in site.page_db.items():
+                        db[t] = rows
                     pre = 'window.__FAKE_DB=%s;window.__FAKE_SIGNED_IN=true;window.__FAKE_UID=%s;window.__LIVE_TABLES=%s;\n' % (
                         json.dumps(db), json.dumps(site.W.info['uid']), json.dumps(site.live_tables))
                     return self.send(200, pre + io.open(os.path.join(HERE, 'fake-supabase.js'), encoding='utf-8').read(),
@@ -242,11 +246,13 @@ class Site(object):
                          '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
                 return self.send(200, io.open(f, 'rb').read(), ctype)
 
-        self.srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), H)
+        # browser=False, port, host: the local click-through demo (tools/browser-rig/account_demo.py, 5 Nov 2026) serves
+        # on a fixed localhost port for a person's own browser, with no headless Chrome of its own.
+        self.srv = http.server.ThreadingHTTPServer((host, port), H)
         self.srv.socket.listen(128)   # Python's default queue of 5 drops scripts when a page asks for many at once (rig.py Server, 26 Oct 2026)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = 'http://127.0.0.1:%d' % self.srv.server_address[1]
-        self.B = VL.Browser()
+        self.B = VL.Browser() if browser else None
 
     def rewrites(self):
         """The exact-path 200 rewrites in venueplay/_redirects ("/offer-oct  /nsw  200"), read once."""
@@ -347,7 +353,8 @@ class Site(object):
 
     def close(self):
         try:
-            self.B.close()
+            if self.B:
+                self.B.close()
         finally:
             self.W.close()
             self.srv.shutdown()

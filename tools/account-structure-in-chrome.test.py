@@ -315,7 +315,8 @@ try:
     l2 = S.js(sid, 'document.getElementById("venueLinkVal").textContent + " " + document.getElementById("signageLink").href.split("?")[1]')
     ok('picking The Royal Arms changes the link and the signs link together', l2 == 'https://venueplay.com.au/play?venue=the-royal-arms venue=the-royal-arms', l2)
     S.js(sid, 'document.querySelector(\'.tabs button[data-tab="settings"]\').click(); true'); time.sleep(0.3)
-    ok('Game settings says where the opt-in list went', S.js(sid, '/opt-in list is under the Marketing tab/.test(document.getElementById("tp-settings").innerText)') is True)
+    # 5 Nov 2026, INBOX item 34: the note pointing at the Marketing tab is gone, because the opt-in tick is not on this screen.
+    ok('Game settings no longer sends you to the Marketing tab for the opt-in list', S.js(sid, '/opt-in list is under the Marketing tab/.test(document.getElementById("tp-settings").innerText)') is False)
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error on the Marketing tab', errs == '[]', errs)
     S.close_tab(tid)

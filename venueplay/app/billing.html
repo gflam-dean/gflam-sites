@@ -79,6 +79,8 @@
   .pastdue .pdpay{color:var(--pink);font-size:13.5px;font-weight:700;text-decoration:underline}
   /* AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33): one card at the top of Billing says where the account
      stands, what is kept and how to come back. Amber like the console's hold card: nothing is wrong, the games are off. */
+  .label.framed{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}   /* kept for screen readers */
+  .setframe{display:block;width:100%;height:640px;border:0;background:transparent;color-scheme:dark}
   .leftcard{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;padding:16px 18px;margin:0 0 16px}
   .leftcard h2{font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3;margin:0 0 6px}
   .leftcard p{font-size:14px;line-height:1.55;color:var(--text);margin:0 0 8px}
@@ -413,7 +415,10 @@
   <!-- The owner's intro is about billing (plan, hosts, next payment), so it shows on the Billing tab only (Dean,
        5 Nov 2026: "up the top it says we've still got host, next payment and everything on this page"). showTab
        hides it on every other tab. A manager's intro says what they can do here, so it drops "billonly" and stays. -->
-  <p class="lede billonly" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
+  <!-- NO DESCRIPTION UNDER THE HEADING (Dean, 5 Nov 2026, INBOX item 35: "Your account" is self-explanatory). The owner's
+       intro is gone; the paragraph stays empty and hidden. A manager's line (what the owner has switched on for them)
+       is written into it by gateSections and shows on every tab, because it tells them something the heading does not. -->
+  <p class="lede billonly" id="lede" hidden></p>
   <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
   <p class="lede" id="otherAccounts" hidden></p>
 
@@ -593,7 +598,7 @@
     <div class="label">Your nights</div>
     <!-- The monthly report (31 Oct 2026): any month, the same numbers as the email on the 1st. -->
     <p class="note" style="margin:0 0 10px"><a href="report.html" id="reportLink" style="color:#FF1F8E;font-weight:700">See your monthly report</a>: nights, players, who came back and your top teams, for any month.</p>
-    <p class="note" style="margin:0 0 10px">How your recent nights went. "Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
+    <p class="note" style="margin:0 0 10px">"Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
     <!-- Read-only, so nothing can be written to the wrong venue here. It still gets the bar,
          because quietly reading the WRONG venue's numbers and deciding something about your
          Tuesday off the back of them is its own kind of wrong. -->
@@ -607,9 +612,11 @@
 
     <div class="tabpanel" id="tp-settings">
     <div class="label">Player data &amp; name display</div>
-    <p class="note" style="margin:0 0 10px">What players are asked for when they join, whether the join screen asks them to opt in to your marketing, how their name shows on the TV (John S, J Smith or John Smith), and your bingo permit. Opens that venue's settings.</p>
+    <!-- ONE VENUE, NO PICKER (Dean, 5 Nov 2026, INBOX item 34): an account with one venue sees that venue's settings right
+         here (settings.html?embed=1 in a frame that grows to fit); two or more venues get one row each, as before.
+         The description paragraph under the heading went (item 35), and so did the line about the opt-in list being under
+         Marketing: the opt-in tick is not on this screen. -->
     <div id="playerData"></div>
-    <p class="note" style="margin:12px 0 0">Your opt-in list is under the Marketing tab, with your venue link and your table signs. Permits for raffles and members draws are under Draws.</p>
     </div><!-- /tp-settings -->
 
     <!-- MARKETING (Dean, 24 Oct 2026): everything a venue uses to get people playing, in one tab.
@@ -1302,7 +1309,20 @@
     // Player data + name display: reuse the existing per-venue settings page (what players are
     // asked for at join, and how their name shows on the TV). One link per venue.
     var pd = $("playerData");
-    if (pd){
+    if (pd && d.venues.length === 1){
+      var v1 = d.venues[0], want = "settings.html?venue=" + encodeURIComponent(v1.id) + "&embed=1";
+      var fr = pd.querySelector("iframe.setframe");
+      if (!fr || fr.getAttribute("data-src") !== want){
+        pd.innerHTML = "";
+        fr = document.createElement("iframe");
+        fr.className = "setframe"; fr.title = "Game settings for " + v1.name;
+        fr.setAttribute("data-src", want);   // loaded when the tab is first opened (paintSettingsFrame), not on every visit
+        pd.appendChild(fr);
+      }
+      paintSettingsFrame();
+      // The settings page inside has its own section headings, so the tab's label would be a second heading on top.
+      var pdl = pd.previousElementSibling; if (pdl && pdl.classList.contains("label")) pdl.classList.add("framed");
+    } else if (pd){
       pd.innerHTML = "";
       d.venues.forEach(function(v){
         var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none";
@@ -1456,6 +1476,9 @@
     var st = d && d.standing, tabs = standingTabs(st), left = !!tabs;
     leftState = left ? st.state : null;
     document.body.classList.toggle("vp-left", left);
+    /* The sign-in bar ("Your games are on hold for the moment") says less than the card on Billing and, for a paused
+       prospect or a cancelled account, says it wrongly, so the card replaces it on this page. */
+    if (left){ var sb = $("vpSuspendBar"); if (sb && sb.parentNode) sb.parentNode.removeChild(sb); }
     // Tab buttons: only the three that still mean something. A manager's own gates (gateSections) ran first and win.
     var btns = document.querySelectorAll(".tabs button");
     for (var i = 0; i < btns.length; i++){
@@ -1580,13 +1603,8 @@
       $("loading").style.display = "none";
       $("content").style.display = "";
       // The two plans reduce differently and the page has to say which one you are on.
-      var _l=$("lede");
-      /* "Reductions apply from your next renewal" read as "deductions" (Dean, 19 Oct 2026). Say what
-         happens in plain words: adding is immediate, lowering waits for the renewal. */
-      if(_l) _l.textContent = "Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away. " +
-        (d.plan === "annual"
-          ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
-          : "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short.");
+      /* The owner's intro under "Your account" was cut (Dean, 5 Nov 2026, INBOX item 35). What it said about adding and
+         lowering players is said where it matters, under Your venues (players-note). */
       render(d);
       applyStanding(d);
       renderOtherAccounts(d.other_accounts || []);
@@ -2452,11 +2470,24 @@
   /* Open one tab: its button lit, its panel shown, every other hidden. The billing intro at the top of the page
      (#lede, while it carries "billonly") shows on the Billing tab only (Dean, 5 Nov 2026); the venue drop-down
      above the tabs belongs to every tab and is left alone. */
+  /* The single venue's Game settings frame loads the first time the tab is open, and takes the height the page inside
+     tells it (settings.html posts vpSettingsHeight, same origin only), so it never scrolls inside the page. */
+  function paintSettingsFrame(){
+    var fr = document.querySelector("#playerData iframe.setframe"), tab = $("tp-settings");
+    if (!fr || !tab || !tab.classList.contains("on")) return;
+    if (!fr.getAttribute("src")) fr.setAttribute("src", fr.getAttribute("data-src"));
+  }
+  window.addEventListener("message", function(e){
+    if (e.origin !== location.origin || !e.data || typeof e.data.vpSettingsHeight !== "number") return;
+    var fr = document.querySelector("#playerData iframe.setframe");
+    if (fr && e.source === fr.contentWindow) fr.style.height = Math.max(200, Math.min(6000, e.data.vpSettingsHeight)) + "px";
+  });
   function showTab(id){
     var t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
     for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a].getAttribute('data-tab')===id);
     for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
-    var l=$("lede"); if(l) l.hidden = (id!=="billing" && l.classList.contains("billonly"));
+    var l=$("lede"); if(l) l.hidden = !l.textContent || (id!=="billing" && l.classList.contains("billonly"));
+    if (id === "settings" && typeof paintSettingsFrame === "function") paintSettingsFrame();
   }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.
