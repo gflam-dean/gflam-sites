@@ -51,6 +51,8 @@
       '<div class="rowbetween"><div class="lblk" style="margin:0">Monthly report, every venue</div>'
       + '<select id="rpMonth" class="sp" aria-label="Month">' + months.map(function (m, i) { return '<option value="' + m + '"' + (i === 1 ? " selected" : "") + '>' + rpEsc(monthWords(m)) + (i === 0 ? " (so far)" : "") + '</option>'; }).join("") + '</select>'
       + '<button class="mini" id="rpRefresh">Refresh</button></div>'
+      + '<div class="lblk">Sign-ups from gflam.com.au</div>'
+      + '<div class="panel pad" id="rpSources"><div class="note" style="margin:0">Counting&hellip;</div></div>'
       + '<div id="rpBody"><div class="note">Adding it up&hellip;</div></div>'
       + '<div class="lblk">What\'s new at venueplay, in every venue\'s email</div>'
       + '<div class="panel pad" id="rpNews"><div class="note" style="margin:0">Loading&hellip;</div></div>';
@@ -131,6 +133,32 @@
     });
   }
 
+  /* ---- sign-ups by where they came from (Dean, 4 Nov 2026) ----
+     "is there a way to tell how many people actually sign up through that?" The Gflam group site's
+     banner links venueplay.com.au/gflam; every checkout started from it is tagged
+     utm_source=gflam.com.au and counted by the billing Worker (POST /admin/signup-sources). Only
+     the Worker's numbers are shown: if it does not answer, this says so and shows no number. */
+  var GFLAM = "gflam.com.au";
+  function sourcesHtml(r) {
+    var g = null;
+    (r.sources || []).forEach(function (x) { if (x.source === GFLAM) g = x; });
+    var su = g ? g.signed_up : { month: 0, all: 0 }, st = g ? g.started : { month: 0, all: 0 };
+    var when = function (t) { try { return new Date(t).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short" }); } catch (e) { return ""; } };
+    var others = (r.sources || []).filter(function (x) { return x.source !== GFLAM; });
+    return '<p style="margin:0 0 8px" id="rpGflamLine">Signed up from gflam.com.au: <b>' + n(su.month) + '</b> this month, <b>' + n(su.all) + '</b> all time.</p>'
+      + '<p class="note" style="margin:0 0 8px">Started the sign-up form from there: ' + n(st.month) + ' this month, ' + n(st.all) + ' all time. "Signed up" means the card went in.</p>'
+      + (g && g.recent.length ? '<p class="note" style="margin:0 0 8px">Latest: ' + g.recent.slice(0, 5).map(function (x) { return rpEsc(x.venue) + " (" + rpEsc(when(x.at)) + (x.signed_up ? ", signed up" : ", not finished") + ")"; }).join("; ") + '.</p>' : "")
+      + (others.length ? '<p class="note" style="margin:0 0 8px">Other tagged links: ' + others.map(function (x) { return rpEsc(x.source === "none" ? "untagged" : x.source) + " " + n(x.signed_up.all) + " signed up"; }).join(", ") + '.</p>' : "")
+      + '<p class="note" style="margin:0">Counted from the day this tagging went live; sign-ups before that have no source and are not in these numbers. Banner clicks are not counted here: they are in Google Analytics under the source gflam.com.au. Test venues are left out.</p>';
+  }
+  function loadSources() {
+    var box = $("rpSources"); if (!box || !H.post) return;
+    return H.post("/admin/signup-sources", {}).then(function (r) {
+      if (!r || r.error) { box.innerHTML = '<div class="note" style="margin:0">' + rpEsc((r && r.error) || "Could not count sign-ups just now.") + ' No number is shown rather than a wrong one.</div>'; return; }
+      box.innerHTML = sourcesHtml(r);
+    });
+  }
+
   /* ---- the news ---- */
   function newsForm(n0) {
     var items = (n0 && n0.items) || [];
@@ -184,7 +212,8 @@
 
   var api = {
     init: function (h) { H.post = h.post; if (h.isOwner) H.isOwner = h.isOwner; if (h.showTest) H.showTest = h.showTest; return api; },
-    open: function () { shell(); if (!S.data && !S.loading) { load(); loadNews(); } },
+    open: function () { shell(); if (!S.data && !S.loading) { load(); loadNews(); loadSources(); } },
+    sourcesHtml: function (r) { return sourcesHtml(r); },
     repaint: function () { render(); }
   };
   root.VPReports = api;

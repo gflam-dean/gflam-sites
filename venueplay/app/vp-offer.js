@@ -34,12 +34,41 @@
      typed dates to this row, and goes red once this row's month has ended. */
   var WRITTEN_FOR = 'nov';
 
-  /* The offer page: the row its address names (/offer-nov), else October (/nsw, the link already
-     in venues' inboxes). */
-  function forPath(pathname) {
+  /* THE ROW FOR TODAY (Dean, 4 Nov 2026). The row whose code belongs to this calendar month in
+     Brisbane (UTC+10 all year, no daylight saving): the code the billing Worker honours today
+     (vpaCodeInDate ends each code with its month). The year comes from the code, so a 'nov' row
+     written for 2026 is never picked in November 2027. No row for this month, or the row is
+     marked ended: null, and the caller shows the standard rate. */
+  var MON3 = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  function forDate(nowMs) {
+    var d = new Date((nowMs == null ? Date.now() : nowMs) + 10 * 3600 * 1000);
+    var key = MON3[d.getUTCMonth()], row = OFFERS[key];
+    if (!row || row.ended) return null;
+    var y = /-(20\d\d)$/.exec(row.code || '');
+    if (!y || Number(y[1]) !== d.getUTCFullYear()) return null;
+    return key;
+  }
+
+  /* THE GFLAM GROUP SITE'S BANNER LINK, venueplay.com.au/gflam (Dean, 4 Nov 2026: "if someone
+     lands on the Gflam group website and clicks the venueplay banner, send them to a discount
+     link because they've come from us"). _redirects serves /gflam from this same page, and it
+     shows whichever month's row is live today, so the group site never needs editing when the
+     month rolls over. Past the last row it falls back to October, which is ended: the page then
+     says the offer ended and quotes the standard rate, never a price the Worker will not charge.
+     vp-subscribe.js tags a visit to /gflam as utm_source=gflam.com.au, so the sign-up is counted
+     in HQ > Reports. */
+  function isGflam(pathname) { return /^\/gflam\/?$/i.test(pathname || ''); }
+
+  /* The offer page: the row its address names (/offer-nov), today's row for /gflam, else October
+     (/nsw, the link already in venues' inboxes). */
+  function forPath(pathname, nowMs) {
+    if (isGflam(pathname)) {
+      var today = forDate(nowMs);
+      return { key: today || 'oct', row: OFFERS[today || 'oct'] };
+    }
     var m = /^\/offer-([a-z]{3})\b/i.exec(pathname || '');
     var key = (m && OFFERS[m[1].toLowerCase()]) ? m[1].toLowerCase() : 'oct';
     return { key: key, row: OFFERS[key] };
   }
-  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath };
+  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, isGflam: isGflam };
 })(typeof window !== 'undefined' ? window : this);

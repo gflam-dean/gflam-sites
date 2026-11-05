@@ -84,7 +84,12 @@ var GOOD = { label: 'Mia from the agency', mobile: '0412 000 111', email: 'Mia@A
   check('players through the door: 4 + 5 + 6', t.players === 15 && t.nights === 3, [t.players, t.nights]);
   check('different phones: 6, and the four seen on all three nights are regulars', vA.phones === 6 && vA.regulars === 4, [vA.phones, vA.regulars]);
   check('questions asked: 2, from 3 answers', t.questions_asked === 2 && t.answers_given === 3, [t.questions_asked, t.answers_given]);
-  check('raffle draws 2, prizes 4 worth $200, opt-ins 1', t.raffle_draws === 2 && t.prizes_given === 4 && t.prizes_value_cents === 20000 && t.opt_ins === 1, t);
+  /* 3 Nov 2026 (Dean): the view's prizes_given_* already INCLUDES the cash, so 3 prizes worth $150 of which
+     1 is $50 cash is 3 prizes: $50 cash and 2 others worth $100. It used to read "4 worth $200" (cash twice). */
+  check('raffle draws 2, opt-ins 1, and 3 prizes, never 4: the cash is not counted twice', t.raffle_draws === 2 && t.prizes_given === 3 && t.opt_ins === 1, t);
+  check('cash and other prizes apart: $50 cash in 1, 2 others worth $100, and no single dollar total any more',
+    t.prizes_cash_count === 1 && t.prizes_cash_cents === 5000 && t.prizes_other_count === 2 && t.prizes_other_cents === 10000 && !('prizes_value_cents' in t), t);
+  check('no unvalued column (migration 150 not run): 0 with no value, and nothing breaks', t.prizes_unvalued === 0, t);
   check('biggest night and busiest day', vA.biggest_night && vA.biggest_night.players === 6 && vA.busiest_day === 'Friday', [vA.biggest_night, vA.busiest_day]);
   check('NOTHING from the other account: not its 50 players, not its game', t.players === 15 && JSON.stringify(s.body).indexOf('Somebody Else') === -1);
   check('and not one name, address or number of any player is in it', !/secret|optedin|0400000000|0411111111|Opted/i.test(JSON.stringify(s.body)));

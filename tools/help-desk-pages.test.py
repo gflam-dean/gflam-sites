@@ -618,7 +618,9 @@ def main():
         print('VENUEPLAY CONSOLE HEADER (the venue form)')
         t = Tab(b, 390, 800)
         t.go(VP + '/__fixture/venue.html')
-        check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&x.nextElementSibling.textContent==="Account";})()', 8) is True)
+        # Since 3 Nov 2026 Help goes just before Sign out (the last button), so a Back link that sits first stays
+        # first: Back, Help, Sign out on one line (Dean, round 2 B). On the console that is Account, Help, Sign out.
+        check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&!!x.previousElementSibling&&x.previousElementSibling.textContent==="Account"&&!!x.nextElementSibling&&x.nextElementSibling.textContent==="Sign out"&&!x.nextElementSibling.nextElementSibling;})()', 8) is True)
         panel_checks(t, 'venue', len(vp_faq['venue']['items']), 'venues')
         t.shot('07-venue-help-panel')
         c = t.js(CALL_LINE)

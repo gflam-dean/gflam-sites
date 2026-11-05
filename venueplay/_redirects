@@ -42,6 +42,12 @@
 /offer-mar  /nsw  200
 /offer      /     302
 
+# THE GFLAM GROUP SITE'S BANNER (Dean, 4 Nov 2026). gflam.com.au links venueplay.com.au/gflam. It is
+# the same offer page, showing whichever month's offer is live today (VPOffer.forPath), so the
+# group site never needs editing at a month's end; the sign-up is tagged utm_source=gflam.com.au.
+/gflam      /nsw  200
+/gflam/     /nsw  200
+
 # STATE PAGES RETIRED (Dean, 25 Sep 2026: "all the state links are gone except for nsw"). Nobody
 # was sent these, and /nsw is the one already in inboxes, so it keeps serving the October page.
 /qld          /offer-oct  301

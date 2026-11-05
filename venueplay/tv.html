@@ -454,6 +454,7 @@
   .winburst.show{opacity:1}
   .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .in-tvapp #tvFsBtn{display:none!important}   /* never in an app: see IN_APP (4 Nov 2026) */
 </style>
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card and its intro, before vp-oldtv so an older TV rewrites its styles too -->
 <script>
@@ -770,6 +771,10 @@
      address instead (&app=tizen|webos&appv=<version>) and /app/vp-tvapp.js sets window.VP_TV_APP
      (2 Nov 2026). */
   var IN_APP = (function(){ try{ return /\bVenuePlayTV\//.test(navigator.userAgent || "") || !!(window.VP_TV_APP && window.VP_TV_APP.platform); }catch(e){ return false; } })();
+  /* No "GO FULLSCREEN" inside any app (4 Nov 2026: a Google Play reviewer saw it bottom left of the live venue
+     screen; the app hid it once on load and tv.html showed it again later). The app is already full screen, so
+     the class on <html> takes it off for good, whatever shows it afterwards (Android, LG, Samsung). */
+  if(IN_APP){ try{ document.documentElement.classList.add("in-tvapp"); }catch(e){} }
   var VENUE_SLUG=(function(){
     if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();

@@ -24,12 +24,29 @@ way Dean does:
              stops the page drawing
   Phone      every tab fits a 390 pixel screen without sideways scrolling
 
+  Dean, 3 Nov 2026 (console-hq-5nov, items I and J):
+  Venues     ONE headline venues number, painted once, after the prospects list is known (it used to
+             paint the count and then a smaller one a moment later); the "Open now / signed up" card is
+             gone; the drop-down offers "Cancelled (N)", the venues that have left, under the heading
+             "Cancelled venues (N)"; the "Show cancelled" tick is gone, the option is the one place
+  Screens    its own tab, holding "Put the ads back on / Restart the page", the time and TVs by type,
+             with a line saying it applies to every venue screen; the time is 3am Brisbane for BOTH
+             actions and stays 3am when the action changes; Apply still asks first and still posts the
+             same /screen/command with a 3am Brisbane time
+  Spacing    measured from getBoundingClientRect at 1100 and 390: the tools row is one height on one
+             line, the four cards are one height on one line, everything shares one left edge; on a
+             phone the search, the filter and the buttons stack full width, the cards pair up
+
+Takes the heavy lock first (VP_WAIT_LOCK seconds to wait): one Chrome suite at a time on this Mac.
+
     python3 tools/hq-tabs-in-chrome.test.py [--shots DIR]
 """
 import argparse, json, os, sys, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
+import gatelib  # noqa: E402
 import admin_site, hq_scenario  # noqa: E402
 from hq_scenario import vid, TUGUN, LEAVING, ENDED  # noqa: E402
 
@@ -37,6 +54,16 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--shots')
 A = ap.parse_args()
 PASS, FAIL = [0], [0]
+
+if not gatelib.hold_lock_or_refuse('hq-tabs-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
+    print('REFUSED: another live Chrome run holds /tmp/vp-heavy.lock')
+    sys.exit(3)
+
+# Every paint of the headline venues number, from before the page's own scripts run: the check is that
+# there is exactly one, so the number can never be seen to change (Dean, 3 Nov 2026).
+PRE = ('window.__stPaints=[]; document.addEventListener("DOMContentLoaded", function(){'
+       'var e=document.getElementById("stVenues"); if(!e) return;'
+       'new MutationObserver(function(){ window.__stPaints.push(e.textContent); }).observe(e, {childList:true, characterData:true, subtree:true});});')
 
 
 def ok(label, good, detail=''):
@@ -105,10 +132,97 @@ def raw_of(key):
     return a[0] if a else None
 
 
+def rects(sid, sels):
+    """[{h, t, l, w}] for each selector, rounded; None where the element is missing."""
+    return js(sid, '(%s).map(function(s){var e=document.querySelector(s); if(!e) return null; var r=e.getBoundingClientRect(); '
+                   'return {h:Math.round(r.height), t:Math.round(r.top), l:Math.round(r.left), w:Math.round(r.width)};})' % json.dumps(sels))
+
+
+def spread(rs, key):
+    vals = [r[key] for r in rs if r]
+    return (max(vals) - min(vals)) if vals and len(vals) == len(rs) else 999
+
+
+TOOLS = ['#venueSearch', '#venueFilter', '#addVenueToggle', '#prospectToggle', '.vtools a.btn.pink']
+CARDS = ['#app > .stats .scard:nth-child(1)', '#app > .stats .scard:nth-child(2)', '#app > .stats .scard:nth-child(3)', '#app > .stats .scard:nth-child(4)']
+
+
 try:
-    tid, sid = S.open('/app/hq.html?as=admin', 1280, 1000)
+    tid, sid = S.open('/app/hq.html?as=admin', 1280, 1000, pre=PRE)
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     time.sleep(2)
+
+    print('\nVenues: one headline number, painted once (Dean, 3 Nov 2026)')
+    S.until(sid, '/^\\d+$/.test(document.getElementById("stVenues").textContent)', 15)
+    time.sleep(2)
+    paints = js(sid, 'JSON.stringify(window.__stPaints||[])')
+    # 16 venues less Ended Bowls and Archived Hotel (left) and Test Alpha (flagged test): 13, of which 5 are grouped.
+    ok('the venues number is painted exactly once, after the venue AND prospects lists are known: it cannot be seen to change',
+       paints == '["13"]', paints)
+    card = js(sid, '(function(){var c=document.querySelector(".stats .scard"); return {k:c.querySelector(".k").textContent, v:c.querySelector(".v").textContent, d:c.querySelector(".d").textContent};})()')
+    ok('it is labelled: "Customer venues 13, 8 independent, 5 grouped"',
+       card and card['k'] == 'Customer venues' and card['v'] == '13' and card['d'] == '8 independent, 5 grouped', card)
+    ok('there is no second venues number: the "Open now / signed up" card is gone and four cards remain',
+       js(sid, '!document.getElementById("stSpots") && document.querySelector("#app > .stats").querySelectorAll(".scard").length===4 && document.body.innerText.indexOf("Open now")===-1') is True,
+       js(sid, 'document.querySelector("#app > .stats").querySelectorAll(".scard").length'))
+
+    print('\nVenues: Cancelled in the drop-down, the one place for venues that have left')
+    ok('the filter offers "Cancelled (2)": Ended Bowls and Archived Hotel have left',
+       js(sid, '(document.querySelector(\'#venueFilter option[value="cancelled"]\')||{}).textContent') == 'Cancelled (2)',
+       js(sid, '(document.querySelector(\'#venueFilter option[value="cancelled"]\')||{}).textContent'))
+    js(sid, 'var s=document.getElementById("venueFilter"); s.value="cancelled"; s.dispatchEvent(new Event("change")); true')
+    time.sleep(0.3)
+    cx = js(sid, '({names:[].map.call(document.querySelectorAll("#venueRows .vn"), function(e){return e.textContent;}), lbl:document.getElementById("venuesLbl").textContent})')
+    ok('choosing it lists exactly those two under "Cancelled venues (2)"',
+       cx and sorted(cx['names']) == ['Archived Hotel', 'Ended Bowls'] and cx['lbl'] == 'Cancelled venues (2)', cx)
+    ok('and the "Show cancelled" tick is gone: one answer in one place',
+       js(sid, '!document.getElementById("showLeft") && document.body.innerText.indexOf("Show cancelled")===-1') is True)
+    shot(sid, 'venues-cancelled-desktop')
+    js(sid, 'var s=document.getElementById("venueFilter"); s.value="all"; s.dispatchEvent(new Event("change")); true')
+    time.sleep(0.3)
+
+    print('\nScreens: its own tab, 3am Brisbane for both actions (Dean, 3 Nov 2026)')
+    ok('a Screens tab exists and the block has left the Venues list for it',
+       js(sid, '!!document.querySelector(\'#hqNav button[data-pane="screens"]\') && !document.querySelector("#paneVenues #screensAction") && '
+               '!!document.querySelector("#paneScreens #screensAction") && !!document.querySelector("#paneScreens #reloadScreensWhen") && !!document.querySelector("#paneScreens #reloadScreens")') is True)
+    pane(sid, 'screens')
+    ok('opening it shows the block, with a line saying it applies to every venue screen',
+       js(sid, '!document.getElementById("paneScreens").classList.contains("hidden") && document.getElementById("paneVenues").classList.contains("hidden") && '
+               '/every venue screen/.test((document.getElementById("screensScope")||{}).textContent||"")') is True,
+       js(sid, '(document.getElementById("screensScope")||{}).textContent'))
+    ok('TVs by type is drawn on the tab too', js(sid, '(function(){var t=(document.querySelector("#paneScreens #tvTypesOut")||{}).innerText||""; return /TVs by type/.test(t) && !/loading/.test(t);})()') is True,
+       js(sid, '(document.querySelector("#paneScreens #tvTypesOut")||{}).innerText'))
+    whens = js(sid, '(function(){var a=document.getElementById("screensAction"), w=document.getElementById("reloadScreensWhen"); var out=[w.value];'
+                    'a.value="reload"; a.dispatchEvent(new Event("change")); out.push(w.value); a.value="ads"; a.dispatchEvent(new Event("change")); out.push(w.value); return out;})()')
+    ok('the time is "at 3am Brisbane" for Put the ads back on, and stays 3am through Restart the page and back',
+       whens == ['3am', '3am', '3am'] and js(sid, 'document.querySelector(\'#reloadScreensWhen option[value="now"]\').textContent') == 'right now', whens)
+    js(sid, 'window.__posts=[]; (function(f){ window.fetch=function(u,o){ try{ window.__posts.push({u:String(u), b:(o&&o.body)||null}); }catch(e){} return f.apply(this, arguments); }; })(window.fetch); true')
+    click(sid, '#reloadScreens')
+    S.until(sid, '!!document.getElementById("vpAskGo")', 5)
+    asked = js(sid, 'document.body.innerText') or ''
+    ok('Apply asks first, and says it goes at 3am Brisbane, nothing interrupted', 'put the venue\'s advertising back on' in asked and 'Brisbane. Nothing is interrupted' in asked, asked[-300:])
+    click(sid, '#vpAskGo')
+    S.until(sid, '(window.__posts||[]).some(function(p){ return /\\/screen\\/command$/.test(p.u); })', 10)
+    post = js(sid, 'JSON.stringify(((window.__posts||[]).filter(function(p){ return /\\/screen\\/command$/.test(p.u); })[0]||{}))')
+    try:
+        p = json.loads(post or '{}')
+        body = json.loads(p.get('b') or '{}')
+    except Exception:
+        p, body = {}, {}
+    import datetime as _dt0
+    at = body.get('at') or ''
+    at_utc = None
+    try:
+        at_utc = _dt0.datetime.strptime(at[:19], '%Y-%m-%dT%H:%M:%S')
+    except Exception:
+        pass
+    ok('and still posts the same /screen/command for every screen: command ads, at a time that is 3am Brisbane',
+       body.get('all') is True and body.get('command') == 'ads' and at_utc is not None and at_utc.hour == 17 and at_utc.minute == 0, (p.get('u'), body))
+    time.sleep(0.5)
+    js(sid, '(function(){var b=document.querySelector("[id$=Go]"); if(b) b.click();})()')
+    shot(sid, 'screens-desktop')
+    pane(sid, 'venues')
+    time.sleep(0.4)
 
     print('\nVenues: one line each')
     ok('no screen address line under any venue name', js(sid, 'document.querySelectorAll("#venueRows td .vt.mono").length') == 0)
@@ -323,12 +437,43 @@ try:
     ok('no script error anywhere on the desktop run', errs == '[]', errs)
     S.close_tab(tid)
 
+    print('\nSpacing at 1100: one height, one line, one left edge (Dean, 3 Nov 2026)')
+    tid, sid = S.open('/app/hq.html?as=admin', 1100, 900)
+    S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
+    time.sleep(1.5)
+    tr = rects(sid, TOOLS) or []
+    ok('the search, the filter and the three buttons are one height (42px) on one line',
+       len(tr) == 5 and all(tr) and spread(tr, 'h') <= 1 and spread(tr, 't') <= 1 and tr[0]['h'] == 42, tr)
+    cr = rects(sid, CARDS) or []
+    ok('the four cards are one height on one line', len(cr) == 4 and all(cr) and spread(cr, 'h') <= 1 and spread(cr, 't') <= 1, cr)
+    lr = rects(sid, ['.titlerow .h2', '#app > .stats .scard:nth-child(1)', '#hqNav button[data-pane="venues"]', '#venueSearch', '#paneVenues > .panel:not(.pad)']) or []
+    ok('the title, the first card, the first tab, the search and the list share one left edge', len(lr) == 5 and all(lr) and spread(lr, 'l') <= 1, lr)
+    shot(sid, 'venues-1100', full=False)
+    S.close_tab(tid)
+
+    print('\nSpacing at 390: stacked full width, the cards in pairs')
+    tid, sid = S.open('/app/hq.html?as=admin', 390, 844, True)
+    S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
+    time.sleep(1.5)
+    tr = rects(sid, TOOLS) or []
+    ok('the search, the filter and the three buttons stack, each the full width of the page, one left edge',
+       len(tr) == 5 and all(tr) and spread(tr, 'l') <= 1 and spread(tr, 'w') <= 1 and tr[0]['w'] >= 300 and len(set(r['t'] for r in tr)) == 5, tr)
+    cr = rects(sid, CARDS) or []
+    ok('the four cards are one height, two to a row', len(cr) == 4 and all(cr) and spread(cr, 'h') <= 1 and cr[0]['t'] == cr[1]['t'] and cr[2]['t'] == cr[3]['t'] and cr[0]['t'] != cr[2]['t'], cr)
+    pane(sid, 'screens')
+    time.sleep(0.5)
+    sr = rects(sid, ['#screensAction', '#reloadScreensWhen', '#reloadScreens']) or []
+    ok('on the Screens tab the two choices and the button stack full width too',
+       len(sr) == 3 and all(sr) and spread(sr, 'l') <= 1 and spread(sr, 'w') <= 1 and len(set(r['t'] for r in sr)) == 3 and no_sideways(sid), sr)
+    shot(sid, 'screens-phone')
+    S.close_tab(tid)
+
     print('\nPhone: every tab fits')
     tid, sid = S.open('/app/hq.html?as=admin', 390, 844, True)
     S.until(sid, 'document.querySelectorAll("#venueRows tr").length > 0', 25)
     time.sleep(2)
     bad = []
-    for p in ('venues', 'live', 'quiet', 'cancelled', 'billing', 'groups', 'usage', 'team', 'flagged', 'audit'):
+    for p in ('venues', 'live', 'screens', 'quiet', 'cancelled', 'billing', 'groups', 'usage', 'team', 'flagged', 'audit'):
         pane(sid, p)
         time.sleep(1.2)
         if not no_sideways(sid):
@@ -357,7 +502,7 @@ finally:
 total = PASS[0] + FAIL[0]
 print('')
 print('%d of %d checks passed' % (PASS[0], total))
-EXPECTED = 64
+EXPECTED = 82
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

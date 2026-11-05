@@ -568,6 +568,29 @@ function form(o) { return Object.keys(o).map(function (k) { return encodeURIComp
   check('and the other buttons still work then', (await call(pathOf(L.yes), undefined, {}, 'POST', '')).status === 200 && ROWS[0].decision === 'yes', ROWS[0].decision);
   check('none of the photos pages has an em or en dash, or the word roster', [gp.html, gy.html, pp.html, p148.html].every(function (h) { return !/[\u2014\u2013]/.test(h) && !/roster/i.test(h); }));
 
+  /* THE FOLLOW-UP TO A PROSPECT WHO NEVER SIGNED IN (Dean, 3 Nov 2026): a review of class "nudge". Its pages must
+     talk about the follow-up email, never about "their reply", "their account email" or Instantly. */
+  section('16. A FOLLOW-UP EMAIL FOR DEAN\'S YES (class nudge, 3 Nov 2026): the pages say what it is and what happens');
+  world();
+  var NZ = { folder: 'nudge-2026-11-03-quiet-arms', company: 'Quiet Arms', class: 'nudge', their_words: 'Set up 4 days ago by HQ. Nobody has signed in. No phone on file.',
+    reply: 'Hi Sam,\n\nJust checking your venueplay account reached you.\n\nCheers,\nDean', mailbox: '', reply_to: 'sam@quiet.example', recommend: 'yes', recommend_why: 'A short, friendly nudge.' };
+  r = await call('/autopilot/review/register', NZ, AP); L = r.body.links || {};
+  check('a nudge registers like any review: Yes, Edit and No links, signed', r.status === 200 && !!L.yes && !!L.edit && !!L.no && !L.stop, L);
+  var ny = await call(pathOf(L.yes), undefined, {}, 'GET');
+  check('its Yes page names the follow-up and who it goes to, with the sign-in button under Dean\'s words',
+    ny.status === 200 && /nobody has signed in yet\. A follow-up email to sam@quiet\.example/.test(ny.html) && /Where they are/.test(ny.html) && /fresh one-tap sign-in button under your words/.test(ny.html) && /No Instantly campaign is touched/.test(ny.html), ny.html.slice(0, 400));
+  check('...and never the reply wording (no "Replied to", no "What they wrote", no "their account email follows")',
+    !/Replied to|What they wrote|Their account email follows/.test(ny.html), ny.html.slice(0, 400));
+  var nn = await call(pathOf(L.no), undefined, {}, 'GET');
+  check('its No page says the account stays in HQ > Prospects, not "their email stays in Instantly"', /stays as it is in HQ &gt; Prospects|stays as it is in HQ > Prospects/.test(nn.html) && !/stays in Instantly/.test(nn.html), nn.html.slice(-700));
+  check('none of the nudge pages has an em or en dash', [ny.html, nn.html].every(function (h) { return !/[\u2014\u2013]/.test(h); }));
+  var NS = Object.assign({}, NZ, { folder: NZ.folder + '-sms', class: 'nudge sms', reply_to: '0432 071 622',
+    reply: 'venueplay: Hi Sam, your venueplay account for Quiet Arms is ready. Tap to sign in, no password: {link} Questions? 07 5228 3667. Reply STOP to opt out' });
+  r = await call('/autopilot/review/register', NS, AP); var LS = r.body.links || {};
+  var sy = await call(pathOf(LS.yes), undefined, {}, 'GET');
+  check('the text is its own review with its own links, worded as a text: the day after the email, 9am to 8pm, never Sunday, queued until the SMS provider is on',
+    r.status === 200 && !!LS.yes && LS.yes !== L.yes && /The follow-up by text to 0432 071 622/.test(sy.html) && /never on a Sunday/.test(sy.html) && /stays queued and nothing is sent/.test(sy.html), sy.html.slice(0, 400));
+
   print('');
   print(bad ? 'FAILED: ' + bad + ' of ' + ran + ' checks failed' : 'ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { bad++; print('  FAIL the suite threw: ' + (e && e.stack || e)); print('FAILED: threw'); });

@@ -55,8 +55,14 @@
     });
     return any ? out : null;
   }
+  /* venueplay.com.au/gflam is the Gflam group site's banner link (Dean, 4 Nov 2026). The banner
+     carries no tags of its own, so a visit to that address IS the tag: a venue that signs up after
+     landing there is counted as coming from gflam.com.au (HQ > Reports). Tags typed onto the link
+     still win. */
+  var GFLAM_UTM = { utm_source: "gflam.com.au", utm_medium: "banner", utm_campaign: "group-site" };
   function utm() {
-    var here = utmFrom(root.location && root.location.search);
+    var loc = root.location || {};
+    var here = utmFrom(loc.search) || (/^\/gflam\/?$/i.test(loc.pathname || "") ? GFLAM_UTM : null);
     try {
       if (here) root.sessionStorage.setItem("vpsUtm", JSON.stringify(here));
       else here = JSON.parse(root.sessionStorage.getItem("vpsUtm") || "null");
@@ -157,6 +163,6 @@
     Array.prototype.forEach.call(doc.querySelectorAll("form[data-vps]"), wire);
     utm();   // remember the tags this visit landed with, for a sign-up on a later page
   }
-  root.VPSubscribe = { start: start, nextMonth: nextMonth, utmFrom: utmFrom };
+  root.VPSubscribe = { start: start, nextMonth: nextMonth, utmFrom: utmFrom, utm: utm };
   if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else start();
 })(typeof window !== "undefined" ? window : this);

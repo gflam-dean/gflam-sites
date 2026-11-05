@@ -649,7 +649,8 @@
       if (!acts) return;
       var b = el("button", "hact", "Help"); b.type = "button"; b.id = "vphLink"; b.setAttribute("aria-haspopup", "dialog");
       on(b, "click", openPanel);
-      acts.insertBefore(b, acts.firstChild);
+      // Before Sign out (the last button), so a Back link that sits first stays first: Back, Help, Sign out (3 Nov 2026).
+      acts.insertBefore(b, acts.lastElementChild);
       // Which venue: the same context the page itself uses, never a guess.
       try { if (root.VP && root.VP.ready) root.VP.ready().then(function (c) { root.VP.__helpCtx = c; }).catch(function () {}); } catch (e) {}
       return;

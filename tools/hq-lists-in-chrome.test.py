@@ -20,12 +20,19 @@ the page reads vp_admin_audit back from that same database, so a click is seen t
 import argparse, datetime, os, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
+import gatelib  # noqa: E402
 import admin_site  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--shots')
 A = ap.parse_args()
+
+# One Chrome suite at a time on this Mac (VP_WAIT_LOCK seconds to wait for the heavy lock).
+if not gatelib.hold_lock_or_refuse('hq-lists-in-chrome.test.py', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
+    print('REFUSED: another live Chrome run holds /tmp/vp-heavy.lock')
+    sys.exit(3)
 
 PASS, FAIL = [0], [0]
 
@@ -123,8 +130,9 @@ try:
     ok('active, quiet, cancelling-but-still-playing and UNPAID venues are listed',
        all(n in shown for n in ['Active Arms', 'Quiet Rung Hotel', 'Unpaid Club', 'Leaving Lounge']), shown)
     ok('ended and archived venues are not', 'Ended Bowls' not in shown and 'Archived Hotel' not in shown, shown)
-    ok('the tick says how many it is hiding', S.js(sid, 'document.getElementById("leftHiddenN").textContent') == '(2 hidden)',
-       S.js(sid, 'document.getElementById("leftHiddenN").textContent'))
+    # 3 Nov 2026: the "Show cancelled" tick became the Cancelled option in the drop-down, one place to find them.
+    ok('the Cancelled option says how many have left', S.js(sid, 'document.querySelector(\'#venueFilter option[value="cancelled"]\').textContent') == 'Cancelled (2)',
+       S.js(sid, '(document.querySelector(\'#venueFilter option[value="cancelled"]\')||{}).textContent'))
     shot(sid, 'hq-venues-default')
     S.js(sid, 'var i=document.getElementById("venueSearch"); i.value="ended"; i.dispatchEvent(new Event("input")); true')
     time.sleep(0.3)
@@ -134,12 +142,12 @@ try:
     ok('and an archived venue too', names(sid) == ['Archived Hotel'], names(sid))
     shot(sid, 'hq-venues-search-finds-hidden')
     S.js(sid, 'var i=document.getElementById("venueSearch"); i.value=""; i.dispatchEvent(new Event("input")); true')
-    S.js(sid, 'var c=document.getElementById("showLeft"); c.checked=true; c.dispatchEvent(new Event("change")); true')
+    S.js(sid, 'var s=document.getElementById("venueFilter"); s.value="cancelled"; s.dispatchEvent(new Event("change")); true')
     time.sleep(0.3)
     shown = names(sid)
-    ok('"Show cancelled" brings them back', 'Ended Bowls' in shown and 'Archived Hotel' in shown and len(shown) == 9, shown)
+    ok('choosing Cancelled lists exactly the two that have left, and nothing else', sorted(shown) == ['Archived Hotel', 'Ended Bowls'], shown)
     shot(sid, 'hq-venues-show-cancelled')
-    S.js(sid, 'var c=document.getElementById("showLeft"); c.checked=false; c.dispatchEvent(new Event("change")); true')
+    S.js(sid, 'var s=document.getElementById("venueFilter"); s.value="all"; s.dispatchEvent(new Event("change")); true')
 
     print('\nthe tab badges, on page load, before either tab is opened')
     S.until(sid, '(function(){var a=document.querySelector(\'#hqNav button[data-pane="quiet"] .tabcount\'),'

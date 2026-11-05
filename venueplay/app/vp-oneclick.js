@@ -99,10 +99,18 @@
             rm.className = "okmsg warn"; rm.textContent = "Lots of tries from this network just now. Wait a few minutes, then tap again.";
             return "busy";
           }
-          // One answer whatever happened, so this page never says whether an address has a login.
-          rb.hidden = true;
-          rm.textContent = "Done. If " + (got.e ? got.e : "that address") + " is on a venueplay login, a new link is on its way. It can take a minute, so check your junk folder too.";
-          return "sent";
+          return res.json().catch(function () { return {}; }).then(function (d) {
+            rb.hidden = true;
+            /* THE 30 DAYS ARE OVER (Dean, 4 Nov 2026): no link by itself. Say so plainly, and that we will be in touch;
+               the Worker has opened a sales ticket for Dean to choose. Only the holder of that venue's own link sees this. */
+            if (d && d.ended) {
+              rm.textContent = "That sign-in link has ended. We have let the venueplay team know and we will be in touch to get you going. Prefer to write? Email support@venueplay.com.au.";
+              return "ended";
+            }
+            // One answer whatever happened, so this page never says whether an address has a login.
+            rm.textContent = "Done. If " + (got.e ? got.e : "that address") + " is on a venueplay login, a new link is on its way. It can take a minute, so check your junk folder too.";
+            return "sent";
+          });
         })
         .catch(function () {
           rb.disabled = false; rb.textContent = got.t ? "Send me a new link" : "Send me a sign-in link";

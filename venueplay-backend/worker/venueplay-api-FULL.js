@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 21:40 · e05e29c7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 09:19 · b92cef2d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -228,6 +228,10 @@ export default {
       if (request.method === 'GET'  && path === '/autopilot/decisions'      && typeof vpaAutopilotDecisions === 'function')    return await vpaAutopilotDecisions(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/decisions/done' && typeof vpaAutopilotDecisionDone === 'function') return await vpaAutopilotDecisionDone(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/holds'          && typeof vpaAutopilotHolds === 'function')        return await vpaAutopilotHolds(request, env, json);
+      // The follow-up to a prospect who never signed in (3 Nov 2026): who is quiet, and send on Dean's yes.
+      if (request.method === 'GET'  && path === '/autopilot/prospects/quiet' && typeof vpaAutopilotQuietProspects === 'function') return await vpaAutopilotQuietProspects(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/nudge'  && typeof vpaAutopilotProspectNudge === 'function') return await vpaAutopilotProspectNudge(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/nudge-sms' && typeof vpaAutopilotProspectNudgeSms === 'function') return await vpaAutopilotProspectNudgeSms(request, env, json);
       // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
@@ -255,6 +259,7 @@ export default {
       // HQ > Reports: every venue's month, the totals and who is trending down (Dean, 31 Oct 2026).
       if (request.method === 'POST' && path === '/admin/month-report'    && typeof vpaHandleMonthReport === 'function')    return await vpaHandleMonthReport(request, env, json);
       // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
+      if (request.method === 'POST' && path === '/admin/signup-sources' && typeof vpaHandleSignupSources === 'function') return await vpaHandleSignupSources(request, env, json);
       if (request.method === 'POST' && path === '/admin/month-news'      && typeof vpaHandleMonthNews === 'function')      return await vpaHandleMonthNews(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
@@ -610,6 +615,24 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'Sorry, we could not save your details just then. Please try again.' }, 502);
   }
 
+  /* WHERE THIS SIGN-UP CAME FROM (Dean, 4 Nov 2026: "is there a way to tell how many people
+     actually sign up through that?"). The page sends the utm tags the visit landed with
+     (vp-subscribe.js keeps them for the visit; venueplay.com.au/gflam tags itself
+     utm_source=gflam.com.au). One vp_admin_audit row per checkout started, so no migration:
+     HQ > Reports counts them against the account row (POST /admin/signup-sources), and a row
+     with a Stripe subscription is a venue that really signed up. Best-effort, never blocks. */
+  const signupUtm = vpsUtm(b.utm);
+  if (signupUtm.utm_source) {
+    try {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'signup_source',
+        target: 'account:' + rowId,
+        detail: Object.assign({}, signupUtm, { venue: venues[0].name, is_group: isGroup,
+          founding_code: (b.founding_code || '').trim().toUpperCase().slice(0, 40) || null }),
+      }, false);
+    } catch (e) { /* the count is best-effort, never block signup */ }
+  }
+
   // OPT-IN GATE (see memory venueplay-optin-gate): if the signup EMAIL does not look like a real
   // venue, it is likely a third-party trivia host, not the venue that owns the players' data. Flag
   // it: email Dean + drop a flag in HQ. Opt-in collection then stays LOCKED (cannot be switched on
@@ -717,6 +740,10 @@ async function handleCheckout(request, env, json) {
      are trying to win back gently. Found by audit, 20 Sep 2026. */
   form.set('metadata[trial_end]', String(trialTs));
   form.set('metadata[returning]', returning ? '1' : '0');
+  /* Where they came from, on the Stripe record too, so a payment can be traced to the link. */
+  form.set('metadata[utm_source]', signupUtm.utm_source || '');
+  form.set('metadata[utm_campaign]', signupUtm.utm_campaign || '');
+  form.set('subscription_data[metadata][utm_source]', signupUtm.utm_source || '');
   // Apply the volume coupon (its Stripe name shows the reason on checkout + the invoice),
   // or disallow promo codes when there is no tier discount (Stripe forbids setting both).
   if (tierCoupon) {
@@ -2832,7 +2859,28 @@ function vpaReviewPage(title, inner, status) {
 }
 
 /* Exactly what happens, and when (Dean: confirm pages say exactly what will happen and when). */
+const VPA_NUDGE_CLASS = 'nudge';   // the follow-up to a prospect who never signed in (3 Nov 2026)
+const VPA_NUDGE_SMS_CLASS = 'nudge sms';   // the same follow-up by text, its own Yes / Edit / No (3 Nov 2026)
 function vpaReviewWhatHappens(row, edited) {
+  if (row.class === VPA_NUDGE_SMS_CLASS) {
+    return '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+      + '<li>The text' + (edited ? ', with your changes,' : '') + ' waits until the day after the follow-up email, at the other end of the day '
+      + '(email in the morning, text late afternoon, or the other way round), between 9am and 8pm, never on a Sunday.</li>'
+      + '<li>Then it checks again that nobody has signed in, and texts ' + vpaEsc(row.reply_to || 'their mobile') + ' from venueplay with a fresh one-tap sign-in link where {link} is. '
+      + 'Until the SMS provider is switched on, the text stays queued and nothing is sent.</li>'
+      + '<li>If something is not right, you get an email saying why. No Instantly campaign is touched.</li>'
+      + '</ol></div>';
+  }
+  if (row.class === VPA_NUDGE_CLASS) {
+    return '<div class="what"><b>What happens when you tap it</b><ol>'
+      + '<li>Within 5 minutes your Mac picks this up (if it is asleep, as soon as it wakes).</li>'
+      + '<li>It checks again that nobody at the venue has signed in since, that they are still a prospect and have not cancelled.</li>'
+      + '<li>If all is well, this email' + (edited ? ', with your changes,' : '') + ' goes to ' + vpaEsc(row.reply_to || 'their account email')
+      + ' from hello@send.venueplay.com.au (replies come to hello@venueplay.com.au), with a fresh one-tap sign-in button under your words, between 8am and 5pm Monday to Friday.</li>'
+      + '<li>If something is not right, you get an email saying why it was held. Nothing goes to them if it is held. No Instantly campaign is touched.</li>'
+      + '</ol></div>';
+  }
   if (row.class === 'web form') {
     // A website enquiry (2 Nov 2026): the reply goes through the help desk, on their ticket.
     return '<div class="what"><b>What happens when you tap it</b><ol>'
@@ -2855,6 +2903,14 @@ function vpaReviewWhatHappens(row, edited) {
 }
 
 function vpaReviewTitle(row) {
+  if (row.class === VPA_NUDGE_SMS_CLASS) {
+    return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+      + '<p class="muted">The follow-up by text' + (row.reply_to ? ' to ' + vpaEsc(row.reply_to) : '') + ', its own choice, waiting for your yes.</p>';
+  }
+  if (row.class === VPA_NUDGE_CLASS) {
+    return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
+      + '<p class="muted">Set up as a prospect and nobody has signed in yet. A follow-up email' + (row.reply_to ? ' to ' + vpaEsc(row.reply_to) : '') + ', waiting for your yes.</p>';
+  }
   if (row.class === 'web form') {
     return '<h1>' + vpaEsc(row.company || row.folder) + '</h1>'
       + '<p class="muted">Filled in the form on our website' + (row.reply_to ? ', from ' + vpaEsc(row.reply_to) : '') + '.</p>';
@@ -2863,6 +2919,7 @@ function vpaReviewTitle(row) {
     + '<p class="muted">Replied to ' + vpaEsc(row.mailbox || 'us') + (row.reply_to ? ' from ' + vpaEsc(row.reply_to) : '') + '.</p>';
 }
 function vpaReviewWords(row) {
+  if (row.class === VPA_NUDGE_CLASS || row.class === VPA_NUDGE_SMS_CLASS) return '<h2>Where they are</h2><div class="card words">' + vpaEsc(row.their_words || '') + '</div>';
   return '<h2>What they wrote</h2><div class="card words">' + vpaEsc(row.their_words || '(nothing above the quoted email)') + '</div>';
 }
 
@@ -3153,7 +3210,8 @@ async function vpaAutopilotReviewPage(request, env) {
       + '<div class="what"><b>What happens when you tap it</b><ol>'
       + '<li>Nothing is sent to them and no account is made, now or later.</li>'
       + '<li>Within 5 minutes your Mac marks it rejected and emails you to say so.</li>'
-      + (row.class === 'web form' ? '<li>Their ticket stays in HQ > Help desk, so you can still answer it there by hand.</li></ol></div>'
+      + ((row.class === VPA_NUDGE_CLASS || row.class === VPA_NUDGE_SMS_CLASS) ? '<li>Their account stays as it is in HQ > Prospects, where you can still ring them or resend their sign-in link.</li></ol></div>'
+         : row.class === 'web form' ? '<li>Their ticket stays in HQ > Help desk, so you can still answer it there by hand.</li></ol></div>'
                                   : '<li>Their email stays in Instantly, so you can still answer it there by hand.</li></ol></div>')
       + '<h2>Why not? (optional, just for the record)</h2>'
       + '<textarea class="short" name="reason" aria-label="Why not"></textarea>';
@@ -3402,13 +3460,19 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     /* WHEN IT GOES. Resend holds it (scheduled_at) until then, so nothing here has to wake up to send
        it, and HQ can cancel it or send it now until that minute (vp_prospect_welcomes, migration 124). */
     const sendAtMs = Date.now() + delayMin * 60000;
-    /* ITS BUTTON SIGNS THEM STRAIGHT IN, ONCE (migration 123). Only the hash is kept. Its 14 days start
-       when the email goes, not when HQ pressed the button. No table yet, or no login: the button opens
-       the email sign-in instead, and HQ is told. */
+    /* ITS BUTTON SIGNS THEM STRAIGHT IN, ONCE (migration 123). Only the hash is kept. It lasts 30 DAYS FROM
+       SETUP (Dean, 4 Nov 2026, VPA_PROSPECT_LINK_DAYS), the same moment every link resent to them ends at,
+       so the follow-ups can count down one true number. Before migration 151 it is 14 days from when the
+       email goes, and HQ is told. No table yet, or no login: the button opens the email sign-in instead,
+       and HQ is told. */
     let signinToken = null;
     // A mobile login signs in by text code, so it needs no one-click link (and has none to leak).
     if (login && !login.mobile) {
-      try { signinToken = await vpaMintSigninLink(env, login.id, venue.id, sendAtMs); }
+      try {
+        const minted = await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
+        signinToken = minted.token;
+        if (minted.shortened) warnings.push('Their sign-in link lasts 14 days, not 30 (run migration 151 for the 30 day prospect link).');
+      }
       catch (e) { warnings.push('The one-click sign-in button was not made (run migration 123), so their email button opens the email-code sign-in instead.'); }
     }
     const render = { foundingId: foundingId, email: email, firstName: firstName, venueName: name, slug: slug,
@@ -3505,9 +3569,16 @@ async function vpaProspectLastSignIn(env, userIds) {
 async function vpaProspectsList(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error, need_migration: d.need_migration }, d.status);
+  return json(d);
+}
+/* THE ONE READ BEHIND HQ > Prospects AND THE AUTOPILOT'S FOLLOW-UP (3 Nov 2026). Returns the HQ answer
+   ({ ok, prospects, card_added, ... }) or { error, status }. */
+async function vpaProspectsData(env) {
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
-  catch (e) { return json({ error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125 }, 503); }
+  catch (e) { return { error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125, status: 503 }; }
   const now = Date.now(), DAY = 86400000;
   const ids = rows.map((r) => r.venue_id);
   const venues = {}, accounts = {}, staff = {}, welcomes = {};
@@ -3564,12 +3635,22 @@ async function vpaProspectsList(request, env, json) {
       phone: r.phone || null, tel: r.phone ? 'tel:' + String(r.phone).replace(/[^\d+]/g, '') : null,
       website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
       created_at: r.created_at, days_since_setup: days, welcome: welcome,
+      /* Their sign-in link's true end, 30 days from setup or from HQ's last resend (link_from), the whole days
+         left on it, and nudge_day: the day of THAT clock the follow-ups count from (Dean, 4 Nov 2026). */
+      link_from: isFinite(vpaProspectWindowFromMs(r)) ? new Date(vpaProspectWindowFromMs(r)).toISOString() : null,
+      link_expires_at: isFinite(vpaProspectWindowFromMs(r)) ? new Date(vpaProspectWindowFromMs(r) + VPA_PROSPECT_LINK_DAYS * DAY).toISOString() : null,
+      link_days_left: isFinite(vpaProspectWindowFromMs(r)) ? vpaDaysLeft(vpaProspectWindowFromMs(r) + VPA_PROSPECT_LINK_DAYS * DAY, now) : null,
+      nudge_day: isFinite(vpaProspectWindowFromMs(r)) ? Math.floor((now - vpaProspectWindowFromMs(r)) / DAY) : days,
       last_sign_in_at: seen.at != null ? new Date(seen.at).toISOString() : null, sign_in_known: seen.known,
       called: r.called_at ? { at: r.called_at, by: r.called_label || '', note: r.call_note || '' } : null,
       call_requested: r.call_requested === true,
-      follow_up: due && seen.known && seen.at == null && !r.called_at });
+      /* "Call them" only when there IS a number to call (Dean, 3 Nov 2026: the yellow highlight showed with no
+         phone). Without one, the same quiet prospect is email_follow_up: the autopilot drafts a nudge email
+         and Dean says yes or no to it (GET /autopilot/prospects/quiet); nothing is flagged yellow. */
+      follow_up: due && seen.known && seen.at == null && !r.called_at && !!r.phone,
+      email_follow_up: due && seen.known && seen.at == null && !r.phone && !!r.email });
     /* THE ONE FLAG A ROW SHOWS. They asked for a call: that comes first, whatever else is true, until
-       somebody marks it Called. Otherwise the 3-day no-sign-in flag. */
+       somebody marks it Called. Otherwise the 3-day no-sign-in flag, which needs a phone number. */
     const last = out[out.length - 1];
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
     Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
@@ -3577,9 +3658,193 @@ async function vpaProspectsList(request, env, json) {
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
   cardAdded.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-  return json({ ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
+  return { ok: true, follow_up_days: VPA_PROSPECT_FOLLOWUP_DAYS, prospects: out,
     follow_up_count: out.filter((p) => p.flag).length, signed_up: signedUp,
-    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS });
+    card_added: cardAdded, free_month_ready: freeMonthReady, last_days: VPA_PROSPECT_LAST_DAYS };
+}
+
+/* ===========================================================================
+ * THE FOLLOW-UP EMAIL TO A PROSPECT WHO NEVER SIGNED IN (Dean, 3 Nov 2026)
+ *
+ * "If a prospect never signs in, trigger a follow-up email." The standing rule holds: the autopilot sends
+ * NOTHING without Dean. So the Mac (~/venue-enrich/prospect_nudge.py, run by prospect-autopilot.py) asks
+ * this Worker who has gone quiet, drafts the nudge, and sends Dean the usual one-tap Yes / Edit / No review
+ * (class "nudge", the same signed buttons as every other review). Only on his Yes does it call the second
+ * route, which sends the words he approved with a fresh one-tap sign-in link to their account email.
+ *
+ *   GET  /autopilot/prospects/quiet   X-Autopilot-Key  prospects nobody at the venue has signed in to,
+ *                                                      with an email: the same answer HQ > Prospects reads
+ *                                                      (vpaProspectsData), so the two never disagree.
+ *                                                      The Mac decides how many days is quiet
+ *                                                      (NUDGE_AFTER_DAYS, Dean's number).
+ *   POST /autopilot/prospect/nudge    X-Autopilot-Key  { venue_id, text }: checks AGAIN that they are still
+ *                                                      a prospect, still never signed in, not cancelled,
+ *                                                      then sends text (plain words, a blank line between
+ *                                                      paragraphs) with the sign-in button, from the
+ *                                                      transactional address with replies to hello@. The
+ *                                                      sign-in link cap per login per day still applies.
+ * No Instantly campaign is read or touched. Recorded in vp_admin_audit (prospect_nudge_sent / _refused).
+ * ======================================================================== */
+const VPA_NUDGE_TEXT_MAX = 4000;
+function vpaQuietProspect(p) {
+  return !!(p && p.status === 'not_signed_in' && p.sign_in_known !== false && !p.last_sign_in_at && p.email);
+}
+/* AT SEND TIME, NOT ONLY AT DRAFT TIME (Dean, 4 Nov 2026): if they have acted on the email, nothing more goes.
+   Signing in, adding a card and cancelling all take them off the quiet list (vpaQuietProspect: free_month,
+   card_added, cancelled). A TAP on the link that never became a sign-in is the one thing the list cannot
+   see, so the one-click route records it (signin_link_used) and this reads it back, since the start of
+   their current 30 days (an HQ resend starts a fresh clock, and an old tap does not count against it). */
+async function vpaProspectTappedLink(env, venueId, sinceMs) {
+  try {
+    const rows = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId) + '&action=eq.signin_link_used'
+      + (isFinite(sinceMs) ? '&created_at=gt.' + encodeURIComponent(new Date(sinceMs).toISOString()) : '') + '&select=id&limit=1');
+    return !!(rows && rows.length);
+  } catch (_) { return false; }
+}
+async function vpaAutopilotQuietProspects(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
+    venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
+    mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
+    state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
+    /* The link's true end (30 days from setup) and the whole days left on it (4 Nov 2026), so the Mac can
+       draft "expires in {days} days" and time the "3 days before" follow-up. The Worker fills {days} again
+       from the link it actually mints when the email goes. A Mac on an older Worker sees neither field. */
+    link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
+    link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
+    called: !!p.called, call_requested: !!p.call_requested }));
+  return json({ ok: true, prospects: quiet, link_days: VPA_PROSPECT_LINK_DAYS });
+}
+/* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
+   their one-tap sign-in link, at a different time from the email". Dean approves it in the same review email, as
+   its own line; the Mac sends it the next day at the other end of the day (prospect_nudge.py plans when).
+   OFF UNTIL THE SMS PROVIDER EXISTS: PROSPECT_SMS_ON must say "on" AND the ClickSend login must be set
+   (CLICKSEND_USERNAME, CLICKSEND_API_KEY). Until then this answers 503 sms_off, sends nothing, and the Mac keeps the
+   text queued. The words are Dean's (SMS_TEXT on the Mac), with {link} where the sign-in link goes. The Spam Act
+   needs the sender identified and a way to stop: the text must name venueplay and say "Reply STOP to opt out",
+   or it is refused. A new sign-in link is made for the text WITHOUT retiring the email's, so either one works.
+   NOT BUILT YET, because the provider is not: reading STOP replies back from ClickSend and keeping a do-not-text
+   list. Both are needed before PROSPECT_SMS_ON is set. */
+const VPA_NUDGE_SMS_MAX = 480;
+function vpaSmsOn(env) {
+  return String(env.PROSPECT_SMS_ON || '').toLowerCase() === 'on' && !!env.CLICKSEND_USERNAME && !!env.CLICKSEND_API_KEY;
+}
+async function vpaSendSms(env, toE164, body) {
+  const auth = 'Basic ' + btoa(String(env.CLICKSEND_USERNAME) + ':' + String(env.CLICKSEND_API_KEY));
+  const res = await fetch('https://rest.clicksend.com/v3/sms/send', { method: 'POST',
+    headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [{ source: 'venueplay', from: 'venueplay', to: toE164, body: body }] }) });
+  const j = await res.json().catch(() => null);
+  const m = j && j.data && j.data.messages && j.data.messages[0];
+  return { ok: res.ok && !!m && String(m.status || '').toUpperCase() === 'SUCCESS', status: res.status, id: m && m.message_id };
+}
+async function vpaAutopilotProspectNudgeSms(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const text = String(b.text || '').replace(/\s+/g, ' ').trim();
+  if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !/Reply STOP to opt out/i.test(text) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
+    return json({ error: 'The text must name venueplay, carry {link} and "Reply STOP to opt out", have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
+  }
+  if (!vpaSmsOn(env)) return json({ error: 'Texts are switched off until the SMS provider is set up. Nothing was sent; it stays queued.', sms_off: true }, 503);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, status) => {
+    await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: why });
+    return json({ error: why, refused: true }, status || 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no text was sent.');
+  if (!vpaQuietProspect(p)) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in since, so no text was sent.');
+  const to = vpaNormaliseMobileAU(p.phone || '');
+  if (!vpaIsAuMobileE164(to)) return await refuse('There is no mobile on file for them, so no text was sent.', 400);
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  if (!authUserId) return await refuse('Their login could not be found, so no text was sent.', 400);
+  const since = new Date(Date.now() - 86400000).toISOString();
+  const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
+  if (recent && recent.length >= VPA_SIGNIN_LINKS_PER_DAY_HQ) return await refuse('Too many sign-in links went to them in the last day, so no text was sent.', 429);
+  /* The text's link ends when the email's does: the prospect's 30 days from setup (Dean, 4 Nov 2026), and
+     {days} in the text is filled from the link that was minted, like the email. */
+  const win = await vpaProspectLinkWindow(env, venueId);
+  if (win && win.ended) return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Resend from HQ to give them a fresh 30 days.');
+  if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
+  let token, minted;
+  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
+  catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
+  let r;
+  try { r = await vpaSendSms(env, to, body); } catch (_) { r = { ok: false }; }
+  if (!r.ok) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
+    return json({ error: 'The text did not send (the SMS provider said ' + (r.status || 'nothing') + '). Nothing reached them.' }, 502);
+  }
+  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined });
+  return json({ ok: true, to_last3: to.slice(-3) });
+}
+function vpaNudgeHtml(text) {
+  const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
+  return String(text).split(/\n\s*\n/).map((para) => para.trim()).filter(Boolean)
+    .map((para) => '<p style="' + P + '">' + vpaEsc(para).replace(/\n/g, '<br>') + '</p>').join('');
+}
+async function vpaAutopilotProspectNudge(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const text = String(b.text || '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim();
+  if (text.length < 20 || text.length > VPA_NUDGE_TEXT_MAX) return json({ error: 'The email needs some words (20 to ' + VPA_NUDGE_TEXT_MAX + ' characters).' }, 400);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, status) => {
+    await vpaAudit(env, actor, 'prospect_nudge_refused', 'venue:' + venueId, { reason: why });
+    return json({ error: why, refused: true }, status || 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so nothing was sent.');
+  if (!vpaQuietProspect(p)) return await refuse(p.last_sign_in_at ? 'Somebody at ' + (p.name || 'the venue') + ' has signed in since, so nothing was sent.'
+    : 'They are not waiting on a first sign-in any more, so nothing was sent.');
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  /* The subject is the Mac's too (4 Nov 2026: the day-3 and the "expires in 3 days" follow-ups say different
+     things), held to the same rules as the words: one line, no long dash, lowercase venueplay. */
+  const subjectRaw = String(b.subject || '').replace(/\s+/g, ' ').trim();
+  if (subjectRaw && (subjectRaw.length > 120 || /[\u2014\u2013]/.test(subjectRaw) || /VenuePlay/.test(subjectRaw))) {
+    return json({ error: 'The subject must be one short line, with no long dash, and venueplay in lowercase.' }, 400);
+  }
+  if (/[\u2014\u2013]/.test(text) || /VenuePlay/.test(text)) return json({ error: 'The email must have no long dash, and venueplay in lowercase.' }, 400);
+  const winN = await vpaProspectLinkWindow(env, venueId);
+  if (await vpaProspectTappedLink(env, venueId, winN ? winN.from : NaN)) return await refuse('They have opened their sign-in link since, so nothing was sent.');
+  /* NOT hq: an automatic follow-up never restarts the 30 days, and after them it sends nothing (reason 'ended'
+     below): Dean decides from HQ. The HQ per-day link cap still applies (opts.hqCap). */
+  const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, nudge: text, subject: subjectRaw || 'Your venueplay is ready when you are' });
+  await vpaAudit(env, actor, r.ok ? 'prospect_nudge_sent' : 'prospect_nudge_refused', 'venue:' + venueId,
+    { name: p.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, expires_at: r.ok ? r.expires_at : undefined, days_left: r.ok ? r.days_left : undefined });
+  if (r.ok) return json({ ok: true, to: r.to, expires_at: r.expires_at, days_left: r.days_left, shortened: !!r.shortened });
+  if (r.reason === 'ended') return json({ error: 'Their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so nothing was sent. Resend from HQ to give them a fresh 30 days.', refused: true, ended: true }, 409);
+  if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day, so nothing more was sent.' }, 429);
+  if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
+  return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
 /* A card on file, as opposed to comp, invoice or a group: those are signed up but are not "Card added". */
 function vpaProspectCardOn(founding) {
@@ -3956,6 +4221,48 @@ async function vpaProspectReminderSweep(env, nowMs) {
  *   limit    per network, like /contact and the help desk (helpIpLimit: durable, hashed address).
  * ======================================================================== */
 const VPA_SIGNIN_LINK_DAYS = 14;
+/* A PROSPECT'S SIGN-IN LINK LASTS 30 DAYS FROM SETUP (Dean, 4 Nov 2026, the two journeys). The link in the
+   welcome, the day-3 "here's your sign-in link again" and the "expires in 3 days" one all end at the SAME
+   moment, 30 days after vp_prospects.created_at, so "this link expires in {X} days" is one true number
+   that counts down. After that point a resent link (the sign-in page's "Send me a new link", or HQ) is an
+   ordinary 14 day one, and the free month still only starts the first time they sign in. Migration 123
+   caps a link at 15 days; migration 151 lifts that to 31. Until 151 has run, vpaMintSigninLinkFor falls
+   back to 14 days and the words printed are the days the link REALLY has (never a number that is not
+   the real expiry). Logins that are not a prospect's keep 14 days. */
+const VPA_PROSPECT_LINK_DAYS = 30;
+function vpaProspectLinkEndMs(createdAt) { const c = Date.parse(createdAt || ''); return isFinite(c) ? c + VPA_PROSPECT_LINK_DAYS * 86400000 : NaN; }
+/* Whole days a link has left, counted up: 3 days and 2 hours is 4 days, the day it expires is 1, gone is 0. */
+function vpaDaysLeft(expiresMs, nowMs) { return Math.max(0, Math.ceil((Number(expiresMs) - Number(nowMs)) / 86400000)); }
+/* The words Dean approved carry {days} ("expires in {days} days") and {expires}; both are filled from the
+   link that was actually minted, after it was minted, so the email can never say a number the link does
+   not have. "{days} days" becomes "1 day" on the last day. */
+function vpaFillDays(text, days, expiresMs) {
+  const n = Math.max(0, Math.round(Number(days) || 0));
+  return String(text)
+    .replace(/\{days\}\s+days?\b/g, n + (n === 1 ? ' day' : ' days'))
+    .replace(/\{days\}/g, String(n))
+    .replace(/\{expires\}/g, isFinite(Number(expiresMs)) ? vpaBneDateWords(Number(expiresMs)) : '');
+}
+/* WHEN A PROSPECT'S 30 DAYS RUN. From setup (vp_prospects.created_at), or from the last time HQ resent their
+   link (link_from, migration 151): Dean, 4 Nov 2026, "an HQ resend by Dean or staff starts a fresh 30 days
+   from the resend, with the journey-1 emails re-dated from there. The automatic nudges never reset it." */
+function vpaProspectWindowFromMs(row) {
+  const lf = Date.parse((row && row.link_from) || '');
+  return isFinite(lf) ? lf : Date.parse((row && row.created_at) || '');
+}
+/* A prospect venue's link window: { from, end, ended }, or null when the venue is not a prospect's. */
+async function vpaProspectLinkWindow(env, venueId) {
+  if (!venueId) return null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=*&limit=1');
+    const row = pr && pr[0];
+    if (!row) return null;
+    const from = vpaProspectWindowFromMs(row);
+    if (!isFinite(from)) return null;
+    const end = from + VPA_PROSPECT_LINK_DAYS * 86400000;
+    return { from: from, end: end, ended: end <= Date.now(), row: row };
+  } catch (_) { return null; }
+}
 const VPA_ONECLICK_PER_IP = 20;          // per 10 minutes: a person clicks once or twice; a guesser is stopped
 function vpaB64Url(bytes) {
   const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -3972,16 +4279,35 @@ async function vpaSigninTokenHash(token) { return vpbSha256Hex(new TextEncoder()
 /* startsAtMs: when the email carrying it goes (a delayed welcome, up to a day ahead). The 14 days run
    from then, and migration 123's own check (expires within 15 days of created) still holds. */
 async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
+  return (await vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, null)).token;
+}
+/* expiresAtMs (optional): the moment the link should end, a prospect's 30 days from setup, whether that is
+   sooner or later than 14 days (on day 29 the link has one day, and the email says one day). Without one,
+   or with one already past, the link is the ordinary 14 days from when its email goes. Returns the token
+   AND the expiry it was really given, so every sentence about it is written from the row that exists.
+   Before migration 151 the table refuses a life over 15 days: then the same link is made again with 14, and
+   `shortened` says so (the row that was refused never existed, so nothing is left behind). */
+async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs) {
   const raw = new Uint8Array(32);
   crypto.getRandomValues(raw);
   const token = vpaB64Url(raw);
   const now = Date.now();
   const from = Math.max(now, Math.min(Number(startsAtMs) || now, now + VPA_PROSPECT_MAX_DELAY_MIN * 60000));
-  await vpaInsert(env, 'vp_signin_links', {
+  const plain = from + VPA_SIGNIN_LINK_DAYS * 86400000;
+  const asked = Number(expiresAtMs);
+  const want = (isFinite(asked) && asked > from + 60000)
+    ? Math.min(asked, now + (VPA_PROSPECT_LINK_DAYS + 1) * 86400000) : plain;
+  const row = async (exp) => vpaInsert(env, 'vp_signin_links', {
     token_hash: await vpaSigninTokenHash(token), auth_user_id: authUserId, venue_id: venueId, purpose: 'prospect_welcome',
-    created_at: new Date(now).toISOString(), expires_at: new Date(from + VPA_SIGNIN_LINK_DAYS * 86400000).toISOString(), used_at: null,
+    created_at: new Date(now).toISOString(), expires_at: new Date(exp).toISOString(), used_at: null,
   }, false);
-  return token;
+  try { await row(want); return { token: token, expiresAt: want, shortened: false }; }
+  catch (e) {
+    if (want === plain) throw e;                       // not the 15 day cap: no table, or worse
+    await row(plain);                                  // migration 151 not run yet: the 14 day link, and say so
+    console.log('[signin-link] a 30 day prospect link was refused (run migration 151): made a 14 day one for venue ' + venueId);
+    return { token: token, expiresAt: plain, shortened: true };
+  }
 }
 /* The email's main button. With a token it signs them in. Without one (migration 123 missing) it opens the
    same page with no token, which offers to email them a link (POST /auth/one-click/resend). NEVER the
@@ -4012,6 +4338,9 @@ async function vpaHandleOneClick(request, env, json) {
   } catch (_) { rows = null; }
   if (!Array.isArray(rows) || rows.length !== 1) return json(GONE, 410);
   const link = rows[0];
+  /* THEY ACTED ON THE EMAIL (Dean, 4 Nov 2026): a tap on the link is recorded against the venue, no token in
+     it, so the follow-ups stop at send time even if the sign-in that follows the tap never completes. */
+  await vpaAudit(env, { actorId: null, label: 'self (sign-in link)', role: null }, 'signin_link_used', 'venue:' + link.venue_id, {}).catch(() => null);
   // Still on that venue's staff: HQ removing them since the email went out ends the link too.
   const staff = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(link.auth_user_id) +
     '&venue_id=eq.' + encodeURIComponent(link.venue_id) + '&select=role&limit=1');
@@ -4066,26 +4395,70 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const since = new Date(Date.now() - 86400000).toISOString();
   const recent = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=50');
   if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
-  const cap = opts.hq ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
+  const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
   if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
   // Only the newest link works: every unused one for this login is retired before the new one is made.
   try {
     await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null', {
       method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
   } catch (_) {}
-  let token;
-  try { token = await vpaMintSigninLink(env, authUserId, pick.venue_id, Date.now()); }
+  /* WHEN IT ENDS (Dean, 4 Nov 2026): a prospect's venue inside its 30 days from setup gets a link that ends at
+     that same moment, so every link they are sent counts down the one true number; anyone else, or after
+     the 30 days (the sign-in page's "Send me a new link" still works then), the ordinary 14 days. */
+  const win = await vpaProspectLinkWindow(env, pick.venue_id);
+  const vs0 = win ? await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1') : null;
+  /* AFTER THE 30 DAYS, NO LINK HANDS ITSELF OUT (Dean, 4 Nov 2026: "they already had their one chance", but
+     "maybe it just wasn't the right time"). The sign-in page's "Send me a new link" (opts.self) and the
+     automatic follow-ups (opts.nudge) stop here; the caller tells the person and opens a sales ticket, and
+     Dean chooses whether to resend from HQ. HQ (opts.hq, below) is the one place a fresh 30 days starts. */
+  if (win && win.ended && !opts.hq) {
+    return { ok: false, reason: 'ended', to: email, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
+             window_from: new Date(win.from).toISOString(), window_end: new Date(win.end).toISOString() };
+  }
+  let windowEnd = null, restart = false;
+  if (opts.expiresAtMs != null) windowEnd = Number(opts.expiresAtMs);
+  else if (win && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ: a fresh 30 days from now
+  else if (win && !win.ended) windowEnd = win.end;                                                           // automatic: the same end, never reset
+  let token, expiresAt, shortened = false;
+  try { const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened; }
   catch (e) { return { ok: false, reason: 'no_table' }; }
+  /* THE JOURNEY-1 CLOCK RESTARTS WITH AN HQ RESEND: link_from is what the quiet list and the nudges count
+     from. Before migration 151 the column is not there; the link still goes and HQ is told the 30 days
+     could not be re-dated. Written before the email, so a resend never goes out un-dated. */
+  let redated = false;
+  if (restart) {
+    try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { link_from: new Date().toISOString() }); redated = true; }
+    catch (e) { console.log('[signin-link] could not re-date the prospect\'s 30 days (run migration 151) for venue ' + pick.venue_id); }
+  }
+  const daysLeft = vpaDaysLeft(expiresAt, Date.now());
+  const expiresWords = vpaBneDateWords(expiresAt);
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(pick.venue_id) + '&select=name&limit=1');
   const venueName = (vs && vs[0] && vs[0].name) || '';
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const url = vpaOneClickUrl(site, token, email);
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
+  const BUTTON = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>';
+  const done = { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
+                 expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
+                 prospect: !!win, restarted: restart, redated: redated };
+  /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
+     own hello and sign-off), then the same button. {days} and {expires} in his words are filled from THIS
+     link, after it was minted (Dean, 4 Nov 2026: never a number that is not the real expiry). */
+  if (opts.nudge) {
+    const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
+    const nudgeInner = vpaNudgeHtml(words) + BUTTON
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. It works until ' + vpaEsc(expiresWords) + '.</p>';
+    const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
+    let sentN = false;
+    try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
+    if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+    return Object.assign(done, { words: words });
+  }
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#12101a;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
-    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in.</p>'
-    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>'
+    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. It works until ' + vpaEsc(expiresWords) + '.</p>'
+    + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
     + '<p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">' + vpaProspectSignoff(null) + '</p>';
@@ -4095,7 +4468,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
       vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO);
   } catch (_) { sent = false; }
   if (!sent) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
-  return { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone };
+  return done;
 }
 async function vpaHandleOneClickResend(request, env, json) {
   const SAME = { ok: true };
@@ -4116,12 +4489,36 @@ async function vpaHandleOneClickResend(request, env, json) {
       if (u && u.id) who = { id: u.id, venue: null };
     }
     if (who) {
-      const r = await vpaSendSigninLink(env, who.id, who.venue, {});
-      await vpaAudit(env, { actorId: null, label: 'self (sign-in page)', role: null }, r.ok ? 'signin_link_resent' : 'signin_link_resend_refused',
+      const r = await vpaSendSigninLink(env, who.id, who.venue, { self: true });
+      await vpaAudit(env, { actorId: null, label: 'self (sign-in page)', role: null }, r.ok ? 'signin_link_resent' : (r.reason === 'ended' ? 'signin_link_ended' : 'signin_link_resend_refused'),
         'auth_user:' + who.id, { reason: r.ok ? undefined : r.reason, venue_id: r.venue_id || who.venue || undefined, by_token: !!(t && who.venue) });
+      /* THE 30 DAYS ARE OVER (Dean, 4 Nov 2026): no link by itself. The page says the link has ended and that
+         we will be in touch, and a SALES ticket opens in HQ, buzzing like the other sales alerts, so Dean can
+         choose to resend. One ticket per venue a week, so a second tap does not make a second ticket. This
+         answer is different from SAME only for someone holding that venue's own link or address. */
+      if (!r.ok && r.reason === 'ended') {
+        await vpaProspectLinkEndedTicket(env, r).catch(() => null);
+        return json({ ok: true, ended: true });
+      }
     }
   } catch (_) {}
   return json(SAME);
+}
+const VPA_LINK_ENDED_TITLE = 'Sign-in link ended: ';
+async function vpaProspectLinkEndedTicket(env, r) {
+  const since = new Date(Date.now() - 7 * 86400000).toISOString();
+  const have = await vpaSelect(env, 'vp_help_tickets', 'venue_id=eq.' + encodeURIComponent(r.venue_id) + '&subject=like.' + encodeURIComponent(VPA_LINK_ENDED_TITLE + '*')
+    + '&created_at=gt.' + encodeURIComponent(since) + '&select=id&limit=1');
+  if (have && have.length) return null;
+  const name = r.venue_name || 'a prospect';
+  const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'urgent',
+    title: VPA_LINK_ENDED_TITLE + name + ' tapped "Send me a new link" after their 30 days',
+    message: name + ' tapped "Send me a new link" on the sign-in page, but their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end))
+      + ' and no link goes by itself after that (Dean, 4 Nov 2026: "they already had their one chance", but "maybe it just wasn\'t the right time").\n\n'
+      + 'They were told the link has ended and that we will be in touch. To give them a fresh 30 days, press Resend sign-in link on their card in HQ > Prospects.',
+    contact_email: r.to || null, venue_id: r.venue_id || null });
+  if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, name, null).catch(() => null); }
+  return t;
 }
 async function vpaAdminSigninLink(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
@@ -4147,7 +4544,9 @@ async function vpaAdminSigninLink(request, env, json) {
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
   await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
-  if (r.ok) return json({ ok: true, to: r.to, has_mobile: r.has_mobile });
+  if (r.ok) return json({ ok: true, to: r.to, has_mobile: r.has_mobile, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left,
+                          prospect: !!r.prospect, restarted: !!r.restarted, redated: !!r.redated,
+                          note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
@@ -9116,6 +9515,12 @@ async function vpbSubItem(env, subId) {
     priceId: item.price && item.price.id,
     quantity: item.quantity,
     periodEnd: sub.current_period_end || item.current_period_end, // moved under items in newer Stripe API
+    /* The start of the cycle and the billing anchor (4 Nov 2026): the pro rata stub for a new pub is
+       counted in the days of the cycle being billed, and the anchor's day of the month is what says
+       where the NEXT cycle ends (Stripe keeps the anchor day: on the 31st, 31 Jan runs to 28 Feb and
+       then to 31 Mar). vpbCycleDays and vpbMonthOnS read these. */
+    periodStart: sub.current_period_start || item.current_period_start || null,
+    anchor: sub.billing_cycle_anchor || null,
     last4: (pm && pm.card && pm.card.last4) || null,
     brand: (pm && pm.card && pm.card.brand) || null,
   };
@@ -9276,10 +9681,111 @@ async function vpbAccountSummary(request, env, json) {
     has_subscription: !!o.account.stripe_subscription_id,
     is_owner: vpbIsOwner(o),
     perms: o.perms || null,
+    /* Dean's billing rules (vpbRules): the page's wording and the Add players question follow these,
+       so what a venue reads is always what this Worker does. Both off until Dean says yes. */
+    rules: vpbRules(env),
   });
 }
 
 /* --- POST /account/players : change ONE venue's max players. --- */
+
+/* DEAN'S BILLING RULES (3 Nov 2026), and the one switch, OFF until he says yes.
+
+   1. Busy nights (overages) stay exactly as built: charged on the night, $2 a head, $1 the third time
+      with the maximum raised. Nothing here touches that code.
+   2. Adding a player is the full rate for one month on the NEXT bill, not pro rata, and the player is
+      ready tonight. Lowering the number takes effect from the next cycle, so a venue cannot add 30 for
+      one night and drop them before the bill. THIS IS WHAT vpbSetPlayers AND vpbAdjustPlayerBilling
+      ALREADY DO (tools/test-players-timing.js runs them), so there is no switch for it: the page's
+      words were the only thing that disagreed, and they now say this.
+   3. A new pub on a group: its first month is free, then it joins the group's ONE billing cycle, with
+      the stub between the end of its free month and the next group bill pro rated on that bill. One
+      card charge per group, never a separate transaction for the pub. TODAY (switch off) vpbAddVenue
+      charges the pub a month and credits a month, so it is free until the next bill date (anywhere
+      from 0 to 30 days) and a full month from then. That is the gap.
+   4. The honest-mistake undo: a venue that lowers its players back within ONE HOUR of adding them,
+      with no game started at that venue since the add, has the increase cancelled completely: the
+      invoice line is deleted, nothing goes on the next bill. After an hour, or once any game has
+      started, the increase stands and a later decrease counts from the next cycle (rule 2). TODAY
+      (switch off) there is no undo: the month is charged the moment they press Add.
+
+   Rules 3 and 4 sit behind ONE switch on the live Worker, OFF until Dean says yes:
+
+        VPB_BILLING_RULES_3NOV = '1'   rule 3: nothing charged for the rest of this cycle; the pub's
+                                       free month runs to the same date next month (Brisbane); the
+                                       days of that month inside the next cycle come off the next
+                                       group bill as a credit, so that bill charges only the days
+                                       after the free month, then a full month like the others.
+                                       rule 4: the one-hour undo in vpbSetPlayers.
+
+   DEAN, 4 NOV 2026, "YES TO PRO RATA", WITH TWO CLARIFICATIONS:
+     - pro rata is BY DAYS OF THE MONTH BEING BILLED: "3 weeks and 2 days is 23 days which is x% of
+       the month being billed". So the stub is (whole Brisbane days the pub is paid for) / (whole days
+       in that billing cycle): 23 of a 31-day cycle is 23/31, 23 of a 30-day cycle is 23/30. The money
+       is rounded to the cent ONCE, at the end. It used to be days / 30 whatever the month was. The
+       helpers below (vpbBrisDays, vpbMonthOnS, vpbCycleDays, vpbProrataCents, vpbDaysWords) are the
+       one place that arithmetic lives, and the words the page and the invoice line show ("23 of 31
+       days (74%)") come from the same numbers.
+     - the one-hour undo is ONLY for an existing venue adding more players outside its free month:
+       never inside the account's own free month (nothing was charged, there is no line to delete),
+       never for a venue still inside the free month a new pub gets (vpbVenueInFreeMonth), never for
+       a new pub being added (vpbAddVenue offers none and writes no players_increased row), and never
+       once a game has started at the venue since the add.
+
+   Read in ONE place so the page and the Worker say the same thing: /account/summary sends `rules`. */
+function vpbRules(env) {
+  const on = !!(env && String(env.VPB_BILLING_RULES_3NOV || '') === '1');
+  return { new_pub_free_month: on, undo_hour: on };
+}
+const VPB_UNDO_WINDOW_S = 3600;   // rule 4: one hour
+
+/* --- Whole Brisbane days, the unit Dean bills in (4 Nov 2026). --- */
+const VPB_BRIS_S = 36000;   // UTC+10, no daylight saving, the same shift vpaFmtDate uses
+/* The Brisbane calendar day a unix second falls on, counted from the epoch. Two instants on the same
+   Brisbane date give the same number, so the difference of two of these is a count of calendar days,
+   which is how a bill is counted: "3 weeks and 2 days is 23 days". */
+function vpbBrisDays(s) { return Math.floor((Number(s) + VPB_BRIS_S) / 86400); }
+/* Midnight Brisbane on the same date ONE MONTH ON, as a unix second. `anchorS` (optional) is an instant
+   whose Brisbane day of the month is the one to land on, for a Stripe billing anchor; without it the
+   day is s's own. A shorter next month lands on its last day, the way Stripe does: anchored on the
+   31st, 31 Jan runs to 28 Feb and then to 31 Mar, not to 28 Mar. */
+function vpbMonthOnS(s, anchorS) {
+  const d = new Date((Number(s) + VPB_BRIS_S) * 1000);
+  const a = (anchorS != null && Number(anchorS) > 0) ? new Date((Number(anchorS) + VPB_BRIS_S) * 1000) : d;
+  const want = a.getUTCDate();
+  const lastOfNext = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 2, 0)).getUTCDate();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, Math.min(want, lastOfNext)) / 1000 - VPB_BRIS_S;
+}
+/* How many whole Brisbane days a billing cycle holds (never below one, so nothing divides by zero). */
+function vpbCycleDays(startS, endS) { return Math.max(1, vpbBrisDays(endS) - vpbBrisDays(startS)); }
+/* players x rate x days / cycleDays, to the cent, rounded ONCE at the end. Rounding per player first
+   is a different number: 10 players at $2.50 for 8 of 31 days is $6.45, not 10 x 65c = $6.50. */
+function vpbProrataCents(rate, players, days, cycleDays) {
+  if (!(rate > 0) || !(players > 0) || !(days > 0) || !(cycleDays > 0)) return 0;
+  return Math.round(rate * 100 * players * days / cycleDays);
+}
+/* The words a venue reads for a pro rata stub, on the page and on the invoice line alike. */
+function vpbDaysWords(days, cycleDays) {
+  return days + ' of ' + cycleDays + ' day' + (cycleDays === 1 ? '' : 's') + ' (' + Math.round(100 * days / Math.max(1, cycleDays)) + '%)';
+}
+/* DD/MM/YYYY in Brisbane, for a Stripe line a bookkeeper reads. */
+function vpbBrisDMY(s) { return new Date((Number(s) + VPB_BRIS_S) * 1000).toISOString().slice(0, 10).split('-').reverse().join('/'); }
+
+/* Is this venue still inside the free month a new pub gets (rule 3)? vp_venues.free_month_at (migration
+   83) is stamped the day the pub is added; the month runs to the same date next month, Brisbane. The
+   only thing this gates is the one-hour undo (Dean, 4 Nov 2026: the undo is for an existing venue
+   OUTSIDE its free month), so when the column cannot be read the answer is "in it": no undo, and a
+   log line, never a free month's players let off a charge because a read failed. */
+async function vpbVenueInFreeMonth(env, venueId) {
+  const rows = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,free_month_at&limit=1');
+  if (!rows || !rows.length) {
+    console.log('[billing] undo: could not read free_month_at for venue ' + venueId + ': treating it as inside its free month (no undo)');
+    return true;
+  }
+  const at = rows[0].free_month_at ? Date.parse(rows[0].free_month_at) : NaN;
+  if (!Number.isFinite(at)) return false;
+  return (Date.now() / 1000) < vpbMonthOnS(Math.floor(at / 1000));
+}
 
 /* How much of an ANNUAL term is still ahead of us, 0..1. An annual venue has already paid for
    the whole year, so both the charge for adding players and the credit for giving them up are
@@ -9345,6 +9851,8 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
 
     if (!annual) {
       if (delta < 0) return null;                            // monthly reductions need no money move
+      /* A FULL MONTH, NOT PRO RATA, on purpose (Dean's rule 2, 3 Nov 2026, see vpbRules): the player is
+         ready tonight and the next bill carries one month for them whatever day it is. */
       const cents = Math.round(rate * 100) * n;
       if (!(cents > 0)) return null;
       if (dryRun) return { kind: 'quote', cents: cents };
@@ -9367,7 +9875,8 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       // vpbStripePost never throws, so an unchecked call reported a Stripe refusal to the venue,
       // and to the audit trail, as money successfully charged.
       if (mRes && mRes.error) { console.log('[billing] monthly add FAILED: ' + (mRes.error.message || '')); return { kind: 'failed', cents: cents }; }
-      return { kind: 'charge', cents: cents };
+      // The invoice item's id goes into the audit row, which is what the one-hour undo (rule 4) deletes.
+      return { kind: 'charge', cents: cents, item: (mRes && mRes.id) || null };
     }
 
     const frac = vpbYearFractionLeft(info);
@@ -9517,11 +10026,73 @@ async function vpbSetPlayers(request, env, json) {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
+    /* Rule 4 (behind the switch): the page says "Changed your mind? You can undo this within an hour, as
+       long as no game has started" only when the Worker will honour it: monthly, a real invoice line to
+       delete (so not inside the account's own free month, where nothing is charged), and NOT a venue
+       still inside the free month a new pub gets (Dean, 4 Nov 2026). */
+    let undoOpen = !!(vpbRules(env).undo_hour && !annualPlan && iAdj && iAdj.kind === 'charge' && iAdj.item
+                      && !(info.sub && info.sub.status === 'trialing'));
+    if (undoOpen && await vpbVenueInFreeMonth(env, venueId)) undoOpen = false;
     return json({ ok: true, applied: 'now', players: players,
                   // Name the money. The page could not tell the venue what it had
                   // just been charged, only that something would appear later.
                   charge_cents: (iAdj && iAdj.cents) || 0,
-                  charge_failed: (iAdj && iAdj.kind === 'failed') ? true : false });
+                  charge_failed: (iAdj && iAdj.kind === 'failed') ? true : false,
+                  undo_hour: undoOpen });
+  }
+
+  /* THE ONE-HOUR UNDO (Dean's rule 4, 3 Nov 2026, behind VPB_BILLING_RULES_3NOV, see vpbRules). Monthly
+     only. The last increase at this venue is read back from its audit row; if it was under an hour
+     ago, charged an invoice item, no game has STARTED at the venue since, and the number asked for is
+     at or below the number before that add, the increase is cancelled completely: the invoice item is
+     deleted (nothing on the next bill), the capacity goes back now, the quantity goes back now. If
+     Stripe will not delete the line (it has already been invoiced), the increase stands and this is an
+     ordinary reduction below, which the page is told (undo_failed).
+
+     WHO NEVER GETS THE UNDO (Dean, 4 Nov 2026: it is for an existing venue adding players OUTSIDE its
+     free month, and nothing else):
+       - inside the account's own free month: the add charged nothing, so there is no invoice line
+         (`item`) and the test below fails on its own
+       - a new pub being added: vpbAddVenue writes a venue_added row, never players_increased, and
+         answers with no undo, so there is nothing here to read back
+       - a venue still inside the free month a new pub gets: vpbVenueInFreeMonth, read fresh
+       - once a game has STARTED at the venue since the add */
+  if (!annualPlan && vpbRules(env).undo_hour) {
+    try {
+      const lastUp = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + venueId)
+        + '&action=eq.players_increased&order=created_at.desc&limit=1&select=created_at,detail');
+      const row = lastUp && lastUp[0];
+      const det = (row && row.detail) || {};
+      const addedAt = row && row.created_at ? Date.parse(row.created_at) : NaN;
+      const ageS = Number.isFinite(addedAt) ? (Date.now() - addedAt) / 1000 : Infinity;
+      const item = det.billing && det.billing.kind === 'charge' && det.billing.item;
+      if (row && ageS >= 0 && ageS < VPB_UNDO_WINDOW_S && item && players <= (parseInt(det.from, 10) || 0)) {
+        const inFreeMonth = await vpbVenueInFreeMonth(env, venueId);
+        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId)
+          + '&started_at=gte.' + encodeURIComponent(new Date(addedAt).toISOString()) + '&select=id&limit=1');
+        if (!inFreeMonth && !(played && played.length)) {
+          const del = await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(item));
+          if (del && del.deleted === true) {
+            await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { max_players: players, pending_players: null });
+            const uTotal = await vpbAccountTotal(env, foundingId);
+            const uinfo = await vpbSubItem(env, o.account.stripe_subscription_id);
+            if (uinfo && uinfo.itemId) {
+              await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(uinfo.itemId),
+                { quantity: Math.max(uTotal, 1), proration_behavior: 'none' });
+            }
+            await vpaInsert(env, 'vp_admin_audit', {
+              ...vpbActorFields(o), action: 'players_increase_undone',
+              target: 'venue:' + venueId,
+              detail: { from: current, to: players, added_at: row.created_at, minutes_after: Math.round(ageS / 60),
+                        undone_cents: det.billing.cents || 0, invoice_item: item, actor_user: o.authUserId },
+            }, false).catch(() => {});
+            return json({ ok: true, applied: 'undone', players: players, undone_cents: det.billing.cents || 0 });
+          }
+          console.log('[billing] undo: Stripe would not delete invoice item ' + item + ': ' + ((del && del.error && del.error.message) || 'already invoiced'));
+          b.undo_failed = true;   // the ordinary reduction below tells the page
+        }
+      }
+    } catch (e) { console.log('[billing] undo check failed, reducing normally: ' + (e && e.message)); }
   }
 
   /* DECREASE. The two plans genuinely differ here, and conflating them was minting credit.
@@ -9559,7 +10130,8 @@ async function vpbSetPlayers(request, env, json) {
                 applied: annualPlan ? 'now' : 'next_renewal',
                 players: annualPlan ? players : undefined,
                 pending: annualPlan ? null : players,
-                credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0 });
+                credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0,
+                undo_failed: b.undo_failed === true });
 }
 
 /* The Stripe idempotency tag for a new venue's setup charge. Its own function so the gate can
@@ -9702,7 +10274,16 @@ async function vpbAddVenue(request, env, json) {
   const alreadyPaid = (reviving && twin.status !== 'suspended' && twin.cancel_at_period_end)
     ? Math.max(0, parseInt(twin.max_players, 10) || 0) : 0;
   const chargePlayers = Math.max(0, players - alreadyPaid);
-  const aAdj = (billingOk && chargePlayers > 0) ? await vpbAdjustPlayerBilling(env, info, chargePlayers, o.account.plan, name,
+  /* DEAN'S GROUP RULE, BEHIND VPB_NEW_PUB_FREE_MONTH (3 Nov 2026, see vpbRules): a new pub on a paying
+     monthly account is charged NOTHING for the rest of this cycle, its first month is free (to the same
+     date next month), and the days of that month inside the next cycle come off the next bill (the
+     credit below), by days of that cycle (Dean, 4 Nov 2026: 23 of 31 days is 23/31). So a pub added a
+     week after the bill date pays for the 3 weeks and a bit after its free month on the next bill, then
+     a full month like the others. One cycle, one card charge, no separate transaction for the new pub. A venue
+     coming back, a yearly plan, and an account still inside its own free month keep today's path. */
+  const newVenueProrata = vpbRules(env).new_pub_free_month && o.account.plan !== 'annual' && !reviving
+    && !!(billingOk && info && info.sub && info.sub.customer && info.sub.status !== 'trialing');
+  const aAdj = (billingOk && chargePlayers > 0 && !newVenueProrata) ? await vpbAdjustPlayerBilling(env, info, chargePlayers, o.account.plan, name,
     vpbNewVenueTag(r.venue && r.venue.id, chargePlayers, info.periodEnd)) : null;
 
   /* THE NEW VENUE GETS ITS FIRST MONTH FREE, the same month a venue that signs up on its own
@@ -9731,12 +10312,56 @@ async function vpbAddVenue(request, env, json) {
      nothing to hand back; crediting then would give away a month they never paid for. kind
      'failed' is a Stripe refusal, and crediting that would turn a failed charge into free money.
      So the test is kind === 'charge', not merely "aAdj exists". */
-  let freeMonth = null;
+  let freeMonth = null, freeUntil = null, stub = null;
+  if (newVenueProrata) {
+    /* DEAN, 4 NOV 2026: PRO RATA IS BY DAYS OF THE MONTH BEING BILLED. The pub's free month runs to the
+       same date next month (Brisbane). Nothing is charged for the rest of this cycle. The next group bill
+       covers the NEXT cycle, from this renewal to the anchor day a month on (30 days from 7 Nov, 31 from
+       7 Dec, 28 from 7 Feb 2027), and the pub pays only the days of it after its free month: added on the
+       15th against a 7 Dec to 7 Jan cycle, the free month ends 15 Dec, 8 of 31 days come off and the pub
+       pays 23 of 31 days (74%). The bill charges the full month through the quantity, so the free days
+       come off as a credit, rounded to the cent ONCE: players x rate x freeDays / cycleDays. Zero when the
+       free month ends on or before the renewal. Used to be days / 30 whatever the month was. */
+    const fRate = vpbRateStrict(env, info.priceId, o.account.plan);
+    const nowS = Math.floor(Date.now() / 1000);
+    freeUntil = vpbMonthOnS(nowS);
+    const cycleStart = Number(info.periodEnd) || nowS;
+    const cycleEnd = vpbMonthOnS(cycleStart, info.anchor);
+    const cycleDays = vpbCycleDays(cycleStart, cycleEnd);
+    const freeDays = Math.max(0, Math.min(cycleDays, vpbBrisDays(freeUntil) - vpbBrisDays(cycleStart)));
+    const stubDays = cycleDays - freeDays;
+    stub = { cycle_days: cycleDays, free_days: freeDays, stub_days: stubDays,
+             pct: Math.round(100 * stubDays / cycleDays), words: vpbDaysWords(stubDays, cycleDays) };
+    const freeCents = (fRate == null) ? 0 : vpbProrataCents(fRate, players, freeDays, cycleDays);
+    let credited = 0;
+    if (freeCents > 0) {
+      const fRes = await vpbStripePost(env, 'customers/' + encodeURIComponent(info.sub.customer) + '/balance_transactions', {
+        amount: -freeCents, currency: 'aud',
+        /* The same days and percentage the page shows, so the invoice and the screen cannot disagree. */
+        description: name + ' - first month free to ' + vpbBrisDMY(freeUntil) + ': ' + vpbDaysWords(freeDays, cycleDays)
+                     + ' of your next bill taken off, so you pay ' + stub.words,
+      }, 'vfree:' + String(r.venue && r.venue.id));
+      if (fRes && !fRes.error && fRes.id) {
+        credited = freeCents;
+        freeMonth = { cents: freeCents, txn: fRes.id, days: freeDays, cycle_days: cycleDays, stub_days: stubDays };
+      } else {
+        console.log('[billing] FREE MONTH CREDIT FAILED for ' + name + ': ' + ((fRes && fRes.error && fRes.error.message) || 'unknown'));
+        freeMonth = { cents: 0, failed: true, owed_cents: freeCents, days: freeDays, cycle_days: cycleDays, stub_days: stubDays };
+      }
+    } else {
+      freeMonth = { cents: 0, days: 0, cycle_days: cycleDays, stub_days: stubDays };
+    }
+    /* THE FREE MONTH IS RECORDED WHETHER OR NOT MONEY MOVED: free_month_at is what vpbVenueInFreeMonth
+       reads to keep the one-hour undo away from a pub still inside it (Dean, 4 Nov 2026). A pub added on
+       the bill date has nothing to credit and is still in its free month. Best effort, after the money. */
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue && r.venue.id),
+      { free_month_at: new Date().toISOString(), free_month_cents: credited }).catch(() => {});
+  }
   /* NOT FOR A VENUE COMING BACK. It had its free month the first time, and without this the
      free month is farmable: cancel a venue, add it again, get another month. That is the exact
      loop Dean named when he asked for the same-name rule. `reviving` is the whole test, because
      a returning venue is now the SAME ROW rather than a new one. */
-  if (!reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
+  if (!newVenueProrata && !reviving && aAdj && aAdj.kind === 'charge' && aAdj.cents > 0 && info && info.sub && info.sub.customer) {
     const fRate = vpbRateStrict(env, info.priceId, o.account.plan);   // per player, per month
     const freeCents = (fRate == null) ? 0 : Math.round(fRate * 100) * players;
     if (freeCents > 0) {
@@ -9783,6 +10408,19 @@ async function vpbAddVenue(request, env, json) {
   return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent,
     readded: !!reviving,
     free_month_cents: (freeMonth && freeMonth.cents) || 0,
+    /* Which rule applied, so the page says the true sentence: 'prorata' (free 30 days, then only the
+       days after on the next bill), 'month' (today's charge-a-month-credit-a-month), or null (nothing
+       was charged or credited: still in the account's own free month, or a venue coming back). */
+    free_rule: newVenueProrata ? 'prorata' : ((freeMonth && freeMonth.cents > 0) ? 'month' : null),
+    free_until: freeUntil ? vpaFmtDate(freeUntil) : null,
+    free_days_credited: (freeMonth && freeMonth.days) || 0,
+    /* The stub in days, the same numbers the credit line carries: "23 of 31 days (74%)" (Dean, 4 Nov 2026). */
+    cycle_days: stub ? stub.cycle_days : null,
+    stub_days: stub ? stub.stub_days : null,
+    stub_words: stub ? stub.words : null,
+    /* A NEW PUB IS NEVER OFFERED THE ONE-HOUR UNDO (Dean, 4 Nov 2026): the undo is for an existing venue
+       adding players outside its free month. Said outright so the page cannot assume it. */
+    undo_hour: false,
     venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
 }
 
@@ -12651,7 +13289,8 @@ async function vpmInChunks(ids, read) {
 
 async function vpmStats(env, venues) {
   const blank = () => ({ games: 0, games_by_type: {}, nights: 0, players: 0, phones: 0, regulars: 0, questions_asked: 0,
-                         answers_given: 0, raffle_draws: 0, member_draws: 0, prizes_given: 0, prizes_value_cents: 0,
+                         answers_given: 0, raffle_draws: 0, member_draws: 0, prizes_given: 0,
+                         prizes_cash_count: 0, prizes_cash_cents: 0, prizes_other_count: 0, prizes_other_cents: 0, prizes_unvalued: 0,
                          opt_ins: 0, biggest_night: null, busiest_day: null, players_this_month: 0, players_last_month: 0,
                          games_this_month: 0, games_last_month: 0 });
   const per = {}; venues.forEach((v) => { per[v.id] = Object.assign({ venue_id: v.id, venue_name: v.name }, blank()); });
@@ -12726,11 +13365,20 @@ async function vpmStats(env, venues) {
     'draw_id=in.(' + inl + ')&select=id,draw_id&order=id.asc'));
     dr.forEach((r) => { const vid = vOfDraw[r.draw_id]; if (vid) per[vid].member_draws++; });
   }
+  /* CASH AND OTHER PRIZES, APART (Dean, 3 Nov 2026). prizes_given_* in the view is EVERY prize it counts
+     and cash_given_* is the cash part of it, so this used to add the two and count the cash twice. Now:
+     cash (count, dollars), other prizes with a value (count, dollars), and prizes with no value at all
+     (count only; migration 150's unvalued_given_count, 0 before it is run). Never one dollar total.
+     select=*: the new column must not break the read before 150 is run. */
   const prizes = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_prizes_given',
-    'venue_id=in.(' + inl + ')&select=venue_id,prizes_given_count,prizes_given_value_cents,cash_given_count,cash_given_value_cents&order=venue_id.asc'));
+    'venue_id=in.(' + inl + ')&select=*&order=venue_id.asc'));
   prizes.forEach((r) => { const p = per[r.venue_id]; if (!p) return;
-    p.prizes_given += (r.prizes_given_count || 0) + (r.cash_given_count || 0);
-    p.prizes_value_cents += (r.prizes_given_value_cents || 0) + (r.cash_given_value_cents || 0); });
+    const all = +r.prizes_given_count || 0, allC = +r.prizes_given_value_cents || 0;
+    const cash = +r.cash_given_count || 0, cashC = +r.cash_given_value_cents || 0, unval = +r.unvalued_given_count || 0;
+    p.prizes_given += all + unval;
+    p.prizes_cash_count += cash; p.prizes_cash_cents += cashC;
+    p.prizes_other_count += Math.max(0, all - cash); p.prizes_other_cents += Math.max(0, allC - cashC);
+    p.prizes_unvalued += unval; });
   // opted_in_at only: a COUNT of people who said yes. Never a name, an address or a number.
   const optins = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'v_vp_player_optins',
     'venue_id=in.(' + inl + ')&select=venue_id,opted_in_at&order=opted_in_at.asc'));
@@ -12740,7 +13388,7 @@ async function vpmStats(env, venues) {
   const list = venues.map((v) => per[v.id]);
   list.forEach((p) => {
     ['games', 'nights', 'players', 'phones', 'regulars', 'questions_asked', 'answers_given', 'raffle_draws', 'member_draws',
-     'prizes_given', 'prizes_value_cents', 'opt_ins', 'players_this_month', 'players_last_month', 'games_this_month', 'games_last_month']
+     'prizes_given', 'prizes_cash_count', 'prizes_cash_cents', 'prizes_other_count', 'prizes_other_cents', 'prizes_unvalued', 'opt_ins', 'players_this_month', 'players_last_month', 'games_this_month', 'games_last_month']
       .forEach((k) => { total[k] += p[k]; });
     Object.keys(p.games_by_type).forEach((f) => { total.games_by_type[f] = (total.games_by_type[f] || 0) + p.games_by_type[f]; });
     if (p.biggest_night && (!total.biggest_night || p.biggest_night.players > total.biggest_night.players)) {
@@ -13173,7 +13821,10 @@ async function vpbMonthReport(request, env, json) {
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  const venue = o.venues.find((v) => v.id === String(b.venue_id || '').trim()) || (o.venues.length === 1 && !b.venue_id ? o.venues[0] : null);
+  /* No venue named: the login's first venue, never "Pick one of your venues" (Dean, 3 Nov 2026: with no nights yet the
+     report said "pick a venue"). The page then shows the venue drop-down to change it. A venue that is named and is
+     not one of theirs is still refused. */
+  const venue = o.venues.find((v) => v.id === String(b.venue_id || '').trim()) || (!b.venue_id && o.venues.length ? o.venues[0] : null);
   if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
   const now = Date.now();
   const months = vprMonthsFor(venue, now);
@@ -13284,6 +13935,70 @@ async function vprStoredWrite(env, month, data, who) {
 /* --- POST /admin/month-report { month, refresh } : HQ, every venue, from the STORED copy.
    Opening HQ reads one row. refresh:true (owner or accounts) works the month out again and keeps it:
    that is the 13-months-of-every-venue read, so it only ever happens on that tap. --- */
+/* SIGN-UPS BY WHERE THEY CAME FROM (Dean, 4 Nov 2026). HQ > Reports shows "Signed up from
+   gflam.com.au: N this month, N all time". Counted from the signup_source audit rows handleCheckout
+   writes (one per checkout started with a utm_source) and the account row each one names:
+     started    the venue filled in the form and was sent to the card step
+     signed up  that account has a Stripe subscription (the card went in), same test as the
+                one-account guard in handleCheckout
+   "This month" is the Brisbane calendar month the checkout was started in. Test venues (a test
+   name) are left out. Counts only from rows that exist: before this shipped nothing was tagged,
+   so earlier sign-ups are not in it, and the page says so. Clicks are not counted here: the
+   banner's visits are in Google Analytics under the same utm_source. */
+function vpaSignupSourceKey(src) {
+  const s = String(src || '').trim().toLowerCase().replace(/^www\./, '');
+  return s || 'none';
+}
+function vpaSignupSourceTally(audits, accounts, nowMs) {
+  const byId = {};
+  (accounts || []).forEach(function (a) { if (a && a.id != null) byId[String(a.id)] = a; });
+  const bris = new Date((nowMs == null ? Date.now() : nowMs) + 10 * 3600 * 1000);
+  const thisMonth = bris.toISOString().slice(0, 7);
+  const out = {}, seen = {};
+  (audits || []).forEach(function (r) {
+    const id = String(r && r.target || '').replace(/^account:/, '');
+    if (!id || seen[id]) return;            // one account counts once, whatever retries left behind
+    seen[id] = true;
+    const d = (r && r.detail) || {};
+    const acc = byId[id];
+    if (acc && /\btest\b/i.test(String(acc.venue_name || ''))) return;
+    const key = vpaSignupSourceKey(d.utm_source);
+    const t = Date.parse(r.created_at || '');
+    const month = isFinite(t) ? new Date(t + 10 * 3600 * 1000).toISOString().slice(0, 7) : '';
+    const k = out[key] || (out[key] = { source: key, started: { month: 0, all: 0 }, signed_up: { month: 0, all: 0 }, recent: [] });
+    const done = !!(acc && acc.stripe_subscription_id);
+    k.started.all++; if (month === thisMonth) k.started.month++;
+    if (done) { k.signed_up.all++; if (month === thisMonth) k.signed_up.month++; }
+    if (k.recent.length < 20) k.recent.push({ venue: (acc && acc.venue_name) || d.venue || '', at: r.created_at || null,
+      signed_up: done, campaign: d.utm_campaign || '' });
+  });
+  return { month: thisMonth, sources: Object.keys(out).sort().map(function (k) { return out[k]; }) };
+}
+async function vpaHandleSignupSources(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  /* vpaReadPage, not vpaSelect: vpaSelect answers [] when the database fails, which would show
+     Dean a confident 0. A failed read says so instead. */
+  let audits, accounts = [];
+  try {
+    audits = await vpaReadPage(env, 'vp_admin_audit',
+      'action=eq.signup_source&select=target,detail,created_at&order=created_at.desc&limit=5000');
+    const ids = [];
+    (audits || []).forEach(function (r) {
+      const id = String(r.target || '').replace(/^account:/, '');
+      if (/^[0-9a-f-]{1,40}$/i.test(id) && ids.indexOf(id) === -1) ids.push(id);
+    });
+    for (let i = 0; i < ids.length; i += 100) {
+      const got = await vpaReadPage(env, 'venueplay_founding',
+        'id=in.(' + ids.slice(i, i + 100).join(',') + ')&select=id,venue_name,stripe_subscription_id&limit=100');
+      accounts = accounts.concat(got || []);
+    }
+  } catch (e) {
+    return json({ error: 'Could not count sign-ups just now. Please try again in a moment.' }, 503);
+  }
+  return json(Object.assign({ ok: true }, vpaSignupSourceTally(audits, accounts, Date.now())));
+}
+
 async function vpaHandleMonthReport(request, env, json) {
   const actor = await vpaRequireAdmin(request, env);
   if (actor.error) return json({ error: actor.error }, actor.status);

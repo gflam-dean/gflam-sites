@@ -226,7 +226,7 @@ pass("the reply names the amount charged", !!setp && /charge_cents/.test(setp),
      "so the page can tell the venue what just happened");
 var page = find("venueplay/app/billing.html");
 pass("the page asks for a quote before an increase", /preview:true/.test(page));
-pass("and confirms with the figure", /vpAsk\(words\)/.test(page));
+pass("and confirms with the figure", /vpAsk\(words[,)]/.test(page));   // vpAsk(words, { yes, no, id }) since 3 Nov 2026
 pass("the price sentence is plan-aware", /d\.plan === "annual"/.test(page),
      "one sentence for both plans was wrong by a factor of twelve");
 

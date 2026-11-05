@@ -303,9 +303,61 @@ def trivia_live():
     finally:
         r.close()
 
+# What the page painted, every 40 ms, recorded IN the page (a CDP round trip is slower than the jump):
+# the show's flying wordmark while it plays, the corner's showing mark, and the trivia title's top.
+REC = r'''window.__vpRec=[];(function(){ function R(e){ if(!e) return null; var q=e.getBoundingClientRect(); return q.height?[q.left,q.top,q.right,q.height]:null; }
+  setInterval(function(){ try{
+    var c=document.querySelector(".tv-corner"), mk=null; if(c){ var s=c.querySelectorAll("svg"); for(var i=0;i<s.length&&!mk;i++) mk=R(s[i]); }
+    var tl=document.getElementById("tvLobbyNight")||document.getElementById("tvQNight");
+    window.__vpRec.push({ms:Math.round(performance.now()), on:!!(window.VPSting&&VPSting.playing()), wg:R(document.getElementById("vpsWg")), mark:mk, title:tl?R(tl):null});
+  }catch(e){} }, 40); })();'''
+
+def landing_live():
+    """THE SHOW LANDS ON THE MOVED MARK, AND NOTHING JUMPS AFTER IT (Dean, 4 Nov 2026, on a real TV: "the logo sat
+    in the middle of the screen and dropped the trivia down"). On the trivia and musical bingo demos with
+    Tugun's square crest, on their own clock (no hand on the show), the show hid the corner's mark while the
+    crest arrived, so the corner was lined up on the crest only once the show ended: the flying wordmark landed
+    on the un-moved corner, then the mark (and TRIVIA beside it) dropped 35px at 1920x1080, 22px at 1280x720 and
+    19px on musical bingo, in one frame. Recorded in the page every 40 ms: the wordmark's last box in the show
+    against the corner mark that replaces it (within 2px), and the trivia title's top through the hand-over
+    (within 2px). Also with the CPU slowed 4x, as a TV is."""
+    import rig as RIG
+    r = RIG.Rig()
+    try:
+        for path, what, w, h, cpu in (('/app/trivia/screen?demo=1&sting=1', 'TRIVIA', 1920, 1080, 1), ('/app/trivia/screen?demo=1&sting=1', 'TRIVIA', 1280, 720, 1),
+                                      ('/app/musical/screen?demo=1&sting=1', 'MUSICAL BINGO', 1920, 1080, 1), ('/app/musical/screen?demo=1&sting=1', 'MUSICAL BINGO', 1280, 720, 1),
+                                      ('/app/trivia/screen?demo=1&sting=1', 'TRIVIA', 1920, 1080, 4)):
+            tag = 'LANDING %s demo at %dx%d%s' % (what, w, h, ', CPU 4x slower' if cpu > 1 else '')
+            print('\n' + tag)
+            tid, sid = r.open('/__blank', width=w, height=h)
+            if cpu > 1: r.B.call('Emulation.setCPUThrottlingRate', {'rate': cpu}, session=sid)
+            r.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': REC}, session=sid)
+            r.B.call('Page.navigate', {'url': r.base + path}, session=sid)
+            played = r.until(sid, 'window.VPSting && VPSting.stats().plays>=1 && !VPSting.playing() && VPSting.stats().last==="done"', 30 if cpu > 1 else 20)
+            ok(tag + ': the show played in full on its own clock', played is True, r.ask(sid, '(window.VPSting?VPSting.stats():null)'))
+            time.sleep(1.6)   # past the trivia wall's 1 s title tick: a late re-line-up shows here
+            rec = r.ask(sid, 'window.__vpRec') or []
+            on = [x for x in rec if x.get('on') and x.get('wg')]
+            off = [x for x in rec if not x.get('on') and on and x['ms'] > on[-1]['ms'] and x.get('mark')]
+            ok(tag + ': the page recorded the show and what came after it', bool(on) and bool(off), [len(rec), len(on), len(off)])
+            if on and off:
+                land, after, last = on[-1]['wg'], off[0]['mark'], off[-1]['mark']
+                d = max(abs(land[1] - after[1]), abs(land[2] - after[2]))
+                print('  %s: the show landed at top %.1f right %.1f; the mark it left is at top %.1f right %.1f (off by %.1f)' % (tag, land[1], land[2], after[1], after[2], d))
+                ok(tag + ': the show\'s wordmark lands where the corner mark then sits (within 2px; it landed 19 to 35px high before 4 Nov 2026)', d <= 2.0, [land, after])
+                ok(tag + ': the corner mark does not move after the show (within 2px)', abs(after[1] - last[1]) <= 2.0, [after, last])
+                if what == 'TRIVIA':
+                    tb = [x['title'] for x in on if x.get('title')][-1:] + [x['title'] for x in off if x.get('title')][-1:]
+                    ok(tag + ': TRIVIA is on its line through the show and stays there after it (within 2px)', len(tb) == 2 and abs(tb[0][1] - tb[1][1]) <= 2.0, tb)
+            ok(tag + ': no script errors on the screen', r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
+            r.close_tab(tid)
+    finally:
+        r.close()
+
 def main():
     if not take_lock():
         return 2
+    landing_live()
     trivia_live()
     none = real()
     demo((none or {}).get('mark'))

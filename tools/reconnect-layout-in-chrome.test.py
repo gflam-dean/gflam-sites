@@ -203,7 +203,7 @@ def main():
         print('\nTHE BINGO TV DEMO (/tv?demo=1)')
         QR = r'''(function(){ window.__qr=[]; var v; Object.defineProperty(window,"VPQR",{configurable:true,get:function(){return v;},set:function(x){ v=x; if(x&&x.draw){ var d=x.draw; x.draw=function(el,url){ if(el && (el.id==="qrBig"||el.id==="qrMini")) window.__qr.push(String(url)); return d.apply(this,arguments); }; } }}); })();'''
         tid, tv = r.open('/tv?demo=1', before=QR, width=1280, height=720)
-        ok('the demo lobby is up', r.until(tv, '(function(){var c=document.getElementById("lobbyCode");return !!c&&c.textContent.length===6;})()', 20) is True)
+        ok('the demo lobby is up', r.until(tv, '(function(){var c=document.getElementById("lobbyCode");return !!c&&c.textContent.length===6&&c.textContent!=="------";})()', 20) is True)
         code = r.ask(tv, 'document.getElementById("lobbyCode").textContent')
         ok('the lobby shows the demo\'s own code, one the code alphabet allows (not a code this browser invented)', code == 'VENUE2', code)
         qrs = r.ask(tv, 'window.__qr') or []
