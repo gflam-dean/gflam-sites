@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 161: a host's opt-in to venueplay product updates (Dean, 5 Nov 2026, INBOX item 21a)
+-- Migration 164: a host's opt-in to venueplay product updates (Dean, 5 Nov 2026, INBOX item 21a)
 -- ---------------------------------------------------------------------
 --   NOT RUN. Safe to run any number of times. Either order with the billing
 --   Worker: before this table exists POST /account/updates-ask answers
@@ -28,7 +28,7 @@
 -- them explicitly, so a revoke from public alone does nothing; migration 32).
 --
 -- NUMBER: 152 to 154 are on other branches, tonight's agents take 155
--- onwards and 160 is on this branch, so 161. Renumber at merge if taken.
+-- onwards, 160 is on this branch, and 161 is the venue rating (fix/venue-rating-8nov), so 164 (the coordinator, 5 Nov 2026). Renumber at merge if taken.
 -- Branch fix/host-updates-optin-8nov.
 -- =====================================================================
 

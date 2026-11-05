@@ -163,7 +163,7 @@ def build(key, root=None, browser=False, port=0, fonts=True):
     S = admin_site.Site(root=root, fonts=fonts, browser=browser, port=port, page_db=page,
                         extra_pages={'/demo/host-email': HOST_EMAIL_PAGE})
     S.W.seed('vp_platform_admins', [])
-    S.W.missing('vp_host_updates_optin', False)   # the demo shows the card working, as after migration 161
+    S.W.missing('vp_host_updates_optin', False)   # the demo shows the card working, as after migration 164
     # Links the Worker makes (the paused prospect's Add your card) point nowhere real, never at the live site.
     S.W.env(SITE_URL='https://demo-not-live.invalid', API_ORIGIN='https://demo-not-live.invalid')
     for t, rows in worker.items():

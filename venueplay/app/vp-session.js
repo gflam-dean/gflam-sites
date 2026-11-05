@@ -1356,6 +1356,7 @@
     if (!v || v.status !== 'suspended') return;
     if (document.getElementById('vpSuspendBar') || document.getElementById('vpHoldCard')) return;
     var nonpay = v.suspended_reason === 'nonpayment';
+    var owner = !!(ctx && (ctx.role === 'owner' || ctx.role === 'manager' || ctx.isAdmin));
     var bar = document.createElement('div');
     bar.id = 'vpSuspendBar';
     if (bar.setAttribute) bar.setAttribute('role', 'status');
@@ -1372,9 +1373,17 @@
       // An archived venue was switched off on purpose. Telling its owner to "give us a shout
       // and we will sort it out" reads as a fault and sends them chasing a problem that is not
       // one. Say what it is, and point at the way out.
+      /* EACH STATE IN ITS OWN WORDS (Dean, 5 Nov 2026, INBOX item 54 answer 5): "on hold for the moment, we will sort
+         it out" was said to a paused prospect and a cancelled venue too, which is not what happened to either. */
       : isArchived(v)
-      ? 'This venue is archived, so its games are switched off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring this one back.'
-      : 'Your games are on hold for the moment. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
+      ? 'This venue\'s account is closed, so its games are off. Nothing has been lost. Choose another venue to keep playing, or email support@venueplay.com.au to bring it back.'
+      : v.suspended_reason === 'free_month_ended'
+      ? (owner
+          ? 'Your free month has ended, so your games are paused. Nothing has been lost. <a href="/app/billing.html" style="color:#180d00;text-decoration:underline">Add your card</a> and everything comes straight back on.'
+          : 'The free month has ended, so games are paused here. Nothing has been lost. Ask the venue owner or a manager to add a card and everything comes straight back on.')
+      : (v.suspended_reason === 'cancelled' || v.suspended_reason === 'ended')
+      ? 'This venue\'s subscription has ended, so its games are off. Nothing has been lost. Email support@venueplay.com.au to start it again.'
+      : 'This venue\'s games are switched off for now. Nothing has been lost. Email support@venueplay.com.au and we will sort it out.';
     statusBar('hold', bar);
   }
   /* Fire-and-forget POST to the game Worker, signed with the caller's token.

@@ -1,4 +1,4 @@
-/* PRODUCT UPDATES BY EMAIL, ASKED AT SIGN-IN, RUN AND NOT WORD-SEARCHED (Dean, 5 Nov 2026, INBOX item 21a; migration 161).
+/* PRODUCT UPDATES BY EMAIL, ASKED AT SIGN-IN, RUN AND NOT WORD-SEARCHED (Dean, 5 Nov 2026, INBOX item 21a; migration 164).
 
    "when a host signs in (by phone), also ask for their EMAIL address, optional, for product updates about
    once a month. It needs a clear opt-in tick, unticked by default (Spam Act ...), and an unsubscribe link in
@@ -198,7 +198,7 @@ if (!VPB_HOST_UPDATES_CONSENT) throw new Error('cannot find VPB_HOST_UPDATES_CON
   section('4. Fails closed: nobody is asked for what we cannot store');
   world(); MISSING = true;
   var m1 = await call('/account/updates-ask', {}, AS(HOST));
-  check('the table missing (migration 161 not run): ask false', m1.status === 200 && m1.body.ask === false, m1);
+  check('the table missing (migration 164 not run): ask false', m1.status === 200 && m1.body.ask === false, m1);
   var m2 = await call('/account/updates-optin', { email: 'sam@test-alpha.example', opt_in: true }, AS(HOST));
   check('the table missing: an opt-in says it did not save, never ok', m2.status === 503 && !m2.body.ok, m2);
   world(); FAIL[T + ':GET'] = 1;
@@ -277,7 +277,7 @@ if (!VPB_HOST_UPDATES_CONSENT) throw new Error('cannot find VPB_HOST_UPDATES_CON
   world(); MISSING = true;
   var doc5 = newDoc(); SENT = [];
   P.maybe(staffCtx(HOST), pageDeps(HOST, doc5)); settle();
-  check('before migration 161 runs, the console shows nothing', !doc5.getElementById('vpUpdatesOptin') && SENT.length === 1, SENT);
+  check('before migration 164 runs, the console shows nothing', !doc5.getElementById('vpUpdatesOptin') && SENT.length === 1, SENT);
   MISSING = false;
   var P2 = freshPage(), doc6 = newDoc(), d6 = pageDeps(HOST, doc6); delete d6.again; SENT = [];
   P2.maybe(staffCtx(HOST), d6); settle(); P2.maybe(staffCtx(HOST), d6); settle();

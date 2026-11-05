@@ -404,7 +404,7 @@
   "counted_by": "lines"
  },
  "tools/test-archived-venue-restore.js": {
-  "checks": 14,
+  "checks": 18,
   "counted_by": "lines"
  },
  "tools/test-audit-search.js": {

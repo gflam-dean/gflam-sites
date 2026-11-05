@@ -1493,9 +1493,11 @@
   var leftState = null;
   function leftWords(st, d){
     var kept = st.kept_until ? fmtDay(st.kept_until) : null;
+    /* What the 90 days do (Dean, 5 Nov 2026, INBOX item 54): players' details and members' names go; the venue's own
+       details and its draw history (amounts, dates, counts) are kept. */
     var keep = kept
-      ? ("Your player details, members list and draw history are kept until " + kept + ". After that they are deleted, as our privacy policy says.")
-      : "Nothing has been deleted. Your player details, members list and draw history are all still here.";
+      ? ("Your players' details and your members' names are kept until " + kept + ", then deleted, as our privacy policy says. Your venue's own details and draw history stay on file.")
+      : "Nothing has been deleted. Your players' details, members list and draw history are all still here.";
     var back = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on.";
     /* THE SELF-SERVE RESTART (Dean, INBOX 54.3): with it switched on, a paused prospect or a cancelled venue comes back
        from here in one tap, so the card says that instead of "call us". The Worker decides what the tap does. */
@@ -1569,7 +1571,11 @@
         var w = leftWords(st, d);
         lc.innerHTML = '<h2>' + esc(w.title) + '</h2><p>' + esc(w.text) + '</p>' +
           (w.card ? '<div class="lcact"><a class="go" id="leftCardBtn" href="#" aria-disabled="true">Add your card</a></div>' : '') +
-          (w.restart ? '<div class="lcact"><button class="go" type="button" id="leftRestartBtn" disabled>Checking&hellip;</button></div><p class="lcnote" id="leftRestartNote"></p>' : '') +
+          /* THE COME-BACK SLOT (Dean, 5 Nov 2026, INBOX item 54 answer 3): the self-serve restart's one button and its words.
+             Shown only when the restart is switched on (w.restart); otherwise hidden and the words above say how. */
+          '<div class="lcact" id="leftComeBack" data-state="' + esc(st.state) + '"' + (w.restart ? '' : ' hidden') + '>' +
+            (w.restart ? '<button class="go" type="button" id="leftRestartBtn" disabled>Checking&hellip;</button>' : '') + '</div>' +
+          (w.restart ? '<p class="lcnote" id="leftRestartNote"></p>' : '') +
           '<p class="lckeep">' + esc(w.keep) + '</p>';
         lc.hidden = false;
         if (w.card) leftCardLink();
@@ -1943,7 +1949,7 @@
       var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues"
                 : (names.length ? names.join(", ") : "No venues");
       var roleWord = h.is_owner ? "Owner" : (h.role === "manager" ? "Manager" : "Host");
-      /* The owner gets the full mobile from the Worker (INBOX item 21b); anyone else the last three digits. */
+      /* The owner and managers get the full mobile from the Worker (INBOX items 21b, 54); the last three digits only as a fallback. */
       var sub = roleWord + " · " + scope + (h.mobile ? " · " + h.mobile : (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : ""));
       // A full-access login (the owner's, or one HQ set up) is owner-only, and even the owner
       // cannot delete it from here, so do not draw buttons that will only ever refuse.
