@@ -64,7 +64,7 @@ def scene_ghost():
         r.ask(a, 'document.getElementById("startBtn").click(); true')
         ok('CONTROL: window A has a musical lobby open', r.until(a, LOBBY, 20) is True)
         ok('CONTROL: the Worker has that lobby live on the venue code', live_sessions(r).get('live') is True, live_sessions(r))
-        recs = json.loads(r.ask(a, 'localStorage.getItem("vpOpenSessions")||"[]"'))
+        recs = r.json(a, 'localStorage.getItem("vpOpenSessions")||"[]"', [])
         ok('CONTROL: window A noted its night (stamped, not closing) in this browser', len(recs) == 1 and recs[0].get('closing') is False and isinstance(recs[0].get('seen'), (int, float)), recs)
         s1 = recs[0]['id'] if recs else ''
 
@@ -99,7 +99,7 @@ def scene_ghost():
         ok('the waiting close went to the Worker BEFORE the question and the new session', '/session/close' in calls and '/session' in calls and calls.index('/session/close') < calls.index('/play/live') < calls.index('/session'), calls)
         lv = live_sessions(r)
         ok('the venue has ONE live lobby afterwards, on the venue code, musical', lv.get('live') is True and lv.get('format') == 'musical_bingo' and lv.get('join_code') == r.W.info['code'], lv)
-        recs2 = json.loads(r.ask(c, 'localStorage.getItem("vpOpenSessions")||"[]"'))
+        recs2 = r.json(c, 'localStorage.getItem("vpOpenSessions")||"[]"', [])
         ok('window C holds the new night; the old one was closed and dropped from the list', any(x['id'] != s1 and not x.get('closing') for x in recs2) and all(x['id'] != s1 for x in recs2), recs2)
         ok('no script errors on window C', r.ask(c, 'window.__errs.length') == 0, r.ask(c, 'JSON.stringify(window.__errs)'))
         r.close_tab(tc)

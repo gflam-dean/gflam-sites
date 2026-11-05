@@ -785,7 +785,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      tv_here, which is what HQ reads to decide a screen is alive. A demo must never make a dead
      TV look healthy. */
   if(!VP_DEMO) ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true, audio:audioState() }); tvStatus(true); }
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true, audio:(typeof audioState==="function" ? audioState() : "unknown") }); tvStatus(true); }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 

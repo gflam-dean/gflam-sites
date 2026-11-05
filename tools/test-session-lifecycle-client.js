@@ -155,7 +155,7 @@ print('\n== 4. the TV says whether it can play sound, and the console acts at on
   ok('allowed and nothing played yet: unknown, not a false "ok"', audioState() === 'unknown');
   _audioHeard = true; ok('a clip that really played: ok', audioState() === 'ok');
   _audioWarned = true; ok('a warned screen stays blocked in every reply', audioState() === 'blocked');
-  ok('every host-triggered tv_here carries the sound state', /tvSend\(\{ t:"tv_here", audio:audioState\(\) \}\)/.test(MSCREEN) && /tvSend\(\{ t:"tv_here", hello:true, audio:audioState\(\) \}\)/.test(MSCREEN));
+  ok('every host-triggered tv_here carries the sound state', /tvSend\(\{ t:"tv_here", audio:audioState\(\) \}\)/.test(MSCREEN) && /tvSend\(\{ t:"tv_here", hello:true, audio:\(typeof audioState==="function" \? audioState\(\) : "unknown"\) \}\)/.test(MSCREEN));
 })();
 (function () {
   var errs = [], note = { cls: { hidden: true }, textContent: '' };

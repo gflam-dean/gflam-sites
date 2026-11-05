@@ -146,6 +146,9 @@ eval(liftLine(/^const PLAY_LIVE_TTL_MS[^\n]*/m));
 eval(liftLine(/^const playLiveCache[^\n]*/m));
 eval(lift('handlePlayLive'));
 eval(lift('playLiveLookup'));
+/* a walked-away trivia or musical lobby is not live (6 Nov 2026): both lookups ask this. */
+eval(liftLine(/^const ABANDONED_LOBBY_MS[^\n]*/m));
+eval(lift('sessionAbandoned'));
 eval(lift('venueRowByCode'));
 
 /* The three copies of the hash the pages carry. They must equal the Worker's. */
