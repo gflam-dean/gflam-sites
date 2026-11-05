@@ -11897,6 +11897,10 @@ MUTATIONS = [
      '      if (phone && venueRoom && st.noAnswer) {\n        if (!st.unreachSince) st.unreachSince = t;\n        if (t - st.unreachSince < UNREACHABLE_MS) { st.downSince = t; st.tries = 0; }\n      }\n', '',
      'in Chrome, a phone back from a quiet drop has left the room alone and taken the whole venue off it'),
     # The first-sign-in setup guide (Dean, 5 Nov 2026, INBOX 13), branch fix/first-run-guide-10nov.
+    ('runs vp-firstrun.js: the TV, hosts, a first game, then the card', 'venueplay/app/vp-firstrun.js',
+     'var STEPS = ["mobile", "terms", "tv", "hosts", "game", "card"];',
+     'var STEPS = ["mobile", "terms", "tv", "game", "card"];',
+     'the gate\'s first-sign-in guide line stays green with the hosts step gone'),
     ('test-first-run-guide.js', 'venueplay/app/vp-firstrun.js',
      'var STEPS = ["mobile", "terms", "tv", "hosts", "game", "card"];',
      'var STEPS = ["mobile", "terms", "tv", "game", "hosts", "card"];',
