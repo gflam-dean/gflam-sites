@@ -4207,7 +4207,7 @@ def local_checks(which):
             out = ((r.stdout or '') + (r.stderr or '')).strip()
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
-            ok('the real templates render with every venue, its own TV link and no raw tags',
+            ok('the real templates render with every venue, the bare venueplay.com.au/tv link and no raw tags',
                r.returncode == 0 and n >= 9 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-welcome-email-renders.js. This is the first thing a '

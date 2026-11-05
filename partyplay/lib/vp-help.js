@@ -533,8 +533,8 @@
   }
   function fillStep(s, ctx) {
     return String(s || "").replace(/\{tv_link\}/g, function () {
-      var slug = ctx.mode === "venue" ? venueSlug2() : "";
-      return slug ? "your venue's TV link, venueplay.com.au/tv?" + slug : "your venue's TV link (it is on your Account page)";
+      /* Dean, 5 Nov 2026: everywhere says venueplay.com.au/tv, and the venue types its screen code. */
+      return "venueplay.com.au/tv (then type the six-character screen code from your host console)";
     });
   }
   function authHeader(need) {

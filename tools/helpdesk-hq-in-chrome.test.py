@@ -28,7 +28,7 @@ rig's fake Resend, which this suite reads back). Then, at desk width and at phon
 
     python3 tools/helpdesk-hq-in-chrome.test.py [--shots DIR]
 """
-import argparse, json, os, sys, time
+import re, argparse, json, os, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
@@ -233,8 +233,8 @@ try:
     ok('...the player and PartyPlay ones are not offered here', not any(t in picker(sid) for t in [r['title'] for r in SEED if r['audience'] in ('player', 'partyplay')]))
     pick(sid, 'TV not showing the game')
     txt = text(sid, 'document.getElementById("hdtReply").value')
-    ok('picking one drops it into the reply box, filled in: "Hi Sam", the venue, and that venue\'s own TV address',
-       txt.startswith('Hi Sam,') and 'the TV at Deepwater Hotel' in txt and 'venueplay.com.au/tv?deepwater-hotel' in txt and '{' not in txt, txt[:220])
+    ok('picking one drops it into the reply box, filled in: "Hi Sam", the venue, and the bare TV address and the screen-code words',
+       txt.startswith('Hi Sam,') and 'the TV at Deepwater Hotel' in txt and 'venueplay.com.au/tv (then type the six-character screen code from your host console)' in txt and '/tv?' not in txt and '{' not in txt, txt[:220])
     ok('the box keeps the focus, ready to change the words', js(sid, 'document.activeElement && document.activeElement.id') == 'hdtReply')
     fitb = js(sid, '(function(){var t=document.getElementById("hdtReply");return {h:t.clientHeight,s:t.scrollHeight};})()')
     ok('the reply box grows to show the whole saved reply, no scrolling inside it', bool(fitb) and fitb['h'] > 160 and fitb['s'] <= fitb['h'] + 4, fitb)
@@ -246,7 +246,7 @@ try:
     time.sleep(0.4)
     mails = S.W.sent()[sent0:]
     ok('"Send and close" sent exactly one email, to Sam, with the edited words in it', len(mails) == 1 and mails[0]['to'] == ['sam@deepwater.example']
-       and 'venueplay.com.au/tv?deepwater-hotel' in mails[0]['html'] and 'we can also log in remotely' in mails[0]['html'], [m.get('to') for m in mails])
+       and 'venueplay.com.au/tv (then type the six-character screen code from your host console)' in re.sub(r'<[^>]+>', '', mails[0]['html']) and '/tv?' not in mails[0]['html'] and 'we can also log in remotely' in mails[0]['html'], [m.get('to') for m in mails])
     ok('...and closed the ticket, in one tap', ticket(1001)['status'] == 'closed' and bool(ticket(1001).get('closed_at')), ticket(1001)['status'])
     ok('back on the list, it says so, and 1001 has left Needs reply', 'ticket 1001 closed' in (js(sid, 'document.getElementById("hdDone").textContent') or '') and 1001 not in row_nos(sid), row_nos(sid))
     S.until(sid, 'document.querySelector("[data-n=needs]").textContent==="3"', 6)

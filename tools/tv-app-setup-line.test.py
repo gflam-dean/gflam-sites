@@ -166,7 +166,7 @@ for lb in ('leave-behind', 'leave-behind-club', 'leave-behind-pub', 'leave-behin
           lw.endswith(SHORT) and 'all included.' in lw, lw[-160:])
 
 tr = read('venueplay/training.html')
-cap = re.search(r'cap:"The venue TV is set up once with its own screen code[^"]*"', tr)
+cap = re.search(r'cap:"The venue TV is opened once at venueplay.com.au/tv[^"]*"', tr)
 check('the training walkthrough\'s TV caption names the VenuePlay TV app',
       bool(cap) and SHORT in cap.group(0), cap and cap.group(0)[:200])
 
@@ -179,6 +179,18 @@ check('the Account page\'s TV note (where the TV link is) names the VenuePlay TV
 ll = read('venueplay/llms.txt')
 check('llms.txt (what AI search reads about VenuePlay) names the VenuePlay TV app and its Google Play page',
       re.search(r'^- Got a TV with Google Play\? Get the venueplay TV app \(' + re.escape(PLAY) + r'\), then put in your screen code\.$', ll, re.M) is not None)
+
+# ---------------------------------------------------------------- the onboarding email's screen box (Dean, 5 Nov 2026)
+# /tv no longer asks anyone to bookmark a venue link: the screen code is quicker. So the venue
+# onboarding email has a "Your screen code" box and no /tv?slug link or "home page" instruction.
+ob_raw = read('venueplay/emails/venue-onboarding.html')
+ob = re.sub(r'<!--.*?-->', ' ', ob_raw, flags=re.S)
+obt = text(ob)
+check('the venue onboarding email has a "Your screen code" box with the screen-code words, word for word',
+      'Your screen code' in obt and "Open venueplay.com.au/tv on the TV (or the venueplay TV app), then type the six-character screen code from your host console. The TV remembers your venue after that." in obt, obt[-500:])
+check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), and no "home page" instruction',
+      '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt, obt[-500:])
+check('step 1 points at the screen code, not a link below', 'Open the TV link below' not in obt and 'see the box below' in obt, obt[:900])
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))

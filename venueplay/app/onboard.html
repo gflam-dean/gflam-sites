@@ -405,7 +405,7 @@
     $("doneWrap").classList.remove("hidden");
     $("dName").textContent=v.name;
     $("dSlug").textContent=v.slug;
-    $("dTv").textContent="venueplay.com.au/tv?"+v.slug;
+    $("dTv").textContent="venueplay.com.au/tv (then type the screen code from your host console)";
     $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main screen":"Screen row not created (add one later).";
     $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created. Compliance line accepted and recorded.":"Settings row not created (open Settings to create it).";
     if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager yet. Add one from Your account (View as this venue) whenever you are ready."; }
