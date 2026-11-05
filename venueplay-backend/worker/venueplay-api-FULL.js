@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 19:59 · 1043b0a6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 20:14 · 99576d7d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -11690,6 +11690,14 @@ async function vpbCancelVenue(request, env, json) {
      Only reverses OUR OWN suspension. A venue switched off for not paying, or suspended by
      hand from HQ, is left exactly as it is: changing your mind about leaving does not settle
      an unpaid bill, and an undo must never be a way to turn your games back on. */
+  /* A VENUE THAT HAS ALREADY BEEN SWITCHED OFF, brought back through "Keep this venue": with the self-serve restart on,
+     it goes through the restart, so it joins the cycle with its pro rata stub, exactly as "Bring it back" does
+     (Dean, INBOX 55g). Off: the old undo below, unchanged. */
+  if (undo && vpbRestartOn(env) && venue.status === 'suspended'
+      && (venue.suspended_reason === 'cancelled' || venue.suspended_reason === 'ended')) {
+    if (o.actingAsAdmin) return json({ error: 'Restarting uses the venue\'s own card. HQ View as cannot do it.' }, 403);
+    return await vpbRestartRun(env, o, venueId, Date.now(), json);
+  }
   const patch = { cancel_at_period_end: !undo };
   /* WHAT IT WAS, so a refusal from Stripe can put back EVERYTHING this writes and not just the
      flag. The write has to come before Stripe, because the new billed total is counted off
@@ -11799,8 +11807,9 @@ async function vpbCancelVenue(request, env, json) {
  *
  * WHICH VENUES: suspended for one of VPB_RESTART_REASONS. A venue closed by us (archived), switched off by hand,
  * or off for a failed card is not a self-serve restart: the first two are ours to undo, the last pays its
- * invoice (the existing failed-payment steps). An account with a recorded chargeback, a comp account and a
- * subscription that carried a discount are sent to us too, so nothing here ever drops a deal we made.
+ * invoice (the existing failed-payment steps). An account with a recorded CHARGEBACK is never restarted or
+ * switched on from here: the page shows one neutral line (email support@) and HQ is told who it is, once
+ * (INBOX 55f).
  *
  * THE 90 DAYS: from closed_at, the clock the nightly retention sweep (venueplay-game.js sweepRetention) reads,
  * so "restart" and "player details deleted" can never disagree about the day. Allowed while now is BEFORE
@@ -11819,8 +11828,12 @@ async function vpbCancelVenue(request, env, json) {
  *             separate transaction. Nothing for a cycle still inside the account's own free month (trialing).
  *   new_sub   the subscription has ended (a one-venue account that cancelled). A new subscription on the card
  *             they have with us, starting today, charged today for the first period. No free month (they had
- *             it). The price: the offer they were on if they come back within 5 days of leaving (11:59:59pm
- *             Brisbane on day 5, the same end-of-day rule as the prospect grace), else the standard rate.
+ *             it). The price (Dean, 5 Nov 2026, INBOX 55a): the standard rate. The one automatic exception: a venue
+ *             that was with us MORE THAN 6 MONTHS and comes back WITHIN 2 MONTHS of leaving goes back on its OLD
+ *             rate. There is no 5-day keep-the-offer for a cancelled venue (that grace is for paused prospects).
+ *             A venue that had a special discount, or a free (comp) account, restarts on the standard rate with
+ *             nothing said on the page, and support@ and HQ are told (a help desk ticket and an email) so Dean can
+ *             sort a discount from HQ (INBOX 57).
  *             No saved card, or the card is refused: a Checkout page for the same subscription, and the
  *             webhook (metadata vp_restart) switches the venue on.
  *
@@ -11864,10 +11877,54 @@ async function vpbProspectHeld(env, prow, nowMs) {
 }
 /* The first moment a restart is refused: closed_at + 90 days, the instant the retention sweep may purge. */
 function vpbRestartDeadlineMs(clockMs) { return isFinite(clockMs) ? clockMs + VPB_RETENTION_DAYS * 86400000 : NaN; }
-/* A cancelled paying venue keeps the offer it was on to 11:59:59pm Brisbane on the 5th day after the day it
-   left (day 0), the same five whole Brisbane days the prospect grace gives (vpaOfferGraceEnd). */
-function vpbLeftGraceEndMs(clockMs) {
-  return isFinite(clockMs) ? vpaBneDayStartMs(vpaAddDays(vpaBneDay(clockMs), VPA_OFFER_GRACE_DAYS + 1)) - 1000 : NaN;
+/* THE OLD-RATE EXCEPTION (Dean, 5 Nov 2026, INBOX 55a): with us MORE THAN 6 months, back WITHIN 2 months of leaving.
+   Calendar months on the Brisbane clock, the same instant n months on (a shorter month lands on its last day, the
+   way a billing anchor does: 31 Aug + 6 months is 28 Feb). */
+const VPB_OLD_RATE_TENURE_MONTHS = 6, VPB_OLD_RATE_BACK_MONTHS = 2;
+function vpbAddMonthsMs(ms, n) {
+  if (!isFinite(ms)) return NaN;
+  const d = new Date(ms + VPA_BNE_MS);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n + 1, 0)).getUTCDate();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, Math.min(d.getUTCDate(), last),
+    d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds()) - VPA_BNE_MS;
+}
+/* The last instant the old rate is kept, or NaN when the venue does not qualify (6 months or less with us). */
+function vpbOldRateUntilMs(joinedMs, leftMs) {
+  if (!isFinite(joinedMs) || !isFinite(leftMs)) return NaN;
+  if (!(leftMs > vpbAddMonthsMs(joinedMs, VPB_OLD_RATE_TENURE_MONTHS))) return NaN;
+  return vpbAddMonthsMs(leftMs, VPB_OLD_RATE_BACK_MONTHS);
+}
+/* TELL SUPPORT AND HQ (INBOX 55f, 57): a help desk ticket (HQ > Support) and an email to support@ and Dean, ONCE per
+   venue and subject. Best effort: a restart, or a refusal, never waits on it. */
+async function vpbRestartAlert(env, venue, account, subject, message) {
+  try {
+    const title = subject + ' [' + venue.id + ']';
+    const have = await vpaSelect(env, 'vp_help_tickets', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&subject=eq.' + encodeURIComponent(title) + '&select=id&limit=1');
+    if (have && have.length) return false;
+    if (typeof helpInsertTicket === 'function') {
+      await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'manual', status: 'new', priority: 'urgent',
+        title: title, message: message, contact_email: (account && account.contact_email) || null, venue_id: venue.id }).catch(() => null);
+    }
+    const html = '<p>' + vpaEsc(message) + '</p><p>Venue id: ' + vpaEsc(venue.id) + '. It is in HQ &gt; Support.</p>';
+    for (const to of ['support@venueplay.com.au', 'dean@venueplay.com.au']) await vpaSendEmail(env, to, vpaAlertSubject('check', subject), html).catch(() => false);
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'system', action: 'venue_restart_alert',
+      target: 'venue:' + venue.id, detail: { subject: subject } }, false).catch(() => {});
+    return true;
+  } catch (_) { return false; }
+}
+/* What the special deal was, in words for the alert: "a 33.3% special discount", "a $10.00 special discount". */
+function vpbDealWords(sub, comp) {
+  if (comp) return 'a free account';
+  const d = sub && ((sub.discounts && sub.discounts.length && sub.discounts[0]) || sub.discount);
+  const c = d && d.coupon;
+  if (c && typeof c.percent_off === 'number') return 'a ' + c.percent_off + '% special discount';
+  if (c && typeof c.amount_off === 'number') return 'a $' + (c.amount_off / 100).toFixed(2) + ' special discount';
+  return d ? 'a special discount' : null;
+}
+const VPB_RESTART_NEUTRAL = 'To restart this account, email support@venueplay.com.au and we will take it from there.';
+async function vpbRestartDealAlert(env, venue, account, deal) {
+  return vpbRestartAlert(env, venue, account, (venue.name || 'A venue') + ' has re-signed up',
+    (venue.name || 'A venue') + ' has re-signed up; they previously had ' + deal + '. They are back on the standard rate. Sort any discount from HQ.');
 }
 function vpbRestartMoney(cents) { return '$' + (Math.round(cents) / 100).toFixed(2); }
 function vpbCardOf(pm) {
@@ -11883,7 +11940,7 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
   const mine = (o.venues || []).find((v) => v.id === venueId);
   if (!mine) return refuse(400, 'Pick one of your venues.');
   const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId)
-    + '&select=id,name,status,suspended_reason,closed_at,player_data_purged_at,max_players,founding_id,cancel_at_period_end&limit=1');
+    + '&select=id,name,status,suspended_reason,closed_at,player_data_purged_at,max_players,founding_id,cancel_at_period_end,created_at&limit=1');
   const venue = vr && vr[0];
   if (!venue) return refuse(503, 'We could not check your account just now. Please try again in a minute.');
   if (venue.founding_id !== o.account.id) return refuse(400, 'Pick one of your venues.');
@@ -11899,13 +11956,12 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
   if (venue.player_data_purged_at || !(nowMs < deadlineMs)) {
     return refuse(410, 'It has been more than 90 days since ' + (venue.name || 'your venue') + ' left, so the account is on hold and cannot be restarted from here. Call us on ' + VP_SUPPORT_PHONE + ' or email support@venueplay.com.au and we will set you up again.', { held: true });
   }
-  if (o.account.status === 'comp') return refuse(409, 'This account is on us, so we switch it back on for you. ' + VPB_RESTART_CALL);
   /* A chargeback is recorded against the account (vpaRecordDispute). Read with a query that THROWS, so a failed
      read refuses rather than lets a disputed account restart itself. */
   let disputed;
   try { disputed = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.payment_disputed&target=eq.' + encodeURIComponent('account:' + o.account.id) + '&select=id&order=id.asc'); }
   catch (e) { return refuse(503, 'We could not check your account just now. Please try again in a minute.'); }
-  if (disputed && disputed.length) return refuse(409, 'There is a payment question open on this account. ' + VPB_RESTART_CALL);
+  if (disputed && disputed.length) return refuse(409, VPB_RESTART_NEUTRAL, { dispute: true, venue: venue });
 
   const players = Math.max(1, parseInt(venue.max_players, 10) || 0);
   const base = { venue: venue, prow: prow, clockMs: clockMs, deadlineMs: deadlineMs, players: players,
@@ -11918,9 +11974,10 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
       grace_ends_at: pp.grace_ends_at || null, today_cents: 0, monthly_cents: Math.round(pp.rate * 100) * players });
   }
 
-  if (!o.account.stripe_subscription_id && !o.account.stripe_customer_id) return refuse(409, 'This account has no billing set up with us. ' + VPB_RESTART_CALL);
+  const comp = o.account.status === 'comp';
+  if (!o.account.stripe_subscription_id && !o.account.stripe_customer_id && !comp) return refuse(409, 'This account has no billing set up with us. ' + VPB_RESTART_CALL);
   const info = o.account.stripe_subscription_id ? await vpbSubItem(env, o.account.stripe_subscription_id) : null;
-  if (o.account.stripe_subscription_id && (!info || !info.sub || info.sub.error)) return refuse(503, 'We could not reach our payment provider just now. Nothing has been charged. Please try again in a minute.');
+  if (o.account.stripe_subscription_id && (!info || !info.sub || (info.sub.error && !comp))) return refuse(503, 'We could not reach our payment provider just now. Nothing has been charged. Please try again in a minute.');
   const subStatus = (info && info.sub && info.sub.status) || null;
   const plan = o.account.plan === 'annual' ? 'annual' : 'monthly';
 
@@ -11945,31 +12002,34 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
     return refuse(409, 'There is an unpaid invoice on this account. Update your card below to pay it, and your games come back on.', { update_card: true });
   }
 
-  /* THE SUBSCRIPTION HAS ENDED: a new one, on the card they have with us, at the price the 5-day rule sets. */
+  /* THE SUBSCRIPTION HAS ENDED (or there never was one: a free account): a new one, on the card they have with us,
+     at the standard rate, or their old rate under the 6-months-in, 2-months-out exception (INBOX 55a). A special
+     discount or a free account restarts on the standard rate and support@ is told (INBOX 57). */
+  const sub0 = (info && info.sub && !info.sub.error) ? info.sub : null;
+  const deal = vpbDealWords(sub0, comp);
   const oldPrice = info && info.priceId;
-  if (!oldPrice) return refuse(503, 'We could not check your price just now. Nothing has been charged. Please try again in a minute.');
-  const discounted = !!(info.sub && ((info.sub.discounts && info.sub.discounts.length) || info.sub.discount));
-  if (discounted) return refuse(409, 'Your account had a discount with us, so we restart it for you to keep it right. ' + VPB_RESTART_CALL);
-  const wasOffer = vpbIsFoundingPrice(env, oldPrice);
-  const graceEndMs = vpbLeftGraceEndMs(clockMs);
-  const keepOffer = wasOffer && isFinite(graceEndMs) && nowMs <= graceEndMs + 999;
+  if (!oldPrice && !deal) return refuse(503, 'We could not check your price just now. Nothing has been charged. Please try again in a minute.');
+  const wasOffer = !deal && vpbIsFoundingPrice(env, oldPrice);
+  const oldRateUntilMs = deal ? NaN : vpbOldRateUntilMs(Date.parse(venue.created_at || ''), clockMs);
+  const keepOffer = wasOffer && isFinite(oldRateUntilMs) && nowMs < oldRateUntilMs;
   const priceId = keepOffer
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
   if (!priceId) return refuse(503, 'We could not check your price just now. Nothing has been charged. Please try again in a minute.');
   const rate = vpbRateStrict(env, priceId, plan);
-  const customer = o.account.stripe_customer_id || (info.sub && info.sub.customer) || null;
-  if (!customer) return refuse(409, 'This account has no billing set up with us. ' + VPB_RESTART_CALL);
+  const customer = o.account.stripe_customer_id || (sub0 && sub0.customer) || null;
+  if (!customer && !comp) return refuse(409, 'This account has no billing set up with us. ' + VPB_RESTART_CALL);
   /* THE CARD: the customer's default first (the portal sets it when a card is updated), then the old
-     subscription's own. Unreadable: no card, so the owner adds one on Stripe's page rather than us guessing. */
+     subscription's own. Unreadable: no card, so the owner adds one on Stripe's page rather than us guessing.
+     A free account with no Stripe customer adds its card on Stripe's page. */
   let card = null;
-  const cust = await vpbStripeGet(env, 'customers/' + encodeURIComponent(customer) + '?expand[]=invoice_settings.default_payment_method');
+  const cust = customer ? await vpbStripeGet(env, 'customers/' + encodeURIComponent(customer) + '?expand[]=invoice_settings.default_payment_method') : null;
   if (cust && !cust.error && cust.invoice_settings) card = vpbCardOf(cust.invoice_settings.default_payment_method);
-  if (!card && info.sub) card = vpbCardOf(info.sub.default_payment_method);
+  if (!card && sub0) card = vpbCardOf(sub0.default_payment_method);
   const perPeriodCents = Math.round(rate * 100) * players * (plan === 'annual' ? 12 : 1);
   return Object.assign(base, { kind: 'new_sub', mode: card ? 'confirm' : 'card', plan: plan, rate: rate, price_id: priceId,
-    offer: keepOffer, was_offer: wasOffer, grace_ends_at: (wasOffer && isFinite(graceEndMs)) ? new Date(graceEndMs).toISOString() : null,
-    customer: customer, card: card, today_cents: perPeriodCents, monthly_cents: Math.round(rate * 100) * players });
+    offer: keepOffer, was_offer: wasOffer, old_rate: keepOffer, old_rate_until_ms: keepOffer ? oldRateUntilMs : NaN, deal: deal,
+    contact_email: o.account.contact_email || null, customer: customer, card: card, today_cents: perPeriodCents, monthly_cents: Math.round(rate * 100) * players });
 }
 
 /* What the page shows: the plan, without the internals. */
@@ -11981,10 +12041,8 @@ function vpbRestartPublic(p) {
     Object.assign(out, { stub: vpbRestartMoney(p.stub_cents), stub_cents: p.stub_cents, stub_words: p.stub_words,
       next_bill_at: p.next_bill_at, next_bill_words: p.next_bill_words, trialing: p.trialing });
   }
-  if (p.kind === 'new_sub' || p.kind === 'prospect') {
-    out.offer = !!p.offer;
-    if (p.grace_ends_at && p.offer) { out.offer_kept_until = p.grace_ends_at; out.offer_kept_words = vpaBneDateWords(Date.parse(p.grace_ends_at)); }
-  }
+  /* The rate is said (it is what they pay); the leeway behind it is never announced (Dean, INBOX 55c): no keep-by date. */
+  if (p.kind === 'new_sub' || p.kind === 'prospect') out.offer = !!p.offer;
   if (p.card) out.card = { brand: p.card.brand, last4: p.card.last4 };
   return out;
 }
@@ -12007,7 +12065,7 @@ async function vpbRestartQuote(request, env, json) {
   const g = await vpbRestartGate(request, env, json, 'restart-quote', 30);
   if (g.res) return g.res;
   const p = await vpbRestartPlan(env, g.o, g.venueId, Date.now());
-  if (p.refuse) return json(Object.assign({ ok: false, available: true, can_restart: false }, p.refuse), 200);
+  if (p.refuse) return json(Object.assign({ ok: false, available: true, can_restart: false }, await vpbRestartRefusal(env, g.o, p.refuse)), 200);
   if (p.already) return json({ ok: true, available: true, can_restart: false, already: true });
   if (p.kind !== 'prospect') { const og = vpbOwnerOnly(g.o, json); if (og) return json({ ok: false, available: true, can_restart: false, error: 'Only the account owner can restart billing.' }, 200); }
   return json(vpbRestartPublic(p));
@@ -12018,7 +12076,7 @@ async function vpbRestartCheckout(env, o, p, nowMs) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const nowS = Math.floor(nowMs / 1000);
   const form = {
-    mode: 'subscription', customer: p.customer,
+    mode: 'subscription',
     'line_items[0][price]': p.price_id, 'line_items[0][quantity]': String(p.players),
     payment_method_collection: 'always', allow_promotion_codes: 'false',
     client_reference_id: o.account.id,
@@ -12029,18 +12087,20 @@ async function vpbRestartCheckout(env, o, p, nowMs) {
     'subscription_data[metadata][tier]': p.offer ? 'founding' : 'standard',
     /* Open no longer than the offer or the 90 days allow (Stripe: 30 minutes to 24 hours). */
     expires_at: String(Math.max(nowS + 31 * 60, Math.min(nowS + 23 * 3600,
-      Math.floor(((p.offer && p.grace_ends_at) ? Math.min(Date.parse(p.grace_ends_at) + 1000, p.deadlineMs) : p.deadlineMs) / 1000)))),
+      Math.floor((p.old_rate && isFinite(p.old_rate_until_ms) ? Math.min(p.old_rate_until_ms, p.deadlineMs) : p.deadlineMs) / 1000)))),
     success_url: site + '/app/billing.html?restarted=1',
     cancel_url: site + '/app/billing.html',
   };
+  if (p.customer) form.customer = p.customer; else if (p.contact_email) form.customer_email = p.contact_email;
+  if (p.deal) { form['metadata[vp_restart_deal]'] = p.deal; form['subscription_data[metadata][vp_restart_deal]'] = p.deal; }
   const hour = Math.floor(nowMs / 3600000);
   const s = await vpbStripePost(env, 'checkout/sessions', form, 'restartcs:' + p.venue.id + ':' + p.clockMs + ':' + p.price_id + ':' + hour);
   return (s && !s.error && s.url) ? s.url : null;
 }
 
 /* Switch the venue back on. Filtered on status=suspended, so a second call changes nothing. */
-async function vpbRestartSwitchOn(env, foundingId, venueId, kind, subId) {
-  if (subId) await sbUpdate(env, foundingId, { stripe_subscription_id: subId, status: 'card_on_file' });
+async function vpbRestartSwitchOn(env, foundingId, venueId, kind, subId, customerId) {
+  if (subId) await sbUpdate(env, foundingId, Object.assign({ stripe_subscription_id: subId, status: 'card_on_file' }, customerId ? { stripe_customer_id: customerId } : {}));
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&status=eq.suspended',
     { status: 'active', suspended_reason: null, closed_at: null, cancel_at_period_end: false, pending_players: null });
   if (kind === 'new_sub') {
@@ -12056,9 +12116,25 @@ async function vpbRestart(request, env, json) {
   if (!vpbRestartOn(env)) return json({ error: 'Restarting from here is not switched on yet. ' + VPB_RESTART_CALL }, 403);
   const g = await vpbRestartGate(request, env, json, 'restart', 6);
   if (g.res) return g.res;
-  const o = g.o, nowMs = Date.now();
-  const p = await vpbRestartPlan(env, o, g.venueId, nowMs);
-  if (p.refuse) return json(Object.assign({ ok: false }, p.refuse), p.refuse.status);
+  return await vpbRestartRun(env, g.o, g.venueId, Date.now(), json);
+}
+
+/* A refusal as the page sees it. A chargeback also tells support@ and HQ who it is, once (INBOX 55f). */
+async function vpbRestartRefusal(env, o, r) {
+  const out = Object.assign({}, r);
+  if (r.dispute && r.venue) {
+    await vpbRestartAlert(env, r.venue, o.account, 'Chargeback account asked to restart: ' + (r.venue.name || 'a venue'),
+      (r.venue.name || 'A venue') + ' tried to restart venueplay from its Account page. The account has a recorded chargeback, so it was NOT restarted and NOT switched on. Contact them before doing anything.');
+  }
+  delete out.venue; delete out.dispute;
+  return out;
+}
+
+/* THE RESTART ITSELF, for /account/restart and for the older "Keep this venue" undo of a venue that has already been
+   switched off (Dean, INBOX 55g: that undo now charges the part-month stub too). The caller has checked who it is. */
+async function vpbRestartRun(env, o, venueId, nowMs, json) {
+  const p = await vpbRestartPlan(env, o, venueId, nowMs);
+  if (p.refuse) return json(Object.assign({ ok: false }, await vpbRestartRefusal(env, o, p.refuse)), p.refuse.status);
   if (p.already) return json({ ok: true, already: true, restarted: false });
 
   if (p.kind === 'prospect') {
@@ -12133,7 +12209,8 @@ async function vpbRestart(request, env, json) {
     return json({ ok: false, card_failed: true, error: 'Your card was not accepted, so nothing has been charged. Use another card to come back.', card_url: url, mode: 'card' }, 402);
   }
   await vpbRestartSwitchOn(env, o.account.id, p.venue.id, 'new_sub', sub.id);
-  await audit('venue_restarted', { subscription: sub.id, price: p.price_id, offer: p.offer, charged_cents: p.today_cents });
+  await audit('venue_restarted', { subscription: sub.id, price: p.price_id, offer: p.offer, charged_cents: p.today_cents, deal: p.deal || null });
+  if (p.deal) await vpbRestartDealAlert(env, p.venue, o.account, p.deal);
   return json({ ok: true, restarted: true, kind: 'new_sub', charged: vpbRestartMoney(p.today_cents), offer: p.offer });
 }
 
@@ -12170,9 +12247,13 @@ async function vpbRestartFromCheckout(env, s) {
       return;
     }
   }
-  await vpbRestartSwitchOn(env, foundingId, venueId, 'new_sub', subId);
+  await vpbRestartSwitchOn(env, foundingId, venueId, 'new_sub', subId, s.customer || null);
   await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'stripe', action: 'venue_restarted',
-    target: 'venue:' + venueId, detail: { name: v.name || null, kind: 'new_sub', via: 'checkout', subscription: subId } }, false).catch(() => {});
+    target: 'venue:' + venueId, detail: { name: v.name || null, kind: 'new_sub', via: 'checkout', subscription: subId, deal: md.vp_restart_deal || null } }, false).catch(() => {});
+  if (md.vp_restart_deal) {
+    const fa = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(foundingId) + '&select=id,contact_email&limit=1');
+    await vpbRestartDealAlert(env, v, fa && fa[0], String(md.vp_restart_deal).slice(0, 80));
+  }
 }
 
 /* --- Venue screen (what shows on /tv?<slug>): custom promo slides, the weekly

@@ -1607,15 +1607,14 @@
     var money = function(r){ return "$" + Number(r).toFixed(2); };
     var pl = q.players + " player" + (q.players === 1 ? "" : "s");
     var until = q.restart_until_words ? (" You can come back from here until " + q.restart_until_words + ".") : "";
-    var offer = (q.offer && q.offer_kept_words) ? (" Your " + money(q.rate) + " offer price is kept if you come back by " + q.offer_kept_words + ".") : "";
     if (q.kind === "group") return { label: "Bring " + (q.venue_name || "this venue") + " back",
       note: pl + " at " + money(q.rate) + " a player. " + (q.trialing ? "Nothing extra this cycle, " : (q.stub + " for the rest of this cycle (" + q.stub_words + ") goes on your next bill, ")) +
             "on " + q.next_bill_words + ", then " + q.monthly + " a month." + until };
     if (q.mode === "card") return { label: q.kind === "prospect" ? "Add your card and come back" : "Add a card and come back",
-      note: pl + " at " + money(q.rate) + " a player, " + q.monthly + " a month" + (q.kind === "prospect" ? "" : (", " + q.today + " today")) + "." + offer + until };
+      note: pl + " at " + money(q.rate) + " a player, " + q.monthly + " a month" + (q.kind === "prospect" ? "" : (", " + q.today + " today")) + "." + until };
     var c = q.card || {}, cw = (c.brand ? (c.brand.charAt(0).toUpperCase() + c.brand.slice(1)) : "Card") + (c.last4 ? " ending " + c.last4 : "");
     return { label: "Come back: " + q.today + " today on " + cw,
-      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + offer + until };
+      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + until };
   }
   /* Which left venue the restart is for: the one the leaving email named (?venue=), else the first that has left. */
   function restartVenueId(d){

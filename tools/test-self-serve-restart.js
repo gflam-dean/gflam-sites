@@ -8,9 +8,10 @@
    Runs the REAL billing Worker (tools/rig-billing-worker.js) through its REAL router, with a FIXED clock and a fake
    Stripe that keeps state (customers, subscriptions, invoice items, Checkout pages) and replays an Idempotency-Key
    the way Stripe does, so a double tap is tested against the thing that actually stops it:
-     1. the pure rules: the 90-day deadline and the 5-day offer boundary for a cancelled venue, to the millisecond
-     2. a cancelled one-venue account, its subscription ended, a card on file: restart on day 0, inside the grace,
-        on the last grace instant, the first standard instant, after the grace, on day 89 and refused on day 91;
+     1. the pure rules: the 90-day deadline, and Dean's old-rate exception for a cancelled venue (more than 6 months
+        with us, back within 2 months of leaving: the old rate; otherwise the standard rate), to the millisecond
+     2. a cancelled one-venue account, its subscription ended, a card on file: restart on day 0, day 3, day 10,
+        the last old-rate instant, the first standard instant, day 89, and refused on day 91; a short-tenure venue;
         the new subscription's price, quantity, card, no trial, error_if_incomplete, the switch-on, the clock cleared
      3. a double tap (together and one after the other): one subscription, one charge
      4. a failing card: nothing charged, nothing switched on, a Checkout page for another card; that page paid
@@ -19,10 +20,14 @@
      6. a paused prospect: its own card link, the offer grace price, day 89 and day 91 (and the card link and the
         /add-card page refuse after 90 days too); a cancelled prospect's card brings it back
      7. tamper-proof: another account's venue, HQ View as, a restricted manager, the switch off, the rate limit,
-        a failed card account, a closed account, a chargeback, a discount, purged player details
+        a failed card account, a closed account, purged player details; a CHARGEBACK (never restarted, a neutral line,
+        HQ told once); a special DISCOUNT and a FREE account (restart at the standard rate, nothing said on the page,
+        support@ and HQ told); the old "Keep this venue" undo goes through the restart (the stub)
      8. the members list, the slides and the draws are byte-for-byte the same after every restart
      9. the page: restartView (lifted from billing.html) turns each quote into the button and the words; the
         come-back link in the console shell
+
+   Dean's answers, builds INBOX 55 and 57 (5 Nov 2026), are what sections 1, 2 and 7 hold the code to.
 
    Run from the repo root:  jsc tools/test-self-serve-restart.js */
 var ran = 0, bad = 0; function badCount() { return bad; }
@@ -223,7 +228,7 @@ function paidLeft(o) {
     stripe_customer_id: 'cus_' + fid.slice(-4), stripe_subscription_id: 'sub_old_' + fid.slice(-4), contact_email: 'owner' + OWN + '@restart.example', max_seats: 20 });
   var venue = { id: vid, name: o.name || 'Come Back Hotel', founding_id: fid, group_id: null, max_players: o.players || 20, pending_players: null,
     status: 'suspended', suspended_reason: o.reason || 'cancelled', slug: 'come-back-' + OWN, cancel_at_period_end: o.reason === 'ended' ? false : true,
-    timezone: 'Australia/Brisbane', created_at: '2026-06-01T00:00:00.000Z', postcode: '4000', closed_at: o.noClock ? null : new Date(o.leftMs || LEFT0).toISOString(),
+    timezone: 'Australia/Brisbane', created_at: o.joined || '2026-03-01T00:00:00.000Z', postcode: '4000', closed_at: o.noClock ? null : new Date(o.leftMs || LEFT0).toISOString(),
     player_data_purged_at: o.purged ? new Date(LEFT0 + 5 * DAY).toISOString() : null };
   DB.vp_venues.push(venue);
   DB.vp_venue_staff.push({ auth_user_id: owner, venue_id: vid, role: 'owner', permissions: null });
@@ -257,20 +262,25 @@ async function restartAt(A, ms, who, venue, headers) { return withClock(ms, asyn
 function newSubs() { return ST.created.length; }
 
 (async function () {
-  section('1. The pure rules: 90 days to the millisecond, the 5-day offer for a cancelled venue');
+  section('1. The pure rules: 90 days to the millisecond, the old-rate exception for a cancelled venue');
   check('the deadline is closed_at + 90 days exactly (the instant the retention sweep may purge)',
     vpbRestartDeadlineMs(LEFT0) === LEFT0 + 90 * DAY && new Date(vpbRestartDeadlineMs(LEFT0)).toISOString() === '2027-03-02T05:00:00.000Z', new Date(vpbRestartDeadlineMs(LEFT0)).toISOString());
-  check('the offer is kept to 11:59:59pm Brisbane on Mon 7 Dec, the 5th day after the day it left', new Date(vpbLeftGraceEndMs(LEFT0)).toISOString() === '2026-12-07T13:59:59.000Z', new Date(vpbLeftGraceEndMs(LEFT0)).toISOString());
+  var J9 = Date.parse('2026-03-01T00:00:00.000Z');
+  check('with us 9 months, left 2 Dec: the old rate is kept to the same instant 2 months on (3pm Tue 2 Feb 2027 Brisbane)', new Date(vpbOldRateUntilMs(J9, LEFT0)).toISOString() === '2027-02-02T05:00:00.000Z', new Date(vpbOldRateUntilMs(J9, LEFT0)).toISOString());
+  check('with us EXACTLY 6 months to the instant: not "more than 6 months", no old rate', isNaN(vpbOldRateUntilMs(vpbAddMonthsMs(LEFT0, -6), LEFT0)) && !isNaN(vpbOldRateUntilMs(vpbAddMonthsMs(LEFT0, -6) - 1, LEFT0)));
+  check('with us 4 months: no old rate', isNaN(vpbOldRateUntilMs(Date.parse('2026-08-01T00:00:00.000Z'), LEFT0)));
+  check('calendar months land on the last day of a short month (31 Aug + 6 months is 28 Feb)', new Date(vpbAddMonthsMs(Date.parse('2026-08-31T02:00:00.000Z'), 6)).toISOString() === '2027-02-28T02:00:00.000Z', new Date(vpbAddMonthsMs(Date.parse('2026-08-31T02:00:00.000Z'), 6)).toISOString());
   check('no clock, no deadline: NaN, never "for ever"', isNaN(vpbRestartDeadlineMs(vpbRestartClockMs({ closed_at: null }, null))));
   check('a prospect with no closed_at (migration 160 not run) counts from its pause', vpbRestartClockMs({ closed_at: null }, { paused_at: '2026-12-03T00:00:00.000Z' }) === Date.parse('2026-12-03T00:00:00.000Z'));
 
   section('2. A cancelled one-venue account, subscription ended, card on file: day by day');
+  /* With us since 1 Mar 2026 (9 months), on the $2.50 offer: the old rate to 3pm Tue 2 Feb 2027, then $3. */
   var days = [
     ['day 0 (the afternoon it left)', at2(2026, 12, 2, 17, 0), 'price_F_M', true],
-    ['day 3, inside the grace', at2(2026, 12, 5, 11, 0), 'price_F_M', true],
-    ['day 5, 23:59:59.999, the last grace instant', at2(2026, 12, 7, 23, 59, 59, 999), 'price_F_M', true],
-    ['day 6, 00:00:00.000, the first standard instant', at2(2026, 12, 8, 0, 0, 0, 0), 'price_S_M', false],
-    ['day 10, after the grace', at2(2026, 12, 12, 10, 0), 'price_S_M', false],
+    ['day 3', at2(2026, 12, 5, 11, 0), 'price_F_M', true],
+    ['day 6 (no 5-day cut-off for a cancelled venue)', at2(2026, 12, 8, 9, 0), 'price_F_M', true],
+    ['day 60, the last old-rate instant (2 months less 1 ms)', at2(2027, 2, 2, 15, 0) - 1, 'price_F_M', true],
+    ['day 62, 2 months to the instant: the standard rate', at2(2027, 2, 2, 15, 0), 'price_S_M', false],
     ['day 89', at2(2027, 3, 1, 15, 0), 'price_S_M', false],
     ['the last millisecond of day 90', LEFT0 + 90 * DAY - 1, 'price_S_M', false],
   ];
@@ -279,9 +289,9 @@ function newSubs() { return ST.created.length; }
     var A = paidLeft({ name: 'Day Walk Hotel ' + di });
     var before = keptSnap();
     var q = await quoteAt(A, dd[1]);
-    check(dd[0] + ': the quote says it can restart, on the card ending 4242, ' + (dd[3] ? '$2.50 (offer kept)' : '$3.00 (standard)') + ', charged today',
+    check(dd[0] + ': the quote says it can restart, on the card ending 4242, ' + (dd[3] ? '$2.50 (its old rate)' : '$3.00 (standard)') + ', charged today, with no keep-by date said',
       q.status === 200 && q.body.can_restart === true && q.body.kind === 'new_sub' && q.body.mode === 'confirm' && q.body.card && q.body.card.last4 === '4242' &&
-      q.body.rate === (dd[3] ? 2.5 : 3) && q.body.offer === dd[3] && q.body.today_cents === 20 * (dd[3] ? 250 : 300), q.body);
+      q.body.rate === (dd[3] ? 2.5 : 3) && q.body.offer === dd[3] && q.body.today_cents === 20 * (dd[3] ? 250 : 300) && !('offer_kept_until' in q.body) && !('offer_kept_words' in q.body), q.body);
     check(dd[0] + ': the quote wrote nothing anywhere', writes().length === 0 && A.v.status === 'suspended', writes());
     var r = await restartAt(A, dd[1]);
     var c = ST.created[0] || { form: {} };
@@ -306,9 +316,12 @@ function newSubs() { return ST.created.length; }
   var AP2 = paidLeft({ name: 'Purged Hotel', purged: true });
   var rp = await restartAt(AP2, at2(2026, 12, 20, 10, 0));
   check('player details already purged (inside the 90 days by date): refused as held', rp.status === 410 && rp.body.held === true && newSubs() === 0, rp.body);
+  var SH = paidLeft({ name: 'Short Stay Hotel', joined: '2026-08-01T00:00:00.000Z' });
+  var sh = await restartAt(SH, at2(2026, 12, 3, 10, 0));
+  check('with us only 4 months, on the offer, back the next day: the standard rate (no 5-day keep-the-offer for a cancelled venue)', sh.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M', ST.created[0] && ST.created[0].form);
   var AS1 = paidLeft({ name: 'Standard Before Hotel', price: 'price_S_M' });
   var rs1 = await restartAt(AS1, at2(2026, 12, 3, 10, 0));
-  check('a venue that was on the standard rate never gains the offer, even inside the 5 days', rs1.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M', ST.created[0] && ST.created[0].form);
+  check('a long-tenure venue that was on the standard rate goes back on the standard rate (its old rate), never the offer', rs1.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M', ST.created[0] && ST.created[0].form);
   var AE = paidLeft({ name: 'Ended Hotel', reason: 'ended' });
   var re = await restartAt(AE, at2(2026, 12, 4, 10, 0));
   check('a venue switched off as "ended" restarts the same way', re.status === 200 && AE.v.status === 'active' && newSubs() === 1, re.body);
@@ -345,7 +358,7 @@ function newSubs() { return ST.created.length; }
   check('the card page is the same subscription: their customer, the offer price (day 2), 20 players, no trial, marked vp_restart with the venue',
     cs.form.mode === 'subscription' && cs.form.customer === F.cus && cs.form['line_items[0][price]'] === 'price_F_M' && cs.form['line_items[0][quantity]'] === '20' &&
     !('subscription_data[trial_end]' in cs.form) && cs.form['metadata[vp_restart]'] === '1' && cs.form['metadata[venue_id]'] === F.vid && cs.form.client_reference_id === F.fid, cs.form);
-  check('the card page closes no later than the offer does (5 days) and within Stripe\'s 24 hours', Number(cs.form.expires_at) <= Math.floor(at2(2026, 12, 4, 10, 0) / 1000) + 23 * 3600 && Number(cs.form.expires_at) <= Math.floor((vpbLeftGraceEndMs(LEFT0) + 1000) / 1000) + 31 * 60, cs.form.expires_at);
+  check('the card page closes within Stripe\'s 24 hours (and never after the old rate or the 90 days end)', Number(cs.form.expires_at) === Math.floor(at2(2026, 12, 4, 10, 0) / 1000) + 23 * 3600, cs.form.expires_at);
   check('a refused card is written down for HQ', DB.vp_admin_audit.some(function (x) { return x.action === 'venue_restart_card_refused' && x.detail.decline === 'insufficient_funds'; }));
   var venuesBefore = DB.vp_venues.length, sentBefore = sent.length;
   var ev = { id: 'evt_restart_1', type: 'checkout.session.completed', data: { object: { id: cs.id, client_reference_id: F.fid, customer: F.cus, subscription: 'sub_paid_page',
@@ -365,6 +378,11 @@ function newSubs() { return ST.created.length; }
   check('a SECOND card page paid while already back on: the first subscription is kept, the second recorded and Dean told (never silently billed twice)',
     F.f().stripe_subscription_id === 'sub_paid_page' && DB.vp_admin_audit.some(function (x) { return x.action === 'venue_restart_duplicate' && x.detail.duplicate === 'sub_second_page'; }) &&
     sent.some(function (m) { return /second restart/.test(m.subject || '') && (m.to || []).join(',').indexOf('hello@venueplay.com.au') !== -1; }));
+  var FE = paidLeft({ name: 'Edge Of Old Rate Hotel' });
+  ST.customers[FE.cus].invoice_settings.default_payment_method = null; ST.subs[FE.oldSub].default_payment_method = null;
+  var fe = await restartAt(FE, at2(2027, 2, 2, 12, 0));
+  check('a card page opened 3 hours before the old rate ends closes when it does (Stripe\'s 31-minute floor aside), so it cannot be paid at the old rate later',
+    fe.body.mode === 'card' && Number(ST.sessions[0].form.expires_at) === Math.floor(at2(2027, 2, 2, 15, 0) / 1000) && ST.sessions[0].form['line_items[0][price]'] === 'price_F_M', ST.sessions[0] && ST.sessions[0].form);
   var FN = paidLeft({ name: 'No Card Hotel', card: false });
   var qn = await quoteAt(FN, at2(2026, 12, 4, 10, 0));
   var rn = await restartAt(FN, at2(2026, 12, 4, 10, 0));
@@ -495,14 +513,49 @@ function newSubs() { return ST.created.length; }
   var rnp = await restartAt(RN, at2(2026, 12, 4, 10, 0));
   check('off for a failed card: refused with "update your card" (the existing failed-payment steps)', rnp.status === 409 && rnp.body.update_card === true, rnp.body);
   var RD = paidLeft({ name: 'Disputed Hotel' }); DB.vp_admin_audit.push({ id: 'd1', action: 'payment_disputed', target: 'account:' + RD.fid, detail: {} });
-  var rd = await restartAt(RD, at2(2026, 12, 4, 10, 0));
-  check('a chargeback on the account: refused, call us', rd.status === 409 && /payment question/.test(rd.body.error) && newSubs() === 0, rd.body);
+  var rdq = await quoteAt(RD, at2(2026, 12, 4, 10, 0));
+  var rd = await restartAt(RD, at2(2026, 12, 4, 10, 1));
+  var rdTickets = (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === RD.vid; });
+  check('a CHARGEBACK: no button, the one neutral line (email support@), no "call us", nothing in Stripe, NOT switched on',
+    rdq.body.can_restart === false && rd.status === 409 && rd.body.error === 'To restart this account, email support@venueplay.com.au and we will take it from there.' && rdq.body.error === rd.body.error &&
+    writes().length === 0 && RD.v.status === 'suspended' && !('dispute' in rd.body) && !('venue' in rd.body), [rdq.body, rd.body]);
+  check('a chargeback: HQ is told who it is ONCE (one help desk ticket naming the venue, emails to support@ and Dean), however many times they try',
+    rdTickets.length === 1 && /Chargeback account asked to restart: Disputed Hotel/.test(rdTickets[0].subject) && rdTickets[0].category === 'accounts' &&
+    sent.filter(function (m) { return /Disputed Hotel/.test(m.subject || ''); }).map(function (m) { return (m.to || []).join(','); }).sort().join(' ') === 'dean@venueplay.com.au support@venueplay.com.au', [rdTickets, sent.map(function (m) { return [m.to, m.subject]; })]);
   var RX = paidLeft({ name: 'Discount Hotel', discount: true });
+  var rxq = await quoteAt(RX, at2(2026, 12, 4, 10, 0));
   var rx = await restartAt(RX, at2(2026, 12, 4, 10, 0));
-  check('a subscription that carried a discount: refused, so the discount is never silently dropped', rx.status === 409 && /discount/.test(rx.body.error) && newSubs() === 0, rx.body);
+  var rxT = (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === RX.vid; });
+  check('a special DISCOUNT (33.3%): restarts self-serve at the standard rate ($3), with no special message on the page',
+    rx.status === 200 && rx.body.restarted === true && ST.created[0].form['items[0][price]'] === 'price_S_M' && rxq.body.rate === 3 && !/discount|deal|let us know/i.test((JSON.stringify(rxq.body) + JSON.stringify(rx.body)).split('Discount Hotel').join('')), [rxq.body, rx.body]);
+  check('and the system tells support@ and HQ: "Discount Hotel has re-signed up; they previously had a 33.3% special discount"',
+    rxT.length === 1 && /Discount Hotel has re-signed up/.test(rxT[0].subject) && /they previously had a 33\.3% special discount/.test(rxT[0].message) &&
+    sent.filter(function (m) { return /Discount Hotel has re-signed up/.test(m.subject || ''); }).length === 2, [rxT, sent.length]);
   var RM = paidLeft({ name: 'Comp Hotel', comp: true });
   var rm = await restartAt(RM, at2(2026, 12, 4, 10, 0));
-  check('a comp account: refused, call us', rm.status === 409 && newSubs() === 0, rm.body);
+  var rmT = (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === RM.vid; });
+  check('a FREE (comp) account with a saved card: restarts at the standard rate, support@ told "they previously had a free account"',
+    rm.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M' && rmT.length === 1 && /they previously had a free account/.test(rmT[0].message), [rm.body, rmT]);
+  var RF = paidLeft({ name: 'Comp No Stripe Hotel', comp: true });
+  RF.f().stripe_customer_id = null; RF.f().stripe_subscription_id = null;
+  var rfq = await quoteAt(RF, at2(2026, 12, 4, 10, 0));
+  var rf2 = await restartAt(RF, at2(2026, 12, 4, 10, 0));
+  var csf = ST.sessions[0] || { form: {} };
+  check('a free account that never had Stripe: the card page, at the standard rate, by their email, marked with the deal for the webhook',
+    rfq.body.mode === 'card' && rfq.body.rate === 3 && rf2.body.mode === 'card' && csf.form['line_items[0][price]'] === 'price_S_M' && !csf.form.customer &&
+    csf.form.customer_email === RF.f().contact_email && csf.form['metadata[vp_restart_deal]'] === 'a free account', [rfq.body, csf.form]);
+  await withClock(at2(2026, 12, 4, 10, 10), function () { return vpaHandleStripeEvent(ENV, { id: 'evt_comp', type: 'checkout.session.completed', data: { object: { id: csf.id, client_reference_id: RF.fid,
+    customer: 'cus_new_comp', subscription: 'sub_comp_paid', metadata: { vp_restart: '1', venue_id: RF.vid, row_id: RF.fid, vp_restart_deal: 'a free account' } } } }); });
+  check('paid: back on, the account now has its Stripe customer and subscription and is no longer comp, and support@ is told once',
+    RF.v.status === 'active' && RF.f().stripe_customer_id === 'cus_new_comp' && RF.f().stripe_subscription_id === 'sub_comp_paid' && RF.f().status === 'card_on_file' &&
+    (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === RF.vid; }).length === 1, [RF.f(), RF.v.status]);
+  var UG = paidLeft({ name: 'Old Undo Hotel', live: true, players: 10, others: [{ name: 'Busy Pub', players: 30 }] });
+  var ug = await withClock(at2(2026, 12, 4, 10, 0), function () { return call('/account/cancel-venue', { venue_id: UG.vid, undo: true }, AS(UG.owner, UG.vid)); });
+  check('the old "Keep this venue" undo of a group pub already switched off now goes through the restart: back on, with the pro rata stub on the next bill',
+    ug.status === 200 && ug.body.restarted === true && UG.v.status === 'active' && ST.items.filter(function (x) { return !x.deleted; }).length === 1 && ST.items[0].amount === 1583, [ug.body, ST.items]);
+  var UO = paidLeft({ name: 'Old Undo Off Hotel', off: true, live: true, players: 10, others: [{ name: 'Busy Pub', players: 30 }] });
+  var uo = await withClock(at2(2026, 12, 4, 10, 0), function () { return call('/account/cancel-venue', { venue_id: UO.vid, undo: true }, AS(UO.owner, UO.vid)); });
+  check('with the switch OFF, that undo is exactly as before (on, no stub line)', uo.status === 200 && UO.v.status === 'active' && ST.items.length === 0, [uo.body, ST.items]);
   var RK = paidLeft({ name: 'No Clock Hotel', noClock: true });
   var rk = await restartAt(RK, at2(2026, 12, 4, 10, 0));
   check('no record of when it left: refused (never assumed to be inside the 90 days)', rk.status === 409 && newSubs() === 0, rk.body);
@@ -520,10 +573,10 @@ function newSubs() { return ST.created.length; }
   check('switch off: no button (the card keeps "call us")', v1 === null);
   var vq = (await quoteAt(paidLeft({ name: 'Words Hotel' }), at2(2026, 12, 4, 10, 0))).body;
   var v2 = restartView(vq);
-  check('a card on file: "Come back: $50.00 today on Visa ending 4242", with the price, the offer date and the last day to come back',
-    v2.label === 'Come back: $50.00 today on Visa ending 4242' && /20 players at \$2\.50 a player/.test(v2.note) && /offer price is kept if you come back by Mon 7 Dec/.test(v2.note) && /until Tue 2 Mar/.test(v2.note), v2);
-  var v3 = restartView((await quoteAt(paidLeft({ name: 'Words Card Hotel', card: false }), at2(2026, 12, 9, 10, 0))).body);
-  check('no card: "Add a card and come back", standard price after the grace', v3.label === 'Add a card and come back' && /\$3\.00 a player/.test(v3.note) && !/offer/.test(v3.note), v3);
+  check('a card on file: "Come back: $50.00 today on Visa ending 4242", with the price and the last day to come back, and no keep-by date for the rate',
+    v2.label === 'Come back: $50.00 today on Visa ending 4242' && /20 players at \$2\.50 a player/.test(v2.note) && !/kept|offer/.test(v2.note) && /until Tue 2 Mar/.test(v2.note), v2);
+  var v3 = restartView((await quoteAt(paidLeft({ name: 'Words Card Hotel', card: false, joined: '2026-09-01T00:00:00.000Z' }), at2(2026, 12, 9, 10, 0))).body);
+  check('no card: "Add a card and come back", at the standard rate (a short-tenure venue)', v3.label === 'Add a card and come back' && /\$3\.00 a player/.test(v3.note) && !/offer/.test(v3.note), v3);
   var v4 = restartView(gq.body);
   check('a group venue: "Bring Group Comeback Hotel back", the stub, its days and the bill date', v4.label === 'Bring Group Comeback Hotel back' && /\$15\.83 for the rest of this cycle \(19 of 30 days/.test(v4.note) && /23 Dec/.test(v4.note), v4);
   var v5 = restartView(q91.body);
