@@ -81,6 +81,12 @@
      stands, what is kept and how to come back. Amber like the console's hold card: nothing is wrong, the games are off. */
   .label.framed{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}   /* kept for screen readers */
   .setframe{display:block;width:100%;height:640px;border:0;background:transparent;color-scheme:dark}
+  /* Label on top, then the value with its Copy button beside it, at every width (a phone kept the button on a line of its own). */
+  .scrcard .scrrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:10px 0;border-top:1px solid var(--line-2)}
+  .scrcard .scrrow:first-of-type{border-top:0}
+  .scrcard .scrk{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+  .scrcard .scrv{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere}
+  .scrcard .scrcopy{margin:0;min-height:44px}
   .leftcard{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;padding:16px 18px;margin:0 0 16px}
   .leftcard h2{font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3;margin:0 0 6px}
   .leftcard p{font-size:14px;line-height:1.55;color:var(--text);margin:0 0 8px}
@@ -626,15 +632,20 @@
          decision on Game settings, so the last line points there. -->
     <div class="tabpanel" id="tp-marketing">
     <div class="label">Your venue link</div>
-    <p class="note" style="margin:0 0 10px">The address your table-sign QR code points at. It goes to your venue, not to one night's game, so it never changes: put it in a post, a menu or an email and it works every week, for every game you run.</p>
+    <p class="note" style="margin:0 0 10px">Where players join, and where your table-sign QR code points. It never changes, so put it in a post, a menu or an email and it works for every game you run.</p>
     <div id="mkPickWrap" class="screenpick" style="display:none">
       <label class="flabel" for="mkVenue">You are looking at the link for</label>
       <select id="mkVenue"></select>
       <p class="pickfine">The link and the signs below are for <b id="mkPickName">this venue</b> only.</p>
     </div>
     <div class="scard">
-      <div class="scardhead">Your venue link<span class="forvenue" id="mkLinkForVenue"></span></div>
-      <div id="venueLinkVal" style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:19px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere;margin:8px 0 12px">Loading your link&hellip;</div>
+      <!-- One heading, not two (the label above already says "Your venue link"), and a Copy button like the Your screen
+           card (INBOX item 21e/g, 5 Nov 2026). -->
+      <div class="scardhead">Players join at<span class="forvenue" id="mkLinkForVenue"></span></div>
+      <div class="scrrow" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 10px">
+        <b id="venueLinkVal" style="flex:1 1 200px;font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:18px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere">Loading your link&hellip;</b>
+        <button class="addbtn scrcopy" type="button" data-copy="venueLinkVal" aria-label="Copy your venue link" style="margin:0;min-height:40px">Copy</button>
+      </div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <a id="venueLinkOpen" href="#" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Open it</a>
         <span class="snote" style="margin:0">Opens the join page a player sees when they scan.</span>
@@ -820,8 +831,17 @@
     </div><!-- /tp-draws -->
 
     <div class="tabpanel" id="tp-screen">
+    <!-- YOUR SCREEN (Dean, 5 Nov 2026, INBOX item 21e): the screen-code rule, said the same way everywhere, as one tidy card
+         with a copy button on each line: venueplay.com.au/tv plus the venue's screen code (vp_venues.join_code, the code the
+         console shows and the TV asks for). Follows the venue at the top of the page. -->
+    <div class="scard scrcard" id="screenCard">
+      <div class="scardhead">Your screen<span class="forvenue" id="scrForVenue"></span></div>
+      <div class="scrrow"><span class="scrk">Open</span><b class="scrv" id="scrUrl">venueplay.com.au/tv</b><button class="addbtn scrcopy" type="button" data-copy="scrUrl" aria-label="Copy the screen address">Copy</button></div>
+      <div class="scrrow"><span class="scrk">Screen code</span><b class="scrv" id="scrCode">&hellip;</b><button class="addbtn scrcopy" type="button" data-copy="scrCode" aria-label="Copy the screen code">Copy</button></div>
+      <p class="snote" style="margin:10px 0 0">On the TV's web browser, open venueplay.com.au/tv and put in the screen code. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">venueplay TV app</a>, then put in your screen code.</p>
+    </div>
     <div class="label">Advertising</div>
-    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline">venueplay TV app</a>, then put in your screen code.</p>
+    <p class="note" style="margin:0 0 10px">Your own promo images play on your TV between games. Changes appear within a few seconds.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
       <label class="flabel" for="screenVenue">You are editing the TV at</label>
       <select id="screenVenue"></select>
@@ -1831,10 +1851,12 @@
     if (!hosts.length){ wrap.innerHTML = '<p class="note" style="margin:0 0 6px">' + (at ? ("Just you so far at " + esc(at.name) + ". Add a host below and they can run games there.") : "Just you so far, and you can host every venue.") + '</p>'; return; }
     hosts.forEach(function(h){
       var names = (h.venue_ids || []).map(function(id){ return vmap[id]; }).filter(Boolean);
-      var scope = (venues.length && names.length >= venues.length) ? "All venues"
+      /* "All venues" only when there IS more than one (Dean, 5 Nov 2026, INBOX item 21c). With one venue the name says it. */
+      var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues"
                 : (names.length ? names.join(", ") : "No venues");
       var roleWord = h.is_owner ? "Owner" : (h.role === "manager" ? "Manager" : "Host");
-      var sub = roleWord + " · " + scope + (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : "");
+      /* The owner gets the full mobile from the Worker (INBOX item 21b); anyone else the last three digits. */
+      var sub = roleWord + " · " + scope + (h.mobile ? " · " + h.mobile : (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : ""));
       // A full-access login (the owner's, or one HQ set up) is owner-only, and even the owner
       // cannot delete it from here, so do not draw buttons that will only ever refuse.
       var locked = h.is_owner || h.full_access;
@@ -2302,9 +2324,28 @@
     });
   }
   function setTvLinks(slug){
-    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
     $("screenPreview").href = tvHref(slug);
+    paintScreenCard();
   }
+  /* The Your screen card: the venue's screen code, read the way the console reads it (VP.venueJoinCode). */
+  var scrSeq = 0;
+  function paintScreenCard(){
+    var code = $("scrCode"), fv = $("scrForVenue"); if (!code) return;
+    var v = screenCurrent || null, id = (v && v.id) || pageVenueId, mine = ++scrSeq;
+    if (fv) fv.textContent = (screenVenues && screenVenues.length > 1 && v && v.name) ? v.name : "";
+    if (!id || !window.VP || !VP.venueJoinCode){ code.textContent = "Shown on your host console"; return; }
+    VP.venueJoinCode(id).then(function(c){
+      if (mine !== scrSeq) return;
+      code.textContent = c || "Shown on your host console";
+      var b = document.querySelector('.scrcopy[data-copy="scrCode"]'); if (b) b.hidden = !c;
+    });
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target && e.target.closest ? e.target.closest(".scrcopy") : null; if (!b) return;
+    var t = ($(b.getAttribute("data-copy")) || {}).textContent || "";
+    function done(ok){ var was = "Copy"; b.textContent = ok ? "Copied" : "Copy failed"; setTimeout(function(){ b.textContent = was; }, 1800); }
+    try { navigator.clipboard.writeText(t).then(function(){ done(true); }, function(){ done(false); }); } catch (err) { done(false); }
+  });
   /* The venue rows this page needs beyond the billing summary: the slug (the venue link), the state
      and the permits (the draws permits). Read from vp_venues under the login's own RLS, the way
      vp-session reads the venue list; the summary carries none of these. Throws on a failed read, so
@@ -2430,11 +2471,13 @@
       var row = document.querySelector("#rfList .drow .dn");
       var nm = row && row.querySelector("b") ? row.querySelector("b").textContent.trim() : "";
       var when = row && row.querySelector("small") ? row.querySelector("small").textContent.trim() : "";
-      rf.textContent = nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet";
+      /* "Not on the TV yet" read like a fault (Dean, 5 Nov 2026, INBOX item 21d). Say what is set, plainly. */
+      rf.textContent = nm ? (nm + (when ? ", " + when : "")) : "No raffle routine yet";
     }
     if (md){
-      var n = document.querySelectorAll("#mdList .drow").length;
-      md.textContent = n ? (n + (n === 1 ? " draw" : " draws")) : "No draw yet";
+      var rows = document.querySelectorAll("#mdList .drow"), n = rows.length;
+      var first = n && rows[0].querySelector(".dn b") ? rows[0].querySelector(".dn b").textContent.trim() : "";
+      md.textContent = !n ? "No draw yet" : (n === 1 ? (first || "1 draw") : (n + " draws"));
     }
     if (pm){
       // vp-permits.js paints one .vpp-card per kind this venue's state asks about; name them, never claim "on file".
@@ -2446,11 +2489,12 @@
   (function initFolds(){
     var heads = document.querySelectorAll("#tp-draws .acchead");
     if (!heads.length) return;
-    var had = null; try { had = localStorage.getItem(ACC_KEY); } catch (e) {}
-    accOpen(/^(raffles|members|permits)$/.test(had || "") ? had : "raffles", false);
+    /* EVERY FOLD STARTS CLOSED (Dean, 5 Nov 2026, INBOX item 21d): the headings and a one-line summary each, and a tap
+       opens one. The fold that was open last time is no longer reopened. */
+    accOpen("", false);
     for (var i = 0; i < heads.length; i++){
       (function(h){
-        var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), true); };
+        var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), false); };
         h.addEventListener("click", go);
         h.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); go(); } });
       })(heads[i]);
@@ -3024,7 +3068,7 @@
     if (!managers.length){ box.innerHTML = '<p class="note" style="margin:0 0 8px">No managers yet.</p>'; return; }
     managers.forEach(function(m){
       var names = (m.venue_ids||[]).map(function(id){ return vmap[id]; }).filter(Boolean);
-      var scope = (names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
+      var scope = (venues.length > 1 && names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
       var p = m.permissions || {};
       var row = document.createElement("div"); row.className = "venue"; row.style.flexWrap = "wrap";
       row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + '</small></div>' +

@@ -1795,6 +1795,13 @@ async function vpaAuthGetUser(env, id) {
   } catch (e) { return null; }
 }
 /* "ending 123": enough to tell staff apart, never enough to dial. */
+/* An Australian mobile as a person writes it (0400 111 222) from Auth's 61400111222 or +61400111222. Anything else is
+   handed back as digits, never guessed at. */
+function vpaShowMobile(phone) {
+  const d = String(phone || '').replace(/[^\d]/g, '');
+  const local = /^614\d{8}$/.test(d) ? '0' + d.slice(2) : (/^04\d{8}$/.test(d) ? d : null);
+  return local ? local.slice(0, 4) + ' ' + local.slice(4, 7) + ' ' + local.slice(7) : (d || null);
+}
 function vpaMaskMobile(phone) {
   const d = String(phone || '').replace(/[^\d]/g, '');
   return d.length >= 3 ? d.slice(-3) : null;
@@ -15115,7 +15122,15 @@ async function vpbListHosts(request, env, json) {
   // Mobile digits, in parallel and bounded: a slow Auth API costs the digits, never the list.
   const ids = Object.keys(byUser).slice(0, 60);
   const users = await Promise.all(ids.map((id) => vpaAuthGetUser(env, id)));
-  users.forEach((u, i) => { if (u && u.phone) byUser[ids[i]].mobile_last3 = vpaMaskMobile(u.phone); });
+  /* THE OWNER SEES EACH HOST'S FULL MOBILE (Dean, 5 Nov 2026, INBOX item 21b): it is their staff and they need to ring
+     them. A restricted manager keeps the last three digits only. A host never reaches this route at all
+     (vpbRequireOwner takes owner and manager staff rows only), so a host sees nobody's number but their own login. */
+  const fullMobiles = vpbIsOwner(o);
+  users.forEach((u, i) => {
+    if (!(u && u.phone)) return;
+    byUser[ids[i]].mobile_last3 = vpaMaskMobile(u.phone);
+    if (fullMobiles) byUser[ids[i]].mobile = vpaShowMobile(u.phone);
+  });
   return json({
     hosts: Object.keys(byUser).map((k) => byUser[k]),
     venues: o.venues.map((v) => ({ id: v.id, name: v.name })),

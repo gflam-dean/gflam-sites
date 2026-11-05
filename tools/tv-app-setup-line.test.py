@@ -171,7 +171,8 @@ check('the training walkthrough\'s TV caption names the VenuePlay TV app',
       bool(cap) and SHORT in cap.group(0), cap and cap.group(0)[:200])
 
 bh = re.sub(r'<!--.*?-->', ' ', read('venueplay/app/billing.html'), flags=re.S)
-note = re.search(r'<p class="note"[^>]*>Upload your own promo images to play on the venue TV(.*?)</p>', bh, re.S)
+# Since 5 Nov 2026 (INBOX item 21e) the TV address and the app line live on the Your screen card at the top of Screen.
+note = re.search(r'<p class="snote"[^>]*>On the TV\'s web browser, open venueplay\.com\.au/tv(.*?)</p>', bh, re.S)
 nw = text(note.group(1)) if note else ''
 check('the Account page\'s TV note (where the TV link is) names the VenuePlay TV app, linked to its Google Play page',
       SHORT in nw and bool(note) and linked(note.group(1)) == PLAY, [nw[-200:], note and linked(note.group(1))])

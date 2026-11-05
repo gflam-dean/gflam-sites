@@ -115,6 +115,10 @@
   "checks": 178,
   "counted_by": "total"
  },
+ "tools/account-review-in-chrome.test.py": {
+  "checks": 92,
+  "counted_by": "lines"
+ },
  "tools/account-structure-in-chrome.test.py": {
   "checks": 58,
   "counted_by": "lines"
@@ -365,6 +369,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-people-mobiles.js": {
+  "checks": 8,
   "counted_by": "lines"
  },
  "tools/test-account-standing.js": {
