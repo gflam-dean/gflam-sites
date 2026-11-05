@@ -399,6 +399,7 @@
   "touring-unsubscribe.test.js",
   "trivia-catchup.test.js",
   "trivia-demo-phone-in-chrome.test.py",
+  "trivia-empty-room-in-chrome.test.py",
   "trivia-join-in-chrome.test.py",
   "trivia-newlook-in-chrome.test.py",
   "trivia-night.test.js",

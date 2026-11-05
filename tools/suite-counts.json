@@ -943,6 +943,10 @@
   "checks": 59,
   "counted_by": "lines"
  },
+ "tools/test-trivia-no-players.js": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -1081,6 +1085,10 @@
  },
  "tools/trivia-demo-phone-in-chrome.test.py": {
   "checks": 56,
+ "counted_by": "lines"
+ },
+ "tools/trivia-empty-room-in-chrome.test.py": {
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/trivia-join-in-chrome.test.py": {

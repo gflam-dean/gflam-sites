@@ -934,7 +934,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1,nobody:1};
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -1076,6 +1076,15 @@
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
       show("tvBoard");
       renderBoardPaged(m.title||"Leaderboard", m.rows||[]);
+    }
+    else if(m.t==="nobody"){
+      /* NOBODY JOINED (6 Nov 2026): a calm end state, never an error and never an empty board. The join corner
+         (shown on every board) carries the QR and code for next time. */
+      state.phase="leaderboard";
+      if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+      show("tvBoard");
+      renderBoardPaged("Thanks for playing", []);
+      $("tvBoardRows").innerHTML='<div style="text-align:center;font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;font-size:2.4cqw;color:#fff;margin-top:6cqw">Scan the code to join next time</div>';
     }
     else if(m.t==="podium"){
       state.phase="podium";
