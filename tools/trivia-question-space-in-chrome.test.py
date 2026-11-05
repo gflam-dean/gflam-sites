@@ -62,6 +62,8 @@ class Site(http.server.BaseHTTPRequestHandler):
         if u.path == '/__fake/supabase.js':
             pre = 'window.__FAKE_DB={};window.__FAKE_SIGNED_IN=false;window.__FAKE_UID="x";\n'
             return self.send(200, pre + io.open(os.path.join(ROOT, 'tools/browser-rig/fake-supabase.js'), encoding='utf-8').read(), 'application/javascript')
+        if u.path == '/__fixture/pic.svg':
+            return self.send(200, PIC, 'image/svg+xml')
         if u.path == '/__fake/qrcode.js':
             return self.send(200, 'window.QRCode={toCanvas:function(c,t,o,cb){if(typeof o==="function")o(null);else if(cb)cb(null);}};', 'application/javascript')
         p = u.path
@@ -79,11 +81,19 @@ class Site(http.server.BaseHTTPRequestHandler):
             if ext == '.html' and q1 in ('short', 'long'):
                 SWAPPED[0] += t.count(DEMO_Q1)
                 t = t.replace(DEMO_Q1, SHORT_Q1 if q1 == 'short' else LONG_Q1)
+            if ext == '.html' and 'pic=1' in (u.query or ''):
+                PICS[0] += t.count(DEMO_MSG)
+                t = t.replace(DEMO_MSG, PIC_MSG)
             return self.send(200, t, {'.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json'}[ext] + '; charset=utf-8')
         ct = {'.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2'}.get(ext, 'application/octet-stream')
         return self.send(200, open(f, 'rb').read(), ct)
 
 SWAPPED = [0]
+PICS = [0]
+DEMO_MSG = 'options:q.options, secs:SECS,'
+PIC_MSG = 'options:q.options, imageUrl:location.origin+"/__fixture/pic.svg", secs:SECS,'
+PIC = ('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">'
+       '<rect width="800" height="450" fill="#335577"/><circle cx="400" cy="225" r="150" fill="#FFD93D"/></svg>')
 T0 = 1793500000000          # a fixed instant, never the real clock
 FREEZE = r'''(function(){ var a=document.getAnimations?document.getAnimations():[];
   a.forEach(function(x){ try{ var t=x.effect&&x.effect.getComputedTiming(); if(t&&isFinite(t.endTime)) x.finish(); else { x.pause(); x.currentTime=0; } }catch(e){} });
@@ -105,7 +115,8 @@ PROBE = r'''(function(){
         if(!tops.some(function(t){ return Math.abs(t-c.top)<2; })) tops.push(c.top);
         ink = ink ? [Math.min(ink[0],c.left),Math.min(ink[1],c.top),Math.max(ink[2],c.right),Math.max(ink[3],c.bottom)] : [c.left,c.top,c.right,c.bottom]; }); }
     out.lines=tops.length; out.ink=ink; }
-  out.ring=R(lay.querySelector(".ringwrap svg"));
+  out.ring=R(lay.querySelector(".ringwrap svg")); out.pic=lay.classList.contains("pic");
+  var im=lay.querySelector(".qimg"); out.img=(im && !im.classList.contains("hidden")) ? R(im) : null;
   /* The VISIBLE ring: the circle's geometry plus half its stroke, in screen pixels. */
   var c=lay.querySelector(".ringwrap .rbg"), sv=lay.querySelector(".ringwrap svg");
   if(c && sv && sv.getBoundingClientRect().width>0){ var cb=c.getBoundingClientRect(), k=sv.getBoundingClientRect().width/100, hs=parseFloat(getComputedStyle(c).strokeWidth)/2*k;
@@ -209,6 +220,13 @@ def wall(B, base, w, h):
        [[c['r'] for c in oc], [c['r'] for c in tc], [c['r'] for c in lc]])
     ok(tag + ': the answers start at 24.11% of the width (463px at 1920)', bool(tc) and abs(min(c['r'][1] for c in tc) - 0.2411 * w) <= 1.5, tc and tc[0]['r'])
 
+    # A PICTURE QUESTION (fault found 5 Nov 2026, INBOX 43): "Question N of 20" sat behind the picture round's ring.
+    pz = load(B, base, '/app/trivia/screen.html?demo=1&sting=0&pic=1', w, h, states, 'picture')
+    pq, pr = pz.get('question', {}), pz.get('reveal', {})
+    ok(tag + ': a picture question: the demo carried a picture (the fixture applied)', PICS[0] > 0 and pq.get('pic') is True and bool(pq.get('img')), [PICS[0], pq.get('pic'), pq.get('img')])
+    QR, RG, IM = pq.get('qround'), pq.get('ring'), pq.get('img')
+    ok(tag + ': on a picture question "Question N of 20" sits UNDER the ring, not behind it', bool(QR and RG) and QR[1] >= RG[3], [QR, RG])
+    ok(tag + ': and clear of the picture, the same on the reveal', bool(QR and IM) and (QR[0] >= IM[2] or QR[3] <= IM[1]) and same(QR, pr.get('qround')), [QR, IM, pr.get('qround')])
 
 def main():
     import gatelib

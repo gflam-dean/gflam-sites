@@ -1052,7 +1052,7 @@
   "counted_by": "lines"
  },
  "tools/trivia-question-space-in-chrome.test.py": {
-  "checks": 56,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

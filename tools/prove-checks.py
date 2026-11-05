@@ -11686,6 +11686,10 @@ MUTATIONS = [
     ('trivia-question-space-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '  .layer.qgrid:not(.pic) .qround{top:50.1cqw;', '  .layer.qgrid:not(.pic) .qround{top:20cqw;',
      'in Chrome: "Question N of 20" is not under the answers'),
+    # 5 Nov 2026, INBOX 43: on a picture question "Question N of 20" sat behind the ring.
+    ('trivia-question-space-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
+     '  .layer.pic .qround{top:20.2cqw;width:10cqw}', '  .layer.pic .qround{top:17.4cqw;width:10cqw}',
+     'in Chrome: on a picture question "Question N of 20" sits behind the timer ring again'),
     # 3 Nov 2026: trivia's new look (feature/newlook-trivia-4nov) and the time's-up buzzer on the TV.
     ('test-trivia-newlook.js', 'venueplay/app/trivia/screen.html',
      '    curQ.buzzed=true;\n    try{ unlockAudio(); }catch(e){}', '    try{ unlockAudio(); }catch(e){}',
