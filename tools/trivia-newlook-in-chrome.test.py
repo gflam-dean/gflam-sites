@@ -166,6 +166,7 @@ PHONE_PROBE = r'''(function(){
     dotR: (function(){ var d=document.getElementById("statusDot"); return d ? R(d) : null; })(), lbl: (function(){ var l=view && view.querySelector(".pq-count"); return l ? l.textContent : ""; })(),
     lblR: (function(){ var l=view && view.querySelector(".pq-count"); return l ? R(l) : null; })(),
     ptsR: (function(){ var e=document.getElementById("pResPts"); return e && view && view.id==="vRes" ? R(e) : null; })(), ptsT: (document.getElementById("pResPts")||{}).textContent||"",
+    cardR: (function(){ var e=document.querySelector("#vRes .pcard"); return e && view && view.id==="vRes" ? R(e) : null; })(),
     totR: (function(){ var e=document.querySelector(".ptotal"); return e && view && view.id==="vRes" ? R(e) : null; })(), totT: (document.querySelector(".ptotal")||{}).textContent||"",
     dot: (function(){ var d=document.getElementById("statusDot"); return d ? d.getBoundingClientRect().width : 0; })(),
     pq: (document.getElementById("pqText")||{}).textContent||"", rq: (document.getElementById("pResQ")||{}).textContent||"", W: innerWidth };
@@ -371,7 +372,7 @@ def phone(B, base):
     L = q.get('logo')
     ok('the venue\'s logo is top left', bool(L) and L[0] <= 20 and L[1] <= 30, L)
     ok('and clear of the menu button', bool(L and q.get('menu')) and L[2] + 8 <= q['menu'][0], [L, q.get('menu')])
-    ok('no player name in the header', 'Dre' not in (q.get('head') or ''), q.get('head'))
+    ok('no player name in the header', 'Sarah' not in (q.get('head') or ''), q.get('head'))
     ok('the label is just "QUESTION 3 OF 20" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 3 of 20', q.get('lbl'))
     D_, MB_ = q.get('dotR'), q.get('menu')
     ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
@@ -402,7 +403,8 @@ def phone(B, base):
     P_, RR_ = rt.get('ptsR'), rt.get('ringR')
     ok('the result: the points just won sit in the ring\'s place', bool(P_ and RR_) and P_[0] >= RR_[0] and P_[2] <= RR_[2] and P_[1] >= RR_[1] and P_[3] <= RR_[3] and (rt.get('ptsT') or '').startswith('+'), [P_, RR_, rt.get('ptsT')])
     T_ = rt.get('totR')
-    ok('and the running total sits small in the bottom-right corner', bool(T_) and T_[0] >= 375 / 2 and T_[2] >= 375 - 24 and T_[3] >= 812 * 0.8 and (T_[3] - T_[1]) <= 24, [T_, rt.get('totT')])
+    C_ = rt.get('cardR')
+    ok('and the running total sits small inside the result card, under the verdict (so the result is never taller than the phone)', bool(T_ and C_) and T_[0] >= C_[0] and T_[2] <= C_[2] and T_[1] >= C_[1] and T_[3] <= C_[3] and (T_[3] - T_[1]) <= 24, [T_, C_, rt.get('totT')])
     for nm_, x_ in (('question', q), ('result', rt)):
         ok('the countdown sits ABOVE the question on the %s' % nm_, bool(x_.get('ringR') and x_.get('qR')) and x_['ringR'][3] <= x_['qR'][1] + 0.5, [x_.get('ringR'), x_.get('qR')])
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]

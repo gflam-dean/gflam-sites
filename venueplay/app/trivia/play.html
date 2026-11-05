@@ -31,6 +31,11 @@
 
   .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
   /* THE HEADER, OPTION 5, and our logo at the foot: one copy in /app/vp-phone.css, shared by the player phones (4 Nov 2026). */
+  /* The sales-page demo phone shows this page inside a rounded bezel. A backdrop-filter layer is not clipped to a
+     rounded parent, so the header's square top corners stuck out of the top of the phone (Dean, 4 Nov 2026). The
+     header is 92% opaque, so without the blur it looks the same. */
+  html[data-vp-demo] .ptop{backdrop-filter:none;-webkit-backdrop-filter:none}
+  .pfoot{padding-top:12px}   /* our logo 10px closer to the bottom on the trivia phone (Dean, 4 Nov 2026); the shared /app/vp-phone.css rule is 22px */
 
   .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
   .center{justify-content:center;text-align:center}
@@ -104,6 +109,11 @@
      outlined in its own colour and tagged YOURS, the rest dim, then one card with your points and place */
   .presult{text-align:left}
   .presult .rem{display:none}
+  /* The result stacks a ring, the question (up to three lines), four answers, the card and our logo. On an 844px phone
+     (and the sales-page demo phone, which is one) the longest of them was 32px too tall and pushed our logo off the
+     bottom, so the gaps below the answers are a little tighter, and our logo sits 10px closer to the bottom edge on every screen (Dean, 4 Nov 2026). */
+  #vRes{padding-bottom:10px}
+  #vRes .pcard{margin-top:10px;padding-top:8px;padding-bottom:8px}   /* the answers stay exactly where they were on the question: only what is BELOW them is tighter */
   .presult .pq-ring .n b{font-size:30px}
   .panswers.rv .pans{cursor:default}   /* the same size and place as on the question: nothing jumps (Dean, 3 Nov 2026) */
   .pans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
@@ -118,7 +128,7 @@
   .pcard .tot{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted);margin-top:2px}
   .pcard .tot b{color:var(--muted);font-weight:700}
   .pq-ring .n .pts{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1;color:#2FD08A}
-  .ptotal{width:max-content;margin:8px 4px 0 auto;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}   /* small, bottom right, in the page's flow so it never sits on the card or the footer */
+  .ptotal{width:max-content;margin:2px 0 0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--muted)}   /* small, under the verdict, inside the card, so the result is never taller than the phone */
   .ptotal b{color:#fff}
   .pcard .rank{margin-left:auto}
   .pcard .rank{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:#fff}
@@ -233,11 +243,11 @@
       <div class="panswers rv" id="pResAnswers"></div>
       <div class="rem" id="pResEmoji">&#127881;</div>
       <div class="pcard">
-        <div><div class="rtag" id="pResTag">Correct!</div></div>
+        <div><div class="rtag" id="pResTag">Correct!</div>
+          <div class="ptotal"><b id="pResTot">130</b> points</div></div>   <!-- the running total, small, under the verdict inside the card: it used to sit on its own line below the card and push our logo off the bottom of an 844px phone (Dean, 4 Nov 2026) -->
         <div class="rank hidden" id="pResRank">3rd of 11</div>
       </div>
       <div class="ca hidden" id="pResCa"></div>
-      <div class="ptotal"><b id="pResTot">130</b> points</div>   <!-- the running total, small, bottom right -->
       <div class="rnext" id="pResNext">This stays up until the next question starts</div>
     </div>
   </div>
@@ -1310,7 +1320,7 @@
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
-    P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    P.joined=true; P.name="Sarah"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
     (function(){ var lg=$("venueLogo"); if(!lg) return;
       /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
@@ -1327,7 +1337,7 @@
     function fire(o){ try{ onMsg(o); }catch(e){} }
     function round(){
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.total=0; P.rank=0; P.ended=false;
+      _dt=[]; P.total=515; P.rank=0; P.ended=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Sarah's score on the wall's final scores */
       fire({ t:"started" });
       /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
          then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own
@@ -1338,14 +1348,14 @@
       var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 as before the show, on a phone with ?sting=0
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
-      d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
+      d(T0+REV,       function(){ P.total=645; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
       d(T0+GAP,       function(){ fire(q(2,"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", ["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"],15)); });
       d(T0+GAP+3600,  function(){ answer(2); });
       d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], split:[7,26,9,1], demoPts:0 }); });
       d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
       d(T0+2*GAP+3400,function(){ answer(0); });
-      d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
-      d(T0+3*GAP,     function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
+      d(T0+2*GAP+REV, function(){ P.total=790; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
+      d(T0+3*GAP,     function(){ P.total=790; P.rank=2; fire({ t:"podium" }); });
       d(T0+3*GAP+17000, round);
     }
     showWait("The quiz is starting. Your questions will pop up here.");
