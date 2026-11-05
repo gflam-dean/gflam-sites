@@ -23,6 +23,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 _spec = importlib.util.spec_from_file_location('nl', os.path.join(ROOT, 'tools', 'trivia-newlook-in-chrome.test.py'))
 NL = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(NL)   # its Site (this checkout, no network) and Chrome driver
+# This suite drives a real Chrome through that driver (tools/browser-rig underneath), so gatelib.uses_chrome must
+# count it: --skip-chrome skips it and a Chrome run takes the heavy lock (release/6nov, 5 Nov 2026).
 VL = NL.VL
 SHOTS = os.environ.get('VP_SHOTS', '')
 
