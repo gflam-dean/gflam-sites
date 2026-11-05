@@ -37,7 +37,6 @@ DB.vp_raffle_settings = []; DB.vp_raffle_prizes = []; DB.vp_member_draws = []; D
 
 /* jsc has no WebCrypto. The Worker names a stored logo by the SHA-256 of its bytes; a stand-in digest
    that is a pure function of the bytes keeps "same file, same address" true, which is all a page needs. */
-var _rv = 2463534242;
 if (typeof crypto === 'undefined') {
   crypto = { subtle: { digest: function (alg, bytes) {
     var b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), out = new Uint8Array(32), h = 2166136261 >>> 0;

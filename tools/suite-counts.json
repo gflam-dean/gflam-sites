@@ -116,7 +116,7 @@
   "counted_by": "total"
  },
  "tools/account-structure-in-chrome.test.py": {
-  "checks": 58,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/add-login-email.test.py": {
@@ -1433,6 +1433,14 @@
  },
  "venueplay-backend/worker/winback-unsubscribe.test.js": {
   "checks": 51,
+  "counted_by": "lines"
+ },
+ "tools/multi-raffle-in-chrome.test.py": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
+ "tools/test-multi-raffle.js": {
+  "checks": 26,
   "counted_by": "lines"
  }
 }

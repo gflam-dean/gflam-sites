@@ -125,6 +125,7 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   }
   var ADS = { slides: [], draws: [], raffle: null, raffles: null, rotationSecs: 7 }, BAD_IMG = {};
   function slideVisible() { return true; } function venuePending() { return false; }
+  var holdVenueName = '';   // main's holding card (3 Nov 2026): loopEntries reads it only when nothing else is on the loop
   function esc(s) { return String(s == null ? '' : s); } function escBr(s) { return esc(s); } function accentHex() { return '#FF1F8E'; }
   eval(grab('hasRaffle')); eval(grab('rafflesOnWall')); eval(grab('loopEntries')); eval(grab('entryInner'));
   function raffleCards() { return loopEntries().filter(function (e) { return e.type === 'auto-raffle'; }).map(function (e) { return entryInner(e); }); }
