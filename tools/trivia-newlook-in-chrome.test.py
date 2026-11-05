@@ -8,7 +8,8 @@ Tugun Bowls Club's crest), served from this checkout, on Chrome's virtual clock,
   TV (1920x1080 and 1280x720)
     - ONE GRID: the label line, the question text and every answer card are in the same place on the
       countdown and on the reveal (within 1px; the right card only lifts about its own middle), and the
-      reveal's "got it right" sits in the clock's box. No wall is moved or shrunk by vp-fit.
+      reveal has no "got it right" box. NO COUNTS (Dean, 4 Nov 2026): the ring holds the seconds and SECS only,
+      and the phone's result shows no pick counts. No wall is moved or shrunk by vp-fit.
     - the four answer colours are coral, blue, amber and violet, and the right answer turns green
     - the answer cards and the leaderboard stay clear of where the JOIN NOW card sits on a real night,
       and the question starts below the venue's logo
@@ -88,7 +89,9 @@ WIDE_LOGO = ('<svg xmlns="http://www.w3.org/2000/svg" width="660" height="100" v
              'font-weight="900" fill="#fff" text-anchor="middle">PAUSE BAR</text></svg>')
 T0 = 1793500000000          # a fixed instant, never the real clock
 # Counts every sound card the page makes: the sales-page demo must never make one.
-HOOK = r'''(function(){ window.__acMade=0; var A=window.AudioContext||window.webkitAudioContext; if(!A) return;
+# window.__vpDemoAutoplay: the phone plays its scripted round only when embedded in a sales page, or with this
+# hook (Dean, 4 Nov 2026). These measurements are of that sales-page round, so the hook is set.
+HOOK = r'''(function(){ window.__vpDemoAutoplay=true; window.__acMade=0; var A=window.AudioContext||window.webkitAudioContext; if(!A) return;
   function W(){ window.__acMade++; return new A(); } window.AudioContext=W; window.webkitAudioContext=W; })();'''
 FREEZE = r'''(function(){ var a=document.getAnimations?document.getAnimations():[];
   a.forEach(function(x){ try{ var t=x.effect&&x.effect.getComputedTiming(); if(t&&isFinite(t.endTime)) x.finish(); else { x.pause(); x.currentTime=0; } }catch(e){} });
@@ -112,7 +115,7 @@ TV_PROBE = r'''(function(){
     var cn=document.querySelector(".tv-corner .vn svg, .tv-corner svg"); out.mark=cn ? R(cn) : null;
     /* the corner furniture (the answered count, the joined count) sits in the corner on purpose: not the wall's bottom */
     out.bottom=Math.max.apply(null,[].map.call(lay.querySelectorAll("*"),function(e){ if(e.closest(".answered,.joined")) return 0; var b=e.getBoundingClientRect(); return (b.width>2&&b.height>2&&getComputedStyle(e).visibility!=="hidden")?b.bottom:0; }).concat([0]));
-    out.ans=R(lay.querySelector(".rcount")); out.ansText=(lay.querySelector(".rcount")||{}).textContent||"";
+    out.ans=R(lay.querySelector(".rcount")); out.ringText=((lay.querySelector(".ringwrap .rnum")||{}).textContent||"").replace(/\s+/g,"");
     out.ring=R(lay.querySelector(".ringwrap svg")); out.secs=R(lay.querySelector(".rlbl")); out.num=R(lay.querySelector("#tvCdNum"));
     out.joined=/joined/i.test(lay.textContent||"");
     out.scan=R(lay.querySelector(".scanplay")); out.qr=R(lay.querySelector(".qrbig"));
@@ -157,7 +160,7 @@ PHONE_PROBE = r'''(function(){
     logo: (lg && !lg.classList.contains("hidden")) ? R(lg) : null, foot: foot ? R(foot) : null, viewR: view ? R(view) : null, menu: R(menu),
     btns: [].map.call(document.querySelectorAll("#"+(view?view.id:"x")+" .pans"),function(b){ var cs=getComputedStyle(b);
       var t=b.querySelector(".pt"), l=b.querySelector(".pl"), ls=l?getComputedStyle(l):null; return { lfs: ls?parseFloat(ls.fontSize):0, lff: ls?ls.fontFamily:"", lfg: ls?ls.color:"", lts: ls?ls.textShadow:"", cls:b.className, c:cs.getPropertyValue("--c").trim(), bg:cs.backgroundColor, sh:cs.boxShadow, op:parseFloat(cs.opacity),
-        fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"" }; }),
+        fg: t ? getComputedStyle(t).color : cs.color, tag:(b.querySelector(".tg")||{}).textContent||"", txt:b.innerText||"", cnt:!!b.querySelector(".cnt") }; }),
     lock: "", all: view ? view.innerText : "",
     ringR: (function(){ var r=view && view.querySelector(".pq-ring"); return r ? R(r) : null; })(),
     qR: (function(){ var r=view && view.querySelector(".pq-text"); return r ? R(r) : null; })(),
@@ -165,6 +168,7 @@ PHONE_PROBE = r'''(function(){
     dotR: (function(){ var d=document.getElementById("statusDot"); return d ? R(d) : null; })(), lbl: (function(){ var l=view && view.querySelector(".pq-count"); return l ? l.textContent : ""; })(),
     lblR: (function(){ var l=view && view.querySelector(".pq-count"); return l ? R(l) : null; })(),
     ptsR: (function(){ var e=document.getElementById("pResPts"); return e && view && view.id==="vRes" ? R(e) : null; })(), ptsT: (document.getElementById("pResPts")||{}).textContent||"",
+    cardR: (function(){ var e=document.querySelector("#vRes .pcard"); return e && view && view.id==="vRes" ? R(e) : null; })(),
     totR: (function(){ var e=document.querySelector(".ptotal"); return e && view && view.id==="vRes" ? R(e) : null; })(), totT: (document.querySelector(".ptotal")||{}).textContent||"",
     dot: (function(){ var d=document.getElementById("statusDot"); return d ? d.getBoundingClientRect().width : 0; })(),
     pq: (document.getElementById("pqText")||{}).textContent||"", rq: (document.getElementById("pResQ")||{}).textContent||"", W: innerWidth };
@@ -272,12 +276,13 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': the reveal has no "got it right" box in the clock\'s place', rv.get('got') is None, rv.get('got'))
     A, RG, SC = q.get('ans'), q.get('ring'), q.get('secs')
     import re as _re
-    ok(tag + ': "32/43" (answered out of the players in) sits small inside the ring, under SECS',
-       bool(A and RG and SC) and A[1] >= SC[3] - 0.5 and A[0] >= RG[0] and A[2] <= RG[2] and A[3] <= RG[3] - (RG[3] - RG[1]) * 0.08 and bool(_re.match(r'^\d+/\d+$', q.get('ansText', ''))),
-       [A, SC, RG, q.get('ansText')])
+    # NO COUNTS ON THE TV (Dean, 4 Nov 2026): the demo sends "players 43" and the host's "answered" tally, as a
+    # real host does, and the ring must hold the seconds and SECS only. The "32/43" that sat under SECS is gone.
+    ok(tag + ': the ring holds the seconds and SECS only: no "32/43" answered count (the demo sends one)',
+       A is None and bool(RG and SC) and bool(_re.match(r'^\d+secs$', (q.get('ringText') or '').lower())), [A, q.get('ringText')])
     N_ = q.get('num')
-    ok(tag + ': the number, SECS and the count are one block, centred in the ring top to bottom',
-       bool(N_ and A and RG) and abs((N_[1] + A[3]) / 2 - (RG[1] + RG[3]) / 2) <= 0.02 * (RG[2] - RG[0]), [N_, A, RG])
+    ok(tag + ': the number and SECS are one block, centred in the ring top to bottom',
+       bool(N_ and SC and RG) and abs((N_[1] + SC[3]) / 2 - (RG[1] + RG[3]) / 2) <= 0.02 * (RG[2] - RG[0]), [N_, SC, RG])
     RV_ = rv.get('ring')
     ok(tag + ': the reveal has no countdown ring', RV_ is None or (RV_[2] - RV_[0]) < 1, RV_)
     ok(tag + ': the scores carry no page words', not any(x in (bd.get('text') or '') for x in ('Page ', 'Teams ')), (bd.get('text') or '')[-80:])
@@ -299,13 +304,17 @@ def tv(B, base, w, h, logo=''):
     rc_ = rv.get('cards') or []
     lowest = max([c['r'][3] for c in (q.get('cards') or [])] or [0])
     QR_, RG_ = q.get('qround'), q.get('ring')
-    ok(tag + ': "Question 3 of 20" sits under the ring and above the answers, the same on the countdown and the reveal',
-       bool(QR_ and RG_ and rv.get('qround')) and QR_[1] >= RG_[3] - 0.5 and QR_[3] <= min(c['r'][1] for c in q.get('cards') or [[0, 9e9]]) and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
-       [QR_, RG_, q.get('qroundText')])
+    # THE FINAL WALL (Dean, 5 Nov 2026, LAYOUT-FINAL.css): "Question N of 20" under the answers on the right; the
+    # question centred on the ring's centre line; the answers at a fixed 24.11% of the width, a normal gap under the
+    # ring. tools/trivia-question-space-in-chrome.test.py measures the gaps and every question length.
     qc_ = q.get('cards') or []
-    ok(tag + ': the question\'s top is lined up with the ring\'s top (as approved)', bool(q.get('q') and RG_) and abs(q['q'][1] - RG_[1]) <= 0.004 * w, [q.get('q'), RG_])
-    ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and fill the lower half (to about 1014px at 1080)',
-       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and max(c['r'][3] for c in qc_) >= 0.52 * w and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
+    ok(tag + ': "Question 3 of 20" sits under the answers on the right, the same on the countdown and the reveal',
+       bool(QR_ and qc_ and rv.get('qround')) and QR_[1] >= max(c['r'][3] for c in qc_) and abs(QR_[2] - max(c['r'][2] for c in qc_)) <= 2 and QR_[3] <= h and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
+       [QR_, qc_ and qc_[-1]['r'], q.get('qroundText')])
+    ok(tag + ': the question is centred on the ring\'s centre line (as approved, 5 Nov)', bool(q.get('q') and RG_) and abs((q['q'][1] + q['q'][3]) / 2 - (RG_[1] + RG_[3]) / 2) <= 0.004 * w, [q.get('q'), RG_])
+    ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and start a normal gap under the ring (463px at 1920)',
+       len(qc_) == 4 and all(abs((c['r'][3] - c['r'][1]) - 0.11875 * w) <= 0.003 * w for c in qc_) and abs(min(c['r'][1] for c in qc_) - 0.2411 * w) <= 0.002 * w
+       and bool(RG_) and min(c['r'][1] for c in qc_) > RG_[3] and max(c['r'][3] for c in qc_) <= h - 0.02 * w,
        [c['r'] for c in qc_])
     ok(tag + ': a long two-line question and long answers fit: the question clear of the boxes, every answer inside its box',
        lq.get('layer') == 'tvQ' and bool(lq.get('q')) and lq['q'][3] <= min(c['r'][1] for c in lq.get('cards') or [[0, 0]]) - 0.005 * w and not any(c['ovf'] for c in lq.get('cards') or []) and len(lq.get('cards') or []) == 4,
@@ -369,7 +378,7 @@ def phone(B, base):
     L = q.get('logo')
     ok('the venue\'s logo is top left', bool(L) and L[0] <= 20 and L[1] <= 30, L)
     ok('and clear of the menu button', bool(L and q.get('menu')) and L[2] + 8 <= q['menu'][0], [L, q.get('menu')])
-    ok('no player name in the header', 'Dre' not in (q.get('head') or ''), q.get('head'))
+    ok('no player name in the header', 'Sarah' not in (q.get('head') or ''), q.get('head'))
     ok('the label is just "QUESTION 3 OF 20" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 3 of 20', q.get('lbl'))
     D_, MB_ = q.get('dotR'), q.get('menu')
     ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
@@ -400,11 +409,17 @@ def phone(B, base):
     P_, RR_ = rt.get('ptsR'), rt.get('ringR')
     ok('the result: the points just won sit in the ring\'s place', bool(P_ and RR_) and P_[0] >= RR_[0] and P_[2] <= RR_[2] and P_[1] >= RR_[1] and P_[3] <= RR_[3] and (rt.get('ptsT') or '').startswith('+'), [P_, RR_, rt.get('ptsT')])
     T_ = rt.get('totR')
-    ok('and the running total sits small in the bottom-right corner', bool(T_) and T_[0] >= 375 / 2 and T_[2] >= 375 - 24 and T_[3] >= 812 * 0.8 and (T_[3] - T_[1]) <= 24, [T_, rt.get('totT')])
+    C_ = rt.get('cardR')
+    ok('and the running total sits small inside the result card, under the verdict (so the result is never taller than the phone)', bool(T_ and C_) and T_[0] >= C_[0] and T_[2] <= C_[2] and T_[1] >= C_[1] and T_[3] <= C_[3] and (T_[3] - T_[1]) <= 24, [T_, C_, rt.get('totT')])
     for nm_, x_ in (('question', q), ('result', rt)):
         ok('the countdown sits ABOVE the question on the %s' % nm_, bool(x_.get('ringR') and x_.get('qR')) and x_['ringR'][3] <= x_['qR'][1] + 0.5, [x_.get('ringR'), x_.get('qR')])
     gr = [b for b in rt.get('btns') or [] if 'right' in b['cls']]
     ok('a right answer: green, "RIGHT · YOURS"', len(gr) == 1 and gr[0]['bg'] == GREEN and 'yours' in gr[0]['tag'].lower(), [(b['cls'], b['bg'], b['tag']) for b in rt.get('btns') or []])
+    # NO PICK COUNTS ON THE PHONE (Dean, 4 Nov 2026): the demo's reveal carries split [4,31,6,2], which adds up to the room
+    for nm_, x_ in (('right', rt), ('wrong', wr)):
+        bt_ = x_.get('btns') or []
+        ok('the %s result: no card shows how many picked it (no count, no digit; the demo sends them)' % nm_,
+           len(bt_) == 4 and not any(b.get('cnt') or any(ch.isdigit() for ch in b.get('txt', '')) for b in bt_), [(b.get('txt'), b.get('cnt')) for b in bt_])
     ok('the result shows the question the room saw', rt.get('rq') and rt.get('rq') == 'Which Australian city hosted the 2000 Summer Olympics?', rt.get('rq'))
     h1 = phone_stable(B, base, '', 'phone, Tugun\'s round logo')
     h2 = phone_stable(B, base, '/__fixture/wide-logo.svg', 'phone, a wide wordmark')
@@ -442,7 +457,7 @@ def host():
         ok('the buzzer row lines up with the other setting rows: its label where theirs are, its switch at the right edge',
            bool(H) and abs(H['lab'][0] - H['fieldLab'][0]) <= 1 and abs(H['ctl'][2] - H['sel'][2]) <= 2, H)
         ok('the picker is a CATEGORY drop-down', bool(H) and H['catText'].startswith('Category'), H and H['catText'])
-        ok('the way back is clearly labelled "All games"', bool(H) and 'All games' in (H['nav'] or ''), H and H['nav'])
+        ok('the way back is clearly labelled "Play", the main screen (Dean, 4 Nov 2026 round 3 O)', bool(H) and (H['nav'] or '').strip().endswith('Play') and 'Games' not in (H['nav'] or ''), H and H['nav'])
         ok('no TV yet: the console says so in plain words, and how to fix it',
            bool(H) and (H['status'] != 'TV not connected yet' or H['hint'] is True) and 'Waiting for screen' not in H['status'], H)
         S.js(sid, 'document.querySelector(\'#cfgBuzzer [data-v="on"]\').click(); document.querySelector(\'#cfgBuzzWhere [data-v="device"]\').click(); true')
@@ -460,7 +475,7 @@ def host():
         time.sleep(1)
         P = S.js(sid, '(function(){function R(s){var e=document.querySelector(s);if(!e)return null;var b=e.getBoundingClientRect();return [b.left,b.top,b.right,b.bottom];}'
                       'return {brand:R(".bar>.brand"), who:R(".bar>.who"), nav:R(".bar>.vp-navlink"), end:R("#toAdsBtn"), W:innerWidth};})()')
-        ok('phone width: the venueplay logo, TRIVIA and the TV status on the first row, "All games" and End game under them',
+        ok('phone width: the venueplay logo, TRIVIA and the TV status on the first row, "Play" and End game under them',
            bool(P and P['brand'] and P['nav'] and P['end']) and P['nav'][1] >= P['brand'][3] - 1 and P['end'][1] >= P['brand'][3] - 1 and P['brand'][0] <= 30 and P['end'][2] <= P['W'], P)
         S.close_tab(tid)
     finally:

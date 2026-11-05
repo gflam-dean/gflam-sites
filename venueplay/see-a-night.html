@@ -571,7 +571,10 @@
     box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
     overflow:hidden;position:relative;
   }
-  .vp-live-phone .vp-livebox{ aspect-ratio:390/844; border-radius:33px; }
+  /* The scaled iframe is its own layer, and Chrome on a phone does not clip a layer like that to the
+     rounded corners of an overflow:hidden parent, so the screen's square top corners stuck out of the
+     frame (Dean, 4 Nov 2026). clip-path clips the composited layer itself. */
+  .vp-live-phone .vp-livebox{ aspect-ratio:390/844; border-radius:33px; clip-path:inset(0 round 33px); }
   .vp-live-phone .vp-live{ width:390px; height:844px; }
 
   @media (max-width: 560px){

@@ -463,3 +463,81 @@ def flake_summary_line():
     if hard:
         bits.append('%d failed twice, RED (%s)' % (len(hard), ', '.join(f['suite'] for f in hard)))
     return 'FLAKES: ' + '; '.join(bits) + '. Logged to tools/flake-log.jsonl'
+
+
+# ---------------------------------------------------------------------------------------------
+# SUITES READ THE PAGE ROBUSTLY (4 Nov 2026). The 4 Nov gate went red on four Chrome suites for
+# three shapes of fragile reading, none a product fault. Each shape is named here, found by its
+# text in every tools/*.test.py, and the gate has a red line for it, so the shape cannot come back
+# in a new suite. The robust forms live in tools/browser-rig/waits.py.
+HYGIENE_RULES = (
+    # json.loads() around a raw rig answer: when the page's expression throws the rig answers a
+    # dict, json.loads raises a TypeError about its own argument, and the page's reason is lost.
+    ('rig-json', re.compile(r'json\.loads\(\s*\w+\.(js|ask|until|eval|evaluate)\('),
+     'json.loads() around a raw rig answer: use <rig>.json(sid, expr[, default]) (waits.as_json), which keeps the page\'s reason when it threw'),
+    # the TV paints "------" where the lobby code goes; six characters long is not a code yet.
+    ('lobby-placeholder', re.compile(r'^(?![\s\S]*------)[\s\S]*lobbyCode[\s\S]*\.length\s*={2,3}\s*6'),
+     'a lobby code read without excluding the "------" placeholder: add && c.textContent!=="------", or use <rig>.until_text(sid, "lobbyCode")'),
+    # a control pinned by its neighbours or its parent's class name breaks on every intended
+    # re-order of the header (3 Nov: Help moved; the HQ menu restructure is queued).
+    ('neighbour-pin', re.compile(r'(next|previous)ElementSibling\s*(===|\.textContent|\.innerText)|parent(Node|Element)\.className\s*==='),
+     'a control pinned by its neighbour or its parent\'s className: assert what it means (<rig>.header_control, closest(".hactions"), a data-* hook)'),
+)
+
+# Files allowed one named shape for a while, because another branch is editing them and two
+# agents in one file is the worse fault. DATED: past the date the line is red, and says so.
+HYGIENE_GRANDFATHER = {
+    ('help-desk-pages.test.py', 'neighbour-pin'): ('2026-11-09',
+        'fix/gate-reds-4nov and fix/site-polish-6nov both edit it this week; replace the five neighbour pins with header_control '
+        '(~/venue-enrich/reports/tests-futureproof-6nov/NOTES-help-desk-pages.md)'),
+}
+
+
+def suite_hygiene(tools_dir=None, today=None):
+    """Read every tools/*.test.py and name each line that reads the page the fragile way.
+    Returns {'files': n, 'bad': [..human lines..], 'grandfathered': [..]}. Comment lines are
+    skipped (a rule may be TALKED about); a line is judged once per rule."""
+    tools_dir = tools_dir or os.path.join(ROOT, 'tools')
+    today = today or time.strftime('%Y-%m-%d')
+    out = {'files': 0, 'bad': [], 'grandfathered': []}
+    for f in sorted(os.listdir(tools_dir)):
+        if not f.endswith('.test.py'):
+            continue
+        out['files'] += 1
+        try:
+            lines = io.open(os.path.join(tools_dir, f), encoding='utf-8', errors='replace').read().splitlines()
+        except (IOError, OSError):
+            continue
+        for i, line in enumerate(lines, 1):
+            if line.strip().startswith('#'):
+                continue
+            for name, rx, fix in HYGIENE_RULES:
+                if not rx.search(line):
+                    continue
+                g = HYGIENE_GRANDFATHER.get((f, name))
+                if g and today <= g[0]:
+                    out['grandfathered'].append('%s:%d %s (until %s: %s)' % (f, i, name, g[0], g[1]))
+                else:
+                    out['bad'].append('%s:%d %s: %s%s' % (f, i, name, fix, (' [grandfather ended %s]' % g[0]) if g else ''))
+    return out
+
+
+def looks_like_homepage(status, content_type, body):
+    """IS THIS PAGES' HOMEPAGE-INSTEAD-OF-THE-FILE FALLBACK? (4 Nov 2026)
+
+    Cloudflare Pages answers a path it does not have with the site's index and a 200. Until today the
+    gate spotted that with `'<html' in body[:2000]`, which called venueplay/app/vp-tvhold.js the homepage
+    on LIVE because line 21 of its header comment says "<html". Judged now by what the server SAYS it
+    sent (Content-Type text/html is the homepage; nothing else is) and, when it says nothing, by what
+    the body STARTS with after whitespace and a BOM: <!doctype or <html. A script that merely mentions
+    a tag inside a comment is a script. A non-200 is not the fallback (it is its own fault, named by
+    the caller)."""
+    if status != 200:
+        return False
+    ct = (content_type or '').lower()
+    if 'text/html' in ct:
+        return True
+    if 'javascript' in ct or 'ecmascript' in ct or 'text/css' in ct or 'json' in ct:
+        return False
+    head = (body or '').lstrip('\ufeff \t\r\n')[:200].lower()
+    return head.startswith('<!doctype') or head.startswith('<html')

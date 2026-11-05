@@ -104,7 +104,7 @@ MID_FADE = r'''
 CONFIRMED = 'try{localStorage.setItem("vpTvVenue",%s);localStorage.setItem("vpTvConfirmed",%s);}catch(e){}'
 
 def wall(r, sid):
-    return json.loads(r.ask(sid, 'JSON.stringify(window.__wall||[])') or '[]')
+    return r.json(sid, 'JSON.stringify(window.__wall||[])', [])
 
 def own(what):
     return ('tugun-tuesday.jpg' in what) or ('TEXT TRIVIA EVERY ' in what.upper())
@@ -139,7 +139,7 @@ def main():
             if want_both:
                 ok('%s: and the loop really turns: both good slides take their turn' % name,
                    any('tugun-tuesday.jpg' in x[1] for x in w) and any(TEXT_HEAD.upper() in x[1].upper() for x in w), sorted(set(x[1][:60] for x in w)))
-            bad_in = json.loads(r.ask(sid, 'JSON.stringify(window.__badIn||[])') or '[]')
+            bad_in = r.json(sid, 'JSON.stringify(window.__badIn||[])', [])
             ok('%s: after the first slide has painted, the broken picture never comes back into the loop' % name,
                first is not None and not [t for t in bad_in if t > first], [first, bad_in])
             if change:

@@ -3,8 +3,8 @@
 
 Dean, 29 Oct 2026 (migration 127: a prospect's free month starts at their first sign-in, reminders go
 while there is no card, the account pauses when it runs out, and "Cancel, it's not for us"). HQ's
-Prospects tab now shows, per prospect: a status chip (Not signed in yet / Free month (X days left) /
-Card added / Paused / Cancelled), the first sign-in, the free month's end, a highlight on the last
+Prospects tab now shows, per prospect: a status chip (Not signed in · N days / Free month · X days left /
+Card added / Paused / Cancelled; 4 Nov 2026: the chip opens the row's details, tools/prospects-edit-in-chrome.test.py), the first sign-in, the free month's end, a highlight on the last
 three days, the 3-day "Call them" flag as it was, and a filter and a sort by status.
 
 Opens the REAL hq.html in headless Chrome (tools/browser-rig/admin_site.py: its own --user-data-dir,
@@ -141,7 +141,7 @@ CARD_JS = '''(function(id){var c=document.querySelector('#paneProspects .prcard[
   return {st:b&&b.getAttribute("data-pr-status"),chip:b?b.textContent:"",shown:!!(r&&r.width>0&&getComputedStyle(b).display!=="none"),
     first:(c.querySelector("[data-pr-first]")||{}).textContent||"",ends:(c.querySelector("[data-pr-ends]")||{}).textContent||"",
     last3:c.classList.contains("last3"),lastline:(c.querySelector("[data-pr-last]")||{}).textContent||"",
-    flag:(c.querySelector(".prflag")||{}).textContent||"",called:!!c.querySelector("[data-pr-called]"),resend:!!c.querySelector("[data-pr-signin]"),text:c.innerText.replace(/\\s+/g," ")};})("%s")'''
+    flag:(c.querySelector(".prflag")||{}).textContent||"",called:!!c.querySelector("[data-pr-called]"),resend:!!c.querySelector("[data-pr-signin]"),text:c.textContent.replace(/\\s+/g," ")};})("%s")'''
 
 
 def card(sid, n):
@@ -186,24 +186,24 @@ try:
 
     print('\nevery status, as the Worker decided it')
     c = card(sid, NOSIGN)
-    ok('Never Signed Arms: Not signed in yet, first sign-in "Not yet", free month starts at their first sign-in',
-       c.get('st') == 'not_signed_in' and c.get('chip') == 'Not signed in yet' and c.get('shown') and c.get('first') == 'Not yet'
+    ok('Never Signed Arms: Not signed in \u00b7 5 days, first sign-in "Not yet", free month starts at their first sign-in',
+       c.get('st') == 'not_signed_in' and c.get('chip') == 'Not signed in \u00b7 5 days' and c.get('shown') and c.get('first') == 'Not yet'
        and c.get('ends') == 'Starts at their first sign-in', c)
     ok('...and the 3-day "Call them" flag is kept as it was', c.get('flag') == 'Call them' and 'Nobody has signed in since they were set up 5 days ago' in c.get('text', ''), c)
     c = card(sid, ASKED)
     ok("O'Brien's Tavern: Not signed in yet, Call requested, its name escaped (no bold tag run)",
        c.get('st') == 'not_signed_in' and c.get('flag') == 'Call requested' and "O'Brien's <b>Tavern</b>" in c.get('text', ''), c)
     c = card(sid, FRESH)
-    ok('Fresh Start Hotel: Free month (14 days left), no highlight, no call flag',
-       c.get('st') == 'free_month' and c.get('chip') == 'Free month (14 days left)' and not c.get('last3') and c.get('flag') == '', c)
+    ok('Fresh Start Hotel: Free month \u00b7 14 days left, no highlight, no call flag',
+       c.get('st') == 'free_month' and c.get('chip') == 'Free month \u00b7 14 days left' and not c.get('last3') and c.get('flag') == '', c)
     end13 = TODAY_BNE + datetime.timedelta(days=13)
     ok('...first sign-in and the free month end date shown, in Brisbane days',
        c.get('first', '').count(',') == 1 and c.get('ends', '').startswith('%s %d %s' % (end13.strftime('%a'), end13.day, end13.strftime('%b'))), c)
     c = card(sid, LAST3)
-    ok('Three Days Hotel: Free month (3 days left), highlighted, with the line saying so',
-       c.get('chip') == 'Free month (3 days left)' and c.get('last3') and c.get('lastline') == '3 days left in their free month, and no card yet.', c)
+    ok('Three Days Hotel: Free month \u00b7 3 days left, highlighted, with the line saying so',
+       c.get('chip') == 'Free month \u00b7 3 days left' and c.get('last3') and c.get('lastline') == '3 days left in their free month, and no card yet.', c)
     c = card(sid, FINAL)
-    ok('Final Day Inn: Free month (last day), highlighted', c.get('chip') == 'Free month (last day)' and c.get('last3')
+    ok('Final Day Inn: Free month \u00b7 last day, highlighted', c.get('chip') == 'Free month \u00b7 last day' and c.get('last3')
        and c.get('lastline') == 'Last day of their free month, and no card yet.', c)
     c = card(sid, CARD)
     ok('Card Club Hotel: Card added, its free month end shown, no Called button',
@@ -215,8 +215,8 @@ try:
        and c.get('ends', '').startswith('Ended ') and ', paused ' in c.get('ends', ''), c)
     c = card(sid, CANCEL)
     ok('Cancelled Bowls Club (paused, then cancelled): Cancelled, not Paused, and no Called button (they said no)', c.get('st') == 'cancelled' and c.get('chip') == 'Cancelled' and not c.get('called'), c)
-    ok('...and no Resend sign-in link either: they asked us to stop', not c.get('resend'), c)
-    ok('every prospect still in play (not signed in, free month, paused, card added) keeps Resend sign-in link (phone sign-in, 29 Oct)',
+    ok('...and no Send them a new sign-in link either: they asked us to stop', not c.get('resend'), c)
+    ok('every prospect still in play (not signed in, free month, paused, card added) keeps Send them a new sign-in link (phone sign-in, 29 Oct)',
        all(card(sid, n).get('resend') for n in (NOSIGN, ASKED, FRESH, LAST3, FINAL, PAUSED, CARD)),
        [NAMES[n] for n in (NOSIGN, ASKED, FRESH, LAST3, FINAL, PAUSED, CARD) if not card(sid, n).get('resend')])
     ok('the tab count is still who to call (2), not every prospect',
