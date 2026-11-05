@@ -318,6 +318,31 @@
   .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:var(--fs-xl);font-weight:400;letter-spacing:.01em}
   .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
 
+  /* ---------- THE NO-CARD START (#start, app/vp-start.js; Dean, 5 Nov 2026) ---------- */
+  #start{padding-top:56px}
+  #start .form-grid{margin-top:6px}
+  .st-step[hidden]{display:none}
+  .st-help{font-family:'Manrope',sans-serif;font-size:var(--fs-xs);color:var(--muted);text-transform:none;letter-spacing:normal}
+  .st-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+  .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:18px 0 0;text-align:center}
+  .st-legal a{color:#fff}
+  #st-go,#st-check{width:100%;margin-top:18px;padding:16px;font-size:var(--fs-base)}
+  #st-go:disabled,#st-check:disabled{opacity:.6;cursor:default;transform:none}
+  .st-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:var(--fs-xl);letter-spacing:.01em;line-height:1.05;margin:0 0 10px}
+  .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
+  /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
+  .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;
+    color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
+  .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
+  .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font:inherit;cursor:pointer;min-height:24px}
+  .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
+  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:30px;letter-spacing:.14em;color:#fff;margin-top:8px}
+  #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
+  #st-done,#st-held{text-align:center}
+  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px;font-size:24px} }
+
   /* ---------- FAQ ---------- */
   .faq{max-width:780px;margin:0 auto}
   .q{border-bottom:1px solid var(--line)}
@@ -584,9 +609,10 @@
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
       <p class="lede">Trivia, musical bingo, bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
-        <!-- A free account, set up by us (Dean, 5 Nov 2026: a page-only stopgap until the no-card sign-up). It opens the
-             "Talk to us" form below with the topic set; the enquiry is the same sales ticket as any other. -->
-        <a class="btn btn-primary" href="#contact" data-cta="hero-free-play" data-topic="free-account">Have a play for free</a>
+        <!-- The no-card start (Dean, 5 Nov 2026, INBOX 80B and 96): the five boxes just below the hero (#start,
+             app/vp-start.js). Until the Worker's start is switched on, that form hands over to Friday's stopgap, the
+             "Talk to us" form set to "Set me up a free account" (window.VPFreeAccountEnquiry, below). -->
+        <a class="btn btn-primary" href="#start" data-cta="hero-free-play">Have a play for free</a>
         <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
         <a class="btn btn-ghost" href="#contact" data-cta="hero-contact">Talk to us</a>
       </div>
@@ -651,6 +677,92 @@
 </script>
 
 
+
+<!-- ===================== THE NO-CARD START (Dean, 5 Nov 2026; INBOX 80B, 81, 93, 96) =====================
+     Five boxes, a text code, then the account (a venue on our licensed list) or "we'll check your venue" (one that
+     is not, or a mobile or email already on venueplay). The Worker decides; app/vp-start.js draws it. Real forms,
+     every box with name= and autocomplete=, so a phone fills them. No terms tick box: the line above the button. -->
+<section class="sec" id="start">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">No card to start</div>
+      <h2 class="sec-title">Have a play for free</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Five boxes and a text code. Your venue is set up with sample nights to try, and nothing is charged.</p>
+    </div>
+    <div class="form-shell">
+      <div class="inner">
+        <form id="st-form" class="st-step" autocomplete="on" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="st-venue">Venue name</label>
+              <input id="st-venue" name="organization" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label for="st-postcode">Postcode</label>
+              <input id="st-postcode" name="postal-code" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]*" maxlength="4" required>
+            </div>
+            <div class="field">
+              <label for="st-name">Your name</label>
+              <input id="st-name" name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label for="st-mobile">Mobile <span class="st-help">We text your code to it</span></label>
+              <input id="st-mobile" name="tel" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel" maxlength="20" required>
+            </div>
+            <div class="field full">
+              <label for="st-email">Email <span class="st-help">Your account emails come here</span></label>
+              <input id="st-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" maxlength="200" required>
+            </div>
+          </div>
+          <div class="st-hp" aria-hidden="true"><label for="st-website">Leave this empty</label><input id="st-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <div id="st-ts"></div>
+          <p class="st-legal">By starting you agree to the <a href="/terms">Terms and Conditions</a> and <a href="/privacy">Privacy Policy</a>.</p>
+          <button class="btn btn-primary" id="st-go" type="submit">Have a play for free</button>
+          <p class="form-err" id="st-err" role="alert"></p>
+        </form>
+
+        <form id="st-code" class="st-step" autocomplete="on" novalidate hidden>
+          <h3 class="st-h">Check your phone</h3>
+          <p class="st-p">We&rsquo;ve texted a 6-digit code to the mobile ending <b id="st-end"></b>. Type it in below.</p>
+          <div class="st-boxes" role="group" aria-label="Your 6-digit code">
+            <input id="st-c1" name="one-time-code" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code, number 1 of 6">
+            <input id="st-c2" name="code-2" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 2 of 6">
+            <input id="st-c3" name="code-3" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 3 of 6">
+            <input id="st-c4" name="code-4" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 4 of 6">
+            <input id="st-c5" name="code-5" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 5 of 6">
+            <input id="st-c6" name="code-6" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 6 of 6">
+          </div>
+          <button class="btn btn-primary" id="st-check" type="submit">Check my code</button>
+          <p class="form-err" id="st-cerr" role="alert"></p>
+          <p class="st-small">Nothing yet? <button type="button" class="st-link" id="st-resend">Send it again</button> or <button type="button" class="st-link" id="st-change">change your details</button>.</p>
+        </form>
+
+        <div id="st-done" class="st-step" hidden>
+          <h3 class="st-h">Your trivia night is ready.</h3>
+          <p class="st-p">Your venue is set up with sample nights to try it.</p>
+          <p class="st-p">Your first month starts now.</p>
+          <p class="st-tv" id="st-tvline">To see it on your TV, go to venueplay.com.au/tv and type this code: <b id="st-tvcode"></b></p>
+          <!-- ===== TRY-IT DEMO SLOT (JOB B1, fix/try-demo-10nov; INBOX 82, 84b, 92c, 93) =====
+               The try-it demo draws here. It is hidden until the demo puts something in it. On an account being made,
+               app/vp-start.js fires "vp-start-done" on document with { venue, tv_code, go_url, slug, players } and sets
+               window.VPStart.done the same. Up to 10 joiners, never a billable session. ===== -->
+          <div id="st-try-slot" data-slot="try-it-demo" hidden></div>
+          <!-- ===== END TRY-IT DEMO SLOT ===== -->
+          <a class="btn btn-primary" id="st-open" href="/app">Open my host console</a>
+        </div>
+
+        <div id="st-held" class="st-step" hidden>
+          <div class="success show" style="padding-top:0">
+            <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Thanks</h3>
+            <p id="st-held-words">Thanks, we&rsquo;ll check your venue and get you set up, usually within a business day.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="/app/vp-start.js"></script>
 
 <!-- ===================== GAME MODES ===================== -->
 <section class="sec" id="modes">
@@ -1531,6 +1643,15 @@
   [].forEach.call(document.querySelectorAll('[data-topic="free-account"]'), function(a){
     a.addEventListener('click', ctFreeAccount);
   });
+  /* THE NO-CARD START IS NOT SWITCHED ON YET (app/vp-start.js): its five boxes hand over to this form, filled in with
+     what they typed and the free-account topic, so "Have a play for free" still reaches us as a sales ticket. */
+  window.VPFreeAccountEnquiry = function(d){
+    d = d || {};
+    function put(id, v){ var e = document.getElementById(id); if (e && v && !e.value) e.value = v; }
+    put('ct-name', d.name); put('ct-email', d.email); put('ct-venue', d.venue); put('ct-postcode', d.postcode); put('ct-phone', d.mobile);
+    ctFreeAccount();
+    var c = document.getElementById('contact'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior:'smooth' });
+  };
 
   /* ---------- Contact form → Worker → email ---------- */
   var ctBtn = document.getElementById('ct-submit');
