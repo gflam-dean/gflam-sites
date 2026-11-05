@@ -47,6 +47,15 @@ var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false, NO_148 = f
 var V2 = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];   // STALE = n: the next n reads see the row before the other tap landed
 var NOW = Date.parse('2026-10-29T08:00:00Z');
 Date.now = function () { return NOW; };
+/* `new Date()` with no arguments reads the same fixed clock (5 Nov 2026). The holds door asks for links that
+   expire after new Date().toISOString(); with only Date.now fixed, the real clock passed the fixture's 7-day
+   expiry (5 Nov 08:00Z) and the suite went red on every branch from that minute. */
+var RealDate = Date;
+Date = (function (D) {
+  function FixedDate() { var a = [].slice.call(arguments); return a.length ? new (Function.prototype.bind.apply(D, [null].concat(a)))() : new D(NOW); }
+  FixedDate.prototype = D.prototype; FixedDate.now = function () { return NOW; }; FixedDate.parse = D.parse; FixedDate.UTC = D.UTC;
+  return FixedDate;
+})(RealDate);
 var rigFetch = globalThis.fetch;
 function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
 globalThis.fetch = function (url, opts) {
