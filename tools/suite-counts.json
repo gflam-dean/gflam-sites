@@ -500,7 +500,7 @@
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
-  "checks": 66,
+  "checks": 123,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {

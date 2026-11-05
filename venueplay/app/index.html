@@ -1484,6 +1484,10 @@
        picker, no TV pairing (migration 122). Its TV keeps showing its ads. */
     if(window.VP && VP.termsGate && VP.termsGate(__ctx)){ go("vBoot"); return; }
     if(window.VP && VP.termsCard) VP.termsCard(__ctx);   // section 6 of the Terms, asked once; it blocks nothing (28 Oct 2026)
+    /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new
+       venue's owner or manager may be asked ONE short optional thing the Account page lacks, as a sheet over the
+       console. Never more than one a sign-in; "Not now" always works. It never blocks the console. */
+    if(window.VPFirstRun && VPFirstRun.ask && window.VP && VP.getClient){ try{ VPFirstRun.ask(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); }catch(e){} }
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();

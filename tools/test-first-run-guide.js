@@ -56,10 +56,10 @@ function before(a, b, root) { var order = []; each(root, function (e) { order.pu
 async function settle() { for (var i = 0; i < 12; i++) await Promise.resolve(); }
 
 var SESSION = readFile('venueplay/app/vp-session.js'), FIRSTRUN = readFile('venueplay/app/vp-firstrun.js'), INDEX = readFile('venueplay/app/index.html');
-var USER, AUTH_CALLS, CALLS, OPENED, STORE, HOSTS, IMG = [];
+var USER, AUTH_CALLS, CALLS, OPENED, STORE, HOSTS, IMG = [], SAVED = [], SESS = {};
 function page(phone, over) {
   over = over || {};
-  USER = { id: 'u1', email: 'owner@example.com', phone: phone || '' }; AUTH_CALLS = []; CALLS = []; OPENED = [];
+  USER = { id: 'u1', email: 'owner@example.com', phone: phone || '' }; AUTH_CALLS = []; CALLS = []; OPENED = []; SAVED = []; SESS = {};
   HOSTS = over.hosts || [];
   var body = new El('body'), hdr = new El('header'); body.appendChild(hdr);
   var document = { body: body, createElement: function (t) { return new El(t); },
@@ -93,14 +93,17 @@ function page(phone, over) {
   (new Function('window', FIRSTRUN))(window);
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, VP: window.VP,
     setInterval: function () { return 1; }, clearInterval: function () {}, openUrl: function (u) { OPENED.push(u); },
-    imageData: function (file) { IMG.push(file.name); return Promise.resolve(file.dataUrl); } };
+    imageData: function (file) { IMG.push(file.name); return Promise.resolve(file.dataUrl); },
+    saveSettings: function (id, patch) { SAVED.push({ id: id, patch: patch }); return over.saveFail ? Promise.reject(new Error('column setup_answers does not exist')) : Promise.resolve({}); },
+    session: { getItem: function (k) { return k in SESS ? SESS[k] : null; }, setItem: function (k, v) { SESS[k] = String(v); } } };
   return { doc: document, body: body, FR: window.VPFirstRun, VP: window.VP, deps: deps };
 }
 /* A self sign-up two days old: its mobile on the login, the Terms ticked at checkout, a card at Stripe. */
 function venue(over) { var v = { id: 'V1', name: 'The Test Arms', slug: 'the-test-arms', status: 'active', terms_required: false, created_at: new Date(Date.now() - 2 * 86400000).toISOString(), compliance_accepted_at: '2026-11-03T01:00:00Z', compliance_accepted_by: 'Sam' }; for (var k in (over || {})) v[k] = over[k]; return v; }
 /* Their staff row's name: a real one by default (so the optional About you step is about the logo alone), or the
    "<venue> manager" placeholder the Worker writes at set up. */
-function ctxFor(role, v, name) { return { role: role, venue: v || venue(), currentVenueId: 'V1', user: { id: 'u1', phone: USER ? USER.phone : '' }, staff: [{ venue_id: 'V1', role: role, display_name: name === undefined ? 'Sam Smith' : name }] }; }
+var FULL_ANSWERS = { tvs: '1', nights: ['thu'], games: ['trivia'], name_ok: true };   // the wizard's questions already answered: those steps are left out
+function ctxFor(role, v, name, answers) { return { role: role, venue: v || venue(), currentVenueId: 'V1', user: { id: 'u1', phone: USER ? USER.phone : '' }, staff: [{ venue_id: 'V1', role: role, display_name: name === undefined ? 'Sam Smith' : name }], settings: { setup_answers: answers === undefined ? FULL_ANSWERS : answers } }; }
 function $(P, id) { return P.doc.getElementById(id); }
 function T(P, id) { var e = $(P, id); return e ? seen(e) : ''; }
 function lis(el) { var out = []; each(el, function (e) { if (e.tagName === 'LI') out.push(seen(e)); }); return out; }
@@ -109,7 +112,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
 (async function () {
   section('1. THE ORDER: the TV, then hosts, then a first test game');
   var P = page('61452510904');
-  check('the steps run mobile, Terms, TV, hosts, game, About you, card', P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,account,card', P.FR.STEPS);
+  check('the steps run mobile, Terms, venue, games, TV, hosts, game, About you, card', P.FR.STEPS.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', P.FR.STEPS);
   var R = P.FR.open(ctxFor('owner'), P.deps); await R.ready; await settle();
   check('a self sign-up with its mobile, the Terms and a card on: exactly the TV, hosts and a first game, in that order', R.steps().join() === 'tv,hosts,game', R.steps());
   check('it opens on the TV, step 1 of 3, three dots', R.step() === 'tv' && T(P, 'vpFrCount') === 'Step 1 of 3' && $(P, 'vpFrDots').children.length === 3, T(P, 'vpFrCount'));
@@ -191,7 +194,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('Open trivia opens the trivia console for their venue', OPENED[0] === '/app/trivia/host.html?venue=the-test-arms', OPENED);
 
   section('5. READABLE AT 375px: nothing under 15px');
-  var PR = page('', { card: false, noLogo: true }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }] }, PR.deps);
+  var PR = page('', { card: false, noLogo: true }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }], settings: { setup_answers: {} } }, PR.deps);
   await RR.ready;
   var small = [], wide = [], seenSteps = [];
   for (var si = 0; si < RR.steps().length; si++) {
@@ -204,7 +207,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
       var w = /(?:^|;)\s*(?:min-)?width:\s*([\d.]+)px/.exec(css); if (w && parseFloat(w[1]) > 343) wide.push(nm + ' ' + (e.id || e.tagName) + ' ' + w[1]);
     });
   }
-  check('every step was drawn (mobile, Terms, TV, hosts, game, About you, card)', seenSteps.join() === 'mobile,terms,tv,hosts,game,account,card', seenSteps);
+  check('every step was drawn (mobile, Terms, venue, games, TV, hosts, game, About you, card)', seenSteps.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', seenSteps);
   check('no text in the guide is set under 15px on any step', small.length === 0, small);
   check('no fixed width wider than a 375px phone leaves (343px inside the 16px margins)', wide.length === 0, wide);
   check('the guide is one column, at most 480px wide, with 16px margins', /max-width:480px/.test($(PR, 'vpFirstRun').children.filter(function (c) { return c.tagName === 'DIV'; })[0].getAttribute('style')) && /padding:0 16px/.test($(PR, 'vpFirstRun').getAttribute('style')));
@@ -255,8 +258,132 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('the logo read fails: the logo is still offered (optional), the guide still opens on the TV', RF2.steps().indexOf('account') >= 0 && RF2.step() === 'tv', RF2.steps());
   check('it never asks for an address, a game night or anything the Account page does not store', !/suburb|address|game night|which night/i.test(T(PA, 'vpFrBody')));
 
+  section('8. THE WIZARD ASKS FIRST: the venue name, how many TVs, which nights, which games (Dean, INBOX 44a)');
+  var PW = page('61452510904'); var RW = PW.FR.open(ctxFor('owner', venue(), undefined, {}), PW.deps); await RW.ready; await settle();
+  check('a new venue that has answered nothing: the questions come first, then the TV, hosts and the test game', RW.steps().join() === 'venue,games,tv,hosts,game' && RW.step() === 'venue', RW.steps());
+  check('"About your venue", everything optional, so Next reads "Skip for now"', T(PW, 'vpFrTitle') === 'About your venue' && /Every one is optional/.test(T(PW, 'vpFrBody')) && $(PW, 'vpFrNext').textContent === 'Skip for now', T(PW, 'vpFrBody'));
+  check('it shows the venue name as saved and asks if it is right', T(PW, 'vpFrVenueName') === 'The Test Arms' && /Is this your venue's name\?/.test(T(PW, 'vpFrNameCheck')) && T(PW, 'vpFrNameYes') === "Yes, that's right" && T(PW, 'vpFrNameNo') === 'Not quite');
+  check('nothing is saved until they answer', SAVED.length === 0 && CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); }).length === 0);
+  function lastSaved() { return SAVED[SAVED.length - 1]; }
+  $(PW, 'vpFrNameYes').click(); await settle();
+  check('"Yes, that\'s right" is kept for THIS venue through the page\'s own saveSettings, only as setup_answers', lastSaved() && lastSaved().id === 'V1' && Object.keys(lastSaved().patch).join() === 'setup_answers' && JSON.stringify(lastSaved().patch.setup_answers) === '{"name_ok":true}', lastSaved());
+  check('and Next reads Next', $(PW, 'vpFrNext').textContent === 'Next' && /confirmed/.test(T(PW, 'vpFrNameCheckMsg')));
+  check('the TV question: 1, 2, 3 or 4 or more, one choice', T(PW, 'vpFrChips-tvs') === '1 TV 2 TVs 3 TVs 4 or more' && /How many TVs will show venueplay\?/.test(T(PW, 'vpFrTvsBox')));
+  $(PW, 'vpFrChip-tvs-2').click(); await settle();
+  check('two TVs: saved, and that chip is the one pressed', JSON.stringify(lastSaved().patch.setup_answers) === '{"tvs":"2","name_ok":true}' && $(PW, 'vpFrChip-tvs-2').getAttribute('aria-pressed') === 'true' && $(PW, 'vpFrChip-tvs-1').getAttribute('aria-pressed') === 'false', lastSaved());
+  $(PW, 'vpFrChip-tvs-3').click();
+  check('a second choice replaces the first (one TV count)', $(PW, 'vpFrChip-tvs-3').getAttribute('aria-pressed') === 'true' && $(PW, 'vpFrChip-tvs-2').getAttribute('aria-pressed') === 'false');
+  check('the nights question: Mon to Sun in order, any number, with the "changes week to week" note', T(PW, 'vpFrChips-nights') === 'Mon Tue Wed Thu Fri Sat Sun' && /Leave it blank if it changes week to week/.test(T(PW, 'vpFrNightsBox')));
+  $(PW, 'vpFrChip-nights-fri').click(); $(PW, 'vpFrChip-nights-thu').click(); await settle();
+  check('Fri then Thu: kept in week order, Thu and Fri', JSON.stringify(lastSaved().patch.setup_answers.nights) === '["thu","fri"]', lastSaved());
+  $(PW, 'vpFrChip-nights-fri').click(); await settle();
+  check('tapping a night again takes it off', JSON.stringify(lastSaved().patch.setup_answers.nights) === '["thu"]' && $(PW, 'vpFrChip-nights-fri').getAttribute('aria-pressed') === 'false');
+  check('the answers are also kept on this device, so nothing is lost without the database column', JSON.parse(STORE['vpFirstRun:V1']).answers.tvs === '3' && JSON.stringify(JSON.parse(STORE['vpFirstRun:V1']).answers.nights) === '["thu"]', STORE['vpFirstRun:V1']);
+  $(PW, 'vpFrNameNo').click();
+  check('"Not quite" opens a box for the right name', $(PW, 'vpFrNameFix').style.display === 'block');
+  await $(PW, 'vpFrNameSend').click();
+  check('nothing typed: asked for it, no ticket', /Type what it should say first/.test(T(PW, 'vpFrNameCheckMsg')) && CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); }).length === 0, T(PW, 'vpFrNameCheckMsg'));
+  $(PW, 'vpFrNameNew').value = ' The Test   Arms Hotel ';
+  await $(PW, 'vpFrNameSend').click(); await settle();
+  var tkt = CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); })[0];
+  check('the right name goes to HQ as a help desk ticket for this venue (no route renames a venue), signed in', tkt && tkt.body.subject === 'Please correct my venue name' && tkt.body.venue_id === 'V1' && /It should say The Test Arms Hotel\./.test(tkt.body.message) && tkt.opts.headers.Authorization === 'Bearer TOKEN-1', tkt && tkt.body);
+  check('and it says we will change it', /We will change it to The Test Arms Hotel/.test(T(PW, 'vpFrNameCheckMsg')));
+  check('the venue row itself is never written from the page', SAVED.every(function (x) { return Object.keys(x.patch).join() === 'setup_answers'; }));
+
+  await RW.next();
+  check('step 2: "Which games do you play?", the five games, trivia first, musical bingo spelled out', T(PW, 'vpFrTitle') === 'Which games do you play?' && T(PW, 'vpFrChips-games') === 'Trivia Musical bingo Bingo Raffles Members draws', T(PW, 'vpFrChips-games'));
+  check('optional: Next reads "Skip for now"', $(PW, 'vpFrNext').textContent === 'Skip for now');
+  $(PW, 'vpFrChip-games-bingo').click(); $(PW, 'vpFrChip-games-trivia').click(); $(PW, 'vpFrChip-games-raffles').click(); $(PW, 'vpFrChip-games-musical').click(); await settle();
+  check('chosen games are saved in the same order as listed (trivia, musical bingo, bingo, raffles) and Next reads Next', JSON.stringify(lastSaved().patch.setup_answers.games) === '["trivia","musical","bingo","raffles"]' && $(PW, 'vpFrNext').textContent === 'Next', lastSaved());
+  await RW.next();
+  check('with three TVs the TV step says so, and that every TV uses the same screen code', /You said 3 TVs\. Do the steps below on each TV, with the same screen code\./.test(T(PW, 'vpFrManyTvs')), T(PW, 'vpFrBody'));
+  await RW.go('game'); await settle();
+  var gn = T(PW, 'vpFrGameNotes');
+  check('the test game step points at the Account pages for their games and their nights (raffles: Draws; bingo: Game settings; Thu)', /Raffles and members draws are set up under Account, then Draws\./.test(gn) && /For bingo, add your permit details under Account, then Game settings\./.test(gn) && /Your game nights: Thu\. Run this test before the first one\./.test(gn), gn);
+  check('musical bingo is never listed with bingo or a permit (it is chosen here, and the notes never mention it)', !/musical/i.test(gn) && gn.split('permit').length === 2, gn);
+  check('trivia is still the first, pink button', before($(PW, 'vpFrTrivia'), $(PW, 'vpFrMusical'), PW.body) && /FF1F8E/.test($(PW, 'vpFrTrivia').style.cssText));
+  var P1 = page('61452510904'); var R1 = P1.FR.open(ctxFor('owner', venue(), undefined, { tvs: '1', nights: [], games: ['musical'], name_ok: true }), P1.deps); await R1.ready;
+  check('answers already given are left out: only the nights are unanswered, so only the venue step stays', R1.steps().join() === 'venue,tv,hosts,game' && R1.steps().indexOf('games') === -1, R1.steps());
+  await R1.go('tv'); check('one TV: no several-TVs line', !$(P1, 'vpFrManyTvs'));
+  await R1.go('game');
+  check('a venue that plays only musical bingo is pointed at no permit, no draws and no game nights', !$(P1, 'vpFrGameNotes'), T(P1, 'vpFrGameNotes'));
+  var PS2 = page('61452510904', { saveFail: true }); var RS2 = PS2.FR.open(ctxFor('owner', venue(), undefined, {}), PS2.deps); await RS2.ready;
+  $(PS2, 'vpFrChip-tvs-2').click(); await settle();
+  check('the database column is not there yet (migration 163 not run): the guide still works, shows no error, keeps the answer on this device', JSON.parse(STORE['vpFirstRun:V1']).answers.tvs === '2' && $(PS2, 'vpFrNext').textContent === 'Next' && !/error|could not|column/i.test(T(PS2, 'vpFrBody')), T(PS2, 'vpFrBody'));
+  var dirty = P.FR.cleanAnswers({ tvs: '9', nights: ['thu', 'xx', '<b>'], games: 'trivia', name_ok: 'yes', evil: '<script>' });
+  check('only the known keys and values can be kept (a TV count of 9, a night called xx, a string for games, anything extra are dropped)', JSON.stringify(dirty) === '{"nights":["thu"]}', dirty);
+  check('the Account page\'s saved answers win, and this device fills the gaps', JSON.stringify(P.FR.answersFor({ settings: { setup_answers: { tvs: '2', games: ['trivia'] } } }, { answers: { tvs: '4', nights: ['sat'] } })) === '{"tvs":"2","games":["trivia"],"nights":["sat"]}');
+
+  section('9. ONE MORE QUESTION ON A LATER SIGN-IN: never more than one, always skippable (Dean, INBOX 46)');
+  function later(answers, over) { var Q = page('61452510904', over); var ctx = ctxFor('owner', over && over.venue || venue(), over && over.name, answers); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', done: true }); return { P: Q, ctx: ctx }; }
+  var L = later({}, { noLogo: true });
+  var k1 = await L.P.FR.ask(L.ctx, L.P.deps);
+  check('a new venue, guide done, nothing answered: ONE question, "Which games do you play?", as a sheet over the console', k1 === 'games' && T(L.P, 'vpAsk') !== '' && /One quick question/.test(T(L.P, 'vpAsk')) && /Which games do you play\?/.test(T(L.P, 'vpAsk')) && $(L.P, 'vpAsk').getAttribute('role') === 'dialog', k1);
+  check('with Done and Not now, both at least 44px tall, and no text under 15px', T(L.P, 'vpAskDone') === 'Done' && T(L.P, 'vpAskLater') === 'Not now' && /min-height:44px/.test($(L.P, 'vpAskDone').style.cssText) && /min-height:44px/.test($(L.P, 'vpAskLater').style.cssText) && (function () { var bad = []; each($(L.P, 'vpAsk'), function (e) { var m, re = /font-size:\s*([\d.]+)px/g, css = e.getAttribute('style') || ''; while ((m = re.exec(css))) if (parseFloat(m[1]) < 15) bad.push(m[1]); }); return !bad.length; })());
+  var k2 = await L.P.FR.ask(L.ctx, L.P.deps);
+  check('asked again in the same sign-in: nothing (never more than one a sign-in)', k2 === '' && walk(L.P.body, function (e) { return e.id === 'vpAsk'; }) !== null && (function () { var n = 0; each(L.P.body, function (e) { if (e.id === 'vpAsk') n++; }); return n === 1; })(), k2);
+  $(L.P, 'vpFrChip-games-musical') || 0;
+  $(L.P, 'vpFrChip-games-trivia').click(); await settle();
+  check('a tap is saved to this venue at once', lastSaved() && JSON.stringify(lastSaved().patch.setup_answers) === '{"games":["trivia"]}', lastSaved());
+  $(L.P, 'vpAskDone').click();
+  check('Done closes it', !$(L.P, 'vpAsk'));
+  SESS = {};
+  var L2 = { ctx: ctxFor('owner', venue(), undefined, { games: ['trivia'] }) };
+  var k3 = await L.P.FR.ask(L2.ctx, L.P.deps);
+  check('the next sign-in asks the NEXT thing: which nights', k3 === 'nights' && /Which nights do you run games\?/.test(T(L.P, 'vpAsk')), k3);
+  $(L.P, 'vpAskLater').click(); SESS = {};
+  check('"Not now" closes it, sends nothing, and the day after it asks again', !$(L.P, 'vpAsk') && (await L.P.FR.ask(L2.ctx, L.P.deps)) === 'nights');
+  $(L.P, 'vpAskLater').click(); SESS = {};
+  var k4 = await L.P.FR.ask(L2.ctx, L.P.deps);
+  check('skipped twice: never asked again, so the next question (how many TVs) comes instead', k4 === 'tvs' && JSON.parse(STORE['vpAsk:V1']).skips.nights === 2, [k4, STORE['vpAsk:V1']]);
+  $(L.P, 'vpAskLater').click(); SESS = {};
+  var L3 = await L.P.FR.ask(ctxFor('owner', venue({ logo_url: null }), undefined, { tvs: '1', nights: ['thu'], games: ['trivia'] }), L.P.deps);
+  check('with the questions answered or skipped, a venue with no logo is asked for it, and "Add it" opens the guide on that step', L3 === 'logo' && T(L.P, 'vpAskDone') === 'Add it', L3);
+  $(L.P, 'vpAskDone').click(); await settle();
+  check('the guide opens on About you (its own step does the upload)', !!$(L.P, 'vpFirstRun') && JSON.parse(STORE['vpFirstRun:V1']).step === 'account', STORE['vpFirstRun:V1']);
+  function none(why, ctx, setup) { return async function () { var Q = page('61452510904'); if (setup) setup(Q); else STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', done: true }); var r = await Q.FR.ask(ctx, Q.deps); check(why, r === '' && !$(Q, 'vpAsk'), r); }; }
+  await none('the guide itself is still due: no question on top of it', ctxFor('owner', venue(), undefined, {}), function () { STORE = {}; })();
+  await none('a venue that is not new (60 days old, a live client): never asked', ctxFor('owner', venue({ created_at: new Date(Date.now() - 60 * 86400000).toISOString() }), undefined, {}))();
+  await none('a host is never asked', ctxFor('host', venue(), undefined, {}))();
+  await none('everything answered, a logo on, a real name: nothing to ask', ctxFor('owner', venue({ logo_url: 'https://db/l.png' }), undefined, FULL_ANSWERS))();
+  var wordsAsk = (function () { var out = ''; var Q = page('61452510904'); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', done: true }); return Q.FR.ask(ctxFor('owner', venue(), undefined, {}), Q.deps).then(function () { return seen(Q.body); }); })();
+  var wa = await wordsAsk;
+  check('the question reads in lowercase venueplay with no dash', !/VenuePlay/.test(wa) && !/[\u2013\u2014]/.test(wa), wa);
+
+  section('10. THE ACCOUNT PAGE CARD, THE CONSOLE WIRING AND MIGRATION 163');
+  var d1 = P.FR.describe({ tvs: '2', nights: ['fri', 'thu'], games: ['raffles', 'trivia', 'bingo'] }), d2 = P.FR.describe({ tvs: '4' }), d3 = P.FR.describe({});
+  check('describe(): the answers in words, in the order the guide lists them', d1.tvs === '2 TVs' && d1.nights === 'Thu and Fri' && d1.games === 'Trivia, Bingo and Raffles' && d2.tvs === '4 or more TVs' && d3.tvs === '' && d3.nights === '' && d3.games === '', [d1, d2, d3]);
+  var BILL = readFile('venueplay/app/billing.html');
+  function liftFn(src, name) { var i = src.indexOf('function ' + name + '('); if (i < 0) throw new Error('cannot find ' + name); var dd = 0, k = src.indexOf('{', i); do { if (src[k] === '{') dd++; else if (src[k] === '}') dd--; k++; } while (dd > 0 && k < src.length); return src.slice(i, k); }
+  function runAbout(rows, fail) {
+    var body = new El('div'), wrap = new El('div'); wrap.style.display = 'none';
+    var els = { aboutVenue: body, aboutVenueWrap: wrap }, asked = [];
+    var fakeVP = { getClient: function () { var b = { select: function () { return b; }, in: function (c, ids) { asked.push([c, ids]); return fail ? Promise.reject(new Error('x')) : Promise.resolve(rows); } }; return { from: function (t) { asked.push(t); return b; } }; } };
+    var doc = { createElement: function (t) { return new El(t); } };
+    var fn = (new Function('$', 'VP', 'document', 'window', 'VPFirstRun', 'esc', liftFn(BILL, 'renderAbout') + '\nreturn renderAbout;'))(function (id) { return els[id]; }, fakeVP, doc, { VPFirstRun: P.FR }, P.FR, function (x) { return String(x); });
+    fn([{ id: 'V1', name: 'The Test Arms' }, { id: 'V2', name: 'The Other Arms' }]);
+    return { body: body, wrap: wrap, asked: asked };
+  }
+  var ab = runAbout({ data: [{ venue_id: 'V1', setup_answers: { tvs: '2', nights: ['thu', 'fri'], games: ['trivia', 'raffles'] } }], error: null });
+  await settle();
+  check('the Account page card reads vp_venue_settings.setup_answers for the account\'s venues and shows it', ab.asked[0] === 'vp_venue_settings' && ab.asked[1][0] === 'venue_id' && ab.asked[1][1].join() === 'V1,V2' && ab.wrap.style.display === '', ab.asked);
+  var abText = ab.body.children.map(function (r) { return r.innerHTML.replace(/<\/(b|small)>/g, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); }).join(' | ');
+  check('one row a venue: its answers in words, or "Not filled in yet"', abText === 'The Test Arms 2 TVs \u00b7 Games on Thu and Fri \u00b7 Trivia and Raffles | The Other Arms Not filled in yet', abText);
+  var ab2 = runAbout({ data: [], error: { message: 'column setup_answers does not exist' } }); await settle();
+  var ab3 = runAbout(null, true); await settle();
+  check('before migration 163 (the read fails or errors) the card stays hidden and says nothing', ab2.wrap.style.display === 'none' && ab3.wrap.style.display === 'none' && ab2.body.children.length === 0 && ab3.body.children.length === 0);
+  check('billing.html loads vp-firstrun.js after vp-session.js and has the card on the Game settings tab', BILL.indexOf('<script src="vp-firstrun.js"></script>') > BILL.indexOf('<script src="vp-session.js"></script>') && /<div id="aboutVenueWrap"[\s\S]*?About your venue[\s\S]*?<div class="label">Player data/.test(BILL) && /renderAbout\(d\.venues\);/.test(BILL));
+  check('the card tells them how to change an answer', /To change an answer, open Setup guide at the top of the console\./.test(BILL));
+  check('index.html asks the one later question after the Terms card, never blocking, only when VPFirstRun.ask exists', INDEX.indexOf('VPFirstRun.ask(__ctx') > INDEX.indexOf('VP.termsCard(__ctx);   // section 6') && /VPFirstRun\.ask &&/.test(INDEX) && /onClose:function\(\)\{\}/.test(INDEX.slice(INDEX.indexOf('VPFirstRun.ask(__ctx'), INDEX.indexOf('VPFirstRun.ask(__ctx') + 200)));
+  var MIG = readFile('venueplay-backend/supabase/venueplay-163-setup-answers.sql'), MIGS = readFile('venueplay-backend/supabase/MIGRATIONS.md');
+  var migCode = MIG.split('\n').filter(function (l) { return !/^\s*--/.test(l); }).join('\n');
+  check('migration 163 adds only vp_venue_settings.setup_answers (a jsonb object, 2,000 characters at most), safe to run twice', /ADD COLUMN IF NOT EXISTS setup_answers jsonb NOT NULL DEFAULT '\{\}'::jsonb/.test(migCode) && /jsonb_typeof\(setup_answers\) = 'object' AND length\(setup_answers::text\) <= 2000\)/.test(migCode) && /IF NOT EXISTS \(SELECT 1 FROM pg_constraint/.test(migCode));
+  check('and no policy, grant, function or trigger (so RLS-BASELINE.json does not change)', !/create\s+(or replace\s+)?(policy|function|trigger)|\bgrant\b|\brevoke\b|alter\s+policy/i.test(migCode), migCode);
+  check('it says NOT RUN and has a rollback; MIGRATIONS.md lists it as 163 with the same words', /NOT RUN/.test(MIG) && /Rollback:/.test(MIG) && /DROP COLUMN IF EXISTS setup_answers/.test(MIG) && /venueplay-163-setup-answers\.sql/.test(MIGS) && /NOT RUN/.test(MIGS.slice(MIGS.indexOf('venueplay-163-setup-answers.sql'))));
+  check('the keys the page keeps are exactly the ones the migration documents', /"tvs".*"nights".*"games".*"name_ok"/s.test(MIG.replace(/\n--\s*/g, ' ')) || (MIG.indexOf('"tvs"') > 0 && MIG.indexOf('"nights"') > 0 && MIG.indexOf('"games"') > 0 && MIG.indexOf('"name_ok"') > 0));
+
   section('6. THE WORDS');
-  var words = [P, PJ, PH, P0, PR, PA].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  var words = [P, PJ, PH, P0, PR, PA, PW].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   check('lowercase venueplay in everything it says (never VenuePlay)', !/VenuePlay|Venueplay|VENUEPLAY/.test(words));
   check('no em dash or en dash, never "roster", never "the ACT"', !/[–—]/.test(words) && !/roster/i.test(words) && !/\bthe ACT\b/.test(words));
 

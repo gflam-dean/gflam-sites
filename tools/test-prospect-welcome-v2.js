@@ -86,7 +86,7 @@ function page(phone) {
 }
 function tick() { TIMERS.forEach(function (t) { if (t.on) t.fn(); }); }
 function pv(over) { var v = { id: 'V1', name: "Caz Reitop's Dirty Secrets", slug: 'caz-reitop-s-dirty-secrets', status: 'active', terms_required: true, compliance_accepted_at: null, compliance_accepted_by: null }; for (var k in (over || {})) v[k] = over[k]; return v; }
-function ctxFor(role, v) { return { role: role, venue: v || pv(), currentVenueId: 'V1', staff: [{ venue_id: 'V1', role: role, display_name: 'Amit' }] }; }
+function ctxFor(role, v) { return { role: role, venue: v || pv(), currentVenueId: 'V1', staff: [{ venue_id: 'V1', role: role, display_name: 'Amit' }], settings: { setup_answers: { tvs: '1', nights: ['thu'], games: ['trivia'], name_ok: true } } }; }   // the wizard's questions already answered (tools/test-first-run-guide.js runs them)
 function hiddenEl(e) { return !!e && (e.style.display === 'none' || (!e.style.display && /display:none/.test(e.style.cssText || ''))); }
 function $(P, id) { return P.doc.getElementById(id); }
 function T(P, id) { var e = $(P, id); return e ? allText(e) : ''; }
@@ -95,7 +95,7 @@ var __rnd = 11;
 (async function () {
   section('1. THE FIRST RUN: who gets it');
   var P = page();
-  check('vp-firstrun.js exports VPFirstRun with the seven steps in order (About you is left out below: these venues have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,account,card', P.FR && P.FR.STEPS);
+  check('vp-firstrun.js exports VPFirstRun with the nine steps in order (the questions and About you are left out below: these venues have answered, have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', P.FR && P.FR.STEPS);
   check('a prospect venue (terms_required), its manager: it opens', P.FR.wants(ctxFor('manager'), P.deps.storage) === true);
   check('its owner too', P.FR.wants(ctxFor('owner'), P.deps.storage) === true);
   check('a host: no (the tick and the card are not theirs)', P.FR.wants(ctxFor('host'), P.deps.storage) === false);

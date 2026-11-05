@@ -583,6 +583,13 @@
     </div><!-- /tp-nights -->
 
     <div class="tabpanel" id="tp-settings">
+    <!-- ABOUT YOUR VENUE (Dean, 5 Nov 2026, INBOX 44a): what the setup wizard was told (how many TVs, game nights, the
+         games played), read from vp_venue_settings.setup_answers (migration 163). Hidden until the column answers. -->
+    <div id="aboutVenueWrap" style="display:none">
+      <div class="label">About your venue</div>
+      <div id="aboutVenue"></div>
+      <p class="note" style="margin:6px 0 16px">From your setup questions. To change an answer, open Setup guide at the top of the console.</p>
+    </div>
     <div class="label">Player data &amp; name display</div>
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, whether the join screen asks them to opt in to your marketing, how their name shows on the TV (John S, J Smith or John Smith), and your bingo permit. Opens that venue's settings.</p>
     <div id="playerData"></div>
@@ -854,6 +861,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
 <script src="/app/vp-gaming.js"></script>
@@ -1260,6 +1268,7 @@
       wrap.appendChild(row);
     });
 
+    renderAbout(d.venues);
     // Player data + name display: reuse the existing per-venue settings page (what players are
     // asked for at join, and how their name shows on the TV). One link per venue.
     var pd = $("playerData");
@@ -1275,6 +1284,28 @@
     }
   }
 
+  /* ABOUT YOUR VENUE: one row per venue from vp_venue_settings.setup_answers. A read that fails (the column is not
+     there until migration 163 runs) leaves the whole card hidden and says nothing. */
+  function renderAbout(venues){
+    var wrap = $("aboutVenueWrap"), box = $("aboutVenue");
+    if (!wrap || !box || !window.VPFirstRun || !VPFirstRun.describe || !venues || !venues.length) return;
+    var ids = venues.map(function(v){ return v.id; });
+    VP.getClient().from("vp_venue_settings").select("venue_id,setup_answers").in("venue_id", ids).then(function(r){
+      if (!r || r.error || !Array.isArray(r.data)) return;
+      var by = {}; r.data.forEach(function(x){ by[x.venue_id] = x.setup_answers; });
+      box.innerHTML = "";
+      venues.forEach(function(v){
+        var w = VPFirstRun.describe(by[v.id]), bits = [];
+        if (w.tvs) bits.push(w.tvs);
+        if (w.nights) bits.push("Games on " + w.nights);
+        if (w.games) bits.push(w.games);
+        var row = document.createElement("div"); row.className = "venue";
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small></div>';
+        box.appendChild(row);
+      });
+      wrap.style.display = "";
+    }, function(){});
+  }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   /* A login with venues on another account gets one line naming those venues and a switch.
      The switch just records that venue as the one picked; every call names it from then on. */
