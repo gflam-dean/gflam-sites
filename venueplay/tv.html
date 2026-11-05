@@ -3006,8 +3006,8 @@
       BALLS.forEach(function(n,i){
         at(FIRST + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
       });
-      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4", cardNo:47}); });
-      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", cardNo:47, prize:"$50 bar tab"}); });   // a believable card, not #000
+      at(FIRST + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Jess", cardNo:47}); });
+      at(FIRST + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Jess", cardNo:47, prize:"$50 bar tab"}); });   // a believable card, not #000
       at(FIRST + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
 
       /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
