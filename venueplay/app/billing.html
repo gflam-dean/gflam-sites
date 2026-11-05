@@ -50,6 +50,7 @@
   .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
+  #lede[hidden] ~ #content{margin-top:18px}   /* the billing intro is hidden off the Billing tab: keep the heading clear of what follows */
   .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:18px 20px;margin:12px 0}
   .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
@@ -108,8 +109,13 @@
   .acchead.open .accchev{transform:rotate(-135deg);margin:4px 4px 0 0;border-color:var(--pink)}
   .accbody{display:none;padding:2px 0 8px}
   .acchead.open + .accbody{display:block}
-  .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
-  .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+  /* EVERY TAB FITS, NOTHING SCROLLS SIDEWAYS (Dean, 5 Nov 2026: "the tabs scroll sideways"). Seven tabs at 14px
+     with 16px padding were wider than the 642px column, so on a desktop and an iPad the row scrolled with a
+     scrollbar under it, and on a phone the tabs were 39px tall. Now: the row WRAPS, never scrolls; 15px text;
+     every tab 48px tall (the brand's touch target). On a desktop or iPad that is one row; on a phone it is two
+     even rows, the first four tabs above and Draws, Marketing, Game settings below (the phone rule further down). */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow:visible}
+  .tabs button{flex:1 1 auto;min-width:0;min-height:48px;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:15px;line-height:1.2;padding:8px 10px;border-radius:10px;cursor:pointer;transition:.15s}
   .tabs button.on{background:var(--pink);color:#fff}
   .tabs button:hover:not(.on){color:var(--text)}
   .tabpanel{display:none}
@@ -190,11 +196,11 @@
     .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
     .canxlink{min-height:44px;display:inline-flex;align-items:center}
     .tabs{top:6px}
-    /* ALL FIVE TABS ON SCREEN (14 Oct 2026 audit). At phone width the strip scrolled sideways
-       with nothing to say so, and "Game settings" sat cut off past the edge: a tab you cannot
-       see is a tab nobody presses. They wrap to a second row instead. */
-    .tabs{flex-wrap:wrap;overflow-x:visible}
-    .tabs button{flex:1 1 auto;padding:10px 12px}
+    /* ALL SEVEN TABS ON SCREEN (14 Oct 2026 audit; two even rows since 5 Nov 2026). The first four take
+       about a quarter each, so a fifth can never join their row, and the last three share the second row.
+       Down to 320px wide: the padding is small so "Game settings" still fits beside the other two. */
+    .tabs button{padding:8px 4px}
+    .tabs button:nth-child(-n+4){flex:1 1 23%}
   }
   /* The "Open it" switch to another account was the browser's default blue underline on a dark
      page (14 Oct 2026 audit). It is the one action on that line, so it looks like one. */
@@ -392,7 +398,10 @@
 </header>
 <div class="wrap">
   <h1>Your account</h1>
-  <p class="lede" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
+  <!-- The owner's intro is about billing (plan, hosts, next payment), so it shows on the Billing tab only (Dean,
+       5 Nov 2026: "up the top it says we've still got host, next payment and everything on this page"). showTab
+       hides it on every other tab. A manager's intro says what they can do here, so it drops "billonly" and stays. -->
+  <p class="lede billonly" id="lede">Your plan, venues, hosts and next payment. You can add players or venues anytime and they apply straight away.</p>
   <!-- Only for a login with venues on more than one account. Everyone else never sees it. -->
   <p class="lede" id="otherAccounts" hidden></p>
 
@@ -1364,6 +1373,7 @@
     }
     var lede=$("lede");
     if(lede){
+      lede.classList.remove("billonly"); lede.hidden = false;   // a manager's intro is about the whole page, on every tab
       var canDo=[];
       if(p.advertising!==false) canDo.push("your screen");
       if(p.draws_raffles!==false) canDo.push("draws and raffles");
@@ -2254,6 +2264,15 @@
     var s = null; try { s = sessionStorage.getItem(TAB_KEY); } catch (e) {}
     return TAB_RE.test(s || "") ? s : null;
   }
+  /* Open one tab: its button lit, its panel shown, every other hidden. The billing intro at the top of the page
+     (#lede, while it carries "billonly") shows on the Billing tab only (Dean, 5 Nov 2026); the venue drop-down
+     above the tabs belongs to every tab and is left alone. */
+  function showTab(id){
+    var t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
+    for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a].getAttribute('data-tab')===id);
+    for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
+    var l=$("lede"); if(l) l.hidden = (id!=="billing" && l.classList.contains("billonly"));
+  }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.
   (function initTabs(){
@@ -2261,9 +2280,8 @@
     if(!tabs.length) return;
     for(var i=0;i<tabs.length;i++){
       tabs[i].addEventListener('click', function(){
-        var id=this.getAttribute('data-tab'), t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
-        for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a]===this);
-        for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
+        var id=this.getAttribute('data-tab');
+        showTab(id);
         try{ window.scrollTo(0,0); }catch(e){}
         rememberTab(id);
       });

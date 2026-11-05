@@ -119,6 +119,10 @@
   "checks": 58,
   "counted_by": "lines"
  },
+ "tools/account-tabs-in-chrome.test.py": {
+  "checks": 235,
+  "counted_by": "lines"
+ },
  "tools/add-login-email.test.py": {
   "checks": 19,
   "counted_by": "lines"
@@ -361,6 +365,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-tabs.js": {
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-add-venue-free-month.js": {
