@@ -907,6 +907,10 @@
   "checks": 57,
   "counted_by": "lines"
  },
+ "tools/test-trivia-no-players.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-no-repeat-survives-a-removal.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -1045,6 +1049,10 @@
  },
  "tools/trivia-newlook-in-chrome.test.py": {
   "checks": 202,
+  "counted_by": "lines"
+ },
+ "tools/trivia-no-players-in-chrome.test.py": {
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

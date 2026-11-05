@@ -143,6 +143,7 @@
   .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
   .pempty{color:var(--faint);font-size:12.5px;padding:12px 4px}
 
+  .calmnote{margin:12px 0 0;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink-3);color:var(--text);font-size:14px;font-weight:600;line-height:1.45}
   .btnrow{display:flex;gap:10px;margin-top:12px}
   .btnrow .btn{flex:1}
 
@@ -526,6 +527,7 @@
     timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
+    noPlayersNote:false,            // Reveal leaderboard with nobody joined: a calm line, not an error
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
     answeredPids:{}, answeredQseq:0,
@@ -890,6 +892,7 @@
       }
       rw.appendChild(el("div","since",'<b>'+spTot+'</b> answered'+(spTot?' &middot; '+(sp[q2.correctIndex]||0)+' got it right':'')));
       body.appendChild(rw);
+      if(G.noPlayersNote){ var nn=el("div","calmnote",esc(NOBODY_MSG)); nn.id="noPlayersNote"; nn.setAttribute("role","status"); body.appendChild(nn); }
       // On the last question turn the button into "Reveal leaderboard" (which shows the podium);
       // the podium never appears mid-round now.
       var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
@@ -1163,7 +1166,7 @@
   function reveal(){
     if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
-      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[];
+      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[]; G.noPlayersNote=false;
       saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
       if(G.defer){
@@ -1185,24 +1188,52 @@
       // Between-question leaderboard, but NOT after the last question - there the host reveals
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
-      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200); }
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){
+        /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
+        if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
+        else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
+      } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
+  /* NOBODY JOINED IS NOT A FAULT (live fault, Fri 6 Nov 2026, The Mini Bar). A game with no phones
+     on it has an empty board, and Reveal leaderboard then told the host "Scores could not be
+     loaded ... Check your connection", which was wrong: the connection was fine. The three outcomes
+     are kept in one small function so a suite can run it: a board with rows is the podium; an empty
+     board that the server itself just answered, with nobody joined, is "nobody"; anything else
+     (the fetch failed, or phones are in but no scores came back) is the real "could not be loaded". */
+  function finishOutcome(boardLen, players, fetchOk){
+    if(boardLen>0) return "podium";
+    if(players===0 && fetchOk===true) return "nobody";
+    return "error";
+  }
+  var NOBODY_MSG="Nobody has joined this game yet, so there are no scores to show. Players join with the code on the TV.";
   function finish(){
     clearTick();
+    G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
        rebuild), fetch it once more before announcing rather than firing confetti over nothing. */
     if(!G.board.length && G.gameId){
+      var ok=false;
       apiPost("/host/reveal",{ game_id:G.gameId })
-        .then(function(r){ if(r && r.leaderboard) G.board=r.leaderboard; })
-        .catch(function(){})
-        .then(function(){ finishNow(); });
+        .then(function(r){ ok=true; if(r && r.leaderboard) G.board=r.leaderboard; })
+        .catch(function(){ ok=false; })
+        .then(function(){ finishNow(ok); });
       return;
     }
-    finishNow();
+    finishNow(false);
   }
-  function finishNow(){
-    if(!G.board.length){
+  function finishNow(fetchOk){
+    var out=finishOutcome(G.board.length, playerCount(), fetchOk);
+    if(out==="nobody"){
+      /* Calm, not an error: a plain line on the console, and the TV's "Thanks for playing" with the
+         join QR. Stay in "reveal" so the button is still there if someone joins and the host tries
+         again, and so "Start a new round" is not the only way out. */
+      G.noPlayersNote=true;
+      bcast({ t:"nobody" });
+      renderConsole();
+      return;
+    }
+    if(out==="error"){
       /* Do NOT set status to "ended" here. Doing so re-rendered the console into its finished
          state, whose only control is "Start a new round", which calls endRound() and destroys the
          game: after a transient failure at the climax the host's single option wiped the scores
