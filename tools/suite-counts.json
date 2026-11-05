@@ -355,6 +355,10 @@
   "checks": 40,
   "counted_by": "lines"
  },
+ "tools/look-publish.test.py": {
+  "checks": 33,
+  "counted_by": "lines"
+ },
  "tools/migrations-parse.test.py": {
   "checks": 21,
   "counted_by": "lines"
@@ -1909,6 +1913,10 @@
  },
  "venueplay-backend/app/hq-contact-rule.test.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/app/look-page.test.js": {
+  "checks": 56,
   "counted_by": "lines"
  },
  "venueplay-backend/app/members/draw-again.test.js": {

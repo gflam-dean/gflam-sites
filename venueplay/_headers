@@ -48,3 +48,18 @@
 /llms.txt
   Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=3600
+
+# ONE VENUE'S TV SLIDES (build job 7, 5 Nov 2026): never indexed, and the code in the address never sent on
+# in a Referer header. look.html carries the same as meta tags. Merged with /* above, as every rule here is.
+/look
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+/look/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+/look.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+/look-data/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
