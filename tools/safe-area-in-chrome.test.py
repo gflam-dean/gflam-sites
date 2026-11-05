@@ -111,8 +111,15 @@ def page(r, path, what, shape, w, h, ins):
     ok(tag + ': scrolled to the end, nothing sits under the home bar', not low, low[:4])
     stuck = [p for p in end if p['pin'] and p['t'] < ins['top'] - 0.5 and p['b'] > 0]
     ok(tag + ': scrolled, the header that stays on screen keeps out from under the island', not stuck, stuck[:4])
-    mp = r.ask(sid, '(function(p,b){ if(!p||!b) return null; p.classList.remove("hidden"); var q=p.getBoundingClientRect(), k=b.getBoundingClientRect(); var o={top:q.top, btn:k.bottom}; p.classList.add("hidden"); return o; })(document.getElementById("menuPanel"), document.getElementById("menuBtn"))')
-    if mp is not None:
+    mp = r.ask(sid, '(function(p,b){ if(!p||!b) return null; p.classList.remove("hidden"); var q=p.getBoundingClientRect(), k=b.getBoundingClientRect(), sh=p.querySelector(".vp-sheet"), last=sh?sh.lastElementChild:null;'
+                    ' if(sh) sh.scrollTop=sh.scrollHeight;'   # a sheet taller than a landscape phone scrolls inside itself: read its last row at the end
+                    ' var o={top:q.top, btn:k.bottom, sheet:!!sh, sheetTop:sh?sh.getBoundingClientRect().top:0, low:last?last.getBoundingClientRect().bottom:0}; p.classList.add("hidden"); return o; })(document.getElementById("menuPanel"), document.getElementById("menuBtn"))')
+    if mp is not None and mp.get('sheet'):
+        # THE MUSICAL PHONE'S MENU IS ONE SHEET FROM THE BOTTOM (the new look, Dean 3 Nov 2026; /app/vp-phone.css): its top
+        # clear of the island, its last row clear of the home bar (scrolled to the end of the sheet: in landscape the
+        # sheet is taller than the phone and scrolls inside itself, 86vh at most).
+        ok(tag + ': the menu sheet starts clear of the island and its last row clears the home bar', mp['sheetTop'] >= ins['top'] - 0.5 and mp['low'] <= h - ins['bottom'] + 0.5, mp)
+    elif mp is not None:
         ok(tag + ': the menu opens below its button, not over it or under the island', mp['top'] >= mp['btn'] - 0.5 and mp['top'] >= ins['top'], mp)
     if path == '/app/musical/play':
         # the catch-up list ("Songs played"), a sheet up from the bottom: its Close button above the home bar

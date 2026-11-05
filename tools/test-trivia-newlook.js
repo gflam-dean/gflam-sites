@@ -318,7 +318,10 @@ print('\n== 6. the phone: the result cards and the header ==');
   show('no answer: the right one green, nothing tagged YOURS', nc[0].classList.contains('right') && !nc.some(function (c) { return c.classList.contains('mine'); }));
 
   var dom = makeDom();
-  var hv = new Function('$', lift(PLAY, 'headerVenue', 'trivia/play.html') + '; return headerVenue;')(dom.$);
+  /* headerVenue hands the work to the ONE shared copy, VPVenueLogo.headerName in /app/vp-venuelogo.js (4 Nov 2026): run that real one. */
+  var VLOGO = readFile('venueplay/app/vp-venuelogo.js');
+  var hn = new Function(lift(VLOGO, 'headerName', 'vp-venuelogo.js') + '; return headerName;')();
+  var hv = new Function('$', 'VPVenueLogo', lift(PLAY, 'headerVenue', 'trivia/play.html') + '; return headerVenue;')(dom.$, { headerName: hn });
   hv('', 'The Pause Bar');
   show('no logo: the venue\'s name is shown top left', dom.$('hdrVenueName').textContent === 'The Pause Bar' && !dom.$('hdrVenueName').classList.contains('hidden'));
   hv('https://x/logo.png', 'The Pause Bar');

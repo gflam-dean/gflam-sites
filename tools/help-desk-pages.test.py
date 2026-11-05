@@ -582,8 +582,9 @@ def main():
             down = {'/help/content?brand=venueplay&audience=patron': {'status': 500, 'body': {}}} if 'musical' in name else None
             t = Tab(b, routes=down)
             t.go(VP + path)
-            # The trivia phone keeps Help ONLY in its menu, top right (Dean, 3 Nov 2026: data-menu-only="1").
-            menu_only = 'trivia' in name
+            # The trivia phone keeps Help ONLY in its menu, top right (Dean, 3 Nov 2026: data-menu-only="1"), and the
+            # musical phone the same since its new look (4 Nov 2026: one menu sheet, Help its first row).
+            menu_only = True
             t.until('!!document.getElementById("%s")' % ('vphMenu' if menu_only else 'vphLink'), 15)
             # The start-of-game show (on by default again since 4 Nov) plays over the demo for about 2.5 s and
             # then takes itself off the page. Measure the game the player is left with, after it. Wait for the show to
@@ -595,7 +596,7 @@ def main():
             time.sleep(1.5)
             if menu_only:
                 check(name + ': no Help link at the foot of the page; Help is in the menu at the top right',
-                      t.js('!document.getElementById("vphLink") && !!document.getElementById("vphMenu") && document.getElementById("vphMenu").parentNode.id==="menuPanel"') is True)
+                      t.js('!document.getElementById("vphLink") && !!document.getElementById("vphMenu") && !!document.getElementById("vphMenu").closest("#menuPanel")') is True)
                 mb = t.js('(function(){var b=document.getElementById("menuBtn").getBoundingClientRect();return [b.left,b.top,b.right,b.bottom,innerWidth];})()')
                 check(name + ': and that menu button is top right', bool(mb) and mb[1] < 80 and mb[2] >= mb[4] - 24, mb)
             else:
@@ -609,7 +610,7 @@ def main():
             check(name + ': no support phone number or tel: link, on the page, in Help or in its form', t.js(NO_PHONE) is True)
             t.js('document.querySelector(".vph-x").click()')
             if down:
-                t.js('document.getElementById("vphLink").click()')
+                t.js('document.getElementById("%s").click()' % ('vphMenu' if menu_only else 'vphLink'))
                 got = t.until('document.querySelectorAll("#vphFaq details").length || 0', 8)
                 check('Worker down: Help still shows the FAQ from the site, open, and a way to send a message, with no steps',
                       got == len(vp_faq['patron']['items']) and t.js('document.getElementById("vphFaq").open') is True and t.js('!document.querySelector(".vph-issue") && !!document.querySelector(".vph-msg")') is True, got)

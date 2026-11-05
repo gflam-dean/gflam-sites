@@ -180,7 +180,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 230,
+  "checks": 228,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -225,6 +225,10 @@
  },
  "tools/musical-host-titles-in-chrome.test.py": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/musical-newlook-in-chrome.test.py": {
+  "checks": 250,
   "counted_by": "lines"
  },
  "tools/night-pass-hq-in-chrome.test.py": {
@@ -585,6 +589,10 @@
  },
  "tools/test-musical-host.js": {
   "checks": 94,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-newlook.js": {
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -1092,7 +1100,7 @@
   "counted_by": "lines"
  },
  "tools/venue-logo-in-chrome.test.py": {
-  "checks": 414,
+  "checks": 376,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

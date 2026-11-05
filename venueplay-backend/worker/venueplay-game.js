@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 19:37 · 758de98a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 06:49 · 440660e1';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1277,22 +1277,60 @@ async function joinInfoStaticRead(key, load, fresh) {
   joinInfoKeep(joinInfoStatic, key, { until: now + JOIN_INFO_STATIC_TTL_MS, data: data });
   return data;
 }
+/* THE VENUE'S OWN TV SLIDES, FOR ITS AD ON THE PLAYER'S PHONE (Dean, 3 Nov 2026: "What's on at <venue>" on the lobby
+   and after the game, /app/vp-phonead.js). The same pictures the venue's own TV already shows anyone in the room
+   (GET /screen answers them by slug), and nothing else. ONLY FOR A PHONE THAT ASKS (ad:1, the musical bingo phone,
+   4 Nov 2026), so bingo's and trivia's answers are byte for byte what they were and cost what they did. Kept 30 s per
+   venue, and a fresh:1 lookup does NOT bypass it: a picture a few seconds old is harmless, unlike the age and paper
+   rules the fresh read is for. So a busy room costs one read every 30 s, not one a phone. A failed read, or no venue,
+   is no slides: the ad is a nicety and must never cost a phone its join. */
+async function joinInfoWithSlides(env, body, venueId) {
+  let slides = [];
+  if (venueId) {
+    try {
+      const rows = await joinInfoStaticRead('a:' + venueId,
+        () => sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(venueId) + '&select=slides&limit=1'), false);
+      slides = phoneSlides(rows && rows[0] && rows[0].slides);
+    } catch (e) { slides = []; }
+  }
+  return Object.assign({}, body, { slides: slides });
+}
+/* The phone's copy of a venue's slides: pictures only, a plain https address (the rule tv.html applies before a
+   picture reaches the wall), the slide's own dates kept so the phone can leave out one not on yet or finished,
+   eight at most. Text slides stay on the TV: they are written for a wall, not a 375px card. */
+function phoneSlides(raw) {
+  const out = [];
+  if (!Array.isArray(raw)) return out;
+  for (const s of raw) {
+    if (out.length >= 8) break;
+    if (!s || typeof s !== 'object' || typeof s.image_url !== 'string') continue;
+    const u = s.image_url.trim();
+    if (u.length > 600 || !/^https:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) || u.indexOf('&#') !== -1) continue;
+    const o = { image_url: u };
+    if (typeof s.starts === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.starts)) o.starts = s.starts;
+    if (typeof s.ends === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.ends)) o.ends = s.ends;
+    out.push(o);
+  }
+  return out;
+}
 async function handleJoinInfo(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
   if (!code) return json({ collect: null, exists: false });
   const now = Date.now();
   const fresh = b.fresh === 1 || b.fresh === true;
+  /* ad:1, the phone that shows the venue's ad (/app/vp-phonead.js), gets the venue's slides with the same answer. */
+  const wantAd = b.ad === 1 || b.ad === true;
   if (!fresh) {
     const hit = joinInfoCache.get(code);
-    if (hit && hit.until > now) return json(hit.body);
+    if (hit && hit.until > now) return json(wantAd ? await joinInfoWithSlides(env, hit.body, hit.venueId) : hit.body);
   }
   // Stamped from BEFORE the lookup, so a copy never outlives the moment it was read by more than the
   // window, and never replaces a copy read after it (a slow lookup finishing behind a fresh one).
   const out = await joinInfoLookup(env, code, fresh);
   const until = now + JOIN_INFO_TTL_MS, prev = joinInfoCache.get(code);
-  if (out.keep && !(prev && prev.until > until)) joinInfoKeep(joinInfoCache, code, { until: until, body: out.body });
-  return json(out.body);
+  if (out.keep && !(prev && prev.until > until)) joinInfoKeep(joinInfoCache, code, { until: until, body: out.body, venueId: out.venueId || null });
+  return json(wantAd ? await joinInfoWithSlides(env, out.body, out.venueId) : out.body);
 }
 async function joinInfoLookup(env, code, fresh) {
   let venueId = null;
@@ -1461,7 +1499,7 @@ async function joinInfoLookup(env, code, fresh) {
     email: !!cfg.collect_email,
     mobile: !!cfg.collect_mobile,
     marketing_optin: !!cfg.collect_marketing_optin,
-  } } };
+  } }, venueId: venueId };
 }
 
 /* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a

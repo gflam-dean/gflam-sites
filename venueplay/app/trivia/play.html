@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -29,27 +30,7 @@
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
   .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-  /* THE HEADER, OPTION 5 (Dean, 3 Nov 2026): the venue's logo top left (or its name as text when it has
-     none), no player name, and our venueplay logo small at the BOTTOM of the page instead. Island-safe, and only on a phone
-     that has one (Dean, 3 Nov 2026): the header's top padding is max(12px, env(safe-area-inset-top)), the
-     footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
-     island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
-  .ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
-  .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
-  /* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
-     static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */
-  .ptop .brand .venue{position:absolute;left:auto;right:62px;top:calc(31px + env(safe-area-inset-top, 0px));transform:translateY(-50%);margin:0}   /* level with the menu button, which /app/vp-safe-area.css sets at 12px + the island, 38px tall */
-  .brand .word{display:flex;align-items:center;min-height:56px;min-width:0;font-family:'Manrope',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.15;text-align:left}
-  .brand .vname{overflow-wrap:break-word;hyphens:manual}
-  .brand .vname.long{font-size:16px}
-  .brand .div{width:1px;height:16px;background:var(--line)}
-  .venue{font-size:15px;color:var(--muted);margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px}
-  .vlogo{display:block;margin:0;height:56px;max-width:170px;object-fit:contain}   /* sized by its shape once it loads: /app/vp-venuelogo.js */
-  .pfoot{padding:22px 16px max(10px, env(safe-area-inset-bottom, 0px));text-align:center}   /* low, just above the home bar */
-  .pfoot svg{display:inline-block;width:132px;height:auto;color:#fff}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
-  .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
+  /* THE HEADER, OPTION 5, and our logo at the foot: one copy in /app/vp-phone.css, shared by the player phones (4 Nov 2026). */
 
   .view{flex:1;display:flex;flex-direction:column;padding:14px 16px 18px}
   .center{justify-content:center;text-align:center}
@@ -166,7 +147,7 @@
   .winner #finalSub{color:#fff;font-weight:700}
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} .winner #finalBig,.winner #finalEmoji{animation:none} }
   /* menu (top-right): Light mode + Leave */
-  .menubtn{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 9px);right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
+  /* .menubtn is in /app/vp-phone.css with the rest of the header (4 Nov 2026) */
   .menupanel{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 54px);right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:200px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
   .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
@@ -1167,13 +1148,7 @@
   }
   /* The venue's name as text, top left, when it has no logo (option 5). The logo wins: never both.
      Never cut short: a long name steps down to 16px and wraps. */
-  function headerVenue(logo, name){
-    var vn=$("hdrVenueName"); if(!vn) return;
-    var nm=String(name||"").trim();
-    if(logo){ vn.classList.add("hidden"); return; }
-    if(nm){ vn.textContent=nm; vn.classList.toggle("long", nm.length>24); }
-    vn.classList.remove("hidden");
-  }
+  function headerVenue(logo, name){ try{ VPVenueLogo.headerName($("hdrVenueName"), logo, name); }catch(e){} }   /* one copy, in /app/vp-venuelogo.js (4 Nov 2026) */
   function loadJoinInfo(){
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
