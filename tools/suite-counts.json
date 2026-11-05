@@ -875,6 +875,10 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-self-serve-restart.js": {
+  "checks": 128,
+  "counted_by": "lines"
+ },
  "tools/test-set-count.js": {
   "checks": 9,
   "counted_by": "lines"
