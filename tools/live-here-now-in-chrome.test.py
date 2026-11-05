@@ -310,8 +310,8 @@ def main():
     check('nothing on the page collects anything: no form, no input, no Meta pixel; analytics is the site\'s own vp-analytics.js',
           not re.search(r'<(form|input|textarea|select)\b', HTML) and 'vp-pixel' not in HTML and 'fbq(' not in HTML
           and '<script src="/app/vp-analytics.js" defer></script>' in HTML)
-    check('the name is written "venueplay" in what a punter reads (the copyright line keeps the registered VenuePlay)',
-          'VenuePlay' not in re.sub(r'trading as VenuePlay', '', text) and 'venueplay' in text)
+    check('the name is written "venueplay" in what a punter reads, the copyright line too ("trading as venueplay", Dean, 4 Nov 2026)',
+          'VenuePlay' not in text and 'venueplay' in text and 'trading as venueplay' in text)
     check('the header carries the new wordmark, drawn by tools/sync-brand-mark.py (data-vp-mark="wordmark")',
           'data-vp-mark="wordmark"' in HTML and 'href="/" aria-label="venueplay home"' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()

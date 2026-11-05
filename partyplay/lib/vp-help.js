@@ -128,7 +128,7 @@
       ".vph summary{cursor:pointer;padding:11px 0;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;gap:12px}" +
       ".vph summary::-webkit-details-marker{display:none}" +
       ".vph summary::after{content:'+';color:#FF1F8E;font-weight:800;flex:none}" +
-      ".vph details[open] summary::after{content:'\u2212'}" +
+      ".vph details[open]>summary::after{content:'\u2212'}" +
       ".vph details p{margin:0 0 12px;color:#C9C9D1}" +
       ".vph label{display:block;font-size:13px;color:#9A9AA4;margin:12px 0 5px}" +
       ".vph input[type=text],.vph input[type=email],.vph input[type=tel],.vph textarea,.vph select{width:100%;box-sizing:border-box;background:#17171A;border:1px solid rgba(255,255,255,.14);color:#E7E7EC;border-radius:10px;padding:12px;font:400 16px/1.4 'Manrope',system-ui,sans-serif;outline:none;text-align:left}" +

@@ -356,12 +356,33 @@ def help_page_checks(b, VP):
         check(tag + ' venue: the venue issues and the venue FAQ (%d), open on the page' % len(vp_faq['venue']['items']),
               got == len(vp_faq['venue']['items']) and t.js('document.getElementById("vphFaq-venue").open') is True and
               t.js('Array.prototype.map.call(document.querySelectorAll("#vphFlow-venue .vph-issue"),function(x){return x.textContent;}).join("|")') == '|'.join(i['title'] for i in ISSUES['venueplay:venue']), got)
+        # THE FAQ MARKERS (4 Nov 2026): the outer "Questions and answers" is open on the page, so it shows
+        # the minus; every question inside it is shut and must show a plus. Until 4 Nov the open outer
+        # details turned every summary inside it to a minus, so a shut question looked open.
+        mk = t.js('(function(){var q=function(e){return getComputedStyle(e,"::after").content;};var o=document.querySelector("#vphFaq-venue>summary");'
+                  'var inner=Array.prototype.map.call(document.querySelectorAll("#vphFaq-venue details:not([open])>summary"),q);'
+                  'return JSON.stringify({outer:o&&q(o),inner:inner});})()')
+        mk = json.loads(mk) if isinstance(mk, str) else {}
+        check(tag + ' venue: the open "Questions and answers" shows a minus and every shut question in it a plus',
+              mk.get('outer') == '"\u2212"' and len(mk.get('inner') or []) == len(vp_faq['venue']['items']) and all(x == '"+"' for x in mk['inner']), mk)
+        # THE LAYOUT (Dean, 4 Nov 2026: "needs formatting properly"): on a wide screen the help sits in a
+        # right-hand column level with the heading, lined up with the right edge of the choices above;
+        # on a phone it is one column, the help card before the email line.
+        lay = t.js('(function(){var R=function(s){var e=document.querySelector(s);if(!e)return null;var r=e.getBoundingClientRect();return [Math.round(r.left),Math.round(r.top),Math.round(r.right),Math.round(r.bottom)];};'
+                   'return JSON.stringify({card:R("#venue > .card"),head:R("#venue .panel-head h2"),reach:R("#venue .reach"),paths:R(".paths"),sw:document.documentElement.scrollWidth,vw:innerWidth});})()')
+        lay = json.loads(lay) if isinstance(lay, str) else {}
+        if tag == 'desktop':
+            check(tag + ' venue: the help card is a right-hand column beside the heading, its right edge on the choices\' right edge',
+                  bool(lay.get('card')) and lay['card'][0] > lay['head'][2] and abs(lay['card'][2] - lay['paths'][2]) <= 2 and abs(lay['card'][1] - lay['head'][1]) <= 40, lay)
+        else:
+            check(tag + ' venue: one column on a phone: the card under the heading, the email line under the card, nothing sideways',
+                  bool(lay.get('card')) and lay['card'][1] > lay['head'][3] and lay['reach'][1] >= lay['card'][3] and lay['sw'] <= lay['vw'], lay)
         check(tag + ' venue: the player panel stays shut, and the address says #venue', t.js('document.getElementById("player").hidden && location.hash==="#venue" && document.querySelector("[data-path=venue]").getAttribute("aria-selected")==="true"') is True)
         # THE SUPPORT PHONE on /help: drawn by the widget into the venue part, as on the console.
         c = page_call(t)
         check(tag + ' venue: "Call us on 07 5228 3667", a tel:+61752283667 link, above the issues, inside the card, no sideways scroll', call_ok(c), c)
         check(tag + ' venue: the call line is the first thing in the venue help, and there is one of it',
-              t.js('(function(){var f=document.getElementById("vphFlow-venue");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall-venue"&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
+              t.js('(function(){var f=document.getElementById("vphFlow-venue"),c=document.getElementById("vphCall-venue");if(!f||!c)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return first===c&&document.querySelectorAll("#venue .vph-call").length===1;})()') is True)
         t.shot('21-help-%s-venue' % tag)
         I3 = ISSUES['venueplay:venue'][0]
         t.js('document.querySelector("#vphFlow-venue [data-issue=\'%s\']").click()' % I3['id'])
@@ -508,7 +529,7 @@ def main():
         t.js('document.getElementById("vphLink").scrollIntoView({block:"end"})')
         t.shot('02-bingo-phone-help-link')
         check('bingo phone: Help is also in the phone menu, above Leave game',
-              t.js('(function(){var m=document.getElementById("vphMenu"),l=document.getElementById("leaveBtn");return !!(m&&l&&m.parentNode===l.parentNode&&m.nextElementSibling===l);})()') is True)
+              t.js('(function(){var m=document.getElementById("vphMenu"),l=document.getElementById("leaveBtn");return !!(m&&l&&m.parentNode===l.parentNode&&(m.compareDocumentPosition(l)&Node.DOCUMENT_POSITION_FOLLOWING));})()') is True)
         panel_checks(t, 'bingo phone', len(vp_faq['patron']['items']), 'Help')
         t.shot('03-bingo-phone-help-panel')
         I1 = ISSUES['venueplay:patron'][0]
@@ -621,12 +642,16 @@ def main():
         t.go(VP + '/__fixture/venue.html')
         # Since 3 Nov 2026 Help goes just before Sign out (the last button), so a Back link that sits first stays
         # first: Back, Help, Sign out on one line (Dean, round 2 B). On the console that is Account, Help, Sign out.
-        check('venue: a Help button sits in the header beside Account', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="hactions"&&!!x.previousElementSibling&&x.previousElementSibling.textContent==="Account"&&!!x.nextElementSibling&&x.nextElementSibling.textContent==="Sign out"&&!x.nextElementSibling.nextElementSibling;})()', 8) is True)
+        # By meaning, not by neighbour (NOTES-help-desk-pages.md, 4 Nov 2026): Help is a visible control in the
+        # header actions, on the same row as Account. The header order is Dean's to change.
+        check('venue: a Help control is in the header actions, on the same row as Account', t.until('(function(){var x=document.getElementById("vphLink");if(!x)return false;var a=x.closest(".hactions");'
+              'if(!a)return false;var r=x.getBoundingClientRect();var acct=[].filter.call(a.querySelectorAll("a,button"),function(b){return /^Account$/.test(b.textContent.trim())})[0];'
+              'return r.width>0&&r.height>0&&!!acct&&Math.abs(acct.getBoundingClientRect().top-r.top)<=6;})()', 8) is True)
         panel_checks(t, 'venue', len(vp_faq['venue']['items']), 'venues')
         t.shot('07-venue-help-panel')
         c = t.js(CALL_LINE)
         check('venue: Help opens with "Call us on 07 5228 3667", a tel:+61752283667 link, inside the panel, no sideways scroll', call_ok(c), c)
-        check('venue: the call line is first, above the issues', t.js('(function(){var f=document.getElementById("vphFlow");return !!f.firstElementChild&&f.firstElementChild.id==="vphCall";})()') is True)
+        check('venue: the call line is first, above the issues', t.js('(function(){var f=document.getElementById("vphFlow"),c=document.getElementById("vphCall");if(!f||!c)return false;var first=[].filter.call(f.children,function(e){return e.getBoundingClientRect().height>0})[0];return first===c;})()') is True)
         t.js('document.getElementById("vphFaq").open=true;Array.prototype.forEach.call(document.querySelectorAll("#vphFaq details"),function(d){d.open=true;})')
         check('venue: the FAQ says to call 07 5228 3667 and press 2 if a game is on right now',
               'call 07 5228 3667 and press 2' in (t.js('document.getElementById("vphFaq").textContent') or ''))
@@ -707,7 +732,7 @@ def main():
         print('PARTYPLAY HOST CONSOLE')
         t = Tab(b, 390, 800)
         t.go(PP + '/host?code=KFP7QX&key=abc')
-        check('partyplay host: Help sits in the top bar', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&x.parentNode.className==="top";})()', 10) is True)
+        check('partyplay host: Help sits in the top bar', t.until('(function(){var x=document.getElementById("vphLink");return !!x&&!!x.closest(".top")&&x.getBoundingClientRect().height>0;})()', 10) is True)
         panel_checks(t, 'partyplay host', len(pp_faq['host']['items']), 'hosts')
         t.shot('09-partyplay-host-panel')
         check('partyplay host: its own issues ("The party screen is blank")', 'The party screen is blank' in (t.js('document.getElementById("vphFlow").textContent') or ''))

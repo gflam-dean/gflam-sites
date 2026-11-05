@@ -136,8 +136,23 @@ print('the contact lines say venueplay, not Gflam Group; the legal line stays (D
   });
   ['index', 'help', 'nsw', 'privacy', 'terms', 'live-here-now'].forEach(function (f) {
     var src = readFile('venueplay/' + f + '.html') || '';
-    check(f + '.html keeps the legal footer line "© Gflam Group Pty Ltd, trading as VenuePlay"', /&copy; <span id="vp-year"><\/span> Gflam Group Pty Ltd, trading as VenuePlay/.test(src));
+    check(f + '.html keeps the legal footer line, lowercase: "© Gflam Group Pty Ltd, trading as venueplay" (Dean, 4 Nov 2026)', /&copy; <span id="vp-year"><\/span> Gflam Group Pty Ltd, trading as venueplay(?![A-Za-z])/.test(src));
   });
+  /* LOWERCASE ON THE LEGAL PAGES TOO (Dean, 4 Nov 2026: "just make it all lowercase, I don't care"). The
+     opening line of the Terms and of the Privacy Policy names the registered entity, then the name it trades as. */
+  [['terms', terms], ['privacy', priv]].forEach(function (x) {
+    check(x[0] + ': the opening line says "trading as venueplay", and no "VenuePlay" is left in what a reader sees',
+          /\(ABN 35 679 383 049\), trading as venueplay \(/.test(x[1]) && !/VenuePlay/.test(x[1].replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/facebook\.com\/people\/VenuePlay\//g, '')));
+  });
+  /* PRIVACY QUESTIONS GO TO THE HELP PAGE FIRST (Dean, 4 Nov 2026), with a real email address kept beside it
+     (the Privacy Act needs real contact details). hello@ forwards into the help desk; never a phone number. */
+  var pc = contactBlock(priv), after = priv.slice(priv.indexOf(pc) + pc.length, priv.indexOf('</main>'));
+  check('privacy: Contact us lists the help page (/help) and hello@venueplay.com.au, and no phone number',
+        /Help: <a href="\/help">venueplay\.com\.au\/help<\/a>/.test(pc) && /mailto:hello@venueplay\.com\.au/.test(pc) && !/tel:|\b0\d(?:[ -]?\d){8}\b/.test(pc + after), pc);
+  check('privacy: the line under it sends privacy requests to the help page first, then the email',
+        /quickest way to ask us about your privacy[^<]*<a href="\/help">/.test(after) && /You can also email <a href="mailto:hello@venueplay\.com\.au">/.test(after), after.slice(0, 300));
+  check('privacy: the Meta Pixel line reads "The Meta Pixel never receives a venue\u2019s player list, or anyone\u2019s name or email address."',
+        priv.indexOf('The Meta Pixel never receives a venue\u2019s player list, or anyone\u2019s name or email address.') !== -1 && priv.indexOf('it is never sent a venue') === -1);
 })();
 
 print('PartyPlay: not at a pub, club or other licensed venue (NSW social housie, 1 Oct point 11)');

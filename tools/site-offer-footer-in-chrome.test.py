@@ -98,19 +98,31 @@ FOOT = r'''(function(){
   window.scrollTo({top: document.documentElement.scrollHeight, behavior: "instant"});
   var f = document.querySelector("footer"); if (!f) return JSON.stringify({none:true});
   var mid = function (el) { if (!el) return null; var r = el.getBoundingClientRect(); return Math.round(r.left + r.width / 2); };
-  var lines = {}, links = f.querySelectorAll(".foot-links a");
+  var lines = {}, lineTxt = {}, links = f.querySelectorAll(".foot-links a");
   Array.prototype.forEach.call(links, function (a) { var r = a.getBoundingClientRect(); var k = Math.round(r.top / 6);
-    (lines[k] = lines[k] || []).push([r.left, r.right]); });
+    (lines[k] = lines[k] || []).push([r.left, r.right]); (lineTxt[k] = lineTxt[k] || []).push(a.textContent.trim()); });
+  var lineTexts = Object.keys(lineTxt).map(Number).sort(function (a, b) { return a - b; }).map(function (k) { return lineTxt[k].join(' | '); });
   var lineMids = Object.keys(lines).map(function (k) { var L = lines[k]; return Math.round((Math.min.apply(null, L.map(function (x) { return x[0]; })) + Math.max.apply(null, L.map(function (x) { return x[1]; }))) / 2); });
   var dots = Array.prototype.filter.call(f.querySelectorAll(".foot-links .dot"), function (d) { return d.getBoundingClientRect().width > 0; }).length;
   var copy = null, w = document.createTreeWalker(f, NodeFilter.SHOW_TEXT);
   while (w.nextNode()) { if (/Gflam Group Pty Ltd/.test(w.currentNode.nodeValue)) copy = w.currentNode; }
+  function rgc(n){ var q = document.createRange(); q.selectNodeContents(n); return q.getBoundingClientRect(); }
   var cb = null, oneLine = false; if (copy) { var rg = document.createRange(); rg.selectNodeContents(copy); cb = rg.getBoundingClientRect().bottom;
-    var yr = f.querySelector("#vp-year"), rr = rg.getClientRects(); oneLine = !!yr && rr.length >= 1 && Math.abs(yr.getBoundingClientRect().top - rr[0].top) <= 4; }
+    var yr = f.querySelector("#vp-year"), rr = rg.getClientRects(); oneLine = !!yr && rr.length === 1 && Math.abs(yr.getBoundingClientRect().top - rr[0].top) <= 4; }
   var bar = document.querySelector(".vp-float-cta.show"), barTop = bar ? bar.getBoundingClientRect().top : innerHeight;
   return JSON.stringify({ vw: innerWidth, sw: document.documentElement.scrollWidth, brand: mid(f.querySelector(".foot-brand")),
+    textBottom: (function (t) { return t ? Math.round(t.getBoundingClientRect().bottom) : null; })(f.querySelector(".powered .powered-by-text")),
+    textW: (function (t) { return t ? Math.round(t.getBoundingClientRect().width) : 0; })(f.querySelector(".powered .powered-by-text")),
+    textMid: mid(f.querySelector(".powered .powered-by-text")),
+    poweredTop: (function (i) { return i ? Math.round(i.getBoundingClientRect().top) : 0; })(f.querySelector(".powered img.powered-by")),
     poweredH: (function (i) { return i ? Math.round(i.getBoundingClientRect().height * 10) / 10 : null; })(f.querySelector(".powered img.powered-by")),
-    powered: mid(f.querySelector(".powered")), social: mid(f.querySelector(".foot-social")), lineMids: lineMids, lineCount: lineMids.length,
+    poweredW: (function (i) { return i ? Math.round(i.getBoundingClientRect().width * 10) / 10 : null; })(f.querySelector(".powered img.powered-by")),
+    /* the venueplay letters' own width: the inline wordmark is drawn edge to edge; the primary logo file
+       (viewBox -101 -829 4876 1136) has 100 units of glow room either side of its 4676-unit letters */
+    markW: (function (b) { var i = b && b.querySelector("img[src*='venueplay-primary']"), v = b && b.querySelector("svg[data-vp-mark='wordmark']");
+      if (i) return Math.round(i.getBoundingClientRect().width * 4676 / 4876 * 10) / 10; if (v) return Math.round(v.getBoundingClientRect().width * 10) / 10; return null; })(f.querySelector(".foot-brand")),
+    gapAbove: Math.round(parseFloat(getComputedStyle(f).marginTop)), padTop: Math.round(parseFloat(getComputedStyle(f).paddingTop)),
+    powered: mid(f.querySelector(".powered")), social: mid(f.querySelector(".foot-social")), lineMids: lineMids, lineCount: lineMids.length, lineTexts: lineTexts, copyW: (function(){ return copy ? Math.round((function(r){return r.width;})(rgc(copy))) : 0; })(), copyFs: copy ? parseFloat(getComputedStyle(copy.parentNode).fontSize) : 0,
     links: links.length, dots: dots, copyBottom: cb, oneLine: oneLine, barTop: barTop, bar: !!bar, dir: getComputedStyle(f.querySelector(".foot")).flexDirection });
 })()'''
 
@@ -144,6 +156,11 @@ try:
     ok('no offer price and no closing day anywhere on the homepage ($2.50, $2.30, "%s", "%s")' % (DAY, CODE),
        not re.search(r'\$2\.(50|30)\b', allt) and DAY not in allt and DATE not in allt and CODE not in allt,
        re.findall(r'.{30}(?:\$2\.50|\$2\.30|%s).{30}' % re.escape(DAY), allt)[:3])
+    ok('the price words say the per-player rate never changes and only the monthly bill moves, with a plan move up '
+       '(no "the only time your monthly changes" beside "the rate never changes"; Dean, 4 Nov 2026)',
+       'Your rate of $3 per player, per month, never changes. Your monthly bill moves only when your plan moves up.' in allt
+       and 'Your rate per player never changes: that plan move is the only thing that changes your monthly bill.' in allt
+       and 'only time your monthly changes' not in allt, re.findall(r'.{0,60}never changes.{0,80}', allt)[:3])
     ok('the homepage does not load the offer file or ask the Worker about a code',
        h.get('scripts') == 0 and h.get('asked') == 0 and h.get('offer') is False, h)
     S.js(sid, 'document.getElementById("offer").scrollIntoView({block:"start",behavior:"instant"}); window.scrollBy(0,-60); true')
@@ -186,15 +203,49 @@ try:
         mid = (f.get('vw') or 390) / 2.0
         centred = all(x is not None and abs(x - mid) <= 3 for x in (f.get('brand'), f.get('powered'), f.get('social')))
         ok('%s: the logo, "Powered by Gflam Touring" and the social icons are centred' % name, centred, f)
-        ok('%s: the powered-by Gflam line is the smaller 14px line (Dean, 3 Nov 2026 evening)' % name,
-           f.get('poweredH') is not None and 13 <= f['poweredH'] <= 15, f.get('poweredH'))
+        ok('%s: the powered-by block is two lines, centred: "powered by" over the Gflam logo, the Gflam logo about 104px wide, no wider than the screen (Dean, 5 Nov 2026)' % name,
+           f.get('poweredW') and 98 <= f['poweredW'] <= 110 and f.get('textBottom') is not None
+           and f['textBottom'] <= f.get('poweredTop', 0) + 1 and f.get('textW', 0) > 20 and abs(f.get('textMid', 0) - mid) <= 3 and f['poweredW'] <= f.get('vw', 0), (f.get('poweredW'), f.get('markW'), f.get('poweredH')))
+        ok('%s: the footer sits lower, with a tad less room above it than before (about 25%% less, 48px), sized for a phone: 44 to 52px of space and 44 to 56px inside before the logo' % name,
+           44 <= f.get('gapAbove', 0) <= 52 and 44 <= f.get('padTop', 0) <= 56, (f.get('gapAbove'), f.get('padTop')))
         ok('%s: every line of links is centred, and no dot is left at the end of a line' % name,
            f.get('links', 0) >= 4 and f.get('lineCount', 0) >= 1 and all(abs(x - mid) <= 3 for x in f.get('lineMids', [])) and f.get('dots') == 0, f)
+        LT = f.get('lineTexts') or []
+        ok('%s: the footer links sit on three centred lines, grouped as page links / FAQs, Help, Contact / Privacy, Terms (Dean, 5 Nov 2026)' % name,
+           len(LT) == 3 and LT[2] == 'Privacy | Terms' and LT[0].split(' | ')[0] in ('Play', 'Home')
+           and (LT[1] == 'FAQs | Help | Contact' or (page in ('/terms.html', '/privacy.html') and LT[1] == 'Help')), LT)
+        ok('%s: the copyright line is on ONE line at 390, in a font of 11px or more' % name,
+           f.get('oneLine') is True and f.get('copyW', 999) <= f.get('vw', 0) - 24 and f.get('copyFs', 0) >= 11, (f.get('copyW'), f.get('copyFs'), f.get('oneLine')))
         ok('%s: the copyright line is one line ("(c) 2026 Gflam Group..."), wholly above the sticky bar%s, and nothing scrolls sideways' % (name, '' if page in ('/help.html', '/terms.html', '/privacy.html') else ' (shown)'),
            f.get('copyBottom') is not None and f.get('oneLine') is True and f['copyBottom'] <= f['barTop'] - 4 and f.get('sw', 999) <= f.get('vw', 0)
            and (f.get('bar') or page in ('/help.html', '/terms.html', '/privacy.html')), f)
         shot(S, sid, 'footer-%s-390' % page.strip('/').replace('.html', ''))
         S.close_tab(tid)
+
+    print('\nTHE FOOTER AT 375px')
+    for page in ('/index.html', '/nsw.html', '/help.html', '/terms.html', '/privacy.html'):
+        tid, sid = S.open(page, 375, 812, mobile=True, pre=pre(INSIDE_MS))
+        S.until(sid, '!!document.querySelector("footer .foot-links")', 20)
+        time.sleep(0.8)
+        S.js(sid, 'window.scrollTo({top: document.documentElement.scrollHeight, behavior: "instant"}); true')
+        time.sleep(0.6)
+        v = S.js(sid, FOOT)
+        f = json.loads(v) if isinstance(v, str) else {}
+        ok('%s at 375: the copyright is one line, the links are three lines, and nothing scrolls sideways' % page,
+           f.get('oneLine') is True and f.get('copyW', 999) <= 375 - 24 and f.get('lineCount') == 3 and f.get('sw', 999) <= 375, (f.get('oneLine'), f.get('copyW'), f.get('lineCount'), f.get('sw')))
+        S.close_tab(tid)
+
+    print('\nTHE POWERED-BY BLOCK FITS A 320px SCREEN')
+    tid, sid = S.open('/index.html', 320, 640, mobile=True, pre=pre(INSIDE_MS))
+    S.until(sid, '!!document.querySelector("footer .foot-links")', 20)
+    time.sleep(0.8)
+    S.js(sid, 'window.scrollTo({top: document.documentElement.scrollHeight, behavior: "instant"}); true')
+    time.sleep(0.6)
+    v = S.js(sid, FOOT)
+    f = json.loads(v) if isinstance(v, str) else {}
+    ok('at 320px the two-line powered-by block is inside the screen, the logo 98 to 110px, and nothing scrolls sideways',
+       f.get('poweredW') and 98 <= f['poweredW'] <= 110 and f.get('sw', 999) <= 320 and f.get('textBottom') is not None, (f.get('poweredW'), f.get('sw')))
+    S.close_tab(tid)
 
     print('\nTHE FOOTER AT DESKTOP WIDTH IS AS IT WAS')
     tid, sid = S.open('/index.html', 1280, 900, pre=pre(INSIDE_MS))
@@ -203,13 +254,16 @@ try:
     v = S.js(sid, FOOT)
     f = json.loads(v) if isinstance(v, str) else {}
     ok('desktop: the footer is still a row, with the dots between the links', f.get('dir') == 'row' and f.get('dots') == f.get('links', 0) - 1 and f.get('lineCount') == 1, f)
+    ok('desktop: the footer has 90px or more of space above it and the powered-by Gflam logo is about 104px wide (Dean, 5 Nov 2026)',
+       f.get('gapAbove', 0) >= 90 and f.get('padTop', 0) >= 60 and f.get('poweredW') and 98 <= f['poweredW'] <= 110,
+       (f.get('gapAbove'), f.get('padTop'), f.get('poweredW'), f.get('markW')))
     S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 28   # +5: the powered-by line measured on each page (3 Nov 2026 evening)
+EXPECTED = 51   # +5: the powered-by line measured on each page (3 Nov 2026 evening); +7 (4 Nov 2026): the footer gap on each page, the desktop footer, the price words
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)
