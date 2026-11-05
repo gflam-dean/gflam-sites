@@ -4855,10 +4855,10 @@ async function vpbCardLink(request, env, json) {
   if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
   const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=founding_id,max_players&limit=1');
   const fid = vr && vr[0] && vr[0].founding_id;
-  if (!fid) return json({ error: 'This venue has no account record yet. Reply to Dean\'s email and he will sort it.' }, 409);
+  if (!fid) return json({ error: 'This venue has no account record yet. Email support@venueplay.com.au and we will sort it.' }, 409);
   const fr = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fid) + '&select=id,max_seats,stripe_subscription_id&limit=1');
   const f = fr && fr[0];
-  if (!f) return json({ error: 'This venue has no account record yet. Reply to Dean\'s email and he will sort it.' }, 409);
+  if (!f) return json({ error: 'This venue has no account record yet. Email support@venueplay.com.au and we will sort it.' }, 409);
   const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
   const rate = vpaProspectPrice(env, prow).rate;   // a prospect keeps the offer they were set up on until a pause
   const seats = parseInt(f.max_seats, 10) || parseInt(vr[0].max_players, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
