@@ -24,7 +24,10 @@ eval(lift(BILL,"vpaStaffCard"));
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaPlainLineDesc"));   // the lines in plain words (31 Oct 2026)
 eval(lift(BILL,"vpaFmtDate"));
-eval(lift(BILL,"vpaLineParts"));       // each line in two plain lines (Dean, 5 Nov 2026)
+eval(lift(BILL,"vpaEmailButton"));   // one centred button style (Dean, 5 Nov 2026 round 5)
+eval(lift(BILL,"vpaDayMonth"));
+eval(lift(BILL,"vpaLineParts"));
+eval(lift(BILL,"vpaInvoiceVenues"));       // each line in two plain lines (Dean, 5 Nov 2026)
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
 /* The receipt's "Let us know how we're going" faces (5 Nov 2026). jsc has no crypto.subtle, so here they
    render as nothing, which is the receipt's own fallback; tools/test-receipt-survey.js runs them. */
@@ -32,6 +35,7 @@ eval(lift(BILL,"vpaCardSecret"));
 eval(lift(BILL,"vpaCustomerSite"));
 eval(lift(BILL,"vpaRateToken"));
 eval(lift(BILL,"vpaRateHtml"));
+eval(lift(BILL,"vpaRateFeedbackLink"));
 var VPA_RATE_FACES = [];
 eval(lift(BILL,"vpaTaxSummaryHtml"));
 /* The receipt and the helpers it calls. These must be lifted at TOP LEVEL: an eval inside a
@@ -71,7 +75,7 @@ pass("every line on her bill is listed", (lines.match(/full month/g)||[]).length
      "found " + ((lines.match(/full month/g)||[]).length) + " of the 3 extra-player lines");
 /* In plain words since 31 Oct 2026 (Dean: never "founding" on anything a venue sees). Stripe's
    product keeps its name; tools/test-receipts-plain-words.js runs the rest of that rule. */
-pass("the subscription line is there too, in plain words", lines.indexOf("venueplay plan, monthly") !== -1 && lines.indexOf("1 player at $2.50 each") !== -1 && !/founding/i.test(lines));
+pass("the subscription line is there too, in plain words", lines.indexOf("1 player at $2.50 each") !== -1 && lines.indexOf("venueplay plan") === -1 && !/founding/i.test(lines));
 pass("each venue is named, which is what a group account needs", lines.indexOf("Not jess") !== -1 && lines.indexOf("The Jolly Jess") !== -1);
 /* Count the AMOUNT CELLS, not the string. The subscription line's own description
    contains "(at $2.50 / month)", so a naive search finds five and the check failed on
@@ -211,6 +215,7 @@ eval(lift(BILL,"vpaIsExtrasInvoice"));
 eval(lift(BILL,"vpaMoveExtrasToMonthly"));
 eval(lift(BILL,"vpaPaymentFailedNextStep"));
 eval(lift(BILL,"vpaFmtDate"));
+eval(lift(BILL,"vpaEmailButton"));   // one centred button style (Dean, 5 Nov 2026 round 5)
 eval(lift(BILL,"vpaFirePaymentFailedEmail"));
 var limit = /const VPA_EXTRAS_MOVE_MAX_CENTS = ([0-9]+);/.exec(BILL);
 var VPA_EXTRAS_MOVE_MAX_CENTS = limit ? Number(limit[1]) : NaN;

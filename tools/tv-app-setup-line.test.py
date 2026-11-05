@@ -205,8 +205,9 @@ check('the venue onboarding email has no "Ready to forward" banner and no "send 
       not re.search(r'Ready to forward|straight on to whoever|forward this on', obt, re.I) and 'forwardable' not in ob.lower(), obt[:300])
 check('the venue onboarding email has no screen-link box, no {{tv_url}} (not even in its notes), no "home page" and no /tv?slug',
       '{{tv_url}}' not in ob_raw and 'screen link' not in obt.lower() and 'home page' not in obt and '/tv?' not in ob_raw, obt[-500:])
-check('the venue onboarding email says where the join code shows the right way (host console and the TV, once a game is started)',
-      "When you start a game, the players' join code shows on your host console and on the TV." in obt, obt[-700:])
+# Dean, 5 Nov 2026 round 4: the TV step ends on the full-screen line; nothing about the join code there at all.
+check('the venue onboarding email\'s TV step ends on the full-screen line and says nothing about a join code',
+      "enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. Open the host console" in obt and 'join code' not in obt, obt[-700:])
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))

@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 17:43 · db8125ae';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 18:26 · afd7c89c';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3905,10 +3905,11 @@ async function vpaProspectCalled(request, env, json) {
  *   - the free month starts the FIRST TIME anyone at the venue signs in (POST /account/prospect-start
  *     from the app's setup guide; the hourly sweep also notices a sign-in from Auth), and ends at
  *     11:59:59pm Brisbane on the 30th day after that (VPA_FREE_MONTH_DAYS)
- *   - with no card: three reminders, no more (Dean, 30 Oct 2026; it was seven): day 3, day 23, and the
- *     day before the month ends (day 29), only 8am to 5pm Monday to Friday Brisbane. An early one (3, 23)
- *     that lands on a weekend goes the next Monday; the day-29 one goes the Friday before, so the last one
- *     always beats the pause.
+ *   - with no card: three reminders, no more (Dean, 5 Nov 2026 ~7pm; before that 3, 23, 29): day 3, one week
+ *     before the month ends (day 23, "One week left", with their stats) and the last day itself (day 30, "Today is
+ *     the last day"), only 8am to 5pm Monday to Friday Brisbane. The early one (3) that lands on a weekend goes the
+ *     next Monday; 23 and 30 go the Friday before, so they always beat the pause, and a day 30 moved to a Friday is
+ *     sent as a "last" one, never as "today".
  *     A run that finds several due sends only the newest. Each has "Add my card" and "Cancel, it's
  *     not for us". What has gone is kept in vp_prospects.reminders_sent, so a missed run or a restart
  *     neither loses one nor sends one twice.
@@ -3919,8 +3920,10 @@ async function vpaProspectCalled(request, env, json) {
  *     that day. A card added after the pause switches the venue straight back on.
  * ======================================================================== */
 const VPA_FREE_MONTH_DAYS = 30;
-const VPA_REMINDER_DAYS = [3, 23, 29];
-const VPA_LAST_REMINDER_FROM = 29;          // 29, the day before the free month ends, is "the last one"
+/* Dean, 5 Nov 2026 ~7pm (replaces 30 Oct's 3, 23, 29): day 3, one week before the end (23: "last", their stats) and the
+   last day itself (30: "final"). There is no day-29 email any more. */
+const VPA_REMINDER_DAYS = [3, 23, 30];
+const VPA_LAST_REMINDER_FROM = 23;          // 23 and 30 move to the Friday before a weekend, never after
 const VPA_STANDARD_RATE = 3.00, VPA_OFFER_RATE = 2.50;
 /* THE 5-DAY GRACE, EMAIL WORDING ONLY (Dean, 5 Nov 2026: "you have 5 days after your free month ends to add
    your card and keep $2.50"). The prospect welcome and the card reminder carry that sentence in a grace section
@@ -3928,6 +3931,10 @@ const VPA_STANDARD_RATE = 3.00, VPA_OFFER_RATE = 2.50;
    today vpaProspectPrice drops the offer the moment the pause lands. The billing job that builds the grace
    (vpaProspectPrice, the sweep and the Terms) flips this in the same commit, never before. */
 const VPA_OFFER_GRACE_LIVE = false;
+/* HOW LONG A PAUSED ACCOUNT IS KEPT, for the card reminder's "We keep your paused account for N days" (Dean, 5 Nov 2026
+   round 5: "leave it for now, I'm deciding"). 0 means not decided, and the line is left out. Set the days only once
+   Dean has said them and whatever clears a paused account honours them. */
+const VPA_PAUSED_KEEP_DAYS = 0;
 const VPA_BNE_MS = 10 * 3600000;            // Brisbane, UTC+10, no daylight saving
 function vpaBneDay(ms) { return new Date(ms + VPA_BNE_MS).toISOString().slice(0, 10); }
 function vpaBneDayStartMs(day) { return Date.parse(day + 'T00:00:00Z') - VPA_BNE_MS; }
@@ -4107,8 +4114,8 @@ async function vpaProspectCardAdded(env, foundingId) {
   await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
   return true;
 }
-/* ONE REMINDER EMAIL, emails/prospect-reminder.html. kind: 'early' (3, 23), 'last' (29, the day before it ends).
-   'final' (the last day itself) is no longer on the schedule (Dean, 30 Oct 2026) and is kept only as a template. */
+/* ONE REMINDER EMAIL, emails/prospect-reminder.html. kind: 'early' (day 3), 'last' (day 23, one week out, or a day 30 moved to a Friday), 'final' (the last day itself, day 30) (Dean, 5 Nov 2026 ~7pm).
+   The last-day one says "today" only when it goes on that day. Day 29 is no longer on the schedule. */
 async function vpaRenderProspectReminder(env, o) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const res = await fetch(site + '/emails/prospect-reminder.html');
@@ -4116,14 +4123,30 @@ async function vpaRenderProspectReminder(env, o) {
   const tpl = String(await res.text());
   let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
   const onOffer = o.offerRate < VPA_STANDARD_RATE;
+  /* THEIR FREE MONTH IN NUMBERS (Dean, 5 Nov 2026 round 7: urgency, and their real stats). Read, never guessed: stats that
+     could not be read say nothing at all; read and empty is the gentle "first night" version with the sign-in button. */
+  const st = (o.kind === 'last' || o.kind === 'final') && o.stats && o.stats.ok ? o.stats : null;
+  const ran = !!(st && st.nights > 0 && st.totalGames > 0);
+  const fmtN = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const statsLine = ran ? 'In your free month, ' + vpaEsc(o.venueName || 'your venue') + ' ran <b>' + fmtN(st.totalGames) + ' game' + (st.totalGames === 1 ? '' : 's') + '</b>'
+      + (st.totalPlayers > 0 ? ' and <b>' + fmtN(st.totalPlayers) + ' player' + (st.totalPlayers === 1 ? '' : 's') + '</b> joined in' : '') + '.'
+      + (st.biggest && st.biggest.players > 1 && st.nights > 1 ? ' Your biggest night had ' + fmtN(st.biggest.players) + ' players.' : '')
+      + ' Don&#39;t let that stop now.' : '';
   html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final',
-    grace: onOffer && VPA_OFFER_GRACE_LIVE, nograce: onOffer && !VPA_OFFER_GRACE_LIVE, nooffer: !onOffer });
+    grace: onOffer && VPA_OFFER_GRACE_LIVE, nograce: onOffer && !VPA_OFFER_GRACE_LIVE, nooffer: !onOffer, keepdays: VPA_PAUSED_KEEP_DAYS > 0,
+    stats: ran, nostats: !!st && !ran });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
     .replace(/{{ends_on}}/g, vpaEsc(o.endsWords))
+    .replace(/{{days_left}} days left/g, Number(o.daysLeft) === 8 ? 'One week left' : '{{days_left}} days left')   // day 23 counts 8 with today: "One week left" (5 Nov 2026 ~7pm)
     .replace(/{{days_left}} days/g, Number(o.daysLeft) === 1 ? '1 day' : o.daysLeft + ' days')   // never "1 days left" (5 Nov 2026)
     .replace(/{{days_left}}/g, String(o.daysLeft))
+    .replace(/{{keep_days}}/g, String(VPA_PAUSED_KEEP_DAYS))
+    .replace(/{{stats_line}}/g, statsLine)
+    .replace(/{{nocard_when}}/g, o.kind === 'final' ? 'tonight' : 'then')
+    .replace(/{{pauses}}/g, o.kind === 'final' ? 'pauses tonight' : 'pauses')
+    .replace(/{{host_console_url}}/g, site + '/app')
     .replace(/{{offer_rate}}/g, '$' + Number(o.offerRate).toFixed(2))
     .replace(/{{standard_rate}}/g, '$' + VPA_STANDARD_RATE.toFixed(2))
     .replace(/{{card_url}}/g, o.cardUrl)
@@ -4180,11 +4203,14 @@ async function vpaProspectReminderSweep(env, nowMs) {
     const r = due[due.length - 1];
     const email = p.email;
     if (!email || !env.RESEND_API_KEY) continue;
-    const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
+    /* "Today is the last day" only ON the last day: a last day on a weekend goes the Friday before, as a "last" one. */
+    const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
       endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
-      cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id) });
+      cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id),
+      /* Their own free month in numbers, for the last reminder only (Dean, 5 Nov 2026 round 7). Never stops the email. */
+      stats: kind !== 'early' ? await vpaVenueStats(env, v.id, v.timezone || 'Australia/Brisbane').catch(() => null) : null });
     if (!msg) continue;
     const res = await fetch('https://api.resend.com/emails', { method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
@@ -4447,7 +4473,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const url = vpaOneClickUrl(site, token, email);
   const first = String((user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || '').trim().split(/\s+/)[0];
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
-  const BUTTON = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td><a href="' + vpaEsc(url) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Open your venueplay</a></td></tr></table>';
+  const BUTTON = vpaEmailButton(vpaEsc(url), 'Open your venueplay') + '<div style="height:18px;line-height:18px;font-size:0">&nbsp;</div>';
   const done = { ok: true, to: email, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
@@ -4711,6 +4737,7 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{signin_url}}/g, sms ? site + '/app/?signin=sms#m=' + mobile.replace(/\D/g, '') : vpaOneClickUrl(site, o.signinToken, email))
     .replace(/{{login_mobile}}/g, sms ? vpaEsc(mobile) : '')
     .replace(/{{player_count}}/g, String(parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS))
+    .replace(/{{plan_total}}/g, '$' + ((parseInt(o.seats, 10) > 0 ? parseInt(o.seats, 10) : VPA_PROSPECT_DEFAULT_PLAYERS) * rate).toFixed(2))
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
@@ -7600,12 +7627,8 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       let blocks = '';
       for (let i = 0; i < venues.length; i++) {
         const v = venues[i]; const seats = parseInt(v.seats, 10) || 0;
-        blocks += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px"><tr><td style="padding:16px 20px">'
-          + '<p style="margin:0;font-size:17px;font-weight:700;color:#0A0A0B">' + vpaEsc(v.name) + '</p>'
-          + '<p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">' + seats + ' players &middot; ' + vpaPaymentPhrase(seats * rate, plan) + '</p>'
-          + '<a href="' + consoleUrl + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>'
-          + '<a href="' + tvFor(v) + '" style="display:inline-block;color:#FF1F8E;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #FF1F8E;padding:8.5px 20px;border-radius:8px">TV screen</a>'
-          + '</td></tr></table>';
+        /* "Your venues": each venue's name, one per line (Dean, 5 Nov 2026 round 4). The plan box says the money. */
+        blocks += '<p style="margin:0 0 6px;font-size:16px;line-height:1.5;font-weight:700;color:#0A0A0B">' + vpaEsc(v.name) + '</p>';
       }
       /* EVERY occurrence, not the first. A string replace swaps only the FIRST match, and the
          first {{VENUE_BLOCKS}} in the template was inside its documentation comment. So the
@@ -8048,6 +8071,9 @@ async function vpbFireVenueOnboarding(env, o) {
     const res = await fetch(site + '/emails/venue-onboarding.html');
     if (!res.ok) return false;
     let html = await res.text();
+    /* "Pick <venue> when it asks which venue you're at" is only true for a login with 2 or more venues: that is when
+       the console asks (index.html, staff.length > 1). Unknown means it is left out (Dean, 5 Nov 2026 round 5). */
+    html = vpaTplSections(html, { multivenue: Number(o.loginVenues) > 1 });
     html = html
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
@@ -8134,7 +8160,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
       + '<h1 style="margin:0 0 18px;font-size:24px;color:#0A0A0B">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:20px">' + table + '</table>'
       + gamingBlock
-      + '<a href="' + site + '/app/hq.html" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open HQ</a>'
+      + vpaEmailButton(site + '/app/hq.html', 'Open HQ')
       + '</div>';
 
     await fetch('https://api.resend.com/emails', {
@@ -8276,6 +8302,17 @@ function vpaVenueEmailCard(preheader, inner, title, brand) {
 }
 /* The site's email templates ask for the number with two tags; every template the Worker sends
    goes through here, so none of them can be filled one way and another a different way. */
+/* ONE BUTTON, ONE PLACE (Dean, 5 Nov 2026 round 5: "they sit in different places across the emails"). Every button in
+   every email is this: centred in its own table (Outlook ignores margin auto on an <a>), pink, 16px, 14px by 30px.
+   quiet is the one secondary ("Cancel, it's not for us"): the same shape and size, white with a grey edge. The
+   templates under /emails/ carry the same markup by hand; tools/test-receipt-survey.js holds them all to it. */
+function vpaEmailButton(href, label, quiet) {
+  const style = quiet
+    ? 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:13px 29px;border-radius:10px;border:1px solid #d8d8e0'
+    : 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px';
+  return '<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center">'
+    + '<a href="' + href + '" style="' + style + '">' + label + '</a></td></tr></table>';
+}
 function vpaFillSupport(html) {
   return String(html).replace(/\{\{support_phone\}\}/g, VP_SUPPORT_PHONE).replace(/\{\{support_tel\}\}/g, VP_SUPPORT_TEL);
 }
@@ -8349,15 +8386,17 @@ function vpaTaxSummaryHtml(invoice) {
          + (strong ? ';font-weight:700' : '') + '">$' + (cents / 100).toFixed(2) + '</td></tr>';
   };
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
+       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:8px"><tr><td style="padding:16px 18px">'
        + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
        + row('Subtotal (excluding GST)', ex, false)
        + row('GST', gst, false)
        + row('Total paid', total, true)
        + '</table>'
-       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Prices include GST. venueplay, '
-       + 'ABN ' + VP_ABN + '.</p>'
-       + '</td></tr></table>';
+       + '</td></tr></table>'
+       /* UNDER the box, full width, so it is one line on a 375px phone (Dean, 5 Nov 2026 round 6: about 277px of
+          12px text; the box's own padding left 259). A narrower phone wraps it rather than clipping it. */
+       + '<p style="margin:0 0 22px;font-size:12px;line-height:1.4;color:#9a9aa4">Prices include GST. venueplay, '
+       + 'ABN ' + VP_ABN + '.</p>';
 }
 
 /* WHAT A VENUE READS FOR A STRIPE LINE (Dean, 30 Oct 2026: never "founding" on anything a venue sees,
@@ -8380,36 +8419,50 @@ function vpaPlainLineDesc(desc) {
     .trim();
 }
 
-/* WHAT A LINE IS FOR, IN TWO PLAIN LINES (Dean, 5 Nov 2026: "fix the what it's for line"). Stripe's plan line,
-   "24 Players x venueplay plan (monthly) (at $2.50 / month)" once vpaPlainLineDesc has had it, reads as
-   "venueplay plan, monthly" over "24 players at $2.50 each", plus the dates it covers when Stripe sends them.
-   Anything else (a big night, a pro rata line) keeps its plain words on one line. Quantity, rate and dates are
-   Stripe's own: nothing here is worked out. */
+/* WHAT A LINE IS FOR, IN ONE PLAIN LINE (Dean, 5 Nov 2026 round 6). The amount above already says what is due, so the plan
+   line is only what it covers: "24 players at $2.50 each, 4 December to 4 January". Stripe's own quantity, rate and
+   dates, read off "24 Players x venueplay plan (monthly) (at $2.50 / month)" once vpaPlainLineDesc has had it. Any other
+   line (a big night, a pro rata line) keeps its plain words. */
+function vpaDayMonth(ts) { return vpaFmtDate(ts).replace(/ \d{4}$/, ''); }
 function vpaLineParts(line) {
   const plain = vpaPlainLineDesc((line && line.description) || 'venueplay') || 'venueplay';
-  const m = /^(\d+)\s+players?\s*[×x]\s*venueplay plan(?:\s*\((monthly|annual|yearly)\))?\s*\(at\s+(\$[\d.,]+)\s*\/\s*(month|year)\)$/i.exec(plain);
+  const m = /^(\d+)\s+players?\s*[×x]\s*venueplay plan(?:\s*\((monthly|annual|yearly)\))?\s*\(at\s+\$([\d.,]+)\s*\/\s*(month|year)\)$/i.exec(plain);
   const p = line && line.period;
-  const covers = (p && p.start && p.end && p.end > p.start) ? vpaFmtDate(p.start) + ' to ' + vpaFmtDate(p.end) : '';
-  if (!m) return { what: plain, detail: '', covers: covers };
-  const n = parseInt(m[1], 10), per = (m[2] || (m[4] === 'year' ? 'annual' : 'monthly')).toLowerCase();
-  return { what: 'venueplay plan, ' + (per === 'yearly' ? 'annual' : per),
-           detail: n + ' player' + (n === 1 ? '' : 's') + ' at ' + m[3] + ' each', covers: covers };
+  const covers = (p && p.start && p.end && p.end > p.start) ? vpaDayMonth(p.start) + ' to ' + vpaDayMonth(p.end) : '';
+  if (!m) return { plan: false, what: plain, covers: covers };
+  const n = parseInt(m[1], 10), rate = Number(m[3].replace(/,/g, ''));
+  return { plan: true, n: n, rate: rate, each: n + ' player' + (n === 1 ? '' : 's') + ' at $' + rate.toFixed(2) + ' each', covers: covers };
 }
-function vpaInvoiceLinesHtml(invoice) {
+/* A GROUP'S BILL, VENUE BY VENUE (Dean, 5 Nov 2026 round 6). Stripe bills a group as one quantity, so the split comes from
+   the account's own venues and their players, and it is shown only when it adds up to exactly what Stripe charged:
+   the same players, at the same rate, to the cent. Otherwise the one line stands. */
+async function vpaInvoiceVenues(env, customerId) {
+  try {
+    if (!customerId) return [];
+    const accts = await vpaSelect(env, 'venueplay_founding', 'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id&limit=1');
+    const fid = accts && accts[0] && accts[0].id;
+    if (!fid) return [];
+    const vs = await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(fid) + '&select=name,max_players,status,suspended_reason&order=name.asc&limit=200');
+    return (vs || []).filter((v) => v && v.status !== 'archived' && !/^archived/.test(String(v.suspended_reason || '')) && parseInt(v.max_players, 10) > 0);
+  } catch (_) { return []; }
+}
+function vpaInvoiceLinesHtml(invoice, venues) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
-  const rows = lines.map(function (l, i) {
+  const money = (c) => '$' + (c / 100).toFixed(2);
+  const row = (words, amt, muted) => '<tr>'
+    + '<td valign="top" style="padding:8px 16px 8px 0;font-size:14px;line-height:1.45;color:' + (muted ? '#6a6a75' : '#0A0A0B') + '">' + words + '</td>'
+    + '<td valign="top" align="right" style="padding:8px 0;width:1%;font-size:14px;line-height:1.45;font-weight:700;color:#0A0A0B;text-align:right;white-space:nowrap">' + (amt == null ? '' : money(amt)) + '</td></tr>';
+  const vs = Array.isArray(venues) ? venues : [];
+  const rows = lines.map(function (l) {
     const amt = Number(l.amount || 0);
     const w = vpaLineParts(l);
-    const rule = i < lines.length - 1 ? ';border-bottom:1px solid #f0f0f3' : '';
-    return '<tr>'
-      + '<td valign="top" style="padding:10px 16px 10px 0' + rule + '">'
-      +   '<p style="margin:0;font-size:14px;line-height:1.45;font-weight:700;color:#0A0A0B">' + vpaEsc(w.what) + '</p>'
-      +   (w.detail ? '<p style="margin:3px 0 0;font-size:13px;line-height:1.45;color:#6a6a75">' + vpaEsc(w.detail) + '</p>' : '')
-      +   (w.covers ? '<p style="margin:2px 0 0;font-size:13px;line-height:1.45;color:#6a6a75">' + vpaEsc(w.covers) + '</p>' : '')
-      + '</td>'
-      + '<td valign="top" align="right" style="padding:10px 0;width:1%;font-size:14px;line-height:1.45;font-weight:700;color:#0A0A0B;text-align:right;white-space:nowrap' + rule + '">$'
-      + (amt / 100).toFixed(2) + '</td></tr>';
+    if (!w.plan) return row(vpaEsc(w.what) + (w.covers ? ', ' + vpaEsc(w.covers) : ''), amt);
+    const seats = vs.map((v) => parseInt(v.max_players, 10) || 0);
+    const split = vs.length > 1 && seats.reduce((a, b) => a + b, 0) === w.n && Math.round(w.n * w.rate * 100) === amt;
+    if (!split) return row(vpaEsc(w.each) + (w.covers ? ', ' + vpaEsc(w.covers) : ''), amt);
+    return vs.map((v, i) => row('<b>' + vpaEsc(v.name) + ':</b> ' + seats[i] + ' player' + (seats[i] === 1 ? '' : 's') + ' at $' + w.rate.toFixed(2) + ' each', Math.round(seats[i] * w.rate * 100))).join('')
+      + (w.covers ? row(vpaEsc(w.covers), null, true) : '');
   }).join('');
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px 8px">'
@@ -8507,9 +8560,7 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">'
       + 'If that is not what you want, you can set your player limit back on your account page and the change '
       + 'takes effect at your next renewal.</p>'
-      + '<p style="margin:22px 0"><a href="' + site + '/app/billing.html#billing" '
-      + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
-      + 'See your plan</a></p>'
+      + vpaEmailButton(site + '/app/billing.html#billing', 'See your plan') + '<div style="height:22px;line-height:22px;font-size:0">&nbsp;</div>'
       + vpaVenueEmailFoot(true)
       + '</div>';
     const ok = await vpaSendEmail(env, email, 'Your venueplay plan has moved up',
@@ -8534,7 +8585,7 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
    venue's rating of us is a different thing for a different reader, so it waits for its own route
    (venueplay-backend NEEDS-DEAN: POST /venue-rating). Until then the page hands the answer to the venue's
    mail app, addressed to support@, so nothing they write is lost. */
-const VPA_RATE_FACES = [{ r: 3, face: '\u{1F604}', word: 'Loving it' }, { r: 2, face: '\u{1F642}', word: 'Good' }, { r: 1, face: '\u{1F610}', word: 'Could be better' }];
+const VPA_RATE_FACES = [{ r: 3, face: '\u{1F604}', word: 'Loving it' }, { r: 2, face: '\u{1F642}', word: 'Good' }, { r: 1, face: '\u{1F610}', word: 'Not quite' }];
 async function vpaRateToken(env, ref) {
   const secret = vpaCardSecret(env);
   if (!secret || !ref) return '';
@@ -8543,6 +8594,15 @@ async function vpaRateToken(env, ref) {
   const mac = await crypto.subtle.sign('HMAC', key, enc.encode('vp-rate:' + ref));
   return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
+/* "or tap Send feedback": the same signed page with no face picked, so they choose there. */
+async function vpaRateFeedbackLink(env, invoice) {
+  try {
+    const ref = String((invoice && invoice.id) || '');
+    const t = await vpaRateToken(env, ref);
+    if (!t) return '';
+    return vpaCustomerSite(env) + '/rate/?i=' + encodeURIComponent(ref) + (invoice.number ? '&n=' + encodeURIComponent(String(invoice.number)) : '') + '&t=' + t;
+  } catch (_) { return ''; }
+}
 async function vpaRateHtml(env, invoice) {
   try {
     const ref = String((invoice && invoice.id) || '');
@@ -8550,11 +8610,11 @@ async function vpaRateHtml(env, invoice) {
     if (!t) return '';
     const site = vpaCustomerSite(env);
     const num = invoice.number ? '&n=' + encodeURIComponent(String(invoice.number)) : '';
-    const cell = (f) => '<td align="center" valign="top" style="padding:0 4px;width:33%">'
+    const cell = (f) => '<td align="center" valign="top" style="padding:0 3px;width:33%">'
       + '<a href="' + site + '/rate/?i=' + encodeURIComponent(ref) + '&r=' + f.r + num + '&t=' + t + '" '
-      + 'style="display:block;border:1px solid #e6e6ec;border-radius:12px;padding:12px 4px;text-decoration:none;color:#0A0A0B">'
-      + '<span style="display:block;font-size:26px;line-height:1.2">' + f.face + '</span>'
-      + '<span style="display:block;margin-top:4px;font-size:13px;font-weight:700;color:#0A0A0B">' + f.word + '</span></a></td>';
+      + 'style="display:block;border:1px solid #e6e6ec;border-radius:10px;padding:8px 2px;text-decoration:none;color:#0A0A0B">'
+      + '<span style="display:block;font-size:20px;line-height:1.2">' + f.face + '</span>'
+      + '<span style="display:block;margin-top:3px;font-size:12px;line-height:1.25;font-weight:700;color:#0A0A0B;white-space:nowrap">' + f.word + '</span></a></td>';
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin:26px 0 0">'
       + '<tr><td style="padding:18px 14px 16px">'
       + '<p style="margin:0 0 4px;padding:0 4px;font-size:15px;font-weight:700;color:#0A0A0B">Let us know how we&#39;re going</p>'
@@ -8613,7 +8673,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
             ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpaInvoiceVenues(env, invoice.customer))
       /* `customer` did not exist here. It was written on 11 Sep 2026 at 05:34 (0d1f1fd),
          the only `customer` in the file is a const inside the UPCOMING-reminder function,
          and vpaUpliftWarningHtml's own parameter is called customerId. So this line threw
@@ -8631,10 +8691,11 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + (await vpaUpliftWarningHtml(env, invoice.customer))
       + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate. You can change it any time on your billing page.</p>' : '')
-      + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 24px;border-radius:9px">View your tax invoice</a>' : '')
+      + (btn ? vpaEmailButton(btn, 'View your tax invoice') : '')
       + (btn && pdf && pdf !== btn ? '<p style="font-size:13px;color:#6a6a75;margin:10px 0 0">Or <a href="' + pdf + '" style="color:#C70F69;font-weight:700;text-decoration:none">download it as a PDF</a>.</p>' : '')
       + (await vpaRateHtml(env, invoice))
-      + '<p style="font-size:14.5px;line-height:1.55;color:#0A0A0B;margin:22px 0 0"><b>Thank you for being with us.</b> If there&#39;s anything you&#39;d like the games to do that they don&#39;t, reply and tell us.</p>'
+      + '<p style="font-size:14.5px;line-height:1.55;color:#0A0A0B;margin:22px 0 0"><b>Thank you for being with us.</b> If there&#39;s anything you&#39;d like to see in the games, reply and tell us'
+      + (await vpaRateFeedbackLink(env, invoice).then((u) => u ? ', or tap <a href="' + u + '" style="color:#C70F69;font-weight:700;text-decoration:none">Send feedback</a>' : '', () => '')) + '.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
@@ -8712,7 +8773,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpaInvoiceVenues(env, invoice.customer))
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
             + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">A busy month: this bill includes extra players.</p>'
@@ -8727,7 +8788,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
             + '. Nothing to claim, it happens on its own.</p>'
             + '</td></tr></table>'
           : '')
-      + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
+      + vpaEmailButton(billing, 'Manage your plan')
       + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. On monthly, added players are a full month and reductions start at your next renewal. On annual, added players are pro rata to your renewal, and if you reduce, the unused value is held as credit against next year rather than lost.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
@@ -9190,7 +9251,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
    and no talk of games pausing because extras never pause anything. */
 function vpaPaymentFailedNextStep(moved, payNow, billing) {
   const p = (t) => '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + t + '</p>';
-  const btn = '<a href="' + payNow + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Pay now with a new card</a>'
+  const btn = vpaEmailButton(payNow, 'Pay now with a new card')
     + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">No sign in needed, it takes a minute. You can also do it from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>';
   if (moved && moved.moved) {
     return p('Nothing to do. It will come out with your next subscription payment' + (moved.next ? ' on ' + vpaEsc(moved.next) : '') + ' instead, and your games are running as normal.')
@@ -10505,10 +10566,17 @@ async function vpbAddVenue(request, env, json) {
   // A venue added from the account is a venue nobody has told yet. Send the owner one tidy
   // setup email they can forward straight on to the people who will run the night there.
   // Best-effort: the venue is already live and billed, so this must not be able to fail the call.
+  // How many venues the login that added it can now pick from: the console asks "which venue" only past one.
+  let loginVenues = 0;
+  try {
+    const rows = await vpaSelect(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(o.authUserId) + '&select=venue_id');
+    loginVenues = new Set((rows || []).map((x) => x.venue_id)).size;
+  } catch (_) { loginVenues = 0; }
   const onboardingSent = await vpbFireVenueOnboarding(env, {
     email: o.account && o.account.contact_email,
     venueName: name,
     slug: r.venue && r.venue.slug,
+    loginVenues: loginVenues,
   });
 
   return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent,
@@ -10615,9 +10683,7 @@ async function vpaFireCancelAlert(env, opts) {
                       + '</td><td style="padding:4px 0"><b>' + r[1] + '</b></td></tr>').join('')
       + '</table>'
       + said
-      + '<p style="margin:20px 0"><a href="' + site + '/app/hq" '
-      + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
-      + 'Open HQ</a></p>'
+      + vpaEmailButton(site + '/app/hq', 'Open HQ') + '<div style="height:20px;line-height:20px;font-size:0">&nbsp;</div>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; venueplay, ABN ' + VP_ABN + '</p>'
       + '</div>';
     let sent = 0;
@@ -11197,43 +11263,58 @@ async function vpaFireDeliveryFailure(env, opts) {
  * they were the only ones we never made the case to. Dean spotted it, 17 Sep 2026, by asking
  * what happens if somebody clicks cancel the morning after.
  */
+/* THE GOODBYE, REWRITTEN (Dean, 5 Nov 2026 round 6: "a mess", and one line read "you are on true a player a month").
+   THAT LINE WAS A FILL: the price box printed whatever o.rate held, and anything that was not a price (true from a
+   preview, '' or undefined from a row with no rate) went straight into the sentence. The box is gone, and nothing in
+   this email prints a value that is not a string we made here. Short, warm and plain, with true facts only: sorry and
+   thanks (with how long, when we know), the account stays on until the last day, undo any time until close that day
+   (one button), nothing deleted for 90 days (the same promise as venueplay.com.au/privacy), the sign-off.
+   It never asks why they are leaving: they were asked when they cancelled. */
+/* "YOUR TIME WITH VENUEPLAY" (Dean, 5 Nov 2026 round 7: "I thought we were doing some game data on that"). Their real
+   numbers from vpaVenueStats, the counts the wrap and the reports read: games and nights, players who joined in, regulars
+   who came back, the biggest night. Members added and raffles run are not counted anywhere it can read, so they are not
+   said. A number that is not there is a line that is not there; with no nights at all, nothing. */
+function vpaTimeWithUsHtml(stats, title) {
+  if (!stats || !stats.ok || !(stats.nights > 0) || !(stats.totalGames > 0)) return '';
+  const n = (x) => String(Math.round(x || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const li = (t) => '<tr><td valign="top" style="padding:4px 10px 4px 0;font-size:15px;color:#FF1F8E;font-weight:800">&#9656;</td>'
+    + '<td style="padding:4px 0;font-size:15px;line-height:1.5;color:#0A0A0B">' + t + '</td></tr>';
+  let rows = li('<b>' + n(stats.totalGames) + '</b> game' + (stats.totalGames === 1 ? '' : 's') + ' over <b>' + n(stats.nights) + '</b> night' + (stats.nights === 1 ? '' : 's'));
+  if (stats.totalPlayers > 0) rows += li('<b>' + n(stats.totalPlayers) + '</b> player' + (stats.totalPlayers === 1 ? '' : 's') + ' joined in');
+  if (stats.regulars > 0) rows += li('<b>' + n(stats.regulars) + '</b> regular' + (stats.regulars === 1 ? '' : 's') + ' came back for another night');
+  if (stats.biggest && stats.biggest.players > 0) {
+    const at = stats.biggest.at && Date.parse(stats.biggest.at) ? ' on ' + vpaFmtDate(Math.floor(Date.parse(stats.biggest.at) / 1000)) : '';
+    rows += li('Your biggest night: <b>' + n(stats.biggest.players) + '</b> player' + (stats.biggest.players === 1 ? '' : 's') + at);
+  }
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin:0 0 18px"><tr><td style="padding:16px 18px">'
+    + '<p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#C70F69">' + vpaEsc(title) + '</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0">' + rows + '</table></td></tr></table>';
+}
 function vpaGoodbyeHtml(env, o) {
-  const day = o.day, dated = o.dated;
-  const when = day ? (day + ', ' + dated) : dated;
-  return vpaLeavingHtml(env, {
-    heading: day ? (day + ' is your last day on venueplay.') : 'Your last day on venueplay.',
-    preheader: 'Everything you ran with us, and one tap to keep ' + (o.name || 'the venue') + ' going.',
-    /* SORRY TO SEE THEM GO, AND SAY HOW LONG IT HAS BEEN. A venue that has been with us a
-       year should not get the same opening line as one that lasted a fortnight, and "the last
-       14 months" is the sentence that makes somebody pause. Only said when we know it. */
-    lead: '<b>' + o.hello + '</b> We are sorry to see you go.'
-        + (o.tenure ? ' It has been a pleasure having ' + vpaEsc(o.name || 'you')
-                    + ' with us for the last <b>' + vpaEsc(o.tenure) + '</b>.' : '')
-        + ' You are set to cancel after <b>' + vpaEsc(when)
-        + '</b>. You keep that night in full, right through to close, and your screens '
-        + 'keep playing your advertising until you shut.',
-    priceHold: o.rate,
-    founding: o.founding,
-    rows: [['Venue', o.name || 'your venue'],
-           ['Last day', when],
-           ['Until close that day', 'Every game runs as normal, and the TVs keep showing your advertising.'],
-           ['Undo it any time up to', 'close on ' + (day || 'your last day')],
-           ['After that', 'Games stop. Nothing is deleted for 90 days.']],
-    extra: (o.wrap || '')
-         + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
-         + 'All of that stays yours if you change your mind. One click, any time up to close on '
-         + vpaEsc(day || 'your last day') + ', and nothing will have been interrupted.</p>'
-         /* THE SIGN OFF. Dean, 17 Sep 2026: "we should also wish them the very best and in the
-            most friendly sign off." A venue leaving is a publican we may well see again, and
-            the last paragraph they read should sound like it came from a person who meant it.
-            No pitch in it, and nothing asked for except the one thing worth asking. */
-         + '<p style="font-size:13.5px;color:#6a6a75;margin:0 0 18px">'
-         + 'And if you are going, thank you for the run. We wish you and '
-         + vpaEsc(o.name || 'your venue') + ' all the very best, and if you ever want us back, '
-         + 'you know where we are. If something did not work, we would genuinely like to hear '
-         + 'it. Just reply, it reaches a person.</p>',
-    cta: 'Keep the venue running',
-  });
+  const site = vpaCustomerSite(env);
+  const day = typeof o.day === 'string' && o.day ? o.day : '';
+  const dated = typeof o.dated === 'string' && o.dated ? o.dated : '';
+  const when = day && dated ? day + ' ' + dated : (dated || 'your last day');
+  const name = vpaEsc((typeof o.name === 'string' && o.name) || 'your venue');
+  const hello = typeof o.hello === 'string' && o.hello ? '<b>' + o.hello + '</b> ' : '';
+  // vpaTenureWords: "few weeks", "month", "7 months", "year", "2 years and 3 months". Nothing else is printed.
+  const tenure = typeof o.tenure === 'string' && /^(few weeks|month|year|\d+ months|\d+ years|(year|\d+ years) and (a month|\d+ months))$/.test(o.tenure) ? vpaEsc(o.tenure) : '';
+  const P = '<p style="font-size:15px;line-height:1.6;color:#3a3a44;margin:0 0 16px">';
+  const heading = day ? day + ' is your last day on venueplay' : 'Your last day on venueplay';
+  return vpaVenueEmailCard('Your account stays on until ' + (day && dated ? day + ' ' + dated : (dated || 'your last day')) + ', and you can undo this any time until then.',
+      '<div style="font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#0A0A0B">'
+    + '<p style="font-size:19px;font-weight:800;margin:0 0 14px">' + vpaEsc(heading) + '</p>'
+    + P + hello + 'We&#39;re sorry to see you go, and thank you.'
+    +   (tenure ? ' It&#39;s been a pleasure having ' + name + ' with us for the last ' + tenure + '.' : '') + '</p>'
+    + vpaTimeWithUsHtml(o.stats, 'Your time with venueplay')
+    + P + 'Your account stays on until <b>' + vpaEsc(when) + '</b>. Keep running games, and your screens keep showing your ads until then.</p>'
+    + P + '<b>Changed your mind?</b> You can undo this any time until close on ' + vpaEsc(when) + '.</p>'
+    + vpaEmailButton(site + '/app/billing.html#billing', 'Keep my account')
+    + '<p style="font-size:15px;line-height:1.6;color:#3a3a44;margin:26px 0 16px"><b>Nothing is deleted for 90 days.</b> Your members list, ad slides, and raffle and members draw history stay in your account. Come back in that time and everything is where you left it. After 90 days, in line with our <a href="' + site + '/privacy" style="color:#3a3a44">privacy policy</a>, the player data is deleted.</p>'
+    + P + 'We wish you and ' + name + ' all the very best.</p>'
+    + '<p style="font-size:15px;line-height:1.6;color:#3a3a44;margin:0 0 4px">Cheers,<br>the venueplay team</p>'
+    + vpaVenueEmailFoot(false)
+    + '</div>', heading);
 }
 
 async function vpaFireCancelConfirm(env, opts) {
@@ -11264,7 +11345,7 @@ async function vpaFireCancelConfirm(env, opts) {
       const stats = await vpaVenueStats(env, opts.venueId, opts.timezone).catch(() => null);
       const months = vpaTenureMonths(opts.createdAt, opts.endTs * 1000);
       const html2 = vpaGoodbyeHtml(env, {
-        day: day, dated: ends, name: opts.name, wrap: vpaWrapHtml(stats, {
+        day: day, dated: ends, name: opts.name, stats: stats, wrap: vpaWrapHtml(stats, {
           rateCents: opts.rateCents, players: opts.players, months: months }),
         tenure: vpaTenureWords(opts.createdAt, opts.endTs * 1000),
         rate: opts.rate, founding: opts.founding,
@@ -11492,7 +11573,7 @@ async function vpaLastDaySweep(env) {
       const wrap = vpaWrapHtml(stats, { rateCents: rateCents, players: v.max_players,
                                         months: vpaTenureMonths(v.created_at, endTs * 1000) });
       const html = vpaGoodbyeHtml(env, {
-        day: day, dated: dated, name: v.name, tenure: tenure, wrap: wrap,
+        day: day, dated: dated, name: v.name, tenure: tenure, wrap: wrap, stats: stats,
         rate: rate, founding: founding,
         hello: vpaHello(tz, acct && acct.contact_name, v.name),
       });
@@ -13039,7 +13120,7 @@ async function vpaHandleInviteBack(request, env, json) {
     + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + (acct.contact_name ? 'Hi ' + vpaEsc(String(acct.contact_name).split(' ')[0]) + ', thanks' : 'Thanks')
     + ' for talking with us. If you would like to keep your games running, sign in to your account page and tap <b>Keep this venue</b>. '
     + 'Nothing changes and nothing is charged unless you do.</p>'
-    + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open my account page</a>'
+    + vpaEmailButton(link, 'Open my account page')
     + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email.</p>'
     + (await vpUnsubFooterHtml(env, to, 'winback')) + '</div>';
   const sent = await vpaSendEmail(env, to, subject, vpaEmailDocument(html, subject), undefined,
@@ -17605,7 +17686,7 @@ function vpsConfirmationEmail(env, email, venue, nowMs) {
     + '. Once a month we send one short email: new games and features, tips for a fuller room, and what other venues are doing with venueplay.</p>'
     + '<p style="font-size:15px;line-height:1.55;color:#3a3a44;margin:0 0 22px">Your first one lands early ' + vpsNextMonthName(nowMs)
     + '. Nothing else, and nobody will ring you.</p>'
-    + '<a href="' + vpaEsc(look) + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:12px 24px;border-radius:8px">See how a night runs</a>'
+    + vpaEmailButton(vpaEsc(look), 'See how a night runs')
     + '<p style="font-size:13px;line-height:1.5;color:#6a6a75;margin:22px 0 0">Questions? Just reply to this email. Did not sign up? Tap unsubscribe below and you will not hear from us again.</p>'
     + vpsFooterHtml(env, email);
   return { subject: subject, html: vpaVenueEmailCard('One short email a month. Here is what to expect.', inner, subject) };

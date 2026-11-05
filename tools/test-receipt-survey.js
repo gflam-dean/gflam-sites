@@ -61,13 +61,16 @@ async function main() {
     (h.match(/<a href="https:\/\/invoice\.stripe\.com\/i\/acct_x\/test_1"[^>]*>View your tax invoice<\/a>/g) || []).length === 1 && /<a href="https:\/\/pay\.stripe\.com\/invoice\/acct_x\/test_1\/pdf"[^>]*>download it as a PDF<\/a>/.test(h));
   var tok = ''; vpaRateToken(ENV, 'in_ABC123').then(function (x) { tok = x; }); drain();
   var faces = [];
-  h.replace(/<a href="(https:\/\/venueplay\.com\.au\/rate\/\?[^"]+)"[^>]*>([\s\S]*?)<\/a>/g, function (m, u, inner) { faces.push({ u: u.replace(/&amp;/g, '&'), w: visible(inner) }); });
-  check('three faces, Loving it, Good, Could be better, each to venueplay.com.au/rate/ with r=3, 2, 1, this invoice and its signature',
+  h.replace(/<a href="(https:\/\/venueplay\.com\.au\/rate\/\?[^"]*&r=[^"]+)"[^>]*>([\s\S]*?)<\/a>/g, function (m, u, inner) { faces.push({ u: u.replace(/&amp;/g, '&'), w: visible(inner) }); });
+  check('three faces, Loving it, Good, Not quite, each to venueplay.com.au/rate/ with r=3, 2, 1, this invoice and its signature',
     faces.length === 3 && /^[0-9a-f]{32}$/.test(tok) && [3, 2, 1].every(function (n, i) {
       return faces[i].u === 'https://venueplay.com.au/rate/?i=in_ABC123&r=' + n + '&n=ABC-0001&t=' + tok; }) &&
-    /Loving it/.test(faces[0].w) && /Good/.test(faces[1].w) && /Could be better/.test(faces[2].w), faces);
+    /Loving it/.test(faces[0].w) && /Good/.test(faces[1].w) && /Not quite/.test(faces[2].w), faces);
   var other = ''; vpaRateToken(ENV, 'in_OTHER').then(function (x) { other = x; }); drain();
   check('the signature is for THIS invoice: another invoice gets another one', !!other && other !== tok);
+  check('"or tap Send feedback" opens the same signed page with no face picked', h.indexOf('or tap <a href="https://venueplay.com.au/rate/?i=in_ABC123&n=ABC-0001&t=' + tok + '"') !== -1 && /Send feedback<\/a>\.<\/p>/.test(h), (h.match(/.{0,120}Send feedback.{0,20}/) || [])[0]);
+  check('the faces fit one line on a 320px phone: 20px faces, 12px words that never wrap, 2px padding', (h.match(/padding:8px 2px[^"]*"><span style="display:block;font-size:20px/g) || []).length === 3 && (h.match(/font-size:12px;line-height:1\.25;font-weight:700;color:#0A0A0B;white-space:nowrap">/g) || []).length === 3);
+  check('the GST and ABN line is 12px, under the GST box at full width (one line at 375px: measured 277px of 295)', /<\/table><\/td><\/tr><\/table><p style="margin:0 0 22px;font-size:12px;line-height:1\.4;color:#9a9aa4">Prices include GST\. venueplay, ABN 35 679 383 049\.<\/p>/.test(h));
   check('"Let us know how we\'re going", one tap and an optional comment, then "Thank you for being with us."; the Tuesday line is gone',
     t.indexOf("Let us know how we're going Tap a face, add a comment if you like, and send.") !== -1 && t.indexOf('Thank you for being with us.') !== -1 && !/Tuesday|backing us early/.test(t), t.slice(-600));
   sent = []; await vpaFireInvoiceEmail({ RESEND_API_KEY: 'k', SITE_URL: 'https://venueplay-api.workers.dev', CARD_LINK_SECRET: 's3cret' }, INV);
@@ -111,7 +114,7 @@ async function main() {
     P.calls.length === 1 && post.url === 'https://api.venueplay.com.au/venue-rating' && post.method === 'POST' && post.headers['Content-Type'] === 'application/x-www-form-urlencoded' &&
     form.i === 'in_ABC123' && form.r === '1' && form.t === '0123456789abcdef0123456789abcdef' && form.comment === 'The TV froze on Friday', post);
   check('the route is not built yet (404): the mail app opens to support@ with the face and the comment, and the page says to hit send there',
-    /^mailto:support@venueplay\.com\.au\?subject=How%20we're%20going%3A%20Could%20be%20better%20\(ABC-0001\)&body=/.test(P.loc.href) && decodeURIComponent(P.loc.href).indexOf('The TV froze on Friday') !== -1 &&
+    /^mailto:support@venueplay\.com\.au\?subject=How%20we're%20going%3A%20Not%20quite%20\(ABC-0001\)&body=/.test(P.loc.href) && decodeURIComponent(P.loc.href).indexOf('The TV froze on Friday') !== -1 &&
     P.els.head.textContent === 'Nearly there' && /Hit send there/.test(P.els.lede.textContent) && P.els.ask.className === 'hidden' && !!P.els.extra, [P.loc.href.slice(0, 160), P.els.head.textContent]);
   var F = run(Q.replace('r=1', 'r=3'), 'fail'); F.send('');
   check('offline, the same: the mail app, never a "saved" it did not do', /^mailto:support@venueplay\.com\.au\?subject=How%20we're%20going%3A%20Loving%20it/.test(F.loc.href) && F.els.head.textContent !== 'Thank you', F.loc.href.slice(0, 120));
@@ -161,13 +164,25 @@ async function main() {
 
   print('\n4. "What this is for" in two plain lines, with room before the amount');
   var lp = vpaLineParts(INV.lines.data[0]);
-  check('Stripe\'s plan line reads "venueplay plan, monthly" over "24 players at $2.50 each" and the dates it covers',
-    lp.what === 'venueplay plan, monthly' && lp.detail === '24 players at $2.50 each' && lp.covers === vpaFmtDate(1796306400) + ' to ' + vpaFmtDate(1798984800), lp);
+  check('Stripe\'s plan line is one line: "24 players at $2.50 each, 4 December to 4 January" (no "venueplay plan, monthly": the amount already says it)',
+    lp.plan === true && lp.each === '24 players at $2.50 each' && lp.covers === '4 December to 4 January' && visible(vpaInvoiceLinesHtml(INV)).indexOf('What this is for 24 players at $2.50 each, 4 December to 4 January $60.00') !== -1 && !/venueplay plan/.test(vpaInvoiceLinesHtml(INV)), [lp, visible(vpaInvoiceLinesHtml(INV))]);
+  var G2 = clone(INV, { lines: { data: [{ description: '80 Players × Founding Membership (Monthly) (at $2.50 / month)', amount: 20000, quantity: 80, period: { start: 1796306400, end: 1798984800 } }] } });
+  var gv = visible(vpaInvoiceLinesHtml(G2, [{ name: 'The Mini Bar Burleigh', max_players: 30 }, { name: 'The Mini Bar Tugun', max_players: 50 }]));
+  check('a group, venue by venue: "The Mini Bar Burleigh: 30 players at $2.50 each $75.00", "The Mini Bar Tugun: 50 players ... $125.00", then the period',
+    gv.indexOf('What this is for The Mini Bar Burleigh: 30 players at $2.50 each $75.00 The Mini Bar Tugun: 50 players at $2.50 each $125.00 4 December to 4 January') !== -1, gv);
+  var bad2 = visible(vpaInvoiceLinesHtml(G2, [{ name: 'A', max_players: 30 }, { name: 'B', max_players: 40 }]));
+  check('a split that does not add up to what Stripe charged is never shown: the one line stands', bad2.indexOf('80 players at $2.50 each, 4 December to 4 January $200.00') !== -1 && bad2.indexOf('A:') === -1, bad2);
+  sent = []; var VSEL = vpaSelect;
+  vpaSelect = function (env, table) { if (table === 'venueplay_founding') return Promise.resolve([{ id: 'f1' }]); if (table === 'vp_venues') return Promise.resolve([{ name: 'The Mini Bar Burleigh', max_players: 30, status: 'active' }, { name: 'The Mini Bar Tugun', max_players: 50, status: 'active' }, { name: 'Old Pub', max_players: 20, status: 'archived' }]); return Promise.resolve([]); };
+  await vpaFireUpcomingEmail(ENV, clone(G2, { amount_paid: 0, amount_due: 20000 })); var gu = visible((sent[0] || {}).html);
+  sent = []; await vpaFireInvoiceEmail(ENV, clone(G2, { amount_paid: 20000 })); var gr = visible((sent[0] || {}).html);
+  vpaSelect = VSEL;
+  check('the group\'s upcoming payment and receipt both break it down per venue (an archived venue left out)', gu.indexOf('The Mini Bar Burleigh: 30 players at $2.50 each $75.00 The Mini Bar Tugun: 50 players at $2.50 each $125.00') !== -1 && gr.indexOf('The Mini Bar Tugun: 50 players at $2.50 each $125.00') !== -1 && gu.indexOf('Old Pub') === -1, [gu.slice(0, 600), gr.slice(0, 300)]);
   var big = vpaLineParts({ description: 'Big night extra players - The Royal - 12 over 100 at $2.00', amount: 2400 });
-  check('any other line keeps its own plain words', big.what === 'Big night extra players - The Royal - 12 over 100 at $2.00' && big.detail === '' && big.covers === '', big);
+  check('any other line keeps its own plain words', big.plan === false && big.what === 'Big night extra players - The Royal - 12 over 100 at $2.00' && big.covers === '', big);
   var tbl = vpaInvoiceLinesHtml(INV);
   check('the words cell keeps 16px clear of the amount, which sits top right on one line',
-    /<td valign="top" style="padding:10px 16px 10px 0">/.test(tbl) && /<td valign="top" align="right" style="padding:10px 0;width:1%;[^"]*white-space:nowrap">\$60\.00<\/td>/.test(tbl), tbl.slice(0, 600));
+    /<td valign="top" style="padding:8px 16px 8px 0;[^"]*">24 players at \$2\.50 each, 4 December to 4 January<\/td>/.test(tbl) && /<td valign="top" align="right" style="padding:8px 0;width:1%;[^"]*white-space:nowrap">\$60\.00<\/td>/.test(tbl), tbl.slice(0, 600));
 
   print('\n5. The 5-day grace is in the emails, switched OFF until the billing change ships');
   check('VPA_OFFER_GRACE_LIVE is false in the Worker, declared once', (src.match(/const VPA_OFFER_GRACE_LIVE = /g) || []).length === 1 && /const VPA_OFFER_GRACE_LIVE = false;/.test(src));
@@ -178,7 +193,7 @@ async function main() {
   /* The same function, with the switch ON. A const made by the indirect eval cannot be reached from new Function's
      scope, so the two constants it reads come in as arguments, the standard rate read off the Worker. */
   var STD = Number((/const VPA_STANDARD_RATE = ([\d.]+)/.exec(src) || [])[1]);
-  function withGrace(name) { return new Function('VPA_OFFER_GRACE_LIVE', 'VPA_STANDARD_RATE', 'return ' + liftFn(src, name).replace(/^function/, 'async function'))(true, STD); }
+  function withGrace(name, keep) { return new Function('VPA_OFFER_GRACE_LIVE', 'VPA_STANDARD_RATE', 'VPA_PAUSED_KEEP_DAYS', 'return ' + liftFn(src, name).replace(/^function/, 'async function'))(true, STD, keep || 0); }
   var on = ''; withGrace('vpaRenderProspectWelcome')(ENV, W).then(function (x) { RAW += x; on = visible(x); }); drain();
   check('switched on, the welcome says Dean\'s words: 5 days after the free month ends to add the card and keep $2.50, then the offer ends',
     on.indexOf("If there's no card by then, your account is paused, and you have 5 days after your free month ends to add your card and keep $2.50. After that, the offer ends.") !== -1 && on.indexOf('your account is paused and the $2.50 offer ends') === -1, on.slice(-900));
@@ -192,6 +207,73 @@ async function main() {
     ron.indexOf('You then have 5 days after your free month ends to add your card and keep $2.50') !== -1 && ron.indexOf('offer ends. Nothing is lost') === -1, [roff && roff.slice(0, 700), ron && ron.slice(0, 700)]);
   check('a venue not on an offer hears neither: it pauses, and a card switches it back on', rstd.indexOf('Your account pauses. Nothing is lost, and adding a card switches it all back on.') !== -1 && !/offer|5 days/.test(rstd.replace(/Unsubscribe[\s\S]*$/, '')), rstd && rstd.slice(0, 700));
   check('no raw IF tags or tokens are left in any of them (the html, comments included)', RAW.length > 5000 && !/IF:|ENDIF|\{\{/.test(RAW));
+
+  /* 6. "We keep your paused account for N days" waits for Dean (round 5): VPA_PAUSED_KEEP_DAYS is 0, the line is out. */
+  print('\n6. The paused-account days line is a placeholder, OFF until Dean decides');
+  check('VPA_PAUSED_KEEP_DAYS is 0 in the Worker, and today\'s reminder has no "We keep your paused account" line',
+    /const VPA_PAUSED_KEEP_DAYS = 0;/.test(src) && roff.indexOf('We keep your paused account') === -1 && RAW.indexOf('{{keep_days}}') === -1);
+  var r30 = null; withGrace('vpaRenderProspectReminder', 30)(ENV, R).then(function (x) { r30 = visible(x.html); }); drain();
+  check('given a number of days, the reminder says "We keep your paused account for 30 days."', !!r30 && r30.indexOf('We keep your paused account for 30 days.') !== -1, r30 && r30.slice(0, 800));
+
+  /* 6b. THEIR FREE MONTH IN NUMBERS (Dean, 5 Nov 2026 round 7) on the one-week and last-day reminders. */
+  print('\n6b. The reminders carry their real free-month numbers, or the first-night version, or nothing');
+  function rem(kind, stats, days) { var out = null; vpaRenderProspectReminder(ENV, clone(R, { kind: kind, daysLeft: days || 8, stats: stats })).then(function (x) { out = visible(x.html); }); drain(); return out; }
+  var ST = { ok: true, nights: 4, totalGames: 6, totalPlayers: 148, regulars: 21, biggest: { players: 47, at: '2026-11-27T09:30:00Z' } };
+  var wk = rem('last', ST, 8);
+  check('one week out, with numbers: "One week left", then "In your free month, The Royal ran 6 games and 148 players joined in. Your biggest night had 47 players. Don\'t let that stop now." then the ask',
+    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. In your free month, The Royal ran 6 games and 148 players joined in. Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
+  var wk0 = rem('last', { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 }, 8);
+  check('one week out with no games yet: "You haven\'t had your first night yet" and the sign-in button, no numbers',
+    wk0.indexOf("You haven't had your first night yet, and there's still time.") !== -1 && /Open your venueplay/.test(wk0) && wk0.indexOf('In your free month') === -1, wk0.slice(0, 700));
+  var wkX = rem('last', null, 8), wkY = rem('last', { ok: false }, 8);
+  check('numbers that could not be read say nothing: no stats line and no first-night line', [wkX, wkY].every(function (t) { return t.indexOf('In your free month') === -1 && t.indexOf('first night') === -1; }));
+  var fd = rem('final', ST, 1);
+  check('the last day: "Today is the last day", "We\'d be sad to see you go.", their numbers, the pause tonight, what they keep for 90 days, Add my card',
+    fd.indexOf("Today is the last day of your free month") !== -1 && fd.indexOf("We'd be sad to see you go. In your free month, The Royal ran 6 games") !== -1 &&
+    fd.indexOf("If there's no card by tonight Your account pauses tonight and the $2.50 offer ends. Nothing is lost.") !== -1 &&
+    /Here's what you still have for the next 90 days: .*Your members list .*Your ad slides .*Your raffle and members draw history .*Your billing page, ready for your card .*Add my card/.test(fd), fd.slice(0, 1200));
+  var e3 = rem('early', ST, 27);
+  check('the day-3 note is as it was: no numbers, no last-day words', e3.indexOf("How's it going?") !== -1 && e3.indexOf('In your free month') === -1 && e3.indexOf('Today is the last day') === -1);
+  check('the sweep reads the numbers only for the one-week and last-day emails', /stats: kind !== 'early' \? await vpaVenueStats\(env, v\.id/.test(src));
+
+  /* 7. ONE BUTTON, ONE PLACE (Dean, 5 Nov 2026 round 5). Every button in every email a venue or staff gets is the same
+     pink button (or the one quiet "Cancel, it's not for us"), centred in its own table. Rendered, not read. */
+  print('\n7. Every button in every email is the same button, centred');
+  var BTN = 'display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px';
+  var QUIET = 'display:inline-block;background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:13px 29px;border-radius:10px;border:1px solid #d8d8e0';
+  var WRAP = '<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="';
+  var mails = {};
+  function grab(name) { var m = sent[sent.length - 1]; mails[name] = m ? m.html : ''; sent = []; }
+  sent = [];
+  await vpaFireWelcome(ENV, { metadata: { tier: 'founding' } }, { contact_email: 'o@pub.com', plan: 'monthly', max_seats: 24 }, [{ name: 'The Royal', seats: 24 }], false); grab('welcome');
+  await vpaFireWelcome(ENV, { metadata: { tier: 'founding' } }, { contact_email: 'o@pub.com', plan: 'monthly' }, [{ name: 'A', seats: 30 }, { name: 'B', seats: 50 }], true); grab('welcome-group');
+  await vpaFireHqWelcome(ENV, { email: 'o@pub.com', venueName: 'The Royal', seats: 24, foundingId: 'f1' }); grab('welcome-hq');
+  await vpbFireVenueOnboarding(ENV, { email: 'o@pub.com', venueName: 'The Crown', loginVenues: 2 }); grab('onboarding');
+  var pw = ''; vpaRenderProspectWelcome(ENV, W).then(function (x) { pw = x; }); drain(); mails['welcome-prospect'] = pw;
+  mails['prospect-reminder'] = RAW.slice(0, 0) || ''; vpaRenderProspectReminder(ENV, R).then(function (x) { mails['prospect-reminder'] = x.html; }); drain();
+  await vpaFireUpcomingEmail(ENV, clone(INV, { amount_paid: 0 })); grab('upcoming');
+  await vpaFireInvoiceEmail(ENV, INV); grab('receipt');
+  await vpaFirePaymentFailedEmail(ENV, clone(INV, { billing_reason: 'subscription_cycle' }), undefined, { code: 'expired_card', message: '' }); grab('payment-failed');
+  mails['help-reply'] = helpReplyHtml({ brand: 'venueplay', ticket_no: 1, category: 'venue_support', reply_token: 'abcdefghijkl' }, 'Hi,\n\nYes.', 'support@venueplay.com.au', 'Kayla', []);
+  var bad = [], count = 0;
+  Object.keys(mails).forEach(function (n) {
+    var h = String(mails[n] || '');
+    if (!h) { bad.push(n + ': not rendered'); return; }
+    h.replace(/<a href="([^"]*)" style="([^"]*)">([^<]*)<\/a>/g, function (m, href, style, label, at) {
+      if (!/border-radius/.test(style) || !/padding:/.test(style)) return m;   // a text link, not a button
+      count++;
+      if (style !== BTN && style !== QUIET) bad.push(n + ' "' + label + '": its own style');
+      if (h.slice(Math.max(0, at - WRAP.length + 9), at) + '<a href="' !== WRAP) bad.push(n + ' "' + label + '": not centred in the button table');
+      return m;
+    });
+  });
+  check('every button in the welcome, group, HQ, onboarding, prospect welcome, reminder, upcoming payment, receipt, declined card and help reply is the one pink (or quiet) button, centred in its own table',
+    bad.length === 0 && count >= 11, [count, bad]);
+  check('the reminder\'s only quiet button is "Cancel, it\'s not for us", and nothing else is quiet',
+    (mails['prospect-reminder'].match(/background:#ffffff;color:#0A0A0B[^"]*">Cancel, it's not for us</g) || []).length === 1 &&
+    Object.keys(mails).every(function (n) { return (String(mails[n]).match(/background:#ffffff;color:#0A0A0B;text-decoration:none;font-size:16px/g) || []).length === (n === 'prospect-reminder' ? 1 : 0); }));
+  check('the Worker has one button maker, and no hand-made pink button is left in it', /function vpaEmailButton\(href, label, quiet\)/.test(src) &&
+    (src.match(/style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:1\dpx;font-weight:700;padding/g) || []).length === 0);
 
   print('');
   print(fails ? (fails + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));

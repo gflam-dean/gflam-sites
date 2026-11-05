@@ -764,7 +764,7 @@
   "counted_by": "lines"
  },
  "tools/test-receipt-survey.js": {
-  "checks": 35,
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/test-receipts-plain-words.js": {
@@ -1024,7 +1024,7 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-email-renders.js": {
-  "checks": 34,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-welcome-is-sent-once.js": {
@@ -1264,7 +1264,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 92,
+  "checks": 91,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {

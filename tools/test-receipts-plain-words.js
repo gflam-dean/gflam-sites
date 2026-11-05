@@ -99,7 +99,7 @@ async function main() {
   check('the inbox preview: "Paid $66.50. Your receipt, and your tax invoice ABC-0001 one tap away."', rt.indexOf('Paid $66.50. Your receipt, and your tax invoice ABC-0001 one tap away.') !== -1, rt.slice(0, 160));
   check('the body: "Thanks, your payment has gone through. This is your receipt, and your tax invoice ABC-0001 is one tap away below."', rt.indexOf('Thanks, your payment has gone through. This is your receipt, and your tax invoice ABC-0001 is one tap away below.') !== -1, rt.slice(0, 300));
   check('the page title: "Your venueplay receipt"', /<title>Your venueplay receipt<\/title>/.test(r.html));
-  check('the subscription line reads "venueplay plan, monthly" over "1 player at $2.50 each"', rt.indexOf('venueplay plan, monthly 1 player at $2.50 each') !== -1, rt.slice(0, 600));
+  check('the subscription line reads "1 player at $2.50 each", one plain line (Dean, 5 Nov 2026 round 6)', rt.indexOf('What this is for 1 player at $2.50 each $2.50') !== -1 && rt.indexOf('venueplay plan, monthly') === -1, rt.slice(0, 600));
   check('the proration line reads "venueplay plan (annual)"', rt.indexOf('12 × venueplay plan (annual)') !== -1);
   check('the big night is still counted on it: 12 extra players over 1 big night', rt.indexOf('12 extra players') !== -1 && rt.indexOf('1 big night') !== -1);
   check('"View your tax invoice" opens Stripe\'s hosted invoice, and "download it as a PDF" its PDF',
@@ -113,7 +113,7 @@ async function main() {
   var u = last(), ut = visible(u.html);
   check('CONTROL: the reminder was sent', !!u.html, u.subject);
   clean('payment reminder', ut + ' ' + (u.subject || ''));
-  check('its lines are in plain words', ut.indexOf('venueplay plan, monthly 1 player at $2.50 each') !== -1, ut.slice(0, 500));
+  check('its lines are in plain words', ut.indexOf('What this is for 1 player at $2.50 each $2.50') !== -1, ut.slice(0, 500));
   check('the business name line: "' + NAME_LINE + '"', ut.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, ut.slice(-300));
 
   print('\nThe declined card');

@@ -151,7 +151,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var ml = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Login Hotel'; })[0] || {};
   var lastMail = sent[sent.length - 1] || {};
   check('the welcome says clearly the account is set up for 10 players, and that they can change it any time (Dean, 29 Oct 2026; 5 Nov 2026: "say clearly")',
-    /Your account is set up for 10 players a session to start with\. You can change that any time\./.test(lastMail.text || '') && /<strong>10 players<\/strong>/.test(lastMail.html || ''), (lastMail.text || '').slice(0, 900));
+    /Your plan is set to 10 players, so that's \$25\.00 a month\. You can change it any time\./.test(lastMail.text || '') && /<strong>10 players<\/strong>/.test(lastMail.html || ''), (lastMail.text || '').slice(0, 900));
   check('the welcome says plainly it is not a sign-up that starts billing, in words that match the code (phase 2): the month starts at first sign-in, no card, a reminder, a pause that takes the offer, cancel',
     /* Dean, 5 Nov 2026: "simply pauses" was too soft. Say plainly: paused, and the offer ends (today's rule; the
        5-day grace words wait behind VPA_OFFER_GRACE_LIVE until the billing change ships). */

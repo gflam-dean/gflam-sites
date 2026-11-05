@@ -7,6 +7,9 @@
   host "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app."
   and they sign in with their own mobile: it is not a personal link), then the TV.
   Carries NO billing detail: the owner's account handles the money.
+  Section kept or stripped by vpaTplSections: multivenue, the "Pick <venue> ... or tap Switch venue" words, kept only
+  when the owner's login has 2 or more venues, which is when the console asks which venue (index.html: staff.length > 1;
+  Dean, 5 Nov 2026 round 5).
   Merge fields:
     {{venue_name}}        the new venue, e.g. "The Grand Hotel"
     {{host_console_url}}  link to the app host console sign-in
@@ -37,7 +40,7 @@
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone.</strong> Go to <a href="{{host_console_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and sign in with your mobile as usual. Pick {{venue_name}} when it asks which venue you&#39;re at, or tap <strong>Switch venue</strong>. Its host console shows its six-character screen code.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone.</strong> Go to <a href="{{host_console_url}}" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and sign in with your mobile as usual.<!--IF:multivenue--> Pick {{venue_name}} when it asks which venue you&#39;re at, or tap <strong>Switch venue</strong>.<!--ENDIF:multivenue--> Its host console shows its six-character screen code.</td>
           </tr></table></td></tr>
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
@@ -45,14 +48,14 @@
           </tr></table></td></tr>
           <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Put venueplay on the TV.</strong> Go to <a href="https://venueplay.com.au/tv" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/tv</a> on the venue&#39;s screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players&#39; join code shows on your host console and on the TV.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Put venueplay on the TV.</strong> Go to <a href="https://venueplay.com.au/tv" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/tv</a> on the venue&#39;s screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.</td>
           </tr></table></td></tr>
         </table>
       </td></tr>
 
       <!-- CTA -->
       <tr><td align="center" style="padding:30px 32px 4px">
-        <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open the host console</a>
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;line-height:1.2;padding:14px 30px;border-radius:10px">Open the host console</a></td></tr></table>
       </td></tr>
       <tr><td align="center" style="padding:10px 20px 0"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first open {{venue_name}}, we'll walk you through it.</p></td></tr>
 

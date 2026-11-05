@@ -70,17 +70,21 @@ check('no raw {{token}} reaches the customer', !/\{\{[^}]+\}\}/.test(one), (one.
    app detail, and no different buttons for different screens. */
 var STEP1 = "1 Sign in on your phone. Go to venueplay.com.au/app and enter your mobile. We text you a code, and you're in. Your host console shows your six-character screen code.";
 var STEP2 = "2 Add your hosts. In Account > People, add each host's name and mobile. We text them where to sign in, and they sign in with their own mobile.";
-var STEP3 = "3 Put venueplay on your TV. Go to venueplay.com.au/tv on your TV's screen and enter your six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
+var STEP3 = "3 Put venueplay on your TV. Go to venueplay.com.au/tv on your TV's screen and enter your six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.";
 check('the three steps in order: sign in, add your hosts, then the TV at venueplay.com.au/tv with the screen code; never a /tv?slug link',
       words(one).indexOf(STEP1 + ' ' + STEP2 + ' ' + STEP3) !== -1 && !/\/tv\?/.test(String(sent && sent.html)), words(one).slice(words(one).indexOf('Three steps'), words(one).indexOf('Three steps') + 700));
-check('no Google Play, no app and no per-screen buttons in the setup steps; the join code is NOT a TV step on its own',
-      !/Google Play|Google TV|Android TV|Fire Stick|play\.google\.com/.test(one) && words(one).indexOf('a join code appears') === -1 && words(one).indexOf('Open the TV link') === -1, (one.match(/.{0,60}(Google|Fire Stick).{0,60}/) || [])[0]);
+check('no Google Play, no app and no per-screen buttons in the setup steps, and no join code line in them at all (Dean, round 4)',
+      !/Google Play|Google TV|Android TV|Fire Stick|play\.google\.com/.test(one) && words(one).indexOf('join code') === -1 && words(one).indexOf('Open the TV link') === -1, (one.match(/.{0,60}(Google|Fire Stick).{0,60}/) || [])[0]);
 check('the heading is "Welcome to venueplay" in 21px on one line (nowrap), and the email points at the in-app guide in one line',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(one) && words(one).indexOf("When you first sign in, we'll walk you through it.") !== -1 && one.indexOf('Your screens') === -1);
-check('the plan box is trimmed: no "three times in a row", no "Changing your maximum" paragraph, a one-line pointer to the billing page and Terms, and a MONTHLY customer sees no annual paragraph',
-      words(one).indexOf('three times in a row') === -1 && words(one).indexOf('Changing your maximum') === -1 && words(one).indexOf('On an annual plan') === -1 &&
-      words(one).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>billing page</.test(one) && /href="https:\/\/venueplay\.com\.au\/terms"[^>]*>Terms</.test(one) &&
-      words(one).indexOf('$2') !== -1 && words(one).indexOf('No lock-in') !== -1 && words(one).indexOf('free until') !== -1, words(one).slice(-900));
+/* THE PLAN BOX IN PLAIN WORDS (Dean, 5 Nov 2026 round 4: "straight up, plain language"), true to the Terms: $2 an
+   extra player, and the third night in a row is $1 an extra and lifts the plan (dean-settled-answers). */
+var BUSY = "Busy night? If more people turn up than your plan covers, each extra player that night is $2, and your host OKs it on screen first. If that happens three nights in a row, the third night's extras are $1 each and your plan moves up to fit the crowd. To change your player number, go to Account > Billing.";
+check('the plan box in plain words: the rate, the plan\'s players and the total; busy nights at $2, the third in a row at $1 and the plan moving up; change it in Account > Billing; full details in the Terms; no annual paragraph for a MONTHLY customer',
+      words(one).indexOf("You pay $2.50 a month for each player in your plan. Your plan is set to 40 players, so that's $100.00 a month. You can change it any time. Prices include GST. " + BUSY) !== -1 &&
+      /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>Account &gt; Billing</.test(one) && /Full details in our <a href="https:\/\/venueplay\.com\.au\/terms"[^>]*>Terms of Service</.test(one) &&
+      words(one).indexOf('Busy nights and changing your maximum') === -1 && words(one).indexOf('maximum players per session') === -1 && words(one).indexOf('On an annual plan') === -1 &&
+      words(one).indexOf('No lock-in') !== -1 && words(one).indexOf('free until') !== -1, words(one).slice(-900));
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@pub.com', contact_name: 'Sam', plan: 'annual', max_seats: 40 },
   [{ name: 'The Royal Hotel', seats: 40, slug: 'the-royal-hotel-4220' }], false);
@@ -107,17 +111,20 @@ check('no raw {{VENUE_BLOCKS}} or any other token reaches the customer',
 check('BOTH venues are actually in the email', grp.indexOf('The Anchor') !== -1 && grp.indexOf('The Crown') !== -1);
 var GSTEP1 = "1 Sign in on your phone. Go to venueplay.com.au/app and enter your mobile. We text you a code, and you're in. Pick a venue, or tap Switch venue to change. Each venue's host console shows its own six-character screen code.";
 var GSTEP2 = "2 Add each host. In Account > People, add each host's name and mobile and tick the venues they run. We text them where to sign in, and they sign in with their own mobile.";
-var GSTEP3 = "3 Put venueplay on each TV. Go to venueplay.com.au/tv on each venue's screen and enter that venue's six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
-check('every venue card points at the bare /tv, and the group steps are sign in, add each host, then each TV with that venue\'s screen code; no /tv?slug anywhere',
-      words(grp).indexOf(GSTEP1 + ' ' + GSTEP2 + ' ' + GSTEP3) !== -1 && !/Google Play|play\.google\.com/.test(grp) && !/\/tv\?/.test(String(sent && sent.html)) && (String(sent && sent.html).match(/href="https:\/\/venueplay\.com\.au\/tv"/g) || []).length >= 2,
+var GSTEP3 = "3 Put venueplay on each TV. Go to venueplay.com.au/tv on each venue's screen and enter that venue's six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.";
+check('the group steps are sign in, add each host, then each TV with that venue\'s screen code; no Google Play; no /tv?slug anywhere',
+      words(grp).indexOf(GSTEP1 + ' ' + GSTEP2 + ' ' + GSTEP3) !== -1 && !/Google Play|play\.google\.com/.test(grp) && !/\/tv\?/.test(String(sent && sent.html)) && (String(sent && sent.html).match(/href="https:\/\/venueplay\.com\.au\/tv"/g) || []).length === 1,
       words(grp).slice(words(grp).indexOf('Three steps'), words(grp).indexOf('Three steps') + 700));
-check('the group email says how many venues in digits, "You\'ve set up 2 venues today.", never "All 2 of your venues" or "all two"',
-      words(grp).indexOf("You've set up 2 venues today.") !== -1 && !/all (2|two) (of your )?venues/i.test(words(grp)), words(grp).slice(0, 300));
+/* "YOUR VENUES" (Dean, 5 Nov 2026 round 4): after the login, each venue's name on its own line, and never "signed up
+   today" or a count of venues in words. */
+check('after the login, "Your venues" lists each venue\'s name, one per line, and the email never says how many were set up today',
+      words(grp).indexOf("Your login It's your mobile number") < words(grp).indexOf('Your venues The Anchor The Crown') && words(grp).indexOf('Your venues The Anchor The Crown Your first month is free') !== -1 &&
+      /<p style="margin:0 0 6px;font-size:16px;line-height:1\.5;font-weight:700;color:#0A0A0B">The Anchor<\/p><p [^>]*>The Crown<\/p>/.test(grp) && !/set up 2 venues|today|all (2|two) (of your )?venues/i.test(words(grp)), words(grp).slice(0, 500));
 check('the group heading fits one line and the group email points at the in-app guide',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(grp) && words(grp).indexOf("When you first sign in, we'll walk you through it.") !== -1 && words(grp).indexOf('screen link') === -1);
-check('the GROUP plan box is trimmed the same way: no "three times in a row", no "Changing your maximum", the one-line pointer to the billing page and Terms, no annual paragraph for a monthly group',
-      words(grp).indexOf('three times in a row') === -1 && words(grp).indexOf('Changing your maximum') === -1 && words(grp).indexOf('On an annual plan') === -1 &&
-      words(grp).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>billing page</.test(String(sent && sent.html)) && words(grp).indexOf('No lock-in') !== -1, words(grp).slice(-700));
+check('the GROUP plan box in the same plain words, with the group\'s players and total; no annual paragraph for a monthly group',
+      words(grp).indexOf("You pay $2.50 a month for each player in your plan. Your plan is set to 80 players across your venues, so that's $200.00 a month. You can change it any time. Prices include GST. " + BUSY) !== -1 &&
+      /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>Account &gt; Billing</.test(String(sent && sent.html)) && words(grp).indexOf('On an annual plan') === -1 && words(grp).indexOf('No lock-in') !== -1, words(grp).slice(-900));
 var grpMonthly = sent;
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@group.com', contact_name: 'Sam', plan: 'annual' },
@@ -176,7 +183,8 @@ check('and it is never presented as "$184.00 a month" on its own', !/\$184\.00 a
 var mo = welcomePlan('monthly');
 check('monthly, 80 players at $2.50: $200.00 a month, and no mention of a year', mo.indexOf('$200.00 a month') !== -1 && mo.indexOf('a year') === -1, (mo.match(/first payment[^.]*\./) || [])[0]);
 var yg = welcomePlan('annual', true);
-check('an annual GROUP: the group total for the year ($2,760.00) and each venue\'s own', yg.indexOf('$2,760.00 a year') !== -1 && yg.indexOf('$2,208.00 a year') !== -1 && yg.indexOf('$552.00 a year') !== -1, (yg.match(/\$[0-9,.]+ a year/g) || []));
+check('an annual GROUP: the group total for the year ($2,760.00), and the plan box at the annual rate, "$2.30 a month for each player", for 100 players', yg.indexOf('$2,760.00 a year') !== -1 && yg.replace(/&#39;/g, "'").indexOf("You pay $2.30 a month for each player in your plan. Your plan is set to 100 players across your venues, so that's $2,760.00 a year, billed yearly ($230.00 a month).") !== -1, (yg.match(/You pay[^.]*\.[^.]*\./) || [])[0]);
+check('an annual single venue: "$2.30 a month for each player", 80 players, "$2,208.00 a year, billed yearly ($184.00 a month)"', yr.replace(/&#39;/g, "'").indexOf("You pay $2.30 a month for each player in your plan. Your plan is set to 80 players, so that's $2,208.00 a year, billed yearly ($184.00 a month).") !== -1, (yr.match(/You pay[^.]*\.[^.]*\./) || [])[0]);
 check('no raw token left behind on any of them', !/\{\{/.test(yr + mo + yg));
 
 print('');
@@ -191,11 +199,22 @@ check('it is written to the owner: "The Crown is set up.", on the account, nothi
 /* THE HOSTS STEP, TRUE TO WHAT HAPPENS (Dean, 5 Nov 2026: "is not true anymore"). vpbAddHost texts the host
    "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app." and they sign in with their own
    mobile: an address, not a personal sign-in link. */
-var OSTEPS = "1 Sign in on your phone. Go to venueplay.com.au/app and sign in with your mobile as usual. Pick The Crown when it asks which venue you're at, or tap Switch venue. Its host console shows its six-character screen code. "
+var OSTEPS = "1 Sign in on your phone. Go to venueplay.com.au/app and sign in with your mobile as usual. Its host console shows its six-character screen code. "
   + "2 Add its hosts. In Account > People, add each host's name and mobile and tick The Crown. We text them where to sign in, and they sign in with their own mobile. "
-  + "3 Put venueplay on the TV. Go to venueplay.com.au/tv on the venue's screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
+  + "3 Put venueplay on the TV. Go to venueplay.com.au/tv on the venue's screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.";
 check('it carries the three steps in order (sign in, its hosts, the TV with the screen code), no Google Play, no /tv?slug link, no raw token',
       ob.indexOf(OSTEPS) !== -1 && !/Google Play|play\.google\.com/.test(String(sent && sent.html)) && ob.indexOf('own sign-in link') === -1 && !/\/tv\?/.test(String(sent && sent.html)) && !/\{\{[^}]+\}\}/.test(String(sent && sent.html)), ob.slice(ob.indexOf('Three steps'), ob.indexOf('Three steps') + 900));
+/* "Pick <venue> when it asks which venue you're at" only when the login has 2 or more venues, which is when the console
+   asks (index.html: staff.length > 1; Dean, 5 Nov 2026 round 5). Above, nothing said how many: it is left out. */
+check('with no count of the login\'s venues, the "Pick The Crown ... Switch venue" words are left out', ob.indexOf('Switch venue') === -1 && ob.indexOf('which venue') === -1);
+sent = null; vpbFireVenueOnboarding(ENV, { email: 'owner@pub.com', venueName: 'The Crown', loginVenues: 2 }); drain();
+var ob2 = words(sent && sent.html);
+sent = null; vpbFireVenueOnboarding(ENV, { email: 'owner@pub.com', venueName: 'The Crown', loginVenues: 1 }); drain();
+var ob1 = words(sent && sent.html);
+check('a login with 2 venues is told "Pick The Crown when it asks which venue you\'re at, or tap Switch venue."; a login with 1 is not',
+      ob2.indexOf("sign in with your mobile as usual. Pick The Crown when it asks which venue you're at, or tap Switch venue. Its host console") !== -1 && ob1.indexOf('Switch venue') === -1 && !/IF:|ENDIF/.test(String(sent && sent.html)), ob2.slice(ob2.indexOf('Three steps'), ob2.indexOf('Three steps') + 300));
+var ixs = readFile('venueplay/app/index.html');
+check('...and that is when the console really asks: more than one venue on the login', /if\(staff\.length>1 && !venuePickFresh\(\)\)\{ showVenuePick\(\); return; \}/.test(ixs) && /__ctx\.staff && __ctx\.staff\.length>1/.test(ixs));
 check('it points at the in-app guide for this venue in one line and ends with the help line',
       ob.indexOf("When you first open The Crown, we'll walk you through it.") !== -1 && ob.indexOf('If you need any help, let us know.') !== -1 && ob.indexOf('press 2') !== -1);
 

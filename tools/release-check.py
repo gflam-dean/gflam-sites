@@ -3817,7 +3817,7 @@ def local_checks(which):
             # D92: a prospect's free month, its card reminders and the pause (Dean, 29 Oct 2026; migration 127).
             ('D92. A prospect\'s free month starts at first sign-in, reminds them on its days, and pauses with the offer gone if no card',
              'test-prospect-free-month.js',
-             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
+             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 (a week out) and 30 (the last day) only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
@@ -3921,9 +3921,9 @@ def local_checks(which):
              'A venue charged a month for players it undid within the hour (or let off a month it used), an undo '
              'that leaves the invoice line standing, or the new rules switched on by a value nobody set'),
             # D115: Dean's 5 Nov 2026 evening email notes, branch fix/email-copy-8nov.
-            ('D115. The receipt asks how we are going with signed one-tap faces, Manage your plan opens Account > Billing, and the 5-day grace words stay OFF',
+            ('D115. The receipt asks how we are going with signed faces, Manage your plan opens Account > Billing, the reminders carry real numbers, one button style, and the grace and kept-days words stay OFF',
              'test-receipt-survey.js',
-             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned), "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in two plain lines with room before the amount; VPA_OFFER_GRACE_LIVE is false, the welcome and reminder say a pause ends the offer, and switched on they say the 5 days', 35,
+             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 52,
              'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
              'console, or the emails promising a grace the billing does not give'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',

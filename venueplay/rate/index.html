@@ -66,7 +66,7 @@
       <div class="faces" role="radiogroup" aria-label="How are we going?">
         <button type="button" data-r="3" role="radio"><span aria-hidden="true">&#x1F604;</span>Loving it</button>
         <button type="button" data-r="2" role="radio"><span aria-hidden="true">&#x1F642;</span>Good</button>
-        <button type="button" data-r="1" role="radio"><span aria-hidden="true">&#x1F610;</span>Could be better</button>
+        <button type="button" data-r="1" role="radio"><span aria-hidden="true">&#x1F610;</span>Not quite</button>
       </div>
       <label for="note">Anything you'd like to tell us? (optional)</label>
       <textarea id="note" maxlength="1000"></textarea>
@@ -79,7 +79,7 @@
 <script>
 (function () {
   var VP_WORKER = "https://api.venueplay.com.au", TO = "support@venueplay.com.au";
-  var WORDS = { "3": "Loving it", "2": "Good", "1": "Could be better" };
+  var WORDS = { "3": "Loving it", "2": "Good", "1": "Not quite" };
   function $(id) { return document.getElementById(id); }
   /* The same param() as /unsubscribe, letter for letter (tools/check-twins.py). */
   function param(n) {
