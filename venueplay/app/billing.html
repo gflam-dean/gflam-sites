@@ -96,6 +96,10 @@
   .leftcard .lckeep{color:var(--muted);font-size:13px;margin:0}
   .leftcard .lcact{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
   .leftcard .lcact a.go{text-decoration:none}
+  .leftcard .lcact .go{min-height:44px}
+  .leftcard .lcnote{font-size:13.5px;line-height:1.5;color:var(--text);margin:4px 0 8px}
+  .leftcard .lcnote.err{color:#FF8A8A}
+  .venue .backbtn{min-height:44px;display:inline-flex;align-items:center}
   .ldrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line-2);flex-wrap:wrap}
   .ldrow:first-child{border-top:0;padding-top:2px}
   .ldrow b{color:#fff;font-size:15px}
@@ -1177,6 +1181,19 @@
     var multi = d.venues.length > 1;
     d.venues.forEach(function(v){
       var row = document.createElement("div"); row.className = "venue" + (v.cancelling ? " cancelling" : "");
+      if (v.left && d.restart){
+        /* Off after leaving, with the self-serve restart on (INBOX 54.3): the quote says what it costs, one tap brings it back. */
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>Off since it left</small></div>' +
+          '<div class="cxbanner"><span class="lcnote">Checking&hellip;</span><button class="keep backbtn" type="button" disabled>Bring it back</button></div>';
+        var bb = row.querySelector(".backbtn"), bn = row.querySelector(".lcnote");
+        api("/account/restart-quote", { venue_id: v.id }).then(function(q){
+          var rv = restartView(q);
+          if (!rv){ bn.textContent = "This venue has left. Call us on 07 5228 3667 to bring it back."; bb.style.display = "none"; return; }
+          bn.textContent = rv.note;
+          if (rv.label){ bb.disabled = false; bb.onclick = function(){ restartTap(bb, bn, v.id, load); }; } else bb.style.display = "none";
+        });
+        wrap.appendChild(row); return;
+      }
       if (v.cancelling){
         // Cancelled venues keep access until the period ends; offer a one-click "keep it".
         var until = d.next_charge ? (" until " + d.next_charge) : " until the end of your paid period";
@@ -1480,6 +1497,13 @@
       ? ("Your player details, members list and draw history are kept until " + kept + ". After that they are deleted, as our privacy policy says.")
       : "Nothing has been deleted. Your player details, members list and draw history are all still here.";
     var back = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on.";
+    /* THE SELF-SERVE RESTART (Dean, INBOX 54.3): with it switched on, a paused prospect or a cancelled venue comes back
+       from here in one tap, so the card says that instead of "call us". The Worker decides what the tap does. */
+    if (d && d.restart && (st.state === "paused_prospect" || st.state === "cancelled")){
+      return { title: st.state === "paused_prospect" ? "Your free month has ended, so your games are paused" : "Your subscription has ended",
+        text: "Nothing has been lost. Come back below and your games, members list, slides and draws are all just as you left them.",
+        keep: keep, restart: true };
+    }
     if (st.state === "paused_prospect") return { title: "Your free month has ended, so your games are paused",
       text: "Nothing has been lost. Add your card and everything comes straight back on, exactly as you left it.",
       keep: keep, card: true };
@@ -1545,9 +1569,11 @@
         var w = leftWords(st, d);
         lc.innerHTML = '<h2>' + esc(w.title) + '</h2><p>' + esc(w.text) + '</p>' +
           (w.card ? '<div class="lcact"><a class="go" id="leftCardBtn" href="#" aria-disabled="true">Add your card</a></div>' : '') +
+          (w.restart ? '<div class="lcact"><button class="go" type="button" id="leftRestartBtn" disabled>Checking&hellip;</button></div><p class="lcnote" id="leftRestartNote"></p>' : '') +
           '<p class="lckeep">' + esc(w.keep) + '</p>';
         lc.hidden = false;
         if (w.card) leftCardLink();
+        if (w.restart) leftRestart(d);
       }
     }
     // Open on Billing, once, whatever tab was open last time (Dean: "fine with Billing first").
@@ -1564,6 +1590,58 @@
     api("/account/card-link", { venue_id: vid }).then(function(j){
       if (j && j.card_url && /^https:\/\//.test(j.card_url)){ a.href = j.card_url; a.removeAttribute("aria-disabled"); }
       else if (j && j.error){ a.removeAttribute("href"); a.textContent = "Add your card"; showMsg(j.error); }
+    });
+  }
+  /* THE RESTART BUTTON'S WORDS, from the Worker's quote (/account/restart-quote) and nothing else, so the page can only
+     ever say what the Worker will do. Pure, so tools/test-self-serve-restart.js runs it. null: the restart is not on. */
+  function restartView(q){
+    if (!q || q.available === false) return null;
+    if (q.already) return { done: true, note: "This venue is already back on. Reload the page to see everything." };
+    if (!q.can_restart) return { refused: true, held: !!q.held, note: q.error || "Call us on 07 5228 3667 and we will sort it out." };
+    var money = function(r){ return "$" + Number(r).toFixed(2); };
+    var pl = q.players + " player" + (q.players === 1 ? "" : "s");
+    var until = q.restart_until_words ? (" You can come back from here until " + q.restart_until_words + ".") : "";
+    var offer = (q.offer && q.offer_kept_words) ? (" Your " + money(q.rate) + " offer price is kept if you come back by " + q.offer_kept_words + ".") : "";
+    if (q.kind === "group") return { label: "Bring " + (q.venue_name || "this venue") + " back",
+      note: pl + " at " + money(q.rate) + " a player. " + (q.trialing ? "Nothing extra this cycle, " : (q.stub + " for the rest of this cycle (" + q.stub_words + ") goes on your next bill, ")) +
+            "on " + q.next_bill_words + ", then " + q.monthly + " a month." + until };
+    if (q.mode === "card") return { label: q.kind === "prospect" ? "Add your card and come back" : "Add a card and come back",
+      note: pl + " at " + money(q.rate) + " a player, " + q.monthly + " a month" + (q.kind === "prospect" ? "" : (", " + q.today + " today")) + "." + offer + until };
+    var c = q.card || {}, cw = (c.brand ? (c.brand.charAt(0).toUpperCase() + c.brand.slice(1)) : "Card") + (c.last4 ? " ending " + c.last4 : "");
+    return { label: "Come back: " + q.today + " today on " + cw,
+      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + offer + until };
+  }
+  /* Which left venue the restart is for: the one the leaving email named (?venue=), else the first that has left. */
+  function restartVenueId(d){
+    var vs = (d && d.venues) || [], want = (String(location.search || "").match(/[?&]venue=([0-9a-fA-F-]{36})/) || [])[1];
+    if (want && vs.some(function(v){ return v.id === want; })) return want;
+    var left = vs.filter(function(v){ return v.left; })[0];
+    return (left && left.id) || (vs[0] && vs[0].id) || pageVenueId || "";
+  }
+  /* One tap: the button does what the quote said. A card page (a first card, or a card that was refused) is Stripe's,
+     opened in this tab; a card already held restarts here and the page reloads its account. Disabled while it runs,
+     so a double tap sends one request (and the Worker would charge once anyway). */
+  function restartTap(btn, note, vid, after){
+    if (btn.disabled) return;
+    btn.disabled = true; var was = btn.textContent; btn.textContent = "One moment\u2026"; note.classList.remove("err");
+    api("/account/restart", { venue_id: vid }).then(function(r){
+      if (r && r.card_url && /^https:\/\//.test(r.card_url)){ window.location.href = r.card_url; return; }
+      if (r && (r.restarted || r.already)){ showMsg("Welcome back. Your games are on again.", true); if (after) after(); return; }
+      btn.disabled = false; btn.textContent = was;
+      note.textContent = (r && r.error) || "That did not work just now. Nothing has been charged. Please try again.";
+      note.classList.add("err");
+    }).catch(function(){ btn.disabled = false; btn.textContent = was; note.textContent = "That did not work just now. Nothing has been charged. Please try again."; note.classList.add("err"); });
+  }
+  function leftRestart(d){
+    var btn = $("leftRestartBtn"), note = $("leftRestartNote"); if (!btn || !note) return;
+    var vid = restartVenueId(d);
+    api("/account/restart-quote", { venue_id: vid }).then(function(q){
+      var v = restartView(q);
+      if (!v){ btn.parentNode.style.display = "none"; note.textContent = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on."; return; }
+      if (v.label){ btn.textContent = v.label; btn.disabled = false; btn.onclick = function(){ restartTap(btn, note, vid, load); }; }
+      else btn.parentNode.style.display = "none";
+      note.textContent = v.note; note.classList.toggle("err", !!v.refused && !v.held);
+      if (/[?&]come-back=1(&|$)/.test(String(location.search || "")) && v.label){ try { $("leftCard").scrollIntoView({ block: "start" }); btn.focus(); } catch (e) {} }
     });
   }
   /* Read only: what the members draw panel already loaded, written as rows. No second copy of the data. */
@@ -1632,6 +1710,11 @@
          lowering players is said where it matters, under Your venues (players-note). */
       render(d);
       applyStanding(d);
+      /* Back from the restart's card page (Stripe's Done): the venue comes on when Stripe tells the Worker, a moment later. */
+      if (!load._restartSaid && /[?&]restarted=1(&|$)/.test(String(location.search || ""))){
+        load._restartSaid = true;
+        showMsg(d.standing && d.standing.state === "active" ? "Welcome back. Your games are on again." : "Thanks, your card is in. Your games come back on in a moment: reload this page to see it.", true);
+      }
       renderOtherAccounts(d.other_accounts || []);
       mountAcctPick(d.venues || []);
     }).catch(function(){
