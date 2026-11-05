@@ -2217,10 +2217,13 @@
   function accSummaries(){
     var rf = $("rfSum"), md = $("mdSum"), pm = $("pmSum");
     if (rf){
+      /* Two or more raffles (migration 117): the heading counts them, as Members draws does; naming only the
+         first would read as if the venue had one. One raffle: its name and night, as always. */
+      var rfRows = document.querySelectorAll("#rfList .drow").length;
       var row = document.querySelector("#rfList .drow .dn");
       var nm = row && row.querySelector("b") ? row.querySelector("b").textContent.trim() : "";
       var when = row && row.querySelector("small") ? row.querySelector("small").textContent.trim() : "";
-      rf.textContent = nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet";
+      rf.textContent = rfRows > 1 ? (rfRows + " raffles") : (nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet");
     }
     if (md){
       var n = document.querySelectorAll("#mdList .drow").length;

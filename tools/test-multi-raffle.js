@@ -191,6 +191,28 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   k1.savePrize('Cash');
   check('one raffle: a new prize is not filed under any raffle and game_prefs saves the buttons as main does',
         k1.POSTS.length === 1 && !('raffle_id' in k1.POSTS[0]) && k1.rafflePrefs().prizes[0] === 'Cash', [k1.POSTS, k1.rafflePrefs().prizes]);
+
+  print('Your account > Draws: the folded Raffles heading');
+  (function () {
+    var bh = readFile('venueplay/app/billing.html');
+    var i = bh.indexOf('function accSummaries('), d = 0, st = false, src = null;
+    for (var j = i; i >= 0 && j < bh.length; j++) { if (bh[j] === '{') { d++; st = true; } else if (bh[j] === '}') { d--; if (st && d === 0) { src = bh.slice(i, j + 1); break; } } }
+    function el(txt) { return { textContent: txt }; }
+    function fakeRow(name, when) { return { querySelector: function (q) { return q === 'b' ? el(name) : (q === 'small' ? el(when) : null); } }; }
+    function heading(rows) {
+      var rfSum = el(''), document = {
+        querySelectorAll: function (q) { return q === '#rfList .drow' ? rows : []; },
+        querySelector: function (q) { return q === '#rfList .drow .dn' ? (rows[0] || null) : null; } };
+      var $ = function (id) { return id === 'rfSum' ? rfSum : null; };
+      eval('(' + src + ')')();
+      return rfSum.textContent;
+    }
+    check('the Raffles heading is lifted off the page', !!src);
+    var one = heading([fakeRow('Meat Raffle', 'drawn Friday 6:30pm')]);
+    check('one raffle: the heading names it and its night, as always', one === 'Meat Raffle, drawn Friday 6:30pm', one);
+    var two = heading([fakeRow('Meat Raffle', 'drawn Friday 6:30pm'), fakeRow('Chook Raffle', 'drawn Sunday 3pm')]);
+    check('two raffles: the heading says 2 raffles, never just the first one\'s name', two === '2 raffles', two);
+  })();
   finished = true;
 })().catch(function (e) { print('  FAIL the test itself threw: ' + e + '\n' + (e && e.stack)); fails++; });
 drainMicrotasks();
