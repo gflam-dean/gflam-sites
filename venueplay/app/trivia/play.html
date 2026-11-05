@@ -349,7 +349,8 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
-<script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
+<script src="/app/vp-details.js"></script>
+<script src="/app/vp-demo.js"></script>   <!-- the try-it demo: their own name, email and mobile from sign-up, never the tick (INBOX 82) -->   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
@@ -1240,6 +1241,11 @@
       /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
          shared by all three phones. Not ticking it changes nothing about playing. */
       if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
+      /* THE TRY-IT DEMO (INBOX 82): their own details from sign-up, carried in the address's #fragment by
+         /app/try.html and read once (VPDemo.takePrefill), go into the boxes. The offers tick stays theirs to tap. */
+      if(typeof VPDemo==="object") VPDemo.applyPrefill(document);
+      if(r && r.demo){ var dn=document.createElement("p"); dn.id="demoNote"; dn.setAttribute("style","font-size:14px;line-height:1.5;color:#B9B9C6;margin:8px 0 0");
+        dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo. Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list."; box.appendChild(dn); }
       /* Collection notice. Australian privacy law wants people told what is being collected and
          who gets it AT THE POINT they are asked, not only in a policy page they never open. This
          screen asked for last name, postcode, email and mobile with no notice and no link to the
@@ -1352,6 +1358,7 @@
   takeHopName();
   /* Join is the submit button of a real form (autofill, and Enter joins): /app/vp-details.js. Old listeners only if that file did not load. */
   if(typeof VPDetails==="object") VPDetails.wire({ join:join, kind:"team" });
+  if(typeof VPDemo==="object" && VPDemo.takePrefill()) VPDemo.applyPrefill(document);   // read once, then out of the address
   else { $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); }); $("joinBtn").addEventListener("click", join); }
   // ---- menu (Light mode / Leave) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
