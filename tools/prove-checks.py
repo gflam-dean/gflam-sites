@@ -8047,7 +8047,7 @@ MUTATIONS = [
      'Gflam Group Pty Ltd, trading as venueplay', 'Gflam Group Pty Ltd, trading as VenuePlay',
      'the coaster page copyright goes back to the capitalised VenuePlay'),
     ('site-offer-footer-in-chrome.test.py', 'venueplay/app/vp-footer.css',
-     'footer .powered img.powered-by{display:block;width:116px;', 'footer .powered img.powered-by{display:block;width:189px;',
+     'footer .powered img.powered-by{display:block;width:104px;', 'footer .powered img.powered-by{display:block;width:189px;',
      'the Gflam logo under "powered by" grows back to the full 189px wordmark width'),
     ('site-offer-footer-in-chrome.test.py', 'venueplay/privacy.html',
      '<span class="powered-by-text">powered by</span>', '',

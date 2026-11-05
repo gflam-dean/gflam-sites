@@ -16,11 +16,11 @@
 /* THE POWERED-BY LINE (Dean, 3 Nov 2026: "keep a powered-by, but make it nicer"; 5 Nov 2026: two lines,
    centred). "powered by" on the first line in the footer's own small muted text, the Gflam. logo on the
    second, stacked. The logo is cut from the kit's Gflam Touring White file (above the TOURING line), never
-   retyped, saved at 278px wide so it is sharp at 2x. The whole block is about 116px wide (Dean, 5 Nov 2026: 15 to 20% smaller than 139, about 61% of the
+   retyped, saved at 278px wide so it is sharp at 2x. The whole block is about 104px wide (Dean, 5 Nov 2026: 139, then 116, then 10% smaller again; about 55% of the
    189px wordmark); max-width:100% keeps it inside a 320px screen. */
 footer .powered{display:flex;flex-direction:column;align-items:center;gap:6px;line-height:1}
 footer .powered .powered-by-text{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs,12px);color:var(--muted);opacity:.85}
-footer .powered img.powered-by{display:block;width:116px;max-width:100%;height:auto;opacity:.6;margin:0 auto}
+footer .powered img.powered-by{display:block;width:104px;max-width:100%;height:auto;opacity:.6;margin:0 auto}
 
 /* MORE ROOM ABOVE THE FOOTER (Dean, 4 Nov 2026: "sit a bit lower and more separated from the content
    above"). This file loads after each page's own styles, so it sets the space for all five pages. */

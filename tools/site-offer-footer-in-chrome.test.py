@@ -203,8 +203,8 @@ try:
         mid = (f.get('vw') or 390) / 2.0
         centred = all(x is not None and abs(x - mid) <= 3 for x in (f.get('brand'), f.get('powered'), f.get('social')))
         ok('%s: the logo, "Powered by Gflam Touring" and the social icons are centred' % name, centred, f)
-        ok('%s: the powered-by block is two lines, centred: "powered by" over the Gflam logo, the Gflam logo about 116px wide, no wider than the screen (Dean, 5 Nov 2026)' % name,
-           f.get('poweredW') and 110 <= f['poweredW'] <= 122 and f.get('textBottom') is not None
+        ok('%s: the powered-by block is two lines, centred: "powered by" over the Gflam logo, the Gflam logo about 104px wide, no wider than the screen (Dean, 5 Nov 2026)' % name,
+           f.get('poweredW') and 98 <= f['poweredW'] <= 110 and f.get('textBottom') is not None
            and f['textBottom'] <= f.get('poweredTop', 0) + 1 and f.get('textW', 0) > 20 and abs(f.get('textMid', 0) - mid) <= 3 and f['poweredW'] <= f.get('vw', 0), (f.get('poweredW'), f.get('markW'), f.get('poweredH')))
         ok('%s: the footer sits lower, with a tad less room above it than before (about 25%% less, 48px), sized for a phone: 44 to 52px of space and 44 to 56px inside before the logo' % name,
            44 <= f.get('gapAbove', 0) <= 52 and 44 <= f.get('padTop', 0) <= 56, (f.get('gapAbove'), f.get('padTop')))
@@ -243,8 +243,8 @@ try:
     time.sleep(0.6)
     v = S.js(sid, FOOT)
     f = json.loads(v) if isinstance(v, str) else {}
-    ok('at 320px the two-line powered-by block is inside the screen, the logo 110 to 122px, and nothing scrolls sideways',
-       f.get('poweredW') and 110 <= f['poweredW'] <= 122 and f.get('sw', 999) <= 320 and f.get('textBottom') is not None, (f.get('poweredW'), f.get('sw')))
+    ok('at 320px the two-line powered-by block is inside the screen, the logo 98 to 110px, and nothing scrolls sideways',
+       f.get('poweredW') and 98 <= f['poweredW'] <= 110 and f.get('sw', 999) <= 320 and f.get('textBottom') is not None, (f.get('poweredW'), f.get('sw')))
     S.close_tab(tid)
 
     print('\nTHE FOOTER AT DESKTOP WIDTH IS AS IT WAS')
@@ -254,8 +254,8 @@ try:
     v = S.js(sid, FOOT)
     f = json.loads(v) if isinstance(v, str) else {}
     ok('desktop: the footer is still a row, with the dots between the links', f.get('dir') == 'row' and f.get('dots') == f.get('links', 0) - 1 and f.get('lineCount') == 1, f)
-    ok('desktop: the footer has 90px or more of space above it and the powered-by Gflam logo is about 116px wide (Dean, 5 Nov 2026)',
-       f.get('gapAbove', 0) >= 90 and f.get('padTop', 0) >= 60 and f.get('poweredW') and 110 <= f['poweredW'] <= 122,
+    ok('desktop: the footer has 90px or more of space above it and the powered-by Gflam logo is about 104px wide (Dean, 5 Nov 2026)',
+       f.get('gapAbove', 0) >= 90 and f.get('padTop', 0) >= 60 and f.get('poweredW') and 98 <= f['poweredW'] <= 110,
        (f.get('gapAbove'), f.get('padTop'), f.get('poweredW'), f.get('markW')))
     S.close_tab(tid)
 finally:
