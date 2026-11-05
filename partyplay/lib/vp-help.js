@@ -166,6 +166,9 @@
       ".vph .vph-call{background:#1B1B20;border:1px solid rgba(255,31,142,.35);border-radius:12px;padding:12px 14px;margin:0 0 14px;color:#E7E7EC;font-size:15px;line-height:1.45}" +
       ".vph .vph-call a{color:#FF8AC4;font-weight:800;white-space:nowrap;text-decoration:underline;text-underline-offset:3px}" +
       ".vph .vph-got{font-size:13.5px;color:#35D07F;margin:6px 0 0;min-height:0}.vph .vph-got:empty{display:none}" +
+      ".vph .vph-who{margin-top:20px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08)}" +
+      ".vph .vph-whohead{font:800 15px/1.3 'Hanken Grotesk',system-ui,sans-serif;color:#fff;margin:12px 0 0}" +
+      ".vph .vph-whonote{font-size:13px;color:#9A9AA4;margin:3px 0 0}.vph .vph-whonote:empty{display:none}" +
       ".vph .vph-about{font-size:14px;color:#C9C9D1;background:#1B1B20;border-radius:10px;padding:10px 12px;margin-bottom:4px}" +
       ".vph-inline .vph{background:transparent;box-shadow:none;max-height:none;padding:0;border-radius:0;max-width:none}";
     doc.head.appendChild(s);
@@ -308,7 +311,7 @@
           while (pick.firstChild) pick.removeChild(pick.firstChild);
           var first = el("option", "", list.length ? "Choose a venue" : "No venues found"); first.value = ""; pick.appendChild(first);
           list.forEach(function (v) { var o = el("option", "", v.name || "Unnamed venue"); o.value = v.id; pick.appendChild(o); });
-          if (list.length === 1) pick.value = list[0].id;
+          if (list.length === 1) { pick.value = list[0].id; if (pick._refill) pick._refill(); }
         });
       }
     } else {
@@ -336,18 +339,41 @@
     var msg = input2("textarea", "vphMsg", { maxlength: "4000", placeholder: venueMode || pubVenue ? "What is happening, and on which screen?" : "How can we help?" });
     f.appendChild(field("Message", msg));
     if (venueMode) {
-      /* WHERE WE REPLY. HQ answers by email only, and hosts sign in by phone, so a login with no
-         email is ASKED for one (Dean, 21 Oct 2026). A login with an email may leave it blank.
+      /* YOUR DETAILS, FILLED IN (Dean, 4 Nov 2026: "auto-fill their name, email and phone. They
+         shouldn't have to type what we already know"). The Worker says what it knows about THIS
+         signed-in login (POST /help/venue/me, the token proves who; nothing is ever read from the
+         address), and the boxes start with it. They are ordinary boxes: change anything, and what
+         is in them is what is sent. HQ View as is told nothing, so Dean's own details never land
+         on a venue's form. A box the person has already typed in is never overwritten.
+         WHERE WE REPLY. HQ answers by email only, and hosts sign in by phone, so a login we know no
+         email for is ASKED for one (Dean, 21 Oct 2026). One we know may leave it blank.
          There is no "Happening now" tick any more: the Worker marks a request urgent itself when a
          game or lobby is open at the venue, because that is why they are writing. */
-      var replyTo = input2("email", "vphReply", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "Leave blank to use the email you sign in with" });
-      var replyField = field("Reply to (optional)", replyTo); f.appendChild(replyField);
-      loginEmail().then(function (have) {
-        if (have) return;
-        replyNeed = true;
-        replyField.firstChild.textContent = "Your email, so we can reply";
-        replyTo.setAttribute("placeholder", "you@example.com");
-      });
+      var who = el("div", "vph-who"); who.id = "vphWho" + sfx;
+      who.appendChild(el("h4", "vph-whohead", "Your details"));
+      var whoNote = el("p", "vph-whonote"); whoNote.id = "vphWhoNote" + sfx; who.appendChild(whoNote);
+      name = input2("text", "vphName", { maxlength: "120", autocomplete: "name", placeholder: "Your name" });
+      who.appendChild(field("Your name", name));
+      var replyTo = input2("email", "vphReply", { maxlength: "200", autocomplete: "email", inputmode: "email", placeholder: "you@example.com" });
+      var replyField = field("Your email, so we can reply", replyTo); who.appendChild(replyField);
+      phone = input2("tel", "vphPhone", { maxlength: "30", autocomplete: "tel", inputmode: "tel", placeholder: "Optional" });
+      who.appendChild(field("Your phone (optional)", phone));
+      f.appendChild(who);
+      [name, replyTo, phone].forEach(function (n) { on(n, "input", function () { n._typed = true; }); });
+      var askedFor = 0;
+      var fillWho = function () {
+        var mine = ++askedFor, vid = venueId() || (pick ? pick.value : "");
+        return knownDetails(vid).then(function (k) {
+          if (mine !== askedFor) return;
+          if (!k) return loginEmail().then(function (have) { if (mine === askedFor) replyNeed = !have; });
+          var put = function (n, v) { if (!n._typed) n.value = v || ""; return !!v; };
+          var any = [put(name, k.name), put(replyTo, k.email), put(phone, k.phone)].some(Boolean);
+          replyNeed = !k.email;
+          whoNote.textContent = any ? "Filled in from your login. Change anything that is not right." : "";
+        });
+      };
+      fillWho();
+      if (pick) { on(pick, "change", fillWho); pick._refill = fillWho; }
     }
     // Turnstile sits just above Send, and only when it is switched on.
     var ts = { box: el("div", "vph-ts"), id: null, on: false };
@@ -389,8 +415,10 @@
         if (!String(subject.value || "").trim()) { err.textContent = "Give it a short subject."; subject.focus(); return; }
         var re = String(replyTo.value || "").trim();
         if ((replyNeed || re) && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(re)) { err.textContent = "Put in your email so we can reply. We answer by email."; replyTo.focus(); return; }
+        var pn = String(phone.value || "").trim();
+        if (pn && !/^[+0-9 ()\-.]{6,30}$/.test(pn)) { err.textContent = "That phone number does not look right. Leave it blank if you like."; phone.focus(); return; }
         body = { venue_id: venueId() || (pick ? pick.value : ""), subject: subject.value, message: m, category: kind.value, reply_email: re,
-                 issue_id: issue ? issue.id : undefined };
+                 name: String(name.value || "").trim(), phone: pn, issue_id: issue ? issue.id : undefined };
         url = API + "/help/venue/ticket";
         if (!body.venue_id) { err.textContent = "Choose which venue this is about."; try { pick.focus(); } catch (e) {} return; }
       } else {
@@ -482,6 +510,18 @@
         var u = r && r.data && r.data.session && r.data.session.user; return (u && u.email) || "";
       }).catch(function () { return ""; });
     } catch (e) { return Promise.resolve(""); }
+  }
+  /* What the Worker already knows about THIS signed-in login at that venue: { name, email, phone },
+     or null when it could not say (no login, no venue yet, an older Worker, offline). A POST with the
+     token, never a query string. */
+  function knownDetails(vid) {
+    if (!vid) return Promise.resolve(null);
+    return authHeader(true).then(function (h) {
+      if (!h) return null;
+      return root.fetch(API + "/help/venue/me", { method: "POST", headers: { "Content-Type": "application/json", Authorization: h }, body: JSON.stringify({ venue_id: vid }) })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return j && !j.error ? { name: String(j.name || ""), email: String(j.email || ""), phone: String(j.phone || "") } : null; });
+    }).catch(function () { return null; });
   }
   /* "{tv_link}" in a step is the venue's own TV address when this page knows it, written the way the
      account page writes it (venueplay.com.au/tv?<slug>); anywhere else, where to find it. */

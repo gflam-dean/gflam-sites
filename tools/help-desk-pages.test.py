@@ -58,6 +58,16 @@ FIXTURES = {
 <script>window.VP={ready:function(){return Promise.resolve({currentVenueId:"11111111-2222-4333-8444-555555555555",venue:{id:"11111111-2222-4333-8444-555555555555",slug:"royal"},staff:[{venue_id:"11111111-2222-4333-8444-555555555555"}]});},
 getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"venue-login-token"}}});}}};}};</script>
 <script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
+    # A HOST signed in on the console (Dean, 4 Nov 2026: fill in their name, email and phone). The address
+    # carries name, email and phone on purpose: the form must NEVER take them from there.
+    '/__fixture/venue-host.html': '''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{background:#0A0A0B;color:#eee;margin:0;font-family:system-ui}header .bar{display:flex;align-items:center;gap:8px;padding:12px}
+.hactions{margin-left:auto;display:flex;gap:8px}.hact{padding:7px 14px;border-radius:999px;background:#17171A;color:#eee;border:1px solid #333}</style></head>
+<body><header><div class="bar"><b>VenuePlay</b><span class="hactions"><a class="hact" href="#">Account</a><button class="hact">Sign out</button></span></div></header>
+<div style="padding:16px">The console.</div>
+<script>window.VP={ready:function(){return Promise.resolve({currentVenueId:"11111111-2222-4333-8444-555555555555",venue:{id:"11111111-2222-4333-8444-555555555555",slug:"royal"},staff:[{venue_id:"11111111-2222-4333-8444-555555555555",role:"host",display_name:"Hayley"}]});},
+getClient:function(){return{auth:{getSession:function(){return Promise.resolve({data:{session:{access_token:"host-login-token",user:{phone:"61400000002"}}}});}}};}};</script>
+<script src="/app/vp-help.js" data-mode="venue" data-brand="venueplay"></script></body></html>''',
     '/__fixture/blank.html': '<!doctype html><html><head><meta charset="utf-8"></head><body>blank</body></html>',
     # A GROUP account (The Mini Bar, 21 Oct 2026: "pick your venue first" with nothing to pick). This login
     # is staff at three venues and the page has no current venue: Help must offer the three by name.
@@ -121,7 +131,9 @@ window.__routes = window.__routes || {};
       var path = u.slice("https://help.test".length);
       window.__posts.push({ path: path, body: b, headers: (o && o.headers) || {} });
       var r = window.__routes[path] || window.__routes[path.split("?")[0]] || { status: 200, body: { ok: true, ticket_no: 1042 } };
-      return Promise.resolve(new Response(JSON.stringify(r.body), { status: r.status || 200, headers: { "Content-Type": "application/json" } }));
+      var answer = function () { return new Response(JSON.stringify(r.body), { status: r.status || 200, headers: { "Content-Type": "application/json" } }); };
+      if (r.delay) return new Promise(function (res) { setTimeout(function () { res(answer()); }, r.delay); });
+      return Promise.resolve(answer());
     }
     if (/workers\.dev|\/\/(api|game)\.venueplay\.com\.au|\/\/api\.partyplay\.com\.au/.test(u)) return Promise.reject(new Error("the real Worker is never called from this test"));
     return real.apply(this, arguments);
@@ -143,7 +155,9 @@ ISSUES = {'venueplay:patron': [_iss(1, 'My game is not showing', 4), _iss(2, 'So
 ISSUES['venueplay:patron'][0]['steps'][0]['body'] = 'Pull down to refresh the page.'
 ISSUES['venueplay:venue'][0]['steps'][1]['body'] = 'Check the TV is showing {tv_link}.'
 ISSUES['venueplay:patron'][0]['steps'][3]['body'] = 'Ask the host. They can see who has joined and can get you going.'
-DEFAULT_ROUTES = {'/help/triage': {'body': {'ok': True, 'proof': 'proof-from-start'}}}
+DEFAULT_ROUTES = {'/help/triage': {'body': {'ok': True, 'proof': 'proof-from-start'}},
+                  # A Worker from before 4 Nov 2026 has no /help/venue/me: the form must work exactly as it did.
+                  '/help/venue/me': {'status': 404, 'body': {'error': 'Not found'}}}
 for key, data in (('venueplay:patron', _vp['patron']), ('venueplay:venue', _vp['venue']), ('partyplay:guest', _pp['guest']), ('partyplay:host', _pp['host'])):
     b_, a_ = key.split(':')
     DEFAULT_ROUTES['/help/content?brand=%s&audience=%s' % (b_, a_)] = _content(data['items'], ISSUES[key])
@@ -286,6 +300,100 @@ def last_ticket(t):
     return ([x for x in posts(t) if x['path'] == '/help/ticket'][-1:] or [{}])[0]
 
 
+ME = '/help/venue/me'
+KNOWN = {'name': 'Hayley', 'email': 'hayley@royalhotel.com.au', 'phone': '0400 000 002'}
+WHO_BOXES = ('(function(){var g=function(i){var e=document.getElementById(i);return e?e.value:null;};'
+             'var n=document.getElementById("vphWhoNote");return {name:g("vphName"),email:g("vphReply"),phone:g("vphPhone"),note:n?n.textContent:null};})()')
+
+
+def host_details_checks(b, VP):
+    """A SIGNED-IN HOST'S OWN DETAILS, FILLED IN (Dean, 4 Nov 2026): "A LOGGED-IN venue submitting a support
+    request: auto-fill their name, email and phone. They shouldn't have to type what we already know." What the
+    Worker says it knows about THIS login fills the boxes; they can change any of it; nothing comes from the
+    address, and nothing personal goes into one."""
+    print('THE CONSOLE FORM FILLS IN A SIGNED-IN HOST\'S OWN NAME, EMAIL AND PHONE')
+    bad = '?venue=royal&name=Evil%20Eve&email=evil%40example.com&phone=0499999999'
+    t = Tab(b, 390, 800, routes={ME: {'body': KNOWN}})
+    t.go(VP + '/__fixture/venue-host.html' + bad)
+    t.until('!!document.getElementById("vphLink")', 8)
+    t.js('document.getElementById("vphLink").click()')
+    t.until('!!document.querySelector(".vph-msg")', 5)
+    to_form(t)
+    w = t.until('(function(){var v=document.getElementById("vphName");return v&&v.value?1:0;})()', 5)
+    got = t.js(WHO_BOXES) or {}
+    check('host: Your name, Your email and Your phone are filled in with what we know about this login',
+          w == 1 and got.get('name') == 'Hayley' and got.get('email') == 'hayley@royalhotel.com.au' and got.get('phone') == '0400 000 002', got)
+    check('host: and it says so, in one line: filled in from your login, change anything that is not right',
+          got.get('note') == 'Filled in from your login. Change anything that is not right.', got)
+    check('host: none of it came from the address (name, email and phone in the link are ignored)',
+          'Evil' not in json.dumps(got) and 'evil@' not in json.dumps(got) and '0499' not in json.dumps(got), got)
+    me = [x for x in posts(t) if x['path'] == ME]
+    check('host: what we know is asked of the Worker as a POST with the login\'s token and only the venue in the body',
+          len(me) == 1 and (me[0].get('headers') or {}).get('Authorization') == 'Bearer host-login-token'
+          and me[0].get('body') == {'venue_id': '11111111-2222-4333-8444-555555555555'}, me)
+    lay = t.js('(function(){var w=document.getElementById("vphWho"),m=document.getElementById("vphMsg"),ids=["vphName","vphReply","vphPhone"];'
+               'var mw=m.getBoundingClientRect().width,ok=ids.every(function(i){var r=document.getElementById(i).getBoundingClientRect();return Math.abs(r.width-mw)<2&&r.height>=40;});'
+               'var labs=ids.map(function(i){return document.getElementById(i).parentNode.querySelector("label").textContent;});'
+               'var head=w&&w.querySelector(".vph-whohead");'
+               'return {ok:ok,labs:labs,head:head&&head.textContent,after:!!(m.compareDocumentPosition(w)&Node.DOCUMENT_POSITION_FOLLOWING),scroll:document.documentElement.scrollWidth<=window.innerWidth};})()') or {}
+    check('host: the three boxes sit together under "Your details", after the message, as wide as it, on-brand, no sideways scroll',
+          lay.get('ok') is True and lay.get('head') == 'Your details' and lay.get('labs') == ['Your name', 'Your email, so we can reply', 'Your phone (optional)']
+          and lay.get('after') is True and lay.get('scroll') is True, lay)
+    copy = t.js('document.getElementById("vphFlow").innerText') or ''
+    check('host: the form says venueplay in lower case if at all, has no em dash, and never shows the support line as their number',
+          'VenuePlay' not in copy and '\u2014' not in copy and t.js('document.getElementById("vphPhone").value').replace(' ', '') != '0752283667', copy[:300])
+    t.shot('07e-venue-form-filled-in')
+    t.js('document.getElementById("vphSubject").value="TV not showing";document.getElementById("vphMsg").value="Black since 7";'
+         'var n=document.getElementById("vphName");n.value="Hayley Jones";n.dispatchEvent(new Event("input"));'
+         'var p=document.getElementById("vphPhone");p.value="0412 345 678";p.dispatchEvent(new Event("input"));document.querySelector(".vph-go").click()')
+    t.until('!!document.querySelector(".vph-done")', 8)
+    tk = ([x for x in posts(t) if x['path'] == '/help/venue/ticket'][-1:] or [{}])[0]
+    bb = tk.get('body', {})
+    check('host: they can change any of it, and what is in the boxes is what is sent',
+          bb.get('name') == 'Hayley Jones' and bb.get('phone') == '0412 345 678' and bb.get('reply_email') == 'hayley@royalhotel.com.au', bb)
+    check('host: nothing personal is ever in an address: every request this form made has a bare path',
+          all('?' not in x['path'] for x in posts(t) if x['path'] in (ME, '/help/venue/ticket')) and not [x for x in posts(t) if re.search(r'hayley|0400|0412|%40|@', x['path'], re.I)],
+          [x['path'] for x in posts(t)])
+    t.close()
+
+    print('A BOX THE HOST TYPED IN FIRST IS NEVER OVERWRITTEN; A PHONE THAT IS NOT A NUMBER IS NOT SENT')
+    t = Tab(b, 390, 800, routes={ME: {'body': KNOWN, 'delay': 1500}})
+    t.go(VP + '/__fixture/venue-host.html')
+    t.until('!!document.getElementById("vphLink")', 8)
+    t.js('document.getElementById("vphLink").click()')
+    t.until('!!document.querySelector(".vph-msg")', 5)
+    to_form(t)
+    t.js('var n=document.getElementById("vphName");n.value="Hay";n.dispatchEvent(new Event("input"));')
+    t.until('(document.getElementById("vphReply")||{}).value', 5)
+    got = t.js(WHO_BOXES) or {}
+    check('host: a name typed before the answer arrived stays as typed; the rest still fills in',
+          got.get('name') == 'Hay' and got.get('email') == 'hayley@royalhotel.com.au' and got.get('phone') == '0400 000 002', got)
+    n0 = len([x for x in posts(t) if x['path'] == '/help/venue/ticket'])
+    t.js('document.getElementById("vphSubject").value="x";document.getElementById("vphMsg").value="y";document.getElementById("vphPhone").value="call me";document.querySelector(".vph-go").click()')
+    time.sleep(0.3)
+    check('host: a phone that is not a number: no send, and it says so', len([x for x in posts(t) if x['path'] == '/help/venue/ticket']) == n0
+          and 'phone number' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+    t.close()
+
+    print('A LOGIN WE KNOW NOTHING ABOUT (HQ VIEW AS IS TOLD NOTHING), AND THE ADDRESS STILL CANNOT FILL IT')
+    t = Tab(b, 390, 800, routes={ME: {'body': {'name': '', 'email': '', 'phone': ''}}})
+    t.go(VP + '/__fixture/venue-host.html' + bad)
+    t.until('!!document.getElementById("vphLink")', 8)
+    t.js('document.getElementById("vphLink").click()')
+    t.until('!!document.querySelector(".vph-msg")', 5)
+    to_form(t)
+    t.until('window.__posts.some(function(x){return x.path==="%s";})' % ME, 5)
+    time.sleep(0.3)
+    got = t.js(WHO_BOXES) or {}
+    check('nothing known: the boxes are empty (never the link\'s name, email or phone) and there is no "filled in" line',
+          got.get('name') == '' and got.get('email') == '' and got.get('phone') == '' and got.get('note') == '', got)
+    t.js('document.getElementById("vphSubject").value="x";document.getElementById("vphMsg").value="y";document.querySelector(".vph-go").click()')
+    time.sleep(0.3)
+    check('nothing known: the email is asked for before it sends, because we answer by email',
+          not [x for x in posts(t) if x['path'] == '/help/venue/ticket'] and 'email' in (t.js('document.querySelector(".vph-err").textContent') or ''))
+    t.close()
+
+
 def group_checks(b, VP):
     """A group account with several venues, and the account page's own venue (21 Oct 2026)."""
     print('A GROUP ACCOUNT (The Mini Bar): HELP WITH NO CURRENT VENUE')
@@ -299,7 +407,7 @@ def group_checks(b, VP):
     check('group: with no current venue, the form asks which venue, listing this login\'s venues by name', opts == 'Choose a venue|The Mini Bar Broadbeach|The Mini Bar Burleigh|The Mini Bar Tugun', opts)
     check('group: and they come from this login\'s own venues (one read, by id)', 'in 3' in (t.js('window.__asked') or []), t.js('window.__asked'))
     lab = t.js('(function(){var r=document.getElementById("vphReply");return r.parentNode.querySelector("label").textContent;})()')
-    check('group: a login WITH an email may leave the reply address blank', lab == 'Reply to (optional)', lab)
+    check('group: a login WITH an email may leave the reply address blank (here an older Worker that cannot fill it in)', lab == 'Your email, so we can reply' and t.js('document.getElementById("vphReply").value') == '', lab)
     t.shot('07d-group-venue-picker')
     t.js('document.getElementById("vphSubject").value="TV";document.getElementById("vphMsg").value="Black screen";document.querySelector(".vph-go").click()')
     time.sleep(0.3)
@@ -333,6 +441,18 @@ def help_page_checks(b, VP):
     """THE PUBLIC HELP PAGE, /help (21 Oct 2026): the real page, the real widget in "page" mode,
     at desktop and phone width. Every ticket goes to the stand-in Worker, never the real one."""
     vp_faq = json.load(open(os.path.join(ROOT, 'venueplay', 'data', 'help-faq.json')))
+    print('THE HELP PAGE, SIGNED OUT: EXACTLY AS BEFORE, NOTHING FILLED IN, EVEN FROM THE LINK')
+    t = Tab(b, 375, 740, routes={ME: {'body': KNOWN}})
+    t.go(VP + '/help?name=Evil%20Eve&email=evil%40example.com&phone=0499999999#venue')
+    t.until('!!document.querySelector("#vphFlow-venue .vph-msg")', 15)
+    t.js('document.querySelector("#vphFlow-venue .vph-msg").click()')
+    t.until('!!document.getElementById("vphName-venue")', 5)
+    time.sleep(0.4)
+    pv = t.js('(function(){var g=function(i){var e=document.getElementById(i);return e?e.value:null;};return {name:g("vphName-venue"),email:g("vphEmail-venue"),phone:g("vphPhone-venue"),venue:g("vphVenue-venue"),who:!!document.getElementById("vphWho-venue")};})()') or {}
+    check('/help signed out: the venue form is as it was: name, venue, email and phone empty, no "Your details" group, and nothing from the link',
+          pv == {'name': '', 'email': '', 'phone': '', 'venue': '', 'who': False}, pv)
+    check('/help signed out: and the Worker is never asked what it knows', not [x for x in posts(t) if x['path'] == ME], [x['path'] for x in posts(t)])
+    t.close()
     for w, h, mobile, tag in ((1280, 900, False, 'desktop'), (375, 740, True, 'phone')):
         print('THE HELP PAGE, /help, ' + tag.upper())
         t = Tab(b, w, h, mobile=mobile, pre=ERRWATCH)
@@ -679,6 +799,7 @@ def main():
               err == 'That is a lot of requests in an hour.' and t.js('document.querySelector(".vph-go").disabled') is False, err)
         t.close()
 
+        host_details_checks(b, VP)
         group_checks(b, VP)
         help_page_checks(b, VP)
 
