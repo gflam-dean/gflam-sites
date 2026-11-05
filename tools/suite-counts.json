@@ -1020,7 +1020,7 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-email-renders.js": {
-  "checks": 31,
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-welcome-is-sent-once.js": {

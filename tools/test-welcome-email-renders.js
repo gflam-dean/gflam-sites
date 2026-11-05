@@ -105,6 +105,18 @@ check('every venue card points at the bare /tv, and the group steps say to type 
       (grp.match(/\/tv[^"<\s]*/g) || []).slice(0, 6));
 check('the group heading fits one line and the group email points at the in-app guide',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(grp) && words(grp).indexOf("When you first sign in, we'll walk you through it.") !== -1 && words(grp).indexOf('screen link') === -1);
+check('the GROUP plan box is trimmed the same way: no "three times in a row", no "Changing your maximum", the one-line pointer to the billing page and Terms, no annual paragraph for a monthly group',
+      words(grp).indexOf('three times in a row') === -1 && words(grp).indexOf('Changing your maximum') === -1 && words(grp).indexOf('On an annual plan') === -1 &&
+      words(grp).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html"[^>]*>billing page</.test(String(sent && sent.html)) && words(grp).indexOf('No lock-in') !== -1, words(grp).slice(-700));
+var grpMonthly = sent;
+sent = null;
+vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@group.com', contact_name: 'Sam', plan: 'annual' },
+  [{ name: 'The Anchor', seats: 30, slug: 'the-anchor-2000' }, { name: 'The Crown', seats: 50, slug: 'the-crown-3000' }], true);
+drain();
+var grpAnnual = words(sent && sent.html);
+check('an ANNUAL group sees the annual paragraph (pro rata, the credit), never "refund", and no raw IF tags',
+      grpAnnual.indexOf('On an annual plan, added players are pro rata to your renewal.') !== -1 && grpAnnual.indexOf('held as a credit that comes off your next renewal on its own') !== -1 && grpAnnual.indexOf('refund') === -1 && !/IF:|ENDIF/.test(String(sent && sent.html)), grpAnnual.slice(-700));
+sent = grpMonthly;
 check('the venue cards are VISIBLE, not injected into a comment',
       (String(sent && sent.html).match(/<!--[\s\S]*?-->/g) || []).join('').indexOf('The Anchor') === -1);
 
