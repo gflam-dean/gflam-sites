@@ -2221,8 +2221,8 @@ MUTATIONS = [
     # and does not assert on, and the text was not even there any more. A mutation aimed at the
     # wrong thing is a check nobody is proving.
     ('trivia-catchup.test.js', 'venueplay/app/trivia/host.html',
-     'var to = pid ? function(o){ o.to = pid; gsend(o); } : send;',
-     'var to = send;',
+     'var to = only || (pid ? function(o){ o.to = pid; gsend(o); } : send);',
+     'var to = only || send;',
      'a phone that joins mid-question is caught up by broadcasting to the whole room instead of '
      'answering the one phone, so every other player sees somebody else\'s catch-up'),
 
@@ -14094,7 +14094,7 @@ MUTATIONS = [
      "  .layer.qgrid:not(.pic) .qround{top:50.1cqw;", "  .layer.qgrid:not(.pic) .qround{top:40cqw;",
      'in Chrome, "Question 3 of 20" runs into the answer cards instead of sitting under them'),
     ('trivia-newlook-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
-     '<div class="boardtitle wintitle">Winners <span>tonight</span></div>', '<div class="boardtitle">Winners tonight</div>',
+     "var tt=$(\"tvPodTitle\"); if(tt) tt.innerHTML='Winners <span>tonight</span>';", "var tt=$(\"tvPodTitle\"); if(tt) tt.innerHTML='Winners tonight';",
      'in Chrome, "Winners tonight" loses its touch of the winning yellow'),
     ('test-trivia-newlook.js', 'venueplay/app/trivia/screen.html',
      '      /* NO COUNTS ON THE REVEAL (Dean,', '      box.appendChild(el("span","sc","33 players"));\n      /* NO COUNTS ON THE REVEAL (Dean,',
@@ -14133,7 +14133,7 @@ MUTATIONS = [
      ".layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);", ".layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--gold);",
      'in Chrome, the join code\'s box is yellow again, the colour kept for winning moments'),
     ('test-trivia-newlook.js', 'venueplay/app/trivia/screen.html',
-     '    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || which==="tvQ" || which==="tvReveal" || (!JOIN_ON_RESULTS && (which==="tvBoard" || which==="tvPodium")));', '    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");',
+     '    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || which==="tvQ" || which==="tvReveal" || which==="tvPodium" || VP_PREVIEW || (!JOIN_ON_RESULTS && which==="tvBoard"));', '    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby" || VP_PREVIEW);',
      'the JOIN NOW card sits over the answers on the question again'),
     ('trivia-newlook-in-chrome.test.py', 'venueplay/app/trivia/screen.html',
      '    if(m.t==="players"){ return; }', '    if(m.t==="players"){ var _j=$("lobbySub"); if(_j) _j.textContent=m.count+" players joined"; return; }',

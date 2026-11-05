@@ -220,15 +220,16 @@ print('\n== 3c. the JOIN NOW card: over neither the question, the reveal, the sc
   function seenWith(flag) {
     var dom = makeDom();
     var f = new Function('$', 'paintNight', 'stopBoardPaging', 'setTimeout', 'alignTitle', 'window', 'JOIN_ON_RESULTS',
-      'var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
+      'var VP_PREVIEW=false; var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
     var show_ = f(dom.$, function () {}, function () {}, function () {}, function () {}, {}, flag);
     var J = dom.$('tvJoinCorner');
     return ['tvLobby', 'tvQ', 'tvReveal', 'tvBoard', 'tvPodium'].map(function (w) { show_(w); return w + ':' + (J.classList.contains('hidden') ? 'off' : 'on'); }).join();
   }
+  /* The podium never carries it, switch or not (Dean, 5 Nov 2026, INBOX 78: "NO join card / JOIN NOW corner on the podium screens"). */
   show('off on the lobby, the question, the reveal, the scores and the podium',
        seenWith(false) === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:off,tvPodium:off', seenWith(false));
-  show('and the one-line switch (JOIN_ON_RESULTS) puts it back on the scores and the podium',
-       seenWith(true) === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:on', seenWith(true));
+  show('and the one-line switch (JOIN_ON_RESULTS) puts it back on the scores only, never the podium',
+       seenWith(true) === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:off', seenWith(true));
 })();
 
 /* ======================================================================================= 4 */

@@ -4085,6 +4085,9 @@ const GAME_PREFS_KEYS = {
     double_last:   gpInt(1, 100),
     buzzer:        gpBool,   // the time's-up buzzer, OFF unless the venue switches it on (3 Nov 2026)
     buzzer_where:  (v) => ({ tv: 1, device: 1 }[v] ? v : undefined),   // where it plays: the TV, or the host's own device
+    // Game settings, the end of the night (Dean, 5 Nov 2026, INBOX 78). Both ON unless the venue switches them off.
+    end_suspense:  gpBool,   // "Suspense reveal at the end of the night": 3rd, 2nd, the winner, by the TV itself
+    round_board:   gpBool,   // "Show the leaderboard after each round"
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
