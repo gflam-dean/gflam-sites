@@ -36,6 +36,9 @@ function arm(opts) {
     if (table === 'vp_venues' && /name=eq/.test(q)) return Promise.resolve(opts.sameName || []);
     return Promise.resolve([]);
   };
+  /* The cross-account "same venue" check (INBOX 60, 5 Nov 2026) pages vp_venues through vpaSelectAll. No other
+     account holds the venues added here, so it answers with none; tools/test-signup-core.js runs the refusal. */
+  vpaSelectAll = function () { return Promise.resolve([]); };
   var status = opts.status || 'active';
   var priceId = ('priceId' in opts) ? opts.priceId : MONTHLY;
 

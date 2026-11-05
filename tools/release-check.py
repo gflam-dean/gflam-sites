@@ -856,7 +856,10 @@ def local_checks(which):
     # screens, and the reason it has to stay that way is that the fault it fixes was
     # exactly this: five screens each deciding for themselves when to show the
     # Reconnecting pill, and all five getting it wrong in two different directions.
-    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus']
+    # vpVenueKey, vpVenuePostcode and vpVenueMatch joined on 5 Nov 2026 (INBOX 60, 61, 62, 81): "is this the same
+    # venue?" is asked at self sign-up, Add a venue, the no-card start's licensed list and (item 62) the coaster
+    # round. The source is venueplay-backend/worker/vp-venue-match.js; each Worker carries a copy.
+    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus', 'vpVenueKey', 'vpVenuePostcode', 'vpVenueMatch']
     def fnbody(src, name):
         m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
         if not m:
@@ -3820,6 +3823,12 @@ def local_checks(which):
              'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
+            # D145: the sign-up core (Dean, 5 Nov 2026; INBOX 60, 61, 80B, 81, 84), branch fix/signup-core-10nov.
+            ('D145. The same pub in another account gets no venue and no free month, only a ticket; new venues sign up as before',
+             'test-signup-core.js',
+             'Add a venue and the card sign-up refuse the same name and postcode on another account, any status, with Dean\'s words, a ticket naming both accounts and the person, and an HQ alert; nothing made, Stripe never asked; the right name at the wrong postcode and a new name go ahead; a venue with no postcode counts as the same; a database that will not answer refuses', 22,
+             'A pub already on venueplay signed up again by somebody else, with a second account and a second free month, '
+             'and nobody at HQ told'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers

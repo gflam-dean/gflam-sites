@@ -592,6 +592,24 @@ async function handleCheckout(request, env, json) {
       existing_account: true }, 409);
   }
 
+  /* THE SAME PUB IN ANOTHER ACCOUNT (Dean, 5 Nov 2026, INBOX 60). Every venue on this sign-up is checked across
+     every account with the one matcher (vpVenueMatch, the in-account rule's name and postcode). A match on an account
+     that is not this person's own (their own is a return, which keeps today's path and its twelve-month rule) means
+     nothing is saved, Stripe is never asked, and no free month starts: a help desk ticket and an HQ alert instead.
+     Fails closed: a database that cannot be read refuses the sign-up rather than waving it through. */
+  {
+    const mine = sameEmail.map(function (a) { return 'f:' + a.id; });
+    for (const v of venues) {
+      let hit = null;
+      try { hit = await vpaSameVenueElsewhere(env, v.name, v.postcode || b.postcode, mine); }
+      catch (e) { return json({ error: 'We could not finish checking your venue just now. Nothing was saved or charged. Please try again in a minute.' }, 503); }
+      if (hit) {
+        return await vpaSameVenueRefusal(env, json, { door: 'card sign-up', name: v.name, postcode: v.postcode || b.postcode, hit: hit,
+          contact_name: contactName, email: email, mobile: (b.mobile || '').trim(), from_account: null });
+      }
+    }
+  }
+
   // 1) Save the lead (status 'pending' until the card is added). For a group we
   //    store the full venue list so provisioning can create each one.
   const row = await sbInsert(env, {
@@ -1803,6 +1821,130 @@ function vpaMaskMobile(phone) {
 // --- misc helpers ---
 function vpaSlugify(s) {
   return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/* ===== VP-VENUE-MATCH: a copy of venueplay-backend/worker/vp-venue-match.js. Edit that file, then this copy;
+   the gate refuses any copy that differs. ===== */
+function vpVenueKey(name) {
+  let s = String(name == null ? '' : name);
+  try { s = s.normalize('NFKD'); } catch (e) { /* an engine without normalize keeps its accents */ }
+  s = s.replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['`\u2018\u2019\u02bc\u00b4]/g, '')
+    .replace(/[&+]/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^the /, '');
+  return s.replace(/ /g, '-');
+}
+function vpVenuePostcode(postcode) {
+  const d = String(postcode == null ? '' : postcode).replace(/\D/g, '');
+  return d.length === 4 ? d : '';
+}
+function vpVenueMatch(aName, aPostcode, bName, bPostcode) {
+  const ka = vpVenueKey(aName);
+  if (!ka || ka !== vpVenueKey(bName)) return null;
+  const pa = vpVenuePostcode(aPostcode), pb = vpVenuePostcode(bPostcode);
+  if (pa && pb) return pa === pb ? 'same' : null;
+  return 'unsure';
+}
+/* ===== VP-VENUE-MATCH END ===== */
+
+/* SAME VENUE, ANY ACCOUNT (Dean, 5 Nov 2026, INBOX 60). "Run the same venue name + postcode check the in-account
+   rule uses, but ACROSS ALL ACCOUNTS." Every venue whatever its status (a cancelled, paused or archived venue is
+   still that pub: coming back is the restart, never a second free month).
+
+   THE CANDIDATES come from the database and the DECISION from vpVenueMatch, so the database can only ever hand
+   back rows to look at: every venue at that postcode, plus every venue with NO postcode whose name holds the
+   longest word of the name typed (an old venue without a postcode cannot be told apart from a new one, so it
+   counts: vpVenueMatch says 'unsure' and this treats it as the same venue).
+
+   FAILS CLOSED. vpaSelectAll throws on any failed page; the caller turns that into "we could not check, nothing
+   was made", never into "no match". Returns [{ venue, match, account }], account being the billing parent
+   ('f:<founding id>', 'g:<group id>', or the venue itself when it has neither). */
+function vpaVenueAccountKey(v) {
+  if (!v) return '';
+  return v.founding_id ? 'f:' + v.founding_id : (v.group_id ? 'g:' + v.group_id : 'v:' + v.id);
+}
+async function vpaVenuesLike(env, name, postcode) {
+  const key = vpVenueKey(name);
+  if (!key) return [];
+  const pc = vpVenuePostcode(postcode);
+  const cols = '&select=id,name,slug,postcode,founding_id,group_id,status,suspended_reason&order=id.asc';
+  const longest = key.split('-').filter(function (w) { return w !== 'and'; })
+    .sort(function (a, b) { return b.length - a.length; })[0] || key;
+  let rows = pc ? await vpaSelectAll(env, 'vp_venues', 'postcode=eq.' + pc + cols) : [];
+  rows = rows.concat(await vpaSelectAll(env, 'vp_venues', 'postcode=is.null&name=ilike.' + encodeURIComponent('*' + longest + '*') + cols));
+  const seen = {}, out = [];
+  rows.forEach(function (v) {
+    if (!v || seen[v.id]) return;
+    seen[v.id] = true;
+    const m = vpVenueMatch(name, pc, v.name, v.postcode);
+    if (m) out.push({ venue: v, match: m, account: vpaVenueAccountKey(v) });
+  });
+  return out;
+}
+/* The same venue in ANOTHER account: the first hit whose account is not one of `mine` (account keys), or null.
+   Throws when the database cannot be read (the caller refuses, never creates). */
+async function vpaSameVenueElsewhere(env, name, postcode, mine) {
+  const own = {};
+  (mine || []).forEach(function (k) { if (k) own[k] = true; });
+  const hits = await vpaVenuesLike(env, name, postcode);
+  return hits.filter(function (h) { return !own[h.account]; })[0] || null;
+}
+/* What a person who typed somebody else's venue is told (Dean's words, INBOX 60), and the one they are told when
+   the ticket could not be made, so the page never says a ticket was lodged when it was not. */
+const VPA_SAME_VENUE_WORDS = 'This venue is already set up with venueplay. We\'ve lodged a ticket on your behalf and we\'ll be in touch soon.';
+const VPA_SAME_VENUE_NO_TICKET = 'This venue is already set up with venueplay. Please email hello@venueplay.com.au and we\'ll sort it out with you.';
+/* THE TICKET (INBOX 60): both accounts, the person's name, email and mobile, and an HQ alert (helpAnnounce: the
+   staff email and the push). Dean decides whether they join the existing account or get a new one. One ticket per
+   venue, person and day, so a person pressing the button five times files one. Returns { ok, ticket_no } or
+   { ok:false }; never throws. */
+async function vpaSameVenueTicket(env, t) {
+  try {
+    const v = (t.hit && t.hit.venue) || {};
+    const email = String(t.email || '').trim().toLowerCase();
+    const once = 'samevenue:' + vpVenueKey(t.name) + ':' + vpVenuePostcode(t.postcode) + ':' + (email || t.mobile || '');
+    if (!(await helpLimit(env, once, 1, 86400))) return { ok: true, repeat: true };
+    let theirs = null;
+    if (v.founding_id) {
+      const f = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,venue_name,contact_email,status,stripe_subscription_id&limit=1');
+      theirs = (f && f[0]) || null;
+    }
+    const lines = [
+      'Someone tried to set up a venue that venueplay already has, so nothing was made and no free month was started.',
+      '',
+      'Where: ' + (t.door || 'sign-up'),
+      'What they typed: ' + helpLine(t.name, 120) + ', ' + (vpVenuePostcode(t.postcode) || 'no postcode'),
+      'Who: ' + (helpLine(t.contact_name, 120) || '(no name)') + ', ' + (email || '(no email)') + ', ' + (helpLine(t.mobile, 40) || '(no mobile)'),
+      '',
+      'THE EXISTING VENUE: ' + (v.name || '?') + ' (' + (v.postcode || 'no postcode') + '), status ' + (v.status || '?') +
+        (v.suspended_reason ? ' (' + v.suspended_reason + ')' : '') + ', venue ' + (v.id || '?') +
+        (t.hit && t.hit.match === 'unsure' ? '. One of the two has no postcode, so check it is really the same pub.' : '.'),
+      'Its account: ' + (theirs ? (theirs.venue_name || '?') + ', ' + (theirs.contact_email || 'no email') + ', ' + (theirs.status || '?') +
+        (theirs.stripe_subscription_id ? ', card on file' : ', no card') + ', account ' + theirs.id : (v.group_id ? 'operator group ' + v.group_id : 'none on file')),
+      'The person\'s own account: ' + (t.from_account ? (t.from_account.venue_name || '?') + ', ' + (t.from_account.contact_email || 'no email') + ', account ' + t.from_account.id : 'none (a new sign-up)'),
+      '',
+      'Decide whether they join the existing account or get a new one, then let them know.',
+    ];
+    const ticket = await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'web_form', priority: 'normal',
+      title: 'Same venue, another account: ' + helpLine(t.name, 80) + ' (' + (vpVenuePostcode(t.postcode) || 'no postcode') + ')',
+      message: lines.join('\n'), contact_name: t.contact_name || null, contact_email: email || null, contact_phone: t.mobile || null,
+      venue_id: v.id || null, lead_venue_name: t.name || null, lead_locality: vpVenuePostcode(t.postcode) || null });
+    if (!ticket || !ticket.id) return { ok: false };
+    try { await helpAnnounce(env, ticket, v.name || ''); } catch (e) { /* the ticket stands; HQ sees it */ }
+    await vpaAudit(env, { actorId: null, label: 'self (' + (t.door || 'sign-up') + ')', role: null }, 'same_venue_other_account',
+      'venue:' + (v.id || ''), { typed: t.name, postcode: vpVenuePostcode(t.postcode), ticket_no: ticket.ticket_no, door: t.door || null,
+        their_account: v.founding_id || v.group_id || null, from_account: t.from_account ? t.from_account.id : null }).catch(function () {});
+    return { ok: true, ticket_no: ticket.ticket_no };
+  } catch (e) {
+    console.log('[same-venue] the ticket was not made: ' + String((e && e.message) || e).slice(0, 200));
+    return { ok: false };
+  }
+}
+/* The one answer every door gives (409), with the ticket made first. */
+async function vpaSameVenueRefusal(env, json, t) {
+  const tk = await vpaSameVenueTicket(env, t);
+  return json({ error: tk.ok ? VPA_SAME_VENUE_WORDS : VPA_SAME_VENUE_NO_TICKET, same_venue: true, ticket: !!tk.ok }, 409);
 }
 
 /* THE SLUG IS THE VENUE'S IDENTITY, AND AUSTRALIA REUSES PUB NAMES CONSTANTLY.
@@ -10215,6 +10357,25 @@ async function vpbAddVenue(request, env, json) {
   const reviving = !!twin && (twin.status === 'suspended' || !!twin.cancel_at_period_end);
   if (twin && !reviving) {
     return json({ error: 'You already have a venue called ' + name + ' at that postcode. If this is a different pub, put its own postcode in. If it is the same one, change its max players on the list above instead.' }, 409);
+  }
+  /* THE SAME PUB IN ANOTHER ACCOUNT (Dean, 5 Nov 2026, INBOX 60). The rule above looks inside this account; this one
+     looks across every account, with the same matcher (vpVenueMatch). A manager who moved pubs and adds a NEW venue
+     name is unchanged. The same venue name and postcode on someone else's account, whatever its status, gets no venue
+     and no free month here: a help desk ticket naming both accounts, an HQ alert, and Dean decides. A venue of this
+     account coming back is the revive path above and never reaches this. Fails closed: if the check cannot run,
+     nothing is added and nothing is charged. */
+  if (!twin) {
+    let elsewhere = null;
+    try {
+      elsewhere = await vpaSameVenueElsewhere(env, name, postcode, [vpaVenueAccountKey({ founding_id: foundingId })]);
+    } catch (e) {
+      return json({ error: 'We could not check that venue just now. Nothing was added or charged. Please try again in a minute.' }, 503);
+    }
+    if (elsewhere) {
+      return await vpaSameVenueRefusal(env, json, { door: 'Add a venue', name: name, postcode: postcode, hit: elsewhere,
+        contact_name: '', email: (o.account && o.account.contact_email) || '', mobile: '',
+        from_account: { id: foundingId, contact_email: (o.account && o.account.contact_email) || '', venue_name: (o.venues && o.venues[0] && o.venues[0].name) || '' } });
+    }
   }
 
   let r;
