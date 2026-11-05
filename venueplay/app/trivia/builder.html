@@ -75,10 +75,18 @@
   .pencil:hover{border-color:var(--pink);color:#fff}
   .saved{font-size:12px;color:var(--win);display:inline-flex;align-items:center;gap:6px}
   .saved.busy{color:var(--muted)}
-  .addrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .addrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:12px 0}
   .addrow .btn{padding:12px 8px;font-size:13px}
   .addrow .btn.on{background:var(--pink);color:#fff;border-color:var(--pink)}
-  @media (max-width:420px){ .addrow{grid-template-columns:1fr} }
+  /* "Create your own" sits on its own, on the right: library questions are swapped or removed, never edited (Dean, 5 Nov 2026). */
+  .addrow .btn.own{margin-left:10px;border-color:rgba(255,31,142,.55);white-space:nowrap}
+  .qrow .qact{align-items:flex-end}
+  .qrow .qs{background:var(--ink-3);border:1px solid var(--line);border-radius:8px;color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;min-width:44px;height:44px;padding:0 10px}
+  .qrow .qs:hover{border-color:var(--pink)}
+  .qrow .qs:disabled{opacity:.45;cursor:wait}
+  .qrow .qtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);font-size:10px;letter-spacing:.06em;color:var(--muted)}
+  .qrow .qtag.mine{border-color:rgba(255,194,75,.5);color:var(--gold)}
+  @media (max-width:420px){ .addrow{grid-template-columns:1fr} .addrow .btn.own{margin-left:0} }
   .panel{border-top:1px dashed var(--line);padding-top:12px;margin-top:4px}
   .opts .orow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .opts .orow input[type=text]{flex:1}
@@ -181,12 +189,12 @@
           <span class="qcount" id="qCount">0 questions</span>
           <span class="saved" id="savedNote">&#10003; Saved automatically</span>
         </div>
-        <div class="hint" style="margin:8px 0 0">Questions play in a random order on the night, so the order here does not matter.</div>
+        <div class="hint" style="margin:8px 0 0">Questions play in a random order on the night, so the order here does not matter. Library questions can be swapped or removed but not edited. To write your own, use Create your own.</div>
 
         <div class="addrow">
           <button type="button" class="btn ghost" data-panel="lib">+ From the library</button>
           <button type="button" class="btn ghost" data-panel="search">+ Search a topic</button>
-          <button type="button" class="btn ghost" data-panel="own">+ Write your own</button>
+          <button type="button" class="btn ghost own" data-panel="own">Create your own</button>
         </div>
 
         <div class="panel hidden" id="panelLib">
@@ -214,7 +222,7 @@
         </div>
 
         <div class="panel hidden" id="panelOwn">
-          <div class="hint" id="ownHint">Type a question, four answers, and tick the correct one. Add a picture for a picture round.</div>
+          <div class="hint" id="ownHint">Create your own question: type it, four answers, and tick the correct one. It is saved to your venue only. Add a picture for a picture round.</div>
           <label class="f">Question</label>
           <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
           <div class="opts" id="ownOpts" style="margin-top:10px">
@@ -472,10 +480,14 @@
       renderQuestions(G.questions);
     }).catch(function(e){ setStatus("listStatus", (e&&e.message)||"Could not load the questions", "err"); });
   }
+  var OWN_HINT="Create your own question: type it, four answers, and tick the correct one. It is saved to your venue only. Add a picture for a picture round.";
+  /* LIBRARY OR YOUR OWN. The server says which (q.own, the library's exact words); the guess stays only for an older Worker. A
+     library question is swapped or removed here, never edited; one you created is yours to edit. The Worker enforces the same. */
+  function isOwn(q){ if(typeof q.own==="boolean") return q.own; return (!q.category || !G.libraryTitles[q.category]); }
   function renderQuestions(qs){
     $("qCount").textContent=qs.length+" question"+(qs.length===1?"":"s");
     var w=$("qList"); w.innerHTML="";
-    if(!qs.length){ w.innerHTML='<div class="empty">No questions yet. Use the three buttons above: grab a batch from the library, search a topic, or write your own.</div>'; setStatus("listStatus",""); return; }
+    if(!qs.length){ w.innerHTML='<div class="empty">No questions yet. Use the buttons above: grab a batch from the library, search a topic, or create your own.</div>'; setStatus("listStatus",""); return; }
     qs.forEach(function(q){
       var ans=(Array.isArray(q.options)&&q.options[q.correct_index])||"";
       var row=document.createElement("div"); row.className="qrow"+(q.id===G.editingId?" editing":""); row.setAttribute("data-qid", q.id);
@@ -483,9 +495,13 @@
         (q.image_url?'<img class="qthumb" alt="" src="'+esc(q.image_url)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qt">'+esc(q.question)+
           '<div class="qa">&#10003; '+esc(ans)+'</div>'+
-          '<div class="qmeta">'+esc(q.category||"")+(q.difficulty?" &middot; "+esc(q.difficulty):"")+(q.image_url?" &middot; picture":"")+'</div>'+
+          '<div class="qmeta">'+esc(q.category||"")+(q.difficulty?" &middot; "+esc(q.difficulty):"")+(q.image_url?" &middot; picture":"")+
+            (isOwn(q) ? '<span class="qtag mine">Your own</span>' : '<span class="qtag">Library</span>')+'</div>'+
         '</div>'+
-        '<div class="qact"><button class="qe" type="button" data-ed="'+esc(q.id)+'" title="Edit this question" aria-label="Edit">&#9998;</button>'+
+        '<div class="qact">'+
+        (isOwn(q)
+          ? '<button class="qe" type="button" data-ed="'+esc(q.id)+'" title="Edit this question" aria-label="Edit">&#9998;</button>'
+          : '<button class="qs" type="button" data-sw="'+esc(q.id)+'" title="Swap for another library question of the same category and difficulty" aria-label="Swap this question">Swap</button>')+
         '<button class="qx" type="button" data-rm="'+esc(q.id)+'" title="Remove this question" aria-label="Remove">&times;</button></div>';
       w.appendChild(row);
     });
@@ -556,6 +572,7 @@
   function startEdit(qid){
     var q=null; for(var i=0;i<G.questions.length;i++){ if(G.questions[i].id===qid){ q=G.questions[i]; break; } }
     if(!q) return;
+    if(!isOwn(q)){ setStatus("listStatus","Library questions cannot be edited. Swap it for another, remove it, or use Create your own.","err"); return; }
     if(!G.editingId){ var cur=readOwnForm(); if(cur.question || cur.options.some(function(o){ return !!o; })) saveDraft(cur); }   // never lose a half-written question to an edit tap
     G.editingId=qid;
     showPanel("own");
@@ -568,7 +585,7 @@
   }
   function cancelEdit(){
     G.editingId=null;
-    $("ownHint").textContent="Type a question, four answers, and tick the correct one. Add a picture for a picture round.";
+    $("ownHint").textContent=OWN_HINT;
     $("addOwnBtn").textContent="Add question"; $("cancelEditBtn").classList.add("hidden");
     fillOwnForm({ question:"", options:["","","",""], correct_index:-1, category:"", difficulty:"medium", image_url:"" });
     restoreDraft();
@@ -590,6 +607,18 @@
       .then(function(){ setStatus("ownStatus","Saved.","ok"); cancelEdit(); clearDraft(); loadQuestions(); loadMySets(); })
       .catch(function(e){ setStatus("ownStatus", (e&&e.message)||"Could not save the change", "err"); })
       .then(function(){ $("addOwnBtn").disabled=false; saving(false); });
+  }
+  /* SWAP (Dean, 5 Nov 2026): another library question of the same category and difficulty, in the same place in the night.
+     The Worker picks it (one that is not already in this night) and says if there is none. */
+  function swapQuestion(qid, btn){
+    if(btn) btn.disabled=true;
+    saving(true); setStatus("listStatus","Swapping…","");
+    req("POST","/host/trivia/questions/swap",{ question_id:qid }).then(function(r){
+      var nq=r&&r.question;
+      if(nq){ for(var i=0;i<G.questions.length;i++){ if(G.questions[i].id===qid){ G.questions[i]=Object.assign({}, G.questions[i], nq); break; } } renderQuestions(G.questions); }
+      setStatus("listStatus", nq ? ('Swapped. Now: "'+String(nq.question||"").slice(0,70)+(String(nq.question||"").length>70?"…":"")+'"') : "Swapped.", "ok");
+      saving(false);
+    }).catch(function(e){ if(btn) btn.disabled=false; saving(false); setStatus("listStatus", (e&&e.message)||"Could not swap that question", "err"); });
   }
   // Remove with an Undo. The Worker hard-deletes, so Undo re-adds the same question (new id, same words).
   var undoTimer=null;
@@ -696,7 +725,7 @@
        Guessing from the category counted library questions as the host's whenever their category was
        not a set's title, "YOUR OWN 3" for one written (audit, 14 Oct 2026). The guess stays only for
        an older Worker that does not send own. */
-    qs.forEach(function(q){ if(q.image_url) pics++; if(typeof q.own==="boolean" ? q.own : (!q.category || !G.libraryTitles[q.category])) own++; });
+    qs.forEach(function(q){ if(q.image_url) pics++; if(typeof q.own==="boolean" ? q.own : (!q.category || !G.libraryTitles[q.category])) own++; });   // the same rule as isOwn(), inline: other suites lift this function alone
     $("sumQs").textContent=qs.length; $("sumPics").textContent=pics; $("sumOwn").textContent=own;
     $("readyTitle").textContent=G.title; $("readyName").value=G.title;
     var run=$("runBtn"); run.href="/app/trivia/host.html?set="+encodeURIComponent(G.setId);
@@ -756,6 +785,7 @@
   document.querySelectorAll("#ownOpts input").forEach(function(i){ i.addEventListener("input", function(){ saveDraft(); }); i.addEventListener("change", function(){ saveDraft(); }); });
   $("qList").addEventListener("click", function(e){
     var rm=e.target.closest("button[data-rm]"); if(rm){ removeQuestion(rm.getAttribute("data-rm")); return; }
+    var sw=e.target.closest("button[data-sw]"); if(sw){ swapQuestion(sw.getAttribute("data-sw"), sw); return; }
     var ed=e.target.closest("button[data-ed]"); if(ed){ startEdit(ed.getAttribute("data-ed")); }
   });
   $("backTo1").addEventListener("click", function(){ goStep(1); loadMySets(); });

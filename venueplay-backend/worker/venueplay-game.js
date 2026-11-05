@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 19:37 · 758de98a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 20:22 · cb2591e9';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -373,6 +373,7 @@ export default {
       if (method === 'GET'  && path === '/host/pr/boards')                 return await handlePRBoards(request, env, json);   // Punters Reckon, staff only
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/update')   return await handleTriviaUpdate(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/swap')     return await handleTriviaSwap(request, env, json);
       if (method === 'POST' && path === '/host/trivia/image-upload')       return await handleTriviaImageUpload(request, env, json);
       if (method === 'POST' && path === '/host/question/add-time')         return await handleHostAddTime(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
@@ -5755,6 +5756,24 @@ async function handleTriviaSetDelete(request, env, json) {
   await sbDelete(env, 'vp_question_sets', 'id=eq.' + enc(set.id));
   return json({ ok: true, archived: false });
 }
+/* LIBRARY QUESTIONS ARE NOT THE VENUE'S TO EDIT (Dean, 5 Nov 2026, item 45c). Adding from the library COPIES a question into
+   the venue's own night, word for word, so the copy is told from a question the host wrote by its exact text being in a
+   library set. Returns the Set of those texts among `texts` that are library questions. THROWS if the check cannot be made:
+   the callers that protect the library (update, swap) fail closed on that, rather than let an edit through. */
+async function libraryTextsAmong(env, texts) {
+  const out = new Set();
+  const uniq = [...new Set((texts || []).map((t) => String(t || '')))].filter(Boolean);
+  if (!uniq.length) return out;
+  const lib = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200');
+  if (!lib.length) return out;
+  const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
+  for (let i = 0; i < uniq.length; i += 20) {
+    const quoted = uniq.slice(i, i + 20).map((q) => enc('"' + q.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'));
+    const hits = await sbGet(env, 'vp_questions', 'set_id=in.' + inList + '&question=in.(' + quoted.join(',') + ')&select=question&limit=1000');
+    for (let k = 0; k < hits.length; k++) out.add(hits[k].question);
+  }
+  return out;
+}
 async function handleTriviaSetQuestions(request, env, json) {     // list a venue set's questions for editing
   const authUserId = await verifyHostJwt(request, env);
   const setId = new URL(request.url).searchParams.get('set') || '';
@@ -5766,21 +5785,11 @@ async function handleTriviaSetQuestions(request, env, json) {     // list a venu
      "Film & TV" set), so it said YOUR OWN 3 when the host had written one (audit, 14 Oct 2026). A
      copied library question keeps its text word for word, so: any question whose exact text is in a
      library set came from the library, and the rest are the venue's own. Twenty texts a read. If the
-     check cannot be made, `own` is left off and the builder falls back to its old guess. */
+     check cannot be made, `own` is left off and the builder falls back to its old guess.
+     This is the SAME rule the update and swap routes judge by (libraryTextsAmong), so the screen and
+     the server can never disagree about which questions may be edited. */
   let libTexts = null;
-  try {
-    const lib = rows.length ? await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200') : [];
-    if (lib.length) {
-      libTexts = new Set();
-      const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
-      const uniq = [...new Set(rows.map((r) => String(r.question || '')))].filter(Boolean);
-      for (let i = 0; i < uniq.length; i += 20) {
-        const quoted = uniq.slice(i, i + 20).map((q) => enc('"' + q.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'));
-        const hits = await sbGet(env, 'vp_questions', 'set_id=in.' + inList + '&question=in.(' + quoted.join(',') + ')&select=question&limit=1000');
-        for (let k = 0; k < hits.length; k++) libTexts.add(hits[k].question);
-      }
-    }
-  } catch (e) { libTexts = null; }
+  try { libTexts = rows.length ? await libraryTextsAmong(env, rows.map((r) => r.question)) : null; } catch (e) { libTexts = null; }
   return json({ questions: libTexts ? rows.map((r) => Object.assign({}, r, { own: !libTexts.has(r.question) })) : rows });
 }
 /* ------------------------- GET /host/pr/boards?venue_id= -------------------------
@@ -6052,7 +6061,10 @@ async function handleTriviaAdd(request, env, json) {              // write your 
   // improve them and promote the good ones into the shared library. Best-effort (never blocks
   // the host adding their question, and no-ops if the submissions table is not migrated yet).
   try {
-    const subs = rows.map((r) => ({
+    /* A question that is ALREADY a library question (an Undo after removing one) is not a host-written one to review. */
+    let already = new Set();
+    try { already = await libraryTextsAmong(env, rows.map((r) => r.question)); } catch (e) { already = new Set(); }
+    const subs = rows.filter((r) => !already.has(r.question)).map((r) => ({
       venue_id: set.owner_venue_id || null, question: r.question, options: r.options,
       correct_index: r.correct_index, category: r.category || null,
       difficulty: r.difficulty || null, image_url: r.image_url || null, status: 'pending',
@@ -6072,9 +6084,19 @@ async function handleTriviaUpdate(request, env, json) {
   const b = await readJson(request);
   const qid = String(b.question_id || '').trim();
   assertUuid(qid, 'question_id');
-  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id,question');
   if (!qrows.length) return json({ error: 'Question not found' }, 404);
-  await triviaSetForVenue(env, qrows[0].set_id, authUserId);        // ENFORCED: staff at the set's venue
+  await triviaSetForVenue(env, qrows[0].set_id, authUserId);        // ENFORCED: staff at the set's venue, and never a library set (403)
+  /* LIBRARY QUESTIONS CANNOT BE EDITED, BY ANYONE BUT US (Dean, 5 Nov 2026). The shared library rows themselves are already
+     out of reach (triviaSetForVenue refuses a set with no owner); this closes the venue's COPY of one: a host may swap it
+     for another or remove it, never reword it or change its answers. Fails closed: if the library cannot be checked, nothing
+     is written. A host's own question is still theirs to edit. */
+  let libHit;
+  try { libHit = await libraryTextsAmong(env, [qrows[0].question]); }
+  catch (e) { return json({ error: 'Could not check whether that is a library question. Nothing was changed. Try again in a moment.' }, 503); }
+  if (libHit.has(qrows[0].question)) {
+    return json({ error: 'Library questions cannot be edited. Swap it for another library question, or create your own.', code: 'library_question' }, 403);
+  }
   const clean = sanitizeQuestion(b);
   if (!clean) return json({ error: 'Fill the question, all four answers, and tick the correct one.' }, 400);
   if (clean.image_url && !/^https:\/\//i.test(clean.image_url)) {
@@ -6082,6 +6104,54 @@ async function handleTriviaUpdate(request, env, json) {
   }
   await sbPatch(env, 'vp_questions', 'id=eq.' + enc(qid), clean);
   return json({ ok: true });
+}
+
+/* --- POST /host/trivia/questions/swap : replace a LIBRARY question with another of the same category and difficulty. ---
+   body { question_id }, Authorization: host JWT. Staff-gated through the question's own set (a library set, or another
+   venue's, is a 403). Only a library question can be swapped (a host's own is edited or removed). The replacement is a
+   different library question with the same category and difficulty that is not already in this night, written over the
+   old one in place, so the night keeps its order. Refused while a round on this set is running (like remove), and for a
+   question already answered in a past game (its answers belong to the results). */
+async function handleTriviaSwap(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);             // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const qid = String(b.question_id || '').trim();
+  assertUuid(qid, 'question_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id,seq,question,category,difficulty');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  const old = qrows[0];
+  const set = await triviaSetForVenue(env, old.set_id, authUserId); // ENFORCED: staff at the set's venue; a library set is a 403
+  let libHit;
+  try { libHit = await libraryTextsAmong(env, [old.question]); }
+  catch (e) { return json({ error: 'Could not check that question. Nothing was changed. Try again in a moment.' }, 503); }
+  if (!libHit.has(old.question)) return json({ error: 'Only library questions can be swapped. Edit your own question, or remove it.', code: 'not_library' }, 409);
+  const cat = String(old.category || '').trim();
+  if (!cat || !['easy', 'medium', 'hard'].includes(old.difficulty)) {
+    return json({ error: 'That question has no category or difficulty on record, so there is nothing to match. Remove it and add another.' }, 409);
+  }
+  const liveTg = await sbGet(env, 'vp_trivia_games', 'question_set_id=eq.' + enc(set.id) + '&select=game_id&limit=200');
+  if (liveTg.length) {
+    const ids = '(' + liveTg.map((t) => enc(t.game_id)).join(',') + ')';
+    const running = await sbGet(env, 'vp_games', 'id=in.' + ids + '&status=eq.running&select=id&limit=1');
+    if (running.length) return json({ error: 'A trivia round is running on this night. Finish the round, then swap the question.' }, 409);
+  }
+  const answered = await sbGet(env, 'vp_trivia_answers', 'question_id=eq.' + enc(qid) + '&select=question_id&limit=1');
+  if (answered.length) return json({ error: 'This question has already been played in a past round, so it is kept for the results. It cannot be swapped.' }, 409);
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200');
+  if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
+  const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
+  const q = 'set_id=in.' + inList + '&parked_at=is.null&category=eq.' + enc(cat) + '&difficulty=eq.' + enc(old.difficulty)
+          + '&select=question,options,correct_index,category,difficulty,image_url';
+  const have = new Set((await sbGetAll(env, 'vp_questions', 'set_id=eq.' + enc(set.id) + '&select=question&order=seq.asc')).map((r) => r.question));
+  const pool = (await randomWindow(env, 'vp_questions', q, 60)).filter((p) => p.question && !have.has(p.question));
+  if (!pool.length) return json({ error: 'There is no other ' + old.difficulty + ' ' + cat + ' library question to swap in that is not already in this night.' }, 404);
+  const pick = pool[randInt(pool.length)];
+  await sbPatch(env, 'vp_questions', 'id=eq.' + enc(qid), {
+    question: pick.question, options: pick.options, correct_index: pick.correct_index,
+    category: pick.category, difficulty: pick.difficulty, image_url: pick.image_url || null,
+  });
+  return json({ ok: true, question: { id: qid, seq: old.seq, question: pick.question, options: pick.options, correct_index: pick.correct_index,
+    category: pick.category, difficulty: pick.difficulty, image_url: pick.image_url || null, own: false } });
 }
 
 /* --- POST /host/trivia/image-upload : the picture round. ---

@@ -1043,6 +1043,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/trivia-library-swap-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/trivia-newlook-in-chrome.test.py": {
   "checks": 202,
   "counted_by": "lines"
@@ -1378,6 +1382,10 @@
  "venueplay-backend/worker/trivia-catchup.test.js": {
   "checks": 17,
   "counted_by": "total"
+ },
+ "venueplay-backend/worker/trivia-library-swap.test.js": {
+  "checks": 31,
+  "counted_by": "lines"
  },
  "venueplay-backend/worker/trivia-reveal.test.js": {
   "checks": 19,
