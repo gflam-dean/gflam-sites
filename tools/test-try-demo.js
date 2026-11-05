@@ -16,6 +16,7 @@
         three-big-nights streak is untouched. The same night not a demo bills (Stripe is called), and a real
         quiet night resets the streak (the path the demo must never reach).
      7. Metering and group overage leave a demo out (DEMO_OFF on the read).
+     8. A prospect venue that has not ticked the Terms plays the demo; its real night still waits for the tick.
 
    Run from the repo root:  jsc tools/test-try-demo.js */
 load('tools/rig-game-worker.js');
@@ -200,6 +201,18 @@ function rowsOf(t) { return (DB[t] || []).length; }
   show('...and the demo session is not in what it counts', metIds.indexOf(DEMO) < 0 && met.status === 200, metIds.slice(0, 160));
   var gsrc = String(handleGroupOverage);
   show('group overage reads its sessions with DEMO_OFF', /'vp_sessions',\s*'venue_id=eq\.' \+ enc\(v\.id\) \+ '&opened_at=gte\.' \+ enc\(since\) \+ DEMO_OFF/.test(gsrc));
+
+  print('');
+  print('8. A new venue plays the demo before the Terms tick; a real night still waits for it');
+  world();
+  DB.vp_venues[0].terms_required = true; DB.vp_venues[0].compliance_accepted_at = null;
+  var hd = await call(handleCreateSession, { venue_id: VENUE, format: 'trivia', road: 'supabase', demo: true });
+  show('a venue that has not ticked opens the demo', hd.status === 200 && hd.body.demo === true, JSON.stringify(hd.body));
+  var hg = await call(handleHostGame, { session_id: hd.body.session_id, format: 'trivia', question_set_id: SET });
+  show('...and starts its 5-question round', hg.status === 200 && hg.body.question_count === 5, JSON.stringify(hg.body));
+  sess(hd.body.session_id).status = 'finished'; sess(hd.body.session_id).ended_at = new Date().toISOString();
+  var hr = await call(handleCreateSession, { venue_id: VENUE, format: 'trivia', road: 'supabase' });
+  show('a real night at the same venue is still held for the tick (terms_first)', hr.status === 403 && hr.body.code === 'terms_first', JSON.stringify(hr.body));
 
   print('');
   print(bad ? ('FAILED ' + bad + ' of ' + ran) : ('All ' + ran + ' checks passed'));

@@ -1150,7 +1150,10 @@ async function handleCreateSession(request, env, json) {
   /* 'host': the reader is the venue's own host, so a switched-off venue answers in the host's words, never the
      room's "have a word with the staff" (28 Oct 2026). requireStaff has already found the staff row by then. */
   const staff = await requireStaff(env, authUserId, venueId, 'host');   // ENFORCED: staff at THIS venue (also enforces the kill-switch)
-  if (await venueTermsPending(env, venueId)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
+  /* THE DEMO COMES BEFORE THE TICK (INBOX 87: sign up, then the demo, then the console). Section 6 is about running
+     games for a room; a demo is the venue's own 5-question trivia round with up to 10 phones, never billed, so a
+     prospect venue may play it before ticking. Every real night still waits for the tick, here and at /host/game. */
+  if (b.demo !== true && await venueTermsPending(env, venueId)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
 
   /* A CONSOLE FROM BEFORE THE ROOM SWITCH OPENS A GAME: hand the whole venue to Supabase to meet
      it (roomOldConsoleCheck, ROOM SERVER section). A console on the room says road:"room" and
@@ -3531,7 +3534,7 @@ async function handleHostGame(request, env, json) {
   const session = sessions[0];
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
   const staff = await requireStaff(env, authUserId, session.venue_id, 'host');   // ENFORCED: staff at the session's venue (also kill-switch, in the host's words)
-  if (await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)
+  if (!isDemoSession(session) && await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122); the demo comes before it
 
   // Once-a-week limit for trivia + musical bingo, checked BEFORE the rollover below so a
   // blocked start can never finish the game already running. Extra rounds within THIS

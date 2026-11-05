@@ -3150,6 +3150,11 @@ MUTATIONS = [
      "    'venue_id=eq.' + vid + '&select=id,status,opened_at,",
      "the venue's nights list shows the demo as a night"),
 
+    ('test-try-demo.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (b.demo !== true && await venueTermsPending(env, venueId)) return termsFirstReply(json);",
+     "  if (await venueTermsPending(env, venueId)) return termsFirstReply(json);",
+     'a new venue cannot play the demo until it has ticked the Terms, so the journey stops at the first screen'),
+
     # ---- 6 Nov 2026, INBOX 80B, 81, 84 (as changed by 97): the no-card start. Items 60 and 61 are parked on
     # fix/same-pub-later with their own rows.
     ('test-signup-core.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
@@ -8871,11 +8876,11 @@ MUTATIONS = [
      '',
      'the trivia console sets up a night the Worker will refuse'),
     ('test-prospect-terms-first-game.js', 'venueplay-backend/worker/venueplay-game.js',
-     '  if (await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);',
+     "  if (!isDemoSession(session) && await venueTermsPending(env, session.venue_id)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122); the demo comes before it",
      '',
      '/host/game starts trivia, musical bingo or a raffle at a venue that never ticked'),
     ('test-prospect-terms-first-game.js', 'venueplay-backend/worker/venueplay-game.js',
-     '  if (await venueTermsPending(env, venueId)) return termsFirstReply(json);',
+     '  if (b.demo !== true && await venueTermsPending(env, venueId)) return termsFirstReply(json);   // a prospect venue ticks section 6 first (migration 122)',
      '',
      'Open lobby works at a venue that never ticked'),
     ('test-prospect-terms-first-game.js', 'venueplay-backend/worker/venueplay-game.js',
