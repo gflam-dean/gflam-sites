@@ -881,9 +881,9 @@ def local_checks(which):
     # screens, and the reason it has to stay that way is that the fault it fixes was
     # exactly this: five screens each deciding for themselves when to show the
     # Reconnecting pill, and all five getting it wrong in two different directions.
-    # vpVenueKey, vpVenuePostcode and vpVenueMatch joined on 5 Nov 2026 (INBOX 60, 61, 62, 81): "is this the same
-    # venue?" is asked at self sign-up, Add a venue, the no-card start's licensed list and (item 62) the coaster
-    # round. The source is venueplay-backend/worker/vp-venue-match.js; each Worker carries a copy.
+    # vpVenueKey, vpVenuePostcode and vpVenueMatch joined on 5 Nov 2026 (INBOX 62, 81): "is this the same
+    # venue?" is asked by the no-card start's licensed list and later (item 62) the coaster round.
+    # The source is venueplay-backend/worker/vp-venue-match.js; each Worker carries a copy.
     SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus', 'vpVenueKey', 'vpVenuePostcode', 'vpVenueMatch']
     def fnbody(src, name):
         m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
@@ -3875,12 +3875,12 @@ def local_checks(which):
              'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
-            # D145: the sign-up core (Dean, 5 Nov 2026; INBOX 60, 61, 80B, 81, 84), branch fix/signup-core-10nov.
-            ('D145. The same pub in another account gets no venue and no free month, only a ticket; new venues sign up as before',
+            # D145: the no-card start (Dean, 5 Nov 2026; INBOX 80B, 81, 84, as changed by 97), branch fix/signup-core-10nov.
+            # Items 60 and 61 (the same pub across accounts, the known-person prefill) are parked on fix/same-pub-later.
+            ('D145. The no-card start makes an account only for a licensed venue after the text code, one free month per mobile and email, and never bills',
              'test-signup-core.js',
-             'Add a venue and the card sign-up refuse the same name and postcode on another account, any status, with Dean\'s words, a ticket naming both accounts and the person, and an HQ alert; nothing made, Stripe never asked; the right name at the wrong postcode and a new name go ahead; a venue with no postcode counts as the same; a database that will not answer refuses', 22,
-             'A pub already on venueplay signed up again by somebody else, with a second account and a second free month, '
-             'and nobody at HQ told'),
+             'runs the billing Worker: the five boxes checked, the honeypot and the bot check, eight code requests an hour per network, a 6-digit code texted through the SMS hook and kept only as a hash, five wrong tries spend it; nothing made before the code passes; a venue on our licensed list (name and postcode through vpVenueMatch) gets the prospect account at 10 players with no card, no Stripe and the free month not started; a fake name or the right name at the wrong postcode, a mobile or email already on venueplay (a login, an account typed any way, an earlier sign-up), or a list that will not answer is held for HQ with the same words and one ticket; a login or account read that fails makes nothing; a double tap makes one account; HQ owner or accounts approve (the normal account and welcome) or refuse in one tap; no session, no seats above 10, no uplift on any path; the parked items 60 and 61 are absent', 75,
+             'A stranger, a bot or a returning venue given a free month, or a sign-up that reaches Stripe or a bill'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers

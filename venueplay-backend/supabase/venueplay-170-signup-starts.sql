@@ -1,18 +1,18 @@
 -- =====================================================================
 -- Migration 170: the no-card start's sign-up attempts (vp_signup_starts)
 -- ---------------------------------------------------------------------
--- Dean, 5 Nov 2026 (INBOX 80B, 81, 60, 61): a public "Have a play, free"
--- start on the offer page. Five boxes (venue, postcode, name, mobile,
+-- Dean, 5 Nov 2026 (INBOX 80B, 81, as changed by 97): a public "Have a play
+-- for free" start on the offer page. Five boxes (venue, postcode, name, mobile,
 -- email), a 6-digit code texted to the mobile, then:
 --   - the venue is on our licensed venues list (171): the same card-free
 --     prospect account HQ makes (10 players, free month from the first
 --     sign-in, card later);
 --   - it is not: NO account and NO free month. HQ gets a ticket and
 --     approves in one tap (POST /admin/signup-start/decide);
---   - the same venue is on another account (item 60): nothing made, a
---     ticket for Dean;
---   - the mobile already signs in (item 61, proven by the code): the new
---     venue joins THAT account, one bill, through Add a venue's own code.
+--   - the mobile or the email is already on venueplay (one free month per
+--     mobile and per email): nothing made, held for HQ the same way.
+-- (The same pub across accounts, item 60, and the known-person join, item
+-- 61, are parked on fix/same-pub-later: nothing for them is in this table.)
 --
 -- ONE ROW PER ATTEMPT holds what they typed and the code's HASH (never the
 -- code), so the text code is checked before anything else is made. It is
@@ -53,20 +53,13 @@ create table if not exists public.vp_signup_starts (
   code_expires_at   timestamptz,
   code_sent_count   smallint not null default 0 check (code_sent_count between 0 and 20),
   attempts          smallint not null default 0 check (attempts between 0 and 50),
-  -- which number the code went to: 'typed' (their mobile) or 'known' (the mobile already on the
-  -- login that holds the email they typed, item 61)
-  code_to           text not null default 'typed' check (code_to in ('typed', 'known')),
+  -- when the code to THEIR mobile passed (set in the same write that moves the outcome on)
   verified_at       timestamptz,
-  known_login_id    uuid,
   outcome           text not null default 'pending' check (outcome in
                       ('pending',        -- code not typed yet
                        'made',           -- a licensed venue: the account was made
-                       'joined',         -- a known person: the venue joined their account
                        'held_unlisted',  -- not on the licensed list: waiting for HQ
-                       'held_same_venue',-- on another account: ticket for Dean (item 60)
-                       'held_known',     -- a known mobile or email that could not be joined here: ticket
-                       'yours',          -- the venue is already on their own account
-                       'check_email',    -- the email signs in elsewhere: a sign-in link went to it
+                       'held_known',     -- a mobile or email already on venueplay, or a setup that refused: waiting for HQ
                        'approved',       -- HQ approved a held one: the account was made
                        'refused')),      -- HQ said no
   venue_id          uuid references public.vp_venues(id) on delete set null,
