@@ -195,9 +195,14 @@
   function remove(btn, id) {
     var c = find(id); if (!c) return null;
     var what = c.kind === "lead" ? "Coaster players at " + c.name : c.name;
-    if (root.confirm && !root.confirm("Remove " + what + "? Its board and its rounds (first names only) go with it.")) return null;
-    btn.disabled = true; btn.textContent = "Removing...";
-    return post("/admin/coaster/remove", { id: id }).then(function (j) {
+    /* Asked on the page (/app/vp-ask.js), never a native confirm(): a kiosk browser answers those no. */
+    var ask = root.vpAsk ? root.vpAsk("Remove " + what + "? Its board and its rounds (first names only) go with it.", { yes: "Remove", no: "Keep it" }) : Promise.resolve(false);
+    return Promise.resolve(ask).then(function (yes) {
+      if (!yes) return null;
+      btn.disabled = true; btn.textContent = "Removing...";
+      return post("/admin/coaster/remove", { id: id });
+    }).then(function (j) {
+      if (!j) return null;
       if (j.error) { btn.disabled = false; btn.textContent = "Remove"; say(j.error); return j; }
       S.msg = what + " is removed." + ((j.warnings || []).length ? " " + j.warnings.join(" ") : "");
       return load().then(function () { say(S.msg, true); return j; });

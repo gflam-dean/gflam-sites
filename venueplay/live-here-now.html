@@ -77,6 +77,10 @@
     overflow-x:hidden;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
   a{color:inherit;text-decoration:none}
   [hidden]{display:none!important}
+  /* and per class, so the gate can see each one that sets its own display is still hidden by the attribute */
+  .vlogo[hidden]{display:none}
+  .picks[hidden]{display:none}
+  .btn[hidden]{display:none}
   .shell{width:100%;max-width:480px;margin:0 auto;padding:0 18px}
 
   /* ---------- THE HEADER, OPTION 5 (the trivia phone's, Dean 3 Nov 2026): the venue's logo top left, or its

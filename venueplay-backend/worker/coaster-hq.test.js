@@ -370,7 +370,7 @@ function nextTick() { return new Promise(function (r) { r(); }); }
   ['cqName', 'cqSuburb', 'cqPostcode', 'cqMsg'].forEach(function (id) { ELS[id] = mk(id); });
   var PREFILL = [], CALLS = [];
   var W = { VP: { getClient: function () { return { auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: ADMIN } } }); } } }; } },
-    setTimeout: function () {}, confirm: function () { return true; }, hqProspectPrefill: function (o) { PREFILL.push(o); },
+    setTimeout: function () {}, vpAsk: function () { return Promise.resolve(true); }, hqProspectPrefill: function (o) { PREFILL.push(o); },
     fetch: function (url, opts) { var path = String(url).replace(API, ''); CALLS.push(path);
       return _d.fetch(req(path, JSON.parse(opts.body), opts.headers), ENV).then(function (res) {
         return { status: res.status, ok: res.status >= 200 && res.status < 300, json: function () { return Promise.resolve(res.body ? JSON.parse(res.body) : {}); } }; }); } };

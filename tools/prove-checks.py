@@ -11501,6 +11501,11 @@ MUTATIONS = [
      '    goPane("venues");\n    show("prospectPanel", true); ppLoadWaiting();\n',
      '    show("prospectPanel", true); ppLoadWaiting();\n',
      'Make it a normal prospect fills a form on a tab that is not showing, and nothing seems to happen'),
+    # check-links.py follows a 200 rewrite in _redirects (/coaster and /gflam are the offer page), 5 Nov 2026.
+    ('every link on our own pages goes somewhere', 'tools/check-links.py',
+     "            out[w[0].rstrip('/') or '/'] = w[1]",
+     "            pass",
+     'a link to an address the site serves by rewrite (/coaster) is reported broken, or a broken one passes'),
     # THE NOT-FOUND PAGE (venueplay/404.html), redesigned for phones 1 Nov 2026, branch feature/coaster-404-2nov.
     ('not-found-in-chrome.test.py', 'tools/pagesim.py',
      '                self.send_response(404)',
