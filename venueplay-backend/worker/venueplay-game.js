@@ -533,7 +533,9 @@ async function sweepRetention(env) {
          20 Sep 2026) left a live customer one failed card away from this list. A venue
          suspended for non-payment or by hand is NOT a closed account, whatever date it
          carries, so the reason has to say closed as well. */
-      + '&suspended_reason=in.(ended,cancelled,archived,archived_cancelling)'
+      /* free_month_ended joined 5 Nov 2026 (INBOX item 33): a prospect paused for want of a card has left
+         too, and its pause now stamps closed_at. A card before the 90 days clears closed_at. */
+      + '&suspended_reason=in.(ended,cancelled,archived,archived_cancelling,free_month_ended)'
       + '&select=id,name,closed_at&limit=200');
     if (!venues || !venues.length) return { venues: 0, players: 0, captures: 0 };
 

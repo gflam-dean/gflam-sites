@@ -79,8 +79,10 @@ check('asks only for venues closed BEFORE the cutoff', /closed_at=lt\./.test(q),
    HQ reactivation path forgot to clear closed_at, which left a live customer one failed
    card away from this list: status suspended (non-payment), closed date ancient. The reason
    has to say the account is CLOSED as well. */
+/* free_month_ended joined the list on 5 Nov 2026 (INBOX item 33): a prospect paused for want of a card has
+   left, and its pause stamps closed_at like every other way of leaving. */
 check('and only for venues whose REASON says closed, never non-payment or manual',
-      /suspended_reason=in\.\(ended,cancelled,archived,archived_cancelling\)/.test(q), q);
+      /suspended_reason=in\.\(ended,cancelled,archived,archived_cancelling,free_month_ended\)/.test(q), q);
 check('non-payment is not in that list', !/nonpayment|manual/.test(q), q);
 check('asks only for SUSPENDED venues', /status=eq\.suspended/.test(q), q);
 check('skips venues already purged', /player_data_purged_at=is\.null/.test(q), q);

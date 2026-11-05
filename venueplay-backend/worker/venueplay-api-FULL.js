@@ -4086,7 +4086,9 @@ async function vpaProspectCancel(request, env, json) {
   await vpaProspectPatch(env, prow.venue_id, { cancelled_at: at });
   if (v.status === 'active') {
     await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id), { method: 'PATCH', headers: vpaHeaders(env),
-      body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled' }) });
+      /* closed_at starts the 90-day clock, the same as a paid venue's cancellation (INBOX item 33, 5 Nov 2026).
+         It never used to, so a prospect who cancelled kept their players on file for ever. */
+      body: JSON.stringify({ status: 'suspended', suspended_reason: 'cancelled', closed_at: at }) });
   }
   await vpaAudit(env, { actorId: null, label: 'the venue (cancel link)' }, 'prospect_cancelled', 'venue:' + v.id, { name: v.name });
   return page('All done', 'venueplay for ' + name + ' is cancelled. Nothing was ever charged, and you will not hear from us about it again. If you change your mind, just call us.');
@@ -4097,7 +4099,8 @@ async function vpaProspectCardAdded(env, foundingId) {
   const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
   if (!prow || !prow.paused_at) return false;
   await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(prow.venue_id) + '&status=eq.suspended&suspended_reason=eq.free_month_ended', {
-    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'active', suspended_reason: null }) });
+    // Back on, so the 90-day clock stops (INBOX item 33), the same as every other way back on.
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'active', suspended_reason: null, closed_at: null }) });
   await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
   return true;
 }
@@ -4156,7 +4159,10 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (nowMs > endMs) {
       if (v.status === 'active') {
         await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(v.id) + '&status=eq.active', {
-          method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'suspended', suspended_reason: 'free_month_ended' }) });
+          /* closed_at starts the 90-day clock (INBOX item 33, 5 Nov 2026): a paused prospect who never comes back
+             has its player details cleared 90 days after the pause, like every other venue that has left. A card
+             before then clears it again (vpaProspectCardAdded). */
+          method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'suspended', suspended_reason: 'free_month_ended', closed_at: new Date(nowMs).toISOString() }) });
       }
       await vpaProspectPatch(env, p.venue_id, { paused_at: new Date(nowMs).toISOString() });
       await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null });
@@ -9202,7 +9208,7 @@ async function vpbRequireOwner(request, env) {
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
     '&order=founding_id.asc,created_at.asc' +
-    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode');
+    '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
   if (!venues || !venues.length) return { error: 'No venues found.', status: 403 };
 
   /* WHICH ACCOUNT. A login with venues on two accounts (a publican who signed up two pubs
@@ -9239,7 +9245,7 @@ async function vpbRequireOwner(request, env) {
     const all = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) +
       '&order=created_at.asc' +
-      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode');
+      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end,suspended_reason,timezone,created_at,postcode,closed_at');
     if (all && all.length) accountVenues = all;
   }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
@@ -9312,6 +9318,34 @@ async function vpbRequireOwner(request, env) {
                : ((staff || []).length ? 'manager' : null);
   return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor,
            perms: perms, role: myRole, actingAsAdmin: actingAsAdmin, otherAccounts: otherAccounts };
+}
+
+/* WHERE THE ACCOUNT STANDS, AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33). One answer, read by
+   /account/summary, so Your account shows a venue that has left exactly what it may still use.
+     active           at least one venue is on. A venue that has cancelled but is still inside its paid
+                      period is still on (status active), so it keeps every tab until the end date.
+     paused_prospect  every venue is off because the free month ran out with no card (free_month_ended)
+     cancelled        every venue is off and at least one ended by cancelling (cancelled, ended,
+                      archived_cancelling): the owner's own cancellation has reached its end date
+     closed           every venue is off and at least one was closed by us (archived)
+     paused           every venue is off for another reason (a failed card, or switched off by hand)
+   Anything but active means no games: the game Worker refuses a venue whose status is not active.
+   kept_until is the day the nightly retention sweep (venueplay-game.js sweepRetention) clears the player
+   details: 90 days after the EARLIEST closed_at on the account, because that venue goes first. Null when no
+   clock is running (a failed card or a hand switch-off never starts one). */
+const VPB_RETENTION_DAYS = 90;
+function vpbAccountStanding(venues) {
+  const list = Array.isArray(venues) ? venues : [];
+  if (!list.length || list.some((v) => v && v.status !== 'suspended')) return { state: 'active', games: true, kept_until: null };
+  const why = list.map((v) => String((v && v.suspended_reason) || ''));
+  const state = why.some((r) => r === 'archived') ? 'closed'
+              : why.some((r) => r === 'cancelled' || r === 'ended' || r === 'archived_cancelling') ? 'cancelled'
+              : why.every((r) => r === 'free_month_ended') ? 'paused_prospect'
+              : 'paused';
+  let first = null;
+  list.forEach((v) => { const t = Date.parse((v && v.closed_at) || ''); if (isFinite(t) && (first == null || t < first)) first = t; });
+  return { state: state, games: false,
+           kept_until: first == null ? null : new Date(first + VPB_RETENTION_DAYS * 86400000).toISOString() };
 }
 
 // Full-access (account owner or legacy staff) vs a restricted manager, and per-toggle checks.
@@ -9681,6 +9715,8 @@ async function vpbAccountSummary(request, env, json) {
     has_subscription: !!o.account.stripe_subscription_id,
     is_owner: vpbIsOwner(o),
     perms: o.perms || null,
+    /* After a venue leaves (INBOX item 33): which tabs the page shows, and whether games can run. */
+    standing: vpbAccountStanding(o.venues),
     /* Dean's billing rules (vpbRules): the page's wording and the Add players question follow these,
        so what a venue reads is always what this Worker does. Both off until Dean says yes. */
     rules: vpbRules(env),

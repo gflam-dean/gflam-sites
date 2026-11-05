@@ -77,6 +77,18 @@
   .pastdue .pdtext{font-size:14.5px;line-height:1.5;color:#fff}
   .pastdue .pdactions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
   .pastdue .pdpay{color:var(--pink);font-size:13.5px;font-weight:700;text-decoration:underline}
+  /* AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33): one card at the top of Billing says where the account
+     stands, what is kept and how to come back. Amber like the console's hold card: nothing is wrong, the games are off. */
+  .leftcard{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.45);border-radius:16px;padding:16px 18px;margin:0 0 16px}
+  .leftcard h2{font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3;margin:0 0 6px}
+  .leftcard p{font-size:14px;line-height:1.55;color:var(--text);margin:0 0 8px}
+  .leftcard .lckeep{color:var(--muted);font-size:13px;margin:0}
+  .leftcard .lcact{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+  .leftcard .lcact a.go{text-decoration:none;display:inline-block}
+  .ldrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line-2);flex-wrap:wrap}
+  .ldrow:first-child{border-top:0;padding-top:2px}
+  .ldrow b{color:#fff;font-size:15px}
+  .ldrow small{color:var(--muted);font-size:13px}
   /* One night, one row. On a phone the figures drop under the date instead of squeezing. */
   .night{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0;
     display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -422,6 +434,8 @@
     </div>
 
     <div class="tabpanel on" id="tp-billing">
+    <!-- After a venue leaves (INBOX item 33): where the account stands, what is kept, how to come back. -->
+    <div id="leftCard" class="leftcard" role="status" hidden></div>
     <!-- Failed payment. Stripe emails the owner and the venue is suspended after repeat failures,
          but this page said nothing and kept showing a normal "Next payment" tile. -->
     <div id="pastDue" class="pastdue" style="display:none">
@@ -634,6 +648,22 @@
     </div><!-- /tp-marketing -->
 
     <div class="tabpanel" id="tp-draws">
+    <!-- READ ONLY AFTER A VENUE LEAVES (INBOX item 33): each members draw's jackpot and when it last ran, the members
+         list, and the winners download. The folds below are for setting draws up, so they are hidden then. -->
+    <div id="leftDraws" hidden>
+      <div class="label">Your draws</div>
+      <p class="note" style="margin:0 0 10px">Your games are off, so these are read only. Nothing here has been changed.</p>
+      <div class="scard">
+        <div class="scardhead">Members draws</div>
+        <div id="leftDrawRows"><p class="snote">Loading&hellip;</p></div>
+      </div>
+      <div class="scard">
+        <div class="scardhead">Your members list</div>
+        <div class="snote" id="leftMembersCount">Loading your members list&hellip;</div>
+        <div class="btnrow"><button class="addbtn" id="leftMembersCsv" type="button">Download your members list (CSV)</button></div>
+      </div>
+      <div id="leftDrawLogSlot"></div>
+    </div>
     <div class="label acchead" data-acc="raffles" role="button" tabindex="0" aria-expanded="false">Raffles<span class="accsum" id="rfSum"></span><span class="accchev"></span></div>
     <div class="accbody" id="acc-raffles">
     <p class="note" style="margin:8px 0 10px">Set your raffle routine and your usual prizes once. What you have given away shows here too, with cash and other prizes counted apart.</p>
@@ -678,7 +708,7 @@
     <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
          "who won the members draw on 12 August, and how much" could only be answered by someone
          reading the database. -->
-    <div class="scard">
+    <div class="scard" id="drawLogCard">
       <div class="scardhead">Draws and raffles: who won what</div>
       <p class="snote">Every raffle and members draw result for this venue. Keep it for your records.</p>
       <div class="btnrow">
@@ -1385,6 +1415,159 @@
     }
   }
 
+  /* AFTER A VENUE LEAVES (Dean, 5 Nov 2026, INBOX item 33). When every venue on the account is off (closed by us,
+     cancelled and past its end date, a prospect whose free month ran out with no card, or switched off for a failed
+     card), the account cannot run games, so the page shows only what is still theirs to use:
+       Billing    invoices, the card, and how to come back (a paused prospect adds a card right here)
+       Draws      read only: each members draw's jackpot and when it last ran, the members list, the winners download
+       Marketing  the opt-in download only
+     and hides People, Nights, Screen, Game settings, the venue link and the table signs. It opens on Billing.
+     The Worker decides the state (vpbAccountStanding, /account/summary "standing"); this only paints it.
+     A venue that has cancelled but is still inside its paid period is active and keeps every tab. */
+  var LEFT_TABS = ["billing", "draws", "marketing"];
+  function standingTabs(st){
+    return (!st || st.state === "active" || st.games !== false) ? null : LEFT_TABS.slice();
+  }
+  var leftState = null;
+  function leftWords(st, d){
+    var kept = st.kept_until ? fmtDay(st.kept_until) : null;
+    var keep = kept
+      ? ("Your player details, members list and draw history are kept until " + kept + ". After that they are deleted, as our privacy policy says.")
+      : "Nothing has been deleted. Your player details, members list and draw history are all still here.";
+    var back = "Want to come back? Call us on 07 5228 3667 or email support@venueplay.com.au and we will switch it back on.";
+    if (st.state === "paused_prospect") return { title: "Your free month has ended, so your games are paused",
+      text: "Nothing has been lost. Add your card and everything comes straight back on, exactly as you left it.",
+      keep: keep, card: true };
+    if (st.state === "cancelled") return { title: "Your subscription has ended",
+      text: "Your games are off. Your invoices, opt-ins, members list and draw history are still here. " + back, keep: keep };
+    if (st.state === "closed") return { title: "This account is closed",
+      text: "Your games are off. Your invoices, opt-ins, members list and draw history are still here. " + back, keep: keep };
+    if (d && d.past_due) return { title: "Your games are off until the card is updated",
+      text: "Nothing has been lost. Update your card below and everything comes straight back on.", keep: keep };
+    return { title: "Your games are on hold",
+      text: "Nothing has been lost. Call us on 07 5228 3667 or email support@venueplay.com.au and we will sort it out.", keep: keep };
+  }
+  function fmtDay(iso){
+    var t = new Date(iso); if (isNaN(t)) return null;
+    var M = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return t.getDate() + " " + M[t.getMonth()] + " " + t.getFullYear();
+  }
+  function applyStanding(d){
+    var st = d && d.standing, tabs = standingTabs(st), left = !!tabs;
+    leftState = left ? st.state : null;
+    document.body.classList.toggle("vp-left", left);
+    // Tab buttons: only the three that still mean something. A manager's own gates (gateSections) ran first and win.
+    var btns = document.querySelectorAll(".tabs button");
+    for (var i = 0; i < btns.length; i++){
+      var id = btns[i].getAttribute("data-tab");
+      if (left && tabs.indexOf(id) < 0){ btns[i].setAttribute("data-left-hid", "1"); btns[i].style.display = "none"; }
+      else if (btns[i].getAttribute("data-left-hid")){ btns[i].removeAttribute("data-left-hid"); btns[i].style.display = ""; }
+    }
+    function hide(el, on){ if (!el) return; if (on){ el.setAttribute("data-left-hid", "1"); el.style.display = "none"; }
+                           else if (el.getAttribute("data-left-hid")){ el.removeAttribute("data-left-hid"); el.style.display = ""; } }
+    function sec(labelText){   // a .label and its siblings up to the next .label, as gateSections reads them
+      var out = [], labels = $("content").querySelectorAll(".label");
+      for (var i = 0; i < labels.length; i++){
+        if (labels[i].textContent.trim().toLowerCase() !== labelText.toLowerCase()) continue;
+        out.push(labels[i]);
+        for (var el = labels[i].nextElementSibling; el && !(el.classList && el.classList.contains("label")); el = el.nextElementSibling) out.push(el);
+      }
+      return out;
+    }
+    // Billing: the plan, venue steppers, adding a venue and payment reminders are about running games.
+    var sum = document.querySelector("#tp-billing > .card"); hide(sum, left);
+    ["Your venues", "Payment reminders"].forEach(function(t){ sec(t).forEach(function(el){ hide(el, left); }); });
+    // A paused prospect has no Stripe customer yet, so the portal has nothing to open: the card button is above.
+    sec("Invoices & card").forEach(function(el){ hide(el, left && st.state === "paused_prospect" && d.has_subscription === false); });
+    // Marketing: only the opt-in download. The venue link, the table signs and the pointer to Game settings go.
+    sec("Your venue link").forEach(function(el){ hide(el, left); });
+    hide($("optinSignpost"), left);
+    // Draws: the read-only block, and the folds (which are for setting draws up) hidden.
+    var ld = $("leftDraws"); if (ld) ld.hidden = !left;
+    [].forEach.call(document.querySelectorAll("#tp-draws .acchead, #tp-draws .accbody"), function(el){ hide(el, left); });
+    var log = $("drawLogCard"), slot = $("leftDrawLogSlot"), home = $("acc-raffles");
+    if (log && slot && home){
+      if (left && log.parentNode !== slot) slot.appendChild(log);
+      if (!left && log.parentNode === slot) home.appendChild(log);
+    }
+    var lc = $("leftCard");
+    if (lc){
+      if (!left){ lc.hidden = true; lc.innerHTML = ""; }
+      else {
+        var w = leftWords(st, d);
+        lc.innerHTML = '<h2>' + esc(w.title) + '</h2><p>' + esc(w.text) + '</p>' +
+          (w.card ? '<div class="lcact"><a class="go" id="leftCardBtn" href="#" aria-disabled="true">Add your card</a></div>' : '') +
+          '<p class="lckeep">' + esc(w.keep) + '</p>';
+        lc.hidden = false;
+        if (w.card) leftCardLink();
+      }
+    }
+    // Open on Billing, once, whatever tab was open last time (Dean: "fine with Billing first").
+    if (left && !applyStanding._tabbed){
+      applyStanding._tabbed = true;
+      var tb = document.querySelector('.tabs button[data-tab="billing"]'); if (tb) tb.click();
+    }
+    if (left) paintLeftDraws();
+  }
+  /* The paused prospect's own signed card link (/account/card-link, the same route the console's hold card uses). */
+  function leftCardLink(){
+    var a = $("leftCardBtn"); if (!a) return;
+    var vid = (acctVenues && acctVenues[0] && acctVenues[0].id) || pageVenueId || "";
+    api("/account/card-link", { venue_id: vid }).then(function(j){
+      if (j && j.card_url && /^https:\/\//.test(j.card_url)){ a.href = j.card_url; a.removeAttribute("aria-disabled"); }
+      else if (j && j.error){ a.removeAttribute("href"); a.textContent = "Add your card"; showMsg(j.error); }
+    });
+  }
+  /* Read only: what the members draw panel already loaded, written as rows. No second copy of the data. */
+  function paintLeftDraws(){
+    if (typeof leftState === "undefined" || !leftState) return;
+    var box = $("leftDrawRows");
+    if (box){
+      if (!mdReady){ box.innerHTML = '<p class="snote">Loading&hellip;</p>'; }
+      else if (!mdDraws.length){ box.innerHTML = '<p class="snote">No members draws were set up.</p>'; }
+      else box.innerHTML = mdDraws.map(function(dr){
+        var jp = dr.current_jackpot_cents != null ? ("Jackpot $" + toDollars(dr.current_jackpot_cents)) : "No jackpot set";
+        var lastT = dr.last_drawn_at || dr.last_drawn_date || null;
+        var last = lastT ? ("Last drawn " + (fmtDay(lastT) || lastT)) : "Never drawn";
+        return '<div class="ldrow"><b>' + esc(dr.name || "Members draw") + '</b><small>' + esc(jp) + ' &middot; ' + esc(last) + '</small></div>';
+      }).join("");
+    }
+    var c = $("leftMembersCount"), src = $("mdCount"), dl = $("leftMembersCsv");
+    if (c && src) c.textContent = src.textContent;
+    if (dl) dl.hidden = !(src && / in your list\./.test(src.textContent));
+  }
+  /* The members list as a CSV (number, first name, surname): the venue's own list, read with its own login and paged,
+     ordered, until a page comes back EMPTY (CLAUDE.md: never stop on a short page). */
+  function downloadMembers(){
+    var vid = mdCurrent || pageVenueId; if (!vid){ showMsg("Pick a venue first."); return; }
+    var client = VP.getClient(), btn = $("leftMembersCsv"), rows = [], PAGE = 1000;
+    btn.disabled = true;
+    client.from("vp_member_rosters").select("id").eq("venue_id", vid).then(function(rr){
+      var ids = ((rr && rr.data) || []).map(function(x){ return x.id; });
+      if (!ids.length) return [];
+      function page(from){
+        return client.from("vp_members").select("number,first_name,last_name").in("roster_id", ids)
+          .order("number", { ascending: true }).order("id", { ascending: true }).range(from, from + PAGE - 1).then(function(r){
+            if (r && r.error) throw r.error;
+            var got = (r && r.data) || [];
+            if (!got.length) return rows;
+            rows = rows.concat(got);
+            return page(from + got.length);
+          });
+      }
+      return page(0);
+    }).then(function(all){
+      btn.disabled = false;
+      if (!all.length){ showMsg("There is nobody on your members list."); return; }
+      var q = function(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var csv = "Member number,First name,Surname\n" + all.map(function(m){ return [m.number, m.first_name, m.last_name].map(q).join(","); }).join("\n") + "\n";
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = "members-list.csv"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }).catch(function(){ btn.disabled = false; showMsg("Could not download your members list just now. Please try again."); });
+  }
+  if ($("leftMembersCsv")) $("leftMembersCsv").addEventListener("click", downloadMembers);
+
   function load(){
     return api("/account/summary", {}).then(function(d){
       if (d.error){
@@ -1405,6 +1588,7 @@
           ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
           : "If you lower your players or remove a venue, that change applies from your next renewal, so you're never left short.");
       render(d);
+      applyStanding(d);
       renderOtherAccounts(d.other_accounts || []);
       mountAcctPick(d.venues || []);
     }).catch(function(){
@@ -1425,7 +1609,8 @@
     if (!window.VPVenuePick) return;
     var want = defaultVenue(venues);
     acctPick = window.VPVenuePick.mount($("acctPick"), { venues: venues, value: want && want.id, label: "You are looking at",
-      note: "Every tab on this page is for this venue, and the console, Game settings and your monthly report open on it too.",
+      /* After leaving there is no console and no Game settings to open (INBOX item 33). */
+      note: leftState ? "Every tab on this page is for this venue." : "Every tab on this page is for this venue, and the console, Game settings and your monthly report open on it too.",
       onChange: switchAccountVenue });
     if (want && venues.length > 1) pageVenueId = want.id;
   }
@@ -2605,17 +2790,19 @@
           mdReady = true;
           renderDrawPicker();
           fillMembersDraw(mdDraw);
+          paintLeftDraws();
         }
         return client.from("vp_member_rosters").select("id").eq("venue_id", venueId).then(function(rr){
           if (stale()) return;
           if (readFailed(rr)){ mdCountFailed(venueId); return; }
           var ids = (rr.data || []).map(function(x){ return x.id; });
-          if (!ids.length){ $("mdCount").textContent = "No members yet."; return; }
+          if (!ids.length){ $("mdCount").textContent = "No members yet."; paintLeftDraws(); return; }
           return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
             if (stale()) return;
             if (readFailed(rc) || typeof rc.count !== "number"){ mdCountFailed(venueId); return; }
             var n = rc.count;
             $("mdCount").textContent = n ? (n + " member" + (n===1?"":"s") + " in your list.") : "No members yet.";
+            paintLeftDraws();
           });
         });
       }).catch(function(){ if (!stale()) mdCountFailed(venueId); });

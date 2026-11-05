@@ -201,6 +201,9 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await walk(bne(2026, 12, 2, 23, 0), bne(2026, 12, 3, 1, 0));
   check('after 11:59:59pm on day 30 with no card: PAUSED (suspended, free_month_ended), recorded and audited', C.v.status === 'suspended' && C.v.suspended_reason === 'free_month_ended' && !!C.row().paused_at &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_paused' && a.target === 'venue:' + C.v.id; }), [C.v.status, C.v.suspended_reason]);
+  /* THE 90-DAY CLOCK (Dean, 5 Nov 2026, INBOX item 33): a paused prospect has left, so the pause stamps closed_at
+     and the nightly retention sweep clears its player details 90 days later, like every other way of leaving. */
+  check('the pause starts the 90-day clock: closed_at is the moment of the pause', !!C.v.closed_at && C.v.closed_at === C.row().paused_at, [C.v.closed_at, C.row().paused_at]);
   var lr2 = await call('/account/card-link', { venue_id: C.v.id }, AS(C.login, C.v.id));
   check('after the pause the offer has gone: their card is added at $3.00', lr2.body.rate === 3 && lr2.body.paused === true, lr2.body);
   stripeCalls.length = 0;
@@ -211,6 +214,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var n = REM().length; await walk(bne(2026, 12, 3, 8, 0), bne(2026, 12, 10, 16, 0));
   check('nothing more is sent once it is paused', REM().length === n);
   await vpaProspectCardAdded(ENV, C.v.founding_id);
+  check('a card after the pause stops the 90-day clock (closed_at cleared), the same as every other way back on', C.v.closed_at === null, C.v.closed_at);
   check('a card after the pause switches it straight back on, audited', C.v.status === 'active' && C.v.suspended_reason === null && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_unpaused'; }), [C.v.status, C.v.suspended_reason]);
 
   section('4. During the month, Checkout keeps the offer and charges nothing until the month ends');
@@ -253,6 +257,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   var ok = await vpaProspectCancel(creq('POST', '', q), ENV);
   check('the button: cancelled, switched off, audited, and the page says nothing was charged', /All done/.test(ok.body) && /Nothing was ever charged/.test(ok.body) && !!F.row().cancelled_at &&
     F.v.status === 'suspended' && F.v.suspended_reason === 'cancelled' && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_cancelled'; }), [F.v.status, F.v.suspended_reason]);
+  check('a cancelled prospect starts the 90-day clock too (closed_at = when they cancelled), like a paid venue that cancels', !!F.v.closed_at && F.v.closed_at === F.row().cancelled_at, [F.v.closed_at, F.row().cancelled_at]);
   await walk(fs, bne(2026, 12, 4, 12, 0), 6 * 3600000);
   check('a cancelled prospect gets no reminders and is never paused', REM().length === 0 && !F.row().paused_at, REM().length);
   check('the cancel link is our own page on venueplay.com.au (never workers.dev: Ozemail bounced it, 31 Oct 2026), signed per account', /^https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&]+&t=[0-9a-f]{32}$/.test(link) && link !== await vpaProspectCancelLink(ENV, U(4242)), link);

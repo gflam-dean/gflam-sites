@@ -592,3 +592,12 @@ resent their link, which restarts those 30 days and re-dates the follow-ups (aut
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-160-left-accounts-90-day-clock.sql` (Dean, 5 Nov 2026, INBOX item 33, the account after a venue leaves): starts
+the 90-day retention clock (`vp_venues.closed_at`) for prospects that had ALREADY left by cancelling or by being paused when
+their free month ran out with no card, from the moment they left (`vp_prospects.cancelled_at` or `paused_at`), never from
+today and never for a venue that is back on. The Worker change on the same branch stamps it for new ones, clears it when a
+card brings a paused prospect back, and the sweep now includes `free_month_ended`. Data only: no table, column, policy or
+grant, so RLS-BASELINE.json does not change. Either order with the Workers. NUMBER: 152 to 154 are on other branches and
+tonight's agents take 155 onwards, so 160 (renumber at merge if taken). Branch `fix/account-review-8nov`. NOT RUN.
+Read-back and rollback in the file.

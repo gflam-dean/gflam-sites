@@ -36,7 +36,9 @@
   /* ORDER, the way PostgREST does it, for the HQ screens that read the audit newest first
      (19 Oct 2026). Nulls last. Unordered reads keep the stored order, as before. */
   Query.prototype.order = function (k, o) { (this.ord = this.ord || []).push({ k: k, asc: !(o && o.ascending === false) }); return this; };
-  Query.prototype.range = function () { return this; };
+  /* RANGE, offset first then limit, the way PostgREST does it (5 Nov 2026: the members list download pages with it,
+     and a stub that ignores it answers the same page for ever). */
+  Query.prototype.range = function (a, b) { this._rFrom = a; this._rTo = b; return this; };
   Query.prototype.limit = function (n) { this.lim = n; return this; };
   Query.prototype.maybeSingle = function () { this.one = 'maybe'; return this; };
   Query.prototype.single = function () { this.one = 'single'; return this; };
@@ -65,8 +67,10 @@
         return 0;
       });
     }
+    var total = rows.length;   // count:'exact' is the whole match, before the range, as PostgREST answers it
+    if (typeof this._rFrom === "number") rows = rows.slice(this._rFrom, this._rTo + 1);
     if (this.lim != null) rows = rows.slice(0, this.lim);
-    return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: rows.length });
+    return this.write ? { data: null, error: null } : (this.one ? { data: rows[0] || null, error: null } : { data: rows, error: null, count: typeof this._rFrom === "number" ? total : rows.length });
   };
   function session() {
     return SIGNED_IN ? { access_token: 'fake-token', user: { id: window.__FAKE_UID, email: 'host@test.local', phone: PHONE, user_metadata: META } } : null;

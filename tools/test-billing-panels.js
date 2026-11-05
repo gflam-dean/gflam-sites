@@ -67,7 +67,9 @@ var NAMES = [
   // 21 Oct 2026: the screen panel now tracks unsaved changes (a chosen logo saves itself)
   'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow',
   // 3 Nov 2026 (Dean): ONE venue drop-down moves every panel; prizes said as cash and other, apart
-  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines'
+  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines',
+  // 5 Nov 2026 (INBOX item 33): the members panel also paints the read-only view of an account that has left
+  'paintLeftDraws'
 ];
 var SRC = '', MISSING = [];
 /* ...and the two page variables those read, lifted as they are written, never restated here. */
