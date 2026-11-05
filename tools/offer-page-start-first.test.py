@@ -143,5 +143,5 @@ txt = re.sub(r'<[^>]+>', ' ', BODY)
 ok('brand: no em or en dash anywhere on the page body, "venueplay" never capitalised in the new copy',
    '—' not in hp + sub + offer and '–' not in hp + sub + offer and 'VenuePlay' not in hp + sub + offer)
 
-print('\n%s %d checks, %d failed' % ('PASS' if not failed else 'FAIL', passed + failed, failed))
+print('\n%d of %d checks passed' % (passed, passed + failed))
 sys.exit(1 if failed else 0)

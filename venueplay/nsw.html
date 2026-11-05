@@ -1354,7 +1354,7 @@
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
   var errEl = document.getElementById('vp-err');
-  function showErr(msg, field){ errEl.textContent = msg; errEl.classList.add('show'); if (!field && /^Please tick/.test(msg)) field = 'consent'; if (field && window.vpTrack) vpTrack('start_field_error', { field: field }); }
+  function showErr(msg, field){ errEl.textContent = msg; errEl.classList.add('show'); if (!field && /^Please tick/.test(msg)) field = 'consent'; if (field && window.vpTrack) window.vpTrack('start_field_error', { field: field }); }
   function clearErr(){ errEl.classList.remove('show'); }
 
   /* AU mobile check: strips spaces, country code (+61 / 61) and the trunk 0,
@@ -1423,7 +1423,7 @@
     // AND Stripe.js loaded. Otherwise ask for the classic redirect, exactly as before.
     var wantEmbedded = VP_STRIPE_PK.indexOf('pk_') === 0 && typeof window.Stripe === 'function';
 
-    if (window.vpTrack) vpTrack('start_submit', { offer: (window.VP_OFFER && window.VP_OFFER.month || '').toLowerCase() });
+    if (window.vpTrack) window.vpTrack('start_submit', { offer: (window.VP_OFFER && window.VP_OFFER.month || '').toLowerCase() });
     submitBtn.disabled = true;
     submitBtn.textContent = wantEmbedded ? 'Loading secure card form…' : 'Taking you to Stripe…';
 
@@ -1468,7 +1468,7 @@
     try {
       if (!_vpStripe) _vpStripe = Stripe(VP_STRIPE_PK);
       embedOverlay.classList.add('show');
-      if (window.vpTrack) vpTrack('checkout_open', {});
+      if (window.vpTrack) window.vpTrack('checkout_open', {});
       document.body.style.overflow = 'hidden'; // stop the page scrolling behind the modal
       _vpStripe.initEmbeddedCheckout({ clientSecret: clientSecret }).then(function(checkout){
         _vpCheckout = checkout;
@@ -1492,7 +1492,7 @@
     var f = document.getElementById('vp-form'); if (f) f.style.display = 'none';
     var s = document.getElementById('vp-success'); if (s) { s.classList.add('show'); s.scrollIntoView({ behavior:'smooth', block:'center' }); }
     if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
-    if (window.vpTrack) vpTrack('checkout_done', {});
+    if (window.vpTrack) window.vpTrack('checkout_done', {});
     if (typeof fbq === 'function') fbq('track', 'StartTrial');
   } else if (params.get('vp') === 'cancel') {
     showErr('No worries, your card wasn\u2019t added. Your spot isn\u2019t held until you finish checkout.');
@@ -1835,15 +1835,15 @@
   var q = new URLSearchParams(location.search);
   var offer = ((window.VP_OFFER && window.VP_OFFER.month) || '').toLowerCase();
   var base = { step: q.get('s') || q.get('utm_content') || '', source: q.get('utm_source') || '', offer: offer };
-  vpTrack('offer_land', base);
+  window.vpTrack('offer_land', base);
   var form = document.getElementById('claim'), seen = false, begun = false;
-  function seenNow() { if (seen) return; seen = true; vpTrack('start_seen', base); }
+  function seenNow() { if (seen) return; seen = true; window.vpTrack('start_seen', base); }
   if (form && 'IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (es) { for (var i = 0; i < es.length; i++) if (es[i].isIntersecting) { seenNow(); io.disconnect(); } }, { threshold: 0.2 });
     io.observe(form);
   } else if (form) { seenNow(); }
   var f = document.getElementById('vp-form');
-  if (f) f.addEventListener('focusin', function () { if (begun) return; begun = true; vpTrack('start_begin', base); });
+  if (f) f.addEventListener('focusin', function () { if (begun) return; begun = true; window.vpTrack('start_begin', base); });
 })();
 </script>
 
