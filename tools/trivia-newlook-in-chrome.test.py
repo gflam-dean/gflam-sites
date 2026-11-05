@@ -370,7 +370,7 @@ def phone(B, base):
     L = q.get('logo')
     ok('the venue\'s logo is top left', bool(L) and L[0] <= 20 and L[1] <= 30, L)
     ok('and clear of the menu button', bool(L and q.get('menu')) and L[2] + 8 <= q['menu'][0], [L, q.get('menu')])
-    ok('no player name in the header', 'Pint Sized' not in (q.get('head') or ''), q.get('head'))
+    ok('no player name in the header', 'Sarah' not in (q.get('head') or ''), q.get('head'))
     ok('the label is just "QUESTION 3 OF 20" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 3 of 20', q.get('lbl'))
     D_, MB_ = q.get('dotR'), q.get('menu')
     ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
