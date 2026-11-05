@@ -113,7 +113,7 @@
     if (p.last_sign_in_at) return when(p.last_sign_in_at, true);
     return p.sign_in_known === false ? "Could not check just now" : "Never";
   }
-  function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : "HQ"; }
+  function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : (p.source === "self" ? "Signed up on the website" : "HQ"); }
   function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/.*$/, ""); }
   function cardHtml(p) {
     /* Card added is a customer, and Cancelled said no: neither gets a Called button unless they asked for a call. */
