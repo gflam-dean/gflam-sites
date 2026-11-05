@@ -951,6 +951,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/test-trivia-question-space.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/test-trusted-logos.js": {
   "checks": 43,
   "counted_by": "lines"
@@ -1085,6 +1089,10 @@
  },
  "tools/trivia-newlook-in-chrome.test.py": {
   "checks": 204,
+  "counted_by": "lines"
+ },
+ "tools/trivia-question-space-in-chrome.test.py": {
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {

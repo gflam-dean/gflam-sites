@@ -100,6 +100,21 @@
   /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
      with the length (Hanken 800, 76px at 1920 for a short one, as mocked). */
   .qtext{position:absolute;left:calc(8.9cqw);top:9.4cqw;width:65.1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
+  /* THE FINAL TRIVIA WALL (Dean, 5 Nov 2026; mock reports/fb-cover-6nov/layout/LAYOUT-FINAL.css and FINAL-LAYOUT-*.png).
+     Units are cqw (1cqw = 19.2px on a 1920 set). Picture questions (.layer.pic) keep their own layout, so every
+     rule here skips them. The countdown (#tvQ) and the reveal (#tvReveal) are both .qgrid and share these rules,
+     so nothing moves between them. tools/test-trivia-question-space.js and trivia-question-space-in-chrome measure it.
+     1. The ring stays full size (14.58cqw) and moves up from 9.4cqw to 7.55cqw: the gap from the venueplay
+        corner logo to the ring equals the gap from the ring to the answers (48px at 1920). */
+  .layer.qgrid:not(.pic) .qfoot{top:7.55cqw}
+  /* 2. The question (one, two or three lines) is centred on the ring's centre line, 7.55 + 14.58/2 = 14.84cqw,
+        growing up and down. */
+  .layer.qgrid:not(.pic) .qtext{top:14.84cqw;transform:translateY(-50%)}
+  /* 3. The answers sit at a fixed 24.11cqw, a normal gap (48px at 1920) under the ring's bottom edge, the same for
+        every question, so they never move. */
+  .layer.qgrid:not(.pic) .answers{top:24.11cqw}
+  /* 4. "Question 3 of 20" goes under the answers (which end at 24.11 + 2 x 11.875 + 1.46 = 49.32cqw), right-aligned. */
+  .layer.qgrid:not(.pic) .qround{top:50.1cqw;right:8.9cqw;width:auto;text-align:right}
   .qtext.q-med  {font-size:3.3cqw}
   .qtext.q-long {font-size:2.7cqw;line-height:1.14}
   .qtext.q-epic {font-size:2.25cqw;line-height:1.16}
@@ -176,7 +191,7 @@
      under the ring (since the four cards fill the lower half, per the approved mock), the same place on the countdown and the reveal. */
   .qround{position:absolute;right:8.9cqw;width:14.58cqw;top:24.6cqw;text-align:center;white-space:nowrap}
   .qround .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;line-height:1.2;color:#F2F2F5}
-  .layer.pic .qround{top:17.4cqw;width:10cqw}
+  .layer.pic .qround{top:20.2cqw;width:10cqw}   /* under the picture round's 10cqw ring (9.4 to 19.4cqw): at 17.4 it sat behind the ring (found 5 Nov 2026) */
 
   /* reveal / board */
   .revboard{display:none}
