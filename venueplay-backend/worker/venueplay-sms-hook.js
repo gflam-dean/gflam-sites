@@ -246,7 +246,7 @@ async function postWithDeadline(url, headers, body, timeoutMs) {
 
 /* Mobile Message: HTTP 200 with a results array whose first entry says "success". */
 async function sendViaMobileMessage(env, to, message, customRef, timeoutMs) {
-  const sender = env.SMS_SENDER || "VenuePlay";
+  const sender = env.SMS_SENDER || "venueplay";
   const basicAuth = "Basic " + btoa((env.MOBILEMESSAGE_USERNAME || "") + ":" + (env.MOBILEMESSAGE_PASSWORD || ""));
   let r;
   try {

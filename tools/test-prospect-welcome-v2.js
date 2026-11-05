@@ -662,7 +662,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var tkt = DB.vp_help_tickets[0] || {};
   check('a ticket "Please call me", venue support, for that venue, with their mobile in it and on the ticket', hr.status === 200 && tkt.subject === 'Please call me' && tkt.category === 'venue_support' && tkt.venue_id === U(101) &&
     /Please call me on 0452 510 904/.test(tkt.message) && tkt.contact_phone === '+61452510904' && tkt.contact_email === 'cazreitop@gmail.com', tkt);
-  check('staff are alerted, and the venue gets its number back', hr.body.ticket_no && sent.some(function (x) { return /^\[venueplay\] Venue support \[#\d+\]/.test(x.subject); }), sent.map(function (x) { return x.subject; }));
+  check('staff are alerted, and the venue gets its number back', hr.body.ticket_no && sent.some(function (x) { return /^venueplay \u00b7 Action needed: Venue support \[#\d+\]/.test(x.subject); }), sent.map(function (x) { return x.subject; }));
 
   if (bad) throw new Error('prospect welcome v2: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

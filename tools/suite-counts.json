@@ -163,6 +163,10 @@
   "checks": 43,
   "counted_by": "lines"
  },
+ "tools/email-fit-in-chrome.test.py": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
@@ -492,7 +496,7 @@
   "counted_by": "lines"
  },
  "tools/test-email-rebrand.js": {
-  "checks": 34,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
@@ -516,7 +520,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 382,
+  "checks": 391,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {

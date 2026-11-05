@@ -16,7 +16,7 @@ function lift(src, name) { var m = new RegExp("(?:async\\s+)?function\\s+" + nam
 
 var W = find("venueplay-backend/worker/venueplay-api-FULL.js");
 var VP_ABN = (/const VP_ABN = '([^']+)'/.exec(W) || [, ""])[1];
-eval(lift(W, "vpaEsc")); eval(lift(W, "vpaEmailDocument")); eval(lift(W, "vpaVenueEmailCard")); eval(lift(W, "vpaStaffCard")); eval(lift(W, "helpEmailCard"));
+eval(lift(W, "vpaEsc")); eval(lift(W, "vpaEmailDocument")); eval(lift(W, "vpaVenueEmailCard")); eval(lift(W, "vpaStaffPill")); eval(lift(W, "vpaStaffSubject")); eval(lift(W, "vpaStaffCard")); eval(lift(W, "helpEmailCard"));
 var DARK = "https://venueplay.com.au/logos/venueplay-email-on-dark.png";
 var RETIRED = /venueplay_primary_rebuilt|venueplay_primary_dark|#12101a/i;
 
@@ -48,5 +48,12 @@ pass("the PartyPlay help card is untouched (its own logo)", helpEmailCard(true, 
   pass(n + ": nothing retired, no Gflam, no dash, no capital VenuePlay in what is sent", !RETIRED.test(h) && !/gflam/i.test(h.replace(/<!--[\s\S]*?-->/g, "")) && !/[—–]|&mdash;|&ndash;/.test(h.replace(/<!--[\s\S]*?-->/g, "")) && !/VenuePlay/.test(h.replace(/<!--[\s\S]*?-->/g, "")));
   pass(n + ": Manrope first, and no .dev link", h.indexOf("Manrope,-apple-system") !== -1 && !/\.dev\b/.test(h));
 });
+/* 5. every staff email says what it is and whether it needs them (Dean, 5 Nov 2026) */
+pass("subjects start \"venueplay \u00b7 Action needed:\", \"venueplay \u00b7 FYI:\" or \"venueplay \u00b7 Urgent:\"", vpaStaffSubject("action", "x") === "venueplay \u00b7 Action needed: x" && vpaStaffSubject("fyi", "x") === "venueplay \u00b7 FYI: x" && vpaStaffSubject("urgent", "x") === "venueplay \u00b7 Urgent: x");
+var pa = vpaStaffCard("<p>x</p>", "A", "action"), pf = vpaStaffCard("<p>x</p>", "A", "fyi"), pu = vpaStaffCard("<p>x</p>", "A", "urgent");
+pass("the card opens with a pink ACTION NEEDED pill", /background:#FF1F8E;color:#ffffff[^>]*>ACTION NEEDED</.test(pa) && pa.indexOf("ACTION NEEDED") < pa.indexOf("<p>x</p>"));
+pass("a grey FOR YOUR INFO pill", /background:#E4E4EA[^>]*>FOR YOUR INFO</.test(pf));
+pass("a red URGENT pill", /background:#D92D20;color:#ffffff[^>]*>URGENT</.test(pu));
+pass("every staff send in the Worker is labelled (no staff subject goes out bare)", /vpaStaffSubject\(leaving \? 'urgent' : 'fyi'/.test(W) && /function vpaAlertSubject[\s\S]{0,400}vpaStaffSubject\(/.test(W) && /function helpAlertSubject[\s\S]{0,300}vpaStaffSubject\(/.test(W));
 print(bad ? "\n" + bad + " of " + ran + " FAILED" : "\nALL " + ran + " CHECKS PASSED");
 if (bad) throw new Error("email rebrand checks failed");

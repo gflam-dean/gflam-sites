@@ -23,6 +23,8 @@ eval(lift(BILL,"vpaVenueEmailFoot"));
 /* The shell (23 Oct 2026): every venue email is now a full document in the shared card. */
 eval(lift(BILL,"vpaEmailDocument"));
 eval(lift(BILL,"vpaVenueEmailCard"));
+eval(lift(BILL,"vpaStaffSubject"));
+eval(lift(BILL,"vpaStaffPill"));
 eval(lift(BILL,"vpaStaffCard"));
 
 eval(lift(BILL,"vpaEsc"));

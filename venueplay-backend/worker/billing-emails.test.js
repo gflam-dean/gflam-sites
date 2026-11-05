@@ -42,6 +42,8 @@ var VPA_ALERT_KINDS = (function(){
   while((x=re.exec(m[1]))) o[x[1]]=x[2];
   return o;
 })();
+eval(lift(BILL,"vpaStaffSubject"));
+eval(lift(BILL,"vpaStaffPill"));
 eval(lift(BILL,"vpaAlertSubject"));
 eval(lift(BILL,"vpaFireCancelAlert"));
 eval(lift(BILL,"vpaSendEmail"));
@@ -426,13 +428,13 @@ function alertSubjectChecks() {
   pass("they are all capitals, so the inbox sorts and scans", allCaps);
 
   pass("the tag comes first and the name after a colon",
-       vpaAlertSubject("cancelled", "Praze The Roof Sports Bar") === "CANCELLED VENUE: Praze The Roof Sports Bar",
+       vpaAlertSubject("cancelled", "Praze The Roof Sports Bar") === "venueplay \u00b7 FYI: CANCELLED VENUE: Praze The Roof Sports Bar",
        vpaAlertSubject("cancelled", "Praze The Roof Sports Bar"));
   pass("a missing name leaves a tag, never a dangling colon",
-       vpaAlertSubject("new_venue", "") === "NEW VENUE" && vpaAlertSubject("new_venue", null) === "NEW VENUE",
+       vpaAlertSubject("new_venue", "") === "venueplay \u00b7 FYI: NEW VENUE" && vpaAlertSubject("new_venue", null) === "venueplay \u00b7 FYI: NEW VENUE",
        vpaAlertSubject("new_venue", null));
   pass("an unknown kind still produces something sendable",
-       vpaAlertSubject("nonsense", "A Venue") === "VENUEPLAY: A Venue");
+       vpaAlertSubject("nonsense", "A Venue") === "venueplay \u00b7 FYI: VENUEPLAY: A Venue");
 
   /* EVERY SUBJECT IN THE WORKER, CLASSIFIED. The first version of this scanned for a
      literal to: ['dean@...'] near a subject, and found two of the three: the new-signup
@@ -467,7 +469,7 @@ function alertSubjectChecks() {
     if (/^helpAlertSubject\(ticket, lead\),?$/.test(line)) { helpSubjects++; continue; }
     if (/^'Re: ' \+ helpLine\(subj, 150\) \+ ' ' \+ helpReplyTag\(t\),?$/.test(line)) { helpSubjects++; continue; }
     // The once-a-day "alerts paused" email, to us, when the help desk's daily alert cap is reached.
-    if (/^'\[Help desk\] Alerts paused for today: ' \+ cap \+ ' reached',?$/.test(line)) { helpSubjects++; continue; }
+    if (/^vpaStaffSubject\('fyi', '\[Help desk\] Alerts paused for today: ' \+ cap \+ ' reached'\),?$/.test(line)) { helpSubjects++; continue; }
     // The acknowledgement to whoever wrote in (23 Oct 2026): the number and the reply secret, built in one place.
     if (/^helpAckSubject\(t\),?$/.test(line)) { helpSubjects++; continue; }
     if (CUSTOMER_SUBJECTS.some(function (c) { return line.indexOf(c) >= 0; })) continue;
@@ -519,7 +521,7 @@ function cancelAlertChecks() {
          so "CANCELLED VENUE: Wellshot Hotel" is scannable and filterable where
          "Wellshot Hotel has cancelled" is not. The venue still has to be in there. */
       pass("the subject leads with CANCELLED VENUE and then the venue",
-           sent[0].body.subject === "CANCELLED VENUE: Wellshot Hotel", sent[0].body.subject);
+           sent[0].body.subject === "venueplay \u00b7 FYI: CANCELLED VENUE: Wellshot Hotel", sent[0].body.subject);
       pass("the heading inside is still a sentence, not a shout",
            /Wellshot Hotel has cancelled/.test(h), "the subject is the queue, the email is the read");
       pass("it says when they stop", h.indexOf("18 September 2026") >= 0, "so you know how long you have to call");
@@ -534,7 +536,7 @@ function cancelAlertChecks() {
     return vpaFireCancelAlert(ENV, Object.assign({}, VENUE, { undo: true }));
   }).then(function () {
     pass("un-cancelling is good news and also worth knowing", sent.length === 2 &&
-         sent[0].body.subject === "UNCANCELLED VENUE: Wellshot Hotel",
+         sent[0].body.subject === "venueplay \u00b7 FYI: UNCANCELLED VENUE: Wellshot Hotel",
          sent.length ? sent[0].body.subject : "");
 
     sent = []; rows = [];

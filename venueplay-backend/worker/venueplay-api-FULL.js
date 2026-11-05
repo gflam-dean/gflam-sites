@@ -664,7 +664,7 @@ async function handleCheckout(request, env, json) {
               + '<p><b>Venue:</b> ' + vpaEsc(venues[0].name) + '</p>'
               + '<p><b>Email:</b> ' + vpaEsc(email) + '</p>'
               + '<p><b>Players / plan:</b> ' + totalSeats + ' players, ' + plan + '</p>'
-              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>', 'Signup flagged for review'),
+              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>', 'Signup flagged for review', 'action'),
           }),
         });
       } catch (e) { /* email is best-effort, never block signup */ }
@@ -1142,7 +1142,7 @@ async function handleContact(request, env, json) {
       to: ['sales@venueplay.com.au'],   // ONE copy, the sales mailbox (Dean, 30 Oct 2026: it came twice when it went to dean@ AND sales@)
       reply_to: email,
       subject: vpaAlertSubject('enquiry', name + (ticketNo ? ' ' + helpTag(ticketNo) : '')),
-      html: vpaStaffCard(html, 'New venueplay enquiry'),
+      html: vpaStaffCard(html, 'New venueplay enquiry', 'action'),
       text: helpPlainFromHtml(html),       // every help desk email carries a text part (28 Oct 2026)
       headers: { 'X-VP-Help': 'alert' },   // so the hello@ copy to the help subdomain is not a second ticket
     }),
@@ -1401,8 +1401,8 @@ async function vpaHandleResendWebhook(request, env, json) {
       + '</div>';
     for (const who of VPA_CANCEL_ALERTS) {
       await vpaSendEmail(env, who,
-        (leaving ? 'ACTION NEEDED: leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
-        + (named || addr), vpaStaffCard(html, 'Email ' + head)).catch(() => false);
+        vpaStaffSubject(leaving ? 'urgent' : 'fyi', (leaving ? 'leaving email ' + head + ' - ' : 'Email ' + head + ' - ')
+        + (named || addr)), vpaStaffCard(html, 'Email ' + head, leaving ? 'urgent' : 'fyi')).catch(() => false);
     }
     await vpaInsert(env, 'vp_admin_audit', {
       actor_admin: null, actor_label: 'system',
@@ -7903,10 +7903,22 @@ const VPA_ALERT_KINDS = {
   check:       'CHECK SIGNUP',
   enquiry:     'ENQUIRY',
 };
+/* EVERY EMAIL TO STAFF SAYS WHAT IT IS AND WHETHER IT NEEDS THEM (Dean, 5 Nov 2026): the subject starts
+   "venueplay · Action needed:", "venueplay · FYI:" or "venueplay · Urgent:", and the card opens with the same words in a pill
+   (pink ACTION NEEDED, grey FOR YOUR INFO, red URGENT). action = a decision or a reply is wanted; fyi = nothing to do;
+   urgent = a live fault. */
+function vpaStaffSubject(kind, subject, brand) {
+  const words = { action: 'Action needed', urgent: 'Urgent' }[kind] || 'FYI';
+  return (brand === 'partyplay' ? 'PartyPlay' : 'venueplay') + ' \u00b7 ' + words + ': ' + String(subject == null ? '' : subject);
+}
+function vpaStaffPill(kind) {
+  const p = { action: ['ACTION NEEDED', '#FF1F8E', '#ffffff'], urgent: ['URGENT', '#D92D20', '#ffffff'] }[kind] || ['FOR YOUR INFO', '#E4E4EA', '#3a3a44'];
+  return '<p style="margin:0 0 16px"><span style="display:inline-block;background:' + p[1] + ';color:' + p[2] + ';font-size:11px;font-weight:800;line-height:1;letter-spacing:.08em;padding:7px 12px;border-radius:999px">' + p[0] + '</span></p>';
+}
 function vpaAlertSubject(kind, rest) {
   const tag = VPA_ALERT_KINDS[kind] || 'VENUEPLAY';
   const tail = String(rest == null ? '' : rest).trim();
-  return tail ? tag + ': ' + tail : tag;
+  return vpaStaffSubject(kind === 'check' || kind === 'enquiry' ? 'action' : 'fyi', tail ? tag + ': ' + tail : tag);
 }
 
 /* One place that actually posts to Resend, so the three emails below cannot
@@ -8117,7 +8129,7 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
                  (isGroup ? list.length + ' venues, ' : '')
                  + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : '')
                  + (guessed ? '' : ' [club or pub?]')),
-        html: vpaStaffCard(html, 'New signup'),
+        html: vpaStaffCard(html, 'New signup', guessed ? 'fyi' : 'action'),
       }),
     });
   } catch (_) { /* internal notification only; never affect provisioning */ }
@@ -8226,7 +8238,7 @@ function vpaEmailDocument(html, title) {
    brands from here); anything else is VenuePlay. */
 /* Emails to our own staff (an enquiry, a flagged signup, a bounce, a help desk alert) wear the same card as the
    customer ones: venueplay logo on near-black, the pink rule, white page (Dean, 5 Nov 2026: "emails need logo and rebrand too"). */
-function vpaStaffCard(inner, title) { return vpaVenueEmailCard(title, inner, title); }
+function vpaStaffCard(inner, title, kind) { return vpaVenueEmailCard(title, vpaStaffPill(kind) + inner, title); }
 function vpaVenueEmailCard(preheader, inner, title, brand) {
   const pp = brand === 'partyplay';
   const site = pp ? 'https://partyplay.com.au' : 'https://venueplay.com.au';
@@ -8235,7 +8247,7 @@ function vpaVenueEmailCard(preheader, inner, title, brand) {
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
-    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:#0A0A0B;padding:20px 32px">'
     + '<img src="' + logo + '" width="168" alt="' + (pp ? 'PartyPlay' : 'venueplay') + '" style="display:block;border:0;height:auto"></td></tr>'
     + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
@@ -10520,7 +10532,7 @@ async function vpaFireCancelAlert(env, opts) {
       + '</div>';
     let sent = 0;
     for (const to of VPA_CANCEL_ALERTS) {
-      const ok = await vpaSendEmail(env, to, subject, vpaStaffCard(html, subject)).catch(() => false);
+      const ok = await vpaSendEmail(env, to, subject, vpaStaffCard(html, subject, 'fyi')).catch(() => false);
       if (ok) sent++;
     }
     await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
@@ -15133,7 +15145,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
           messages: [{
             to: mobile,
             message: message,
-            sender: env.SMS_SENDER || 'VenuePlay',
+            sender: env.SMS_SENDER || 'venueplay',
             custom_ref: 'staff-welcome',
           }],
         }),
@@ -15512,10 +15524,42 @@ function helpBareSubject(s) {
 }
 /* WHO SIGNS. A person, never a department: "Dean" over "VenuePlay support". An HQ reply is signed by
    the admin who sent it when their HQ label is a name; the acknowledgement by HELP_SIGNER, else Dean. */
-function helpSigner(env, label) {
+function helpFirstName(label) {
   const l = helpLine(label, 40);
-  if (/^[A-Za-z][A-Za-z' -]{1,39}$/.test(l)) return l;
-  return helpLine((env && env.HELP_SIGNER) || 'Dean', 40) || 'Dean';
+  return /^[A-Za-z][A-Za-z' -]{1,39}$/.test(l) ? l.split(/\s+/)[0] : '';
+}
+/* FIRST NAME ONLY (Dean, 5 Nov 2026: "Kind regards, Kayla"): the sign-off and the signature's name line never carry a surname. */
+function helpSigner(env, label) {
+  return helpFirstName(label) || helpFirstName((env && env.HELP_SIGNER) || 'Dean') || 'Dean';
+}
+/* THE EARLIER MESSAGES UNDER EVERY REPLY (Dean, 5 Nov 2026), newest first, like an email client: the customer's messages and
+   our earlier replies, never an internal note or a status change. The ticket's own first message is the oldest. About the
+   last 10. Read BEFORE the reply being sent is recorded, so it is never quoted under itself. */
+const HELP_THREAD_MAX = 10;
+function helpThreadDate(iso) {
+  const t = Date.parse(iso); if (!(t > 0)) return '';
+  const d = new Date(t + 10 * 3600 * 1000);   // Brisbane, no daylight saving
+  return d.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}
+async function helpThreadFor(env, t) {
+  const rows = (await vpaSelect(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id)
+    + '&kind=in.(reply,email_in)&select=kind,body,author,created_at&order=created_at.desc&limit=' + HELP_THREAD_MAX)) || [];
+  const theirs = t.contact_name || t.contact_email || 'the customer';
+  const out = rows.filter((r) => r && String(r.body || '').trim()).map((r) => {   // the query already keeps to replies and customer emails
+    if (r.kind === 'email_in') return { who: theirs, at: r.created_at, body: r.body };
+    const a = String(r.author || '').replace(/^Prospect autopilot, signed /, '').replace(/\s*\(from .*$/, '');
+    return { who: helpFirstName(a) || 'venueplay', at: r.created_at, body: r.body };
+  });
+  if (String(t.message || '').trim()) out.push({ who: theirs, at: t.created_at, body: t.message });
+  return out.slice(0, HELP_THREAD_MAX);
+}
+function helpThreadHtml(items) {
+  return (items || []).map((m) => {
+    const when = helpThreadDate(m.at);
+    return '<p class="hd-mute" style="margin:22px 0 6px;font-size:13px;line-height:1.5;color:#8a8a95">' + (when ? 'On ' + when + ', ' : '') + helpHtml(m.who) + ' wrote:</p>'
+      + '<div class="hd-mute" style="border-left:3px solid #d9d9e0;padding:2px 0 2px 12px;font-size:14px;line-height:1.55;color:#6a6a75;white-space:pre-wrap;word-break:break-word">'
+      + helpLinkify(helpHtml(String(m.body).trim().slice(0, 2000))) + '</div>';
+  }).join('');
 }
 /* THE SIGNATURE (Dean, 29 Oct 2026): a copy of his own Outlook signature, so a help desk email signs
    off the way his support@ and hello@ mail does. ONE function, so it can be swapped whole. In order:
@@ -15540,7 +15584,7 @@ function helpSignatureHtml(ticket, signer, replyTo, signedOff) {
   const icon = pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif';
   const phone = !pp && ['venue_support', 'accounts', 'sales'].indexOf(ticket.category) !== -1;
   const L = (k, v) => '<strong style="color:#FF1F8E">' + k + '</strong>&nbsp;&nbsp;' + v;
-  return (signedOff ? '' : '<p style="margin:22px 0 0">Kind Regards</p>')
+  return (signedOff ? '' : '<p style="margin:22px 0 0">Kind regards,</p>')
     + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 0;border-collapse:collapse"><tr>'
     + '<td class="hd-sig-icon" valign="top" style="width:120px;padding:0 16px 0 0">'
     + '<img class="hd-sig-img" src="' + icon + '" width="120" height="120" alt="' + brand + '" style="display:block;border:0;width:120px;height:120px;border-radius:12px"></td>'
@@ -15715,8 +15759,8 @@ async function helpSendEmail(env, m) {
    and the send. domain stop this alert, copied from hello@ to the help subdomain, coming straight
    back in as a ticket of its own. */
 function helpAlertSubject(ticket, lead) {
-  return '[' + (HELP_BRAND_LABEL[ticket.brand] || 'venueplay') + '] ' + (ticket.priority === 'urgent' ? 'URGENT ' : '') +
-         helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90);
+  return vpaStaffSubject(ticket.priority === 'urgent' ? 'urgent' : 'action',
+         helpCategoryLabel(ticket.category, ticket.brand) + ' ' + helpTag(ticket.ticket_no) + ': ' + helpLine(lead || ticket.subject, 90), ticket.brand);
 }
 /* A DAILY CAP ON ALERT EMAILS. The alerts go out on the same Resend account as every invoice and
    receipt, so a flood of tickets must never become a flood of email. Past the cap the tickets are
@@ -15728,9 +15772,9 @@ async function helpAlertAllowed(env) {
     try {
       await helpSendEmail(env, { to: env.VP_HELP_ALERT_EMAIL || env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au',
         from: 'Help Desk <hello@send.venueplay.com.au>', reply_to: 'hello@venueplay.com.au',
-        subject: '[Help desk] Alerts paused for today: ' + cap + ' reached',
+        subject: vpaStaffSubject('fyi', '[Help desk] Alerts paused for today: ' + cap + ' reached'),
         html: vpaStaffCard('<p>The help desk has sent ' + cap + ' alert emails today, its daily limit, so it has stopped emailing until tomorrow. ' +
-              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>', 'Help desk alerts paused'),
+              'Tickets are still being made: open HQ to see them. If this is a flood, the rate limits are holding it.</p>', 'Help desk alerts paused', 'fyi'),
         headers: { 'X-VP-Help': 'alert' } });
     } catch (e) {}
   }
@@ -15755,7 +15799,7 @@ async function helpNotifyStaff(env, ticket, venueName, lead) {
     return await helpSendEmail(env, { to: to, from: 'Help Desk <hello@send.venueplay.com.au>',
       reply_to: ticket.contact_email || 'hello@venueplay.com.au',
       subject: helpAlertSubject(ticket, lead),
-      html: vpaStaffCard(html, helpAlertSubject(ticket, lead)), headers: { 'X-VP-Help': 'alert' } });
+      html: vpaStaffCard(html, helpAlertSubject(ticket, lead), ticket.priority === 'urgent' ? 'urgent' : 'action'), headers: { 'X-VP-Help': 'alert' } });
   } catch (e) { return false; }
 }
 
@@ -16219,13 +16263,13 @@ function helpEmailCard(pp, inner, foot, title, preheader) {
     + '<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">'
     + '<title>' + vpaEsc(title || brand) + '</title>'
     + '<style>@media (prefers-color-scheme: dark){.hd-page{background:#0b0a10 !important}.hd-card{background:#1c1a24 !important}'
-    + '.hd-text{color:#e6e4ec !important}.hd-ink{color:#ffffff !important}.hd-mute{color:#a9a6b4 !important;border-color:#34313f !important}.hd-a{color:#ff6fb5 !important}}'
+    + '.hd-text{color:#e6e4ec !important}.hd-ink{color:#ffffff !important}.hd-mute{color:#a9a6b4 !important;border-color:#34313f !important}.hd-a{color:#ff6fb5 !important}}[data-ogsc] .hd-ink{color:#ffffff !important}[data-ogsc] .hd-text{color:#e6e4ec !important}[data-ogsb] .hd-card{background-color:#1c1a24 !important}[data-ogsb] .hd-page{background-color:#0b0a10 !important}'
     + '@media (max-width:480px){.hd-sig-icon{width:84px !important;padding-right:12px !important}.hd-sig-img{width:84px !important;height:84px !important;border-radius:10px !important}.hd-sig-text{padding-left:12px !important;font-size:13px !important}}</style>'
     + '</head><body class="hd-page" style="margin:0;padding:0;background:' + page + ';-webkit-text-size-adjust:100%">'
     + (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + vpaEsc(preheader) + '</div>' : '')
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hd-page" style="background:' + page + ';margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
     + '<tr><td align="center" style="padding:24px 12px">'
-    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">'
+    + '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="hd-card" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">'
     + '<tr><td style="background:' + band + ';padding:20px 28px"><img src="' + logo + '" width="168" alt="' + brand + '" style="display:block;border:0;height:auto;max-width:168px"></td></tr>'
     + '<tr><td style="height:3px;background:#FF1F8E;font-size:0;line-height:0">&nbsp;</td></tr>'
     + '<tr><td class="hd-text" style="padding:28px 28px 8px;font-size:16px;line-height:1.6;color:' + text + '">' + inner + '</td></tr>'
@@ -16235,11 +16279,11 @@ function helpEmailCard(pp, inner, foot, title, preheader) {
 /* The email the contact gets, in the ticket's own brand and card (helpEmailCard). Transactional, so
    it carries the ABN and a way to reach us (as venueplay/emails/*.html do); the reference is in the
    subject so their reply threads back. */
-function helpReplyHtml(ticket, body, replyTo, signer) {
+function helpReplyHtml(ticket, body, replyTo, signer, thread) {
   const pp = ticket.brand === 'partyplay';
   const ref = helpRef(ticket.reply_token);
   return helpEmailCard(pp,
-    '<div style="white-space:pre-wrap">' + helpLinkify(helpHtml(body)) + '</div>' + helpSignatureHtml(ticket, signer || 'Dean', replyTo, helpSignsOff(body)),
+    '<div style="white-space:pre-wrap">' + helpLinkify(helpHtml(body)) + '</div>' + helpSignatureHtml(ticket, signer || 'Dean', replyTo, helpSignsOff(body)) + helpThreadHtml(thread),
     'Ticket ' + ticket.ticket_no + (ref ? ' (ref ' + ref + ')' : '') + '. To add anything, just reply to this email.<br>' + helpBrandFooter(pp) + '.',
     'Ticket ' + ticket.ticket_no);
 }
@@ -16320,9 +16364,10 @@ async function helpSendTicketReply(env, t, body, signer, authorLabel, authorExtr
   const to = String(t.contact_email || '').toLowerCase();
   const f = helpFromFor(t.category, t.brand);
   const subj = helpBareSubject(t.subject).replace(/^(re|fw|fwd):\s*/i, '') || 'Your request';
+  const thread = await helpThreadFor(env, t).catch(() => []);
   const ok = await helpSendEmail(env, { to: to, from: f.from, reply_to: f.reply_to,
     subject: 'Re: ' + helpLine(subj, 150) + ' ' + helpReplyTag(t),
-    html: helpReplyHtml(t, body, f.reply_to, signer) });
+    html: helpReplyHtml(t, body, f.reply_to, signer, thread) });
   if (!ok) return '';
   await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'reply', body: body,
     author: authorLabel + ' (from ' + f.reply_to + ' to ' + to + (authorExtra || '') + ')', author_id: authorId || null }, false);
@@ -16333,6 +16378,8 @@ async function helpAdminReply(request, env, json) {
   const t = await helpFindTicket(env, g.body.id);
   if (!t) return json({ error: 'That ticket is not there any more.' }, 404);
   if (!t.contact_email) return json({ error: 'This ticket has no email address to reply to. Add a note instead.' }, 400);
+  /* SIGNED BY A PERSON, BY FIRST NAME (Dean, 5 Nov 2026): no name on the HQ login, no send, and no fallback to a team name. */
+  if (!helpFirstName(g.admin.label)) return json({ error: 'Add your name to your profile first, so your reply can be signed with it. Nothing was sent.', need_name: true }, 400);
   const body = helpText(g.body.body);
   if (!body) return json({ error: 'Type the reply first.' }, 400);
   if (body.length > 8000) return json({ error: 'That reply is too long.' }, 400);
