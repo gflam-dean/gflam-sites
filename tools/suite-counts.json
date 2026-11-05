@@ -611,6 +611,10 @@
   "checks": 70,
   "counted_by": "lines"
  },
+ "tools/test-offer-grace.js": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
  "tools/test-old-tv-css.js": {
   "checks": 107,
   "counted_by": "lines"

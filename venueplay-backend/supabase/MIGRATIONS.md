@@ -592,3 +592,11 @@ resent their link, which restarts those 30 days and re-dates the follow-ups (aut
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-162-help-faq-offer-grace.sql` (Dean, 5 Nov 2026, THE 5-DAY OFFER GRACE): words only. The help FAQ's "Billing and
+players" answer (vp_help_faq, id d3a64ff4-...) now says a free month that ends with no card pauses the games, and that a
+venue set up on an offer price has 5 days to add a card and keep it, then the standard rate applies. Guarded: it changes the
+row only if the answer is still migration 106's, so an HQ edit is never overwritten. The grace itself needs NO column or table
+(the Worker counts five days from vp_prospects.free_month_ends_at, migration 127), and no Worker waits for this file. No
+policy or grant changes, so RLS-BASELINE.json does not change. NUMBER: 162 given by the main session (153 live-here-now, 155
+security, 160 account-review, 161 venue rating). Branch `fix/offer-grace-10nov`. NOT RUN. Read-back and rollback in the file.
