@@ -3782,13 +3782,19 @@ async function vpsStartRow(env, id) {
   const r = await vpaSelect(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(id) + '&select=*&limit=1');
   return (r && r[0]) || null;
 }
-/* A fresh code for a row, to the number it is for, written down (hash only) BEFORE it is sent. */
-async function vpsIssueCode(env, row, to, e164) {
+/* A fresh code for a row, to the number it is for, written down (hash only) BEFORE it is sent.
+   A code to a KNOWN login's mobile (to 'known') names that login in the SAME write, so the row can never hold a
+   login and a code that is not that login's: the code that proves the login is the only thing that can pass. The
+   old code dies in that write too, so the typed mobile's code proves nothing about the known login. Nothing here
+   says the login is proven: verified_at is set only once a code passes (vpsDecideFor). */
+async function vpsIssueCode(env, row, to, e164, knownLoginId) {
   const code = vpsCode();
-  await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), {
-    code_hash: await vpsCodeHash(env, row.id, code), code_to: to, attempts: 0,
+  const patch = { code_hash: await vpsCodeHash(env, row.id, code), code_to: to, attempts: 0,
     code_sent_count: Math.min(20, (row.code_sent_count || 0) + 1),
-    code_expires_at: new Date(Date.now() + VPS_START_CODE_MIN * 60000).toISOString() });
+    code_expires_at: new Date(Date.now() + VPS_START_CODE_MIN * 60000).toISOString() };
+  if (to === 'known') { patch.known_login_id = knownLoginId; patch.verified_at = null; }
+  await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), patch);
+  Object.assign(row, patch);
   return await vpsSendCodeText(env, e164, code);
 }
 
@@ -3976,12 +3982,16 @@ async function vpsDecideFor(env, json, row, hits, login, byEmail) {
   // 3. The email they typed already signs in, on another mobile. Nothing about that login is said or shown.
   if (byEmail) {
     const phone = byEmail.phone ? '+' + String(byEmail.phone).replace(/[^\d]/g, '') : '';
-    await vpsSetOutcome(env, row, { known_login_id: byEmail.id, verified_at: new Date().toISOString() });
+    /* NOTHING is written about that login until its own mobile's code passes (security review, 5 Nov 2026: a row that
+       named the login with the typed mobile's code still live let a stranger's own code read and join it). */
     if (vpaIsAuMobileE164(phone)) {
       /* The same per-mobile limit as any start, on THAT mobile: typing someone's email can never become a way to text
          them over and over. Over the limit, no text goes and the answer is the same words. */
       const km = await helpSha256Hex('m|' + phone);
-      const s = (await helpLimit(env, 'start:m:' + km.slice(0, 32), VPS_START_PER_MOBILE, 3600)) ? await vpsIssueCode(env, row, 'known', phone) : { ok: false };
+      const allowed = await helpLimit(env, 'start:m:' + km.slice(0, 32), VPS_START_PER_MOBILE, 3600);
+      const s = allowed ? await vpsIssueCode(env, row, 'known', phone, byEmail.id) : { ok: false };
+      // No text could go: this start is spent (the same words, so the answer still says nothing about that login).
+      if (!allowed) await vpsSetOutcome(env, row, { outcome: 'held_known', code_hash: null });
       return json({ ok: true, outcome: 'prove', sent: !!s.ok,
         message: 'That email is already on venueplay. To keep accounts safe, we\'ve texted a code to the mobile on that account. Type it in to carry on.' });
     }
@@ -4036,6 +4046,17 @@ async function vpsClaim(env, row, from, to) {
   } catch (e) { return false; }
 }
 
+/* THE LOGIN THIS START HAS PROVEN, or null. A code passes only for the number in code_to (vpsCheckCode runs first,
+   always): 'known' is the mobile on the login named in the same write, so that login is proven; 'typed' is the mobile
+   they typed, which proves a login only when that login's own mobile is that number. Anything else proves nothing. */
+async function vpsProvenLogin(env, row) {
+  if (!row.known_login_id || !row.verified_at) return null;
+  const u = await vpaAuthGetUser(env, row.known_login_id);
+  if (!u) return null;
+  if (row.code_to === 'known') return u;
+  const digits = (x) => String(x || '').replace(/[^\d]/g, '');
+  return (row.code_to === 'typed' && digits(u.phone) && digits(u.phone) === digits(row.mobile)) ? u : null;
+}
 async function vpsStartVerify(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
   if (!(await helpIpLimit(env, 'startv', ip, VPS_START_VERIFY_PER_IP, 600))) return json({ error: VPS_START_WORDS.busy }, 429);
@@ -4054,8 +4075,11 @@ async function vpsStartVerify(request, env, json) {
     return await vpsDecideFor(env, json, row, hits, u, u);
   }
   if (row.known_login_id && row.verified_at) {
-    // Already proven and asked "add it to your account?": the same answer again (a second tap).
-    return await vpsDecideFor(env, json, row, [], await vpaAuthGetUser(env, row.known_login_id), null);
+    /* Already proven and asked "add it to your account?": the same answer again (a second tap). ONLY when the login
+       was proven by the code to the mobile they typed, and that mobile IS the login's (vpsProvenLogin). */
+    const proven = await vpsProvenLogin(env, row);
+    if (!proven) return json({ error: VPS_START_WORDS.code_gone, gone: true }, 410);
+    return await vpsDecideFor(env, json, row, [], proven, null);
   }
   return await vpsDecide(env, json, row);
 }
@@ -4074,6 +4098,7 @@ async function vpsStartJoin(request, env, json) {
   if (row.outcome !== 'pending' || !row.verified_at || !row.known_login_id || !row.founding_id) {
     return json({ error: 'This sign-up has already been dealt with. Sign in with your mobile at venueplay.com.au/app.' }, 409);
   }
+  if (!(await vpsProvenLogin(env, row))) return json({ error: VPS_START_WORDS.code_gone, gone: true }, 410);
   const mine = await vpsLoginAccounts(env, row.known_login_id).catch(() => null);
   const vs = mine && mine.owned[row.founding_id];
   if (!vs || !vs.length) return json({ error: VPS_START_WORDS.blip }, 409);

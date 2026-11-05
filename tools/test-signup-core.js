@@ -291,13 +291,30 @@ async function moreSections() {
   var em = await start({ venue: 'Railway Hotel', postcode: '4350', mobile: '0499 111 222', email: 'sam@grandhotel.example' });
   var msg = JSON.stringify(em.verify.body);
   check('they are asked to prove it with a code to the mobile already on that login', em.verify.body.outcome === 'prove' && em.verify.body.sent === true && TEXTS[TEXTS.length - 1].body.user.phone === '+61412345678', em.verify.body);
-  check('and the answer names nothing of theirs: no name, no venue, no digits of that mobile', msg.indexOf('Sam') === -1 && msg.indexOf('Grand') === -1 && msg.indexOf('678') === -1 && msg.indexOf('345') === -1, msg);
+  var lmsg = msg.toLowerCase();
+  check('and the answer names nothing of theirs: no name, no email, no venue, no digits of that mobile', lmsg.indexOf('sam') === -1 && lmsg.indexOf('jones') === -1 && lmsg.indexOf('grand') === -1 && lmsg.indexOf('678') === -1 && lmsg.indexOf('345') === -1, msg);
   var pv = await call('/start/verify', { start_id: em.id, code: lastCode() }, NET());
   check('the code from THAT mobile proves it, and then the details are pre-filled', pv.body.outcome === 'known' && pv.body.prefill && pv.body.prefill.email === 'sam@grandhotel.example', pv.body);
   check('nothing made yet', same(snapshot(), s4), snapshot());
   for (var q = 0; q < 5; q++) await start({ venue: 'Railway Hotel', postcode: '4350', mobile: '0499 111 4' + q + '0', email: 'sam@grandhotel.example' });
   var toVictim = TEXTS.slice(textsFrom).filter(function (t) { return t.body.user.phone === '+61412345678'; }).length;
   check('typing someone\'s email over and over never texts their mobile more than 3 times an hour', toVictim <= 3, toVictim);
+  /* THE ATTACK (review, 5 Nov 2026): with that mobile's texts spent, a stranger types the known email with THEIR OWN
+     mobile, passes their own code, then sends their own code again (verify, then join). Nothing of the login may come
+     back and nothing may be attached. */
+  // The email's own limit (3 starts an hour) is spent by the loop above; the attacker waits it out. The MOBILE's stays spent.
+  Object.keys(HITS).forEach(function (k) { if (k.indexOf('start:e:') === 0) delete HITS[k]; });
+  var fBefore = count('venueplay_founding'), vBefore = count('vp_venues');
+  var atk = await start({ venue: 'Attack Arms', postcode: '4350', mobile: '0499 555 000', email: 'sam@grandhotel.example' });
+  var atkCode = TEXTS.filter(function (t) { return t.body.user.phone === '+61499555000'; }).slice(-1)[0];
+  atkCode = atkCode && atkCode.body.sms.otp;
+  var atk2 = await call('/start/verify', { start_id: atk.id, code: atkCode }, NET());
+  var atk3 = await call('/start/join', { start_id: atk.id, code: atkCode }, NET());
+  var all = (JSON.stringify(atk.verify.body) + JSON.stringify(atk2.body) + JSON.stringify(atk3.body)).toLowerCase();
+  check('ATTACK: the stranger\'s own code, sent again, never reveals the login (no pre-fill, no email, no name)', !atk2.body.prefill && all.indexOf('sam@') === -1 && all.indexOf('jones') === -1 && atk2.body.outcome !== 'known', [atk.verify.body, atk2.body]);
+  check('ATTACK: and joining with it attaches nothing to that account', atk3.status !== 200 && count('venueplay_founding') === fBefore && count('vp_venues') === vBefore, atk3);
+  var atkRow = DB.vp_signup_starts.filter(function (r) { return r.id === atk.id; })[0] || {};
+  check('ATTACK: the row never says that login was proven', !(atkRow.known_login_id && atkRow.verified_at && atkRow.code_to !== 'known' && atkRow.outcome === 'pending'), atkRow);
   world(); listed();
   AUTH.push({ id: U(7777), email: 'nophone@venue.example', phone: '' });
   DB.vp_venue_staff.push({ venue_id: U(7778), auth_user_id: U(7777), role: 'manager' });
