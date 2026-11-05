@@ -9072,6 +9072,22 @@ MUTATIONS = [
      "  const phone = true;",
      'a player or a PartyPlay guest is given the venue support line in the signature'),
     # Saved replies and the easier help desk (D91 and helpdesk-hq-in-chrome.test.py), 29 Oct 2026.
+    # "Have a play for free" on the offer page (Dean, 5 Nov 2026, release/6nov stopgap): tools/offer-free-play-in-chrome.test.py.
+    ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
+     '        <a class="btn btn-primary" href="#contact" data-cta="hero-free-play" data-topic="free-account">Have a play for free</a>\n', '',
+     'in Chrome, the offer page has no "Have a play for free" button and "See pricing" leads again'),
+    ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
+     "send it through, usually within one business day.';", "send it through soon.';",
+     'in Chrome, the free account thank-you no longer says when the account comes'),
+    ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
+     '    var t = document.getElementById(\'ct-topic\'); if (t) t.hidden = false;\n', '',
+     'in Chrome, the button opens the form with no topic shown'),
+    ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
+     "    if (m && !m.value.trim()) m.value = CT_TOPIC + ', so I can have a play at my venue.';", "    if (m && !m.value.trim()) m.value = 'I would like to have a play at my venue.';",
+     'in Chrome, the message box is not started with the topic'),
+    ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
+     """document.querySelectorAll('[data-topic="free-account"]')""", """document.querySelectorAll('[data-topic="free-account"],[data-cta="hero-contact"]')""",
+     'in Chrome, plain "Talk to us" is turned into a free account request too'),
     # Migration 156 (release/6nov, 5 Nov 2026): the prize reply in lowercase; the test applies 126 then 156.
     ('the built-in starter replies equal migration 126\'s rows',
      'venueplay-backend/supabase/venueplay-156-saved-reply-lowercase-name.sql',

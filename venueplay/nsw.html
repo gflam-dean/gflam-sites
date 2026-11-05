@@ -294,6 +294,7 @@
     transition:background-color 9999s ease-in-out 0s;
   }
   #vp-submit,#ct-submit{width:100%;margin-top:20px;padding:16px;font-size:var(--fs-base)}
+  .ct-topic{margin:0 0 16px;font-size:var(--fs-base);color:var(--muted)} .ct-topic b{color:#fff}
   #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
   a.vp-tel{color:var(--pink);white-space:nowrap}
   .form-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);text-align:center;margin-top:16px}
@@ -583,7 +584,10 @@
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
       <p class="lede">Trivia, musical bingo, bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="#offer" data-cta="hero-pricing">See pricing</a>
+        <!-- A free account, set up by us (Dean, 5 Nov 2026: a page-only stopgap until the no-card sign-up). It opens the
+             "Talk to us" form below with the topic set; the enquiry is the same sales ticket as any other. -->
+        <a class="btn btn-primary" href="#contact" data-cta="hero-free-play" data-topic="free-account">Have a play for free</a>
+        <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
         <a class="btn btn-ghost" href="#contact" data-cta="hero-contact">Talk to us</a>
       </div>
       <p class="h2-price"><b>First month free.</b> Then a pub with 30 players pays $75 a month. No lock-in, cancel anytime.</p>
@@ -1001,6 +1005,7 @@
     <div class="form-shell">
       <div class="inner">
         <div id="ct-form">
+          <p class="ct-topic" id="ct-topic" hidden>Topic: <b>Set me up a free account</b></p>
           <div class="form-grid">
             <div class="field">
               <label for="ct-name">Your name</label>
@@ -1035,7 +1040,7 @@
         <div class="success" id="ct-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Message sent</h3>
-          <p>Thanks, we've got it and we'll be in touch soon.</p>
+          <p id="ct-thanks">Thanks, we've got it and we'll be in touch soon.</p>
         </div>
       </div>
     </div>
@@ -1510,6 +1515,23 @@
     document.getElementById('claim').scrollIntoView({ behavior:'smooth' });
   }
 
+  /* ---------- "Have a play for free" (Dean, 5 Nov 2026) ----------
+     A page-only stopgap until the no-card sign-up: the hero's first button opens the "Talk to us" form below with
+     the topic set and the message started, and the same /contact route makes it a sales ticket. We set the account
+     up in business hours, so the thank-you line says when. */
+  var CT_TOPIC = 'Set me up a free account';
+  var CT_FREE_THANKS = 'Thanks, we\u2019ll set up your free account and send it through, usually within one business day.';
+  var ctTopic = '';
+  function ctFreeAccount(){
+    ctTopic = CT_TOPIC;
+    var t = document.getElementById('ct-topic'); if (t) t.hidden = false;
+    var m = document.getElementById('ct-message');
+    if (m && !m.value.trim()) m.value = CT_TOPIC + ', so I can have a play at my venue.';
+  }
+  [].forEach.call(document.querySelectorAll('[data-topic="free-account"]'), function(a){
+    a.addEventListener('click', ctFreeAccount);
+  });
+
   /* ---------- Contact form → Worker → email ---------- */
   var ctBtn = document.getElementById('ct-submit');
   var ctErr = document.getElementById('ct-err');
@@ -1531,12 +1553,15 @@
     // Optional, but a half-typed number is worse than none: it looks like a way to ring back.
     if (phone && phone.replace(/[^0-9]/g, '').length < 8) { ctErr.textContent = 'That phone number looks too short. Leave it blank if you would rather we emailed.'; ctErr.classList.add('show'); return; }
     if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }
+    // The topic leads the message, so the ticket's title says what they asked for even if they rewrote the box.
+    if (ctTopic && message.indexOf(ctTopic) !== 0) message = ctTopic + ': ' + message;
 
     if (!workerReady) { ctErr.textContent = 'Contact isn\u2019t connected yet, the Worker URL still needs to be set. For now, email hello@venueplay.com.au.'; ctErr.classList.add('show'); return; }
 
     ctBtn.disabled = true; ctBtn.textContent = 'Sending…';
     function ctDone(){
       document.getElementById('ct-form').style.display = 'none';
+      if (ctTopic) { var th = document.getElementById('ct-thanks'); if (th) th.textContent = CT_FREE_THANKS; }
       var s = document.getElementById('ct-success'); s.classList.add('show');
       s.scrollIntoView({ behavior:'smooth', block:'center' });
     }
