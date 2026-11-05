@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 19:37 · 758de98a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 15:35 · 565da08e';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -2348,7 +2348,7 @@ async function coasterLimit(request, env, what, max, secs) {
 
 /* The same words HQ keeps a coaster venue's name_key in (vpaCoasterNameKey in the billing Worker). */
 function coasterNameKey(s) {
-  return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/['‘’`]/g, '')
+  return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/['\u2018\u2019`]/g, '')
     .replace(/[^a-z0-9]+/g, ' ').trim().replace(/^the /, '');
 }
 
@@ -2356,8 +2356,8 @@ function coasterNameKey(s) {
 function coasterFirstName(raw) {
   const n = cleanName(String(raw || '').replace(/[\x00-\x1f]+/g, ' ').trim());
   if (!n) return null;
-  const first = n.split(/\s+/)[0].replace(/[^A-Za-zÀ-ɏ'\-]/g, '').slice(0, 14);
-  return /[A-Za-zÀ-ɏ]/.test(first) ? first.charAt(0).toUpperCase() + first.slice(1) : null;
+  const first = n.split(/\s+/)[0].replace(/[^A-Za-z\u00C0-\u024F'\-]/g, '').slice(0, 14);
+  return /[A-Za-z\u00C0-\u024F]/.test(first) ? first.charAt(0).toUpperCase() + first.slice(1) : null;
 }
 
 /* The place's night (5am to 5am where it is) and that night's Monday, as yyyy-mm-dd. */
