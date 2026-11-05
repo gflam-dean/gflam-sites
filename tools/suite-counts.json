@@ -792,15 +792,15 @@
   "counted_by": "lines"
  },
  "tools/test-room-dropout-formats.js": {
-  "checks": 16,
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/test-room-dropout.js": {
-  "checks": 55,
+  "checks": 58,
   "counted_by": "lines"
  },
  "tools/test-room-formats.js": {
-  "checks": 197,
+  "checks": 233,
   "counted_by": "lines"
  },
  "tools/test-room-old-console.js": {
@@ -1168,7 +1168,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-fallback.test.js": {
-  "checks": 71,
+  "checks": 78,
   "counted_by": "lines"
  },
  "venueplay-backend/app/room-optin.test.js": {
@@ -1319,6 +1319,10 @@
   "checks": 12,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/room-handover-auth.test.js": {
+  "checks": 40,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/screen-endpoint.test.js": {
   "checks": 19,
   "counted_by": "lines"
@@ -1420,7 +1424,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room-handover.test.js": {
-  "checks": 43,
+  "checks": 57,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venueplay-room.test.js": {

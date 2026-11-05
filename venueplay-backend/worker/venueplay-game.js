@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Nov 2026, 19:37 · 758de98a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 18:58 · f10ba327';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -345,7 +345,7 @@ export default {
          Worker deployed without the binding behaves exactly as it did before. */
       if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
       if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresenceNight(request, env, json);   // + session_ok for an answers room
-      if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json);
+      if (method === 'POST' && path === '/room/handover')      return await handleRoomHandover(request, env, json, roomHandoverAuth);   // signed, or only an ask (F2)
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
@@ -12003,6 +12003,63 @@ function dbError(op, target, detail) {
  *   - profanity filter is a minimal wordlist; extend before launch.
  * ===================================================================== */
 
+/* WHO MAY HAND A VENUE'S ROOM OVER (6 Nov 2026, security review B1, finding F2).
+   handleRoomHandover (in the room server copy below) asks this, and hands over only on
+   signed: true. Everything else is refused there and turned into an ask (see VenueRoom.ask).
+     1. Rate limited per network first, in the same isolate memory every other public write
+        here uses (rateLimit). A whole venue shares one network, and a page that gave up tells
+        at most six times in five minutes, so 30 a minute is a flood, not a pub.
+     2. Signed means a Supabase sign in (verifyHostJwt) that is staff at the venue the room
+        belongs to, or an HQ admin (requireStaff, the same answer every host route gets).
+        The venue is the one named (venue=<slug>), else the room's own code (a venue's join
+        code, or a session's join code). A room no venue owns (a TV paired by its own code)
+        takes staff at any venue, or an admin: still somebody signed in and accountable.
+     3. A players' room named beside a venue goes with it only when it is that venue's
+        session (extra), so a host of one venue cannot name another venue's room.
+   Never throws: a failed read is "not signed", which is the safe way round. */
+const HANDOVER_MAX_PER_IP = 30;                      // per minute, per network
+async function roomHandoverAuth(request, env, name, venueSlug) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  const salt = env.IP_HASH_SALT || 'venueplay';
+  const ipKey = ip ? 'handover:ip:' + (await sha256Hex(salt + ':' + ip)) : 'handover:ip:none';
+  const rl = await rateLimit(env, ipKey, HANDOVER_MAX_PER_IP, 60);
+  if (!rl.ok) return { limited: true };
+  if (!/^Bearer\s+\S/i.test(request.headers.get('Authorization') || '')) return { signed: false };
+  try {
+    const uid = await verifyHostJwt(request, env);
+    const code = String(name || '').slice(3).toUpperCase();
+    let venueId = null;
+    if (venueSlug) {
+      const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(String(venueSlug).toLowerCase()) + '&select=id&limit=1');
+      venueId = (rows && rows[0] && rows[0].id) || null;
+      if (!venueId) return { signed: false };
+    } else if (JOIN_CODE_RE.test(code)) {
+      venueId = await venueByCode(env, code, { includeSuspended: true });
+      if (!venueId) {
+        const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&select=venue_id&order=created_at.desc&limit=1');
+        venueId = (ss && ss[0] && ss[0].venue_id) || null;
+      }
+    }
+    if (venueId) {
+      await requireStaff(env, uid, venueId);
+      let extra = false;
+      if (venueSlug && roomVenueRooms(venueSlug).indexOf(name) < 0 && JOIN_CODE_RE.test(code)) {
+        const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&venue_id=eq.' + enc(venueId) + '&select=id&limit=1');
+        extra = !!(ss && ss.length);
+      }
+      return { signed: true, extra: extra, user: uid };
+    }
+    assertUuid(uid, 'user');
+    const staff = await sbGet(env, 'vp_venue_staff', 'auth_user_id=eq.' + enc(uid) + '&role=in.(owner,manager,host)&select=id&limit=1');
+    if (staff && staff.length) return { signed: true, extra: false, user: uid };
+    const admins = await sbGet(env, 'vp_platform_admins', 'auth_user_id=eq.' + enc(uid) + '&role=in.(owner,accounts)&select=auth_user_id&limit=1');
+    if (admins && admins.length) return { signed: true, extra: false, user: uid };
+    return { signed: false };
+  } catch (e) {
+    return { signed: false };
+  }
+}
+
 /* ============================================================================
  * ROOM SERVER (copied from venueplay-room.js, kept identical by the gate)
  *
@@ -12102,7 +12159,8 @@ function roomFormatsKey() {
   for (const k in f) { if (f[k]) out.push(k); }
   return out.sort().join(',');
 }
-const ROOM_HANDOVER_CLOSE = 4503;                    // "go to Supabase": the page does not retry the room
+const ROOM_HANDOVER_CLOSE = 4503;
+const ROOM_ASK_QUIET_MS = 20000;                     // an unsigned ask reaches the consoles at most this often                    // "go to Supabase": the page does not retry the room
 
 /* ONE PAGE, ONE SOCKET (live flight-mode test, 1 Nov 2026: presence said phone:2 for Dean's one phone).
    A phone that loses signal cannot close its socket, so the room keeps it until Cloudflare notices, which
@@ -12127,6 +12185,7 @@ export class VenueRoom {
     this.counts = new Map();
     /* Until when this room is handed to Supabase (ms), read from storage once per wake. */
     this.hoUntil = null;
+    this.askedAt = 0;                                  // when this room last passed an unsigned ask on (ask)
     /* A HEARTBEAT THAT DOES NOT WAKE THE ROOM. A socket that is idle for an hour between games
        can be cut by the venue's router without either end hearing a thing, and the TV would sit
        there "connected" to nothing when the first ball is called. Supabase has a heartbeat for
@@ -12173,10 +12232,35 @@ export class VenueRoom {
     return roomJson({ ok: true, closed: n, until: this.hoUntil || 0 });
   }
 
+  /* A PAGE WITH NO SIGN IN MAY ONLY ASK (6 Nov 2026, security review B1 finding F2). A TV or a
+     phone that gave up on the room cannot hand the venue over any more: anybody can read a room's
+     name off /play/live, so an unsigned handover let a stranger close every socket at a venue, and
+     again every six hours. Instead the room tells the consoles in it, and only them, that a page
+     says it left. A console then listens on the old road for a minute (vp-room.js, onAsk) and hands
+     the venue over itself, signed, if it hears that page there. A stranger's ask is heard by no one
+     on the old road, so nothing moves. Once every ROOM_ASK_QUIET_MS per room at most, so an ask
+     flood costs a console one short listen. Nothing is marked and no socket is closed. */
+  ask() {
+    const now = Date.now();
+    if (this.askedAt && now - this.askedAt < ROOM_ASK_QUIET_MS) return roomJson({ ok: true, asked: 0, quiet: true });
+    this.askedAt = now;
+    const hosts = this.state.getWebSockets('host');
+    const word = JSON.stringify({ t: 'room_ask' });
+    let n = 0;
+    for (let i = 0; i < hosts.length; i++) {
+      let a = null;
+      try { a = hosts[i].deserializeAttachment(); } catch (e) { a = null; }
+      if (a && a.gone) continue;
+      try { hosts[i].send(word); n += 1; } catch (e) {}
+    }
+    return roomJson({ ok: true, asked: n });
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '');
     if (path === '/handover' && request.method === 'POST') return await this.handover(true, url.searchParams.get('soft') === '1');
+    if (path === '/ask' && request.method === 'POST') return this.ask();
     /* A room that has been handed over takes nobody in and says so in the same 503 words a
        Worker with no room answers, which is the answer every page already falls back on. */
     if ((path === '/ws' || path === '/presence') && await this.handedOver()) {
@@ -12265,7 +12349,7 @@ export class VenueRoom {
     if (obj.tok || obj.token) return;
     /* Only the room says "hand over". Relayed from a phone, it would send a whole venue to
        Supabase on one stranger's say so. */
-    if (obj.t === 'room_handover') return;
+    if (obj.t === 'room_handover' || obj.t === 'room_ask') return;
     /* A trivia answer is HELD, not relayed. The other phones must never learn what this one
        picked, and the TV's "answered" ticker is a separate cosmetic message the phone sends
        once the answer is in. */
@@ -12474,9 +12558,16 @@ function roomOff(env) {
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 /* POST /room/handover?room=vp-XXXXXX : a page has gone back to Supabase, so the whole room does.
-   No sign in, on purpose. The page that calls it may be a TV, which has no key, and the worst
-   anybody can do with it is put a venue on the road every venue used before 31 Oct 2026 for
-   six hours. It works with ROOM_OFF on as well, so a venue that went across while the switch
+   SIGNED, SINCE 6 NOV 2026 (security review B1, finding F2). Until then there was no sign in, on
+   the reasoning that a TV has no key and the worst anybody could do was put a venue on the old road
+   for six hours. But a room's name is on /play/live for anyone, so a stranger could close every
+   socket at a venue mid-game, and again every six hours. Now:
+     - a console signed in as staff at the venue (or an HQ admin) hands it over, as before;
+     - a page with no sign in (a TV, a phone) is answered 401 and only ASKS: the consoles in the
+       room are told, listen on the old road, and hand over themselves if the page is there (ask);
+     - every request is rate limited per network first.
+   The check itself lives in the game Worker (roomHandoverAuth), which has the sign in and the
+   database; it is passed in as `auth`, and without one nothing is handed over. It works with ROOM_OFF on as well, so a venue that went across while the switch
    was on stays across when it is turned off again, instead of late phones finding an empty
    room. Bingo rooms only: an answers room (vpa-) is per game and is never handed over. */
 /* ONE VENUE IS FIVE ROOMS (1 Nov 2026, every format on the room). Bingo meets on "vp-" + the
@@ -12547,17 +12638,34 @@ async function roomOldConsoleCheck(env, road, fmt, slugOf) {
    musical console that gives up must take the TV's router with it, and the raffle room nobody is
    in yet must turn the raffle console away when it opens tonight. soft=1 passes the word on
    without pushing an existing mark further out (see VenueRoom.handover). */
-async function handleRoomHandover(request, env, json) {
+async function handleRoomHandover(request, env, json, auth) {
   if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name) || !/^vp-/.test(name)) return json({ error: 'bad room' }, 400);
   const soft = url.searchParams.get('soft') === '1';
   const venue = url.searchParams.get('venue');
+  if (venue != null && venue !== '' && !roomVenueRooms(venue).length) return json({ error: 'bad venue' }, 400);
+  let who = null;
+  try { who = typeof auth === 'function' ? await auth(request, env, name, venue || '') : null; } catch (e) { who = null; }
+  if (who && who.limited) return json({ error: 'too many handovers from this network, wait a minute' }, 429);
+  if (!who || who.signed !== true) {
+    /* The ask goes where the console is: a screen gives up in its own format's room, and the console
+       that has to hear it may be in any of the venue's rooms, so naming the venue asks all of them. */
+    const askAt = (venue != null && venue !== '') ? roomVenueRooms(venue) : [];
+    if (askAt.indexOf(name) < 0) askAt.unshift(name);
+    const got = await Promise.all(askAt.map(function (n) {
+      return roomStub(env, n).fetch('https://room/ask', { method: 'POST' })
+        .then(function (r) { return r.json(); }).catch(function () { return null; });
+    }));
+    let asked = 0;
+    for (let i = 0; i < got.length; i++) asked += (got[i] && got[i].asked) || 0;
+    return json({ error: 'sign in first', handed_over: false, asked: asked }, 401);
+  }
   if (venue != null && venue !== '') {
     const names = roomVenueRooms(venue);
-    if (!names.length) return json({ error: 'bad venue' }, 400);
-    if (names.indexOf(name) < 0) names.unshift(name);       // a players' room on a join code of its own
+    /* A players' room on a join code of its own goes too, when the check found it is this venue's. */
+    if (names.indexOf(name) < 0 && who.extra === true) names.unshift(name);
     const closed = await roomHandOverAll(env, names, soft);
     return json({ ok: true, rooms: names.length, closed: closed });
   }

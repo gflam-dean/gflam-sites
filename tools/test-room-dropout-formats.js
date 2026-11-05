@@ -199,6 +199,22 @@ async function inRoomStill(F) {
     print('       (' + (at < 0 ? 'NOT back within 8 s' : 'back on the game ' + at + ' s after the signal') + ')');
     check(F + ': it asks again by itself and is on the game within 8 s, not waiting for the next ' + (F === 'musical' ? 'song' : 'question'), at > 0, sawOf(F, v));
 
+    print('T. ' + F + ': NO LINE AT ALL FOR LONGER THAN A PHONE WAITS: IT GOES TO SUPABASE, AND THE CONSOLE FOLLOWS (F2, 6 Nov 2026)');
+    /* The phone's handover has no sign in and only asks. The console, asked, listens on the old road,
+       hears this phone announce itself there, and moves the venue itself, signed. */
+    v = await boot(F);
+    await advance(20000);
+    signalGone(v.phone);
+    for (t = 0; t < 200; t += 20) { await advance(10000); moveOn(F, v); await advance(10000); }
+    check(F + ': control: past its wait the phone gave up on the room (nothing of it there)', roomSockets('phone').length === 0 && !handedOver(BINGO), roomSockets('phone'));
+    signalBack(v.phone);
+    at = await backWithin(F, v, 8);
+    print('       (' + (at < 0 ? 'NOT back within 8 s' : 'back on the game ' + at + ' s after the signal') + ')');
+    check(F + ': within 8 s it is on the game as it is now', at > 0, sawOf(F, v));
+    check(F + ': the console came across to meet it, by its own signed handover', v.host.road() === 'supabase' && FETCHES.some(function (f) { return /^host POST \/room\/handover/.test(f); }), [v.host.road(), FETCHES.filter(function (f) { return /handover/.test(f); }).slice(0, 6)]);
+    moveOn(F, v); await advance(1000);
+    check(F + ': and it hears the console\'s next message', onGame(F, v), sawOf(F, v));
+
     print('S. ' + F + ': THE PAGE IS RELOADED MID-GAME');
     v = await boot(F);
     await advance(10000);

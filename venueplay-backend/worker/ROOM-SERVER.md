@@ -247,6 +247,12 @@ closes every way a venue could end up split across the two roads once nobody typ
   `{t:"room_handover"}` to every socket, closes them with **4503**, and answers 503
   `room handed over` to anyone for **six hours** (a mark on disk). A console still on Supabase
   re-asserts every two hours for up to twelve. Bingo rooms only, never an answers room.
+* **Signed, since 6 Nov 2026 (security review B1, F2).** The handover is carried out only for a
+  console signed in as staff at the venue, or an HQ admin (`roomHandoverAuth` in the game Worker),
+  and every request is rate limited per network (30 a minute). A TV or phone has no sign in: its
+  handover is answered 401 and only ASKS (`VenueRoom.ask`): the consoles in the room are told
+  `{t:"room_ask"}`, listen on the old road for a minute (vp-room.js `onAsk`), and hand over
+  themselves if the page that left is really there. At most one ask per room per 20 seconds.
 * **ROOM_OFF reaches open rooms**: the first message after the switch empties the room the same
   way, and marks it. Reveal still takes trivia answers a room holds while the switch is on.
 * **One ear on the old road**: the TV (one channel on the connection its router already has) and

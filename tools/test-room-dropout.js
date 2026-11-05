@@ -54,6 +54,7 @@ function signalGone(ph, how) {
 }
 function signalBack(ph, how) {
   ph.sb.netDown = false;
+  if (ph.sb.lineBack) ph.sb.lineBack();
   if (how.events) { ph.sb.navigator.onLine = true; (ph.dom.window._on.online || []).forEach(function (f) { f(); }); }
 }
 async function venueStillInRoom() {
@@ -62,10 +63,10 @@ async function venueStillInRoom() {
 }
 var HOST = null;
 /* One night: a console and a phone in the room, a game on, `played` seconds of balls before the drop. */
-async function night(played) {
+async function night(played, popts) {
   freshWorld(); SOCKETS = []; NEXT_ROOM_SRC = VPROOM_NEW;
   HOST = bootHost(); await advance(300);
-  var ann = bootPhone('Ann'); await advance(300);
+  var ann = bootPhone('Ann', popts); await advance(300);
   await startGame(HOST, ann);
   for (var t = 0; t < played; t += 5) { call(HOST); await advance(5000); }
   return ann;
@@ -151,7 +152,10 @@ async function judge(label, ann, away, within) {
   check('H: back in the room', road(ann) === 'room' && await venueStillInRoom(), road(ann));
 
   print('\nI. NO LINE AT ALL FOR LONGER THAN A PHONE WAITS (UNREACHABLE_MS): it goes, and the venue follows fast');
-  ann = await night(30);
+  /* SINCE 6 NOV 2026 (B1, F2) a phone cannot hand the venue over by itself: its unsigned handover is
+     refused and only asks the console, which follows when its ear hears the phone's signed join on
+     the old road. So this phone holds a key, as a real one does. */
+  ann = await night(30, { keyed: true });
   away = await drop(ann, 190, { close: true });   // it gives up about 150 s in; the line is back 40 s later
   check('I: past the wait it went to Supabase (a Worker down for minutes must not strand it in a dead room)', road(ann) === 'supabase', road(ann));
   await judge('I', ann, away, 8);
@@ -176,6 +180,16 @@ async function judge(label, ann, away, within) {
   check('J: the same ticket, not a new one', JSON.stringify(ann.P.cards.map(function (c) { return c.cardNo; })) === JSON.stringify(cardNos), ann.P.cards.map(function (c) { return c.cardNo; }));
   check('J: with the marks the punter had made', ann.P.cards.length > 0 && marked.every(function (n) { return ann.P.cards.some(function (c) { return c.daubs[n]; }); }), ann.P.cards.map(function (c) { return Object.keys(c.daubs); }));
   check('J: back in the room', road(ann) === 'room' && await venueStillInRoom(), road(ann));
+
+  print('\nK. A STRANGER POSTS A HANDOVER FOR THE ROOM MID-GAME (security review B1, F2, 6 Nov 2026)');
+  /* The room's name is on /play/live for anyone. Until 6 Nov this one request closed every socket. */
+  ann = await night(30);
+  var att = await workerFetch('https://game.venueplay.com.au/room/handover?room=vp-' + CODE + '&venue=test-pub', { method: 'POST' });
+  check('K: an unsigned handover is refused, 401', att.status === 401, att.status);
+  for (var q = 0; q < 10; q++) { call(HOST); await advance(3000); }
+  check('K: half a minute on, the console and the phone are still in the room, and the room is not marked', road(ann) === 'room' && await venueStillInRoom(), [road(ann), road(HOST)]);
+  var nb = call(HOST); await advance(500);
+  check('K: and the next ball still reaches the phone through the room', heardBall(ann, nb) && road(ann) === 'room');
 
   print('');
   print(PASS + ' passed, ' + FAIL + ' failed');

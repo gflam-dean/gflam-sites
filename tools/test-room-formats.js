@@ -194,6 +194,38 @@ function errorsOf(v) { var e = []; for (var k in v) e = e.concat(v[k].errors.map
     t1 = tag(); say(F, v, t1); await advance(500);
     check(F + ': and the screen hears the old console', got('screen', t1, 'supabase'));
     if (v.phone) check(F + ': and the phone', got('phone', t1, 'supabase'));
+
+    print('M. ' + F + ': THE SCREEN LOSES THE ROOM MID-GAME AND GOES TO SUPABASE ALONE (F2, 6 Nov 2026)');
+    /* The screen has no sign in, so its own handover is refused and only ASKS. The console hears the
+       ask, listens on the old road again (its first minute's ear long gone), hears the screen there,
+       and moves the venue itself, signed. */
+    freshWorld({ formats: on }); v = boot(F); await advance(2000); await openGame(F, v);
+    await advance(61000);
+    check(F + ': control: the console\'s first ear is gone and everyone is in the room', liveChannels('host').length === 0 && roomSockets('screen').indexOf(R) >= 0 && v.host.road() === 'room');
+    CUT.screen = true;
+    socketsOf(/^screen$/).forEach(dropSocket);
+    await advance(20000);
+    var asks = FETCHES.filter(function (f) { return /^screen POST \/room\/handover/.test(f); });
+    check(F + ': the screen gave up on the room and said so', v.screen.road() === 'supabase' && asks.length >= 1, [v.screen.road(), asks.length]);
+    check(F + ': its handover, with no sign in, did not move the venue by itself: the console moved it, signed',
+          FETCHES.some(function (f) { return /^host POST \/room\/handover/.test(f); }), FETCHES.filter(function (f) { return /handover/.test(f); }).slice(0, 6));
+    check(F + ': the console heard the ask and came across to meet the screen', v.host.road() === 'supabase' && handedOver(R), [v.host.road(), handedOver(R)]);
+    t1 = tag(); say(F, v, t1); await advance(500);
+    check(F + ': and the screen hears the console again, on the old road', got('screen', t1, 'supabase'));
+    CUT = {};
+
+    print('N. ' + F + ': A STRANGER POSTS A HANDOVER FOR THIS VENUE (F2, the attack)');
+    freshWorld({ formats: on }); v = boot(F); await advance(2000); await openGame(F, v);
+    var att = await workerFetch(API + '/room/handover?room=' + R + '&venue=' + SLUG, { method: 'POST' }, 'stranger');
+    check(F + ': it is refused, 401', att.status === 401, att.status);
+    att = await workerFetch(API + '/room/handover?room=' + BINGO + '&soft=1', { method: 'POST' }, 'stranger');
+    check(F + ': and by the bingo room\'s name too', att.status === 401, att.status);
+    await advance(70000);
+    check(F + ': a minute on, no room is marked and no page has left', ![BINGO, ROOM.musical, ROOM.trivia, ROOM.raffle, ROOM.members].some(handedOver) &&
+          v.host.road() === 'room' && v.screen.road() === 'room' && v.tv.road() === 'room', [v.host.road(), v.screen.road(), v.tv.road()]);
+    t1 = tag(); say(F, v, t1); await advance(500);
+    check(F + ': and the screen still hears the console in the room', got('screen', t1, 'room'));
+
   }
 
   print('\n######## THE NIGHT ########');
