@@ -155,6 +155,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/details-autofill-in-chrome.test.py": {
+  "checks": 92,
+  "counted_by": "lines"
+ },
  "tools/drag-bingo-clubs-page.test.py": {
   "checks": 56,
   "counted_by": "lines"

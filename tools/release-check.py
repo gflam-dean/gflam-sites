@@ -2526,6 +2526,22 @@ def local_checks(which):
     if len(set(gathers)) != 1: wrong.append('the three phones\' gatherCapture differ')
     ok('every player phone builds its details ticks from vp-consent.js', not wrong, why='; '.join(wrong[:3]))
 
+    # THE DETAILS BOXES ARE A REAL FORM, BUILT ONCE, SO THE PHONE CAN AUTOFILL THEM (5 Nov 2026).
+    # They were innerHTML inputs with no name= and no <form>, and iPhone and Android autofill skipped
+    # them ("it doesn't autofill every detail"). /app/vp-details.js now draws them and wraps Join.
+    wrong = []
+    for rel, kind in (('venueplay/play.html', 'person'), ('venueplay/app/musical/play.html', 'person'), ('venueplay/app/trivia/play.html', 'team')):
+        _p = os.path.join(ROOT, rel)
+        src = io.open(_p, encoding='utf-8').read() if os.path.isfile(_p) else ''
+        if not src:
+            wrong.append(rel + ' is missing'); continue
+        li = _fn(src, 'function loadJoinInfo(){')
+        if '<script src="/app/vp-details.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-details.js')
+        if 'VPDetails.html(c)' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        if 'placeholder=' in li: wrong.append(rel + ' loadJoinInfo draws a box of its own')
+        if 'VPDetails.wire({ join:join, kind:"%s" })' % kind not in src: wrong.append(rel + ' does not wire Join with VPDetails.wire kind ' + kind)
+    ok('every player phone draws its details boxes as a form from vp-details.js', not wrong, why='; '.join(wrong[:3]))
+
     # EVERY MERGE TAG IN AN EMAIL THE WORKER SENDS HAS TO BE FILLED IN BY THE WORKER.
     # {{unsubscribe_url}} sat in four templates and nothing anywhere replaced it, so the
     # link in every welcome email was the literal text and a venue clicking it went
