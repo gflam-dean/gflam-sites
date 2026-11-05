@@ -134,7 +134,12 @@ def no_venue():
         ok('the badge is on screen, inside the wall, and nothing covers it', r.ask(tv, on_top('tvPlayLink')) is True, r.ask(tv, on_top('tvPlayLink')))
         ok('"Put in the screen code" is there too, on screen and not covered', r.ask(tv, on_top('tvSetupCode')) is True and 'Put in the screen code' in card,
            r.ask(tv, on_top('tvSetupCode')))
-        ok('and the old way still reads: open venueplay.com.au/tv?your-venue once', 'venueplay.com.au/tv?your-venue' in card, card[-160:])
+        ok('the "Or open venueplay.com.au/tv?your-venue ... save it as a bookmark" line is gone (Dean, 5 Nov 2026: longer than entering the code)',
+           'your-venue' not in card and 'save it as a bookmark' not in card and r.ask(tv, '!document.querySelector(".su-alt")') is True, card[-200:])
+        ok('the Google Play half says "Google Play", never "Play Store", on this card and in every TV kind\'s setup wording',
+           'Play Store' not in card and 'in Google Play on this TV, open it and put in your screen code' in card
+           and r.ask(tv, '(function(){var T=window.VPTvType;if(!T)return "no VPTvType";var bad=[];T.LABELS.forEach(function(l){var s=T.setup(l[0]);if(/Play Store/i.test(JSON.stringify(s)))bad.push(l[0]);});return bad.length?bad:true;})()') is True,
+           card[:300])
         ok('the whole card fits on a 1280 x 720 wall (nothing cut off, nothing to scroll)',
            r.ask(tv, '(function(){var e=document.getElementById("pairPanel"),b=e.getBoundingClientRect();return b.top>=0&&b.left>=0&&b.bottom<=innerHeight&&b.right<=innerWidth&&e.scrollHeight<=e.clientHeight+1;})()') is True,
            r.ask(tv, 'JSON.stringify(document.getElementById("pairPanel").getBoundingClientRect())'))

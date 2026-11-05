@@ -106,7 +106,7 @@ for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
 
 # ---------------------------------------------------------------- the training walkthrough
 tr = read('venueplay/training.html')
-cap = re.search(r'cap:"The venue TV is opened once at your venue\'s own link[^"]*"', tr)
+cap = re.search(r'cap:"The venue TV is set up once with its own screen code[^"]*"', tr)
 check('the training walkthrough\'s first caption says the TV is kept full screen with nothing over it',
       bool(cap) and 'full screen with nothing over it' in cap.group(0), cap and cap.group(0)[-120:])
 

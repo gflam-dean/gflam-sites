@@ -166,7 +166,7 @@ for lb in ('leave-behind', 'leave-behind-club', 'leave-behind-pub', 'leave-behin
           lw.endswith(SHORT) and 'all included.' in lw, lw[-160:])
 
 tr = read('venueplay/training.html')
-cap = re.search(r'cap:"The venue TV is opened once at your venue\'s own link[^"]*"', tr)
+cap = re.search(r'cap:"The venue TV is set up once with its own screen code[^"]*"', tr)
 check('the training walkthrough\'s TV caption names the VenuePlay TV app',
       bool(cap) and SHORT in cap.group(0), cap and cap.group(0)[:200])
 
