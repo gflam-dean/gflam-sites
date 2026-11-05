@@ -30,6 +30,7 @@ function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; pri
 
 var BINGO = find('venueplay/play.html');
 var TRIVIA = find('venueplay/app/trivia/play.html');
+var DEMO = '';   // trivia host.html's try-it demo switch (?demo=), off: a real night's openSession is what is lifted below
 var MUSICAL = find('venueplay/app/musical/play.html');
 var SESSION = find('venueplay/app/vp-session.js');
 

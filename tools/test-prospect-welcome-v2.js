@@ -340,7 +340,8 @@ var __rnd = 11;
   check('welcome-group.html: the same', /<a href="https:\/\/venueplay\.com\.au\/app\/\?guide=1"[^>]*>Open your setup guide<\/a>/.test(readFile('venueplay/emails/welcome-group.html')));
   var WP = readFile('venueplay/emails/welcome-prospect.html');
   check('the prospect welcome\'s button signs them in to the console (/app/go or ?signin=sms), where the guide opens first', /<a href="\{\{signin_url\}\}"/.test(WP) && /vpaOneClickUrl\(site, o\.signinToken, email\)/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')) &&
-    /w\.location\.replace\("\/app\/"\)/.test(readFile('venueplay/app/vp-oneclick.js')));
+    /w\.location\.replace\(\(w\.VPTrySlot && w\.VPTrySlot\.nextAfterSignIn\) \? w\.VPTrySlot\.nextAfterSignIn\(ls\) : "\/app\/"\)/.test(readFile('venueplay/app/vp-oneclick.js')) &&
+    /if \(!raw\) return "\/app\/";/.test(readFile('venueplay/app/vp-try-slot.js')));   // the console unless the try-it demo was chosen in the last 30 minutes
 
   /* ============================================================================================= */
   section('2. THE DELAYED EMAIL, on the real billing Worker');

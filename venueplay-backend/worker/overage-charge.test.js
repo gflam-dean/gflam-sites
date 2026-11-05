@@ -39,7 +39,7 @@ function lift(src, name) {
   return null;
 }
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
-var NAMES = ["chargeNightOverage", "applyOverageCharge", "playerIdsWhoPlayed", "countPlayersWhoPlayed",
+var NAMES = ["isDemoSession", "chargeNightOverage", "applyOverageCharge", "playerIdsWhoPlayed", "countPlayersWhoPlayed",
              "countPlayers", "overageCeiling", "brisbaneNightKey", "venueInFreeMonth", "openInvoice", "settleInvoice",
              "stripeGet", "stripePost", "recordOverageCrash", "subscriptionPaymentMethod"];
 var missing = NAMES.filter(function (n) { return !lift(GAME, n); });
