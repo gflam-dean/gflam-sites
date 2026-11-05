@@ -7,14 +7,14 @@
         switched it off, never on the sales-page demo; and a TV that cannot play sound says so to the
         console and puts nothing on the wall
      2. the reveal is the question's own grid: the same text with the same size rule, the same answer
-        size, the right answer marked correct and the rest dimmed, and "31 /43 got it right"
+        size, the right answer marked correct and the rest dimmed, and no count anywhere (Dean, 4 Nov 2026)
      3. no empty-state text: a board with no rows paints nothing ("No scores yet" is gone); and with
         sixteen teams the top ten show, then the rest a page at a time with the leader kept at the top
      4. the podium stands second, first, third
      5. the console's Time's-up buzzer: OFF unless switched on, plays on the TV or on the console itself,
         both remembered for the venue and sent to the TV
      6. the phone result: the right answer green (RIGHT ANSWER, or RIGHT · YOURS), a wrong pick tagged
-        YOURS, the rest dim, each with its count; the header shows the venue's name only when it has
+        YOURS, the rest dim, and NO pick counts (Dean, 4 Nov 2026: they add up to the room); the header shows the venue's name only when it has
         no logo
 
    Run: jsc tools/test-trivia-newlook.js   (from the repo root) */
@@ -308,14 +308,30 @@ print('\n== 6. the phone: the result cards and the header ==');
   show('a wrong pick: the right answer is green and tagged RIGHT ANSWER', cards[0].classList.contains('right') && /^right answer$/i.test(tagOf(cards[0])), [cards[0].className, tagOf(cards[0])]);
   show('your pick is outlined and tagged YOURS', cards[1].classList.contains('mine') && /^yours$/i.test(tagOf(cards[1])), [cards[1].className, tagOf(cards[1])]);
   show('the other two dim, with no tag', [2, 3].every(function (i) { return cards[i].classList.contains('dim') && !tagOf(cards[i]); }));
-  var cnt = cards.map(function (c) { return (all(c).filter(function (k) { return k.className === 'cnt'; })[0] || {}).textContent; });
-  show('each card shows how many picked it', cnt.join('|') === '33|5|4|1', cnt.join('|'));
+  /* NO ATTENDANCE NUMBERS (Dean, 4 Nov 2026): the reveal still carries split [33,5,4,1] (the host console uses
+     it), and the phone must paint none of it: no count element, and no digit in any card. */
+  var cnt = cards.filter(function (c) { return all(c).some(function (k) { return k.className === 'cnt'; }); }).length;
+  var digits = cards.map(function (c) { return all(c).map(function (k) { return k.children && k.children.length ? '' : (k.textContent || ''); }).join(''); }).filter(function (t) { return /\d/.test(t); });
+  show('no card shows how many picked it (no count element, no digit on any card)', cnt === 0 && digits.length === 0 && cards.length === 4, JSON.stringify([cnt, digits]));
   show('the ring stays in its place for the points (never hidden)', w.$('pResRing').style.visibility !== 'hidden');
   show('the question and label are the ones the room saw', w.$('pResQ').textContent === 'Which band released Back in Black?' && w.$('pResCount').textContent === 'Question 3 of 20');
   var r = phone(0), rc = r.$('pResAnswers').children;
   show('a right pick: RIGHT · YOURS on the green card, no separate YOURS', rc[0].classList.contains('right') && /right .* yours/i.test(tagOf(rc[0])) && !rc.some(function (c) { return c.classList.contains('mine'); }), tagOf(rc[0]));
   var n = phone(null), nc = n.$('pResAnswers').children;
   show('no answer: the right one green, nothing tagged YOURS', nc[0].classList.contains('right') && !nc.some(function (c) { return c.classList.contains('mine'); }));
+
+  /* NO PLAYER COUNTS ANYWHERE (Dean, 4 Nov 2026): the place is "3rd" or "You finished 7th", never "of 16", though
+     the score reply carries players_count and the phone keeps it. The result card, the wait screen and the final. */
+  function placeOn(rank) {
+    var fd = makeDom(), P = { rank: rank, total: 300, playersCount: 16 };
+    var fns = new Function('P', '$', 'celebrate', 'confettiBurst', 'askHowItWent', liftAll(PLAY, ['ordinal', 'rankText', 'decorateFinal'], 'trivia/play.html') + '; return { rt: rankText, fin: decorateFinal };')(
+      P, fd.$, function () {}, function () {}, function () {});
+    var rt = fns.rt(); fns.fin();
+    return { rt: rt, fin: fd.$('finalRank').textContent };
+  }
+  var p3 = placeOn(3), p7 = placeOn(7);
+  show('the place on the phone is "3rd" and "7th", never "of 16" (the room size)', p3.rt === '3rd' && p7.rt === '7th', JSON.stringify([p3.rt, p7.rt]));
+  show('the final says "You finished 7th" (and "You finished 3rd"), never "of 16"', p7.fin === 'You finished 7th' && p3.fin === 'You finished 3rd' && !/\bof\b|16/.test(p7.fin + p3.fin), JSON.stringify([p3.fin, p7.fin]));
 
   var dom = makeDom();
   /* headerVenue hands the work to the ONE shared copy, VPVenueLogo.headerName in /app/vp-venuelogo.js (4 Nov 2026): run that real one. */

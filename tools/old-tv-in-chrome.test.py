@@ -210,7 +210,8 @@ RING_PROBE = r'''(function(){
   function m(){ var s=document.querySelector("#tvQ .ringwrap svg"), n=document.getElementById("tvCdNum"), l=document.getElementById("tvCdLbl"), c=document.querySelector("#tvQ .rcount");
     if(!s||!n||!l) return null; var cs=getComputedStyle(l);
     return {ring:box(s), num:box(n), lbl:box(l), text:(l.textContent||"").trim(), tt:cs.textTransform, ff:cs.fontFamily,
-            shown:cs.display!=="none"&&cs.visibility!=="hidden"&&parseFloat(cs.opacity)>0, numtext:n.textContent, count:(c&&c.getBoundingClientRect().height>0)?box(c):null}; }
+            shown:cs.display!=="none"&&cs.visibility!=="hidden"&&parseFloat(cs.opacity)>0, numtext:n.textContent, count:(c&&c.getBoundingClientRect().height>0)?box(c):null,
+            extra:(function(){ var r=n.parentNode, t=""; [].forEach.call(r.childNodes,function(k){ if(k!==n&&k!==l) t+=(k.textContent||""); }); return t.replace(/\s+/g,""); })()}; }
   q.classList.remove("pic"); out.plain=m();
   q.classList.add("pic"); out.pic=m();
   if(!had) q.classList.remove("pic");
@@ -233,12 +234,15 @@ def ring_checks(tag, p):
             far = corners_in(b)
             ok(t + ": %s sits wholly inside the ring's inner circle (corner %.1fpx from centre, inner edge %.1fpx)" % (what, far, inner),
                b[2] > b[0] and b[3] > b[1] and far <= inner - 1, b)
+        # NO COUNTS ON THE TV (Dean, 4 Nov 2026): nothing in the ring but the number and SECS, no "41/43"
+        ok(t + ': the ring holds the number and SECS only (no answered count, on either engine)', g.get('count') is None and g.get('extra', 'x') == '',
+           [g.get('count'), g.get('extra')])
         n, lb = g['num'], g['lbl']
         ok(t + ': SECS sits under the number, not over it', lb[1] >= n[3] - 0.5, 'number %s, label %s' % (n, lb))
         tol = max(1.5, 0.02 * (R - L))
         ok(t + ': the number and SECS are centred across the ring', abs((n[0] + n[2]) / 2 - cx) <= tol and abs((lb[0] + lb[2]) / 2 - cx) <= tol,
            'centre %.1f, number %.1f, label %.1f' % (cx, (n[0] + n[2]) / 2, (lb[0] + lb[2]) / 2))
-        # Dean, 3 Nov: the number, SECS and the "41/43" count are ONE block, evenly spaced, centred in the ring
+        # Dean, 3 Nov: the number and SECS are ONE block, centred in the ring (the "41/43" under them went on 4 Nov)
         bot = (g.get('count') or lb)[3]
         ok(t + ': and the number, SECS and the count centred as one block top to bottom', abs((n[1] + bot) / 2 - cy) <= tol,
            'block middle %.1f, ring centre %.1f' % ((n[1] + bot) / 2, cy))

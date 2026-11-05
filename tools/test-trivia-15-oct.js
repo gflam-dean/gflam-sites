@@ -144,8 +144,8 @@ await (async function () {
   a.run(reveal); await flush();
   var d = a.dom.$;
   show('a 401 is healed and the score asked again with the new token', a.rejoins() === 1 && a.gets() === 2, a.rejoins() + ' ' + a.gets());
-  show('the card shows the server\'s +290, 580 and 2nd of 3 (it said CORRECT! 0, 290, 3rd of 3)',
-       d('pResTag').textContent === 'Correct!' && d('pResPts').textContent === '+290' && d('pResTot').textContent === 580 && d('pResRank').textContent === '2nd of 3',
+  show('the card shows the server\'s +290, 580 and 2nd, never "2nd of 3" (no player counts anywhere, Dean 4 Nov 2026)',
+       d('pResTag').textContent === 'Correct!' && d('pResPts').textContent === '+290' && d('pResTot').textContent === 580 && d('pResRank').textContent === '2nd',
        [d('pResTag').textContent, d('pResPts').textContent, d('pResTot').textContent, d('pResRank').textContent].join(' | '));
   // b. never reached the server at all: no number rather than a wrong 0
   var b = phone({ choice: 1, total: 290, replies: [{ status: 401 }, { status: 401 }] });
@@ -245,7 +245,7 @@ await (async function () {
   show('   control: a phone coming back IS "back in"', /back in/.test(dom.$('waitMsg').textContent));
   P.pendingScore = true; P.total = 0; f(P, dom.$, function () {}, function () { return Promise.resolve({ total: 450, rank: 2, players_count: 5 }); }, function () {}, function () {}, function () {}, function () {})();
   await flush();
-  show('   and a phone with points still sees its place', !dom.$('waitRank').classList.contains('hidden') && dom.$('waitRank').textContent === '2nd of 5', dom.$('waitRank').textContent);
+  show('   and a phone with points still sees its place', !dom.$('waitRank').classList.contains('hidden') && dom.$('waitRank').textContent === '2nd', dom.$('waitRank').textContent);   // never "2nd of 5" (Dean, 4 Nov 2026)
 })();
 (function () {
   // c. YOUR OWN counts what the server says the host wrote

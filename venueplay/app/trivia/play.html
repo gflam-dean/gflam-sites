@@ -106,11 +106,9 @@
   .presult .rem{display:none}
   .presult .pq-ring .n b{font-size:30px}
   .panswers.rv .pans{cursor:default}   /* the same size and place as on the question: nothing jumps (Dean, 3 Nov 2026) */
-  .pans .cnt{margin-left:auto;padding-left:8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:inherit}
   .pans.right{background:#2FD08A;color:#0A0A0B;box-shadow:0 0 34px -6px rgba(47,208,138,.6);z-index:1}
   .pans.right .pl{color:#0A0A0B;text-shadow:none}   /* white on the green would be 1.9:1 */
   .pans.neutral.right .pl{color:#fff}
-  .pans.right .cnt{color:#0A0A0B;font-size:18px}
   .pans.mine{background:#1A1A1F;color:#fff;box-shadow:inset 0 0 0 4px var(--c)}   /* your wrong pick: outlined in its colour */
   .pans.mine .pl{color:var(--c);text-shadow:none}
   .pans .tg{position:absolute;left:20px;top:-11px;background:#0A0A0B;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;line-height:1;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:6px}
@@ -521,7 +519,9 @@
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
-  function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank)+(P.playersCount>0?(" of "+P.playersCount):""); }
+  /* "3rd", never "3rd of 16" (Dean, 4 Nov 2026: "no player counts anywhere"). P.playersCount is still read from the
+     score reply for anything that needs it; it is never written on the phone. */
+  function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank); }
   /* head: a heading for the moment instead of "You're in". Dean, 25 Sep 2026, on a paper round:
      take out the "You're in" above "Answer locked in"; mid-game it reads like a join screen. */
   function showWait(msg, head){
@@ -794,10 +794,11 @@
 
   /* THE RESULT, NEW LOOK (3 Nov 2026): the question as the room saw it, the right answer green with a
      RIGHT ANSWER tag ("RIGHT · YOURS" when it was this phone's), a wrong pick outlined in its own colour
-     and tagged YOURS, the others dim, each with how many picked it when the reveal says. */
+     and tagged YOURS, the others dim. NO PICK COUNTS (Dean, 4 Nov 2026): "4, 31, 6, 2" added up to the room, and
+     the room size is not for the room to read; the host console has how many picked each. */
   function paintRevealCards(m, ci, mine){
     var opts=Array.isArray(m.options)&&m.options.length ? m.options : (P.q ? P.q.options : []);
-    var split=Array.isArray(m.split) ? m.split : null, wrap=$("pResAnswers");
+    var wrap=$("pResAnswers");
     $("pResCount").textContent = (P.q && P.q.label) || "Question";
     var q=$("pResQ"); q.textContent=(P.q && P.q.text) || ""; q.className=phoneQClass(q.textContent);
     var ring=$("pResRing");
@@ -811,7 +812,6 @@
       else if(i===mine) b.appendChild(el("span","tg","Yours"));
       b.appendChild(el("span","pl",LETTERS[i]));
       b.appendChild(el("span","pt",esc(opts[i])));
-      if(split) b.appendChild(el("span","cnt",String(Number(split[i])||0)));   // numeric: arrives over a public channel
       wrap.appendChild(b);
     }
   }
@@ -864,7 +864,7 @@
     } else {
       $("finalEmoji").innerHTML="&#127881;";
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
-      $("finalRank").textContent = r ? ("You finished "+ordinal(r)+(P.playersCount>0?(" of "+P.playersCount):"")) : ""; if(wrap) wrap.classList.remove("winner");
+      $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");   // never "of 16" (Dean, 4 Nov 2026)
     }
     askHowItWent();
   }
