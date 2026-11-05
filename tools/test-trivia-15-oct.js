@@ -234,7 +234,7 @@ print('\n== 4. the smaller ones ==');
 })();
 await (async function () {
   // b. a brand-new joiner is "in", not "back in", and gets no "1st of 1"
-  globalThis.clearAuto = function () {}; globalThis.clearAutoFinish = function () {}; globalThis.armAutoFinish = function () {}; globalThis.armNoGame = function () {};   // the "no host heard" timer is tested in test-trivia-live-fixes-6nov.js
+  globalThis.clearAuto = function () {}; globalThis.clearAutoFinish = function () {}; globalThis.armAutoFinish = function () {}; globalThis.clearEndTimers = function () {}; globalThis.armNoGame = function () {};   // the "no host heard" timer is tested in test-trivia-live-fixes-6nov.js
   var dom = makeDom(), msgs = [], P = { joined: true, gameId: 'g1', q: null, ended: false, total: 0, rank: 0, pendingScore: true, name: 'New' };
   var f = new Function('P', '$', 'show', 'playerGet', 'renderQuestion', 'stopCd', 'lockOut', 'refreshTotals',
     liftAll(PLAY, ['applyPending', 'pullScore', 'showWait', 'rankText', 'ordinal'], 'trivia/play.html') + '; return applyPending;');

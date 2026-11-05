@@ -3,9 +3,9 @@
    This RUNS the real functions lifted out of venueplay/app/trivia/host.html and play.html:
      - AUTO REVEAL: autoRevealWait() is never earlier than the clock closing plus the host's delay, is off when
        switched off, and never fires for a question that is not open ("That didn't even give me time to answer").
-     - THE WINNERS ARE THREE TAPS: finishNow() sends the podium (step 1, first place covered) and NOTHING else;
-       announceFirst() sends step 2; showFinalBoard() sends the leaderboard; the leaderboard cannot come before the
-       podium, and a step cannot be skipped.
+     - THE WINNERS, ONE TAP A PLACE: finishNow() puts up third place only, nextPlace() second, then the winner (the only
+       message the TV and phones celebrate); "All at once" goes straight to the winner; the leaderboard 60 s after the
+       winner or on "Show the leaderboard", then the ads 2 minutes later; never before the winner.
      - THE PHONE IS QUIET until first place is announced: showFinal(true) never celebrates, showFinal() for a
        first-place team does; an idle (End game) paints the quiet final screen, not "You're in / Good luck".
      - the +10 seconds button is gone from the console, with the function behind it.
@@ -70,38 +70,54 @@ ok('every team is in: one tap reveals', t4.n() === 1);
 ok('the Reveal button goes through the two-tap guard', /rv\.addEventListener\("click", function\(\)\{ revealTap\(rv\); \}\)/.test(HOST));
 
 
-print('THE WINNERS: podium first, first place on the host\'s tap, leaderboard last');
-var SRC = ['finishOutcome', 'finishNow', 'endMsg', 'announceFirst', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
+print('THE WINNERS (Dean, 6 Nov 11:30): one tap each for third, second, the winner; or all at once; then the leaderboard');
+var SRC = ['finishOutcome', 'finishNow', 'podiumRanks', 'endMsg', 'nextPlace', 'clearEndTimers', 'armBoardTimer', 'boardNoteText', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
+var BOARD_AFTER = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[1]), BOARD_STAYS = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[2]);
 function makeHost(board, all) {
-  var G = { board: board, status: 'reveal', endStep: 0, noPlayersNote: false, winnersAll: all === true };
-  var sent = [], errors = [];
+  var G = { board: board, status: 'reveal', noPlayersNote: false, winnersAll: all === true, endRanks: [], endReveal: 0, endBoard: false };
+  var sent = [], errors = [], timers = [];
   function playerCount() { return 3; } function bcast(m) { sent.push(m); } function renderConsole() {} function hostError(m) { errors.push(m); }
-  var NOBODY_MSG = 'x';
+  function setTimeout(f, ms) { timers.push({ f: f, ms: ms, on: true }); return timers.length; } function clearTimeout(id) { if (id && timers[id - 1]) timers[id - 1].on = false; }
+  function setInterval() { return 0; } function clearInterval() {} function $() { return null; }
+  var NOBODY_MSG = 'x', BOARD_AFTER_MS = BOARD_AFTER, BOARD_STAYS_MS = BOARD_STAYS;
   eval(SRC);
-  return { G: G, sent: sent, finishNow: finishNow, announceFirst: announceFirst, showFinalBoard: showFinalBoard, endMsg: endMsg };
+  return { G: G, sent: sent, timers: timers, finishNow: finishNow, nextPlace: nextPlace, showFinalBoard: showFinalBoard, podiumRanks: podiumRanks,
+           live: function () { return timers.filter(function (t) { return t.on; }); } };
 }
+function wire(h) { return h.sent.map(function (m) { return m.t + (m.reveal ? ':' + m.reveal : ''); }).join(','); }
 var B = [{ name: 'A', points: 900 }, { name: 'B', points: 700 }, { name: 'C', points: 500 }, { name: 'D', points: 100 }];
 var h = makeHost(B);
 h.finishNow(true);
-ok('the end of the quiz sends ONE message: the podium, step 1', h.sent.length === 1 && h.sent[0].t === 'podium' && h.sent[0].step === 1, JSON.stringify(h.sent.map(function (m) { return m.t + ':' + m.step; })));
-ok('no leaderboard is sent with it', !h.sent.some(function (m) { return m.t === 'leaderboard'; }));
+ok('the end of the quiz puts up the podium showing THIRD place only, and nothing else', wire(h) === 'podium:3', wire(h));
 h.showFinalBoard();
-ok('the leaderboard cannot be shown before first place is announced', h.sent.length === 1 && h.G.endStep === 1);
-h.announceFirst();
-ok('Announce first place sends the podium again at step 2', h.sent.length === 2 && h.sent[1].t === 'podium' && h.sent[1].step === 2, JSON.stringify(h.sent[1]));
-h.announceFirst();
-ok('and only once', h.sent.length === 2);
-h.showFinalBoard();
-ok('then Show the leaderboard sends the final scores', h.sent.length === 3 && h.sent[2].t === 'leaderboard' && /^final/i.test(h.sent[2].title) && h.sent[2].rows.length === 4, JSON.stringify(h.sent[2]));
-ok('the order on the wire is podium, podium, leaderboard', h.sent.map(function (m) { return m.t; }).join(',') === 'podium,podium,leaderboard');
+ok('the leaderboard cannot come before the winner', wire(h) === 'podium:3');
+h.nextPlace();
+ok('tap 2 shows SECOND', wire(h) === 'podium:3,podium:2', wire(h));
+ok('no leaderboard timer yet', h.live().length === 0);
+h.nextPlace();
+ok('tap 3 shows the WINNER (reveal 1: the TV fanfare and the phones celebrate on this one only)', wire(h) === 'podium:3,podium:2,podium:1', wire(h));
+h.nextPlace();
+ok('and there is no fourth tap', wire(h) === 'podium:3,podium:2,podium:1');
+var lt = h.live();
+ok('the leaderboard comes up by itself 60 seconds after the winner', BOARD_AFTER === 60000 && lt.length === 1 && lt[0].ms === 60000, lt.map(function (t) { return t.ms; }));
+lt[0].on = false; lt[0].f();
+ok('it does: the final scores', wire(h) === 'podium:3,podium:2,podium:1,leaderboard', wire(h));
+var at = h.live();
+ok('they stay 2 minutes, then the TV goes back to the ads', BOARD_STAYS === 120000 && at.length === 1 && at[0].ms === 120000, at.map(function (t) { return t.ms; }));
+at[0].f();
+ok('to_ads is sent at the end of the 2 minutes', h.sent[h.sent.length - 1].t === 'to_ads');
+var hs = makeHost(B); hs.finishNow(true); hs.nextPlace(); hs.nextPlace(); hs.showFinalBoard();
+ok('"Show the leaderboard" before the 60 seconds brings it up at once, and the 60 second timer is cancelled', wire(hs) === 'podium:3,podium:2,podium:1,leaderboard' && hs.live().length === 1 && hs.live()[0].ms === 120000, wire(hs));
+hs.live()[0].f(); hs.timers.forEach(function (t) { if (t.ms === 60000) t.f(); });
+ok('and a late 60 second timer never sends the leaderboard twice', hs.sent.filter(function (m) { return m.t === 'leaderboard'; }).length === 1);
 var ha = makeHost(B, true);
 ha.finishNow(true);
-ok('"All at once" (Advanced settings): the podium goes up at step 2, all three places and the sound together', ha.sent.length === 1 && ha.sent[0].t === 'podium' && ha.sent[0].step === 2, JSON.stringify(ha.sent));
-ha.announceFirst();
-ok('there is no first place left to announce', ha.sent.length === 1);
-ha.showFinalBoard();
-ok('and the next tap is the leaderboard', ha.sent.length === 2 && ha.sent[1].t === 'leaderboard');
-ok('staged is the default, and the setting is in Advanced settings', /winnersAll:false/.test(HOST) && HOST.indexOf('id="cfgWinners"') > HOST.indexOf('id="triviaAdv"') && HOST.indexOf('id="cfgWinners"') < HOST.indexOf('</details>', HOST.indexOf('id="triviaAdv"')));
+ok('"All at once": all three places together, with the sound (reveal 1)', wire(ha) === 'podium:1', wire(ha));
+ok('and the 60 second leaderboard timer starts at once', ha.live().length === 1 && ha.live()[0].ms === 60000);
+ok('two teams: second, then the winner', makeHost().podiumRanks([{ points: 9 }, { points: 5 }]).join() === '2,1');
+ok('a tie for first: third, then the two winners together', makeHost().podiumRanks([{ points: 9 }, { points: 9 }, { points: 5 }]).join() === '3,1');
+ok('one team: just the winner', makeHost().podiumRanks([{ points: 9 }]).join() === '1');
+ok('"One at a time" is the default, and the setting is in Advanced settings', /winnersAll:false/.test(HOST) && HOST.indexOf('id="cfgWinners"') > HOST.indexOf('id="triviaAdv"') && HOST.indexOf('id="cfgWinners"') < HOST.indexOf('</details>', HOST.indexOf('id="triviaAdv"')) && />One at a time</.test(HOST) && />All at once</.test(HOST));
 
 print('THE PHONE');
 function makePhone(rank) {
@@ -117,16 +133,16 @@ function makePhone(rank) {
 }
 var p1 = makePhone(1);
 p1.showFinal(true, 'The winners are going up on the big screen.');
-ok('step 1 on a first-place phone: no celebration, no confetti, no rating prompt', p1.counts.celebrate === 0 && p1.counts.confetti === 0 && p1.counts.ask === 0, JSON.stringify(p1.counts));
+ok('third or second on the TV, first-place phone: no celebration, no confetti, no rating prompt', p1.counts.celebrate === 0 && p1.counts.confetti === 0 && p1.counts.ask === 0, JSON.stringify(p1.counts));
 ok('and it does not say YOU WON yet', p1.$('finalBig').textContent !== 'YOU WON!' && p1.$('finalRank').textContent === '', p1.$('finalBig').textContent);
 ok('it still shows the score', p1.$('finalScore').textContent === '790 points');
 var p2 = makePhone(1);
 p2.showFinal();
-ok('step 2 on a first-place phone: the celebration fires, once', p2.counts.celebrate === 1 && p2.$('finalBig').textContent === 'YOU WON!', JSON.stringify(p2.counts));
+ok('the winner revealed, first-place phone: the celebration fires, once', p2.counts.celebrate === 1 && p2.$('finalBig').textContent === 'YOU WON!', JSON.stringify(p2.counts));
 var p3 = makePhone(5);
 p3.showFinal(true, 'The host has ended this game.');
 ok('End game: the quiet final-score screen with the points, never "You\'re in"', p3.$('finalScore').textContent === '790 points' && p3.$('finalBig').textContent === "That's a wrap" && p3.counts.celebrate === 0);
-ok('the podium message on the phone is gated on its step', /if\(m\.step===1\)\{ if\(!P\.celebrated\) showFinal\(true,/.test(PLAY) && /else \{ P\.celebrated=true; showFinal\(\); \}/.test(PLAY));
+ok('the podium message on the phone is gated on what is revealed', /if\(m\.reveal>1\)\{ if\(!P\.celebrated\) showFinal\(true,/.test(PLAY) && /else \{ P\.celebrated=true; showFinal\(\); \}/.test(PLAY));
 var idle = PLAY.slice(PLAY.indexOf('else if(m.t==="idle"){'), PLAY.indexOf('else if(m.t==="idle"){') + 700);
 ok('idle (End game) never routes to the "You\'re in" screen for a player who has a score', idle.indexOf('if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");') > 0 && !/showWait\("Thanks for playing\. Sit tight/.test(idle), idle.slice(0, 300));
 
@@ -193,7 +209,7 @@ ok('no addTime() function and no call to the add-time route from the console', H
 print('THE TV: no Join now card on the winners or the leaderboard');
 ok('one line switch, off', /var JOIN_ON_RESULTS=false;/.test(SCREEN));
 ok('show() hides the card on the board and the podium unless it is on', /\(!JOIN_ON_RESULTS && \(which==="tvBoard" \|\| which==="tvPodium"\)\)/.test(SCREEN));
-ok('the podium covers first place and stays silent at step 1', /cols\.classList\.toggle\("covered", step===1\);\s*\n\s*if\(step===1\)\{[\s\S]*?return; \}\s*\n\s*if\(!already\) celebrate\(9000\);/.test(SCREEN));
+ok('the TV covers each place not yet revealed, and stays silent until the winner', /var col=el\("div","pcol "\+CLS\[o\.rank\]\+\(o\.rank<reveal \? " covered" : ""\)\);/.test(SCREEN) && /if\(reveal>1\)\{ if\(celebrateTimer\)[\s\S]*?return; \}\s*\n\s*if\(!already\) celebrate\(9000\);/.test(SCREEN));
 ok('the TV no longer holds the leaderboard behind the podium on a timer', SCREEN.indexOf('_hold') < 0);
 
 print('');

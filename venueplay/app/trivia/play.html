@@ -1156,9 +1156,9 @@
     else if(m.t==="podium"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
-      /* step 1: the host has the podium up and has NOT announced first place yet. A quiet screen, no sound, no result.
-         step 2 (or no step, an older console): first place is announced, so the celebration is allowed now. */
-      if(m.step===1){ if(!P.celebrated) showFinal(true, "The winners are going up on the big screen."); }
+      /* reveal 3 or 2: the TV is still revealing third and second place. A quiet screen, no sound, no result.
+         reveal 1 (or none, an older console): the winner is up, so the celebration is allowed now. */
+      if(m.reveal>1){ if(!P.celebrated) showFinal(true, "The winners are going up on the big screen."); }
       else { P.celebrated=true; showFinal(); }
     }
     else if(m.t==="idle"){

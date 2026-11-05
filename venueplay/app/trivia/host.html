@@ -318,8 +318,8 @@
               </div>
               <div class="field">
                 <label>How the winners show</label>
-                <div class="seg" id="cfgWinners"><button data-v="staged" class="on">One place at a time</button><button data-v="all">All at once</button></div>
-                <div class="note" id="winnersNote" style="margin-top:4px">The podium goes up with first place covered; you tap Announce first place for the big moment.</div>
+                <div class="seg" id="cfgWinners"><button data-v="staged" class="on">One at a time</button><button data-v="all">All at once</button></div>
+                <div class="note" id="winnersNote" style="margin-top:4px">Tap to reveal third place, then second, then the winner (with the fanfare).</div>
               </div>
               <div style="margin-top:4px;padding:12px 14px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:11px">
                 <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
@@ -540,7 +540,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    autoReveal:true, autoSecs:10, endStep:0, allInAt:0, winnersAll:false, timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
+    autoReveal:true, autoSecs:10, endReveal:0, endRanks:[], endBoard:false, allInAt:0, winnersAll:false, timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     noPlayersNote:false,            // Reveal leaderboard with nobody joined: a calm line, not an error
@@ -934,14 +934,19 @@
       done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
         '<div class="qtext-h">The winners are on the big screen.</div>';
       body.appendChild(done);
-      if(G.endStep===1){ done.querySelector(".qtext-h").textContent="The podium is on the big screen. First place is still covered."; }
-      if(G.endStep===2){ done.querySelector(".qtext-h").textContent="First place is up. Next, the full leaderboard."; }
-      if(G.endStep>=3){ done.querySelector(".qtext-h").textContent="The final scores are on the big screen."; }
-      if(G.endStep===1 || G.endStep===2){
-        var nb=el("button","btn pink big", G.endStep===1 ? "Announce first place" : "Show the leaderboard"); nb.id="endStepBtn";
-        nb.addEventListener("click", G.endStep===1 ? announceFirst : showFinalBoard); body.appendChild(nb);
+      var PLACE={3:"third",2:"second",1:"first"};
+      var nxt = (!G.endBoard && G.endReveal>1) ? G.endRanks[G.endRanks.indexOf(G.endReveal)+1]||1 : 0;
+      if(!G.endBoard && G.endReveal>1){ done.querySelector(".qtext-h").textContent="On the big screen: "+PLACE[G.endReveal]+" place. The rest are still covered."; }
+      if(!G.endBoard && G.endReveal===1){ done.querySelector(".qtext-h").textContent="The winner is on the big screen."; }
+      if(G.endBoard){ done.querySelector(".qtext-h").textContent="The final scores are on the big screen. The TV goes back to your ads in 2 minutes."; }
+      if(nxt){
+        var nb=el("button","btn pink big", nxt===1 ? "Reveal the winner" : "Reveal "+PLACE[nxt]+" place"); nb.id="endStepBtn";
+        nb.addEventListener("click", nextPlace); body.appendChild(nb);
+      } else if(!G.endBoard && G.endReveal===1){
+        var lb=el("button","btn pink big","Show the leaderboard"); lb.id="endStepBtn"; lb.addEventListener("click", showFinalBoard); body.appendChild(lb);
+        if(G.boardAt){ var bn=el("div","note",boardNoteText(G.boardAt-Date.now())); bn.id="boardNote"; bn.style.margin="8px 0 0"; bn.style.textAlign="center"; body.appendChild(bn); }
       }
-      var again=el("button", G.endStep>=3 ? "btn pink big" : "btn ghost big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
+      var again=el("button", G.endBoard ? "btn pink big" : "btn ghost big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
     }
   }
   /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
@@ -1004,8 +1009,8 @@
     var w=$("autoRevealWrap"); if(w && w.style) w.style.opacity = G.autoReveal ? "1" : ".45";
     var i=$("cfgAutoSecs"); if(i && document.activeElement!==i) i.value=G.autoSecs; }
   /* HOW THE WINNERS SHOW (Dean, 6 Nov 2026): staged (default) or all at once. Per venue, on this device, like auto reveal. */
-  var WIN_NOTE={ staged:"The podium goes up with first place covered; you tap Announce first place for the big moment.",
-                 all:"All three places go up together, with the sound. Then you tap Show the leaderboard." };
+  var WIN_NOTE={ staged:"Tap to reveal third place, then second, then the winner (with the fanfare).",
+                 all:"All three places go up together, with the fanfare." };
   function winKey(){ return "vpTriviaWinners:"+(G.venueId||""); }
   function paintWinners(){ var v=G.winnersAll ? "all" : "staged"; paintSeg("cfgWinners", v); var n=$("winnersNote"); if(n) n.textContent=WIN_NOTE[v]; }
   function loadWinners(){ try{ G.winnersAll = localStorage.getItem(winKey())==="all"; }catch(e){ G.winnersAll=false; } paintWinners(); }
@@ -1317,20 +1322,61 @@
       renderConsole();
       return;
     }
-    /* THE WINNERS ARE THREE STEPS, EACH ONE THE HOST'S TAP (Dean, 6 Nov 2026: "the leaderboard came up before the podium" and
-       "the sound played before you push the buttons to announce the first"). 1: the podium goes up, first place still
-       covered, NO sound. 2: "Announce first place": first place is shown and the fanfare plays. 3: "Show the leaderboard":
-       the full final scores. Nothing is sent on a timer, so the order cannot swap. */
-    G.status="ended"; G.endStep=(G.winnersAll===true ? 2 : 1);   // "All at once" (Advanced settings): the podium, first place and the sound together
+    /* THE WINNERS (Dean, 6 Nov 2026, 11:30; INBOX 77/78). "One place at a time" (the default) is a click-through: the podium
+       goes up showing THIRD place only and nothing plays; tap 2 shows SECOND; tap 3 shows FIRST, with the fanfare on the TV and
+       the phones celebrating. "All at once": all three and the sound together. Ties share a place, so the taps follow the
+       places there are. Then the whole leaderboard: 60 seconds after the winner, or sooner on "Show the leaderboard"; it stays
+       2 minutes and then the TV goes back to the venue's ads. (A paper night's between-round boards are untouched.) */
+    clearEndTimers();
+    G.status="ended"; G.endBoard=false;
+    G.endRanks=podiumRanks(G.board);
+    G.endReveal = (G.winnersAll===true) ? 1 : G.endRanks[0];
     bcast(endMsg());
+    if(G.endReveal===1) armBoardTimer();
     renderConsole();
   }
-  function endMsg(){
-    if(G.endStep>=3) return { t:"leaderboard", title:"Final scores", rows:G.board };
-    return { t:"podium", top:G.board.slice(0,3), rows:G.board, step:(G.endStep>=2 ? 2 : 1) };
+  /* The places on the podium, lowest first: [3,2,1], or [2,1] with two teams, or [3,1] when two tie for first. The TV's
+     podiumEntries() draws the same places from the same rows. */
+  function podiumRanks(rows){
+    var out=[], rank=1, n=0;
+    for(var i=0;i<(rows||[]).length && n<4;i++){
+      if(i>0 && (Number(rows[i].points)||0)!==(Number(rows[i-1].points)||0)) rank=i+1;
+      if(rank>3) break;
+      n++; if(out.indexOf(rank)<0) out.push(rank);
+    }
+    if(!out.length) out=[1];
+    return out.sort(function(a,b){ return b-a; });
   }
-  function announceFirst(){ if(G.status!=="ended" || G.endStep!==1) return; G.endStep=2; bcast(endMsg()); renderConsole(); }
-  function showFinalBoard(){ if(G.status!=="ended" || G.endStep!==2) return; G.endStep=3; bcast(endMsg()); renderConsole(); }
+  function endMsg(){
+    if(G.endBoard) return { t:"leaderboard", title:"Final scores", rows:G.board, final:true };
+    return { t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:(G.endReveal||1) };
+  }
+  function nextPlace(){
+    if(G.status!=="ended" || G.endBoard || !(G.endReveal>1)) return;
+    var i=G.endRanks.indexOf(G.endReveal);
+    G.endReveal = (i>=0 && i+1<G.endRanks.length) ? G.endRanks[i+1] : 1;
+    bcast(endMsg());
+    if(G.endReveal===1) armBoardTimer();
+    renderConsole();
+  }
+  var BOARD_AFTER_MS=60000, BOARD_STAYS_MS=120000;
+  function clearEndTimers(){ clearTimeout(G.boardT); clearTimeout(G.adsT); clearInterval(G.boardTick); G.boardT=G.adsT=G.boardTick=null; G.boardAt=0; }
+  function armBoardTimer(){
+    clearEndTimers();
+    G.boardAt=Date.now()+BOARD_AFTER_MS;
+    G.boardT=setTimeout(function(){ G.boardT=null; showFinalBoard(); }, BOARD_AFTER_MS);
+    G.boardTick=setInterval(function(){ var n=$("boardNote"); if(n) n.textContent=boardNoteText(G.boardAt-Date.now()); }, 1000);
+  }
+  function boardNoteText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The leaderboard comes up by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+"."; }
+  function showFinalBoard(){
+    if(G.status!=="ended" || G.endBoard || G.endReveal!==1) return;
+    clearEndTimers();
+    G.endBoard=true;
+    bcast(endMsg());
+    /* The end of the night: the board stays 2 minutes, then the venue's ads. */
+    G.adsT=setTimeout(function(){ G.adsT=null; if(G.status==="ended" && G.endBoard){ bcast({ t:"to_ads" }); } }, BOARD_STAYS_MS);
+    renderConsole();
+  }
   /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
      The referee is /app/topanswers/pr-game.js. Its board object, with the answers, never leaves this
      console: the TV and phones get the question and a count (ta_board), each found answer as it is found
@@ -1512,10 +1558,10 @@
     send({ t:"state", phase:"lobby", colour:G.colour });
   }
   function endRound(){
-    clearTick(); clearAuto(); clearAutoFinish();
+    clearTick(); clearAuto(); clearAutoFinish(); clearEndTimers();
     clearTrivia();
     var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
-    G.status="setup"; G.current=null; G.answeredPids={}; G.endStep=0;
+    G.status="setup"; G.current=null; G.answeredPids={}; G.endReveal=0; G.endBoard=false;
     /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
        "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
        (and a board ended mid-play flipped its answers for no time at all). */
@@ -1593,7 +1639,7 @@
       if(G.board.length) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });
     } else if(G.status==="ended" && G.board.length){
       /* A phone is never sent the leaderboard (it has no such screen) and gets first place once it is announced. */
-      var em=endMsg(); if(pid && em.t==="leaderboard") em={ t:"podium", top:G.board.slice(0,3), rows:G.board, step:2 };
+      var em=endMsg(); if(pid && em.t==="leaderboard") em={ t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:1 };
       to(em);
     }
   }

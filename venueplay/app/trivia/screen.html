@@ -270,9 +270,9 @@
   .pcol.second .medal{height:12.5cqw}
   .pcol.first .medal{height:17cqw;font-size:7.8cqw;color:#FFD93D;border-top-color:#FFD93D;box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,217,61,.55)}
   @keyframes bandin{to{opacity:1;transform:none}}
-  /* FIRST PLACE COVERED (6 Nov 2026): the podium is up before the host announces first; the winner's name and score stay hidden and the step is plain. */
-  .podium.covered .pcol.first .pwho{visibility:hidden}
-  .podium.covered .pcol.first .medal{color:#8A8A95;border-top-color:#2A2A31;box-shadow:none}
+  /* A PLACE NOT REVEALED YET (Dean, 6 Nov 2026: third, then second, then the winner, one tap each): its step stands plain, the name and score hidden. */
+  .pcol.covered .pwho{visibility:hidden}
+  .pcol.covered .medal{color:#8A8A95;border-top-color:#2A2A31;box-shadow:none}
   @media (prefers-reduced-motion:reduce){.pcol{animation:none;opacity:1;transform:none}}
   /* join corner */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
@@ -794,10 +794,13 @@
     }
     return out;
   }
-  function renderPodium(top, rows, step){
+  /* reveal: the places shown so far, from the bottom: 3 is third only, 2 is second and third, 1 (or none, an older
+     console) is everybody, with the fanfare and the confetti, once. */
+  function renderPodium(top, rows, reveal){
     show("tvPodium");
-    var already = state.phase==="podium" && state.podStep===2;
-    state.podStep = step===1 ? 1 : 2;
+    reveal = (reveal===2 || reveal===3) ? reveal : 1;
+    var already = state.phase==="podium" && state.podReveal===1;
+    state.podReveal = reveal;
     var cols=$("tvPodiumCols"); cols.innerHTML="";
     var ents=podiumEntries(top, rows);
     var CLS={1:"first",2:"second",3:"third"}, MEDAL={1:"1",2:"2",3:"3"};
@@ -809,7 +812,7 @@
     cols.classList.toggle("four", order.length>3);
     var tiedRank={}; ents.forEach(function(e){ tiedRank[e.rank]=(tiedRank[e.rank]||0)+1; });
     order.forEach(function(o){ if(!o || !o.p) return;
-      var col=el("div","pcol "+CLS[o.rank]);
+      var col=el("div","pcol "+CLS[o.rank]+(o.rank<reveal ? " covered" : ""));
       var who=el("div","pwho");
       who.appendChild(el("div","pn",esc(o.p.name)+(tiedRank[o.rank]>1?' <span>(tied)</span>':'')));
       who.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
@@ -817,11 +820,8 @@
       col.appendChild(el("div","medal",MEDAL[o.rank]));
       cols.appendChild(col);
     });
-    /* step 1: the podium is up but FIRST PLACE IS COVERED and nothing plays: the host has not announced it yet (Dean, 6 Nov 2026,
-       "the sound played before you push the buttons to announce the first"). step 2 (or no step): first place shows, the fanfare
-       and the confetti go, once. */
-    cols.classList.toggle("covered", step===1);
-    if(step===1){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } return; }
+    /* Nothing plays until the winner is revealed (Dean, 6 Nov 2026: "the sound played before you push the buttons"). */
+    if(reveal>1){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } return; }
     if(!already) celebrate(9000);
   }
 
@@ -1131,8 +1131,8 @@
     }
     else if(m.t==="podium"){
       state.phase="podium";
-      renderPodium(m.top||[], m.rows, m.step===1 ? 1 : 2);
-      if(m.step!==1) triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
+      renderPodium(m.top||[], m.rows, m.reveal);
+      if(!(m.reveal>1)) triviaEndShow(m.top, "FINAL SCORES");   // the end-of-game show over the podium (off unless ?endshow=1)
     }
   }
   /* THE END-OF-GAME SHOW (2 Nov 2026): the top three teams and their scores, a tie sharing its place, then

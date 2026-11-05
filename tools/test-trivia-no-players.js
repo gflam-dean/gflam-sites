@@ -22,7 +22,7 @@ function lift(name) {
   return HOST.slice(i, k) + '\n';
 }
 var NOBODY_LINE = (HOST.match(/var NOBODY_MSG="([^"]+)"/) || [])[1];
-var SRC = ['finishOutcome', 'finish', 'finishNow', 'endMsg', 'reveal'].map(lift).join('\n');
+var SRC = ['finishOutcome', 'finish', 'finishNow', 'podiumRanks', 'endMsg', 'reveal'].map(lift).join('\n');
 
 var ran = 0, bad = 0;
 function show(n, c, extra) { ran++; print((c ? '  ok   ' : '  FAIL ') + n + (extra ? '   -> ' + extra : '')); if (!c) bad++; }
@@ -34,7 +34,7 @@ function makeConsole(o) {
   var sent = [], errors = [], timers = [], renders = 0;
   var players = o.players | 0;
   function playerCount() { return players; }
-  function clearTick() {} function clearAuto() {} function clearAutoFinish() {} function armAutoFinish() {}
+  function clearTick() {} function clearAuto() {} function clearAutoFinish() {} function armAutoFinish() {} function clearEndTimers() {} function armBoardTimer() {}
   function clearErrForAction() {}
   function saveTrivia() {}
   function isDouble() { return false; }
