@@ -227,6 +227,19 @@ def get(url, timeout=20, headers=None):
         return 0, str(e), url
 
 
+def get_typed(url, timeout=20):
+    """Status, body and the Content-Type the server sent (get() drops the headers, and the homepage
+    fallback is told apart from a script by its Content-Type first: gatelib.looks_like_homepage)."""
+    req = urllib.request.Request(url, headers={'User-Agent': BROWSER_UA})
+    try:
+        with _opener.open(req, timeout=timeout) as r:
+            return r.status, r.read().decode('utf-8', 'replace'), r.headers.get('Content-Type', '')
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode('utf-8', 'replace'), e.headers.get('Content-Type', '')
+    except Exception as e:
+        return 0, str(e), ''
+
+
 def post(url, body=None, headers=None, timeout=20, method='POST'):
     data = json.dumps(body or {}).encode()
     h = {'content-type': 'application/json', 'User-Agent': BROWSER_UA}
@@ -639,6 +652,18 @@ def local_checks(which):
     ok('no suite tried to push, fetch, pull or clone anywhere but a local path', not attempts,
        'every suite ran behind tools/git-shim/git with GIT_DIR scrubbed',
        why='; '.join(a[:160] for a in attempts[:3]))
+
+    """SUITES READ THE PAGE ROBUSTLY (4 Nov 2026). The 4 Nov gate went red on four Chrome suites, none for a
+    product fault: a lobby code read while the TV still painted "------", json.loads() around a rig answer
+    that was a thrown exception (so the one line saying WHY was lost), and a Help button pinned to "its next
+    sibling says Account" the day Help moved on purpose. gatelib.HYGIENE_RULES names each shape by its text;
+    tools/browser-rig/waits.py holds the robust forms (<rig>.json, until_text, settled, reveal, header_control).
+    A file another branch is editing this week may be grandfathered for ONE shape until a DATE
+    (gatelib.HYGIENE_GRANDFATHER); past the date the line is red and says which file and what to change."""
+    hyg = gatelib.suite_hygiene(os.path.join(ROOT, 'tools'))
+    ok('every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour',
+       not hyg['bad'], '%d suite files read%s' % (hyg['files'], ('; grandfathered until a date: %d line(s) in %s' % (len(hyg['grandfathered']), ', '.join(sorted(set(g.split(':')[0] for g in hyg['grandfathered']))))) if hyg['grandfathered'] else ''),
+       why='; '.join(hyg['bad'][:3]))
 
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
@@ -4747,12 +4772,15 @@ def shared_scripts_live(base, folder, url_prefix='/app/'):
         # VP or PP: PartyPlay's shared scripts were never checked at all, and they fail
         # exactly the same way. Hardcoding VP here is why: it was written for one product.
         m = re.search(r'root\.((?:VP|PP)[A-Za-z]+)\s*=', local)
-        status, body, _ = get(base + url_prefix + f)
-        looks_html = '<html' in body[:2000].lower() or '<!doctype' in body[:200].lower()
+        status, body, ctype = get_typed(base + url_prefix + f)
+        # By Content-Type first, then by what the body STARTS with (gatelib.looks_like_homepage): the old
+        # `'<html' in body[:2000]` called vp-tvhold.js the homepage on 4 Nov 2026 because its header
+        # comment mentions the tag. The "does not define VPxxx" half below is unchanged.
+        looks_html = gatelib.looks_like_homepage(status, ctype, body)
         why = ''
         good = status == 200 and not looks_html
         if looks_html:
-            why = 'the homepage came back, so this script is not deployed'
+            why = 'the homepage came back (%s), so this script is not deployed' % (ctype or 'no Content-Type')
         elif status != 200:
             why = 'HTTP %s' % status
         elif m and m.group(1) not in body:

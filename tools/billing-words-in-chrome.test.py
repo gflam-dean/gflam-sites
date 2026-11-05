@@ -66,7 +66,7 @@ def main():
                 tid, sid = S.open('/app/billing.html', w, h, mob, pre=OVERLAY % json.dumps(st))
                 up = S.until(sid, BILLING_UP, 30)
                 d = {}
-                try: d = json.loads(S.js(sid, READ) or '{}')
+                try: d = S.json(sid, READ, {})
                 except Exception: pass
                 ok('%s: CONTROL: the Billing tab is up, from the Worker\'s own answer with the state laid over it' % where, up is True and d.get('sum') is True,
                    [up, S.js(sid, 'document.getElementById("loading").textContent')])

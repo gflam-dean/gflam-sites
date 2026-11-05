@@ -17,6 +17,7 @@ ROOT may be another checkout (a pristine origin/main for "before" screenshots). 
 always this checkout's.
 """
 import base64, http.server, importlib.util, io, json, os, socket, subprocess, threading, time, urllib.parse
+import waits                      # wait on the page, not on luck (4 Nov 2026): json, until_text, settled, reveal
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -316,15 +317,35 @@ class Site(object):
         return r.get('result', {}).get('value')
 
     def until(self, sid, expr, secs=15):
-        t = time.time() + secs
-        while time.time() < t:
-            v = self.js(sid, expr)
-            if v == 'HUNG':
-                return v
-            if v and not (isinstance(v, dict) and '__threw' in v):
-                return v
-            time.sleep(0.2)
-        return False
+        """The first truthy answer inside `secs`, or a falsy waits.Never that prints the page's last
+        answer (or why its expression threw), so a red line says what the page was showing."""
+        return waits.until(lambda e: self.js(sid, e), expr, secs, every=0.2)
+
+    # ---- reading the page robustly (tools/browser-rig/waits.py, 4 Nov 2026) ----
+    def json(self, sid, expr, default=None, secs=10):
+        """The page's answer as a Python value whether it returned an object or a JSON string; a
+        thrown expression or a hung page raises waits.PageThrew with the page's own reason. The
+        4 Nov 2026 gate lost account-structure's reason to json.loads(dict): never again."""
+        return waits.as_json(self.js(sid, expr, secs=secs), default, what='`%s`' % expr.strip()[:90])
+
+    def until_text(self, sid, target, secs=15):
+        """An element's text once it is REAL (not "------", an ellipsis or "Loading")."""
+        return waits.until_text(lambda e: self.js(sid, e), target, secs)
+
+    def settled(self, sid, expr, secs=15, still=0.5):
+        """The value of `expr` once it has stopped changing for `still` seconds (a fading pill, a
+        sliding fold): measure the layout, not the animation."""
+        return waits.settled(lambda e: self.js(sid, e), expr, secs, still)
+
+    def reveal(self, sid, selector, secs=10):
+        """Open the folds between `selector` and the page (as an owner would: click the heading,
+        open the <details>) and wait for it to show. For "the field is reachable", not "open by default"."""
+        return waits.reveal(lambda e: self.js(sid, e), selector, secs)
+
+    def header_control(self, sid, control_id, header='header', actions='.hactions'):
+        """Where a header control is, by meaning: in the header, in its actions, visible, and which
+        other actions share its row. Never "its next sibling says Account"."""
+        return waits.header_control(lambda e: self.js(sid, e), control_id, header, actions)
 
     def set_file(self, sid, selector, path):
         root = self.B.call('DOM.getDocument', {'depth': 0}, session=sid)['root']['nodeId']

@@ -25,6 +25,8 @@ PAGE = os.path.join(ROOT, 'touring', 'index.html')
 SHOTS = os.environ.get('TOURING_CARD_SHOTS') or os.path.expanduser('~/venue-enrich/touring-card-shots')
 
 _spec = importlib.util.spec_from_file_location('verify_live', os.path.join(ROOT, 'tools', 'verify-live.py'))
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'browser-rig'))
+import waits   # as_json (4 Nov 2026): a measurement that did not come back is named, not a TypeError
 _vl = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_vl)
 
@@ -238,7 +240,9 @@ try:
             # screenshot of the card, for a person to look at
             br.eval(sid, "document.querySelector('#tourCards').scrollIntoView(); true")
             time.sleep(0.3)
-            m = json.loads(br.eval(sid, MEASURE))
+            m = waits.as_json(br.eval(sid, MEASURE), what='MEASURE')
+            if m is None:
+                raise RuntimeError('MEASURE answered nothing: the tour card is not on the page (or its expression threw)')
             c = m['cardRect']
             shot = br.call('Page.captureScreenshot', {'format': 'png', 'captureBeyondViewport': True,
                                                       'clip': {'x': max(0, c['l'] - 10), 'y': max(0, c['t'] - 10) + br.eval(sid, 'window.scrollY'),

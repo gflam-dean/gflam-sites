@@ -183,6 +183,16 @@ MUTATIONS = [
      '<div><div class="n">245</div>',
      'the proof strip claims 245 tickets (the old ads figure), not the 223 the export records'),
     # THE GATE'S OWN RELIABILITY, 27 Oct 2026 (tools/gatelib.py, verify-live's Browser, the wake check).
+    # THE HOMEPAGE FALLBACK IS STILL SEEN (4 Nov 2026). The live check itself cannot be proven without breaking
+    # production (shared_scripts_live reads the live site); its judgement is a pure function, broken here two ways.
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     "    if 'text/html' in ct:\n        return True",
+     "    if 'text/html' in ct:\n        return False",
+     'Pages\' homepage, served as text/html in place of a script, is called a script: a half-deployed vp-qr.js ships green again'),
+    ('gate-reliability.test.py', 'tools/gatelib.py',
+     "    return head.startswith('<!doctype') or head.startswith('<html')",
+     "    return False",
+     'with no Content-Type the homepage body is no longer recognised by how it starts'),
     ('gate-reliability.test.py', 'tools/deploy-worker.py',
      "            return 'PASS' in text and not any(l.strip().startswith('FAIL') for l in text.splitlines())",
      "            return False",
@@ -6605,8 +6615,8 @@ MUTATIONS = [
      '    var indep=active.length;',
      'the card says 13 independent when 5 of them are grouped'),
     ('hq-tabs-in-chrome.test.py', 'venueplay/app/hq.html',
-     '    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n  </div>',
-     '    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>\n  </div>',
+     '    <div class="scard" data-stat="suspended"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n  </div>',
+     '    <div class="scard" data-stat="suspended"><div class="k">Suspended</div><div class="v" id="stSusp">&hellip;</div><div class="d">paused or unpaid</div></div>\n    <div class="scard"><div class="k">Open now</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>\n  </div>',
      'a second "Open now / signed up" venues number is back at the top of the page'),
     ('hq-tabs-in-chrome.test.py', 'venueplay/app/hq.html',
      'co.textContent = "Cancelled" + (leftN ? " ("+leftN+")" : "");',
@@ -12337,6 +12347,21 @@ MUTATIONS = [
      "  if (!email && !demoCall) return json({ error: 'Put in your email so we can reply.' }, 400);",
      "  if (!email) return json({ error: 'Put in your email so we can reply.' }, 400);",
      'a call-back without an email is refused'),
+    # SUITES READ THE PAGE ROBUSTLY (4 Nov 2026, gatelib.suite_hygiene). The shape is written into a suite that
+    # is NOT a Chrome suite (livenorm), under `if False:` so the suite itself still passes: only the gate's own
+    # hygiene line may go red. Each of the three shapes that turned the 4 Nov gate red is put back once.
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    g = json.loads(S.js(sid, CARD) or '{}')\n",
+     'a suite parses a raw rig answer with json.loads again: a thrown page expression becomes "the JSON object must be str, not dict" and the reason is lost (account-structure, 4 Nov)'),
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    up = r.until(tv, '(function(){var c=document.getElementById(\"lobbyCode\");return !!c&&c.textContent.length===6;})()', 20)\n",
+     'a suite calls the TV lobby up when six characters are painted, and the six are the ------ placeholder (reconnect-layout, 4 Nov)'),
+    ('every suite reads the page robustly', 'tools/livenorm.test.py',
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)",
+     "print('\\n%d of %d checks passed' % (ran - bad, ran))\nif bad:\n    sys.exit(1)" + "\nif False:\n    ok(t.until('x.parentNode.className===\"hactions\"&&x.nextElementSibling.textContent===\"Account\"') is True)\n",
+     'a suite pins a header control to its neighbour again, and the next intended re-order of the header turns it red (help-desk-pages, 4 Nov)'),
 ]
 
 
