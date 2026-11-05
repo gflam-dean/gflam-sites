@@ -217,10 +217,20 @@ try:
     ok('an NSW venue that saved a bingo permit still sees it, marked not needed, with a Clear button',
        card_kinds(sid, '#permitsWrap') == 'bingo!' and S.js(sid, '!!document.querySelector("#permitsWrap .pclear") && /Your state does not need a permit for this/.test(document.getElementById("permitsWrap").innerText)') is True, card_kinds(sid, '#permitsWrap'))
     S.close_tab(tid)
+    # Deepwater saved a raffle permit above, and a saved permit is never hidden (VPPermits.kindsFor), so its raffle card
+    # rightly stays. Take the raffle permit off for this one check ("no permit recorded"), then put it back for HQ below.
+    saved_permits = dict(permits_in_db(V1) or {})
+    set_venue(V1, permits=dict((k, v) for k, v in saved_permits.items() if k != 'raffle'))
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
     S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===1 && !!document.querySelector("#drawPermits .vpp-below")', 25)
     ok('an NSW venue with no prizes recorded: the members-draw card (authority above $10,000), and the raffle card under its $30,000 line', card_kinds(sid, '#drawPermits') == 'members' and '$30,000 in total prizes' in (S.js(sid, '(document.querySelector("#drawPermits .vpp-below")||{}).textContent') or ''), card_kinds(sid, '#drawPermits'))
+    S.close_tab(tid)
+    set_venue(V1, permits=saved_permits)
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2', 25)
+    ok('an NSW venue with a raffle permit saved: the raffle card stays (saved data is never hidden) beside the members-draw card', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
     S.close_tab(tid)
 
     print('\nHQ lists only the kinds the state needs')
