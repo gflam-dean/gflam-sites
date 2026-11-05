@@ -592,3 +592,12 @@ resent their link, which restarts those 30 days and re-dates the follow-ups (aut
 or grant changes, so RLS-BASELINE.json does not change. Either order with the billing Worker: before it runs the Worker makes the 14 day link
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. NOT RUN.
 Read-back and rollback in the file.
+
+`venueplay-152-signin-texts-queue.sql` (Dean, 4 Nov 2026, HQ > Prospects: "Send them a new sign-in link" goes by email AND
+text when we have a mobile): one new table, `vp_signin_texts`, the texts HQ asked for outside 9am to 8pm Brisbane (or on a
+Sunday), queued for the next allowed time and sent by the billing Worker's hourly trigger, which makes the one-use link at
+that moment (no token is ever stored here). Row security on, service role only. RLS-BASELINE.json gains one table: rerun
+venueplay-backend/tools/dump-rls-baseline.py after running and commit it. Either order with the billing Worker: before it
+runs nothing is queued, the email still goes, and HQ is told no text was queued and to press again after 9am. Texts stay
+off until PROSPECT_SMS_ON and the ClickSend login are set, either way. NUMBER: 140 to 151 are taken, so 152. Branch
+`fix/hq-prospects-6nov`. NOT RUN. Read-back and rollback in the file.

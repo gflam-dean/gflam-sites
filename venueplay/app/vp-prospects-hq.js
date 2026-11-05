@@ -34,7 +34,9 @@
   "use strict";
   var doc = root.document;
   var API = root.VP_PROSPECTS_API || "https://api.venueplay.com.au";
-  var S = { data: null, ids: {}, open: null, loading: false, filter: "all", sort: "call" };
+  /* expanded: the rows opened by their status chip (Dean, 4 Nov 2026: compact rows); editing: the row whose Edit details
+     form is open; byId: every row the tab shows, for hq.html's one send button (it words the email and text from it). */
+  var S = { data: null, ids: {}, byId: {}, open: null, editing: null, expanded: {}, loading: false, filter: "all", sort: "call" };
 
   function prEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -71,15 +73,20 @@
     if (n <= 0) return "ended";
     return n === 1 ? "last day" : n + " days left";
   }
+  /* THE CHIP (Dean, 4 Nov 2026): "Not signed in · 5 days", "Free month · 12 days left". Short enough for a phone row. */
+  var CHIP = { not_signed_in: "Not signed in", free_month: "Free month", paused: "Paused", card_added: "Card added", cancelled: "Cancelled" };
   function statusLabel(p) {
-    var st = statusOf(p), t = STATUS[st].label;
-    if (st === "free_month" && p.days_left != null) t += " (" + daysLeftText(p.days_left) + ")";
+    var st = statusOf(p), t = CHIP[st];
+    if (st === "not_signed_in") { var n = p.days_since_setup; if (n != null && isFinite(n)) t += " \u00b7 " + (n <= 0 ? "today" : n === 1 ? "1 day" : n + " days"); }
+    if (st === "free_month" && p.days_left != null) t += " \u00b7 " + daysLeftText(p.days_left);
     return t;
   }
+  /* The chip is the row's button: it opens the details and actions, and closes them again. */
   function statusHtml(p) {
-    var st = statusOf(p);
-    return '<span class="badge prst ' + STATUS[st].cls + (p.last_days && st === "free_month" ? " prst-last" : "") +
-      '" data-pr-status="' + prEsc(st) + '">' + prEsc(statusLabel(p)) + "</span>";
+    var st = statusOf(p), open = !!S.expanded[p.venue_id];
+    return '<button type="button" class="badge prst ' + STATUS[st].cls + (p.last_days && st === "free_month" ? " prst-last" : "") +
+      '" data-pr-status="' + prEsc(st) + '" data-pr-toggle="' + prEsc(p.venue_id) + '" aria-expanded="' + (open ? "true" : "false") +
+      '" title="' + (open ? "Hide" : "Show") + ' details and actions">' + prEsc(statusLabel(p)) + "</button>";
   }
   function firstSignInText(p) {
     if (p.first_signin_at) return when(p.first_signin_at, true);
@@ -100,6 +107,7 @@
   }
   function phoneHtml(p) {
     if (p.phone && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.phone) + "</a>";
+    if (p.mobile && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.mobile) + "</a>";
     return '<span class="prnophone">No phone, email them</span>';
   }
   function welcomeText(w) {
@@ -115,10 +123,25 @@
   }
   function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : "HQ"; }
   function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/.*$/, ""); }
+  /* Edit details (Dean, 4 Nov 2026): name, email, mobile and phone, checked again by the Worker (POST /admin/prospect/update). */
+  function editHtml(p) {
+    var f = function (id, label, val, type, hint) {
+      return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + type + '" value="' + prEsc(val || "") + '" autocomplete="off"' +
+        (type === "tel" ? ' inputmode="tel" class="mono"' : "") + ">" + (hint ? '<div class="note">' + hint + "</div>" : "") + "</div>";
+    };
+    return '<div class="predit" data-pr-editform="' + prEsc(p.venue_id) + '">' +
+      f("prEdName", "Contact name", p.contact_name, "text", "") +
+      f("prEdEmail", "Email", p.email, "email", "Their login. Changing it moves their sign-in to the new address, and any link sent to the old one stops working.") +
+      f("prEdMobile", "Mobile", p.mobile, "tel", "An Australian mobile, 04... It goes on the call list and gets the text follow-ups.") +
+      f("prEdPhone", "Phone to call", p.phone, "tel", "A mobile, or a landline with its area code (02, 03, 07, 08).") +
+      '<div class="prerr" id="prEdErr" role="alert" hidden></div>' +
+      '<div class="practs"><button type="button" class="btn pink sp" data-pr-edit-save="' + prEsc(p.venue_id) + '">Save details</button>' +
+      '<button type="button" class="mini" data-pr-edit-close="1">Cancel</button></div></div>';
+  }
   function cardHtml(p) {
     /* Card added is a customer, and Cancelled said no: neither gets a Called button unless they asked for a call. */
     var st = statusOf(p), done = st === "card_added" || (st === "cancelled" && p.flag !== "call_requested");
-    var why = p.flag === "call_requested" ? "They asked us to call them." + (p.phone ? "" : " No number on file: reply to their email for one.")
+    var why = p.flag === "call_requested" ? "They asked us to call them." + (p.tel ? "" : " No number on file: reply to their email for one.")
       : (p.flag === "no_sign_in" && p.tel) ? "Nobody has signed in since they were set up " + ago(p.days_since_setup) + "." : "";
     /* No phone: never yellow. Say what happens instead (the autopilot drafts a follow-up email for Dean's yes). */
     var quietNoPhone = !p.tel && (p.email_follow_up || (p.flag === "no_sign_in"));
@@ -132,24 +155,27 @@
         '<textarea id="prNote" maxlength="500" rows="2" placeholder="e.g. Spoke to Sam, trying it Friday"></textarea>' +
         '<div class="practs"><button type="button" class="btn pink sp" data-pr-save="' + prEsc(p.venue_id) + '">Save as called</button>' +
         '<button type="button" class="mini" data-pr-close="1">Cancel</button></div></div>'
+      : S.editing === p.venue_id ? editHtml(p)
       : (function () {
-          // Called while not yet called (and not done); Resend sign-in link (phone sign-in, main) for anyone not cancelled.
-          /* View as (Dean, 1 Nov 2026: "we can't login to view them as themselves" until they add a card). The SAME
-             function as the Venues row's View as (hq.html viewAs, as window.hqViewAs), so the same rules hold: every
-             prospect with a venue row, Cancelled and Card added too, opens their own pages as them. */
-          var acts = (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "") +
+          /* ONE SEND BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same.
+             "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; a fresh
+             30 days. Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
+          var acts = (p.tel ? '<a class="mini prcall" href="' + prEsc(p.tel) + '">Call ' + prEsc(p.phone || p.mobile || "") + "</a>" : "") +
+            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send them a new sign-in link' +
+              '<span class="prvia">' + (p.mobile ? "by email and text" : "email only, add a mobile to text it too") + "</span></button>" : "") +
+            '<button type="button" class="mini" data-pr-edit="' + prEsc(p.venue_id) + '">Edit details</button>' +
             (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
-            (st !== "cancelled" ? '<button type="button" class="mini" data-pr-signin="' + prEsc(p.venue_id) + '">Resend sign-in link</button>' : "") +
-            /* Their account email again, with a fresh sign-in (31 Oct 2026: a bounced or cancelled welcome). Not after
-               Cancel (they said no) or a pause (the card email is what brings them back, from Venues > Details). */
-            (st !== "cancelled" && st !== "paused" && st !== "card_added" ? '<button type="button" class="mini" data-pr-welcome="' + prEsc(p.venue_id) + '">Resend their account email</button>' : "");
+            (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "");
           return acts ? '<div class="practs">' + acts + "</div>" : "";
         })();
     var last = st === "free_month" && p.last_days;
     var yellow = p.flag === "call_requested" || (p.flag === "no_sign_in" && p.tel);
-    return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") +
+    var open = !!S.expanded[p.venue_id];
+    var sub = [p.contact_name, p.mobile || p.phone].filter(Boolean).join(" \u00b7 ");
+    return '<div class="panel pad prcard' + (yellow ? " flagged" : "") + (p.flag === "call_requested" ? " req" : "") + (last ? " last3" : "") + (open ? " open" : "") +
       '" data-pr-id="' + prEsc(p.venue_id) + '" data-pr-st="' + prEsc(st) + '">' +
-      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
+      '<div class="prtop"><div class="prname">' + prEsc(p.name || "A venue") + (sub ? '<span class="prsub">' + prEsc(sub) + "</span>" : "") + "</div>" + statusHtml(p) + flagHtml(p) + "</div>" +
+      '<div class="prmore"' + (open ? "" : " hidden") + ">" +
       (why ? '<div class="prwhy">' + prEsc(why) + "</div>" : "") +
       (quietNoPhone ? '<div class="prquiet" data-pr-quiet="1">' + prEsc("Nobody has signed in since they were set up " + ago(p.days_since_setup) +
         ". No phone on file, so a follow-up email is drafted for Dean to approve.") + "</div>" : "") +
@@ -158,6 +184,7 @@
       '<div class="prgrid">' +
         '<div><span class="k">Contact</span>' + prEsc(p.contact_name || "No name given") + "</div>" +
         '<div><span class="k">Phone</span>' + phoneHtml(p) + "</div>" +
+        '<div><span class="k">Mobile</span>' + (p.mobile ? prEsc(p.mobile) : '<span class="prnophone">None, so no texts</span>') + "</div>" +
         '<div><span class="k">Email</span>' + (p.email ? '<a href="mailto:' + prEsc(p.email) + '">' + prEsc(p.email) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Website</span>' + (/^https?:\/\//i.test(String(p.website || "")) ? '<a href="' + prEsc(p.website) + '" target="_blank" rel="noopener">' + prEsc(siteHost(p.website)) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Set up</span>' + prEsc(when(p.created_at)) + " (" + prEsc(ago(p.days_since_setup)) + "), by " + prEsc(sourceText(p)) + "</div>" +
@@ -166,7 +193,7 @@
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
         '<div><span class="k">Where</span>' + prEsc([p.postcode, p.state].filter(Boolean).join(" ") || "Not known") + "</div>" +
-      "</div>" + called + form + "</div>";
+      "</div>" + called + form + "</div></div>";
   }
   function headHtml(d) {
     var n = (d.prospects || []).length, f = d.follow_up_count || 0;
@@ -258,7 +285,17 @@
     p.innerHTML = "<style>" +
       ".prlist{display:grid;gap:12px}" +
       ".prcard{border-left:3px solid transparent}.prcard.flagged{border-left-color:var(--roll)}" +
-      ".prtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.prname{font-weight:800;font-size:16px;color:#fff;flex:1;min-width:0;overflow-wrap:anywhere}" +
+      ".prlist{gap:8px}.prcard.panel.pad{padding:10px 14px}.prcard.open{padding:14px}" +
+      ".prtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.prname{font-weight:800;font-size:15px;color:#fff;flex:1;min-width:0;overflow-wrap:anywhere}" +
+      ".prsub{display:block;font-weight:500;font-size:12.5px;color:var(--muted);margin-top:1px}" +
+      "button.badge.prst{cursor:pointer;font:inherit;font-size:12px;font-weight:700;line-height:1.2;padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}" +
+      "button.badge.prst:focus-visible{outline:2px solid var(--pink);outline-offset:2px}" +
+      "button.badge.prst::after{content:\"\\25BE\";font-size:10px;opacity:.8}button.badge.prst[aria-expanded=true]::after{content:\"\\25B4\"}" +
+      ".prmore{margin-top:10px;border-top:1px solid var(--line-2,rgba(255,255,255,.08));padding-top:10px}" +
+      ".prsend{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1.2}.prvia{font-size:11px;font-weight:500;color:var(--muted);margin-top:2px}" +
+      ".prcall{text-decoration:none;font-weight:800;color:var(--pink)!important}" +
+      ".predit{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px 16px}.predit .practs,.predit .prerr{grid-column:1/-1}" +
+      ".predit input{width:100%}.predit .note{margin-top:3px;font-size:12px}.prerr{color:#FF8A8E;font-weight:700;font-size:13px}" +
       ".prwhy{color:var(--roll);font-size:13px;margin-top:4px}" +
       ".prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px;margin-top:12px;font-size:13.5px}" +
       ".prgrid > div{min-width:0;overflow-wrap:anywhere}.prgrid .k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}" +
@@ -277,7 +314,7 @@
       ".badge.prst-cancel{background:rgba(154,154,164,.10);color:var(--faint);border:1px solid rgba(154,154,164,.3);text-decoration:line-through}" +
       ".prcard.last3{border-left-color:var(--roll);box-shadow:inset 0 0 0 1px rgba(245,165,36,.35)}" +
       ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
-      "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}}" +
+      "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}.practs > *{flex:1 1 auto}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
     host.insertBefore(p, $("paneLive") || null);
     p.addEventListener("click", onClick);
@@ -301,6 +338,8 @@
       S.data = d;
       S.ids = {};
       (d.prospects || []).forEach(function (p) { S.ids[p.venue_id] = true; });
+      S.byId = {};
+      allOf(d).forEach(function (p) { S.byId[p.venue_id] = p; });
       setCount(d.error ? 0 : (d.follow_up_count || 0));
       draw();
       try { doc.dispatchEvent(new root.CustomEvent("vp-prospects")); } catch (e) {}
@@ -308,16 +347,34 @@
     });
     return S.loading;
   }
+  function editSave(t) {
+    var id = t.getAttribute("data-pr-edit-save"), p = S.byId[id] || {};
+    var v = function (k) { return (($(k) || {}).value || "").trim(); };
+    var body = { venue_id: id }, want = { contact_name: v("prEdName"), email: v("prEdEmail"), mobile: v("prEdMobile"), phone: v("prEdPhone") };
+    Object.keys(want).forEach(function (k) { if (want[k] !== String(p[k] || "")) body[k] = want[k]; });
+    var err = $("prEdErr");
+    var say = function (m) { if (err) { err.textContent = m; err.hidden = !m; } };
+    if (Object.keys(body).length === 1) { S.editing = null; draw(); return; }
+    t.disabled = true; t.textContent = "Saving...";
+    post("/admin/prospect/update", body).then(function (j) {
+      if (j.error) { t.disabled = false; t.textContent = "Save details"; say(j.error); return; }
+      S.editing = null; S.loading = false;
+      load().then(function () { if (j.warnings && j.warnings.length && root.vpTell) root.vpTell("Saved.\n\n" + j.warnings.join("\n")); });
+    });
+  }
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button"); if (!t) return;
-    if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); draw(); if ($("prNote")) $("prNote").focus(); return; }
+    if (t.hasAttribute("data-pr-toggle")) { var tid = t.getAttribute("data-pr-toggle"); if (S.expanded[tid]) delete S.expanded[tid]; else S.expanded[tid] = true; draw(); return; }
+    if (t.hasAttribute("data-pr-edit")) { S.editing = t.getAttribute("data-pr-edit"); S.open = null; draw(); if ($("prEdName")) $("prEdName").focus(); return; }
+    if (t.hasAttribute("data-pr-edit-close")) { S.editing = null; draw(); return; }
+    if (t.hasAttribute("data-pr-edit-save")) { editSave(t); return; }
+    if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); S.editing = null; draw(); if ($("prNote")) $("prNote").focus(); return; }
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
     // View as: hq.html's own viewAs (window.hqViewAs), the one the Venues row calls. Never a second copy here.
     if (t.hasAttribute("data-pr-viewas")) { if (typeof root.hqViewAs === "function") root.hqViewAs(t.getAttribute("data-pr-viewas"), t); return; }
-    // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing.
-    if (t.hasAttribute("data-pr-signin")) { if (typeof root.hqSigninLink === "function") root.hqSigninLink(t.getAttribute("data-pr-signin"), t); return; }
-    // The same function as the Venues row's button (hq.html hqResendWelcome): it asks the Worker which email goes first.
-    if (t.hasAttribute("data-pr-welcome")) { if (typeof root.hqResendWelcome === "function") root.hqResendWelcome(t.getAttribute("data-pr-welcome"), t); return; }
+    // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing; the row tells it
+    // their email, mobile and booked welcome, so it can say how the link will go before it goes.
+    if (t.hasAttribute("data-pr-signin")) { var sid = t.getAttribute("data-pr-signin"); if (typeof root.hqSigninLink === "function") root.hqSigninLink(sid, t, S.byId[sid]); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");
@@ -343,7 +400,7 @@
     })();
   }
 
-  root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; },
-    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick } };
+  root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; }, get: function (id) { return S.byId[id] || null; },
+    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick, editHtml: editHtml } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);
