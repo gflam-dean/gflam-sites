@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 19:22 · 7ff07288';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 19:31 · 79e1ad96';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3874,7 +3874,9 @@ function vpaProspectStatus(r, cardOn, lastSignInMs, nowMs) {
   const base = { first_signin_at: r.first_signin_at || null, free_month_ends_at: r.free_month_ends_at || null,
     paused_at: r.paused_at || null, cancelled_at: r.cancelled_at || null, card_choice: r.card_choice || null,
     offer_rate: Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,
-    reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false };
+    reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false,
+    /* THE 5-DAY OFFER GRACE: when a paused prospect's offer price stops being kept (null: no offer, or not paused). */
+    offer_kept_until: r.paused_at && vpaProspectOfferRate(r) && isFinite(vpaOfferGraceEnd(r)) ? new Date(vpaOfferGraceEnd(r)).toISOString() : null };
   if (cardOn) return Object.assign(base, { status: 'card_added' });
   if (r.cancelled_at) return Object.assign(base, { status: 'cancelled' });
   if (r.paused_at) return Object.assign(base, { status: 'paused' });
@@ -3925,8 +3927,9 @@ async function vpaProspectCalled(request, env, json) {
  *   - a card (or comp, invoice, group) or a cancel stops them all
  *   - the free month over with no card: the venue PAUSES (status suspended, reason free_month_ended):
  *     games off, the TV keeps its ads (venueLookupReply keeps a suspended venue's screen). The offer
- *     price they were set up on (offer_rate) goes with it: a card added after that is at the price of
- *     that day. A card added after the pause switches the venue straight back on.
+ *     price they were set up on (offer_rate) is KEPT FOR 5 DAYS after the free month's last day (THE
+ *     5-DAY OFFER GRACE, vpaOfferGraceEnd); a card added after that is at the standard rate. A card
+ *     added after the pause switches the venue straight back on.
  * ======================================================================== */
 const VPA_FREE_MONTH_DAYS = 30;
 const VPA_REMINDER_DAYS = [3, 23, 29];
@@ -3939,6 +3942,48 @@ function vpaAddDays(day, n) { return new Date(Date.parse(day + 'T00:00:00Z') + n
 function vpaWeekday(day) { return new Date(Date.parse(day + 'T00:00:00Z')).getUTCDay(); }   // 0 Sunday .. 6 Saturday
 /* The free month's last moment: 11:59:59pm Brisbane on the 30th day after the first sign-in. */
 function vpaFreeMonthEnd(firstMs) { return vpaBneDayStartMs(vpaAddDays(vpaBneDay(firstMs), VPA_FREE_MONTH_DAYS + 1)) - 1000; }
+/* THE 5-DAY OFFER GRACE (Dean, 5 Nov 2026, builds INBOX 24): "when a prospect's free month ends with no card, the
+   account pauses (as today), and they have 5 DAYS after that date to add a card and still keep their offer price
+   ($2.50). After 5 days, the offer is gone and the standard rate applies."
+     - "that date" is the free month's last day (free_month_ends_at, 11:59:59pm Brisbane on day 30). Day 1 of the
+       grace is the first paused day; day 5 is the last. The offer holds to 11:59:59pm Brisbane on day 5, the same
+       end-of-day Brisbane rule the free month and the offer codes (vpaCodeInDate) use. Day 6 is the standard rate.
+     - counted from free_month_ends_at, NEVER from paused_at: the hourly sweep can pause late (a missed run, an
+       outage), and a late sweep must not move anybody's deadline.
+     - only an offer they were set up on (offer_rate under the standard rate) is kept. A prospect set up at the
+       standard rate stays on it, and after the grace nobody gets "whatever offer is open today": it is the standard
+       rate (the offer is gone, Dean's words).
+     - no new email: the settled reminders are day 3, 23 and 29 only (dean-settled-answers-check-first). */
+const VPA_OFFER_GRACE_DAYS = 5;
+/* The free month's last moment for a prospect row, or NaN when it has never started. */
+function vpaProspectMonthEndMs(prow) {
+  if (!prow) return NaN;
+  const e = Date.parse(prow.free_month_ends_at || '');
+  if (isFinite(e)) return e;
+  const f = Date.parse(prow.first_signin_at || '');
+  if (isFinite(f)) return vpaFreeMonthEnd(f);
+  /* Paused with neither date (should not happen: the sweep pauses only a started month): the day before the pause
+     is taken as the last free day, so the grace is still five whole Brisbane days. */
+  const p = Date.parse(prow.paused_at || '');
+  return isFinite(p) ? vpaBneDayStartMs(vpaBneDay(p)) - 1000 : NaN;
+}
+/* The grace's last moment: 11:59:59pm Brisbane on the 5th day after the free month's last day. NaN: no month. */
+function vpaOfferGraceEnd(prow) {
+  const end = vpaProspectMonthEndMs(prow);
+  return isFinite(end) ? vpaBneDayStartMs(vpaAddDays(vpaBneDay(end), VPA_OFFER_GRACE_DAYS + 1)) - 1000 : NaN;
+}
+/* The free month is used up: paused, or simply past its end (the sweep has not run yet). Either way no trial is left. */
+function vpaProspectMonthOver(prow, nowMs) {
+  if (!prow) return false;
+  if (prow.paused_at) return true;
+  const end = vpaProspectMonthEndMs(prow);
+  return isFinite(end) && nowMs > end;
+}
+/* The offer rate a prospect was set up on, or 0 when they were set up at the standard rate. */
+function vpaProspectOfferRate(prow) {
+  const r = Number(prow && prow.offer_rate);
+  return r > 0 && r < VPA_STANDARD_RATE ? r : 0;
+}
 /* Which reminder goes on which Brisbane day, from the first sign-in: [{ day: 3, date: '2026-11-02' }, ...]. */
 function vpaReminderPlan(firstMs) {
   const start = vpaBneDay(firstMs), out = [];
@@ -3956,11 +4001,19 @@ function vpaInSendWindow(ms) {
   return wd >= 1 && wd <= 5 && m >= 8 * 60 && m < 17 * 60;
 }
 /* THE PRICE A PROSPECT'S CARD IS ADDED AT. The offer they were set up on (offer_rate) holds through
-   their free month even if that month's offer has since closed; a pause takes it away, and then it is
-   whatever is open the day they add the card. Not a prospect: as before, whatever is open now. */
-function vpaProspectPrice(env, prow) {
-  if (prow && prow.paused_at) { const open = vpaFoundingOpenNow(env); return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE }; }
-  if (prow && Number(prow.offer_rate) > 0 && Number(prow.offer_rate) < VPA_STANDARD_RATE) return { founding: true, rate: Number(prow.offer_rate) };
+   their free month even if that month's offer has since closed, and for THE 5-DAY OFFER GRACE after it
+   (vpaOfferGraceEnd). Once the month is over (paused, or past its end) and the grace has run out, it is the
+   standard rate. Not a prospect, or a prospect inside a month set up at no offer: as before, whatever is open now.
+   nowMs: the moment of the card-add (Date.now() when not given), so the suite can walk the days. */
+function vpaProspectPrice(env, prow, nowMs) {
+  const now = nowMs == null ? Date.now() : nowMs;
+  const offer = vpaProspectOfferRate(prow);
+  if (vpaProspectMonthOver(prow, now)) {
+    const graceEnd = vpaOfferGraceEnd(prow);
+    if (offer && isFinite(graceEnd) && now <= graceEnd + 999) return { founding: true, rate: offer, grace: true, grace_ends_at: new Date(graceEnd).toISOString() };
+    return { founding: false, rate: VPA_STANDARD_RATE, grace: false };
+  }
+  if (offer) return { founding: true, rate: offer };
   const open = vpaFoundingOpenNow(env);
   return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE };
 }
@@ -4108,9 +4161,17 @@ async function vpaProspectCancel(request, env, json) {
 async function vpaProspectCardAdded(env, foundingId) {
   const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
   if (!prow || !prow.paused_at) return false;
+  /* ONCE (10 Nov 2026). paused_at stays set after the card (it is history), so the hourly sweep below calls this for
+     every paused-then-carded prospect every hour, and the webhook calls it too. The switch-on is filtered and changes
+     nothing a second time; the audit row is only written when the venue really was still paused. An unreadable venue
+     still gets the switch-on and its audit row, as before. */
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(prow.venue_id) + '&select=id,status,suspended_reason&limit=1');
+  const known = vs && vs[0];
+  const stillPaused = !known || (known.status === 'suspended' && known.suspended_reason === 'free_month_ended');
   await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(prow.venue_id) + '&status=eq.suspended&suspended_reason=eq.free_month_ended', {
     // Back on, so the 90-day clock stops (INBOX item 33), the same as every other way back on.
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'active', suspended_reason: null, closed_at: null }) });
+  if (!stillPaused) return false;
   await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
   return true;
 }
@@ -4175,7 +4236,8 @@ async function vpaProspectReminderSweep(env, nowMs) {
           method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'suspended', suspended_reason: 'free_month_ended', closed_at: new Date(nowMs).toISOString() }) });
       }
       await vpaProspectPatch(env, p.venue_id, { paused_at: new Date(nowMs).toISOString() });
-      await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null });
+      await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null,
+        offer_kept_until: vpaProspectOfferRate(p) ? new Date(vpaOfferGraceEnd(p)).toISOString() : null });
       out.paused.push(v.id);
       continue;
     }
@@ -4959,11 +5021,12 @@ async function vpbCardLink(request, env, json) {
   const f = fr && fr[0];
   if (!f) return json({ error: 'This venue has no account record yet. Email support@venueplay.com.au and we will sort it.' }, 409);
   const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
-  const rate = vpaProspectPrice(env, prow).rate;   // a prospect keeps the offer they were set up on until a pause
+  const pp = vpaProspectPrice(env, prow), rate = pp.rate;   // a prospect keeps the offer they were set up on through the month and the 5-day grace
   const seats = parseInt(f.max_seats, 10) || parseInt(vr[0].max_players, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
   const out = { ok: true, has_card: !!f.stripe_subscription_id, rate: rate, seats: seats, monthly: Math.round(seats * rate * 100) / 100 };
   if (prow && prow.free_month_ends_at) { out.free_month_ends_at = prow.free_month_ends_at; out.ends_words = vpaBneDateWords(Date.parse(prow.free_month_ends_at)); }
   if (prow && prow.paused_at) out.paused = true;
+  if (pp.grace) { out.offer_grace = true; out.offer_kept_until = pp.grace_ends_at; out.offer_kept_words = vpaBneDateWords(Date.parse(pp.grace_ends_at)); }
   if (!out.has_card) {
     out.card_url = await vpaCardLink(env, fid);
     if (!out.card_url) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
@@ -7926,13 +7989,15 @@ async function vpaAddCardRedirect(request, env) {
     /* A PROSPECT (migration 127): the offer they were set up on holds through their free month, and a pause
        takes it away (vpaProspectPrice). Anyone else: is the deal open today, as before. */
     const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
-    const founding = prow ? vpaProspectPrice(env, prow).founding : vpaFoundingOpenNow(env);
+    const cardAtMs = Date.now();   // THE moment of the card-add: the price, the grace and the trial are all decided on it
+    const pprice = prow ? vpaProspectPrice(env, prow, cardAtMs) : null;
+    const founding = pprice ? pprice.founding : vpaFoundingOpenNow(env);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
       : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
     if (!price) return page('We could not open the payment page', 'Reply to your welcome email and we will send you another way to pay.');
 
-    const nowTs = Math.floor(Date.now() / 1000);
+    const nowTs = Math.floor(cardAtMs / 1000);
     // Their free month starts when they add the card, not when HQ built the venue: they have not
     // had the product until now. Stripe rejects a trial_end under ~2 days out.
     /* A WHOLE 30 DAYS, TO THE END OF THE 30TH DAY IN BRISBANE (Dean, 29 Oct 2026). Exactly now + 30 days was
@@ -7942,8 +8007,9 @@ async function vpaAddCardRedirect(request, env) {
     const bneToday = Math.floor((nowTs + 10 * 3600) / 86400) * 86400 - 10 * 3600;   // 00:00 today, Brisbane
     let trialTs = Math.max(bneToday + 31 * 24 * 60 * 60 - 1, nowTs + 3 * 24 * 60 * 60);
     /* A prospect's free month started at their first sign-in (migration 127): a card added on day 10 is first
-       charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. */
-    if (prow && prow.paused_at) trialTs = 0;
+       charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. So is a
+       month that has simply run past its end before the hourly sweep paused it (vpaProspectMonthOver). */
+    if (prow && vpaProspectMonthOver(prow, cardAtMs)) trialTs = 0;
     else if (prow && prow.free_month_ends_at) trialTs = Math.max(Math.floor(Date.parse(prow.free_month_ends_at) / 1000), nowTs + 3 * 24 * 60 * 60);
 
     const form = new URLSearchParams();
@@ -7951,6 +8017,13 @@ async function vpaAddCardRedirect(request, env) {
     form.set('line_items[0][price]', price);
     form.set('line_items[0][quantity]', String(seats));
     if (trialTs) form.set('subscription_data[trial_end]', String(trialTs));
+    /* THE 5-DAY OFFER GRACE: a payment page opened inside the grace closes when the grace does (Stripe takes 30
+       minutes to 24 hours), so a page left open on day 5 cannot be finished at the offer price on day 7. */
+    if (pprice && pprice.grace) {
+      const graceEndTs = Math.floor(Date.parse(pprice.grace_ends_at) / 1000) + 1;
+      form.set('expires_at', String(Math.min(Math.max(graceEndTs, nowTs + 31 * 60), nowTs + 23 * 3600)));
+      form.set('metadata[offer_grace]', '1');
+    }
     form.set('subscription_data[metadata][venue]', f.venue_name || '');
     form.set('subscription_data[metadata][row_id]', foundingId);
     form.set('subscription_data[metadata][tier]', founding ? 'founding' : 'standard');
