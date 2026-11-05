@@ -60,9 +60,12 @@
      landing there is counted as coming from gflam.com.au (HQ > Reports). Tags typed onto the link
      still win. */
   var GFLAM_UTM = { utm_source: "gflam.com.au", utm_medium: "banner", utm_campaign: "group-site" };
+  /* venueplay.com.au/coaster: "From a venue? Click here" on the drink-coaster page (Dean, 4 Nov 2026). */
+  var COASTER_UTM = { utm_source: "coaster", utm_medium: "qr", utm_campaign: "live-here-now" };
   function utm() {
     var loc = root.location || {};
-    var here = utmFrom(loc.search) || (/^\/gflam\/?$/i.test(loc.pathname || "") ? GFLAM_UTM : null);
+    var here = utmFrom(loc.search) || (/^\/gflam\/?$/i.test(loc.pathname || "") ? GFLAM_UTM : null)
+      || (/^\/coaster\/?$/i.test(loc.pathname || "") ? COASTER_UTM : null);
     try {
       if (here) root.sessionStorage.setItem("vpsUtm", JSON.stringify(here));
       else here = JSON.parse(root.sessionStorage.getItem("vpsUtm") || "null");
