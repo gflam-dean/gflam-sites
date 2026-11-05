@@ -305,7 +305,7 @@ if (!VPB_HOST_UPDATES_CONSENT) throw new Error('cannot find VPB_HOST_UPDATES_CON
   check('a host with their mobile: asked, then the console pairs as before (never blocked)', R1.order.join() === 'updates,pair', R1.order);
   var R2 = runProceed(one, true, true);
   check('a login still giving its name and mobile is not asked yet', R2.order.indexOf('updates') === -1 && R2.order[0] === 'aboutyou', R2.order);
-  var two = staffCtx(HOST); two.venue = { slug: 'test-alpha' }; two.staff = [{}, {}];
+  var two = staffCtx(HOST); two.venue = { slug: 'test-alpha' }; two.staff = [{ venue_id: 'v-one', role: 'host' }, { venue_id: 'v-two', role: 'host' }];   // two DISTINCT venues (round 3 counts distinct ones)
   var R3 = runProceed(two, false, false);
   check('a host with two venues is asked after the venue pick, not before', R3.order.join() === 'venuepick', R3.order);
   var R4 = runProceed({ authed: true, isAdmin: true, scope: 'admin', user: { id: ADMIN }, staff: [], venue: { slug: 'test-alpha' } }, false, true);

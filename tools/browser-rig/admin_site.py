@@ -131,7 +131,7 @@ TOURING = {
 
 class Site(object):
     def __init__(self, root=REPO, fonts=False, extra_db=None, live_tables=None, game=None, game_tables=None,
-                 browser=True, port=0, host='127.0.0.1', page_db=None):
+                 browser=True, port=0, host='127.0.0.1', page_db=None, extra_pages=None):
         """game: optionally the REAL game Worker on a pipe (tools/browser-rig/rig.py Worker), answering
         /__game instead of a 404; game_tables: tables the page reads live from THAT Worker's database
         (e.g. vp_member_draws, which the game Worker writes), named in live_tables as well."""
@@ -140,6 +140,7 @@ class Site(object):
         self.root = os.path.abspath(root)
         self.extra_db = extra_db or {}          # more rows for the stand-in supabase-js, by table
         self.page_db = page_db or {}            # tables that REPLACE the stand-in's own (the demo's accounts)
+        self.extra_pages = extra_pages or {}    # path -> html, rig-only pages (the demo's host email card)
         self.live_tables = live_tables or []    # tables the page reads from the Worker rig's database
         self.fonts = fonts
         self.W = BillingWorker(self.root)
@@ -214,6 +215,8 @@ class Site(object):
                         json.dumps(db), json.dumps(site.W.info['uid']), json.dumps(site.live_tables))
                     return self.send(200, pre + io.open(os.path.join(HERE, 'fake-supabase.js'), encoding='utf-8').read(),
                                      'application/javascript')
+                if u.path in site.extra_pages:
+                    return self.send(200, site.rewrite(site.extra_pages[u.path], 'owner'), 'text/html; charset=utf-8')
                 if u.path == '/__fake/blank.css':
                     return self.send(200, '', 'text/css')
                 p = u.path

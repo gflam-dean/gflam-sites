@@ -119,6 +119,18 @@ def account_rows(key):
     return worker, page
 
 
+HOST_EMAIL_PAGE = """<!DOCTYPE html><html lang="en-AU"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>venueplay demo: the host email card</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0A0A0B;color:#E7E7EC;font-family:Manrope,system-ui,sans-serif}p{max-width:520px;margin:40px auto;padding:0 16px;line-height:1.55;color:#A6A6B0}</style>
+</head><body><p>DEMO ONLY. This is the card a host sees at the bottom of their console after signing in (item 21a). In this demo the
+Save and Not now buttons go to the local test Worker; nothing is sent and nothing is stored outside this Mac.</p>
+<script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
+<script src="/app/vp-updates-optin.js"></script>
+<script>VPUpdatesOptin.open({ role: "host", venue: { name: "Test Alpha" } }, { client: window.supabase.createClient("x", "y") });</script>
+</body></html>"""
+
+
 def build(key, root=None, browser=False, port=0, fonts=True):
     """One test account on its own server. key 'hq' is HQ, holding every test account."""
     root = root or os.path.dirname(os.path.dirname(HERE))
@@ -148,8 +160,10 @@ def build(key, root=None, browser=False, port=0, fonts=True):
         S.W.seed('vp_venue_staff', [r for r in wk['vp_venue_staff'] if r['auth_user_id'] != UID])
         return S
     worker, page = account_rows(key)
-    S = admin_site.Site(root=root, fonts=fonts, browser=browser, port=port, page_db=page)
+    S = admin_site.Site(root=root, fonts=fonts, browser=browser, port=port, page_db=page,
+                        extra_pages={'/demo/host-email': HOST_EMAIL_PAGE})
     S.W.seed('vp_platform_admins', [])
+    S.W.missing('vp_host_updates_optin', False)   # the demo shows the card working, as after migration 161
     for t, rows in worker.items():
         S.W.seed(t, rows)
     return S
