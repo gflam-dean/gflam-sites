@@ -20,6 +20,11 @@
      5. READABLE AT 375px: nothing in the guide under 15px, no fixed width wider than a 375px phone
         leaves, the borrowed Terms card lifted to 15px on a phone
      6. THE WORDS: lowercase venueplay, no em or en dash, never "roster"
+     7. ABOUT YOU AND YOUR VENUE (Dean, INBOX 24): their name while it is still the "<venue> manager"
+        placeholder (/account/my-name) and a logo while there is none (/account/logo-upload, this venue),
+        each optional and only when empty; a GIF, a logo over 1MB or no name refused on the page, the
+        Worker's own refusal shown; the step left out when both are done; never a question the Account
+        page does not store
 
    Run from the repo root:  jsc tools/test-first-run-guide.js */
 var ran = 0, bad = 0;
@@ -51,7 +56,7 @@ function before(a, b, root) { var order = []; each(root, function (e) { order.pu
 async function settle() { for (var i = 0; i < 12; i++) await Promise.resolve(); }
 
 var SESSION = readFile('venueplay/app/vp-session.js'), FIRSTRUN = readFile('venueplay/app/vp-firstrun.js'), INDEX = readFile('venueplay/app/index.html');
-var USER, AUTH_CALLS, CALLS, OPENED, STORE, HOSTS;
+var USER, AUTH_CALLS, CALLS, OPENED, STORE, HOSTS, IMG = [];
 function page(phone, over) {
   over = over || {};
   USER = { id: 'u1', email: 'owner@example.com', phone: phone || '' }; AUTH_CALLS = []; CALLS = []; OPENED = [];
@@ -73,7 +78,9 @@ function page(phone, over) {
   var fetch = function (url, opts) {
     var c = { url: String(url), opts: opts || {}, body: opts && opts.body ? JSON.parse(opts.body) : null }; CALLS.push(c);
     var ans = { ok: true };
-    if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, slides: [] };
+    if (/\/account\/screen-get$/.test(c.url)) ans = over.screenFail ? { error: 'offline' } : { ok: true, slides: [], logo_url: over.noLogo ? null : 'https://db/storage/v1/object/public/venue-logos/V1/old.png' };
+    if (/\/account\/my-name$/.test(c.url)) ans = String(c.body.name || '').trim() ? { ok: true, name: String(c.body.name).trim() } : { error: 'Pop your name in first.' };
+    if (/\/account\/logo-upload$/.test(c.url)) ans = /^data:image\/png;base64,TOOSMALL/.test(c.body.data) ? { error: 'That logo is only 40 by 40 pixels, too small to read on a TV. Use one at least 200 pixels wide.' } : { ok: true, url: 'https://db/storage/v1/object/public/venue-logos/V1/new.png' };
     if (/\/account\/card-link$/.test(c.url)) ans = over.card === false ? { ok: true, has_card: false, card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc', rate: 3, seats: 60, monthly: 180 } : { ok: true, has_card: true, rate: 3, seats: 60, monthly: 180 };
     if (/\/account\/hosts$/.test(c.url)) ans = over.hostsFail ? { error: 'Could not reach venueplay.' } : { ok: true, hosts: HOSTS, venues: [{ id: 'V1', name: 'The Test Arms' }] };
     if (/\/account\/host-add$/.test(c.url)) ans = c.body.mobile === '+61400000009' ? { error: 'That mobile is already the marketing login at your venue. Use a different mobile for a host, or remove the marketing login first.' } : { ok: true, auth_user_id: 'h-new', venue_ids: c.body.venue_ids };
@@ -85,12 +92,15 @@ function page(phone, over) {
   (new Function('window', 'document', 'localStorage', 'sessionStorage', 'location', 'fetch', SESSION))(window, document, storage, window.sessionStorage, window.location, fetch);
   (new Function('window', FIRSTRUN))(window);
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, VP: window.VP,
-    setInterval: function () { return 1; }, clearInterval: function () {}, openUrl: function (u) { OPENED.push(u); } };
+    setInterval: function () { return 1; }, clearInterval: function () {}, openUrl: function (u) { OPENED.push(u); },
+    imageData: function (file) { IMG.push(file.name); return Promise.resolve(file.dataUrl); } };
   return { doc: document, body: body, FR: window.VPFirstRun, VP: window.VP, deps: deps };
 }
 /* A self sign-up two days old: its mobile on the login, the Terms ticked at checkout, a card at Stripe. */
 function venue(over) { var v = { id: 'V1', name: 'The Test Arms', slug: 'the-test-arms', status: 'active', terms_required: false, created_at: new Date(Date.now() - 2 * 86400000).toISOString(), compliance_accepted_at: '2026-11-03T01:00:00Z', compliance_accepted_by: 'Sam' }; for (var k in (over || {})) v[k] = over[k]; return v; }
-function ctxFor(role, v) { return { role: role, venue: v || venue(), currentVenueId: 'V1', user: { id: 'u1', phone: USER ? USER.phone : '' }, staff: [{ venue_id: 'V1', role: role }] }; }
+/* Their staff row's name: a real one by default (so the optional About you step is about the logo alone), or the
+   "<venue> manager" placeholder the Worker writes at set up. */
+function ctxFor(role, v, name) { return { role: role, venue: v || venue(), currentVenueId: 'V1', user: { id: 'u1', phone: USER ? USER.phone : '' }, staff: [{ venue_id: 'V1', role: role, display_name: name === undefined ? 'Sam Smith' : name }] }; }
 function $(P, id) { return P.doc.getElementById(id); }
 function T(P, id) { var e = $(P, id); return e ? seen(e) : ''; }
 function lis(el) { var out = []; each(el, function (e) { if (e.tagName === 'LI') out.push(seen(e)); }); return out; }
@@ -99,7 +109,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
 (async function () {
   section('1. THE ORDER: the TV, then hosts, then a first test game');
   var P = page('61452510904');
-  check('the steps run mobile, Terms, TV, hosts, game, card', P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,card', P.FR.STEPS);
+  check('the steps run mobile, Terms, TV, hosts, game, About you, card', P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,account,card', P.FR.STEPS);
   var R = P.FR.open(ctxFor('owner'), P.deps); await R.ready; await settle();
   check('a self sign-up with its mobile, the Terms and a card on: exactly the TV, hosts and a first game, in that order', R.steps().join() === 'tv,hosts,game', R.steps());
   check('it opens on the TV, step 1 of 3, three dots', R.step() === 'tv' && T(P, 'vpFrCount') === 'Step 1 of 3' && $(P, 'vpFrDots').children.length === 3, T(P, 'vpFrCount'));
@@ -181,7 +191,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('Open trivia opens the trivia console for their venue', OPENED[0] === '/app/trivia/host.html?venue=the-test-arms', OPENED);
 
   section('5. READABLE AT 375px: nothing under 15px');
-  var PR = page('', { card: false }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner' }] }, PR.deps);
+  var PR = page('', { card: false, noLogo: true }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }] }, PR.deps);
   await RR.ready;
   var small = [], wide = [], seenSteps = [];
   for (var si = 0; si < RR.steps().length; si++) {
@@ -194,7 +204,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
       var w = /(?:^|;)\s*(?:min-)?width:\s*([\d.]+)px/.exec(css); if (w && parseFloat(w[1]) > 343) wide.push(nm + ' ' + (e.id || e.tagName) + ' ' + w[1]);
     });
   }
-  check('every step was drawn (mobile, Terms, TV, hosts, game, card)', seenSteps.join() === 'mobile,terms,tv,hosts,game,card', seenSteps);
+  check('every step was drawn (mobile, Terms, TV, hosts, game, About you, card)', seenSteps.join() === 'mobile,terms,tv,hosts,game,account,card', seenSteps);
   check('no text in the guide is set under 15px on any step', small.length === 0, small);
   check('no fixed width wider than a 375px phone leaves (343px inside the 16px margins)', wide.length === 0, wide);
   check('the guide is one column, at most 480px wide, with 16px margins', /max-width:480px/.test($(PR, 'vpFirstRun').children.filter(function (c) { return c.tagName === 'DIV'; })[0].getAttribute('style')) && /padding:0 16px/.test($(PR, 'vpFirstRun').getAttribute('style')));
@@ -202,8 +212,51 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('the borrowed Terms card is lifted to 15px inside the guide on a phone (text, labels, buttons)', !!lift && lift.tagName === 'STYLE' && /@media \(max-width:600px\)/.test(lift.textContent) && ['p', 'label', 'span', 'button'].every(function (t) { return lift.textContent.indexOf('#vpFirstRun #vpTermsCard ' + t) >= 0; }) && /font-size:15px!important/.test(lift.textContent), lift && lift.textContent);
   check('the screen code itself is big (30px) and can be read across a bar', /font:800 30px/.test($(P, 'vpFrTvCode') ? $(P, 'vpFrTvCode').getAttribute('style') : '') || /font:800 30px/.test($(PJ, 'vpFrTvCode').getAttribute('style')));
 
+  section('7. ABOUT YOU AND YOUR VENUE: two optional Account page questions, each only while it is empty (Dean, INBOX 24)');
+  var PA = page('61452510904', { noLogo: true }); var RA = PA.FR.open(ctxFor('owner', venue(), 'The Test Arms manager'), PA.deps); await RA.ready;
+  check('a new venue with the placeholder name and no logo: About you comes after the first game', RA.steps().join() === 'tv,hosts,game,account', RA.steps());
+  await RA.go('account'); await settle();
+  check('"About you and your venue", both optional, both questions there, and (the last step here) its button reads Finish', T(PA, 'vpFrTitle') === 'About you and your venue' && /Both are optional/.test(T(PA, 'vpFrBody')) && !!$(PA, 'vpFrMyName') && !!$(PA, 'vpFrLogoFile') && $(PA, 'vpFrNext').textContent === 'Finish' && !$(PA, 'vpFrNext').disabled, [T(PA, 'vpFrBody'), $(PA, 'vpFrNext').textContent]);
+  check('the logo is picked with a guide-styled "Choose a logo file" button that opens the real file box', T(PA, 'vpFrLogoPick') === 'Choose a logo file' && $(PA, 'vpFrLogoPick').tagName === 'LABEL' && $(PA, 'vpFrLogoPick').getAttribute('for') === 'vpFrLogoFile' && /opacity:0/.test($(PA, 'vpFrLogoFile').getAttribute('style')));
+  check('the logo box takes a PNG, WebP or JPEG and says a see-through PNG looks best on the TV', $(PA, 'vpFrLogoFile').getAttribute('accept') === 'image/png,image/webp,image/jpeg' && /shows on your TV between games\. A PNG with a see-through background looks best/.test(T(PA, 'vpFrLogoBox')));
+  function sent(re) { return CALLS.filter(function (c) { return re.test(c.url); }); }
+  await $(PA, 'vpFrNameSave').click();
+  check('no name typed: asked for it, nothing sent', /Type your name first/.test(T(PA, 'vpFrNameMsg')) && sent(/\/account\/my-name$/).length === 0, T(PA, 'vpFrNameMsg'));
+  $(PA, 'vpFrMyName').value = '  Alex   Rivera ';
+  await $(PA, 'vpFrNameSave').click(); await settle();
+  var mn = sent(/\/account\/my-name$/)[0];
+  check('"Save my name" goes to /account/my-name (the route the name screen uses), tidied, signed in', mn && mn.body.name === 'Alex Rivera' && Object.keys(mn.body).join() === 'name' && mn.opts.headers.Authorization === 'Bearer TOKEN-1', mn && mn.body);
+  check('then says it is saved, and "Skip for now" becomes Finish (the last step for a venue whose card is on)', /Saved\. You are Alex Rivera\./.test(T(PA, 'vpFrNameMsg')) && $(PA, 'vpFrNext').textContent === 'Finish', [T(PA, 'vpFrNameMsg'), $(PA, 'vpFrNext').textContent]);
+  var lf = $(PA, 'vpFrLogoFile');
+  lf.files = [{ name: 'menu.gif', type: 'image/gif', dataUrl: 'data:image/gif;base64,R0lG' }];
+  await (lf.handlers.change[0])();
+  check('a GIF is refused before anything is read or sent', /Use a PNG, WebP or JPEG image/.test(T(PA, 'vpFrLogoMsg')) && IMG.length === 0 && sent(/logo-upload$/).length === 0, T(PA, 'vpFrLogoMsg'));
+  lf.files = [{ name: 'big.png', type: 'image/png', dataUrl: 'data:image/png;base64,' + new Array(1500000).join('A') }];
+  await (lf.handlers.change[0])(); await settle();
+  check('a logo over 1MB is refused on the page with the Worker\'s own limit, nothing sent', /too big\. Keep it to 1MB or less/.test(T(PA, 'vpFrLogoMsg')) && sent(/logo-upload$/).length === 0, T(PA, 'vpFrLogoMsg'));
+  lf.files = [{ name: 'tiny.png', type: 'image/png', dataUrl: 'data:image/png;base64,TOOSMALLxx' }];
+  await (lf.handlers.change[0])(); await settle();
+  check('the Worker refuses one (too small for a TV): its own words are shown, no thumbnail', /too small to read on a TV/.test(T(PA, 'vpFrLogoMsg')) && $(PA, 'vpFrLogoThumb').style.display !== 'block', T(PA, 'vpFrLogoMsg'));
+  lf.files = [{ name: 'logo.png', type: 'image/png', dataUrl: 'data:image/png;base64,iVBORw0KGgo' }];
+  await (lf.handlers.change[0])(); await settle();
+  var lu = sent(/\/account\/logo-upload$/).pop();
+  check('a PNG goes to /account/logo-upload for THIS venue, as the data URL the Account page sends', lu && lu.body.venue_id === 'V1' && lu.body.data === 'data:image/png;base64,iVBORw0KGgo' && Object.keys(lu.body).sort().join() === 'data,venue_id' && lu.opts.headers['X-VP-Venue'] === 'V1', lu && lu.body);
+  check('then says it is on the TV and shows it', /Saved\. Your logo is on your TV now\./.test(T(PA, 'vpFrLogoMsg')) && $(PA, 'vpFrLogoThumb').getAttribute('src') === 'https://db/storage/v1/object/public/venue-logos/V1/new.png' && $(PA, 'vpFrLogoThumb').style.display === 'block', T(PA, 'vpFrLogoMsg'));
+  var PK = page('61452510904', { noLogo: true, card: false }); var RK = PK.FR.open(ctxFor('owner', venue(), 'The Test Arms manager'), PK.deps); await RK.ready; await RK.go('account');
+  check('as the last step its button reads Finish (it closes the guide); with the card step after it, "Skip for now"', RK.steps().join() === 'tv,hosts,game,account,card' && $(PK, 'vpFrNext').textContent === 'Skip for now', [RK.steps(), $(PK, 'vpFrNext').textContent]);
+  $(PK, 'vpFrMyName').value = 'Jo Park'; await $(PK, 'vpFrNameSave').click(); await settle();
+  check('and once a name is saved there, "Skip for now" becomes Next', /Saved\. You are Jo Park\./.test(T(PK, 'vpFrNameMsg')) && $(PK, 'vpFrNext').textContent === 'Next', [T(PK, 'vpFrNameMsg'), $(PK, 'vpFrNext').textContent]);
+  var PL = page('61452510904', { noLogo: true }); var RL = PL.FR.open(ctxFor('owner'), PL.deps); await RL.ready; await RL.go('account');
+  check('their real name already on (it is not "<venue> manager"): only the logo is asked', !$(PL, 'vpFrMyName') && !!$(PL, 'vpFrLogoFile'), RL.steps());
+  var PN = page('61452510904'); var RN = PN.FR.open(ctxFor('owner', venue(), ''), PN.deps); await RN.ready; await RN.go('account');
+  check('a logo already on and no name at all: only the name is asked', !!$(PN, 'vpFrMyName') && !$(PN, 'vpFrLogoFile'), RN.steps());
+  check('a real name and a logo: no About you step at all (nothing to ask)', R.steps().indexOf('account') === -1 && R.go('account') === null, R.steps());
+  var PF2 = page('61452510904', { screenFail: true }); var RF2 = PF2.FR.open(ctxFor('owner'), PF2.deps); await RF2.ready;
+  check('the logo read fails: the logo is still offered (optional), the guide still opens on the TV', RF2.steps().indexOf('account') >= 0 && RF2.step() === 'tv', RF2.steps());
+  check('it never asks for an address, a game night or anything the Account page does not store', !/suburb|address|game night|which night/i.test(T(PA, 'vpFrBody')));
+
   section('6. THE WORDS');
-  var words = [P, PJ, PH, P0, PR].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  var words = [P, PJ, PH, P0, PR, PA].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   check('lowercase venueplay in everything it says (never VenuePlay)', !/VenuePlay|Venueplay|VENUEPLAY/.test(words));
   check('no em dash or en dash, never "roster", never "the ACT"', !/[–—]/.test(words) && !/roster/i.test(words) && !/\bthe ACT\b/.test(words));
 

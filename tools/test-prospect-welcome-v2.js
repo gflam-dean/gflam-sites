@@ -68,7 +68,7 @@ function page(phone) {
   var fetch = function (url, opts) {
     var c = { url: String(url), opts: opts || {}, body: opts && opts.body ? JSON.parse(opts.body) : null }; CALLS.push(c);
     var ans = { ok: true };
-    if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, slides: [{ image_url: 'https://db/storage/v1/object/public/venue-ads/V1/a.png', seconds: 8 }, { image_url: 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg', seconds: 8 }] };
+    if (/\/account\/screen-get$/.test(c.url)) ans = { ok: true, logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png', slides: [{ image_url: 'https://db/storage/v1/object/public/venue-ads/V1/a.png', seconds: 8 }, { image_url: 'https://db/storage/v1/object/public/venue-ads/V1/b.jpg', seconds: 8 }] };
     if (/\/account\/card-link$/.test(c.url)) ans = { ok: true, has_card: false, card_url: 'https://www.venueplay.com.au/add-card?f=F1&t=abc', rate: 2.5, seats: 60, monthly: 150, ends_words: 'Thu 26 Nov' };
     if (/\/help\/venue\/ticket$/.test(c.url)) ans = { ok: true, ticket_no: 1007 };
     if (/\/account\/compliance-accept$/.test(c.url)) ans = { ok: true, compliance_accepted_at: '2026-10-28T02:00:00.000Z', compliance_accepted_by: 'Amit' };
@@ -95,7 +95,7 @@ var __rnd = 11;
 (async function () {
   section('1. THE FIRST RUN: who gets it');
   var P = page();
-  check('vp-firstrun.js exports VPFirstRun with the six steps in order', P.FR && P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,card', P.FR && P.FR.STEPS);
+  check('vp-firstrun.js exports VPFirstRun with the seven steps in order (About you is left out below: these venues have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,tv,hosts,game,account,card', P.FR && P.FR.STEPS);
   check('a prospect venue (terms_required), its manager: it opens', P.FR.wants(ctxFor('manager'), P.deps.storage) === true);
   check('its owner too', P.FR.wants(ctxFor('owner'), P.deps.storage) === true);
   check('a host: no (the tick and the card are not theirs)', P.FR.wants(ctxFor('host'), P.deps.storage) === false);
@@ -225,7 +225,7 @@ var __rnd = 11;
   var P3 = page(); P3.FR.open(ctxFor('manager'), P3.deps); P3.FR.open(ctxFor('manager'), P3.deps);
   var n = 0; walk(P3.body, function (e) { if (e.id === 'vpFirstRun') n++; return false; });
   check('opened twice, still one guide', n === 1, n);
-  var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150 }); } }); };
+  var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150, logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png' }); } }); };
   var R4 = P4.FR.open(ctxFor('manager'), P4.deps); await R4.ready;
   check('a venue whose card is on (every self sign-up that added one at Stripe): no card step at all', R4.steps().indexOf('card') === -1 && R4.go('card') === null && R4.steps().join() === 'mobile,terms,tv,hosts,game', R4.steps());
   await R4.go('game');
@@ -296,7 +296,7 @@ var __rnd = 11;
 
   var PSU = page('61452510904');
   PSU.deps.fetch = function (url, opts) { var c = { url: String(url), body: JSON.parse(opts.body) }; CALLS.push(c);
-    var ans = /card-link$/.test(c.url) ? { ok: true, has_card: true, rate: 3, seats: 60, monthly: 180 } : /screen-get$/.test(c.url) ? { ok: true, slides: [] } : { ok: true };
+    var ans = /card-link$/.test(c.url) ? { ok: true, has_card: true, rate: 3, seats: 60, monthly: 180 } : /screen-get$/.test(c.url) ? { ok: true, slides: [], logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png' } : { ok: true };
     return Promise.resolve({ ok: true, json: function () { return Promise.resolve(ans); } }); };
   var RSU = PSU.FR.open(ctxFor('owner', selfV()), PSU.deps); await RSU.ready;
   check('a self sign-up with its mobile, the Terms ticked at checkout and a card at Stripe: just Your TV, hosts and a first game, step 1 of 3',

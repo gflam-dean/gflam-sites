@@ -22,7 +22,12 @@
      4. Your hosts        name and mobile; the billing Worker's /account/host-add makes the login and texts
                           the host their own sign-in link (the same route as Account > People > Add a host).
      5. A first game      a test game, trivia first in three taps, or musical bingo, opening that console.
-     6. Your card         the card link for their own account (/account/card-link) and the price line,
+     6. About you         two optional Account page questions a new venue usually leaves empty (Dean, 5 Nov 2026,
+                          INBOX 24): their own name while it is still the "<venue> manager" the Worker gave
+                          them (/account/my-name, what HQ and the Hosts list show), and the venue's logo while
+                          it has none (/account/logo-upload, which puts it on the TV). Each only when empty;
+                          the step is left out when both are done. No new route, no migration.
+     7. Your card         the card link for their own account (/account/card-link) and the price line,
                           plus "Need a hand? Tap here and Dean will call": a help desk ticket, "Please
                           call me", with their mobile. No typing needed.
 
@@ -48,8 +53,8 @@
   "use strict";
   var BILLING_API = "https://api.venueplay.com.au";
   var KEY = "vpFirstRun:";
-  var STEPS = ["mobile", "terms", "tv", "hosts", "game", "card"];
-  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", tv: "Your TV", hosts: "Add your hosts", game: "Run your first game", card: "Add your card when you're ready" };
+  var STEPS = ["mobile", "terms", "tv", "hosts", "game", "account", "card"];
+  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", tv: "Your TV", hosts: "Add your hosts", game: "Run your first game", account: "About you and your venue", card: "Add your card when you're ready" };
 
   var C = { ink: "#0A0A0B", ink2: "#141418", pink: "#FF1F8E", pinkSoft: "#FF8CC6", text: "#E7E7EC", muted: "#C9C9D1", faint: "#8A8A94", line: "rgba(255,255,255,.12)", ok: "#2BD47D" };
   var FONT = "font-family:Manrope,system-ui,sans-serif";
@@ -147,6 +152,11 @@
     function drop(name) { var i = steps.indexOf(name); if (i >= 0 && steps.length > 1) steps.splice(i, 1); }
     if (ctx.user && ctx.user.phone) { drop("mobile"); state.mobile = "done"; }
     if (v.compliance_accepted_at) drop("terms");
+    /* Their name is still the placeholder the Worker wrote at set up ("<venue> manager"), or missing. */
+    var myRow = (ctx.staff || []).filter(function (r) { return r && r.venue_id === v.id; })[0] || null;
+    var myName = myRow ? String(myRow.display_name || "").trim() : "";
+    var needName = !myName || myName.toLowerCase() === (String(v.name || "") + " manager").toLowerCase();
+    var needLogo = true;   // confirmed by /account/screen-get below, before the first step is drawn
     var cardInfo = null;   // the first /account/card-link answer, which the card step uses rather than asking twice
     var timers = [];
     var me = { phone: "", email: "", token: "" };
@@ -157,6 +167,30 @@
     function screenCode() {
       if (v.join_code) return String(v.join_code);
       return (VP && VP.venueCode && v.slug) ? String(VP.venueCode(v.slug)) : "";
+    }
+    /* A chosen logo as the data: URL /account/logo-upload takes. PNG and WebP go as they are; a JPEG is redrawn
+       as a PNG (the Worker takes PNG or WebP only), no wider or taller than 1600px. deps.imageData stands in
+       for this in the suite, which has no FileReader or canvas. */
+    function imageData(file) {
+      if (typeof deps.imageData === "function") return deps.imageData(file);
+      return new Promise(function (ok, no) {
+        var fr = new root.FileReader();
+        fr.onerror = function () { no(new Error("read")); };
+        fr.onload = function () {
+          var url = String(fr.result || "");
+          if (/^data:image\/(png|webp);/.test(url)) return ok(url);
+          var im = new root.Image();
+          im.onerror = function () { no(new Error("decode")); };
+          im.onload = function () {
+            var k = Math.min(1, 1600 / Math.max(im.width || 1, im.height || 1));
+            var c = doc.createElement("canvas"); c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+            ok(c.toDataURL("image/png"));
+          };
+          im.src = url;
+        };
+        fr.readAsDataURL(file);
+      });
     }
     function el(tag, css, text) { var e = doc.createElement(tag); if (css) e.setAttribute("style", css); if (text != null) e.textContent = text; return e; }
     function clearTimers() { timers.forEach(function (t) { try { stop(t); } catch (e) {} }); timers = []; }
@@ -217,6 +251,7 @@
     function msgLine(id) { var m = el("p", "margin:8px 0 0;font-size:15px;line-height:1.5;color:" + C.pinkSoft + ";min-height:1px", ""); m.id = id; m.setAttribute("role", "status"); return m; }
     function setNext(label, enabled) {
       if (label === "Next" && steps.indexOf(state.step) === steps.length - 1) label = "Finish";   // the last step this venue has
+      if (label === "Skip for now" && steps.indexOf(state.step) === steps.length - 1) label = "Finish";   // an optional last step (About you) closes the guide: say so
       next.textContent = label; next.disabled = !enabled;
       next.style.opacity = enabled ? "1" : ".45";
     }
@@ -418,6 +453,66 @@
       mus.addEventListener("click", function () { leave("/app/musical/host.html"); });
       setNext("Next", true);
     };
+    /* ABOUT YOU AND YOUR VENUE (Dean, 5 Nov 2026, INBOX 24). Two optional questions, each only while its
+       answer is empty, each saved by the route the Account page already uses. Skippable as a whole. */
+    STEP.account = function () {
+      body.appendChild(el("p", TEXT, "Two quick ones for your Account page. Both are optional, and you can change them any time under Account."));
+      var saved = 0;
+      function savedOne() { saved++; setNext("Next", true); }
+      setNext("Skip for now", true);
+      if (needName) {
+        var nb = el("div", "margin:0 0 20px"); nb.id = "vpFrNameBox";
+        var nl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your name"); nl.setAttribute("for", "vpFrMyName");
+        var ni = el("input", INPUT); ni.id = "vpFrMyName"; ni.setAttribute("type", "text"); ni.setAttribute("autocomplete", "name"); ni.setAttribute("placeholder", "First and last name");
+        var nh = el("p", "margin:0 0 10px;font-size:15px;line-height:1.5;color:" + C.faint, "So your hosts and our team know who they are talking to.");
+        var ns = el("button", BTN_PINK, "Save my name"); ns.id = "vpFrNameSave"; ns.setAttribute("type", "button");
+        var nm = msgLine("vpFrNameMsg");
+        nb.appendChild(nl); nb.appendChild(nh); nb.appendChild(ni); nb.appendChild(ns); nb.appendChild(nm); body.appendChild(nb);
+        ns.addEventListener("click", function () {
+          var name = String(ni.value || "").replace(/\s+/g, " ").trim().slice(0, 60);
+          nm.style.color = C.pinkSoft;
+          if (!name) { nm.textContent = "Type your name first."; return Promise.resolve(false); }
+          ns.disabled = true; nm.textContent = "";
+          return billing("/account/my-name", { name: name }).then(function (r) {
+            ns.disabled = false;
+            if (!r || r.error || !r.ok) { nm.textContent = (r && r.error) || "That did not save. Try again."; return false; }
+            needName = false; if (myRow) myRow.display_name = r.name || name;
+            nm.style.color = C.ok; nm.textContent = "Saved. You are " + (r.name || name) + ".";
+            savedOne(); return true;
+          });
+        });
+      }
+      if (needLogo) {
+        var lb = el("div", ""); lb.id = "vpFrLogoBox";
+        var ll = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Your logo"); ll.setAttribute("for", "vpFrLogoFile");
+        var lh = el("p", "margin:0 0 10px;font-size:15px;line-height:1.5;color:" + C.faint, "It shows on your TV between games. A PNG with a see-through background looks best.");
+        /* The browser's own file button is unbranded and its "No file chosen" is small: the input stays (for the
+           keyboard and screen readers, focusable) but out of sight, and a guide-styled label opens it. */
+        var lf = el("input", "position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;font-size:15px"); lf.id = "vpFrLogoFile"; lf.setAttribute("type", "file"); lf.setAttribute("accept", "image/png,image/webp,image/jpeg");
+        var lp = el("label", BTN_GHOST + ";display:inline-block;text-align:center", "Choose a logo file"); lp.id = "vpFrLogoPick"; lp.setAttribute("for", "vpFrLogoFile");
+        var lm = msgLine("vpFrLogoMsg");
+        var lt = el("img", "display:none;max-width:200px;max-height:90px;margin:10px 0 0;background:#000;border-radius:8px;padding:6px"); lt.id = "vpFrLogoThumb"; lt.setAttribute("alt", "Your logo");
+        lb.appendChild(ll); lb.appendChild(lh); lb.appendChild(lf); lb.appendChild(lp); lb.appendChild(lm); lb.appendChild(lt); body.appendChild(lb);
+        lf.addEventListener("change", function () {
+          var file = lf.files && lf.files[0];
+          lm.style.color = C.pinkSoft;
+          if (!file) return Promise.resolve(false);
+          if (!/^image\/(png|webp|jpeg)$/.test(String(file.type || ""))) { lm.textContent = "Use a PNG, WebP or JPEG image."; return Promise.resolve(false); }
+          lm.style.color = C.faint; lm.textContent = "Uploading your logo...";
+          return Promise.resolve(imageData(file)).then(function (data) {
+            if (!data || !/^data:image\/(png|webp);base64,/.test(data)) { lm.style.color = C.pinkSoft; lm.textContent = "That image could not be read. Try another file."; return false; }
+            if (Math.floor((data.length - data.indexOf(",") - 1) * 3 / 4) > 1024 * 1024) { lm.style.color = C.pinkSoft; lm.textContent = "That logo is too big. Keep it to 1MB or less."; return false; }
+            return billing("/account/logo-upload", { venue_id: v.id, data: data }).then(function (r) {
+              if (!r || r.error || !r.ok) { lm.style.color = C.pinkSoft; lm.textContent = (r && r.error) || "Could not upload the logo. Try again."; return false; }
+              needLogo = false;
+              lm.style.color = C.ok; lm.textContent = "Saved. Your logo is on your TV now.";
+              if (r.url) { lt.setAttribute("src", r.url); lt.style.display = "block"; }
+              savedOne(); return true;
+            });
+          }, function () { lm.style.color = C.pinkSoft; lm.textContent = "That image could not be read. Try another file."; return false; });
+        });
+      }
+    };
     STEP.card = function () {
       var price = el("p", TEXT, "Your price is set on your usual crowd, not counted each time you play."); price.id = "vpFrPrice";
       body.appendChild(price);
@@ -539,10 +634,12 @@
       return steps[steps.length - 1];
     }
     count.textContent = ""; title.textContent = "Getting started";
-    api.ready = Promise.all([loadMe(), billing("/account/card-link", { venue_id: v.id })]).then(function (a) {
+    api.ready = Promise.all([loadMe(), billing("/account/card-link", { venue_id: v.id }), billing("/account/screen-get", { venue_id: v.id })]).then(function (a) {
       if (me.phone) { drop("mobile"); state.mobile = "done"; }
       cardInfo = a[1] || null;
       if (cardInfo && cardInfo.ok && cardInfo.has_card) drop("card");
+      if (a[2] && a[2].ok && a[2].logo_url) needLogo = false;   // a read that fails still offers the logo: it is optional
+      if (!needName && !needLogo) drop("account");
     }, function () {}).then(function () { return shell.parentNode ? api.go(resumeAt(state.step)) : null; });
     return api;
   }
