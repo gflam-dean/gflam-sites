@@ -4012,6 +4012,19 @@ def local_checks(which):
              'a new lobby in a multi-game night sends phones to that game, not the last one played', 6,
              'After trivia, the whole room typing the code into the bingo lobby lands on a dead trivia '
              'page, and after bingo a musical lobby shows last game\'s YOU WON'),
+            # D140 and D141: Dean's live play at Test Alpha, 6 Nov 2026 (findings B, C, C2, D, F, G, I), branch
+            # fix/session-lifecycle-6nov. Worker half (needs a restamp and a deploy) and console, phone and TV half.
+            ('D140. A trivia or musical lobby nobody is running is not live, and a phone on a dead night is told to re-join',
+             'test-session-lifecycle.js',
+             'a walked-away trivia or musical lobby is gone for /play, /join/info and the next lobby, which closes it and opens a fresh one; a bingo night, a running game and a young lobby are never touched; a finished night answers stale:true on /player/card', 19,
+             'A host who leaves without End game keeps the venue\'s one live session answering "musical" to /play for the '
+             'rest of the night, a bingo lobby is sent to "Up first: Musical bingo", and a phone that joined a lobby '
+             'sits on "You\'re in" with no card for the whole game'),
+            ('D141. A closed tab leaves no ghost "other device", a takeover keeps the room, the bingo console says bingo, and the musical wall and console say what they hear',
+             'test-session-lifecycle-client.js',
+             'a night another page holds is not closed by this page, a waiting close is sent before the other-device question, a reopened night is not closed, the bingo console re-posts its format, the musical phone re-joins on stale, the TV reports blocked sound from the lobby and on song 1, the console plays it at once, and the wall counts songs played', 28,
+             'A takeover that ends the lobby under the room ("No active game with that code"), a bingo lobby that '
+             'still says musical, a silent first song nobody was told about, or a wall that says "Song 14" twice'),
             ('D44. A paper card or team is one player, printing is capped, and a paper night holds its answers',
              'test-paper-players.js',
              'paper cards and sheets bill once, stop at ten, and keep a paper round\'s answers off every screen', 45,

@@ -3064,7 +3064,28 @@
       var v = __ctx && __ctx.venue; if(!v || !v.id) return;
       // A reload in the lobby brings the session back with the saved game. Reuse it: opening a
       // second one would leave the first counting a room that had already moved on.
-      if(G.sessionId && G.joinCode){ sendState(); seatSoon(); return; }
+      /* AND SAY "BINGO" TO THE SERVER AGAIN (Dean's live play, 6 Nov 2026). This used to return here and
+         ask the server nothing. A session this console remembers can be one the server has since been told
+         is another game's: Dean opened a bingo lobby after musical bingo and every phone typing the code
+         was sent to "Up first: Musical bingo", because the venue's one live session still said musical.
+         Trivia and musical already re-post on a reused session; this does the same. The Worker reuses the
+         same session (nothing is reopened) and writes lobby_format = bingo, which is what /play reads.
+         A different session coming back (the old one was closed, or replaced) is adopted. */
+      if(G.sessionId && G.joinCode){
+        sendState(); seatSoon();
+        try{ VP.noteOpenSession(G.sessionId, v.id); }catch(e){}
+        if(window.VP && VP.gameApiPost){
+          VP.gameApiPost("/session", { venue_id: v.id, caller: !!G.caller, format: "bingo", road: bingoRoad() }).then(function(r){
+            if(!r || r.error || !r.session_id) return;
+            if(r.session_id!==G.sessionId || (r.join_code && r.join_code!==G.joinCode)){
+              G.sessionId=r.session_id; G.joinCode=r.join_code||G.joinCode; G.seatDown=false;
+              try{ VP.noteOpenSession(r.session_id, v.id); }catch(e){}
+              sendState(); saveGame(); renderJoinCounts(); seatSoon();
+            }
+          }).catch(function(){});
+        }
+        return;
+      }
       if(!(window.VP && VP.gameApiPost)) return;
       // caller says whether tonight is real balls: the Worker then tells every phone to use its paper book.
       VP.gameApiPost("/session", { venue_id: v.id, format: "bingo", caller: !!G.caller, road: bingoRoad() }).then(function(r){

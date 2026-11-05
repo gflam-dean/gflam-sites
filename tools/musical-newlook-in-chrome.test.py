@@ -299,7 +299,7 @@ def tv(B, base, w, h, logo, tag, shots):
         R = [tl.get('r'), n.get('artist'), (n.get('wins') or {}).get('r')]
         ok(tagn + ' now playing: title, artist and sentence in that order, none touching the next', all(R) and R[0][3] <= R[1][1] + 1 and R[1][3] <= R[2][1] + 1, R)
         sn = n.get('songno') or {}
-        ok(tagn + ' now playing: "Song 14" bottom left, over the strip', sn.get('text') == 'Song 14' and bool(sn.get('r') and A) and abs(sn['r'][0] - A[0]) <= 1 and sn['r'][1] > A[3], sn)
+        ok(tagn + ' now playing: "14 songs played" bottom left, over the strip', sn.get('text') == '14 songs played' and bool(sn.get('r') and A) and abs(sn['r'][0] - A[0]) <= 1 and sn['r'][1] > A[3], sn)
         T = n.get('tiles') or []
         ok(tagn + ' now playing: the strip is the last five, with their artwork, the current one outlined in pink',
            [t['text'] for t in T] == played[-5:] and all(t['img'] for t in T) and [t['cur'] for t in T] == [False] * 4 + [True] and T[-1]['bc'] == 'rgb(255, 31, 142)', [(t['text'], t['cur'], t['bc'], t['img']) for t in T])
@@ -332,7 +332,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
         ok(tagn + ' listen: the strip keeps a dashed "Song 16" for it after the four before', (L.get('next') or {}).get('text') == 'Song 16' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
-        ok(tagn + ' listen: "Song 16" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == 'Song 16' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
+        ok(tagn + ' listen: "15 songs played" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == '15 songs played' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
         # the listen line as most hosts run it
         P.js(say(chan, [{'t': 'played', 'title': 'Sweet Caroline', 'artist': 'Neil Diamond', 'artworkUrl': '/__fixture/art-305080.svg', 'played': allp + ['Sweet Caroline'], 'reveal': 'end', 'replay': True}]))
         time.sleep(1)
