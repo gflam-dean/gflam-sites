@@ -163,7 +163,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   RESEND_EVENTS[wOf(names[3]).resend_id] = 'DOWN';
   RESEND_EVENTS[wOf(names[4]).resend_id] = 'delivered';
   var v4 = DB.vp_venues.filter(function (q) { return q.name === names[4]; })[0];
-  DB.vp_admin_audit.push({ id: newId(), action: 'signin_link_used', target: 'venue:' + v4.id, created_at: new Date().toISOString(), detail: {} });
+  DB.vp_admin_audit.push({ id: newId(), action: 'signin_link_used', target: 'venue:' + v4.id, created_at: new Date(Date.now() + 1000).toISOString(), detail: {} });   // a second after setup, as a real tap is
   var v5 = DB.vp_venues.filter(function (q) { return q.name === names[5]; })[0];
   DB.vp_admin_audit.push({ id: newId(), action: 'email_bounced', target: 'venue:' + v5.id, created_at: new Date().toISOString(), detail: { address: 'sam' + 46 + '@testcharlie.example', reason: '550 mailbox unavailable' } });
   var L = await call('/admin/prospects', {}, HQ);

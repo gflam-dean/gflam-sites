@@ -3626,7 +3626,7 @@ async function vpaProspectsData(env, dopts) {
     (await vpaSelectAll(env, 'vp_venue_staff', 'venue_id=in.(' + chunk + ')&select=venue_id,auth_user_id&order=venue_id.asc,auth_user_id.asc'))
       .forEach((s) => { (staff[s.venue_id] = staff[s.venue_id] || []).push(s.auth_user_id); });
     try {
-      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status,resend_id,email&order=send_at.desc'))
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + chunk + ')&select=venue_id,send_at,status&order=send_at.desc'))
         .forEach((w) => { if (!welcomes[w.venue_id]) welcomes[w.venue_id] = w; });
     } catch (_) { /* migration 124 not run: the column says "not recorded" */ }
   }
@@ -3754,7 +3754,6 @@ async function vpaAutopilotQuietProspects(request, env, json) {
   const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
-    delivery: p.delivery || null,          // where their account email got to, and the link (5 Nov 2026)
     venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!p.phone,
     mobile: vpaIsAuMobileE164(vpaNormaliseMobileAU(p.phone || '')) ? p.phone : null,   // for the text (3 Nov 2026)
     state: p.state, source: p.source, created_at: p.created_at, days_since_setup: p.days_since_setup,
@@ -3764,6 +3763,10 @@ async function vpaAutopilotQuietProspects(request, env, json) {
     link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
     link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
     called: !!p.called, call_requested: !!p.call_requested }));
+  /* Where their account email got to, and the link (5 Nov 2026), so the Mac can catch a bounce or a junked one. */
+  const deliveryOf = {};
+  (d.prospects || []).forEach((p) => { deliveryOf[p.venue_id] = p.delivery || null; });
+  quiet.forEach((q) => { q.delivery = deliveryOf[q.venue_id] || null; });
   return json({ ok: true, prospects: quiet, link_days: VPA_PROSPECT_LINK_DAYS });
 }
 /* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
@@ -3972,6 +3975,13 @@ async function vpaResendLastEvent(env, id) {
   } catch (_) { return null; }
 }
 async function vpaProspectDelivery(env, p, w, nowMs) {
+  if (w) {
+    // The list's own read keeps to send_at and status; the Resend id and address are read here, for this one.
+    try {
+      const full = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(p.venue_id) + '&select=resend_id,email,send_at,status&order=send_at.desc&limit=1');
+      if (full && full[0]) w = Object.assign({}, w, { resend_id: full[0].resend_id, email: full[0].email });
+    } catch (_) {}
+  }
   const out = { welcome: 'none', welcome_at: w ? w.send_at : null, bounce_domain: null, bounce_reason: null, link_opened_at: null, signed_in_at: p.last_sign_in_at || null };
   const addr = String((w && w.email) || p.email || '').trim().toLowerCase();
   if (w) {
