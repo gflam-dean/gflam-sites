@@ -87,6 +87,13 @@ function freshWorld(opts) {
       return { fetch: function (u, init) { return r.obj.fetch(typeof u === 'string' ? new Request(u, init) : u); } };
     } };
 }
+/* WHO MAY HAND THE ROOM OVER (6 Nov 2026, F2): the game Worker's roomHandoverAuth, as far as this
+   rig's pages go. The console is signed in (its VP session's token, "tok"); a TV and a phone send no
+   sign in and are only an ask. room-handover-auth.test.js holds the real check to this contract. */
+function RIG_AUTH(request) {
+  var h = (request && request.headers && request.headers.get('Authorization')) || '';
+  return Promise.resolve(h === 'Bearer tok' ? { signed: true, extra: true } : { signed: false });
+}
 function wjson(obj, status) { return new Response(JSON.stringify(obj), { status: status || 200 }); }
 function workerFetch(url, init) {
   var path = (/^https?:\/\/[^\/]+(\/[^?]*)/.exec(url) || [])[1] || '';
@@ -98,7 +105,7 @@ function workerFetch(url, init) {
   }
   if (path === '/room/handover' && init && init.method === 'POST') {
     if (WORKER_OLD) return Promise.resolve(wjson({ error: 'not found' }, 404));
-    return handleRoomHandover(new Request(url, init), ENV, wjson);
+    return handleRoomHandover(new Request(url, init), ENV, wjson, RIG_AUTH);
   }
   return Promise.reject(new Error('offline rig'));
 }
@@ -149,6 +156,31 @@ baseSandbox = function (dom, who) {
       return dud;
     }
     var w = new BrowserWS(u); w.who = who; SOCKETS.push(w); return w;
+  };
+  /* THE OLD ROAD HAS NO LINE EITHER (6 Nov 2026). With netDown the room was out of reach but the
+     fake Supabase bus was not, so a phone that fell back while it had no signal still talked on the
+     old road. That never mattered while the phone's own handover POST (which netDown does block)
+     was what moved the venue; since F2 the console follows what it HEARS there, so the bus must
+     keep the same rule: nothing in or out while the line is down, what was sent waits (supabase-js
+     buffers pushes), and when the line is back the channel joins again and says SUBSCRIBED, as a
+     real one does. sb.lineBack() is that moment; a suite calls it when it gives the signal back. */
+  var _held = [], _subs = [];
+  var _mk = sb.supabase.createClient;
+  sb.supabase = { createClient: function () {
+    var c = _mk.apply(null, arguments), _ch = c.channel;
+    c.channel = function (name, o) {
+      var ch = _ch.call(c, name, o), _send = ch.send, _on = ch.on, _subscribe = ch.subscribe;
+      ch.on = function (a, b, cb) { return _on.call(ch, a, b, function (e) { if (!sb.netDown) cb(e); }); };
+      ch.send = function (m) { if (sb.netDown) { _held.push([ch, _send, m]); return; } return _send.call(ch, m); };
+      ch.subscribe = function (cb) { _subs.push(cb); return _subscribe.call(ch, cb); };
+      return ch;
+    };
+    return c;
+  } };
+  sb.lineBack = function () {
+    var h = _held; _held = [];
+    _subs.forEach(function (cb) { fSetTimeout(function () { cb('SUBSCRIBED'); }, 1); });
+    h.forEach(function (x) { x[1].call(x[0], x[2]); });
   };
   sb.Date = Date;
   if (NEXT_ROOM_SRC) {

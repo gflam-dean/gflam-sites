@@ -74,6 +74,9 @@ eval(src.replace(/^export \{[\s\S]*?\};?\s*$/m, '')
         .replace(/^const /mg, 'var ')
         .replace(/^class VenueRoom /m, 'var VenueRoom = class VenueRoom '));
 
+/* A console signed in as staff at the venue: what roomHandoverAuth answers for the real caller.
+   The check itself is tested against the game Worker in room-handover-auth.test.js. */
+function SIGNED() { return Promise.resolve({ signed: true, extra: true }); }
 function json(obj, status) { return new Response(JSON.stringify(obj), { status: status || 200 }); }
 function join(room, role) { return room.fetch(new Request('https://room/ws?role=' + role + '&room=vp-ABC123', { headers: { Upgrade: 'websocket' } })); }
 
@@ -145,7 +148,7 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
              get: function (id) { return { fetch: function (u) { seen.push(id + ' ' + u); return Promise.resolve(json({ ok: true, closed: 2 })); } }; } };
   var badName = await handleRoomHandover(new Request('https://w/room/handover?room=vpa-11111111-1111-4111-8111-111111111111', { method: 'POST' }), { ROOM: ns }, json);
   ok('an answers room (vpa-) is never handed over', badName.status === 400 && seen.length === 0);
-  var offToo = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: ns, ROOM_OFF: '1' }, json);
+  var offToo = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: ns, ROOM_OFF: '1' }, json, SIGNED);
   ok('with ROOM_OFF on it still reaches the room, so the mark is set while the switch is on',
      offToo.status === 200 && seen.length === 1 && /id:vp-ABC123 https:\/\/room\/handover/.test(seen[0]), seen.join(','));
   var ns503 = { idFromName: function (n) { return n; }, get: function () { return { fetch: function () { return Promise.resolve(json({ error: 'room handed over', handed_over: true }, 503)); } }; } };
@@ -181,17 +184,69 @@ function join(room, role) { return room.fetch(new Request('https://room/ws?role=
   var calls = [];
   var nsV = { idFromName: function (n) { return n; },
               get: function (id) { return { fetch: function (u) { calls.push(id + ' ' + u); return Promise.resolve(json({ ok: true, closed: 1 })); } }; } };
-  var rv = await handleRoomHandover(new Request('https://w/room/handover?room=' + five[2] + '&venue=test-alpha', { method: 'POST' }), { ROOM: nsV }, json);
+  var rv = await handleRoomHandover(new Request('https://w/room/handover?room=' + five[2] + '&venue=test-alpha', { method: 'POST' }), { ROOM: nsV }, json, SIGNED);
   ok('a handover naming the venue reaches all five rooms', rv.status === 200 && rv._json.rooms === 5 && calls.length === 5 &&
      five.every(function (n) { return calls.some(function (c) { return c.indexOf(n + ' https://room/handover') === 0; }); }), calls.join(' | '));
   ok('and counts the sockets it closed across them', rv._json.closed === 5, JSON.stringify(rv._json));
   calls = [];
-  await handleRoomHandover(new Request('https://w/room/handover?room=vp-ZZZZZZ&venue=test-alpha&soft=1', { method: 'POST' }), { ROOM: nsV }, json);
+  await handleRoomHandover(new Request('https://w/room/handover?room=vp-ZZZZZZ&venue=test-alpha&soft=1', { method: 'POST' }), { ROOM: nsV }, json, SIGNED);
   ok('a players\' room on a join code of its own goes with them, and soft is passed to each room',
      calls.length === 6 && calls[0].indexOf('vp-ZZZZZZ ') === 0 && calls.every(function (c) { return /\?soft=1$/.test(c); }), calls.join(' | '));
   calls = [];
-  var rb = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123&venue=..%2Fetc', { method: 'POST' }), { ROOM: nsV }, json);
+  var rb = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123&venue=..%2Fetc', { method: 'POST' }), { ROOM: nsV }, json, SIGNED);
   ok('a venue that is not a slug is refused and reaches nothing', rb.status === 400 && calls.length === 0);
+
+  calls = [];
+  await handleRoomHandover(new Request('https://w/room/handover?room=vp-ZZZZZZ&venue=test-alpha', { method: 'POST' }), { ROOM: nsV }, json,
+                           function () { return Promise.resolve({ signed: true, extra: false }); });
+  ok('a players\' room the check did not find to be this venue\'s stays where it is: the venue\'s five go, it does not',
+     calls.length === 5 && !calls.some(function (c) { return c.indexOf('vp-ZZZZZZ ') === 0; }), calls.join(' | '));
+
+  print('\n== 6 Nov 2026 (B1 F2): a page with no sign in may only ASK ==');
+  calls = [];
+  var nsA = { idFromName: function (n) { return n; },
+              get: function (id) { return { fetch: function (u) { calls.push(id + ' ' + u); return Promise.resolve(json(/\/ask$/.test(u) ? { ok: true, asked: 1 } : { ok: true, closed: 3 })); } }; } };
+  function UNSIGNED() { return Promise.resolve({ signed: false }); }
+  var un = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: nsA }, json, UNSIGNED);
+  ok('an unsigned handover is refused, 401 sign in first', un.status === 401 && un._json.handed_over === false && /sign in/.test(un._json.error), JSON.stringify(un._json));
+  ok('and reaches the room only as an ask: nothing handed over, nothing closed',
+     calls.length === 1 && /vp-ABC123 https:\/\/room\/ask$/.test(calls[0]) && un._json.asked === 1, calls.join(' | '));
+  calls = [];
+  var unV = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123&venue=test-alpha', { method: 'POST' }), { ROOM: nsA }, json, UNSIGNED);
+  ok('naming the venue: still 401, and the room and each of the venue\'s five are only ASKED (the console may be in any of them), none handed over',
+     unV.status === 401 && calls.length === 6 && calls.every(function (c) { return /\/ask$/.test(c); }) && unV._json.asked === 6, calls.join(' | '));
+  calls = [];
+  var noAuth = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: nsA }, json);
+  ok('with no check passed in at all, nothing is handed over (safe by default)', noAuth.status === 401 && !calls.some(function (c) { return /\/handover/.test(c); }));
+  calls = [];
+  var thr = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: nsA }, json,
+                                     function () { return Promise.reject(new Error('db down')); });
+  ok('a check that throws is not signed: 401, nothing handed over', thr.status === 401 && !calls.some(function (c) { return /\/handover/.test(c); }));
+  calls = [];
+  var lim = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: nsA }, json,
+                                     function () { return Promise.resolve({ limited: true }); });
+  ok('a burst over the limit is refused 429 and reaches no room, not even as an ask', lim.status === 429 && calls.length === 0, calls.join(' | '));
+  calls = [];
+  var sg = await handleRoomHandover(new Request('https://w/room/handover?room=vp-ABC123', { method: 'POST' }), { ROOM: nsA }, json, SIGNED);
+  ok('the real caller, a signed console, still hands the room over', sg.status === 200 && calls.length === 1 && /vp-ABC123 https:\/\/room\/handover$/.test(calls[0]) && sg._json.closed === 3, calls.join(' | '));
+
+  print('\n== the room passes an ask to its consoles, and only to them ==');
+  sockets.length = 0; STORE.clear();
+  var rA = new VenueRoom(state, {});
+  var aTv = (await join(rA, 'tv')).webSocket.of, aHost = (await join(rA, 'host')).webSocket.of, aP = (await join(rA, 'phone')).webSocket.of;
+  var ar = await rA.fetch(new Request('https://room/ask', { method: 'POST' }));
+  ok('the ask reaches the console as room_ask', ar.status === 200 && ar._json.asked === 1 && aHost.got.some(function (m) { return m.t === 'room_ask'; }), JSON.stringify(ar._json));
+  ok('and nobody else: the TV and the phone hear nothing', aTv.got.length === 0 && aP.got.length === 0);
+  ok('no socket is closed and the room is not marked', !aTv.closed && !aHost.closed && !aP.closed && !STORE.has('ho') &&
+     (await rA.fetch(new Request('https://room/presence'))).status === 200);
+  var ar2 = await rA.fetch(new Request('https://room/ask', { method: 'POST' }));
+  ok('a second ask inside the quiet window reaches nobody', ar2._json.asked === 0 && ar2._json.quiet === true &&
+     aHost.got.filter(function (m) { return m.t === 'room_ask'; }).length === 1, JSON.stringify(ar2._json));
+  NOW += ROOM_ASK_QUIET_MS + 1;
+  var ar3 = await rA.fetch(new Request('https://room/ask', { method: 'POST' }));
+  ok('after the quiet window the next ask is passed on again', ar3._json.asked === 1);
+  await rA.webSocketMessage(aP, JSON.stringify({ t: 'room_ask' }));
+  ok('a phone saying room_ask is relayed to nobody', aHost.got.filter(function (m) { return m.t === 'room_ask'; }).length === 2 && aTv.got.length === 0);
 
   print('\n== soft: the word passed on does not push a mark later ==');
   sockets.length = 0; STORE.clear();

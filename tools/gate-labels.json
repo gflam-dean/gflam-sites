@@ -294,6 +294,7 @@
   "rng-evidence.test.js",
   "room-dropout-in-chrome.test.py",
   "room-fallback.test.js",
+  "room-handover-auth.test.js",
   "room-optin.test.js",
   "run.html loads the shared names",
   "run.html names a game rather than printing its format",
