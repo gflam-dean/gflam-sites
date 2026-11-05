@@ -189,8 +189,11 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
     /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=/.test(early.text) && !/workers\.dev/.test(early.html + early.text), early.text.slice(0, 900));
   check('day 23: the same friendly note, with the end date', !!mid23 && /How's it going\?/.test(mid23.text) && /runs until Wed 2 December/.test(mid23.text), mid23 && mid23.text.slice(0, 500));
   check('day 29, the day before it ends: "2 days left of your free month", ends on Wed 2 December', !!last && /2 days left of your free month/.test(last.text) && /ends on Wed 2 December/.test(last.text), last && last.text.slice(0, 500));
-  check('and exactly what happens with no card: paused, games off, the TV keeps the ads, nothing lost, the $2.50 offer goes, our price on the day after that',
-    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. The \$2\.50 a player offer you were set up on ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
+  /* Dean, 5 Nov 2026: "Your free month ends on <date>. If you'd like to keep going, add your card." Nothing about
+     when we charge, and plainly what a pause does. The 5-day grace words stay behind VPA_OFFER_GRACE_LIVE. */
+  check('and exactly what happens with no card: it pauses, the $2.50 offer ends, nothing lost, a card switches it back on; no charge timing on the last one, no 5-day grace yet',
+    !!last && /ends on Wed 2 December\. If you'd like to keep going, add your card\./.test(last.text) && /If there's no card by then\s+Your account pauses and the \$2\.50 offer ends\. Nothing is lost, and adding a card switches it all back on\./.test(last.text) &&
+    !/won't be charged|5 days/.test(last.text), last && last.text.slice(0, 1200));
   check('no em dash, no "about" on a price, no urgency words', got.every(function (g) { return !/[—–]/.test(g.msg.text) && !/about \$/.test(g.msg.text) && !/hurry|act now|last chance|don't miss/i.test(g.msg.text); }));
   check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,29]', C.row().reminders_sent);
   var mid = REM().length; await walk(bne(2026, 11, 26, 9, 0), bne(2026, 11, 26, 16, 0));

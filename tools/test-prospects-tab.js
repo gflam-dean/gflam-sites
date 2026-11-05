@@ -150,10 +150,13 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   r = await setUp({ name: 'Mobile Login Hotel', email: 'ml@ml.example', mobile: '0400 222 333' });
   var ml = DB.vp_venues.filter(function (x) { return x.name === 'Mobile Login Hotel'; })[0] || {};
   var lastMail = sent[sent.length - 1] || {};
-  check('the welcome says the account is set up for 10 players to start with, and that they can change it any time (Dean, 29 Oct 2026)',
-    /Your account is set up for 10 players to start with, and you can change that any time\./.test(lastMail.text || ''), (lastMail.text || '').slice(0, 900));
+  check('the welcome says clearly the account is set up for 10 players, and that they can change it any time (Dean, 29 Oct 2026; 5 Nov 2026: "say clearly")',
+    /Your account is set up for 10 players a session to start with\. You can change that any time\./.test(lastMail.text || '') && /<strong>10 players<\/strong>/.test(lastMail.html || ''), (lastMail.text || '').slice(0, 900));
   check('the welcome says plainly it is not a sign-up that starts billing, in words that match the code (phase 2): the month starts at first sign-in, no card, a reminder, a pause that takes the offer, cancel',
-    (lastMail.text || '').indexOf("Your first month is free, and it starts the first time you sign in. There's no card on your account, so nothing can be charged. You can add your card whenever suits, and we'll send you a reminder before your free month ends. If you don't add one, your account simply pauses and the offer price goes with it. If it's not for you, just hit cancel") !== -1 &&
+    /* Dean, 5 Nov 2026: "simply pauses" was too soft. Say plainly: paused, and the offer ends (today's rule; the
+       5-day grace words wait behind VPA_OFFER_GRACE_LIVE until the billing change ships). */
+    (lastMail.text || '').replace(/\s+/g, ' ').indexOf("Your first month is free and starts the first time you sign in. There's no card on your account, so nothing can be charged, and there's no lock-in. We'll remind you before your free month ends. To keep $2.50, add your card before your free month ends. If there's no card by then, your account is paused and the $2.50 offer ends. If it's not for you, just hit cancel") !== -1 &&
+    (lastMail.text || '').indexOf('simply pauses') === -1 && (lastMail.text || '').indexOf('5 days') === -1 &&
     /<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&amp;t=[0-9a-f]{32}"|<a href="https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=[^&"]+&t=[0-9a-f]{32}"/.test(lastMail.html || '') && (lastMail.html || '').indexOf('workers.dev') === -1, (lastMail.text || '').slice(0, 1400));
   check('a prospect whose login has their mobile gets the text-code welcome and NO one-click sign-in link at all',
     r.status === 200 && r.body.login && r.body.login.mobile && DB.vp_signin_links.filter(function (x) { return x.venue_id === ml.id; }).length === 0 &&

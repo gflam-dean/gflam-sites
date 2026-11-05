@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>venueplay · How are we going?</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  "LET US KNOW HOW WE'RE GOING" (Dean, 5 Nov 2026), from the faces on the receipt email.
+  The email's three faces open this page with the answer in the address: ?i=<Stripe invoice id>&r=3|2|1
+  &n=<invoice number, for the words only>&t=<signed token for that invoice> (vpaRateHtml in the billing Worker).
+
+  OPENING THIS PAGE NEVER SENDS ANYTHING, the cancel link's lesson (31 Oct 2026): mail scanners open every
+  link in an email and Microsoft's run the page's JavaScript. The face they tapped is shown picked; only the
+  Send button sends, with the optional comment.
+
+  WHERE IT GOES. The route that keeps these, POST https://api.venueplay.com.au/venue-rating { i, r, t,
+  comment }, is not built yet (~/venue-enrich/builds/NEEDS-DEAN.md). Until it answers ok, Send opens the
+  venue's mail app with the answer written out to support@venueplay.com.au, and the page says so, so
+  nothing is quietly lost and nothing claims to be saved when it was not.
+
+  NO ANALYTICS ON THIS PAGE. The invoice id and its token are in the address.
+-->
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --pink:#FF1F8E; --text:#E7E7EC; --muted:#9A9AA4;
+         --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+       color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.55;min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:24px 16px}
+  .card{max-width:520px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:30px 26px}
+  h1{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:24px;line-height:1.25;color:#fff;margin:0 0 12px}
+  p{color:var(--muted);font-size:16px;margin:0 0 14px}
+  .faces{display:flex;gap:10px;margin:4px 0 18px}
+  .faces button{flex:1;background:transparent;border:1px solid var(--line);border-radius:12px;padding:12px 4px;color:var(--text);
+                font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  .faces button span{display:block;font-size:28px;line-height:1.2;margin-bottom:4px}
+  .faces button.on{border-color:var(--pink);background:rgba(255,31,142,.12)}
+  label{display:block;font-size:14px;color:var(--muted);margin:0 0 6px}
+  textarea{width:100%;min-height:110px;padding:12px 13px;border-radius:10px;border:1px solid var(--line);background:#0E0D13;color:var(--text);
+           font:inherit;font-size:16px;resize:vertical}
+  button.go{margin-top:14px;width:100%;padding:14px 20px;border:0;border-radius:10px;background:var(--pink);color:#fff;
+            font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  button.go[disabled]{opacity:.6;cursor:default}
+  .err{color:#FF8FC4;font-size:14.5px;margin-top:12px}
+  .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+  a{color:var(--pink);font-weight:700;text-decoration:none}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1 id="head">Thanks for letting us know</h1>
+    <p id="lede">Here's what you picked. Add a comment if you like, then tap Send.</p>
+    <div id="ask">
+      <div class="faces" role="radiogroup" aria-label="How are we going?">
+        <button type="button" data-r="3" role="radio"><span aria-hidden="true">&#x1F604;</span>Loving it</button>
+        <button type="button" data-r="2" role="radio"><span aria-hidden="true">&#x1F642;</span>Good</button>
+        <button type="button" data-r="1" role="radio"><span aria-hidden="true">&#x1F610;</span>Could be better</button>
+      </div>
+      <label for="note">Anything you'd like to tell us? (optional)</label>
+      <textarea id="note" maxlength="1000"></textarea>
+      <button type="button" class="go" id="go">Send</button>
+    </div>
+    <p id="err" class="err hidden" role="alert"></p>
+    <noscript><p class="err">This page needs JavaScript. Reply to your receipt email and tell us how we're going.</p></noscript>
+    <p class="foot">Thank you for being with us. Questions? Email <a href="mailto:support@venueplay.com.au">support@venueplay.com.au</a>.</p>
+  </main>
+<script>
+(function () {
+  var VP_WORKER = "https://api.venueplay.com.au", TO = "support@venueplay.com.au";
+  var WORDS = { "3": "Loving it", "2": "Good", "1": "Could be better" };
+  function $(id) { return document.getElementById(id); }
+  /* The same param() as /unsubscribe, letter for letter (tools/check-twins.py). */
+  function param(n) {
+    try {
+      var m = new RegExp("[?&]" + n + "=([^&]*)").exec(location.search);
+      return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : "";
+    } catch (e) { return ""; }
+  }
+  var i = param("i"), t = param("t"), n = param("n").replace(/[^A-Za-z0-9-]/g, "").slice(0, 24), r = param("r");
+  if (!WORDS[r]) r = "";
+  var faces = document.querySelectorAll(".faces button");
+  function pick(v) {
+    r = v;
+    for (var k = 0; k < faces.length; k++) {
+      var on = faces[k].getAttribute("data-r") === v;
+      faces[k].className = on ? "on" : ""; faces[k].setAttribute("aria-checked", on ? "true" : "false");
+    }
+  }
+  for (var k = 0; k < faces.length; k++) faces[k].addEventListener("click", function () { pick(this.getAttribute("data-r")); });
+  if (r) pick(r); else { $("head").textContent = "How are we going?"; $("lede").textContent = "Pick a face, add a comment if you like, then tap Send."; }
+  function done(title, text) {
+    $("head").textContent = title; $("lede").textContent = text;
+    $("ask").className = "hidden"; $("err").className = "err hidden";
+  }
+  /* Until /venue-rating is built: the venue's own mail app, with the answer written out. */
+  function byEmail(note) {
+    var subject = "How we're going: " + WORDS[r] + (n ? " (" + n + ")" : "");
+    var body = "How we're going: " + WORDS[r] + "\n\n" + (note ? note + "\n\n" : "") + (i ? "Ref: " + i + "\n" : "");
+    var MAIL = ["mailto", TO].join(":");   // built, so the site's link checker does not read a half address as a page
+    var link = MAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    done("Nearly there", "Your email app should open with your answer in it. Hit send there and it comes straight to our team.");
+    var p = document.createElement("p"), a = document.createElement("a");
+    a.href = link; a.textContent = "Didn't open? Tap here to email it to us";
+    p.appendChild(a); $("lede").parentNode.insertBefore(p, $("err"));
+    location.href = link;
+  }
+  /* THE BUTTON is the only thing that sends. A form post, so the browser sends it without a preflight. */
+  $("go").addEventListener("click", function () {
+    if (!r) { $("err").textContent = "Pick a face first."; $("err").className = "err"; return; }
+    var note = String($("note").value || "").trim().slice(0, 1000), go = $("go");
+    go.disabled = true; go.textContent = "One moment...";
+    if (!i || !t) { byEmail(note); return; }
+    fetch(VP_WORKER + "/venue-rating", { method: "POST", credentials: "omit",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "i=" + encodeURIComponent(i) + "&r=" + encodeURIComponent(r) + "&t=" + encodeURIComponent(t) + "&comment=" + encodeURIComponent(note) })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (a) {
+        if (a && a.ok) done("Thank you", "That's come straight to our team. Thanks for taking the time.");
+        else byEmail(note);
+      })
+      .catch(function () { byEmail(note); });
+  });
+})();
+</script>
+</body>
+</html>

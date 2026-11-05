@@ -383,12 +383,18 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
       check(c[0] + ': and no "this link works once, next time sign in with your email" story', !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 700));
     }
     check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
-    check(c[0] + ': the offer in words: locked in at $2.50 for as long as they are with us, start by 30 November, first month free, no lock-in', /To lock in the \$2\.50 deal we have on at the moment, we've set your account up at \$2\.50 a player a month on your usual crowd, and it stays at \$2\.50 for as long as you're with us\. You just need to start by 30 November\. Your first month is free, and there's no lock-in\./.test(txt) && !/offer runs|Our November offer/.test(txt), txt);
+    /* Dean, 5 Nov 2026 evening: the offer in his words, then that the card keeps it, said plainly (the 5-day grace
+       words wait behind VPA_OFFER_GRACE_LIVE until the billing change ships). */
+    check(c[0] + ': the offer in words: $2.50 on the usual crowd, stays $2.50 for as long as they are with us, start by 30 November; first month free, no lock-in; add the card before the free month ends to keep it, or it pauses and the offer ends',
+      /It's \$2\.50 a player a month on your usual crowd, and it stays \$2\.50 for as long as you're with us\. You just need to start by 30 November\./.test(txt) &&
+      /Your first month is free and starts the first time you sign in\. There's no card on your account, so nothing can be charged, and there's no lock-in\./.test(txt) &&
+      /To keep \$2\.50, add your card before your free month ends\. If there's no card by then, your account is paused and the \$2\.50 offer ends\./.test(txt) &&
+      !/offer runs|Our November offer|simply pauses|5 days/.test(txt), txt);
     check(c[0] + ': with no sender given (HQ), signed "the venueplay team" with a lowercase t, then the website', /Cheers, the venueplay team venueplay\.com\.au/.test(txt) && !/The venueplay team/.test(txt) && !/Cheers, Dean/.test(txt), txt);
     check(c[0] + ': the button is centred in the login box (centred table with auto margins, centred cell), for Outlook and Gmail', /<table role="presentation" align="center"[^>]*style="margin:16px auto 0"><tr>\s*<td align="center"><a href="[^"]+" style="display:inline-block;background:#FF1F8E[^>]*>Open your venueplay<\/a>/.test(html), html.slice(html.indexOf('Open your venueplay') - 500, html.indexOf('Open your venueplay') + 30));
     check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
     check(c[0] + ': on brand (version 3): the venueplay logo in the dark header, as every venueplay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
-      /background:#0A0A0B[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-on-dark\.png"[^>]*alt="venueplay"/.test(html));
+      /background:#0A0A0B[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-header-solid\.png"[^>]*alt="venueplay"/.test(html));
     check(c[0] + ': who we are (venueplay and its ABN, never Gflam: Dean, 29 Oct 2026), the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up venueplay for/.test(txt) && /venueplay\s*\.\s*ABN 35 679 383 049/.test(txt) && !/Gflam/i.test(html) &&
       L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[2])) !== -1 && L.indexOf('tel:+61752283667') !== -1 && L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1, L);
     check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your venueplay (https://www.venueplay.com.au/app/' + (c[0] === 'VIC' ? '?signin=sms#m=0452510904' : 'go#t=')) !== -1, msg.text);
@@ -401,7 +407,8 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   world(); ENV.FOUNDING_CODES = '';
   await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: '' })), ENV, J);
   var std = sent[0] ? visible(sent[0].html) : '';
-  check('with no offer running, the email quotes the standard $3.00 and names no offer month', /It's \$3\.00 a player a month on your usual crowd, first month free, no lock-in\./.test(std) && !/offer runs/.test(std) && !/lock in the/.test(std), std);
+  check('with no offer running, the email quotes the standard $3.00, first month free and no lock-in, a plain pause, and names no offer month', /It's \$3\.00 a player a month on your usual crowd\./.test(std) && /Your first month is free and starts the first time you sign in\./.test(std) && /no lock-in/.test(std) &&
+    /If there's no card when your free month ends, your account is paused until you add one\./.test(std) && !/offer runs|offer ends|To keep/.test(std) && !/lock in the/.test(std), std);
   check('the offer deadline: the last day of the code\'s month (30 November, 31 December, 28 February in 2027), nothing when no month is known, and the phrase helper is untouched',
     vpaOfferDeadline('OFFER-NOV-2026') === ' You just need to start by 30 November.' && vpaOfferDeadline('OFFER-DEC-2026') === ' You just need to start by 31 December.' && vpaOfferDeadline('OFFER-FEB-2027') === ' You just need to start by 28 February.' &&
     vpaOfferDeadline(null) === '' && vpaOfferDeadline('junk') === '' && vpaOfferMonthPhrase('OFFER-NOV-2026') === 'while the November offer runs');

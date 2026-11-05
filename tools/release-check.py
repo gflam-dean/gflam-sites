@@ -3833,11 +3833,13 @@ def local_checks(which):
             # never Gflam Group, never founding; 31 Oct: the paid-invoice email delivers Stripe's tax invoice and
             # says "Tax invoice"), branch
             # fix/receipts-and-host-titles-31oct. The billing page's words: tools/billing-words-in-chrome.test.py.
-            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email says Tax invoice',
+            # 5 Nov 2026 (fix/email-copy-8nov): the paid-invoice email is the RECEIPT and links Stripe's tax invoice
+            # (Dean: "don't call the email itself a tax invoice unless it is one").
+            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email is a receipt that links the tax invoice',
              'test-receipts-plain-words.js',
-             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
-             'A venue reading "Founding Membership" or Gflam Group on its tax invoice email, or that email no longer '
-             'saying it is the tax invoice it delivers'),
+             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan, monthly" over "N players at $x each" with Stripe\'s quantity, rate and dates; the paid-invoice email is the receipt ("Your venueplay receipt: $x paid", "Prices include GST. venueplay, ABN 35 679 383 049.", never "Tax invoice." in its small print), "View your tax invoice" opening Stripe\'s hosted invoice and the PDF beside it, ending "Thank you for being with us."; the receipt, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
+             'A venue reading "Founding Membership" or Gflam Group on a billing email, a receipt calling itself a tax '
+             'invoice, or the tax invoice no longer one tap away'),
             # D100: the lobby poll answered from the Worker's memory (31 Oct 2026, after the 30 Oct live ramp bent the
             # database gateway at about 43 calls a second), branch fix/lobby-poll-31oct.
             ('D100. A lobby full of phones costs the database one read per few seconds, and still moves with the host',
@@ -3918,6 +3920,12 @@ def local_checks(which):
              'runs vpbSetPlayers: an add with 3 days of the cycle left is still one full month on the next invoice, live tonight, quantity up with no proration; a drop waits for the renewal, refunds and credits nothing, so 30 added for one night cost a month; a quote changes nothing; a pending drop then up charges only the new players; a yearly plan keeps its pro rata and credit; VPB_BILLING_RULES_3NOV is off unless it is the string 1; with it on, an undo within 59 minutes with no game started deletes the invoice line, puts the capacity and quantity back and writes the HQ history row, while 61 minutes, a game started since, a part-way drop, a refused delete, no add on record and a yearly plan all fall back to the ordinary reduction', 40,
              'A venue charged a month for players it undid within the hour (or let off a month it used), an undo '
              'that leaves the invoice line standing, or the new rules switched on by a value nobody set'),
+            # D115: Dean's 5 Nov 2026 evening email notes, branch fix/email-copy-8nov.
+            ('D115. The receipt asks how we are going with signed one-tap faces, Manage your plan opens Account > Billing, and the 5-day grace words stay OFF',
+             'test-receipt-survey.js',
+             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned), "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in two plain lines with room before the amount; VPA_OFFER_GRACE_LIVE is false, the welcome and reminder say a pause ends the offer, and switched on they say the 5 days', 35,
+             'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
+             'console, or the emails promising a grace the billing does not give'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,

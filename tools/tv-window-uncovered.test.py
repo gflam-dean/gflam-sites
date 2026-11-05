@@ -14,7 +14,7 @@ setting up the TV:
     the gate uses and requires its new answer to be the JSON's, word for word, and its guard to be
     the answer 106 seeded (so it applies on the live database, instead of silently doing nothing)
   - the four emails a new venue gets (welcome, welcome-group, welcome-hq, venue-onboarding): the
-    "Set up your screen" step carries the one line
+    "Put venueplay on your TV" step ends on the short tip (Dean, 5 Nov 2026 evening: keep it simple)
   - the training walkthrough's first caption
   - and /help draws the venue FAQ at all (the audience mount and the widget in page mode), so the
     words have a page to land on
@@ -97,11 +97,12 @@ w = read('venueplay/app/vp-help.js')
 check('the widget falls back on /data/help-faq.json when the Worker cannot be reached', '/data/help-faq.json' in w)
 
 # ---------------------------------------------------------------- the emails a new venue gets
-LINE = 'then go full screen with nothing covering the window. A page hidden behind another window slows down and shows RECONNECTING.'   # the emails' wording since 5 Nov 2026
+# Dean, 5 Nov 2026 evening: the TV step is one simple line for every screen, so the tip is one short sentence after it.
+LINE = 'six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.'
 for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
     s = re.sub(r'<!--.*?-->', ' ', read('venueplay/emails/%s.html' % t), flags=re.S)
-    cell = re.search(r'<strong>Set up (?:your|the|each) screen\.</strong>(.*?)</td>', s, re.S)
-    check('email %s: the "Set up your screen" step says full screen with nothing over it, and what RECONNECTING means' % t,
+    cell = re.search(r'<strong>Put venueplay on (?:your|each|the) TV\.</strong>(.*?)</td>', s, re.S)
+    check('email %s: the TV step says keep it full screen with nothing covering it, and why' % t,
           bool(cell) and LINE in cell.group(1) and not EM_DASH.search(cell.group(1)), cell and cell.group(1)[-160:])
 
 # ---------------------------------------------------------------- the training walkthrough

@@ -117,6 +117,29 @@
      which does not exist, and a missing page on this site answers with the MARKETING HOMEPAGE. So a
      host whose login ran out mid-night was dropped on the sales site (found 30 Sep 2026). */
   var SIGNIN    = "/app/";            // the sign-in shell
+  /* BACK WHERE THE LINK WAS GOING, AFTER THE TEXT CODE (Dean, 5 Nov 2026: "Manage your plan must link to the
+     right place, the Account > Billing page"). An email link to /app/billing.html#billing opened signed out
+     went to the sign-in and then the console, so the owner never saw Billing. requireAuth notes the page
+     (one /app/*.html page and an optional #tab, nothing else) in this tab for 30 minutes, and the console
+     reads it ONCE, straight after sign-in, and goes there. The page still checks who may see it. */
+  /* Pages serves /app/billing.html as /app/billing (a 308, the # kept), so the page is noted with or without .html. */
+  var AFTER_KEY = "vpAfterSignIn", AFTER_RE = /^\/app\/[a-z][a-z0-9-]*(\.html)?(#[a-zA-Z]{1,20})?$/, AFTER_MS = 30 * 60 * 1000;
+  function rememberAfterSignIn() {
+    try {
+      var to = String(root.location.pathname || "") + (/^#[a-zA-Z]{1,20}$/.test(String(root.location.hash || "")) ? root.location.hash : "");
+      if (!AFTER_RE.test(to) || /^\/app\/(index|hq)(\.html)?(#|$)/.test(to)) return;
+      root.sessionStorage.setItem(AFTER_KEY, JSON.stringify({ to: to, at: Date.now() }));
+    } catch (e) {}
+  }
+  function afterSignIn() {
+    try {
+      var raw = root.sessionStorage.getItem(AFTER_KEY);
+      if (!raw) return null;
+      root.sessionStorage.removeItem(AFTER_KEY);
+      var o = JSON.parse(raw);
+      return (o && AFTER_RE.test(String(o.to)) && Date.now() - Number(o.at) >= 0 && Date.now() - Number(o.at) < AFTER_MS) ? String(o.to) : null;
+    } catch (e) { return null; }
+  }
 
   var _client  = null;   // the Supabase client singleton
   var _ctx     = null;   // last resolved Context
@@ -622,7 +645,7 @@
   function requireAuth(opts) {
     opts = opts || {};
     return ready().then(function (ctx) {
-      if (!ctx.authed) { root.location.href = SIGNIN; return new Promise(function () {}); }
+      if (!ctx.authed) { rememberAfterSignIn(); root.location.href = SIGNIN; return new Promise(function () {}); }
       if (opts.venue && !ctx.currentVenueId) { root.location.href = homeHref(ctx); return new Promise(function () {}); }
       if (opts.roles && opts.roles.length) {
         var ok = ctx.isAdmin || (ctx.role && opts.roles.indexOf(ctx.role) >= 0);
@@ -1565,6 +1588,7 @@
     loadSettings: loadSettings,
     saveSettings: saveSettings,
     requireAuth: requireAuth,
+    afterSignIn: afterSignIn,
     signOut: signOut,
     homeHref: homeHref,
     venueCode: venueCode,

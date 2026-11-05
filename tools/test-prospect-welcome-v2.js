@@ -564,7 +564,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   check('a prospect who pressed Cancel: refused, saying so, and nothing goes', rw.status === 409 && /Cancel/.test(rw.body.error) && sent.length === 1, rw.body);
   DB.vp_prospects[0].cancelled_at = null; DB.vp_prospects[0].paused_at = '2026-11-28T14:00:00Z';
   rw = await resend({ venue_id: v.id });
-  check('a prospect whose free month ran out (paused) gets the add-your-card email, the card being what brings them back', rw.status === 200 && rw.body.template === 'card' && (sent[1] || {}).subject === 'Your venueplay account is ready. One thing left.', rw.body);
+  check('a prospect whose free month ran out (paused) gets the add-your-card email, the card being what brings them back', rw.status === 200 && rw.body.template === 'card' && (sent[1] || {}).subject === 'Your venueplay account is ready', rw.body);
   DB.vp_prospects[0].paused_at = null; DB.venueplay_founding[0].stripe_subscription_id = 'sub_1';
   var n0 = sent.length;
   rw = await resend({ venue_id: v.id });
@@ -604,9 +604,9 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var dc = await resend({ venue_id: U(201), dry_run: true });
   rw = await resend({ venue_id: U(201) });
   again = sent[0] || {};
-  check('an ordinary account still gets the add-your-card email ("One thing left."), with its card link, to its contact only, and the dry run said so first',
-    dc.status === 200 && dc.body.template === 'card' && dc.body.subject === 'Your venueplay account is ready. One thing left.' && rw.status === 200 && rw.body.template === 'card' && sent.length === 1 &&
-    again.subject === 'Your venueplay account is ready. One thing left.' && onlyTo(again, 'owner@ordinary.example') && /\/add-card\?f=/.test(again.html) && /\/add-card\?f=/.test(rw.body.card_url || ''), [dc.body, rw.body, again.subject]);
+  check('an ordinary account still gets the add-your-card email ("Your venueplay account is ready", 5 Nov 2026), with its card link, to its contact only, and the dry run said so first',
+    dc.status === 200 && dc.body.template === 'card' && dc.body.subject === 'Your venueplay account is ready' && rw.status === 200 && rw.body.template === 'card' && sent.length === 1 &&
+    again.subject === 'Your venueplay account is ready' && onlyTo(again, 'owner@ordinary.example') && /\/add-card\?f=/.test(again.html) && /\/add-card\?f=/.test(rw.body.card_url || ''), [dc.body, rw.body, again.subject]);
   check('and no sign-in link is made for it, the audit row says the card template', DB.vp_signin_links.length === 0 && DB.vp_admin_audit.some(function (a) { return a.action === 'welcome_resent' && a.detail.template === 'card'; }) &&
     vpaAuditSentence(DB.vp_admin_audit.filter(function (a) { return a.action === 'welcome_resent'; })[0], 'Ordinary') === 'Sent Ordinary the add-your-card email again.');
   var sa = await resend({ venue_id: U(201), send_at: new Date(Date.now() + 3600000).toISOString() });
@@ -625,7 +625,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var hqWin = { VPProspects: { isProspect: function (id) { return !!PROSPECT_IDS[id]; } } };
   var fakePost = function (path, body) { POSTS.push({ path: path, body: body });
     if (body.dry_run) return Promise.resolve(body.venue_id === 'P1' ? { ok: true, dry_run: true, template: 'prospect', to: 'laketavern@ozemail.com.au', subject: 'Your venueplay account for Lakeside Tavern', signin: 'one_click', sender: 'Harry', slides: 4 }
-      : { ok: true, dry_run: true, template: 'card', to: 'owner@ordinary.example', subject: 'Your venueplay account is ready. One thing left.', comp: false });
+      : { ok: true, dry_run: true, template: 'card', to: 'owner@ordinary.example', subject: 'Your venueplay account is ready', comp: false });
     return Promise.resolve({ ok: true, sent: true, template: 'prospect', to: 'laketavern@ozemail.com.au' }); };
   var hqFns = (new Function('window', 'S', 'workerPost', 'vpAsk', 'vpTell',
     liftFn(HQ, 'resendLabel') + '\n' + liftFn(HQ, 'resendSignInWords') + '\n' + liftFn(HQ, 'hqResendWelcome') + '\nreturn { label: resendLabel, go: hqResendWelcome };'))(
@@ -640,7 +640,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     /one-tap sign-in link/.test(ASKED[0]) && /4 slides/.test(ASKED[0]) && /signed Harry/.test(ASKED[0]) && !/card/i.test(ASKED[0]), [POSTS, ASKED[0]]);
   ANSWER = true;
   await hqFns.go('C1', hqBtn);
-  check('for an ordinary venue the confirm names the add-your-card email, and Yes then sends it (no dry run)', /the add-your-card email again/.test(ASKED[1]) && /One thing left/.test(ASKED[1]) &&
+  check('for an ordinary venue the confirm names the add-your-card email, and Yes then sends it (no dry run)', /the add-your-card email again/.test(ASKED[1]) && /Your venueplay account is ready/.test(ASKED[1]) &&
     POSTS.length === 3 && POSTS[2].path === '/admin/resend-welcome' && !POSTS[2].body.dry_run && POSTS[2].body.venue_id === 'C1' && /Sent to/.test(TOLD[0] || ''), [ASKED[1], POSTS, TOLD]);
   var PANE2 = readFile('venueplay/app/vp-prospects-hq.js');
   var PW = { VP: null, fetch: function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };

@@ -8,8 +8,11 @@
          (at $2.50 / month)") is printed in plain words, "venueplay plan (monthly)". The Stripe
          product keeps its name; only what our emails print changes (vpaPlainLineDesc).
      (b) the paid-invoice email DELIVERS Stripe's tax invoice (Dean, 31 Oct 2026: "I thought we were
-         delivering the Stripe tax invoice"), so it says "Tax invoice. venueplay, ABN ...", its subject
-         is "Your venueplay invoice <number> - $x", and "View invoice" opens Stripe's hosted invoice.
+         delivering the Stripe tax invoice") and is itself the payment RECEIPT (Dean, 5 Nov 2026: "make
+         the email a payment receipt, with a clear View your tax invoice button. Don't call the email
+         itself a tax invoice unless it is one"): its subject is "Your venueplay receipt: $x paid", its
+         GST box says "Prices include GST. venueplay, ABN ..." and never "Tax invoice", and "View your
+         tax invoice" opens Stripe's hosted invoice, with the PDF beside it.
      (c) the business name line reads "venueplay, ABN 35 679 383 049".
 
    It RUNS the shipped senders (the receipt, the payment reminder, the declined card for a
@@ -85,22 +88,23 @@ async function main() {
   check('the big-night count still reads Stripe\'s own line (12 extra players over 1 night)',
         (function () { var o = vpaOverageFromInvoice(invoice()); return o.nights === 1 && o.players === 12 && o.cents === 2400; })(), vpaOverageFromInvoice(invoice()));
 
-  print('\n(b) and (c) The paid invoice, delivering Stripe\'s tax invoice');
+  print('\n(b) and (c) The paid invoice: a receipt that links Stripe\'s tax invoice');
   sent = [];
   await vpaFireInvoiceEmail(ENV, invoice());
   var r = last(), rt = visible(r.html);
   check('CONTROL: the receipt was sent, with its lines', !!r.html && rt.indexOf('What this is for') !== -1, r.subject);
   clean('receipt', rt + ' ' + (r.subject || ''));
-  check('it is the tax invoice: "Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST."', rt.indexOf('Tax invoice. ' + NAME_LINE + '. Prices include GST.') !== -1, rt.slice(-700));
-  check('it is never called a receipt in its own small print', rt.indexOf('Receipt. venueplay') === -1);
-  check('the subject: "Your venueplay invoice ABC-0001 - $66.50"', r.subject === 'Your venueplay invoice ABC-0001 - $66.50', r.subject);
-  check('the inbox preview: "Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside."', rt.indexOf('Paid $66.50. Your tax invoice ABC-0001 and what it covers are inside.') !== -1, rt.slice(0, 160));
-  check('the body: "Here is your invoice ABC-0001, and exactly what it is for."', rt.indexOf('Here is your invoice ABC-0001, and exactly what it is for.') !== -1);
-  check('the page title: "Your venueplay invoice"', /<title>Your venueplay invoice<\/title>/.test(r.html));
-  check('the subscription line reads "1 Player × venueplay plan (monthly) (at $2.50 / month)"', rt.indexOf('1 Player × venueplay plan (monthly) (at $2.50 / month)') !== -1, rt.slice(0, 600));
+  check('the GST box: "Prices include GST. venueplay, ABN 35 679 383 049." and the email never calls itself a tax invoice in its small print', rt.indexOf('Prices include GST. ' + NAME_LINE + '.') !== -1 && rt.indexOf('Tax invoice.') === -1, rt.slice(-700));
+  check('the subject: "Your venueplay receipt: $66.50 paid"', r.subject === 'Your venueplay receipt: $66.50 paid', r.subject);
+  check('the inbox preview: "Paid $66.50. Your receipt, and your tax invoice ABC-0001 one tap away."', rt.indexOf('Paid $66.50. Your receipt, and your tax invoice ABC-0001 one tap away.') !== -1, rt.slice(0, 160));
+  check('the body: "Thanks, your payment has gone through. This is your receipt, and your tax invoice ABC-0001 is one tap away below."', rt.indexOf('Thanks, your payment has gone through. This is your receipt, and your tax invoice ABC-0001 is one tap away below.') !== -1, rt.slice(0, 300));
+  check('the page title: "Your venueplay receipt"', /<title>Your venueplay receipt<\/title>/.test(r.html));
+  check('the subscription line reads "venueplay plan, monthly" over "1 player at $2.50 each"', rt.indexOf('venueplay plan, monthly 1 player at $2.50 each') !== -1, rt.slice(0, 600));
   check('the proration line reads "venueplay plan (annual)"', rt.indexOf('12 × venueplay plan (annual)') !== -1);
   check('the big night is still counted on it: 12 extra players over 1 big night', rt.indexOf('12 extra players') !== -1 && rt.indexOf('1 big night') !== -1);
-  check('Stripe\'s own invoice keeps its title: "View invoice" opens the hosted invoice', /<a href="https:\/\/invoice\.stripe\.com\/i\/acct_x\/test_1"[^>]*>View invoice<\/a>/.test(r.html));
+  check('"View your tax invoice" opens Stripe\'s hosted invoice, and "download it as a PDF" its PDF',
+    /<a href="https:\/\/invoice\.stripe\.com\/i\/acct_x\/test_1"[^>]*>View your tax invoice<\/a>/.test(r.html) && /<a href="https:\/\/pay\.stripe\.com\/invoice\/acct_x\/test_1\/pdf"[^>]*>download it as a PDF<\/a>/.test(r.html));
+  check('it ends on "Thank you for being with us."', rt.indexOf('Thank you for being with us.') !== -1 && rt.indexOf('backing us early') === -1);
   check('the business name line in the small print: "' + NAME_LINE + '"', rt.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, rt.slice(-300));
 
   print('\nThe payment reminder');
@@ -109,7 +113,7 @@ async function main() {
   var u = last(), ut = visible(u.html);
   check('CONTROL: the reminder was sent', !!u.html, u.subject);
   clean('payment reminder', ut + ' ' + (u.subject || ''));
-  check('its lines are in plain words', ut.indexOf('1 Player × venueplay plan (monthly) (at $2.50 / month)') !== -1);
+  check('its lines are in plain words', ut.indexOf('venueplay plan, monthly 1 player at $2.50 each') !== -1, ut.slice(0, 500));
   check('the business name line: "' + NAME_LINE + '"', ut.indexOf('venueplay.com.au · ' + NAME_LINE) !== -1, ut.slice(-300));
 
   print('\nThe declined card');

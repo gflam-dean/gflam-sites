@@ -9,8 +9,10 @@
   (a card added after that is at our price on that day). "Cancel, it's not for us" switches it off and stops
   these emails; the link opens a page that asks first, so a mail scanner never cancels anybody.
   Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
-  Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (were they
-  set up on an offer price).
+  Sections kept or stripped by vpaTplSections: early / last / final (which reminder), and exactly one of
+  nograce / grace / nooffer (set up on an offer price, and is THE 5-DAY GRACE live). grace (Dean, 5 Nov 2026:
+  5 days after the free month ends to add a card and keep the offer) is OFF until the billing change ships
+  (VPA_OFFER_GRACE_LIVE in the Worker); nograce is today's truth, a pause ends the offer.
   Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
     {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
@@ -20,8 +22,8 @@
   <tr><td align="center" style="padding:24px 12px">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your free month of venueplay at {{venue_name}} runs until {{ends_on}}.</div>
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">
-      <tr><td style="background:#0A0A0B;padding:20px 28px">
-        <img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
+      <tr><td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 28px">
+        <img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
       </td></tr>
       <tr><td style="padding:30px 28px 4px">
 <!--IF:early-->
@@ -38,7 +40,7 @@
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from venueplay. Your free month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your free month ends.</p>
 <!--ENDIF:early-->
 <!--IF:last-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends on {{ends_on}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends on {{ends_on}}. If you'd like to keep going, add your card.</p>
 <!--ENDIF:last-->
 <!--IF:final-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends tonight. If you'd like to keep going, add your card today.</p>
@@ -47,12 +49,15 @@
       <tr><td style="padding:20px 28px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">If there's no card by the end</p>
-<!--IF:offer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. The {{offer_rate}} a player offer you were set up on ends with the pause, so a card added after that is at our price on the day.</p>
-<!--ENDIF:offer-->
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">If there's no card by then</p>
+<!--IF:nograce-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses and the {{offer_rate}} offer ends. Nothing is lost, and adding a card switches it all back on.</p>
+<!--ENDIF:nograce-->
+<!--IF:grace-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses. You then have 5 days after your free month ends to add your card and keep {{offer_rate}}, and adding it switches it all back on. After that, the offer ends.</p>
+<!--ENDIF:grace-->
 <!--IF:nooffer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on.</p>
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses. Nothing is lost, and adding a card switches it all back on.</p>
 <!--ENDIF:nooffer-->
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr>
               <td><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Add my card</a></td>

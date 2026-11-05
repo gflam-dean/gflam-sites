@@ -65,16 +65,21 @@ drain();
 var one = visible(sent && sent.html);
 check('the single-venue welcome is sent at all', !!one, sent);
 check('no raw {{token}} reaches the customer', !/\{\{[^}]+\}\}/.test(one), (one.match(/\{\{[^}]+\}\}/g) || []).slice(0, 5));
-check('the TV steps (Dean, 5 Nov 2026): Google TV or Android TV gets the app and the screen code; any other TV opens venueplay.com.au/tv, types the code, goes full screen; never a /tv?slug link',
-      words(one).indexOf("Google TV or Android TV: get the venueplay TV app from Google Play, open it and type the six-character screen code from your host console. That is it, it remembers your venue. Any other TV, a Fire Stick or a laptop on HDMI: open venueplay.com.au/tv in the TV's web browser, type the screen code, then go full screen with nothing covering the window.") !== -1 && !/\/tv\?/.test(String(sent && sent.html)),
-      (one.match(/venueplay\.com\.au\/tv[^"<\s]*/g) || []).slice(0, 4));
-check('the sign-in step: phone, venueplay.com.au/app, a text code, start a game from the host console; the join code is NOT a TV step, it shows once a game is open',
-      words(one).indexOf("Sign in and start a game. On your phone, go to venueplay.com.au/app and we text you a code. Then start a game from the host console. The players' join code shows on the host console, and on the TV once a game is open.") !== -1 && words(one).indexOf('a join code appears') === -1 && words(one).indexOf('Open the TV link') === -1, words(one).slice(0, 700));
+/* THE THREE STEPS, IN DEAN'S ORDER (5 Nov 2026 evening): sign in first (the TV step needs the screen code the
+   host console shows), then the hosts, then the TV at venueplay.com.au/tv with the screen code. No Google Play or
+   app detail, and no different buttons for different screens. */
+var STEP1 = "1 Sign in on your phone. Go to venueplay.com.au/app and enter your mobile. We text you a code, and you're in. Your host console shows your six-character screen code.";
+var STEP2 = "2 Add your hosts. In Account > People, add each host's name and mobile. We text them where to sign in, and they sign in with their own mobile.";
+var STEP3 = "3 Put venueplay on your TV. Go to venueplay.com.au/tv on your TV's screen and enter your six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
+check('the three steps in order: sign in, add your hosts, then the TV at venueplay.com.au/tv with the screen code; never a /tv?slug link',
+      words(one).indexOf(STEP1 + ' ' + STEP2 + ' ' + STEP3) !== -1 && !/\/tv\?/.test(String(sent && sent.html)), words(one).slice(words(one).indexOf('Three steps'), words(one).indexOf('Three steps') + 700));
+check('no Google Play, no app and no per-screen buttons in the setup steps; the join code is NOT a TV step on its own',
+      !/Google Play|Google TV|Android TV|Fire Stick|play\.google\.com/.test(one) && words(one).indexOf('a join code appears') === -1 && words(one).indexOf('Open the TV link') === -1, (one.match(/.{0,60}(Google|Fire Stick).{0,60}/) || [])[0]);
 check('the heading is "Welcome to venueplay" in 21px on one line (nowrap), and the email points at the in-app guide in one line',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(one) && words(one).indexOf("When you first sign in, we'll walk you through it.") !== -1 && one.indexOf('Your screens') === -1);
 check('the plan box is trimmed: no "three times in a row", no "Changing your maximum" paragraph, a one-line pointer to the billing page and Terms, and a MONTHLY customer sees no annual paragraph',
       words(one).indexOf('three times in a row') === -1 && words(one).indexOf('Changing your maximum') === -1 && words(one).indexOf('On an annual plan') === -1 &&
-      words(one).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html"[^>]*>billing page</.test(one) && /href="https:\/\/venueplay\.com\.au\/terms"[^>]*>Terms</.test(one) &&
+      words(one).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>billing page</.test(one) && /href="https:\/\/venueplay\.com\.au\/terms"[^>]*>Terms</.test(one) &&
       words(one).indexOf('$2') !== -1 && words(one).indexOf('No lock-in') !== -1 && words(one).indexOf('free until') !== -1, words(one).slice(-900));
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@pub.com', contact_name: 'Sam', plan: 'annual', max_seats: 40 },
@@ -100,14 +105,19 @@ check('the group welcome is sent at all', !!grp, sent);
 check('no raw {{VENUE_BLOCKS}} or any other token reaches the customer',
       !/\{\{[^}]+\}\}/.test(grp), (grp.match(/\{\{[^}]+\}\}/g) || []).slice(0, 5));
 check('BOTH venues are actually in the email', grp.indexOf('The Anchor') !== -1 && grp.indexOf('The Crown') !== -1);
-check('every venue card points at the bare /tv, and the group steps say to type each venue\'s screen code; no /tv?slug anywhere',
-      words(grp).indexOf("type that venue's screen code, then go full screen with nothing covering the window.") !== -1 && words(grp).indexOf("from that venue's host console") !== -1 && !/\/tv\?/.test(String(sent && sent.html)) && (String(sent && sent.html).match(/href="https:\/\/venueplay\.com\.au\/tv"/g) || []).length >= 2,
-      (grp.match(/\/tv[^"<\s]*/g) || []).slice(0, 6));
+var GSTEP1 = "1 Sign in on your phone. Go to venueplay.com.au/app and enter your mobile. We text you a code, and you're in. Pick a venue, or tap Switch venue to change. Each venue's host console shows its own six-character screen code.";
+var GSTEP2 = "2 Add each host. In Account > People, add each host's name and mobile and tick the venues they run. We text them where to sign in, and they sign in with their own mobile.";
+var GSTEP3 = "3 Put venueplay on each TV. Go to venueplay.com.au/tv on each venue's screen and enter that venue's six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
+check('every venue card points at the bare /tv, and the group steps are sign in, add each host, then each TV with that venue\'s screen code; no /tv?slug anywhere',
+      words(grp).indexOf(GSTEP1 + ' ' + GSTEP2 + ' ' + GSTEP3) !== -1 && !/Google Play|play\.google\.com/.test(grp) && !/\/tv\?/.test(String(sent && sent.html)) && (String(sent && sent.html).match(/href="https:\/\/venueplay\.com\.au\/tv"/g) || []).length >= 2,
+      words(grp).slice(words(grp).indexOf('Three steps'), words(grp).indexOf('Three steps') + 700));
+check('the group email says how many venues in digits, "You\'ve set up 2 venues today.", never "All 2 of your venues" or "all two"',
+      words(grp).indexOf("You've set up 2 venues today.") !== -1 && !/all (2|two) (of your )?venues/i.test(words(grp)), words(grp).slice(0, 300));
 check('the group heading fits one line and the group email points at the in-app guide',
       /<h1 [^>]*font-size:21px[^>]*white-space:nowrap">Welcome to venueplay<\/h1>/.test(grp) && words(grp).indexOf("When you first sign in, we'll walk you through it.") !== -1 && words(grp).indexOf('screen link') === -1);
 check('the GROUP plan box is trimmed the same way: no "three times in a row", no "Changing your maximum", the one-line pointer to the billing page and Terms, no annual paragraph for a monthly group',
       words(grp).indexOf('three times in a row') === -1 && words(grp).indexOf('Changing your maximum') === -1 && words(grp).indexOf('On an annual plan') === -1 &&
-      words(grp).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html"[^>]*>billing page</.test(String(sent && sent.html)) && words(grp).indexOf('No lock-in') !== -1, words(grp).slice(-700));
+      words(grp).indexOf('Busy nights and changing your maximum: see your billing page and our Terms.') !== -1 && /href="https:\/\/venueplay\.com\.au\/app\/billing\.html#billing"[^>]*>billing page</.test(String(sent && sent.html)) && words(grp).indexOf('No lock-in') !== -1, words(grp).slice(-700));
 var grpMonthly = sent;
 sent = null;
 vpaFireWelcome(ENV, SESSION, { contact_email: 'owner@group.com', contact_name: 'Sam', plan: 'annual' },
@@ -176,13 +186,18 @@ vpbFireVenueOnboarding(ENV, { email: 'owner@pub.com', venueName: 'The Crown', sl
 drain();
 var ob = words(sent && sent.html);
 check('the subject is "The Crown is set up on venueplay", never "forward this on"', sent && sent.subject === 'The Crown is set up on venueplay', sent && sent.subject);
-check('it is written to the owner: "The Crown is set up.", add hosts in Account > People, each host is texted their own sign-in link, nothing to forward',
-      ob.indexOf('The Crown is set up.') !== -1 && ob.indexOf('Add your hosts in Account > People. Each host gets a text with their own sign-in link, so there is nothing to forward.') !== -1 && !/Ready to forward|straight on to whoever|forward this on|Forwardable/i.test(visible(sent && sent.html)), ob.slice(0, 500));
-check('it carries the same TV steps (Google TV or Android TV app; any other TV at venueplay.com.au/tv, screen code, full screen) and the host console step, no join code as a TV step, no /tv?slug link',
-      ob.indexOf("Google TV or Android TV: get the venueplay TV app from Google Play, open it and type the six-character screen code from your host console. That is it, it remembers your venue. Any other TV, a Fire Stick or a laptop on HDMI: open venueplay.com.au/tv in the TV's web browser, type the screen code, then go full screen with nothing covering the window.") !== -1 &&
-      ob.indexOf("Sign in and start a game.") !== -1 && ob.indexOf('a join code appears') === -1 && !/\/tv\?/.test(String(sent && sent.html)) && !/\{\{[^}]+\}\}/.test(String(sent && sent.html)), ob.slice(300, 1200));
-check('it points at the in-app guide in one line and ends with the help line',
-      ob.indexOf("When you first sign in, we'll walk you through it.") !== -1 && ob.indexOf('If you need any help, let us know.') !== -1 && ob.indexOf('press 2') !== -1);
+check('it is written to the owner: "The Crown is set up.", on the account, nothing to forward, and never "nothing to sign up for"',
+      ob.indexOf("The Crown is set up. It's on your account now, billed with your other venues.") !== -1 && !/sign up for|Ready to forward|straight on to whoever|forward this on|Forwardable/i.test(visible(sent && sent.html)), ob.slice(0, 500));
+/* THE HOSTS STEP, TRUE TO WHAT HAPPENS (Dean, 5 Nov 2026: "is not true anymore"). vpbAddHost texts the host
+   "<venue> has set you up on venueplay. To sign in visit venueplay.com.au/app." and they sign in with their own
+   mobile: an address, not a personal sign-in link. */
+var OSTEPS = "1 Sign in on your phone. Go to venueplay.com.au/app and sign in with your mobile as usual. Pick The Crown when it asks which venue you're at, or tap Switch venue. Its host console shows its six-character screen code. "
+  + "2 Add its hosts. In Account > People, add each host's name and mobile and tick The Crown. We text them where to sign in, and they sign in with their own mobile. "
+  + "3 Put venueplay on the TV. Go to venueplay.com.au/tv on the venue's screen and enter its six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind. When you start a game, the players' join code shows on your host console and on the TV.";
+check('it carries the three steps in order (sign in, its hosts, the TV with the screen code), no Google Play, no /tv?slug link, no raw token',
+      ob.indexOf(OSTEPS) !== -1 && !/Google Play|play\.google\.com/.test(String(sent && sent.html)) && ob.indexOf('own sign-in link') === -1 && !/\/tv\?/.test(String(sent && sent.html)) && !/\{\{[^}]+\}\}/.test(String(sent && sent.html)), ob.slice(ob.indexOf('Three steps'), ob.indexOf('Three steps') + 900));
+check('it points at the in-app guide for this venue in one line and ends with the help line',
+      ob.indexOf("When you first open The Crown, we'll walk you through it.") !== -1 && ob.indexOf('If you need any help, let us know.') !== -1 && ob.indexOf('press 2') !== -1);
 
 print(PASS + ' passed, ' + FAIL + ' failed');
 if (FAIL) { print('FAILED ' + FAIL); throw new Error(FAIL + ' check(s) failed'); }
