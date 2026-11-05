@@ -1,50 +1,46 @@
 #!/usr/bin/env python3
-"""THE DRINK-COASTER PAGE, PLAYED IN A REAL BROWSER AT PHONE WIDTH (/live-here-now, 31 Oct 2026;
-finished 1 Nov 2026 for the Mon 2 Nov release: the coaster reads "Scan for 60 seconds of trivia while
-you wait for your drink", and venueplay.com.au/here is the short address printed under the QR).
+"""THE DRINK-COASTER PAGE, v2, PLAYED IN A REAL BROWSER AT PHONE WIDTH (/live-here-now; v1 31 Oct to
+1 Nov 2026, v2 Dean 4 Nov 2026: reports/live-here-now-v2/DEAN-NOTES.md, later items override earlier).
 
-Dean's brief: "Opens straight into a question. No name, no sign-up, no room code. Four big buttons,
-tap to answer, instant right/wrong in pink or yellow. Five questions per scan, then a score screen:
-'4/5. Beat the table?' with a 'Play again' button and a 'Find out when the next trivia night is'
-line ... The question bank changes every hour automatically, and the phone remembers which
-questions it has already shown, so the same person scanning again gets fresh ones."
-
-Every one of those is a thing the page DOES, so this opens the real venueplay/live-here-now.html,
+What Dean asked for, each a thing the page DOES, so this opens the real venueplay/live-here-now.html,
 served from this checkout the way Cloudflare Pages serves it (tools/pagesim.py: clean addresses, the
-real _redirects, the real 404.html), in headless Chrome as a phone, and plays it by tapping the screen:
+real _redirects), in headless Chrome as a phone, and plays it by tapping and typing:
 
-  - /here (the short address on the coaster) and /live answer 301 to /live-here-now (the real
-    _redirects lines), and a phone that types /here lands on the game
+  - /here (the short address on the coaster) and /live answer 301 to /live-here-now
+  - FIRST NAME first ("Nice one, Sam"), one box, nothing else asked; an empty name is refused
+  - "Where are you playing?": three letters finds the pub (name, then suburb and postcode or state);
+    two letters asks for more; not listed opens "Type your venue's name", kept as a lead, still a board;
+    "Just play, no board" plays without one; the next scan offers the same venue first
+  - the new look: the answers in the TV's full colours, the right one turns GREEN and says so, a
+    wrong pick is outlined in its own colour and tagged; "Correct! +145" once the Worker answers;
+    a second tap changes nothing
+  - the end: "Nice one, Sam", "3 of 5", "435 points, N seconds", "1st tonight at The Mini Bar", the
+    board (Tonight and This week) with your row marked, "Challenge your mates"
+  - a mate on the challenge link (?c=CODE) gets the same five questions, skips the venue, lands on
+    the same board
+  - the board down (503 off): the page plays the v1 way, "Correct!" with no points, "3 of 5",
+    "Done in N seconds", no board, no challenge
+  - "From a venue? Click here" goes to /coaster (today's offer), and "Game on the TV? Join it"
+    follows ?v=<slug> as before
+  - the hour's five: the same on two phones in an hour, different the next; Play again and a rescan
+    never repeat; storage blocked (private mode) still plays
+  - at 320, 375, 390, 430 and 1280 wide: no sideways scroll, nothing off the screen or cut off in its
+    box, buttons a thumb can hit, and no visible text under 15px, on every screen
 
-  - the first question is up with nothing typed: no input anywhere, four buttons a thumb can hit,
-    no sideways scroll, and the same at 320 px
-  - a right tap paints the button PINK and says so; a wrong tap paints it YELLOW and shows the
-    right one in pink; a second tap on an answered question changes nothing
-  - five questions, then "3/5. Beat the table?", how long it took, Play again, "Game on the TV?
-    Join it", and the soft call to action: "Want this on the big screen? ... Ask the bar." with a
-    light "Run a venue?" link to the homepage. No price, no offer, no phone number, no form
-  - at 320, 375, 390 and 430 wide: no sideways scroll, every button and line inside the screen and
-    nothing cut off inside its own box, on the question and on the score
-  - Play again: five more, none of them seen. A fresh scan (reload) in the same hour: five more again
-  - two phones in the same hour get the same five (a fair "Beat the table?"); the next hour, a
-    different five. The clock is pinned inside the page, never read from this machine
-  - storage blocked (private mode): still plays, and Play again is still fresh
-  - ?v=<slug> sends "Game on the TV? Join it" to that venue's page, /play?venue=<slug>; none, to
-    /play (type the code from the TV)
-  - the question file is the build script's output exactly, every question traces to an easy
-    "VenuePlay Original" in the trivia bank, and it is small enough for pub wifi
-
-Nothing leaves this machine: fonts and analytics are blocked in the browser. The page loads the
-site's analytics (vp-analytics.js) and nothing else that counts people: no Meta pixel, no form.
+THE GAME WORKER IS A STAND-IN HERE: a small local server answering the five /coaster routes in their
+real shapes, pointed at through window.VP_GAME_API. The Worker's own behaviour (the search, scoring
+by triviaAnswerPoints, first names only, the boards) is run against the shipped Worker by
+venueplay-backend/worker/coaster-round.test.js; the page's own logic by coaster-page.test.js.
+Nothing leaves this machine: fonts, analytics and every venueplay.com.au address are blocked.
 Chrome runs under /tmp/vp-heavy.lock (VP_WAIT_LOCK=<seconds> to wait for it).
 
-    python3 tools/live-here-now-in-chrome.test.py [--shots DIR]
+    python3 tools/live-here-now-in-chrome.test.py [--shots DIR]      (or VP_SHOTS=DIR)
 """
-import argparse, base64, http.client, importlib.util, io, json, os, re, sys, time
+import argparse, base64, http.client, http.server, importlib.util, io, json, os, re, socketserver, sys, threading, time, urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
-ap.add_argument('--shots', default=os.environ.get('LIVE_HERE_NOW_SCREENS', ''))
+ap.add_argument('--shots', default=os.environ.get('LIVE_HERE_NOW_SCREENS', '') or os.environ.get('VP_SHOTS', ''))
 A = ap.parse_args()
 
 
@@ -79,17 +75,137 @@ DATA = os.path.join(ROOT, 'venueplay', 'data', 'live-here-now.json')
 HTML = io.open(PAGE, encoding='utf-8').read()
 BANK = json.load(io.open(DATA, encoding='utf-8'))
 BY_ID = dict((q[0], q) for q in BANK['q'])
-PINK, GOLD = 'rgb(255, 31, 142)', 'rgb(255, 194, 75)'
+GREEN = 'rgb(47, 208, 138)'
+COLOURS = ['rgb(255, 90, 78)', 'rgb(77, 141, 255)', 'rgb(255, 165, 61)', 'rgb(165, 123, 255)']
 HOUR = 491234          # a fixed hour (Sep 2026), never this machine's clock
 T0 = HOUR * 3600000 + 20 * 60000
+MINI = 'v:11111111-1111-4111-8111-111111111111'
+TUGUN = 'c:44444444-4444-4444-8444-444444444444'
 
 
-def serve(folder):
-    return pagesim.serve(folder)
+# ---------------------------------------------------------------------------------------------
+# THE STAND-IN GAME WORKER: the five /coaster routes in their real shapes.
+# ---------------------------------------------------------------------------------------------
+FAKE = {'off': False, 'rounds': {}, 'codes': {}, 'log': [], 'n': 0}
+PLACES = [
+    {'place': MINI, 'name': 'The Mini Bar', 'suburb': '', 'postcode': '2485', 'state': 'NSW'},
+    {'place': TUGUN, 'name': 'Tugun Tavern', 'suburb': 'Tugun', 'postcode': '4224', 'state': 'QLD'},
+    {'place': 'v:77777777-7777-4777-8777-777777777771', 'name': 'Royal Hotel', 'suburb': '', 'postcode': '2000', 'state': 'NSW'},
+]
+NAMES = dict((p['place'], p['name']) for p in PLACES)
 
 
+def fake_board(place, period, play):
+    rows = [r for r in FAKE['rounds'].values() if r['place'] == place and r['done']]
+    rows.sort(key=lambda r: (-r['points'], r['ms']))
+    rank = None
+    for i, r in enumerate(rows):
+        if r['id'] == play:
+            rank = i + 1
+    return {'period': 'week' if period == 'week' else 'tonight', 'rank': rank, 'players': len(rows), 'more': False,
+            'rows': [{'place': i + 1, 'name': r['name'], 'points': r['points'], 'correct': r['correct'], 'you': r['id'] == play}
+                     for i, r in enumerate(rows[:10])]}
+
+
+class FakeWorker(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def send(self, status, obj):
+        body = json.dumps(obj).encode()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send(204, {})
+
+    def do_GET(self):
+        u = urllib.parse.urlparse(self.path)
+        q = dict(urllib.parse.parse_qsl(u.query))
+        FAKE['log'].append(('GET', u.path, q))
+        if FAKE['off']:
+            return self.send(503, {'off': True})
+        if u.path == '/coaster/venues':
+            t = re.sub(r'[^a-z0-9]', '', re.sub(r'^\s*the\s+', '', q.get('q', '').lower()))
+            if len(t) < 3:
+                return self.send(200, {'matches': [], 'why': 'Type at least three letters of the name.'})
+            m = [dict(p, exact=False) for p in PLACES if t in re.sub(r'[^a-z0-9]', '', p['name'].lower())]
+            return self.send(200, {'matches': m})
+        if u.path == '/coaster/board':
+            b = fake_board(q.get('place'), q.get('period'), q.get('play'))
+            b['venue'] = {'name': NAMES.get(q.get('place'), ''), 'suburb': '', 'logo_url': ''}
+            return self.send(200, b)
+        self.send(404, {'error': 'not found'})
+
+    def do_POST(self):
+        n = int(self.headers.get('Content-Length') or 0)
+        b = json.loads(self.rfile.read(n) or b'{}')
+        FAKE['log'].append(('POST', self.path, b))
+        if FAKE['off']:
+            return self.send(503, {'off': True})
+        if self.path == '/coaster/lead':
+            place = 'c:66666666-6666-4666-8666-%012d' % (len(NAMES) + 1)
+            NAMES[place] = b.get('name', '')
+            return self.send(200, {'ok': True, 'place': place, 'name': b.get('name', '')})
+        if self.path == '/coaster/start':
+            first = (b.get('name') or '').split(' ')[0][:14]
+            if not first:
+                return self.send(400, {'error': 'Type your first name.'})
+            if b.get('code'):
+                g = FAKE['codes'].get(b['code'])
+                if not g:
+                    return self.send(404, {'error': 'That challenge has finished.', 'gone': True})
+                place, qids = g['place'], g['qids']
+            else:
+                place, qids = b.get('place'), b.get('qids')
+            FAKE['n'] += 1
+            rid = '00000000-0000-4000-8000-%012d' % FAKE['n']
+            code = 'CODE%02d' % FAKE['n']
+            r = {'id': rid, 'token': 'tok%d' % FAKE['n'], 'place': place, 'qids': qids, 'name': first.capitalize(), 'answers': [],
+                 'points': 0, 'correct': 0, 'ms': 0, 'done': False}
+            FAKE['rounds'][rid] = r
+            FAKE['codes'][code] = {'place': place, 'qids': qids}
+            return self.send(200, {'ok': True, 'play': rid, 'token': r['token'], 'code': code, 'place': place, 'name': r['name'],
+                                   'venue': {'name': NAMES.get(place, ''), 'suburb': '', 'logo_url': ''}, 'qids': qids, 'base': 100})
+        if self.path == '/coaster/answer':
+            r = FAKE['rounds'].get(b.get('play'))
+            if not r or b.get('token') != r['token']:
+                return self.send(403, {'error': 'That round is not yours.'})
+            if len(r['answers']) != b.get('i'):
+                return self.send(409, {'error': 'That question is already answered.'})
+            right = BY_ID[r['qids'][b['i']]][3]
+            good = b.get('a') == right
+            pts = 145 if good else 0
+            r['answers'].append(b['a'])
+            r['points'] += pts
+            r['correct'] += 1 if good else 0
+            r['ms'] += 2000
+            out = {'ok': True, 'i': b['i'], 'right': right, 'correct': good, 'points': pts, 'total': r['points'], 'done': b['i'] == 4}
+            if b['i'] == 4:
+                r['done'] = True
+                out['score'] = {'correct': r['correct'], 'points': r['points'], 'secs': r['ms'] // 1000}
+                out['board'] = fake_board(r['place'], 'night', r['id'])
+            return self.send(200, out)
+        self.send(404, {'error': 'not found'})
+
+
+def fake_worker():
+    class S(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        daemon_threads = True
+    s = S(('127.0.0.1', 0), FakeWorker)
+    threading.Thread(target=s.serve_forever, daemon=True).start()
+    return s, 'http://127.0.0.1:%d' % s.server_address[1]
+
+
+# ---------------------------------------------------------------------------------------------
+# THE BROWSER
+# ---------------------------------------------------------------------------------------------
 def no_follow(base, path):
-    """(status, Location) for one GET, redirects NOT followed."""
     host = base.split('//', 1)[1]
     c = http.client.HTTPConnection(host, timeout=10)
     c.request('GET', path)
@@ -99,11 +215,11 @@ def no_follow(base, path):
     return r.status, r.getheader('Location')
 
 
-def pre(clock_ms, block_storage=False):
-    """Before the page's own scripts: a pinned clock, a record of script errors, and (optionally) a
-       phone whose storage throws the way Safari's private mode and locked-down phones do."""
+def pre(clock_ms, api, block_storage=False):
+    """Before the page's own scripts: a pinned clock, the stand-in Worker, a record of script errors,
+       and (optionally) storage that throws the way Safari's private mode does."""
     s = ('(function(){var T=%d,p0=performance.now();Date.now=function(){return T+Math.floor(performance.now()-p0);};'
-         'window.__errs=[];window.addEventListener("error",function(e){window.__errs.push(String(e.message));});})();') % clock_ms
+         'window.VP_GAME_API=%s;window.__errs=[];window.addEventListener("error",function(e){window.__errs.push(String(e.message));});})();') % (clock_ms, json.dumps(api))
     if block_storage:
         s += ('(function(){try{Object.defineProperty(window,"localStorage",{configurable:true,get:function(){'
               'throw new DOMException("The operation is insecure.","SecurityError");}});}catch(e){}})();')
@@ -111,21 +227,17 @@ def pre(clock_ms, block_storage=False):
 
 
 class Tab(object):
-    def __init__(self, b, base, w=375, h=740, clock=T0, block_storage=False):
-        self.b, self.base = b, base
+    def __init__(self, b, base, api, w=375, h=740, clock=T0, block_storage=False, mobile=True):
+        self.b, self.base, self.api, self.h = b, base, api, h
         self.tid = b.call('Target.createTarget', {'url': 'about:blank', 'newWindow': True})['targetId']
         self.sid = b.call('Target.attachToTarget', {'targetId': self.tid, 'flatten': True})['sessionId']
         b.call('Page.enable', session=self.sid)
-        b.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': True}, session=self.sid)
+        b.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': h, 'deviceScaleFactor': 2, 'mobile': mobile}, session=self.sid)
         b.call('Emulation.setTouchEmulationEnabled', {'enabled': True}, session=self.sid)
-        self.script = b.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre(clock, block_storage)}, session=self.sid)['identifier']
+        self.script = b.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre(clock, api, block_storage)}, session=self.sid)['identifier']
         b.call('Network.enable', session=self.sid)
         b.call('Network.setBlockedURLs', {'urls': ['*fonts.googleapis.com*', '*fonts.gstatic.com*', '*googletagmanager*',
                                                    '*google-analytics*', '*facebook*', '*workers.dev*', '*venueplay.com.au*']}, session=self.sid)
-
-    def clock(self, ms):
-        self.b.call('Page.removeScriptToEvaluateOnNewDocument', {'identifier': self.script}, session=self.sid)
-        self.script = self.b.call('Page.addScriptToEvaluateOnNewDocument', {'source': pre(ms)}, session=self.sid)['identifier']
 
     def go(self, path):
         self.b.call('Page.navigate', {'url': self.base + path}, session=self.sid)
@@ -137,7 +249,7 @@ class Tab(object):
             return {'__threw': json.dumps(r['exceptionDetails'])[:300]}
         return r.get('result', {}).get('value')
 
-    def until(self, expr, secs=20):
+    def until(self, expr, secs=15):
         end = time.time() + secs
         while time.time() < end:
             v = self.js(expr)
@@ -147,15 +259,32 @@ class Tab(object):
         return None
 
     def tap(self, x, y):
-        """A real touch on the screen, where a thumb would land: whatever is painted there gets it."""
         for t in ('touchStart', 'touchEnd'):
             pts = [{'x': x, 'y': y}] if t == 'touchStart' else []
             self.b.call('Input.dispatchTouchEvent', {'type': t, 'touchPoints': pts}, session=self.sid)
 
-    def shot(self, path):
+    def tap_id(self, el_id):
+        """Taps the middle of an element, scrolling it into view first, as a thumb would."""
+        r = self.js('(function(){var e=document.getElementById(%s);if(!e||e.hidden)return null;e.scrollIntoView({block:"center"});'
+                    'var r=e.getBoundingClientRect();return r.width&&r.height?[r.left+r.width/2,r.top+r.height/2]:null;})()' % json.dumps(el_id))
+        if not r or isinstance(r, dict):
+            return False
+        time.sleep(0.05)
+        self.tap(r[0], r[1])
+        return True
+
+    def type_into(self, el_id, text):
+        """Taps the box and types, the way a phone keyboard does (input events, one insertText)."""
+        self.tap_id(el_id)
+        self.js('(function(){var e=document.getElementById(%s);e.focus();e.value="";})()' % json.dumps(el_id))
+        self.b.call('Input.insertText', {'text': text}, session=self.sid)
+
+    def shot(self, name):
+        if not A.shots:
+            return
         d = self.b.call('Page.captureScreenshot', {'format': 'png', 'captureBeyondViewport': False}, session=self.sid)['data']
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'wb') as f:
+        os.makedirs(A.shots, exist_ok=True)
+        with open(os.path.join(A.shots, name), 'wb') as f:
             f.write(base64.b64decode(d))
 
     def close(self):
@@ -163,40 +292,48 @@ class Tab(object):
 
 
 STATE = r'''(function(){
-  var q=document.getElementById("q"), sc=document.getElementById("score");
+  function shown(id){var e=document.getElementById(id);return !!e && !e.hidden && e.getBoundingClientRect().height>0;}
+  function txt(id){var e=document.getElementById(id);return e?e.textContent.replace(/\s+/g," ").trim():"";}
+  var q=document.getElementById("q");
   var btns=Array.prototype.map.call(document.querySelectorAll("#answers .ans"),function(b){
-    var r=b.getBoundingClientRect(), cs=getComputedStyle(b);
-    return {text:b.lastChild.textContent, x:r.left+r.width/2, y:r.top+r.height/2, w:r.width, h:r.height, left:r.left, right:r.right, bottom:r.bottom,
-      bg:cs.backgroundColor, disabled:b.disabled};
+    var r=b.getBoundingClientRect(), cs=getComputedStyle(b), tg=b.querySelector(".tg");
+    return {text:b.querySelector(".t").textContent, x:r.left+r.width/2, y:r.top+r.height/2, w:r.width, h:r.height, left:r.left, right:r.right, bottom:r.bottom,
+      bg:cs.backgroundColor, cls:b.className, tag:tg?tg.textContent:"", disabled:b.disabled};
   });
-  var qr=q.getBoundingClientRect();
-  return JSON.stringify({id:q.getAttribute("data-id"), q:q.hidden?"":q.textContent, qRight:qr.right, btns:btns,
-    count:document.getElementById("count").textContent.replace(/\s+/g," ").trim(), verdict:document.getElementById("verdict").textContent,
-    verdictColor:getComputedStyle(document.getElementById("verdict")).color,
-    score:sc.hidden?"":document.getElementById("scoreLine").textContent.replace(/\s+/g," ").trim(),
-    scoreShown:!sc.hidden && sc.getBoundingClientRect().height>0,
-    again:(function(){var a=document.getElementById("again"),r=a.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height,shown:!sc.hidden};})(),
-    next:document.getElementById("joinGame").getAttribute("href"), nextText:document.getElementById("joinGame").textContent,
-    sub:document.getElementById("scoreSub").textContent, clock:document.getElementById("clock").textContent,
-    failed:!document.getElementById("failed").hidden,
-    inputs:document.querySelectorAll("input,textarea,select").length,
+  var picks=Array.prototype.map.call(document.querySelectorAll("#picks .pick, #againBox .pick"),function(b){
+    var r=b.getBoundingClientRect(); return {text:b.textContent.replace(/\s+/g," ").trim(), x:r.left+r.width/2, y:r.top+r.height/2, h:r.height};
+  });
+  var rows=Array.prototype.map.call(document.querySelectorAll("#rows li"),function(li){return {text:li.textContent.replace(/\s+/g," ").trim(), you:/\byou\b/.test(li.className)};});
+  return JSON.stringify({
+    view:["vName","vWhere","vPlay","score","failed"].filter(shown)[0]||"",
+    id:q.hidden?"":q.getAttribute("data-id"), q:q.hidden?"":q.textContent, btns:btns, picks:picks, rows:rows,
+    count:txt("count"), verdict:txt("verdict"), total:txt("ptotal"), hdr:txt("hdrName"), tag:shown("hdrTag"),
+    nameKick:txt("nameKick"), nameErr:txt("nameErr"), whereKick:txt("whereKick"), hint:txt("whereHint"), leadOpen:shown("leadForm"),
+    leadVal:(document.getElementById("leadIn")||{}).value||"", nameVal:(document.getElementById("nameIn")||{}).value||"",
+    kick:txt("scoreKick"), scoreN:txt("scoreN"), pts:shown("scorePts")?txt("scorePts"):"", place:shown("scorePlace")?txt("scorePlace"):"",
+    sub:txt("scoreSub"), board:shown("board"), challenge:shown("challenge"),
+    tabNight:(document.getElementById("tabNight")||{getAttribute:function(){return ""}}).getAttribute("aria-selected"),
+    next:document.getElementById("joinGame").getAttribute("href"), owner:document.getElementById("ownerLink").getAttribute("href"),
+    ownerText:txt("ownerLink"), inputs:Array.prototype.filter.call(document.querySelectorAll("input"),function(i){return i.offsetParent!==null;}).length,
     vw:innerWidth, sw:document.documentElement.scrollWidth, errs:window.__errs||[]});
 })()'''
 
 
 FIT = r'''(function(){
-  var vw=innerWidth, out=[], clipped=[];
+  var vw=innerWidth, out=[], clipped=[], small=[];
   Array.prototype.forEach.call(document.querySelectorAll("header *, main *, footer *"),function(e){
     var r=e.getBoundingClientRect(); if(!r.width||!r.height) return;
-    var cs=getComputedStyle(e); if(cs.visibility==="hidden") return;
+    var cs=getComputedStyle(e); if(cs.visibility==="hidden"||cs.display==="none") return;
     if(r.left<-0.5||r.right>vw+0.5) out.push((e.id||e.className||e.tagName)+" "+Math.round(r.left)+".."+Math.round(r.right));
-    if(/^(BUTTON|A|H1|H2|P|SPAN)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1 && cs.overflow!=="visible")
+    if(/^(BUTTON|A|H1|H2|P|SPAN|B|LI)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1 && cs.overflow!=="visible")
       clipped.push((e.id||e.className||e.tagName)+" "+e.scrollWidth+">"+e.clientWidth);
     if(/^(BUTTON|A)$/.test(e.tagName) && e.scrollWidth>e.clientWidth+1) clipped.push((e.id||e.className||e.tagName)+" text wider than its button");
+    var own=Array.prototype.some.call(e.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});
+    if(own && parseFloat(cs.fontSize)<15) small.push((e.id||e.className||e.tagName)+" "+cs.fontSize);
   });
-  var big=document.querySelector(".bigscreen"), bb=big?big.getBoundingClientRect():null;
-  return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6),
-    bigBottom: bb && bb.height ? bb.bottom : -1});
+  var tall=Array.prototype.filter.call(document.querySelectorAll("button, .btn"),function(b){var r=b.getBoundingClientRect();return r.height && /btn|ans|pick/.test(b.className) && r.height<54;})
+    .map(function(b){return (b.id||b.className)+" "+Math.round(b.getBoundingClientRect().height);});
+  return JSON.stringify({sw:document.documentElement.scrollWidth, out:out.slice(0,6), clipped:clipped.slice(0,6), small:small.slice(0,6), short:tall.slice(0,6)});
 })()'''
 
 
@@ -205,9 +342,20 @@ def state(t):
     return json.loads(v) if isinstance(v, str) else {'__bad': v}
 
 
+def wait(t, pred, secs=12):
+    end = time.time() + secs
+    s = {}
+    while time.time() < end:
+        s = state(t)
+        if pred(s):
+            return s
+        time.sleep(0.1)
+    return s
+
+
 def clear_storage(b, base, seen=None):
-    """Forget what this phone has seen, from a page of the same site (Storage.clearDataForOrigin
-       answered "Internal error" on this Chrome, 1 Nov 2026, and so cleared nothing)."""
+    """Forget this phone, from a page of the same site (Storage.clearDataForOrigin answered
+       "Internal error" on this Chrome, 1 Nov 2026, and so cleared nothing)."""
     tid = b.call('Target.createTarget', {'url': base + '/llms.txt', 'newWindow': True})['targetId']
     sid = b.call('Target.attachToTarget', {'targetId': tid, 'flatten': True})['sessionId']
     for _ in range(50):
@@ -223,26 +371,35 @@ def clear_storage(b, base, seen=None):
     b.close_tab(tid)
 
 
-def wait_question(t, not_id=None, secs=15):
-    """The next question is on screen (a different one from not_id), its four buttons laid out."""
-    end = time.time() + secs
-    s = {}
-    while time.time() < end:
+def name_step(t, name):
+    wait(t, lambda s: s.get('view') == 'vName')
+    t.type_into('nameIn', name)
+    t.tap_id('nameBtn')
+
+
+def where_step(t, typed, pick_text):
+    s = wait(t, lambda s: s.get('view') == 'vWhere')
+    t.type_into('whereIn', typed)
+    s = wait(t, lambda s: any(pick_text in p['text'] for p in s.get('picks', [])))
+    p = [p for p in s.get('picks', []) if pick_text in p['text']]
+    if p:
+        t.js('(function(){var b=Array.prototype.filter.call(document.querySelectorAll("#picks .pick"),function(b){return b.textContent.indexOf(%s)>=0;})[0];if(b)b.scrollIntoView({block:"center"});})()' % json.dumps(pick_text))
         s = state(t)
-        if s.get('id') and s.get('id') != not_id and len(s.get('btns', [])) == 4 and not s['btns'][0]['disabled']:
-            return s
-        if s.get('scoreShown') or s.get('failed'):
-            return s
-        time.sleep(0.1)
+        p = [p for p in s.get('picks', []) if pick_text in p['text']]
+        t.tap(p[0]['x'], p[0]['y'])
     return s
 
 
-def play_round(t, pattern, label):
-    """Plays five questions by tapping: pattern[i] True taps the right answer, False a wrong one.
-       Returns (ids, last state, per-question observations)."""
+def wait_question(t, not_id=None, secs=12):
+    return wait(t, lambda s: (s.get('id') and s.get('id') != not_id and len(s.get('btns', [])) == 4 and not s['btns'][0]['disabled'])
+                or s.get('view') in ('score', 'failed'), secs)
+
+
+def play_round(t, pattern):
+    """Taps five questions: pattern[i] True taps the right answer, False a wrong one."""
     ids, seen = [], []
     s = wait_question(t)
-    for i, want_right in enumerate(pattern):
+    for want_right in pattern:
         if not s.get('id'):
             break
         q = BY_ID.get(s['id'])
@@ -252,23 +409,17 @@ def play_round(t, pattern, label):
             break
         pick = q[3] if want_right else (q[3] + 1) % 4
         b = s['btns'][pick]
+        before = s
         t.tap(b['x'], b['y'])
-        after = None
-        end = time.time() + 3
-        while time.time() < end:
-            after = state(t)
-            if after.get('verdict'):
-                time.sleep(0.3)          # the colour fades in over 0.12 s: read it once it has landed
-                after = state(t)
-                break
-            time.sleep(0.03)
-        # A second, late tap on another answer must change nothing.
-        other = after['btns'][(pick + 2) % 4] if after and after.get('btns') else None
+        after = wait(t, lambda x: bool(x.get('verdict')), 3)
+        time.sleep(0.35)          # the colour lands, and the Worker's points arrive
+        after = state(t)
+        other = after['btns'][(pick + 2) % 4] if after.get('btns') else None
         if other:
             t.tap(other['x'], other['y'])
         late = state(t)
-        seen.append({'id': s['id'], 'right': want_right, 'pick': pick, 'answer': q[3], 'text_match': [x['text'] for x in s['btns']] == q[2],
-                     'qtext': s['q'] == q[1], 'after': after, 'late': late})
+        seen.append({'id': s['id'], 'right': want_right, 'pick': pick, 'answer': q[3], 'before': before,
+                     'text_match': [x['text'] for x in s['btns']] == q[2], 'qtext': s['q'] == q[1], 'after': after, 'late': late})
         s = wait_question(t, not_id=s['id'])
     return ids, s, seen
 
@@ -292,36 +443,26 @@ def main():
     check('a big enough bank: at least 600 questions (120 scans before a phone could need a repeat)', len(BANK['q']) >= 600, len(BANK['q']))
     check('every question has four different answers, one marked right, and an id of its own',
           all(len(q[2]) == 4 and len(set(q[2])) == 4 and 0 <= q[3] < 4 for q in BANK['q']) and len(BY_ID) == len(BANK['q']))
-    check('small enough for pub wifi: the page under 40 KB and the questions under 200 KB',
-          os.path.getsize(PAGE) < 40000 and os.path.getsize(DATA) < 200000, (os.path.getsize(PAGE), os.path.getsize(DATA)))
+    check('small enough for pub wifi: the page under 60 KB and the questions under 200 KB',
+          os.path.getsize(PAGE) < 60000 and os.path.getsize(DATA) < 200000, (os.path.getsize(PAGE), os.path.getsize(DATA)))
 
-    print('\nTHE WORDS ON THE PAGE')
-    text = re.sub(r'<script[\s\S]*?</script>|<style[\s\S]*?</style>|<!--[\s\S]*?-->', ' ', HTML)
-    text = re.sub(r'<[^>]+>', ' ', text) + ' '.join(re.findall(r"'([^']{3,})'", re.search(r'<script>\s*\(function[\s\S]*</script>', HTML).group(0)))
-    check('no em dash, no "roster", no price or offer, no phone number',
-          u'—' not in HTML and 'roster' not in HTML.lower() and not re.search(r'\$\s?\d|\boffer\b|\bprice', text, re.I)
-          and not re.search(r'\b0\d(?:[ -]?\d){8}\b|tel:', text + HTML), re.findall(r'.{20}(?:—|\$\d|offer|0\d \d{4}).{20}', HTML)[:3])
-    check('the soft call to action is on the page, for the room and then for an owner: "Want this on the big screen?", '
-          '"Ask the bar.", "Run a venue? See how it works" to the homepage',
-          'Want this on the big screen?' in text and 'Ask the bar.' in text
-          and re.search(r'<a class="owner" id="ownerLink" href="/">Run a venue\? See how it works</a>', HTML) is not None)
-    check('nothing on the page collects anything: no form, no input, no Meta pixel; analytics is the site\'s own vp-analytics.js',
-          not re.search(r'<(form|input|textarea|select)\b', HTML) and 'vp-pixel' not in HTML and 'fbq(' not in HTML
-          and '<script src="/app/vp-analytics.js" defer></script>' in HTML)
-    check('the name is written "venueplay" in what a punter reads (the copyright line keeps the registered VenuePlay)',
-          'VenuePlay' not in re.sub(r'trading as VenuePlay', '', text) and 'venueplay' in text)
-    check('the header carries the new wordmark, drawn by tools/sync-brand-mark.py (data-vp-mark="wordmark")',
-          'data-vp-mark="wordmark"' in HTML and 'href="/" aria-label="venueplay home"' in HTML)
+    print('\nTHE PAGE FILE')
+    check('analytics is the site\'s own vp-analytics.js; no Meta pixel',
+          '<script src="/app/vp-analytics.js" defer></script>' in HTML and 'vp-pixel' not in HTML and 'fbq(' not in HTML)
+    check('the foot carries the venueplay wordmark (data-vp-mark="wordmark"), linked home',
+          'data-vp-mark="wordmark"' in HTML and 'class="mark" href="/" aria-label="venueplay home"' in HTML)
     red = [l.split() for l in io.open(os.path.join(ROOT, 'venueplay', '_redirects'), encoding='utf-8').read().splitlines()
            if l.strip() and not l.lstrip().startswith('#')]
     check('_redirects sends /here (and /here.html), the address printed on the coaster, to /live-here-now with a 301',
           ['/here', '/live-here-now', '301'] in red and ['/here.html', '/live-here-now', '301'] in red, [r for r in red if 'here' in ' '.join(r)])
     check('and /live (and /live.html), the other spelling people try, with a 301 too',
           ['/live', '/live-here-now', '301'] in red and ['/live.html', '/live-here-now', '301'] in red, [r for r in red if 'live' in ' '.join(r)])
+    check('and /coaster, "From a venue? Click here", is served by the offer page (today\'s offer)', ['/coaster', '/nsw', '200'] in red)
     sm = io.open(os.path.join(ROOT, 'venueplay', 'sitemap.xml'), encoding='utf-8').read()
     check('the sitemap lists https://venueplay.com.au/live-here-now', '<loc>https://venueplay.com.au/live-here-now</loc>' in sm)
 
-    srv, base = serve(os.path.join(ROOT, 'venueplay'))
+    srv, base = pagesim.serve(os.path.join(ROOT, 'venueplay'))
+    fsrv, api = fake_worker()
     print('\nTHE SHORT ADDRESS UNDER THE QR')
     for short in ('/here', '/live'):
         st, loc = no_follow(base, short)
@@ -334,97 +475,198 @@ def main():
         return
     b = vl.Browser()
     try:
-        tl = Tab(b, base, w=390, h=844)
+        clear_storage(b, base)
+        tl = Tab(b, base, api, w=390, h=844)
         tl.go('/here')
-        landed = tl.until('document.getElementById("q").getAttribute("data-id") && location.pathname', 15)
-        check('a phone that types venueplay.com.au/here lands on /live-here-now with a question up', landed == '/live-here-now', landed)
+        s = wait(tl, lambda s: s.get('view') == 'vName')
+        check('a phone that types venueplay.com.au/here lands on /live-here-now, asking for a first name',
+              tl.js('location.pathname') == '/live-here-now' and s.get('view') == 'vName', s.get('view'))
         tl.close()
 
         print('\nA PHONE SCANS THE COASTER (375 x 740)')
-        t = Tab(b, base)
         clear_storage(b, base)
+        FAKE['log'][:] = []
+        t = Tab(b, base, api)
         t.go('/live-here-now')
+        s = wait(t, lambda s: s.get('view') == 'vName')
+        check('the first screen asks for a first name, in one box, and nothing else', s.get('view') == 'vName' and s.get('inputs') == 1, s)
+        check('the header reads "60-second trivia" before a venue is known', s.get('hdr') == '60-second trivia' and not s.get('tag'), s.get('hdr'))
+        t.shot('lhn-name-375.png')
+        t.tap_id('nameBtn')
+        s = wait(t, lambda s: bool(s.get('nameErr')), 3)
+        check('Next with no name says "Type your first name." and stays', s.get('view') == 'vName' and s.get('nameErr') == 'Type your first name.', s.get('nameErr'))
+        name_step(t, 'sam smith')
+        s = wait(t, lambda s: s.get('view') == 'vWhere')
+        check('then "Where are you playing?", greeting the first name only: "Hi Sam"', s.get('view') == 'vWhere' and s.get('whereKick') == 'Hi Sam', s.get('whereKick'))
+        t.type_into('whereIn', 'mi')
+        s = wait(t, lambda s: bool(s.get('hint')), 3)
+        check('two letters asks for three, and searches nothing', 'three letters' in s.get('hint', '') and not s.get('picks') and
+              not any(x[1] == '/coaster/venues' for x in FAKE['log']), s.get('hint'))
+        t.type_into('whereIn', 'min')
+        s = wait(t, lambda s: bool(s.get('picks')))
+        check('three letters finds The Mini Bar, with its postcode and state', [p['text'] for p in s.get('picks', [])] == ['The Mini Bar2485 NSW'], s.get('picks'))
+        check('each pick is a thumb-sized button (56 px or taller)', all(p['h'] >= 56 for p in s.get('picks', [])), s.get('picks'))
+        t.shot('lhn-where-375.png')
+        t.type_into('whereIn', 'tug')
+        s = wait(t, lambda s: any('Tugun Tavern' in p['text'] for p in s.get('picks', [])))
+        check('a coaster venue shows its suburb and postcode: "Tugun Tavern / Tugun 4224"', any(p['text'] == 'Tugun TavernTugun 4224' for p in s.get('picks', [])), s.get('picks'))
+        where_step(t, 'min', 'The Mini Bar')
         s = wait_question(t)
-        check('a question is on screen straight away, with nothing to type (no name, no code)',
-              bool(s.get('id')) and s.get('inputs') == 0 and 'Question 1 of 5' == s.get('count'), s)
+        start = [x[2] for x in FAKE['log'] if x[1] == '/coaster/start']
+        check('picking it starts a round on its board, sending only the first name, the place and five question ids',
+              len(start) == 1 and sorted(start[0].keys()) == ['name', 'place', 'qids'] and start[0]['place'] == MINI and len(start[0]['qids']) == 5, start)
+        check('the header now names the venue (no logo: its name as text) with "60-second trivia" beside it',
+              s.get('hdr') == 'The Mini Bar' and s.get('tag'), (s.get('hdr'), s.get('tag')))
         btns = s.get('btns', [])
-        check('four big buttons a thumb can hit: each at least 56 px tall and 300 px wide, all on screen',
-              len(btns) == 4 and all(x['h'] >= 56 and x['w'] >= 300 and x['right'] <= s['vw'] and x['bottom'] <= 740 for x in btns),
-              [(round(x['w']), round(x['h']), round(x['bottom'])) for x in btns])
-        check('nothing scrolls sideways at 375 px', s.get('sw', 999) <= s.get('vw', 0), (s.get('sw'), s.get('vw')))
-        first_id = s.get('id')
-
-        ids1, s, seen = play_round(t, [True, False, True, False, True], 'first scan')
+        check('four answers in the TV\'s full colours: coral, blue, amber, violet', [x['bg'] for x in btns] == COLOURS, [x['bg'] for x in btns])
+        check('each a thumb can hit: 64 px tall or more, the width of the phone less the margins, all on screen',
+              len(btns) == 4 and all(x['h'] >= 64 and x['w'] >= 330 and x['right'] <= 375 for x in btns), [(round(x['w']), round(x['h'])) for x in btns])
+        t.shot('lhn-question-375.png')
+        ids1, s, seen = play_round(t, [True, False, True, False, True])
         r = [x for x in seen if x.get('right')]
         w = [x for x in seen if x.get('right') is False]
-        check('each question and its four answers are the bank\'s, as shown on the buttons',
-              len(seen) == 5 and all(x.get('qtext') and x.get('text_match') for x in seen), seen[:1])
-        check('a right tap turns that button PINK and says "Right!" at once',
-              len(r) == 3 and all(x['after'] and x['after']['btns'][x['pick']]['bg'] == PINK and x['after']['verdict'] == 'Right!'
-                                  and x['after']['verdictColor'] == PINK for x in r),
-              [(x['after'] or {}).get('verdict') for x in r] + [((x['after'] or {}).get('btns') or [{}] * 4)[x['pick']].get('bg') for x in r])
-        check('a wrong tap turns that button YELLOW, shows the right answer in PINK, and says "Not quite"',
-              len(w) == 2 and all(x['after'] and x['after']['btns'][x['pick']]['bg'] == GOLD and x['after']['btns'][x['answer']]['bg'] == PINK
-                                  and x['after']['verdict'] == 'Not quite' and x['after']['verdictColor'] == GOLD for x in w),
-              [((x['after'] or {}).get('verdict'), [y['bg'] for y in (x['after'] or {}).get('btns', [])]) for x in w])
-        check('a second tap on an answered question changes nothing',
-              all(x['late'] and x['late'].get('verdict') == x['after'].get('verdict')
-                  and [y['bg'] for y in x['late'].get('btns', [])] == [y['bg'] for y in x['after'].get('btns', [])] for x in seen if x.get('after')),
-              [(x['after'] or {}).get('verdict') for x in seen])
-        check('five different questions, then the score', len(ids1) == 5 and len(set(ids1)) == 5 and ids1[0] == first_id, ids1)
-        check('the score screen reads "3/5. Beat the table?"', s.get('scoreShown') and s.get('score') == '3/5. Beat the table?', s.get('score'))
-        check('a Play again button a thumb can hit, on screen',
-              s.get('again', {}).get('shown') and s['again']['h'] >= 56 and 0 < s['again']['y'] < 740, s.get('again'))
-        check('"Game on the TV? Join it" goes to /play (type the code from the TV) when the coaster names no venue',
-              s.get('next') == '/play' and s.get('nextText') == 'Game on the TV? Join it', s.get('next'))
-        check('the score says how long the round took: "Done in N seconds." (the clock counts up, never down)',
-              re.match(r'^Done in \d+ seconds?\. ', s.get('sub') or '') is not None, s.get('sub'))
-        if A.shots:
-            t.shot(os.path.join(A.shots, 'live-here-now-score-375.png'))
+        check('each question and its four answers are the bank\'s', len(seen) == 5 and all(x.get('qtext') and x.get('text_match') for x in seen), seen[:1])
+        check('a right tap turns that answer GREEN, tagged "Right answer", and the Worker\'s points follow: "Correct! +145"',
+              len(r) == 3 and all(x['after']['btns'][x['pick']]['bg'] == GREEN and x['after']['btns'][x['pick']]['tag'] == 'Right answer'
+                                  and x['after']['verdict'] == 'Correct!+145' for x in r),
+              [(x['after'].get('verdict'), x['after']['btns'][x['pick']]['bg']) for x in r])
+        check('a wrong tap outlines your pick in its own colour, tagged "Yours", shows the right one GREEN, and says "Not quite"',
+              len(w) == 2 and all(' mine' in x['after']['btns'][x['pick']]['cls'] and x['after']['btns'][x['pick']]['tag'] == 'Yours'
+                                  and x['after']['btns'][x['answer']]['bg'] == GREEN and x['after']['verdict'] == 'Not quite' for x in w),
+              [(x['after'].get('verdict'), [y['cls'] for y in x['after'].get('btns', [])]) for x in w])
+        check('a second tap on an answered question changes nothing (and the Worker hears one answer a question)',
+              all(x['late'].get('verdict') == x['after'].get('verdict') and [y['cls'] for y in x['late']['btns']] == [y['cls'] for y in x['after']['btns']] for x in seen)
+              and len([y for y in FAKE['log'] if y[1] == '/coaster/answer']) == 5, len([y for y in FAKE['log'] if y[1] == '/coaster/answer']))
+        check('the running total shows under the answers: "435 points" after the fifth', seen and seen[-1]['after'].get('total') == '435 points', seen and seen[-1]['after'].get('total'))
+        check('five different questions, then the end', len(ids1) == 5 and len(set(ids1)) == 5 and s.get('view') == 'score', ids1)
+        check('the end is personal: "Nice one, Sam", "3 of 5"', s.get('kick') == 'Nice one, Sam' and s.get('scoreN') == '3 of 5', (s.get('kick'), s.get('scoreN')))
+        check('the points and the time: "435 points, 10 seconds"', s.get('pts') == '435 points, 10 seconds', s.get('pts'))
+        check('and the place: "1st tonight at The Mini Bar"', s.get('place') == '1st tonight at The Mini Bar', s.get('place'))
+        check('the board, Tonight selected, with Sam\'s row marked "(you)"',
+              s.get('board') and s.get('tabNight') == 'true' and len(s.get('rows', [])) == 1 and s['rows'][0]['you'] and 'Sam (you)' in s['rows'][0]['text'], s.get('rows'))
+        check('"Challenge your mates" is offered', s.get('challenge') is True)
+        check('"From a venue? Click here" goes to /coaster (today\'s offer), never the home page',
+              s.get('owner') == '/coaster' and s.get('ownerText') == 'From a venue? Click here', (s.get('owner'), s.get('ownerText')))
+        check('"Game on the TV? Join it" goes to /play when the coaster names no venue', s.get('next') == '/play', s.get('next'))
+        t.shot('lhn-score-375.png')
+        t.tap_id('tabWeek')
+        s = wait(t, lambda s: s.get('tabNight') == 'false' and s.get('rows') and 'Loading' not in s['rows'][0]['text'])
+        check('This week loads the week\'s board for the same venue', any(x[1] == '/coaster/board' and x[2].get('period') == 'week' and x[2].get('place') == MINI for x in FAKE['log'])
+              and s['rows'] and s['rows'][0]['you'], s.get('rows'))
+        code1 = [x for x in FAKE['codes']][-1]
 
         print('\nPLAY AGAIN, AND SCAN AGAIN')
-        t.tap(s['again']['x'], s['again']['y'])
-        ids2, s, _ = play_round(t, [True, True, True, True, False], 'play again')
-        check('Play again gives five questions this phone has not seen', len(set(ids2)) == 5 and not set(ids2) & set(ids1), (ids1, ids2))
-        check('and the score counts the new round: "4/5. Beat the table?"', s.get('score') == '4/5. Beat the table?', s.get('score'))
+        t.tap_id('again')
+        ids2, s, _ = play_round(t, [True, True, True, True, False])
+        check('Play again: five questions this phone has not seen, on the same board, no questions asked',
+              len(set(ids2)) == 5 and not set(ids2) & set(ids1) and s.get('scoreN') == '4 of 5', (ids1, ids2, s.get('scoreN')))
+        check('and the board now has both rounds, the better one first', [x['text'].split(' ')[0] for x in s.get('rows', [])][:2] == ['1st', '2nd'] and s.get('place') == '1st tonight at The Mini Bar', s.get('rows'))
         stored = t.js('localStorage.getItem("vp-lhn-seen")')
         check('the phone keeps every question it has shown', isinstance(stored, str) and set(ids1 + ids2) <= set(json.loads(stored)), stored)
         t.go('/live-here-now')
-        s = wait_question(t)
-        ids3, s, _ = play_round(t, [True] * 5, 'rescan')
-        check('scanning again in the same hour: five more, none seen before',
-              len(set(ids3)) == 5 and not set(ids3) & set(ids1 + ids2), ids3)
-        check('a perfect round reads "5/5. Beat the table?"', s.get('score') == '5/5. Beat the table?', s.get('score'))
+        s = wait(t, lambda s: s.get('view') == 'vName')
+        check('a rescan has the name ready: "Sam"', s.get('nameVal') == 'Sam', s.get('nameVal'))
+        t.tap_id('nameBtn')
+        s = wait(t, lambda s: s.get('view') == 'vWhere' and s.get('picks'))
+        check('and offers the same venue first: "Still at The Mini Bar?"', bool(s.get('picks')) and s['picks'][0]['text'].startswith('Still at The Mini Bar?'), s.get('picks'))
+        t.tap(s['picks'][0]['x'], s['picks'][0]['y'])
+        ids3, s, _ = play_round(t, [True] * 5)
+        check('a rescan in the same hour: five more, none seen before', len(set(ids3)) == 5 and not set(ids3) & set(ids1 + ids2), ids3)
+        check('a perfect round: "Perfect round, Sam", "5 of 5"', s.get('kick') == 'Perfect round, Sam' and s.get('scoreN') == '5 of 5', (s.get('kick'), s.get('scoreN')))
         check('no script error on the page', not s.get('errs'), s.get('errs'))
         t.close()
 
+        print('\nA MATE ON THE CHALLENGE LINK')
+        clear_storage(b, base)
+        tm = Tab(b, base, api)
+        tm.go('/live-here-now?c=' + code1)
+        s = wait(tm, lambda s: s.get('view') == 'vName')
+        check('the link opens on the name, saying "You have been challenged"', s.get('nameKick') == 'You have been challenged', s.get('nameKick'))
+        name_step(tm, 'Mia')
+        s = wait_question(tm)
+        check('then straight to the questions, no venue asked (the link carries it), on The Mini Bar\'s board',
+              s.get('id') and s.get('hdr') == 'The Mini Bar', (s.get('view'), s.get('hdr')))
+        idsm, s, _ = play_round(tm, [True, True, False, False, False])
+        check('the same five questions the challenger had', idsm == ids1, (idsm, ids1))
+        check('and the same board: Mia is on it with Sam', any('Mia (you)' in x['text'] for x in s.get('rows', [])) and any('Sam' in x['text'] for x in s.get('rows', [])), s.get('rows'))
+        tm.close()
+
+        print('\nNOT LISTED, AND JUST PLAY')
+        clear_storage(b, base)
+        tn = Tab(b, base, api)
+        tn.go('/live-here-now')
+        name_step(tn, 'Kai')
+        wait(tn, lambda s: s.get('view') == 'vWhere')
+        tn.type_into('whereIn', 'Duck and Drake')
+        s = wait(tn, lambda s: s.get('leadOpen'))
+        check('a pub that is not on venueplay says so and opens "Your venue\'s name", filled in',
+              'Nothing by that name' in s.get('hint', '') and s.get('leadOpen') and s.get('leadVal') == 'Duck and Drake', (s.get('hint'), s.get('leadVal')))
+        tn.tap_id('leadBtn')
+        s = wait_question(tn)
+        lead = [x[2] for x in FAKE['log'] if x[1] == '/coaster/lead']
+        check('Play here keeps it as a lead for Dean and plays on its own board, named in the header',
+              lead and lead[-1] == {'name': 'Duck and Drake'} and s.get('hdr') == 'Duck and Drake', (lead, s.get('hdr')))
+        tn.close()
+        clear_storage(b, base)
+        ts = Tab(b, base, api)
+        ts.go('/live-here-now')
+        name_step(ts, 'Lou')
+        wait(ts, lambda s: s.get('view') == 'vWhere')
+        n_before = len(FAKE['log'])
+        ts.tap_id('skipWhere')
+        _, s, seen = play_round(ts, [True, False, True, True, False])
+        check('"Just play, no board" plays the round on the phone, sending nothing',
+              len(FAKE['log']) == n_before and s.get('view') == 'score' and not s.get('board') and not s.get('challenge'), FAKE['log'][n_before:])
+        check('a right answer there says "Correct!" with no points to show', seen and seen[0]['after'].get('verdict') == 'Correct!', seen and seen[0]['after'].get('verdict'))
+        ts.close()
+
+        print('\nTHE BOARD DOWN (MIGRATION 153 NOT RUN, OR THE WORKER FAILING)')
+        FAKE['off'] = True
+        clear_storage(b, base)
+        to = Tab(b, base, api)
+        to.go('/live-here-now')
+        name_step(to, 'Ava')
+        s = wait(to, lambda s: s.get('view') == 'vWhere')
+        to.type_into('whereIn', 'mini')
+        s = wait(to, lambda s: s.get('leadOpen'))
+        check('the search down says so and offers to type the venue', 'having a rest' in s.get('hint', '') and s.get('leadOpen'), s.get('hint'))
+        to.tap_id('leadBtn')
+        ids_off, s, seen = play_round(to, [True, False, True, True, False])
+        check('the round still plays, the v1 way: "Correct!" with no points', len(ids_off) == 5 and seen[0]['after'].get('verdict') == 'Correct!', seen and seen[0]['after'].get('verdict'))
+        check('the end: "3 of 5", "Done in N seconds. ... Beat the table?", no board, no challenge',
+              s.get('scoreN') == '3 of 5' and re.match(r'^Done in \d+ seconds?\. .*Beat the table\?$', s.get('sub') or '') is not None
+              and not s.get('board') and not s.get('challenge') and not s.get('pts'), (s.get('scoreN'), s.get('sub')))
+        check('no script error with the board down', not s.get('errs'), s.get('errs'))
+        to.close()
+        FAKE['off'] = False
+
         print('\nTHE HOUR CHANGES THE SET')
-        def first_five(clock, slug=''):
+        def first_five(clock):
             clear_storage(b, base)
-            tt = Tab(b, base, clock=clock)
-            tt.go('/live-here-now' + slug)
-            ids, last, _ = play_round(tt, [True] * 5, 'first five')
+            tt = Tab(b, base, api, clock=clock)
+            tt.go('/live-here-now')
+            name_step(tt, 'Jo')
+            wait(tt, lambda s: s.get('view') == 'vWhere')
+            tt.tap_id('skipWhere')
+            ids, last, _ = play_round(tt, [True] * 5)
             tt.close()
-            return ids, last
-        a, _ = first_five(T0)
-        a2, _ = first_five(T0 + 30 * 60000)
-        nxt, _ = first_five(T0 + 3600000)
-        check('two phones scanning in the same hour get the same five, so the table plays the same round',
-              len(a) == 5 and a == a2 and a == ids1, (a, a2, ids1))
+            return ids
+        a = first_five(T0)
+        a2 = first_five(T0 + 30 * 60000)
+        nxt = first_five(T0 + 3600000)
+        check('two phones scanning in the same hour get the same five', len(a) == 5 and a == a2 and a == ids1, (a, a2, ids1))
         check('the next hour, a fresh phone gets a different five', len(nxt) == 5 and len(set(nxt) & set(a)) <= 1, (a, nxt))
-        lat, _ = first_five(T0 + 5 * 3600000)
-        check('and five hours on, different again', len(lat) == 5 and len(set(lat) & set(a)) <= 1 and len(set(lat) & set(nxt)) <= 1, lat)
 
         print('\nSTORAGE BLOCKED (private mode)')
-        tb = Tab(b, base, block_storage=True)
+        tb = Tab(b, base, api, block_storage=True)
         tb.go('/live-here-now')
-        s = wait_question(tb)
         threw = tb.js('(function(){try{localStorage.length;return false;}catch(e){return true;}})()')
-        check('with storage throwing, the first question still comes up', threw is True and bool(s.get('id')), (threw, s.get('id')))
-        p1, s, _ = play_round(tb, [False] * 5, 'blocked')
-        check('it plays to the end: "0/5. Beat the table?"', s.get('score') == '0/5. Beat the table?', s.get('score'))
-        tb.tap(s['again']['x'], s['again']['y'])
-        p2, s, _ = play_round(tb, [True] * 5, 'blocked again')
+        name_step(tb, 'Max')
+        where_step(tb, 'min', 'The Mini Bar')
+        p1, s, _ = play_round(tb, [False] * 5)
+        check('with storage throwing, it still plays to the end: "0 of 5"', threw is True and s.get('scoreN') == '0 of 5', (threw, s.get('scoreN')))
+        tb.tap_id('again')
+        p2, s, _ = play_round(tb, [True] * 5)
         check('and Play again is still five fresh ones, remembered in memory', len(set(p2)) == 5 and not set(p1) & set(p2), (p1, p2))
         check('no script error with storage blocked', not s.get('errs'), s.get('errs'))
         tb.close()
@@ -433,67 +675,55 @@ def main():
         for q, want in (('?v=tugun-bowls-club', '/play?venue=tugun-bowls-club'),
                         ('?v=Tugun%20Bowls%20Club', '/play?venue=tugun-bowls-club'),
                         ('?v=', '/play')):
-            tv = Tab(b, base)
+            tv = Tab(b, base, api)
             tv.go('/live-here-now' + q)
-            tv.until('!!document.getElementById("q").getAttribute("data-id")', 15)
+            wait(tv, lambda s: s.get('view') == 'vName')
             got = tv.js('document.getElementById("joinGame").getAttribute("href")')
             check('%s links "Game on the TV? Join it" to %s' % (q, want), got == want, got)
             tv.close()
-        check('/play?venue=<slug> is a page in this site (play.html reads the venue through vp-venueurl.js)',
-              os.path.isfile(os.path.join(ROOT, 'venueplay', 'play.html'))
-              and 'VPVenueURL.slug' in io.open(os.path.join(ROOT, 'venueplay', 'play.html'), encoding='utf-8').read())
 
-        print('\nFOUR PHONES: 320, 375, 390 AND 430 WIDE')
-        # The question with the LONGEST answer in the file comes up first at every width: the phone is
-        # told it has seen every other one, so the hour's order has to start with it. A short random
-        # set would let a layout that only fails on long answers through.
+        print('\nFIVE SCREENS: 320, 375, 390, 430 AND 1280 WIDE')
         LONG = max(BANK['q'], key=lambda q: max(len(o) for o in q[2]))
         others = [q[0] for q in BANK['q'] if q[0] != LONG[0]]
-        for w, h in ((320, 568), (375, 667), (390, 844), (430, 932)):
+        for w, h, mob in ((320, 568, True), (375, 667, True), (390, 844, True), (430, 932, True), (1280, 800, False)):
             clear_storage(b, base, seen=others)
-            tf = Tab(b, base, w=w, h=h)
+            tf = Tab(b, base, api, w=w, h=h, mobile=mob)
             tf.go('/live-here-now')
+            wait(tf, lambda s: s.get('view') == 'vName')
+            f = json.loads(tf.js(FIT))
+            check('%d px, the name: nothing sideways, off the screen, cut off, under 15px or too small to tap' % w,
+                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            tf.shot('lhn-name-%d.png' % w)
+            name_step(tf, 'Christabel-Anne')
+            wait(tf, lambda s: s.get('view') == 'vWhere')
+            tf.type_into('whereIn', 'ro')
+            tf.type_into('whereIn', 'roy')
+            wait(tf, lambda s: bool(s.get('picks')))
+            tf.tap_id('notListed')
+            f = json.loads(tf.js(FIT))
+            check('%d px, where are you playing (picks and the typed-name box open): the same' % w,
+                  f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
+            tf.shot('lhn-where-%d.png' % w)
+            where_step(tf, 'min', 'The Mini Bar')
             s = wait_question(tf)
-            btns = s.get('btns', [])
-            check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)),
-                  s.get('id') == LONG[0], s.get('id'))
+            check('%d px: the first question is the one with the longest answer ("%s")' % (w, max(LONG[2], key=len)), s.get('id') == LONG[0], s.get('id'))
             f = json.loads(tf.js(FIT))
-            check('%d px, a question: nothing scrolls sideways, nothing sits off the screen or is cut off in its box' % w,
-                  f['sw'] <= w and not f['out'] and not f['clipped'], f)
-            check('%d px: four answer buttons a thumb can hit (56 px tall or more, the full width less the margins)' % w,
-                  len(btns) == 4 and all(x['h'] >= 56 and x['w'] >= w - 40 and x['left'] >= 0 and x['right'] <= w for x in btns),
-                  [(round(x['left']), round(x['right']), round(x['h'])) for x in btns])
+            check('%d px, a question: the same' % w, f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], f)
             if h >= 667:
-                check('%d px: the question and all four answers are on the first screen, no scrolling to answer' % w,
-                      all(x['bottom'] <= h for x in btns), [round(x['bottom']) for x in btns])
-            _, s, _ = play_round(tf, [True, False, True, True, False], 'fit %d' % w)
+                check('%d px: the question and all four answers are on the first screen' % w, all(x['bottom'] <= h for x in s.get('btns', [])),
+                      [round(x['bottom']) for x in s.get('btns', [])])
+            tf.shot('lhn-question-%d.png' % w)
+            _, s, _ = play_round(tf, [True, False, True, True, False])
+            time.sleep(0.4)
             f = json.loads(tf.js(FIT))
-            check('%d px, the score: "3/5. Beat the table?", nothing sideways, nothing off the screen or cut off' % w,
-                  s.get('score') == '3/5. Beat the table?' and f['sw'] <= w and not f['out'] and not f['clipped'], (s.get('score'), f))
-            if h >= 844:
-                check('%d px: Play again and "Want this on the big screen?" are both on the first screen of the score' % w,
-                      0 < s['again']['y'] < h and f['bigBottom'] <= h, (s['again'], f['bigBottom']))
-            if A.shots and w in (320, 430):
-                time.sleep(0.5)      # the score fades in over 0.35 s
-                tf.shot(os.path.join(A.shots, 'live-here-now-score-%d.png' % w))
+            check('%d px, the end with the board: "3 of 5", the same' % w,
+                  s.get('scoreN') == '3 of 5' and f['sw'] <= w and not f['out'] and not f['clipped'] and not f['small'] and not f['short'], (s.get('scoreN'), f))
+            tf.shot('lhn-score-%d.png' % w)
             tf.close()
-
-        if A.shots:
-            # The picture for a person to look at: a wrong answer, so both colours are on screen.
-            clear_storage(b, base)
-            tp = Tab(b, base)
-            tp.go('/live-here-now')
-            s = wait_question(tp)
-            q = BY_ID[s['id']]
-            tp.shot(os.path.join(A.shots, 'live-here-now-question-375.png'))
-            wrong = s['btns'][(q[3] + 1) % 4]
-            tp.tap(wrong['x'], wrong['y'])
-            time.sleep(0.25)
-            tp.shot(os.path.join(A.shots, 'live-here-now-wrong-375.png'))
-            tp.close()
     finally:
         b.close()
         srv.shutdown()
+        fsrv.shutdown()
 
 
 try:

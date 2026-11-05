@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 15:24 · bda5f437';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 15:47 · d24fb6de';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3777,7 +3777,7 @@ async function vpaCoasterAdd(request, env, json) {
   const suburb = String(b.suburb || '').replace(/[\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
   const postcode = String(b.postcode || '').replace(/\D/g, '').slice(0, 4);
   const state = postcode.length === 4 ? vpaStateFromPostcode(postcode) : null;
-  if (!state) return json({ error: 'Enter the venue\'s 4-digit postcode. It sets the state and the time its board resets.' + NONE }, 400);
+  if (!state) return json({ error: 'Enter the coaster venue\'s 4-digit postcode. It sets the state and the time its board resets.' + NONE }, 400);
   // The logo is checked in full, by the venue logo's own rules, before anything is made.
   let logo = null;
   if (b.logo != null && b.logo !== '') {

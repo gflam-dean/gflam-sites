@@ -386,6 +386,19 @@ step(function () {
     return post(W.answer, { play: R.play, token: R.token, i: 0, a: rightOf(q[0]) });
   }).then(function (r) {
     pass("the same question again (a double tap or a replay) is refused and scored once", r.status === 409 && DB.vp_coaster_plays[0].points === 145, [r, DB.vp_coaster_plays[0].points]);
+    /* Two taps landing at the same moment (both read the round before either writes): one scores. */
+    NOW += 100;
+    var x1 = post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
+    var x2 = post(W.answer, { play: R.play, token: R.token, i: 1, a: rightOf(q[1]) });
+    return Promise.all([x1, x2]);
+  }).then(function (both) {
+    var st = both.map(function (r) { return r.status; }).sort().join(",");
+    pass("two taps at the same moment: one is scored, the other refused (a compare-and-set on the answers)",
+      st === "200,409" && DB.vp_coaster_plays[0].answers.length === 2, [st, DB.vp_coaster_plays[0].answers]);
+    /* Put the round back to one answer, so the timings below read as written. */
+    var row = DB.vp_coaster_plays[0];
+    row.answers = row.answers.slice(0, 1); row.points = 145; row.correct = 1; row.ms_total = 2000; row.asked_at = new RealDate(start0 + 2000).toISOString();
+    NOW = start0 + 2000;
     return post(W.answer, { play: R.play, token: "not-the-secret", i: 1, a: 0 });
   }).then(function (r) {
     pass("the wrong secret cannot answer someone's round", r.status === 403, r);
