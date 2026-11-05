@@ -7,7 +7,7 @@ showed four prices, two crossed out). Reads the shipped files; the analytics fil
 
   python3 tools/offer-page-start-first.test.py
 
-  1. the hero's first button is "Have a play, free" and goes to the form; "See pricing" is second
+  1. the hero's first button is "Have a play for free" and goes to the form; "See pricing" is second
   2. the form (#claim) is the second section, straight after the hero, before the game modes
   3. ONE price line: one price row, nothing struck out, no price in the hero, none in the form's lede
   4. the email's own words ("have a play for a month on us") sit by the button and by the form
@@ -32,10 +32,10 @@ BODY = NSW[NSW.index('<body'):]
 print('1. The start button is first in the hero')
 hero = re.search(r'<div class="hero-cta">(.*?)</div>', NSW, re.S).group(1)
 links = re.findall(r'<a [^>]*href="([^"]+)"[^>]*>([^<]+)</a>', hero)
-ok('the hero has "Have a play, free" first, going to the form', links[:1] == [('#claim', 'Have a play, free')], links)
+ok('the hero has "Have a play for free" first, going to the form', links[:1] == [('#claim', 'Have a play for free')], links)
 ok('"See pricing" is second, going to the price', links[1:2] == [('#offer', 'See pricing')], links)
 ok('the start button is the pink one and "See pricing" the quiet one',
-   re.search(r'class="btn btn-primary" href="#claim"[^>]*>Have a play, free', hero) and re.search(r'class="btn btn-ghost" href="#offer"[^>]*>See pricing', hero))
+   re.search(r'class="btn btn-primary" href="#claim"[^>]*>Have a play for free', hero) and re.search(r'class="btn btn-ghost" href="#offer"[^>]*>See pricing', hero))
 ok('the hero has no competing exit beside the ask ("Talk to us" stays in the nav and the contact section)', 'Talk to us' not in hero and 'Contact' in NSW and 'id="contact"' in NSW, links)
 
 print('2. The form is the second section')
@@ -137,7 +137,7 @@ ok('the only pages with a sign-up form are nsw.html and the homepage (which has 
 ok('the month rows live in one file, vp-offer.js, and nsw.html loads it', '<script src="/app/vp-offer.js">' in NSW and len(glob.glob(os.path.join(ROOT, '**', 'vp-offer.js'), recursive=True)) == 1)
 IDX = rd('venueplay/index.html')
 ok('the homepage never loads the offer file and never sends these events (no offers there)',
-   'vp-offer.js' not in IDX and 'vpTrack' not in IDX and 'Have a play, free' not in IDX)
+   'vp-offer.js' not in IDX and 'vpTrack' not in IDX and 'Have a play for free' not in IDX)
 ok('vp-analytics.js is the one place that defines vpTrack', len([p for p in glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.js'), recursive=True) if 'window.vpTrack =' in open(p, encoding='utf-8', errors='replace').read()]) == 1)
 txt = re.sub(r'<[^>]+>', ' ', BODY)
 ok('brand: no em or en dash anywhere on the page body, "venueplay" never capitalised in the new copy',
