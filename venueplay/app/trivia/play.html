@@ -1346,7 +1346,7 @@
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
   if(VP_DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
-    P.joined=true; P.name="Pint Sized"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    P.joined=true; P.name="Table 6"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
     /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left, as a real venue's would be. */
     (function(){ var lg=$("venueLogo"); if(!lg) return;
       /* ?logo=/path swaps in another file from this site (never a URL), as on the wall's demo: how a wide wordmark sits. */
@@ -1363,7 +1363,7 @@
     function fire(o){ try{ onMsg(o); }catch(e){} }
     function round(){
       for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.total=0; P.rank=0; P.ended=false;
+      _dt=[]; P.total=515; P.rank=0; P.ended=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Table 6's score on the wall's final scores */
       fire({ t:"started" });
       /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
          then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own
@@ -1374,14 +1374,14 @@
       var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 as before the show, on a phone with ?sting=0
       d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
       d(T0+3400,      function(){ answer(1); });
-      d(T0+REV,       function(){ P.total=130; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
+      d(T0+REV,       function(){ P.total=645; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
       d(T0+GAP,       function(){ fire(q(2,"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", ["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"],15)); });
       d(T0+GAP+3600,  function(){ answer(2); });
       d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], split:[7,26,9,1], demoPts:0 }); });
       d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
       d(T0+2*GAP+3400,function(){ answer(0); });
-      d(T0+2*GAP+REV, function(){ P.total=275; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
-      d(T0+3*GAP,     function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
+      d(T0+2*GAP+REV, function(){ P.total=790; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
+      d(T0+3*GAP,     function(){ P.total=790; P.rank=2; fire({ t:"podium" }); });
       d(T0+3*GAP+17000, round);
     }
     showWait("The quiz is starting. Your questions will pop up here.");

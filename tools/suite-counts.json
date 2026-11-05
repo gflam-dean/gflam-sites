@@ -316,7 +316,7 @@
   "counted_by": "lines"
  },
  "tools/see-a-night-phone-in-chrome.test.py": {
-  "checks": 41,
+  "checks": 43,
   "counted_by": "lines"
  },
  "tools/set-worker-secret.test.py": {
