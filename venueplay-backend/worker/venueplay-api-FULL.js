@@ -147,6 +147,8 @@ export default {
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
+      // What the console's Help form fills in for a signed-in host (Dean, 4 Nov 2026): their OWN name, email and phone.
+      if (request.method === 'POST' && path === '/help/venue/me')          return await helpVenueMe(request, env, json);
       // "Got it: <venue>" on the public forms (29 Oct 2026). Public, rate-limited, answers a venue NAME or nothing.
       if (request.method === 'POST' && path === '/help/venue-match')       return await helpVenueMatchRoute(request, env, json);
       if (request.method === 'POST' && path === '/help/push/peek')         return await helpPushPeek(request, env, json);
@@ -16397,6 +16399,73 @@ async function helpRequireVenueStaff(request, env, venueId) {
   return { authUserId: payload.sub, staff: (staff && staff[0]) || null, admin: admin, venue: v[0] };
 }
 
+/* ------------------------------ what we already know about a venue login ------------------------------
+   Dean, 4 Nov 2026: "A LOGGED-IN venue submitting a support request: auto-fill their name, email and
+   phone. They shouldn't have to type what we already know." ONE answer for both places that need it:
+   POST /help/venue/me fills the console form's boxes with it, and POST /help/venue/ticket falls back
+   to it for any box left blank. So the form shows exactly what the ticket would have used.
+
+     name   the login's name at THIS venue (vp_venue_staff.display_name), unless it is only a role
+            word ("Manager"), then the name on the login itself (Auth user_metadata.full_name)
+     email  the login's own email; for the venue's OWNER only, else the account's contact email,
+            which is theirs. A host who signs in by phone usually has neither, and is asked
+     phone  the login's own number, the one they sign in with by text. Never the support line
+
+   Only ever from the signed-in login, as the verified token says: never from the page, a link or a
+   query string. HQ (an admin login, View as) is given nothing by the route: Dean's own details must
+   never be filled in on a venue's form. */
+function helpPhoneE164(raw, stored) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return null;
+  if (!/^[+0-9 ()\-.]{1,30}$/.test(s)) return null;
+  const plus = s.charAt(0) === '+';
+  const d = s.replace(/[^0-9]/g, '');
+  let e = null;
+  if (plus || stored) e = /^[1-9]\d{7,14}$/.test(d) ? '+' + d : null;     // Auth keeps a number without its +
+  else if (/^0[2-578]\d{8}$/.test(d)) e = '+61' + d.slice(1);           // 04xx xxx xxx, 07 xxxx xxxx
+  else if (/^61[2-578]\d{8}$/.test(d)) e = '+' + d;
+  else if (/^4\d{8}$/.test(d)) e = '+61' + d;                             // a mobile typed without its 0
+  return e;
+}
+function helpPhoneShow(e164) {
+  const d = String(e164 || '').replace(/[^0-9]/g, '');
+  if (/^614\d{8}$/.test(d)) { const l = '0' + d.slice(2); return l.slice(0, 4) + ' ' + l.slice(4, 7) + ' ' + l.slice(7); }
+  if (/^61[2378]\d{8}$/.test(d)) { const l = '0' + d.slice(2); return l.slice(0, 2) + ' ' + l.slice(2, 6) + ' ' + l.slice(6); }
+  return e164 ? String(e164) : '';
+}
+async function helpVenueKnown(env, who) {
+  const u = await vpaAuthGetUser(env, who.authUserId);
+  let email = (u && u.email && HELP_EMAIL_RE.test(String(u.email))) ? String(u.email).toLowerCase() : '';
+  if (!email && who.venue.founding_id && who.staff && who.staff.role === 'owner') {
+    const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
+    const ce = String((acc && acc[0] && acc[0].contact_email) || '').trim().toLowerCase();
+    if (HELP_EMAIL_RE.test(ce)) email = ce;
+  }
+  let phone = helpPhoneE164(u && u.phone, true);
+  if (phone === VP_SUPPORT_TEL) phone = null;
+  const roleWord = /^(owner|manager|host|marketing|staff)$/i;
+  const staffName = helpLine(who.staff && who.staff.display_name, 120);
+  const meta = (u && u.user_metadata) || {};
+  const metaName = helpLine(meta.full_name || meta.name, 120);
+  const name = (staffName && !roleWord.test(staffName) ? staffName : '') || (metaName && !roleWord.test(metaName) ? metaName : '') || staffName || '';
+  return { name: name, email: email, phone: phone };
+}
+
+/* ------------------------------ POST /help/venue/me ------------------------------
+   The signed-in login's own name, email and phone, for the console Help form to fill in. A POST with
+   the venue in its body, so nothing personal is ever in an address. Submit-only rule 3 still holds:
+   this answers about the person asking, never a ticket. */
+async function helpVenueMe(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const who = await helpRequireVenueStaff(request, env, _b.body.venue_id);
+  if (who.error) return json({ error: who.error }, who.status);
+  if (who.admin) return json({ name: '', email: '', phone: '' });
+  if (!(await helpLimit(env, 'me:staff:' + who.authUserId, 120, 3600))) return json({ name: '', email: '', phone: '' }, 429);
+  const k = await helpVenueKnown(env, who);
+  return json({ name: k.name, email: k.email, phone: helpPhoneShow(k.phone) });
+}
+
 /* ------------------------------ POST /help/venue/ticket ------------------------------
    Submit only. It answers with the ticket number and nothing else: not the account's email it
    will reply to, and there is no route that lists a venue's tickets back. */
@@ -16421,15 +16490,16 @@ async function helpVenueTicket(request, env, json) {
      all. The address they typed wins; then the login's own email; then, for the venue's OWNER only,
      the account's contact email, which is theirs. Anyone else with none of those is asked for one:
      before this, a host's request was answered to the owner's inbox. */
-  let contactEmail = replyEmail, contactPhone = null, loginEmail = '';
-  const u = await vpaAuthGetUser(env, who.authUserId);
-  if (u && u.email && HELP_EMAIL_RE.test(String(u.email))) loginEmail = String(u.email).toLowerCase();
-  if (!who.admin) contactPhone = (u && u.phone) ? ('+' + String(u.phone).replace(/^\+/, '')) : null;
-  if (!contactEmail) contactEmail = loginEmail || null;
-  if (!contactEmail && who.venue.founding_id && who.staff && who.staff.role === 'owner') {
-    const acc = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(who.venue.founding_id) + '&select=contact_email&limit=1');
-    contactEmail = (acc && acc[0] && acc[0].contact_email) || null;
-  }
+  /* THE PHONE (Dean, 4 Nov 2026). The form now shows the host's own number, filled in, and they may
+     change it: a number they typed wins; a box left blank keeps the login's own number, as before.
+     The support line is ours, never theirs, so it is never kept as a contact. */
+  const typedPhone = helpLine(b.phone, 30);
+  const phoneTyped = typedPhone ? helpPhoneE164(typedPhone, false) : null;
+  if (typedPhone && phoneTyped === null) return json({ error: 'That phone number does not look right.' }, 400);
+  const known = await helpVenueKnown(env, who);
+  let contactEmail = replyEmail || known.email || null;
+  let contactPhone = phoneTyped || (who.admin ? null : known.phone) || null;
+  if (contactPhone === VP_SUPPORT_TEL) contactPhone = null;
   if (!contactEmail) return json({ error: 'Put in an email so we can reply. We answer help requests by email.', need_email: true }, 400);
   /* URGENT IS WORKED OUT, NOT TICKED (Dean, 21 Oct 2026: "if they are contacting us during a game,
      that is why they are contacting us"). A lobby or a game open at this venue right now makes the
@@ -16443,7 +16513,7 @@ async function helpVenueTicket(request, env, json) {
     t = await helpInsertTicket(env, {
       brand: 'venueplay', category: issue ? issue.category : b.category === 'accounts' ? 'accounts' : 'venue_support', channel: 'venue_form',
       priority: gameOn ? 'urgent' : 'normal', title: subject, message: message,
-      contact_name: helpLine(b.name, 120) || (who.staff && who.staff.display_name) || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
+      contact_name: helpLine(b.name, 120) || known.name || (who.admin ? 'HQ: ' + (who.admin.label || 'admin') : null),
       contact_email: contactEmail, contact_phone: contactPhone, venue_id: who.venue.id, raised_by: who.authUserId,
     });
   } catch (e) {

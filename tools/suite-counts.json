@@ -184,7 +184,7 @@
   "counted_by": "lines"
  },
  "tools/help-desk-pages.test.py": {
-  "checks": 232,
+  "checks": 246,
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
@@ -528,7 +528,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 402,
+  "checks": 420,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {

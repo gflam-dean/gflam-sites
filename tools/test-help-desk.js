@@ -330,6 +330,54 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('no login, no venue ticket', (await call(helpVenueTicket, null, { venue_id: VA, subject: 'x', message: 'y' })).status === 401);
   check('a login that is nobody\'s staff is refused', (await call(helpVenueTicket, NOBODY, { venue_id: VA, subject: 'x', message: 'y' })).status === 403);
 
+  print('WHAT WE ALREADY KNOW: THE CONSOLE FORM FILLS IN A HOST\'S OWN NAME, EMAIL AND PHONE (Dean, 4 Nov 2026)');
+  world();
+  DB.auth = [{ id: HOST_A, phone: '61400000002' }, { id: MKT_A, email: 'Mkt@RoyalHotel.com.au', phone: '61752283667', user_metadata: { full_name: 'Morgan Lee' } },
+             { id: OWNER_A, phone: '61400000001', user_metadata: { full_name: 'Sam Royal' } }, { id: ADMIN, email: 'dean@example.com', phone: '61400000009' }];
+  r = await call(helpVenueMe, HOST_A, { venue_id: VA });
+  check('me: a host who signs in by phone is told their own name at this venue and their own number, written the Australian way, and no email (they are asked)',
+        r.status === 200 && r.body.name === 'Hayley' && r.body.phone === '0400 000 002' && r.body.email === '', r);
+  check('me: it answers name, email and phone and nothing else', Object.keys(r.body || {}).sort().join() === 'email,name,phone', r.body);
+  r = await call(helpVenueMe, OWNER_A, { venue_id: VA });
+  check("me: the venue's OWNER with no login email is given the account's contact email, which is theirs", r.status === 200 && r.body.email === 'owner@royalhotel.com.au' && r.body.name === 'Sam' && r.body.phone === '0400 000 001', r);
+  r = await call(helpVenueMe, MKT_A, { venue_id: VA });
+  check('me: a login with no name at the venue is given the name on the login, its own email in lower case, and NEVER the support line as their phone',
+        r.status === 200 && r.body.name === 'Morgan Lee' && r.body.email === 'mkt@royalhotel.com.au' && r.body.phone === '', r);
+  DB.vp_venue_staff.push({ auth_user_id: OWNER_A, venue_id: VB, role: 'manager', display_name: 'Manager' });
+  r = await call(helpVenueMe, OWNER_A, { venue_id: VB });
+  check("me: a staff name that is only a role word (\"Manager\") gives way to the person's own name, and a manager is not handed the account's email",
+        r.status === 200 && r.body.name === 'Sam Royal' && r.body.email === '', r);
+  r = await call(helpVenueMe, ADMIN, { venue_id: VA });
+  check("me: HQ (View as, an admin login) is told NOTHING, so Dean's own details never fill a venue's form", r.status === 200 && r.body.name === '' && r.body.email === '' && r.body.phone === '', r);
+  check('me: no login, nothing', (await call(helpVenueMe, null, { venue_id: VA })).status === 401);
+  r = await call(helpVenueMe, OWNER_B, { venue_id: VA });
+  check("me: another venue's owner asking about this venue is refused and told nothing", r.status === 403 && !/Hayley|Sam|0400|royalhotel/.test(JSON.stringify(r.body)), r);
+  check('me: a login that is nobody\'s staff is refused', (await call(helpVenueMe, NOBODY, { venue_id: VA })).status === 403);
+  check('me: no venue, refused', (await call(helpVenueMe, HOST_A, {})).status === 400);
+  var srcMe = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  check('me: the route is a POST, so nothing personal is ever in an address', /request\.method === 'POST' && path === '\/help\/venue\/me'/.test(srcMe) && !/'GET'\s*&& path === '\/help\/venue\/me'/.test(srcMe));
+  DB.vp_sessions = [];
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV', message: 'Blank', reply_email: 'hayley@example.com', name: 'Hayley Jones', phone: '0412 345 678' });
+  t = r.body && T(r.body.ticket_no);
+  check('ticket: the name and phone the host changed on the form are what the ticket keeps (the phone as +61)', r.status === 200 && t && t.contact_name === 'Hayley Jones' && t.contact_phone === '+61412345678', t);
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV', message: 'Blank', reply_email: 'hayley@example.com', name: '', phone: '' });
+  t = r.body && T(r.body.ticket_no);
+  check('ticket: boxes left blank fall back to what we know (the venue name and the login number)', r.status === 200 && t && t.contact_name === 'Hayley' && t.contact_phone === '+61400000002', t);
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV', message: 'Blank', reply_email: 'hayley@example.com', phone: 'call me maybe' });
+  check('ticket: a phone that is not a number is refused, in words', r.status === 400 && /phone number/.test(r.body.error || ''), r);
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV', message: 'Blank', reply_email: 'hayley@example.com', phone: '07 5228 3667' });
+  t = r.body && T(r.body.ticket_no);
+  check('ticket: the support line typed as their phone is never kept as their contact', r.status === 200 && t && t.contact_phone === null, t);
+  r = await call(helpVenueTicket, MKT_A, { venue_id: VA, subject: 'Promo', message: 'x' });
+  t = r.body && T(r.body.ticket_no);
+  check('ticket: a login whose number on file is the support line gets no contact phone', r.status === 200 && t && t.contact_phone === null && t.contact_name === 'Morgan Lee', t);
+  r = await call(helpVenueTicket, ADMIN, { venue_id: VA, subject: 'For them', message: 'x' });
+  t = r.body && T(r.body.ticket_no);
+  check("ticket: from HQ View as, Dean's own mobile is never attached", r.status === 200 && t && t.contact_phone === null && /^HQ: /.test(t.contact_name), t);
+  r = await call(helpVenueTicket, HOST_A, { venue_id: VA, subject: 'TV', message: 'Blank', reply_email: 'hayley@example.com', phone: '+64 21 555 0123' });
+  t = r.body && T(r.body.ticket_no);
+  check('ticket: an overseas number with its + is kept as typed, digits only', r.status === 200 && t && t.contact_phone === '+64215550123', t);
+
   print('NOBODY BUT HQ READS A TICKET (Dean, 19 Oct: tickets are for staff only)');
   world();
   await call(helpPublicTicket, null, PATRON);
@@ -358,7 +406,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\/|'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
-  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, and the phone peek', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/ticket'", publicHelp);
+  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, the phone peek, and a login\'s own details', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/me','/help/venue/ticket'", publicHelp);
   /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its four
      routes are exactly these (3 Nov 2026: + solve, which closes a sales ticket once the prospect is answered),
      and each one's first line is the autopilot key's door. */
