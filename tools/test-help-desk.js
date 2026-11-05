@@ -222,6 +222,45 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('a venue ticket from /help is still a public form: the honeypot catches a bot on it',
         (await call(helpPublicTicket, null, Object.assign({}, VENUE_PUB, { website: 'x', device: 'v6' }))).body.ticket_no === null);
 
+  /* THE DEMO PHONE'S CALL-BACK (Dean, 4 Nov 2026): the five-question demo opened by scanning the demo TV
+     ends on "Want this at your venue?", a call-back form posting to this same public route as a sales
+     enquiry, source demo-phone. A mobile is required, an email is not, and the ticket buzzes like any sale. */
+  print('THE DEMO PHONE CALL-BACK (source demo-phone)');
+  world();
+  var DEMO_CB = { brand: 'venueplay', kind: 'sales', source: 'demo-phone', name: 'Kim', venue_name: 'The Commercial Hotel', locality: 'Murwillumbah',
+                  phone: '0412 345 678', email: '', best_time: 'afternoon', website: '', device: 'dp1' };
+  r = await call(helpPublicTicket, null, DEMO_CB);
+  t = r.body && T(r.body.ticket_no);
+  check('demo call-back: a mobile and no email makes a ticket', r.status === 200 && !!t, r);
+  check('demo call-back: it is a venueplay SALES ticket from the web form (what HQ and the autopilot read as a sale)', t && t.brand === 'venueplay' && t.category === 'sales' && t.channel === 'web_form', t);
+  check('demo call-back: the mobile is kept as digits, no email, the venue and its place as the lead fields', t && t.contact_phone === '0412345678' && t.contact_email === null && t.contact_name === 'Kim' && t.lead_venue_name === 'The Commercial Hotel' && t.lead_locality === 'Murwillumbah', t);
+  check('demo call-back: tagged demo-phone in its subject, with the best time to call', t && t.subject === 'Call-back (demo-phone) from The Commercial Hotel, Murwillumbah: Kim, afternoon', t && t.subject);
+  check('demo call-back: the message is the Worker\'s own, with the best time, the mobile and Source: demo-phone', t && /^Venue: The Commercial Hotel\nSuburb or postcode: Murwillumbah\n\nCall-back request from the demo phone/.test(t.message) && /\nBest time to call: afternoon\n/.test(t.message) && /\nMobile: 0412345678\n/.test(t.message) && /\nSource: demo-phone$/.test(t.message), t && t.message);
+  check('demo call-back: staff are alerted like any sale', sent.some(function (m) { return /^\[venueplay\]/.test(m.subject) && /demo-phone/.test(m.html); }), sent.map(function (m) { return m.subject; }));
+  r = await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { email: 'kim@commercial.com.au', device: 'dp2', phone: '+61 412 345 679' }));
+  t = r.body && T(r.body.ticket_no);
+  check('demo call-back: +61 becomes 0, and an email given is kept', r.status === 200 && t && t.contact_phone === '0412345679' && t.contact_email === 'kim@commercial.com.au', t);
+  check('demo call-back: nobody is sent the "we will reply by email" acknowledgement (we call them)', !sent.some(function (m) { return m.to.join() === 'kim@commercial.com.au'; }), sent.map(function (m) { return m.to; }));
+  check('demo call-back: no mobile, no ticket', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { phone: '', device: 'dp3' }))).status === 400);
+  check('demo call-back: a landline is not a mobile', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { phone: '07 5555 1234', device: 'dp4' }))).status === 400);
+  check('demo call-back: a best time is one of morning, afternoon, evening', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { best_time: 'midnight', device: 'dp5' }))).status === 400);
+  check('demo call-back: the venue and its suburb or postcode are required', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { locality: '', device: 'dp6' }))).status === 400);
+  check('demo call-back: a first name is required', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { name: '', device: 'dp7' }))).status === 400);
+  check('demo call-back: a bad email is refused, not dropped', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { email: 'kim@nowhere', device: 'dp8' }))).status === 400);
+  var nT = DB.vp_help_tickets.length;
+  r = await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { website: 'http://spam', device: 'dp9' }));
+  check('demo call-back: the honeypot is told it worked and nothing is made', r.status === 200 && r.body.ticket_no === null && DB.vp_help_tickets.length === nT, r);
+  codes = [];
+  for (i = 0; i < 4; i++) codes.push((await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { phone: '0499 000 111', device: 'dm' + i }))).status);
+  check('demo call-back: one mobile, three an hour, then refused', codes.join() === '200,200,200,429', codes);
+  world();
+  codes = [];
+  for (i = 0; i < 7; i++) codes.push((await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { phone: '041100000' + i, device: 'dn' + i }))).status);
+  check('demo call-back: callers who gave no email do not share one limit between them', codes.join() === '200,200,200,200,200,200,200', codes);
+  check('demo call-back: a sales enquiry WITHOUT the demo-phone source still needs an email', (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { source: '', device: 'dz' }))).status === 400
+        && (await call(helpPublicTicket, null, Object.assign({}, DEMO_CB, { source: 'home', device: 'dx' }))).status === 400);
+  check('demo call-back: the source only counts on a venueplay sale (a patron cannot drop the email with it)', (await call(helpPublicTicket, null, Object.assign({}, PATRON, { source: 'demo-phone', email: '', phone: '0412345678', device: 'dy' }))).status === 400);
+
   print('THE VENUEPLAY WEBSITE ENQUIRY FORM (/contact)');
   world();
   r = await call(handleContact, null, { name: 'Lee', email: 'lee@pub.com.au', phone: '0400000000', message: 'Pricing for 3 venues?' });

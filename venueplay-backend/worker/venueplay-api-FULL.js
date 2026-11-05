@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '4 Nov 2026, 09:19 · b92cef2d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '4 Nov 2026, 21:26 · 0d57f670';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15911,11 +15911,32 @@ async function helpPublicTicket(request, env, json) {
   const support = 'support@' + brand + '.com.au';
   const name = helpLine(b.name, 200);
   const email = helpLine(b.email, 300).toLowerCase();
-  const phone = helpLine(b.phone, 60);
-  const message = helpText(b.message);
+  let phone = helpLine(b.phone, 60);
+  /* THE DEMO PHONE'S CALL-BACK (Dean, 4 Nov 2026). Somebody who scanned the demo TV, played the five
+     question demo on their own phone and tapped "Want this at your venue?". A SALES ticket like any
+     enquiry, tagged source demo-phone: a first name, the venue and its suburb or postcode (the lead
+     fields above, required), a MOBILE (required: we call them), an email only if they gave one, and
+     the best time to call. The message is written here, never taken from the page. */
+  const demoCall = brand === 'venueplay' && kind === 'sales' && b.source === 'demo-phone';
+  let bestTime = '';
+  if (demoCall) {
+    const digits = phone.replace(/[\s().-]/g, '').replace(/^\+?61(?=4)/, '0');
+    if (!/^04\d{8}$/.test(digits)) return json({ error: 'Put in a mobile number, like 0412 345 678.' }, 400);
+    phone = digits;
+    bestTime = ['morning', 'afternoon', 'evening'].indexOf(b.best_time) >= 0 ? b.best_time : '';
+    if (!bestTime) return json({ error: 'Pick the best time to call.' }, 400);
+    if (!name) return json({ error: 'Put in your first name.' }, 400);
+    if (!lead || !lead.name || !lead.place) return json({ error: 'Tell us the venue and its suburb or postcode.' }, 400);
+    if (email && !HELP_EMAIL_RE.test(email)) return json({ error: 'That email does not look right. Leave it blank if you like.' }, 400);
+    if (!(await helpLimit(env, 'tk:ph:' + digits, 3, 3600))) return json({ error: 'You have sent a few already. Give us a little while to call.' }, 429);
+  }
+  const message = demoCall
+    ? 'Call-back request from the demo phone (they scanned the demo TV and played the demo round).\n'
+      + 'Best time to call: ' + bestTime + '\nMobile: ' + phone + (email ? '\nEmail: ' + email : '\nEmail: none given') + '\nSource: demo-phone'
+    : helpText(b.message);
   if (!message) return json({ error: 'Type your message first.' }, 400);
-  if (!email) return json({ error: 'Put in your email so we can reply.' }, 400);
-  if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || !HELP_EMAIL_RE.test(email)) {
+  if (!email && !demoCall) return json({ error: 'Put in your email so we can reply.' }, 400);
+  if (name.length > 120 || email.length > 200 || phone.length > 40 || message.length > HELP_MESSAGE_MAX || (email && !HELP_EMAIL_RE.test(email))) {
     return json({ error: 'That message is too long or the email address does not look right.' }, 400);
   }
   const ts = await helpTurnstile(env, b.turnstile, ip);
@@ -15924,7 +15945,7 @@ async function helpPublicTicket(request, env, json) {
   if (device && !(await helpLimit(env, 'tk:dev:' + device, HELP_MAX_PER_DEVICE, 600))) {
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
-  if (!(await helpLimit(env, 'tk:em:' + email, HELP_MAX_PER_EMAIL, 3600))) {
+  if (email && !(await helpLimit(env, 'tk:em:' + email, HELP_MAX_PER_EMAIL, 3600))) {   // no email (a demo call-back): its mobile was limited above
     return json({ error: 'You have sent a few already. Give us a little while to reply.' }, 429);
   }
   let where = { venue_id: null, session_id: null, room_code: null };
@@ -15944,16 +15965,17 @@ async function helpPublicTicket(request, env, json) {
   const issue = kind === 'sales' ? null : await helpIssueFor(env, b.issue_id, brand);
   const category = issue ? issue.category : kind === 'sales' ? 'sales' : kind === 'host' ? 'venue_support'
                  : kind === 'venue' ? helpPublicVenueCategory(b.category) : 'patron_support';
-  const who = kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
+  const who = demoCall ? 'Call-back (demo-phone)' : kind === 'sales' ? 'Enquiry' : kind === 'host' ? 'Host help' : kind === 'venue' ? 'Venue help' : (brand === 'partyplay' ? 'Guest help' : 'Player help');
   const at = typedVenue ? ' at ' + typedVenue : lead && lead.name ? ' from ' + lead.name + (lead.place ? ', ' + lead.place : '') : '';
   let t;
   try {
     t = await helpInsertTicket(env, {
       brand: brand, category: category, channel: kind === 'sales' || kind === 'venue' ? 'web_form' : 'patron_form',
-      title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
+      title: issue ? issue.title + at + (game ? ' (' + game + ')' : '') : demoCall ? who + at + ': ' + name + ', ' + bestTime
+           : who + at + (game ? ' (' + game + ')' : '') + ': ' + helpLine(message, 80),
       message: (typedVenue ? 'Venue (as typed): ' + typedVenue + '\n\n' : '') +
                (lead && lead.name && !typedVenue ? 'Venue: ' + lead.name + '\nSuburb or postcode: ' + lead.place + (lead.site ? '\nWebsite: ' + lead.site : '') + '\n\n' : '') +
-               message, contact_name: name || null, contact_email: email, contact_phone: phone || null,
+               message, contact_name: name || null, contact_email: email || null, contact_phone: phone || null,
       venue_id: where.venue_id, room_code: where.room_code, session_id: where.session_id, venue_matched_by: matchedBy,
       lead_venue_name: lead ? lead.name || null : null, lead_locality: lead ? lead.place || null : null, lead_website: lead ? lead.site || null : null,
     });
@@ -15962,7 +15984,8 @@ async function helpPublicTicket(request, env, json) {
   }
   await helpNoteTicketFromIssue(env, issue);
   await helpAnnounce(env, t, await helpVenueName(env, t.venue_id));
-  await helpAcknowledge(env, t);
+  // A call-back is answered by a call: the acknowledgement says "reply by email", so it is not sent.
+  if (!demoCall) await helpAcknowledge(env, t);
   return json({ ok: true, ticket_no: t.ticket_no });
 }
 

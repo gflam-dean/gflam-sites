@@ -524,7 +524,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 382,
+  "checks": 401,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
@@ -1053,6 +1053,10 @@
  },
  "tools/touring-signups.test.py": {
   "checks": 29,
+  "counted_by": "lines"
+ },
+ "tools/trivia-demo-phone-in-chrome.test.py": {
+  "checks": 56,
   "counted_by": "lines"
  },
  "tools/trivia-join-in-chrome.test.py": {

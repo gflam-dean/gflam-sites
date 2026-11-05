@@ -242,12 +242,13 @@ def other_games():
             ok(words + ' TV: the first ' + first + ' arriving mid-show makes it give way at once',
                r.ask(s1, '!VPSting.playing() && VPSting.stats().last==="content" && !document.getElementById("vpSting")') is True, r.ask(s1, STATS))
         for path, words in (('/app/trivia/play?demo=1', ['LET\u2019S PLAY, DRE!', 'TRIVIA']), ('/app/musical/play?demo=1', ['LET\u2019S PLAY, SAM!', 'MUSICAL BINGO'])):
-            _, p1 = r.open(path, width=390, height=844)
+            # the sales-page phone (it plays itself only when embedded, or with this hook: Dean, 4 Nov 2026)
+            _, p1 = r.open(path, before='window.__vpDemoAutoplay=true;', width=390, height=844)
             ok(words[1] + ' phone: the show with the player\'s name', r.until(p1, 'window.VPSting && VPSting.playing()', 15) is True and r.ask(p1, 'VPSting.shown()') == words, r.ask(p1, 'VPSting.shown()'))
             ok(words[1] + ' phone: done before the first question or song', r.until(p1, '!VPSting.playing() && VPSting.stats().plays===1', 8) is True, r.ask(p1, STATS))
         # the off switch on a game screen and a phone: the same demo scripts, which do send "started"
         for path, what in (('/app/trivia/screen?demo=1&sting=0', 'trivia TV'), ('/app/trivia/play?demo=1&sting=0', 'trivia phone'), ('/play?demo=1&sting=0', 'bingo phone')):
-            _, o1 = r.open(path, width=1280 if 'screen' in path else 390, height=720 if 'screen' in path else 844)
+            _, o1 = r.open(path, before='window.__vpDemoAutoplay=true;', width=1280 if 'screen' in path else 390, height=720 if 'screen' in path else 844)
             r.until(o1, 'document.readyState==="complete" && !!window.VPSting', 15)
             if 'screen' in path:
                 # with the show off the demo's first question is on the wall at 0.9 s, not held for a show
