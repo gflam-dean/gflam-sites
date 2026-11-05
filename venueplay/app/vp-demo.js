@@ -35,7 +35,8 @@
   }
 
   function clampPlayers(v) {
-    var n = parseInt(String(v == null ? "" : v).replace(/[^0-9]/g, ""), 10);
+    var t = String(v == null ? "" : v).trim(), n = parseInt(t, 10);
+    if (isNaN(n)) n = parseInt(t.replace(/[^0-9]/g, ""), 10);     // "about 6" is 6
     if (!isFinite(n) || n < 1) return 1;
     return n > MAX ? MAX : n;
   }
