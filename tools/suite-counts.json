@@ -512,7 +512,7 @@
   "counted_by": "lines"
  },
  "tools/test-group-invoice-lines.js": {
-  "checks": 108,
+  "checks": 141,
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {

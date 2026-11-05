@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 20:30 · 1ce53273';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 21:00 · 1733cf2e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -8350,32 +8350,57 @@ function vpaPlainLineDesc(desc) {
     .trim();
 }
 
-/* `split` (optional) is vpbSplitPlanLine's answer: the ONE plan line Stripe wrote for a group
-   ("45 Players x venueplay plan (monthly)") printed as one row per venue instead, "The Royal Hotel:
-   20 players at $2.50". The rows are the same cents as the line they replace (checked before the split
-   is ever handed here), so the table adds up to exactly what it did before. Every other line, the big
-   nights, added players and prorations, is printed as Stripe wrote it. */
+/* `split` (optional) is vpbSplitPlanLine's answer. For a group, Stripe's ONE plan line ("45 Players x
+   venueplay plan (monthly)") is printed as one block per venue (Dean, 5 Nov 2026, INBOX 75c):
+       The Royal Hotel: 20 players at $2.50 each   $50.00
+         Extra players: 2 x $2.00 (05/11/2026)     $4.00
+         Total for The Royal Hotel                 $54.00
+   then the next venue, then the account total. Each venue's extras are Stripe's own lines on this invoice,
+   moved under the venue they name and otherwise unchanged; nothing else moves. The rows marked
+   data-vp="line" are every charge on the invoice exactly once, in cents Stripe wrote, so they add up to
+   what they did before (vpbSplitPlanLine checks it before the split is ever handed here). The totals and
+   "less" rows are sums of those, and the account rows only print when they land exactly on what was paid. */
 function vpaInvoiceLinesHtml(invoice, split) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
-  const cell = function (desc, cents) {
-    return '<tr>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
-      + (cents / 100).toFixed(2) + '</td></tr>';
+  const usable = !!(split && Array.isArray(split.venues) && split.venues.length);
+  const money = function (cents) { return (cents < 0 ? '-$' : '$') + (Math.abs(cents) / 100).toFixed(2); };
+  const cell = function (desc, cents, kind) {
+    const sub = kind === 'extra', tot = kind === 'sum' || kind === 'total';
+    // The marker only on a split table: an invoice we do not split is printed byte for byte as before.
+    return '<tr' + (usable ? ' data-vp="' + (kind || 'line') + '"' : '') + '>'
+      + '<td style="padding:' + (sub ? '4px 0 4px 14px' : '7px 0') + ';font-size:' + (sub ? '12.5px' : '13.5px') + ';color:'
+      + (sub ? '#4a4a55' : '#12101a') + (tot ? ';font-weight:700' : '') + ';border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
+      + '<td style="padding:' + (sub ? '4px 0' : '7px 0') + ';font-size:' + (sub ? '12.5px' : '13.5px') + ';color:#12101a;text-align:right;white-space:nowrap'
+      + (tot ? ';font-weight:700' : '') + ';border-bottom:1px solid #f0f0f3">' + money(cents) + '</td></tr>';
   };
+  const taken = {};
+  if (usable) (split.taken || []).forEach(function (i) { taken[i] = true; });
   const rows = lines.map(function (l, i) {
-    if (split && split.index === i && Array.isArray(split.rows) && split.rows.length) {
-      return split.rows.map(function (r) { return cell(r.words, Number(r.cents)); }).join('');
+    if (usable && split.index === i) {
+      return split.venues.map(function (v) {
+        let h = cell(v.words, Number(v.cents), 'line');
+        (v.extras || []).forEach(function (x) { h += cell(x.words, Number(x.cents), 'extra'); });
+        if ((v.extras || []).length) h += cell('Total for ' + v.label, Number(v.total), 'sum');
+        return h;
+      }).join('');
     }
+    if (taken[i]) return '';                       // printed under its venue above
     const amt = Number(l.amount || 0);
     const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
-    return cell(desc, amt);
+    return cell(desc, amt, 'line');
   }).join('');
+  let foot = '';
+  if (usable && split.account) {
+    const a = split.account;
+    foot += cell('Total for all venues', a.lines_cents, 'total');
+    if (a.discount_cents > 0) foot += cell('Discount', -a.discount_cents, 'less');
+    if (a.credit_cents > 0) foot += cell('Credit on your account', -a.credit_cents, 'less');
+  }
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
        + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">What this is for</p>'
-       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>'
+       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + foot + '</table>'
        + '</td></tr></table>';
 }
 
@@ -8466,10 +8491,61 @@ function vpbSplitPlanLine(invoice, venues) {
   const rows = list.map(function (v) {
     const label = v.name + (seen[v.name.toLowerCase()] > 1 && v.postcode ? ' (' + v.postcode + ')' : '');
     return { id: v.id, name: v.name, postcode: v.postcode, label: label, players: v.players, cents: v.players * unit,
-             words: label + ': ' + v.players + ' player' + (v.players === 1 ? '' : 's') + ' at ' + rate + per };
+             words: label + ': ' + v.players + ' player' + (v.players === 1 ? '' : 's') + ' at ' + rate + ' each' + per,
+             extras: [], total: v.players * unit };
   });
   // sum === qty and unit * qty === amount above, so these rows add up to the line's amount exactly.
-  return { index: idx, unit_cents: unit, interval: per ? 'year' : 'month', players: qty, cents: amount, rows: rows };
+
+  /* EACH VENUE'S EXTRAS, from Stripe's own lines on THIS invoice (Dean, 5 Nov 2026, INBOX 75c). The game
+     Worker's big night writes "<venue> - Extra Player - DD/MM/YYYY" at $2.00 a head, or at $1.00 with
+     " (3rd big night, plan moved up)" when the third night in a row moved the plan up (chargeNightOverage);
+     an added player on the billing page writes the same "<venue> - Extra Player - <date>" at the plan rate
+     (vpbAdjustPlayerBilling). Most big nights are their own invoice on the night, so a monthly bill carries
+     them only when one could not be collected on the night and rode the renewal. Nothing is worked out
+     here: the quantity, unit and amount are Stripe's. A line is put under a venue only when its name is
+     that venue's, and only one venue has that name; anything else stays where Stripe put it. */
+  const byName = {};
+  rows.forEach(function (r) { const k = r.name.toLowerCase(); byName[k] = (k in byName) ? null : r; });
+  const taken = [];
+  const all = invoice.lines.data;
+  for (let i = 0; i < all.length; i++) {
+    if (i === idx) continue;
+    const x = vpbExtraLine(all[i]);
+    if (!x) continue;
+    const r = byName[x.venue.toLowerCase()];
+    if (!r) continue;
+    r.extras.push({ index: i, words: x.words, cents: x.cents, qty: x.qty, unit_cents: x.unit });
+    r.total += x.cents;
+    taken.push(i);
+  }
+
+  /* THE ACCOUNT TOTAL: every line once, then what came off. Printed only when it lands exactly on what was
+     paid (or is due), so the email can never show a sum that disagrees with Stripe. */
+  const linesCents = all.reduce(function (n, x) { return n + (Number(x && x.amount) || 0); }, 0);
+  const discount = Array.isArray(invoice.total_discount_amounts)
+    ? invoice.total_discount_amounts.reduce(function (n, d) { return n + (Number(d && d.amount) || 0); }, 0) : 0;
+  const due = Number(invoice.amount_paid) > 0 ? Number(invoice.amount_paid) : Number(invoice.amount_due || 0);
+  const credit = linesCents - discount - due;
+  const account = (Number.isInteger(linesCents) && credit >= 0 && Number.isInteger(credit))
+    ? { lines_cents: linesCents, discount_cents: discount, credit_cents: credit, paid_cents: due } : null;
+  return { index: idx, unit_cents: unit, interval: per ? 'year' : 'month', players: qty, cents: amount,
+           rows: rows, venues: rows, taken: taken, account: account };
+}
+
+/* One big-night or added-player line, read back from Stripe's own fields, or null. */
+function vpbExtraLine(l) {
+  if (!l || l.proration === true) return null;
+  const m = /^(.+?) - Extra Player - (\d{2}\/\d{2}\/\d{4})( \(3rd big night, plan moved up\))?\s*$/.exec(String(l.description || ''));
+  if (!m) return null;
+  const qty = parseInt(l.quantity, 10);
+  const cents = Number(l.amount);
+  if (!(qty > 0) || !Number.isInteger(cents) || !(cents > 0) || cents % qty !== 0) return null;
+  const unit = cents / qty;
+  const third = !!m[3];
+  const bigNight = third || unit === 200;
+  return { venue: m[1].trim(), date: m[2], qty: qty, unit: unit, cents: cents, third: third,
+           words: (bigNight ? 'Extra players: ' : 'Players added: ') + qty + ' x $' + (unit / 100).toFixed(2)
+                  + ' (' + m[2] + (third ? ', 3rd big night, plan moved up' : '') + ')' };
 }
 
 /* The rows Stripe was given (metadata written on invoice.created), when they are there and still exact. */
@@ -8514,7 +8590,10 @@ function vpbSplitMemo(split) {
   let out = VPB_MEMO_HEAD;
   for (let i = 0; i < split.rows.length; i++) {
     const r = split.rows[i];
-    const piece = r.words + ' ($' + (r.cents / 100).toFixed(2) + ')' + (i < split.rows.length - 1 ? '; ' : '.');
+    const piece = r.words + ' ($' + (r.cents / 100).toFixed(2) + ')'
+      + (r.extras || []).map(function (x) { return ', ' + x.words.charAt(0).toLowerCase() + x.words.slice(1) + ' ($' + (x.cents / 100).toFixed(2) + ')'; }).join('')
+      + ((r.extras || []).length ? ', total for ' + r.label + ' $' + (r.total / 100).toFixed(2) : '')
+      + (i < split.rows.length - 1 ? '; ' : '.');
     if ((out + piece).length > 1400) {
       out += 'and ' + (split.rows.length - i) + ' more venue' + (split.rows.length - i === 1 ? '' : 's') + ', listed on your venueplay invoice email.';
       return out;

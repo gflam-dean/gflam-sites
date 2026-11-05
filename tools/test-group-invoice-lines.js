@@ -104,17 +104,38 @@ function inv(lines, extra) {
 
 /* What a venue reads about the money on a rendered email: everything a total could hide in. */
 function money(r) {
-  var t = visible(r && r.html);
-  var rows = [], m, re = /<td style="padding:7px 0[^"]*">([\s\S]*?)<\/td><td style="padding:7px 0[^"]*">\$([0-9]+\.[0-9]{2})<\/td>/g;
-  while ((m = re.exec((r && r.html) || ''))) rows.push({ words: visible(m[1]), cents: Math.round(parseFloat(m[2]) * 100) });
+  var html = (r && r.html) || '', t = visible(html);
+  // Only the "What this is for" table: its rows each carry the row rule, and nothing else on the page does.
+  var at = html.indexOf('What this is for'), table = at < 0 ? '' : html.slice(at, html.indexOf('</table>', at));
+  var rows = [], m, re = /<tr( data-vp="([a-z]+)")?><td style="padding:[^"]*border-bottom:1px solid #f0f0f3">([^<]*)<\/td><td style="padding:[^"]*border-bottom:1px solid #f0f0f3">(-?)\$([0-9]+\.[0-9]{2})<\/td><\/tr>/g;
+  while ((m = re.exec(table))) rows.push({ kind: m[2] || 'line', words: visible(m[3]), cents: (m[4] ? -1 : 1) * Math.round(parseFloat(m[5]) * 100) });
+  var charges = rows.filter(function (x) { return x.kind === 'line' || x.kind === 'extra'; });
   function after(label) { var i = t.indexOf(label); if (i < 0) return null; var mm = /\$([0-9,]+\.[0-9]{2})/.exec(t.slice(i + label.length)); return mm ? mm[1] : null; }
   return {
     subject: r && r.subject,
     big: after('Amount paid') || after('Amount due'),
     subtotal: after('Subtotal (excluding GST)'), gst: after('GST '), total: after('Total paid'),
-    rowsSum: rows.reduce(function (n, x) { return n + x.cents; }, 0),
-    rows: rows, text: t,
+    rowsSum: charges.reduce(function (n, x) { return n + x.cents; }, 0),
+    rows: charges, all: rows, text: t,
   };
+}
+/* The sums printed on a split table are the sums of its charges: each "Total for <venue>" is its block,
+   "Total for all venues" is every charge once, and less what came off it is exactly what was paid. */
+function sumsHold(mm, paidCents) {
+  var block = 0, bad = [], seenTotal = null, less = 0;
+  mm.all.forEach(function (x) {
+    if (x.kind === 'line') block = x.cents;
+    else if (x.kind === 'extra') block += x.cents;
+    else if (x.kind === 'sum') { if (x.cents !== block) bad.push(['venue total', x.words, x.cents, block]); }
+    else if (x.kind === 'total') seenTotal = x.cents;
+    else if (x.kind === 'less') less += -x.cents;
+  });
+  if (seenTotal === null) bad.push('no account total');
+  else {
+    if (seenTotal !== mm.rowsSum) bad.push(['account total', seenTotal, mm.rowsSum]);
+    if (seenTotal - less !== paidCents) bad.push(['less what came off', seenTotal, less, paidCents]);
+  }
+  return bad;
 }
 var realSplit = vpbInvoiceVenueSplit;
 async function render(kind, invoice, splitOn) {
@@ -139,27 +160,31 @@ async function sameMoney(name, kind, invoice, venues, expectRows) {
   if (expectRows) {
     var missing = expectRows.filter(function (w) { return ma.text.indexOf(w) === -1; });
     check(name + ': it shows the per-venue lines (' + expectRows.length + ')', missing.length === 0, missing);
+    var due = Number(invoice.amount_paid) > 0 ? Number(invoice.amount_paid) : Number(invoice.amount_due || 0);
+    var sb = sumsHold(ma, due);
+    check(name + ': every venue total, the account total and what came off add up to what Stripe charged (' + due + ')', sb.length === 0, sb);
     check(name + ': and no longer the single group line', /\b\d+ Players × venueplay plan/.test(mb.text) && !/\b\d+ Players × venueplay plan/.test(ma.text), ma.text.slice(0, 300));
   } else {
     check(name + ': nothing new is said, the email is byte for byte what it was', b.html === a.html, ma.text.slice(0, 300));
+    check(name + ': and it carries none of the split table\'s markers, so it is the same bytes main sends', a.html.indexOf('data-vp=') === -1);
   }
   return { before: b, after: a, mb: mb, ma: ma };
 }
 
 async function main() {
-  var ROWS3 = ['The Grand Hotel: 15 players at $2.50', 'The Royal Hotel: 20 players at $2.50', 'Tugun Tavern: 10 players at $2.50'];
+  var ROWS3 = ['The Grand Hotel: 15 players at $2.50 each', 'The Royal Hotel: 20 players at $2.50 each', 'Tugun Tavern: 10 players at $2.50 each'];
 
   say('(a) The split itself');
   var s = vpbSplitPlanLine(inv([planLine(45, 250)]), [ROYAL, GRAND, TUGUN]);
   check('a 3-venue group of 45 players at $2.50 splits into 3 rows', !!s && s.rows.length === 3, s);
   check('the rows are the plan line\'s own cents: 3750 + 5000 + 2500 = 11250', !!s && s.rows.map(function (r) { return r.cents; }).join(',') === '3750,5000,2500' && s.cents === 11250, s && s.rows);
   check('in Dean\'s words, "<venue>: N players at $X", sorted by name', !!s && s.rows.map(function (r) { return r.words; }).join('|') === ROWS3.join('|'), s && s.rows.map(function (r) { return r.words; }));
-  check('one player reads "1 player"', (function () { var x = vpbSplitPlanLine(inv([planLine(21, 250)]), [ROYAL, V('v1', 'The Snug', 1)]); return !!x && x.rows[0].words === 'The Royal Hotel: 20 players at $2.50' && x.rows[1].words === 'The Snug: 1 player at $2.50'; })());
+  check('one player reads "1 player"', (function () { var x = vpbSplitPlanLine(inv([planLine(21, 250)]), [ROYAL, V('v1', 'The Snug', 1)]); return !!x && x.rows[0].words === 'The Royal Hotel: 20 players at $2.50 each' && x.rows[1].words === 'The Snug: 1 player at $2.50 each'; })());
   check('a venue cancelling at period end is not billed and is not listed', (function () { var x = vpbSplitPlanLine(inv([planLine(45, 250)]), [ROYAL, GRAND, TUGUN, V('v-gone', 'Gone Inn', 8, { cancel_at_period_end: true })]); return !!x && x.rows.length === 3 && x.rows.every(function (r) { return r.name !== 'Gone Inn'; }); })());
-  check('a pending reduction is billed at its new number (15 -> 10), the same as the Stripe quantity', (function () { var x = vpbSplitPlanLine(inv([planLine(40, 250)]), [ROYAL, V('v-grand', 'The Grand Hotel', 15, { pending_players: 10 }), TUGUN]); return !!x && x.rows[0].words === 'The Grand Hotel: 10 players at $2.50' && x.cents === 10000; })());
-  check('annual: "at $27.60 a year", the line\'s own unit', (function () { var x = vpbSplitPlanLine(inv([planLine(45, 2760, '45 Players × Founding Membership (Annual) (at $27.60 / year)', { price: { unit_amount: 2760, recurring: { interval: 'year' } } })]), [ROYAL, GRAND, TUGUN]); return !!x && x.rows[1].words === 'The Royal Hotel: 20 players at $27.60 a year' && x.cents === 124200; })());
+  check('a pending reduction is billed at its new number (15 -> 10), the same as the Stripe quantity', (function () { var x = vpbSplitPlanLine(inv([planLine(40, 250)]), [ROYAL, V('v-grand', 'The Grand Hotel', 15, { pending_players: 10 }), TUGUN]); return !!x && x.rows[0].words === 'The Grand Hotel: 10 players at $2.50 each' && x.cents === 10000; })());
+  check('annual: "at $27.60 each a year", the line\'s own unit', (function () { var x = vpbSplitPlanLine(inv([planLine(45, 2760, '45 Players × Founding Membership (Annual) (at $27.60 / year)', { price: { unit_amount: 2760, recurring: { interval: 'year' } } })]), [ROYAL, GRAND, TUGUN]); return !!x && x.rows[1].words === 'The Royal Hotel: 20 players at $27.60 each a year' && x.cents === 124200; })());
   check('the newer Stripe line shape (parent.subscription_item_details, no type) is found', (function () { var l = planLine(45, 250); delete l.type; l.parent = { type: 'subscription_item_details', subscription_item_details: { subscription_item: 'si_1' } }; return !!vpbSplitPlanLine(inv([l]), [ROYAL, GRAND, TUGUN]); })());
-  check('two Royal Hotels on one account are told apart by postcode', (function () { var x = vpbSplitPlanLine(inv([planLine(30, 250)]), [V('a', 'Royal Hotel', 20, { postcode: '2711' }), V('b', 'Royal Hotel', 10, { postcode: '2550' })]); return !!x && x.rows[0].words === 'Royal Hotel (2550): 10 players at $2.50' && x.rows[1].words === 'Royal Hotel (2711): 20 players at $2.50'; })());
+  check('two Royal Hotels on one account are told apart by postcode', (function () { var x = vpbSplitPlanLine(inv([planLine(30, 250)]), [V('a', 'Royal Hotel', 20, { postcode: '2711' }), V('b', 'Royal Hotel', 10, { postcode: '2550' })]); return !!x && x.rows[0].words === 'Royal Hotel (2550): 10 players at $2.50 each' && x.rows[1].words === 'Royal Hotel (2711): 20 players at $2.50 each'; })());
   say('\n    ...and it says NOTHING new whenever it cannot be exact');
   check('our table says 44, Stripe billed 45: no split', vpbSplitPlanLine(inv([planLine(45, 250)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)]) === null);
   check('one venue: no split (Stripe\'s line already says it)', vpbSplitPlanLine(inv([planLine(20, 250)]), [ROYAL]) === null);
@@ -174,7 +199,7 @@ async function main() {
   var ex = await sameMoney('3-venue group, monthly', 'receipt', inv([planLine(45, 250, PLAN_M)]), [ROYAL, GRAND, TUGUN], ROWS3);
   if (ex) {
     check('3-venue group: the receipt still says $112.50 paid', ex.ma.big === '112.50', ex.ma.big);
-    check('3-venue group: the three rows are $37.50, $50.00 and $25.00', ex.ma.rows.map(function (r) { return r.cents; }).join(',') === '3750,5000,2500', ex.ma.rows);
+    check('3-venue group: the three rows are $37.50, $50.00 and $25.00, then the account total', ex.ma.all.filter(function (r) { return r.kind === 'total'; }).map(function (r) { return r.cents; }).join() === '11250' && ex.ma.rows.map(function (r) { return r.cents; }).join(',') === '3750,5000,2500', ex.ma.rows);
   }
   // A new pub's pro rata stub: Tugun is inside its free month. The plan line bills it in full and the
   // free days come off as a customer credit (vpbAddVenue), which Stripe applies to the invoice total.
@@ -182,9 +207,35 @@ async function main() {
     inv([planLine(45, 250, PLAN_M)], { starting_balance: -645, amount_paid: 11250 - 645, amount_due: 11250 - 645 }), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 10, { free_month_at: '2026-11-15T00:00:00Z' })], ROWS3);
   // The group player limit is PER VENUE: a big night at The Royal is its own line, as are added players.
   await sameMoney('the player limit: a big night, added players, a pending reduction and a venue cancelling', 'receipt',
-    inv([planLine(40, 250), itemLine('Big night extra players - The Royal Hotel - 12 over 20 at $2.00', 2400, 12), itemLine('The Grand Hotel: 5 extra players, full month', 1250, 5)]),
+    inv([planLine(40, 250), itemLine('The Royal Hotel - Extra Player - 31/10/2026', 2400, 12), itemLine('The Grand Hotel - Extra Player - 02/11/2026', 1250, 5)]),
     [ROYAL, V('v-grand', 'The Grand Hotel', 15, { pending_players: 10 }), TUGUN, V('v-gone', 'Gone Inn', 8, { cancel_at_period_end: true })],
-    ['The Grand Hotel: 10 players at $2.50', 'The Royal Hotel: 20 players at $2.50', 'Tugun Tavern: 10 players at $2.50', 'Big night extra players - The Royal Hotel - 12 over 20 at $2.00', 'The Grand Hotel: 5 extra players, full month']);
+    ['The Grand Hotel: 10 players at $2.50 each', 'Players added: 5 x $2.50 (02/11/2026)', 'Total for The Grand Hotel $37.50', 'The Royal Hotel: 20 players at $2.50 each', 'Extra players: 12 x $2.00 (31/10/2026)', 'Total for The Royal Hotel $74.00', 'Tugun Tavern: 10 players at $2.50 each', 'Total for all venues $136.50']);
+  // DEAN'S EXAMPLE (INBOX 75c), with the 3rd-time rate: The Royal had 2 extras at $2, Tugun its 3rd big
+  // night in a row at $1 (the plan moved up), a 33.3% discount and a free-month credit on top.
+  ex = await sameMoney('Dean\'s layout: extras per venue, the 3rd-time $1 rate, a discount and a credit', 'receipt',
+    inv([planLine(45, 250, PLAN_M), itemLine('The Royal Hotel - Extra Player - 31/10/2026', 400, 2),
+         itemLine('Tugun Tavern - Extra Player - 01/11/2026 (3rd big night, plan moved up)', 300, 3)],
+        { total_discount_amounts: [{ amount: 3746 }], starting_balance: -645, amount_paid: 11950 - 3746 - 645, amount_due: 11950 - 3746 - 645 }),
+    [ROYAL, GRAND, TUGUN],
+    ['The Royal Hotel: 20 players at $2.50 each $50.00 Extra players: 2 x $2.00 (31/10/2026) $4.00 Total for The Royal Hotel $54.00',
+     'Tugun Tavern: 10 players at $2.50 each $25.00 Extra players: 3 x $1.00 (01/11/2026, 3rd big night, plan moved up) $3.00 Total for Tugun Tavern $28.00',
+     'The Grand Hotel: 15 players at $2.50 each $37.50 The Royal Hotel', 'Total for all venues $119.50 Discount -$37.46 Credit on your account -$6.45']);
+  var deanEx = ex;
+  check('Dean\'s layout: the email still says $75.59 paid', !!ex && ex.ma.big === '75.59', ex && ex.ma.big);
+  check('the 3rd-time rate is read off Stripe\'s line ($1.00), never assumed', !!ex && ex.ma.rows.some(function (r) { return r.words === 'Extra players: 3 x $1.00 (01/11/2026, 3rd big night, plan moved up)' && r.cents === 300; }));
+  // A third big night whose uplift did NOT happen is charged $2 with no suffix (chargeNightOverage): shown as $2.
+  check('a 3rd night that did not move the plan up is $2.00, as Stripe charged it', (function () { var x = vpbSplitPlanLine(inv([planLine(45, 250), itemLine('Tugun Tavern - Extra Player - 01/11/2026', 600, 3)]), [ROYAL, GRAND, TUGUN]); var t = x && x.rows.filter(function (r) { return r.name === 'Tugun Tavern'; })[0]; return !!t && t.extras.length === 1 && t.extras[0].words === 'Extra players: 3 x $2.00 (01/11/2026)' && t.total === 3100; })());
+  check('extras for a venue not on this account stay where Stripe put them', (function () { var x = vpbSplitPlanLine(inv([planLine(45, 250), itemLine('Old Pub - Extra Player - 01/11/2026', 400, 2)]), [ROYAL, GRAND, TUGUN]); return !!x && x.taken.length === 0; })());
+  check('extras naming one of two same-named venues stay where Stripe put them', (function () { var x = vpbSplitPlanLine(inv([planLine(30, 250), itemLine('Royal Hotel - Extra Player - 01/11/2026', 400, 2)]), [V('a', 'Royal Hotel', 20, { postcode: '2711' }), V('b', 'Royal Hotel', 10, { postcode: '2550' })]); return !!x && x.taken.length === 0; })());
+  check('an amount that does not divide by its quantity is not read as extras', vpbExtraLine({ description: 'Tugun Tavern - Extra Player - 01/11/2026', amount: 401, quantity: 2 }) === null);
+  // An old balance OWED rides this bill (Stripe adds a positive starting balance): the lines less what came off
+  // cannot reach what was paid, so the account rows are left off rather than show a sum Stripe did not charge.
+  WORLD.venues = [ROYAL, GRAND, TUGUN];
+  var owed = await render('receipt', inv([planLine(45, 250, PLAN_M)], { starting_balance: 500, amount_paid: 11750, amount_due: 11750 }), true);
+  var mo = money(owed);
+  check('a balance owed riding the bill: the venues are shown, but no account total that would not match $117.50',
+        !!owed && mo.big === '117.50' && ROWS3.every(function (w) { return mo.text.indexOf(w) !== -1; }) && !mo.all.some(function (r) { return r.kind === 'total' || r.kind === 'less'; }), mo.all);
+  await sameMoney('extras for a venue not on the account', 'receipt', inv([planLine(45, 250, PLAN_M), itemLine('Old Pub - Extra Player - 01/11/2026', 400, 2)]), [ROYAL, GRAND, TUGUN], ROWS3.concat(['Old Pub - Extra Player - 01/11/2026']));
   await sameMoney('the account\'s own free month ($0 invoice)', 'receipt', inv([planLine(45, 250, PLAN_M)], { amount_paid: 0, amount_due: 0, starting_balance: -11250 }), [ROYAL, GRAND, TUGUN], null);
   await sameMoney('a 33.3% discount', 'receipt', inv([planLine(45, 250, PLAN_M)], { total_discount_amounts: [{ amount: 3746, discount: 'di_1' }], amount_paid: 7504, amount_due: 7504 }), [ROYAL, GRAND, TUGUN], ROWS3);
   await sameMoney('a $10 off discount', 'receipt', inv([planLine(45, 250, PLAN_M)], { total_discount_amounts: [{ amount: 1000, discount: 'di_2' }], amount_paid: 10250, amount_due: 10250 }), [ROYAL, GRAND, TUGUN], ROWS3);
@@ -192,13 +243,13 @@ async function main() {
   await sameMoney('annual, with a proration line beside it', 'receipt',
     inv([planLine(45, 2760, '45 Players × Founding Membership (Annual) (at $27.60 / year)', { price: { unit_amount: 2760, recurring: { interval: 'year' } } }),
          planLine(5, 2760, 'Remaining time on 5 × Founding Membership (Annual) after 10 Nov 2026', { id: 'il_pr', proration: true, amount: 11040, price: { unit_amount: 2760, recurring: { interval: 'year' } } })]),
-    [ROYAL, GRAND, TUGUN], ['The Royal Hotel: 20 players at $27.60 a year', 'Remaining time on 5 × venueplay plan (annual) after 10 Nov 2026']);
+    [ROYAL, GRAND, TUGUN], ['The Royal Hotel: 20 players at $27.60 each a year', 'Remaining time on 5 × venueplay plan (annual) after 10 Nov 2026']);
   await sameMoney('drift (our table 44, Stripe 45)', 'receipt', inv([planLine(45, 250, PLAN_M)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)], null);
   await sameMoney('a single venue', 'receipt', inv([planLine(20, 250, '20 Players × Founding Membership (Monthly) (at $2.50 / month)')]), [ROYAL], null);
   await sameMoney('the payment reminder, 3-venue group', 'reminder', inv([planLine(45, 250, PLAN_M)], { amount_paid: 0, status: 'draft' }), [ROYAL, GRAND, TUGUN], ROWS3);
   await sameMoney('the payment reminder, with a discount and a big night', 'reminder',
-    inv([planLine(45, 250, PLAN_M), itemLine('Big night extra players - Tugun Tavern - 4 over 10 at $2.00', 800, 4)], { amount_paid: 0, amount_due: 8304, total_discount_amounts: [{ amount: 3746 }], status: 'draft' }),
-    [ROYAL, GRAND, TUGUN], ROWS3.concat(['Big night extra players - Tugun Tavern - 4 over 10 at $2.00']));
+    inv([planLine(45, 250, PLAN_M), itemLine('Tugun Tavern - Extra Player - 04/11/2026', 800, 4)], { amount_paid: 0, amount_due: 8304, total_discount_amounts: [{ amount: 3746 }], status: 'draft' }),
+    [ROYAL, GRAND, TUGUN], ROWS3.concat(['Extra players: 4 x $2.00 (04/11/2026)', 'Total for Tugun Tavern $33.00', 'Discount -$37.46']));
   // Every case at once, many shapes: the rendered lines always add up to what they did.
   var shapes = 0, bad = [];
   for (var a = 1; a <= 6; a++) for (var b = 0; b <= 5; b++) for (var c = 0; c <= 4; c++) {
@@ -236,7 +287,12 @@ async function main() {
   check('ON: it writes ONLY the description and metadata', keys.length > 0 && keys.every(function (k) { return k === 'description' || /^metadata\[vp_[a-z_0-9]+\]$/.test(k); }), keys);
   check('ON: never an amount, quantity, price, item, line, coupon, discount, tax or balance', !keys.some(function (k) { return /amount|quantit|price|item|line(?!s_)|coupon|discount|tax|balance|auto_advance|collection|due/.test(k.replace(/^metadata\[vp_lines_[a-z]+\]$/, '')); }), keys);
   check('ON: the memo says each venue: "Players by venue: The Grand Hotel: 15 players at $2.50 ($37.50); ..."',
-        form.description === 'Players by venue: The Grand Hotel: 15 players at $2.50 ($37.50); The Royal Hotel: 20 players at $2.50 ($50.00); Tugun Tavern: 10 players at $2.50 ($25.00).', form.description);
+        form.description === 'Players by venue: The Grand Hotel: 15 players at $2.50 each ($37.50); The Royal Hotel: 20 players at $2.50 each ($50.00); Tugun Tavern: 10 players at $2.50 each ($25.00).', form.description);
+  await created(envOn(), inv([planLine(45, 250, PLAN_M), itemLine('Tugun Tavern - Extra Player - 01/11/2026 (3rd big night, plan moved up)', 300, 3)], { status: 'draft' }));
+  var xform = stripe[0] ? decodeURIComponent(stripe[0].body.replace(/\+/g, ' ')) : '';
+  check('ON: the memo carries each venue\'s extras and its total, as Stripe has them',
+        xform.indexOf('Tugun Tavern: 10 players at $2.50 each ($25.00), extra players: 3 x $1.00 (01/11/2026, 3rd big night, plan moved up) ($3.00), total for Tugun Tavern $28.00.') !== -1, xform.slice(0, 400));
+  check('ON: still only description and metadata with extras on the bill', !!stripe[0] && stripe[0].body.split('&').every(function (kv) { var k = decodeURIComponent(kv.split('=')[0]); return k === 'description' || /^metadata\[vp_[a-z_0-9]+\]$/.test(k); }));
   check('ON: the metadata carries 3 venues and the unit, readable back', form['metadata[vp_lines_n]'] === '3' && form['metadata[vp_lines_unit]'] === '250' && JSON.parse(form['metadata[vp_venue_2]']).n === 'The Royal Hotel' && JSON.parse(form['metadata[vp_venue_2]']).p === 20, form);
   check('ON: keyed once per invoice, so a retried event cannot write twice', stripe[0] && stripe[0].idem === 'vplines:in_group', stripe[0] && stripe[0].idem);
   check('ON: it is written down', audits.some(function (x) { return x.row.action === 'invoice_venue_lines' && x.row.detail.outcome === 'written' && x.row.detail.cents === 11250; }), audits.map(function (x) { return x.row.action; }));
@@ -294,8 +350,8 @@ async function main() {
   var tq = await vpbAccountTotal(ENV, 'f1'), sp = vpbSplitPlanLine(inv([planLine(tq, 250)]), WORLD.venues);
   check('the split and the Stripe quantity read the same rule: the rows add to vpbAccountTotal (' + tq + ')', !!sp && sp.players === tq && sp.rows.reduce(function (n, r) { return n + r.players; }, 0) === tq, sp);
 
-  if (DUMP && ex) {
-    print('<!-- BEFORE -->\n' + ex.before.html + '\n<!-- AFTER -->\n' + ex.after.html);
+  if (DUMP && deanEx) {
+    print('<!-- BEFORE -->\n' + deanEx.before.html + '\n<!-- AFTER -->\n' + deanEx.after.html);
     return;
   }
   print('\n' + (fails ? fails + ' OF ' + ran + ' FAILED' : 'ALL ' + ran + ' CHECKS PASSED'));
