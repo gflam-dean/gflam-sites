@@ -4493,7 +4493,7 @@ MUTATIONS = [
      '      66:"Clickety click",77:"Sunset strip",88:"Two fat ladies",90:"Top of the shop"})[n] || "";', '      66:"Clickety click",77:"Sunset strip",88:"Two fat ladies",90:"Top of the shop"})[n+1] || "";',
      'the call under the ball is for the wrong number'),
     ('test-double-points.js', 'venueplay-backend/worker/venueplay-game.js',
-     '      pts = mult * (base + bonus);', '      pts = base + bonus;',
+     '    pts = mult * (base + bonus);', '    pts = base + bonus;',
      'the double points questions score single while the TV tells the room they are double'),
     ('test-double-points.js', 'venueplay-backend/worker/venueplay-game.js',
      '    const from = Math.max(0, chosenSeqs.length - doubleLast);', '    const from = 0;',

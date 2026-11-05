@@ -6936,16 +6936,7 @@ async function handleHostRevealManyTrips(request, env, json, pre) {
     if (racedOut) continue;
     if (a.is_correct !== null && a.is_correct !== undefined) continue;
     const correct = a.answer_index === q.correct_index;
-    let pts = 0;
-    if (correct) {
-      let bonus = 0;
-      if (speedBonus && endsAtMs && a.answered_at && secs > 0) {
-        // Faster answers keep more of the +50% bonus: remaining/secs of base*0.5.
-        const remaining = Math.max(0, Math.min(secs, (endsAtMs - Date.parse(a.answered_at)) / 1000));
-        bonus = Math.round(base * 0.5 * (remaining / secs));
-      }
-      pts = mult * (base + bonus);
-    }
+    const pts = triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, a.answered_at ? Date.parse(a.answered_at) : 0);
     // Collected, not written one at a time. See the batch below.
     scored.push({ id: a.id, is_correct: correct, points_awarded: pts });
   }
@@ -8453,6 +8444,25 @@ async function handlePlayerAlive(request, env, json) {
   } catch (e) {
     return json({ ok: true, recorded: false });
   }
+}
+
+/* WHAT A TRIVIA ANSWER IS WORTH, IN ONE PLACE (moved here 5 Nov 2026 from inside the reveal, unchanged,
+   so the coaster round on /live-here-now scores by the very same rule: "Correct! +130"). A correct
+   answer is base, plus up to another half of base for speed, scaled by how much of the question's time
+   was left when it was given; a wrong one is worth nothing. mult is 2 on a double points question
+   (migration 96), 1 otherwise. Times are milliseconds. trivia-score.test.js runs this function. */
+function triviaAnswerPoints(correct, base, secs, speedBonus, mult, endsAtMs, answeredAtMs) {
+  let pts = 0;
+  if (correct) {
+    let bonus = 0;
+    if (speedBonus && endsAtMs && answeredAtMs && secs > 0) {
+      // Faster answers keep more of the +50% bonus: remaining/secs of base*0.5.
+      const remaining = Math.max(0, Math.min(secs, (endsAtMs - answeredAtMs) / 1000));
+      bonus = Math.round(base * 0.5 * (remaining / secs));
+    }
+    pts = mult * (base + bonus);
+  }
+  return pts;
 }
 
 async function handlePlayerScore(request, env, json) {
