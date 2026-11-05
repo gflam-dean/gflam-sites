@@ -635,3 +635,11 @@ the Mac (~/venue-enrich/venueplay-SEND-pubs-and-clubs.csv and ~/venue-enrich/par
 state registers), 32,415 name and postcode rows on 6 Nov 2026. Missing or empty, every start is held for HQ (the safe way
 round). RLS on, service role only. NUMBER: 171 (172 is the try-it demo's, `fix/try-demo-10nov`). Branch
 `fix/signup-core-10nov`. NOT RUN.
+
+`venueplay-172-demo-sessions.sql` (Dean, 5 Nov 2026, INBOX 82 and 84b: the try-it demo is never billed): ONE new column,
+`vp_sessions.is_demo boolean not null default false`, and a small partial index. Written once by the game Worker at
+POST /session {demo:true}; honoured by chargeNightOverage (no charge, no streak change), the overage ask, the once-a-week
+trivia check and stamp, vp_asked_questions, saved trivia prefs, metering, group overage and the billing Worker's stats
+reads (VPA_NOT_DEMO). A demo's players stay on its venue's opt-in list and in the privacy paths on purpose. RUN IT BEFORE
+deploying either Worker from this branch: their reads filter is_demo=not.is.true, which PostgREST refuses while the column
+is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. NOT RUN.
