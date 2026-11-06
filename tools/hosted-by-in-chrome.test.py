@@ -373,10 +373,11 @@ def people():
                 ok('%s: a chosen logo shows in the dark chip before Save' % label,
                    S.until(sid, '/^url\\("data:image/.test(document.querySelector(".hbpanel .hb-thumb").style.backgroundImage)', 15) is True,
                    S.js(sid, 'document.querySelector(".hbpanel .hb-thumb").style.backgroundImage.slice(0,40)'))
-                S.js(sid, '(function(){ var p=document.querySelector(".hbpanel"); var i=p.querySelector(".hb-name"); i.value=%s; i.dispatchEvent(new Event("input")); var t=p.querySelector(\'.hb-g[value="trivia"]\'); t.click(); return true; })()' % json.dumps(NAME))
-                time.sleep(0.3)
+                time.sleep(0.3)   # measured once the picked logo is painted, not before it has loaded
                 after = json.loads(S.js(sid, PEOPLE)).get('where')
                 ok('%s: nothing jumps when a logo is picked (the next heading stays at %spx)' % (label, before), before is not None and before == after, (before, after))
+                S.js(sid, '(function(){ var p=document.querySelector(".hbpanel"); var i=p.querySelector(".hb-name"); i.value=%s; i.dispatchEvent(new Event("input")); var t=p.querySelector(\'.hb-g[value="trivia"]\'); t.click(); return true; })()' % json.dumps(NAME))
+                time.sleep(0.3)
                 if SHOTS: S.shot(sid, shot_path('people-%d-filled.png' % w), False)
                 S.js(sid, 'document.querySelector(".hbpanel .hb-save").click(); true')
                 saved = S.until(sid, '/Saved\. It shows on the TV/.test(document.getElementById("msg").textContent)', 20)
