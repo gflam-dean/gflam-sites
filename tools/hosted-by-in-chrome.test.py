@@ -262,8 +262,8 @@ def wall_checks(tag, m, base, host_logo, venue, mode):
             ok('%s: inside the header band: no lower than the venue %s or 15%% of the height' % (tag, 'name' if venue == 'none' else 'logo'), hb[3] <= max(L[3], 0.15 * H) + 1, [hb, L])
         ok('%s: one shape: HOSTED BY above the name' % tag, bool(m.get('lblR')) and bool(m.get('nameR')) and m['lblR'][3] <= m['nameR'][1] + 1, [m.get('lblR'), m.get('nameR')])
     else:
-        x0 = L[0] if (L and venue != 'none') else inset
-        ok('%s: along the bottom, left-aligned with the venue logo\'s margin (%dpx)' % (tag, x0), abs(hb[0] - x0) <= 1 and hb[1] > 0.8 * H, [hb, L])
+        x0 = L[0] if L else inset
+        ok('%s: along the bottom, left-aligned with the venue %s (%dpx)' % (tag, 'name' if venue == 'none' else 'logo', x0), abs(hb[0] - x0) <= 1 and hb[1] > 0.8 * H, [hb, L])
         ok('%s: clear of the bottom edge for overscan (%.0fpx, at least 40)' % (tag, H - hb[3]), H - hb[3] >= 39.5, hb)
         ok('%s: no part of the slide runs under it or off the screen' % tag, all(not overlap(hb, k, 1) and k[3] <= H for k in m.get('kids') or []), [k for k in m.get('kids') or [] if overlap(hb, k, 1)][:2])
     if host_logo:

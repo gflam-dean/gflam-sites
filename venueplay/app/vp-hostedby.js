@@ -157,7 +157,7 @@
     if (MODE === "bottom") {
       ih = Math.round(Math.max(30, 0.052 * H));
       img.style.height = ih + "px"; img.style.maxWidth = Math.round(0.14 * W) + "px";
-      s.left = Math.round(logo ? logo.left : inset) + "px";   /* the logo's own margin, never closer to the edge */
+      s.left = Math.round(logo ? logo.left : (tag ? tag.left : inset)) + "px";   /* the venue logo's or name's own margin */
       s.top = "auto";
       s.bottom = Math.round(Math.max(40, 0.056 * H)) + "px";
       s.maxWidth = Math.round(0.5 * W) + "px";
