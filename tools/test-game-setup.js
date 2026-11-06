@@ -206,9 +206,10 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a mix: set_mode "mix" and no category sent, so the console keeps choosing', sv && sv.body.prefs.set_mode === 'mix' && !('set_id' in sv.body.prefs) && !('set_ids' in sv.body.prefs));
   check('no theme nights asked in setup (Dean, round 7b point 5: later, by email); the usual prizes kept as prize buttons', !$(P, 'vpGsIn_theme_nights') && sv && JSON.stringify(sv.body.prefs.prize_list) === '["$50 bar tab"]' && sv.body.prefs.rounds === 3, sv && sv.body.prefs);
   check('then "Do you want to set up your next game?", naming what is left', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && /You still have musical bingo and members draws\./.test(T(P, 'vpGsBody')), T(P, 'vpGsBody'));
-  $(P, 'vpGsNextYes').click(); await settle();
+  check('the answers sit right under the question, the next game named: "Yes, set up musical bingo", "That\'s enough for today"; the bar keeps only Back (Dean, round 9b)', T(P, 'vpGsNextYes') === 'Yes, set up musical bingo' && /vpgs-answers/.test($(P, 'vpGsNextYes').parentNode.className) && $(P, 'vpGsNextNo').parentNode === $(P, 'vpGsNextYes').parentNode && !!$(P, 'vpGsBack') && /vpgs-foot/.test($(P, 'vpGsBack').parentNode.className), T(P, 'vpGsNextYes'));
+  $(P, 'vpGsNextPick').click(); await settle();
   var which = all($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game'); }).map(function (e) { return e.getAttribute('data-game'); });
-  check('Yes: "What would you like to set up next?" with the games left', T(P, 'vpGsTitle') === 'What would you like to set up next?' && which.join() === 'musical,members', which);
+  check('"Or pick a different game": "What would you like to set up next?" with the games left', T(P, 'vpGsTitle') === 'What would you like to set up next?' && which.join() === 'musical,members', which);
   walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   check('members draws, as game 3 of 3', T(P, 'vpGsTitle') === 'Set up members draws' && T(P, 'vpGsCount') === 'Game 3 of 3', [T(P, 'vpGsTitle'), T(P, 'vpGsCount')]);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
@@ -293,7 +294,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('saved: rounds 3, round 1 no prize, then $20 bar tab and Meat tray; the first real prize as the console\'s prize', mp && mp.body.prefs.rounds === 3 && mp.body.prefs.prizes.join('|') === '|$20 bar tab|Meat tray' && JSON.stringify(mp.body.prefs.prize_none) === '[1]' && mp.body.prefs.prize === '$20 bar tab' && mp.body.prefs.prize_same === false, mp && mp.body);
   check('the musical bingo Worker keeps all of it, no-prize rounds included', mp && srtj(WK.clean('musical', mp.body.prefs)) === srtj(mp.body.prefs), mp && WK.clean('musical', mp.body.prefs));
   check('no music picked: nothing sent for it, the console keeps choosing', mp && !('playlists' in mp.body.prefs) && !('playlist' in mp.body.prefs), mp && mp.body);
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
   check('bingo with phone tickets: no question about who draws the numbers (it does not apply)', $(P, 'vpGsQ_caller').parentNode.style.display === 'none');
   check('phone tickets: tickets each player is asked, no paper words', $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === '' && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === 'none');
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'paper'; }).click();
@@ -302,7 +303,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var bp = posts('/host/game-prefs')[0];
   check('saved as paper, venueplay drawing the numbers, no tickets-per-player for paper books (Dean, round 3)', bp && bp.body.prefs.ticket_kind === 'paper' && bp.body.prefs.caller === false && !('cards' in bp.body.prefs) && !('allow_early' in bp.body.prefs) && srtj(WK.clean('bingo', bp.body.prefs)) === srtj(bp.body.prefs), bp && bp.body);
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   $(P, 'vpGsIn_raffles').value = '3'; $(P, 'vpGsIn_raffles').handlers.input.forEach(function (f) { f(); });
   check('three raffles a night: a prize count for each, no "are they the same prize?" question (Dean, round 8b point 7)', $(P, 'vpGsIn_raffle_counts').children.length === 3 && !$(P, 'vpGsQ_prizes_same') && !$(P, 'vpGsIn_range_min'));
   $(P, 'vpGsIn_raffle_counts_0').value = '2'; $(P, 'vpGsIn_raffle_counts_1').value = '5';
@@ -311,7 +312,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var rr = posts('/host/game-prefs')[0];
   check('raffle 1 has 2 prizes, raffle 2 has 5, raffle 3 has 1, and the prizes are the console\'s buttons', rr && rr.body.prefs.prizes.join('|') === 'Meat Tray|Fuel voucher' && JSON.stringify(rr.body.prefs.raffle_counts) === '[2,5,1]' && rr.body.prefs.raffles === 3 && rr.body.prefs.prize_count === 5 && rr.body.prefs.prizes_weekly === true, rr && rr.body);
   check('the raffle Worker keeps all of it', rr && srtj(WK.clean('raffle', rr.body.prefs)) === srtj(rr.body.prefs), rr && WK.clean('raffle', rr.body.prefs));
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   check('members draws: no draw-day question (the night comes from the nights step)', !$(P, 'vpGsIn_draw_day') && !$(P, 'vpGsQ_draw_day'));
 
   section('6c. WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026), right after the games question, skippable');
@@ -404,7 +405,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('the usual prizes become trivia\'s prize buttons (each once)', tp3 && JSON.stringify(tp3.body.prefs.prize_list) === '["Meat tray","$50 bar tab"]', tp3 && tp3.body.prefs);
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('kept as the usual prizes for the next games', JSON.stringify(sa.prize_bank) === '["Meat tray","$50 bar tab"]', sa.prize_bank);
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
   var uchips = all($(P, 'vpGsUsual_round_prizes'), function (e) { return e.className === 'vpgs-uchip'; });
   check('bingo: a prize for each game of the night (Dean, round 8b point 11), empty, the usual prizes one tap away', $(P, 'vpGsIn_round_prizes').children.length === 3 && $(P, 'vpGsIn_round_prizes_0').value === '' && uchips.map(function (e) { return e.getAttribute('data-item'); }).join('|') === 'Meat tray|$50 bar tab', uchips.length);
   uchips[1].click(); uchips[0].click();
@@ -413,7 +414,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var bpz = posts('/host/game-prefs')[0].body.prefs;
   check('saved: each game\'s prize in order (no prize for game 3), the prize buttons, 6 tickets a player by default', JSON.stringify(bpz.round_prizes) === '["$50 bar tab","Meat tray",""]' && bpz.rounds === 3 && bpz.prize_list.join('|') === '$50 bar tab|Meat tray' && bpz.cards === 6 && srtj(WK.clean('bingo', bpz)) === srtj(bpz), bpz);
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   function keysIn(id) { var g = $(P, id); return g ? all(g, function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() : ''; }
   var mrows = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).filter(function (e) { return e.style.display !== 'none'; }).map(function (e) { return e.getAttribute('data-key'); });
   check('members draws: one row each, the name, when it started, the time (the time picker), the starting jackpot ($ before the box, empty), how much it goes up and the most it can reach (Dean, round 7b points 17 and 19)', mrows.slice(0, 7).join() === 'name,date_started,draw_time,current_jackpot_cents,starting_amount_cents,increment_cents,max_jackpot_cents' && $(P, 'vpGsIn_draw_time').type === 'time' && $(P, 'vpGsIn_starting_amount_cents').value === '' && $(P, 'vpGsIn_starting_amount_cents').parentNode.children[0].textContent === '$' && /current jackpot for the next draw/i.test(T(P, 'vpGsBody')) && mrows.indexOf('over_max') < 0, mrows);
@@ -458,7 +459,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('in words: "Fri: Bingo \u00d72 6pm, Members draws 8pm \u00b7 Sat: Karaoke 9pm \u00b7 ..."', /^Fri: Bingo \u00d72 6pm, Members draws 8pm \u00b7 Sat: Karaoke 9pm/.test(P.GS.weekWords(sa.week)), P.GS.weekWords(sa.week));
   $(P, 'vpGsAllYes').click(); await settle();
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }); $(P, 'vpGsSave').click(); await settle();
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   check('two members nights: members draw 1 of 2, called after its night', /draw 1 of 2/.test(T(P, 'vpGsCount')) && $(P, 'vpGsIn_name').placeholder === 'Friday Members Draw' && $(P, 'vpGsIn_draw_time').value === '20:00' && /Draw time/.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'draw_time'; }).getAttribute('data-from') === 'night', [T(P, 'vpGsCount'), $(P, 'vpGsIn_name').placeholder]);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('then draw 2 of 2, Sunday 5pm', /draw 2 of 2/.test(T(P, 'vpGsCount')) && $(P, 'vpGsIn_name').placeholder === 'Sunday Members Draw' && $(P, 'vpGsIn_draw_time').value === '17:00', [T(P, 'vpGsCount'), $(P, 'vpGsIn_name').placeholder]);
@@ -473,7 +474,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   P = page({ answers: { games: ['trivia', 'raffles'], prizes_shared: true, prize_bank: ['Meat tray', '$50 bar tab'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
   check('trivia starts empty, the usual prizes one tap away, and no question about them', tagsOf(P, 'prize_list').length === 0 && !!$(P, 'vpGsUsual_prize_list') && !$(P, 'vpGsShared'));
-  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
+  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   check('raffles keep their own list (Meat Tray), never the usual-prizes question', tagsOf(P, 'prizes').join() === 'Meat Tray' && !$(P, 'vpGsShared'), tagsOf(P, 'prizes'));
   check('"Raffles a night" is one compact line with a small box, no unit word (Dean, round 8b point 5); no More settings on raffles', / cmp/.test(walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'raffles'; }).className) && !all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-unit'; }).length && !$(P, 'vpGsAdvanced'));
   walk($(P, 'vpGsUsual_prizes'), function (e) { return e.getAttribute && e.getAttribute('data-item') === '$50 bar tab'; }).click();
@@ -496,11 +497,11 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var pr = $(P, 'vpGsHelp_count'); var crow = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'count'; });
   check('the "?" words sit under the whole setting (the row\'s last part), never over the question', pr && crow.children[crow.children.length - 1] === pr, crow && crow.children.map(function (c) { return c.className; }));
   check('no unit words after the boxes, so every box lines up (Dean, round 8b points 5 and 16)', all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-unit'; }).length === 0);
-  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
+  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
   check('left unanswered on trivia, it is never asked again on bingo (asked once, design review)', !$(P, 'vpGsShared') && T(P, 'vpGsTitle') === 'Set up bingo');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
-  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextYes').click(); await settle();
+  $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextPick').click(); await settle();
   check('"What would you like to set up next?" has a line under the title and quiet outlined buttons', /Pick one/.test(T(P, 'vpGsBody')) && /vpgs-outline/.test(walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'musical'; }).className));
   var P16 = page(); var hdr = new El('header'); hdr.style.visibility = ''; P16.body.appendChild(hdr);
   P16.doc.querySelector = function (sel) { return sel === 'header' ? hdr : null; };
@@ -552,7 +553,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('several, spelt properly: "Karaoke", "Darts", and their own words with a capital first letter', ot.join('|') === 'Karaoke|Darts|Trivia for kids', ot);
   P = page({ answers: { games: ['members', 'trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle(); $(P, 'vpGsSave').click(); await settle();
-  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   $(P, 'vpGsIn_name').value = 'Club Draw'; $(P, 'vpGsIn_max_jackpot_cents').value = '5000'; $(P, 'vpGsIn_max_jackpot_cents').handlers.input.forEach(function (f) { f(); });
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'second'; }).click();
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
@@ -584,7 +585,9 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('dropped on round 2, it goes in round 2 (Dean, round 8b point 8)', b2.value === 'Meat tray' && $(P, 'vpGsIn_prizes_0').value === '');
   check('"No prize" is there for every round', !!$(P, 'vpGsNone_0') && !!$(P, 'vpGsNone_1') && !!$(P, 'vpGsNone_2'));
   $(P, 'vpGsSave').click(); await settle();
-  check('the next game question: "Do you want to set up your next game?" Yes, or "That\'s enough for today", in the footer like every other screen (Dean, round 8b points 12 and 13)', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && T(P, 'vpGsNextNo') === "That's enough for today" && $(P, 'vpGsNextYes').parentNode === $(P, 'vpGsNextNo').parentNode && /vpgs-foot/.test($(P, 'vpGsNextYes').parentNode.className));
+  check('the next game question: "Do you want to set up your next game?" "Yes, set up bingo" or "That\'s enough for today", right under it (Dean, rounds 8b and 9b)', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && T(P, 'vpGsNextYes') === 'Yes, set up bingo' && T(P, 'vpGsNextNo') === "That's enough for today" && $(P, 'vpGsNextPick').style.display === 'none');
+  $(P, 'vpGsNextYes').click(); await settle();
+  check('Yes goes straight to the game it names', T(P, 'vpGsTitle') === 'Set up bingo', T(P, 'vpGsTitle'));
 
   P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();

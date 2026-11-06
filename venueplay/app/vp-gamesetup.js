@@ -195,7 +195,7 @@
     "@media (min-width:760px){#vpGs{--bw:680px}}" + "@media (min-width:1100px){#vpGs{--bw:820px}}" + P + ".vpgs-foot .vpgs-btn{min-height:48px;padding:10px 20px}" + P + ".vpgs-foot .vpgs-stack .vpgs-btn{min-height:48px}" +
     P + ".vpgs-wideonly{display:none}" + "@media (min-width:1100px){" + P + ".vpgs-wideonly{display:inline-block}}" +
     P + ".vpgs-kind .vpgs-seg button{min-height:48px}" + P + ".vpgs-q3{margin:14px 0 6px}" + P + ".vpgs-h3{display:block;margin:0;font:800 17px/1.3 " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sub{margin:2px 0 0;font-size:14px;color:#C6C6CE}" +
-    P + ".vpgs-btn.big.vpgs-outline{margin:10px 0 0}" +
+    P + ".vpgs-btn.big.vpgs-outline{margin:10px 0 0}" + P + ".vpgs-answers{margin:14px 0 4px;gap:10px}" + P + ".vpgs-answers .vpgs-btn.big{min-height:52px;margin:0}" + P + ".vpgs-answers .vpgs-link{align-self:center}" + P + ".vpgs-answers+.vpgs-note{margin:10px 0 0}" +
     P + ".vpgs-prew{position:relative;display:block}" + P + ".vpgs-pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:" + C.muted + ";font-size:16px;pointer-events:none}" + P + ".vpgs-prew .vpgs-in{padding-left:22px}" +
     /* ONE BOX WIDTH FOR EVERY SMALL BOX, so they line up down the screen (Dean, round 8b points 5, 10 and 16) */
     P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:88px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=money]>.vpgs-ctl{width:112px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=time]>.vpgs-ctl{width:136px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=date]>.vpgs-ctl{width:164px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=seg]>.vpgs-ctl{width:136px}" + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-in," + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-seg{width:100%!important}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:100%!important;flex:1}" +
@@ -1174,9 +1174,11 @@
       F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". We'll go through them one at a time, each in under five minutes."));
       var nt = F.el("p", "vpgs-note", "Not today is fine: each game keeps the usual settings, and walks you through its setup the first time you open it.");
       F.body.appendChild(nt);
-      var no = F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }); F.body.appendChild(no);
+      var ans2 = F.el("div", "vpgs-stack vpgs-answers");
+      ans2.appendChild(F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }));
+      ans2.appendChild(F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }));
+      F.body.insertBefore(ans2, nt);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
-      F.foot.appendChild(F.btn("Yes, set them all up", "pink", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }));
     }
     var drafts = {};   // what they left on a game when they pressed Back, by game and draw
     function oneGame(g, inst) {
@@ -1232,8 +1234,14 @@
       F.clear(); F.step("Game " + (all.indexOf(g) + 1) + " of " + all.length, all.length, all.indexOf(g) + 1);
       F.title.textContent = "Do you want to set up your next game?";
       F.body.appendChild(F.el("p", "vpgs-lead", "You still have " + listWords(rest) + "."));
-      F.foot.appendChild(F.btn("That's enough for today", "ghost", "vpGsNextNo", function () { noWorries(rest); }));   // Dean, round 8b point 12
-      F.foot.appendChild(F.btn("Yes", "pink", "vpGsNextYes", function () { whichNext(rest); }));
+      /* A QUESTION'S ANSWERS SIT RIGHT UNDER IT, not at the bottom of an empty screen (Dean, round 9b); the bar keeps Back */
+      var ans = F.el("div", "vpgs-stack vpgs-answers");
+      ans.appendChild(F.btn("Yes, set up " + gameOf(rest[0]).name, "pink big", "vpGsNextYes", function () { oneGame(rest[0]); }));
+      ans.appendChild(F.btn("That's enough for today", "ghost big vpgs-outline", "vpGsNextNo", function () { noWorries(rest); }));   // Dean, round 8b point 12
+      var other = F.el("button", "vpgs-link", "Or pick a different game"); other.id = "vpGsNextPick"; other.setAttribute("type", "button");
+      other.addEventListener("click", function () { whichNext(rest); }); if (rest.length < 2) other.style.display = "none";
+      ans.appendChild(other); F.body.appendChild(ans);
+      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", function () { oneGame(g); }));
     }
     function whichNext(rest) {
       F.clear(); F.step("Next game", 0, 0); F.title.textContent = "What would you like to set up next?";
