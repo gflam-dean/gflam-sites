@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/gate-record.test.py": {
