@@ -355,6 +355,14 @@ hidden for SA and NT venues not recorded as a club; this switch, set only from H
 it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
 (both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
 
+`venueplay-117-multi-raffle.sql` (Dean, 24 Oct 2026: "Absolutely" to more than one raffle a venue): `vp_venue_screen.raffles`
+(jsonb list of { id, label, day, time }, default '[]', backfilled from the single routine in `raffle`, which stays and is
+mirrored to the first raffle by the billing Worker) and `vp_raffle_prizes.raffle_id` (which raffle a usual prize is for; null
+is a prize from before, shown under the first raffle). No new table, policy, grant or function, so RLS-BASELINE.json does not
+change; the screen history trigger (114) records the new column with the rest of the row. Either order with the Workers is safe:
+both read `raffles` on a query of its own and fall back to the single routine; a raffles save before it is run is refused with
+"run migration 117 first". Branch `fix/multi-raffle`, brought onto main as `fix/multi-raffle-8nov` (5 Nov 2026) with its number kept: it is already in the live database. RUN by Dean 26 Oct 2026. Rollback: in the file.
+
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
 jsonb `{"type":"any","n":1..15}` or `{"type":"shape","cells":[0..26]}`, deleted_at kept so a game playing a deleted pattern is
@@ -372,7 +380,7 @@ No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature
 unsubscribe train (train/unsub-27-oct). RUN on the live database: the 28 Oct unsubscribe audit found it live, and on 3 Nov 2026
 `gflam_customers?select=unsubscribe_source` answered 200 to the service key (one transaction, so the index came with it).
 Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
-(117 is fix/multi-raffle, unmerged; 118 is on main, above.)
+(117 is multi-raffle and 118 is custom patterns, both above.)
 
 `venueplay-121-game-prefs.sql` (Dean, 28 Oct 2026): every game's setup saved for the VENUE in one place.
 `vp_venue_settings.game_prefs` (jsonb, not null, default `{}`, an object of at most 20,000 characters) keyed by game

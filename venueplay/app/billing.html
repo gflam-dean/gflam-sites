@@ -666,12 +666,15 @@
         <button class="offtv" id="rfClear" type="button">Take off the TV</button>
       </div>
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the routine above, so the raffle stops appearing between games. Your prize list below is kept.</p>
-      <!-- A venue has ONE raffle routine (vp_venue_screen.raffle is one routine per venue, the one the TV
-           shows), so this list has one row at most and no "Add another": change it above or take it off. -->
+      <!-- Before migration 117 a venue had ONE raffle routine (vp_venue_screen.raffle), so this list had one
+           row at most. With the list (vp_venue_screen.raffles) it has a row per raffle, each with Edit. -->
       <div class="drawlist" id="rfList"></div>
+      <!-- More than one raffle (Dean, 24 Oct 2026; migration 117). Shown only once the venue's raffle list
+           exists; before that the venue has its one routine, as it always has. -->
+      <button class="addbtn" id="rfAddRaffle" type="button" style="margin-top:12px" hidden>+ Add another raffle</button>
     </div>
     <div class="scard">
-      <div class="scardhead">Your usual prizes</div>
+      <div class="scardhead">Your usual prizes<span class="forvenue" id="rfPrizesFor"></span></div>
       <p class="snote">Add the prizes you run each week so the host can pick them fast on the night.</p>
       <div id="rfPrizes"></div>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
@@ -2263,10 +2266,13 @@
   function accSummaries(){
     var rf = $("rfSum"), md = $("mdSum"), pm = $("pmSum");
     if (rf){
+      /* Two or more raffles (migration 117): the heading counts them, as Members draws does; naming only the
+         first would read as if the venue had one. One raffle: its name and night, as always. */
+      var rfRows = document.querySelectorAll("#rfList .drow").length;
       var row = document.querySelector("#rfList .drow .dn");
       var nm = row && row.querySelector("b") ? row.querySelector("b").textContent.trim() : "";
       var when = row && row.querySelector("small") ? row.querySelector("small").textContent.trim() : "";
-      rf.textContent = nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet";
+      rf.textContent = rfRows > 1 ? (rfRows + " raffles") : (nm ? (nm + (when ? ", " + when : "")) : "Not on the TV yet");
     }
     if (md){
       var n = document.querySelectorAll("#mdList .drow").length;
@@ -2992,8 +2998,42 @@
   }
   /* The venue's one raffle routine, as SAVED (not as typed), listed under the form like the members draws. */
   var rfSaved = null, rfPrizeCount = null;
+  /* MORE THAN ONE RAFFLE (migration 117). rfMulti is true once screen-get says the venue's raffle list
+     exists (raffles_ready); rfRaffles is that list as saved, rfEditId the one in the form (null: a new
+     one). Until then the page is exactly the one-routine page it always was. */
+  var rfMulti = false, rfRaffles = [], rfEditId = null, rfPrizeCounts = null;
+  function rfFind(id){ for (var i = 0; i < rfRaffles.length; i++) if (rfRaffles[i].id === id) return rfRaffles[i]; return null; }
+  function rfFill(r){ r = r || {}; $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || ""; }
+  function rfEdit(id){
+    rfEditId = id; rfFill(rfFind(id)); renderRaffleList(); loadRafflePrizes(rfCurrent);
+  }
+  /* Edit and Remove raffle, made as elements (like the members draw rows) so they always exist to wire up. */
+  function rfRowButtons(row, onEdit, onRemove){
+    var btns=document.createElement("div"); btns.className="drowbtns";
+    var eb=document.createElement("button"); eb.type="button"; eb.className="addbtn redit"; eb.textContent="Edit";
+    var rb=document.createElement("button"); rb.type="button"; rb.className="offtv rremove"; rb.textContent="Remove raffle";
+    eb.addEventListener("click", onEdit); rb.addEventListener("click", onRemove);
+    btns.appendChild(eb); btns.appendChild(rb); row.appendChild(btns);
+  }
   function renderRaffleList(){
     var box=$("rfList"); if(!box) return;
+    var add=$("rfAddRaffle"); if(add) add.hidden = !rfMulti;
+    if (rfMulti){
+      box.innerHTML="";
+      var cur = rfFind(rfEditId), pf=$("rfPrizesFor"); if(pf) pf.textContent = cur ? (cur.label || "this raffle") : "";
+      if (!rfRaffles.length){ box.innerHTML='<p class="snote" style="margin:10px 0 0">No raffles saved yet. Fill one in above and save it.</p>'; return; }
+      rfRaffles.forEach(function(r){
+        var onTv = !!(r.day && r.time);
+        var row=document.createElement("div"); row.className="drow"+(r.id===rfEditId?" editing":""); row.setAttribute("data-raffle", r.id);
+        var pc = rfPrizeCounts && rfPrizeCounts[r.id];
+        row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") +
+          (pc!=null ? (' &middot; ' + pc + ' usual prize' + (pc===1?'':'s')) : '') + '</small>' +
+          '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>';
+        rfRowButtons(row, function(){ rfEdit(r.id); try{ $("rf-label").focus(); }catch(e){} }, function(){ removeRaffle(r.id); });
+        box.appendChild(row);
+      });
+      return;
+    }
     box.innerHTML="";
     var r=rfSaved||{};
     if(!(r.label || r.day || r.time)){ box.innerHTML='<p class="snote" style="margin:10px 0 0">No raffle routine saved. A venue has one routine, the one your TV shows: fill it in above and save it.</p>'; return; }
@@ -3001,15 +3041,22 @@
     var row=document.createElement("div"); row.className="drow"; row.setAttribute("data-raffle","1");
     row.innerHTML='<div class="dn"><b>' + esc(r.label || "Raffle") + '</b><small>' + esc(onTv ? ("drawn " + r.day + " " + r.time) : "No draw night set") +
       (rfPrizeCount!=null ? (' &middot; ' + rfPrizeCount + ' usual prize' + (rfPrizeCount===1?'':'s')) : '') + '</small>' +
-      '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>' +
-      '<div class="drowbtns"><button class="addbtn redit" type="button">Edit</button><button class="offtv rremove" type="button">Remove raffle</button></div>';
-    row.querySelector(".redit").addEventListener("click", function(){ try{ $("rf-label").focus(); }catch(e){} });
-    row.querySelector(".rremove").addEventListener("click", clearRaffleRoutine);
+      '<span class="tvtag' + (onTv ? ' on' : '') + '">' + (onTv ? 'On the TV' : 'Not on the TV') + '</span></div>';
+    rfRowButtons(row, function(){ try{ $("rf-label").focus(); }catch(e){} }, clearRaffleRoutine);
     box.appendChild(row);
   }
   function loadRafflePrizes(venueId){
-    VP.getClient().from("vp_raffle_prizes").select("id,label").eq("venue_id", venueId).order("created_at",{ascending:false}).then(function(r){
+    VP.getClient().from("vp_raffle_prizes").select(rfMulti ? "id,label,raffle_id" : "id,label").eq("venue_id", venueId).order("created_at",{ascending:false}).then(function(r){
       if (venueId !== rfCurrent) return;      // the picker has moved on
+      /* With a raffle list, the prizes shown are the raffle being edited's: its own, plus (for the
+         venue's FIRST raffle) the prizes saved before raffles had their own list. */
+      if (rfMulti && r && r.data){
+        var first = rfRaffles[0] && rfRaffles[0].id;
+        /* Each raffle's count, for its row in the list (the one-routine row always said how many). */
+        rfPrizeCounts = {};
+        rfRaffles.forEach(function(x){ rfPrizeCounts[x.id] = r.data.filter(function(p){ return p.raffle_id === x.id || (!p.raffle_id && x.id === first); }).length; });
+        r = { data: r.data.filter(function(p){ return rfEditId && (p.raffle_id === rfEditId || (!p.raffle_id && rfEditId === first)); }), error: r.error };
+      }
       var box = $("rfPrizes"); box.innerHTML = "";
       if (readFailed(r)){
         showLoadFailed("rfPrizes", "Could not load your prize list. Try again.", function(){ loadRafflePrizes(venueId); });
@@ -3042,7 +3089,15 @@
       var r = d.raffle || {};
       $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || "";
       rfReady = true;
-      rfSaved = { label: r.label || "", day: r.day || "", time: r.time || "" }; renderRaffleList();
+      rfSaved = { label: r.label || "", day: r.day || "", time: r.time || "" };
+      rfMulti = d.raffles_ready === true;
+      if (rfMulti){
+        rfRaffles = Array.isArray(d.raffles) ? d.raffles : [];
+        if (!rfFind(rfEditId)) rfEditId = rfRaffles[0] ? rfRaffles[0].id : null;
+        rfFill(rfFind(rfEditId));
+        loadRafflePrizes(venueId);   // now that the raffle in the form is known, its own prizes
+      }
+      renderRaffleList();
     });
   }
   /* PRIZES GIVEN AWAY, CASH AND NOT CASH APART (Dean, 3 Nov 2026: "$800 given away in prizes" only
@@ -3093,7 +3148,7 @@
   }
   function loadRafflesFor(venueId){
     rfCurrent = venueId;
-    rfSaved = null; rfPrizeCount = null; renderRaffleList();
+    rfSaved = null; rfPrizeCount = null; rfRaffles = []; rfEditId = null; rfMulti = false; rfPrizeCounts = null; renderRaffleList();
     paintRfVenue();
     loadRaffleRoutine(venueId);
     loadRafflePrizes(venueId);
@@ -3129,9 +3184,43 @@
       showLoadFailed("drawPermitsErr", "Could not load the permits for " + (rfVenueName() || "this venue") + ". Try again.", function(){ loadDrawPermits(venueId); });
     });
   }
+  /* Write the whole list (the Worker keeps ids, makes one for a new raffle, and mirrors the first into
+     the single routine), then read it back so every row and id on the page is the stored one. */
+  function saveRaffleList(list, done){
+    return api("/account/screen-save", { venue_id:rfCurrent, raffles:list }).then(function(r){
+      if (r.error){ showMsg(r.error); return; }
+      pushToScreen(rfCurrent);
+      return loadRaffleRoutine(rfCurrent).then(function(){ if (done) done(); });
+    });
+  }
+  function removeRaffle(id){
+    if (rfNotReady()) return;
+    var r = rfFind(id); if (!r) return;
+    vpAsk("Remove " + (r.label || "this raffle") + "?\n\nIt comes off the TV and out of your list of raffles. Its prizes stay on your records.").then(function(ok){ if (!ok) return;
+      if (rfEditId === id) rfEditId = null;
+      saveRaffleList(rfRaffles.filter(function(x){ return x.id !== id; }), function(){ showMsg((r.label || "Raffle") + " removed.", true); loadRafflePrizes(rfCurrent); });
+    });
+  }
+  function addAnotherRaffle(){
+    if (rfNotReady()) return;
+    rfEditId = null; rfFill(null); renderRaffleList(); loadRafflePrizes(rfCurrent);
+    try{ $("rf-label").focus(); }catch(e){}
+    showMsg("Fill this in and save to add another raffle.", true);
+  }
   function saveRaffleRoutine(){
     if (rfNotReady()) return;
     var raffle = { label:$("rf-label").value.trim(), day:$("rf-day").value.trim(), time:$("rf-time").value.trim() };
+    if (rfMulti){
+      if (!raffle.label && !raffle.day && !raffle.time){ showMsg("Give the raffle a name, a day or a time first."); return; }
+      var editing = rfEditId, list = rfRaffles.map(function(x){ return x.id === editing ? { id:x.id, label:raffle.label, day:raffle.day, time:raffle.time } : x; });
+      if (!rfFind(editing)) list.push(raffle);
+      var btn0=$("rfSave"); btn0.disabled=true;
+      saveRaffleList(list, function(){
+        if (!editing && rfRaffles.length) rfEdit(rfRaffles[rfRaffles.length - 1].id);   // the one just added
+        showMsg("Raffle saved. Your TV updates in a few seconds.", true);
+      }).then(function(){ btn0.disabled=false; paintRfVenue(); });
+      return;
+    }
     var btn=$("rfSave"); btn.disabled=true; btn.textContent="Saving…";
     api("/account/screen-save", { venue_id:rfCurrent, raffle:raffle }).then(function(r){
       btn.disabled=false; paintRfVenue();
@@ -3145,6 +3234,7 @@
      empty routine stores null, and the screen drops the card on its next refresh. */
   function clearRaffleRoutine(){
     if (!rfCurrent){ showMsg("Pick a venue first."); return; }
+    if (rfMulti){ if (rfEditId) removeRaffle(rfEditId); else { rfFill(null); } return; }
     vpAsk("Remove the raffle routine?\n\nIt comes off the TV and stops showing between games. Your prize list is kept, and you can set the routine again any time.").then(function(ok){ if (!ok) return;
     var btn=$("rfClear"); btn.disabled=true; btn.textContent="Removing…";
     api("/account/screen-save", { venue_id:rfCurrent, raffle:{ label:"", day:"", time:"" } }).then(function(r){
@@ -3178,8 +3268,9 @@
     if (!rfCurrent){ showMsg("Pick a venue first."); return; }
     var label = $("rf-newprize").value.trim();
     if (!label){ showMsg("Enter a prize."); return; }
+    if (rfMulti && !rfEditId){ showMsg("Save the raffle first, then add its prizes."); return; }
     var btn=$("rfAddPrize"); btn.disabled=true; btn.textContent="Adding…";
-    gameApi("/host/raffle/prize-add", { venue_id:rfCurrent, label:label }).then(function(r){
+    gameApi("/host/raffle/prize-add", rfMulti ? { venue_id:rfCurrent, label:label, raffle_id:rfEditId } : { venue_id:rfCurrent, label:label }).then(function(r){
       btn.disabled=false; paintRfVenue();
       if (r.error){ showMsg(r.error); return; }
       $("rf-newprize").value = "";
@@ -3266,6 +3357,7 @@
     $("rfClear").addEventListener("click", clearRaffleRoutine);
     $("rfAddPrize").addEventListener("click", addRafflePrize);
     $("rfPrizes").addEventListener("click", function(e){ var b=e.target.closest(".rfx"); if (b) removeRafflePrize(b.getAttribute("data-id")); });
+    $("rfAddRaffle").addEventListener("click", addAnotherRaffle);
     loadRafflePanel();
   }
   /* Opens on the venue this login is working at (defaultVenue), not venues[0]. */

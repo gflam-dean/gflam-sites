@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 19:25 · c83bc43b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 19:29 · 7ec2435a';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3000,6 +3000,15 @@ async function handleScreen(request, env, json) {
   const rows = await sbGet(env, 'vp_venue_screen',
     'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
   const cfg = (rows && rows[0]) || null;
+  /* MORE THAN ONE RAFFLE (migration 117). Asked on its own, and a refusal (the column is not there
+     yet) is null, which the TV reads as "use the single routine": never a failed screen. */
+  let raffles = null;
+  if (cfg) {
+    try {
+      const rr = await sbGet(env, 'vp_venue_screen', 'slug=eq.' + enc(slug) + '&select=raffles&limit=1');
+      raffles = (rr && rr[0] && Array.isArray(rr[0].raffles)) ? rr[0].raffles : null;
+    } catch (e) { raffles = null; }
+  }
 
   /* A REAL VENUE THAT HAS NEVER SET UP A SCREEN IS STILL A REAL VENUE.
 
@@ -3052,6 +3061,7 @@ async function handleScreen(request, env, json) {
     logo_url: (cfg && cfg.logo_url) || '',
     slides: (cfg && Array.isArray(cfg.slides)) ? cfg.slides : [],
     raffle: (cfg && cfg.raffle) || null,
+    raffles: raffles,
     draws: draws,
   });
 }
@@ -5661,7 +5671,17 @@ async function handleRafflePrizeAdd(request, env, json) {
   if (!staffCan(staff, 'draws_raffles')) {
     return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
   }
-  const made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
+  /* raffle_id (migration 117): which of the venue's raffles this prize is for. Before the column
+     exists the insert with it is refused, so it is tried once without: the prize is the venue's, as
+     it always was, and nothing the venue typed is lost. */
+  const raffleId = (typeof b.raffle_id === 'string' && /^[A-Za-z0-9-]{6,40}$/.test(b.raffle_id)) ? b.raffle_id : null;
+  let made;
+  if (raffleId) {
+    try { made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label, raffle_id: raffleId }, true); }
+    catch (e) { made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true); }
+  } else {
+    made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
+  }
   return json({ ok: true, prize: Array.isArray(made) ? made[0] : made });
 }
 

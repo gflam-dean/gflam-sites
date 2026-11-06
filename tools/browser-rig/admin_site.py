@@ -57,6 +57,9 @@ class BillingWorker(object):
 
     def sent(self):
         return self._send({'ask': 'sent'})['body']
+    def refuse(self, cols):
+        """Columns the fake database does not have yet: reads and writes naming them answer 400."""
+        return self._send({'ask': 'refuse', 'cols': cols})['body']
 
     def stored(self):
         return self._send({'ask': 'stored'})['body']

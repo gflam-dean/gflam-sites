@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 19:24 · 6e109636';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 19:29 · 88de6746';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -13156,6 +13156,41 @@ function vpbCleanRaffle(r) {
   return { label: vpbScreenStr(r.label, 60), day: vpbScreenStr(r.day, 20), time: vpbScreenStr(r.time, 20) };
 }
 
+/* MORE THAN ONE RAFFLE (Dean, 24 Oct 2026; migration 117). vp_venue_screen.raffles is the venue's
+   list, each { id, label, day, time }; `raffle` stays and mirrors the first, for anything still reading
+   the single routine. Up to VPB_MAX_RAFFLES, an empty entry is dropped, an id is kept when it is one of
+   ours and made when it is not (a new raffle). */
+const VPB_MAX_RAFFLES = 8;
+function vpbRaffleId() {
+  const b = new Uint8Array(8); crypto.getRandomValues(b);
+  return 'r' + Array.from(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+}
+function vpbCleanRaffles(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [], seen = {};
+  list.slice(0, VPB_MAX_RAFFLES).forEach(function (r) {
+    const c = vpbCleanRaffle(r);
+    if (!c) return;
+    let id = (r && typeof r.id === 'string' && /^[A-Za-z0-9-]{6,40}$/.test(r.id)) ? r.id : '';
+    if (!id || seen[id]) id = vpbRaffleId();
+    seen[id] = true;
+    out.push({ id: id, label: c.label, day: c.day, time: c.time });
+  });
+  return out;
+}
+/* Read the list on its OWN trip, so a database migration 117 has not reached yet can only cost the
+   list, never the slides: { ready:false } then, and the page keeps the single routine. */
+async function vpbReadRaffles(env, venueId) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen?venue_id=eq.' + encodeURIComponent(venueId)
+      + '&select=raffles&limit=1', { headers: vpaHeaders(env) });
+    if (!res.ok) return { ready: false, raffles: [] };
+    const rows = await res.json();
+    const r = Array.isArray(rows) && rows[0];
+    return { ready: true, raffles: (r && Array.isArray(r.raffles)) ? r.raffles : [] };
+  } catch (_) { return { ready: false, raffles: [] }; }
+}
+
 async function vpbScreenGet(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -13168,11 +13203,21 @@ async function vpbScreenGet(request, env, json) {
   const cfg = (rows && rows[0]) || {};
   /* No show_logo_on_site here any more: whether the logo is on our website is HQ's choice since
      migration 111, and the Screen tab no longer has the tick. */
+  /* The raffles. Before migration 117 the list is not there (raffles_ready false) and the page keeps the
+     single routine. After it, a venue whose list is still empty but has a routine (saved between the
+     backfill and now) is shown that routine as its first raffle, so it is never lost from the list. */
+  const rl = await vpbReadRaffles(env, venueId);
+  let raffles = rl.raffles;
+  if (rl.ready && !raffles.length && cfg.raffle) {
+    const c = vpbCleanRaffle(cfg.raffle);
+    if (c) raffles = [{ id: 'r-routine', label: c.label, day: c.day, time: c.time }];
+  }
   return json({
     ok: true,
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
     slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
+    raffles: raffles, raffles_ready: rl.ready,
   });
 }
 
@@ -13194,7 +13239,10 @@ async function vpbScreenSave(request, env, json) {
                          + VPB_MAX_SLIDES + '. Remove ' + (b.slides.length - VPB_MAX_SLIDES)
                          + ' and save again.' }, 400);
   }
-  if (b.raffle !== undefined && !vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to change raffles.' }, 403);
+  if ((b.raffle !== undefined || b.raffles !== undefined) && !vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to change raffles.' }, 403);
+  if (b.raffles !== undefined && Array.isArray(b.raffles) && b.raffles.length > VPB_MAX_RAFFLES) {
+    return json({ error: 'A venue can have up to ' + VPB_MAX_RAFFLES + ' raffles. Remove one and save again.' }, 400);
+  }
 
   // Partial update: only the parts sent are changed. The advertising section sends slides;
   // the raffle section sends raffle. That way saving one never wipes the other.
@@ -13202,6 +13250,31 @@ async function vpbScreenSave(request, env, json) {
   if (b.slides !== undefined) row.slides = vpbCleanSlides(b.slides);
   if (b.draws !== undefined) row.draws = vpbCleanDraws(b.draws);
   if (b.raffle !== undefined) row.raffle = vpbCleanRaffle(b.raffle);
+  /* The list wins over a single routine sent alongside it, and `raffle` mirrors its first entry, so a
+     TV still on the single routine shows the first raffle rather than a stale one. Only written once
+     the column is there: before migration 117 the page never sends raffles, and if one does arrive it
+     is refused in words rather than half-saved. */
+  if (b.raffles !== undefined) {
+    const rl = await vpbReadRaffles(env, venueId);
+    if (!rl.ready) return json({ error: 'More than one raffle is not switched on yet (run migration 117 first). Nothing was changed.' }, 409);
+    row.raffles = vpbCleanRaffles(b.raffles);
+    row.raffle = row.raffles[0] ? { label: row.raffles[0].label, day: row.raffles[0].day, time: row.raffles[0].time } : null;
+  } else if (b.raffle !== undefined) {
+    /* THE SINGLE ROUTINE ALONE, once the list is there: an account page loaded before this release
+       (open in a tab) still sends only `raffle`. It is the venue's FIRST raffle, so it is written
+       there too; otherwise the list (which the TV and the page now read) would keep the old words
+       while `raffle` had the new ones. Cleared routine: the first raffle goes. Before migration 117
+       the read says not ready and only `raffle` is written, as it always was. */
+    const rl = await vpbReadRaffles(env, venueId);
+    if (rl.ready) {
+      const list = vpbCleanRaffles(rl.raffles);
+      if (row.raffle) {
+        if (list.length) list[0] = { id: list[0].id, label: row.raffle.label, day: row.raffle.day, time: row.raffle.time };
+        else list.push({ id: vpbRaffleId(), label: row.raffle.label, day: row.raffle.day, time: row.raffle.time });
+      } else if (list.length) list.shift();
+      row.raffles = list;
+    }
+  }
   /* THE LOGO IS NOT A FREE-TEXT ADDRESS. This stored any string starting "http", and the logo is
      painted on every TV the venue has and on the public homepage strip. A logo now goes up
      through /account/logo-upload, which writes the address itself; here it can only be cleared,
@@ -13243,6 +13316,10 @@ const VPA_SCREEN_HISTORY_LIMIT = 100;
 
 function vpaScreenSlidesOf(row) { return row && Array.isArray(row.slides) ? row.slides : []; }
 function vpaScreenRaffleLabel(row) {
+  /* Every raffle, once there is a list (migration 117): HQ's screen history names them all. */
+  if (row && Array.isArray(row.raffles) && row.raffles.length) {
+    return row.raffles.map(function (x) { return [x.label, x.day, x.time].filter(Boolean).join(', ') || '(set)'; }).join(' / ');
+  }
   const r = row && row.raffle;
   if (!r) return null;
   return [r.label, r.day, r.time].filter(Boolean).join(', ') || '(set)';
@@ -13410,6 +13487,9 @@ async function vpaHandleScreenRestore(request, env, json) {
     logo_url: src.logo_url === undefined ? null : src.logo_url,
     updated_at: new Date().toISOString(),
   };
+  /* A version from after migration 117 carries the raffle list; put it back too. An older version
+     has none, and the list is left as it is rather than emptied by a version that never knew it. */
+  if (Array.isArray(src.raffles)) row.raffles = src.raffles;
   const res = await vpbWriteScreen(env, row, { via: 'hq_restore', route: 'screen-restore', admin: actor.actorId || null,
                                                label: actor.label || 'admin', role: actor.role || null, restored_from: hid });
   if (!res.ok) {
