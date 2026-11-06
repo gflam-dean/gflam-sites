@@ -120,6 +120,9 @@
     P + ".vpgs-hint{margin:6px 0 0;font-size:14px;color:" + C.faint + "}",
     P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:36px;font-size:14px;padding:0 4px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
+    P + ".vpgs-lt b{color:#FFFFFF;font-weight:700}" + P + ".vpgs-list .vpgs-n{margin-top:1px}",
+    P + ".vpgs-time.sess{grid-template-columns:1fr 120px 120px}",
+    "@media (max-width:600px){" + P + ".vpgs-go{width:100%}" + P + ".vpgs-foot .vpgs-go{flex:1}" + P + ".vpgs-time.sess{grid-template-columns:1fr 110px;row-gap:6px}" + P + ".vpgs-time.sess .vpgs-sess{grid-column:2}}",
     P + ".vpgs-cats .vpgs-chip{height:100%;align-items:flex-start}" + P + ".vpgs-cats{grid-auto-rows:1fr}",
     "@media (max-width:420px){" + P + "h2.vpgs-title{font-size:20px}" + P + ".vpgs-lead{font-size:14.5px}" + P + ".vpgs-chip{min-height:44px;font-size:14.5px}" + P + ".vpgs-btn.big{min-height:48px;font-size:15px}" + P + ".vpgs-card{padding:16px 14px}}",
     "@media (min-width:600px){" + P + ".vpgs-music{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" +
@@ -133,7 +136,7 @@
       P + ".vpgs-group .vpgs-row.two{display:block}" + P + ".vpgs-group .vpgs-row.two .vpgs-lab{margin:0 0 6px}}",
     /* LAPTOPS ARE SMALL SCREENS (Dean, round 3): bigger type and controls from 1100px */
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:780px;padding-top:28px}" + P + ".vpgs-card{padding:34px 40px}" + P + "h2.vpgs-title{font-size:30px}" +
-      P + ".vpgs-lead{font-size:17px}" + P + ".vpgs-lab{font-size:16.5px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
+      P + ".vpgs-lead{font-size:17px}" + P + ".vpgs-lab{font-size:16.5px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
       P + ".vpgs-chip{min-height:50px;font-size:16px}" + P + ".vpgs-seg button{min-height:48px;font-size:16px}" + P + ".vpgs-in{min-height:48px;font-size:17px}" +
       P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 340px}}"
   ].join("");
@@ -165,15 +168,22 @@
       if (!d || typeof d !== "object" || !WEEK.some(function (x) { return x[0] === d.day; }) || !Array.isArray(d.games)) return;
       var have = byDay[d.day] = byDay[d.day] || {};
       d.games.forEach(function (gm) {
-        if (!gm || ORDER.indexOf(gm.game) < 0 || have[gm.game]) return;
+        if (!gm) return;
+        var key = gm.game, nm = "";
+        if (gm.game === "other") { nm = otherList(gm.name)[0] || ""; if (!nm) return; key = "other:" + nm.toLowerCase(); }
+        else if (ORDER.indexOf(gm.game) < 0) return;
+        if (have[key]) return;
         var t = (typeof gm.start === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : "";
-        have[gm.game] = t ? { game: gm.game, start: t } : { game: gm.game };
+        var e = { game: gm.game }; if (nm) e.name = nm; if (t) e.start = t;
+        if (Number.isInteger(gm.count) && gm.count >= 2 && gm.count <= 4) e.count = gm.count;   // sessions that night (bingo, raffles)
+        have[key] = e;
       });
     });
     var out = [];
     WEEK.forEach(function (x) {
       var h = byDay[x[0]]; if (!h) return;
-      var gs = ORDER.filter(function (g) { return h[g]; }).map(function (g) { return h[g]; }).slice(0, 5);
+      var gs = ORDER.filter(function (g) { return h[g]; }).map(function (g) { return h[g]; })
+        .concat(Object.keys(h).filter(function (k) { return k.indexOf("other:") === 0; }).map(function (k) { return h[k]; })).slice(0, 8);
       if (gs.length) out.push({ day: x[0], games: gs });
     });
     return out;
@@ -227,7 +237,7 @@
   function weekWords(w) {
     return (cleanWeek(w) || []).map(function (d) {
       var day = WEEK.filter(function (x) { return x[0] === d.day; })[0][1];
-      return day + ": " + d.games.map(function (gm) { var g = gameOf(gm.game); return (g ? g.title : gm.game) + (gm.start ? " " + timeWords(gm.start) : ""); }).join(", ");
+      return day + ": " + d.games.map(function (gm) { var g = gameOf(gm.game); return (gm.name || (g ? g.title : gm.game)) + (gm.count ? " \u00d7" + gm.count : "") + (gm.start ? " " + timeWords(gm.start) : ""); }).join(", ");
     }).join(" \u00b7 ");
   }
   /* "19:30" -> "7:30pm" */
@@ -472,28 +482,33 @@
       };
       ctx.noneOf = function () { var o = []; for (var i = 0; i < (plist._want || 0); i++) if (nones[i]) o.push(i + 1); return o; };
     } else if (s.kind === "prizebank" || s.kind === "taglist") {
-      /* A short list: the usual prizes (they become the game's prize buttons, Dean round 3) or theme nights. */
-      var bank = el("div", "vpgs-plist"); bank.id = "vpGsIn_" + s.key; wrap.appendChild(bank);
-      if (s.kind === "prizebank") { var pn = el("p", "vpgs-note", s.help); pn.id = "vpGsNote_" + s.key; pn.setAttribute("style", "margin:6px 0 0"); wrap.appendChild(pn); }
-      var startB = (s.prizes && ctx.bank && ctx.bank.length) ? ctx.bank.slice() : (s.def || []).slice();
-      var most = s.kind === "prizebank" ? 8 : (s.max || 6);
-      var addOne = function (val) {
-        var inp = el("input", "vpgs-in"); inp.type = "text"; inp.maxLength = s.kind === "prizebank" ? 80 : (s.each || 60);
-        var n = bank.children.length - 1;   // the inputs so far (the "+ Add" button is always last)
-        inp.placeholder = n ? "" : (s.placeholder || ""); inp.value = val || "";
-        inp.id = "vpGsIn_" + s.key + "_" + n; inp.setAttribute("aria-label", s.label + " " + (n + 1));
-        bank.insertBefore(inp, more); return inp;
+      /* A short list, typed one at a time with Enter, shown as tags (Dean, round 4: the prizes half the size): the
+         usual prizes (the game's prize buttons, Dean round 3) or theme nights. */
+      var most = s.kind === "prizebank" ? 8 : (s.max || 6), each = s.kind === "prizebank" ? 80 : (s.each || 60);
+      var items2 = ((s.prizes && ctx.bank && ctx.bank.length) ? ctx.bank : (s.def || [])).slice(0, most);
+      var tagBox = el("div", "vpgs-tags"); tagBox.id = "vpGsIn_" + s.key; wrap.appendChild(tagBox);
+      var tin = el("input", "vpgs-in"); tin.type = "text"; tin.maxLength = each; tin.placeholder = s.placeholder || ""; tin.id = "vpGsIn_" + s.key + "_new";
+      tin.setAttribute("aria-label", s.label); tin.setAttribute("enterkeyhint", "enter"); wrap.appendChild(tin);
+      var th = el("p", "vpgs-hint", "Press Enter after each one." + (s.kind === "prizebank" ? " " + s.help : "")); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);
+      var drawTags = function () {
+        while (tagBox.firstChild) tagBox.removeChild(tagBox.firstChild);
+        items2.forEach(function (w, k) {
+          var t = el("button", "vpgs-tag2"); t.setAttribute("type", "button"); t.setAttribute("aria-label", "Remove " + w); t.setAttribute("data-item", w);
+          t.appendChild(el("span", null, w)); t.appendChild(el("span", "x", "×"));
+          t.addEventListener("click", function () { items2.splice(k, 1); drawTags(); });
+          tagBox.appendChild(t);
+        });
+        tin.style.display = items2.length >= most ? "none" : "";
       };
-      var more = el("button", "vpgs-add", s.kind === "prizebank" ? "+ Add another prize" : "+ Add another"); more.setAttribute("type", "button");
-      bank.appendChild(more);
-      var firstN = Math.max(s.kind === "prizebank" ? 2 : 1, startB.length);
-      for (var bi = 0; bi < firstN; bi++) addOne(startB[bi]);
-      more.addEventListener("click", function () { if (bank.children.length - 1 < most) addOne(""); if (bank.children.length - 1 >= most) more.style.display = "none"; });
-      get = function () {
-        var out = [];
-        Array.prototype.forEach.call(bank.children, function (c) { if (c.tagName === "INPUT") { var t = String(c.value || "").trim(); if (t && out.indexOf(t) < 0) out.push(t); } });
-        return out.length ? out.slice(0, most) : undefined;
+      var addTag = function () {
+        var w = String(tin.value || "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, each);
+        if (w && !items2.some(function (y) { return y.toLowerCase() === w.toLowerCase(); }) && items2.length < most) items2.push(w);
+        tin.value = ""; drawTags();
       };
+      tin.addEventListener("keydown", function (e) { if (e && (e.key === "Enter" || e.keyCode === 13)) { if (e.preventDefault) e.preventDefault(); addTag(); } });
+      tin.addEventListener("blur", function () { if (tin.value) addTag(); });
+      drawTags();
+      get = function () { if (tin.value) addTag(); return items2.length ? items2.slice(0, most) : undefined; };
     } else if (s.kind === "categories") {
       /* "Pick categories" (Dean, round 3): each says what it covers. Read like the trivia console: the venue's own sets
          and the venueplay library, never another venue's private night. */
@@ -752,17 +767,18 @@
       F.body.appendChild(F.el("p", "vpgs-lead", "A quick heads-up before we start."));
       var ul = F.el("ul", "vpgs-list"); ul.id = "vpGsHeadsUp";
       var known = Array.isArray(answers.games) && answers.games.length;
-      var lines = [["Each game takes less than five minutes to set up.", "time"],
-        ["You don't need to do it all now. You can set up each game the first time you open it.", "later"]];
-      if (!known || answers.games.indexOf("members") >= 0) lines.push(["Running members draws? Have your draw details handy: the draw name, day, time and jackpot.", "members"]);
-      lines.push(["For your screen, have your advertising handy: your promo images and your logo.", "screen"]);
+      var lines = [["Each game takes less than five minutes to set up.", "", "time"],
+        ["You don't need to do it all now.", " You can set up each game the first time you open it.", "later"]];
+      if (!known || answers.games.indexOf("members") >= 0) lines.push(["Running members draws?", " Have your draw details handy: the draw name, day, time and jackpot.", "members"]);
+      lines.push(["For your screen,", " have your advertising handy: your promo images and your logo.", "screen"]);
       lines.forEach(function (t, i) {
-        var li = F.el("li"); li.setAttribute("data-line", t[1]);
-        li.appendChild(F.el("span", "vpgs-n", String(i + 1))); li.appendChild(F.el("span", null, t[0])); ul.appendChild(li);
+        var li = F.el("li"); li.setAttribute("data-line", t[2]);
+        var tx = F.el("span", "vpgs-lt"); tx.appendChild(F.el("b", null, t[0])); if (t[1]) tx.appendChild(F.el("span", null, t[1]));
+        li.appendChild(F.el("span", "vpgs-n", String(i + 1))); li.appendChild(tx); ul.appendChild(li);
       });
       F.body.appendChild(ul);
       F.body.appendChild(F.el("p", "vpgs-ready", "Then you're ready for your week."));
-      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink", "vpGsGo", pick));
+      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink vpgs-go", "vpGsGo", pick));
     }
     function pick() {
       F.clear(); F.step("Your games", 3, 2); F.title.textContent = "What games do you play at your venue?";
@@ -821,14 +837,7 @@
         b.appendChild(F.el("span", "bx", on ? "✓" : "")); b.appendChild(F.el("span", null, words)); b.setAttribute("aria-checked", on ? "true" : "false");
         b.addEventListener("click", function () { var now2 = click(); b.setAttribute("aria-checked", now2 ? "true" : "false"); b.firstChild.textContent = now2 ? "✓" : ""; paint(); drawChips(); });
         var cell = F.el("div", "vpgs-cell"); cell.appendChild(b);
-        /* MORE THAN ONE OF A GAME (Dean, round 3): "+ Add another" under a ticked game; members draws are set up one by one. */
-        if (on && id !== "other") {
-          var n = (answers.counts && answers.counts[id]) || 1;
-          if (n > 1) b.children[1].textContent = words + " \u00d7" + n;
-          var add = F.el("button", "vpgs-add vpgs-add-s", n > 1 ? "+ Add another (" + n + " now)" : "+ Add another"); add.setAttribute("type", "button"); add.setAttribute("data-add", id);
-          add.addEventListener("click", function () { answers.counts = answers.counts || {}; answers.counts[id] = Math.min(5, ((answers.counts[id]) || 1) + 1); drawChips(); });
-          cell.appendChild(add);
-        }
+        /* MORE THAN ONE OF A GAME (Dean, round 4): asked in the nights step, per night (sessions) and by the nights ticked. */
         box.appendChild(cell); return b;
       }
       /* Bingo where it is not open to this venue (an SA or NT pub) is not offered, the way its console hides the tile. */
@@ -837,7 +846,6 @@
         while (box.firstChild) box.removeChild(box.firstChild);
         var br = bingoRules(v, answers);
         if (br.hidden) { var bi = cur.indexOf("bingo"); if (bi >= 0) cur.splice(bi, 1); }
-        if (answers.counts) Object.keys(answers.counts).forEach(function (g) { if (cur.indexOf(g) < 0) delete answers.counts[g]; });
         GAMES.forEach(function (g) {
           if (g === "bingo" && br.hidden) return;
           chip(g, gameOf(g).title, cur.indexOf(g) >= 0, function () { var i = cur.indexOf(g); if (i >= 0) cur.splice(i, 1); else cur.push(g); return i < 0; });
@@ -857,13 +865,19 @@
     function weekStep() {
       F.clear(); F.step("Your games", 3, 2); F.title.textContent = "Which nights do you run them?";
       F.body.appendChild(F.el("p", "vpgs-lead", "Tap the nights for each game, then its start time. Players see this on their phones, so they know when to come in."));
-      var cur = {};   // game -> { day: "HH:MM" or "" }
-      (cleanWeek(answers.week) || []).forEach(function (d) { d.games.forEach(function (gm) { (cur[gm.game] = cur[gm.game] || {})[d.day] = gm.start || ""; }); });
+      /* rows: each ticked game, then each "Something else" they run (Dean, round 4: karaoke and poker get nights too) */
+      var items = ticked().map(function (g) { return { key: g, game: g, title: gameOf(g).title }; })
+        .concat(otherList(answers.other).map(function (nm) { return { key: "other:" + nm.toLowerCase(), game: "other", name: nm, title: nm }; }));
+      var cur = {}, cnt = {};   // key -> { day: "HH:MM" or "" }; key -> { day: sessions }
+      (cleanWeek(answers.week) || []).forEach(function (d) { d.games.forEach(function (gm) {
+        var k = gm.game === "other" ? "other:" + String(gm.name || "").toLowerCase() : gm.game;
+        (cur[k] = cur[k] || {})[d.day] = gm.start || ""; if (gm.count) (cnt[k] = cnt[k] || {})[d.day] = gm.count; }); });
       var wrap = F.el("div"); wrap.id = "vpGsWeek";
-      ticked().forEach(function (g) {
+      items.forEach(function (it) {
+        var g = it.key, multi = it.game === "bingo" || it.game === "raffles";
         var blk = F.el("div", "vpgs-row"); blk.setAttribute("data-game", g);
-        blk.appendChild(F.el("div", "vpgs-lab", gameOf(g).title));
-        var days = F.el("div", "vpgs-days"); days.setAttribute("role", "group"); days.setAttribute("aria-label", gameOf(g).title + " nights");
+        blk.appendChild(F.el("div", "vpgs-lab", it.title));
+        var days = F.el("div", "vpgs-days"); days.setAttribute("role", "group"); days.setAttribute("aria-label", it.title + " nights");
         var times = F.el("div", "vpgs-times");
         function paint() {
           while (times.firstChild) times.removeChild(times.firstChild);
@@ -876,13 +890,22 @@
             if (!cur[g][x[0]]) r.className += " need";
             function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (cur[g][x[0]] ? "" : " need"); gate(); }
             t.addEventListener("input", took); t.addEventListener("change", took);
-            r.appendChild(t); times.appendChild(r);
+            r.appendChild(t);
+            if (multi) {
+              /* MORE THAN ONE SESSION A NIGHT (Dean, round 4: several bingo sessions or raffle draws a week) */
+              var sel = F.el("select", "vpgs-in vpgs-sess"); sel.id = "vpGsCount_" + g + "_" + x[0]; sel.setAttribute("aria-label", it.title + " sessions on " + x[2]);
+              [1, 2, 3, 4].forEach(function (n) { var o = F.el("option", null, n === 1 ? "1 session" : n + " sessions"); o.value = String(n); sel.appendChild(o); });
+              sel.value = String((cnt[g] && cnt[g][x[0]]) || 1);
+              sel.addEventListener("change", function () { var n = parseInt(sel.value, 10) || 1; cnt[g] = cnt[g] || {}; if (n > 1) cnt[g][x[0]] = n; else delete cnt[g][x[0]]; });
+              r.appendChild(sel); r.className += " sess";
+            }
+            times.appendChild(r);
           });
         }
         WEEK.forEach(function (x) {
           var on = !!(cur[g] && cur[g][x[0]] !== undefined);
           var b = F.el("button", "vpgs-day", x[1]); b.setAttribute("type", "button"); b.setAttribute("aria-pressed", on ? "true" : "false");
-          b.setAttribute("data-day", x[0]); b.setAttribute("aria-label", gameOf(g).title + " on " + x[2]);
+          b.setAttribute("data-day", x[0]); b.setAttribute("aria-label", it.title + " on " + x[2]);
           b.addEventListener("click", function () {
             cur[g] = cur[g] || {};
             if (cur[g][x[0]] !== undefined) delete cur[g][x[0]]; else cur[g][x[0]] = "";
@@ -910,11 +933,21 @@
         var w = [];
         WEEK.forEach(function (x) {
           var gs = [];
-          ORDER.forEach(function (g) { if (cur[g] && cur[g][x[0]] !== undefined) gs.push(cur[g][x[0]] ? { game: g, start: cur[g][x[0]] } : { game: g }); });
+          items.forEach(function (it) {
+            var k = it.key; if (!cur[k] || cur[k][x[0]] === undefined) return;
+            var e = { game: it.game }; if (it.name) e.name = it.name; if (cur[k][x[0]]) e.start = cur[k][x[0]];
+            if (cnt[k] && cnt[k][x[0]] > 1) e.count = cnt[k][x[0]];
+            gs.push(e);
+          });
           if (gs.length) w.push({ day: x[0], games: gs });
         });
         w = cleanWeek(w);
         if (w.length) { answers.week = w; answers.nights = w.map(function (d) { return d.day; }); } else delete answers.week;
+        /* how many of each game a week, from the nights (for planning and Dean's report): two bingo sessions on Friday
+           and one on Sunday is 3; two members draw nights is 2 draws, set up one by one */
+        var per = {}; (w || []).forEach(function (d) { d.games.forEach(function (gm) { if (gm.game !== "other") per[gm.game] = (per[gm.game] || 0) + (gm.count || 1); }); });
+        var cn = {}; Object.keys(per).forEach(function (g) { if (per[g] >= 2) cn[g] = Math.min(per[g], 5); });
+        if (Object.keys(cn).length) answers.counts = cn; else delete answers.counts;
         if (deps.weekOnly) return Promise.resolve(persist()).then(function () { end("done"); });
         persist(); allToday();
       }));
@@ -934,7 +967,8 @@
     }
     function oneGame(g, inst) {
       inst = inst || 1;
-      var all = ticked(), i = all.indexOf(g), many = (g === "members" && answers.counts && answers.counts.members) || 1;
+      var memNights = (cleanWeek(answers.week) || []).filter(function (d) { return d.games.some(function (x) { return x.game === "members"; }); }).length;
+      var all = ticked(), i = all.indexOf(g), many = (g === "members" && memNights > 1) ? memNights : 1;   // a draw for each members night
       gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
           bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: answers.prizes_shared === undefined }, function (outcome, vals) {
         if (outcome === "saved") {
