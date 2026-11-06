@@ -293,10 +293,10 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('the musical bingo Worker keeps all of it, no-prize rounds included', mp && srtj(WK.clean('musical', mp.body.prefs)) === srtj(mp.body.prefs), mp && WK.clean('musical', mp.body.prefs));
   check('no music picked: nothing sent for it, the console keeps choosing', mp && !('playlists' in mp.body.prefs) && !('playlist' in mp.body.prefs), mp && mp.body);
   $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
-  check('bingo with phone tickets: no question about who draws the numbers (it does not apply)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === 'none');
+  check('bingo with phone tickets: no question about who draws the numbers (it does not apply)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.parentNode.style.display === 'none');
   check('phone tickets: tickets each player is asked, no paper words', $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === '' && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === 'none');
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'paper'; }).click();
-  check('paper tickets (the venue\'s own books): "We can\'t check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.", and who draws them', /We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen\./.test(T(P, 'vpGsBody')) && $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === '' && /We can draw them for you/.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === '' && $(P, 'vpGsIn_cards').value === '6');
+  check('paper tickets (the venue\'s own books): "We can\'t check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.", and who draws them', /We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen\./.test(T(P, 'vpGsBody')) && $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.parentNode.style.display === '' && /We can draw them for you/.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === '' && $(P, 'vpGsIn_cards').value === '6');
   check('no empty "A few quick questions" heading when paper leaves nothing advanced to ask', $(P, 'vpGsAdvanced').style.display === 'none');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var bp = posts('/host/game-prefs')[0];
@@ -367,7 +367,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a venue whose record says pub or club is not asked', !$(P, 'vpGsKind'));
   gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
   check('Victoria: phone tickets switched off and said straight away in one plain line, no phone choice', T(P, 'vpGsFixed_ticket_kind') === vic.why && !walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'phone'; }), T(P, 'vpGsFixed_ticket_kind'));
-  check('Victoria: who draws the numbers is asked (venueplay can, or real balls)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === '');
+  check('Victoria: who draws the numbers is asked (venueplay can, or real balls)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.parentNode.style.display === '');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var vb = posts('/host/game-prefs')[0];
   check('saved as paper for a Victorian venue, no tickets-per-player question', vb && vb.body.prefs.ticket_kind === 'paper' && vb.body.prefs.caller === false && !('cards' in vb.body.prefs), vb && vb.body);

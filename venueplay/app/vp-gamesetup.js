@@ -93,8 +93,8 @@
     P + ".vpgs-sec h3{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sec .sub{margin:0 0 2px;font-size:14px;color:" + C.faint + "}",
     P + ".vpgs-row{position:relative;padding:10px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child,.vpgs-rows>.vpgs-group:first-child{border-top:none;padding-top:0}",
     P + ".vpgs-prompt{margin:0 0 4px;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + "}",
-    P + ".vpgs-lab{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
-    P + ".vpgs-q{flex:none;width:44px;height:44px;margin:-8px -8px -8px -4px;border:none;border-radius:50%;background:transparent;cursor:pointer;padding:0;position:relative;z-index:0;color:" + C.pinkSoft + ";font:800 14px " + HEAD + "}",
+    P + ".vpgs-lab{position:relative;display:block;margin:0 0 6px;font:700 15px " + HEAD + ";line-height:1.35;color:#FFFFFF}",
+    P + ".vpgs-q{display:inline-block;vertical-align:middle;width:44px;height:44px;margin:-12px -10px -12px -6px;border:none;border-radius:50%;background:transparent;cursor:pointer;padding:0;position:relative;z-index:0;color:" + C.pinkSoft + ";font:800 14px " + HEAD + "}",
     P + ".vpgs-q::before{content:'';position:absolute;left:9.5px;top:9.5px;width:25px;height:25px;box-sizing:border-box;border-radius:50%;border:1.5px solid " + C.pinkSoft + ";z-index:-1}",
     P + ".vpgs-q[aria-expanded=true]{color:#FFFFFF}" + P + ".vpgs-q[aria-expanded=true]::before{background:" + C.pink + ";border-color:" + C.pink + ";z-index:-1}",
     /* the "?" words: UNDER the setting on a phone (Dean, round 2), a bubble under the label on a wider screen */
@@ -123,10 +123,10 @@
     P + ".vpgs-group .vpgs-row{display:flex;flex-direction:column;justify-content:flex-end}" + P + ".vpgs-group>:only-child{grid-column:1/-1}",
     P + ".vpgs-prow.nonone{grid-template-columns:72px 1fr}",
     P + "input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.75}",
-    P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:36px;font-size:14px;padding:0 4px}",
+    P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:44px;font-size:14px;padding:0 10px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
     /* THE "?" LINE UP (Dean, round 5): always at the end of its label line */
-    P + ".vpgs-lab{justify-content:flex-start}" + P + ".vpgs-lab>span{flex:0 1 auto;min-width:0}" +
+    P + ".vpgs-lab span{display:inline}" + P + ".vpgs-lab .vpgs-nw{white-space:nowrap}" +
     /* a number is one compact line on every screen: the question, then a small box (Dean, round 5) */
     P + ".vpgs-rows .vpgs-row.num{display:grid;grid-template-columns:minmax(0,1fr) 170px;column-gap:12px;align-items:center}" + P + ".vpgs-row.num .vpgs-lab{margin:0}" + P + ".vpgs-row.num .vpgs-pop{grid-column:1/-1}" +
     P + ".vpgs-tw{display:flex;gap:6px;align-items:center}" + P + ".vpgs-tw .vpgs-in{flex:1;min-width:0}" +
@@ -396,11 +396,14 @@
     var row = el("div", "vpgs-row" + (wide ? " two" : "") + (num ? " num" : "")); row.setAttribute("data-key", s.key);
     var lab = el("div", "vpgs-lab");
     /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
-    lab.appendChild(el("span", null, (s.advanced && s.prompt) ? s.prompt : s.label));
+    /* the last word and the "?" never part, so the "?" always sits straight after the words, never alone on a line */
+    var words = String((s.advanced && s.prompt) ? s.prompt : s.label), cut = words.lastIndexOf(" ");
+    if (cut > 0) lab.appendChild(el("span", null, words.slice(0, cut + 1)));
+    var tail = el("span", "vpgs-nw"); tail.appendChild(el("span", null, cut > 0 ? words.slice(cut + 1) : words)); lab.appendChild(tail);
     var q = el("button", "vpgs-q", "?"); q.setAttribute("type", "button");
     q.setAttribute("aria-label", "What does " + s.label + " mean?"); q.setAttribute("aria-expanded", "false");
     var popId = "vpGsHelp_" + s.key; q.setAttribute("aria-controls", popId); q.id = "vpGsQ_" + s.key;
-    lab.appendChild(q);
+    tail.appendChild(q);
     var pop = el("div", "vpgs-pop"); pop.id = popId; pop.setAttribute("role", "note"); pop.style.display = "none";
     pop.appendChild(el("span", null, s.help));
     var got = el("button", "got", "Got it"); got.setAttribute("type", "button"); pop.appendChild(got);
