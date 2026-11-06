@@ -979,6 +979,14 @@
   "checks": 43,
   "counted_by": "lines"
  },
+ "tools/test-try-demo-billing.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-try-demo.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/test-tv-does-not-flap.js": {
   "checks": 11,
   "counted_by": "lines"
@@ -1057,6 +1065,10 @@
  },
  "tools/test-venuepick.js": {
   "checks": 25,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-demo.js": {
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/test-vp-draw-11.js": {
