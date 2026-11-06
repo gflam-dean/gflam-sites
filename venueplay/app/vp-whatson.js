@@ -183,8 +183,11 @@
     }
     var out = [];
     if (!up.some(function (x) { return !x.ev.game; })) return out;   // our games alone are not the venue's What's on
-    for (i = 0; i < up.length; i += 5) {
-      out.push({ type: "list", rows: up.slice(i, i + 5).map(function (x) { return { date: x.date, label: dayLabel(x.date, t), ev: x.ev }; }) });
+    /* Five a slide at most, the slides balanced (7 nights are 4 and 3, not 5 and 2), and every list slide of the set the
+       same size, chosen by how many rows it holds: fewer rows, bigger words (Dean, round 3: "a lot of wasted space"). */
+    var pages = Math.ceil(up.length / 5), per = Math.ceil(up.length / pages), size = per <= 2 ? "xl" : per === 3 ? "l" : "m";
+    for (i = 0; i < up.length; i += per) {
+      out.push({ type: "list", size: size, rows: up.slice(i, i + per).map(function (x) { return { date: x.date, label: dayLabel(x.date, t), ev: x.ev }; }) });
     }
     var posters = 0;
     for (i = 0; i < up.length && posters < 3; i++) {
@@ -200,9 +203,12 @@
   /* The HTML of one of tvSlides' slides, for tv.html (its look is tv.html's .wo-* rules, the trivia new look: a small
      kicker over a big Anton headline, flat rows, tonight marked by a pink bar). venue: the venue's name. Times are
      written as people say them, "9pm", never "9PM". (The venue's own colours and background are a later job.) */
-  function tvHtml(sl, venue) {
+  /* logo: the venue's own logo, the one it already uploads for its TV (vp_venue_screen.logo_url, as /screen hands it
+     over); with none, its name stands in. Our own mark is tv.html's corner wordmark, always on the wall. */
+  function tvHtml(sl, venue, logo) {
     if (!sl) return "";
     venue = typeof venue === "string" ? venue : "";
+    var lg = cssUrl(logo), logoHtml = lg ? '<img class="wo-logo" alt="" src="' + lg + '">' : "";
     if (sl.type === "list") {
       var rows = "", last = "";
       sl.rows.forEach(function (r) {
@@ -213,8 +219,8 @@
           '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (r.ev.line ? '<i>' + esc(r.ev.line) + '</i>' : '') + '</span>' +
           '<span class="wo-time">' + esc(time12(r.ev.start)) + '</span></div>';
       });
-      return '<div class="wo-wall"><div class="wo-in">' + (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '') +
-        '<div class="wo-head">What’s on</div><div class="wo-list">' + rows + '</div></div></div>';
+      return '<div class="wo-wall wo-' + (sl.size || "m") + '"><div class="wo-in"><div class="wo-top">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) +
+        '<div class="wo-head">What’s on</div></div><div class="wo-list">' + rows + '</div></div></div>';
     }
     if (sl.type === "poster") {
       var bg = cssUrl(sl.ev.image_url);
@@ -222,7 +228,7 @@
       var tm = time12(sl.ev.start);
       return '<div class="wo-wall wo-poster"><div class="wo-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wo-pic" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wo-words"><div class="wo-when' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
+        '<div class="wo-words">' + logoHtml + '<div class="wo-when' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
         '<div class="adbig">' + esc(sl.ev.title).replace(/ (with|and|at|&amp;) /gi, " $1\u00a0") + '</div>' +   // "with" stays with the name after it
         (sl.ev.line ? '<div class="adsub">' + esc(sl.ev.line) + '</div>' : '') + '</div></div>';
     }

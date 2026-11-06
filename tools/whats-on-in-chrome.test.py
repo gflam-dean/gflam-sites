@@ -86,7 +86,7 @@ def account():
         err = S.js(sid, 'document.querySelector(".woe-err").textContent')
         ok('Save with no title says "Give it a title." and stores nothing', err == 'Give it a title.' and events() == [], [err, events()])
         when = TODAY + datetime.timedelta(days=3)
-        form_set(sid, 0, 'Mount Kujo album launch'); form_set(sid, 1, iso(when)); form_set(sid, 3, '20:00'); form_set(sid, 4, 'With Circuit Breaker')
+        form_set(sid, 0, 'Mount Kujo album launch'); form_set(sid, 2, iso(when)); form_set(sid, 1, '20:00'); form_set(sid, 4, 'With Circuit Breaker')   # inputs: title, starts, date, last date, line
         S.set_file(sid, '.woe-form input[type=file]', POSTER)
         S.until(sid, '/venue-ads/.test(document.querySelector(".woe-form .woe-thumb").style.backgroundImage)', 25)
         click(sid, '.woe-form button', 'Save event')
@@ -98,9 +98,8 @@ def account():
            and sorted(ev[0].keys()) == ['date', 'id', 'image_url', 'line', 'start', 'title'], ev)
         click(sid, '#woBox .woe-add')
         form_set(sid, 0, 'Revolver Fridays')
-        click(sid, '.woe-form .woe-seg button', 'Every week')
-        click(sid, '.woe-form .woe-day[data-day="%s"]' % dkey(TODAY))
-        form_set(sid, 3, '22:00')
+        S.js(sid, '(function(){var w=document.querySelector(".woe-form select"); w.value=%s; w.dispatchEvent(new Event("change",{bubbles:true})); return true;})()' % json.dumps(dkey(TODAY)))
+        form_set(sid, 1, '22:00')
         click(sid, '.woe-form button', 'Save event')
         S.until(sid, 'document.querySelectorAll(".woe").length===2', 15)
         ev = events()
@@ -116,15 +115,16 @@ def account():
         S.until(sid, 'document.querySelector(".woe-form").hidden', 15)
         wk2 = [e for e in events() if e.get('id') == wid]
         ok('Edit saves under the same id', len(wk2) == 1 and wk2[0].get('line') == 'Four decks, one winner' and len(events()) == 2, events())
-        for w in (820, 390):
+        for w in (1280, 820, 390):
             S.B.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': 900, 'deviceScaleFactor': 1, 'mobile': w < 600}, session=sid)
             time.sleep(0.6)
             click(sid, '#woBox .woe-add')
             time.sleep(0.4)
-            click(sid, '.woe-form .woe-seg button', 'Every week')   # the day buttons are measured too
             time.sleep(0.2)
-            fit = S.json(sid, 'JSON.stringify((function(){var c=document.getElementById("woCard"),r=c.getBoundingClientRect(),over=[];[].forEach.call(c.querySelectorAll("*"),function(n){var b=n.getBoundingClientRect();if(b.width&&b.right>innerWidth+1)over.push((n.className||n.tagName)+":"+Math.round(b.right));});return {w:innerWidth,doc:document.documentElement.scrollWidth,over:over.slice(0,5),btn:Math.round(document.querySelector(".woe-form .go").getBoundingClientRect().height),day:Math.round(document.querySelector(".woe-form .woe-day").getBoundingClientRect().height)};})())', {})
+            fit = S.json(sid, 'JSON.stringify((function(){var c=document.getElementById("woCard"),r=c.getBoundingClientRect(),over=[];[].forEach.call(c.querySelectorAll("*"),function(n){var b=n.getBoundingClientRect();if(b.width&&b.right>innerWidth+1)over.push((n.className||n.tagName)+":"+Math.round(b.right));});return {w:innerWidth,doc:document.documentElement.scrollWidth,over:over.slice(0,5),btn:Math.round(document.querySelector(".woe-form .go").getBoundingClientRect().height),day:Math.round(document.querySelector(".woe-form select").getBoundingClientRect().height),rows:[].map.call(document.querySelectorAll("#woBox .woe"),function(x){return Math.round(x.getBoundingClientRect().height);})};})())', {})
             ok('%d wide: nothing on the card is wider than the screen, buttons at least 44px tall' % w, not fit.get('over') and fit.get('doc', 9999) <= w and fit.get('btn', 0) >= 40 and fit.get('day', 0) >= 44, fit)
+            if w >= 820:
+                ok('%d wide: each event is one compact row, not a tall card (Dean, round 3)' % w, fit.get('rows') and max(fit['rows']) <= 66, fit.get('rows'))
             if SHOTS: S.shot(sid, os.path.join(SHOTS, 'whats-on-account-%d.png' % w))
             click(sid, '.woe-form button', 'Cancel')
         S.js(sid, '(function(){var r=document.querySelector(\'.woe[data-id="%s"]\'); r.querySelector(".woe-rm").click(); return true;})()' % wid)
@@ -209,6 +209,15 @@ def tv_and_phone():
             ok('%dx%d: tap tomorrow: the card names the day, then the venue\'s night, no "No games this night" over it' % (W, H), len(t1) == 1 and 'Revolver Fridays' in t1[0] and '10pm' in t1[0] and str(hd).lower().startswith(dkey(tom)[:3]), [hd, t1])
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-tomorrow-%d.jpg' % W))
             ok('%dx%d: no script errors on the phone' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
+            r.close_tab(tid)
+
+        print('\nNO "CONNECTED" WORD on any phone (Dean, 6 Nov 2026: "why do we have the connected word again?")')
+        for page in ('/app/trivia/play.html', '/app/musical/play.html', '/play.html'):
+            tid, sid = r.open(page, width=390, height=664)
+            r.until(sid, '!!document.getElementById("statusText") && !!document.getElementById("statusDot")', 20)
+            m = r.json(sid, 'JSON.stringify((function(){var d=document.getElementById("statusDot"),t=document.getElementById("statusText"),l=d.parentNode; l.classList.remove("nostatus"); d.classList.add("on"); t.textContent="Connected";'
+                            'var a={dot:Math.round(d.getBoundingClientRect().width),w:Math.round(t.getBoundingClientRect().width)}; d.classList.remove("on"); t.textContent="Reconnecting"; a.re=Math.round(t.getBoundingClientRect().width); return a;})())', {})
+            ok('%s: connected is the green dot alone (the word is not seen), and "Reconnecting" still shows' % page, m.get('dot', 0) >= 6 and m.get('w', 9) <= 1 and m.get('re', 0) > 40, m)
             r.close_tab(tid)
     finally:
         r.close()

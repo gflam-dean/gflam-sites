@@ -19,6 +19,7 @@
   var d = root.document;
   var DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   var SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+  var LONG = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
   var TITLE_MAX = 60, LINE_MAX = 48;   // the Worker says the same (design review: one line on the TV)
 
   function el(tag, cls, text) { var e = d.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
@@ -100,55 +101,48 @@
       editing = { id: (src && !copy) ? src.id : "", title: src ? src.title : "", date: src ? (src.date || "") : "", day: src ? (src.day || "") : "",
                   until: src ? (src.until || "") : "", start: src ? (src.start || "") : "", line: src ? (src.line || "") : "", image_url: src ? (src.image_url || "") : "" };
       if (copy && editing.date) editing.date = "";   // a copy asks for its own date
-      var kind = editing.day ? "weekly" : "once";
+      var kind = editing.day ? "weekly" : "once";   // set from the When list (setKind)
       form.innerHTML = ""; form.hidden = false; add.hidden = true; count.hidden = true;
       /* Edit opens where the manager tapped, in place of that row (the row hides); Add and Copy open at the top. */
       if (editing.id) paintList(); else { box.insertBefore(form, list); paintList(); }
       form.appendChild(el("div", "woe-fhead", editing.id ? "Edit event" : (copy ? "Copy of " + src.title : "Add an event")));
 
+      /* ROUND 3 (Dean, 6 Nov 2026: "a lot of wasted space in there"): three short rows, side by side where they fit.
+           Title | When | Starts
+           Date (one date) or Last date (every week) | One line about it
+           Poster | Save event, Cancel
+         "When" is one list: One date, or Every Monday to Every Sunday. On a phone every field takes the full width. */
       var title = input("text", editing.title, TITLE_MAX, "DJ Tilly, Parma night, Live music");
-      form.appendChild(field("Title", title));
-
-      var seg = el("div", "woe-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "When");
-      var b1 = el("button", "", "One date"), b2 = el("button", "", "Every week");
-      [b1, b2].forEach(function (b) { b.setAttribute("type", "button"); seg.appendChild(b); });
-      var wl = el("div", "woe-f"); wl.appendChild(el("div", "flabel", "When")); wl.appendChild(seg); form.appendChild(wl);
-
-      var once = el("div", "woe-when-once"), date = input("date", editing.date);
-      date.setAttribute("min", t());
-      once.appendChild(field("Date", date));
-      var weekly = el("div", "woe-when-weekly"), chips = el("div", "woe-days"), until = input("date", editing.until);
-      until.setAttribute("min", t());
-      DAY_ORDER.forEach(function (k) {
-        var c = el("button", "woe-day" + (editing.day === k ? " on" : ""), SHORT[k]); c.setAttribute("type", "button"); c.setAttribute("data-day", k);
-        c.setAttribute("aria-pressed", editing.day === k ? "true" : "false");
-        c.onclick = function () {
-          editing.day = k;
-          var all = chips.querySelectorAll(".woe-day");
-          for (var i = 0; i < all.length; i++) { var on = all[i].getAttribute("data-day") === k; all[i].className = "woe-day" + (on ? " on" : ""); all[i].setAttribute("aria-pressed", on ? "true" : "false"); }
-        };
-        chips.appendChild(c);
+      var sel = el("select", "woe-when-sel");
+      [["once", "One date"]].concat(DAY_ORDER.map(function (k) { return [k, "Every " + LONG[k]]; })).forEach(function (op) {
+        var x = el("option", "", op[1]); x.value = op[0]; x.setAttribute("value", op[0]); sel.appendChild(x);
       });
-      var dw = el("div", "woe-f"); dw.appendChild(el("div", "flabel", "Day")); dw.appendChild(chips); weekly.appendChild(dw);
-      weekly.appendChild(field("Last date (optional)", until, el("p", "snote", "Leave blank and it runs every week until you remove it.")));
-      form.appendChild(once); form.appendChild(weekly);
-      function setKind(k) {
-        kind = k; once.hidden = k !== "once"; weekly.hidden = k !== "weekly";
-        b1.className = k === "once" ? "on" : ""; b2.className = k === "weekly" ? "on" : "";
-        b1.setAttribute("aria-pressed", k === "once" ? "true" : "false"); b2.setAttribute("aria-pressed", k === "weekly" ? "true" : "false");
-      }
-      b1.onclick = function () { setKind("once"); }; b2.onclick = function () { setKind("weekly"); };
-      setKind(kind);
-
+      sel.value = editing.day || "once";
       var start = input("time", editing.start);
+      var r1 = el("div", "woe-grid woe-r1");
+      r1.appendChild(field("Title", title)); r1.appendChild(field("When", sel)); r1.appendChild(field("Starts", start));
+      form.appendChild(r1);
+
+      var date = input("date", editing.date), until = input("date", editing.until);
+      date.setAttribute("min", t()); until.setAttribute("min", t());
+      var once = field("Date", date), weekly = field("Last date (optional)", until, el("p", "woe-hint", "Leave blank if it runs every week until you remove it."));
+      once.className += " woe-when-once"; weekly.className += " woe-when-weekly";
       var line = input("text", editing.line, LINE_MAX, "DJs from 9, free entry");
       var counter = el("span", "woe-counter");
       function countLine() { counter.textContent = String(line.value || "").length + " of " + LINE_MAX; }
       line.oninput = countLine; countLine();
-      var two = el("div", "woe-two"), lf = field("One line about it (optional)", line);
+      var lf = field("One line about it (optional)", line);
       lf.labelEl.appendChild(counter);
-      two.appendChild(field("Starts", start)); two.appendChild(lf);
-      form.appendChild(two);
+      var r2 = el("div", "woe-grid woe-r2");
+      r2.appendChild(once); r2.appendChild(weekly); r2.appendChild(lf);
+      form.appendChild(r2);
+      function setKind() {
+        kind = sel.value === "once" ? "once" : "weekly";
+        editing.day = kind === "weekly" ? sel.value : "";
+        once.hidden = kind !== "once"; weekly.hidden = kind !== "weekly";
+      }
+      sel.onchange = setKind;
+      setKind();
 
       /* The picture: optional, uploaded the moment it is chosen, like a promo slide. */
       var pic = el("div", "woe-pic"), pth = el("div", "woe-thumb big"), pb = el("div", "woe-picbtns");
@@ -177,19 +171,19 @@
       };
       pb.appendChild(choose); pb.appendChild(drop);
       var pt = el("div", "woe-picwords");
-      pt.appendChild(el("p", "snote", "A poster or a photo. Tall posters show whole on your TV."));
-      pt.appendChild(el("p", "snote woe-datecheck", "Check the date on your poster matches the date above."));
+      pt.appendChild(el("p", "woe-hint", "A poster or a photo. Tall posters show whole on your TV."));
       pt.appendChild(pb);
-      var pf = el("div", "woe-f woe-picf"); pf.appendChild(el("div", "flabel", "Picture (optional)"));
+      var pf = el("div", "woe-f woe-picf"); pf.appendChild(el("div", "flabel", "Poster (optional)"));
       pic.appendChild(pth); pic.appendChild(pt); pic.appendChild(file);
-      pf.appendChild(pic); form.appendChild(pf);
+      pf.appendChild(pic);
       paintPic();
 
       var err = el("p", "woe-err"); err.setAttribute("role", "status");
       var acts = el("div", "woe-facts"), go = el("button", "go", "Save event"), cancel = el("button", "addbtn", "Cancel");
       go.setAttribute("type", "button"); cancel.setAttribute("type", "button");
       acts.appendChild(go); acts.appendChild(cancel);
-      form.appendChild(err); form.appendChild(acts);
+      var r3 = el("div", "woe-r3"); r3.appendChild(pf); r3.appendChild(acts);
+      form.appendChild(err); form.appendChild(r3);
       cancel.onclick = shut;
       go.onclick = function () {
         var ev = { title: String(title.value || "").trim(), start: start.value || "", line: String(line.value || "").trim(), image_url: editing.image_url || "" };

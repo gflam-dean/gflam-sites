@@ -79,6 +79,10 @@ ok('a poster for the soonest nights with a picture: Friday, then Mount Kujo (Lov
 var many = []; for (var i = 0; i < 14; i++) many.push({ title: 'n' + i, day: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][i % 7], start: '20:00' });
 var ms = W.tvSlides(many, TODAY);
 ok('five a list slide, two list slides at most (ten nights)', ms.length === 2 && ms[0].rows.length === 5 && ms[1].rows.length === 5);
+var seven = W.tvSlides(many.slice(0, 7), TODAY).filter(function (x) { return x.type === 'list'; }), two = W.tvSlides(many.slice(0, 2), TODAY)[0], three = W.tvSlides(many.slice(0, 3), TODAY)[0];
+ok('round 3: seven nights are two balanced slides (4 and 3, not 5 and 2), one size for the set; fewer rows, bigger words', seven.length === 2 && seven[0].rows.length === 4 && seven[1].rows.length === 3 && seven[0].size === 'm' && seven[1].size === 'm' && two.size === 'xl' && three.size === 'l' && /wo-wall wo-xl/.test(W.tvHtml(two, 'Pub')), JSON.stringify(seven.map(function (x) { return x.rows.length + x.size; })));
+var withLogo = W.tvHtml(sl[0], 'Revolver Upstairs', 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png'), withPoster = W.tvHtml(sl[1], 'Revolver Upstairs', 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png');
+ok('round 3: the venue\'s own uploaded logo heads the list slide beside WHAT\u2019S ON (its name only when it has none), and sits on the poster slide', /<div class="wo-top"><img class="wo-logo" alt="" src="https:\/\/x\.supabase\.co[^"]*logo\.png">/.test(withLogo) && !/wo-kick/.test(withLogo) && /wo-kick">Revolver Upstairs/.test(W.tvHtml(sl[0], "Revolver Upstairs")) && /wo-words"><img class="wo-logo"/.test(withPoster) && W.tvHtml(sl[0], 'x', 'javascript:alert(1)').indexOf('wo-logo') === -1, withLogo.slice(0, 200));
 ok('a weekly night with a picture is one poster, not one a week; three posters at most', W.tvSlides([EV[0]], '2026-11-06').filter(function (x) { return x.type === 'poster'; }).length === 1 && W.tvSlides([1, 2, 3, 4, 5].map(function (n) { return { title: 'p' + n, date: '2026-11-1' + (n + 2), image_url: 'https://a/p' + n + '.jpg' }; }), TODAY).filter(function (x) { return x.type === 'poster'; }).length === 3);
 var gw = W.tvSlides(EV, TODAY, [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }]);
 var gwRows = gw.reduce(function (a, x) { return a.concat(x.rows || []); }, []);
@@ -150,37 +154,35 @@ ok('a picture shows as its thumbnail; with none, the tile quietly says its day (
 ok('"5 of 30" and "+ Add an event"', /5 of 30/.test(texts(page, 'woe-count')) && byClass(page, 'woe-add').length === 1 && !byClass(page, 'woe-add')[0].hidden);
 byClass(page, 'woe-add')[0].onclick();
 var form = byClass(page, 'woe-form')[0];
-ok('Add opens the form: Title, One date / Every week, Starts, One line about it (0 of 48), Picture with the poster date check, Save event', !form.hidden && /Add an event/.test(form.textContent) && /One date/.test(form.textContent) && /Every week/.test(form.textContent) && /Starts/.test(form.textContent) && /One line about it/.test(form.textContent) && /0 of 48/.test(form.textContent) && /Check the date on your poster/.test(form.textContent) && /Picture/.test(form.textContent) && /Save event/.test(form.textContent));
+ok('Add opens the form (round 3, three short rows): Title, When, Starts; Date or Last date, One line about it (0 of 48); Poster, Save event. No poster-date reminder.', !form.hidden && /Add an event/.test(form.textContent) && /When/.test(form.textContent) && /One date/.test(form.textContent) && /Every Friday/.test(form.textContent) && /Starts/.test(form.textContent) && /One line about it/.test(form.textContent) && /0 of 48/.test(form.textContent) && !/Check the date on your poster/.test(form.textContent) && /Poster \(optional\)/.test(form.textContent) && /Save event/.test(form.textContent) && byClass(form, 'woe-r1').length === 1 && byClass(form, 'woe-r2').length === 1 && byClass(form, 'woe-r3').length === 1);
 function inputs() { return all(form).filter(function (n) { return n.tagName === 'input'; }); }
+function field(t) { var f = all(form).filter(function (n) { return n.tagName === 'label' && n._text === t; })[0]; return f ? all(f.parentNode).filter(function (n) { return n.tagName === 'input' || n.tagName === 'select'; })[0] : null; }
 function btn(t) { return all(form).filter(function (n) { return n.tagName === 'button' && n.textContent === t; })[0]; }
 btn('Save event').onclick(); drain();
 ok('Save with nothing in: "Give it a title." and nothing sent', /Give it a title/.test(texts(form, 'woe-err')) && saved.length === 0);
-inputs()[0].value = 'DJ Tilly';
+field('Title').value = 'DJ Tilly';
 btn('Save event').onclick(); drain();
 ok('no date: "Pick the date."', /Pick the date/.test(texts(form, 'woe-err')) && saved.length === 0);
-inputs()[1].value = '2026-11-01';
+field('Date').value = '2026-11-01';
 btn('Save event').onclick(); drain();
 ok('a date that has been: refused in words', /That date has been/.test(texts(form, 'woe-err')) && saved.length === 0);
-btn('Every week').onclick();
-btn('Save event').onclick(); drain();
-ok('Every week with no day: "Pick the day it runs each week."', /Pick the day it runs each week/.test(texts(form, 'woe-err')) && saved.length === 0);
-all(form).filter(function (n) { return n.attrs['data-day'] === 'sat'; })[0].onclick();
-var ins = inputs(); ins[3].value = '23:00'; ins[4].value = 'Free entry before 11';
-all(form).filter(function (n) { return n.tagName === 'button' && /Choose a picture/.test(n.textContent); })[0];
-var fileIn = ins[5]; fileIn.files = [{ name: 'p.jpg' }]; fileIn.onchange();
+var when = field('When'); when.value = 'sat'; when.onchange();
+ok('When "Every Saturday": the Date field goes, Last date (optional) comes with its short hint', byClass(form, 'woe-when-once')[0].hidden === true && byClass(form, 'woe-when-weekly')[0].hidden === false && /Leave blank if it runs every week until you remove it/.test(form.textContent));
+field('Starts').value = '23:00'; field('One line about it (optional)').value = 'Free entry before 11';
+var fileIn = all(form).filter(function (n) { return n.tagName === 'input' && n.attrs.type === 'file'; })[0]; fileIn.files = [{ name: 'p.jpg' }]; fileIn.onchange();
 btn('Save event').onclick(); drain();
 ok('a good weekly event is sent with only its fields (day, start, line, the uploaded picture)', saved.length === 1 && saved[0].title === 'DJ Tilly' && saved[0].day === 'sat' && saved[0].start === '23:00' && saved[0].line === 'Free entry before 11' && /new\.jpg/.test(saved[0].image_url) && saved[0].date === undefined && !saved[0].id, JSON.stringify(saved[0]));
 ok('then the form shuts, the list repaints from the Worker\'s answer, and it says it is on the TV', form.hidden && byClass(page, 'woe').length === 6 && /shows on your TV/.test(said[said.length - 1]));
 ed.open('e3', true);
 form = byClass(page, 'woe-form')[0];
-ok('Copy: a new event with the details, its date asked for again', /Copy of Mount Kujo/.test(form.textContent) && inputs()[0].value === 'Mount Kujo album launch' && inputs()[1].value === '');
-inputs()[1].value = '2026-11-28';
+ok('Copy: a new event with the details, its date asked for again', /Copy of Mount Kujo/.test(form.textContent) && field('Title').value === 'Mount Kujo album launch' && field('Date').value === '');
+field('Date').value = '2026-11-28';
 btn('Save event').onclick(); drain();
 ok('and saved as a new one (no id), on its new date', saved.length === 2 && !saved[1].id && saved[1].date === '2026-11-28' && /kujo\.jpg/.test(saved[1].image_url));
 ed.open('e1', false);
 form = byClass(page, 'woe-form')[0];
 ok('Edit opens in place of its row (the row hides, the form sits where it was); Add and Copy open at the top', form.parentNode === byClass(page, 'woe-list')[0] && byClass(page, 'woe').filter(function (r) { return r.attrs['data-id'] === 'e1'; })[0].hidden === true && byClass(page, 'woe-add')[0].hidden === true);
-ok('Edit: the form holds it, Every week on Friday, keeping its id', /Edit event/.test(form.textContent) && inputs()[0].value === 'Revolver Fridays' && /\bon\b/.test(all(form).filter(function (n) { return n.attrs['data-day'] === 'fri'; })[0].className));
+ok('Edit: the form holds it, When "Every Friday", keeping its id', /Edit event/.test(form.textContent) && field('Title').value === 'Revolver Fridays' && field('When').value === 'fri');
 btn('Save event').onclick(); drain();
 ok('saved under its own id', saved.length === 3 && saved[2].id === 'e1' && saved[2].day === 'fri');
 var rm = byClass(page, 'woe').filter(function (r) { return r.attrs['data-id'] === 'e4'; })[0];
@@ -192,7 +194,7 @@ var empty = new Node('div'); E.mount(empty, { events: [], today: TODAY, save: fu
 ok('nothing yet: a line saying what to add', /Nothing on yet/.test(empty.textContent));
 var fail = new Node('div'); E.mount(fail, { events: [], today: TODAY, save: function () { return { then: function (f) { f({ error: 'What’s on is not switched on yet.' }); } }; }, remove: function () {} });
 byClass(fail, 'woe-add')[0].onclick(); form = byClass(fail, 'woe-form')[0];
-inputs()[0].value = 'x'; inputs()[1].value = '2026-11-20'; btn('Save event').onclick(); drain(); drain();
+field('Title').value = 'x'; field('Date').value = '2026-11-20'; btn('Save event').onclick(); drain(); drain();
 ok('a refusal from the Worker is shown in the form, which stays open', /not switched on yet/.test(texts(form, 'woe-err')) && !form.hidden);
 
 print('\nTHE WORKERS: only cleaned fields, past ones dropped, pictures from the venue\'s own folder');
