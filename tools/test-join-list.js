@@ -66,6 +66,13 @@ var GOOD = { code: 'ACDE23', email: ' Sam@Example.com ', marketing_optin: true, 
   r = await post(Object.assign({}, GOOD, { marketing_optin: false, pid: 'pid-ffffffff' }), 'tok-here');
   show('no tick: the email only', DB.vp_players[0].email === 'sam@example.com' && DB.vp_players[0].marketing_optin !== true);
 
+  reset({ collect_first_name: true, collect_email: false, collect_mobile: true, collect_marketing_optin: true });
+  r = await post({ code: 'ACDE23', mobile: '0412 345 678', marketing_optin: true, consent_version: 'vpc-2-6nov', pid: 'pid-mmmmmmmm' }, 'tok-here');
+  show('a mobile only, where the venue collects mobiles (the menu\'s "Join the list")', r.body.stored === true && DB.vp_players[0].mobile === '0412345678' && DB.vp_players[0].marketing_optin === true, JSON.stringify(DB.vp_players[0]));
+  reset();
+  r = await post({ code: 'ACDE23', mobile: '12ab', pid: 'pid-nnnnnnnn' });
+  show('a junk mobile is refused', r.status === 400 && DB.vp_captures.length === 0, JSON.stringify(r));
+
   print('REFUSED');
   reset();
   r = await post(Object.assign({}, GOOD, { email: 'not an email', pid: 'pid-gggggggg' }));

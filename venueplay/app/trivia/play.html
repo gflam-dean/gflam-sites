@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the musical and bingo phones (6 Nov 2026) -->   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -228,6 +229,7 @@
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -630,7 +632,9 @@
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"];   // the last two: the scanned demo only (4 Nov 2026)
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
-    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){} }   // the venue's ad: the lobby, the waits and the end of the night, never a question
+    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){}
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");   // the compact ad under a waiting screen, so it and our logo fit (Dean, 6 Nov 2026)
+  }   // the venue's ad: the lobby, the waits and the end of the night, never a question
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
   /* "3rd", never "3rd of 16" (Dean, 4 Nov 2026: "no player counts anywhere"). P.playersCount is still read from the
@@ -671,10 +675,26 @@
   function headsUpKey(){ return "vp-headsup-"+P.room; }
   function headsUpDone(){ try{ return localStorage.getItem(headsUpKey())==="1"; }catch(e){ return false; } }
   function headsUp(email, optin){
+    return listSend(email, "", optin).then(function(r){ try{ localStorage.setItem(headsUpKey(),"1"); }catch(e){} return r; });
+  }
+  /* One way onto the venue's list for every door on this phone (the heads-up, the menu): /join/list, with the token this
+     phone joined with, so a player's opt-in lands on their own player row. A ticked send puts this phone on the list. */
+  function listSend(email, mobile, optin){
     var h={ "Content-Type":"application/json" }, t=P.token||P.lastToken; if(t) h["X-Player-Token"]=t;
-    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email, marketing_optin:optin===true,
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email||"", mobile:mobile||"", marketing_optin:optin===true,
       consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
-      .then(readApi).then(function(r){ try{ localStorage.setItem(headsUpKey(),"1"); }catch(e){} return r; });
+      .then(readApi).then(function(r){ if(optin===true && r && r.stored) setOnList(); return r; });
+  }
+  /* ON THE VENUE'S LIST (kept on the phone per room code): ticked the offers when joining, or joined the list since. */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
+  function setOnList(){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} paintListItem(); }
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026): only where the venue collects the offers tick and a way to reach
+     them, only for a phone that is in, and gone once it is on the list. */
+  function paintListItem(){
+    var b=$("vpListItem"); if(!b) return;
+    var c=P.collect||{};
+    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
+    VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
   }
   var NO_GAME_MSG="Ask the host, or scan the code when the next game starts.";
   function showNoGame(){
@@ -1351,6 +1371,7 @@
       P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null;
       if(r&&r.venue_name) P.venueName=String(r.venue_name);
       P.collect=(r&&r.collect)||null;   // what this venue collects: the heads-up sign-up shows only when it collects email
+      paintListItem();
       if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
         if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
       }
@@ -1399,6 +1420,7 @@
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
+      if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();   // said yes when joining: on the list, no menu row
       announce();   // cosmetic roster on the host + TV
       if(P.pendingQ || P.pendingScore){ applyPending(true); }   // true: a name just typed in, not a phone coming back
       else showWait("Watch the big screen. Your questions will pop up here.");

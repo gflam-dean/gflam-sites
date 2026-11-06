@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 11:36 · 5aa894f4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 12:36 · d12ce0dc';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1949,7 +1949,7 @@ function gatedCapture(cfg, b) {
  * "GET A HEADS UP BY EMAIL" ON THE PHONE WITH NO GAME ON (Dean, 6 Nov 2026, round 5): one email, the venue's own optional
  * "Send me offers from {venue}. I'm 18 or over." tick (/app/vp-consent.js), and the consent words' version.
  *
- * body { code, email, marketing_optin, consent_version, pid }, header X-Player-Token optional.
+ * body { code, email, mobile, marketing_optin, consent_version, pid }, header X-Player-Token optional (email or mobile, or both).
  *   code   the room's join code or the venue's permanent code (the QR the phone came from)
  *   -> { ok:true, stored:true } | { ok:true, stored:false } (the venue does not collect email) | 4xx
  *
@@ -1974,8 +1974,12 @@ async function handleJoinList(request, env, json) {
     const rd = await rateLimit(env, 'list:dev:' + pid, LIST_MAX_PER_DEVICE, 3600);
     if (!rd.ok) return json({ error: 'You have already signed up from this phone' }, 429);
   }
+  /* An email, or a mobile, or both (the menu's "Join {venue}'s list" asks for what the venue collects, 6 Nov 2026). */
   const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right' }, 400);
+  const mobile = String(b.mobile || '').replace(/[^0-9+]/g, '').slice(0, 20);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right' }, 400);
+  if (mobile && !/^\+?[0-9]{8,15}$/.test(mobile)) return json({ error: 'That mobile does not look right' }, 400);
+  if (!email && !mobile) return json({ error: 'That email does not look right' }, 400);
   const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
   const code = String(b.code || '').trim().toUpperCase();
   if (!/^[A-Z0-9]{4,12}$/.test(code)) return json({ error: 'Missing code' }, 400);
@@ -1986,8 +1990,8 @@ async function handleJoinList(request, env, json) {
   else venueId = await venueByCode(env, code);
   if (!venueId) return json({ error: 'No venue with that code' }, 404);
   const cfg = await venueCollectCfg(env, venueId);
-  const cap = gatedCapture(cfg, { email: email, marketing_optin: b.marketing_optin === true });
-  if (!cap.email) return json({ ok: true, stored: false });   // this venue does not collect email: nothing is kept
+  const cap = gatedCapture(cfg, { email: email || null, mobile: mobile || null, marketing_optin: b.marketing_optin === true });
+  if (!cap.email && !cap.mobile) return json({ ok: true, stored: false });   // the venue collects neither: nothing is kept
   if (cap.marketing_optin && consentVersion) cap.consent_version = consentVersion;
 
   /* A phone that played here: its own player row, when the token is real and its session is this venue's. */
