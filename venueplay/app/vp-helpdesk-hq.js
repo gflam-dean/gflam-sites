@@ -814,7 +814,8 @@
       '<div class="note" style="margin:0 0 12px">A buzz on this phone or computer when a ticket comes in. It says the brand, the kind and the number, never the person or their message.</div>' +
       '<div class="note" style="margin:0 0 12px">Sales and urgent alerts stay on screen until the ticket is opened, answered, closed or assigned. On an iPhone that needs one setting: Settings, Notifications, venueplay HQ, then Banner Style: Persistent (and Sounds on).</div>' +
       '<div class="checklist" style="max-width:520px;margin-bottom:12px"><label class="checkitem"><input type="radio" name="hdaF" value="all" checked> Every ticket</label>' +
-      '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales</label></div>' +
+      '<label class="checkitem"><input type="radio" name="hdaF" value="urgent_sales"> Only urgent ones and sales (bad player feedback too)</label>' +
+      '<label class="checkitem"><input type="radio" name="hdaF" value="bad_feedback"> Only bad player feedback</label></div>' +
       '<button class="btn pink" id="hdaOn"' + (can ? "" : " disabled") + '>Turn alerts on</button> <button class="btn ghost" id="hdaOff"' + (can ? "" : " disabled") + '>Turn alerts off on this device</button>' +
       '<div class="note" id="hdaMsg"></div>';
     if (!can) return;
@@ -829,6 +830,7 @@
         w.addEventListener("statechange", function () { if (w.state === "activated") res(reg); }); });
     });
   }
+  var _alertNote = "";
   function alertOn() {
     var filter = (doc.querySelector('input[name="hdaF"]:checked') || {}).value || "all";
     say("Asking this device...");
@@ -844,12 +846,13 @@
       var label = (root.navigator.userAgentData && root.navigator.userAgentData.platform) || root.navigator.platform || "";
       return post("/admin/help/push/subscribe", { endpoint: sub.endpoint, filter: filter, device_label: label }).then(function (r) {
         if (r.error) throw new Error(r.error);
+        _alertNote = r.note || "";   // e.g. "Only bad player feedback" before migration 137: every ticket for now
         // The device's own secret, for the service worker to ask what woke it. Never leaves this device but to us.
         return root.caches.open("vp-help-push").then(function (c) {
           return c.put(SCOPE + "config", new Response(JSON.stringify({ api: API, endpoint: sub.endpoint, token: r.token })));
         });
       });
-    }).then(function () { say("Alerts are on for this device."); })
+    }).then(function () { say("Alerts are on for this device." + (_alertNote ? " " + _alertNote : "")); })
       .catch(function (e) { say((e && e.message) || "That did not work. Try again."); });
   }
   /* "MOVE IT ON" (Dean, 3 Nov 2026). A sales or urgent alert stays on screen until it is dealt with

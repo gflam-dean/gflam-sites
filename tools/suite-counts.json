@@ -179,6 +179,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/feedback-followup-in-chrome.test.py": {
+  "checks": 153,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
@@ -205,6 +209,10 @@
  },
  "tools/helpdesk-hq-in-chrome.test.py": {
   "checks": 78,
+  "counted_by": "lines"
+ },
+ "tools/home-hero-in-chrome.test.py": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -400,7 +408,7 @@
   "counted_by": "lines"
  },
  "tools/subscribe-in-chrome.test.py": {
-  "checks": 74,
+  "checks": 122,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -449,6 +457,10 @@
  },
  "tools/test-billing-panels.js": {
   "checks": 68,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-confirm-shows-win.js": {
+  "checks": 22,
   "counted_by": "lines"
  },
  "tools/test-bingo-draw-record-18-oct.js": {
@@ -557,6 +569,14 @@
  },
  "tools/test-fallback-switch.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-feedback-consent.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-feedback-form.js": {
+  "checks": 73,
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
@@ -760,7 +780,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 67,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -1128,7 +1148,7 @@
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
-  "checks": 100,
+  "checks": 114,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {
@@ -1196,7 +1216,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 100,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
@@ -1268,7 +1288,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
-  "checks": 149,
+  "checks": 150,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {

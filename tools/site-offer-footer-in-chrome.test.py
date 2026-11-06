@@ -110,6 +110,7 @@ FOOT = r'''(function(){
   var cb = null, oneLine = false; if (copy) { var rg = document.createRange(); rg.selectNodeContents(copy); cb = rg.getBoundingClientRect().bottom;
     var yr = f.querySelector("#vp-year"), rr = rg.getClientRects(); oneLine = !!yr && rr.length === 1 && Math.abs(yr.getBoundingClientRect().top - rr[0].top) <= 4; }
   var bar = document.querySelector(".vp-float-cta.show"), barTop = bar ? bar.getBoundingClientRect().top : innerHeight;
+  var ctry = f.querySelector(".foot-country"), ctryBottom = ctry ? ctry.getBoundingClientRect().bottom : null;
   return JSON.stringify({ vw: innerWidth, sw: document.documentElement.scrollWidth, brand: mid(f.querySelector(".foot-brand")),
     textBottom: (function (t) { return t ? Math.round(t.getBoundingClientRect().bottom) : null; })(f.querySelector(".powered .powered-by-text")),
     textW: (function (t) { return t ? Math.round(t.getBoundingClientRect().width) : 0; })(f.querySelector(".powered .powered-by-text")),
@@ -123,7 +124,7 @@ FOOT = r'''(function(){
       if (i) return Math.round(i.getBoundingClientRect().width * 4676 / 4876 * 10) / 10; if (v) return Math.round(v.getBoundingClientRect().width * 10) / 10; return null; })(f.querySelector(".foot-brand")),
     gapAbove: Math.round(parseFloat(getComputedStyle(f).marginTop)), padTop: Math.round(parseFloat(getComputedStyle(f).paddingTop)),
     powered: mid(f.querySelector(".powered")), social: mid(f.querySelector(".foot-social")), lineMids: lineMids, lineCount: lineMids.length, lineTexts: lineTexts, copyW: (function(){ return copy ? Math.round((function(r){return r.width;})(rgc(copy))) : 0; })(), copyFs: copy ? parseFloat(getComputedStyle(copy.parentNode).fontSize) : 0,
-    links: links.length, dots: dots, copyBottom: cb, oneLine: oneLine, barTop: barTop, bar: !!bar, dir: getComputedStyle(f.querySelector(".foot")).flexDirection });
+    links: links.length, dots: dots, copyBottom: cb, countryBottom: ctryBottom, oneLine: oneLine, barTop: barTop, bar: !!bar, dir: getComputedStyle(f.querySelector(".foot")).flexDirection });
 })()'''
 
 
@@ -216,8 +217,11 @@ try:
            and (LT[1] == 'FAQs | Help | Contact' or (page in ('/terms.html', '/privacy.html') and LT[1] == 'Help')), LT)
         ok('%s: the copyright line is on ONE line at 390, in a font of 11px or more' % name,
            f.get('oneLine') is True and f.get('copyW', 999) <= f.get('vw', 0) - 24 and f.get('copyFs', 0) >= 11, (f.get('copyW'), f.get('copyFs'), f.get('oneLine')))
-        ok('%s: the copyright line is one line ("(c) 2026 Gflam Group..."), wholly above the sticky bar%s, and nothing scrolls sideways' % (name, '' if page in ('/help.html', '/terms.html', '/privacy.html') else ' (shown)'),
+        # 2 Nov 2026: the Acknowledgement of Country line now sits UNDER the copyright line, so it is the
+        # footer's last line and the one the pink bar would cover first. Both must clear the bar.
+        ok('%s: the copyright line is one line ("(c) 2026 Gflam Group..."), it and the Acknowledgement of Country line wholly above the sticky bar%s, and nothing scrolls sideways' % (name, '' if page in ('/help.html', '/terms.html', '/privacy.html') else ' (shown)'),
            f.get('copyBottom') is not None and f.get('oneLine') is True and f['copyBottom'] <= f['barTop'] - 4 and f.get('sw', 999) <= f.get('vw', 0)
+           and f.get('countryBottom') is not None and f['countryBottom'] <= f['barTop'] - 4
            and (f.get('bar') or page in ('/help.html', '/terms.html', '/privacy.html')), f)
         shot(S, sid, 'footer-%s-390' % page.strip('/').replace('.html', ''))
         S.close_tab(tid)

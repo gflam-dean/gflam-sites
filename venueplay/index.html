@@ -1115,7 +1115,7 @@
 
 <!-- ===================== THE MONTHLY EMAIL (31 Oct 2026) =====================
      For the venue that is not ready to talk to us yet: one email a month, nothing else asked but
-     the address (the venue is optional). Sits right after "Talk to us" as the softer choice, in this
+     the address, the venue name and its postcode (2 Nov 2026: offers go by state). Sits right after "Talk to us" as the softer choice, in this
      page's own pieces; /app/vp-subscribe.js makes it work and /app/vp-subscribe.css lays it out.
      Never an offer here: the same standard sign-up on every page that has it. -->
 <section class="sec sec-tight" id="monthly">
@@ -1133,9 +1133,15 @@
               <label for="vps-email">Email</label>
               <input id="vps-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required>
             </div>
-            <div class="field">
-              <label for="vps-venue">Venue <span class="vps-opt">(optional)</span></label>
-              <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120">
+            <div class="vps-pair">
+              <div class="field">
+                <label for="vps-venue">Venue name</label>
+                <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required>
+              </div>
+              <div class="field">
+                <label for="vps-postcode">Postcode</label>
+                <input id="vps-postcode" name="postcode" type="text" placeholder="4217" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+              </div>
             </div>
           </div>
           <div class="vps-hp" aria-hidden="true"><label for="vps-website">Leave this empty</label><input id="vps-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
@@ -1171,6 +1177,7 @@
       &copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as venueplay
     </div>
   </div>
+  <p class="wrap foot-country">venueplay and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.</p>
 </footer>
 
 <!-- ===================== SCRIPT ===================== -->
@@ -1697,7 +1704,7 @@
      deliberately left alone: centring three or four lines of running text inside a box is the
      one place this stops looking designed and starts looking like a school project. */
   .hero > .wrap{text-align:center}
-  .hero .lede{margin-left:auto;margin-right:auto;max-width:62ch}
+  .hero:not(.hero2) .lede{margin-left:auto;margin-right:auto;max-width:62ch}
   .hero-cta{justify-content:center}
   .sec-head{text-align:center}
   .sec-sub{margin-left:auto;margin-right:auto}
@@ -1732,8 +1739,13 @@
      breaks. It never re-centres the box afterwards, so once the text inside was centred the
      balanced heading still sat about 175px left of true centre while everything around it was
      dead centre, which is the kind of near-miss that looks worse than no centring at all.
-     Any capped-width block inside a centred head gets its box centred too. */
-  .hero h1{margin-left:auto;margin-right:auto}
+     Any capped-width block inside a centred head gets its box centred too.
+     NOT the two-column hero (.hero2, "Run a packed Tuesday"): beside the demo its copy is LEFT
+     aligned, and centring the 14ch heading box in that column pushed the heading about 54px in
+     from the wordmark, the lede and the buttons, all of which start hard left (Dean, 2 Nov 2026:
+     "looks out of alignment with a logo in the corner"). On a phone .hero2 centres its own
+     heading in its 900px media block. */
+  .hero:not(.hero2) h1{margin-left:auto;margin-right:auto}
   .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:auto;margin-right:auto}
   .offer-grid > div:first-child .sec-title{margin-left:auto;margin-right:auto}
 

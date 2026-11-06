@@ -385,6 +385,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
 <script src="/app/vp-room.js"></script>
+<script src="/app/vp-loved.js"></script>
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
@@ -945,6 +946,10 @@
       done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
         '<div class="qtext-h">The winners are on the big screen.</div>';
       body.appendChild(done);
+      /* The room's verdict, favourable only and as true counts (/app/vp-loved.js), once phones have rated. */
+      var lv=el("div","",""); lv.id="triviaLoved"; lv.style.cssText="display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.28);color:var(--win);font-weight:700;font-size:14px";
+      body.appendChild(lv);
+      if(window.VPLoved && G.sessionId) VPLoved.show(VP_GAME_API, G.sessionId, lv);
       var PLACE={3:"third",2:"second",1:"first"};
       var nxt = (!G.endBoard && G.endReveal>1) ? G.endRanks[G.endRanks.indexOf(G.endReveal)+1]||1 : 0;
       if(!G.endBoard && G.endReveal>1){ done.querySelector(".qtext-h").textContent="On the big screen: "+PLACE[G.endReveal]+" place. The rest are still covered."; }

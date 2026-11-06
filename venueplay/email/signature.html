@@ -25,11 +25,11 @@
 <body>
 <div class="wrap">
   <h1>venueplay email signature</h1>
-  <p>Fill in your details, check the preview, then <b>Copy signature</b> and paste it into Outlook: Settings, Mail, Compose and reply, Email signature. The logo is hosted on venueplay.com.au, so it shows for everyone you email.</p>
+  <p>Fill in your details (Mobile is optional: leave it empty and the signature has no mobile line), check the preview, then <b>Copy signature</b> and paste it into Outlook: Settings, Mail, Compose and reply, Email signature. The logo is hosted on venueplay.com.au, so it shows for everyone you email.</p>
   <div class="row">
     <div class="fld"><label for="nm">Name</label><input id="nm" value="Dean Tindale"></div>
     <div class="fld"><label for="rl">Role</label><input id="rl" value="Founder, venueplay"></div>
-    <div class="fld"><label for="mb">Mobile</label><input id="mb" placeholder="0400 000 000"></div>
+    <div class="fld"><label for="mb">Mobile (optional)</label><input id="mb" type="tel" value="" placeholder="Leave empty for no mobile" autocomplete="off"></div>
     <div class="fld"><label for="em">Email</label><input id="em" value="hello@venueplay.com.au"></div>
   </div>
   <div class="warn" id="warn">The logo is not live at venueplay.com.au/email/venueplay-signature.gif yet. Wait for the site to publish, then reload this page.</div>
@@ -53,6 +53,7 @@
     var name=$("nm").value.trim(), role=$("rl").value.trim(), mob=$("mb").value.trim(), em=$("em").value.trim();
     var ink=dark?"#FFFFFF":"#0A0A0B", mute=dark?"#B8B8C2":"#5E5E68";
     var rows="";
+    /* Mobile is optional and starts empty: never prefilled with anyone's number. Empty means no M line at all. */
     if(mob) rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">M</span> <a href="'+("tel:"+esc(tel(mob)))+'" style="color:'+mute+';text-decoration:none">'+esc(mob)+'</a></td></tr>';
     if(em)  rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">E</span> <a href="'+("mailto:"+esc(em))+'" style="color:'+mute+';text-decoration:none">'+esc(em)+'</a></td></tr>';
     rows+='<tr><td style="padding:2px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:'+mute+'"><span style="color:#FF1F8E;font-weight:700;display:inline-block;width:18px">W</span> <a href="https://venueplay.com.au" style="color:'+mute+';text-decoration:none">venueplay.com.au</a></td></tr>';

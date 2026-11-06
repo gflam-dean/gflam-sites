@@ -41,6 +41,7 @@ ok('phones re-join on rollcall only, never on host_here', /if\(m\.t==="rollcall"
   function send(m) { sent.push(m.t); }
   function sendState() { sent.push('state'); }
   function sendClaimPending() {}
+  function winShownWid() { return ''; }   // no confirmed win showing (6 Nov 2026: a reloaded TV gets one back)
   var _lastHelloReplay = 0;
   eval(lift(CONSOLE, 'tvHere', 'app/index.html'));
   for (var i = 0; i < 5; i++) { tvHere({ hello: true }); now += 200; }
