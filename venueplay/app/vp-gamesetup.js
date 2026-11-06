@@ -130,7 +130,8 @@
     P + ".vpgs-unitw{display:flex;align-items:center;gap:8px}" + P + ".vpgs-unitw .vpgs-in{flex:1;min-width:0}" + P + ".vpgs-unit{flex:none;font-size:15px;color:" + C.muted + "}",
     P + ".vpgs-group .vpgs-row{display:flex;flex-direction:column;justify-content:flex-end}" + P + ".vpgs-group>:only-child{grid-column:1/-1}",
     P + ".vpgs-prow.nonone{grid-template-columns:72px 1fr}" + P + ".vpgs-prow.solo{grid-template-columns:1fr auto!important}" + P + ".vpgs-prow.solo>:nth-child(3){grid-column:2!important;grid-row:1!important}" + P + ".vpgs-prow.solo.nonone{grid-template-columns:1fr!important}" + P + ".vpgs-prow.solo>span:first-child{display:none}" + P + ".vpgs-prow.solo>:nth-child(2){grid-column:1!important;grid-row:1!important}",
-    P + "input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.75}",
+    /* white calendar and clock icons on the dark boxes (Dean, round 9b): the dark colour scheme, and the icon itself inverted */
+    P + ".vpgs-in{color-scheme:dark}" + P + "input[type=time]::-webkit-calendar-picker-indicator," + P + "input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:1;cursor:pointer}",
     P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:44px;font-size:14px;padding:0 10px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
     /* THE "?" LINE UP (Dean, round 5): always at the end of its label line */

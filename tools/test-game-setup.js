@@ -609,6 +609,8 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('first open: Save in the bottom bar\'s usual place, "Play now with the defaults" a big button in the card', /vpgs-foot/.test($(P18, 'vpGsSave').parentNode.className) && $(P18, 'vpGsPlayNow').parentNode.id === 'vpGsBody');
   $(P18, 'vpGsClose').click(); await fo18;
 
+  check('white calendar and clock icons in the date and time boxes on the dark screens (Dean, round 9b)', (function () { var st = walk($(P18, 'vpGs') || $(P, 'vpGs'), function (e) { return e.tagName === 'STYLE'; }); var css = st ? st.textContent : ''; return /\.vpgs-in\{color-scheme:dark\}/.test(css) && /input\[type=date\]::-webkit-calendar-picker-indicator\{filter:invert\(1\);opacity:1/.test(css) && /input\[type=time\]::-webkit-calendar-picker-indicator,/.test(css); })());
+
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');
   var gstep = FR.slice(FR.indexOf('STEP.pick = function'), FR.indexOf('STEP.tv = function'));
