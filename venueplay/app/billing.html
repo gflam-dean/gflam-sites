@@ -673,7 +673,6 @@
     <div class="label">Your nights</div>
     <!-- The monthly report (31 Oct 2026): any month, the same numbers as the email on the 1st. -->
     <p class="note" style="margin:0 0 10px"><a href="report.html" id="reportLink" style="color:#FF1F8E;font-weight:700">See your monthly report</a></p>
-    <p class="note" style="margin:0 0 10px">How your recent nights went. "Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
     <!-- Read-only, so nothing can be written to the wrong venue here. It still gets the bar,
          because quietly reading the WRONG venue's numbers and deciding something about your
          Tuesday off the back of them is its own kind of wrong. -->
@@ -3545,7 +3544,7 @@
     var real = (nights||[]).filter(function(n){ return !n.abandoned; });
     if (!real.length){
       box.innerHTML = '<div class="card"><b style="display:block;font-size:16px;color:#fff;margin-bottom:6px">No nights yet</b>' +
-        '<span class="muted" style="font-size:13.5px">Once you run your first game here, every night shows up on this page: who came, what you played and what you gave away.</span></div>';
+        '<span class="muted" style="font-size:13.5px">Your nights show here once you run a game.</span></div>';
       return;
     }
     real.forEach(function(n){
@@ -3553,7 +3552,7 @@
       var what = formatWords(n.formats) || "Nothing recorded";
       var bits = [];
       bits.push('<div class="nfig"><b>' + (n.players||0) + '</b><span>player' + ((n.players===1)?"":"s") + '</span></div>');
-      if (n.came_back_known) bits.push('<div class="nfig"><b>' + (n.came_back||0) + '</b><span>came back</span></div>');
+      if (n.came_back_known) bits.push('<div class="nfig"><b>' + (n.came_back||0) + '</b><span>came back</span></div>');   // stated plainly, never hedged (Dean, 6 Nov 2026)
       bits.push('<div class="nfig"><b>' + (n.games||0) + '</b><span>game' + ((n.games===1)?"":"s") + '</span></div>');
       if (n.prize_cents) bits.push('<div class="nfig"><b>$' + (n.prize_cents/100).toFixed(2) + '</b><span>in cash prizes</span></div>');   // cash only (raffle cash, members draws), and says so
       row.innerHTML = '<div class="nhead"><b>' + esc(nightDate(n.at) || "A night") + '</b><small>' + esc(what) +
