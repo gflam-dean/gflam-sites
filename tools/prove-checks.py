@@ -323,6 +323,9 @@ MUTATIONS = [
      '<!--IF:offerpause--> and the offer price goes with it<!--ENDIF:offerpause-->',
      ' and the offer price goes with it',
      'switched on, the welcome still says the offer price goes with the pause'),
+    ('connected-word-in-chrome.test.py', 'venueplay/app/vp-connbar.js',
+     '    ".brand .venue #statusText{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}" +', '',
+     'in Chrome, a phone says "Connected" beside the green dot again'),
     # 1 Nov 2026, live test night: "Allow early BINGO calls" showed ticked after a mid-game reload.
     ('test-early-bingo-restore.js', 'venueplay/app/index.html',
      '    window.addEventListener("pageshow", syncEarlyBoxes);\n', '',
