@@ -65,6 +65,7 @@ ok('today\'s one-off is still on today', W.current({ title: 'x', date: TODAY }, 
 ok('the nights on a date, earliest first', W.on(EV, '2026-11-14').map(function (e) { return e.id; }).join() === 'e4,e3');
 ok('the next seven days in date and time order', W.upcoming(EV, TODAY, 7).map(function (x) { return x.date.slice(8) + x.ev.id; }).join() === '12e2,13e1,14e4,14e3', W.upcoming(EV, TODAY, 7).map(function (x) { return x.date.slice(8) + x.ev.id; }).join());
 ok('labels read as people say them', W.dayLabel(TODAY, TODAY) === 'Tonight' && W.dayLabel('2026-11-13', TODAY) === 'Tomorrow' && W.dayLabel('2026-11-14', TODAY) === 'Sat 14 Nov' && W.dayLabel('2026-11-14', TODAY, true) === 'Saturday 14 Nov');
+ok('an apostrophe inside a word is the curly one everywhere (the TV too)', W.clean([{ title: "What's the story?", day: 'fri', line: "Don't miss it" }])[0].title === 'What\u2019s the story?' && W.clean([{ title: "x", day: 'fri', line: "Don't miss it" }])[0].line === 'Don\u2019t miss it');
 ok('the account page\'s when: "Every Friday, 10pm" and "Sat 14 Nov, 8pm" and a last date', W.whenText(EV[0], TODAY) === 'Every Friday, 10pm' && W.whenText(EV[2], TODAY) === 'Sat 14 Nov, 8pm' && W.whenText({ title: 'x', day: 'fri', until: '2026-12-18' }, TODAY) === 'Every Friday, until 18 Dec', W.whenText(EV[0], TODAY) + ' / ' + W.whenText({ title: 'x', day: 'fri', until: '2026-12-18' }, TODAY));
 ok('a bad entry is left out, never guessed: no title, no day, a made-up date, a bad time, a picture that is not a web address', W.clean([{ day: 'fri' }, { title: 'x' }, { title: 'y', date: '2026-02-30' }, { title: 'z', day: 'fri', start: '25:00', image_url: 'javascript:alert(1)' }]).length === 1 && !W.clean([{ title: 'z', day: 'fri', start: '25:00', image_url: 'javascript:alert(1)' }])[0].start && !W.clean([{ title: 'z', day: 'fri', image_url: 'ftp://x/y.jpg' }])[0].image_url);
 ok('at most 30 (the cap)', W.clean(Array.apply(null, Array(40)).map(function (_, i) { return { title: 't' + i, day: 'fri' }; })).length === 30 && W.MAX === 30);
@@ -100,7 +101,7 @@ ok('the lobby opens exactly as Dean\'s round 7 lobby (our game alone), so the ad
 ok('the strip says "Tap a day" when the venue has nights this week', /Tap a day/.test(byClass(box, 'vpt-week')[0].textContent));
 lb.buttons[0].onclick();
 rows = byClass(spot, 'row');
-ok('tap Today: TONIGHT, our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Tonight' && rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
+ok('tap Today: TONIGHT once (our game\'s line says 7:30pm, not Tonight 7:30pm), our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Tonight' && rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && !/Tonight/.test(rows[0].textContent) && /7:30pm/.test(rows[0].textContent) && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
 var days = lb.buttons;
 ok('a gold dot on the days with one of the venue\'s nights (Thu, Fri, Sat, Sun no)', /\bev\b/.test(days[0].className) && /\bev\b/.test(days[1].className) && /\bev\b/.test(days[2].className) && !/\bev\b/.test(days[3].className), days.map(function (d) { return d.className; }).join('|'));
 ok('our game nights keep their own mark beside it', /\bon\b/.test(days[0].className) && /\bon\b/.test(days[6].className) && !/\bon\b/.test(days[1].className));
@@ -122,9 +123,9 @@ var none = new Node('div'); T.lobby(none, { name: 'Sam', me: 'trivia', week: WEE
 ok('no events: the lobby is exactly as before (one row, no dots)', byClass(byClass(none, 'vpt-night')[0], 'row').length === 1 && !byClass(none, 'ev').length);
 var ng = new Node('div'), ngs = T.noGame(ng, { name: 'Sam', venue: 'Revolver Upstairs', week: WEEK, events: EV, now: THU });
 var evb = byClass(ng, 'vpt-evs')[0];
-ok('no game on: the venue\'s nights for the first game day (today), headed "On at Revolver Upstairs"', evb && !evb.hidden && byClass(evb, 'nk')[0].textContent === 'On at Revolver Upstairs' && /I ♥ 3181/.test(evb.textContent), evb && evb.textContent);
+ok('no game on: the venue\'s nights for the first game day (today), with no label of their own (the ad below says What\u2019s on)', evb && !evb.hidden && !byClass(evb, 'nk').length && /I \u2665 3181/.test(evb.textContent), evb && evb.textContent);
 ngs.buttons[1].onclick();
-ok('tap Friday: Friday\'s nights, the same heading (the lead line names the day)', /On at Revolver Upstairs/.test(evb.textContent) && /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent), evb.textContent);
+ok('tap Friday: Friday\'s nights, and the lead line says "No games on Friday" on one line', /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent) && byClass(ng, 'vpt-next')[0].textContent.indexOf('No games on Friday') >= 0, [evb.textContent, byClass(ng, 'vpt-next')[0].textContent]);
 ngs.buttons[3].onclick();
 ok('tap a day with none: the list goes away', evb.hidden === true);
 var ng0 = new Node('div'); T.noGame(ng0, { name: 'Sam', week: WEEK, now: THU });

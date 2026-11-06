@@ -89,7 +89,7 @@ ok('with the week stored: "Next game here: Wednesday, Trivia 7pm"', /Next game h
 byClass(ngw, 'd')[6].onclick();
 ok('tap Friday: the lead line shows Friday\'s games', /Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
 byClass(ngw, 'd')[1].onclick();
-ok('tap Saturday: no games', /no games/.test(ngw.children[0].textContent), ngw.children[0].textContent);
+ok('tap Saturday: no games', /no games/i.test(ngw.children[0].textContent), ngw.children[0].textContent);
 ok('no sign-up box when the page has no way to send one', byClass(ng, 'vpt-sign').length === 0);
 ok('then the week strip, on the next game night (Wednesday)', byClass(ng, 'vpt-week').length === 1 && /picked/.test(byClass(ng, 'd')[4].className), texts(ng, 'd'));
 ok('never "you\'re on the list"', !/on .*list/i.test(ng.textContent));

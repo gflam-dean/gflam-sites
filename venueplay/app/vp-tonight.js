@@ -179,7 +179,9 @@
        tonight's beside our game (design review, 6 Nov 2026). */
     function today(tapped) {
       var evs = tapped ? eventsOn(o, now(o)) : [];
-      paintRows(spot, tonight(o).concat(eventRows(evs, 3)), evs.length ? "Tonight" : "");
+      var rows = tonight(o);
+      if (evs.length) rows.forEach(function (r) { r.sub = String(r.sub || "").replace(/^Tonight,? ?/, ""); });   // the kicker says Tonight once
+      paintRows(spot, rows.concat(eventRows(evs, 3)), evs.length ? "Tonight" : "");
     }
     today();
     box.appendChild(spot);
@@ -213,6 +215,7 @@
     function paint(dd, picked) {
       k.textContent = picked ? (dd.i === 0 ? "Today" : LONG[dd.key] + " " + dd.date.getDate()) : "Next game here";
       line.textContent = nightLine(o, dd).replace(/^(Tonight|[A-Za-z]+day)(, |: )/, picked ? "" : "$1$2");
+      if (picked && /^no games$/.test(line.textContent)) line.textContent = "No games on " + (dd.i === 0 ? "today" : LONG[dd.key]);   // one line (design review)
     }
     if (first >= 0) paint(days[first], false);
     else { k.textContent = "Next game here"; line.textContent = "Ask at the bar for the next game night"; }
@@ -223,7 +226,7 @@
     function paintEvents(dd) {
       var list = eventsOn(o, dd.date);
       evBox.hidden = !list.length;
-      if (list.length) paintRows(evBox, eventRows(list, 3), "On at " + (o.venue || "this venue"));   // the lead line above already names the day
+      if (list.length) paintRows(evBox, eventRows(list, 3), "");   // no label: the lead line names the day, and the ad below says What's on at <venue>
     }
     var start = first >= 0 ? first : 0;
     var s = strip(o, start, function (dd) { paint(dd, true); paintEvents(dd); });

@@ -210,8 +210,15 @@ def tv_and_phone():
         r.close()
 
 def main():
-    if not gatelib.hold_lock_or_refuse('whats-on-in-chrome', wait_s=int(os.environ.get('VP_WAIT_LOCK', '0') or 0)):
-        return 2
+    # Look every half second (as tools/tv-first-slide-in-chrome.test.py does); never clear anybody else's lock.
+    end = time.time() + int(os.environ.get('VP_WAIT_LOCK', '0') or 0)
+    while True:
+        st, pid, text = gatelib.lock_state()
+        if st in ('free', 'mine') and gatelib.hold_lock_or_refuse('whats-on-in-chrome', wait_s=0):
+            break
+        if time.time() > end:
+            print('  heavy lock held by pid %s ("%s"); gave up waiting' % (pid, text[:80])); return 2
+        time.sleep(0.5)
     account()
     tv_and_phone()
     print('\n' + ('ALL %d CHECKS PASSED' % ran if not bad else '%d OF %d CHECKS FAILED' % (bad, ran)))

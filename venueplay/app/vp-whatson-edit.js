@@ -106,7 +106,7 @@
       if (editing.id) paintList(); else { box.insertBefore(form, list); paintList(); }
       form.appendChild(el("div", "woe-fhead", editing.id ? "Edit event" : (copy ? "Copy of " + src.title : "Add an event")));
 
-      var title = input("text", editing.title, TITLE_MAX, "DJ Tilly, Trivia with Mikey, $15 Parmas");
+      var title = input("text", editing.title, TITLE_MAX, "DJ Tilly, Parma night, Live music");
       form.appendChild(field("Title", title));
 
       var seg = el("div", "woe-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "When");

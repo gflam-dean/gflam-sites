@@ -55,19 +55,22 @@
     h = h % 12 || 12;
     return h + (m[2] === "00" ? "" : ":" + m[2]) + ap;
   }
+  /* An apostrophe inside a word is the curly one, the way the account page and phones set it ("What’s"), so the TV
+     never shows two kinds (design review, 6 Nov). */
+  function curly(s) { return String(s).replace(/(\w)'(\w)/g, "$1\u2019$2"); }
   function str(s, n) { return String(s == null ? "" : s).replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, n); }
 
   /* One stored night, read defensively: what is not right is left out, and a night with no title or no day is no night. */
   function clean1(e) {
     if (!e || typeof e !== "object") return null;
-    var o = { title: str(e.title, 60) };
+    var o = { title: curly(str(e.title, 60)) };
     if (!o.title) return null;
     if (e.id != null && /^[A-Za-z0-9_-]{1,40}$/.test(String(e.id))) o.id = String(e.id);
     if (parse(e.date)) o.date = String(e.date);
     else if (DAYS.indexOf(e.day) !== -1) { o.day = e.day; if (parse(e.until)) o.until = String(e.until); }
     else return null;
     if (TIME_RE.test(String(e.start || ""))) o.start = String(e.start);
-    var line = str(e.line, 48); if (line) o.line = line;
+    var line = curly(str(e.line, 48)); if (line) o.line = line;
     if (typeof e.image_url === "string" && URL_OK.test(e.image_url) && e.image_url.indexOf("&#") === -1 && e.image_url.length <= 600) o.image_url = e.image_url;
     return o;
   }
@@ -215,7 +218,7 @@
       return '<div class="wo-wall wo-poster"><div class="wo-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wo-pic" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wo-words"><div class="wo-when' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
-        '<div class="adbig">' + esc(sl.ev.title) + '</div>' +
+        '<div class="adbig">' + esc(sl.ev.title).replace(/ (with|and|at|&amp;) /gi, " $1\u00a0") + '</div>' +   // "with" stays with the name after it
         (sl.ev.line ? '<div class="adsub">' + esc(sl.ev.line) + '</div>' : '') + '</div></div>';
     }
     return "";
