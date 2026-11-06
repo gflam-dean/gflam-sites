@@ -730,6 +730,8 @@
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="/app/vp-venuepick.js"></script>
+<script src="vp-setup-help.js"></script>
+<script src="vp-gamesetup.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
 <script src="vp-gaming.js"></script>
@@ -4479,6 +4481,7 @@
     $("headerTag").textContent="Bingo";
     // the venue's own patterns into every pattern list (nothing shows until migration 118 is live), then its saved setup
     Promise.resolve(loadCustomPatterns()).then(startBingoPrefs, startBingoPrefs).catch(function(){});
+    if(window.VPGameSetup) VPGameSetup.firstOpen("bingo", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
     syncBingoPaidChoice();
   }
 

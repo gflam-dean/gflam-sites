@@ -365,6 +365,8 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setup-help.js"></script>
+<script src="../vp-gamesetup.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
@@ -2119,6 +2121,7 @@
       $("statusText").textContent="Signed in";
       // The question sets, then this venue's saved setup over them (VP.gamePrefs; the old trivia_* columns as a fallback).
       Promise.resolve(loadQuestionSets()).then(startTriviaPrefs, startTriviaPrefs).catch(function(){});
+      if(window.VPGameSetup) VPGameSetup.firstOpen("trivia", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
       /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
          console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
       (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal

@@ -170,7 +170,15 @@
       if (Array.isArray(a[k])) out[k] = all.filter(function (x) { return a[k].indexOf(x) >= 0; });
     });
     if (a.name_ok === true) out.name_ok = true;
+    /* games_at and setup (INBOX 104, vp-gamesetup.js): the date the games were first answered, for Dean's monthly
+       email, and which games are set up. Kept here so a save from this wizard never drops them. */
+    if (root.VPGameSetup && root.VPGameSetup.cleanExtra) root.VPGameSetup.cleanExtra(a, out);
     return out;
+  }
+  /* The ticked games not set up yet (setup_answers.setup, INBOX 104). */
+  function gamesToSetUp(a) {
+    var st = (root.VPGameSetup && root.VPGameSetup.cleanSetup) ? root.VPGameSetup.cleanSetup(a && a.setup) : {};
+    return ((a && a.games) || []).filter(function (g) { return !st[g]; });
   }
   /* The venue's saved answers (vp_venue_settings.setup_answers, once migration 163 is run) and this device's. */
   function answersFor(ctx, state) {
@@ -258,7 +266,8 @@
     /* THE ANSWERS SO FAR (the venue's saved ones and this device's). A question already answered is left out. */
     var answers = answersFor(ctx, state);
     if (answers.tvs && answered("nights", answers) && answers.name_ok) drop("venue");
-    if (answered("games", answers)) drop("games");
+    /* The games step stays while a game they play is not set up yet (INBOX 104): it is now the games setup. */
+    if (answered("games", answers) && !(root.VPGameSetup && root.VPSetupHelp && gamesToSetUp(answers).length)) drop("games");
     function saveAnswer(key, value) {
       state.answers = cleanAnswers(answers); save();
       return persistAnswers(deps, VP, v.id, state.answers);
@@ -494,6 +503,18 @@
       if (answers.tvs || answered("nights", answers) || answers.name_ok) setNext("Next", true);
     };
     STEP.games = function () {
+      /* THE GAMES SETUP (Dean, 6 Nov 2026, INBOX 104): the heads-up, "What games do you play at your venue?", "Would
+         you like to set them all up today?", then each ticked game one at a time (vp-gamesetup.js, over this guide).
+         It saves through this guide's own answers, so setup_answers has one saving path. */
+      if (root.VPGameSetup && root.VPSetupHelp) {
+        body.appendChild(el("p", TEXT, "Your games setup is open."));
+        setNext("Next", false);   // until the games setup closes
+        return root.VPGameSetup.run(ctx, { doc: doc, storage: storage, client: client, VP: VP, fetch: fetchFn, answers: answers,
+          saveAnswers: function () { return saveAnswer("games"); } }).then(function (outcome) {
+          if (outcome === "closed") { close(false); return "closed"; }
+          setNext("Next", true); return api.next();
+        });
+      }
       body.appendChild(el("p", TEXT, "Tap every game you play, or plan to. We use it to point you at the right pages. It is optional."));
       setNext(answered("games", answers) ? "Next" : "Skip for now", true);
       var gb = el("div", ""); gb.id = "vpFrGamesBox";

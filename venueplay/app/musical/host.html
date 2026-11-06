@@ -510,6 +510,8 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setup-help.js"></script>
+<script src="../vp-gamesetup.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
@@ -2444,6 +2446,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var _oneTab=(window.VP_ONETAB ? VP_ONETAB.claim("musical:"+G.venueId) : Promise.resolve(true));
       // This venue's saved setup, once the themes exist to pick from (see applyMusicalPrefs).
       libReady.then(startVenuePrefs).catch(function(){});
+      if(window.VPGameSetup) VPGameSetup.firstOpen("musical", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
       Promise.all([libReady, _oneTab]).then(function(){   // library must be loaded before we rebuild a game's song list
         restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
           /* Picked up on another device: stand down and fall silent (/app/vp-pickup.js). */
