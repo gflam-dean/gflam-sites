@@ -61,7 +61,8 @@
     /* ...but words stay a readable measure (design review, 6 Nov 2026: 170-character lines on Billing), and the venue
        rows on Billing and Game settings sit two to a row instead of a name at the far left and its controls 800px away. */
     .tabpanel p.note,.tabpanel .snote,.tabpanel > p,.lede{max-width:760px}
-    #venues,#playerData,#aboutVenue{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:start}
+    /* Game settings shows one venue now (Dean, 6 Nov 2026), so only Billing's venue list goes two across. */
+    #venues{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:start}
   }
   #addToggle{margin:12px 0}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
@@ -1221,7 +1222,7 @@
     $("s-next").textContent = d.comp ? ""
       : d.next_charge ? ("on " + d.next_charge)
       : d.has_subscription === false ? "when you add your card"
-      : "after your first payment";
+      : "";   // no date yet: just "$350 per month" (Dean, 6 Nov 2026: not "$350 per month after your first payment")
     /* PAST DUE. Stripe says past_due or unpaid the moment a charge fails, and until now this page
        carried on showing a normal next payment as though nothing had happened. Name the date and
        the amount if we have them, and put the fix one tap away. */

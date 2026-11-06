@@ -187,6 +187,12 @@ def tv_and_phone():
                len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t'] and 'TOMORROW' in rows[1]['t'].upper()
                and 'Kujo' in rows[2]['t'] and rows[0]['bar'] == 'rgb(255, 31, 142)' and not any('Long gone' in x['t'] for x in rows), rows)
             ok('feature %dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
+        # Dean, 6 Nov 2026 (round 5 note 12): with only two nights the rows are the same size, a little smaller, dropped
+        # down a touch, with room left under them.
+        two = [nights[0], dict(nights[1], title='Revolver Fridays with Jmcee, Raev and Friends')]   # one long title, one short
+        for W, H, got, m, rows in scene(two, 'two'):
+            ok('two %dx%d: two nights: the two rows are exactly the same height, start a gap below the header, and leave room under them' % (W, H),
+               got is True and m.get('feature') is True and len(rows) == 2 and rows[0]['h'] == rows[1]['h'] and rows[0]['top'] - m.get('headTop', 0) >= H * 0.12 and rows[1]['bot'] <= H * 0.8, [rows, m.get('headTop')])
         plain = [dict(n, image_url=None) if n.get('image_url') else n for n in nights]
         for W, H, got, m, rows in scene(plain, 'list'):
             ok('list %dx%d: no picture this week: the plain list takes its turn, its header at the top' % (W, H), got is True and not m.get('feature') and m.get('headTop', 999) < H * 0.12, m)

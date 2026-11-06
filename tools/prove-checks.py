@@ -13083,6 +13083,10 @@ MUTATIONS = [
     ('test-email-rebrand.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "{ action: ['ACTION NEEDED', '#FF1F8E', '#ffffff'],", "{ action: ['ACTION NEEDED', '#8A8A95', '#ffffff'],",
      'the action-needed pill is not pink, so a decision looks like information'),
+    ('whats-on-in-chrome.test.py', 'venueplay/tv.html',
+     'max-height:none;height:13.5cqw;min-height:0;overflow:hidden;',
+     'max-height:none;min-height:0;',
+     'the two-night poster slide shows a short row beside a tall one'),
     # One venue per tab on Your account (Dean, 6 Nov 2026, round 7 note 4), branch feature/whats-on-12nov.
     ('test-first-run-guide.js', 'venueplay/app/billing.html',
      '    setCard("mkOptinCard", p.players_optin===true);',
