@@ -28,7 +28,7 @@
   /* THE POPULAR SONGS (Dean, 6 Nov 2026): a few crowd-favourite lists that take turns week to week, so the same songs
      are not played every week. Musical bingo's default music; the console plays this week's one
      (VPGameSetup.weekPick, Brisbane weeks from Monday). Ids from venueplay/data/musical-library.json. */
-  var POPULAR = ["pub-classics", "80s-pop", "90s", "2000s", "aussie"];
+  var POPULAR = ["all-the-hits", "pub-classics", "80s-pop", "90s", "2000s"];   // "All the hits" first (Dean, round 3; tools/make-hits-playlist.py)
   /* WHAT EACH TRIVIA CATEGORY COVERS (Dean, round 3: "show what each includes"). The library's categories are the
      20 themes venueplay-backend/seed-trivia.py rolls the questions up into (THEME_RULES); these words are a short
      plain summary of each theme's rule there. A category not listed shows its question count only. */
@@ -84,8 +84,8 @@
         help: "Pick one or more kinds of music your crowd knows. With more than one, a different one plays each week." },
       { key: "rounds", label: "Rounds a night", kind: "number", def: 3, min: 1, max: 10, quick: true,
         help: "How many games you play in a night, so the TV can show the next round coming up." },
-      { key: "prize_same", label: "Same prize every round?", kind: "seg", options: YES_NO, def: false, quick: true,
-        help: "No: a prize for each round, one under the other. Yes: one prize for every round." },
+      { key: "prize_same", label: "Prizes", kind: "seg", options: [[false, "A prize for each round"], [true, "One prize for every round"]], def: false, quick: true,
+        help: "A prize for each round, one under the other, or one prize for every round." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true,
         help: "What each round's winner gets. Tick \"No prize\" for a round you play just for fun." },
       { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true,
@@ -114,9 +114,9 @@
         help: "venueplay shows every number on the TV either way. Your caller checks a paper ticket when someone calls BINGO." },
       { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw them for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
         help: "venueplay can draw the numbers on the TV for you, or your caller draws real balls and taps each number in as it's called." },
-      { key: "cards", label: "Tickets each player gets", kind: "select", def: 6,
+      { key: "cards", label: "Tickets each player gets", kind: "select", def: 6, showIf: { ticket_kind: "phone" },
         options: [[1, "1 ticket"], [2, "2 tickets"], [3, "3 tickets"], [4, "4 tickets"], [5, "5 tickets"], [6, "6 tickets (a book)"]],
-        help: "How many tickets each player gets, on their phone or in a paper book. 6 (a full book) is the usual." },
+        help: "How many tickets each player gets on their phone. 6 (a full book) is the usual." },
       { key: "prize_list", label: "Your usual prizes", kind: "prizebank", def: [], prizes: true, placeholder: "e.g. Meat tray",
         help: "We load all your usual prizes so you can tap and go on the night." },
       { key: "allow_early", label: "Let players call BINGO early", kind: "seg", options: ON_OFF, def: false, advanced: true, showIf: { ticket_kind: "phone" },
@@ -125,11 +125,11 @@
     ], popovers: ["ticket_kind", "caller", "prize_list"] },
 
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", settings: [
-      { key: "prize_count", label: "How many prizes do you draw?", kind: "number", def: 1, min: 1, max: 12,
+      { key: "prize_count", label: "Prizes to draw", kind: "number", def: 1, min: 1, max: 12, group: "count",
         help: "How many prizes you draw in a raffle. Each prize gets its own draw on the night." },
-      { key: "prizes_same", label: "Are they all the same prize?", kind: "seg", options: YES_NO, def: true,
+      { key: "prizes_same", label: "Are they usually the same prize?", kind: "seg", options: YES_NO, def: true, group: "count",
         help: "Yes: one prize box, like a meat tray each draw. No: a box for each prize." },
-      { key: "prizes", label: "Prize", kind: "prizelist", def: "Meat Tray", placeholder: "e.g. Meat Tray", max: 80, countFrom: "prize_count", sameFrom: "prizes_same", each: "Prize", prizes: true,
+      { key: "prizes", label: "Prize", kind: "prizelist", def: "Meat Tray", placeholder: "e.g. Meat Tray", max: 80, countFrom: "prize_count", sameFrom: "prizes_same", each: "Prize", prizes: true, ownList: true,
         help: "Your prizes are saved as buttons on the raffle console, so each one is a single tap on the night." },
       { key: "prizes_weekly", label: "The same prizes each week?", kind: "seg", options: YES_NO, def: true,
         help: "Yes: we keep these prizes for every raffle. No: you add the night's prizes on the raffle console." },
@@ -155,16 +155,14 @@
     /* MEMBERS DRAWS: no defaults (every box starts empty), and the draw's own settings are saved by
        /host/members/settings (manager or owner), which makes the draw. A skipped members draw is never called saved. */
     { key: "members", name: "members draws", title: "Members draws", console: "/app/members/host.html", prefs: "members", needsDetails: true, settings: [
-      { key: "date_started", label: "First draw date", kind: "date", def: "", fills: "draw_day",
-        help: "The date of your first draw. It fills in your draw day, and the TV says how long the draw has been running." },
-      { key: "draw_day", label: "Draw day", kind: "text", def: "", placeholder: "Friday", max: 20, group: "when",
-        help: "The day you draw each week. It shows on the TV so members know when to be in." },
-      { key: "draw_time", label: "Draw time", kind: "text", def: "", placeholder: "7:30pm", max: 20, group: "when",
+      { key: "date_started", label: "First draw date", kind: "date", def: "",
+        help: "The date of your first draw. The TV uses it to say how long the draw has been running." },
+      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, group: "nametime",
+        help: "The name on the TV. Leave it and we call it after your draw night, like Friday Members Draw." },
+      { key: "draw_time", label: "Draw time", kind: "text", def: "", placeholder: "7:30pm", max: 20, group: "nametime",
         help: "The time you draw. It shows on the TV beside the day." },
-      { key: "starting_amount_cents", label: "Starting jackpot ($)", kind: "money", def: "", group: "when",
+      { key: "starting_amount_cents", label: "Starting jackpot ($)", kind: "money", def: "",
         help: "What the jackpot starts at, and what it goes back to after someone wins it." },
-      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, nameFrom: "draw_day",
-        help: "The name on the TV. Leave it and we call it after your draw day, like Friday Members Draw." },
       { key: "increment_cents", label: "Weekly increase ($)", kind: "money", def: "", advanced: true,
         prompt: "How much does it grow each week nobody wins?",
         help: "How much the jackpot goes up each week it isn't claimed." },
@@ -178,14 +176,16 @@
   ];
   function byKey(k) { return GAMES.filter(function (g) { return g.key === k; })[0] || null; }
   /* A game's saved values from its defaults, for the keys the Worker keeps (members: none, it has no defaults). */
-  /* opts.bingo: the venue's bingo rules (VPGameSetup.bingoRules): no phone tickets there means paper by default,
+  /* opts.bank: the usual prizes shared across games. opts.bingo: the venue's bingo rules (VPGameSetup.bingoRules): no phone tickets there means paper by default,
      and venueplay drawing the numbers wherever that is allowed. */
   function defaults(k, opts) {
     var g = byKey(k), out = {};
     if (!g || g.needsDetails) return out;
     var br = (opts && opts.bingo) || null;
     g.settings.forEach(function (s) {
-      if (s.kind === "info" || s.kind === "sets" || s.kind === "categories" || s.kind === "taglist" || s.kind === "prizebank") return;   // words only, or theirs to give
+      /* the venue's usual prizes, when they said they use them across games (Dean, round 3): every game's buttons */
+      if (s.kind === "prizebank") { if (opts && Array.isArray(opts.bank) && opts.bank.length) out[s.key] = opts.bank.slice(0, 8); return; }
+      if (s.kind === "info" || s.kind === "sets" || s.kind === "categories" || s.kind === "taglist") return;   // words only, or theirs to give
       if (s.kind === "range") { out[s.keys[0]] = s.def[0]; out[s.keys[1]] = s.def[1]; return; }
       if (s.kind === "playlists") { out.playlists = s.def.slice(); out.playlist = s.def[0]; return; }
       if (s.kind === "prizelist") { if (s.def) { out[s.key] = [s.def]; if (k === "musical") out.prize = s.def; } return; }
