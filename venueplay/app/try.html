@@ -25,7 +25,7 @@
   :root{ --ink:#0A0A0B; --ink-2:#141418; --ink-3:#1B1B20; --pink:#FF1F8E; --pink-soft:#FF8CC6; --text:#E7E7EC; --muted:#C9C9D1; --faint:#8A8A94;
          --line:rgba(255,255,255,.12); --win:#2BD47D; }
   *{ box-sizing:border-box; }
-  [hidden]{ display:none !important; }   /* .btn sets display; hidden must still hide */
+  [hidden],.btn[hidden]{ display:none !important; }   /* .btn sets display; hidden must still hide */
   html,body{ margin:0; background:var(--ink); color:var(--text); font-family:Manrope,system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; }
   body{ min-height:100vh; }
   .wrap{ max-width:620px; margin:0 auto; padding:28px 18px 40px; }
