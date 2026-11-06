@@ -575,7 +575,7 @@ Promise.resolve()
   check('cash said on its own: $800.00 across 3 prizes', /Cash: \$800\.00 across 3 prizes/.test(both), both);
   check('other prizes apart: 2 worth $150.00, never the cash counted twice', /Other prizes with a value entered: 2 prizes, worth \$150\.00/.test(both) && both.indexOf('$1,750') < 0 && both.indexOf('1750') < 0, both);
   check('no line adds them into one dollar total ($950 or "given away in prizes")', both.indexOf('950') < 0 && !/given away in prizes/.test(both), both);
-  check('before migration 150: says a prize with no value is not counted here, and where they all are', /not counted here\. Every one is listed under Draws and raffles: who won what/.test(both), both);
+  check('before migration 150: says a prize with no value is not counted here, and where they all are', /not counted here\. Every one is listed under Who won what/.test(both), both);
   var un = L({ venue_id: 'v-A', prizes_given_count: 3, prizes_given_value_cents: 80000, cash_given_count: 3, cash_given_value_cents: 80000, unvalued_given_count: 4 });
   check('after migration 150: 4 with no value, counted and never priced', /no value entered, like a meat tray: 4 prizes\. They are counted, never priced\./.test(un) && /Other prizes with a value entered: none yet/.test(un), un);
   var only = L({ venue_id: 'v-A', prizes_given_count: 0, prizes_given_value_cents: 0, cash_given_count: 0, cash_given_value_cents: 0, unvalued_given_count: 2 });

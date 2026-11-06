@@ -220,11 +220,12 @@ try:
             bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return {id:b.id,shown:b.offsetParent!==null}}),remembered:localStorage.getItem("vpDrawsFold"),
             h:document.getElementById("tp-draws").getBoundingClientRect().height})"""
         f = S.json(sid, FOLDS, {})
-        ok('%s: F. three folds: Raffles, Members draws, Permits' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits'] and all(x['shown'] for x in f.get('heads', [])), f)
-        ok('%s: F. only Raffles is open to start; the other two bodies are folded away' % where,
-           [x['open'] for x in f.get('heads', [])] == [True, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False], f)
-        ok('%s: F. the headings say what is set: "Not on the TV yet" and "No draw yet" at this venue' % where,
-           [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', 'No draw yet'], f)
+        # Dean, 6 Nov 2026: "who won what" is a fold of its own at the BOTTOM, and an empty members draw says nothing.
+        ok('%s: F. four folds: Raffles, Members draws, Permits, then Who won what at the bottom' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits', 'winners'] and all(x['shown'] for x in f.get('heads', [])), f)
+        ok('%s: F. only Raffles is open to start; the other bodies are folded away' % where,
+           [x['open'] for x in f.get('heads', [])] == [True, False, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False, False], f)
+        ok('%s: F. the headings say what is set: "Not on the TV yet" for the raffle, and nothing at all for no members draw' % where,
+           [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', ''], f)
         tall = f.get('h', 0)
         S.js(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').click(); true'); time.sleep(0.4)
         f2 = S.json(sid, FOLDS, {})

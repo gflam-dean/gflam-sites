@@ -745,7 +745,7 @@
     </div>
     <div id="rfLoadErr" class="loadfail" hidden></div>
     <div class="scard">
-      <div class="scardhead">Routine</div>
+      <div class="scardhead">Your raffle</div>
       <p class="snote">When your raffle runs. Shows on the TV as "drawn [day] [time]".</p>
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="rf-label">Raffle name</label><input type="text" id="rf-label" placeholder="e.g. Meat Raffle"></div>
@@ -775,26 +775,6 @@
       <div class="snote" id="rfTally"></div>
     </div>
 
-    <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
-         "who won the members draw on 12 August, and how much" could only be answered by someone
-         reading the database. -->
-    <div class="scard">
-      <div class="scardhead">Draws and raffles: who won what</div>
-      <p class="snote">Every raffle and members draw result.</p>
-      <div class="btnrow">
-        <label class="flabel" for="dlMonths" style="margin:0 6px 0 0;align-self:center">Show</label>
-        <select id="dlMonths" style="flex:1 1 170px;max-width:220px">
-          <option value="1">The last month</option>
-          <option value="3" selected>The last 3 months</option>
-          <option value="6">The last 6 months</option>
-          <option value="12">The last 12 months</option>
-        </select>
-        <button class="addbtn" id="dlCsv" type="button">Download as CSV</button>
-      </div>
-      <p class="snote" id="dlTotal" style="margin-top:10px"></p>
-      <div id="drawLog"><p class="snote">Loading…</p></div>
-    </div>
-
     </div><!-- /acc-raffles -->
     <div class="label acchead" data-acc="members" role="button" tabindex="0" aria-expanded="false">Members draws<span class="accsum" id="mdSum"></span><span class="accchev"></span></div>
     <div class="accbody" id="acc-members">
@@ -812,7 +792,7 @@
     </div>
     <div id="mdLoadErr" class="loadfail" hidden></div>
     <div class="scard">
-      <div class="scardhead" id="mdHead">Your members draws</div>
+      <div class="scardhead" id="mdHead">Your members draw</div>
       <p class="snote" id="mdEditing">A new draw. Fill it in and save it.</p>
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
@@ -886,6 +866,30 @@
     <div id="drawPermitsErr" class="loadfail" hidden></div>
     <div id="drawPermits"></div>
     </div><!-- /acc-permits -->
+    <!-- WHO WON WHAT, AT THE BOTTOM (Dean, 6 Nov 2026): every raffle and members draw result, in a fold of its own after
+         the raffles, the members draws and the permits. -->
+    <div class="label acchead" data-acc="winners" role="button" tabindex="0" aria-expanded="false">Who won what<span class="accsum" id="wnSum"></span><span class="accchev"></span></div>
+    <div class="accbody" id="acc-winners">
+    <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
+         "who won the members draw on 12 August, and how much" could only be answered by someone
+         reading the database. -->
+    <div class="scard">
+            <p class="snote">Every raffle and members draw result.</p>
+      <div class="btnrow">
+        <label class="flabel" for="dlMonths" style="margin:0 6px 0 0;align-self:center">Show</label>
+        <select id="dlMonths" style="flex:1 1 170px;max-width:220px">
+          <option value="1">The last month</option>
+          <option value="3" selected>The last 3 months</option>
+          <option value="6">The last 6 months</option>
+          <option value="12">The last 12 months</option>
+        </select>
+        <button class="addbtn" id="dlCsv" type="button">Download as CSV</button>
+      </div>
+      <p class="snote" id="dlTotal" style="margin-top:10px"></p>
+      <div id="drawLog"><p class="snote">Loading…</p></div>
+    </div>
+
+    </div><!-- /acc-winners -->
     </div><!-- /tp-draws -->
 
     <div class="tabpanel" id="tp-screen">
@@ -2419,7 +2423,7 @@
     }
     if (md){
       var n = document.querySelectorAll("#mdList .drow").length;
-      md.textContent = n ? (n + (n === 1 ? " draw" : " draws")) : "No draw yet";
+      md.textContent = n ? (n + (n === 1 ? " draw" : " draws")) : "";
     }
     if (pm){
       // vp-permits.js paints one .vpp-card per kind this venue's state asks about; name them, never claim "on file".
@@ -2434,7 +2438,7 @@
     var heads = document.querySelectorAll("#tp-draws .acchead");
     if (!heads.length) return;
     var had = null; try { had = localStorage.getItem(ACC_KEY); } catch (e) {}
-    accOpen(/^(raffles|members|permits)$/.test(had || "") ? had : "raffles", false);
+    accOpen(/^(raffles|members|permits|winners)$/.test(had || "") ? had : "raffles", false);
     for (var i = 0; i < heads.length; i++){
       (function(h){
         var go = function(){ accOpen(h.classList.contains("open") ? "" : h.getAttribute("data-acc"), true); };
@@ -3218,7 +3222,7 @@
     out.push("Cash: " + (cash ? (money(cashC / 100) + " across " + pz(cash) + " (members draws and cash raffle prizes).") : "none yet."));
     out.push("Other prizes with a value entered: " + (other ? (pz(other) + ", worth " + money(otherC / 100) + " between them.") : "none yet."));
     if (known) out.push("Other prizes with no value entered, like a meat tray: " + (unval ? (pz(unval) + ". They are counted, never priced.") : "none yet."));
-    else out.push("A raffle prize entered with no dollar value, like a meat tray, is not counted here. Every one is listed under Draws and raffles: who won what.");
+    else out.push("A raffle prize entered with no dollar value, like a meat tray, is not counted here. Every one is listed under Who won what.");
     out.push("Trivia, bingo and musical bingo prizes are not in these figures: they are typed as words on the night, with no value.");
     return out;
   }
@@ -3362,7 +3366,7 @@
       ? (dlRows.length + " result" + (dlRows.length === 1 ? "" : "s") + (r.cash && r.cash !== "$0.00" ? ", " + r.cash + " in cash prizes" : ""))
       : "";
     if (!dlRows.length){
-      box.innerHTML = '<p class="snote">Nothing drawn in this period yet. Every raffle and members draw you run shows up here.</p>';
+      box.innerHTML = '';   // nothing drawn: say nothing (Dean, 6 Nov 2026)
       return;
     }
     var html = '<div class="logwrap"><table class="logtable"><thead><tr>' +
