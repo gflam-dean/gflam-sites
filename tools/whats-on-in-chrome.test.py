@@ -213,20 +213,6 @@ def tv_and_phone():
             ok('%dx%d: no script errors on the phone' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
             r.close_tab(tid)
 
-        print('\nNO "CONNECTED" WORD on any phone (Dean, 6 Nov 2026: "why do we have the connected word again?")')
-        for page in ('/app/trivia/play.html', '/app/musical/play.html', '/play.html'):
-            tid, sid = r.open(page, width=390, height=664)
-            r.until(sid, '!!document.getElementById("statusText") && !!document.getElementById("statusDot")', 20)
-            m = r.json(sid, 'JSON.stringify((function(){var d=document.getElementById("statusDot"),t=document.getElementById("statusText"),l=d.parentNode; l.classList.remove("nostatus"); d.classList.remove("on"); t.textContent="Reconnecting"; var re=Math.round(t.getBoundingClientRect().width);'
-                            'd.classList.add("on"); t.textContent="Connected"; return {re:re,dot:Math.round(d.getBoundingClientRect().width),w:Math.round(t.getBoundingClientRect().width),pos:getComputedStyle(t).position};})())', {})
-            # The bingo phone already shows its status as the dot alone (the words ride the dot's label), so only the
-            # trivia and musical phones are held to "Reconnecting" still showing.
-            # The trivia phone's own status code can repaint the line while the rig's channel settles, so the
-            # "Reconnecting still shows" half is measured on the musical phone, which shares the one CSS rule.
-            mus = page == '/app/musical/play.html'
-            ok('%s: connected is the green dot alone (the word is not seen)%s' % (page, ', and "Reconnecting" still shows' if mus else ''),
-               m.get('dot', 0) >= 6 and m.get('w', 9) <= 1 and (not mus or m.get('re', 0) > 40), m)
-            r.close_tab(tid)
     finally:
         r.close()
 

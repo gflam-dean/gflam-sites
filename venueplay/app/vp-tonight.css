@@ -89,8 +89,3 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-night .row.more .bd{visibility:hidden}
 .vpt-night .nk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A95;padding:8px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vpt-evs[hidden]{display:none}
-/* NO "CONNECTED" WORD (Dean, 6 Nov 2026, twice: "why do we have the connected word again? I thought we got rid of that").
-   Connected is the green dot alone; the word stays for screen readers only. Only the healthy state is silent: Connecting,
-   Reconnecting and Waiting for the host still say so. One rule here (this file is the one all three phones load), and
-   tools/whats-on-in-chrome.test.py measures it on the real trivia, musical and bingo pages. */
-.venue .dot.on + #statusText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
