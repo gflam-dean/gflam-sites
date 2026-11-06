@@ -14,7 +14,7 @@
   Everything else (the Terms tick, their TV, a first game, their card) lives in the app's first-run setup.
   It is transactional: they asked for it. Who we are and how to stop product emails are in the footer.
   Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their screen
-  ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), samelogin (their mobile and email
+  ads), sms / oneclick / viacode / nooneclick (how they sign in; exactly one is kept; viacode is the short link, which opens the text-code sign-in), samelogin (their mobile and email
   are already one VenuePlay login at another venue), founding / standard (offer).
   Merge fields:
     {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told) {{cancel_url}}
@@ -60,6 +60,9 @@
 <!--IF:oneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The button below opens your account for you. No password, and no app to download.</p>
 <!--ENDIF:oneclick-->
+<!--IF:viacode-->
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we&#39;ll text a code to your mobile to sign you in. No password, and no app to download.</p>
+<!--ENDIF:viacode-->
 <!--IF:nooneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we'll email {{login_email}} a link that opens your account. No password, and no app to download.</p>
 <!--ENDIF:nooneclick-->

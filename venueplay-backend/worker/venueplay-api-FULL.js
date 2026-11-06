@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 13:03 · bd5027ee';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 21:24 · daaccec3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -143,6 +143,8 @@ export default {
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
       if (request.method === 'POST' && path === '/auth/one-click/resend' && typeof vpaHandleOneClickResend === 'function') return await vpaHandleOneClickResend(request, env, json);
+      if (request.method === 'POST' && path === '/short/open'   && typeof vpaShortOpen === 'function')   return await vpaShortOpen(request, env, json);
+      if (request.method === 'POST' && path === '/short/attach' && typeof vpaShortAttach === 'function') return await vpaShortAttach(request, env, json);
       if (request.method === 'POST' && path === '/venue-signin/lookup' && typeof vpaVenueSigninLookup === 'function') return await vpaVenueSigninLookup(request, env, json);
       if (request.method === 'POST' && path === '/venue-signin/send'   && typeof vpaVenueSigninSend === 'function')   return await vpaVenueSigninSend(request, env, json);
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
@@ -4719,21 +4721,19 @@ async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
    AND the expiry it was really given, so every sentence about it is written from the row that exists.
    Before migration 151 the table refuses a life over 15 days: then the same link is made again with 14, and
    `shortened` says so (the row that was refused never existed, so nothing is left behind). */
-/* THE SHORT LINK (Dean, 6 Nov 2026: "shorten the sign-in link in text messages", never a third-party shortener: the
-   link is a login key and must not pass through anyone else). venueplay.com.au/s/AB2CD7KM is OUR link, and the 8 letters
-   are NOT a login key (security review, 6 Nov 2026): they are the prospect's handle, and the Worker maps them to the
-   CURRENT live one-tap token behind them (32 random bytes, kept as its sha256, single use, ending with the 30 days).
-   Tapping the short link uses that token; once it is used nothing the public can do makes the short link work again
-   (only a send we make on purpose mints the next token behind it, at the SAME end). 31 letters and digits with the
-   look-alikes left out (no I, L, O, 0 or 1). Every try costs a guesser against VPA_ONECLICK_PER_IP per 10 minutes,
-   VPA_SHORT_PER_IP an hour per network and VPA_SHORT_ALL_GLOBAL tries an hour from everywhere together.
-   /s/<code> (venueplay/s.html) only moves the code into /app/go's fragment. Needs migration 175 (NOT RUN): before it,
+/* THE SHORT LINK (Dean, 6 Nov 2026: "shorten the sign-in link in text messages", never a third-party shortener).
+   venueplay.com.au/s/AB2CD7KMNPQR is OUR link. The 12 letters are NOT a login key (security review, 6 Nov 2026):
+   opening them leads to the normal sign-in, where a text code to the account's own mobile is what lets anyone in
+   (OPENING THE SHORT LINK, below). 31 letters and digits with the look-alikes left out (no I, L, O, 0 or 1), about
+   59 bits. Every open costs a guesser against VPA_SHORT_PER_IP an hour per network and VPA_SHORT_ALL_GLOBAL an hour
+   from everywhere together, and a burst of misses files one HQ ticket. Needs migration 175 (NOT RUN): before it,
    texts carry the long one-tap link as they always have. */
 const VPA_SHORT_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const VPA_SHORT_LEN = 8;
-const VPA_SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/;
+const VPA_SHORT_LEN = 12;               // 31^12, about 59 bits (security review, 6 Nov 2026: 8 letters was about 40)
+const VPA_SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/;
 const VPA_SHORT_PER_IP = 15;              // short-link tries per network per hour (a person taps once or twice), on top of VPA_ONECLICK_PER_IP
 const VPA_SHORT_ALL_GLOBAL = 600;         // short-link tries per hour, every network together: a spread-out guesser is stopped too
+const VPA_SHORT_FAIL_ALERT = 100;         // wrong short-link tries in an hour (all networks) that make ONE urgent HQ ticket
 function vpaShortSigninCode() {
   const n = VPA_SHORT_ALPHA.length, limit = Math.floor(256 / n) * n, out = [];
   const buf = new Uint8Array(1);
@@ -4753,13 +4753,13 @@ function vpaSigninTokenShape(t) {
 /* ONE LINK PER PROSPECT (Dean, 6 Nov 2026): "the email and the text, and every follow-up email or text for that
    prospect, use the SAME link, and sending it again must NOT renew the 30 days ... Only an explicit HQ 'start a fresh
    30 days' action may issue a new window."
-   A prospect inside its 30 days has ONE short link (venueplay.com.au/s/XXXXXXXX), made the first time we send it and
-   kept on vp_prospects (migration 175): signin_code_hash to find it, signin_code_enc sealed (the 8 letters XOR an
+   A prospect inside its 30 days has ONE short link (venueplay.com.au/s/XXXXXXXXXXXX), made the first time we send it and
+   kept on vp_prospects (migration 175): signin_code_hash to find it, signin_code_enc sealed (the 12 letters XOR an
    HMAC keystream from a Worker secret and a random nonce) so the same letters can go in the next email. Behind it,
-   ONE live one-tap token at a time (vp_signin_links, short_ok), ending when the 30 days end. A send we make (the
-   welcome, the thread reply, HQ's Resend, Dean's approved follow-ups) hands out the same short link; if its token
-   was used, a NEW token is made at the SAME end (a used token is never opened again). Self-serve paths ("Send me a new
-   link", /go/{venue code}) never touch the short link: they email a long link of their own. Only HQ's "Start a fresh
+   no token at all: opening it leads to the normal text-code sign-in (OPENING THE SHORT LINK, below). A send we make (the
+   welcome, the thread reply, HQ's Resend, Dean's approved follow-ups) hands out the same short link, ending at the
+   same moment. Self-serve paths ("Send me a new link", /go/{venue code}) never touch it: they email a long one-tap
+   link of their own (single use, the same end). Only HQ's "Start a fresh
    30 days" makes a new window and new letters. */
 async function vpaCodeKeyStream(env, nonce) {
   const secret = String(env.SIGNIN_LINK_SECRET || env.CARD_LINK_SECRET || env.SUPABASE_SERVICE_KEY || '');
@@ -4776,25 +4776,24 @@ async function vpaSealCode(env, code) {
   return 'v1.' + nonce + '.' + hex;
 }
 async function vpaOpenCode(env, sealed) {
-  const m = /^v1\.([A-Za-z0-9_-]{16})\.([0-9a-f]{16})$/.exec(String(sealed || ''));
+  const m = /^v1\.([A-Za-z0-9_-]{16})\.([0-9a-f]{24})$/.exec(String(sealed || ''));
   if (!m) return null;
   try {
     const ks = await vpaCodeKeyStream(env, m[1]);
     let code = '';
-    for (let i = 0; i < 8; i++) code += String.fromCharCode((parseInt(m[2].slice(i * 2, i * 2 + 2), 16) ^ ks[i]) & 255);
+    for (let i = 0; i < VPA_SHORT_LEN; i++) code += String.fromCharCode((parseInt(m[2].slice(i * 2, i * 2 + 2), 16) ^ ks[i]) & 255);
     return VPA_SHORT_RE.test(code) ? code : null;
   } catch (e) { return null; }
 }
-/* The prospect's one link: { token: the short letters, short: true, expiresAt, hash: the live token's hash, reused },
-   or null when it does not apply (not a prospect, outside the 30 days, another login, or migration 175 not run: the
-   caller then makes a long link of its own, as before). Never re-opens a used token. */
+/* The prospect's one link: { token: the short letters, short: true, expiresAt: the end of their 30 days }, or null when
+   it does not apply (not a prospect, outside the 30 days, another login, or migration 175 not run: the caller then makes
+   a long link of its own, as before). The letters are NOT a login key: see THE FIRST OPEN, below. */
 async function vpaProspectOneLink(env, venueId, authUserId, opts) {
   opts = opts || {};
   const win = opts.win !== undefined ? opts.win : await vpaProspectLinkWindow(env, venueId);
   if (!win || win.ended || !win.row || !('signin_code_enc' in win.row) || !('signin_code_hash' in win.row)) return null;
   if (win.row.auth_user_id && authUserId && win.row.auth_user_id !== authUserId) return null;
-  const who = authUserId || win.row.auth_user_id;
-  if (!who) return null;
+  if (!(authUserId || win.row.auth_user_id)) return null;
   let code = win.row.signin_code_enc ? await vpaOpenCode(env, win.row.signin_code_enc) : null;
   if (!code) {
     const mine = vpaShortSigninCode(), sealed = await vpaSealCode(env, mine);
@@ -4805,30 +4804,98 @@ async function vpaProspectOneLink(env, venueId, authUserId, opts) {
     code = (back && back[0] && back[0].signin_code_enc) ? await vpaOpenCode(env, back[0].signin_code_enc) : null;
     if (!code) return null;
   }
-  const nowIso = new Date().toISOString();
-  const live = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(who) + '&venue_id=eq.' + encodeURIComponent(venueId) +
-    '&short_ok=is.true&used_at=is.null&expires_at=gt.' + encodeURIComponent(nowIso) + '&select=token_hash,expires_at&order=created_at.desc&limit=1');
-  if (live && live[0]) return { token: code, short: true, expiresAt: Date.parse(live[0].expires_at), hash: live[0].token_hash, reused: true };
-  const m = await vpaMintSigninLinkFor(env, who, venueId, Date.now(), win.end, { shortOk: true });
-  return { token: code, short: true, expiresAt: m.expiresAt, hash: await vpaSigninTokenHash(m.token), reused: false };
+  return { token: code, short: true, expiresAt: win.end, hash: null, reused: true };
 }
-/* A tap on the short link: the prospect it belongs to, inside its 30 days, and its CURRENT live token, used here by one
-   conditional update (two taps at once: one wins). [{ auth_user_id, venue_id }] or null. */
-async function vpaShortLinkClaim(env, code) {
+/* ===========================================================================
+ * OPENING THE SHORT LINK (Dean, 6 Nov 2026: "keep it as simple as possible"), venueplay/s.html:
+ *   - mobile known: the NORMAL sign-in screen with their mobile filled in (/app/?signin=sms#m=04...). They tap
+ *     Send code, type it, and they are in. The mobile we hold is put on the login first, so the code reaches it.
+ *   - no mobile: the same screen with the mobile empty. The number they type goes on the login (POST
+ *     /short/attach, from the sign-in page) and the text code then proves it is theirs; it is their login from then.
+ *   - once claimed (somebody has signed in to it): the link opens the normal sign-in, nothing filled in.
+ *   - every open records "opened" (signin_link_used), so HQ's history and the follow-ups see it.
+ * The letters are never a login key: the text code is. After the sign-in the usual first-run flow takes over.
+ *   POST /short/open   { code }          { go }  where to send the browser
+ *   POST /short/attach { code, mobile }  { ok }  only while unclaimed and only when we hold no mobile
+ * Limits: VPA_SHORT_PER_IP an hour per network, VPA_SHORT_ALL_GLOBAL from everywhere, a burst of misses files one
+ * HQ ticket. Needs migration 175 (NOT RUN). */
+const VPA_SHORT_WORDS = {
+  busy: 'Too many tries from here. Please try again in an hour.',
+  mobile: 'Please type an Australian mobile, like 0412 345 678.',
+  taken: 'That mobile already has a venueplay login. Sign in with it, or use a different mobile.',
+};
+/* Letters that found nothing: counted for the whole hour, every network together. Past VPA_SHORT_FAIL_ALERT it files
+   ONE urgent HQ ticket an hour, so a guessing burst is seen by a person (the limits have already slowed it). */
+async function vpaShortLinkMiss(env) {
   try {
-    const pr = await vpaSelect(env, 'vp_prospects', 'signin_code_hash=eq.' + (await vpaSigninTokenHash('short|' + code)) + '&select=venue_id,auth_user_id,created_at,link_from&limit=2');
-    if (!pr || pr.length !== 1 || !pr[0].auth_user_id) return null;
-    const from = vpaProspectWindowFromMs(pr[0]);
-    if (!isFinite(from) || from + VPA_PROSPECT_LINK_DAYS * 86400000 <= Date.now()) return null;
-    const nowIso = new Date().toISOString();
-    const live = await vpaSelect(env, 'vp_signin_links', 'auth_user_id=eq.' + encodeURIComponent(pr[0].auth_user_id) + '&venue_id=eq.' + encodeURIComponent(pr[0].venue_id) +
-      '&short_ok=is.true&expires_at=gt.' + encodeURIComponent(nowIso) + '&used_at=is.null&select=token_hash&order=created_at.desc&limit=1');
-    if (!live || !live[0]) return null;
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?token_hash=eq.' + live[0].token_hash + '&expires_at=gt.' + encodeURIComponent(nowIso) + '&used_at=is.null&select=auth_user_id,venue_id', {
-      method: 'PATCH', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify({ used_at: nowIso }) });
-    if (!res.ok) return null;
-    return await res.json().catch(() => null);
-  } catch (e) { return null; }
+    if (await helpLimit(env, 'oneclick-short-miss', VPA_SHORT_FAIL_ALERT, 3600)) return;
+    if (!(await helpLimit(env, 'oneclick-short-alert', 1, 3600))) return;
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'urgent',
+      title: 'Short sign-in links: a burst of wrong tries',
+      message: 'More than ' + VPA_SHORT_FAIL_ALERT + ' venueplay.com.au/s/... links that match nothing were opened in the last hour. Somebody may be guessing. '
+        + 'Each network is held to ' + VPA_SHORT_PER_IP + ' an hour and everyone together to ' + VPA_SHORT_ALL_GLOBAL + ', and a link on its own never signs anyone in '
+        + '(a text code to the account\'s own mobile does), so nothing is needed to stop it; this is so a person knows. No venue, address or link is in this ticket.',
+      contact_email: null, venue_id: null });
+    if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, 'venueplay', null).catch(() => null); }
+    await vpaAudit(env, { actorId: null, label: 'short sign-in links' }, 'short_link_burst', 'signin:short', { misses_over: VPA_SHORT_FAIL_ALERT });
+  } catch (e) {}
+}
+/* The short letters' prospect and where it stands. Every look-up is a short-link try (the limits) and a miss counts. */
+async function vpaShortLookup(request, env, code) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'oneclick-short', ip, VPA_SHORT_PER_IP, 3600))) return { busy: true };
+  if (!(await helpLimit(env, 'oneclick-short-all', VPA_SHORT_ALL_GLOBAL, 3600))) return { busy: true };
+  const c = vpaSigninTokenShape(code);
+  if (!c || c.length !== VPA_SHORT_LEN) { await vpaShortLinkMiss(env); return { state: 'none' }; }
+  let pr = null;
+  try { pr = await vpaSelect(env, 'vp_prospects', 'signin_code_hash=eq.' + (await vpaSigninTokenHash('short|' + c)) + '&select=*&limit=2'); } catch (e) { pr = null; }
+  if (!pr || pr.length !== 1 || !pr[0].auth_user_id) { await vpaShortLinkMiss(env); return { state: 'none' }; }
+  const row = pr[0];
+  const user = await vpaAuthGetUser(env, row.auth_user_id);
+  if (!user) return { state: 'none' };
+  /* Claimed: their free month has started (the first sign-in) or Auth has seen a sign-in on the login. */
+  if (row.first_signin_at || user.last_sign_in_at) return { state: 'claimed', row: row, user: user };
+  const from = vpaProspectWindowFromMs(row);
+  if (!isFinite(from) || from + VPA_PROSPECT_LINK_DAYS * 86400000 <= Date.now()) return { state: 'ended', row: row, user: user };
+  return { state: 'unclaimed', row: row, user: user };
+}
+/* The mobile we hold for a prospect: the account's (Edit details, setup), else the login's own. E.164 or null. */
+async function vpaShortMobileOnFile(env, row, user) {
+  try { const t = await vpaSigninTextTarget(env, row.venue_id, user); return t && t.e164 ? t.e164 : null; } catch (e) { return null; }
+}
+/* Put a mobile on the login (a sole-venue prospect login only), unless another login has it. true when it is there. */
+async function vpaShortPutMobile(env, user, e164) {
+  if (String(user.phone || '').replace(/\D/g, '') === e164.replace(/\D/g, '')) return true;
+  if (user.phone) return false;   // the login already signs in with another mobile: that one stays
+  const taken = await vpaFindAuthUser(env, { phone: e164 }).catch(() => null);
+  if (taken && taken.id !== user.id) return false;
+  try { await vpaAuthUpdateUser(env, user.id, { phone: e164, phone_confirm: true }); return true; } catch (e) { return false; }
+}
+function vpaShortLocal(e164) { return '0' + String(e164).replace(/\D/g, '').slice(2); }
+async function vpaShortOpen(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json({ go: '/app/' });
+  const L = await vpaShortLookup(request, env, _b.body && _b.body.code);
+  if (L.busy) return json({ error: VPA_SHORT_WORDS.busy, busy: true, go: '/app/' }, 429);
+  if (L.state !== 'unclaimed') return json({ go: '/app/', state: L.state });
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'signin_link_used', 'venue:' + L.row.venue_id, { via: 'short' }).catch(() => null);
+  const m = await vpaShortMobileOnFile(env, L.row, L.user);
+  if (m && (await vpaShortPutMobile(env, L.user, m))) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal(m), state: 'unclaimed' });
+  if (L.user.phone) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal('+' + String(L.user.phone).replace(/\D/g, '')), state: 'unclaimed' });
+  return json({ go: '/app/?signin=sms', state: 'unclaimed', attach: true });
+}
+async function vpaShortAttach(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const L = await vpaShortLookup(request, env, _b.body && _b.body.code);
+  if (L.busy) return json({ error: VPA_SHORT_WORDS.busy, busy: true }, 429);
+  if (L.state !== 'unclaimed') return json({ ok: false, state: L.state }, 409);
+  if (L.user.phone || (await vpaShortMobileOnFile(env, L.row, L.user))) return json({ ok: false, has_mobile: true }, 409);   // only when we hold none
+  const e164 = vpaNormaliseMobileAU(_b.body && _b.body.mobile);
+  if (!vpaIsAuMobileE164(e164)) return json({ error: VPA_SHORT_WORDS.mobile, field: 'mobile' }, 400);
+  if (!(await vpaShortPutMobile(env, L.user, e164))) return json({ error: VPA_SHORT_WORDS.taken, taken: true }, 409);
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'prospect_mobile_added', 'venue:' + L.row.venue_id, { to_last3: e164.slice(-3) });
+  return json({ ok: true });
 }
 async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs, opts) {
   const raw = new Uint8Array(32);
@@ -4843,7 +4910,6 @@ async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expire
   const row = async (exp) => vpaInsert(env, 'vp_signin_links', {
     token_hash: await vpaSigninTokenHash(token), auth_user_id: authUserId, venue_id: venueId, purpose: 'prospect_welcome',
     created_at: new Date(now).toISOString(), expires_at: new Date(exp).toISOString(), used_at: null,
-    ...((opts && opts.shortOk) ? { short_ok: true } : {}),   // behind the prospect's short link (migration 175)
   }, false);
   try { await row(want); return { token: token, expiresAt: want, shortened: false }; }
   catch (e) {
@@ -4870,16 +4936,12 @@ async function vpaHandleOneClick(request, env, json) {
   if (!_b.ok) return json(GONE, 410);
   const token = vpaSigninTokenShape(_b.body && _b.body.t);
   if (!token) return json(GONE, 410);
-  const isShort = token.length === VPA_SHORT_LEN;
-  if (isShort && ip && !(await helpIpLimit(env, 'oneclick-short', ip, VPA_SHORT_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
-  if (isShort && !(await helpLimit(env, 'oneclick-short-all', VPA_SHORT_ALL_GLOBAL, 3600))) return json({ ok: false, busy: true }, 429);
+  /* The short letters are never a login key (Dean, 6 Nov 2026): they open /s/, which asks for a code first. */
+  if (token.length === VPA_SHORT_LEN) return json(GONE, 410);
   const hash = await vpaSigninTokenHash(token);
   const nowIso = new Date().toISOString();
   let rows = null;
-  if (isShort) {
-    rows = await vpaShortLinkClaim(env, token);
-    if (!rows || rows.length !== 1) return json(GONE, 410);   // the short link: nothing live behind it
-  } else try {
+  try {
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?token_hash=eq.' + hash + '&used_at=is.null&expires_at=gt.' + encodeURIComponent(nowIso) + '&select=auth_user_id,venue_id', {
       method: 'PATCH',
       headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
@@ -4989,7 +5051,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
          short link back to life (security review, 6 Nov 2026). */
       one = await vpaProspectOneLink(env, pick.venue_id, authUserId, { win: win });
     }
-    if (one) { token = one.token; expiresAt = one.expiresAt; oneLink = true; await retireOthers(one.hash); }
+    if (one) { token = one.token; expiresAt = one.expiresAt; oneLink = true; await retireOthers(null); }
     else {
       await retireOthers(null);
       const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened;
@@ -5497,7 +5559,9 @@ async function vpaRenderProspectWelcome(env, o) {
      button opens that sign-in with their number filled in. Otherwise the one-click link, else email. */
   const mobile = vpaProspectPhone(o.mobile);
   const sms = !!(o.mobileLogin && mobile && mobile.indexOf('04') === 0);
-  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken,
+  /* The prospect's short link (migration 175) opens the normal sign-in and texts a code (Dean, 6 Nov 2026). */
+  const viaCode = !sms && !!o.signinToken && VPA_SHORT_RE.test(String(o.signinToken));
+  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken && !viaCode, viacode: viaCode,
     nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')

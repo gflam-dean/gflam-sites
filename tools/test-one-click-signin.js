@@ -394,72 +394,90 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('rate-limited per network: the 21st try in 10 minutes from one address is 429, another address is not', LIMIT.slice(0, 20).every(function (s) { return s === 410; }) && LIMIT[20] === 429 && other.status === 410, LIMIT);
   check('nothing was logged, so no token can be in a log', LOGS.length === 0, LOGS);
 
-  section('1s. THE SHORT LINK IN A TEXT (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K, our own, the same one-tap sign-in');
-  var SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/;
+  section('1s. THE SHORT LINK IN A TEXT (Dean, 6 Nov 2026): venueplay.com.au/s/AB2CD7KMNPQR, our own, never a login key');
+  var SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/;
   /* The Worker's constants live inside its own scope, so they are read from the lines that declare them. */
   var WSRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
   var VPA_SHORT_PER_IP = +(/\nconst VPA_SHORT_PER_IP = (\d+);/.exec(WSRC) || [0, 0])[1];
   var VPA_SHORT_ALPHA = (/\nconst VPA_SHORT_ALPHA = '([A-Z0-9]+)';/.exec(WSRC) || [0, ''])[1];
   var codes = {}; for (var ci = 0; ci < 300; ci++) codes[vpaShortSigninCode()] = 1;
   var ck = Object.keys(codes);
-  check('a short code is 8 letters and digits with no look-alikes (no I, L, O, 0 or 1), and 300 in a row are all different',
-    ck.length === 300 && ck.every(function (c) { return SHORT_RE.test(c); }) && !ck.some(function (c) { return /[ILO01]/.test(c); }), ck.slice(0, 3));
+  check('a short code is 12 letters and digits with no look-alikes (no I, L, O, 0 or 1), at least 59 bits (31^12), and 300 in a row are all different',
+    Math.log(Math.pow(VPA_SHORT_ALPHA.length, 12)) / Math.LN2 >= 59 && VPA_SHORT_ALPHA.length === 31 && ck.length === 300 && ck.every(function (c) { return SHORT_RE.test(c); }) && !ck.some(function (c) { return /[ILO01]/.test(c); }), ck.slice(0, 3));
   /* The prospect's row as migration 175 makes it (this suite's world is the database before 175). */
   var pRow = DB.vp_prospects.filter(function (x) { return x.venue_id === v.id; })[0];
   pRow.signin_code_enc = null; pRow.signin_code_hash = null; MIG175 = true;
-  DB.vp_signin_links.forEach(function (l) { l.used_at = l.used_at || new Date().toISOString(); });   // the earlier sections' links: spent
-  var liveShort = function () { return DB.vp_signin_links.filter(function (l) { return l.venue_id === v.id && l.short_ok === true && !l.used_at; }); };
+  var nLinks0 = DB.vp_signin_links.length;
   var one1 = await vpaProspectOneLink(ENV, v.id, login.id, {});
   var code1 = one1 && one1.token;
-  var lr = liveShort();
-  var cH1 = await vpaSigninTokenHash(code1), cH2 = await vpaSigninTokenHash('short|' + code1);
-  check('the short link is a HANDLE, not a login key: no link row is the code\'s hash; behind it ONE live one-tap token of 32 random bytes (hash only), ending with their 30 days',
-    SHORT_RE.test(code1 || '') && one1.short === true && !DB.vp_signin_links.some(function (l) { return l.token_hash === cH1 || l.token_hash === cH2; }) && lr.length === 1 && lr[0].token_hash === one1.hash &&
-    RANDOM_ASKS.indexOf(32) !== -1 && pRow.signin_code_hash && pRow.signin_code_hash !== one1.hash, [code1, lr.length, RANDOM_ASKS.slice(-3)]);
+  check('the short link is never a login key: making it adds NO sign-in token at all, and no row anywhere holds the letters or their plain hash',
+    SHORT_RE.test(code1 || '') && one1.short === true && DB.vp_signin_links.length === nLinks0 && JSON.stringify(DB).indexOf(code1) === -1 &&
+    JSON.stringify(DB).indexOf(await vpaSigninTokenHash(code1)) === -1 && !!pRow.signin_code_hash, [code1, DB.vp_signin_links.length, nLinks0]);
   var surl = vpaShortSigninUrl('https://www.venueplay.com.au', code1);
-  check('the link is our own domain, /s/ and the code: no venue name, no email, no third party', surl === 'venueplay.com.au/s/' + code1, surl);
+  check('the link is our own domain, /s/ and the letters: no venue name, no email, no third party', surl === 'venueplay.com.au/s/' + code1, surl);
   GEN.length = 0;
   var sOk = await vpaHandleOneClick(click(code1.toLowerCase()), ENV, J);
-  check('tapped (even typed in lower case): ONE sign-in for this login, by using the live token behind it', sOk.status === 200 && sOk.body.ok === true && sOk.body.token_hash === 'hashed-' + login.id && GEN.length === 1 && liveShort().length === 0, sOk);
-  var sAgain = await vpaHandleOneClick(click(code1), ENV, J);
-  check('then the short link is dead: the same code again is refused the same way as any spent link', sAgain.status === 410 && JSON.stringify(sAgain.body) === '{"ok":false}' && GEN.length === 1, sAgain);
+  var sOk2 = await vpaHandleOneClick(click(code1), ENV, J);
+  check('SECURITY: the letters at the one-tap sign-in are refused the same way as a spent link, every time, and Auth is never asked', sOk.status === 410 && sOk2.status === 410 && JSON.stringify(sOk.body) === '{"ok":false}' && GEN.length === 0, [sOk, sOk2]);
   sent.length = 0;
   DB.vp_signin_links.forEach(function (l) { l.created_at = new Date(Date.now() - 2 * 86400000).toISOString(); });   // the day's cap on links for one login is not what this checks
   var rsS = await vpaHandleOneClickResend({ url: 'https://api/auth/one-click/resend', headers: { get: function (k) { return k === 'cf-connecting-ip' ? '203.0.113.240' : ''; } }, text: function () { return Promise.resolve(JSON.stringify({ t: code1 })); } }, ENV, J);
   var selfMail = String((sent[0] || {}).html || '');
-  check('"Send me a new link" from the spent short link: emails the login\'s OWN address a LONG link of its own, never the short one',
+  check('"Send me a new link" with the letters: emails the login\'s OWN address a long one-tap link of its own, never the short one',
     rsS.body.ok === true && sent.length === 1 && String(sent[0].to).indexOf('cazreitop@gmail.com') !== -1 && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(selfMail) && selfMail.indexOf('/s/') === -1, [rsS.body, sent.map(function (m) { return m.to; })]);
-  var sAfterSelf = await vpaHandleOneClick(click(code1), ENV, J);
-  check('SECURITY: a self-serve ask never brings the used short link back to life (still 410, no live token behind it)', sAfterSelf.status === 410 && liveShort().length === 0 && GEN.length === 1, sAfterSelf);
-  var usedRows = DB.vp_signin_links.filter(function (l) { return l.venue_id === v.id && l.short_ok === true && l.used_at; });
-  var one2 = await vpaProspectOneLink(ENV, v.id, login.id, {});
-  var lr2 = liveShort();
-  check('a send WE make (HQ, Dean\'s approved follow-ups) hands out the same letters, with a NEW token behind them at the SAME end; the used one stays used',
-    one2.token === code1 && lr2.length === 1 && lr2[0].token_hash !== usedRows[0].token_hash && lr2[0].expires_at === usedRows[0].expires_at && usedRows.every(function (u) { return !!u.used_at; }), [one2.token, lr2, usedRows]);
-  lr2[0].expires_at = new Date(Date.now() - 1000).toISOString();
-  var sExp = await vpaHandleOneClick(click(code1), ENV, J);
-  check('expired: refused, Auth not asked', sExp.status === 410 && GEN.length === 1, sExp);
-  var oneNet = [];
-  for (var sk = 0; sk < VPA_SHORT_PER_IP + 1; sk++) oneNet.push((await vpaHandleOneClick(click('XXXXXXX' + VPA_SHORT_ALPHA[sk % 31], '198.51.100.250'), ENV, J)).status);
-  var longSame = await vpaHandleOneClick(click('W' + token.slice(1), '198.51.100.250'), ENV, J);
-  var otherNet = await vpaHandleOneClick(click('XXXXXXXA', '198.51.100.251'), ENV, J);
-  check('short links have their own, tighter limit per network: try ' + (VPA_SHORT_PER_IP + 1) + ' in an hour from one address is 429, while a long link from it and a short one from another address are not',
-    VPA_SHORT_PER_IP < 20 && oneNet.slice(0, VPA_SHORT_PER_IP).every(function (x) { return x === 410; }) && oneNet[VPA_SHORT_PER_IP] === 429 && longSame.status === 410 && otherNet.status === 410, [oneNet, longSame.status, otherNet.status]);
-  var VPA_SHORT_ALL_GLOBAL = +(/\nconst VPA_SHORT_ALL_GLOBAL = (\d+);/.exec(WSRC) || [0, 0])[1];
-  var glob = [];
-  for (var gk = 0; gk < VPA_SHORT_ALL_GLOBAL + 5; gk++) glob.push((await vpaHandleOneClick(click('YYYYYYY' + VPA_SHORT_ALPHA[gk % 31], '10.' + (gk >> 8 & 255) + '.' + (gk & 255) + '.9'), ENV, J)).status);
-  check('and a cap on short-link tries from EVERYWHERE together (' + VPA_SHORT_ALL_GLOBAL + ' an hour), so a guesser spread over many networks is stopped too',
-    VPA_SHORT_ALL_GLOBAL > 0 && VPA_SHORT_ALL_GLOBAL <= 1000 && glob.indexOf(429) !== -1 && glob.indexOf(429) <= VPA_SHORT_ALL_GLOBAL, [VPA_SHORT_ALL_GLOBAL, glob.indexOf(429)]);
   MIG175 = false;
 
   var SH = readFile('venueplay/s.html'); var sJs = /<script>([\s\S]*?)<\/script>/.exec(SH)[1];
-  function sPage(path) { var to = null; var location = { pathname: path, replace: function (u) { to = u; } }; (new Function('location', sJs))(location); return to; }
-  check('the /s/ page moves the code into /app/go\'s fragment (never sent to a server), capitals, nothing else',
-    sPage('/s/AB2CD7KM') === '/app/go#t=AB2CD7KM' && sPage('/s/ab2cd7km/') === '/app/go#t=AB2CD7KM', [sPage('/s/AB2CD7KM'), sPage('/s/ab2cd7km/')]);
-  check('anything that is not a code (look-alikes, wrong length, more path) goes to the normal sign-in', sPage('/s/AB12CD7K') === '/app/' && sPage('/s/ABC') === '/app/' && sPage('/s/AB2CD7KM/x') === '/app/' && sPage('/s/') === '/app/', [sPage('/s/AB12CD7K'), sPage('/s/ABC')]);
+  function sPage(path, answer) {
+    var P = { to: null, posts: [], store: {} };
+    var location = { pathname: path, replace: function (u) { P.to = u; } };
+    var sessionStorage = { setItem: function (k, v) { P.store[k] = v; }, removeItem: function (k) { delete P.store[k]; }, getItem: function (k) { return P.store[k] || null; } };
+    var fetch = function (u, o) { P.posts.push({ u: u, b: JSON.parse(o.body) });
+      return answer === 'down' ? Promise.reject(new TypeError('offline')) : Promise.resolve({ json: function () { return Promise.resolve(answer || { go: '/app/' }); } }); };
+    var setTimeout = function () {};
+    (new Function('location', 'sessionStorage', 'fetch', 'setTimeout', sJs))(location, sessionStorage, fetch, setTimeout); drainMicrotasks(); drainMicrotasks(); drainMicrotasks();
+    return P;
+  }
+  var pk = sPage('/s/ab2cd7kmnpqr', { go: '/app/?signin=sms#m=0412345678' });
+  check('the /s/ page asks the Worker with the letters only (capitals), and goes where it says: the normal sign-in, mobile filled in',
+    pk.posts.length === 1 && /\/short\/open$/.test(pk.posts[0].u) && JSON.stringify(pk.posts[0].b) === '{"code":"AB2CD7KMNPQR"}' && pk.to === '/app/?signin=sms#m=0412345678' && !pk.store.vpShortAttach, pk);
+  var pn = sPage('/s/AB2CD7KMNPQR/', { go: '/app/?signin=sms', attach: true });
+  check('no mobile held: the empty sign-in, with the letters left for it (so the number they type goes on THIS account)', pn.to === '/app/?signin=sms' && pn.store.vpShortAttach === 'AB2CD7KMNPQR', pn);
+  var pe = sPage('/s/AB2CD7KMNPQR', { go: 'https://evil.example/' });
+  var pd = sPage('/s/AB2CD7KMNPQR', 'down');
+  check('it only ever goes into /app/ (any other answer, or no answer, is the plain sign-in)', pe.to === '/app/' && pd.to === '/app/', [pe.to, pd.to]);
+  check('anything that is not 12 letters (look-alikes, wrong length, more path) goes to the normal sign-in without asking',
+    sPage('/s/AB12CD7KMNPQ').to === '/app/' && sPage('/s/ABC').to === '/app/' && sPage('/s/AB2CD7KMNPQR/x').to === '/app/' && sPage('/s/').to === '/app/' && sPage('/s/ABC').posts.length === 0);
   check('_redirects serves /s/* from that page, and it sends no referrer', /^\/s\/\*\s+\/s\s+200$/m.test(readFile('venueplay/_redirects')) && /name="referrer" content="no-referrer"/.test(SH));
+  /* The sign-in page's Send code (app/index.html), run as shipped: with the letters left by /s/ (no mobile held) it puts
+     the typed number on that account's login (POST /short/attach) BEFORE the code is sent; without them, as always. */
+  function sendCodeRun(store, attachAnswer, typed) {
+    var R = { posts: [], otps: [], err: '', store: store };
+    var els = {}; ['mobileIn', 'mobileErr', 'sentTo', 'stepMobile', 'stepCode', 'otpIn', 'emailAlt'].forEach(function (id) { els[id] = new El(id); els[id].focus = function () {}; });
+    els.mobileIn.value = typed || '0433 444 555';
+    var $ = function (id) { return els[id]; };
+    var client = { auth: { signInWithOtp: function (o) { R.otps.push(o); return Promise.resolve({ error: null }); } } };
+    var sessionStorage = { getItem: function (k) { return k in store ? store[k] : null; }, removeItem: function (k) { delete store[k]; } };
+    var fetch = function (u, o) { R.posts.push({ u: u, b: JSON.parse(o.body) }); var a = attachAnswer || { status: 200, body: { ok: true } };
+      return Promise.resolve({ status: a.status, json: function () { return Promise.resolve(a.body); } }); };
+    var h = liftAfter(INDEX, '$("sendCodeBtn").addEventListener("click", ');
+    var fn = (new Function('$', 'client', 'sessionStorage', 'fetch', 'toE164', 'otpSendError', 'showEmailAlt',
+      'var E164 = "", MODE = "sms";\n' + 'return ' + h + ';'))($, client, sessionStorage, fetch, (new Function(lift(INDEX, 'toE164') + '\nreturn toE164;'))(), function () { return 'ours'; }, function () {});
+    fn.call({ disabled: false, textContent: 'Send code' });
+    for (var i = 0; i < 10; i++) drainMicrotasks();
+    R.err = els.mobileErr.textContent; R.stepCode = !els.stepCode.classList.contains('hidden');
+    return R;
+  }
+  var sc1 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' });
+  check('NO MOBILE HELD, the sign-in page: the typed number goes on that account first (/short/attach with the letters), THEN the normal text code; the letters are forgotten',
+    sc1.posts.length === 1 && /\/short\/attach$/.test(sc1.posts[0].u) && sc1.posts[0].b.code === 'AB2CD7KMNPQR' && sc1.posts[0].b.mobile === '+61433444555' &&
+    sc1.otps.length === 1 && sc1.otps[0].phone === '+61433444555' && !('vpShortAttach' in sc1.store), sc1);
+  var sc2 = sendCodeRun({ vpShortAttach: 'AB2CD7KMNPQR' }, { status: 409, body: { error: 'That mobile already has a venueplay login. Sign in with it, or use a different mobile.', taken: true } });
+  check('...a mobile that is another login: they are told, and NO code is sent', sc2.otps.length === 0 && /already has a venueplay login/.test(sc2.err), sc2);
+  var sc3 = sendCodeRun({});
+  check('...and without the letters the page is exactly as before: no call to us, the normal code', sc3.posts.length === 0 && sc3.otps.length === 1 && sc3.otps[0].phone === '+61433444555', sc3);
   var GW = {}; (new Function('window', ONECLICK))(GW);
-  check('the go page takes the short code as its token (capitals), like the long one, and refuses a look-alike', GW.VPOneClick.parse('#t=ab2cd7km').t === 'AB2CD7KM' && GW.VPOneClick.parse('#t=AB12CD7K').t === '' && GW.VPOneClick.parse('#t=' + TOKEN_A).t === TOKEN_A, GW.VPOneClick.parse('#t=ab2cd7km'));
+  check('the go page takes only the long one-tap token: the short letters are not a token there', GW.VPOneClick.parse('#t=ab2cd7kmnpqr').t === '' && GW.VPOneClick.parse('#t=' + TOKEN_A).t === TOKEN_A);
 
   section('1c. Without migration 123 the prospect is still set up, and the button opens the page that emails them a link (never the email sign-in)');
   world(); MIG123 = false;

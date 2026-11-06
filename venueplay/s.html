@@ -12,16 +12,26 @@
 <link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
 <title>venueplay</title>
-<!-- THE SHORT SIGN-IN LINK IN A TEXT (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K. The 8 letters are a one-tap
-     sign-in token (the billing Worker keeps only its hash, the same expiry and single use as every sign-in link).
-     This page does one thing: it moves the code out of the address into /app/go's fragment, which is never sent to
-     a server, and /app/go signs them in exactly as the long link does. Anything that is not a code goes to /app. -->
+<!-- THE SHORT SIGN-IN LINK (Dean, 6 Nov 2026): venueplay.com.au/s/AB2CD7KMNPQR. The 12 letters are never a login key.
+     This page asks the billing Worker (/short/open) where to go, and goes: the NORMAL sign-in with their mobile filled
+     in, or with it empty when we hold none (the letters are left for the sign-in page, which puts the number they type
+     on the account's login before the code is sent), or plain sign-in once the account has been signed in to. The
+     open is recorded for HQ's history. The text code to their own mobile is what signs anyone in. -->
 <script>
 (function () {
-  var m = /^\/s\/([A-Za-z0-9]{8})\/?$/.exec(location.pathname || '');
+  var m = /^\/s\/([A-Za-z0-9]{12})\/?$/.exec(location.pathname || '');
   var code = m ? m[1].toUpperCase() : '';
-  if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(code)) { location.replace('/app/'); return; }
-  location.replace('/app/go#t=' + code);
+  if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/.test(code)) { location.replace('/app/'); return; }
+  try { sessionStorage.removeItem('vpShortAttach'); } catch (e) {}
+  var done = false, go = function (u) { if (done) return; done = true; location.replace(u || '/app/'); };
+  setTimeout(function () { go('/app/'); }, 8000);   // the Worker not answering: the normal sign-in, never a dead page
+  fetch('https://api.venueplay.com.au/short/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      var to = (j && typeof j.go === 'string' && /^\/app\/(\?signin=sms(#m=04\d{8})?)?$/.test(j.go)) ? j.go : '/app/';
+      if (j && j.attach) { try { sessionStorage.setItem('vpShortAttach', code); } catch (e) {} }
+      go(to);
+    }, function () { go('/app/'); });
 })();
 </script>
 <style>body{margin:0;background:#0A0A0B;color:#fff;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}p{font-size:17px}</style>

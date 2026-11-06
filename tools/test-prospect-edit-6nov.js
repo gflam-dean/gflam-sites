@@ -310,12 +310,12 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   check('inside 9am to 8pm on a weekday: ONE press sends the email AND the text, now', tx.status === 200 && tx.body.text && tx.body.text.status === 'sent' && sent.length === 1 && SMS.length === 1 && SMS[0].body.messages[0].to === '+61455666777', [tx.body, SMS.length]);
   var wbRow = DB.vp_prospects.filter(function (r) { return r.venue_id === wb.id; })[0] || {};
   var wbEnd = Date.parse(wbRow.link_from || wbRow.created_at) + 30 * DAY;
-  check('...ONE live token behind their one short link, the email\'s and the text\'s the same, ending at their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
-    wbLinks.length === 1 && wbLinks[0].short_ok === true && Math.abs(Date.parse(wbLinks[0].expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from &&
-    (sent[0] && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}/.test(sent[0].html || '')), [wbLinks, wbRow.created_at]);
+  check('...their one short link, the email\'s and the text\'s the same, with NO sign-in token behind it, ending at their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
+    wbLinks.length === 0 && Math.abs(Date.parse(tx.body.expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from &&
+    (sent[0] && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}/.test(sent[0].html || '')), [wbLinks, wbRow.created_at]);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
   check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and for how long, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
-    smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} We've emailed it too, check junk\\. Available for " + tx.body.days_left + " days\\. \\{optout\\}$").test(smsBody.body) &&
+    smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12} We've emailed it too, check junk\\. Available for " + tx.body.days_left + " days\\. \\{optout\\}$").test(smsBody.body) &&
     !/[—–]/.test(smsBody.body) && smsBody.body.replace('{optout}', 'Reply STOP to opt out').length <= 160, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);
@@ -329,7 +329,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
     tq.status === 200 && sent.length === 1 && SMS.length === 0 && tq.body.text.status === 'queued' && qrow.status === 'queued' && Date.parse(qrow.send_at) === mon9 && qrow.to_e164 === '+61455666777', [tq.body, qrow]);
   check('...and HQ is shown when: "Sent by email, link works until <day>. The text is queued for 9:00am Mon ..."',
     /^Sent by email, link works until .+\. The text is queued for 9:00am Mon \d+ [A-Z][a-z]{2} \(texts go 9am to 8pm, not Sundays\)\.$/.test(tq.body.line), tq.body.line);
-  check('...no token is kept in the queue (only who, where and when): the text makes its link when it goes', !/t=|token/.test(JSON.stringify(qrow)) && DB.vp_signin_links.filter(function (l) { return l.venue_id === wb.id && !l.used_at; }).length === 1, qrow);
+  check('...no token is kept in the queue (only who, where and when): the text makes its link when it goes', !/t=|token/.test(JSON.stringify(qrow)) && DB.vp_signin_links.filter(function (l) { return l.venue_id === wb.id && !l.used_at; }).length === 0, qrow);   // after 175: the short link has no token behind it
   CLOCK = mon9 - 3600000;
   var sw0 = await vpaSigninTextSweep(ENV, Date.now());
   check('the hourly trigger at 8am Monday sends nothing yet', sw0.sent === 0 && SMS.length === 0 && qrow.status === 'queued', sw0);
@@ -363,7 +363,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
     to1.status === 200 && to1.body.text.status === 'opted_out' && /they opted out of texts/.test(to1.body.line) && MM_CALLS === mm0 + 1, to1.body);
   check('...it is recorded as do-not-text for that number (sms_opted_out), and the text\'s link is retired',
     audits('sms_opted_out').some(function (a) { return a.target === 'sms:+61466111222'; }) &&
-    DB.vp_signin_links.filter(function (l) { return l.venue_id === oo.id && !l.used_at; }).length === 1, audits('sms_opted_out'));
+    DB.vp_signin_links.filter(function (l) { return l.venue_id === oo.id && !l.used_at; }).length === 0, audits('sms_opted_out'));   // after 175: no token behind the short link
   MM_STATUS = 'success';
   var to2 = await call('/admin/signin-link', { venue_id: oo.id, text: true }, AS(ADMIN));
   check('...and that number is never tried again: the next press does not even call Mobile Message', to2.body.text.status === 'opted_out' && MM_CALLS === mm0 + 1, [to2.body, MM_CALLS]);
