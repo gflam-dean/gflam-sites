@@ -31,7 +31,7 @@ A = ap.parse_args()
 
 PASS, FAIL = [0], [0]
 HELD = "Thanks, we'll check your venue and get you set up, usually within a business day."   # Dean's words, as the Worker says them
-DONE = ['Your trivia night is ready.', 'Your venue is set up with sample nights to try it.', 'Your first month starts now.']
+DONE = ['Your trivia night is ready.', 'Your venue is set up with sample nights to try it.', 'Your free month starts when you open your host console.']
 
 
 def ok(label, good, detail=''):

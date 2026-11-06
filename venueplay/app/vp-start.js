@@ -5,7 +5,7 @@
    the mobile, then one of two screens:
      made   (a venue name and a postcode are enough, Dean 6 Nov 2026; one not on our licensed list is flagged for HQ)
             "Your trivia night is ready." / "Your venue is set up with sample nights to try it." /
-            "Your first month starts now." then "To see it on your TV, go to venueplay.com.au/tv and type
+            "Your free month starts when you open your host console." then "To see it on your TV, go to venueplay.com.au/tv and type
             this code: ABC123", a slot for the try-it demo (JOB B1, fix/try-demo-10nov) and a way in.
      held   "Thanks, we'll check your venue and get you set up, usually within a business day."
             (the mobile or email is already on venueplay: one free month per mobile and per email).
