@@ -91,7 +91,7 @@ SEE = r'''(function(){
   Array.prototype.forEach.call(document.querySelectorAll("details"), function(d){ d.open = true; });
   var vis = function(el){ if(!el) return false; var r = el.getBoundingClientRect(), cs = getComputedStyle(el);
     return r.width > 0 && r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden"; };
-  var eb = document.querySelector("#top .eyebrow");
+  var eb = document.querySelector("#top .hero-offer");
   var rows = Array.prototype.map.call(document.querySelectorAll("#offer .price-row"), function(r){
     return r.querySelector("b").textContent + "=" + r.querySelector(".pv").textContent.replace(/\s+/g, " ").trim(); });
   return JSON.stringify({
@@ -227,7 +227,7 @@ try:
     ok('/offer-nov reads exactly as when the Worker never answers (the November offer, unchanged)',
        v.get('all') and v.get('all') == base.get('all') and v.get('rows') == base.get('rows'), '')
     ok('/offer-nov still offers $2.50 to 30 November: the badge, $75 for 30 players, the card and the plan buttons',
-       (v.get('eyebrow') or '').lower().endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
+       (v.get('eyebrow') or '').lower().rstrip('.').endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
        and v.get('rows') == ['Per player, per month=$2.50']
        and v.get('plans') == ['$2.50 / player', '$2.30 / player'] and v.get('submit') == 'Hold my spot, add card'
        and 'Keep $2.50 by adding your card before your free month ends' in v.get('all', '') and "won't come back" not in v.get('all', '').replace('\u2019', "'")
@@ -246,7 +246,7 @@ try:
         v = see(S, sid)
         ok('%s: no banner, nothing rewritten, the same words as when the Worker never answers' % what,
            v.get('ended') is None and 'This offer ended' not in v.get('all', '') and v.get('all') == base.get('all')
-           and (v.get('eyebrow') or '').lower().endswith(WDAY.lower()) and v.get('plans') == ['$2.50 / player', '$2.30 / player'], (v.get('ended'), v.get('eyebrow')))
+           and (v.get('eyebrow') or '').lower().rstrip('.').endswith(WDAY.lower()) and v.get('plans') == ['$2.50 / player', '$2.30 / player'], (v.get('ended'), v.get('eyebrow')))
         ok('%s: no script error' % what, not v.get('errs'), v.get('errs'))
         S.close_tab(tid)
 
@@ -281,12 +281,28 @@ try:
        v.get('ended') == 'ended' and not v.get('asked') and v.get('banner', '').startswith('This offer ended on 31 October.')
        and v.get('rows') == ['Per player, per month=$3.00'] and '$2.50' not in v.get('all', ''), (v.get('ended'), v.get('asked'), v.get('rows')))
     S.close_tab(tid)
+    print('\nTHE LIVE AND THE ENDED WORDS ARE NEVER ON SCREEN TOGETHER, ON BOTH SIDES OF EVERY DATE (fake clock, Brisbane)')
+    def bris(y, m, d, h=12):
+        return int(datetime.datetime(y, m, d, h, tzinfo=datetime.timezone.utc).timestamp() * 1000) - 10 * 3600 * 1000
+    LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you join by', re.I)
+    for path, when, ms, want_ended in (('/offer-nov', '9 Nov', bris(2026, 11, 9), False), ('/offer-nov', '11 Nov, after the rollover', bris(2026, 11, 11), False),
+                                       ('/offer-nov', '1 Dec', bris(2026, 12, 1), True), ('/offer-dec', '11 Nov', bris(2026, 11, 11), False),
+                                       ('/offer-dec', '5 Dec', bris(2026, 12, 5), False), ('/offer-dec', '2 Jan 2027', bris(2027, 1, 2), True)):
+        tid, sid = load(S, path, 'open', 375, 812, True, clock_ms=ms, ends=want_ended)
+        v = see(S, sid)
+        t = v.get('all', '')
+        is_ended = 'This offer ended' in t
+        is_live = bool(LIVE.search(t))
+        ok('%s on %s: %s, and the live and ended words are never visible together' % (path, when, 'ended' if want_ended else 'live'),
+           is_ended == want_ended and is_live != want_ended and not (is_ended and is_live) and (v.get('eyebrow') is None) == want_ended,
+           (is_ended, is_live, v.get('eyebrow'), re.findall(r'.{25}(?:This offer ended|\$2\.50).{25}', t)[:3]))
+        S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 48
+EXPECTED = 54
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -148,6 +148,18 @@ ok('the floating button also stays away while the start section or the card form
 ok('the start section holds the one easy-to-change destination for the hero button, with a note for the five-box form',
    'id="start"' in NSW and 'vp-start.js' in NSW)
 
+print('8. No "made by AI" look on the offer journey (Dean, 6 Nov): no pink pill, no pink dash before a heading, no spaced-out mono capitals')
+css = re.search(r'<style>(.*?)</style>', NSW, re.S).group(1)
+rules = re.findall(r'([^{}]+)\{([^{}]*)\}', css)
+spaced = [sel.strip()[:60] for sel, body in rules
+          if 'text-transform:uppercase' in body and re.search(r"JetBrains|monospace", body)
+          and (lambda m: m and float(m.group(1)) >= 0.05)(re.search(r'letter-spacing:(\.?\d*\.?\d+)em', body))]
+ok('no rule sets monospace, UPPERCASE and wide letter spacing together (the spaced-out capitals)', not spaced, spaced)
+ok('no pill with a pulsing dot: no .eyebrow, no .live-dot, no class="eyebrow" on the offer page', '.eyebrow' not in css and '.live-dot' not in css and 'class="eyebrow"' not in NSW and 'live-dot' not in NSW)
+ok('no pink dash drawn before a heading label (.label has no ::before line)', not re.search(r'\.label::before', css) and not re.search(r'\.vps-swap-k::before', css))
+ok('the offer is one plain bold line in normal type: <p class="hero-offer">$2.50 a player if you join by <date>.</p>',
+   re.search(r'<p class="hero-offer">\$2\.50 a player if you join by <span class="vpc-day"[^>]*>[^<]+</span>\.</p>', NSW) and re.search(r'\.hero-offer\{[^}]*font-weight:700', css) and 'uppercase' not in re.search(r'\.hero-offer\{[^}]*\}', css).group(0))
+
 print('6. Every copy agrees')
 red = rd('venueplay/_redirects')
 offers = re.findall(r'^/(offer-[a-z]{3})\s+(\S+)\s+(\d+)\s*$', red, re.M)
