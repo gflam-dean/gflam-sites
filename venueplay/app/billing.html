@@ -195,6 +195,15 @@
   .scardhead .forvenue:not(:empty)::before{content:" · ";color:var(--muted)}
   .scard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:15px 16px;margin:10px 0}
   .scardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.01em}
+  /* THE SCREEN TAB FOLDS (Dean, 6 Nov 2026: "logo, slides and What's on get huge"): each card folds to its heading, folded
+     to start, with what is set on the right ("3 slides", "7 events"); tap the heading to open it. The open ones are
+     remembered on this device. */
+  .scard.fold > .scardhead{display:flex;align-items:center;gap:10px;cursor:pointer;min-height:28px}
+  .scard.fold > .scardhead .fsum{margin-left:auto;font-family:'Manrope',sans-serif;font-weight:500;font-size:13px;color:var(--muted);white-space:nowrap}
+  .scard.fold > .scardhead .accchev{flex:0 0 auto;width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s;margin:0 4px 4px 0}
+  .scard.fold:not(.folded) > .scardhead .accchev{transform:rotate(-135deg);margin:4px 4px 0 0;border-color:var(--pink)}
+  .scard.fold.folded > :not(.scardhead){display:none !important}
+  .scard.fold.folded{padding-bottom:15px}
   .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
   .mdgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .mdf label{display:block;margin:0 0 5px}
@@ -941,7 +950,7 @@
            (HQ > Venues > Details, migration 111); the old route answers 410. -->
     </div>
 
-    <div class="scard">
+    <div class="scard" id="slidesCard">
       <div class="scardhead">Slides<span class="forvenue" id="slidesForVenue"></span></div>
       <p class="snote">One image each, with optional dates. Up to 20.</p>
       <div id="slides"></div>
@@ -2636,6 +2645,38 @@
     paintScreenVenue();
     fillScreen(d);
   }
+  /* THE SCREEN TAB FOLDS (Dean, 6 Nov 2026). */
+  var SCREEN_FOLD_KEY = "vpScreenOpen", SCREEN_FOLDS = ["logoCard", "slidesCard", "woCard"];
+  function screenFoldSummaries(){
+    var put = function(id, text){ var c = $(id), f = c && c.querySelector(".fsum"); if (f) f.textContent = text; };
+    put("logoCard", screenLogoUrl ? "Logo set" : "No logo yet");
+    var n = document.querySelectorAll("#slides .adslide").length; put("slidesCard", n ? n + (n === 1 ? " slide" : " slides") : "No slides yet");
+    var e = document.querySelectorAll("#woBox .woe").length; put("woCard", e ? e + (e === 1 ? " event" : " events") : "No events yet");
+  }
+  (function initScreenFolds(){
+    var open = []; try { open = JSON.parse(localStorage.getItem(SCREEN_FOLD_KEY) || "[]") || []; } catch (e) { open = []; }
+    SCREEN_FOLDS.forEach(function(id){
+      var card = $(id), head = card && card.querySelector(".scardhead"); if (!head) return;
+      card.classList.add("fold"); if (open.indexOf(id) === -1) card.classList.add("folded");
+      var sum = document.createElement("span"); sum.className = "fsum"; head.appendChild(sum);
+      var chev = document.createElement("span"); chev.className = "accchev"; head.appendChild(chev);
+      head.setAttribute("role", "button"); head.setAttribute("tabindex", "0");
+      head.setAttribute("aria-expanded", card.classList.contains("folded") ? "false" : "true");
+      var go = function(){
+        var shut = card.classList.toggle("folded");
+        head.setAttribute("aria-expanded", shut ? "false" : "true");
+        var now = SCREEN_FOLDS.filter(function(x){ var c = $(x); return c && !c.classList.contains("folded"); });
+        try { localStorage.setItem(SCREEN_FOLD_KEY, JSON.stringify(now)); } catch (e) {}
+      };
+      head.addEventListener("click", go);
+      head.addEventListener("keydown", function(ev){ if (ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); go(); } });
+    });
+    if (window.MutationObserver){
+      var mo = new MutationObserver(screenFoldSummaries);
+      ["slides", "woBox", "logoThumb"].forEach(function(id){ var el = $(id); if (el) mo.observe(el, { childList: true, subtree: true, attributes: true }); });
+    }
+    screenFoldSummaries();
+  })();
   function initScreen(){
     try{ screenOrigin = window.location.origin; }catch(e){}
     loadScreenPanel();

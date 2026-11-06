@@ -77,6 +77,11 @@ def account():
         S.until(sid, 'document.getElementById("content").style.display!=="none" && !!document.querySelector(\'[data-tab="screen"]\')', 20)
         S.js(sid, 'document.querySelector(\'[data-tab="screen"]\').click(); true')
         S.until(sid, '!!document.querySelector("#woBox .woe-add")', 15)
+        folds = S.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#tp-screen .scard.fold"),function(c){return {id:c.id,folded:c.classList.contains("folded"),sum:(c.querySelector(".fsum")||{}).textContent||"",h:Math.round(c.getBoundingClientRect().height)};}))', [])
+        ok('the logo, slides and What\'s on cards start folded to their headings, each saying what is set (Dean, 6 Nov 2026)',
+           [x['id'] for x in folds] == ['logoCard', 'slidesCard', 'woCard'] and all(x['folded'] and x['h'] < 80 for x in folds) and [x['sum'] for x in folds][2] == 'No events yet', folds)
+        S.js(sid, 'document.querySelector(\'[data-tab="screen"]\').click(); [].forEach.call(document.querySelectorAll(".scard.fold.folded > .scardhead"),function(h){h.click();}); true')   # the Screen tab's cards fold (Dean, 6 Nov 2026): open them
+        S.until(sid, '!!document.querySelector("#woBox .woe-add")', 15)
         card = S.json(sid, 'JSON.stringify({head:document.querySelector("#woCard .scardhead").textContent, inScreen:!!document.querySelector("#tp-screen #woCard"), after:(function(){var s=document.getElementById("slides"),w=document.getElementById("woCard");return !!(s.compareDocumentPosition(w)&Node.DOCUMENT_POSITION_FOLLOWING);})(), empty:(document.querySelector("#woBox .woe-empty")||{}).textContent||""})', {})
         ok('the What\'s on card is on the Screen tab, after Slides, and says what to add', card.get('inScreen') and card.get('after') and card.get('head', '').startswith("What's on") and 'Nothing on yet' in card.get('empty', ''), card)
         click(sid, '#woBox .woe-add')

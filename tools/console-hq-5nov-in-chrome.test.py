@@ -244,6 +244,7 @@ try:
         ok('%s: F. and after the reload Members draws is still the open fold' % where, [x['open'] for x in f3.get('heads', [])] == [False, True, False], f3)
         S.js(sid, 'localStorage.removeItem("vpDrawsFold"); true')
         tab(sid, 'screen')
+        S.js(sid, '[].forEach.call(document.querySelectorAll(".scard.fold.folded > .scardhead"),function(h){h.click();}); true')   # the cards fold (Dean, 6 Nov 2026)
         S.js(sid, 'document.getElementById("addSlide").click(); document.getElementById("addSlide").click(); true'); time.sleep(0.6)
         geo = S.json(sid, '(function(){var r=document.querySelector("#slides .adslide"),t=r.querySelector(".adthumb").getBoundingClientRect(),f=r.querySelector(".adfields").getBoundingClientRect(),rr=r.getBoundingClientRect();'
                                    'return JSON.stringify({ratio:t.width/t.height,tw:t.width,rw:rr.width,fieldsBelow:f.top>=t.bottom-1,label:getComputedStyle(r.querySelector(".adthumb"),"::before").content});})()', {})
