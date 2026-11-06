@@ -1187,7 +1187,9 @@
        we onboarded from HQ that has not added its card yet. Neither has a payment at launch. */
     /* "Next payment: $X per month" (Dean, 3 Nov 2026): the amount beside its label, the date after it. */
     var nextAmt = d.next_charge_amount || (d.comp ? "" : nextMonthly);
-    $("s-next-amt").textContent = d.comp ? "Nothing to pay" : (nextAmt + (d.plan === "annual" ? " a year" : " per month"));
+    /* "Next payment $350 on <date>" (Dean, 6 Nov 2026): the amount and its date; "per month" only when there is no date yet. */
+    var nextShort = String(nextAmt || "").replace(/\.00$/, "");
+    $("s-next-amt").textContent = d.comp ? "Nothing to pay" : (d.next_charge ? nextShort : (nextShort + (d.plan === "annual" ? " a year" : " per month")));
     $("s-next").textContent = d.comp ? ""
       : d.next_charge ? ("on " + d.next_charge)
       : d.has_subscription === false ? "when you add your card"

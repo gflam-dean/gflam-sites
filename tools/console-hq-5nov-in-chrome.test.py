@@ -118,8 +118,9 @@ try:
         tm, nm, np = by.get('This month', {}), by.get('Next month', {}), by.get('Next payment', {})
         ok('%s: 4. the player numbers say "players" and sit beside their labels' % where,
            tm.get('v', '').endswith(('players', 'player')) and nm.get('v', '').endswith(('players', 'player')) and tm.get('side') and nm.get('side'), [tm, nm])
-        ok('%s: 4. "Next payment: $X per month", the amount beside its label' % where,
-           np.get('v', '').startswith('$') and np.get('v', '').endswith('per month') and np.get('side'), np)
+        # Dean, 6 Nov 2026: "Next payment $350 on <date>"; with no date yet (no card) it is "$350 per month".
+        ok('%s: 4. "Next payment $X on <date>" (or "$X per month" before there is a date), the amount beside its label' % where,
+           np.get('v', '').startswith('$') and np.get('side') and (np.get('v', '').endswith('per month') or (str(np.get('sub', '')).startswith('on ') and 'per month' not in np.get('v', ''))), np)
         ok('%s: 7. no lock-out card anywhere on the page' % where,
            S.js(sid, '!document.getElementById("resecureCard") && !/lock (old )?devices|lock out/i.test(document.body.innerText)') is True)
         pick = S.js(sid, 'JSON.stringify({n:document.querySelectorAll("#acctPick select").length,opts:[].map.call(document.querySelectorAll("#acctPick option"),function(o){return o.textContent}),'
