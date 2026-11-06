@@ -9198,7 +9198,7 @@ MUTATIONS = [
     # Saved replies and the easier help desk (D91 and helpdesk-hq-in-chrome.test.py), 29 Oct 2026.
     # "Have a play for free" on the offer page (Dean, 5 Nov 2026, release/6nov stopgap): tools/offer-free-play-in-chrome.test.py.
     ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
-     '      <p style="margin-top:20px"><a class="btn btn-primary" href="#contact" data-cta="start-set-me-up" data-topic="free-account">Set me up a free account</a></p>\n', '',
+     '<a href="#contact" data-cta="start-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a>', '',
      'in Chrome, the offer page has no way to ask us to set up a free account'),
     ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
      '<a class="btn btn-primary" href="#start" data-cta="hero-start">Have a play for free</a>', '<a class="btn btn-ghost" href="#start" data-cta="hero-start">Have a play for free</a>',
@@ -10744,8 +10744,8 @@ MUTATIONS = [
      '<p class="h2-price"><b>First month free.</b> Then $2.50 a player a month. Nothing is charged today.',
      "a price creeps back under the start button and the email's words are gone"),
     ('offer-page-start-first.test.py', 'venueplay/nsw.html',
-     'Sign up and have a play for a month on us. Nothing is charged today. No lock-in, cancel anytime.</p>\n      <p style="margin-top:20px">',
-     'Nothing is charged today. No lock-in, cancel anytime.</p>\n      <p style="margin-top:20px">',
+     'Sign up and have a play for a month on us. Nothing is charged today. No lock-in, cancel anytime.</p>\n      <p class="form-fine" style="margin-top:20px">',
+     'Nothing is charged today. No lock-in, cancel anytime.</p>\n      <p class="form-fine" style="margin-top:20px">',
      'the start section no longer says what the email said'),
     ('offer-page-start-first.test.py', 'venueplay/app/vp-analytics.js',
      '/^[a-z][a-z0-9_-]{0,23}$/.test(v)',

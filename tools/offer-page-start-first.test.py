@@ -134,6 +134,11 @@ ok('the card form is titled "Rather add your card now?"', '<h2 class="sec-title"
 ok('the card form line reads "Keep $2.50 by adding your card before your free month ends"', 'Keep $2.50 by adding your card before your free month ends' in card)
 ok('"Lock in your price" in the pricing section and the floating button both point at the start section, not the card form',
    re.search(r'href="#start" data-cta="offer-lock">Lock in your price', offer) and re.search(r'<a href="#start" class="vp-float-cta" id="vpFloatCta"', NSW) and 'href="#claim"' not in NSW, re.findall(r'href="#claim"', NSW))
+prim = re.findall(r'<a [^>]*>', NSW)
+prim = [t for t in prim if 'btn-primary' in t or 'vp-float-cta' in t]
+pt = sorted({re.search(r'href="([^"]*)"', t).group(1) for t in prim if 'href="/' not in t})
+ok('every primary start button (hero, "Lock in your price", the floating button) points at #start; the free-account enquiry and the card form are only secondary',
+   all(re.search(r'href="#start"', t) for t in prim if any(k in t for k in ('hero-start', 'offer-lock', 'vp-float-cta'))) and '#contact' not in pt and '#claim' not in pt, pt)
 ok('the start section holds the one easy-to-change destination for the hero button, with a note for the five-box form',
    'id="start"' in NSW and 'five-box start form' in NSW)
 
