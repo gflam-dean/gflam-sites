@@ -151,9 +151,9 @@ function hosts() { return CALLS.map(function (c) { return /clicksend/.test(c.url
   pass("both hang: the hook still answers, with an error", r.status === 500 && hosts() === "mobilemessage,clicksend", hosts());
 
   /* ---- 5. A REGISTERED SENDER ---- */
-  var withFrom = JSON.parse(JSON.stringify(BOTH)); withFrom.CLICKSEND_FROM = "VenuePlay";
+  var withFrom = JSON.parse(JSON.stringify(BOTH)); withFrom.CLICKSEND_FROM = "venueplay";
   r = await run(withFrom, "throw", CS_OK);
-  pass("CLICKSEND_FROM, when set, is the sender", r.status === 200 && CALLS[1].body.messages[0].from === "VenuePlay");
+  pass("CLICKSEND_FROM, when set, is the sender", r.status === 200 && CALLS[1].body.messages[0].from === "venueplay");
 
   /* ---- 6. /health ---- */
   CALLS = [];

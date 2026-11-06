@@ -150,6 +150,81 @@ SHAPES.forEach(function(t){
 });
 ok("play.html reads all " + SHAPES.length + " address shapes right", playFn && !playWrong.length, playWrong.join(", "));
 
+// ---- /app/vp-tvpaired.js: the venue THIS SCREEN was paired to by its own screen code (5 Nov 2026) ----
+/* Two keys on purpose: vpTvVenue is any /tv?venue= visit (Dean, 1 Nov 2026: the prospect's slides, "a random
+   person"), vpTvPaired only a code typed on this screen (Dean, 5 Nov 2026: "I don't want them to ask for the
+   code again on the TV, no way"). This RUNS the real file, with the real vp-venueurl.js and vp-tvtype.js. */
+var PSRC = readFile("venueplay/app/vp-tvpaired.js"), TSRC = readFile("venueplay/app/vp-tvtype.js");
+function paired(mem){
+  var win = load(); win.localStorage = store(""); delete win.localStorage._m.vpTvVenue;
+  if (mem) for (var k in mem) win.localStorage._m[k] = mem[k];
+  win.sessionStorage = store(""); delete win.sessionStorage._m.vpTvVenue;
+  win.setTimeout = function(){ return 0; }; win.clearTimeout = function(){};
+  (new Function("window", TSRC))(win); (new Function("window", PSRC))(win);
+  return win;
+}
+var P0 = paired().VPTvPaired;
+ok("vp-tvpaired.js defines VPTvPaired with save, slug, clear, forget, target, go", !!P0 && ["save","slug","clear","forget","target","go","openedPaired","appStore"].every(function(f){ return typeof P0[f] === "function"; }));
+(function(){
+  var w = paired(), P = w.VPTvPaired;
+  ok("nothing paired: slug() is empty", P.slug() === "");
+  ok("save() writes vpTvPaired as {slug, at}", P.save("Test-Alpha") === true && JSON.parse(w.localStorage._m.vpTvPaired).slug === "test-alpha" && JSON.parse(w.localStorage._m.vpTvPaired).at > 0, w.localStorage._m.vpTvPaired);
+  ok("and slug() reads it back", P.slug() === "test-alpha");
+  ok("save() never touches vpTvVenue", !("vpTvVenue" in w.localStorage._m));
+  P.forget("some-other-venue");
+  ok("forget(another venue) keeps the pairing (a mistyped /tv?venue= must not unpair the real venue)", P.slug() === "test-alpha");
+  P.forget("test-alpha");
+  ok("forget(the paired venue) clears it (two strikes: it no longer exists)", P.slug() === "" && !("vpTvPaired" in w.localStorage._m));
+  P.save("test-alpha"); P.clear();
+  ok("clear() (Change venue) clears it", P.slug() === "");
+})();
+[["junk", "not json"], ["a bare slug, the old shape", "test-alpha"], ["no slug", '{"at":1}'], ["a slug that is not one", '{"slug":"<script>","at":1}']].forEach(function(t){
+  var P = paired({ vpTvPaired: t[1] }).VPTvPaired;
+  ok("vpTvPaired holding " + t[0] + " reads as not paired", P.slug() === "", P.slug());
+});
+ok("vpTvVenue alone is never read as paired (the 1 Nov fault)", paired({ vpTvVenue: "indypendent-hotel" }).VPTvPaired.slug() === "");
+var PT = [
+  ["", "/tv?venue=test-alpha", "bare /tv opens the paired venue"],
+  ["?intro=0", "/tv?venue=test-alpha&intro=0", "bare /tv keeps its other settings"],
+  ["?demo=1", "", "?demo=1 stays hermetic"],
+  ["?demo=1&ads=1", "", "the ads-only demo stays hermetic"],
+  ["?probe=1", "", "a probe is not a screen"],
+  ["?venue=other-venue", "", "an address that names a venue keeps it"],
+  ["?other-venue", "", "the short form keeps it too"],
+  ["?venue=", "", "an unreadable address is not overridden"],
+  ["?fbclid=abc", "/tv?venue=test-alpha&fbclid=abc", "a tracking tag does not stop it"]
+];
+PT.forEach(function(t){
+  var w = paired({ vpTvPaired: '{"slug":"test-alpha","at":1}' }), got;
+  try { got = w.VPTvPaired.target(t[0], "/tv", ""); } catch (e) { got = "THREW " + e; }
+  ok("target: " + t[2] + ": " + (t[0] || "(nothing)") + " -> " + (t[1] || "stay"), got === t[1], got);
+});
+(function(){
+  var w = paired({ vpTvVenue: "other-venue" }), got = "x";
+  try { got = w.VPTvPaired.target("", "/tv", ""); } catch (e) { got = "THREW " + e; }
+  ok("target: never paired, another venue remembered: bare /tv stays the setup card", got === "", got);
+  var w2 = paired({ vpTvPaired: '{"slug":"test-alpha","at":1}' }), went = null;
+  w2.document = { documentElement: { style: {} } };
+  var r = w2.VPTvPaired.go({ search: "", pathname: "/tv", hash: "", replace: function(u){ went = u; } });
+  ok("go(): bare /tv moves on to the paired venue's address", r === true && went === "/tv?venue=test-alpha", went);
+  ok("go(): and marks this tab's next venue screen as opened from bare /tv", w2.VPTvPaired.openedPaired("test-alpha") === true);
+  ok("openedPaired() is read once (a reload is an ordinary open)", w2.VPTvPaired.openedPaired("test-alpha") === false);
+  w2.VPTvPaired.go({ search: "", pathname: "/tv", hash: "", replace: function(){} });
+  ok("openedPaired() is for THAT venue only", w2.VPTvPaired.openedPaired("other-venue") === false);
+  var w3 = paired({ vpTvPaired: '{"slug":"test-alpha","at":1}' }), went3 = null;
+  w3.VPTvPaired.go({ search: "?demo=1", pathname: "/tv", hash: "", replace: function(u){ went3 = u; } });
+  ok("go(): a demo is never moved and never marked", went3 === null && w3.VPTvPaired.openedPaired("test-alpha") === false, went3);
+})();
+// "Get the app": only the store this TV's own setup line names, and only with a live address (Dean, 5 Nov 2026)
+[["googletv", "play"], ["chromecast", "play"], ["samsung", ""], ["lg", ""], ["firetv", ""], ["pc", ""], ["mobile", ""], ["unknown", ""], ["app", ""]].forEach(function(t){
+  var got; try { got = P0.appStore(t[0]); } catch (e) { got = "THREW " + e; }
+  ok("get the app: a " + t[0] + " browser " + (t[1] ? "is offered " + t[1] : "is offered nothing"), got === t[1], got);
+});
+(function(){
+  var w = paired(); w.VPTvType.STORES.samsung.url = "https://example.invalid/samsung";
+  ok("get the app: a Samsung TV is offered Samsung Apps the day its address is in STORES", w.VPTvPaired.appStore("samsung") === "samsung", w.VPTvPaired.appStore("samsung"));
+})();
+
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");

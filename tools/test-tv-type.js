@@ -171,7 +171,7 @@ function El() { var e = { style: {}, innerHTML: '', attrs: {}, kids: {} }; e.que
 function card() {
   var app = El(), code = El(), pp = El();
   app.kids['.su-head'] = El(); app.kids['.su-head'].innerHTML = 'Got a TV with Google Play? <b>Get the venueplay TV app</b>';
-  app.kids['.su-text'] = El(); app.kids['.su-text'].innerHTML = 'Search for <b>venueplay TV</b> in the Play Store on this TV, open it and put in your screen code.';
+  app.kids['.su-text'] = El(); app.kids['.su-text'].innerHTML = 'Search for <b>venueplay TV</b> in Google Play on this TV, open it and put in your screen code.';
   code.kids['.su-head'] = El(); code.kids['.su-head'].innerHTML = 'Or use this TV&rsquo;s web browser';
   code.kids['.su-text'] = El(); code.kids['.su-text'].innerHTML = 'Put in the six-character screen code from your host console.';
   return { suApp: app, suCode: code, pairPanel: pp };

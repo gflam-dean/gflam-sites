@@ -36,8 +36,8 @@
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
   /* THE HEADER IN ONE ORDER (Dean, 3 Nov 2026: the logo sat oddly between the buttons and "Games" was not
-     clear). Desk: "< All games", the venueplay logo and TRIVIA, the TV status, End game on the right.
-     Phone: the logo, TRIVIA and the TV status on the first row; "< All games" and End game under them. */
+     clear; 4 Nov round 3: it says "Play", the main screen). Desk: "< Play", the venueplay logo and TRIVIA, the TV status, End game on the right.
+     Phone: the logo, TRIVIA and the TV status on the first row; "< Play" and End game under them. */
   .bar>.vp-navlink{order:1}
   .bar>.brand{order:2}
   .bar>.tag{order:3}
@@ -143,6 +143,7 @@
   .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
   .pempty{color:var(--faint);font-size:12.5px;padding:12px 4px}
 
+  .calmnote{margin:12px 0 0;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink-3);color:var(--text);font-size:14px;font-weight:600;line-height:1.45}
   .btnrow{display:flex;gap:10px;margin-top:12px}
   .btnrow .btn{flex:1}
 
@@ -193,7 +194,7 @@
 <header>
   <div class="bar">
     <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
-    <a class="vp-navlink" href="/app" title="Back to all games">&lsaquo; All games</a>
+    <a class="vp-navlink" href="/app" title="Back to Play">&#8592; Play</a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
@@ -526,6 +527,7 @@
     timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
+    noPlayersNote:false,            // Reveal leaderboard with nobody joined: a calm line, not an error
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
     answeredPids:{}, answeredQseq:0,
@@ -890,6 +892,7 @@
       }
       rw.appendChild(el("div","since",'<b>'+spTot+'</b> answered'+(spTot?' &middot; '+(sp[q2.correctIndex]||0)+' got it right':'')));
       body.appendChild(rw);
+      if(G.noPlayersNote){ var nn=el("div","calmnote",esc(NOBODY_MSG)); nn.id="noPlayersNote"; nn.setAttribute("role","status"); body.appendChild(nn); }
       // On the last question turn the button into "Reveal leaderboard" (which shows the podium);
       // the podium never appears mid-round now.
       var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
@@ -1163,7 +1166,7 @@
   function reveal(){
     if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
-      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[];
+      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[]; G.noPlayersNote=false;
       saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
       if(G.defer){
@@ -1185,24 +1188,52 @@
       // Between-question leaderboard, but NOT after the last question - there the host reveals
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
-      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200); }
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){
+        /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
+        if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
+        else { bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); }
+      } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
+  /* NOBODY JOINED IS NOT A FAULT (live fault, Fri 6 Nov 2026, The Mini Bar). A game with no phones
+     on it has an empty board, and Reveal leaderboard then told the host "Scores could not be
+     loaded ... Check your connection", which was wrong: the connection was fine. The three outcomes
+     are kept in one small function so a suite can run it: a board with rows is the podium; an empty
+     board that the server itself just answered, with nobody joined, is "nobody"; anything else
+     (the fetch failed, or phones are in but no scores came back) is the real "could not be loaded". */
+  function finishOutcome(boardLen, players, fetchOk){
+    if(boardLen>0) return "podium";
+    if(players===0 && fetchOk===true) return "nobody";
+    return "error";
+  }
+  var NOBODY_MSG="Nobody has joined this game yet, so there are no scores to show. Players join with the code on the TV.";
   function finish(){
     clearTick();
+    G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
        rebuild), fetch it once more before announcing rather than firing confetti over nothing. */
     if(!G.board.length && G.gameId){
+      var ok=false;
       apiPost("/host/reveal",{ game_id:G.gameId })
-        .then(function(r){ if(r && r.leaderboard) G.board=r.leaderboard; })
-        .catch(function(){})
-        .then(function(){ finishNow(); });
+        .then(function(r){ ok=true; if(r && r.leaderboard) G.board=r.leaderboard; })
+        .catch(function(){ ok=false; })
+        .then(function(){ finishNow(ok); });
       return;
     }
-    finishNow();
+    finishNow(false);
   }
-  function finishNow(){
-    if(!G.board.length){
+  function finishNow(fetchOk){
+    var out=finishOutcome(G.board.length, playerCount(), fetchOk);
+    if(out==="nobody"){
+      /* Calm, not an error: a plain line on the console, and the TV's "Thanks for playing" with the
+         join QR. Stay in "reveal" so the button is still there if someone joins and the host tries
+         again, and so "Start a new round" is not the only way out. */
+      G.noPlayersNote=true;
+      bcast({ t:"nobody" });
+      renderConsole();
+      return;
+    }
+    if(out==="error"){
       /* Do NOT set status to "ended" here. Doing so re-rendered the console into its finished
          state, whose only control is "Start a new round", which calls endRound() and destroys the
          game: after a transient failure at the climax the host's single option wiped the scores

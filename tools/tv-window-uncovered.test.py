@@ -106,7 +106,7 @@ for t in ('welcome', 'welcome-group', 'welcome-hq', 'venue-onboarding'):
 
 # ---------------------------------------------------------------- the training walkthrough
 tr = read('venueplay/training.html')
-cap = re.search(r'cap:"The venue TV is opened once at your venue\'s own link[^"]*"', tr)
+cap = re.search(r'cap:"The venue TV is opened once at venueplay.com.au/tv[^"]*"', tr)
 check('the training walkthrough\'s first caption says the TV is kept full screen with nothing over it',
       bool(cap) and 'full screen with nothing over it' in cap.group(0), cap and cap.group(0)[-120:])
 
@@ -123,7 +123,9 @@ pc = re.search(r'case "pc":[^\n]*', tt)
 # (tv-bare-setup-in-chrome.test.py), so it carries the tip in fewer words.
 check('the TV setup card on a laptop or PC carries the tip', bool(pc) and 'Keep this screen full screen, never covered by another window, or the TV can fall behind.' in pc.group(0), pc and pc.group(0)[-200:])
 fr = read('venueplay/app/vp-firstrun.js')
-check('the console setup guide\'s TV step carries the tip after "leave it running"', ('leave it running. ' + TIP) in fr)
+# Since 5 Nov 2026 (INBOX 13) the TV step's browser way ends "Go full screen and leave it running." and the tip
+# is its own line straight after that list, said word for word.
+check('the console setup guide\'s TV step carries the tip as its own line after "Go full screen and leave it running"', ('body.appendChild(el("p", TEXT, "' + TIP + '"));') in fr and fr.find('Go full screen and leave it running.') < fr.find(TIP) and fr.find('Go full screen and leave it running.') > 0)
 
 print('')
 print(('%d FAILED, %d run' % (fails, ran)) if fails else ('ALL %d CHECKS PASSED' % ran))

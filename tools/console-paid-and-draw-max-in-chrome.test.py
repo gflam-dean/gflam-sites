@@ -86,7 +86,7 @@ try:
     seen, rules = {}, {}
     for name in ('Deepwater Hotel', 'Tugun Bowls Club', 'Fitzroy Social'):
         tid, sid = console_for(name)
-        t = json.loads(S.js(sid, TICKETS))
+        t = S.json(sid, TICKETS)
         t['opts'] = S.js(sid, 'Array.prototype.map.call(document.getElementById("paidSel").options, function(o){ return o.value; }).join(",")')
         seen[name] = t
         S.js(sid, 'try{ localStorage.removeItem("vpGamingAck"); Object.keys(localStorage).forEach(function(k){ if(/^vpg|ack/i.test(k)) localStorage.removeItem(k); }); }catch(e){} document.getElementById("prizeInput").value="Meat tray"; document.getElementById("startBtn").click(); true')
@@ -130,16 +130,16 @@ try:
     ok('the setup shows "Maximum jackpot ($)", filled from the draw ($1,200)', shown['vis'] and shown['v'] == '1200' and shown['label'] == 'Maximum jackpot ($)', shown)
     S.js(sid, 'document.getElementById("mdSave").click(); true')
     S.until(sid, 'window.__sent.length===1', 10)
-    sent = json.loads(S.js(sid, 'JSON.stringify(window.__sent)'))
+    sent = S.json(sid, 'JSON.stringify(window.__sent)')
     ok('a save that did not touch the box leaves the maximum alone (not in the request)', sent and 'max_jackpot_cents' not in sent[0], sent)
     S.js(sid, 'var m=document.getElementById("md-max"); m.value="1500"; m.dispatchEvent(new Event("input")); document.getElementById("mdSave").click(); true')
     S.until(sid, 'window.__sent.length===2', 10)
-    sent = json.loads(S.js(sid, 'JSON.stringify(window.__sent)'))
+    sent = S.json(sid, 'JSON.stringify(window.__sent)')
     ok('typing $1,500 sends max_jackpot_cents 150000 to /host/members/settings', sent[1].get('max_jackpot_cents') == 150000, sent[1])
     S.until(sid, 'document.getElementById("md-max").value==="1500"', 5)
     S.js(sid, 'var m=document.getElementById("md-max"); m.value=""; m.dispatchEvent(new Event("input")); document.getElementById("mdSave").click(); true')
     S.until(sid, 'window.__sent.length===3', 10)
-    sent = json.loads(S.js(sid, 'JSON.stringify(window.__sent)'))
+    sent = S.json(sid, 'JSON.stringify(window.__sent)')
     ok('clearing the box and saving sends null: no maximum', 'max_jackpot_cents' in sent[2] and sent[2]['max_jackpot_cents'] is None, sent[2])
     ok('no script error on Your account', S.js(sid, 'JSON.stringify(window.__errs||[])') == '[]', S.js(sid, 'JSON.stringify(window.__errs||[])'))
     S.close_tab(tid)
