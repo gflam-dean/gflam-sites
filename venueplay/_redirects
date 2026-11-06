@@ -37,6 +37,9 @@
 # The short sign-in link in a text (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K is served by s.html, which
 # moves the code into /app/go's fragment. Our own domain, never a third-party shortener.
 /s/*  /s  200
+# The easy way back in by the venue's (public) code: /go/ABC123 opens go-venue.html, which only offers to send a
+# sign-in link to whatever is on that account. The code is never a login key on its own.
+/go/*  /go-venue  200
 /offer-oct  /nsw  200
 /offer-nov  /nsw  200
 /offer-dec  /nsw  200

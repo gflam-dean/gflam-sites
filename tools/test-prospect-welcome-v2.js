@@ -345,6 +345,7 @@ var __rnd = 11;
   /* ============================================================================================= */
   section('2. THE DELAYED EMAIL, on the real billing Worker');
   load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
   vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 if (typeof TextEncoder === 'undefined') { TextEncoder = function () {}; TextEncoder.prototype.encode = function (s) { s = unescape(encodeURIComponent(String(s))); var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }; }
 function fnv(bytes, seed) { var out = new Uint8Array(32), h = (2166136261 ^ seed) >>> 0; for (var r = 0; r < 32; r++) { for (var i = 0; i < bytes.length; i++) { h ^= bytes[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; } return out; }
@@ -653,8 +654,8 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var hNot = PW.VPProspects._t.cardHtml(prow0), hCx = PW.VPProspects._t.cardHtml(Object.assign({}, prow0, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' }));
   /* ONE BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same, so a prospect
      row has only "Send them a new sign-in link" now; one who cancelled has neither. */
-  check('HQ > Prospects: each prospect row has ONE send button, "Send them a new sign-in link", and no "Resend their account email"; one who cancelled has none',
-    /data-pr-signin="[^"]+">Send them a new sign-in link<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
+  check('HQ > Prospects: each prospect row has ONE send button, "Send their sign-in link again", and no "Resend their account email"; one who cancelled has none',
+    /data-pr-signin="[^"]+">Send their sign-in link again<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
 
   section('3. "Please call me": the exact request the first run sends, through the real /help/venue/ticket');
   world();

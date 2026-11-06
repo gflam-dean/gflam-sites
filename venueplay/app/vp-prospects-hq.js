@@ -161,8 +161,10 @@
              "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; a fresh
              30 days. Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
           var acts = (p.tel ? '<a class="mini prcall" href="' + prEsc(p.tel) + '">Call ' + prEsc(p.phone || p.mobile || "") + "</a>" : "") +
-            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send them a new sign-in link' +
-              '<span class="prvia">' + (p.mobile ? "by email and text" : "email only, add a mobile to text it too") + "</span></button>" : "") +
+            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send their sign-in link again' +
+              '<span class="prvia">' + (p.mobile ? "the same link, by email and text" : "the same link, email only, add a mobile to text it too") + "</span></button>" : "") +
+            /* Dean, 6 Nov 2026: the ONLY way to give them more time, kept apart and labelled so it is never pressed by mistake. */
+            (st === "not_signed_in" ? '<button type="button" class="mini" data-pr-fresh="' + prEsc(p.venue_id) + '">Start a fresh 30 days</button>' : "") +
             '<button type="button" class="mini" data-pr-edit="' + prEsc(p.venue_id) + '">Edit details</button>' +
             (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
             (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "");
@@ -380,6 +382,7 @@
     // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing; the row tells it
     // their email, mobile and booked welcome, so it can say how the link will go before it goes.
     if (t.hasAttribute("data-pr-signin")) { var sid = t.getAttribute("data-pr-signin"); if (typeof root.hqSigninLink === "function") root.hqSigninLink(sid, t, S.byId[sid]); return; }
+    if (t.hasAttribute("data-pr-fresh")) { var fid = t.getAttribute("data-pr-fresh"); if (typeof root.hqFreshWindow === "function") root.hqFreshWindow(fid, t, S.byId[fid]); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");

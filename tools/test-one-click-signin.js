@@ -232,6 +232,7 @@ check('a minute short of 4 hours: still signed in', under.out === 0 && under.lef
 
 /* ============================== 1. the billing Worker ============================== */
 load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
 vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 /* jsc has no WebCrypto, TextEncoder or getRandomValues. The digest stand-in is a pure function of its
    input (enough to show what is stored is the hash of what is sent and never the token); the random

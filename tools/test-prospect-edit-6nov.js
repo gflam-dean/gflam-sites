@@ -37,6 +37,7 @@ Response = function (body, init) { this.body = body; this.status = (init && init
 Response.redirect = function (u, s) { return { redirect: u, status: s }; };
 
 load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
 vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 if (typeof TextEncoder === 'undefined') { TextEncoder = function () {}; TextEncoder.prototype.encode = function (s) { s = unescape(encodeURIComponent(String(s))); var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }; }
 function fnv(bytes, seed) { var out = new Uint8Array(32), h = (2166136261 ^ seed) >>> 0; for (var r = 0; r < 32; r++) { for (var i = 0; i < bytes.length; i++) { h ^= bytes[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; } return out; }
@@ -306,11 +307,13 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var tx = await call('/admin/signin-link', { venue_id: wb.id, text: true }, AS(ADMIN));
   var wbLinks = DB.vp_signin_links.filter(function (l) { return l.venue_id === wb.id && !l.used_at; });
   check('inside 9am to 8pm on a weekday: ONE press sends the email AND the text, now', tx.status === 200 && tx.body.text && tx.body.text.status === 'sent' && sent.length === 1 && SMS.length === 1 && SMS[0].body.messages[0].to === '+61455666777', [tx.body, SMS.length]);
-  check('...two live links, the email\'s and the text\'s, ending at the same moment, a fresh 30 days from now',
-    wbLinks.length === 2 && wbLinks[0].expires_at === wbLinks[1].expires_at && Math.abs(Date.parse(wbLinks[0].expires_at) - (CLOCK + 30 * DAY)) < 120000 && tx.body.days_left === 30, wbLinks);
+  var wbRow = DB.vp_prospects.filter(function (r) { return r.venue_id === wb.id; })[0] || {};
+  var wbEnd = Date.parse(wbRow.link_from || wbRow.created_at) + 30 * DAY;
+  check('...two live links (before migration 175), the email\'s and the text\'s, ending at the same moment: their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
+    wbLinks.length === 2 && wbLinks[0].expires_at === wbLinks[1].expires_at && Math.abs(Date.parse(wbLinks[0].expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from, [wbLinks, wbRow.created_at]);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
   check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and for how long, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
-    smsBody.from === 'venueplay' && /^Hi Sam, here's your venueplay sign-in link: venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} We've emailed it too, check junk\. Available for 30 days\. \{optout\}$/.test(smsBody.body) &&
+    smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} We've emailed it too, check junk\\. Available for " + tx.body.days_left + " days\\. \\{optout\\}$").test(smsBody.body) &&
     !/[—–]/.test(smsBody.body) && smsBody.body.replace('{optout}', 'Reply STOP to opt out').length <= 160, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);
@@ -402,10 +405,10 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var hOpen = T.cardHtml(pr);
   check('pressing the chip opens it (aria-expanded true, details shown); pressing again closes it',
     /aria-expanded="true"/.test(hOpen) && /<div class="prmore">/.test(hOpen) && (T.onClick({ target: tg }), /<div class="prmore" hidden>/.test(T.cardHtml(pr))), hOpen.slice(0, 500));
-  check('ONE send button, "Send them a new sign-in link", and with no mobile it says "email only, add a mobile to text it too"; no second resend',
-    /data-pr-signin="[^"]+">Send them a new sign-in link<span class="prvia">email only, add a mobile to text it too<\/span><\/button>/.test(h) && !/data-pr-welcome|Resend their account email|Resend sign-in link/.test(h + PANE.replace(/\/\*[\s\S]*?\*\//g, '')), h);
+  check('ONE send button, "Send their sign-in link again" (the same link, Dean 6 Nov 2026), and with no mobile it says "email only, add a mobile to text it too"; no second resend; and the separate "Start a fresh 30 days"',
+    /data-pr-signin="[^"]+">Send their sign-in link again<span class="prvia">the same link, email only, add a mobile to text it too<\/span><\/button>/.test(h) && /data-pr-fresh="[^"]+">Start a fresh 30 days<\/button>/.test(h) && !/data-pr-welcome|Resend their account email|Resend sign-in link/.test(h + PANE.replace(/\/\*[\s\S]*?\*\//g, '')), h);
   var hm = T.cardHtml(Object.assign({}, pr, { mobile: '0412 345 678', phone: '0412 345 678', tel: 'tel:0412345678' }));
-  check('with a mobile: "by email and text", a Call button that rings it, and the mobile under the name', /<span class="prvia">by email and text<\/span>/.test(hm) && /<a class="mini prcall" href="tel:0412345678">Call 0412 345 678<\/a>/.test(hm) && /<span class="prsub">Jo · 0412 345 678<\/span>/.test(hm), hm);
+  check('with a mobile: "by email and text", a Call button that rings it, and the mobile under the name', /<span class="prvia">the same link, by email and text<\/span>/.test(hm) && /<a class="mini prcall" href="tel:0412345678">Call 0412 345 678<\/a>/.test(hm) && /<span class="prsub">Jo · 0412 345 678<\/span>/.test(hm), hm);
   check('Edit details, Called and View as are in the actions too', /data-pr-edit="[^"]+">Edit details</.test(h) && /data-pr-called=/.test(h) && /data-pr-viewas=/.test(h));
   check('cancelled: no send button (they said no), Edit details still there', !/data-pr-signin/.test(T.cardHtml(Object.assign({}, pr, { status: 'cancelled' }))) && /data-pr-edit=/.test(T.cardHtml(Object.assign({}, pr, { status: 'cancelled' }))));
   T.S.editing = U(1); T.S.expanded[U(1)] = true;
@@ -427,8 +430,8 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   var btn = { textContent: 'Send them a new sign-in link', disabled: false };
   REPLY['/admin/signin-link'] = { ok: true, to: 'jo@q.example', line: 'Sent by email and text, link works until Fri 4 Dec.' };
   await fn('V1', btn, { venue_id: 'V1', name: 'Quiet Arms', email: 'jo@q.example', mobile: '0412 345 678', welcome: { status: 'sent' } });
-  check('with a mobile it asks first, saying it goes by email to them AND by text to the mobile, for a fresh 30 days',
-    /It goes by email to jo@q\.example and by text to 0412 345 678\. One tap opens their account, for a fresh 30 days\./.test(ASK[0] || ''), ASK);
+  check('with a mobile it asks first, saying it goes by email to them AND by text to the mobile, and that it is the same link with no more time',
+    /It goes by email to jo@q\.example and by text to 0412 345 678\. One tap opens their account\. It is the same link as before, and it does not give them more time\./.test(ASK[0] || ''), ASK);
   check('...then asks the Worker for both (text: true) and shows the Worker\'s own line', POSTS.length === 1 && POSTS[0].path === '/admin/signin-link' && POSTS[0].body.venue_id === 'V1' && POSTS[0].body.text === true &&
     TELL[0] === 'Sent by email and text, link works until Fri 4 Dec.\n\nThe email went to jo@q.example.' && btn.disabled === false && btn.textContent === 'Send them a new sign-in link', [POSTS, TELL]);
   await fn('V1', btn, { venue_id: 'V1', email: 'jo@q.example', mobile: null, welcome: null });

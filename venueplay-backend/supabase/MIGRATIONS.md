@@ -618,3 +618,11 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-175-prospect-one-signin-link.sql` (Dean, 6 Nov 2026, ONE sign-in link per prospect): one column,
+`vp_prospects.signin_code_enc`, the prospect's short code (venueplay.com.au/s/XXXXXXXX) sealed by the billing Worker, so
+the welcome, the reply in their thread, every follow-up email and text and HQ's Resend all carry the same link with the same
+end; only HQ's "Start a fresh 30 days" makes a new one. No table, policy, grant or function, so RLS-BASELINE.json does not
+change. Either order with the billing Worker (before it, each send makes its own link as today). NUMBER: 175 (the main
+session's; 173 is fix/signup-core-10nov's). Branch `fix/signin-thread-10nov`. NOT RUN. Read-back and rollback in the file.
+

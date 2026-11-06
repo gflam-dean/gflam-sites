@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 12:08 · f078800d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 12:25 · e27e226f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -143,6 +143,8 @@ export default {
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
       if (request.method === 'POST' && path === '/auth/one-click/resend' && typeof vpaHandleOneClickResend === 'function') return await vpaHandleOneClickResend(request, env, json);
+      if (request.method === 'POST' && path === '/venue-signin/lookup' && typeof vpaVenueSigninLookup === 'function') return await vpaVenueSigninLookup(request, env, json);
+      if (request.method === 'POST' && path === '/venue-signin/send'   && typeof vpaVenueSigninSend === 'function')   return await vpaVenueSigninSend(request, env, json);
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
@@ -3478,7 +3480,8 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     // A mobile login signs in by text code, so it needs no one-click link (and has none to leak).
     if (login && !login.mobile) {
       try {
-        const minted = await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
+        const one = await vpaProspectOneLink(env, venue.id, login.id, { arm: true });
+        const minted = one || await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
         signinToken = minted.token;
         if (minted.shortened) warnings.push('Their sign-in link lasts 14 days, not 30 (run migration 151 for the 30 day prospect link).');
       }
@@ -3545,7 +3548,7 @@ async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobi
   }
   if (!authUserId) return { url: null, reason: 'no_login' };
   try {
-    const m = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), endMs);
+    const m = (await vpaProspectOneLink(env, venueId, authUserId, { arm: true })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), endMs);
     return { url: vpaOneClickUrl(site, m.token, email), kind: 'link', expires_at: new Date(m.expiresAt).toISOString(),
              expires_words: vpaBneDateWords(m.expiresAt), days_left: vpaDaysLeft(m.expiresAt, Date.now()) };
   } catch (e) { return { url: null, reason: 'no_table' }; }
@@ -3903,19 +3906,19 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (win && win.ended) return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Resend from HQ to give them a fresh 30 days.');
   if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
   let token, minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null, { short: true }); token = minted.token; }
+  try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { win: win, arm: true })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null, { short: true }); token = minted.token; }
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaShortSigninUrl(site, token));
   let r;
   try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    if (!minted.hash) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));   // never the prospect's one link
     await vpaSmsRecordOptOut(env, to, venueId);
     return await refuse('They opted out of texts (Mobile Message blocked it), so no text was sent and none will be.');
   }
   if (!r.ok) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    if (!minted.hash) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));   // never the prospect's one link
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
     return json({ error: 'The text did not send (the SMS provider said ' + (r.status || 'nothing') + '). Nothing reached them.' }, 502);
   }
@@ -4744,6 +4747,79 @@ function vpaSigninTokenShape(t) {
   const up = v.toUpperCase();
   return VPA_SHORT_RE.test(up) ? up : '';
 }
+/* ONE LINK PER PROSPECT (Dean, 6 Nov 2026): "the email and the text, and every follow-up email or text for that
+   prospect, use the SAME link, and sending it again must NOT renew the 30 days ... Only an explicit HQ 'start a fresh
+   30 days' action may issue a new window."
+   A prospect inside its 30 days has ONE short code (venueplay.com.au/s/XXXXXXXX), made the first time anything is
+   sent and kept on vp_prospects.signin_code_enc (migration 175, NOT RUN), sealed: an 8 letter code XOR an HMAC
+   keystream from a Worker secret and a random nonce, so the database alone never holds a working key. Its one-tap
+   row in vp_signin_links ends when the 30 days end, whatever sends it. A tap uses it (single use, as every link);
+   the next send (HQ's Resend, "Send me a new link", a follow-up) re-arms THAT row, same code, same end. Nothing
+   here ever moves the end: only vpaSendSigninLink's opts.fresh (HQ's "Start a fresh 30 days") makes a new window
+   and a new code. Before migration 175 the column is not there and every send mints its own link as before, still
+   ending at the same 30 day moment (never renewed). */
+async function vpaCodeKeyStream(env, nonce) {
+  const secret = String(env.SIGNIN_LINK_SECRET || env.CARD_LINK_SECRET || env.SUPABASE_SERVICE_KEY || '');
+  if (!secret) throw new Error('no secret to seal a sign-in code with');
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('vp-signin-code|' + secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('seal|' + nonce)));
+}
+async function vpaSealCode(env, code) {
+  const n = new Uint8Array(12); crypto.getRandomValues(n);
+  const nonce = vpaB64Url(n);
+  const ks = await vpaCodeKeyStream(env, nonce);
+  let hex = '';
+  for (let i = 0; i < code.length; i++) hex += ((code.charCodeAt(i) ^ ks[i]) & 255).toString(16).padStart(2, '0');
+  return 'v1.' + nonce + '.' + hex;
+}
+async function vpaOpenCode(env, sealed) {
+  const m = /^v1\.([A-Za-z0-9_-]{16})\.([0-9a-f]{16})$/.exec(String(sealed || ''));
+  if (!m) return null;
+  try {
+    const ks = await vpaCodeKeyStream(env, m[1]);
+    let code = '';
+    for (let i = 0; i < 8; i++) code += String.fromCharCode((parseInt(m[2].slice(i * 2, i * 2 + 2), 16) ^ ks[i]) & 255);
+    return VPA_SHORT_RE.test(code) ? code : null;
+  } catch (e) { return null; }
+}
+/* The prospect's one link: { token, expiresAt, reused } , or null when it does not apply (not a prospect, outside
+   the 30 days, another login, or migration 175 not run: the caller then mints as before). arm: a send that hands
+   the link out again re-opens a used one, at the same end. */
+async function vpaProspectOneLink(env, venueId, authUserId, opts) {
+  opts = opts || {};
+  const win = opts.win !== undefined ? opts.win : await vpaProspectLinkWindow(env, venueId);
+  if (!win || win.ended || !win.row || !('signin_code_enc' in win.row)) return null;
+  if (win.row.auth_user_id && authUserId && win.row.auth_user_id !== authUserId) return null;
+  const who = authUserId || win.row.auth_user_id;
+  if (!who) return null;
+  const use = async (code) => {
+    const hash = await vpaSigninTokenHash(code);
+    const rows = await vpaSelect(env, 'vp_signin_links', 'token_hash=eq.' + hash + '&select=id,used_at,expires_at&limit=1');
+    if (rows && rows[0]) {
+      if (rows[0].used_at && opts.arm) {
+        await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?token_hash=eq.' + hash, { method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: null }) });
+      }
+      return { token: code, expiresAt: Date.parse(rows[0].expires_at), reused: true, hash: hash };
+    }
+    await vpaInsert(env, 'vp_signin_links', { token_hash: hash, auth_user_id: who, venue_id: venueId, purpose: 'prospect_welcome',
+      created_at: new Date().toISOString(), expires_at: new Date(win.end).toISOString(), used_at: null }, false);
+    return { token: code, expiresAt: win.end, reused: true, hash: hash };
+  };
+  const have = win.row.signin_code_enc ? await vpaOpenCode(env, win.row.signin_code_enc) : null;
+  if (have) return await use(have);
+  const m = await vpaMintSigninLinkFor(env, who, venueId, Date.now(), win.end, { short: true });
+  const sealed = await vpaSealCode(env, m.token);
+  /* Two sends at the same moment: the first to write the column wins, the other's code is retired and the winner's used. */
+  await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&signin_code_enc=is.null', { signin_code_enc: sealed });
+  const back = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=signin_code_enc&limit=1');
+  const stored = back && back[0] && back[0].signin_code_enc;
+  if (stored && stored !== sealed) {
+    await vpaProspectRetireLink(env, await vpaSigninTokenHash(m.token));
+    const theirs = await vpaOpenCode(env, stored);
+    if (theirs) return await use(theirs);
+  }
+  return { token: m.token, expiresAt: m.expiresAt, reused: false, hash: await vpaSigninTokenHash(m.token) };
+}
 async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs, opts) {
   const raw = new Uint8Array(32);
   crypto.getRandomValues(raw);
@@ -4771,6 +4847,7 @@ async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expire
    email-code sign-in (Dean, 29 Oct 2026: "it's got to be phone number"). Their own address rides in the
    fragment so that page knows where to send a new link. Fragment only: it is never sent to a server. */
 function vpaOneClickUrl(site, token, email) {
+  if (token && VPA_SHORT_RE.test(String(token))) return site + '/s/' + token;   // the prospect's one link: the same in every email and text
   const e = email ? 'e=' + encodeURIComponent(email) : '';
   return token ? site + '/app/go#t=' + token + (e ? '&' + e : '') : site + '/app/go' + (e ? '#' + e : '');
 }
@@ -4855,11 +4932,14 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
   const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
   if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
-  // Only the newest link works: every unused one for this login is retired before the new one is made.
-  try {
-    await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null', {
-      method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
-  } catch (_) {}
+  /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
+     prospect inside its 30 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
+  const retireOthers = async (keepHash) => {
+    try {
+      await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null' + (keepHash ? '&token_hash=neq.' + keepHash : ''), {
+        method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+    } catch (_) {}
+  };
   /* WHEN IT ENDS (Dean, 4 Nov 2026): a prospect's venue inside its 30 days from setup gets a link that ends at
      that same moment, so every link they are sent counts down the one true number; anyone else, or after
      the 30 days (the sign-in page's "Send me a new link" still works then), the ordinary 14 days. */
@@ -4868,17 +4948,34 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   /* AFTER THE 30 DAYS, NO LINK HANDS ITSELF OUT (Dean, 4 Nov 2026: "they already had their one chance", but
      "maybe it just wasn't the right time"). The sign-in page's "Send me a new link" (opts.self) and the
      automatic follow-ups (opts.nudge) stop here; the caller tells the person and opens a sales ticket, and
-     Dean chooses whether to resend from HQ. HQ (opts.hq, below) is the one place a fresh 30 days starts. */
-  if (win && win.ended && !opts.hq) {
+     Dean chooses whether to resend from HQ. HQ's "Start a fresh 30 days" (opts.fresh, below) is the one place a fresh
+     30 days starts (Dean, 6 Nov 2026: a normal resend never renews them, so after the 30 days it is refused too). */
+  if (win && win.ended && !opts.fresh) {
     return { ok: false, reason: 'ended', to: email, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
              window_from: new Date(win.from).toISOString(), window_end: new Date(win.end).toISOString() };
   }
   let windowEnd = null, restart = false;
   if (opts.expiresAtMs != null) windowEnd = Number(opts.expiresAtMs);
-  else if (win && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ: a fresh 30 days from now
-  else if (win && !win.ended) windowEnd = win.end;                                                           // automatic: the same end, never reset
-  let token, expiresAt, shortened = false;
-  try { const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened; }
+  else if (win && opts.fresh && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ's "Start a fresh 30 days" only
+  else if (win && !win.ended) windowEnd = win.end;                                                                         // every other send: the same end, never reset
+  let token, expiresAt, shortened = false, oneLink = false;
+  try {
+    let one = null;
+    if (restart) {
+      /* A fresh 30 days: link_from moves to now (below), the old code is dropped and a new one made for the new window. */
+      try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { link_from: new Date().toISOString() }); } catch (_) {}
+      try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { signin_code_enc: null }); } catch (_) {}   // before 175: no column, nothing to drop
+      await retireOthers(null);
+      one = await vpaProspectOneLink(env, pick.venue_id, authUserId, { arm: true });
+    } else if (win && !win.ended) {
+      one = await vpaProspectOneLink(env, pick.venue_id, authUserId, { win: win, arm: true });
+    }
+    if (one) { token = one.token; expiresAt = one.expiresAt; oneLink = true; await retireOthers(one.hash); }
+    else {
+      await retireOthers(null);
+      const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened;
+    }
+  }
   catch (e) { return { ok: false, reason: 'no_table' }; }
   /* THE JOURNEY-1 CLOCK RESTARTS WITH AN HQ RESEND: link_from is what the quiet list and the nudges count
      from. Before migration 151 the column is not there; the link still goes and HQ is told the 30 days
@@ -4914,7 +5011,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
-    if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+    if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
@@ -4929,8 +5026,67 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     sent = await vpaSendEmail(env, email, 'Your venueplay sign-in link',
       vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO);
   } catch (_) { sent = false; }
-  if (!sent) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+  if (!sent) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
   return done;
+}
+/* ===========================================================================
+ * THE EASY WAY BACK IN BY THE VENUE'S CODE (Dean, 6 Nov 2026): venueplay.com.au/go/{venue code}.
+ * The venue's code is PUBLIC (the TV and every player see it), so it is NEVER a login key on its own: the page
+ * (venueplay/go-venue.html) only says "Sign in to {venue}" and offers to send a sign-in link to whatever is ON
+ * THAT ACCOUNT, never saying what that is.
+ *   POST /venue-signin/lookup { code }  -> { ok, venue }  the name only (the TV shows it already), or 404.
+ *   POST /venue-signin/send   { code }  -> { ok: true } WHATEVER happens (no venue, no login, over a limit, sent):
+ *        the login it goes to is the prospect's own, else the owner, else a manager; the link goes to THAT login's
+ *        email (vpaSendSigninLink, opts.self: a prospect gets its one link, same end), and by text to the
+ *        prospect's mobile when texts are on. Nothing the caller typed is ever a destination.
+ * Limits: lookups 30 per network per 10 minutes; sends 6 per network an hour and 3 per venue an hour.
+ * ======================================================================== */
+const VPA_GO_LOOKUP_PER_IP = 30;
+const VPA_GO_SEND_PER_IP = 6;
+const VPA_GO_SEND_PER_VENUE = 3;
+function vpaGoCode(raw) { const c = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return /^[A-Z0-9]{6}$/.test(c) ? c : ''; }
+async function vpaGoVenue(env, code) {
+  if (!code) return null;
+  const v = await vpaSelect(env, 'vp_venues', 'join_code=eq.' + encodeURIComponent(code) + '&select=id,name,status&limit=2');
+  return (v && v.length === 1) ? v[0] : null;
+}
+async function vpaVenueSigninLookup(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'go-lookup', ip, VPA_GO_LOOKUP_PER_IP, 600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json({ ok: false }, 404);
+  const v = await vpaGoVenue(env, vpaGoCode(_b.body && _b.body.code));
+  if (!v || v.status === 'archived') return json({ ok: false }, 404);
+  return json({ ok: true, venue: v.name || 'your venue' });
+}
+async function vpaVenueSigninSend(request, env, json) {
+  const SAME = { ok: true };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'go-send', ip, VPA_GO_SEND_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json(SAME);
+  try {
+    const v = await vpaGoVenue(env, vpaGoCode(_b.body && _b.body.code));
+    if (!v || v.status === 'archived') return json(SAME);
+    if (!(await helpLimit(env, 'go-send-venue:' + v.id, VPA_GO_SEND_PER_VENUE, 3600))) return json(SAME);
+    const ids = [];
+    try { const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(v.id) + '&select=auth_user_id&limit=1'); if (pr && pr[0] && pr[0].auth_user_id) ids.push(pr[0].auth_user_id); } catch (_) {}
+    const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(v.id) + '&role=in.(owner,manager)&select=auth_user_id,role&limit=20');
+    (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((x) => { if (ids.indexOf(x.auth_user_id) < 0) ids.push(x.auth_user_id); });
+    let r = { ok: false };
+    for (let i = 0; i < ids.length && i < 4; i++) {
+      r = await vpaSendSigninLink(env, ids[i], v.id, { self: true });
+      if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
+    }
+    if (r.ok && vpaSmsOn(env)) {
+      try {
+        const target = await vpaSigninTextTarget(env, v.id, await vpaAuthGetUser(env, r.auth_user_id));
+        if (target && target.e164 && vpaSmsAllowedAt(Date.now()) <= Date.now() && !(await vpaSmsOptedOut(env, target.e164))) await vpaSigninTextSend(env, r.auth_user_id, v.id, v.name, target, Date.parse(r.expires_at));
+      } catch (_) {}
+    }
+    await vpaAudit(env, { actorId: null, label: 'self (venue code page)', role: null }, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + v.id, { via: 'go_code', reason: r.ok ? undefined : r.reason });
+  } catch (e) { console.log('[go] ' + String((e && e.message) || e).slice(0, 160)); }
+  return json(SAME);
 }
 async function vpaHandleOneClickResend(request, env, json) {
   const SAME = { ok: true };
@@ -5059,14 +5215,14 @@ async function vpaSigninTextTarget(env, venueId, user) {
 /* Make the text's own link and send it now. { ok } or { ok:false, status }. */
 async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, expiresMs) {
   let minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs, { short: true }); }
+  try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { arm: true })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs, { short: true }); }
   catch (e) { return { ok: false, status: 'no_table' }; }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const body = vpaSigninTextBody(target.first, venueName, vpaShortSigninUrl(site, minted.token), minted.expiresAt);
   let r;
   try { r = await vpaSendSms(env, target.e164, body, 'signin-' + String(venueId).slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));
+    if (!minted.hash) await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));   // never the prospect's one link
     if (r.blocked) await vpaSmsRecordOptOut(env, target.e164, venueId);
     return { ok: false, status: r.blocked ? 'opted_out' : (r.status || 'unreachable') };
   }
@@ -5150,6 +5306,9 @@ async function vpaAdminSigninLink(request, env, json) {
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name&limit=1');
   const venue = vs && vs[0];
   if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  /* "Start a fresh 30 days" (Dean, 6 Nov 2026): its own, clearly labelled HQ button, the ONLY thing that gives a
+     prospect a new window and a new link. The normal "Resend sign-in link" sends the same link, same end. */
+  const fresh = !!(_b.body && _b.body.fresh === true);
   // Whose link: the prospect's own login first (HQ > Prospects), then the venue's owner, then a manager.
   const ids = [];
   try {
@@ -5160,10 +5319,10 @@ async function vpaAdminSigninLink(request, env, json) {
   (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((s) => { if (ids.indexOf(s.auth_user_id) < 0) ids.push(s.auth_user_id); });
   let r = { ok: false, reason: 'no_login' };
   for (let i = 0; i < ids.length && i < 6; i++) {
-    r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true });
+    r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true, fresh: fresh });
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
-  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });
   /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
   let text = null;
   if (r.ok && _b.body && _b.body.text === true) {
@@ -5174,6 +5333,7 @@ async function vpaAdminSigninLink(request, env, json) {
                           text: text || undefined, line: text ? vpaSigninSentLine(r, text) : undefined,
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
+  if (r.reason === 'ended') return json({ error: 'Their 30 days ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so the same link cannot be sent again. To give them a new link and a fresh 30 days, press Start a fresh 30 days.', ended: true, window_end: r.window_end }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
   if (r.reason === 'no_table') return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503);
@@ -5444,8 +5604,15 @@ async function vpaProspectWelcomeNow(request, env, json) {
   if (!(await vpaResendCancel(env, g.row.resend_id))) return json({ error: 'Resend would not take back the booked one, so nothing was sent twice. Try again in a minute.' }, 502);
   const render = Object.assign({}, g.row.detail || {});
   let token = null;
-  if (render.authUserId && !render.mobileLogin) { try { token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now()); } catch (_) { token = null; } }
-  await vpaProspectRetireLink(env, g.row.signin_token_hash);
+  let same = false;
+  if (render.authUserId && !render.mobileLogin) {
+    try {
+      const one = await vpaProspectOneLink(env, g.row.venue_id, render.authUserId, { arm: true });   // the prospect's one link (Dean, 6 Nov 2026)
+      if (one) { token = one.token; same = one.hash === g.row.signin_token_hash; }
+      else token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now());
+    } catch (_) { token = null; }
+  }
+  if (!same) await vpaProspectRetireLink(env, g.row.signin_token_hash);
   const r = await vpaFireProspectWelcome(env, Object.assign({}, render, { signinToken: token, sendAtMs: null }));
   const at = new Date().toISOString();
   if (!r.ok) {
@@ -5798,7 +5965,7 @@ async function vpaResendProspectWelcome(env, actor, venue, f, which, b, json) {
 
   let token = null;
   if (login && !sms) {
-    try { token = await vpaMintSigninLink(env, login.id, venue.id, sendAtMs || now); }
+    try { const one = await vpaProspectOneLink(env, venue.id, login.id, { arm: true }); token = one ? one.token : await vpaMintSigninLink(env, login.id, venue.id, sendAtMs || now); }
     catch (e) { token = null; warnings.push('The one-click sign-in was not made (migration 123), so their button asks for a sign-in link instead.'); }
   }
   const render = { foundingId: f.id, email: email, firstName: String(prow.contact_name || setup.first_name || last.firstName || '').trim().slice(0, 60),

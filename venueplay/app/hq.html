@@ -2623,7 +2623,9 @@
       : "by email only, to "+(p.email||"their login")+" (add a mobile in Edit details to text it too)";
     /* No number before the Worker has minted the link (Dean, 4 Nov 2026: never print a number that is not the real
        expiry). The Worker's own line says how it went and until when. */
-    return vpAsk("Send "+name+" a new sign-in link?\n\nIt goes "+how+". One tap opens their account"+(p?", for a fresh 30 days":"")+". Any older link stops working.").then(function(ok){ if(!ok) return null;
+    /* THE SAME LINK (Dean, 6 Nov 2026): a prospect's resend is the same link as before, and it never gives them more
+       time. Only "Start a fresh 30 days" (hqFreshWindow, below) does. */
+    return vpAsk("Send "+name+" their sign-in link again?\n\nIt goes "+how+". One tap opens their account."+(p?" It is the same link as before, and it does not give them more time.":" Any older link stops working.")).then(function(ok){ if(!ok) return null;
       busy("Sending...");
       return workerPost("/admin/signin-link", { venue_id:id, text:true }).then(function(r){
         done();
@@ -2635,6 +2637,25 @@
     });
   }
   window.hqSigninLink=hqSigninLink;
+  /* "START A FRESH 30 DAYS" (Dean, 6 Nov 2026): its own button, the ONLY way a prospect gets a new window. A new link that
+     lasts 30 days from today goes by email (and text with a mobile); their old link stops working. The free month is
+     not touched (it starts at their first sign-in, as always). */
+  function hqFreshWindow(id, btn, p){
+    p = p || (window.VPProspects && VPProspects.get ? VPProspects.get(id) : null) || null;
+    var name=((S.venues||[]).filter(function(x){return x.id===id;})[0]||{}).name||(p&&p.name)||"this venue";
+    var was=btn.textContent;
+    return vpAsk("Start a fresh 30 days for "+name+"?\n\nThey get a NEW sign-in link that lasts 30 days from today, by email"+(p&&p.mobile?" and text":"")+". Their old link stops working, and the follow-ups count from today. Their free month is not changed.").then(function(ok){ if(!ok) return null;
+      btn.disabled=true; btn.textContent="Sending...";
+      return workerPost("/admin/signin-link", { venue_id:id, text:true, fresh:true }).then(function(r){
+        btn.disabled=false; btn.textContent=was;
+        if(r.error){ vpTell(r.error); return r; }
+        vpTell("A fresh 30 days started. "+(r.line || ("Sent by email, link works until "+(r.expires_words||"it expires")+"."))+"\n\nThe email went to "+r.to+(r.text&&r.text.mobile&&(r.text.status==="sent"||r.text.status==="queued")?", the text to "+r.text.mobile:"")+".");
+        if(window.VPProspects && p) VPProspects.load();
+        return r;
+      });
+    });
+  }
+  window.hqFreshWindow=hqFreshWindow;
   /* RESEND THEIR EMAIL (31 Oct 2026). One shared function: the Venues row and HQ > Prospects both call it.
      It asks the Worker which email would go (dry_run) and to whom, says exactly that, and only then sends. */
   function resendLabel(id){

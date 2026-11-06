@@ -168,6 +168,7 @@ check('index.html: any other venue goes on to the plain card and the TV, as befo
 
 /* =============================================================================================== */
 load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
 vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 /* jsc has no WebCrypto, TextEncoder, atob or URL. Stand-ins that are pure functions of their input are
    enough for what is claimed here (the link the email carries is the one /add-card accepts); the
