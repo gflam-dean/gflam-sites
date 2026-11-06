@@ -13762,7 +13762,7 @@ MUTATIONS = [
      '<link rel="stylesheet" href="/app/vp-tonight.css">', '',
      'the trivia phone stops loading the shared waiting-screen look'),
     ('test-vp-tonight.js', 'venueplay/app/vp-tonight.css',
-     '.vpt-on #vpAd .slide{aspect-ratio:2/1}', '.vpt-on #vpAd .slide{aspect-ratio:16/9}',
+     '.vpt-on #vpAd .slide{aspect-ratio:5/2}', '.vpt-on #vpAd .slide{aspect-ratio:16/9}',
      'the ad under the lobby is full height again and pushes our logo off a 664px screen'),
     ('test-join-list.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (mobile && !/^\\+?[0-9]{8,15}$/.test(mobile)) return json({ error: 'That mobile does not look right' }, 400);", '',
