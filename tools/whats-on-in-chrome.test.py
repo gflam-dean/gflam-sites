@@ -153,28 +153,40 @@ def tv_and_phone():
         ]
         r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': None, 'raffle': None, 'events': nights,
                                      'slides': [{'image_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg', 'seconds': 3}]}], replace=True)
-        print('\nTV: the venue\'s nights between games')
-        for (W, H) in ((1920, 1080), (1280, 720)):
-            tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
-            got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-list");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
-            time.sleep(1.2)   # the 0.8 s hand-over has finished
-            ok('%dx%d: the What\'s on list slide takes its turn in the loop' % (W, H), got is True, r.ask(sid, '(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})() && (function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})().innerText'))
-            m = r.json(sid, 'JSON.stringify((function(){var s=(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})(),rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),bot:Math.round(b.bottom),right:Math.round(b.right),bar:getComputedStyle(x,"::before").backgroundColor};});var hd=s.querySelector(".wo-head").getBoundingClientRect(); return {kick:s.querySelector(".wo-kick").textContent,head:s.querySelector(".wo-head").textContent,headTop:Math.round(hd.top),rows:rows,h:innerHeight,w:innerWidth};})())', {})
-            rows = m.get('rows') or []
-            ok('%dx%d: TEST ALPHA over WHAT\u2019S ON at the top, tonight first with the pink bar, then tomorrow, then the one-off; times as people say them; the past gig never shows' % (W, H),
-               m.get('kick') == 'Test Alpha' and m.get('head') == 'What\u2019s on' and m.get('headTop', 999) < m.get('h', 0) * 0.15 and len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t']
-               and 'TOMORROW' in rows[1]['t'].upper() and 'Kujo' in rows[2]['t'] and rows[0]['bar'] == 'rgb(255, 31, 142)' and not any('Long gone' in x['t'] for x in rows), m)
-            ok('%dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
-            if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-list-%d.jpg' % W))
-            got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-poster");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
-            time.sleep(1.2)
-            p = r.json(sid, 'JSON.stringify((function(){var s=(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})(); if(!s||!s.querySelector(".wo-poster")) return {}; var pic=s.querySelector(".wo-pic").getBoundingClientRect(), w=s.querySelector(".wo-words").getBoundingClientRect(); return {bg:s.querySelector(".wo-pic").style.backgroundImage,txt:s.innerText.replace(/\\s+/g," "),pic:[Math.round(pic.width),Math.round(pic.height)],wordsRight:Math.round(w.right),overlap:pic.right>w.left+1,w:innerWidth};})())', {})
-            ok('%dx%d: the night with a picture gets a poster slide: the picture whole on the left, the words beside it' % (W, H),
-               got is True and 'tugun-friday.jpg' in p.get('bg', '') and 'REVOLVER FRIDAYS' in p.get('txt', '').upper() and 'TOMORROW' in p.get('txt', '').upper() and '10pm' in p.get('txt', '')
-               and p.get('pic', [0, 0])[1] > H * 0.6 and not p.get('overlap') and p.get('wordsRight', 9999) <= p.get('w', 0), p)
-            if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-poster-%d.jpg' % W))
-            ok('%dx%d: no script errors on the TV' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
-            r.close_tab(tid)
+        print('\nTV: the venue\'s nights between games (round 4: feature and week; the plain list when no night has a picture)')
+        LIT = '(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})()'
+        ROWS = ('rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),top:Math.round(b.top),bot:Math.round(b.bottom),right:Math.round(b.right),h:Math.round(b.height),'
+                'bar:getComputedStyle(x,"::before").backgroundColor,day:getComputedStyle(x.querySelector(".wo-day")).opacity};})')
+        def scene(rowset, label):
+            r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': None, 'raffle': None, 'events': rowset,
+                                         'slides': [{'image_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg', 'seconds': 3}]}], replace=True)
+            for (W, H) in ((1920, 1080), (1280, 720)):
+                tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
+                # The slide on top (z-index 2) is the What's on slide, fully in, and has just arrived (so it stays for its 12 to 14 s).
+                got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".wo-list") && +getComputedStyle(s).opacity>0.99;})()', 40)
+                time.sleep(0.3)
+                m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + ',' + ROWS + ';var hd=s.querySelector(".wo-head").getBoundingClientRect(), b=s.querySelector(".wo-b"), pic=s.querySelector(".wb-pic"), side=s.querySelector(".wb-side .wo-top"), corner=document.querySelector("#tvCorner svg");'
+                                'return {feature:!!b, kick:(s.querySelector(".wo-kick")||{}).textContent||"", head:s.querySelector(".wo-head").textContent, headTop:Math.round(hd.top), headRight:Math.round(hd.right), rows:rows, h:innerHeight, w:innerWidth,'
+                                'pic:pic?[Math.round(pic.getBoundingClientRect().width),Math.round(pic.getBoundingClientRect().height)]:null, bg:pic?pic.style.backgroundImage:"", when:(s.querySelector(".wb-when")||{}).textContent||"",'
+                                'corner:(corner && corner.getBoundingClientRect().width>0)?Math.round(corner.getBoundingClientRect().left):9999};})())', {})
+                rows = m.get('rows') or []
+                if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-%s-%d.jpg' % (label, W)))
+                yield W, H, got, m, rows
+                ok('%s %dx%d: no script errors on the TV' % (label, W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
+                r.close_tab(tid)
+        for W, H, got, m, rows in scene(nights, 'feature'):
+            ok('feature %dx%d: a night with a picture: the feature and week view takes its turn in the loop' % (W, H), got is True and m.get('feature') is True, m)
+            ok('feature %dx%d: the picture large on the left with its day and time under it ("Tomorrow · 10pm"), TEST ALPHA over WHAT’S ON clear of our corner mark' % (W, H),
+               'tugun-friday.jpg' in m.get('bg', '') and (m.get('pic') or [0, 0])[1] > H * 0.6 and m.get('when') == 'Tomorrow · 10pm' and m.get('kick') == 'Test Alpha' and m.get('head') == 'What’s on' and m.get('headRight', 9999) + 12 <= m.get('corner', 0), dict((k, v) for k, v in m.items() if k != 'rows'))
+            ok('feature %dx%d: the week beside it, tonight first with the pink bar, then tomorrow, then the one-off; the past gig never shows' % (W, H),
+               len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t'] and 'TOMORROW' in rows[1]['t'].upper()
+               and 'Kujo' in rows[2]['t'] and rows[0]['bar'] == 'rgb(255, 31, 142)' and not any('Long gone' in x['t'] for x in rows), rows)
+            ok('feature %dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
+        plain = [dict(n, image_url=None) if n.get('image_url') else n for n in nights]
+        for W, H, got, m, rows in scene(plain, 'list'):
+            ok('list %dx%d: no picture this week: the plain list takes its turn, its header at the top' % (W, H), got is True and not m.get('feature') and m.get('headTop', 999) < H * 0.12, m)
+            ok('list %dx%d: the rows fill the wall below the header (the last ends within 8%% of the bottom), every day label at full strength' % (W, H),
+               len(rows) == 3 and rows[-1]['bot'] >= m['h'] * 0.88 and rows[-1]['bot'] <= m['h'] - 8 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
 
         print('\nPHONE: the week strip on the real trivia phone page')
         for (W, H) in ((390, 664), (375, 667)):
