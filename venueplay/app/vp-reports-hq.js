@@ -171,22 +171,27 @@
     if (!r || r.error) return '<div class="note" style="margin:0">' + rpEsc((r && r.error) || "Could not count the answers just now.") + '</div>';
     if (r.waiting) return '<p class="note" style="margin:0" id="rpGamesWaiting">' + rpEsc(r.note) + '</p>';
     var t = r.tally || {}, g = t.games || {};
-    var h = '<p style="margin:0 0 8px" id="rpGamesLine"><b>' + n(t.answered) + '</b> of ' + n(t.venues) + ' active venues have told us which games they play; <b>' + n(t.answered_month) + '</b> answered in ' + rpEsc(monthWords(r.month)) + '.</p>'
-      + '<div class="tscroll"><table><thead><tr><th>Game</th><th>Venues that play it</th><th>New in ' + rpEsc(monthWords(r.month).split(" ")[0]) + '</th><th>Set up</th></tr></thead><tbody>'
+    var mname = rpEsc(monthWords(r.month).split(" ")[0]);
+    /* Round 4 (Dean): every count says which it is. Running total is every venue that has ever told us; new is answered in the month picked. */
+    var sub = function (x) { return '<div class="vt">' + n(x) + ' new</div>'; };
+    var both = function (x) { return '<li>' + rpEsc(x.text) + ': running total ' + n(x.count) + ', new in ' + mname + ' ' + n(x.count_month) + '</li>'; };
+    var h = '<p style="margin:0 0 4px" id="rpGamesLine"><b>Running total:</b> ' + n(t.answered) + ' of ' + n(t.venues) + ' active venues have told us which games they play.</p>'
+      + '<p style="margin:0 0 8px" id="rpGamesNewLine"><b>New in ' + mname + ':</b> ' + n(t.answered_month) + ' answered in ' + rpEsc(monthWords(r.month)) + '.</p>'
+      + '<div class="tscroll"><table><thead><tr><th>Game</th><th>Running total</th><th>New in ' + mname + '</th><th>Set up (running total)</th></tr></thead><tbody>'
       + GAMES.map(function (x) { var c = g[x[0]] || {}; return '<tr><td>' + rpEsc(x[1]) + '</td><td class="mono">' + n(c.plays) + '</td><td class="mono">' + n(c.new_month) + '</td><td class="mono">' + n(c.set_up) + '</td></tr>'; }).join("")
       + '</tbody></table></div>';
     if ((t.states || []).length) {
-      h += '<div class="note" style="margin:12px 0 4px"><b>State by state</b></div><div class="tscroll"><table><thead><tr><th>State</th><th>Answered</th>'
+      h += '<div class="note" style="margin:12px 0 4px"><b>State by state</b>: each number is the running total, underneath it new in ' + mname + '.</div><div class="tscroll"><table><thead><tr><th>State</th><th>Answered</th>'
         + GAMES.map(function (x) { return '<th>' + rpEsc(x[1]) + '</th>'; }).join("") + '</tr></thead><tbody>'
-        + t.states.map(function (st) { return '<tr><td>' + rpEsc(st.name) + '</td><td class="mono">' + n(st.answered) + ' of ' + n(st.venues) + '</td>'
-          + GAMES.map(function (x) { return '<td class="mono">' + n((st.games || {})[x[0]]) + '</td>'; }).join("") + '</tr>'; }).join("")
+        + t.states.map(function (st) { return '<tr><td>' + rpEsc(st.name) + '</td><td class="mono">' + n(st.answered) + ' of ' + n(st.venues) + sub(st.answered_month) + '</td>'
+          + GAMES.map(function (x) { return '<td class="mono">' + n((st.games || {})[x[0]]) + sub((st.games_month || {})[x[0]]) + '</td>'; }).join("") + '</tr>'; }).join("")
         + '</tbody></table></div>';
     }
     var o = t.other || [];
     h += '<div class="note" style="margin:12px 0 4px"><b>Something else they run</b></div>'
-      + (o.length ? '<p style="margin:0 0 8px">' + o.map(function (x) { return rpEsc(x.text) + " (" + n(x.count) + ")"; }).join(", ") + '</p>' : '<p class="note" style="margin:0 0 8px">Nobody has written anything else yet.</p>')
+      + (o.length ? '<ul style="margin:0 0 8px;padding-left:20px">' + o.map(both).join("") + '</ul>' : '<p class="note" style="margin:0 0 8px">Nobody has written anything else yet.</p>')
       + '<div class="note" style="margin:12px 0 4px"><b>Games we don\'t run yet</b></div>'
-      + ((t.not_ours || []).length ? '<p style="margin:0 0 8px" id="rpGamesNotOurs">' + t.not_ours.map(function (x) { return rpEsc(x.text) + " (" + n(x.count) + ")"; }).join(", ") + '</p>' : '<p class="note" style="margin:0 0 8px">None so far.</p>')
+      + ((t.not_ours || []).length ? '<ul style="margin:0 0 8px;padding-left:20px" id="rpGamesNotOurs">' + t.not_ours.map(both).join("") + '</ul>' : '<p class="note" style="margin:0 0 8px">None so far.</p>')
       /* The Worker's own CSV (vprGamesCsv), the same file that goes with the email on the 1st. A byte order mark so Excel reads it as UTF-8. */
       + (r.csv ? '<p style="margin:0 0 8px"><a id="rpGamesCsv" download="' + rpEsc(r.csv_name || "what-venues-play.csv") + '" href="data:text/csv;charset=utf-8,' + rpEsc(encodeURIComponent("\ufeff" + r.csv)) + '">Download as a spreadsheet</a></p>' : "")
       + '<p class="note" style="margin:0">From the answers in the setup wizard, as they stand now. Test venues and venues that are not active are left out. The same numbers go to Dean in an internal email on the 1st.</p>';

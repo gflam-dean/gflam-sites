@@ -32,6 +32,9 @@
    = Karaoke 2, POOL comp 2 (first spelling kept), then one each: the markup, =HYPERLINK("x"),
      Jag the Joker, Lawn bow, Meat raffle. Ours: Jag the Joker and Meat raffle.
      Games we don't run yet: Karaoke 2, POOL comp 2, the markup 1, =HYPERLINK("x") 1, Lawn bow 1.
+   RUNNING TOTAL AND NEW IN OCTOBER (round 4): new means games_at in October, so V1 and V3 are new and
+   the Anchor (September) is not. By state, new: QLD 1 (trivia, musical, raffles), ACT 1 (musical,
+   raffles, members), State not set 0. Something else, new: Karaoke 1 of 2, POOL comp 1 of 2, the rest 1 of 1.
 
    Run from the repo root:  jsc tools/test-games-answers.js
 */
@@ -131,7 +134,8 @@ function row(html, name) {
     [row(mail.html, 'Trivia'), row(mail.html, 'Musical bingo'), row(mail.html, 'Bingo'), row(mail.html, 'Raffles'), row(mail.html, 'Members draws')]);
   var at = ['>Trivia<', '>Musical bingo<', '>Bingo<', '>Raffles<', '>Members draws<'].map(function (s) { return mail.html.indexOf(s); });
   check('the games in the house order: Trivia, Musical bingo, Bingo, Raffles, Members draws', at.every(function (x, i) { return x > 0 && (i === 0 || x > at[i - 1]); }), at);
-  check('the totals in words', /3 of 4 active venues have told us which games they play\. 2 of them answered in October 2026\./.test(mail.html));
+  check('the totals in words, each labelled', /<b>Running total:<\/b> 3 of 4 active venues have told us which games they play\./.test(mail.html) && /<b>New in October:<\/b> 2 answered in October 2026\./.test(mail.html));
+  check('the game table says Running total and New in October', />Running total<\/th>/.test(mail.html) && />New in October<\/th>/.test(mail.html) && />Set up \(running total\)<\/th>/.test(mail.html) && !/Venues that play it/.test(mail.html));
   check('no long dash, venueplay in lower case, never Gflam', !/[\u2014\u2013]|&mdash;|&ndash;/.test(mail.html + mail.subject) && !/VenuePlay|Venueplay|VENUEPLAY/.test(mail.html.replace(/alt="[^"]*"/g, '')) && !/gflam/i.test(mail.html));
   check('the new-look staff card (logo band and the for-your-info pill)', /venueplay-email-on-dark\.png/.test(mail.html) && /FOR YOUR INFO/.test(mail.html));
 
@@ -153,30 +157,43 @@ function row(html, name) {
   var ours = vprGamesTally([{ venue_id: V1, setup_answers: { games: [], other: 'Pub TRIVIA, Musical Bingo night, members draws, Raffles, meat raffles, Jag the joker, Lawn bowls' } }], venues, tests, '2026-10');
   check('our games are matched on the words, any case (trivia, musical bingo, members draws, raffles, meat raffles, jag the joker)',
     ours.not_ours.map(function (o) { return o.text; }).join('|') === 'Lawn bowls' && ours.other.length === 7, ours.other);
-  check('the email lists games we don\'t run yet, escaped', /Games we don't run yet/.test(mail.html) && /Lawn bow \(1\)/.test(mail.html) && mail.html.indexOf('=HYPERLINK(&quot;x&quot;) (1)') !== -1 && /POOL comp \(2\)/.test(mail.html));
+  check('the email lists games we don\'t run yet, escaped, with both figures', /Games we don't run yet/.test(mail.html) && /Lawn bow: running total 1, new in October 1/.test(mail.html) && mail.html.indexOf('=HYPERLINK(&quot;x&quot;): running total 1, new in October 1') !== -1 && /POOL comp: running total 2, new in October 1/.test(mail.html));
+  check('this month by state: QLD 1 new (trivia, musical, raffles), ACT 1 new (musical, raffles, members), State not set 0 (the Anchor answered in September)',
+    S_.QLD.answered_month === 1 && [S_.QLD.games_month.trivia, S_.QLD.games_month.musical, S_.QLD.games_month.bingo, S_.QLD.games_month.raffles, S_.QLD.games_month.members].join() === '1,1,0,1,0'
+    && S_.ACT.answered_month === 1 && [S_.ACT.games_month.trivia, S_.ACT.games_month.musical, S_.ACT.games_month.bingo, S_.ACT.games_month.raffles, S_.ACT.games_month.members].join() === '0,1,0,1,1'
+    && NS.answered_month === 0 && [NS.games_month.trivia, NS.games_month.bingo].join() === '0,0', [S_.QLD, S_.ACT, NS]);
+  check('something else this month counts only venues that answered in October: Karaoke 1 of 2, POOL comp 1 of 2, the rest 1 of 1',
+    t.other.map(function (o) { return o.count + '/' + o.count_month; }).join() === '2/1,2/1,1/1,1/1,1/1,1/1,1/1', t.other);
+  var tSepO = vprGamesTally(DB.vp_venue_settings, venues, tests, '2026-09');
+  check('and in September only the Anchor\'s entries are new (Karaoke 1, POOL comp 1)', tSepO.other.filter(function (o) { return o.count_month; }).map(function (o) { return o.text + '=' + o.count_month; }).join() === 'Karaoke=1,POOL comp=1', tSepO.other);
 
   print('the spreadsheet');
   var csv = vprGamesCsv('2026-10', t);
   var WANT = [
     '"What venues play: October 2026 (internal, venueplay)"', '',
-    'Game,Venues that play it,New in October,Set up',
+    '"Running total means every venue that has ever told us, all time. New in October means it answered in October 2026."', '',
+    'Game,Running total,New in October,Set up (running total)',
     'Trivia,2,1,1', 'Musical bingo,2,2,0', 'Bingo,1,0,1', 'Raffles,2,2,1', 'Members draws,1,1,1', '',
-    'Active venues,4', 'Answered,3', 'Answered in October,2', '',
-    'State,Active venues,Answered,Trivia,Musical bingo,Bingo,Raffles,Members draws',
-    'QLD,1,1,1,1,0,1,0', 'ACT,1,1,0,1,0,1,1', 'State not set,2,1,1,0,1,0,0', '',
-    'Something else they run,Venues,One of our games',
-    'Karaoke,2,No', 'POOL comp,2,No', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1,No', '"\'=HYPERLINK(""x"")",1,No', 'Jag the Joker,1,Yes', 'Lawn bow,1,No', 'Meat raffle,1,Yes', '',
-    "Games we don't run yet,Venues",
-    'Karaoke,2', 'POOL comp,2', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1', '"\'=HYPERLINK(""x"")",1', 'Lawn bow,1'].join('\r\n') + '\r\n';
+    'Active venues,4', '"Answered, running total",3', '"Answered, new in October",2', '',
+    'State,Active venues,"Answered, running total","Answered, new in October","Trivia, running total","Trivia, new in October","Musical bingo, running total","Musical bingo, new in October",'
+      + '"Bingo, running total","Bingo, new in October","Raffles, running total","Raffles, new in October","Members draws, running total","Members draws, new in October"',
+    'QLD,1,1,1,1,1,1,1,0,0,1,1,0,0', 'ACT,1,1,1,0,0,1,1,0,0,1,1,1,1', 'State not set,2,1,0,1,0,0,0,1,0,0,0,0,0', '',
+    'Something else they run,Running total,New in October,One of our games',
+    'Karaoke,2,1,No', 'POOL comp,2,1,No', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1,1,No', '"\'=HYPERLINK(""x"")",1,1,No', 'Jag the Joker,1,1,Yes', 'Lawn bow,1,1,No', 'Meat raffle,1,1,Yes', '',
+    "Games we don't run yet,Running total,New in October",
+    'Karaoke,2,1', 'POOL comp,2,1', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1,1', '"\'=HYPERLINK(""x"")",1,1', 'Lawn bow,1,1'].join('\r\n') + '\r\n';
   check('the CSV is the hand count, line for line', csv === WANT, csv.split('\r\n').filter(function (l, i) { return l !== WANT.split('\r\n')[i]; }));
   check('a venue\'s words starting with = open as text, never a formula', csv.indexOf('\'=HYPERLINK') !== -1 && !/(^|,)=HYPERLINK/m.test(csv));
   check('the file is named for the month', vprGamesCsvName('2026-10') === 'what-venues-play-2026-10.csv');
 
   print('the email: state by state and something else');
-  var stRow = /<td[^>]*>ACT<\/td><td[^>]*>1 of 1<\/td>((?:<td[^>]*>\d+<\/td>){5})/.exec(mail.html);
-  check('the email has the state table, ACT\'s row in the house order of games (0, 1, 0, 1, 1)', !!stRow && stRow[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).join(',') === '0,1,0,1,1', stRow && stRow[1]);
+  var stRow = /<td[^>]*>ACT<\/td><td[^>]*>1 of 1<br><span[^>]*>1 new<\/span><\/td>((?:<td[^>]*>\d+<br><span[^>]*>\d+ new<\/span><\/td>){5})/.exec(mail.html);
+  check('the email has the state table, ACT\'s row in the house order of games, running total over new (0/0, 1/1, 0/0, 1/1, 1/1)', !!stRow && stRow[1].replace(/<[^>]+>/g, ' ').replace(/ new/g, '').trim().split(/\s+/).join(',') === '0,0,1,1,0,0,1,1,1,1', stRow && stRow[1]);
+  var nsRow = /<td[^>]*>State not set<\/td><td[^>]*>1 of 2<br><span[^>]*>0 new<\/span><\/td>((?:<td[^>]*>\d+<br><span[^>]*>\d+ new<\/span><\/td>){5})/.exec(mail.html);
+  check('State not set in the email: the Anchor\'s trivia and bingo are in the running total and not new (1/0, 0/0, 1/0, 0/0, 0/0)', !!nsRow && nsRow[1].replace(/<[^>]+>/g, ' ').replace(/ new/g, '').trim().split(/\s+/).join(',') === '1,0,0,0,1,0,0,0,0,0', nsRow && nsRow[1]);
+  check('and says what the two numbers are', /Each number is the running total\. Underneath: new in October\./.test(mail.html));
   check('and State not set, never "the ACT"', /State not set<\/td><td[^>]*>1 of 2</.test(mail.html) && !/the ACT/i.test(mail.html));
-  check('Something else they run, with a count each', /Something else they run/.test(mail.html) && /Karaoke \(2\)/.test(mail.html) && mail.html.indexOf('karaoke  ') === -1);
+  check('Something else they run, with a running total and new in October each', /Something else they run/.test(mail.html) && /Karaoke: running total 2, new in October 1/.test(mail.html) && /Jag the Joker: running total 1, new in October 1/.test(mail.html) && mail.html.indexOf('karaoke  ') === -1);
   check('the venue\'s words are escaped in the email', mail.html.indexOf('<i>Meat') === -1 && mail.html.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
   check('and never in the subject', mail.subject === 'What venues play: October 2026' && !/Karaoke|Meat/.test(mail.subject));
 
@@ -283,16 +300,22 @@ function row(html, name) {
   var pg = hqPage(ADMIN); pg.VP.open(); await pg.settle();
   var gh = (pg.els.rpGames || {}).innerHTML || '';
   check('the section is #rpGames in HQ > Reports, and it asks for action games', !!pg.els.rpGames && /id="rpGames"/.test(pg.els.paneReports.innerHTML) && /What venues play/.test(pg.els.paneReports.innerHTML));
-  check('it shows the hand count: 3 of 4 answered, 0 in November so far', /<b>3<\/b> of 4 active venues have told us which games they play; <b>0<\/b> answered in November 2026/.test(gh), gh.slice(0, 300));
+  check('it shows the hand count, labelled: running total 3 of 4, new in November 0', /id="rpGamesLine"><b>Running total:<\/b> 3 of 4 active venues have told us which games they play\./.test(gh) && /id="rpGamesNewLine"><b>New in November:<\/b> 0 answered in November 2026\./.test(gh), gh.slice(0, 300));
   var hqRow = function (name) { var m = new RegExp('<td>' + name + '</td>((?:<td class="mono">\\d+</td>){3})').exec(gh); return m ? m[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).join(',') : null; };
   check('every game row in the house order with plays, new, set up', hqRow('Trivia') === '2,0,1' && hqRow('Musical bingo') === '2,0,0' && hqRow('Bingo') === '1,0,1' && hqRow('Raffles') === '2,0,1' && hqRow('Members draws') === '1,0,1'
     && gh.indexOf('<td>Trivia</td>') < gh.indexOf('<td>Musical bingo</td>') && gh.indexOf('<td>Musical bingo</td>') < gh.indexOf('<td>Bingo</td>'), [hqRow('Trivia'), hqRow('Musical bingo'), hqRow('Bingo')]);
-  check('state by state: QLD, ACT and State not set with answered of venues', /<td>QLD<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>ACT<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>State not set<\/td><td class="mono">1 of 2<\/td>/.test(gh) && !/the ACT/i.test(gh));
-  check('something else, counted and escaped', /Something else they run/.test(gh) && /Karaoke \(2\)/.test(gh) && gh.indexOf('<i>Meat') === -1 && gh.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
+  check('state by state: QLD, ACT and State not set with answered of venues', /<td>QLD<\/td><td class="mono">1 of 1<div class="vt">0 new<\/div><\/td>/.test(gh) && /<td>ACT<\/td><td class="mono">1 of 1<div class="vt">0 new<\/div><\/td>/.test(gh) && /<td>State not set<\/td><td class="mono">1 of 2<div class="vt">0 new<\/div><\/td>/.test(gh) && !/the ACT/i.test(gh));
+  check('something else, counted and escaped', /Something else they run/.test(gh) && /<li>Karaoke: running total 2, new in November 0<\/li>/.test(gh) && gh.indexOf('<i>Meat') === -1 && gh.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
   var link = /<a id="rpGamesCsv" download="([^"]*)" href="data:text\/csv;charset=utf-8,([^"]*)">Download as a spreadsheet<\/a>/.exec(gh);
   check('Download as a spreadsheet: the Worker\'s CSV, named for the month, with the byte order mark', !!link && link[1] === 'what-venues-play-2026-11.csv'
     && decodeURIComponent(link[2].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')) === '\ufeff' + hr.body.csv, link && link[1]);
-  check('games we don\'t run yet, escaped', /id="rpGamesNotOurs">Karaoke \(2\), POOL comp \(2\), &lt;i&gt;Meat/.test(gh), gh.slice(gh.indexOf('rpGamesNotOurs'), gh.indexOf('rpGamesNotOurs') + 120));
+  check('games we don\'t run yet, escaped', /id="rpGamesNotOurs"><li>Karaoke: running total 2, new in November 0<\/li><li>POOL comp: running total 2, new in November 0<\/li><li>&lt;i&gt;Meat/.test(gh), gh.slice(gh.indexOf('rpGamesNotOurs'), gh.indexOf('rpGamesNotOurs') + 120));
+  var octR = (await call(vpaHandleMonthReport, ADMIN, { action: 'games', month: '2026-10' })).body;
+  var oh = pg.VP.gamesHtml(octR);
+  check('HQ for October: new in October 2, QLD trivia 1 over 1 new, Karaoke 2 with 1 new', /<b>New in October:<\/b> 2 answered in October 2026\./.test(oh)
+    && /<td>QLD<\/td><td class="mono">1 of 1<div class="vt">1 new<\/div><\/td><td class="mono">1<div class="vt">1 new<\/div><\/td>/.test(oh) && /<li>Karaoke: running total 2, new in October 1<\/li>/.test(oh)
+    && /<td>State not set<\/td><td class="mono">1 of 2<div class="vt">0 new<\/div><\/td><td class="mono">1<div class="vt">0 new<\/div><\/td>/.test(oh)
+    && />Running total<\/th><th>New in October<\/th><th>Set up \(running total\)<\/th>/.test(oh), oh.slice(0, 400));
   check('opening the page sends nothing', sent.length === 0 && DB.vp_admin_audit.length === 0);
   world(); COLUMN_MISSING = true;
   var pw = hqPage(ADMIN); pw.VP.open(); await pw.settle();

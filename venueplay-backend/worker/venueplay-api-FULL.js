@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 12:35 · 356eb26e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 13:42 · 4b8a8ce3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15454,8 +15454,8 @@ function vprGamesTally(rows, venues, tests, month) {
   VPR_GAMES.forEach((g) => { t.games[g[0]] = { name: g[1], plays: 0, new_month: 0, set_up: 0 }; });
   const byState = {};
   VPR_GAMES_STATES.concat(['']).forEach((k) => {
-    const st = byState[k] = { state: k, name: k || VPR_GAMES_NO_STATE, venues: 0, answered: 0, games: {} };
-    VPR_GAMES.forEach((g) => { st.games[g[0]] = 0; });
+    const st = byState[k] = { state: k, name: k || VPR_GAMES_NO_STATE, venues: 0, answered: 0, answered_month: 0, games: {}, games_month: {} };
+    VPR_GAMES.forEach((g) => { st.games[g[0]] = 0; st.games_month[g[0]] = 0; });
   });
   (venues || []).forEach((v) => {
     if (!v || !live[v.id] || stateOf[v.id] !== undefined) return;
@@ -15474,17 +15474,17 @@ function vprGamesTally(rows, venues, tests, month) {
     const fresh = !!at && at.slice(0, 7) === month;
     t.answered++; if (fresh) t.answered_month++;
     const st = byState[stateOf[r.venue_id]];
-    st.answered++;
+    st.answered++; if (fresh) st.answered_month++;
     const setup = (a.setup && typeof a.setup === 'object') ? a.setup : {};
     VPR_GAMES.forEach((g) => {
       const c = t.games[g[0]];
-      if (a.games.indexOf(g[0]) !== -1) { c.plays++; st.games[g[0]]++; if (fresh) c.new_month++; }
+      if (a.games.indexOf(g[0]) !== -1) { c.plays++; st.games[g[0]]++; if (fresh) { c.new_month++; st.games_month[g[0]]++; } }
       if (setup[g[0]] === 'done') c.set_up++;
     });
     (typeof a.other === 'string' ? vprGamesOther(a.other) : []).forEach((o) => {
       const key = o.toLowerCase();
-      if (!other[key]) other[key] = { text: o, count: 0, ours: VPR_GAMES_OURS.test(o) };
-      other[key].count++;
+      if (!other[key]) other[key] = { text: o, count: 0, count_month: 0, ours: VPR_GAMES_OURS.test(o) };
+      other[key].count++; if (fresh) other[key].count_month++;
     });
   });
   t.states = VPR_GAMES_STATES.concat(['']).map((k) => byState[k]).filter((x) => x.venues > 0);
@@ -15505,44 +15505,52 @@ function vprGamesEmail(env, month, tally) {
   });
   const inner = '<h2 style="margin:0 0 12px">What venues play: ' + vpaEsc(words) + '</h2>'
     + '<p style="margin:0 0 12px">This is an internal email for the venueplay team. It is not sent to any venue.</p>'
-    + '<p style="margin:0 0 16px">' + tally.answered + ' of ' + tally.venues + ' active venues have told us which games they play. '
-    + tally.answered_month + ' of them answered in ' + vpaEsc(words) + '.</p>'
+    + '<p style="margin:0 0 4px"><b>Running total:</b> ' + tally.answered + ' of ' + tally.venues + ' active venues have told us which games they play.</p>'
+    + '<p style="margin:0 0 12px"><b>New in ' + vpaEsc(vprMonthName(month)) + ':</b> ' + tally.answered_month + ' answered in ' + vpaEsc(words) + '.</p>'
+    + '<p style="margin:0 0 16px;font-size:13px;color:#6a6a75">Running total means every venue that has ever told us, all time. New means it answered in ' + vpaEsc(words) + '.</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
-    + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right">Venues that play it</th>'
-    + '<th style="' + head + ';text-align:right">New in ' + vpaEsc(vprMonthName(month)) + '</th><th style="' + head + ';text-align:right">Set up</th></tr>'
+    + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right">Running total</th>'
+    + '<th style="' + head + ';text-align:right">New in ' + vpaEsc(vprMonthName(month)) + '</th><th style="' + head + ';text-align:right">Set up (running total)</th></tr>'
     + rows + '</table>'
-    + vprGamesStatesHtml(tally, cell, head)
-    + vprGamesOtherHtml(tally)
+    + vprGamesStatesHtml(tally, cell, head, month)
+    + vprGamesOtherHtml(tally, month)
     + '<p style="margin:0;font-size:13px;color:#6a6a75">Counted from the answers in the setup wizard. Test venues and venues that are not active are left out. '
     + 'Set up means the venue finished that game\'s setup step in the wizard.</p>';
   return { to: VPR_GAMES_TO, subject: subject, html: vpaStaffCard(inner, subject, 'fyi') };
 }
-function vprGamesStatesHtml(tally, cell, head) {
+/* Each state cell is the running total, with the month's new ones small underneath ("2" over "1 new"),
+   so seven columns still fit a phone. */
+function vprGamesStatesHtml(tally, cell, head, month) {
   if (!(tally.states || []).length) return '';
   /* Seven narrow columns: words wrap between words only, never mid-word ("Answere d"), and sit a little smaller. */
   head += ';word-break:normal;overflow-wrap:normal;hyphens:none;font-size:11px;padding-left:4px;padding-right:4px;vertical-align:bottom';
   cell += ';padding-left:4px;padding-right:4px;white-space:nowrap';
-  let h = '<p style="margin:0 0 8px;font-weight:700">State by state</p>'
+  const mname = vpaEsc(vprMonthName(month));
+  const sub = (x) => '<br><span style="font-size:11px;color:#6a6a75">' + x + ' new</span>';
+  let h = '<p style="margin:0 0 4px;font-weight:700">State by state</p>'
+    + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">Each number is the running total. Underneath: new in ' + mname + '.</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
     + '<tr><th style="' + head + '">State</th><th style="' + head + ';text-align:right">Answered</th>';
   VPR_GAMES.forEach((g) => { h += '<th style="' + head + ';text-align:right">' + vpaEsc(g[1]) + '</th>'; });
   h += '</tr>';
   tally.states.forEach((st) => {
-    h += '<tr><td style="' + cell + '">' + vpaEsc(st.name) + '</td><td style="' + cell + ';text-align:right">' + st.answered + ' of ' + st.venues + '</td>';
-    VPR_GAMES.forEach((g) => { h += '<td style="' + cell + ';text-align:right">' + st.games[g[0]] + '</td>'; });
+    h += '<tr><td style="' + cell + '">' + vpaEsc(st.name) + '</td><td style="' + cell + ';text-align:right">' + st.answered + ' of ' + st.venues + sub(st.answered_month) + '</td>';
+    VPR_GAMES.forEach((g) => { h += '<td style="' + cell + ';text-align:right">' + st.games[g[0]] + sub(st.games_month[g[0]]) + '</td>'; });
     h += '</tr>';
   });
   return h + '</table>';
 }
-function vprGamesOtherHtml(tally) {
+function vprGamesOtherHtml(tally, month) {
   const list = tally.other || [];
+  const mname = vpaEsc(vprMonthName(month));
+  const both = (o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ': running total ' + o.count + ', new in ' + mname + ' ' + (o.count_month || 0) + '</li>';
   return '<p style="margin:0 0 8px;font-weight:700">Something else they run</p>'
     + (list.length
-      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + list.map((o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ' (' + o.count + ')</li>').join('') + '</ul>'
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + list.map(both).join('') + '</ul>'
       : '<p style="margin:0 0 16px">Nobody has written anything else yet.</p>')
     + '<p style="margin:0 0 8px;font-weight:700">Games we don\'t run yet</p>'
     + ((tally.not_ours || []).length
-      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + tally.not_ours.map((o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ' (' + o.count + ')</li>').join('') + '</ul>'
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + tally.not_ours.map(both).join('') + '</ul>'
       : '<p style="margin:0 0 16px">None so far.</p>');
 }
 /* The same numbers as a spreadsheet (CSV, Excel opens it): the games, the totals, state by state, something
@@ -15554,21 +15562,25 @@ function vprGamesCsv(month, tally) {
   const mname = vprMonthName(month);
   row(['What venues play: ' + vprMonthWords(month) + ' (internal, venueplay)']);
   row([]);
-  row(['Game', 'Venues that play it', 'New in ' + mname, 'Set up']);
+  row(['Running total means every venue that has ever told us, all time. New in ' + mname + ' means it answered in ' + vprMonthWords(month) + '.']);
+  row([]);
+  row(['Game', 'Running total', 'New in ' + mname, 'Set up (running total)']);
   VPR_GAMES.forEach((g) => { const c = tally.games[g[0]]; row([g[1], c.plays, c.new_month, c.set_up]); });
   row([]);
   row(['Active venues', tally.venues]);
-  row(['Answered', tally.answered]);
-  row(['Answered in ' + mname, tally.answered_month]);
+  row(['Answered, running total', tally.answered]);
+  row(['Answered, new in ' + mname, tally.answered_month]);
   row([]);
-  row(['State', 'Active venues', 'Answered'].concat(VPR_GAMES.map((g) => g[1])));
-  (tally.states || []).forEach((st) => row([st.name, st.venues, st.answered].concat(VPR_GAMES.map((g) => st.games[g[0]]))));
+  const pair = (w) => [w + ', running total', w + ', new in ' + mname];
+  row(['State', 'Active venues'].concat(pair('Answered')).concat([].concat.apply([], VPR_GAMES.map((g) => pair(g[1])))));
+  (tally.states || []).forEach((st) => row([st.name, st.venues, st.answered, st.answered_month]
+    .concat([].concat.apply([], VPR_GAMES.map((g) => [st.games[g[0]], st.games_month[g[0]]])))));
   row([]);
-  row(['Something else they run', 'Venues', 'One of our games']);
-  (tally.other || []).forEach((o) => row([o.text, o.count, o.ours ? 'Yes' : 'No']));
+  row(['Something else they run', 'Running total', 'New in ' + mname, 'One of our games']);
+  (tally.other || []).forEach((o) => row([o.text, o.count, o.count_month || 0, o.ours ? 'Yes' : 'No']));
   row([]);
-  row(["Games we don't run yet", 'Venues']);
-  (tally.not_ours || []).forEach((o) => row([o.text, o.count]));
+  row(["Games we don't run yet", 'Running total', 'New in ' + mname]);
+  (tally.not_ours || []).forEach((o) => row([o.text, o.count, o.count_month || 0]));
   return L.join('\r\n') + '\r\n';
 }
 /* Reads and builds, sends nothing. { month, to, subject, html, tally } or { month, skipped: why }.
