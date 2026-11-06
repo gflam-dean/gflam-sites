@@ -164,7 +164,8 @@
   /* ---- what venues play (Dean, Nov 2026, INBOX 104a) ----
      The same tally as the internal email to Dean on the 1st, any day: POST /admin/month-report
      { action: "games" }, owner only, reads only and never sends. "New" is answered in the month
-     picked. The "Something else" words are the venue's own typing, so every one is escaped. */
+     picked. The "Something else" words are the venue's own typing, so every one is escaped.
+     Round 3: several entries each, the ones that are not our games listed again, and the CSV to download. */
   var GAMES = [["trivia", "Trivia"], ["musical", "Musical bingo"], ["bingo", "Bingo"], ["raffles", "Raffles"], ["members", "Members draws"]];
   function gamesHtml(r) {
     if (!r || r.error) return '<div class="note" style="margin:0">' + rpEsc((r && r.error) || "Could not count the answers just now.") + '</div>';
@@ -184,6 +185,10 @@
     var o = t.other || [];
     h += '<div class="note" style="margin:12px 0 4px"><b>Something else they run</b></div>'
       + (o.length ? '<p style="margin:0 0 8px">' + o.map(function (x) { return rpEsc(x.text) + " (" + n(x.count) + ")"; }).join(", ") + '</p>' : '<p class="note" style="margin:0 0 8px">Nobody has written anything else yet.</p>')
+      + '<div class="note" style="margin:12px 0 4px"><b>Games we don\'t run yet</b></div>'
+      + ((t.not_ours || []).length ? '<p style="margin:0 0 8px" id="rpGamesNotOurs">' + t.not_ours.map(function (x) { return rpEsc(x.text) + " (" + n(x.count) + ")"; }).join(", ") + '</p>' : '<p class="note" style="margin:0 0 8px">None so far.</p>')
+      /* The Worker's own CSV (vprGamesCsv), the same file that goes with the email on the 1st. A byte order mark so Excel reads it as UTF-8. */
+      + (r.csv ? '<p style="margin:0 0 8px"><a id="rpGamesCsv" download="' + rpEsc(r.csv_name || "what-venues-play.csv") + '" href="data:text/csv;charset=utf-8,' + rpEsc(encodeURIComponent("\ufeff" + r.csv)) + '">Download as a spreadsheet</a></p>' : "")
       + '<p class="note" style="margin:0">From the answers in the setup wizard, as they stand now. Test venues and venues that are not active are left out. The same numbers go to Dean in an internal email on the 1st.</p>';
     return h;
   }

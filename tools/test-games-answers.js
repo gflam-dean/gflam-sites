@@ -23,8 +23,15 @@
      QLD            answered 1 of 1   trivia 1, musical 1, raffles 1
      ACT            answered 1 of 1   members 1, raffles 1, musical 1
      State not set  answered 1 of 2   bingo 1, trivia 1
-   SOMETHING ELSE: V1 "Karaoke" and V2 "  karaoke  " are one answer, Karaoke (2); V3's 82 characters of
-   markup are cut to 60 and escaped (1); Test Alpha's "Test Karaoke" is not counted.
+   SOMETHING ELSE, several entries each, comma separated (120 characters in all, 40 each):
+     V1 "Karaoke, Meat raffle, Jag the Joker"
+     V2 "  karaoke  ,POOL comp, karaoke"          (karaoke twice from one venue counts once)
+     V3 82 characters of markup, =HYPERLINK("x"), Pool comp, and "Lawn bowls day" cut by the
+        120 at "Lawn bow"; the markup entry is cut to 40 and escaped
+     Test Alpha's "Test Karaoke" is not counted.
+   = Karaoke 2, POOL comp 2 (first spelling kept), then one each: the markup, =HYPERLINK("x"),
+     Jag the Joker, Lawn bow, Meat raffle. Ours: Jag the Joker and Meat raffle.
+     Games we don't run yet: Karaoke 2, POOL comp 2, the markup 1, =HYPERLINK("x") 1, Lawn bow 1.
 
    Run from the repo root:  jsc tools/test-games-answers.js
 */
@@ -58,7 +65,8 @@ globalThis.fetch = function (url, opts) {
 
 /* The "Something else" words, typed by a venue: markup, quotes and 82 characters, so the cap and the escaping both show. */
 var LONG_OTHER = '<i>Meat</i> & "darts" ' + new Array(61).join('x');
-var CAPPED = LONG_OTHER.slice(0, 60);
+var CAPPED = LONG_OTHER.slice(0, 40);
+var V3_OTHER = LONG_OTHER + ', =HYPERLINK("x"), Pool comp, Lawn bowls day';   // 126 characters: the 120 cuts the last entry
 function world() {
   DB = {}; sent.length = 0; FAIL = {}; COLUMN_MISSING = false; vprForget();
   DB.venueplay_founding = [{ id: 'f1', contact_email: 'owner@royalhotel.com.au', contact_name: 'Sam Smith', plan: 'monthly', status: 'card_on_file' },
@@ -72,9 +80,9 @@ function world() {
                   V(V3, 'The Big Club', 'f3', 'big-club', 'active', ' act '), V(V4, 'Test Alpha', 'f4', 'test-alpha', 'active', 'NSW'),
                   V(V5, 'The Old Inn', 'f5', 'old-inn', 'cancelled', 'VIC'), V(V6, 'The Quiet Inn', 'f6', 'quiet-inn', 'active', 'Queensland')];
   DB.vp_venue_settings = [
-    { venue_id: V1, setup_answers: { tvs: '2', nights: ['fri'], games: ['trivia', 'musical', 'raffles'], name_ok: true, games_at: '2026-10-05', setup: { trivia: 'done', musical: 'later' }, other: 'Karaoke' } },
-    { venue_id: V2, setup_answers: { tvs: '1', games: ['bingo', 'trivia'], games_at: '2026-09-20', setup: { bingo: 'done', trivia: 'shown' }, other: '  karaoke  ' } },
-    { venue_id: V3, setup_answers: { games: ['members', 'raffles', 'musical', 'musical'], games_at: '2026-10-30', setup: { members: 'done', raffles: 'done' }, other: LONG_OTHER } },
+    { venue_id: V1, setup_answers: { tvs: '2', nights: ['fri'], games: ['trivia', 'musical', 'raffles'], name_ok: true, games_at: '2026-10-05', setup: { trivia: 'done', musical: 'later' }, other: 'Karaoke, Meat raffle, Jag the Joker' } },
+    { venue_id: V2, setup_answers: { tvs: '1', games: ['bingo', 'trivia'], games_at: '2026-09-20', setup: { bingo: 'done', trivia: 'shown' }, other: '  karaoke  ,POOL comp, karaoke' } },
+    { venue_id: V3, setup_answers: { games: ['members', 'raffles', 'musical', 'musical'], games_at: '2026-10-30', setup: { members: 'done', raffles: 'done' }, other: V3_OTHER } },
     { venue_id: V4, setup_answers: { games: ['trivia', 'musical', 'bingo', 'raffles', 'members'], games_at: '2026-10-10', setup: { trivia: 'done', bingo: 'done' }, other: 'Test Karaoke' } },
     { venue_id: V5, setup_answers: { games: ['trivia'], games_at: '2026-10-02', setup: { trivia: 'done' } } },
     { venue_id: V6, setup_answers: { tvs: '1' } }];
@@ -136,8 +144,35 @@ function row(html, name) {
   var NS = S_['State not set'];
   check('State not set: 1 of 2 answered, bingo 1, trivia 1, musical 0', NS.venues === 2 && NS.answered === 1 && NS.games.bingo === 1 && NS.games.trivia === 1 && NS.games.musical === 0, NS);
   check('Something else: Karaoke twice (case and spaces are one answer, first spelling kept), the long one once, the test venue\'s left out',
-    t.other.length === 2 && t.other[0].text === 'Karaoke' && t.other[0].count === 2 && t.other[1].text === CAPPED && t.other[1].count === 1, t.other);
-  check('the venue\'s own words are cut at 60 characters', CAPPED.length === 60 && t.other[1].text.length === 60);
+    t.other.map(function (o) { return o.text + '=' + o.count; }).join('|') === 'Karaoke=2|POOL comp=2|' + CAPPED + '=1|=HYPERLINK("x")=1|Jag the Joker=1|Lawn bow=1|Meat raffle=1', t.other);
+  check('each entry is cut at 40 characters, and the whole answer at 120', CAPPED.length === 40 && t.other[2].text === CAPPED && V3_OTHER.length === 126 && t.other.some(function (o) { return o.text === 'Lawn bow'; }));
+  check('the entries that are one of our games are marked ours (jag the joker, meat raffle), the rest are not',
+    t.other.filter(function (o) { return o.ours; }).map(function (o) { return o.text; }).join('|') === 'Jag the Joker|Meat raffle', t.other);
+  check('games we don\'t run yet: Karaoke 2, POOL comp 2, the markup, =HYPERLINK, Lawn bow',
+    t.not_ours.map(function (o) { return o.text + '=' + o.count; }).join('|') === 'Karaoke=2|POOL comp=2|' + CAPPED + '=1|=HYPERLINK("x")=1|Lawn bow=1', t.not_ours);
+  var ours = vprGamesTally([{ venue_id: V1, setup_answers: { games: [], other: 'Pub TRIVIA, Musical Bingo night, members draws, Raffles, meat raffles, Jag the joker, Lawn bowls' } }], venues, tests, '2026-10');
+  check('our games are matched on the words, any case (trivia, musical bingo, members draws, raffles, meat raffles, jag the joker)',
+    ours.not_ours.map(function (o) { return o.text; }).join('|') === 'Lawn bowls' && ours.other.length === 7, ours.other);
+  check('the email lists games we don\'t run yet, escaped', /Games we don't run yet/.test(mail.html) && /Lawn bow \(1\)/.test(mail.html) && mail.html.indexOf('=HYPERLINK(&quot;x&quot;) (1)') !== -1 && /POOL comp \(2\)/.test(mail.html));
+
+  print('the spreadsheet');
+  var csv = vprGamesCsv('2026-10', t);
+  var WANT = [
+    '"What venues play: October 2026 (internal, venueplay)"', '',
+    'Game,Venues that play it,New in October,Set up',
+    'Trivia,2,1,1', 'Musical bingo,2,2,0', 'Bingo,1,0,1', 'Raffles,2,2,1', 'Members draws,1,1,1', '',
+    'Active venues,4', 'Answered,3', 'Answered in October,2', '',
+    'State,Active venues,Answered,Trivia,Musical bingo,Bingo,Raffles,Members draws',
+    'QLD,1,1,1,1,0,1,0', 'ACT,1,1,0,1,0,1,1', 'State not set,2,1,1,0,1,0,0', '',
+    'Something else they run,Venues,One of our games',
+    'Karaoke,2,No', 'POOL comp,2,No', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1,No', '"\'=HYPERLINK(""x"")",1,No', 'Jag the Joker,1,Yes', 'Lawn bow,1,No', 'Meat raffle,1,Yes', '',
+    "Games we don't run yet,Venues",
+    'Karaoke,2', 'POOL comp,2', '"<i>Meat</i> & ""darts"" xxxxxxxxxxxxxxxxxx",1', '"\'=HYPERLINK(""x"")",1', 'Lawn bow,1'].join('\r\n') + '\r\n';
+  check('the CSV is the hand count, line for line', csv === WANT, csv.split('\r\n').filter(function (l, i) { return l !== WANT.split('\r\n')[i]; }));
+  check('a venue\'s words starting with = open as text, never a formula', csv.indexOf('\'=HYPERLINK') !== -1 && !/(^|,)=HYPERLINK/m.test(csv));
+  check('the file is named for the month', vprGamesCsvName('2026-10') === 'what-venues-play-2026-10.csv');
+
+  print('the email: state by state and something else');
   var stRow = /<td[^>]*>ACT<\/td><td[^>]*>1 of 1<\/td>((?:<td[^>]*>\d+<\/td>){5})/.exec(mail.html);
   check('the email has the state table, ACT\'s row in the house order of games (0, 1, 0, 1, 1)', !!stRow && stRow[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).join(',') === '0,1,0,1,1', stRow && stRow[1]);
   check('and State not set, never "the ACT"', /State not set<\/td><td[^>]*>1 of 2</.test(mail.html) && !/the ACT/i.test(mail.html));
@@ -150,8 +185,10 @@ function row(html, name) {
   var dry = await vprGamesDryRun(ENV, '2026-10');
   check('it returns exactly what would go: to, subject, html and the tally', dry.to === 'dean@venueplay.com.au' && dry.subject === 'What venues play: October 2026' && /Members draws/.test(dry.html) && dry.tally.answered === 3 && dry.tally.games.raffles.plays === 2, dry);
   check('and sends and records nothing', sent.length === 0 && DB.vp_admin_audit.length === 0, [sent.length, DB.vp_admin_audit.length]);
+  check('the dry run carries the CSV and its name', dry.csv === vprGamesCsv('2026-10', dry.tally) && dry.csv_name === 'what-venues-play-2026-10.csv' && /^Trivia,2,1,1$/m.test(dry.csv));
   var pv = await call(vpaHandleMonthReport, ADMIN, { action: 'games-preview', month: '2026-10' });
   check('HQ preview (owner): the subject, html and tally, sent false', pv.status === 200 && pv.body.subject === 'What venues play: October 2026' && pv.body.sent === false && pv.body.tally.answered === 3 && /Trivia/.test(pv.body.html), pv);
+  check('the HQ preview returns the CSV too', pv.body.csv === dry.csv && pv.body.csv_name === 'what-venues-play-2026-10.csv');
   check('the HQ preview sends nothing and writes nothing', sent.length === 0 && DB.vp_admin_audit.length === 0, [sent.length, DB.vp_admin_audit]);
   var pvs = await call(vpaHandleMonthReport, STAFF_ADMIN, { action: 'games-preview', month: '2026-10' });
   check('a staff HQ login cannot preview it', pvs.status === 403 && !pvs.body.html, pvs);
@@ -173,6 +210,11 @@ function row(html, name) {
   check('3am on the 1st: exactly one games email', g.length === 1 && run1.games && run1.games.sent === 1, [g.length, run1.games]);
   check('to dean@venueplay.com.au and nobody else', g.length === 1 && g[0].to.length === 1 && g[0].to[0] === 'dean@venueplay.com.au' && !g[0].cc && !g[0].bcc, g[0] && g[0].to);
   check('no venue contact ever gets the games email, and Dean gets nothing else', sent.every(function (m) { return /^What venues play/.test(m.subject) === (m.to[0] === 'dean@venueplay.com.au'); }), sent.map(function (m) { return [m.to, m.subject]; }));
+  var att = g.length === 1 ? g[0].attachments : null;
+  var dec = att && att[0] ? atob(att[0].content) : '';
+  check('the CSV goes with it as one attachment, what-venues-play-2026-10.csv', !!att && att.length === 1 && att[0].filename === 'what-venues-play-2026-10.csv', att);
+  check('the attachment is the dry run\'s CSV, with a UTF-8 byte order mark for Excel', dec === '\xEF\xBB\xBF' + vprGamesCsv('2026-10', vprGamesTally(DB.vp_venue_settings, DB.vp_venues, tests, '2026-10')), dec.slice(0, 80));
+  check('no venue email carries an attachment', sent.filter(function (m) { return m.to[0] !== 'dean@venueplay.com.au'; }).every(function (m) { return !m.attachments; }) && sent.some(function (m) { return m.to[0] !== 'dean@venueplay.com.au'; }));
   check('it is October\'s, with October\'s numbers', g.length === 1 && g[0].subject === 'What venues play: October 2026' && row(g[0].html, 'Raffles') === '2,2,1');
   check('the venue reports went too (The Royal had a night)', sent.some(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }) && run1.sent === 1, run1);
   var ga = gamesAudits();
@@ -212,8 +254,9 @@ function row(html, name) {
   check('owner: the tally for the month so far, with states and something else', hr.status === 200 && hr.body.month === '2026-11' && hr.body.tally.answered === 3
     && hr.body.tally.answered_month === 0 && hr.body.tally.states.length === 3 && hr.body.tally.other[0].text === 'Karaoke' && !hr.body.html, hr.body);
   check('it sends nothing and writes nothing', sent.length === 0 && DB.vp_admin_audit.length === 0, [sent.length, DB.vp_admin_audit.length]);
+  check('and carries November\'s CSV', hr.body.csv_name === 'what-venues-play-2026-11.csv' && hr.body.csv === vprGamesCsv('2026-11', hr.body.tally));
   var hs = await call(vpaHandleMonthReport, STAFF_ADMIN, { action: 'games', month: '2026-11' });
-  check('a staff HQ login is refused and sees no numbers', hs.status === 403 && !hs.body.tally, hs);
+  check('a staff HQ login is refused and sees no numbers or CSV', hs.status === 403 && !hs.body.tally && !hs.body.csv, hs);
   COLUMN_MISSING = true;
   var hw = await call(vpaHandleMonthReport, ADMIN, { action: 'games', month: '2026-11' });
   check('before migration 163 it says so plainly', hw.status === 200 && hw.body.waiting === true && hw.body.note === 'Waiting for the setup answers to be switched on (migration 163).' && !hw.body.tally, hw.body);
@@ -246,6 +289,10 @@ function row(html, name) {
     && gh.indexOf('<td>Trivia</td>') < gh.indexOf('<td>Musical bingo</td>') && gh.indexOf('<td>Musical bingo</td>') < gh.indexOf('<td>Bingo</td>'), [hqRow('Trivia'), hqRow('Musical bingo'), hqRow('Bingo')]);
   check('state by state: QLD, ACT and State not set with answered of venues', /<td>QLD<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>ACT<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>State not set<\/td><td class="mono">1 of 2<\/td>/.test(gh) && !/the ACT/i.test(gh));
   check('something else, counted and escaped', /Something else they run/.test(gh) && /Karaoke \(2\)/.test(gh) && gh.indexOf('<i>Meat') === -1 && gh.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
+  var link = /<a id="rpGamesCsv" download="([^"]*)" href="data:text\/csv;charset=utf-8,([^"]*)">Download as a spreadsheet<\/a>/.exec(gh);
+  check('Download as a spreadsheet: the Worker\'s CSV, named for the month, with the byte order mark', !!link && link[1] === 'what-venues-play-2026-11.csv'
+    && decodeURIComponent(link[2].replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')) === '\ufeff' + hr.body.csv, link && link[1]);
+  check('games we don\'t run yet, escaped', /id="rpGamesNotOurs">Karaoke \(2\), POOL comp \(2\), &lt;i&gt;Meat/.test(gh), gh.slice(gh.indexOf('rpGamesNotOurs'), gh.indexOf('rpGamesNotOurs') + 120));
   check('opening the page sends nothing', sent.length === 0 && DB.vp_admin_audit.length === 0);
   world(); COLUMN_MISSING = true;
   var pw = hqPage(ADMIN); pw.VP.open(); await pw.settle();

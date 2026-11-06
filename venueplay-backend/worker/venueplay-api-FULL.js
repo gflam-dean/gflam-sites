@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:55 · 93e45cfa';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 12:35 · 356eb26e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -8976,8 +8976,10 @@ function vpaAlertSubject(kind, rest) {
 /* replyTo: where a reply lands. hello@ unless the sender says otherwise; the HQ welcome and the
    onboarding guide say support@, because a reply to either is a setup question.
    headers: extra message headers, only ever vpUnsubHeaders() for a MARKETING email (26 Oct 2026).
-   A transactional email passes nothing and goes out exactly as before. */
-async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
+   A transactional email passes nothing and goes out exactly as before.
+   attachments: optional [{ filename, content }] with content already base64, as Resend takes it. Only
+   the internal "What venues play" email to Dean passes one (its CSV); every other caller passes none. */
+async function vpaSendEmail(env, to, subject, html, replyTo, headers, attachments) {
   if (!env.RESEND_API_KEY || !to) return false;
   const msg = {
     from: 'venueplay <hello@send.venueplay.com.au>',
@@ -8990,6 +8992,7 @@ async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
     text: helpPlainFromHtml(html),
   };
   if (headers && typeof headers === 'object' && Object.keys(headers).length) msg.headers = headers;
+  if (Array.isArray(attachments) && attachments.length) msg.attachments = attachments.map((a) => ({ filename: String(a.filename), content: String(a.content) }));
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
@@ -15112,7 +15115,7 @@ async function vpaHandleMonthReport(request, env, json) {
     try { run = await vprGamesDryRun(env, month); }
     catch (e) { return json({ error: 'Could not build the preview just now. Please try again.' }, 503); }
     if (run.skipped) return json({ ok: true, month: month, sent: false, skipped: run.skipped });
-    return json({ ok: true, month: month, sent: false, to: run.to, subject: run.subject, html: run.html, tally: run.tally });
+    return json({ ok: true, month: month, sent: false, to: run.to, subject: run.subject, html: run.html, tally: run.tally, csv: run.csv, csv_name: run.csv_name });
   }
   /* action 'games': HQ > Reports' "What venues play" section, any day: the tally as it stands, "new"
      meaning answered in the month picked. Owner only. Reads only; sends and writes nothing. */
@@ -15123,7 +15126,7 @@ async function vpaHandleMonthReport(request, env, json) {
     catch (e) { return json({ error: 'Could not count the answers just now. Please try again.' }, 503); }
     if (run.missing) return json({ ok: true, month: month, waiting: true, note: VPR_GAMES_WAITING });
     if (run.skipped) return json({ error: 'Could not count the answers just now. Please try again.' }, 503);
-    return json({ ok: true, month: month, tally: run.tally });
+    return json({ ok: true, month: month, tally: run.tally, csv: run.csv, csv_name: run.csv_name });
   }
   if (_b.body.refresh === true) {
     if (!canRefresh) return json({ error: 'Only an owner or accounts login can refresh the report.' }, 403);
@@ -15425,10 +15428,22 @@ async function vpaHandleMonthNews(request, env, json) {
    any day (POST /admin/month-report { action: 'games' }, owner only), and that never sends. */
 const VPR_GAMES_STATES = ['NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
 const VPR_GAMES_NO_STATE = 'State not set';
-const VPR_GAMES_OTHER_MAX = 60;
+/* Round 3 (Dean's note 12): other is SEVERAL entries, comma separated, 120 characters in all and 40 each.
+   An entry that names one of our games is still listed, and anything else is also listed under
+   "Games we don't run yet". */
+const VPR_GAMES_OTHER_MAX = 120;
+const VPR_GAMES_OTHER_ONE = 40;
+const VPR_GAMES_OURS = /\b(trivia|musical bingo|bingo|raffles?|meat raffles?|members draws?|jag the joker)\b/i;
 const VPR_GAMES_WAITING = 'Waiting for the setup answers to be switched on (migration 163).';
 function vprGamesOther(x) {
-  return String(x == null ? '' : x).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPR_GAMES_OTHER_MAX).trim();
+  const all = String(x == null ? '' : x).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPR_GAMES_OTHER_MAX);
+  const out = [], had = {};
+  all.split(',').forEach((e) => {
+    const one = e.trim().slice(0, VPR_GAMES_OTHER_ONE).trim();
+    if (!one || had[one.toLowerCase()]) return;           // the same thing twice from one venue counts once
+    had[one.toLowerCase()] = true; out.push(one);
+  });
+  return out;
 }
 const VPR_GAMES = [['trivia', 'Trivia'], ['musical', 'Musical bingo'], ['bingo', 'Bingo'], ['raffles', 'Raffles'], ['members', 'Members draws']];
 const VPR_GAMES_TO = 'dean@venueplay.com.au';
@@ -15466,15 +15481,15 @@ function vprGamesTally(rows, venues, tests, month) {
       if (a.games.indexOf(g[0]) !== -1) { c.plays++; st.games[g[0]]++; if (fresh) c.new_month++; }
       if (setup[g[0]] === 'done') c.set_up++;
     });
-    const o = typeof a.other === 'string' ? vprGamesOther(a.other) : '';
-    if (o) {
+    (typeof a.other === 'string' ? vprGamesOther(a.other) : []).forEach((o) => {
       const key = o.toLowerCase();
-      if (!other[key]) other[key] = { text: o, count: 0 };
+      if (!other[key]) other[key] = { text: o, count: 0, ours: VPR_GAMES_OURS.test(o) };
       other[key].count++;
-    }
+    });
   });
   t.states = VPR_GAMES_STATES.concat(['']).map((k) => byState[k]).filter((x) => x.venues > 0);
   t.other = Object.keys(other).map((k) => other[k]).sort((x, y) => y.count - x.count || (x.text.toLowerCase() < y.text.toLowerCase() ? -1 : 1));
+  t.not_ours = t.other.filter((o) => !o.ours);
   return t;
 }
 function vprGamesEmail(env, month, tally) {
@@ -15524,7 +15539,37 @@ function vprGamesOtherHtml(tally) {
   return '<p style="margin:0 0 8px;font-weight:700">Something else they run</p>'
     + (list.length
       ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + list.map((o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ' (' + o.count + ')</li>').join('') + '</ul>'
-      : '<p style="margin:0 0 16px">Nobody has written anything else yet.</p>');
+      : '<p style="margin:0 0 16px">Nobody has written anything else yet.</p>')
+    + '<p style="margin:0 0 8px;font-weight:700">Games we don\'t run yet</p>'
+    + ((tally.not_ours || []).length
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + tally.not_ours.map((o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ' (' + o.count + ')</li>').join('') + '</ul>'
+      : '<p style="margin:0 0 16px">None so far.</p>');
+}
+/* The same numbers as a spreadsheet (CSV, Excel opens it): the games, the totals, state by state, something
+   else, and the games we don't run yet. Every cell through vpbCsvCell, so a venue's own words starting
+   with = + - @ open as text, never as a formula. */
+function vprGamesCsvName(month) { return 'what-venues-play-' + month + '.csv'; }
+function vprGamesCsv(month, tally) {
+  const L = [], row = (cells) => L.push(cells.map(vpbCsvCell).join(','));
+  const mname = vprMonthName(month);
+  row(['What venues play: ' + vprMonthWords(month) + ' (internal, venueplay)']);
+  row([]);
+  row(['Game', 'Venues that play it', 'New in ' + mname, 'Set up']);
+  VPR_GAMES.forEach((g) => { const c = tally.games[g[0]]; row([g[1], c.plays, c.new_month, c.set_up]); });
+  row([]);
+  row(['Active venues', tally.venues]);
+  row(['Answered', tally.answered]);
+  row(['Answered in ' + mname, tally.answered_month]);
+  row([]);
+  row(['State', 'Active venues', 'Answered'].concat(VPR_GAMES.map((g) => g[1])));
+  (tally.states || []).forEach((st) => row([st.name, st.venues, st.answered].concat(VPR_GAMES.map((g) => st.games[g[0]]))));
+  row([]);
+  row(['Something else they run', 'Venues', 'One of our games']);
+  (tally.other || []).forEach((o) => row([o.text, o.count, o.ours ? 'Yes' : 'No']));
+  row([]);
+  row(["Games we don't run yet", 'Venues']);
+  (tally.not_ours || []).forEach((o) => row([o.text, o.count]));
+  return L.join('\r\n') + '\r\n';
 }
 /* Reads and builds, sends nothing. { month, to, subject, html, tally } or { month, skipped: why }.
    venues/tests may be passed in by the sweep, which has them already. */
@@ -15540,7 +15585,8 @@ async function vprGamesDryRun(env, month, venues, tests) {
   }
   const tally = vprGamesTally(rows, vs, ts, month);
   const mail = vprGamesEmail(env, month, tally);
-  return { month: month, to: mail.to, subject: mail.subject, html: mail.html, tally: tally };
+  return { month: month, to: mail.to, subject: mail.subject, html: mail.html, tally: tally,
+    csv: vprGamesCsv(month, tally), csv_name: vprGamesCsvName(month) };
 }
 /* The once-a-month send, from inside the sweep. Never throws: the venue reports must go regardless. */
 async function vprGamesSend(env, month, venues, tests) {
@@ -15555,7 +15601,9 @@ async function vprGamesSend(env, month, venues, tests) {
        never turn into a second email on the next tick. */
     const detail = { month: month, accepted: null, answered: run.tally.answered, answered_month: run.tally.answered_month };
     const row = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'automatic (monthly report)', action: 'games_answers_sent', target: target, detail: detail });
-    const accepted = await vpaSendEmail(env, run.to, run.subject, run.html).catch(() => false);
+    /* The CSV goes as an attachment on this email only, with a byte order mark so Excel reads it as UTF-8. */
+    const csvFile = { filename: run.csv_name, content: vpsB64(new TextEncoder().encode('\ufeff' + run.csv)) };
+    const accepted = await vpaSendEmail(env, run.to, run.subject, run.html, null, null, [csvFile]).catch(() => false);
     if (row && row.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(row.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
     return { sent: 1 };
   } catch (e) { return { failed: true, sent: 0 }; }
