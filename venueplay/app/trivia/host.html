@@ -2119,7 +2119,7 @@
     if(G.status!==_demo.last){ _demo.last=G.status; _demo.at=now; }
     var since=now-_demo.at, joined=Math.max(playerCount(), G.lobbyN|0);
     demoSay({ status:G.status, joined:joined, expected:DEMO_N, answered:answeredCount(), qi:(G.current && (G.current.qi||G.current.qseq))||0,
-              qtotal:G.qtotal||VPDemo.QUESTIONS, left:(G.status==="question" ? remainingSecs() : null), joinCode:G.joinCode||"", error:(($("hostErrBar")||{}).textContent||"").trim() });
+              qtotal:G.qtotal||VPDemo.QUESTIONS, left:(G.status==="question" ? remainingSecs() : null), joinCode:G.joinCode||"", error:(($("hostErrBar") && $("hostErrBar").classList.contains("show")) ? (($("hostErrText")||{}).textContent||"").trim() : "") });   // only a shown error, in its own words
     if(G.busy) return;
     if(G.status==="setup"){ if(G.questionCount>0 && since>800 && !_demo.opened){ _demo.opened=true; openLobby(); } return; }
     if(G.status==="lobby"){ if(joined>=1 && (joined>=DEMO_N || _demo.start)) startRound(); return; }

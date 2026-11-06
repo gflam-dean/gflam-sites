@@ -4,8 +4,8 @@
      1. "How many players will join?": default 1, up to 10 whatever is typed (50 is 10).
      2. THE AUTO RULE: the answer goes up when the 30 s run out OR when that many players have all answered,
         whichever comes first; started with fewer, all of THEM.
-     3. The device: a hint only; plan() for both choices and both device answers (two-screen, phone-only,
-        phone with a TV code, the host link), and the one-screen layout left for Tuesday.
+     3. The device: a hint only; plan() for both choices and both device answers: two-screen, phone with a TV
+        code, the host link; NO other device skips the demo into the account (Dean, 6 Nov); phone-only is off.
      4. Prefill: their own name, email and mobile round-trip through the #fragment, are wiped from the address
         once read, never overwrite what was typed, and never tick the offers box.
      5. The addresses: the page's own origin or venueplay.com.au, never a .dev host; the host link is the demo.
@@ -45,15 +45,20 @@ check('375 x 812 touch is a phone', D.deviceKind(375, 812, true) === 'phone');
 check('1024 x 768 touch is a tablet', D.deviceKind(1024, 768, true) === 'tablet');
 check('1366 x 768 no touch is a computer', D.deviceKind(1366, 768, false) === 'computer');
 var p = D.plan({ mode: 'player', device: 'computer', other: true });
-check('computer, as a player, another device: this screen is the TV with the QR, and it runs itself', p.tv && p.playerQr && p.driver && !p.player && !p.hostLink && !p.oneScreen, p);
+check('computer, as a player, another device: this screen is the TV with the QR, and it runs itself', p.tv && p.playerQr && p.driver && !p.player && !p.hostLink && !p.skip, p);
 p = D.plan({ mode: 'host', device: 'computer', other: true });
 check('computer, as the host too: the TV, the QR, the host link, and it does NOT run itself', p.tv && p.playerQr && p.hostLink && !p.driver, p);
 p = D.plan({ mode: 'player', device: 'computer', other: false });
-check('computer, no other device: the two-screen steps for now, the one-screen layout marked for Tuesday', p.tv && p.driver && p.oneScreen, p);
+check('computer, NO other device: no demo, straight into their account (Dean, 6 Nov)', p.skip === true && !p.tv && !p.driver, p);
 p = D.plan({ mode: 'player', device: 'phone', other: true });
-check('phone, another device: this phone is the player, the TV code is shown, it runs itself', p.player && p.tvCode && p.driver && !p.tv, p);
+check('phone, another device: this phone is the player, the TV code is shown, it runs itself', p.player && p.tvCode && p.driver && !p.tv && !p.skip, p);
 p = D.plan({ mode: 'player', device: 'phone', other: false });
-check('phone, no other device: the phone-only mini demo (player and the game on this phone)', p.player && p.phoneOnly && p.driver && !p.tv && !p.tvCode, p);
+check('phone, NO other device: no demo, straight into their account', p.skip === true && !p.player && !p.driver, p);
+check('the phone-only mini demo is switched OFF', D.PHONE_ONLY === false);
+p = D.plan({ mode: 'player', device: 'phone', other: false, phoneOnly: true });
+check('...and, switched on, it would be the player and the game on this phone', p.player && p.phoneOnly && p.driver && !p.tv && !p.tvCode && !p.skip, p);
+p = D.plan({ mode: 'host', device: 'tablet', other: false });
+check('tablet, as the host too, no other device: straight into their account', p.skip === true, p);
 p = D.plan({ mode: 'host', device: 'phone', other: true });
 check('phone, as the host too: player here, the TV code and the host link, the host device runs it', p.player && p.tvCode && p.hostLink && !p.driver, p);
 

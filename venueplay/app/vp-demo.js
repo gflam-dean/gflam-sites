@@ -27,6 +27,11 @@
 (function (root) {
   "use strict";
   var MAX = 10, QUESTIONS = 5, SECONDS = 30;
+  /* NO SECOND DEVICE, NO DEMO (Dean, 6 Nov 2026 ~11:40): "Have you got another device handy?" No goes straight
+     into their account (the console home, where the setup wizard opens). The one-screen demo is not built, and the
+     phone-only mini demo (the player and the game on one phone) is OFF: it is here, behind this switch, not finished
+     or tested end to end. Turn it on only after tools/try-demo-in-chrome.test.py plays it green. */
+  var PHONE_ONLY = false;
   var ORIGIN = "https://venueplay.com.au";
   /* The page's own origin (a local preview stays local), else venueplay.com.au. Never a .dev host. */
   function origin() {
@@ -61,12 +66,13 @@
      o.device "phone" | "tablet" | "computer"; o.other: they have another device handy.
      -> { tv: this screen shows the TV, player: this screen is the player, driver: this screen runs the
           game itself (hidden console, auto), hostLink: show the host console link, playerQr: show the QR
-          for their phone, tvCode: show "open venueplay.com.au/tv and type this code", oneScreen: TUESDAY's
-          combined layout would go here (two-screen words shown for now) } */
+          for their phone, tvCode: show "open venueplay.com.au/tv and type this code", skip: no second device,
+          so no demo, straight into their account. o.phoneOnly forces the switched-off phone-only demo (tests). } */
   function plan(o) {
     o = o || {};
     var host = o.mode === "host", phone = o.device === "phone";
-    var p = { tv: false, player: false, driver: false, hostLink: false, playerQr: false, tvCode: false, oneScreen: false, phoneOnly: false };
+    var p = { tv: false, player: false, driver: false, hostLink: false, playerQr: false, tvCode: false, phoneOnly: false, skip: false };
+    if (!o.other && !(phone && (o.phoneOnly === true || PHONE_ONLY))) { p.skip = true; return p; }   // no second device: straight to the account
     if (phone) {
       p.player = true;
       if (o.other) { p.tvCode = true; if (host) p.hostLink = true; else p.driver = true; }
@@ -74,7 +80,6 @@
     } else {
       p.tv = true; p.playerQr = true;                              // this screen is the TV, their phone joins by QR
       if (host) p.hostLink = true; else p.driver = true;
-      if (!o.other) p.oneScreen = true;                            // TUESDAY: TV and phone side by side; for now the two-screen steps
     }
     return p;
   }
@@ -152,7 +157,7 @@
   function hostUrl(n) { return origin() + "/app/trivia/host.html?demo=host&n=" + clampPlayers(n); }
   function tvUrl(slug) { return "/tv?venue=" + encodeURIComponent(String(slug || "")) + "&intro=0"; }
 
-  root.VPDemo = { MAX: MAX, QUESTIONS: QUESTIONS, SECONDS: SECONDS, clampPlayers: clampPlayers, shouldReveal: shouldReveal,
+  root.VPDemo = { PHONE_ONLY: PHONE_ONLY, MAX: MAX, QUESTIONS: QUESTIONS, SECONDS: SECONDS, clampPlayers: clampPlayers, shouldReveal: shouldReveal,
                   deviceKind: deviceKind, plan: plan, prefillHash: prefillHash, readPrefill: readPrefill, takePrefill: takePrefill,
                   applyPrefill: applyPrefill, playUrl: playUrl, hostUrl: hostUrl, tvUrl: tvUrl, code: code,
                   _reset: function () { _held = null; } };

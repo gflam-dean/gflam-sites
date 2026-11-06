@@ -16,8 +16,8 @@
      venue through the one trivia engine: the real console (/app/trivia/host.html?demo=auto, out of sight, or ?demo=host
      on their tablet), the real TV (/tv?venue=) and the real phone (/app/trivia/play.html). The session is a demo
      (migration 172): never billed, nothing remembered, up to 10 for the demo. Then into their console, where the setup
-     wizard opens. The rules: /app/vp-demo.js. TUESDAY hooks: the musical bingo round (data-next="musical"), the 30 s ad
-     break between the games (#tryAdBreak), and the one-screen combined layout (plan().oneScreen). -->
+     wizard opens. The rules: /app/vp-demo.js. TUESDAY hooks: the musical bingo round (data-next="musical") and the 30 s ad
+     break between the games (#tryAdBreak). No second device: no demo, straight into the account (Dean, 6 Nov). -->
 <style>
   :root{ --ink:#0A0A0B; --ink-2:#141418; --ink-3:#1B1B20; --pink:#FF1F8E; --pink-soft:#FF8CC6; --text:#E7E7EC; --muted:#C9C9D1; --faint:#8A8A94;
          --line:rgba(255,255,255,.12); --win:#2BD47D; }
@@ -138,7 +138,6 @@
       <p class="status" id="playStatus" role="status">Getting the game ready...</p>
       <button class="btn" type="button" id="startNow" hidden>Start now</button>
       <p class="small">Up to 10 for the demo. Nothing is charged.</p>
-      <p class="small" id="oneScreenNote" hidden>Grab your phone for the player part. A one-screen version is on its way.</p>
       <p class="err" id="playErr" role="alert"></p>
     </div>
   </div>
@@ -212,6 +211,7 @@
   function details(){ return { name:S.me.name, email:S.me.email, mobile:S.me.mobile }; }
   function go(){
     S.plan=VPDemo.plan({ mode:S.mode, device:S.device, other:S.other });
+    if(S.plan.skip){ location.href="/app/"; return; }   // no second device: straight into their account, where the wizard opens (Dean, 6 Nov)
     if(S.plan.tvCode){
       $("phoneTvCode").textContent=S.code||"------";
       var words="venueplay: open venueplay.com.au/tv on a laptop or TV and type this code: "+(S.code||"");
@@ -238,12 +238,13 @@
       stage.classList.add("tv");
       $("tvBox").hidden=false; $("tvBox").appendChild(frame(VPDemo.tvUrl(S.slug), "", "Your TV screen"));
       $("side").hidden=false;
-      if(p.oneScreen) $("oneScreenNote").hidden=false;   // TUESDAY: the combined layout
-      drawJoin(S.code);
+      /* The QR goes up once the demo's lobby is open (the console says so), so a phone that scans it is asked
+         for the demo's details straight away. With the host on another device, the TV's code from the start. */
+      if(!p.driver) drawJoin(S.code); else $("joinPart").style.visibility="hidden";
     }
     if(p.player){
       $("phoneBox").hidden=false;
-      $("phoneBox").appendChild(frame(VPDemo.playUrl(S.code, details()).replace(/^https?:\/\/[^\/]+/,""), "", "Your player screen"));
+      if(!p.driver) playerFrame(S.code);   // the host opens the game on their other device
     }
     if(p.hostLink && p.tv){ $("hostPart").hidden=false; VPQR.draw($("hostQr"), VPDemo.hostUrl(S.n), 180); $("playStatus").textContent="Open the host console on your other device to start."; }
     if(p.driver){
@@ -251,6 +252,11 @@
       driver.setAttribute("aria-hidden","true"); driver.setAttribute("tabindex","-1");
       document.body.appendChild(driver);
     }
+  }
+  var _pf=false;
+  function playerFrame(code){
+    if(_pf) return; _pf=true;
+    $("phoneBox").appendChild(frame(VPDemo.playUrl(code, details()).replace(/^https?:\/\/[^\/]+/,""), "", "Your player screen"));
   }
   function drawJoin(code){
     code=VPDemo.code(code); if(!code || code===S.joinCode) return;
@@ -263,7 +269,10 @@
   window.addEventListener("message", function(e){
     if(e.origin!==location.origin || !e.data || e.data.vpDemo!==true || e.data.cmd) return;
     var d=e.data;
-    if(d.joinCode) drawJoin(d.joinCode);
+    if(d.joinCode && d.status!=="setup"){
+      if(S.plan && S.plan.tv){ $("joinPart").style.visibility=""; drawJoin(d.joinCode); }
+      if(S.plan && S.plan.player) playerFrame(d.joinCode);
+    }
     $("playErr").textContent = d.error || "";
     if(d.status==="setup") say("Getting the game ready...");
     else if(d.status==="lobby"){ say(d.joined+" of "+d.expected+" joined. "+(d.joined>=d.expected ? "Starting..." : "Waiting for players.")); $("startNow").hidden=!(d.joined>=1 && d.joined<d.expected); }

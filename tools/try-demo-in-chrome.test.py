@@ -14,8 +14,8 @@ would:
      "That's the game", then "Set up my games" goes to the console. The Worker's database afterwards: the
      session is a demo; the ticked player is on THIS venue's list with email, mobile and consent time; the
      unticked one has no contact kept; no question burned, no weekly stamp, no saved prefs, nothing charged.
-  B. ON A PHONE (375 x 812) with no other device: the phone-only mini demo: the player in this phone, the game
-     running itself in the same page, the question and answers on the phone, scored, then the result.
+  B. NO OTHER DEVICE, on a phone or a laptop: no demo, straight into their account (Dean, 6 Nov 2026). The
+     phone-only mini demo is switched off (VPDemo.PHONE_ONLY).
   C. ON A PHONE with another device: "This phone is your player. For the TV part, open venueplay.com.au/tv
      on a laptop or TV and type this code", the venue's screen code, and Text me / Email me to their OWN
      mobile and email only.
@@ -29,7 +29,7 @@ Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears a
 
     VP_SHOTS=/some/dir python3 tools/try-demo-in-chrome.test.py
 """
-import json, os, sys, time
+import json, os, re, sys, time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 SHOTS = os.environ.get('VP_SHOTS', '')
@@ -79,8 +79,13 @@ def to_play(r, sid, mode, n, other):
     clickid(r, sid, 'devYes' if other else 'devNo')
 
 
-def phone_join(r, url, team=None, tick=False):
-    t, s = r.open(url.replace('https://venueplay.com.au', ''), width=375, height=812)
+# Every window in the rig is one browser profile, so a second "phone" would find the first one's player id and be
+# the same player (play.html keeps it in localStorage, as a real phone does). A real second phone has its own.
+OWN_PHONE = 'try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(/^vp-t(pid|name|token|sess)-/.test(k)) localStorage.removeItem(k); } }catch(e){}'
+
+
+def phone_join(r, url, team=None, tick=False, own=False):
+    t, s = r.open(re.sub(r'^https?://[^/]+', '', url), width=375, height=812, before=(OWN_PHONE if own else None))
     r.phone_ready(s, 60)
     r.until(s, '!!document.getElementById("xEmail")', 15)
     if team: r.ask(s, 'var n=document.getElementById("nameIn"); n.value=%s; true' % json.dumps(team))
@@ -92,6 +97,8 @@ def answer(r, s, i=2):
     return r.ask(s, '(function(){ var b=document.querySelectorAll("#pAnswers button")[%d]; if(!b) return false; b.click(); return true; })()' % i)
 
 
+# What the console running the demo is showing (it is out of sight, in iframe.driver), for a failure message.
+DRV = '(function(){ var f=document.querySelector("iframe.driver"), d=f&&f.contentDocument; if(!d) return "no driver"; return JSON.stringify({ err:(d.getElementById("hostErrText")||{}).textContent, note:(d.getElementById("noPlayersNote")||{}).textContent, btns:[].map.call(d.querySelectorAll("button"),function(b){ return b.getBoundingClientRect().height>0 ? b.textContent.trim() : ""; }).filter(Boolean).join("|"), errs:(f.contentWindow.__errs||[]) }); })()'
 QUP = '(function(){ var v=document.getElementById("vQ"); return !!v && !v.classList.contains("hidden") && document.querySelectorAll("#pAnswers button").length===4; })()'
 QTEXT = '(document.getElementById("pqText")||{}).textContent'
 
@@ -117,11 +124,11 @@ def scene_a(RIG):
            r.until(lap, STEP + '==="stepDevice" && /Have you got another device handy \\(a phone, or a laptop or TV\\)\\?/.test(document.body.innerText)', 10) is True)
         clickid(r, lap, 'devYes')
         ok('Yes: this screen is the TV, the venue\'s own screen', r.until(lap, '!!document.querySelector("#tvBox iframe") && document.querySelector("#tvBox iframe").getAttribute("src").indexOf("/tv?venue=' + r.W.info['slug'] + '")===0', 10) is True)
-        ok('  with the QR for their phone beside it', r.ask(lap, '!document.getElementById("side").hidden && /Scan with your phone to play/.test(document.getElementById("side").innerText)') is True)
         ok('  and the game runs itself out of sight (the console, ?demo=auto, 2 players)',
            r.ask(lap, '(function(){ var d=document.querySelector("iframe.driver"); return !!d && /\\/app\\/trivia\\/host\\.html\\?demo=auto&n=2$/.test(d.getAttribute("src")) && d.getAttribute("aria-hidden")==="true"; })()') is True)
         ok('the demo session is opened, marked a demo', r.until(lap, '/joined/.test(document.getElementById("playStatus").textContent)', 40) is True and
            any(s.get('is_demo') is True for s in db(r, 'vp_sessions')), [db(r, 'vp_sessions'), r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(lap, 'document.getElementById("playErr").textContent')])
+        ok('  with the QR for their phone beside it, once the lobby is open', r.until(lap, '!document.getElementById("side").hidden && /Scan with your phone to play/.test(document.getElementById("side").innerText)', 10) is True)
         f = r.layout = r.json(lap, FIT)
         ok('laid out for 1366: nothing wider than the screen', f.get('wide', 1) <= 0, f)
         if SHOTS: r.shot(lap, os.path.join(SHOTS, 'try-lobby-1366.jpg'))
@@ -137,26 +144,32 @@ def scene_a(RIG):
            r.ask(p1, 'document.getElementById("xOptin").parentNode.textContent'))
         r.ask(p1, 'document.getElementById("xOptin").click(); true')
         r.ask(p1, 'document.getElementById("joinBtn").click(); true')
-        t2, p2 = phone_join(r, url.split('#')[0], team='Table Two')
+        t2, p2 = phone_join(r, url.split('#')[0], team='Table Two', own=True)
         ok('a phone without the details is not pre-filled (the TV\'s own QR carries nobody\'s)', r.ask(p2, '(document.getElementById("xEmail")||{}).value') == '')
         r.ask(p2, 'document.getElementById("joinBtn").click(); true')
         ok('both join: the game starts itself at 2 of 2', r.until(p1, QUP, 60) is True and r.until(p2, QUP, 10) is True, [r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(p1, 'document.body.innerText.slice(0,200)')])
         ok('  the question is on the phone', 'Question' in (r.ask(p1, QTEXT) or ''), r.ask(p1, QTEXT))
+        # The console's own state, as the laptop shows it (host.html?demo=auto tells the page): "Question N of 5." while
+        # it is open, "Question N of 5: the answer" once revealed.
+        def asked(n): return r.until(lap, '/^Question %d of 5\\. /.test(document.getElementById("playStatus").textContent)' % n, 40)
+        def revealed(n, secs): return r.until(lap, '/^Question %d of 5: the answer/.test(document.getElementById("playStatus").textContent)' % n, secs)
         # Q1: both answer -> straight away
-        t0 = time.time(); answer(r, p1); answer(r, p2)
-        up = r.until(p1, '!document.getElementById("vRes").classList.contains("hidden")', 25)
-        ok('Q1, both answered: the answer goes up straight away, long before 30 s', up is True and time.time() - t0 < 12, round(time.time() - t0, 1))
+        asked(1); time.sleep(1); t0 = time.time(); answer(r, p1); answer(r, p2)
+        up = revealed(1, 25)
+        ok('Q1, both answered: the answer goes up straight away, long before 30 s', up is True and time.time() - t0 < 8, round(time.time() - t0, 1))
         # Q2: one answers -> 30 s
-        r.until(p1, QUP, 30); t0 = time.time(); answer(r, p1)
-        early = r.until(p1, '!document.getElementById("vRes").classList.contains("hidden")', 20)
-        ok('Q2, one of two answered: no answer yet at 20 s', early is not True, round(time.time() - t0, 1))
-        up = r.until(p1, '!document.getElementById("vRes").classList.contains("hidden")', 25)
-        ok('  and it goes up when the 30 s run out', up is True and 26 <= time.time() - t0 <= 45, round(time.time() - t0, 1))
+        ok('the next question comes by itself after the leaderboard', asked(2) is True, r.ask(lap, 'document.getElementById("playStatus").textContent'))
+        t0 = time.time(); r.until(p1, QUP, 10); answer(r, p1)
+        early = revealed(2, 18)
+        ok('Q2, one of two answered: no answer yet at 18 s', early is not True, round(time.time() - t0, 1))
+        up = revealed(2, 25)
+        ok('  and it goes up when the 30 s run out', up is True and 22 <= time.time() - t0 <= 40, round(time.time() - t0, 1))
         for q in (3, 4, 5):
-            r.until(p1, QUP, 30); answer(r, p1); answer(r, p2)
-            r.until(p1, '!document.getElementById("vRes").classList.contains("hidden")', 25)
+            asked(q); r.until(p1, QUP, 10); answer(r, p1); answer(r, p2)
+            revealed(q, 25)
         ok('after 5 questions: "That\'s the game" on the laptop', r.until(lap, 'document.getElementById("done").classList.contains("on")', 60) is True,
-           r.ask(lap, 'document.getElementById("playStatus").textContent'))
+           [r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(lap, DRV), len(db(r, 'vp_trivia_answers')), db(r, 'vp_trivia_answers')[:2],
+            r.W.ask('POST', '/host/reveal', {'game_id': (db(r, 'vp_games') or [{}])[-1].get('id')}, {'Authorization': 'Bearer x'})])
         ok('  with the leaderboard, Dean first (he ticked nothing wrong)', 'points' in (r.ask(lap, 'document.getElementById("doneBoard").innerText') or ''), r.ask(lap, 'document.getElementById("doneBoard").innerText'))
         ok('  and one button on: "Set up my games", to the console', r.ask(lap, 'document.getElementById("toConsole").getAttribute("href")') == '/app/' and
            r.ask(lap, 'document.getElementById("toConsole").textContent') == 'Set up my games')
@@ -182,28 +195,20 @@ def scene_a(RIG):
 
 
 def scene_bcd(RIG):
-    print('\nB. ON A PHONE, NO OTHER DEVICE: THE PHONE-ONLY MINI DEMO')
+    print('\nB. NO OTHER DEVICE: NO DEMO, STRAIGHT INTO THEIR ACCOUNT (Dean, 6 Nov 2026)')
     r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
     try:
         seed(r)
-        tb, ph = r.open('/app/try.html?device=phone', width=375, height=812)
-        r.until(ph, STEP + '==="stepMode"', 20)
-        f = r.json(ph, FIT); ok('laid out for 375 (the first question)', f.get('wide', 1) <= 0 and not f.get('small'), f)
-        to_play(r, ph, 'player', 1, False)
-        ok('the player is on this phone, the game runs itself in the same page', r.until(ph, '!!document.querySelector("#phoneBox iframe") && !!document.querySelector("iframe.driver")', 10) is True)
-        FR = 'document.querySelector("#phoneBox iframe").contentDocument'
-        ok('  the join screen is pre-filled', r.until(ph, '(function(){ var d=%s; var e=d && d.getElementById("xEmail"); return !!e && e.value==="host@test.local" && d.getElementById("nameIn").value==="Dean"; })()' % FR, 40) is True)
-        r.ask(ph, '%s.getElementById("joinBtn").click(); true' % FR)
-        ok('  the question and its answers come up on the phone', r.until(ph, '(function(){ var d=%s; return !!d && d.querySelectorAll("#pAnswers button").length===4 && /Question/.test(d.getElementById("pqText").textContent); })()' % FR, 60) is True)
-        for q in range(5):
-            r.until(ph, '(function(){ var d=%s; var v=d.getElementById("vQ"); return !v.classList.contains("hidden") && d.querySelectorAll("#pAnswers button").length===4; })()' % FR, 40)
-            r.ask(ph, '%s.querySelectorAll("#pAnswers button")[2].click(); true' % FR)
-            r.until(ph, '!%s.getElementById("vRes").classList.contains("hidden")' % FR, 25)
-        ok('  scored: the phone shows its points', r.ask(ph, '/\\d/.test(%s.getElementById("pResPts").textContent)' % FR) is True)
-        ok('  then the result', r.until(ph, 'document.getElementById("done").classList.contains("on")', 60) is True)
-        f = r.json(ph, FIT); ok('  laid out for 375 at the end too', f.get('wide', 1) <= 0, f)
-        if SHOTS: r.shot(ph, os.path.join(SHOTS, 'try-phone-only-375.jpg'))
-        r.close_tab(tb)
+        for dev, w, h in (('phone', 375, 812), ('computer', 1366, 768)):
+            tb, ph = r.open('/app/try.html?device=%s' % dev, width=w, height=h)
+            r.until(ph, STEP + '==="stepMode"', 20)
+            if dev == 'phone':
+                f = r.json(ph, FIT); ok('laid out for 375 (the first question)', f.get('wide', 1) <= 0 and not f.get('small'), f)
+            to_play(r, ph, 'player', 1, False)
+            ok('on a %s, "No": straight into their account (the console home), no demo' % dev, r.until(ph, 'location.pathname==="/app/" || location.pathname==="/app/index.html"', 15) is True, r.ask(ph, 'location.href'))
+            ok('  and no demo session was opened', not any(x.get('is_demo') for x in db(r, 'vp_sessions')), db(r, 'vp_sessions'))
+            r.close_tab(tb)
+        ok('the phone-only mini demo is switched off (VPDemo.PHONE_ONLY)', 'var PHONE_ONLY = false;' in open(os.path.join(ROOT, 'venueplay/app/vp-demo.js')).read())
 
         print('\nC. ON A PHONE WITH A LAPTOP OR TV HANDY')
         tc, pc = r.open('/app/try.html?device=phone', width=375, height=812)
