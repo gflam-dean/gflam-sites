@@ -61,17 +61,14 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-sign .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
 .vpt-sign .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;min-height:0;margin-top:6px}
 /* The ad under a waiting screen is a little shorter than 16:9, so it and our logo fit a 664px screen. */
-/* THE AD TAKES THE ROOM THE SCREEN HAS (design review, 6 Nov 2026: a 90px hole above the ad, the banner's last line
-   cut, our logo 6px from the edge). It stays in its one spot above our logo, at least 24px under the screen above it;
-   it grows into any spare height up to 16:9 and never below 5:2 (the old fixed size, so nothing that fitted stops
-   fitting). The picture shows whole over a blurred copy of itself. Our logo has 12px above and below. */
-.vpt-on .view{flex:0 0 auto}
-.vpt-on #vpAd{flex:1 1 0;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;padding-top:24px}
-.vpt-on #vpAd[hidden]{display:none}
-.vpt-on #vpAd .k{margin-bottom:6px;flex:none}
-.vpt-on #vpAd .rail{flex:1 1 0;min-height:calc((100vw - 32px) * .4);max-height:calc((100vw - 32px) * .5625)}
-.vpt-on #vpAd .slide{aspect-ratio:auto;height:auto}
-.vpt-on #vpAd .dots{margin-top:6px;flex:none}
+/* THE AD IN ONE FIXED SPOT (Dean's round 7: the same place and size on every screen that shows it, so it and our logo fit a
+   664px screen). Design review, 6 Nov 2026: the picture now shows whole over a blurred copy of itself (the banner's last
+   line was cut) and our logo has 12px above and below. A bigger, growing ad was tried and dropped: it moved the ad
+   between the lobby and the end of the game, which the one-fixed-spot rule forbids. */
+.vpt-on #vpAd{padding-top:6px}
+.vpt-on #vpAd .k{margin-bottom:6px}
+.vpt-on #vpAd .slide{aspect-ratio:5/2}
+.vpt-on #vpAd .dots{margin-top:6px}
 .vpt-on #vWait{padding-top:4px;padding-bottom:0;justify-content:flex-start}   /* the lobby starts at the top, so the ad below it is not pushed off */
 .vpt-on .pfoot{padding-top:12px;padding-bottom:max(12px, env(safe-area-inset-bottom, 0px))}
 body.light .vpt-head .t,body.light .vpt-next,body.light .vpt-night .g b,body.light .vpt-sign .lb{color:#191420}
