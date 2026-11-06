@@ -63,7 +63,8 @@ ok('the ended page also shows ONE row ($3.00), not two', sa.count('class="price-
 
 print('4. The email\'s own words are by the button and the form')
 ok('under the hero button: "have a play for a month on us"', 'have a play for a month on us' in hp.lower(), hp)
-ok('at the start section: "have a play for a month on us"', 'have a play for a month on us' in sub.lower(), sub)
+ok('the start section is the no-card start (job signup-core): its own script is loaded and the card form is a separate, lower section',
+   '<script src="/app/vp-start.js"></script>' in NSW and NSW.index('id="start"') < NSW.index('id="offer"') < NSW.index('id="claim"'))
 ok('no promise of "no card": the form still asks for one, so the page does not say otherwise (the no-card start is item 80B)',
    not re.search(r'no card|card.?free|without a card', hp + sub + offer, re.I) and 'Hold my spot, add card' in NSW)
 
@@ -140,7 +141,7 @@ pt = sorted({re.search(r'href="([^"]*)"', t).group(1) for t in prim if 'href="/'
 ok('every primary start button (hero, "Lock in your price", the floating button) points at #start; the free-account enquiry and the card form are only secondary',
    all(re.search(r'href="#start"', t) for t in prim if any(k in t for k in ('hero-start', 'offer-lock', 'vp-float-cta'))) and '#contact' not in pt and '#claim' not in pt, pt)
 ok('the start section holds the one easy-to-change destination for the hero button, with a note for the five-box form',
-   'id="start"' in NSW and 'five-box start form' in NSW)
+   'id="start"' in NSW and 'vp-start.js' in NSW)
 
 print('6. Every copy agrees')
 red = rd('venueplay/_redirects')
