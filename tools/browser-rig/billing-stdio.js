@@ -53,7 +53,7 @@ if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { t
 if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: k._s }); };
 if (!crypto.subtle.sign) crypto.subtle.sign = function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); };
 /* crypto.randomUUID is on Cloudflare and not in jsc: the What's on save names a new event with it (INBOX 110). */
-if (!crypto.randomUUID) { var _uu = 0; crypto.randomUUID = function () { _uu++; return '00000000-0000-4000-8000-' + ('000000000000' + _uu).slice(-12); }; }
+if (!crypto.randomUUID) { var _uu = 0; crypto.randomUUID = function () { _uu++; var h = ('00000000' + (_uu * 2654435761 >>> 0).toString(16)).slice(-8); return h + '-0000-4000-8000-' + ('000000000000' + _uu).slice(-12); }; }
 var STORED = [];
 /* A TABLE THAT IS NOT THERE YET (29 Oct 2026, tools/helpdesk-hq-in-chrome.test.py): {ask:'missing', table, on}
    makes every request to it answer the way live PostgREST answered for vp_help_saved_replies before

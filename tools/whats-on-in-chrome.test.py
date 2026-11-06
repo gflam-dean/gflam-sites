@@ -121,6 +121,8 @@ def account():
             time.sleep(0.6)
             click(sid, '#woBox .woe-add')
             time.sleep(0.4)
+            click(sid, '.woe-form .woe-seg button', 'Every week')   # the day buttons are measured too
+            time.sleep(0.2)
             fit = S.json(sid, 'JSON.stringify((function(){var c=document.getElementById("woCard"),r=c.getBoundingClientRect(),over=[];[].forEach.call(c.querySelectorAll("*"),function(n){var b=n.getBoundingClientRect();if(b.width&&b.right>innerWidth+1)over.push((n.className||n.tagName)+":"+Math.round(b.right));});return {w:innerWidth,doc:document.documentElement.scrollWidth,over:over.slice(0,5),btn:Math.round(document.querySelector(".woe-form .go").getBoundingClientRect().height),day:Math.round(document.querySelector(".woe-form .woe-day").getBoundingClientRect().height)};})())', {})
             ok('%d wide: nothing on the card is wider than the screen, buttons at least 44px tall' % w, not fit.get('over') and fit.get('doc', 9999) <= w and fit.get('btn', 0) >= 40 and fit.get('day', 0) >= 44, fit)
             if SHOTS: S.shot(sid, os.path.join(SHOTS, 'whats-on-account-%d.png' % w))
@@ -153,8 +155,9 @@ def tv_and_phone():
         for (W, H) in ((1920, 1080), (1280, 720)):
             tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
             got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-list");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
-            ok('%dx%d: the What\'s on list slide takes its turn in the loop' % (W, H), got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show") && document.querySelector("#tvAds .ad.show").innerText'))
-            m = r.json(sid, 'JSON.stringify((function(){var s=document.querySelector("#tvAds .ad.show"),rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),bot:Math.round(b.bottom),right:Math.round(b.right),bar:getComputedStyle(x,"::before").backgroundColor};});var hd=s.querySelector(".wo-head").getBoundingClientRect(); return {kick:s.querySelector(".wo-kick").textContent,head:s.querySelector(".wo-head").textContent,headTop:Math.round(hd.top),rows:rows,h:innerHeight,w:innerWidth};})())', {})
+            time.sleep(1.2)   # the 0.8 s hand-over has finished
+            ok('%dx%d: the What\'s on list slide takes its turn in the loop' % (W, H), got is True, r.ask(sid, '(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})() && (function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})().innerText'))
+            m = r.json(sid, 'JSON.stringify((function(){var s=(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})(),rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),bot:Math.round(b.bottom),right:Math.round(b.right),bar:getComputedStyle(x,"::before").backgroundColor};});var hd=s.querySelector(".wo-head").getBoundingClientRect(); return {kick:s.querySelector(".wo-kick").textContent,head:s.querySelector(".wo-head").textContent,headTop:Math.round(hd.top),rows:rows,h:innerHeight,w:innerWidth};})())', {})
             rows = m.get('rows') or []
             ok('%dx%d: TEST ALPHA over WHAT\u2019S ON at the top, tonight first with the pink bar, then tomorrow, then the one-off; times as people say them; the past gig never shows' % (W, H),
                m.get('kick') == 'Test Alpha' and m.get('head') == 'What\u2019s on' and m.get('headTop', 999) < m.get('h', 0) * 0.15 and len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t']
@@ -162,9 +165,10 @@ def tv_and_phone():
             ok('%dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-list-%d.jpg' % W))
             got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-poster");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
-            p = r.json(sid, 'JSON.stringify((function(){var s=document.querySelector("#tvAds .ad.show"); if(!s||!s.querySelector(".wo-poster")) return {}; var pic=s.querySelector(".wo-pic").getBoundingClientRect(), w=s.querySelector(".wo-words").getBoundingClientRect(); return {bg:s.querySelector(".wo-pic").style.backgroundImage,txt:s.innerText.replace(/\\s+/g," "),pic:[Math.round(pic.width),Math.round(pic.height)],wordsRight:Math.round(w.right),overlap:pic.right>w.left+1,w:innerWidth};})())', {})
+            time.sleep(1.2)
+            p = r.json(sid, 'JSON.stringify((function(){var s=(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})(); if(!s||!s.querySelector(".wo-poster")) return {}; var pic=s.querySelector(".wo-pic").getBoundingClientRect(), w=s.querySelector(".wo-words").getBoundingClientRect(); return {bg:s.querySelector(".wo-pic").style.backgroundImage,txt:s.innerText.replace(/\\s+/g," "),pic:[Math.round(pic.width),Math.round(pic.height)],wordsRight:Math.round(w.right),overlap:pic.right>w.left+1,w:innerWidth};})())', {})
             ok('%dx%d: the night with a picture gets a poster slide: the picture whole on the left, the words beside it' % (W, H),
-               got is True and 'tugun-friday.jpg' in p.get('bg', '') and 'Revolver Fridays' in p.get('txt', '') and 'TOMORROW' in p.get('txt', '').upper() and '10pm' in p.get('txt', '')
+               got is True and 'tugun-friday.jpg' in p.get('bg', '') and 'REVOLVER FRIDAYS' in p.get('txt', '').upper() and 'TOMORROW' in p.get('txt', '').upper() and '10pm' in p.get('txt', '')
                and p.get('pic', [0, 0])[1] > H * 0.6 and not p.get('overlap') and p.get('wordsRight', 9999) <= p.get('w', 0), p)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-poster-%d.jpg' % W))
             ok('%dx%d: no script errors on the TV' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
@@ -183,7 +187,7 @@ def tv_and_phone():
             S = ('(function(ev){var vs=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"]; vs.forEach(function(v){var e=document.getElementById(v); if(e) e.classList.toggle("hidden", v!=="vWait");});'
                  'document.getElementById("app").classList.add("vpt-on"); document.getElementById("waitIn").classList.add("hidden"); var tn=document.getElementById("vpTonight"); tn.classList.remove("hidden");'
                  'window.__st=VPTonight.lobby(tn,{name:"The Quizzly Bears",me:"trivia",week:[{day:%s,games:[{game:"trivia",start:"19:30"}]}],events:ev});'
-                 'VPPhoneAd.set([{image_url:"https://x.supabase.co/storage/v1/object/public/venue-ads/v/ad.jpg"}],"Test Alpha"); VPPhoneAd.show(true); return true;})(%s)') % (json.dumps(dkey(TODAY)), json.dumps(evs))
+                 'VPPhoneAd.set([{image_url:"https://x.supabase.co/storage/v1/object/public/venue-ads/v/ad.jpg"}],"Test Alpha"); VPPhoneAd.show(true); [].forEach.call(document.querySelectorAll("#vpAd img"),function(i){ i.onerror=null; i.src=location.origin+"/logos/ad-slides/tugun-tuesday.jpg"; }); return true;})(%s)') % (json.dumps(dkey(TODAY)), json.dumps(evs))
             r.ask(sid, S)
             time.sleep(1.2)
             m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var dot=window.__st.buttons[0]; var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,dot:getComputedStyle(dot,"::after").backgroundColor,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})

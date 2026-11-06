@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 14:03 · 4e07d255';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 14:43 · 61028c76';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12599,7 +12599,8 @@ async function vpbWhatsOnSave(request, env, json) {
   if (at >= 0) events[at] = ev;
   else {
     if (events.length >= VPB_MAX_EVENTS) return json({ error: 'You have ' + VPB_MAX_EVENTS + ' events on, which is the most. Remove one first.' }, 400);
-    ev.id = 'e' + crypto.randomUUID().replace(/-/g, '').slice(0, 15);
+    do { ev.id = 'e' + crypto.randomUUID().replace(/-/g, '').slice(0, 15); }
+    while (events.some(function (x) { return x.id === ev.id; }));   // never two events with one id
     events.push(ev);
   }
   return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_saved', { id: ev.id, title: ev.title, edited: at >= 0 });

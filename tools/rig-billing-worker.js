@@ -104,6 +104,12 @@ globalThis.fetch=function(url,opts){
   /* vp_help_tickets.ticket_no is a database sequence live; the fake hands out the next one the same way
      (29 Oct 2026: a call logged in the rig showed "#undefined" in a venue's ticket list). */
   if(method==='POST'&&t==='vp_help_tickets'){var o0=JSON.parse(opts.body);if(o0&&!Array.isArray(o0)&&o0.ticket_no==null){o0.ticket_no=tbl(t).reduce(function(m,x){return Math.max(m,+x.ticket_no||1000)},1000)+1;opts=Object.assign({},opts,{body:JSON.stringify(o0)});}}
+  /* vp_venue_screen is written as an upsert on venue_id (vpbWriteScreen, Prefer: resolution=merge-duplicates), so a
+     second save changes the venue's ONE row, as PostgREST does; it used to add a second row, and a read with limit=1
+     then answered from the first (6 Nov 2026, the What's on editor's Edit "lost" an event in the rig only). */
+  if(method==='POST'&&t==='vp_venue_screen'){var hp=(opts.headers&&(opts.headers.Prefer||opts.headers.prefer))||'';var o3=JSON.parse(opts.body);
+    if(/merge-duplicates/.test(hp)&&o3&&!Array.isArray(o3)&&o3.venue_id){var had=tbl(t).filter(function(r){return r.venue_id===o3.venue_id;})[0];
+      if(had){for(var k3 in o3)had[k3]=o3[k3];return Promise.resolve(resp(201,[had]));}}}
   if(method==='POST'){var o=JSON.parse(opts.body);o.id=o.id||newId();o.created_at=o.created_at||new Date().toISOString();tbl(t).push(o);return Promise.resolve(resp(201,[o]));}
   if(method==='PATCH'){var o2=JSON.parse(opts.body);tbl(t).filter(function(r){return match(r,q)}).forEach(function(r){for(var k in o2)r[k]=o2[k];});return Promise.resolve(resp(204,''));}
   if(method==='DELETE'){var gone=tbl(t).filter(function(r){return match(r,q)});DB[t]=tbl(t).filter(function(r){return gone.indexOf(r)===-1});return Promise.resolve(resp(200,gone));}
