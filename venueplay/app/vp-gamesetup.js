@@ -195,7 +195,8 @@
     "@media (min-width:760px){#vpGs{--bw:680px}}" + "@media (min-width:1100px){#vpGs{--bw:820px}}" + P + ".vpgs-foot .vpgs-btn{min-height:48px;padding:10px 20px}" + P + ".vpgs-foot .vpgs-stack .vpgs-btn{min-height:48px}" +
     P + ".vpgs-wideonly{display:none}" + "@media (min-width:1100px){" + P + ".vpgs-wideonly{display:inline-block}}" +
     P + ".vpgs-kind .vpgs-seg button{min-height:48px}" + P + ".vpgs-q3{margin:14px 0 6px}" + P + ".vpgs-h3{display:block;margin:0;font:800 17px/1.3 " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sub{margin:2px 0 0;font-size:14px;color:#C6C6CE}" +
-    P + ".vpgs-btn.big.vpgs-outline{margin:10px 0 0}" + P + ".vpgs-answers{margin:14px 0 4px;gap:10px}" + P + ".vpgs-answers .vpgs-btn.big{min-height:52px;margin:0}" + P + ".vpgs-answers .vpgs-link{align-self:center}" + P + ".vpgs-answers+.vpgs-note{margin:10px 0 0}" +
+    P + ".vpgs-btn.big.vpgs-outline{margin:10px 0 0}" +
+    P + ".vpgs-toprow{display:flex;justify-content:flex-end;min-height:44px;margin:0 0 8px}" + P + ".vpgs-topnext{min-height:44px;padding:6px 18px;font-size:15px}" + P + ".vpgs-count{min-height:18px}" + P + ".vpgs-bar{min-height:3px}" + P + ".vpgs-answers{margin:14px 0 4px;gap:10px}" + P + ".vpgs-answers .vpgs-btn.big{min-height:52px;margin:0}" + P + ".vpgs-answers .vpgs-link{align-self:center}" + P + ".vpgs-answers+.vpgs-note{margin:10px 0 0}" +
     P + ".vpgs-prew{position:relative;display:block}" + P + ".vpgs-pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:" + C.muted + ";font-size:16px;pointer-events:none}" + P + ".vpgs-prew .vpgs-in{padding-left:22px}" +
     /* ONE BOX WIDTH FOR EVERY SMALL BOX, so they line up down the screen (Dean, round 8b points 5, 10 and 16) */
     P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:88px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=money]>.vpgs-ctl{width:112px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=time]>.vpgs-ctl{width:136px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=date]>.vpgs-ctl{width:164px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=seg]>.vpgs-ctl{width:136px}" + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-in," + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-seg{width:100%!important}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:100%!important;flex:1}" +
@@ -431,6 +432,10 @@
     head.appendChild(logo); head.appendChild(x); box.appendChild(head);
     var stepRow = el("div", "vpgs-step"); var count = el("p", "vpgs-count"); count.id = "vpGsCount"; stepRow.appendChild(count); box.appendChild(stepRow);
     var bar = el("div", "vpgs-bar"); bar.id = "vpGsBar"; bar.setAttribute("aria-hidden", "true"); box.appendChild(bar);
+    /* NEXT IN THE SAME TWO PLACES ON EVERY SCREEN (Dean, round 9b): compact at the top right under the progress bar, and
+       in the bar fixed to the bottom. The top one is never its own action: it presses the bottom bar's main button. */
+    var topRow = el("div", "vpgs-toprow"); var topNext = el("button", "vpgs-btn pink vpgs-topnext", "Next"); topNext.id = "vpGsTopNext"; topNext.setAttribute("type", "button");
+    topRow.appendChild(topNext); box.appendChild(topRow);
     var card = el("div", "vpgs-card");
     var title = el("h2", "vpgs-title"); title.id = "vpGsTitle";
     var body = el("div"); body.id = "vpGsBody";
@@ -440,7 +445,17 @@
     /* the console's own header can paint through a fixed layer on an iPhone: hidden while this is open (design review, 6 Nov) */
     var hdr = doc.querySelector ? doc.querySelector("header") : null, hdrWas = hdr && hdr.style ? hdr.style.visibility : null;
     if (hdr && hdr.style) hdr.style.visibility = "hidden";
-    function clear() { while (body.firstChild) body.removeChild(body.firstChild); while (foot.firstChild) foot.removeChild(foot.firstChild); if (shell.scrollTop) shell.scrollTop = 0; }
+    function mainOf(n) { var kids = n.children || []; for (var i = 0; i < kids.length; i++) { var k = kids[i]; if (k.tagName === "BUTTON" && /(^| )pink( |$)/.test(k.className || "")) return k; var d = mainOf(k); if (d) return d; } return null; }
+    function syncTop() {
+      var m = mainOf(foot);
+      topNext.style.visibility = m ? "" : "hidden";
+      topNext.textContent = m && /^Go to my console/.test(m.textContent) ? "Done" : "Next";
+      topNext.disabled = !!(m && m.disabled);
+      topNext.setAttribute("aria-label", m ? m.textContent : "Next");
+    }
+    topNext.addEventListener("click", function () { var m = mainOf(foot); if (m && !m.disabled) m.click(); });
+    if (root.setInterval) root.setInterval(function () { var m = mainOf(foot); if (m) topNext.disabled = !!m.disabled; }, 400);   // follows the bottom button when it waits for an answer
+    function clear() { while (body.firstChild) body.removeChild(body.firstChild); while (foot.firstChild) foot.removeChild(foot.firstChild); if (shell.scrollTop) shell.scrollTop = 0; Promise.resolve().then(syncTop); }
     function btn(label, kind, id, onClick) { var b = el("button", "vpgs-btn " + kind, label); b.setAttribute("type", "button"); if (id) b.id = id; b.addEventListener("click", onClick); return b; }
     function close() { if (shell.parentNode) shell.parentNode.removeChild(shell); if (hdr && hdr.style) hdr.style.visibility = hdrWas || ""; }
     /* the step line: words, and a bar of n parts with the first `on` lit */
@@ -449,7 +464,7 @@
       while (bar.firstChild) bar.removeChild(bar.firstChild);
       for (var i = 0; i < (n || 0); i++) { var s = el("i", i < on ? "on" : ""); bar.appendChild(s); }
     }
-    return { el: el, shell: shell, count: count, title: title, body: body, foot: foot, x: x, clear: clear, btn: btn, close: close, step: step };
+    return { el: el, shell: shell, count: count, title: title, body: body, foot: foot, x: x, clear: clear, btn: btn, close: close, step: step, topNext: topNext, syncTop: syncTop };
   }
 
   /* YOUR USUAL PRIZES, ONE TAP EACH (Dean, round 7b points 10 and 15): the prizes typed in an earlier game show as small
@@ -871,7 +886,7 @@
       mlater.addEventListener("click", function () { done("later"); }); F.body.appendChild(mlater);
     }
     var saveWords = opts.first ? (g.needsDetails ? "Save the draw" : "Save and play") : "Save " + g.name;
-    var save = F.btn(saveWords, "pink" + (opts.first ? " big" : ""), "vpGsSave", function () {
+    var save = F.btn(saveWords, "pink", "vpGsSave", function () {
       save.disabled = true; msg.textContent = "";
       var vals = collect();
       var p = g.needsDetails ? saveMembers(deps, vid, vals) : savePrefs(deps, vid, gkey, vals, false).then(function (ok) { return { ok: ok }; });
@@ -883,15 +898,13 @@
     });
     if (opts.first) {
       /* THE BIG WAY OUT (Dean, round 2): a host at 7pm with a full room is never stuck behind a form. */
-      var stack = el("div", "vpgs-stack"); stack.style.width = "100%";
-      stack.appendChild(save);
       if (!g.needsDetails) {
         var play = F.btn(gkey === "musical" ? "Play now with the defaults (popular songs)" : "Play now with the defaults", "ghost big vpgs-outline vpgs-pk", "vpGsPlayNow", function () { done("defaults"); });
-        stack.appendChild(play);
+        F.body.appendChild(play);
       } else {
-        stack.appendChild(F.btn("Not now, take me to the console", "ghost big vpgs-outline vpgs-pk", "vpGsPlayNow", function () { done("later"); }));
+        F.body.appendChild(F.btn("Not now, take me to the console", "ghost big vpgs-outline vpgs-pk", "vpGsPlayNow", function () { done("later"); }));
       }
-      F.foot.appendChild(stack);
+      F.foot.appendChild(el("span")); F.foot.appendChild(save);   // the main button in the same place as every other screen
     } else {
       F.foot.appendChild(opts.back ? F.btn("Back", "ghost", "vpGsBack", function () {
         var d = {};
@@ -1175,10 +1188,11 @@
       var nt = F.el("p", "vpgs-note", "Not today is fine: each game keeps the usual settings, and walks you through its setup the first time you open it.");
       F.body.appendChild(nt);
       var ans2 = F.el("div", "vpgs-stack vpgs-answers");
-      ans2.appendChild(F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }));
+      var allYes = F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }); ans2.appendChild(allYes);
       ans2.appendChild(F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }));
       F.body.insertBefore(ans2, nt);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
+      F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { allYes.click(); }));   // Next is "Yes, set them all up"
     }
     var drafts = {};   // what they left on a game when they pressed Back, by game and draw
     function oneGame(g, inst) {
@@ -1242,6 +1256,7 @@
       other.addEventListener("click", function () { whichNext(rest); }); if (rest.length < 2) other.style.display = "none";
       ans.appendChild(other); F.body.appendChild(ans);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", function () { oneGame(g); }));
+      F.foot.appendChild(F.btn("Next", "pink", "vpGsNextGo", function () { oneGame(rest[0]); }));   // Next is "Yes" (Dean, round 9b)
     }
     function whichNext(rest) {
       F.clear(); F.step("Next game", 0, 0); F.title.textContent = "What would you like to set up next?";
@@ -1249,6 +1264,7 @@
       var stack = F.el("div", "vpgs-stack"); stack.id = "vpGsWhich";
       rest.forEach(function (g) { var b = F.btn(gameOf(g).title, "ghost big vpgs-outline", null, function () { oneGame(g); }); b.setAttribute("data-game", g); stack.appendChild(b); });
       F.body.appendChild(stack);
+      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Next", "pink", "vpGsWhichNext", function () { oneGame(rest[0]); }));
     }
     /* "No worries." The defaults are written for each game left (never over a saved value). Members draws have no
        defaults, so they get their own line rather than being called saved (Dean, round 2). */

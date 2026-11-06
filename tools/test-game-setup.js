@@ -595,6 +595,20 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('members: "After a win it goes back to" right under "Current jackpot for the next draw", and the member numbers said once (design review r9)', mk9.indexOf('starting_amount_cents') === mk9.indexOf('current_jackpot_cents') + 1 && /After a win it goes back to/.test(T(P, 'vpGsBody')) && !/member numbers/.test(T(P, 'vpGsLead')), mk9);
   check('every screen\'s buttons sit in one bar fixed to the bottom, the main one on the right', (function () { var st = walk($(P, 'vpGs'), function (e) { return e.tagName === 'STYLE'; }); var css = st ? st.textContent : ''; return /\.vpgs-foot\{position:fixed;left:0;right:0;bottom:0/.test(css) && /\.vpgs-foot \.vpgs-btn\.pink\{margin-left:auto\}/.test(css); })());
 
+  P = page({ answers: { games: ['trivia', 'musical'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  check('a compact Next under the progress bar on every screen, the same as the bottom bar\'s main button (Dean, round 9b)', !!$(P, 'vpGsTopNext') && T(P, 'vpGsTopNext') === 'Next' && $(P, 'vpGsTopNext').style.visibility === '' && $(P, 'vpGsTopNext').getAttribute('aria-label') === 'Next');
+  $(P, 'vpGsTopNext').click(); await settle();
+  check('the top Next does what the bottom one does (games, then the nights)', /Which nights/.test(T(P, 'vpGsTitle')), T(P, 'vpGsTitle'));
+  $(P, 'vpGsWeekSkip').click(); await settle();
+  check('"Set them all up today?": Next at the bottom is "Yes, set them all up", the answers under the question', !!$(P, 'vpGsAllNext') && /vpgs-answers/.test($(P, 'vpGsAllYes').parentNode.className));
+  $(P, 'vpGsTopNext').click(); await settle(); $(P, 'vpGsSave').click(); await settle();
+  check('next game: Next (top and bottom) is "Yes, set up musical bingo"', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && !!$(P, 'vpGsNextGo') && $(P, 'vpGsTopNext').getAttribute('aria-label') === 'Next');
+  $(P, 'vpGsTopNext').click(); await settle();
+  check('and it opens musical bingo', T(P, 'vpGsTitle') === 'Set up musical bingo', T(P, 'vpGsTitle'));
+  var P18 = page(); var fo18 = P18.GS.firstOpen('trivia', Object.assign(P18.deps, { ctx: Object.assign(P18.ctx, { settings: { setup_answers: { setup: { trivia: 'later' } } } }) })); await settle();
+  check('first open: Save in the bottom bar\'s usual place, "Play now with the defaults" a big button in the card', /vpgs-foot/.test($(P18, 'vpGsSave').parentNode.className) && $(P18, 'vpGsPlayNow').parentNode.id === 'vpGsBody');
+  $(P18, 'vpGsClose').click(); await fo18;
+
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');
   var gstep = FR.slice(FR.indexOf('STEP.pick = function'), FR.indexOf('STEP.tv = function'));
