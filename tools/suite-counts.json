@@ -1019,6 +1019,10 @@
   "checks": 26,
   "counted_by": "lines"
  },
+ "tools/test-trivia-reveal.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/test-trusted-logos.js": {
   "checks": 43,
   "counted_by": "lines"
@@ -1181,6 +1185,10 @@
  },
  "tools/trivia-question-space-in-chrome.test.py": {
   "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/trivia-reveal-in-chrome.test.py": {
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/try-demo-in-chrome.test.py": {

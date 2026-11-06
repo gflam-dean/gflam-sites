@@ -215,16 +215,20 @@ print('\n== 3b. sixteen teams: the top ten, then the rest a page at a time, the 
   show('twenty-eight teams: three pages, the last is the leader and 20 to 28', cn.length === 10 && cn[0] === 'T1' && cn[1] === 'T20' && cn[9] === 'T28', cn.join());
 })();
 
-print('\n== 3c. the JOIN NOW card: over the scores, never over the question or its reveal ==');
+print('\n== 3c. the JOIN NOW card: over neither the question, the reveal, the scores nor the podium (6 Nov 2026), unless the one-line switch is on ==');
 (function () {
-  var dom = makeDom();
-  var f = new Function('$', 'paintNight', 'stopBoardPaging', 'setTimeout', 'alignTitle', 'window',
-    'var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
-  var show_ = f(dom.$, function () {}, function () {}, function () {}, function () {}, {});
-  var J = dom.$('tvJoinCorner');
-  var seen = ['tvLobby', 'tvQ', 'tvReveal', 'tvBoard', 'tvPodium'].map(function (w) { show_(w); return w + ':' + (J.classList.contains('hidden') ? 'off' : 'on'); });
-  show('off on the lobby, the question and the reveal; on for the scores and the podium',
-       seen.join() === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:on', seen.join());
+  function seenWith(flag) {
+    var dom = makeDom();
+    var f = new Function('$', 'paintNight', 'stopBoardPaging', 'setTimeout', 'alignTitle', 'window', 'JOIN_ON_RESULTS',
+      'var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];\n' + lift(SCREEN, 'show', 'trivia/screen.html') + '; return show;');
+    var show_ = f(dom.$, function () {}, function () {}, function () {}, function () {}, {}, flag);
+    var J = dom.$('tvJoinCorner');
+    return ['tvLobby', 'tvQ', 'tvReveal', 'tvBoard', 'tvPodium'].map(function (w) { show_(w); return w + ':' + (J.classList.contains('hidden') ? 'off' : 'on'); }).join();
+  }
+  show('off on the lobby, the question, the reveal, the scores and the podium',
+       seenWith(false) === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:off,tvPodium:off', seenWith(false));
+  show('and the one-line switch (JOIN_ON_RESULTS) puts it back on the scores and the podium',
+       seenWith(true) === 'tvLobby:off,tvQ:off,tvReveal:off,tvBoard:on,tvPodium:on', seenWith(true));
 })();
 
 /* ======================================================================================= 4 */

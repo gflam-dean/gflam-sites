@@ -668,3 +668,10 @@ deploying either Worker from this branch: their reads filter is_demo=not.is.true
 is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. RUN LIVE (see the RUN LIVE line above).
 
 `venueplay-169-library-questions-read-only.sql` (Dean, 5 Nov 2026, items 45c and 75d): a venue can no longer edit or delete a copy of a library question straight through the database, and can no longer set its own question set to the library. Adds `vp_questions.from_library` (backfilled for every existing copy by exact words, the Worker's own rule), replaces `vp_questions_host_write` (a venue writes only the questions it created) and `vp_question_sets_host_write` (a venue's own set must be `private`). Library reads, swap and remove are unchanged (the Worker uses the service key). Either order with the Worker. RLS-BASELINE.json policy TEXT changes: re-dump it after this runs. NUMBER: 169 is Dean's. Branch `fix/trivia-library-swap-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-174-optin-consent-version.sql` (Dean, 6 Nov 2026, the "Get a heads up by email" sign-up on the phone with no
+game on): two columns, `vp_players.consent_version` and `vp_captures.consent_version` (text, 20 characters at most), the
+version of the offers + 18+ consent words the person ticked (VPConsent.VERSION). No new policy, grant or function, so
+RLS-BASELINE.json does not change. Either order with the game Worker: before it runs, /join/list stores the sign-up
+without the version. NUMBER: 174 (the coordinator's number, 6 Nov 2026). Branch `fix/trivia-live-fixes-6nov`. NOT RUN.
+Read-back and rollback in the file.
