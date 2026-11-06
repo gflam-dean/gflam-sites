@@ -64,7 +64,7 @@
     P + ".vpgs-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:12px 0 0}",
     P + ".vpgs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 20px;border-radius:12px;border:none;font:700 16px/1.25 " + HEAD + ";cursor:pointer;text-align:center}",
     P + ".vpgs-btn.pink{background:" + C.pink + ";color:#FFFFFF}" + P + ".vpgs-btn.ghost{background:rgba(255,255,255,.08);color:" + C.text + "}",
-    P + ".vpgs-btn.big{width:100%;min-height:50px}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
+    P + ".vpgs-btn.big{width:100%;min-height:50px}" + P + ".vpgs-btn.vpgs-outline{border:1.5px solid rgba(255,140,198,.7);background:transparent}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
     P + ".vpgs-stack{display:flex;flex-direction:column;gap:10px}",
     P + ".vpgs-close{min-height:44px;padding:8px 14px;font-size:15px}",
     P + ".vpgs-list{list-style:none;margin:0 0 12px;padding:0}",
@@ -85,8 +85,8 @@
     P + ".vpgs-plist{display:flex;flex-direction:column;gap:6px}",
     P + ".vpgs-prow{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;font:700 14px " + HEAD + ";color:" + C.muted + "}",
     P + ".vpgs-none{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;font:600 14px Manrope,system-ui,sans-serif;color:" + C.faint + ";white-space:nowrap;cursor:pointer}",
-    P + ".vpgs-none input{width:18px;height:18px;accent-color:" + C.pink + "}",
-    P + ".vpgs-add{align-self:flex-start;min-height:44px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
+    P + ".vpgs-none input{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin:0;border-radius:6px;border:2px solid rgba(255,255,255,.35);background:transparent;cursor:pointer}" + P + ".vpgs-none input:checked{background:" + C.pink + ";border-color:" + C.pink + "}",
+    P + ".vpgs-add{align-self:flex-start;min-height:44px;margin:6px 0 0;padding:8px 14px;border:1px solid rgba(255,140,198,.5);border-radius:10px;background:rgba(255,31,142,.06);font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
     P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
     P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}",
     P + ".vpgs-sec{margin:14px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
@@ -94,15 +94,16 @@
     P + ".vpgs-row{position:relative;padding:10px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child,.vpgs-rows>.vpgs-group:first-child{border-top:none;padding-top:0}",
     P + ".vpgs-prompt{margin:0 0 4px;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + "}",
     P + ".vpgs-lab{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
-    P + ".vpgs-q{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid " + C.pinkSoft + ";color:" + C.pinkSoft + ";background:transparent;font:800 14px " + HEAD + ";cursor:pointer;padding:0}",
-    P + ".vpgs-q[aria-expanded=true]{background:" + C.pink + ";border-color:" + C.pink + ";color:#FFFFFF}",
+    P + ".vpgs-q{flex:none;width:44px;height:44px;margin:-8px -8px -8px -4px;border:none;border-radius:50%;background:transparent;cursor:pointer;padding:0;position:relative;z-index:0;color:" + C.pinkSoft + ";font:800 14px " + HEAD + "}",
+    P + ".vpgs-q::before{content:'';position:absolute;left:9.5px;top:9.5px;width:25px;height:25px;box-sizing:border-box;border-radius:50%;border:1.5px solid " + C.pinkSoft + ";z-index:-1}",
+    P + ".vpgs-q[aria-expanded=true]{color:#FFFFFF}" + P + ".vpgs-q[aria-expanded=true]::before{background:" + C.pink + ";border-color:" + C.pink + ";z-index:-1}",
     /* the "?" words: UNDER the setting on a phone (Dean, round 2), a bubble under the label on a wider screen */
     P + ".vpgs-pop{position:static;margin:0 0 8px;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 15px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}",
     P + ".vpgs-pop .got{display:block;margin:4px 0 0;padding:0;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;min-height:32px;text-align:left}",
     P + ".vpgs-seg{display:flex;width:100%;border:1px solid rgba(255,255,255,.18);border-radius:10px;overflow:hidden}",
     P + ".vpgs-seg button{flex:1;min-height:44px;padding:8px 10px;border:none;background:transparent;font:700 15px/1.2 " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-seg button+button{border-left:1px solid rgba(255,255,255,.18)}" + P + ".vpgs-seg button[aria-pressed=true]{background:" + C.pink + ";color:#FFFFFF}",
-    P + ".vpgs-info{margin:0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.45;color:" + C.muted + "}",
+    P + ".vpgs-info{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}",
     P + ".vpgs-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}",
     P + ".vpgs-day{min-height:44px;padding:0;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);font:700 14px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-day[aria-pressed=true]{background:" + C.pink + ";border-color:" + C.pink + ";color:#FFFFFF}",
@@ -117,34 +118,47 @@
     P + ".vpgs-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}" + P + ".vpgs-tags:empty{display:none}",
     P + ".vpgs-tag2{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,31,142,.55);background:rgba(255,31,142,.10);color:#FFFFFF;font:700 14px " + HEAD + ";cursor:pointer}",
     P + ".vpgs-tag2 .x{font-size:16px;line-height:1;color:" + C.pinkSoft + "}",
-    P + ".vpgs-hint{margin:6px 0 0;font-size:14px;color:" + C.faint + "}",
+    P + ".vpgs-hint{margin:6px 0 0;font-size:14px;line-height:1.4;color:#B4B4BE}",
+    P + ".vpgs-unitw{display:flex;align-items:center;gap:8px}" + P + ".vpgs-unitw .vpgs-in{flex:1;min-width:0}" + P + ".vpgs-unit{flex:none;font-size:15px;color:" + C.muted + "}",
+    P + ".vpgs-group .vpgs-row{display:flex;flex-direction:column;justify-content:flex-end}" + P + ".vpgs-group>:only-child{grid-column:1/-1}",
+    P + ".vpgs-prow.nonone{grid-template-columns:72px 1fr}",
+    P + "input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.75}",
     P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:36px;font-size:14px;padding:0 4px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
     /* THE "?" LINE UP (Dean, round 5): always at the end of its label line */
-    P + ".vpgs-lab{justify-content:space-between}" + P + ".vpgs-lab>span{flex:1;min-width:0}" +
+    P + ".vpgs-lab{justify-content:flex-start}" + P + ".vpgs-lab>span{flex:0 1 auto;min-width:0}" +
     /* a number is one compact line on every screen: the question, then a small box (Dean, round 5) */
-    P + ".vpgs-rows .vpgs-row.num{display:grid;grid-template-columns:minmax(0,1fr) 120px;column-gap:12px;align-items:center}" + P + ".vpgs-row.num .vpgs-lab{margin:0}" + P + ".vpgs-row.num .vpgs-pop{grid-column:1/-1}" +
+    P + ".vpgs-rows .vpgs-row.num{display:grid;grid-template-columns:minmax(0,1fr) 170px;column-gap:12px;align-items:center}" + P + ".vpgs-row.num .vpgs-lab{margin:0}" + P + ".vpgs-row.num .vpgs-pop{grid-column:1/-1}" +
     P + ".vpgs-tw{display:flex;gap:6px;align-items:center}" + P + ".vpgs-tw .vpgs-in{flex:1;min-width:0}" +
     P + ".vpgs-rm{flex:none;width:36px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:" + C.pinkSoft + ";font:700 18px " + HEAD + ";cursor:pointer}",
     P + ".vpgs-lt b{color:#FFFFFF;font-weight:700}" + P + ".vpgs-list .vpgs-n{margin-top:1px}",
     P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 140px 130px}",
+    /* the reviewer's layout (design review, 6 Nov): one row per setting, control column fixed */
+    "#vpGs.vpgs-alt .vpgs-asec{margin:18px 0 0;padding:16px 0 0;border-top:1px solid rgba(255,255,255,.18)}#vpGs.vpgs-alt .vpgs-asec:first-child{margin-top:4px;padding-top:0;border-top:none}",
+    "#vpGs.vpgs-alt .vpgs-ah{margin:0 0 8px;font:800 14px " + HEAD + ";letter-spacing:.08em;text-transform:uppercase;color:" + C.pinkSoft + "}",
+    "#vpGs.vpgs-alt .vpgs-row.arow{display:grid;grid-template-columns:minmax(0,1fr);row-gap:8px;padding:12px 0}",
+    "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-lab{margin:0}",
+    "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-pop{grid-column:1/-1}",
+    "@media (min-width:600px){#vpGs.vpgs-alt .vpgs-row.arow{grid-template-columns:minmax(0,1fr) 240px;column-gap:20px;align-items:center}#vpGs.vpgs-alt .vpgs-row.arow.ablock{grid-template-columns:minmax(0,1fr)}" +
+      "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-unitw .vpgs-in{flex:0 0 90px}}",
     "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:1fr auto;row-gap:2px}" + P + ".vpgs-prow>:nth-child(2){grid-column:1/-1;grid-row:2}" + P + ".vpgs-prow>:nth-child(3){grid-column:2;grid-row:1}" + P + ".vpgs-go{width:100%}" + P + ".vpgs-foot .vpgs-go{flex:1}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 130px;row-gap:6px}" + P + ".vpgs-times .vpgs-time.sess .vpgs-sess{grid-column:2}}",
     P + ".vpgs-cats .vpgs-chip{height:100%;align-items:flex-start}" + P + ".vpgs-cats{grid-auto-rows:1fr}",
-    "@media (max-width:420px){" + P + "h2.vpgs-title{font-size:20px}" + P + ".vpgs-lead{font-size:14.5px}" + P + ".vpgs-chip{min-height:44px;font-size:14.5px}" + P + ".vpgs-btn.big{min-height:48px;font-size:15px}" + P + ".vpgs-card{padding:16px 14px}}",
+    "@media (max-width:420px){" + P + "h2.vpgs-title{font-size:20px}" + P + ".vpgs-lead{font-size:14.5px}" + P + ".vpgs-chip{min-height:44px;font-size:14.5px}" + P + ".vpgs-btn.big{min-height:48px;font-size:15px}" + P + ".vpgs-card{padding:16px 12px}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:44px}" + P + ".vpgs-hint{font-size:14px}}",
     "@media (min-width:600px){" + P + ".vpgs-music{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" +
       P + ".vpgs-group{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:auto}" +
-      P + ".vpgs-pop{position:absolute;z-index:5;left:0;top:36px;width:360px;margin:0;padding:12px 14px 8px;border:1px solid " + C.pink + ";border-radius:12px;background:#1E1E24;box-shadow:0 14px 40px rgba(0,0,0,.6)}" +
+
       P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;text-align:left;text-decoration:underline;text-underline-offset:3px}}",
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:660px;padding-top:24px}" + P + ".vpgs-card{padding:26px 30px}" + P + "h2.vpgs-title{font-size:26px}" +
-      P + ".vpgs-chips{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-music{grid-template-columns:repeat(4,1fr)}" +
+      P + ".vpgs-chips{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" +
       P + ".vpgs-row.two{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:20px;align-items:center}" +
       P + ".vpgs-row.two .vpgs-prompt{grid-column:1/-1}" + P + ".vpgs-row.two .vpgs-lab{margin:0}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" +
       P + ".vpgs-group .vpgs-row.two{display:block}" + P + ".vpgs-group .vpgs-row.two .vpgs-lab{margin:0 0 6px}}",
     /* LAPTOPS ARE SMALL SCREENS (Dean, round 3): bigger type and controls from 1100px */
-    "@media (min-width:1100px){" + P + ".vpgs-box{max-width:780px;padding-top:28px}" + P + ".vpgs-card{padding:34px 40px}" + P + "h2.vpgs-title{font-size:30px}" +
-      P + ".vpgs-lead{font-size:17px}" + P + ".vpgs-lab{font-size:16.5px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
+    /* LAPTOPS (design review, 6 Nov): a 900px column, 18px body text, 15px helpers */
+    "@media (min-width:1100px){" + P + ".vpgs-box{max-width:900px;padding-top:32px}" + P + ".vpgs-card{padding:36px 44px}" + P + "h2.vpgs-title{font-size:32px}" +
+      P + ".vpgs-lead{font-size:18px}" + P + ".vpgs-lab{font-size:18px}" + P + ".vpgs-hint{font-size:15px}" + P + ".vpgs-unit{font-size:17px}" + P + ".vpgs-chip small{font-size:15px}" + P + ".vpgs-info{font-size:17px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
       P + ".vpgs-chip{min-height:50px;font-size:16px}" + P + ".vpgs-seg button{min-height:48px;font-size:16px}" + P + ".vpgs-in{min-height:48px;font-size:17px}" +
-      P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 340px}}"
+      P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 380px}" + P + ".vpgs-rows .vpgs-row.num{grid-template-columns:minmax(0,1fr) 200px}}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -343,7 +357,7 @@
     var old = doc.getElementById("vpGs"); if (old && old.parentNode) old.parentNode.removeChild(old);
     function el(tag, cls, text) { var e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
     var shell = el("div"); shell.id = "vpGs";
-    shell.setAttribute("style", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;overflow-y:auto;background:" + (deps.over ? "rgba(10,10,11,.95)" : C.ink) + ";font-family:Manrope,system-ui,sans-serif;color:" + C.text + ";padding:0 16px");
+    shell.setAttribute("style", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;overflow-y:auto;background:" + C.ink + ";font-family:Manrope,system-ui,sans-serif;color:" + C.text + ";padding:0 16px");
     shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-label", "Set up your games");
     var st = el("style", null, CSS); shell.appendChild(st);
     var box = el("div", "vpgs-box"); shell.appendChild(box);
@@ -359,9 +373,12 @@
     card.appendChild(title); card.appendChild(body); box.appendChild(card);
     var foot = el("div", "vpgs-foot"); foot.id = "vpGsFoot"; box.appendChild(foot);
     doc.body.appendChild(shell);
+    /* the console's own header can paint through a fixed layer on an iPhone: hidden while this is open (design review, 6 Nov) */
+    var hdr = doc.querySelector ? doc.querySelector("header") : null, hdrWas = hdr && hdr.style ? hdr.style.visibility : null;
+    if (hdr && hdr.style) hdr.style.visibility = "hidden";
     function clear() { while (body.firstChild) body.removeChild(body.firstChild); while (foot.firstChild) foot.removeChild(foot.firstChild); if (shell.scrollTop) shell.scrollTop = 0; }
     function btn(label, kind, id, onClick) { var b = el("button", "vpgs-btn " + kind, label); b.setAttribute("type", "button"); if (id) b.id = id; b.addEventListener("click", onClick); return b; }
-    function close() { if (shell.parentNode) shell.parentNode.removeChild(shell); }
+    function close() { if (shell.parentNode) shell.parentNode.removeChild(shell); if (hdr && hdr.style) hdr.style.visibility = hdrWas || ""; }
     /* the step line: words, and a bar of n parts with the first `on` lit */
     function step(words, n, on) {
       count.textContent = words || "";
@@ -391,8 +408,9 @@
     q.addEventListener("click", function () { var opening = pop.style.display === "none"; ctx.pops.forEach(function (p) { p(false); }); show(opening); });
     got.addEventListener("click", function () { show(false); if (q.focus) q.focus(); });
     ctx.pops.push(show);
-    var left = el("div"); left.appendChild(lab); left.appendChild(pop); row.appendChild(left);
-    var wrap = el("div"), get = function () { return undefined; }, setTo = null, cur = s.def, onChange = [];
+    var left = el("div"); left.appendChild(lab); row.appendChild(left);
+    var wrap = el("div"), get = function () { return undefined; }, cur = s.def, onChange = [];
+    var setter = null;   // a seg's way to be set from outside (raffles' "Use my usual prizes")
     function changed() { onChange.forEach(function (f) { f(); }); if (ctx.refresh) ctx.refresh(); }
     if (s.kind === "seg") {
       var seg = el("div", "vpgs-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", s.label);
@@ -403,7 +421,7 @@
         seg.appendChild(b);
       });
       wrap.appendChild(seg); get = function () { return cur; };
-      setTo = function (v) { cur = v; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); };
+      setter = function (v) { cur = v; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); };
     } else if (s.kind === "select") {
       var sel = el("select", "vpgs-in"); sel.id = "vpGsIn_" + s.key; sel.setAttribute("aria-label", s.label);
       var opts = s.options || [];
@@ -468,7 +486,7 @@
             inp.disabled = !!nones[i];
             (function (cb, inp, k) { cb.addEventListener("change", function () { nones[k] = !!cb.checked; inp.disabled = !!cb.checked; }); })(cb, inp, i);
             nl.appendChild(cb); nl.appendChild(el("span", null, "No prize")); pr.appendChild(nl);
-          } else pr.appendChild(el("span"));
+          } else pr.className += " nonone";
           plist.appendChild(pr);
         }
         lab.firstChild.textContent = want > 1 ? (s.none ? "Prize for each round" : s.each + "s") : s.label;
@@ -551,7 +569,7 @@
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
     } else {
       var inp1 = el("input", "vpgs-in"); inp1.id = "vpGsIn_" + s.key; inp1.setAttribute("aria-label", s.label);
-      inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : "text");
+      inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : (s.kind === "time" ? "time" : "text"));
       if (s.kind === "number") { inp1.setAttribute("inputmode", "numeric"); if (s.min != null) inp1.min = String(s.min); if (s.max != null) inp1.max = String(s.max); }
       if (s.kind === "money") { inp1.setAttribute("inputmode", "decimal"); inp1.step = "0.01"; inp1.min = "0"; }
       if (s.placeholder) inp1.placeholder = s.placeholder;
@@ -560,15 +578,17 @@
       inp1.addEventListener("input", changed); inp1.addEventListener("change", changed);
       /* THE FIRST DRAW DATE FILLS IN THE DRAW DAY (Dean, round 2), unless they typed a day of their own. */
       wrap.appendChild(inp1);
+      if (s.unit) { wrap.className = "vpgs-unitw"; wrap.appendChild(el("span", "vpgs-unit", s.unit)); }   // "30 seconds" (design review, 6 Nov)
       get = function () {
         var v = String(inp1.value || "").trim();
+        if (s.kind === "time") return /^\d\d:\d\d$/.test(v) ? timeWords(v) : undefined;   // saved as the TV shows it: "7:30pm"
         if (s.kind === "number") { if (!v) return undefined; var n = parseInt(v, 10); if (isNaN(n)) return undefined; if (s.min != null && n < s.min) n = s.min; if (s.max != null && n > s.max) n = s.max; return n; }
         if (s.kind === "money") { if (!v) return undefined; var m = Math.round(parseFloat(v) * 100); return isNaN(m) || m < 0 ? undefined : m; }
         return v ? v : undefined;
       };
     }
-    row.appendChild(wrap);
-    return { row: row, get: get, setTo: function (v) { if (setTo) setTo(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input") : (wrap.children[0] && wrap.children[0].tagName === "INPUT" ? wrap.children[0] : null); } };
+    row.appendChild(wrap); row.appendChild(pop);   // the "?" words open under the whole setting, pushing what follows down
+    return { row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input") : (wrap.children[0] && wrap.children[0].tagName === "INPUT" ? wrap.children[0] : null); } };
   }
   /* Trivia question sets for "Pick categories": the venue's own and the venueplay library, never another venue's private night. */
   function loadSetRows(ctx, paint) {
@@ -611,7 +631,7 @@
     if (g.needsDetails) {
       var mw = (cleanWeek((opts.answers || (cx.settings && cx.settings.setup_answers) || {}).week) || []).filter(function (d) { return d.games.some(function (x) { return x.game === "members"; }); });
       var md = mw[((opts.instance || 1) - 1) % (mw.length || 1)];
-      if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; var mg = md.games.filter(function (x) { return x.game === "members"; })[0]; memTime = timeWords(mg && mg.start); }
+      if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; var mg = md.games.filter(function (x) { return x.game === "members"; })[0]; memTime = (mg && mg.start) || ""; }
     }
     var lead = (g.needsDetails && opts.quickOnly) ? "Two quick questions before your first draw. The rest can wait." : g.needsDetails
       ? "Grab your members draw details. These go on the TV each draw night. Your members list is added on your Account page."
@@ -619,8 +639,8 @@
     var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
     var sec = el("div", "vpgs-sec"); sec.id = "vpGsAdvanced";
-    sec.appendChild(el("h3", null, "A few quick questions"));
-    sec.appendChild(el("p", "sub", "Advanced settings. The usual answers suit most venues."));
+    sec.appendChild(el("h3", null, "More settings"));
+    sec.appendChild(el("p", "sub", "The usual ones are fine, change them only if you like."));
     var advRows = el("div", "vpgs-rows"); sec.appendChild(advRows);
     var hasAdv = false;
     var settings = g.settings;
@@ -639,9 +659,44 @@
     ctx.usual = (opts.usual && opts.usual.length) ? opts.usual : null;
     ctx.quick = !!opts.quickOnly;   // for raffles' "Use my usual prizes"
     var groups = {};
+    /* THE REVIEWER'S LAYOUT, a second option for Dean (design review, 6 Nov; deps.layout "rows"): one repeating row per
+       setting, the "?" straight after its label, a fixed control column, units after numbers, and three plain headings,
+       the last one folded away: "The basics", "Prizes", "More settings, usually fine as they are". */
+    var alt = (deps.layout === "rows") && !opts.quickOnly, altSec = null;
+    if (alt) {
+      F.shell.className = "vpgs-alt";
+      altSec = {};
+      [["basics", "The basics"], ["prizes", "Prizes"], ["more", "More settings, usually fine as they are"]].forEach(function (h) {
+        var box = el("div", "vpgs-asec"); box.id = "vpGsSec_" + h[0];
+        var hd = el("h3", "vpgs-ah", h[1]); box.appendChild(hd);
+        var inner = el("div", "vpgs-rows"); box.appendChild(inner);
+        if (h[0] === "more") {
+          inner.style.display = "none";
+          var tg = el("button", "vpgs-add", "Show more settings"); tg.setAttribute("type", "button"); tg.id = "vpGsMoreToggle"; tg.setAttribute("aria-expanded", "false");
+          tg.addEventListener("click", function () { var open = inner.style.display === "none"; inner.style.display = open ? "" : "none"; tg.textContent = open ? "Hide more settings" : "Show more settings"; tg.setAttribute("aria-expanded", open ? "true" : "false"); });
+          box.insertBefore(tg, inner);
+        }
+        altSec[h[0]] = { box: box, rows: inner, used: false };
+        list.appendChild(box);
+      });
+    }
+    var PRIZE_KEYS = { prize_same: 1, prize_weekly: 1, prize_count: 1, prizes_same: 1, prizes_weekly: 1, rounds: 1 };
     settings.forEach(function (s) {
       if (opts.quickOnly && !s.quick) return;
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
+      if (alt) {
+        var where = s.advanced ? "more" : ((s.prizes || PRIZE_KEYS[s.key]) ? "prizes" : "basics");
+        var block = !(s.kind === "seg" || s.kind === "number" || s.kind === "money" || s.kind === "select" || s.kind === "time" || s.kind === "date");
+        r.row.className = "vpgs-row arow" + (block ? " ablock" : "");
+        altSec[where].rows.appendChild(r.row); altSec[where].used = true;
+        if (s.prizes && !s.ownList && opts.askShared) {   // the same rule as below, in the reviewer's layout
+          if (typeof opts.onAsked === "function") opts.onAsked();
+          var shA = settingRow(F, { key: "shared", label: "Use these prizes for your other games too?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
+            help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
+          shA.row.id = "vpGsShared"; shA.row.className = "vpgs-row arow"; ctx.sharedRow = shA; opts.askShared = false; altSec.prizes.rows.appendChild(shA.row); altSec.prizes.used = true;
+        }
+        return;
+      }
       if (s.group) {
         /* settings that sit together in one row (the members draw's day, time and starting jackpot) */
         if (!groups[s.group]) {
@@ -650,7 +705,12 @@
         }
         groups[s.group].appendChild(r.row);
       } else if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
+      if (s.prizes && !s.ownList && opts.bank && opts.bank.length && !opts.askShared) {
+        /* asked once already, and they said yes (design review, 6 Nov): one quiet line instead of the question again */
+        var us = el("p", "vpgs-hint", "Using your usual prizes. Change them here for this game."); us.id = "vpGsUsing"; r.row.appendChild(us);
+      }
       if (s.prizes && opts.askShared && !s.ownList) {
+        if (typeof opts.onAsked === "function") opts.onAsked();   // never asked again in this setup, whatever the answer
         /* asked like every other setting, with its own "?" (Dean, round 5: the "?" consistent everywhere) */
         var shR = settingRow(F, { key: "shared", label: "Do you use these prizes for your other games too?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
           help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
@@ -660,6 +720,7 @@
       }
     });
     if (ctx.pendingShared) { list.appendChild(ctx.pendingShared); ctx.pendingShared = null; }
+    if (alt) Object.keys(altSec).forEach(function (k) { if (!altSec[k].used) altSec[k].box.style.display = "none"; });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
     ctx.refresh = function () {
@@ -676,7 +737,10 @@
     if (g.needsDetails) {
       var nmIn = all.input("name"), tmIn = all.input("draw_time");
       if (nmIn) nmIn.placeholder = (memDay || "Friday") + " Members Draw";
-      if (tmIn && memTime && !tmIn.value) tmIn.value = memTime;
+      if (tmIn && memTime && !tmIn.value) {
+        tmIn.value = memTime;   // "20:00" from the nights step, in the time picker
+        var fromN = el("p", "vpgs-hint", "From the night you picked."); fromN.id = "vpGsFromNight"; tmIn.parentNode.appendChild(fromN);
+      }
     }
     var msg = el("p", "vpgs-msg"); msg.id = "vpGsMsg"; msg.setAttribute("role", "status"); F.body.appendChild(msg);
     function collect() {
@@ -703,7 +767,7 @@
       return vals;
     }
     if (!opts.first && !g.needsDetails) {
-      var later = el("button", "vpgs-link", "Not ready yet? Use the usual settings for now"); later.id = "vpGsLater"; later.setAttribute("type", "button");
+      var later = el("button", "vpgs-link", "Not ready yet? Use usual settings"); later.id = "vpGsLater"; later.setAttribute("type", "button");
       later.addEventListener("click", function () { done("later"); }); F.body.appendChild(later);
     }
     if (!opts.first && g.needsDetails) {
@@ -780,7 +844,7 @@
       var known = Array.isArray(answers.games) && answers.games.length;
       var lines = [["Each game takes less than five minutes to set up.", "", "time"],
         ["You don't need to do it all now.", " You can set up each game the first time you open it.", "later"]];
-      if (!known || answers.games.indexOf("members") >= 0) lines.push(["Running members draws?", " Have your draw details handy: the draw name, day, time and jackpot.", "members"]);
+      if (!known || answers.games.indexOf("members") >= 0) lines.push(["Running members draws?", " Have your draw details handy: the draw name, time and jackpot.", "members"]);
       lines.push(["For your screen,", " have your advertising handy: your promo images and your logo.", "screen"]);
       lines.forEach(function (t, i) {
         var li = F.el("li"); li.setAttribute("data-line", t[2]);
@@ -995,7 +1059,8 @@
       var memNights = (cleanWeek(answers.week) || []).filter(function (d) { return d.games.some(function (x) { return x.game === "members"; }); }).length;
       var all = ticked(), i = all.indexOf(g), many = (g === "members" && memNights > 1) ? memNights : 1;   // a draw for each members night
       gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
-          bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: answers.prizes_shared === undefined }, function (outcome, vals) {
+          bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: answers.prizes_shared === undefined && !answers.prizes_asked,
+          onAsked: function () { answers.prizes_asked = true; } }, function (outcome, vals) {
         if (outcome === "saved") {
           /* "Do you use these prizes across different games?" asked once. Yes: these prizes start every other game's list. */
           if (vals && vals.__shared !== undefined) { answers.prizes_shared = vals.__shared; var pb = bankOf(vals); if (pb.length) answers.prize_bank = pb; }
@@ -1020,9 +1085,10 @@
       F.body.appendChild(stack);
     }
     function whichNext(rest) {
-      F.clear(); F.title.textContent = "What would you like to set up next?";
+      F.clear(); F.step("Next game", 0, 0); F.title.textContent = "What would you like to set up next?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "Pick one. You can come back for the others."));
       var stack = F.el("div", "vpgs-stack"); stack.id = "vpGsWhich";
-      rest.forEach(function (g) { var b = F.btn(gameOf(g).title, "pink big", null, function () { oneGame(g); }); b.setAttribute("data-game", g); stack.appendChild(b); });
+      rest.forEach(function (g) { var b = F.btn(gameOf(g).title, "ghost big vpgs-outline", null, function () { oneGame(g); }); b.setAttribute("data-game", g); stack.appendChild(b); });
       F.body.appendChild(stack);
     }
     /* "No worries." The defaults are written for each game left (never over a saved value). Members draws have no

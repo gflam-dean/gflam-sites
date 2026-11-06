@@ -560,7 +560,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
-  "checks": 173,
+  "checks": 186,
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
