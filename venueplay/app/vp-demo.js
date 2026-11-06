@@ -87,8 +87,11 @@
   /* base64url of a small JSON, by hand: no btoa on every engine, and none of the fields can hold more than
      plain text. */
   var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  function utf8(s) { return unescape(encodeURIComponent(s)); }
-  function deUtf8(s) { try { return decodeURIComponent(escape(s)); } catch (e) { return ""; } }
+  function utf8(s) { return encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, function (m, h) { return String.fromCharCode(parseInt(h, 16)); }); }
+  function deUtf8(s) {
+    var t = ""; for (var i = 0; i < s.length; i++) t += "%" + ("0" + s.charCodeAt(i).toString(16)).slice(-2);
+    try { return decodeURIComponent(t); } catch (e) { return ""; }
+  }
   function enc64(s) {
     s = utf8(s); var out = "";
     for (var i = 0; i < s.length; i += 3) {

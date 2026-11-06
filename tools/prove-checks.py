@@ -3037,6 +3037,16 @@ MUTATIONS = [
      'the two copies disagree on whether a wrong postcode is a different venue'),
 
     # ---- 6 Nov 2026, INBOX 82, 84b: the try-it demo is never billed (fix/try-demo-10nov, migration 172).
+    # D160, D161, D162 in the gate (release-check.py runs the three suites under their own labels).
+    ('runs the game Worker: a demo session carries is_demo', 'venueplay-backend/worker/venueplay-game.js',
+     '  if (isDemoSession(session)) return;\n  if (!env.STRIPE_SECRET_KEY) return;', '  if (!env.STRIPE_SECRET_KEY) return;',
+     'in the gate, a demo with 50 players is billed for the extras'),
+    ('runs the billing Worker with a demo beside a real night', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&select=id,status,opened_at,", "    'venue_id=eq.' + vid + '&select=id,status,opened_at,",
+     "in the gate, the venue's nights list shows the demo as a night"),
+    ('runs vp-demo.js and vp-try-slot.js', 'venueplay/app/vp-demo.js',
+     '    return n > MAX ? MAX : n;', '    return n;',
+     'in the gate, 50 typed for "How many players" is 50'),
     ('test-try-demo.js', 'venueplay-backend/worker/venueplay-game.js',
      '  if (isDemoSession(session)) return;\n  if (!env.STRIPE_SECRET_KEY) return;',
      '  if (!env.STRIPE_SECRET_KEY) return;',

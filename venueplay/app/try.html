@@ -7,6 +7,9 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon.ico?v=f4" sizes="any">
 <link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +25,7 @@
   :root{ --ink:#0A0A0B; --ink-2:#141418; --ink-3:#1B1B20; --pink:#FF1F8E; --pink-soft:#FF8CC6; --text:#E7E7EC; --muted:#C9C9D1; --faint:#8A8A94;
          --line:rgba(255,255,255,.12); --win:#2BD47D; }
   *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }   /* .btn sets display; hidden must still hide */
   html,body{ margin:0; background:var(--ink); color:var(--text); font-family:Manrope,system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; }
   body{ min-height:100vh; }
   .wrap{ max-width:620px; margin:0 auto; padding:28px 18px 40px; }
