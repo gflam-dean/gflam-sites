@@ -38,7 +38,9 @@ CODE = ('(function(){var c=document.getElementById("st-tvcode");c.scrollIntoView
         'var pts=[[r.left+2,r.top+2],[r.right-2,r.top+2],[r.left+2,r.bottom-2],[r.right-2,r.bottom-2],[(r.left+r.right)/2,(r.top+r.bottom)/2]];'
         'var top=pts.every(function(p){var e=document.elementFromPoint(p[0],p[1]);return e&&(e===c||c.contains(e)||e.id==="st-tvline"||(e.closest&&e.closest("#st-done")));});'
         'var overlap=!(f.right<=r.left||f.left>=r.right||f.bottom<=r.top||f.top>=r.bottom);'
-        'return {text:c.textContent.trim(),inside:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,onTop:top,overlap:overlap,w:Math.round(r.width),vw:innerWidth};})()')
+        'var fixed=[].filter.call(document.querySelectorAll("body *"),function(e){var cs=getComputedStyle(e);if(cs.position!=="fixed"&&cs.position!=="sticky")return false;var b=e.getBoundingClientRect();'
+        'return b.width>0&&b.height>0&&cs.visibility!=="hidden"&&cs.display!=="none"&&cs.opacity!=="0"&&cs.pointerEvents!=="none"&&!(b.right<=r.left||b.left>=r.right||b.bottom<=r.top||b.top>=r.bottom);}).map(function(e){return e.id||e.className||e.tagName;});'
+        'return {covers:fixed,text:c.textContent.trim(),inside:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,onTop:top,overlap:overlap,w:Math.round(r.width),vw:innerWidth};})()')
 
 
 def fill(sid, venue, postcode, name, mobile, email, kind='pub'):
@@ -93,7 +95,7 @@ try:
     time.sleep(0.5)
     f = S.json(sid, FLOAT, {})
     ok('the TV code is on screen, whole, inside the 375px width and height', bool(c.get('text')) and c.get('inside') is True, c)
-    ok('and nothing covers it: every corner and the middle of the code is the code, and the button does not overlap it', c.get('onTop') is True and c.get('overlap') is False and f.get('shown') is False, [c, f])
+    ok('and nothing covers it: every corner and the middle of the code is the code, and the button does not overlap it', c.get('onTop') is True and c.get('overlap') is False and not c.get('covers') and f.get('shown') is False, [c, f])
     S.js(sid, 'window.scrollTo({top: 0, behavior: "instant"}); window.scrollTo({top: 2500, behavior: "instant"}); true')
     time.sleep(0.6)
     f = S.json(sid, FLOAT, {})
@@ -117,7 +119,7 @@ try:
     f = S.json(sid, FLOAT, {})
     ok('autofill, no box touched: on the done screen and below it the button is gone', f.get('shown') is False, f)
     c = S.json(sid, CODE, {})
-    ok('and the TV code is whole on screen and uncovered', c.get('inside') is True and c.get('onTop') is True and c.get('overlap') is False, c)
+    ok('and the TV code is whole on screen and uncovered by any fixed or sticky element', c.get('inside') is True and c.get('onTop') is True and c.get('overlap') is False and not c.get('covers'), c)
     S.close_tab(tid)
 finally:
     S.close()

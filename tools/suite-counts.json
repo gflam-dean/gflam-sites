@@ -260,7 +260,7 @@
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
-  "checks": 48,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/offer-float-done-in-chrome.test.py": {
@@ -272,7 +272,7 @@
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
-  "checks": 42,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
