@@ -173,13 +173,13 @@
     P + ".vpgs-rows>.vpgs-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;grid-template-areas:'lab q' 'ctl ctl' 'pop pop';column-gap:6px;align-items:center;padding:6px 0;border-top:1px solid " + C.line + "}" +
     P + ".vpgs-rows>.vpgs-row:first-child{border-top:none;padding-top:0}" +
     P + ".vpgs-rows>.vpgs-row>.vpgs-lab{grid-area:lab;margin:0;font-size:15px;line-height:1.3}" +
-    P + ".vpgs-rows>.vpgs-row>.vpgs-q{grid-area:q;display:block;margin:-4px 0;justify-self:end}" +
-    P + ".vpgs-rows>.vpgs-row>.vpgs-ctl{grid-area:ctl;margin:2px 0 0;min-width:0}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-q{grid-area:q;display:block;margin:0;justify-self:end}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-ctl{grid-area:ctl;margin:0;min-width:0}" +
     P + ".vpgs-rows>.vpgs-row>.vpgs-pop{grid-area:pop;margin:6px 0 0}" + P + ".vpgs-rows>.vpgs-row>.vpgs-full{grid-column:1/-1;margin:2px 0 0}" +
     P + ".vpgs-rows>.vpgs-row.cmp{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{margin:0}" +
     P + ".vpgs-row.cmp .vpgs-unitw{gap:6px}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:64px;flex:none}" + P + ".vpgs-row.cmp .vpgs-unitw input[inputmode=decimal]{width:104px}" + P + ".vpgs-row.cmp .vpgs-unit{min-width:0}" + P + ".vpgs-row.cmp input[type=time]{width:130px}" + P + ".vpgs-row.cmp input[type=date]{width:150px}" +
     P + ".vpgs-row.cmp .vpgs-seg{width:136px}" + P + ".vpgs-row.cmp .vpgs-pair{width:200px}" + P + ".vpgs-row.cmp .vpgs-pair .vpgs-in{width:80px}" +
-    P + ".vpgs-in{min-height:42px;padding:8px 10px}" + P + ".vpgs-seg button{min-height:42px;padding:6px 8px}" + P + ".vpgs-chip{min-height:44px;padding:7px 10px}" +
+    P + ".vpgs-in{min-height:44px;padding:8px 10px}" + P + ".vpgs-seg button{min-height:44px;padding:6px 8px}" + P + ".vpgs-chip{min-height:44px;padding:7px 10px}" +
     P + ".vpgs-sec{margin:8px 0 0;padding:8px 0 0}" + P + ".vpgs-sech{display:flex;align-items:center;gap:10px;justify-content:space-between}" + P + ".vpgs-secw{min-width:0}" +
     P + ".vpgs-sec h3{font-size:15px}" + P + ".vpgs-sec .sub{margin:0;font-size:14px;line-height:1.35;color:#C6C6CE}" + P + ".vpgs-sech .vpgs-add{margin:0;flex:none}" + P + ".vpgs-sec>.vpgs-rows{margin:6px 0 0}" +
     P + ".vpgs-usual{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}" + P + ".vpgs-usual-l{font-size:14px;color:#C6C6CE}" +
@@ -190,7 +190,8 @@
     P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
     P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
     P + ".vpgs-helpcard{margin:6px 0 0;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 14.5px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}" + P + ".vpgs-helpcard ol{margin:6px 0;padding-left:20px}" + P + ".vpgs-helpcard li{margin:0 0 4px}" + P + ".vpgs-helpcard b{display:block}" +
-    "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:62px minmax(0,1fr) auto}" + P + ".vpgs-prow>:nth-child(2){grid-column:2;grid-row:1}" + P + ".vpgs-prow>:nth-child(3){grid-column:3;grid-row:1}" + P + ".vpgs-prow.nonone{grid-template-columns:62px minmax(0,1fr)}}" +
+    "@media (max-width:420px){" + P + ".vpgs-prow{gap:4px}" + P + ".vpgs-none{padding:0;gap:4px}" + P + ".vpgs-prow .vpgs-in{padding:8px 8px}}" +
+    "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:56px minmax(0,1fr) auto}" + P + ".vpgs-prow>:nth-child(2){grid-column:2;grid-row:1}" + P + ".vpgs-prow>:nth-child(3){grid-column:3;grid-row:1}" + P + ".vpgs-prow.nonone{grid-template-columns:62px minmax(0,1fr)}}" +
     "@media (min-width:600px){" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:84px}" + P + ".vpgs-rows>.vpgs-row.cmpw{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{margin:0;width:300px}" + P + ".vpgs-row.cmp .vpgs-seg{width:160px}}" +
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:680px;padding-top:16px}" + P + ".vpgs-card{padding:20px 24px}" + P + "h2.vpgs-title{font-size:24px}}" +
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:820px;padding-top:20px}" + P + ".vpgs-card{padding:24px 32px}" + P + "h2.vpgs-title{font-size:28px}" + P + ".vpgs-lead{font-size:16.5px;margin:0 0 10px}" +
