@@ -3166,6 +3166,14 @@ MUTATIONS = [
      'a new venue cannot play the demo until it has ticked the Terms, so the journey stops at the first screen'),
 
     # ---- 6 Nov 2026, INBOX 82, 92c, 93: the try-it demo's rules (vp-demo.js, vp-try-slot.js).
+    ('try-demo-in-chrome.test.py', 'venueplay/app/try.html',
+     '    if(S.plan.skip){ location.href="/app/"; return; }',
+     '',
+     'a venue with no second device is sent into a demo it cannot play, not into its account'),
+    ('try-demo-in-chrome.test.py', 'venueplay/app/trivia/play.html',
+     '      if(typeof VPDemo==="object") VPDemo.applyPrefill(document);\n',
+     '',
+     'the demo phone is not pre-filled with their own name, email and mobile'),
     ('test-vp-demo.js', 'venueplay/app/vp-demo.js',
      '{ p.skip = true; return p; }   // no second device: straight to the account',
      '{ }   // no second device: straight to the account',

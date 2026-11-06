@@ -416,6 +416,7 @@
   "trivia-reveal.test.js",
   "trivia-score.test.js",
   "trivia-set-delete.test.js",
+  "try-demo-in-chrome.test.py",
   "tv-ads-rebuild.test.js",
   "tv-and-phone-in-chrome.test.py",
   "tv-app-cors.test.js",
