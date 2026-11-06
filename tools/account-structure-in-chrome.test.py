@@ -113,7 +113,7 @@ try:
     tid, sid = S.open('/app/settings.html?venue=' + V1, 390, 844, True)
     S.until(sid, '!!document.querySelector("#permitsWrap .permit")', 25)
     time.sleep(1.0)
-    g = json.loads(S.js(sid, CARD) or '{}')
+    g = S.json(sid, CARD, {})
     cards = g.get('cards') or []
     ok('one permit card on Game settings, and it is the bingo one', g.get('kinds') == ['bingo'], g.get('kinds'))
     c = cards[0] if cards else {}
@@ -146,10 +146,19 @@ try:
     print('\nYOUR ACCOUNT > DRAWS: the raffle and members-draw permits, beside the draws')
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
-    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length>=1', 25)
+    S.until(sid, '!!document.querySelector("#drawPermits .vpp-below")', 25)
     time.sleep(0.8)
     kinds = card_kinds(sid, '#drawPermits')
-    ok('a QLD venue: the Draws tab has the raffle permit only (a free members draw is a category 4 game, no licence) and no bingo', kinds == 'raffle', kinds)
+    # Q (Dean, 4 Nov 2026, round 3): with nothing given away yet, a QLD venue is asked for NO permit at all: the raffle
+    # card hides under the state's line ($50,000 in ticket sales), with one sentence and "Record a permit anyway".
+    below = S.js(sid, '(document.querySelector("#drawPermits .vpp-below")||{}).textContent')
+    ok('a QLD venue with no prizes recorded: no permit card at all on the Draws tab (no bingo, no members, and the raffle card is under the line)', kinds == '', kinds)
+    ok('Q: the raffle line says why, with Queensland\'s own measure: a licence over $50,000 in ticket sales, and the prizes recorded here ($0)',
+       'not needed yet' in (below or '') and '$50,000 in ticket sales' in (below or '') and 'add up to $0' in (below or ''), below)
+    S.js(sid, 'document.querySelector("#drawPermits .pshowraffle").click(); true')
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length>=1', 10); time.sleep(0.4)
+    kinds = card_kinds(sid, '#drawPermits')
+    ok('Q: "Record a permit anyway" brings the raffle card up, and only the raffle card (a free members draw is a category 4 game, no licence)', kinds == 'raffle', kinds)
     # Since 3 Nov 2026 Draws is three folds (Dean, round 2 F): the heading is the Permits fold's, whose words come before
     # its summary span (the same reading billing.html's own section() gating uses), so read the words, not the summary.
     ok('under a "Permits and authorities for draws" heading at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));var l=ls[ls.length-1];var w=l&&l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent.trim():"";return l&&l.getAttribute("data-acc")==="permits"&&w==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
@@ -167,11 +176,11 @@ try:
        bool(db) and (db.get('raffle') or {}).get('npo_name') == 'Deepwater Lions Club' and (db.get('raffle') or {}).get('holder') == 'npo' and (db.get('bingo') or {}).get('number') == 'NSW-CH-1234', db)
     # Another venue on the picker: its own (empty) permits, never the first venue's, and ITS state's kinds.
     S.js(sid, 'var s=document.getElementById("rfVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
-    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2 && document.querySelector(\'#drawPermits .permit[data-kind="raffle"] .pstatus\').textContent.trim()==="Not recorded"', 20)
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===1 && document.getElementById("pmPickName").textContent==="The Royal Arms" && document.querySelector(\'#drawPermits .permit[data-kind="members"] .pstatus\').textContent.trim()==="Not recorded"', 20)
     time.sleep(0.4)
-    v2 = S.js(sid, 'document.querySelector(\'#drawPermits .permit[data-kind="raffle"] .pnpo_name\').value + "|" + document.getElementById("pmPickName").textContent')
+    v2 = S.js(sid, 'document.querySelector(\'#drawPermits .permit[data-kind="members"] .pnpo_name\').value + "|" + document.getElementById("pmPickName").textContent')
     ok('switching the raffle picker to The Royal Arms repaints its own permits (empty), and says whose they are', v2 == '|The Royal Arms', v2)
-    ok('a TAS venue: raffle AND members-draw cards (each needs a permit above $10,000)', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
+    ok('a TAS venue with no prizes recorded: the members-draw card (a permit above $10,000), and the raffle card under its $10,000 line', card_kinds(sid, '#drawPermits') == 'members' and '$10,000 in total prizes' in (S.js(sid, '(document.querySelector("#drawPermits .vpp-below")||{}).textContent') or ''), card_kinds(sid, '#drawPermits'))
     r = fill_permit(sid, '#drawPermits', 'members', number='TP-0099')
     db = permits_in_db(V2)
     ok('and the TAS members-draw permit saves through the real Worker', r is True and bool(db) and (db.get('members') or {}).get('number') == 'TP-0099', db)
@@ -182,9 +191,9 @@ try:
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
     S.js(sid, 'var s=document.getElementById("rfVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
-    S.until(sid, 'document.getElementById("pmPickName").textContent==="The Royal Arms" && document.querySelectorAll("#drawPermits .permit").length===2', 20)
+    S.until(sid, 'document.getElementById("pmPickName").textContent==="The Royal Arms" && document.querySelectorAll("#drawPermits .permit").length===1', 20)
     time.sleep(0.4)
-    ok('QLD with a members permit saved: the members card stays, marked not needed', card_kinds(sid, '#drawPermits') == 'raffle,members!', card_kinds(sid, '#drawPermits'))
+    ok('QLD with a members permit saved: the members card stays, marked not needed (the raffle card is under the line)', card_kinds(sid, '#drawPermits') == 'members!', card_kinds(sid, '#drawPermits'))
     note = S.js(sid, '(document.querySelector(\'#drawPermits .permit[data-kind="members"] .pnotneeded\')||{}).textContent')
     ok('with the note "Your state does not need a permit for this. You can clear it."', note == 'Your state does not need a permit for this. You can clear it.', note)
     S.js(sid, 'document.querySelector(\'#drawPermits .permit[data-kind="members"] .pclear\').click(); true')
@@ -208,10 +217,20 @@ try:
     ok('an NSW venue that saved a bingo permit still sees it, marked not needed, with a Clear button',
        card_kinds(sid, '#permitsWrap') == 'bingo!' and S.js(sid, '!!document.querySelector("#permitsWrap .pclear") && /Your state does not need a permit for this/.test(document.getElementById("permitsWrap").innerText)') is True, card_kinds(sid, '#permitsWrap'))
     S.close_tab(tid)
+    # Deepwater saved a raffle permit above, and a saved permit is never hidden (VPPermits.kindsFor), so its raffle card
+    # rightly stays. Take the raffle permit off for this one check ("no permit recorded"), then put it back for HQ below.
+    saved_permits = dict(permits_in_db(V1) or {})
+    set_venue(V1, permits=dict((k, v) for k, v in saved_permits.items() if k != 'raffle'))
+    tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
+    S.until(sid, BILLING_UP, 25)
+    S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===1 && !!document.querySelector("#drawPermits .vpp-below")', 25)
+    ok('an NSW venue with no prizes recorded: the members-draw card (authority above $10,000), and the raffle card under its $30,000 line', card_kinds(sid, '#drawPermits') == 'members' and '$30,000 in total prizes' in (S.js(sid, '(document.querySelector("#drawPermits .vpp-below")||{}).textContent') or ''), card_kinds(sid, '#drawPermits'))
+    S.close_tab(tid)
+    set_venue(V1, permits=saved_permits)
     tid, sid = S.open('/app/billing.html#draws', 1100, 1000)
     S.until(sid, BILLING_UP, 25)
     S.until(sid, 'document.querySelectorAll("#drawPermits .permit").length===2', 25)
-    ok('an NSW venue: raffle (charity authority) and members-draw (authority above $10,000) cards', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
+    ok('an NSW venue with a raffle permit saved: the raffle card stays (saved data is never hidden) beside the members-draw card', card_kinds(sid, '#drawPermits') == 'raffle,members', card_kinds(sid, '#drawPermits'))
     S.close_tab(tid)
 
     print('\nHQ lists only the kinds the state needs')
@@ -343,7 +362,7 @@ try:
     S.until(sid, BILLING_UP, 25)
     S.until(sid, '!!document.querySelector("#draws-pane .vpp-card, .vpp-card")', 20)
     time.sleep(0.8)
-    m = json.loads(S.js(sid, '''(function(){
+    m = S.json(sid, '''(function(){
       function box(id){var e=document.getElementById(id);if(!e)return null;var cs=getComputedStyle(e),r=e.getBoundingClientRect();
         return {bg:cs.backgroundColor,h:Math.round(r.height),rad:parseFloat(cs.borderTopLeftRadius)||0,fs:parseFloat(cs.fontSize)||0};}
       function fold(n){var h=document.querySelector('#tp-draws .acchead[data-acc="'+n+'"]');if(h&&!h.classList.contains('open'))h.click();return !!h&&h.classList.contains('open');}
@@ -354,7 +373,7 @@ try:
       out.folds.members=fold('members'); out.fix=['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box); dates();
       out.folds.permits=fold('permits'); dates();
       var h=getComputedStyle(document.querySelector('header'));out.hdr={bg:h.backgroundColor,bf:h.backdropFilter||h.webkitBackdropFilter||'none'};
-      out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''') or '{}')
+      out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''', {})
     # Since 3 Nov 2026 Draws is three folds (one open at a time, Dean round 2 F): each box is measured with ITS fold
     # open, as an owner sees it (Raffles: the Show select; Members draws: Fix a name; every fold: the date boxes).
     fx = m.get('fix') or []

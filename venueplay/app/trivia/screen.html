@@ -70,24 +70,7 @@
   .hostline b{color:var(--pink)}
 
   /* lobby */
-  /* THE JOIN SCREEN (Dean, 3 Nov 2026, the approved v5 join): at 1920, the QR 600px at x 204 y 220; SCAN TO PLAY
-     150px Anton from x 895; "or go to venueplay.com.au/play" under it; the code 150px mono in a pink-edged box
-     with CODE inside; the title 72px on the logos' line. The night's own name and the small status line stay in
-     the page for the console and old screens, out of sight on a linked TV. */
-  .layer.join .lobbyname{display:none}
-  .layer.join .lobbyrow{position:absolute;left:calc(10.6cqw);top:11.46cqw;margin:0}
-  .layer.join .qrbig{width:31.25cqw;height:31.25cqw;padding:2.1cqw;border-radius:1.6cqw;box-shadow:none}
-  .layer.join .jright{position:absolute;left:calc(46.6cqw);right:5cqw;top:11.46cqw;height:31.25cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}   /* centred on the QR; SCAN TO PLAY, the address and the code box on one centre line */
-  .layer.join .scanplay{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:7.8cqw;line-height:.92;color:#fff;margin:0;white-space:nowrap}
-  .layer.join .joinurl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.5cqw;line-height:1.2;color:#fff;margin-top:1.5cqw}
-  .layer.join .joinurl .jor{color:#8A8A95}
-  .layer.join .joinurl b{font-weight:800}
-  .layer.join .codebox{display:flex;align-items:center;margin-top:2.6cqw;padding:1.6cqw 2.4cqw;border:.16cqw solid var(--pink);border-radius:1.15cqw;background:#1A1A1F}
-  .layer.join .codelbl{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.67cqw;color:#8A8A95;margin-right:2.4cqw}
-  .layer.join .codeval{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:7.8cqw;line-height:1;color:#fff;letter-spacing:.06em;background:none;border:none;padding:0;border-radius:0}
-  .layer.join .jsub{position:absolute;left:0;right:0;top:46cqw;margin:0;text-align:center}
-  .layer.join.ready .jsub{display:none}   /* a linked or set-up TV: no tiny "Grab your phone" line */
-  .layer.join .hostline{position:absolute;left:0;right:0;top:49cqw;margin:0;text-align:center}
+  /* The join screen's rules (.layer.join) are in /app/vp-tvgame.js, shared with the musical bingo wall (4 Nov 2026). */
   .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
   .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
   .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
@@ -111,21 +94,27 @@
      from the px-anchored logo and the JOIN NOW card is measured at 1920 and 1280 by
      tools/trivia-newlook-in-chrome.test.py. */
   .layer.qgrid{display:block;padding:0;text-align:left}
-  /* THE GAME'S NAME, READABLE FROM THE BACK OF THE ROOM (Dean, 3 Nov 2026: "The title of the game needs to
-     be clearer on each TV"). "TRIVIA" in Anton, white, at 2.6cqw (50px on a 1920 set, 33px on 1280), alone
-     in the top line (where the night is up to sits under the answers, .qround), centred between the venue's
-     logo (top left, up to 15% of the width for a wide wordmark) and ours (top right), inside 20cqw to 80cqw,
-     and set on the SAME centre line as the corner logos by alignTitle(). tools/trivia-newlook-in-chrome.test.py
-     measures both with a round and a wide logo at 1920 and 1280. */
-  .toplbl{position:absolute;left:calc(20cqw);right:20cqw;top:2.5cqw;display:flex;align-items:baseline;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;color:#fff;line-height:1.15}
-  .toplbl .tl-night{font-family:'Anton',sans-serif;font-weight:400;font-size:2.6cqw;letter-spacing:.02em;text-transform:uppercase;color:#fff}
-  .srt{position:absolute;left:50%;top:50%;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-
+  /* The game's name (.toplbl, .tl-night) is in /app/vp-tvgame.js, shared with the musical bingo wall (4 Nov 2026). */
   /* question layer */
   .qcount{font-family:'JetBrains Mono',monospace;font-weight:700}
   /* One fixed size for every question meant a long one ran off the wall, so the size still steps down
      with the length (Hanken 800, 76px at 1920 for a short one, as mocked). */
   .qtext{position:absolute;left:calc(8.9cqw);top:9.4cqw;width:65.1cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.96cqw;line-height:1.12;letter-spacing:-.01em;color:#fff;overflow-wrap:break-word}
+  /* THE FINAL TRIVIA WALL (Dean, 5 Nov 2026; mock reports/fb-cover-6nov/layout/LAYOUT-FINAL.css and FINAL-LAYOUT-*.png).
+     Units are cqw (1cqw = 19.2px on a 1920 set). Picture questions (.layer.pic) keep their own layout, so every
+     rule here skips them. The countdown (#tvQ) and the reveal (#tvReveal) are both .qgrid and share these rules,
+     so nothing moves between them. tools/test-trivia-question-space.js and trivia-question-space-in-chrome measure it.
+     1. The ring stays full size (14.58cqw) and moves up from 9.4cqw to 7.55cqw: the gap from the venueplay
+        corner logo to the ring equals the gap from the ring to the answers (48px at 1920). */
+  .layer.qgrid:not(.pic) .qfoot{top:7.55cqw}
+  /* 2. The question (one, two or three lines) is centred on the ring's centre line, 7.55 + 14.58/2 = 14.84cqw,
+        growing up and down. */
+  .layer.qgrid:not(.pic) .qtext{top:14.84cqw;transform:translateY(-50%)}
+  /* 3. The answers sit at a fixed 24.11cqw, a normal gap (48px at 1920) under the ring's bottom edge, the same for
+        every question, so they never move. */
+  .layer.qgrid:not(.pic) .answers{top:24.11cqw}
+  /* 4. "Question 3 of 20" goes under the answers (which end at 24.11 + 2 x 11.875 + 1.46 = 49.32cqw), right-aligned. */
+  .layer.qgrid:not(.pic) .qround{top:50.1cqw;right:8.9cqw;width:auto;text-align:right}
   .qtext.q-med  {font-size:3.3cqw}
   .qtext.q-long {font-size:2.7cqw;line-height:1.14}
   .qtext.q-epic {font-size:2.25cqw;line-height:1.16}
@@ -182,7 +171,9 @@
   .ans.correct .split .sfill{background:#0A0A0B}
 
   /* THE CLOCK (the bold "20 SECS" of 2 Nov 2026, kept): a ring in the top-right box, the seconds in Anton
-     with SECS under them, and the answered count below. On the reveal the same box holds "33 /43 got it right". */
+     with SECS under them, and nothing else. NO COUNTS ON THE WALL (Dean, 4 Nov 2026: "I don't want people being
+     like oh how did they know that we only had 12 people rock up today?"): the "32/43" answered count that sat
+     under SECS is gone; how many answered stays on the host console. */
   .qfoot{position:absolute;right:8.9cqw;top:9.4cqw;width:14.58cqw;text-align:center}
   .ringwrap{position:relative;width:14.58cqw;height:14.58cqw;margin:0 auto}
   .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -194,17 +185,13 @@
      (radius 40% of the ring) at every size; tools/old-tv-in-chrome.test.py measures that at 1920, 1280
      and 1024 wide, new and old sets. */
   .ringwrap .rlbl{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:1.5cqw;line-height:1;color:#fff;margin-top:.3cqw;padding-left:.16em}
-  /* ANSWERED / IN THE ROOM, small inside the ring under SECS (Dean, 3 Nov 2026: "32/32"). The number, SECS and
-     the count are ONE block, centred in the ring with even spacing (Dean: with the count hung below the pair it
-     looked off-centre). tools/old-tv-in-chrome.test.py measures the block against the ring's inner circle. */
-  .ringwrap .rcount{display:block;margin-top:.45cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.3cqw;line-height:1;color:#8A8A95;white-space:nowrap}
-  .ringwrap .rcount b{color:#fff;font-weight:700}
-  .layer.pic .ringwrap .rcount{margin-top:.3cqw;font-size:.85cqw}
+  /* The number and SECS are ONE block, centred in the ring (tools/old-tv-in-chrome.test.py measures it against
+     the ring's inner circle, and tools/tv-no-counts-in-chrome.test.py that nothing else is in the ring). */
   /* WHERE THE NIGHT IS UP TO (Dean, 3 Nov 2026): "Question 3 of 20", clear, centred
      under the ring (since the four cards fill the lower half, per the approved mock), the same place on the countdown and the reveal. */
   .qround{position:absolute;right:8.9cqw;width:14.58cqw;top:24.6cqw;text-align:center;white-space:nowrap}
   .qround .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.6cqw;line-height:1.2;color:#F2F2F5}
-  .layer.pic .qround{top:17.4cqw;width:10cqw}
+  .layer.pic .qround{top:20.2cqw;width:10cqw}   /* under the picture round's 10cqw ring (9.4 to 19.4cqw): at 17.4 it sat behind the ring (found 5 Nov 2026) */
 
   /* reveal / board */
   .revboard{display:none}
@@ -275,6 +262,7 @@
     font-weight:800;letter-spacing:.12em;text-transform:uppercase;animation:dblpulse 1.6s ease-in-out infinite}
   @keyframes dblpulse{ 0%,100%{box-shadow:0 0 0 0 rgba(255,194,75,.6)} 50%{box-shadow:0 0 2cqw .4cqw rgba(255,194,75,.35)} }
 </style>
+<script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared by the game walls (4 Nov 2026) -->
 <script src="/app/vp-tvhold.js"></script>   <!-- the venueplay tv card: this lobby before the host is there (3 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
@@ -317,7 +305,7 @@
     <div class="qfoot">
       <div class="ringwrap">
         <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
-        <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span><span class="rcount"><b id="tvAnsCount">0</b><span id="tvAnsOf"></span></span></div>
+        <div class="rnum"><span id="tvCdNum">20</span><span class="rlbl" id="tvCdLbl">secs</span></div>
       </div>
     </div>
   </div>
@@ -471,7 +459,7 @@
      "6 playing" on the wall. The host console has the number. */
   var state={ phase:"lobby", hostSeen:false, colour:true, title:"" };
   var _prBoard=null;   // Punters Reckon board, mounted on first use
-  var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
+  var curQ=null, ringTimer=null, boardRollTimer=null;
 
   // ---- layers ----
   var LAYERS=["tvLobby","tvQ","tvReveal","tvPaper","tvBoard","tvPodium","tvPR"];
@@ -485,18 +473,7 @@
      square logo's middle (/app/vp-venuelogo.js keepAligned) and stays at the top beside a wide one, so the
      line the two logos share is the mark's middle. Each top line is set so its middle is on it; measured,
      never guessed, and written only when it moves. */
-  function alignTitle(){
-    try{
-      /* the mark's box even while the start show hides it (4 Nov 2026), so TRIVIA is on the logos' line before the show ends, not dropped after */
-      var cn=document.querySelector(".tv-corner"), mb=(window.VPVenueLogo && VPVenueLogo.markBox) ? VPVenueLogo.markBox(cn) : null;
-      if(!mb){ var mk=document.querySelector(".tv-corner svg"); if(!mk) return; mb=mk.getBoundingClientRect(); }
-      if(!(mb.height>0)) return;
-      var mid=mb.top+mb.height/2, ls=document.querySelectorAll(".layer .toplbl");
-      for(var i=0;i<ls.length;i++){ var l=ls[i], h=l.offsetHeight; if(!h) continue;
-        var lay=l.parentNode, lt=lay ? lay.getBoundingClientRect().top : 0;
-        var top=Math.round(mid-lt-h/2)+"px"; if(l.style.top!==top) l.style.top=top; }
-    }catch(e){}
-  }
+  function alignTitle(){ try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){} }   /* one copy, in /app/vp-tvgame.js (4 Nov 2026) */
   window.addEventListener("resize", alignTitle);
   setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes */
   function show(which){
@@ -638,7 +615,6 @@
            /* LIVE: the clock was still running when this arrived. A replay to a TV that reloaded after the
               clock ran out carries secs 0 and is not live, so its "lock" never sounds the buzzer. */
            live:(typeof m.secs==="number") ? m.secs>1 : ((Number(m.endsAt)||0)-Date.now()>1500), buzzed:false };
-    answeredPids={};
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     /* DOUBLE POINTS FINAL ROUND (28 Sep 2026): the console flags the question; the Worker scores it. */
@@ -661,7 +637,6 @@
       wrap.appendChild(box);
     }
     applyColour(wrap);
-    $("tvAnsCount").textContent="0";
     setRing(1); $("tvRing").style.stroke="var(--pink)"; $("tvCdNum").textContent=dur;
     ringTimer=setInterval(tickRing, 300); tickRing();
   }
@@ -959,7 +934,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,buzzer:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1,closed:1,handin:1,roundanswers:1,ta_board:1,ta_reveal:1,ta_showall:1,nobody:1};
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
@@ -1038,9 +1013,9 @@
     // wind-down: they have finished and the room should be looking at the venue again.
     if(m.t==="to_ads"){ if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }   // after the end-of-game show, if one is on
     if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
-    /* The lobby never shows how many have joined (Dean, 3 Nov 2026: that stays on the host console). The count
-       is kept only for the ring's "32/32", answered out of the players in. */
-    if(m.t==="players"){ if(typeof m.count==="number") state.players=m.count; paintAnsOf(); return; }
+    /* NO COUNTS ON THE WALL (Dean, 3 and 4 Nov 2026): not how many joined, not how many answered. "players" is
+       host presence only here; the number stays on the host console. */
+    if(m.t==="players"){ return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(typeof m.colour==="boolean") state.colour=m.colour;
@@ -1053,12 +1028,7 @@
       if(typeof m.buzzer==="boolean") BUZZ.on=m.buzzer;
       renderQuestion(m);
     }
-    else if(m.t==="answer"){
-      if(curQ && m.qseq===curQ.qseq && m.pid){ answeredPids[m.pid]=true; $("tvAnsCount").textContent=countKeys(answeredPids); }
-    }
-    else if(m.t==="answered"){   // the host pushes the tally here (players answer on the game channel we're not on)
-      if(typeof m.count==="number") $("tvAnsCount").textContent=m.count;
-    }
+    /* "answer" and the host's "answered" tally are not painted: the wall never says how many answered (Dean, 4 Nov 2026). */
     else if(m.t==="time"){
       // The host added time. Stretch the ring to the new deadline rather than leaving it at zero.
       if(!curQ || m.qseq!==curQ.qseq) return;
@@ -1107,6 +1077,15 @@
       show("tvBoard");
       renderBoardPaged(m.title||"Leaderboard", m.rows||[]);
     }
+    else if(m.t==="nobody"){
+      /* NOBODY JOINED (6 Nov 2026): a calm end state, never an error and never an empty board. The join corner
+         (shown on every board) carries the QR and code for next time. */
+      state.phase="leaderboard";
+      if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+      show("tvBoard");
+      renderBoardPaged("Thanks for playing", []);
+      $("tvBoardRows").innerHTML='<div style="text-align:center;font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;font-size:2.4cqw;color:#fff;margin-top:6cqw">Scan the code to join next time</div>';
+    }
     else if(m.t==="podium"){
       state.phase="podium";
       renderPodium(m.top||[], m.rows);
@@ -1130,8 +1109,6 @@
   }
   /* "Back to ads" waits for the end-of-game show to finish, if one is playing. */
   function endShowThen(go){ if(window.VPEndShow && VPEndShow.playing()) VPEndShow.after(go); else go(); }
-  function paintAnsOf(){ var o=$("tvAnsOf"); if(!o) return; var n=Number(state.players)||0; o.textContent = n>0 ? "/"+n : ""; }
-  function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
 
   // ---- init ----
   function drawQR(el, url, size){ VPQR.draw(el, url, size); }
@@ -1168,7 +1145,7 @@
       ];
       var BOARD = [
         { name:"The Quiztopher Nolans", points:840 },
-        { name:"Table 6",               points:790 },
+        { name:"Sarah",                  points:790 },
         { name:"Nan's Army",            points:735 },
         { name:"Last Place Again",      points:690 },
         { name:"Two Beers or Not",      points:615 },
@@ -1194,7 +1171,7 @@
         m({ t:"session", session_id:"demo", join_code:DEMO_JOIN_CODE, title:"Trivia Night" });
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
-        m({ t:"players", count:43 });   // the players in, for the ring's "32/43"
+        m({ t:"players", count:43 });   // sent as a real host does; the wall must show no count (tools/tv-no-counts-in-chrome.test.py)
       });
       /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
       t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, on a screen with ?sting=0
@@ -1203,7 +1180,7 @@
           m({ t:"question", qseq:i+1, qi:i+3, qtotal:20, text:q.text,   // reads "Question 3 of 20": a night already under way (Dean, 3 Nov 2026)
               options:q.options, secs:SECS, endsAt:Date.now()+12*1000 });   // joins a 20-second question at 12 left, so the ring shows the time already gone (Dean, 3 Nov 2026)
         });
-        // The count climbing is what makes a still screen look like a room full of people.
+        // The host's tally, sent as on a real night: the wall must ignore it (no counts on the TV, Dean 4 Nov 2026).
         [1,2,3].forEach(function(n, k){
           at(t + 1200 + k*1100, function(){ m({ t:"answered", count: 14 + n*9 }); });
         });
