@@ -57,7 +57,7 @@
         var m = el("div", "woe-main"), nx = W().next(e, t());
         if (!e.image_url) th.textContent = (W().dayKey(nx) || "").toUpperCase();   // no picture: the day, quietly
         var when = W().whenText(e, t());
-        if (nx === t()) when = "Tonight" + (e.start ? ", " + W().time12(e.start) : "") + (e.day ? " (every " + ({ mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" })[e.day] + ")" : "");
+        if (nx === t()) when = "Tonight" + (e.start ? ", " + W().time12(e.start) : "") + (e.day ? " (weekly)" : "");
         m.appendChild(el("div", "woe-when" + (nx === t() ? " tn" : ""), when));
         m.appendChild(el("div", "woe-title", e.title));
         if (e.line) m.appendChild(el("div", "woe-line", e.line));

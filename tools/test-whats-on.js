@@ -149,7 +149,7 @@ var ed = E.mount(page, { events: EV, today: TODAY, venue: 'Revolver Upstairs',
   say: function (s, good) { said.push(s); } });
 var list = byClass(page, 'woe');
 ok('the list: five upcoming in date order, past ones gone', list.length === 5 && list.map(function (r) { return r.attrs['data-id']; }).join() === 'e2,e1,e4,e3,e5', list.map(function (r) { return r.attrs['data-id']; }).join());
-ok('tonight\'s reads "Tonight, 9pm (every Thursday)" in gold; the others their when', /Tonight, 9pm \(every Thursday\)/.test(byClass(list[0], 'woe-when')[0].textContent) && /\btn\b/.test(byClass(list[0], 'woe-when')[0].className) && byClass(list[1], 'woe-when')[0].textContent === 'Every Friday, 10pm');
+ok('tonight\'s reads "Tonight, 9pm (weekly)" in gold; the others their when', /Tonight, 9pm \(weekly\)/.test(byClass(list[0], 'woe-when')[0].textContent) && /\btn\b/.test(byClass(list[0], 'woe-when')[0].className) && byClass(list[1], 'woe-when')[0].textContent === 'Every Friday, 10pm');
 ok('a picture shows as its thumbnail; with none, the tile quietly says its day (THU)', /fri\.jpg/.test(byClass(list[1], 'woe-thumb')[0].style.backgroundImage) && byClass(list[0], 'woe-thumb')[0].textContent === 'THU');
 ok('"5 of 30" and "+ Add an event"', /5 of 30/.test(texts(page, 'woe-count')) && byClass(page, 'woe-add').length === 1 && !byClass(page, 'woe-add')[0].hidden);
 byClass(page, 'woe-add')[0].onclick();

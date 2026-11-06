@@ -106,7 +106,7 @@ def account():
         wk = [e for e in ev if e.get('title') == 'Revolver Fridays']
         ok('a weekly night is stored by its weekday', len(wk) == 1 and wk[0].get('day') == dkey(TODAY) and 'date' not in wk[0] and wk[0].get('start') == '22:00', ev)
         first = S.js(sid, 'document.querySelector(".woe .woe-when").textContent')
-        ok('the list is in date order, and tonight\'s weekly night reads "Tonight, 10pm (every ...)" first', first.startswith('Tonight, 10pm (every '), first)
+        ok('the list is in date order, and tonight\'s weekly night reads "Tonight, 10pm (weekly)" first', first.startswith('Tonight, 10pm (weekly)'), first)
         wid = wk[0]['id']
         S.js(sid, '(function(){var r=document.querySelector(\'.woe[data-id="%s"]\'); r.querySelector(".woe-edit").click(); return true;})()' % wid)
         S.until(sid, '!document.querySelector(".woe-form").hidden', 5)
