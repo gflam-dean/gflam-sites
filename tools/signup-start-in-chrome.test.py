@@ -151,7 +151,7 @@ try:
         type_code(sid, c, paste=(n == 2))
         S.until(sid, '!document.getElementById("st-done").hidden', 20)
         shot(sid, 'start-done-%s.png' % where)
-        d = S.json(sid, '(function(){var e=document.getElementById("st-done");return {lines:[].map.call(e.querySelectorAll(".st-h,.st-p"),function(x){return x.textContent.trim();}),'
+        d = S.json(sid, '(function(){var e=document.getElementById("st-done");return {lines:[].map.call(e.querySelectorAll(":scope > .st-h, :scope > .st-p"),function(x){return x.textContent.trim();}),'
                         'tv:document.getElementById("st-tvline").textContent.replace(/\\s+/g," ").trim(),code:document.getElementById("st-tvcode").textContent.trim(),'
                         'slot:!!document.getElementById("st-try-slot"),slotAfterTv:!!(document.getElementById("st-tvline").compareDocumentPosition(document.getElementById("st-try-slot"))&4),'
                         'open:document.getElementById("st-open").getAttribute("href")};})()', {})
@@ -182,7 +182,7 @@ try:
     type_code(sid, last_code('+61412555009'))
     S.until(sid, '!document.getElementById("st-done").hidden', 20)
     ok('the account is made straight away and the done screen shows', len(S.W.table('venueplay_founding')) == nf + 1 and
-       S.json(sid, '[].map.call(document.querySelectorAll("#st-done .st-h,#st-done .st-p"),function(x){return x.textContent.trim();})', []) == DONE)
+       S.json(sid, '[].map.call(document.querySelectorAll("#st-done > .st-h,#st-done > .st-p"),function(x){return x.textContent.trim();})', []) == DONE)
     S.close_tab(tid)
 
     print('\nA MOBILE ALREADY ON VENUEPLAY, WITH A NEW EMAIL: HELD, DEAN\'S WORDS')
