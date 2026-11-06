@@ -2132,7 +2132,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
     if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
-    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
+    var _rounds=(window.VPSetupUse && VPSetupUse.roundPrize(p,0)) ? true : false;   // the night's prize rounds fill the box instead (fillRoundPrize)
+    if(p.prize && !_rounds){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
     G.setupPrefs=p;   // the setup wizard's prize rounds, read again between games (fillRoundPrize)
     fillRoundPrize();
     if(p.reveal && REVEAL_MODES[p.reveal]){ setRevealMode(p.reveal); used=true; }

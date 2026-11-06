@@ -74,7 +74,7 @@ function loads(src, path) { return src.indexOf('<script src="' + path + '"></scr
 function between(src, a, b) { var i = src.indexOf(a); return i < 0 ? '' : src.slice(i, src.indexOf(b, i + a.length)); }
 var amp = between(MUS, 'function applyMusicalPrefs', 'function musicalLocalPrefs');
 check('musical bingo loads it, plays this week\'s list when there are several', loads(MUS, '../vp-setupuse.js') && /VPSetupUse\.weekPick\(p\.playlists\)/.test(amp) && /selectPlaylist\(plWant\)/.test(amp));
-check('musical bingo fills this round\'s prize once the venue\'s setup is in', /G\.setupPrefs=p;/.test(amp) && /fillRoundPrize\(\);/.test(amp));
+check('musical bingo fills this round\'s prize once the venue\'s setup is in, and the single saved prize never gets there first', /G\.setupPrefs=p;/.test(amp) && /fillRoundPrize\(\);/.test(amp) && /if\(p\.prize && !_rounds\)/.test(amp));
 var frp = between(MUS, 'function fillRoundPrize', 'function startVenuePrefs');
 check('the round\'s prize goes in the box only when the host has not typed one, with "Round N of R tonight" and the buttons', /!String\(pi\.value\|\|""\)\.trim\(\) \|\| pi\.value===pi\._round/.test(frp) && /"Round "\+rp\.number\+" of "\+rp\.of\+" tonight"/.test(frp) && /VPSetupUse\.prizeButtons\(document, note,/.test(frp));
 var win = between(MUS, 'G.prizesWon.push(', 'function endGameNow');
