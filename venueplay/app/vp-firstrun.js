@@ -1,3 +1,8 @@
+/* THE FIRST RUN, AS REBUILT ON 6 NOV 2026 (Dean, INBOX 87 and 88a). The steps listed below are the 28 Oct design; the ORDER
+   is now the one in the comment above STEPS: one question first ("What games do you want to set up today?"), then only the
+   ticked games, with Put it on your TV and Who's hosting? inside the first one, and "Not ready yet? Remind me next time I
+   sign in" on every game, which brings that game back as the one question on the next sign-in (ASK_ORDER, first in line).
+
 /* THE FIRST RUN: a prospect's guided setup, one step per screen (Dean, 28 Oct 2026).
 
    "just a link: hey, I've set you up an account. Click here to access it, and then it actually asks
@@ -66,8 +71,21 @@
   "use strict";
   var BILLING_API = "https://api.venueplay.com.au";
   var KEY = "vpFirstRun:";
-  var STEPS = ["mobile", "terms", "venue", "games", "tv", "hosts", "game", "account", "card"];
-  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", venue: "About your venue", games: "Which games do you play?", tv: "Your TV", hosts: "Add your hosts", game: "Run your first game", account: "About you and your venue", card: "Add your card when you're ready" };
+  /* ONE FIRST-RUN ORDER (Dean, 5 Nov 2026, INBOX 87 and 88a, rebuilt 6 Nov). After sign-up and the try-it demo the person is
+     on their console home and this opens with ONE question, "What games do you want to set up today?" (pick). Then ONLY the
+     ticked games get steps. Your TV and Add your hosts are steps INSIDE the first ticked game's setup (they sit before it
+     here, and are left out when no game is ticked). mobile and terms stay first for a prospect, where a game cannot start
+     without them; a self sign-up has both done already, so for them pick is first.
+     HOOK, jag the joker: it joins the list (GAMES, below) and gets a step here only once the codebase has a "jag the joker
+     is live" flag. There is none today (only migration 95), so it is not offered.
+     HOOK, "Your details" (INBOX 88b, a Tuesday build): a step between the games and "account", skippable with the same
+     remind-me. Not built yet. */
+  var STEPS = ["mobile", "terms", "pick", "tv", "hosts", "trivia", "musical", "bingo", "raffles", "members", "account", "card"];
+  var GAME_STEPS = ["trivia", "musical", "bingo", "raffles", "members"];
+  var TITLES = { mobile: "Add your mobile", terms: "Tick the Terms", pick: "What games do you want to set up today?", tv: "Put it on your TV", hosts: "Who's hosting?",
+    trivia: "Set up trivia", musical: "Set up musical bingo", bingo: "Set up bingo", raffles: "Set up raffles", members: "Set up members draws",
+    account: "About you and your venue", card: "Add your card when you're ready" };
+  var REMIND_TEXT = "Not ready yet? Remind me next time I sign in";
 
   var C = { ink: "#0A0A0B", ink2: "#141418", pink: "#FF1F8E", pinkSoft: "#FF8CC6", text: "#E7E7EC", muted: "#C9C9D1", faint: "#8A8A94", line: "rgba(255,255,255,.12)", ok: "#2BD47D" };
   var FONT = "font-family:Manrope,system-ui,sans-serif";
@@ -118,7 +136,8 @@
   }
   /* Should it open now? A prospect: yes (the card step is theirs). Any other new venue: only until its
      first game. Trivia and musical bingo stamp the venue row; bingo leaves a session. A venue that has
-     played is marked done on this device. A read that fails opens nothing: a real venue's console must
+     played is marked done on this device. The try-it demo is not a first game (migration 172, is_demo): a venue
+     that has only played the demo still gets the wizard, which is where the demo sends it. A read that fails opens nothing: a real venue's console must
      never be held up by a guide it may not need. Resolves true or false, never rejects. */
   function check(ctx, client, storage) {
     storage = storage || root.localStorage;
@@ -128,7 +147,7 @@
     function played() { var st = readState(storage, v.id); st.done = true; writeState(storage, v.id, st); _noGuide[v.id] = true; return false; }
     if (v.last_trivia_at || v.last_musical_at) return Promise.resolve(played());
     try {
-      return Promise.resolve(client.from("vp_sessions").select("id").eq("venue_id", v.id).limit(1)).then(function (r) {
+      return Promise.resolve(client.from("vp_sessions").select("id").eq("venue_id", v.id).neq("is_demo", true).limit(1)).then(function (r) {
         if (!r || r.error || !Array.isArray(r.data)) { _noGuide[v.id] = true; return false; }
         return r.data.length ? played() : true;
       }, function () { _noGuide[v.id] = true; return false; });
@@ -157,15 +176,15 @@
   var QUESTIONS = {
     tvs: { title: "How many TVs will show venueplay?", options: TVS, multi: false },
     nights: { title: "Which nights do you run games?", options: NIGHTS, multi: true },
-    games: { title: "Which games do you play?", options: GAMES, multi: true }
+    games: { title: "What games do you want to set up today?", options: GAMES, multi: true }
   };
-  var ASK_ORDER = ["games", "nights", "tvs", "logo", "name"];
+  var ASK_ORDER = ["remind", "games", "nights", "tvs", "logo", "name"];   // remind first: a game they asked to be reminded of (INBOX 88a)
   function keysOf(list) { return list.map(function (o) { return o[0]; }); }
   /* What may be kept: only the known keys with only the known values, so nothing typed anywhere can ride in. */
   function cleanAnswers(a) {
     var out = {}; a = (a && typeof a === "object") ? a : {};
     if (keysOf(TVS).indexOf(String(a.tvs)) >= 0) out.tvs = String(a.tvs);
-    ["nights", "games"].forEach(function (k) {
+    ["nights", "games", "remind"].forEach(function (k) {   // remind: the games they asked to be reminded of at the next sign-in
       var all = keysOf(k === "nights" ? NIGHTS : GAMES);
       if (Array.isArray(a[k])) out[k] = all.filter(function (x) { return a[k].indexOf(x) >= 0; });
     });
@@ -257,17 +276,37 @@
        vp-about-you.js, asks for it first since 29 Oct 2026), the Terms are ticked, or the card is on:
        that step is left out, not shown as done. The login's phone and the card are confirmed below,
        before the first step is drawn. */
-    var steps = STEPS.slice();
-    function drop(name) { var i = steps.indexOf(name); if (i >= 0 && steps.length > 1) steps.splice(i, 1); }
+    /* THE ANSWERS SO FAR (the venue's saved ones and this device's). */
+    var answers = answersFor(ctx, state);
+    /* THE GAMES TO SET UP NOW: the ticked ones less any they asked to be reminded of; or, on a sign-in where a
+       reminded game came back as the one question (ask() below), just that game (state.only). */
+    function plan() {
+      if (Array.isArray(state.only)) return state.only.filter(function (g) { return GAME_STEPS.indexOf(g) >= 0; });
+      var rm = answers.remind || [];
+      return (answers.games || []).filter(function (g) { return rm.indexOf(g) < 0; });
+    }
+    /* the one opening question, until it is answered; with the games setup (INBOX 104), also while a game they play is not set up */
+    var setupGames = !!(root.VPGameSetup && root.VPSetupHelp);
+    var pickNeeded = (!answered("games", answers) || (setupGames && gamesToSetUp(answers).length > 0)) && !Array.isArray(state.only);
+    var dropped = {};
+    function build() {
+      var out = [], p = plan();
+      STEPS.forEach(function (s) {
+        if (dropped[s]) return;
+        if (s === "pick") { if (pickNeeded) out.push(s); return; }
+        if (s === "tv" || s === "hosts") { if (p.length && !state.tvDone) out.push(s); return; }   // inside the FIRST ticked game's setup
+        if (GAME_STEPS.indexOf(s) >= 0) { if (!setupGames && p.indexOf(s) >= 0) out.push(s); return; }   // the games setup does each game itself (INBOX 104)
+        out.push(s);
+      });
+      return out;
+    }
+    var steps = [];
+    function drop(name) { dropped[name] = true; steps = build(); }
+    steps = build();
     if (ctx.user && ctx.user.phone) { drop("mobile"); state.mobile = "done"; }
     if (v.compliance_accepted_at) drop("terms");
     var myRow = (ctx.staff || []).filter(function (r) { return r && r.venue_id === v.id; })[0] || null;
     var needName = nameNeeded(ctx);
-    /* THE ANSWERS SO FAR (the venue's saved ones and this device's). A question already answered is left out. */
-    var answers = answersFor(ctx, state);
-    if (answers.tvs && answered("nights", answers) && answers.name_ok) drop("venue");
-    /* The games step stays while a game they play is not set up yet (INBOX 104): it is now the games setup. */
-    if (answered("games", answers) && !(root.VPGameSetup && root.VPSetupHelp && gamesToSetUp(answers).length)) drop("games");
     function saveAnswer(key, value) {
       state.answers = cleanAnswers(answers); save();
       return persistAnswers(deps, VP, v.id, state.answers);
@@ -373,7 +412,7 @@
     }
     function close(finished) {
       clearTimers();
-      if (finished) state.done = true; else state.dismissed = true;
+      if (finished) { state.done = true; state.only = null; } else state.dismissed = true;
       save();
       if (shell.parentNode) shell.parentNode.removeChild(shell);
       if (pageHeader && pageHeader.style && pageHeader.getAttribute) { pageHeader.style.visibility = pageHeader.getAttribute("data-vpfr") || ""; pageHeader.removeAttribute("data-vpfr"); }
@@ -454,95 +493,110 @@
       var t = every(function () { if (accepted()) { clearTimers(); done(); } }, 400);
       timers.push(t);
     };
-    /* ABOUT YOUR VENUE (Dean, 5 Nov 2026, INBOX 44a): the wizard asks first. All optional, each tap saved. */
-    function heading(text) { return el("p", "margin:0 0 8px;font-size:15px;font-weight:700;color:" + C.muted, text); }
     function anyPick() { setNext("Next", true); }
-    STEP.venue = function () {
-      body.appendChild(el("p", TEXT, "A few quick questions so venueplay fits " + (v.name || "your venue") + ". Every one is optional, and you can change them later under Account."));
-      setNext("Skip for now", true);
-      /* 1. Is the name right? A wrong one goes to HQ as a ticket (no route renames a venue). */
-      var nb = el("div", "margin:0 0 22px"); nb.id = "vpFrNameCheck";
-      nb.appendChild(heading("Is this your venue's name?"));
-      var nn = el("p", "margin:0 0 10px;font-size:20px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:" + HEAD + ";overflow-wrap:anywhere", v.name || ""); nn.id = "vpFrVenueName"; nb.appendChild(nn);
-      var yes = el("button", BTN_GHOST + ";margin:0 8px 8px 0", "Yes, that's right"); yes.id = "vpFrNameYes"; yes.setAttribute("type", "button");
-      var no = el("button", BTN_GHOST + ";margin:0 0 8px", "Not quite"); no.id = "vpFrNameNo"; no.setAttribute("type", "button");
-      var fix = el("div", "display:none"); fix.id = "vpFrNameFix";
-      var fl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:6px 0 6px", "What should it say?"); fl.setAttribute("for", "vpFrNameNew");
-      var fi = el("input", INPUT); fi.id = "vpFrNameNew"; fi.setAttribute("type", "text"); fi.setAttribute("autocomplete", "off"); fi.setAttribute("maxlength", "80");
-      var fs = el("button", BTN_PINK, "Send the right name"); fs.id = "vpFrNameSend"; fs.setAttribute("type", "button");
-      fix.appendChild(fl); fix.appendChild(fi); fix.appendChild(fs);
-      var nmsg = msgLine("vpFrNameCheckMsg");
-      nb.appendChild(yes); nb.appendChild(no); nb.appendChild(fix); nb.appendChild(nmsg); body.appendChild(nb);
-      if (answers.name_ok) { nmsg.style.color = C.ok; nmsg.textContent = "Thanks, that's confirmed."; }
-      yes.addEventListener("click", function () {
-        answers.name_ok = true; fix.style.display = "none"; nmsg.style.color = C.ok; nmsg.textContent = "Thanks, that's confirmed.";
-        anyPick(); return saveAnswer("name_ok", true);
-      });
-      no.addEventListener("click", function () { fix.style.display = "block"; nmsg.textContent = ""; });
-      fs.addEventListener("click", function () {
-        var nm = String(fi.value || "").replace(/[\u0000-\u001f\u007f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
-        nmsg.style.color = C.pinkSoft;
-        if (!nm) { nmsg.textContent = "Type what it should say first."; return Promise.resolve(false); }
-        fs.disabled = true; nmsg.textContent = "";
-        return billing("/help/venue/ticket", { venue_id: v.id, subject: "Please correct my venue name",
-          message: "The venue is called " + (v.name || "(no name)") + " in venueplay. It should say " + nm + ". Sent from the setup guide.", category: "venue_support" }).then(function (j) {
-          fs.disabled = false;
-          if (!j || j.error || !j.ok) { nmsg.textContent = (j && j.error) || "That did not send. Try again in a minute."; return false; }
-          fix.style.display = "none"; nmsg.style.color = C.ok; nmsg.textContent = "Thanks. We will change it to " + nm + " and tell you when it is done.";
-          anyPick(); return true;
-        });
-      });
-      /* 2 and 3. How many TVs, and which nights. */
-      function pick(key) { return function () { anyPick(); return saveAnswer(key); }; }
-      var tb = el("div", "margin:0 0 22px"); tb.id = "vpFrTvsBox";
-      tb.appendChild(heading(QUESTIONS.tvs.title)); tb.appendChild(chipRow(doc, "tvs", TVS, false, answers, pick("tvs"))); body.appendChild(tb);
-      var gb = el("div", ""); gb.id = "vpFrNightsBox";
-      gb.appendChild(heading(QUESTIONS.nights.title)); gb.appendChild(chipRow(doc, "nights", NIGHTS, true, answers, pick("nights")));
-      gb.appendChild(el("p", "margin:6px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Tap every night you run games. Leave it blank if it changes week to week."));
-      body.appendChild(gb);
-      if (answers.tvs || answered("nights", answers) || answers.name_ok) setNext("Next", true);
-    };
-    STEP.games = function () {
-      /* THE GAMES SETUP (Dean, 6 Nov 2026, INBOX 104): the heads-up, "What games do you play at your venue?", "Would
-         you like to set them all up today?", then each ticked game one at a time (vp-gamesetup.js, over this guide).
-         It saves through this guide's own answers, so setup_answers has one saving path. */
+    function gameLabel(g) { var o = GAMES.filter(function (x) { return x[0] === g; })[0]; return o ? o[1].toLowerCase() : g; }
+    /* "NOT READY YET? REMIND ME NEXT TIME I SIGN IN" (Dean, 5 Nov 2026, INBOX 88a). On each ticked game's setup. The game is
+       taken out of this run, kept in answers.remind (this device, and setup_answers where the column exists), and comes back
+       as the ONE question on the next sign-in (ask() below, first in ASK_ORDER). */
+    function remindGame(game) {
+      var cur = (answers.remind || []).slice(); if (cur.indexOf(game) < 0) cur.push(game);
+      answers.remind = keysOf(GAMES).filter(function (x) { return cur.indexOf(x) >= 0; });
+      if (Array.isArray(state.only)) state.only = state.only.filter(function (g) { return g !== game; });
+      steps = build();
+      var saving = saveAnswer("remind");
+      api.go(resumeAt(state.step));   // the game's own steps are gone: on to what is left (or the same TV step, now for the next game)
+      return saving;
+    }
+    function addRemind(game) {
+      var wrap = el("div", "margin:22px 0 0;padding-top:16px;border-top:1px solid " + C.line);
+      var b = el("button", BTN_GHOST + ";width:100%", REMIND_TEXT); b.id = "vpFrRemind"; b.setAttribute("type", "button"); b.setAttribute("data-game", game);
+      var m = msgLine("vpFrRemindMsg");
+      wrap.appendChild(b); wrap.appendChild(el("p", "margin:8px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "We will ask about " + gameLabel(game) + " again first thing next time you sign in."));
+      wrap.appendChild(m); body.appendChild(wrap);
+      b.addEventListener("click", function () { return remindGame(game); });
+    }
+    /* THE ONE OPENING QUESTION (Dean, 5 Nov 2026, INBOX 87): "What games do you want to set up today?" Ticks in the
+       order trivia, musical bingo, bingo, raffles, members draws. Each tap is kept (this device, and the venue's
+       setup_answers where the column exists) and the steps are rebuilt, so only the ticked games get a setup. */
+    STEP.pick = function () {
+      /* THE GAMES SETUP (Dean, 6 Nov 2026, INBOX 104; it replaces this step's own question and the per-game steps where
+         vp-gamesetup.js is loaded): the heads-up, "What games do you play at your venue?", which nights, "Would you like
+         to set them all up today?", then each ticked game one at a time, over this guide. It saves through this
+         guide's own answers, so setup_answers has one saving path. Then the guide carries on: Put it on your TV
+         (with "Is this the same TV as your demo?") and Who's hosting? for the games they ticked. */
       if (root.VPGameSetup && root.VPSetupHelp) {
         body.appendChild(el("p", TEXT, "Your games setup is open."));
         setNext("Next", false);   // until the games setup closes
         return root.VPGameSetup.run(ctx, { doc: doc, storage: storage, client: client, VP: VP, fetch: fetchFn, answers: answers,
           saveAnswers: function () { return saveAnswer("games"); } }).then(function (outcome) {
           if (outcome === "closed") { close(false); return "closed"; }
-          setNext("Next", true); return api.next();
+          steps = build(); setNext("Next", true); return api.next();
         });
       }
-      body.appendChild(el("p", TEXT, "Tap every game you play, or plan to. We use it to point you at the right pages. It is optional."));
+      body.appendChild(el("p", TEXT, "Tick every game you want to set up now. We set up only those, one at a time, and the first one also gets your TV and your host."));
       setNext(answered("games", answers) ? "Next" : "Skip for now", true);
       var gb = el("div", ""); gb.id = "vpFrGamesBox";
-      gb.appendChild(chipRow(doc, "games", GAMES, true, answers, function () { anyPick(); return saveAnswer("games"); }));
+      gb.appendChild(chipRow(doc, "games", QUESTIONS.games.options, true, answers, function () {
+        steps = build(); anyPick(); return saveAnswer("games");
+      }));
       body.appendChild(gb);
+      body.appendChild(el("p", "margin:12px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Not sure yet? Skip this and we will ask again next time you sign in."));
     };
     STEP.tv = function () {
       /* THE TV, BY SCREEN CODE (Dean, 5 Nov 2026, INBOX 13). Two ways in, each a short numbered list:
          a Google TV gets the venueplay TV app; any other TV (or a laptop or stick plugged into it) opens
          venueplay.com.au/tv in its web browser. Both ask for the same six-character screen code, which
          is the venue's own join code, the one the console shows beside "Screen code". Never a slug link. */
+      var first = plan()[0];
+      body.appendChild(el("p", TEXT, "This is part of setting up " + gameLabel(first) + ", your first game."));
+      /* IS THIS THE SAME TV AS THE DEMO? (Dean, 5 Nov 2026, INBOX 86 and 87). Asked only when this browser played the demo
+         for THIS venue: the demo screen (/tv?venue=<slug>) stored vpTvVenue, and the try page set vpDemoPlayed-<venue id> to
+         "1". Yes keeps that pairing, with no code to type. No shows venueplay.com.au/tv and the screen code, as before. */
+      function lsGet(k) { try { return storage.getItem(k); } catch (e) { return null; } }
+      var askSame = !!(v.slug && lsGet("vpTvVenue") === v.slug) || lsGet("vpDemoPlayed-" + v.id) === "1";
+      var tvBox = el("div", ""); tvBox.id = "vpFrTvBox";
+      if (askSame) {
+        var sq = el("div", "margin:0 0 16px"); sq.id = "vpFrSameTv";
+        sq.appendChild(el("p", "margin:0 0 10px;font-size:17px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:" + HEAD, "Is this the same TV you played the demo on?"));
+        var sy = el("button", BTN_GHOST + ";margin:0 8px 8px 0;min-width:96px", "Yes"); sy.id = "vpFrSameYes"; sy.setAttribute("type", "button");
+        var sn = el("button", BTN_GHOST + ";margin:0 0 8px;min-width:96px", "No"); sn.id = "vpFrSameNo"; sn.setAttribute("type", "button");
+        var sm = msgLine("vpFrSameMsg");
+        sq.appendChild(sy); sq.appendChild(sn); sq.appendChild(sm); body.appendChild(sq);
+        var showSame = function (ans) {
+          state.sameTv = ans; save();
+          sy.setAttribute("aria-pressed", ans === "yes" ? "true" : "false"); sn.setAttribute("aria-pressed", ans === "no" ? "true" : "false");
+          tvBox.style.display = ans === "no" ? "block" : "none";
+          sm.style.color = C.ok;
+          sm.textContent = ans === "yes" ? "Great. That TV stays paired to " + (v.name || "your venue") + ", so there is no code to type." : "";
+        };
+        sy.addEventListener("click", function () {
+          /* Yes: pair this browser to the venue exactly as a screen paired by its own code is (vp-tvpaired.js), so bare
+             venueplay.com.au/tv here opens the venue with no code. The demo screen only wrote vpTvVenue, never this. */
+          var TP = deps.VPTvPaired || root.VPTvPaired;
+          if (TP && TP.save && v.slug) { try { TP.save(v.slug); } catch (e) {} }
+          showSame("yes"); return true;
+        });
+        sn.addEventListener("click", function () { showSame("no"); return true; });
+        showSame(state.sameTv === "yes" || state.sameTv === "no" ? state.sameTv : "");
+      }
+      body.appendChild(tvBox);
       var code = screenCode();
-      body.appendChild(el("p", TEXT, "Get " + (v.name || "your venue") + " on the TV in a couple of minutes. You will need this screen code:"));
+      tvBox.appendChild(el("p", TEXT, "Get " + (v.name || "your venue") + " on the TV in a couple of minutes. You will need this screen code:"));
       var codeBox = el("div", "margin:0 0 6px;padding:14px 16px;border-radius:12px;border:1px solid " + C.line + ";background:" + C.ink + ";text-align:center;color:#FFFFFF;font:800 30px/1.2 " + HEAD + ";letter-spacing:.22em", code || "------");
       codeBox.id = "vpFrTvCode"; codeBox.setAttribute("aria-label", "Your screen code " + String(code || "").split("").join(" "));
-      body.appendChild(codeBox);
+      tvBox.appendChild(codeBox);
       var tvs = parseInt(answers.tvs, 10) || 0;
       if (tvs >= 2) {
         var many = el("p", TEXT, "You said " + (tvs >= 4 ? "four or more TVs" : tvs + " TVs") + ". Do the steps below on each TV, with the same screen code. Every screen shows the same thing."); many.id = "vpFrManyTvs";
-        body.appendChild(many);
+        tvBox.appendChild(many);
       }
-      body.appendChild(el("p", "margin:0 0 18px;font-size:15px;line-height:1.5;color:" + C.faint + ";text-align:center", "It is also at the top of your host console, beside Screen code."));
+      tvBox.appendChild(el("p", "margin:0 0 18px;font-size:15px;line-height:1.5;color:" + C.faint + ";text-align:center", "It is also at the top of your host console, beside Screen code."));
       function way(id, head, items) {
         var w = el("div", "margin:0 0 14px;padding:16px;border-radius:12px;border:1px solid " + C.line + ";background:rgba(255,255,255,.03)"); w.id = id;
         w.appendChild(el("h3", "margin:0 0 10px;font-size:17px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:" + HEAD, head));
         var ol = el("ol", "margin:0;padding:0 0 0 22px;font-size:15px;line-height:1.55;color:" + C.muted);
         items.forEach(function (it) { var li = el("li", "margin:0 0 6px"); if (typeof it === "string") li.textContent = it; else li.appendChild(it); ol.appendChild(li); });
-        w.appendChild(ol); body.appendChild(w); return w;
+        w.appendChild(ol); tvBox.appendChild(w); return w;
       }
       /* THE APP, FOR A GOOGLE TV (Dean, 31 Oct 2026, then 5 Nov). The store page is the link. */
       var playLi = el("span", ""); playLi.id = "vpFrPlay";
@@ -560,6 +614,7 @@
       var empty = el("p", "position:absolute;top:50%;left:0;right:0;margin:0;transform:translateY(-50%);text-align:center;font-size:15px;color:" + C.faint, "Loading your TV...");
       frame.appendChild(img); frame.appendChild(empty); body.appendChild(frame);
       var cap = el("p", "margin:10px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, ""); cap.id = "vpFrCaption"; body.appendChild(cap);
+      addRemind(first);
       setNext("Next", true);
       return billing("/account/screen-get", { venue_id: v.id }).then(function (d) {
         var slides = ((d && d.slides) || []).filter(function (s) { return s && /^https:\/\//.test(String(s.image_url || "")); });
@@ -580,7 +635,7 @@
        the host's login and texts them their own sign-in link; nothing here sends a text itself. Hosts sign
        in by mobile, never email (Dean, 29 Oct). Optional: a venue whose owner hosts can skip it. */
     STEP.hosts = function () {
-      body.appendChild(el("p", TEXT, "Hosts run the games on the night. Add each one with their name and mobile, and we text them their own sign-in link. Nothing to install and no password."));
+      body.appendChild(el("p", TEXT, "Who runs the games on the night? Add a host with their name and mobile and we text them their own sign-in link, with nothing to install and no password. Or tap I'll host if that's you."));
       var list = el("div", "margin:0 0 14px"); list.id = "vpFrHostList"; body.appendChild(list);
       var added = 0;
       function row(name, sub) {
@@ -593,15 +648,29 @@
       var none = el("p", "margin:0;font-size:15px;line-height:1.5;color:" + C.faint, "No hosts yet. If you host every night yourself, skip this."); none.id = "vpFrHostNone";
       list.appendChild(none);
       var nl = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Host's name"); nl.setAttribute("for", "vpFrHostName");
-      var name = el("input", INPUT); name.id = "vpFrHostName"; name.setAttribute("type", "text"); name.setAttribute("autocomplete", "off"); name.setAttribute("placeholder", "First and last name");
+      var name = el("input", INPUT); name.id = "vpFrHostName"; name.setAttribute("type", "text"); name.setAttribute("name", "host_name"); name.setAttribute("autocomplete", "off"); name.setAttribute("placeholder", "First and last name");
       var ml = el("label", "display:block;font-size:15px;font-weight:700;color:" + C.muted + ";margin:0 0 6px", "Their mobile"); ml.setAttribute("for", "vpFrHostMobile");
-      var mob = el("input", INPUT); mob.id = "vpFrHostMobile"; mob.setAttribute("type", "tel"); mob.setAttribute("inputmode", "tel"); mob.setAttribute("autocomplete", "off"); mob.setAttribute("placeholder", "04xx xxx xxx");
-      var add = el("button", BTN_PINK + ";width:100%", "Add host and text them"); add.id = "vpFrHostAdd"; add.setAttribute("type", "button");
+      var mob = el("input", INPUT); mob.id = "vpFrHostMobile"; mob.setAttribute("type", "tel"); mob.setAttribute("inputmode", "tel"); mob.setAttribute("name", "host_mobile"); mob.setAttribute("autocomplete", "off"); mob.setAttribute("placeholder", "04xx xxx xxx");
+      var add = el("button", BTN_PINK + ";width:100%", "Add host and text them"); add.id = "vpFrHostAdd"; add.setAttribute("type", "submit");
       var msg = msgLine("vpFrHostMsg");
-      body.appendChild(nl); body.appendChild(name); body.appendChild(ml); body.appendChild(mob); body.appendChild(add); body.appendChild(msg);
+      /* A REAL FORM (the pattern of vp-details.js): named boxes with autocomplete words, so Enter on a phone keyboard
+         adds the host. The button's own click does the work and stops the form navigating. */
+      var form = el("form", ""); form.id = "vpFrHostForm"; form.setAttribute("name", "host"); form.setAttribute("autocomplete", "off"); form.setAttribute("novalidate", "novalidate");
+      form.addEventListener("submit", function (e) { if (e && e.preventDefault) e.preventDefault(); });
+      form.appendChild(nl); form.appendChild(name); form.appendChild(ml); form.appendChild(mob); form.appendChild(add); form.appendChild(msg);
+      body.appendChild(form);
+      var self = el("button", BTN_GHOST + ";width:100%;margin:12px 0 0", "I'll host"); self.id = "vpFrHostSelf"; self.setAttribute("type", "button");
+      body.appendChild(self);
+      self.addEventListener("click", function () {
+        state.hosting = "self"; save();
+        msg.style.color = C.ok; msg.textContent = "Got it, you will host. Add a host any time under Account, then People.";
+        setNext("Next", true); return true;
+      });
       body.appendChild(el("p", "margin:14px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Add or remove hosts any time under Account, then People."));
       setNext("Skip for now", true);
-      add.addEventListener("click", function () {
+      addRemind(plan()[0]);
+      add.addEventListener("click", function (e) {
+        if (e && e.preventDefault) e.preventDefault();
         var nm = String(name.value || "").trim(), ph = mobileE164(mob.value);
         msg.style.color = C.pinkSoft;
         if (!nm) { msg.textContent = "Type the host's name first."; return Promise.resolve(false); }
@@ -625,32 +694,40 @@
         return hs.length;
       });
     };
-    STEP.game = function () {
+    /* EACH TICKED GAME'S OWN SETUP (Dean, 5 Nov 2026, INBOX 87). Trivia and musical bingo open their console for a first
+       test game with the TV on and their own phone as the player; bingo points at the permit on Game settings (the card
+       VPPermits paints there); raffles and members draws point at Account, then Draws. Each ends with the remind-me button. */
+    function nightsLine() { return answered("nights", answers) ? el("p", TEXT, "Your game nights: " + nightsWords(answers.nights) + ". Run a test before the first one.") : null; }
+    function consoleStep(name, label, path, how) {
       var q = "?venue=" + encodeURIComponent(v.slug || "");
-      /* A TEST GAME, TRIVIA FIRST (Dean, 5 Nov 2026, INBOX 13): try it before the first real night, with the TV
-         on and their own phone as the player. */
       body.appendChild(el("p", TEXT, "Run a quick test game now, before your first real night. With the TV on, join from your own phone using the QR code on the TV, so you see what your players see."));
-      body.appendChild(el("p", TEXT, "Trivia takes three taps: pick a question set, tap Open lobby, then Start once people have joined on their phones from the QR code on the TV."));
-      var tri = el("button", BTN_PINK + ";width:100%;margin:0 0 10px", "Open trivia"); tri.id = "vpFrTrivia"; tri.setAttribute("type", "button");
-      var mus = el("button", BTN_GHOST + ";width:100%", "Or try musical bingo"); mus.id = "vpFrMusical"; mus.setAttribute("type", "button");
-      body.appendChild(tri); body.appendChild(mus);
-      /* WHAT THEIR ANSWERS POINT AT: the Account pages for the other games they play, and their game nights. */
-      var gl = answers.games || [], notes = [];
-      if (gl.indexOf("raffles") >= 0 || gl.indexOf("members") >= 0) notes.push("Raffles and members draws are set up under Account, then Draws.");
-      if (gl.indexOf("bingo") >= 0) notes.push("For bingo, add your permit details under Account, then Game settings.");
-      if (answered("nights", answers)) notes.push("Your game nights: " + nightsWords(answers.nights) + ". Run this test before the first one.");
-      if (notes.length) {
-        var nl2 = el("ul", "margin:14px 0 0;padding:0 0 0 20px;font-size:15px;line-height:1.55;color:" + C.muted); nl2.id = "vpFrGameNotes";
-        notes.forEach(function (t) { nl2.appendChild(el("li", "margin:0 0 6px", t)); });
-        body.appendChild(nl2);
-      }
-      body.appendChild(el("p", "margin:12px 0 0;font-size:15px;line-height:1.5;color:" + C.faint, "Musical bingo: pick a playlist, tap Open lobby, then Deal, then Play. Come back to this guide any time from Setup guide at the top."));
-      // Leaving for a game moves the guide on, so it reopens on the last step.
-      function leave(path) { var gi = steps.indexOf("game"); state.step = steps[gi + 1] || "game"; save(); clearTimers(); go(path + q); }
-      tri.addEventListener("click", function () { leave("/app/trivia/host.html"); });
-      mus.addEventListener("click", function () { leave("/app/musical/host.html"); });
+      body.appendChild(el("p", TEXT, how));
+      var b = el("button", BTN_PINK + ";width:100%", "Open " + label); b.id = name === "trivia" ? "vpFrTrivia" : "vpFrMusical"; b.setAttribute("type", "button");
+      body.appendChild(b);
+      var nl = nightsLine(); if (nl) { nl.id = "vpFrGameNotes"; nl.style.margin = "14px 0 0"; body.appendChild(nl); }
+      // Leaving for a game moves the guide on, so it reopens on the step after this one.
+      b.addEventListener("click", function () { var gi = steps.indexOf(name); state.step = steps[gi + 1] || name; save(); clearTimers(); go(path + q); });
+      addRemind(name);
       setNext("Next", true);
+    }
+    STEP.trivia = function () { consoleStep("trivia", "trivia", "/app/trivia/host.html", "Trivia takes three taps: pick a question set, tap Open lobby, then Start once people have joined on their phones from the QR code on the TV."); };
+    STEP.musical = function () { consoleStep("musical", "musical bingo", "/app/musical/host.html", "Musical bingo: pick a playlist, tap Open lobby, then Deal, then Play."); };
+    function pointStep(game, text, linkText, href) {
+      body.appendChild(el("p", TEXT, text));
+      var a = el("a", BTN_PINK + ";width:100%;text-align:center;text-decoration:none", linkText); a.id = "vpFrOpen-" + game; a.setAttribute("href", href);
+      a.addEventListener("click", function () { var gi = steps.indexOf(game); state.step = steps[gi + 1] || game; save(); });
+      body.appendChild(a);
+      addRemind(game);
+      setNext("Next", true);
+    }
+    STEP.bingo = function () {
+      var P = deps.VPPermits || root.VPPermits, why = P && P.notNeeded ? P.notNeeded(v, "bingo") : "";
+      pointStep("bingo", why ? "Your state does not need a bingo permit, so there is nothing to record. Everything else for bingo is under Account, then Game settings."
+        : "Bingo may need a permit where you are. Add your permit details under Account, then Game settings, so they are on file before your first night.",
+        "Open Game settings", "/app/settings.html");
     };
+    STEP.raffles = function () { pointStep("raffles", "Raffles are set up under Account, then Draws. Add your prizes and, if your state asks for one, your permit details.", "Open Draws", "/app/billing.html#draws"); };
+    STEP.members = function () { pointStep("members", "Members draws are set up under Account, then Draws. They draw from your members list.", "Open Draws", "/app/billing.html#draws"); };
     /* ABOUT YOU AND YOUR VENUE (Dean, 5 Nov 2026, INBOX 24). Two optional questions, each only while its
        answer is empty, each saved by the route the Account page already uses. Skippable as a whole. */
     STEP.account = function () {
@@ -811,6 +888,7 @@
         if (next.disabled) return null;
         var i = steps.indexOf(state.step);
         if (state.step === "mobile" && state.mobile !== "done") state.mobile = "skipped";
+        if (state.step === "hosts") state.tvDone = true;   // the TV and host are asked once, inside the first game
         if (i >= steps.length - 1) { close(true); return "done"; }
         return api.go(steps[i + 1]);
       },
@@ -858,6 +936,7 @@
     var v = ctx.venue, st = readState(storage, v.id), a = answersFor(ctx, st), skips = readAsk(storage, v.id).skips;
     for (var i = 0; i < ASK_ORDER.length; i++) {
       var k = ASK_ORDER[i];
+      if (k === "remind") { if (a.remind && a.remind.length) return k; continue; }   // asked until they set it up: they asked to be reminded
       if ((skips[k] || 0) >= 2) continue;
       if (k === "logo" ? !v.logo_url : (k === "name" ? nameNeeded(ctx) : !answered(k, a))) return k;
     }
@@ -884,21 +963,30 @@
       sheet.id = "vpAsk"; sheet.setAttribute("role", "dialog"); sheet.setAttribute("aria-label", "One quick question");
       var box = el("div", "max-width:480px;margin:0 auto");
       box.appendChild(el("p", "margin:0 0 6px;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:" + C.pink, "One quick question"));
-      var q = QUESTIONS[key];
+      var q = QUESTIONS[key], rgame = key === "remind" ? answers.remind[0] : "";
+      var rlabel = rgame ? (GAMES.filter(function (g) { return g[0] === rgame; })[0] || [rgame, rgame])[1].toLowerCase() : "";
       box.appendChild(el("h3", "margin:0 0 10px;font-size:19px;font-weight:800;line-height:1.3;color:#FFFFFF;font-family:" + HEAD,
-        q ? q.title : (key === "logo" ? "Add your logo for your TV?" : "What should we call you?")));
+        key === "remind" ? "Ready to set up " + rlabel + " now?" : (q ? q.title : (key === "logo" ? "Add your logo for your TV?" : "What should we call you?"))));
       var picked = false;
       function save() { var c = cleanAnswers(answers); st.answers = c; writeState(storage, v.id, st); return persistAnswers(deps, VP, v.id, c); }
       var row = el("div", "display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0");
-      var doneBtn = el("button", BTN_PINK, q ? "Done" : "Add it"); doneBtn.id = "vpAskDone"; doneBtn.setAttribute("type", "button");
-      var later = el("button", BTN_GHOST, "Not now"); later.id = "vpAskLater"; later.setAttribute("type", "button");
+      var doneBtn = el("button", BTN_PINK, key === "remind" ? "Set it up" : (q ? "Done" : "Add it")); doneBtn.id = "vpAskDone"; doneBtn.setAttribute("type", "button");
+      var later = el("button", BTN_GHOST, key === "remind" ? "Not yet" : "Not now"); later.id = "vpAskLater"; later.setAttribute("type", "button");
       if (q) box.appendChild(chipRow(doc, key, q.options, q.multi, answers, function () { picked = true; return save(); }));
-      else box.appendChild(el("p", "margin:0;font-size:15px;line-height:1.5;color:" + C.muted, key === "logo" ? "It shows on your TV between games." : "So your hosts and our team know who is who."));
+      else box.appendChild(el("p", "margin:0;font-size:15px;line-height:1.5;color:" + C.muted, key === "remind" ? "You asked us to remind you. It takes a few minutes." : (key === "logo" ? "It shows on your TV between games." : "So your hosts and our team know who is who.")));
       row.appendChild(doneBtn); row.appendChild(later); box.appendChild(row); sheet.appendChild(box); doc.body.appendChild(sheet);
       function closeSheet(outcome) { if (sheet.parentNode) sheet.parentNode.removeChild(sheet); if (typeof deps.onClose === "function") deps.onClose(outcome); }
-      function skip() { var a = readAsk(storage, v.id); a.skips[key] = (a.skips[key] || 0) + 1; try { storage.setItem(ASK_KEY + v.id, JSON.stringify(a)); } catch (e) {} closeSheet("skipped"); }
+      function skip() { if (key === "remind") { closeSheet("skipped"); return true; }   // a reminder is never used up by saying not yet
+        var a = readAsk(storage, v.id); a.skips[key] = (a.skips[key] || 0) + 1; try { storage.setItem(ASK_KEY + v.id, JSON.stringify(a)); } catch (e) {} closeSheet("skipped"); }
       later.addEventListener("click", skip);
       doneBtn.addEventListener("click", function () {
+        if (key === "remind") {   // the game comes off the reminder list and the guide opens on just that game
+          answers.remind = answers.remind.filter(function (g) { return g !== rgame; });
+          var rs = readState(storage, v.id); rs.answers = cleanAnswers(answers); rs.only = [rgame]; rs.step = "tv";   // resumeAt() moves on to the game itself when the TV and host are already done
+          rs.dismissed = false; rs.done = false; writeState(storage, v.id, rs);
+          persistAnswers(deps, VP, v.id, rs.answers);
+          closeSheet("guide"); return open(ctx, deps);
+        }
         if (!q) {   // a logo or a name: the guide's own step does it
           var g = readState(storage, v.id); g.step = "account"; g.dismissed = false; g.done = false; writeState(storage, v.id, g);
           closeSheet("guide"); return open(ctx, deps);

@@ -1,12 +1,11 @@
-/* THE SIGN-UP CORE, RUN AND NOT WORD-SEARCHED (Dean, 5 Nov 2026; INBOX 60, 61, 80B, 81, 84).
+/* THE SIGN-UP CORE, RUN AND NOT WORD-SEARCHED (Dean, 5 Nov 2026; INBOX 80B, 81, 84, as changed by 97).
 
    Runs the REAL billing Worker (tools/rig-billing-worker.js) through its REAL router against the rig's fake
    database, fake Stripe and fake Resend:
-     1. the same pub in ANOTHER account (item 60) at Add a venue: no venue, no free month, no Stripe call; a help
-        desk ticket naming both accounts and the person, and an HQ alert. A new name, or the right name at the wrong
-        postcode, is added as before. A database that cannot be read refuses, never creates.
-     2. the same at the card sign-up (/checkout): nothing saved, Stripe never asked.
-   (Sections for the no-card start, the licensed list and the billing guards follow below.)
+     1. the parked work (the same pub across accounts, item 60; the known-person prefill, item 61) is NOT here:
+        Add a venue and the card sign-up behave exactly as on main, and /start/join does not exist;
+     5 to 12. the no-card start (/start/begin, verify, resend), the licensed list (171), HQ's one-tap approve, one free
+        month per mobile and per email, the network limit, and the billing guards (item 84).
 
    Run from the repo root:  jsc tools/test-signup-core.js */
 var ran = 0, bad = 0;
@@ -33,7 +32,7 @@ crypto = { subtle: {
 if (typeof btoa === 'undefined') { btoa = function (s) { var B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', o = ''; for (var i = 0; i < s.length; i += 3) { var a = s.charCodeAt(i), b = s.charCodeAt(i + 1), c = s.charCodeAt(i + 2); var n = (a << 16) | ((b || 0) << 8) | (c || 0); o += B[(n >> 18) & 63] + B[(n >> 12) & 63] + (isNaN(b) ? '=' : B[(n >> 6) & 63]) + (isNaN(c) ? '=' : B[n & 63]); } return o; }; }
 
 /* What left the Worker, besides the database: texts (the SMS hook), Stripe and Resend (the rig records those two). */
-var TEXTS = [], AUTH = [], JOINS = 0, HITS = {};
+var TEXTS = [], AUTH = [], JOINS = 0, HITS = {}, AUTH_CAP = 0;
 var rigFetch = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url), method = (opts && opts.method) || 'GET';
@@ -58,14 +57,19 @@ globalThis.fetch = function (url, opts) {
     if (FAIL['auth:GET'] > 0 && method === 'GET') { FAIL['auth:GET']--; return RS(503, {}); }
     if (method === 'POST') { var b = JSON.parse(opts.body); var nu = { id: newId(), email: b.email || '', phone: b.phone ? String(b.phone).replace('+', '') : '' }; AUTH.push(nu); return RS(200, nu); }
     if (one) { var hit = AUTH.filter(function (x) { return x.id === one[1]; })[0]; return hit ? RS(200, hit) : RS(404, {}); }
-    return RS(200, { users: AUTH });
+    /* Paged as Auth pages it (page from 1, per_page): a fake that answers every page with everyone never ends. */
+    var pg = /[?&]page=(\d+)/.exec(u), pp = /[?&]per_page=(\d+)/.exec(u);
+    var per = pp ? +pp[1] : 50, from = ((pg ? +pg[1] : 1) - 1) * per;
+    /* AUTH_CAP: an Auth whose own maximum page sits below the size asked for, so EVERY page is short. */
+    var give = AUTH_CAP ? Math.min(per, AUTH_CAP) : per; from = ((pg ? +pg[1] : 1) - 1) * give;
+    return RS(200, { users: AUTH.slice(from, from + give) });
   }
   return rigFetch(url, opts);
 };
 function U(nn) { return '61000000-0000-4000-8000-' + ('000000000000' + nn).slice(-12); }
 var ADMIN = U(9001), ACCTS = U(9002), STAFFADMIN = U(9003);
 function world() {
-  DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; TEXTS = []; AUTH = [];
+  DB = {}; sent.length = 0; stripeCalls.length = 0; FAIL = {}; TEXTS = []; AUTH = []; AUTH_CAP = 0;
   DB.vp_platform_admins = [{ auth_user_id: ADMIN, label: 'Dean', role: 'owner' }, { auth_user_id: ACCTS, label: 'Accounts', role: 'accounts' }, { auth_user_id: STAFFADMIN, label: 'Helper', role: 'staff' }];
   ['vp_venues', 'venueplay_founding', 'vp_venue_staff', 'vp_admin_audit', 'vp_venue_settings', 'vp_screens', 'vp_venue_screen', 'vp_signin_links',
    'vp_prospect_welcomes', 'vp_prospects', 'vp_help_tickets', 'vp_sessions', 'vp_signup_starts', 'vp_licensed_venues'].forEach(function (t) { DB[t] = []; });
@@ -104,61 +108,23 @@ function tickets() { return DB.vp_help_tickets || []; }
 function alerts() { return sent.filter(function (m) { return /Same venue, another account/.test(m.subject || ''); }); }
 
 async function main() {
-  section('1. Add a venue: the same pub in another account (INBOX 60)');
+  section('1. The parked work is not on this branch (INBOX 97: items 60 and 61 moved to fix/same-pub-later)');
   world();
-  var theirs = account({ name: 'Royal Hotel', postcode: '4000', venueStatus: 'suspended', reason: 'cancelled', email: 'gm@royal.example' });
+  account({ name: 'Royal Hotel', postcode: '4000', email: 'gm@royal.example' });
   var mine = account({ name: 'Bat and Ball', postcode: '2000', email: 'sam@batandball.example' });
-  var venuesBefore = DB.vp_venues.length;
   var r = await call('/account/add-venue', { name: 'The Royal Hotel', postcode: '4000', players: 10 }, AS(mine.owner));
-  check('the same name and postcode on someone else\'s (cancelled) account is refused', r.status === 409 && r.body.same_venue === true, r);
-  check('they read Dean\'s words, word for word', r.body.error === 'This venue is already set up with venueplay. We\'ve lodged a ticket on your behalf and we\'ll be in touch soon.', r.body.error);
-  check('no venue was made', DB.vp_venues.length === venuesBefore, DB.vp_venues.length);
-  check('Stripe was never asked (no quantity, no charge, no free month credit)', stripeCalls.length === 0, stripeCalls);
-  var tk = tickets()[0] || {};
-  check('one help desk ticket, filed under accounts', tickets().length === 1 && tk.category === 'accounts', tickets());
-  check('the ticket names BOTH accounts', tk.message && tk.message.indexOf(theirs.fid) !== -1 && tk.message.indexOf(mine.fid) !== -1, tk.message);
-  check('the ticket names the person\'s email and the existing account\'s contact', tk.contact_email === 'sam@batandball.example' && /gm@royal\.example/.test(tk.message), tk);
-  check('the ticket is on the existing venue', tk.venue_id === theirs.vid, tk.venue_id);
-  check('HQ is alerted (the staff email)', alerts().length === 1, sent.map(function (m) { return m.subject; }));
-  var r2 = await call('/account/add-venue', { name: 'ROYAL HOTEL.', postcode: '4000', players: 10 }, AS(mine.owner));
-  check('pressing again is refused the same way, with no second ticket that day', r2.status === 409 && tickets().length === 1, tickets().length);
-
-  section('2. Add a venue: a different venue is added as before');
-  var r3 = await call('/account/add-venue', { name: 'Royal Hotel', postcode: '2026', players: 10 }, AS(mine.owner));
-  check('THE RIGHT NAME AT THE WRONG POSTCODE is another pub, and is added', r3.status === 200 && r3.body.ok === true, r3);
-  var r4 = await call('/account/add-venue', { name: 'Totally New Tavern', postcode: '4000', players: 10 }, AS(mine.owner));
-  check('a new name (a manager who moved pubs) is added as before', r4.status === 200 && r4.body.ok === true, r4);
-  check('neither made a ticket', tickets().length === 1, tickets().length);
-
-  section('3. Add a venue: no postcode on the old venue, and a database that will not answer');
+  check('Add a venue: a pub with the same name on another account is added as on main (no cross-account check here)', r.status === 200 && r.body.ok === true, r);
+  check('and no ticket was made', tickets().length === 0, tickets());
   world();
-  account({ name: 'Railway Hotel', postcode: null, email: 'old@railway.example' });
-  var mine2 = account({ name: 'Commercial Hotel', postcode: '3000' });
-  var r5 = await call('/account/add-venue', { name: 'Railway Hotel', postcode: '3550', players: 10 }, AS(mine2.owner));
-  check('an old venue with no postcode cannot be told apart, so it counts as the same venue (refused, ticketed)', r5.status === 409 && tickets().length === 1, r5);
-  check('and the ticket says to check it is really the same pub', /no postcode, so check/.test((tickets()[0] || {}).message || ''), (tickets()[0] || {}).message);
-  var before = DB.vp_venues.length;
-  /* Only the cross-account read fails (the owner's own venues still load), so the refusal is the check's own. */
-  var realAll = vpaSelectAll;
-  vpaSelectAll = function (env, table, q) { if (table === 'vp_venues' && /postcode=/.test(q)) return Promise.reject(new Error('read vp_venues page 0: 503')); return realAll(env, table, q); };
-  var r6 = await call('/account/add-venue', { name: 'Brand New Arms', postcode: '3000', players: 10 }, AS(mine2.owner));
-  vpaSelectAll = realAll;
-  check('a database that cannot be read refuses (fails closed, 503), adds nothing and charges nothing', r6.status === 503 && /could not check/.test(r6.body.error || '') && DB.vp_venues.length === before && stripeCalls.length === 0, r6);
-
-  section('4. The card sign-up (/checkout): the same pub in another account');
-  world();
-  var held = account({ name: 'Olim\'s Canberra Hotel', postcode: '2612', email: 'events@olims.example' });
-  var fBefore = DB.venueplay_founding.length;
+  account({ name: 'Olim\'s Canberra Hotel', postcode: '2612', email: 'events@olims.example' });
   var c1 = await call('/checkout', { email: 'new@person.example', name: 'Pat', mobile: '0400 000 111', compliance_accepted: true,
     venues: [{ name: 'Olims Canberra Hotel', seats: 30, postcode: '2612' }] });
-  check('refused with Dean\'s words', c1.status === 409 && c1.body.error === 'This venue is already set up with venueplay. We\'ve lodged a ticket on your behalf and we\'ll be in touch soon.', c1);
-  check('no account row was saved', DB.venueplay_founding.length === fBefore, DB.venueplay_founding.length);
-  check('Stripe was never asked, so no free month started', stripeCalls.length === 0, stripeCalls);
-  check('a ticket with the person\'s name, email and mobile', tickets().length === 1 && tickets()[0].contact_name === 'Pat' && tickets()[0].contact_phone === '0400 000 111' && tickets()[0].contact_email === 'new@person.example', tickets()[0]);
-  check('the ticket names the existing account', /events@olims\.example/.test(tickets()[0].message) && tickets()[0].message.indexOf(held.fid) !== -1, tickets()[0].message);
-  var c2 = await call('/checkout', { email: 'new2@person.example', name: 'Pat', mobile: '0400 000 112', compliance_accepted: true,
-    venues: [{ name: 'A Different Pub', seats: 30, postcode: '2612' }] });
-  check('a different venue goes on to the card step as before', c2.status === 200 && stripeCalls.length > 0, c2);
+  check('the card sign-up goes on to the card step as on main', c1.status === 200 && stripeCalls.length > 0, c1);
+  var jn = await call('/start/join', { start_id: U(1), code: '123456' }, NET());
+  check('there is no /start/join (the known-person join is parked)', jn.status === 404 || !jn.body.ok, jn);
+  var src = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  check('none of the parked functions is in the Worker', ['vpaSameVenueElsewhere', 'vpaSameVenueTicket', 'vpsStartJoin', 'vpsProvenLogin', 'vpbOwnerFor', 'vpbAddVenueFor', 'known_login_id'].every(function (n) { return src.indexOf(n) === -1; }),
+    ['vpaSameVenueElsewhere', 'vpaSameVenueTicket', 'vpsStartJoin', 'vpsProvenLogin', 'vpbOwnerFor', 'vpbAddVenueFor', 'known_login_id'].filter(function (n) { return src.indexOf(n) !== -1; }));
 
   if (typeof moreSections === 'function') await moreSections();
 
@@ -166,7 +132,7 @@ async function main() {
   if (bad) print(bad + ' of ' + ran + ' checks FAILED'); else print('ALL ' + ran + ' CHECKS PASSED');
 }
 
-/* ======================= THE NO-CARD START (/start, INBOX 80B, 81, 61, 84) ======================= */
+/* ======================= THE NO-CARD START (/start, INBOX 80B, 81, 84, 97) ======================= */
 function lastCode() { return TEXTS.length ? TEXTS[TEXTS.length - 1].body.sms.otp : null; }
 function listed() {
   DB.vp_licensed_venues = [
@@ -175,14 +141,14 @@ function listed() {
     { id: 3, name: 'Railway Hotel', name_key: 'railway-hotel', postcode: '4350', suburb: 'Toowoomba', au_state: 'QLD', source: 'send list' },
     { id: 4, name: 'Commercial Hotel', name_key: 'commercial-hotel', postcode: '2800', suburb: 'Orange', au_state: 'NSW', source: 'send list' } ];
 }
-var FIVE = { venue: 'the grand hotel', postcode: '4217', name: 'Sam Jones', mobile: '0412 345 678', email: 'sam@grandhotel.example' };
+var FIVE = { venue: 'the grand hotel', postcode: '4217', kind: 'pub', name: 'Sam Jones', mobile: '0412 345 678', email: 'sam@grandhotel.example' };
 function five(o) { var b = {}; for (var k in FIVE) b[k] = FIVE[k]; for (var k2 in (o || {})) b[k2] = o[k2]; return b; }
 var IP = 0;
 function NET() { return { 'cf-connecting-ip': '10.0.0.' + (++IP) }; }
 async function start(o) {
   var r = await call('/start/begin', five(o), NET());
   if (r.status !== 200) return { begin: r };
-  var v = await call('/start/verify', { start_id: r.body.start_id, code: lastCode() }, NET());
+  var v = await call('/start/verify', { start_id: r.body.start_id, code: lastCode(), kind: five(o).kind }, NET());
   return { begin: r, verify: v, id: r.body.start_id };
 }
 function count(t) { return (DB[t] || []).length; }
@@ -195,6 +161,14 @@ async function moreSections() {
   var s0 = snapshot();
   var e1 = await call('/start/begin', five({ postcode: '' }), NET());
   check('no postcode: refused, pointing at the postcode box', e1.status === 400 && e1.body.field === 'postcode', e1);
+  var e0 = await call('/start/begin', five({ venue: '  ' }), NET());
+  check('a blank venue name: refused, pointing at the venue box', e0.status === 400 && e0.body.field === 'venue', e0);
+  var e0b = await call('/start/begin', five({ postcode: '42' }), NET());
+  var e0c = await call('/start/begin', five({ postcode: 'abcd' }), NET());
+  check('a postcode that is not 4 digits: refused', e0b.status === 400 && e0b.body.field === 'postcode' && e0c.status === 400 && e0c.body.field === 'postcode', [e0b, e0c]);
+  var e0d = await call('/start/begin', five({ kind: '' }), NET());
+  var e0e = await call('/start/begin', five({ kind: 'casino' }), NET());
+  check('pub or club is a required, honest choice: none, or anything else, is refused', e0d.status === 400 && e0d.body.field === 'kind' && e0e.status === 400 && e0e.body.field === 'kind', [e0d, e0e]);
   var e2 = await call('/start/begin', five({ mobile: '07 5228 3667' }), NET());
   check('a landline is not a mobile (a code could never reach it)', e2.status === 400 && e2.body.field === 'mobile', e2);
   var hp = await call('/start/begin', five({ website: 'http://spam.example' }), NET());
@@ -232,7 +206,7 @@ async function moreSections() {
   check('one account, one venue, one login: the prospect setup\'s own rows', snapshot().f === s1.f + 1 && snapshot().v === s1.v + 1 && AUTH.length === s1.auth + 1, snapshot());
   check('10 players, whatever the page sent (50 here)', v.max_players === 10 && f.max_seats === 10, [v.max_players, f.max_seats]);
   check('no card: no Stripe customer, no subscription, Stripe never called', !f.stripe_subscription_id && !f.stripe_customer_id && stripeCalls.length === 0, stripeCalls);
-  check('a pub until they say otherwise (asked when they first turn on bingo, raffles or members draws)', v.entity_type === 'for_profit' && v.paid_entry_enabled === false, v.entity_type);
+  check('they chose pub: the venue is a pub (for_profit), the rules the VPPermits cards read', v.entity_type === 'for_profit' && v.venue_kind === 'pub' && v.paid_entry_enabled === false, v.entity_type);
   check('the state comes from the postcode', v.au_state === 'QLD', v.au_state);
   var p = DB.vp_prospects.filter(function (x) { return x.venue_id === v.id; })[0] || {};
   check('HQ > Prospects lists it as a self sign-up', p.source === 'self', p.source);
@@ -243,109 +217,160 @@ async function moreSections() {
   var again = await call('/start/verify', { start_id: a.id, code: TEXTS[0].body.sms.otp }, NET());
   check('the same code again makes nothing more', again.body.outcome === 'done_before' && snapshot().f === s1.f + 1, again.body);
 
-  section('7. A FAKE NAME, and THE RIGHT NAME AT THE WRONG POSTCODE: no account, no free month, HQ checks (item 81)');
+  section('7. NOT ON OUR LIST (Dean, 6 Nov 2026: a name and a postcode let them through): made straight away AND flagged for HQ');
   var s2 = snapshot();
   var fk = await start({ venue: 'Totally Made Up Tavern', mobile: '0412 000 001', email: 'fake@made.example' });
-  check('a fake name: Dean\'s words', fk.verify.status === 200 && fk.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', fk.verify.body);
-  check('a fake name: nothing made', same(snapshot(), s2), snapshot());
-  var tkt = tickets().filter(function (t) { return /Sign-up to check: Totally Made Up Tavern/.test(t.subject || ''); })[0] || {};
-  check('an HQ ticket with what they typed (venue, postcode, name, email, mobile)', /Totally Made Up Tavern/.test(tkt.message || '') && /4217/.test(tkt.message) && /fake@made\.example/.test(tkt.message) && /\+61412000001/.test(tkt.message), tkt.message);
+  check('a fake name with a real postcode: the account is made straight away', fk.verify.status === 200 && fk.verify.body.outcome === 'made' && snapshot().f === s2.f + 1, fk.verify.body);
+  var fkRow = DB.vp_signup_starts.filter(function (r) { return r.id === fk.id; })[0] || {};
+  check('and flagged: no licensed match on its row, not yet checked by HQ', fkRow.outcome === 'made' && !fkRow.licensed_match && !fkRow.decided_at, fkRow);
   var wp = await start({ venue: 'The Grand Hotel', postcode: '2000', mobile: '0412 000 002', email: 'wrongpc@made.example' });
-  check('the right name at the wrong postcode is held the same way', wp.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.' && same(snapshot(), s2), wp.verify.body);
-  check('both are waiting in HQ', DB.vp_signup_starts.filter(function (r) { return r.outcome === 'held_unlisted'; }).length === 2);
+  var wpRow = DB.vp_signup_starts.filter(function (r) { return r.id === wp.id; })[0] || {};
+  check('the right name at the wrong postcode: made, and flagged the same way', wp.verify.body.outcome === 'made' && !wpRow.licensed_match && snapshot().f === s2.f + 2, wp.verify.body);
+  var listedRow = DB.vp_signup_starts.filter(function (r) { return r.outcome === 'made' && r.licensed_match; });
+  check('a listed venue (section 6) carries its match, so it is not flagged', listedRow.length === 1 && /Grand Hotel, 4217/.test(listedRow[0].licensed_match), listedRow);
+  var cl = await start({ venue: 'Tweed Heads Bowls Club', postcode: '2485', kind: 'club', mobile: '0412 000 003', email: 'sec@tweedbowls.example' });
+  var cv = DB.vp_venues.filter(function (x) { return x.name === 'Tweed Heads Bowls Club'; })[0] || {};
+  check('they chose club: the venue is a club (non_profit), so NSW paid entry opens without HQ', cl.verify.body.outcome === 'made' && cv.entity_type === 'non_profit' && cv.venue_kind === 'club' && cv.paid_entry_enabled === true, [cv.entity_type, cv.venue_kind, cv.paid_entry_enabled]);
+  var clRow = DB.vp_signup_starts.filter(function (r) { return r.id === cl.id; })[0] || {};
+  check('pub or club is on the sign-up row too (migration 173), for an HQ approval later', clRow.entity_type === 'non_profit' && fkRow.entity_type === 'for_profit', [clRow.entity_type, fkRow.entity_type]);
 
-  section('8. HQ approves in one tap: the normal account and welcome follow');
+  section('8. HQ: the flagged accounts and the held sign-ups, one tap each');
   var held = await call('/admin/signup-starts', {}, AS(ADMIN));
-  check('HQ lists the held sign-ups', held.status === 200 && held.body.held.length === 2, held.body);
-  var no = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(STAFFADMIN));
-  check('a staff admin cannot approve (owner or accounts only)', no.status === 403 && snapshot().f === s2.f, no);
+  var hl = (held.body.held || []);
+  check('HQ lists the made accounts that are not on the list, saying so', held.status === 200 && hl.filter(function (r) { return r.made && /Not on our licensed venues list, check/.test(r.why); }).length === 3, hl);
+  check('and not the listed one', !hl.some(function (r) { return /Grand Hotel/i.test(r.venue_name) && r.postcode === '4217'; }), hl.map(function (r) { return r.venue_name; }));
+  var no = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(STAFFADMIN));
+  check('a staff admin cannot mark one checked (owner or accounts only)', no.status === 403, no);
+  var ck = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(ACCTS));
+  check('Checked marks it, makes and changes nothing else', ck.status === 200 && ck.body.outcome === 'checked' && snapshot().f === s2.f + 3, ck);
+  var held2 = await call('/admin/signup-starts', {}, AS(ADMIN));
+  check('and it leaves the list', !(held2.body.held || []).some(function (r) { return r.id === fk.id; }), held2.body.held);
+  var ck2 = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(ADMIN));
+  check('a second tap does nothing more', ck2.status === 409, ck2);
+  /* A HELD sign-up (a mobile already on venueplay, typed with a new email and a new pub): Approve and Refuse. */
+  var s2b = snapshot();
+  var hk = await start({ venue: 'Second Pub', postcode: '4217', email: 'sam.second.pub@x.example', kind: 'club' });
+  check('a mobile already on venueplay is held, nothing made', hk.verify.body.outcome === 'held' && same(snapshot(), s2b), hk.verify.body);
   var sentBefore = sent.length;
-  var yes = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(ACCTS));
-  check('approve makes the account', yes.status === 200 && yes.body.outcome === 'approved' && snapshot().f === s2.f + 1, yes);
+  var yes = await call('/admin/signup-start/decide', { start_id: hk.id, decision: 'approve' }, AS(ACCTS));
+  var hv = DB.vp_venues.filter(function (x) { return x.name === 'Second Pub'; })[0] || {};
+  check('approve makes the account', yes.status === 200 && yes.body.outcome === 'approved' && snapshot().f === s2b.f + 1, yes);
+  check('as the club they chose (kept on the row)', hv.entity_type === 'non_profit', hv.entity_type);
   check('and sends the welcome', sent.length > sentBefore && yes.body.welcome_sent === true, sent.slice(sentBefore).map(function (m) { return m.subject; }));
   check('still no card and no Stripe call', stripeCalls.length === 0, stripeCalls);
-  var twice = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(ADMIN));
-  check('a second tap makes nothing more', twice.status === 409 && snapshot().f === s2.f + 1, twice);
-  var ref = await call('/admin/signup-start/decide', { start_id: wp.id, decision: 'refuse' }, AS(ADMIN));
-  check('refuse makes nothing', ref.status === 200 && snapshot().f === s2.f + 1, ref);
+  var twice = await call('/admin/signup-start/decide', { start_id: hk.id, decision: 'approve' }, AS(ADMIN));
+  check('a second tap makes nothing more', twice.status === 409 && snapshot().f === s2b.f + 1, twice);
+  var hk2 = await start({ venue: 'Third Pub', postcode: '4217', email: 'sam.third.pub@x.example' });
+  var ref = await call('/admin/signup-start/decide', { start_id: hk2.id, decision: 'refuse' }, AS(ADMIN));
+  check('refuse makes nothing', ref.status === 200 && snapshot().f === s2b.f + 1, ref);
 
-  section('9. A KNOWN PERSON RE-TRYING WITH A NEW EMAIL: their mobile, proven, joins their account (item 61)');
-  var s3 = snapshot();
+  /* HQ's pane draws what a member of the public typed: escaped, with both buttons naming the sign-up. */
+  var PANE = readFile('venueplay/app/vp-prospects-hq.js');
+  var PW = { VP: null, fetch: function () { return Promise.resolve({ status: 200, ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };
+  PW.document = { readyState: 'complete', getElementById: function () { return null; }, addEventListener: function () {} };
+  (new Function('window', PANE))(PW);
+  var hh = PW.VPProspects._t.heldHtml([{ id: U(4242), venue_name: '<img src=x onerror=alert(1)>Arms', postcode: '4217', au_state: 'QLD', contact_name: 'Pat "P" <b>', email: 'p@x.example',
+    mobile: '0412 000 001', created_at: '2026-11-06T00:00:00Z', ticket_no: 1007, why: 'Not on our licensed venues list' }]);
+  check('HQ\'s Sign-ups to check escapes what the public typed (no tag of theirs reaches HQ)', hh.indexOf('<img') === -1 && hh.indexOf('&lt;img') !== -1 && hh.indexOf('<b>') === -1, hh);
+  check('and each row has Approve and Refuse for that sign-up, with why it was held', hh.indexOf('data-st-approve="' + U(4242) + '"') !== -1 && hh.indexOf('data-st-refuse="' + U(4242) + '"') !== -1 && /Not on our licensed venues list/.test(hh), hh);
+  check('nothing held: nothing drawn', PW.VPProspects._t.heldHtml([]) === '');
+  var hm = PW.VPProspects._t.heldHtml([{ id: U(4343), venue_name: 'Made Arms', postcode: '4217', made: true, why: 'Account made. Not on our licensed venues list, check' }]);
+  check('a made account not on the list gets one Checked button, never Approve or Refuse', hm.indexOf('data-st-checked="' + U(4343) + '"') !== -1 && hm.indexOf('data-st-approve') === -1 && hm.indexOf('data-st-refuse') === -1, hm);
+
+  section('9. A KNOWN PERSON RE-TRYING WITH A NEW EMAIL: held for HQ, no second free month, nothing of theirs shown');
+  HITS = {};   // an hour later: Sam's mobile spent its 3 codes an hour in sections 6 and 8
+  var s3 = snapshot(), tk3 = tickets().length;
   var kn = await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.new@another.example' });
-  check('the code proves the mobile, and they are recognised', kn.verify.status === 200 && kn.verify.body.outcome === 'known', kn.verify.body);
-  check('their details are pre-filled only now: their name and their login\'s email', kn.verify.body.prefill && kn.verify.body.prefill.email === 'sam@grandhotel.example' && /Sam/.test(kn.verify.body.prefill.name || ''), kn.verify.body.prefill);
-  check('no second account, no second login, no second free month', snapshot().f === s3.f && AUTH.length === s3.auth, snapshot());
-  var j = await call('/start/join', { start_id: kn.id, code: lastCode() }, NET());
-  var nv = DB.vp_venues.filter(function (x) { return x.name === 'Royal Hotel' && x.postcode === '4000'; })[0] || {};
-  var grand = DB.vp_venues.filter(function (x) { return x.name === 'GRAND HOTEL'; })[0] || {};
-  check('their yes adds Royal Hotel to THEIR account: one bill', j.status === 200 && j.body.outcome === 'joined' && nv.founding_id === grand.founding_id, j);
-  check('still one account, and no new login', snapshot().f === s3.f && AUTH.length === s3.auth, snapshot());
-  var j2 = await call('/start/join', { start_id: kn.id, code: lastCode() }, NET());
-  check('joining twice adds nothing more', j2.status === 409 && DB.vp_venues.filter(function (x) { return x.name === 'Royal Hotel'; }).length === 1, j2);
-  var yours = await start({ venue: 'The Grand Hotel', email: 'third@another.example' });
-  check('the same person signing up the pub they already have is told it is theirs, nothing made', yours.verify.body.outcome === 'yours' && snapshot().f === s3.f, yours.verify.body);
+  check('their mobile (proven by its code) already signs in: held, with the same words as an unlisted venue', kn.verify.status === 200 && kn.verify.body.outcome === 'held' && kn.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', kn.verify.body);
+  check('no second account, no second login, no second free month', same(snapshot(), s3), snapshot());
+  var knMsg = JSON.stringify(kn.verify.body).toLowerCase();
+  check('the answer names nothing of theirs (no login email, no venue, no name)', knMsg.indexOf('grandhotel') === -1 && knMsg.indexOf('grand') === -1 && knMsg.indexOf('jones') === -1 && !kn.verify.body.prefill, knMsg);
+  check('word for word the same answer every held sign-up gets, Dean\'s words (nothing tells which reason)', JSON.stringify(kn.verify.body) === JSON.stringify(hk.verify.body) && kn.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', [kn.verify.body, hk.verify.body]);
+  var kt = tickets().slice(tk3)[0] || {};
+  check('one HQ ticket saying why: the mobile already signs in', tickets().length === tk3 + 1 && /mobile already signs in/.test(kt.message || '') && /one free month per mobile and per email/.test(kt.message || ''), kt.message);
+  check('the sign-up waits as held_known', DB.vp_signup_starts.filter(function (r) { return r.id === kn.id; })[0].outcome === 'held_known');
 
-  section('10. An email we know, typed with another mobile: nothing about that login is shown (item 61)');
-  HITS = {};   // an hour later: the per-mobile limit (3 an hour) was spent on that mobile in section 9
+  section('10. An email we know, typed with another mobile: held, nothing shown, nothing texted to anyone else');
+  HITS = {};   // an hour later
   var s4 = snapshot(), textsFrom = TEXTS.length;
   var em = await start({ venue: 'Railway Hotel', postcode: '4350', mobile: '0499 111 222', email: 'sam@grandhotel.example' });
-  var msg = JSON.stringify(em.verify.body);
-  check('they are asked to prove it with a code to the mobile already on that login', em.verify.body.outcome === 'prove' && em.verify.body.sent === true && TEXTS[TEXTS.length - 1].body.user.phone === '+61412345678', em.verify.body);
-  var lmsg = msg.toLowerCase();
-  check('and the answer names nothing of theirs: no name, no email, no venue, no digits of that mobile', lmsg.indexOf('sam') === -1 && lmsg.indexOf('jones') === -1 && lmsg.indexOf('grand') === -1 && lmsg.indexOf('678') === -1 && lmsg.indexOf('345') === -1, msg);
-  var pv = await call('/start/verify', { start_id: em.id, code: lastCode() }, NET());
-  check('the code from THAT mobile proves it, and then the details are pre-filled', pv.body.outcome === 'known' && pv.body.prefill && pv.body.prefill.email === 'sam@grandhotel.example', pv.body);
-  check('nothing made yet', same(snapshot(), s4), snapshot());
-  for (var q = 0; q < 5; q++) await start({ venue: 'Railway Hotel', postcode: '4350', mobile: '0499 111 4' + q + '0', email: 'sam@grandhotel.example' });
-  var toVictim = TEXTS.slice(textsFrom).filter(function (t) { return t.body.user.phone === '+61412345678'; }).length;
-  check('typing someone\'s email over and over never texts their mobile more than 3 times an hour', toVictim <= 3, toVictim);
-  /* THE ATTACK (review, 5 Nov 2026): with that mobile's texts spent, a stranger types the known email with THEIR OWN
-     mobile, passes their own code, then sends their own code again (verify, then join). Nothing of the login may come
-     back and nothing may be attached. */
-  // The email's own limit (3 starts an hour) is spent by the loop above; the attacker waits it out. The MOBILE's stays spent.
-  Object.keys(HITS).forEach(function (k) { if (k.indexOf('start:e:') === 0) delete HITS[k]; });
-  var fBefore = count('venueplay_founding'), vBefore = count('vp_venues');
-  var atk = await start({ venue: 'Attack Arms', postcode: '4350', mobile: '0499 555 000', email: 'sam@grandhotel.example' });
-  var atkCode = TEXTS.filter(function (t) { return t.body.user.phone === '+61499555000'; }).slice(-1)[0];
-  atkCode = atkCode && atkCode.body.sms.otp;
-  var atk2 = await call('/start/verify', { start_id: atk.id, code: atkCode }, NET());
-  var atk3 = await call('/start/join', { start_id: atk.id, code: atkCode }, NET());
-  var all = (JSON.stringify(atk.verify.body) + JSON.stringify(atk2.body) + JSON.stringify(atk3.body)).toLowerCase();
-  check('ATTACK: the stranger\'s own code, sent again, never reveals the login (no pre-fill, no email, no name)', !atk2.body.prefill && all.indexOf('sam@') === -1 && all.indexOf('jones') === -1 && atk2.body.outcome !== 'known', [atk.verify.body, atk2.body]);
-  check('ATTACK: and joining with it attaches nothing to that account', atk3.status !== 200 && count('venueplay_founding') === fBefore && count('vp_venues') === vBefore, atk3);
-  var atkRow = DB.vp_signup_starts.filter(function (r) { return r.id === atk.id; })[0] || {};
-  check('ATTACK: the row never says that login was proven', !(atkRow.known_login_id && atkRow.verified_at && atkRow.code_to !== 'known' && atkRow.outcome === 'pending'), atkRow);
-  world(); listed();
-  AUTH.push({ id: U(7777), email: 'nophone@venue.example', phone: '' });
-  DB.vp_venue_staff.push({ venue_id: U(7778), auth_user_id: U(7777), role: 'manager' });
-  DB.vp_venues.push({ id: U(7778), name: 'Somewhere Else', slug: 'somewhere-else', postcode: '2600', founding_id: U(7779) });
-  var ce = await start({ venue: 'Railway Hotel', postcode: '4350', mobile: '0499 111 333', email: 'nophone@venue.example' });
-  var cmsg = JSON.stringify(ce.verify.body);
-  check('a known email with no mobile on its login: the existing one-tap sign-in email goes to it', ce.verify.body.outcome === 'check_email' && sent.some(function (m) { return (m.to || []).indexOf('nophone@venue.example') !== -1; }), [ce.verify.body, sent.map(function (m) { return m.to; })]);
-  check('and the page names nothing of that login', cmsg.indexOf('Somewhere') === -1, cmsg);
-  check('nothing made', count('venueplay_founding') === 0, count('venueplay_founding'));
+  var emMsg = JSON.stringify(em.verify.body).toLowerCase();
+  check('held with the unlisted words', em.verify.body.outcome === 'held' && em.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', em.verify.body);
+  check('the only text went to the mobile they typed, never to the login\'s own', TEXTS.slice(textsFrom).every(function (t) { return t.body.user.phone === '+61499111222'; }), TEXTS.slice(textsFrom).map(function (t) { return t.body.user.phone; }));
+  check('the answer names nothing of that login', emMsg.indexOf('sam') === -1 && emMsg.indexOf('678') === -1 && emMsg.indexOf('grand') === -1, emMsg);
+  check('nothing made', same(snapshot(), s4), snapshot());
 
-  section('11. One free month per mobile, per email and per venue');
+  section('11. One free month per mobile and per email (sbPriorAccounts), a double tap, and a database that will not answer');
   world(); listed();
-  DB.venueplay_founding.push({ id: U(8001), venue_name: 'Old Pub', contact_email: 'old@pub.example', mobile: '+61412999000', status: 'active', created_at: '2026-01-01T00:00:00.000Z' });
-  var pm = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 000', email: 'brand.new@pub.example' });
-  check('a mobile already on an account (not a login): held for HQ, no free month', pm.verify.body.outcome === 'held' && count('venueplay_founding') === 1, pm.verify.body);
-  var pe = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 001', email: 'old@pub.example' });
-  check('an email already on an account: held for HQ, no free month', pe.verify.body.outcome === 'held' && count('venueplay_founding') === 1, pe.verify.body);
-  var other = account({ name: 'Railway Hotel', postcode: '4350', email: 'gm@railway.example' });
-  var pv2 = await start({ venue: 'The Railway Hotel', postcode: '4350', mobile: '0412 999 002', email: 'someone@else.example' });
-  check('a venue on another account: Dean\'s item 60 words, a ticket, nothing made', pv2.verify.body.message === 'This venue is already set up with venueplay. We\'ve lodged a ticket on your behalf and we\'ll be in touch soon.' && count('venueplay_founding') === 2, pv2.verify.body);
+  DB.venueplay_founding.push({ id: U(8001), venue_name: 'Old Pub', contact_email: 'old@pub.example', mobile: '0412 999 000', status: 'cancelled', created_at: '2026-01-01T00:00:00.000Z' });
+  var pm = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412999000', email: 'brand.new@pub.example' });
+  check('a mobile on an account row (typed with spaces on the card sign-up, and cancelled since): held, no free month', pm.verify.body.outcome === 'held' && count('venueplay_founding') === 1, pm.verify.body);
+  DB.venueplay_founding.push({ id: U(8002), venue_name: 'Older Pub', contact_email: 'plus@pub.example', mobile: '+61412999111', status: 'active', created_at: '2026-01-01T00:00:00.000Z' });
+  var pp = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 111', email: 'another.new@pub.example' });
+  check('a mobile kept as +61 on an account: held', pp.verify.body.outcome === 'held' && count('venueplay_founding') === 2, pp.verify.body);
+  var pe = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 001', email: 'OLD@pub.example' });
+  check('an email already on an account (any case): held, no free month', pe.verify.body.outcome === 'held' && count('venueplay_founding') === 2, pe.verify.body);
+  var tw = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 002', email: 'twice@pub.example' });
+  var tw2 = await start({ venue: 'Commercial Hotel', postcode: '2800', mobile: '0412 999 003', email: 'twice@pub.example' });
+  check('the first start with a new email and mobile makes the account', tw.verify.body.outcome === 'made', tw.verify.body);
+  check('the same email again with another mobile: held, no second free month', tw2.verify.body.outcome === 'held' && count('venueplay_founding') === 3, tw2.verify.body);
+  var tw3 = await start({ venue: 'Grand Hotel', postcode: '4217', mobile: '0412 999 002', email: 'third@pub.example' });
+  check('the same mobile again with another email: held', tw3.verify.body.outcome === 'held' && count('venueplay_founding') === 3, tw3.verify.body);
+  for (var ac = 0; ac < 5; ac++) AUTH.push({ id: U(6100 + ac), email: 'filler' + ac + '@x.example', phone: '6140000000' + ac });
+  AUTH.push({ id: U(6200), email: 'deep@x.example', phone: '61412888000' });
+  AUTH_CAP = 3;   // Auth hands back 3 a page whatever is asked: the login is on page 2, behind a short page 1
+  var deep = await start({ venue: 'Grand Hotel', postcode: '4217', mobile: '0412 888 000', email: 'deep.new@x.example' });
+  AUTH_CAP = 0;
+  check('a login past a SHORT first page of logins is still found: held, no free month', deep.verify.body.outcome === 'held' && count('venueplay_founding') === 3, deep.verify.body);
+  var s5 = snapshot();
+  var db1 = await call('/start/begin', five({ mobile: '0412 777 001', email: 'dbl@pub.example' }), NET());
+  var dcode = lastCode();
+  var p1 = call('/start/verify', { start_id: db1.body.start_id, code: dcode }, NET());
+  var p2 = call('/start/verify', { start_id: db1.body.start_id, code: dcode }, NET());
+  var both = [await p1, await p2];
+  check('a double tap on the code makes ONE account', snapshot().f === s5.f + 1 && both.filter(function (x) { return x.body.outcome === 'made'; }).length === 1, both.map(function (x) { return x.body.outcome; }));
+  var tkd = tickets().length;
+  var h1 = await call('/start/begin', five({ venue: 'Nowhere Arms', mobile: '0412 777 002', email: 'twice@pub.example' }), NET());   // an email already made: held
+  var hcode = lastCode();
+  var hp1 = call('/start/verify', { start_id: h1.body.start_id, code: hcode }, NET());
+  var hp2 = call('/start/verify', { start_id: h1.body.start_id, code: hcode }, NET());
+  await hp1; await hp2;
+  check('a double tap on a held sign-up files ONE ticket', tickets().length === tkd + 1, tickets().length - tkd);
+  var s6 = snapshot();
+  FAIL['auth:GET'] = 1;
+  var fa = await start({ venue: 'Grand Hotel', mobile: '0412 777 003', email: 'fa@pub.example' });
+  check('the login list will not answer: nothing made, try again (fails closed)', fa.verify.status === 503 && same(snapshot(), s6), fa.verify);
+  FAIL['venueplay_founding:GET'] = 1;
+  var fb = await start({ venue: 'Grand Hotel', mobile: '0412 777 004', email: 'fb@pub.example' });
+  check('the account list will not answer: nothing made (sbPriorAccounts strict)', fb.verify.status === 503 && same(snapshot(), s6), fb.verify);
+  FAIL['vp_licensed_venues:GET'] = 1;
+  var fc = await start({ venue: 'Grand Hotel', mobile: '0412 777 005', email: 'fc@pub.example' });
+  var fcRow = DB.vp_signup_starts.filter(function (r) { return r.id === fc.id; })[0] || {};
+  check('the licensed list will not answer: made, and flagged for HQ to check (the list is a signal only)', fc.verify.body.outcome === 'made' && !fcRow.licensed_match && !fcRow.decided_at, fc.verify.body);
+
+  section('11b. The network limit and the email box');
+  world(); listed();
+  var ipb = { 'cf-connecting-ip': '10.9.9.9' }, lim = [];
+  for (var li = 0; li < 9; li++) lim.push((await call('/start/begin', five({ mobile: '0412 600 0' + (10 + li), email: 'n' + li + '@lim.example' }), ipb)).status);
+  check('eight code requests an hour from one network, then refused', lim.slice(0, 8).every(function (x) { return x === 200; }) && lim[8] === 429, lim);
+  var bad1 = await call('/start/begin', five({ email: 'a,b@x.example' }), NET());
+  check('an email with a comma is refused (it is read back inside a database filter)', bad1.status === 400 && bad1.body.field === 'email', bad1);
 
   section('12. The billing guards (item 84): no sign-up path ever bills');
   world(); listed();
   await start({ venue: 'The Grand Hotel' });
-  var kj = await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.second@x.example' });
-  await call('/start/join', { start_id: kj.id, code: lastCode() }, NET());
-  await start({ venue: 'Nowhere Inn', mobile: '0412 222 333', email: 'n@w.example' });
+  await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.second@x.example' });
+  var un = await start({ venue: 'Nowhere Inn', mobile: '0412 222 333', email: 'n@w.example' });
+  var hq = await start({ venue: 'Held Then Approved', mobile: '0412 222 333', email: 'fresh@w.example' });   // a known mobile: held
+  await call('/admin/signup-start/decide', { start_id: hq.id, decision: 'approve' }, AS(ADMIN));
+  check('four paths ran: listed, held for a known mobile, unlisted and flagged, held then approved by HQ', count('venueplay_founding') === 3 && un.verify.body.outcome === 'made' && hq.verify.body.outcome === 'held', count('venueplay_founding'));
   check('no game session was made by any sign-up path', count('vp_sessions') === 0, count('vp_sessions'));
-  check('Stripe was never called (a prospect account has no subscription for Add a venue to change)', stripeCalls.length === 0, stripeCalls);
+  check('Stripe was never called: no customer, no subscription, no invoice item', stripeCalls.length === 0, stripeCalls);
+  check('every account has no Stripe ids', DB.venueplay_founding.every(function (f) { return !f.stripe_customer_id && !f.stripe_subscription_id; }), DB.venueplay_founding);
   check('every venue is at the 10 players it starts with, nothing pending, nothing extra', DB.vp_venues.every(function (x) { return x.max_players === 10 && !x.pending_players; }), DB.vp_venues.map(function (x) { return x.max_players; }));
-  check('no busy-night or player-count audit row (no uplift)', !DB.vp_admin_audit.some(function (r) { return /players|overage|uplift|busy/.test(r.action || ''); }), DB.vp_admin_audit.map(function (r) { return r.action; }));
+  check('every account is at 10 seats', DB.venueplay_founding.every(function (f) { return f.max_seats === 10; }), DB.venueplay_founding.map(function (f) { return f.max_seats; }));
+  check('no busy-night or player-count audit row (no uplift)', !DB.vp_admin_audit.some(function (r) { return /players|overage|uplift|busy|extra/.test(r.action || ''); }), DB.vp_admin_audit.map(function (r) { return r.action; }));
+  check('the free month has not started on any of them (it starts at the first sign-in)', DB.vp_prospects.every(function (p) { return !p.first_signin_at && !p.free_month_started_at; }) && DB.venueplay_founding.every(function (f) { return !f.trial_ends_at && !f.free_until; }), DB.vp_prospects);
   /* A constant for the next job (item 82's demo). The Worker's constants live inside its own scope, so it is read
      as the line that declares it, the one place that number is set. */
   var cap = /\nconst VP_DEMO_JOINER_CAP = (\d+);/.exec(readFile('venueplay-backend/worker/venueplay-api-FULL.js'));

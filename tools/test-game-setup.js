@@ -486,8 +486,9 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
 
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');
-  var gstep = FR.slice(FR.indexOf('STEP.games = function'), FR.indexOf('STEP.tv = function'));
-  check('the guide\'s games step runs the games setup with its own answers and saving path', /root\.VPGameSetup\.run\(ctx, \{[^}]*answers: answers,[^}]*saveAnswers:/.test(gstep), gstep.slice(0, 600));
+  var gstep = FR.slice(FR.indexOf('STEP.pick = function'), FR.indexOf('STEP.tv = function'));
+  check('the guide\'s opening step (wizard-v2\'s pick) runs the games setup with its own answers and saving path, then carries on to the TV step', /root\.VPGameSetup\.run\(ctx, \{[^}]*answers: answers,[^}]*saveAnswers:/.test(gstep), gstep.slice(0, 600));
+  check('with the games setup loaded, the per-game steps are left out (it sets each game up itself), and the TV step stays', /if \(GAME_STEPS\.indexOf\(s\) >= 0\) \{ if \(!setupGames && p\.indexOf\(s\) >= 0\) out\.push\(s\); return; \}/.test(FR) && /if \(s === "tv" \|\| s === "hosts"\) \{ if \(p\.length && !state\.tvDone\) out\.push\(s\); return; \}/.test(FR) && /steps = build\(\); setNext\("Next", true\); return api\.next\(\);/.test(gstep));
   var clean = FR.slice(FR.indexOf('function cleanAnswers'), FR.indexOf('function answersFor'));
   check('the guide\'s own cleaning keeps games_at and setup', /VPGameSetup\.cleanExtra\(a, out\)/.test(clean));
   var x = P.GS.cleanExtra({ games_at: '2026-11-07', setup: { trivia: 'done', evil: '<b>' }, other: 1 });

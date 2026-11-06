@@ -140,6 +140,8 @@ eval(liftLine(/^const joinInfoStatic[^\n]*/m));
 eval(lift('joinInfoKeep'));
 eval(lift('joinInfoStaticRead'));
 eval(lift('handleJoinInfo'));
+eval(lift('isDemoSession'));
+eval('var DEMO_MAX_PLAYERS=' + (/const DEMO_MAX_PLAYERS = (\d+)/.exec(src)||[,'10'])[1] + ';');   // the try-it demo (migration 172)
 eval(lift('joinInfoLookup'));
 /* /play/live keeps its answer a few seconds (the cheaper join, 31 Oct 2026): the cache, then the lookup. */
 eval(liftLine(/^const PLAY_LIVE_TTL_MS[^\n]*/m));

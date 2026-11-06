@@ -367,6 +367,10 @@
   "checks": 95,
   "counted_by": "lines"
  },
+ "tools/signup-start-in-chrome.test.py": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -544,7 +548,7 @@
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
-  "checks": 123,
+  "checks": 145,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
@@ -556,7 +560,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
-  "checks": 172,
+  "checks": 173,
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
@@ -796,7 +800,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 159,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
@@ -931,6 +935,10 @@
   "checks": 30,
   "counted_by": "lines"
  },
+ "tools/test-signup-core.js": {
+  "checks": 89,
+  "counted_by": "lines"
+ },
  "tools/test-stale-phone-and-end-once.js": {
   "checks": 21,
   "counted_by": "lines"
@@ -989,6 +997,14 @@
  },
  "tools/test-trusted-logos.js": {
   "checks": 43,
+  "counted_by": "lines"
+ },
+ "tools/test-try-demo-billing.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-try-demo.js": {
+  "checks": 49,
   "counted_by": "lines"
  },
  "tools/test-tv-does-not-flap.js": {
@@ -1071,6 +1087,10 @@
   "checks": 25,
   "counted_by": "lines"
  },
+ "tools/test-vp-demo.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/test-vp-draw-11.js": {
   "checks": 46,
   "counted_by": "lines"
@@ -1129,6 +1149,10 @@
  },
  "tools/trivia-question-space-in-chrome.test.py": {
   "checks": 62,
+  "counted_by": "lines"
+ },
+ "tools/try-demo-in-chrome.test.py": {
+  "checks": 52,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
@@ -1501,6 +1525,10 @@
  },
  "venueplay-backend/worker/venue-code.test.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-match.test.js": {
+  "checks": 21,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-scale.test.js": {

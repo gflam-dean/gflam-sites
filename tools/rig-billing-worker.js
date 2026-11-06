@@ -62,6 +62,8 @@ function match(row,q){
     if(k==='and'){ var conds=v.replace(/^\(|\)$/g,'').split(','); var all=true;   // and=(col.op.val,...), as PostgREST
       conds.forEach(function(c){ var mm=/^([a-z_]+)\.(eq|gte|lte|gt|lt)\.(.*)$/.exec(c); if(!mm) throw new Error('the fake database cannot answer and='+v);
         var one={}; one[mm[1]]=mm[2]+'.'+mm[3]; if(!match(row,one)) all=false; }); if(!all) return false; continue; }
+    /* not.is.true, as Postgres IS NOT TRUE: false AND null pass (the demo filter, VPA_NOT_DEMO, migration 172). */
+    if(v==='not.is.true'){ if(row[k]===true) return false; continue; }
     var m=/^(eq|neq|is|in|gte|lte|gt|lt|ilike|like)\.(.*)$/.exec(v); if(!m) throw new Error('the fake database cannot answer '+k+'='+v);
     /* A plain col=like.x* (28 Oct 2026). Until then it threw, and the help desk's once-only acknowledgement
        guard "passed" only because the throw was caught and read as "do not send": prove-checks found the

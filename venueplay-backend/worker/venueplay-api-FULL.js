@@ -31,7 +31,12 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 13:42 · 4b8a8ce3';   // tools/stamp-workers.py, do not edit by hand
+/* THE TRY-IT DEMO IS NOT A NIGHT (migration 172, vp_sessions.is_demo; INBOX 84b). Every read here that turns
+   sessions into stats, activity, metering or "has this venue played" leaves demos out. Reads that must see
+   every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
+   The game Worker's twin is DEMO_OFF. */
+const VPA_NOT_DEMO = '&is_demo=not.is.true';
+const BUILD = '6 Nov 2026, 11:17 · eee656e6';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -139,12 +144,11 @@ export default {
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
       // The monthly email sign-up on the sales pages (31 Oct 2026; migration 134). Public, rate-limited, honeypot.
       if (request.method === 'POST' && path === '/subscribe') return await vpsHandleSubscribe(request, env, json);
-      // The no-card start (Dean, 5 Nov 2026, INBOX 80B, 81; migration 170). Public, rate-limited, bot-checked; nothing
+      // The no-card start (Dean, 5 Nov 2026, INBOX 80B, 81, 97; migration 170). Public, rate-limited, bot-checked; nothing
       // is made until the text code passes, and nothing here is ever billed.
       if (request.method === 'POST' && path === '/start/begin')  return await vpsStartBegin(request, env, json);
       if (request.method === 'POST' && path === '/start/resend') return await vpsStartResend(request, env, json);
       if (request.method === 'POST' && path === '/start/verify') return await vpsStartVerify(request, env, json);
-      if (request.method === 'POST' && path === '/start/join')   return await vpsStartJoin(request, env, json);
       // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
@@ -604,24 +608,6 @@ async function handleCheckout(request, env, json) {
       + 'stays on one bill. If you have moved to a new venue and that account belongs to the old '
       + 'one, email hello@venueplay.com.au and we will move things across for you.',
       existing_account: true }, 409);
-  }
-
-  /* THE SAME PUB IN ANOTHER ACCOUNT (Dean, 5 Nov 2026, INBOX 60). Every venue on this sign-up is checked across
-     every account with the one matcher (vpVenueMatch, the in-account rule's name and postcode). A match on an account
-     that is not this person's own (their own is a return, which keeps today's path and its twelve-month rule) means
-     nothing is saved, Stripe is never asked, and no free month starts: a help desk ticket and an HQ alert instead.
-     Fails closed: a database that cannot be read refuses the sign-up rather than waving it through. */
-  {
-    const mine = sameEmail.map(function (a) { return 'f:' + a.id; });
-    for (const v of venues) {
-      let hit = null;
-      try { hit = await vpaSameVenueElsewhere(env, v.name, v.postcode || b.postcode, mine); }
-      catch (e) { return json({ error: 'We could not finish checking your venue just now. Nothing was saved or charged. Please try again in a minute.' }, 503); }
-      if (hit) {
-        return await vpaSameVenueRefusal(env, json, { door: 'card sign-up', name: v.name, postcode: v.postcode || b.postcode, hit: hit,
-          contact_name: contactName, email: email, mobile: (b.mobile || '').trim(), from_account: null });
-      }
-    }
   }
 
   // 1) Save the lead (status 'pending' until the card is added). For a group we
@@ -1222,7 +1208,9 @@ function vpaEmailIs(email) {
   return 'ilike.' + encodeURIComponent(String(email || '').trim().replace(/[*%\\]/g, '_'));
 }
 
-async function sbPriorAccounts(env, email, mobile, excludeId) {
+/* strict (5 Nov 2026, the no-card start): a read that fails THROWS instead of answering "no earlier accounts", because
+   there that answer starts a free month. The card sign-up keeps the forgiving answer. */
+async function sbPriorAccounts(env, email, mobile, excludeId, strict) {
   try {
     const ors = ['contact_email.' + vpaEmailIs(email)];
     if (mobile) ors.push('mobile.eq.' + encodeURIComponent(mobile));
@@ -1235,10 +1223,11 @@ async function sbPriorAccounts(env, email, mobile, excludeId) {
               '&select=id,venue_name,contact_email,mobile,created_at,status,stripe_subscription_id' +
               '&order=created_at.desc&limit=5';
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + q, { headers: sbHeaders(env) });
-    if (!res.ok) return [];
+    if (!res.ok) { if (strict) throw new Error('prior accounts: ' + res.status); return []; }
     const rows = await res.json();
+    if (strict && !Array.isArray(rows)) throw new Error('prior accounts: not a list');
     return Array.isArray(rows) ? rows : [];
-  } catch (e) { return []; }
+  } catch (e) { if (strict) throw e; return []; }
 }
 async function sbInsert(env, obj) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/venueplay_founding', {
@@ -1809,8 +1798,9 @@ async function vpaFindAuthUser(env, sel, strict) {
       if (wantPhone && u.phone && String(u.phone).replace(/[^\d]/g, '') === wantPhone) return u;
       if (wantEmail && u.email && String(u.email).toLowerCase() === wantEmail) return u;
     }
-    if (users.length < PER) return null;   // last page
+    if (strict ? users.length === 0 : users.length < PER) return null;   // last page (strict: only an EMPTY page ends it)
   }
+  if (strict) throw new Error('auth users: more than ' + (PER * MAX_PAGES) + ' logins, the search did not finish');
   return null;
 }
 
@@ -1865,104 +1855,6 @@ function vpVenueMatch(aName, aPostcode, bName, bPostcode) {
   return 'unsure';
 }
 /* ===== VP-VENUE-MATCH END ===== */
-
-/* SAME VENUE, ANY ACCOUNT (Dean, 5 Nov 2026, INBOX 60). "Run the same venue name + postcode check the in-account
-   rule uses, but ACROSS ALL ACCOUNTS." Every venue whatever its status (a cancelled, paused or archived venue is
-   still that pub: coming back is the restart, never a second free month).
-
-   THE CANDIDATES come from the database and the DECISION from vpVenueMatch, so the database can only ever hand
-   back rows to look at: every venue at that postcode, plus every venue with NO postcode whose name holds the
-   longest word of the name typed (an old venue without a postcode cannot be told apart from a new one, so it
-   counts: vpVenueMatch says 'unsure' and this treats it as the same venue).
-
-   FAILS CLOSED. vpaSelectAll throws on any failed page; the caller turns that into "we could not check, nothing
-   was made", never into "no match". Returns [{ venue, match, account }], account being the billing parent
-   ('f:<founding id>', 'g:<group id>', or the venue itself when it has neither). */
-function vpaVenueAccountKey(v) {
-  if (!v) return '';
-  return v.founding_id ? 'f:' + v.founding_id : (v.group_id ? 'g:' + v.group_id : 'v:' + v.id);
-}
-async function vpaVenuesLike(env, name, postcode) {
-  const key = vpVenueKey(name);
-  if (!key) return [];
-  const pc = vpVenuePostcode(postcode);
-  const cols = '&select=id,name,slug,postcode,founding_id,group_id,status,suspended_reason&order=id.asc';
-  const longest = key.split('-').filter(function (w) { return w !== 'and'; })
-    .sort(function (a, b) { return b.length - a.length; })[0] || key;
-  let rows = pc ? await vpaSelectAll(env, 'vp_venues', 'postcode=eq.' + pc + cols) : [];
-  rows = rows.concat(await vpaSelectAll(env, 'vp_venues', 'postcode=is.null&name=ilike.' + encodeURIComponent('*' + longest + '*') + cols));
-  const seen = {}, out = [];
-  rows.forEach(function (v) {
-    if (!v || seen[v.id]) return;
-    seen[v.id] = true;
-    const m = vpVenueMatch(name, pc, v.name, v.postcode);
-    if (m) out.push({ venue: v, match: m, account: vpaVenueAccountKey(v) });
-  });
-  return out;
-}
-/* The same venue in ANOTHER account: the first hit whose account is not one of `mine` (account keys), or null.
-   Throws when the database cannot be read (the caller refuses, never creates). */
-async function vpaSameVenueElsewhere(env, name, postcode, mine) {
-  const own = {};
-  (mine || []).forEach(function (k) { if (k) own[k] = true; });
-  const hits = await vpaVenuesLike(env, name, postcode);
-  return hits.filter(function (h) { return !own[h.account]; })[0] || null;
-}
-/* What a person who typed somebody else's venue is told (Dean's words, INBOX 60), and the one they are told when
-   the ticket could not be made, so the page never says a ticket was lodged when it was not. */
-const VPA_SAME_VENUE_WORDS = 'This venue is already set up with venueplay. We\'ve lodged a ticket on your behalf and we\'ll be in touch soon.';
-const VPA_SAME_VENUE_NO_TICKET = 'This venue is already set up with venueplay. Please email hello@venueplay.com.au and we\'ll sort it out with you.';
-/* THE TICKET (INBOX 60): both accounts, the person's name, email and mobile, and an HQ alert (helpAnnounce: the
-   staff email and the push). Dean decides whether they join the existing account or get a new one. One ticket per
-   venue, person and day, so a person pressing the button five times files one. Returns { ok, ticket_no } or
-   { ok:false }; never throws. */
-async function vpaSameVenueTicket(env, t) {
-  try {
-    const v = (t.hit && t.hit.venue) || {};
-    const email = String(t.email || '').trim().toLowerCase();
-    const once = 'samevenue:' + vpVenueKey(t.name) + ':' + vpVenuePostcode(t.postcode) + ':' + (email || t.mobile || '');
-    if (!(await helpLimit(env, once, 1, 86400))) return { ok: true, repeat: true };
-    let theirs = null;
-    if (v.founding_id) {
-      const f = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,venue_name,contact_email,status,stripe_subscription_id&limit=1');
-      theirs = (f && f[0]) || null;
-    }
-    const lines = [
-      'Someone tried to set up a venue that venueplay already has, so nothing was made and no free month was started.',
-      '',
-      'Where: ' + (t.door || 'sign-up'),
-      'What they typed: ' + helpLine(t.name, 120) + ', ' + (vpVenuePostcode(t.postcode) || 'no postcode'),
-      'Who: ' + (helpLine(t.contact_name, 120) || '(no name)') + ', ' + (email || '(no email)') + ', ' + (helpLine(t.mobile, 40) || '(no mobile)'),
-      '',
-      'THE EXISTING VENUE: ' + (v.name || '?') + ' (' + (v.postcode || 'no postcode') + '), status ' + (v.status || '?') +
-        (v.suspended_reason ? ' (' + v.suspended_reason + ')' : '') + ', venue ' + (v.id || '?') +
-        (t.hit && t.hit.match === 'unsure' ? '. One of the two has no postcode, so check it is really the same pub.' : '.'),
-      'Its account: ' + (theirs ? (theirs.venue_name || '?') + ', ' + (theirs.contact_email || 'no email') + ', ' + (theirs.status || '?') +
-        (theirs.stripe_subscription_id ? ', card on file' : ', no card') + ', account ' + theirs.id : (v.group_id ? 'operator group ' + v.group_id : 'none on file')),
-      'The person\'s own account: ' + (t.from_account ? (t.from_account.venue_name || '?') + ', ' + (t.from_account.contact_email || 'no email') + ', account ' + t.from_account.id : 'none (a new sign-up)'),
-      '',
-      'Decide whether they join the existing account or get a new one, then let them know.',
-    ];
-    const ticket = await helpInsertTicket(env, { brand: 'venueplay', category: 'accounts', channel: 'web_form', priority: 'normal',
-      title: 'Same venue, another account: ' + helpLine(t.name, 80) + ' (' + (vpVenuePostcode(t.postcode) || 'no postcode') + ')',
-      message: lines.join('\n'), contact_name: t.contact_name || null, contact_email: email || null, contact_phone: t.mobile || null,
-      venue_id: v.id || null, lead_venue_name: t.name || null, lead_locality: vpVenuePostcode(t.postcode) || null });
-    if (!ticket || !ticket.id) return { ok: false };
-    try { await helpAnnounce(env, ticket, v.name || ''); } catch (e) { /* the ticket stands; HQ sees it */ }
-    await vpaAudit(env, { actorId: null, label: 'self (' + (t.door || 'sign-up') + ')', role: null }, 'same_venue_other_account',
-      'venue:' + (v.id || ''), { typed: t.name, postcode: vpVenuePostcode(t.postcode), ticket_no: ticket.ticket_no, door: t.door || null,
-        their_account: v.founding_id || v.group_id || null, from_account: t.from_account ? t.from_account.id : null }).catch(function () {});
-    return { ok: true, ticket_no: ticket.ticket_no };
-  } catch (e) {
-    console.log('[same-venue] the ticket was not made: ' + String((e && e.message) || e).slice(0, 200));
-    return { ok: false };
-  }
-}
-/* The one answer every door gives (409), with the ticket made first. */
-async function vpaSameVenueRefusal(env, json, t) {
-  const tk = await vpaSameVenueTicket(env, t);
-  return json({ error: tk.ok ? VPA_SAME_VENUE_WORDS : VPA_SAME_VENUE_NO_TICKET, same_venue: true, ticket: !!tk.ok }, 409);
-}
 
 /* THE SLUG IS THE VENUE'S IDENTITY, AND AUSTRALIA REUSES PUB NAMES CONSTANTLY.
 
@@ -3669,36 +3561,39 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
 }
 
 /* ===========================================================================
- * THE NO-CARD START: /start  (Dean, 5 Nov 2026; INBOX 80B, 81, 60, 61, 84; migrations 170 and 171)
+ * THE NO-CARD START: /start  (Dean, 5 Nov 2026; INBOX 80B, 81, 84, 97; migrations 170 and 171)
  *
  * "A public, rate-limited, bot-checked version of the prospect setup that makes the same card-free prospect
  * account (10 players, free month starts at first sign-in, card asked later through the existing card choice)."
  *
- *   POST /start/begin   { venue, postcode, name, mobile, email, turnstile?, website? (a honeypot) }
- *                       Five boxes checked; per network, per mobile and per email limits; Turnstile when switched on;
+ *   POST /start/begin   { venue, postcode, kind: 'pub' | 'club', name, mobile, email, turnstile?, website? (a honeypot) }
+ *                       Five boxes and pub or club checked (Dean, 6 Nov 2026: asked at sign-up, so a club has bingo,
+ *                       raffles and members draws open without HQ; stored as the venue's entity_type, which the
+ *                       VPPermits cards and the gaming rules read); per network, per mobile and per email limits; Turnstile when switched on;
  *                       ONE row in vp_signup_starts (170) holding what they typed and the code's hash; a 6-digit code
  *                       texted to the mobile through the SMS hook (the same sender as every sign-in code). Nothing else
  *                       is made. -> { ok, start_id }
- *   POST /start/verify  { start_id, code }  The code passes, then ONE decision, in this order:
- *                       1. the same venue on any account (item 60): their own account says "already yours", anyone
- *                          else's is a ticket for Dean and nothing is made (Dean's words);
- *                       2. a mobile that already signs in, now proven by the code (item 61): their details, and the
- *                          question "add it to your account?" (/start/join does it, through Add a venue's own code);
- *                       3. an email that already signs in on another mobile: never a detail shown. A code to the
- *                          mobile on that login, or, with none, the existing one-tap sign-in email;
- *                       4. a mobile or email already behind an account or a sign-up (one free month per mobile, per
- *                          email and per venue): held for HQ, with a ticket;
- *                       5. the venue on our licensed list (171, item 81): the account, straight away;
- *                       6. not on the list: NO account and NO free month. A ticket HQ approves in one tap.
- *   POST /start/join    { start_id, code }  a known person's yes: the venue joins their account (one bill).
- *   POST /admin/signup-starts          (owner | accounts) the held sign-ups, for HQ.
- *   POST /admin/signup-start/decide    (owner | accounts) { start_id, decision: approve | refuse }. Approve makes the
- *                       normal account and sends the normal welcome, after every guard above has been asked again.
+ *   POST /start/resend  { start_id }  a new code to the same mobile, inside the same limits.
+ *   POST /start/verify  { start_id, code, kind }  The code passes, then ONE decision, in this order:
+ *                       1. ONE FREE MONTH PER MOBILE AND PER EMAIL (Dean, INBOX 81 and 97): a mobile or an email that
+ *                          already signs in, is already on an account (sbPriorAccounts, the card sign-up's own check),
+ *                          or already had a start made, is held for HQ with a ticket. Nothing about that login or
+ *                          account is said: they read the same words as an unlisted venue.
+ *                       2. the account, straight away (Dean, 6 Nov 2026: NO held sign-ups for an unlisted venue; a venue
+ *                          name and a postcode are enough). Our licensed list (171, item 81) is a SIGNAL only: a match
+ *                          is written to licensed_match; no match leaves it empty, and HQ's list shows the account as
+ *                          "Not on our licensed venues list, check" until HQ marks it checked (decided_at).
+ *   POST /admin/signup-starts          (owner | accounts) the held sign-ups, and the made ones not on the list, for HQ.
+ *   POST /admin/signup-start/decide    (owner | accounts) { start_id, decision: approve | refuse | checked }. Approve
+ *                       makes the normal account and sends the normal welcome; checked marks a made one as looked at.
+ *
+ * NOT HERE (Dean, INBOX 97, "we are not going to have two of the same venue sign up"): the same pub on another account
+ * (item 60) and a known person's pub joining their account (item 61). Both are built and parked on fix/same-pub-later.
+ * A known person is held for HQ here, which is the safe way round.
  *
  * NOTHING HERE IS BILLED (item 84). The account is the prospect account: no Stripe customer, no subscription, no
  * session, no player count above the 10 it starts with. The free month's clock starts at the first sign-in, as for
- * every prospect (/account/prospect-start), never here. A join adds the venue through Add a venue, which is the one
- * place a venue's players reach a bill. tools/test-signup-core.js proves it.
+ * every prospect (/account/prospect-start), never here. tools/test-signup-core.js proves it.
  *
  * Before migration 170 every route here answers 503 "not switched on yet" and makes nothing. Without the SMS hook
  * settings (SEND_SMS_HOOK_URL, SEND_SMS_HOOK_SECRET) no code can be sent, so nothing starts either.
@@ -3719,10 +3614,11 @@ const VPS_START_WORDS = {
   unlisted: 'Thanks, we\'ll check your venue and get you set up, usually within a business day.',
   off: 'Starting online is not switched on just yet. Email hello@venueplay.com.au and we\'ll set you up.',
   busy: 'Too many tries from here. Please try again in an hour.',
-  bot: 'Please let the check finish (the box above the button), then press Start again.',
+  bot: 'Please let the check finish (the box above the button), then press the button again.',
   code_wrong: 'That code is not right. Check the text and try again.',
   code_gone: 'That code has run out. Tap Send it again for a new one.',
   blip: 'We could not finish setting you up just then. Nothing was made. Please try again in a minute.',
+  done_before: 'This sign-up has already been dealt with. Sign in with your mobile at venueplay.com.au/app.',
 };
 function vpsStartOff(env) { return !env.SEND_SMS_HOOK_URL || !env.SEND_SMS_HOOK_SECRET; }
 function vpsUuid() {
@@ -3778,30 +3674,39 @@ function vpsStartFields(b) {
   if (!vpVenueKey(venue)) return { error: 'Enter your venue\'s name.', field: 'venue' };
   const state = postcode ? vpaStateFromPostcode(postcode) : null;
   if (!state) return { error: 'Enter your venue\'s 4-digit postcode.', field: 'postcode' };
+  const entity = vpsEntity(b.kind);
+  if (!entity) return { error: 'Choose pub or club.', field: 'kind' };
   if (!name) return { error: 'Enter your name.', field: 'name' };
   if (!vpaIsAuMobileE164(mobile)) return { error: 'Enter your mobile (04...). We text your code to it.', field: 'mobile' };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) return { error: 'Enter your email.', field: 'email' };
-  return { venue: venue, postcode: postcode, state: state, name: name, mobile: mobile, email: email };
+  // No comma, semicolon, bracket, quote or backslash: an address is read back in a PostgREST or=() filter below.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || /[,;()\\"]/.test(email) || email.length > 200) return { error: 'Enter your email.', field: 'email' };
+  return { venue: venue, postcode: postcode, state: state, entity: entity, name: name, mobile: mobile, email: email };
+}
+/* PUB OR CLUB, as the card sign-up asks it: a club is non_profit (paid entry opens by state, vpaPaidEntryDefault), a pub
+   for_profit. Anything else is no answer. */
+function vpsEntity(kind) {
+  const k = String(kind || '').trim().toLowerCase();
+  return k === 'club' ? 'non_profit' : (k === 'pub' ? 'for_profit' : null);
 }
 async function vpsStartRow(env, id) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(String(id || ''))) return null;
   const r = await vpaSelect(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(id) + '&select=*&limit=1');
   return (r && r[0]) || null;
 }
-/* A fresh code for a row, to the number it is for, written down (hash only) BEFORE it is sent.
-   A code to a KNOWN login's mobile (to 'known') names that login in the SAME write, so the row can never hold a
-   login and a code that is not that login's: the code that proves the login is the only thing that can pass. The
-   old code dies in that write too, so the typed mobile's code proves nothing about the known login. Nothing here
-   says the login is proven: verified_at is set only once a code passes (vpsDecideFor). */
-async function vpsIssueCode(env, row, to, e164, knownLoginId) {
+/* A fresh code for a row, written down (hash only, the old code dies in the same write) BEFORE it is sent, always to
+   the mobile they typed. */
+async function vpsIssueCode(env, row) {
   const code = vpsCode();
-  const patch = { code_hash: await vpsCodeHash(env, row.id, code), code_to: to, attempts: 0,
+  const patch = { code_hash: await vpsCodeHash(env, row.id, code), attempts: 0,
     code_sent_count: Math.min(20, (row.code_sent_count || 0) + 1),
     code_expires_at: new Date(Date.now() + VPS_START_CODE_MIN * 60000).toISOString() };
-  if (to === 'known') { patch.known_login_id = knownLoginId; patch.verified_at = null; }
   await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), patch);
   Object.assign(row, patch);
-  return await vpsSendCodeText(env, e164, code);
+  return await vpsSendCodeText(env, row.mobile, code);
+}
+async function vpsMobileLimit(env, e164) {
+  const mk = await helpSha256Hex('m|' + e164);
+  return await helpLimit(env, 'start:m:' + mk.slice(0, 32), VPS_START_PER_MOBILE, 3600);
 }
 
 async function vpsStartBegin(request, env, json) {
@@ -3817,43 +3722,38 @@ async function vpsStartBegin(request, env, json) {
   const bot = await helpTurnstile(env, b.turnstile, ip);
   if (!bot.ok) return json({ error: VPS_START_WORDS.bot, bot: true }, 403);
   if (vpsStartOff(env)) return json({ error: VPS_START_WORDS.off, off: true }, 503);
-  const mk = await helpSha256Hex('m|' + f.mobile), ek = await helpSha256Hex('e|' + f.email);
-  if (!(await helpLimit(env, 'start:m:' + mk.slice(0, 32), VPS_START_PER_MOBILE, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const ek = await helpSha256Hex('e|' + f.email);
+  if (!(await vpsMobileLimit(env, f.mobile))) return json({ error: VPS_START_WORDS.busy }, 429);
   if (!(await helpLimit(env, 'start:e:' + ek.slice(0, 32), VPS_START_PER_EMAIL, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
   let row;
   try {
     row = await vpaInsert(env, 'vp_signup_starts', { id: vpsUuid(), ip_key: ip ? (await helpIpKey(env, ip)).slice(0, 80) : null,
       venue_name: f.venue, venue_key: vpVenueKey(f.venue), postcode: f.postcode, au_state: f.state,
-      contact_name: f.name, email: f.email, mobile: f.mobile, outcome: 'pending', attempts: 0, code_sent_count: 0, code_to: 'typed' });
+      contact_name: f.name, email: f.email, mobile: f.mobile, outcome: 'pending', attempts: 0, code_sent_count: 0 });
   } catch (e) {
     return json({ error: VPS_START_WORDS.off, off: true }, 503);   // migration 170 not run
   }
   if (!row || !row.id) return json({ error: VPS_START_WORDS.blip }, 502);
-  const sent = await vpsIssueCode(env, row, 'typed', f.mobile);
-  if (!sent.ok) return json({ error: 'We could not send the text just then. Check your mobile number and press Start again.', field: 'mobile' }, 502);
+  // Pub or club on the row too (migration 173), for an approval HQ makes later. Before 173 it lives on the page,
+  // which sends it again with the code; nothing fails without it.
+  try { await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { entity_type: f.entity }); row.entity_type = f.entity; } catch (e) { /* 173 not run */ }
+  const sent = await vpsIssueCode(env, row);
+  if (!sent.ok) return json({ error: 'We could not send the text just then. Check your mobile number and press the button again.', field: 'mobile' }, 502);
   return json({ ok: true, start_id: row.id });
 }
 
-/* POST /start/resend { start_id }: a new code to the same number, within the same limits. One answer whatever happens. */
+/* POST /start/resend { start_id }: a new code to the same mobile, within the same limits. One answer whatever happens. */
 async function vpsStartResend(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
   if (!(await helpIpLimit(env, 'start', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const row = await vpsStartRow(env, _b.body.start_id);
-  if (!row || row.outcome !== 'pending' || (row.code_sent_count || 0) >= 5) return json({ ok: true });
-  let to = row.mobile;
-  if (row.code_to === 'known') {
-    const u = row.known_login_id ? await vpaAuthGetUser(env, row.known_login_id) : null;
-    to = u && u.phone ? '+' + String(u.phone).replace(/[^\d]/g, '') : null;
-  }
-  const mk = await helpSha256Hex('m|' + to);
-  if (to && (await helpLimit(env, 'start:m:' + mk.slice(0, 32), VPS_START_PER_MOBILE, 3600))) await vpsIssueCode(env, row, row.code_to, to);
+  if (row && row.outcome === 'pending' && (row.code_sent_count || 0) < 5 && (await vpsMobileLimit(env, row.mobile))) await vpsIssueCode(env, row);
   return json({ ok: true });
 }
 
-/* The code, checked. { row } when it is right, else { res } to answer with. A right code is NOT spent: /start/join
-   asks for it again (the yes is a second request), inside the same ten minutes and the same five tries. */
+/* The code, checked. { row } when it is right, else { res } to answer with. */
 async function vpsCheckCode(env, json, b) {
   const row = await vpsStartRow(env, b.start_id);
   const code = String(b.code || '').replace(/\D/g, '');
@@ -3871,18 +3771,17 @@ async function vpsSetOutcome(env, row, patch) {
   await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), patch);
   Object.assign(row, patch);
 }
-/* Every venue a login holds as owner or manager, by account (founding id). */
-async function vpsLoginAccounts(env, authUserId) {
-  const staff = await vpaSelectAll(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=venue_id,role&order=venue_id.asc');
-  const ids = staff.map((s) => s.venue_id);
-  const venues = ids.length ? await vpaSelectAll(env, 'vp_venues', 'id=in.(' + ids.map(encodeURIComponent).join(',') + ')&select=id,name,founding_id,group_id&order=id.asc') : [];
-  const owned = {}, all = {};
-  venues.forEach((v) => {
-    const k = vpaVenueAccountKey(v); all[k] = true;
-    const st = staff.find((s) => s.venue_id === v.id);
-    if (st && (st.role === 'owner' || st.role === 'manager') && v.founding_id) (owned[v.founding_id] = owned[v.founding_id] || []).push(v);
-  });
-  return { keys: Object.keys(all), owned: owned };
+/* A conditional move from one outcome to the next: true for the ONE request that made it (PostgREST answers a
+   conditional PATCH with the rows it changed). A double tap or a second tab cannot make two accounts. */
+async function vpsClaim(env, row, from, to) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signup_starts?id=eq.' + encodeURIComponent(row.id) + '&outcome=eq.' + from + '&select=id', {
+      method: 'PATCH', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ outcome: to, verified_at: row.verified_at || new Date().toISOString() }) });
+    const got = res.ok ? await res.json().catch(() => null) : null;
+    if (Array.isArray(got) && got.length === 1) { row.outcome = to; return true; }
+    return false;
+  } catch (e) { return false; }
 }
 /* "Our licensed venues" (171): the rows at that postcode, judged by vpVenueMatch. Only 'same' counts: a listed venue
    with no postcode cannot say it is this one. A missing table, or one that cannot be read, is NOT a match: HQ checks. */
@@ -3892,7 +3791,7 @@ async function vpsLicensedMatch(env, name, postcode) {
     return rows.find((r) => vpVenueMatch(name, postcode, r.name, r.postcode) === 'same') || null;
   } catch (e) { return null; }
 }
-/* An HQ ticket for a start that is held, with everything they typed. Never throws. */
+/* An HQ ticket for a start that is held, with everything they typed and why. Never throws. */
 async function vpsHoldTicket(env, row, why, extra) {
   try {
     const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'normal',
@@ -3908,19 +3807,49 @@ async function vpsHoldTicket(env, row, why, extra) {
   } catch (e) { console.log('[start] hold ticket not made: ' + String((e && e.message) || e).slice(0, 160)); }
   return null;
 }
-/* THE ACCOUNT: the prospect setup itself (vpaProspectSetUp, one copy), as a self sign-up. Pub until they say otherwise
-   (Dean: pub or club is asked only when they first turn on bingo, raffles or members draws); 10 players; no card. */
+/* HELD FOR HQ. The move out of `from` is claimed first (one request wins), so a double tap files ONE ticket. Whoever
+   loses the claim reads the same words: nothing about the start or anyone's login is said either way. */
+async function vpsHold(env, json, row, from, outcome, why, extra) {
+  if (await vpsClaim(env, row, from, outcome)) {
+    const tn = await vpsHoldTicket(env, row, why, extra);
+    if (tn) await vpsSetOutcome(env, row, { ticket_no: tn }).catch(() => {});
+  }
+  return json({ ok: true, outcome: 'held', message: VPS_START_WORDS.unlisted });
+}
+/* ONE FREE MONTH PER MOBILE AND PER EMAIL, FAILING CLOSED. sbPriorAccounts is the card sign-up's own check (strict
+   here, so a read that will not answer throws instead of reading as "nobody"). An account row keeps a mobile AS IT
+   WAS TYPED ("0412 345 678", "+61412345678"), so the mobile is also asked as its nine digits in order with anything
+   between them: a near miss only ever holds a sign-up for HQ, never makes one. */
+async function vpsKnown(env, row) {
+  const nine = String(row.mobile).replace(/\D/g, '').slice(-9);
+  const byPhone = await vpaFindAuthUser(env, { phone: row.mobile }, true);
+  const byEmail = await vpaFindAuthUser(env, { email: row.email }, true);
+  const prior = (await sbPriorAccounts(env, row.email, row.mobile, null, true))
+    .concat(await vpaSelectAll(env, 'venueplay_founding', 'mobile=ilike.' + encodeURIComponent('*' + nine.split('').join('*')) +
+      '&status=neq.pending&select=id,venue_name,status&order=id.asc'));
+  const before = await vpaSelectAll(env, 'vp_signup_starts', 'or=(mobile.eq.' + encodeURIComponent(row.mobile) + ',email.eq.' + encodeURIComponent(row.email) +
+    ')&outcome=in.(made,approved)&id=neq.' + encodeURIComponent(row.id) + '&select=id,venue_name,outcome&order=id.asc');
+  const said = [], seen = {};
+  if (byPhone) said.push('the mobile already signs in (login ' + byPhone.id + (byPhone.email ? ', ' + byPhone.email : '') + ')');
+  if (byEmail && (!byPhone || byEmail.id !== byPhone.id)) said.push('the email already signs in (login ' + byEmail.id + ')');
+  prior.forEach((a) => { if (!seen[a.id]) { seen[a.id] = true; said.push('account ' + (a.venue_name || '?') + ' (' + (a.status || '?') + ', ' + a.id + ')'); } });
+  before.forEach((x) => said.push('an earlier sign-up for ' + x.venue_name + ' (' + x.outcome + ')'));
+  return said;
+}
+/* THE ACCOUNT: the prospect setup itself (vpaProspectSetUp, one copy), as a self sign-up: pub or club as they chose it
+   (row.kind from the page with the code, else the row's entity_type, migration 173; an HQ approval with neither is a pub,
+   the stricter rules, and HQ can change it); 10 players; no card. */
 async function vpsMakeAccount(env, row, actor, sendWelcome) {
   let out = null;
   const cap = function (o, status) { out = { body: o, status: status || 200 }; return out; };
   await vpaProspectSetUp(env, actor, { name: row.venue_name, first_name: String(row.contact_name).split(' ')[0], email: row.email,
-    mobile: row.mobile, postcode: row.postcode, entity_type: 'for_profit', players: VPS_START_PLAYERS,
+    mobile: row.mobile, postcode: row.postcode, entity_type: vpsEntity(row.kind) || row.entity_type || 'for_profit', players: VPS_START_PLAYERS,
     send_welcome: !!sendWelcome, send_in_minutes: 0 }, cap, { via: 'self_signup' });
   return out || { body: { error: 'nothing came back' }, status: 500 };
 }
 /* The done screen's facts: the TV code (the venue's join code, the console's "Screen code") and a one-tap sign-in. */
 async function vpsDone(env, venueId, authUserId) {
-  const v = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=name,join_code&limit=1');
+  const v = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=name,join_code,slug&limit=1');
   let go = null;
   if (authUserId) {
     try {
@@ -3928,141 +3857,40 @@ async function vpsDone(env, venueId, authUserId) {
       go = vpaOneClickUrl((env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, ''), m.token, '');
     } catch (e) { go = null; }
   }
-  return { venue: (v && v[0] && v[0].name) || '', tv_code: (v && v[0] && v[0].join_code) || null, go_url: go };
+  const r = (v && v[0]) || {};
+  return { venue: r.name || '', tv_code: r.join_code || null, slug: r.slug || null, go_url: go };
 }
 
-/* THE DECISION, once the code to THEIR typed mobile has passed. Returns the JSON answer. */
+/* THE DECISION, once the code to their mobile has passed. */
 async function vpsDecide(env, json, row) {
-  let hits, byPhone, byEmail;
-  try {
-    hits = await vpaVenuesLike(env, row.venue_name, row.postcode);
-    byPhone = await vpaFindAuthUser(env, { phone: row.mobile }, true);
-    byEmail = (byPhone && String(byPhone.email || '').toLowerCase() === row.email) ? byPhone : await vpaFindAuthUser(env, { email: row.email }, true);
-  } catch (e) { return json({ error: VPS_START_WORDS.blip }, 503); }
-  const login = byPhone || null;     // the only login this person has PROVEN (the code went to its own mobile)
-  return await vpsDecideFor(env, json, row, hits, login, byEmail);
-}
-async function vpsDecideFor(env, json, row, hits, login, byEmail) {
-  // 1. The same venue on an account (item 60).
-  if (hits.length) {
-    if (login) {
-      const mine = await vpsLoginAccounts(env, login.id).catch(() => null);
-      const own = mine && hits.find((h) => mine.keys.indexOf(h.account) !== -1);
-      if (own) {
-        await vpsSetOutcome(env, row, { outcome: 'yours', verified_at: new Date().toISOString(), known_login_id: login.id, venue_id: own.venue.id });
-        return json({ ok: true, outcome: 'yours', message: own.venue.name + ' is already on your venueplay account. Sign in with your mobile at venueplay.com.au/app to open it.' });
-      }
-    }
-    const tk = await vpaSameVenueTicket(env, { door: 'no-card start', name: row.venue_name, postcode: row.postcode, hit: hits[0],
-      contact_name: row.contact_name, email: row.email, mobile: row.mobile, from_account: null });
-    await vpsSetOutcome(env, row, { outcome: 'held_same_venue', verified_at: new Date().toISOString(), ticket_no: tk.ticket_no || null });
-    return json({ ok: true, outcome: 'held', message: tk.ok ? VPA_SAME_VENUE_WORDS : VPA_SAME_VENUE_NO_TICKET });
+  // 1. One free month per mobile and per email. Fails closed: a read that will not answer makes nothing.
+  let said;
+  try { said = await vpsKnown(env, row); } catch (e) { console.log("[start] known check: " + String((e && e.message) || e).slice(0, 200)); return json({ error: VPS_START_WORDS.blip }, 503); }
+  if (said.length) {
+    return await vpsHold(env, json, row, 'pending', 'held_known',
+      'This mobile or email is already on venueplay (one free month per mobile and per email), so no new account or free month was made. If it is the same person adding a pub, add it to their account with Add a venue.',
+      'Already on venueplay: ' + said.join('; '));
   }
-  // 2. Their mobile already signs in, and the code just proved it is theirs (item 61).
-  if (login) {
-    const mine = await vpsLoginAccounts(env, login.id).catch(() => null);
-    const fids = mine ? Object.keys(mine.owned) : [];
-    if (fids.length === 1) {
-      const f = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fids[0]) + '&select=id,venue_name,contact_email,contact_name&limit=1');
-      const acct = (f && f[0]) || { id: fids[0] };
-      /* The billing address (migration 154, run live 5 Nov) on its own read, so a database without it still pre-fills
-         the rest. The business name and ABN have no column yet (item 65 and migrations 166/167 add what is missing):
-         they pre-fill here once they exist, by adding them to this read. */
-      const fb = await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(fids[0]) + '&select=billing_street,billing_suburb&limit=1');
-      if (fb && fb[0]) Object.assign(acct, fb[0]);
-      await vpsSetOutcome(env, row, { outcome: 'pending', verified_at: new Date().toISOString(), known_login_id: login.id, founding_id: fids[0] });
-      const meta = login.user_metadata || {};
-      return json({ ok: true, outcome: 'known', venue: row.venue_name,
-        /* WHAT WE ALREADY HAVE, shown only now that the code has proved the mobile is theirs. */
-        prefill: { name: meta.full_name || acct.contact_name || row.contact_name, email: login.email || acct.contact_email || '',
-          mobile_ending: String(row.mobile).slice(-3), account: acct.venue_name || (mine.owned[fids[0]][0] || {}).name || '',
-          business_name: acct.business_name || null, abn: acct.abn || null,
-          billing_address: [acct.billing_street, acct.billing_suburb].filter(Boolean).join(', ') || null } });
-    }
-    const why = fids.length ? 'This mobile already signs in to venueplay, on ' + fids.length + ' accounts, so which one this venue joins needs a person.'
-      : 'This mobile already signs in to venueplay as a host or manager on another account, so it was not given a new account automatically.';
-    const tn = await vpsHoldTicket(env, row, why, 'Their login: ' + (login.email || '(no email)') + ', ' + login.id);
-    await vpsSetOutcome(env, row, { outcome: 'held_known', verified_at: new Date().toISOString(), known_login_id: login.id, ticket_no: tn });
-    return json({ ok: true, outcome: 'held', message: VPS_START_WORDS.unlisted });
-  }
-  // 3. The email they typed already signs in, on another mobile. Nothing about that login is said or shown.
-  if (byEmail) {
-    const phone = byEmail.phone ? '+' + String(byEmail.phone).replace(/[^\d]/g, '') : '';
-    /* NOTHING is written about that login until its own mobile's code passes (security review, 5 Nov 2026: a row that
-       named the login with the typed mobile's code still live let a stranger's own code read and join it). */
-    if (vpaIsAuMobileE164(phone)) {
-      /* The same per-mobile limit as any start, on THAT mobile: typing someone's email can never become a way to text
-         them over and over. Over the limit, no text goes and the answer is the same words. */
-      const km = await helpSha256Hex('m|' + phone);
-      const allowed = await helpLimit(env, 'start:m:' + km.slice(0, 32), VPS_START_PER_MOBILE, 3600);
-      const s = allowed ? await vpsIssueCode(env, row, 'known', phone, byEmail.id) : { ok: false };
-      // No text could go: this start is spent (the same words, so the answer still says nothing about that login).
-      if (!allowed) await vpsSetOutcome(env, row, { outcome: 'held_known', code_hash: null });
-      return json({ ok: true, outcome: 'prove', sent: !!s.ok,
-        message: 'That email is already on venueplay. To keep accounts safe, we\'ve texted a code to the mobile on that account. Type it in to carry on.' });
-    }
-    await vpaSendSigninLink(env, byEmail.id, null, { self: true }).catch(() => null);
-    await vpsSetOutcome(env, row, { outcome: 'check_email' });
-    return json({ ok: true, outcome: 'check_email',
-      message: 'That email is already on venueplay. To keep accounts safe, we\'ve emailed it a sign-in link. Tap it, then use Add a venue to add ' + row.venue_name + '.' });
-  }
-  // 4. One free month per mobile and per email: an account or a sign-up they already had.
-  let prior = [], before = [];
-  try {
-    prior = await sbPriorAccounts(env, row.email, row.mobile, null);
-    before = await vpaSelectAll(env, 'vp_signup_starts', 'or=(mobile.eq.' + encodeURIComponent(row.mobile) + ',email.eq.' + encodeURIComponent(row.email) +
-      ')&outcome=in.(made,joined,approved)&select=id,venue_name,outcome&order=id.asc');
-  } catch (e) { return json({ error: VPS_START_WORDS.blip }, 503); }
-  if (prior.length || before.length) {
-    const tn = await vpsHoldTicket(env, row, 'This mobile or email has had a venueplay account or free month before (one free month per mobile, per email and per venue), so no new free month was started.',
-      'Before: ' + prior.map((a) => (a.venue_name || '?') + ' (' + (a.status || '?') + ', account ' + a.id + ')').concat(before.map((x) => x.venue_name + ' (sign-up ' + x.outcome + ')')).join('; '));
-    await vpsSetOutcome(env, row, { outcome: 'held_known', verified_at: new Date().toISOString(), ticket_no: tn });
-    return json({ ok: true, outcome: 'held', message: VPS_START_WORDS.unlisted });
-  }
-  // 5 and 6. On our licensed venues list, or not (item 81).
+  // 2. The account (Dean, 6 Nov 2026: a name and a postcode are enough for now). The licensed list is a signal for HQ.
   const listed = await vpsLicensedMatch(env, row.venue_name, row.postcode);
-  if (!listed) {
-    const tn = await vpsHoldTicket(env, row, 'This venue is not on our licensed venues list at that postcode, so no account and no free month were made yet.');
-    await vpsSetOutcome(env, row, { outcome: 'held_unlisted', verified_at: new Date().toISOString(), ticket_no: tn });
-    return json({ ok: true, outcome: 'held', message: VPS_START_WORDS.unlisted });
-  }
-  // Claimed once: a second tab or a double tap cannot make two accounts.
-  const claim = await vpsClaim(env, row, 'pending', 'made');
-  if (!claim) return json({ error: VPS_START_WORDS.blip }, 409);
-  const made = await vpsMakeAccount(env, row, { actorId: null, role: 'self', label: 'Self sign-up (no-card start)' }, false);
+  if (!(await vpsClaim(env, row, 'pending', 'made'))) return json({ ok: true, outcome: 'done_before', message: VPS_START_WORDS.done_before });
+  let made;
+  try { made = await vpsMakeAccount(env, row, { actorId: null, role: 'self', label: 'Self sign-up (no-card start)' }, false); }
+  catch (e) { made = { status: 500, body: { error: String((e && e.message) || e).slice(0, 200) } }; }
   if (made.status !== 200 || !made.body.ok) {
-    await vpsSetOutcome(env, row, { outcome: 'pending', verified_at: null }).catch(() => {});
-    return json({ error: VPS_START_WORDS.blip, detail: made.body && made.body.error }, 502);
+    // The prospect setup refused (for one, a venue of that exact name and postcode already set up): HQ looks.
+    return await vpsHold(env, json, row, 'made', 'held_known', 'The account could not be made automatically: ' + String((made.body && made.body.error) || 'no answer').slice(0, 300));
   }
   await vpsSetOutcome(env, row, { venue_id: made.body.venue.id, founding_id: made.body.founding_id,
-    licensed_match: (listed.name + ', ' + listed.postcode + ' (' + listed.source + ')').slice(0, 200) });
-  const login2 = made.body.login ? await vpaFindAuthUser(env, { email: row.email }) : null;
-  const done = await vpsDone(env, made.body.venue.id, login2 && login2.id);
-  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, go_url: done.go_url, players: VPS_START_PLAYERS });
-}
-/* A conditional move from one outcome to the next: true for the ONE request that made it. */
-async function vpsClaim(env, row, from, to) {
-  try {
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signup_starts?id=eq.' + encodeURIComponent(row.id) + '&outcome=eq.' + from + '&select=id', {
-      method: 'PATCH', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
-      body: JSON.stringify({ outcome: to, verified_at: row.verified_at || new Date().toISOString() }) });
-    const got = res.ok ? await res.json().catch(() => null) : null;
-    if (Array.isArray(got) && got.length === 1) { row.outcome = to; return true; }
-    return false;
-  } catch (e) { return false; }
+    licensed_match: listed ? (listed.name + ', ' + listed.postcode + ' (' + listed.source + ')').slice(0, 200) : null }).catch(() => {});
+  // The login made a moment ago for this email (the email was checked free above). Its one-tap sign-in goes only to
+  // the browser that has just typed the code texted to this mobile.
+  let login = null;
+  try { login = made.body.login ? await vpaFindAuthUser(env, { email: row.email }) : null; } catch (e) { login = null; }
+  const done = await vpsDone(env, made.body.venue.id, login && login.id);
+  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS });
 }
 
-/* THE LOGIN THIS START HAS PROVEN, or null. A code passes only for the number in code_to (vpsCheckCode runs first,
-   always): 'known' is the mobile on the login named in the same write, so that login is proven; 'typed' is the mobile
-   they typed, which proves a login only when that login's own mobile is that number. Anything else proves nothing. */
-async function vpsProvenLogin(env, row) {
-  if (!row.known_login_id || !row.verified_at) return null;
-  const u = await vpaAuthGetUser(env, row.known_login_id);
-  if (!u) return null;
-  if (row.code_to === 'known') return u;
-  const digits = (x) => String(x || '').replace(/[^\d]/g, '');
-  return (row.code_to === 'typed' && digits(u.phone) && digits(u.phone) === digits(row.mobile)) ? u : null;
-}
 async function vpsStartVerify(request, env, json) {
   const ip = request.headers.get('cf-connecting-ip') || '';
   if (!(await helpIpLimit(env, 'startv', ip, VPS_START_VERIFY_PER_IP, 600))) return json({ error: VPS_START_WORDS.busy }, 429);
@@ -4070,61 +3898,9 @@ async function vpsStartVerify(request, env, json) {
   if (!_b.ok) return _b.res;
   const c = await vpsCheckCode(env, json, _b.body);
   if (c.res) return c.res;
-  const row = c.row;
-  if (row.outcome !== 'pending') return json({ ok: true, outcome: 'done_before', message: 'This sign-up has already been dealt with. Sign in with your mobile at venueplay.com.au/app.' });
-  if (row.code_to === 'known') {
-    // The code went to the mobile on the login that holds the email they typed: that login is now proven theirs.
-    const u = row.known_login_id ? await vpaAuthGetUser(env, row.known_login_id) : null;
-    if (!u) return json({ error: VPS_START_WORDS.blip }, 503);
-    let hits;
-    try { hits = await vpaVenuesLike(env, row.venue_name, row.postcode); } catch (e) { return json({ error: VPS_START_WORDS.blip }, 503); }
-    return await vpsDecideFor(env, json, row, hits, u, u);
-  }
-  if (row.known_login_id && row.verified_at) {
-    /* Already proven and asked "add it to your account?": the same answer again (a second tap). ONLY when the login
-       was proven by the code to the mobile they typed, and that mobile IS the login's (vpsProvenLogin). */
-    const proven = await vpsProvenLogin(env, row);
-    if (!proven) return json({ error: VPS_START_WORDS.code_gone, gone: true }, 410);
-    return await vpsDecideFor(env, json, row, [], proven, null);
-  }
-  return await vpsDecide(env, json, row);
-}
-
-/* POST /start/join { start_id, code }: the known person said yes. Add a venue's own code does it (vpbAddVenueFor), with
-   the login the code proved, on the one account they hold, so the in-account and cross-account rules, the Stripe
-   quantity and the new pub's free month are exactly Add a venue's. */
-async function vpsStartJoin(request, env, json) {
-  const ip = request.headers.get('cf-connecting-ip') || '';
-  if (!(await helpIpLimit(env, 'startv', ip, VPS_START_VERIFY_PER_IP, 600))) return json({ error: VPS_START_WORDS.busy }, 429);
-  const _b = await vpaBody(request, json);
-  if (!_b.ok) return _b.res;
-  const c = await vpsCheckCode(env, json, _b.body);
-  if (c.res) return c.res;
-  const row = c.row;
-  if (row.outcome !== 'pending' || !row.verified_at || !row.known_login_id || !row.founding_id) {
-    return json({ error: 'This sign-up has already been dealt with. Sign in with your mobile at venueplay.com.au/app.' }, 409);
-  }
-  if (!(await vpsProvenLogin(env, row))) return json({ error: VPS_START_WORDS.code_gone, gone: true }, 410);
-  const mine = await vpsLoginAccounts(env, row.known_login_id).catch(() => null);
-  const vs = mine && mine.owned[row.founding_id];
-  if (!vs || !vs.length) return json({ error: VPS_START_WORDS.blip }, 409);
-  const o = await vpbOwnerFor(env, row.known_login_id, vs[0].id, { noAdmin: true });
-  if (o.error) return json({ error: o.error }, o.status || 403);
-  if (!(await vpsClaim(env, row, 'pending', 'joined'))) return json({ error: 'This sign-up has already been dealt with.' }, 409);
-  let r = null;
-  const cap = function (body, status) { r = { body: body, status: status || 200 }; return r; };
-  await vpbAddVenueFor(env, o, { name: row.venue_name, postcode: row.postcode, players: VPS_START_PLAYERS }, cap);
-  if (!r || r.status !== 200 || !r.body.ok) {
-    await vpsSetOutcome(env, row, { outcome: (r && r.body && r.body.same_venue) ? 'held_same_venue' : 'pending' }).catch(() => {});
-    return json(r ? r.body : { error: VPS_START_WORDS.blip }, r ? r.status : 502);
-  }
-  const added = await vpaSelect(env, 'vp_venues', 'founding_id=eq.' + encodeURIComponent(row.founding_id) + '&name=eq.' + encodeURIComponent(row.venue_name) +
-    '&postcode=eq.' + row.postcode + '&select=id&order=created_at.desc&limit=1');
-  const vid = added && added[0] && added[0].id;
-  await vpsSetOutcome(env, row, { venue_id: vid || null });
-  const done = vid ? await vpsDone(env, vid, row.known_login_id) : { venue: row.venue_name, tv_code: null, go_url: null };
-  return json({ ok: true, outcome: 'joined', venue: done.venue, tv_code: done.tv_code, go_url: done.go_url,
-    free_rule: r.body.free_rule || null, free_until: r.body.free_until || null });
+  if (c.row.outcome !== 'pending') return json({ ok: true, outcome: 'done_before', message: VPS_START_WORDS.done_before });
+  if (vpsEntity(_b.body.kind)) c.row.kind = _b.body.kind;
+  return await vpsDecide(env, json, c.row);
 }
 
 /* ---- HQ: the held sign-ups, and the one-tap decision (owner | accounts) ---- */
@@ -4132,10 +3908,13 @@ async function vpsAdminStarts(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
   let rows;
-  try { rows = await vpaSelectAll(env, 'vp_signup_starts', 'outcome=in.(held_unlisted,held_known)&select=id,created_at,venue_name,postcode,au_state,contact_name,email,mobile,outcome,ticket_no&order=created_at.desc'); }
-  catch (e) { return json({ error: 'Run migration 170 first (vp_signup_starts).', need_migration: 170 }, 503); }
+  try {
+    rows = await vpaSelectAll(env, 'vp_signup_starts', 'or=(outcome.eq.held_known,and(outcome.eq.made,licensed_match.is.null,decided_at.is.null))' +
+      '&select=id,created_at,venue_name,postcode,au_state,contact_name,email,mobile,outcome,ticket_no,venue_id&order=created_at.desc');
+  } catch (e) { return json({ error: 'Run migration 170 first (vp_signup_starts).', need_migration: 170 }, 503); }
   return json({ ok: true, held: rows.map((r) => Object.assign({}, r, { mobile: vpaProspectPhone(r.mobile) || r.mobile,
-    why: r.outcome === 'held_unlisted' ? 'Not on our licensed venues list' : 'Has had an account or a free month before' })) });
+    made: r.outcome === 'made',
+    why: r.outcome === 'made' ? 'Account made. Not on our licensed venues list, check' : 'Already on venueplay (mobile or email)' })) });
 }
 async function vpsAdminDecide(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
@@ -4143,24 +3922,30 @@ async function vpsAdminDecide(request, env, json) {
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
   const b = _b.body;
-  if (['approve', 'refuse'].indexOf(b.decision) === -1) return json({ error: 'Choose approve or refuse.' }, 400);
+  if (['approve', 'refuse', 'checked'].indexOf(b.decision) === -1) return json({ error: 'Choose approve or refuse.' }, 400);
   const row = await vpsStartRow(env, b.start_id);
   if (!row) return json({ error: 'That sign-up is not here any more.' }, 404);
-  if (['held_unlisted', 'held_known'].indexOf(row.outcome) === -1 || !row.verified_at) return json({ error: 'That sign-up has already been decided.', outcome: row.outcome }, 409);
+  /* A made account that is not on our licensed list: HQ has looked at it. Nothing is made or changed but the mark. */
+  if (b.decision === 'checked') {
+    if (row.outcome !== 'made' || row.decided_at) return json({ error: 'That sign-up has already been checked.', outcome: row.outcome }, 409);
+    await vpsSetOutcome(env, row, { decided_at: new Date().toISOString(), decided_label: String(actor.label || 'HQ').slice(0, 120) });
+    await vpaAudit(env, actor, 'signup_start_checked', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode, venue_id: row.venue_id });
+    return json({ ok: true, outcome: 'checked' });
+  }
+  if (row.outcome !== 'held_known' || !row.verified_at) return json({ error: 'That sign-up has already been decided.', outcome: row.outcome }, 409);
   const by = { decided_at: new Date().toISOString(), decided_label: String(actor.label || 'HQ').slice(0, 120) };
+  const was = row.outcome;
   if (b.decision === 'refuse') {
-    if (!(await vpsClaim(env, row, row.outcome, 'refused'))) return json({ error: 'That sign-up has already been decided.' }, 409);
+    if (!(await vpsClaim(env, row, was, 'refused'))) return json({ error: 'That sign-up has already been decided.' }, 409);
     await vpsSetOutcome(env, row, by);
     await vpaAudit(env, actor, 'signup_start_refused', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode });
     return json({ ok: true, outcome: 'refused' });
   }
-  /* APPROVE asks every guard again: HQ's yes says the venue is real, not that nobody else has signed it up since. */
-  let hits;
-  try { hits = await vpaVenuesLike(env, row.venue_name, row.postcode); } catch (e) { return json({ error: 'Could not check the venue just now. Nothing was made.' }, 503); }
-  if (hits.length) return json({ error: row.venue_name + ' (' + row.postcode + ') is now on an account (' + hits[0].venue.name + '). Nothing was made: open it in HQ > Venues.' }, 409);
-  const was = row.outcome;
   if (!(await vpsClaim(env, row, was, 'approved'))) return json({ error: 'That sign-up has already been decided.' }, 409);
-  const made = await vpsMakeAccount(env, row, actor, true);
+  // The prospect setup's own refusals still stand: an email that already signs in, the same venue twice.
+  let made;
+  try { made = await vpsMakeAccount(env, row, actor, true); }
+  catch (e) { made = { status: 500, body: { error: 'The account was not made: ' + String((e && e.message) || e).slice(0, 160) } }; }
   if (made.status !== 200 || !made.body.ok) {
     await vpsSetOutcome(env, row, { outcome: was }).catch(() => {});
     return json({ error: (made.body && made.body.error) || 'The account was not made.' }, made.status === 200 ? 502 : made.status);
@@ -6615,7 +6400,7 @@ async function vpaHandleQuietVenues(request, env, json) {
 
   // Sessions carry the venue directly.
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'select=venue_id,opened_at,started_at,ended_at' +
+    'select=venue_id,opened_at,started_at,ended_at' + VPA_NOT_DEMO +
     '&or=(started_at.gte.' + cutoff + ',opened_at.gte.' + cutoff + ',ended_at.gte.' + cutoff + ')');
   for (const r of (sessions || [])) { note(r.venue_id, r.started_at || r.opened_at || r.ended_at); }
   // Broadcast bingo only ever appears here.
@@ -7064,7 +6849,7 @@ async function vpaHandleVenueHistory(request, env, json) {
      retention screen, not an archive. The most recent 60 nights answers every
      question anybody opens this panel to ask. */
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&select=id,join_code,status,opened_at,started_at,ended_at,created_at' +
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&select=id,join_code,status,opened_at,started_at,ended_at,created_at' +
     '&order=created_at.desc&limit=60') || [];
 
   /* What was actually PLAYED in each of those nights. A session on its own only
@@ -7264,7 +7049,7 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
      try, so a failed read now means NOTHING is archived tonight. A venue archived by
      mistake is a dark room on a Friday; a sweep that skips a night costs nothing. */
   const sess = await vpaSelectAll(env, 'vp_sessions',
-    'select=venue_id,opened_at,started_at,ended_at' +
+    'select=venue_id,opened_at,started_at,ended_at' + VPA_NOT_DEMO +
     '&or=(started_at.gte.' + lookback + ',opened_at.gte.' + lookback + ',ended_at.gte.' + lookback + ')' +
     '&order=venue_id.asc,opened_at.asc,id.asc');
   for (const r of sess) note(r.venue_id, r.started_at || r.opened_at || r.ended_at);
@@ -10223,19 +10008,12 @@ async function vpbRequireOwner(request, env) {
 
   const payload = await vpaVerifyJWT(token, env.SUPABASE_JWT_SECRET, env);
   if (!payload || !payload.sub) return { error: 'Invalid or expired session. Please sign in again.', status: 401 };
-  return await vpbOwnerFor(env, payload.sub, request.headers.get('X-VP-Venue') || '', null);
-}
-/* THE OWNER'S ACCOUNT FOR A LOGIN, once the login is known (5 Nov 2026, INBOX 61). vpbRequireOwner finds the login
-   from the session; the no-card start finds it from a text code to the mobile that login signs in with, which is the
-   same proof the sign-in page takes. One body for both, so a known person's new pub joins their account through the
-   exact checks Add a venue makes. opts.noAdmin: a platform admin's login is treated as the venue staff it also is,
-   never as View as (a sign-up is never HQ acting on a venue). */
-async function vpbOwnerFor(env, authUserId, venueHeader, opts) {
-  opts = opts || {};
+  const authUserId = payload.sub;
+
   // Is this a Gflam HQ admin? Resolved ONCE, before anything else, because it decides both whose
   // account this call is about and who the audit entry names.
   let adminRow = null;
-  if (!opts.noAdmin) try {
+  try {
     // owner/accounts ONLY, matching requireStaff in the game Worker. Accepting any row let a
     // Gflam 'staff' admin View-as into any venue and then charge their card through
     // /account/players, cancel their venues, and export their entire marketing list.
@@ -10251,7 +10029,7 @@ async function vpbOwnerFor(env, authUserId, venueHeader, opts) {
 
   // "View as" from HQ: the console names the venue it is acting on in X-VP-Venue. Honoured for
   // platform admins ONLY, so a staff member naming someone else's venue changes nothing.
-  const target = String(venueHeader || '').trim();
+  const target = (request.headers.get('X-VP-Venue') || '').trim();
   // Local on purpose: this Worker has no shared UUID_RE (that one lives in the game Worker).
   const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   const viewingAs = !!(adminRow && isUuid.test(target));
@@ -11143,7 +10921,7 @@ async function vpbSetPlayers(request, env, json) {
       const item = det.billing && det.billing.kind === 'charge' && det.billing.item;
       if (row && ageS >= 0 && ageS < VPB_UNDO_WINDOW_S && item && players <= (parseInt(det.from, 10) || 0)) {
         const inFreeMonth = await vpbVenueInFreeMonth(env, venueId);
-        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId)
+        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId) + VPA_NOT_DEMO
           + '&started_at=gte.' + encodeURIComponent(new Date(addedAt).toISOString()) + '&select=id&limit=1');
         if (!inFreeMonth && !(played && played.length)) {
           const del = await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(item));
@@ -11223,12 +11001,7 @@ async function vpbAddVenue(request, env, json) {
 
   const _b = await vpaBody(request, json);
   if (!_b.ok) return _b.res;
-  return await vpbAddVenueFor(env, o, _b.body, json);
-}
-/* The whole of Add a venue once the owner is known: the session (above) or, for a known person on the no-card
-   start, the text code to their own login's mobile (vpsStartJoin, INBOX 61). One copy, so the in-account rule, the
-   cross-account rule (item 60), the Stripe quantity and the new pub's free month are the same at both doors. */
-async function vpbAddVenueFor(env, o, b, json) {
+  const b = _b.body;
   const name = (b.name || '').trim();
   const players = parseInt(b.players, 10);
   if (!name) return json({ error: 'Enter a venue name.' }, 400);
@@ -11295,25 +11068,6 @@ async function vpbAddVenueFor(env, o, b, json) {
   const reviving = !!twin && (twin.status === 'suspended' || !!twin.cancel_at_period_end);
   if (twin && !reviving) {
     return json({ error: 'You already have a venue called ' + name + ' at that postcode. If this is a different pub, put its own postcode in. If it is the same one, change its max players on the list above instead.' }, 409);
-  }
-  /* THE SAME PUB IN ANOTHER ACCOUNT (Dean, 5 Nov 2026, INBOX 60). The rule above looks inside this account; this one
-     looks across every account, with the same matcher (vpVenueMatch). A manager who moved pubs and adds a NEW venue
-     name is unchanged. The same venue name and postcode on someone else's account, whatever its status, gets no venue
-     and no free month here: a help desk ticket naming both accounts, an HQ alert, and Dean decides. A venue of this
-     account coming back is the revive path above and never reaches this. Fails closed: if the check cannot run,
-     nothing is added and nothing is charged. */
-  if (!twin) {
-    let elsewhere = null;
-    try {
-      elsewhere = await vpaSameVenueElsewhere(env, name, postcode, [vpaVenueAccountKey({ founding_id: foundingId })]);
-    } catch (e) {
-      return json({ error: 'We could not check that venue just now. Nothing was added or charged. Please try again in a minute.' }, 503);
-    }
-    if (elsewhere) {
-      return await vpaSameVenueRefusal(env, json, { door: 'Add a venue', name: name, postcode: postcode, hit: elsewhere,
-        contact_name: '', email: (o.account && o.account.contact_email) || '', mobile: '',
-        from_account: { id: foundingId, contact_email: (o.account && o.account.contact_email) || '', venue_name: (o.venues && o.venues[0] && o.venues[0].name) || '' } });
-    }
   }
 
   let r;
@@ -11704,7 +11458,7 @@ async function vpaVenueStats(env, venueId, tz) {
   const _weekday = {};      // which night of the week they actually run
   try {
     const sessions = await vpaSelect(env, 'vp_sessions',
-      'venue_id=eq.' + encodeURIComponent(venueId)
+      'venue_id=eq.' + encodeURIComponent(venueId) + VPA_NOT_DEMO
       + '&select=id,started_at,opened_at,overage_approved_count&limit=2000') || [];
     if (!sessions.length) { out.ok = true; return out; }
     const ids = sessions.map((s) => s.id);
@@ -14402,7 +14156,7 @@ async function vpmStats(env, venues) {
   const lastMonth = lm.getUTCFullYear() + '-' + ('0' + (lm.getUTCMonth() + 1)).slice(-2);
 
   const sessions = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_sessions',
-    'venue_id=in.(' + inl + ')&select=id,venue_id,opened_at,created_at&order=id.asc'));
+    'venue_id=in.(' + inl + ')' + VPA_NOT_DEMO + '&select=id,venue_id,opened_at,created_at&order=id.asc'));
   const venueOf = {}, dayOf = {};
   sessions.forEach((x) => { venueOf[x.id] = x.venue_id; dayOf[x.id] = vpmLocalDay(x.opened_at || x.created_at, tzOf[x.venue_id]); });
   const sids = sessions.map((x) => x.id);
@@ -14613,7 +14367,7 @@ async function vprRead(env, venues, month) {
   const w = vprWindow(month);
   const ids = venues.map((v) => v.id);
   const sessions = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_sessions',
-    'venue_id=in.(' + inl + ')&and=(created_at.gte.' + w.lookFrom + ',created_at.lt.' + w.to + ')'
+    'venue_id=in.(' + inl + ')' + VPA_NOT_DEMO + '&and=(created_at.gte.' + w.lookFrom + ',created_at.lt.' + w.to + ')'
     + '&select=id,venue_id,created_at,opened_at,started_at,ended_at&order=id.asc'));
   const recent = sessions.filter((s) => Date.parse(s.created_at || 0) >= Date.parse(w.from));
   const games = recent.length ? await vpmInChunks(recent.map((s) => s.id), (inl) => vpaSelectAll(env, 'vp_games',
@@ -16242,7 +15996,7 @@ async function vpbDrawLog(request, env, json) {
 
   // Raffles: sessions -> raffle games -> results.
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&order=created_at.desc&limit=300') || [];
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&order=created_at.desc&limit=300') || [];
   if (sessions.length) {
     const games = await vpaSelect(env, 'vp_games',
       'session_id=in.(' + sessions.map((x) => encodeURIComponent(x.id)).join(',') + ')&format=eq.raffle&select=id,started_at&order=started_at.desc&limit=300') || [];
@@ -16307,7 +16061,7 @@ async function vpbNights(request, env, json) {
   const vid = encodeURIComponent(venueId);
 
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&select=id,status,opened_at,started_at,ended_at,created_at&order=created_at.desc&limit=' + (limit + 10)) || [];
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&select=id,status,opened_at,started_at,ended_at,created_at&order=created_at.desc&limit=' + (limit + 10)) || [];
   let games = [], players = [], seenDevices = [];
   if (sessions.length) {
     const ids = sessions.map((x) => encodeURIComponent(x.id)).join(',');
