@@ -367,6 +367,10 @@
   "checks": 95,
   "counted_by": "lines"
  },
+ "tools/signup-start-in-chrome.test.py": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
