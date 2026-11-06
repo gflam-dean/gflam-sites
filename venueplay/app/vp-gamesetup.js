@@ -129,7 +129,7 @@
     P + ".vpgs-hint{margin:6px 0 0;font-size:14px;line-height:1.4;color:#B4B4BE}",
     P + ".vpgs-unitw{display:flex;align-items:center;gap:8px}" + P + ".vpgs-unitw .vpgs-in{flex:1;min-width:0}" + P + ".vpgs-unit{flex:none;font-size:15px;color:" + C.muted + "}",
     P + ".vpgs-group .vpgs-row{display:flex;flex-direction:column;justify-content:flex-end}" + P + ".vpgs-group>:only-child{grid-column:1/-1}",
-    P + ".vpgs-prow.nonone{grid-template-columns:72px 1fr}",
+    P + ".vpgs-prow.nonone{grid-template-columns:72px 1fr}" + P + ".vpgs-prow.solo{grid-template-columns:1fr auto!important}" + P + ".vpgs-prow.solo>:nth-child(3){grid-column:2!important;grid-row:1!important}" + P + ".vpgs-prow.solo.nonone{grid-template-columns:1fr!important}" + P + ".vpgs-prow.solo>span:first-child{display:none}" + P + ".vpgs-prow.solo>:nth-child(2){grid-column:1!important;grid-row:1!important}",
     P + "input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.75}",
     P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:44px;font-size:14px;padding:0 10px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
@@ -535,7 +535,8 @@
         while (plist.firstChild) plist.removeChild(plist.firstChild);
         for (var i = 0; i < want; i++) {
           var pr = el("div", "vpgs-prow");
-          pr.appendChild(el("span", null, want > 1 ? s.each + " " + (i + 1) : "All"));
+          pr.appendChild(el("span", null, want > 1 ? s.each + " " + (i + 1) : ""));   // one prize: just the box, no odd "All" (design review r7)
+          if (want === 1) pr.className += " solo";
           var inp = el("input", "vpgs-in"); inp.type = "text"; inp.maxLength = s.max || 120; inp.placeholder = s.placeholder || "";
           inp.setAttribute("aria-label", want > 1 ? s.each + " " + (i + 1) + " prize" : s.label); inp.id = "vpGsIn_" + s.key + "_" + i;
           inp.value = vals[i] != null ? vals[i] : "";
