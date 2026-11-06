@@ -1195,6 +1195,10 @@
   "checks": 376,
   "counted_by": "lines"
  },
+ "tools/wizard-v2-in-chrome.test.py": {
+  "checks": 30,
+  "counted_by": "lines"
+ },
  "touring-backend/lib/touring-api.test.js": {
   "checks": 56,
   "counted_by": "lines"
