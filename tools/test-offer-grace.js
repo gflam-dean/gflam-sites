@@ -354,10 +354,10 @@ async function newProspect(name, offerOpen) {
   check('the welcome, switch OFF: today\'s words, unchanged', /your account simply pauses and the offer price goes with it\. If/.test(wh(wOff)) && !/5 more days/.test(wh(wOff)));
 
   var TERMS = readFile('venueplay/terms.html'), t2 = TERMS.slice(TERMS.indexOf('<h2>2. Offer pricing</h2>'), TERMS.indexOf('<h2>3. Pricing and billing</h2>'));
-  check('the Terms (section 2) say it: pauses with no card, 5 days after the free month ends to keep the offer price, to 11:59pm Brisbane, then standard, no em dash, lowercase venueplay',
-    /your account pauses/.test(t2) && /you have 5 days after your free month ends to add a card and keep that offer price/.test(t2) && /11:59pm Brisbane time on the fifth day/.test(t2) && /standard rate/.test(t2) && !/[\u2014\u2013]/.test(t2) && !/VenuePlay/.test(t2), t2.slice(0, 300));
+  check('the Terms (section 2) never mention the 5 days (Dean, 6 Nov 2026: never in the Terms or publicly), no em dash, lowercase venueplay',
+    t2.length > 50 && !/5 days after|five days|fifth day|grace/i.test(TERMS) && !/[\u2014\u2013]/.test(t2) && !/VenuePlay/.test(t2), t2.slice(0, 300));
   var NSW = readFile('venueplay/nsw.html');
-  check('the offer page\'s billing FAQ says the 5 days (and the home page FAQ mentions no offer)', /you have 5 days after your free month ends to add a card and keep this rate/.test(NSW) && !/5 days after your free month/.test(readFile('venueplay/index.html')));
+  check('no public page mentions the 5 days (offer page FAQ and home page FAQ)', !/5 days after your free month|5 more days/.test(NSW) && !/5 days after your free month|5 more days/.test(readFile('venueplay/index.html')));
   var Z = await newProspect('Pause Screen Hotel');
   var SES = readFile('venueplay/app/vp-session.js');
   check('the console\'s pause screen is the one wording (it does not still say the offer ended with the free month)',
