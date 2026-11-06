@@ -712,7 +712,7 @@
   "counted_by": "lines"
  },
  "tools/test-offer-grace.js": {
-  "checks": 40,
+  "checks": 48,
   "counted_by": "lines"
  },
  "tools/test-old-tv-css.js": {

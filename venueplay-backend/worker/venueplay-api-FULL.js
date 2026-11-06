@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 23:03 · 85c5c9e4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 23:05 · bfcbfe12';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4918,6 +4918,12 @@ function vpaFreeMonthEnd(firstMs) { return vpaBneDayStartMs(vpaAddDays(vpaBneDay
        rate (the offer is gone, Dean's words).
      - no new email: the settled reminders are day 3, 23 and 29 only (dean-settled-answers-check-first). */
 const VPA_OFFER_GRACE_DAYS = 5;
+/* THE GRACE IN THE EMAILS (Dean, 6 Nov 2026; INBOX 24: "switch it on in the same release as this change, and never
+   before"). The welcome and the card reminders say "you keep $2.50 for 5 more days after your free month" only when
+   the Worker setting OFFER_GRACE_EMAILS is "on". Off (the default), they keep today's words (the offer ends with the
+   pause), which is the stricter promise and never untrue. A Worker setting, not code, so Dean's yes needs no deploy and
+   switching it off again is instant. The grace itself (vpaProspectPrice) does not read this. */
+function vpaGraceEmailWords(env) { return String((env && env.OFFER_GRACE_EMAILS) || '').trim().toLowerCase() === 'on'; }
 /* The free month's last moment for a prospect row, or NaN when it has never started. */
 function vpaProspectMonthEndMs(prow) {
   if (!prow) return NaN;
@@ -5143,13 +5149,16 @@ async function vpaRenderProspectReminder(env, o) {
   if (!res.ok) return null;
   const tpl = String(await res.text());
   let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
-  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: o.offerRate < VPA_STANDARD_RATE, nooffer: !(o.offerRate < VPA_STANDARD_RATE) });
+  const onOffer = o.offerRate < VPA_STANDARD_RATE;
+  const grace = onOffer && vpaGraceEmailWords(env) && !!o.graceWords;   // no date to give: today's words
+  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: onOffer && !grace, graceoffer: grace, nooffer: !onOffer });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
     .replace(/{{ends_on}}/g, vpaEsc(o.endsWords))
     .replace(/{{days_left}} days/g, Number(o.daysLeft) === 1 ? '1 day' : o.daysLeft + ' days')   // never "1 days left" (5 Nov 2026)
     .replace(/{{days_left}}/g, String(o.daysLeft))
+    .replace(/{{offer_kept_until}}/g, vpaEsc(o.graceWords || ''))
     .replace(/{{offer_rate}}/g, '$' + Number(o.offerRate).toFixed(2))
     .replace(/{{standard_rate}}/g, '$' + VPA_STANDARD_RATE.toFixed(2))
     .replace(/{{card_url}}/g, o.cardUrl)
@@ -5209,7 +5218,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!email || !env.RESEND_API_KEY) continue;
     const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
-      endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
+      endsWords: vpaBneDateWords(endMs), graceWords: isFinite(vpaOfferGraceEnd(p)) ? vpaBneDateWords(vpaOfferGraceEnd(p)) : '', daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
       cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id) });
     if (!msg) continue;
@@ -6164,7 +6173,8 @@ async function vpaRenderProspectWelcome(env, o) {
   /* The prospect's short link (migration 175) opens the normal sign-in and texts a code (Dean, 6 Nov 2026). */
   const viaCode = !sms && !!o.signinToken && VPA_SHORT_RE.test(String(o.signinToken));
   html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken && !viaCode, viacode: viaCode,
-    nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding });
+    nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding,
+    graceoffer: founding && vpaGraceEmailWords(env), offerpause: founding && !vpaGraceEmailWords(env), plainpause: !founding });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
