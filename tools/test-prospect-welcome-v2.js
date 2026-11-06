@@ -274,8 +274,8 @@ var __rnd = 11;
   check('a venue 60 days old that is not a prospect: never (Tugun and every venue already running are left alone)', PS.FR.wants(ctxFor('owner', selfV({ created_at: '2026-08-31T00:00:00Z' })), PS.deps.storage, NOW) === false);
   check('a venue with no created_at: never', PS.FR.wants(ctxFor('owner', selfV({ created_at: null })), PS.deps.storage, NOW) === false);
   check('a host at a new venue: no', PS.FR.wants(ctxFor('host', selfV()), PS.deps.storage, NOW) === false);
-  function sessClient(rows, fail) { return { from: function (t) { var q = { t: t, f: {} }; var b = { select: function () { return b; }, eq: function (k, v) { q.f[k] = v; return b; }, limit: function (n) { q.limit = n; CK.push(q);
-    return fail ? Promise.reject(new Error('offline')) : Promise.resolve({ data: rows.filter(function (r) { return r.venue_id === q.f.venue_id; }).slice(0, n), error: null }); } }; return b; } }; }
+  function sessClient(rows, fail) { return { from: function (t) { var q = { t: t, f: {} }; var b = { select: function () { return b; }, eq: function (k, v) { q.f[k] = v; return b; }, neq: function (k, v) { q.n = q.n || {}; q.n[k] = v; return b; }, limit: function (n) { q.limit = n; CK.push(q);
+    return fail ? Promise.reject(new Error('offline')) : Promise.resolve({ data: rows.filter(function (r) { if (r.venue_id !== q.f.venue_id) return false; for (var k in (q.n || {})) if (r[k] === q.n[k]) return false; return true; }).slice(0, n), error: null }); } }; return b; } }; }
   var CK = [];
   var nv = selfV({ id: 'VN1', created_at: new Date(Date.now() - 2 * 86400000).toISOString() });
   var ok1 = await PS.FR.check(ctxFor('owner', nv), sessClient([{ venue_id: 'OTHER' }]), PS.deps.storage);
@@ -284,6 +284,9 @@ var __rnd = 11;
   var ok2 = await PS.FR.check(ctxFor('owner', nv2), sessClient([{ venue_id: 'VN2' }]), PS.deps.storage);
   check('a venue that has had its first game: does not open, and is marked done on this device so it is never asked again',
     ok2 === false && JSON.parse(STORE['vpFirstRun:VN2']).done === true && PS.FR.wants(ctxFor('owner', nv2), PS.deps.storage) === false, STORE['vpFirstRun:VN2']);
+  var nv5 = selfV({ id: 'VN5', created_at: new Date(Date.now() - 2 * 86400000).toISOString() });
+  var ok5 = await PS.FR.check(ctxFor('owner', nv5), sessClient([{ venue_id: 'VN5', is_demo: true }]), PS.deps.storage);
+  check('a venue that has only played the try-it demo still gets the wizard (a demo is not a first game, migration 172)', ok5 === true && CK[CK.length - 1].n && CK[CK.length - 1].n.is_demo === true, CK[CK.length - 1]);
   var nv3 = selfV({ id: 'VN3', created_at: new Date(Date.now() - 2 * 86400000).toISOString(), last_trivia_at: '2026-10-29T09:00:00Z' });
   var n0 = CK.length, ok3 = await PS.FR.check(ctxFor('owner', nv3), sessClient([]), PS.deps.storage);
   check('a venue whose row says it ran trivia: does not open, without asking', ok3 === false && CK.length === n0);

@@ -3166,6 +3166,9 @@ MUTATIONS = [
      'a new venue cannot play the demo until it has ticked the Terms, so the journey stops at the first screen'),
 
     # ---- 6 Nov 2026, INBOX 82, 92c, 93: the try-it demo's rules (vp-demo.js, vp-try-slot.js).
+    ('test-prospect-welcome-v2.js', 'venueplay/app/vp-firstrun.js',
+     '.eq("venue_id", v.id).neq("is_demo", true).limit(1)', '.eq("venue_id", v.id).limit(1)',
+     'a venue that has only played the try-it demo never sees the setup wizard the demo sends it to'),
     ('try-demo-in-chrome.test.py', 'venueplay/app/try.html',
      '    if(S.plan.skip){ location.href="/app/"; return; }',
      '',

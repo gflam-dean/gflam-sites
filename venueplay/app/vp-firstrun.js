@@ -136,7 +136,8 @@
   }
   /* Should it open now? A prospect: yes (the card step is theirs). Any other new venue: only until its
      first game. Trivia and musical bingo stamp the venue row; bingo leaves a session. A venue that has
-     played is marked done on this device. A read that fails opens nothing: a real venue's console must
+     played is marked done on this device. The try-it demo is not a first game (migration 172, is_demo): a venue
+     that has only played the demo still gets the wizard, which is where the demo sends it. A read that fails opens nothing: a real venue's console must
      never be held up by a guide it may not need. Resolves true or false, never rejects. */
   function check(ctx, client, storage) {
     storage = storage || root.localStorage;
@@ -146,7 +147,7 @@
     function played() { var st = readState(storage, v.id); st.done = true; writeState(storage, v.id, st); _noGuide[v.id] = true; return false; }
     if (v.last_trivia_at || v.last_musical_at) return Promise.resolve(played());
     try {
-      return Promise.resolve(client.from("vp_sessions").select("id").eq("venue_id", v.id).limit(1)).then(function (r) {
+      return Promise.resolve(client.from("vp_sessions").select("id").eq("venue_id", v.id).neq("is_demo", true).limit(1)).then(function (r) {
         if (!r || r.error || !Array.isArray(r.data)) { _noGuide[v.id] = true; return false; }
         return r.data.length ? played() : true;
       }, function () { _noGuide[v.id] = true; return false; });

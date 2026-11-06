@@ -540,7 +540,7 @@
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
-  "checks": 123,
+  "checks": 145,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
@@ -784,7 +784,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 159,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
