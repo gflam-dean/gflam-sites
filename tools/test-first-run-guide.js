@@ -382,6 +382,20 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
     check('and with nothing chosen yet it follows the drop-down, which opens on the first venue', rows[0].hidden === false && rows[1].hidden === true, [rows[0].hidden, rows[1].hidden]);
     check('Billing alone is about the group: the drop-down gives way there to "You\'re looking at the group"', /<p class="acctgroup" id="acctGroup" hidden>You're looking at the group<\/p>/.test(BILL) && /body\[data-tab="billing"\] #acctPick\{display:none\}/.test(BILL) && /document\.body\.setAttribute\("data-tab", id\)/.test(BILL) && /label: "You're looking at",/.test(BILL));
   })();
+  /* The Marketing tab is three cards since 6 Nov 2026, so a manager's toggles hide them by card, not by label. */
+  (function () {
+    function gate(perms) {
+      var els = {};
+      function $(id) { return els[id] || (els[id] = { id: id, style: { display: '' }, classList: { remove: function () {} }, querySelectorAll: function () { return []; }, querySelector: function () { return null; } }); }
+      var doc = { querySelector: function () { return null; }, querySelectorAll: function () { return []; } };
+      var g = (new Function('$', 'document', 'rememberedTab', liftFn(BILL, 'gateSections') + '\ngateSections._tabbed = true; return gateSections;'))($, doc, function () { return null; });
+      g({ is_owner: false, perms: perms });
+      return function (id) { return $(id).style.display; };
+    }
+    var none = gate({ advertising: false, players_optin: false }), all = gate({ advertising: true, players_optin: true }), unset = gate({});
+    check('a manager without the opt-in right does not see the offers list card; with it, they do (and never on an unset toggle)', none('mkOptinCard') === 'none' && all('mkOptinCard') === '' && unset('mkOptinCard') === 'none', [none('mkOptinCard'), all('mkOptinCard'), unset('mkOptinCard')]);
+    check('and the venue link and table signs cards follow the screen right, like the TV', none('mkLinkCard') === 'none' && none('mkSignsCard') === 'none' && all('mkLinkCard') === '' && all('mkSignsCard') === '' && unset('mkLinkCard') === '', [none('mkLinkCard'), none('mkSignsCard'), all('mkLinkCard')]);
+  })();
   var ab2 = runAbout({ data: [], error: { message: 'column setup_answers does not exist' } }); await settle();
   var ab3 = runAbout(null, true); await settle();
   check('before migration 163 (the read fails or errors) the card stays hidden and says nothing', ab2.wrap.style.display === 'none' && ab3.wrap.style.display === 'none' && ab2.body.children.length === 0 && ab3.body.children.length === 0);

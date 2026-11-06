@@ -326,8 +326,8 @@ try:
     ok('the Table signs card is here, and its link carries the venue', sg.endswith('/signage.html?venue=deepwater-hotel') and S.js(sid, '!!document.querySelector("#tp-marketing #signageLink") && !document.querySelector("#tp-screen #signageLink")') is True, sg)
     ok('the opt-in CSV export is here, not under Game settings', S.js(sid, '!!document.querySelector("#tp-marketing #optinExport") && !document.querySelector("#tp-settings #optinExport")') is True)
     sp = S.js(sid, 'document.getElementById("optinSignpost").innerText.replace(/\\s+/g," ").trim() + " | " + document.getElementById("optinSettingsLink").getAttribute("href")')
-    ok('one line says the opt-in tick and what players are asked for are set under Game settings, and links to that venue\'s settings',
-       sp == 'The opt-in tick on the join screen, and what players are asked for, are set under Game settings. | settings.html?venue=' + V1, sp)
+    ok('one short line says what players are asked is changed in Game settings, and links to that venue\'s settings',
+       sp == 'Change what players are asked in Game settings. | settings.html?venue=' + V1, sp)
     shot(sid, 'billing-marketing')
     S.js(sid, 'var s=document.getElementById("mkVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
     time.sleep(0.3)

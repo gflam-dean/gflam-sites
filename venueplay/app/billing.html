@@ -720,33 +720,38 @@
          Game settings. What is ASKED on the join screen (the opt-in tick, the fields) stays an owner-only
          decision on Game settings, so the last line points there. -->
     <div class="tabpanel" id="tp-marketing">
-    <div class="label">Your venue link</div>
-    <p class="note" style="margin:0 0 10px">It never changes: use it in posts, menus and emails.</p>
+    <!-- Tidier (Dean, 6 Nov 2026): three cards the same shape, each a heading, one short line and its button.
+         The link is shown in full, wrapping on a phone rather than cut off. -->
     <div id="mkPickWrap" class="screenpick" style="display:none">
       <label class="flabel" for="mkVenue">You are looking at the link for</label>
       <select id="mkVenue"></select>
       <p class="pickfine">The link and the signs below are for <b id="mkPickName">this venue</b> only.</p>
     </div>
-    <div class="scard">
+    <div class="scard" id="mkLinkCard">
       <div class="scardhead">Your venue link<span class="forvenue" id="mkLinkForVenue"></span></div>
-      <div id="venueLinkVal" style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:19px;letter-spacing:.04em;color:#fff;overflow-wrap:anywhere;margin:8px 0 12px">Loading your link&hellip;</div>
+      <p class="snote">Use it in posts, menus and emails. It never changes.</p>
+      <div id="venueLinkVal" style="font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-weight:700;font-size:clamp(14px,3.6vw,19px);letter-spacing:.02em;color:#fff;overflow-wrap:anywhere;margin:10px 0 12px">Loading your link&hellip;</div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <a id="venueLinkOpen" href="#" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Open it</a>
-        <span class="snote" style="margin:0">Opens the join page a player sees when they scan.</span>
+        <span class="snote" style="margin:0">What players see when they scan.</span>
       </div>
     </div>
-    <div class="scard">
+    <div class="scard" id="mkSignsCard">
       <div class="scardhead">Table signs</div>
       <p class="snote">Print signs for your tables.</p>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
         <a id="signageLink" href="/signage.html" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Print table signs</a>
       </div>
     </div>
 
-    <div class="label">Marketing opt-ins</div>
-    <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted".</p>
-    <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
-    <p class="note" id="optinSignpost" style="margin:12px 0 0">The opt-in tick on the join screen, and what players are asked for, are set under <a id="optinSettingsLink" href="settings.html" style="color:var(--pink)">Game settings</a>.</p>
+    <div class="scard" id="mkOptinCard">
+      <div class="scardhead">Your offers list</div>
+      <p class="snote">Players who ticked to get your offers.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
+      </div>
+      <p class="snote" id="optinSignpost" style="margin:12px 0 0">Change what players are asked in <a id="optinSettingsLink" href="settings.html" style="color:var(--pink)">Game settings</a>.</p>
+    </div>
     </div><!-- /tp-marketing -->
 
     <div class="tabpanel" id="tp-draws">
@@ -1502,12 +1507,15 @@
        export route refuses anything short of an explicit tick, so showing this section as
        available to a manager whose permission was never set told them they had something
        they would be refused the moment they pressed Download. */
-    setSec("Marketing opt-ins", p.players_optin===true);
+    /* The Marketing tab is cards, not labelled sections, since 6 Nov 2026 (Dean: "tidier"), so it is gated by card. */
+    function setCard(id, show){ var c=$(id); if(c) c.style.display = show?"":"none"; }
+    setCard("mkOptinCard", p.players_optin===true);
     setSec("Raffles", p.draws_raffles!==false);
     setSec("Members draws", p.draws_raffles!==false);
     setSec("Permits and authorities for draws", p.draws_raffles!==false);
     setSec("Advertising", p.advertising!==false);
-    setSec("Your venue link", p.advertising!==false);   // the link and the table signs: the same right as the TV
+    setCard("mkLinkCard", p.advertising!==false);   // the link and the table signs: the same right as the TV
+    setCard("mkSignsCard", p.advertising!==false);
     // Owner-only sections, hidden last so any overlap ends hidden.
     var firstCard=$("content").querySelector(".card"); if(firstCard) firstCard.style.display="none"; // billing summary
     var _pd=$("pastDue"); if(_pd) _pd.style.display="none";   // a failed payment is the owner's to fix
