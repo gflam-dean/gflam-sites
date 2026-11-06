@@ -360,7 +360,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
     var els = { aboutVenue: body, aboutVenueWrap: wrap }, asked = [];
     var fakeVP = { getClient: function () { var b = { select: function () { return b; }, in: function (c, ids) { asked.push([c, ids]); return fail ? Promise.reject(new Error('x')) : Promise.resolve(rows); } }; return { from: function (t) { asked.push(t); return b; } }; } };
     var doc = { createElement: function (t) { return new El(t); } };
-    var fn = (new Function('$', 'VP', 'document', 'window', 'VPFirstRun', 'esc', liftFn(BILL, 'renderAbout') + '\nreturn renderAbout;'))(function (id) { return els[id]; }, fakeVP, doc, { VPFirstRun: P.FR }, P.FR, function (x) { return String(x); });
+    var fn = (new Function('$', 'VP', 'document', 'window', 'VPFirstRun', 'esc', 'showOnlyPageVenue', liftFn(BILL, 'renderAbout') + '\nreturn renderAbout;'))(function (id) { return els[id]; }, fakeVP, doc, { VPFirstRun: P.FR }, P.FR, function (x) { return String(x); }, function () {});
     fn([{ id: 'V1', name: 'The Test Arms' }, { id: 'V2', name: 'The Other Arms' }]);
     return { body: body, wrap: wrap, asked: asked };
   }
@@ -369,6 +369,19 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('the Account page card reads vp_venue_settings.setup_answers for the account\'s venues and shows it', ab.asked[0] === 'vp_venue_settings' && ab.asked[1][0] === 'venue_id' && ab.asked[1][1].join() === 'V1,V2' && ab.wrap.style.display === '', ab.asked);
   var abText = ab.body.children.map(function (r) { return r.innerHTML.replace(/<\/(b|small)>/g, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); }).join(' | ');
   check('one row a venue: its answers in words, or "Not filled in yet"', abText === 'The Test Arms 2 TVs \u00b7 Games on Thu and Fri \u00b7 Trivia and Raffles | The Other Arms Not filled in yet', abText);
+  /* ONE VENUE PER TAB (Dean, 6 Nov 2026): the venue chosen at the top is the only row Game settings shows. */
+  (function () {
+    function rowFor(id) { return { hidden: false, getAttribute: function () { return id; } }; }
+    var rows = [rowFor('V1'), rowFor('V2')], sel = [];
+    var docQ = { querySelectorAll: function (q) { sel.push(q); return rows; } };
+    var only = (new Function('document', 'pageVenueId', 'acctPick', liftFn(BILL, 'showOnlyPageVenue') + '\nreturn showOnlyPageVenue;'))(docQ, 'V2', null);
+    only();
+    check('Game settings shows only the venue chosen at the top: Royal Arms chosen, Deepwater\'s row is hidden (Dean, 6 Nov 2026)', rows[0].hidden === true && rows[1].hidden === false && /#aboutVenue/.test(sel[0]) && /#playerData/.test(sel[0]), [rows[0].hidden, rows[1].hidden, sel]);
+    var only2 = (new Function('document', 'pageVenueId', 'acctPick', liftFn(BILL, 'showOnlyPageVenue') + '\nreturn showOnlyPageVenue;'))(docQ, null, { value: function () { return 'V1'; } });
+    only2();
+    check('and with nothing chosen yet it follows the drop-down, which opens on the first venue', rows[0].hidden === false && rows[1].hidden === true, [rows[0].hidden, rows[1].hidden]);
+    check('Billing alone is about the group: the drop-down gives way there to "You\'re looking at the group"', /<p class="acctgroup" id="acctGroup" hidden>You're looking at the group<\/p>/.test(BILL) && /body\[data-tab="billing"\] #acctPick\{display:none\}/.test(BILL) && /document\.body\.setAttribute\("data-tab", id\)/.test(BILL) && /label: "You're looking at",/.test(BILL));
+  })();
   var ab2 = runAbout({ data: [], error: { message: 'column setup_answers does not exist' } }); await settle();
   var ab3 = runAbout(null, true); await settle();
   check('before migration 163 (the read fails or errors) the card stays hidden and says nothing', ab2.wrap.style.display === 'none' && ab3.wrap.style.display === 'none' && ab2.body.children.length === 0 && ab3.body.children.length === 0);

@@ -13083,6 +13083,15 @@ MUTATIONS = [
     ('test-email-rebrand.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "{ action: ['ACTION NEEDED', '#FF1F8E', '#ffffff'],", "{ action: ['ACTION NEEDED', '#8A8A95', '#ffffff'],",
      'the action-needed pill is not pink, so a decision looks like information'),
+    # One venue per tab on Your account (Dean, 6 Nov 2026, round 7 note 4), branch feature/whats-on-12nov.
+    ('test-first-run-guide.js', 'venueplay/app/billing.html',
+     '      el.hidden = !!id && el.getAttribute("data-venue") !== String(id);',
+     '      el.hidden = false;',
+     'Game settings lists Deepwater and Royal Arms side by side whichever venue is chosen at the top'),
+    ('test-first-run-guide.js', 'venueplay/app/billing.html',
+     '  body[data-tab="billing"] #acctPick{display:none}\n',
+     '',
+     'the Billing tab shows one venue\'s drop-down over the whole group\'s bill'),
     # The first-sign-in setup guide (Dean, 5 Nov 2026, INBOX 13), branch fix/first-run-guide-10nov.
     ('runs vp-firstrun.js: the TV, hosts, a first game, then the card', 'venueplay/app/vp-firstrun.js',
      'var STEPS = ["mobile", "terms", "venue", "games", "tv", "hosts", "game", "account", "card"];',

@@ -174,6 +174,9 @@
      /app/vp-venuepick.js. The panels' own pickers stay in the page as each panel's record of the
      venue it is showing, and are never shown: two drop-downs that can disagree was the fault. */
   .screenpick{display:none!important}
+  .acctgroup{margin:0 0 18px;font-size:15px;font-weight:600}
+  body[data-tab="billing"] #acctPick{display:none}
+  body:not([data-tab="billing"]) #acctGroup{display:none}
   .acctpick{background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);border-radius:16px;padding:14px 16px 2px;margin:0 0 18px}
   .screenpick{margin:0 0 16px;background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);
     border-radius:14px;padding:13px 15px}
@@ -188,6 +191,7 @@
   .loadfail{margin:0 0 14px;background:rgba(255,194,75,0.08);border:1px solid rgba(255,194,75,0.4);
     border-radius:12px;padding:11px 13px;color:#FFC24B;font-size:13.5px}
   .loadfail[hidden]{display:none}
+  .venue[hidden]{display:none}
   .loadfail .addbtn{margin:8px 0 0}
   .loadfail p{margin:0}
   /* The venue's name beside a card heading: present, not shouting. */
@@ -483,7 +487,7 @@
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
 </head>
-<body>
+<body data-tab="billing">
 <header>
   <div class="bar">
     <div class="brand">
@@ -513,6 +517,9 @@
     <!-- THE ONE VENUE DROP-DOWN (vp-venuepick.js). Every tab below follows it, and so does every other
          screen: the console, Game settings and the monthly report open on the venue chosen here. -->
     <div class="acctpick" id="acctPick" hidden></div>
+    <!-- Billing is the one tab that is about the whole group, so there the venue drop-down gives way to
+         this line (Dean, 6 Nov 2026: "Billing is the only screen that shows all venues"). -->
+    <p class="acctgroup" id="acctGroup" hidden>You're looking at the group</p>
 
     <div class="tabs" role="tablist">
       <button class="on" data-tab="billing">Billing</button>
@@ -1408,12 +1415,13 @@
     if (pd){
       pd.innerHTML = "";
       d.venues.forEach(function(v){
-        var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none";
+        var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none"; a.setAttribute("data-venue", v.id);
         a.href = "settings.html?venue=" + encodeURIComponent(v.id);
         a.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>What you collect, the opt-in tick, how names show on the screen, your bingo permit</small></div>' +
           '<span class="canxlink" style="color:var(--muted);pointer-events:none">Open &rsaquo;</span>';
         pd.appendChild(a);
       });
+      showOnlyPageVenue();
     }
   }
 
@@ -1432,10 +1440,11 @@
         if (w.tvs) bits.push(w.tvs);
         if (w.nights) bits.push("Games on " + w.nights);
         if (w.games) bits.push(w.games);
-        var row = document.createElement("div"); row.className = "venue";
+        var row = document.createElement("div"); row.className = "venue"; row.setAttribute("data-venue", v.id);
         row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small></div>';
         box.appendChild(row);
       });
+      showOnlyPageVenue();
       wrap.style.display = "";
     }, function(){});
   }
@@ -1579,10 +1588,11 @@
   function mountAcctPick(venues){
     if (!window.VPVenuePick) return;
     var want = defaultVenue(venues);
-    acctPick = window.VPVenuePick.mount($("acctPick"), { venues: venues, value: want && want.id, label: "You are looking at",
-      note: "Every tab on this page is for this venue, and the console, Game settings and your monthly report open on it too.",
+    acctPick = window.VPVenuePick.mount($("acctPick"), { venues: venues, value: want && want.id, label: "You're looking at",
       onChange: switchAccountVenue });
     if (want && venues.length > 1) pageVenueId = want.id;
+    var grp = $("acctGroup"); if (grp) grp.hidden = venues.length < 2;
+    showOnlyPageVenue();
   }
   function switchAccountVenue(id, name){
     function go(){
@@ -1597,6 +1607,7 @@
       });
       if (lastHosts) renderHosts(lastHosts, acctVenues);
       buildHostVenuePicker(acctVenues);
+      showOnlyPageVenue();
       paintNightsLink();
       return true;
     }
@@ -1610,6 +1621,15 @@
       });
     }
     return go();
+  }
+  /* ONE VENUE PER TAB (Dean, 6 Nov 2026): outside Billing a list shows only the venue chosen at the top,
+     never Deepwater and Royal Arms side by side. Rows carry data-venue; the rest are hidden, not removed,
+     so switching venue is instant. */
+  function showOnlyPageVenue(){
+    var id = pageVenueId || (acctPick && acctPick.value && acctPick.value()) || "";
+    [].forEach.call(document.querySelectorAll("#aboutVenue [data-venue], #playerData [data-venue]"), function(el){
+      el.hidden = !!id && el.getAttribute("data-venue") !== String(id);
+    });
   }
   /* The monthly report link follows the venue too (Dean, 3 Nov 2026: it said "pick a venue"). */
   function paintNightsLink(){
@@ -2475,6 +2495,7 @@
     for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a].getAttribute('data-tab')===id);
     for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
     var l=$("lede"); if(l) l.hidden = (id!=="billing" && l.classList.contains("billonly"));
+    try { document.body.setAttribute("data-tab", id); } catch (e) {}
   }
   // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
   // Venue setup. Static markup, so wire the buttons once on load.

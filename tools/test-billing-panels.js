@@ -68,11 +68,13 @@ var NAMES = [
   // 21 Oct 2026: the screen panel now tracks unsaved changes (a chosen logo saves itself)
   'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow',
   // 3 Nov 2026 (Dean): ONE venue drop-down moves every panel; prizes said as cash and other, apart
-  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines'
+  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines',
+  // 6 Nov 2026 (Dean): one venue per tab, outside Billing
+  'showOnlyPageVenue'
 ];
 var SRC = '', MISSING = [];
 /* ...and the two page variables those read, lifted as they are written, never restated here. */
-['  var logoEd = {', '  var screenDirty = '].forEach(function (head) {
+['  var logoEd = {', '  var screenDirty = ', '  var acctPick = '].forEach(function (head) {
   var at = SCRIPT.indexOf('\n' + head);
   if (at < 0) throw new Error(head.trim() + ' is not in the page any more');
   SRC += SCRIPT.slice(at + 1, SCRIPT.indexOf('\n', at + 1)) + '\n';
@@ -157,7 +159,7 @@ function makePage(opts) {
   opts = opts || {};
   var els = {};
   var $ = function (id) { return els[id] || (els[id] = new El(id, SELECTS[id] ? 'select' : 'div')); };
-  var document = { createElement: function (t) { return new El(null, t); }, body: new El('body') };
+  var document = { createElement: function (t) { return new El(null, t); }, body: new El('body'), querySelectorAll: function () { return []; } };
   var store = opts.storage || {};
   var localStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
   var window = { location: { origin: 'https://venueplay.com.au' } };
