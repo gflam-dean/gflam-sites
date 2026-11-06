@@ -71,7 +71,7 @@ ok('the Reveal button goes through the two-tap guard', /rv\.addEventListener\("c
 
 
 print('THE WINNERS (Dean, 6 Nov 11:30): one tap each for third, second, the winner; or all at once; then the leaderboard');
-var SRC = ['finishOutcome', 'finishNow', 'podiumRanks', 'endMsg', 'nextPlace', 'clearEndTimers', 'armBoardTimer', 'boardNoteText', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
+var SRC = ['finishOutcome', 'finishNow', 'podiumRanks', 'endMsg', 'nextPlace', 'armAutoPlace', 'clearEndTimers', 'armBoardTimer', 'boardNoteText', 'showFinalBoard'].map(function (n) { return liftFrom(HOST, n); }).join('\n');
 var BOARD_AFTER = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[1]), BOARD_STAYS = +((HOST.match(/var BOARD_AFTER_MS=(\d+), BOARD_STAYS_MS=(\d+);/) || [])[2]);
 function makeHost(board, all) {
   var G = { board: board, status: 'reveal', noPlayersNote: false, winnersAll: all === true, endRanks: [], endReveal: 0, endBoard: false };
@@ -79,7 +79,7 @@ function makeHost(board, all) {
   function playerCount() { return 3; } function bcast(m) { sent.push(m); } function renderConsole() {} function hostError(m) { errors.push(m); }
   function setTimeout(f, ms) { timers.push({ f: f, ms: ms, on: true }); return timers.length; } function clearTimeout(id) { if (id && timers[id - 1]) timers[id - 1].on = false; }
   function setInterval() { return 0; } function clearInterval() {} function $() { return null; }
-  var NOBODY_MSG = 'x', BOARD_AFTER_MS = BOARD_AFTER, BOARD_STAYS_MS = BOARD_STAYS;
+  var NOBODY_MSG = 'x', BOARD_AFTER_MS = BOARD_AFTER, BOARD_STAYS_MS = BOARD_STAYS, AUTO_PLACE_MS = +((HOST.match(/var AUTO_PLACE_MS=(\d+);/) || [])[1]);
   eval(SRC);
   return { G: G, sent: sent, timers: timers, finishNow: finishNow, nextPlace: nextPlace, showFinalBoard: showFinalBoard, podiumRanks: podiumRanks,
            live: function () { return timers.filter(function (t) { return t.on; }); } };
@@ -114,6 +114,16 @@ var ha = makeHost(B, true);
 ha.finishNow(true);
 ok('"All at once": all three places together, with the sound (reveal 1)', wire(ha) === 'podium:1', wire(ha));
 ok('and the 60 second leaderboard timer starts at once', ha.live().length === 1 && ha.live()[0].ms === 60000);
+var hu = makeHost(B); hu.G.autoPlaces = true; hu.finishNow(true);
+var st = hu.live();
+ok('nobody tapped (the 1:30 timer): third, then a timer to the next place a few seconds later', wire(hu) === 'podium:3' && st.length === 1 && st[0].ms === 6000, st.map(function (t) { return t.ms; }));
+st[0].on = false; st[0].f();
+var st2 = hu.live();
+ok('second by itself, and another timer', wire(hu) === 'podium:3,podium:2' && st2.length === 1 && st2[0].ms === 6000);
+st2[0].on = false; st2[0].f();
+ok('then the winner by itself, and then the 60 second leaderboard', wire(hu) === 'podium:3,podium:2,podium:1' && hu.live().length === 1 && hu.live()[0].ms === 60000, wire(hu));
+ok('the host\'s own tap never steps by itself', h.timers.filter(function (t) { return t.ms === 6000; }).length === 0);
+ok('the 1:30 timer calls finish as auto; the button passes a click, which is not', /clearAutoFinish\(\); finish\(true\); \} \}, AUTO_FINISH_MS\);/.test(HOST) && /G\.autoPlaces = \(auto===true\);/.test(HOST));
 ok('two teams: second, then the winner', makeHost().podiumRanks([{ points: 9 }, { points: 5 }]).join() === '2,1');
 ok('a tie for first: third, then the two winners together', makeHost().podiumRanks([{ points: 9 }, { points: 9 }, { points: 5 }]).join() === '3,1');
 ok('one team: just the winner', makeHost().podiumRanks([{ points: 9 }]).join() === '1');
@@ -200,7 +210,7 @@ ok('the console line counts down from 1:30', aft(90000) === "The TV reveals the 
   var G2 = G; G.status = 'ended'; timers = []; finished = 0; armAutoFinish(); timers[0].f();
   ok('but not once the host has already tapped', finished === 0);
 })();
-ok('the last reveal arms it, and the host\'s tap and End round clear it', /if\(isLast\)\{ armAutoFinish\(\); renderConsole\(\); \}/.test(HOST) && /function finish\(\)\{\n    clearAutoFinish\(\);/.test(HOST) && /clearTick\(\); clearAuto\(\); clearAutoFinish\(\);/.test(HOST));
+ok('the last reveal arms it, and the host\'s tap and End round clear it', /if\(isLast\)\{ armAutoFinish\(\); renderConsole\(\); \}/.test(HOST) && /function finish\(auto\)\{\n    clearAutoFinish\(\);/.test(HOST) && /clearTick\(\); clearAuto\(\); clearAutoFinish\(\);/.test(HOST));
 
 print('THE +10 SECONDS BUTTON IS GONE (Dean, 6 Nov 2026)');
 ok('no "+10 seconds" button on the console', HOST.indexOf('+10 seconds') < 0 && HOST.indexOf('addTimeBtn') < 0);

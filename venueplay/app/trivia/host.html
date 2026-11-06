@@ -1281,12 +1281,15 @@
   function armAutoFinish(){
     clearAutoFinish();
     G.finishAt=Date.now()+AUTO_FINISH_MS;
-    G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(); } }, AUTO_FINISH_MS);
+    G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(true); } }, AUTO_FINISH_MS);
     G.finishTick=setInterval(function(){ var n=$("autoFinishNote"); if(n) n.textContent=autoFinishText(G.finishAt-Date.now()); }, 1000);
   }
   function autoFinishText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The TV reveals the winners by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+" if you don't tap."; }
-  function finish(){
+  /* auto: the 1:30 timer put the winners up, nobody tapped (Dean, 6 Nov 2026, 13:10): in "One at a time" the TV then steps
+     through third, second and the winner BY ITSELF, AUTO_PLACE_MS apart. The host's own tap (a click event) is never auto. */
+  function finish(auto){
     clearAutoFinish();
+    G.autoPlaces = (auto===true);
     clearTick();
     G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
@@ -1332,9 +1335,11 @@
     G.endRanks=podiumRanks(G.board);
     G.endReveal = (G.winnersAll===true) ? 1 : G.endRanks[0];
     bcast(endMsg());
-    if(G.endReveal===1) armBoardTimer();
+    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
     renderConsole();
   }
+  var AUTO_PLACE_MS=6000;
+  function armAutoPlace(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=setTimeout(function(){ G.autoPlaceT=null; nextPlace(); }, AUTO_PLACE_MS); }
   /* The places on the podium, lowest first: [3,2,1], or [2,1] with two teams, or [3,1] when two tie for first. The TV's
      podiumEntries() draws the same places from the same rows. */
   function podiumRanks(rows){
@@ -1356,11 +1361,11 @@
     var i=G.endRanks.indexOf(G.endReveal);
     G.endReveal = (i>=0 && i+1<G.endRanks.length) ? G.endRanks[i+1] : 1;
     bcast(endMsg());
-    if(G.endReveal===1) armBoardTimer();
+    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
     renderConsole();
   }
   var BOARD_AFTER_MS=60000, BOARD_STAYS_MS=120000;
-  function clearEndTimers(){ clearTimeout(G.boardT); clearTimeout(G.adsT); clearInterval(G.boardTick); G.boardT=G.adsT=G.boardTick=null; G.boardAt=0; }
+  function clearEndTimers(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=null; clearTimeout(G.boardT); clearTimeout(G.adsT); clearInterval(G.boardTick); G.boardT=G.adsT=G.boardTick=null; G.boardAt=0; }
   function armBoardTimer(){
     clearEndTimers();
     G.boardAt=Date.now()+BOARD_AFTER_MS;
