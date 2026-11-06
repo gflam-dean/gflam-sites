@@ -69,7 +69,7 @@ try:
         v = S.json(sid, HERO, {})
         b = v.get('btns') or []
         ok('%s: the hero\'s first button is "Have a play for free" and goes to the start form (Sunday version; the enquiry stays as a link under it)' % where,
-           len(b) >= 2 and b[0]['t'] == 'Have a play for free' and b[0]['href'] == '#claim', b[:1])
+           len(b) >= 2 and b[0]['t'] == 'Have a play for free' and b[0]['href'] == '#start', b[:1])
         ok('%s: "See pricing" is the second button' % where, len(b) >= 2 and b[1]['t'] == 'See pricing' and b[1]['href'] == '#offer', b[1:2])
         ok('%s: every hero button sits inside the page (no sideways scroll), at least 44px tall' % where,
            b and all(x['l'] >= 0 and x['r'] <= v.get('vw', 0) and x['h'] >= 44 for x in b), b)
@@ -122,9 +122,13 @@ page = open(os.path.join(A.root, 'venueplay', 'nsw.html'), encoding='utf-8').rea
 new = re.findall(r'Have a play for free|Set me up a free account[^\'"<]*|we\\u2019ll set up your free account[^\'"]*', page)
 ok('the new words have no em dash and no capitalised VenuePlay', new and not any('—' in x or 'VenuePlay' in x for x in new), new)
 
+ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it won\'t come back" is gone',
+   'Trivia and musical bingo, plus bingo, raffles and members draws where your state allows' in page
+   and 'Keep $2.50 by adding your card before your free month ends' in page and 'come back' not in re.sub(r'<[^>]+>', ' ', page.split('<footer')[0].split('id="offer"')[1].split('</section>')[0]))
+
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 23
+EXPECTED = 24
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

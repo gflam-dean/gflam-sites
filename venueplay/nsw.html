@@ -582,10 +582,10 @@
     <div class="h2-copy">
       <span class="eyebrow"><span class="live-dot"></span> <span class="eb-text">$2.50 a player, if you lock it in by <span class="vpc-day" style="white-space:nowrap">30 November</span></span></span>
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
-      <p class="lede">Trivia, musical bingo, bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
+      <p class="lede">Trivia and musical bingo, plus bingo, raffles and members draws where your state allows, on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
-        <!-- THE START BUTTON. Its destination is this one href (today the sign-up form below, #claim). The no-card start (job signup-core) changes only this href. -->
-        <a class="btn btn-primary" href="#claim" data-cta="hero-start">Have a play for free</a>
+        <!-- THE START BUTTON. Its destination is this one href (today the start section below, #start). The no-card start (job signup-core) changes only this href. -->
+        <a class="btn btn-primary" href="#start" data-cta="hero-start">Have a play for free</a>
         <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
       </div>
       <p class="h2-price"><b>Sign up and have a play for a month on us.</b> Nothing is charged today. No lock-in, cancel anytime.</p>
@@ -650,108 +650,17 @@
 
 
 
-<!-- ===================== SIGNUP ===================== -->
-<section class="sec" id="claim">
+<!-- ===================== START ===================== -->
+<!-- Every "Have a play for free", "Lock in your price" and the floating button point at #start. STOPGAP until the no-card start
+     (job signup-core, fix/signup-core-10nov): this body is replaced by the five-box start form and id="start" stays. -->
+<section class="sec" id="start">
   <div class="wrap">
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
-      <div class="label" style="justify-content:center">Claim your spot</div>
+      <div class="label" style="justify-content:center">Free first month</div>
       <h2 class="sec-title">Start your free month</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Sign up and have a play for a month on us. Add your card to lock in your price before <span class="vpc-day">30 November</span>. Nothing is charged today, your first payment is one month later, and you can cancel any time before then.</p>
-    </div>
-
-    <p class="form-fine" style="margin:-8px 0 24px"><a href="#contact" data-cta="claim-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a></p>
-
-    <div class="form-shell">
-      <div class="inner">
-        <div id="vp-form">
-          <div class="form-grid">
-            <div class="field full">
-              <label for="vp-name">Your name</label>
-              <input id="vp-name" type="text" placeholder="Your full name" autocomplete="name">
-            </div>
-            <div class="field full">
-              <label for="vp-email">Contact email</label>
-              <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
-            </div>
-            <!-- Mobile and club-or-pub share a row. Dean, 17 Sep 2026: "maybe move pub or club
-                 next to mobile number?" Both are short answers and both were eating a full
-                 width each, which pushed the venue rows and the button further down the page
-                 than they needed to be. The grid drops to one column on a phone, so they stack
-                 there as before. -->
-            <div class="field">
-              <label for="vp-mobile">Mobile</label>
-              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
-            </div>
-            <div class="field">
-              <!-- Club or pub. Asked once for the account, because a group is pubs or it is clubs,
-                   never a mix. It decides which gaming rules the venue is shown and whether it can
-                   ever charge for entry, and nothing else on this form can tell us. These six
-                   founding pages are the launch cohort and were not asking it at all.
-                   The label is four words now that it sits in a half-width column: the long form
-                   wrapped onto two lines and knocked it out of line with Mobile beside it. -->
-              <label for="vp-entity">Club or pub?</label>
-              <select id="vp-entity">
-                <option value="">Choose one</option>
-                <option value="non_profit">Club (RSL, bowls, leagues, community, non-profit)</option>
-                <option value="for_profit">Pub, hotel or tavern</option>
-              </select>
-              
-            </div>
-            <div class="field full">
-              <label>Your venues</label>
-              <div id="vp-venue-list"></div>
-              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
-              <!-- Dean, 22 Oct 2026: "better to be honest from the beginning". Shown the moment a pub
-                   gives a South Australian or Northern Territory postcode (migration 116). -->
-              <div class="state-note" id="vp-nobingo" hidden>
-                <h4 id="vp-nobingo-title">Number bingo is not available for pubs here</h4>
-                <p id="vp-nobingo-body"></p>
-                <label class="ck"><input type="checkbox" id="vp-nobingo-ask"> <span>Our bingo is run by a not-for-profit organisation, such as a club or charity. Please look at switching it on for us.</span></label>
-              </div>
-              <span class="field-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
-            </div>
-            <div class="field full">
-              <label>Plan</label>
-              <div class="seg" id="vp-plan">
-                <button type="button" class="on" data-plan="monthly">Monthly<small>$2.50 / player</small></button>
-                <button type="button" data-plan="annual">Annual<small>$2.30 / player</small></button>
-              </div>
-            </div>
-          </div>
-          <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
-          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights running and we move you up to a plan that fits, which is cheaper than paying extras. Your rate per player never changes: that plan move is the only thing that changes your monthly bill.</p>
-          <div class="consent">
-            <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
-            <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me venueplay news, tips and product updates. You can unsubscribe anytime.</span></label>
-          </div>
-          <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
-          <p class="form-err" id="vp-err"></p>
-          <p class="form-fine" id="vp-fine">Secured by Stripe · first month free for new venues · cancel anytime before your first payment</p>
-        </div>
-
-        <div class="success" id="vp-success">
-          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <!-- WHAT THIS SAID, AND WHY IT WAS WRONG. Dean, 17 Sep 2026, after a real signup:
-               "confirmation says spot is held... maybe we should go to the sign in page or
-               something with a banner saying log in?"
-
-               "Your spot is held" is the language from BEFORE checkout, when there really was
-               only a spot. By the time anyone reads this their venues are provisioned, their
-               screen codes exist and they could run a game tonight. Telling them we are holding
-               something makes them wait for a next step that has already happened.
-
-               And there was nothing to press. The old copy sent them to their inbox, which made
-               the email the only way in. It is not: sign-in is a code texted to the mobile they
-               just typed in, so they can be on their console before the email lands. The button
-               goes there. We do NOT redirect automatically, because this panel carries the one
-               line people want in writing, that nothing is charged for a month. -->
-          <h3>You're in</h3>
-          <p>Your price is locked in and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.</p>
-          <a class="btn btn-primary success-go" href="/app">Sign in and set up your screen</a>
-          <p class="success-fine">Sign in with the mobile you just gave us. No password, we text you a code.</p>
-        </div>
-
-      </div>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Sign up and have a play for a month on us. Nothing is charged today. No lock-in, cancel anytime.</p>
+      <p style="margin-top:20px"><a class="btn btn-primary" href="#contact" data-cta="start-set-me-up" data-topic="free-account">Set me up a free account</a></p>
+      <p class="form-fine">We set it up and send it through, usually within one business day.</p>
     </div>
   </div>
 </section>
@@ -867,8 +776,8 @@
         <div>
           <div class="label">Open now</div>
           <h2 class="sec-title">First month free.<br>Then your rate is locked for life.</h2>
-          <p class="sec-sub">Venues that join before <span class="vpc-date">30 November 2026</span> keep this rate for as long as they stay, with the first month free. After <span class="vpc-day">30 November</span> this offer ends for you, and it won&#39;t come back.</p>
-          <div class="offer-cta"><a class="btn btn-primary" href="#claim" data-cta="offer-lock">Lock in your price</a></div>
+          <p class="sec-sub">Venues that join before <span class="vpc-date">30 November 2026</span> keep this rate for as long as they stay, with the first month free. After <span class="vpc-day">30 November</span> this offer ends for you.</p>
+          <div class="offer-cta"><a class="btn btn-primary" href="#start" data-cta="offer-lock">Lock in your price</a></div>
         </div>
         <div class="price-card">
           <div class="price-row found">
@@ -949,6 +858,111 @@
   #vp-embedded{padding:6px 10px 14px;min-height:280px}
   @media (max-width:520px){ .vp-embed-lock{display:none} }
 </style>
+
+<!-- ===================== ADD YOUR CARD NOW (lower on the page; the start form is above) ===================== -->
+<section class="sec" id="claim">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">Claim your spot</div>
+      <h2 class="sec-title">Rather add your card now?</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Keep $2.50 by adding your card before your free month ends. Nothing is charged today, your first payment is one month later, and you can cancel any time before then.</p>
+    </div>
+
+
+    <div class="form-shell">
+      <div class="inner">
+        <div id="vp-form">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="vp-name">Your name</label>
+              <input id="vp-name" type="text" placeholder="Your full name" autocomplete="name">
+            </div>
+            <div class="field full">
+              <label for="vp-email">Contact email</label>
+              <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
+            </div>
+            <!-- Mobile and club-or-pub share a row. Dean, 17 Sep 2026: "maybe move pub or club
+                 next to mobile number?" Both are short answers and both were eating a full
+                 width each, which pushed the venue rows and the button further down the page
+                 than they needed to be. The grid drops to one column on a phone, so they stack
+                 there as before. -->
+            <div class="field">
+              <label for="vp-mobile">Mobile</label>
+              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
+            </div>
+            <div class="field">
+              <!-- Club or pub. Asked once for the account, because a group is pubs or it is clubs,
+                   never a mix. It decides which gaming rules the venue is shown and whether it can
+                   ever charge for entry, and nothing else on this form can tell us. These six
+                   founding pages are the launch cohort and were not asking it at all.
+                   The label is four words now that it sits in a half-width column: the long form
+                   wrapped onto two lines and knocked it out of line with Mobile beside it. -->
+              <label for="vp-entity">Club or pub?</label>
+              <select id="vp-entity">
+                <option value="">Choose one</option>
+                <option value="non_profit">Club (RSL, bowls, leagues, community, non-profit)</option>
+                <option value="for_profit">Pub, hotel or tavern</option>
+              </select>
+              
+            </div>
+            <div class="field full">
+              <label>Your venues</label>
+              <div id="vp-venue-list"></div>
+              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
+              <!-- Dean, 22 Oct 2026: "better to be honest from the beginning". Shown the moment a pub
+                   gives a South Australian or Northern Territory postcode (migration 116). -->
+              <div class="state-note" id="vp-nobingo" hidden>
+                <h4 id="vp-nobingo-title">Number bingo is not available for pubs here</h4>
+                <p id="vp-nobingo-body"></p>
+                <label class="ck"><input type="checkbox" id="vp-nobingo-ask"> <span>Our bingo is run by a not-for-profit organisation, such as a club or charity. Please look at switching it on for us.</span></label>
+              </div>
+              <span class="field-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
+            </div>
+            <div class="field full">
+              <label>Plan</label>
+              <div class="seg" id="vp-plan">
+                <button type="button" class="on" data-plan="monthly">Monthly<small>$2.50 / player</small></button>
+                <button type="button" data-plan="annual">Annual<small>$2.30 / player</small></button>
+              </div>
+            </div>
+          </div>
+          <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
+          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights running and we move you up to a plan that fits, which is cheaper than paying extras. Your rate per player never changes: that plan move is the only thing that changes your monthly bill.</p>
+          <div class="consent">
+            <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
+            <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me venueplay news, tips and product updates. You can unsubscribe anytime.</span></label>
+          </div>
+          <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
+          <p class="form-err" id="vp-err"></p>
+          <p class="form-fine" id="vp-fine">Secured by Stripe · first month free for new venues · cancel anytime before your first payment</p>
+        </div>
+
+        <div class="success" id="vp-success">
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <!-- WHAT THIS SAID, AND WHY IT WAS WRONG. Dean, 17 Sep 2026, after a real signup:
+               "confirmation says spot is held... maybe we should go to the sign in page or
+               something with a banner saying log in?"
+
+               "Your spot is held" is the language from BEFORE checkout, when there really was
+               only a spot. By the time anyone reads this their venues are provisioned, their
+               screen codes exist and they could run a game tonight. Telling them we are holding
+               something makes them wait for a next step that has already happened.
+
+               And there was nothing to press. The old copy sent them to their inbox, which made
+               the email the only way in. It is not: sign-in is a code texted to the mobile they
+               just typed in, so they can be on their console before the email lands. The button
+               goes there. We do NOT redirect automatically, because this panel carries the one
+               line people want in writing, that nothing is charged for a month. -->
+          <h3>You're in</h3>
+          <p>Your price is locked in and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.</p>
+          <a class="btn btn-primary success-go" href="/app">Sign in and set up your screen</a>
+          <p class="success-fine">Sign in with the mobile you just gave us. No password, we text you a code.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ===================== FAQ ===================== -->
 <section class="sec" id="faq">
@@ -1794,14 +1808,14 @@
   #how .vps-step p{font-size:var(--fs-base)}
   @media (max-width:760px){ #how .vps-steps{grid-template-columns:1fr} #how .vps-step{padding:20px 0;border-bottom:1px solid var(--line)} }
 </style>
-<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in your price">
+<a href="#start" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in your price">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
  Lock in your price
 </a>
 <script>
 (function(){
   var cta=document.getElementById('vpFloatCta'); if(!cta) return;
-  var claim=document.getElementById('claim');
+  var claim=document.getElementById('start');
   function upd(){
     var y=window.pageYOffset||document.documentElement.scrollTop;
     var show=y>560;

@@ -32,16 +32,16 @@ BODY = NSW[NSW.index('<body'):]
 print('1. The start button is first in the hero')
 hero = re.search(r'<div class="hero-cta">(.*?)</div>', NSW, re.S).group(1)
 links = re.findall(r'<a [^>]*href="([^"]+)"[^>]*>([^<]+)</a>', hero)
-ok('the hero has "Have a play for free" first, going to the form', links[:1] == [('#claim', 'Have a play for free')], links)
+ok('the hero has "Have a play for free" first, going to the start section', links[:1] == [('#start', 'Have a play for free')], links)
 ok('"See pricing" is second, going to the price', links[1:2] == [('#offer', 'See pricing')], links)
 ok('the start button is the pink one and "See pricing" the quiet one',
-   re.search(r'class="btn btn-primary" href="#claim"[^>]*>Have a play for free', hero) and re.search(r'class="btn btn-ghost" href="#offer"[^>]*>See pricing', hero))
+   re.search(r'class="btn btn-primary" href="#start"[^>]*>Have a play for free', hero) and re.search(r'class="btn btn-ghost" href="#offer"[^>]*>See pricing', hero))
 ok('the hero has no competing exit beside the ask ("Talk to us" stays in the nav and the contact section)', 'Talk to us' not in hero and 'Contact' in NSW and 'id="contact"' in NSW, links)
 
-print('2. The form is the second section')
+print('2. The start section is the second section; the card form is lower')
 secs = re.findall(r'<section[^>]*\bid="([^"]+)"', BODY)
-ok('the sections run hero, form, then the rest', secs[:3] == ['top', 'claim', 'modes'], secs[:4])
-ok('the form is above the pricing and the questions', secs.index('claim') < secs.index('offer') < secs.index('faq'), secs)
+ok('the sections run hero, start, then the rest', secs[:3] == ['top', 'start', 'modes'], secs[:4])
+ok('the start section is above the pricing; the card form is below the pricing and above the questions', secs.index('start') < secs.index('offer') < secs.index('claim') < secs.index('faq'), secs)
 ok('there is still exactly one form, with its submit button and its success panel',
    NSW.count('id="vp-submit"') == 1 and NSW.count('id="vp-form"') == 1 and NSW.count('id="vp-success"') == 1)
 
@@ -56,14 +56,14 @@ ok('the price section\'s heading and words carry no price; the one row holds it'
 ok('that one row is $2.50 with the standard $3.00 beside it', '<div class="pv">$2.50</div>' in offer and 'Standard rate $3.00' in offer)
 hp = re.search(r'<p class="h2-price">(.*?)</p>', NSW, re.S).group(1)
 ok('the hero note under the button carries no price', '$' not in hp, hp)
-sub = re.search(r'<section class="sec" id="claim">.*?<p class="sec-sub"[^>]*>(.*?)</p>', NSW, re.S).group(1)
-ok('the form\'s lede carries no price', '$' not in sub, sub)
+sub = re.search(r'<section class="sec" id="start">.*?<p class="sec-sub"[^>]*>(.*?)</p>', NSW, re.S).group(1)
+ok('the start section\'s lede carries no price', '$' not in sub, sub)
 sa = NSW[NSW.index('function standardPage'):NSW.index('function endedNow')]
 ok('the ended page also shows ONE row ($3.00), not two', sa.count('class="price-row') == 1 and '$3.00' in sa and '$2.85</div>' not in sa)
 
 print('4. The email\'s own words are by the button and the form')
 ok('under the hero button: "have a play for a month on us"', 'have a play for a month on us' in hp.lower(), hp)
-ok('at the form: "have a play for a month on us"', 'have a play for a month on us' in sub.lower(), sub)
+ok('at the start section: "have a play for a month on us"', 'have a play for a month on us' in sub.lower(), sub)
 ok('no promise of "no card": the form still asks for one, so the page does not say otherwise (the no-card start is item 80B)',
    not re.search(r'no card|card.?free|without a card', hp + sub + offer, re.I) and 'Hold my spot, add card' in NSW)
 
@@ -123,6 +123,19 @@ ok('only the clean tokens go: step s3 and the month; a dotted source, a name, em
 ok('an event that is not on the list is never sent', res.get('unknownGrew') == 0, res.get('unknownGrew'))
 ok('a robot or opted-out browser gets a vpTrack that does nothing, and starts no dataLayer',
    res.get('robot') == {'fn': 'function', 'threw': False, 'layer': False}, res.get('robot'))
+
+print('7. Dean\'s wording, 6 Nov (items 8 and 10)')
+lede = re.search(r'<p class="lede">(.*?)</p>', NSW, re.S).group(1)
+ok('hero line: "Trivia and musical bingo, plus bingo, raffles and members draws where your state allows"',
+   lede.startswith('Trivia and musical bingo, plus bingo, raffles and members draws where your state allows'), lede[:120])
+ok('"and it won\'t come back" is gone from the page', "come back" not in re.sub(r'<[^>]+>', ' ', offer) and 'won&#39;t come back' not in NSW and "won't come back" not in NSW)
+card = re.search(r'<section class="sec" id="claim">.*?</section>', NSW, re.S).group(0)
+ok('the card form is titled "Rather add your card now?"', '<h2 class="sec-title">Rather add your card now?</h2>' in card)
+ok('the card form line reads "Keep $2.50 by adding your card before your free month ends"', 'Keep $2.50 by adding your card before your free month ends' in card)
+ok('"Lock in your price" in the pricing section and the floating button both point at the start section, not the card form',
+   re.search(r'href="#start" data-cta="offer-lock">Lock in your price', offer) and re.search(r'<a href="#start" class="vp-float-cta" id="vpFloatCta"', NSW) and 'href="#claim"' not in NSW, re.findall(r'href="#claim"', NSW))
+ok('the start section holds the one easy-to-change destination for the hero button, with a note for the five-box form',
+   'id="start"' in NSW and 'five-box start form' in NSW)
 
 print('6. Every copy agrees')
 red = rd('venueplay/_redirects')
