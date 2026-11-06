@@ -71,32 +71,38 @@ ok('a bad entry is left out, never guessed: no title, no day, a made-up date, a 
 ok('at most 30 (the cap)', W.clean(Array.apply(null, Array(40)).map(function (_, i) { return { title: 't' + i, day: 'fri' }; })).length === 30 && W.MAX === 30);
 ok('the TV\'s date comes from the venue\'s own time zone', W.todayIn('Australia/Brisbane', new Date(Date.UTC(2026, 10, 12, 15, 0))) === '2026-11-13' && W.todayIn('Australia/Perth', new Date(Date.UTC(2026, 10, 12, 15, 0))) === '2026-11-12');
 
-print('\nTHE TV (tv.html between games)');
+print('\nTHE TV (tv.html between games), round 4: feature and week, the plain list when there is no picture');
 var sl = W.tvSlides(EV, TODAY);
-ok('one list slide for the week, then a poster for each night with a picture', sl.length === 3 && sl[0].type === 'list' && sl[1].type === 'poster' && sl[2].type === 'poster', sl.map(function (x) { return x.type; }).join());
-ok('the list in date order, Tonight first', sl[0].rows.map(function (r) { return r.label + ':' + r.ev.id; }).join() === 'Tonight:e2,Tomorrow:e1,Sat 14 Nov:e4,Sat 14 Nov:e3', sl[0].rows.map(function (r) { return r.label + ':' + r.ev.id; }).join());
-ok('a poster for the soonest nights with a picture: Friday, then Mount Kujo (Love, Jess is next week, off the list)', sl[1].ev.id === 'e1' && sl[1].label === 'Tomorrow' && sl[2].ev.id === 'e3');
+var rowsOf = function (x) { return x.rows.map(function (r) { return r.label + ':' + (r.ev.id || r.ev.title); }).join(); };
+ok('nights with pictures this week: "feature and week" views, the soonest picture first (Friday, then Mount Kujo)', sl.length === 2 && sl[0].type === 'feature' && sl[0].feature.ev.id === 'e1' && sl[0].feature.label === 'Tomorrow' && sl[1].feature.ev.id === 'e3', JSON.stringify(sl.map(function (x) { return x.type; })));
+ok('its week in date order, Tonight first, the featured night still in the list', rowsOf(sl[0]) === 'Tonight:e2,Tomorrow:e1,Sat 14 Nov:e4,Sat 14 Nov:e3', rowsOf(sl[0]));
 var many = []; for (var i = 0; i < 14; i++) many.push({ title: 'n' + i, day: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][i % 7], start: '20:00' });
+var busy = W.tvSlides(many.concat([EV[2]]), TODAY);
+var shown = {}; busy.forEach(function (v) { v.rows.forEach(function (r) { shown[r.date + (r.ev.id || r.ev.title)] = 1; }); });
+ok('a busy week rotates: two views of six, every row shown in one of them (none left out)', busy.length === 2 && busy[0].rows.length === 6 && busy[1].rows.length === 6 && Object.keys(shown).length === 12 && busy.every(function (v) { return v.type === 'feature'; }), JSON.stringify(busy.map(function (v) { return v.rows.length; })));
+var twoPics = W.tvSlides([EV[0], EV[2], EV[1]], TODAY);
+ok('two nights with pictures and a short week: two views, each featuring one of them in turn', twoPics.length === 2 && twoPics[0].feature.ev.id === 'e1' && twoPics[1].feature.ev.id === 'e3', JSON.stringify(twoPics.map(function (v) { return v.feature.ev.id; })));
 var ms = W.tvSlides(many, TODAY);
-ok('five a list slide, two list slides at most (ten nights)', ms.length === 2 && ms[0].rows.length === 5 && ms[1].rows.length === 5);
-var seven = W.tvSlides(many.slice(0, 7), TODAY).filter(function (x) { return x.type === 'list'; }), two = W.tvSlides(many.slice(0, 2), TODAY)[0], three = W.tvSlides(many.slice(0, 3), TODAY)[0];
-ok('round 3: seven nights are two balanced slides (4 and 3, not 5 and 2), one size for the set; fewer rows, bigger words', seven.length === 2 && seven[0].rows.length === 4 && seven[1].rows.length === 3 && seven[0].size === 'm' && seven[1].size === 'm' && two.size === 'xl' && three.size === 'l' && /wo-wall wo-xl/.test(W.tvHtml(two, 'Pub')), JSON.stringify(seven.map(function (x) { return x.rows.length + x.size; })));
-var withLogo = W.tvHtml(sl[0], 'Revolver Upstairs', 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png'), withPoster = W.tvHtml(sl[1], 'Revolver Upstairs', 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png');
-ok('round 3: the venue\'s own uploaded logo heads the list slide beside WHAT\u2019S ON (its name only when it has none), and sits on the poster slide', /<div class="wo-top"><img class="wo-logo" alt="" src="https:\/\/x\.supabase\.co[^"]*logo\.png">/.test(withLogo) && !/wo-kick/.test(withLogo) && /wo-kick">Revolver Upstairs/.test(W.tvHtml(sl[0], "Revolver Upstairs")) && /wo-words"><img class="wo-logo"/.test(withPoster) && W.tvHtml(sl[0], 'x', 'javascript:alert(1)').indexOf('wo-logo') === -1, withLogo.slice(0, 200));
-ok('a weekly night with a picture is one poster, not one a week; three posters at most', W.tvSlides([EV[0]], '2026-11-06').filter(function (x) { return x.type === 'poster'; }).length === 1 && W.tvSlides([1, 2, 3, 4, 5].map(function (n) { return { title: 'p' + n, date: '2026-11-1' + (n + 2), image_url: 'https://a/p' + n + '.jpg' }; }), TODAY).filter(function (x) { return x.type === 'poster'; }).length === 3);
+ok('no picture this week: the plain list, five a slide at most, 12 rows at most (here 5, 5 and 2 balanced to 4 4 4)', ms.every(function (x) { return x.type === 'list'; }) && ms.length === 3 && ms[0].rows.length === 4 && ms[2].rows.length === 4, JSON.stringify(ms.map(function (x) { return x.rows.length; })));
+var seven = W.tvSlides(many.slice(0, 7), TODAY), two = W.tvSlides(many.slice(0, 2), TODAY)[0], three = W.tvSlides(many.slice(0, 3), TODAY)[0];
+ok('the list: seven nights are two balanced slides (4 and 3), one size for the set; fewer rows, bigger words', seven.length === 2 && seven[0].rows.length === 4 && seven[1].rows.length === 3 && seven[0].size === 'm' && seven[1].size === 'm' && two.size === 'xl' && three.size === 'l' && /wo-wall wo-xl/.test(W.tvHtml(two, 'Pub')), JSON.stringify(seven.map(function (x) { return x.rows.length + x.size; })));
+var L = 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png';
+var fh = W.tvHtml(sl[0], 'Revolver Upstairs', L), lh = W.tvHtml(two, 'Revolver Upstairs', L), nh = W.tvHtml(two, 'Revolver Upstairs');
+ok('the venue\'s own uploaded logo heads both layouts beside WHAT’S ON; with none, its name stands in; a bad address never', /<div class="wo-top"><img class="wo-logo" alt="" src="https:\/\/x\.supabase\.co[^"]*logo\.png"><div class="wo-head">What’s on</.test(lh) && /wb-side"><div class="wo-top"><img class="wo-logo"/.test(fh) && /wo-kick">Revolver Upstairs</.test(nh) && W.tvHtml(two, 'x', 'javascript:alert(1)').indexOf('wo-logo') === -1, lh.slice(0, 220));
+ok('feature and week: the picture whole over a blurred copy of itself, only its day and time under it (no repeated title), the week beside it', /wb-art" style="background-image:url\(https:\/\/x\.supabase\.co\/storage\/v1\/object\/public\/venue-ads\/v\/fri\.jpg\)/.test(fh) && /wb-pic/.test(fh) && /wb-when">Tomorrow · 10pm</.test(fh) && !/adbig/.test(fh) && (fh.match(/wo-row/g) || []).length === 4, fh.slice(0, 300));
+ok('each row: the day and the time together on the left, then the title (round 4: no empty middle), every day label the same', /<span class="wo-when2"><span class="wo-day">Tonight<\/span><span class="wo-time">9pm<\/span><\/span><span class="wo-what"><b>I ♥ 3181<\/b>/.test(fh) && !/again/.test(fh), fh.slice(fh.indexOf('wo-list'), fh.indexOf('wo-list') + 300));
 var gw = W.tvSlides(EV, TODAY, [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }]);
 var gwRows = gw.reduce(function (a, x) { return a.concat(x.rows || []); }, []);
-ok('our game nights join the list (Dean, 6 Nov): tonight\'s trivia at 7:30pm before the venue\'s 9pm night', gw[0].rows[0].ev.game === 'trivia' && gw[0].rows[0].ev.title === 'Trivia night' && gw[0].rows[1].ev.id === 'e2', JSON.stringify(gw[0].rows.map(function (r) { return r.ev.title; })));
+ok('our game nights join the week (Dean, 6 Nov): tonight\'s trivia at 7:30pm before the venue\'s 9pm night', gwRows[0].ev.game === 'trivia' && gwRows[0].ev.title === 'Trivia night' && gwRows[1].ev.id === 'e2', JSON.stringify(gwRows.map(function (r) { return r.ev.title; })));
 var ko = W.tvSlides(EV, TODAY, [{ day: 'fri', games: [{ game: 'bingo', start: '18:00', count: 2 }, { game: 'other', name: 'Karaoke', start: '21:00' }] }]).reduce(function (a, x) { return a.concat(x.rows || []); }, []);
-ok('the wizard\'s newer week on the TV: "Bingo \u00d72" and a Something-else night by its own name (no phone line)', ko.some(function (r) { return r.ev.title === 'Bingo \u00d72' && r.ev.line === 'Play on your phone'; }) && ko.some(function (r) { return r.ev.title === 'Karaoke' && !r.ev.line; }), JSON.stringify(ko.map(function (r) { return r.ev.title; })));
-ok('a game night never gets a poster, and our games alone make no What\'s on slide', gw.filter(function (x) { return x.type === 'poster'; }).every(function (x) { return !x.ev.game; }) && W.tvSlides([], TODAY, [{ day: 'thu', games: [{ game: 'trivia' }] }]).length === 0);
+ok('the wizard\'s newer week on the TV: "Bingo ×2" and a Something-else night by its own name (no phone line)', ko.some(function (r) { return r.ev.title === 'Bingo ×2' && r.ev.line === 'Play on your phone'; }) && ko.some(function (r) { return r.ev.title === 'Karaoke' && !r.ev.line; }), JSON.stringify(ko.map(function (r) { return r.ev.title; })));
+ok('a game night is never the feature, and our games alone make no What\'s on slide', gw.every(function (x) { return x.type !== 'feature' || !x.feature.ev.game; }) && W.tvSlides([], TODAY, [{ day: 'thu', games: [{ game: 'trivia' }] }]).length === 0);
 ok('nothing on: no What\'s on slide at all', W.tvSlides([], TODAY).length === 0 && W.tvSlides([EV[5]], TODAY).length === 0);
-var h0 = W.tvHtml(sl[0], 'Revolver Upstairs'), h1 = W.tvHtml(sl[1], 'Revolver Upstairs');
-ok('the list slide: the venue as a kicker over WHAT\u2019S ON, a Tonight row, the times as people say them', /wo-kick">Revolver Upstairs</.test(h0) && /wo-head">What\u2019s on</.test(h0) && /wo-row tonight/.test(h0) && />9pm</.test(h0) && />10pm</.test(h0) && !/PM</.test(h0), h0.slice(0, 300));
-ok('the poster slide: the picture whole, "Tomorrow, 10pm" big beside the title, the title and line', /wo-pic/.test(h1) && /fri\.jpg/.test(h1) && /wo-when">Tomorrow \u00b7 10pm</.test(h1) && /Revolver Fridays/.test(h1) && /4 deck dancefloor battle/.test(h1));
+var h0 = W.tvHtml(two, 'Revolver Upstairs');
+ok('times as people say them ("8pm", never "8PM")', />8pm</.test(h0) && !/PM</.test(h0) && />10pm</.test(fh));
 var evil = W.tvHtml(W.tvSlides([{ title: '<img src=x onerror=alert(1)>', day: 'thu', line: '"><script>', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY)[0], '<b>pub</b>');
 ok('every venue word is escaped on the wall', evil.indexOf('<img') === -1 && evil.indexOf('<script') === -1 && evil.indexOf('<b>pub') === -1 && /&lt;img/.test(evil));
-ok('a picture address with an entity in it is refused', W.tvSlides([{ title: 'x', day: 'thu', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY).length === 1);
+ok('a picture address with an entity in it is refused (the night stays, in the plain list)', W.tvSlides([{ title: 'x', day: 'thu', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY)[0].type === 'list');
 
 print('\nTHE PHONE\'S WEEK STRIP (vp-tonight.js with the venue\'s events)');
 var WEEK = [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }];
@@ -231,7 +237,7 @@ ok('a new event gets its id from crypto, never Math.random', /crypto\.randomUUID
 
 print('\nTHE PAGES');
 var TV = readFile('venueplay/tv.html'), BILL = readFile('venueplay/app/billing.html');
-ok('the TV loads vp-whatson.js and puts the nights in its loop', /<script src="\/app\/vp-whatson\.js"><\/script>/.test(TV) && /VPWhatsOn\.tvSlides\(ADS\.events, VPWhatsOn\.todayIn\(VENUE_TZ\), ADS\.week\)/.test(TV) && /ADS\.week = Array\.isArray\(d\.week\) \? d\.week : null;/.test(TV) && /ADS\.events = Array\.isArray\(d\.events\) \? d\.events : \[\];/.test(TV));
+ok('the TV loads vp-whatson.js and puts the nights in its loop', /<script src="\/app\/vp-whatson\.js"><\/script>/.test(TV) && /VPWhatsOn\.tvSlides\(woEv, VPWhatsOn\.todayIn\(VENUE_TZ\), ADS\.week\)/.test(TV) && /ADS\.week = Array\.isArray\(d\.week\) \? d\.week : null;/.test(TV) && /ADS\.events = Array\.isArray\(d\.events\) \? d\.events : \[\];/.test(TV));
 ['venueplay/app/trivia/play.html', 'venueplay/app/musical/play.html', 'venueplay/play.html'].forEach(function (f) {
   var s = readFile(f);
   ok(f.replace('venueplay/', '') + ' loads vp-whatson.js before vp-tonight.js and passes the events on', s.indexOf('<script src="/app/vp-whatson.js"></script>') > 0 && s.indexOf('<script src="/app/vp-whatson.js"></script>') < s.indexOf('<script src="/app/vp-tonight.js"></script>') && /P\.events=\(r&&Array\.isArray\(r\.events\)\)\?r\.events:\[\];/.test(s) && /events:P\.events/.test(s));

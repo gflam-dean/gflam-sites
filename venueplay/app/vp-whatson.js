@@ -173,29 +173,36 @@
     });
     return out;
   }
+  /* ROUND 4 (Dean's design rounds, 6 Nov 2026): the What's on slide is "feature and week" when any night this week has
+     a picture: the soonest picture whole on the left, the week's rows on the right, six a view. A busy week rotates
+     through more views, so no row is ever left out; each view features the next picture in turn.
+       { type:"feature", feature:{ date, label, ev }, rows:[{ date, label, ev }] }
+     With no picture this week it is the plain list instead, five a slide, balanced (7 rows are 4 and 3), one size
+     for the set (fewer rows, bigger words):
+       { type:"list", size:"m"|"l"|"xl", rows:[...] }
+     At most 12 rows (two views of six). */
   function tvSlides(events, t, week) {
-    var list = clean(events), up = [], i, j;
-    for (i = 0; i < 7 && up.length < 10; i++) {
+    var list = clean(events), up = [], i, j, MAXROWS = 12;
+    for (i = 0; i < 7 && up.length < MAXROWS; i++) {
       var s = addDays(t, i), day = gameNights(week, s);
       for (j = 0; j < list.length; j++) if (isOn(list[j], s)) day.push(list[j]);
       day.sort(byStart);
-      for (j = 0; j < day.length && up.length < 10; j++) up.push({ date: s, ev: day[j] });
+      for (j = 0; j < day.length && up.length < MAXROWS; j++) up.push({ date: s, ev: day[j] });
     }
     var out = [];
     if (!up.some(function (x) { return !x.ev.game; })) return out;   // our games alone are not the venue's What's on
-    /* Five a slide at most, the slides balanced (7 nights are 4 and 3, not 5 and 2), and every list slide of the set the
-       same size, chosen by how many rows it holds: fewer rows, bigger words (Dean, round 3: "a lot of wasted space"). */
-    var pages = Math.ceil(up.length / 5), per = Math.ceil(up.length / pages), size = per <= 2 ? "xl" : per === 3 ? "l" : "m";
-    for (i = 0; i < up.length; i += per) {
-      out.push({ type: "list", size: size, rows: up.slice(i, i + per).map(function (x) { return { date: x.date, label: dayLabel(x.date, t), ev: x.ev }; }) });
+    function row(x, long) { return { date: x.date, label: dayLabel(x.date, t, long), ev: x.ev }; }
+    var feats = up.filter(function (x) { return x.ev.image_url && !x.ev.game; }).slice(0, 3);
+    if (feats.length) {
+      var pages = Math.ceil(up.length / 6), views = Math.max(pages, feats.length);
+      for (i = 0; i < views; i++) {
+        var p = i % pages;
+        out.push({ type: "feature", feature: row(feats[i % feats.length], true), rows: up.slice(p * 6, p * 6 + 6).map(function (x) { return row(x); }) });
+      }
+      return out;
     }
-    var posters = 0;
-    for (i = 0; i < up.length && posters < 3; i++) {
-      var e = up[i].ev;
-      if (!e.image_url || e.game) continue;
-      posters++;
-      out.push({ type: "poster", date: up[i].date, label: dayLabel(up[i].date, t, true), ev: e });
-    }
+    var pg = Math.ceil(up.length / 5), per = Math.ceil(up.length / pg), size = per <= 2 ? "xl" : per === 3 ? "l" : "m";
+    for (i = 0; i < up.length; i += per) out.push({ type: "list", size: size, rows: up.slice(i, i + per).map(function (x) { return row(x); }) });
     return out;
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -209,28 +216,29 @@
     if (!sl) return "";
     venue = typeof venue === "string" ? venue : "";
     var lg = cssUrl(logo), logoHtml = lg ? '<img class="wo-logo" alt="" src="' + lg + '">' : "";
-    if (sl.type === "list") {
-      var rows = "", last = "";
-      sl.rows.forEach(function (r) {
-        var tn = r.label === "Tonight", again = r.date === last;
-        last = r.date;
-        rows += '<div class="wo-row' + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + (again ? " again" : "") + '">' +
-          '<span class="wo-day">' + esc(r.label) + '</span>' +
-          '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (r.ev.line ? '<i>' + esc(r.ev.line) + '</i>' : '') + '</span>' +
-          '<span class="wo-time">' + esc(time12(r.ev.start)) + '</span></div>';
+    function rowsHtml(rows) {
+      var h = "";
+      rows.forEach(function (r) {
+        var tn = r.label === "Tonight";
+        /* The when on the left, day over time, so a row reads left to right with no empty middle (round 4, M2). */
+        h += '<div class="wo-row' + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + '">' +
+          '<span class="wo-when2"><span class="wo-day">' + esc(r.label) + '</span><span class="wo-time">' + esc(time12(r.ev.start)) + '</span></span>' +
+          '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (r.ev.line ? '<i>' + esc(r.ev.line) + '</i>' : '') + '</span></div>';
       });
-      return '<div class="wo-wall wo-' + (sl.size || "m") + '"><div class="wo-in"><div class="wo-top">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) +
-        '<div class="wo-head">What’s on</div></div><div class="wo-list">' + rows + '</div></div></div>';
+      return h;
     }
-    if (sl.type === "poster") {
-      var bg = cssUrl(sl.ev.image_url);
+    var head = '<div class="wo-top">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) + '<div class="wo-head">What’s on</div></div>';
+    if (sl.type === "list") {
+      return '<div class="wo-wall wo-' + (sl.size || "m") + '"><div class="wo-in">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
+    }
+    if (sl.type === "feature") {
+      var f = sl.feature, bg = cssUrl(f.ev.image_url);
       if (!bg) return "";
-      var tm = time12(sl.ev.start);
-      return '<div class="wo-wall wo-poster"><div class="wo-art" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wo-pic" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wo-words">' + logoHtml + '<div class="wo-when' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
-        '<div class="adbig">' + esc(sl.ev.title).replace(/ (with|and|at|&amp;) /gi, " $1\u00a0") + '</div>' +   // "with" stays with the name after it
-        (sl.ev.line ? '<div class="adsub">' + esc(sl.ev.line) + '</div>' : '') + '</div></div>';
+      var tm = time12(f.ev.start);
+      return '<div class="wo-wall wo-b"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
+        '<div class="wb-pic" style="background-image:url(' + bg + ')"></div>' +
+        '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div></div>' +
+        '<div class="wb-side">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
     }
     return "";
   }
