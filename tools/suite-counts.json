@@ -359,6 +359,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/setup-use-in-chrome.test.py": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "tools/share-card-in-chrome.test.py": {
   "checks": 30,
   "counted_by": "lines"
