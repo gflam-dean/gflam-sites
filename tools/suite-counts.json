@@ -1008,7 +1008,7 @@
   "counted_by": "lines"
  },
  "tools/test-signup-core.js": {
-  "checks": 89,
+  "checks": 96,
   "counted_by": "lines"
  },
  "tools/test-stale-phone-and-end-once.js": {
