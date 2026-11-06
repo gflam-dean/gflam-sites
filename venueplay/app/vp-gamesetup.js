@@ -189,9 +189,14 @@
     P + ".vpgs-sug{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}" + P + ".vpgs-sug:empty{display:none}" +
     P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
     P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
+    P + ".vpgs-addlink{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0 -12px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:left}" +
+    P + ".vpgs-time>span:first-child{display:flex;flex-direction:column;align-items:flex-start}" +
+    P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;min-height:44px;text-align:left;text-decoration:underline;text-underline-offset:3px}" +
+    P + ".vpgs-rows>.vpgs-row.under{border-top:none;padding-top:0;grid-template-areas:'ctl ctl' 'pop pop'}" + P + ".vpgs-rows>.vpgs-row.under>.vpgs-lab," + P + ".vpgs-rows>.vpgs-row.under>.vpgs-q{display:none}" +
+    P + ".vpgs-rows>.vpgs-row.vpgs-linkrow{grid-template-areas:'ctl ctl'}" + P + ".vpgs-linkrow .vpgs-addlink{margin:0}" +
+    "@media (max-width:600px){" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" + P + ".vpgs-cats .vpgs-chip small{display:none}" + P + ".vpgs-cats .vpgs-chip{align-items:center}}" +
     P + ".vpgs-helpcard{margin:6px 0 0;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 14.5px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}" + P + ".vpgs-helpcard ol{margin:6px 0;padding-left:20px}" + P + ".vpgs-helpcard li{margin:0 0 4px}" + P + ".vpgs-helpcard b{display:block}" +
-    "@media (max-width:420px){" + P + ".vpgs-prow{gap:4px}" + P + ".vpgs-none{padding:0;gap:4px}" + P + ".vpgs-prow .vpgs-in{padding:8px 8px}}" +
-    "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:56px minmax(0,1fr) auto}" + P + ".vpgs-prow>:nth-child(2){grid-column:2;grid-row:1}" + P + ".vpgs-prow>:nth-child(3){grid-column:3;grid-row:1}" + P + ".vpgs-prow.nonone{grid-template-columns:62px minmax(0,1fr)}}" +
+    "@media (max-width:600px){" + P + ".vpgs-prow{row-gap:0}" + P + ".vpgs-prow>:first-child{font-size:14px}}" +
     "@media (min-width:600px){" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:84px}" + P + ".vpgs-rows>.vpgs-row.cmpw{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{margin:0;width:300px}" + P + ".vpgs-row.cmp .vpgs-seg{width:160px}}" +
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:680px;padding-top:16px}" + P + ".vpgs-card{padding:20px 24px}" + P + "h2.vpgs-title{font-size:24px}}" +
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:820px;padding-top:20px}" + P + ".vpgs-card{padding:24px 32px}" + P + "h2.vpgs-title{font-size:28px}" + P + ".vpgs-lead{font-size:16.5px;margin:0 0 10px}" +
@@ -445,13 +450,30 @@
   /* ONE SETTING: its short question (advanced), its label and "?", its control. Returns { row, get, s, set, value }. */
   function settingRow(F, s, ctx, all) {
     var el = F.el;
+    if (s.soundHelp) {
+      /* "HOW TO GET THE SOUND THROUGH YOUR SPEAKERS" (Dean, round 7b point 13): one link, its steps open underneath */
+      var srow = el("div", "vpgs-row vpgs-linkrow"); srow.setAttribute("data-key", s.key);
+      var sctl = el("div", "vpgs-ctl"); srow.appendChild(sctl);
+      var sl = el("button", "vpgs-addlink", "How to get the sound through your speakers"); sl.id = "vpGsSoundHow"; sl.setAttribute("type", "button"); sl.setAttribute("aria-expanded", "false");
+      var card = el("div", "vpgs-helpcard"); card.id = "vpGsSoundCard"; card.style.display = "none";
+      var ol = el("ol");
+      ["Look on the back of the TV for an HDMI socket marked ARC or eARC, or a small square optical socket marked Digital Audio Out.",
+       "Run a cable from that socket to your amp, soundbar or mixer. If your amp only has red and white plugs, a small converter from any electronics shop does the job.",
+       "On the TV, open Settings, then Sound, and set the sound output to your amp or external speakers.",
+       "Play a song on the console and turn it up slowly on your amp."].forEach(function (t) { ol.appendChild(el("li", null, t)); });
+      card.appendChild(ol);
+      card.appendChild(el("p", null, "Using a music system with zones? Ask whoever looks after it to add the TV as a source. Still stuck? Get in touch and we'll talk you through it."));
+      sl.addEventListener("click", function () { var on = card.style.display === "none"; card.style.display = on ? "block" : "none"; sl.setAttribute("aria-expanded", on ? "true" : "false"); });
+      sctl.appendChild(sl); sctl.appendChild(card);
+      return { row: srow, get: function () { return undefined; }, setTo: function () {}, s: s, input: function () { return null; } };
+    }
     /* ONE ROW PER SETTING, THE "?" IN ONE COLUMN DOWN THE RIGHT EDGE (Dean, round 7b point 9: "the question marks
        don't line up"). A small control (a number, a time, a date, On/Off) sits on the label's own line; a big one (a
        list, prizes, music) goes underneath, full width. A two-word choice sits on the line from iPad width up. */
     var shortSeg = s.kind === "seg" && (s.options || []).reduce(function (n, o) { return n + String(o[1]).length; }, 0) <= 8;
     var cmp = s.kind === "number" || s.kind === "money" || s.kind === "time" || s.kind === "date" || s.kind === "range" || shortSeg;
     var cmpw = !cmp && (s.kind === "seg" || s.kind === "select");
-    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : ""))); row.setAttribute("data-key", s.key);
+    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : "")) + (s.underPrev ? " under" : "")); row.setAttribute("data-key", s.key);
     var lab = el("div", "vpgs-lab");
     /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
     lab.appendChild(el("span", null, String((s.advanced && s.prompt) ? s.prompt : s.label)));
@@ -554,7 +576,10 @@
       };
       /* RAFFLES KEEP THEIR OWN LIST (Dean, round 3: "raffles probably have different prizes"); one tap loads the usual
          prizes when they want them, to change and add to. */
+      var lastBox = null;
+      plist.addEventListener("focusin", function (e) { if (e && e.target && e.target.tagName === "INPUT" && e.target.type === "text") lastBox = e.target; });
       var uc = usualChips(F, ctx, function (w) {
+        if (lastBox && lastBox.parentNode && lastBox.parentNode.parentNode === plist && !lastBox.disabled) { lastBox.value = w; var nx = lastBox.parentNode.nextSibling; lastBox = nx ? nx.children[1] : null; return; }   // the box they tapped, then the next one
         for (var k = 0; k < plist.children.length; k++) { var inp = plist.children[k].children[1]; if (inp && !inp.disabled && !String(inp.value || "").trim()) { inp.value = w; return; } }
       }, "vpGsUsual_" + s.key);
       if (uc) wrap.insertBefore(uc, plist);
@@ -625,21 +650,7 @@
       get = function () { return s.value; };
     } else if (s.kind === "info") {
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
-      if (s.soundHelp) {
-        /* "IS YOUR TV PLUGGED INTO YOUR SPEAKERS?" IS GOING TO BE A HUGE QUESTION (Dean, round 7b point 13) */
-        var sl = el("button", "vpgs-add", "How to connect your speakers"); sl.id = "vpGsSoundHow"; sl.setAttribute("type", "button"); sl.setAttribute("aria-expanded", "false");
-        var card = el("div", "vpgs-helpcard"); card.id = "vpGsSoundCard"; card.style.display = "none";
-        card.appendChild(el("b", null, "Getting the music through your speakers"));
-        var ol = el("ol");
-        ["Look on the back of the TV for an HDMI socket marked ARC or eARC, or a small square optical socket marked Digital Audio Out.",
-         "Run a cable from that socket to your amp, soundbar or mixer. If your amp only has red and white plugs, a small converter from any electronics shop does the job.",
-         "On the TV, open Settings, then Sound, and set the sound output to your amp or external speakers.",
-         "Play a song on the console and turn it up slowly on your amp."].forEach(function (t) { ol.appendChild(el("li", null, t)); });
-        card.appendChild(ol);
-        card.appendChild(el("p", null, "Using a music system with zones? Ask whoever looks after it to add the TV as a source. Still stuck? Get in touch and we'll talk you through it."));
-        sl.addEventListener("click", function () { var on = card.style.display === "none"; card.style.display = on ? "block" : "none"; sl.setAttribute("aria-expanded", on ? "true" : "false"); });
-        wrap.appendChild(sl); wrap.appendChild(card);
-      }
+
     } else {
       var inp1 = el("input", "vpgs-in"); inp1.id = "vpGsIn_" + s.key; inp1.setAttribute("aria-label", s.label);
       inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : (s.kind === "time" ? "time" : "text"));
@@ -652,7 +663,10 @@
       /* THE FIRST DRAW DATE FILLS IN THE DRAW DAY (Dean, round 2), unless they typed a day of their own. */
       if (s.pre) { wrap.className = "vpgs-unitw"; wrap.appendChild(el("span", "vpgs-unit", s.pre)); }   // "$ 250": the $ outside the label, so the label stays one line
       wrap.appendChild(inp1);
-      if (s.unit) { wrap.className = "vpgs-unitw"; wrap.appendChild(el("span", "vpgs-unit", s.unit)); }   // "30 seconds" (design review, 6 Nov)
+      if (s.unit) {
+        wrap.className = "vpgs-unitw"; var un = el("span", "vpgs-unit", s.unit); wrap.appendChild(un);
+        if (s.unitOne) { var unf = function () { un.textContent = String(inp1.value).trim() === "1" ? s.unitOne : s.unit; }; inp1.addEventListener("input", unf); unf(); }   // "1 prize", "3 prizes"
+      }   // "30 seconds" (design review, 6 Nov)
       get = function () {
         var v = String(inp1.value || "").trim();
         if (s.kind === "time") return /^\d\d:\d\d$/.test(v) ? timeWords(v) : undefined;   // saved as the TV shows it: "7:30pm"
@@ -751,6 +765,7 @@
     settings.forEach(function (s) {
       if (opts.quickOnly && !s.quick) return;
       if (!opts.quickOnly && s.firstOnly) return;   // asked on a first open only (members draws: the jackpot now)
+      if (s.advanced && g.noMore) return;   // left to the console, at its usual setting (spacing review r8)
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
       if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
     });
@@ -776,8 +791,7 @@
       if (nmIn) nmIn.placeholder = (memDay || "Friday") + " Members Draw";
       if (tmIn && memTime && !tmIn.value) {
         tmIn.value = memTime;   // "20:00" from the nights step, in the time picker
-        var fromN = el("p", "vpgs-hint vpgs-full", "From the night you picked."); fromN.id = "vpGsFromNight";
-        var tmRow = byKey.draw_time && byKey.draw_time.row; if (tmRow) tmRow.insertBefore(fromN, tmRow.children[tmRow.children.length - 1]);
+        var tmRow = byKey.draw_time && byKey.draw_time.row; if (tmRow) { var tl = tmRow.children[0].firstChild; tl.textContent = "Draw time, from your night"; tl.id = "vpGsFromNight"; }   // no extra line (spacing review r8)
       }
     }
     var msg = el("p", "vpgs-msg"); msg.id = "vpGsMsg"; msg.setAttribute("role", "status"); F.body.appendChild(msg);
@@ -804,11 +818,13 @@
         if (!vals.draw_day) delete vals.draw_day;
         if (!vals.name && vals.draw_day) vals.name = vals.draw_day + " Members Draw";
       }
+      /* the settings this screen leaves to the console keep their usual values (spacing review r8) */
+      if (g.noMore && !g.needsDetails) { var dft = help().defaults(gkey, { bingo: bingoRules(cx.venue, opts.answers || (cx.settings && cx.settings.setup_answers)) }); g.settings.forEach(function (st) {
+        if (!st.advanced || !(st.key in dft) || st.key in vals) return;
+        if (st.showIf && Object.keys(st.showIf).some(function (k) { return (k in vals ? vals[k] : dft[k]) !== st.showIf[k]; })) return;   // only what applies (no early BINGO for paper books)
+        vals[st.key] = dft[st.key];
+      }); }
       return vals;
-    }
-    if (!opts.first && !g.needsDetails) {
-      var later = el("button", "vpgs-link", "Not ready yet? Use usual settings"); later.id = "vpGsLater"; later.setAttribute("type", "button");
-      later.addEventListener("click", function () { done("later"); }); F.body.appendChild(later);
     }
     if (!opts.first && g.needsDetails) {
       var mlater = el("button", "vpgs-link", "Not ready yet? Set it up later"); mlater.id = "vpGsLater"; mlater.setAttribute("type", "button");
@@ -1049,9 +1065,11 @@
                 times.appendChild(r2);
               });
               if (more.length < 3) {
-                var addS = F.el("button", "vpgs-add vpgs-add-s", "+ Add another session on " + x[2]); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
-                addS.addEventListener("click", function () { cnt[g] = cnt[g] || {}; cnt[g][x[0]] = more.concat([""]); paint(); gate(); });
-                times.appendChild(addS);
+                /* a small link on the night's own time row, not a box under every night (spacing review r8) */
+                var addS = F.el("button", "vpgs-addlink", "+ another session"); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
+                addS.setAttribute("aria-label", "Add another session on " + x[2]);
+                addS.addEventListener("click", function (e) { if (e && e.preventDefault) e.preventDefault(); cnt[g] = cnt[g] || {}; cnt[g][x[0]] = more.concat([""]); paint(); gate(); });
+                r.firstChild.appendChild(addS);
               }
               return;
             }

@@ -91,7 +91,7 @@
         help: "How many games you play in a night, so the TV can show the next round coming up." },
       { key: "prize_same", label: "Prizes", kind: "seg", options: [[false, "A different prize each round"], [true, "The same prize every round"]], def: false, quick: true,
         help: "A different prize each round (type them one under the other, or tick No prize), or the same prize every round." },
-      { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true,
+      { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true, underPrev: true,
         help: "What each round's winner gets. Tick \"No prize\" for a round you play just for fun." },
       { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true, advanced: true, prompt: "Same prizes every week?",
         brief: function (v) { return v === false ? "new prizes each week" : "the same prizes every week"; },
@@ -105,7 +105,7 @@
         brief: function (v) { return v ? "well-known songs only" : "any song"; },
         prompt: "Stick to the songs everyone knows?",
         help: "On: the night leans on songs everyone knows. Off: any song in your music can come up, deep cuts and all." },
-      { key: "sound", label: "The music plays from your TV", kind: "info", soundHelp: true, quick: true,
+      { key: "sound", label: "The music plays from your TV", kind: "info", soundHelp: true, advanced: true, prompt: "Sound through your speakers",
         words: "To fill the room, play the TV's sound through your venue's speakers.",
         help: "The music comes out of the TV. Most venues run it through their own speakers so everyone can hear." }
     ], popovers: ["playlists", "prize_same", "hits_only"] },
@@ -114,11 +114,11 @@
        vp-gaming.js (VPGameSetup.bingoRules): where phones may not be tickets, "phone tickets" is switched off and
        one plain line says why; where bingo is not open to a pub at all (SA, NT), there is no bingo setup. Paper
        tickets are the venue's OWN books: venueplay never prints or checks them. No pattern: picked on the night. */
-    { key: "bingo", name: "bingo", title: "Bingo", console: "/app/", prefs: "bingo", settings: [
+    { key: "bingo", name: "bingo", title: "Bingo", console: "/app/", prefs: "bingo", noMore: true, settings: [
       { key: "ticket_kind", label: "Phone tickets or paper tickets?", kind: "seg", options: [["phone", "Phone tickets"], ["paper", "Paper tickets"]], def: "phone",
         help: "Phone tickets are checked by venueplay when someone calls BINGO. Paper tickets are your own books, checked by your caller." },
       { key: "paper_note", label: "With paper tickets", kind: "info", showIf: { ticket_kind: "paper" },
-        words: "We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.",
+        words: "Your own books. Your caller checks a win; the numbers show on the TV.",
         help: "venueplay shows every number on the TV either way. Your caller checks a paper ticket when someone calls BINGO." },
       { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw them for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
         help: "venueplay can draw the numbers on the TV for you, or your caller draws real balls and taps each number in as it's called." },
@@ -133,8 +133,8 @@
         help: "Players can call BINGO before they've really won. A wrong call comes to you and you just tap Play on." }
     ], popovers: ["ticket_kind", "caller", "prize_list"] },
 
-    { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", settings: [
-      { key: "prize_count", label: "Prizes in each raffle", kind: "number", unit: "prizes", def: 1, min: 1, max: 12,
+    { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", noMore: true, settings: [
+      { key: "prize_count", label: "Prizes in each raffle", kind: "number", unit: "prizes", unitOne: "prize", def: 1, min: 1, max: 12,
         help: "How many prizes you draw in a raffle. Each prize gets its own draw on the night." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "Meat Tray", placeholder: "e.g. Meat Tray", max: 80, countFrom: "prize_count", each: "Prize", prizes: true, ownList: true,
         help: "Your prizes are saved as buttons on the raffle console, so each one is a single tap on the night." },
@@ -165,7 +165,7 @@
 
     /* MEMBERS DRAWS: no defaults (every box starts empty), and the draw's own settings are saved by
        /host/members/settings (manager or owner), which makes the draw. A skipped members draw is never called saved. */
-    { key: "members", name: "members draws", title: "Members draws", console: "/app/members/host.html", prefs: "members", needsDetails: true, settings: [
+    { key: "members", name: "members draws", title: "Members draws", console: "/app/members/host.html", prefs: "members", needsDetails: true, noMore: true, settings: [
       { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, quick: true,
         help: "The name on the TV. Leave it and we call it after your draw night, like Friday Members Draw." },
       { key: "date_started", label: "When did it start?", kind: "date", def: "", quick: true,
