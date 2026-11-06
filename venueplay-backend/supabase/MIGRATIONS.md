@@ -640,3 +640,11 @@ round). RLS on, service role only. NUMBER: 171 (172 is the try-it demo's, `fix/t
 `vp_signup_starts.entity_type` ('for_profit' or 'non_profit'), so a sign-up HQ approves later keeps the answer. The venue's
 own entity_type is set when the account is made either way. 170 and 171 unchanged. Before it runs, the start still works.
 NUMBER: 172 is the try-it demo's, so 173. Branch `fix/signup-core-10nov`. NOT RUN. Run after 170.
+
+`venueplay-172-demo-sessions.sql` (Dean, 5 Nov 2026, INBOX 82 and 84b: the try-it demo is never billed): ONE new column,
+`vp_sessions.is_demo boolean not null default false`, and a small partial index. Written once by the game Worker at
+POST /session {demo:true}; honoured by chargeNightOverage (no charge, no streak change), the overage ask, the once-a-week
+trivia check and stamp, vp_asked_questions, saved trivia prefs, metering, group overage and the billing Worker's stats
+reads (VPA_NOT_DEMO). A demo's players stay on its venue's opt-in list and in the privacy paths on purpose. RUN IT BEFORE
+deploying either Worker from this branch: their reads filter is_demo=not.is.true, which PostgREST refuses while the column
+is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. NOT RUN.

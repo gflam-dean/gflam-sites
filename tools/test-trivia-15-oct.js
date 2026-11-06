@@ -26,6 +26,7 @@ async function flush() { for (var i = 0; i < 30; i++) await null; }
 var FIT = readFile('venueplay/app/vp-fit.js');
 var SCREEN = readFile('venueplay/app/trivia/screen.html');
 var HOSTP = readFile('venueplay/app/trivia/host.html');
+var DEMO = '';   // the console's try-it demo switch (?demo=), off: these are a real night's functions lifted out of the page
 var PLAY = readFile('venueplay/app/trivia/play.html');
 var BUILDER = readFile('venueplay/app/trivia/builder.html');
 

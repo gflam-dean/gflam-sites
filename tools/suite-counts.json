@@ -552,7 +552,7 @@
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
-  "checks": 123,
+  "checks": 145,
   "counted_by": "lines"
  },
  "tools/test-free-entry-rules-are-the-states-own.js": {
@@ -796,7 +796,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-welcome-v2.js": {
-  "checks": 159,
+  "checks": 160,
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
@@ -995,6 +995,14 @@
   "checks": 43,
   "counted_by": "lines"
  },
+ "tools/test-try-demo-billing.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-try-demo.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/test-tv-does-not-flap.js": {
   "checks": 11,
   "counted_by": "lines"
@@ -1075,6 +1083,10 @@
   "checks": 25,
   "counted_by": "lines"
  },
+ "tools/test-vp-demo.js": {
+  "checks": 49,
+  "counted_by": "lines"
+ },
  "tools/test-vp-draw-11.js": {
   "checks": 46,
   "counted_by": "lines"
@@ -1135,6 +1147,10 @@
   "checks": 62,
   "counted_by": "lines"
  },
+ "tools/try-demo-in-chrome.test.py": {
+  "checks": 52,
+  "counted_by": "lines"
+ },
  "tools/tv-and-phone-in-chrome.test.py": {
   "checks": 100,
   "counted_by": "lines"
@@ -1185,6 +1201,10 @@
  },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 376,
+  "counted_by": "lines"
+ },
+ "tools/wizard-v2-in-chrome.test.py": {
+  "checks": 30,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

@@ -31,7 +31,12 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 11:14 · d0c4e136';   // tools/stamp-workers.py, do not edit by hand
+/* THE TRY-IT DEMO IS NOT A NIGHT (migration 172, vp_sessions.is_demo; INBOX 84b). Every read here that turns
+   sessions into stats, activity, metering or "has this venue played" leaves demos out. Reads that must see
+   every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
+   The game Worker's twin is DEMO_OFF. */
+const VPA_NOT_DEMO = '&is_demo=not.is.true';
+const BUILD = '6 Nov 2026, 11:17 · eee656e6';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6395,7 +6400,7 @@ async function vpaHandleQuietVenues(request, env, json) {
 
   // Sessions carry the venue directly.
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'select=venue_id,opened_at,started_at,ended_at' +
+    'select=venue_id,opened_at,started_at,ended_at' + VPA_NOT_DEMO +
     '&or=(started_at.gte.' + cutoff + ',opened_at.gte.' + cutoff + ',ended_at.gte.' + cutoff + ')');
   for (const r of (sessions || [])) { note(r.venue_id, r.started_at || r.opened_at || r.ended_at); }
   // Broadcast bingo only ever appears here.
@@ -6844,7 +6849,7 @@ async function vpaHandleVenueHistory(request, env, json) {
      retention screen, not an archive. The most recent 60 nights answers every
      question anybody opens this panel to ask. */
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&select=id,join_code,status,opened_at,started_at,ended_at,created_at' +
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&select=id,join_code,status,opened_at,started_at,ended_at,created_at' +
     '&order=created_at.desc&limit=60') || [];
 
   /* What was actually PLAYED in each of those nights. A session on its own only
@@ -7044,7 +7049,7 @@ async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
      try, so a failed read now means NOTHING is archived tonight. A venue archived by
      mistake is a dark room on a Friday; a sweep that skips a night costs nothing. */
   const sess = await vpaSelectAll(env, 'vp_sessions',
-    'select=venue_id,opened_at,started_at,ended_at' +
+    'select=venue_id,opened_at,started_at,ended_at' + VPA_NOT_DEMO +
     '&or=(started_at.gte.' + lookback + ',opened_at.gte.' + lookback + ',ended_at.gte.' + lookback + ')' +
     '&order=venue_id.asc,opened_at.asc,id.asc');
   for (const r of sess) note(r.venue_id, r.started_at || r.opened_at || r.ended_at);
@@ -10913,7 +10918,7 @@ async function vpbSetPlayers(request, env, json) {
       const item = det.billing && det.billing.kind === 'charge' && det.billing.item;
       if (row && ageS >= 0 && ageS < VPB_UNDO_WINDOW_S && item && players <= (parseInt(det.from, 10) || 0)) {
         const inFreeMonth = await vpbVenueInFreeMonth(env, venueId);
-        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId)
+        const played = inFreeMonth ? null : await vpaSelect(env, 'vp_sessions', 'venue_id=eq.' + encodeURIComponent(venueId) + VPA_NOT_DEMO
           + '&started_at=gte.' + encodeURIComponent(new Date(addedAt).toISOString()) + '&select=id&limit=1');
         if (!inFreeMonth && !(played && played.length)) {
           const del = await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(item));
@@ -11450,7 +11455,7 @@ async function vpaVenueStats(env, venueId, tz) {
   const _weekday = {};      // which night of the week they actually run
   try {
     const sessions = await vpaSelect(env, 'vp_sessions',
-      'venue_id=eq.' + encodeURIComponent(venueId)
+      'venue_id=eq.' + encodeURIComponent(venueId) + VPA_NOT_DEMO
       + '&select=id,started_at,opened_at,overage_approved_count&limit=2000') || [];
     if (!sessions.length) { out.ok = true; return out; }
     const ids = sessions.map((s) => s.id);
@@ -14148,7 +14153,7 @@ async function vpmStats(env, venues) {
   const lastMonth = lm.getUTCFullYear() + '-' + ('0' + (lm.getUTCMonth() + 1)).slice(-2);
 
   const sessions = await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_sessions',
-    'venue_id=in.(' + inl + ')&select=id,venue_id,opened_at,created_at&order=id.asc'));
+    'venue_id=in.(' + inl + ')' + VPA_NOT_DEMO + '&select=id,venue_id,opened_at,created_at&order=id.asc'));
   const venueOf = {}, dayOf = {};
   sessions.forEach((x) => { venueOf[x.id] = x.venue_id; dayOf[x.id] = vpmLocalDay(x.opened_at || x.created_at, tzOf[x.venue_id]); });
   const sids = sessions.map((x) => x.id);
@@ -14359,7 +14364,7 @@ async function vprRead(env, venues, month) {
   const w = vprWindow(month);
   const ids = venues.map((v) => v.id);
   const sessions = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_sessions',
-    'venue_id=in.(' + inl + ')&and=(created_at.gte.' + w.lookFrom + ',created_at.lt.' + w.to + ')'
+    'venue_id=in.(' + inl + ')' + VPA_NOT_DEMO + '&and=(created_at.gte.' + w.lookFrom + ',created_at.lt.' + w.to + ')'
     + '&select=id,venue_id,created_at,opened_at,started_at,ended_at&order=id.asc'));
   const recent = sessions.filter((s) => Date.parse(s.created_at || 0) >= Date.parse(w.from));
   const games = recent.length ? await vpmInChunks(recent.map((s) => s.id), (inl) => vpaSelectAll(env, 'vp_games',
@@ -15755,7 +15760,7 @@ async function vpbDrawLog(request, env, json) {
 
   // Raffles: sessions -> raffle games -> results.
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&order=created_at.desc&limit=300') || [];
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&order=created_at.desc&limit=300') || [];
   if (sessions.length) {
     const games = await vpaSelect(env, 'vp_games',
       'session_id=in.(' + sessions.map((x) => encodeURIComponent(x.id)).join(',') + ')&format=eq.raffle&select=id,started_at&order=started_at.desc&limit=300') || [];
@@ -15820,7 +15825,7 @@ async function vpbNights(request, env, json) {
   const vid = encodeURIComponent(venueId);
 
   const sessions = await vpaSelect(env, 'vp_sessions',
-    'venue_id=eq.' + vid + '&select=id,status,opened_at,started_at,ended_at,created_at&order=created_at.desc&limit=' + (limit + 10)) || [];
+    'venue_id=eq.' + vid + VPA_NOT_DEMO + '&select=id,status,opened_at,started_at,ended_at,created_at&order=created_at.desc&limit=' + (limit + 10)) || [];
   let games = [], players = [], seenDevices = [];
   if (sessions.length) {
     const ids = sessions.map((x) => encodeURIComponent(x.id)).join(',');

@@ -101,7 +101,7 @@
   "console-paid-and-draw-max-in-chrome.test.py",
   "console-round3-6nov-in-chrome.test.py",
   "cryptoInt() is the same in all 12 file(s)",
-  "definition check across 147 file(s)",
+  "definition check across 150 file(s)",
   "demo-hermetic.test.js",
   "deploy build parses",
   "details-autofill-in-chrome.test.py",
@@ -140,7 +140,7 @@
   "every playlist points at songs that exist",
   "every prove-checks mutation still finds the line it breaks",
   "every run-by-hand excuse still names a real suite",
-  "every script in 148 file(s) parses",
+  "every script in 151 file(s) parses",
   "every shared script loads before it is used",
   "every song has audio",
   "every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour",
@@ -303,7 +303,10 @@
   "room-optin.test.js",
   "run.html loads the shared names",
   "run.html names a game rather than printing its format",
+  "runs the billing Worker with a demo beside a real night: quiet venues, venue history, auto-archive, set players' \"played since\", venue stats, metering stats, the monthly report read, the draw log and the nights list each ask vp_sessions with is_demo=not.is.true and show only the real night; find a person still sees demo players",
   "runs the billing Worker: the five boxes and pub or club checked (a blank name, a postcode that is not 4 digits, or no pub or club refused), the honeypot and the bot check, eight code requests an hour per network, a 6-digit code texted through the SMS hook and kept only as a hash, five wrong tries spend it; nothing made before the code passes; then the prospect account at 10 players with no card, no Stripe and the free month not started, a club as non_profit with its paid entry open by state; a venue on our licensed list (vpVenueMatch) carries its match, one not on it (or a list that will not answer) is made AND flagged for HQ until Checked (owner or accounts, once); a mobile or email already on venueplay (a login, an account typed any way, an earlier sign-up) is held with Dean's words and one ticket, Approve (as the pub or club they chose, with the welcome) or Refuse in one tap; a login or account read that fails makes nothing; a double tap makes one account; no session, no seats above 10, no uplift on any path; HQ's list escapes what the public typed; the parked items 60 and 61 are absent",
+  "runs the game Worker: a demo session carries is_demo, a real night never runs on one and a demo never takes over a real night, 3 a day, trivia only; its join screen asks name, email, mobile and the one tick; 50 phones and 10 get in; ticked, the player is on that venue's list and nowhere else, not ticked no contact is kept; 5 questions of 30 s whatever is sent, no weekly check or stamp, no asked-question memory, no saved prefs, no 402; never charged with 50 players and approval, the streak untouched; a real night beside it does all of those; metering leaves it out; a venue plays it before the Terms tick, its real night still waits",
+  "runs vp-demo.js and vp-try-slot.js: default 1 and up to 10 players (50 typed is 10); an answer goes up when the 30 s run out or everyone in has answered, whichever comes first, all of them when fewer joined; which screens each choice and device shows (two-screen, the TV code, the host link; no second device skips the demo into the account; the phone-only demo switched off); their name, email and mobile through the #fragment only, wiped once read, never over what was typed, never the offers tick; links on our origin, never .dev; after sign-in the demo only if chosen in the last 30 minutes and only its two fixed addresses",
   "runs vp-firstrun.js: the TV, hosts, a first game, then the card; the venue's own screen code (its join code or the console's derived one), the Google TV app linked to its Play page then the code, or venueplay.com.au/tv in the TV's browser, the code and full screen, Google TV first, no slug link; hosts at this venue listed, a name and an Australian mobile asked for before anything is sent, /account/host-add for this venue only, the Worker's refusal shown, never an email; trivia first and pink, musical bingo never called bingo; nothing under 15px, nothing wider than a phone, the Terms card lifted on a phone; the wizard asks first: is the venue name right (a wrong one goes to HQ as a ticket), how many TVs, which nights, which games (trivia, musical bingo, bingo, raffles, members draws), each optional and saved to vp_venue_settings.setup_answers (migration 163, NOT RUN) through saveSettings with only the known keys and values, kept on the device too, a question already answered left out, the answers shaping the TV step and the test game step, an Account page card reading them, and ONE more optional question on a later sign-in (never two, skippable, never again after two skips, never for a venue the guide is not for); then About you: their name while it is still \"<venue> manager\" (/account/my-name) and a logo while there is none (/account/logo-upload, this venue, PNG, WebP or JPEG, 1MB), each optional and only when empty, the Worker's refusal shown, the step left out when both are done; lowercase venueplay, no dashes",
   "runs vpbSetPlayers: an add with 3 days of the cycle left is still one full month on the next invoice, live tonight, quantity up with no proration; a drop waits for the renewal, refunds and credits nothing, so 30 added for one night cost a month; a quote changes nothing; a pending drop then up charges only the new players; a yearly plan keeps its pro rata and credit; VPB_BILLING_RULES_3NOV is off unless it is the string 1; with it on, an undo within 59 minutes with no game started deletes the invoice line, puts the capacity and quantity back and writes the HQ history row, while 61 minutes, a game started since, a part-way drop, a refused delete, no add on record and a yearly plan all fall back to the ordinary reduction",
   "safe-area-in-chrome.test.py",
@@ -416,6 +419,7 @@
   "trivia-reveal.test.js",
   "trivia-score.test.js",
   "trivia-set-delete.test.js",
+  "try-demo-in-chrome.test.py",
   "tv-ads-rebuild.test.js",
   "tv-and-phone-in-chrome.test.py",
   "tv-app-cors.test.js",
@@ -462,6 +466,7 @@
   "vpVenuePostcode() is the same in all 2 file(s)",
   "webhook-ledger.test.js",
   "weekly-before-the-room.test.js",
-  "winback-unsubscribe.test.js"
+  "winback-unsubscribe.test.js",
+  "wizard-v2-in-chrome.test.py"
  ]
 }

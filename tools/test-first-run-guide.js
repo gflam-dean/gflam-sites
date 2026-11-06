@@ -55,7 +55,7 @@ function inside(el, anc) { for (var p = el; p; p = p.parentNode) if (p === anc) 
 function before(a, b, root) { var order = []; each(root, function (e) { order.push(e); }); return order.indexOf(a) >= 0 && order.indexOf(a) < order.indexOf(b); }
 async function settle() { for (var i = 0; i < 12; i++) await Promise.resolve(); }
 
-var SESSION = readFile('venueplay/app/vp-session.js'), FIRSTRUN = readFile('venueplay/app/vp-firstrun.js'), INDEX = readFile('venueplay/app/index.html');
+var TVPAIRED = readFile('venueplay/app/vp-tvpaired.js'), SESSION = readFile('venueplay/app/vp-session.js'), FIRSTRUN = readFile('venueplay/app/vp-firstrun.js'), INDEX = readFile('venueplay/app/index.html');
 var USER, AUTH_CALLS, CALLS, OPENED, STORE, HOSTS, IMG = [], SAVED = [], SESS = {};
 function page(phone, over) {
   over = over || {};
@@ -90,6 +90,7 @@ function page(phone, over) {
     localStorage: storage, sessionStorage: { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {} },
     setTimeout: function () { return 0; }, clearTimeout: function () {}, document: document, fetch: fetch };
   (new Function('window', 'document', 'localStorage', 'sessionStorage', 'location', 'fetch', SESSION))(window, document, storage, window.sessionStorage, window.location, fetch);
+  (new Function('window', TVPAIRED))(window);
   (new Function('window', FIRSTRUN))(window);
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, VP: window.VP,
     setInterval: function () { return 1; }, clearInterval: function () {}, openUrl: function (u) { OPENED.push(u); },
@@ -112,12 +113,12 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
 (async function () {
   section('1. THE ORDER: the TV, then hosts, then a first test game');
   var P = page('61452510904');
-  check('the steps run mobile, Terms, venue, games, TV, hosts, game, About you, card', P.FR.STEPS.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', P.FR.STEPS);
+  check('the steps run mobile, Terms, the one question (pick), TV, hosts, the five games in order, About you, card', P.FR.STEPS.join() === 'mobile,terms,pick,tv,hosts,trivia,musical,bingo,raffles,members,account,card', P.FR.STEPS);
   var R = P.FR.open(ctxFor('owner'), P.deps); await R.ready; await settle();
-  check('a self sign-up with its mobile, the Terms and a card on: exactly the TV, hosts and a first game, in that order', R.steps().join() === 'tv,hosts,game', R.steps());
+  check('a self sign-up with its mobile, the Terms and a card on: exactly the TV, hosts and the one ticked game (trivia), in that order', R.steps().join() === 'tv,hosts,trivia', R.steps());
   check('it opens on the TV, step 1 of 3, three dots', R.step() === 'tv' && T(P, 'vpFrCount') === 'Step 1 of 3' && $(P, 'vpFrDots').children.length === 3, T(P, 'vpFrCount'));
   var PC = page('61452510904', { card: false }); var RC = PC.FR.open(ctxFor('owner'), PC.deps); await RC.ready;
-  check('a new venue with no card yet: the card step comes after the first game, last', RC.steps().join() === 'tv,hosts,game,card', RC.steps());
+  check('a new venue with no card yet: the card step comes after the first game, last', RC.steps().join() === 'tv,hosts,trivia,card', RC.steps());
 
   section('2. THE TV: the screen code, then a Google TV or the TV\'s web browser');
   var code = P.VP.venueCode('the-test-arms');
@@ -147,7 +148,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
     { auth_user_id: 'h2', label: 'Elsewhere Host', role: 'host', venue_ids: ['V9'], mobile_last3: '456' },
     { auth_user_id: 'm1', label: 'Mia Manager', role: 'manager', venue_ids: ['V1'] }] });
   var RH = PH.FR.open(ctxFor('owner'), PH.deps); await RH.ready; await RH.go('hosts'); await settle();
-  check('step 2 of 3, "Add your hosts", and it says each host gets a text with their own sign-in link', T(PH, 'vpFrTitle') === 'Add your hosts' && T(PH, 'vpFrCount') === 'Step 2 of 3' && /we text them their own sign-in link/.test(T(PH, 'vpFrBody')), T(PH, 'vpFrBody'));
+  check('step 2 of 3, "Who\'s hosting?", and it says each host gets a text with their own sign-in link', T(PH, 'vpFrTitle') === "Who's hosting?" && T(PH, 'vpFrCount') === 'Step 2 of 3' && /we text them their own sign-in link/.test(T(PH, 'vpFrBody')), T(PH, 'vpFrBody'));
   var hl = CALLS.filter(function (c) { return /\/account\/hosts$/.test(c.url); })[0];
   check('it asks the billing Worker who is on, signed in, for this venue', hl && hl.opts.headers.Authorization === 'Bearer TOKEN-1' && hl.opts.headers['X-VP-Venue'] === 'V1', hl && hl.opts.headers);
   var rows = []; each($(PH, 'vpFrHostList'), function (e) { if (e.getAttribute('data-host') === '1') rows.push(seen(e)); });
@@ -183,18 +184,21 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('a host is never asked for an email (hosts sign in by mobile)', !emailIn && !/e-?mail/i.test(T(P0, 'vpFrBody')));
   check('it says where to change hosts later: Account, then People', /Add or remove hosts any time under Account, then People\./.test(T(P0, 'vpFrBody')));
 
-  section('4. A FIRST TEST GAME: trivia first');
-  await R.go('game');
-  check('step 3 of 3, a test game before the first real night, joining from their own phone', T(P, 'vpFrCount') === 'Step 3 of 3' && /Run a quick test game now, before your first real night/.test(T(P, 'vpFrBody')) && /join from your own phone using the QR code on the TV/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
-  var tri = $(P, 'vpFrTrivia'), mus = $(P, 'vpFrMusical');
-  check('trivia comes first and is the pink button; musical bingo second', before(tri, mus, P.body) && /FF1F8E/.test(tri.style.cssText) && !/FF1F8E/.test(mus.style.cssText) && tri.textContent === 'Open trivia', [tri.textContent, mus.textContent]);
-  check('musical bingo is always "musical bingo", never "bingo" on its own', !/bingo/i.test(T(P, 'vpFrBody').replace(/musical bingo/gi, 'MB')), T(P, 'vpFrBody'));
+  section('4. A FIRST TEST GAME: trivia and musical bingo each have their own setup');
+  await R.go('trivia');
+  check('step 3 of 3, a test game before the first real night, joining from their own phone', T(P, 'vpFrCount') === 'Step 3 of 3' && T(P, 'vpFrTitle') === 'Set up trivia' && /Run a quick test game now, before your first real night/.test(T(P, 'vpFrBody')) && /join from your own phone using the QR code on the TV/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
+  var tri = $(P, 'vpFrTrivia');
+  check('trivia is the pink button and says Open trivia; musical bingo is not on the trivia step', /FF1F8E/.test(tri.style.cssText) && tri.textContent === 'Open trivia' && !$(P, 'vpFrMusical'), tri.textContent);
   check('it is the last step here and reads Finish', $(P, 'vpFrNext').textContent === 'Finish');
   tri.click();
   check('Open trivia opens the trivia console for their venue', OPENED[0] === '/app/trivia/host.html?venue=the-test-arms', OPENED);
+  var PMB = page('61452510904'); var RMB = PMB.FR.open(ctxFor('owner', venue(), undefined, { games: ['musical'] }), PMB.deps); await RMB.ready; await RMB.go('musical');
+  check('musical bingo has its own step: pink "Open musical bingo", always "musical bingo", never "bingo" on its own', T(PMB, 'vpFrTitle') === 'Set up musical bingo' && T(PMB, 'vpFrMusical') === 'Open musical bingo' && !/bingo/i.test(T(PMB, 'vpFrBody').replace(/musical bingo/gi, 'MB').replace(/Not ready yet\?[^.]*\./i, '')), T(PMB, 'vpFrBody'));
+  $(PMB, 'vpFrMusical').click();
+  check('Open musical bingo opens that console for their venue', OPENED[OPENED.length - 1] === '/app/musical/host.html?venue=the-test-arms', OPENED);
 
   section('5. READABLE AT 375px: nothing under 15px');
-  var PR = page('', { card: false, noLogo: true }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }], settings: { setup_answers: {} } }, PR.deps);
+  var PR = page('', { card: false, noLogo: true }); var RR = PR.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }], settings: { setup_answers: { games: ['trivia', 'musical', 'bingo', 'raffles', 'members'] } } }, PR.deps);
   await RR.ready;
   var small = [], wide = [], seenSteps = [];
   for (var si = 0; si < RR.steps().length; si++) {
@@ -207,7 +211,15 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
       var w = /(?:^|;)\s*(?:min-)?width:\s*([\d.]+)px/.exec(css); if (w && parseFloat(w[1]) > 343) wide.push(nm + ' ' + (e.id || e.tagName) + ' ' + w[1]);
     });
   }
-  check('every step was drawn (mobile, Terms, venue, games, TV, hosts, game, About you, card)', seenSteps.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', seenSteps);
+  var PQ = page('', { card: false, noLogo: true }); var RQ = PQ.FR.open({ role: 'owner', venue: venue({ terms_required: true, compliance_accepted_at: null }), currentVenueId: 'V1', user: { id: 'u1', phone: '' }, staff: [{ venue_id: 'V1', role: 'owner', display_name: 'The Test Arms manager' }], settings: { setup_answers: {} } }, PQ.deps);
+  await RQ.ready; await RQ.go('pick'); await settle();
+  each($(PQ, 'vpFirstRun'), function (e) {   // the one opening question, at the same sizes
+    var css = e.getAttribute('style') || '', m, re = /font-size:\s*([\d.]+)px/g;
+    while ((m = re.exec(css))) if (parseFloat(m[1]) < 15) small.push('pick ' + (e.id || e.tagName) + ' ' + m[1]);
+    var f = /(?:^|;)\s*font:\s*[^;]*?([\d.]+)px/.exec(css); if (f && parseFloat(f[1]) < 15) small.push('pick ' + (e.id || e.tagName) + ' font ' + f[1]);
+    var w = /(?:^|;)\s*(?:min-)?width:\s*([\d.]+)px/.exec(css); if (w && parseFloat(w[1]) > 343) wide.push('pick ' + (e.id || e.tagName) + ' ' + w[1]);
+  });
+  check('every step was drawn (mobile, Terms, TV, hosts, the five games, About you, card)', seenSteps.join() === 'mobile,terms,tv,hosts,trivia,musical,bingo,raffles,members,account,card', seenSteps);
   check('no text in the guide is set under 15px on any step', small.length === 0, small);
   check('no fixed width wider than a 375px phone leaves (343px inside the 16px margins)', wide.length === 0, wide);
   check('the guide is one column, at most 480px wide, with 16px margins', /max-width:480px/.test($(PR, 'vpFirstRun').children.filter(function (c) { return c.tagName === 'DIV'; })[0].getAttribute('style')) && /padding:0 16px/.test($(PR, 'vpFirstRun').getAttribute('style')));
@@ -217,7 +229,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
 
   section('7. ABOUT YOU AND YOUR VENUE: two optional Account page questions, each only while it is empty (Dean, INBOX 24)');
   var PA = page('61452510904', { noLogo: true }); var RA = PA.FR.open(ctxFor('owner', venue(), 'The Test Arms manager'), PA.deps); await RA.ready;
-  check('a new venue with the placeholder name and no logo: About you comes after the first game', RA.steps().join() === 'tv,hosts,game,account', RA.steps());
+  check('a new venue with the placeholder name and no logo: About you comes after the first game', RA.steps().join() === 'tv,hosts,trivia,account', RA.steps());
   await RA.go('account'); await settle();
   check('"About you and your venue", both optional, both questions there, and (the last step here) its button reads Finish', T(PA, 'vpFrTitle') === 'About you and your venue' && /Both are optional/.test(T(PA, 'vpFrBody')) && !!$(PA, 'vpFrMyName') && !!$(PA, 'vpFrLogoFile') && $(PA, 'vpFrNext').textContent === 'Finish' && !$(PA, 'vpFrNext').disabled, [T(PA, 'vpFrBody'), $(PA, 'vpFrNext').textContent]);
   check('the logo is picked with a guide-styled "Choose a logo file" button that opens the real file box', T(PA, 'vpFrLogoPick') === 'Choose a logo file' && $(PA, 'vpFrLogoPick').tagName === 'LABEL' && $(PA, 'vpFrLogoPick').getAttribute('for') === 'vpFrLogoFile' && /opacity:0/.test($(PA, 'vpFrLogoFile').getAttribute('style')));
@@ -246,7 +258,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('a PNG goes to /account/logo-upload for THIS venue, as the data URL the Account page sends', lu && lu.body.venue_id === 'V1' && lu.body.data === 'data:image/png;base64,iVBORw0KGgo' && Object.keys(lu.body).sort().join() === 'data,venue_id' && lu.opts.headers['X-VP-Venue'] === 'V1', lu && lu.body);
   check('then says it is on the TV and shows it', /Saved\. Your logo is on your TV now\./.test(T(PA, 'vpFrLogoMsg')) && $(PA, 'vpFrLogoThumb').getAttribute('src') === 'https://db/storage/v1/object/public/venue-logos/V1/new.png' && $(PA, 'vpFrLogoThumb').style.display === 'block', T(PA, 'vpFrLogoMsg'));
   var PK = page('61452510904', { noLogo: true, card: false }); var RK = PK.FR.open(ctxFor('owner', venue(), 'The Test Arms manager'), PK.deps); await RK.ready; await RK.go('account');
-  check('as the last step its button reads Finish (it closes the guide); with the card step after it, "Skip for now"', RK.steps().join() === 'tv,hosts,game,account,card' && $(PK, 'vpFrNext').textContent === 'Skip for now', [RK.steps(), $(PK, 'vpFrNext').textContent]);
+  check('as the last step its button reads Finish (it closes the guide); with the card step after it, "Skip for now"', RK.steps().join() === 'tv,hosts,trivia,account,card' && $(PK, 'vpFrNext').textContent === 'Skip for now', [RK.steps(), $(PK, 'vpFrNext').textContent]);
   $(PK, 'vpFrMyName').value = 'Jo Park'; await $(PK, 'vpFrNameSave').click(); await settle();
   check('and once a name is saved there, "Skip for now" becomes Next', /Saved\. You are Jo Park\./.test(T(PK, 'vpFrNameMsg')) && $(PK, 'vpFrNext').textContent === 'Next', [T(PK, 'vpFrNameMsg'), $(PK, 'vpFrNext').textContent]);
   var PL = page('61452510904', { noLogo: true }); var RL = PL.FR.open(ctxFor('owner'), PL.deps); await RL.ready; await RL.go('account');
@@ -258,58 +270,33 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   check('the logo read fails: the logo is still offered (optional), the guide still opens on the TV', RF2.steps().indexOf('account') >= 0 && RF2.step() === 'tv', RF2.steps());
   check('it never asks for an address, a game night or anything the Account page does not store', !/suburb|address|game night|which night/i.test(T(PA, 'vpFrBody')));
 
-  section('8. THE WIZARD ASKS FIRST: the venue name, how many TVs, which nights, which games (Dean, INBOX 44a)');
+  section('8. THE ONE OPENING QUESTION: "What games do you want to set up today?" (Dean, INBOX 87)');
   var PW = page('61452510904'); var RW = PW.FR.open(ctxFor('owner', venue(), undefined, {}), PW.deps); await RW.ready; await settle();
-  check('a new venue that has answered nothing: the questions come first, then the TV, hosts and the test game', RW.steps().join() === 'venue,games,tv,hosts,game' && RW.step() === 'venue', RW.steps());
-  check('"About your venue", everything optional, so Next reads "Skip for now"', T(PW, 'vpFrTitle') === 'About your venue' && /Every one is optional/.test(T(PW, 'vpFrBody')) && $(PW, 'vpFrNext').textContent === 'Skip for now', T(PW, 'vpFrBody'));
-  check('it shows the venue name as saved and asks if it is right', T(PW, 'vpFrVenueName') === 'The Test Arms' && /Is this your venue's name\?/.test(T(PW, 'vpFrNameCheck')) && T(PW, 'vpFrNameYes') === "Yes, that's right" && T(PW, 'vpFrNameNo') === 'Not quite');
-  check('nothing is saved until they answer', SAVED.length === 0 && CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); }).length === 0);
   function lastSaved() { return SAVED[SAVED.length - 1]; }
-  $(PW, 'vpFrNameYes').click(); await settle();
-  check('"Yes, that\'s right" is kept for THIS venue through the page\'s own saveSettings, only as setup_answers', lastSaved() && lastSaved().id === 'V1' && Object.keys(lastSaved().patch).join() === 'setup_answers' && JSON.stringify(lastSaved().patch.setup_answers) === '{"name_ok":true}', lastSaved());
-  check('and Next reads Next', $(PW, 'vpFrNext').textContent === 'Next' && /confirmed/.test(T(PW, 'vpFrNameCheckMsg')));
-  check('the TV question: 1, 2, 3 or 4 or more, one choice', T(PW, 'vpFrChips-tvs') === '1 TV 2 TVs 3 TVs 4 or more' && /How many TVs will show venueplay\?/.test(T(PW, 'vpFrTvsBox')));
-  $(PW, 'vpFrChip-tvs-2').click(); await settle();
-  check('two TVs: saved, and that chip is the one pressed', JSON.stringify(lastSaved().patch.setup_answers) === '{"tvs":"2","name_ok":true}' && $(PW, 'vpFrChip-tvs-2').getAttribute('aria-pressed') === 'true' && $(PW, 'vpFrChip-tvs-1').getAttribute('aria-pressed') === 'false', lastSaved());
-  $(PW, 'vpFrChip-tvs-3').click();
-  check('a second choice replaces the first (one TV count)', $(PW, 'vpFrChip-tvs-3').getAttribute('aria-pressed') === 'true' && $(PW, 'vpFrChip-tvs-2').getAttribute('aria-pressed') === 'false');
-  check('the nights question: Mon to Sun in order, any number, with the "changes week to week" note', T(PW, 'vpFrChips-nights') === 'Mon Tue Wed Thu Fri Sat Sun' && /Leave it blank if it changes week to week/.test(T(PW, 'vpFrNightsBox')));
-  $(PW, 'vpFrChip-nights-fri').click(); $(PW, 'vpFrChip-nights-thu').click(); await settle();
-  check('Fri then Thu: kept in week order, Thu and Fri', JSON.stringify(lastSaved().patch.setup_answers.nights) === '["thu","fri"]', lastSaved());
-  $(PW, 'vpFrChip-nights-fri').click(); await settle();
-  check('tapping a night again takes it off', JSON.stringify(lastSaved().patch.setup_answers.nights) === '["thu"]' && $(PW, 'vpFrChip-nights-fri').getAttribute('aria-pressed') === 'false');
-  check('the answers are also kept on this device, so nothing is lost without the database column', JSON.parse(STORE['vpFirstRun:V1']).answers.tvs === '3' && JSON.stringify(JSON.parse(STORE['vpFirstRun:V1']).answers.nights) === '["thu"]', STORE['vpFirstRun:V1']);
-  $(PW, 'vpFrNameNo').click();
-  check('"Not quite" opens a box for the right name', $(PW, 'vpFrNameFix').style.display === 'block');
-  await $(PW, 'vpFrNameSend').click();
-  check('nothing typed: asked for it, no ticket', /Type what it should say first/.test(T(PW, 'vpFrNameCheckMsg')) && CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); }).length === 0, T(PW, 'vpFrNameCheckMsg'));
-  $(PW, 'vpFrNameNew').value = ' The Test   Arms Hotel ';
-  await $(PW, 'vpFrNameSend').click(); await settle();
-  var tkt = CALLS.filter(function (c) { return /help\/venue\/ticket$/.test(c.url); })[0];
-  check('the right name goes to HQ as a help desk ticket for this venue (no route renames a venue), signed in', tkt && tkt.body.subject === 'Please correct my venue name' && tkt.body.venue_id === 'V1' && /It should say The Test Arms Hotel\./.test(tkt.body.message) && tkt.opts.headers.Authorization === 'Bearer TOKEN-1', tkt && tkt.body);
-  check('and it says we will change it', /We will change it to The Test Arms Hotel/.test(T(PW, 'vpFrNameCheckMsg')));
-  check('the venue row itself is never written from the page', SAVED.every(function (x) { return Object.keys(x.patch).join() === 'setup_answers'; }));
-
-  await RW.next();
-  check('step 2: "Which games do you play?", the five games, trivia first, musical bingo spelled out', T(PW, 'vpFrTitle') === 'Which games do you play?' && T(PW, 'vpFrChips-games') === 'Trivia Musical bingo Bingo Raffles Members draws', T(PW, 'vpFrChips-games'));
-  check('optional: Next reads "Skip for now"', $(PW, 'vpFrNext').textContent === 'Skip for now');
+  check('a new venue that has answered nothing: the wizard opens on the ONE question and nothing else', RW.steps().join() === 'pick' && RW.step() === 'pick' && T(PW, 'vpFrTitle') === 'What games do you want to set up today?', RW.steps());
+  check('its five ticks are trivia, musical bingo, bingo, raffles, members draws, in that order, musical bingo spelled out', T(PW, 'vpFrChips-games') === 'Trivia Musical bingo Bingo Raffles Members draws', T(PW, 'vpFrChips-games'));
+  check('there is no venue name, nights or TV count question ahead of it', !$(PW, 'vpFrNameCheck') && !$(PW, 'vpFrTvsBox') && !$(PW, 'vpFrNightsBox'));
+  check('it is optional: with no game ticked it is the only step, so Next reads Finish and closes it, and nothing is saved until they tap', $(PW, 'vpFrNext').textContent === 'Finish' && SAVED.length === 0);
   $(PW, 'vpFrChip-games-bingo').click(); $(PW, 'vpFrChip-games-trivia').click(); $(PW, 'vpFrChip-games-raffles').click(); $(PW, 'vpFrChip-games-musical').click(); await settle();
-  check('chosen games are saved in the same order as listed (trivia, musical bingo, bingo, raffles) and Next reads Next', JSON.stringify(lastSaved().patch.setup_answers.games) === '["trivia","musical","bingo","raffles"]' && $(PW, 'vpFrNext').textContent === 'Next', lastSaved());
+  check('ticked games are saved in the listed order, for THIS venue, only as setup_answers, and Next reads Next', lastSaved() && lastSaved().id === 'V1' && Object.keys(lastSaved().patch).join() === 'setup_answers' && JSON.stringify(lastSaved().patch.setup_answers.games) === '["trivia","musical","bingo","raffles"]' && $(PW, 'vpFrNext').textContent === 'Next', lastSaved());
+  check('ONLY the ticked games get a setup: TV and hosts first (inside the first game), then trivia, musical bingo, bingo, raffles, and no members draws step', RW.steps().join() === 'pick,tv,hosts,trivia,musical,bingo,raffles', RW.steps());
+  $(PW, 'vpFrChip-games-musical').click(); await settle();
+  check('un-ticking a game takes its setup out again', RW.steps().join() === 'pick,tv,hosts,trivia,bingo,raffles', RW.steps());
+  check('the answers are also kept on this device, so nothing is lost without the database column', JSON.stringify(JSON.parse(STORE['vpFirstRun:V1']).answers.games) === '["trivia","bingo","raffles"]', STORE['vpFirstRun:V1']);
   await RW.next();
-  check('with three TVs the TV step says so, and that every TV uses the same screen code', /You said 3 TVs\. Do the steps below on each TV, with the same screen code\./.test(T(PW, 'vpFrManyTvs')), T(PW, 'vpFrBody'));
-  await RW.go('game'); await settle();
-  var gn = T(PW, 'vpFrGameNotes');
-  check('the test game step points at the Account pages for their games and their nights (raffles: Draws; bingo: Game settings; Thu)', /Raffles and members draws are set up under Account, then Draws\./.test(gn) && /For bingo, add your permit details under Account, then Game settings\./.test(gn) && /Your game nights: Thu\. Run this test before the first one\./.test(gn), gn);
-  check('musical bingo is never listed with bingo or a permit (it is chosen here, and the notes never mention it)', !/musical/i.test(gn) && gn.split('permit').length === 2, gn);
-  check('trivia is still the first, pink button', before($(PW, 'vpFrTrivia'), $(PW, 'vpFrMusical'), PW.body) && /FF1F8E/.test($(PW, 'vpFrTrivia').style.cssText));
-  var P1 = page('61452510904'); var R1 = P1.FR.open(ctxFor('owner', venue(), undefined, { tvs: '1', nights: [], games: ['musical'], name_ok: true }), P1.deps); await R1.ready;
-  check('answers already given are left out: only the nights are unanswered, so only the venue step stays', R1.steps().join() === 'venue,tv,hosts,game' && R1.steps().indexOf('games') === -1, R1.steps());
-  await R1.go('tv'); check('one TV: no several-TVs line', !$(P1, 'vpFrManyTvs'));
-  await R1.go('game');
-  check('a venue that plays only musical bingo is pointed at no permit, no draws and no game nights', !$(P1, 'vpFrGameNotes'), T(P1, 'vpFrGameNotes'));
+  check('Next goes to Put it on your TV, step 2 of 6, and it names the first game', RW.step() === 'tv' && T(PW, 'vpFrCount') === 'Step 2 of 6' && T(PW, 'vpFrTitle') === 'Put it on your TV' && /part of setting up trivia, your first game/.test(T(PW, 'vpFrBody')), T(PW, 'vpFrBody'));
+  await RW.next(); check('then Who\'s hosting?', RW.step() === 'hosts' && T(PW, 'vpFrTitle') === "Who's hosting?");
+  await RW.next(); check('then the first game itself, trivia, and the TV and host are marked done so no later game asks again', RW.step() === 'trivia' && JSON.parse(STORE['vpFirstRun:V1']).tvDone === true, STORE['vpFirstRun:V1']);
+  await RW.next(); check('then bingo (musical bingo was un-ticked), with no second TV or hosts step', RW.step() === 'bingo' && RW.steps().indexOf('tv') < RW.steps().indexOf('trivia'), RW.steps());
+  var P2 = page('61452510904'); var R2 = P2.FR.open(ctxFor('owner', venue(), undefined, { games: ['bingo'] }), P2.deps); await R2.ready;
+  check('the first ticked game need not be trivia: bingo alone gets the TV and hosts then bingo', R2.steps().join() === 'tv,hosts,bingo' && /part of setting up bingo, your first game/.test(T(P2, 'vpFrBody')), [R2.steps(), T(P2, 'vpFrBody')]);
+  var PN0 = page('61452510904'); var RN0 = PN0.FR.open(ctxFor('owner', venue(), undefined, {}), PN0.deps); await RN0.ready;
+  await RN0.next(); await settle();
+  check('skipping the question sets up no game: no TV, no hosts, straight to what is left (the venue has nothing else, so it finishes)', RN0.steps().join() === 'pick' && !$(PN0, 'vpFirstRun'), RN0.steps());
   var PS2 = page('61452510904', { saveFail: true }); var RS2 = PS2.FR.open(ctxFor('owner', venue(), undefined, {}), PS2.deps); await RS2.ready;
-  $(PS2, 'vpFrChip-tvs-2').click(); await settle();
-  check('the database column is not there yet (migration 163 not run): the guide still works, shows no error, keeps the answer on this device', JSON.parse(STORE['vpFirstRun:V1']).answers.tvs === '2' && $(PS2, 'vpFrNext').textContent === 'Next' && !/error|could not|column/i.test(T(PS2, 'vpFrBody')), T(PS2, 'vpFrBody'));
+  $(PS2, 'vpFrChip-games-trivia').click(); await settle();
+  check('the database column is not there yet (migration 163 not run): the wizard still works, shows no error, keeps the answer on this device', JSON.parse(STORE['vpFirstRun:V1']).answers.games[0] === 'trivia' && $(PS2, 'vpFrNext').textContent === 'Next' && !/error|could not|column/i.test(T(PS2, 'vpFrBody')), T(PS2, 'vpFrBody'));
+
   var dirty = P.FR.cleanAnswers({ tvs: '9', nights: ['thu', 'xx', '<b>'], games: 'trivia', name_ok: 'yes', evil: '<script>' });
   check('only the known keys and values can be kept (a TV count of 9, a night called xx, a string for games, anything extra are dropped)', JSON.stringify(dirty) === '{"nights":["thu"]}', dirty);
   check('the Account page\'s saved answers win, and this device fills the gaps', JSON.stringify(P.FR.answersFor({ settings: { setup_answers: { tvs: '2', games: ['trivia'] } } }, { answers: { tvs: '4', nights: ['sat'] } })) === '{"tvs":"2","games":["trivia"],"nights":["sat"]}');
@@ -318,7 +305,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   function later(answers, over) { var Q = page('61452510904', over); var ctx = ctxFor('owner', over && over.venue || venue(), over && over.name, answers); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', done: true }); return { P: Q, ctx: ctx }; }
   var L = later({}, { noLogo: true });
   var k1 = await L.P.FR.ask(L.ctx, L.P.deps);
-  check('a new venue, guide done, nothing answered: ONE question, "Which games do you play?", as a sheet over the console', k1 === 'games' && T(L.P, 'vpAsk') !== '' && /One quick question/.test(T(L.P, 'vpAsk')) && /Which games do you play\?/.test(T(L.P, 'vpAsk')) && $(L.P, 'vpAsk').getAttribute('role') === 'dialog', k1);
+  check('a new venue, guide done, nothing answered: ONE question, "What games do you want to set up today?", as a sheet over the console', k1 === 'games' && T(L.P, 'vpAsk') !== '' && /One quick question/.test(T(L.P, 'vpAsk')) && /What games do you want to set up today\?/.test(T(L.P, 'vpAsk')) && $(L.P, 'vpAsk').getAttribute('role') === 'dialog', k1);
   check('with Done and Not now, both at least 44px tall, and no text under 15px', T(L.P, 'vpAskDone') === 'Done' && T(L.P, 'vpAskLater') === 'Not now' && /min-height:44px/.test($(L.P, 'vpAskDone').style.cssText) && /min-height:44px/.test($(L.P, 'vpAskLater').style.cssText) && (function () { var bad = []; each($(L.P, 'vpAsk'), function (e) { var m, re = /font-size:\s*([\d.]+)px/g, css = e.getAttribute('style') || ''; while ((m = re.exec(css))) if (parseFloat(m[1]) < 15) bad.push(m[1]); }); return !bad.length; })());
   var k2 = await L.P.FR.ask(L.ctx, L.P.deps);
   check('asked again in the same sign-in: nothing (never more than one a sign-in)', k2 === '' && walk(L.P.body, function (e) { return e.id === 'vpAsk'; }) !== null && (function () { var n = 0; each(L.P.body, function (e) { if (e.id === 'vpAsk') n++; }); return n === 1; })(), k2);
@@ -379,11 +366,98 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   var migCode = MIG.split('\n').filter(function (l) { return !/^\s*--/.test(l); }).join('\n');
   check('migration 163 adds only vp_venue_settings.setup_answers (a jsonb object, 2,000 characters at most), safe to run twice', /ADD COLUMN IF NOT EXISTS setup_answers jsonb NOT NULL DEFAULT '\{\}'::jsonb/.test(migCode) && /jsonb_typeof\(setup_answers\) = 'object' AND length\(setup_answers::text\) <= 2000\)/.test(migCode) && /IF NOT EXISTS \(SELECT 1 FROM pg_constraint/.test(migCode));
   check('and no policy, grant, function or trigger (so RLS-BASELINE.json does not change)', !/create\s+(or replace\s+)?(policy|function|trigger)|\bgrant\b|\brevoke\b|alter\s+policy/i.test(migCode), migCode);
-  check('it says NOT RUN and has a rollback; MIGRATIONS.md lists it as 163 with the same words', /NOT RUN/.test(MIG) && /Rollback:/.test(MIG) && /DROP COLUMN IF EXISTS setup_answers/.test(MIG) && /venueplay-163-setup-answers\.sql/.test(MIGS) && /NOT RUN/.test(MIGS.slice(MIGS.indexOf('venueplay-163-setup-answers.sql'))));
+  check('it says NOT RUN and has a rollback; MIGRATIONS.md lists it as 163 with the same words', /NOT RUN/.test(MIG) && /Rollback:/.test(MIG) && /DROP COLUMN IF EXISTS setup_answers/.test(MIG) && /venueplay-163-setup-answers\.sql/.test(MIGS) && /NOT RUN/.test((function () { var i = MIGS.indexOf('venueplay-163-setup-answers.sql'), j = MIGS.indexOf('`venueplay-', i + 10); return MIGS.slice(i, j > i ? j : undefined); })()));   // 163's own entry, not the ones after it (172 and 173 say NOT RUN too)
   check('the keys the page keeps are exactly the ones the migration documents', /"tvs".*"nights".*"games".*"name_ok"/s.test(MIG.replace(/\n--\s*/g, ' ')) || (MIG.indexOf('"tvs"') > 0 && MIG.indexOf('"nights"') > 0 && MIG.indexOf('"games"') > 0 && MIG.indexOf('"name_ok"') > 0));
 
+  section('11. EACH GAME HAS ITS OWN SETUP; IS THIS THE SAME TV AS THE DEMO; REMIND ME NEXT TIME (Dean, INBOX 86, 87, 88a)');
+  var PG = page('61452510904'); var RG = PG.FR.open(ctxFor('owner', venue(), undefined, { games: ['trivia', 'musical', 'bingo', 'raffles', 'members'] }), PG.deps); await RG.ready;
+  var PAk = page('61452510904'); var RAk = PAk.FR.open(ctxFor('owner', venue(), undefined, {}), PAk.deps); await RAk.ready;
+  check('the opening question says it will be asked again next time if skipped', /Skip this and we will ask again next time you sign in\./.test(T(PAk, 'vpFrBody')), T(PAk, 'vpFrBody'));
+  var PT3 = page('61452510904'); var RT3 = PT3.FR.open(ctxFor('owner', venue(), undefined, { games: ['trivia'], tvs: '3' }), PT3.deps); await RT3.ready; await settle();
+  var PT1 = page('61452510904'); var RT1 = PT1.FR.open(ctxFor('owner', venue(), undefined, { games: ['trivia'], tvs: '1' }), PT1.deps); await RT1.ready; await settle();
+  check('three TVs answered (by the later "how many TVs" question): the TV step says do the steps on each; one TV: it does not', /You said 3 TVs/.test(T(PT3, 'vpFrManyTvs')) && !$(PT1, 'vpFrManyTvs'), T(PT3, 'vpFrManyTvs'));
+  check('all five ticked: TV and hosts once, before the first game, then the games in order trivia, musical bingo, bingo, raffles, members draws', RG.steps().join() === 'tv,hosts,trivia,musical,bingo,raffles,members', RG.steps());
+  await RG.go('bingo');
+  check('bingo points at Game settings, where the permit card (VPPermits) is, and never mentions musical bingo', T(PG, 'vpFrTitle') === 'Set up bingo' && /Account, then Game settings/.test(T(PG, 'vpFrBody')) && $(PG, 'vpFrOpen-bingo').getAttribute('href') === '/app/settings.html' && !/musical/i.test(T(PG, 'vpFrBody')), T(PG, 'vpFrBody'));
+  await RG.go('raffles');
+  check('raffles point at Account, then Draws', T(PG, 'vpFrTitle') === 'Set up raffles' && /Account, then Draws/.test(T(PG, 'vpFrBody')) && $(PG, 'vpFrOpen-raffles').getAttribute('href') === '/app/billing.html#draws', T(PG, 'vpFrBody'));
+  await RG.go('members');
+  check('members draws point at Account, then Draws, and say "your members list" (never roster)', T(PG, 'vpFrTitle') === 'Set up members draws' && /Account, then Draws/.test(T(PG, 'vpFrBody')) && /your members list/.test(T(PG, 'vpFrBody')) && !/roster/i.test(T(PG, 'vpFrBody')), T(PG, 'vpFrBody'));
+  var PV = page('61452510904'); var RV = PV.FR.open(ctxFor('owner', venue({ au_state: 'NSW' }), undefined, { games: ['bingo'] }), PV.deps); await RV.ready; await RV.go('bingo');
+  var WPm = {}; (new Function('window', 'document', readFile('venueplay/app/vp-permits.js')))(WPm, PV.doc);
+  var PV2 = page('61452510904'); PV2.deps.VPPermits = WPm.VPPermits; var RV2 = PV2.FR.open(ctxFor('owner', venue({ au_state: 'NSW' }), undefined, { games: ['bingo'] }), PV2.deps); await RV2.ready; await RV2.go('bingo');
+  var PV3 = page('61452510904'); PV3.deps.VPPermits = WPm.VPPermits; var RV3 = PV3.FR.open(ctxFor('owner', venue({ au_state: 'VIC' }), undefined, { games: ['bingo'] }), PV3.deps); await RV3.ready; await RV3.go('bingo');
+  check('bingo reads VPPermits: NSW needs no bingo permit so it says there is nothing to record; VIC may need one so it says to add it', WPm.VPPermits && /does not need a bingo permit/.test(T(PV2, 'vpFrBody')) && /may need a permit/.test(T(PV3, 'vpFrBody')) && !/may need a permit/.test(T(PV2, 'vpFrBody')), [T(PV2, 'vpFrBody'), T(PV3, 'vpFrBody')]);
+  var hostForm = $(PH, 'vpFrHostForm');
+  check('the host boxes are a real form with a name and autocomplete words, and the boxes are 16px on a phone', hostForm && hostForm.tagName === 'FORM' && hostForm.getAttribute('name') === 'host' && hostForm.getAttribute('autocomplete') === 'off' && $(PH, 'vpFrHostName').getAttribute('name') === 'host_name' && $(PH, 'vpFrHostMobile').getAttribute('name') === 'host_mobile' && $(PH, 'vpFrHostMobile').getAttribute('autocomplete') === 'off' && /font-size:16px/.test($(PH, 'vpFrHostName').getAttribute('style')) && inside($(PH, 'vpFrHostAdd'), hostForm) && $(PH, 'vpFrHostAdd').getAttribute('type') === 'submit', hostForm && hostForm.attrs);
+  var hs = $(P0, 'vpFrHostSelf');
+  check('"Who\'s hosting?" has an "I\'ll host" button as well as adding a host by name and mobile', hs && hs.textContent === "I'll host" && !!$(P0, 'vpFrHostAdd'));
+  var PHs = page('61452510904'); var RHs = PHs.FR.open(ctxFor('owner'), PHs.deps); await RHs.ready; await RHs.go('hosts'); await settle();
+  $(PHs, 'vpFrHostSelf').click();
+  check('"I\'ll host" asks the Worker for nothing, says so, and lets them carry on', /you will host/.test(T(PHs, 'vpFrHostMsg')) && $(PHs, 'vpFrNext').textContent === 'Next' && CALLS.filter(function (c) { return /host-add$/.test(c.url); }).length === 0 && JSON.parse(STORE['vpFirstRun:V1']).hosting === 'self', T(PHs, 'vpFrHostMsg'));
+
+  /* THE SAME-TV QUESTION, INSIDE THE TV STEP */
+  async function tvPage(setup) { var Q = page('61452510904'); setup(Q); var RQ2 = Q.FR.open(ctxFor('owner'), Q.deps); await RQ2.ready; await settle(); return { P: Q, R: RQ2 }; }
+  var N0 = await tvPage(function () {});
+  check('no demo played on this browser: no same-TV question, the screen code and both ways are there as ever', !$(N0.P, 'vpFrSameTv') && T(N0.P, 'vpFrTvCode').length === 6 && !!$(N0.P, 'vpFrTvApp') && $(N0.P, 'vpFrTvBox').style.display !== 'none');
+  var N1 = await tvPage(function () { STORE['vpTvVenue'] = 'another-pub'; });
+  check('a TV remembered for ANOTHER venue is not this venue\'s demo: no question', !$(N1.P, 'vpFrSameTv'));
+  var Y0 = await tvPage(function () { STORE['vpTvVenue'] = 'the-test-arms'; });
+  check('the demo screen on this browser was this venue (vpTvVenue is its slug): "Is this the same TV you played the demo on?" with Yes and No', /Is this the same TV you played the demo on\?/.test(T(Y0.P, 'vpFrSameTv')) && T(Y0.P, 'vpFrSameYes') === 'Yes' && T(Y0.P, 'vpFrSameNo') === 'No', T(Y0.P, 'vpFrSameTv'));
+  check('inside the TV step, above the code, and the code and both ways stay hidden until they answer', before($(Y0.P, 'vpFrSameTv'), $(Y0.P, 'vpFrTvBox'), Y0.P.body) && inside($(Y0.P, 'vpFrSameTv'), $(Y0.P, 'vpFrBody')) && $(Y0.P, 'vpFrTvBox').style.display === 'none');
+  check('before they answer, this browser is not paired for bare /tv', !Y0.P.deps.storage.getItem('vpTvPaired'));
+  $(Y0.P, 'vpFrSameYes').click();
+  check('Yes pairs this browser to the venue through VPTvPaired.save, so bare /tv opens it with no code', Y0.P.deps.VP !== undefined && JSON.parse(STORE[Object.keys(STORE).filter(function (k) { return /paired/i.test(k); })[0]] || '{}').slug === 'the-test-arms', Object.keys(STORE));
+  check('Yes keeps the pairing: no code to type, the code and the ways hidden, and it says so', $(Y0.P, 'vpFrTvBox').style.display === 'none' && /no code to type/.test(T(Y0.P, 'vpFrSameMsg')) && JSON.parse(STORE['vpFirstRun:V1']).sameTv === 'yes' && $(Y0.P, 'vpFrNext').textContent === 'Next' && !$(Y0.P, 'vpFrNext').disabled, T(Y0.P, 'vpFrSameMsg'));
+  $(Y0.P, 'vpFrSameNo').click();
+  check('No shows venueplay.com.au/tv and the screen code, the existing content', $(Y0.P, 'vpFrTvBox').style.display === 'block' && T(Y0.P, 'vpFrTvCode').length === 6 && /venueplay\.com\.au\/tv/.test(T(Y0.P, 'vpFrTvWeb')) && T(Y0.P, 'vpFrSameMsg') === '', T(Y0.P, 'vpFrSameMsg'));
+  var D0 = await tvPage(function () { STORE['vpDemoPlayed-V1'] = '1'; });
+  check('the try page set vpDemoPlayed-<venue id> to "1": the question is asked even when no TV was remembered', !!$(D0.P, 'vpFrSameTv'));
+  var D1 = await tvPage(function () { STORE['vpDemoPlayed-V1'] = '0'; STORE['vpDemoPlayed-V2'] = '1'; });
+  check('another venue\'s demo flag, or a flag that is not "1", asks nothing', !$(D1.P, 'vpFrSameTv'));
+  var Yr = await tvPage(function () { STORE['vpTvVenue'] = 'the-test-arms'; STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', sameTv: 'yes' }); });
+  check('an answer already given is remembered when the step is drawn again', $(Yr.P, 'vpFrTvBox').style.display === 'none' && $(Yr.P, 'vpFrSameYes').getAttribute('aria-pressed') === 'true');
+
+  /* NOT READY YET? REMIND ME NEXT TIME I SIGN IN */
+  var PRm = page('61452510904'); var RRm = PRm.FR.open(ctxFor('owner', venue(), undefined, { games: ['trivia', 'musical'] }), PRm.deps); await RRm.ready; await settle();
+  check('every ticked game\'s setup has "Not ready yet? Remind me next time I sign in" (on the TV step, hosts, and the game)', T(PRm, 'vpFrRemind') === 'Not ready yet? Remind me next time I sign in' && (await RRm.go('hosts'), T(PRm, 'vpFrRemind')) === 'Not ready yet? Remind me next time I sign in' && (await RRm.go('trivia'), T(PRm, 'vpFrRemind')) === 'Not ready yet? Remind me next time I sign in');
+  await RRm.go('tv'); await settle();
+  await $(PRm, 'vpFrRemind').click(); await settle();
+  var sa = lastSaved().patch.setup_answers;
+  check('remind me on trivia: it is kept (setup_answers and this device) as a game to come back to', JSON.stringify(sa.remind) === '["trivia"]' && JSON.stringify(JSON.parse(STORE['vpFirstRun:V1']).answers.remind) === '["trivia"]', sa);
+  check('and trivia drops out of this run, so the TV and hosts now belong to musical bingo, the next game', RRm.steps().join() === 'tv,hosts,musical' && RRm.step() === 'tv' && /part of setting up musical bingo, your first game/.test(T(PRm, 'vpFrBody')), [RRm.steps(), RRm.step()]);
+  await RRm.go('musical'); await $(PRm, 'vpFrRemind').click(); await settle();
+  check('remind me on the last game too: no game steps left, so on to what is left (the venue has nothing else, so no step is left to show)', RRm.steps().indexOf('musical') === -1 && RRm.steps().indexOf('tv') === -1 && JSON.stringify(lastSaved().patch.setup_answers.remind) === '["trivia","musical"]', RRm.steps());
+  /* THE NEXT SIGN-IN: the ONE question */
+  var back = lastSaved().patch.setup_answers;
+  var NS = page('61452510904'); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'musical', done: true, answers: back });
+  var ctxN = ctxFor('owner', venue(), undefined, back);
+  var kN = await NS.FR.ask(ctxN, NS.deps);
+  check('next sign-in: the first game they asked to be reminded of is the ONE question, ahead of nights and TVs (trivia)', kN === 'remind' && /Ready to set up trivia now\?/.test(T(NS, 'vpAsk')) && T(NS, 'vpAskDone') === 'Set it up' && T(NS, 'vpAskLater') === 'Not yet', [kN, T(NS, 'vpAsk')]);
+  check('remind is first in ASK_ORDER, ahead of the games, nights and TVs questions', NS.FR.nextQuestion(ctxN, NS.deps.storage) === 'remind' && NS.FR.nextQuestion(ctxFor('owner', venue(), undefined, { games: ['trivia'], remind: ['musical'] }), { getItem: function () { return null; } }) === 'remind' && NS.FR.nextQuestion(ctxFor('owner', venue(), undefined, { games: ['trivia'] }), { getItem: function () { return null; } }) === 'nights');
+  $(NS, 'vpAskLater').click(); SESS = {};
+  var kN2 = await NS.FR.ask(ctxN, NS.deps);
+  check('"Not yet" leaves it on the list: it is asked again the sign-in after, however often it is put off', kN2 === 'remind' && !!$(NS, 'vpAsk') && !STORE['vpAsk:V1'], [kN2, STORE['vpAsk:V1']]);
+  $(NS, 'vpAskDone').click(); await settle();
+  check('"Set it up" opens the guide on JUST that game: its TV, hosts and trivia, no musical bingo', !!$(NS, 'vpFirstRun') && $(NS, 'vpAsk') === null && T(NS, 'vpFrTitle') === 'Put it on your TV' && /setting up trivia/.test(T(NS, 'vpFrBody')), T(NS, 'vpFrTitle'));
+  var afterSet = lastSaved().patch.setup_answers;
+  check('and trivia comes off the reminder list (musical bingo stays on it), saved', JSON.stringify(afterSet.remind) === '["musical"]', afterSet);
+  $(NS, 'vpFrNext').click(); await settle(); $(NS, 'vpFrNext').click(); await settle();
+  check('Next, Next: TV then hosts then trivia, and Finish on trivia closes the run', RW && NS.doc.getElementById('vpFrTitle').textContent === 'Set up trivia' && $(NS, 'vpFrNext').textContent === 'Finish');
+  var gs = JSON.parse(STORE['vpFirstRun:V1']);
+  check('the run is just that game (state.only), the guide reopened and not done', JSON.stringify(gs.only) === '["trivia"]' && gs.done === false && gs.dismissed === false, gs);
+  $(NS, 'vpFrNext').click(); await settle();
+  var gd = JSON.parse(STORE['vpFirstRun:V1']);
+  check('finishing it marks the guide done and clears the single-game run, so a later open is the ordinary plan', gd.done === true && gd.only === null && gd.tvDone === true, gd);
+  var NSr = page('61452510904'); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'trivia', done: true, tvDone: true, answers: { games: ['trivia'], remind: ['musical'] } });
+  var kS = await NSr.FR.ask(ctxFor('owner', venue(), undefined, { games: ['trivia', 'musical'], remind: ['musical'] }), NSr.deps);
+  var kSt = T(NSr, 'vpAsk'); $(NSr, 'vpAskDone').click(); await settle();
+  check('a TV and host already done are not asked again when a reminded game comes back: it opens on that game', kS === 'remind' && /Ready to set up musical bingo now\?/.test(kSt) && JSON.parse(STORE['vpFirstRun:V1']).step === 'musical', STORE['vpFirstRun:V1']);
+  var NSn = page('61452510904'); STORE['vpFirstRun:V1'] = JSON.stringify({ step: 'tv', done: true });
+  check('nothing to be reminded of: the ordinary next question is asked instead', (await NSn.FR.ask(ctxFor('owner', venue(), undefined, { games: ['trivia'] }), NSn.deps)) === 'nights');
+
   section('6. THE WORDS');
-  var words = [P, PJ, PH, P0, PR, PA, PW].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  var words = [P, PJ, PH, P0, PR, PA, PW, PG, Y0.P, NS].map(function (q) { return seen(q.body); }).join(' ') + ' ' + FIRSTRUN.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   check('lowercase venueplay in everything it says (never VenuePlay)', !/VenuePlay|Venueplay|VENUEPLAY/.test(words));
   check('no em dash or en dash, never "roster", never "the ACT"', !/[–—]/.test(words) && !/roster/i.test(words) && !/\bthe ACT\b/.test(words));
 
