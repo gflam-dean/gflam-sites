@@ -36,6 +36,13 @@
   var ORDER = ["trivia", "musical", "bingo", "raffles", "members"];
   var SETUP_STATES = { done: 1, later: 1, shown: 1 };
   var OTHER_MAX = 60;
+  /* THE GAME WEEK (Dean, 6 Nov 2026): which game runs on which night, with an optional start time. Kept in
+     setup_answers.week, read by the phone screens' "This week here" strip:
+       "week": [ { "day": "wed", "games": [ { "game": "trivia", "start": "19:00" } ] },
+                 { "day": "fri", "games": [ { "game": "musical", "start": "19:30" }, { "game": "members" } ] } ]
+     day: mon..sun, in week order, each day once; game: trivia | musical | bingo | raffles | members, each once a day,
+     in the house order; start: "HH:MM" 24 hour, left out when not given. At most 5 games a day. */
+  var WEEK = [["mon", "Mon", "Monday"], ["tue", "Tue", "Tuesday"], ["wed", "Wed", "Wednesday"], ["thu", "Thu", "Thursday"], ["fri", "Fri", "Friday"], ["sat", "Sat", "Saturday"], ["sun", "Sun", "Sunday"]];
   var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   var C = { ink: "#0A0A0B", ink2: "#141418", ink3: "#1C1C22", pink: "#FF1F8E", pinkSoft: "#FF8CC6", text: "#E7E7EC", muted: "#C9C9D1", faint: "#9A9AA4", line: "rgba(255,255,255,.10)", ok: "#2BD47D" };
   var HEAD = "'Hanken Grotesk',Manrope,sans-serif";
@@ -85,6 +92,10 @@
     P + ".vpgs-seg button{flex:1;min-height:48px;padding:10px 12px;border:none;background:transparent;font:700 15px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-seg button+button{border-left:1px solid rgba(255,255,255,.18)}" + P + ".vpgs-seg button[aria-pressed=true]{background:" + C.pink + ";color:#FFFFFF}",
     P + ".vpgs-info{margin:0;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.5;color:" + C.muted + "}",
+    P + ".vpgs-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}",
+    P + ".vpgs-day{min-height:46px;padding:0;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);font:700 15px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
+    P + ".vpgs-day[aria-pressed=true]{background:" + C.pink + ";border-color:" + C.pink + ";color:#FFFFFF}",
+    P + ".vpgs-times{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0 0}" + P + ".vpgs-time{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;font-size:15px;color:" + C.muted + "}",
     P + ".vpgs-msg{margin:12px 0 0;font-size:15px;line-height:1.5;color:" + C.pinkSoft + "}",
     P + ".vpgs-link{display:block;margin:18px 0 0;padding:0;min-height:44px;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}",
     P + ".vpgs-tag{display:inline-block;margin:0 0 12px;padding:4px 12px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + ";letter-spacing:.06em;text-transform:uppercase}",
@@ -116,6 +127,35 @@
     ORDER.forEach(function (g) { if (SETUP_STATES[s[g]]) out[g] = s[g]; });
     return out;
   }
+  function cleanWeek(w) {
+    if (!Array.isArray(w)) return null;
+    var byDay = {};
+    w.forEach(function (d) {
+      if (!d || typeof d !== "object" || !WEEK.some(function (x) { return x[0] === d.day; }) || !Array.isArray(d.games)) return;
+      var have = byDay[d.day] = byDay[d.day] || {};
+      d.games.forEach(function (gm) {
+        if (!gm || ORDER.indexOf(gm.game) < 0 || have[gm.game]) return;
+        var t = (typeof gm.start === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : "";
+        have[gm.game] = t ? { game: gm.game, start: t } : { game: gm.game };
+      });
+    });
+    var out = [];
+    WEEK.forEach(function (x) {
+      var h = byDay[x[0]]; if (!h) return;
+      var gs = ORDER.filter(function (g) { return h[g]; }).map(function (g) { return h[g]; }).slice(0, 5);
+      if (gs.length) out.push({ day: x[0], games: gs });
+    });
+    return out;
+  }
+  /* "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws" */
+  function weekWords(w) {
+    return (cleanWeek(w) || []).map(function (d) {
+      var day = WEEK.filter(function (x) { return x[0] === d.day; })[0][1];
+      return day + ": " + d.games.map(function (gm) { var g = gameOf(gm.game); return (g ? g.title : gm.game) + (gm.start ? " " + timeWords(gm.start) : ""); }).join(", ");
+    }).join(" \u00b7 ");
+  }
+  /* "19:30" -> "7:30pm" */
+  function timeWords(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); if (!m) return ""; var h = +m[1], ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return h + (m[2] === "00" ? "" : ":" + m[2]) + ap; }
   function cleanOther(t) { return typeof t === "string" ? t.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, OTHER_MAX) : ""; }
   /* The keys this file adds to setup_answers, cleaned. vp-firstrun.js keeps them through its own cleanAnswers. */
   function cleanExtra(a, out) {
@@ -125,6 +165,8 @@
     if (Object.keys(s).length) out.setup = s;
     var o = cleanOther(a && a.other);
     if (o) out.other = o;
+    var w = cleanWeek(a && a.week);
+    if (w && w.length) out.week = w;
     return out;
   }
   function readLocal(storage, vid) { try { var s = JSON.parse(storage.getItem(LKEY + vid) || "{}"); return (s && typeof s === "object") ? s : {}; } catch (e) { return {}; } }
@@ -471,6 +513,7 @@
     function left() { var s = cleanSetup(answers.setup); return ticked().filter(function (g) { return s[g] !== "done"; }); }
     function end(outcome) { F.close(); finish(outcome); }
     F.x.addEventListener("click", function () {
+      if (deps.weekOnly) return end("closed");   // the Account page's game nights: closing changes nothing
       /* Closing part way: whatever is not set up keeps its defaults and opens its own setup the first time. */
       var rest = left(); rest.forEach(function (g) { mark(g, "later"); });
       Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g), true); })).then(persist, persist);
@@ -510,7 +553,7 @@
         if (!had && answers.games.length && !answers.games_at) answers.games_at = brisbaneDate(now);
         persist();
         if (!answers.games.length) return end("done");
-        allToday();
+        weekStep();
       });
       function paint() { var any = cur.length || (otherOn && cleanOther(otherIn.value)); next.disabled = !any; otherWrap.style.display = otherOn ? "" : "none"; }
       function chip(id, words, on, click) {
@@ -527,6 +570,63 @@
       F.body.appendChild(box); F.body.appendChild(otherWrap); paint();
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", headsUp)); F.foot.appendChild(next);
     }
+    /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026), right after the games question, skippable: for each game they
+       ticked, the nights it runs, and an optional start time for each. Saved as setup_answers.week (see WEEK above),
+       and the nights as setup_answers.nights, the shape the Account page card already reads. */
+    function weekStep() {
+      F.clear(); F.step("Your games", 3, 2); F.title.textContent = "Which nights do you run them?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "Tap the nights for each game. A start time is optional. Players see this on their phones, so they know when to come in."));
+      var cur = {};   // game -> { day: "HH:MM" or "" }
+      (cleanWeek(answers.week) || []).forEach(function (d) { d.games.forEach(function (gm) { (cur[gm.game] = cur[gm.game] || {})[d.day] = gm.start || ""; }); });
+      var wrap = F.el("div"); wrap.id = "vpGsWeek";
+      ticked().forEach(function (g) {
+        var blk = F.el("div", "vpgs-row"); blk.setAttribute("data-game", g);
+        blk.appendChild(F.el("div", "vpgs-lab", gameOf(g).title));
+        var days = F.el("div", "vpgs-days"); days.setAttribute("role", "group"); days.setAttribute("aria-label", gameOf(g).title + " nights");
+        var times = F.el("div", "vpgs-times");
+        function paint() {
+          while (times.firstChild) times.removeChild(times.firstChild);
+          WEEK.forEach(function (x) {
+            if (!cur[g] || cur[g][x[0]] === undefined) return;
+            var r = F.el("label", "vpgs-time");
+            r.appendChild(F.el("span", null, x[2] + " start time (optional)"));
+            var t = F.el("input", "vpgs-in"); t.type = "time"; t.id = "vpGsTime_" + g + "_" + x[0]; t.value = cur[g][x[0]] || "";
+            t.addEventListener("input", function () { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; });
+            t.addEventListener("change", function () { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; });
+            r.appendChild(t); times.appendChild(r);
+          });
+        }
+        WEEK.forEach(function (x) {
+          var on = !!(cur[g] && cur[g][x[0]] !== undefined);
+          var b = F.el("button", "vpgs-day", x[1]); b.setAttribute("type", "button"); b.setAttribute("aria-pressed", on ? "true" : "false");
+          b.setAttribute("data-day", x[0]); b.setAttribute("aria-label", gameOf(g).title + " on " + x[2]);
+          b.addEventListener("click", function () {
+            cur[g] = cur[g] || {};
+            if (cur[g][x[0]] !== undefined) delete cur[g][x[0]]; else cur[g][x[0]] = "";
+            b.setAttribute("aria-pressed", cur[g][x[0]] !== undefined ? "true" : "false"); paint();
+          });
+          days.appendChild(b);
+        });
+        blk.appendChild(days); blk.appendChild(times); wrap.appendChild(blk); paint();
+      });
+      F.body.appendChild(wrap);
+      var skip = F.el("button", "vpgs-link", "Skip for now, I'll add these later"); skip.id = "vpGsWeekSkip"; skip.setAttribute("type", "button");
+      skip.addEventListener("click", function () { if (deps.weekOnly) return end("closed"); allToday(); }); F.body.appendChild(skip);
+      if (deps.weekOnly) { skip.textContent = "Cancel"; F.step("Your game nights", 0, 0); F.foot.appendChild(F.el("span")); }
+      else F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", pick));
+      F.foot.appendChild(F.btn(deps.weekOnly ? "Save" : "Next", "pink", "vpGsWeekNext", function () {
+        var w = [];
+        WEEK.forEach(function (x) {
+          var gs = [];
+          ORDER.forEach(function (g) { if (cur[g] && cur[g][x[0]] !== undefined) gs.push(cur[g][x[0]] ? { game: g, start: cur[g][x[0]] } : { game: g }); });
+          if (gs.length) w.push({ day: x[0], games: gs });
+        });
+        w = cleanWeek(w);
+        if (w.length) { answers.week = w; answers.nights = w.map(function (d) { return d.day; }); } else delete answers.week;
+        if (deps.weekOnly) return Promise.resolve(persist()).then(function () { end("done"); });
+        persist(); allToday();
+      }));
+    }
     function allToday() {
       F.clear(); F.step("Your games", 3, 3); F.title.textContent = "Would you like to set them all up today?";
       if (!ticked().length) return end("done");
@@ -537,7 +637,7 @@
       F.body.appendChild(stack);
       var nt = F.el("p", "vpgs-note", "Not today is fine: each game keeps the usual settings, and walks you through its setup the first time you open it.");
       nt.setAttribute("style", "margin:16px 0 0"); F.body.appendChild(nt);
-      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", pick)); F.foot.appendChild(F.el("span"));
+      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep)); F.foot.appendChild(F.el("span"));
     }
     function oneGame(g) {
       var all = ticked(), i = all.indexOf(g);
@@ -584,7 +684,8 @@
       F.body.appendChild(F.el("p", "vpgs-lead", "Every game you play is set up. You can change any setting in that game's console."));
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
     }
-    if (deps.start === "pick") pick(); else headsUp();
+    /* The Account page's "Set your game nights" opens just the week (deps.weekOnly, start "week"). */
+    if (deps.start === "week") weekStep(); else if (deps.start === "pick") pick(); else headsUp();
     return finished;
   }
 
@@ -629,6 +730,6 @@
     });
   }
 
-  root.VPGameSetup = { run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
+  root.VPGameSetup = { cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
     savePrefs: savePrefs, listWords: listWords, brisbaneDate: brisbaneDate, dayOf: dayOf, ORDER: ORDER, LKEY: LKEY, GAME_API: GAME_API, OTHER_MAX: OTHER_MAX };
 })(typeof window !== "undefined" ? window : this);

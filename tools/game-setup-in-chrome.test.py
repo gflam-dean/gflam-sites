@@ -127,6 +127,11 @@ def every_screen(RIG):
             for name, click in steps:
                 if name == 'all today':
                     r.ask(sid, 'document.querySelector("#vpGsGames [data-game=trivia]").click(); document.querySelector("#vpGsGames [data-game=musical]").click(); document.getElementById("vpGsNext").click(); true')
+                    time.sleep(0.5)
+                    r.ask(sid, 'document.querySelector("#vpGsWeek [data-game=trivia] [data-day=wed]").click(); true'); time.sleep(0.3)
+                    fits(tag + ' which nights', r.json(sid, FIT))
+                    if SHOTS: r.shot(sid, os.path.join(SHOTS, 'screen-%s-week.jpg' % tag))
+                    r.ask(sid, 'document.getElementById("vpGsWeekSkip").click(); true')
                 elif click:
                     r.ask(sid, 'document.getElementById("%s").click(); true' % click)
                 time.sleep(0.6)

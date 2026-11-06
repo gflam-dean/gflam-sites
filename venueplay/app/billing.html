@@ -878,6 +878,8 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-setup-help.js"></script>
+<script src="vp-gamesetup.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
@@ -1317,7 +1319,20 @@
         if (w.nights) bits.push("Games on " + w.nights);
         if (w.games) bits.push(w.games);
         var row = document.createElement("div"); row.className = "venue";
-        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small></div>';
+        /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026): the week in words, and a button that opens the setup
+           wizard's own week step (vp-gamesetup.js) for this venue, saved to setup_answers.week. */
+        var wk = (window.VPGameSetup && VPGameSetup.weekWords) ? VPGameSetup.weekWords((by[v.id] || {}).week) : "";
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small>' +
+          (wk ? '<small class="aboutWeek">' + esc(wk) + '</small>' : '') + '</div>';
+        if (window.VPGameSetup && VPGameSetup.run && (by[v.id] || {}).games && (by[v.id].games || []).length) {
+          var eb = document.createElement("button"); eb.type = "button"; eb.className = "canxlink aboutWeekBtn"; eb.setAttribute("data-venue", v.id);
+          eb.textContent = wk ? "Change game nights" : "Set your game nights";
+          eb.addEventListener("click", function(){
+            var cx = { role: "owner", venue: v, settings: { setup_answers: JSON.parse(JSON.stringify(by[v.id] || {})) } };
+            VPGameSetup.run(cx, { start: "week", weekOnly: true, VP: VP }).then(function(){ renderAbout(venues); });
+          });
+          row.appendChild(eb);
+        }
         box.appendChild(row);
       });
       wrap.style.display = "";
