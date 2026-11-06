@@ -77,6 +77,9 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    ('connected-word-in-chrome.test.py', 'venueplay/app/vp-connbar.js',
+     '    ".brand .venue #statusText{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}" +', '',
+     'in Chrome, a phone says "Connected" beside the green dot again'),
     # 1 Nov 2026, live test night: "Allow early BINGO calls" showed ticked after a mid-game reload.
     ('test-early-bingo-restore.js', 'venueplay/app/index.html',
      '    window.addEventListener("pageshow", syncEarlyBoxes);\n', '',
