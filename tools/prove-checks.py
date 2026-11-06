@@ -13845,6 +13845,12 @@ MUTATIONS = [
     ('test-bingo-tonight.js', 'venueplay/play.html',
      '    if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();', '    paintListItem();',
      'a bingo player who ticked the offers when joining is offered the list again'),
+    ('phone-lobby-fit-in-chrome.test.py', 'venueplay/app/vp-tonight.css',
+     '.vpt-on #vpAd .slide{aspect-ratio:5/2}', '.vpt-on #vpAd .slide{aspect-ratio:4/3}',
+     'in Chrome, a tall ad pushes our logo off a 664px lobby'),
+    ('phone-lobby-fit-in-chrome.test.py', 'venueplay/play.html',
+     '    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait"); }catch(e){}', '',
+     'in Chrome, the bingo lobby shows no ad'),
 ]
 
 
