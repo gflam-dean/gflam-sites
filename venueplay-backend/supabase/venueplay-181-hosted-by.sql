@@ -7,7 +7,7 @@
 -- TWO THINGS, one per question:
 --
 --   WHAT the card says belongs to the HOST'S LOGIN, so it follows them to every venue they run, on any account:
---     vp_host_brands (one row per login): name (1 to 40 characters) and logo_url (our own public storage, the
+--     vp_host_brands (one row per login): name (1 to 40 characters in the database; the app keeps it to 32, two lines on a TV) and logo_url (our own public storage, the
 --     venue-logos bucket the venue logo already uses, under hosts/<login>/). Written only by the billing Worker
 --     (/account/hosted-by-save and /account/hosted-by-logo, an owner or a manager allowed to add hosts, for a
 --     host on one of their own venues). Row security on and NO policy, so the service role is the only reader

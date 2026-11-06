@@ -1692,8 +1692,8 @@
     panel.style.display = "none";
     panel.innerHTML =
       '<div class="qhead">Show your host on the TV</div>' +
-      '<p class="qhint">"Hosted by", their name and their logo show on your TV while ' + esc(who) + ' runs the game. It is their card, so it reads the same at every venue they host.</p>' +
-      '<div class="ffield"><label class="flabel">Name on the TV</label><input type="text" class="hb-name" maxlength="40" placeholder="Their name or trivia company"></div>' +
+      '<p class="qhint">"Hosted by" with their name and logo shows on your TV while ' + esc(who) + ' runs the game. It looks the same at every venue they host.</p>' +
+      '<div class="ffield"><label class="flabel">Name on the TV</label><input type="text" class="hb-name" maxlength="32" placeholder="Their name or trivia company"></div>' +
       '<div class="ffield"><span class="flabel">Their logo (optional)</span><div class="hb-logorow"><div class="hb-thumb">No logo</div><div class="hb-logobtns">' +
         '<label class="addbtn hb-pick">Choose logo<input type="file" accept="image/*" style="display:none"></label>' +
         '<button class="canxlink hb-rmlogo" type="button">Remove logo</button></div></div></div>' +
@@ -1739,8 +1739,7 @@
         if (!r || r.error){ showMsg((r && r.error) || "That did not save. Try again."); return; }
         hostedSavedLine = (body.trivia || body.musical) ? "Saved. It shows on the TV from their next game." : "Saved. It is off at " + ((v && v.name) || "this venue") + ".";
         hostedSavedFor = h.auth_user_id;
-        showMsg(hostedSavedLine, true);
-        reloadFn();
+        reloadFn();   // the Saved line on their row says it; no second message at the foot of the page
       });
     });
     return panel;

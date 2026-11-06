@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 18:51 · 69d137f5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 21:35 · 53b92062';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15796,7 +15796,7 @@ async function vpbSetStaffVenues(request, env, json) {
    not switched on yet; nothing else on People changes.
    --------------------------------------------------------------------------------------- */
 const VPB_HOSTED_GAMES = ['trivia', 'musical'];
-const VPB_HOSTED_NAME_MAX = 40;
+const VPB_HOSTED_NAME_MAX = 32;   // two lines at most beside the venue logo on a TV (design review 2)
 function vpbHostedName(v) {
   return String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, VPB_HOSTED_NAME_MAX);
 }

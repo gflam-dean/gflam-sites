@@ -13360,6 +13360,16 @@ MUTATIONS = [
     ('hosted-by-in-chrome.test.py', 'venueplay/app/billing.html',
      '        hostedSavedFor = h.auth_user_id;\n', '\n',
      'in Chrome, saving a host\'s TV card shows no Saved line'),
+    ('hosted-by-in-chrome.test.py', 'venueplay/app/vp-hostedby.js',
+     '      var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.28 * W);', '      var stop = 0.9 * W;',
+     'in Chrome, a long host name runs into the game\'s name (design review 2)'),
+    ('hosted-by-in-chrome.test.py', 'venueplay/app/vp-hostedby.js',
+     '      ih = logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H);', '      ih = logo ? logo.height : Math.round(0.044 * H);',
+     'in Chrome, the host\'s logo is as big as the venue\'s own'),
+    ('hosted-by-in-chrome.test.py', 'venueplay/app/billing.html',
+     '        reloadFn();   // the Saved line on their row says it; no second message at the foot of the page',
+     '        showMsg(hostedSavedLine, true); reloadFn();',
+     'in Chrome, saving a host\'s TV card shows Saved twice, the second over a button'),
 ]
 
 

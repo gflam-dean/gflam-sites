@@ -166,7 +166,7 @@ function person(l, uid) { return ((l.body && l.body.hosts) || []).filter(functio
   var w10 = await save(OLIVE, { auth_user_id: SAM, venue_id: ROYAL, name: 'Quiz Co Trivia', trivia: true, logo_data: dataUrl(png(8, 8, 20, 3)) });
   check('a logo too small to read on a TV is refused', w10.status === 400 && brand(SAM)[0].logo_url === br.logo_url, w10);
   var long = await save(OLIVE, { auth_user_id: SAM, venue_id: ROYAL, name: 'Quiz <b>Co</b> and a very long trivia company name that goes on and on', trivia: true });
-  check('a long name is cut to 40 characters, and no markup survives', long.status === 200 && brand(SAM)[0].name.length <= 40 && !/[<>]/.test(brand(SAM)[0].name), brand(SAM)[0]);
+  check('a long name is cut to 32 characters (two lines on a TV), and no markup survives', long.status === 200 && brand(SAM)[0].name.length === 32 && !/[<>]/.test(brand(SAM)[0].name), brand(SAM)[0]);
   await save(OLIVE, { auth_user_id: SAM, venue_id: ROYAL, name: 'Quiz Co Trivia', trivia: true });
 
   print('switching off, and taking the logo away');

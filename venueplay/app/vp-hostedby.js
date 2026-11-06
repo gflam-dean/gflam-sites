@@ -30,7 +30,7 @@
 (function (w, d) {
   "use strict";
 
-  var NAME_MAX = 40;
+  var NAME_MAX = 32;   /* two lines at most beside the venue logo (design review 2, 6 Nov 2026) */
   var LOGO_RE = /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/venue-logos\/hosts\/[A-Za-z0-9\/._-]+$/;
   var SITE_RE = /^\/[A-Za-z0-9][A-Za-z0-9\/._-]*$/;
 
@@ -100,14 +100,14 @@
       ".hostedby .hb-logo[hidden]{display:none}" +
       ".hostedby .hb-text{display:flex;flex-direction:column;justify-content:center;min-width:0}" +
       ".hostedby .hb-lbl{font-weight:800;font-size:max(11px,1.67vh);line-height:1.1;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.86);white-space:nowrap}" +
-      ".hostedby .hb-name{font-weight:800;font-size:max(16px,2.78vh);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}" +
+      ".hostedby .hb-name{font-weight:800;font-size:max(16px,2.78vh);line-height:1.15;min-width:0;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}" +
       /* top: a thin divider so the host never reads as part of the venue's own wordmark */
       ".hostedby.hb-top{gap:max(10px,1.1vh);padding-left:max(12px,1.4vh);border-left:2px solid rgba(255,255,255,.28)}" +
       ".hostedby.hb-top .hb-text{gap:max(2px,.35vh)}" +
       /* bottom: one line, label, logo, name */
       ".hostedby.hb-bottom{gap:max(10px,1.3vh)}" +
       ".hostedby.hb-bottom .hb-text{flex-direction:row;align-items:center;gap:max(10px,1.3vh)}" +
-      ".hostedby.hb-bottom .hb-name{font-size:max(16px,2.6vh)}";
+      ".hostedby.hb-bottom .hb-name{font-size:max(16px,2.6vh);-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}";
     (d.head || d.documentElement).appendChild(s);
   }
 
@@ -162,13 +162,20 @@
       s.bottom = Math.round(Math.max(40, 0.056 * H)) + "px";
       s.maxWidth = Math.round(0.5 * W) + "px";
     } else {
-      /* The host's logo is the venue logo's height (a wide wordmark is short, so it is too), no wider than
-         13% of the screen; beside a venue's NAME it is 4.4% of the height. */
-      ih = logo ? logo.height : Math.round(0.044 * H);
+      /* The host's logo is 70% of the venue logo's height, so the venue's own logo stays the bigger one (a wide
+         wordmark is short, so it is too), no wider than 13% of the screen; beside a venue's NAME it is 4.4% of
+         the height. */
+      ih = logo ? Math.round(0.7 * logo.height) : Math.round(0.044 * H);
       img.style.height = Math.round(ih) + "px"; img.style.maxWidth = Math.round(0.13 * W) + "px";
       var anchor = logo || tag, left = anchor ? anchor.right + gap : inset;
       s.left = Math.round(left) + "px";
-      s.maxWidth = Math.round(Math.max(0.12 * W, 0.44 * W - left)) + "px";   /* never reaches the game's name */
+      /* NEVER REACHES THE GAME'S NAME: it stops a gap short of the name as painted (TRIVIA is short, MUSICAL
+         BINGO is long), and never past 28% of the screen's width beyond its own start. A long name wraps to two
+         lines and is then cut with an ellipsis. */
+      var tl = null, tls = d.querySelectorAll(".toplbl .tl-night");
+      for (var t = 0; t < tls.length; t++) { var tr = visible(tls[t]); if (tr && (!tl || tr.left < tl.left)) tl = tr; }
+      var stop = Math.min(tl ? tl.left - gap : 0.42 * W, left + 0.28 * W);
+      s.maxWidth = Math.round(Math.max(0.1 * W, stop - left)) + "px";
       var h = el.offsetHeight || 0, mid = anchor ? anchor.top + anchor.height / 2 : inset + h / 2;
       s.top = Math.round(Math.max(inset, mid - h / 2)) + "px";
       s.bottom = "auto";

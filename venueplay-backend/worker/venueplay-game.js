@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 18:51 · ad18e2d9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 21:35 · b4d138f7';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3911,7 +3911,7 @@ async function handleHostedBy(request, env, json) {
   try {
     const br = await sbGet(env, 'vp_host_brands', 'auth_user_id=eq.' + enc(authUserId) + '&select=name,logo_url&limit=1');
     const r = br && br[0];
-    const name = r ? String(r.name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+    const name = r ? String(r.name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 32) : '';
     if (name) card = { name: name, logo_url: hostedLogoOk(env, r.logo_url) ? r.logo_url : '' };
   } catch (e) { return json(none); }
   if (!card) return json(none);
