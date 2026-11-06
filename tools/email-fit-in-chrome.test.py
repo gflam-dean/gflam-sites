@@ -59,7 +59,7 @@ for name, h in pages.items():
     for w in (320, 375, 390):
         path = os.path.join(tmp, re.sub(r'\W+', '-', name) + '-%d.html' % w)
         open(path, 'w', encoding='utf-8').write(WRAP % (w, H.escape(h, quote=True)))
-        r = subprocess.run([CH, '--headless=new', '--disable-gpu', '--allow-file-access-from-files', '--user-data-dir=' + prof, '--window-size=900,900',
+        r = subprocess.run([CH, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--allow-file-access-from-files', '--user-data-dir=' + prof, '--window-size=900,900',
                             '--virtual-time-budget=4000', '--dump-dom', 'file://' + path], capture_output=True, text=True, timeout=120)
         m = re.search(r'<pre id="probe">(.*?)</pre>', r.stdout, re.S)
         j = json.loads(m.group(1).replace('&quot;', '"')) if m else {}
