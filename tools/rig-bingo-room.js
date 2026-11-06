@@ -128,7 +128,7 @@ function bootHost(opts){
   sb.VP=VP; dom.window.VP=VP;
   var HOLD={ busy:function(){ return false; }, hold:function(){}, release:function(){} };
   sb.VP_HOLD=HOLD; dom.window.VP_HOLD=HOLD;
-  var ex=runPage(consoleScript(), sb, ["G","nextBall","startGame","openLobby","newGame","endGame","hostConfirm","hostReject","keepPlaying","finishGame","onMsg","commitBall","NIGHT","topUpFor","dealFor","makeStrip","checkPattern","saveGame","restoreGame"]);
+  var ex=runPage(consoleScript(), sb, ["G","nextBall","startGame","openLobby","newGame","endGame","hostConfirm","hostReject","keepPlaying","finishGame","confirmWinner","onMsg","commitBall","NIGHT","topUpFor","dealFor","makeStrip","checkPattern","saveGame","restoreGame"]);
   ex.dom=dom; ex.sb=sb; ex.$=function(id){ return dom.document.getElementById(id); };
   return ex;
 }

@@ -2765,6 +2765,20 @@
       /* The same real-balls win said again (a screen that reloaded asked the console to catch it
          up): every other wall is already showing it, so it is not a second fanfare. */
       var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
+      /* A WIN THE HOST CONFIRMED IS ALREADY UP (Dean, 6 Nov 2026): Confirm winner sends it at once, then the
+         host's Keep playing or Finish game sends it again with shown:true, and a tie partner checked after it
+         puts it back up. Same wid and the same names: no second fanfare. Keep playing takes the wall back to
+         the numbers with the next pattern and prize. */
+      var wk=function(w){ return ((w&&w.winners)||[]).map(function(x){ return x.pid||x.name; }).join(",")+"|"+((w&&w.pattern)||""); };
+      var seen=!!(!m.caller && m.wid && state.winner && state.winner.wid===m.wid && wk(state.winner)===wk(m));
+      if(seen && m.cont){
+        state.winner=m;
+        if(m.next) state.pattern=m.next;
+        if(typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
+        if(state.phase==="win"){ stopCelebrate(); clearConfetti(); }
+        state.phase="running"; applyBingo(); return;
+      }
+      if(seen){ state.winner=m; state.phase="win"; applyBingo(); return; }
       state.winner=m;
       if(again){ applyBingo(); return; }
       noteEndWin(m);   // for the end-of-game show

@@ -167,6 +167,38 @@ def tv_missed_idle():
 
 
 # ======================================================================================
+def tv_confirm_shows_win():
+    print('\nCONFIRM WINNER (Dean, live, 6 Nov 2026): the TV shows BINGO! and the name as soon as the host confirms, once')
+    r = RIG.Rig()
+    try:
+        ttid, tv = r.open('/tv?venue=' + r.W.info['slug'], before=fast(1))
+        r.until(tv, vis('adsRoot'), 15); time.sleep(1.5)
+        say = lambda m: r.ask(tv, 'window.__say(%s)' % json.dumps(m))
+        # every piece of confetti the wall ever adds, counted as it is added
+        r.ask(tv, '(function(){ window.__conf=0; new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes, function(n){ if(n.classList && n.classList.contains("confetti")) window.__conf++; }); }); }).observe(document.body, { childList:true, subtree:true }); return 1; })()')
+        say({'t': 'mode', 'mode': 'bingo', 'caller': False}); time.sleep(0.3)
+        say({'t': 'state', 'pattern': 'one', 'prize': 'Meat tray', 'called': [4, 8, 15], 'active': True, 'caller': False}); time.sleep(0.3)
+        say({'t': 'claim_pending', 'name': 'Sam', 'names': ['Sam']})
+        ok('CONTROL: a BINGO puts "BINGO? Checking" up', r.until(tv, vis('tvClaim'), 6) is True)
+        win = {'t': 'winner', 'wid': 'h-test-1', 'held': True, 'pid': 'p1', 'name': 'Sam', 'cardNo': 696, 'pattern': 'one', 'prize': 'Meat tray',
+               'winners': [{'pid': 'p1', 'name': 'Sam', 'cardNo': 696}], 'shared': False, 'cont': False}
+        say(win)
+        ok('Confirm winner: the TV goes straight to the win, naming Sam and the prize', r.until(tv, vis('tvWin'), 6) is True and r.ask(tv, vis('tvClaim')) is False
+           and 'Sam' in (r.ask(tv, 'document.getElementById("tvWin").innerText') or ''), r.ask(tv, 'document.getElementById("tvWin").innerText'))
+        time.sleep(5)   # the confetti has fallen (each piece lives 3.8 s)
+        c0 = r.ask(tv, 'window.__conf')
+        ok('CONTROL: the confirmed win celebrated (confetti fell)', (c0 or 0) > 0, c0)
+        say(dict(win, held=False, shown=True)); time.sleep(1.5)
+        ok('Finish game sends it again: the win stays up and does NOT celebrate a second time', r.ask(tv, vis('tvWin')) is True and r.ask(tv, 'window.__conf') == c0,
+           [r.ask(tv, vis('tvWin')), c0, r.ask(tv, 'window.__conf')])
+        say(dict(win, held=False, shown=True, cont=True, next='two', nextPrize='Bar tab')); time.sleep(0.4)
+        ok('Keep playing: the wall is back on the numbers at once, no second celebration', r.until(tv, vis('tvRun'), 3) is True and r.ask(tv, vis('tvWin')) is False and r.ask(tv, 'window.__conf') == c0,
+           [r.ask(tv, vis('tvRun')), r.ask(tv, vis('tvWin')), r.ask(tv, 'window.__conf')])
+    finally:
+        r.close()
+
+
+# ======================================================================================
 def phone_paper(entry):
     print('\nFAULT 3: a phone on "Tonight you play on paper" (%s) follows the room after a long real-balls night' % entry)
     r = RIG.Rig()
@@ -456,6 +488,7 @@ try:
     tv_only_its_own_slides()
     tv_old_winner()
     tv_missed_idle()
+    tv_confirm_shows_win()
     phone_paper('typed code')
     phone_paper('table talker')
     phone_one_chain()

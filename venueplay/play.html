@@ -1772,15 +1772,21 @@
       // An older host sends none, so the game prize stands in, exactly as before.
       var stagePrize = (typeof m.prize==="string" && m.prize) ? m.prize : P.prize;
       var pn=patName(m.pattern, "a prize");
+      /* Confirm winner shows the win at once (held:true), and Keep playing sends it again (shown:true, same
+         wid) to take the room back to the numbers (Dean, 6 Nov 2026). This phone has already celebrated it
+         and is on YOU WON or "who won": it leaves that screen for its tickets and does not celebrate twice. */
+      var _seen=!!(m.wid && (P.heldWid===m.wid || m.shown));
+      if(m.held && m.wid) P.heldWid=m.wid;
       if(m.cont){
         // a stage was won; the game plays on for the next prize with the same tickets
+        if(_seen){ P.won=false; P.ended=false; P.lostBy=""; clearWin(P.room); _celebrated=false; }
         if(m.next) P.pattern=m.next;
         if(typeof m.nextPrize==="string" && m.nextPrize) P.prize=m.nextPrize;
         P.wonCardNo=0;
         if(me){
           P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
           P.stageNote="";
-          celebrateStage();
+          if(!_seen) celebrateStage();
         } else {
           P.stageNote=esc(list(names))+" won "+esc(pn)+".";
         }

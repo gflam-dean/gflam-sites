@@ -439,6 +439,10 @@
   "checks": 68,
   "counted_by": "lines"
  },
+ "tools/test-bingo-confirm-shows-win.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/test-bingo-draw-record-18-oct.js": {
   "checks": 27,
   "counted_by": "lines"
@@ -1204,7 +1208,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
-  "checks": 149,
+  "checks": 150,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
