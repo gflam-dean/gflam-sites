@@ -715,7 +715,7 @@
       if (s.prizes && opts.askShared && !s.ownList) {
         if (typeof opts.onAsked === "function") opts.onAsked();   // never asked again in this setup, whatever the answer
         /* asked like every other setting, with its own "?" (Dean, round 5: the "?" consistent everywhere) */
-        var shR = settingRow(F, { key: "shared", label: "Do you use these prizes for your other games too?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
+        var shR = settingRow(F, { key: "shared", label: "Same prizes for other games?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
           help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
         var sr = shR.row; sr.id = "vpGsShared"; ctx.sharedRow = shR;
         opts.askShared = false;
@@ -742,7 +742,10 @@
       if (nmIn) nmIn.placeholder = (memDay || "Friday") + " Members Draw";
       if (tmIn && memTime && !tmIn.value) {
         tmIn.value = memTime;   // "20:00" from the nights step, in the time picker
-        var fromN = el("p", "vpgs-hint", "From the night you picked."); fromN.id = "vpGsFromNight"; tmIn.parentNode.appendChild(fromN);
+        /* the line goes under the date and time pair, full width, so the two boxes stay level (design review round 6) */
+        var fromN = el("p", "vpgs-hint", "Draw time: from the night you picked."); fromN.id = "vpGsFromNight"; fromN.style.margin = "0 0 8px";
+        var tmGrp = tmIn.parentNode; while (tmGrp && tmGrp.className !== "vpgs-group" && tmGrp !== F.body) tmGrp = tmGrp.parentNode;
+        if (tmGrp && tmGrp.className === "vpgs-group" && tmGrp.parentNode) tmGrp.parentNode.insertBefore(fromN, tmGrp.nextSibling); else tmIn.parentNode.appendChild(fromN);
       }
     }
     var msg = el("p", "vpgs-msg"); msg.id = "vpGsMsg"; msg.setAttribute("role", "status"); F.body.appendChild(msg);

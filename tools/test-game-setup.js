@@ -397,7 +397,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('"Something else" asks "What else do you run?"', /What else do you run\?/.test(T(P, 'vpGsBody')));
   gameBtn(P, 'other').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
-  check('the first game with prizes asks once: "Do you use these prizes for your other games too?", beside "Questions in a round" (a 2x2 grid with the theme nights and prizes)', /Do you use these prizes for your other games too\?/.test(T(P, 'vpGsShared')) && $(P, 'vpGsShared').parentNode.id === 'vpGsGroup_sc' && all($(P, 'vpGsGroup_tp'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() === 'theme_nights,prize_list');
+  check('the first game with prizes asks once: "Same prizes for other games?", beside "Questions in a round" (a 2x2 grid with the theme nights and prizes)', /Same prizes for other games\?/.test(T(P, 'vpGsShared')) && $(P, 'vpGsShared').parentNode.id === 'vpGsGroup_sc' && all($(P, 'vpGsGroup_tp'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() === 'theme_nights,prize_list');
   check('prizes typed one at a time with Enter, shown as small tags (Dean, round 4: half the size)', /Press Enter after each one\./.test(T(P, 'vpGsNote_prize_list')) && $(P, 'vpGsIn_prize_list').className === 'vpgs-tags');
   addTag(P, 'prize_list', 'Meat tray'); addTag(P, 'prize_list', '$50 bar tab'); addTag(P, 'prize_list', 'meat TRAY');
   walk($(P, 'vpGsShared'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'true'; }).click();
@@ -453,7 +453,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P, 'vpGsAllYes').click(); await settle();
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }); $(P, 'vpGsSave').click(); await settle();
   $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
-  check('two members nights: members draw 1 of 2, called after its night', /draw 1 of 2/.test(T(P, 'vpGsCount')) && $(P, 'vpGsIn_name').placeholder === 'Friday Members Draw' && $(P, 'vpGsIn_draw_time').value === '20:00' && /From the night you picked/.test(T(P, 'vpGsFromNight')), [T(P, 'vpGsCount'), $(P, 'vpGsIn_name').placeholder]);
+  check('two members nights: members draw 1 of 2, called after its night', /draw 1 of 2/.test(T(P, 'vpGsCount')) && $(P, 'vpGsIn_name').placeholder === 'Friday Members Draw' && $(P, 'vpGsIn_draw_time').value === '20:00' && /Draw time: from the night you picked/.test(T(P, 'vpGsFromNight')) && $(P, 'vpGsFromNight').parentNode !== $(P, 'vpGsIn_draw_time').parentNode, [T(P, 'vpGsCount'), $(P, 'vpGsIn_name').placeholder]);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('then draw 2 of 2, Sunday 5pm', /draw 2 of 2/.test(T(P, 'vpGsCount')) && $(P, 'vpGsIn_name').placeholder === 'Sunday Members Draw' && $(P, 'vpGsIn_draw_time').value === '17:00', [T(P, 'vpGsCount'), $(P, 'vpGsIn_name').placeholder]);
   $(P, 'vpGsSave').click(); await settle();
