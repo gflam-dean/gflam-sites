@@ -223,7 +223,7 @@
     function paintEvents(dd) {
       var list = eventsOn(o, dd.date);
       evBox.hidden = !list.length;
-      if (list.length) paintRows(evBox, eventRows(list, 0), "On at " + (o.venue || "this venue") + (dd.i === 0 ? " tonight" : ", " + LONG[dd.key] + " " + dd.date.getDate()));
+      if (list.length) paintRows(evBox, eventRows(list, 3), "On at " + (o.venue || "this venue"));   // the lead line above already names the day
     }
     var start = first >= 0 ? first : 0;
     var s = strip(o, start, function (dd) { paint(dd, true); paintEvents(dd); });

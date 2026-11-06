@@ -118,9 +118,9 @@ var none = new Node('div'); T.lobby(none, { name: 'Sam', me: 'trivia', week: WEE
 ok('no events: the lobby is exactly as before (one row, no dots)', byClass(byClass(none, 'vpt-night')[0], 'row').length === 1 && !byClass(none, 'ev').length);
 var ng = new Node('div'), ngs = T.noGame(ng, { name: 'Sam', venue: 'Revolver Upstairs', week: WEEK, events: EV, now: THU });
 var evb = byClass(ng, 'vpt-evs')[0];
-ok('no game on: the venue\'s nights for the first game day (today), headed "On at Revolver Upstairs tonight"', evb && !evb.hidden && /On at Revolver Upstairs tonight/.test(evb.textContent) && /I ♥ 3181/.test(evb.textContent), evb && evb.textContent);
+ok('no game on: the venue\'s nights for the first game day (today), headed "On at Revolver Upstairs"', evb && !evb.hidden && byClass(evb, 'nk')[0].textContent === 'On at Revolver Upstairs' && /I ♥ 3181/.test(evb.textContent), evb && evb.textContent);
 ngs.buttons[1].onclick();
-ok('tap Friday: Friday\'s nights, "On at Revolver Upstairs, Friday 13"', /On at Revolver Upstairs, Friday 13/.test(evb.textContent) && /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent), evb.textContent);
+ok('tap Friday: Friday\'s nights, the same heading (the lead line names the day)', /On at Revolver Upstairs/.test(evb.textContent) && /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent), evb.textContent);
 ngs.buttons[3].onclick();
 ok('tap a day with none: the list goes away', evb.hidden === true);
 var ng0 = new Node('div'); T.noGame(ng0, { name: 'Sam', week: WEEK, now: THU });

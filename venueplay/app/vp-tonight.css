@@ -75,8 +75,8 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-listform .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;margin-top:6px}
 /* THE VENUE'S OWN NIGHTS (INBOX 110, "What's on"; design review 6 Nov): a 6px gold dot inside a day that has one (white on
    Today), clear of the pink game-night underline; their rows in the house grey chip with the time as people say it
-   ("9pm"), the title alone on up to two lines; and under a waiting screen the venue's ad follows the card 24px below,
-   so tapping a day never opens a hole above it (our logo stays at the foot). */
+   ("9pm"), the title alone on up to two lines. The venue's ad stays anchored above our logo at the foot (Dean's round 7
+   rule: it and our logo fit a 664px screen), so a busy tapped day may scroll rather than push the logo off. */
 .vpt-week .days.has-ev .d{padding-bottom:12px;position:relative}
 .vpt-week .d.ev::after{content:"";position:absolute;left:50%;bottom:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#FFC24B}
 .vpt-week .d.now.ev::after{background:#fff}
@@ -87,6 +87,3 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-night .row.more .bd{visibility:hidden}
 .vpt-night .nk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A95;padding:8px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vpt-evs[hidden]{display:none}
-.vpt-on .view{flex:0 0 auto}
-.vpt-on #vpAd{padding-top:24px}
-.vpt-on .pfoot{margin-top:auto}
