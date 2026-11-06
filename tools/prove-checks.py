@@ -3036,6 +3036,10 @@ MUTATIONS = [
      "  if (pa && pb) return pa === pb ? 'same' : null;", "  if (pa && pb) return pa === pb ? 'same' : 'unsure';",
      'the two copies disagree on whether a wrong postcode is a different venue'),
 
+    # D145 in the gate (release-check.py runs test-signup-core.js under its own label).
+    ('runs the billing Worker: the five boxes and pub or club checked', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if (code.length !== 6 || (await vpsCodeHash(env, row.id, code)) !== row.code_hash) {", "  if (false) {",
+     'in the gate, any six digits pass the no-card start\'s text code'),
     # ---- 6 Nov 2026, INBOX 80B, 81, 84 (as changed by 97): the no-card start. Items 60 and 61 are parked on
     # fix/same-pub-later with their own rows.
     ('test-signup-core.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
