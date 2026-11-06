@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 12:35 · b0771a44';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 13:07 · 5944f2ed';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1527,15 +1527,27 @@ function joinNights(sa) {
       if (!d || typeof d !== 'object' || DAYS.indexOf(d.day) === -1 || !Array.isArray(d.games)) continue;
       const have = byDay[d.day] = byDay[d.day] || {};
       for (const gm of d.games) {
-        if (!gm || GAMES.indexOf(gm.game) === -1 || have[gm.game]) continue;
+        if (!gm || typeof gm !== 'object') continue;
+        /* "other" is a Something-else night with its own name (Karaoke), one per name; count is 2 to 4 sessions of one
+           game ("Bingo x2"). Both from the wizard's game week (6 Nov 2026), and backwards compatible. */
+        const isOther = gm.game === 'other';
+        const nm = isOther ? String(gm.name == null ? '' : gm.name).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+        if ((!isOther && GAMES.indexOf(gm.game) === -1) || (isOther && !nm)) continue;
+        const key = isOther ? 'other:' + nm.toLowerCase() : gm.game;
+        if (have[key]) continue;
         const t = (typeof gm.start === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : '';
-        have[gm.game] = t ? { game: gm.game, start: t } : { game: gm.game };
+        const o = isOther ? { game: 'other', name: nm } : { game: gm.game };
+        if (t) o.start = t;
+        const n = Number(gm.count);
+        if (!isOther && Number.isInteger(n) && n >= 2 && n <= 4) o.count = n;
+        have[key] = o;
       }
     }
     const week = [];
     for (const day of DAYS) {
       const h = byDay[day]; if (!h) continue;
-      const gs = GAMES.filter((g) => h[g]).map((g) => h[g]).slice(0, 5);
+      const others = Object.keys(h).filter((k) => k.indexOf('other:') === 0).map((k) => h[k]);
+      const gs = GAMES.filter((g) => h[g]).map((g) => h[g]).concat(others).slice(0, 5);
       if (gs.length) week.push({ day: day, games: gs });
     }
     if (week.length) res.week = week;

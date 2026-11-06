@@ -55,11 +55,29 @@
      is stored: unknown, never guessed. */
   function gamesOn(o, key) {
     var wk = o && o.week;
-    if (!Array.isArray(wk) || !wk.length) return null;
+    var hasEv = !!(o && o.events && Array.isArray(o.events[key]) && o.events[key].length);
+    if ((!Array.isArray(wk) || !wk.length) && !hasEv) return null;
+    wk = Array.isArray(wk) ? wk : [];
     var out = [];
     wk.forEach(function (dd) {
       if (!dd || dd.day !== key || !Array.isArray(dd.games)) return;
-      dd.games.forEach(function (x) { if (x && GAME_NAME[x.game]) out.push({ game: x.game, time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" }); });
+      dd.games.forEach(function (x) {
+        if (!x) return;
+        /* "Something else" nights (game "other" with its own name, e.g. Karaoke) and several sessions of one game
+           (count 2 to 4: "Bingo \u00d72"), from the wizard's game week (6 Nov 2026). */
+        var nm = x.game === "other" ? String(x.name || "").trim().slice(0, 40) : GAME_NAME[x.game];
+        if (!nm) return;
+        var n = (+x.count >= 2 && +x.count <= 4) ? +x.count : 0;
+        out.push({ game: x.game, label: nm + (n ? " \u00d7" + n : ""), night: x.game === "other" ? nm : NIGHT_NAME[x.game] + (n ? " \u00d7" + n : ""),
+                   time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" });
+      });
+    });
+    /* A THIRD KIND OF ROW, READY (the What's On work, feature/whats-on-12nov): the venue's own events for the night, as
+       o.events = { wed: [{ name: "Live music", start: "20:00" }] }, shown under the games with the same badge and time. */
+    var ev = o && o.events && Array.isArray(o.events[key]) ? o.events[key] : [];
+    ev.forEach(function (x) {
+      var nm = x && String(x.name || "").trim().slice(0, 40);
+      if (nm) out.push({ game: "event", label: nm, night: nm, time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" });
     });
     return out;
   }
@@ -83,7 +101,7 @@
     var rows = [{ game: me, name: GAME_NAME[me] || "Game", badge: "Next", sub: "Tonight" + (myTime ? " " + myTime : "") + (o.prize ? ", " + o.prize : "") }];
     list.forEach(function (x) {
       if (x.game === me) return;
-      rows.push({ game: x.game, name: GAME_NAME[x.game], badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
+      rows.push({ game: x.game, name: x.label, badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
     });
     return rows;
   }
@@ -91,7 +109,7 @@
   function nightRows(o, dt) {
     var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key);
     if (list && list.length) return list.map(function (x) {
-      return { game: x.game, badge: badge, name: NIGHT_NAME[x.game], sub: x.time ? x.time : "Ask for start time" };
+      return { game: x.game, badge: badge, name: x.night, sub: x.time ? x.time : "Ask for start time" };
     });
     if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }];
     return [{ game: "", badge: badge, name: "No games this night", sub: "" }];
@@ -160,7 +178,7 @@
   /* "Next game here: Wednesday, Trivia 7pm" for a day; "Tonight" for today; unknown games: the day and "ask at the bar". */
   function nightLine(o, dd) {
     var list = gamesOn(o, dd.key), day = dd.i === 0 ? "Tonight" : LONG[dd.key];
-    if (list && list.length) return day + ", " + list.map(function (x) { return GAME_NAME[x.game] + (x.time ? " " + x.time : ""); }).join(" and ");
+    if (list && list.length) return day + ", " + list.map(function (x) { return x.label + (x.time ? " " + x.time : ""); }).join(" and ");
     if (!list && dd.on) return day + ", ask at the bar for what\u2019s on";
     return day + ": no games";
   }
