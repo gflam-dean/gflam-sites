@@ -729,6 +729,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-setupuse.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
@@ -3025,6 +3026,9 @@
     if(p && p.prizes && typeof p.prizes==="object"){   // known for the whole night, even in a game brought back
       Object.keys(p.prizes).forEach(function(k){ if(typeof p.prizes[k]==="string" && p.prizes[k] && !Object.prototype.hasOwnProperty.call(BPRIZES, k)) BPRIZES[k]=p.prizes[k]; });
     }
+    /* THE USUAL PRIZES AS TAP-AND-GO BUTTONS (the setup wizard, Dean 6 Nov 2026), under the prize box and the new game
+       box, like the raffle's. Known for the whole night. */
+    if(p && Array.isArray(p.prize_list)){ G.prizeList=p.prize_list; paintBingoPrizeButtons(); }
     if(!p || G.status!=="setup") return;   // a lobby or game brought back keeps its own choices
     if(typeof p.caller==="boolean"){ var cc=$("callerChk"); if(cc && !cc.disabled) cc.checked=p.caller; }
     if(p.pattern){ var ps=$("patternSel"), k=String(p.pattern).replace(/"/g,"");
@@ -3034,6 +3038,11 @@
     if(p.cards!=null){ var cs=$("cardsSel"); if(cs) cs.value=String(clampCards(p.cards)); }
     if(typeof p.allow_early==="boolean"){ G.allowEarly=p.allow_early; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=p.allow_early; if(b) b.checked=p.allow_early; }
     syncPatEdit(); renderConsole();
+  }
+  function paintBingoPrizeButtons(){
+    if(!window.VPSetupUse || !G.prizeList) return;
+    VPSetupUse.prizeButtons(document, $("prizeInput"), G.prizeList, function(x){ var pi=$("prizeInput"); pi.value=x; pi._auto=null; notePrize($("patternSel").value, x); queueBingoPrefs(); }, "bingoPrizeBtns");
+    VPSetupUse.prizeButtons(document, $("ngPrize"), G.prizeList, function(x){ var ng=$("ngPrize"); ng.value=x; ng._auto=null; }, "ngPrizeBtns");
   }
   var _bingoPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("bingo", { venueId:function(){ return (__ctx && __ctx.venue && __ctx.venue.id) || ""; },
     api:function(){ return VP_GAME_API; }, token:vpHostToken, collect:bingoPrefs, apply:applyBingoPrefs }) : null;

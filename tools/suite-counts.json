@@ -919,6 +919,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "tools/test-setup-use.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/test-shared-links-absolute.js": {
   "checks": 6,
   "counted_by": "lines"

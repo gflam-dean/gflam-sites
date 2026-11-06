@@ -274,6 +274,13 @@
             </label>
             <select id="setSel"><option value="">Loading the categories&hellip;</option></select>
             <div class="note" id="setLastNote" style="margin-top:4px;display:none">This is the set your venue played last time. Pick another for a fresh night.</div>
+            <div class="note" id="setWeekNote" style="margin-top:4px;display:none">One of your categories, a different one each week.</div>
+            <div class="note" id="themeNights" style="margin-top:6px;display:none"></div>
+          </div>
+          <div class="field" id="triviaPrizeField" style="display:none">
+            <label for="triviaPrize">Tonight's prize</label>
+            <input type="text" id="triviaPrize" placeholder="e.g. $50 bar tab" maxlength="80">
+            <div class="note" style="margin-top:4px">For you to read out at the end.</div>
           </div>
           <div class="field">
             <label>Questions this round</label>
@@ -381,6 +388,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setupuse.js"></script>
 <script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
@@ -2148,6 +2156,32 @@
     p.double_last=Math.max(1, Math.min(100, parseInt(G.doubleLast,10)||10));
     return p;
   }
+  /* THE SETUP WIZARD'S TRIVIA ANSWERS ON THE CONSOLE (Dean, 6 Nov 2026): their picked categories in their own group at
+     the top of the list, their theme nights as links that open the question builder on that topic, and their usual
+     prizes as tap-and-go buttons under "Tonight's prize". */
+  function paintTriviaSetup(p){
+    var sel=$("setSel");
+    if(sel && Array.isArray(p.set_ids) && p.set_ids.length && !document.getElementById("yourCats")){
+      var grp=document.createElement("optgroup"); grp.id="yourCats"; grp.label="Your categories";
+      p.set_ids.forEach(function(id){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===id){ grp.appendChild(sel.options[k].cloneNode(true)); break; } } });
+      if(grp.children.length) sel.insertBefore(grp, sel.firstChild);
+    }
+    var tn=$("themeNights");
+    if(tn && Array.isArray(p.theme_nights) && p.theme_nights.length){
+      while(tn.firstChild) tn.removeChild(tn.firstChild);
+      tn.appendChild(document.createTextNode("Your theme nights: "));
+      p.theme_nights.slice(0,6).forEach(function(t, i){
+        if(i) tn.appendChild(document.createTextNode(" \u00b7 "));
+        var a=document.createElement("a"); a.href="/app/trivia/builder.html?topic="+encodeURIComponent(String(t).slice(0,60)); a.textContent=String(t).slice(0,60);
+        a.setAttribute("style","color:var(--pink);font-weight:700;text-decoration:none"); tn.appendChild(a);
+      });
+      tn.style.display="";
+    }
+    if(window.VPSetupUse && Array.isArray(p.prize_list) && VPSetupUse.cleanList(p.prize_list).length){
+      var f=$("triviaPrizeField"), ti=$("triviaPrize"); if(f) f.style.display="";
+      VPSetupUse.prizeButtons(document, ti, p.prize_list, function(x){ ti.value=x; }, "triviaPrizeBtns");
+    }
+  }
   function applyTriviaPrefs(p){
     if(p && (typeof p.buzzer==="boolean" || p.buzzer_where)){   // the venue's own switch, even mid-quiz
       if(typeof p.buzzer==="boolean") G.buzzer=p.buzzer;
@@ -2155,6 +2189,12 @@
       try{ localStorage.setItem(buzzKey(), G.buzzer?"1":"0"); localStorage.setItem(whereKey(), G.buzzWhere); }catch(e){} paintBuzzer(); }
     if(!p || G.status!=="setup") return;   // a quiz brought back keeps its own settings
     var sel=$("setSel");
+    paintTriviaSetup(p);
+    if(p.set_mode==="pick" && Array.isArray(p.set_ids) && p.set_ids.length && sel && !setFromUrl() && window.VPSetupUse){
+      /* THEIR CATEGORIES (the setup wizard, Dean 6 Nov 2026): listed first, and a different one each week. */
+      var wantId=VPSetupUse.weekPick(p.set_ids);
+      for(var w=0;w<sel.options.length;w++){ if(sel.options[w].value===wantId){ sel.selectedIndex=w; syncSetCount(); var wn=$("setWeekNote"); if(wn) wn.style.display=""; p=Object.assign({}, p, { set_id:null }); break; } }
+    }
     if(p.set_id && sel && !setFromUrl()){   // "Run it now" from the builder (?set=) always wins
       for(var k=0;k<sel.options.length;k++){
         if(sel.options[k].value===p.set_id){ sel.selectedIndex=k; syncSetCount(); var ln=$("setLastNote"); if(ln) ln.style.display=""; break; }
