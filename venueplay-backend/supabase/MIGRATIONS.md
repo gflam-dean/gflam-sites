@@ -618,3 +618,10 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-174-optin-consent-version.sql` (Dean, 6 Nov 2026, the "Get a heads up by email" sign-up on the phone with no
+game on): two columns, `vp_players.consent_version` and `vp_captures.consent_version` (text, 20 characters at most), the
+version of the offers + 18+ consent words the person ticked (VPConsent.VERSION). No new policy, grant or function, so
+RLS-BASELINE.json does not change. Either order with the game Worker: before it runs, /join/list stores the sign-up
+without the version. NUMBER: 174 (the coordinator's number, 6 Nov 2026). Branch `fix/trivia-live-fixes-6nov`. NOT RUN.
+Read-back and rollback in the file.

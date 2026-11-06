@@ -254,6 +254,17 @@
               <span class="seg mini" id="cfgBuzzWhere" role="group" aria-label="Where the buzzer plays"><button type="button" data-v="tv" class="on" aria-pressed="true">TV</button><button type="button" data-v="device" aria-pressed="false">This device</button></span></span>
           </span>
         </div>
+        <!-- AUTO REVEAL (Dean, 6 Nov 2026: "the reveal answer needs to happen automatically, maybe 30 seconds after it closes").
+             ON by default. The answer goes up this many seconds AFTER the clock closes, never before it. The host can still
+             press Reveal sooner. Kept on this device per venue (localStorage), so it needs no Worker change. -->
+        <div class="field buzzrow" id="autoRevealRow" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px">
+          <label style="margin:0">Reveal the answer automatically</label>
+          <span style="display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 10px">
+            <span class="seg mini" id="cfgAutoReveal" role="group" aria-label="Reveal the answer automatically"><button type="button" data-v="on" class="on" aria-pressed="true">On</button><button type="button" data-v="off" aria-pressed="false">Off</button></span>
+            <span id="autoRevealWrap" style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)">after the clock closes or every team is in
+              <input type="number" id="cfgAutoSecs" class="mono" min="3" max="60" value="10" style="width:64px" aria-label="Seconds after the clock closes"> seconds</span>
+          </span>
+        </div>
         <div class="note hidden" id="tvHint" style="margin:0 0 12px;color:var(--text)">TV not connected yet. On the TV, open your venue's TV link (venueplay.com.au/tv). It connects on its own; nothing to type.</div>
         <div class="note hidden" id="tvSoundNote" style="margin:-6px 0 12px;color:var(--roll)">TV sound is off: press OK on the TV remote once to turn it on.</div>
         <div id="setupBlock">
@@ -304,6 +315,11 @@
                   <div class="field" style="margin:0"><input type="number" id="cfgDoubleLast" class="mono" min="1" max="100" value="10" aria-label="Questions in the double points round"></div>
                 </div>
                 <div class="note" id="doubleNote" style="margin-top:4px">The last 10 questions of the night score double, speed bonus included.</div>
+              </div>
+              <div class="field">
+                <label>How the winners show</label>
+                <div class="seg" id="cfgWinners"><button data-v="staged" class="on">One at a time</button><button data-v="all">All at once</button></div>
+                <div class="note" id="winnersNote" style="margin-top:4px">Tap to reveal third place, then second, then the winner (with the fanfare).</div>
               </div>
               <div style="margin-top:4px;padding:12px 14px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:11px">
                 <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
@@ -524,7 +540,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
+    autoReveal:true, autoSecs:10, endReveal:0, endRanks:[], endBoard:false, allInAt:0, winnersAll:false, timePerQ:30, base:100, count:10, speedBonus:true, colour:true, buzzer:false, buzzWhere:"tv", doublePoints:false, doubleLast:10, doubleSeqs:[],
     setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     noPlayersNote:false,            // Reveal leaderboard with nobody joined: a calm line, not an error
@@ -696,7 +712,7 @@
         if(q && (phase==="asking"||phase==="locked")){
           var endsAt=Date.parse(q.ends_at)||0;
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
-          G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
+          G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={}; G.allInAt=0;
           if(p.cur && p.cur.qseq===q.qseq){   // what this tablet knew before the reload
             if(typeof p.cur.ci==="number") G.current.correctIndex=p.cur.ci;
             if(p.cur.pids && typeof p.cur.pids==="object") G.answeredPids=p.cur.pids;
@@ -705,6 +721,7 @@
           readBoard();   // the scores so far, WITHOUT revealing the open question (see readBoard)
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); try{ hostTimesUp(); }catch(e){} } }, 500); }
           else { send({ t:"lock" }); }
+          scheduleAutoReveal();
         } else if(q && phase==="revealed"){
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0, imageUrl:q.image_url||"" };
           G.status="reveal"; G.board=[];
@@ -866,9 +883,8 @@
         w.appendChild(o);
       }
       body.appendChild(w);
-      var rv=el("button","btn win big", G.defer ? "Close the question" : "Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
-      var at=el("button","btn ghost","+10 seconds"); at.id="addTimeBtn"; at.style.width="100%"; at.style.marginTop="8px";
-      at.addEventListener("click", function(){ addTime(10); }); body.appendChild(at);
+      var rv=el("button","btn win big", G.defer ? "Close the question" : "Reveal answer"); rv.id="revealBtn"; rv.addEventListener("click", function(){ revealTap(rv); }); body.appendChild(rv);
+      if(G.autoReveal && !G.defer){ var an=el("div","note",'The answer goes up by itself '+G.autoSecs+' seconds after the clock closes, or after every team is in. Tap Reveal twice to show it sooner.'); an.id="autoRevealNote"; an.style.margin="8px 0 0"; an.style.textAlign="center"; body.appendChild(an); }
       var nu=nextUpPanel(); if(nu) body.appendChild(nu);
       body.appendChild(endBtn("End round"));
       return;
@@ -908,6 +924,7 @@
         vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
       }); brow.appendChild(endb);
       body.appendChild(brow);
+      if(isLast && G.finishAt){ var afn=el("div","note",autoFinishText(G.finishAt-Date.now())); afn.id="autoFinishNote"; afn.style.margin="8px 0 0"; afn.style.textAlign="center"; body.appendChild(afn); }
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
       return;
     }
@@ -917,7 +934,19 @@
       done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
         '<div class="qtext-h">The winners are on the big screen.</div>';
       body.appendChild(done);
-      var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
+      var PLACE={3:"third",2:"second",1:"first"};
+      var nxt = (!G.endBoard && G.endReveal>1) ? G.endRanks[G.endRanks.indexOf(G.endReveal)+1]||1 : 0;
+      if(!G.endBoard && G.endReveal>1){ done.querySelector(".qtext-h").textContent="On the big screen: "+PLACE[G.endReveal]+" place. The rest are still covered."; }
+      if(!G.endBoard && G.endReveal===1){ done.querySelector(".qtext-h").textContent="The winner is on the big screen."; }
+      if(G.endBoard){ done.querySelector(".qtext-h").textContent="The final scores are on the big screen. The TV goes back to your ads in 2 minutes."; }
+      if(nxt){
+        var nb=el("button","btn pink big", nxt===1 ? "Reveal the winner" : "Reveal "+PLACE[nxt]+" place"); nb.id="endStepBtn";
+        nb.addEventListener("click", nextPlace); body.appendChild(nb);
+      } else if(!G.endBoard && G.endReveal===1){
+        var lb=el("button","btn pink big","Show the leaderboard"); lb.id="endStepBtn"; lb.addEventListener("click", showFinalBoard); body.appendChild(lb);
+        if(G.boardAt){ var bn=el("div","note",boardNoteText(G.boardAt-Date.now())); bn.id="boardNote"; bn.style.margin="8px 0 0"; bn.style.textAlign="center"; body.appendChild(bn); }
+      }
+      var again=el("button", G.endBoard ? "btn pink big" : "btn ghost big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
     }
   }
   /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
@@ -926,31 +955,6 @@
     vpAsk("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.").then(function(ok){ if(ok) endRound(); });
   }); return b; }
 
-  /* MORE TIME, ASKED OF THE SERVER. The Worker owns the deadline and throws away a late
-     answer, so a clock the console stretched on its own would promise the room ten more
-     seconds and then bin what they tapped. This moves the real deadline first and only then
-     tells the phones and the TV. If the route is not deployed yet the host is told plainly
-     and the question carries on with the time it had. */
-  function addTime(secs){
-    if(G.status!=="question" || !G.gameId || !G.current) return;
-    clearErrForAction();
-    var b=$("addTimeBtn");
-    if(remainingSecs()<=0){ hostError("That question is out of time. Reveal the answer and carry on."); return; }
-    if(b){ b.disabled=true; b.textContent="Adding\u2026"; }
-    function done(){ if(b){ b.disabled=false; b.textContent="+10 seconds"; } }
-    apiPost("/host/question/add-time",{ game_id:G.gameId, seconds:secs }).then(function(r){
-      var ends=Date.parse(r&&r.ends_at)||0;
-      if(!ends) throw new Error("The server did not send back a new finish time.");
-      G.current.endsAt=ends;
-      bcast({ t:"time", qseq:G.current.qseq, endsAt:ends, secs:remainingSecs() });
-      updateLive(); done();
-    }).catch(function(e){
-      done();
-      if(e && e.status===404) hostError("Extra time is not switched on at the server yet. This question keeps the time it started with.");
-      else hostError((e&&e.message)||"Could not add time.");
-    });
-  }
-
   function updateLive(){
     var e=$("hAns"), c=$("hCd"), t=$("hTot"), w=$("hAnsWrap");
     var a=answeredCount(), p=playerCount();
@@ -958,8 +962,68 @@
     if(t) t.textContent=p;
     if(w) w.style.color=(p>0 && a>=p) ? "var(--win)" : "";   // all teams in -> light up green
     if(c) c.textContent=remainingSecs()+"s";
+    /* EVERY TEAM HAS ANSWERED (Dean, 6 Nov 2026): the auto reveal may go early, the delay counted from this moment. */
+    if(G.status==="question" && p>0 && a>=p && !G.allInAt){ G.allInAt=Date.now(); if(G.autoReveal) scheduleAutoReveal(); }
   }
   function clearTick(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } }
+  /* AUTO REVEAL (Dean, 6 Nov 2026). How long to wait, in ms from now, before the answer goes up by itself, or -1 for
+     "do not". The answer is never due before the clock has CLOSED (endsAt) plus the host's delay: Dean's "That didn't even
+     give me time to answer" was an early reveal. Kept as one small function so a suite can run it. */
+  /* allInAt (Dean's answer, 6 Nov 2026 10:00): once EVERY team has answered, the wait counts from that moment instead of the
+     close, so the room is not left waiting on the clock. Still always the full delay after it. */
+  function autoRevealWait(on, status, endsAt, now, secs, allInAt){
+    if(on!==true || status!=="question" || !(endsAt>0)) return -1;
+    var d=Math.max(3, Math.min(60, parseInt(secs,10)||10));
+    var from = (allInAt>0 && allInAt<endsAt) ? allInAt : endsAt;
+    return Math.max(0, from-now) + d*1000;
+  }
+  function allAnswered(){ var p=playerCount(); return p>0 && answeredCount()>=p; }
+  /* TWO TAPS WHILE THE CLOCK RUNS (Dean, 6 Nov 2026: question 1 was revealed before the room had time to answer). With time
+     left, the first tap turns the button into "Tap again to reveal now" for 4 seconds and the second reveals. Once the clock
+     has closed, or every team is in, one tap as before. */
+  var REVEAL_ARM_MS=4000;
+  function revealTap(btn){
+    if(remainingSecs()<=0 || allAnswered() || (btn && btn.getAttribute("data-armed")==="1")){ if(btn) clearTimeout(btn._armT); reveal(); return; }
+    if(!btn) return;
+    var was=btn.textContent;
+    btn.setAttribute("data-armed","1"); btn.textContent="Tap again to reveal now";
+    btn._armT=setTimeout(function(){ btn.removeAttribute("data-armed"); btn.textContent=was; }, REVEAL_ARM_MS);
+  }
+  function clearAuto(){ if(G.autoT){ clearTimeout(G.autoT); G.autoT=null; } }
+  function scheduleAutoReveal(){
+    clearAuto();
+    if(G.defer) return;   // a paper round is closed by the host once the sheets are in, not by a clock
+    var w=autoRevealWait(G.autoReveal, G.status, G.current&&G.current.endsAt, Date.now(), G.autoSecs, G.allInAt);
+    if(w<0) return;
+    var qs=G.current.qseq;
+    G.autoT=setTimeout(function(){
+      G.autoT=null;
+      if(G.status!=="question" || !G.current || G.current.qseq!==qs) return;
+      if(remainingSecs()>0 && !allAnswered()){ scheduleAutoReveal(); return; }   // belt and braces: never while the clock runs, unless every team is in
+      if(G.busy){ G.autoT=setTimeout(scheduleAutoReveal, 500); return; }
+      reveal();
+    }, w);
+  }
+  function autoKey(){ return "vpTriviaAutoReveal:"+(G.venueId||""); }
+  function paintAutoReveal(){ paintSeg("cfgAutoReveal", G.autoReveal ? "on" : "off");
+    var w=$("autoRevealWrap"); if(w && w.style) w.style.opacity = G.autoReveal ? "1" : ".45";
+    var i=$("cfgAutoSecs"); if(i && document.activeElement!==i) i.value=G.autoSecs; }
+  /* HOW THE WINNERS SHOW (Dean, 6 Nov 2026): staged (default) or all at once. Per venue, on this device, like auto reveal. */
+  var WIN_NOTE={ staged:"Tap to reveal third place, then second, then the winner (with the fanfare).",
+                 all:"All three places go up together, with the fanfare." };
+  function winKey(){ return "vpTriviaWinners:"+(G.venueId||""); }
+  function paintWinners(){ var v=G.winnersAll ? "all" : "staged"; paintSeg("cfgWinners", v); var n=$("winnersNote"); if(n) n.textContent=WIN_NOTE[v]; }
+  function loadWinners(){ try{ G.winnersAll = localStorage.getItem(winKey())==="all"; }catch(e){ G.winnersAll=false; } paintWinners(); }
+  function loadAutoReveal(){
+    try{ var v=JSON.parse(localStorage.getItem(autoKey())||"null");
+      if(v && typeof v==="object"){ if(typeof v.on==="boolean") G.autoReveal=v.on; var n=parseInt(v.secs,10); if(n>=3 && n<=60) G.autoSecs=n; } }catch(e){}
+    paintAutoReveal();
+  }
+  function autoChanged(){
+    try{ localStorage.setItem(autoKey(), JSON.stringify({ on:G.autoReveal, secs:G.autoSecs })); }catch(e){}
+    paintAutoReveal();
+    if(G.status==="question") scheduleAutoReveal(); else if(!G.autoReveal) clearAuto();
+  }
 
   // ---- game flow (every write goes through the Worker) ----
   function readSettings(){
@@ -1139,13 +1203,14 @@
         correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs, imageUrl:r.image_url||"" };
       G.nextUp = r.next_preview || null;   // host-only: what to start reading before tapping Next
       G.qtotal=r.qtotal||G.qtotal;
-      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[];
+      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[]; G.allInAt=0;
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, session_id:G.sessionId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
         text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, buzzer:(G.buzzer===true && G.buzzWhere!=="device"), imageUrl:r.image_url||"", double:isDouble(r.qseq) });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); try{ hostTimesUp(); }catch(e){} } }, 500);
+      scheduleAutoReveal();
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   /* Refill the leaderboard after a reload. G.board is ONLY ever set from a /host/reveal response,
@@ -1174,7 +1239,7 @@
       .catch(function(){ /* leave the board empty; finish() below refuses to show an empty podium */ });
   }
   function reveal(){
-    if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick();
+    if(G.busy || G.status!=="question" || !G.gameId) return; clearErrForAction(); G.busy=true; clearTick(); clearAuto();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
       G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[]; G.noPlayersNote=false;
       saveTrivia();
@@ -1198,6 +1263,7 @@
       // Between-question leaderboard, but NOT after the last question - there the host reveals
       // the leaderboard/podium manually with the button.
       var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
+      if(isLast){ armAutoFinish(); renderConsole(); }   // the console shows the 1:30 line
       if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){
         /* No players: the same calm "Thanks for playing" as the final reveal, never an empty board. */
         if(!G.board.length && playerCount()===0){ bcast({ t:"nobody" }); }
@@ -1217,7 +1283,23 @@
     return "error";
   }
   var NOBODY_MSG="Nobody has joined this game yet, so there are no scores to show. Players join with the code on the TV.";
-  function finish(){
+  /* THE TV IS NEVER STUCK ON THE LAST ANSWER (INBOX 50 and 77, Dean 5 Nov 2026: "TV reveals by itself in 1:30 if you don't
+     tap"). After the last question's reveal, if the host has not tapped Reveal leaderboard within 90 seconds, the podium goes
+     up by itself, the same way the tap does: staged (first place covered, silent) unless the venue chose "All at once". */
+  var AUTO_FINISH_MS=90000;
+  function clearAutoFinish(){ if(G.finishT){ clearTimeout(G.finishT); G.finishT=null; } if(G.finishTick){ clearInterval(G.finishTick); G.finishTick=null; } G.finishAt=0; }
+  function armAutoFinish(){
+    clearAutoFinish();
+    G.finishAt=Date.now()+AUTO_FINISH_MS;
+    G.finishT=setTimeout(function(){ G.finishT=null; if(G.status==="reveal" && !G.busy){ clearAutoFinish(); finish(true); } }, AUTO_FINISH_MS);
+    G.finishTick=setInterval(function(){ var n=$("autoFinishNote"); if(n) n.textContent=autoFinishText(G.finishAt-Date.now()); }, 1000);
+  }
+  function autoFinishText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The TV reveals the winners by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+" if you don't tap."; }
+  /* auto: the 1:30 timer put the winners up, nobody tapped (Dean, 6 Nov 2026, 13:10): in "One at a time" the TV then steps
+     through third, second and the winner BY ITSELF, AUTO_PLACE_MS apart. The host's own tap (a click event) is never auto. */
+  function finish(auto){
+    clearAutoFinish();
+    G.autoPlaces = (auto===true);
     clearTick();
     G.noPlayersNote=false;
     /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
@@ -1253,9 +1335,61 @@
       renderConsole();
       return;
     }
-    G.status="ended";
-    bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board });
-    bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
+    /* THE WINNERS (Dean, 6 Nov 2026, 11:30; INBOX 77/78). "One place at a time" (the default) is a click-through: the podium
+       goes up showing THIRD place only and nothing plays; tap 2 shows SECOND; tap 3 shows FIRST, with the fanfare on the TV and
+       the phones celebrating. "All at once": all three and the sound together. Ties share a place, so the taps follow the
+       places there are. Then the whole leaderboard: 60 seconds after the winner, or sooner on "Show the leaderboard"; it stays
+       2 minutes and then the TV goes back to the venue's ads. (A paper night's between-round boards are untouched.) */
+    clearEndTimers();
+    G.status="ended"; G.endBoard=false;
+    G.endRanks=podiumRanks(G.board);
+    G.endReveal = (G.winnersAll===true) ? 1 : G.endRanks[0];
+    bcast(endMsg());
+    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
+    renderConsole();
+  }
+  var AUTO_PLACE_MS=6000;
+  function armAutoPlace(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=setTimeout(function(){ G.autoPlaceT=null; nextPlace(); }, AUTO_PLACE_MS); }
+  /* The places on the podium, lowest first: [3,2,1], or [2,1] with two teams, or [3,1] when two tie for first. The TV's
+     podiumEntries() draws the same places from the same rows. */
+  function podiumRanks(rows){
+    var out=[], rank=1, n=0;
+    for(var i=0;i<(rows||[]).length && n<4;i++){
+      if(i>0 && (Number(rows[i].points)||0)!==(Number(rows[i-1].points)||0)) rank=i+1;
+      if(rank>3) break;
+      n++; if(out.indexOf(rank)<0) out.push(rank);
+    }
+    if(!out.length) out=[1];
+    return out.sort(function(a,b){ return b-a; });
+  }
+  function endMsg(){
+    if(G.endBoard) return { t:"leaderboard", title:"Final scores", rows:G.board, final:true };
+    return { t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:(G.endReveal||1) };
+  }
+  function nextPlace(){
+    if(G.status!=="ended" || G.endBoard || !(G.endReveal>1)) return;
+    var i=G.endRanks.indexOf(G.endReveal);
+    G.endReveal = (i>=0 && i+1<G.endRanks.length) ? G.endRanks[i+1] : 1;
+    bcast(endMsg());
+    if(G.endReveal===1) armBoardTimer(); else if(G.autoPlaces) armAutoPlace();
+    renderConsole();
+  }
+  var BOARD_AFTER_MS=60000, BOARD_STAYS_MS=120000;
+  function clearEndTimers(){ clearTimeout(G.autoPlaceT); G.autoPlaceT=null; clearTimeout(G.boardT); clearTimeout(G.adsT); clearInterval(G.boardTick); G.boardT=G.adsT=G.boardTick=null; G.boardAt=0; }
+  function armBoardTimer(){
+    clearEndTimers();
+    G.boardAt=Date.now()+BOARD_AFTER_MS;
+    G.boardT=setTimeout(function(){ G.boardT=null; showFinalBoard(); }, BOARD_AFTER_MS);
+    G.boardTick=setInterval(function(){ var n=$("boardNote"); if(n) n.textContent=boardNoteText(G.boardAt-Date.now()); }, 1000);
+  }
+  function boardNoteText(ms){ var t=Math.max(0, Math.ceil(ms/1000)); return "The leaderboard comes up by itself in "+Math.floor(t/60)+":"+(t%60<10?"0":"")+(t%60)+"."; }
+  function showFinalBoard(){
+    if(G.status!=="ended" || G.endBoard || G.endReveal!==1) return;
+    clearEndTimers();
+    G.endBoard=true;
+    bcast(endMsg());
+    /* The end of the night: the board stays 2 minutes, then the venue's ads. */
+    G.adsT=setTimeout(function(){ G.adsT=null; if(G.status==="ended" && G.endBoard){ bcast({ t:"to_ads" }); } }, BOARD_STAYS_MS);
     renderConsole();
   }
   /* ---- PUNTERS RECKON (feature/top-answers; hidden unless the console is opened with ?pr=1) ----
@@ -1439,10 +1573,10 @@
     send({ t:"state", phase:"lobby", colour:G.colour });
   }
   function endRound(){
-    clearTick();
+    clearTick(); clearAuto(); clearAutoFinish(); clearEndTimers();
     clearTrivia();
     var gid=G.gameId, afterPodium=(G.status==="ended" && !G.pr);
-    G.status="setup"; G.current=null; G.answeredPids={};
+    G.status="setup"; G.current=null; G.answeredPids={}; G.endReveal=0; G.endBoard=false;
     /* FINAL SCORES MUST STAY UP LONG ENOUGH TO READ. This used to send the leaderboard and then
        "idle" in the same breath, so the TV went straight back to the lobby and nobody saw who won
        (and a board ended mid-play flipped its answers for no time at all). */
@@ -1519,7 +1653,9 @@
            options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
       if(G.board.length) to({ t:"leaderboard", title:"Leaderboard", rows:G.board });
     } else if(G.status==="ended" && G.board.length){
-      to({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+      /* A phone is never sent the leaderboard (it has no such screen) and gets first place once it is announced. */
+      var em=endMsg(); if(pid && em.t==="leaderboard") em={ t:"podium", top:G.board.slice(0,3), rows:G.board, reveal:1 };
+      to(em);
     }
   }
     if(m.t==="tv_here"){
@@ -1980,6 +2116,10 @@
       else sn.classList.add("hidden"); });
     return true;
   }
+  document.querySelectorAll("#cfgWinners button").forEach(function(b){ b.addEventListener("click", function(){
+    G.winnersAll = b.getAttribute("data-v")==="all"; try{ localStorage.setItem(winKey(), G.winnersAll ? "all" : "staged"); }catch(e){} paintWinners(); }); });
+  document.querySelectorAll("#cfgAutoReveal button").forEach(function(b){ b.addEventListener("click", function(){ G.autoReveal=b.getAttribute("data-v")==="on"; autoChanged(); }); });
+  (function(){ var i=$("cfgAutoSecs"); if(i) i.addEventListener("change", function(){ var n=parseInt(i.value,10); G.autoSecs=(n>=3 && n<=60) ? n : 10; i.value=G.autoSecs; autoChanged(); }); })();
   document.querySelectorAll("#cfgBuzzer button").forEach(function(b){ b.addEventListener("click", function(){ setBuzzer(b.getAttribute("data-v")==="on", true); }); });
   document.querySelectorAll("#cfgBuzzWhere button").forEach(function(b){ b.addEventListener("click", function(){ setBuzzWhere(b.getAttribute("data-v"), true); }); });
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
@@ -2119,6 +2259,8 @@
       if(VP.termsGate && VP.termsGate(ctx)){ VP.enforceShift(); $("statusText").textContent="One tick first"; return; }   // a prospect venue ticks section 6 before its first game (migration 122)
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.colour=true;   // a venue that once saved "Plain" is not stuck with it: the setting is gone
+      loadWinners();      // how the winners show, as this venue left it (staged by default)
+      loadAutoReveal();   // auto reveal, as this venue left it (on, 10 seconds, by default)
       loadBuzzer();    // the time's-up buzzer switch, as this venue left it (on by default)
       weeklyPreCheck(ctx.venue);
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
@@ -2174,7 +2316,7 @@
       send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
              options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
     } else if(G.status==="ended" && G.board.length){
-      send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+      send(endMsg());
     }
   }
   /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.

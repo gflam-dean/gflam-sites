@@ -267,8 +267,10 @@ var BEFORE_ROOM = { 'qr bingo90': 43, 'qr trivia': 42, 'qr musical_bingo': 58.5,
 /* Musical bingo +1 on purpose (4 Nov 2026, feature/newlook-musical-5nov): its phone shows the venue's own slides in the
    lobby and after the game (Dean, 3 Nov 2026), so its /join/info asks ad:1 and the Worker reads vp_venue_screen once
    per venue per 30 s (never on fresh:1). Cold, as here, that is one more call; in a busy room it is one every 30 s. */
-var CEIL_OLD = { 'qr bingo90': 28, 'qr trivia': 23, 'qr musical_bingo': 40, 'venue bingo90': 28, 'venue trivia': 23, 'venue musical_bingo': 40 };
-var CEIL_132 = { 'qr bingo90': 20, 'qr trivia': 19, 'qr musical_bingo': 36, 'venue bingo90': 20, 'venue trivia': 19, 'venue musical_bingo': 36 };
+/* Trivia +1 on purpose (6 Nov 2026, fix/trivia-live-fixes-6nov): the trivia phone's you're-in and end-of-night screens now carry the
+   venue's ad like musical's, so its /join/info asks ad:1; same cold-read cost as the musical line above. */
+var CEIL_OLD = { 'qr bingo90': 28, 'qr trivia': 24, 'qr musical_bingo': 40, 'venue bingo90': 28, 'venue trivia': 24, 'venue musical_bingo': 40 };
+var CEIL_132 = { 'qr bingo90': 20, 'qr trivia': 20, 'qr musical_bingo': 36, 'venue bingo90': 20, 'venue trivia': 20, 'venue musical_bingo': 36 };
 
 (async function () {
   /* The isolate the pages talk to has asked for vp_join_context once and been told 404, as a live

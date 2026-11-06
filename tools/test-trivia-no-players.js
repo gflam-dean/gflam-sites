@@ -22,7 +22,7 @@ function lift(name) {
   return HOST.slice(i, k) + '\n';
 }
 var NOBODY_LINE = (HOST.match(/var NOBODY_MSG="([^"]+)"/) || [])[1];
-var SRC = ['finishOutcome', 'finish', 'finishNow', 'reveal'].map(lift).join('\n');
+var SRC = ['finishOutcome', 'finish', 'finishNow', 'podiumRanks', 'endMsg', 'reveal'].map(lift).join('\n');
 
 var ran = 0, bad = 0;
 function show(n, c, extra) { ran++; print((c ? '  ok   ' : '  FAIL ') + n + (extra ? '   -> ' + extra : '')); if (!c) bad++; }
@@ -34,7 +34,7 @@ function makeConsole(o) {
   var sent = [], errors = [], timers = [], renders = 0;
   var players = o.players | 0;
   function playerCount() { return players; }
-  function clearTick() {}
+  function clearTick() {} function clearAuto() {} function clearAutoFinish() {} function armAutoFinish() {} function clearEndTimers() {} function armBoardTimer() {}
   function clearErrForAction() {}
   function saveTrivia() {}
   function isDouble() { return false; }
@@ -90,7 +90,7 @@ async function flush() { for (var i = 0; i < 40; i++) await null; }
   print('players present, scores come back on the retry');
   C = makeConsole({ players: 4, board: [], fetchBoard: [{ name: 'A', points: 300 }, { name: 'B', points: 200 }, { name: 'C', points: 100 }] });
   C.finish(); await flush();
-  show('the podium and the final scores go out', C.types() === 'podium,leaderboard', C.types());
+  show('the podium goes out first, on its own: the scores follow on the host\'s taps (6 Nov 2026)', C.types() === 'podium', C.types());
   show('the night ends and there is no error', C.G.status === 'ended' && C.errors.length === 0);
 
   print('the host taps again after someone joins');
