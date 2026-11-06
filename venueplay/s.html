@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>venueplay</title>
+<!-- THE SHORT SIGN-IN LINK IN A TEXT (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K. The 8 letters are a one-tap
+     sign-in token (the billing Worker keeps only its hash, the same expiry and single use as every sign-in link).
+     This page does one thing: it moves the code out of the address into /app/go's fragment, which is never sent to
+     a server, and /app/go signs them in exactly as the long link does. Anything that is not a code goes to /app. -->
+<script>
+(function () {
+  var m = /^\/s\/([A-Za-z0-9]{8})\/?$/.exec(location.pathname || '');
+  var code = m ? m[1].toUpperCase() : '';
+  if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(code)) { location.replace('/app/'); return; }
+  location.replace('/app/go#t=' + code);
+})();
+</script>
+<style>body{margin:0;background:#0A0A0B;color:#fff;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}p{font-size:17px}</style>
+</head>
+<body>
+<noscript><p><a href="/app/" style="color:#FF1F8E">Open venueplay</a></p></noscript>
+<p>Opening venueplay...</p>
+</body>
+</html>

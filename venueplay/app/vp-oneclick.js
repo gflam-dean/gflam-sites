@@ -42,6 +42,8 @@
       var k = kv.slice(0, i), v = "";
       try { v = decodeURIComponent(kv.slice(i + 1)); } catch (e) { v = ""; }
       if (k === "t" && /^[A-Za-z0-9_-]{43}$/.test(v)) out.t = v;
+      /* The short link from a text (venueplay.com.au/s/AB12CD7K, Dean 6 Nov 2026): the same one-tap token, 8 letters. */
+      else if (k === "t" && /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/i.test(v)) out.t = v.toUpperCase();
       if (k === "e" && EMAIL_RE.test(v) && v.length <= 200) out.e = v.toLowerCase();
     });
     return out;

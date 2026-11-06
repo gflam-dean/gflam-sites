@@ -235,7 +235,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   ENV.PROSPECT_SMS_ON = 'on'; ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; SMS.length = 0;
   var ns = await call('/autopilot/prospect/nudge-sms', { venue_id: small.id, text: 'venueplay: Hi Jo, your venueplay is ready: {link} Reply STOP to opt out' }, AP);
   check('...and the text follow-up, once Dean says yes, goes to that mobile with no other step',
-    ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /\/app\/go#t=/.test(SMS[0].body.messages[0].body), [ns.body, SMS]);
+    ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} /.test(SMS[0].body.messages[0].body), [ns.body, SMS]);
   check('...through MOBILE MESSAGE, the sign-in codes\' provider: its own login, sender "venueplay", and "Reply STOP" made its opt-out link ({optout})',
     SMS[0] && SMS[0].auth === 'Basic ' + btoa('mm-user:mm-pass') && SMS[0].body.messages[0].from === 'venueplay' && /\{optout\}$/.test(SMS[0].body.messages[0].body) && !/Reply STOP/.test(SMS[0].body.messages[0].body), SMS[0]);
   delete ENV.PROSPECT_SMS_ON;
@@ -309,9 +309,9 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   check('...two live links, the email\'s and the text\'s, ending at the same moment, a fresh 30 days from now',
     wbLinks.length === 2 && wbLinks[0].expires_at === wbLinks[1].expires_at && Math.abs(Date.parse(wbLinks[0].expires_at) - (CLOCK + 30 * DAY)) < 120000 && tx.body.days_left === 30, wbLinks);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
-  check('...the text is from venueplay, names them and the venue, carries the one-tap link, says until when, and the opt-out link ({optout}, Mobile Message\'s), no long dash',
-    smsBody.from === 'venueplay' && /^venueplay: Hi Sam, here is your new sign-in link for Weekend Bowls\. /.test(smsBody.body) && /\/app\/go#t=/.test(smsBody.body) &&
-    smsBody.body.indexOf('It works until ' + tx.body.expires_words + '.') !== -1 && /\{optout\}$/.test(smsBody.body) && !/[—–]/.test(smsBody.body) && smsBody.body.length <= 480, smsBody.body);
+  check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and for how long, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
+    smsBody.from === 'venueplay' && /^Hi Sam, here's your venueplay sign-in link: venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} We've emailed it too, check junk\. Available for 30 days\. \{optout\}$/.test(smsBody.body) &&
+    !/[—–]/.test(smsBody.body) && smsBody.body.replace('{optout}', 'Reply STOP to opt out').length <= 160, smsBody.body);
   check('...HQ is shown one line: "Sent by email and text, link works until <day>."', tx.body.line === 'Sent by email and text, link works until ' + tx.body.expires_words + '.', tx.body.line);
   check('...recorded: signin_link_sent and signin_text_sent (last three digits only)', audits('signin_text_sent').some(function (a) { return a.target === 'venue:' + wb.id && a.detail.to_last3 === '777'; }) && audits('signin_link_sent').length >= 1);
 

@@ -393,6 +393,51 @@ function freshLink(ttlMs, venueId, userId) {   // a second link for the same log
   check('rate-limited per network: the 21st try in 10 minutes from one address is 429, another address is not', LIMIT.slice(0, 20).every(function (s) { return s === 410; }) && LIMIT[20] === 429 && other.status === 410, LIMIT);
   check('nothing was logged, so no token can be in a log', LOGS.length === 0, LOGS);
 
+  section('1s. THE SHORT LINK IN A TEXT (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K, our own, the same one-tap sign-in');
+  var SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/;
+  /* The Worker's constants live inside its own scope, so they are read from the lines that declare them. */
+  var WSRC = readFile('venueplay-backend/worker/venueplay-api-FULL.js');
+  var VPA_SHORT_PER_IP = +(/\nconst VPA_SHORT_PER_IP = (\d+);/.exec(WSRC) || [0, 0])[1];
+  var VPA_SHORT_ALPHA = (/\nconst VPA_SHORT_ALPHA = '([A-Z0-9]+)';/.exec(WSRC) || [0, ''])[1];
+  var codes = {}; for (var ci = 0; ci < 300; ci++) codes[vpaShortSigninCode()] = 1;
+  var ck = Object.keys(codes);
+  check('a short code is 8 letters and digits with no look-alikes (no I, L, O, 0 or 1), and 300 in a row are all different',
+    ck.length === 300 && ck.every(function (c) { return SHORT_RE.test(c); }) && !ck.some(function (c) { return /[ILO01]/.test(c); }), ck.slice(0, 3));
+  var sm = await vpaMintSigninLinkFor(ENV, login.id, v.id, Date.now(), Date.now() + 30 * 86400000, { short: true });
+  var sRow = DB.vp_signin_links[DB.vp_signin_links.length - 1];
+  check('it is kept like every link: only its hash, the same expiry asked for, unused, nothing else stored', SHORT_RE.test(sm.token) && sRow.token_hash === (await vpaSigninTokenHash(sm.token)) &&
+    JSON.stringify(sRow).indexOf(sm.token) === -1 && Math.abs(Date.parse(sRow.expires_at) - (Date.now() + 30 * 86400000)) < 5000 && sRow.used_at === null, sRow);
+  var surl = vpaShortSigninUrl('https://www.venueplay.com.au', sm.token);
+  check('the link is our own domain, /s/ and the code: no venue name, no email, no third party', surl === 'venueplay.com.au/s/' + sm.token, surl);
+  GEN.length = 0;
+  var sOk = await vpaHandleOneClick(click(sm.token.toLowerCase()), ENV, J);
+  check('tapped (even typed in lower case): ONE sign-in for this login, as the long link', sOk.status === 200 && sOk.body.ok === true && sOk.body.token_hash === 'hashed-' + login.id && GEN.length === 1, sOk);
+  var sAgain = await vpaHandleOneClick(click(sm.token), ENV, J);
+  check('used once only: the same code again is refused the same way as any spent link', sAgain.status === 410 && JSON.stringify(sAgain.body) === '{"ok":false}' && GEN.length === 1, sAgain);
+  var sm2 = await vpaMintSigninLinkFor(ENV, login.id, v.id, Date.now(), Date.now() + 30 * 86400000, { short: true });
+  DB.vp_signin_links[DB.vp_signin_links.length - 1].expires_at = new Date(Date.now() - 1000).toISOString();
+  var sExp = await vpaHandleOneClick(click(sm2.token), ENV, J);
+  check('expired: refused, Auth not asked', sExp.status === 410 && GEN.length === 1, sExp);
+  var oneNet = [];
+  for (var sk = 0; sk < VPA_SHORT_PER_IP + 1; sk++) oneNet.push((await vpaHandleOneClick(click('XXXXXXX' + VPA_SHORT_ALPHA[sk % 31], '198.51.100.250'), ENV, J)).status);
+  var longSame = await vpaHandleOneClick(click('W' + token.slice(1), '198.51.100.250'), ENV, J);
+  var otherNet = await vpaHandleOneClick(click('XXXXXXXA', '198.51.100.251'), ENV, J);
+  check('short codes have their own, tighter limit per network: try ' + (VPA_SHORT_PER_IP + 1) + ' in an hour from one address is 429, while a long link from it and a short one from another address are not',
+    VPA_SHORT_PER_IP < 20 && oneNet.slice(0, VPA_SHORT_PER_IP).every(function (x) { return x === 410; }) && oneNet[VPA_SHORT_PER_IP] === 429 && longSame.status === 410 && otherNet.status === 410, [oneNet, longSame.status, otherNet.status]);
+  DB.vp_signin_links = [];   // the day's cap on links for one login is not what this checks
+  var sm3 = await vpaMintSigninLinkFor(ENV, login.id, v.id, Date.now(), Date.now() + 30 * 86400000, { short: true }); sent.length = 0;
+  var rs = await vpaHandleOneClickResend({ url: 'https://api/auth/one-click/resend', headers: { get: function (k) { return k === 'cf-connecting-ip' ? '203.0.113.240' : ''; } }, text: function () { return Promise.resolve(JSON.stringify({ t: sm3.token })); } }, ENV, J);
+  check('"Send me a new link" from a spent short link finds the login it was made for, and emails ITS own address', rs.body.ok === true && sent.length === 1 && sent[0].to && String(sent[0].to).indexOf('cazreitop@gmail.com') !== -1, [rs.body, sent.map(function (m) { return m.to; })]);
+
+  var SH = readFile('venueplay/s.html'); var sJs = /<script>([\s\S]*?)<\/script>/.exec(SH)[1];
+  function sPage(path) { var to = null; var location = { pathname: path, replace: function (u) { to = u; } }; (new Function('location', sJs))(location); return to; }
+  check('the /s/ page moves the code into /app/go\'s fragment (never sent to a server), capitals, nothing else',
+    sPage('/s/AB2CD7KM') === '/app/go#t=AB2CD7KM' && sPage('/s/ab2cd7km/') === '/app/go#t=AB2CD7KM', [sPage('/s/AB2CD7KM'), sPage('/s/ab2cd7km/')]);
+  check('anything that is not a code (look-alikes, wrong length, more path) goes to the normal sign-in', sPage('/s/AB12CD7K') === '/app/' && sPage('/s/ABC') === '/app/' && sPage('/s/AB2CD7KM/x') === '/app/' && sPage('/s/') === '/app/', [sPage('/s/AB12CD7K'), sPage('/s/ABC')]);
+  check('_redirects serves /s/* from that page, and it sends no referrer', /^\/s\/\*\s+\/s\s+200$/m.test(readFile('venueplay/_redirects')) && /name="referrer" content="no-referrer"/.test(SH));
+  var GW = {}; (new Function('window', ONECLICK))(GW);
+  check('the go page takes the short code as its token (capitals), like the long one, and refuses a look-alike', GW.VPOneClick.parse('#t=ab2cd7km').t === 'AB2CD7KM' && GW.VPOneClick.parse('#t=AB12CD7K').t === '' && GW.VPOneClick.parse('#t=' + TOKEN_A).t === TOKEN_A, GW.VPOneClick.parse('#t=ab2cd7km'));
+
   section('1c. Without migration 123 the prospect is still set up, and the button opens the page that emails them a link (never the email sign-in)');
   world(); MIG123 = false;
   r = await vpaHandleProspect(as(ADMIN, CAZ), ENV, J);

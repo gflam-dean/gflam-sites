@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:45 · 6cda9f73';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 12:08 · f078800d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3903,10 +3903,10 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (win && win.ended) return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Resend from HQ to give them a fresh 30 days.');
   if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
   let token, minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
+  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null, { short: true }); token = minted.token; }
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
+  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaShortSigninUrl(site, token));
   let r;
   try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
@@ -4716,10 +4716,38 @@ async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
    AND the expiry it was really given, so every sentence about it is written from the row that exists.
    Before migration 151 the table refuses a life over 15 days: then the same link is made again with 14, and
    `shortened` says so (the row that was refused never existed, so nothing is left behind). */
-async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs) {
+/* THE SHORT LINK FOR A TEXT (Dean, 6 Nov 2026: "shorten the sign-in link in text messages", never a third-party
+   shortener: the link is a login key and must not pass through anyone else). venueplay.com.au/s/AB12CD7K is OUR link:
+   the 8 letters ARE a one-tap token, kept like every other one in vp_signin_links (its sha256 only, the same expiry,
+   used once, retired the same way), so no new table and no migration. 31 letters and digits with the look-alikes
+   left out (no I, L, O, 0 or 1), 8 of them: 31^8 is about 850 billion, and every try costs a guesser a request
+   against two per-network limits (VPA_ONECLICK_PER_IP per 10 minutes, VPA_SHORT_PER_IP per hour). No venue name,
+   no email in it. /s/<code> (venueplay/s.html) only moves the code into /app/go's fragment, so the sign-in that
+   follows is the one every link already uses. */
+const VPA_SHORT_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const VPA_SHORT_LEN = 8;
+const VPA_SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/;
+const VPA_SHORT_PER_IP = 15;              // short-code tries per network per hour (a person taps once or twice), on top of VPA_ONECLICK_PER_IP
+function vpaShortSigninCode() {
+  const n = VPA_SHORT_ALPHA.length, limit = Math.floor(256 / n) * n, out = [];
+  const buf = new Uint8Array(1);
+  while (out.length < VPA_SHORT_LEN) { crypto.getRandomValues(buf); if (buf[0] < limit) out.push(VPA_SHORT_ALPHA[buf[0] % n]); }
+  return out.join('');
+}
+/* In a text the link is written without https:// and www. (12 characters, the difference between one SMS part and
+   two): every phone's Messages app makes venueplay.com.au/s/... a link by itself. */
+function vpaShortSigninUrl(site, code) { return String(site).replace(/^https?:\/\//, '').replace(/^www\./, '') + '/s/' + code; }
+/* A token as typed or tapped: the long one as it is, a short one in capitals. '' when it is neither. */
+function vpaSigninTokenShape(t) {
+  const v = String(t || '').trim();
+  if (/^[A-Za-z0-9_-]{43}$/.test(v)) return v;
+  const up = v.toUpperCase();
+  return VPA_SHORT_RE.test(up) ? up : '';
+}
+async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs, opts) {
   const raw = new Uint8Array(32);
   crypto.getRandomValues(raw);
-  const token = vpaB64Url(raw);
+  const token = (opts && opts.short) ? vpaShortSigninCode() : vpaB64Url(raw);
   const now = Date.now();
   const from = Math.max(now, Math.min(Number(startsAtMs) || now, now + VPA_PROSPECT_MAX_DELAY_MIN * 60000));
   const plain = from + VPA_SIGNIN_LINK_DAYS * 86400000;
@@ -4752,8 +4780,9 @@ async function vpaHandleOneClick(request, env, json) {
   if (ip && !(await helpIpLimit(env, 'oneclick', ip, VPA_ONECLICK_PER_IP, 600))) return json({ ok: false, busy: true }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return json(GONE, 410);
-  const token = String((_b.body && _b.body.t) || '');
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return json(GONE, 410);
+  const token = vpaSigninTokenShape(_b.body && _b.body.t);
+  if (!token) return json(GONE, 410);
+  if (token.length === VPA_SHORT_LEN && ip && !(await helpIpLimit(env, 'oneclick-short', ip, VPA_SHORT_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
   const hash = await vpaSigninTokenHash(token);
   const nowIso = new Date().toISOString();
   let rows = null;
@@ -4881,7 +4910,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (opts.nudge) {
     const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
-      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. It works until ' + vpaEsc(expiresWords) + '.</p>';
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>';
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
@@ -4890,7 +4919,7 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   }
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
-    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. It works until ' + vpaEsc(expiresWords) + '.</p>'
+    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
     + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
@@ -4909,11 +4938,11 @@ async function vpaHandleOneClickResend(request, env, json) {
   if (ip && !(await helpIpLimit(env, 'oneclick-resend', ip, VPA_RESEND_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return json(SAME);
-  const t = String((_b.body && _b.body.t) || '');
+  const t = vpaSigninTokenShape(_b.body && _b.body.t);
   const e = String((_b.body && _b.body.e) || '').trim().toLowerCase();
   try {
     let who = null;
-    if (/^[A-Za-z0-9_-]{43}$/.test(t)) {
+    if (t) {
       const rows = await vpaSelect(env, 'vp_signin_links', 'token_hash=eq.' + (await vpaSigninTokenHash(t)) + '&select=auth_user_id,venue_id&limit=1');
       if (rows && rows[0]) who = { id: rows[0].auth_user_id, venue: rows[0].venue_id };
     }
@@ -4981,11 +5010,32 @@ function vpaSmsAllowedAt(ms) {
   }
   return t;
 }
+/* DEAN'S WORDING RULE (6 Nov 2026): never explain when the free month starts; say "This link is available for 30
+   days." (urgency), with the date. The number is the link's own, from the row that was made (30 for a fresh one,
+   fewer once their 30 days from setup are partly used), so it is never untrue. */
+function vpaLinkAvailableWords(expiresMs, nowMs) {
+  const n = Math.max(1, vpaDaysLeft(expiresMs, nowMs == null ? Date.now() : nowMs));
+  return 'This link is available for ' + n + (n === 1 ? ' day' : ' days') + ', until ' + vpaBneDateWords(expiresMs) + '.';
+}
+/* ONE SMS PART (Dean, 6 Nov 2026: "the sign-in text is too long"). No "venueplay:" prefix (the sender already shows
+   venueplay); venueplay is named once in the words (Spam Act: who it is from). Dean's words:
+     "Hi {first}, here's your venueplay sign-in link for {venue}: {short link} Available for 30 days. Reply STOP to opt out"
+   (vpaSendSms turns the opt-out into Mobile Message's own link), plus "We've emailed it too, check junk." 160 characters
+   is one part: a text over it drops " for {venue}", then the first name; past that it is two parts (never more: the
+   link and the opt-out are never cut, and every other piece has a fixed length). */
+const VPA_SMS_ONE_PART = 160;
 function vpaSigninTextBody(first, venueName, url, expiresMs) {
-  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 30);
-  const v = String(venueName || '').replace(/\s+/g, ' ').trim().slice(0, 60);
-  return 'venueplay: Hi ' + (f || 'there') + ', here is your new sign-in link' + (v ? ' for ' + v : '') + '. Tap to sign in, no password needed: '
-    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';   // vpaSendSms makes this Mobile Message's {optout} link
+  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 20);
+  const v = String(venueName || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+  const n = Math.max(1, vpaDaysLeft(expiresMs, Date.now()));
+  /* Dean, 6 Nov 2026: one short line that the login went by email too, and may be in junk. The text only ever goes
+     with the email (HQ's Resend sends both; a queued text follows the email that already went). */
+  const tail = ': ' + url + ' We\'ve emailed it too, check junk. Available for ' + n + (n === 1 ? ' day' : ' days') + '. Reply STOP to opt out';
+  const make = (who, where) => 'Hi ' + (who || 'there') + ', here\'s your venueplay sign-in link' + (where ? ' for ' + where : '') + tail;
+  let t = make(f, v);
+  if (t.length > VPA_SMS_ONE_PART) t = make(f, '');
+  if (t.length > VPA_SMS_ONE_PART) t = make('', '');
+  return t;
 }
 /* Who to text for this venue's login: the prospect's mobile (Edit details or setup), else the login's own. */
 async function vpaSigninTextTarget(env, venueId, user) {
@@ -5009,11 +5059,10 @@ async function vpaSigninTextTarget(env, venueId, user) {
 /* Make the text's own link and send it now. { ok } or { ok:false, status }. */
 async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, expiresMs) {
   let minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs); }
+  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs, { short: true }); }
   catch (e) { return { ok: false, status: 'no_table' }; }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const user = await vpaAuthGetUser(env, authUserId);
-  const body = vpaSigninTextBody(target.first, venueName, vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);
+  const body = vpaSigninTextBody(target.first, venueName, vpaShortSigninUrl(site, minted.token), minted.expiresAt);
   let r;
   try { r = await vpaSendSms(env, target.e164, body, 'signin-' + String(venueId).slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok) {

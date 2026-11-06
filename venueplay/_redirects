@@ -34,6 +34,9 @@
 # page, which reads the month from the address and shows that month's closing date and code.
 # 200 = a rewrite: the visitor keeps the address. A new month is a new line here and a new row
 # in nsw.html OFFERS. Plain /offer is NOT an offer: it goes to the homepage and the $3 rate.
+# The short sign-in link in a text (Dean, 6 Nov 2026): venueplay.com.au/s/AB12CD7K is served by s.html, which
+# moves the code into /app/go's fragment. Our own domain, never a third-party shortener.
+/s/*  /s  200
 /offer-oct  /nsw  200
 /offer-nov  /nsw  200
 /offer-dec  /nsw  200
