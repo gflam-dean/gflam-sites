@@ -533,8 +533,20 @@ definer with its own search_path. Either order with the billing Worker: until it
 keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
 NOT RUN. Rollback: in the file.
 
-(137 is spent: the end-screen ratings work, `feature/end-screen-ratings-1nov`, claims "migration 137" in its Worker code, not yet
-committed on 1 Nov 2026. 138 is the next free number on every branch.)
+`venueplay-137-feedback-notes.sql` (Dean, 1 Nov 2026: every "How was that?" rating on a phone gets one short follow-up):
+one new table `vp_feedback_notes`, HQ's only (one row per rating in `vp_game_feedback`, unique feedback_id; venue, session,
+game, format, rating, up to six tags, a line of up to 300 characters, wants_reply, the help-desk ticket it made if any).
+Never an email: a consented email goes only into a help-desk ticket. No name and no "share" column: Dean, 2 Nov 2026, removed
+the ticks; a venue sees only counts of "Loved it" and "Good", read from `vp_game_feedback` (migration 60), which needs no new
+column. It also widens `vp_help_push_subs.filter` to allow 'bad_feedback' ("Only bad player feedback" alerts). Service role
+only (RLS on, no policies, anon/authenticated revoked). Any order with the billing Worker: until it is run, POST /help/feedback
+keeps the rating and answers `missing: true` for the words, and HQ's /admin/feedback says the notes table is not there.
+Built on `feature/player-screens-2nov`, approved by Dean 1 and 2 Nov 2026 on `release/tue-3nov`, which never reached main;
+brought back on `fix/recover-3nov-10nov` (6 Nov 2026). STATUS: LIVE. RLS-BASELINE.json, dumped read-only from live on
+3 Nov 2026 (commit 1ee4cbd7), records `vp_feedback_notes`, and the 3 Nov job list has Dean running 137. Which revision of the
+file ran is not recorded; the Worker copes either way (it never writes the removed columns, and keeps a device on 'all' if
+the filter check refuses 'bad_feedback'). DO NOT RUN AGAIN: migration 144 (`feature/help-alerts-by-team-2nov`) widens the
+same filter check further, and 137 run after it would narrow it back. Read-back (read-only) in the file.
 
 `venueplay-138-help-faq-lowercase-name.sql` (Dean, 1 Nov 2026: the name is "venueplay", lowercase, in all customer text): two
 Help answers that live only in the database get the name in lowercase, one word each. The venue answer "Setting up the TV"

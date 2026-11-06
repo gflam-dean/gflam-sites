@@ -591,6 +591,11 @@
       <p class="pickfine">Every number below is <b id="ntPickName">this venue</b> only.</p>
     </div>
     <div id="nights"><p class="note">Loading your nights…</p></div>
+    <!-- WHAT PLAYERS THOUGHT (Dean, 2 Nov 2026): counts by game and night of the ratings a venue is shown
+         (VPR_VENUE_RATINGS in the billing Worker: "Loved it" and "Good"). Never a comment or a name. -->
+    <div class="label" style="margin-top:22px">What players thought</div>
+    <p class="note" style="margin:0 0 10px">How players rated your games on their phones at the end of each game, over the last eight weeks.</p>
+    <div id="liked"><p class="note">Loading…</p></div>
     </div><!-- /tp-nights -->
 
     <div class="tabpanel" id="tp-settings">
@@ -3428,6 +3433,29 @@
         return;
       }
       renderNights(r.nights || []);
+    }).then(function(){ return loadLikedFor(venueId); });
+  }
+  /* What players thought: favourable counts only, from /account/feedback. */
+  /* The ratings shown come from the server (VPR_VENUE_RATINGS), labelled as the phone labels them. */
+  function likedFigs(shown, counts){
+    return (shown||[]).map(function(s){ return '<div class="nfig"><b>' + ((counts||{})[s.key]||0) + '</b><span>' + esc(s.label) + '</span></div>'; }).join("");
+  }
+  function loadLikedFor(venueId){
+    var box = $("liked"); if (!box) return;
+    return api("/account/feedback", { venue_id: venueId }).then(function(r){
+      if (venueId !== ntCurrent) return;
+      if (!r || r.error){ box.innerHTML = '<p class="note">Could not load this just now.</p>'; return; }
+      if (!r.total){
+        box.innerHTML = '<div class="card"><span class="muted" style="font-size:13.5px">No ratings yet. At the end of every game, players can tap "Loved it", "Good" or "Not for me" on their phone. The good ones show up here.</span></div>';
+        return;
+      }
+      box.innerHTML = '<div class="night" id="likedSum"><div class="nhead"><b>Last eight weeks</b><small>All games</small></div><div class="nfigs">' + likedFigs(r.shown, r.counts) + '</div></div>';
+      (r.nights || []).forEach(function(n){
+        var row = document.createElement("div"); row.className = "night";
+        row.innerHTML = '<div class="nhead"><b>' + esc(nightDate(n.night + "T12:00:00")) + '</b><small>' + esc(FORMAT_WORDS[n.format] || n.format) + '</small></div>' +
+          '<div class="nfigs">' + likedFigs(r.shown, n.counts) + '</div>';
+        box.appendChild(row);
+      });
     });
   }
   /* Opens on the venue this login is working at (defaultVenue), not venues[0], like every

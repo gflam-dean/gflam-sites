@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 21:31 · cc77c28d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 09:59 · a70fdcce';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -146,6 +146,8 @@ export default {
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
+      // The follow-up to a phone's "How was that?" (Dean, 1 Nov 2026; migration 137). Public, limited, honeypotted.
+      if (request.method === 'POST' && path === '/help/feedback'          && typeof vpfFeedbackMore === 'function')  return await vpfFeedbackMore(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
       // What the console's Help form fills in for a signed-in host (Dean, 4 Nov 2026): their OWN name, email and phone.
       if (request.method === 'POST' && path === '/help/venue/me')          return await helpVenueMe(request, env, json);
@@ -197,6 +199,8 @@ export default {
       if (request.method === 'POST' && path === '/marketing/summary'        && typeof vpmSummary === 'function')         return await vpmSummary(request, env, json);
       // The monthly report, one venue of the caller's own (Dean, 31 Oct 2026). Counts only.
       if (request.method === 'POST' && path === '/account/month-report'     && typeof vpbMonthReport === 'function')     return await vpbMonthReport(request, env, json);
+      // What players thought: favourable counts only, by game and night (Dean, 2 Nov 2026).
+      if (request.method === 'POST' && path === '/account/feedback'         && typeof vpbFeedbackCounts === 'function')  return await vpbFeedbackCounts(request, env, json);
       if (request.method === 'POST' && path === '/account/hosts'       && typeof vpbListHosts === 'function')    return await vpbListHosts(request, env, json);
       if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/host-add'    && typeof vpbAddHost === 'function')      return await vpbAddHost(request, env, json);
@@ -265,6 +269,8 @@ export default {
       // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
       if (request.method === 'POST' && path === '/admin/signup-sources' && typeof vpaHandleSignupSources === 'function') return await vpaHandleSignupSources(request, env, json);
       if (request.method === 'POST' && path === '/admin/month-news'      && typeof vpaHandleMonthNews === 'function')      return await vpaHandleMonthNews(request, env, json);
+      // HQ > Feedback: every rating, tag and word players left, per venue, state, game, month and night (HQ only).
+      if (request.method === 'POST' && path === '/admin/feedback'        && typeof vpaHandleFeedbackHq === 'function')     return await vpaHandleFeedbackHq(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
@@ -359,6 +365,8 @@ export default {
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
     /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
     try { await vpaSigninTextSweep(env, Date.now()); } catch (e7) { /* the next tick looks again */ }
+    /* Two or more "Not for me" at a venue in one night (Dean, 2 Nov 2026): one soft alert to HQ's phones (migration 137 not needed for it). */
+    try { await vpfAlertSweep(env, Date.now()); } catch (e8) { /* the next tick looks again */ }
   },
 };
 
@@ -13950,6 +13958,12 @@ async function vprRead(env, venues, month) {
     'venue_id=in.(' + inl + ')&and=(opted_in_at.gte.' + w.from + ',opted_in_at.lt.' + w.to + ')'
     + '&select=venue_id,opted_in_at&order=opted_in_at.asc,email.asc,mobile.asc'));
 
+  /* WHAT PLAYERS THOUGHT (Dean, 2 Nov 2026): counts of the ratings a venue is shown (VPR_VENUE_RATINGS),
+     and nothing else is READ here, so no report can carry a rating HQ keeps, a comment or a name. */
+  const liked = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_game_feedback',
+    'venue_id=in.(' + inl + ')&source=eq.player&' + vprRatingFilter() + '&and=(created_at.gte.' + w.from + ',created_at.lt.' + w.to + ')'
+    + '&select=venue_id,format,rating,created_at&order=created_at.asc,id.asc'));
+
   /* The slide tally (migration 135). A 404 is the table not being there yet: no counts, said so. */
   let shows = null, screens = [];
   try {
@@ -13966,7 +13980,7 @@ async function vprRead(env, venues, month) {
       'venue_id=in.(' + inl + ')&select=venue_id,slides&order=venue_id.asc'));
   }
   const by = {};
-  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [],
+  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [], liked: [],
                                        shows: shows ? [] : null, labels: {} }; });
   const venueOfSession = {}, venueOfGame = {};
   sessions.forEach((s) => { if (by[s.venue_id]) { by[s.venue_id].sessions.push(s); venueOfSession[s.id] = s.venue_id; } });
@@ -13976,12 +13990,49 @@ async function vprRead(env, venues, month) {
   cards.forEach((c) => { const v = venueOfGame[c.game_id]; if (v) by[v].cards.push(c); });
   reports.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].reports.push(r); });
   optins.forEach((o) => { if (by[o.venue_id]) by[o.venue_id].optins.push(o); });
+  liked.forEach((f) => { if (by[f.venue_id]) by[f.venue_id].liked.push(f); });
   if (shows) shows.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].shows.push(r); });
   screens.forEach((sc) => {
     if (!by[sc.venue_id] || !Array.isArray(sc.slides)) return;
     sc.slides.forEach((sl) => { const k = vprSlideKey(sl); if (k) by[sc.venue_id].labels[k] = String((sl && (sl.head || sl.tag)) || '').trim(); });
   });
   return by;
+}
+
+/* THE ROOM'S VERDICT FOR A VENUE (Dean, 2 Nov 2026): how many players tapped each rating a venue is
+   shown, in total, by game and by night (2am to 2am on the venue's clock), labelled as the phone
+   labels them. True counts only, never an average or a percentage, never a comment or a name.
+
+   WHICH RATINGS A VENUE SEES: VPR_VENUE_RATINGS, and nothing else is even read from the database
+   (vprRead, /account/feedback). Today "Loved it" and "Good"; "Not for me" stays HQ's (Dean: "let's
+   see how the negative goes"). To show it to venues later, add 1 to this list: the reads, the
+   monthly email, the report page and the account panel all follow it. */
+var VPR_VENUE_RATINGS = [3, 2];   // a var so tools/test-feedback-consent.js can flip it the way a person would
+const VPR_RATINGS = { 3: { key: 'loved', label: 'Loved it' }, 2: { key: 'good', label: 'Good' }, 1: { key: 'not_for_me', label: 'Not for me' } };
+function vprRatingFilter() { return 'rating=in.(' + VPR_VENUE_RATINGS.join(',') + ')'; }
+function vprLiked(list, tz, month) {
+  const zero = () => { const c = {}; VPR_VENUE_RATINGS.forEach((r) => { c[VPR_RATINGS[r].key] = 0; }); return c; };
+  const out = { shown: VPR_VENUE_RATINGS.map((r) => ({ key: VPR_RATINGS[r].key, label: VPR_RATINGS[r].label })),
+                counts: zero(), total: 0, formats: {}, nights: [] };
+  const per = {};
+  (list || []).forEach((r) => {
+    const rating = Number(r && r.rating);
+    if (VPR_VENUE_RATINGS.indexOf(rating) === -1) return;      // never counted for a venue, whatever a caller passed
+    const night = vprNightKey(r.created_at, tz);
+    if (!night || (month && night.slice(0, 7) !== month)) return;
+    const f = vprFormat(r.format), key = VPR_RATINGS[rating].key;
+    out.counts[key]++; out.total++;
+    (out.formats[f] = out.formats[f] || zero())[key]++;
+    const k = night + '|' + f;
+    (per[k] = per[k] || { night: night, weekday: vprWeekday(night), format: f, counts: zero() }).counts[key]++;
+  });
+  out.nights = Object.keys(per).sort().reverse().map((k) => per[k]);
+  return out;
+}
+const VPR_FORMAT_WORDS = { bingo90: 'Bingo', musical_bingo: 'Musical bingo', trivia: 'Trivia' };
+/* "Loved it: 41 · Good: 12", the phone's own words, in the shown order. */
+function vprLikedWords(l) {
+  return l.shown.map((s) => vpaEsc(s.label) + ': <b>' + (l.counts[s.key] || 0) + '</b>').join(' &middot; ');
 }
 
 /* A slide's key: its uploaded file's name, or its heading for a text slide. The same rule as
@@ -14171,6 +14222,7 @@ function vprFigures(venue, rows, month) {
     night_list: nightList,
     top_teams: topTeams,
     optins: optins,
+    liked: vprLiked(rows.liked, tz, month),
     ads: ads,
     ad_shows: ads ? ads.shows : 0,
   };
@@ -14246,6 +14298,31 @@ async function vpbMonthReport(request, env, json) {
   catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
   return json({ ok: true, venue: { id: venue.id, name: venue.name },
     venues: o.venues.map((v) => ({ id: v.id, name: v.name })), months: months, report: rep });
+}
+
+/* --- POST /account/feedback { venue_id } : what players thought, the venue's way (Dean, 2 Nov 2026).
+   The last eight weeks: how many tapped "Loved it" and "Good", by game and night, for one of the
+   caller's OWN venues (owner, manager or marketing login, or HQ through View as, the monthly report's
+   rule). Only the ratings in VPR_VENUE_RATINGS are read: no comment, no name ever leaves here. --- */
+const VPR_LIKED_WEEKS = 8;
+async function vpbFeedbackCounts(request, env, json) {
+  const o = await vpmRequireAny(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const wanted = String(b.venue_id || '').trim();
+  const venue = wanted ? o.venues.find((v) => v.id === wanted) : (o.venues.length === 1 ? o.venues[0] : null);   // only the caller's own
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  const since = new Date(Date.now() - VPR_LIKED_WEEKS * 7 * 86400000).toISOString();
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'vp_game_feedback', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&source=eq.player&' + vprRatingFilter()
+      + '&created_at=gte.' + encodeURIComponent(since) + '&select=format,rating,created_at&order=created_at.asc,id.asc');
+  } catch (e) { return json({ error: 'We could not read that just now. Please try again in a moment.' }, 503); }
+  const l = vprLiked(rows, venue.timezone || 'Australia/Brisbane', '');
+  return json({ ok: true, venue: { id: venue.id, name: venue.name }, weeks: VPR_LIKED_WEEKS,
+    shown: l.shown, counts: l.counts, total: l.total, formats: l.formats, nights: l.nights.slice(0, 60) });
 }
 
 /* HQ's test venues: a test slug or name (the homepage rule), or marked test in HQ. */
@@ -14550,6 +14627,12 @@ async function vprEmailHtml(env, venue, rep, opts) {
       body += p('Your adverts and slides were on screen <b>' + n(a.ads.shows) + ' times</b>, ' + onFor + ' in all, across '
         + plural(a.ads.nights, 'day', 'days') + (a.ads.screens > 1 ? ' and up to ' + a.ads.screens + ' screens' : '') + '.');
       body += table(a.ads.slides.slice(0, 5).map((x) => row(vpaEsc(x.label), n(x.shows) + ' times')).join(''));
+    }
+    if (a.liked && a.liked.total) {
+      body += h2('What players thought');
+      body += p('At the end of each game players rate it on their phone. ' + vprLikedWords(a.liked));
+      const lf = Object.keys(a.liked.formats);
+      if (lf.length > 1) body += table(lf.map((f) => row(vpaEsc(VPR_FORMAT_WORDS[f] || f), vprLikedWords({ shown: a.liked.shown, counts: a.liked.formats[f] }))).join(''));
     }
     if (a.optins) {
       body += h2('Your list');
@@ -17129,8 +17212,17 @@ async function helpVapidAuth(env, endpoint) {
   const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, helpUtf8Bytes(unsigned)));
   return 'vapid t=' + unsigned + '.' + helpB64url(sig) + ', k=' + env.VAPID_PUBLIC_KEY;
 }
+/* WHICH TICKETS BUZZ WHICH PHONE (HQ > Help desk > Alerts on this device).
+     all            every ticket
+     urgent_sales   urgent ones and sales, and bad player feedback (Dean, 2 Nov 2026: venue feedback is important)
+     bad_feedback   only bad player feedback (Dean, 2 Nov 2026): the "2 or more Not for me tonight" alert and a
+                    "Not for me" follow-up that asked to be answered. Needs migration 137 to be stored.
+   A ticket is bad feedback by helpIsBadFeedback: the alert sweep's own raised_by, or the flag the follow-up
+   sets on the ticket it hands to the push (never stored, never on anything a player sees). */
+function helpIsBadFeedback(ticket) { return !!(ticket && (ticket.bad_feedback === true || ticket.raised_by === VPF_ALERT_BY)); }
 function helpPushWants(sub, ticket) {
-  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales';
+  if (sub.filter === 'bad_feedback') return helpIsBadFeedback(ticket);
+  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales' || helpIsBadFeedback(ticket);
   return true;
 }
 async function helpPushNew(env, ticket) {
@@ -17162,14 +17254,24 @@ async function helpAdminPushSubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const endpoint = String(g.body.endpoint || '').trim();
   if (!HELP_PUSH_HOSTS.test(endpoint) || endpoint.length > 1000) return json({ error: 'That is not a push address this desk knows.' }, 400);
-  const filter = g.body.filter === 'urgent_sales' ? 'urgent_sales' : 'all';
+  let filter = ['urgent_sales', 'bad_feedback'].indexOf(g.body.filter) >= 0 ? g.body.filter : 'all';
   const raw = new Uint8Array(32); crypto.getRandomValues(raw);
   const token = helpB64url(raw);
   await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
-  await vpaInsert(env, 'vp_help_push_subs', { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
+  const row = { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
     admin_label: g.admin.label, token_hash: await helpSha256Hex(token),   // last_peek_at: the database's now() (migration 108)
-    device_label: helpLine(g.body.device_label, 80) || null }, false);
-  return json({ ok: true, token: token, filter: filter });
+    device_label: helpLine(g.body.device_label, 80) || null };
+  let note = '';
+  try { await vpaInsert(env, 'vp_help_push_subs', row, false); }
+  catch (e) {
+    /* Until migration 137 widens the filter's check, "bad_feedback" is refused. The old setting was
+       already removed above, so the device is never left with no alerts: it gets every ticket, and says so. */
+    if (filter !== 'bad_feedback') throw e;
+    filter = 'all'; row.filter = 'all';
+    await vpaInsert(env, 'vp_help_push_subs', row, false);
+    note = 'This device gets every ticket for now: "Only bad player feedback" needs migration 137 run first.';
+  }
+  return json({ ok: true, token: token, filter: filter, note: note || undefined });
 }
 async function helpAdminPushUnsubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
@@ -18182,4 +18284,223 @@ async function vpsBackOn(env) {
   const out = Object.create(null);
   subs.forEach((s) => { const e = String(s.email || '').trim().toLowerCase(); if (e && stops[e] && vpsConsentBeats(s, stops[e])) out[e] = true; });
   return out;
+}
+
+/* =======================================================================================
+   "HOW WAS THAT?" FOLLOWED UP (Dean, 1 Nov 2026; migration 137).
+
+   Every rating on a phone gets one short follow-up, tailored to the answer:
+     Loved it     "What did you love?"            tags and an optional line. Never an email ask.
+     Good         "What would make it better?"    tags, a line, and an optional email with an UNTICKED consent box
+     Not for me   "Sorry to hear that. What went wrong?"   the same
+   POST /help/feedback keeps it in vp_feedback_notes, against the rating the phone just made
+   (vp_game_feedback, by the id the game Worker handed back), at most once per rating and only
+   within an hour of it.
+
+   WHO SEES WHAT. A venue sees only favourable feedback, as true counts (loved it, good), never an
+   average, never "Not for me". HQ sees everything, here, at POST /admin/feedback.
+
+   NO TICKS FOR THE VENUE (Dean, 2 Nov 2026): a player is never asked to tick anything for the venue.
+   A venue sees only COUNTS of "Loved it" and "Good" (vprLiked: the monthly report and the account's
+   feedback panel), never a comment, a tag, a name or a "Not for me". Everything a player writes here
+   is HQ's. A request that sends to_venue, share or first_name has them ignored: nothing stores them.
+
+   THE EMAIL is never kept in this table: with the consent ticked it goes into a help-desk ticket and nowhere else, and it is only ever used
+   to reply about this feedback (the box says so). Venue-collected contact details are never used.
+
+   THE TICKET'S TWO FACES. The subject a player can see is neutral ("Your feedback about venueplay
+   at <venue>"); the label HQ works from ("Bad feedback received" or "Feedback: could be better")
+   is an INTERNAL note on the ticket, which no email ever carries. Positive feedback never makes a
+   ticket or an alert.
+
+   THE SOFT ALERT. Two or more "Not for me" (Dean, 2 Nov 2026; it was three) at one venue on one night (2am to 2am, the venue's
+   clock) opens one internal ticket and wakes HQ's phones through the help desk's push, once per
+   venue per night, with no email. It is checked when such a follow-up arrives and on every
+   scheduled tick (vpfAlertSweep).
+   ======================================================================================= */
+const VPF_TAGS = {
+  3: { host: 'The host', questions: 'The questions', music: 'The music', prizes: 'The prizes', easy_join: 'Easy to join', other: 'Something else' },
+  2: { faster: 'A faster pace', easier_join: 'Easier to join', prizes: 'Better prizes', screen: 'The screen or sound', variety: 'More variety', other: 'Something else' },
+  1: { couldnt_join: "Couldn't join", too_slow: 'Too slow', screen: 'Screen problems', didnt_like: "Didn't like the game", other: 'Something else' },
+};
+const VPF_NOTE_MAX = 300;
+const VPF_WINDOW_MS = 60 * 60 * 1000;   // a follow-up belongs to a rating made in the last hour
+const VPF_ALERT_BY = 'automatic (player feedback)';   // the alert ticket's raised_by: helpIsBadFeedback reads it
+const VPF_ALERT_AT = 2;                 // "Not for me" at one venue on one night before HQ is woken (Dean, 2 Nov 2026)
+const VPF_LABEL = { 1: 'Bad feedback received', 2: 'Feedback: could be better' };
+const VPF_FORMAT_WORDS = { bingo: 'bingo', bingo90: 'bingo', musical: 'musical bingo', musical_bingo: 'musical bingo', trivia: 'trivia' };
+
+function vpfNight(iso, tz) {
+  const t = Date.parse(iso || '');
+  if (!isFinite(t)) return '';
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .format(new Date(t - 2 * 3600 * 1000));
+  } catch (e) { return ''; }
+}
+function vpfTagWords(rating, tags) { return (tags || []).map((k) => (VPF_TAGS[rating] || {})[k] || k); }
+
+async function vpfFeedbackMore(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'fbm', ip, HELP_MAX_PER_IP, 3600))) return json({ ok: true, throttled: true });   // never an error to a punter
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  if (String(b.website || '').trim()) return json({ ok: true });            // the honeypot: thanked, nothing kept
+  const fid = String(b.feedback_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(fid)) return json({ error: 'Which rating is this about?' }, 400);
+  let f;
+  try {
+    f = (await vpaReadPage(env, 'vp_game_feedback', 'id=eq.' + encodeURIComponent(fid) + '&source=eq.player&select=id,venue_id,session_id,game_id,format,rating,created_at&limit=1'))[0];
+  } catch (e) { return json({ error: 'We could not save that just now.' }, 503); }
+  if (!f || Date.now() - Date.parse(f.created_at) > VPF_WINDOW_MS) return json({ ok: true, ignored: true });
+  const rating = parseInt(f.rating, 10);
+  const allowed = VPF_TAGS[rating] || {};
+  const tags = Array.from(new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => String(t)))).filter((t) => allowed[t]).slice(0, 6);
+  const note = helpText(b.note).slice(0, VPF_NOTE_MAX);
+  /* An email only where the page asks for one (good or not for me), only with the box ticked, and
+     then only into the ticket. A "loved it" that sends one has it dropped. */
+  const email = (rating <= 2 && b.consent === true) ? helpLine(b.email, 200).toLowerCase() : '';
+  if (email && !HELP_EMAIL_RE.test(email)) return json({ error: 'That email address does not look right.' }, 400);
+  if (!tags.length && !note && !email) return json({ ok: true, nothing: true });
+  const device = helpLine(b.device, 64);
+  if (device && !(await helpLimit(env, 'fbm:dev:' + device, 10, 3600))) return json({ ok: true, throttled: true });
+  let had;
+  try { had = await vpaReadPage(env, 'vp_feedback_notes', 'feedback_id=eq.' + encodeURIComponent(fid) + '&select=id&limit=1'); }
+  catch (e) {
+    if (e && e.status === 404) return json({ ok: true, missing: true });     // migration 137 not run: the rating itself is kept
+    return json({ error: 'We could not save that just now.' }, 503);
+  }
+  if (had.length) return json({ ok: true, already: true });
+  let ticket = null;
+  if (email) {
+    const vname = await helpVenueName(env, f.venue_id);
+    const venue = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(f.venue_id) + '&select=timezone,join_code&limit=1');
+    const night = vpfNight(f.created_at, venue && venue[0] && venue[0].timezone);
+    const game = VPF_FORMAT_WORDS[String(f.format || '')] || String(f.format || 'a game');
+    try {
+      ticket = await helpInsertTicket(env, {
+        brand: 'venueplay', category: 'patron_support', channel: 'patron_form',
+        title: 'Your feedback about venueplay at ' + (vname || 'the venue'),
+        message: 'Feedback after ' + game + (vname ? ' at ' + vname : '') + (night ? ' on ' + night : '') + '.\n\n'
+          + (tags.length ? (rating === 1 ? 'What went wrong: ' : 'What would make it better: ') + vpfTagWords(rating, tags).join(', ') + '\n' : '')
+          + (note ? '\n' + note + '\n' : '') + '\nThey asked us to reply about this feedback only.',
+        contact_email: email, venue_id: f.venue_id, session_id: f.session_id || null,
+        room_code: venue && venue[0] ? venue[0].join_code || null : null,
+      });
+      /* THE LABEL IS HQ'S. An internal note, which no email to the player ever carries. */
+      await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: ticket.id, kind: 'note', author: 'Player feedback',
+        body: VPF_LABEL[rating] + '. Rated "' + (rating === 1 ? 'Not for me' : 'Good') + '" after ' + game + (night ? ' on ' + night : '') + '.' }, false).catch(() => null);
+      // A copy marked for the push filter only (helpIsBadFeedback): the ticket itself is never marked.
+      await helpAnnounce(env, Object.assign({}, ticket, { bad_feedback: rating === 1 }), vname);
+      await helpAcknowledge(env, ticket);
+    } catch (e) { ticket = null; }
+  }
+  try {
+    await vpaInsert(env, 'vp_feedback_notes', { feedback_id: f.id, venue_id: f.venue_id, session_id: f.session_id || null,
+      game_id: f.game_id || null, format: f.format || null, rating: rating, tags: tags, note: note || null,
+      wants_reply: !!email, ticket_id: ticket ? ticket.id : null }, false);
+  } catch (e) { return json({ error: 'We could not save that just now.' }, 503); }
+  if (rating === 1) { try { await vpfAlertSweep(env, Date.now()); } catch (e) {} }
+  return json({ ok: true, ticket_no: ticket ? ticket.ticket_no : null });
+}
+
+/* THE SOFT ALERT: three or more "Not for me" at a venue on one night opens ONE internal ticket and
+   pushes HQ's phones, once per venue per night. Reads the last day and a half of "Not for me" only. */
+async function vpfAlertSweep(env, nowMs) {
+  const since = new Date((nowMs || Date.now()) - 36 * 3600 * 1000).toISOString();
+  const bad = await vpaSelectAll(env, 'vp_game_feedback',
+    'source=eq.player&rating=eq.1&created_at=gte.' + encodeURIComponent(since) + '&select=id,venue_id,format,created_at&order=created_at.asc,id.asc');
+  if (!bad.length) return { alerts: 0 };
+  const vids = Array.from(new Set(bad.map((r) => r.venue_id)));
+  const venues = await vpaSelectAll(env, 'vp_venues', 'id=in.(' + vids.map(encodeURIComponent).join(',') + ')&select=id,name,timezone,join_code&order=id.asc');
+  const vOf = {}; venues.forEach((v) => { vOf[v.id] = v; });
+  const groups = {};
+  bad.forEach((r) => {
+    const v = vOf[r.venue_id]; const n = vpfNight(r.created_at, v && v.timezone);
+    const k = r.venue_id + ':' + n;
+    (groups[k] = groups[k] || { venue_id: r.venue_id, night: n, rows: [] }).rows.push(r);
+  });
+  let alerts = 0;
+  for (const k of Object.keys(groups)) {
+    const g = groups[k];
+    if (g.rows.length < VPF_ALERT_AT) continue;
+    const target = 'feedback-alert:' + k;
+    const done = await vpaSelect(env, 'vp_admin_audit', 'action=eq.feedback_alert&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1');
+    if (done && done.length) continue;
+    const v = vOf[g.venue_id] || {};
+    const games = Array.from(new Set(g.rows.map((r) => VPF_FORMAT_WORDS[String(r.format || '')] || String(r.format || 'a game')))).join(', ');
+    /* Written first, so two ticks at once cannot both alert: the audit row is the "once". */
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'automatic (player feedback)', action: 'feedback_alert', target: target,
+      detail: { venue: v.name || '', night: g.night, count: g.rows.length } }, false);
+    try {
+      const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'general', channel: 'manual', raised_by: VPF_ALERT_BY,
+        title: VPF_LABEL[1] + ': ' + g.rows.length + ' players said Not for me at ' + (v.name || 'a venue') + ' on ' + g.night,
+        message: g.rows.length + ' players rated ' + games + ' "Not for me" at ' + (v.name || 'this venue') + ' on the night of ' + g.night
+          + '. Their reasons, where they gave any, are in HQ > Feedback.', venue_id: g.venue_id, room_code: v.join_code || null });
+      await helpPushNew(env, Object.assign({}, t, { bad_feedback: true }));   // a soft alert: HQ's phones, never an email
+    } catch (e) { /* the audit row stands: one try per venue per night */ }
+    alerts++;
+  }
+  return { alerts: alerts };
+}
+
+/* --- POST /admin/feedback { venue_id?, state?, format?, month?, night? } : HQ ONLY, everything.
+   Counts per rating and per tag, per venue, and every note with its words (never an email: that is
+   on the ticket, for the one person who asked to be answered). --- */
+async function vpaHandleFeedbackHq(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(b.month || '')) ? String(b.month) : vpfNight(new Date().toISOString(), 'Australia/Brisbane').slice(0, 7);
+  const y = +month.slice(0, 4), mo = +month.slice(5, 7);
+  const from = new Date(Date.UTC(y, mo - 1, 1) - 2 * 86400000).toISOString(), to = new Date(Date.UTC(y, mo, 1) + 2 * 86400000).toISOString();
+  const want = {
+    venue: /^[0-9a-fA-F-]{36}$/.test(String(b.venue_id || '')) ? String(b.venue_id) : '',
+    state: /^[A-Z]{2,3}$/.test(String(b.state || '')) ? String(b.state) : '',
+    format: String(b.format || '').toLowerCase().replace(/[^a-z_]/g, ''),
+    night: /^\d{4}-\d{2}-\d{2}$/.test(String(b.night || '')) ? String(b.night) : '',
+  };
+  let ratings, notes = [], venues, missing = false;
+  try {
+    ratings = await vpaSelectAll(env, 'vp_game_feedback', 'source=eq.player&and=(created_at.gte.' + from + ',created_at.lt.' + to + ')'
+      + (want.venue ? '&venue_id=eq.' + want.venue : '') + '&select=id,venue_id,format,rating,created_at&order=created_at.asc,id.asc');
+    try {
+      notes = await vpaSelectAll(env, 'vp_feedback_notes', 'and=(created_at.gte.' + from + ',created_at.lt.' + to + ')'
+        + (want.venue ? '&venue_id=eq.' + want.venue : '') + '&select=feedback_id,venue_id,format,rating,tags,note,wants_reply,ticket_id,created_at&order=created_at.asc,id.asc');
+    } catch (e) { if (e && /: 404 /.test(String(e.message))) missing = true; else throw e; }
+    const vids = Array.from(new Set(ratings.map((r) => r.venue_id).concat(notes.map((n) => n.venue_id))));
+    venues = vids.length ? await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_venues', 'id=in.(' + inl + ')&select=id,name,au_state,timezone&order=id.asc')) : [];
+  } catch (e) { return json({ error: 'Could not read the feedback just now. Please try again.' }, 503); }
+  const vOf = {}; venues.forEach((v) => { vOf[v.id] = v; });
+  const fmt = (f) => (VPF_FORMAT_WORDS[String(f || '')] || String(f || 'game'));
+  const keep = (r) => {
+    const v = vOf[r.venue_id] || {};
+    const n = vpfNight(r.created_at, v.timezone);
+    if (n.slice(0, 7) !== month) return false;
+    if (want.state && v.au_state !== want.state) return false;
+    if (want.format && fmt(r.format).replace(/ /g, '_') !== want.format && String(r.format || '') !== want.format) return false;
+    if (want.night && n !== want.night) return false;
+    r._night = n; return true;
+  };
+  const rs = ratings.filter(keep), ns = notes.filter(keep);
+  const per = {};
+  const blank = (id) => ({ venue_id: id, name: (vOf[id] || {}).name || '', state: (vOf[id] || {}).au_state || '', loved: 0, good: 0, not_for_me: 0, tags: {} });
+  rs.forEach((r) => { const p = per[r.venue_id] = per[r.venue_id] || blank(r.venue_id); if (r.rating === 3) p.loved++; else if (r.rating === 2) p.good++; else p.not_for_me++; });
+  ns.forEach((n) => { const p = per[n.venue_id] = per[n.venue_id] || blank(n.venue_id);
+    (n.tags || []).forEach((t) => { const k = n.rating + ':' + t; p.tags[k] = (p.tags[k] || 0) + 1; }); });
+  const total = { loved: 0, good: 0, not_for_me: 0, tags: {} };
+  Object.keys(per).forEach((id) => { const p = per[id]; total.loved += p.loved; total.good += p.good; total.not_for_me += p.not_for_me;
+    Object.keys(p.tags).forEach((k) => { total.tags[k] = (total.tags[k] || 0) + p.tags[k]; }); });
+  const tagWords = (tags) => Object.keys(tags).sort((a, c) => tags[c] - tags[a]).map((k) => { const r = +k.split(':')[0], t = k.split(':')[1];
+    return { rating: r, tag: t, words: (VPF_TAGS[r] || {})[t] || t, count: tags[k] }; });
+  return json({ ok: true, month: month, filters: want, missing_notes_table: missing,
+    total: { loved: total.loved, good: total.good, not_for_me: total.not_for_me, ratings: total.loved + total.good + total.not_for_me, tags: tagWords(total.tags) },
+    venues: Object.keys(per).map((id) => Object.assign({}, per[id], { tags: tagWords(per[id].tags) }))
+      .sort((a, c) => c.not_for_me - a.not_for_me || (c.loved + c.good) - (a.loved + a.good)),
+    notes: ns.slice().reverse().slice(0, 500).map((n) => ({ venue: (vOf[n.venue_id] || {}).name || '', state: (vOf[n.venue_id] || {}).au_state || '',
+      format: fmt(n.format), night: n._night, at: n.created_at, rating: n.rating, tags: vpfTagWords(n.rating, n.tags), note: n.note || '',
+      wants_reply: !!n.wants_reply, has_ticket: !!n.ticket_id })) });
 }

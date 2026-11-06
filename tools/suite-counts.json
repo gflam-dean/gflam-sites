@@ -179,6 +179,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/feedback-followup-in-chrome.test.py": {
+  "checks": 153,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
@@ -537,6 +541,14 @@
  },
  "tools/test-fallback-switch.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-feedback-consent.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-feedback-form.js": {
+  "checks": 63,
   "counted_by": "lines"
  },
  "tools/test-first-run-guide.js": {
