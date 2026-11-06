@@ -622,7 +622,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function frame(which){
     /* Not on the lobby any more (Dean, 6 Nov 2026, round 7: every lobby has the same layout, no "One line across" pill). */
     paintRow2(!!P.room && (which==="vCard" || which==="vJoin"));
-    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");   // the compact ad under the lobby, so it and our logo fit
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", !!AD_VIEWS[which]);   // the compact ad, the same size wherever it shows (one fixed spot), so it and our logo fit
     try{ if(window.VPPhoneAd) VPPhoneAd.show(!!AD_VIEWS[which]); }catch(e){}
   }
   function route(){

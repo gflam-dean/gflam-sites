@@ -83,6 +83,8 @@ ok('a weekly night with a picture is one poster, not one a week; three posters a
 var gw = W.tvSlides(EV, TODAY, [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }]);
 var gwRows = gw.reduce(function (a, x) { return a.concat(x.rows || []); }, []);
 ok('our game nights join the list (Dean, 6 Nov): tonight\'s trivia at 7:30pm before the venue\'s 9pm night', gw[0].rows[0].ev.game === 'trivia' && gw[0].rows[0].ev.title === 'Trivia night' && gw[0].rows[1].ev.id === 'e2', JSON.stringify(gw[0].rows.map(function (r) { return r.ev.title; })));
+var ko = W.tvSlides(EV, TODAY, [{ day: 'fri', games: [{ game: 'bingo', start: '18:00', count: 2 }, { game: 'other', name: 'Karaoke', start: '21:00' }] }]).reduce(function (a, x) { return a.concat(x.rows || []); }, []);
+ok('the wizard\'s newer week on the TV: "Bingo \u00d72" and a Something-else night by its own name (no phone line)', ko.some(function (r) { return r.ev.title === 'Bingo \u00d72' && r.ev.line === 'Play on your phone'; }) && ko.some(function (r) { return r.ev.title === 'Karaoke' && !r.ev.line; }), JSON.stringify(ko.map(function (r) { return r.ev.title; })));
 ok('a game night never gets a poster, and our games alone make no What\'s on slide', gw.filter(function (x) { return x.type === 'poster'; }).every(function (x) { return !x.ev.game; }) && W.tvSlides([], TODAY, [{ day: 'thu', games: [{ game: 'trivia' }] }]).length === 0);
 ok('nothing on: no What\'s on slide at all', W.tvSlides([], TODAY).length === 0 && W.tvSlides([EV[5]], TODAY).length === 0);
 var h0 = W.tvHtml(sl[0], 'Revolver Upstairs'), h1 = W.tvHtml(sl[1], 'Revolver Upstairs');

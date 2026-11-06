@@ -30,6 +30,7 @@ var intervals = [];
 var window = { document: { createElement: function (t) { return new Node(t); } } };
 var setInterval = function (f, ms) { intervals.push({ f: f, ms: ms }); return intervals.length; };
 var clearInterval = function () {};
+(function () { eval(readFile('venueplay/app/vp-whatson.js')); }).call(window);   // the venue's own events' date rules (INBOX 110)
 var SRC = readFile('venueplay/app/vp-tonight.js');
 (function () { eval(SRC); }).call(window);
 var T = window.VPTonight;
@@ -117,6 +118,20 @@ var blank = new Node('div');
 T.noGame(blank, { name: 'Sam', now: WED });
 ok('no nights known: no night marked, "ask at the bar", nothing invented', byClass(blank, 'd').every(function (x) { return !/\bon\b/.test(x.className); }) && /Ask at the bar for the next game night/.test(blank.children[0].textContent), blank.children[0].textContent);
 
+print('\nTHE WIZARD\'S NEWER WEEK: Something-else nights, several sessions, and room for the venue\'s own events');
+var kx = new Node('div');
+T.noGame(kx, { week: [{ day: 'fri', games: [{ game: 'bingo', start: '18:00', count: 2 }] }, { day: 'sat', games: [{ game: 'other', name: 'Karaoke', start: '21:00' }] }], now: new Date(2026, 10, 6, 12, 0, 0) });
+ok('"Bingo ×2 6pm" tonight (count 2 to 4 sessions)', /Tonight, Bingo ×2 6pm/.test(kx.children[0].textContent), kx.children[0].textContent);
+byClass(kx, 'd')[1].onclick();
+ok('a Something-else night by its own name: "Karaoke 9pm"', /Karaoke 9pm/.test(kx.children[0].textContent) && /\bon\b/.test(byClass(kx, 'd')[1].className), kx.children[0].textContent);
+var ev = new Node('div');
+T.lobby(ev, { name: 'Sam', me: 'trivia', events: [{ title: 'Live music', day: 'wed', start: '20:00' }], now: FRI });   // the What's on shape (feature/whats-on-12nov)
+byClass(byClass(ev, 'vpt-week')[0], 'd')[5].onclick();
+ok('a third kind of row: the venue\'s own event on a night shows with its time, and the day carries its dot', /Live music/.test(byClass(ev, 'vpt-night')[0].textContent) && /8pm/.test(byClass(ev, 'vpt-night')[0].textContent) && /\bev\b/.test(byClass(byClass(ev, 'vpt-week')[0], 'd')[5].className), byClass(ev, 'vpt-night')[0].textContent);
+var ng2 = new Node('div');
+T.noGame(ng2, { week: [{ day: 'fri', games: [{ game: 'other', name: '' }, { game: 'poker' }] }], now: FRI });
+ok('a Something-else night with no name, or a game nobody knows, is left out', /Ask at the bar for the next game night/.test(ng2.children[0].textContent), ng2.children[0].textContent);
+
 print('\nTHE WORKER sends only what the venue gave the setup wizard');
 var W = readFile('venueplay-backend/worker/venueplay-game.js');
 var i = W.indexOf('function joinNights('), k = W.indexOf('{', i), depth = 0;
@@ -127,6 +142,8 @@ ok('known nights and games, in week order', J1 === '{"nights":["wed","fri"],"gam
 ok('nothing at all for a venue that never answered', JSON.stringify(joinNights({})) === '{}' && JSON.stringify(joinNights(null)) === '{}');
 var J2 = JSON.stringify(joinNights({ week: [{ day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }, { day: 'wed', games: [{ game: 'trivia', start: '19:00' }, { game: 'trivia' }, { game: 'poker' }, { game: 'bingo', start: '7.30pm' }] }, { day: 'xmas', games: [{ game: 'trivia' }] }, { day: 'sat', games: [] }], nights: ['wed'], secret: 'x' }));
 ok('the game week, the wizard\'s shape: days in week order, known games once each, a proper start kept, a bad one dropped, empty and unknown days left out, no other answer', J2 === '{"week":[{"day":"wed","games":[{"game":"trivia","start":"19:00"},{"game":"bingo"}]},{"day":"fri","games":[{"game":"musical","start":"19:30"},{"game":"members"}]}],"nights":["wed"],"games":[]}', J2);
+var J3 = JSON.stringify(joinNights({ week: [{ day: 'fri', games: [{ game: 'bingo', start: '18:00', count: 2 }, { game: 'trivia', count: 9 }, { game: 'other', name: '  Karaoke <b> night ', start: '21:00' }, { game: 'other', name: 'karaoke <b> night' }, { game: 'other', name: '' }] }] }));
+ok('Something-else nights by name (cleaned, once per name), sessions 2 to 4 kept, anything else dropped', J3 === '{"week":[{"day":"fri","games":[{"game":"trivia"},{"game":"bingo","start":"18:00","count":2},{"game":"other","name":"Karaoke b night","start":"21:00"}]}]}', J3);
 ok('/join/info carries them', /\}, \.\.\.joinNights\(cfg\.setup_answers\) \}, venueId: venueId \};/.test(W));
 ok('and a database without migration 163 is asked again without the column', /try \{ rows = await sbGet\(env, 'vp_venue_settings', 'venue_id=eq\.' \+ enc\(venueId\) \+ '&select=' \+ cols \+ ',setup_answers&limit=1'\); \}\s*\n\s*catch \(e\) \{ rows = await sbGet\(env, 'vp_venue_settings', 'venue_id=eq\.' \+ enc\(venueId\) \+ '&select=' \+ cols \+ '&limit=1'\); \}/.test(W));
 print('\nTHE TRIVIA PHONE uses it');
@@ -134,7 +151,7 @@ var PLAY = readFile('venueplay/app/trivia/play.html');
 ok('loads the module and its shared look', PLAY.indexOf('<script src="/app/vp-tonight.js"></script>') > 0 && PLAY.indexOf('<link rel="stylesheet" href="/app/vp-tonight.css">') > 0);
 var CSS = readFile('venueplay/app/vp-tonight.css');
 ok('the shared look holds the ad and the waiting screens (one copy, moved out of vp-phone.css)', /#vpAd\{/.test(CSS) && /\.vpt-week \.days\{/.test(CSS) && !/#vpAd\{/.test(readFile('venueplay/app/vp-phone.css')));
-ok('the ad under a waiting screen is shorter (2:1), so it and our logo fit 664px', /\.vpt-on #vpAd \.slide\{aspect-ratio:2\/1\}/.test(CSS) && /ap\.classList\.toggle\("vpt-on", which==="vWait"\)/.test(PLAY));
+ok('the ad under a waiting screen is shorter (5:2), so it and our logo fit 664px', /\.vpt-on #vpAd \.slide\{aspect-ratio:5\/2\}/.test(CSS) && /ap\.classList\.toggle\("vpt-on", which==="vWait" \|\| which==="vFinal"\)/.test(PLAY));
 ok('the plain lobby (no other heading, nothing scored) is option C', /var useT = !head && !\(P\.total>0\) && typeof VPTonight==="object";/.test(PLAY) && /VPTonight\.lobby\(tn, \{ name:P\.name, me:"trivia"/.test(PLAY));
 ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, events:P\.events, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));

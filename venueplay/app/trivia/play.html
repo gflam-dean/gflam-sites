@@ -634,7 +634,7 @@
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"];   // the last two: the scanned demo only (4 Nov 2026)
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
     try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){}
-    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");   // the compact ad under a waiting screen, so it and our logo fit (Dean, 6 Nov 2026)
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait" || which==="vFinal");   // the compact ad, the same size wherever it shows (one fixed spot), so it and our logo fit (Dean, 6 Nov 2026)
   }   // the venue's ad: the lobby, the waits and the end of the night, never a question
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.

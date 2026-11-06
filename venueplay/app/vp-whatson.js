@@ -162,8 +162,13 @@
     week.forEach(function (d) {
       if (!d || d.day !== k || !Array.isArray(d.games)) return;
       d.games.forEach(function (g) {
-        if (!g || !GAME_NIGHT[g.game]) return;
-        out.push({ title: GAME_NIGHT[g.game], start: TIME_RE.test(String(g.start || "")) ? g.start : "", line: "Play on your phone", game: g.game });
+        if (!g) return;
+        /* A "Something else" night (game "other", its own name, e.g. Karaoke) is the venue's, not ours: no phone line.
+           Several sessions of one game (count 2 to 4) say so: "Bingo \u00d72". */
+        var other = g.game === "other", nm = other ? str(g.name, 40) : GAME_NIGHT[g.game];
+        if (!nm) return;
+        var n = (+g.count >= 2 && +g.count <= 4) ? +g.count : 0;
+        out.push({ title: nm + (n ? " \u00d7" + n : ""), start: TIME_RE.test(String(g.start || "")) ? g.start : "", line: other ? "" : "Play on your phone", game: g.game });
       });
     });
     return out;

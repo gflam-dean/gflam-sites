@@ -50,7 +50,7 @@ ok('the week comes from /join/info', /P\.week=\(r&&Array\.isArray\(r\.week\)\)\?
 print('ROUND 7 (Dean, 6 Nov 2026): the same lobby as every game, the ad and our logo always fit, and "Join the list" in the menu');
 ok('loads the shared look', PLAY.indexOf('<link rel="stylesheet" href="/app/vp-tonight.css">') > 0);
 ok('no "One line across" pill on the lobby (row two only on the join steps and the card)', /paintRow2\(!!P\.room && \(which==="vCard" \|\| which==="vJoin"\)\);/.test(PLAY));
-ok('the compact ad under the lobby', /ap\.classList\.toggle\("vpt-on", which==="vWait"\);/.test(PLAY));
+ok('the compact ad under the lobby', /ap\.classList\.toggle\("vpt-on", !!AD_VIEWS\[which\]\);/.test(PLAY));
 ok('"Join {venue}\'s list" in the menu, only where the venue collects the tick and a way to reach them, only once in, gone once on the list',
    /<div id="vpListItem"><\/div>/.test(PLAY) && /if\(typeof VPTonight!=="object" \|\| !P\.joined \|\| onList\(\) \|\| !\(c\.marketing_optin && \(c\.email \|\| c\.mobile\)\)\)\{ b\.innerHTML=""; return; \}/.test(PLAY));
 ok('it sends through /join/list with this phone\'s token, and a ticked send puts the phone on the list', /fetch\(VP_GAME_API\+"\/join\/list"/.test(PLAY) && /if\(optin===true && r && r\.stored\) setOnList\(\);/.test(PLAY));
