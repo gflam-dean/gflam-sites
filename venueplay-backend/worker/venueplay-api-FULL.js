@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 23:05 · bfcbfe12';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '7 Nov 2026, 05:38 · bc878d73';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -373,7 +373,8 @@ export default {
        so a venue's screen is still checked on a night when either sweep above has thrown. */
     try { await vpaScreenHistoryNightly(env); } catch (e3) { /* tomorrow night will look again */ }
     /* A prospect's card reminders and the pause at the end of their free month (migration 127). Its own try:
-       the sweep keeps its own hours (8am to 5pm Mon to Fri for emails) and remembers what it sent. */
+       the sweep keeps Dean's send window for emails (vpaSendAllowedAt; the pause itself is on time)
+       and remembers what it sent. */
     try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
@@ -4965,10 +4966,45 @@ function vpaReminderPlan(firstMs) {
   });
   return out;
 }
-function vpaInSendWindow(ms) {
-  const d = new Date(ms + VPA_BNE_MS), wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
-  return wd >= 1 && wd <= 5 && m >= 8 * 60 && m < 17 * 60;
+/* DEAN'S SEND WINDOW (7 Nov 2026, after a card reminder was reported at midnight): every AUTOMATIC or scheduled
+   email or text to a prospect or venue goes only MONDAY TO FRIDAY, 9am to 12 noon and 2pm to 5pm, in the VENUE'S
+   OWN LOCAL TIME, from its state: QLD Brisbane (+10), NSW and ACT Sydney, VIC Melbourne, TAS Hobart (daylight saving
+   from the first Sunday in October to the first Sunday in April), SA Adelaide (+9:30, +10:30 in daylight saving),
+   NT Darwin (+9:30) and WA Perth (+8), neither with daylight saving. A state we do not know is Brisbane's clock.
+   Outside the window a message is HELD to the next one opening. Answers to what the person just did (the sign-up
+   confirmation, the account-ready text and email, a text code) are not automatic and go at once, at any hour.
+   vpaSendAllowedAt(state, ms): the first moment at or after ms a message may go (ms itself inside a window). */
+const VPA_SEND_TZ = { QLD: 'Australia/Brisbane', NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne',
+  TAS: 'Australia/Hobart', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
+const VPA_SEND_HOURS = [9, 10, 11, 14, 15, 16];   // 9am to 12 noon, 2pm to 5pm: the hours a window covers
+const VPA_SEND_FMT = {};
+function vpaSendTz(state) { return VPA_SEND_TZ[String(state || '').trim().toUpperCase()] || 'Australia/Brisbane'; }
+function vpaSendLocal(tz, ms) {
+  const f = VPA_SEND_FMT[tz] || (VPA_SEND_FMT[tz] = new Intl.DateTimeFormat('en-AU', { timeZone: tz, weekday: 'short',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }));
+  const o = {}; f.formatToParts(new Date(ms)).forEach(function (p) { o[p.type] = p.value; });
+  return { wd: o.weekday, h: parseInt(o.hour, 10) % 24, m: parseInt(o.minute, 10), s: parseInt(o.second, 10) };
 }
+function vpaSendOpen(p) { return p.wd !== 'Sat' && p.wd !== 'Sun' && VPA_SEND_HOURS.indexOf(p.h) !== -1; }
+function vpaSendAllowedAt(state, ms) {
+  const tz = vpaSendTz(state);
+  let t = Math.floor(Number(ms));
+  let p = vpaSendLocal(tz, t);
+  if (vpaSendOpen(p)) return t;
+  // Every Australian offset is a whole or half hour, so the local hour turns over at a whole UTC minute: step to the
+  // next local hour, then an hour at a time (Friday 5pm to Monday 9am is 64 steps; a daylight saving change is fine).
+  t = t - (t % 1000) - (p.m * 60 + p.s) * 1000 + 3600000;
+  for (let i = 0; i < 24 * 8; i++, t += 3600000) { if (vpaSendOpen(vpaSendLocal(tz, t))) return t; }
+  return t;
+}
+/* A venue's state for its sending clock: au_state, else from its postcode, else null (Brisbane's clock). */
+function vpaSendState(venue) {
+  if (!venue) return null;
+  if (venue.au_state) return String(venue.au_state).toUpperCase();
+  try { return venue.postcode ? vpaStateFromPostcode(String(venue.postcode)) || null : null; } catch (_) { return null; }
+}
+/* Inside the window right now, at this venue? */
+function vpaInSendWindow(ms, state) { return vpaSendAllowedAt(state, ms) === Math.floor(Number(ms)); }
 /* THE PRICE A PROSPECT'S CARD IS ADDED AT. The offer they were set up on (offer_rate) holds through
    their free month even if that month's offer has since closed, and for THE 5-DAY OFFER GRACE after it
    (vpaOfferGraceEnd). Once the month is over (paused, or past its end) and the grace has run out, it is the
@@ -5181,7 +5217,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
   catch (e) { return Object.assign(out, { why: 'migration 127 not run' }); }
   for (const p of rows) {
     if (!('first_signin_at' in p)) return Object.assign(out, { why: 'migration 127 not run' });
-    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id&limit=1');
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id,au_state,postcode&limit=1');
     const v = vr && vr[0];
     if (!v || vpaProspectGone(v)) continue;
     const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
@@ -5208,8 +5244,11 @@ async function vpaProspectReminderSweep(env, nowMs) {
       out.paused.push(v.id);
       continue;
     }
-    if (!vpaInSendWindow(nowMs)) continue;
-    const sent = Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
+    /* The pause above is on time, at any hour (it sends nothing). An EMAIL waits for DEAN'S SEND WINDOW at the venue
+       (vpaSendAllowedAt: Monday to Friday, 9 to 12 and 2 to 5, its own local time): outside it the reminder stays due
+       (nothing is marked sent), so the first sweep inside a window sends it, once. */
+    if (!vpaInSendWindow(nowMs, vpaSendState(v))) continue;
+    const sent =Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
     const today = vpaBneDay(nowMs);
     const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && sent.indexOf(r.day) === -1);
     if (!due.length) continue;
