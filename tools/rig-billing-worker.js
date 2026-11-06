@@ -50,7 +50,7 @@ function logicEval(row,node){
   var r2=logicCmp(row[m[1]],m[3],m[4]); return m[2]?!r2:r2;
 }
 function match(row,q){
-  for(var k in q){ if(['select','order','limit','offset'].indexOf(k)!==-1) continue;
+  for(var k in q){ if(['select','order','limit','offset','on_conflict'].indexOf(k)!==-1) continue;
     var v=q[k];
     if(k==='and'||k==='or'){ if(!logicEval(row,k+v)) return false; continue; }
     if(k==='or'){ var parts=v.replace(/^\(|\)$/g,'').split(','); var any=false;
@@ -104,6 +104,12 @@ globalThis.fetch=function(url,opts){
   /* vp_help_tickets.ticket_no is a database sequence live; the fake hands out the next one the same way
      (29 Oct 2026: a call logged in the rig showed "#undefined" in a venue's ticket list). */
   if(method==='POST'&&t==='vp_help_tickets'){var o0=JSON.parse(opts.body);if(o0&&!Array.isArray(o0)&&o0.ticket_no==null){o0.ticket_no=tbl(t).reduce(function(m,x){return Math.max(m,+x.ticket_no||1000)},1000)+1;opts=Object.assign({},opts,{body:JSON.stringify(o0)});}}
+  /* AN UPSERT ON A NAMED KEY (6 Nov 2026, Hosted by): ?on_conflict=col with Prefer resolution=merge-duplicates
+     updates the row holding that key with only the columns sent, as PostgREST does. Only when on_conflict is
+     named, so every older caller's POST is answered exactly as before. */
+  if(method==='POST'&&q.on_conflict&&/merge-duplicates/.test(((opts&&opts.headers)||{}).Prefer||'')){var u0=JSON.parse(opts.body),kc=q.on_conflict;
+    var hit0=tbl(t).filter(function(r){return String(r[kc])===String(u0[kc]);})[0];
+    if(hit0){for(var k0 in u0)hit0[k0]=u0[k0];return Promise.resolve(resp(201,[hit0]));}}
   if(method==='POST'){var o=JSON.parse(opts.body);o.id=o.id||newId();o.created_at=o.created_at||new Date().toISOString();tbl(t).push(o);return Promise.resolve(resp(201,[o]));}
   if(method==='PATCH'){var o2=JSON.parse(opts.body);tbl(t).filter(function(r){return match(r,q)}).forEach(function(r){for(var k in o2)r[k]=o2[k];});return Promise.resolve(resp(204,''));}
   if(method==='DELETE'){var gone=tbl(t).filter(function(r){return match(r,q)});DB[t]=tbl(t).filter(function(r){return gone.indexOf(r)===-1});return Promise.resolve(resp(200,gone));}

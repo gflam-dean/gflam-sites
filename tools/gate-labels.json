@@ -1,5 +1,6 @@
 {
  "labels": [
+  "/host/hosted-by answers the signed-in host's card at a venue where they are staff, for exactly the games that venue switched on; refused elsewhere; nothing to show (never an error) for the owner, HQ View as, a switch off, no name, or before migration 181; a logo outside our venue-logos/hosts/ storage never reaches a TV; the console tags only \"mode\" and only once it has heard back, and the TV keeps a foreign logo address off the wall",
   "/session, /host/game, /host/bingo/draw and the members draw refuse terms_first at a held venue; an ordinary or ticked venue is not held; a stranger learns nothing; a missing column holds nobody, a database fault is not swallowed",
   "DEPLOY-partyplay-api.js carries its own fingerprint",
   "DEPLOY-partyplay-api.js is whole",
@@ -162,6 +163,7 @@
   "hop-name.test.js",
   "host.html loads the shared names",
   "host.html takes its names from the same place, so they cannot drift",
+  "hosted-by-in-chrome.test.py",
   "hq-contact-rule.test.js",
   "hq-lists-in-chrome.test.py",
   "hq-tabs-in-chrome.test.py",
@@ -433,6 +435,7 @@
   "tv.html, the four game screens and the three phones size the logo by its shape with one rule, untappable, a vp-fit keep-out, and nothing with no logo",
   "tvSend() is the same in all 5 file(s)",
   "tvStatus() is the same in all 5 file(s)",
+  "two owners on two accounts add one mobile and get one host login listed at both pubs; the card (a name of 40 characters at most, no markup, and a logo through the venue logo's own checks into venue-logos/hosts/<login>/) follows the host while each venue switches trivia and musical bingo for its own TV only; another account, a stranger, the host, a manager without add hosts and the owner's own login are refused; a bad, oversized or tiny logo and a switch with no name change nothing; before migration 181 (NOT RUN) the save writes nothing and People is the old list",
   "unsold-and-hold.test.js",
   "ux-fixes-in-chrome.test.py",
   "venue-channel.test.js",

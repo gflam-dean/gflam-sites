@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 22:28 · eea135d4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 18:51 · ad18e2d9';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -363,6 +363,7 @@ export default {
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       /* Each game's setup saved for the VENUE (migration 121, Dean 28 Oct 2026). Any staff role. */
       if ((method === 'GET' || method === 'POST') && path === '/host/game-prefs') return await handleGamePrefs(request, env, json);
+      if (method === 'GET'  && path === '/host/hosted-by')     return await handleHostedBy(request, env, json);   // INBOX 120, migration 181
       /* Pick up a running quiz or musical game from ANY device (Dean, 20 Oct 2026). Staff only. */
       if (method === 'POST' && path === '/host/running')       return await handleHostRunning(request, env, json);
       if (method === 'POST' && path === '/host/running/take')  return await handleHostRunningTake(request, env, json);
@@ -3875,6 +3876,46 @@ async function handleGamePrefs(request, env, json) {
   if (!Object.keys(clean).length) return json({ error: 'Nothing to save' }, 400);
   const all = await sbRpc(env, 'vp_set_game_prefs', { p_venue_id: venueId, p_game: game, p_prefs: clean });
   return json({ ok: true, game, prefs: cleanGamePrefs(game, (all && all[game]) || clean) });
+}
+
+/* GET /host/hosted-by?venue_id=  "HOSTED BY" FOR THE SIGNED-IN HOST AT THIS VENUE (INBOX 120, migration 181).
+
+   { trivia: card|null, musical: card|null }, card = { name, logo_url }. A card for a game only when
+   this venue's owner has switched it on for this host (vp_venue_staff.hosted_by on the caller's own
+   row here) and the host has a name on their card (vp_host_brands, one per login, so it follows them
+   to every venue). The console asks once it knows its venue and carries the card to the TV on its
+   "mode" message; the TV paints it beside the venue's logo.
+
+   Nothing to show whenever it cannot be read: before migration 181 runs, for an HQ admin using View
+   as (no staff row of their own), and on any read error. A Hosted by line is a nicety and must never
+   stop a game. The logo is handed on only if it is in our own public venue-logos bucket under hosts/,
+   the place the billing Worker writes it (vpbHostedLogoOk there). */
+function hostedLogoOk(env, url) {
+  const pre = String(env.SUPABASE_URL || '') + '/storage/v1/object/public/venue-logos/hosts/';
+  return typeof url === 'string' && url.length <= 500 && url.indexOf(pre) === 0 && /^[A-Za-z0-9\/._-]+$/.test(url.slice(pre.length));
+}
+async function handleHostedBy(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const venueId = String(new URL(request.url).searchParams.get('venue_id') || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  const staff = await requireStaff(env, authUserId, venueId, 'host');   // staff at THIS venue, and the kill-switch
+  const none = { trivia: null, musical: null };
+  if (!staff || staff.is_admin) return json(none);
+  let sw = null, card = null;
+  try {
+    const rows = await sbGet(env, 'vp_venue_staff',
+      'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&select=hosted_by&limit=1');
+    sw = rows && rows[0] && rows[0].hosted_by;
+  } catch (e) { return json(none); }
+  if (!sw || typeof sw !== 'object' || (sw.trivia !== true && sw.musical !== true)) return json(none);
+  try {
+    const br = await sbGet(env, 'vp_host_brands', 'auth_user_id=eq.' + enc(authUserId) + '&select=name,logo_url&limit=1');
+    const r = br && br[0];
+    const name = r ? String(r.name || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+    if (name) card = { name: name, logo_url: hostedLogoOk(env, r.logo_url) ? r.logo_url : '' };
+  } catch (e) { return json(none); }
+  if (!card) return json(none);
+  return json({ trivia: sw.trivia === true ? card : null, musical: sw.musical === true ? card : null });
 }
 
 async function hostStartMusical(env, json, b, session, staff, seq) {
