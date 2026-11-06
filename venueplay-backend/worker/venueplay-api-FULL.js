@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:06 · 553e12b8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:31 · ae66c020';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15114,6 +15114,17 @@ async function vpaHandleMonthReport(request, env, json) {
     if (run.skipped) return json({ ok: true, month: month, sent: false, skipped: run.skipped });
     return json({ ok: true, month: month, sent: false, to: run.to, subject: run.subject, html: run.html, tally: run.tally });
   }
+  /* action 'games': HQ > Reports' "What venues play" section, any day: the tally as it stands, "new"
+     meaning answered in the month picked. Owner only. Reads only; sends and writes nothing. */
+  if (_b.body.action === 'games') {
+    if (actor.role !== 'owner') return json({ error: 'Only an owner login can see what venues play.' }, 403);
+    let run;
+    try { run = await vprGamesDryRun(env, month); }
+    catch (e) { return json({ error: 'Could not count the answers just now. Please try again.' }, 503); }
+    if (run.missing) return json({ ok: true, month: month, waiting: true, note: VPR_GAMES_WAITING });
+    if (run.skipped) return json({ error: 'Could not count the answers just now. Please try again.' }, 503);
+    return json({ ok: true, month: month, tally: run.tally });
+  }
   if (_b.body.refresh === true) {
     if (!canRefresh) return json({ error: 'Only an owner or accounts login can refresh the report.' }, 403);
     let data;
@@ -15406,14 +15417,38 @@ async function vpaHandleMonthNews(request, env, json) {
    One email to dean@venueplay.com.au only, never a venue contact, sent from vprMonthlySweep (so it is
    off unless MONTHLY_REPORTS is on, and only on the 1st to the 3rd, 2am to 7am Brisbane), once a
    month by its vp_admin_audit row (games_answers_sent, target games-answers:<month>). Before
-   migration 163 the read answers 400 and nothing is sent, with the venue reports untouched. */
+   migration 163 the read answers 400 and nothing is sent, with the venue reports untouched.
+   Round 2 (Dean, Nov 2026): the same counts state by state (vp_venues.au_state; empty or unknown is
+   "State not set"), and setup_answers.other, the "Something else" tick's own words (60 characters at
+   most), listed once each, case left as first typed, with a count. other is the venue's own typing:
+   it is escaped wherever it is shown and never goes in a subject. HQ > Reports shows the same tally
+   any day (POST /admin/month-report { action: 'games' }, owner only), and that never sends. */
+const VPR_GAMES_STATES = ['NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
+const VPR_GAMES_NO_STATE = 'State not set';
+const VPR_GAMES_OTHER_MAX = 60;
+const VPR_GAMES_WAITING = 'Waiting for the setup answers to be switched on (migration 163).';
+function vprGamesOther(x) {
+  return String(x == null ? '' : x).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPR_GAMES_OTHER_MAX).trim();
+}
 const VPR_GAMES = [['trivia', 'Trivia'], ['musical', 'Musical bingo'], ['bingo', 'Bingo'], ['raffles', 'Raffles'], ['members', 'Members draws']];
 const VPR_GAMES_TO = 'dean@venueplay.com.au';
 function vprGamesTally(rows, venues, tests, month) {
-  const live = {};
+  const live = {}, stateOf = {};
   (venues || []).forEach((v) => { if (v && v.status === 'active' && !(tests && tests.has(v.id))) live[v.id] = true; });
-  const t = { month: month, venues: Object.keys(live).length, answered: 0, answered_month: 0, games: {} };
+  const t = { month: month, venues: Object.keys(live).length, answered: 0, answered_month: 0, games: {}, states: [], other: [] };
   VPR_GAMES.forEach((g) => { t.games[g[0]] = { name: g[1], plays: 0, new_month: 0, set_up: 0 }; });
+  const byState = {};
+  VPR_GAMES_STATES.concat(['']).forEach((k) => {
+    const st = byState[k] = { state: k, name: k || VPR_GAMES_NO_STATE, venues: 0, answered: 0, games: {} };
+    VPR_GAMES.forEach((g) => { st.games[g[0]] = 0; });
+  });
+  (venues || []).forEach((v) => {
+    if (!v || !live[v.id] || stateOf[v.id] !== undefined) return;
+    const k = String(v.au_state || '').trim().toUpperCase();
+    stateOf[v.id] = VPR_GAMES_STATES.indexOf(k) !== -1 ? k : '';
+    byState[stateOf[v.id]].venues++;
+  });
+  const other = {};
   const seen = {};
   (rows || []).forEach((r) => {
     if (!r || !live[r.venue_id] || seen[r.venue_id]) return;
@@ -15423,13 +15458,23 @@ function vprGamesTally(rows, venues, tests, month) {
     const at = /^\d{4}-\d{2}-\d{2}$/.test(String(a.games_at || '')) ? String(a.games_at) : '';
     const fresh = !!at && at.slice(0, 7) === month;
     t.answered++; if (fresh) t.answered_month++;
+    const st = byState[stateOf[r.venue_id]];
+    st.answered++;
     const setup = (a.setup && typeof a.setup === 'object') ? a.setup : {};
     VPR_GAMES.forEach((g) => {
       const c = t.games[g[0]];
-      if (a.games.indexOf(g[0]) !== -1) { c.plays++; if (fresh) c.new_month++; }
+      if (a.games.indexOf(g[0]) !== -1) { c.plays++; st.games[g[0]]++; if (fresh) c.new_month++; }
       if (setup[g[0]] === 'done') c.set_up++;
     });
+    const o = typeof a.other === 'string' ? vprGamesOther(a.other) : '';
+    if (o) {
+      const key = o.toLowerCase();
+      if (!other[key]) other[key] = { text: o, count: 0 };
+      other[key].count++;
+    }
   });
+  t.states = VPR_GAMES_STATES.concat(['']).map((k) => byState[k]).filter((x) => x.venues > 0);
+  t.other = Object.keys(other).map((k) => other[k]).sort((x, y) => y.count - x.count || (x.text.toLowerCase() < y.text.toLowerCase() ? -1 : 1));
   return t;
 }
 function vprGamesEmail(env, month, tally) {
@@ -15451,20 +15496,44 @@ function vprGamesEmail(env, month, tally) {
     + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right">Venues that play it</th>'
     + '<th style="' + head + ';text-align:right">New in ' + vpaEsc(vprMonthName(month)) + '</th><th style="' + head + ';text-align:right">Set up</th></tr>'
     + rows + '</table>'
+    + vprGamesStatesHtml(tally, cell, head)
+    + vprGamesOtherHtml(tally)
     + '<p style="margin:0;font-size:13px;color:#6a6a75">Counted from the answers in the setup wizard. Test venues and venues that are not active are left out. '
     + 'Set up means the venue finished that game\'s setup step in the wizard.</p>';
   return { to: VPR_GAMES_TO, subject: subject, html: vpaStaffCard(inner, subject, 'fyi') };
 }
+function vprGamesStatesHtml(tally, cell, head) {
+  if (!(tally.states || []).length) return '';
+  let h = '<p style="margin:0 0 8px;font-weight:700">State by state</p>'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
+    + '<tr><th style="' + head + '">State</th><th style="' + head + ';text-align:right">Answered</th>';
+  VPR_GAMES.forEach((g) => { h += '<th style="' + head + ';text-align:right">' + vpaEsc(g[1]) + '</th>'; });
+  h += '</tr>';
+  tally.states.forEach((st) => {
+    h += '<tr><td style="' + cell + '">' + vpaEsc(st.name) + '</td><td style="' + cell + ';text-align:right">' + st.answered + ' of ' + st.venues + '</td>';
+    VPR_GAMES.forEach((g) => { h += '<td style="' + cell + ';text-align:right">' + st.games[g[0]] + '</td>'; });
+    h += '</tr>';
+  });
+  return h + '</table>';
+}
+function vprGamesOtherHtml(tally) {
+  const list = tally.other || [];
+  return '<p style="margin:0 0 8px;font-weight:700">Something else they run</p>'
+    + (list.length
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + list.map((o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ' (' + o.count + ')</li>').join('') + '</ul>'
+      : '<p style="margin:0 0 16px">Nobody has written anything else yet.</p>');
+}
 /* Reads and builds, sends nothing. { month, to, subject, html, tally } or { month, skipped: why }.
    venues/tests may be passed in by the sweep, which has them already. */
 async function vprGamesDryRun(env, month, venues, tests) {
-  const vs = venues || await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+  const vs = venues || await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
   const ts = tests || await vprTestVenueIds(env, vs);
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
   catch (e) {
     /* No setup_answers column yet (migration 163 not run) is a 400 from PostgREST; anything else is a failed read. */
-    return { month: month, skipped: /: 40[04] /.test(String(e && e.message)) ? 'no setup_answers column yet (migration 163)' : 'could not read the answers' };
+    const missing = /: 40[04] /.test(String(e && e.message));
+    return { month: month, missing: missing, skipped: missing ? 'no setup_answers column yet (migration 163)' : 'could not read the answers' };
   }
   const tally = vprGamesTally(rows, vs, ts, month);
   const mail = vprGamesEmail(env, month, tally);
@@ -15502,7 +15571,7 @@ async function vprMonthlySweep(env, nowMs, opts) {
   if (!o.anyTime && (bris.getUTCDate() > 3 || bris.getUTCHours() < 2 || bris.getUTCHours() >= 7)) return { off: false, waiting: true, sent: 0 };
   const month = vprLastMonth(now);
   const batch = parseInt(env.MONTHLY_REPORTS_BATCH, 10) > 0 ? parseInt(env.MONTHLY_REPORTS_BATCH, 10) : VPR_BATCH;
-  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
   const tests = await vprTestVenueIds(env, venues);
   /* What venues play, to Dean only, once a month. Never throws, so it cannot hold up a venue's report. */
   const games = await vprGamesSend(env, month, venues, tests);

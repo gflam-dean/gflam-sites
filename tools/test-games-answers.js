@@ -18,6 +18,14 @@
      Raffles        plays 2 (V1 V3)   new 2           set up 1 (V3)
      Members draws  plays 1 (V3)      new 1           set up 1 (V3)
 
+   STATE BY STATE (vp_venues.au_state): V1 QLD, V2 '' and V6 'Queensland' (not a state code) are
+   "State not set", V3 ' act ' is ACT. Test Alpha (NSW) and the Old Inn (VIC) are out, so no NSW or VIC row.
+     QLD            answered 1 of 1   trivia 1, musical 1, raffles 1
+     ACT            answered 1 of 1   members 1, raffles 1, musical 1
+     State not set  answered 1 of 2   bingo 1, trivia 1
+   SOMETHING ELSE: V1 "Karaoke" and V2 "  karaoke  " are one answer, Karaoke (2); V3's 82 characters of
+   markup are cut to 60 and escaped (1); Test Alpha's "Test Karaoke" is not counted.
+
    Run from the repo root:  jsc tools/test-games-answers.js
 */
 load('tools/rig-billing-worker.js');
@@ -48,6 +56,9 @@ globalThis.fetch = function (url, opts) {
   return RIG_FETCH(url, opts);
 };
 
+/* The "Something else" words, typed by a venue: markup, quotes and 82 characters, so the cap and the escaping both show. */
+var LONG_OTHER = '<i>Meat</i> & "darts" ' + new Array(61).join('x');
+var CAPPED = LONG_OTHER.slice(0, 60);
 function world() {
   DB = {}; sent.length = 0; FAIL = {}; COLUMN_MISSING = false; vprForget();
   DB.venueplay_founding = [{ id: 'f1', contact_email: 'owner@royalhotel.com.au', contact_name: 'Sam Smith', plan: 'monthly', status: 'card_on_file' },
@@ -56,15 +67,15 @@ function world() {
                            { id: 'f4', contact_email: 'dean@test.com.au', plan: 'monthly', status: 'card_on_file' },
                            { id: 'f5', contact_email: 'old@oldinn.com.au', plan: 'monthly', status: 'cancelled' },
                            { id: 'f6', contact_email: 'quiet@quietinn.com.au', plan: 'monthly', status: 'card_on_file' }];
-  function V(id, name, f, slug, status) { return { id: id, name: name, founding_id: f, slug: slug, status: status, timezone: 'Australia/Brisbane', created_at: '2026-08-01T00:00:00Z' }; }
-  DB.vp_venues = [V(V1, 'The Royal Hotel', 'f1', 'royal', 'active'), V(V2, 'The Anchor Pub', 'f2', 'anchor', 'active'),
-                  V(V3, 'The Big Club', 'f3', 'big-club', 'active'), V(V4, 'Test Alpha', 'f4', 'test-alpha', 'active'),
-                  V(V5, 'The Old Inn', 'f5', 'old-inn', 'cancelled'), V(V6, 'The Quiet Inn', 'f6', 'quiet-inn', 'active')];
+  function V(id, name, f, slug, status, st) { return { id: id, name: name, founding_id: f, slug: slug, status: status, au_state: st, timezone: 'Australia/Brisbane', created_at: '2026-08-01T00:00:00Z' }; }
+  DB.vp_venues = [V(V1, 'The Royal Hotel', 'f1', 'royal', 'active', 'QLD'), V(V2, 'The Anchor Pub', 'f2', 'anchor', 'active', ''),
+                  V(V3, 'The Big Club', 'f3', 'big-club', 'active', ' act '), V(V4, 'Test Alpha', 'f4', 'test-alpha', 'active', 'NSW'),
+                  V(V5, 'The Old Inn', 'f5', 'old-inn', 'cancelled', 'VIC'), V(V6, 'The Quiet Inn', 'f6', 'quiet-inn', 'active', 'Queensland')];
   DB.vp_venue_settings = [
-    { venue_id: V1, setup_answers: { tvs: '2', nights: ['fri'], games: ['trivia', 'musical', 'raffles'], name_ok: true, games_at: '2026-10-05', setup: { trivia: 'done', musical: 'later' } } },
-    { venue_id: V2, setup_answers: { tvs: '1', games: ['bingo', 'trivia'], games_at: '2026-09-20', setup: { bingo: 'done', trivia: 'shown' } } },
-    { venue_id: V3, setup_answers: { games: ['members', 'raffles', 'musical', 'musical'], games_at: '2026-10-30', setup: { members: 'done', raffles: 'done' } } },
-    { venue_id: V4, setup_answers: { games: ['trivia', 'musical', 'bingo', 'raffles', 'members'], games_at: '2026-10-10', setup: { trivia: 'done', bingo: 'done' } } },
+    { venue_id: V1, setup_answers: { tvs: '2', nights: ['fri'], games: ['trivia', 'musical', 'raffles'], name_ok: true, games_at: '2026-10-05', setup: { trivia: 'done', musical: 'later' }, other: 'Karaoke' } },
+    { venue_id: V2, setup_answers: { tvs: '1', games: ['bingo', 'trivia'], games_at: '2026-09-20', setup: { bingo: 'done', trivia: 'shown' }, other: '  karaoke  ' } },
+    { venue_id: V3, setup_answers: { games: ['members', 'raffles', 'musical', 'musical'], games_at: '2026-10-30', setup: { members: 'done', raffles: 'done' }, other: LONG_OTHER } },
+    { venue_id: V4, setup_answers: { games: ['trivia', 'musical', 'bingo', 'raffles', 'members'], games_at: '2026-10-10', setup: { trivia: 'done', bingo: 'done' }, other: 'Test Karaoke' } },
     { venue_id: V5, setup_answers: { games: ['trivia'], games_at: '2026-10-02', setup: { trivia: 'done' } } },
     { venue_id: V6, setup_answers: { tvs: '1' } }];
   DB.vp_platform_admins = [{ auth_user_id: ADMIN, role: 'owner', label: 'Dean' }, { auth_user_id: STAFF_ADMIN, role: 'staff', label: 'Helper' }];
@@ -115,6 +126,24 @@ function row(html, name) {
   check('the totals in words', /3 of 4 active venues have told us which games they play\. 2 of them answered in October 2026\./.test(mail.html));
   check('no long dash, venueplay in lower case, never Gflam', !/[\u2014\u2013]|&mdash;|&ndash;/.test(mail.html + mail.subject) && !/VenuePlay|Venueplay|VENUEPLAY/.test(mail.html.replace(/alt="[^"]*"/g, '')) && !/gflam/i.test(mail.html));
   check('the new-look staff card (logo band and the for-your-info pill)', /venueplay-email-on-dark\.png/.test(mail.html) && /FOR YOUR INFO/.test(mail.html));
+
+  print('state by state, and something else');
+  var sn = t.states.map(function (x) { return x.name; }).join('|');
+  check('the states with active venues, in order, unknown and empty under State not set (ACT, never "the ACT")', sn === 'QLD|ACT|State not set', sn);
+  var S_ = {}; t.states.forEach(function (x) { S_[x.name] = x; });
+  check('QLD: 1 of 1 answered, trivia 1, musical 1, bingo 0, raffles 1, members 0', S_.QLD.venues === 1 && S_.QLD.answered === 1 && S_.QLD.games.trivia === 1 && S_.QLD.games.musical === 1 && S_.QLD.games.bingo === 0 && S_.QLD.games.raffles === 1 && S_.QLD.games.members === 0, S_.QLD);
+  check('ACT (typed " act "): 1 of 1, members 1, raffles 1, musical 1 once, trivia 0', S_.ACT.venues === 1 && S_.ACT.answered === 1 && S_.ACT.games.members === 1 && S_.ACT.games.raffles === 1 && S_.ACT.games.musical === 1 && S_.ACT.games.trivia === 0, S_.ACT);
+  var NS = S_['State not set'];
+  check('State not set: 1 of 2 answered, bingo 1, trivia 1, musical 0', NS.venues === 2 && NS.answered === 1 && NS.games.bingo === 1 && NS.games.trivia === 1 && NS.games.musical === 0, NS);
+  check('Something else: Karaoke twice (case and spaces are one answer, first spelling kept), the long one once, the test venue\'s left out',
+    t.other.length === 2 && t.other[0].text === 'Karaoke' && t.other[0].count === 2 && t.other[1].text === CAPPED && t.other[1].count === 1, t.other);
+  check('the venue\'s own words are cut at 60 characters', CAPPED.length === 60 && t.other[1].text.length === 60);
+  var stRow = /<td[^>]*>ACT<\/td><td[^>]*>1 of 1<\/td>((?:<td[^>]*>\d+<\/td>){5})/.exec(mail.html);
+  check('the email has the state table, ACT\'s row in the house order of games (0, 1, 0, 1, 1)', !!stRow && stRow[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).join(',') === '0,1,0,1,1', stRow && stRow[1]);
+  check('and State not set, never "the ACT"', /State not set<\/td><td[^>]*>1 of 2</.test(mail.html) && !/the ACT/i.test(mail.html));
+  check('Something else they run, with a count each', /Something else they run/.test(mail.html) && /Karaoke \(2\)/.test(mail.html) && mail.html.indexOf('karaoke  ') === -1);
+  check('the venue\'s words are escaped in the email', mail.html.indexOf('<i>Meat') === -1 && mail.html.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
+  check('and never in the subject', mail.subject === 'What venues play: October 2026' && !/Karaoke|Meat/.test(mail.subject));
 
   print('the dry run sends nothing');
   world();
@@ -176,6 +205,54 @@ function row(html, name) {
   check('and the venue reports still go', sent.some(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }));
   await vprMonthlySweep(ENVON, Date.parse('2026-10-31T18:00:00Z'));
   check('the next tick sends it, once', gamesMail().length === 1 && gamesAudits().length === 1);
+
+  print('HQ > Reports: What venues play, any day (owner only, never sends)');
+  world();
+  var hr = await call(vpaHandleMonthReport, ADMIN, { action: 'games', month: '2026-11' });
+  check('owner: the tally for the month so far, with states and something else', hr.status === 200 && hr.body.month === '2026-11' && hr.body.tally.answered === 3
+    && hr.body.tally.answered_month === 0 && hr.body.tally.states.length === 3 && hr.body.tally.other[0].text === 'Karaoke' && !hr.body.html, hr.body);
+  check('it sends nothing and writes nothing', sent.length === 0 && DB.vp_admin_audit.length === 0, [sent.length, DB.vp_admin_audit.length]);
+  var hs = await call(vpaHandleMonthReport, STAFF_ADMIN, { action: 'games', month: '2026-11' });
+  check('a staff HQ login is refused and sees no numbers', hs.status === 403 && !hs.body.tally, hs);
+  COLUMN_MISSING = true;
+  var hw = await call(vpaHandleMonthReport, ADMIN, { action: 'games', month: '2026-11' });
+  check('before migration 163 it says so plainly', hw.status === 200 && hw.body.waiting === true && hw.body.note === 'Waiting for the setup answers to be switched on (migration 163).' && !hw.body.tally, hw.body);
+  COLUMN_MISSING = false;
+  FAIL['vp_venue_settings:GET'] = 1;
+  var hf = await call(vpaHandleMonthReport, ADMIN, { action: 'games', month: '2026-11' });
+  check('a read that fails is an error, never a confident 0', hf.status === 503 && !hf.body.tally, hf);
+
+  /* The page itself: vp-reports-hq.js on a small fake document, posting to the real handler. */
+  function hqPage(user) {
+    var els = {}, pending = [];
+    function el(id) { return els[id] || (els[id] = { id: id, innerHTML: '', value: id === 'rpMonth' ? '2026-11' : '', style: {}, checked: false, _a: {},
+      setAttribute: function (k, v) { this._a[k] = v; }, getAttribute: function (k) { return this._a[k] || null; }, addEventListener: function () {} }); }
+    var win = { document: { getElementById: el, querySelectorAll: function () { return []; } } };
+    (new Function('window', readFile('venueplay/app/vp-reports-hq.js')))(win);
+    win.VPReports.init({ isOwner: function () { return true; }, post: function (path, body) {
+      var p = (path === '/admin/month-report' && body && body.action === 'games')
+        ? call(vpaHandleMonthReport, user, body).then(function (r) { return r.body; })
+        : Promise.resolve({ error: 'not in this test' });
+      pending.push(p); return p; } });
+    return { els: els, VP: win.VPReports, settle: async function () { for (var i = 0; i < 5; i++) { await Promise.all(pending); await null; } } };
+  }
+  world();
+  var pg = hqPage(ADMIN); pg.VP.open(); await pg.settle();
+  var gh = (pg.els.rpGames || {}).innerHTML || '';
+  check('the section is #rpGames in HQ > Reports, and it asks for action games', !!pg.els.rpGames && /id="rpGames"/.test(pg.els.paneReports.innerHTML) && /What venues play/.test(pg.els.paneReports.innerHTML));
+  check('it shows the hand count: 3 of 4 answered, 0 in November so far', /<b>3<\/b> of 4 active venues have told us which games they play; <b>0<\/b> answered in November 2026/.test(gh), gh.slice(0, 300));
+  var hqRow = function (name) { var m = new RegExp('<td>' + name + '</td>((?:<td class="mono">\\d+</td>){3})').exec(gh); return m ? m[1].replace(/<[^>]+>/g, ' ').trim().split(/\s+/).join(',') : null; };
+  check('every game row in the house order with plays, new, set up', hqRow('Trivia') === '2,0,1' && hqRow('Musical bingo') === '2,0,0' && hqRow('Bingo') === '1,0,1' && hqRow('Raffles') === '2,0,1' && hqRow('Members draws') === '1,0,1'
+    && gh.indexOf('<td>Trivia</td>') < gh.indexOf('<td>Musical bingo</td>') && gh.indexOf('<td>Musical bingo</td>') < gh.indexOf('<td>Bingo</td>'), [hqRow('Trivia'), hqRow('Musical bingo'), hqRow('Bingo')]);
+  check('state by state: QLD, ACT and State not set with answered of venues', /<td>QLD<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>ACT<\/td><td class="mono">1 of 1<\/td>/.test(gh) && /<td>State not set<\/td><td class="mono">1 of 2<\/td>/.test(gh) && !/the ACT/i.test(gh));
+  check('something else, counted and escaped', /Something else they run/.test(gh) && /Karaoke \(2\)/.test(gh) && gh.indexOf('<i>Meat') === -1 && gh.indexOf('&lt;i&gt;Meat&lt;/i&gt; &amp; &quot;darts&quot;') !== -1);
+  check('opening the page sends nothing', sent.length === 0 && DB.vp_admin_audit.length === 0);
+  world(); COLUMN_MISSING = true;
+  var pw = hqPage(ADMIN); pw.VP.open(); await pw.settle();
+  check('before migration 163 the page says: Waiting for the setup answers to be switched on (migration 163).', (pw.els.rpGames.innerHTML || '').indexOf('Waiting for the setup answers to be switched on (migration 163).') !== -1 && !/of 4 active/.test(pw.els.rpGames.innerHTML), pw.els.rpGames.innerHTML);
+  world();
+  var ps = hqPage(STAFF_ADMIN); ps.VP.open(); await ps.settle();
+  check('a staff login sees the refusal, not numbers', /Only an owner login can see what venues play/.test(ps.els.rpGames.innerHTML) && !/active venues/.test(ps.els.rpGames.innerHTML), ps.els.rpGames.innerHTML);
 
   print(fails ? fails + ' OF ' + ran + ' CHECKS FAILED' : 'ALL ' + ran + ' CHECKS PASSED');
 })().catch(function (e) { print('  FAIL threw: ' + e + '\n' + (e && e.stack)); });
