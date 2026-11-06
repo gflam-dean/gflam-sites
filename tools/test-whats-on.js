@@ -103,7 +103,11 @@ ok('tap Sunday (nothing): "No games this night"', /No games this night/.test(spo
 var lots = EV.concat([{ id: 'x1', title: 'Two', day: 'thu', start: '22:00' }, { id: 'x2', title: 'Three', day: 'thu', start: '23:00' }, { id: 'x3', title: 'Four', day: 'thu' }]);
 var lb2 = new Node('div'); T.lobby(lb2, { name: 'Sam', me: 'trivia', week: WEEK, events: lots, now: THU });
 var r2 = byClass(byClass(lb2, 'vpt-night')[0], 'row');
-ok('four nights tonight: two shown, then "+2 more tonight", so the ad and our logo still fit', r2.length === 4 && /\+2 more tonight/.test(r2[3].textContent) && /\bmore\b/.test(r2[3].className), texts(lb2, 'row'));
+ok('four nights tonight: one compact row, the first and "+3 more tonight", so the ad and our logo still fit', r2.length === 2 && /I \u2665 3181/.test(r2[1].textContent) && /\+3 more tonight/.test(r2[1].textContent) && !/Back bar/.test(r2[1].textContent), texts(lb2, 'row'));
+var lb3 = new Node('div'), st3 = T.lobby(lb3, { name: 'Sam', me: 'trivia', week: WEEK, events: lots.concat([{ id: 'x4', title: 'Five', day: 'fri' }, { id: 'x5', title: 'Six', day: 'fri' }, { id: 'x6', title: 'Seven', day: 'fri' }]), now: THU });
+st3.buttons[1].onclick();
+var r3 = byClass(byClass(lb3, 'vpt-night')[0], 'row');
+ok('a tapped day with four nights: two, then "+2 more"', r3.length === 3 && /\+2 more/.test(r3[2].textContent) && /\bmore\b/.test(r3[2].className), texts(lb3, 'row'));
 var none = new Node('div'); T.lobby(none, { name: 'Sam', me: 'trivia', week: WEEK, now: THU });
 ok('no events: the lobby is exactly as before (one row, no dots)', byClass(byClass(none, 'vpt-night')[0], 'row').length === 1 && !byClass(none, 'ev').length);
 var ng = new Node('div'), ngs = T.noGame(ng, { name: 'Sam', week: WEEK, events: EV, now: THU });

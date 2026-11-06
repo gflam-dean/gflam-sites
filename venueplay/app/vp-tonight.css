@@ -77,6 +77,11 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-week .d.ev small{position:relative}
 .vpt-week .d.ev small::after{content:"";position:absolute;left:50%;bottom:-5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#FFC24B}
 .vpt-week .d.now.ev small::after{background:#0A0A0B}
+.vpt-night .row.ev{padding:6px 0}
+.vpt-night .row.ev .g{display:flex;align-items:baseline;gap:7px;white-space:nowrap;overflow:hidden}
+.vpt-night .row.ev .g b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:17px}
+.vpt-night .row.ev .g span{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.vpt-night .row.ev .bd{padding:2px 8px}
 .vpt-night .bd.t{background:transparent;color:#FFC24B;box-shadow:inset 0 0 0 1.5px rgba(255,194,75,.55)}
 .vpt-night .row.more .g b{font-size:15px;font-weight:700;color:#9A9AA4}
 .vpt-night .row.more .bd{visibility:hidden}

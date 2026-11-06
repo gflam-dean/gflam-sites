@@ -80,13 +80,15 @@
     if (!W || !o || !Array.isArray(o.events) || !o.events.length) return [];
     return W.on(o.events, W.today(dt));
   }
+  /* The venue's nights as rows, one line each (title, then its line, cut with an ellipsis). cap: at most that many rows,
+     the last saying "+N more" when there are more. */
   function eventRows(list, cap) {
     var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
     for (var i = 0; i < n; i++) {
       var e = list[i], t = time12(e.start);
       rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: e.line || "" });
     }
-    if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more" + (cap ? " tonight" : ""), sub: "" });
+    if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more", sub: "" });
     return rows;
   }
   function hasTimes(o) {
@@ -106,11 +108,19 @@
       if (x.game === me) return;
       rows.push({ game: x.game, name: GAME_NAME[x.game], badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
     });
-    return rows.concat(eventRows(eventsOn(o, now(o)), 3));
+    /* Tonight's own nights in ONE compact row, so the venue's ad and our logo still fit a 664px screen: the first, and
+       "+2 more tonight" in place of its line when there are more (tap Today in the strip for them all). */
+    var evs = eventsOn(o, now(o));
+    if (evs.length) {
+      var r = eventRows(evs.slice(0, 1), 0)[0];
+      if (evs.length > 1) r.sub = "+" + (evs.length - 1) + " more tonight";
+      rows.push(r);
+    }
+    return rows;
   }
   /* Another night's rows, for the spot when a day is tapped. */
   function nightRows(o, dt) {
-    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 0);
+    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 3);
     if (list && list.length) return list.map(function (x) {
       return { game: x.game, badge: badge, name: NIGHT_NAME[x.game], sub: x.time ? x.time : "Ask for start time" };
     }).concat(evs);
