@@ -179,6 +179,10 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/game-setup-in-chrome.test.py": {
+  "checks": 158,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
