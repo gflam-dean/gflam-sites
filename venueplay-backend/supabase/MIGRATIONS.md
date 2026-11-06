@@ -593,6 +593,14 @@ or grant changes, so RLS-BASELINE.json does not change. Either order with the bi
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50).
 Read-back and rollback in the file.
 
+`venueplay-162-help-faq-offer-grace.sql` (Dean, 5 Nov 2026, THE 5-DAY OFFER GRACE): words only. The help FAQ's "Billing and
+players" answer (vp_help_faq, id d3a64ff4-...) now says a free month that ends with no card pauses the games, and a card
+switches them back on. The 5-day grace is NOT announced (Dean, 5 Nov 2026, builds INBOX 55c; changed on fix/self-serve-restart-10nov). Guarded: it changes the
+row only if the answer is still migration 106's, so an HQ edit is never overwritten. The grace itself needs NO column or table
+(the Worker counts five days from vp_prospects.free_month_ends_at, migration 127), and no Worker waits for this file. No
+policy or grant changes, so RLS-BASELINE.json does not change. NUMBER: 162 given by the main session (153 live-here-now, 155
+security, 160 account-review, 161 venue rating). Branch `fix/offer-grace-10nov`. NOT RUN. Read-back and rollback in the file.
+
 `venueplay-152-signin-texts-queue.sql` (Dean, 4 Nov 2026, HQ > Prospects: "Send them a new sign-in link" goes by email AND
 text when we have a mobile): one new table, `vp_signin_texts`, the texts HQ asked for outside 9am to 8pm Brisbane (or on a
 Sunday), queued for the next allowed time and sent by the billing Worker's hourly trigger, which makes the one-use link at
@@ -603,6 +611,8 @@ off until PROSPECT_SMS_ON and the ClickSend login are set, either way. NUMBER: 1
 `fix/hq-prospects-6nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50). Read-back and rollback in the file.
 
 RUN LIVE, Thu 5 Nov 2026 (Dean, read back OK by 20:50): 150, 151, 152, 154 and 161. 154 (`venueplay-154-prospect-details.sql`, branch `fix/prospect-details-10nov`) and 161 (`venueplay-161-venue-ratings.sql`, branch `fix/venue-rating-8nov`) are not in the 6 Nov release: their files and entries come with those branches, and both numbers are TAKEN. RLS-BASELINE.json was dumped after all five (152 and 161 each add one table, RLS on, service role only) and committed with the 6 Nov release.
+
+RUN LIVE, confirmed Fri 6 Nov 2026: 150, 151, 152, 154, 161, 163, 166, 167, 170, 171 and 172 (all of these are live; their files and entries come with their own branches where not yet on main). 162 (this branch) and 169 (trivia library swap) are NOT RUN.
 
 `venueplay-156-saved-reply-lowercase-name.sql` (Dean, 1 and 4 Nov 2026: "venueplay" lowercase in all customer text): one
 word in one help desk saved reply, seed_key 'player-prize' ("venueplay supplies the game software only"), only if it still
@@ -617,7 +627,7 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 `VP.saveSettings`, which the existing owner and manager policies (migration 77) already allow, so there is no new policy,
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
-branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. RUN LIVE (see the RUN LIVE line for 163, 166, 167, 170, 171, 172 above). Read-back and rollback in the file.
 
 `venueplay-170-signup-starts.sql` (Dean, 5 Nov 2026, INBOX 80B and 81 as changed by 97: the no-card start, "Have a play for
 free" on /offer-nov): ONE new table, `vp_signup_starts`, one row per sign-up attempt holding the five boxes and the text code's
@@ -647,4 +657,4 @@ POST /session {demo:true}; honoured by chargeNightOverage (no charge, no streak 
 trivia check and stamp, vp_asked_questions, saved trivia prefs, metering, group overage and the billing Worker's stats
 reads (VPA_NOT_DEMO). A demo's players stay on its venue's opt-in list and in the privacy paths on purpose. RUN IT BEFORE
 deploying either Worker from this branch: their reads filter is_demo=not.is.true, which PostgREST refuses while the column
-is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. NOT RUN.
+is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. RUN LIVE (see the RUN LIVE line above).

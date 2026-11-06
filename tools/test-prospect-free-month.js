@@ -11,7 +11,8 @@
      1. the reminder calendar: weekends moved (day 3 and day 23 on to Monday, day 29 back to Friday)
      2. /account/prospect-start: starts the month once, for the venue's owner or manager only, never View as
      3. a month with no card: every reminder once, on its day, inside the hours, the right words; then the pause
-     4. the offer: held through the month after the offer closes; gone after the pause (card link and Checkout)
+     4. the offer: held through the month after the offer closes; gone after the pause and its 5-day grace (card link
+      and Checkout; the grace itself, day by day, is tools/test-offer-grace.js)
      5. a card stops everything; a card after the pause switches the venue back on
      6. cancel: the link asks first (a mail scanner cancels nobody), then switches off and stops the reminders
      7. a missed week sends one reminder, not a pile; a sign-in the guide never reported is found in Auth
@@ -195,19 +196,26 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,29]', C.row().reminders_sent);
   var mid = REM().length; await walk(bne(2026, 11, 26, 9, 0), bne(2026, 11, 26, 16, 0));
   check('running the same day again sends nothing', REM().length === mid);
+  var realNow0 = Date.now; Date.now = function () { return bne(2026, 12, 2, 12, 0); };   // a fixed clock: the price reads it
   var lr = await call('/account/card-link', { venue_id: C.v.id }, AS(C.login, C.v.id));
+  Date.now = realNow0;
   check('before the pause, with the November offer closed: their card is still added at the $2.50 they were set up on', lr.status === 200 && lr.body.rate === 2.5 && !lr.body.paused, lr.body);
   check('still on: no pause on Wed 2 Dec at noon', C.v.status === 'active' && !C.row().paused_at);
   await walk(bne(2026, 12, 2, 23, 0), bne(2026, 12, 3, 1, 0));
   check('after 11:59:59pm on day 30 with no card: PAUSED (suspended, free_month_ended), recorded and audited', C.v.status === 'suspended' && C.v.suspended_reason === 'free_month_ended' && !!C.row().paused_at &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_paused' && a.target === 'venue:' + C.v.id; }), [C.v.status, C.v.suspended_reason]);
+  /* THE 5-DAY OFFER GRACE (10 Nov 2026): the offer now holds to 11:59pm Brisbane on Mon 7 Dec, so "gone" is asked
+     on day 6, Tue 8 Dec, at a FIXED clock (never the real one: the card-add reads Date.now). tools/test-offer-grace.js
+     walks every day of it. */
+  var realNow = Date.now; Date.now = function () { return bne(2026, 12, 8, 9, 0); };
   var lr2 = await call('/account/card-link', { venue_id: C.v.id }, AS(C.login, C.v.id));
-  check('after the pause the offer has gone: their card is added at $3.00', lr2.body.rate === 3 && lr2.body.paused === true, lr2.body);
+  check('after the pause and its 5-day grace the offer has gone: their card is added at $3.00', lr2.body.rate === 3 && lr2.body.paused === true && !lr2.body.offer_grace, lr2.body);
   stripeCalls.length = 0;
   var tok = await vpaCardToken(ENV, C.v.founding_id);
   await vpaAddCardRedirect({ url: 'https://api.example/add-card?f=' + C.v.founding_id + '&t=' + tok, method: 'GET', headers: { get: function () { return null; } } }, ENV);
+  Date.now = realNow;
   var co = (stripeCalls[0] || {}).body || '';
-  check('Checkout after the pause: the standard price, and no free month left (no trial)', /line_items%5B0%5D%5Bprice%5D=price_S_M/.test(co) && !/trial_end/.test(co), co.slice(0, 400));
+  check('Checkout after the pause and its grace: the standard price, and no free month left (no trial)', /line_items%5B0%5D%5Bprice%5D=price_S_M/.test(co) && !/trial_end/.test(co), co.slice(0, 400));
   var n = REM().length; await walk(bne(2026, 12, 3, 8, 0), bne(2026, 12, 10, 16, 0));
   check('nothing more is sent once it is paused', REM().length === n);
   await vpaProspectCardAdded(ENV, C.v.founding_id);
@@ -319,9 +327,9 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   function liftFn(src, name) { var i = src.indexOf('function ' + name + '('); var d = 0, k = src.indexOf('{', i); do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0); return src.slice(i, k); }
   var holdWords = new Function('isArchived', liftFn(SES, 'holdWords') + '\nreturn holdWords;')(function () { return false; });
   var hw = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'owner');
-  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, the offer price went, nothing to do if it is not for them',
+  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, nothing to do if it is not for them, and the 5-day leeway is NOT announced (INBOX 55c)',
     hw && hw.reason === 'free_month_ended' && /Your free month has ended, so your games are paused/.test(hw.title) && /Your TV keeps showing your ads and nothing has been lost\./.test(hw.text) &&
-    /The offer price you were set up on ended with your free month/.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
+    !/5 days|offer ends|standard price/.test(hw.text) && /If it is not for you, there is nothing you need to do\./.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
   var hh = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'host');
   check('a host is told to ask the owner or a manager, with no card button', hh && !hh.link && /Ask the venue owner or a manager to add a card/.test(hh.text), hh);
   check('the console fetches the venue\'s own card link for that button (never a link written into the page)', /w\.link\.href === '#vp-card'/.test(SES) && /\/account\/card-link/.test(liftFn(SES, 'holdGate')));
