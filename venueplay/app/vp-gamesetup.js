@@ -147,6 +147,45 @@
     });
     return out;
   }
+  /* PUB OR CLUB: the venue's own record (vp_venues.entity_type, set at sign-up or by HQ), else what they told this
+     wizard once (setup_answers.venue_kind). null when nobody knows yet. */
+  function kindOf(venue, answers) {
+    var e = venue && venue.entity_type;
+    if (e === "non_profit") return "club";
+    if (e === "for_profit") return "pub";
+    var k = answers && answers.venue_kind;
+    return (k === "pub" || k === "club") ? k : null;
+  }
+  /* WHAT BINGO THIS VENUE MAY RUN (Dean, 6 Nov 2026), from the rules in vp-gaming.js, never a copy of them:
+       hidden    bingo is not open to it at all (SA and NT pubs: VPGaming.numberBingoHidden)
+       phones    phones may be bingo tickets in its state (VPGaming.states[state].phones.bingo)
+       autoDraw  venueplay may draw the numbers (no state in the rules bars it today; a state given
+                 autoDraw: false in vp-gaming.js gets caller mode only, real balls)
+       why       one plain line when phone tickets are switched off (the first sentence of the state's own words)
+     A venue whose pub-or-club is unknown is judged as a pub, the stricter way, as the console does. */
+  function bingoRules(venue, answers) {
+    var G = root.VPGaming, st = String((venue && venue.au_state) || "").toUpperCase();
+    var kind = kindOf(venue, answers);
+    var v2 = { au_state: st, entity_type: kind === "club" ? "non_profit" : "for_profit", number_bingo_on: venue && venue.number_bingo_on };
+    var S = (G && G.states && G.states[st]) || {};
+    var out = { state: st, kind: kind, hidden: !!(G && G.numberBingoHidden && G.numberBingoHidden(v2)),
+      phones: !(S.phones && S.phones.bingo === false), autoDraw: S.autoDraw !== false, why: "" };
+    if (!out.phones) {
+      var para = String(S.paperBingo || ""), cut = para.indexOf(". ");   // no look-behind: older iPad Safari cannot parse it
+      var first = cut > 0 ? para.slice(0, cut + 1) : (para || "Phones can't be bingo tickets here.");
+      out.why = first + " So it's paper tickets, with our calling and our screen.";
+    }
+    if (out.hidden) out.why = "Bingo isn't open to a pub in " + ((G && G.NO_PUB_BINGO_STATES && G.NO_PUB_BINGO_STATES[st]) || "your state") + ", so it's switched off. Your other games are fine.";
+    return out;
+  }
+  /* THIS WEEK'S MUSIC (Dean, 6 Nov 2026): with more than one list, a different one each week, Brisbane weeks from
+     Monday, so the same songs are not played every week. */
+  function weekPick(list, now) {
+    if (!Array.isArray(list) || !list.length) return "";
+    var t = (now == null ? Date.now() : now) + 10 * 3600 * 1000;
+    var wk = Math.floor((t - Date.UTC(2024, 0, 1)) / (7 * 86400000));   // 1 Jan 2024 was a Monday
+    return list[((wk % list.length) + list.length) % list.length];
+  }
   /* "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws" */
   function weekWords(w) {
     return (cleanWeek(w) || []).map(function (d) {
@@ -165,6 +204,7 @@
     if (Object.keys(s).length) out.setup = s;
     var o = cleanOther(a && a.other);
     if (o) out.other = o;
+    if (a && (a.venue_kind === "pub" || a.venue_kind === "club")) out.venue_kind = a.venue_kind;
     var w = cleanWeek(a && a.week);
     if (w && w.length) out.week = w;
     return out;
@@ -348,6 +388,10 @@
       [a, b2].forEach(function (i, k) { i.type = "number"; i.setAttribute("inputmode", "numeric"); i.value = String(s.def[k]); i.min = String(s.min); i.max = String(s.max); i.setAttribute("aria-label", s.label + (k ? " (last)" : " (first)")); i.id = "vpGsIn_" + s.keys[k]; });
       pair.appendChild(a); pair.appendChild(el("span", null, "to")); pair.appendChild(b2); wrap.appendChild(pair);
       get = function () { var x1 = parseInt(a.value, 10), x2 = parseInt(b2.value, 10); if (isNaN(x1) || isNaN(x2)) return undefined; return [Math.max(s.min, x1), Math.min(s.max, x2)]; };
+    } else if (s.kind === "fixed") {
+      /* a choice the venue's rules make for them, said in one plain line (bingo's paper tickets) */
+      var fx = el("p", "vpgs-info", s.words || ""); fx.id = "vpGsFixed_" + s.key; wrap.appendChild(fx);
+      get = function () { return s.value; };
     } else if (s.kind === "info") {
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
     } else {
@@ -420,8 +464,17 @@
     sec.appendChild(el("p", "sub", "Advanced settings. The usual answers suit most venues."));
     var advRows = el("div", "vpgs-rows"); sec.appendChild(advRows);
     var hasAdv = false;
-    g.settings.forEach(function (s) {
-      if (s.firstOpenOnly && !opts.first) return;
+    var settings = g.settings;
+    /* BINGO BY STATE AND PUB OR CLUB: only the choices this venue is allowed, nothing that does not apply. */
+    if (gkey === "bingo") {
+      var br = bingoRules(cx.venue, opts.answers || (cx.settings && cx.settings.setup_answers));
+      if (!br.phones || !br.autoDraw) settings = settings.map(function (s) {
+        if (s.key === "ticket_kind" && !br.phones) return { key: "ticket_kind", label: "Paper tickets", kind: "fixed", value: "paper", words: br.why, help: s.help };
+        if (s.key === "caller" && !br.autoDraw) return Object.assign({}, s, { options: [[true, "You draw real balls"]], def: true });
+        return s;
+      });
+    }
+    settings.forEach(function (s) {
       if (opts.quickOnly && !s.quick) return;
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
       if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
@@ -443,7 +496,7 @@
     function collect() {
       var vals = {};
       rows.forEach(function (r) {
-        if (r.hidden || r.s.kind === "info") return;
+        if (r.hidden || r.s.kind === "info") return;   // a "fixed" choice is saved, an "info" line is not
         var v = r.get(); if (v === undefined) return;
         if (r.s.kind === "range") { vals[r.s.keys[0]] = v[0]; vals[r.s.keys[1]] = v[1]; return; }
         if (r.s.kind === "playlists") { vals.playlists = v; vals.playlist = v[0]; return; }
@@ -518,7 +571,7 @@
       if (deps.weekOnly) return end("closed");   // the Account page's game nights: closing changes nothing
       /* Closing part way: whatever is not set up keeps its defaults and opens its own setup the first time. */
       var rest = left(); rest.forEach(function (g) { mark(g, "later"); });
-      Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g), true); })).then(persist, persist);
+      Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
       end("closed");
     });
     function headsUp() {
@@ -544,6 +597,20 @@
       F.body.appendChild(F.el("p", "vpgs-lead", "Tick all you run, even the ones you only do now and then."));
       var box = F.el("div", "vpgs-chips"); box.id = "vpGsGames"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Your games");
       var cur = (answers.games || []).slice(), other = cleanOther(answers.other), otherOn = !!other;
+      /* PUB OR CLUB, asked once and only when the venue's own record does not say (Dean, 6 Nov 2026). It decides which
+         bingo this venue may run. Kept as setup_answers.venue_kind for HQ to confirm on the venue. */
+      var kindWrap = null;
+      if (!(v.entity_type === "for_profit" || v.entity_type === "non_profit")) {
+        kindWrap = F.el("div", "vpgs-row two"); kindWrap.id = "vpGsKind"; kindWrap.setAttribute("style", "margin:0 0 14px;padding-top:0;border-top:none");
+        kindWrap.appendChild(F.el("div", "vpgs-lab", "Are you a pub or a club?"));
+        var kseg = F.el("div", "vpgs-seg"); kseg.setAttribute("role", "group"); kseg.setAttribute("aria-label", "Pub or club");
+        [["pub", "A pub or hotel"], ["club", "A club"]].forEach(function (o) {
+          var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", o[0]); b.setAttribute("aria-pressed", answers.venue_kind === o[0] ? "true" : "false");
+          b.addEventListener("click", function () { answers.venue_kind = o[0]; Array.prototype.forEach.call(kseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === o[0] ? "true" : "false"); }); drawChips(); });
+          kseg.appendChild(b);
+        });
+        kindWrap.appendChild(kseg);
+      }
       var otherIn = F.el("input", "vpgs-in"); otherIn.id = "vpGsOther"; otherIn.type = "text"; otherIn.maxLength = OTHER_MAX;
       otherIn.placeholder = "e.g. karaoke, poker, a footy tipping comp"; otherIn.setAttribute("aria-label", "What else do you run?"); otherIn.value = other;
       var otherWrap = F.el("div"); otherWrap.setAttribute("style", "margin:10px 0 0"); otherWrap.appendChild(otherIn);
@@ -564,12 +631,23 @@
         b.addEventListener("click", function () { var now2 = click(); b.setAttribute("aria-checked", now2 ? "true" : "false"); b.firstChild.textContent = now2 ? "✓" : ""; paint(); });
         box.appendChild(b); return b;
       }
-      GAMES.forEach(function (g) {
-        chip(g, gameOf(g).title, cur.indexOf(g) >= 0, function () { var i = cur.indexOf(g); if (i >= 0) cur.splice(i, 1); else cur.push(g); return i < 0; });
-      });
-      chip("other", "Something else", otherOn, function () { otherOn = !otherOn; return otherOn; });
+      /* Bingo where it is not open to this venue (an SA or NT pub) is not offered, the way its console hides the tile. */
+      var bnote = F.el("p", "vpgs-note"); bnote.id = "vpGsBingoNote";
+      function drawChips() {
+        while (box.firstChild) box.removeChild(box.firstChild);
+        var br = bingoRules(v, answers);
+        if (br.hidden) { var bi = cur.indexOf("bingo"); if (bi >= 0) cur.splice(bi, 1); }
+        GAMES.forEach(function (g) {
+          if (g === "bingo" && br.hidden) return;
+          chip(g, gameOf(g).title, cur.indexOf(g) >= 0, function () { var i = cur.indexOf(g); if (i >= 0) cur.splice(i, 1); else cur.push(g); return i < 0; });
+        });
+        chip("other", "Something else", otherOn, function () { otherOn = !otherOn; return otherOn; });
+        bnote.textContent = br.hidden ? br.why : ""; bnote.style.display = br.hidden ? "" : "none";
+        paint();
+      }
       otherIn.addEventListener("input", paint);
-      F.body.appendChild(box); F.body.appendChild(otherWrap); paint();
+      if (kindWrap) F.body.appendChild(kindWrap);
+      F.body.appendChild(box); F.body.appendChild(otherWrap); F.body.appendChild(bnote); drawChips();
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", headsUp)); F.foot.appendChild(next);
     }
     /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026), right after the games question, skippable: for each game they
@@ -646,7 +724,7 @@
       gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length, n: all.length, on: i + 1, back: allToday }, function (outcome) {
         if (outcome === "saved") { mark(g, "done"); persist(); afterGame(g); return; }
         mark(g, "later");
-        return savePrefs(deps, vid, g, help().defaults(g), true).then(function () { persist(); afterGame(g); });
+        return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true).then(function () { persist(); afterGame(g); });
       });
     }
     /* "Do you want to set up your next game?" ONLY here, between games of this first run (Dean, 6 Nov 2026). */
@@ -673,7 +751,7 @@
     function noWorries(rest) {
       rest.forEach(function (g) { mark(g, "later"); });
       var withDefaults = rest.filter(function (g) { return !gameOf(g).needsDetails; });
-      Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g), true); })).then(persist, persist);
+      Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
       F.clear(); F.step("All done for today", 0, 0); F.title.textContent = "No worries.";
       var line = "We'll remind you when you open each of those games.";
       if (withDefaults.length) line += " Your default settings have been saved for " + listWords(withDefaults) + ".";
@@ -723,7 +801,7 @@
         }
         if (o === "defaults") {
           /* PLAY NOW: the defaults for anything not saved yet (musical bingo: the popular songs), then the console. */
-          return savePrefs(deps, vid, gkey, help().defaults(gkey), true).then(function (saved) {
+          return savePrefs(deps, vid, gkey, help().defaults(gkey, { bingo: bingoRules(cx.venue, cx.settings && cx.settings.setup_answers) }), true).then(function (saved) {
             out("defaults"); if (saved && typeof deps.onSaved === "function") deps.onSaved();
           });
         }
@@ -732,6 +810,6 @@
     });
   }
 
-  root.VPGameSetup = { cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
+  root.VPGameSetup = { bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
     savePrefs: savePrefs, listWords: listWords, brisbaneDate: brisbaneDate, dayOf: dayOf, ORDER: ORDER, LKEY: LKEY, GAME_API: GAME_API, OTHER_MAX: OTHER_MAX };
 })(typeof window !== "undefined" ? window : this);

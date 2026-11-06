@@ -46,7 +46,7 @@ function raw(el) { var t = el.textContent || ''; el.children.forEach(function (c
 function seen(el) { return raw(el).replace(/\s+/g, ' ').trim(); }
 async function settle() { for (var i = 0; i < 30; i++) await Promise.resolve(); }
 
-var HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
+var GAMING = readFile('venueplay/app/vp-gaming.js'), HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
 var NOW = Date.parse('2026-11-06T15:30:00Z');   // 1:30am on Sat 7 Nov in Brisbane: the Brisbane date is the 7th, not the 6th
 var CALLS, PREFS, SAVED, STORE, RELOADS;
 function page(over) {
@@ -67,16 +67,17 @@ function page(over) {
     if (m) ans = over.prefsReadFail ? (st = 503, { error: 'busy' }) : { game: m[2], prefs: PREFS[m[2]] || {} };
     else if (/\/host\/game-prefs$/.test(u)) { var g = c.body.game; PREFS[g] = Object.assign({}, PREFS[g] || {}, c.body.prefs); ans = { ok: true, game: g, prefs: PREFS[g] }; }
     else if (/\/host\/members\/settings$/.test(u)) { if (over.membersRefuse) { st = 403; ans = { error: 'Only a manager or owner can change the draw and jackpot settings' }; } }
-    else if (/musical-library\.json$/.test(u)) ans = { playlists: [{ id: 'pub-classics', name: 'Pub Classics' }, { id: 'bad id<script>', name: 'x' }] };
+    else if (/musical-library\.json$/.test(u)) ans = { playlists: [{ id: 'pub-classics', name: 'Pub Classics' }, { id: '80s-pop', name: '80s' }, { id: '90s', name: '90s' }, { id: '2000s', name: '2000s' }, { id: 'aussie', name: 'Aussie' }, { id: 'country', name: 'Country' }, { id: 'bad id<script>', name: 'x' }] };
     return Promise.resolve({ ok: st < 400, status: st, json: function () { return Promise.resolve(ans); } });
   };
   var client = { auth: { getSession: function () { return Promise.resolve({ data: { session: { access_token: 'TOKEN-1' } } }); } },
     from: function (t) { var b = { select: function () { return b; }, eq: function () { return b; },
       then: function (r) { return Promise.resolve({ data: t === 'vp_question_sets' ? [{ id: 'S-OWN', title: 'Our quiz', question_count: 40, owner_venue_id: 'V1' }, { id: 'S-LIB', title: 'General knowledge', question_count: 400, owner_venue_id: null }, { id: 'S-OTHER', title: 'Another pub', owner_venue_id: 'V2' }] : [] }).then(r); } }; return b; } };
   var window = { localStorage: storage, document: document, fetch: fetch, location: { reload: function () { RELOADS++; } } };
+  (new Function('window', 'document', GAMING))(window, document);
   (new Function('window', HELP))(window);
   (new Function('window', GS))(window);
-  var ctx = { role: over.role || 'owner', venue: { id: 'V1', name: 'The Test Arms' }, settings: { setup_answers: over.answers || {} } };
+  var ctx = { role: over.role || 'owner', venue: Object.assign({ id: 'V1', name: 'The Test Arms', au_state: 'QLD', entity_type: 'for_profit' }, over.venue || {}), settings: { setup_answers: over.answers || {} } };
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, now: NOW, ctx: ctx,
     saveSettings: function (id, patch) { SAVED.push({ id: id, patch: JSON.parse(JSON.stringify(patch)) }); return over.saveFail ? Promise.reject(new Error('no column')) : Promise.resolve({}); },
     onSaved: function () { RELOADS++; } };
@@ -231,12 +232,12 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('musical bingo asks its three quick questions first: which music, what prize, how many rounds (Dean, round 2)', asked.join() === 'playlists,rounds,prize_same,prizes', asked);
   await settle();
   var music = all($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id'); }).map(function (e) { return e.getAttribute('data-id'); });
-  check('the music from the song library, a bad id never offered', music.join() === 'pub-classics', music);
-  check('the popular songs (Pub Classics) ticked to start with', walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).getAttribute('aria-checked') === 'true');
+  check('the music from the song library, a bad id never offered', music.join() === 'pub-classics,80s-pop,90s,2000s,aussie,country', music);
+  check('the popular songs ticked to start with (Pub Classics on the fallback list before the library loads)', walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).getAttribute('aria-checked') === 'true');
   check('a BIG "Play now with the defaults" button, not a small link', /^Play now with the defaults/.test(T(P, 'vpGsPlayNow')) && / big/.test($(P, 'vpGsPlayNow').className), [T(P, 'vpGsPlayNow'), $(P, 'vpGsPlayNow').className]);
   CALLS = []; $(P, 'vpGsPlayNow').click(); await settle();
   var dp = posts('/host/game-prefs')[0];
-  check('Play now: the defaults saved where nothing was, the popular songs, then straight to the console', (await fo) === 'defaults' && !$(P, 'vpGs') && dp && dp.body.prefs.playlist === 'pub-classics' && dp.body.prefs.playlists.join() === 'pub-classics' && dp.body.prefs.rounds === 1, dp && dp.body);
+  check('Play now: the defaults saved where nothing was, the popular songs (Pub Classics, 80s, 90s, 2000s, Aussie, a different one each week), then straight to the console', (await fo) === 'defaults' && !$(P, 'vpGs') && dp && dp.body.prefs.playlist === 'pub-classics' && dp.body.prefs.playlists.join() === 'pub-classics,80s-pop,90s,2000s,aussie' && dp.body.prefs.rounds === 1, dp && dp.body);
   P.ctx.settings.setup_answers.setup.musical = 'later';   // even if the venue's save was refused (163 not run)
   check('never again on this device', (await P.GS.firstOpen('musical', P.deps)) === 'none' && !$(P, 'vpGs'));
   var P6 = page({ answers: { setup: { trivia: 'later' } }, role: 'host' });
@@ -248,7 +249,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var rp = posts('/host/game-prefs')[0];
   check('Save: raffles settings sent, the console takes them (reload), and it is "done"', (await fo8) === 'saved' && RELOADS === 1 && rp.body.game === 'raffle' && rp.body.prefs.range_max === 150 && rp.body.prefs.prizes.join() === 'Meat Tray' && JSON.parse(STORE['vpGameSetup:V1']).setup.raffles === 'done', rp && rp.body);
   var P9 = page({ answers: { setup: { bingo: 'later' } } }); P9.GS.firstOpen('bingo', P9.deps); await settle();
-  check('bingo asks who draws the balls when they first open it (not in the first run)', !!$(P9, 'vpGsQ_caller'), T(P9, 'vpGsBody').slice(0, 200));
+  check('bingo\'s first open has the same state-aware setup (who draws the numbers, for paper)', !!$(P9, 'vpGsQ_caller') && T(P9, 'vpGsTitle') === 'Set up bingo', T(P9, 'vpGsBody').slice(0, 200));
   check('setup states keep only known games and states', JSON.stringify(P.GS.cleanSetup({ trivia: 'done', musical: 'x', jag: 'done', bingo: 'later' })) === '{"trivia":"done","bingo":"later"}');
 
   section('6b. ROUND 2 (Dean, 6 Nov 2026): something else, prizes per round, raffle prizes, phone or paper bingo, the draw date');
@@ -269,21 +270,21 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'false' && e.parentNode.parentNode.parentNode.getAttribute('data-key') === 'prize_same'; }).click();
   check('three rounds, not the same prize: a box for each round', $(P, 'vpGsIn_prizes').children.length === 3 && $(P, 'vpGsIn_prizes_2').getAttribute('aria-label') === 'Prize for round 3', $(P, 'vpGsIn_prizes').children.length);
   $(P, 'vpGsIn_prizes_0').value = '$20 bar tab'; $(P, 'vpGsIn_prizes_2').value = 'Meat tray';
-  walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).click();   // pick nothing: the first picked is the playlist
+  ['pub-classics', '80s-pop', '90s', '2000s', 'aussie'].forEach(function (id) { walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === id; }).click(); });   // untick the popular ones: nothing picked
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var mp = posts('/host/game-prefs')[0];
   check('saved: rounds 3, a prize for each round, the first round\'s as the console\'s prize', mp && mp.body.prefs.rounds === 3 && mp.body.prefs.prizes.join('|') === '$20 bar tab||Meat tray' && mp.body.prefs.prize === '$20 bar tab' && mp.body.prefs.prize_same === false, mp && mp.body);
   check('no music picked: nothing sent for it, the console keeps choosing', mp && !('playlists' in mp.body.prefs) && !('playlist' in mp.body.prefs), mp && mp.body);
   check('the musical bingo Worker keeps all of it', mp && srtj(WK.clean('musical', mp.body.prefs)) === srtj(mp.body.prefs), mp && WK.clean('musical', mp.body.prefs));
   $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
-  check('bingo: never asks about real balls in the first run (Dean: it becomes a prompt when they open the game)', !$(P, 'vpGsQ_caller'));
+  check('bingo with phone tickets: no question about who draws the numbers (it does not apply)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === 'none');
   check('phone tickets: tickets each player is asked, no paper words', $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === '' && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === 'none');
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'paper'; }).click();
-  check('paper tickets: "We can\'t check paper tickets, but we can draw the balls for you, or you draw them and tap each number on the screen."', /We can't check paper tickets, but we can draw the balls for you, or you draw them and tap each number on the screen\./.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === '' && $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === 'none');
+  check('paper tickets (the venue\'s own books): "We can\'t check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.", and who draws them', /We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen\./.test(T(P, 'vpGsBody')) && $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === '' && /We can draw the numbers for you/.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === '' && $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === 'none');
   check('no empty "A few quick questions" heading when paper leaves nothing advanced to ask', $(P, 'vpGsAdvanced').style.display === 'none');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var bp = posts('/host/game-prefs')[0];
-  check('saved as paper, with no tickets-each-player for paper', bp && bp.body.prefs.ticket_kind === 'paper' && !('cards' in bp.body.prefs) && !('allow_early' in bp.body.prefs) && srtj(WK.clean('bingo', bp.body.prefs)) === srtj(bp.body.prefs), bp && bp.body);
+  check('saved as paper, venueplay drawing the numbers, with no tickets-each-player for paper', bp && bp.body.prefs.ticket_kind === 'paper' && bp.body.prefs.caller === false && !('cards' in bp.body.prefs) && !('allow_early' in bp.body.prefs) && srtj(WK.clean('bingo', bp.body.prefs)) === srtj(bp.body.prefs), bp && bp.body);
   $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   $(P, 'vpGsIn_prize_count').value = '2'; $(P, 'vpGsIn_prize_count').handlers.input.forEach(function (f) { f(); });
   check('two prizes, all the same: still one box', $(P, 'vpGsIn_prizes').children.length === 1);
@@ -338,6 +339,36 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('the week in words for the Account page: "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws"', P.GS.weekWords([{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }]) === 'Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws');
   var BIL = readFile('venueplay/app/billing.html'), about = BIL.slice(BIL.indexOf('function renderAbout'), BIL.indexOf('function renderOtherAccounts'));
   check('the Account page shows the week and opens the week step for that venue (weekOnly), and loads the module', /VPGameSetup\.weekWords\(\(by\[v\.id\] \|\| \{\}\)\.week\)/.test(about) && /VPGameSetup\.run\(cx, \{ start: "week", weekOnly: true/.test(about) && BIL.indexOf('<script src="vp-gamesetup.js"></script>') > 0 && /esc\(wk\)/.test(about), about.slice(0, 300));
+
+  section('6d. BINGO BY STATE AND PUB OR CLUB; THE MUSIC TAKES TURNS (Dean, 6 Nov 2026)');
+  var R = page().GS;
+  var vic = R.bingoRules({ au_state: 'VIC', entity_type: 'for_profit' }), sap = R.bingoRules({ au_state: 'SA', entity_type: 'for_profit' }), sac = R.bingoRules({ au_state: 'SA', entity_type: 'non_profit' }), qld = R.bingoRules({ au_state: 'QLD', entity_type: 'for_profit' });
+  check('from vp-gaming.js: Victoria no phone tickets; SA and NT pubs no bingo; an SA club bingo on paper; Queensland phones', !vic.phones && !vic.hidden && sap.hidden && !sac.hidden && !sac.phones && qld.phones && !qld.hidden && !R.bingoRules({ au_state: 'TAS' }).phones && R.bingoRules({ au_state: 'NT' }).hidden, [vic, sap, sac, qld]);
+  check('the one plain line for Victoria is the state\'s own first sentence, then what happens', vic.why === "Victoria does not allow a phone as a bingo ticket. So it's paper tickets, with our calling and our screen.", vic.why);
+  check('a venue nobody has called a pub or a club is judged the stricter way, and its own answer counts', R.bingoRules({ au_state: 'SA' }).hidden && !R.bingoRules({ au_state: 'SA' }, { venue_kind: 'club' }).hidden);
+  P = page({ venue: { au_state: 'VIC' } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  check('a venue whose record says pub or club is not asked', !$(P, 'vpGsKind'));
+  gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); if ($(P, 'vpGsWeekSkip')) $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  check('Victoria: phone tickets switched off and said straight away in one plain line, no phone-only questions', T(P, 'vpGsFixed_ticket_kind') === vic.why && !$(P, 'vpGsQ_cards') === false && $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === 'none' && !walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'phone'; }), T(P, 'vpGsFixed_ticket_kind'));
+  check('Victoria: who draws the numbers is asked (venueplay can, or real balls)', $(P, 'vpGsQ_caller').parentNode.parentNode.parentNode.style.display === '');
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  var vb = posts('/host/game-prefs')[0];
+  check('saved as paper for a Victorian venue', vb && vb.body.prefs.ticket_kind === 'paper' && vb.body.prefs.caller === false && !('cards' in vb.body.prefs), vb && vb.body);
+  check('the defaults for a Victorian venue are paper too', JSON.stringify(P.H.defaults('bingo', { bingo: vic })).indexOf('"ticket_kind":"paper"') >= 0 && P.H.defaults('bingo', { bingo: qld }).ticket_kind === 'phone' && P.H.defaults('bingo', { bingo: qld }).caller === undefined);
+  P = page({ venue: { au_state: 'SA', entity_type: null } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  check('pub or club unknown: asked once, with the games', !!$(P, 'vpGsKind') && /Are you a pub or a club\?/.test(T(P, 'vpGsKind')));
+  check('an SA venue that might be a pub sees no bingo tick, and one line why', !gameBtn(P, 'bingo') && /Bingo isn't open to a pub in South Australia/.test(T(P, 'vpGsBingoNote')), T(P, 'vpGsBingoNote'));
+  walk($(P, 'vpGsKind'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'club'; }).click();
+  check('they say club: bingo is offered', !!gameBtn(P, 'bingo') && $(P, 'vpGsBingoNote').style.display === 'none');
+  gameBtn(P, 'bingo').click(); SAVED = []; $(P, 'vpGsNext').click(); await settle();
+  check('kept as setup_answers.venue_kind for HQ to confirm', SAVED.length && SAVED[SAVED.length - 1].patch.setup_answers.venue_kind === 'club', SAVED.length && SAVED[SAVED.length - 1].patch.setup_answers);
+  check('the music takes turns: five weeks, five different lists, then round again (Brisbane weeks from Monday)', (function () {
+    var L = ['a', 'b', 'c', 'd', 'e'], mon = Date.parse('2026-11-08T14:00:00Z'), seen = [];   // Monday 9 Nov, midnight in Brisbane
+    for (var w = 0; w < 6; w++) seen.push(R.weekPick(L, mon + w * 7 * 86400000));
+    return seen.slice(0, 5).sort().join() === 'a,b,c,d,e' && seen[5] === seen[0] && R.weekPick(L, mon - 1000) !== R.weekPick(L, mon) && R.weekPick(L, mon + 6.9 * 86400000) === R.weekPick(L, mon);
+  })());
+  var MUS = readFile('venueplay/app/musical/host.html');
+  check('the musical bingo console plays this week\'s list when the venue has more than one', /VPGameSetup\.weekPick\(p\.playlists\)/.test(MUS.slice(MUS.indexOf('function applyMusicalPrefs'), MUS.indexOf('function musicalLocalPrefs'))));
 
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');

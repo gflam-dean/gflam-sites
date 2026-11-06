@@ -18,7 +18,6 @@
      showIf    { key: value }: shown only while that setting has that value
      fills     a date that fills another box (members draws: the start date fills the draw day)
      quick     musical bingo's three quick questions on the first open (Dean, round 2)
-     firstOpenOnly  asked when they first open the game, not in the first run (bingo's real balls, Dean round 2)
 
    Plain words, lowercase venueplay, no em dashes, musical bingo is not bingo. Checked by tools/test-game-setup.js
    (length, no dashes, every key on the Worker's list, every default the console's own). */
@@ -26,6 +25,10 @@
   "use strict";
   var ON_OFF = [[true, "On"], [false, "Off"]];
   var YES_NO = [[true, "Yes"], [false, "No"]];
+  /* THE POPULAR SONGS (Dean, 6 Nov 2026): a few crowd-favourite lists that take turns week to week, so the same songs
+     are not played every week. Musical bingo's default music; the console plays this week's one
+     (VPGameSetup.weekPick, Brisbane weeks from Monday). Ids from venueplay/data/musical-library.json. */
+  var POPULAR = ["pub-classics", "80s-pop", "90s", "2000s", "aussie"];
   var GAMES = [
     { key: "trivia", name: "trivia", title: "Trivia", console: "/app/trivia/host.html", prefs: "trivia", settings: [
       { key: "set_id", label: "Question set", kind: "sets", def: "",
@@ -53,8 +56,8 @@
     ], popovers: ["buzzer", "speed_bonus", "double_points"] },
 
     { key: "musical", name: "musical bingo", title: "Musical bingo", console: "/app/musical/host.html", prefs: "musical", settings: [
-      { key: "playlists", label: "Your music", kind: "playlists", def: ["pub-classics"], quick: true,
-        help: "Pick one or more kinds of music your crowd knows. The cards are made from these songs." },
+      { key: "playlists", label: "Your music", kind: "playlists", def: POPULAR, quick: true,
+        help: "Pick one or more kinds of music your crowd knows. With more than one, a different one plays each week." },
       { key: "rounds", label: "Rounds of musical bingo a night", kind: "number", def: 1, min: 1, max: 10, quick: true,
         help: "How many games you play in a night, so the TV can show the next round coming up." },
       { key: "prize_same", label: "Same prize every round?", kind: "seg", options: YES_NO, def: true, quick: true,
@@ -78,12 +81,18 @@
         help: "The music plays from the TV, so plug the TV's sound into your speakers (HDMI to your soundbar or amp)." }
     ], popovers: ["playlists", "prize_same", "hits_only"] },
 
+    /* BINGO FOLLOWS THE VENUE'S STATE AND WHETHER IT IS A PUB OR A CLUB (Dean, 6 Nov 2026), from the rules in
+       vp-gaming.js (VPGameSetup.bingoRules): where phones may not be tickets, "phone tickets" is switched off and
+       one plain line says why; where bingo is not open to a pub at all (SA, NT), there is no bingo setup. Paper
+       tickets are the venue's OWN books: venueplay never prints or checks them. */
     { key: "bingo", name: "bingo", title: "Bingo", console: "/app/", prefs: "bingo", settings: [
       { key: "ticket_kind", label: "Phone tickets or paper tickets?", kind: "seg", options: [["phone", "Phone tickets"], ["paper", "Paper tickets"]], def: "phone",
         help: "Phone tickets are checked by venueplay when someone calls BINGO. Paper tickets are your own books, checked by your caller." },
       { key: "paper_note", label: "With paper tickets", kind: "info", showIf: { ticket_kind: "paper" },
-        words: "We can't check paper tickets, but we can draw the balls for you, or you draw them and tap each number on the screen.",
-        help: "venueplay shows every ball on the TV either way. Your caller checks a paper ticket when someone calls BINGO." },
+        words: "We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.",
+        help: "venueplay shows every number on the TV either way. Your caller checks a paper ticket when someone calls BINGO." },
+      { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw the numbers for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
+        help: "venueplay can draw the numbers on the TV for you, or your caller draws real balls and taps each number in as it's called." },
       { key: "cards", label: "Tickets each player gets", kind: "select", def: 1, showIf: { ticket_kind: "phone" },
         options: [[1, "1 ticket"], [2, "2 tickets"], [3, "3 tickets"], [4, "4 tickets"], [5, "5 tickets"], [6, "6 tickets (a full book)"]],
         help: "How many tickets everyone gets each game. More tickets means more chances and quicker wins." },
@@ -94,10 +103,8 @@
         help: "What the winner gets. venueplay remembers a prize for each pattern, so it fills in next time." },
       { key: "allow_early", label: "Let players call BINGO early", kind: "seg", options: ON_OFF, def: false, advanced: true, showIf: { ticket_kind: "phone" },
         prompt: "Let players call BINGO early, for a laugh?",
-        help: "Players can call BINGO before they've really won. A wrong call comes to you and you just tap Play on." },
-      { key: "caller", label: "Who draws the balls?", kind: "seg", options: [[false, "venueplay draws them"], [true, "We draw real balls"]], def: false, firstOpenOnly: true,
-        help: "venueplay can draw the balls for you on the TV, or your caller draws real balls and taps each number in." }
-    ], popovers: ["ticket_kind", "cards", "allow_early"] },
+        help: "Players can call BINGO before they've really won. A wrong call comes to you and you just tap Play on." }
+    ], popovers: ["ticket_kind", "caller", "cards"] },
 
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", settings: [
       { key: "prize_count", label: "How many prizes do you draw?", kind: "number", def: 1, min: 1, max: 12,
@@ -153,18 +160,24 @@
   ];
   function byKey(k) { return GAMES.filter(function (g) { return g.key === k; })[0] || null; }
   /* A game's saved values from its defaults, for the keys the Worker keeps (members: none, it has no defaults). */
-  function defaults(k) {
+  /* opts.bingo: the venue's bingo rules (VPGameSetup.bingoRules): no phone tickets there means paper by default,
+     and venueplay drawing the numbers wherever that is allowed. */
+  function defaults(k, opts) {
     var g = byKey(k), out = {};
     if (!g || g.needsDetails) return out;
+    var br = (opts && opts.bingo) || null;
     g.settings.forEach(function (s) {
-      if (s.kind === "info" || s.kind === "sets" || s.firstOpenOnly) return;   // picked on the night, or asked on the first open
+      if (s.kind === "info" || s.kind === "sets") return;   // words only, or picked on the night
       if (s.kind === "range") { out[s.keys[0]] = s.def[0]; out[s.keys[1]] = s.def[1]; return; }
       if (s.kind === "playlists") { out.playlists = s.def.slice(); out.playlist = s.def[0]; return; }
       if (s.kind === "prizelist") { if (s.def) { out[s.key] = [s.def]; if (k === "musical") out.prize = s.def; } return; }
       if (s.def === "" || s.def == null) return;   // an empty prize is "not set", the console's own empty box
+      if (s.showIf && k === "bingo" && br && !br.phones && s.showIf.ticket_kind === "phone") return;
+      if (s.showIf && k === "bingo" && (!br || br.phones) && s.showIf.ticket_kind === "paper") return;
       out[s.key] = s.def;
     });
+    if (k === "bingo" && br && !br.phones) { out.ticket_kind = "paper"; out.caller = br.autoDraw === false; }
     return out;
   }
-  root.VPSetupHelp = { GAMES: GAMES, byKey: byKey, defaults: defaults, DEFAULT_PLAYLIST: "pub-classics" };
+  root.VPSetupHelp = { GAMES: GAMES, byKey: byKey, defaults: defaults, POPULAR: POPULAR, DEFAULT_PLAYLIST: POPULAR[0] };
 })(typeof window !== "undefined" ? window : this);

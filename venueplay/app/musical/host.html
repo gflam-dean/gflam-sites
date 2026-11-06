@@ -2068,8 +2068,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function applyMusicalPrefs(p){
     if(!p || G.status!=="setup") return false;
     var used=false;   // VP.gamePrefs holds every save while this runs
-    if(p.playlist){
-      for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===p.playlist){ selectPlaylist(p.playlist); used=true; break; } }
+    /* MORE THAN ONE LIST (the setup wizard, Dean 6 Nov 2026): this week's one, so the same songs are not played every
+       week (VPGameSetup.weekPick, Brisbane weeks from Monday). The host can still pick any theme on the night. */
+    var plWant=(Array.isArray(p.playlists) && p.playlists.length>1 && window.VPGameSetup && VPGameSetup.weekPick) ? VPGameSetup.weekPick(p.playlists) : p.playlist;
+    if(plWant){
+      for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===plWant){ selectPlaylist(plWant); used=true; break; } }
     }
     if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
     if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
