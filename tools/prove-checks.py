@@ -13584,6 +13584,12 @@ MUTATIONS = [
     ('test-vp-tonight.js', 'venueplay/app/vp-tonight.js',
      '    if (o.offers !== false) {', '    if (true) {',
      'the offers tick shows for a venue that does not collect it'),
+    ('test-vp-tonight.js', 'venueplay/app/vp-tonight.js',
+     '    box.appendChild(el("div", "vpt-none", "No game here right now"));', '    box.appendChild(head(o.name)); box.appendChild(el("div", "vpt-none", "No game here right now"));',
+     'the no-game screen says "You\'re in, Sam" when nothing is on'),
+    ('test-vp-tonight.js', 'venueplay/app/vp-tonight.js',
+     '    var s = strip(o, first, function (dd) { paint(dd); });', '    var s = strip(o, first, function (dd) { });',
+     'tapping a day on the no-game screen loads nothing'),
 ]
 
 

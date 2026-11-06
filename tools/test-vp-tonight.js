@@ -77,9 +77,12 @@ ok('a name or prize is set as text, never as HTML', all(evil).every(function (n)
 print('\n"NO GAME ON RIGHT NOW", Dean\'s round 5 pick');
 var ng = new Node('div');
 T.noGame(ng, { name: 'Sam', nights: ['wed', 'fri'], games: ['trivia'], venue: 'Tugun Bowls Club', now: new Date(2026, 10, 7, 12, 0, 0) });
-ok('"You\'re in, Sam" then "No game here right now"', byClass(ng, 't')[0].textContent === 'You’re in, Sam' && byClass(ng, 'vpt-none')[0].textContent === 'No game here right now');
+ok('nothing is on, so it never says "You\'re in": it leads with "No game here right now"', byClass(ng, 't').length === 0 && !/You.re in/.test(ng.textContent) && ng.children[0].className === 'vpt-none' && ng.children[0].textContent === 'No game here right now');
+ok('then the NEXT game night in the spot, labelled "Next here", before the week', ng.children[1].className === 'vpt-night' && /Next here/.test(ng.children[1].textContent) && /Wed 11/.test(ng.children[1].textContent) && ng.children[2].className === 'vpt-week', ng.children.map(function (c) { return c.className; }).join());
 ok('no sign-up box when the page has no way to send one', byClass(ng, 'vpt-sign').length === 0);
 ok('the week strip, starting on the next game night (Wednesday, from a Saturday)', byClass(ng, 'vpt-week').length === 1 && /picked/.test(byClass(ng, 'd')[4].className) && /Wed 11/.test(byClass(ng, 'vpt-night')[0].textContent), texts(ng, 'd'));
+byClass(ng, 'd')[6].onclick();
+ok('tapping Friday loads Friday\'s night', /Fri 13/.test(byClass(ng, 'vpt-night')[0].textContent) && /picked/.test(byClass(ng, 'd')[6].className), byClass(ng, 'vpt-night')[0].textContent);
 ok('never "you\'re on the list"', !/on .*list/i.test(ng.textContent));
 var sent = [], sg = new Node('div'), resolveIt;
 T.noGame(sg, { name: 'Sam', venue: 'Tugun Bowls Club', signup: function (e, o) { sent.push([e, o]); return { then: function (ok_) { resolveIt = ok_; } }; }, now: WED });

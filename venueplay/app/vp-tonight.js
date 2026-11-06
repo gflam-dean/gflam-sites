@@ -11,9 +11,10 @@
      drawn by the page (/app/vp-phonead.js, .pfoot).
 
    "NO GAME ON RIGHT NOW":   VPTonight.noGame(box, o)
-     "You're in, Sam", "No game here right now", a SMALL optional "Get a heads up by email" (only when the page passes
+     "No game here right now" (never "You're in": nothing is on), the venue's NEXT game night in the spot, the same week
+     strip (tap a day to load that night), then a SMALL optional "Get a heads up by email" (only when the page passes
      o.signup, a function that sends it; after a confirmed send the box closes and is not shown again on this phone, and
-     nothing says "you're on the list"), then the same week strip with its night spot.
+     nothing says "you're on the list"). The venue's ad and our logo sit at the bottom, drawn by the page.
 
    DATA, read defensively. Only what the venue told the setup wizard (vp_venue_settings.setup_answers, migration 163),
    passed on by /join/info:
@@ -157,17 +158,18 @@
   function noGame(box, o) {
     if (!box) return;
     o = o || {}; box.innerHTML = "";
-    box.appendChild(head(o.name));
+    /* Nothing is on, so nobody is "in" (Dean, 6 Nov 2026): it leads with the plain words, then the NEXT game night. */
     box.appendChild(el("div", "vpt-none", "No game here right now"));
-    if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
     /* The night spot starts on the next game night from today (today included), or today when none is known. */
     var days = week(o), first = 0;
     for (var i = 0; i < days.length; i++) { if (days[i].on) { first = i; break; } }
     var spot = el("div", "vpt-night");
-    paintRows(spot, nightRows(o, days[first].date), "");
-    var s = strip(o, first, function (dd) { paintRows(spot, nightRows(o, dd.date), ""); });
-    box.appendChild(s.el);
+    function paint(dd) { paintRows(spot, nightRows(o, dd.date), dd.on ? (dd.i === 0 ? "Next here: tonight" : "Next here") : ""); }
+    paint(days[first]);
     box.appendChild(spot);
+    var s = strip(o, first, function (dd) { paint(dd); });
+    box.appendChild(s.el);
+    if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
     return s;
   }
   /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */
