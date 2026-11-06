@@ -70,11 +70,11 @@
     P + ".vpgs-list{list-style:none;margin:0 0 12px;padding:0}",
     P + ".vpgs-list li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid " + C.line + ";font-size:15px;line-height:1.45;color:" + C.muted + "}",
     P + ".vpgs-list li:first-child{border-top:none;padding-top:0}" + P + ".vpgs-list b{color:#FFFFFF}",
-    P + ".vpgs-n{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(255,31,142,.16);color:" + C.pink + ";display:flex;align-items:center;justify-content:center;font:800 13px " + HEAD + "}",
+    P + ".vpgs-n{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(255,31,142,.16);color:" + C.pink + ";display:flex;align-items:center;justify-content:center;font:800 14px " + HEAD + "}",
     P + ".vpgs-ready{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}",
     P + ".vpgs-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
     P + ".vpgs-chip{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);font:700 15px/1.25 " + HEAD + ";color:#FFFFFF;cursor:pointer;text-align:left}",
-    P + ".vpgs-chip .bx{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:13px;color:#FFFFFF}",
+    P + ".vpgs-chip .bx{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:14px;color:#FFFFFF}",
     P + ".vpgs-chip small{display:block;font:500 14px/1.3 Manrope,system-ui,sans-serif;color:" + C.faint + ";margin-top:2px}",
     P + ".vpgs-chip[aria-checked=true]{border-color:" + C.pink + ";background:rgba(255,31,142,.12)}" + P + ".vpgs-chip[aria-checked=true] .bx{background:" + C.pink + ";border-color:" + C.pink + "}",
     P + ".vpgs-music{display:grid;grid-template-columns:1fr 1fr;gap:6px}" + P + ".vpgs-music .vpgs-chip{min-height:44px;padding:8px 10px;font-size:14px}",
@@ -86,7 +86,7 @@
     P + ".vpgs-prow{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;font:700 14px " + HEAD + ";color:" + C.muted + "}",
     P + ".vpgs-none{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;font:600 14px Manrope,system-ui,sans-serif;color:" + C.faint + ";white-space:nowrap;cursor:pointer}",
     P + ".vpgs-none input{width:18px;height:18px;accent-color:" + C.pink + "}",
-    P + ".vpgs-add{align-self:flex-start;min-height:40px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
+    P + ".vpgs-add{align-self:flex-start;min-height:44px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
     P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
     P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:1/-1}",
     P + ".vpgs-sec{margin:14px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
@@ -844,7 +844,7 @@
       if (!ticked().length) return end("done");
       F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". We'll go through them one at a time, each in under five minutes."));
       var stack = F.el("div", "vpgs-stack");
-      stack.appendChild(F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { oneGame(left()[0]); }));
+      stack.appendChild(F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }));
       stack.appendChild(F.btn("Not today", "ghost big", "vpGsAllNo", function () { noWorries(left()); }));
       F.body.appendChild(stack);
       var nt = F.el("p", "vpgs-note", "Not today is fine: each game keeps the usual settings, and walks you through its setup the first time you open it.");

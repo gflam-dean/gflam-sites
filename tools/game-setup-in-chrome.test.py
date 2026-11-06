@@ -38,7 +38,7 @@ FIT = r'''(function(){ var s=document.getElementById("vpGs"); if(!s) return {non
   var W=document.documentElement.clientWidth, out={side: s.scrollWidth>s.clientWidth+1 || document.documentElement.scrollWidth>W+1, small:[], tiny:[], pop:null, title:(document.getElementById("vpGsTitle")||{}).textContent};
   [].forEach.call(s.querySelectorAll("button"),function(b){ var r=b.getBoundingClientRect(); if(!r.width) return;
     var need=/vpgs-q/.test(b.className)?28:(b.className==="got"?32:44); if(r.height<need-0.5) out.small.push((b.id||b.textContent).slice(0,30)+" "+Math.round(r.height)); });
-  [].forEach.call(s.querySelectorAll("p,span,button,li,h2,h3,select,input"),function(e){ var r=e.getBoundingClientRect(); if(!r.width||!(e.textContent||e.value)) return;
+  [].forEach.call(s.querySelectorAll("p,span,button,li,h2,h3,select,input"),function(e){ var r=e.getBoundingClientRect(); if(!r.width||!(e.textContent||e.value)||e.type==="checkbox") return;
     var f=parseFloat(getComputedStyle(e).fontSize); if(f<14) out.tiny.push((e.id||e.tagName)+" "+f); });
   var p=[].filter.call(s.querySelectorAll(".vpgs-pop"),function(e){return e.style.display==="block";})[0];
   if(p){ var r=p.getBoundingClientRect(); out.pop={left:r.left,right:r.right,W:W,text:p.textContent,pos:getComputedStyle(p).position}; }
@@ -63,7 +63,7 @@ def first_open(RIG):
     r = RIG.Rig(host_pages=('/app/trivia/host.html',))
     try:
         V = r.W.info['venue']
-        r.db['vp_question_sets'] = [{'id': '33333333-3333-4333-8333-333333333333', 'title': 'Pub Classics', 'question_count': 40,
+        r.db['vp_question_sets'] = [{'id': '33333333-3333-4333-8333-333333333333', 'title': 'General Knowledge', 'question_count': 400,
                                      'visibility': 'public', 'owner_venue_id': None, 'status': 'active'}]
         r.db['vp_venue_settings'] = [{'venue_id': V, 'setup_answers': {'games': ['trivia'], 'games_at': '2026-11-06', 'setup': {'trivia': 'later'}}}]
         tid, sid = r.open('/app/trivia/host.html?venue=' + V, width=820, height=1180)
@@ -118,7 +118,7 @@ def every_screen(RIG):
         V = r.W.info['venue']
         r.db['vp_venue_settings'] = [{'venue_id': V, 'setup_answers': {}}]
         for W, H in ((390, 664), (820, 1180), (1024, 768), (1280, 800)):
-            tid, sid = r.open('/app/?venue=' + V, width=W, height=H)
+            tid, sid = r.open('/app/?venue=' + V, before='try{localStorage.clear()}catch(e){}', width=W, height=H)
             r.until(sid, 'document.readyState==="complete" && !!window.VPGameSetup && !!window.VP && !!VP.getContext && !!VP.getContext() && !!VP.getContext().venue', 25)
             r.ask(sid, '(function(){ var o=document.getElementById("vpFirstRun"); if(o) o.remove(); window.__gsRun=VPGameSetup.run(VP.getContext(),{}); return true; })()')
             tag = '%dx%d' % (W, H)

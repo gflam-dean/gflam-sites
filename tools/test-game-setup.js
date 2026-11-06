@@ -417,6 +417,10 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('not named: called "{Day} Members Draw" from the draw day', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body.name === 'Friday Members Draw', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body);
 
+  var P13 = page({ answers: { games: ['trivia'], setup: { trivia: 'done' } } }); P13.GS.run(P13.ctx, Object.assign(P13.deps, { start: 'pick' })); await settle();
+  $(P13, 'vpGsNext').click(); if ($(P13, 'vpGsWeekSkip')) $(P13, 'vpGsWeekSkip').click(); $(P13, 'vpGsAllYes').click(); await settle();
+  check('every game already set up: "Yes" goes to "You\'re ready for your week", never a broken screen', T(P13, 'vpGsTitle') === "You're ready for your week.", T(P13, 'vpGsTitle'));
+
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');
   var gstep = FR.slice(FR.indexOf('STEP.games = function'), FR.indexOf('STEP.tv = function'));
