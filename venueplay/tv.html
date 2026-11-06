@@ -151,7 +151,8 @@
   .wo-what i{display:block;font-style:normal;font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.75cqw,34px);line-height:1.25;color:#C9C9D2;margin-top:.3cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .wo-row.game .wo-what i{color:#FF8CC6}
   .wo-time{font-family:'Anton',sans-serif;font-size:clamp(18px,3.6cqw,70px);color:#fff;line-height:1;white-space:nowrap}
-  .wo-l .wo-list,.wo-xl .wo-list{flex:1;justify-content:center;margin-top:0;padding-bottom:3cqw}   /* fewer rows: centred in the space under the header */
+  .wo-list{flex:1;justify-content:center;min-height:0}   /* the rows centred in the space under the header, which stays put */
+  .wo-l .wo-list,.wo-xl .wo-list{margin-top:0;padding-bottom:2cqw}
   .wo-l .wo-list{gap:1.4cqw}
   .wo-l .wo-row{padding:1.7cqw 2.8cqw;grid-template-columns:20cqw minmax(0,1fr) auto}
   .wo-l .wo-day{font-size:clamp(12px,2.4cqw,46px)}
