@@ -189,15 +189,19 @@
     P + ".vpgs-sug{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}" + P + ".vpgs-sug:empty{display:none}" +
     P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
     P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
-    P + ".vpgs-foot{position:sticky;bottom:0;z-index:2;margin:0;padding:10px 0 12px;background:" + C.ink + "}" + P + ".vpgs-foot .vpgs-btn{min-height:48px;padding:10px 20px}" + P + ".vpgs-foot .vpgs-stack .vpgs-btn{min-height:48px}" +
+    "#vpGs{--bw:560px}" + P + ".vpgs-box{padding-bottom:96px}" +
+    P + ".vpgs-foot{position:fixed;left:0;right:0;bottom:0;z-index:3;margin:0;padding:10px max(16px, calc((100% - var(--bw)) / 2)) calc(12px + env(safe-area-inset-bottom, 0px));background:" + C.ink + ";border-top:1px solid " + C.line + ";display:flex;gap:10px;align-items:center;justify-content:space-between}" +
+    P + ".vpgs-foot .vpgs-btn.pink{margin-left:auto}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-foot .vpgs-stack{width:100%}" +
+    "@media (min-width:760px){#vpGs{--bw:680px}}" + "@media (min-width:1100px){#vpGs{--bw:820px}}" + P + ".vpgs-foot .vpgs-btn{min-height:48px;padding:10px 20px}" + P + ".vpgs-foot .vpgs-stack .vpgs-btn{min-height:48px}" +
     P + ".vpgs-wideonly{display:none}" + "@media (min-width:1100px){" + P + ".vpgs-wideonly{display:inline-block}}" +
     P + ".vpgs-kind .vpgs-seg button{min-height:48px}" + P + ".vpgs-q3{margin:14px 0 6px}" + P + ".vpgs-h3{display:block;margin:0;font:800 17px/1.3 " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sub{margin:2px 0 0;font-size:14px;color:#C6C6CE}" +
     P + ".vpgs-btn.big.vpgs-outline{margin:10px 0 0}" +
     P + ".vpgs-prew{position:relative;display:block}" + P + ".vpgs-pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:" + C.muted + ";font-size:16px;pointer-events:none}" + P + ".vpgs-prew .vpgs-in{padding-left:22px}" +
     /* ONE BOX WIDTH FOR EVERY SMALL BOX, so they line up down the screen (Dean, round 8b points 5, 10 and 16) */
-    P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:136px}" + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-in," + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-seg{width:100%!important}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:100%!important;flex:1}" +
+    P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:88px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=money]>.vpgs-ctl{width:112px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=time]>.vpgs-ctl{width:136px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=date]>.vpgs-ctl{width:164px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=seg]>.vpgs-ctl{width:136px}" + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-in," + P + ".vpgs-row.cmp .vpgs-ctl .vpgs-seg{width:100%!important}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:100%!important;flex:1}" +
     P + ".vpgs-clist{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}" + P + ".vpgs-crow{display:grid;grid-template-columns:auto 64px;gap:6px;align-items:center;font:700 14px " + HEAD + ";color:" + C.muted + "}" +
-    "@media (min-width:600px){" + P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:170px}}" +
+    "@media (min-width:600px){" + P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{width:100px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=money]>.vpgs-ctl{width:130px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=time]>.vpgs-ctl{width:150px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=date]>.vpgs-ctl{width:176px}" + P + ".vpgs-rows>.vpgs-row.cmp[data-kind=seg]>.vpgs-ctl{width:170px}}" +
+    P + ".vpgs-in.vpgs-drop{outline:2px dashed " + C.pink + ";outline-offset:2px;background:rgba(255,31,142,.10)}" + P + ".vpgs-uchip.vpgs-dragging{opacity:.45}" + P + ".vpgs-uchip{cursor:grab}" +
     P + ".vpgs-addlink{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0 -12px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:left}" +
     P + ".vpgs-time>span:first-child{display:flex;flex-direction:column;align-items:flex-start}" +
     P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;min-height:44px;text-align:left;text-decoration:underline;text-underline-offset:3px}" +
@@ -457,7 +461,8 @@
     ctx.usual.slice(0, 8).forEach(function (w) {
       var b = F.el("button", "vpgs-uchip", "+ " + w); b.setAttribute("type", "button"); b.setAttribute("data-item", w);
       b.setAttribute("draggable", "true");   // on a computer: drag it onto a round's box (Dean, round 8b point 8)
-      b.addEventListener("dragstart", function (e) { if (e && e.dataTransfer) { e.dataTransfer.setData("text/plain", w); e.dataTransfer.effectAllowed = "copy"; } });
+      b.addEventListener("dragstart", function (e) { b.className = "vpgs-uchip vpgs-dragging"; if (e && e.dataTransfer) { e.dataTransfer.setData("text/plain", w); e.dataTransfer.effectAllowed = "copy"; } });
+      b.addEventListener("dragend", function () { b.className = "vpgs-uchip"; });
       b.addEventListener("click", function () { onPick(w); });
       box.appendChild(b);
     });
@@ -484,7 +489,7 @@
     var shortSeg = s.kind === "seg" && (s.options || []).reduce(function (n, o) { return n + String(o[1]).length; }, 0) <= 8;
     var cmp = s.kind === "number" || s.kind === "money" || s.kind === "time" || s.kind === "date" || s.kind === "range" || shortSeg;   // one box width for all of them, so they line up (Dean, round 8b points 5, 10, 16)
     var cmpw = !cmp && (s.kind === "seg" || s.kind === "select");
-    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : "")) + (s.underPrev ? " under" : "")); row.setAttribute("data-key", s.key);
+    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : "")) + (s.underPrev ? " under" : "")); row.setAttribute("data-key", s.key); row.setAttribute("data-kind", s.kind);
     var lab = el("div", "vpgs-lab");
     /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
     lab.appendChild(el("span", null, String((s.advanced && s.prompt) ? s.prompt : s.label)));
@@ -574,8 +579,9 @@
           inp.setAttribute("aria-label", want > 1 ? s.each + " " + (i + 1) + " prize" : s.label); inp.id = "vpGsIn_" + s.key + "_" + i;
           inp.value = vals[i] != null ? vals[i] : "";
           (function (box) {
-            box.addEventListener("dragover", function (e) { if (e && e.preventDefault) e.preventDefault(); });
-            box.addEventListener("drop", function (e) { if (e && e.preventDefault) e.preventDefault(); var w = e && e.dataTransfer ? e.dataTransfer.getData("text/plain") : ""; if (w && !box.disabled) box.value = w; });
+            box.addEventListener("dragover", function (e) { if (e && e.preventDefault) e.preventDefault(); box.className = "vpgs-in vpgs-drop"; });
+            box.addEventListener("dragleave", function () { box.className = "vpgs-in"; });
+            box.addEventListener("drop", function (e) { if (e && e.preventDefault) e.preventDefault(); var w = e && e.dataTransfer ? e.dataTransfer.getData("text/plain") : ""; box.className = "vpgs-in"; if (w && !box.disabled) box.value = w; });
           })(inp);
           pr.appendChild(inp);
           if (s.none) {
@@ -756,7 +762,7 @@
       if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; memTime = md.start || ""; }
     }
     var lead = (g.needsDetails && opts.quickOnly) ? "A few quick questions before your first draw. Add your member numbers later, on a computer." : g.needsDetails
-      ? "Your draw's details for the TV. Add your member numbers later, on a computer, on your Account page."
+      ? "Your draw's details for the TV."
       : (opts.quickOnly ? "Three quick questions before your first game." : (opts.first ? "A quick setup before your first game. " : "") + "The usual settings are already filled in. Change anything you like.");
     var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
@@ -1203,7 +1209,7 @@
     var extrasAsked = false;
     function extras(next) {
       /* THE MEMBERS LIST IS A COMPUTER JOB (Dean, round 8b point 14): say so, never push an upload on a phone or iPad */
-      F.clear(); F.step("Members draws", 0, 0); F.title.textContent = "You can add your members list later";
+      F.clear(); F.step("Members draws", 0, 0); F.title.textContent = "Add your members list later";
       F.body.appendChild(F.el("p", "vpgs-lead", "Your member numbers let the TV draw a real member. It's easiest on a computer: Account page, Members list."));
       var go = F.el("a", "vpgs-link vpgs-wideonly", "On a computer now? Add it on your Account page"); go.id = "vpGsExtrasYes";
       go.setAttribute("href", deps.membersListUrl || "/app/billing.html#acc-members");

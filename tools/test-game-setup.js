@@ -218,7 +218,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var ms = posts('/host/members/settings')[0];
   check('the draw is made through /host/members/settings: name, $250 as 25000 cents; the time to reach the host is left to the console (spacing review r8)', ms && ms.body.venue_id === 'V1' && ms.body.name === 'Friday Members Draw' && ms.body.starting_amount_cents === 25000 && !('time_to_claim_seconds' in ms.body) && !$(P, 'vpGsIn_time_to_claim_seconds') && !ms.body.draw_id, ms && ms.body);
   check('blank boxes are not sent (members draws have no defaults to invent)', ms && !('increment_cents' in ms.body) && !('max_jackpot_cents' in ms.body));
-  check('after members draws: "You can add your members list later", easiest on a computer, nothing pushed (Dean, round 8b point 14)', T(P, 'vpGsTitle') === 'You can add your members list later' && /on a computer/.test(T(P, 'vpGsBody')) && /vpgs-wideonly/.test($(P, 'vpGsExtrasYes').className), T(P, 'vpGsTitle'));
+  check('after members draws: "Add your members list later", easiest on a computer, nothing pushed (Dean, round 8b point 14)', T(P, 'vpGsTitle') === 'Add your members list later' && /on a computer/.test(T(P, 'vpGsBody')) && /vpgs-wideonly/.test($(P, 'vpGsExtrasYes').className), T(P, 'vpGsTitle'));
   $(P, 'vpGsExtrasNo').click(); await settle();
   check('one game left: asked again, between games of this first run', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && /musical bingo\./.test(T(P, 'vpGsBody')));
   $(P, 'vpGsNextNo').click(); await settle();
@@ -267,7 +267,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var P15 = page({ answers: { setup: { members: 'later' } } }); P15.GS.firstOpen('members', P15.deps); await settle();
   var mk = all($(P15, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
   check('members draws on their first open: the name, when it started, the jackpot now and how much it goes up each week (Dean, round 7b point 18)', mk.join() === 'name,date_started,current_jackpot_cents,increment_cents' && /A few quick questions before your first draw/.test(T(P15, 'vpGsLead')), mk);
-  check('musical bingo prizes: "A different prize each round" or "The same prize every round"', JSON.stringify(P.H.byKey('musical').settings.filter(function (x) { return x.key === 'prize_same'; })[0].options.map(function (o) { return o[1]; })) === '["A different prize each round","The same prize every round"]');
+  check('musical bingo prizes: "Different each round" or "Same every round" (short, one line each)', JSON.stringify(P.H.byKey('musical').settings.filter(function (x) { return x.key === 'prize_same'; })[0].options.map(function (o) { return o[1]; })) === '["Different each round","Same every round"]');
   check('setup states keep only known games and states', JSON.stringify(P.GS.cleanSetup({ trivia: 'done', musical: 'x', jag: 'done', bingo: 'later' })) === '{"trivia":"done","bingo":"later"}');
 
   section('6b. ROUND 2 (Dean, 6 Nov 2026): something else, prizes per round, raffle prizes, phone or paper bingo, the draw date');
@@ -558,7 +558,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
   var mo = posts('/host/members/settings')[0]; sa = SAVED.length ? SAVED[SAVED.length - 1].patch.setup_answers : {};
   check('over the most: "another draw" is kept in setup_answers for later, never sent to the draw (the draw only knows "kept")', mo && mo.body.max_jackpot_cents === 500000 && !('over_max' in mo.body) && !('__setup' in mo.body) && sa.members_over === 'second', [mo && mo.body, sa.members_over]);
-  check('then "You can add your members list later"', T(P, 'vpGsTitle') === 'You can add your members list later');
+  check('then "Add your members list later"', T(P, 'vpGsTitle') === 'Add your members list later');
   var went = ''; P.deps.go = function (u) { went = u; };
   $(P, 'vpGsExtrasYes').click(); await settle();
   check('"Add my members list" goes to the Account page\'s members list', went === '/app/billing.html#acc-members', went);
@@ -572,7 +572,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('tap a round\'s box, then a usual prize: it goes in that round (Dean, round 7b point 15)', b3.value === '$50 bar tab' && $(P, 'vpGsIn_prizes_0').value === '', [b3.value, $(P, 'vpGsIn_prizes_0').value]);
   check('the speakers guide is a single link inside More settings, to its own page with the usual setups (Dean, round 8b point 9)', !!walk($(P, 'vpGsAdvanced'), function (e) { return e.id === 'vpGsSoundHow'; }) && T(P, 'vpGsSoundHow') === 'How to get the sound through your speakers' && $(P, 'vpGsSoundHow').getAttribute('href') === '/app/sound-help.html' && $(P, 'vpGsSoundHow').getAttribute('target') === '_blank');
   var SH = readFile('venueplay/app/sound-help.html');
-  check('the guide covers the usual setups, each with a picture and short steps, and never "we\'ll talk you through it"', ['HDMI ARC', 'Optical', 'headphone', 'Bluetooth', 'laptop'].every(function (w) { return SH.indexOf(w) >= 0; }) && (SH.match(/<svg/g) || []).length >= 5 && !/talk you through/i.test(SH) && !/[\u2014\u2013]/.test(SH));
+  check('the guide covers the usual setups, each with a drawing (the back of the TV, the socket to use circled, where the cable goes) and short steps, and never "we\'ll talk you through it"', ['HDMI ARC', 'Optical', 'headphone', 'Bluetooth', 'laptop'].every(function (w) { return SH.indexOf(w) >= 0; }) && (SH.match(/<svg/g) || []).length >= 5 && (SH.match(/Back of the TV/g) || []).length >= 3 && (SH.match(/stroke="#FF1F8E" stroke-width="3"/g) || []).length >= 6 && !/talk you through/i.test(SH) && !/[\u2014\u2013]/.test(SH));
 
   section('6j. ROUND 9 (Dean, round 8b)');
   P = page({ answers: { games: ['musical', 'bingo'], prize_bank: ['Meat tray'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
@@ -585,6 +585,12 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('"No prize" is there for every round', !!$(P, 'vpGsNone_0') && !!$(P, 'vpGsNone_1') && !!$(P, 'vpGsNone_2'));
   $(P, 'vpGsSave').click(); await settle();
   check('the next game question: "Do you want to set up your next game?" Yes, or "That\'s enough for today", in the footer like every other screen (Dean, round 8b points 12 and 13)', T(P, 'vpGsTitle') === 'Do you want to set up your next game?' && T(P, 'vpGsNextNo') === "That's enough for today" && $(P, 'vpGsNextYes').parentNode === $(P, 'vpGsNextNo').parentNode && /vpgs-foot/.test($(P, 'vpGsNextYes').parentNode.className));
+
+  P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
+  var mk9 = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
+  check('members: "After a win it goes back to" right under "Current jackpot for the next draw", and the member numbers said once (design review r9)', mk9.indexOf('starting_amount_cents') === mk9.indexOf('current_jackpot_cents') + 1 && /After a win it goes back to/.test(T(P, 'vpGsBody')) && !/member numbers/.test(T(P, 'vpGsLead')), mk9);
+  check('every screen\'s buttons sit in one bar fixed to the bottom, the main one on the right', (function () { var st = walk($(P, 'vpGs'), function (e) { return e.tagName === 'STYLE'; }); var css = st ? st.textContent : ''; return /\.vpgs-foot\{position:fixed;left:0;right:0;bottom:0/.test(css) && /\.vpgs-foot \.vpgs-btn\.pink\{margin-left:auto\}/.test(css); })());
 
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');
