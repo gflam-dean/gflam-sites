@@ -395,6 +395,10 @@
   "checks": 18,
   "counted_by": "lines"
  },
+ "tools/test-account-ready.js": {
+  "checks": 26,
+  "counted_by": "lines"
+ },
  "tools/test-account-tabs.js": {
   "checks": 33,
   "counted_by": "lines"
