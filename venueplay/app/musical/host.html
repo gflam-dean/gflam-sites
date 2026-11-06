@@ -1928,6 +1928,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     _tvAudio=state;
     var n=$("tvAudioNote");
     if(state==="blocked"){
+      audio.muted = !(G.hostMonitor || soundIsOnlyHere());   // a TV is there (it just spoke): quiet here until the host answers
       if(n){ if(G.hostMonitor) n.textContent="The TV can\u2019t play sound; the songs are coming out of this device."; else askTvSound(n); n.classList.remove("hidden"); }
     } else {
       if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
