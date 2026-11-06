@@ -59,7 +59,7 @@
     var out = [];
     wk.forEach(function (dd) {
       if (!dd || dd.day !== key || !Array.isArray(dd.games)) return;
-      dd.games.forEach(function (x) { if (x && GAME_NAME[x.game]) out.push({ game: x.game, time: time12(x.start) }); });
+      dd.games.forEach(function (x) { if (x && GAME_NAME[x.game]) out.push({ game: x.game, time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" }); });
     });
     return out;
   }
@@ -76,13 +76,15 @@
 
   /* TONIGHT's rows in the lobby: this game first, then any other game stored for tonight. */
   function tonight(o) {
-    var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", sub: o.prize || "" }];
-    (gamesOn(o, dayKey(now(o))) || []).forEach(function (x) {
-      if (x.game !== me) rows.push({ game: x.game, name: GAME_NAME[x.game], sub: x.time || "" });
+    var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", sub: o.prize || "" }], list = gamesOn(o, dayKey(now(o))) || [], mine = "";
+    list.forEach(function (x) { if (x.game === me) mine = x.start || ""; });
+    list.forEach(function (x) {
+      if (x.game !== me) rows.push({ game: x.game, name: GAME_NAME[x.game], sub: x.time || "", start: x.start || "" });
       else if (!rows[0].sub && x.time) rows[0].sub = x.time;   // this game's own start tonight, when no prize is set
     });
     rows[0].badge = rows.length > 1 ? "Next" : "Tonight";
-    for (var i = 1; i < rows.length; i++) rows[i].badge = "Later";
+    /* A game that starts before this one tonight is EARLIER, not later (musical at 9pm, trivia at 7pm). */
+    for (var i = 1; i < rows.length; i++) rows[i].badge = (mine && rows[i].start && rows[i].start < mine) ? "Earlier" : "Later";
     return rows;
   }
   /* Another night's rows, for the spot when a day is tapped. */
@@ -113,7 +115,7 @@
     spot.innerHTML = "";
     if (title) spot.appendChild(el("div", "nk", title));
     rows.forEach(function (r, i) {
-      var row = el("div", "row" + (r.badge === "Later" ? " later" : "")); row.setAttribute("data-game", r.game || "");
+      var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "")); row.setAttribute("data-game", r.game || "");
       row.appendChild(el("span", "bd" + (i === 0 && (r.badge === "Next" || r.badge === "Tonight") ? " next" : ""), r.badge));
       var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.sub) g.appendChild(el("span", "", r.sub));
       row.appendChild(g); spot.appendChild(row);

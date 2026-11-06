@@ -138,7 +138,7 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-week{margin-top:10px;background:#1A1A1F;border-radius:16px;padding:11px 8px 10px}
 .vpt-week .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95}
 .vpt-week .k .ask{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;letter-spacing:0;text-transform:none;text-align:right}
-.vpt-week .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.vpt-week .days{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(6,minmax(0,1fr));gap:3px}   /* "Today" is the widest word: its cell is wider (Dean, 6 Nov: it spilled at 375) */
 .vpt-week .d{min-width:0;overflow:hidden;border:0;cursor:pointer;text-align:center;padding:7px 0 6px;border-radius:9px;background:#232329;color:#6E6E78;font-family:'Manrope',sans-serif}
 .vpt-week .d b{display:block;font-weight:700;font-size:15px;line-height:1.15;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .vpt-week .d small{display:block;font-weight:600;font-size:15px;line-height:1.15;margin-top:2px}
