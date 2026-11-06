@@ -916,7 +916,7 @@
   "counted_by": "lines"
  },
  "tools/test-signin-in-thread.js": {
-  "checks": 34,
+  "checks": 43,
   "counted_by": "lines"
  },
  "tools/test-signing-15-oct.js": {

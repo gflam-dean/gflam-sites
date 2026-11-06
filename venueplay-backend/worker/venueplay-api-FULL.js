@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 21:31 · cc77c28d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:45 · 6cda9f73';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3865,6 +3865,11 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const b = _b.body || {};
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  /* THE 'YES' REPLY'S TEXT (Dean, 6 Nov 2026): "we build their account, then they get a reply in their email thread
+     with the sign-in link, and a text message with the link". The same route and the same guards as the nudge (a
+     quiet prospect only, their own mobile, opt-out honoured, a fresh link that leaves the email's working); purpose
+     'yes_reply' only labels it, so the audit and HQ can tell the welcome text from a later nudge. */
+  const purpose = b.purpose === 'yes_reply' ? 'yes_reply' : 'nudge';
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
   if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !(/Reply STOP to opt out/i.test(text) || text.indexOf('{optout}') >= 0) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
     return json({ error: 'The text must name venueplay, carry {link} and an opt-out ("Reply STOP to opt out" or {optout}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
@@ -3903,7 +3908,7 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
   const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
   let r;
-  try { r = await vpaSendSms(env, to, body, 'nudge-' + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
+  try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
     await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
     await vpaSmsRecordOptOut(env, to, venueId);
@@ -3914,8 +3919,8 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
     return json({ error: 'The text did not send (the SMS provider said ' + (r.status || 'nothing') + '). Nothing reached them.' }, 502);
   }
-  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined });
-  return json({ ok: true, to_last3: to.slice(-3) });
+  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined, purpose: purpose });
+  return json({ ok: true, to_last3: to.slice(-3), purpose: purpose });
 }
 function vpaNudgeHtml(text) {
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';

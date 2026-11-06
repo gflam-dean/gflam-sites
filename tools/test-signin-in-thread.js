@@ -41,7 +41,7 @@ function b64(bytes) { var s = ''; for (var i = 0; i < bytes.length; i += 3) { va
 var PNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 7, 128, 0, 0, 4, 56, 8, 2, 0, 0, 0, 1, 2, 3];
 function slide(salt) { var b = PNG.slice(); b.push(salt); return 'data:image/png;base64,' + b64(b); }
 
-var AUTH = [], CANCELS = [], RESEND_IDS = 0, STORE = [], RESEND_EVENTS = {}, RESEND_GETS = 0;
+var SMS = [], AUTH = [], CANCELS = [], RESEND_IDS = 0, STORE = [], RESEND_EVENTS = {}, RESEND_GETS = 0;
 function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
 var rigFetch = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
@@ -50,6 +50,7 @@ globalThis.fetch = function (url, opts) {
   var g = /api\.resend\.com\/emails\/([^/?]+)$/.exec(u);
   if (g && method === 'GET') { RESEND_GETS++; var ev = RESEND_EVENTS[g[1]]; return ev === 'DOWN' ? RS(500, {}) : RS(200, { id: g[1], last_event: ev || 'sent' }); }
   if (u.indexOf('api.resend.com/emails') !== -1 && method === 'POST') { sent.push(JSON.parse(opts.body)); RESEND_IDS++; return RS(200, { id: 're_' + RESEND_IDS }); }
+  if (u.indexOf('api.mobilemessage.com.au/v1/messages') !== -1) { SMS.push(JSON.parse(opts.body).messages[0]); return RS(200, { results: [{ status: 'success', message_id: 'mm_' + SMS.length }] }); }
   if (u.indexOf('/storage/v1/') !== -1) return RS(200, {});
   if (u.indexOf('/auth/v1/admin/users') !== -1) {
     var one = /\/auth\/v1\/admin\/users\/([0-9a-fA-F-]{36})/.exec(u);
@@ -99,6 +100,9 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
     r.body.signin.url.indexOf(SITE + '/app/go#t=') === 0 && /#t=[A-Za-z0-9_-]{43}&e=sam1%40testcharlie\.example$/.test(r.body.signin.url), r.body.signin);
   check('its OWN token: two live links for the venue (the welcome\'s and the reply\'s), so either one works', liveLinks(vid).length === 2, DB.vp_signin_links);
   check('the welcome still goes as the backup, booked as before', sent.length === 1 && r.body.welcome && r.body.welcome.status === 'scheduled', r.body.welcome);
+  var wl = sent[0] || {};
+  check('the account email says which address our emails come from, and comes from it (Dean, 6 Nov 2026: "so they look out for it")',
+    /Our emails come from <strong>hello@send\.venueplay\.com\.au<\/strong>, so keep an eye out for them/.test(String(wl.html || '')) && /hello@send\.venueplay\.com\.au/.test(String(wl.from || '')), [wl.from, String(wl.html || '').slice(0, 200)]);
   check('the link ends with their 30 days, and says when', r.body.signin.days_left >= 29 && !!r.body.signin.expires_words, r.body.signin);
   check('the token is never written to the audit', JSON.stringify(DB.vp_admin_audit).indexOf(r.body.signin.url.split('#t=')[1].split('&')[0]) === -1);
   world(); N = 10;
@@ -188,9 +192,41 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var D = await call('/autopilot/decisions', undefined, AP, 'GET');
   check('GET /autopilot/decisions lists signin_in_reply, thread_link and delivery', D.status === 200 && ['needs_you', 'signin_in_reply', 'thread_link', 'delivery'].every(function (f) { return (D.body.features || []).indexOf(f) !== -1; }), D.body.features);
 
+  section('5a. A \'yes\' reply also gets a text with the sign-in link (Dean, 6 Nov 2026)');
+  /* Dean's words for the text, the exact string the Mac sends (venue filled in by the Mac, {link} by the Worker). */
+  var YES_TEXT = 'Welcome to venueplay! Your account for Test Charlie Yes Hotel is ready. Tap to sign in: {link} Reply STOP to opt out';
+  world(); SMS = [];
+  ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass';
+  ENV.PROSPECT_SMS_ON = '';
+  r = await call('/autopilot/prospect', body({ name: 'Test Charlie Yes Hotel', return_signin_link: true, mobile: '0400 222 444' }), AP);
+  var yvid = r.body.venue && r.body.venue.id;
+  var ys = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: YES_TEXT, purpose: 'yes_reply' }, AP);
+  check('texts switched off (PROSPECT_SMS_ON not "on"): 503, nothing texted, nothing minted for it', ys.status === 503 && ys.body.sms_off === true && SMS.length === 0, [ys, SMS]);
+  ENV.PROSPECT_SMS_ON = 'on';
+  var linksBefore = liveLinks(yvid).length;
+  ys = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: YES_TEXT, purpose: 'yes_reply' }, AP);
+  var sms = SMS[0] || {};
+  check('switched on: ONE text to their own mobile, from the venueplay sender', ys.status === 200 && SMS.length === 1 && sms.to === '+61400222444' && sms.sender === 'venueplay', [ys, SMS]);
+  check('the text carries a one-tap sign-in link and Dean\'s words, with the opt-out as Mobile Message\'s own link', /^Welcome to venueplay! Your account for Test Charlie Yes Hotel is ready\. Tap to sign in: $/.test((sms.message || '').split(SITE + '/app/go#t=')[0]) && /\/app\/go#t=[A-Za-z0-9_-]{43}&e=/.test(sms.message || '') && /\{optout\}$/.test(sms.message || '') && (sms.message || '').indexOf('{link}') === -1, sms.message);
+  check('its own fresh link: the welcome\'s and the reply\'s still work too', liveLinks(yvid).length === linksBefore + 1, DB.vp_signin_links);
+  var ya = DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_nudge_sms_sent' && a.target === 'venue:' + yvid; });
+  check('audited as the yes reply\'s text (not a nudge), last 3 digits only, never the link', ya.length === 1 && ya[0].detail && ya[0].detail.purpose === 'yes_reply' && ys.body.purpose === 'yes_reply' &&
+    JSON.stringify(ya[0]).indexOf('/app/go') === -1 && JSON.stringify(ya[0]).indexOf('0400222444') === -1, ya);
+  var nd = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: YES_TEXT }, AP);
+  var na = DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_nudge_sms_sent' && a.target === 'venue:' + yvid; });
+  check('CONTROL: without purpose it is a nudge, as before', nd.status === 200 && na.length === 2 && na[1].detail && na[1].detail.purpose === 'nudge', na);
+  SMS = [];
+  var bad1 = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: 'Welcome to venueplay! Your account is ready. Tap to sign in: {link}', purpose: 'yes_reply' }, AP);
+  check('a yes text with no opt-out is refused, nothing texted', bad1.status === 400 && SMS.length === 0, bad1);
+  var bad2 = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: YES_TEXT, purpose: 'yes_reply' }, {});
+  check('the key only: no autopilot key, nothing texted', bad2.status === 401 || bad2.status === 403 ? SMS.length === 0 : false, bad2);
+  ENV.PROSPECT_SMS_ON = ''; ENV.MOBILEMESSAGE_USERNAME = ''; ENV.MOBILEMESSAGE_PASSWORD = '';
+
   section('5. HQ shows it');
   var src = readFile('venueplay/app/vp-prospects-hq.js');
-  check('HQ > Prospects has a Delivery line from the Worker\'s words', /<span class="k">Delivery<\/span>/.test(src) && /p\.delivery\.words/.test(src));
+  /* The line itself must be shown whenever the Worker sent words (a bare mention of p.delivery.words elsewhere
+     in the card, e.g. inside prEsc, is not enough: that stayed green with the line switched off, 6 Nov). */
+  check('HQ > Prospects has a Delivery line from the Worker\'s words', /\(p\.delivery && p\.delivery\.words \? '<div><span class="k">Delivery<\/span>/.test(src) && /prEsc\(p\.delivery\.words\)/.test(src));
 
   if (bad) throw new Error('signin in thread: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');
