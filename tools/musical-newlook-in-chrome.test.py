@@ -478,7 +478,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.shot(shots + '-phone-4-youre-in')
         ok('%s lobby: YOU\'RE IN, the name, Musical bingo tonight, and NO player count though the host sent 4137 (Dean, 4 Nov 2026; round 5 lobby 6 Nov)' % tag, wt.get('view') == 'vWait' and "you're in" in wt.get('all', '').lower().replace('\u2019', "'") and 'sam' in wt.get('all', '').lower() and 'musical bingo' in wt.get('all', '').lower() and '4137' not in wt.get('all', '') and 'playing' not in wt.get('all', '').lower(), wt.get('all'))
         ok('%s lobby: the one lobby line every game uses: "The game will start here when the host is ready."' % tag, 'The game will start here when the host is ready.' in wt.get('all', '') and 'your card appears' not in wt.get('all', '').lower(), wt.get('all'))
-        ok('%s lobby: row two keeps the pattern and the prize' % tag, (wt.get('row2') or {}).get('prize') == 'Meat tray', wt.get('row2'))
+        ok('%s lobby: no pattern pill on the lobby (Dean, 6 Nov 2026, round 7: every lobby the same layout)' % tag, not wt.get('row2') or not (wt.get('row2') or {}).get('shown', True), wt.get('row2'))
         ok('%s lobby: the venue\'s ad: "What\'s on at <venue>" and its five slides, above our logo' % tag,
            bool(wt.get('ad')) and wt['ad']['k'] == "What's on at " + name and wt['ad']['n'] == 5 and wt['ad']['r'][3] <= (wt.get('foot') or [0, 0, 0, 9999])[1], wt.get('ad'))
         phone_frame_checks(tag + ' lobby', wt, True)
