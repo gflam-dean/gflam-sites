@@ -140,6 +140,11 @@ prim = [t for t in prim if 'btn-primary' in t or 'vp-float-cta' in t]
 pt = sorted({re.search(r'href="([^"]*)"', t).group(1) for t in prim if 'href="/' not in t})
 ok('every primary start button (hero, "Lock in your price", the floating button) points at #start; the free-account enquiry and the card form are only secondary',
    all(re.search(r'href="#start"', t) for t in prim if any(k in t for k in ('hero-start', 'offer-lock', 'vp-float-cta'))) and '#contact' not in pt and '#claim' not in pt, pt)
+fl = NSW[NSW.index("var cta=document.getElementById('vpFloatCta')"):]
+fl = fl[:fl.index('</script>')]
+ok('the floating button goes for good once someone has started: a box touched (focusin), a later step showing, or vp-start-done',
+   "addEventListener('focusin'" in fl and "addEventListener('vp-start-done'" in fl and "'st-code','st-done','st-held'" in fl and '!started' in fl, fl[:200])
+ok('the floating button also stays away while the start section or the card form is on screen', 'inView(claim)' in fl and 'inView(card)' in fl)
 ok('the start section holds the one easy-to-change destination for the hero button, with a note for the five-box form',
    'id="start"' in NSW and 'vp-start.js' in NSW)
 

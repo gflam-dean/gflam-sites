@@ -1938,13 +1938,20 @@
 <script>
 (function(){
   var cta=document.getElementById('vpFloatCta'); if(!cta) return;
-  var claim=document.getElementById('start');
+  var claim=document.getElementById('start'), card=document.getElementById('claim'), started=false;
+  /* ONCE SOMEONE HAS STARTED, THE BUTTON GOES FOR GOOD (6 Nov 2026): on a phone it sat over the done screen and the TV code.
+     "Started" = a box in the start section was touched, a later step (code, done, held) is showing, or the account is made
+     (app/vp-start.js fires vp-start-done on document). It also stays away while the start section or the card form is in view. */
+  function laterStep(){ var ids=['st-code','st-done','st-held']; for(var i=0;i<ids.length;i++){ var e=document.getElementById(ids[i]); if(e && !e.hidden) return true; } return false; }
+  function inView(el){ if(!el) return false; var r=el.getBoundingClientRect(); return r.top < window.innerHeight && r.bottom > 0; }
   function upd(){
     var y=window.pageYOffset||document.documentElement.scrollTop;
-    var show=y>560;
-    if(show && claim){ var r=claim.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) show=false; }
+    if(!started && laterStep()) started=true;
+    var show=y>560 && !started && !inView(claim) && !inView(card);
     cta.classList.toggle('show', show);
   }
+  if(claim){ claim.addEventListener('focusin', function(){ started=true; upd(); }); }
+  document.addEventListener('vp-start-done', function(){ started=true; upd(); });
   window.addEventListener('scroll', upd, {passive:true});
   window.addEventListener('resize', upd);
   upd();
