@@ -296,11 +296,11 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var vis = function (h) { return String(h || '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/\s+/g, ' '); };
   var wn = await withClock(NOV5, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', firstName: 'Sam', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
   check('the welcome on the November offer: "Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player."',
-    vis(wn).indexOf('Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player.') !== -1 && !/lock in the|lock it in|need to start by/i.test(vis(wn)), vis(wn).slice(0, 900));
+    vis(wn).indexOf("Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player a month, for as long as you're with us. No lock-in.") !== -1 && !/lock in the|lock it in|need to start by/i.test(vis(wn)), vis(wn).slice(0, 900));
   var wd = await withClock(NOV11, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-DEC-2026' }); });
-  check('the welcome on the December offer (after the 10 Nov switch): Sign in by 31 December', vis(wd).indexOf('Sign in by 31 December to keep $2.50 a player.') !== -1 && vis(wd).indexOf('30 November') === -1);
+  check('the welcome on the December offer (after the 10 Nov switch): Sign in by 31 December', vis(wd).indexOf('Sign in by 31 December to keep $2.50 a player a month') !== -1 && vis(wd).indexOf('30 November') === -1);
   var wl = await withClock(DEC_FIRST, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
-  check('a welcome on the November offer sent on 1 Dec: the standard $3.00 line, no sign-in-by date', /It's \$3\.00 a player a month on your usual crowd, first month free, no lock-in\./.test(vis(wl)) && !/Sign in by/.test(vis(wl)), vis(wl).slice(0, 600));
+  check('a welcome on the November offer sent on 1 Dec: the standard $3.00 line, no sign-in-by date', /Your free month starts the first time you sign in\. Then it's \$3\.00 a player a month\. No lock-in\./.test(vis(wl)) && !/Sign in by/.test(vis(wl)), vis(wl).slice(0, 600));
   var tplWas = TPL['welcome-prospect.html'];
   TPL['welcome-prospect.html'] = tplWas.replace(/<!--IF:founding-->[\s\S]*?<!--ENDIF:founding-->/, "<!--IF:founding-->\n<p>To keep the {{player_rate}} deal, it stays at {{player_rate}} for as long as you're with us.{{offer_deadline}} Your first month is free.</p>\n<!--ENDIF:founding-->");
   var wo = await withClock(NOV5, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: 'OFFER-NOV-2026' }); });
@@ -334,11 +334,11 @@ var NOV5 = bms(2026, 11, 5, 10, 0), NOV9 = bms(2026, 11, 9, 10, 0), NOV11 = bms(
   var rw = function (ms, code) { return withClock(ms, function () { return vpaRenderProspectWelcome(ENV, { email: 's@x.example', venueName: 'Switch Hotel', signinToken: 'T0K3N', slides: 0, seats: 10, offerCode: code }); }); };
   var wN9 = vis(await rw(LATE9, 'OFFER-NOV-2026')), wD10 = vis(await rw(EARLY10, 'OFFER-DEC-2026')), wN10 = vis(await rw(EARLY10, 'OFFER-NOV-2026'));
   check('welcome: November prospect (9 Nov 11:59pm, and still on 10 Nov) reads 30 November; December prospect (10 Nov 12:01am) reads 31 December',
-    wN9.indexOf('Sign in by 30 November to keep $2.50 a player.') !== -1 && wN10.indexOf('Sign in by 30 November to keep $2.50 a player.') !== -1 &&
-    wD10.indexOf('Sign in by 31 December to keep $2.50 a player.') !== -1 && wD10.indexOf('30 November') === -1, [wN9.slice(0, 200), wD10.slice(0, 200)]);
+    wN9.indexOf('Sign in by 30 November to keep $2.50 a player a month') !== -1 && wN10.indexOf('Sign in by 30 November to keep $2.50 a player a month') !== -1 &&
+    wD10.indexOf('Sign in by 31 December to keep $2.50 a player a month') !== -1 && wD10.indexOf('30 November') === -1, [wN9.slice(0, 200), wD10.slice(0, 200)]);
   var wN1 = vis(await rw(DEC_FIRST, 'OFFER-NOV-2026')), wD1 = vis(await rw(DEC_FIRST, 'OFFER-DEC-2026')), wDJ = vis(await rw(JAN_FIRST, 'OFFER-DEC-2026'));
   check('welcome after the date: November on 1 Dec and December on 1 Jan get the standard $3.00 line; December on 1 Dec still 31 December',
-    /It's \$3\.00 a player a month/.test(wN1) && !/Sign in by/.test(wN1) && /It's \$3\.00 a player a month/.test(wDJ) && !/Sign in by/.test(wDJ) && wD1.indexOf('Sign in by 31 December') !== -1);
+    /Then it's \$3\.00 a player a month/.test(wN1) && !/Sign in by/.test(wN1) && /Then it's \$3\.00 a player a month/.test(wDJ) && !/Sign in by/.test(wDJ) && wD1.indexOf('Sign in by 31 December') !== -1);
   [PN, PD].forEach(function (P) { var u = AUTH.filter(function (x) { return x.id === P.login; })[0]; if (u && !u.email) u.email = P.row().email; });
   var link = async function (P, ms) { var m0 = sent.length; await withClock(ms, function () { return vpaSendSigninLink(ENV, P.login, P.v.id, { hq: true }); }); return sent.slice(m0).map(function (m) { return vis(m.html); }).join(' '); };
   var lN = await link(PN, EARLY10), lD = await link(PD, EARLY10);

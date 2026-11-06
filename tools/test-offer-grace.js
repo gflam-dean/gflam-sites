@@ -349,10 +349,10 @@ async function newProspect(name, offerOpen) {
   var wStd = await vpaRenderProspectWelcome((ENV.OFFER_GRACE_EMAILS = 'on', ENV.FOUNDING_CODES = '', ENV), { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Welcome Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
   ENV.OFFER_GRACE_EMAILS = ''; ENV.FOUNDING_CODES = fcWas;
   var wh = function (w) { return String((w && w.html) || w || ''); };
-  check('the welcome, old switch ON: pauses and the offer price goes with it; never the 5 days',
-    /your account simply pauses and the offer price goes with it\. If/.test(wh(wOn)) && !NEVER.test(wh(wOn)), (wh(wOn).match(/simply pauses.{0,80}/) || [''])[0]);
-  check('the welcome at the standard rate (no offer open): pauses, and no offer or 5 days is mentioned', /your account simply pauses\. If/.test(wh(wStd)) && !/5 more days|goes with it/.test(wh(wStd)), (wh(wStd).match(/simply pauses.{0,80}/) || [''])[0]);
-  var para = function (w) { return (wh(w).match(/If you don&#39;t add one[^<]*/) || [''])[0]; };
+  var para = function (w) { return (wh(w).match(/There&#39;s no card on your account[^<]*/) || [''])[0]; };
+  check('the welcome, old switch ON: the short no-card line, the offer line, and never the 5 days',
+    !!para(wOn) && /\$2\.50 a player a month, for as long as you&#39;re with us/.test(wh(wOn)) && !NEVER.test(wh(wOn)), para(wOn));
+  check('the welcome at the standard rate (no offer open): $3.00, and no offer or 5 days is mentioned', /Then it&#39;s \$3\.00 a player a month\. No lock-in\./.test(wh(wStd)) && !/5 more days|goes with it|offer/.test(wh(wStd).replace(/<!--[\s\S]*?-->/g, '')), para(wStd));
   check('the welcome, switch OFF: the same pause words as ON', !!para(wOff) && para(wOff) === para(wOn) && !NEVER.test(wh(wOff)), [para(wOff), para(wOn)]);
 
   var TERMS = readFile('venueplay/terms.html'), t2 = TERMS.slice(TERMS.indexOf('<h2>2. Offer pricing</h2>'), TERMS.indexOf('<h2>3. Pricing and billing</h2>'));

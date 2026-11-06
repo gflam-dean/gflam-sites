@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '7 Nov 2026, 05:24 · cced1204';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '7 Nov 2026, 06:09 · df7274db';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -6320,7 +6320,7 @@ async function vpaRenderProspectWelcome(env, o) {
   const viaCode = !sms && !!o.signinToken && VPA_SHORT_RE.test(String(o.signinToken));
   html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken && !viaCode, viacode: viaCode,
     nooneclick: !sms && !o.signinToken, founding: founding && !!signinBy, foundingnodate: founding && !signinBy, standard: !founding,
-    offerpause: founding, plainpause: !founding });
+    offerpause: founding, plainpause: !founding });   // offerpause/plainpause: the template before 12 Nov (Pages may lag the Worker)
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))

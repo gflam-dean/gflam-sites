@@ -51,7 +51,7 @@
       <tr><td style="padding:22px 28px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
+            <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">Your login</p>
 <!--IF:sms-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's your mobile, <strong>{{login_mobile}}</strong>. Sign in with your mobile and we'll text you a code. No password, and no app to download.</p>
 <!--ENDIF:sms-->
@@ -75,19 +75,18 @@
       </td></tr>
       <tr><td style="padding:22px 28px 0">
         <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">It takes about 5 minutes and walks you through everything.</p>
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Our emails come from <strong>hello@send.venueplay.com.au</strong>, so keep an eye out for them. If one lands in your junk folder, mark it as not junk and the rest will come straight to your inbox.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Our emails come from <strong>hello@send.venueplay.com.au</strong>. If one lands in junk, mark it as not junk.</p>
 <!--IF:founding-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Sign in by {{offer_deadline}} to keep {{player_rate}} a player.</p>
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">That&#39;s {{player_rate}} a player a month on your usual crowd for as long as you&#39;re with us, and there&#39;s no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Sign in by {{offer_deadline}} to keep {{player_rate}} a player a month, for as long as you&#39;re with us. No lock-in.</p>
 <!--ENDIF:founding-->
 <!--IF:foundingnodate-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. It&#39;s {{player_rate}} a player a month on your usual crowd, and there&#39;s no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Then it&#39;s {{player_rate}} a player a month, for as long as you&#39;re with us. No lock-in.</p>
 <!--ENDIF:foundingnodate-->
 <!--IF:standard-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Then it&#39;s {{player_rate}} a player a month. No lock-in.</p>
 <!--ENDIF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is set up for {{player_count}} players to start with, and you can change that any time.</p>
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month is free. This link is available for 30 days. There&#39;s no card on your account, so nothing can be charged. You can add your card whenever suits, and we&#39;ll send you a reminder before your free month ends. If you don&#39;t add one, your account simply pauses<!--IF:offerpause--> and the offer price goes with it<!--ENDIF:offerpause-->. If it&#39;s not for you, just hit <a href="{{cancel_url}}" style="color:#0A0A0B;font-weight:700">cancel</a>.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There&#39;s no card on your account, so nothing can be charged. We&#39;ll remind you before your free month ends. Not for you? Just hit <a href="{{cancel_url}}" style="color:#0A0A0B;font-weight:700">cancel</a>.</p>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">
