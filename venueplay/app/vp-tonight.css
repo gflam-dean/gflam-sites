@@ -70,9 +70,8 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-on #vpAd .slide{aspect-ratio:5/2}
 .vpt-on #vpAd .dots{margin-top:6px}
 .vpt-on #vWait{padding-top:4px;padding-bottom:0;justify-content:flex-start}   /* the lobby starts at the top, so the ad below it is not pushed off */
-/* The waiting screen sits in the middle of the room above the fixed ad, not hard against the header with a hole under it
-   (design review, 6 Nov 2026). Auto margins, so a tall one simply starts at the top, never cut off. */
-.vpt-on .vpt:not(.hidden){margin-top:auto;margin-bottom:auto}
+/* The waiting screen starts straight under the header on every lobby state, at the same height (Dean, 6 Nov 2026: "the
+   you're in can move up"); any spare room sits above the WHAT'S ON AT section, so the ad and our logo stay at the foot. */
 .vpt-on.vpt-tight #vpAd .slide{aspect-ratio:3/1}
 .vpt-on.vpt-tight .pfoot{padding-top:10px}
 .vpt-on .pfoot{padding-top:12px;padding-bottom:max(12px, env(safe-area-inset-bottom, 0px))}
