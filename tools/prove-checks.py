@@ -9400,7 +9400,7 @@ MUTATIONS = [
      '      if (j.ok) { var h = $("st-held-words"); if (h) h.textContent = WORDS.blip; show("st-held"); return; }',
      "in Chrome, a held sign-up is told something other than Dean's words"),
     ('signup-start-in-chrome.test.py', 'venueplay/app/vp-start.js',
-     '      if (j.off && typeof root.VPFreeAccountEnquiry === "function") { root.VPFreeAccountEnquiry(d); return; }\n',
+     '      if ((j.off || j._status === 404) && typeof root.VPFreeAccountEnquiry === "function") { root.VPFreeAccountEnquiry(d); return; }\n',
      '',
      "in Chrome, a start that is not switched on leads nowhere instead of to Friday's Talk to us form"),
     ('signup-start-in-chrome.test.py', 'venueplay/app/vp-start.js',

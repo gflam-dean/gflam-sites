@@ -110,7 +110,8 @@
         var c = $("st-c1"); if (c) c.focus();
         return;
       }
-      if (j.off && typeof root.VPFreeAccountEnquiry === "function") { root.VPFreeAccountEnquiry(d); return; }
+      // Not switched on, or a Worker from before the start (no route: 404): Friday's Talk to us form, filled in.
+      if ((j.off || j._status === 404) && typeof root.VPFreeAccountEnquiry === "function") { root.VPFreeAccountEnquiry(d); return; }
       err("st-err", j.error || WORDS.blip);
       if (j.field) { var f = $(j.field === "kind" ? "st-kind-pub" : "st-" + j.field); if (f) f.focus(); }
       try { if (S.ts && S.tsId != null) S.ts.reset(S.tsId); } catch (e) {}
