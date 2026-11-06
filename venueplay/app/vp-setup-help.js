@@ -157,11 +157,11 @@
     { key: "members", name: "members draws", title: "Members draws", console: "/app/members/host.html", prefs: "members", needsDetails: true, settings: [
       { key: "date_started", label: "First draw date", kind: "date", def: "", group: "dt",
         help: "The date of your first draw. The TV uses it to say how long the draw has been running." },
-      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, quick: true,
+      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, quick: true, group: "nj",
         help: "The name on the TV. Leave it and we call it after your draw night, like Friday Members Draw." },
       { key: "draw_time", label: "Draw time", kind: "time", def: "", group: "dt",
         help: "The time you draw. It shows on the TV beside the day." },
-      { key: "starting_amount_cents", label: "Starting jackpot ($)", kind: "money", def: "", placeholder: "e.g. 250", quick: true,
+      { key: "starting_amount_cents", label: "Starting jackpot", pre: "$", kind: "money", def: "", placeholder: "e.g. 250", quick: true, group: "nj",
         help: "What the jackpot starts at, and what it goes back to after someone wins it." },
       { key: "increment_cents", label: "Weekly increase ($)", kind: "money", def: "", advanced: true,
         prompt: "How much does it grow each week nobody wins?",

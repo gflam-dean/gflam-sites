@@ -64,7 +64,7 @@
     P + ".vpgs-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:12px 0 0}",
     P + ".vpgs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 20px;border-radius:12px;border:none;font:700 16px/1.25 " + HEAD + ";cursor:pointer;text-align:center}",
     P + ".vpgs-btn.pink{background:" + C.pink + ";color:#FFFFFF}" + P + ".vpgs-btn.ghost{background:rgba(255,255,255,.08);color:" + C.text + "}",
-    P + ".vpgs-btn.big{width:100%;min-height:50px}" + P + ".vpgs-btn.vpgs-outline{border:1.5px solid rgba(255,140,198,.7);background:transparent}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
+    P + ".vpgs-btn.big{width:100%;min-height:50px}" + P + ".vpgs-btn.vpgs-outline{border:1.5px solid rgba(255,140,198,.7);background:transparent}" + P + ".vpgs-btn.vpgs-pk{border:2px solid " + C.pink + ";color:" + C.pinkSoft + "}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
     P + ".vpgs-stack{display:flex;flex-direction:column;gap:10px}",
     P + ".vpgs-close{min-height:44px;padding:8px 14px;font-size:15px}",
     P + ".vpgs-list{list-style:none;margin:0 0 12px;padding:0}",
@@ -85,7 +85,7 @@
     P + ".vpgs-plist{display:flex;flex-direction:column;gap:6px}",
     P + ".vpgs-prow{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;font:700 14px " + HEAD + ";color:" + C.muted + "}",
     P + ".vpgs-none{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;font:600 14px Manrope,system-ui,sans-serif;color:" + C.faint + ";white-space:nowrap;cursor:pointer}",
-    P + ".vpgs-none input{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin:0;border-radius:6px;border:2px solid rgba(255,255,255,.35);background:transparent;cursor:pointer}" + P + ".vpgs-none input:checked{background:" + C.pink + ";border-color:" + C.pink + "}",
+    P + ".vpgs-none input{-webkit-appearance:none;appearance:none;width:20px;height:20px;margin:0;border-radius:6px;border:2px solid rgba(255,255,255,.35);background:transparent;cursor:pointer}" + P + ".vpgs-none input:checked{background:" + C.pink + " url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") center/14px no-repeat;border-color:" + C.pink + "}",
     P + ".vpgs-add{align-self:flex-start;min-height:44px;margin:6px 0 0;padding:8px 14px;border:1px solid rgba(255,140,198,.5);border-radius:10px;background:rgba(255,31,142,.06);font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
     P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
     P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}",
@@ -99,7 +99,7 @@
     P + ".vpgs-q[aria-expanded=true]{color:#FFFFFF}" + P + ".vpgs-q[aria-expanded=true]::before{background:" + C.pink + ";border-color:" + C.pink + ";z-index:-1}",
     /* the "?" words: UNDER the setting on a phone (Dean, round 2), a bubble under the label on a wider screen */
     P + ".vpgs-pop{position:static;margin:0 0 8px;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 15px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}",
-    P + ".vpgs-pop .got{display:block;margin:4px 0 0;padding:0;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;min-height:32px;text-align:left}",
+    P + ".vpgs-pop .got{display:block;margin:4px 0 0;padding:0;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;min-height:44px;min-width:88px;text-align:left}",
     P + ".vpgs-seg{display:flex;width:100%;border:1px solid rgba(255,255,255,.18);border-radius:10px;overflow:hidden}",
     P + ".vpgs-seg button{flex:1;min-height:44px;padding:8px 10px;border:none;background:transparent;font:700 15px/1.2 " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-seg button+button{border-left:1px solid rgba(255,255,255,.18)}" + P + ".vpgs-seg button[aria-pressed=true]{background:" + C.pink + ";color:#FFFFFF}",
@@ -129,8 +129,8 @@
     P + ".vpgs-lab span{display:inline}" + P + ".vpgs-lab .vpgs-nw{white-space:nowrap}" +
     /* a number is one compact line on every screen: the question, then a small box (Dean, round 5) */
     P + ".vpgs-rows .vpgs-row.num{display:grid;grid-template-columns:minmax(0,1fr) 170px;column-gap:12px;align-items:center}" + P + ".vpgs-row.num .vpgs-lab{margin:0}" + P + ".vpgs-row.num .vpgs-pop{grid-column:1/-1}" +
-    P + ".vpgs-tw{display:flex;gap:6px;align-items:center}" + P + ".vpgs-tw .vpgs-in{flex:1;min-width:0}" +
-    P + ".vpgs-rm{flex:none;width:36px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:" + C.pinkSoft + ";font:700 18px " + HEAD + ";cursor:pointer}",
+    P + ".vpgs-tw{display:flex;gap:6px;align-items:center;justify-content:flex-end}" + P + ".vpgs-tw .vpgs-in{flex:none;width:140px;min-width:0}" + P + ".vpgs-time.sx{grid-template-columns:1fr 190px}" +
+    P + ".vpgs-rm{flex:none;width:44px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:" + C.pinkSoft + ";font:700 18px " + HEAD + ";cursor:pointer}",
     P + ".vpgs-lt b{color:#FFFFFF;font-weight:700}" + P + ".vpgs-list .vpgs-n{margin-top:1px}",
     P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 140px 130px}",
     /* the reviewer's layout (design review, 6 Nov): one row per setting, control column fixed */
@@ -143,6 +143,9 @@
       "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-unitw .vpgs-in{flex:0 0 90px}}",
     "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:1fr auto;row-gap:2px}" + P + ".vpgs-prow>:nth-child(2){grid-column:1/-1;grid-row:2}" + P + ".vpgs-prow>:nth-child(3){grid-column:2;grid-row:1}" + P + ".vpgs-go{width:100%}" + P + ".vpgs-foot .vpgs-go{flex:1}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 130px;row-gap:6px}" + P + ".vpgs-times .vpgs-time.sess .vpgs-sess{grid-column:2}}",
     P + ".vpgs-cats .vpgs-chip{height:100%;align-items:flex-start}" + P + ".vpgs-cats{grid-auto-rows:1fr}",
+    "@media (max-width:600px){" + P + ".vpgs-sec.folded>.vpgs-rows{display:none}" + P + "#vpGsGroup_nj{grid-template-columns:1fr;grid-auto-flow:row}}" +
+    "@media (min-width:601px){" + P + ".vpgs-phoneonly{display:none}}" +
+    "@media (max-width:420px){" + P + ".vpgs-music.q3{gap:5px}" + P + ".vpgs-music.q3 .vpgs-chip{padding:8px 6px;justify-content:center;text-align:center;font-size:14px}" + P + ".vpgs-music.q3 .vpgs-chip .bx{display:none}" + P + ".vpgs-music.q3 .vpgs-chip[aria-checked=true]{background:rgba(255,31,142,.22);box-shadow:inset 0 0 0 1px " + C.pink + "}}" +
     "@media (max-width:420px){" + P + "h2.vpgs-title{font-size:20px}" + P + ".vpgs-lead{font-size:14.5px}" + P + ".vpgs-chip{min-height:44px;font-size:14.5px}" + P + ".vpgs-btn.big{min-height:48px;font-size:15px}" + P + ".vpgs-card{padding:16px 12px}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:44px}" + P + ".vpgs-hint{font-size:14px}}",
     "@media (min-width:600px){" + P + ".vpgs-music{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" +
       P + ".vpgs-group{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:auto}" +
@@ -470,7 +473,8 @@
          can be "No prize" (Dean, round 3: some venues give nothing for the first rounds). */
       var plist = el("div", "vpgs-plist"); plist.id = "vpGsIn_" + s.key; wrap.appendChild(plist);
       var vals = [], nones = [];
-      var start = (ctx.bank && ctx.bank.length && !s.ownList) ? ctx.bank.slice() : (s.def ? [s.def] : []);
+      var start = s.draftList ? s.draftList.slice() : (ctx.bank && ctx.bank.length && !s.ownList) ? ctx.bank.slice() : (s.def ? [s.def] : []);
+      if (s.draftNones) s.draftNones.forEach(function (k) { nones[k - 1] = true; });
       vals = start;
       var draw = function () {
         var n = parseInt(all.value(s.countFrom), 10) || 1, same = all.value(s.sameFrom) !== false;
@@ -516,11 +520,11 @@
       /* A short list, typed one at a time with Enter, shown as tags (Dean, round 4: the prizes half the size): the
          usual prizes (the game's prize buttons, Dean round 3) or theme nights. */
       var most = s.kind === "prizebank" ? 8 : (s.max || 6), each = s.kind === "prizebank" ? 80 : (s.each || 60);
-      var items2 = ((s.prizes && ctx.bank && ctx.bank.length) ? ctx.bank : (s.def || [])).slice(0, most);
+      var items2 = ((s.prizes && ctx.bank && ctx.bank.length && !s.fromDraft) ? ctx.bank : (s.def || [])).slice(0, most);
       var tagBox = el("div", "vpgs-tags"); tagBox.id = "vpGsIn_" + s.key; wrap.appendChild(tagBox);
       var tin = el("input", "vpgs-in"); tin.type = "text"; tin.maxLength = each; tin.placeholder = s.placeholder || ""; tin.id = "vpGsIn_" + s.key + "_new";
       tin.setAttribute("aria-label", s.label); tin.setAttribute("enterkeyhint", "enter"); wrap.appendChild(tin);
-      var th = el("p", "vpgs-hint", "Press Enter after each one."); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);   // the rest is under its "?" (Dean, round 5: half the size)
+      var th = el("p", "vpgs-hint", "Press Enter to add."); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);   // the rest is under its "?" (Dean, round 5: half the size)
       var drawTags = function () {
         while (tagBox.firstChild) tagBox.removeChild(tagBox.firstChild);
         items2.forEach(function (w, k) {
@@ -580,6 +584,7 @@
       if (s.def !== "" && s.def != null) inp1.value = s.kind === "money" ? String(s.def / 100) : String(s.def);
       inp1.addEventListener("input", changed); inp1.addEventListener("change", changed);
       /* THE FIRST DRAW DATE FILLS IN THE DRAW DAY (Dean, round 2), unless they typed a day of their own. */
+      if (s.pre) { wrap.className = "vpgs-unitw"; wrap.appendChild(el("span", "vpgs-unit", s.pre)); }   // "$ 250": the $ outside the label, so the label stays one line
       wrap.appendChild(inp1);
       if (s.unit) { wrap.className = "vpgs-unitw"; wrap.appendChild(el("span", "vpgs-unit", s.unit)); }   // "30 seconds" (design review, 6 Nov)
       get = function () {
@@ -645,6 +650,11 @@
     sec.appendChild(el("h3", null, "More settings"));
     sec.appendChild(el("p", "sub", "The usual ones are fine, change them only if you like."));
     var advRows = el("div", "vpgs-rows"); sec.appendChild(advRows);
+    /* ON A PHONE ONLY, "More settings" is folded away until tapped (design review r7: the one idea kept from option B) */
+    sec.className = "vpgs-sec folded";
+    var advT = el("button", "vpgs-add vpgs-phoneonly", "Show more settings"); advT.setAttribute("type", "button"); advT.id = "vpGsAdvToggle"; advT.setAttribute("aria-expanded", "false");
+    advT.addEventListener("click", function () { var open = /folded/.test(sec.className); sec.className = open ? "vpgs-sec" : "vpgs-sec folded"; advT.textContent = open ? "Hide more settings" : "Show more settings"; advT.setAttribute("aria-expanded", open ? "true" : "false"); });
+    sec.insertBefore(advT, advRows);
     var hasAdv = false;
     var settings = g.settings;
     /* BINGO BY STATE AND PUB OR CLUB: only the choices this venue is allowed, nothing that does not apply. */
@@ -659,6 +669,15 @@
     /* THE PRIZES (Dean, round 3): what they type becomes this game's prize buttons on its console. Asked once, with the
        first game that has prizes: "do you use these across different games?" Yes: the next games start with them. */
     ctx.bank = (opts.bank && opts.bank.length) ? opts.bank : null;
+    /* BACK KEEPS WHAT THEY DID (design review r7): coming back to a game shows the prizes, ticks and answers they left. */
+    var draft = opts.draft || null;
+    if (draft) settings = settings.map(function (s) {
+      var k = s.key || (s.keys || []).join(), dv = draft[k];
+      if (dv === undefined || s.kind === "fixed" || s.kind === "info") return s;
+      var c = Object.assign({}, s, { def: dv, fromDraft: true });
+      if (s.kind === "prizelist") { c.def = s.def; c.draftList = dv; c.draftNones = draft.__nones || []; }
+      return c;
+    });
     ctx.usual = (opts.usual && opts.usual.length) ? opts.usual : null;
     ctx.quick = !!opts.quickOnly;   // for raffles' "Use my usual prizes"
     var groups = {};
@@ -715,7 +734,7 @@
       if (s.prizes && opts.askShared && !s.ownList) {
         if (typeof opts.onAsked === "function") opts.onAsked();   // never asked again in this setup, whatever the answer
         /* asked like every other setting, with its own "?" (Dean, round 5: the "?" consistent everywhere) */
-        var shR = settingRow(F, { key: "shared", label: "Same prizes for other games?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
+        var shR = settingRow(F, { key: "shared", label: "Same prizes for other games?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: draft ? draft.__shared : undefined,
           help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
         var sr = shR.row; sr.id = "vpGsShared"; ctx.sharedRow = shR;
         opts.askShared = false;
@@ -723,6 +742,14 @@
       }
     });
     if (ctx.pendingShared) { list.appendChild(ctx.pendingShared); ctx.pendingShared = null; }
+    /* a pair left with one setting (first open: no prizes question beside "Questions in a round") becomes one compact
+       line with a small box, not a box stretched across the screen (design review r7) */
+    Object.keys(groups).forEach(function (k) {
+      var gEl = groups[k]; if (gEl.children.length !== 1 || !gEl.parentNode) return;
+      var only = gEl.children[0], rr = byKey[only.getAttribute("data-key")];
+      if (!rr || (rr.s.kind !== "number" && rr.s.kind !== "money")) return;
+      only.className += " num"; gEl.parentNode.insertBefore(only, gEl); gEl.parentNode.removeChild(gEl);
+    });
     if (alt) Object.keys(altSec).forEach(function (k) { if (!altSec[k].used) altSec[k].box.style.display = "none"; });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
@@ -745,7 +772,7 @@
         /* the line goes under the date and time pair, full width, so the two boxes stay level (design review round 6) */
         var fromN = el("p", "vpgs-hint", "Draw time: from the night you picked."); fromN.id = "vpGsFromNight"; fromN.style.margin = "0 0 8px";
         var tmGrp = tmIn.parentNode; while (tmGrp && tmGrp.className !== "vpgs-group" && tmGrp !== F.body) tmGrp = tmGrp.parentNode;
-        if (tmGrp && tmGrp.className === "vpgs-group" && tmGrp.parentNode) tmGrp.parentNode.insertBefore(fromN, tmGrp.nextSibling); else tmIn.parentNode.appendChild(fromN);
+        if (tmGrp && tmGrp.className === "vpgs-group" && tmGrp.parentNode) tmGrp.parentNode.insertBefore(fromN, tmGrp.nextSibling); else { fromN.textContent = "From the night you picked."; tmIn.parentNode.appendChild(fromN); }   // right under its own box: no need to say "Draw time" again
       }
     }
     var msg = el("p", "vpgs-msg"); msg.id = "vpGsMsg"; msg.setAttribute("role", "status"); F.body.appendChild(msg);
@@ -796,14 +823,26 @@
       var stack = el("div", "vpgs-stack"); stack.style.width = "100%";
       stack.appendChild(save);
       if (!g.needsDetails) {
-        var play = F.btn(gkey === "musical" ? "Play now with the defaults (popular songs)" : "Play now with the defaults", "ghost big", "vpGsPlayNow", function () { done("defaults"); });
+        var play = F.btn(gkey === "musical" ? "Play now with the defaults (popular songs)" : "Play now with the defaults", "ghost big vpgs-outline vpgs-pk", "vpGsPlayNow", function () { done("defaults"); });
         stack.appendChild(play);
       } else {
-        stack.appendChild(F.btn("Not now, take me to the console", "ghost big", "vpGsPlayNow", function () { done("later"); }));
+        stack.appendChild(F.btn("Not now, take me to the console", "ghost big vpgs-outline vpgs-pk", "vpGsPlayNow", function () { done("later"); }));
       }
       F.foot.appendChild(stack);
     } else {
-      F.foot.appendChild(opts.back ? F.btn("Back", "ghost", "vpGsBack", opts.back) : el("span"));
+      F.foot.appendChild(opts.back ? F.btn("Back", "ghost", "vpGsBack", function () {
+        var d = {};
+        rows.forEach(function (r) {
+          if (r.s.kind === "info" || r.s.kind === "fixed") return;
+          var k = r.s.key || (r.s.keys || []).join(), v;
+          if (r.s.kind === "time" || r.s.kind === "date") { var ti = r.input(); v = ti && ti.value ? ti.value : undefined; } else v = r.get();
+          if (v !== undefined) d[k] = v;
+          if (r.s.kind === "prizelist" && ctx.noneOf) d.__nones = ctx.noneOf();
+        });
+        if (ctx.sharedRow) { d.__askedHere = true; var sv = ctx.sharedRow.get(); if (sv !== undefined) d.__shared = sv; }
+        if (opts.onDraft) opts.onDraft(d);
+        opts.back();
+      }) : el("span"));
       F.foot.appendChild(save);
     }
     return rows;
@@ -977,14 +1016,15 @@
               /* MORE THAN ONE SESSION A NIGHT, EACH WITH ITS START TIME (Dean, rounds 4 and 5) */
               var more = (cnt[g] && cnt[g][x[0]]) || [];
               more.forEach(function (tv, k) {
-                var r2 = F.el("label", "vpgs-time" + (tv ? "" : " need"));
+                var r2 = F.el("label", "vpgs-time sx" + (tv ? "" : " need"));
                 r2.appendChild(F.el("span", null, "Session " + (k + 2) + " start time"));
                 var t2 = F.el("input", "vpgs-in"); t2.type = "time"; t2.id = "vpGsTime_" + g + "_" + x[0] + "_" + (k + 2); t2.value = tv || "";
-                function took2() { more[k] = /^\d\d:\d\d$/.test(t2.value) ? t2.value : ""; r2.className = "vpgs-time" + (more[k] ? "" : " need"); gate(); }
+                function took2() { more[k] = /^\d\d:\d\d$/.test(t2.value) ? t2.value : ""; r2.className = "vpgs-time sx" + (more[k] ? "" : " need"); gate(); }
                 t2.addEventListener("input", took2); t2.addEventListener("change", took2);
                 var rm = F.el("button", "vpgs-rm", "\u00d7"); rm.setAttribute("type", "button"); rm.setAttribute("aria-label", "Remove session " + (k + 2));
                 rm.addEventListener("click", function (e) { if (e && e.preventDefault) e.preventDefault(); more.splice(k, 1); paint(); gate(); });
-                var tw = F.el("span", "vpgs-tw"); tw.appendChild(t2); tw.appendChild(rm); r2.appendChild(tw);
+                /* the cross sits to the LEFT of the box, so the time box is as wide as every other one and lines up (design review r7: "08:0" was cut off) */
+                var tw = F.el("span", "vpgs-tw"); tw.appendChild(rm); tw.appendChild(t2); r2.appendChild(tw);
                 times.appendChild(r2);
               });
               if (more.length < 3) {
@@ -1060,12 +1100,15 @@
       nt.setAttribute("style", "margin:16px 0 0"); F.body.appendChild(nt);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep)); F.foot.appendChild(F.el("span"));
     }
+    var drafts = {};   // what they left on a game when they pressed Back, by game and draw
     function oneGame(g, inst) {
       inst = inst || 1;
       var memNights = (cleanWeek(answers.week) || []).filter(function (d) { return d.games.some(function (x) { return x.game === "members"; }); }).length;
       var all = ticked(), i = all.indexOf(g), many = (g === "members" && memNights > 1) ? memNights : 1;   // a draw for each members night
+      var dk = g + "#" + inst, dr = drafts[dk] || null;
       gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
-          bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: answers.prizes_shared === undefined && !answers.prizes_asked,
+          draft: dr, onDraft: function (d) { drafts[dk] = d; },
+          bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: (answers.prizes_shared === undefined && !answers.prizes_asked) || !!(dr && dr.__askedHere),
           onAsked: function () { answers.prizes_asked = true; } }, function (outcome, vals) {
         if (outcome === "saved") {
           /* "Do you use these prizes across different games?" asked once. Yes: these prizes start every other game's list. */
@@ -1107,7 +1150,7 @@
       var line = "We'll remind you when you open each of those games.";
       if (withDefaults.length) line += " Your default settings have been saved for " + listWords(withDefaults) + ".";
       var p = F.el("p", "vpgs-lead", line); p.id = "vpGsNoWorries"; F.body.appendChild(p);
-      if (rest.indexOf("members") >= 0) { var m = F.el("p", "vpgs-note", "Members draws still need your draw details (the draw name, day and jackpot), so we'll ask for those when you open it."); m.id = "vpGsMembersNote"; F.body.appendChild(m); }
+      if (rest.indexOf("members") >= 0) { var m = F.el("p", "vpgs-note", "Members draws still need your draw details (the draw name, time and jackpot), so we'll ask for those when you open it."); m.id = "vpGsMembersNote"; F.body.appendChild(m); }
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
     }
     function allDone() {
