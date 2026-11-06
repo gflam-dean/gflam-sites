@@ -476,7 +476,7 @@ def phone(B, base, logo, tag, shots, full, name='Tugun Bowls Club', sp='slide'):
         P.js(say('vp-' + ROOM, [{'t': 'state', 'lobby': True, 'active': False, 'pattern': 'one', 'prize': 'Meat tray', 'played': []}, {'t': 'players', 'count': 4137}])); time.sleep(1.5)
         wt = pp(P) or {}
         P.shot(shots + '-phone-4-youre-in')
-        ok('%s lobby: YOU\'RE IN, the name, Up first: Musical bingo, and NO player count though the host sent 4137 (Dean, 4 Nov 2026)' % tag, wt.get('view') == 'vWait' and "you're in" in wt.get('all', '').lower() and 'Sam' in wt.get('all', '') and 'musical bingo' in wt.get('all', '').lower() and '4137' not in wt.get('all', '') and 'playing' not in wt.get('all', '').lower(), wt.get('all'))
+        ok('%s lobby: YOU\'RE IN, the name, Musical bingo tonight, and NO player count though the host sent 4137 (Dean, 4 Nov 2026; round 5 lobby 6 Nov)' % tag, wt.get('view') == 'vWait' and "you're in" in wt.get('all', '').lower().replace('\u2019', "'") and 'Sam' in wt.get('all', '') and 'musical bingo' in wt.get('all', '').lower() and '4137' not in wt.get('all', '') and 'playing' not in wt.get('all', '').lower(), wt.get('all'))
         ok('%s lobby: the one lobby line every game uses: "The game will start here when the host is ready."' % tag, 'The game will start here when the host is ready.' in wt.get('all', '') and 'your card appears' not in wt.get('all', '').lower(), wt.get('all'))
         ok('%s lobby: row two keeps the pattern and the prize' % tag, (wt.get('row2') or {}).get('prize') == 'Meat tray', wt.get('row2'))
         ok('%s lobby: the venue\'s ad: "What\'s on at <venue>" and its five slides, above our logo' % tag,
