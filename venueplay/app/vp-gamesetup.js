@@ -77,7 +77,7 @@
     P + ".vpgs-chip .bx{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:14px;color:#FFFFFF}",
     P + ".vpgs-chip small{display:block;font:500 14px/1.3 Manrope,system-ui,sans-serif;color:" + C.faint + ";margin-top:2px}",
     P + ".vpgs-chip[aria-checked=true]{border-color:" + C.pink + ";background:rgba(255,31,142,.12)}" + P + ".vpgs-chip[aria-checked=true] .bx{background:" + C.pink + ";border-color:" + C.pink + "}",
-    P + ".vpgs-music{display:grid;grid-template-columns:1fr 1fr;gap:6px}" + P + ".vpgs-music .vpgs-chip{min-height:44px;padding:8px 10px;font-size:14px}",
+    P + ".vpgs-music{display:grid;grid-template-columns:1fr 1fr;gap:6px}" + P + ".vpgs-music>.vpgs-add{margin:0;width:100%;align-self:stretch;min-height:44px}" + P + ".vpgs-music .vpgs-chip{min-height:44px;padding:8px 10px;font-size:14px}",
     P + ".vpgs-cats{display:grid;grid-template-columns:1fr;gap:6px}" + P + ".vpgs-cats .vpgs-chip{min-height:44px;padding:8px 12px}",
     P + ".vpgs-in{display:block;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:" + C.ink + ";color:#FFFFFF;font:16px Manrope,system-ui,sans-serif;margin:0}",
     P + ".vpgs-in:focus{outline:2px solid " + C.pink + ";outline-offset:1px}" + P + ".vpgs-in[disabled]{opacity:.4}",
@@ -145,13 +145,17 @@
     P + ".vpgs-cats .vpgs-chip{height:100%;align-items:flex-start}" + P + ".vpgs-cats{grid-auto-rows:1fr}",
     "@media (max-width:600px){" + P + ".vpgs-sec.folded>.vpgs-rows{display:none}" + P + "#vpGsGroup_nj{grid-template-columns:1fr;grid-auto-flow:row}}" +
     "@media (min-width:601px){" + P + ".vpgs-phoneonly{display:none}}" +
-    "@media (max-width:420px){" + P + ".vpgs-music.q3{gap:5px}" + P + ".vpgs-music.q3 .vpgs-chip{padding:8px 6px;justify-content:center;text-align:center;font-size:14px}" + P + ".vpgs-music.q3 .vpgs-chip .bx{display:none}" + P + ".vpgs-music.q3 .vpgs-chip[aria-checked=true]{background:rgba(255,31,142,.22);box-shadow:inset 0 0 0 1px " + C.pink + "}}" +
+    "@media (max-width:420px){" + P + ".vpgs-music.q3{gap:5px}" + P + ".vpgs-music.q3{gap:8px;padding-top:6px}" + P + ".vpgs-music.q3 .vpgs-chip{position:relative;padding:8px 6px;justify-content:center;text-align:center;font-size:14px}" +
+      /* the tick moves to a small pink badge on the corner, so the words keep one line (design review r7b: what is picked must show) */
+      P + ".vpgs-music.q3 .vpgs-chip .bx{position:absolute;top:-8px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid " + C.ink + ";font-size:14px;line-height:1}" +
+      P + ".vpgs-music.q3 .vpgs-chip[aria-checked=false] .bx{display:none}" + P + ".vpgs-music.q3 .vpgs-chip[aria-checked=false]{color:#C8C8D0;border-color:rgba(255,255,255,.3);background:transparent}" +
+      P + ".vpgs-music.q3 .vpgs-chip[aria-checked=true]{background:rgba(255,31,142,.22);box-shadow:inset 0 0 0 1px " + C.pink + "}}" +
     "@media (max-width:420px){" + P + "h2.vpgs-title{font-size:20px}" + P + ".vpgs-lead{font-size:14.5px}" + P + ".vpgs-chip{min-height:44px;font-size:14.5px}" + P + ".vpgs-btn.big{min-height:48px;font-size:15px}" + P + ".vpgs-card{padding:16px 12px}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:44px}" + P + ".vpgs-hint{font-size:14px}}",
     "@media (min-width:600px){" + P + ".vpgs-music{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" +
       P + ".vpgs-group{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:auto}" +
 
       P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;text-align:left;text-decoration:underline;text-underline-offset:3px}}",
-    "@media (min-width:760px){" + P + ".vpgs-box{max-width:660px;padding-top:24px}" + P + ".vpgs-card{padding:26px 30px}" + P + "h2.vpgs-title{font-size:26px}" +
+    "@media (min-width:760px){" + P + ".vpgs-music>.vpgs-add{grid-column:1/-1;width:auto;justify-self:start;padding:8px 16px}" + P + ".vpgs-box{max-width:660px;padding-top:24px}" + P + ".vpgs-card{padding:26px 30px}" + P + "h2.vpgs-title{font-size:26px}" +
       P + ".vpgs-chips{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" +
       P + ".vpgs-row.two{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:20px;align-items:center}" +
       P + ".vpgs-row.two .vpgs-prompt{grid-column:1/-1}" + P + ".vpgs-row.two .vpgs-lab{margin:0}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" +
@@ -159,7 +163,7 @@
     /* LAPTOPS ARE SMALL SCREENS (Dean, round 3): bigger type and controls from 1100px */
     /* LAPTOPS (design review, 6 Nov): a 900px column, 18px body text, 15px helpers */
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:900px;padding-top:32px}" + P + ".vpgs-card{padding:36px 44px}" + P + "h2.vpgs-title{font-size:32px}" +
-      P + ".vpgs-lead{font-size:18px}" + P + ".vpgs-lab{font-size:18px}" + P + ".vpgs-hint{font-size:15px}" + P + ".vpgs-unit{font-size:17px}" + P + ".vpgs-chip small{font-size:15px}" + P + ".vpgs-info{font-size:17px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
+      P + ".vpgs-lead{font-size:18px}" + P + ".vpgs-lab{font-size:18px}" + P + ".vpgs-hint{font-size:15px;color:#C6C6CE}" + P + ".vpgs-sec .sub{font-size:15px;color:#C6C6CE}" + P + ".vpgs-unit{font-size:17px}" + P + ".vpgs-chip small{font-size:15px}" + P + ".vpgs-info{font-size:17px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
       P + ".vpgs-chip{min-height:50px;font-size:16px}" + P + ".vpgs-seg button{min-height:48px;font-size:16px}" + P + ".vpgs-in{min-height:48px;font-size:17px}" +
       P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 380px}" + P + ".vpgs-rows .vpgs-row.num{grid-template-columns:minmax(0,1fr) 200px}}"
   ].join("");
@@ -464,6 +468,7 @@
           if (!showAll && (pi2 < 0 || pi2 >= lim) && (ctx.quick || picked.indexOf(p.id) < 0)) { b.style.display = "none"; hidden++; }
           grid.appendChild(b);
         });
+        if (!ctx.quick) grid.appendChild(moreM);   // the last tile in the grid: "2000s" never sits alone on a row (design review r7)
         moreM.textContent = "+ Show all " + list.length + " kinds of music";
         moreM.style.display = hidden ? "" : "none";
       });
