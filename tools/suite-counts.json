@@ -551,6 +551,10 @@
   "checks": 171,
   "counted_by": "lines"
  },
+ "tools/test-games-answers.js": {
+  "checks": 45,
+  "counted_by": "lines"
+ },
  "tools/test-gaming-rules-letters-15-oct.js": {
   "checks": 72,
   "counted_by": "lines"

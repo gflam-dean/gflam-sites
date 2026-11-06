@@ -360,6 +360,7 @@
   "the free-entry popup shows each state its own prize thresholds",
   "the game Worker and the console mirror skip the once-a-week rule only for weekly_limit_off true, and keep it before 107",
   "the game names live in lib/pp-games.js",
+  "the games the setup wizard was told, counted per game over active venues that are not test venues, how many play it, how many are new that month by games_at, how many set it up; one email to dean@venueplay.com.au only, saying it is internal, games in the house order; a dry run and an owner-only HQ preview send nothing; off unless MONTHLY_REPORTS is on, only 2am to 7am on the 1st to the 3rd, once a month by its record written first; nothing before anyone answers; before migration 163 no email and the venue reports still go",
   "the guests' email addresses are actually deleted, not just promised",
   "the guests' nicknames are actually deleted, not just promised",
   "the host consoles share one set of console classes",

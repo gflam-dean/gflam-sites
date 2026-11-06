@@ -3881,6 +3881,13 @@ def local_checks(which):
              'Add a venue and the card sign-up refuse the same name and postcode on another account, any status, with Dean\'s words, a ticket naming both accounts and the person, and an HQ alert; nothing made, Stripe never asked; the right name at the wrong postcode and a new name go ahead; a venue with no postcode counts as the same; a database that will not answer refuses', 22,
              'A pub already on venueplay signed up again by somebody else, with a second account and a second free month, '
              'and nobody at HQ told'),
+            # D146: what venues play, one internal email a month to Dean from the setup wizard's answers
+            # (INBOX 104a, migration 163 NOT RUN), branch fix/wizard-104-10nov.
+            ('D146. What venues play goes to Dean once a month, counted by hand, and to nobody else',
+             'test-games-answers.js',
+             'the games the setup wizard was told, counted per game over active venues that are not test venues, how many play it, how many are new that month by games_at, how many set it up; one email to dean@venueplay.com.au only, saying it is internal, games in the house order; a dry run and an owner-only HQ preview send nothing; off unless MONTHLY_REPORTS is on, only 2am to 7am on the 1st to the 3rd, once a month by its record written first; nothing before anyone answers; before migration 163 no email and the venue reports still go', 45,
+             'A venue sent HQ\'s numbers, Dean emailed the same totals every hour of the 1st, test pubs counted as customers, '
+             'or the venue reports stopped because the wizard\'s column was not there yet'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers
