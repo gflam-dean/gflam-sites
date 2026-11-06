@@ -141,6 +141,7 @@ eval(lift('joinInfoKeep'));
 eval(lift('joinInfoStaticRead'));
 eval(lift('handleJoinInfo'));
 eval(lift('joinInfoLookup'));
+eval(lift('joinNights'));   // the venue's game nights on /join/info (6 Nov 2026)
 /* /play/live keeps its answer a few seconds (the cheaper join, 31 Oct 2026): the cache, then the lookup. */
 eval(liftLine(/^const PLAY_LIVE_TTL_MS[^\n]*/m));
 eval(liftLine(/^const playLiveCache[^\n]*/m));

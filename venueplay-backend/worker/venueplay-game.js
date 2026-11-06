@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 22:28 · eea135d4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:32 · c0235d0f';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1423,8 +1423,13 @@ async function joinInfoLookup(env, code, fresh) {
     return { keep: !!held, body: { collect: null, format: '', exists: !!held } };
   }
   const cfg = await joinInfoStaticRead('s:' + venueId, async () => {
-    const rows = await sbGet(env, 'vp_venue_settings',
-      'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+    const cols = 'collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin';
+    /* THE VENUE'S GAME NIGHTS (Dean, 6 Nov 2026: the phone's "Tonight" and "Next game night" cards). Only what the venue
+       told the setup wizard (migration 163, setup_answers: which nights, which games). Before 163 has run the column does
+       not exist and PostgREST refuses the read, so it is asked again without it: the phone then shows no nights. */
+    let rows;
+    try { rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=' + cols + ',setup_answers&limit=1'); }
+    catch (e) { rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=' + cols + '&limit=1'); }
     return (rows && rows[0]) || {};
   }, fresh);
   /* The venue's NAME, so the join screen can say who is asking for these details. A collection
@@ -1499,7 +1504,16 @@ async function joinInfoLookup(env, code, fresh) {
     email: !!cfg.collect_email,
     mobile: !!cfg.collect_mobile,
     marketing_optin: !!cfg.collect_marketing_optin,
-  } }, venueId: venueId };
+  }, ...joinNights(cfg.setup_answers) }, venueId: venueId };
+}
+/* The phone's copy of the venue's game nights: { nights:["wed","fri"], games:["trivia","musical"] }, the known values only,
+   in week order, from the setup wizard's answers. Nothing at all when the venue never answered. No start times exist. */
+function joinNights(sa) {
+  const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], GAMES = ['trivia', 'musical', 'bingo', 'raffles', 'members'];
+  if (!sa || typeof sa !== 'object') return {};
+  const nights = Array.isArray(sa.nights) ? DAYS.filter((d) => sa.nights.indexOf(d) !== -1) : [];
+  const games = Array.isArray(sa.games) ? GAMES.filter((g) => sa.games.indexOf(g) !== -1) : [];
+  return (nights.length || games.length) ? { nights: nights, games: games } : {};
 }
 
 /* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a

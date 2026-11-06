@@ -218,6 +218,11 @@ def wall(B, base, w, h):
     QR, RG, IM = pq.get('qround'), pq.get('ring'), pq.get('img')
     ok(tag + ': a picture question: "Question 3 of 20" sits under its ring, not behind it, and clear of the picture',
        bool(QR and RG and IM) and QR[1] >= RG[3] and (QR[0] >= IM[2] or QR[3] <= IM[1]), [QR, RG, IM])
+    for nm_, x_ in (('countdown', pq), ('reveal', pr)):
+        Q_, R_, I_ = x_.get('q'), x_.get('ring'), x_.get('img')
+        ok(tag + ': a picture question: the question sits on the ring\'s centre line on the %s (within 2px; Dean, 6 Nov 2026)' % nm_,
+           bool(Q_ and R_) and abs((Q_[1] + Q_[3]) / 2 - (R_[1] + R_[3]) / 2) <= 2, [Q_, R_])
+        ok(tag + ': and clear of the picture under it on the %s' % nm_, bool(Q_ and I_) and Q_[3] <= I_[1] + 1, [Q_, I_])
     ok(tag + ': and the reveal\'s disc leaves it clear too', bool(PM.get('r') and pr.get('qround')) and pr['qround'][1] >= PM['r'][3], [PM.get('r'), pr.get('qround')])
 
     calm = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, [('landing', 7300), ('reveal', 9000)], 'calm', calm=True)

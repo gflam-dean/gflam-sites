@@ -113,3 +113,32 @@
 #vpAd .dots i{width:7px;height:7px;border-radius:4px;background:#3A3A44}
 #vpAd .dots i.on{width:22px;background:#fff}
 body.light #vpAd .dots i.on{background:#191420}
+
+/* 6. WHILE THE PHONE WAITS (Dean, 6 Nov 2026, round 4: option C for "You're in", option B for "No game on right now";
+   reports/fri-6nov-live-fixes/host-mock-4/). Drawn by /app/vp-tonight.js, shared by the trivia and musical phones. */
+.vpt{display:flex;flex-direction:column;align-items:stretch;padding:6px 20px 8px;text-align:left}
+.vpt-head{display:flex;align-items:center;gap:12px}
+.vpt-head .vp-tick{width:40px;height:40px;margin:0;border-width:2.5px;flex:none}
+.vpt-head .vp-tick svg{width:18px;height:18px}
+.vpt-head .t{font-family:'Anton',sans-serif;font-weight:400;font-size:34px;line-height:1.02;text-transform:uppercase;color:#fff;overflow-wrap:anywhere}
+.vpt-night{margin-top:14px;background:#1A1A1F;border-radius:18px;padding:14px 16px 6px}
+.vpt-night .nk,.vpt-hero .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A95;margin-bottom:6px}
+.vpt-night .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
+.vpt-night .nk + .row{border-top:0}
+.vpt-night .bd{flex:none;min-width:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:7px;background:#26262C;color:#9A9AA4}
+.vpt-night .bd.next{background:#FF1F8E;color:#0A0A0B}
+.vpt-night .g{flex:1;min-width:0}
+.vpt-night .g b{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:19px;line-height:1.2;color:#fff}
+.vpt-night .g span{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;line-height:1.3;color:#9A9AA4;margin-top:1px}
+.vpt-night .row.later .g b{color:#C9C9D2}
+.vpt-wait{font-family:'Manrope',sans-serif;font-weight:500;font-size:16px;line-height:1.4;color:#9A9AA4;margin:12px 0 0;text-align:center}
+.vpt-hero{margin-top:14px;background:radial-gradient(420px 260px at 100% -20%,rgba(255,31,142,.25),transparent 60%),#16161A;border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:18px}
+.vpt-hero .k{color:#FF1F8E}
+.vpt-hero .d{font-family:'Anton',sans-serif;font-weight:400;font-size:46px;line-height:1;text-transform:uppercase;color:#fff;margin:6px 0 6px;overflow-wrap:anywhere}
+.vpt-hero .g{font-family:'Manrope',sans-serif;font-weight:700;font-size:17px;line-height:1.4;color:#E7E7EC}
+.vpt-dots{display:flex;gap:6px;margin-top:12px}
+.vpt-dots i{width:7px;height:7px;border-radius:4px;background:#3A3A44}
+.vpt-dots i.on{width:22px;background:#fff}
+.vpt-onlist{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;line-height:1.4;color:#8A8A95;text-align:center;margin:12px 0 0}
+body.light .vpt-head .t,body.light .vpt-hero .d,body.light .vpt-night .g b{color:#191420}
+body.light .vpt-night,body.light .vpt-hero{background:#FFFFFF}

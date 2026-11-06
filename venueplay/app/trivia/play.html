@@ -261,7 +261,7 @@
   <!-- WAIT: you're in. The new look, as the musical phone's (mock-ups newlook-musical-5nov/final/13-phone-youre-in.png): the green ring
        tick, YOU'RE IN in Anton, the name, an "Up first" chip, the one lobby line every game uses, then the venue's ad (6 Nov 2026) -->
   <div class="view hidden" id="vWait">
-    <div class="vp-in">
+    <div class="vp-in" id="waitIn">
       <div class="vp-tick" id="waitIcon" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="vp-h" id="waitHead">You&#39;re in</div>
       <div class="vp-name" id="waitName">Player</div>
@@ -270,6 +270,9 @@
       <div class="scorebox hidden" id="waitScore"></div>
       <div class="rankline hidden" id="waitRank"></div>
     </div>
+    <!-- Dean's round 4 picks (6 Nov 2026): "You're in, <name>" and Tonight (option C), or "No game on right now" (option B).
+         Drawn by /app/vp-tonight.js; the block above is what shows without it, and for any other heading. -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- QUESTION -->
@@ -390,7 +393,8 @@
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
-<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
+<script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
@@ -643,6 +647,13 @@
   function showWait(msg, head){
     show("vWait");
     $("waitName").textContent=P.name; $("waitName").classList.remove("hidden");
+    /* THE LOBBY, OPTION C: the plain "You're in" (no other heading, nothing scored yet) is drawn by /app/vp-tonight.js. */
+    var tn=$("vpTonight"), inb=$("waitIn");
+    if(tn && inb){
+      var useT = !head && !(P.total>0) && typeof VPTonight==="object";
+      tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT);
+      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games }); }
+    }
     $("waitHead").textContent = head || "You\u2019re in";
     /* The tick and the "Up first" chip belong to the lobby's YOU'RE IN only; a heading for any other moment stands alone. */
     $("waitIcon").classList.toggle("hidden", !!head);
@@ -660,12 +671,20 @@
      luck, "You're back in. Next question coming up on the big screen", 131 points, 2nd, hours after the night had
      ended and with the host signed out). Said plainly, with no score and no promise of a question. A host message
      (a heartbeat, a question, a lobby) takes the phone out of it again. */
+  /* On the venue's list: this phone ticked the venue's offers when it joined (kept on the phone per venue code). */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
   var NO_GAME_MSG="Ask the host, or scan the code when the next game starts.";
   function showNoGame(){
     if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; }
     P.q=null; P.total=0; P.rank=0; P.playersCount=0; stopCd();
     showWait(NO_GAME_MSG, "No game on right now");
     $("waitName").classList.add("hidden");   // no name and no score: nothing is being played
+    /* OPTION B (Dean, 6 Nov 2026): "You're in, <name>" and the venue's next game nights, turning, then its ad. */
+    var tn=$("vpTonight"), inb=$("waitIn");
+    if(tn && inb && typeof VPTonight==="object"){
+      inb.classList.add("hidden"); tn.classList.remove("hidden");
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, venue:P.venueName, onList:onList() });
+    }
   }
   /* A phone that comes back between questions is told "watch the big screen", and if no host is heard on the channel
      within 75 s (the console speaks every 30 s while a game or lobby is open) there is no game: say so. */
@@ -1179,6 +1198,7 @@
     if(g && g.format==="trivia" && g.game_id){
       useGame(g.game_id);
       if(typeof g.colour==="boolean") P.colour=g.colour;
+      if(g.prize) P.prize=String(g.prize).slice(0,80);   // the Tonight card shows it
       /* A phone that slept through a question comes back into whatever is on: the open question
          (asking), the same question with the buttons locked (locked), or its own score while the
          room is between questions. Before, only "asking" was handled and the rest saw "You're in". */
@@ -1322,6 +1342,12 @@
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       headerVenue(r&&r.logo_url, r&&r.venue_name);
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
+      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      if(r&&r.venue_name) P.venueName=String(r.venue_name);
+      if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
+        if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
+      }
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
@@ -1367,6 +1393,7 @@
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
+      if(P.capture && P.capture.marketing_optin===true){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} }   // on the venue's list: the "no game" screen says so
       announce();   // cosmetic roster on the host + TV
       if(P.pendingQ || P.pendingScore){ applyPending(true); }   // true: a name just typed in, not a phone coming back
       else showWait("Watch the big screen. Your questions will pop up here.");

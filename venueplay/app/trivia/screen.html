@@ -156,6 +156,9 @@
   .layer.pic .qimg{display:block}
   .layer.pic .qimg.hidden{display:none!important}
   .layer.pic .qtext{font-size:2.5cqw;line-height:1.14}
+  /* The picture round's question sits on its ring's centre line, as the text round's does (Dean, 6 Nov 2026: it sat at the top, above
+     the ring's centre). The ring is 10cqw from 9.4cqw, so its centre is 14.4cqw; the text grows up and down from there. */
+  .layer.pic .qtext{top:14.4cqw;transform:translateY(-50%)}
   .layer.pic .answers{top:37.6cqw;grid-template-columns:1fr 1fr 1fr 1fr;grid-gap:1.3cqw;gap:1.3cqw}
   .layer.pic .ans{height:6.3cqw;padding:0 1.2cqw 0 1.8cqw}
   .layer.pic .ans .al{width:3.6cqw;height:3.6cqw;font-size:3.2cqw;margin-right:1.2cqw}
