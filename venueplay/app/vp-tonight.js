@@ -1,62 +1,104 @@
 /* vp-tonight.js  -- THE PLAYER PHONE WHILE IT WAITS, ONE COPY FOR EVERY GAME (6 Nov 2026).
 
-   Dean picked two of the round 4 mock-ups (reports/fri-6nov-live-fixes/host-mock-4/REVIEW.html):
+   Dean's final picks (reports/fri-6nov-live-fixes/host-mock-5/DEAN-PICKS.md, round 5):
 
-   OPTION C, the lobby ("You're in"):   VPTonight.lobby(box, o)
-     "You're in, Sam" beside the green ring tick, then a TONIGHT card: the game this phone joined, badged NEXT, with its
-     prize when the host has set one, and every other game the venue runs on tonight's weekday, badged LATER. Only one
-     game tonight: the badge reads TONIGHT and there is no Later row. Then the one lobby line. The venue's ad
-     (/app/vp-phonead.js) sits underneath, in its own fixed slot.
+   "YOU'RE IN" (the lobby):   VPTonight.lobby(box, o)
+     "You're in, Sam" beside the green ring tick, then the TONIGHT spot: the game this phone joined (its prize only when
+     the host set a real one). Only one game tonight: badged TONIGHT, no Later row. More games stored for tonight: the
+     first badged NEXT, the rest LATER. Then the "THIS WEEK HERE" strip: today and the next six days, the venue's game
+     nights marked. Tap a day and the Tonight spot shows that night's games ("Trivia night, ask for start time",
+     "Members draw, 7:30pm"); tap Today to come back. Then the one lobby line. The venue's ad and our logo sit under it,
+     drawn by the page (/app/vp-phonead.js, .pfoot).
 
-   OPTION B, nothing is on ("No game on right now"):   VPTonight.noGame(box, o)
-     "You're in, Sam", then a NEXT GAME NIGHT card that turns, one at a time, through the venue's coming nights
-     ("Wednesday" / "Trivia and Musical bingo"), and "Members draw" / "Scan the QR code again on the night." when the
-     venue runs one. A phone that is already on the venue's list reads "You're on <venue>'s list. Change this from any
-     of their emails." The one-field email sign-up is NOT here: no Worker route takes a sign-up from a phone with no
-     game yet (to build: a /join/list route and its consent record).
+   "NO GAME ON RIGHT NOW":   VPTonight.noGame(box, o)
+     "You're in, Sam", "No game here right now", a SMALL optional "Get a heads up by email" (only when the page passes
+     o.signup, a function that sends it; after a confirmed send the box closes and is not shown again on this phone, and
+     nothing says "you're on the list"), then the same week strip with its night spot.
 
-   Only stored data: the nights and games the venue gave the setup wizard (vp_venue_settings.setup_answers, sent by
-   /join/info as nights and games). No start times, and no record of which game runs on which night, so every night
-   lists the venue's games. Every word from the venue or a player is set as text, never as HTML.
+   DATA, read defensively. Only what the venue told the setup wizard (vp_venue_settings.setup_answers, migration 163),
+   passed on by /join/info:
+     nights      ["wed","fri"]                                     which weekdays it runs games
+     games       ["trivia","musical","members"]                    which games it runs
+     night_games {"wed":[{"game":"trivia","time":"19:30"}], ...}   which game on which night, an optional start time
+   With no night_games, the strip shows the nights only and says "Ask at the bar for start times". Nothing is invented.
+   Every word from the venue or a player is set as text, never as HTML.
 
-   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, nights:["wed","fri"], games:["trivia","musical"],
-         venue, onList, now }   (now: a Date, for the suites; the phone's own clock otherwise)
+   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, nights, games, night_games, signup(email, optin) -> Promise,
+         signedUp, venue, now }   (now: a Date, for the suites; the phone's clock otherwise)
 
    ES5, no dependencies. Its look is /app/vp-phone.css section 6. tools/test-vp-tonight.js runs it. */
 (function (root) {
   "use strict";
   var d = root.document;
   var DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-  var DAY_NAME = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
-  var GAME_NAME = { trivia: "Trivia", musical: "Musical bingo", bingo: "Bingo" };
-  var PLAYED = ["trivia", "musical", "bingo"];   // games played on a phone; raffles and members draws are not "games later"
+  var SHORT = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
+  var LONG = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var GAME_NAME = { trivia: "Trivia", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
+  var NIGHT_NAME = { trivia: "Trivia night", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var TICK = '<div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-  var _turn = null;
 
   function el(tag, cls, text) { var e = d.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
-  function games(o) { var g = (o && o.games) || []; return PLAYED.filter(function (k) { return g.indexOf(k) !== -1; }); }
-  function today(o) { return DAYS[((o && o.now) || new Date()).getDay()]; }
-  function joinNames(list) { list = list.map(function (k) { return GAME_NAME[k]; }); return list.length < 2 ? (list[0] || "") : list.slice(0, -1).join(", ") + " and " + list[list.length - 1]; }
+  function now(o) { return (o && o.now) || new Date(); }
+  function dayKey(dt) { return DAYS[dt.getDay()]; }
+  function addDays(dt, n) { var x = new Date(dt.getTime()); x.setDate(x.getDate() + n); return x; }
 
-  /* Tonight's rows: this game first, then every other game the venue plays, when tonight is one of its nights. */
+  /* "19:30" -> "7:30pm", "19:00" -> "7pm"; anything else is not a time and is left out. */
+  function time12(t) {
+    var m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(String(t || ""));
+    if (!m) return "";
+    var h = +m[1], mm = m[2], ap = h >= 12 ? "pm" : "am";
+    h = h % 12 || 12;
+    return h + (mm === "00" ? "" : ":" + mm) + ap;
+  }
+  /* That night's games, from night_games when the venue gave them: [{game, time}], known games only. */
+  function gamesOn(o, key) {
+    var ng = o && o.night_games, list = (ng && typeof ng === "object" && Array.isArray(ng[key])) ? ng[key] : null;
+    if (!list) return null;   // not stored: unknown, never guessed
+    var out = [];
+    list.forEach(function (x) {
+      var g = typeof x === "string" ? x : (x && x.game);
+      if (GAME_NAME[g]) out.push({ game: g, time: time12(x && x.time) });
+    });
+    return out;
+  }
+  function isNight(o, key) {
+    var ng = gamesOn(o, key);
+    if (ng) return ng.length > 0;
+    return ((o && o.nights) || []).indexOf(key) !== -1;
+  }
+  function hasTimes(o) {
+    var ng = o && o.night_games, any = false;
+    if (ng && typeof ng === "object") Object.keys(ng).forEach(function (k) { (gamesOn(o, k) || []).forEach(function (x) { if (x.time) any = true; }); });
+    return any;
+  }
+
+  /* TONIGHT's rows in the lobby: this game first, then any other game stored for tonight. */
   function tonight(o) {
-    var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", prize: o.prize || "" }];
-    if (((o.nights || []).indexOf(today(o)) !== -1)) {
-      games(o).forEach(function (k) { if (k !== me) rows.push({ game: k, name: GAME_NAME[k], prize: "" }); });
-    }
+    var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", sub: o.prize || "" }];
+    (gamesOn(o, dayKey(now(o))) || []).forEach(function (x) {
+      if (x.game !== me) rows.push({ game: x.game, name: GAME_NAME[x.game], sub: x.time || "" });
+    });
     rows[0].badge = rows.length > 1 ? "Next" : "Tonight";
     for (var i = 1; i < rows.length; i++) rows[i].badge = "Later";
     return rows;
   }
-  /* The coming nights, from today on, then "Members draw" when the venue runs one. */
-  function upcoming(o) {
-    var out = [], g = games(o), start = DAYS.indexOf(today(o)), nights = o.nights || [];
+  /* Another night's rows, for the spot when a day is tapped. */
+  function nightRows(o, dt) {
+    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key);
+    if (list && list.length) return list.map(function (x) {
+      return { game: x.game, badge: badge, name: NIGHT_NAME[x.game], sub: x.time ? x.time : "Ask for start time" };
+    });
+    if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }];
+    return [{ game: "", badge: badge, name: "No games this night", sub: "" }];
+  }
+  /* The seven days from today. */
+  function week(o) {
+    var t = now(o), out = [];
     for (var i = 0; i < 7; i++) {
-      var k = DAYS[(start + i) % 7];
-      if (nights.indexOf(k) !== -1) out.push({ big: DAY_NAME[k], line: g.length ? joinNames(g) : "Games night" });
+      var dt = addDays(t, i), k = dayKey(dt);
+      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: i ? String(dt.getDate()) : dt.getDate() + " " + MONTHS[dt.getMonth()], on: isNight(o, k) });
     }
-    if ((o.games || []).indexOf("members") !== -1) out.push({ big: "Members draw", line: "Scan the QR code again on the night." });
-    if (!out.length) out.push({ big: "Game nights", line: "Scan the QR code on the TV again on the night." });
     return out;
   }
 
@@ -65,45 +107,94 @@
     h.appendChild(el("div", "t", "You’re in" + (name ? ", " + name : "")));
     return h;
   }
-  function stop() { if (_turn) { clearInterval(_turn); _turn = null; } }
+  function paintRows(spot, rows, title) {
+    spot.innerHTML = "";
+    if (title) spot.appendChild(el("div", "nk", title));
+    rows.forEach(function (r, i) {
+      var row = el("div", "row" + (r.badge === "Later" ? " later" : "")); row.setAttribute("data-game", r.game || "");
+      row.appendChild(el("span", "bd" + (i === 0 && (r.badge === "Next" || r.badge === "Tonight") ? " next" : ""), r.badge));
+      var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.sub) g.appendChild(el("span", "", r.sub));
+      row.appendChild(g); spot.appendChild(row);
+    });
+  }
+  /* THIS WEEK HERE: seven tappable days. onPick(day) repaints the spot. */
+  function strip(o, picked, onPick) {
+    var w = el("div", "vpt-week"), k = el("div", "k");
+    k.appendChild(el("span", "", "This week here"));
+    if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
+    w.appendChild(k);
+    var row = el("div", "days"), days = week(o), btns = [];
+    days.forEach(function (dd) {
+      var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.i === picked ? " picked" : ""));
+      b.setAttribute("type", "button"); b.setAttribute("data-day", dd.key);
+      b.setAttribute("aria-pressed", dd.i === picked ? "true" : "false");
+      b.appendChild(el("b", "", dd.label)); b.appendChild(el("small", "", dd.small));
+      b.onclick = function () {
+        btns.forEach(function (x, j) { x.className = x.className.replace(/ picked\b/g, "") + (j === dd.i ? " picked" : ""); x.setAttribute("aria-pressed", j === dd.i ? "true" : "false"); });
+        onPick(dd);
+      };
+      btns.push(b); row.appendChild(b);
+    });
+    w.appendChild(row);
+    return { el: w, days: days, buttons: btns };
+  }
 
   function lobby(box, o) {
     if (!box) return;
-    stop(); o = o || {}; box.innerHTML = "";
+    o = o || {}; box.innerHTML = "";
     box.appendChild(head(o.name));
-    var card = el("div", "vpt-night"); card.appendChild(el("div", "nk", "Tonight"));
-    tonight(o).forEach(function (r, i) {
-      var row = el("div", "row" + (i ? " later" : "")); row.setAttribute("data-game", r.game);
-      row.appendChild(el("span", "bd" + (i ? "" : " next"), r.badge));
-      var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.prize) g.appendChild(el("span", "", r.prize));
-      row.appendChild(g); card.appendChild(row);
-    });
-    box.appendChild(card);
+    var spot = el("div", "vpt-night");
+    function today() { paintRows(spot, tonight(o), tonight(o).length > 1 ? "Tonight" : ""); }
+    today();
+    box.appendChild(spot);
+    var s = strip(o, 0, function (dd) { if (dd.i === 0) today(); else paintRows(spot, nightRows(o, dd.date), ""); });
+    box.appendChild(s.el);
     box.appendChild(el("p", "vpt-wait", o.wait || "The game will start here when the host is ready."));
+    return s;
   }
 
   function noGame(box, o) {
     if (!box) return;
-    stop(); o = o || {}; box.innerHTML = "";
+    o = o || {}; box.innerHTML = "";
     box.appendChild(head(o.name));
-    var list = upcoming(o), card = el("div", "vpt-hero"), k = el("div", "k", "Next game night"), big = el("div", "d"), line = el("div", "g");
-    card.appendChild(k); card.appendChild(big); card.appendChild(line);
-    var dots = el("div", "vpt-dots"); list.forEach(function () { dots.appendChild(el("i")); });
-    if (list.length > 1) card.appendChild(dots);
-    var at = 0;
-    function paint() {
-      var e = list[at]; big.textContent = e.big; line.textContent = e.line;
-      k.textContent = e.big === "Members draw" ? "Also at this venue" : "Next game night";
-      for (var i = 0; i < dots.children.length; i++) dots.children[i].className = i === at ? "on" : "";
-    }
-    paint();
-    if (list.length > 1) _turn = setInterval(function () { if (!box.isConnected && box.isConnected !== undefined) { stop(); return; } at = (at + 1) % list.length; paint(); }, 4000);
-    box.appendChild(card);
-    if (o.onList) {
-      var v = String(o.venue || "this venue");
-      box.appendChild(el("p", "vpt-onlist", "You’re on " + v + "’s list. Change this from any of their emails."));
-    }
+    box.appendChild(el("div", "vpt-none", "No game here right now"));
+    if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
+    /* The night spot starts on the next game night from today (today included), or today when none is known. */
+    var days = week(o), first = 0;
+    for (var i = 0; i < days.length; i++) { if (days[i].on) { first = i; break; } }
+    var spot = el("div", "vpt-night");
+    paintRows(spot, nightRows(o, days[first].date), "");
+    var s = strip(o, first, function (dd) { paintRows(spot, nightRows(o, dd.date), ""); });
+    box.appendChild(s.el);
+    box.appendChild(spot);
+    return s;
+  }
+  /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */
+  function signupBox(o) {
+    var f = el("form", "vpt-sign"); f.setAttribute("novalidate", "");
+    f.appendChild(el("div", "lb", "Get a heads up by email"));
+    var r = el("div", "row1"), inp = el("input"), btn = el("button", "", "Sign me up");
+    inp.setAttribute("type", "email"); inp.setAttribute("name", "email"); inp.setAttribute("autocomplete", "email");
+    inp.setAttribute("placeholder", "Your email"); inp.setAttribute("aria-label", "Your email");
+    btn.setAttribute("type", "submit");
+    r.appendChild(inp); r.appendChild(btn); f.appendChild(r);
+    var tk = el("label", "tk"), cb = el("input");
+    cb.setAttribute("type", "checkbox");
+    tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + (o.venue || "this venue") + ". I’m 18 or over."));
+    f.appendChild(tk);
+    var err = el("div", "err"); err.setAttribute("role", "status"); f.appendChild(err);
+    f.onsubmit = function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      var v = String(inp.value || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { err.textContent = "That email doesn’t look right."; return false; }
+      btn.disabled = true; err.textContent = "";
+      Promise.resolve(o.signup(v, !!cb.checked)).then(function () {
+        if (f.parentNode) f.parentNode.removeChild(f);   // closes; the screen is the week again, nothing more is said
+      }, function () { btn.disabled = false; err.textContent = "Could not send that. Try again in a moment."; });
+      return false;
+    };
+    return f;
   }
 
-  root.VPTonight = { lobby: lobby, noGame: noGame, stop: stop, tonight: tonight, upcoming: upcoming };
+  root.VPTonight = { lobby: lobby, noGame: noGame, tonight: tonight, nightRows: nightRows, week: week, time12: time12 };
 })(typeof window !== "undefined" ? window : this);

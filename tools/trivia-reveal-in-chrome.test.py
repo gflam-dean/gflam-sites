@@ -219,7 +219,8 @@ def wall(B, base, w, h):
     ok(tag + ': a picture question: "Question 3 of 20" sits under its ring, not behind it, and clear of the picture',
        bool(QR and RG and IM) and QR[1] >= RG[3] and (QR[0] >= IM[2] or QR[3] <= IM[1]), [QR, RG, IM])
     for nm_, x_ in (('countdown', pq), ('reveal', pr)):
-        Q_, R_, I_ = x_.get('q'), x_.get('ring'), x_.get('img')
+        # on the reveal the ring gives way to the green disc in the same spot (checked above), so the disc is the line
+        Q_, R_, I_ = x_.get('q'), (x_.get('ring') if nm_ == 'countdown' else (x_.get('mark') or {}).get('r')), x_.get('img')
         ok(tag + ': a picture question: the question sits on the ring\'s centre line on the %s (within 2px; Dean, 6 Nov 2026)' % nm_,
            bool(Q_ and R_) and abs((Q_[1] + Q_[3]) / 2 - (R_[1] + R_[3]) / 2) <= 2, [Q_, R_])
         ok(tag + ': and clear of the picture under it on the %s' % nm_, bool(Q_ and I_) and Q_[3] <= I_[1] + 1, [Q_, I_])

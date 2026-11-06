@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:32 · c0235d0f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:43 · 651305a3';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1513,7 +1513,27 @@ function joinNights(sa) {
   if (!sa || typeof sa !== 'object') return {};
   const nights = Array.isArray(sa.nights) ? DAYS.filter((d) => sa.nights.indexOf(d) !== -1) : [];
   const games = Array.isArray(sa.games) ? GAMES.filter((g) => sa.games.indexOf(g) !== -1) : [];
-  return (nights.length || games.length) ? { nights: nights, games: games } : {};
+  /* Which game on which night, with an optional start time (Dean, 6 Nov 2026: the wizard asks it). Read defensively:
+     night_games {"wed":[{"game":"trivia","time":"19:30"}]} or {"wed":["trivia"]}; anything else is left out. */
+  const ng = {};
+  if (sa.night_games && typeof sa.night_games === 'object' && !Array.isArray(sa.night_games)) {
+    for (const d of DAYS) {
+      const list = sa.night_games[d];
+      if (!Array.isArray(list)) continue;
+      const out = [];
+      for (const x of list.slice(0, 6)) {
+        const g = typeof x === 'string' ? x : (x && typeof x === 'object' ? x.game : '');
+        if (GAMES.indexOf(g) === -1) continue;
+        const t = x && typeof x === 'object' && typeof x.time === 'string' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(x.time) ? x.time : '';
+        out.push(t ? { game: g, time: t } : { game: g });
+      }
+      ng[d] = out;
+    }
+  }
+  const res = {};
+  if (nights.length || games.length) { res.nights = nights; res.games = games; }
+  if (Object.keys(ng).length) res.night_games = ng;
+  return res;
 }
 
 /* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a

@@ -270,7 +270,7 @@
       <div class="scorebox hidden" id="waitScore"></div>
       <div class="rankline hidden" id="waitRank"></div>
     </div>
-    <!-- Dean's round 4 picks (6 Nov 2026): "You're in, <name>" and Tonight (option C), or "No game on right now" (option B).
+    <!-- Dean's round 5 picks (6 Nov 2026): "You're in, <name>" with Tonight and This week here, or "No game here right now".
          Drawn by /app/vp-tonight.js; the block above is what shows without it, and for any other heading. -->
     <div class="vpt hidden" id="vpTonight"></div>
   </div>
@@ -652,7 +652,7 @@
     if(tn && inb){
       var useT = !head && !(P.total>0) && typeof VPTonight==="object";
       tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT);
-      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games }); }
+      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, night_games:P.nightGames }); }
     }
     $("waitHead").textContent = head || "You\u2019re in";
     /* The tick and the "Up first" chip belong to the lobby's YOU'RE IN only; a heading for any other moment stands alone. */
@@ -671,19 +671,17 @@
      luck, "You're back in. Next question coming up on the big screen", 131 points, 2nd, hours after the night had
      ended and with the host signed out). Said plainly, with no score and no promise of a question. A host message
      (a heartbeat, a question, a lobby) takes the phone out of it again. */
-  /* On the venue's list: this phone ticked the venue's offers when it joined (kept on the phone per venue code). */
-  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
   var NO_GAME_MSG="Ask the host, or scan the code when the next game starts.";
   function showNoGame(){
     if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; }
     P.q=null; P.total=0; P.rank=0; P.playersCount=0; stopCd();
     showWait(NO_GAME_MSG, "No game on right now");
     $("waitName").classList.add("hidden");   // no name and no score: nothing is being played
-    /* OPTION B (Dean, 6 Nov 2026): "You're in, <name>" and the venue's next game nights, turning, then its ad. */
+    /* "NO GAME ON RIGHT NOW" (Dean's round 5 pick): "You're in, <name>", "No game here right now", the week strip, then its ad. */
     var tn=$("vpTonight"), inb=$("waitIn");
     if(tn && inb && typeof VPTonight==="object"){
       inb.classList.add("hidden"); tn.classList.remove("hidden");
-      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, venue:P.venueName, onList:onList() });
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, night_games:P.nightGames, venue:P.venueName });   // no sign-up: no Worker route takes one yet
     }
   }
   /* A phone that comes back between questions is told "watch the big screen", and if no host is heard on the channel
@@ -1343,7 +1341,7 @@
       headerVenue(r&&r.logo_url, r&&r.venue_name);
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
       /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
-      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.nightGames=(r&&r.night_games&&typeof r.night_games==="object")?r.night_games:null;
       if(r&&r.venue_name) P.venueName=String(r.venue_name);
       if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
         if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
@@ -1393,7 +1391,6 @@
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
-      if(P.capture && P.capture.marketing_optin===true){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} }   // on the venue's list: the "no game" screen says so
       announce();   // cosmetic roster on the host + TV
       if(P.pendingQ || P.pendingScore){ applyPending(true); }   // true: a name just typed in, not a phone coming back
       else showWait("Watch the big screen. Your questions will pop up here.");
