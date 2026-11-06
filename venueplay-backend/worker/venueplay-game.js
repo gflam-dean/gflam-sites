@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 14:16 · 11aae308';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 16:42 · 21dbc510';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3909,6 +3909,7 @@ const GAME_PREFS_KEYS = {
     set_ids:       (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const u = gpUuid(x); if (u && out.indexOf(u) < 0) out.push(u); if (out.length >= 20) break; } return out; },
     theme_nights:  gpWords(6, 60),
     prize_list:    gpWords(8, 80),
+    rounds:        gpInt(1, 20),   // rounds a night (setup wizard, round 8: Dean "it never asks how many rounds")
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)

@@ -35,7 +35,15 @@
   var LKEY = "vpGameSetup:";
   var ORDER = ["trivia", "musical", "bingo", "raffles", "members"];
   var SETUP_STATES = { done: 1, later: 1, shown: 1 };
-  var OTHER_MAX = 120, OTHER_EACH = 40;   // "Something else": several entries, "karaoke, poker" (Dean, round 3)
+  var OTHER_MAX = 120, OTHER_EACH = 40;
+  /* WHAT VENUES TELL US THEY RUN BESIDES OUR GAMES (Dean, round 7b point 1): suggested as they type, spelt properly
+     ("karaoke" becomes "Karaoke"). Anything else they type is kept as typed, first letter capital. */
+  var OTHER_KNOWN = ["Karaoke", "Pool comp", "Darts", "Poker night", "Live music", "Chase the Ace", "Jokers wild", "Keno", "Footy tipping", "Bowls", "Meat raffle", "Open mic", "Comedy night", "Line dancing"];
+  function otherWord(w) {
+    var t = String(w || "").replace(/\s+/g, " ").trim(); if (!t) return "";
+    var k = OTHER_KNOWN.filter(function (x) { return x.toLowerCase() === t.toLowerCase(); })[0];
+    return k || (t.charAt(0).toUpperCase() + t.slice(1));
+  }   // "Something else": several entries, "karaoke, poker" (Dean, round 3)
   /* THE GAME WEEK (Dean, 6 Nov 2026): which game runs on which night, with an optional start time. Kept in
      setup_answers.week, read by the phone screens' "This week here" strip:
        "week": [ { "day": "wed", "games": [ { "game": "trivia", "start": "19:00" } ] },
@@ -133,18 +141,9 @@
     P + ".vpgs-rm{flex:none;width:44px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:" + C.pinkSoft + ";font:700 18px " + HEAD + ";cursor:pointer}",
     P + ".vpgs-lt b{color:#FFFFFF;font-weight:700}" + P + ".vpgs-list .vpgs-n{margin-top:1px}",
     P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 140px 130px}",
-    /* the reviewer's layout (design review, 6 Nov): one row per setting, control column fixed */
-    "#vpGs.vpgs-alt .vpgs-asec{margin:18px 0 0;padding:16px 0 0;border-top:1px solid rgba(255,255,255,.18)}#vpGs.vpgs-alt .vpgs-asec:first-child{margin-top:4px;padding-top:0;border-top:none}",
-    "#vpGs.vpgs-alt .vpgs-ah{margin:0 0 8px;font:800 14px " + HEAD + ";letter-spacing:.08em;text-transform:uppercase;color:" + C.pinkSoft + "}",
-    "#vpGs.vpgs-alt .vpgs-row.arow{display:grid;grid-template-columns:minmax(0,1fr);row-gap:8px;padding:12px 0}",
-    "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-lab{margin:0}",
-    "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-pop{grid-column:1/-1}",
-    "@media (min-width:600px){#vpGs.vpgs-alt .vpgs-row.arow{grid-template-columns:minmax(0,1fr) 240px;column-gap:20px;align-items:center}#vpGs.vpgs-alt .vpgs-row.arow.ablock{grid-template-columns:minmax(0,1fr)}" +
-      "#vpGs.vpgs-alt .vpgs-row.arow .vpgs-unitw .vpgs-in{flex:0 0 90px}}",
     "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:1fr auto;row-gap:2px}" + P + ".vpgs-prow>:nth-child(2){grid-column:1/-1;grid-row:2}" + P + ".vpgs-prow>:nth-child(3){grid-column:2;grid-row:1}" + P + ".vpgs-go{width:100%}" + P + ".vpgs-foot .vpgs-go{flex:1}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 130px;row-gap:6px}" + P + ".vpgs-times .vpgs-time.sess .vpgs-sess{grid-column:2}}",
     P + ".vpgs-cats .vpgs-chip{height:100%;align-items:flex-start}" + P + ".vpgs-cats{grid-auto-rows:1fr}",
-    "@media (max-width:600px){" + P + ".vpgs-sec.folded>.vpgs-rows{display:none}" + P + "#vpGsGroup_nj{grid-template-columns:1fr;grid-auto-flow:row}}" +
-    "@media (min-width:601px){" + P + ".vpgs-phoneonly{display:none}}" +
+    P + ".vpgs-sec.folded>.vpgs-rows{display:none}" +
     "@media (max-width:420px){" + P + ".vpgs-music.q3{gap:5px}" + P + ".vpgs-music.q3{gap:8px;padding-top:6px}" + P + ".vpgs-music.q3 .vpgs-chip{position:relative;padding:8px 6px;justify-content:center;text-align:center;font-size:14px}" +
       /* the tick moves to a small pink badge on the corner, so the words keep one line (design review r7b: what is picked must show) */
       P + ".vpgs-music.q3 .vpgs-chip .bx{position:absolute;top:-8px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid " + C.ink + ";font-size:14px;line-height:1}" +
@@ -165,7 +164,37 @@
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:900px;padding-top:32px}" + P + ".vpgs-card{padding:36px 44px}" + P + "h2.vpgs-title{font-size:32px}" +
       P + ".vpgs-lead{font-size:18px}" + P + ".vpgs-lab{font-size:18px}" + P + ".vpgs-hint{font-size:15px;color:#C6C6CE}" + P + ".vpgs-sec .sub{font-size:15px;color:#C6C6CE}" + P + ".vpgs-unit{font-size:17px}" + P + ".vpgs-chip small{font-size:15px}" + P + ".vpgs-info{font-size:17px}" + P + ".vpgs-list li{font-size:17px;padding:13px 0}" + P + ".vpgs-n{width:28px;height:28px;font-size:15px}" + P + ".vpgs-ready{font-size:18px}" + P + ".vpgs-btn{min-height:50px;font-size:17px;padding:12px 24px}" + P + ".vpgs-btn.big{min-height:56px}" +
       P + ".vpgs-chip{min-height:50px;font-size:16px}" + P + ".vpgs-seg button{min-height:48px;font-size:16px}" + P + ".vpgs-in{min-height:48px;font-size:17px}" +
-      P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 380px}" + P + ".vpgs-rows .vpgs-row.num{grid-template-columns:minmax(0,1fr) 200px}}"
+      P + ".vpgs-music{grid-template-columns:repeat(5,1fr)}" + P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-row.two{grid-template-columns:minmax(0,1fr) 380px}" + P + ".vpgs-rows .vpgs-row.num{grid-template-columns:minmax(0,1fr) 200px}}",
+    /* ROUND 8 (Dean, round 7b: "everything's very spacey", "spacing spacing spacing", "the question marks don't line
+       up"). One grid per setting: the label, then the control, then the "?" in one column down the right edge; the
+       help opens under the whole row. Tighter everywhere: rows 6px top and bottom, smaller headings, no empty lines. */
+    P + ".vpgs-box{padding:8px 0 20px}" + P + ".vpgs-head{margin:0 0 6px}" + P + ".vpgs-bar{margin:0 0 8px}" + P + ".vpgs-step{margin:0 0 4px}" +
+    P + ".vpgs-card{padding:14px 14px}" + P + "h2.vpgs-title{margin:0 0 4px;font-size:20px}" + P + ".vpgs-lead{margin:0 0 8px;font-size:14.5px;line-height:1.4}" +
+    P + ".vpgs-rows>.vpgs-row{display:grid;grid-template-columns:minmax(0,1fr) 44px;grid-template-areas:'lab q' 'ctl ctl' 'pop pop';column-gap:6px;align-items:center;padding:6px 0;border-top:1px solid " + C.line + "}" +
+    P + ".vpgs-rows>.vpgs-row:first-child{border-top:none;padding-top:0}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-lab{grid-area:lab;margin:0;font-size:15px;line-height:1.3}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-q{grid-area:q;display:block;margin:-4px 0;justify-self:end}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-ctl{grid-area:ctl;margin:2px 0 0;min-width:0}" +
+    P + ".vpgs-rows>.vpgs-row>.vpgs-pop{grid-area:pop;margin:6px 0 0}" + P + ".vpgs-rows>.vpgs-row>.vpgs-full{grid-column:1/-1;margin:2px 0 0}" +
+    P + ".vpgs-rows>.vpgs-row.cmp{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{margin:0}" +
+    P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:84px;flex:none}" + P + ".vpgs-row.cmp .vpgs-unit{min-width:0}" + P + ".vpgs-row.cmp input[type=time]{width:130px}" + P + ".vpgs-row.cmp input[type=date]{width:150px}" +
+    P + ".vpgs-row.cmp .vpgs-seg{width:136px}" + P + ".vpgs-row.cmp .vpgs-pair{width:200px}" + P + ".vpgs-row.cmp .vpgs-pair .vpgs-in{width:80px}" +
+    P + ".vpgs-in{min-height:42px;padding:8px 10px}" + P + ".vpgs-seg button{min-height:42px;padding:6px 8px}" + P + ".vpgs-chip{min-height:44px;padding:7px 10px}" +
+    P + ".vpgs-sec{margin:8px 0 0;padding:8px 0 0}" + P + ".vpgs-sech{display:flex;align-items:center;gap:10px;justify-content:space-between}" + P + ".vpgs-secw{min-width:0}" +
+    P + ".vpgs-sec h3{font-size:15px}" + P + ".vpgs-sec .sub{margin:0;font-size:14px;line-height:1.35;color:#C6C6CE}" + P + ".vpgs-sech .vpgs-add{margin:0;flex:none}" + P + ".vpgs-sec>.vpgs-rows{margin:6px 0 0}" +
+    P + ".vpgs-usual{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}" + P + ".vpgs-usual-l{font-size:14px;color:#C6C6CE}" +
+    P + ".vpgs-uchip{min-height:36px;padding:4px 10px;border-radius:999px;border:1px dashed rgba(255,140,198,.7);background:transparent;color:" + C.pinkSoft + ";font:700 14px " + HEAD + ";cursor:pointer}" +
+    P + ".vpgs-link{margin:8px 0 0}" + P + ".vpgs-foot{margin:10px 0 0}" + P + ".vpgs-tags{margin:0 0 4px}" + P + ".vpgs-prow{gap:6px}" + P + ".vpgs-plist{gap:4px}" +
+    P + ".vpgs-chips{gap:6px;grid-auto-rows:1fr}" + P + ".vpgs-chips>.vpgs-cell{display:flex}" + P + ".vpgs-chips>.vpgs-cell>.vpgs-chip{flex:1;height:auto}" +
+    P + ".vpgs-sug{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}" + P + ".vpgs-sug:empty{display:none}" +
+    P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
+    P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
+    P + ".vpgs-helpcard{margin:6px 0 0;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 14.5px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}" + P + ".vpgs-helpcard ol{margin:6px 0;padding-left:20px}" + P + ".vpgs-helpcard li{margin:0 0 4px}" + P + ".vpgs-helpcard b{display:block}" +
+    "@media (min-width:600px){" + P + ".vpgs-rows>.vpgs-row.cmpw{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{margin:0;width:300px}" + P + ".vpgs-row.cmp .vpgs-seg{width:160px}}" +
+    "@media (min-width:760px){" + P + ".vpgs-box{max-width:680px;padding-top:16px}" + P + ".vpgs-card{padding:20px 24px}" + P + "h2.vpgs-title{font-size:24px}}" +
+    "@media (min-width:1100px){" + P + ".vpgs-box{max-width:820px;padding-top:20px}" + P + ".vpgs-card{padding:24px 32px}" + P + "h2.vpgs-title{font-size:28px}" + P + ".vpgs-lead{font-size:16.5px;margin:0 0 10px}" +
+      P + ".vpgs-rows>.vpgs-row>.vpgs-lab{font-size:17px}" + P + ".vpgs-rows>.vpgs-row{padding:7px 0}" + P + ".vpgs-in{min-height:44px;font-size:16px}" + P + ".vpgs-seg button{min-height:44px;font-size:15.5px}" + P + ".vpgs-chip{min-height:46px;font-size:15.5px}" +
+      P + ".vpgs-sec h3{font-size:16px}" + P + ".vpgs-sec .sub{font-size:15px}" + P + ".vpgs-btn{min-height:46px;font-size:16px}" + P + ".vpgs-btn.big{min-height:50px}" + P + ".vpgs-list li{font-size:16px;padding:9px 0}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{width:340px}}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -295,6 +324,7 @@
     if (o) out.other = o;
     if (a && (a.venue_kind === "pub" || a.venue_kind === "club")) out.venue_kind = a.venue_kind;
     if (a && typeof a.prizes_shared === "boolean") out.prizes_shared = a.prizes_shared;
+    if (a && ({ keep: 1, second: 1, none: 1 })[a.members_over]) out.members_over = a.members_over;   // members draws over the most (Dean, round 7b point 17)
     if (a && a.counts && typeof a.counts === "object") { var cn = {}; ORDER.forEach(function (g) { var n = a.counts[g]; if (Number.isInteger(n) && n >= 2 && n <= 5) cn[g] = n; }); if (Object.keys(cn).length) out.counts = cn; }
     if (a && Array.isArray(a.prize_bank)) { var pb = a.prize_bank.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return x.trim().slice(0, 80); }).slice(0, 8); if (pb.length) out.prize_bank = pb; }
     var w = cleanWeek(a && a.week);
@@ -341,6 +371,7 @@
       if (!Object.keys(p).length) return Promise.resolve(true);
       return gameApi(deps, "POST", "/host/game-prefs", { venue_id: vid, game: g.prefs, prefs: p }).then(function (r) { return r.ok; });
     };
+    var clean = {}; Object.keys(prefs || {}).forEach(function (k) { if (k.indexOf("__") !== 0) clean[k] = prefs[k]; }); prefs = clean;
     if (!onlyMissing) return send(prefs);
     return gameApi(deps, "GET", "/host/game-prefs?venue_id=" + encodeURIComponent(vid) + "&game=" + encodeURIComponent(g.prefs)).then(function (r) {
       if (!r.ok) return false;   // could not read what the venue has: write nothing rather than risk writing over it
@@ -351,7 +382,7 @@
   }
   function saveMembers(deps, vid, vals) {
     var body = { venue_id: vid };
-    Object.keys(vals).forEach(function (k) { if (vals[k] !== "" && vals[k] != null) body[k] = vals[k]; });
+    Object.keys(vals).forEach(function (k) { if (k.indexOf("__") !== 0 && vals[k] !== "" && vals[k] != null) body[k] = vals[k]; });
     if (!body.name) return Promise.resolve({ ok: false, error: "Add your draw day (or a name) first." });
     return gameApi(deps, "POST", "/host/members/settings", body).then(function (r) {
       if (r.ok) return { ok: true };
@@ -395,22 +426,36 @@
     return { el: el, shell: shell, count: count, title: title, body: body, foot: foot, x: x, clear: clear, btn: btn, close: close, step: step };
   }
 
+  /* YOUR USUAL PRIZES, ONE TAP EACH (Dean, round 7b points 10 and 15): the prizes typed in an earlier game show as small
+     buttons above a prize list; a tap adds that prize, in the order tapped. Nothing is filled in for them. */
+  function usualChips(F, ctx, onPick, id) {
+    if (!ctx.usual || !ctx.usual.length) return null;
+    var box = F.el("div", "vpgs-usual"); box.id = id;
+    box.appendChild(F.el("span", "vpgs-usual-l", "Tap to add a usual prize:"));
+    ctx.usual.slice(0, 8).forEach(function (w) {
+      var b = F.el("button", "vpgs-uchip", "+ " + w); b.setAttribute("type", "button"); b.setAttribute("data-item", w);
+      b.addEventListener("click", function () { onPick(w); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+
   /* ONE SETTING: its short question (advanced), its label and "?", its control. Returns { row, get, s, set, value }. */
   function settingRow(F, s, ctx, all) {
     var el = F.el;
-    var wide = s.kind === "seg" || s.kind === "number" || s.kind === "select" || s.kind === "money";
-    var num = (s.kind === "number" || s.kind === "money") && !s.group;   // one compact line: the question, then a small box (Dean, round 5)
-    var row = el("div", "vpgs-row" + (wide ? " two" : "") + (num ? " num" : "")); row.setAttribute("data-key", s.key);
+    /* ONE ROW PER SETTING, THE "?" IN ONE COLUMN DOWN THE RIGHT EDGE (Dean, round 7b point 9: "the question marks
+       don't line up"). A small control (a number, a time, a date, On/Off) sits on the label's own line; a big one (a
+       list, prizes, music) goes underneath, full width. A two-word choice sits on the line from iPad width up. */
+    var shortSeg = s.kind === "seg" && (s.options || []).reduce(function (n, o) { return n + String(o[1]).length; }, 0) <= 8;
+    var cmp = s.kind === "number" || s.kind === "money" || s.kind === "time" || s.kind === "date" || s.kind === "range" || shortSeg;
+    var cmpw = !cmp && (s.kind === "seg" || s.kind === "select");
+    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : ""))); row.setAttribute("data-key", s.key);
     var lab = el("div", "vpgs-lab");
     /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
-    /* the last word and the "?" never part, so the "?" always sits straight after the words, never alone on a line */
-    var words = String((s.advanced && s.prompt) ? s.prompt : s.label), cut = words.lastIndexOf(" ");
-    if (cut > 0) lab.appendChild(el("span", null, words.slice(0, cut + 1)));
-    var tail = el("span", "vpgs-nw"); tail.appendChild(el("span", null, cut > 0 ? words.slice(cut + 1) : words)); lab.appendChild(tail);
+    lab.appendChild(el("span", null, String((s.advanced && s.prompt) ? s.prompt : s.label)));
     var q = el("button", "vpgs-q", "?"); q.setAttribute("type", "button");
     q.setAttribute("aria-label", "What does " + s.label + " mean?"); q.setAttribute("aria-expanded", "false");
     var popId = "vpGsHelp_" + s.key; q.setAttribute("aria-controls", popId); q.id = "vpGsQ_" + s.key;
-    tail.appendChild(q);
     var pop = el("div", "vpgs-pop"); pop.id = popId; pop.setAttribute("role", "note"); pop.style.display = "none";
     pop.appendChild(el("span", null, s.help));
     var got = el("button", "got", "Got it"); got.setAttribute("type", "button"); pop.appendChild(got);
@@ -418,7 +463,7 @@
     q.addEventListener("click", function () { var opening = pop.style.display === "none"; ctx.pops.forEach(function (p) { p(false); }); show(opening); });
     got.addEventListener("click", function () { show(false); if (q.focus) q.focus(); });
     ctx.pops.push(show);
-    var left = el("div"); left.appendChild(lab); row.appendChild(left);
+    row.appendChild(lab); row.appendChild(q);
     var wrap = el("div"), get = function () { return undefined; }, cur = s.def, onChange = [];
     var setter = null;   // a seg's way to be set from outside (raffles' "Use my usual prizes")
     function changed() { onChange.forEach(function (f) { f(); }); if (ctx.refresh) ctx.refresh(); }
@@ -469,7 +514,7 @@
           grid.appendChild(b);
         });
         if (!ctx.quick) grid.appendChild(moreM);   // the last tile in the grid: "2000s" never sits alone on a row (design review r7)
-        moreM.textContent = "+ Show all " + list.length + " kinds of music";
+        moreM.textContent = "+ " + hidden + " more kinds of music";
         moreM.style.display = hidden ? "" : "none";
       });
       get = function () { return picked.length ? picked.slice() : undefined; };
@@ -478,11 +523,11 @@
          can be "No prize" (Dean, round 3: some venues give nothing for the first rounds). */
       var plist = el("div", "vpgs-plist"); plist.id = "vpGsIn_" + s.key; wrap.appendChild(plist);
       var vals = [], nones = [];
-      var start = s.draftList ? s.draftList.slice() : (ctx.bank && ctx.bank.length && !s.ownList) ? ctx.bank.slice() : (s.def ? [s.def] : []);
+      var start = s.draftList ? s.draftList.slice() : (s.def ? [s.def] : []);   // the usual prizes are offered, never filled in (round 8)
       if (s.draftNones) s.draftNones.forEach(function (k) { nones[k - 1] = true; });
       vals = start;
       var draw = function () {
-        var n = parseInt(all.value(s.countFrom), 10) || 1, same = all.value(s.sameFrom) !== false;
+        var n = parseInt(all.value(s.countFrom), 10) || 1, same = s.sameFrom ? all.value(s.sameFrom) !== false : false;
         var want = same ? 1 : Math.max(1, Math.min(n, 12));
         Array.prototype.forEach.call(plist.children, function (pr, i) { var inp = pr.children[1]; if (inp) vals[i] = inp.value; });
         while (plist.firstChild) plist.removeChild(plist.firstChild);
@@ -506,14 +551,10 @@
       };
       /* RAFFLES KEEP THEIR OWN LIST (Dean, round 3: "raffles probably have different prizes"); one tap loads the usual
          prizes when they want them, to change and add to. */
-      if (s.ownList && ctx.usual && ctx.usual.length) {
-        var use = el("button", "vpgs-add", "Use my usual prizes"); use.id = "vpGsUseUsual"; use.setAttribute("type", "button"); wrap.appendChild(use);
-        use.addEventListener("click", function () {
-          vals = ctx.usual.slice(); var cnt = all.input(s.countFrom); if (cnt) { cnt.value = String(Math.min(12, vals.length)); }
-          all.set(s.sameFrom, false); ctx.refresh();
-          Array.prototype.forEach.call(plist.children, function (pr, k) { var inp = pr.children[1]; if (inp && ctx.usual[k] != null) inp.value = ctx.usual[k]; });
-        });
-      }
+      var uc = usualChips(F, ctx, function (w) {
+        for (var k = 0; k < plist.children.length; k++) { var inp = plist.children[k].children[1]; if (inp && !inp.disabled && !String(inp.value || "").trim()) { inp.value = w; return; } }
+      }, "vpGsUsual_" + s.key);
+      if (uc) wrap.insertBefore(uc, plist);
       ctx.redraw.push(draw);
       get = function () {
         var out = [];
@@ -525,11 +566,11 @@
       /* A short list, typed one at a time with Enter, shown as tags (Dean, round 4: the prizes half the size): the
          usual prizes (the game's prize buttons, Dean round 3) or theme nights. */
       var most = s.kind === "prizebank" ? 8 : (s.max || 6), each = s.kind === "prizebank" ? 80 : (s.each || 60);
-      var items2 = ((s.prizes && ctx.bank && ctx.bank.length && !s.fromDraft) ? ctx.bank : (s.def || [])).slice(0, most);
+      var items2 = (s.def || []).slice(0, most);
       var tagBox = el("div", "vpgs-tags"); tagBox.id = "vpGsIn_" + s.key; wrap.appendChild(tagBox);
       var tin = el("input", "vpgs-in"); tin.type = "text"; tin.maxLength = each; tin.placeholder = s.placeholder || ""; tin.id = "vpGsIn_" + s.key + "_new";
       tin.setAttribute("aria-label", s.label); tin.setAttribute("enterkeyhint", "enter"); wrap.appendChild(tin);
-      var th = el("p", "vpgs-hint", "Press Enter to add."); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);   // the rest is under its "?" (Dean, round 5: half the size)
+      tin.placeholder = (s.placeholder || "Type one") + ", then Enter";   // one line less than a "Press Enter" note (Dean, round 7b: spacing)
       var drawTags = function () {
         while (tagBox.firstChild) tagBox.removeChild(tagBox.firstChild);
         items2.forEach(function (w, k) {
@@ -547,6 +588,8 @@
       };
       tin.addEventListener("keydown", function (e) { if (e && (e.key === "Enter" || e.keyCode === 13)) { if (e.preventDefault) e.preventDefault(); addTag(); } });
       tin.addEventListener("blur", function () { if (tin.value) addTag(); });
+      var uc2 = usualChips(F, ctx, function (w) { if (!items2.some(function (y) { return y.toLowerCase() === w.toLowerCase(); }) && items2.length < most) items2.push(w); drawTags(); }, "vpGsUsual_" + s.key);
+      if (uc2) wrap.insertBefore(uc2, tagBox);
       drawTags();
       get = function () { if (tin.value) addTag(); return items2.length ? items2.slice(0, most) : undefined; };
     } else if (s.kind === "categories") {
@@ -579,6 +622,21 @@
       get = function () { return s.value; };
     } else if (s.kind === "info") {
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
+      if (s.soundHelp) {
+        /* "IS YOUR TV PLUGGED INTO YOUR SPEAKERS?" IS GOING TO BE A HUGE QUESTION (Dean, round 7b point 13) */
+        var sl = el("button", "vpgs-add", "How to get the sound through your speakers"); sl.id = "vpGsSoundHow"; sl.setAttribute("type", "button"); sl.setAttribute("aria-expanded", "false");
+        var card = el("div", "vpgs-helpcard"); card.id = "vpGsSoundCard"; card.style.display = "none";
+        card.appendChild(el("b", null, "Getting the music through your speakers"));
+        var ol = el("ol");
+        ["Look on the back of the TV for an HDMI socket marked ARC or eARC, or a small square optical socket marked Digital Audio Out.",
+         "Run a cable from that socket to your amp, soundbar or mixer. If your amp only has red and white plugs, a small converter from any electronics shop does the job.",
+         "On the TV, open Settings, then Sound, and set the sound output to your amp or external speakers.",
+         "Play a song on the console and turn it up slowly on your amp."].forEach(function (t) { ol.appendChild(el("li", null, t)); });
+        card.appendChild(ol);
+        card.appendChild(el("p", null, "Using a music system with zones? Ask whoever looks after it to add the TV as a source. Still stuck? Get in touch and we'll talk you through it."));
+        sl.addEventListener("click", function () { var on = card.style.display === "none"; card.style.display = on ? "block" : "none"; sl.setAttribute("aria-expanded", on ? "true" : "false"); });
+        wrap.appendChild(sl); wrap.appendChild(card);
+      }
     } else {
       var inp1 = el("input", "vpgs-in"); inp1.id = "vpGsIn_" + s.key; inp1.setAttribute("aria-label", s.label);
       inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : (s.kind === "time" ? "time" : "text"));
@@ -600,6 +658,7 @@
         return v ? v : undefined;
       };
     }
+    wrap.className = "vpgs-ctl" + (wrap.className ? " " + wrap.className : "");
     row.appendChild(wrap); row.appendChild(pop);   // the "?" words open under the whole setting, pushing what follows down
     return { row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input") : (wrap.children[0] && wrap.children[0].tagName === "INPUT" ? wrap.children[0] : null); } };
   }
@@ -646,20 +705,21 @@
       var md = mw[((opts.instance || 1) - 1) % (mw.length || 1)];
       if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; var mg = md.games.filter(function (x) { return x.game === "members"; })[0]; memTime = (mg && mg.start) || ""; }
     }
-    var lead = (g.needsDetails && opts.quickOnly) ? "Two quick questions before your first draw. The rest can wait." : g.needsDetails
-      ? "Grab your members draw details. These go on the TV each draw night. Your members list is added on your Account page."
-      : (opts.quickOnly ? (g.needsDetails ? "Two quick questions before your first draw." : "Three quick questions before your first game.") : (opts.first ? "A quick setup before your first game, under five minutes. " : "") + "The usual settings are already filled in. Change anything you like, or tap ? to see what a setting means.");
+    var lead = (g.needsDetails && opts.quickOnly) ? "A few quick questions before your first draw. The rest can wait." : g.needsDetails
+      ? "Grab your members draw details. These go on the TV each draw night. You can add your members list on your Account page."
+      : (opts.quickOnly ? "Three quick questions before your first game." : (opts.first ? "A quick setup before your first game. " : "") + "The usual settings are already filled in. Change anything you like.");
     var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
-    var sec = el("div", "vpgs-sec"); sec.id = "vpGsAdvanced";
-    sec.appendChild(el("h3", null, "More settings"));
-    sec.appendChild(el("p", "sub", "The usual ones are fine, change them only if you like."));
+    var sec = el("div", "vpgs-sec folded"); sec.id = "vpGsAdvanced";
+    /* MORE SETTINGS, FOLDED THE SAME WAY ON EVERY SCREEN, SAYING WHAT IS IN THERE (Dean, round 7b point 8: "I don't know
+       what the other settings are"; laptop and phone the same). */
+    var secHead = el("div", "vpgs-sech");
+    var secWords = el("div", "vpgs-secw"); secWords.appendChild(el("h3", null, "More settings"));
+    var secSum = el("p", "sub"); secSum.id = "vpGsAdvSummary"; secWords.appendChild(secSum); secHead.appendChild(secWords);
+    var advT = el("button", "vpgs-add", "Change"); advT.setAttribute("type", "button"); advT.id = "vpGsAdvToggle"; advT.setAttribute("aria-expanded", "false");
+    advT.addEventListener("click", function () { var open = /folded/.test(sec.className); sec.className = open ? "vpgs-sec" : "vpgs-sec folded"; advT.textContent = open ? "Done" : "Change"; advT.setAttribute("aria-expanded", open ? "true" : "false"); });
+    secHead.appendChild(advT); sec.appendChild(secHead);
     var advRows = el("div", "vpgs-rows"); sec.appendChild(advRows);
-    /* ON A PHONE ONLY, "More settings" is folded away until tapped (design review r7: the one idea kept from option B) */
-    sec.className = "vpgs-sec folded";
-    var advT = el("button", "vpgs-add vpgs-phoneonly", "Show more settings"); advT.setAttribute("type", "button"); advT.id = "vpGsAdvToggle"; advT.setAttribute("aria-expanded", "false");
-    advT.addEventListener("click", function () { var open = /folded/.test(sec.className); sec.className = open ? "vpgs-sec" : "vpgs-sec folded"; advT.textContent = open ? "Hide more settings" : "Show more settings"; advT.setAttribute("aria-expanded", open ? "true" : "false"); });
-    sec.insertBefore(advT, advRows);
     var hasAdv = false;
     var settings = g.settings;
     /* BINGO BY STATE AND PUB OR CLUB: only the choices this venue is allowed, nothing that does not apply. */
@@ -685,87 +745,26 @@
     });
     ctx.usual = (opts.usual && opts.usual.length) ? opts.usual : null;
     ctx.quick = !!opts.quickOnly;   // for raffles' "Use my usual prizes"
-    var groups = {};
-    /* THE REVIEWER'S LAYOUT, a second option for Dean (design review, 6 Nov; deps.layout "rows"): one repeating row per
-       setting, the "?" straight after its label, a fixed control column, units after numbers, and three plain headings,
-       the last one folded away: "The basics", "Prizes", "More settings, usually fine as they are". */
-    var alt = (deps.layout === "rows") && !opts.quickOnly, altSec = null;
-    if (alt) {
-      F.shell.className = "vpgs-alt";
-      altSec = {};
-      [["basics", "The basics"], ["prizes", "Prizes"], ["more", "More settings, usually fine as they are"]].forEach(function (h) {
-        var box = el("div", "vpgs-asec"); box.id = "vpGsSec_" + h[0];
-        var hd = el("h3", "vpgs-ah", h[1]); box.appendChild(hd);
-        var inner = el("div", "vpgs-rows"); box.appendChild(inner);
-        if (h[0] === "more") {
-          inner.style.display = "none";
-          var tg = el("button", "vpgs-add", "Show more settings"); tg.setAttribute("type", "button"); tg.id = "vpGsMoreToggle"; tg.setAttribute("aria-expanded", "false");
-          tg.addEventListener("click", function () { var open = inner.style.display === "none"; inner.style.display = open ? "" : "none"; tg.textContent = open ? "Hide more settings" : "Show more settings"; tg.setAttribute("aria-expanded", open ? "true" : "false"); });
-          box.insertBefore(tg, inner);
-        }
-        altSec[h[0]] = { box: box, rows: inner, used: false };
-        list.appendChild(box);
-      });
-    }
-    var PRIZE_KEYS = { prize_same: 1, prize_weekly: 1, prize_count: 1, prizes_same: 1, prizes_weekly: 1, rounds: 1 };
     settings.forEach(function (s) {
       if (opts.quickOnly && !s.quick) return;
+      if (!opts.quickOnly && s.firstOnly) return;   // asked on a first open only (members draws: the jackpot now)
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
-      if (alt) {
-        var where = s.advanced ? "more" : ((s.prizes || PRIZE_KEYS[s.key]) ? "prizes" : "basics");
-        var block = !(s.kind === "seg" || s.kind === "number" || s.kind === "money" || s.kind === "select" || s.kind === "time" || s.kind === "date");
-        r.row.className = "vpgs-row arow" + (block ? " ablock" : "");
-        altSec[where].rows.appendChild(r.row); altSec[where].used = true;
-        if (s.prizes && !s.ownList && opts.askShared) {   // the same rule as below, in the reviewer's layout
-          if (typeof opts.onAsked === "function") opts.onAsked();
-          var shA = settingRow(F, { key: "shared", label: "Use these prizes for your other games too?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
-            help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
-          shA.row.id = "vpGsShared"; shA.row.className = "vpgs-row arow"; ctx.sharedRow = shA; opts.askShared = false; altSec.prizes.rows.appendChild(shA.row); altSec.prizes.used = true;
-        }
-        return;
-      }
-      if (s.group) {
-        /* settings that sit together in one row (the members draw's day, time and starting jackpot) */
-        if (!groups[s.group]) {
-          groups[s.group] = el("div", "vpgs-group"); groups[s.group].id = "vpGsGroup_" + s.group; (s.advanced ? advRows : list).appendChild(groups[s.group]);
-          if (ctx.pendingShared && s.pairShared) { groups[s.group].appendChild(ctx.pendingShared); ctx.pendingShared = null; }
-        }
-        groups[s.group].appendChild(r.row);
-      } else if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
-      if (s.prizes && !s.ownList && opts.bank && opts.bank.length && !opts.askShared) {
-        /* asked once already, and they said yes (design review, 6 Nov): one quiet line instead of the question again */
-        var us = el("p", "vpgs-hint", "Using your usual prizes. Change them here for this game."); us.id = "vpGsUsing"; r.row.appendChild(us);
-      }
-      if (s.prizes && opts.askShared && !s.ownList) {
-        if (typeof opts.onAsked === "function") opts.onAsked();   // never asked again in this setup, whatever the answer
-        /* asked like every other setting, with its own "?" (Dean, round 5: the "?" consistent everywhere) */
-        var shR = settingRow(F, { key: "shared", label: "Same prizes for other games?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: draft ? draft.__shared : undefined,
-          help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
-        var sr = shR.row; sr.id = "vpGsShared"; ctx.sharedRow = shR;
-        opts.askShared = false;
-        if (s.group) { sr.className = "vpgs-row"; ctx.pendingShared = sr; } else list.appendChild(sr);   // trivia: beside "Questions in a round" (Dean, round 5: a 2x2 grid)
-      }
+      if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
     });
-    if (ctx.pendingShared) { list.appendChild(ctx.pendingShared); ctx.pendingShared = null; }
-    /* a pair left with one setting (first open: no prizes question beside "Questions in a round") becomes one compact
-       line with a small box, not a box stretched across the screen (design review r7) */
-    Object.keys(groups).forEach(function (k) {
-      var gEl = groups[k]; if (gEl.children.length !== 1 || !gEl.parentNode) return;
-      var only = gEl.children[0], rr = byKey[only.getAttribute("data-key")];
-      if (!rr || (rr.s.kind !== "number" && rr.s.kind !== "money")) return;
-      only.className += " num"; gEl.parentNode.insertBefore(only, gEl); gEl.parentNode.removeChild(gEl);
-    });
-    if (alt) Object.keys(altSec).forEach(function (k) { if (!altSec[k].used) altSec[k].box.style.display = "none"; });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
     ctx.refresh = function () {
       rows.forEach(function (r) {
         var on = true, w = r.s.showIf;
         if (w) Object.keys(w).forEach(function (k) { if (all.value(k) !== w[k]) on = false; });
+        if (typeof r.s.showWhen === "function" && !r.s.showWhen(all)) on = false;
         r.row.style.display = on ? "" : "none"; r.hidden = !on;
       });
       /* no advanced question left to ask (bingo with paper tickets): no empty heading either */
       sec.style.display = rows.some(function (r) { return r.s.advanced && !r.hidden; }) ? "" : "none";
+      var sum = [];
+      rows.forEach(function (r) { if (r.s.advanced && !r.hidden && typeof r.s.brief === "function") { var b = r.s.brief(r.get()); if (b) sum.push(b); } });
+      secSum.textContent = sum.length ? sum.join(", ") + "." : "The usual ones suit most venues.";
       ctx.redraw.forEach(function (f) { f(); });
     };
     ctx.refresh();
@@ -774,10 +773,8 @@
       if (nmIn) nmIn.placeholder = (memDay || "Friday") + " Members Draw";
       if (tmIn && memTime && !tmIn.value) {
         tmIn.value = memTime;   // "20:00" from the nights step, in the time picker
-        /* the line goes under the date and time pair, full width, so the two boxes stay level (design review round 6) */
-        var fromN = el("p", "vpgs-hint", "Draw time: from the night you picked."); fromN.id = "vpGsFromNight"; fromN.style.margin = "0 0 8px";
-        var tmGrp = tmIn.parentNode; while (tmGrp && tmGrp.className !== "vpgs-group" && tmGrp !== F.body) tmGrp = tmGrp.parentNode;
-        if (tmGrp && tmGrp.className === "vpgs-group" && tmGrp.parentNode) tmGrp.parentNode.insertBefore(fromN, tmGrp.nextSibling); else { fromN.textContent = "From the night you picked."; tmIn.parentNode.appendChild(fromN); }   // right under its own box: no need to say "Draw time" again
+        var fromN = el("p", "vpgs-hint vpgs-full", "From the night you picked."); fromN.id = "vpGsFromNight";
+        var tmRow = byKey.draw_time && byKey.draw_time.row; if (tmRow) tmRow.insertBefore(fromN, tmRow.children[tmRow.children.length - 1]);
       }
     }
     var msg = el("p", "vpgs-msg"); msg.id = "vpGsMsg"; msg.setAttribute("role", "status"); F.body.appendChild(msg);
@@ -786,10 +783,12 @@
       rows.forEach(function (r) {
         if (r.hidden || r.s.kind === "info") return;   // a "fixed" choice is saved, an "info" line is not
         var v = r.get(); if (v === undefined) return;
+        if (r.s.setupOnly) { vals.__setup = vals.__setup || {}; vals.__setup[r.s.key] = v; return; }   // kept in setup_answers, not sent to the console
         if (r.s.kind === "range") { vals[r.s.keys[0]] = v[0]; vals[r.s.keys[1]] = v[1]; return; }
         if (r.s.kind === "playlists") { vals.playlists = v; vals.playlist = v[0]; return; }
         if (r.s.kind === "prizelist") {
           vals[r.s.key] = v;
+          if (gkey === "raffles") vals.prizes_same = v.filter(function (x, k) { return x && v.indexOf(x) === k; }).length <= 1;   // no "same prize?" question (Dean, round 7b point 10)
           if (gkey === "musical") { var firstP = v.filter(function (x) { return x; })[0]; if (firstP) vals.prize = firstP; if (r.s.none && ctx.noneOf) vals.prize_none = ctx.noneOf(); }
           return;
         }
@@ -818,7 +817,7 @@
       var vals = collect();
       var p = g.needsDetails ? saveMembers(deps, vid, vals) : savePrefs(deps, vid, gkey, vals, false).then(function (ok) { return { ok: ok }; });
       return p.then(function (r) {
-        if (r.ok) { var shv = ctx.sharedRow ? ctx.sharedRow.get() : undefined; if (shv !== undefined) vals.__shared = shv; return done("saved", vals); }
+        if (r.ok) return done("saved", vals);
         save.disabled = false;
         msg.textContent = r.error || "We could not save that just now. Check your connection and try again.";
       });
@@ -844,7 +843,6 @@
           if (v !== undefined) d[k] = v;
           if (r.s.kind === "prizelist" && ctx.noneOf) d.__nones = ctx.noneOf();
         });
-        if (ctx.sharedRow) { d.__askedHere = true; var sv = ctx.sharedRow.get(); if (sv !== undefined) d.__shared = sv; }
         if (opts.onDraft) opts.onDraft(d);
         opts.back();
       }) : el("span"));
@@ -882,7 +880,7 @@
       if (deps.weekOnly) return end("closed");   // the Account page's game nights: closing changes nothing
       /* Closing part way: whatever is not set up keeps its defaults and opens its own setup the first time. */
       var rest = left(); rest.forEach(function (g) { mark(g, "later"); });
-      Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers), bank: answers.prizes_shared === true ? answers.prize_bank : null }), true); })).then(persist, persist);
+      Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
       end("closed");
     });
     function headsUp() {
@@ -906,33 +904,48 @@
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink vpgs-go", "vpGsGo", pick));
     }
     function pick() {
-      F.clear(); F.step("Your games", 3, 2); F.title.textContent = "What games do you play at your venue?";
+      F.clear(); F.step("Your games", 3, 2); F.title.textContent = "What games do you play?";
       F.body.appendChild(F.el("p", "vpgs-lead", "Tick all you run, even the ones you only do now and then."));
       var box = F.el("div", "vpgs-chips"); box.id = "vpGsGames"; box.setAttribute("role", "group"); box.setAttribute("aria-label", "Your games");
       var cur = (answers.games || []).slice(), other = cleanOther(answers.other), otherOn = !!other;
       /* PUB OR CLUB, asked once and only when the venue's own record does not say (Dean, 6 Nov 2026). It decides which
          bingo this venue may run. Kept as setup_answers.venue_kind for HQ to confirm on the venue. */
       var kindWrap = null;
-      if (!(v.entity_type === "for_profit" || v.entity_type === "non_profit")) {
-        kindWrap = F.el("div", "vpgs-row two"); kindWrap.id = "vpGsKind"; kindWrap.setAttribute("style", "margin:0 0 14px;padding-top:0;border-top:none");
-        kindWrap.appendChild(F.el("div", "vpgs-lab", "Are you a pub or a club?"));
+      /* asked here every time, already answered when the venue's record says (Dean, round 7b point 2: "why doesn't it ask
+         what you are here") */
+      if (!answers.venue_kind && v.entity_type === "for_profit") answers.venue_kind = "pub";
+      if (!answers.venue_kind && v.entity_type === "non_profit") answers.venue_kind = "club";
+      {
+        kindWrap = F.el("div", "vpgs-rows"); kindWrap.id = "vpGsKind"; kindWrap.setAttribute("style", "margin:0 0 8px");
+        var kRow = F.el("div", "vpgs-row cmpw"); kindWrap.appendChild(kRow);
+        kRow.appendChild(F.el("div", "vpgs-lab", "Are you a pub or a club?"));
         var kseg = F.el("div", "vpgs-seg"); kseg.setAttribute("role", "group"); kseg.setAttribute("aria-label", "Pub or club");
         [["pub", "A pub or hotel"], ["club", "A club"]].forEach(function (o) {
           var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", o[0]); b.setAttribute("aria-pressed", answers.venue_kind === o[0] ? "true" : "false");
           b.addEventListener("click", function () { answers.venue_kind = o[0]; Array.prototype.forEach.call(kseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === o[0] ? "true" : "false"); }); drawChips(); });
           kseg.appendChild(b);
         });
-        kindWrap.appendChild(kseg);
+        var kctl = F.el("div", "vpgs-ctl"); kctl.appendChild(kseg); kRow.appendChild(kctl);
       }
       /* SOMETHING ELSE, ONE AT A TIME (Dean, round 3): type one, press Enter, type the next. */
       var others = otherList(other);
       var otherIn = F.el("input", "vpgs-in"); otherIn.id = "vpGsOther"; otherIn.type = "text"; otherIn.maxLength = OTHER_EACH;
-      otherIn.placeholder = "e.g. karaoke"; otherIn.setAttribute("aria-label", "What else do you run?"); otherIn.setAttribute("enterkeyhint", "enter");
+      otherIn.placeholder = "e.g. Karaoke, then Enter"; otherIn.setAttribute("aria-label", "What else do you run?"); otherIn.setAttribute("enterkeyhint", "enter");
       var otherWrap = F.el("div"); otherWrap.setAttribute("style", "margin:10px 0 0");
       var oq = F.el("label", "vpgs-ask", "What else do you run?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq);
       var otherTags = F.el("div", "vpgs-tags"); otherTags.id = "vpGsOtherList";
       otherWrap.appendChild(otherTags); otherWrap.appendChild(otherIn);
-      var oh = F.el("p", "vpgs-hint", "Press Enter after each one."); oh.id = "vpGsOtherHint"; otherWrap.appendChild(oh);
+      var sug = F.el("div", "vpgs-sug"); sug.id = "vpGsOtherSuggest"; otherWrap.appendChild(sug);
+      function suggest() {
+        while (sug.firstChild) sug.removeChild(sug.firstChild);
+        var t = String(otherIn.value || "").trim().toLowerCase(); if (!t) return;
+        OTHER_KNOWN.filter(function (x) { return x.toLowerCase().indexOf(t) >= 0 && !others.some(function (y) { return y.toLowerCase() === x.toLowerCase(); }); }).slice(0, 4).forEach(function (x) {
+          var b = F.el("button", "vpgs-uchip", "+ " + x); b.setAttribute("type", "button"); b.setAttribute("data-other", x);
+          b.addEventListener("click", function () { otherIn.value = x; addOther(); suggest(); });
+          sug.appendChild(b);
+        });
+      }
+      otherIn.addEventListener("input", suggest);
       function drawOthers() {
         while (otherTags.firstChild) otherTags.removeChild(otherTags.firstChild);
         others.forEach(function (w, k) {
@@ -942,7 +955,7 @@
           otherTags.appendChild(t);
         });
       }
-      function addOther() { var w = otherList(otherIn.value)[0]; if (w) { others = otherList(others.concat([w]).join(",")); otherIn.value = ""; drawOthers(); } paint(); }
+      function addOther() { var w = otherWord(otherList(otherIn.value)[0]); if (w) { others = otherList(others.concat([w]).join(",")); otherIn.value = ""; drawOthers(); if (typeof suggest === "function") suggest(); } paint(); }
       otherIn.addEventListener("keydown", function (e) { if (e && (e.key === "Enter" || e.keyCode === 13)) { if (e.preventDefault) e.preventDefault(); addOther(); } });
       drawOthers();
       var next = F.btn("Next", "pink", "vpGsNext", function () {
@@ -999,7 +1012,7 @@
         (cur[k] = cur[k] || {})[d.day] = gm.start || ""; if (gm.starts && gm.starts.length > 1) (cnt[k] = cnt[k] || {})[d.day] = gm.starts.slice(1); }); });
       var wrap = F.el("div"); wrap.id = "vpGsWeek";
       items.forEach(function (it) {
-        var g = it.key, multi = it.game === "bingo" || it.game === "raffles";
+        var g = it.key, multi = it.game !== "members";   // any game can run twice in a night (Dean, round 7b point 4); a members draw is once a night
         var blk = F.el("div", "vpgs-row"); blk.setAttribute("data-game", g);
         blk.appendChild(F.el("div", "vpgs-lab", it.title));
         var days = F.el("div", "vpgs-days"); days.setAttribute("role", "group"); days.setAttribute("aria-label", it.title + " nights");
@@ -1033,7 +1046,7 @@
                 times.appendChild(r2);
               });
               if (more.length < 3) {
-                var addS = F.el("button", "vpgs-add vpgs-add-s", "+ Another session on " + x[2]); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
+                var addS = F.el("button", "vpgs-add vpgs-add-s", "+ Add another session on " + x[2]); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
                 addS.addEventListener("click", function () { cnt[g] = cnt[g] || {}; cnt[g][x[0]] = more.concat([""]); paint(); gate(); });
                 times.appendChild(addS);
               }
@@ -1113,20 +1126,44 @@
       var dk = g + "#" + inst, dr = drafts[dk] || null;
       gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
           draft: dr, onDraft: function (d) { drafts[dk] = d; },
-          bank: answers.prizes_shared === true ? answers.prize_bank : null, usual: answers.prize_bank || null, askShared: (answers.prizes_shared === undefined && !answers.prizes_asked) || !!(dr && dr.__askedHere),
-          onAsked: function () { answers.prizes_asked = true; } }, function (outcome, vals) {
+          usual: answers.prize_bank || null }, function (outcome, vals) {
         if (outcome === "saved") {
-          /* "Do you use these prizes across different games?" asked once. Yes: these prizes start every other game's list. */
-          if (vals && vals.__shared !== undefined) { answers.prizes_shared = vals.__shared; var pb = bankOf(vals); if (pb.length) answers.prize_bank = pb; }
+          /* NO "SAME PRIZES FOR OTHER GAMES?" QUESTION (Dean, round 7b point 7): the prizes typed in a game become the
+             usual prizes the next games offer as one-tap buttons, nothing filled in for them. */
+          if (vals && vals.__setup && vals.__setup.over_max) answers.members_over = vals.__setup.over_max;
+          var pb = bankOf(vals); if (pb.length) answers.prize_bank = (answers.prize_bank || []).concat(pb.filter(function (w) { return (answers.prize_bank || []).indexOf(w) < 0; })).slice(0, 8);
           if (inst < many) { persist(); return oneGame(g, inst + 1); }   // the next members draw (Dean, round 3: "Add another")
           mark(g, "done"); persist(); afterGame(g); return;
         }
         mark(g, "later");
-        return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers), bank: answers.prizes_shared === true ? answers.prize_bank : null }), true).then(function () { persist(); afterGame(g); });
+        return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true).then(function () { persist(); afterGame(g); });
       });
     }
     /* "Do you want to set up your next game?" ONLY here, between games of this first run (Dean, 6 Nov 2026). */
+    /* "DO YOU WANT TO ADD EXTRAS NOW?" after members draws (Dean, round 7b point 21): the members list, so the TV draws
+       real member numbers. Not now carries on with the games left. */
     function afterGame(g) {
+      if (g === "members" && !extrasAsked) { extrasAsked = true; return extras(function () { afterGame(g); }); }
+      return afterGame2(g);
+    }
+    var extrasAsked = false;
+    function extras(next) {
+      F.clear(); F.step("Members draws", 0, 0); F.title.textContent = "Do you want to add extras now?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "Your members list lets the TV draw a real member's number. You can add it now or any time on your Account page."));
+      var stack = F.el("div", "vpgs-stack"); stack.id = "vpGsExtras";
+      var go = F.btn("Add my members list", "pink big", "vpGsExtrasYes", function () {
+        /* the games left keep their usual settings and open their own setup the first time, as when closing part way */
+        var rest = left(); rest.forEach(function (x) { mark(x, "later"); });
+        Promise.all(rest.map(function (x) { return savePrefs(deps, vid, x, help().defaults(x, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
+        end("members-list");
+        var url = deps.membersListUrl || "/app/billing.html#acc-members";
+        try { if (typeof deps.go === "function") deps.go(url); else if (root.location) root.location.href = url; } catch (e) {}
+      });
+      stack.appendChild(go);
+      stack.appendChild(F.btn("Not now", "ghost big vpgs-outline", "vpGsExtrasNo", next));
+      F.body.appendChild(stack);
+    }
+    function afterGame2(g) {
       var rest = left().filter(function (x) { return cleanSetup(answers.setup)[x] !== "later"; });
       if (!rest.length) return allDone();
       var all = ticked();
@@ -1150,8 +1187,8 @@
     function noWorries(rest) {
       rest.forEach(function (g) { mark(g, "later"); });
       var withDefaults = rest.filter(function (g) { return !gameOf(g).needsDetails; });
-      Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers), bank: answers.prizes_shared === true ? answers.prize_bank : null }), true); })).then(persist, persist);
-      F.clear(); F.step("All done for today", 0, 0); F.title.textContent = "No worries.";
+      Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
+      F.clear(); F.step("", 0, 0); F.title.textContent = "No worries.";
       var line = "We'll remind you when you open each of those games.";
       if (withDefaults.length) line += " Your default settings have been saved for " + listWords(withDefaults) + ".";
       var p = F.el("p", "vpgs-lead", line); p.id = "vpGsNoWorries"; F.body.appendChild(p);
@@ -1159,7 +1196,7 @@
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
     }
     function allDone() {
-      F.clear(); F.step("All set", 0, 0); F.title.textContent = "You're ready for your week.";
+      F.clear(); F.step("", 0, 0); F.title.textContent = "You're ready for your week.";
       F.body.appendChild(F.el("p", "vpgs-lead", "Every game you play is set up. You can change any setting in that game's console."));
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
     }
