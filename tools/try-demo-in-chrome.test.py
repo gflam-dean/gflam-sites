@@ -63,6 +63,14 @@ def seed(r):
     r.db['vp_venue_staff'][0]['display_name'] = 'Dean Tindale'
 
 
+def clock_now(r):
+    # The rig's Worker clock starts on a fixed day; a question's 30 s are counted from it, so the browsers would read
+    # every question as already over. Put the Worker on today's clock, as Cloudflare's is.
+    with r.W.lock:
+        r.W.p.stdin.write(json.dumps({'now': int(time.time() * 1000)}) + '\n'); r.W.p.stdin.flush()
+        r.W.p.stdout.readline()
+
+
 def db(r, t):
     with r.W.lock:
         r.W.p.stdin.write(json.dumps({'table': t}) + '\n'); r.W.p.stdin.flush()
@@ -107,7 +115,7 @@ def scene_a(RIG):
     print('\nA. ON A LAPTOP, AS A PLAYER, TWO PHONES')
     r = RIG.Rig(host_pages=('/app/trivia/host.html', '/app/try.html'))
     try:
-        seed(r)
+        seed(r); clock_now(r)
         tl, lap = r.open('/app/try.html?device=computer', width=1366, height=768)
         ok('the first question: "It\'s your first time here. How would you like to try it?"',
            r.until(lap, '/It.s your first time here\\. How would you like to try it\\?/.test(document.body.innerText) && ' + STEP + '==="stepMode"', 20) is True, r.ask(lap, STEP))
@@ -149,6 +157,11 @@ def scene_a(RIG):
         r.ask(p2, 'document.getElementById("joinBtn").click(); true')
         ok('both join: the game starts itself at 2 of 2', r.until(p1, QUP, 60) is True and r.until(p2, QUP, 10) is True, [r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(p1, 'document.body.innerText.slice(0,200)')])
         ok('  the question is on the phone', 'Question' in (r.ask(p1, QTEXT) or ''), r.ask(p1, QTEXT))
+        # The leaderboard is a database VIEW (v_vp_trivia_leaderboard); the rig's fake PostgREST has no views, so the
+        # test stands in for it with the two teams' rows (as tools/pickup-in-chrome.test.py does).
+        gid = ([g for g in db(r, 'vp_games') if g.get('format') == 'trivia'] or [{}])[-1].get('id')
+        pls = [p for p in db(r, 'vp_players') if p.get('display_name') in ('Dean', 'Table Two')]
+        r.W.seed('v_vp_trivia_leaderboard', [{'game_id': gid, 'player_id': p.get('id'), 'display_name': p.get('display_name'), 'points': (500 if p.get('display_name') == 'Dean' else 300)} for p in pls])
         # The console's own state, as the laptop shows it (host.html?demo=auto tells the page): "Question N of 5." while
         # it is open, "Question N of 5: the answer" once revealed.
         def asked(n): return r.until(lap, '/^Question %d of 5\\. /.test(document.getElementById("playStatus").textContent)' % n, 40)
@@ -170,7 +183,7 @@ def scene_a(RIG):
         ok('after 5 questions: "That\'s the game" on the laptop', r.until(lap, 'document.getElementById("done").classList.contains("on")', 60) is True,
            [r.ask(lap, 'document.getElementById("playStatus").textContent'), r.ask(lap, DRV), len(db(r, 'vp_trivia_answers')), db(r, 'vp_trivia_answers')[:2],
             r.W.ask('POST', '/host/reveal', {'game_id': (db(r, 'vp_games') or [{}])[-1].get('id')}, {'Authorization': 'Bearer x'})])
-        ok('  with the leaderboard, Dean first (he ticked nothing wrong)', 'points' in (r.ask(lap, 'document.getElementById("doneBoard").innerText') or ''), r.ask(lap, 'document.getElementById("doneBoard").innerText'))
+        ok('  with the leaderboard, Dean first', (r.ask(lap, 'document.getElementById("doneBoard").innerText') or '').startswith('Dean, 500 points'), r.ask(lap, 'document.getElementById("doneBoard").innerText'))
         ok('  and one button on: "Set up my games", to the console', r.ask(lap, 'document.getElementById("toConsole").getAttribute("href")') == '/app/' and
            r.ask(lap, 'document.getElementById("toConsole").textContent') == 'Set up my games')
         ok('  the wizard will know a demo was played on this screen', r.ask(lap, 'localStorage.getItem("vpDemoPlayed-"+VPTry.venueId)') == '1')

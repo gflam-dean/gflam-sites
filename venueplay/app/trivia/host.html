@@ -2124,7 +2124,7 @@
     if(G.status==="setup"){ if(G.questionCount>0 && since>800 && !_demo.opened){ _demo.opened=true; openLobby(); } return; }
     if(G.status==="lobby"){ if(joined>=1 && (joined>=DEMO_N || _demo.start)) startRound(); return; }
     if(G.status==="ready"){ if(since>=3000) nextQuestion(); return; }
-    if(G.status==="question"){ if(VPDemo.shouldReveal(remainingSecs(), answeredCount(), DEMO_N, playerCount())) reveal(); return; }
+    if(G.status==="question"){ if(VPDemo.shouldReveal(remainingSecs(), answeredCount(), DEMO_N, joined)) reveal(); return; }   // joined: the server's count as well as this console's roster, so one answer never stands for two phones
     if(G.status==="reveal"){
       var last=G.qtotal && G.current && (G.current.qi||G.current.qseq)>=G.qtotal;
       if(last){ if(since>=6000 && now-(_demo.fin||0)>=6000){ _demo.fin=now; finish(); } }   // finish() can stay on reveal (a board that did not load): try again every 6 s, never in a burst
