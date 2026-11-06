@@ -422,9 +422,10 @@ def tv_only_its_own_slides():
         LIT = '(function(){var s=document.querySelector("#tvAds .ad.show");return s?s.textContent.replace(/\\s+/g," ").trim().slice(0,200):"";})()'
         NAME = '((document.getElementById("venueNameTag")||{}).textContent||"")'
         # The Mini Bar has a members draw of its own, so its wall rotates ITS draw board (the holding card
-        # only fills an otherwise empty loop); The Average Joe has nothing at all, so it gets the card.
+        # only fills an otherwise empty loop); The Average Joe has nothing at all (no slides, no logo), so it gets
+        # the set-up slide (item 102: "Please set up your screen"), still its own and never Tugun Bowls'.
         for slug, name, what, own in (('the-mini-bar', 'The Mini Bar', 'an empty slide list (The Mini Bar after the data fix)', 'members draws'),
-                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Waiting for the host')):
+                                      ('the-average-joe', 'The Average Joe', 'no screen row at all', 'Please set up your screen')):
             r.W.calls[:] = []
             tid, tv = r.open('/tv?venue=' + slug, width=1280, height=720)
             ok('%s: the TV loads on the ads' % what, r.until(tv, vis('adsRoot'), 15) is True)

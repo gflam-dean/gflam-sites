@@ -1031,6 +1031,10 @@
   "checks": 22,
   "counted_by": "lines"
  },
+ "tools/test-tv-setup-slide.js": {
+  "checks": 27,
+  "counted_by": "lines"
+ },
  "tools/test-tv-slides-in-step.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -1192,7 +1196,7 @@
   "counted_by": "lines"
  },
  "tools/tv-logo-in-chrome.test.py": {
-  "checks": 94,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/tv-no-counts-in-chrome.test.py": {
