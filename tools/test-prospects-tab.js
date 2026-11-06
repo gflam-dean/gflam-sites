@@ -448,7 +448,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('the headline Venues count leaves prospects out too', /!hasLeft\(v\) && !hideAsTest\(v\) && !isProspect\(v\)/.test(stats), stats.slice(0, 300));
 
   /* THE WORKED EXAMPLE IS 30 PLAYERS, AT THE PAGE'S OWN PRICE (Dean, 29 Oct 2026: so the money looks right for a smaller venue). */
-  [['venueplay/nsw.html', /\$(\d+\.\d\d) a player, if you lock it in/], ['venueplay/index.html', /sec-title">\$(\d+(?:\.\d\d)?) per player/]].forEach(function (c) {
+  [['venueplay/nsw.html', /\$(\d+\.\d\d) a player if you join by/], ['venueplay/index.html', /sec-title">\$(\d+(?:\.\d\d)?) per player/]].forEach(function (c) {
     var page = readFile(c[0]), rate = parseFloat((c[1].exec(page) || [])[1]);
     /* 8 Nov 2026 (item 80A): the offer page has ONE price line, and the 30-player example sits in it. */
     var ex = (c[0] === 'venueplay/nsw.html' ? /A room of thirty is \$(\d+)\./ : /Then a pub with (\d+) players pays \$(\d+) a month\./).exec(page) || [];

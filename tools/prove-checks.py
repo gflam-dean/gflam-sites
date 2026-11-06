@@ -1682,7 +1682,7 @@ MUTATIONS = [
      'October ended on 31 October and nobody marked its row ended, so nothing says the page was '
      'checked: /nsw and /offer-oct could be selling $2.50 the Worker no longer honours'),
     ('no founding page has outlived its own deadline', 'venueplay/nsw.html',
-     "    document.title = document.title.replace(/founding/i, 'now open');\n    try { standardPage(); } catch (e) { if (window.console) console.error('offer: standard page', e); }\n",
+     "    document.title = document.title.replace(/founding/i, 'now open');\n    standardPage();\n",
      "    document.title = document.title.replace(/founding/i, 'now open');\n",
      'the October link says the offer ended in a banner and goes on promising $2.50 locked for life '
      'everywhere below it, which is what venues saw on 1 November 2026'),
