@@ -363,6 +363,10 @@
   "checks": 95,
   "counted_by": "lines"
  },
+ "tools/signup-start-in-chrome.test.py": {
+  "checks": 46,
+  "counted_by": "lines"
+ },
  "tools/signup-tick-in-chrome.test.py": {
   "checks": 20,
   "counted_by": "lines"
@@ -921,6 +925,10 @@
  },
  "tools/test-signing-15-oct.js": {
   "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/test-signup-core.js": {
+  "checks": 89,
   "counted_by": "lines"
  },
  "tools/test-stale-phone-and-end-once.js": {
@@ -1493,6 +1501,10 @@
  },
  "venueplay-backend/worker/venue-code.test.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-match.test.js": {
+  "checks": 21,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-scale.test.js": {

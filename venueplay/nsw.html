@@ -327,7 +327,7 @@
   /* Pub or club (Dean, 6 Nov 2026): one honest two-way choice, nothing preselected, the same size as the boxes. */
   .st-kind-lbl{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   .st-kind{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .st-kind-opt{position:relative;display:block;cursor:pointer;margin:0;text-transform:none;letter-spacing:normal;font-family:'Manrope',sans-serif}
+  .field .st-kind-opt{position:relative;display:block;cursor:pointer;margin:0;text-transform:none;letter-spacing:normal;font-family:'Manrope',sans-serif;color:#fff}   /* not the form's mono field label */
   .st-kind-opt input{position:absolute;opacity:0;width:1px;height:1px}
   .st-kind-opt span{display:flex;align-items:center;justify-content:center;min-height:52px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink);
     color:#fff;font-size:var(--fs-base);font-weight:700}
@@ -341,16 +341,16 @@
   .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
   /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
   .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
-  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--fs-lg);font-weight:700;
     color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
   .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
   .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
-  .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font:inherit;cursor:pointer;min-height:24px}
+  .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:inherit;line-height:inherit;cursor:pointer;min-height:24px}
   .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
-  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:30px;letter-spacing:.14em;color:#fff;margin-top:8px}
+  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xl);letter-spacing:.14em;color:#fff;margin-top:8px}
   #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
   #st-done,#st-held{text-align:center}
-  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px;font-size:24px} }
+  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px} }
 
   /* ---------- FAQ ---------- */
   .faq{max-width:780px;margin:0 auto}
