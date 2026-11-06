@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:43 · 651305a3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:45 · a206e3f2';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1506,33 +1506,40 @@ async function joinInfoLookup(env, code, fresh) {
     marketing_optin: !!cfg.collect_marketing_optin,
   }, ...joinNights(cfg.setup_answers) }, venueId: venueId };
 }
-/* The phone's copy of the venue's game nights: { nights:["wed","fri"], games:["trivia","musical"] }, the known values only,
-   in week order, from the setup wizard's answers. Nothing at all when the venue never answered. No start times exist. */
+/* The phone's copy of the venue's game week (Dean, 6 Nov 2026: the "This week here" strip on the waiting phone). Players
+   are anonymous, so /join/info hands over ONLY this, never any other setup answer:
+     week   [{"day":"wed","games":[{"game":"trivia","start":"19:00"}]}, ...]   which game on which night, an optional start
+            (the wizard's shape, fix/wizard-104-10nov; cleaned by the same rules as VPGameSetup.cleanWeek in
+            /app/vp-gamesetup.js: known days in week order, known games in their order, one of each a night, at most
+            five, "HH:MM" or no start)
+     nights ["wed","fri"], games ["trivia","musical"]   the older answers, when no week was given
+   Nothing at all when the venue never answered. */
 function joinNights(sa) {
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], GAMES = ['trivia', 'musical', 'bingo', 'raffles', 'members'];
   if (!sa || typeof sa !== 'object') return {};
+  const res = {};
+  if (Array.isArray(sa.week)) {
+    const byDay = {};
+    for (const d of sa.week) {
+      if (!d || typeof d !== 'object' || DAYS.indexOf(d.day) === -1 || !Array.isArray(d.games)) continue;
+      const have = byDay[d.day] = byDay[d.day] || {};
+      for (const gm of d.games) {
+        if (!gm || GAMES.indexOf(gm.game) === -1 || have[gm.game]) continue;
+        const t = (typeof gm.start === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : '';
+        have[gm.game] = t ? { game: gm.game, start: t } : { game: gm.game };
+      }
+    }
+    const week = [];
+    for (const day of DAYS) {
+      const h = byDay[day]; if (!h) continue;
+      const gs = GAMES.filter((g) => h[g]).map((g) => h[g]).slice(0, 5);
+      if (gs.length) week.push({ day: day, games: gs });
+    }
+    if (week.length) res.week = week;
+  }
   const nights = Array.isArray(sa.nights) ? DAYS.filter((d) => sa.nights.indexOf(d) !== -1) : [];
   const games = Array.isArray(sa.games) ? GAMES.filter((g) => sa.games.indexOf(g) !== -1) : [];
-  /* Which game on which night, with an optional start time (Dean, 6 Nov 2026: the wizard asks it). Read defensively:
-     night_games {"wed":[{"game":"trivia","time":"19:30"}]} or {"wed":["trivia"]}; anything else is left out. */
-  const ng = {};
-  if (sa.night_games && typeof sa.night_games === 'object' && !Array.isArray(sa.night_games)) {
-    for (const d of DAYS) {
-      const list = sa.night_games[d];
-      if (!Array.isArray(list)) continue;
-      const out = [];
-      for (const x of list.slice(0, 6)) {
-        const g = typeof x === 'string' ? x : (x && typeof x === 'object' ? x.game : '');
-        if (GAMES.indexOf(g) === -1) continue;
-        const t = x && typeof x === 'object' && typeof x.time === 'string' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(x.time) ? x.time : '';
-        out.push(t ? { game: g, time: t } : { game: g });
-      }
-      ng[d] = out;
-    }
-  }
-  const res = {};
   if (nights.length || games.length) { res.nights = nights; res.games = games; }
-  if (Object.keys(ng).length) res.night_games = ng;
   return res;
 }
 

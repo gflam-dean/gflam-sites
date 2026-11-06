@@ -17,13 +17,13 @@
 
    DATA, read defensively. Only what the venue told the setup wizard (vp_venue_settings.setup_answers, migration 163),
    passed on by /join/info:
-     nights      ["wed","fri"]                                     which weekdays it runs games
-     games       ["trivia","musical","members"]                    which games it runs
-     night_games {"wed":[{"game":"trivia","time":"19:30"}], ...}   which game on which night, an optional start time
-   With no night_games, the strip shows the nights only and says "Ask at the bar for start times". Nothing is invented.
+     week    [{"day":"wed","games":[{"game":"trivia","start":"19:00"}]}, ...]   which game on which night, an optional
+             start (the setup wizard's game week, cleaned by the Worker as VPGameSetup.cleanWeek does)
+     nights  ["wed","fri"], games ["trivia","musical"]   the older answers, used only when no week is stored
+   With no week, the strip marks the nights only and says "Ask at the bar for start times". Nothing is invented.
    Every word from the venue or a player is set as text, never as HTML.
 
-   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, nights, games, night_games, signup(email, optin) -> Promise,
+   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, week, nights, games, signup(email, optin) -> Promise,
          signedUp, venue, now }   (now: a Date, for the suites; the phone's clock otherwise)
 
    ES5, no dependencies. Its look is /app/vp-phone.css section 6. tools/test-vp-tonight.js runs it. */
@@ -51,14 +51,15 @@
     h = h % 12 || 12;
     return h + (mm === "00" ? "" : ":" + mm) + ap;
   }
-  /* That night's games, from night_games when the venue gave them: [{game, time}], known games only. */
+  /* That night's games from the venue's week (the wizard's shape: [{day, games:[{game, start}]}]), or null when no week
+     is stored: unknown, never guessed. */
   function gamesOn(o, key) {
-    var ng = o && o.night_games, list = (ng && typeof ng === "object" && Array.isArray(ng[key])) ? ng[key] : null;
-    if (!list) return null;   // not stored: unknown, never guessed
+    var wk = o && o.week;
+    if (!Array.isArray(wk) || !wk.length) return null;
     var out = [];
-    list.forEach(function (x) {
-      var g = typeof x === "string" ? x : (x && x.game);
-      if (GAME_NAME[g]) out.push({ game: g, time: time12(x && x.time) });
+    wk.forEach(function (dd) {
+      if (!dd || dd.day !== key || !Array.isArray(dd.games)) return;
+      dd.games.forEach(function (x) { if (x && GAME_NAME[x.game]) out.push({ game: x.game, time: time12(x.start) }); });
     });
     return out;
   }
@@ -68,8 +69,8 @@
     return ((o && o.nights) || []).indexOf(key) !== -1;
   }
   function hasTimes(o) {
-    var ng = o && o.night_games, any = false;
-    if (ng && typeof ng === "object") Object.keys(ng).forEach(function (k) { (gamesOn(o, k) || []).forEach(function (x) { if (x.time) any = true; }); });
+    var any = false;
+    ((o && o.week) || []).forEach(function (dd) { ((dd && dd.games) || []).forEach(function (x) { if (x && time12(x.start)) any = true; }); });
     return any;
   }
 

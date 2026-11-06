@@ -652,7 +652,7 @@
     if(tn && inb){
       var useT = !head && !(P.total>0) && typeof VPTonight==="object";
       tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT);
-      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, night_games:P.nightGames }); }
+      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, week:P.week }); }
     }
     $("waitHead").textContent = head || "You\u2019re in";
     /* The tick and the "Up first" chip belong to the lobby's YOU'RE IN only; a heading for any other moment stands alone. */
@@ -681,7 +681,7 @@
     var tn=$("vpTonight"), inb=$("waitIn");
     if(tn && inb && typeof VPTonight==="object"){
       inb.classList.add("hidden"); tn.classList.remove("hidden");
-      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, night_games:P.nightGames, venue:P.venueName });   // no sign-up: no Worker route takes one yet
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, venue:P.venueName });   // no sign-up: no Worker route takes one yet
     }
   }
   /* A phone that comes back between questions is told "watch the big screen", and if no host is heard on the channel
@@ -1341,7 +1341,7 @@
       headerVenue(r&&r.logo_url, r&&r.venue_name);
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
       /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
-      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.nightGames=(r&&r.night_games&&typeof r.night_games==="object")?r.night_games:null;
+      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null;
       if(r&&r.venue_name) P.venueName=String(r.venue_name);
       if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
         if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
