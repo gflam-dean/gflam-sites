@@ -26,7 +26,7 @@
   var LONG = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/, TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  var URL_OK = /^https:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/;
+  var URL_OK = /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/;   // tv.html's own rule for a slide's picture (the Worker only stores our own storage's https address)
   var MAX = 30;                       // the Worker's VPB_MAX_EVENTS: the gate makes the two agree
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }

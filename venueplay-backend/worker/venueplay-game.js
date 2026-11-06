@@ -1373,7 +1373,7 @@ function publicEvents(raw, now) {
     const line = str(e.line, 90); if (line) o.line = line;
     if (typeof e.image_url === 'string') {
       const u = e.image_url.trim();
-      if (u.length <= 600 && /^https:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf('&#') === -1) o.image_url = u;
+      if (u.length <= 600 && /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf('&#') === -1) o.image_url = u;   // tv.html's rule for a slide
     }
     out.push(o);
   }

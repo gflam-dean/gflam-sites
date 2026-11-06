@@ -38,7 +38,7 @@
     add.setAttribute("type", "button"); form.hidden = true;
     var count = el("span", "woe-count");
     var foot = el("div", "woe-foot"); foot.appendChild(add); foot.appendChild(count);
-    box.appendChild(list); box.appendChild(form); box.appendChild(foot);
+    box.appendChild(foot); box.appendChild(form); box.appendChild(list);   // Add at the top, the form under it, then the list
 
     function paintList() {
       list.innerHTML = "";
