@@ -888,7 +888,7 @@
             var t = F.el("input", "vpgs-in"); t.type = "time"; t.id = "vpGsTime_" + g + "_" + x[0]; t.value = cur[g][x[0]] || "";
             t.setAttribute("required", "required");   // the phone's own scroll-wheel time picker (input type=time)
             if (!cur[g][x[0]]) r.className += " need";
-            function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (cur[g][x[0]] ? "" : " need"); gate(); }
+            function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (multi ? " sess" : "") + (cur[g][x[0]] ? "" : " need"); gate(); }
             t.addEventListener("input", took); t.addEventListener("change", took);
             r.appendChild(t);
             if (multi) {

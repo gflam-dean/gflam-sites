@@ -438,6 +438,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   function wtime(id, t) { $(P, id).value = t; $(P, id).handlers.change.forEach(function (f) { f(); }); }
   wtime('vpGsTime_bingo_fri', '18:00'); wtime('vpGsTime_bingo_sun', '14:00'); wtime('vpGsTime_members_fri', '20:00'); wtime('vpGsTime_members_sun', '17:00'); wtime('vpGsTime_other:karaoke_sat', '21:00');
   check('bingo asks how many sessions each night; members draws and karaoke do not', !!$(P, 'vpGsCount_bingo_fri') && !$(P, 'vpGsCount_members_fri') && !$(P, 'vpGsCount_other:karaoke_sat'));
+  check('the sessions box keeps its place beside the time once a time is typed', /\bsess\b/.test($(P, 'vpGsCount_bingo_fri').parentNode.className), $(P, 'vpGsCount_bingo_fri').parentNode.className);
   $(P, 'vpGsCount_bingo_fri').value = '2'; $(P, 'vpGsCount_bingo_fri').handlers.change.forEach(function (f) { f(); });
   SAVED = []; $(P, 'vpGsWeekNext').click(); await settle();
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
