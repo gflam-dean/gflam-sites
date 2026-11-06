@@ -13325,7 +13325,7 @@ MUTATIONS = [
      'shows nothing until it exists. Rollback at the bottom.',
      'migration 163 does not say it has not been run'),
     ('test-first-run-guide.js', 'venueplay-backend/supabase/MIGRATIONS.md',
-     'Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.',
+     'Branch `fix/first-run-guide-10nov`. RUN LIVE (see the RUN LIVE line for 163, 166, 167, 170, 171, 172 above). Read-back and rollback in the file.',
      'Branch `fix/first-run-guide-10nov`. Read-back and rollback in the file.',
      'MIGRATIONS.md does not say migration 163 has not been run'),
     ('test-first-run-guide.js', 'venueplay/app/vp-firstrun.js',
