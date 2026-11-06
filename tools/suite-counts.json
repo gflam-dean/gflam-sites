@@ -264,7 +264,7 @@
   "counted_by": "lines"
  },
  "tools/offer-float-done-in-chrome.test.py": {
-  "checks": 7,
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/offer-free-play-in-chrome.test.py": {

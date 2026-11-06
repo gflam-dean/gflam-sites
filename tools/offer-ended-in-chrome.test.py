@@ -230,7 +230,7 @@ try:
        (v.get('eyebrow') or '').lower().endswith('30 november') and '$2.50 a player' in (v.get('eyebrow') or '').lower() and 'month on us' in v.get('heroPrice', '') and '$' not in v.get('heroPrice', '')
        and v.get('rows') == ['Per player, per month=$2.50']
        and v.get('plans') == ['$2.50 / player', '$2.30 / player'] and v.get('submit') == 'Hold my spot, add card'
-       and 'Keep $2.50 by adding your card before your free month ends' in v.get('all', '') and 'come back' not in v.get('all', '')
+       and 'Keep $2.50 by adding your card before your free month ends' in v.get('all', '') and "won't come back" not in v.get('all', '').replace('\u2019', "'")
        and 'where your state allows' in v.get('all', ''), (v.get('eyebrow'), v.get('heroPrice'), v.get('rows'), v.get('plans')))
     shot(S, sid, 'offer-ended-1nov-offer-nov-phone-top')
     ck = signup(S, sid)

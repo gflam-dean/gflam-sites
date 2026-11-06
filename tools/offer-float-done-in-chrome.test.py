@@ -33,7 +33,7 @@ def ok(label, good, detail=''):
 
 FLOAT = ('(function(){var f=document.getElementById("vpFloatCta");var r=f.getBoundingClientRect();var cs=getComputedStyle(f);'
          'return {shown:f.classList.contains("show")&&cs.opacity!=="0"&&cs.pointerEvents!=="none",cls:f.className,top:Math.round(r.top),bottom:Math.round(r.bottom),vh:innerHeight};})()')
-CODE = ('(function(){var c=document.getElementById("st-tvcode");c.scrollIntoView({block:"center"});var r=c.getBoundingClientRect();'
+CODE = ('(function(){var c=document.getElementById("st-tvcode");c.scrollIntoView({block:"center",behavior:"instant"});var r=c.getBoundingClientRect();'
         'var f=document.getElementById("vpFloatCta").getBoundingClientRect();'
         'var pts=[[r.left+2,r.top+2],[r.right-2,r.top+2],[r.left+2,r.bottom-2],[r.right-2,r.bottom-2],[(r.left+r.right)/2,(r.top+r.bottom)/2]];'
         'var top=pts.every(function(p){var e=document.elementFromPoint(p[0],p[1]);return e&&(e===c||c.contains(e)||e.id==="st-tvline"||(e.closest&&e.closest("#st-done")));});'
@@ -51,7 +51,8 @@ S = admin_site.Site(root=A.root)
 try:
     S.W.env(SEND_SMS_HOOK_URL='https://sms-hook.rig/', SEND_SMS_HOOK_SECRET='dGVzdC1zZWNyZXQtb25seQ==')
     S.W.seed('vp_licensed_venues', [
-        {'id': 1, 'name': 'Kirra Beach Hotel', 'name_key': 'kirra-beach-hotel', 'postcode': '4225', 'suburb': 'Kirra', 'au_state': 'QLD', 'source': 'venue master list'}])
+        {'id': 1, 'name': 'Kirra Beach Hotel', 'name_key': 'kirra-beach-hotel', 'postcode': '4225', 'suburb': 'Kirra', 'au_state': 'QLD', 'source': 'venue master list'},
+        {'id': 2, 'name': 'The Railway Hotel', 'name_key': 'railway-hotel', 'postcode': '2000', 'suburb': 'Sydney', 'au_state': 'NSW', 'source': 'send list'}])
     for t in ('vp_signup_starts', 'vp_prospects', 'vp_help_tickets', 'vp_sessions', 'vp_prospect_welcomes', 'auth'):
         S.W.seed(t, [])
     S.W.seed('vp_platform_admins', [{'auth_user_id': S.W.info['uid'], 'role': 'owner', 'label': 'Dean'}])
@@ -59,18 +60,18 @@ try:
     print('AT 375 x 667, BEFORE ANYONE STARTS')
     tid, sid = S.open('/offer-nov', 375, 667, mobile=True)
     S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
-    S.js(sid, 'document.getElementById("offer").scrollIntoView(); window.scrollBy(0, 900); true')
+    S.js(sid, 'window.scrollTo({top: document.getElementById("modes").getBoundingClientRect().top + pageYOffset + 300, behavior: "instant"}); true')
     time.sleep(0.6)
     f = S.json(sid, FLOAT, {})
     ok('control: down the page, away from the start boxes, the floating button shows', f.get('shown') is True, f)
-    S.js(sid, 'document.getElementById("start").scrollIntoView(); true')
+    S.js(sid, 'window.scrollTo({top: document.getElementById("start").getBoundingClientRect().top + pageYOffset, behavior: "instant"}); true')
     time.sleep(0.6)
     f = S.json(sid, FLOAT, {})
     ok('with the start boxes on screen the button is away', f.get('shown') is False, f)
 
     print('\nTOUCHING A BOX')
     S.js(sid, 'document.getElementById("st-venue").focus(); true')
-    S.js(sid, 'window.scrollBy(0, 1800); true')
+    S.js(sid, 'window.scrollTo({top: pageYOffset + 1800, behavior: "instant"}); true')
     time.sleep(0.6)
     f = S.json(sid, FLOAT, {})
     ok('once a box has been touched the button stays away, even scrolled down the page', f.get('shown') is False, f)
@@ -93,17 +94,37 @@ try:
     f = S.json(sid, FLOAT, {})
     ok('the TV code is on screen, whole, inside the 375px width and height', bool(c.get('text')) and c.get('inside') is True, c)
     ok('and nothing covers it: every corner and the middle of the code is the code, and the button does not overlap it', c.get('onTop') is True and c.get('overlap') is False and f.get('shown') is False, [c, f])
-    S.js(sid, 'window.scrollTo(0, 0); window.scrollBy(0, 2500); true')
+    S.js(sid, 'window.scrollTo({top: 0, behavior: "instant"}); window.scrollTo({top: 2500, behavior: "instant"}); true')
     time.sleep(0.6)
     f = S.json(sid, FLOAT, {})
     ok('scrolling up and down the page afterwards does not bring the button back', f.get('shown') is False, f)
+    S.close_tab(tid)
+
+    print('\nA START THAT NEVER TOUCHED A BOX (autofill): THE DONE SCREEN ALONE SENDS THE BUTTON AWAY')
+    tid, sid = S.open('/offer-nov', 375, 667, mobile=True)
+    S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
+    S.js(sid, 'window.scrollTo({top: document.getElementById("modes").getBoundingClientRect().top + pageYOffset + 300, behavior: "instant"}); true')
+    time.sleep(0.5)
+    fill(sid, 'The Railway Hotel', '2000', 'Kim Offer', '0412 555 002', 'kim2@venue2.com.au')
+    S.until(sid, '!document.getElementById("st-code").hidden', 15)
+    t = [x for x in S.W._send({'ask': 'texts'})['body'] if (x.get('user') or {}).get('phone') == '+61412555002']
+    code = t[-1]['sms']['otp'] if t else ''
+    S.js(sid, '(function(){var e=document.getElementById("st-c1");e.value=%r;e.dispatchEvent(new Event("input",{bubbles:true}));return true;})()' % code)
+    S.until(sid, '!document.getElementById("st-done").hidden', 20)
+    time.sleep(0.8)
+    S.js(sid, 'window.scrollTo({top: pageYOffset + 1500, behavior: "instant"}); true')
+    time.sleep(0.6)
+    f = S.json(sid, FLOAT, {})
+    ok('autofill, no box touched: on the done screen and below it the button is gone', f.get('shown') is False, f)
+    c = S.json(sid, CODE, {})
+    ok('and the TV code is whole on screen and uncovered', c.get('inside') is True and c.get('onTop') is True and c.get('overlap') is False, c)
     S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 7
+EXPECTED = 9
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

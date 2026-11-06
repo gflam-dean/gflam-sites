@@ -1951,7 +1951,7 @@
     cta.classList.toggle('show', show);
   }
   if(claim){ claim.addEventListener('focusin', function(){ started=true; upd(); }); }
-  document.addEventListener('vp-start-done', function(){ started=true; upd(); });
+  document.addEventListener('vp-start-done', function(){ upd(); });   /* the done screen is already showing, so upd() sees it */
   window.addEventListener('scroll', upd, {passive:true});
   window.addEventListener('resize', upd);
   upd();
