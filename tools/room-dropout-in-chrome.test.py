@@ -144,7 +144,9 @@ ROOM_HOST = r'''(function(SRC){
       var c = BY[m.sid]; if (c) c.srv.gone = true;
     } else if (m.op === 'http') {
       var h = /\/room\/presence/.test(m.url) ? handleRoomPresence(new Request(m.url), ENV, wjson)
-                                            : handleRoomHandover(new Request(m.url, { method: 'POST' }), ENV, wjson);
+                                            : handleRoomHandover(new Request(m.url, { method: 'POST' }), ENV, wjson,
+                                                                 /* every page here is a phone: no sign in, so a handover only asks (F2, 6 Nov 2026) */
+                                                                 function () { return Promise.resolve({ signed: false }); });
       h.then(function (r) { bc.postMessage({ op: 'http', rid: m.rid, status: r.status, body: r._json }); });
     }
   };

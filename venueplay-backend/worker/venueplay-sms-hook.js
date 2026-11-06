@@ -31,10 +31,12 @@
  *   MOBILEMESSAGE_USERNAME   Your Mobile Message API username (API key).
  *   MOBILEMESSAGE_PASSWORD   Your Mobile Message API password (API secret).
  *   SMS_SENDER               The "sender" value. Either a registered sender ID of
- *                            up to 11 alphanumeric characters (e.g. "VenuePlay")
+ *                            up to 11 alphanumeric characters (e.g. "venueplay")
  *                            or a registered number. Must be registered on your
  *                            Mobile Message account. Optional; defaults to
- *                            "VenuePlay".
+ *                            "venueplay" (lowercase, Dean 4 Nov 2026). A sender ID
+ *                            is registered with the provider: check its exact form
+ *                            there before relying on this default.
  *   CLICKSEND_USERNAME       Optional BACKUP provider (21 Oct 2026). With this and
  *   CLICKSEND_API_KEY        CLICKSEND_API_KEY set, a Mobile Message error or
  *                            timeout falls through to ClickSend. Unset, nothing
@@ -63,7 +65,7 @@
  *   Header: Authorization: Basic base64(username:password)
  *   Body (JSON):
  *     { "messages": [ { "to": "0412345678", "message": "...",
- *                       "sender": "VenuePlay", "custom_ref": "..." } ] }
+ *                       "sender": "venueplay", "custom_ref": "..." } ] }
  *   Success (HTTP 200): { "status": "complete",
  *     "results": [ { "status": "success", "message_id": "...", "cost": 1 } ] }
  *   Each recipient result carries its own "status"; we treat anything other than
@@ -78,7 +80,7 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '1 Nov 2026, 13:09 · 8a1d3ef9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Nov 2026, 21:31 · 48c6f43f';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
@@ -246,7 +248,7 @@ async function postWithDeadline(url, headers, body, timeoutMs) {
 
 /* Mobile Message: HTTP 200 with a results array whose first entry says "success". */
 async function sendViaMobileMessage(env, to, message, customRef, timeoutMs) {
-  const sender = env.SMS_SENDER || "VenuePlay";
+  const sender = env.SMS_SENDER || "venueplay";
   const basicAuth = "Basic " + btoa((env.MOBILEMESSAGE_USERNAME || "") + ":" + (env.MOBILEMESSAGE_PASSWORD || ""));
   let r;
   try {

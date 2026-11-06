@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
-"""YOUR DETAILS: "I'M 18 OR OVER" AND "KEEP ME POSTED" ARE TWO TICKS, NEVER ONE (3 Nov 2026).
+"""YOUR DETAILS: ONE TICK, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026, 6 Nov release).
 
-The three player phones ended the details step with ONE tick, "I am 18 or over. Keep me posted on
-what is on at the venue", which bundled a condition of entry with marketing consent. Marketing
-consent must be optional and must not be bundled (Spam Act 2003, APP 7). Now the details step shows
-two ticks, built once in venueplay/app/vp-consent.js:
-
-  #x18     "I'm 18 or over"                            needed ONLY with the opt-in (4 Nov 2026): a gate on
-                                                       the phone; nothing new is sent to the Worker
-  #xOptin  "Keep me posted on what's on at the venue"  OPTIONAL, unticked; marketing_optin comes from
-                                                       this tick ONLY, and only with an email or mobile
+The 3 Nov step had two ticks ("I'm 18 or over" and "Keep me posted"). Dean folded 18+ into the offers
+opt-in: one optional tick, built once in venueplay/app/vp-consent.js, consent version vpc-2-6nov.
 
 This opens the REAL bingo, musical bingo and trivia phones in headless Chrome, served from this
 checkout, with the Worker answered here, and plays the details step:
 
-  A  two separate ticks, each its own label, both unticked, in that order, the words exact, and no
-     label anywhere on the step says both "18" and "posted"
-  B  opt-in ticked, 18+ left empty: refused with "To get venue news, tick I'm 18 or over.", nothing sent
-  N  neither ticked, email typed: joins, no opt-in (joining works as it did before)
-  C  18+ ticked, opt-in left empty, email typed: joins, and what reaches the Worker has NO opt-in
-  D  18+ and opt-in ticked, email typed: marketing_optin true reaches the Worker
-  E  18+ and opt-in ticked, NO email or mobile typed: no opt-in reaches the Worker
-  F  a venue collecting the opt-in with no email or mobile box: neither tick (nothing to keep posted by)
-  G  at 320 wide: both ticks on screen, side by side with nothing, inside the screen, no sideways
-     scroll, boxes at least 18px, pink, the shared .optin style
-  H  bingo only, a state that asks at the age screen: no double ask. Ticked on the age screen, the
-     details step's 18+ tick comes down; reloaded the same night, it is never drawn; the opt-in stays
+  A  one tick, #xOptin, unticked, the words exact with the venue's name; no #x18 and no other 18+
+     words anywhere on the step
+  V  a venue with no name: "Send me offers from this venue. I'm 18 or over."
+  N  not ticked, email typed: joins, no opt-in, no consent_version (playing never depends on it)
+  D  ticked, email typed: marketing_optin true and consent_version vpc-2-6nov reach the Worker
+  E  ticked, NO email or mobile typed: nothing about consent reaches the Worker
+  F  a venue collecting the opt-in with no email or mobile box: no tick, joins with a name
+  G  at 320, 375 and 390 wide: on screen, inside the width, clear of the island (top 59px) and the
+     home bar, no sideways scroll, box at least 18px, pink, the shared .optin style
+  H  bingo only, a state that asks at its own age screen (the state rule, unchanged): after it is
+     ticked the one offers tick stays, unticked and in the same words, and Join goes through
 
     python3 tools/consent-split-in-chrome.test.py      screenshots of the details step at 375 wide go
                                                        to $VP_SHOTS if set
@@ -71,7 +63,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         code = str((body or {}).get('code') or q.get('code', [''])[0])
         ageq = code.startswith('AGE')
         if p.startswith('/join/info'):
-            return self.send(200, json.dumps({'ok': True, 'exists': True, 'venue_name': 'The Test Hotel', 'collect': collect_for(code),
+            return self.send(200, json.dumps({'ok': True, 'exists': True, 'venue_name': '' if code.startswith('NVN') else 'The Test Hotel', 'collect': collect_for(code),
                                               'age_gate': ageq, 'paper_bingo': False}), 'application/json')
         if p.startswith('/play/live'):
             return self.send(200, json.dumps({'live': True, 'exists': True, 'age_gate': ageq, 'paper_bingo': False}), 'application/json')
@@ -156,14 +148,12 @@ TICKS = r'''(function(){
 def ticks(sid):
     return json.loads(ask(sid, TICKS) or '{}')
 
-def join(sid, name, age=False, optin=False, email=''):
-    ask(sid, '''(function(){
-      function tick(id,v){ var c=document.getElementById(id); if(c && c.checked!==v) c.click(); }
+def join(sid, name, optin=False, email=''):
+    ask(sid, """(function(){
+      var c=document.getElementById("xOptin"); if(c && c.checked!==%s) c.click();
       document.getElementById("nameIn").value=%s;
-      %s %s
       var e=document.getElementById("xEmail"); if(e) e.value=%s;
-      document.getElementById("joinBtn").click(); return true; })()''' % (
-        json.dumps(name), 'tick("x18",true);' if age else '', 'tick("xOptin",true);' if optin else '', json.dumps(email)))
+      document.getElementById("joinBtn").click(); return true; })()""" % ('true' if optin else 'false', json.dumps(name), json.dumps(email)))
 
 def sent(code, secs=6):
     """Every body the phone posted to /join or /capture for this code (the details travel on one of them)."""
@@ -177,19 +167,27 @@ def sent(code, secs=6):
     return []
 
 PAGES = [('bingo', '/play'), ('musical', '/app/musical/play.html'), ('trivia', '/app/trivia/play.html')]
-AGE_TEXT, OPTIN_TEXT, AGE_NEEDED = "I'm 18 or over", "Keep me posted on what's on at the venue", "To get venue news, tick I'm 18 or over."
+WORDS = "Send me offers from The Test Hotel. I'm 18 or over."
+NO_NAME_WORDS = "Send me offers from this venue. I'm 18 or over."
+VERSION = 'vpc-2-6nov'
+ISLAND = 59   # the iPhone's Dynamic Island and status bar: nothing a person taps sits in the top 59px
 # A room code is six letters from the code alphabet (no O, 0, 1, I, L, B, 8): three say the scenario,
 # three count, so every page gets codes nobody else used.
 ALPHA = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'
 CODES = iter(a + b + c for a in ALPHA for b in ALPHA for c in ALPHA)
 def code(prefix): return prefix + next(CODES)
 
+STEP_TEXT = 'document.getElementById("joinExtra").textContent'
+VIEW = r"""(function(){ var c=document.getElementById("xOptin"); if(!c) return "{}"; var l=c.closest("label");
+  l.scrollIntoView({block:"center"}); var r=l.getBoundingClientRect();
+  return JSON.stringify({t:r.top,b:r.bottom,H:innerHeight}); })()"""
+
 def page(game, path):
     sep = '&' if '?' in path else '?'
     print('\n%s phone (%s)' % (game, path))
 
     # A, G and the screenshot: the details step of a venue that collects email, mobile and the opt-in.
-    for w, h in ((375, 812), (320, 640)):
+    for w, h in ((375, 812), (320, 640), (390, 844)):
         c = code('PTN'); tid, sid = open_page(path + sep + 'room=' + c, w, h)
         try:
             ok('%s %d: the details step is drawn' % (game, w), until(sid, READY), ask(sid, 'document.getElementById("joinExtra").innerHTML.slice(0,200)'))
@@ -197,69 +195,58 @@ def page(game, path):
             t = ticks(sid); L = t.get('labels', [])
             if w == 375: shot(sid, '%s-details-375' % game)
             ids = [x['id'] for x in L]
-            ok('A %s %d: two ticks, 18+ then the opt-in, each its own label' % (game, w), ids == ['x18', 'xOptin'], ids)
-            ok('A %s %d: the words are exact: "%s" and "%s"' % (game, w, AGE_TEXT, OPTIN_TEXT),
-               [x['text'] for x in L] == [AGE_TEXT, OPTIN_TEXT], [x['text'] for x in L])
-            ok('A %s %d: neither is ticked, in the markup or by a script' % (game, w),
+            ok('A %s %d: one tick, #xOptin, and no #x18' % (game, w), ids == ['xOptin'] and ask(sid, 'document.getElementById("x18")===null'), ids)
+            ok('A %s %d: the words are exact: "%s"' % (game, w, WORDS), [x['text'] for x in L] == [WORDS], [x['text'] for x in L])
+            ok('A %s %d: not ticked, in the markup or by a script' % (game, w),
                L and all(x['checked'] is False and x['defaultChecked'] is False for x in L), L)
-            ok('A %s %d: no label on the step says both 18 and "posted" (nothing bundled)' % (game, w),
-               not [x for x in L if '18' in x['text'] and 'posted' in x['text'].lower()], [x['text'] for x in L])
-            if len(L) == 2:
-                a, b = L[0]['r'], L[1]['r']
-                ok('G %s %d: both ticks on screen, inside the screen width' % (game, w),
-                   all(x['r']['w'] > 0 and x['r']['l'] >= 0 and x['r']['r'] <= t['W'] + 0.5 for x in L), [x['r'] for x in L])
-                ok('G %s %d: stacked, not overlapping' % (game, w), b['t'] >= a['b'] - 0.5, (a, b))
+            st = ask(sid, STEP_TEXT) or ''
+            ok('A %s %d: the step says 18 once, inside the offers tick, and nowhere else' % (game, w), st.count('18') == 1, st)
+            if len(L) == 1:
+                x = L[0]
+                ok('G %s %d: on screen, inside the screen width' % (game, w), x['r']['w'] > 0 and x['r']['l'] >= 0 and x['r']['r'] <= t['W'] + 0.5, x['r'])
                 ok('G %s %d: no sideways scroll' % (game, w), t['sw'] <= t['W'], (t['sw'], t['W']))
-                ok('G %s %d: the shared on-brand tick (.optin, flex, boxes 18px or more, pink)' % (game, w),
-                   all('optin' in x['cls'].split() and x['display'] == 'flex' and x['box']['w'] >= 17.5 and x['box']['h'] >= 17.5
-                       and x['accent'] not in ('', 'auto') for x in L), [(x['cls'], x['display'], x['box'], x['accent']) for x in L])
+                ok('G %s %d: the shared on-brand tick (.optin, flex, box 18px or more, pink)' % (game, w),
+                   'optin' in x['cls'].split() and x['display'] == 'flex' and x['box']['w'] >= 17.5 and x['box']['h'] >= 17.5
+                   and x['accent'] not in ('', 'auto'), (x['cls'], x['display'], x['box'], x['accent']))
+                v = json.loads(ask(sid, VIEW) or '{}')
+                ok('G %s %d: scrolled to, clear of the island and the home bar' % (game, w),
+                   v and v['t'] >= ISLAND and v['b'] <= v['H'] - 20, v)
         finally:
             B.close_tab(tid)
 
-    # B: Join without the 18+ tick is refused, and nothing is sent.
-    c = code('PTN'); tid, sid = open_page(path + sep + 'room=' + c, 390, 844)
+    # V: no venue name.
+    c = code('NVN'); tid, sid = open_page(path + sep + 'room=' + c, 375, 812)
     try:
-        until(sid, READY)
-        join(sid, 'Sam', age=False, optin=True, email='sam@example.com')
-        time.sleep(0.8)
-        err = ask(sid, 'document.getElementById("joinErr").textContent')
-        ok('B %s: opt-in ticked, 18+ empty: Join is refused: "%s"' % (game, AGE_NEEDED), err == AGE_NEEDED, err)
-        ok('B %s: and nothing was sent to the Worker (no join, no details)' % game, sent(c, 1.5) == [], sent(c, 0.1))
-        # then ticking 18+ clears the message and the same press goes through
-        ask(sid, 'document.getElementById("x18").click(); true')
-        ok('B %s: ticking 18+ takes the message down' % game, ask(sid, 'document.getElementById("joinErr").textContent') == '',
-           ask(sid, 'document.getElementById("joinErr").textContent'))
-        ask(sid, 'document.getElementById("joinBtn").click(); true')
-        got = sent(c)
-        ok('B %s: and Join then goes through, with the opt-in that was ticked' % game, any(b.get('marketing_optin') is True for b in got), got)
+        until(sid, READY); time.sleep(0.3)
+        got = [x['text'] for x in ticks(sid).get('labels', [])]
+        ok('V %s: a venue with no name: "%s"' % (game, NO_NAME_WORDS), got == [NO_NAME_WORDS], got)
     finally:
         B.close_tab(tid)
 
-    # C, D, E: what reaches the Worker comes from the opt-in tick alone, and only with a contact method.
-    for tag, age, optin, email, want in (('N', False, False, 'nee@example.com', False), ('C', True, False, 'cee@example.com', False),
-                                         ('D', True, True, 'dee@example.com', True), ('E', True, True, '', False)):
+    # N, D, E: what reaches the Worker comes from the one tick alone, and only with a contact method.
+    for tag, optin, email, want in (('N', False, 'nee@example.com', False), ('D', True, 'dee@example.com', True), ('E', True, '', False)):
         c = code('PTN'); tid, sid = open_page(path + sep + 'room=' + c, 390, 844)
         try:
             until(sid, READY)
-            join(sid, 'Pat', age=age, optin=optin, email=email)
+            join(sid, 'Pat', optin=optin, email=email)
             got = sent(c)
             has = any(b.get('marketing_optin') is True for b in got)
-            say = {'N': 'neither ticked, email typed: joins with NO opt-in, as joining worked before',
-                   'C': '18+ ticked, opt-in empty, email typed: joins with NO opt-in',
-                   'D': '18+ and opt-in ticked, email typed: marketing_optin reaches the Worker',
-                   'E': '18+ and opt-in ticked, no email or mobile: NO opt-in (nothing to keep posted by)'}[tag]
-            ok('%s %s: %s' % (tag, game, say), bool(got) and has == want, got)
-            ok('%s %s: the 18+ tick is not sent anywhere (no new field for the Worker)' % (tag, game),
+            ver = any(b.get('consent_version') == VERSION for b in got)
+            say = {'N': 'not ticked, email typed: joins with NO opt-in and no consent version',
+                   'D': 'ticked, email typed: marketing_optin true and consent_version %s reach the Worker' % VERSION,
+                   'E': 'ticked, no email or mobile: nothing about consent reaches the Worker'}[tag]
+            ok('%s %s: %s' % (tag, game, say), bool(got) and has == want and ver == want, got)
+            ok('%s %s: no age field is sent anywhere' % (tag, game),
                not [b for b in got if [k for k in b if '18' in k or k.startswith('age')]], got)
         finally:
             B.close_tab(tid)
 
-    # F: an opt-in with no email or mobile box shows neither tick, and Join works with just a name.
+    # F: an opt-in with no email or mobile box shows no tick, and Join works with just a name.
     c = code('NCX'); tid, sid = open_page(path + sep + 'room=' + c, 390, 844)
     try:
         until(sid, READY)
         ids = [x['id'] for x in ticks(sid).get('labels', [])]
-        ok('F %s: opt-in collected but no email or mobile box: neither tick is drawn' % game, ids == [], ids)
+        ok('F %s: opt-in collected but no email or mobile box: no tick is drawn' % game, ids == [], ids)
         join(sid, 'Lee')
         got = sent(c)
         ok('F %s: and Join goes through with just a name, no opt-in' % game, bool(got) and not any(b.get('marketing_optin') for b in got), got)
@@ -268,36 +255,19 @@ def page(game, path):
 
 
 def bingo_age_screen():
-    print('\nbingo phone: a state that asks at the age screen (no double ask)')
+    print('\nbingo phone: a state that asks at its own age screen (the state rule, unchanged)')
     c = code('AGE'); tid, sid = open_page('/play?room=' + c, 375, 812)
     try:
-        ok('H: the age screen is up', until(sid, 'document.getElementById("age18Chk")!==null'), '')
+        ok('H: the state age screen is still up where the state asks', until(sid, 'document.getElementById("age18Chk")!==null'), '')
         until(sid, READY)
         ask(sid, 'document.getElementById("age18Chk").click(); document.getElementById("age18Btn").click(); true')
-        ok('H: ticked on the age screen, the details step\'s 18+ tick comes down', until(sid, 'document.getElementById("x18")===null && document.getElementById("age18Chk")===null', 6),
-           [x['id'] for x in ticks(sid).get('labels', [])])
+        ok('H: ticked, the age screen comes down', until(sid, 'document.getElementById("age18Chk")===null', 6), '')
         L = ticks(sid).get('labels', [])
-        ok('H: and the opt-in stays, unticked and on its own', [(x['id'], x['text'], x['checked']) for x in L] == [('xOptin', OPTIN_TEXT, False)], L)
+        ok('H: and the one offers tick stays, unticked, in the same words', [(x['id'], x['text'], x['checked']) for x in L] == [('xOptin', WORDS, False)], L)
         if SHOTS: shot(sid, 'bingo-details-375-after-age-screen')
         join(sid, 'Max', optin=False, email='max@example.com')
         got = sent(c)
-        ok('H: Join goes through without asking 18+ again, and with no opt-in', bool(got) and not any(b.get('marketing_optin') for b in got)
-           and ask(sid, 'document.getElementById("joinErr").textContent') != AGE_NEEDED, got)
-    finally:
-        B.close_tab(tid)
-    # Reloaded the same night (sessionStorage says ok): the 18+ tick is never drawn.
-    c = code('AGE'); tid, sid = open_page('/play?room=' + c, 375, 812)
-    try:
-        until(sid, 'document.getElementById("age18Chk")!==null')
-        ask(sid, 'document.getElementById("age18Chk").click(); document.getElementById("age18Btn").click(); true')
-        time.sleep(0.5)
-        B.call('Page.navigate', {'url': BASE + '/play?room=' + c}, session=sid)
-        time.sleep(1.0)
-        until(sid, READY)
-        time.sleep(0.5)
-        ids = [x['id'] for x in ticks(sid).get('labels', [])]
-        ok('H: reloaded the same night: no age screen, and the details step draws only the opt-in',
-           ids == ['xOptin'] and ask(sid, 'document.getElementById("age18Chk")===null'), ids)
+        ok('H: Join goes through with no opt-in', bool(got) and not any(b.get('marketing_optin') for b in got), got)
     finally:
         B.close_tab(tid)
 

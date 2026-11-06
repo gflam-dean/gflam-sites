@@ -10,7 +10,7 @@ On the rig in tools/browser-rig/rig.py (the repo's pages, the real game Worker i
      plays nothing (the start-of-game show is switched off with ?sting=0 here, so the two never mix); End game plays the show over the ads ("BINGO!", "WE HAVE A WINNER", "One line ·
      Meat tray", THANKS FOR PLAYING, TEST ALPHA), then it goes and the ads are up. A TV without the
      switch shows nothing new. A second game: the next game's first word stops the show at once.
-  2. The sales-page bingo demo (tv.html?demo=1): a phone winner is named, "TABLE 4".
+  2. The sales-page bingo demo (tv.html?demo=1): a phone winner is named, "JESS".
   3. MUSICAL BINGO, the real musical console and the real TV: the TV embeds the musical screen, a song
      plays, End game: the screen in the frame plays the close, the TV keeps the frame up until it has
      finished, then the ads. The musical demo: its winner, named.
@@ -160,8 +160,8 @@ def demos():
         _, d = r.open('/tv?demo=1&endshow=1', width=1920, height=1080)
         ok('bingo demo: the game ends and the show plays', r.until(d, 'window.VPEndShow && VPEndShow.playing()', 60) is True, r.ask(d, STATS))
         s = r.ask(d, SHOWN) or {}
-        ok('bingo demo: the phone winner by name: WE HAVE A WINNER, TABLE 4, One line · $50 bar tab',
-           s.get('eye') == 'WE HAVE A WINNER' and s.get('big') == 'TABLE 4' and s.get('sub') == 'One line ' + DOT + ' $50 bar tab' and s.get('venue') == 'TUGUN BOWLS CLUB', s)
+        ok('bingo demo: the phone winner by name: WE HAVE A WINNER, JESS, One line · $50 bar tab',
+           s.get('eye') == 'WE HAVE A WINNER' and s.get('big') == 'JESS' and s.get('sub') == 'One line ' + DOT + ' $50 bar tab' and s.get('venue') == 'TUGUN BOWLS CLUB', s)
         time.sleep(1.4); shot(r, d, 'endshow-2-bingo-demo')
 
         print('\n3. MUSICAL BINGO (demo)')
@@ -176,7 +176,7 @@ def demos():
         ok('trivia: the podium plays the show', r.until(tr, 'window.VPEndShow && VPEndShow.playing()', 70) is True, r.ask(tr, STATS))
         s = r.ask(tr, SHOWN) or {}
         ok('trivia: FINAL SCORES, the top three teams, first at the top, each with its place and score',
-           s.get('eye') == 'FINAL SCORES' and s.get('rows') == [['1', 'THE QUIZTOPHER NOLANS', '840'], ['2', 'TABLE 6', '790'], ['3', "NAN'S ARMY", '735']], s)
+           s.get('eye') == 'FINAL SCORES' and s.get('rows') == [['1', 'THE QUIZTOPHER NOLANS', '840'], ['2', 'SARAH', '790'], ['3', "NAN'S ARMY", '735']], s)
         time.sleep(1.6); shot(r, tr, 'endshow-4-trivia-result')
         m = r.ask(tr, BOXES)
         ok('trivia: the three rows are on the screen', m and len([b for b in m['boxes'] if re.match(r'^vpeRow\d$', b[0])]) == 3 and not outside(m), outside(m) or m)

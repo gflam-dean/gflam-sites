@@ -14,9 +14,9 @@ LOOKED AT, not read. Each scene opens the real venueplay/tv.html in headless Chr
      Get the venueplay TV app" at TV size; the Get it on Google Play badge is a real link to the
      app's store page, on screen and not covered, drawn in CSS (no image); "Put in the screen code"
      opens the same keypad as ever (29 keys, Delete, Go back) and Go back closes it
-  2. the code typed on that keypad: the screen is set, Start now, and the venue screen shows "Save
-     this page as a bookmark or favourite so this TV opens straight to Test Alpha next time:
-     venueplay.com.au/tv?<slug>", at the top over the venue's own ads; any key closes it; a reload
+  2. the code typed on that keypad: the screen is set, Start now, and the venue screen shows "This TV
+     now opens Test Alpha by itself, with no code to type again, at venueplay.com.au/tv" (5 Nov 2026: never
+     the ?<slug> form, and it is paired now), at the top over the venue's own ads; any key closes it; a reload
      does not bring it back
   3. it goes by itself after twenty seconds
   4. it goes the moment a game takes the wall (it never sits over game content)
@@ -134,7 +134,12 @@ def no_venue():
         ok('the badge is on screen, inside the wall, and nothing covers it', r.ask(tv, on_top('tvPlayLink')) is True, r.ask(tv, on_top('tvPlayLink')))
         ok('"Put in the screen code" is there too, on screen and not covered', r.ask(tv, on_top('tvSetupCode')) is True and 'Put in the screen code' in card,
            r.ask(tv, on_top('tvSetupCode')))
-        ok('and the old way still reads: open venueplay.com.au/tv?your-venue once', 'venueplay.com.au/tv?your-venue' in card, card[-160:])
+        ok('the "Or open venueplay.com.au/tv?your-venue ... save it as a bookmark" line is gone (Dean, 5 Nov 2026: longer than entering the code)',
+           'your-venue' not in card and 'save it as a bookmark' not in card and r.ask(tv, '!document.querySelector(".su-alt")') is True, card[-200:])
+        ok('the Google Play half says "Google Play", never "Play Store", on this card and in every TV kind\'s setup wording',
+           'Play Store' not in card and 'in Google Play on this TV, open it and put in your screen code' in card
+           and r.ask(tv, '(function(){var T=window.VPTvType;if(!T)return "no VPTvType";var bad=[];T.LABELS.forEach(function(l){var s=T.setup(l[0]);if(/Play Store/i.test(JSON.stringify(s)))bad.push(l[0]);});return bad.length?bad:true;})()') is True,
+           card[:300])
         ok('the whole card fits on a 1280 x 720 wall (nothing cut off, nothing to scroll)',
            r.ask(tv, '(function(){var e=document.getElementById("pairPanel"),b=e.getBoundingClientRect();return b.top>=0&&b.left>=0&&b.bottom<=innerHeight&&b.right<=innerWidth&&e.scrollHeight<=e.clientHeight+1;})()') is True,
            r.ask(tv, 'JSON.stringify(document.getElementById("pairPanel").getBoundingClientRect())'))
@@ -170,8 +175,8 @@ def by_code():
     r = RIG.Rig()
     try:
         slug, code = r.W.info['slug'], r.W.info['code']
-        want_link = 'venueplay.com.au/tv?' + slug
-        want = 'Save this page as a bookmark or favourite so this TV opens straight to Test Alpha next time: ' + want_link
+        want_link = 'venueplay.com.au/tv'   # never the slug form (Dean, 5 Nov 2026): the code paired it, bare /tv opens it
+        want = 'This TV now opens Test Alpha by itself, with no code to type again, at ' + want_link
         tid, tv = r.open('/tv', before=SAY, width=W, height=H)
         r.until(tv, vis('pairPanel'), 20)
         r.ask(tv, 'document.getElementById("tvSetupCode").click(); true')
@@ -189,8 +194,8 @@ def by_code():
         time.sleep(0.5)
         shot(r, tv, 'tv-landing-3-save-note')
         got = (words(r, tv, 'tvSaveNote') or '').replace(' Press any key to close this', '')
-        ok('it reads "Save this page as a bookmark or favourite so this TV opens straight to Test Alpha next time: venueplay.com.au/tv?<slug>"', got == want, got)
-        ok('the link it gives is this venue\'s own, in full', r.ask(tv, 'document.getElementById("snLink").textContent') == want_link, r.ask(tv, 'document.getElementById("snLink").textContent'))
+        ok('it reads "This TV now opens Test Alpha by itself, with no code to type again, at venueplay.com.au/tv"', got == want, got)
+        ok('the address it gives is plain venueplay.com.au/tv, never the ?<slug> form', r.ask(tv, 'document.getElementById("snLink").textContent') == want_link, r.ask(tv, 'document.getElementById("snLink").textContent'))
         ok('at TV size (the link at least 24px on a 1280 wall)', (r.ask(tv, 'parseFloat(getComputedStyle(document.getElementById("snLink")).fontSize)') or 0) >= 24,
            r.ask(tv, 'parseFloat(getComputedStyle(document.getElementById("snLink")).fontSize)'))
         ok('at the top of the wall, inside it, clear of the connection pill above it',

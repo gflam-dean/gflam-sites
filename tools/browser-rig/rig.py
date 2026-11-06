@@ -6,6 +6,7 @@ builds inline, lifted out so more than one suite can stand it up. Never shipped:
     import rig;  r = rig.Rig();  tid, sid = r.open('/tv?venue=test-alpha');  ...;  r.close()
 """
 import atexit, base64, http.server, importlib.util, io, json, os, subprocess, threading, time, urllib.parse
+import waits                      # wait on the page, not on luck (4 Nov 2026): json, until_text, settled, reveal
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
@@ -176,12 +177,31 @@ class Rig(object):
         return 'HUNG' if r is None else r.get('result', {}).get('value')
 
     def until(self, sid, expr, secs=15):
-        t = time.time() + secs
-        while time.time() < t:
-            v = self.ask(sid, expr)
-            if v == 'HUNG' or v: return v
-            time.sleep(0.25)
-        return False
+        """The first truthy answer inside `secs`, or a falsy waits.Never that prints the page's last
+        answer (or why its expression threw). A thrown expression used to come back as a truthy
+        dict here; it is not an answer and is kept asking until the deadline (4 Nov 2026)."""
+        return waits.until(lambda e: self.ask(sid, e), expr, secs, every=0.25)
+
+    # ---- reading the page robustly (tools/browser-rig/waits.py, 4 Nov 2026) ----
+    def json(self, sid, expr, default=None, wait=8):
+        """The page's answer as a Python value whether it returned an object or a JSON string; a
+        thrown expression or a hung page raises waits.PageThrew with the page's own reason."""
+        return waits.as_json(self.ask(sid, expr, wait), default, what='`%s`' % expr.strip()[:90])
+
+    def until_text(self, sid, target, secs=15):
+        """An element's text once it is REAL (not "------", an ellipsis or "Loading")."""
+        return waits.until_text(lambda e: self.ask(sid, e), target, secs)
+
+    def settled(self, sid, expr, secs=15, still=0.5):
+        """The value of `expr` once it has stopped changing for `still` seconds."""
+        return waits.settled(lambda e: self.ask(sid, e), expr, secs, still)
+
+    def reveal(self, sid, selector, secs=10):
+        """Open the folds between `selector` and the page (as an owner would) and wait for it to show."""
+        return waits.reveal(lambda e: self.ask(sid, e), selector, secs)
+
+    def header_control(self, sid, control_id, header='header', actions='.hactions'):
+        return waits.header_control(lambda e: self.ask(sid, e), control_id, header, actions)
 
     # The phone is ready for a name when its scripts have run (Join is enabled and says Join; until
     # then play.html shows it disabled, "Loading...") and the Worker has been asked about the room

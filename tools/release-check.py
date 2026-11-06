@@ -227,6 +227,19 @@ def get(url, timeout=20, headers=None):
         return 0, str(e), url
 
 
+def get_typed(url, timeout=20):
+    """Status, body and the Content-Type the server sent (get() drops the headers, and the homepage
+    fallback is told apart from a script by its Content-Type first: gatelib.looks_like_homepage)."""
+    req = urllib.request.Request(url, headers={'User-Agent': BROWSER_UA})
+    try:
+        with _opener.open(req, timeout=timeout) as r:
+            return r.status, r.read().decode('utf-8', 'replace'), r.headers.get('Content-Type', '')
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode('utf-8', 'replace'), e.headers.get('Content-Type', '')
+    except Exception as e:
+        return 0, str(e), ''
+
+
 def post(url, body=None, headers=None, timeout=20, method='POST'):
     data = json.dumps(body or {}).encode()
     h = {'content-type': 'application/json', 'User-Agent': BROWSER_UA}
@@ -639,6 +652,18 @@ def local_checks(which):
     ok('no suite tried to push, fetch, pull or clone anywhere but a local path', not attempts,
        'every suite ran behind tools/git-shim/git with GIT_DIR scrubbed',
        why='; '.join(a[:160] for a in attempts[:3]))
+
+    """SUITES READ THE PAGE ROBUSTLY (4 Nov 2026). The 4 Nov gate went red on four Chrome suites, none for a
+    product fault: a lobby code read while the TV still painted "------", json.loads() around a rig answer
+    that was a thrown exception (so the one line saying WHY was lost), and a Help button pinned to "its next
+    sibling says Account" the day Help moved on purpose. gatelib.HYGIENE_RULES names each shape by its text;
+    tools/browser-rig/waits.py holds the robust forms (<rig>.json, until_text, settled, reveal, header_control).
+    A file another branch is editing this week may be grandfathered for ONE shape until a DATE
+    (gatelib.HYGIENE_GRANDFATHER); past the date the line is red and says which file and what to change."""
+    hyg = gatelib.suite_hygiene(os.path.join(ROOT, 'tools'))
+    ok('every suite reads the page robustly: rig answers parsed by the rig, lobby codes past the placeholder, headers by meaning not by neighbour',
+       not hyg['bad'], '%d suite files read%s' % (hyg['files'], ('; grandfathered until a date: %d line(s) in %s' % (len(hyg['grandfathered']), ', '.join(sorted(set(g.split(':')[0] for g in hyg['grandfathered']))))) if hyg['grandfathered'] else ''),
+       why='; '.join(hyg['bad'][:3]))
 
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
@@ -2480,35 +2505,46 @@ def local_checks(which):
                 js_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
     ok('no consent box is ticked from a script', not js_hits, why=', '.join(js_hits[:4]))
 
-    # "I'M 18 OR OVER" AND "KEEP ME POSTED" ARE TWO TICKS, NEVER ONE (3 Nov 2026). The three player phones
-    # shipped ONE tick, "I am 18 or over. Keep me posted on what is on at the venue": a condition of entry
-    # bundled with marketing consent, which must be optional and unbundled (Spam Act 2003, APP 7). The
-    # ticks are now built once, in venueplay/app/vp-consent.js. Two checks:
-    #   1. no shipped page or script, comments stripped, puts "18 or over" and "keep me posted/updated"
-    #      in one line of text a person reads;
+    # ONE TICK, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026, for the 6 Nov release).
+    # The 3 Nov step had two ticks, "I'm 18 or over" and "Keep me posted"; Dean folded 18+ into the
+    # offers opt-in. The tick is built once, in venueplay/app/vp-consent.js. Two checks:
+    #   1. vp-consent.js (comments stripped) draws ONE checkbox, in exactly those words, with no #x18
+    #      and no 18+ gate at Join; no player phone's details step (loadJoinInfo, join, gatherCapture)
+    #      says 18 itself; and the old "keep me posted" wording is gone from every page;
     #   2. every player phone that offers the details step builds it from VPConsent (loads the file,
-    #      loadJoinInfo calls VPConsent.render and draws no checkbox of its own, join() asks
-    #      VPConsent.ageOk() before gatherCapture, and gatherCapture takes the opt-in from
-    #      VPConsent.optedIn), and the three gatherCapture bodies are the same text.
-    bundled = []
-    for f in files:
-        if not (f.endswith('.html') or f.endswith('.js')) or os.sep + 'worker' + os.sep in f:
-            continue
-        text = io.open(f, encoding='utf-8', errors='ignore').read()
+    #      loadJoinInfo calls VPConsent.render with the venue's name and draws no checkbox of its own,
+    #      join() holds nobody on an 18+ tick, gatherCapture takes the opt-in and the consent version
+    #      from VPConsent.optedIn only), and the three gatherCapture bodies are the same text.
+    def _nocomments(text):
         text = re.sub(r'/\*.*?\*/', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
         text = re.sub(r'<!--.*?-->', lambda m: '\n' * m.group(0).count('\n'), text, flags=re.S)
-        text = re.sub(r'(^|[^:\\])//[^\n]*', r'\1', text)
-        for i, line in enumerate(text.split('\n')):
-            if re.search(r"18\s*(or|\+)\s*(over|older)?", line, re.I) and re.search(r'keep me (posted|updated)', line, re.I):
-                bundled.append('%s:%d' % (short(f), i + 1))
-    ok('no page bundles the 18+ statement with marketing consent', not bundled,
-       why=', '.join(bundled[:4]) + ': one tick both states the player is 18 or over and consents to '
-           'marketing; marketing consent must be its own optional tick (venueplay/app/vp-consent.js)')
-    phones = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html']
-    wrong, gathers = [], []
+        return re.sub(r'(^|[^:\\])//[^\n]*', r'\1', text)
     def _fn(src, head):
         a = src.find(head)
         return '' if a < 0 else src[a:src.find('\n  }\n', a)]
+    phones = ['venueplay/play.html', 'venueplay/app/musical/play.html', 'venueplay/app/trivia/play.html']
+    onetick = []
+    _cp = os.path.join(ROOT, 'venueplay', 'app', 'vp-consent.js')
+    csrc = _nocomments(io.open(_cp, encoding='utf-8').read()) if os.path.isfile(_cp) else ''
+    if not csrc: onetick.append('venueplay/app/vp-consent.js is missing')
+    if 'var OPTIN_HEAD = "Send me offers from ";' not in csrc or 'var OPTIN_TAIL = ". I\'m 18 or over.";' not in csrc:
+        onetick.append('vp-consent.js does not word the tick "Send me offers from {venue}. I\'m 18 or over."')
+    if csrc.count('createElement("input")') != 1 or _fn(csrc, '  function render(').count('tick(') != 1:
+        onetick.append('vp-consent.js draws other than one checkbox')
+    if 'x18' in csrc: onetick.append('vp-consent.js still draws an 18+ tick of its own')
+    if 'function ageOk() { return true; }' not in csrc: onetick.append('vp-consent.js holds Join on an 18+ tick')
+    for rel in phones:
+        _p = os.path.join(ROOT, rel)
+        src = _nocomments(io.open(_p, encoding='utf-8').read()) if os.path.isfile(_p) else ''
+        for _hd in ('function loadJoinInfo(){', '  function join(){', '  function gatherCapture(nm){'):
+            if '18' in _fn(src, _hd): onetick.append('%s %s says 18 itself' % (rel, _hd.strip()))
+    for f in files:
+        if not (f.endswith('.html') or f.endswith('.js')) or os.sep + 'worker' + os.sep in f:
+            continue
+        if re.search(r'keep me (posted|updated) on what', _nocomments(io.open(f, encoding='utf-8', errors='ignore').read()), re.I):
+            onetick.append(short(f) + ' still shows the old "Keep me posted" tick')
+    ok('the details step asks 18+ only inside the one offers tick', not onetick, why='; '.join(onetick[:3]))
+    wrong, gathers = [], []
     for rel in phones:
         _p = os.path.join(ROOT, rel)
         src = io.open(_p, encoding='utf-8').read() if os.path.isfile(_p) else ''
@@ -2517,14 +2553,30 @@ def local_checks(which):
         li, jn, gc = _fn(src, 'function loadJoinInfo(){'), _fn(src, '  function join(){'), _fn(src, '  function gatherCapture(nm){')
         gathers.append(gc)
         if '<script src="/app/vp-consent.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-consent.js')
-        if 'VPConsent.render(box, c,' not in li: wrong.append(rel + ' loadJoinInfo does not build the ticks with VPConsent.render')
+        if 'VPConsent.render(box, c, { venueName:P.venueName });' not in li: wrong.append(rel + ' loadJoinInfo does not build the tick with VPConsent.render naming the venue')
         if 'checkbox' in li: wrong.append(rel + ' loadJoinInfo draws a checkbox of its own')
-        a, g = jn.find('VPConsent.ageOk()'), jn.find('gatherCapture(')
-        if a < 0 or g < 0 or g < a: wrong.append(rel + ' join() gathers before asking VPConsent.ageOk()')
-        if 'if(typeof VPConsent==="object" && VPConsent.optedIn(cap)) cap.marketing_optin=true;' not in gc or gc.count('marketing_optin') != 1:
-            wrong.append(rel + ' gatherCapture sets marketing_optin other than from VPConsent.optedIn')
+        if 'ageOk' in jn or 'AGE_NEEDED' in jn or 'gatherCapture(' not in jn: wrong.append(rel + ' join() holds a player on an 18+ tick')
+        if ('if(typeof VPConsent==="object" && VPConsent.optedIn(cap)){ cap.marketing_optin=true; cap.consent_version=VPConsent.VERSION; }' not in gc
+                or gc.count('marketing_optin') != 1 or gc.count('consent_version') != 1):
+            wrong.append(rel + ' gatherCapture sets marketing_optin or consent_version other than from VPConsent.optedIn')
     if len(set(gathers)) != 1: wrong.append('the three phones\' gatherCapture differ')
     ok('every player phone builds its details ticks from vp-consent.js', not wrong, why='; '.join(wrong[:3]))
+
+    # THE DETAILS BOXES ARE A REAL FORM, BUILT ONCE, SO THE PHONE CAN AUTOFILL THEM (5 Nov 2026).
+    # They were innerHTML inputs with no name= and no <form>, and iPhone and Android autofill skipped
+    # them ("it doesn't autofill every detail"). /app/vp-details.js now draws them and wraps Join.
+    wrong = []
+    for rel, kind in (('venueplay/play.html', 'person'), ('venueplay/app/musical/play.html', 'person'), ('venueplay/app/trivia/play.html', 'team')):
+        _p = os.path.join(ROOT, rel)
+        src = io.open(_p, encoding='utf-8').read() if os.path.isfile(_p) else ''
+        if not src:
+            wrong.append(rel + ' is missing'); continue
+        li = _fn(src, 'function loadJoinInfo(){')
+        if '<script src="/app/vp-details.js"></script>' not in src: wrong.append(rel + ' does not load /app/vp-details.js')
+        if 'VPDetails.html(c)' not in li: wrong.append(rel + ' loadJoinInfo does not draw the boxes with VPDetails.html')
+        if 'placeholder=' in li: wrong.append(rel + ' loadJoinInfo draws a box of its own')
+        if 'VPDetails.wire({ join:join, kind:"%s" })' % kind not in src: wrong.append(rel + ' does not wire Join with VPDetails.wire kind ' + kind)
+    ok('every player phone draws its details boxes as a form from vp-details.js', not wrong, why='; '.join(wrong[:3]))
 
     # EVERY MERGE TAG IN AN EMAIL THE WORKER SENDS HAS TO BE FILLED IN BY THE WORKER.
     # {{unsubscribe_url}} sat in four templates and nothing anywhere replaced it, so the
@@ -3925,6 +3977,21 @@ def local_checks(which):
              'runs vpbSetPlayers: an add with 3 days of the cycle left is still one full month on the next invoice, live tonight, quantity up with no proration; a drop waits for the renewal, refunds and credits nothing, so 30 added for one night cost a month; a quote changes nothing; a pending drop then up charges only the new players; a yearly plan keeps its pro rata and credit; VPB_BILLING_RULES_3NOV is off unless it is the string 1; with it on, an undo within 59 minutes with no game started deletes the invoice line, puts the capacity and quantity back and writes the HQ history row, while 61 minutes, a game started since, a part-way drop, a refused delete, no add on record and a yearly plan all fall back to the ordinary reduction', 40,
              'A venue charged a month for players it undid within the hour (or let off a month it used), an undo '
              'that leaves the invoice line standing, or the new rules switched on by a value nobody set'),
+            # D117: HQ > Prospects for the 6 Nov release (Dean, 4 Nov 2026; migration 152 NOT RUN), branch fix/hq-prospects-6nov.
+            # The pane in Chrome: tools/prospects-edit-in-chrome.test.py.
+            ('D117. HQ edits a prospect\'s details safely, sends the sign-in link by email and text from one button, and shows compact rows',
+             'test-prospect-edit-6nov.js',
+             "Edit details on a prospect: owner or accounts only; an Australian mobile (04) and a landline with its area code, the setup's email check, a refusal changes nothing; one audit row of who changed what, from and to; a new mobile goes on the account, rings when there was no number, goes on their login only if it is nobody else's and the login has none, puts them on the call list and in the Mac's text follow-up on the next read; a new email moves the login, the prospect and the account together, retires links sent to the old address, refused for another login's address or a login that runs another venue; ONE send button sends the sign-in link by email and, with a mobile, by text (two links ending together, a fresh 30 days), outside 9am to 8pm or on a Sunday the text is queued (migration 152) for the next allowed time and sent once by the hourly trigger; texts off, no queue and no mobile each say so; compact rows with a status chip that opens them", 72,
+             'A mobile Dean adds on Friday that never reaches the call list or the weekend text, an email change that '
+             'leaves their sign-in link going to the old address (or to a stranger at a typo), a text at 10pm or on a '
+             'Sunday, or two resend buttons that look the same and do different things'),
+            # D123: the first-sign-in setup guide (Dean, 5 Nov 2026, INBOX 13), branch fix/first-run-guide-10nov.
+            # (D115 to D122 left free: other branches hold some of them.)
+            ('D123. A new venue\'s first sign-in is a setup wizard: it asks about the venue, TVs, game nights and games, then walks it through the TV by screen code, adding hosts by text, and a trivia test game',
+             'test-first-run-guide.js',
+             'runs vp-firstrun.js: the TV, hosts, a first game, then the card; the venue\'s own screen code (its join code or the console\'s derived one), the Google TV app linked to its Play page then the code, or venueplay.com.au/tv in the TV\'s browser, the code and full screen, Google TV first, no slug link; hosts at this venue listed, a name and an Australian mobile asked for before anything is sent, /account/host-add for this venue only, the Worker\'s refusal shown, never an email; trivia first and pink, musical bingo never called bingo; nothing under 15px, nothing wider than a phone, the Terms card lifted on a phone; the wizard asks first: is the venue name right (a wrong one goes to HQ as a ticket), how many TVs, which nights, which games (trivia, musical bingo, bingo, raffles, members draws), each optional and saved to vp_venue_settings.setup_answers (migration 163, NOT RUN) through saveSettings with only the known keys and values, kept on the device too, a question already answered left out, the answers shaping the TV step and the test game step, an Account page card reading them, and ONE more optional question on a later sign-in (never two, skippable, never again after two skips, never for a venue the guide is not for); then About you: their name while it is still "<venue> manager" (/account/my-name) and a logo while there is none (/account/logo-upload, this venue, PNG, WebP or JPEG, 1MB), each optional and only when empty, the Worker\'s refusal shown, the step left out when both are done; lowercase venueplay, no dashes', 123,
+             'A new venue told to type a slug link the TV no longer takes, a host added to every venue on the account '
+             'or never texted, or a guide too small to read on the owner\'s phone'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,
@@ -4154,7 +4221,7 @@ def local_checks(which):
             out = ((r.stdout or '') + (r.stderr or '')).strip()
             bad = [l.strip() for l in out.splitlines() if l.strip().startswith('FAIL')]
             n = len([l for l in out.splitlines() if l.strip().startswith('ok ')])
-            ok('the real templates render with every venue, its own TV link and no raw tags',
+            ok('the real templates render with every venue, the bare venueplay.com.au/tv link and no raw tags',
                r.returncode == 0 and n >= 9 and not bad,
                detail=('; '.join(bad[:3]) if bad else '%d checks' % n),
                why='run jsc tools/test-welcome-email-renders.js. This is the first thing a '
@@ -4738,12 +4805,15 @@ def shared_scripts_live(base, folder, url_prefix='/app/'):
         # VP or PP: PartyPlay's shared scripts were never checked at all, and they fail
         # exactly the same way. Hardcoding VP here is why: it was written for one product.
         m = re.search(r'root\.((?:VP|PP)[A-Za-z]+)\s*=', local)
-        status, body, _ = get(base + url_prefix + f)
-        looks_html = '<html' in body[:2000].lower() or '<!doctype' in body[:200].lower()
+        status, body, ctype = get_typed(base + url_prefix + f)
+        # By Content-Type first, then by what the body STARTS with (gatelib.looks_like_homepage): the old
+        # `'<html' in body[:2000]` called vp-tvhold.js the homepage on 4 Nov 2026 because its header
+        # comment mentions the tag. The "does not define VPxxx" half below is unchanged.
+        looks_html = gatelib.looks_like_homepage(status, ctype, body)
         why = ''
         good = status == 200 and not looks_html
         if looks_html:
-            why = 'the homepage came back, so this script is not deployed'
+            why = 'the homepage came back (%s), so this script is not deployed' % (ctype or 'no Content-Type')
         elif status != 200:
             why = 'HTTP %s' % status
         elif m and m.group(1) not in body:

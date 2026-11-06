@@ -120,7 +120,7 @@ function bootHost(opts){
   var ctx={ authed:true, scope:"staff", role:"owner", isAdmin:false, currentVenueId:"v1", user:{user_metadata:{name:"Dean"}},
             venue:{ id:"v1", slug:"test-pub", name:"Test Pub", status:"active", max_players:(opts.cap||100), created_at:"2026-01-01T00:00:00Z" }, staff:[{venue_id:"v1"}] };
   var VP={ useClient:function(){}, ready:function(){ return Promise.resolve(ctx); }, refresh:function(){ return Promise.resolve(ctx); }, suspensionBanner:function(){},
-    venueCode:function(){ return CODE; }, venueJoinCode:function(){ return Promise.resolve(null); }, getClient:function(){ return { auth:{ getSession:function(){ return Promise.resolve({data:{session:null}}); } } }; },
+    venueCode:function(){ return CODE; }, venueJoinCode:function(){ return Promise.resolve(null); }, getClient:function(){ return { auth:{ getSession:function(){ return Promise.resolve({data:{session:{access_token:"tok"}}}); } } }; },   // signed in: a handover from this console is signed (F2)
     gameApiPost:function(path,body){ (sb.__posts=sb.__posts||[]).push({path:path,body:body}); return Promise.resolve(opts.post?opts.post(path,body):{error:"offline"}); },
     gameApiCall:function(path,body){ (sb.__calls=sb.__calls||[]).push({path:path,body:body}); return Promise.resolve(opts.call?opts.call(path,body):{status:503,json:{}}); },
     setGameActive:function(){}, enforceShift:function(){}, noteOpenSession:function(){}, closeOpenSessions:function(){}, listVenues:function(){ return Promise.resolve([]); }, signOut:function(){},
@@ -132,9 +132,18 @@ function bootHost(opts){
   ex.dom=dom; ex.sb=sb; ex.$=function(id){ return dom.document.getElementById(id); };
   return ex;
 }
-function bootPhone(name){
+function bootPhone(name, popts){
   var dom=makeDom("?room="+CODE);
   var sb=baseSandbox(dom,"phone:"+name);
+  /* keyed: the phone holds a key the way every browser that can make one does (vp-phonekey.js), so
+     what it says carries a k1_ pid, pk and sig. Only the SHAPE: the rig's console has no VPPhoneKey
+     and does not verify. A console's ear on the old road knows a real phone by that shape. */
+  if(popts && popts.keyed){
+    var KP={ join:1, claim:1, leave:1 }, kpid="k1_rig"+String(name).toLowerCase();
+    var K={ isPhoneMsg:function(m){ return !!(m && KP[m.t]===1); },
+            ensure:function(){ return Promise.resolve({ pid:kpid, pk:"rigpk", sign:function(m){ var o={}; for(var k in m) o[k]=m[k]; o.pid=kpid; o.pk="rigpk"; o.sig="rigsig"; return Promise.resolve(o); } }); } };
+    sb.VPPhoneKey=K; dom.window.VPPhoneKey=K;
+  }
   var ex=runPage(inlineScript("venueplay/play.html"), sb, ["P","onMsg","pressBingo","join","route","leaveGame","onChannelStatus"]);
   ex.dom=dom; ex.sb=sb; ex.$=function(id){ return dom.document.getElementById(id); };
   ex.name=name;
