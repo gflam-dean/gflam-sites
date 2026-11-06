@@ -635,3 +635,8 @@ the Mac (~/venue-enrich/venueplay-SEND-pubs-and-clubs.csv and ~/venue-enrich/par
 state registers), 32,415 name and postcode rows on 6 Nov 2026. Missing or empty, every start is held for HQ (the safe way
 round). RLS on, service role only. NUMBER: 171 (172 is the try-it demo's, `fix/try-demo-10nov`). Branch
 `fix/signup-core-10nov`. NOT RUN.
+
+`venueplay-173-signup-starts-pub-or-club.sql` (Dean, 6 Nov 2026: ask pub or club at the no-card start): ONE nullable column,
+`vp_signup_starts.entity_type` ('for_profit' or 'non_profit'), so a sign-up HQ approves later keeps the answer. The venue's
+own entity_type is set when the account is made either way. 170 and 171 unchanged. Before it runs, the start still works.
+NUMBER: 172 is the try-it demo's, so 173. Branch `fix/signup-core-10nov`. NOT RUN. Run after 170.
