@@ -327,6 +327,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
@@ -1214,10 +1215,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
+      /* THE SONGS, THE TIMES AND THE CLOCK ARE /app/vp-demo-clock.js, shared with the demo phone (app/musical/play.html),
+         so the wall and the phone are on the same song at the same moment, every lap (7 Nov 2026). No timer here. */
+      var C=VPDemoClock.MUSICAL, steps=[];
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
       /* The songs as the library names them. Their artwork is NOT here any more (Dean, 4 Nov 2026): third-party album
          covers may not appear in store screenshots, so the demo wall shows our venueplay logo tile in the art spot. */
-      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley"}, {"title": "Dancing Queen", "artist": "ABBA"}, {"title": "Khe Sanh", "artist": "Cold Chisel"}, {"title": "Mr. Brightside", "artist": "The Killers"}, {"title": "The Horses", "artist": "Daryl Braithwaite"}];   /* no album covers on a sales page or a store screenshot (Dean, 4 Nov 2026): the wall draws our logo tile */
+      var SONGS = C.SONGS;
       at(0, function(){
         m({ t:"session", join_code:DEMO_JOIN_CODE });
         m({ t:"mode" });
@@ -1225,24 +1229,23 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
            I wrote "one_line" first and the wall printed it verbatim. tv.html's demo carries the
            same note for the same reason. */
         m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"Meat tray", played:[] });   /* a prize as a host types it; no dollar prize on a sales page (3 Nov 2026) */
-      });
-      /* The first song waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first song makes it give way, so at 1.2 s the sales-page demo cut it off. */
-      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[];   // 1200 as before the show, on a screen with ?sting=0
+      }, true, true);
+      /* The first song waits for the start-of-game show (2 Nov 2026): C.first() is 4.2 s with the show, 1.2 s with ?sting=0. */
       SONGS.forEach(function(sg, i){
-        at(t, function(){
-          /* played is a list of TITLES, not song objects: renderBoard paints each entry straight
-             into textContent, so an object arrives on the wall as "[object Object]". It did. */
-          played.push(sg.title);
-          // reveal:false first, so the wall shows the card filling in without naming the song
-          m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played.slice(), reveal:false });
-        });
-        at(t+2600, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
+        var t=C.songAt(i);
+        /* played is a list of TITLES, not song objects: renderBoard paints each entry straight
+           into textContent, so an object arrives on the wall as "[object Object]". It did. And it is
+           the songs so far, made fresh each time: it used to be one list pushed onto every lap. */
+        var played=SONGS.slice(0, i+1).map(function(x){ return x.title; });
+        // reveal:false first, so the wall shows the card filling in without naming the song
+        at(t, function(){ m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played, reveal:false }); }, true);
+        at(t+C.REVEAL, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
         at(t+3400, function(){ m({ t:"players", count: 22 + i*4 }); });
-        t += 5200;
       });
-      at(t,        function(){ m({ t:"claim_pending", name:"Sam", count:1 });   /* the name a player joined with, never a table (we do not collect tables) */ });
-      at(t+2600,   function(){ m({ t:"winner", name:"Sam", cardNos:[17] });   /* the demo phone's own player and card */ });
-      at(t+9000,   function(){ m({ t:"idle" }); });
+      var t=C.claimAt();
+      at(t,              function(){ m({ t:"claim_pending", name:"Sam", count:1 });   /* the name a player joined with, never a table (we do not collect tables) */ }, true);
+      at(t+C.WIN_AFTER,  function(){ m({ t:"winner", name:"Sam", cardNos:[17] });   /* the demo phone's own player and card */ }, true);
+      at(t+C.IDLE_AFTER, function(){ m({ t:"idle" }); }, true);
 
       /* NO JOIN OR PAIRING CORNER ON A SALES PAGE: the code is one this browser invented, so
          scanning it leads to a room that does not exist. Watched, not hidden once, because the
@@ -1272,14 +1275,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         try{ new MutationObserver(hide).observe(document.body,{ childList:true, subtree:true }); }catch(e){}
       })();
 
-      var timers=[];
-      function run(){
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
-        timers.push(setTimeout(run, t + 14000));
-      }
-      run();
+      // A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap().
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 

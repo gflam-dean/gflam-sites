@@ -393,6 +393,7 @@
 <script src="/app/vp-phonead.js"></script>
 <script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonekey.js"></script>
@@ -1539,8 +1540,8 @@
      scans it wants to play, not watch it play itself. So the round above plays itself only inside
      a frame (the sales pages: index.html, nsw.html, see-a-night.html all iframe it). Opened on its
      own, it is a round of five the person answers (soloIntro below), then an end card with a
-     call-back form. The TV and this phone are not linked (both are scripts joined to nothing), so
-     the phone keeps its own clock and only borrows the wall's first three questions.
+     call-back form. That solo round keeps its own clock (the person sets the pace); the embedded
+     round below runs on the wall's clock (/app/vp-demo-clock.js).
      window.__vpDemoAutoplay is a test's hook, set by script before the page runs (as
      __vpStingManual is): no address can set it, so a phone that scanned the QR never auto-answers. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
@@ -1670,37 +1671,35 @@
       soloIntro();
       return;                    /* never connect, never follow a host, never touch a venue */
     }
-    var _dt=[];
-    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
-    function q(qi, text, options, secs){
-      return { t:"question", qseq:qi, qi:qi+2, qtotal:20, text:text, options:options,   // "Question 3 of 20", the wall's numbers
-               secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
-    }
-    function round(){
-      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.total=515; P.rank=0; P.ended=false; P.celebrated=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Sarah's score on the wall's final scores */
+    /* IN STEP WITH THE WALL BY CONSTRUCTION (Dean, 7 Nov 2026: "the AC/DC question seems to be a different question
+       on the phone", "seems to be lagging"). This phone used to run its own setTimeout chain, started 900 ms after
+       its own load, while the wall started after ITS load (which waits on a dozen more scripts), and nothing ever
+       pulled the two back together; a hidden tab pushed them further apart. Now both pages take the questions,
+       the times and the clock from /app/vp-demo-clock.js, and the sales page gives both frames the same start
+       (?t0=), so they are on the same step at the same moment, every lap. No timer here. */
+    var C=VPDemoClock.TRIVIA, Q=C.Q, steps=[];
+    function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+    /* Sarah's night: right, wrong, right. Her total and place BEFORE each question, so a phone that joins the
+       night part way through (a late frame) still shows the right numbers: 515 + 130 + 145 = 790, her score on
+       the wall's final scores. */
+    var TAP=[1,2,0], TAP_AT=[3400,3600,3400], PTS=[130,0,145], BEFORE=[[515,0],[645,3],[645,4]], AFTER=[[645,3],[645,4],[790,2]];
+    at(0, function(){
+      P.total=515; P.rank=0; P.ended=false; P.celebrated=false;
       fire({ t:"started" });
-      /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
-         then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own
-         clock and a 50000ms lap, so the phone answered questions the wall had not asked yet.
-         Dean, 22 Sep 2026: "the tv and phone seem to be unsynced". The numbers below are the
-         wall's; change both. */
-      // T0 was 900: the first question waits for the start-of-game show, as on the wall (screen.html t = 4200, 2 Nov 2026)
-      var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 as before the show, on a phone with ?sting=0
-      d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
-      d(T0+3400,      function(){ answer(1); });
-      d(T0+REV,       function(){ P.total=645; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
-      d(T0+GAP,       function(){ fire(q(2,"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", ["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"],15)); });
-      d(T0+GAP+3600,  function(){ answer(2); });
-      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], split:[7,26,9,1], demoPts:0 }); });
-      d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
-      d(T0+2*GAP+3400,function(){ answer(0); });
-      d(T0+2*GAP+REV, function(){ P.total=790; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
-      d(T0+3*GAP,     function(){ P.total=790; P.rank=2; fire({ t:"podium" }); });
-      d(T0+3*GAP+17000, round);
-    }
+    }, true, true);
+    Q.forEach(function(q, i){
+      var t=C.qAt(i);
+      at(t, function(ctx){
+        P.total=BEFORE[i][0]; P.rank=BEFORE[i][1]; P.ended=false;
+        fire({ t:"question", qseq:i+1, qi:C.FIRST_QI+i, qtotal:C.QTOTAL, text:q.text, options:q.options,   // the wall's numbers: "Question 8 of 10"
+               secs:C.SECS, endsAt:C.endsAt(ctx, i) });                                                       // and the wall's clock, to the second
+      }, true);
+      at(t+TAP_AT[i], function(){ answer(TAP[i]); });
+      at(t+C.REVEAL, function(){ P.total=AFTER[i][0]; P.rank=AFTER[i][1]; fire({ t:"reveal", qseq:i+1, correctIndex:q.correct, options:q.options, split:q.split, demoPts:PTS[i] }); });
+    });
+    at(C.podiumAt(), function(){ P.total=790; P.rank=2; fire({ t:"podium" }); }, true);
     showWait("The quiz is starting. Your questions will pop up here.");
-    d(900, round);
+    VPDemoClock.run({ lap:C.lap(), steps:steps });
     return;                      /* never connect, never follow a host, never touch a venue */
   }
 

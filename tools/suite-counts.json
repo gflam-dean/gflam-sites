@@ -559,6 +559,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/test-demo-sync.js": {
+  "checks": 35,
+  "counted_by": "lines"
+ },
  "tools/test-double-points.js": {
   "checks": 24,
   "counted_by": "lines"

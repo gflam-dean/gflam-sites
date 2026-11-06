@@ -637,11 +637,11 @@
 <script>
 (function(){
   /* THE WALL AND THE PHONE ARE THE PRODUCT'S OWN PAGES in their ?demo=1 mode: no venue, no
-     network, no analytics. Each one plays a scripted night on its own clock, and the two
-     scripts are written to the same clock (see the notes in play.html and screen.html), so
-     they only stay in step if they START together. Both are (re)loaded in the same tick on
-     every chip, never one after the other. Dean, 22 Sep 2026: "the tv and phone seem to be
-     unsynced". Advertising is the wall alone: it is what the screen does between games. */
+     network, no analytics. Neither keeps its own time: both read one script and one clock
+     (/app/vp-demo-clock.js) from the start time this page puts on BOTH addresses (?t0=), so the
+     phone shows the TV's question at the TV's moment whichever frame loads first, and after a
+     hidden tab. Dean, 22 Sep 2026: "the tv and phone seem to be unsynced", and again 7 Nov 2026:
+     "the AC/DC question seems to be a different question on the phone". Advertising is the wall alone: it is what the screen does between games. */
   var WALL={ bingo:"/tv?demo=1", trivia:"/app/trivia/screen?demo=1", musical:"/app/musical/screen?demo=1", raffle:"/app/raffle/screen?demo=1", members:"/app/members/screen?demo=1", ads:"/tv?demo=1&ads=1" };
   var PHONE={ bingo:"/play?demo=1", trivia:"/app/trivia/play?demo=1", musical:"/app/musical/play?demo=1" };
   var tv=document.getElementById("h2Tv"), ph=document.getElementById("h2Phone"), wrap=document.getElementById("h2PhoneWrap"), modes=document.getElementById("h2Modes");
@@ -655,7 +655,7 @@
   try{ var ro=new ResizeObserver(fit); ro.observe(ph.parentNode); ro.observe(tv.parentNode); }catch(err){}
   window.addEventListener("load", fit); ph.addEventListener("load", fit); tv.addEventListener("load", fit);
   function show(mode){
-    var bust="&t="+Date.now();     // a fresh load each time, so both scripts start from zero together
+    var bust="&t0="+Date.now();    // one start for both frames (and a fresh load each time): the night starts from zero on both
     tv.setAttribute("src", WALL[mode]+bust);
     var stage=document.getElementById("h2Stage");
     if(PHONE[mode]){ wrap.classList.remove("off"); if(stage) stage.classList.remove("nophone"); ph.setAttribute("src", PHONE[mode]+bust); fit(); }
