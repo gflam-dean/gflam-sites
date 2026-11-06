@@ -396,7 +396,7 @@
   "counted_by": "lines"
  },
  "tools/test-account-ready.js": {
-  "checks": 26,
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-account-tabs.js": {

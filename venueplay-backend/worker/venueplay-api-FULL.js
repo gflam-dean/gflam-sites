@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 11:05 · d8661932';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 12:27 · 6b2a7919';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3876,8 +3876,11 @@ function vpsReadyVenueWords(name) {
   const w = String(name || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50).trim();
   return w || 'your venue';
 }
-function vpsReadyText(venueName) {
-  return 'Welcome to venueplay! Your account for ' + vpsReadyVenueWords(venueName) + ' is ready. Sign in any time at venueplay.com.au/app, we\'ll text a code to this mobile.';
+/* emailed: the Welcome email went first, so the text can say so (Dean, 6 Nov 2026: "one short line that we've also
+   emailed their login and it may be in junk"). Two SMS parts at most: the venue's words are cut to 50. */
+function vpsReadyText(venueName, emailed) {
+  return 'Welcome to venueplay! Your account for ' + vpsReadyVenueWords(venueName) + ' is ready. Sign in any time at venueplay.com.au/app, we\'ll text a code to this mobile.'
+    + (emailed ? ' We\'ve emailed your login too, check junk.' : '');
 }
 /* Has this venue had its ready messages? Fails CLOSED: a read that does not answer counts as yes (never twice). */
 async function vpsReadySentBefore(env, venueId) {
@@ -3915,12 +3918,6 @@ async function vpsAccountReady(env, row, venueId, done) {
     const venueName = (done && done.venue) || row.venue_name;
     const to = vpaNormaliseMobileAU(row.mobile);
     const mobileWords = vpaProspectPhone(to);
-    if (vpaIsAuMobileE164(to) && (vpaHasMobileMessage(env) || vpaHasClickSend(env)) && !(await vpaSmsOptedOut(env, to))) {
-      let r;
-      try { r = await vpaSendSms(env, to, vpsReadyText(venueName), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
-      out.texted = !!(r && r.ok);
-      if (r && r.blocked) await vpaSmsRecordOptOut(env, to, venueId);
-    }
     const email = String(row.email || '').trim();
     if (email && env.RESEND_API_KEY && mobileWords) {
       const msg = await vpsRenderReady(env, { venueName: venueName, contactName: row.contact_name, mobileWords: mobileWords, tvCode: done && done.tv_code, email: email });
@@ -3931,6 +3928,12 @@ async function vpsAccountReady(env, row, venueId, done) {
         out.emailed = !!(res && res.ok);
         if (out.emailed) { const j = await res.json().catch(() => ({})); out.email_id = (j && typeof j.id === 'string') ? j.id : undefined; }
       }
+    }
+    if (vpaIsAuMobileE164(to) && (vpaHasMobileMessage(env) || vpaHasClickSend(env)) && !(await vpaSmsOptedOut(env, to))) {
+      let r;
+      try { r = await vpaSendSms(env, to, vpsReadyText(venueName, out.emailed), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
+      out.texted = !!(r && r.ok);
+      if (r && r.blocked) await vpaSmsRecordOptOut(env, to, venueId);
     }
     await vpaAudit(env, { actorId: null, label: 'Self sign-up (no-card start)' }, VPS_READY_ACTION, 'venue:' + venueId,
       { start_id: row.id, texted: out.texted, emailed: out.emailed, email_id: out.email_id, to_last3: to ? to.slice(-3) : undefined });

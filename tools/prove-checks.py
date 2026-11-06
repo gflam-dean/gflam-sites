@@ -78,6 +78,18 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # that check was actually written for.
 MUTATIONS = [
     # Account ready after a self sign-up: the text and the Welcome email (Dean, 6 Nov 2026), branch fix/account-ready-10nov.
+    ('test-account-ready.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    + (emailed ? ' We\\'ve emailed your login too, check junk.' : '');",
+     "    + '';",
+     'the text never says the login was emailed too, or to check junk'),
+    ('test-account-ready.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     'vpsReadyText(venueName, out.emailed)',
+     'vpsReadyText(venueName, true)',
+     'the text says the login was emailed when no email went'),
+    ('test-account-ready.js', 'venueplay/emails/welcome-self.html',
+     'Go to <strong>venueplay.com.au/go/{{tv_code}}</strong> any time',
+     'Go to <strong>venueplay.com.au/app</strong> any time',
+     'the welcome never gives the easy way back in by their venue code'),
     # The gate line for it (D176), proven once through the gate.
     ('runs /start/begin and /start/verify on the billing Worker with a fake Mobile Message and Resend',
      'venueplay-backend/worker/venueplay-api-FULL.js',

@@ -148,7 +148,7 @@ globalThis.fetch = function (url, opts) {
 function readyWorld() { world(); listed(); MM = []; MM_FAIL = false; AUDIT_DOWN = false; ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; ENV.RESEND_API_KEY = ENV.RESEND_API_KEY || 're_test_full'; }
 function welcomes() { return sent.filter(function (m) { return m.subject === 'Welcome to venueplay'; }); }
 function readyRows(vid) { return DB.vp_admin_audit.filter(function (a) { return a.action === 'signup_ready_sent' && (!vid || a.target === 'venue:' + vid); }); }
-var DEAN_TEXT = /^Welcome to venueplay! Your account for (.+) is ready\. Sign in any time at venueplay\.com\.au\/app, we'll text a code to this mobile\.$/;
+var DEAN_TEXT = /^Welcome to venueplay! Your account for (.+) is ready\. Sign in any time at venueplay\.com\.au\/app, we'll text a code to this mobile\.( We've emailed your login too, check junk\.)?$/;
 
 async function main() {
   section('1. A venue made straight away: ONE text and ONE email');
@@ -158,7 +158,9 @@ async function main() {
   check('the account is made and the done screen is told both went', a.verify.status === 200 && a.verify.body.outcome === 'made' && a.verify.body.ready && a.verify.body.ready.texted === true && a.verify.body.ready.emailed === true, a.verify.body);
   var t = MM[0] || {};
   check('ONE text, to the mobile that passed the code, from the venueplay sender (the same sender as the code)', MM.length === 1 && t.to === '+61412345678' && t.sender === 'venueplay', MM);
-  check('in Dean\'s words, word for word, with their venue', DEAN_TEXT.test(t.message || '') && DEAN_TEXT.exec(t.message)[1] === 'The Grand Hotel', t.message);
+  check('in Dean\'s words, word for word, with their venue, and (the email having gone first) that the login was emailed too, check junk',
+    DEAN_TEXT.test(t.message || '') && DEAN_TEXT.exec(t.message)[1] === 'The Grand Hotel' && /We've emailed your login too, check junk\.$/.test(t.message), t.message);
+  check('two SMS parts at most (306 characters), even with the longest venue name', (t.message || '').length <= 306 && vpsReadyText(new Array(90).join('W'), true).length <= 306, [(t.message || '').length, vpsReadyText(new Array(90).join('W'), true).length]);
   check('the text carries no link and no em dash', !/https?:|\/app\/go|#t=/.test(t.message || '') && !/[\u2014\u2013]/.test(t.message || ''), t.message);
   var w = welcomes();
   var h = String((w[0] || {}).html || '');
@@ -167,6 +169,7 @@ async function main() {
   var buttons = h.match(/<a href="[^"]*" style="display:inline-block;background:#FF1F8E/g) || [];
   check('ONE sign-in button: the text-code sign-in with their mobile filled in, never a token in an email', buttons.length === 1 && h.indexOf('href="' + (ENV.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '') + '/app/?signin=sms#m=0412345678"') !== -1 && !/#t=/.test(h), buttons);
   check('it says which address our emails come from, so they look out for the next one', /Our emails come from <strong>hello@send\.venueplay\.com\.au<\/strong>/.test(h));
+  check('the easy way back in: venueplay.com.au/go/{their screen code}, which sends a link to what is on the account', h.indexOf('Go to <strong>venueplay.com.au/go/' + v.join_code + '</strong> any time') !== -1, v.join_code);
   check('what to do first: sign in, the TV with their own screen code, a first night', /What to do first/.test(h) && h.indexOf('type your screen code: <strong>' + v.join_code + '</strong>') !== -1 && /musical bingo/.test(h), v.join_code);
   check('every merge field filled, no em dash, lowercase venueplay in the words', !/{{/.test(h) && !/[\u2014\u2013]/.test(h) && !/VenuePlay/.test(h.replace(/<[^>]+>/g, '')));
   check('a plain-text part goes with it', !!(w[0] || {}).text && /Welcome to venueplay/.test(w[0].text));
@@ -207,7 +210,7 @@ async function main() {
   readyWorld(); var rk = ENV.RESEND_API_KEY; delete ENV.RESEND_API_KEY;
   var ne = await start({ venue: 'The Grand Hotel' });
   ENV.RESEND_API_KEY = rk;
-  check('no email key: the text still goes, emailed false, the done screen as normal', ne.verify.body.outcome === 'made' && MM.length === 1 && ne.verify.body.ready.emailed === false, ne.verify.body);
+  check('no email key: the text still goes, emailed false, and it does NOT say it was emailed', ne.verify.body.outcome === 'made' && MM.length === 1 && ne.verify.body.ready.emailed === false && !/emailed/.test(MM[0].message), [ne.verify.body, MM[0] && MM[0].message]);
 
   section('5. Their typing cannot put a link in our text');
   check('a venue "name" with a link in it reaches the text without the link', DEAN_TEXT.exec(vpsReadyText('Visit www.evil.example/pay now'))[1].indexOf('.') === -1 && vpsReadyText('Visit http://x.example').indexOf('://') === -1, vpsReadyText('Visit www.evil.example/pay now'));
