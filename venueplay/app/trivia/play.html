@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the musical and bingo phones (6 Nov 2026) -->   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -630,7 +631,9 @@
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"];   // the last two: the scanned demo only (4 Nov 2026)
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
-    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){} }   // the venue's ad: the lobby, the waits and the end of the night, never a question
+    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){}
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");   // the compact ad under a waiting screen, so it and our logo fit (Dean, 6 Nov 2026)
+  }   // the venue's ad: the lobby, the waits and the end of the night, never a question
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
   /* "3rd", never "3rd of 16" (Dean, 4 Nov 2026: "no player counts anywhere"). P.playersCount is still read from the

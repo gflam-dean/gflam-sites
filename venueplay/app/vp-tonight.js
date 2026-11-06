@@ -3,18 +3,18 @@
    Dean's final picks (reports/fri-6nov-live-fixes/host-mock-5/DEAN-PICKS.md, round 5):
 
    "YOU'RE IN" (the lobby):   VPTonight.lobby(box, o)
-     "You're in, Sam" beside the green ring tick, then the TONIGHT spot: the game this phone joined (its prize only when
-     the host set a real one). Only one game tonight: badged TONIGHT, no Later row. More games stored for tonight: the
-     first badged NEXT, the rest LATER. Then the "THIS WEEK HERE" strip: today and the next six days, the venue's game
+     "You're in, Sam" beside the green ring tick, centred, then the Tonight spot: this game badged NEXT with "Tonight 7pm"
+     (its stored start; its prize after it only when the host set a real one), and any other game stored for tonight
+     badged LATER or EARLIER with its time. Then the "THIS WEEK HERE" strip: today and the next six days, the venue's game
      nights marked. Tap a day and the Tonight spot shows that night's games ("Trivia night, ask for start time",
      "Members draw, 7:30pm"); tap Today to come back. Then the one lobby line. The venue's ad and our logo sit under it,
      drawn by the page (/app/vp-phonead.js, .pfoot).
 
-   "NO GAME ON RIGHT NOW":   VPTonight.noGame(box, o)
-     "No game here right now" (never "You're in": nothing is on), the venue's NEXT game night in the spot, the same week
-     strip (tap a day to load that night), then a SMALL optional "Get a heads up by email" (only when the page passes
-     o.signup, a function that sends it; after a confirmed send the box closes and is not shown again on this phone, and
-     nothing says "you're on the list"). The venue's ad and our logo sit at the bottom, drawn by the page.
+   "NO GAME ON RIGHT NOW":   VPTonight.noGame(box, o)   (Dean's round 7)
+     No "You're in" and no "No game here right now": it leads with "NEXT GAME HERE / Wednesday, Trivia 7pm", then the SMALL
+     optional "Get a heads up by email" at the top (only when the page passes o.signup, a function that sends it; after a
+     confirmed send the box closes, is not shown again on this phone, and nothing says "you're on the list"), then the
+     week strip (tap a day and the lead line shows that night). The venue's ad and our logo sit at the bottom.
 
    DATA, read defensively. Only what the venue told the setup wizard (vp_venue_settings.setup_answers, migration 163),
    passed on by /join/info:
@@ -74,17 +74,17 @@
     return any;
   }
 
-  /* TONIGHT's rows in the lobby: this game first, then any other game stored for tonight. */
+  /* TONIGHT's rows in the lobby (Dean's round 7): this game badged NEXT, "Tonight 7pm" under it (its start, when stored;
+     its prize after, when the host set a real one); any other game stored for tonight badged LATER (or EARLIER when it
+     starts before this one), "Tonight 9pm". */
   function tonight(o) {
-    var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", sub: o.prize || "" }], list = gamesOn(o, dayKey(now(o))) || [], mine = "";
-    list.forEach(function (x) { if (x.game === me) mine = x.start || ""; });
+    var me = o.me, list = gamesOn(o, dayKey(now(o))) || [], mine = "", myTime = "";
+    list.forEach(function (x) { if (x.game === me) { mine = x.start || ""; myTime = x.time || ""; } });
+    var rows = [{ game: me, name: GAME_NAME[me] || "Game", badge: "Next", sub: "Tonight" + (myTime ? " " + myTime : "") + (o.prize ? ", " + o.prize : "") }];
     list.forEach(function (x) {
-      if (x.game !== me) rows.push({ game: x.game, name: GAME_NAME[x.game], sub: x.time || "", start: x.start || "" });
-      else if (!rows[0].sub && x.time) rows[0].sub = x.time;   // this game's own start tonight, when no prize is set
+      if (x.game === me) return;
+      rows.push({ game: x.game, name: GAME_NAME[x.game], badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
     });
-    rows[0].badge = rows.length > 1 ? "Next" : "Tonight";
-    /* A game that starts before this one tonight is EARLIER, not later (musical at 9pm, trivia at 7pm). */
-    for (var i = 1; i < rows.length; i++) rows[i].badge = (mine && rows[i].start && rows[i].start < mine) ? "Earlier" : "Later";
     return rows;
   }
   /* Another night's rows, for the spot when a day is tapped. */
@@ -116,7 +116,7 @@
     if (title) spot.appendChild(el("div", "nk", title));
     rows.forEach(function (r, i) {
       var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "")); row.setAttribute("data-game", r.game || "");
-      row.appendChild(el("span", "bd" + (i === 0 && (r.badge === "Next" || r.badge === "Tonight") ? " next" : ""), r.badge));
+      row.appendChild(el("span", "bd" + (i === 0 && r.badge === "Next" ? " next" : ""), r.badge));
       var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.sub) g.appendChild(el("span", "", r.sub));
       row.appendChild(g); spot.appendChild(row);
     });
@@ -148,7 +148,7 @@
     o = o || {}; box.innerHTML = "";
     box.appendChild(head(o.name));
     var spot = el("div", "vpt-night");
-    function today() { paintRows(spot, tonight(o), tonight(o).length > 1 ? "Tonight" : ""); }
+    function today() { paintRows(spot, tonight(o), ""); }
     today();
     box.appendChild(spot);
     var s = strip(o, 0, function (dd) { if (dd.i === 0) today(); else paintRows(spot, nightRows(o, dd.date), ""); });
@@ -157,21 +157,32 @@
     return s;
   }
 
+  /* "Next game here: Wednesday, Trivia 7pm" for a day; "Tonight" for today; unknown games: the day and "ask at the bar". */
+  function nightLine(o, dd) {
+    var list = gamesOn(o, dd.key), day = dd.i === 0 ? "Tonight" : LONG[dd.key];
+    if (list && list.length) return day + ", " + list.map(function (x) { return GAME_NAME[x.game] + (x.time ? " " + x.time : ""); }).join(" and ");
+    if (!list && dd.on) return day + ", ask at the bar for what\u2019s on";
+    return day + ": no games";
+  }
   function noGame(box, o) {
     if (!box) return;
     o = o || {}; box.innerHTML = "";
-    /* Nothing is on, so nobody is "in" (Dean, 6 Nov 2026): it leads with the plain words, then the NEXT game night. */
-    box.appendChild(el("div", "vpt-none", "No game here right now"));
-    /* The night spot starts on the next game night from today (today included), or today when none is known. */
-    var days = week(o), first = 0;
+    /* Dean's round 7: no "You're in" and no "No game here right now". It leads with the NEXT game here (from today on),
+       then the small optional sign-up, then the week; tapping a day puts that night in the lead line. */
+    var days = week(o), first = -1;
     for (var i = 0; i < days.length; i++) { if (days[i].on) { first = i; break; } }
-    var spot = el("div", "vpt-night");
-    function paint(dd) { paintRows(spot, nightRows(o, dd.date), dd.on ? (dd.i === 0 ? "Next here: tonight" : "Next here") : ""); }
-    paint(days[first]);
-    box.appendChild(spot);
-    var s = strip(o, first, function (dd) { paint(dd); });
-    box.appendChild(s.el);
+    var lead = el("div", "vpt-next"), k = el("span", "k"), line = el("span", "l");
+    lead.appendChild(k); lead.appendChild(line);
+    function paint(dd, picked) {
+      k.textContent = picked ? (dd.i === 0 ? "Today" : LONG[dd.key] + " " + dd.date.getDate()) : "Next game here";
+      line.textContent = nightLine(o, dd).replace(/^(Tonight|[A-Za-z]+day)(, |: )/, picked ? "" : "$1$2");
+    }
+    if (first >= 0) paint(days[first], false);
+    else { k.textContent = "Next game here"; line.textContent = "Ask at the bar for the next game night"; }
+    box.appendChild(lead);
     if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
+    var s = strip(o, first >= 0 ? first : 0, function (dd) { paint(dd, true); });
+    box.appendChild(s.el);
     return s;
   }
   /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */

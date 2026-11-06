@@ -38,12 +38,12 @@ ok('the module loads and offers lobby() and noGame()', !!T && typeof T.lobby ===
 var WED = new Date(2026, 10, 4, 19, 0, 0);   // Wednesday 4 Nov 2026, fixed: never the real clock
 var FRI = new Date(2026, 10, 6, 19, 0, 0);   // Friday 6 Nov
 function texts(n, cls) { return byClass(n, cls).map(function (r) { return r.textContent; }).join(' | '); }
-print('\n"YOU\'RE IN", Dean\'s round 5 pick');
+print('\n"YOU\'RE IN", Dean\'s round 7 notes: one layout for every lobby');
 var box = new Node('div');
 var lb = T.lobby(box, { name: 'Sam', me: 'trivia', prize: 'Winners take a $50 bar tab', nights: ['wed', 'fri'], games: ['trivia', 'musical'], now: FRI });
 ok('"You\'re in, Sam" beside the ring tick', byClass(box, 't')[0].textContent === 'You’re in, Sam' && byClass(box, 'vpt-head')[0].innerHTML.indexOf('vp-tick') > 0);
 var spot = byClass(box, 'vpt-night')[0], rows = byClass(spot, 'row');
-ok('one game tonight (no game per night stored): badged TONIGHT, no Later row, its real prize', rows.length === 1 && byClass(rows[0], 'bd')[0].textContent === 'Tonight' && /Trivia/.test(rows[0].textContent) && /\$50 bar tab/.test(rows[0].textContent), texts(spot, 'row'));
+ok('one game tonight (no game per night stored): NEXT, "Tonight", its real prize after it, no Later row', rows.length === 1 && byClass(rows[0], 'bd')[0].textContent === 'Next' && /Trivia/.test(rows[0].textContent) && /Tonight, Winners take a \$50 bar tab/.test(rows[0].textContent) && !/TONIGHT/.test(byClass(spot, 'nk').map(function (x) { return x.textContent; }).join()), texts(spot, 'row'));
 ok('no game is guessed for tonight from the venue\'s list', !/Musical/.test(spot.textContent));
 var two = new Node('div');
 T.lobby(two, { name: 'Sam', me: 'trivia', nights: ['fri'], week: [{ day: 'fri', games: [{ game: 'trivia', start: '19:00' }, { game: 'musical', start: '21:00' }] }], now: FRI });
@@ -54,12 +54,12 @@ ok('THIS WEEK HERE: seven days from today, Today first with its date', days.leng
 ok('the venue\'s game nights are marked, the others are not', /\bon\b/.test(days[5].className) && days[5].attrs['data-day'] === 'wed' && !/\bon\b/.test(days[1].className) && /\bon\b/.test(days[0].className));
 ok('no start times stored: "Ask at the bar for start times"', /Ask at the bar for start times/.test(wk.textContent));
 days[5].onclick();
-ok('tap Wednesday: the Tonight spot shows that night (no game per night stored: "Game night", ask at the bar)', /Wed 11/.test(spot.textContent) && /Game night/.test(spot.textContent) && /Ask at the bar/.test(spot.textContent), spot.textContent);
+ok('tap Wednesday: the spot shows that night (no game per night stored: "Game night", ask at the bar)', /Wed 11/.test(spot.textContent) && /Game night/.test(spot.textContent) && /Ask at the bar/.test(spot.textContent), spot.textContent);
 ok('and Wednesday is marked as picked', /picked/.test(days[5].className) && !/picked/.test(days[0].className));
 days[1].onclick();
 ok('tap Saturday, not a game night: "No games this night"', /No games this night/.test(spot.textContent), spot.textContent);
 days[0].onclick();
-ok('tap Today: back to tonight', byClass(spot, 'row').length === 1 && /Tonight/.test(spot.textContent) && /Trivia/.test(spot.textContent));
+ok('tap Today: back to tonight', byClass(spot, 'row').length === 1 && /Next/.test(spot.textContent) && /Tonight/.test(spot.textContent) && /Trivia/.test(spot.textContent), spot.textContent);
 var tm = new Node('div');
 T.lobby(tm, { name: 'Sam', me: 'trivia', nights: ['wed'], week: [{ day: 'wed', games: [{ game: 'trivia' }, { game: 'members', start: '19:30' }] }], now: FRI });
 byClass(byClass(tm, 'vpt-week')[0], 'd')[5].onclick();
@@ -71,27 +71,32 @@ var mu = new Node('div');
 T.lobby(mu, { name: 'Sam', me: 'musical', week: [{ day: 'fri', games: [{ game: 'trivia', start: '19:00' }, { game: 'musical', start: '21:00' }] }], now: FRI });
 var mr = byClass(byClass(mu, 'vpt-night')[0], 'row');
 ok('a game that starts before this one tonight is EARLIER, not later (musical at 9pm, trivia at 7pm)', mr.length === 2 && byClass(mr[0], 'bd')[0].textContent === 'Next' && /Musical/.test(mr[0].textContent) && byClass(mr[1], 'bd')[0].textContent === 'Earlier' && /Trivia/.test(mr[1].textContent), texts(mu, 'row'));
-ok('this game\'s own start tonight shows when no prize is set', /7pm/.test(byClass(byClass(two, 'vpt-night')[0], 'row')[0].textContent));
+ok('"Tonight 7pm" under this game, "Tonight 9pm" under the later one (Dean\'s round 7)', /Tonight 7pm/.test(byClass(byClass(two, 'vpt-night')[0], 'row')[0].textContent) && /Tonight 9pm/.test(byClass(byClass(two, 'vpt-night')[0], 'row')[1].textContent), texts(two, 'row'));
 ok('then the lobby line', byClass(box, 'vpt-wait')[0].textContent === 'The game will start here when the host is ready.');
 ok('times read as people say them, and a bad one is dropped', T.time12('19:30') === '7:30pm' && T.time12('19:00') === '7pm' && T.time12('9:05') === '9:05am' && T.time12('25:00') === '' && T.time12('<b>') === '');
 var evil = new Node('div');
 T.lobby(evil, { name: '<img src=x onerror=alert(1)>', me: 'trivia', prize: '<b>x</b>', now: WED });
 ok('a name or prize is set as text, never as HTML', all(evil).every(function (n) { return n._html.indexOf('<img') < 0 && n._html.indexOf('<b>') < 0; }) && /<img src=x/.test(byClass(evil, 't')[0].textContent));
 
-print('\n"NO GAME ON RIGHT NOW", Dean\'s round 5 pick');
+print('\n"NO GAME ON RIGHT NOW", Dean\'s round 7 notes');
 var ng = new Node('div');
 T.noGame(ng, { name: 'Sam', nights: ['wed', 'fri'], games: ['trivia'], venue: 'Tugun Bowls Club', now: new Date(2026, 10, 7, 12, 0, 0) });
-ok('nothing is on, so it never says "You\'re in": it leads with "No game here right now"', byClass(ng, 't').length === 0 && !/You.re in/.test(ng.textContent) && ng.children[0].className === 'vpt-none' && ng.children[0].textContent === 'No game here right now');
-ok('then the NEXT game night in the spot, labelled "Next here", before the week', ng.children[1].className === 'vpt-night' && /Next here/.test(ng.children[1].textContent) && /Wed 11/.test(ng.children[1].textContent) && ng.children[2].className === 'vpt-week', ng.children.map(function (c) { return c.className; }).join());
+ok('no "You\'re in" and no "No game here right now"', byClass(ng, 't').length === 0 && !/You.re in/.test(ng.textContent) && !/No game here right now/i.test(ng.textContent), ng.textContent);
+ok('it leads with "Next game here" and the next game night (Wednesday, from a Saturday)', ng.children[0].className === 'vpt-next' && /Next game here/.test(ng.children[0].textContent) && /Wednesday, ask at the bar/.test(ng.children[0].textContent), ng.children[0].textContent);
+var ngw = new Node('div');
+T.noGame(ngw, { week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }], now: new Date(2026, 10, 7, 12, 0, 0) });
+ok('with the week stored: "Next game here: Wednesday, Trivia 7pm"', /Next game here/.test(ngw.children[0].textContent) && /Wednesday, Trivia 7pm/.test(ngw.children[0].textContent), ngw.children[0].textContent);
+byClass(ngw, 'd')[6].onclick();
+ok('tap Friday: the lead line shows Friday\'s games', /Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
+byClass(ngw, 'd')[1].onclick();
+ok('tap Saturday: no games', /no games/.test(ngw.children[0].textContent), ngw.children[0].textContent);
 ok('no sign-up box when the page has no way to send one', byClass(ng, 'vpt-sign').length === 0);
-ok('the week strip, starting on the next game night (Wednesday, from a Saturday)', byClass(ng, 'vpt-week').length === 1 && /picked/.test(byClass(ng, 'd')[4].className) && /Wed 11/.test(byClass(ng, 'vpt-night')[0].textContent), texts(ng, 'd'));
-byClass(ng, 'd')[6].onclick();
-ok('tapping Friday loads Friday\'s night', /Fri 13/.test(byClass(ng, 'vpt-night')[0].textContent) && /picked/.test(byClass(ng, 'd')[6].className), byClass(ng, 'vpt-night')[0].textContent);
+ok('then the week strip, on the next game night (Wednesday)', byClass(ng, 'vpt-week').length === 1 && /picked/.test(byClass(ng, 'd')[4].className), texts(ng, 'd'));
 ok('never "you\'re on the list"', !/on .*list/i.test(ng.textContent));
 var sent = [], sg = new Node('div'), resolveIt;
 T.noGame(sg, { name: 'Sam', venue: 'Tugun Bowls Club', signup: function (e, o) { sent.push([e, o]); return { then: function (ok_) { resolveIt = ok_; } }; }, now: WED });
 var form = byClass(sg, 'vpt-sign')[0];
-ok('with a way to send it: a small "Get a heads up by email", one field, the offers tick naming the venue', !!form && /Get a heads up by email/.test(form.textContent) && /Send me offers from Tugun Bowls Club\. I’m 18 or over\./.test(form.textContent) && all(form).filter(function (n) { return n.tagName === 'input'; }).length === 2);
+ok('with a way to send it: a small "Get a heads up by email" at the TOP (right under the next game), one field, the offers tick naming the venue', !!form && sg.children[1] === form && /Get a heads up by email/.test(form.textContent) && /Send me offers from Tugun Bowls Club\. I’m 18 or over\./.test(form.textContent) && all(form).filter(function (n) { return n.tagName === 'input'; }).length === 2);
 var inputs = all(form).filter(function (n) { return n.tagName === 'input'; });
 inputs[0].value = 'not-an-email'; form.onsubmit({ preventDefault: function () {} });
 ok('a bad email is not sent', sent.length === 0 && /doesn/.test(byClass(form, 'err')[0].textContent));
@@ -110,7 +115,7 @@ T.noGame(done, { name: 'Sam', signup: function () {}, signedUp: true, now: WED }
 ok('a phone that already signed up is not asked again', byClass(done, 'vpt-sign').length === 0);
 var blank = new Node('div');
 T.noGame(blank, { name: 'Sam', now: WED });
-ok('no nights known: the week with no night marked and today in the spot, nothing invented', byClass(blank, 'd').every(function (x) { return !/\bon\b/.test(x.className); }) && /No games this night/.test(byClass(blank, 'vpt-night')[0].textContent));
+ok('no nights known: no night marked, "ask at the bar", nothing invented', byClass(blank, 'd').every(function (x) { return !/\bon\b/.test(x.className); }) && /Ask at the bar for the next game night/.test(blank.children[0].textContent), blank.children[0].textContent);
 
 print('\nTHE WORKER sends only what the venue gave the setup wizard');
 var W = readFile('venueplay-backend/worker/venueplay-game.js');
@@ -126,7 +131,10 @@ ok('/join/info carries them', /\}, \.\.\.joinNights\(cfg\.setup_answers\) \}, ve
 ok('and a database without migration 163 is asked again without the column', /try \{ rows = await sbGet\(env, 'vp_venue_settings', 'venue_id=eq\.' \+ enc\(venueId\) \+ '&select=' \+ cols \+ ',setup_answers&limit=1'\); \}\s*\n\s*catch \(e\) \{ rows = await sbGet\(env, 'vp_venue_settings', 'venue_id=eq\.' \+ enc\(venueId\) \+ '&select=' \+ cols \+ '&limit=1'\); \}/.test(W));
 print('\nTHE TRIVIA PHONE uses it');
 var PLAY = readFile('venueplay/app/trivia/play.html');
-ok('loads the module', PLAY.indexOf('<script src="/app/vp-tonight.js"></script>') > 0);
+ok('loads the module and its shared look', PLAY.indexOf('<script src="/app/vp-tonight.js"></script>') > 0 && PLAY.indexOf('<link rel="stylesheet" href="/app/vp-tonight.css">') > 0);
+var CSS = readFile('venueplay/app/vp-tonight.css');
+ok('the shared look holds the ad and the waiting screens (one copy, moved out of vp-phone.css)', /#vpAd\{/.test(CSS) && /\.vpt-week \.days\{/.test(CSS) && !/#vpAd\{/.test(readFile('venueplay/app/vp-phone.css')));
+ok('the ad under a waiting screen is shorter (2:1), so it and our logo fit 664px', /\.vpt-on #vpAd \.slide\{aspect-ratio:2\/1\}/.test(CSS) && /ap\.classList\.toggle\("vpt-on", which==="vWait"\)/.test(PLAY));
 ok('the plain lobby (no other heading, nothing scored) is option C', /var useT = !head && !\(P\.total>0\) && typeof VPTonight==="object";/.test(PLAY) && /VPTonight\.lobby\(tn, \{ name:P\.name, me:"trivia"/.test(PLAY));
 ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));
