@@ -246,6 +246,9 @@ def tv(r):
     NB = '55555555-5555-4555-8555-555555555555'
     r.W.seed('vp_venues', [{'id': NB, 'name': 'The Average Joe', 'slug': 'the-average-joe', 'status': 'active', 'join_code': fnv_code('the-average-joe'),
                             'au_state': 'QLD', 'max_players': 100, 'created_at': '2026-10-28T00:00:00Z', 'suspended_reason': None}])
+    # Item 102: a venue with no slides AND no logo gets the set-up slide, so this set-up venue has a logo (and no slides):
+    # it is the "Waiting for the host" floor this section is about. The set-up slide is checked in tv-logo-in-chrome section 7.
+    r.W.seed('vp_venue_screen', [{'venue_id': NB, 'slug': 'the-average-joe', 'slides': [], 'raffle': None, 'logo_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg'}])
     tid, t = r.open('/tv?venue=the-average-joe', width=1920, height=1080)
     fl = J(r.until(t, ('(function(){var l=document.querySelector("#tvFloor .tvlogo"),w=l&&l.querySelector("svg.tvl-word"),n=document.querySelector("#tvFloor .tvline");if(!l||!w||!n||document.readyState==="loading")return "";'
                        'var b=l.getBoundingClientRect(),c=getComputedStyle(n);return JSON.stringify({w:b.width,pos:getComputedStyle(l).position,paths:w.querySelectorAll("path").length,ff:c.fontFamily,bg:getComputedStyle(document.getElementById("tvFloor")).backgroundImage});})()'), 20))
