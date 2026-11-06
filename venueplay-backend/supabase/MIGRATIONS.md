@@ -618,3 +618,25 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-170-signup-starts.sql` (Dean, 5 Nov 2026, INBOX 80B and 81 as changed by 97: the no-card start, "Have a play for
+free" on /offer-nov): ONE new table, `vp_signup_starts`, one row per sign-up attempt holding the five boxes and the text code's
+HASH (never the code), and what came of it (pending, made, held_unlisted, held_known, approved, refused). Not an account:
+nothing is made from a row until the code to THEIR mobile passes. RLS on, service role only. Also lets `vp_prospects.source`
+say 'self'. Before it runs, /start/* answers "not switched on yet" (503) and makes nothing. NUMBER: 166 and 167 are prospect
+details, 168 is reserved, 169 is the library questions, so 170. Branch `fix/signup-core-10nov`. RUN on the live database 6 Nov 2026 (Dean; read back OK, vp_prospects_source_check is hq/autopilot/self). (A copy on the
+parked branch `fix/same-pub-later` has extra columns for item 61, known_login_id and code_to; this one does not, and that
+branch must renumber or reconcile before it is ever picked up.)
+
+`venueplay-171-licensed-venues.sql` (Dean, 5 Nov 2026, INBOX 81: "stop fake sign-ups getting a free month"): ONE new table,
+`vp_licensed_venues`, our licensed venues keyed by the one matcher (vpVenueKey) and postcode, for the no-card start's check.
+The rows are NOT in the migration: `python3 tools/build-licensed-venues.py --sql OUT.sql` writes them from the two files on
+the Mac (~/venue-enrich/venueplay-SEND-pubs-and-clubs.csv and ~/venue-enrich/partyplay-fit-2026-10-27/master.csv, the
+state registers), 32,415 name and postcode rows on 6 Nov 2026. Missing or empty, every start is held for HQ (the safe way
+round). RLS on, service role only. NUMBER: 171 (172 is the try-it demo's, `fix/try-demo-10nov`). Branch
+`fix/signup-core-10nov`. RUN on the live database 6 Nov 2026 (Dean; read back OK). Its ROWS are not loaded yet (the load file is in the branch's NOTES).
+
+`venueplay-173-signup-starts-pub-or-club.sql` (Dean, 6 Nov 2026: ask pub or club at the no-card start): ONE nullable column,
+`vp_signup_starts.entity_type` ('for_profit' or 'non_profit'), so a sign-up HQ approves later keeps the answer. The venue's
+own entity_type is set when the account is made either way. 170 and 171 unchanged. Before it runs, the start still works.
+NUMBER: 172 is the try-it demo's, so 173. Branch `fix/signup-core-10nov`. NOT RUN. Run after 170.

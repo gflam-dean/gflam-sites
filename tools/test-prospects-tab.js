@@ -450,8 +450,10 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   /* THE WORKED EXAMPLE IS 30 PLAYERS, AT THE PAGE'S OWN PRICE (Dean, 29 Oct 2026: so the money looks right for a smaller venue). */
   [['venueplay/nsw.html', /\$(\d+\.\d\d) a player, if you lock it in/], ['venueplay/index.html', /sec-title">\$(\d+(?:\.\d\d)?) per player/]].forEach(function (c) {
     var page = readFile(c[0]), rate = parseFloat((c[1].exec(page) || [])[1]);
-    var ex = /Then a pub with (\d+) players pays \$(\d+) a month\./.exec(page) || [];
-    var want = { 'venueplay/nsw.html': 'Then a pub with 30 players pays $75 a month.', 'venueplay/index.html': 'Then a pub with 30 players pays $90 a month.' }[c[0]];
+    /* 8 Nov 2026 (item 80A): the offer page has ONE price line, and the 30-player example sits in it. */
+    var ex = (c[0] === 'venueplay/nsw.html' ? /A room of thirty is \$(\d+)\./ : /Then a pub with (\d+) players pays \$(\d+) a month\./).exec(page) || [];
+    if (c[0] === 'venueplay/nsw.html') ex = [ex[0], '30', ex[1]];
+    var want = { 'venueplay/nsw.html': 'A room of thirty is $75.', 'venueplay/index.html': 'Then a pub with 30 players pays $90 a month.' }[c[0]];
     check(c[0] + ': "' + want + '" exactly, worked from the page\'s own $' + rate + ' a player, and never "about" on a price',
       rate > 0 && ex[0] === want && parseInt(ex[2], 10) === rate * 30 && !/pays about \$/.test(page), [rate, ex[0]]);
   });

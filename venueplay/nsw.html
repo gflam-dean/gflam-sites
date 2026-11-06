@@ -318,6 +318,40 @@
   .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:var(--fs-xl);font-weight:400;letter-spacing:.01em}
   .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
 
+  /* ---------- THE NO-CARD START (#start, app/vp-start.js; Dean, 5 Nov 2026) ---------- */
+  #start{padding-top:56px}
+  #start .form-grid{margin-top:6px}
+  .st-step[hidden]{display:none}
+  .st-help{font-family:'Manrope',sans-serif;font-size:var(--fs-xs);color:var(--muted);text-transform:none;letter-spacing:normal}
+  .st-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+  /* Pub or club (Dean, 6 Nov 2026): one honest two-way choice, nothing preselected, the same size as the boxes. */
+  .st-kind-lbl{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .st-kind{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field .st-kind-opt{position:relative;display:block;cursor:pointer;margin:0;text-transform:none;letter-spacing:normal;font-family:'Manrope',sans-serif;color:#fff}   /* not the form's mono field label */
+  .st-kind-opt input{position:absolute;opacity:0;width:1px;height:1px}
+  .st-kind-opt span{display:flex;align-items:center;justify-content:center;min-height:52px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink);
+    color:#fff;font-size:var(--fs-base);font-weight:700}
+  .st-kind-opt input:checked + span{border-color:var(--pink);background:rgba(255,31,142,.14);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-kind-opt input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
+  .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:18px 0 0;text-align:center}
+  .st-legal a{color:#fff}
+  #st-go,#st-check{width:100%;margin-top:18px;padding:16px;font-size:var(--fs-base)}
+  #st-go:disabled,#st-check:disabled{opacity:.6;cursor:default;transform:none}
+  .st-h{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:var(--fs-xl);letter-spacing:.01em;line-height:1.05;margin:0 0 10px}
+  .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
+  /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
+  .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--fs-lg);font-weight:700;
+    color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
+  .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
+  .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:inherit;line-height:inherit;cursor:pointer;min-height:24px}
+  .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
+  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xl);letter-spacing:.14em;color:#fff;margin-top:8px}
+  #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
+  #st-done,#st-held{text-align:center}
+  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px} }
+
   /* ---------- FAQ ---------- */
   .faq{max-width:780px;margin:0 auto}
   .q{border-bottom:1px solid var(--line)}
@@ -582,15 +616,13 @@
     <div class="h2-copy">
       <span class="eyebrow"><span class="live-dot"></span> <span class="eb-text">$2.50 a player, if you lock it in by <span class="vpc-day" style="white-space:nowrap">30 November</span></span></span>
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
-      <p class="lede">Trivia, musical bingo, bingo, raffles and members draws on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
+      <p class="lede">Trivia and musical bingo, plus bingo, raffles and members draws where your state allows, on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
       <div class="hero-cta">
-        <!-- A free account, set up by us (Dean, 5 Nov 2026: a page-only stopgap until the no-card sign-up). It opens the
-             "Talk to us" form below with the topic set; the enquiry is the same sales ticket as any other. -->
-        <a class="btn btn-primary" href="#contact" data-cta="hero-free-play" data-topic="free-account">Have a play for free</a>
+        <!-- THE START BUTTON. Its destination is this one href (today the start section below, #start). The no-card start (job signup-core) changes only this href. -->
+        <a class="btn btn-primary" href="#start" data-cta="hero-start">Have a play for free</a>
         <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
-        <a class="btn btn-ghost" href="#contact" data-cta="hero-contact">Talk to us</a>
       </div>
-      <p class="h2-price"><b>First month free.</b> Then a pub with 30 players pays $75 a month. No lock-in, cancel anytime.</p>
+      <p class="h2-price"><b>Sign up and have a play for a month on us.</b> Nothing is charged today. No lock-in, cancel anytime.</p>
       <p class="hero-note">Built by Gflam Touring, who run live entertainment nights in venues across Australia.</p>
     </div>
     <div class="h2-show" aria-label="venueplay running a sample night">
@@ -651,6 +683,100 @@
 </script>
 
 
+
+<!-- ===================== THE NO-CARD START (Dean, 5 Nov 2026; INBOX 80B, 81, 93, 96) =====================
+     Five boxes and pub or club, a text code, then the account (a venue name and a postcode are enough, Dean 6 Nov 2026;
+     one not on our licensed list is flagged for HQ to check), or "we'll check your venue" when the mobile or email is
+     already on venueplay. The Worker decides; app/vp-start.js draws it. Real forms, every box with name= and
+     autocomplete=, so a phone fills them. No terms tick box: the line above the button. -->
+<section class="sec" id="start">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">No card to start</div>
+      <h2 class="sec-title">Have a play for free</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Five boxes and a text code. Your venue is set up with sample nights to try, and nothing is charged.</p>
+    </div>
+    <div class="form-shell">
+      <div class="inner">
+        <form id="st-form" class="st-step" autocomplete="on" novalidate onsubmit="return false">
+          <div class="form-grid">
+            <div class="field">
+              <label for="st-venue">Venue name</label>
+              <input id="st-venue" name="organization" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label for="st-postcode">Postcode</label>
+              <input id="st-postcode" name="postal-code" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]*" maxlength="4" required>
+            </div>
+            <div class="field full">
+              <span class="st-kind-lbl" id="st-kind-lbl">Is it a pub or a club?</span>
+              <div class="st-kind" role="radiogroup" aria-labelledby="st-kind-lbl">
+                <label class="st-kind-opt"><input type="radio" id="st-kind-pub" name="venue-kind" value="pub" required><span>Pub</span></label>
+                <label class="st-kind-opt"><input type="radio" id="st-kind-club" name="venue-kind" value="club"><span>Club</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="st-name">Your name</label>
+              <input id="st-name" name="name" type="text" placeholder="Your name" autocomplete="name" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label for="st-mobile">Mobile <span class="st-help">We text your code to it</span></label>
+              <input id="st-mobile" name="tel" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel" maxlength="20" required>
+            </div>
+            <div class="field full">
+              <label for="st-email">Email <span class="st-help">Your account emails come here</span></label>
+              <input id="st-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" maxlength="200" required>
+            </div>
+          </div>
+          <div class="st-hp" aria-hidden="true"><label for="st-website">Leave this empty</label><input id="st-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <div id="st-ts"></div>
+          <p class="st-legal">By starting you agree to the <a href="/terms">Terms and Conditions</a> and <a href="/privacy">Privacy Policy</a>.</p>
+          <button class="btn btn-primary" id="st-go" type="submit">Have a play for free</button>
+          <p class="form-err" id="st-err" role="alert"></p>
+        </form>
+
+        <form id="st-code" class="st-step" autocomplete="on" novalidate onsubmit="return false" hidden>
+          <h3 class="st-h">Check your phone</h3>
+          <p class="st-p">We&rsquo;ve texted a 6-digit code to the mobile ending <b id="st-end"></b>. Type it in below.</p>
+          <div class="st-boxes" role="group" aria-label="Your 6-digit code">
+            <input id="st-c1" name="one-time-code" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" aria-label="Code, number 1 of 6">
+            <input id="st-c2" name="code-2" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 2 of 6">
+            <input id="st-c3" name="code-3" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 3 of 6">
+            <input id="st-c4" name="code-4" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 4 of 6">
+            <input id="st-c5" name="code-5" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 5 of 6">
+            <input id="st-c6" name="code-6" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" aria-label="Number 6 of 6">
+          </div>
+          <button class="btn btn-primary" id="st-check" type="submit">Check my code</button>
+          <p class="form-err" id="st-cerr" role="alert"></p>
+          <p class="st-small">Nothing yet? <button type="button" class="st-link" id="st-resend">Send it again</button> or <button type="button" class="st-link" id="st-change">change your details</button>.</p>
+        </form>
+
+        <div id="st-done" class="st-step" hidden>
+          <h3 class="st-h">Your trivia night is ready.</h3>
+          <p class="st-p">Your venue is set up with sample nights to try it.</p>
+          <p class="st-p">Your first month starts now.</p>
+          <p class="st-tv" id="st-tvline">To see it on your TV, go to venueplay.com.au/tv and type this code: <b id="st-tvcode"></b></p>
+          <!-- ===== TRY-IT DEMO SLOT (JOB B1, fix/try-demo-10nov; INBOX 82, 84b, 92c, 93) =====
+               The try-it demo draws here. It is hidden until the demo puts something in it. On an account being made,
+               app/vp-start.js fires "vp-start-done" on document with { venue, tv_code, go_url, slug, players } and sets
+               window.VPStart.done the same. Up to 10 joiners, never a billable session. ===== -->
+          <div id="st-try-slot" data-slot="try-it-demo" hidden></div>
+          <!-- ===== END TRY-IT DEMO SLOT ===== -->
+          <a class="btn btn-primary" id="st-open" href="/app">Open my host console</a>
+        </div>
+
+        <div id="st-held" class="st-step" hidden>
+          <div class="success show" style="padding-top:0">
+            <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Thanks</h3>
+            <p id="st-held-words">Thanks, we'll check your venue and get you set up, usually within a business day.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="/app/vp-start.js"></script>
 
 <!-- ===================== GAME MODES ===================== -->
 <section class="sec" id="modes">
@@ -762,29 +888,15 @@
       <div class="offer-grid">
         <div>
           <div class="label">Open now</div>
-          <h2 class="sec-title">First month free.<br>Then $2.50 a player, locked for life.</h2>
-          <p class="sec-sub">Our standard rate is $3 a player a month. Venues that join before <span class="vpc-date">30 November 2026</span> can still lock in $2.50 per player a month for as long as they stay, with the first month free. After <span class="vpc-day">30 November</span> this offer ends for you, and it won&#39;t come back. After that it&#39;s $3.</p>
-          <div class="offer-cta"><a class="btn btn-primary" href="#claim">Lock in your price</a></div>
+          <h2 class="sec-title">First month free.<br>Then your rate is locked for life.</h2>
+          <p class="sec-sub">Venues that join before <span class="vpc-date">30 November 2026</span> keep this rate for as long as they stay, with the first month free. After <span class="vpc-day">30 November</span> this offer ends for you.</p>
+          <div class="offer-cta"><a class="btn btn-primary" href="#start" data-cta="offer-lock">Lock in your price</a></div>
         </div>
         <div class="price-card">
-          <div class="price-eyebrow">Per player · per month</div>
           <div class="price-row found">
-            <div class="pl"><b>First month</b>on us</div>
-            <div class="pv">$0</div>
+            <div class="pl"><b>Per player, per month</b>first month free. Standard rate $3.00. A room of thirty is $75.</div>
+            <div class="pv">$2.50</div>
           </div>
-          <div class="price-row list">
-            <div class="pl"><b>Standard</b>full rate</div>
-            <div class="pv">$3.00</div>
-          </div>
-          <div class="price-row found">
-            <div class="pl"><b>Monthly</b>Locked for life</div>
-            <div class="pv"><s>$3.00</s> $2.50</div>
-          </div>
-          <div class="price-row found">
-            <div class="pl"><b>Annual</b>billed yearly · best value</div>
-            <div class="pv"><s>$2.85</s> $2.30</div>
-          </div>
-          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate is locked for life while your subscription stays active. Cancel and that rate ends for good, so rejoining later is at the standard rate.</p>
         </div>
       </div>
     </div>
@@ -832,14 +944,44 @@
   </div>
 </section>
 
-<!-- ===================== SIGNUP ===================== -->
+<!-- ===== Embedded checkout overlay (card form stays on venueplay.com.au) ===== -->
+<div id="vp-embed-overlay" role="dialog" aria-modal="true" aria-label="Secure card details">
+  <div class="vp-embed-card">
+    <div class="vp-embed-head">
+      <div class="vp-embed-brand"><svg class="vp-embed-wm" width="96" height="19" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" style="display:block;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
+      <button type="button" id="vp-embed-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="vp-embedded"></div>
+  </div>
+</div>
+<style>
+  #vp-embed-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-start;justify-content:center;
+    background:rgba(8,7,12,.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 16px 40px}
+  #vp-embed-overlay.show{display:flex}
+  .vp-embed-card{width:100%;max-width:640px;background:#fff;border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);margin:auto}
+  .vp-embed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
+  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:var(--fs-base);color:#16141d}
+  .vp-embed-brand b{letter-spacing:-.01em}
+  /* the 1 Nov 2026 wordmark (letters take the dark text colour, triangle pink in the a); it replaced a CSS triangle beside the word, the old logo */
+  .vp-embed-lock{font-size:var(--fs-xs);color:#6a6875;margin-left:2px}
+  #vp-embed-close{border:0;background:none;font-size:var(--fs-lg);line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
+  #vp-embed-close:hover{background:#efeef4;color:#16141d}
+  #vp-embedded{padding:6px 10px 14px;min-height:280px}
+  @media (max-width:520px){ .vp-embed-lock{display:none} }
+</style>
+
+<!-- ===================== ADD YOUR CARD NOW (lower on the page; the start form is above) ===================== -->
 <section class="sec" id="claim">
   <div class="wrap">
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
-      <h2 class="sec-title">Lock in your pricing</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to lock in $2.50 before <span class="vpc-day">30 November</span>. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+      <h2 class="sec-title">Rather add your card now?</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Keep $2.50 by adding your card before your free month ends. Nothing is charged today, your first payment is one month later, and you can cancel any time before then.</p>
+      <p class="form-fine"><a href="#contact" data-cta="claim-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a></p>
     </div>
+
 
     <div class="form-shell">
       <div class="inner">
@@ -935,34 +1077,6 @@
     </div>
   </div>
 </section>
-
-<!-- ===== Embedded checkout overlay (card form stays on venueplay.com.au) ===== -->
-<div id="vp-embed-overlay" role="dialog" aria-modal="true" aria-label="Secure card details">
-  <div class="vp-embed-card">
-    <div class="vp-embed-head">
-      <div class="vp-embed-brand"><svg class="vp-embed-wm" width="96" height="19" viewBox="-1 -729 4676 936" fill="none" role="img" aria-label="venueplay" style="display:block;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
-      <button type="button" id="vp-embed-close" aria-label="Close">&times;</button>
-    </div>
-    <div id="vp-embedded"></div>
-  </div>
-</div>
-<style>
-  #vp-embed-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-start;justify-content:center;
-    background:rgba(8,7,12,.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 16px 40px}
-  #vp-embed-overlay.show{display:flex}
-  .vp-embed-card{width:100%;max-width:640px;background:#fff;border-radius:18px;overflow:hidden;
-    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);margin:auto}
-  .vp-embed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
-  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:var(--fs-base);color:#16141d}
-  .vp-embed-brand b{letter-spacing:-.01em}
-  /* the 1 Nov 2026 wordmark (letters take the dark text colour, triangle pink in the a); it replaced a CSS triangle beside the word, the old logo */
-  .vp-embed-lock{font-size:var(--fs-xs);color:#6a6875;margin-left:2px}
-  #vp-embed-close{border:0;background:none;font-size:var(--fs-lg);line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
-  #vp-embed-close:hover{background:#efeef4;color:#16141d}
-  #vp-embedded{padding:6px 10px 14px;min-height:280px}
-  @media (max-width:520px){ .vp-embed-lock{display:none} }
-</style>
 
 <!-- ===================== FAQ ===================== -->
 <section class="sec" id="faq">
@@ -1373,7 +1487,7 @@
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
   var errEl = document.getElementById('vp-err');
-  function showErr(msg){ errEl.textContent = msg; errEl.classList.add('show'); }
+  function showErr(msg, field){ errEl.textContent = msg; errEl.classList.add('show'); if (!field && /^Please tick/.test(msg)) field = 'consent'; if (field && window.vpTrack) window.vpTrack('start_field_error', { field: field }); }
   function clearErr(){ errEl.classList.remove('show'); }
 
   /* AU mobile check: strips spaces, country code (+61 / 61) and the trunk 0,
@@ -1397,7 +1511,7 @@
     // Club or pub, once for the account: a group is pubs or it is clubs, never a mix.
     var entityType = entitySel ? entitySel.value : '';
     if (entityType !== 'non_profit' && entityType !== 'for_profit') {
-      showErr('Please tell us whether you are a club or a pub. It decides which gaming rules apply to you.');
+      showErr('Please tell us whether you are a club or a pub. It decides which gaming rules apply to you.', 'entity');
       return;
     }
 
@@ -1408,11 +1522,11 @@
       var vn = rows[i].querySelector('.v-name').value.trim();
       var vpc = (rows[i].querySelector('.v-postcode').value || '').replace(/\D/g, '');
       var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
-      if (!vn) { showErr('Please enter a name for every venue.'); return; }
-      if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.'); return; }
-      if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.'); return; }
-      if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
-      if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
+      if (!vn) { showErr('Please enter a name for every venue.', 'venue'); return; }
+      if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.', 'postcode'); return; }
+      if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.', 'seats'); return; }
+      if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.', 'seats'); return; }
+      if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.', 'venue'); return; }
       namesLower[vn.toLowerCase()] = true;
       /* bingo_review: the SA or NT pub ticked "our bingo is run by a not-for-profit". It only asks
          HQ to look (a help desk ticket); bingo stays hidden until HQ switches it on. */
@@ -1422,14 +1536,14 @@
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 
-    if (!name) { showErr('Please enter your name so we know who we are speaking to.'); return; }
-    if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
+    if (!name) { showErr('Please enter your name so we know who we are speaking to.', 'name'); return; }
+    if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.', 'email'); return; }
 
     /* Mobile is the only sign-in method for the host, so it is required and
        must be a real Australian mobile (starts 04). A landline can never
        receive the sign-in text, so we block it here before checkout. */
-    if (!mobile) { showErr('Please enter your mobile number.'); return; }
-    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04).'); return; }
+    if (!mobile) { showErr('Please enter your mobile number.', 'mobile'); return; }
+    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04).', 'mobile'); return; }
 
     var consentEl = document.getElementById('vp-consent');
     if (consentEl && !consentEl.checked) { showErr('Please tick the box to agree to the Terms and Privacy Policy and confirm your venue is responsible for its gaming compliance.'); return; }
@@ -1442,6 +1556,7 @@
     // AND Stripe.js loaded. Otherwise ask for the classic redirect, exactly as before.
     var wantEmbedded = VP_STRIPE_PK.indexOf('pk_') === 0 && typeof window.Stripe === 'function';
 
+    if (window.vpTrack) window.vpTrack('start_submit', { offer: (window.VP_OFFER && window.VP_OFFER.month || '').toLowerCase() });
     submitBtn.disabled = true;
     submitBtn.textContent = wantEmbedded ? 'Loading secure card form…' : 'Taking you to Stripe…';
 
@@ -1486,6 +1601,7 @@
     try {
       if (!_vpStripe) _vpStripe = Stripe(VP_STRIPE_PK);
       embedOverlay.classList.add('show');
+      if (window.vpTrack) window.vpTrack('checkout_open', {});
       document.body.style.overflow = 'hidden'; // stop the page scrolling behind the modal
       _vpStripe.initEmbeddedCheckout({ clientSecret: clientSecret }).then(function(checkout){
         _vpCheckout = checkout;
@@ -1509,6 +1625,7 @@
     var f = document.getElementById('vp-form'); if (f) f.style.display = 'none';
     var s = document.getElementById('vp-success'); if (s) { s.classList.add('show'); s.scrollIntoView({ behavior:'smooth', block:'center' }); }
     if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
+    if (window.vpTrack) window.vpTrack('checkout_done', {});
     if (typeof fbq === 'function') fbq('track', 'StartTrial');
   } else if (params.get('vp') === 'cancel') {
     showErr('No worries, your card wasn\u2019t added. Your spot isn\u2019t held until you finish checkout.');
@@ -1531,6 +1648,15 @@
   [].forEach.call(document.querySelectorAll('[data-topic="free-account"]'), function(a){
     a.addEventListener('click', ctFreeAccount);
   });
+  /* THE NO-CARD START IS NOT SWITCHED ON YET (app/vp-start.js): its five boxes hand over to this form, filled in with
+     what they typed and the free-account topic, so "Have a play for free" still reaches us as a sales ticket. */
+  window.VPFreeAccountEnquiry = function(d){
+    d = d || {};
+    function put(id, v){ var e = document.getElementById(id); if (e && v && !e.value) e.value = v; }
+    put('ct-name', d.name); put('ct-email', d.email); put('ct-venue', d.venue); put('ct-postcode', d.postcode); put('ct-phone', d.mobile);
+    ctFreeAccount();
+    var c = document.getElementById('contact'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior:'smooth' });
+  };
 
   /* ---------- Contact form → Worker → email ---------- */
   var ctBtn = document.getElementById('ct-submit');
@@ -1805,20 +1931,27 @@
   #how .vps-step p{font-size:var(--fs-base)}
   @media (max-width:760px){ #how .vps-steps{grid-template-columns:1fr} #how .vps-step{padding:20px 0;border-bottom:1px solid var(--line)} }
 </style>
-<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in your price">
+<a href="#start" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in your price">
   <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
  Lock in your price
 </a>
 <script>
 (function(){
   var cta=document.getElementById('vpFloatCta'); if(!cta) return;
-  var claim=document.getElementById('claim');
+  var claim=document.getElementById('start'), card=document.getElementById('claim'), started=false;
+  /* ONCE SOMEONE HAS STARTED, THE BUTTON GOES FOR GOOD (6 Nov 2026): on a phone it sat over the done screen and the TV code.
+     "Started" = a box in the start section was touched, a later step (code, done, held) is showing, or the account is made
+     (app/vp-start.js fires vp-start-done on document). It also stays away while the start section or the card form is in view. */
+  function laterStep(){ var ids=['st-code','st-done','st-held']; for(var i=0;i<ids.length;i++){ var e=document.getElementById(ids[i]); if(e && !e.hidden) return true; } return false; }
+  function inView(el){ if(!el) return false; var r=el.getBoundingClientRect(); return r.top < window.innerHeight && r.bottom > 0; }
   function upd(){
     var y=window.pageYOffset||document.documentElement.scrollTop;
-    var show=y>560;
-    if(show && claim){ var r=claim.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) show=false; }
+    if(!started && laterStep()) started=true;
+    var show=y>560 && !started && !inView(claim) && !inView(card);
     cta.classList.toggle('show', show);
   }
+  if(claim){ claim.addEventListener('focusin', function(){ started=true; upd(); }); }
+  document.addEventListener('vp-start-done', function(){ upd(); });   /* the done screen is already showing, so upd() sees it */
   window.addEventListener('scroll', upd, {passive:true});
   window.addEventListener('resize', upd);
   upd();
@@ -1852,6 +1985,34 @@
   var key = picked.key;
   var w = document.querySelectorAll('a[href^="/see-a-night?from="]');
   for (var wi = 0; wi < w.length; wi++) w[wi].setAttribute('href', '/see-a-night?from=offer-' + key);
+})();
+</script>
+
+<!-- ===================================================================
+     WHERE DO PEOPLE DROP OFF? (item 80A, 8 Nov 2026; signup-fix-5nov REPORT section 6)
+     0 sign-up presses from 104 people in 30 days, and no way to see who reached the form or gave
+     up. Each step now sends one event through vpTrack (/app/vp-analytics.js), which carries NO
+     personal data: only the event name and short lowercase tokens (the email step from ?s=, the
+     month, and the NAME of a box that failed, never what was typed in it). offer_land when the
+     page opens, start_seen when the form scrolls into view, start_begin on the first box touched,
+     start_field_error (in showErr above), start_submit, checkout_open, checkout_done. Then a GA4
+     funnel, read every Monday. The homepage has no offers and never loads this.
+     =================================================================== -->
+<script>
+(function () {
+  if (typeof window.vpTrack !== 'function') return;
+  var q = new URLSearchParams(location.search);
+  var offer = ((window.VP_OFFER && window.VP_OFFER.month) || '').toLowerCase();
+  var base = { step: q.get('s') || q.get('utm_content') || '', source: q.get('utm_source') || '', offer: offer };
+  window.vpTrack('offer_land', base);
+  var form = document.getElementById('claim'), seen = false, begun = false;
+  function seenNow() { if (seen) return; seen = true; window.vpTrack('start_seen', base); }
+  if (form && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { for (var i = 0; i < es.length; i++) if (es[i].isIntersecting) { seenNow(); io.disconnect(); } }, { threshold: 0.2 });
+    io.observe(form);
+  } else if (form) { seenNow(); }
+  var f = document.getElementById('vp-form');
+  if (f) f.addEventListener('focusin', function () { if (begun) return; begun = true; window.vpTrack('start_begin', base); });
 })();
 </script>
 
@@ -1914,7 +2075,7 @@
 
     // The hero: the offer badge goes (the banner says it ended), and the price line is the homepage's.
     all('#top .eyebrow', function (el) { el.hidden = true; el.style.display = 'none'; });
-    html('#top .h2-price', '<b>First month free.</b> Then a pub with 30 players pays $90 a month. No lock-in, cancel anytime.');
+    html('#top .h2-price', '<b>Sign up and have a play for a month on us.</b> Nothing is charged today. No lock-in, cancel anytime.');
 
     // The pricing section.
     html('#offer .label', 'Pricing');
@@ -1922,10 +2083,7 @@
     html('#offer .offer-grid .sec-sub', STD);
     all('#offer .offer-cta a', function (a) { a.textContent = 'Start your free month'; });
     html('#offer .price-card',
-      '<div class="price-eyebrow">Per player \u00b7 per month</div>' +
-      '<div class="price-row found"><div class="pl"><b>Monthly</b>per player, per month</div><div class="pv">$3.00</div></div>' +
-      '<div class="price-row found"><div class="pl"><b>Annual</b>billed yearly \u00b7 best value</div><div class="pv">$2.85</div></div>' +
-      '<p class="price-foot">Priced per player, on your venue\'s max players per session. Go over on a big night and it\'s just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate of $3 per player, per month, never changes. Your monthly bill moves only when your plan moves up.</p>');
+      '<div class="price-row found"><div class="pl"><b>Per player, per month</b>first month free. A room of thirty is $90.</div><div class="pv">$3.00</div></div>');
 
     // What you get.
     all('#included .incl li > div', function (d) {

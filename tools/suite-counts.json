@@ -263,8 +263,16 @@
   "checks": 48,
   "counted_by": "lines"
  },
+ "tools/offer-float-done-in-chrome.test.py": {
+  "checks": 9,
+  "counted_by": "lines"
+ },
  "tools/offer-free-play-in-chrome.test.py": {
-  "checks": 23,
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/offer-page-start-first.test.py": {
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
@@ -361,6 +369,10 @@
  },
  "tools/signin-logo-in-chrome.test.py": {
   "checks": 95,
+  "counted_by": "lines"
+ },
+ "tools/signup-start-in-chrome.test.py": {
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/signup-tick-in-chrome.test.py": {
@@ -917,6 +929,10 @@
  },
  "tools/test-signing-15-oct.js": {
   "checks": 30,
+  "counted_by": "lines"
+ },
+ "tools/test-signup-core.js": {
+  "checks": 89,
   "counted_by": "lines"
  },
  "tools/test-stale-phone-and-end-once.js": {
@@ -1489,6 +1505,10 @@
  },
  "venueplay-backend/worker/venue-code.test.js": {
   "checks": 34,
+  "counted_by": "lines"
+ },
+ "venueplay-backend/worker/venue-match.test.js": {
+  "checks": 21,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/venue-scale.test.js": {

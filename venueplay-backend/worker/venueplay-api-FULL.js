@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 21:31 · cc77c28d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 11:14 · d0c4e136';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -139,6 +139,11 @@ export default {
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
       // The monthly email sign-up on the sales pages (31 Oct 2026; migration 134). Public, rate-limited, honeypot.
       if (request.method === 'POST' && path === '/subscribe') return await vpsHandleSubscribe(request, env, json);
+      // The no-card start (Dean, 5 Nov 2026, INBOX 80B, 81, 97; migration 170). Public, rate-limited, bot-checked; nothing
+      // is made until the text code passes, and nothing here is ever billed.
+      if (request.method === 'POST' && path === '/start/begin')  return await vpsStartBegin(request, env, json);
+      if (request.method === 'POST' && path === '/start/resend') return await vpsStartResend(request, env, json);
+      if (request.method === 'POST' && path === '/start/verify') return await vpsStartVerify(request, env, json);
       // "Open your VenuePlay" in the prospect welcome (Dean, 28 Oct 2026; migration 123). Public, rate-limited, one use.
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
@@ -242,6 +247,8 @@ export default {
       // The welcome goes on a delay (Dean, 28 Oct 2026; migration 124): HQ sees when, and can cancel it or send it now.
       // HQ > Prospects (Dean, 29 Oct 2026; migration 125): who has not signed up, who to ring, and the Called mark.
       if (request.method === 'POST' && path === '/admin/prospects'              && typeof vpaProspectsList === 'function')      return await vpaProspectsList(request, env, json);
+      if (request.method === 'POST' && path === '/admin/signup-starts'          && typeof vpsAdminStarts === 'function')        return await vpsAdminStarts(request, env, json);
+      if (request.method === 'POST' && path === '/admin/signup-start/decide'    && typeof vpsAdminDecide === 'function')        return await vpsAdminDecide(request, env, json);
       if (request.method === 'POST' && path === '/admin/prospect/called'        && typeof vpaProspectCalled === 'function')     return await vpaProspectCalled(request, env, json);
       // Edit details on a prospect (Dean, 4 Nov 2026): name, email, mobile, phone, with an audit row.
       if (request.method === 'POST' && path === '/admin/prospect/update'        && typeof vpaProspectUpdate === 'function')     return await vpaProspectUpdate(request, env, json);
@@ -1196,7 +1203,9 @@ function vpaEmailIs(email) {
   return 'ilike.' + encodeURIComponent(String(email || '').trim().replace(/[*%\\]/g, '_'));
 }
 
-async function sbPriorAccounts(env, email, mobile, excludeId) {
+/* strict (5 Nov 2026, the no-card start): a read that fails THROWS instead of answering "no earlier accounts", because
+   there that answer starts a free month. The card sign-up keeps the forgiving answer. */
+async function sbPriorAccounts(env, email, mobile, excludeId, strict) {
   try {
     const ors = ['contact_email.' + vpaEmailIs(email)];
     if (mobile) ors.push('mobile.eq.' + encodeURIComponent(mobile));
@@ -1209,10 +1218,11 @@ async function sbPriorAccounts(env, email, mobile, excludeId) {
               '&select=id,venue_name,contact_email,mobile,created_at,status,stripe_subscription_id' +
               '&order=created_at.desc&limit=5';
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + q, { headers: sbHeaders(env) });
-    if (!res.ok) return [];
+    if (!res.ok) { if (strict) throw new Error('prior accounts: ' + res.status); return []; }
     const rows = await res.json();
+    if (strict && !Array.isArray(rows)) throw new Error('prior accounts: not a list');
     return Array.isArray(rows) ? rows : [];
-  } catch (e) { return []; }
+  } catch (e) { if (strict) throw e; return []; }
 }
 async function sbInsert(env, obj) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/venueplay_founding', {
@@ -1760,7 +1770,9 @@ async function vpaAuthCreateUser(env, body) {
 
 // Best-effort lookup used when a phone/email already has an auth user.
 // Launch-scale: one page of up to 200 users. Widen to real paging past ~200 users.
-async function vpaFindAuthUser(env, sel) {
+/* strict (5 Nov 2026, the no-card start): a page Auth will not answer THROWS instead of reading as "nobody has
+   this login", because there "nobody" starts a free month. Every older caller keeps the forgiving answer. */
+async function vpaFindAuthUser(env, sel, strict) {
   // PAGE PROPERLY. This read one page of 200 users and stopped. It is used when a phone or email
   // already has a login, which is exactly what happens when a venue signs up again or adds a
   // second host, and past 200 logins it would simply fail to find people who were plainly there.
@@ -1773,15 +1785,17 @@ async function vpaFindAuthUser(env, sel) {
   for (let page = 1; page <= MAX_PAGES; page++) {
     const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users?per_page=' + PER + '&page=' + page,
       { headers: vpaHeaders(env) });
-    if (!res.ok) return null;
+    if (!res.ok) { if (strict) throw new Error('auth users page ' + page + ': ' + res.status); return null; }
     const data = await res.json().catch(() => ({}));
+    if (strict && !(data && Array.isArray(data.users))) throw new Error('auth users page ' + page + ': not a list');
     const users = (data && data.users) || [];
     for (const u of users) {
       if (wantPhone && u.phone && String(u.phone).replace(/[^\d]/g, '') === wantPhone) return u;
       if (wantEmail && u.email && String(u.email).toLowerCase() === wantEmail) return u;
     }
-    if (users.length < PER) return null;   // last page
+    if (strict ? users.length === 0 : users.length < PER) return null;   // last page (strict: only an EMPTY page ends it)
   }
+  if (strict) throw new Error('auth users: more than ' + (PER * MAX_PAGES) + ' logins, the search did not finish');
   return null;
 }
 
@@ -1810,6 +1824,32 @@ function vpaMaskMobile(phone) {
 function vpaSlugify(s) {
   return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
+
+/* ===== VP-VENUE-MATCH: a copy of venueplay-backend/worker/vp-venue-match.js. Edit that file, then this copy;
+   the gate refuses any copy that differs. ===== */
+function vpVenueKey(name) {
+  let s = String(name == null ? '' : name);
+  try { s = s.normalize('NFKD'); } catch (e) { /* an engine without normalize keeps its accents */ }
+  s = s.replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/['`\u2018\u2019\u02bc\u00b4]/g, '')
+    .replace(/[&+]/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^the /, '');
+  return s.replace(/ /g, '-');
+}
+function vpVenuePostcode(postcode) {
+  const d = String(postcode == null ? '' : postcode).replace(/\D/g, '');
+  return d.length === 4 ? d : '';
+}
+function vpVenueMatch(aName, aPostcode, bName, bPostcode) {
+  const ka = vpVenueKey(aName);
+  if (!ka || ka !== vpVenueKey(bName)) return null;
+  const pa = vpVenuePostcode(aPostcode), pb = vpVenuePostcode(bPostcode);
+  if (pa && pb) return pa === pb ? 'same' : null;
+  return 'unsure';
+}
+/* ===== VP-VENUE-MATCH END ===== */
 
 /* THE SLUG IS THE VENUE'S IDENTITY, AND AUSTRALIA REUSES PUB NAMES CONSTANTLY.
 
@@ -3422,7 +3462,7 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
      flagged for a call if they never sign in. Best-effort: the account stands without it. */
   try {
     await vpaInsert(env, 'vp_prospects', { venue_id: venue.id, founding_id: foundingId || null,
-      source: opts.via === 'autopilot_prospect' ? 'autopilot' : 'hq', contact_name: firstName || null, email: email,
+      source: opts.via === 'autopilot_prospect' ? 'autopilot' : (opts.via === 'self_signup' ? 'self' : 'hq'), contact_name: firstName || null, email: email,
       phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
       call_requested: b.call_requested === true, created_label: actor.label || null }, false);
     /* THE OFFER THEY WERE SET UP ON (migration 127), kept through their free month even if that month's offer
@@ -3513,6 +3553,401 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
   if (welcome) out.welcome = welcome;
   if (warnings.length) out.warnings = warnings;
   return json(out);
+}
+
+/* ===========================================================================
+ * THE NO-CARD START: /start  (Dean, 5 Nov 2026; INBOX 80B, 81, 84, 97; migrations 170 and 171)
+ *
+ * "A public, rate-limited, bot-checked version of the prospect setup that makes the same card-free prospect
+ * account (10 players, free month starts at first sign-in, card asked later through the existing card choice)."
+ *
+ *   POST /start/begin   { venue, postcode, kind: 'pub' | 'club', name, mobile, email, turnstile?, website? (a honeypot) }
+ *                       Five boxes and pub or club checked (Dean, 6 Nov 2026: asked at sign-up, so a club has bingo,
+ *                       raffles and members draws open without HQ; stored as the venue's entity_type, which the
+ *                       VPPermits cards and the gaming rules read); per network, per mobile and per email limits; Turnstile when switched on;
+ *                       ONE row in vp_signup_starts (170) holding what they typed and the code's hash; a 6-digit code
+ *                       texted to the mobile through the SMS hook (the same sender as every sign-in code). Nothing else
+ *                       is made. -> { ok, start_id }
+ *   POST /start/resend  { start_id }  a new code to the same mobile, inside the same limits.
+ *   POST /start/verify  { start_id, code, kind }  The code passes, then ONE decision, in this order:
+ *                       1. ONE FREE MONTH PER MOBILE AND PER EMAIL (Dean, INBOX 81 and 97): a mobile or an email that
+ *                          already signs in, is already on an account (sbPriorAccounts, the card sign-up's own check),
+ *                          or already had a start made, is held for HQ with a ticket. Nothing about that login or
+ *                          account is said: they read the same words as an unlisted venue.
+ *                       2. the account, straight away (Dean, 6 Nov 2026: NO held sign-ups for an unlisted venue; a venue
+ *                          name and a postcode are enough). Our licensed list (171, item 81) is a SIGNAL only: a match
+ *                          is written to licensed_match; no match leaves it empty, and HQ's list shows the account as
+ *                          "Not on our licensed venues list, check" until HQ marks it checked (decided_at).
+ *   POST /admin/signup-starts          (owner | accounts) the held sign-ups, and the made ones not on the list, for HQ.
+ *   POST /admin/signup-start/decide    (owner | accounts) { start_id, decision: approve | refuse | checked }. Approve
+ *                       makes the normal account and sends the normal welcome; checked marks a made one as looked at.
+ *
+ * NOT HERE (Dean, INBOX 97, "we are not going to have two of the same venue sign up"): the same pub on another account
+ * (item 60) and a known person's pub joining their account (item 61). Both are built and parked on fix/same-pub-later.
+ * A known person is held for HQ here, which is the safe way round.
+ *
+ * NOTHING HERE IS BILLED (item 84). The account is the prospect account: no Stripe customer, no subscription, no
+ * session, no player count above the 10 it starts with. The free month's clock starts at the first sign-in, as for
+ * every prospect (/account/prospect-start), never here. tools/test-signup-core.js proves it.
+ *
+ * Before migration 170 every route here answers 503 "not switched on yet" and makes nothing. Without the SMS hook
+ * settings (SEND_SMS_HOOK_URL, SEND_SMS_HOOK_SECRET) no code can be sent, so nothing starts either.
+ * ======================================================================== */
+const VPS_START_PER_IP = 8;            // code requests per network per hour (a pub's wifi is one address)
+const VPS_START_PER_MOBILE = 3;        // codes per mobile per hour
+const VPS_START_PER_EMAIL = 3;         // starts per email per hour
+const VPS_START_VERIFY_PER_IP = 40;    // code tries per network per ten minutes
+const VPS_START_CODE_MIN = 10;         // a code lasts ten minutes
+const VPS_START_MAX_TRIES = 5;         // wrong codes before the start is spent
+const VPS_START_PLAYERS = VPA_PROSPECT_DEFAULT_PLAYERS;   // 10, as every prospect (Dean, 29 Oct 2026)
+const VPS_START_GO_HOURS = 24;         // the done screen's "open venueplay" sign-in link
+/* THE DEMO'S JOINERS (Dean, 5 Nov 2026, INBOX 84b). The try-it-now game (item 82, the next job) caps its joiners here
+   and says "Up to 10 for the demo", whatever is typed for "How many players will join?". A demo is never a billable
+   session, so this number never reaches a bill. */
+const VP_DEMO_JOINER_CAP = 10;
+const VPS_START_WORDS = {
+  unlisted: 'Thanks, we\'ll check your venue and get you set up, usually within a business day.',
+  off: 'Starting online is not switched on just yet. Email hello@venueplay.com.au and we\'ll set you up.',
+  busy: 'Too many tries from here. Please try again in an hour.',
+  bot: 'Please let the check finish (the box above the button), then press the button again.',
+  code_wrong: 'That code is not right. Check the text and try again.',
+  code_gone: 'That code has run out. Tap Send it again for a new one.',
+  blip: 'We could not finish setting you up just then. Nothing was made. Please try again in a minute.',
+  done_before: 'This sign-up has already been dealt with. Sign in with your mobile at venueplay.com.au/app.',
+};
+function vpsStartOff(env) { return !env.SEND_SMS_HOOK_URL || !env.SEND_SMS_HOOK_SECRET; }
+function vpsUuid() {
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  a[6] = (a[6] & 0x0f) | 0x40; a[8] = (a[8] & 0x3f) | 0x80;
+  const h = [...a].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+/* Six digits, uniform: rejection sampling over getRandomValues, never Math.random. */
+function vpsCode() {
+  const buf = new Uint32Array(1), limit = Math.floor(0x100000000 / 1000000) * 1000000;
+  let x;
+  do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+  return String(x % 1000000).padStart(6, '0');
+}
+async function vpsCodeHash(env, startId, code) {
+  return await helpSha256Hex(String(env.SIGNUP_CODE_SALT || env.SUPABASE_SERVICE_KEY || 'vp-start') + '|' + startId + '|' + code);
+}
+function vpsB64(bytes) {
+  let s = ''; const a = new Uint8Array(bytes);
+  for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+  return btoa(s);
+}
+/* THE TEXT, through the SMS hook (venueplay-sms-hook.js), signed the way Supabase signs its own calls to it (Standard
+   Webhooks: v1, HMAC-SHA256 over id.timestamp.body with the hook's base64 secret). So the code arrives from the same
+   sender, in the same words ("Your venueplay code is 123456"), with the same Mobile Message and ClickSend failover as
+   every sign-in code, and no second SMS account is held anywhere. */
+async function vpsSendCodeText(env, e164, code) {
+  if (vpsStartOff(env)) return { ok: false, off: true };
+  const body = JSON.stringify({ user: { phone: e164 }, sms: { otp: code } });
+  const id = 'vpstart_' + vpsUuid().replace(/-/g, '');
+  const ts = String(Math.floor(Date.now() / 1000));
+  let raw;
+  try { raw = Uint8Array.from(atob(String(env.SEND_SMS_HOOK_SECRET).replace(/^v1,whsec_/, '')), (c) => c.charCodeAt(0)); }
+  catch (e) { return { ok: false, off: true }; }
+  const key = await crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(id + '.' + ts + '.' + body));
+  try {
+    const res = await fetch(String(env.SEND_SMS_HOOK_URL), { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'webhook-id': id, 'webhook-timestamp': ts, 'webhook-signature': 'v1,' + vpsB64(sig) },
+      body: body });
+    return { ok: !!(res && res.ok) };
+  } catch (e) { return { ok: false }; }
+}
+/* What they typed, checked. Returns { error } or the clean five. */
+function vpsStartFields(b) {
+  const venue = helpLine(b.venue, 120);
+  const postcode = vpVenuePostcode(b.postcode);
+  const name = helpLine(b.name, 120);
+  const mobileRaw = helpLine(b.mobile, 40);
+  const mobile = mobileRaw ? vpaNormaliseMobileAU(mobileRaw) : null;
+  const email = String(b.email || '').trim().toLowerCase();
+  if (!vpVenueKey(venue)) return { error: 'Enter your venue\'s name.', field: 'venue' };
+  const state = postcode ? vpaStateFromPostcode(postcode) : null;
+  if (!state) return { error: 'Enter your venue\'s 4-digit postcode.', field: 'postcode' };
+  const entity = vpsEntity(b.kind);
+  if (!entity) return { error: 'Choose pub or club.', field: 'kind' };
+  if (!name) return { error: 'Enter your name.', field: 'name' };
+  if (!vpaIsAuMobileE164(mobile)) return { error: 'Enter your mobile (04...). We text your code to it.', field: 'mobile' };
+  // No comma, semicolon, bracket, quote or backslash: an address is read back in a PostgREST or=() filter below.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || /[,;()\\"]/.test(email) || email.length > 200) return { error: 'Enter your email.', field: 'email' };
+  return { venue: venue, postcode: postcode, state: state, entity: entity, name: name, mobile: mobile, email: email };
+}
+/* PUB OR CLUB, as the card sign-up asks it: a club is non_profit (paid entry opens by state, vpaPaidEntryDefault), a pub
+   for_profit. Anything else is no answer. */
+function vpsEntity(kind) {
+  const k = String(kind || '').trim().toLowerCase();
+  return k === 'club' ? 'non_profit' : (k === 'pub' ? 'for_profit' : null);
+}
+async function vpsStartRow(env, id) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(String(id || ''))) return null;
+  const r = await vpaSelect(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(id) + '&select=*&limit=1');
+  return (r && r[0]) || null;
+}
+/* A fresh code for a row, written down (hash only, the old code dies in the same write) BEFORE it is sent, always to
+   the mobile they typed. */
+async function vpsIssueCode(env, row) {
+  const code = vpsCode();
+  const patch = { code_hash: await vpsCodeHash(env, row.id, code), attempts: 0,
+    code_sent_count: Math.min(20, (row.code_sent_count || 0) + 1),
+    code_expires_at: new Date(Date.now() + VPS_START_CODE_MIN * 60000).toISOString() };
+  await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), patch);
+  Object.assign(row, patch);
+  return await vpsSendCodeText(env, row.mobile, code);
+}
+async function vpsMobileLimit(env, e164) {
+  const mk = await helpSha256Hex('m|' + e164);
+  return await helpLimit(env, 'start:m:' + mk.slice(0, 32), VPS_START_PER_MOBILE, 3600);
+}
+
+async function vpsStartBegin(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'start', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  // THE HONEYPOT: a box a person never sees. A bot that fills it is answered as if it worked, and nothing is made or sent.
+  if (String(b.website || '').trim()) return json({ ok: true, start_id: vpsUuid() });
+  const f = vpsStartFields(b);
+  if (f.error) return json({ error: f.error, field: f.field }, 400);
+  const bot = await helpTurnstile(env, b.turnstile, ip);
+  if (!bot.ok) return json({ error: VPS_START_WORDS.bot, bot: true }, 403);
+  if (vpsStartOff(env)) return json({ error: VPS_START_WORDS.off, off: true }, 503);
+  const ek = await helpSha256Hex('e|' + f.email);
+  if (!(await vpsMobileLimit(env, f.mobile))) return json({ error: VPS_START_WORDS.busy }, 429);
+  if (!(await helpLimit(env, 'start:e:' + ek.slice(0, 32), VPS_START_PER_EMAIL, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  let row;
+  try {
+    row = await vpaInsert(env, 'vp_signup_starts', { id: vpsUuid(), ip_key: ip ? (await helpIpKey(env, ip)).slice(0, 80) : null,
+      venue_name: f.venue, venue_key: vpVenueKey(f.venue), postcode: f.postcode, au_state: f.state,
+      contact_name: f.name, email: f.email, mobile: f.mobile, outcome: 'pending', attempts: 0, code_sent_count: 0 });
+  } catch (e) {
+    return json({ error: VPS_START_WORDS.off, off: true }, 503);   // migration 170 not run
+  }
+  if (!row || !row.id) return json({ error: VPS_START_WORDS.blip }, 502);
+  // Pub or club on the row too (migration 173), for an approval HQ makes later. Before 173 it lives on the page,
+  // which sends it again with the code; nothing fails without it.
+  try { await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { entity_type: f.entity }); row.entity_type = f.entity; } catch (e) { /* 173 not run */ }
+  const sent = await vpsIssueCode(env, row);
+  if (!sent.ok) return json({ error: 'We could not send the text just then. Check your mobile number and press the button again.', field: 'mobile' }, 502);
+  return json({ ok: true, start_id: row.id });
+}
+
+/* POST /start/resend { start_id }: a new code to the same mobile, within the same limits. One answer whatever happens. */
+async function vpsStartResend(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'start', ip, VPS_START_PER_IP, 3600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const row = await vpsStartRow(env, _b.body.start_id);
+  if (row && row.outcome === 'pending' && (row.code_sent_count || 0) < 5 && (await vpsMobileLimit(env, row.mobile))) await vpsIssueCode(env, row);
+  return json({ ok: true });
+}
+
+/* The code, checked. { row } when it is right, else { res } to answer with. */
+async function vpsCheckCode(env, json, b) {
+  const row = await vpsStartRow(env, b.start_id);
+  const code = String(b.code || '').replace(/\D/g, '');
+  if (!row || !row.code_hash) return { res: json({ error: VPS_START_WORDS.code_gone, gone: true }, 410) };
+  if ((row.attempts || 0) >= VPS_START_MAX_TRIES || !(Date.parse(row.code_expires_at) > Date.now())) {
+    return { res: json({ error: VPS_START_WORDS.code_gone, gone: true }, 410) };
+  }
+  if (code.length !== 6 || (await vpsCodeHash(env, row.id, code)) !== row.code_hash) {
+    await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), { attempts: (row.attempts || 0) + 1 }).catch(() => {});
+    return { res: json({ error: VPS_START_WORDS.code_wrong }, 400) };
+  }
+  return { row: row };
+}
+async function vpsSetOutcome(env, row, patch) {
+  await vpaPatch(env, 'vp_signup_starts', 'id=eq.' + encodeURIComponent(row.id), patch);
+  Object.assign(row, patch);
+}
+/* A conditional move from one outcome to the next: true for the ONE request that made it (PostgREST answers a
+   conditional PATCH with the rows it changed). A double tap or a second tab cannot make two accounts. */
+async function vpsClaim(env, row, from, to) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_signup_starts?id=eq.' + encodeURIComponent(row.id) + '&outcome=eq.' + from + '&select=id', {
+      method: 'PATCH', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ outcome: to, verified_at: row.verified_at || new Date().toISOString() }) });
+    const got = res.ok ? await res.json().catch(() => null) : null;
+    if (Array.isArray(got) && got.length === 1) { row.outcome = to; return true; }
+    return false;
+  } catch (e) { return false; }
+}
+/* "Our licensed venues" (171): the rows at that postcode, judged by vpVenueMatch. Only 'same' counts: a listed venue
+   with no postcode cannot say it is this one. A missing table, or one that cannot be read, is NOT a match: HQ checks. */
+async function vpsLicensedMatch(env, name, postcode) {
+  try {
+    const rows = await vpaSelectAll(env, 'vp_licensed_venues', 'postcode=eq.' + vpVenuePostcode(postcode) + '&select=name,postcode,suburb,source&order=id.asc');
+    return rows.find((r) => vpVenueMatch(name, postcode, r.name, r.postcode) === 'same') || null;
+  } catch (e) { return null; }
+}
+/* An HQ ticket for a start that is held, with everything they typed and why. Never throws. */
+async function vpsHoldTicket(env, row, why, extra) {
+  try {
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'normal',
+      title: 'Sign-up to check: ' + row.venue_name + ' (' + row.postcode + ')',
+      message: [why, '', 'Venue: ' + row.venue_name, 'Postcode: ' + row.postcode + (row.au_state ? ' (' + row.au_state + ')' : ''),
+        'Name: ' + row.contact_name, 'Email: ' + row.email, 'Mobile: ' + row.mobile + ' (proven by the text code)',
+        extra ? '' : null, extra || null, '',
+        'Approve or refuse it in HQ > Prospects > Sign-ups to check. Approving makes the normal account and sends the welcome.',
+        'Sign-up start: ' + row.id].filter((x) => x !== null).join('\n'),
+      contact_name: row.contact_name, contact_email: row.email, contact_phone: vpaProspectPhone(row.mobile) || row.mobile,
+      lead_venue_name: row.venue_name, lead_locality: row.postcode });
+    if (t && t.id) { try { await helpAnnounce(env, t, ''); } catch (e) {} return t.ticket_no || null; }
+  } catch (e) { console.log('[start] hold ticket not made: ' + String((e && e.message) || e).slice(0, 160)); }
+  return null;
+}
+/* HELD FOR HQ. The move out of `from` is claimed first (one request wins), so a double tap files ONE ticket. Whoever
+   loses the claim reads the same words: nothing about the start or anyone's login is said either way. */
+async function vpsHold(env, json, row, from, outcome, why, extra) {
+  if (await vpsClaim(env, row, from, outcome)) {
+    const tn = await vpsHoldTicket(env, row, why, extra);
+    if (tn) await vpsSetOutcome(env, row, { ticket_no: tn }).catch(() => {});
+  }
+  return json({ ok: true, outcome: 'held', message: VPS_START_WORDS.unlisted });
+}
+/* ONE FREE MONTH PER MOBILE AND PER EMAIL, FAILING CLOSED. sbPriorAccounts is the card sign-up's own check (strict
+   here, so a read that will not answer throws instead of reading as "nobody"). An account row keeps a mobile AS IT
+   WAS TYPED ("0412 345 678", "+61412345678"), so the mobile is also asked as its nine digits in order with anything
+   between them: a near miss only ever holds a sign-up for HQ, never makes one. */
+async function vpsKnown(env, row) {
+  const nine = String(row.mobile).replace(/\D/g, '').slice(-9);
+  const byPhone = await vpaFindAuthUser(env, { phone: row.mobile }, true);
+  const byEmail = await vpaFindAuthUser(env, { email: row.email }, true);
+  const prior = (await sbPriorAccounts(env, row.email, row.mobile, null, true))
+    .concat(await vpaSelectAll(env, 'venueplay_founding', 'mobile=ilike.' + encodeURIComponent('*' + nine.split('').join('*')) +
+      '&status=neq.pending&select=id,venue_name,status&order=id.asc'));
+  const before = await vpaSelectAll(env, 'vp_signup_starts', 'or=(mobile.eq.' + encodeURIComponent(row.mobile) + ',email.eq.' + encodeURIComponent(row.email) +
+    ')&outcome=in.(made,approved)&id=neq.' + encodeURIComponent(row.id) + '&select=id,venue_name,outcome&order=id.asc');
+  const said = [], seen = {};
+  if (byPhone) said.push('the mobile already signs in (login ' + byPhone.id + (byPhone.email ? ', ' + byPhone.email : '') + ')');
+  if (byEmail && (!byPhone || byEmail.id !== byPhone.id)) said.push('the email already signs in (login ' + byEmail.id + ')');
+  prior.forEach((a) => { if (!seen[a.id]) { seen[a.id] = true; said.push('account ' + (a.venue_name || '?') + ' (' + (a.status || '?') + ', ' + a.id + ')'); } });
+  before.forEach((x) => said.push('an earlier sign-up for ' + x.venue_name + ' (' + x.outcome + ')'));
+  return said;
+}
+/* THE ACCOUNT: the prospect setup itself (vpaProspectSetUp, one copy), as a self sign-up: pub or club as they chose it
+   (row.kind from the page with the code, else the row's entity_type, migration 173; an HQ approval with neither is a pub,
+   the stricter rules, and HQ can change it); 10 players; no card. */
+async function vpsMakeAccount(env, row, actor, sendWelcome) {
+  let out = null;
+  const cap = function (o, status) { out = { body: o, status: status || 200 }; return out; };
+  await vpaProspectSetUp(env, actor, { name: row.venue_name, first_name: String(row.contact_name).split(' ')[0], email: row.email,
+    mobile: row.mobile, postcode: row.postcode, entity_type: vpsEntity(row.kind) || row.entity_type || 'for_profit', players: VPS_START_PLAYERS,
+    send_welcome: !!sendWelcome, send_in_minutes: 0 }, cap, { via: 'self_signup' });
+  return out || { body: { error: 'nothing came back' }, status: 500 };
+}
+/* The done screen's facts: the TV code (the venue's join code, the console's "Screen code") and a one-tap sign-in. */
+async function vpsDone(env, venueId, authUserId) {
+  const v = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=name,join_code,slug&limit=1');
+  let go = null;
+  if (authUserId) {
+    try {
+      const m = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), Date.now() + VPS_START_GO_HOURS * 3600000);
+      go = vpaOneClickUrl((env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, ''), m.token, '');
+    } catch (e) { go = null; }
+  }
+  const r = (v && v[0]) || {};
+  return { venue: r.name || '', tv_code: r.join_code || null, slug: r.slug || null, go_url: go };
+}
+
+/* THE DECISION, once the code to their mobile has passed. */
+async function vpsDecide(env, json, row) {
+  // 1. One free month per mobile and per email. Fails closed: a read that will not answer makes nothing.
+  let said;
+  try { said = await vpsKnown(env, row); } catch (e) { console.log("[start] known check: " + String((e && e.message) || e).slice(0, 200)); return json({ error: VPS_START_WORDS.blip }, 503); }
+  if (said.length) {
+    return await vpsHold(env, json, row, 'pending', 'held_known',
+      'This mobile or email is already on venueplay (one free month per mobile and per email), so no new account or free month was made. If it is the same person adding a pub, add it to their account with Add a venue.',
+      'Already on venueplay: ' + said.join('; '));
+  }
+  // 2. The account (Dean, 6 Nov 2026: a name and a postcode are enough for now). The licensed list is a signal for HQ.
+  const listed = await vpsLicensedMatch(env, row.venue_name, row.postcode);
+  if (!(await vpsClaim(env, row, 'pending', 'made'))) return json({ ok: true, outcome: 'done_before', message: VPS_START_WORDS.done_before });
+  let made;
+  try { made = await vpsMakeAccount(env, row, { actorId: null, role: 'self', label: 'Self sign-up (no-card start)' }, false); }
+  catch (e) { made = { status: 500, body: { error: String((e && e.message) || e).slice(0, 200) } }; }
+  if (made.status !== 200 || !made.body.ok) {
+    // The prospect setup refused (for one, a venue of that exact name and postcode already set up): HQ looks.
+    return await vpsHold(env, json, row, 'made', 'held_known', 'The account could not be made automatically: ' + String((made.body && made.body.error) || 'no answer').slice(0, 300));
+  }
+  await vpsSetOutcome(env, row, { venue_id: made.body.venue.id, founding_id: made.body.founding_id,
+    licensed_match: listed ? (listed.name + ', ' + listed.postcode + ' (' + listed.source + ')').slice(0, 200) : null }).catch(() => {});
+  // The login made a moment ago for this email (the email was checked free above). Its one-tap sign-in goes only to
+  // the browser that has just typed the code texted to this mobile.
+  let login = null;
+  try { login = made.body.login ? await vpaFindAuthUser(env, { email: row.email }) : null; } catch (e) { login = null; }
+  const done = await vpsDone(env, made.body.venue.id, login && login.id);
+  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS });
+}
+
+async function vpsStartVerify(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'startv', ip, VPS_START_VERIFY_PER_IP, 600))) return json({ error: VPS_START_WORDS.busy }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const c = await vpsCheckCode(env, json, _b.body);
+  if (c.res) return c.res;
+  if (c.row.outcome !== 'pending') return json({ ok: true, outcome: 'done_before', message: VPS_START_WORDS.done_before });
+  if (vpsEntity(_b.body.kind)) c.row.kind = _b.body.kind;
+  return await vpsDecide(env, json, c.row);
+}
+
+/* ---- HQ: the held sign-ups, and the one-tap decision (owner | accounts) ---- */
+async function vpsAdminStarts(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'vp_signup_starts', 'or=(outcome.eq.held_known,and(outcome.eq.made,licensed_match.is.null,decided_at.is.null))' +
+      '&select=id,created_at,venue_name,postcode,au_state,contact_name,email,mobile,outcome,ticket_no,venue_id&order=created_at.desc');
+  } catch (e) { return json({ error: 'Run migration 170 first (vp_signup_starts).', need_migration: 170 }, 503); }
+  return json({ ok: true, held: rows.map((r) => Object.assign({}, r, { mobile: vpaProspectPhone(r.mobile) || r.mobile,
+    made: r.outcome === 'made',
+    why: r.outcome === 'made' ? 'Account made. Not on our licensed venues list, check' : 'Already on venueplay (mobile or email)' })) });
+}
+async function vpsAdminDecide(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  if (['approve', 'refuse', 'checked'].indexOf(b.decision) === -1) return json({ error: 'Choose approve or refuse.' }, 400);
+  const row = await vpsStartRow(env, b.start_id);
+  if (!row) return json({ error: 'That sign-up is not here any more.' }, 404);
+  /* A made account that is not on our licensed list: HQ has looked at it. Nothing is made or changed but the mark. */
+  if (b.decision === 'checked') {
+    if (row.outcome !== 'made' || row.decided_at) return json({ error: 'That sign-up has already been checked.', outcome: row.outcome }, 409);
+    await vpsSetOutcome(env, row, { decided_at: new Date().toISOString(), decided_label: String(actor.label || 'HQ').slice(0, 120) });
+    await vpaAudit(env, actor, 'signup_start_checked', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode, venue_id: row.venue_id });
+    return json({ ok: true, outcome: 'checked' });
+  }
+  if (row.outcome !== 'held_known' || !row.verified_at) return json({ error: 'That sign-up has already been decided.', outcome: row.outcome }, 409);
+  const by = { decided_at: new Date().toISOString(), decided_label: String(actor.label || 'HQ').slice(0, 120) };
+  const was = row.outcome;
+  if (b.decision === 'refuse') {
+    if (!(await vpsClaim(env, row, was, 'refused'))) return json({ error: 'That sign-up has already been decided.' }, 409);
+    await vpsSetOutcome(env, row, by);
+    await vpaAudit(env, actor, 'signup_start_refused', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode });
+    return json({ ok: true, outcome: 'refused' });
+  }
+  if (!(await vpsClaim(env, row, was, 'approved'))) return json({ error: 'That sign-up has already been decided.' }, 409);
+  // The prospect setup's own refusals still stand: an email that already signs in, the same venue twice.
+  let made;
+  try { made = await vpsMakeAccount(env, row, actor, true); }
+  catch (e) { made = { status: 500, body: { error: 'The account was not made: ' + String((e && e.message) || e).slice(0, 160) } }; }
+  if (made.status !== 200 || !made.body.ok) {
+    await vpsSetOutcome(env, row, { outcome: was }).catch(() => {});
+    return json({ error: (made.body && made.body.error) || 'The account was not made.' }, made.status === 200 ? 502 : made.status);
+  }
+  await vpsSetOutcome(env, row, Object.assign({ venue_id: made.body.venue.id, founding_id: made.body.founding_id }, by));
+  await vpaAudit(env, actor, 'signup_start_approved', 'signup_start:' + row.id, { venue: row.venue_name, postcode: row.postcode, venue_id: made.body.venue.id });
+  return json({ ok: true, outcome: 'approved', venue: made.body.venue, welcome_sent: !!made.body.welcome_sent, warnings: made.body.warnings });
 }
 
 /* ===========================================================================
@@ -3627,7 +4062,7 @@ async function vpaProspectsData(env) {
       if (vpaProspectCardOn(acct)) {
         const st = vpaProspectStatus(r, true, null, now);
         cardAdded.push(Object.assign({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
-          source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
+          source: (r.source === 'autopilot' || r.source === 'self') ? r.source : 'hq', contact_name: r.contact_name || '', email: r.email || '',
           phone: r.phone || null, mobile: vpaProspectMobile(acct && acct.mobile, r.phone),
           tel: (r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)) ? 'tel:' + String(r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)).replace(/[^\d+]/g, '') : null,
           website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
@@ -3651,7 +4086,7 @@ async function vpaProspectsData(env) {
     const mobile = vpaProspectMobile(acct && acct.mobile, r.phone);
     const ring = r.phone || mobile;
     out.push({ venue_id: r.venue_id, name: v.name, slug: v.slug, postcode: v.postcode || '', state: v.au_state || '',
-      source: r.source === 'autopilot' ? 'autopilot' : 'hq', contact_name: r.contact_name || '', email: r.email || '',
+      source: (r.source === 'autopilot' || r.source === 'self') ? r.source : 'hq', contact_name: r.contact_name || '', email: r.email || '',
       phone: r.phone || null, mobile: mobile, tel: ring ? 'tel:' + String(ring).replace(/[^\d+]/g, '') : null,
       website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
       created_at: r.created_at, days_since_setup: days, welcome: welcome,

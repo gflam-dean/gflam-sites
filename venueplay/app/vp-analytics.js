@@ -99,6 +99,17 @@
      early return, as a function that never runs fn, so a refused visitor stays refused by the
      pixel too instead of the pixel deciding it has no gate and firing anyway. */
   var refused = isRobot() || teamOptOut() || notLiveSite();
+  /* SIGN-UP DROP-OFF EVENTS (8 Nov 2026, item 80A). window.vpTrack(name, params) is the ONLY way a page
+     sends one, and it carries NO PERSONAL DATA by construction: the event name must be on the list below,
+     and each value must be a short lowercase token that starts with a letter (letters, digits, underscore, hyphen). A typed name,
+     email, mobile, venue or postcode never passes that test (no @, no dot, no space, no capital, no leading digit), so
+     even a careless caller cannot send one. Only the offer page calls it; the homepage has no offers
+     and never calls it. A refused visitor (robot, team opt-out, preview) gets a function that does nothing. */
+  var TRACK_EVENTS = { offer_land: 1, start_seen: 1, start_begin: 1, start_field_error: 1, start_submit: 1,
+                       start_code_sent: 1, start_signed_in: 1, checkout_open: 1, checkout_done: 1 };
+  var TRACK_PARAMS = { step: 1, field: 1, offer: 1, source: 1 };
+  function cleanToken(v) { v = String(v == null ? '' : v); return /^[a-z][a-z0-9_-]{0,23}$/.test(v) ? v : ''; }
+  window.vpTrack = function () {};
   var isHuman = false, waiting = [];
   function whenHuman(fn) {
     if (refused || typeof fn !== 'function') return;
@@ -116,6 +127,18 @@
   window.dataLayer = window.dataLayer || [];
   function gtag() { window.dataLayer.push(arguments); }
   window.gtag = gtag;
+  window.vpTrack = function (name, params) {
+    try {
+      if (!TRACK_EVENTS[name]) return;
+      var out = { page_path: location.pathname }, k, v;
+      for (k in (params || {})) {
+        if (!TRACK_PARAMS[k]) continue;
+        v = cleanToken(params[k]);
+        if (v) out[k] = v;
+      }
+      gtag('event', name, out);
+    } catch (e) { /* never let analytics break the page */ }
+  };
 
   /* A VISIT COUNTS WHEN A PERSON DOES SOMETHING. Dean, 25 Sep 2026: "Can we remove them from
      my report". Microsoft's mail scanners open every link in an email from Australian Azure
