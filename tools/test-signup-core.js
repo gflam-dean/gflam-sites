@@ -141,14 +141,14 @@ function listed() {
     { id: 3, name: 'Railway Hotel', name_key: 'railway-hotel', postcode: '4350', suburb: 'Toowoomba', au_state: 'QLD', source: 'send list' },
     { id: 4, name: 'Commercial Hotel', name_key: 'commercial-hotel', postcode: '2800', suburb: 'Orange', au_state: 'NSW', source: 'send list' } ];
 }
-var FIVE = { venue: 'the grand hotel', postcode: '4217', name: 'Sam Jones', mobile: '0412 345 678', email: 'sam@grandhotel.example' };
+var FIVE = { venue: 'the grand hotel', postcode: '4217', kind: 'pub', name: 'Sam Jones', mobile: '0412 345 678', email: 'sam@grandhotel.example' };
 function five(o) { var b = {}; for (var k in FIVE) b[k] = FIVE[k]; for (var k2 in (o || {})) b[k2] = o[k2]; return b; }
 var IP = 0;
 function NET() { return { 'cf-connecting-ip': '10.0.0.' + (++IP) }; }
 async function start(o) {
   var r = await call('/start/begin', five(o), NET());
   if (r.status !== 200) return { begin: r };
-  var v = await call('/start/verify', { start_id: r.body.start_id, code: lastCode() }, NET());
+  var v = await call('/start/verify', { start_id: r.body.start_id, code: lastCode(), kind: five(o).kind }, NET());
   return { begin: r, verify: v, id: r.body.start_id };
 }
 function count(t) { return (DB[t] || []).length; }
@@ -161,6 +161,14 @@ async function moreSections() {
   var s0 = snapshot();
   var e1 = await call('/start/begin', five({ postcode: '' }), NET());
   check('no postcode: refused, pointing at the postcode box', e1.status === 400 && e1.body.field === 'postcode', e1);
+  var e0 = await call('/start/begin', five({ venue: '  ' }), NET());
+  check('a blank venue name: refused, pointing at the venue box', e0.status === 400 && e0.body.field === 'venue', e0);
+  var e0b = await call('/start/begin', five({ postcode: '42' }), NET());
+  var e0c = await call('/start/begin', five({ postcode: 'abcd' }), NET());
+  check('a postcode that is not 4 digits: refused', e0b.status === 400 && e0b.body.field === 'postcode' && e0c.status === 400 && e0c.body.field === 'postcode', [e0b, e0c]);
+  var e0d = await call('/start/begin', five({ kind: '' }), NET());
+  var e0e = await call('/start/begin', five({ kind: 'casino' }), NET());
+  check('pub or club is a required, honest choice: none, or anything else, is refused', e0d.status === 400 && e0d.body.field === 'kind' && e0e.status === 400 && e0e.body.field === 'kind', [e0d, e0e]);
   var e2 = await call('/start/begin', five({ mobile: '07 5228 3667' }), NET());
   check('a landline is not a mobile (a code could never reach it)', e2.status === 400 && e2.body.field === 'mobile', e2);
   var hp = await call('/start/begin', five({ website: 'http://spam.example' }), NET());
@@ -198,7 +206,7 @@ async function moreSections() {
   check('one account, one venue, one login: the prospect setup\'s own rows', snapshot().f === s1.f + 1 && snapshot().v === s1.v + 1 && AUTH.length === s1.auth + 1, snapshot());
   check('10 players, whatever the page sent (50 here)', v.max_players === 10 && f.max_seats === 10, [v.max_players, f.max_seats]);
   check('no card: no Stripe customer, no subscription, Stripe never called', !f.stripe_subscription_id && !f.stripe_customer_id && stripeCalls.length === 0, stripeCalls);
-  check('a pub until they say otherwise (asked when they first turn on bingo, raffles or members draws)', v.entity_type === 'for_profit' && v.paid_entry_enabled === false, v.entity_type);
+  check('they chose pub: the venue is a pub (for_profit), the rules the VPPermits cards read', v.entity_type === 'for_profit' && v.venue_kind === 'pub' && v.paid_entry_enabled === false, v.entity_type);
   check('the state comes from the postcode', v.au_state === 'QLD', v.au_state);
   var p = DB.vp_prospects.filter(function (x) { return x.venue_id === v.id; })[0] || {};
   check('HQ > Prospects lists it as a self sign-up', p.source === 'self', p.source);
@@ -209,31 +217,52 @@ async function moreSections() {
   var again = await call('/start/verify', { start_id: a.id, code: TEXTS[0].body.sms.otp }, NET());
   check('the same code again makes nothing more', again.body.outcome === 'done_before' && snapshot().f === s1.f + 1, again.body);
 
-  section('7. A FAKE NAME, and THE RIGHT NAME AT THE WRONG POSTCODE: no account, no free month, HQ checks (item 81)');
+  section('7. NOT ON OUR LIST (Dean, 6 Nov 2026: a name and a postcode let them through): made straight away AND flagged for HQ');
   var s2 = snapshot();
   var fk = await start({ venue: 'Totally Made Up Tavern', mobile: '0412 000 001', email: 'fake@made.example' });
-  check('a fake name: Dean\'s words', fk.verify.status === 200 && fk.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', fk.verify.body);
-  check('a fake name: nothing made', same(snapshot(), s2), snapshot());
-  var tkt = tickets().filter(function (t) { return /Sign-up to check: Totally Made Up Tavern/.test(t.subject || ''); })[0] || {};
-  check('an HQ ticket with what they typed (venue, postcode, name, email, mobile)', /Totally Made Up Tavern/.test(tkt.message || '') && /4217/.test(tkt.message) && /fake@made\.example/.test(tkt.message) && /\+61412000001/.test(tkt.message), tkt.message);
+  check('a fake name with a real postcode: the account is made straight away', fk.verify.status === 200 && fk.verify.body.outcome === 'made' && snapshot().f === s2.f + 1, fk.verify.body);
+  var fkRow = DB.vp_signup_starts.filter(function (r) { return r.id === fk.id; })[0] || {};
+  check('and flagged: no licensed match on its row, not yet checked by HQ', fkRow.outcome === 'made' && !fkRow.licensed_match && !fkRow.decided_at, fkRow);
   var wp = await start({ venue: 'The Grand Hotel', postcode: '2000', mobile: '0412 000 002', email: 'wrongpc@made.example' });
-  check('the right name at the wrong postcode is held the same way', wp.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.' && same(snapshot(), s2), wp.verify.body);
-  check('both are waiting in HQ', DB.vp_signup_starts.filter(function (r) { return r.outcome === 'held_unlisted'; }).length === 2);
+  var wpRow = DB.vp_signup_starts.filter(function (r) { return r.id === wp.id; })[0] || {};
+  check('the right name at the wrong postcode: made, and flagged the same way', wp.verify.body.outcome === 'made' && !wpRow.licensed_match && snapshot().f === s2.f + 2, wp.verify.body);
+  var listedRow = DB.vp_signup_starts.filter(function (r) { return r.outcome === 'made' && r.licensed_match; });
+  check('a listed venue (section 6) carries its match, so it is not flagged', listedRow.length === 1 && /Grand Hotel, 4217/.test(listedRow[0].licensed_match), listedRow);
+  var cl = await start({ venue: 'Tweed Heads Bowls Club', postcode: '2485', kind: 'club', mobile: '0412 000 003', email: 'sec@tweedbowls.example' });
+  var cv = DB.vp_venues.filter(function (x) { return x.name === 'Tweed Heads Bowls Club'; })[0] || {};
+  check('they chose club: the venue is a club (non_profit), so NSW paid entry opens without HQ', cl.verify.body.outcome === 'made' && cv.entity_type === 'non_profit' && cv.venue_kind === 'club' && cv.paid_entry_enabled === true, [cv.entity_type, cv.venue_kind, cv.paid_entry_enabled]);
+  var clRow = DB.vp_signup_starts.filter(function (r) { return r.id === cl.id; })[0] || {};
+  check('pub or club is on the sign-up row too (migration 173), for an HQ approval later', clRow.entity_type === 'non_profit' && fkRow.entity_type === 'for_profit', [clRow.entity_type, fkRow.entity_type]);
 
-  section('8. HQ approves in one tap: the normal account and welcome follow');
+  section('8. HQ: the flagged accounts and the held sign-ups, one tap each');
   var held = await call('/admin/signup-starts', {}, AS(ADMIN));
-  check('HQ lists the held sign-ups', held.status === 200 && held.body.held.length === 2, held.body);
-  var no = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(STAFFADMIN));
-  check('a staff admin cannot approve (owner or accounts only)', no.status === 403 && snapshot().f === s2.f, no);
+  var hl = (held.body.held || []);
+  check('HQ lists the made accounts that are not on the list, saying so', held.status === 200 && hl.filter(function (r) { return r.made && /Not on our licensed venues list, check/.test(r.why); }).length === 3, hl);
+  check('and not the listed one', !hl.some(function (r) { return /Grand Hotel/i.test(r.venue_name) && r.postcode === '4217'; }), hl.map(function (r) { return r.venue_name; }));
+  var no = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(STAFFADMIN));
+  check('a staff admin cannot mark one checked (owner or accounts only)', no.status === 403, no);
+  var ck = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(ACCTS));
+  check('Checked marks it, makes and changes nothing else', ck.status === 200 && ck.body.outcome === 'checked' && snapshot().f === s2.f + 3, ck);
+  var held2 = await call('/admin/signup-starts', {}, AS(ADMIN));
+  check('and it leaves the list', !(held2.body.held || []).some(function (r) { return r.id === fk.id; }), held2.body.held);
+  var ck2 = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'checked' }, AS(ADMIN));
+  check('a second tap does nothing more', ck2.status === 409, ck2);
+  /* A HELD sign-up (a mobile already on venueplay, typed with a new email and a new pub): Approve and Refuse. */
+  var s2b = snapshot();
+  var hk = await start({ venue: 'Second Pub', postcode: '4217', email: 'sam.second.pub@x.example', kind: 'club' });
+  check('a mobile already on venueplay is held, nothing made', hk.verify.body.outcome === 'held' && same(snapshot(), s2b), hk.verify.body);
   var sentBefore = sent.length;
-  var yes = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(ACCTS));
-  check('approve makes the account', yes.status === 200 && yes.body.outcome === 'approved' && snapshot().f === s2.f + 1, yes);
+  var yes = await call('/admin/signup-start/decide', { start_id: hk.id, decision: 'approve' }, AS(ACCTS));
+  var hv = DB.vp_venues.filter(function (x) { return x.name === 'Second Pub'; })[0] || {};
+  check('approve makes the account', yes.status === 200 && yes.body.outcome === 'approved' && snapshot().f === s2b.f + 1, yes);
+  check('as the club they chose (kept on the row)', hv.entity_type === 'non_profit', hv.entity_type);
   check('and sends the welcome', sent.length > sentBefore && yes.body.welcome_sent === true, sent.slice(sentBefore).map(function (m) { return m.subject; }));
   check('still no card and no Stripe call', stripeCalls.length === 0, stripeCalls);
-  var twice = await call('/admin/signup-start/decide', { start_id: fk.id, decision: 'approve' }, AS(ADMIN));
-  check('a second tap makes nothing more', twice.status === 409 && snapshot().f === s2.f + 1, twice);
-  var ref = await call('/admin/signup-start/decide', { start_id: wp.id, decision: 'refuse' }, AS(ADMIN));
-  check('refuse makes nothing', ref.status === 200 && snapshot().f === s2.f + 1, ref);
+  var twice = await call('/admin/signup-start/decide', { start_id: hk.id, decision: 'approve' }, AS(ADMIN));
+  check('a second tap makes nothing more', twice.status === 409 && snapshot().f === s2b.f + 1, twice);
+  var hk2 = await start({ venue: 'Third Pub', postcode: '4217', email: 'sam.third.pub@x.example' });
+  var ref = await call('/admin/signup-start/decide', { start_id: hk2.id, decision: 'refuse' }, AS(ADMIN));
+  check('refuse makes nothing', ref.status === 200 && snapshot().f === s2b.f + 1, ref);
 
   /* HQ's pane draws what a member of the public typed: escaped, with both buttons naming the sign-up. */
   var PANE = readFile('venueplay/app/vp-prospects-hq.js');
@@ -245,15 +274,18 @@ async function moreSections() {
   check('HQ\'s Sign-ups to check escapes what the public typed (no tag of theirs reaches HQ)', hh.indexOf('<img') === -1 && hh.indexOf('&lt;img') !== -1 && hh.indexOf('<b>') === -1, hh);
   check('and each row has Approve and Refuse for that sign-up, with why it was held', hh.indexOf('data-st-approve="' + U(4242) + '"') !== -1 && hh.indexOf('data-st-refuse="' + U(4242) + '"') !== -1 && /Not on our licensed venues list/.test(hh), hh);
   check('nothing held: nothing drawn', PW.VPProspects._t.heldHtml([]) === '');
+  var hm = PW.VPProspects._t.heldHtml([{ id: U(4343), venue_name: 'Made Arms', postcode: '4217', made: true, why: 'Account made. Not on our licensed venues list, check' }]);
+  check('a made account not on the list gets one Checked button, never Approve or Refuse', hm.indexOf('data-st-checked="' + U(4343) + '"') !== -1 && hm.indexOf('data-st-approve') === -1 && hm.indexOf('data-st-refuse') === -1, hm);
 
   section('9. A KNOWN PERSON RE-TRYING WITH A NEW EMAIL: held for HQ, no second free month, nothing of theirs shown');
+  HITS = {};   // an hour later: Sam's mobile spent its 3 codes an hour in sections 6 and 8
   var s3 = snapshot(), tk3 = tickets().length;
   var kn = await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.new@another.example' });
   check('their mobile (proven by its code) already signs in: held, with the same words as an unlisted venue', kn.verify.status === 200 && kn.verify.body.outcome === 'held' && kn.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', kn.verify.body);
   check('no second account, no second login, no second free month', same(snapshot(), s3), snapshot());
   var knMsg = JSON.stringify(kn.verify.body).toLowerCase();
   check('the answer names nothing of theirs (no login email, no venue, no name)', knMsg.indexOf('grandhotel') === -1 && knMsg.indexOf('grand') === -1 && knMsg.indexOf('jones') === -1 && !kn.verify.body.prefill, knMsg);
-  check('word for word the same answer an unlisted venue gets (nothing tells a known person apart)', JSON.stringify(kn.verify.body) === JSON.stringify(fk.verify.body), [kn.verify.body, fk.verify.body]);
+  check('word for word the same answer every held sign-up gets, Dean\'s words (nothing tells which reason)', JSON.stringify(kn.verify.body) === JSON.stringify(hk.verify.body) && kn.verify.body.message === 'Thanks, we\'ll check your venue and get you set up, usually within a business day.', [kn.verify.body, hk.verify.body]);
   var kt = tickets().slice(tk3)[0] || {};
   check('one HQ ticket saying why: the mobile already signs in', tickets().length === tk3 + 1 && /mobile already signs in/.test(kt.message || '') && /one free month per mobile and per email/.test(kt.message || ''), kt.message);
   check('the sign-up waits as held_known', DB.vp_signup_starts.filter(function (r) { return r.id === kn.id; })[0].outcome === 'held_known');
@@ -298,7 +330,7 @@ async function moreSections() {
   var both = [await p1, await p2];
   check('a double tap on the code makes ONE account', snapshot().f === s5.f + 1 && both.filter(function (x) { return x.body.outcome === 'made'; }).length === 1, both.map(function (x) { return x.body.outcome; }));
   var tkd = tickets().length;
-  var h1 = await call('/start/begin', five({ venue: 'Nowhere Arms', mobile: '0412 777 002', email: 'dblh@pub.example' }), NET());
+  var h1 = await call('/start/begin', five({ venue: 'Nowhere Arms', mobile: '0412 777 002', email: 'twice@pub.example' }), NET());   // an email already made: held
   var hcode = lastCode();
   var hp1 = call('/start/verify', { start_id: h1.body.start_id, code: hcode }, NET());
   var hp2 = call('/start/verify', { start_id: h1.body.start_id, code: hcode }, NET());
@@ -313,7 +345,8 @@ async function moreSections() {
   check('the account list will not answer: nothing made (sbPriorAccounts strict)', fb.verify.status === 503 && same(snapshot(), s6), fb.verify);
   FAIL['vp_licensed_venues:GET'] = 1;
   var fc = await start({ venue: 'Grand Hotel', mobile: '0412 777 005', email: 'fc@pub.example' });
-  check('the licensed list will not answer: held for HQ, never made', fc.verify.body.outcome === 'held' && same(snapshot(), s6), fc.verify.body);
+  var fcRow = DB.vp_signup_starts.filter(function (r) { return r.id === fc.id; })[0] || {};
+  check('the licensed list will not answer: made, and flagged for HQ to check (the list is a signal only)', fc.verify.body.outcome === 'made' && !fcRow.licensed_match && !fcRow.decided_at, fc.verify.body);
 
   section('11b. The network limit and the email box');
   world(); listed();
@@ -328,8 +361,9 @@ async function moreSections() {
   await start({ venue: 'The Grand Hotel' });
   await start({ venue: 'Royal Hotel', postcode: '4000', email: 'sam.second@x.example' });
   var un = await start({ venue: 'Nowhere Inn', mobile: '0412 222 333', email: 'n@w.example' });
-  await call('/admin/signup-start/decide', { start_id: un.id, decision: 'approve' }, AS(ADMIN));
-  check('three paths ran: made, held for a known mobile, held then approved by HQ', count('venueplay_founding') === 2, count('venueplay_founding'));
+  var hq = await start({ venue: 'Held Then Approved', mobile: '0412 222 333', email: 'fresh@w.example' });   // a known mobile: held
+  await call('/admin/signup-start/decide', { start_id: hq.id, decision: 'approve' }, AS(ADMIN));
+  check('four paths ran: listed, held for a known mobile, unlisted and flagged, held then approved by HQ', count('venueplay_founding') === 3 && un.verify.body.outcome === 'made' && hq.verify.body.outcome === 'held', count('venueplay_founding'));
   check('no game session was made by any sign-up path', count('vp_sessions') === 0, count('vp_sessions'));
   check('Stripe was never called: no customer, no subscription, no invoice item', stripeCalls.length === 0, stripeCalls);
   check('every account has no Stripe ids', DB.venueplay_founding.every(function (f) { return !f.stripe_customer_id && !f.stripe_subscription_id; }), DB.venueplay_founding);

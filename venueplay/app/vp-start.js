@@ -1,13 +1,14 @@
 /* THE NO-CARD START ON THE OFFER PAGE (Dean, 5 Nov 2026; INBOX 80B, 81, 93, 96, as changed by 97).
 
-   "Have a play for free": five boxes (venue, postcode, your name, mobile, email), a 6-digit code texted to
+   "Have a play for free": five boxes (venue, postcode, your name, mobile, email) and pub or club (Dean, 6 Nov 2026:
+   asked here so a club has bingo, raffles and members draws open without HQ), a 6-digit code texted to
    the mobile, then one of two screens:
-     made   "Your trivia night is ready." / "Your venue is set up with sample nights to try it." /
+     made   (a venue name and a postcode are enough, Dean 6 Nov 2026; one not on our licensed list is flagged for HQ)
+            "Your trivia night is ready." / "Your venue is set up with sample nights to try it." /
             "Your first month starts now." then "To see it on your TV, go to venueplay.com.au/tv and type
             this code: ABC123", a slot for the try-it demo (JOB B1, fix/try-demo-10nov) and a way in.
      held   "Thanks, we'll check your venue and get you set up, usually within a business day."
-            (not on our licensed venues list, or the mobile or email is already on venueplay; the page
-            cannot tell which, on purpose).
+            (the mobile or email is already on venueplay: one free month per mobile and per email).
    The billing Worker decides everything (POST /start/begin, /start/verify, /start/resend); this file only
    draws it. Nothing is made before the code passes, and nothing here is ever billed.
 
@@ -33,7 +34,7 @@
   var doc = root.document;
   var API = root.VP_START_API || "https://api.venueplay.com.au";
   var WORDS = {
-    held: "Thanks, we’ll check your venue and get you set up, usually within a business day.",
+    held: "Thanks, we'll check your venue and get you set up, usually within a business day.",   // the Worker's words, character for character
     blip: "We couldn’t reach venueplay just then. Check your connection and press the button again.",
     resent: "We’ve sent a new code. It can take a minute to arrive.",
     six: "Type the 6 numbers from the text."
@@ -84,7 +85,8 @@
 
   /* ---- step 1: the five boxes ---- */
   function details() {
-    return { venue: val("st-venue"), postcode: val("st-postcode"), name: val("st-name"), mobile: val("st-mobile"), email: val("st-email") };
+    var k = doc.querySelector('#st-form input[name="venue-kind"]:checked');
+    return { venue: val("st-venue"), postcode: val("st-postcode"), kind: k ? k.value : "", name: val("st-name"), mobile: val("st-mobile"), email: val("st-email") };
   }
   function begin(ev) {
     if (ev) ev.preventDefault();
@@ -92,16 +94,17 @@
     err("st-err", "");
     var d = details(), btn = $("st-go");
     var miss = !d.venue ? ["st-venue", "Enter your venue’s name."] : !/^\d{4}$/.test(d.postcode) ? ["st-postcode", "Enter your venue’s 4-digit postcode."]
+      : !d.kind ? ["st-kind-pub", "Choose pub or club."]
       : !d.name ? ["st-name", "Enter your name."] : !d.mobile ? ["st-mobile", "Enter your mobile. We text your code to it."]
       : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) ? ["st-email", "Enter your email."] : null;
     if (miss) { err("st-err", miss[1]); var m = $(miss[0]); if (m) m.focus(); return; }
-    var body = { venue: d.venue, postcode: d.postcode, name: d.name, mobile: d.mobile, email: d.email,
+    var body = { venue: d.venue, postcode: d.postcode, kind: d.kind, name: d.name, mobile: d.mobile, email: d.email,
       website: val("st-website"), turnstile: tsToken() };
     busy(btn, true, "Sending your code…");
     post("/start/begin", body).then(function (j) {
       busy(btn, false, "Have a play for free");
       if (j.ok && j.start_id) {
-        S.id = j.start_id; S.mobile = d.mobile;
+        S.id = j.start_id; S.mobile = d.mobile; S.kind = d.kind;
         var end = $("st-end"); if (end) end.textContent = String(d.mobile).replace(/\D/g, "").slice(-3);
         clearCode(); show("st-code");
         var c = $("st-c1"); if (c) c.focus();
@@ -109,7 +112,7 @@
       }
       if (j.off && typeof root.VPFreeAccountEnquiry === "function") { root.VPFreeAccountEnquiry(d); return; }
       err("st-err", j.error || WORDS.blip);
-      if (j.field) { var f = $("st-" + j.field); if (f) f.focus(); }
+      if (j.field) { var f = $(j.field === "kind" ? "st-kind-pub" : "st-" + j.field); if (f) f.focus(); }
       try { if (S.ts && S.tsId != null) S.ts.reset(S.tsId); } catch (e) {}
     }, function () { busy(btn, false, "Have a play for free"); err("st-err", WORDS.blip); });
   }
@@ -153,7 +156,7 @@
     err("st-cerr", "");
     var btn = $("st-check");
     busy(btn, true, "Checking…");
-    post("/start/verify", { start_id: S.id, code: c }).then(function (j) {
+    post("/start/verify", { start_id: S.id, code: c, kind: S.kind }).then(function (j) {
       busy(btn, false, "Check my code");
       if (j.ok && j.outcome === "made") return done(j);
       if (j.ok) { var h = $("st-held-words"); if (h) h.textContent = j.message || WORDS.held; show("st-held"); return; }
@@ -190,5 +193,9 @@
   }
 
   root.VPStart = { mount: mount, done: null, _state: S };
-  if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", mount); else mount();
+  /* AT ONCE: the page loads this script straight after the two forms, and the rest of the page (Stripe's script among it)
+     can hold DOMContentLoaded back for seconds. A press in that time must never submit the form the browser's way, which
+     would reload the page with their details in the address. (Each form also says onsubmit="return false" for the same
+     reason, before this file has loaded.) */
+  if ($("st-form") && $("st-code")) mount(); else doc.addEventListener("DOMContentLoaded", mount);
 })(this);

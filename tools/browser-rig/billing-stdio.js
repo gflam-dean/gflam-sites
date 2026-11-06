@@ -80,6 +80,12 @@ globalThis.fetch = function (url, opts) {
     TEXTS.push(JSON.parse(opts.body));
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } });
   }
+  /* Every new venue gets its join code from the database (migration 91's trigger); the TV code on the start's done screen
+     reads it. The rig's database has no trigger, so it is given here, the same shape. */
+  if (m === 'POST' && /\/rest\/v1\/vp_venues$/.test(u)) {
+    var vb0 = JSON.parse(opts.body);
+    if (vb0 && !Array.isArray(vb0) && !vb0.join_code) { vb0.join_code = 'RG' + ('0000' + (tbl('vp_venues').length + 1)).slice(-4); opts = Object.assign({}, opts, { body: JSON.stringify(vb0) }); }
+  }
   if (/\/rest\/v1\/vp_signup_starts\?/.test(u) && m === 'PATCH' && /return=representation/.test(((opts && opts.headers) || {}).Prefer || '')) {
     var sq = parseQ(u.split('?')[1] || ''), sset = JSON.parse(opts.body), sgot = [];
     tbl('vp_signup_starts').forEach(function (r) { if (match(r, sq)) { for (var k in sset) r[k] = sset[k]; sgot.push({ id: r.id }); } });

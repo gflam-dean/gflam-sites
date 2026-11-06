@@ -30,7 +30,7 @@ ap.add_argument('--shots', default='')
 A = ap.parse_args()
 
 PASS, FAIL = [0], [0]
-HELD = 'Thanks, we’ll check your venue and get you set up, usually within a business day.'
+HELD = "Thanks, we'll check your venue and get you set up, usually within a business day."   # Dean's words, as the Worker says them
 DONE = ['Your trivia night is ready.', 'Your venue is set up with sample nights to try it.', 'Your first month starts now.']
 
 
@@ -55,10 +55,12 @@ HERO = ('(function(){var a=[].map.call(document.querySelectorAll("#top .hero-cta
         'return a;})()')
 
 
-def fill(sid, venue, postcode, name, mobile, email):
+def fill(sid, venue, postcode, name, mobile, email, kind='pub'):
     S.js(sid, '(function(){function v(i,x){var e=document.getElementById(i);e.value=x;e.dispatchEvent(new Event("input",{bubbles:true}));}'
               'v("st-venue",%r);v("st-postcode",%r);v("st-name",%r);v("st-mobile",%r);v("st-email",%r);'
-              'document.getElementById("st-go").click();return true;})()' % (venue, postcode, name, mobile, email))
+              '%s'
+              'document.getElementById("st-go").click();return true;})()' % (venue, postcode, name, mobile, email,
+                  ('document.getElementById("st-kind-%s").click();' % kind) if kind else ''))
 
 
 def type_code(sid, code, paste=False):
@@ -95,7 +97,7 @@ try:
     print('THE ADDRESS IS THE REAL ONE')
     ok('/offer-nov is served from nsw.html', S.rewrites().get('/offer-nov') == '/nsw', S.rewrites().get('/offer-nov'))
 
-    for w, h, mobile, n in ((390, 844, True, 1), (1280, 900, False, 2)):
+    for w, h, mobile, n, VEN, PC, ST in ((390, 844, True, 1, 'Kirra Beach Hotel', '4225', 'QLD'), (1280, 900, False, 2, 'The Railway Hotel', '2000', 'NSW')):
         where = '%dpx' % w
         print('\n/offer-nov AT %s: A BRAND-NEW VENUE ON OUR LICENSED LIST' % where)
         tid, sid = S.open('/offer-nov', w, h, mobile=mobile)
@@ -117,13 +119,23 @@ try:
            f.get('goSubmit') and f.get('ckSubmit') and f.get('go') == 'Have a play for free', f)
         ok('%s: no terms tick box, the line instead, word for word' % where,
            f.get('ticks') == 0 and re.sub(r'\s+', ' ', f.get('legal', '')).strip() == 'By starting you agree to the Terms and Conditions and Privacy Policy.', f.get('legal'))
-        ok('%s: Email is labelled just "Email" with the helper "Your account emails come here"; no pub or club question' % where,
-           'Email Your account emails come here' in (f.get('labels') or []) and not any(re.search(r'pub|club', l, re.I) for l in f.get('labels') or []), f.get('labels'))
+        ok('%s: Email is labelled just "Email" with the helper "Your account emails come here"' % where,
+           'Email Your account emails come here' in (f.get('labels') or []), f.get('labels'))
+        k = S.json(sid, '(function(){var r=[].map.call(document.querySelectorAll("#st-form input[name=venue-kind]"),function(e){var b=e.parentNode.getBoundingClientRect();'
+                        'return {v:e.value,c:e.checked,req:e.required,f:e.form&&e.form.id,t:e.parentNode.textContent.trim(),h:Math.round(b.height),l:Math.round(b.left),r:Math.round(b.right)};});'
+                        'return {r:r,vw:document.documentElement.clientWidth,lbl:(document.getElementById("st-kind-lbl")||{}).textContent};})()', {})
+        kr = k.get('r') or []
+        ok('%s: PUB OR CLUB: one honest two-way choice in the form, nothing preselected, required, at least 44px tall, inside the screen' % where,
+           [x['v'] for x in kr] == ['pub', 'club'] and [x['t'] for x in kr] == ['Pub', 'Club'] and not any(x['c'] for x in kr) and kr[0]['req']
+           and all(x['f'] == 'st-form' and x['h'] >= 44 and x['l'] >= 0 and x['r'] <= k.get('vw', 0) for x in kr) and k.get('lbl') == 'Is it a pub or a club?', k)
+        S.js(sid, '(function(){function v(i,x){document.getElementById(i).value=x;}v("st-venue","X Hotel");v("st-postcode","4225");v("st-name","N");v("st-mobile","0412 000 000");v("st-email","n@x.example");document.getElementById("st-go").click();return true;})()')
+        nk = S.until(sid, 'document.getElementById("st-err").textContent', 5)
+        ok('%s: pressing on without choosing says "Choose pub or club." and sends nothing' % where, nk == 'Choose pub or club.' and not [c for c in S.W.calls if c[0] == '/start/begin' and (c[1] or {}).get('venue') == 'X Hotel'], nk)
         S.js(sid, 'document.querySelector("#top .hero-cta a").click(); true')
         before = len(S.W.table('venueplay_founding'))
         mob = '0412 555 00%d' % n
         e164 = '+6141255500%d' % n
-        fill(sid, 'Kirra Beach Hotel', '4225', 'Kim Offer', mob, 'kim%d@kirrabeachhotel.com.au' % n)
+        fill(sid, VEN, PC, 'Kim Offer', mob, 'kim%d@venue%d.com.au' % (n, n), kind=('pub' if n == 1 else 'club'))
         S.until(sid, '!document.getElementById("st-code").hidden', 15)
         shot(sid, 'start-code-%s.png' % where)
         end = S.js(sid, 'document.getElementById("st-end").textContent')
@@ -153,19 +165,31 @@ try:
         S.close_tab(tid)
 
     print('\nTHE ACCOUNT IS THE PROSPECT ACCOUNT, AND NOTHING IS BILLED')
-    made = [v for v in S.W.table('vp_venues') if v.get('name') == 'Kirra Beach Hotel']
-    ok('two venues made, each at 10 players, QLD from the postcode, a pub until they say otherwise',
-       len(made) == 2 and all(v.get('max_players') == 10 and v.get('au_state') == 'QLD' and v.get('entity_type') == 'for_profit' for v in made),
+    made = [v for v in S.W.table('vp_venues') if (v.get('name'), v.get('postcode')) in (('Kirra Beach Hotel', '4225'), ('The Railway Hotel', '2000'))]
+    ok('two venues made, each at 10 players, the state from the postcode, and pub or club as they chose (Kirra a pub, the Railway a club)',
+       len(made) == 2 and all(v.get('max_players') == 10 for v in made) and sorted((v.get('au_state'), v.get('entity_type')) for v in made) == [('NSW', 'non_profit'), ('QLD', 'for_profit')],
        [(v.get('max_players'), v.get('au_state'), v.get('entity_type')) for v in made])
     ok('Stripe was never called, and no game session was opened', not S.W.stripe() and not S.W.table('vp_sessions'), (S.W.stripe(), S.W.table('vp_sessions')))
     ok('HQ > Prospects will list them as self sign-ups', sum(1 for p in S.W.table('vp_prospects') if p.get('source') == 'self') == 2,
        [p.get('source') for p in S.W.table('vp_prospects')])
 
-    print('\nA FAKE NAME: HELD FOR HQ, THEN APPROVED IN ONE TAP')
+    print('\nA FAKE NAME WITH A REAL POSTCODE: MADE STRAIGHT AWAY, FLAGGED FOR HQ (Dean, 6 Nov 2026)')
     tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
     S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
     nf = len(S.W.table('venueplay_founding'))
     fill(sid, 'Totally Made Up Tavern', '4225', 'Pat Faker', '0412 555 009', 'pat@madeup.example')
+    S.until(sid, '!document.getElementById("st-code").hidden', 15)
+    type_code(sid, last_code('+61412555009'))
+    S.until(sid, '!document.getElementById("st-done").hidden', 20)
+    ok('the account is made straight away and the done screen shows', len(S.W.table('venueplay_founding')) == nf + 1 and
+       S.json(sid, '[].map.call(document.querySelectorAll("#st-done .st-h,#st-done .st-p"),function(x){return x.textContent.trim();})', []) == DONE)
+    S.close_tab(tid)
+
+    print('\nA MOBILE ALREADY ON VENUEPLAY, WITH A NEW EMAIL: HELD, DEAN\'S WORDS')
+    tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
+    S.until(sid, '!!window.VPStart && !!document.getElementById("st-go")', 20)
+    nf = len(S.W.table('venueplay_founding'))
+    fill(sid, 'Second Venue Hotel', '4225', 'Pat Faker', '0412 555 009', 'pat.second@madeup.example', kind='club')
     S.until(sid, '!document.getElementById("st-code").hidden', 15)
     type_code(sid, last_code('+61412555009'))
     S.until(sid, '!document.getElementById("st-held").hidden', 20)
@@ -174,6 +198,8 @@ try:
     ok('the page says Dean\'s words, word for word', words == HELD, words)
     ok('no account and no free month were made', len(S.W.table('venueplay_founding')) == nf, len(S.W.table('venueplay_founding')) - nf)
     S.close_tab(tid)
+
+    print('\nHQ > PROSPECTS: SIGN-UPS TO CHECK, ONE TAP EACH')
     tid, sid = S.B.open_tab('about:blank')
     S.B.call('Page.enable', {}, session=sid)
     S.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': 'window.VP_PROSPECTS_API="/__api";'}, session=sid)
@@ -181,16 +207,21 @@ try:
     S.B.call('Page.navigate', {'url': S.base + '/app/hq.html?as=admin'}, session=sid)
     S.until(sid, '!!document.querySelector("#prTab:not([hidden])")', 25)
     S.js(sid, 'document.getElementById("prTab").click(); true')
-    S.until(sid, '!!document.querySelector("#prHeld [data-st-approve]")', 20)
+    S.until(sid, '!!document.querySelector("#prHeld [data-st-approve]") && !!document.querySelector("#prHeld [data-st-checked]")', 20)
     shot(sid, 'hq-signups-to-check.png')
     row = S.js(sid, 'document.getElementById("prHeld").textContent.replace(/\\s+/g," ")') or ''
-    ok('HQ > Prospects shows it under Sign-ups to check, with what they typed and why', 'Totally Made Up Tavern' in row and 'pat@madeup.example' in row
-       and 'Not on our licensed venues list' in row, row[:300])
+    ok('the made account not on our list is there, saying so, with a Checked button', 'Totally Made Up Tavern' in row and 'Not on our licensed venues list, check' in row, row[:400])
+    ok('the held one is there with what they typed and why', 'Second Venue Hotel' in row and 'pat.second@madeup.example' in row and 'Already on venueplay' in row, row[:400])
+    S.js(sid, 'document.querySelector("#prHeld [data-st-checked]").click(); true')
+    S.until(sid, '!document.querySelector("#prHeld [data-st-checked]")', 20)
+    ok('Checked takes the made one off the list and makes nothing', 'Totally Made Up Tavern' not in (S.js(sid, 'document.getElementById("prBody").textContent') or '').split('Prospects')[0]
+       and len(S.W.table('venueplay_founding')) == nf, len(S.W.table('venueplay_founding')) - nf)
     S.js(sid, 'document.querySelector("#prHeld [data-st-approve]").click(); true')
     S.until(sid, '!document.querySelector("#prHeld [data-st-approve]")', 20)
-    ok('Approve makes the normal account, and the row goes', len(S.W.table('venueplay_founding')) == nf + 1 and
-       any(v.get('name') == 'Totally Made Up Tavern' for v in S.W.table('vp_venues')), len(S.W.table('venueplay_founding')) - nf)
-    ok('and the welcome is sent to them', any('pat@madeup.example' in str(m.get('to')) for m in S.W.sent()), [m.get('to') for m in S.W.sent()][-3:])
+    hv = [v for v in S.W.table('vp_venues') if v.get('name') == 'Second Venue Hotel']
+    ok('Approve makes the normal account, as the club they chose, and the row goes', len(S.W.table('venueplay_founding')) == nf + 1 and
+       len(hv) == 1 and hv[0].get('entity_type') == 'non_profit', [(v.get('name'), v.get('entity_type')) for v in hv])
+    ok('and the welcome is sent to them', any('pat.second@madeup.example' in str(m.get('to')) for m in S.W.sent()), [m.get('to') for m in S.W.sent()][-3:])
     S.close_tab(tid)
 
     print('\nNOT SWITCHED ON YET: THE BOXES HAND OVER TO TALK TO US (FRIDAY\'S STOPGAP)')
@@ -218,7 +249,7 @@ ok('the home page has no start form (no offers on the home page)', 'id="st-form"
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 39
+EXPECTED = 46
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

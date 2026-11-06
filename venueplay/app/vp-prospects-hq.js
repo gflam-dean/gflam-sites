@@ -207,22 +207,25 @@
       (d.free_month_ready === false ? " Free months are not recorded until migration 127 is run." : "") +
       (d.signed_up ? " " + prEsc(d.signed_up) + " earlier prospect" + (d.signed_up === 1 ? " has" : "s have") + " signed up." : "") + "</div>";
   }
-  /* SIGN-UPS TO CHECK (Dean, 5 Nov 2026, INBOX 81): a no-card start from the offer page that was NOT made straight
-     away, because the venue is not on our licensed venues list at that postcode, or the mobile or email is already on
-     venueplay (one free month per mobile and per email). The text code to their mobile has passed. Approve makes the
+  /* SIGN-UPS TO CHECK (Dean, 5 and 6 Nov 2026, INBOX 81): from the offer page's no-card start. An account made for a
+     venue NOT on our licensed list (a name and a postcode are enough for now) waits here until HQ taps Checked; a start
+     held because the mobile or email is already on venueplay (one free month per mobile and per email) waits for
+     Approve or Refuse. The text code to their mobile has passed. Approve makes the
      normal prospect account (10 players, no card) and sends the normal welcome; Refuse makes nothing. One tap each,
      owner or accounts only (POST /admin/signup-starts, /admin/signup-start/decide). Each also has a help desk ticket. */
   function heldHtml(h) {
     if (!h || !h.length) return "";
     return '<div class="panel pad prheld" id="prHeld"><div class="lblk" style="margin:0 0 6px">Sign-ups to check <span class="mono">' + h.length + "</span></div>" +
-      '<div class="note" style="margin:0 0 10px">From "Have a play for free" on the offer page. Their mobile is proven by the text code. Nothing has been made and no free month has started. Approve makes the normal account and sends the welcome.</div>' +
+      '<div class="note" style="margin:0 0 10px">From "Have a play for free" on the offer page. Their mobile is proven by the text code. A venue not on our licensed list already has its account: look it over and tap Checked. A held one (its mobile or email is already on venueplay) has nothing made yet: Approve makes the normal account and sends the welcome.</div>' +
       h.map(function (r) {
         return '<div class="prheldrow"><div class="prname">' + prEsc(r.venue_name) + ' <span class="mono">' + prEsc(r.postcode) + (r.au_state ? " " + prEsc(r.au_state) : "") + "</span>" +
           '<span class="prsub">' + prEsc(r.contact_name) + ", " + prEsc(r.email) + ", " + prEsc(r.mobile) + " &middot; " + prEsc(when(r.created_at, true)) +
           (r.ticket_no ? " &middot; ticket #" + prEsc(r.ticket_no) : "") + "</span>" +
           '<span class="prwhy">' + prEsc(r.why) + "</span></div>" +
-          '<div class="practs" style="margin-top:6px"><button class="btn sp" type="button" data-st-approve="' + prEsc(r.id) + '">Approve</button>' +
-          '<button class="btn ghost sp" type="button" data-st-refuse="' + prEsc(r.id) + '">Refuse</button></div></div>';
+          (r.made
+            ? '<div class="practs" style="margin-top:6px"><button class="btn ghost sp" type="button" data-st-checked="' + prEsc(r.id) + '">Checked</button></div></div>'
+            : '<div class="practs" style="margin-top:6px"><button class="btn sp" type="button" data-st-approve="' + prEsc(r.id) + '">Approve</button>' +
+              '<button class="btn ghost sp" type="button" data-st-refuse="' + prEsc(r.id) + '">Refuse</button></div></div>');
       }).join("") + "</div>";
   }
   /* Everyone the tab can show: the prospects (the Worker's order, who to ring first), then Card added. */
@@ -388,10 +391,12 @@
     });
   }
   function decide(t) {
-    var yes = t.hasAttribute("data-st-approve"), sid = t.getAttribute(yes ? "data-st-approve" : "data-st-refuse");
-    t.disabled = true; t.textContent = yes ? "Approving..." : "Refusing...";
-    post("/admin/signup-start/decide", { start_id: sid, decision: yes ? "approve" : "refuse" }).then(function (j) {
-      if (j.error) { t.disabled = false; t.textContent = yes ? "Approve" : "Refuse"; if (root.vpTell) root.vpTell(j.error); else t.title = j.error; return; }
+    var yes = t.hasAttribute("data-st-approve"), chk = t.hasAttribute("data-st-checked");
+    var sid = t.getAttribute(yes ? "data-st-approve" : chk ? "data-st-checked" : "data-st-refuse");
+    var label = yes ? "Approve" : chk ? "Checked" : "Refuse";
+    t.disabled = true; t.textContent = yes ? "Approving..." : chk ? "Saving..." : "Refusing...";
+    post("/admin/signup-start/decide", { start_id: sid, decision: yes ? "approve" : chk ? "checked" : "refuse" }).then(function (j) {
+      if (j.error) { t.disabled = false; t.textContent = label; if (root.vpTell) root.vpTell(j.error); else t.title = j.error; return; }
       S.loading = false;
       load().then(function () {
         if (yes && root.vpTell) root.vpTell("Approved. The account is made" + (j.welcome_sent ? " and the welcome is on its way." : ".") +
@@ -405,7 +410,7 @@
     if (t.hasAttribute("data-pr-edit")) { S.editing = t.getAttribute("data-pr-edit"); S.open = null; draw(); if ($("prEdName")) $("prEdName").focus(); return; }
     if (t.hasAttribute("data-pr-edit-close")) { S.editing = null; draw(); return; }
     if (t.hasAttribute("data-pr-edit-save")) { editSave(t); return; }
-    if (t.hasAttribute("data-st-approve") || t.hasAttribute("data-st-refuse")) { decide(t); return; }
+    if (t.hasAttribute("data-st-approve") || t.hasAttribute("data-st-refuse") || t.hasAttribute("data-st-checked")) { decide(t); return; }
     if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); S.editing = null; draw(); if ($("prNote")) $("prNote").focus(); return; }
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
     // View as: hq.html's own viewAs (window.hqViewAs), the one the Venues row calls. Never a second copy here.

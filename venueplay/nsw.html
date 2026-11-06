@@ -324,6 +324,15 @@
   .st-step[hidden]{display:none}
   .st-help{font-family:'Manrope',sans-serif;font-size:var(--fs-xs);color:var(--muted);text-transform:none;letter-spacing:normal}
   .st-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+  /* Pub or club (Dean, 6 Nov 2026): one honest two-way choice, nothing preselected, the same size as the boxes. */
+  .st-kind-lbl{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .st-kind{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .st-kind-opt{position:relative;display:block;cursor:pointer;margin:0;text-transform:none;letter-spacing:normal;font-family:'Manrope',sans-serif}
+  .st-kind-opt input{position:absolute;opacity:0;width:1px;height:1px}
+  .st-kind-opt span{display:flex;align-items:center;justify-content:center;min-height:52px;border:1px solid var(--line-2);border-radius:11px;background:var(--ink);
+    color:#fff;font-size:var(--fs-base);font-weight:700}
+  .st-kind-opt input:checked + span{border-color:var(--pink);background:rgba(255,31,142,.14);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .st-kind-opt input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
   .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:18px 0 0;text-align:center}
   .st-legal a{color:#fff}
   #st-go,#st-check{width:100%;margin-top:18px;padding:16px;font-size:var(--fs-base)}
@@ -332,16 +341,16 @@
   .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
   /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
   .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
-  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--fs-lg);font-weight:700;
     color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
   .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
   .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
   .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font:inherit;cursor:pointer;min-height:24px}
   .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
-  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:30px;letter-spacing:.14em;color:#fff;margin-top:8px}
+  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xl);letter-spacing:.14em;color:#fff;margin-top:8px}
   #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
   #st-done,#st-held{text-align:center}
-  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px;font-size:24px} }
+  @media (max-width:420px){ .st-boxes{gap:8px} .st-boxes input{height:56px} }
 
   /* ---------- FAQ ---------- */
   .faq{max-width:780px;margin:0 auto}
@@ -679,9 +688,10 @@
 
 
 <!-- ===================== THE NO-CARD START (Dean, 5 Nov 2026; INBOX 80B, 81, 93, 96) =====================
-     Five boxes, a text code, then the account (a venue on our licensed list) or "we'll check your venue" (one that
-     is not, or a mobile or email already on venueplay). The Worker decides; app/vp-start.js draws it. Real forms,
-     every box with name= and autocomplete=, so a phone fills them. No terms tick box: the line above the button. -->
+     Five boxes and pub or club, a text code, then the account (a venue name and a postcode are enough, Dean 6 Nov 2026;
+     one not on our licensed list is flagged for HQ to check), or "we'll check your venue" when the mobile or email is
+     already on venueplay. The Worker decides; app/vp-start.js draws it. Real forms, every box with name= and
+     autocomplete=, so a phone fills them. No terms tick box: the line above the button. -->
 <section class="sec" id="start">
   <div class="wrap">
     <div class="sec-head" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
@@ -691,7 +701,7 @@
     </div>
     <div class="form-shell">
       <div class="inner">
-        <form id="st-form" class="st-step" autocomplete="on" novalidate>
+        <form id="st-form" class="st-step" autocomplete="on" novalidate onsubmit="return false">
           <div class="form-grid">
             <div class="field">
               <label for="st-venue">Venue name</label>
@@ -700,6 +710,13 @@
             <div class="field">
               <label for="st-postcode">Postcode</label>
               <input id="st-postcode" name="postal-code" type="text" placeholder="4000" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]*" maxlength="4" required>
+            </div>
+            <div class="field full">
+              <span class="st-kind-lbl" id="st-kind-lbl">Is it a pub or a club?</span>
+              <div class="st-kind" role="radiogroup" aria-labelledby="st-kind-lbl">
+                <label class="st-kind-opt"><input type="radio" id="st-kind-pub" name="venue-kind" value="pub" required><span>Pub</span></label>
+                <label class="st-kind-opt"><input type="radio" id="st-kind-club" name="venue-kind" value="club"><span>Club</span></label>
+              </div>
             </div>
             <div class="field">
               <label for="st-name">Your name</label>
@@ -721,7 +738,7 @@
           <p class="form-err" id="st-err" role="alert"></p>
         </form>
 
-        <form id="st-code" class="st-step" autocomplete="on" novalidate hidden>
+        <form id="st-code" class="st-step" autocomplete="on" novalidate onsubmit="return false" hidden>
           <h3 class="st-h">Check your phone</h3>
           <p class="st-p">We&rsquo;ve texted a 6-digit code to the mobile ending <b id="st-end"></b>. Type it in below.</p>
           <div class="st-boxes" role="group" aria-label="Your 6-digit code">
@@ -755,7 +772,7 @@
           <div class="success show" style="padding-top:0">
             <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <h3>Thanks</h3>
-            <p id="st-held-words">Thanks, we&rsquo;ll check your venue and get you set up, usually within a business day.</p>
+            <p id="st-held-words">Thanks, we'll check your venue and get you set up, usually within a business day.</p>
           </div>
         </div>
       </div>
