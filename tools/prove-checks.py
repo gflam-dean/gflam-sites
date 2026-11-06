@@ -77,6 +77,31 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # The 5-day grace in the emails, behind OFFER_GRACE_EMAILS (Dean, 6 Nov 2026), branch fix/grace-emails-10nov.
+    ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "function vpaGraceEmailWords(env) { return String((env && env.OFFER_GRACE_EMAILS) || '').trim().toLowerCase() === 'on'; }",
+     'function vpaGraceEmailWords(env) { return true; }',
+     'the emails promise the 5 days before Dean switches it on'),
+    ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     'offer: onOffer && !grace, graceoffer: grace, nooffer: !onOffer });',
+     'offer: onOffer && !grace, graceoffer: false, nooffer: !onOffer });',
+     'switched on, the reminders still say the offer ends with the pause'),
+    ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '  const grace = onOffer && vpaGraceEmailWords(env) && !!o.graceWords;',
+     '  const grace = onOffer && vpaGraceEmailWords(env);',
+     'a reminder with no grace date tells them to add a card by a blank day'),
+    ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "graceWords: isFinite(vpaOfferGraceEnd(p)) ? vpaBneDateWords(vpaOfferGraceEnd(p)) : '',",
+     'graceWords: vpaBneDateWords(endMs),',
+     "the reminder gives the free month's last day as the offer's last day"),
+    ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '    graceoffer: founding && vpaGraceEmailWords(env), offerpause:',
+     '    graceoffer: vpaGraceEmailWords(env), offerpause:',
+     'a venue on the standard rate is told it keeps an offer it never had'),
+    ('test-offer-grace.js', 'venueplay/emails/welcome-prospect.html',
+     '<!--IF:offerpause--> and the offer price goes with it<!--ENDIF:offerpause-->',
+     ' and the offer price goes with it',
+     'switched on, the welcome still says the offer price goes with the pause'),
     # 1 Nov 2026, live test night: "Allow early BINGO calls" showed ticked after a mid-game reload.
     ('test-early-bingo-restore.js', 'venueplay/app/index.html',
      '    window.addEventListener("pageshow", syncEarlyBoxes);\n', '',

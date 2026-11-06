@@ -10,7 +10,8 @@
   these emails; the link opens a page that asks first, so a mail scanner never cancels anybody.
   Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
   Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (were they
-  set up on an offer price).
+  set up on an offer price), graceoffer instead of offer when the Worker setting OFFER_GRACE_EMAILS is on (the 5-day
+  offer grace, Dean 6 Nov 2026: they keep the offer for 5 more days after the free month, to {{offer_kept_until}}).
   Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
     {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
@@ -51,6 +52,9 @@
 <!--IF:offer-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. The {{offer_rate}} a player offer you were set up on ends with the pause, so a card added after that is at our price on the day.</p>
 <!--ENDIF:offer-->
+<!--IF:graceoffer-->
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You keep the {{offer_rate}} a player offer for 5 more days after your free month, so add your card by {{offer_kept_until}} to keep it. After that, it&#39;s our standard {{standard_rate}} a player.</p>
+<!--ENDIF:graceoffer-->
 <!--IF:nooffer-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on.</p>
 <!--ENDIF:nooffer-->

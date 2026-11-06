@@ -322,6 +322,37 @@ async function newProspect(name, offerOpen) {
   var got = await walk(BNE_FIRST, MONTH_END, 3600000);
   check('the settled reminders are untouched: day 3, 23 and 29 only, nothing new for the grace',
     got.map(function (g) { return day(g.at); }).join(' ') === '2026-11-05 2026-11-25 2026-12-01', got.map(function (g) { return day(g.at); }));
+  /* 8. THE EMAILS SAY THE GRACE ONLY WHEN DEAN SWITCHES IT ON (6 Nov 2026, OFFER_GRACE_EMAILS on the billing Worker). */
+  var html = function (g) { return String((g && g.msg && g.msg.html) || ''); };
+  var last = got.filter(function (g) { return /ends/.test(g.msg.subject || ''); })[0];
+  check('switch OFF (the default): the day-29 reminder keeps today\'s words (the offer ends with the pause), no 5 days',
+    !!last && /offer you were set up on ends with the pause/.test(html(last)) && !/5 more days/.test(html(last)), last && html(last).slice(0, 200));
+  ENV.OFFER_GRACE_EMAILS = 'on';
+  var G = await newProspect('Grace Words Hotel');
+  var gotG = await walk(BNE_FIRST, MONTH_END, 3600000);
+  var keptWords = vpaBneDateWords(vpaOfferGraceEnd(G.row()));
+  var lastG = gotG.filter(function (g) { return /ends/.test(g.msg.subject || ''); })[0];
+  check('switch ON: every reminder says they keep the $2.50 for 5 more days after the free month, to the grace\'s own last day, then the standard rate',
+    gotG.length === 3 && gotG.every(function (g) { return html(g).indexOf('You keep the $2.50 a player offer for 5 more days after your free month, so add your card by ' + keptWords + ' to keep it. After that, it&#39;s our standard $3.00 a player.') !== -1; }) &&
+    gotG.every(function (g) { return !/ends with the pause/.test(html(g)); }), [keptWords, gotG.length, lastG && html(lastG).slice(0, 200)]);
+  var q = await quote(G, at(4, 12));
+  check('the date in the email is the one the card-link quotes in the grace (one answer, one place)', q.offer_kept_words === keptWords, [q.offer_kept_words, keptWords]);
+  check('switch ON, no date known (no month started): the reminder falls back to today\'s words, never a blank date',
+    /ends with the pause/.test((await vpaRenderProspectReminder(ENV, { kind: 'last', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 2, offerRate: 2.5, cardUrl: 'c', cancelUrl: 'd', graceWords: '' })).html));
+  var std = await vpaRenderProspectReminder(ENV, { kind: 'last', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 2, offerRate: 3, cardUrl: 'c', cancelUrl: 'd', graceWords: 'Mon 7 December' });
+  check('switch ON, set up at the standard rate: no offer and no 5 days mentioned', !/5 more days|offer/.test(std.html.replace(/<!--[\s\S]*?-->/g, '')), std.html.slice(0, 100));
+  var fcWas = ENV.FOUNDING_CODES; ENV.FOUNDING_CODES = 'OFFER-NOV-2099';   // a welcome sent while the offer is open
+  var wOn = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  ENV.OFFER_GRACE_EMAILS = '';
+  var wOff = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  var wStd = await vpaRenderProspectWelcome((ENV.OFFER_GRACE_EMAILS = 'on', ENV.FOUNDING_CODES = '', ENV), { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  ENV.OFFER_GRACE_EMAILS = ''; ENV.FOUNDING_CODES = fcWas;
+  var wh = function (w) { return String((w && w.html) || w || ''); };
+  check('the welcome, switch ON: pauses, then "You keep $2.50 a player for 5 more days after your free month"; never "the offer price goes with it"',
+    /your account simply pauses\. You keep \$2\.50 a player for 5 more days after your free month, so you can still add your card then\./.test(wh(wOn)) && !/goes with it/.test(wh(wOn)), wh(wOn).slice(0, 200));
+  check('the welcome at the standard rate (no offer open): pauses, and no offer or 5 days is mentioned', /your account simply pauses\. If/.test(wh(wStd)) && !/5 more days|goes with it/.test(wh(wStd)), (wh(wStd).match(/simply pauses.{0,80}/) || [''])[0]);
+  check('the welcome, switch OFF: today\'s words, unchanged', /your account simply pauses and the offer price goes with it\. If/.test(wh(wOff)) && !/5 more days/.test(wh(wOff)));
+
   var TERMS = readFile('venueplay/terms.html'), t2 = TERMS.slice(TERMS.indexOf('<h2>2. Offer pricing</h2>'), TERMS.indexOf('<h2>3. Pricing and billing</h2>'));
   check('the Terms (section 2) say it: pauses with no card, 5 days after the free month ends to keep the offer price, to 11:59pm Brisbane, then standard, no em dash, lowercase venueplay',
     /your account pauses/.test(t2) && /you have 5 days after your free month ends to add a card and keep that offer price/.test(t2) && /11:59pm Brisbane time on the fifth day/.test(t2) && /standard rate/.test(t2) && !/[\u2014\u2013]/.test(t2) && !/VenuePlay/.test(t2), t2.slice(0, 300));
