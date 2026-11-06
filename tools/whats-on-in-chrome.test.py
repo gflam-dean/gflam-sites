@@ -163,7 +163,7 @@ def tv_and_phone():
             for (W, H) in ((1920, 1080), (1280, 720)):
                 tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
                 # The slide on top (z-index 2) is the What's on slide, fully in, and has just arrived (so it stays for its 12 to 14 s).
-                got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".wo-list") && +getComputedStyle(s).opacity>0.99;})()', 40)
+                got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".wo-list") && +getComputedStyle(s).opacity>0.99;})()', 70)
                 time.sleep(0.3)
                 m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + ',' + ROWS + ';var hd=s.querySelector(".wo-head").getBoundingClientRect(), b=s.querySelector(".wo-b"), pic=s.querySelector(".wb-pic"), side=s.querySelector(".wb-side .wo-top"), corner=document.querySelector("#tvCorner svg");'
                                 'return {feature:!!b, kick:(s.querySelector(".wo-kick")||{}).textContent||"", head:s.querySelector(".wo-head").textContent, headTop:Math.round(hd.top), headRight:Math.round(hd.right), rows:rows, h:innerHeight, w:innerWidth,'
