@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 19:33 · 932c7885';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 19:36 · daff522d';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -284,7 +284,7 @@ async function noteLobbyFormat(env, sessionId, format) {
    as a close does) and opens a fresh one. Only those two formats: a bingo night can be broadcast
    only for hours with no game row, and must never be judged by this. Cheap by construction: a
    session younger than the window costs no read at all. Cannot tell (a read fails) = live. */
-const ABANDONED_LOBBY_MS = 3 * 3600 * 1000;
+const ABANDONED_LOBBY_MS = 30 * 60 * 1000;   // 30 minutes with no game (Dean, 6 Nov 2026, 13:10; it was 3 hours)
 async function sessionAbandoned(env, s) {
   try {
     if (!s || !s.id) return false;

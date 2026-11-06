@@ -73,15 +73,15 @@ print('\n== 2. the played strip: the last five, "+N", and a dashed slot for the 
   var tiles = $('tvBoard').children;
   show('fourteen played: the last five on the strip, oldest first', tiles.length === 5 && tiles[0].textContent === 'Song 10 title' && tiles[4].textContent === 'Song 14 title', tiles.map(function (t) { return t.textContent; }).join('|'));
   show('the current song is the one outlined (class "new")', tiles[4].className === 'ptok new' && tiles[3].className === 'ptok');
-  show('"+9" for the nine before them', $('tvBoardMore').textContent === '+9' && !$('tvBoardMore').classList.contains('hidden'));
+  show('no "+9" chip: the only count on the wall is the one bottom left (Dean, 6 Nov 13:10)', $('tvBoardMore').classList.contains('hidden') && $('tvBoardMore').textContent === '');
   show('"14 songs played" bottom left (6 Nov: it said "Song 14", which read as the dashed "Song 15" twice)', $('tvSongNo').textContent === '14 songs played');
   show('artwork on a tile only from the library\'s https or this site, never another kind of address', tiles[4]._imgs === 1 && tiles[3]._imgs === 0);
   show('no dashed slot while nothing is held back', $('tvBoardNext').classList.contains('hidden'));
   state.played = songs.concat(['Mystery']); api.draw({ title: 'Mystery' });
   tiles = $('tvBoard').children;
-  show('song 15 held back: four played, then a dashed "Song 15"', tiles.length === 4 && tiles[3].textContent === 'Song 14 title' && $('tvBoardNext').textContent === 'Song 15' && !$('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
+  show('song 15 held back: four played, then a dashed "Up now" with no number', tiles.length === 4 && tiles[3].textContent === 'Song 14 title' && $('tvBoardNext').textContent === 'Up now' && !$('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
   show('while held, no tile is outlined as current, and the song is not named on the strip', tiles.every(function (t) { return t.className === 'ptok' && t.textContent !== 'Mystery'; }));
-  show('and the left says 14 songs played (the held one is not counted yet), "+10" for the ten before the four', $('tvSongNo').textContent === '14 songs played' && $('tvBoardMore').textContent === '+10', [$('tvSongNo').textContent, $('tvBoardMore').textContent]);
+  show('and the left says 14 songs played (the held one is not counted yet), and no other number', $('tvSongNo').textContent === '14 songs played' && $('tvBoardMore').classList.contains('hidden'), [$('tvSongNo').textContent, $('tvBoardMore').textContent]);
   state.played = ['A']; api.draw(null);
   show('one song: no "+0" chip', $('tvBoardMore').classList.contains('hidden') && $('tvBoard').children.length === 1);
   state.played = []; api.draw(null);

@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the shared phone frame: option 5 header, join screens, menu sheet, the venue's ad (4 Nov 2026) -->
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the trivia and bingo phones (6 Nov 2026) -->   <!-- the shared phone frame: option 5 header, join screens, menu sheet, the venue's ad (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -310,13 +311,16 @@
 
   <!-- WAIT: you're in. The one lobby line every game uses (Dean, 3 Nov 2026 late), then the venue's ad below -->
   <div class="view hidden" id="vWait">
-    <div class="vp-in">
+    <div class="vp-in" id="waitIn">
       <div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="vp-h">You&#39;re in</div>
       <div class="vp-name" id="waitName">Player</div>
       <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div></div>
       <p class="vp-wait">The game will start here when the host is ready.</p>
     </div>
+    <!-- Dean's round 5 pick (6 Nov 2026): "You're in, <name>", Tonight and This week here, drawn by /app/vp-tonight.js
+         (shared with the trivia phone). The block above is what shows without it. -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- CARD -->
@@ -369,6 +373,7 @@
       <label class="menuitem"><span>Mark songs for me</span><input type="checkbox" class="vp-sw" id="assistChk"></label>
       <button type="button" class="menuitem fs" id="fsBtn"><span>Full screen</span><input type="checkbox" class="vp-sw" id="fsChk" tabindex="-1" aria-hidden="true"></button>
       <label class="menuitem"><span>Light screen</span><input type="checkbox" class="vp-sw" id="lightChk"></label>
+      <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -407,7 +412,8 @@
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
-<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
+<script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-tonight.js"></script>   <!-- the waiting screen, shared with the trivia phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -460,6 +466,22 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function deadToken(e, path){
     if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
     throw e;
+  }
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026), the same as the trivia phone: /join/list with this phone's
+     token, only where the venue collects the offers tick and a way to reach them, only once in, gone once on the list. */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
+  function setOnList(){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} paintListItem(); }
+  function listSend(email, mobile, optin){
+    var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token;
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email||"", mobile:mobile||"", marketing_optin:optin===true,
+      consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
+      .then(readApi).then(function(r){ if(optin===true && r && r.stored) setOnList(); return r; });
+  }
+  function paintListItem(){
+    var b=$("vpListItem"); if(!b) return;
+    var c=P.collect||{};
+    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
+    VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
   }
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
   function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
@@ -597,7 +619,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   /* THE SCREENS THAT CARRY THE VENUE'S AD (Dean, 3 Nov 2026 late): the lobby and after the game, in one place. */
   var AD_VIEWS={ vWait:1, vLost:1, vWon:1 };
   function frame(which){
-    paintRow2(!!P.room && (which==="vWait" || which==="vCard" || which==="vJoin"));
+    /* Not on the lobby any more (Dean, 6 Nov 2026, round 7: every lobby has the same layout, no "One line across" pill). */
+    paintRow2(!!P.room && (which==="vCard" || which==="vJoin"));
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", !!AD_VIEWS[which]);   // the compact ad, the same size wherever it shows (one fixed spot), so it and our logo fit
     try{ if(window.VPPhoneAd) VPPhoneAd.show(!!AD_VIEWS[which]); }catch(e){}
   }
   function route(){
@@ -619,7 +643,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cells){ renderCard(); show("vCard"); return; }
-    $("waitName").textContent=P.name; show("vWait");
+    $("waitName").textContent=P.name;
+    /* THE LOBBY, Dean's round 5 pick: drawn by /app/vp-tonight.js when it is loaded; the plain block otherwise. */
+    var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(tn && inb && typeof VPTonight==="object");
+    if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
+    if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; loadJoinInfo(); }   // a phone already in never asked: the week and the ad
+    if(useT) VPTonight.lobby(tn, { name:P.name, me:"musical", prize:(P.prize && P.prize!=="the prize") ? P.prize : "", week:P.week, nights:P.nights, games:P.games });
+    show("vWait");
   }
 
   // ---- card render ----
@@ -1003,6 +1033,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
       /* The venue's own TV slides, for its ad on the lobby and after the game (/app/vp-phonead.js). */
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      /* The venue's game week for the This week here strip (/join/info, from the setup answers; nothing when it never gave them). */
+      P.collect=(r&&r.collect)||null; if(r&&r.venue_name) P.venueName=String(r.venue_name); paintListItem();
+      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      if(P.joined && !$("vWait").classList.contains("hidden")) route();
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
@@ -1083,6 +1117,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
+      if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();   // said yes when joining: on the list, no menu row
       send({ t:"join", pid:P.pid, name:P.name, did:deviceId() });   // cosmetic roster on the host + TV
       return fetchCard();
     }).catch(function(e){
@@ -1354,7 +1389,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
   // ---- menu (Easy mode / Light mode / Leave game) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
-  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden"); }); }
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden");
+    if(P.joined && P.collect===undefined && !P.collectAsked){ P.collectAsked=true; loadJoinInfo(); }   // a phone already in: what the venue collects, for "Join {venue}'s list"
+  }); }
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
   /* ONE SHEET FROM THE BOTTOM (Dean, 3 Nov 2026): a tap on the dark round it closes it. Help (put in by /app/vp-help.js)
      goes first, as mocked. */
