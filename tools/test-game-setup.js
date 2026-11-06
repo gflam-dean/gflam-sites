@@ -420,7 +420,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var mrows = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).filter(function (e) { return e.style.display !== 'none'; }).map(function (e) { return e.getAttribute('data-key'); });
   check('members draws: one row each, the name, when it started, the time (the time picker), the starting jackpot ($ before the box, empty), how much it goes up and the most it can reach (Dean, round 7b points 17 and 19)', mrows.slice(0, 6).join() === 'name,date_started,draw_time,starting_amount_cents,increment_cents,max_jackpot_cents' && $(P, 'vpGsIn_draw_time').type === 'time' && $(P, 'vpGsIn_starting_amount_cents').value === '' && $(P, 'vpGsIn_starting_amount_cents').parentNode.children[0].textContent === '$' && mrows.indexOf('over_max') < 0, mrows);
   $(P, 'vpGsIn_max_jackpot_cents').value = '5000'; $(P, 'vpGsIn_max_jackpot_cents').handlers.input.forEach(function (f) { f(); });
-  check('a most amount typed: "what happens to the weekly amount" is asked (kept, another draw, or not added)', walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'over_max'; }).style.display === '' && /Builds another draw/.test(T(P, 'vpGsBody')));
+  check('a most amount typed: "what happens to the weekly amount" is asked (kept, another draw, or not added)', walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'over_max'; }).style.display === '' && /Another draw/.test(T(P, 'vpGsBody')));
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'second'; }).click();
   $(P, 'vpGsIn_max_jackpot_cents').value = ''; $(P, 'vpGsIn_max_jackpot_cents').handlers.input.forEach(function (f) { f(); });
   $(P, 'vpGsIn_date_started').value = '2026-11-13';
@@ -563,7 +563,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'second'; }).click();
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
   var mo = posts('/host/members/settings')[0]; sa = SAVED.length ? SAVED[SAVED.length - 1].patch.setup_answers : {};
-  check('over the most: "builds another draw" is kept in setup_answers for later, never sent to the draw (the draw only knows "kept")', mo && mo.body.max_jackpot_cents === 500000 && !('over_max' in mo.body) && !('__setup' in mo.body) && sa.members_over === 'second', [mo && mo.body, sa.members_over]);
+  check('over the most: "another draw" is kept in setup_answers for later, never sent to the draw (the draw only knows "kept")', mo && mo.body.max_jackpot_cents === 500000 && !('over_max' in mo.body) && !('__setup' in mo.body) && sa.members_over === 'second', [mo && mo.body, sa.members_over]);
   check('then "Do you want to add extras now?", the members list on the Account page', T(P, 'vpGsTitle') === 'Do you want to add extras now?');
   var went = ''; P.deps.go = function (u) { went = u; };
   $(P, 'vpGsExtrasYes').click(); await settle();

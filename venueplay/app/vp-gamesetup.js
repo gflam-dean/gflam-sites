@@ -177,7 +177,7 @@
     P + ".vpgs-rows>.vpgs-row>.vpgs-ctl{grid-area:ctl;margin:2px 0 0;min-width:0}" +
     P + ".vpgs-rows>.vpgs-row>.vpgs-pop{grid-area:pop;margin:6px 0 0}" + P + ".vpgs-rows>.vpgs-row>.vpgs-full{grid-column:1/-1;margin:2px 0 0}" +
     P + ".vpgs-rows>.vpgs-row.cmp{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmp>.vpgs-ctl{margin:0}" +
-    P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:84px;flex:none}" + P + ".vpgs-row.cmp .vpgs-unit{min-width:0}" + P + ".vpgs-row.cmp input[type=time]{width:130px}" + P + ".vpgs-row.cmp input[type=date]{width:150px}" +
+    P + ".vpgs-row.cmp .vpgs-unitw{gap:6px}" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:64px;flex:none}" + P + ".vpgs-row.cmp .vpgs-unitw input[inputmode=decimal]{width:104px}" + P + ".vpgs-row.cmp .vpgs-unit{min-width:0}" + P + ".vpgs-row.cmp input[type=time]{width:130px}" + P + ".vpgs-row.cmp input[type=date]{width:150px}" +
     P + ".vpgs-row.cmp .vpgs-seg{width:136px}" + P + ".vpgs-row.cmp .vpgs-pair{width:200px}" + P + ".vpgs-row.cmp .vpgs-pair .vpgs-in{width:80px}" +
     P + ".vpgs-in{min-height:42px;padding:8px 10px}" + P + ".vpgs-seg button{min-height:42px;padding:6px 8px}" + P + ".vpgs-chip{min-height:44px;padding:7px 10px}" +
     P + ".vpgs-sec{margin:8px 0 0;padding:8px 0 0}" + P + ".vpgs-sech{display:flex;align-items:center;gap:10px;justify-content:space-between}" + P + ".vpgs-secw{min-width:0}" +
@@ -190,7 +190,8 @@
     P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
     P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
     P + ".vpgs-helpcard{margin:6px 0 0;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 14.5px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}" + P + ".vpgs-helpcard ol{margin:6px 0;padding-left:20px}" + P + ".vpgs-helpcard li{margin:0 0 4px}" + P + ".vpgs-helpcard b{display:block}" +
-    "@media (min-width:600px){" + P + ".vpgs-rows>.vpgs-row.cmpw{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{margin:0;width:300px}" + P + ".vpgs-row.cmp .vpgs-seg{width:160px}}" +
+    "@media (max-width:600px){" + P + ".vpgs-prow{grid-template-columns:62px minmax(0,1fr) auto}" + P + ".vpgs-prow>:nth-child(2){grid-column:2;grid-row:1}" + P + ".vpgs-prow>:nth-child(3){grid-column:3;grid-row:1}" + P + ".vpgs-prow.nonone{grid-template-columns:62px minmax(0,1fr)}}" +
+    "@media (min-width:600px){" + P + ".vpgs-row.cmp .vpgs-unitw .vpgs-in{width:84px}" + P + ".vpgs-rows>.vpgs-row.cmpw{grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'lab ctl q' 'pop pop pop'}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{margin:0;width:300px}" + P + ".vpgs-row.cmp .vpgs-seg{width:160px}}" +
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:680px;padding-top:16px}" + P + ".vpgs-card{padding:20px 24px}" + P + "h2.vpgs-title{font-size:24px}}" +
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:820px;padding-top:20px}" + P + ".vpgs-card{padding:24px 32px}" + P + "h2.vpgs-title{font-size:28px}" + P + ".vpgs-lead{font-size:16.5px;margin:0 0 10px}" +
       P + ".vpgs-rows>.vpgs-row>.vpgs-lab{font-size:17px}" + P + ".vpgs-rows>.vpgs-row{padding:7px 0}" + P + ".vpgs-in{min-height:44px;font-size:16px}" + P + ".vpgs-seg button{min-height:44px;font-size:15.5px}" + P + ".vpgs-chip{min-height:46px;font-size:15.5px}" +
@@ -624,7 +625,7 @@
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
       if (s.soundHelp) {
         /* "IS YOUR TV PLUGGED INTO YOUR SPEAKERS?" IS GOING TO BE A HUGE QUESTION (Dean, round 7b point 13) */
-        var sl = el("button", "vpgs-add", "How to get the sound through your speakers"); sl.id = "vpGsSoundHow"; sl.setAttribute("type", "button"); sl.setAttribute("aria-expanded", "false");
+        var sl = el("button", "vpgs-add", "How to connect your speakers"); sl.id = "vpGsSoundHow"; sl.setAttribute("type", "button"); sl.setAttribute("aria-expanded", "false");
         var card = el("div", "vpgs-helpcard"); card.id = "vpGsSoundCard"; card.style.display = "none";
         card.appendChild(el("b", null, "Getting the music through your speakers"));
         var ol = el("ol");
@@ -764,7 +765,7 @@
       sec.style.display = rows.some(function (r) { return r.s.advanced && !r.hidden; }) ? "" : "none";
       var sum = [];
       rows.forEach(function (r) { if (r.s.advanced && !r.hidden && typeof r.s.brief === "function") { var b = r.s.brief(r.get()); if (b) sum.push(b); } });
-      secSum.textContent = sum.length ? sum.join(", ") + "." : "The usual ones suit most venues.";
+      var sumW = sum.join(", "); secSum.textContent = sumW ? sumW.charAt(0).toUpperCase() + sumW.slice(1) + "." : "The usual ones suit most venues.";
       ctx.redraw.forEach(function (f) { f(); });
     };
     ctx.refresh();
@@ -808,7 +809,7 @@
       later.addEventListener("click", function () { done("later"); }); F.body.appendChild(later);
     }
     if (!opts.first && g.needsDetails) {
-      var mlater = el("button", "vpgs-link", "Not ready yet? Set it up when you first open members draws"); mlater.id = "vpGsLater"; mlater.setAttribute("type", "button");
+      var mlater = el("button", "vpgs-link", "Not ready yet? Set it up later"); mlater.id = "vpGsLater"; mlater.setAttribute("type", "button");
       mlater.addEventListener("click", function () { done("later"); }); F.body.appendChild(mlater);
     }
     var saveWords = opts.first ? (g.needsDetails ? "Save the draw" : "Save and play") : "Save " + g.name;
