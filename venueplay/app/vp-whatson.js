@@ -197,7 +197,8 @@
       var pages = Math.ceil(up.length / 6), views = Math.max(pages, feats.length);
       for (i = 0; i < views; i++) {
         var p = i % pages;
-        out.push({ type: "feature", feature: row(feats[i % feats.length], true), rows: up.slice(p * 6, p * 6 + 6).map(function (x) { return row(x); }) });
+        var rs = up.slice(p * 6, p * 6 + 6);
+        out.push({ type: "feature", size: rs.length <= 2 ? "xl" : rs.length <= 4 ? "l" : "m", feature: row(feats[i % feats.length], true), rows: rs.map(function (x) { return row(x); }) });   // fewer rows, bigger words
       }
       return out;
     }
@@ -227,7 +228,7 @@
       });
       return h;
     }
-    var head = '<div class="wo-top">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) + '<div class="wo-head">What’s on</div></div>';
+    var head = '<div class="wo-top' + (logoHtml ? '' : ' k') + '">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) + '<div class="wo-head">What’s on</div></div>';
     if (sl.type === "list") {
       return '<div class="wo-wall wo-' + (sl.size || "m") + '"><div class="wo-in">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
     }
@@ -235,7 +236,7 @@
       var f = sl.feature, bg = cssUrl(f.ev.image_url);
       if (!bg) return "";
       var tm = time12(f.ev.start);
-      return '<div class="wo-wall wo-b"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
+      return '<div class="wo-wall wo-b wo-b' + (sl.size || "m") + '"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-pic" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div></div>' +
         '<div class="wb-side">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
