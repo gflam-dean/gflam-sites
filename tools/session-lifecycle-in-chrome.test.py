@@ -123,7 +123,19 @@ def scene_sound():
         ok('CONTROL: no sound warning while the TV has said nothing', r.ask(h, note_vis) is not True)
         r.ask(h, TELL + '(%s)' % json.dumps({'t': 'tv_here', 'audio': 'blocked'}))
         ok('the TV reports blocked sound: the bar shows at once, before any song has played', r.until(h, note_vis, 8) is True, r.ask(h, '(document.getElementById("tvAudioNote")||{}).className'))
-        ok('and says which device is playing', 'THIS device' in (r.ask(h, 'document.getElementById("tvAudioNote").textContent') or ''), r.ask(h, 'document.getElementById("tvAudioNote").textContent'))
+        ok('it ASKS first: "The TV can\'t play sound. Play the songs on this device?" with Yes and No (Dean, 6 Nov 13:10)',
+           'Play the songs on this device?' in (r.ask(h, 'document.getElementById("tvAudioNote").textContent') or '') and r.ask(h, '!!document.getElementById("tvSoundYes") && !!document.getElementById("tvSoundNo")') is True,
+           r.ask(h, 'document.getElementById("tvAudioNote").textContent'))
+        ok('and nothing plays here until the host answers', r.ask(h, 'document.querySelector("audio").muted') is True, r.ask(h, 'document.querySelector("audio").muted'))
+        for w, hgt, name in ((375, 667, 'lifecycle-musical-host-sound-ask-375'), (390, 664, 'lifecycle-musical-host-sound-ask-390x664')):
+            r.B.call('Emulation.setDeviceMetricsOverride', {'width': w, 'height': hgt, 'deviceScaleFactor': 2, 'mobile': True}, session=h)
+            time.sleep(1.0)
+            r.ask(h, 'var n=document.getElementById("tvAudioNote"); if(n&&n.scrollIntoView) n.scrollIntoView({block:"center"}); true')
+            time.sleep(0.6)
+            shot(r, h, name)
+        r.ask(h, 'document.getElementById("tvSoundYes").click(); true')
+        time.sleep(0.5)
+        ok('Yes: the bar says this device is playing', 'THIS device' in (r.ask(h, 'document.getElementById("tvAudioNote").textContent') or ''), r.ask(h, 'document.getElementById("tvAudioNote").textContent'))
         ok('the sound button names the device too', 'THIS device only' in (r.ask(h, 'document.getElementById("monitorBtn").textContent') or ''), r.ask(h, 'document.getElementById("monitorBtn").textContent'))
         ok('and this device is not muted', r.ask(h, 'document.querySelector("audio").muted') is False, r.ask(h, 'document.querySelector("audio").muted'))
         for w, hgt, name in ((375, 667, 'lifecycle-musical-host-sound-blocked-375'), (390, 664, 'lifecycle-musical-host-sound-blocked-390x664')):
