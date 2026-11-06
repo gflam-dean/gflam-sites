@@ -68,6 +68,7 @@
       var dt = d.createElement("i"); if (i === 0) dt.className = "on"; dots.appendChild(dt);
     }
     el.appendChild(k); el.appendChild(rail);
+    try { if (root.VPTonight && root.VPTonight.fit) root.VPTonight.fit(); } catch (e) {}   // a tall waiting screen shortens the banner's bottom (vp-tonight.js)
     if (urls.length > 1) el.appendChild(dots);
     function at() { var w = rail.clientWidth || 1; return Math.round(rail.scrollLeft / w); }
     function mark() { var n = at(), ds = dots.children; for (var j = 0; j < ds.length; j++) ds[j].className = j === n ? "on" : ""; }

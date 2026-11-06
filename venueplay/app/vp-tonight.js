@@ -148,10 +148,12 @@
         var app = d.getElementById && d.getElementById("app");
         if (!app || !app.classList) return;
         app.classList.remove("vpt-tight");
-        if (d.documentElement && root.innerHeight && d.documentElement.scrollHeight > root.innerHeight + 1) app.classList.add("vpt-tight");
+        var foot = d.querySelector && d.querySelector(".pfoot");   // our logo at the foot: is it past the bottom of the screen?
+        if (foot && root.innerHeight && foot.getBoundingClientRect().bottom > root.innerHeight + 1) app.classList.add("vpt-tight");
       } catch (e) {}
     };
     if (root.requestAnimationFrame) root.requestAnimationFrame(go); else if (root.setTimeout) root.setTimeout(go, 0);
+    if (root.setTimeout) root.setTimeout(go, 500);   // and once the venue's ad and the fonts have arrived
   }
   function head(name) {
     var h = el("div", "vpt-head"); h.innerHTML = TICK;
@@ -332,5 +334,5 @@
     return { row: row, form: f };
   }
 
-  root.VPTonight = { lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12, eventsOn: eventsOn };
+  root.VPTonight = { fit: fit, lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12, eventsOn: eventsOn };
 })(typeof window !== "undefined" ? window : this);
