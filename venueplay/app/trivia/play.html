@@ -192,15 +192,10 @@
   /* A SHORT PHONE (Dean, 6 Nov 2026, live at Test Alpha: "the screen on the trivia isn't fitted for an iPhone ... I expected it a
      little bit further up so you could see the logo like the mock ups"). Safari's visible area on an iPhone is about 664px tall
      once its bars are up, and the question screen needs about 800: the ring scrolled under the header, the fourth answer was
-     off the bottom and our logo was never seen. Under 830px tall everything tightens (a smaller header, ring and answers, the
-     same colours, letters and order) so the header, the ring, the question, all four answers and our logo sit in one screen
+     off the bottom and our logo was never seen. Under 830px tall the game itself tightens (a smaller ring and answers, the same colours, letters and
+     order; the header and our logo are left exactly as they are) so the header, the ring, the question, all four answers and our logo sit in one screen
      with no scrolling. Measured at 390x664 and 375x664 by tools/trivia-live-fixes-in-chrome.test.py. A taller phone is untouched. */
   @media (max-height:830px){
-    .ptop{padding-bottom:6px}
-    .brand .word{min-height:44px}
-    .vlogo{height:44px}
-    .menubtn{top:calc(max(12px, env(safe-area-inset-top, 0px)) + 3px)}
-    .ptop .brand .venue{top:calc(25px + env(safe-area-inset-top, 0px))}
     .view{padding:8px 16px 8px}
     #vRes{padding-bottom:6px}
     .pq-head{gap:6px;margin-bottom:10px}
@@ -216,7 +211,6 @@
     .pstatus{margin-top:8px;font-size:15px}
     #vRes .pcard,.pcard{margin-top:12px;padding:8px 16px}
     .pfoot{padding:6px 16px max(6px, env(safe-area-inset-bottom, 0px))}
-    .pfoot svg{width:112px}
     .finalwrap{padding-top:16px}
     .finalwrap #finalBig{font-size:52px;margin-bottom:8px}
     .winner #finalBig{font-size:72px}
