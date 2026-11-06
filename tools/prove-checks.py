@@ -9352,7 +9352,7 @@ MUTATIONS = [
     # Saved replies and the easier help desk (D91 and helpdesk-hq-in-chrome.test.py), 29 Oct 2026.
     # "Have a play for free" on the offer page (Dean, 5 Nov 2026, release/6nov stopgap): tools/offer-free-play-in-chrome.test.py.
     ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
-     '<a href="#contact" data-cta="start-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a>', '',
+     '<a href="#contact" data-cta="claim-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a>', '',
      'in Chrome, the offer page has no way to ask us to set up a free account'),
     ('offer-free-play-in-chrome.test.py', 'venueplay/nsw.html',
      '<a class="btn btn-primary" href="#start" data-cta="hero-start">Have a play for free</a>', '<a class="btn btn-ghost" href="#start" data-cta="hero-start">Have a play for free</a>',
@@ -9371,7 +9371,7 @@ MUTATIONS = [
      'in Chrome, plain "Talk to us" is turned into a free account request too'),
     # The no-card start on /offer-nov (Dean, 5 Nov 2026, INBOX 80B, 81, 93, 96): tools/signup-start-in-chrome.test.py.
     ('signup-start-in-chrome.test.py', 'venueplay/nsw.html',
-     '<a class="btn btn-primary" href="#start" data-cta="hero-free-play">',
+     '<a class="btn btn-primary" href="#start" data-cta="hero-start">',
      '<a class="btn btn-primary" href="#contact" data-cta="hero-free-play">',
      'in Chrome, "Have a play for free" goes back to the Talk to us form, not the five boxes'),
     ('signup-start-in-chrome.test.py', 'venueplay/nsw.html',
