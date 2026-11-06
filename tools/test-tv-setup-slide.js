@@ -13,7 +13,7 @@ function lift(src, head) {
   for (; j < src.length; j++) { if (src[j] === '{') { d++; st = true; } else if (src[j] === '}') { d--; if (st && d === 0) break; } }
   return src.slice(i, j + 1);
 }
-var FNS = ['function setupSlideWanted(){', 'function loopEntries(){', 'function entryInner(e){', 'function esc(s){', 'function escBr(s){', 'function tvHoldHtml(line, breathe, o){'].map(function (h) { return lift(TV, h); });
+var FNS = ['function setupSlideWanted(){', 'function hasRaffle(r){', 'function rafflesOnWall(){', 'function loopEntries(){', 'function entryInner(e){', 'function esc(s){', 'function escBr(s){', 'function tvHoldHtml(line, breathe, o){'].map(function (h) { return lift(TV, h); });
 ok('tv.html has the functions under test', FNS.every(function (f) { return f.length > 20; }));
 
 var QR = [];

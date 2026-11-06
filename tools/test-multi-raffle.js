@@ -127,7 +127,8 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
   function slideVisible() { return true; } function venuePending() { return false; }
   var holdVenueName = '';   // main's holding card (3 Nov 2026): loopEntries reads it only when nothing else is on the loop
   function esc(s) { return String(s == null ? '' : s); } function escBr(s) { return esc(s); } function accentHex() { return '#FF1F8E'; }
-  eval(grab('hasRaffle')); eval(grab('rafflesOnWall')); eval(grab('loopEntries')); eval(grab('entryInner'));
+  var venueScreenKnown = false;   // tv-setup-slide (item 102): loopEntries now asks setupSlideWanted() when nothing else is on the loop; unknown screen = no set-up slide
+  eval(grab('hasRaffle')); eval(grab('rafflesOnWall')); eval(grab('setupSlideWanted')); eval(grab('loopEntries')); eval(grab('entryInner'));
   function raffleCards() { return loopEntries().filter(function (e) { return e.type === 'auto-raffle'; }).map(function (e) { return entryInner(e); }); }
   ADS.raffle = { label: 'Meat Raffle', day: 'Friday', time: '6:30pm' };
   var c = raffleCards();
