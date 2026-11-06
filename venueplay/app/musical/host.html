@@ -510,6 +510,7 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setupuse.js"></script>
 <script src="../vp-setup-help.js"></script>
 <script src="../vp-gamesetup.js"></script>
 <script src="../vp-gaming.js"></script>
@@ -2069,8 +2070,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!p || G.status!=="setup") return false;
     var used=false;   // VP.gamePrefs holds every save while this runs
     /* MORE THAN ONE LIST (the setup wizard, Dean 6 Nov 2026): this week's one, so the same songs are not played every
-       week (VPGameSetup.weekPick, Brisbane weeks from Monday). The host can still pick any theme on the night. */
-    var plWant=(Array.isArray(p.playlists) && p.playlists.length>1 && window.VPGameSetup && VPGameSetup.weekPick) ? VPGameSetup.weekPick(p.playlists) : p.playlist;
+       week (VPSetupUse.weekPick, Brisbane weeks from Monday). The host can still pick any theme on the night. */
+    var plWant=(Array.isArray(p.playlists) && p.playlists.length>1 && window.VPSetupUse) ? VPSetupUse.weekPick(p.playlists) : p.playlist;
     if(plWant){
       for(var i=0;i<PL_OPTS.length;i++){ if(PL_OPTS[i].id===plWant){ selectPlaylist(plWant); used=true; break; } }
     }

@@ -207,12 +207,8 @@
   }
   /* THIS WEEK'S MUSIC (Dean, 6 Nov 2026): with more than one list, a different one each week, Brisbane weeks from
      Monday, so the same songs are not played every week. */
-  function weekPick(list, now) {
-    if (!Array.isArray(list) || !list.length) return "";
-    var t = (now == null ? Date.now() : now) + 10 * 3600 * 1000;
-    var wk = Math.floor((t - Date.UTC(2024, 0, 1)) / (7 * 86400000));   // 1 Jan 2024 was a Monday
-    return list[((wk % list.length) + list.length) % list.length];
-  }
+  function weekPick(list, now) { return root.VPSetupUse ? root.VPSetupUse.weekPick(list, now) : ((list && list[0]) || ""); }   // one answer: vp-setupuse.js
+
   /* "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws" */
   function weekWords(w) {
     return (cleanWeek(w) || []).map(function (d) {

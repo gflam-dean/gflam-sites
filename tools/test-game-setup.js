@@ -46,7 +46,7 @@ function raw(el) { var t = el.textContent || ''; el.children.forEach(function (c
 function seen(el) { return raw(el).replace(/\s+/g, ' ').trim(); }
 async function settle() { for (var i = 0; i < 30; i++) await Promise.resolve(); }
 
-var GAMING = readFile('venueplay/app/vp-gaming.js'), HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
+var GAMING = readFile('venueplay/app/vp-gaming.js'), SETUPUSE = readFile('venueplay/app/vp-setupuse.js'), HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
 var NOW = Date.parse('2026-11-06T15:30:00Z');   // 1:30am on Sat 7 Nov in Brisbane: the Brisbane date is the 7th, not the 6th
 var CALLS, PREFS, SAVED, STORE, RELOADS;
 function page(over) {
@@ -75,6 +75,7 @@ function page(over) {
       then: function (r) { return Promise.resolve({ data: t === 'vp_question_sets' ? [{ id: 'S-OWN', title: 'Our quiz', question_count: 40, owner_venue_id: 'V1' }, { id: 'S-LIB', title: 'General Knowledge', question_count: 400, owner_venue_id: null }, { id: 'S-OTHER', title: 'Another pub', owner_venue_id: 'V2' }] : [] }).then(r); } }; return b; } };
   var window = { localStorage: storage, document: document, fetch: fetch, location: { reload: function () { RELOADS++; } } };
   (new Function('window', 'document', GAMING))(window, document);
+  (new Function('window', SETUPUSE))(window);
   (new Function('window', HELP))(window);
   (new Function('window', GS))(window);
   var ctx = { role: over.role || 'owner', venue: Object.assign({ id: 'V1', name: 'The Test Arms', au_state: 'QLD', entity_type: 'for_profit' }, over.venue || {}), settings: { setup_answers: over.answers || {} } };
@@ -378,7 +379,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
     return seen.slice(0, 5).sort().join() === 'a,b,c,d,e' && seen[5] === seen[0] && R.weekPick(L, mon - 1000) !== R.weekPick(L, mon) && R.weekPick(L, mon + 6.9 * 86400000) === R.weekPick(L, mon);
   })());
   var MUS = readFile('venueplay/app/musical/host.html');
-  check('the musical bingo console plays this week\'s list when the venue has more than one', /VPGameSetup\.weekPick\(p\.playlists\)/.test(MUS.slice(MUS.indexOf('function applyMusicalPrefs'), MUS.indexOf('function musicalLocalPrefs'))));
+  check('the musical bingo console plays this week\'s list when the venue has more than one', /VPSetupUse\.weekPick\(p\.playlists\)/.test(MUS.slice(MUS.indexOf('function applyMusicalPrefs'), MUS.indexOf('function musicalLocalPrefs'))));
 
   section('6e. ROUND 3 (Dean, 6 Nov 2026): first name, shared prizes, the members draw name and layout');
   P = page(); P.ctx.staff = [{ venue_id: 'V1', role: 'owner', display_name: 'Sam Nguyen' }]; P.GS.run(P.ctx, P.deps); await settle();
