@@ -135,7 +135,7 @@ function row(html, name) {
   var at = ['>Trivia<', '>Musical bingo<', '>Bingo<', '>Raffles<', '>Members draws<'].map(function (s) { return mail.html.indexOf(s); });
   check('the games in the house order: Trivia, Musical bingo, Bingo, Raffles, Members draws', at.every(function (x, i) { return x > 0 && (i === 0 || x > at[i - 1]); }), at);
   check('the totals in words, each labelled', /<b>Running total:<\/b> 3 of 4 active venues have told us which games they play\./.test(mail.html) && /<b>New in October:<\/b> 2 answered in October 2026\./.test(mail.html));
-  check('the game table says Running total and New in October', />Running total<\/th>/.test(mail.html) && />New in October<\/th>/.test(mail.html) && />Set up \(running total\)<\/th>/.test(mail.html) && !/Venues that play it/.test(mail.html));
+  check('the game table says Total, New in Oct and Set up, short enough never to break on a phone, and says Total is the running total', />Total<\/th>/.test(mail.html) && />New in Oct<\/th>/.test(mail.html) && />Set up<\/th>/.test(mail.html) && /Total is the running total/.test(mail.html) && !/Venues that play it/.test(mail.html));
   check('no long dash, venueplay in lower case, never Gflam', !/[\u2014\u2013]|&mdash;|&ndash;/.test(mail.html + mail.subject) && !/VenuePlay|Venueplay|VENUEPLAY/.test(mail.html.replace(/alt="[^"]*"/g, '')) && !/gflam/i.test(mail.html));
   check('the new-look staff card (logo band and the for-your-info pill)', /venueplay-email-on-dark\.png/.test(mail.html) && /FOR YOUR INFO/.test(mail.html));
 

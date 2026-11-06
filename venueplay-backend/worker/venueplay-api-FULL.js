@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 14:16 · 5529d149';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 14:44 · 28f1898a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15261,10 +15261,11 @@ function vprGamesEmail(env, month, tally) {
     + '<p style="margin:0 0 12px">This is an internal email for the venueplay team. It is not sent to any venue.</p>'
     + '<p style="margin:0 0 4px"><b>Running total:</b> ' + tally.answered + ' of ' + tally.venues + ' active venues have told us which games they play.</p>'
     + '<p style="margin:0 0 12px"><b>New in ' + vpaEsc(vprMonthName(month)) + ':</b> ' + tally.answered_month + ' answered in ' + vpaEsc(words) + '.</p>'
-    + '<p style="margin:0 0 16px;font-size:13px;color:#6a6a75">Running total means every venue that has ever told us, all time. New means it answered in ' + vpaEsc(words) + '.</p>'
+    + '<p style="margin:0 0 16px;font-size:13px;color:#6a6a75">Total is the running total: every venue that has ever told us, all time. New means it answered in ' + vpaEsc(words) + '. Set up is a running total too.</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
-    + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right">Running total</th>'
-    + '<th style="' + head + ';text-align:right">New in ' + vpaEsc(vprMonthName(month)) + '</th><th style="' + head + ';text-align:right">Set up (running total)</th></tr>'
+    /* short headings that never break mid-word on a phone (design review, 6 Nov): Total, New in <Mon>, Set up */
+    + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right;white-space:nowrap">Total</th>'
+    + '<th style="' + head + ';text-align:right;white-space:nowrap">New in ' + vpaEsc(vprMonthName(month).slice(0, 3)) + '</th><th style="' + head + ';text-align:right;white-space:nowrap">Set up</th></tr>'
     + rows + '</table>'
     + vprGamesStatesHtml(tally, cell, head, month)
     + vprGamesOtherHtml(tally, month)
