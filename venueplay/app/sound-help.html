@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Get the sound through your speakers · venueplay</title>
+<!-- THE SPEAKERS GUIDE (Dean, 6 Nov 2026, setup wizard round 8b point 9: "I don't wanna talk people through that").
+     A venue fixes it on its own: find your setup, follow the picture and the steps. Linked from the setup wizard's
+     musical bingo More settings (vp-gamesetup.js) and meant for the musical bingo console too. No scripts. -->
+<style>
+  :root{--ink:#0A0A0B;--ink2:#141418;--line:rgba(255,255,255,.12);--text:#F4F4F6;--muted:#C6C6CE;--pink:#FF1F8E;--pinkSoft:#FF8CC6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font:16px/1.5 Manrope,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+  .logo{font:800 20px "Hanken Grotesk",Manrope,system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 18px}
+  .logo b{color:var(--pink)}
+  h1{font:800 26px/1.2 "Hanken Grotesk",Manrope,system-ui,sans-serif;margin:0 0 8px}
+  .lead{color:var(--muted);margin:0 0 16px}
+  .pick{display:grid;grid-template-columns:1fr;gap:8px;margin:0 0 24px;padding:0;list-style:none}
+  .pick a{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--ink2);color:var(--text);text-decoration:none;font-weight:700}
+  .pick a span{color:var(--muted);font-weight:500;font-size:14px}
+  .pick a:hover,.pick a:focus{border-color:var(--pink)}
+  section{margin:0 0 18px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--ink2)}
+  h2{font:800 20px/1.25 "Hanken Grotesk",Manrope,system-ui,sans-serif;margin:0 0 4px}
+  .when{color:var(--muted);margin:0 0 10px;font-size:15px}
+  svg{display:block;width:100%;height:auto;max-width:560px;margin:4px 0 12px}
+  ol{margin:0;padding-left:22px}
+  li{margin:0 0 6px}
+  .tip{margin:10px 0 0;padding:10px 12px;border-left:3px solid var(--pink);border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font-size:15px}
+  .top{display:inline-block;margin:8px 0 0;color:var(--pinkSoft);font-weight:700;text-decoration:none;min-height:44px;line-height:44px}
+  @media (min-width:640px){ .pick{grid-template-columns:1fr 1fr} .wrap{padding:28px 24px 48px} h1{font-size:30px} }
+</style>
+</head>
+<body>
+<div class="wrap" id="top">
+  <div class="logo">venue<b>play</b></div>
+  <h1>Get the sound through your speakers</h1>
+  <p class="lead">Musical bingo plays from your TV. To fill the room, send the TV's sound to your venue's speakers. Find the setup that looks like yours and follow the steps. Most take five minutes.</p>
+  <ul class="pick">
+    <li><a href="#arc">TV to a soundbar <span>HDMI ARC</span></a></li>
+    <li><a href="#optical">TV to an amp <span>Optical cable</span></a></li>
+    <li><a href="#jack">TV to an amp <span>Headphone socket</span></a></li>
+    <li><a href="#bt">TV to a speaker <span>Bluetooth</span></a></li>
+    <li><a href="#laptop">A laptop to the amp <span>Running it from a laptop</span></a></li>
+    <li><a href="#stuck">Still no sound? <span>Check these</span></a></li>
+  </ul>
+
+  <section id="arc">
+    <h2>TV to a soundbar (HDMI ARC)</h2>
+    <p class="when">Your soundbar or amp has an HDMI socket marked ARC or eARC.</p>
+    <svg viewBox="0 0 560 140" role="img" aria-label="The TV's HDMI ARC socket connects with an HDMI cable to the soundbar's HDMI ARC socket">
+      <rect x="10" y="20" width="170" height="100" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="95" y="65" fill="#F4F4F6" font-size="18" text-anchor="middle" font-family="sans-serif">TV</text><text x="95" y="92" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">HDMI ARC</text>
+      <path d="M180 70 H380" stroke="#FF1F8E" stroke-width="5"/><text x="280" y="58" fill="#F4F4F6" font-size="14" text-anchor="middle" font-family="sans-serif">HDMI cable</text>
+      <rect x="380" y="45" width="170" height="50" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="465" y="76" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Soundbar</text>
+    </svg>
+    <ol>
+      <li>On the back of the TV, find the HDMI socket marked <b>ARC</b> or <b>eARC</b>. Only one socket has it.</li>
+      <li>Plug an HDMI cable from that socket into the soundbar's socket marked <b>ARC</b>, <b>eARC</b> or <b>TV</b>.</li>
+      <li>On the TV remote, open <b>Settings</b>, then <b>Sound</b>, then <b>Sound output</b>. Pick <b>HDMI ARC</b>, <b>Receiver</b> or <b>External speaker</b>.</li>
+      <li>Turn on <b>HDMI-CEC</b> if the TV asks (Samsung calls it Anynet+, LG calls it SimpLink, Sony calls it Bravia Sync).</li>
+      <li>Play a song on the console and turn the soundbar up.</li>
+    </ol>
+  </section>
+
+  <section id="optical">
+    <h2>TV to an amp (Optical cable)</h2>
+    <p class="when">Your amp has a small square socket marked Optical, Digital In or TOSLINK.</p>
+    <svg viewBox="0 0 560 140" role="img" aria-label="The TV's optical out socket connects with an optical cable to the amp's optical in socket">
+      <rect x="10" y="20" width="170" height="100" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="95" y="65" fill="#F4F4F6" font-size="18" text-anchor="middle" font-family="sans-serif">TV</text><text x="95" y="92" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">Optical out</text>
+      <path d="M180 70 H380" stroke="#FF1F8E" stroke-width="5" stroke-dasharray="10 6"/><text x="280" y="58" fill="#F4F4F6" font-size="14" text-anchor="middle" font-family="sans-serif">Optical cable</text>
+      <rect x="380" y="30" width="170" height="80" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="465" y="66" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Amp</text><text x="465" y="90" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">Optical in</text>
+    </svg>
+    <ol>
+      <li>On the back of the TV, find the small square socket marked <b>Optical</b> or <b>Digital Audio Out</b>. Pull out the little cap if there is one.</li>
+      <li>Plug an optical cable from it into the amp's <b>Optical</b> or <b>Digital In</b> socket. It only fits one way round.</li>
+      <li>On the amp, pick the input called <b>Optical</b>, <b>Digital</b> or <b>TV</b>.</li>
+      <li>On the TV, open <b>Settings</b>, then <b>Sound</b>, then <b>Sound output</b>, and pick <b>Optical</b>.</li>
+      <li>Play a song on the console and turn the amp up slowly.</li>
+    </ol>
+  </section>
+
+  <section id="jack">
+    <h2>TV to an amp (Headphone socket)</h2>
+    <p class="when">Your amp only has red and white plugs, or a socket marked AUX.</p>
+    <svg viewBox="0 0 560 140" role="img" aria-label="The TV's headphone socket connects with a 3.5 millimetre to red and white cable to the amp's AUX input">
+      <rect x="10" y="20" width="170" height="100" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="95" y="65" fill="#F4F4F6" font-size="18" text-anchor="middle" font-family="sans-serif">TV</text><text x="95" y="92" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">Headphone</text>
+      <path d="M180 70 H300" stroke="#FF1F8E" stroke-width="5"/><path d="M300 70 L380 55" stroke="#E33" stroke-width="5"/><path d="M300 70 L380 85" stroke="#EEE" stroke-width="5"/><text x="260" y="58" fill="#F4F4F6" font-size="14" text-anchor="middle" font-family="sans-serif">3.5mm to red and white</text>
+      <rect x="380" y="30" width="170" height="80" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="465" y="66" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Amp</text><text x="465" y="90" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">AUX in</text>
+    </svg>
+    <ol>
+      <li>Get a cable with a small headphone plug (3.5mm) on one end and red and white plugs on the other. Any electronics shop has them.</li>
+      <li>Plug the small end into the TV's headphone socket, and the red and white plugs into the amp's <b>AUX</b> or <b>Line in</b>, red to red, white to white.</li>
+      <li>On the amp, pick <b>AUX</b> or <b>Line in</b>.</li>
+      <li>On the TV, open <b>Settings</b>, then <b>Sound</b>, and set the headphone output to <b>Line out</b> or <b>Fixed</b> if it offers it. Turn the TV's volume to about halfway.</li>
+      <li>Play a song on the console and set the volume on the amp.</li>
+    </ol>
+    <p class="tip">No headphone socket on the TV? Use the optical setup with a small optical to red and white converter.</p>
+  </section>
+
+  <section id="bt">
+    <h2>TV to a speaker (Bluetooth)</h2>
+    <p class="when">You have a Bluetooth speaker or soundbar, and no cable run to it.</p>
+    <svg viewBox="0 0 560 140" role="img" aria-label="The TV sends sound by Bluetooth to a speaker">
+      <rect x="10" y="20" width="170" height="100" rx="10" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="95" y="65" fill="#F4F4F6" font-size="18" text-anchor="middle" font-family="sans-serif">TV</text><text x="95" y="92" fill="#FF8CC6" font-size="14" text-anchor="middle" font-family="sans-serif">Bluetooth</text>
+      <path d="M220 70 q20 -25 0 -50 M250 70 q30 -35 0 -70 M220 70 q20 25 0 50 M250 70 q30 35 0 70" fill="none" stroke="#FF1F8E" stroke-width="4"/>
+      <rect x="380" y="35" width="120" height="70" rx="14" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="440" y="76" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Speaker</text>
+    </svg>
+    <ol>
+      <li>Put the speaker into pairing mode (usually hold its Bluetooth button until the light flashes).</li>
+      <li>On the TV, open <b>Settings</b>, then <b>Sound</b>, then <b>Sound output</b>, and pick <b>Bluetooth speaker list</b> or <b>Bluetooth audio</b>.</li>
+      <li>Pick your speaker from the list. It says Connected when it's done.</li>
+      <li>Play a song on the console and set the volume on the speaker.</li>
+    </ol>
+    <p class="tip">Keep the speaker within about 10 metres of the TV, with nothing big in between. For a big room, a cable to your amp is more reliable.</p>
+  </section>
+
+  <section id="laptop">
+    <h2>A laptop to the amp</h2>
+    <p class="when">You run the TV screen from a laptop, or your TV has no way out to the amp.</p>
+    <svg viewBox="0 0 560 160" role="img" aria-label="The laptop sends the picture to the TV by HDMI and the sound to the amp by a headphone cable">
+      <rect x="10" y="50" width="150" height="70" rx="8" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="85" y="91" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Laptop</text>
+      <path d="M160 70 L380 30" stroke="#FF1F8E" stroke-width="5"/><text x="270" y="38" fill="#F4F4F6" font-size="14" text-anchor="middle" font-family="sans-serif">HDMI: picture</text>
+      <path d="M160 100 L380 130" stroke="#FF8CC6" stroke-width="5" stroke-dasharray="10 6"/><text x="270" y="140" fill="#F4F4F6" font-size="14" text-anchor="middle" font-family="sans-serif">Headphone cable: sound</text>
+      <rect x="380" y="8" width="170" height="44" rx="8" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="465" y="36" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">TV</text>
+      <rect x="380" y="108" width="170" height="44" rx="8" fill="none" stroke="#C6C6CE" stroke-width="3"/><text x="465" y="136" fill="#F4F4F6" font-size="16" text-anchor="middle" font-family="sans-serif">Amp (AUX in)</text>
+    </svg>
+    <ol>
+      <li>Plug the laptop into the TV with an HDMI cable, for the picture.</li>
+      <li>Plug a headphone to red and white cable from the laptop's headphone socket into the amp's <b>AUX</b> input, for the sound.</li>
+      <li>On the laptop, choose where the sound goes: on Windows click the speaker icon by the clock and pick <b>Headphones</b>; on a Mac open <b>System Settings</b>, then <b>Sound</b>, then <b>Output</b>, and pick <b>Headphones</b>.</li>
+      <li>Set the laptop's volume to about three quarters and use the amp to make it louder.</li>
+      <li>Play a song on the console to check.</li>
+    </ol>
+  </section>
+
+  <section id="stuck">
+    <h2>Still no sound?</h2>
+    <ol>
+      <li>Is the amp or soundbar on the right input (HDMI ARC, Optical, AUX or TV)? This is the usual fix.</li>
+      <li>Is the TV muted, or its volume at zero? With a headphone cable, the TV's volume controls the amp too.</li>
+      <li>Did the TV's sound output setting change back? Some TVs reset it when they're turned off. Set it again.</li>
+      <li>Swap the cable for another one. Cables fail more often than TVs.</li>
+      <li>Turn the TV and the amp off at the wall for ten seconds, then on again, TV first.</li>
+      <li>Play a YouTube video on the TV. If that has no sound either, the problem is the TV to amp connection, not venueplay.</li>
+    </ol>
+    <a class="top" href="#top">Back to the top</a>
+  </section>
+</div>
+</body>
+</html>

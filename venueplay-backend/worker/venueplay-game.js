@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 16:42 · 21dbc510';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 18:00 · 0cb91e8c';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3893,6 +3893,10 @@ const GAME_PREFS_KEYS = {
     // phone tickets or the venue's own paper books (the setup wizard, INBOX 104 round 2): venueplay never checks paper
     ticket_kind:   (v) => ({ phone: 1, paper: 1 }[v] ? v : undefined),
     prize_list:    gpWords(8, 80),   // the usual prize buttons (setup wizard, round 3)
+    /* the setup wizard, round 9 (Dean: "prizes per round, set on the game"): games a night and each game's prize, in
+       order, "" for a game played for no prize. The bingo console does not read these yet. */
+    rounds:        gpInt(1, 30),
+    round_prizes:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.trim().slice(0, 80) : ''); if (out.length >= 30) break; } return out; },
   },
   trivia: {
     set_id:        gpUuid,
@@ -3930,6 +3934,10 @@ const GAME_PREFS_KEYS = {
     prize_count:   gpInt(1, 12),
     prizes_same:   gpBool,
     prizes_weekly: gpBool,
+    /* the setup wizard, round 9 (Dean: "raffle 1 has 2 prizes, raffle 2 has 5"): raffles a night and the prizes in
+       each. The raffle console does not read these yet (noted for the raffle new look). */
+    raffles:       gpInt(1, 12),
+    raffle_counts: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const n = parseInt(x, 10); if (Number.isInteger(n) && n >= 1 && n <= 12) out.push(n); if (out.length === 12) break; } return out.length ? out : undefined; },
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
