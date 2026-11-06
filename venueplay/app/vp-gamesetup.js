@@ -232,7 +232,7 @@
     var old = doc.getElementById("vpGs"); if (old && old.parentNode) old.parentNode.removeChild(old);
     function el(tag, cls, text) { var e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
     var shell = el("div"); shell.id = "vpGs";
-    shell.setAttribute("style", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;overflow-y:auto;background:" + (deps.over ? "rgba(10,10,11,.86)" : C.ink) + ";font-family:Manrope,system-ui,sans-serif;color:" + C.text + ";padding:0 16px");
+    shell.setAttribute("style", "position:fixed;top:0;left:0;right:0;bottom:0;z-index:9100;overflow-y:auto;background:" + (deps.over ? "rgba(10,10,11,.95)" : C.ink) + ";font-family:Manrope,system-ui,sans-serif;color:" + C.text + ";padding:0 16px");
     shell.setAttribute("role", "dialog"); shell.setAttribute("aria-modal", "true"); shell.setAttribute("aria-label", "Set up your games");
     var st = el("style", null, CSS); shell.appendChild(st);
     var box = el("div", "vpgs-box"); shell.appendChild(box);
@@ -434,6 +434,8 @@
         if (w) Object.keys(w).forEach(function (k) { if (all.value(k) !== w[k]) on = false; });
         r.row.style.display = on ? "" : "none"; r.hidden = !on;
       });
+      /* no advanced question left to ask (bingo with paper tickets): no empty heading either */
+      sec.style.display = rows.some(function (r) { return r.s.advanced && !r.hidden; }) ? "" : "none";
       ctx.redraw.forEach(function (f) { f(); });
     };
     ctx.refresh();

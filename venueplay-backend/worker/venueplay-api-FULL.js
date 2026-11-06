@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:31 · ae66c020';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:55 · 93e45cfa';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -15504,6 +15504,9 @@ function vprGamesEmail(env, month, tally) {
 }
 function vprGamesStatesHtml(tally, cell, head) {
   if (!(tally.states || []).length) return '';
+  /* Seven narrow columns: words wrap between words only, never mid-word ("Answere d"), and sit a little smaller. */
+  head += ';word-break:normal;overflow-wrap:normal;hyphens:none;font-size:11px;padding-left:4px;padding-right:4px;vertical-align:bottom';
+  cell += ';padding-left:4px;padding-right:4px;white-space:nowrap';
   let h = '<p style="margin:0 0 8px;font-weight:700">State by state</p>'
     + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
     + '<tr><th style="' + head + '">State</th><th style="' + head + ';text-align:right">Answered</th>';
