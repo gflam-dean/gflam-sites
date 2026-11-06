@@ -90,6 +90,7 @@ var L = 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png';
 var fh = W.tvHtml(sl[0], 'Revolver Upstairs', L), lh = W.tvHtml(two, 'Revolver Upstairs', L), nh = W.tvHtml(two, 'Revolver Upstairs');
 ok('the venue\'s own uploaded logo heads both layouts beside WHAT’S ON; with none, its name stands in; a bad address never', /<div class="wo-top"><img class="wo-logo" alt="" src="https:\/\/x\.supabase\.co[^"]*logo\.png"><div class="wo-head">What’s on</.test(lh) && /wb-side"><div class="wo-top"><img class="wo-logo"/.test(fh) && /wo-kick">Revolver Upstairs</.test(nh) && W.tvHtml(two, 'x', 'javascript:alert(1)').indexOf('wo-logo') === -1, lh.slice(0, 220));
 ok('feature and week: the picture whole over a blurred copy of itself, only its day and time under it (no repeated title), the week beside it', /wb-art" style="background-image:url\(https:\/\/x\.supabase\.co\/storage\/v1\/object\/public\/venue-ads\/v\/fri\.jpg\)/.test(fh) && /wb-pic/.test(fh) && /wb-when">Tomorrow · 10pm</.test(fh) && !/adbig/.test(fh) && (fh.match(/wo-row/g) || []).length === 4, fh.slice(0, 300));
+ok('round 5: the feature panel also names the night (for a poster with no words on it); three rows or fewer let titles take two lines (size l/xl)', /<div class="wb-title">Revolver Fridays<\/div>/.test(fh) && W.tvSlides([EV[0], EV[1], EV[2]], TODAY)[0].size === 'l' && W.tvSlides([EV[0], EV[1]], TODAY)[0].size === 'xl' && busy[0].size === 'm', fh.slice(fh.indexOf('wb-when'), fh.indexOf('wb-when') + 160));
 ok('each row: the day and the time together on the left, then the title (round 4: no empty middle), every day label the same', /<span class="wo-when2"><span class="wo-day">Tonight<\/span><span class="wo-time">9pm<\/span><\/span><span class="wo-what"><b>I ♥ 3181<\/b>/.test(fh) && !/again/.test(fh), fh.slice(fh.indexOf('wo-list'), fh.indexOf('wo-list') + 300));
 var gw = W.tvSlides(EV, TODAY, [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }]);
 var gwRows = gw.reduce(function (a, x) { return a.concat(x.rows || []); }, []);
@@ -188,6 +189,7 @@ ok('and saved as a new one (no id), on its new date', saved.length === 2 && !sav
 ed.open('e1', false);
 form = byClass(page, 'woe-form')[0];
 ok('Edit opens in place of its row (the row hides, the form sits where it was); Add and Copy open at the top', form.parentNode === byClass(page, 'woe-list')[0] && byClass(page, 'woe').filter(function (r) { return r.attrs['data-id'] === 'e1'; })[0].hidden === true && byClass(page, 'woe-add')[0].hidden === true);
+ok('round 5: editing one that exists, the form also has Copy and Remove (a phone row carries Edit alone)', byClass(form, 'woe-fcopy').length === 1 && byClass(form, 'woe-frm').length === 1);
 ok('Edit: the form holds it, When "Every Friday", keeping its id', /Edit event/.test(form.textContent) && field('Title').value === 'Revolver Fridays' && field('When').value === 'fri');
 btn('Save event').onclick(); drain();
 ok('saved under its own id', saved.length === 3 && saved[2].id === 'e1' && saved[2].day === 'fri');

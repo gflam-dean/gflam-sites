@@ -139,6 +139,20 @@
     return out;
   }
 
+  /* TIGHT (design review, 6 Nov 2026): on a short phone, a tapped day with the venue's nights can be taller than the room
+     above the ad. Then #app gets .vpt-tight and the banner is a little shorter at its bottom (its top stays where the
+     content puts it), so our logo at the foot keeps its 12px. Measured after the browser has laid the page out. */
+  function fit() {
+    var go = function () {
+      try {
+        var app = d.getElementById && d.getElementById("app");
+        if (!app || !app.classList) return;
+        app.classList.remove("vpt-tight");
+        if (d.documentElement && root.innerHeight && d.documentElement.scrollHeight > root.innerHeight + 1) app.classList.add("vpt-tight");
+      } catch (e) {}
+    };
+    if (root.requestAnimationFrame) root.requestAnimationFrame(go); else if (root.setTimeout) root.setTimeout(go, 0);
+  }
   function head(name) {
     var h = el("div", "vpt-head"); h.innerHTML = TICK;
     h.appendChild(el("div", "t", "You’re in" + (name ? ", " + name : "")));
@@ -171,6 +185,7 @@
       b.onclick = function () {
         btns.forEach(function (x, j) { x.className = x.className.replace(/ picked\b/g, "") + (j === dd.i ? " picked" : ""); x.setAttribute("aria-pressed", j === dd.i ? "true" : "false"); });
         onPick(dd);
+        fit();
       };
       btns.push(b); row.appendChild(b);
     });
@@ -202,6 +217,7 @@
     });
     box.appendChild(s.el);
     box.appendChild(el("p", "vpt-wait", o.wait || "The game will start here when the host is ready."));
+    fit();
     return s;
   }
 
@@ -242,6 +258,7 @@
     box.appendChild(s.el);
     paintEvents(days[start]);
     box.appendChild(evBox);
+    fit();
     return s;
   }
   /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */

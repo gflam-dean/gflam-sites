@@ -182,6 +182,14 @@
       var acts = el("div", "woe-facts"), go = el("button", "go", "Save event"), cancel = el("button", "addbtn", "Cancel");
       go.setAttribute("type", "button"); cancel.setAttribute("type", "button");
       acts.appendChild(go); acts.appendChild(cancel);
+      /* Editing one that exists: Copy and Remove are here too, so a phone's row can carry Edit alone (round 5). */
+      if (editing.id && src) {
+        var fcp = el("button", "addbtn woe-fcopy", "Copy"), frm = el("button", "canxlink woe-rm woe-frm", "Remove");
+        fcp.setAttribute("type", "button"); frm.setAttribute("type", "button");
+        fcp.onclick = function () { open(src, true); };
+        frm.onclick = function () { removeOne(src, frm); };
+        acts.appendChild(fcp); acts.appendChild(frm);
+      }
       var r3 = el("div", "woe-r3"); r3.appendChild(pf); r3.appendChild(acts);
       form.appendChild(err); form.appendChild(r3);
       cancel.onclick = shut;

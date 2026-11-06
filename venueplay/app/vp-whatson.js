@@ -198,7 +198,7 @@
       for (i = 0; i < views; i++) {
         var p = i % pages;
         var rs = up.slice(p * 6, p * 6 + 6);
-        out.push({ type: "feature", size: rs.length <= 2 ? "xl" : rs.length <= 4 ? "l" : "m", feature: row(feats[i % feats.length], true), rows: rs.map(function (x) { return row(x); }) });   // fewer rows, bigger words
+        out.push({ type: "feature", size: rs.length <= 2 ? "xl" : rs.length <= 3 ? "l" : "m", feature: row(feats[i % feats.length], true), rows: rs.map(function (x) { return row(x); }) });   // fewer rows, bigger words
       }
       return out;
     }
@@ -238,7 +238,8 @@
       var tm = time12(f.ev.start);
       return '<div class="wo-wall wo-b wo-b' + (sl.size || "m") + '"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-pic" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div></div>' +
+        '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
+        '<div class="wb-title">' + esc(f.ev.title) + '</div></div>' +   // its name too, for a poster with no words on it (round 5)
         '<div class="wb-side">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
     }
     return "";

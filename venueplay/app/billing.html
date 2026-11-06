@@ -53,7 +53,14 @@
   .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
   /* A LAPTOP USES ITS WIDTH (Dean, 6 Nov 2026: "a whole bunch of wasted space on the computer"): from 1100px up every
      tab is a 1120px column, header included, so the tabs never change width; below that, as before. */
-  @media(min-width:1100px){ .wrap,.bar{max-width:1120px} }
+  @media(min-width:1100px){
+    .wrap,.bar{max-width:1120px}
+    /* ...but words stay a readable measure (design review, 6 Nov 2026: 170-character lines on Billing), and the venue
+       rows on Billing and Game settings sit two to a row instead of a name at the far left and its controls 800px away. */
+    .tabpanel p.note,.tabpanel .snote,.tabpanel > p,.lede{max-width:760px}
+    #venues,#playerData,#aboutVenue{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:start}
+  }
+  #addToggle{margin:12px 0}
   h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
   #lede[hidden] ~ #content{margin-top:18px}   /* the billing intro is hidden off the Billing tab: keep the heading clear of what follows */
@@ -222,6 +229,16 @@
      its two buttons sit side by side under it; the three settings line up in one row with their labels, and on a
      phone the preview goes full width with the settings under it. Every control is the page's own. */
   .adslide{display:grid;grid-template-columns:200px 1fr;gap:14px 18px;background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;align-items:start;counter-increment:adslide}
+  /* No dead area beside a slide (design review, 6 Nov 2026): Change image and Remove sit under the settings, beside the
+     picture, instead of under the picture with an empty block next to them. Phones keep the stacked layout below. */
+  @media(min-width:561px){
+    .adslide{grid-template-columns:180px 1fr;grid-template-areas:"thumb fields" "thumb btns";align-items:center;gap:10px 18px}
+    .adslide .adcol{display:contents}
+    .adslide .adthumb{grid-area:thumb}
+    .adslide .adfields{grid-area:fields}
+    .adslide .adthumbbtns{grid-area:btns;justify-content:flex-start}
+    .adslide .adthumbbtns .ad-change{flex:0 0 auto}
+  }
   #slides{counter-reset:adslide}
   .adcol{display:flex;flex-direction:column;gap:8px;min-width:0}
   .adthumb{width:100%;aspect-ratio:16/9;border-radius:10px;background-color:#050506;background-size:contain;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;position:relative}
@@ -292,13 +309,15 @@
   }
   @media(max-width:600px){
     /* A compact card on a phone: the picture or day on the left, the words and the buttons beside it. */
-    .woe{grid-template-columns:44px minmax(0,1fr);grid-template-areas:"th main" "th acts";gap:6px 12px;padding:9px 12px;margin:6px 0;align-items:start}
+    /* A short card on a phone (round 5): picture or day, the words, and Edit; Copy and Remove are in the form Edit opens. */
+    .woe{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"th main acts";gap:6px 10px;padding:9px 10px 9px 12px;margin:6px 0;align-items:center}
+    .woe .woe-copy,.woe .woe-acts .woe-rm{display:none}
     .woe-thumb{width:44px;grid-area:th}
     .woe-main{display:block;grid-area:main}
     .woe-when{margin-bottom:1px}
     .woe-acts{grid-area:acts;gap:6px}
     .woe-acts .addbtn,.woe-rm{min-height:44px}
-    .woe-acts .woe-rm{margin-left:auto}
+    .woe-facts{flex-wrap:wrap}
     .woe-r1,.woe-r2{grid-template-columns:1fr}
     .woe-r3{flex-direction:column;align-items:stretch}
     .woe-facts .go{flex:1}
