@@ -46,7 +46,24 @@ var FOLDER = '2026-10-29-test-charlie-hotel';
 var ROWS = [], WRITES = [], FAILDB = false, STALE = 0, NO_V2 = false, NO_148 = false, NO_149 = false;   // NO_148 / NO_149: the table before migration 148 refuses "photos", before 149 stop / draft / ignore   // NO_V2: the live table before migration 130
 var V2 = ['details', 'edited_postcode', 'edited_entity_type', 'edited_login_email'];   // STALE = n: the next n reads see the row before the other tap landed
 var NOW = Date.parse('2026-10-29T08:00:00Z');
-Date.now = function () { return NOW; };
+/* One fake clock for BOTH Date.now() and the no-argument new Date() the Worker uses (the holds door compares expires_at
+   with new Date().toISOString()). Faking only Date.now left new Date() on the real calendar, so every row made at the
+   fixed 29 Oct 2026 clock "expired" once the real date passed 5 Nov 2026 (the 7-day link life). */
+(function () {
+  var RealDate = Date;
+  function FakeDate(a, b, c, d, e, f, g) {
+    if (!(this instanceof FakeDate)) return new RealDate(NOW).toString();
+    switch (arguments.length) {
+      case 0: return new RealDate(NOW);
+      case 1: return new RealDate(a);
+      default: return new RealDate(a, b, c === undefined ? 1 : c, d || 0, e || 0, f || 0, g || 0);
+    }
+  }
+  FakeDate.prototype = RealDate.prototype;
+  FakeDate.parse = RealDate.parse; FakeDate.UTC = RealDate.UTC;
+  FakeDate.now = function () { return NOW; };
+  globalThis.Date = FakeDate;
+})();
 var rigFetch = globalThis.fetch;
 function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
 globalThis.fetch = function (url, opts) {

@@ -148,8 +148,29 @@
     return false;
   }
 
+  /* A HANDOVER IS SIGNED WHEN THE PAGE IS (6 Nov 2026, security review B1, finding F2). The Worker
+     hands a venue over only for a sign in that is staff there; a console has one (the same Supabase
+     session every apiPost sends), so it goes with the POST. A TV or a phone has none, sends none, and
+     is answered 401: its word reaches the consoles in the room as an ask (room_ask, below), which
+     listen on the old road and hand over themselves if the page that left is there. */
+  function hostToken() {
+    try {
+      var V = (typeof window !== "undefined" && window.VP) || null;
+      if (!V || typeof V.getClient !== "function") return null;
+      var c = V.getClient();
+      if (!c || !c.auth || typeof c.auth.getSession !== "function") return null;
+      return Promise.resolve(c.auth.getSession())
+        .then(function (r) { return (r && r.data && r.data.session && r.data.session.access_token) || ""; })
+        .catch(function () { return ""; });
+    } catch (e) { return null; }
+  }
   function post(url) {
-    try { return fetch(url, { method: "POST" }); } catch (e) { return Promise.reject(e); }
+    function send(tok) {
+      try { return fetch(url, tok ? { method: "POST", headers: { Authorization: "Bearer " + tok } } : { method: "POST" }); }
+      catch (e) { return Promise.reject(e); }
+    }
+    var t = hostToken();
+    return t ? t.then(send) : send("");
   }
   function readJson(r) {
     try { return Promise.resolve(r && typeof r.json === "function" ? r.json() : null).catch(function () { return null; }); }
@@ -336,6 +357,8 @@
         try { obj = JSON.parse(ev.data); } catch (e) { return; }
         if (!obj || typeof obj !== "object") return;
         if (obj.t === "room_handover") { unavailable("handed over"); return; }
+        /* A page with no sign in says it left the room (F2). Only a console is told; it decides. */
+        if (obj.t === "room_ask") { if (role === "host" && opts.onAsk) { try { opts.onAsk(); } catch (e) {} } return; }
         try { onMsg(obj); } catch (e) {}
       };
       ws.onclose = function (ev) {
@@ -458,7 +481,7 @@
     }
     function tellNow(i) {
       st.tellI = -1;
-      post(api + "/room/handover?room=" + encodeURIComponent(roomName))
+      post(api + "/room/handover?room=" + encodeURIComponent(roomName) + venueQ())
         .then(function (r) { if (!r || (r.status >= 500 && r.status !== 503)) tell(i + 1); })
         .catch(function () { tell(i + 1); });
     }
@@ -616,7 +639,8 @@
   var EAR_MS = 60000;
   function channel(g, name, role, make, copts) {
     copts = copts || {};
-    var hs = [], statusCb = null, room = null, real = null, dead = false, started = false, ear = null, earT = null, mine = false;
+    var hs = [], statusCb = null, room = null, real = null, dead = false, started = false, ear = null, earT = null, mine = false, askE = null, askedAt = 0;
+    if (copts.ear && !g.ear) g.ear = copts.ear;      // the group's way onto the old road, for a channel with no ear of its own (askEar)
     /* THE PAGE'S LAST WORD ON WHAT IS ON AIR. A console says mode once, when its game goes up, and a
        screen that was on the other road all along (the old TV whose answer moved the venue) never
        heard it, so the wall stayed on the ads with the lobby open. When the venue moves, the last
@@ -640,7 +664,8 @@
     function dropEar() {
       clearTimeout(earT); earT = null;
       var e = ear; ear = null;
-      return e ? e.release() : Promise.resolve();
+      var a = askE; askE = null;
+      return Promise.all([e ? e.release() : null, a ? a.release() : null]);
     }
     function goReal(pending) {
       if (dead || real) return;
@@ -692,18 +717,50 @@
             if (s !== "open") return;
             mark("room");
             status("SUBSCRIBED");
-            if (!ear && !earT && copts.ear && mine) {
-              var cl = null;
-              try { cl = typeof copts.ear.client === "function" ? copts.ear.client() : copts.ear.client; } catch (e) { cl = null; }
-              if (cl) {
-                var r = room;
-                ear = watch(cl, copts.ear.name || name, { gate: copts.ear.gate, hello: copts.ear.hello,
-                                        onPeer: function () { if (r) r.handover("peer"); } });
-                earT = setTimeout(function () { earT = -1; dropEar(); }, EAR_MS);
-              }
-            }
-          }
+            if (!earT) openEar();
+          },
+          /* A page with no sign in says it left (F2): listen on the old road again for EAR_MS, and
+             hand the venue over, signed, only if a page is really there. */
+          onAsk: function () { askedAt = now(); if (!ear) openEar(); askEar(); }
         });
+        /* A FORMAT'S OWN PHONE, WHEN ASKED (F2). A musical or trivia phone does not sign its join, so
+           oldRoadPeer never takes it for a page on the other road; before 6 Nov it did not need to,
+           because the phone's own handover moved the venue. That handover is only an ask now, so for
+           EAR_MS after one this console also takes its own format's phone announcing itself on the old
+           road as the page that left. Outside that minute, a join there means nothing, as before. */
+        function phonePeer(m) {
+          if (!askedAt || now() - askedAt > EAR_MS || !m || m.t !== "join" || m.rw) return false;
+          if (typeof m.pid !== "string" || !m.pid) return false;
+          if (copts.fmt === "trivia") return m.fmt === "trivia";
+          if (copts.fmt === "musical") return !m.fmt || m.fmt === "musical";
+          return false;
+        }
+        /* THE ASK IS ABOUT THIS ROOM. A screen that left is on the old road under this channel's own
+           name, which is not always where copts.ear listens (a raffle console's ear is on the bingo
+           channel, a musical screen channel has none), so listen here too, for EAR_MS, with the
+           group's Supabase client and the console's own signed hello. A screen there answers
+           host_here with tv_here; that is a peer, and the venue goes, signed. */
+        function askEar() {
+          if (askE || !room || !mine) return;
+          var e = copts.ear || g.ear;
+          if (!e || (copts.ear && (copts.ear.name || name) === name && ear)) return;   // the ear above already listens here
+          var cl = null;
+          try { cl = typeof e.client === "function" ? e.client() : e.client; } catch (x) { cl = null; }
+          if (!cl) return;
+          var r = room;
+          askE = watch(cl, name, { gate: e.gate, hello: e.hello, peer: phonePeer, onPeer: function () { if (r) r.handover("peer"); } });
+          setTimeout(function () { var a = askE; askE = null; if (a) { try { a.release(); } catch (x) {} } }, EAR_MS);
+        }
+        function openEar() {
+          if (ear || !copts.ear || !mine || !room) return;
+          var cl = null;
+          try { cl = typeof copts.ear.client === "function" ? copts.ear.client() : copts.ear.client; } catch (e) { cl = null; }
+          if (!cl) return;
+          var r = room;
+          ear = watch(cl, copts.ear.name || name, { gate: copts.ear.gate, hello: copts.ear.hello, peer: phonePeer,
+                                  onPeer: function () { if (r) r.handover("peer"); } });
+          earT = setTimeout(function () { earT = -1; dropEar(); }, EAR_MS);
+        }
         return shim;
       },
       send: function (msg) {
@@ -743,7 +800,7 @@
         if (done || heard) return;
         var p = e && e.payload;
         var judge = function (m) {
-          if (done || heard || !oldRoadPeer(m)) return;
+          if (done || heard || !(oldRoadPeer(m) || (opts.peer && opts.peer(m)))) return;
           heard = true;
           try { console.log("[venueplay] heard " + m.t + " on the old road: handing the room over"); } catch (x) {}
           if (opts.onPeer) { try { opts.onPeer(m); } catch (x) {} }

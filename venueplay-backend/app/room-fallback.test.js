@@ -33,6 +33,7 @@ function find(rel) {
 var SRC = find("venueplay/app/vp-room.js");
 
 /* ---- the fake world ---------------------------------------------------- */
+var postAuth = [];
 var NOW, timers, nextId, sockets, fetchPlan, unavailReasons, pendings, states, delivered, store, posts, listeners, serverPongs;
 
 function installClock() {
@@ -89,6 +90,7 @@ function setup(plan, opts) {
   opts = opts || {};
   installClock();
   FakeWS.hangNext = false; FakeWS.failNext = false;
+  postAuth = [];
   sockets = []; unavailReasons = []; pendings = []; states = []; delivered = []; store = {}; posts = []; listeners = {};
   serverPongs = true;
   fetchPlan = plan;                       // function(url) -> {status, body} or "throw"
@@ -101,6 +103,7 @@ function setup(plan, opts) {
   globalThis.fetch = function (url, init) {
     if (init && init.method === "POST") {
       posts.push(url);
+      postAuth.push((init.headers && init.headers.Authorization) || "");
       var pr = opts.postPlan ? opts.postPlan(url) : { status: 200, body: { ok: true } };
       if (pr === "throw") return Promise.reject(new Error("network"));
       return Promise.resolve({ status: pr.status, json: function () { return Promise.resolve(pr.body); } });
@@ -456,6 +459,48 @@ tick(200);
 pass("letting go waits while the library still holds the channel", released === false);
 tick(500);
 pass("and is done once it has really gone, so the page's own channel can take the name", released === true);
+
+print("\nA HANDOVER IS SIGNED WHEN THE PAGE IS (6 Nov 2026, security review B1, finding F2)");
+/* The Worker hands a venue over only for a console signed in as staff there. The real caller is the
+   console: it has a Supabase session (VP.getClient, the one every apiPost sends), and it must still
+   be able to move its venue. A TV or a phone has none, sends none, and is only an ask. */
+function signedIn(tok) {
+  globalThis.window.VP = { getClient: function () { return { auth: { getSession: function () {
+    return Promise.resolve({ data: { session: tok ? { access_token: tok } : null } }); } } }; } };
+}
+V = setup(function () { return { status: 503, body: { error: "room server not enabled" } }; });
+signedIn("jwt-console");
+connect(V, "host"); tick(50);
+pass("the real caller, a signed in console, sends its sign in with the handover",
+     handovers() === 1 && postAuth[0] === "Bearer jwt-console", JSON.stringify(postAuth));
+V = setup(function () { return "throw"; });
+signedIn(null);
+connect(V, "tv"); tick(9000);
+pass("a TV with no session sends no Authorization at all", handovers() >= 1 && postAuth.every(function (a) { return a === ""; }), JSON.stringify(postAuth));
+V = setup(function () { return "throw"; });
+connect(V, "tv"); tick(9000);
+pass("and a page without VP at all still posts, unsigned, as before", handovers() >= 1 && postAuth[0] === "");
+V = setup(function () { return "throw"; }, { postPlan: function () { return { status: 401, body: { error: "sign in first", asked: 1 } }; } });
+connect(V, "tv"); tick(9000);
+var n401 = handovers();
+tick(10 * 60000);
+pass("a 401 is an answer, not a failure: the TV does not keep asking", n401 === 1 && handovers() === 1, n401 + " then " + handovers());
+
+print("\nAN ASK REACHES THE CONSOLE, AND NOBODY ELSE ACTS ON IT");
+var asks = 0;
+V = setup(function () { return ok200(); });
+var hostR = V.connect("https://api.test", "vp-ABC123", "host", function (p) { delivered.push(p); },
+  { onAsk: function () { asks++; }, onUnavailable: function (why) { unavailReasons.push(why); } });
+tick(100);
+sockets[0].onmessage({ data: JSON.stringify({ t: "room_ask" }) });
+pass("a console is told (onAsk) and the ask is not handed to the page as a game message", asks === 1 && delivered.length === 0);
+pass("and the console stays in the room: an ask moves nothing by itself", hostR.state() === "open" && unavailReasons.length === 0);
+var phoneAsks = 0;
+V = setup(function () { return ok200(); });
+var phR = V.connect("https://api.test", "vp-ABC123", "phone", function (p) { delivered.push(p); }, { onAsk: function () { phoneAsks++; } });
+tick(100);
+sockets[0].onmessage({ data: JSON.stringify({ t: "room_ask" }) });
+pass("a phone that somehow hears room_ask does nothing with it", phoneAsks === 0 && delivered.length === 0 && phR.state() === "open");
 
 print("");
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));

@@ -164,7 +164,7 @@ async function main() {
     for (var i = 0; i < 50 && !fin; i++) drain();
     var msg = (((sms[0] || {}).messages || [])[0] || {}).message || '';
     check('with ' + c[0] + ': "To sign in visit venueplay.com.au/app", the TV link on venueplay.com.au, no .dev host',
-      msg === 'The Royal Hotel has set you up on venueplay. To sign in visit venueplay.com.au/app. TV URL: venueplay.com.au/tv?the-royal-hotel-4220' && !devHit(msg), msg);
+      msg === 'The Royal Hotel has set you up on venueplay. To sign in visit venueplay.com.au/app. TV: venueplay.com.au/tv, then type the screen code from your host console.' && !devHit(msg), msg);
   });
 
   print(''); print('The cancel link');
