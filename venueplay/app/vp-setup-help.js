@@ -50,7 +50,7 @@
         help: "A mix takes questions from every category. Or pick the categories your crowd likes best." },
       { key: "set_ids", label: "Categories", kind: "categories", def: [], showIf: { set_mode: "pick" },
         help: "Tick the categories to play. Each one says what it covers." },
-      { key: "theme_nights", label: "One-off theme nights", kind: "taglist", def: [], group: "tp", placeholder: "e.g. Home and Away night, 80s night, Halloween", max: 6, each: 60,
+      { key: "theme_nights", label: "One-off theme nights", kind: "taglist", def: [], group: "tp", placeholder: "e.g. 80s night", max: 6, each: 60,
         help: "Any theme nights you run. Our question builder makes a night from any topic, so tell us and we'll have it ready." },
       { key: "prize_list", label: "Your usual prizes", kind: "prizebank", def: [], prizes: true, placeholder: "e.g. $50 bar tab", group: "tp",
         help: "We load all your usual prizes so you can tap and go on the night." },

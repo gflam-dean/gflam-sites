@@ -183,7 +183,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P, 'vpGsAllYes').click(); await settle();
   check('trivia first, "Game 1 of 3"', T(P, 'vpGsTitle') === 'Set up trivia' && T(P, 'vpGsCount') === 'Game 1 of 3', [T(P, 'vpGsTitle'), T(P, 'vpGsCount')]);
   var qs = all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-q'; });
-  check('a "?" beside every trivia setting (' + P.H.byKey('trivia').settings.length + ')', qs.length === P.H.byKey('trivia').settings.length, qs.length);
+  check('a "?" beside every trivia setting, and beside the shared-prizes question (' + (P.H.byKey('trivia').settings.length + 1) + ')', qs.length === P.H.byKey('trivia').settings.length + 1, qs.length);
   check('the advanced ones as short questions', /Should faster answers score more\?/.test(T(P, 'vpGsBody')) && /A few quick questions/.test(T(P, 'vpGsBody')));
   var qSpeed = $(P, 'vpGsQ_speed_bonus'), qBuzz = $(P, 'vpGsQ_buzzer');
   qSpeed.click();

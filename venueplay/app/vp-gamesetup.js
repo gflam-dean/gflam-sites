@@ -499,7 +499,7 @@
       var tagBox = el("div", "vpgs-tags"); tagBox.id = "vpGsIn_" + s.key; wrap.appendChild(tagBox);
       var tin = el("input", "vpgs-in"); tin.type = "text"; tin.maxLength = each; tin.placeholder = s.placeholder || ""; tin.id = "vpGsIn_" + s.key + "_new";
       tin.setAttribute("aria-label", s.label); tin.setAttribute("enterkeyhint", "enter"); wrap.appendChild(tin);
-      var th = el("p", "vpgs-hint", "Press Enter after each one." + (s.kind === "prizebank" ? " " + s.help : "")); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);
+      var th = el("p", "vpgs-hint", "Press Enter after each one."); th.id = "vpGsNote_" + s.key; wrap.appendChild(th);   // the rest is under its "?" (Dean, round 5: half the size)
       var drawTags = function () {
         while (tagBox.firstChild) tagBox.removeChild(tagBox.firstChild);
         items2.forEach(function (w, k) {
@@ -651,15 +651,11 @@
         groups[s.group].appendChild(r.row);
       } else if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
       if (s.prizes && opts.askShared && !s.ownList) {
-        var sr = el("div", "vpgs-row two"); sr.id = "vpGsShared";
-        sr.appendChild(el("div", "vpgs-lab", "Do you use these prizes for your other games too?"));
-        var sseg = el("div", "vpgs-seg"); sseg.setAttribute("role", "group"); sseg.setAttribute("aria-label", "Prizes across games");
-        [[true, "Yes"], [false, "No"]].forEach(function (o) {
-          var b = el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", ctx.shared === o[0] ? "true" : "false");
-          b.addEventListener("click", function () { ctx.shared = o[0]; Array.prototype.forEach.call(sseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === String(o[0]) ? "true" : "false"); }); });
-          sseg.appendChild(b);
-        });
-        sr.appendChild(sseg); opts.askShared = false;
+        /* asked like every other setting, with its own "?" (Dean, round 5: the "?" consistent everywhere) */
+        var shR = settingRow(F, { key: "shared", label: "Do you use these prizes for your other games too?", kind: "seg", options: [[true, "Yes"], [false, "No"]], def: undefined,
+          help: "Yes: these prizes start every other game's list, in the setup and as tap-and-go buttons on each console. Raffles keep their own." }, ctx, all);
+        var sr = shR.row; sr.id = "vpGsShared"; ctx.sharedRow = shR;
+        opts.askShared = false;
         if (s.group) { sr.className = "vpgs-row"; ctx.pendingShared = sr; } else list.appendChild(sr);   // trivia: beside "Questions in a round" (Dean, round 5: a 2x2 grid)
       }
     });
@@ -720,7 +716,7 @@
       var vals = collect();
       var p = g.needsDetails ? saveMembers(deps, vid, vals) : savePrefs(deps, vid, gkey, vals, false).then(function (ok) { return { ok: ok }; });
       return p.then(function (r) {
-        if (r.ok) { if (ctx.shared !== undefined) vals.__shared = ctx.shared; return done("saved", vals); }
+        if (r.ok) { var shv = ctx.sharedRow ? ctx.sharedRow.get() : undefined; if (shv !== undefined) vals.__shared = shv; return done("saved", vals); }
         save.disabled = false;
         msg.textContent = r.error || "We could not save that just now. Check your connection and try again.";
       });
