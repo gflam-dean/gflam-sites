@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:40 · 0e90ef4b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 11:22 · 4e888ea8';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3778,6 +3778,13 @@ const gpBool = (v) => (typeof v === 'boolean') ? v : undefined;
 const gpText = (n) => (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, n) : undefined;
 const gpInt = (lo, hi) => (v) => (typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi) ? v : undefined;
 const gpUuid = (v) => (typeof v === 'string' && GP_UUID.test(v)) ? v.toLowerCase() : undefined;
+/* A short list of short words (the setup wizard, INBOX 104 round 3): prize buttons, theme nights. Empties dropped, each once. */
+const gpWords = (most, len) => (v) => {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  for (const x of v) { const t = (typeof x === 'string') ? x.trim().slice(0, len) : ''; if (t && out.indexOf(t) < 0) out.push(t); if (out.length >= most) break; }
+  return out;
+};
 /* Every game's keys (28 Oct 2026). A key not listed here is dropped, whatever a console sends. */
 const GAME_PREFS_KEYS = {
   bingo: {
@@ -3804,6 +3811,7 @@ const GAME_PREFS_KEYS = {
     allow_early:   gpBool,
     // phone tickets or the venue's own paper books (the setup wizard, INBOX 104 round 2): venueplay never checks paper
     ticket_kind:   (v) => ({ phone: 1, paper: 1 }[v] ? v : undefined),
+    prize_list:    gpWords(8, 80),   // the usual prize buttons (setup wizard, round 3)
   },
   trivia: {
     set_id:        gpUuid,
@@ -3815,6 +3823,11 @@ const GAME_PREFS_KEYS = {
     double_last:   gpInt(1, 100),
     buzzer:        gpBool,   // the time's-up buzzer, OFF unless the venue switches it on (3 Nov 2026)
     buzzer_where:  (v) => ({ tv: 1, device: 1 }[v] ? v : undefined),   // where it plays: the TV, or the host's own device
+    // the setup wizard (INBOX 104 round 3): a mix or picked categories, one-off theme nights, the usual prize buttons
+    set_mode:      (v) => ({ mix: 1, pick: 1 }[v] ? v : undefined),
+    set_ids:       (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const u = gpUuid(x); if (u && out.indexOf(u) < 0) out.push(u); if (out.length >= 20) break; } return out; },
+    theme_nights:  gpWords(6, 60),
+    prize_list:    gpWords(8, 80),
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
@@ -3864,6 +3877,8 @@ const GAME_PREFS_KEYS = {
     },
     prize_same:    gpBool,
     prize_weekly:  gpBool,
+    // rounds played for fun, with no prize (Dean, round 3): round numbers 1 to 10
+    prize_none:    (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (Number.isInteger(x) && x >= 1 && x <= 10 && out.indexOf(x) < 0) out.push(x); } return out; },
   },
 };
 function cleanGamePrefs(game, raw) {

@@ -47,63 +47,80 @@
   var C = { ink: "#0A0A0B", ink2: "#141418", ink3: "#1C1C22", pink: "#FF1F8E", pinkSoft: "#FF8CC6", text: "#E7E7EC", muted: "#C9C9D1", faint: "#9A9AA4", line: "rgba(255,255,255,.10)", ok: "#2BD47D" };
   var HEAD = "'Hanken Grotesk',Manrope,sans-serif";
   var P = "#vpGs ";
+  /* THE LOOK (Dean, round 3: "too much wasted space, the phone too large"). Phone first: 15 to 16px text, 44px controls,
+     tight rows; a tablet or laptop gets a 640px column with labels and controls side by side. The host look: ink,
+     pink, Hanken Grotesk headings, Manrope text. */
   var CSS = [
     P + "*{box-sizing:border-box}",
-    P + ".vpgs-box{max-width:560px;margin:0 auto;padding:18px 0 40px}",
-    P + ".vpgs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:0 0 18px}",
-    P + ".vpgs-logo{display:block;height:24px;width:auto}",
-    P + ".vpgs-step{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px}",
-    P + ".vpgs-count{margin:0;font:800 14px " + HEAD + ";letter-spacing:.1em;text-transform:uppercase;color:" + C.pink + "}",
-    P + ".vpgs-bar{display:flex;gap:6px;margin:0 0 16px}" + P + ".vpgs-bar i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.14)}" + P + ".vpgs-bar i.on{background:" + C.pink + "}",
-    P + ".vpgs-card{background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:18px;padding:24px 20px}",
-    P + "h2.vpgs-title{margin:0 0 10px;font:800 24px/1.25 " + HEAD + ";color:#FFFFFF}",
-    P + ".vpgs-lead{margin:0 0 18px;font-size:16px;line-height:1.55;color:" + C.muted + "}",
-    P + ".vpgs-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;margin:18px 0 0}",
-    P + ".vpgs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border-radius:12px;border:none;font:700 16px/1.3 " + HEAD + ";cursor:pointer;text-align:center}",
+    P + ".vpgs-box{max-width:560px;margin:0 auto;padding:12px 0 28px}",
+    P + ".vpgs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:0 0 10px}",
+    P + ".vpgs-logo{display:block;height:20px;width:auto}",
+    P + ".vpgs-step{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px}",
+    P + ".vpgs-count{margin:0;font:800 14px " + HEAD + ";letter-spacing:.08em;text-transform:uppercase;color:" + C.pink + "}",
+    P + ".vpgs-bar{display:flex;gap:4px;margin:0 0 12px}" + P + ".vpgs-bar i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.14)}" + P + ".vpgs-bar i.on{background:" + C.pink + "}",
+    P + ".vpgs-card{background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:18px 16px}",
+    P + "h2.vpgs-title{margin:0 0 6px;font:800 21px/1.25 " + HEAD + ";color:#FFFFFF}",
+    P + ".vpgs-lead{margin:0 0 14px;font-size:15px;line-height:1.5;color:" + C.muted + "}",
+    P + ".vpgs-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:12px 0 0}",
+    P + ".vpgs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 20px;border-radius:12px;border:none;font:700 16px/1.25 " + HEAD + ";cursor:pointer;text-align:center}",
     P + ".vpgs-btn.pink{background:" + C.pink + ";color:#FFFFFF}" + P + ".vpgs-btn.ghost{background:rgba(255,255,255,.08);color:" + C.text + "}",
-    P + ".vpgs-btn.big{width:100%;min-height:56px;font-size:17px}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
-    P + ".vpgs-stack{display:flex;flex-direction:column;gap:12px}",
-    P + ".vpgs-close{min-height:44px;padding:10px 16px}",
-    P + ".vpgs-list{list-style:none;margin:0 0 18px;padding:0}",
-    P + ".vpgs-list li{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid " + C.line + ";font-size:16px;line-height:1.5;color:" + C.muted + "}",
+    P + ".vpgs-btn.big{width:100%;min-height:50px}" + P + ".vpgs-btn[disabled]{opacity:.45;cursor:default}",
+    P + ".vpgs-stack{display:flex;flex-direction:column;gap:10px}",
+    P + ".vpgs-close{min-height:44px;padding:8px 14px;font-size:15px}",
+    P + ".vpgs-list{list-style:none;margin:0 0 12px;padding:0}",
+    P + ".vpgs-list li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid " + C.line + ";font-size:15px;line-height:1.45;color:" + C.muted + "}",
     P + ".vpgs-list li:first-child{border-top:none;padding-top:0}" + P + ".vpgs-list b{color:#FFFFFF}",
-    P + ".vpgs-n{flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,31,142,.16);color:" + C.pink + ";display:flex;align-items:center;justify-content:center;font:800 14px " + HEAD + "}",
-    P + ".vpgs-ready{margin:0;font:800 17px " + HEAD + ";color:#FFFFFF}",
-    P + ".vpgs-chips{display:grid;grid-template-columns:1fr;gap:10px}",
-    P + ".vpgs-chip{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);font:700 16px " + HEAD + ";color:#FFFFFF;cursor:pointer;text-align:left}",
-    P + ".vpgs-chip .bx{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:14px;color:#FFFFFF}",
+    P + ".vpgs-n{flex:none;width:24px;height:24px;border-radius:50%;background:rgba(255,31,142,.16);color:" + C.pink + ";display:flex;align-items:center;justify-content:center;font:800 13px " + HEAD + "}",
+    P + ".vpgs-ready{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}",
+    P + ".vpgs-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
+    P + ".vpgs-chip{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);font:700 15px/1.25 " + HEAD + ";color:#FFFFFF;cursor:pointer;text-align:left}",
+    P + ".vpgs-chip .bx{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:13px;color:#FFFFFF}",
+    P + ".vpgs-chip small{display:block;font:500 13px/1.3 Manrope,system-ui,sans-serif;color:" + C.faint + ";margin-top:2px}",
     P + ".vpgs-chip[aria-checked=true]{border-color:" + C.pink + ";background:rgba(255,31,142,.12)}" + P + ".vpgs-chip[aria-checked=true] .bx{background:" + C.pink + ";border-color:" + C.pink + "}",
-    P + ".vpgs-music{display:grid;grid-template-columns:1fr 1fr;gap:8px}" + P + ".vpgs-music .vpgs-chip{min-height:46px;padding:10px 12px;font-size:15px}",
-    P + ".vpgs-in{display:block;width:100%;min-height:48px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:" + C.ink + ";color:#FFFFFF;font:16px Manrope,system-ui,sans-serif;margin:0}",
-    P + ".vpgs-in:focus{outline:2px solid " + C.pink + ";outline-offset:1px}",
-    P + ".vpgs-pair{display:flex;gap:10px;align-items:center}" + P + ".vpgs-pair .vpgs-in{flex:1;min-width:0}" + P + ".vpgs-pair span{color:" + C.faint + "}",
-    P + ".vpgs-plist{display:flex;flex-direction:column;gap:8px}",
-    P + ".vpgs-sec{margin:22px 0 0;padding:18px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
-    P + ".vpgs-sec h3{margin:0 0 2px;font:800 17px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sec .sub{margin:0 0 4px;font-size:14px;color:" + C.faint + "}",
-    P + ".vpgs-row{position:relative;padding:14px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child{border-top:none;padding-top:0}",
-    P + ".vpgs-prompt{margin:0 0 6px;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + "}",
-    P + ".vpgs-lab{position:relative;display:flex;align-items:center;gap:10px;margin:0 0 10px;font:700 16px " + HEAD + ";color:#FFFFFF}",
-    P + ".vpgs-q{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid " + C.pinkSoft + ";color:" + C.pinkSoft + ";background:transparent;font:800 15px " + HEAD + ";cursor:pointer;padding:0}",
+    P + ".vpgs-music{display:grid;grid-template-columns:1fr 1fr;gap:6px}" + P + ".vpgs-music .vpgs-chip{min-height:44px;padding:8px 10px;font-size:14px}",
+    P + ".vpgs-cats{display:grid;grid-template-columns:1fr;gap:6px}" + P + ".vpgs-cats .vpgs-chip{min-height:44px;padding:8px 12px}",
+    P + ".vpgs-in{display:block;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:" + C.ink + ";color:#FFFFFF;font:16px Manrope,system-ui,sans-serif;margin:0}",
+    P + ".vpgs-in:focus{outline:2px solid " + C.pink + ";outline-offset:1px}" + P + ".vpgs-in[disabled]{opacity:.4}",
+    P + ".vpgs-pair{display:flex;gap:8px;align-items:center}" + P + ".vpgs-pair .vpgs-in{flex:1;min-width:0}" + P + ".vpgs-pair span{color:" + C.faint + "}",
+    P + ".vpgs-plist{display:flex;flex-direction:column;gap:6px}",
+    P + ".vpgs-prow{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;font:700 14px " + HEAD + ";color:" + C.muted + "}",
+    P + ".vpgs-none{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;font:600 13px Manrope,system-ui,sans-serif;color:" + C.faint + ";white-space:nowrap;cursor:pointer}",
+    P + ".vpgs-none input{width:18px;height:18px;accent-color:" + C.pink + "}",
+    P + ".vpgs-add{align-self:flex-start;min-height:40px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
+    P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
+    P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:1/-1}",
+    P + ".vpgs-sec{margin:14px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
+    P + ".vpgs-sec h3{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sec .sub{margin:0 0 2px;font-size:14px;color:" + C.faint + "}",
+    P + ".vpgs-row{position:relative;padding:10px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child,.vpgs-rows>.vpgs-group:first-child{border-top:none;padding-top:0}",
+    P + ".vpgs-prompt{margin:0 0 4px;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + "}",
+    P + ".vpgs-lab{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
+    P + ".vpgs-q{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid " + C.pinkSoft + ";color:" + C.pinkSoft + ";background:transparent;font:800 14px " + HEAD + ";cursor:pointer;padding:0}",
     P + ".vpgs-q[aria-expanded=true]{background:" + C.pink + ";border-color:" + C.pink + ";color:#FFFFFF}",
     /* the "?" words: UNDER the setting on a phone (Dean, round 2), a bubble under the label on a wider screen */
-    P + ".vpgs-pop{position:static;margin:0 0 12px;padding:12px 14px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 15px/1.5 Manrope,system-ui,sans-serif;color:#FFFFFF}",
-    P + ".vpgs-pop .got{display:block;margin:6px 0 0;padding:0;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;min-height:32px;text-align:left}",
+    P + ".vpgs-pop{position:static;margin:0 0 8px;padding:10px 12px;border-left:3px solid " + C.pink + ";border-radius:0 10px 10px 0;background:rgba(255,31,142,.09);font:500 15px/1.45 Manrope,system-ui,sans-serif;color:#FFFFFF}",
+    P + ".vpgs-pop .got{display:block;margin:4px 0 0;padding:0;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;min-height:32px;text-align:left}",
     P + ".vpgs-seg{display:flex;width:100%;border:1px solid rgba(255,255,255,.18);border-radius:10px;overflow:hidden}",
-    P + ".vpgs-seg button{flex:1;min-height:48px;padding:10px 12px;border:none;background:transparent;font:700 15px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
+    P + ".vpgs-seg button{flex:1;min-height:44px;padding:8px 10px;border:none;background:transparent;font:700 15px/1.2 " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-seg button+button{border-left:1px solid rgba(255,255,255,.18)}" + P + ".vpgs-seg button[aria-pressed=true]{background:" + C.pink + ";color:#FFFFFF}",
-    P + ".vpgs-info{margin:0;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.5;color:" + C.muted + "}",
-    P + ".vpgs-days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}",
-    P + ".vpgs-day{min-height:46px;padding:0;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);font:700 15px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
+    P + ".vpgs-info{margin:0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.45;color:" + C.muted + "}",
+    P + ".vpgs-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}",
+    P + ".vpgs-day{min-height:44px;padding:0;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);font:700 14px " + HEAD + ";color:" + C.muted + ";cursor:pointer}",
     P + ".vpgs-day[aria-pressed=true]{background:" + C.pink + ";border-color:" + C.pink + ";color:#FFFFFF}",
-    P + ".vpgs-times{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0 0}" + P + ".vpgs-time{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;font-size:15px;color:" + C.muted + "}",
-    P + ".vpgs-msg{margin:12px 0 0;font-size:15px;line-height:1.5;color:" + C.pinkSoft + "}",
-    P + ".vpgs-link{display:block;margin:18px 0 0;padding:0;min-height:44px;border:none;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}",
-    P + ".vpgs-tag{display:inline-block;margin:0 0 12px;padding:4px 12px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + ";letter-spacing:.06em;text-transform:uppercase}",
-    P + ".vpgs-note{margin:0 0 16px;font-size:15px;line-height:1.5;color:" + C.faint + "}",
-    "@media (min-width:600px){" + P + ".vpgs-chips{grid-template-columns:1fr 1fr}" + P + ".vpgs-music{grid-template-columns:1fr 1fr 1fr}" +
-      P + ".vpgs-pop{position:absolute;z-index:5;left:0;top:40px;width:380px;margin:0;padding:14px 16px 10px;border:1px solid " + C.pink + ";border-radius:12px;background:#1E1E24;box-shadow:0 14px 40px rgba(0,0,0,.6)}}",
-    "@media (min-width:760px){" + P + ".vpgs-box{max-width:700px;padding-top:28px}" + P + ".vpgs-card{padding:32px 36px}" + P + "h2.vpgs-title{font-size:28px}" +
-      P + ".vpgs-row.two{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:24px;align-items:center}" +
+    P + ".vpgs-times{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 0}" + P + ".vpgs-time{display:grid;grid-template-columns:1fr 140px;gap:8px;align-items:center;font-size:15px;color:" + C.muted + "}",
+    P + ".vpgs-time.need span{color:" + C.pinkSoft + "}",
+    P + ".vpgs-msg{margin:10px 0 0;font-size:15px;line-height:1.45;color:" + C.pinkSoft + "}" + P + ".vpgs-msg:empty{display:none}",
+    /* "Not ready yet?" on a phone: a full-width quiet button, easy to hit with a thumb (Dean, round 3) */
+    P + ".vpgs-link{display:block;width:100%;margin:12px 0 0;padding:10px 12px;min-height:44px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:center}",
+    P + ".vpgs-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + ";letter-spacing:.04em;text-transform:uppercase}",
+    P + ".vpgs-note{margin:0 0 10px;font-size:15px;line-height:1.45;color:" + C.faint + "}",
+    P + ".vpgs-ask{margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
+    "@media (min-width:600px){" + P + ".vpgs-music{grid-template-columns:repeat(3,1fr)}" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" +
+      P + ".vpgs-group{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:auto}" +
+      P + ".vpgs-pop{position:absolute;z-index:5;left:0;top:36px;width:360px;margin:0;padding:12px 14px 8px;border:1px solid " + C.pink + ";border-radius:12px;background:#1E1E24;box-shadow:0 14px 40px rgba(0,0,0,.6)}" +
+      P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;text-align:left;text-decoration:underline;text-underline-offset:3px}}",
+    "@media (min-width:760px){" + P + ".vpgs-box{max-width:660px;padding-top:24px}" + P + ".vpgs-card{padding:26px 30px}" + P + "h2.vpgs-title{font-size:26px}" +
+      P + ".vpgs-chips{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-music{grid-template-columns:repeat(4,1fr)}" +
+      P + ".vpgs-row.two{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:20px;align-items:center}" +
       P + ".vpgs-row.two .vpgs-prompt{grid-column:1/-1}" + P + ".vpgs-row.two .vpgs-lab{margin:0}}"
   ].join("");
 
@@ -146,6 +163,16 @@
       if (gs.length) out.push({ day: x[0], games: gs });
     });
     return out;
+  }
+  /* THEIR FIRST NAME (Dean, round 3: "Welcome to venueplay, {first name}"): this login's name at this venue, unless
+     it is still the "<venue> manager" the account was made with; null when not known (the venue name is used). */
+  function firstName(cx) {
+    if (cx && cx.firstName) return String(cx.firstName).trim().split(/\s+/)[0] || null;
+    var vid = cx && cx.venue && cx.venue.id;
+    var row = ((cx && cx.staff) || []).filter(function (r) { return r && r.venue_id === vid; })[0];
+    var n = String((row && row.display_name) || "").trim();
+    if (!n || / manager$/i.test(n) || /@/.test(n)) return null;
+    return n.split(/\s+/)[0];
   }
   /* PUB OR CLUB: the venue's own record (vp_venues.entity_type, set at sign-up or by HQ), else what they told this
      wizard once (setup_answers.venue_kind). null when nobody knows yet. */
@@ -195,6 +222,8 @@
   }
   /* "19:30" -> "7:30pm" */
   function timeWords(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); if (!m) return ""; var h = +m[1], ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return h + (m[2] === "00" ? "" : ":" + m[2]) + ap; }
+  /* the prizes typed on a game's screen, for the shared list */
+  function bankOf(vals) { return ((vals && (vals.prize_list || vals.prizes)) || []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 8); }
   function cleanOther(t) { return typeof t === "string" ? t.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, OTHER_MAX) : ""; }
   /* The keys this file adds to setup_answers, cleaned. vp-firstrun.js keeps them through its own cleanAnswers. */
   function cleanExtra(a, out) {
@@ -205,6 +234,8 @@
     var o = cleanOther(a && a.other);
     if (o) out.other = o;
     if (a && (a.venue_kind === "pub" || a.venue_kind === "club")) out.venue_kind = a.venue_kind;
+    if (a && typeof a.prizes_shared === "boolean") out.prizes_shared = a.prizes_shared;
+    if (a && Array.isArray(a.prize_bank)) { var pb = a.prize_bank.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return x.trim().slice(0, 80); }).slice(0, 8); if (pb.length) out.prize_bank = pb; }
     var w = cleanWeek(a && a.week);
     if (w && w.length) out.week = w;
     return out;
@@ -260,7 +291,7 @@
   function saveMembers(deps, vid, vals) {
     var body = { venue_id: vid };
     Object.keys(vals).forEach(function (k) { if (vals[k] !== "" && vals[k] != null) body[k] = vals[k]; });
-    if (!body.name) return Promise.resolve({ ok: false, error: "Give the draw a name first." });
+    if (!body.name) return Promise.resolve({ ok: false, error: "Add your draw day (or a name) first." });
     return gameApi(deps, "POST", "/host/members/settings", body).then(function (r) {
       if (r.ok) return { ok: true };
       return { ok: false, error: (r.json && r.json.error) || "We could not save the draw just now. Try again, or set it up in the members draw console." };
@@ -303,7 +334,7 @@
   /* ONE SETTING: its short question (advanced), its label and "?", its control. Returns { row, get, s, set, value }. */
   function settingRow(F, s, ctx, all) {
     var el = F.el;
-    var wide = s.kind === "seg" || s.kind === "number" || s.kind === "select" || s.kind === "money" || s.kind === "sets";
+    var wide = s.kind === "seg" || s.kind === "number" || s.kind === "select" || s.kind === "money";
     var row = el("div", "vpgs-row" + (wide ? " two" : "")); row.setAttribute("data-key", s.key);
     if (s.advanced && s.prompt) row.appendChild(el("p", "vpgs-prompt", s.prompt));
     var lab = el("div", "vpgs-lab");
@@ -331,16 +362,14 @@
         seg.appendChild(b);
       });
       wrap.appendChild(seg); get = function () { return cur; };
-    } else if (s.kind === "select" || s.kind === "sets") {
+    } else if (s.kind === "select") {
       var sel = el("select", "vpgs-in"); sel.id = "vpGsIn_" + s.key; sel.setAttribute("aria-label", s.label);
-      var opts = s.options || [["", "The set you played last"]];
+      var opts = s.options || [];
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = String(o[0]); if (o[0] === s.def) op.selected = true; sel.appendChild(op); });
-      if (s.kind === "sets") loadSets(sel, ctx);
       sel.addEventListener("change", changed);
       wrap.appendChild(sel);
       get = function () {
         var v = sel.value;
-        if (s.kind === "sets") return v ? v : undefined;
         var hit = (s.options || []).filter(function (o) { return String(o[0]) === v; })[0];
         return hit ? hit[0] : undefined;
       };
@@ -364,24 +393,83 @@
       });
       get = function () { return picked.length ? picked.slice() : undefined; };
     } else if (s.kind === "prizelist") {
-      /* One prize box, or one per round or prize, from the two settings that decide (countFrom, sameFrom). */
+      /* One prize box, or one per round or prize, one under the other (countFrom, sameFrom). With s.none, each round
+         can be "No prize" (Dean, round 3: some venues give nothing for the first rounds). */
       var plist = el("div", "vpgs-plist"); plist.id = "vpGsIn_" + s.key; wrap.appendChild(plist);
-      var vals = s.def ? [s.def] : [];
+      var vals = [], nones = [];
+      var start = (ctx.bank && ctx.bank.length) ? ctx.bank.slice() : (s.def ? [s.def] : []);
+      vals = start;
       var draw = function () {
         var n = parseInt(all.value(s.countFrom), 10) || 1, same = all.value(s.sameFrom) !== false;
         var want = same ? 1 : Math.max(1, Math.min(n, 12));
-        Array.prototype.forEach.call(plist.children, function (inp, i) { vals[i] = inp.value; });
+        Array.prototype.forEach.call(plist.children, function (pr, i) { var inp = pr.children[1]; if (inp) vals[i] = inp.value; });
         while (plist.firstChild) plist.removeChild(plist.firstChild);
         for (var i = 0; i < want; i++) {
+          var pr = el("div", "vpgs-prow");
+          pr.appendChild(el("span", null, want > 1 ? s.each + " " + (i + 1) : "All"));
           var inp = el("input", "vpgs-in"); inp.type = "text"; inp.maxLength = s.max || 120; inp.placeholder = s.placeholder || "";
-          inp.setAttribute("aria-label", want > 1 ? s.each + " " + (i + 1) : s.label); inp.id = "vpGsIn_" + s.key + "_" + i;
-          inp.value = vals[i] != null ? vals[i] : (i === 0 ? (s.def || "") : "");
-          plist.appendChild(inp);
+          inp.setAttribute("aria-label", want > 1 ? s.each + " " + (i + 1) + " prize" : s.label); inp.id = "vpGsIn_" + s.key + "_" + i;
+          inp.value = vals[i] != null ? vals[i] : "";
+          pr.appendChild(inp);
+          if (s.none) {
+            var nl = el("label", "vpgs-none"); var cb = el("input"); cb.type = "checkbox"; cb.id = "vpGsNone_" + i; cb.checked = !!nones[i];
+            inp.disabled = !!nones[i];
+            (function (cb, inp, k) { cb.addEventListener("change", function () { nones[k] = !!cb.checked; inp.disabled = !!cb.checked; }); })(cb, inp, i);
+            nl.appendChild(cb); nl.appendChild(el("span", null, "No prize")); pr.appendChild(nl);
+          } else pr.appendChild(el("span"));
+          plist.appendChild(pr);
         }
-        lab.firstChild.textContent = want > 1 ? s.each + "s" : s.label;
+        lab.firstChild.textContent = want > 1 ? (s.none ? "Prize for each round" : s.each + "s") : s.label;
+        plist._want = want;
       };
       ctx.redraw.push(draw);
-      get = function () { var out = []; Array.prototype.forEach.call(plist.children, function (inp) { out.push(String(inp.value || "").trim()); }); return out.some(function (x) { return x; }) ? out : undefined; };
+      get = function () {
+        var out = [];
+        for (var i = 0; i < (plist._want || 0); i++) { var inp = plist.children[i].children[1]; out.push(nones[i] ? "" : String(inp.value || "").trim()); }
+        return (out.some(function (x) { return x; }) || nones.some(function (x) { return x; })) ? out : undefined;
+      };
+      ctx.noneOf = function () { var o = []; for (var i = 0; i < (plist._want || 0); i++) if (nones[i]) o.push(i + 1); return o; };
+    } else if (s.kind === "prizebank" || s.kind === "taglist") {
+      /* A short list: the usual prizes (they become the game's prize buttons, Dean round 3) or theme nights. */
+      var bank = el("div", "vpgs-plist"); bank.id = "vpGsIn_" + s.key; wrap.appendChild(bank);
+      if (s.kind === "prizebank") { var pn = el("p", "vpgs-note", s.help); pn.id = "vpGsNote_" + s.key; pn.setAttribute("style", "margin:6px 0 0"); wrap.appendChild(pn); }
+      var startB = (s.prizes && ctx.bank && ctx.bank.length) ? ctx.bank.slice() : (s.def || []).slice();
+      var most = s.kind === "prizebank" ? 8 : (s.max || 6);
+      var addOne = function (val) {
+        var inp = el("input", "vpgs-in"); inp.type = "text"; inp.maxLength = s.kind === "prizebank" ? 80 : (s.each || 60);
+        var n = bank.children.length - 1;   // the inputs so far (the "+ Add" button is always last)
+        inp.placeholder = n ? "" : (s.placeholder || ""); inp.value = val || "";
+        inp.id = "vpGsIn_" + s.key + "_" + n; inp.setAttribute("aria-label", s.label + " " + (n + 1));
+        bank.insertBefore(inp, more); return inp;
+      };
+      var more = el("button", "vpgs-add", s.kind === "prizebank" ? "+ Add another prize" : "+ Add another"); more.setAttribute("type", "button");
+      bank.appendChild(more);
+      var firstN = Math.max(s.kind === "prizebank" ? 2 : 1, startB.length);
+      for (var bi = 0; bi < firstN; bi++) addOne(startB[bi]);
+      more.addEventListener("click", function () { if (bank.children.length - 1 < most) addOne(""); if (bank.children.length - 1 >= most) more.style.display = "none"; });
+      get = function () {
+        var out = [];
+        Array.prototype.forEach.call(bank.children, function (c) { if (c.tagName === "INPUT") { var t = String(c.value || "").trim(); if (t && out.indexOf(t) < 0) out.push(t); } });
+        return out.length ? out.slice(0, most) : undefined;
+      };
+    } else if (s.kind === "categories") {
+      /* "Pick categories" (Dean, round 3): each says what it covers. Read like the trivia console: the venue's own sets
+         and the venueplay library, never another venue's private night. */
+      var cats = el("div", "vpgs-cats"); cats.id = "vpGsIn_" + s.key; cats.setAttribute("role", "group"); cats.setAttribute("aria-label", s.label); wrap.appendChild(cats);
+      var chosen = (s.def || []).slice();
+      loadSetRows(ctx, function (list) {
+        while (cats.firstChild) cats.removeChild(cats.firstChild);
+        list.forEach(function (x) {
+          var b = el("button", "vpgs-chip"); b.setAttribute("type", "button"); b.setAttribute("role", "checkbox"); b.setAttribute("data-id", x.id);
+          b.appendChild(el("span", "bx", chosen.indexOf(x.id) >= 0 ? "\u2713" : ""));
+          var t = el("span", null, x.title); var inc = (help() && help().INCLUDES && help().INCLUDES[x.title]) || "";
+          t.appendChild(el("small", null, (inc ? inc + ". " : "") + (x.question_count != null ? x.question_count + " questions" : "")));
+          b.appendChild(t); b.setAttribute("aria-checked", chosen.indexOf(x.id) >= 0 ? "true" : "false");
+          b.addEventListener("click", function () { var i = chosen.indexOf(x.id); if (i >= 0) chosen.splice(i, 1); else chosen.push(x.id); b.setAttribute("aria-checked", i >= 0 ? "false" : "true"); b.firstChild.textContent = i >= 0 ? "" : "\u2713"; });
+          cats.appendChild(b);
+        });
+      });
+      get = function () { return chosen.length ? chosen.slice() : undefined; };
     } else if (s.kind === "range") {
       var pair = el("div", "vpgs-pair");
       var a = el("input", "vpgs-in"), b2 = el("input", "vpgs-in");
@@ -406,6 +494,7 @@
       /* THE FIRST DRAW DATE FILLS IN THE DRAW DAY (Dean, round 2), unless they typed a day of their own. */
       if (s.fills) onChange.push(function () { var t = all.input(s.fills), d = dayOf(inp1.value); if (t && d && (!t.value || t._auto)) { t.value = d; t._auto = true; } });
       if (s.key === "draw_day") inp1.addEventListener("input", function () { inp1._auto = false; });
+      if (s.key === "draw_day") onChange.push(function () { var nm = all.input("name"); if (nm) nm.placeholder = (inp1.value ? inp1.value.trim() : "Friday") + " Members Draw"; });
       wrap.appendChild(inp1);
       get = function () {
         var v = String(inp1.value || "").trim();
@@ -417,15 +506,13 @@
     row.appendChild(wrap);
     return { row: row, get: get, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input") : (wrap.children[0] && wrap.children[0].tagName === "INPUT" ? wrap.children[0] : null); } };
   }
-  /* Trivia question sets: the venue's own and the venueplay library, never another venue's private night. */
-  function loadSets(sel, ctx) {
+  /* Trivia question sets for "Pick categories": the venue's own and the venueplay library, never another venue's private night. */
+  function loadSetRows(ctx, paint) {
     var c = ctx.deps.client || (ctx.deps.VP && ctx.deps.VP.getClient && ctx.deps.VP.getClient());
     if (!c || !c.from) return;
     try {
       Promise.resolve(c.from("vp_question_sets").select("id,title,question_count,owner_venue_id,status").eq("status", "active")).then(function (r) {
-        ((r && r.data) || []).filter(function (x) { return x.owner_venue_id === ctx.venueId || !x.owner_venue_id; }).forEach(function (x) {
-          var o = sel.ownerDocument.createElement("option"); o.value = x.id; o.textContent = (x.title || "Untitled set") + (x.question_count != null ? " (" + x.question_count + ")" : ""); sel.appendChild(o);
-        });
+        paint(((r && r.data) || []).filter(function (x) { return x.owner_venue_id === ctx.venueId || !x.owner_venue_id; }));
       }, function () {});
     } catch (e) {}
   }
@@ -474,10 +561,29 @@
         return s;
       });
     }
+    /* THE PRIZES (Dean, round 3): what they type becomes this game's prize buttons on its console. Asked once, with the
+       first game that has prizes: "do you use these across different games?" Yes: the next games start with them. */
+    ctx.bank = (opts.bank && opts.bank.length) ? opts.bank : null;
+    var groups = {};
     settings.forEach(function (s) {
       if (opts.quickOnly && !s.quick) return;
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
-      if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
+      if (s.group) {
+        /* settings that sit together in one row (the members draw's day, time and starting jackpot) */
+        if (!groups[s.group]) { groups[s.group] = el("div", "vpgs-group"); groups[s.group].id = "vpGsGroup_" + s.group; (s.advanced ? advRows : list).appendChild(groups[s.group]); }
+        groups[s.group].appendChild(r.row);
+      } else if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
+      if (s.prizes && opts.askShared) {
+        var sr = el("div", "vpgs-row two"); sr.id = "vpGsShared";
+        sr.appendChild(el("div", "vpgs-lab", "Do you use these prizes across different games?"));
+        var sseg = el("div", "vpgs-seg"); sseg.setAttribute("role", "group"); sseg.setAttribute("aria-label", "Prizes across games");
+        [[true, "Yes"], [false, "No"]].forEach(function (o) {
+          var b = el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", ctx.shared === o[0] ? "true" : "false");
+          b.addEventListener("click", function () { ctx.shared = o[0]; Array.prototype.forEach.call(sseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === String(o[0]) ? "true" : "false"); }); });
+          sseg.appendChild(b);
+        });
+        sr.appendChild(sseg); list.appendChild(sr); opts.askShared = false;
+      }
     });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
@@ -500,9 +606,16 @@
         var v = r.get(); if (v === undefined) return;
         if (r.s.kind === "range") { vals[r.s.keys[0]] = v[0]; vals[r.s.keys[1]] = v[1]; return; }
         if (r.s.kind === "playlists") { vals.playlists = v; vals.playlist = v[0]; return; }
-        if (r.s.kind === "prizelist") { vals[r.s.key] = v; if (gkey === "musical") vals.prize = v[0]; return; }
+        if (r.s.kind === "prizelist") {
+          vals[r.s.key] = v;
+          if (gkey === "musical") { var firstP = v.filter(function (x) { return x; })[0]; if (firstP) vals.prize = firstP; if (r.s.none && ctx.noneOf) vals.prize_none = ctx.noneOf(); }
+          return;
+        }
+        if (r.s.kind === "categories") { vals.set_ids = v; vals.set_id = v[0]; return; }
         vals[r.s.key] = v;
       });
+      /* a members draw with no name is called after its day (Dean, round 3): "Friday Members Draw" */
+      if (g.needsDetails && !vals.name && vals.draw_day) vals.name = vals.draw_day + " Members Draw";
       return vals;
     }
     if (!opts.first && !g.needsDetails) {
@@ -519,7 +632,7 @@
       var vals = collect();
       var p = g.needsDetails ? saveMembers(deps, vid, vals) : savePrefs(deps, vid, gkey, vals, false).then(function (ok) { return { ok: ok }; });
       return p.then(function (r) {
-        if (r.ok) return done("saved", vals);
+        if (r.ok) { if (ctx.shared !== undefined) vals.__shared = ctx.shared; return done("saved", vals); }
         save.disabled = false;
         msg.textContent = r.error || "We could not save that just now. Check your connection and try again.";
       });
@@ -576,7 +689,8 @@
     });
     function headsUp() {
       F.clear(); F.step("Let's get you set up", 3, 1);
-      F.title.textContent = "Welcome to venueplay" + (v.name ? ", " + v.name : "");
+      var who = firstName(cx);
+      F.title.textContent = "Welcome to venueplay" + (who ? ", " + who : (v.name ? ", " + v.name : ""));
       F.body.appendChild(F.el("p", "vpgs-lead", "A quick heads-up before we start."));
       var ul = F.el("ul", "vpgs-list"); ul.id = "vpGsHeadsUp";
       var known = Array.isArray(answers.games) && answers.games.length;
@@ -613,7 +727,8 @@
       }
       var otherIn = F.el("input", "vpgs-in"); otherIn.id = "vpGsOther"; otherIn.type = "text"; otherIn.maxLength = OTHER_MAX;
       otherIn.placeholder = "e.g. karaoke, poker, a footy tipping comp"; otherIn.setAttribute("aria-label", "What else do you run?"); otherIn.value = other;
-      var otherWrap = F.el("div"); otherWrap.setAttribute("style", "margin:10px 0 0"); otherWrap.appendChild(otherIn);
+      var otherWrap = F.el("div"); otherWrap.setAttribute("style", "margin:10px 0 0");
+      var oq = F.el("label", "vpgs-ask", "What else do you run?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq); otherWrap.appendChild(otherIn);
       var next = F.btn("Next", "pink", "vpGsNext", function () {
         var had = Array.isArray(answers.games) && answers.games.length;
         answers.games = ORDER.filter(function (g) { return cur.indexOf(g) >= 0; });
@@ -655,7 +770,7 @@
        and the nights as setup_answers.nights, the shape the Account page card already reads. */
     function weekStep() {
       F.clear(); F.step("Your games", 3, 2); F.title.textContent = "Which nights do you run them?";
-      F.body.appendChild(F.el("p", "vpgs-lead", "Tap the nights for each game. A start time is optional. Players see this on their phones, so they know when to come in."));
+      F.body.appendChild(F.el("p", "vpgs-lead", "Tap the nights for each game, then its start time. Players see this on their phones, so they know when to come in."));
       var cur = {};   // game -> { day: "HH:MM" or "" }
       (cleanWeek(answers.week) || []).forEach(function (d) { d.games.forEach(function (gm) { (cur[gm.game] = cur[gm.game] || {})[d.day] = gm.start || ""; }); });
       var wrap = F.el("div"); wrap.id = "vpGsWeek";
@@ -669,10 +784,12 @@
           WEEK.forEach(function (x) {
             if (!cur[g] || cur[g][x[0]] === undefined) return;
             var r = F.el("label", "vpgs-time");
-            r.appendChild(F.el("span", null, x[2] + " start time (optional)"));
+            r.appendChild(F.el("span", null, x[2] + " start time"));
             var t = F.el("input", "vpgs-in"); t.type = "time"; t.id = "vpGsTime_" + g + "_" + x[0]; t.value = cur[g][x[0]] || "";
-            t.addEventListener("input", function () { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; });
-            t.addEventListener("change", function () { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; });
+            t.setAttribute("required", "required");   // the phone's own scroll-wheel time picker (input type=time)
+            if (!cur[g][x[0]]) r.className += " need";
+            function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (cur[g][x[0]] ? "" : " need"); gate(); }
+            t.addEventListener("input", took); t.addEventListener("change", took);
             r.appendChild(t); times.appendChild(r);
           });
         }
@@ -683,18 +800,27 @@
           b.addEventListener("click", function () {
             cur[g] = cur[g] || {};
             if (cur[g][x[0]] !== undefined) delete cur[g][x[0]]; else cur[g][x[0]] = "";
-            b.setAttribute("aria-pressed", cur[g][x[0]] !== undefined ? "true" : "false"); paint();
+            b.setAttribute("aria-pressed", cur[g][x[0]] !== undefined ? "true" : "false"); paint(); gate();
           });
           days.appendChild(b);
         });
         blk.appendChild(days); blk.appendChild(times); wrap.appendChild(blk); paint();
       });
       F.body.appendChild(wrap);
+      /* EVERY GAME NIGHT HAS A START TIME (Dean, round 3), members draws too: Next waits for them. */
+      var wmsg = F.el("p", "vpgs-msg"); wmsg.id = "vpGsWeekMsg"; F.body.appendChild(wmsg);
+      var nextB = null;
+      function gate() {
+        var missing = 0;
+        Object.keys(cur).forEach(function (g) { Object.keys(cur[g]).forEach(function (d) { if (!cur[g][d]) missing++; }); });
+        if (nextB) nextB.disabled = missing > 0;
+        wmsg.textContent = missing ? "Add a start time for each night you ticked." : "";
+      }
       var skip = F.el("button", "vpgs-link", "Skip for now, I'll add these later"); skip.id = "vpGsWeekSkip"; skip.setAttribute("type", "button");
       skip.addEventListener("click", function () { if (deps.weekOnly) return end("closed"); allToday(); }); F.body.appendChild(skip);
       if (deps.weekOnly) { skip.textContent = "Cancel"; F.step("Your game nights", 0, 0); F.foot.appendChild(F.el("span")); }
       else F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", pick));
-      F.foot.appendChild(F.btn(deps.weekOnly ? "Save" : "Next", "pink", "vpGsWeekNext", function () {
+      F.foot.appendChild(nextB = F.btn(deps.weekOnly ? "Save" : "Next", "pink", "vpGsWeekNext", function () {
         var w = [];
         WEEK.forEach(function (x) {
           var gs = [];
@@ -706,6 +832,7 @@
         if (deps.weekOnly) return Promise.resolve(persist()).then(function () { end("done"); });
         persist(); allToday();
       }));
+      gate();
     }
     function allToday() {
       F.clear(); F.step("Your games", 3, 3); F.title.textContent = "Would you like to set them all up today?";
@@ -721,8 +848,13 @@
     }
     function oneGame(g) {
       var all = ticked(), i = all.indexOf(g);
-      gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length, n: all.length, on: i + 1, back: allToday }, function (outcome) {
-        if (outcome === "saved") { mark(g, "done"); persist(); afterGame(g); return; }
+      gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length, n: all.length, on: i + 1, back: allToday, answers: answers,
+          bank: answers.prizes_shared === true ? answers.prize_bank : null, askShared: answers.prizes_shared === undefined }, function (outcome, vals) {
+        if (outcome === "saved") {
+          /* "Do you use these prizes across different games?" Yes: these prizes start the next games' prize lists. */
+          if (vals && vals.__shared !== undefined) { answers.prizes_shared = vals.__shared; var pb = bankOf(vals); if (vals.__shared && pb.length) answers.prize_bank = pb; }
+          mark(g, "done"); persist(); afterGame(g); return;
+        }
         mark(g, "later");
         return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true).then(function () { persist(); afterGame(g); });
       });

@@ -29,10 +29,31 @@
      are not played every week. Musical bingo's default music; the console plays this week's one
      (VPGameSetup.weekPick, Brisbane weeks from Monday). Ids from venueplay/data/musical-library.json. */
   var POPULAR = ["pub-classics", "80s-pop", "90s", "2000s", "aussie"];
+  /* WHAT EACH TRIVIA CATEGORY COVERS (Dean, round 3: "show what each includes"). The library's categories are the
+     20 themes venueplay-backend/seed-trivia.py rolls the questions up into (THEME_RULES); these words are a short
+     plain summary of each theme's rule there. A category not listed shows its question count only. */
+  var INCLUDES = {
+    "General Knowledge": "A bit of everything", "Australiana": "Aussie places, people and history",
+    "Space & Astronomy": "Planets, stars and space travel", "Music": "Songs, bands, singers and albums",
+    "Film & TV": "Movies, shows, actors and soaps", "Anime, Comics & Cartoons": "Cartoons, superheroes and anime",
+    "Video Games": "Consoles, classic games and gaming", "Sport": "Footy, cricket, the Olympics and more",
+    "Food & Drink": "Food, cooking, beer, wine and spirits", "Technology & Transport": "Gadgets, inventions, cars, planes and trains",
+    "Science & Nature": "Animals, the body, plants and science", "History": "Wars, empires, explorers and the past",
+    "Geography": "Countries, capitals, flags and landmarks", "Books & Literature": "Books, authors and poems",
+    "Art & Culture": "Art, fashion, design and festivals", "Mythology & Religion": "Myths, legends and gods",
+    "Maths & Puzzles": "Numbers, riddles and brain teasers", "Language & Words": "Words, sayings and grammar",
+    "People & Celebrities": "Famous people, royals and leaders", "Hobbies & Collectables": "Games, crafts and pastimes"
+  };
   var GAMES = [
     { key: "trivia", name: "trivia", title: "Trivia", console: "/app/trivia/host.html", prefs: "trivia", settings: [
-      { key: "set_id", label: "Question set", kind: "sets", def: "",
-        help: "The questions you play. We start with the set your venue played last, so pick another for a fresh night." },
+      { key: "set_mode", label: "Your questions", kind: "seg", options: [["mix", "Give me a mix"], ["pick", "Pick categories"]], def: "mix",
+        help: "A mix takes questions from every category. Or pick the categories your crowd likes best." },
+      { key: "set_ids", label: "Categories", kind: "categories", def: [], showIf: { set_mode: "pick" },
+        help: "Tick the categories to play. Each one says what it covers." },
+      { key: "theme_nights", label: "One-off theme nights", kind: "taglist", def: [], placeholder: "e.g. Home and Away night, 80s night, Halloween", max: 6, each: 60,
+        help: "Any theme nights you run. Our question builder makes a night from any topic, so tell us and we'll have it ready." },
+      { key: "prize_list", label: "Your usual prizes", kind: "prizebank", def: [], prizes: true, placeholder: "e.g. $50 bar tab",
+        help: "We load all your usual prizes so you can tap and go on the night." },
       { key: "count", label: "Questions in a round", kind: "number", def: 10, min: 1, max: 100,
         help: "How many questions a round has. Most venues start with 10, and a night you build yourself plays in full." },
       { key: "buzzer", label: "A buzz when time is up", kind: "seg", options: ON_OFF, def: false,
@@ -53,22 +74,22 @@
         help: "The last few questions of the night are worth double points, so teams near the bottom can still catch up." },
       { key: "double_last", label: "How many questions are worth double", kind: "number", def: 10, min: 1, max: 100, advanced: true, showIf: { double_points: true },
         help: "How many of the last questions are worth double points. 10 means the last 10 questions of the night." }
-    ], popovers: ["buzzer", "speed_bonus", "double_points"] },
+    ], popovers: ["set_mode", "speed_bonus", "double_points"] },
 
+    /* MUSICAL BINGO (Dean, round 3): rounds a night, a prize for each round one under the other (not the same every
+       round unless they say so, and "no prize this round" allowed), the same each week. No pattern: that is picked on
+       the night with the crowd. */
     { key: "musical", name: "musical bingo", title: "Musical bingo", console: "/app/musical/host.html", prefs: "musical", settings: [
       { key: "playlists", label: "Your music", kind: "playlists", def: POPULAR, quick: true,
         help: "Pick one or more kinds of music your crowd knows. With more than one, a different one plays each week." },
-      { key: "rounds", label: "Rounds of musical bingo a night", kind: "number", def: 1, min: 1, max: 10, quick: true,
+      { key: "rounds", label: "Rounds a night", kind: "number", def: 3, min: 1, max: 10, quick: true,
         help: "How many games you play in a night, so the TV can show the next round coming up." },
-      { key: "prize_same", label: "Same prize every round?", kind: "seg", options: YES_NO, def: true, quick: true,
-        help: "Yes: one prize box. No: a box for each round, so each round can have its own prize." },
-      { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $50 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Prize for round", quick: true,
-        help: "What the winner gets, shown on the TV and on every phone. Leave it blank if you'd rather announce it." },
+      { key: "prize_same", label: "Same prize every round?", kind: "seg", options: YES_NO, def: false, quick: true,
+        help: "No: a prize for each round, one under the other. Yes: one prize for every round." },
+      { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true,
+        help: "What each round's winner gets. Tick \"No prize\" for a round you play just for fun." },
       { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true,
-        help: "Yes: we keep these prizes for every night. No: we ask for the night's prizes when you start the game." },
-      { key: "pattern", label: "What wins", kind: "select", def: "one",
-        options: [["one", "One line (any full row)"], ["two", "Two lines"], ["corners", "Four corners"], ["full", "Full house"]],
-        help: "What a player needs to win. One line is the quickest game and a full house runs the longest." },
+        help: "Yes: we load these prizes every night. No: you add the night's prizes when you start the game." },
       { key: "reveal", label: "When the TV shows the song name", kind: "select", def: "end", advanced: true,
         options: [["instant", "Straight away"], ["15", "After 15 seconds"], ["end", "When the clip ends"], ["never", "Never, I call it"]],
         prompt: "When should the TV give the song away?",
@@ -84,34 +105,31 @@
     /* BINGO FOLLOWS THE VENUE'S STATE AND WHETHER IT IS A PUB OR A CLUB (Dean, 6 Nov 2026), from the rules in
        vp-gaming.js (VPGameSetup.bingoRules): where phones may not be tickets, "phone tickets" is switched off and
        one plain line says why; where bingo is not open to a pub at all (SA, NT), there is no bingo setup. Paper
-       tickets are the venue's OWN books: venueplay never prints or checks them. */
+       tickets are the venue's OWN books: venueplay never prints or checks them. No pattern: picked on the night. */
     { key: "bingo", name: "bingo", title: "Bingo", console: "/app/", prefs: "bingo", settings: [
       { key: "ticket_kind", label: "Phone tickets or paper tickets?", kind: "seg", options: [["phone", "Phone tickets"], ["paper", "Paper tickets"]], def: "phone",
         help: "Phone tickets are checked by venueplay when someone calls BINGO. Paper tickets are your own books, checked by your caller." },
       { key: "paper_note", label: "With paper tickets", kind: "info", showIf: { ticket_kind: "paper" },
         words: "We can't check paper tickets, but we can draw the numbers for you, or you draw real balls and tap each number on the screen.",
         help: "venueplay shows every number on the TV either way. Your caller checks a paper ticket when someone calls BINGO." },
-      { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw the numbers for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
+      { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw them for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
         help: "venueplay can draw the numbers on the TV for you, or your caller draws real balls and taps each number in as it's called." },
-      { key: "cards", label: "Tickets each player gets", kind: "select", def: 1, showIf: { ticket_kind: "phone" },
-        options: [[1, "1 ticket"], [2, "2 tickets"], [3, "3 tickets"], [4, "4 tickets"], [5, "5 tickets"], [6, "6 tickets (a full book)"]],
-        help: "How many tickets everyone gets each game. More tickets means more chances and quicker wins." },
-      { key: "pattern", label: "What wins", kind: "select", def: "one",
-        options: [["one", "One line (any row)"], ["two", "Two lines"], ["full", "Full house"], ["corners", "Four corners"], ["top", "Top line"], ["middle", "Middle line"], ["bottom", "Bottom line"]],
-        help: "What a ticket needs to win. You can make your own pattern later in the bingo console." },
-      { key: "prize", label: "Prize", kind: "text", def: "", placeholder: "e.g. $50 bar tab", max: 120,
-        help: "What the winner gets. venueplay remembers a prize for each pattern, so it fills in next time." },
+      { key: "cards", label: "Tickets each player gets", kind: "select", def: 6,
+        options: [[1, "1 ticket"], [2, "2 tickets"], [3, "3 tickets"], [4, "4 tickets"], [5, "5 tickets"], [6, "6 tickets (a book)"]],
+        help: "How many tickets each player gets, on their phone or in a paper book. 6 (a full book) is the usual." },
+      { key: "prize_list", label: "Your usual prizes", kind: "prizebank", def: [], prizes: true, placeholder: "e.g. Meat tray",
+        help: "We load all your usual prizes so you can tap and go on the night." },
       { key: "allow_early", label: "Let players call BINGO early", kind: "seg", options: ON_OFF, def: false, advanced: true, showIf: { ticket_kind: "phone" },
         prompt: "Let players call BINGO early, for a laugh?",
         help: "Players can call BINGO before they've really won. A wrong call comes to you and you just tap Play on." }
-    ], popovers: ["ticket_kind", "caller", "cards"] },
+    ], popovers: ["ticket_kind", "caller", "prize_list"] },
 
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", settings: [
       { key: "prize_count", label: "How many prizes do you draw?", kind: "number", def: 1, min: 1, max: 12,
         help: "How many prizes you draw in a raffle. Each prize gets its own draw on the night." },
       { key: "prizes_same", label: "Are they all the same prize?", kind: "seg", options: YES_NO, def: true,
         help: "Yes: one prize box, like a meat tray each draw. No: a box for each prize." },
-      { key: "prizes", label: "Prize", kind: "prizelist", def: "Meat Tray", placeholder: "e.g. Meat Tray", max: 80, countFrom: "prize_count", sameFrom: "prizes_same", each: "Prize",
+      { key: "prizes", label: "Prize", kind: "prizelist", def: "Meat Tray", placeholder: "e.g. Meat Tray", max: 80, countFrom: "prize_count", sameFrom: "prizes_same", each: "Prize", prizes: true,
         help: "Your prizes are saved as buttons on the raffle console, so each one is a single tap on the night." },
       { key: "prizes_weekly", label: "The same prizes each week?", kind: "seg", options: YES_NO, def: true,
         help: "Yes: we keep these prizes for every raffle. No: you add the night's prizes on the raffle console." },
@@ -137,16 +155,16 @@
     /* MEMBERS DRAWS: no defaults (every box starts empty), and the draw's own settings are saved by
        /host/members/settings (manager or owner), which makes the draw. A skipped members draw is never called saved. */
     { key: "members", name: "members draws", title: "Members draws", console: "/app/members/host.html", prefs: "members", needsDetails: true, settings: [
-      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "e.g. Friday Members Draw", max: 80, required: true,
-        help: "The name on the TV, like Friday Members Draw." },
       { key: "date_started", label: "First draw date", kind: "date", def: "", fills: "draw_day",
         help: "The date of your first draw. It fills in your draw day, and the TV says how long the draw has been running." },
-      { key: "draw_day", label: "Draw day", kind: "text", def: "", placeholder: "Fills in from the date", max: 20,
+      { key: "draw_day", label: "Draw day", kind: "text", def: "", placeholder: "Friday", max: 20, group: "when",
         help: "The day you draw each week. It shows on the TV so members know when to be in." },
-      { key: "draw_time", label: "Draw time", kind: "text", def: "", placeholder: "e.g. 7:30pm", max: 20,
+      { key: "draw_time", label: "Draw time", kind: "text", def: "", placeholder: "7:30pm", max: 20, group: "when",
         help: "The time you draw. It shows on the TV beside the day." },
-      { key: "starting_amount_cents", label: "Starting jackpot ($)", kind: "money", def: "",
+      { key: "starting_amount_cents", label: "Starting jackpot ($)", kind: "money", def: "", group: "when",
         help: "What the jackpot starts at, and what it goes back to after someone wins it." },
+      { key: "name", label: "Draw name", kind: "text", def: "", placeholder: "Friday Members Draw", max: 80, nameFrom: "draw_day",
+        help: "The name on the TV. Leave it and we call it after your draw day, like Friday Members Draw." },
       { key: "increment_cents", label: "Weekly increase ($)", kind: "money", def: "", advanced: true,
         prompt: "How much does it grow each week nobody wins?",
         help: "How much the jackpot goes up each week it isn't claimed." },
@@ -167,7 +185,7 @@
     if (!g || g.needsDetails) return out;
     var br = (opts && opts.bingo) || null;
     g.settings.forEach(function (s) {
-      if (s.kind === "info" || s.kind === "sets") return;   // words only, or picked on the night
+      if (s.kind === "info" || s.kind === "sets" || s.kind === "categories" || s.kind === "taglist" || s.kind === "prizebank") return;   // words only, or theirs to give
       if (s.kind === "range") { out[s.keys[0]] = s.def[0]; out[s.keys[1]] = s.def[1]; return; }
       if (s.kind === "playlists") { out.playlists = s.def.slice(); out.playlist = s.def[0]; return; }
       if (s.kind === "prizelist") { if (s.def) { out[s.key] = [s.def]; if (k === "musical") out.prize = s.def; } return; }
@@ -179,5 +197,5 @@
     if (k === "bingo" && br && !br.phones) { out.ticket_kind = "paper"; out.caller = br.autoDraw === false; }
     return out;
   }
-  root.VPSetupHelp = { GAMES: GAMES, byKey: byKey, defaults: defaults, POPULAR: POPULAR, DEFAULT_PLAYLIST: POPULAR[0] };
+  root.VPSetupHelp = { GAMES: GAMES, byKey: byKey, defaults: defaults, POPULAR: POPULAR, DEFAULT_PLAYLIST: POPULAR[0], INCLUDES: INCLUDES };
 })(typeof window !== "undefined" ? window : this);
