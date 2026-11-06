@@ -310,13 +310,16 @@
 
   <!-- WAIT: you're in. The one lobby line every game uses (Dean, 3 Nov 2026 late), then the venue's ad below -->
   <div class="view hidden" id="vWait">
-    <div class="vp-in">
+    <div class="vp-in" id="waitIn">
       <div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="vp-h">You&#39;re in</div>
       <div class="vp-name" id="waitName">Player</div>
       <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div></div>
       <p class="vp-wait">The game will start here when the host is ready.</p>
     </div>
+    <!-- Dean's round 5 pick (6 Nov 2026): "You're in, <name>", Tonight and This week here, drawn by /app/vp-tonight.js
+         (shared with the trivia phone). The block above is what shows without it. -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- CARD -->
@@ -407,7 +410,8 @@
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
-<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
+<script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-tonight.js"></script>   <!-- the waiting screen, shared with the trivia phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -619,7 +623,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cells){ renderCard(); show("vCard"); return; }
-    $("waitName").textContent=P.name; show("vWait");
+    $("waitName").textContent=P.name;
+    /* THE LOBBY, Dean's round 5 pick: drawn by /app/vp-tonight.js when it is loaded; the plain block otherwise. */
+    var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(tn && inb && typeof VPTonight==="object");
+    if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
+    if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; loadJoinInfo(); }   // a phone already in never asked: the week and the ad
+    if(useT) VPTonight.lobby(tn, { name:P.name, me:"musical", prize:(P.prize && P.prize!=="the prize") ? P.prize : "", week:P.week, nights:P.nights, games:P.games });
+    show("vWait");
   }
 
   // ---- card render ----
@@ -1003,6 +1013,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
       /* The venue's own TV slides, for its ad on the lobby and after the game (/app/vp-phonead.js). */
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      /* The venue's game week for the This week here strip (/join/info, from the setup answers; nothing when it never gave them). */
+      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      if(P.joined && !$("vWait").classList.contains("hidden")) route();
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
