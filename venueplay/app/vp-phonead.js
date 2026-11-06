@@ -59,6 +59,9 @@
     var dots = d.createElement("div"); dots.className = "dots";
     for (var i = 0; i < urls.length; i++) {
       var sl = d.createElement("div"); sl.className = "slide";
+      /* The picture whole, over a blurred copy of itself, so a taller box (the lobby gives the ad the room it has) never
+         crops the venue's words and never shows bars (design review, 6 Nov 2026). */
+      var bg = d.createElement("img"); bg.alt = ""; bg.className = "bg"; bg.src = urls[i]; bg.setAttribute("aria-hidden", "true"); sl.appendChild(bg);
       var im = d.createElement("img"); im.alt = ""; im.src = urls[i]; im.setAttribute("loading", "lazy");
       im.onerror = (function (s) { return function () { if (s.parentNode) s.parentNode.removeChild(s); }; })(sl);
       sl.appendChild(im); rail.appendChild(sl);

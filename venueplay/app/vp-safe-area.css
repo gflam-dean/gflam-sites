@@ -12,7 +12,7 @@
    every inset is 0 and nothing moves. The bottom of the page is the help
    footer's (/app/vp-help.js .vph-foot), which already pads for the home bar. Checked by tools/safe-area-in-chrome.test.py with real insets. */
 .ptop{padding-top:calc(16px + env(safe-area-inset-top,0px))}
-.ptop .menubtn{top:calc(12px + env(safe-area-inset-top,0px))}
+.ptop .menubtn{top:calc(9px + env(safe-area-inset-top,0px))}   /* 44px, its middle where the 38px one's was (design review, 6 Nov 2026: tap size) */
 .ptop .menupanel{top:calc(56px + env(safe-area-inset-top,0px))}
 .ptop .hdrball{top:calc(10px + env(safe-area-inset-top,0px))}
 .sheet{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
