@@ -467,6 +467,7 @@
   "vpVenuePostcode() is the same in all 2 file(s)",
   "webhook-ledger.test.js",
   "weekly-before-the-room.test.js",
-  "winback-unsubscribe.test.js"
+  "winback-unsubscribe.test.js",
+  "wizard-v2-in-chrome.test.py"
  ]
 }
