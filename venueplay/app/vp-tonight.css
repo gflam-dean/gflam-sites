@@ -73,18 +73,20 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-listform .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
 .vpt-listform .go{width:100%;min-height:46px;margin-top:10px;border:0;border-radius:12px;background:#FF1F8E;color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px}
 .vpt-listform .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;margin-top:6px}
-/* THE VENUE'S OWN NIGHTS (INBOX 110, "What's on"): a gold dot under a day that has one, and its rows badged with the start time */
-.vpt-week .d.ev small{position:relative}
-.vpt-week .d.ev small::after{content:"";position:absolute;left:50%;bottom:-5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#FFC24B}
-.vpt-week .d.now.ev small::after{background:#0A0A0B}
-.vpt-night .row.ev{padding:4px 0}
-.vpt-night .row.ev .g{display:flex;align-items:baseline;gap:7px;white-space:nowrap;overflow:hidden}
-.vpt-night .row.ev .g b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:17px}
-.vpt-night .row.ev .g span{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.vpt-night .row.ev .bd{padding:1px 8px;line-height:1.25}
-.vpt-night .bd.t{background:transparent;color:#FFC24B;box-shadow:inset 0 0 0 1.5px rgba(255,194,75,.55)}
+/* THE VENUE'S OWN NIGHTS (INBOX 110, "What's on"; design review 6 Nov): a 6px gold dot inside a day that has one (white on
+   Today), clear of the pink game-night underline; their rows in the house grey chip with the time as people say it
+   ("9pm"), the title alone on up to two lines; and under a waiting screen the venue's ad follows the card 24px below,
+   so tapping a day never opens a hole above it (our logo stays at the foot). */
+.vpt-week .days.has-ev .d{padding-bottom:12px;position:relative}
+.vpt-week .d.ev::after{content:"";position:absolute;left:50%;bottom:6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#FFC24B}
+.vpt-week .d.now.ev::after{background:#fff}
+.vpt-night .bd.t{text-transform:none;letter-spacing:.02em}
+.vpt-night .row.ev{align-items:flex-start}
+.vpt-night .row.ev .g b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;padding-top:2px}
 .vpt-night .row.more .g b{font-size:15px;font-weight:700;color:#9A9AA4}
 .vpt-night .row.more .bd{visibility:hidden}
-.vpt-night .nk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95;padding:8px 0 2px}
+.vpt-night .nk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A95;padding:8px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vpt-evs[hidden]{display:none}
-body.light .vpt-night .bd.t{color:#9A6A00;box-shadow:inset 0 0 0 1.5px rgba(154,106,0,.5)}
+.vpt-on .view{flex:0 0 auto}
+.vpt-on #vpAd{padding-top:24px}
+.vpt-on .pfoot{margin-top:auto}

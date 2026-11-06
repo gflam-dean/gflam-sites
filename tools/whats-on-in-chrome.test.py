@@ -154,17 +154,17 @@ def tv_and_phone():
             tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
             got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-list");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
             ok('%dx%d: the What\'s on list slide takes its turn in the loop' % (W, H), got is True, r.ask(sid, 'document.querySelector("#tvAds .ad.show") && document.querySelector("#tvAds .ad.show").innerText'))
-            m = r.json(sid, 'JSON.stringify((function(){var s=document.querySelector("#tvAds .ad.show"),rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),bot:Math.round(b.bottom),right:Math.round(b.right),col:getComputedStyle(x.querySelector(".wo-day")).color};});return {tag:s.querySelector(".adtag").textContent,rows:rows,h:innerHeight,w:innerWidth};})())', {})
+            m = r.json(sid, 'JSON.stringify((function(){var s=document.querySelector("#tvAds .ad.show"),rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),bot:Math.round(b.bottom),right:Math.round(b.right),bar:getComputedStyle(x,"::before").backgroundColor};});var hd=s.querySelector(".wo-head").getBoundingClientRect(); return {kick:s.querySelector(".wo-kick").textContent,head:s.querySelector(".wo-head").textContent,headTop:Math.round(hd.top),rows:rows,h:innerHeight,w:innerWidth};})())', {})
             rows = m.get('rows') or []
-            ok('%dx%d: "What’s on at Test Alpha", tonight first and gold, then tomorrow, then the one-off; the past gig never shows' % (W, H),
-               m.get('tag') == 'What’s on at Test Alpha' and len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t']
-               and 'TOMORROW' in rows[1]['t'].upper() and 'Kujo' in rows[2]['t'] and rows[0]['col'] == 'rgb(255, 194, 75)' and not any('Long gone' in x['t'] for x in rows), m)
+            ok('%dx%d: TEST ALPHA over WHAT\u2019S ON at the top, tonight first with the pink bar, then tomorrow, then the one-off; times as people say them; the past gig never shows' % (W, H),
+               m.get('kick') == 'Test Alpha' and m.get('head') == 'What\u2019s on' and m.get('headTop', 999) < m.get('h', 0) * 0.15 and len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t']
+               and 'TOMORROW' in rows[1]['t'].upper() and 'Kujo' in rows[2]['t'] and rows[0]['bar'] == 'rgb(255, 31, 142)' and not any('Long gone' in x['t'] for x in rows), m)
             ok('%dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-list-%d.jpg' % W))
             got = r.until(sid, '(function(){var s=document.querySelector("#tvAds .ad.show .wo-poster");return !!s && +getComputedStyle(s.closest(".ad")).opacity>0.9;})()', 30)
             p = r.json(sid, 'JSON.stringify((function(){var s=document.querySelector("#tvAds .ad.show"); if(!s||!s.querySelector(".wo-poster")) return {}; var pic=s.querySelector(".wo-pic").getBoundingClientRect(), w=s.querySelector(".wo-words").getBoundingClientRect(); return {bg:s.querySelector(".wo-pic").style.backgroundImage,txt:s.innerText.replace(/\\s+/g," "),pic:[Math.round(pic.width),Math.round(pic.height)],wordsRight:Math.round(w.right),overlap:pic.right>w.left+1,w:innerWidth};})())', {})
             ok('%dx%d: the night with a picture gets a poster slide: the picture whole on the left, the words beside it' % (W, H),
-               got is True and 'tugun-friday.jpg' in p.get('bg', '') and 'Revolver Fridays' in p.get('txt', '') and 'TOMORROW' in p.get('txt', '').upper() and '10PM' in p.get('txt', '').upper()
+               got is True and 'tugun-friday.jpg' in p.get('bg', '') and 'Revolver Fridays' in p.get('txt', '') and 'TOMORROW' in p.get('txt', '').upper() and '10pm' in p.get('txt', '')
                and p.get('pic', [0, 0])[1] > H * 0.6 and not p.get('overlap') and p.get('wordsRight', 9999) <= p.get('w', 0), p)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-poster-%d.jpg' % W))
             ok('%dx%d: no script errors on the TV' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
@@ -186,18 +186,19 @@ def tv_and_phone():
                  'VPPhoneAd.set([{image_url:"https://x.supabase.co/storage/v1/object/public/venue-ads/v/ad.jpg"}],"Test Alpha"); VPPhoneAd.show(true); return true;})(%s)') % (json.dumps(dkey(TODAY)), json.dumps(evs))
             r.ask(sid, S)
             time.sleep(1.2)
-            m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var dot=window.__st.buttons[0].querySelector("small"); var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,dot:getComputedStyle(dot,"::after").backgroundColor,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})
+            m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var dot=window.__st.buttons[0]; var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,dot:getComputedStyle(dot,"::after").backgroundColor,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})
             rows = m.get('rows') or []
             ok('%dx%d: tonight, our trivia first, then the venue\'s night badged with its time' % (W, H),
                len(rows) == 2 and 'Trivia' in rows[0] and '9pm' in rows[1] and '3181' in rows[1], rows)
-            ok('%dx%d: a gold dot under the days that have one of the venue\'s nights' % (W, H),
-               ' ev' in m.get('days', [''])[0] and ' ev' in m.get('days', ['', ''])[1] and m.get('dot') == 'rgb(10, 10, 11)', m.get('days'))
+            ok('%dx%d: a dot in the days that have one of the venue\'s nights (white on Today)' % (W, H),
+               ' ev' in m.get('days', [''])[0] and ' ev' in m.get('days', ['', ''])[1] and m.get('dot') == 'rgb(255, 255, 255)', m.get('days'))
             ok('%dx%d: the venue\'s ad and our logo still fit on the screen' % (W, H), m.get('adH', 0) > 60 and m.get('foot', 9999) <= m.get('h', 0) and m.get('doc', 9999) <= W, m)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-lobby-%d.jpg' % W))
             r.ask(sid, 'window.__st.buttons[1].click(); true')
             time.sleep(0.3)
             t1 = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}))', [])
-            ok('%dx%d: tap tomorrow: the venue\'s night, no "No games this night" over it' % (W, H), len(t1) == 1 and 'Revolver Fridays' in t1[0] and '10pm' in t1[0], t1)
+            hd = r.ask(sid, '(document.querySelector("#vpTonight .vpt-night .nk")||{}).textContent||""')
+            ok('%dx%d: tap tomorrow: the card names the day, then the venue\'s night, no "No games this night" over it' % (W, H), len(t1) == 1 and 'Revolver Fridays' in t1[0] and '10pm' in t1[0] and str(hd).lower().startswith(dkey(tom)[:3]), [hd, t1])
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-tomorrow-%d.jpg' % W))
             ok('%dx%d: no script errors on the phone' % (W, H), r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
             r.close_tab(tid)

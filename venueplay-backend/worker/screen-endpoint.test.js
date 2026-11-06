@@ -43,7 +43,7 @@ function lift(n) {
    indistinguishable from a clean pass unless something is counting. That has
    already cost us once: money.test.js quietly dropped four checks and printed no
    summary at all. So the count is declared up front and verified at the end. */
-var EXPECT = 22;
+var EXPECT = 23;
 var bad = 0, ran = 0, order = [], BEHAVE = {};
 function ok(n, c, extra) {
   ran++;
@@ -70,7 +70,8 @@ function sbGet(env, table, q) {
   return Promise.resolve(fn || []);
 }
 eval(lift('handleScreen'));
-eval(lift('publicEvents'));   // the What's on nights ride the same read (INBOX 110, migration 177)
+eval(lift('publicEvents'));
+eval(lift('screenWeek')); eval(lift('joinNights'));   // and the venue's game nights for its What's on slide   // the What's on nights ride the same read (INBOX 110, migration 177)
 
 function req(slug) { return { url: 'https://x/screen?venue=' + slug }; }
 function base() {
@@ -153,11 +154,13 @@ handleScreen(req('the-average-joe'), {}, json).then(function (r) {
   base();
   BEHAVE.vp_venue_screen = [{ slides: [{ image_url: 'a' }], raffle: null, logo_url: 'L', venue_id: 'v1',
     events: [{ id: 'e1', title: 'Revolver Fridays', day: 'fri', start: '22:00', made_by: 'x' }, { id: 'e2', title: 'Old gig', date: '2020-01-01' }] }];
+  BEHAVE.vp_venue_settings = [{ setup_answers: { week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }], tvs: 3, name_ok: true } }];
   return handleScreen(req('the-average-joe'), {}, json);
 }).then(function (r) {
   var ev = r._json.events || [];
   ok('the nights still to come reach the wall, with only their public fields', ev.length === 1 && ev[0].title === 'Revolver Fridays' && ev[0].made_by === undefined && ev[0].id === undefined,
      JSON.stringify(ev));
+  ok('and the venue\'s game nights for the slide, only the week (no other setup answer)', JSON.stringify(r._json.week) === JSON.stringify([{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }]), JSON.stringify(r._json.week));
   print('\n== before migration 177, the read with the new column is refused and asked again without it ==');
   base();
   var plain = BEHAVE.vp_venue_screen;

@@ -19,7 +19,7 @@
   var d = root.document;
   var DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
   var SHORT = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
-  var TITLE_MAX = 60, LINE_MAX = 90;
+  var TITLE_MAX = 60, LINE_MAX = 48;   // the Worker says the same (design review: one line on the TV)
 
   function el(tag, cls, text) { var e = d.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }
   function W() { return root.VPWhatsOn; }
@@ -44,17 +44,17 @@
       list.innerHTML = "";
       var rows = W().sorted(events, t());
       count.textContent = rows.length ? rows.length + " of " + W().MAX : "";
-      add.hidden = rows.length >= W().MAX;
+      add.hidden = !!editing || rows.length >= W().MAX;
       if (!rows.length) {
-        list.appendChild(el("p", "woe-empty", "Nothing on yet. Add your own nights here: a DJ, a gig, a club night or a special."));
+        list.appendChild(el("p", "woe-empty", "Nothing on yet. Add your own events here: a DJ, a gig, a club night or a special."));
         return;
       }
       rows.forEach(function (e) {
         var r = el("div", "woe"); r.setAttribute("data-id", e.id || "");
         var th = el("div", "woe-thumb" + (e.image_url ? "" : " none"));
         if (e.image_url) th.style.backgroundImage = "url(\"" + String(e.image_url).replace(/["\\]/g, "") + "\")";
-        else th.textContent = "No picture";
         var m = el("div", "woe-main"), nx = W().next(e, t());
+        if (!e.image_url) th.textContent = (W().dayKey(nx) || "").toUpperCase();   // no picture: the day, quietly
         var when = W().whenText(e, t());
         if (nx === t()) when = "Tonight" + (e.start ? ", " + W().time12(e.start) : "") + (e.day ? " (every " + ({ mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" })[e.day] + ")" : "");
         m.appendChild(el("div", "woe-when" + (nx === t() ? " tn" : ""), when));
@@ -67,6 +67,7 @@
         cp.onclick = function () { open(e, true); };
         rm.onclick = function () { removeOne(e, rm); };
         r.appendChild(th); r.appendChild(m); r.appendChild(a);
+        if (editing && editing.id && editing.id === e.id) { r.hidden = true; list.appendChild(form); }   // the form stands in its place
         list.appendChild(r);
       });
     }
@@ -87,6 +88,7 @@
       var f = el("div", "woe-f"), l = el("label", "flabel", label);
       var id = "woe-" + label.replace(/[^a-z]/gi, "").toLowerCase(); input.id = id; l.setAttribute("for", id);
       f.appendChild(l); f.appendChild(input); if (hint) f.appendChild(hint);
+      f.labelEl = l;
       return f;
     }
     function input(type, val, max, ph) {
@@ -99,7 +101,9 @@
                   until: src ? (src.until || "") : "", start: src ? (src.start || "") : "", line: src ? (src.line || "") : "", image_url: src ? (src.image_url || "") : "" };
       if (copy && editing.date) editing.date = "";   // a copy asks for its own date
       var kind = editing.day ? "weekly" : "once";
-      form.innerHTML = ""; form.hidden = false; add.hidden = true;
+      form.innerHTML = ""; form.hidden = false; add.hidden = true; count.hidden = true;
+      /* Edit opens where the manager tapped, in place of that row (the row hides); Add and Copy open at the top. */
+      if (editing.id) paintList(); else { box.insertBefore(form, list); paintList(); }
       form.appendChild(el("div", "woe-fhead", editing.id ? "Edit event" : (copy ? "Copy of " + src.title : "Add an event")));
 
       var title = input("text", editing.title, TITLE_MAX, "DJ Tilly, Trivia with Mikey, $15 Parmas");
@@ -137,14 +141,18 @@
       setKind(kind);
 
       var start = input("time", editing.start);
-      var line = input("text", editing.line, LINE_MAX, "Free entry before 10pm");
-      var two = el("div", "woe-two");
-      two.appendChild(field("Starts", start)); two.appendChild(field("Short line (optional)", line));
+      var line = input("text", editing.line, LINE_MAX, "DJs from 9, free entry");
+      var counter = el("span", "woe-counter");
+      function countLine() { counter.textContent = String(line.value || "").length + " of " + LINE_MAX; }
+      line.oninput = countLine; countLine();
+      var two = el("div", "woe-two"), lf = field("One line about it (optional)", line);
+      lf.labelEl.appendChild(counter);
+      two.appendChild(field("Starts", start)); two.appendChild(lf);
       form.appendChild(two);
 
       /* The picture: optional, uploaded the moment it is chosen, like a promo slide. */
       var pic = el("div", "woe-pic"), pth = el("div", "woe-thumb big"), pb = el("div", "woe-picbtns");
-      var choose = el("button", "addbtn", ""), drop = el("button", "canxlink", "Remove picture"), file = el("input");
+      var choose = el("button", "addbtn", ""), drop = el("button", "canxlink woe-rm", "Remove picture"), file = el("input");
       choose.setAttribute("type", "button"); drop.setAttribute("type", "button");
       file.setAttribute("type", "file"); file.setAttribute("accept", "image/png,image/jpeg,image/webp,image/gif"); file.style.display = "none";
       function paintPic(msg) {
@@ -169,11 +177,12 @@
       };
       pb.appendChild(choose); pb.appendChild(drop);
       var pt = el("div", "woe-picwords");
-      pt.appendChild(el("div", "flabel", "Picture (optional)"));
-      pt.appendChild(el("p", "snote", "A poster or a photo. Your TV shows it whole, beside the details, so a tall poster is fine."));
+      pt.appendChild(el("p", "snote", "A poster or a photo. Tall posters show whole on your TV."));
+      pt.appendChild(el("p", "snote woe-datecheck", "Check the date on your poster matches the date above."));
       pt.appendChild(pb);
+      var pf = el("div", "woe-f woe-picf"); pf.appendChild(el("div", "flabel", "Picture (optional)"));
       pic.appendChild(pth); pic.appendChild(pt); pic.appendChild(file);
-      form.appendChild(pic);
+      pf.appendChild(pic); form.appendChild(pf);
       paintPic();
 
       var err = el("p", "woe-err"); err.setAttribute("role", "status");
@@ -196,8 +205,8 @@
           shut(); say("Saved. It shows on your TV within a few seconds.", true);
         }, function () { go.disabled = false; go.textContent = "Save event"; err.textContent = "Could not save that. Check your connection and try again."; });
       };
-      try { title.focus(); } catch (e) {}
-      try { form.scrollIntoView({ block: "nearest" }); } catch (e) {}
+      try { title.focus({ preventScroll: true }); } catch (e) {}
+      try { if (typeof o.scrollTo === "function") o.scrollTo(form); else form.scrollIntoView({ block: "nearest" }); } catch (e) {}
     }
     /* What is wrong with an event before it is sent, in words (the Worker checks it all again). */
     function problem(ev) {
@@ -211,7 +220,7 @@
       if (ev.line && ev.line.length > LINE_MAX) return "Keep the short line under " + LINE_MAX + " letters.";
       return "";
     }
-    function shut() { editing = null; form.hidden = true; form.innerHTML = ""; paintList(); }
+    function shut() { editing = null; form.hidden = true; form.innerHTML = ""; count.hidden = false; box.insertBefore(form, list); paintList(); }
     add.onclick = function () { open(null, false); };
     paintList();
     return {

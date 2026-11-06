@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 13:29 · 5920d091';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 14:03 · f2a7d98d';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -1347,6 +1347,12 @@ async function joinInfoWithSlides(env, body, venueId) {
   }
   return Object.assign({}, body, { slides: slides, events: events });
 }
+/* The venue's game week for its What's on slide: joinNights' week, or nothing. */
+function screenWeek(rows) {
+  const sa = rows && rows[0] && rows[0].setup_answers;
+  const w = joinNights(sa).week;
+  return Array.isArray(w) ? w : [];
+}
 /* A venue's What's on nights as anyone may see them (the TV's /screen and the phone's /join/info): still to come,
    title, the date or the weekday (and its last date), the start, the short line and a plain https picture, nothing
    else (no id, no who-saved-it). The billing Worker cleaned them on save; this cleans them again on the way out, by
@@ -1370,7 +1376,7 @@ function publicEvents(raw, now) {
       if (typeof e.until === 'string' && DATE.test(e.until)) { if (e.until < cutoff) continue; o.until = e.until; }
     } else continue;
     if (typeof e.start === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(e.start)) o.start = e.start;
-    const line = str(e.line, 90); if (line) o.line = line;
+    const line = str(e.line, 48); if (line) o.line = line;
     if (typeof e.image_url === 'string') {
       const u = e.image_url.trim();
       if (u.length <= 600 && /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf('&#') === -1) o.image_url = u;   // tv.html's rule for a slide
@@ -3169,6 +3175,12 @@ async function handleScreen(request, env, json) {
       joinCode = v0[0].join_code || '';
     }
   }
+  /* The venue's game nights for the What's on slide (Dean, 6 Nov 2026: "list our game nights too"), from its setup
+     answers (migration 163), read beside the venue row and only for a venue that has What's on nights at all. A failed
+     or missing read is no game nights, never a failed screen. */
+  const weekPromise = (cfg && cfg.venue_id && Array.isArray(cfg.events) && cfg.events.length)
+    ? sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(cfg.venue_id) + '&select=setup_answers&limit=1').catch(() => null)
+    : Promise.resolve(null);
   if (cfg && cfg.venue_id) {
     const v = await sbGet(env, 'vp_venues',
       'id=eq.' + enc(cfg.venue_id) + '&select=name,join_code&limit=1').catch(() => null);
@@ -3196,6 +3208,7 @@ async function handleScreen(request, env, json) {
     raffle: (cfg && cfg.raffle) || null,
     draws: draws,
     events: publicEvents(cfg && cfg.events),
+    week: screenWeek(await weekPromise),
   });
 }
 

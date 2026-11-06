@@ -86,7 +86,7 @@
     var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
     for (var i = 0; i < n; i++) {
       var e = list[i], t = time12(e.start);
-      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: e.line || "" });
+      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: "" });   // the title only, on up to two lines (design review, 6 Nov)
     }
     if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more", sub: "" });
     return rows;
@@ -159,7 +159,7 @@
     k.appendChild(el("span", "", "This week here"));
     if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
     w.appendChild(k);
-    var row = el("div", "days"), days = week(o), btns = [];
+    var days = week(o), btns = [], row = el("div", "days" + (days.some(function (x) { return x.ev; }) ? " has-ev" : ""));
     days.forEach(function (dd) {
       var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.ev ? " ev" : "") + (dd.i === picked ? " picked" : ""));
       b.setAttribute("type", "button"); b.setAttribute("data-day", dd.key);
@@ -183,7 +183,12 @@
     function today() { paintRows(spot, tonight(o), ""); }
     today();
     box.appendChild(spot);
-    var s = strip(o, 0, function (dd) { if (dd.i === 0) today(); else paintRows(spot, nightRows(o, dd.date), ""); });
+    var s = strip(o, 0, function (dd) {
+      if (dd.i === 0) { today(); return; }
+      var rows = nightRows(o, dd.date);
+      /* With the venue's own nights in it, the card says which day it is ("FRIDAY 13"): their rows carry a time, not a day. */
+      paintRows(spot, rows, rows.some(function (r) { return r.ev; }) ? LONG[dd.key] + " " + dd.date.getDate() : "");
+    });
     box.appendChild(s.el);
     box.appendChild(el("p", "vpt-wait", o.wait || "The game will start here when the host is ready."));
     return s;
@@ -218,7 +223,7 @@
     function paintEvents(dd) {
       var list = eventsOn(o, dd.date);
       evBox.hidden = !list.length;
-      if (list.length) paintRows(evBox, eventRows(list, 0), (dd.i === 0 ? "Tonight" : LONG[dd.key] + " " + dd.date.getDate()) + " here");
+      if (list.length) paintRows(evBox, eventRows(list, 0), "On at " + (o.venue || "this venue") + (dd.i === 0 ? " tonight" : ", " + LONG[dd.key] + " " + dd.date.getDate()));
     }
     var start = first >= 0 ? first : 0;
     var s = strip(o, start, function (dd) { paint(dd, true); paintEvents(dd); });

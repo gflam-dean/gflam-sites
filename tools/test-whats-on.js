@@ -19,7 +19,9 @@ function ok(n, c, saw) { ran++; print((c ? '  ok   ' : '  FAIL ') + n + (c || sa
 
 /* A fake document: createElement, appendChild, textContent, innerHTML (kept as a string), attributes, hidden, style. */
 function Node(tag) { this.tagName = tag; this.children = []; this.className = ''; this._text = ''; this._html = ''; this.attrs = {}; this.style = {}; this.hidden = false; this.value = ''; this.parentNode = null; }
-Node.prototype.appendChild = function (c) { this.children.push(c); c.parentNode = this; return c; };
+function detach(c) { if (c.parentNode) { var k = c.parentNode.children.indexOf(c); if (k >= 0) c.parentNode.children.splice(k, 1); } }
+Node.prototype.appendChild = function (c) { detach(c); this.children.push(c); c.parentNode = this; return c; };
+Node.prototype.insertBefore = function (c, ref) { detach(c); var k = this.children.indexOf(ref); if (k < 0) this.children.push(c); else this.children.splice(k, 0, c); c.parentNode = this; return c; };
 Node.prototype.setAttribute = function (k, v) { this.attrs[k] = String(v); };
 Node.prototype.getAttribute = function (k) { return this.attrs[k] === undefined ? null : this.attrs[k]; };
 Node.prototype.focus = function () {}; Node.prototype.scrollIntoView = function () {}; Node.prototype.click = function () { if (this.onclick) this.onclick(); };
@@ -77,10 +79,14 @@ var many = []; for (var i = 0; i < 14; i++) many.push({ title: 'n' + i, day: ['m
 var ms = W.tvSlides(many, TODAY);
 ok('five a list slide, two list slides at most (ten nights)', ms.length === 2 && ms[0].rows.length === 5 && ms[1].rows.length === 5);
 ok('a weekly night with a picture is one poster, not one a week; three posters at most', W.tvSlides([EV[0]], '2026-11-06').filter(function (x) { return x.type === 'poster'; }).length === 1 && W.tvSlides([1, 2, 3, 4, 5].map(function (n) { return { title: 'p' + n, date: '2026-11-1' + (n + 2), image_url: 'https://a/p' + n + '.jpg' }; }), TODAY).filter(function (x) { return x.type === 'poster'; }).length === 3);
+var gw = W.tvSlides(EV, TODAY, [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }]);
+var gwRows = gw.reduce(function (a, x) { return a.concat(x.rows || []); }, []);
+ok('our game nights join the list (Dean, 6 Nov): tonight\'s trivia at 7:30pm before the venue\'s 9pm night', gw[0].rows[0].ev.game === 'trivia' && gw[0].rows[0].ev.title === 'Trivia night' && gw[0].rows[1].ev.id === 'e2', JSON.stringify(gw[0].rows.map(function (r) { return r.ev.title; })));
+ok('a game night never gets a poster, and our games alone make no What\'s on slide', gw.filter(function (x) { return x.type === 'poster'; }).every(function (x) { return !x.ev.game; }) && W.tvSlides([], TODAY, [{ day: 'thu', games: [{ game: 'trivia' }] }]).length === 0);
 ok('nothing on: no What\'s on slide at all', W.tvSlides([], TODAY).length === 0 && W.tvSlides([EV[5]], TODAY).length === 0);
 var h0 = W.tvHtml(sl[0], 'Revolver Upstairs'), h1 = W.tvHtml(sl[1], 'Revolver Upstairs');
-ok('the list slide: "What’s on at Revolver Upstairs", a gold Tonight row, the times', /What’s on at Revolver Upstairs/.test(h0) && /wo-row tonight/.test(h0) && />9pm</.test(h0) && />10pm</.test(h0), h0.slice(0, 300));
-ok('the poster slide: the picture whole, "Tomorrow · 10pm", the title and line', /wo-pic/.test(h1) && /fri\.jpg/.test(h1) && /Tomorrow · 10pm/.test(h1) && /Revolver Fridays/.test(h1) && /4 deck dancefloor battle/.test(h1));
+ok('the list slide: the venue as a kicker over WHAT\u2019S ON, a Tonight row, the times as people say them', /wo-kick">Revolver Upstairs</.test(h0) && /wo-head">What\u2019s on</.test(h0) && /wo-row tonight/.test(h0) && />9pm</.test(h0) && />10pm</.test(h0) && !/PM</.test(h0), h0.slice(0, 300));
+ok('the poster slide: the picture whole, "Tomorrow, 10pm" big beside the title, the title and line', /wo-pic/.test(h1) && /fri\.jpg/.test(h1) && /wo-when">Tomorrow \u00b7 10pm</.test(h1) && /Revolver Fridays/.test(h1) && /4 deck dancefloor battle/.test(h1));
 var evil = W.tvHtml(W.tvSlides([{ title: '<img src=x onerror=alert(1)>', day: 'thu', line: '"><script>', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY)[0], '<b>pub</b>');
 ok('every venue word is escaped on the wall', evil.indexOf('<img') === -1 && evil.indexOf('<script') === -1 && evil.indexOf('<b>pub') === -1 && /&lt;img/.test(evil));
 ok('a picture address with an entity in it is refused', W.tvSlides([{ title: 'x', day: 'thu', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY).length === 1);
@@ -90,14 +96,14 @@ var WEEK = [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day:
 var box = new Node('div');
 var lb = T.lobby(box, { name: 'Sam', me: 'trivia', week: WEEK, events: EV, now: THU });
 var spot = byClass(box, 'vpt-night')[0], rows = byClass(spot, 'row');
-ok('tonight: our game first (NEXT), then the venue\'s night badged with its time', rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && /Trivia/.test(rows[0].textContent) && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I ♥ 3181/.test(rows[1].textContent) && /Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
+ok('tonight: our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && /Trivia/.test(rows[0].textContent) && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
 var days = lb.buttons;
 ok('a gold dot on the days with one of the venue\'s nights (Thu, Fri, Sat, Sun no)', /\bev\b/.test(days[0].className) && /\bev\b/.test(days[1].className) && /\bev\b/.test(days[2].className) && !/\bev\b/.test(days[3].className), days.map(function (d) { return d.className; }).join('|'));
 ok('our game nights keep their own mark beside it', /\bon\b/.test(days[0].className) && /\bon\b/.test(days[6].className) && !/\bon\b/.test(days[1].className));
 days[2].onclick();
-ok('tap Saturday (no game): the venue\'s two nights, earliest first, and no "No games this night" over them', byClass(spot, 'row').length === 2 && /Rise & Shine/.test(byClass(spot, 'row')[0].textContent) && /7am/.test(byClass(spot, 'row')[0].textContent) && /Mount Kujo/.test(byClass(spot, 'row')[1].textContent) && !/No games this night/.test(spot.textContent), texts(spot, 'row'));
+ok('tap Saturday (no game): the card says SATURDAY 14, then the venue\'s two nights, earliest first, and no "No games this night"', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Saturday 14' && byClass(spot, 'row').length === 2 && /Rise & Shine/.test(byClass(spot, 'row')[0].textContent) && /7am/.test(byClass(spot, 'row')[0].textContent) && /Mount Kujo/.test(byClass(spot, 'row')[1].textContent) && !/No games this night/.test(spot.textContent), texts(spot, 'row'));
 days[6].onclick();
-ok('tap Wednesday (a game night, no events): our game alone, as before', byClass(spot, 'row').length === 1 && /Musical bingo/.test(spot.textContent) && /8pm/.test(spot.textContent));
+ok('tap Wednesday (a game night, no events): our game alone, as before, no day heading', !byClass(spot, 'nk').length && byClass(spot, 'row').length === 1 && /Musical bingo/.test(spot.textContent) && /8pm/.test(spot.textContent));
 days[3].onclick();
 ok('tap Sunday (nothing): "No games this night"', /No games this night/.test(spot.textContent));
 var lots = EV.concat([{ id: 'x1', title: 'Two', day: 'thu', start: '22:00' }, { id: 'x2', title: 'Three', day: 'thu', start: '23:00' }, { id: 'x3', title: 'Four', day: 'thu' }]);
@@ -110,11 +116,11 @@ var r3 = byClass(byClass(lb3, 'vpt-night')[0], 'row');
 ok('a tapped day with four nights: two, then "+2 more"', r3.length === 3 && /\+2 more/.test(r3[2].textContent) && /\bmore\b/.test(r3[2].className), texts(lb3, 'row'));
 var none = new Node('div'); T.lobby(none, { name: 'Sam', me: 'trivia', week: WEEK, now: THU });
 ok('no events: the lobby is exactly as before (one row, no dots)', byClass(byClass(none, 'vpt-night')[0], 'row').length === 1 && !byClass(none, 'ev').length);
-var ng = new Node('div'), ngs = T.noGame(ng, { name: 'Sam', week: WEEK, events: EV, now: THU });
+var ng = new Node('div'), ngs = T.noGame(ng, { name: 'Sam', venue: 'Revolver Upstairs', week: WEEK, events: EV, now: THU });
 var evb = byClass(ng, 'vpt-evs')[0];
-ok('no game on: the venue\'s nights for the first game day (today), headed "Tonight here"', evb && !evb.hidden && /Tonight here/.test(evb.textContent) && /I ♥ 3181/.test(evb.textContent), evb && evb.textContent);
+ok('no game on: the venue\'s nights for the first game day (today), headed "On at Revolver Upstairs tonight"', evb && !evb.hidden && /On at Revolver Upstairs tonight/.test(evb.textContent) && /I ♥ 3181/.test(evb.textContent), evb && evb.textContent);
 ngs.buttons[1].onclick();
-ok('tap Friday: Friday\'s nights, "Friday 13 here"', /Friday 13 here/.test(evb.textContent) && /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent), evb.textContent);
+ok('tap Friday: Friday\'s nights, "On at Revolver Upstairs, Friday 13"', /On at Revolver Upstairs, Friday 13/.test(evb.textContent) && /Revolver Fridays/.test(evb.textContent) && /10pm/.test(evb.textContent), evb.textContent);
 ngs.buttons[3].onclick();
 ok('tap a day with none: the list goes away', evb.hidden === true);
 var ng0 = new Node('div'); T.noGame(ng0, { name: 'Sam', week: WEEK, now: THU });
@@ -133,11 +139,11 @@ var ed = E.mount(page, { events: EV, today: TODAY, venue: 'Revolver Upstairs',
 var list = byClass(page, 'woe');
 ok('the list: five upcoming in date order, past ones gone', list.length === 5 && list.map(function (r) { return r.attrs['data-id']; }).join() === 'e2,e1,e4,e3,e5', list.map(function (r) { return r.attrs['data-id']; }).join());
 ok('tonight\'s reads "Tonight, 9pm (every Thursday)" in gold; the others their when', /Tonight, 9pm \(every Thursday\)/.test(byClass(list[0], 'woe-when')[0].textContent) && /\btn\b/.test(byClass(list[0], 'woe-when')[0].className) && byClass(list[1], 'woe-when')[0].textContent === 'Every Friday, 10pm');
-ok('a picture shows as its thumbnail, none says "No picture"', /fri\.jpg/.test(byClass(list[1], 'woe-thumb')[0].style.backgroundImage) && /No picture/.test(byClass(list[0], 'woe-thumb')[0].textContent));
+ok('a picture shows as its thumbnail; with none, the tile quietly says its day (THU)', /fri\.jpg/.test(byClass(list[1], 'woe-thumb')[0].style.backgroundImage) && byClass(list[0], 'woe-thumb')[0].textContent === 'THU');
 ok('"5 of 30" and "+ Add an event"', /5 of 30/.test(texts(page, 'woe-count')) && byClass(page, 'woe-add').length === 1 && !byClass(page, 'woe-add')[0].hidden);
 byClass(page, 'woe-add')[0].onclick();
 var form = byClass(page, 'woe-form')[0];
-ok('Add opens the form: Title, One date / Every week, Starts, Short line, Picture, Save event', !form.hidden && /Add an event/.test(form.textContent) && /One date/.test(form.textContent) && /Every week/.test(form.textContent) && /Starts/.test(form.textContent) && /Short line/.test(form.textContent) && /Picture/.test(form.textContent) && /Save event/.test(form.textContent));
+ok('Add opens the form: Title, One date / Every week, Starts, One line about it (0 of 48), Picture with the poster date check, Save event', !form.hidden && /Add an event/.test(form.textContent) && /One date/.test(form.textContent) && /Every week/.test(form.textContent) && /Starts/.test(form.textContent) && /One line about it/.test(form.textContent) && /0 of 48/.test(form.textContent) && /Check the date on your poster/.test(form.textContent) && /Picture/.test(form.textContent) && /Save event/.test(form.textContent));
 function inputs() { return all(form).filter(function (n) { return n.tagName === 'input'; }); }
 function btn(t) { return all(form).filter(function (n) { return n.tagName === 'button' && n.textContent === t; })[0]; }
 btn('Save event').onclick(); drain();
@@ -166,6 +172,7 @@ btn('Save event').onclick(); drain();
 ok('and saved as a new one (no id), on its new date', saved.length === 2 && !saved[1].id && saved[1].date === '2026-11-28' && /kujo\.jpg/.test(saved[1].image_url));
 ed.open('e1', false);
 form = byClass(page, 'woe-form')[0];
+ok('Edit opens in place of its row (the row hides, the form sits where it was); Add and Copy open at the top', form.parentNode === byClass(page, 'woe-list')[0] && byClass(page, 'woe').filter(function (r) { return r.attrs['data-id'] === 'e1'; })[0].hidden === true && byClass(page, 'woe-add')[0].hidden === true);
 ok('Edit: the form holds it, Every week on Friday, keeping its id', /Edit event/.test(form.textContent) && inputs()[0].value === 'Revolver Fridays' && /\bon\b/.test(all(form).filter(function (n) { return n.attrs['data-day'] === 'fri'; })[0].className));
 btn('Save event').onclick(); drain();
 ok('saved under its own id', saved.length === 3 && saved[2].id === 'e1' && saved[2].day === 'fri');
@@ -203,7 +210,7 @@ var future = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10), past =
 ok('the Worker caps agree with the page (30)', /const VPB_MAX_EVENTS = 30;/.test(apiSrc) && W.MAX === 30 && /out\.length >= 30/.test(fnSrc(GAME, 'publicEvents')));
 var c1 = w.clean(ENV, { title: '  DJ   Tilly ', date: future, start: '22:00', line: 'Free', image_url: OURS, extra: 'nope', id: '' }, VID);
 ok('a good one-off is kept with only its fields', c1.ev && c1.ev.title === 'DJ Tilly' && c1.ev.date === future && c1.ev.start === '22:00' && c1.ev.image_url === OURS && c1.ev.extra === undefined && c1.ev.id === undefined, JSON.stringify(c1));
-ok('refused in words: no title, a past date, no day, a bad time, a long title or line', /title/.test(w.clean(ENV, { date: future }, VID).error) && /has been/.test(w.clean(ENV, { title: 'x', date: past }, VID).error) && /Pick a date/.test(w.clean(ENV, { title: 'x' }, VID).error) && /start time/.test(w.clean(ENV, { title: 'x', day: 'fri', start: '7pm' }, VID).error) && /60/.test(w.clean(ENV, { title: new Array(70).join('x'), day: 'fri' }, VID).error) && /90/.test(w.clean(ENV, { title: 'x', day: 'fri', line: new Array(100).join('x') }, VID).error));
+ok('refused in words: no title, a past date, no day, a bad time, a long title or line', /title/.test(w.clean(ENV, { date: future }, VID).error) && /has been/.test(w.clean(ENV, { title: 'x', date: past }, VID).error) && /Pick a date/.test(w.clean(ENV, { title: 'x' }, VID).error) && /start time/.test(w.clean(ENV, { title: 'x', day: 'fri', start: '7pm' }, VID).error) && /60/.test(w.clean(ENV, { title: new Array(70).join('x'), day: 'fri' }, VID).error) && /48/.test(w.clean(ENV, { title: 'x', day: 'fri', line: new Array(60).join('x') }, VID).error));
 ok('a picture from anywhere but this venue\'s own folder is refused', /Upload the picture/.test(w.clean(ENV, { title: 'x', day: 'fri', image_url: 'https://evil.example/a.jpg' }, VID).error) && /Upload the picture/.test(w.clean(ENV, { title: 'x', day: 'fri', image_url: OURS.replace(VID, '99999999-2222-3333-4444-555555555555') }, VID).error) && /Upload the picture/.test(w.clean(ENV, { title: 'x', day: 'fri', image_url: 'https://x.supabase.co/storage/v1/object/public/venue-logos/' + VID + '/a.png' }, VID).error));
 ok('a made-up date (30 Feb) is refused', /Pick the date/.test(w.clean(ENV, { title: 'x', date: '2027-02-30' }, VID).error));
 ok('the stored list drops past ones and anything without an id', w.keep([{ id: 'a', title: 'x', date: past }, { id: 'b', title: 'y', date: future }, { title: 'z', day: 'fri' }, { id: 'c', title: 'w', day: 'fri', until: past }, { id: 'd', title: 'v', day: 'sun' }], w.cut()).map(function (e) { return e.id; }).join() === 'b,d');
@@ -215,7 +222,7 @@ ok('a new event gets its id from crypto, never Math.random', /crypto\.randomUUID
 
 print('\nTHE PAGES');
 var TV = readFile('venueplay/tv.html'), BILL = readFile('venueplay/app/billing.html');
-ok('the TV loads vp-whatson.js and puts the nights in its loop', /<script src="\/app\/vp-whatson\.js"><\/script>/.test(TV) && /VPWhatsOn\.tvSlides\(ADS\.events, VPWhatsOn\.todayIn\(VENUE_TZ\)\)/.test(TV) && /ADS\.events = Array\.isArray\(d\.events\) \? d\.events : \[\];/.test(TV));
+ok('the TV loads vp-whatson.js and puts the nights in its loop', /<script src="\/app\/vp-whatson\.js"><\/script>/.test(TV) && /VPWhatsOn\.tvSlides\(ADS\.events, VPWhatsOn\.todayIn\(VENUE_TZ\), ADS\.week\)/.test(TV) && /ADS\.week = Array\.isArray\(d\.week\) \? d\.week : null;/.test(TV) && /ADS\.events = Array\.isArray\(d\.events\) \? d\.events : \[\];/.test(TV));
 ['venueplay/app/trivia/play.html', 'venueplay/app/musical/play.html', 'venueplay/play.html'].forEach(function (f) {
   var s = readFile(f);
   ok(f.replace('venueplay/', '') + ' loads vp-whatson.js before vp-tonight.js and passes the events on', s.indexOf('<script src="/app/vp-whatson.js"></script>') > 0 && s.indexOf('<script src="/app/vp-whatson.js"></script>') < s.indexOf('<script src="/app/vp-tonight.js"></script>') && /P\.events=\(r&&Array\.isArray\(r\.events\)\)\?r\.events:\[\];/.test(s) && /events:P\.events/.test(s));

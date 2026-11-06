@@ -231,53 +231,65 @@
     .adline{grid-template-columns:1fr 1fr}
     .adline .adf:first-child{grid-column:1 / -1}
   }
-  /* WHAT'S ON (INBOX 110, 6 Nov 2026): the venue's own nights, /app/vp-whatson-edit.js. One row each in date order
-     (picture, when, title, line; Edit, Copy, Remove), and one short form. Phone: the buttons go under the words. */
+  /* WHAT'S ON (INBOX 110, 6 Nov 2026; design review the same day): the venue's own events, /app/vp-whatson-edit.js. One row
+     each in date order (picture, when, title, line; Edit, Copy, Remove), one short form that opens in place of the row
+     being edited. Every control at least 44px tall; the picked day solid pink like the toggle above it. */
   .woe-list{margin:4px 0 0}
   .woe{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px 14px;align-items:center;background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0}
-  .woe-thumb{flex:none;width:64px;aspect-ratio:4/5;border-radius:8px;border:1px solid var(--line);background:#050506 center/contain no-repeat;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--faint);font-size:10.5px;line-height:1.2;padding:3px}
-  .woe-thumb.big{width:112px;cursor:pointer;font-size:12px}
+  .woe[hidden]{display:none}
+  .woe-thumb{flex:none;width:64px;aspect-ratio:4/5;border-radius:8px;border:1px solid var(--line);background:#1A1A1F center/contain no-repeat;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--faint);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;line-height:1.2;padding:3px}
+  .woe-thumb.big{width:96px;cursor:pointer}
   .woe-main{min-width:0}
-  .woe-when{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--pink)}
+  .woe-when{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.04em;color:var(--faint)}
   .woe-when.tn{color:var(--gold)}
   .woe-title{font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-top:2px;overflow-wrap:anywhere}
   .woe-line{color:var(--muted);font-size:13px;line-height:1.35;margin-top:1px;overflow-wrap:anywhere}
   .woe-acts{display:flex;gap:8px;align-items:center}
-  .woe-acts .addbtn{padding:8px 13px}
+  .woe-acts .addbtn{padding:8px 13px;min-height:44px}
+  .woe-rm{min-height:44px;padding:0 12px;display:inline-flex;align-items:center}
   .woe-empty{color:var(--muted);font-size:13.5px;background:var(--ink-3);border:1px dashed var(--line);border-radius:14px;padding:16px;margin:8px 0;text-align:center}
   .woe-foot{display:flex;align-items:center;gap:12px;margin:2px 0 4px}
+  .woe-foot .addbtn{min-height:44px}
   .woe-count{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-  .woe-form{background:var(--ink-3);border:1px solid rgba(255,31,142,.45);border-radius:14px;padding:14px;margin:10px 0}
+  .woe-count[hidden]{display:none}
+  .woe-form{background:var(--ink-3);border:1px solid rgba(255,31,142,.45);border-radius:14px;padding:16px;margin:10px 0}
   .woe-form[hidden]{display:none}
-  .woe-fhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;margin:0 0 10px}
-  .woe-f{margin:0 0 12px;min-width:0}
-  .woe-f .flabel{display:block}
-  .woe-form input[type=text],.woe-form input[type=date],.woe-form input[type=time]{width:100%;min-height:44px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
+  .woe-fhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;margin:0 0 12px}
+  .woe-f{margin:0 0 18px;min-width:0}
+  .woe-f .flabel{display:flex;justify-content:space-between;gap:10px}
+  .woe-counter{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--faint);font-weight:500}
+  .woe-form input[type=text],.woe-form input[type=date],.woe-form input[type=time]{width:100%;min-height:48px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
   .woe-form input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.22)}
   .woe-seg{display:inline-flex;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
-  .woe-seg button{min-height:40px;padding:0 16px;border:0;border-radius:9px;background:none;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  .woe-seg button{min-height:44px;padding:0 16px;border:0;border-radius:9px;background:none;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
   .woe-seg button.on{background:var(--pink);color:#fff}
-  .woe-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;max-width:460px}
-  .woe-day{min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--ink-2);color:var(--text);font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;cursor:pointer;padding:0}
-  .woe-day.on{background:rgba(255,31,142,.14);border-color:var(--pink);color:#fff}
+  .woe-days{display:grid;grid-template-columns:repeat(7,64px);gap:6px}
+  .woe-day{min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--ink-2);color:var(--text);font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;cursor:pointer;padding:0}
+  .woe-day.on{background:var(--pink);border-color:var(--pink);color:#fff}
   .woe-when-once[hidden],.woe-when-weekly[hidden]{display:none}
-  .woe-when-once .woe-f,.woe-when-weekly .woe-f:last-child{max-width:220px}
-  .woe-two{display:grid;grid-template-columns:160px minmax(0,1fr);gap:12px}
-  .woe-pic{display:flex;gap:14px;align-items:flex-start;margin:0 0 6px}
+  .woe-two{display:grid;grid-template-columns:220px minmax(0,1fr);gap:12px}
+  .woe-when-once input,.woe-when-weekly input[type=date],.woe-two input[type=time]{max-width:220px}
+  .woe-pic{display:flex;gap:16px;align-items:flex-start}
   .woe-picwords{min-width:0}
-  .woe-picwords .snote{margin:2px 0 8px}
-  .woe-picbtns{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .woe-picwords .snote{margin:0 0 6px}
+  .woe-datecheck{color:var(--faint)}
+  .woe-picbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+  .woe-picbtns .addbtn{min-height:44px}
+  .woe-picf{margin-bottom:24px}
   .woe-err{color:var(--gold);font-size:13px;min-height:0;margin:4px 0}
   .woe-err:empty{display:none}
-  .woe-facts{display:flex;gap:10px;align-items:center;margin-top:6px}
+  .woe-facts{display:flex;gap:10px;align-items:center}
+  .woe-facts .go,.woe-facts .addbtn{min-height:48px}
   @media(max-width:560px){
     .woe{grid-template-columns:56px minmax(0,1fr)}
     .woe-thumb{width:56px}
+    .woe-thumb.big{width:96px}
     .woe-acts{grid-column:1 / -1;justify-content:flex-start}
     .woe-acts .woe-rm{margin-left:auto}
     .woe-two{grid-template-columns:1fr}
-    .woe-when-once .woe-f,.woe-when-weekly .woe-f:last-child{max-width:none}
-    .woe-thumb.big{width:96px}
+    .woe-when-once input,.woe-when-weekly input[type=date],.woe-two input[type=time]{max-width:none}
+    .woe-days{grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+    .woe-pic{flex-direction:column;gap:10px}
     .woe-facts .go{flex:1}
   }
   .adfields input[type=number],.adfields input[type=date]{width:100%;min-height:44px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
@@ -911,7 +923,7 @@
          Drawn by /app/vp-whatson-edit.js; each event saves by itself (POST /account/whats-on-save). -->
     <div class="scard" id="woCard">
       <div class="scardhead">What's on<span class="forvenue" id="woForVenue"></span></div>
-      <p class="snote">Your own nights: DJs, gigs, club nights and specials. They show on your TV between games and on players' phones, beside our games. Past ones drop off by themselves. Up to 30.</p>
+      <p class="snote">Your own events: DJs, gigs, club nights and specials. They show on your TV between games and on players' phones, beside our games. Past ones drop off by themselves. Up to 30.</p>
       <div id="woBox"></div>
     </div>
 
@@ -2190,7 +2202,10 @@
       save: function(ev){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-save", { venue_id: v, event: ev }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
       remove: function(id){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-remove", { venue_id: v, id: id }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
       upload: uploadEventImage,
-      say: function(t, good){ showMsg(t, good); }
+      say: function(t, good){ showMsg(t, good); },
+      /* The form's top 16px under the sticky header and tabs, wherever it opened (in place of a row, or at the top). */
+      scrollTo: function(f){ try{ var tabs=document.querySelector(".tabs"), off=(tabs ? tabs.getBoundingClientRect().bottom : 80) + 16;
+        window.scrollTo({ top: Math.max(0, f.getBoundingClientRect().top + window.scrollY - off), behavior: "smooth" }); }catch(e){} }
     });
   }
   function uploadEventImage(file, done){

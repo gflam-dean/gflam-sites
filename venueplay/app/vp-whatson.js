@@ -67,7 +67,7 @@
     else if (DAYS.indexOf(e.day) !== -1) { o.day = e.day; if (parse(e.until)) o.until = String(e.until); }
     else return null;
     if (TIME_RE.test(String(e.start || ""))) o.start = String(e.start);
-    var line = str(e.line, 90); if (line) o.line = line;
+    var line = str(e.line, 48); if (line) o.line = line;
     if (typeof e.image_url === "string" && URL_OK.test(e.image_url) && e.image_url.indexOf("&#") === -1 && e.image_url.length <= 600) o.image_url = e.image_url;
     return o;
   }
@@ -144,50 +144,79 @@
     return w + (tm ? ", " + tm : "");
   }
 
-  /* THE TV'S SLIDES (tv.html's ads loop). The next seven days, in date order:
+  /* THE TV'S SLIDES (tv.html's ads loop). The next seven days, in date then time order:
        { type:"list", rows:[{ date, label, ev }] }   up to 5 nights a slide, at most 2 slides (10 nights)
        { type:"poster", date, label, ev }             one for each night with a picture, the soonest 3
-     Nothing when nothing is on: no empty "What's on" card on the wall. */
-  function tvSlides(events, t) {
-    var up = upcoming(events, t, 7, 10), out = [], i;
+     week (Dean, 6 Nov 2026: "yes, list our game nights too"): the venue's game week from its setup answers
+     ([{ day:"wed", games:[{ game:"trivia", start:"19:00" }] }], as /join/info and /screen hand it over). Each game
+     night joins the list as a row of its own ({ game:"trivia" } on the ev), so the slide is one guide to the week.
+     Nothing on at all: no "What's on" slide (no empty card on the wall). Seven days hold each weekly night once, so a
+     weekly night with a picture is one poster, never one a week. */
+  var GAME_NIGHT = { trivia: "Trivia night", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
+  function gameNights(week, s) {
+    var out = [], k = dayKey(s);
+    if (!Array.isArray(week)) return out;
+    week.forEach(function (d) {
+      if (!d || d.day !== k || !Array.isArray(d.games)) return;
+      d.games.forEach(function (g) {
+        if (!g || !GAME_NIGHT[g.game]) return;
+        out.push({ title: GAME_NIGHT[g.game], start: TIME_RE.test(String(g.start || "")) ? g.start : "", line: "Play on your phone", game: g.game });
+      });
+    });
+    return out;
+  }
+  function tvSlides(events, t, week) {
+    var list = clean(events), up = [], i, j;
+    for (i = 0; i < 7 && up.length < 10; i++) {
+      var s = addDays(t, i), day = gameNights(week, s);
+      for (j = 0; j < list.length; j++) if (isOn(list[j], s)) day.push(list[j]);
+      day.sort(byStart);
+      for (j = 0; j < day.length && up.length < 10; j++) up.push({ date: s, ev: day[j] });
+    }
+    var out = [];
+    if (!up.some(function (x) { return !x.ev.game; })) return out;   // our games alone are not the venue's What's on
     for (i = 0; i < up.length; i += 5) {
       out.push({ type: "list", rows: up.slice(i, i + 5).map(function (x) { return { date: x.date, label: dayLabel(x.date, t), ev: x.ev }; }) });
     }
-    var posters = 0;   // seven days hold each weekly night once, so a weekly night is one poster, never one a week
+    var posters = 0;
     for (i = 0; i < up.length && posters < 3; i++) {
       var e = up[i].ev;
-      if (!e.image_url) continue;
+      if (!e.image_url || e.game) continue;
       posters++;
       out.push({ type: "poster", date: up[i].date, label: dayLabel(up[i].date, t, true), ev: e });
     }
     return out;
   }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  /* The HTML of one of tvSlides' slides, for tv.html (its look is tv.html's .wo-* rules). venue: the venue's name. */
+  function cssUrl(u) { u = String(u || ""); return (URL_OK.test(u) && u.indexOf("&#") === -1) ? encodeURI(u).replace(/[()';]/g, "") : ""; }
+  /* The HTML of one of tvSlides' slides, for tv.html (its look is tv.html's .wo-* rules, the trivia new look: a small
+     kicker over a big Anton headline, flat rows, tonight marked by a pink bar). venue: the venue's name. Times are
+     written as people say them, "9pm", never "9PM". (The venue's own colours and background are a later job.) */
   function tvHtml(sl, venue) {
     if (!sl) return "";
+    venue = typeof venue === "string" ? venue : "";
     if (sl.type === "list") {
-      var rows = "";
+      var rows = "", last = "";
       sl.rows.forEach(function (r) {
-        var tn = r.label === "Tonight";
-        rows += '<div class="wo-row' + (tn ? " tonight" : "") + '">' +
+        var tn = r.label === "Tonight", again = r.date === last;
+        last = r.date;
+        rows += '<div class="wo-row' + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + (again ? " again" : "") + '">' +
           '<span class="wo-day">' + esc(r.label) + '</span>' +
           '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (r.ev.line ? '<i>' + esc(r.ev.line) + '</i>' : '') + '</span>' +
           '<span class="wo-time">' + esc(time12(r.ev.start)) + '</span></div>';
       });
-      return '<div class="adtag">What’s on' + (venue ? ' at ' + esc(venue) : '') + '</div><div class="wo-list">' + rows + '</div>';
+      return '<div class="wo-wall"><div class="wo-in">' + (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '') +
+        '<div class="wo-head">What’s on</div><div class="wo-list">' + rows + '</div></div></div>';
     }
     if (sl.type === "poster") {
-      var u = String(sl.ev.image_url || "");
-      if (!URL_OK.test(u) || u.indexOf("&#") !== -1) return "";
-      var bg = encodeURI(u).replace(/[()';]/g, "");
+      var bg = cssUrl(sl.ev.image_url);
+      if (!bg) return "";
       var tm = time12(sl.ev.start);
-      return '<div class="wo-poster"><div class="wo-art" style="background-image:url(' + bg + ')"></div>' +
+      return '<div class="wo-wall wo-poster"><div class="wo-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wo-pic" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wo-words"><div class="adtag' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
+        '<div class="wo-words"><div class="wo-when' + (sl.label === "Tonight" ? " tn" : "") + '">' + esc(sl.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
         '<div class="adbig">' + esc(sl.ev.title) + '</div>' +
-        (sl.ev.line ? '<div class="adsub">' + esc(sl.ev.line) + '</div>' : '') +
-        (venue ? '<div class="wo-at">' + esc(venue) + '</div>' : '') + '</div></div>';
+        (sl.ev.line ? '<div class="adsub">' + esc(sl.ev.line) + '</div>' : '') + '</div></div>';
     }
     return "";
   }

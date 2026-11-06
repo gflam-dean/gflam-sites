@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 13:20 · 04e6910a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 14:03 · 4e07d255';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12519,7 +12519,7 @@ function vpbCleanEvent(env, e, venueId) {
     ev.start = String(e.start);
   }
   const line = vpbScreenStr(e.line, 300).replace(/\s+/g, ' ');
-  if (line.length > 90) return { error: 'Keep the short line under 90 letters.' };
+  if (line.length > 48) return { error: 'Keep the line under 48 letters.' };
   if (line) ev.line = line;
   if (e.image_url) {
     if (!vpbOurAdUrl(env, e.image_url, venueId)) return { error: 'Upload the picture on this page rather than pasting an address.' };
