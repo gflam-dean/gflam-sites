@@ -139,5 +139,33 @@ ok('the plain lobby (no other heading, nothing scored) is option C', /var useT =
 ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));
 
+print('\n"JOIN {VENUE}\'S LIST" IN THE MENU (Dean, 6 Nov 2026)');
+var mb = new Node('div'), sentL = [], resL;
+var ml = T.menuList(mb, { venue: 'Tugun Bowls Club', collect: { email: true, mobile: true }, send: function (f) { sentL.push(f); return { then: function (ok_) { resL = ok_; } }; } });
+ok('one menu row, "Join Tugun Bowls Club\'s list", its form closed', mb.children[0].textContent === 'Join Tugun Bowls Club’s list' && /hidden/.test(mb.children[1].className));
+ml.row.onclick();
+ok('tapped, it opens: the venue\'s fields (email and mobile), the approved tick, "Join the list"', !/hidden/.test(mb.children[1].className) && all(mb.children[1]).filter(function (n) { return n.tagName === 'input'; }).length === 3 && /Send me offers from Tugun Bowls Club\. I’m 18 or over\./.test(mb.children[1].textContent) && /Join the list/.test(mb.children[1].textContent));
+var mi = all(mb.children[1]).filter(function (n) { return n.tagName === 'input'; });
+mi[0].value = 'sam@example.com';
+var realP = Promise; Promise = { resolve: function (x) { return x; } };
+ml.form.onsubmit({ preventDefault: function () {} });
+ok('not sent without the tick (the tick is what joining the list means)', sentL.length === 0 && /Tick the box/.test(byClass(mb.children[1], 'err')[0].textContent));
+mi[2].checked = true; mi[1].value = '12';
+ml.form.onsubmit({ preventDefault: function () {} });
+ok('a junk mobile is not sent', sentL.length === 0 && /mobile/.test(byClass(mb.children[1], 'err')[0].textContent));
+mi[1].value = '0412 345 678';
+ml.form.onsubmit({ preventDefault: function () {} }); Promise = realP;
+ok('ticked, with an email and a mobile: sent once, opted in', sentL.length === 1 && sentL[0].email === 'sam@example.com' && sentL[0].mobile === '0412 345 678' && sentL[0].optin === true, JSON.stringify(sentL));
+resL();
+ok('and once sent the row is gone', mb.children.length === 0);
+var mn = new Node('div');
+ok('a venue that collects no way to reach anyone: no row', T.menuList(mn, { venue: 'X', collect: {}, send: function () {} }) === null && mn.children.length === 0);
+var me1 = new Node('div'); T.menuList(me1, { venue: 'X', collect: { email: true }, send: function () {} });
+ok('only the fields the venue collects (email only: no mobile box)', all(me1.children[1]).filter(function (n) { return n.tagName === 'input'; }).length === 2);
+ok('the trivia phone has the row in its menu, only where the venue collects the tick and a way to reach them, only once in, gone once on the list',
+   /<div id="vpListItem"><\/div>/.test(PLAY) && /if\(typeof VPTonight!=="object" \|\| !P\.joined \|\| onList\(\) \|\| !\(c\.marketing_optin && \(c\.email \|\| c\.mobile\)\)\)\{ b\.innerHTML=""; return; \}/.test(PLAY));
+ok('it sends through /join/list, and a ticked send puts the phone on the list', /send:function\(f\)\{ return listSend\(f\.email, f\.mobile, true\); \}/.test(PLAY) && /if\(optin===true && r && r\.stored\) setOnList\(\);/.test(PLAY));
+ok('a player who ticked the offers when joining is on the list (no row)', /if\(P\.capture && P\.capture\.marketing_optin===true\) setOnList\(\); else paintListItem\(\);/.test(PLAY));
+
 print('');
 print(bad ? (bad + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));

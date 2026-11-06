@@ -65,3 +65,11 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-on #vpAd .dots{margin-top:6px}
 body.light .vpt-head .t,body.light .vpt-next,body.light .vpt-night .g b,body.light .vpt-sign .lb{color:#191420}
 body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFFFF}
+/* "Join {venue}'s list" in the menu (Dean, 6 Nov 2026), the same on every game's phone */
+.vpt-listform{padding:4px 0 10px}
+.vpt-listform.hidden{display:none}
+.vpt-listform input[type=email],.vpt-listform input[type=tel]{display:block;width:100%;box-sizing:border-box;margin:6px 0 0;background:#0F0F12;border:1px solid rgba(255,255,255,.14);border-radius:12px;color:#fff;font-family:'Manrope',sans-serif;font-weight:600;font-size:16px;padding:11px 12px;text-align:left}
+.vpt-listform .tk{display:flex;gap:9px;align-items:flex-start;font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;line-height:1.35;color:#E7E7EC;margin:10px 0 0;text-align:left}
+.vpt-listform .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
+.vpt-listform .go{width:100%;min-height:46px;margin-top:10px;border:0;border-radius:12px;background:#FF1F8E;color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px}
+.vpt-listform .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;margin-top:6px}

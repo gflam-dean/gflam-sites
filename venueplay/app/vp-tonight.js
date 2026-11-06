@@ -215,5 +215,46 @@
     return f;
   }
 
-  root.VPTonight = { lobby: lobby, noGame: noGame, tonight: tonight, nightRows: nightRows, week: week, time12: time12 };
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026): a player who said no at the join screen can change their mind
+     later, on every game's phone. One row in the menu; tapped, it opens the fields the venue collects (email, mobile),
+     the same approved tick "Send me offers from {venue}. I'm 18 or over.", and "Join the list". The tick is what joining
+     the list means, so the button sends only with it ticked. After a confirmed send the row goes for good (the page
+     keeps that on the phone and does not draw it again).
+       o = { venue, collect:{ email, mobile }, send(fields) -> Promise, done() }   fields = { email, mobile, optin:true } */
+  function menuList(box, o) {
+    if (!box) return null;
+    o = o || {}; box.innerHTML = "";
+    var c = o.collect || {};
+    if (!(c.email || c.mobile) || typeof o.send !== "function") return null;
+    var v = String(o.venue || "this venue");
+    var row = el("button", "menuitem vpt-listrow", "Join " + v + "\u2019s list"); row.setAttribute("type", "button"); row.setAttribute("aria-expanded", "false");
+    var f = el("form", "vpt-listform hidden"); f.setAttribute("novalidate", "");
+    var em = null, mo = null;
+    function field(type, ph, ac) { var i = el("input"); i.setAttribute("type", type); i.setAttribute("placeholder", ph); i.setAttribute("aria-label", ph); i.setAttribute("autocomplete", ac); f.appendChild(i); return i; }
+    if (c.email) em = field("email", "Your email", "email");
+    if (c.mobile) mo = field("tel", "Your mobile", "tel");
+    var tk = el("label", "tk"), cb = el("input"); cb.setAttribute("type", "checkbox");
+    tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + v + ". I\u2019m 18 or over.")); f.appendChild(tk);
+    var go = el("button", "go", "Join the list"); go.setAttribute("type", "submit"); f.appendChild(go);
+    var err = el("div", "err"); err.setAttribute("role", "status"); f.appendChild(err);
+    row.onclick = function () { var open = /\bhidden\b/.test(f.className); f.className = "vpt-listform" + (open ? "" : " hidden"); row.setAttribute("aria-expanded", open ? "true" : "false"); };
+    f.onsubmit = function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      var ev = em ? String(em.value || "").trim() : "", mv = mo ? String(mo.value || "").trim() : "";
+      if (!cb.checked) { err.textContent = "Tick the box to join the list."; return false; }
+      if (ev && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ev)) { err.textContent = "That email doesn\u2019t look right."; return false; }
+      if (mv && !/^\+?[0-9 ]{8,18}$/.test(mv)) { err.textContent = "That mobile doesn\u2019t look right."; return false; }
+      if (!ev && !mv) { err.textContent = c.email ? "Pop your email in first." : "Pop your mobile in first."; return false; }
+      go.disabled = true; err.textContent = "";
+      Promise.resolve(o.send({ email: ev, mobile: mv, optin: true })).then(function () {
+        box.innerHTML = "";   // on the list: the row is gone
+        if (typeof o.done === "function") o.done();
+      }, function () { go.disabled = false; err.textContent = "Could not send that. Try again in a moment."; });
+      return false;
+    };
+    box.appendChild(row); box.appendChild(f);
+    return { row: row, form: f };
+  }
+
+  root.VPTonight = { lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12 };
 })(typeof window !== "undefined" ? window : this);
