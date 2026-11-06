@@ -1140,7 +1140,7 @@
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 100,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {

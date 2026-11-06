@@ -184,8 +184,8 @@ def tv_confirm_shows_win():
                'winners': [{'pid': 'p1', 'name': 'Sam', 'cardNo': 696}], 'shared': False, 'cont': False}
         say(win)
         ok('Confirm winner: the TV goes straight to the win, naming Sam and the prize', r.until(tv, vis('tvWin'), 6) is True and r.ask(tv, vis('tvClaim')) is False
-           and 'Sam' in (r.ask(tv, 'document.getElementById("tvWin").innerText') or ''), r.ask(tv, 'document.getElementById("tvWin").innerText'))
-        time.sleep(5)   # the confetti has fallen (each piece lives 3.8 s)
+           and 'SAM' in (r.ask(tv, 'document.getElementById("tvWin").innerText') or '').upper(), r.ask(tv, 'document.getElementById("tvWin").innerText'))
+        time.sleep(14)   # the celebration has run its course (nine seconds of bursts) and the confetti has fallen
         c0 = r.ask(tv, 'window.__conf')
         ok('CONTROL: the confirmed win celebrated (confetti fell)', (c0 or 0) > 0, c0)
         say(dict(win, held=False, shown=True)); time.sleep(1.5)
