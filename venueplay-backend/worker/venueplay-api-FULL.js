@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 22:59 · 0c2eafea';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 23:03 · 71960aca';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3875,6 +3875,91 @@ async function vpsDone(env, venueId, authUserId) {
   return { venue: r.name || '', tv_code: r.join_code || null, slug: r.slug || null, go_url: go };
 }
 
+/* ACCOUNT READY (Dean, 6 Nov 2026; customer journey problem 3): "send BOTH the text and the email". A venue made
+   straight away is signed in on the screen, so nothing told them how to get back in if they closed the tab. The
+   moment the account is made, ONCE per sign-up:
+     - ONE plain text from the same "venueplay" sender as their sign-in code (Mobile Message, ClickSend as backup:
+       vpaSendSms, the provider the code's SMS hook also uses), to the mobile that has just passed the code, in Dean's
+       words: "Welcome to venueplay! Your account for {venue} is ready. Sign in any time at venueplay.com.au/app,
+       we'll text a code to this mobile." No link in it (they sign in by code). A number that opted out is skipped.
+     - the "Welcome to venueplay" email (emails/welcome-self.html): one sign-in button, which address our emails come
+       from, what to do first. From hello@send.venueplay.com.au, as every account email.
+   QUIET HOURS: none, on purpose. Both answer something the person did seconds ago (the code text goes at any hour
+   too); the 9am to 8pm rule is for texts HQ starts (vp_signin_texts). NEVER TWICE: only the one request that moved
+   the sign-up from pending to made (vpsClaim) gets here, and a ready row for the venue already in the audit, or an
+   audit that will not answer, sends nothing. A held sign-up gets nothing here; HQ's Approve sends the normal welcome.
+   Nothing here can stop the done screen: every failure is caught and only reported in { texted, emailed }. */
+const VPS_READY_ACTION = 'signup_ready_sent';
+function vpsReadyVenueWords(name) {
+  /* Their own typing, into a text from our sender: letters, digits and plain punctuation only (no links), 50 at most. */
+  const w = String(name || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50).trim();
+  return w || 'your venue';
+}
+/* emailed: the Welcome email went first, so the text can say so (Dean, 6 Nov 2026: "one short line that we've also
+   emailed their login and it may be in junk"). Two SMS parts at most: the venue's words are cut to 50. */
+function vpsReadyText(venueName, emailed) {
+  return 'Welcome to venueplay! Your account for ' + vpsReadyVenueWords(venueName) + ' is ready. Sign in any time at venueplay.com.au/app, we\'ll text a code to this mobile.'
+    + (emailed ? ' We\'ve emailed your login too, check junk.' : '');
+}
+/* Has this venue had its ready messages? Fails CLOSED: a read that does not answer counts as yes (never twice). */
+async function vpsReadySentBefore(env, venueId) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_admin_audit?target=eq.' + encodeURIComponent('venue:' + venueId) +
+      '&action=eq.' + VPS_READY_ACTION + '&select=id&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+    if (!res || !res.ok) return true;
+    const rows = await res.json();
+    return !Array.isArray(rows) || rows.length > 0;
+  } catch (e) { return true; }
+}
+async function vpsRenderReady(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const res = await fetch(site + '/emails/welcome-self.html');
+  if (!res || !res.ok) return null;
+  let page = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the notes are for us, not the inbox
+  const first = String(o.contactName || '').trim().split(/\s+/)[0];
+  page = page
+    .replace(/{{greeting}}/g, first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,')
+    .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
+    .replace(/{{login_mobile}}/g, vpaEsc(o.mobileWords))
+    .replace(/{{signin_url}}/g, site + '/app/?signin=sms#m=' + String(o.mobileWords).replace(/\D/g, ''))
+    .replace(/{{tv_code}}/g, vpaEsc(o.tvCode || 'shown on your Screen tab'))
+    .replace(/{{terms_url}}/g, site + '/terms')
+    .replace(/{{privacy_url}}/g, site + '/privacy')
+    .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
+    .replace(/{{signoff}}/g, vpaProspectSignoff(''));
+  const subject = 'Welcome to venueplay';
+  return { subject: subject, html: vpaEmailDocument(vpaFillSupport(page), subject) };
+}
+async function vpsAccountReady(env, row, venueId, done) {
+  const out = { texted: false, emailed: false };
+  try {
+    if (!venueId || await vpsReadySentBefore(env, venueId)) return Object.assign(out, { skipped: 'sent before, or could not check' });
+    const venueName = (done && done.venue) || row.venue_name;
+    const to = vpaNormaliseMobileAU(row.mobile);
+    const mobileWords = vpaProspectPhone(to);
+    const email = String(row.email || '').trim();
+    if (email && env.RESEND_API_KEY && mobileWords) {
+      const msg = await vpsRenderReady(env, { venueName: venueName, contactName: row.contact_name, mobileWords: mobileWords, tvCode: done && done.tv_code, email: email });
+      if (msg) {
+        const res = await fetch('https://api.resend.com/emails', { method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: VPA_PROSPECT_FROM, to: [email], reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+        out.emailed = !!(res && res.ok);
+        if (out.emailed) { const j = await res.json().catch(() => ({})); out.email_id = (j && typeof j.id === 'string') ? j.id : undefined; }
+      }
+    }
+    if (vpaIsAuMobileE164(to) && (vpaHasMobileMessage(env) || vpaHasClickSend(env)) && !(await vpaSmsOptedOut(env, to))) {
+      let r;
+      try { r = await vpaSendSms(env, to, vpsReadyText(venueName, out.emailed), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
+      out.texted = !!(r && r.ok);
+      if (r && r.blocked) await vpaSmsRecordOptOut(env, to, venueId);
+    }
+    await vpaAudit(env, { actorId: null, label: 'Self sign-up (no-card start)' }, VPS_READY_ACTION, 'venue:' + venueId,
+      { start_id: row.id, texted: out.texted, emailed: out.emailed, email_id: out.email_id, to_last3: to ? to.slice(-3) : undefined });
+  } catch (e) { console.log('[start] ready: ' + String((e && e.message) || e).slice(0, 200)); }
+  return { texted: out.texted, emailed: out.emailed };
+}
+
 /* THE DECISION, once the code to their mobile has passed. */
 async function vpsDecide(env, json, row) {
   // 1. One free month per mobile and per email. Fails closed: a read that will not answer makes nothing.
@@ -3902,7 +3987,8 @@ async function vpsDecide(env, json, row) {
   let login = null;
   try { login = made.body.login ? await vpaFindAuthUser(env, { email: row.email }) : null; } catch (e) { login = null; }
   const done = await vpsDone(env, made.body.venue.id, login && login.id);
-  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS });
+  const ready = await vpsAccountReady(env, row, made.body.venue.id, done);
+  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS, ready: ready });
 }
 
 async function vpsStartVerify(request, env, json) {

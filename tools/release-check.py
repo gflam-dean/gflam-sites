@@ -3895,6 +3895,11 @@ def local_checks(which):
              'test-try-demo-billing.js',
              'runs the billing Worker with a demo beside a real night: quiet venues, venue history, auto-archive, set players\' "played since", venue stats, metering stats, the monthly report read, the draw log and the nights list each ask vp_sessions with is_demo=not.is.true and show only the real night; find a person still sees demo players', 22,
              'A demo counted as a night in a venue\'s stats or report, keeping a cancelling venue alive, or closing the one-hour undo on a players change'),
+            # D176: account ready after a self sign-up, the text and the Welcome email (Dean, 6 Nov 2026), branch fix/account-ready-10nov.
+            ('D176. A venue made by the no-card start gets one text and one Welcome to venueplay email, once',
+             'test-account-ready.js',
+             'runs /start/begin and /start/verify on the billing Worker with a fake Mobile Message and Resend: ONE text from the venueplay sender to the mobile that passed the code in Dean\'s words, no link; ONE Welcome to venueplay email from hello@send.venueplay.com.au with one sign-in button (the text-code sign-in, their mobile filled in, no token), the sender address, the screen code and what to do first; an unlisted venue the same, a held one nothing; never twice (the same code, a second call, an audit that will not answer sends nothing); a provider down, no provider, an opted-out number or no email key never stops the done screen; a link typed as the venue name never reaches the text; what they typed is escaped in the email; the audit keeps the last 3 digits only; the email goes first so the text can say it was emailed too (check junk), two SMS parts at most; the email gives venueplay.com.au/go/{screen code} as the easy way back in', 28,
+             'A venue that closed the tab at the bar with nothing in its inbox, or a sign-up texted and emailed twice'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers

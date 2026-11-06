@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 39,
   "counted_by": "lines"
  },
  "tools/feedback-followup-in-chrome.test.py": {
@@ -421,6 +421,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-ready.js": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-account-tabs.js": {
