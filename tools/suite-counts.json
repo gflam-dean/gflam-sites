@@ -556,11 +556,11 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
-  "checks": 169,
+  "checks": 172,
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
-  "checks": 84,
+  "checks": 91,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
