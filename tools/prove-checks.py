@@ -77,6 +77,11 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # Dean's wording rule (6 Nov 2026): the welcome says "This link is available for 30 days.", never when the month starts.
+    ('test-prospects-tab.js', 'venueplay/emails/welcome-prospect.html',
+     'Your first month is free. This link is available for 30 days. There&#39;s no card',
+     'Your first month is free, and it starts the first time you sign in. There&#39;s no card',
+     'the welcome explains when the free month starts instead of the 30 days'),
     # The 5-day grace in the emails, behind OFFER_GRACE_EMAILS (Dean, 6 Nov 2026), branch fix/grace-emails-10nov.
     ('test-offer-grace.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "function vpaGraceEmailWords(env) { return String((env && env.OFFER_GRACE_EMAILS) || '').trim().toLowerCase() === 'on'; }",
