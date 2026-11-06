@@ -108,14 +108,6 @@
       if (x.game === me) return;
       rows.push({ game: x.game, name: GAME_NAME[x.game], badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
     });
-    /* Tonight's own nights in ONE compact row, so the venue's ad and our logo still fit a 664px screen: the first, and
-       "+2 more tonight" in place of its line when there are more (tap Today in the strip for them all). */
-    var evs = eventsOn(o, now(o));
-    if (evs.length) {
-      var r = eventRows(evs.slice(0, 1), 0)[0];
-      if (evs.length > 1) r.sub = "+" + (evs.length - 1) + " more tonight";
-      rows.push(r);
-    }
     return rows;
   }
   /* Another night's rows, for the spot when a day is tapped. */
@@ -157,9 +149,11 @@
   function strip(o, picked, onPick) {
     var w = el("div", "vpt-week"), k = el("div", "k");
     k.appendChild(el("span", "", "This week here"));
+    var days = week(o);
     if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
+    else if (days.some(function (x) { return x.ev; })) k.appendChild(el("span", "ask", "Tap a day"));   // the venue's own nights are a tap away
     w.appendChild(k);
-    var days = week(o), btns = [], row = el("div", "days" + (days.some(function (x) { return x.ev; }) ? " has-ev" : ""));
+    var btns = [], row = el("div", "days" + (days.some(function (x) { return x.ev; }) ? " has-ev" : ""));
     days.forEach(function (dd) {
       var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.ev ? " ev" : "") + (dd.i === picked ? " picked" : ""));
       b.setAttribute("type", "button"); b.setAttribute("data-day", dd.key);
@@ -180,11 +174,17 @@
     o = o || {}; box.innerHTML = "";
     box.appendChild(head(o.name));
     var spot = el("div", "vpt-night");
-    function today() { paintRows(spot, tonight(o), ""); }
+    /* The lobby as it opens is exactly Dean's round 7 lobby, so the venue's ad and our logo still fit a 664px screen.
+       The venue's own nights are one tap away: the strip says "Tap a day", Today has its dot, and tapping Today lists
+       tonight's beside our game (design review, 6 Nov 2026). */
+    function today(tapped) {
+      var evs = tapped ? eventsOn(o, now(o)) : [];
+      paintRows(spot, tonight(o).concat(eventRows(evs, 3)), evs.length ? "Tonight" : "");
+    }
     today();
     box.appendChild(spot);
     var s = strip(o, 0, function (dd) {
-      if (dd.i === 0) { today(); return; }
+      if (dd.i === 0) { today(true); return; }
       var rows = nightRows(o, dd.date);
       /* With the venue's own nights in it, the card says which day it is ("FRIDAY 13"): their rows carry a time, not a day. */
       paintRows(spot, rows, rows.some(function (r) { return r.ev; }) ? LONG[dd.key] + " " + dd.date.getDate() : "");

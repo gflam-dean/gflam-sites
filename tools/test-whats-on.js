@@ -96,7 +96,11 @@ var WEEK = [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day:
 var box = new Node('div');
 var lb = T.lobby(box, { name: 'Sam', me: 'trivia', week: WEEK, events: EV, now: THU });
 var spot = byClass(box, 'vpt-night')[0], rows = byClass(spot, 'row');
-ok('tonight: our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && /Trivia/.test(rows[0].textContent) && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
+ok('the lobby opens exactly as Dean\'s round 7 lobby (our game alone), so the ad and our logo still fit 664px', rows.length === 1 && byClass(rows[0], 'bd')[0].textContent === 'Next' && /Trivia/.test(rows[0].textContent) && !byClass(spot, 'nk').length, texts(spot, 'row'));
+ok('the strip says "Tap a day" when the venue has nights this week', /Tap a day/.test(byClass(box, 'vpt-week')[0].textContent));
+lb.buttons[0].onclick();
+rows = byClass(spot, 'row');
+ok('tap Today: TONIGHT, our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Tonight' && rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
 var days = lb.buttons;
 ok('a gold dot on the days with one of the venue\'s nights (Thu, Fri, Sat, Sun no)', /\bev\b/.test(days[0].className) && /\bev\b/.test(days[1].className) && /\bev\b/.test(days[2].className) && !/\bev\b/.test(days[3].className), days.map(function (d) { return d.className; }).join('|'));
 ok('our game nights keep their own mark beside it', /\bon\b/.test(days[0].className) && /\bon\b/.test(days[6].className) && !/\bon\b/.test(days[1].className));
@@ -107,9 +111,9 @@ ok('tap Wednesday (a game night, no events): our game alone, as before, no day h
 days[3].onclick();
 ok('tap Sunday (nothing): "No games this night"', /No games this night/.test(spot.textContent));
 var lots = EV.concat([{ id: 'x1', title: 'Two', day: 'thu', start: '22:00' }, { id: 'x2', title: 'Three', day: 'thu', start: '23:00' }, { id: 'x3', title: 'Four', day: 'thu' }]);
-var lb2 = new Node('div'); T.lobby(lb2, { name: 'Sam', me: 'trivia', week: WEEK, events: lots, now: THU });
+var lb2 = new Node('div'), st2 = T.lobby(lb2, { name: 'Sam', me: 'trivia', week: WEEK, events: lots, now: THU }); st2.buttons[0].onclick();
 var r2 = byClass(byClass(lb2, 'vpt-night')[0], 'row');
-ok('four nights tonight: one compact row, the first and "+3 more tonight", so the ad and our logo still fit', r2.length === 2 && /I \u2665 3181/.test(r2[1].textContent) && /\+3 more tonight/.test(r2[1].textContent) && !/Back bar/.test(r2[1].textContent), texts(lb2, 'row'));
+ok('four nights tonight, Today tapped: our game, two of theirs, then "+2 more", so a busy night stays short', r2.length === 4 && /I \u2665 3181/.test(r2[1].textContent) && /\+2 more/.test(r2[3].textContent), texts(lb2, 'row'));
 var lb3 = new Node('div'), st3 = T.lobby(lb3, { name: 'Sam', me: 'trivia', week: WEEK, events: lots.concat([{ id: 'x4', title: 'Five', day: 'fri' }, { id: 'x5', title: 'Six', day: 'fri' }, { id: 'x6', title: 'Seven', day: 'fri' }]), now: THU });
 st3.buttons[1].onclick();
 var r3 = byClass(byClass(lb3, 'vpt-night')[0], 'row');
@@ -125,7 +129,7 @@ ngs.buttons[3].onclick();
 ok('tap a day with none: the list goes away', evb.hidden === true);
 var ng0 = new Node('div'); T.noGame(ng0, { name: 'Sam', week: WEEK, now: THU });
 ok('no events: no list on the no-game screen', byClass(ng0, 'vpt-evs')[0].hidden === true);
-var ev2 = new Node('div'); T.lobby(ev2, { name: 'Sam', me: 'trivia', week: WEEK, events: [{ title: '<img src=x onerror=alert(1)>', day: 'thu', line: '<b>x</b>' }], now: THU });
+var ev2 = new Node('div'); T.lobby(ev2, { name: 'Sam', me: 'trivia', week: WEEK, events: [{ title: '<img src=x onerror=alert(1)>', day: 'thu', line: '<b>x</b>' }], now: THU }).buttons[0].onclick();
 ok('an event\'s words are set as text on the phone', all(ev2).every(function (n) { return n._html.indexOf('<img') < 0 && n._html.indexOf('<b>') < 0; }) && /<img src=x/.test(ev2.textContent));
 
 print('\nTHE ACCOUNT PAGE EDITOR (vp-whatson-edit.js)');

@@ -188,12 +188,16 @@ def tv_and_phone():
             time.sleep(1.2)
             m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var dot=window.__st.buttons[0]; var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,dot:getComputedStyle(dot,"::after").backgroundColor,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})
             rows = m.get('rows') or []
-            ok('%dx%d: tonight, our trivia first, then the venue\'s night badged with its time' % (W, H),
-               len(rows) == 2 and 'Trivia' in rows[0] and '9pm' in rows[1] and '3181' in rows[1], rows)
+            ok('%dx%d: the lobby opens as Dean\'s round 7 lobby, our trivia alone, and the strip says "Tap a day"' % (W, H),
+               len(rows) == 1 and 'Trivia' in rows[0] and 'Tap a day' in (r.ask(sid, 'document.querySelector("#vpTonight .vpt-week .k").innerText') or ''), rows)
             ok('%dx%d: a dot in the days that have one of the venue\'s nights (white on Today)' % (W, H),
                ' ev' in m.get('days', [''])[0] and ' ev' in m.get('days', ['', ''])[1] and m.get('dot') == 'rgb(255, 255, 255)', m.get('days'))
             ok('%dx%d: the venue\'s ad and our logo still fit on the screen' % (W, H), m.get('adH', 0) > 60 and m.get('foot', 9999) <= m.get('h', 0) and m.get('doc', 9999) <= W, m)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-lobby-%d.jpg' % W))
+            r.ask(sid, 'window.__st.buttons[0].click(); true')
+            time.sleep(0.3)
+            t0 = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}))', [])
+            ok('%dx%d: tap Today: our trivia, then the venue\'s night badged with its time' % (W, H), len(t0) == 2 and 'Trivia' in t0[0] and '9pm' in t0[1] and '3181' in t0[1], t0)
             r.ask(sid, 'window.__st.buttons[1].click(); true')
             time.sleep(0.3)
             t1 = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}))', [])
