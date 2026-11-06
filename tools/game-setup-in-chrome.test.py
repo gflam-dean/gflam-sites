@@ -37,11 +37,11 @@ def ok(name, cond, saw=''):
 FIT = r'''(function(){ var s=document.getElementById("vpGs"); if(!s) return {none:1};
   var W=document.documentElement.clientWidth, out={side: s.scrollWidth>s.clientWidth+1 || document.documentElement.scrollWidth>W+1, small:[], tiny:[], pop:null, title:(document.getElementById("vpGsTitle")||{}).textContent};
   [].forEach.call(s.querySelectorAll("button"),function(b){ var r=b.getBoundingClientRect(); if(!r.width) return;
-    var need=b.className==="vpgs-q"?28:44; if(r.height<need-0.5) out.small.push((b.id||b.textContent).slice(0,30)+" "+Math.round(r.height)); });
+    var need=/vpgs-q/.test(b.className)?28:(b.className==="got"?32:44); if(r.height<need-0.5) out.small.push((b.id||b.textContent).slice(0,30)+" "+Math.round(r.height)); });
   [].forEach.call(s.querySelectorAll("p,span,button,li,h2,h3,select,input"),function(e){ var r=e.getBoundingClientRect(); if(!r.width||!(e.textContent||e.value)) return;
     var f=parseFloat(getComputedStyle(e).fontSize); if(f<14) out.tiny.push((e.id||e.tagName)+" "+f); });
   var p=[].filter.call(s.querySelectorAll(".vpgs-pop"),function(e){return e.style.display==="block";})[0];
-  if(p){ var r=p.getBoundingClientRect(); out.pop={left:r.left,right:r.right,W:W,text:p.textContent}; }
+  if(p){ var r=p.getBoundingClientRect(); out.pop={left:r.left,right:r.right,W:W,text:p.textContent,pos:getComputedStyle(p).position}; }
   return out; })()'''
 
 
@@ -49,11 +49,13 @@ def fits(tag, f):
     f = f or {}
     ok(tag + ': on screen', f.get('none') is None, f)
     ok(tag + ': nothing scrolls sideways', f.get('side') is False, f)
-    ok(tag + ': every button big enough to tap (44px, the "?" 28px)', f.get('small') == [], f.get('small'))
+    ok(tag + ': every button big enough to tap (44px, the "?" 28px, Got it 32px)', f.get('small') == [], f.get('small'))
     ok(tag + ': no text under 14px', f.get('tiny') == [], f.get('tiny'))
     if f.get('pop'):
         p = f['pop']
         ok(tag + ': the open "?" is fully on screen', p['left'] >= 0 and p['right'] <= p['W'] + 0.5, p)
+        ok(tag + ': on a phone the "?" opens underneath the setting, on a bigger screen as a bubble (Dean, round 2)',
+           p['pos'] == ('static' if p['W'] < 600 else 'absolute'), p)
 
 
 def first_open(RIG):

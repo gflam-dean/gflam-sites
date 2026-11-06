@@ -85,6 +85,7 @@ function page(over) {
 function $(P, id) { return P.doc.getElementById(id); }
 function T(P, id) { var e = $(P, id); return e ? seen(e) : ''; }
 function gameBtn(P, g) { return walk($(P, 'vpGsGames'), function (e) { return e.getAttribute && e.getAttribute('data-game') === g; }); }
+function srtj(o) { var r = {}; Object.keys(o || {}).sort().forEach(function (x) { r[x] = o[x]; }); return JSON.stringify(r); }
 function posts(path) { return CALLS.filter(function (c) { return c.method === 'POST' && c.url.indexOf(path) >= 0; }); }
 
 /* The Worker's own key list, run for real: GAME_PREFS_KEYS and cleanGamePrefs lifted out of venueplay-game.js. */
@@ -133,17 +134,18 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('it opens on the heads-up, titled with the venue', T(P, 'vpGsTitle') === 'Welcome to venueplay, The Test Arms', T(P, 'vpGsTitle'));
   var hu = T(P, 'vpGsHeadsUp');
   check('each game takes less than five minutes', /Each game takes less than five minutes to set up\./.test(hu), hu);
-  check('members draw details, while they may run members draws', /members draw details handy/.test(hu), hu);
+  check('members draw details, while they may run members draws', /Running members draws\? Have your draw details handy/.test(hu), hu);
+  check('you don\'t need to do it all now: each game can be set up the first time it is opened (Dean, round 2)', /You don't need to do it all now\. You can set up each game the first time you open it\./.test(hu), hu);
   check('advertising for the screen step: promo images and logo', /For your screen, have your advertising handy: your promo images and your logo\./.test(hu), hu);
   check('"Then you\'re ready for your week."', /Then you're ready for your week\./.test(T(P, 'vpGsBody')));
   var P2 = page({ answers: { games: ['trivia', 'bingo'] } }); P2.GS.run(P2.ctx, P2.deps); await settle();
-  check('a venue already known not to run members draws is not told to find members draw details', !/members draw/.test(T(P2, 'vpGsHeadsUp')) && /less than five minutes/.test(T(P2, 'vpGsHeadsUp')), T(P2, 'vpGsHeadsUp'));
+  check('a venue already known not to run members draws is not told to find members draw details', !/members draws/.test(T(P2, 'vpGsHeadsUp')) && /less than five minutes/.test(T(P2, 'vpGsHeadsUp')), T(P2, 'vpGsHeadsUp'));
 
   section('3. "What games do you play at your venue?"');
   $(P, 'vpGsGo').click(); await settle();
   check('the one question, in Dean\'s words', T(P, 'vpGsTitle') === 'What games do you play at your venue?', T(P, 'vpGsTitle'));
-  var ticks = all($(P, 'vpGsGames'), function (e) { return e.getAttribute && e.getAttribute('role') === 'checkbox'; }).map(function (e) { return e.textContent; });
-  check('ticks: Trivia, Musical bingo, Bingo, Raffles, Members draws, in that order (jag the joker only once it is live)', ticks.join() === 'Trivia,Musical bingo,Bingo,Raffles,Members draws', ticks);
+  var ticks = all($(P, 'vpGsGames'), function (e) { return e.getAttribute && e.getAttribute('role') === 'checkbox'; }).map(function (e) { return seen(e); });
+  check('ticks: Trivia, Musical bingo, Bingo, Raffles, Members draws, then Something else (jag the joker only once it is live)', ticks.join() === 'Trivia,Musical bingo,Bingo,Raffles,Members draws,Something else', ticks);
   check('Next waits for a tick', $(P, 'vpGsNext').disabled === true);
   gameBtn(P, 'members').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'musical').click();
   check('a tick shows ticked', gameBtn(P, 'trivia').getAttribute('aria-checked') === 'true' && gameBtn(P, 'bingo').getAttribute('aria-checked') === 'false');
@@ -158,7 +160,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   PREFS.trivia = { count: 20 };   // a value the venue already chose
   $(P, 'vpGsAllNo').click(); await settle();
   check('"No worries." in Dean\'s words, naming the games with defaults', T(P, 'vpGsTitle') === 'No worries.' && T(P, 'vpGsNoWorries') === "We'll remind you when you open each of those games. Your default settings have been saved for trivia and musical bingo.", T(P, 'vpGsNoWorries'));
-  check('members draws are never called saved: they have no defaults, and are named apart', /Members draws need your draw name, day and jackpot/.test(T(P, 'vpGsMembersNote')), T(P, 'vpGsMembersNote'));
+  check('members draws are never called saved: they have no defaults, and are named apart', /Members draws still need your draw details \(the draw name, day and jackpot\)/.test(T(P, 'vpGsMembersNote')), T(P, 'vpGsMembersNote'));
   var tp = posts('/host/game-prefs').filter(function (c) { return c.body.game === 'trivia'; })[0];
   check('today\'s trivia defaults written for the keys not saved yet', tp && tp.body.prefs.time_s === 30 && tp.body.prefs.speed_bonus === true && tp.body.venue_id === 'V1', tp && tp.body);
   check('and never over a value the venue chose (their 20 questions stay 20)', tp && !('count' in tp.body.prefs) && PREFS.trivia.count === 20, tp && tp.body.prefs);
@@ -225,9 +227,16 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var fo = P.GS.firstOpen('musical', P.deps); await settle();
   check('musical bingo\'s own setup opens over its console', T(P, 'vpGsTitle') === 'Set up musical bingo' && T(P, 'vpGsFirstTag') === 'First time in musical bingo', T(P, 'vpGsTitle'));
   check('marked "shown" before anything else, for the venue and this device', SAVED.length && SAVED[0].patch.setup_answers.setup.musical === 'shown' && JSON.parse(STORE['vpGameSetup:V1']).setup.musical === 'shown', SAVED[0]);
-  var plSel = $(P, 'vpGsIn_playlist'); await settle();
-  check('playlists from the song library, a bad id never offered', plSel.children.map(function (o) { return o.value; }).join() === ',pub-classics', plSel.children.map(function (o) { return o.value; }));
-  $(P, 'vpGsFirstLater').click(); check('"Later" goes straight to the console', (await fo) === 'later' && !$(P, 'vpGs'));
+  var asked = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
+  check('musical bingo asks its three quick questions first: which music, what prize, how many rounds (Dean, round 2)', asked.join() === 'playlists,rounds,prize_same,prizes', asked);
+  await settle();
+  var music = all($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id'); }).map(function (e) { return e.getAttribute('data-id'); });
+  check('the music from the song library, a bad id never offered', music.join() === 'pub-classics', music);
+  check('the popular songs (Pub Classics) ticked to start with', walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).getAttribute('aria-checked') === 'true');
+  check('a BIG "Play now with the defaults" button, not a small link', /^Play now with the defaults/.test(T(P, 'vpGsPlayNow')) && / big/.test($(P, 'vpGsPlayNow').className), [T(P, 'vpGsPlayNow'), $(P, 'vpGsPlayNow').className]);
+  CALLS = []; $(P, 'vpGsPlayNow').click(); await settle();
+  var dp = posts('/host/game-prefs')[0];
+  check('Play now: the defaults saved where nothing was, the popular songs, then straight to the console', (await fo) === 'defaults' && !$(P, 'vpGs') && dp && dp.body.prefs.playlist === 'pub-classics' && dp.body.prefs.playlists.join() === 'pub-classics' && dp.body.prefs.rounds === 1, dp && dp.body);
   P.ctx.settings.setup_answers.setup.musical = 'later';   // even if the venue's save was refused (163 not run)
   check('never again on this device', (await P.GS.firstOpen('musical', P.deps)) === 'none' && !$(P, 'vpGs'));
   var P6 = page({ answers: { setup: { trivia: 'later' } }, role: 'host' });
@@ -236,8 +245,59 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('a game already set up, or already shown, opens nothing', (await P7.GS.firstOpen('trivia', P7.deps)) === 'none' && (await P7.GS.firstOpen('raffles', P7.deps)) === 'none' && (await P7.GS.firstOpen('bingo', P7.deps)) === 'none');
   var P8 = page({ answers: { setup: { raffles: 'later' } } }); var fo8 = P8.GS.firstOpen('raffles', P8.deps); await settle();
   $(P8, 'vpGsSave').click(); await settle();
-  check('Save: raffles settings sent, the console takes them (reload), and it is "done"', (await fo8) === 'saved' && RELOADS === 1 && posts('/host/game-prefs')[0].body.game === 'raffle' && posts('/host/game-prefs')[0].body.prefs.range_max === 150 && JSON.parse(STORE['vpGameSetup:V1']).setup.raffles === 'done', posts('/host/game-prefs')[0]);
+  var rp = posts('/host/game-prefs')[0];
+  check('Save: raffles settings sent, the console takes them (reload), and it is "done"', (await fo8) === 'saved' && RELOADS === 1 && rp.body.game === 'raffle' && rp.body.prefs.range_max === 150 && rp.body.prefs.prizes.join() === 'Meat Tray' && JSON.parse(STORE['vpGameSetup:V1']).setup.raffles === 'done', rp && rp.body);
+  var P9 = page({ answers: { setup: { bingo: 'later' } } }); P9.GS.firstOpen('bingo', P9.deps); await settle();
+  check('bingo asks who draws the balls when they first open it (not in the first run)', !!$(P9, 'vpGsQ_caller'), T(P9, 'vpGsBody').slice(0, 200));
   check('setup states keep only known games and states', JSON.stringify(P.GS.cleanSetup({ trivia: 'done', musical: 'x', jag: 'done', bingo: 'later' })) === '{"trivia":"done","bingo":"later"}');
+
+  section('6b. ROUND 2 (Dean, 6 Nov 2026): something else, prizes per round, raffle prizes, phone or paper bingo, the draw date');
+  P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  gameBtn(P, 'other').click();
+  check('"Something else" opens a short box', $(P, 'vpGsOther').parentNode.style.display === '' && $(P, 'vpGsNext').disabled === true);
+  $(P, 'vpGsOther').value = '  Karaoke <b>and</b> poker nights, plus a footy tipping comp every week of the season  ';
+  (($(P, 'vpGsOther').handlers.input) || []).forEach(function (f) { f(); });
+  check('a "Something else" answer on its own is enough to go on', $(P, 'vpGsNext').disabled === false);
+  gameBtn(P, 'musical').click(); gameBtn(P, 'raffles').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
+  $(P, 'vpGsNext').click(); await settle();
+  sa = SAVED[SAVED.length - 1].patch.setup_answers;
+  check('kept as setup_answers.other: cleaned, no markup, at most 60 characters', sa.other && sa.other.length <= 60 && !/[<>]/.test(sa.other) && /^Karaoke b and \/b poker nights/.test(sa.other), sa.other);
+  $(P, 'vpGsAllYes').click(); await settle();
+  check('musical bingo first (game 1 of 4)', T(P, 'vpGsTitle') === 'Set up musical bingo' && T(P, 'vpGsCount') === 'Game 1 of 4', [T(P, 'vpGsTitle'), T(P, 'vpGsCount')]);
+  check('one prize box while the prize is the same every round', $(P, 'vpGsIn_prizes').children.length === 1);
+  $(P, 'vpGsIn_rounds').value = '3'; $(P, 'vpGsIn_rounds').handlers.input.forEach(function (f) { f(); });
+  walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'false' && e.parentNode.parentNode.parentNode.getAttribute('data-key') === 'prize_same'; }).click();
+  check('three rounds, not the same prize: a box for each round', $(P, 'vpGsIn_prizes').children.length === 3 && $(P, 'vpGsIn_prizes_2').getAttribute('aria-label') === 'Prize for round 3', $(P, 'vpGsIn_prizes').children.length);
+  $(P, 'vpGsIn_prizes_0').value = '$20 bar tab'; $(P, 'vpGsIn_prizes_2').value = 'Meat tray';
+  walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).click();   // pick nothing: the first picked is the playlist
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  var mp = posts('/host/game-prefs')[0];
+  check('saved: rounds 3, a prize for each round, the first round\'s as the console\'s prize', mp && mp.body.prefs.rounds === 3 && mp.body.prefs.prizes.join('|') === '$20 bar tab||Meat tray' && mp.body.prefs.prize === '$20 bar tab' && mp.body.prefs.prize_same === false, mp && mp.body);
+  check('no music picked: nothing sent for it, the console keeps choosing', mp && !('playlists' in mp.body.prefs) && !('playlist' in mp.body.prefs), mp && mp.body);
+  check('the musical bingo Worker keeps all of it', mp && srtj(WK.clean('musical', mp.body.prefs)) === srtj(mp.body.prefs), mp && WK.clean('musical', mp.body.prefs));
+  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
+  check('bingo: never asks about real balls in the first run (Dean: it becomes a prompt when they open the game)', !$(P, 'vpGsQ_caller'));
+  check('phone tickets: tickets each player is asked, no paper words', $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === '' && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === 'none');
+  walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'paper'; }).click();
+  check('paper tickets: "We can\'t check paper tickets, but we can draw the balls for you, or you draw them and tap each number on the screen."', /We can't check paper tickets, but we can draw the balls for you, or you draw them and tap each number on the screen\./.test(T(P, 'vpGsBody')) && walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'paper_note'; }).style.display === '' && $(P, 'vpGsIn_cards').parentNode.parentNode.style.display === 'none');
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  var bp = posts('/host/game-prefs')[0];
+  check('saved as paper, with no tickets-each-player for paper', bp && bp.body.prefs.ticket_kind === 'paper' && !('cards' in bp.body.prefs) && !('allow_early' in bp.body.prefs) && srtj(WK.clean('bingo', bp.body.prefs)) === srtj(bp.body.prefs), bp && bp.body);
+  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
+  $(P, 'vpGsIn_prize_count').value = '2'; $(P, 'vpGsIn_prize_count').handlers.input.forEach(function (f) { f(); });
+  check('two prizes, all the same: still one box', $(P, 'vpGsIn_prizes').children.length === 1);
+  walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'false' && e.parentNode.parentNode.parentNode.getAttribute('data-key') === 'prizes_same'; }).click();
+  $(P, 'vpGsIn_prizes_1').value = 'Fuel voucher';
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  var rr = posts('/host/game-prefs')[0];
+  check('not the same: a box each, saved as the raffle console\'s prize buttons', rr && rr.body.prefs.prizes.join('|') === 'Meat Tray|Fuel voucher' && rr.body.prefs.prize_count === 2 && rr.body.prefs.prizes_same === false && rr.body.prefs.prizes_weekly === true, rr && rr.body);
+  check('the raffle Worker keeps all of it', rr && srtj(WK.clean('raffle', rr.body.prefs)) === srtj(rr.body.prefs), rr && WK.clean('raffle', rr.body.prefs));
+  $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  $(P, 'vpGsIn_date_started').value = '2026-11-13'; $(P, 'vpGsIn_date_started').handlers.change.forEach(function (f) { f(); });
+  check('the first draw date fills in the draw day (13 Nov 2026 is a Friday)', $(P, 'vpGsIn_draw_day').value === 'Friday', $(P, 'vpGsIn_draw_day').value);
+  $(P, 'vpGsIn_draw_day').value = 'Thursday'; $(P, 'vpGsIn_draw_day').handlers.input.forEach(function (f) { f(); });
+  $(P, 'vpGsIn_date_started').value = '2026-11-14'; $(P, 'vpGsIn_date_started').handlers.change.forEach(function (f) { f(); });
+  check('a day they typed themselves is kept', $(P, 'vpGsIn_draw_day').value === 'Thursday', $(P, 'vpGsIn_draw_day').value);
 
   section('7. WIRED IN');
   var FR = readFile('venueplay/app/vp-firstrun.js'), IDX = readFile('venueplay/app/index.html');

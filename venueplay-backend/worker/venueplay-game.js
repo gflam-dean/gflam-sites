@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 22:28 · eea135d4';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 10:40 · 0e90ef4b';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -3802,6 +3802,8 @@ const GAME_PREFS_KEYS = {
     },
     cards:         gpInt(1, 6),
     allow_early:   gpBool,
+    // phone tickets or the venue's own paper books (the setup wizard, INBOX 104 round 2): venueplay never checks paper
+    ticket_kind:   (v) => ({ phone: 1, paper: 1 }[v] ? v : undefined),
   },
   trivia: {
     set_id:        gpUuid,
@@ -3829,6 +3831,10 @@ const GAME_PREFS_KEYS = {
     jackpot_amount_cents: gpInt(0, 100000000),
     allow_redraw:  gpBool,
     spin_seconds:  (v) => ({ 3: 1, 4: 1, 5: 1, 6: 1, 8: 1 }[v] && typeof v === 'number') ? v : undefined,
+    // the setup wizard's prize questions (INBOX 104 round 2): how many prizes, all the same, the same each week
+    prize_count:   gpInt(1, 12),
+    prizes_same:   gpBool,
+    prizes_weekly: gpBool,
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
@@ -3841,6 +3847,23 @@ const GAME_PREFS_KEYS = {
     pattern:       (v) => ({ one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),
     prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),
+    /* The setup wizard (INBOX 104 round 2): the music they picked (one or many playlists, the first is the console's
+       playlist), rounds a night, a prize for each round or one for all, and whether the prizes are the same each week. */
+    playlists:     (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { if (typeof x === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(x) && out.indexOf(x) < 0) out.push(x); if (out.length >= 30) break; }
+      return out.length ? out : undefined;
+    },
+    rounds:        gpInt(1, 10),
+    prizes:        (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { out.push(typeof x === 'string' ? x.trim().slice(0, 120) : ''); if (out.length >= 10) break; }
+      return out;
+    },
+    prize_same:    gpBool,
+    prize_weekly:  gpBool,
   },
 };
 function cleanGamePrefs(game, raw) {
