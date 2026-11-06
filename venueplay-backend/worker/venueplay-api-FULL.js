@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 21:31 · cc77c28d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 13:20 · 04e6910a';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -188,6 +188,9 @@ export default {
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-upload' && typeof vpbScreenUpload === 'function') return await vpbScreenUpload(request, env, json);
+      // What's on (INBOX 110, migration 177): the venue's own nights, one event saved or removed at a time.
+      if (request.method === 'POST' && path === '/account/whats-on-save'   && typeof vpbWhatsOnSave === 'function')   return await vpbWhatsOnSave(request, env, json);
+      if (request.method === 'POST' && path === '/account/whats-on-remove' && typeof vpbWhatsOnRemove === 'function') return await vpbWhatsOnRemove(request, env, json);
       if (request.method === 'POST' && path === '/account/logo-upload' && typeof vpbLogoUpload === 'function') return await vpbLogoUpload(request, env, json);
       if (request.method === 'POST' && path === '/account/logo-remove' && typeof vpbLogoRemove === 'function') return await vpbLogoRemove(request, env, json);
       if (request.method === 'POST' && path === '/account/logo-site'   && typeof vpbLogoSite === 'function')   return await vpbLogoSite(request, env, json);
@@ -12373,8 +12376,18 @@ async function vpbScreenGet(request, env, json) {
   const venueId = (b.venue_id || '').trim() || (o.venues[0] && o.venues[0].id);
   const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
-  const rows = await vpaSelect(env, 'vp_venue_screen',
-    'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle,logo_url');
+  /* With the venue's What's on events (migration 177). Before 177 runs the column does not exist and PostgREST refuses
+     the whole read, so it is asked again without it: the page then gets events_off and says What's on is not on yet.
+     (vpaSelect answers a refused read with [], which here would have shown a venue with slides an empty Slides card.) */
+  let rows = null, eventsOff = false;
+  const sres = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen?venue_id=eq.' + encodeURIComponent(venueId)
+    + '&select=slides,draws,raffle,logo_url,events&limit=1', { headers: vpaHeaders(env) }).catch(function () { return null; });
+  if (sres && sres.ok) rows = await sres.json().catch(function () { return null; });
+  if (!Array.isArray(rows)) {
+    eventsOff = true;
+    rows = await vpaSelect(env, 'vp_venue_screen',
+      'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle,logo_url');
+  }
   const cfg = (rows && rows[0]) || {};
   /* No show_logo_on_site here any more: whether the logo is on our website is HQ's choice since
      migration 111, and the Screen tab no longer has the tick. */
@@ -12383,6 +12396,7 @@ async function vpbScreenGet(request, env, json) {
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
     slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
+    events: vpbKeepEvents(cfg.events, vpbEventsCutoff()), events_off: eventsOff || undefined, events_max: VPB_MAX_EVENTS,
   });
 }
 
@@ -12434,6 +12448,170 @@ async function vpbScreenSave(request, env, json) {
     Object.assign({}, was.row || {}, row),
     { changed: Object.keys(row).filter(function (k) { return k !== 'venue_id' && k !== 'slug' && k !== 'updated_at'; }) });
   return json({ ok: true, slug: venue.slug });
+}
+
+/* ---------------------------------------------------------------------------------------
+   WHAT'S ON (INBOX 110, Dean 6 Nov 2026; promised to Revolver Upstairs for the Thu 12 Nov release).
+
+   The venue's own nights (DJs, gigs, club nights, specials) live in vp_venue_screen.events (migration 177), beside its
+   slides: the TV's GET /screen and the phone's /join/info already read that row, and migration 114 records every
+   change to it. The account page (billing.html, /app/vp-whatson-edit.js) saves ONE event at a time:
+
+     POST /account/whats-on-save   { venue_id, event:{ id?, title, date | day (+until), start?, line?, image_url? } }
+     POST /account/whats-on-remove { venue_id, id }
+       -> { ok, events }   the venue's list as it now stands (past ones gone)
+
+   Same right as the slides ('advertising'), the venue's own staff only (vpbRequireOwner: a login on this venue's
+   account, or HQ's View as). Every field is cleaned here; a picture must be one /account/screen-upload put in this
+   venue's own folder. Past events are dropped on every save and on every read, so nothing old is ever shown or kept.
+   At most VPB_MAX_EVENTS upcoming; vp-whatson.js says the same number (the gate makes the two agree).
+   The date rules match /app/vp-whatson.js (the TV, phones and page): one date, or a weekday with an optional last date.
+   --------------------------------------------------------------------------------------- */
+const VPB_MAX_EVENTS = 30;
+const VPB_EVENT_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+/* "Past" is judged a day behind UTC: Australia is ahead of UTC, so anything before yesterday in UTC is over in every
+   Australian time zone, and the TV and phones drop the rest on the venue's own date. */
+function vpbEventsCutoff(now) {
+  const d = new Date((now || Date.now()) - 24 * 3600 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+function vpbEventDate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+  if (!m) return '';
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? String(s) : '';
+}
+/* An address /account/screen-upload could have written for THIS venue: our public ad bucket, the venue's own folder. */
+function vpbOurAdUrl(env, url, venueId) {
+  if (typeof url !== 'string' || !url || !env.SUPABASE_URL) return false;
+  const base = env.SUPABASE_URL + '/storage/v1/object/public/venue-ads/';
+  if (url.indexOf(base) !== 0) return false;
+  const m = /^([0-9a-fA-F-]{36})\/[A-Za-z0-9._-]{1,120}$/.exec(url.slice(base.length));
+  return !!m && m[1] === venueId;
+}
+/* One event, cleaned. { ev } or { error } in words. Stored fields only, nothing else is kept. */
+function vpbCleanEvent(env, e, venueId) {
+  if (!e || typeof e !== 'object') return { error: 'That event did not come through. Try again.' };
+  const title = vpbScreenStr(e.title, 200).replace(/\s+/g, ' ');
+  if (!title) return { error: 'Give the event a title.' };
+  if (title.length > 60) return { error: 'Keep the title under 60 letters.' };
+  const ev = { title: title };
+  if (e.id !== undefined && e.id !== null && e.id !== '') {
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(e.id))) return { error: 'That event did not come through. Reload the page and try again.' };
+    ev.id = String(e.id);
+  }
+  if (e.date) {
+    const dt = vpbEventDate(e.date);
+    if (!dt) return { error: 'Pick the date.' };
+    if (dt < vpbEventsCutoff()) return { error: 'That date has been. Pick today or later.' };
+    ev.date = dt;
+  } else if (VPB_EVENT_DAYS.indexOf(e.day) !== -1) {
+    ev.day = e.day;
+    if (e.until) {
+      const u = vpbEventDate(e.until);
+      if (!u) return { error: 'That last date does not look right.' };
+      if (u < vpbEventsCutoff()) return { error: 'That last date has been. Leave it blank or pick a later one.' };
+      ev.until = u;
+    }
+  } else return { error: 'Pick a date, or the day it runs each week.' };
+  if (e.start) {
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(e.start))) return { error: 'That start time does not look right.' };
+    ev.start = String(e.start);
+  }
+  const line = vpbScreenStr(e.line, 300).replace(/\s+/g, ' ');
+  if (line.length > 90) return { error: 'Keep the short line under 90 letters.' };
+  if (line) ev.line = line;
+  if (e.image_url) {
+    if (!vpbOurAdUrl(env, e.image_url, venueId)) return { error: 'Upload the picture on this page rather than pasting an address.' };
+    ev.image_url = e.image_url;
+  }
+  return { ev: ev };
+}
+/* The stored list, read defensively: entries still to come, in the stored order, at most the cap. */
+function vpbKeepEvents(arr, cutoff) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(function (e) {
+    if (!e || typeof e !== 'object' || !e.title || !e.id) return false;
+    if (e.date) return String(e.date) >= cutoff;
+    if (VPB_EVENT_DAYS.indexOf(e.day) === -1) return false;
+    return !(e.until && String(e.until) < cutoff);
+  }).slice(0, VPB_MAX_EVENTS);
+}
+/* The row's events, or { off:true } before migration 177, or { error } when it could not be read. */
+async function vpbReadEvents(env, venueId) {
+  let res;
+  try {
+    res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen?venue_id=eq.' + encodeURIComponent(venueId)
+      + '&select=events&limit=1', { headers: vpaHeaders(env) });
+  } catch (_) { return { error: true }; }
+  if (!res.ok) {
+    const t = await res.text().catch(function () { return ''; });
+    if (/events|42703|PGRST204/.test(t)) return { off: true };
+    return { error: true };
+  }
+  const rows = await res.json().catch(function () { return null; });
+  if (!Array.isArray(rows)) return { error: true };
+  return { events: (rows[0] && Array.isArray(rows[0].events)) ? rows[0].events : [] };
+}
+const VPB_EVENTS_OFF = 'What’s on is not switched on yet. It will be soon: nothing was saved.';
+/* Who, which venue, and the list as it stands: the same start for a save and a remove. { res } is a refusal. */
+async function vpbWhatsOnStart(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return { res: json({ error: o.error }, o.status) };
+  if (!vpbCan(o, 'advertising')) return { res: json({ error: 'You do not have permission to change what’s on.' }, 403) };
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return { res: _b.res };
+  const b = _b.body;
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
+  if (!venue) return { res: json({ error: 'That venue is not on your account.' }, 403) };
+  const cur = await vpbReadEvents(env, venueId);
+  if (cur.off) return { res: json({ error: VPB_EVENTS_OFF, events_off: true }, 409) };
+  if (cur.error) return { res: json({ error: 'Could not read your events just now. Nothing was changed. Try again in a moment.' }, 503) };
+  return { o: o, b: b, venue: venue, venueId: venueId, events: vpbKeepEvents(cur.events, vpbEventsCutoff()), before: cur.events };
+}
+async function vpbWhatsOnWrite(env, json, st, events, action, detail) {
+  const row = { venue_id: st.venueId, slug: st.venue.slug, events: events, updated_at: new Date().toISOString() };
+  const res = await vpbWriteScreen(env, row, vpbScreenActor(st.o, action === 'whats_on_removed' ? 'whats-on-remove' : 'whats-on-save'));
+  if (!res.ok) {
+    const t = await res.text().catch(function () { return ''; });
+    if (/events/.test(t)) return json({ error: VPB_EVENTS_OFF, events_off: true }, 409);
+    return json({ error: 'Could not save that. Try again in a moment. ' + t.slice(0, 120) }, 500);
+  }
+  try {
+    await vpaInsert(env, 'vp_admin_audit', {
+      ...vpbActorFields(st.o), action: action, target: 'venue:' + st.venueId,
+      detail: Object.assign({ via: st.o.actingAsAdmin ? 'hq_view_as' : 'venue', user: st.o.authUserId || null,
+                              before: st.before.length, after: events.length }, detail),
+    }, false);
+  } catch (e) { console.error('whats-on audit failed', st.venueId, String((e && e.message) || e).slice(0, 200)); }
+  return json({ ok: true, events: events, events_max: VPB_MAX_EVENTS });
+}
+async function vpbWhatsOnSave(request, env, json) {
+  const st = await vpbWhatsOnStart(request, env, json);
+  if (st.res) return st.res;
+  const c = vpbCleanEvent(env, st.b.event, st.venueId);
+  if (c.error) return json({ error: c.error }, 400);
+  const ev = c.ev;
+  const events = st.events.slice();
+  const at = ev.id ? events.findIndex(function (x) { return x.id === ev.id; }) : -1;
+  if (ev.id && at === -1) return json({ error: 'That event has gone (it may have been removed on another device). Reload the page.' }, 404);
+  if (at >= 0) events[at] = ev;
+  else {
+    if (events.length >= VPB_MAX_EVENTS) return json({ error: 'You have ' + VPB_MAX_EVENTS + ' events on, which is the most. Remove one first.' }, 400);
+    ev.id = 'e' + crypto.randomUUID().replace(/-/g, '').slice(0, 15);
+    events.push(ev);
+  }
+  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_saved', { id: ev.id, title: ev.title, edited: at >= 0 });
+}
+async function vpbWhatsOnRemove(request, env, json) {
+  const st = await vpbWhatsOnStart(request, env, json);
+  if (st.res) return st.res;
+  const id = String(st.b.id || '');
+  const gone = st.events.filter(function (x) { return x.id === id; })[0];
+  const events = st.events.filter(function (x) { return x.id !== id; });
+  if (!gone) return json({ ok: true, events: events, events_max: VPB_MAX_EVENTS });   // already gone: the list says so
+  return await vpbWhatsOnWrite(env, json, st, events, 'whats_on_removed', { id: id, title: gone.title });
 }
 
 /* ---------------------------------------------------------------------------------------
@@ -12620,6 +12798,9 @@ async function vpaHandleScreenRestore(request, env, json) {
     logo_url: src.logo_url === undefined ? null : src.logo_url,
     updated_at: new Date().toISOString(),
   };
+  /* What's on (migration 177): a version recorded with events puts its events back; one from before 177 leaves today's
+     events alone (it never held any, so it cannot say they were not there). */
+  if (Array.isArray(src.events)) row.events = src.events;
   const res = await vpbWriteScreen(env, row, { via: 'hq_restore', route: 'screen-restore', admin: actor.actorId || null,
                                                label: actor.label || 'admin', role: actor.role || null, restored_from: hid });
   if (!res.ok) {
@@ -12679,7 +12860,7 @@ async function vpaScreenHistoryNightly(env) {
    sentence, with the raw row alongside for the page's "details". Owner and accounts admins only.
    --------------------------------------------------------------------------------------- */
 const VPA_AUDIT_KINDS = [
-  { key: 'screen',  label: 'Logo, slides and screens', prefixes: ['logo_', 'slide_', 'screen_', 'screens_'] },
+  { key: 'screen',  label: 'Logo, slides and screens', prefixes: ['logo_', 'slide_', 'screen_', 'screens_', 'whats_on_'] },
   { key: 'billing', label: 'Billing and payments', prefixes: ['payment_', 'overage_', 'invoice_', 'discount_', 'plan_uplift', 'credit_',
                                                                'extras_', 'quantity_', 'add_card_', 'gst_'] },
   { key: 'players', label: 'Players and player data', prefixes: ['players_', 'player_', 'optin_', 'venue_marketing_'] },
@@ -12840,6 +13021,8 @@ const VPA_AUDIT_SAY = {
   logo_removed: function (d, at) { return 'Took the logo off ' + at + '\'s screens.'; },
   logo_on_site: function (d, at) { return (d.show ? 'Agreed to show ' : 'Stopped showing ') + at + '\'s logo on the venueplay website.'; },
   slide_uploaded: function (d, at) { return 'Uploaded an advertising slide for ' + at + '.'; },
+  whats_on_saved: function (d, at) { return (d.edited ? 'Changed' : 'Added') + ' "' + String(d.title || 'an event').slice(0, 60) + '" in ' + at + '\'s What\u2019s on.'; },
+  whats_on_removed: function (d, at) { return 'Removed "' + String(d.title || 'an event').slice(0, 60) + '" from ' + at + '\'s What\u2019s on.'; },
   screen_updated: function (d, at) {
     const b = vpaSummaryWords(d.before), a = vpaSummaryWords(d.after);
     return 'Changed ' + at + '\'s screen' + (b && a && b !== a ? ' (' + b + ' before, ' + a + ' after)' : '') + '.';

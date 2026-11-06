@@ -73,3 +73,13 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-listform .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
 .vpt-listform .go{width:100%;min-height:46px;margin-top:10px;border:0;border-radius:12px;background:#FF1F8E;color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px}
 .vpt-listform .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;margin-top:6px}
+/* THE VENUE'S OWN NIGHTS (INBOX 110, "What's on"): a gold dot under a day that has one, and its rows badged with the start time */
+.vpt-week .d.ev small{position:relative}
+.vpt-week .d.ev small::after{content:"";position:absolute;left:50%;bottom:-5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#FFC24B}
+.vpt-week .d.now.ev small::after{background:#0A0A0B}
+.vpt-night .bd.t{background:transparent;color:#FFC24B;box-shadow:inset 0 0 0 1.5px rgba(255,194,75,.55)}
+.vpt-night .row.more .g b{font-size:15px;font-weight:700;color:#9A9AA4}
+.vpt-night .row.more .bd{visibility:hidden}
+.vpt-night .nk{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95;padding:8px 0 2px}
+.vpt-evs[hidden]{display:none}
+body.light .vpt-night .bd.t{color:#9A6A00;box-shadow:inset 0 0 0 1.5px rgba(154,106,0,.5)}

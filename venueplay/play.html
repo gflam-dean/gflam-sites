@@ -392,6 +392,7 @@
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>
 <script src="/app/vp-phonead.js"></script>   <!-- the venue's ad under the lobby (6 Nov 2026) -->
+<script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script>
 (function(){
@@ -967,7 +968,7 @@
     var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(plain && tn && inb && typeof VPTonight==="object");
     if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
     if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; setTimeout(loadJoinInfo, 1500); }   // once in: the week and the ad, after the seat
-    if(useT) VPTonight.lobby(tn, { name:P.name, me:"bingo", prize:"", week:P.week, nights:P.nights, games:P.games, wait:"Waiting for the host to start the game. Your card will appear here." });
+    if(useT) VPTonight.lobby(tn, { name:P.name, me:"bingo", prize:"", week:P.week, nights:P.nights, games:P.games, events:P.events, wait:"Waiting for the host to start the game. Your card will appear here." });
     show("vWait");
   }
 
@@ -1357,7 +1358,7 @@
       if(r && r.exists===false){ unknownCode(); return; }
       /* For the lobby (round 7) and "Join {venue}'s list" in the menu, a phone that is in as much as one that is joining. */
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
-      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.events=(r&&Array.isArray(r.events))?r.events:[];   // the venue's own What's on nights (INBOX 110)
       P.collect=(r&&r.collect)||null; if(r&&r.venue_name) P.venueName=String(r.venue_name);
       paintListItem();
       if(P.joined && $("vWait") && !$("vWait").classList.contains("hidden")) route();

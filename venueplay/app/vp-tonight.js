@@ -24,7 +24,13 @@
    With no week, the strip marks the nights only and says "Ask at the bar for start times". Nothing is invented.
    Every word from the venue or a player is set as text, never as HTML.
 
-   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, week, nights, games, signup(email, optin) -> Promise,
+   THE VENUE'S OWN NIGHTS (INBOX 110, "What's on", 6 Nov 2026): o.events, the venue's DJs, gigs, club nights and
+   specials from /join/info (cleaned by the Worker; the date rules are /app/vp-whatson.js, the same file the TV and
+   the account page use). A day with one has a gold dot under its date in the strip; tapping it lists them beside our
+   games, each badged with its start time. The lobby's Tonight spot lists tonight's after our game (three at most,
+   then "+2 more tonight"); the no-game screen lists the picked day's under the strip. No events: nothing changes.
+
+   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, week, nights, games, events, signup(email, optin) -> Promise,
          signedUp, venue, now }   (now: a Date, for the suites; the phone's clock otherwise)
 
    ES5, no dependencies. Its look is /app/vp-phone.css section 6. tools/test-vp-tonight.js runs it. */
@@ -68,6 +74,21 @@
     if (ng) return ng.length > 0;
     return ((o && o.nights) || []).indexOf(key) !== -1;
   }
+  /* The venue's own nights on that date (vp-whatson.js), or none when the page has not loaded it. */
+  function eventsOn(o, dt) {
+    var W = root.VPWhatsOn;
+    if (!W || !o || !Array.isArray(o.events) || !o.events.length) return [];
+    return W.on(o.events, W.today(dt));
+  }
+  function eventRows(list, cap) {
+    var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
+    for (var i = 0; i < n; i++) {
+      var e = list[i], t = time12(e.start);
+      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: e.line || "" });
+    }
+    if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more" + (cap ? " tonight" : ""), sub: "" });
+    return rows;
+  }
   function hasTimes(o) {
     var any = false;
     ((o && o.week) || []).forEach(function (dd) { ((dd && dd.games) || []).forEach(function (x) { if (x && time12(x.start)) any = true; }); });
@@ -85,15 +106,16 @@
       if (x.game === me) return;
       rows.push({ game: x.game, name: GAME_NAME[x.game], badge: (mine && x.start && x.start < mine) ? "Earlier" : "Later", sub: "Tonight" + (x.time ? " " + x.time : "") });
     });
-    return rows;
+    return rows.concat(eventRows(eventsOn(o, now(o)), 3));
   }
   /* Another night's rows, for the spot when a day is tapped. */
   function nightRows(o, dt) {
-    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key);
+    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 0);
     if (list && list.length) return list.map(function (x) {
       return { game: x.game, badge: badge, name: NIGHT_NAME[x.game], sub: x.time ? x.time : "Ask for start time" };
-    });
-    if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }];
+    }).concat(evs);
+    if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }].concat(evs);
+    if (evs.length) return evs;   // the venue's own nights, and no game: no "No games this night" over them
     return [{ game: "", badge: badge, name: "No games this night", sub: "" }];
   }
   /* The seven days from today. */
@@ -101,7 +123,7 @@
     var t = now(o), out = [];
     for (var i = 0; i < 7; i++) {
       var dt = addDays(t, i), k = dayKey(dt);
-      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: String(dt.getDate()), on: isNight(o, k) });
+      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: String(dt.getDate()), on: isNight(o, k), ev: eventsOn(o, dt).length > 0 });
     }
     return out;
   }
@@ -115,8 +137,8 @@
     spot.innerHTML = "";
     if (title) spot.appendChild(el("div", "nk", title));
     rows.forEach(function (r, i) {
-      var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "")); row.setAttribute("data-game", r.game || "");
-      row.appendChild(el("span", "bd" + (i === 0 && r.badge === "Next" ? " next" : ""), r.badge));
+      var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "") + (r.ev ? " ev" : "") + (r.more ? " more" : "")); row.setAttribute("data-game", r.game || "");
+      row.appendChild(el("span", "bd" + (i === 0 && r.badge === "Next" ? " next" : "") + (r.ev ? " t" : ""), r.badge));
       var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.sub) g.appendChild(el("span", "", r.sub));
       row.appendChild(g); spot.appendChild(row);
     });
@@ -129,7 +151,7 @@
     w.appendChild(k);
     var row = el("div", "days"), days = week(o), btns = [];
     days.forEach(function (dd) {
-      var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.i === picked ? " picked" : ""));
+      var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.ev ? " ev" : "") + (dd.i === picked ? " picked" : ""));
       b.setAttribute("type", "button"); b.setAttribute("data-day", dd.key);
       b.setAttribute("aria-pressed", dd.i === picked ? "true" : "false");
       b.appendChild(el("b", "", dd.label)); b.appendChild(el("small", "", dd.small));
@@ -181,8 +203,18 @@
     else { k.textContent = "Next game here"; line.textContent = "Ask at the bar for the next game night"; }
     box.appendChild(lead);
     if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
-    var s = strip(o, first >= 0 ? first : 0, function (dd) { paint(dd, true); });
+    /* The venue's own nights for the picked day, under the strip (the first game night's to start, else today's). */
+    var evBox = el("div", "vpt-night vpt-evs");
+    function paintEvents(dd) {
+      var list = eventsOn(o, dd.date);
+      evBox.hidden = !list.length;
+      if (list.length) paintRows(evBox, eventRows(list, 0), (dd.i === 0 ? "Tonight" : LONG[dd.key] + " " + dd.date.getDate()) + " here");
+    }
+    var start = first >= 0 ? first : 0;
+    var s = strip(o, start, function (dd) { paint(dd, true); paintEvents(dd); });
     box.appendChild(s.el);
+    paintEvents(days[start]);
+    box.appendChild(evBox);
     return s;
   }
   /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */
@@ -256,5 +288,5 @@
     return { row: row, form: f };
   }
 
-  root.VPTonight = { lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12 };
+  root.VPTonight = { lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12, eventsOn: eventsOn };
 })(typeof window !== "undefined" ? window : this);

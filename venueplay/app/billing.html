@@ -231,6 +231,55 @@
     .adline{grid-template-columns:1fr 1fr}
     .adline .adf:first-child{grid-column:1 / -1}
   }
+  /* WHAT'S ON (INBOX 110, 6 Nov 2026): the venue's own nights, /app/vp-whatson-edit.js. One row each in date order
+     (picture, when, title, line; Edit, Copy, Remove), and one short form. Phone: the buttons go under the words. */
+  .woe-list{margin:4px 0 0}
+  .woe{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px 14px;align-items:center;background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0}
+  .woe-thumb{width:64px;aspect-ratio:4/5;border-radius:8px;border:1px solid var(--line);background:#050506 center/contain no-repeat;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--faint);font-size:10.5px;line-height:1.2;padding:3px}
+  .woe-thumb.big{width:112px;cursor:pointer;font-size:12px}
+  .woe-main{min-width:0}
+  .woe-when{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--pink)}
+  .woe-when.tn{color:var(--gold)}
+  .woe-title{font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-top:2px;overflow-wrap:anywhere}
+  .woe-line{color:var(--muted);font-size:13px;line-height:1.35;margin-top:1px;overflow-wrap:anywhere}
+  .woe-acts{display:flex;gap:8px;align-items:center}
+  .woe-acts .addbtn{padding:8px 13px}
+  .woe-empty{color:var(--muted);font-size:13.5px;background:var(--ink-3);border:1px dashed var(--line);border-radius:14px;padding:16px;margin:8px 0;text-align:center}
+  .woe-foot{display:flex;align-items:center;gap:12px;margin-top:10px}
+  .woe-count{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .woe-form{background:var(--ink-3);border:1px solid rgba(255,31,142,.45);border-radius:14px;padding:14px;margin:10px 0}
+  .woe-form[hidden]{display:none}
+  .woe-fhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;margin:0 0 10px}
+  .woe-f{margin:0 0 12px;min-width:0}
+  .woe-f .flabel{display:block}
+  .woe-form input[type=text],.woe-form input[type=date],.woe-form input[type=time]{width:100%;min-height:44px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
+  .woe-form input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.22)}
+  .woe-seg{display:inline-flex;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+  .woe-seg button{min-height:40px;padding:0 16px;border:0;border-radius:9px;background:none;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  .woe-seg button.on{background:var(--pink);color:#fff}
+  .woe-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;max-width:460px}
+  .woe-day{min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--ink-2);color:var(--text);font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;cursor:pointer;padding:0}
+  .woe-day.on{background:rgba(255,31,142,.14);border-color:var(--pink);color:#fff}
+  .woe-when-once[hidden],.woe-when-weekly[hidden]{display:none}
+  .woe-when-once .woe-f,.woe-when-weekly .woe-f:last-child{max-width:220px}
+  .woe-two{display:grid;grid-template-columns:160px minmax(0,1fr);gap:12px}
+  .woe-pic{display:flex;gap:14px;align-items:flex-start;margin:0 0 6px}
+  .woe-picwords{min-width:0}
+  .woe-picwords .snote{margin:2px 0 8px}
+  .woe-picbtns{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .woe-err{color:var(--gold);font-size:13px;min-height:0;margin:4px 0}
+  .woe-err:empty{display:none}
+  .woe-facts{display:flex;gap:10px;align-items:center;margin-top:6px}
+  @media(max-width:560px){
+    .woe{grid-template-columns:56px minmax(0,1fr)}
+    .woe-thumb{width:56px}
+    .woe-acts{grid-column:1 / -1;justify-content:flex-start}
+    .woe-acts .woe-rm{margin-left:auto}
+    .woe-two{grid-template-columns:1fr}
+    .woe-when-once .woe-f,.woe-when-weekly .woe-f:last-child{max-width:none}
+    .woe-thumb.big{width:96px}
+    .woe-facts .go{flex:1}
+  }
   .adfields input[type=number],.adfields input[type=date]{width:100%;min-height:44px;box-sizing:border-box;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif;color-scheme:dark}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
@@ -858,6 +907,14 @@
       </div>
     </div>
 
+    <!-- WHAT'S ON (INBOX 110, 6 Nov 2026): the venue's own nights for its TV and the players' phones.
+         Drawn by /app/vp-whatson-edit.js; each event saves by itself (POST /account/whats-on-save). -->
+    <div class="scard" id="woCard">
+      <div class="scardhead">What's on<span class="forvenue" id="woForVenue"></span></div>
+      <p class="snote">Your own nights: DJs, gigs, club nights and specials. They show on your TV between games and on players' phones, beside our games. Past ones drop off by themselves. Up to 30.</p>
+      <div id="woBox"></div>
+    </div>
+
     <!-- The Table signs card lives under Marketing now (24 Oct 2026). -->
     <!-- NOTHING CHOSEN IS LOST UNSEEN (21 Oct 2026). Tugun's logo was chosen, previewed and never
          saved: the Save button was a second step and leaving the page dropped it in silence. A logo
@@ -881,6 +938,8 @@
 <script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
+<script src="/app/vp-whatson.js"></script>   <!-- What's on: the date rules the TV and phones use (INBOX 110) -->
+<script src="/app/vp-whatson-edit.js"></script>   <!-- What's on: the editor under Screen (INBOX 110) -->
 <script src="/app/vp-gaming.js"></script>
 <script src="/app/vp-permits.js"></script>
 <script src="/app/vp-room.js"></script>
@@ -2109,8 +2168,50 @@
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
     screenLogoUrl = cfg.logo_url || ""; renderLogo(); logoHint("");
+    fillWhatsOn(cfg);
     // Rows are rebuilt here, so their buttons need the venue name putting back on them.
     paintScreenVenue();
+  }
+  /* WHAT'S ON (INBOX 110, 6 Nov 2026): the venue's own nights, drawn by /app/vp-whatson-edit.js. Each event saves by
+     itself (POST /account/whats-on-save, /account/whats-on-remove) and the TV is told at once, like a slide. Its picture
+     goes up exactly as a slide's does: shrunk here (resizeAdImage), checked against the Worker's size, then
+     /account/screen-upload. Before migration 177 the Worker says events_off and the card says so instead. */
+  function fillWhatsOn(cfg){
+    var box = $("woBox"); if (!box) return;
+    box.innerHTML = "";
+    if (cfg.events_off || !window.VPWhatsOnEdit){
+      var p = document.createElement("p"); p.className = "woe-empty";
+      p.textContent = "What\u2019s on is being switched on for your venue. Check back soon.";
+      box.appendChild(p); return;
+    }
+    VPWhatsOnEdit.mount(box, {
+      events: cfg.events || [],
+      venue: screenNameNow(),
+      save: function(ev){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-save", { venue_id: v, event: ev }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
+      remove: function(id){ var v = screenCurrent && screenCurrent.id; return api("/account/whats-on-remove", { venue_id: v, id: id }).then(function(r){ if (r && !r.error) pushToScreen(v); return r; }); },
+      upload: uploadEventImage,
+      say: function(t, good){ showMsg(t, good); }
+    });
+  }
+  function uploadEventImage(file, done){
+    if (!screenCurrent){ done("", "Screen is still loading, one moment."); return; }
+    if (file.size > 8*1024*1024){ done("", "That picture is too big. Keep it under 8MB."); return; }
+    var forVenue = screenCurrent.id, reader = new FileReader();
+    reader.onload = function(){
+      resizeAdImage(String(reader.result), function(data){
+        var sending = dataUrlBytes(data);   // what is SENT, as for a slide: an animated GIF is never shrunk
+        if (sending > VP_MAX_IMAGE_BYTES){
+          done("", "That picture is still over " + Math.round(VP_MAX_IMAGE_BYTES/(1024*1024)) + "MB after shrinking. Animated GIFs are sent as they are, so try a smaller one.");
+          return;
+        }
+        api("/account/screen-upload", { venue_id: forVenue, data: data }).then(function(r){
+          if (!r || r.error){ done("", (r && r.error) || "Could not upload that picture. Try again."); return; }
+          done(r.url, "");
+        });
+      });
+    };
+    reader.onerror = function(){ done("", "Could not read that picture. Try another."); };
+    reader.readAsDataURL(file);
   }
   // The bare /tv?<slug> form (tv.html reads a query with no "=" as the slug). Cleaner to read out and
   // to type on a TV remote than /tv?venue=<slug>, and it resolves to exactly the same screen.
@@ -2131,6 +2232,7 @@
     if (lb && lb.firstChild && lb.firstChild.nodeType === 3) lb.firstChild.nodeValue = many ? ("Upload logo for " + n) : "Upload logo";
     var lh = $("logoForVenue"); if (lh) lh.textContent = many ? n : "";
     var sh = $("slidesForVenue"); if (sh) sh.textContent = many ? n : "";
+    var wh = $("woForVenue"); if (wh) wh.textContent = many ? n : "";
     var slides = $("slides");
     if (slides) slides.querySelectorAll(".ad-change").forEach(function(b){
       var has = b.closest(".adslide") && b.closest(".adslide").getAttribute("data-url");

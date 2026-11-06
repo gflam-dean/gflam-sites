@@ -136,7 +136,7 @@ var CSS = readFile('venueplay/app/vp-tonight.css');
 ok('the shared look holds the ad and the waiting screens (one copy, moved out of vp-phone.css)', /#vpAd\{/.test(CSS) && /\.vpt-week \.days\{/.test(CSS) && !/#vpAd\{/.test(readFile('venueplay/app/vp-phone.css')));
 ok('the ad under a waiting screen is shorter (2:1), so it and our logo fit 664px', /\.vpt-on #vpAd \.slide\{aspect-ratio:2\/1\}/.test(CSS) && /ap\.classList\.toggle\("vpt-on", which==="vWait"\)/.test(PLAY));
 ok('the plain lobby (no other heading, nothing scored) is option C', /var useT = !head && !\(P\.total>0\) && typeof VPTonight==="object";/.test(PLAY) && /VPTonight\.lobby\(tn, \{ name:P\.name, me:"trivia"/.test(PLAY));
-ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName,/.test(PLAY));
+ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, events:P\.events, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));
 
 print('\n"JOIN {VENUE}\'S LIST" IN THE MENU (Dean, 6 Nov 2026)');

@@ -164,7 +164,8 @@ await (async function () {
   var src = [/const JOIN_INFO_TTL_MS = \d+;/, /const JOIN_INFO_STATIC_TTL_MS = \d+;/, /const JOIN_INFO_CACHE_MAX = \d+;[^\n]*/, /const joinInfoCache = new Map\(\);[^\n]*/, /const joinInfoStatic = new Map\(\);[^\n]*/]
     .map(function (re) { var m = re.exec(GAME); if (!m) throw new Error('cannot find ' + re); return m[0].replace('const ', 'var '); }).join('\n');
   src += '\n' + lift(GAME, 'joinInfoKeep', 'game Worker') + lift(GAME, 'joinInfoStaticRead', 'game Worker', true) + lift(GAME, 'handleJoinInfo', 'game Worker', true) +
-         lift(GAME, 'joinInfoWithSlides', 'game Worker', true) + lift(GAME, 'phoneSlides', 'game Worker');
+         lift(GAME, 'joinInfoWithSlides', 'game Worker', true) + lift(GAME, 'phoneSlides', 'game Worker') +
+         lift(GAME, 'publicEvents', 'game Worker');   // the What's on nights ride the same read (INBOX 110)
   var W = new Function('sbGet', 'enc', 'joinInfoLookup', 'readJson', src + '\nreturn { h: handleJoinInfo, p: phoneSlides, cache: joinInfoCache, stat: joinInfoStatic };')(sbGet, enc, joinInfoLookup, readJson);
   function json(o) { return o; }
   var plain = await W.h({ b: { code: 'K7MQ2P' } }, env, json);
