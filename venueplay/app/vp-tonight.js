@@ -33,7 +33,6 @@
   var DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   var SHORT = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
   var LONG = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var GAME_NAME = { trivia: "Trivia", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var NIGHT_NAME = { trivia: "Trivia night", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var TICK = '<div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
@@ -79,6 +78,7 @@
     var me = o.me, rows = [{ game: me, name: GAME_NAME[me] || "Game", sub: o.prize || "" }];
     (gamesOn(o, dayKey(now(o))) || []).forEach(function (x) {
       if (x.game !== me) rows.push({ game: x.game, name: GAME_NAME[x.game], sub: x.time || "" });
+      else if (!rows[0].sub && x.time) rows[0].sub = x.time;   // this game's own start tonight, when no prize is set
     });
     rows[0].badge = rows.length > 1 ? "Next" : "Tonight";
     for (var i = 1; i < rows.length; i++) rows[i].badge = "Later";
@@ -98,7 +98,7 @@
     var t = now(o), out = [];
     for (var i = 0; i < 7; i++) {
       var dt = addDays(t, i), k = dayKey(dt);
-      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: i ? String(dt.getDate()) : dt.getDate() + " " + MONTHS[dt.getMonth()], on: isNight(o, k) });
+      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: String(dt.getDate()), on: isNight(o, k) });
     }
     return out;
   }

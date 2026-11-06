@@ -50,7 +50,7 @@ T.lobby(two, { name: 'Sam', me: 'trivia', nights: ['fri'], week: [{ day: 'fri', 
 var tr = byClass(byClass(two, 'vpt-night')[0], 'row');
 ok('two games stored for tonight: NEXT this game, LATER the other with its start time', tr.length === 2 && byClass(tr[0], 'bd')[0].textContent === 'Next' && byClass(tr[1], 'bd')[0].textContent === 'Later' && /Musical bingo/.test(tr[1].textContent) && /9pm/.test(tr[1].textContent), texts(two, 'row'));
 var wk = byClass(box, 'vpt-week')[0], days = byClass(wk, 'd');
-ok('THIS WEEK HERE: seven days from today, Today first with its date', days.length === 7 && /Today/.test(days[0].textContent) && /6 Nov/.test(days[0].textContent) && /Sat/.test(days[1].textContent) && /Thu/.test(days[6].textContent), texts(wk, 'd'));
+ok('THIS WEEK HERE: seven days from today, Today first with its date', days.length === 7 && /Today/.test(days[0].textContent) && /\b6\b/.test(days[0].textContent) && /Sat/.test(days[1].textContent) && /Thu/.test(days[6].textContent), texts(wk, 'd'));
 ok('the venue\'s game nights are marked, the others are not', /\bon\b/.test(days[5].className) && days[5].attrs['data-day'] === 'wed' && !/\bon\b/.test(days[1].className) && /\bon\b/.test(days[0].className));
 ok('no start times stored: "Ask at the bar for start times"', /Ask at the bar for start times/.test(wk.textContent));
 days[5].onclick();
@@ -67,6 +67,7 @@ var tms = byClass(tm, 'vpt-night')[0];
 ok('with game per night stored: "Trivia night, Ask for start time" and "Members draw, 7:30pm"', /Trivia night/.test(tms.textContent) && /Ask for start time/.test(tms.textContent) && /Members draw/.test(tms.textContent) && /7:30pm/.test(tms.textContent), tms.textContent);
 ok('and with a time stored the "Ask at the bar" line is not in the strip head', !/Ask at the bar for start times/.test(byClass(tm, 'vpt-week')[0].textContent));
 ok('a stored night with no games is not marked', (function () { var z = new Node('div'); T.lobby(z, { me: 'trivia', nights: ['wed'], week: [{ day: 'mon', games: [{ game: 'trivia' }] }, { day: 'wed', games: [] }], now: FRI }); return !/\bon\b/.test(byClass(byClass(z, 'vpt-week')[0], 'd')[5].className); })());
+ok('this game\'s own start tonight shows when no prize is set', /7pm/.test(byClass(byClass(two, 'vpt-night')[0], 'row')[0].textContent));
 ok('then the lobby line', byClass(box, 'vpt-wait')[0].textContent === 'The game will start here when the host is ready.');
 ok('times read as people say them, and a bad one is dropped', T.time12('19:30') === '7:30pm' && T.time12('19:00') === '7pm' && T.time12('9:05') === '9:05am' && T.time12('25:00') === '' && T.time12('<b>') === '');
 var evil = new Node('div');

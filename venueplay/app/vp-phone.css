@@ -135,12 +135,12 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-night .row:first-child{border-top:0}
 .vpt-none{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:1.05;text-transform:uppercase;color:#fff;margin:14px 0 0}
 /* THIS WEEK HERE: seven tappable days, today pink, the venue's game nights underlined (Dean, round 5) */
-.vpt-week{margin-top:10px;background:#1A1A1F;border-radius:16px;padding:11px 12px 12px}
+.vpt-week{margin-top:10px;background:#1A1A1F;border-radius:16px;padding:11px 8px 10px}
 .vpt-week .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95}
 .vpt-week .k .ask{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;letter-spacing:0;text-transform:none;text-align:right}
-.vpt-week .days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.vpt-week .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .vpt-week .d{min-width:0;border:0;cursor:pointer;text-align:center;padding:7px 0 6px;border-radius:9px;background:#232329;color:#6E6E78;font-family:'Manrope',sans-serif}
-.vpt-week .d b{display:block;font-weight:800;font-size:15px;line-height:1.15}
+.vpt-week .d b{display:block;font-weight:700;font-size:15px;line-height:1.15;letter-spacing:-.03em;white-space:nowrap}
 .vpt-week .d small{display:block;font-weight:600;font-size:15px;line-height:1.15;margin-top:2px}
 .vpt-week .d.on{background:#2B2B33;color:#fff;box-shadow:inset 0 -3px 0 #FF1F8E}
 .vpt-week .d.now{background:#FF1F8E;color:#0A0A0B}

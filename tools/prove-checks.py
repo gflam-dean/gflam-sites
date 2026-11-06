@@ -13539,6 +13539,9 @@ MUTATIONS = [
     ('test-vp-tonight.js', 'venueplay/app/vp-tonight.js',
      '    if (!Array.isArray(wk) || !wk.length) return null;', '    if (!Array.isArray(wk)) return [];',
      'with no week stored, no night is ever marked'),
+    ('test-vp-tonight.js', 'venueplay/app/vp-tonight.js',
+     '      else if (!rows[0].sub && x.time) rows[0].sub = x.time;', '',
+     "the lobby leaves off this game's own start time tonight"),
 ]
 
 
