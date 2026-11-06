@@ -43,7 +43,7 @@ function lift(n) {
    indistinguishable from a clean pass unless something is counting. That has
    already cost us once: money.test.js quietly dropped four checks and printed no
    summary at all. So the count is declared up front and verified at the end. */
-var EXPECT = 19;
+var EXPECT = 22;
 var bad = 0, ran = 0, order = [], BEHAVE = {};
 function ok(n, c, extra) {
   ran++;
@@ -70,6 +70,7 @@ function sbGet(env, table, q) {
   return Promise.resolve(fn || []);
 }
 eval(lift('handleScreen'));
+eval(lift('publicEvents'));   // the What's on nights ride the same read (INBOX 110, migration 177)
 
 function req(slug) { return { url: 'https://x/screen?venue=' + slug }; }
 function base() {
@@ -146,6 +147,25 @@ handleScreen(req('the-average-joe'), {}, json).then(function (r) {
 }).then(function (r) {
   ok('the screen still answers rather than erroring out', !!r && !!r._json);
   ok('slides still play with no name', r._json.exists === true && r._json.slides.length === 1);
+
+  /* WHAT'S ON (INBOX 110, migration 177): the venue's own nights ride the same read of the same row. */
+  print('\n== the venue\'s What\'s on nights ==');
+  base();
+  BEHAVE.vp_venue_screen = [{ slides: [{ image_url: 'a' }], raffle: null, logo_url: 'L', venue_id: 'v1',
+    events: [{ id: 'e1', title: 'Revolver Fridays', day: 'fri', start: '22:00', made_by: 'x' }, { id: 'e2', title: 'Old gig', date: '2020-01-01' }] }];
+  return handleScreen(req('the-average-joe'), {}, json);
+}).then(function (r) {
+  var ev = r._json.events || [];
+  ok('the nights still to come reach the wall, with only their public fields', ev.length === 1 && ev[0].title === 'Revolver Fridays' && ev[0].made_by === undefined && ev[0].id === undefined,
+     JSON.stringify(ev));
+  print('\n== before migration 177, the read with the new column is refused and asked again without it ==');
+  base();
+  var plain = BEHAVE.vp_venue_screen;
+  BEHAVE.vp_venue_screen = function (q) { return /events/.test(q) ? Promise.reject(new Error('42703 column vp_venue_screen.events does not exist')) : Promise.resolve(plain); };
+  return handleScreen(req('the-average-joe'), {}, json);
+}).then(function (r) {
+  ok('the slides still play', r._json.exists === true && r._json.slides.length === 1 && r._json.logo_url === 'L');
+  ok('and there are simply no nights', Array.isArray(r._json.events) && r._json.events.length === 0);
   done();
 }).catch(function (e) {
   print('\nTEST ERROR: ' + e + (e && e.stack ? '\n' + e.stack : ''));

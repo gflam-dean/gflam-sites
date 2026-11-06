@@ -3917,6 +3917,9 @@ MUTATIONS = [
     # Only a draw with a night set goes on the wall; that filter is also what
     # takes a retired or archived draw off the screen.
     ('screen-endpoint.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  catch (e) { rows = await sbGet(env, 'vp_venue_screen', 'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1'); }", '  catch (e) { throw e; }',
+     'before migration 177 every TV loses its slides, because the read with the new column is refused'),
+    ('screen-endpoint.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "draws = (d || []).filter((x) => x && x.draw_day);",
      "draws = d || [];",
      'a retired members draw goes back up on the wall with its old jackpot'),
