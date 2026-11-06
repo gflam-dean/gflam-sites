@@ -13792,7 +13792,7 @@ MUTATIONS = [
      '    paintRow2(!!P.room && (which==="vCard" || which==="vJoin"));', '    paintRow2(!!P.room && (which==="vWait" || which==="vCard" || which==="vJoin"));',
      'the "One line across" pill is back on the musical lobby'),
     ('test-musical-tonight.js', 'venueplay/app/musical/play.html',
-     '    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");', '',
+     '    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", !!AD_VIEWS[which]);', '',
      'the full-height ad under the musical lobby pushes our logo off'),
     ('test-musical-tonight.js', 'venueplay/app/musical/play.html',
      '    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }', '    if(typeof VPTonight!=="object"){ b.innerHTML=""; return; }',
