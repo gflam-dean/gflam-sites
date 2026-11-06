@@ -353,9 +353,10 @@
   .hbpanel .flabel{font-size:13px}
   .hbpanel .go,.hbpanel .addbtn{min-height:44px}
   .hbpanel .canxlink{min-height:44px;display:inline-flex;align-items:center;font-size:13.5px}
-  .hb-logorow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .hb-thumb{width:150px;height:64px;border:1px solid var(--line);border-radius:10px;background:#050506 center/contain no-repeat;background-origin:content-box;padding:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;flex:none;box-sizing:border-box}
-  .hb-logobtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hb-logorow{display:flex;align-items:center;gap:12px}
+  .hb-thumb{width:120px;height:64px;border:1px solid var(--line);border-radius:10px;background:#050506 center/contain no-repeat;background-origin:content-box;padding:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;flex:none;box-sizing:border-box}
+  .hb-logobtns{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+  .hbsaved{flex-basis:100%;margin:6px 0 0;color:#7CE0A3;font-size:14px;font-weight:600}
   .hb-pick{cursor:pointer;margin:0}
   .hb-actions{display:flex;gap:10px;align-items:center}
   .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
@@ -1674,7 +1675,7 @@
      is theirs: it shows the same at every venue they run, on any account. Whether it shows at THIS venue,
      and for which game, is this venue's own switch. Saved by /account/hosted-by-save; the logo goes through
      the same shrink as the venue logo (vp-logo.js) and the same checks in the Worker. */
-  var hostedReady = false;
+  var hostedReady = false, hostedSavedFor = "", hostedSavedLine = "";
   function hostedOnHere(h, v){
     var sw = v && h.hosted_shows && h.hosted_shows[v.id];
     if (!sw || !h.hosted_by || !h.hosted_by.name) return "";
@@ -1690,13 +1691,13 @@
     panel.className = "hbpanel";
     panel.style.display = "none";
     panel.innerHTML =
-      '<div class="qhead">Hosted by on the TV</div>' +
-      '<p class="qhint">Shows small beside your logo on the TV while ' + esc(who) + ' runs the game. It is their card, so it reads the same at every venue they host.</p>' +
+      '<div class="qhead">Show your host on the TV</div>' +
+      '<p class="qhint">"Hosted by", their name and their logo show on your TV while ' + esc(who) + ' runs the game. It is their card, so it reads the same at every venue they host.</p>' +
       '<div class="ffield"><label class="flabel">Name on the TV</label><input type="text" class="hb-name" maxlength="40" placeholder="Their name or trivia company"></div>' +
-      '<div class="hb-logorow"><div class="hb-thumb">No logo</div><div class="hb-logobtns">' +
+      '<div class="ffield"><span class="flabel">Their logo (optional)</span><div class="hb-logorow"><div class="hb-thumb">No logo</div><div class="hb-logobtns">' +
         '<label class="addbtn hb-pick">Choose logo<input type="file" accept="image/*" style="display:none"></label>' +
-        '<button class="canxlink hb-rmlogo" type="button">Remove logo</button></div></div>' +
-      '<p class="qhint hb-logonote">Optional. A white or bright logo on a see-through background reads best on the dark screen.</p>' +
+        '<button class="canxlink hb-rmlogo" type="button">Remove logo</button></div></div></div>' +
+      '<p class="qhint hb-logonote">Best: a white or bright logo with no background.</p>' +
       '<div class="qhead hb-where">Show it at ' + esc((v && v.name) || "this venue") + ' during</div>' +
       '<div class="hostvenues"><label class="hostchk"><input type="checkbox" class="hb-g" value="trivia"><span>Trivia</span></label>' +
         '<label class="hostchk"><input type="checkbox" class="hb-g" value="musical"><span>Musical bingo</span></label></div>' +
@@ -1709,8 +1710,9 @@
     vpMarkTicked(checks);
     checks.onchange = function(){ vpMarkTicked(checks); };
     function paintThumb(src){
-      if (src){ thumb.textContent = ""; thumb.style.backgroundImage = 'url("' + String(src).replace(/["\\]/g, "") + '")'; rmLogo.style.display = ""; }
-      else { thumb.textContent = "No logo"; thumb.style.backgroundImage = ""; rmLogo.style.display = "none"; }
+      /* visibility, not display: the row keeps its shape, so nothing jumps when a logo is picked */
+      if (src){ thumb.textContent = ""; thumb.style.backgroundImage = 'url("' + String(src).replace(/["\\]/g, "") + '")'; rmLogo.style.visibility = ""; }
+      else { thumb.textContent = "No logo"; thumb.style.backgroundImage = ""; rmLogo.style.visibility = "hidden"; }
     }
     paintThumb(st.logoUrl);
     file.addEventListener("change", function(){
@@ -1735,7 +1737,9 @@
       api("/account/hosted-by-save", body).then(function(r){
         save.disabled = false; save.textContent = "Save";
         if (!r || r.error){ showMsg((r && r.error) || "That did not save. Try again."); return; }
-        showMsg((body.trivia || body.musical) ? "Saved. Hosted by shows on the TV from their next game." : "Saved. Hosted by is off at this venue.", true);
+        hostedSavedLine = (body.trivia || body.musical) ? "Saved. It shows on the TV from their next game." : "Saved. It is off at " + ((v && v.name) || "this venue") + ".";
+        hostedSavedFor = h.auth_user_id;
+        showMsg(hostedSavedLine, true);
         reloadFn();
       });
     });
@@ -1764,7 +1768,7 @@
       var row = document.createElement("div"); row.className = "hostrow";
       row.innerHTML = '<div class="hn"><b>' + esc(h.label || roleWord) + '</b><small>' + esc(sub) + '</small></div>' +
         (locked ? '<span class="own">' + esc(roleWord) + '</span>'
-                : (mayTouch ? '<button class="edv">Edit venues</button>' + (hostedReady ? '<button class="edv hbb">Hosted by</button>' : '') + '<button class="rm">Remove</button>' : ''));
+                : (mayTouch ? '<button class="edv">Edit venues</button>' + (hostedReady ? '<button class="edv hbb">Show on TV</button>' : '') + '<button class="rm">Remove</button>' : ''));
       if (mayTouch){
         var ed = venueEditor(h, venues, loadHosts);
         row.appendChild(ed);
@@ -1775,7 +1779,8 @@
           row.querySelector(".hbb").addEventListener("click", function(){ hb.style.display = (hb.style.display === "none" ? "flex" : "none"); ed.style.display = "none"; });
         }
         var on = hostedOnHere(h, at || venues[0]);
-        if (on) row.querySelector(".hn small").textContent = sub + " · Hosted by on the TV for " + on;
+        if (on) row.querySelector(".hn small").textContent = sub + " · Shows on the TV for " + on;
+        if (hostedSavedFor === h.auth_user_id){ hostedSavedFor = ""; var sv = document.createElement("p"); sv.className = "hbsaved"; sv.setAttribute("role", "status"); sv.textContent = hostedSavedLine; row.appendChild(sv); }
       }
       var rm = row.querySelector(".rm");
       if (rm){

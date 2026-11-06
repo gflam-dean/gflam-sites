@@ -199,14 +199,16 @@ WALL = r'''(function(){
   function on(l){ return !l.classList.contains("hidden") && getComputedStyle(l).display!=="none"; }
   var lay=[].filter.call(document.querySelectorAll(".layer"),on)[0];
   var hb=document.getElementById("hostedBy"), img=hb && hb.querySelector(".hb-logo"), nm=hb && hb.querySelector(".hb-name"), lb=hb && hb.querySelector(".hb-lbl");
-  var parts=[];
-  if(lay){ [".tl-night",".qtext",".answers .ans",".qrbig",".scanplay",".codebox",".joinurl",".lobbyname","#tvBoardRows .brow",".pod",".podium > *",".nowplaying",".np",".songcard",".jsub"].forEach(function(sel){
-    [].forEach.call(lay.querySelectorAll(sel),function(e){ var r=R(e); if(r) parts.push({sel:sel, r:r}); }); }); }
+  var parts=[], kids=[];
+  if(lay){ [".qtext",".answers .ans",".qrbig",".scanplay",".codebox",".joinurl",".lobbyname","#tvBoardRows .brow",".pod",".podium > *",".nowplaying",".np",".songcard",".jsub"].forEach(function(sel){
+    [].forEach.call(lay.querySelectorAll(sel),function(e){ var r=R(e); if(r) parts.push({sel:sel, r:r}); }); });
+    [].forEach.call(lay.children,function(k){ var r=R(k); if(r) kids.push(r); }); }
   var mk=document.querySelector(".tv-corner .vn svg, .tv-corner svg");
-  return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, hb: R(hb), name: nm ? nm.textContent : null,
-    nameFs: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0, lblFs: lb ? parseFloat(getComputedStyle(lb).fontSize) : 0,
+  var ti=lay && lay.querySelector(".toplbl .tl-night");
+  return JSON.stringify({ W:innerWidth, H:innerHeight, layer: lay ? lay.id : null, tf: lay ? (lay.style.transform||"") : null, hb: R(hb), name: nm ? nm.textContent : null,
+    nameFs: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0, lblFs: lb ? parseFloat(getComputedStyle(lb).fontSize) : 0, lblR: R(lb), nameR: R(nm),
     img: R(img), imgOk: !!img && img.complete && img.naturalWidth>0, logo: R(document.getElementById("venueLogo")),
-    tag: R(document.getElementById("venueNameTag")), mark: R(mk), parts: parts });
+    tag: R(document.getElementById("venueNameTag")), mark: R(mk), title: R(ti), parts: parts, kids: kids });
 })()'''
 
 
@@ -218,64 +220,82 @@ def same(a, b, tol=1.0):
     return (a is None and b is None) or (bool(a and b) and all(abs(x - y) <= tol for x, y in zip(a, b)))
 
 
-def wall_checks(tag, m, base, host_logo, venue):
+def wall_checks(tag, m, base, host_logo, venue, mode):
     hb, W, H = m.get('hb'), m.get('W', 0), m.get('H', 0)
     ok('%s: "Hosted by %s" is on the wall' % (tag, NAME), bool(hb) and m.get('name') == NAME, m.get('name'))
     if not hb: return
-    ok('%s: inside the screen' % tag, hb[0] >= 0 and hb[1] >= 0 and hb[2] <= W and hb[3] <= H, hb)
-    ok('%s: the words are big enough to read across a room (name %.0fpx, label %.0fpx, at least 12 and 9)' % (tag, m.get('nameFs'), m.get('lblFs')),
-       m.get('nameFs', 0) >= 12 and m.get('lblFs', 0) >= 9, (m.get('nameFs'), m.get('lblFs')))
-    ok('%s: clear of our venueplay mark' % tag, not overlap(hb, m.get('mark')), [hb, m.get('mark')])
-    if venue == 'none':
-        t = m.get('tag')
-        ok('%s: no venue logo, so it sits UNDER the venue\'s name, left-aligned with it' % tag, bool(t) and hb[1] >= t[3] - 0.5 and abs(hb[0] - t[0]) <= 1, [hb, t])
-    else:
-        L = m.get('logo')
-        ok('%s: BESIDE the venue\'s logo, never on it' % tag, bool(L) and hb[0] >= L[2] and not overlap(hb, L), [hb, L])
-        if L and hb:
-            ok('%s: its middle on the logo\'s middle (within 2px)' % tag, abs((hb[1] + hb[3]) / 2 - (L[1] + L[3]) / 2) <= 2 or hb[1] <= max(14, 0.012 * W) + 1, [hb, L])
+    inset = max(14, round(0.012 * W))
+    ok('%s: inside the screen, at least the venue logo\'s own margin from the left edge (%dpx)' % (tag, inset), hb[0] >= inset - 0.5 and hb[1] >= 0 and hb[2] <= W, hb)
+    ok('%s: big enough to read across a pub: the name %.0fpx (about 30 at 1080), HOSTED BY %.0fpx (about 18)' % (tag, m.get('nameFs'), m.get('lblFs')),
+       m.get('nameFs', 0) >= 0.024 * H and m.get('lblFs', 0) >= 0.0155 * H, (m.get('nameFs'), m.get('lblFs')))
+    ok('%s: clear of our venueplay mark and the game\'s name' % tag, not overlap(hb, m.get('mark')) and not overlap(hb, m.get('title')), [hb, m.get('mark'), m.get('title')])
+    # B lifts a slide that reaches the bottom (musical bingo's song chip, the podium) a few pixels clear of the line,
+    # so its game name may move by up to 0.6% of the height there; the logos never move, and in A nothing moves.
+    tt = 1.0 if mode == 'top' else 0.006 * H
+    ok('%s: the header does not move: the venue logo and our mark exactly, the game\'s name %s' % (tag, 'exactly' if mode == 'top' else 'within %.0fpx' % tt),
+       same(m.get('logo'), base.get('logo')) and same(m.get('mark'), base.get('mark')) and same(m.get('title'), base.get('title'), tt),
+       [m.get('logo'), base.get('logo'), m.get('mark'), base.get('mark'), m.get('title'), base.get('title')])
     hits = [p for p in m.get('parts') or [] if overlap(hb, p['r'], 1)]
-    ok('%s: clear of the game\'s name, the question, the answers, the join and the scores' % tag, not hits, hits[:3])
-    ok('%s: the venue\'s logo is exactly where it is without the line (nothing pushed)' % tag, same(m.get('logo'), base.get('logo')), [m.get('logo'), base.get('logo')])
-    ok('%s: and so is our mark' % tag, same(m.get('mark'), base.get('mark')), [m.get('mark'), base.get('mark')])
-    if host_logo:
-        img, L = m.get('img'), m.get('logo')
-        ok('%s: the host\'s logo has loaded' % tag, m.get('imgOk') is True and bool(img), img)
-        if img:
-            ih = img[3] - img[1]
-            ok('%s: the host\'s logo (%.0fpx tall) is no taller than 5.2%% of the screen and no taller than the venue\'s own' % (tag, ih),
-               ih <= 0.052 * H + 1 and (not L or ih <= (L[3] - L[1]) + 0.5), [ih, L])
+    ok('%s: clear of the question, the answers, the join and the scores' % tag, not hits, hits[:3])
+    L = m.get('logo') if venue != 'none' else m.get('tag')
+    if mode == 'top':
+        ok('%s: the slide does not move at all (every part of it where it is without the line)' % tag,
+           m.get('tf') == base.get('tf') and len(m.get('kids') or []) == len(base.get('kids') or []) and all(same(a, b) for a, b in zip(m.get('kids') or [], base.get('kids') or [])),
+           [m.get('tf'), base.get('tf')])
+        ok('%s: BESIDE the venue\'s %s, on its line, never on it' % (tag, 'name' if venue == 'none' else 'logo'), bool(L) and hb[0] >= L[2] and not overlap(hb, L), [hb, L])
+        if L:
+            mid = lambda r: (r[1] + r[3]) / 2
+            ok('%s: the whole block centred on the venue %s\'s middle (within 2px, or held at the top margin)' % (tag, 'name' if venue == 'none' else 'logo'),
+               abs(mid(hb) - mid(L)) <= 2 or abs(hb[1] - inset) <= 1, [hb, L])
+            ok('%s: inside the header band: no lower than the venue %s or 15%% of the height' % (tag, 'name' if venue == 'none' else 'logo'), hb[3] <= max(L[3], 0.15 * H) + 1, [hb, L])
+        ok('%s: one shape: HOSTED BY above the name' % tag, bool(m.get('lblR')) and bool(m.get('nameR')) and m['lblR'][3] <= m['nameR'][1] + 1, [m.get('lblR'), m.get('nameR')])
     else:
-        ok('%s: no host logo, so the name stands alone' % tag, m.get('img') is None, m.get('img'))
+        x0 = L[0] if (L and venue != 'none') else inset
+        ok('%s: along the bottom, left-aligned with the venue logo\'s margin (%dpx)' % (tag, x0), abs(hb[0] - x0) <= 1 and hb[1] > 0.8 * H, [hb, L])
+        ok('%s: clear of the bottom edge for overscan (%.0fpx, at least 40)' % (tag, H - hb[3]), H - hb[3] >= 39.5, hb)
+        ok('%s: no part of the slide runs under it or off the screen' % tag, all(not overlap(hb, k, 1) and k[3] <= H for k in m.get('kids') or []), [k for k in m.get('kids') or [] if overlap(hb, k, 1)][:2])
+    if host_logo:
+        img = m.get('img')
+        ok('%s: the host\'s logo has loaded' % tag, m.get('imgOk') is True and bool(img), img)
+        if img and mode == 'top':
+            ih, iw = img[3] - img[1], img[2] - img[0]
+            want = (m['logo'][3] - m['logo'][1]) if venue != 'none' else round(0.044 * H)
+            ok('%s: the host\'s logo is the venue logo\'s height (%.0f against %.0f), or held to 13%% of the width' % (tag, ih, want),
+               abs(ih - want) <= 1.5 or iw >= 0.13 * W - 1.5, [ih, iw, want])
+    else:
+        ok('%s: no host logo, so no empty space for one' % tag, m.get('img') is None, m.get('img'))
 
 
 def wall(B, base):
-    print('\n2. THE WALL: trivia and musical bingo at 1920x1080 and 1280x720')
-    trivia = [('lobby', 500), ('question', 4000), ('board', 12500), ('podium', 44000)]
-    musical = [('lobby', 500), ('song', 6000)]
+    print('\n2. THE WALL: trivia and musical bingo at 1920x1080 and 1280x720, option A (top) and option B (bottom)')
+    trivia = [('lobby', 2500), ('question', 4000), ('board', 12500), ('podium', 44000)]   # the lobby once its title is on the logos' line
+    short = [('lobby', 2500), ('question', 4000)]
+    musical = [('lobby', 2500), ('song', 6000)]
     NL.SHOTS = ''   # the new-look suite's own pictures are not wanted here
     for w, h in ((1920, 1080), (1280, 720)):
         for venue, vq in (('crest', ''), ('wide', '&logo=/__fixture/wide-logo.svg'), ('none', '&logo=none')):
-            st = trivia if venue == 'crest' else [('lobby', 500), ('question', 4000)]
+            st = trivia if venue == 'crest' else short
             basem = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, False, st, WALL)
-            for host_logo in ((True, False) if venue == 'crest' else (True,)):
-                q = '&hostedby=' + urllib.parse.quote(NAME) + ('&hostlogo=/x-fixture/host-logo.svg' if host_logo else '')
-                m = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, False, st, WALL)
-                for name, _ in st:
-                    tag = 'trivia %dx%d %s venue logo, %s, %s' % (w, h, venue, 'host logo' if host_logo else 'name only', name)
-                    wall_checks(tag, m.get(name) or {}, basem.get(name) or {}, host_logo, venue)
-                if SHOTS:
-                    snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, st,
-                         'tv-trivia-%dx%d-%s-%s' % (w, h, venue, 'hostlogo' if host_logo else 'nameonly'))
             if SHOTS and venue == 'crest':
                 snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq, w, h, st, 'tv-trivia-%dx%d-crest-nohost' % (w, h))
+            for mode in ('top', 'bottom'):
+                for host_logo in ((True, False) if (venue == 'crest' and mode == 'top') else (True,)):
+                    q = '&hostedby=' + urllib.parse.quote(NAME) + ('&hostlogo=/x-fixture/host-logo.svg' if host_logo else '') + ('&hostedat=bottom' if mode == 'bottom' else '')
+                    m = NL.load(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, False, st, WALL)
+                    for name, _ in st:
+                        t = '%s trivia %dx%d %s venue logo, %s, %s' % ('A' if mode == 'top' else 'B', w, h, venue, 'host logo' if host_logo else 'name only', name)
+                        wall_checks(t, m.get(name) or {}, basem.get(name) or {}, host_logo, venue, mode)
+                    if SHOTS:
+                        snap(B, base, '/app/trivia/screen.html?demo=1&sting=0' + vq + q, w, h, st,
+                             'tv-%s-trivia-%dx%d-%s-%s' % ('A' if mode == 'top' else 'B', w, h, venue, 'hostlogo' if host_logo else 'nameonly'))
         basem = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0', w, h, False, musical, WALL)
-        q = '&hostedby=' + urllib.parse.quote(NAME) + '&hostlogo=/x-fixture/host-logo.svg'
-        m = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, False, musical, WALL)
-        for name, _ in musical:
-            wall_checks('musical bingo %dx%d crest, host logo, %s' % (w, h, name), m.get(name) or {}, basem.get(name) or {}, True, 'crest')
-        if SHOTS:
-            snap(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, musical, 'tv-musical-%dx%d-crest-hostlogo' % (w, h))
+        for mode in ('top', 'bottom'):
+            q = '&hostedby=' + urllib.parse.quote(NAME) + '&hostlogo=/x-fixture/host-logo.svg' + ('&hostedat=bottom' if mode == 'bottom' else '')
+            m = NL.load(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, False, musical, WALL)
+            for name, _ in musical:
+                wall_checks('%s musical bingo %dx%d crest, host logo, %s' % ('A' if mode == 'top' else 'B', w, h, name), m.get(name) or {}, basem.get(name) or {}, True, 'crest', mode)
+            if SHOTS:
+                snap(B, base, '/app/musical/screen.html?demo=1&sting=0' + q, w, h, musical, 'tv-%s-musical-%dx%d-crest-hostlogo' % ('A' if mode == 'top' else 'B', w, h))
 
 
 def snap(B, base, path, w, h, states, stem):
@@ -315,7 +335,7 @@ PEOPLE = r'''(function(){
   var tiny=p ? [].filter.call(p.querySelectorAll("*"),function(e){ return seen(e) && e.children.length===0 && (e.textContent||"").trim() && parseFloat(getComputedStyle(e).fontSize)<12.5; }).map(function(e){ return e.textContent.trim().slice(0,30)+" "+getComputedStyle(e).fontSize; }) : [];
   return JSON.stringify({ vw:innerWidth, dsw:de.scrollWidth, dcw:de.clientWidth, row: !!row, open: seen(p), btn: !!(row && row.querySelector(".hbb")),
     rowL: rr ? Math.floor(rr.left) : 0, rowR: rr ? Math.ceil(rr.right) : 0, ctl: ctl, inpFs: inp ? parseFloat(getComputedStyle(inp).fontSize) : 0,
-    small: row ? (row.querySelector(".hn small")||{}).textContent : "", tiny: tiny, errs: (window.__errs||[]).length });
+    small: row ? (row.querySelector(".hn small")||{}).textContent : "", btnText: row && row.querySelector(".hbb") ? row.querySelector(".hbb").textContent.trim() : "", where: p && p.querySelector(".hb-where") ? Math.round(p.querySelector(".hb-where").getBoundingClientRect().top - p.getBoundingClientRect().top) : null, tiny: tiny, errs: (window.__errs||[]).length });
 })()'''
 
 
@@ -342,21 +362,24 @@ def people():
             time.sleep(1)
             S.js(sid, '(function(){ var b=document.querySelector(\'.tabs button[data-tab="people"]\'); if(b) b.click(); return true; })()'); time.sleep(0.5)
             m = json.loads(S.js(sid, PEOPLE))
-            ok('%s: Sam\'s row has a Hosted by button' % label, m.get('row') is True and m.get('btn') is True, m)
+            ok('%s: Sam\'s row has a Show on TV button' % label, m.get('row') is True and m.get('btn') is True and m.get('btnText') == 'Show on TV', m)
             S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").click(); row.scrollIntoView({block:"start"}); return true; })()')
             time.sleep(0.6)
             if first:
                 if SHOTS: S.shot(sid, shot_path('people-%d-empty.png' % w), False)
                 S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").setAttribute("data-t","1"); row.querySelector(".hb-pick input").id="hbFileT"; return true; })()')
+                before = json.loads(S.js(sid, PEOPLE)).get('where')
                 S.set_file(sid, '#hbFileT', logo_file)
                 ok('%s: a chosen logo shows in the dark chip before Save' % label,
                    S.until(sid, '/^url\\("data:image/.test(document.querySelector(".hbpanel .hb-thumb").style.backgroundImage)', 15) is True,
                    S.js(sid, 'document.querySelector(".hbpanel .hb-thumb").style.backgroundImage.slice(0,40)'))
                 S.js(sid, '(function(){ var p=document.querySelector(".hbpanel"); var i=p.querySelector(".hb-name"); i.value=%s; i.dispatchEvent(new Event("input")); var t=p.querySelector(\'.hb-g[value="trivia"]\'); t.click(); return true; })()' % json.dumps(NAME))
                 time.sleep(0.3)
+                after = json.loads(S.js(sid, PEOPLE)).get('where')
+                ok('%s: nothing jumps when a logo is picked (the next heading stays at %spx)' % (label, before), before is not None and before == after, (before, after))
                 if SHOTS: S.shot(sid, shot_path('people-%d-filled.png' % w), False)
                 S.js(sid, 'document.querySelector(".hbpanel .hb-save").click(); true')
-                saved = S.until(sid, '/Hosted by shows on the TV/.test(document.getElementById("msg").textContent)', 20)
+                saved = S.until(sid, '/Saved\. It shows on the TV/.test(document.getElementById("msg").textContent)', 20)
                 ok('%s: Save says it shows from their next game' % label, saved is True, S.js(sid, 'document.getElementById("msg").textContent'))
                 br = S.W.table('vp_host_brands')
                 rows = [s for s in S.W.table('vp_venue_staff') if s.get('auth_user_id') == sam]
@@ -364,7 +387,10 @@ def people():
                 here = [s for s in rows if s.get('venue_id') == info['venue']]
                 ok('and trivia switched on at the venue shown, nothing at the other', here and here[0].get('hosted_by') == {'trivia': True, 'musical': False}
                    and all(s.get('hosted_by') in (None,) for s in rows if s.get('venue_id') != info['venue']), rows)
-                S.until(sid, '/Hosted by on the TV for trivia/.test(document.querySelector("#hosts").textContent)', 15)
+                S.until(sid, '/Shows on the TV for trivia/.test(document.querySelector("#hosts").textContent)', 15)
+                ok('%s: the row says Saved, under Sam\'s name' % label, S.until(sid, '(function(){ var e=document.querySelector("#hosts .hbsaved"); return !!e && /^Saved\\. It shows on the TV/.test(e.textContent) && e.getBoundingClientRect().height>0; })()', 10) is True,
+                   S.js(sid, '(document.querySelector("#hosts .hbsaved")||{}).textContent'))
+                if SHOTS: S.shot(sid, shot_path('people-%d-saved-line.png' % w), False)
                 first = False
                 S.close_tab(tid)
                 tid, sid = S.open('/app/billing.html#people', w, h, phone)
@@ -373,7 +399,7 @@ def people():
                 S.js(sid, '(function(){ var row=[].filter.call(document.querySelectorAll("#hosts .hostrow"),function(r){ return /Sam/.test(r.textContent); })[0]; row.querySelector(".hbb").click(); row.scrollIntoView({block:"start"}); return true; })()')
                 time.sleep(0.6)
             m = json.loads(S.js(sid, PEOPLE))
-            ok('%s: the row says Hosted by is on for trivia' % label, 'Hosted by on the TV for trivia' in (m.get('small') or ''), m.get('small'))
+            ok('%s: the row says it shows on the TV for trivia' % label, 'Shows on the TV for trivia' in (m.get('small') or ''), m.get('small'))
             ok('%s: the panel is open, the saved name in the box' % label, m.get('open') is True and S.js(sid, 'document.querySelector(".hbpanel .hb-name").value') == NAME, m)
             ok('%s: nothing on the page scrolls sideways (%s <= %s)' % (label, m.get('dsw'), m.get('dcw')), m.get('dsw', 1) <= m.get('dcw', 0), m)
             short = [c for c in m.get('ctl') or [] if c['h'] < 44]
