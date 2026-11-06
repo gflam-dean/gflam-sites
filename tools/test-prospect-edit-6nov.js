@@ -236,7 +236,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   ENV.PROSPECT_SMS_ON = 'on'; ENV.MOBILEMESSAGE_USERNAME = 'mm-user'; ENV.MOBILEMESSAGE_PASSWORD = 'mm-pass'; SMS.length = 0;
   var ns = await call('/autopilot/prospect/nudge-sms', { venue_id: small.id, text: 'venueplay: Hi Jo, your venueplay is ready: {link} Reply STOP to opt out' }, AP);
   check('...and the text follow-up, once Dean says yes, goes to that mobile with no other step',
-    ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} /.test(SMS[0].body.messages[0].body), [ns.body, SMS]);
+    ns.status === 200 && SMS.length === 1 && SMS[0].mm === true && SMS[0].body.messages[0].to === '+61412345678' && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(SMS[0].body.messages[0].body), [ns.body, SMS]);   // before migration 175: the long link
   check('...through MOBILE MESSAGE, the sign-in codes\' provider: its own login, sender "venueplay", and "Reply STOP" made its opt-out link ({optout})',
     SMS[0] && SMS[0].auth === 'Basic ' + btoa('mm-user:mm-pass') && SMS[0].body.messages[0].from === 'venueplay' && /\{optout\}$/.test(SMS[0].body.messages[0].body) && !/Reply STOP/.test(SMS[0].body.messages[0].body), SMS[0]);
   delete ENV.PROSPECT_SMS_ON;
@@ -301,6 +301,7 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   section('7. The one send button\'s Worker half: email and text together, a fresh 30 days');
   ENV.PROSPECT_SMS_ON = 'on'; SMS.length = 0; sent.length = 0;
   CLOCK = bne(3, 12, 0);   // a Wednesday, noon Brisbane
+  MIG175 = true;   // this section is the database after migration 175: one short link per prospect
   await setUp({ name: 'Weekend Bowls', send_welcome: false });
   var wb = venueOf('Weekend Bowls');
   await upd({ venue_id: wb.id, mobile: '0455 666 777' });
@@ -309,8 +310,9 @@ async function upd(body, who) { return call('/admin/prospect/update', body, who 
   check('inside 9am to 8pm on a weekday: ONE press sends the email AND the text, now', tx.status === 200 && tx.body.text && tx.body.text.status === 'sent' && sent.length === 1 && SMS.length === 1 && SMS[0].body.messages[0].to === '+61455666777', [tx.body, SMS.length]);
   var wbRow = DB.vp_prospects.filter(function (r) { return r.venue_id === wb.id; })[0] || {};
   var wbEnd = Date.parse(wbRow.link_from || wbRow.created_at) + 30 * DAY;
-  check('...two live links (before migration 175), the email\'s and the text\'s, ending at the same moment: their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
-    wbLinks.length === 2 && wbLinks[0].expires_at === wbLinks[1].expires_at && Math.abs(Date.parse(wbLinks[0].expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from, [wbLinks, wbRow.created_at]);
+  check('...ONE live token behind their one short link, the email\'s and the text\'s the same, ending at their ORIGINAL 30 days, never renewed by a resend (Dean, 6 Nov 2026)',
+    wbLinks.length === 1 && wbLinks[0].short_ok === true && Math.abs(Date.parse(wbLinks[0].expires_at) - wbEnd) < 120000 && tx.body.restarted === false && !wbRow.link_from &&
+    (sent[0] && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}/.test(sent[0].html || '')), [wbLinks, wbRow.created_at]);
   var smsBody = (SMS[0] && SMS[0].body.messages[0]) || {};
   check('...the text is from venueplay, names them, carries the short one-tap link, says it was emailed too and for how long, the opt-out link ({optout}, Mobile Message\'s), one SMS part (Dean, 6 Nov 2026), no long dash',
     smsBody.from === 'venueplay' && new RegExp("^Hi Sam, here's your venueplay sign-in link: venueplay\\.com\\.au\\/s\\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} We've emailed it too, check junk\\. Available for " + tx.body.days_left + " days\\. \\{optout\\}$").test(smsBody.body) &&

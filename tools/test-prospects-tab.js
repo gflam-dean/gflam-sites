@@ -273,7 +273,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var on = await call('/autopilot/prospect/nudge-sms', { venue_id: mo.id, text: TXT }, AP);
   var m0 = ((SMS[0] || {}).body || {}).messages || [];
   check('provider on, Dean said yes: one text, from venueplay, to their mobile in +61 form', on.status === 200 && SMS.length === 1 && m0.length === 1 && m0[0].from === 'venueplay' && m0[0].to === '+61432071622', [on.status, on.body, m0]);
-  check('...with a real one-tap sign-in link in place of {link}, and Reply STOP to opt out', /venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} /.test(m0[0] && m0[0].body) && /Reply STOP to opt out$/.test(m0[0] && m0[0].body) && (m0[0].body || '').indexOf('{link}') < 0, m0[0] && m0[0].body);
+  check('...with a real one-tap sign-in link in place of {link}, and Reply STOP to opt out', /https:\/\/(www\.)?venueplay\.com\.au\/app\/go#t=[A-Za-z0-9_-]{43}/.test(m0[0] && m0[0].body) && /Reply STOP to opt out$/.test(m0[0] && m0[0].body) && (m0[0].body || '').indexOf('{link}') < 0, m0[0] && m0[0].body);
   check('...and the email\'s link still works: a text never retires it', DB.vp_signin_links.filter(function (l) { return !l.used_at; }).length === linksBefore + 1);
   check('...audited with the last three digits only', DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_nudge_sms_sent' && a.detail.to_last3 === '622' && JSON.stringify(a.detail).indexOf('0432') < 0; }));
   var nomob = await call('/autopilot/prospect/nudge-sms', { venue_id: ngVenue.id, text: TXT }, AP);
@@ -498,7 +498,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   SMS.length = 0;
   var s7 = await call('/autopilot/prospect/nudge-sms', { venue_id: jv.id, text: EXP }, AP);
   var sb = ((SMS[0] || {}).body || {}).messages || [];
-  check('the "expires in 3 days" text: {days} filled (3), {link} a real link, STOP kept', s7.status === 200 && sb.length === 1 && /expires in 3 days\./.test(sb[0].body) && sb[0].body.indexOf('{days}') < 0 && /(^|\s)venueplay\.com\.au\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} /.test(sb[0].body) && /Reply STOP to opt out$/.test(sb[0].body), sb[0] && sb[0].body);
+  check('the "expires in 3 days" text: {days} filled (3), {link} a real link, STOP kept', s7.status === 200 && sb.length === 1 && /expires in 3 days\./.test(sb[0].body) && sb[0].body.indexOf('{days}') < 0 && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(sb[0].body) && /Reply STOP to opt out$/.test(sb[0].body), sb[0] && sb[0].body);
   var sl = DB.vp_signin_links.filter(function (l) { return l.venue_id === jv.id && !l.used_at; });
   var j27 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === jv.id; })[0] || {};
   var slNew = sl[sl.length - 1] || {};

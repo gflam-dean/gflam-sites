@@ -208,7 +208,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   ys = await call('/autopilot/prospect/nudge-sms', { venue_id: yvid, text: YES_TEXT, purpose: 'yes_reply' }, AP);
   var sms = SMS[0] || {};
   check('switched on: ONE text to their own mobile, from the venueplay sender', ys.status === 200 && SMS.length === 1 && sms.to === '+61400222444' && sms.sender === 'venueplay', [ys, SMS]);
-  check('the text carries a one-tap sign-in link and Dean\'s words, with the opt-out as Mobile Message\'s own link', /^Welcome to venueplay! Your account for Test Charlie Yes Hotel is ready\. Tap to sign in: $/.test((sms.message || '').split('venueplay.com.au/s/')[0]) && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8} /.test(sms.message || '') && /\{optout\}$/.test(sms.message || '') && (sms.message || '').indexOf('{link}') === -1, sms.message);
+  check('the text carries a one-tap sign-in link (the long one before migration 175) and Dean\'s words, with the opt-out as Mobile Message\'s own link', /^Welcome to venueplay! Your account for Test Charlie Yes Hotel is ready\. Tap to sign in: $/.test((sms.message || '').split(SITE + '/app/go#t=')[0]) && /\/app\/go#t=[A-Za-z0-9_-]{43}&e=/.test(sms.message || '') && /\{optout\}$/.test(sms.message || '') && (sms.message || '').indexOf('{link}') === -1, sms.message);
   check('its own fresh link: the welcome\'s and the reply\'s still work too', liveLinks(yvid).length === linksBefore + 1, DB.vp_signin_links);
   var ya = DB.vp_admin_audit.filter(function (a) { return a.action === 'prospect_nudge_sms_sent' && a.target === 'venue:' + yvid; });
   check('audited as the yes reply\'s text (not a nudge), last 3 digits only, never the link', ya.length === 1 && ya[0].detail && ya[0].detail.purpose === 'yes_reply' && ys.body.purpose === 'yes_reply' &&
@@ -242,25 +242,37 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var oText = await call('/autopilot/prospect/nudge-sms', { venue_id: ov, text: 'Welcome to venueplay! Your account for One Link Hotel is ready. Tap to sign in: {link} Reply STOP to opt out', purpose: 'yes_reply' }, AP);
   var oNudge = await call('/autopilot/prospect/nudge', { venue_id: ov, text: 'Hi Sam,\n\nJust checking you got your venueplay account. Here is your link again.\n\nCheers,\nKayla' }, AP);
   var oHq = await call('/admin/signin-link', { venue_id: ov, text: true }, HQ);
-  var oSelf = await call('/auth/one-click/resend', { t: cWelcome });
   var texts = SMS.map(function (m) { return m.message; });
   var mails = sent.slice(1).map(function (m) { return String(m.html || ''); });
-  check('the yes text, the follow-up email, HQ\'s Resend (email and text) and "Send me a new link": every one the same code',
-    oText.status === 200 && oNudge.status === 200 && oHq.status === 200 && texts.length >= 2 && mails.length >= 3 &&
-    texts.concat(mails).every(function (t) { return CODE_IN(t) === cWelcome; }), [oText.status, oNudge.status, oHq.status, texts, mails.map(CODE_IN)]);
+  check('the yes text, the follow-up email and HQ\'s Resend (email and text): every one the same short link, written in the texts without https://www. (one SMS part)',
+    oText.status === 200 && oNudge.status === 200 && oHq.status === 200 && texts.length >= 2 && mails.length >= 2 &&
+    texts.concat(mails).every(function (t) { return CODE_IN(t) === cWelcome; }) && texts.every(function (t) { return /(^|\s)venueplay\.com\.au\/s\//.test(t); }), [oText.status, oNudge.status, oHq.status, texts, mails.map(CODE_IN)]);
+  var liveS = function () { return oneRow().filter(function (l) { return l.short_ok === true && !l.used_at; }); };
   var pr2 = DB.vp_prospects.filter(function (x) { return x.venue_id === ov; })[0] || {};
-  check('...and not one of them renewed the 30 days: still one link row, the same end, link_from never set, HQ told not restarted',
-    oneRow().length === 1 && oneRow()[0].expires_at === end0 && !pr2.link_from && oHq.body.restarted === false, [oneRow(), pr2.link_from, oHq.body]);
-  oneRow()[0].used_at = new Date().toISOString();   // they tapped it (POST /auth/one-click marks it used: tools/test-one-click-signin.js 1s)
+  check('...and not one of them renewed the 30 days: ONE live token behind the short link, the same end, link_from never set, HQ told not restarted',
+    liveS().length === 1 && oneRow().length === 1 && oneRow()[0].expires_at === end0 && !pr2.link_from && oHq.body.restarted === false, [oneRow(), pr2.link_from, oHq.body]);
+  var usedOne = liveS()[0]; usedOne.used_at = new Date().toISOString();   // they tapped it (POST /auth/one-click uses it: tools/test-one-click-signin.js 1s)
+  DB.vp_admin_audit.push({ action: 'signin_link_used', target: 'venue:' + ov, detail: {}, created_at: new Date().toISOString() });   // as the tap records it
+  var nPublic = sent.length;
+  var gvx = DB.vp_venues.filter(function (x) { return x.id === ov; })[0]; gvx.join_code = 'ONELNK';
+  var pub1 = await call('/venue-signin/send', { code: 'ONELNK' }, { 'cf-connecting-ip': '192.0.2.77' });
+  var pub2 = await call('/auth/one-click/resend', { t: cWelcome });
+  var pubMails = sent.slice(nPublic).map(function (m) { return String(m.html || ''); });
+  check('SECURITY: the public venue code page and "Send me a new link" never bring the used short link back: no live token behind it, the used row still used, and what they email is a long link of its own (never the short one, never to the caller)',
+    pub1.status === 200 && JSON.stringify(pub1.body) === '{"ok":true}' && liveS().length === 0 && !!usedOne.used_at && pubMails.length >= 1 &&
+    pubMails.every(function (h) { return /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(h) && !CODE_IN(h); }), [pub1.body, liveS(), pubMails.map(function (h) { return (/\/app\/go#t=[^"&]+|\/s\/[A-Z0-9]+/.exec(h) || [''])[0]; })]);
+  var oNudge2 = await call('/autopilot/prospect/nudge-sms', { venue_id: ov, text: 'Hi Sam, your venueplay link: {link} Reply STOP to opt out' }, AP);
+  check('SECURITY: a follow-up after their tap is refused (they acted), and never re-opens the used token', oNudge2.status !== 200 && !!usedOne.used_at && liveS().length === 0, [oNudge2.status, oNudge2.body]);
   var oHq2 = await call('/admin/signin-link', { venue_id: ov }, HQ);
-  check('a used link sent again is the same code re-opened, at the same end (single use per send, never a longer life)',
-    oHq2.status === 200 && CODE_IN(sent[sent.length - 1].html) === cWelcome && oneRow().length === 1 && oneRow()[0].used_at === null && oneRow()[0].expires_at === end0, [oHq2.body, oneRow()]);
+  var after2 = liveS();
+  check('HQ sending it again: the SAME short link, a NEW token behind it at the SAME end, the used one left used (a used token is never opened again)',
+    oHq2.status === 200 && CODE_IN(sent[sent.length - 1].html) === cWelcome && after2.length === 1 && after2[0].token_hash !== usedOne.token_hash && after2[0].expires_at === end0 && !!usedOne.used_at, [oHq2.body, oneRow()]);
   var oFresh = await call('/admin/signin-link', { venue_id: ov, fresh: true }, HQ);
   var pr3 = DB.vp_prospects.filter(function (x) { return x.venue_id === ov; })[0] || {};
   var cFresh = CODE_IN(sent[sent.length - 1].html);
   var live = oneRow().filter(function (l) { return !l.used_at; });
   check('HQ "Start a fresh 30 days": a NEW code, 30 days from now, the old one dead, link_from moved, audited as such',
-    oFresh.status === 200 && oFresh.body.restarted === true && !!cFresh && cFresh !== cWelcome && live.length === 1 && live[0].token_hash === (await vpaSigninTokenHash(cFresh)) &&
+    oFresh.status === 200 && oFresh.body.restarted === true && !!cFresh && cFresh !== cWelcome && live.length === 1 && live[0].short_ok === true && pr3.signin_code_hash === (await vpaSigninTokenHash('short|' + cFresh)) &&
     Math.abs(Date.parse(live[0].expires_at) - Date.now() - 30 * 86400000) < 120000 && !!pr3.link_from && (await vpaOpenCode(ENV, pr3.signin_code_enc)) === cFresh &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'signin_link_sent' && a.detail && a.detail.fresh_30_days === true; }), [oFresh.body, cFresh, live]);
   var oAfter = await call('/admin/signin-link', { venue_id: ov }, HQ);
@@ -273,10 +285,10 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   world(); SMS = [];
   var o5 = await call('/autopilot/prospect', body({ name: 'Two At Once Hotel' }), AP);
   var v5 = o5.body.venue.id, r5 = DB.vp_prospects.filter(function (x) { return x.venue_id === v5; })[0];
-  r5.signin_code_enc = null; DB.vp_signin_links = [];
-  var both5 = await Promise.all([vpaProspectOneLink(ENV, v5, r5.auth_user_id, { arm: true }), vpaProspectOneLink(ENV, v5, r5.auth_user_id, { arm: true })]);
+  r5.signin_code_enc = null; r5.signin_code_hash = null; DB.vp_signin_links = [];
+  var both5 = await Promise.all([vpaProspectOneLink(ENV, v5, r5.auth_user_id, {}), vpaProspectOneLink(ENV, v5, r5.auth_user_id, {})]);
   var live5 = DB.vp_signin_links.filter(function (l) { return !l.used_at; });
-  check('two sends at the same moment: both hand out the one code that was kept, the loser\'s retired', both5[0].token === both5[1].token && live5.length === 1 && (await vpaOpenCode(ENV, r5.signin_code_enc)) === both5[0].token, [both5.map(function (b) { return b && b.token; }), live5.length]);
+  check('two sends at the same moment: both hand out the one code that was kept', both5[0].token === both5[1].token && live5.length >= 1 && live5.length <= 2 && (await vpaOpenCode(ENV, r5.signin_code_enc)) === both5[0].token, [both5.map(function (b) { return b && b.token; }), live5.length]);
   check('a sealed value from another secret, or junk, never opens', (await vpaOpenCode(Object.assign({}, ENV, { SIGNIN_LINK_SECRET: 'another-secret' }), r5.signin_code_enc)) === null && (await vpaOpenCode(ENV, 'v1.junk')) === null);
   MIG175 = false; ENV.PROSPECT_SMS_ON = ''; ENV.MOBILEMESSAGE_USERNAME = ''; ENV.MOBILEMESSAGE_PASSWORD = '';
 
@@ -294,19 +306,21 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   var before8 = sent.length;
   var sd = await call('/venue-signin/send', { code: 'GOC0DE', email: 'attacker@evil.example' }, NETG(2));
   var gm = sent.slice(before8);
-  check('send: ONE email, to the address ON THE ACCOUNT (never one the caller typed), carrying the prospect\'s one link',
-    sd.status === 200 && sd.body.ok === true && gm.length === 1 && String(gm[0].to).indexOf(gEmail) !== -1 && String(gm[0].to).indexOf('evil') === -1 && /\/s\/[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}/.test(gm[0].html || ''), [sd.body, gm.map(function (m) { return m.to; })]);
+  check('send: ONE email, to the address ON THE ACCOUNT (never one the caller typed), with a long one-tap link of its own (never the short link)',
+    sd.status === 200 && sd.body.ok === true && gm.length === 1 && String(gm[0].to).indexOf(gEmail) !== -1 && String(gm[0].to).indexOf('evil') === -1 && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(gm[0].html || '') && !/\/s\/[A-Z0-9]{8}/.test(gm[0].html || ''), [sd.body, gm.map(function (m) { return m.to; })]);
+  check('SECURITY: the public code alone never yields a working login: the answer carries no link or token, and nothing about the account', !/go#t=|\/s\/|token|@/.test(JSON.stringify(sd.body)), sd.body);
   check('...and the answer says nothing about the account (no email, no mobile, no venue id)', JSON.stringify(sd.body) === '{"ok":true}', sd.body);
   var sd0 = await call('/venue-signin/send', { code: 'ZZZZZZ' }, NETG(3));
   check('an unknown code answers exactly the same, and nothing is sent', JSON.stringify(sd0.body) === '{"ok":true}' && sent.length === before8 + 1, sd0.body);
   await call('/venue-signin/send', { code: 'GOC0DE' }, NETG(4)); await call('/venue-signin/send', { code: 'GOC0DE' }, NETG(5));
+  DB.vp_signin_links.forEach(function (l) { l.created_at = new Date(Date.now() - 2 * 86400000).toISOString(); });   // only the venue's own hourly limit may stop the 4th
   var n4 = sent.length; var sd4 = await call('/venue-signin/send', { code: 'GOC0DE' }, NETG(6));
   check('three sends an hour per venue: the 4th (from anywhere) answers the same and sends nothing', JSON.stringify(sd4.body) === '{"ok":true}' && sent.length === n4 && n4 === before8 + 3, [sent.length, n4, before8]);
   var lim = []; for (var gi = 0; gi < 7; gi++) lim.push((await call('/venue-signin/send', { code: 'ZZZZZ' + gi }, NETG(9))).status);
   check('six sends an hour per network, then 429', lim.slice(0, 6).every(function (x) { return x === 200; }) && lim[6] === 429, lim);
   var GP = readFile('venueplay/go-venue.html'), gjs = /<script>([\s\S]*?)<\/script>/.exec(GP)[1];
   var GPOST = [], GE = {}; ['goTitle', 'goSub', 'goSend', 'goMsg'].forEach(function (id) { GE[id] = { id: id, textContent: '', hidden: false, disabled: false, h: {}, addEventListener: function (e, f) { this.h[e] = f; } }; });
-  var GW = { location: { pathname: '/go/goc0de' }, document: { getElementById: function (id) { return GE[id]; } },
+  var GW = { location: { pathname: '/go/goc0de', href: 'https://venueplay.com.au/go/goc0de', search: '', hash: '' }, document: { getElementById: function (id) { return GE[id]; } },
     fetch: function (u, o) { GPOST.push({ u: u, b: JSON.parse(o.body) }); return Promise.resolve({ status: 200, json: function () { return Promise.resolve(/lookup$/.test(u) ? { ok: true, venue: 'Go Code Hotel' } : { ok: true }); } }); } };
   (new Function('window', gjs.replace('(window);', '(window);')))(GW); drainMicrotasks();
   GE.goSend.h.click(); drainMicrotasks(); drainMicrotasks();

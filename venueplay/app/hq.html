@@ -2625,7 +2625,7 @@
        expiry). The Worker's own line says how it went and until when. */
     /* THE SAME LINK (Dean, 6 Nov 2026): a prospect's resend is the same link as before, and it never gives them more
        time. Only "Start a fresh 30 days" (hqFreshWindow, below) does. */
-    return vpAsk("Send "+name+" their sign-in link again?\n\nIt goes "+how+". One tap opens their account."+(p?" It is the same link as before, and it does not give them more time.":" Any older link stops working.")).then(function(ok){ if(!ok) return null;
+    return vpAsk("Send "+name+(p?" their sign-in link again?":" a new sign-in link?")+"\n\nIt goes "+how+". One tap opens their account."+(p?" It is the same link as before, and it does not give them more time.":" Any older link stops working.")).then(function(ok){ if(!ok) return null;
       busy("Sending...");
       return workerPost("/admin/signin-link", { venue_id:id, text:true }).then(function(r){
         done();

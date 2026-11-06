@@ -619,8 +619,10 @@ grant or function and RLS-BASELINE.json does not change. Either order with the s
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
 branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
 
-`venueplay-175-prospect-one-signin-link.sql` (Dean, 6 Nov 2026, ONE sign-in link per prospect): one column,
-`vp_prospects.signin_code_enc`, the prospect's short code (venueplay.com.au/s/XXXXXXXX) sealed by the billing Worker, so
+`venueplay-175-prospect-one-signin-link.sql` (Dean, 6 Nov 2026, ONE sign-in link per prospect): three columns,
+`vp_prospects.signin_code_enc` (the short letters, sealed), `vp_prospects.signin_code_hash` and `vp_signin_links.short_ok`. The
+short link venueplay.com.au/s/XXXXXXXX is a handle over the CURRENT live one-tap token (never a login key; a used token is never
+re-opened), so
 the welcome, the reply in their thread, every follow-up email and text and HQ's Resend all carry the same link with the same
 end; only HQ's "Start a fresh 30 days" makes a new one. No table, policy, grant or function, so RLS-BASELINE.json does not
 change. Either order with the billing Worker (before it, each send makes its own link as today). NUMBER: 175 (the main
