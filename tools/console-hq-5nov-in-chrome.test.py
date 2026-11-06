@@ -174,12 +174,14 @@ try:
         # 6. People
         tab(sid, 'people')
         ppl = S.json(sid, 'JSON.stringify({on:document.getElementById("tp-people").classList.contains("on"),hosts:!!document.querySelector("#tp-people #hosts"),'
-                                    'notInBilling:!document.querySelector("#tp-billing #hosts"),at:document.getElementById("peopleAt").textContent,'
+                                    'notInBilling:!document.querySelector("#tp-billing #hosts"),at:document.getElementById("peopleAt").textContent,atHidden:document.getElementById("peopleAt").hidden,pick:(document.querySelector("#acctPick select")||{}).value||"",'
                                     'ticked:[].map.call(document.querySelectorAll("#host-venues .host-v:checked"),function(c){return c.value})})', {})
         cur = S.js(sid, 'document.querySelector("#acctPick select").value')
         ok('%s: 6. a People tab holds the hosts list, and Billing no longer does' % where, ppl.get('on') and ppl.get('hosts') and ppl.get('notInBilling'), ppl)
-        ok('%s: 6. it says whose people it is showing: the venue chosen at the top' % where, ('Showing who can sign in at ' in (ppl.get('at') or '')), ppl)
-        ok('%s: G. "Change the venue at the top" is said, because there IS a drop-down at the top (two venues)' % where, 'Change the venue at the top of the page' in (ppl.get('at') or ''), ppl)
+        # Dean, 6 Nov 2026 (round 5 note 1: "people who can sign in... change the venue at the top" is self-explanatory):
+        # the venue is the one in the drop-down at the top, and the line that said so is gone.
+        ok('%s: 6. the people shown are the venue chosen at the top, with no line explaining it' % where, ppl.get('at') == '' and ppl.get('atHidden') is True, ppl)
+        ok('%s: G. the drop-down at the top is there and names the venue (two venues)' % where, bool(ppl.get('pick')), ppl)
         g = S.json(sid, """(function(){var t=document.getElementById("tp-people").innerText;var notes=[].map.call(document.querySelectorAll("#tp-people .label:not(#peopleHead) + .note"),function(n){return {b:(n.querySelector("b")||{}).textContent||"",len:n.textContent.length}});
             return JSON.stringify({signins:(t.match(/with a text code/g)||[]).length,theySign:/They sign in at/.test(t),notes:notes});})()""", {})
         ok('%s: G. ONE sign-in sentence for everyone, not one per role' % where, g.get('signins') == 1 and not g.get('theySign'), g)

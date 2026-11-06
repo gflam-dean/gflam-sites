@@ -373,7 +373,7 @@ function heading(el) { var h = walk(el, function (e) { return e.tagName === 'H3'
   var ab3 = runAbout(null, true); await settle();
   check('before migration 163 (the read fails or errors) the card stays hidden and says nothing', ab2.wrap.style.display === 'none' && ab3.wrap.style.display === 'none' && ab2.body.children.length === 0 && ab3.body.children.length === 0);
   check('billing.html loads vp-firstrun.js after vp-session.js and has the card on the Game settings tab', BILL.indexOf('<script src="vp-firstrun.js"></script>') > BILL.indexOf('<script src="vp-session.js"></script>') && /<div id="aboutVenueWrap"[\s\S]*?About your venue[\s\S]*?<div class="label">Player data/.test(BILL) && /renderAbout\(d\.venues\);/.test(BILL));
-  check('the card tells them how to change an answer', /To change an answer, open Setup guide at the top of the console\./.test(BILL));
+  check('the card tells them how to change an answer', /Change these in the console's Setup guide\./.test(BILL));
   check('index.html asks the one later question after the Terms card, never blocking, only when VPFirstRun.ask exists', INDEX.indexOf('VPFirstRun.ask(__ctx') > INDEX.indexOf('VP.termsCard(__ctx);   // section 6') && /VPFirstRun\.ask &&/.test(INDEX) && /onClose:function\(\)\{\}/.test(INDEX.slice(INDEX.indexOf('VPFirstRun.ask(__ctx'), INDEX.indexOf('VPFirstRun.ask(__ctx') + 200)));
   var MIG = readFile('venueplay-backend/supabase/venueplay-163-setup-answers.sql'), MIGS = readFile('venueplay-backend/supabase/MIGRATIONS.md');
   var migCode = MIG.split('\n').filter(function (l) { return !/^\s*--/.test(l); }).join('\n');
