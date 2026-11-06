@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 10:45 · a206e3f2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 11:14 · d3e65901';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -158,6 +158,8 @@ const JOIN_MAX_PER_IP = 300;      // joins per 60s per network. Generous: a whol
 const LIKE_MAX_PER_IP = 30;      // venue-name searches per 60s per network: a screen setting itself up asks a handful of times.
 const FIND_MAX_PER_IP = 20;      // TV-app name searches (?q=) per 60s per network: one per press of Search on a remote.
 const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
+const LIST_MAX_PER_IP = 30;      // /join/list sign-ups per 60s per network (a pub shares one NAT IP)
+const LIST_MAX_PER_DEVICE = 5;   // and per phone, per hour: a phone signs up once, a loop is somebody playing
 const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
 const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined attacker spamming BINGO + the TV overlay.
@@ -335,6 +337,7 @@ export default {
       if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
+      if (method === 'POST' && path === '/join/list')          return await handleJoinList(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/feedback')           return await handleFeedback(request, env, json);
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
@@ -1895,6 +1898,79 @@ function gatedCapture(cfg, b) {
     out.marketing_optin_at = new Date().toISOString();
   }
   return out;
+}
+
+/* ------------------------------ POST /join/list ------------------------------
+ * "GET A HEADS UP BY EMAIL" ON THE PHONE WITH NO GAME ON (Dean, 6 Nov 2026, round 5): one email, the venue's own optional
+ * "Send me offers from {venue}. I'm 18 or over." tick (/app/vp-consent.js), and the consent words' version.
+ *
+ * body { code, email, marketing_optin, consent_version, pid }, header X-Player-Token optional.
+ *   code   the room's join code or the venue's permanent code (the QR the phone came from)
+ *   -> { ok:true, stored:true } | { ok:true, stored:false } (the venue does not collect email) | 4xx
+ *
+ * THE SAME WAY A PLAYER'S OPT-IN IS KEPT, through the same gate (gatedCapture: only what the venue has switched on, the
+ * tick only with an address). A phone that played at THIS venue before (it still holds the token /join gave it) has its
+ * own vp_players row brought up to date, which is exactly where a player's opt-in lives and what the venue's export
+ * reads (v_vp_player_optins). A phone that never played here cannot prove it was ever in the room, so its sign-up is
+ * kept in vp_captures marked during_game false, like an unverified /capture: stored, never mailed (the view leaves
+ * those out). The consent version is kept in the consent_version column (migration 174, NOT RUN); until 174 runs it
+ * is dropped rather than losing the sign-up.
+ *
+ * Limits: LIST_MAX_PER_IP per network per minute, LIST_MAX_PER_DEVICE per phone (pid) per hour. */
+async function handleJoinList(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'list:ip:' + ipHash, LIST_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many sign-ups from this network right now' }, 429);
+  }
+  const pid = String(b.pid || '').trim();
+  if (/^[A-Za-z0-9_-]{8,64}$/.test(pid)) {
+    const rd = await rateLimit(env, 'list:dev:' + pid, LIST_MAX_PER_DEVICE, 3600);
+    if (!rd.ok) return json({ error: 'You have already signed up from this phone' }, 429);
+  }
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right' }, 400);
+  const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
+  const code = String(b.code || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) return json({ error: 'Missing code' }, 400);
+  // The venue: a room's join code (any session, live or not: the night may be over) or the venue's permanent code.
+  let venueId = null;
+  const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&select=venue_id&order=created_at.desc&limit=1');
+  if (ss.length) venueId = ss[0].venue_id;
+  else venueId = await venueByCode(env, code);
+  if (!venueId) return json({ error: 'No venue with that code' }, 404);
+  const cfg = await venueCollectCfg(env, venueId);
+  const cap = gatedCapture(cfg, { email: email, marketing_optin: b.marketing_optin === true });
+  if (!cap.email) return json({ ok: true, stored: false });   // this venue does not collect email: nothing is kept
+  if (cap.marketing_optin && consentVersion) cap.consent_version = consentVersion;
+
+  /* A phone that played here: its own player row, when the token is real and its session is this venue's. */
+  let player = null;
+  try { player = await verifyPlayerToken(request, env); } catch (e) { player = null; }
+  if (player) {
+    const sv = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&select=venue_id&limit=1');
+    if (!(sv.length && sv[0].venue_id === venueId)) player = null;
+  }
+  /* The write's error reaches here as a generic 502 (dbError keeps the database's words in the log), so a row that carries
+     consent_version is tried once more without it: before migration 174 that is the column the database does not know,
+     and a sign-up is never lost to it. A row without the column, or a second failure, is a real fault and is thrown. */
+  const write = async (fn, row) => {
+    try { return await fn(row); }
+    catch (e) {
+      if (!('consent_version' in row) || (e && e.status && e.status !== 502)) throw e;
+      const r2 = Object.assign({}, row); delete r2.consent_version;
+      return await fn(r2);
+    }
+  };
+  if (player) {
+    await write((row) => sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id), row), cap);
+    return json({ ok: true, stored: true });
+  }
+  const row = Object.assign({ venue_id: venueId, source: 'nogame', during_game: false }, cap);
+  if (ipHash) row.source_ip_hash = ipHash;
+  await write((r) => sbInsert(env, 'vp_captures', r, false), row);
+  return json({ ok: true, stored: true });
 }
 
 async function handleCapture(request, env, json) {

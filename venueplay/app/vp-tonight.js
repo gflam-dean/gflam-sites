@@ -179,17 +179,20 @@
     inp.setAttribute("placeholder", "Your email"); inp.setAttribute("aria-label", "Your email");
     btn.setAttribute("type", "submit");
     r.appendChild(inp); r.appendChild(btn); f.appendChild(r);
-    var tk = el("label", "tk"), cb = el("input");
-    cb.setAttribute("type", "checkbox");
-    tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + (o.venue || "this venue") + ". I’m 18 or over."));
-    f.appendChild(tk);
+    var cb = null;
+    if (o.offers !== false) {   // the venue's offers tick, only where the venue collects it (the page says)
+      var tk = el("label", "tk"); cb = el("input");
+      cb.setAttribute("type", "checkbox");
+      tk.appendChild(cb); tk.appendChild(el("span", "", "Send me offers from " + (o.venue || "this venue") + ". I\u2019m 18 or over."));
+      f.appendChild(tk);
+    }
     var err = el("div", "err"); err.setAttribute("role", "status"); f.appendChild(err);
     f.onsubmit = function (e) {
       if (e && e.preventDefault) e.preventDefault();
       var v = String(inp.value || "").trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { err.textContent = "That email doesn’t look right."; return false; }
       btn.disabled = true; err.textContent = "";
-      Promise.resolve(o.signup(v, !!cb.checked)).then(function () {
+      Promise.resolve(o.signup(v, !!(cb && cb.checked))).then(function () {
         if (f.parentNode) f.parentNode.removeChild(f);   // closes; the screen is the week again, nothing more is said
       }, function () { btn.disabled = false; err.textContent = "Could not send that. Try again in a moment."; });
       return false;

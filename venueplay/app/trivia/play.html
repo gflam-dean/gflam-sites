@@ -671,6 +671,17 @@
      luck, "You're back in. Next question coming up on the big screen", 131 points, 2nd, hours after the night had
      ended and with the host signed out). Said plainly, with no score and no promise of a question. A host message
      (a heartbeat, a question, a lobby) takes the phone out of it again. */
+  /* "GET A HEADS UP BY EMAIL" (Dean, 6 Nov 2026): the venue's list, through /join/list, only when the venue collects email.
+     The token this phone joined with (even a finished night's) goes with it, so a regular's sign-up lands on their own
+     player row, where the venue's list is read from. Once sent, this phone is not asked again at this venue. */
+  function headsUpKey(){ return "vp-headsup-"+P.room; }
+  function headsUpDone(){ try{ return localStorage.getItem(headsUpKey())==="1"; }catch(e){ return false; } }
+  function headsUp(email, optin){
+    var h={ "Content-Type":"application/json" }, t=P.token||P.lastToken; if(t) h["X-Player-Token"]=t;
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email, marketing_optin:optin===true,
+      consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
+      .then(readApi).then(function(r){ try{ localStorage.setItem(headsUpKey(),"1"); }catch(e){} return r; });
+  }
   var NO_GAME_MSG="Ask the host, or scan the code when the next game starts.";
   function showNoGame(){
     if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; }
@@ -681,7 +692,8 @@
     var tn=$("vpTonight"), inb=$("waitIn");
     if(tn && inb && typeof VPTonight==="object"){
       inb.classList.add("hidden"); tn.classList.remove("hidden");
-      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, venue:P.venueName });   // no sign-up: no Worker route takes one yet
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, venue:P.venueName,
+        signup: (P.collect && P.collect.email) ? headsUp : null, offers: !!(P.collect && P.collect.marketing_optin), signedUp: headsUpDone() });
     }
   }
   /* A phone that comes back between questions is told "watch the big screen", and if no host is heard on the channel
@@ -1236,6 +1248,7 @@
      playing, 25 Sep 2026. The bingo phone already re-joins whenever the night changes
      (joinServerSession); this is the same rule. Same pid, so the Worker keeps one player. */
   function dropStaleJoin(){
+    if(P.token) P.lastToken=P.token;   // kept in memory only, for the "heads up by email" sign-up (/join/list)
     P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
     // and a socket keeps the first hash it answered with, so the old token's socket goes too (ansRoom reopens one)
     if(AR.room){ try{ AR.room.close(); }catch(e){} AR.room=null; AR.gameId=""; }
@@ -1343,6 +1356,7 @@
       /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
       P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null;
       if(r&&r.venue_name) P.venueName=String(r.venue_name);
+      P.collect=(r&&r.collect)||null;   // what this venue collects: the heads-up sign-up shows only when it collects email
       if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
         if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
       }

@@ -95,6 +95,9 @@ form.onsubmit({ preventDefault: function () {} }); Promise = realPromise;
 ok('a good one is sent once, with the tick', sent.length === 1 && sent[0][0] === 'sam@example.com' && sent[0][1] === true, JSON.stringify(sent));
 resolveIt();
 ok('and once sent the box closes, and nothing says "on the list"', removed === true);
+var nooffer = new Node('div');
+T.noGame(nooffer, { name: 'Sam', venue: 'Tugun Bowls Club', signup: function () {}, offers: false, now: WED });
+ok('a venue that does not collect the offers tick: the email field, no tick', all(byClass(nooffer, 'vpt-sign')[0]).filter(function (n) { return n.tagName === 'input'; }).length === 1 && !/Send me offers/.test(nooffer.textContent));
 var done = new Node('div');
 T.noGame(done, { name: 'Sam', signup: function () {}, signedUp: true, now: WED });
 ok('a phone that already signed up is not asked again', byClass(done, 'vpt-sign').length === 0);
@@ -118,7 +121,7 @@ print('\nTHE TRIVIA PHONE uses it');
 var PLAY = readFile('venueplay/app/trivia/play.html');
 ok('loads the module', PLAY.indexOf('<script src="/app/vp-tonight.js"></script>') > 0);
 ok('the plain lobby (no other heading, nothing scored) is option C', /var useT = !head && !\(P\.total>0\) && typeof VPTonight==="object";/.test(PLAY) && /VPTonight\.lobby\(tn, \{ name:P\.name, me:"trivia"/.test(PLAY));
-ok('"No game on right now" is the round 5 pick, with the week and no sign-up (no route yet)', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName \}\);/.test(PLAY));
+ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));
 
 print('');
