@@ -297,7 +297,7 @@ def join_loading():
 def musical_toast():
     print('\nThe musical TV\'s "No sound on this screen" toast: top centre, off the JOIN NOW QR, gone in eight seconds')
     src = io.open(os.path.join(RIG.ROOT, 'venueplay/app/musical/screen.html'), encoding='utf-8').read()
-    a = src.find('  var _audioWarned=false;'); b = src.find('  function audioOk(){', a)
+    a = src.find('  var _audioWarned=false'); b = src.find('  function audioOk(){', a)
     ok('CONTROL: audioBlocked() is where this test lifts it from', a > 0 and b > a)
     if a < 0 or b < 0: return
     code = src[a:b]

@@ -181,7 +181,7 @@
      on the right a pink NOW PLAYING label, the title in Anton, the artist, and ONE sentence for the pattern and the
      prize ("One line wins a meat tray"). LISTEN: the kit's neon triangle breathing (2.6s, glow only) where the art
      goes, "Know it? Mark it on your card." and the same sentence, with no "Song 15" label (Dean, 3 Nov late). Along the
-     bottom: "Song 14" on the left over a played-so-far strip of the last five, with artwork, the current song outlined
+     bottom: "14 songs played" on the left (6 Nov: it said "Song 14") over a played-so-far strip of the last five, with artwork, the current song outlined
      in pink and "+9" for the earlier ones. NO player count anywhere on the wall (Dean, 4 Nov 2026 evening: counts
      stay on the host console). Sizes in cqw, so
      /app/vp-oldtv.js can work them out on an older set; inner places are written calc(Ncqw) so the corner check
@@ -533,7 +533,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var nx=$("tvBoardNext");
     if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Song "+total; }
     var no=$("tvSongNo");
-    if(no) no.textContent = total>0 ? ("Song "+total) : "";
+    /* "14 songs played", NOT "Song 14" (Dean, live play, 6 Nov 2026: "Song N" bottom left over the last song's
+       cover and a dashed "Song N" bottom right read as the same thing twice). The left says how many have
+       played; the dashed slot, while one is held back, is the one playing now. A song held back is not
+       counted as played yet. */
+    if(no) no.textContent = all.length>0 ? (all.length+" song"+(all.length===1?"":"s")+" played") : "";
     var lbl=$("tvBoardLbl");
     if(lbl){
       lbl.classList.toggle("hidden", true);   // the song number says it now
@@ -781,7 +785,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      tv_here, which is what HQ reads to decide a screen is alive. A demo must never make a dead
      TV look healthy. */
   if(!VP_DEMO) ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true, audio:(typeof audioState==="function" ? audioState() : "unknown") }); tvStatus(true); }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
@@ -928,9 +932,20 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      used to be swallowed by an empty catch. If the kiosk's autoplay setting is off, name that tune
      runs in complete silence while the screen cheerfully shows "Now playing". Say so on the wall,
      and tell the host console, so somebody knows within one song rather than one round. */
-  var _audioWarned=false;
+  var _audioWarned=false, _audioHeard=false;
+  /* WHAT THIS SCREEN CAN SAY ABOUT ITS OWN SOUND, before and after song 1 (Dean's live play, 6 Nov 2026:
+     song 1 was silent and the host was only told after song 2). 'blocked' = a play was refused or never
+     started; 'ok' = a clip has really played here; 'unknown' = nothing tried yet. Where the browser can say
+     in advance (navigator.getAutoplayPolicy), it does, so the host hears about it from the lobby. Every
+     tv_here carries it, so a one-off warning that was missed is repeated on the next reply. */
+  function audioState(){
+    if(_audioWarned) return "blocked";
+    if(_audioHeard) return "ok";
+    try{ if(navigator.getAutoplayPolicy && navigator.getAutoplayPolicy("mediaelement")==="disallowed") return "blocked"; }catch(e){}
+    return "unknown";
+  }
   function audioBlocked(){
-    if(_audioWarned) return; _audioWarned=true;
+    if(_audioWarned) { try{ tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){} return; } _audioWarned=true;
     var w=document.getElementById("audioWarn");
     if(!w){
       /* TOP CENTRE, AND IT GOES (live play audit, 20 Oct 2026). Bottom left it sat on the JOIN NOW
@@ -944,9 +959,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       document.body.appendChild(w);
     }
     setTimeout(function(){ var x=document.getElementById("audioWarn"); if(x) x.remove(); }, 8000);
-    try{ tvSend({ t:"tv_audio_blocked" }); }catch(e){}
+    try{ tvSend({ t:"tv_audio_blocked" }); tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){}
   }
-  function audioOk(){ _audioWarned=false; var w=document.getElementById("audioWarn"); if(w) w.remove(); }
+  function audioOk(){
+    var was=_audioWarned; _audioWarned=false; _audioHeard=true;
+    var w=document.getElementById("audioWarn"); if(w) w.remove();
+    if(was){ try{ tvSend({ t:"tv_here", audio:"ok" }); }catch(e){} }   // the host stops playing it here
+  }
   /* ============ LOUDER THAN THE LAPTOP CAN GO ============================
 
      An <audio> element's volume is a fraction of the source, so 1.0 IS the file,
@@ -996,6 +1015,10 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
       clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
       var pr=clipAudio.play();
+      /* A play() that neither rejects nor starts (the clip sat at 0:00 on Dean's TV for song 1): look again
+         after three seconds and call a clip that has not moved blocked, instead of waiting for song 2. */
+      var _src=url;
+      setTimeout(function(){ if(clipAudio.getAttribute("src")===_src || clipAudio.src===_src){ if(clipAudio.paused || clipAudio.currentTime<0.2) audioBlocked(); } }, 3000);
       if(pr&&pr.then) pr.then(function(){
         audioOk();
         if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} }
@@ -1017,7 +1040,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it. */
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="played" && !m.replay) _endArmed=true; }catch(e){} }
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here", audio:audioState() }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
     if(typeof m.game_id==="string" && m.game_id && (m.t==="started" || m.t==="state")) _gameId=m.game_id;

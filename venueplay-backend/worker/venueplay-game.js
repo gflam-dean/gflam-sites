@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 19:29 · 7ec2435a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 19:31 · 1094055f';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -273,6 +273,44 @@ function lobbyFormat(f) {
 async function noteLobbyFormat(env, sessionId, format) {
   if (!format) return;
   try { await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { lobby_format: lobbyFormat(format) }); } catch (e) { /* tolerated */ }
+}
+/* A TRIVIA OR MUSICAL LOBBY NOBODY IS RUNNING IS NOT LIVE (Dean's live play, 6 Nov 2026).
+   A host who leaves the console without End game used to leave the venue's one live session open:
+   the TV fell back to its old lobby QR and /play with the venue code sent phones into a game that
+   was not there. A trivia or musical session that has run no game for ABANDONED_LOBBY_MS is treated
+   as gone: the lookups below answer "nothing on", and the next lobby closes it (billing it exactly
+   as a close does) and opens a fresh one. Only those two formats: a bingo night can be broadcast
+   only for hours with no game row, and must never be judged by this. Cheap by construction: a
+   session younger than the window costs no read at all. Cannot tell (a read fails) = live. */
+const ABANDONED_LOBBY_MS = 3 * 3600 * 1000;
+async function sessionAbandoned(env, s) {
+  try {
+    if (!s || !s.id) return false;
+    const lf = String(s.lobby_format || '');
+    if (lf !== 'trivia' && lf !== 'musical_bingo') return false;
+    const born = Date.parse(s.opened_at || s.created_at || '');
+    if (!isFinite(born) || Date.now() - born < ABANDONED_LOBBY_MS) return false;
+    const running = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(s.id) + '&status=eq.running&select=id&limit=1');
+    if (running.length) return false;
+    const last = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(s.id) + '&select=ended_at,started_at&order=seq.desc&limit=1');
+    let at = born;
+    if (last.length) at = Math.max(born, Date.parse(last[0].ended_at || last[0].started_at || '') || 0);
+    return Date.now() - at >= ABANDONED_LOBBY_MS;
+  } catch (e) { return false; }
+}
+/* Close an abandoned session the way the host's close and the 3am sweep do: games finished, session
+   finished, draws ended, the night billed (the overage key makes a second close harmless). Never throws. */
+async function closeAbandonedSession(env, sessionId) {
+  try {
+    const session = await getSession(env, sessionId);
+    if (session.ended_at || session.status === 'finished' || session.status === 'cancelled') return;
+    const at = new Date().toISOString();
+    await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running', { status: 'finished', ended_at: at });
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { status: 'finished', ended_at: at });
+    await bingoFinishDraws(env, 'session_id=eq.' + enc(sessionId));
+    try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) { /* tolerated */ }
+    try { await chargeNightOverage(env, session); } catch (e2) { await recordOverageCrash(env, session, e2, 'abandoned_lobby'); }
+  } catch (e) { console.log('[abandoned] could not close ' + sessionId + ': ' + String((e && e.message) || e)); }
 }
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
@@ -1177,7 +1215,12 @@ async function handleCreateSession(request, env, json) {
   const wantDemo = b.demo === true;
   if (wantDemo && b.format && String(b.format) !== 'trivia') return json({ error: 'The demo is a trivia round.', code: 'demo_trivia_only' }, 400);
   let liveNow = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start,paper,is_demo&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start,paper,is_demo,lobby_format,opened_at,created_at&order=created_at.desc&limit=1');
+  /* A lobby left behind by a host who walked away is closed here, and a fresh one opened below. */
+  if (liveNow.length && await sessionAbandoned(env, liveNow[0])) {
+    await closeAbandonedSession(env, liveNow[0].id);
+    liveNow.length = 0;
+  }
   // Caller mode is a bingo console's choice; an older console sends no caller field and changes nothing.
   const callerAsked = (lobbyFormat(b.format) === 'bingo90' && typeof b.caller === 'boolean') ? b.caller : null;
   /* NEVER ONE INTO THE OTHER. A demo asked for while a real night is live is refused (the real night is
@@ -1407,6 +1450,7 @@ async function joinInfoLookup(env, code, fresh) {
   let liveNow = false;
   let liveSession = null;   // the open session's row, for the caller-mode flag (vp_sessions.paper.bingo)
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*&limit=1');
+  if (sessions.length && await sessionAbandoned(env, sessions[0])) sessions.length = 0;   // a walked-away trivia or musical lobby is not on (6 Nov 2026)
   if (sessions.length) {
     venueId = sessions[0].venue_id;
     liveNow = true;
@@ -1439,6 +1483,7 @@ async function joinInfoLookup(env, code, fresh) {
     if (venueId) {
       const live = await sbGet(env, 'vp_sessions',
         'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=*&order=created_at.desc&limit=1');
+      if (live.length && await sessionAbandoned(env, live[0])) live.length = 0;
       if (live.length) {
         liveNow = true;
         liveSession = live[0];
@@ -3144,7 +3189,8 @@ async function playLiveLookup(env, code) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format,paper&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format,paper,opened_at,created_at&order=created_at.desc&limit=1');
+  if (sessions.length && await sessionAbandoned(env, sessions[0])) sessions.length = 0;   // same rule as /join/info: a walked-away lobby is not on
   /* A QUIET NIGHT ASKS NOTHING (live audit, 16 Oct 2026). This used to answer phoneRules(''),
      and '' is bingo, so with nothing on at all a Victorian or Tasmanian phone was told "Tonight
      you play on paper" and an ACT phone was asked "Are you 18 or over?", before the host had
@@ -9029,7 +9075,7 @@ async function handlePlayerCard(request, env, json) {
   } else {
     const games = await sbGet(env, 'vp_games',
       'session_id=eq.' + enc(player.session_id) + '&format=eq.musical_bingo&status=eq.running&select=id,format&order=seq.desc&limit=1');
-    if (!games.length) return json({ game: null });   // nothing running yet; phone waits
+    if (!games.length) return json(await noCardYet(env, player));   // nothing running yet; phone waits
     gameId = games[0].id;
     fmt = games[0].format;
   }
@@ -9042,6 +9088,21 @@ async function handlePlayerCard(request, env, json) {
      ticket from vp_cards, against the unused vp_bingo_games draw) is gone: one bingo ticket path. */
   if (fmt === 'musical_bingo') return await playerMusicCard(env, json, gameId, player);
   return json({ game: null });
+}
+
+/* "NO CARD YET" IS NOT ALWAYS "WAIT" (Dean's live play, 6 Nov 2026: a phone that joined the musical lobby
+   never got a card while songs played). The token is bound to the SESSION the phone joined. If the host's
+   lobby was closed and opened again, that session is finished, the token still checks out (so no 401 and
+   no re-join), and the game is running in the venue's NEW session where this phone has no row: this
+   answered game:null for ever. Now it says so (stale:true) and the phone re-joins the live night under
+   the same device id. A live session, or one that cannot be read, is the old answer: wait. */
+async function noCardYet(env, player) {
+  try {
+    const rows = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&select=status,ended_at&limit=1');
+    const r = rows[0];
+    if (r && (r.status === 'finished' || r.status === 'cancelled' || r.ended_at)) return { game: null, stale: true };
+  } catch (e) { /* cannot tell: wait */ }
+  return { game: null };
 }
 
 /* ------------------------------ MUSICAL: a player's 5x5 card ------------------------------

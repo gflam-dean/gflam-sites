@@ -1048,9 +1048,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return cap;
   }
   // Fetch (or lazily be dealt) this player's 5x5 card for the running game.
+  var _staleAt=0;
   function fetchCard(){
     if(!P.token) return Promise.resolve();
     return playerGet("/player/card").then(function(r){
+      /* THE NIGHT THIS PHONE JOINED HAS ENDED (the Worker says stale:true). The token still checks out, so
+         nothing else ever re-joined: a phone that joined the lobby sat on "You're in" through the whole game
+         with no card (Dean, live play, 6 Nov 2026). Re-join the live night under the same device id, once
+         per twenty seconds so a venue with nothing on cannot make it loop, and ask again. */
+      if(r && r.stale===true && P.joined && (Date.now()-_staleAt)>20000){
+        _staleAt=Date.now(); dropStaleJoin();
+        return rejoinNow().then(function(){ return P.token ? fetchCard() : undefined; });
+      }
       if(!r || r.game===null || !r.game_id){ P.active=false; P.cells=null; route(); return; }
       P.gameId=r.game_id;
       P.cells=r.cells||[];
