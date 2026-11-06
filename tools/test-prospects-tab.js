@@ -32,6 +32,7 @@ Response = function (body, init) { this.body = body; this.status = (init && init
 Response.redirect = function (u, s) { return { redirect: u, status: s }; };
 
 load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
 vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 if (typeof TextEncoder === 'undefined') { TextEncoder = function () {}; TextEncoder.prototype.encode = function (s) { s = unescape(encodeURIComponent(String(s))); var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }; }
 function fnv(bytes, seed) { var out = new Uint8Array(32), h = (2166136261 ^ seed) >>> 0; for (var r = 0; r < 32; r++) { for (var i = 0; i < bytes.length; i++) { h ^= bytes[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; } return out; }
@@ -484,7 +485,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   check('the day-3 follow-up goes with {days} filled from the link that was minted: "expires in 27 days", and the subject Dean chose', n7.status === 200 && n7.body.days_left === 27 && sent.length === b7 + 1 &&
     /This link expires in 27 days\./.test(m7.html || '') && (m7.html || '').indexOf('{days}') < 0 && m7.subject === 'Your venueplay sign-in link again', [n7.body, m7.subject]);
   check('...and that link ends at the SAME 30-day moment from setup as the quiet list says (never 14 days from now)', Math.abs(Date.parse(l7.expires_at) - Date.parse(j7.link_expires_at)) < 1000 && Date.parse(n7.body.expires_at) === Date.parse(l7.expires_at) && Date.parse(l7.expires_at) < Date.now() + 28 * DAY, [l7.expires_at, j7.link_expires_at]);
-  check('...and the email says until when it works, in words', /It works until (Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+\./.test(m7.html || ''), (m7.html || '').slice(-300));
+  check('...and the email says how long the link is available and until when, in words (Dean, 6 Nov 2026)', /This link is available for \d+ days?, until (Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+\./.test(m7.html || ''), (m7.html || '').slice(-300));
   var nd = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3, subject: 'Your venueplay \u2014 link' }, AP);
   var nd2 = await call('/autopilot/prospect/nudge', { venue_id: jv.id, text: DAY3.replace('venueplay', 'VenuePlay').replace('Hey Sam', 'Hey Sam, VenuePlay here') }, AP);
   check('a subject or words with a long dash or VenuePlay: refused, nothing sent', nd.status === 400 && nd2.status === 400 && sent.length === b7 + 1, [nd.body, nd2.body]);
@@ -499,7 +500,7 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   SMS.length = 0;
   var s7 = await call('/autopilot/prospect/nudge-sms', { venue_id: jv.id, text: EXP }, AP);
   var sb = ((SMS[0] || {}).body || {}).messages || [];
-  check('the "expires in 3 days" text: {days} filled (3), {link} a real link, STOP kept', s7.status === 200 && sb.length === 1 && /expires in 3 days\./.test(sb[0].body) && sb[0].body.indexOf('{days}') < 0 && /\/app\/go#t=/.test(sb[0].body) && /Reply STOP to opt out$/.test(sb[0].body), sb[0] && sb[0].body);
+  check('the "expires in 3 days" text: {days} filled (3), {link} a real link, STOP kept', s7.status === 200 && sb.length === 1 && /expires in 3 days\./.test(sb[0].body) && sb[0].body.indexOf('{days}') < 0 && /\/app\/go#t=[A-Za-z0-9_-]{43}/.test(sb[0].body) && /Reply STOP to opt out$/.test(sb[0].body), sb[0] && sb[0].body);
   var sl = DB.vp_signin_links.filter(function (l) { return l.venue_id === jv.id && !l.used_at; });
   var j27 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === jv.id; })[0] || {};
   var slNew = sl[sl.length - 1] || {};
@@ -577,12 +578,16 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var rsE = await call('/auth/one-click/resend', { e: theirAddr });
   check('by address instead of token: the same, ended and no link', rsE.status === 200 && rsE.body.ended === true && emailsTo(theirAddr) === them0, rsE.body);
 
-  /* HQ RESENDS: a fresh 30 days from the resend, the follow-ups re-dated from there; the automatic follow-ups never reset it. */
+  /* HQ (Dean, 6 Nov 2026): the normal Resend never renews the 30 days, so after them it is refused and names the one
+     button that does; "Start a fresh 30 days" (fresh: true) gives a new window from the press, the follow-ups re-dated
+     from there; the automatic follow-ups never reset it. */
   var T8 = Date.now();
-  var hq = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  var hq0 = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  check('HQ\'s normal Resend after the 30 days: refused, nothing sent, and it names "Start a fresh 30 days"', hq0.status === 409 && hq0.body.ended === true && /Start a fresh 30 days/.test(hq0.body.error || '') && emailsTo(theirAddr) === them0, hq0.body);
+  var hq = await call('/admin/signin-link', { venue_id: ev.id, fresh: true }, AS(ADMIN));
   var hl = DB.vp_signin_links.filter(function (l) { return l.venue_id === ev.id && !l.used_at; })[0] || {};
   var ep = row('Ended Arms') || {};
-  check('HQ Resend sign-in link after the 30 days: it goes, lasts a fresh 30 days from NOW, and the prospect is re-dated (link_from)', hq.status === 200 && hq.body.restarted === true && hq.body.redated === true && hq.body.days_left === 30 &&
+  check('HQ Start a fresh 30 days after the 30 days: it goes, lasts a fresh 30 days from NOW, and the prospect is re-dated (link_from)', hq.status === 200 && hq.body.restarted === true && hq.body.redated === true && hq.body.days_left === 30 &&
     Math.abs(Date.parse(hl.expires_at) - T8 - 30 * DAY) < 60000 && Math.abs(Date.parse(ep.link_from) - T8) < 60000 && emailsTo(theirAddr) === them0 + 1, [hq.body, hl.expires_at, ep.link_from]);
   var q8 = ((await call('/autopilot/prospects/quiet', undefined, AP, 'GET')).body.prospects || []).filter(function (x) { return x.venue_id === ev.id; })[0] || {};
   check('...so the quiet list counts journey 1 from the resend: day 0, 30 days left, while days_since_setup still says 31', q8.nudge_day === 0 && q8.link_days_left === 30 && q8.days_since_setup === 31 && Math.abs(Date.parse(q8.link_from) - T8) < 60000, q8);
@@ -590,9 +595,9 @@ async function setUp(o, viaAutopilot) { return viaAutopilot ? call('/autopilot/p
   var hl2 = DB.vp_signin_links.filter(function (l) { return l.venue_id === ev.id && !l.used_at; })[0] || {};
   check('...and the follow-up works again, its link ending at the NEW 30-day moment, and it did not move link_from (automatic never resets)', en2.status === 200 && en2.body.days_left === 30 && Math.abs(Date.parse(hl2.expires_at) - T8 - 30 * DAY) < 60000 && (row('Ended Arms') || {}).link_from === ep.link_from, [en2.body, hl2.expires_at]);
   var hqAgain = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
-  check('the HQ answer names the real expiry for the page to show', /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+$/.test(hqAgain.body.expires_words || '') && hqAgain.body.days_left === 30, hqAgain.body);
-  FAIL['vp_prospects:PATCH'] = 1;
-  var hq151 = await call('/admin/signin-link', { venue_id: ev.id }, AS(ADMIN));
+  check('the HQ answer names the real expiry for the page to show, and a normal Resend inside the new 30 days keeps that end (not renewed)', /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d+ [A-Z][a-z]+$/.test(hqAgain.body.expires_words || '') && hqAgain.body.days_left === 30 && hqAgain.body.restarted === false && (row('Ended Arms') || {}).link_from === ep.link_from, hqAgain.body);
+  FAIL['vp_prospects:PATCH'] = 3;
+  var hq151 = await call('/admin/signin-link', { venue_id: ev.id, fresh: true }, AS(ADMIN));
   check('before migration 151 (link_from cannot be written): the link still goes for 30 days and HQ is told the follow-ups could not be re-dated', hq151.status === 200 && hq151.body.restarted === true && hq151.body.redated === false && /migration 151/.test(hq151.body.note || ''), hq151.body);
   FAIL = {};
   /* A login that is not a prospect's keeps the ordinary 14 days: tools/test-phone-signin.js section 3a. */

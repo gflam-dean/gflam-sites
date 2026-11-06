@@ -700,3 +700,11 @@ shows "No postcode". NUMBER: 137 to 139 spent, 140 earmarked for the help saved-
 and worktree 2 Nov 2026. Branch `fix/signup-postcode-2nov`. NOT RUN. Rollback: in the file.
 Brought back 6 Nov 2026 on `fix/recover-3nov-10nov` for the Tue 10 Nov release (Dean's yes); 134 is live (RLS-BASELINE.json
 lists `vp_subscribers` and `v_vp_subscribers_monthly`). Still NOT RUN: run it before or with the billing Worker that carries it.
+
+`venueplay-175-prospect-one-signin-link.sql` (Dean, 6 Nov 2026, ONE sign-in link per prospect): two columns,
+`vp_prospects.signin_code_enc` (the short letters, sealed) and `vp_prospects.signin_code_hash`. The short link
+venueplay.com.au/s/XXXXXXXXXXXX is never a login key: it opens the normal text-code sign-in with their mobile filled in, so
+the welcome, the reply in their thread, every follow-up email and text and HQ's Resend all carry the same link with the same
+end; only HQ's "Start a fresh 30 days" makes a new one. No table, policy, grant or function, so RLS-BASELINE.json does not
+change. Either order with the billing Worker (before it, each send makes its own link as today). NUMBER: 175 (the main
+session's; 173 is fix/signup-core-10nov's). Branch `fix/signin-thread-10nov`. NOT RUN. Read-back and rollback in the file.

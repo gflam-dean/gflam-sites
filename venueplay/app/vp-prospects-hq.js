@@ -161,8 +161,10 @@
              "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; a fresh
              30 days. Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
           var acts = (p.tel ? '<a class="mini prcall" href="' + prEsc(p.tel) + '">Call ' + prEsc(p.phone || p.mobile || "") + "</a>" : "") +
-            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send them a new sign-in link' +
-              '<span class="prvia">' + (p.mobile ? "by email and text" : "email only, add a mobile to text it too") + "</span></button>" : "") +
+            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send their sign-in link again' +
+              '<span class="prvia">' + (p.mobile ? "the same link, by email and text" : "the same link, email only, add a mobile to text it too") + "</span></button>" : "") +
+            /* Dean, 6 Nov 2026: the ONLY way to give them more time, kept apart and labelled so it is never pressed by mistake. */
+            (st === "not_signed_in" ? '<button type="button" class="mini" data-pr-fresh="' + prEsc(p.venue_id) + '">Start a fresh 30 days</button>' : "") +
             '<button type="button" class="mini" data-pr-edit="' + prEsc(p.venue_id) + '">Edit details</button>' +
             (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
             (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "");
@@ -189,6 +191,11 @@
         '<div><span class="k">Website</span>' + (/^https?:\/\//i.test(String(p.website || "")) ? '<a href="' + prEsc(p.website) + '" target="_blank" rel="noopener">' + prEsc(siteHost(p.website)) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Set up</span>' + prEsc(when(p.created_at)) + " (" + prEsc(ago(p.days_since_setup)) + "), by " + prEsc(sourceText(p)) + "</div>" +
         '<div><span class="k">Welcome email</span>' + prEsc(welcomeText(p.welcome)) + "</div>" +
+        /* Where it got to (Dean, 5 Nov 2026: "make sure our emails are making it somewhere"): the Worker's words, from
+           Resend, the bounce record and their own sign-in link. A bounce or a cancel is red, a sign-in green. */
+        (p.delivery && p.delivery.words ? '<div><span class="k">Delivery</span><span data-pr-delivery="' + prEsc(p.delivery.welcome || "") + '" style="' +
+          (/^(bounced|complained|cancelled|failed)$/.test(p.delivery.welcome || "") && !p.delivery.signed_in_at && !p.delivery.link_opened_at ? "color:#b3261e;font-weight:700" :
+           p.delivery.signed_in_at ? "color:#1b7a3a;font-weight:700" : "") + '">' + prEsc(p.delivery.words) + "</span></div>" : "") +
         (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
@@ -418,6 +425,7 @@
     // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing; the row tells it
     // their email, mobile and booked welcome, so it can say how the link will go before it goes.
     if (t.hasAttribute("data-pr-signin")) { var sid = t.getAttribute("data-pr-signin"); if (typeof root.hqSigninLink === "function") root.hqSigninLink(sid, t, S.byId[sid]); return; }
+    if (t.hasAttribute("data-pr-fresh")) { var fid = t.getAttribute("data-pr-fresh"); if (typeof root.hqFreshWindow === "function") root.hqFreshWindow(fid, t, S.byId[fid]); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");

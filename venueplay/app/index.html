@@ -1047,7 +1047,16 @@
     if(!e164){ $("mobileErr").textContent="Pop in a mobile number to get a code."; return; }
     E164=e164; $("mobileErr").textContent="";
     var btn=this; btn.disabled=true; btn.textContent="Sending...";
-    client.auth.signInWithOtp({ phone:e164 }).then(function(res){
+    /* THE SHORT LINK, NO MOBILE YET (Dean, 6 Nov 2026): venueplay.com.au/s/... left its letters here (s.html). The
+       billing Worker puts the number they typed on THAT account's login first, so the code below reaches the right
+       login; the code then proves the number is theirs, and it is their login from then on. One use, then forgotten. */
+    var shortCode=""; try{ shortCode=sessionStorage.getItem("vpShortAttach")||""; }catch(e){}
+    var attach = shortCode ? fetch("https://api.venueplay.com.au/short/attach", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ code:shortCode, mobile:e164 }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._status=r.status; return j; }); })
+        .then(function(j){ if(j && j.error && j._status===400 || j && j.taken){ throw { shortMsg: j.error }; } try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} }, function(){})
+      : Promise.resolve();
+    attach.then(function(){ return client.auth.signInWithOtp({ phone:e164 }); }, function(err){ btn.disabled=false; btn.textContent="Send code"; $("mobileErr").textContent=(err && err.shortMsg) || "Pop in a mobile number to get a code."; return { _stop:true }; }).then(function(res){
+      if(res && res._stop) return;
       btn.disabled=false; btn.textContent="Send code";
       if(res && res.error){ if(otpSendError(res.error)==="ours") showEmailAlt(); return; }
       MODE="sms";
