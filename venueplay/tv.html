@@ -138,12 +138,14 @@
      THE LIST (.wo-wall without .wo-b, no pictures this week): the header pinned, the rows stretched to fill the wall
        below it (so the first row is always in the same place), each row's day and time together on the left and the
        title beside them, no empty middle; fewer rows, bigger words. Every day label the same light grey. */
-  .wo-wall{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:2.4cqw 4.5cqw 3cqw;overflow:hidden}
+  .wo-wall{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:.8cqw 4.5cqw 3cqw;overflow:hidden}
   .wo-in{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;flex:1;min-height:0}
-  .wo-top{display:flex;align-items:center;justify-content:center;gap:2.4cqw;min-height:6.4cqw;flex:none}
-  .wo-logo{display:block;max-height:6.4cqw;max-width:22cqw;width:auto;height:auto;object-fit:contain}
+  /* ONE TOP LINE (Dean, 6 Nov 2026): the venue's logo (or name) on the LEFT, never centred, WHAT'S ON beside it, both on
+     the same line as our corner mark (whose middle is about 2.9cqw down). */
+  .wo-top{display:flex;align-items:center;justify-content:flex-start;gap:2cqw;min-height:4.2cqw;flex:none;width:91cqw;padding-right:14cqw}
+  .wo-logo{display:block;max-height:4.2cqw;max-width:20cqw;width:auto;height:auto;object-fit:contain}
   .wo-kick{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,1.9cqw,36px);letter-spacing:.12em;text-transform:uppercase;color:#C9C9D2}
-  .wo-head{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,5.6cqw,108px);line-height:1;color:#fff}
+  .wo-head{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(28px,4.2cqw,80px);line-height:1;color:#fff}
   .wo-list{display:flex;flex-direction:column;gap:1cqw;margin-top:1.8cqw;width:91cqw;flex:1;min-height:0}
   .wo-row{position:relative;flex:1 1 auto;max-height:24cqw;display:grid;grid-template-columns:19cqw minmax(0,1fr);align-items:center;gap:2.4cqw;padding:.8cqw 2.6cqw;border-radius:1.1cqw;background:#1A1A1F;text-align:left;overflow:hidden}
   .wo-row.tonight::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#FF1F8E}
@@ -173,12 +175,10 @@
   .wb-when{position:absolute;left:2.6cqw;right:2.6cqw;bottom:6.6cqw;text-align:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,3cqw,58px);line-height:1.1;color:#fff;text-shadow:0 .2cqw 1cqw rgba(0,0,0,.7)}
   .wb-title{position:absolute;left:2.6cqw;right:2.6cqw;bottom:2.2cqw;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,3cqw,58px);line-height:1.05;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* the night's own name, for a poster that has none on it */
   .wb-when.tn{color:#FFD93D}
-  .wb-side{display:flex;flex-direction:column;padding:2.4cqw 3.4cqw 2.6cqw 2.8cqw;min-width:0;min-height:0}
-  .wb-side .wo-top{justify-content:flex-start;margin-right:10cqw}   /* clear of our corner mark */
-  .wb-side .wo-top.k{flex-direction:column;align-items:flex-start;gap:.4cqw}   /* the venue's name over WHAT'S ON when it has no logo */
+  .wb-side{display:flex;flex-direction:column;padding:.8cqw 3.4cqw 2.6cqw 2.8cqw;min-width:0;min-height:0}
+  .wb-side .wo-top{width:auto;padding-right:0;margin-right:12cqw}   /* clear of our corner mark */
+  .wb-side .wo-top.k .wo-kick{font-size:clamp(11px,1.5cqw,28px);letter-spacing:.08em}   /* the venue's name beside WHAT'S ON, on the left, when it has no logo */
   .wo-kick,.wo-head{white-space:nowrap}
-  .wb-side .wo-logo{max-height:5cqw;max-width:17cqw}
-  .wb-side .wo-head{font-size:clamp(30px,4.6cqw,88px)}
   .wb-side .wo-list{width:100%;gap:.8cqw;margin-top:1.6cqw}
   .wb-side .wo-row{grid-template-columns:13cqw minmax(0,1fr);gap:1.6cqw;padding:.6cqw 1.8cqw;max-height:13cqw}
   .wb-side .wo-day{font-size:clamp(10px,1.4cqw,27px)}
@@ -191,11 +191,13 @@
   .wo-bl .wb-side .wo-time{font-size:clamp(20px,4cqw,78px)}
   .wo-bl .wb-side .wo-what b{font-size:clamp(16px,3cqw,58px);white-space:normal;display:-webkit-box;-webkit-line-clamp:3}   /* a title is never cut: up to three lines here */
   .wo-bl .wb-side .wo-what i{font-size:clamp(12px,2cqw,38px);white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
-  .wo-bxl .wb-side .wo-row{max-height:30cqw;grid-template-columns:18cqw minmax(0,1fr)}
-  .wo-bxl .wb-side .wo-day{font-size:clamp(13px,2.3cqw,44px)}
-  .wo-bxl .wb-side .wo-time{font-size:clamp(24px,5.6cqw,108px)}
-  .wo-bxl .wb-side .wo-what b{font-size:clamp(20px,4.4cqw,86px);white-space:normal;display:-webkit-box;-webkit-line-clamp:3}
-  .wo-bxl .wb-side .wo-what i{font-size:clamp(13px,2.5cqw,48px);white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  /* Two rows (Dean, 6 Nov 2026): the same size as each other, a little smaller, dropped down a touch with room to spare. */
+  .wo-bxl .wb-side .wo-list{margin-top:4.4cqw;justify-content:flex-start;gap:1.4cqw}
+  .wo-bxl .wb-side .wo-row{flex:0 0 auto;max-height:none;min-height:15cqw;grid-template-columns:17cqw minmax(0,1fr)}
+  .wo-bxl .wb-side .wo-day{font-size:clamp(12px,2.1cqw,40px)}
+  .wo-bxl .wb-side .wo-time{font-size:clamp(22px,4.8cqw,92px)}
+  .wo-bxl .wb-side .wo-what b{font-size:clamp(18px,3.8cqw,74px);white-space:normal;display:-webkit-box;-webkit-line-clamp:3}
+  .wo-bxl .wb-side .wo-what i{font-size:clamp(12px,2.2cqw,42px);white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 
   /* ---- SET UP THIS SCREEN (no venue linked; ads mode only) ----
      Dean, 31 Oct 2026: "venueplay.com.au/tv ... has a link to the app download for Google play and
