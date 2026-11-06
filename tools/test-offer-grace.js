@@ -323,14 +323,16 @@ async function newProspect(name, offerOpen) {
   check('the settled reminders are untouched: day 3, 23 and 29 only, nothing new for the grace',
     got.map(function (g) { return day(g.at); }).join(' ') === '2026-11-05 2026-11-25 2026-12-01', got.map(function (g) { return day(g.at); }));
   var TERMS = readFile('venueplay/terms.html'), t2 = TERMS.slice(TERMS.indexOf('<h2>2. Offer pricing</h2>'), TERMS.indexOf('<h2>3. Pricing and billing</h2>'));
-  check('the Terms (section 2) say it: pauses with no card, 5 days after the free month ends to keep the offer price, to 11:59pm Brisbane, then standard, no em dash, lowercase venueplay',
-    /your account pauses/.test(t2) && /you have 5 days after your free month ends to add a card and keep that offer price/.test(t2) && /11:59pm Brisbane time on the fifth day/.test(t2) && /standard rate/.test(t2) && !/[\u2014\u2013]/.test(t2) && !/VenuePlay/.test(t2), t2.slice(0, 300));
+  /* THE LEEWAY IS NOT ANNOUNCED (Dean, 5 Nov 2026, builds INBOX 55c): the Worker keeps the 5 days, the Terms and the FAQs never say so. */
+  check('the Terms (section 2) do NOT announce the 5-day grace (the Worker keeps it quietly), and section 2 is still there',
+    t2.indexOf('<h2>2. Offer pricing</h2>') === 0 && !/5 days after your free month/.test(TERMS) && !/fifth day after your free month/.test(TERMS), t2.slice(0, 300));
   var NSW = readFile('venueplay/nsw.html');
-  check('the offer page\'s billing FAQ says the 5 days (and the home page FAQ mentions no offer)', /you have 5 days after your free month ends to add a card and keep this rate/.test(NSW) && !/5 days after your free month/.test(readFile('venueplay/index.html')));
+  check('the offer page\'s billing FAQ says a free month with no card pauses, and does NOT announce the 5 days (nor does the home page)',
+    /your free month ends with no card, your account pauses until you add one/.test(NSW) && !/5 days after your free month/.test(NSW) && !/5 days after your free month/.test(readFile('venueplay/index.html')));
   var Z = await newProspect('Pause Screen Hotel');
   var SES = readFile('venueplay/app/vp-session.js');
-  check('the console\'s pause screen is the one wording (it does not still say the offer ended with the free month)',
-    !/The offer price you were set up on ended with your free month/.test(SES) && /5 days/.test(SES.slice(SES.indexOf("r === 'free_month_ended'"), SES.indexOf("r === 'free_month_ended'") + 1500)));
+  check('the console\'s pause screen does not announce the 5 days (Dean, INBOX 55c), nor say the offer ended with the free month',
+    !/The offer price you were set up on ended with your free month/.test(SES) && SES.indexOf("r === 'free_month_ended'") > 0 && !/5 days/.test(SES.slice(SES.indexOf("r === 'free_month_ended'"), SES.indexOf("r === 'free_month_ended'") + 1500)));
 
   if (badCount()) throw new Error('offer grace: ' + badCount() + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

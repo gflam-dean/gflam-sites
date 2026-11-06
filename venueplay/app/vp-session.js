@@ -1025,14 +1025,14 @@
         link: owner ? { href: '/app/billing.html#pastDue', label: 'Update your card' } : null };
     }
     /* A PROSPECT'S FREE MONTH RAN OUT WITH NO CARD (Dean, 29 Oct 2026; migration 127). Paused, not ended:
-       their TV keeps its ads, nothing is lost, a card switches it straight back on. The offer price they
-       were set up on is kept for 5 days after the free month ends (THE 5-DAY OFFER GRACE, billing Worker
-       vpaOfferGraceEnd); after that a card is added at our standard price. */
+       their TV keeps its ads, nothing is lost, a card switches it straight back on. The billing Worker still
+       keeps the offer price for 5 days after the free month ends (vpaOfferGraceEnd), but the screen does NOT
+       say so: the leeway is not announced (Dean, 5 Nov 2026, builds INBOX 55c). */
     if (r === 'free_month_ended') {
       return { reason: 'free_month_ended',
         title: 'Your free month has ended, so your games are paused',
         text: owner
-          ? 'Your TV keeps showing your ads and nothing has been lost. Add your card and everything comes straight back on, exactly as you left it. You have 5 days after your free month ended to add your card and keep the offer price you were set up on. After that, the offer ends and our standard price applies. If it is not for you, there is nothing you need to do.'
+          ? 'Your TV keeps showing your ads and nothing has been lost. Add your card and everything comes straight back on, exactly as you left it. If it is not for you, there is nothing you need to do.'
           : 'Your TV keeps showing your ads and nothing has been lost. Ask the venue owner or a manager to add a card, and everything comes straight back on.',
         link: owner ? { href: '#vp-card', label: 'Add your card' } : null };
     }
