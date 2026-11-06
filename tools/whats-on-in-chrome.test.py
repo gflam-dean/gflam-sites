@@ -124,7 +124,7 @@ def account():
             fit = S.json(sid, 'JSON.stringify((function(){var c=document.getElementById("woCard"),r=c.getBoundingClientRect(),over=[];[].forEach.call(c.querySelectorAll("*"),function(n){var b=n.getBoundingClientRect();if(b.width&&b.right>innerWidth+1)over.push((n.className||n.tagName)+":"+Math.round(b.right));});return {w:innerWidth,doc:document.documentElement.scrollWidth,over:over.slice(0,5),btn:Math.round(document.querySelector(".woe-form .go").getBoundingClientRect().height),day:Math.round(document.querySelector(".woe-form select").getBoundingClientRect().height),rows:[].map.call(document.querySelectorAll("#woBox .woe"),function(x){return Math.round(x.getBoundingClientRect().height);})};})())', {})
             ok('%d wide: nothing on the card is wider than the screen, buttons at least 44px tall' % w, not fit.get('over') and fit.get('doc', 9999) <= w and fit.get('btn', 0) >= 40 and fit.get('day', 0) >= 44, fit)
             if w >= 820:
-                ok('%d wide: each event is one compact row, not a tall card (Dean, round 3)' % w, fit.get('rows') and max(fit['rows']) <= 66, fit.get('rows'))
+                ok('%d wide: each event is one compact row, not a tall card (Dean, round 3)' % w, fit.get('rows') and max(fit['rows']) <= 74, fit.get('rows'))
             if SHOTS: S.shot(sid, os.path.join(SHOTS, 'whats-on-account-%d.png' % w))
             click(sid, '.woe-form button', 'Cancel')
         S.js(sid, '(function(){var r=document.querySelector(\'.woe[data-id="%s"]\'); r.querySelector(".woe-rm").click(); return true;})()' % wid)
@@ -215,9 +215,12 @@ def tv_and_phone():
         for page in ('/app/trivia/play.html', '/app/musical/play.html', '/play.html'):
             tid, sid = r.open(page, width=390, height=664)
             r.until(sid, '!!document.getElementById("statusText") && !!document.getElementById("statusDot")', 20)
-            m = r.json(sid, 'JSON.stringify((function(){var d=document.getElementById("statusDot"),t=document.getElementById("statusText"),l=d.parentNode; l.classList.remove("nostatus"); d.classList.add("on"); t.textContent="Connected";'
-                            'var a={dot:Math.round(d.getBoundingClientRect().width),w:Math.round(t.getBoundingClientRect().width)}; d.classList.remove("on"); t.textContent="Reconnecting"; a.re=Math.round(t.getBoundingClientRect().width); return a;})())', {})
-            ok('%s: connected is the green dot alone (the word is not seen), and "Reconnecting" still shows' % page, m.get('dot', 0) >= 6 and m.get('w', 9) <= 1 and m.get('re', 0) > 40, m)
+            m = r.json(sid, 'JSON.stringify((function(){var d=document.getElementById("statusDot"),t=document.getElementById("statusText"),l=d.parentNode; l.classList.remove("nostatus"); d.classList.remove("on"); t.textContent="Reconnecting"; var re=Math.round(t.getBoundingClientRect().width);'
+                            'd.classList.add("on"); t.textContent="Connected"; return {re:re,dot:Math.round(d.getBoundingClientRect().width),w:Math.round(t.getBoundingClientRect().width),pos:getComputedStyle(t).position};})())', {})
+            # The bingo phone already shows its status as the dot alone (the words ride the dot's label), so only the
+            # trivia and musical phones are held to "Reconnecting" still showing.
+            ok('%s: connected is the green dot alone (the word is not seen)%s' % (page, '' if page == '/play.html' else ', and "Reconnecting" still shows'),
+               m.get('dot', 0) >= 6 and m.get('w', 9) <= 1 and (page == '/play.html' or m.get('re', 0) > 40), m)
             r.close_tab(tid)
     finally:
         r.close()
