@@ -238,6 +238,9 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('musical bingo asks its three quick questions first: which music, what prize, how many rounds (Dean, round 2)', asked.join() === 'playlists,rounds,prize_same,prizes', asked);
   await settle();
   var music = all($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id'); }).map(function (e) { return e.getAttribute('data-id'); });
+  check('short on a phone: the popular lists first, the rest behind "Show all"', $(P, 'vpGsMoreMusic').textContent === '+ Show all 6 kinds of music' && walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'country'; }).style.display === 'none');
+  $(P, 'vpGsMoreMusic').click();
+  check('"Show all" shows every list', walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'country'; }).style.display === '' && $(P, 'vpGsMoreMusic').style.display === 'none');
   check('the music from the song library, a bad id never offered', music.join() === 'pub-classics,80s-pop,90s,2000s,aussie,country', music);
   check('the popular songs ticked to start with (Pub Classics on the fallback list before the library loads)', walk($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id') === 'pub-classics'; }).getAttribute('aria-checked') === 'true');
   check('a BIG "Play now with the defaults" button, not a small link', /^Play now with the defaults/.test(T(P, 'vpGsPlayNow')) && / big/.test($(P, 'vpGsPlayNow').className), [T(P, 'vpGsPlayNow'), $(P, 'vpGsPlayNow').className]);

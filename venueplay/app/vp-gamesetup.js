@@ -88,7 +88,7 @@
     P + ".vpgs-none input{width:18px;height:18px;accent-color:" + C.pink + "}",
     P + ".vpgs-add{align-self:flex-start;min-height:40px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
     P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
-    P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:1/-1}",
+    P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:1/-1}",
     P + ".vpgs-sec{margin:14px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
     P + ".vpgs-sec h3{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sec .sub{margin:0 0 2px;font-size:14px;color:" + C.faint + "}",
     P + ".vpgs-row{position:relative;padding:10px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child,.vpgs-rows>.vpgs-group:first-child{border-top:none;padding-top:0}",
@@ -121,7 +121,8 @@
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:660px;padding-top:24px}" + P + ".vpgs-card{padding:26px 30px}" + P + "h2.vpgs-title{font-size:26px}" +
       P + ".vpgs-chips{grid-template-columns:1fr 1fr 1fr}" + P + ".vpgs-music{grid-template-columns:repeat(4,1fr)}" +
       P + ".vpgs-row.two{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:20px;align-items:center}" +
-      P + ".vpgs-row.two .vpgs-prompt{grid-column:1/-1}" + P + ".vpgs-row.two .vpgs-lab{margin:0}}"
+      P + ".vpgs-row.two .vpgs-prompt{grid-column:1/-1}" + P + ".vpgs-row.two .vpgs-lab{margin:0}" +
+      P + ".vpgs-group .vpgs-row.two{display:block}" + P + ".vpgs-group .vpgs-row.two .vpgs-lab{margin:0 0 6px}}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -374,9 +375,14 @@
       var grid = el("div", "vpgs-music"); grid.id = "vpGsIn_playlists"; grid.setAttribute("role", "group"); grid.setAttribute("aria-label", s.label);
       var picked = (s.def || []).slice();
       wrap.appendChild(grid);
+      /* SHORT ON A PHONE (Dean, round 3): the popular lists and anything picked first; the rest behind "Show all". */
+      var moreM = el("button", "vpgs-add", ""); moreM.id = "vpGsMoreMusic"; moreM.setAttribute("type", "button"); wrap.appendChild(moreM);
+      var showAll = false;
+      moreM.addEventListener("click", function () { showAll = true; Array.prototype.forEach.call(grid.children, function (c) { c.style.display = ""; }); moreM.style.display = "none"; });
       loadPlaylists(ctx, function (list) {
         while (grid.firstChild) grid.removeChild(grid.firstChild);
-        list.forEach(function (p) {
+        var pop = (help() && help().POPULAR) || [], hidden = 0;
+        list.slice().sort(function (a, b) { var x = pop.indexOf(a.id) >= 0 || picked.indexOf(a.id) >= 0, y = pop.indexOf(b.id) >= 0 || picked.indexOf(b.id) >= 0; return (y ? 1 : 0) - (x ? 1 : 0); }).forEach(function (p) {
           var b = el("button", "vpgs-chip"); b.setAttribute("type", "button"); b.setAttribute("role", "checkbox"); b.setAttribute("data-id", p.id);
           b.appendChild(el("span", "bx", picked.indexOf(p.id) >= 0 ? "✓" : "")); b.appendChild(el("span", null, p.name));
           b.setAttribute("aria-checked", picked.indexOf(p.id) >= 0 ? "true" : "false");
@@ -384,8 +390,11 @@
             var i = picked.indexOf(p.id); if (i >= 0) picked.splice(i, 1); else picked.push(p.id);
             b.setAttribute("aria-checked", i >= 0 ? "false" : "true"); b.firstChild.textContent = i >= 0 ? "" : "✓"; changed();
           });
+          if (!showAll && pop.indexOf(p.id) < 0 && picked.indexOf(p.id) < 0) { b.style.display = "none"; hidden++; }
           grid.appendChild(b);
         });
+        moreM.textContent = "+ Show all " + list.length + " kinds of music";
+        moreM.style.display = hidden ? "" : "none";
       });
       get = function () { return picked.length ? picked.slice() : undefined; };
     } else if (s.kind === "prizelist") {
