@@ -515,7 +515,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        redraws this once the song is shown. */
     var held=!!(_pendingSong && all.length && all[all.length-1]===_pendingSong.title);
     if(held) all=all.slice(0, -1);
-    /* While a song is held back the strip keeps one slot for it, dashed, "Song 15": four played and the next. */
+    /* While a song is held back the strip keeps one slot for it, dashed, "Up now": four played and the next. */
     var room = held ? TV_BOARD_MAX-1 : TV_BOARD_MAX;
     var start=Math.max(0, all.length-room), last=all.length-1;
     for(var i=start;i<all.length;i++){
@@ -528,10 +528,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     if(typeof fitStrip==="function") fitStrip(b);
     var total=all.length+(held?1:0);
+    /* ONE SONG COUNT ON THE WALL (Dean, 6 Nov 2026, 13:10): "14 songs played" bottom left and nothing else that counts.
+       The "+9" chip before the strip and the dashed "Song 15" slot were numbers too, and read as different counts. The
+       chip is gone; the dashed slot says "Up now". */
     var more=$("tvBoardMore");
-    if(more){ more.classList.toggle("hidden", start<=0); more.textContent="+"+start; }
+    if(more){ more.classList.toggle("hidden", true); more.textContent=""; }
     var nx=$("tvBoardNext");
-    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Song "+total; }
+    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Up now"; }
     var no=$("tvSongNo");
     /* "14 songs played", NOT "Song 14" (Dean, live play, 6 Nov 2026: "Song N" bottom left over the last song's
        cover and a dashed "Song N" bottom right read as the same thing twice). The left says how many have

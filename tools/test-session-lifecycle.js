@@ -28,14 +28,19 @@ async function live(code){ var r = await playLiveLookup(ENV, code); return r.bod
   reset('trivia', 5);
   show('a trivia lobby the same age is gone too', (await live('ACDEFG')).live === false);
 
-  reset('musical_bingo', 1);
-  show('control: the same lobby opened 1 hour ago is live', (await live('ACDEFG')).live === true && (await info('ACDEFG')).format === 'musical_bingo');
+  reset('musical_bingo', 0.3);
+  show('control: the same lobby opened 18 minutes ago is live', (await live('ACDEFG')).live === true && (await info('ACDEFG')).format === 'musical_bingo');
   reset('musical_bingo', 5);
   DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'musical_bingo', status:'running' });
   show('control: a game still RUNNING keeps an old session live', (await live('ACDEFG')).live === true);
   reset('musical_bingo', 5);
-  DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'musical_bingo', status:'finished', started_at:ago(4.5), ended_at:ago(1) });
-  show('control: a game that ended an hour ago keeps the night live (the clock is the LAST game, not the lobby)', (await live('ACDEFG')).live === true);
+  DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'musical_bingo', status:'finished', started_at:ago(4.5), ended_at:ago(0.3) });
+  show('control: a game that ended 18 minutes ago keeps the night live (the clock is the LAST game, not the lobby)', (await live('ACDEFG')).live === true);
+  reset('trivia', 0.6);
+  show('30 MINUTES (Dean, 6 Nov 13:10): a trivia lobby opened 36 minutes ago with no game is gone', (await live('ACDEFG')).live === false);
+  reset('musical_bingo', 5);
+  DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'musical_bingo', status:'finished', started_at:ago(1.5), ended_at:ago(0.6) });
+  show('and a night whose last game ended 36 minutes ago is gone', (await live('ACDEFG')).live === false);
   reset('bingo90', 6);
   show('control: a bingo night is never judged by this (broadcast bingo can run hours with no game row)', (await live('ACDEFG')).live === true);
   reset(null, 6);
@@ -56,13 +61,13 @@ async function live(code){ var r = await playLiveLookup(ENV, code); return r.bod
   show('the new one is a trivia lobby', !!fresh && fresh.status === 'lobby' && fresh.lobby_format === 'trivia', fresh && fresh.lobby_format);
   show('only one live session at the venue afterwards', DB.vp_sessions.filter(function(x){ return x.status === 'lobby' || x.status === 'running' || x.status === 'paused'; }).length === 1);
 
-  reset('musical_bingo', 1);
+  reset('musical_bingo', 0.2);
   BODY = { venue_id: VENUE, format: 'bingo' };
   r = await handleCreateSession({}, ENV, json);
   show('control: a young lobby is reused, and told it is bingo now (Dean\'s finding F, server half)', r.body.reused === true && r.body.session_id === S && DB.vp_sessions[0].lobby_format === 'bingo90', JSON.stringify(r.body).slice(0, 90));
   var after = await info('ACDEFG');
   show('and the code then answers bingo, not musical', after.format === 'bingo90' && after.room_code === '', after.format);
-  reset('musical_bingo', 1);
+  reset('musical_bingo', 0.2);
   DB.vp_games.push({ id:'g1', session_id:S, seq:1, format:'musical_bingo', status:'running' });
   BODY = { venue_id: VENUE, format: 'bingo' };
   await handleCreateSession({}, ENV, json);
@@ -80,7 +85,7 @@ async function live(code){ var r = await playLiveLookup(ENV, code); return r.bod
   reset('musical_bingo', 1, 'finished'); DB.vp_sessions[0].ended_at = ago(0.5);
   var c = await card();
   show('a phone on a FINISHED night with no game gets stale:true (rejoin)', c.game === null && c.stale === true, JSON.stringify(c));
-  reset('musical_bingo', 1, 'lobby');
+  reset('musical_bingo', 0.2, 'lobby');
   c = await card();
   show('a phone on a live lobby with no game yet just waits (no stale flag)', c.game === null && c.stale !== true, JSON.stringify(c));
 

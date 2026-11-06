@@ -1897,20 +1897,38 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // ---- incoming messages ----
   // Screen presence arrives on the pairing channel; player join + claim arrive on the game
   // channel. Both flow through onMsg.
-  /* THE TV SAYS WHETHER IT CAN PLAY SOUND (screen.html audioState), on every reply, from the lobby on.
-     Blocked: this device plays the songs too and a bar on the console says so at once, where it used to
-     wait for the screen's one-off message, which Dean only saw after song 2 (6 Nov 2026). The switch
-     it turns on is put back when the TV recovers, and only if this code turned it on. */
-  var _tvAudio="unknown", _autoMonitor=false;
+  /* THE TV SAYS WHETHER IT CAN PLAY SOUND (screen.html audioState), on every reply, from the lobby on, so a blocked TV is known
+     at once (Dean saw it only after song 2, 6 Nov 2026). The host is ASKED, never switched over (Dean, 6 Nov 2026, 13:10):
+     "The TV can't play sound. Play the songs on this device?" Yes turns this device's sound on (the tap also lets the browser
+     play it); No leaves it off and says how to fix the TV. When the TV recovers, a switch the Yes turned on is put back. */
+  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false;
+  function tvSoundYes(){
+    if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
+    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    try{ if(audio.paused && audio.src && G.status==="running") audio.play().catch(function(){}); }catch(e){}
+    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound, so the songs are coming out of THIS device. Put it through the PA, or press any key on the TV remote once."; }
+    syncMonitorBtn();
+  }
+  function tvSoundNo(){
+    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound. Press any key on the TV remote once to turn it on."; }
+  }
+  function askTvSound(n){
+    n.textContent="";
+    n.appendChild(document.createTextNode("The TV can\u2019t play sound. Play the songs on this device? "));
+    var y=document.createElement("button"), no=document.createElement("button");
+    y.type="button"; y.id="tvSoundYes"; y.className="btn pink"; y.textContent="Yes";
+    no.type="button"; no.id="tvSoundNo"; no.className="btn ghost"; no.textContent="No";
+    y.style.cssText=no.style.cssText="width:auto;min-width:72px;padding:8px 16px;margin:8px 8px 0 0";
+    y.addEventListener("click", tvSoundYes); no.addEventListener("click", tvSoundNo);
+    n.appendChild(y); n.appendChild(no);
+  }
   function noteTvAudio(state){
     if(state!=="blocked" && state!=="ok") return;
     if(state===_tvAudio) return;
     _tvAudio=state;
     var n=$("tvAudioNote");
     if(state==="blocked"){
-      if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
-      audio.muted = !(G.hostMonitor || soundIsOnlyHere());
-      if(n){ n.textContent="The TV cannot play sound (autoplay is blocked on that screen), so the songs are coming out of THIS device. Put this device through the PA, or press any key on the TV once."; n.classList.remove("hidden"); }
+      if(n){ if(G.hostMonitor) n.textContent="The TV can\u2019t play sound; the songs are coming out of this device."; else askTvSound(n); n.classList.remove("hidden"); }
     } else {
       if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
       if(n) n.classList.add("hidden");

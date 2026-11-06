@@ -303,7 +303,7 @@ def tv(B, base, w, h, logo, tag, shots):
         T = n.get('tiles') or []
         ok(tagn + ' now playing: the strip is the last five, with their artwork, the current one outlined in pink',
            [t['text'] for t in T] == played[-5:] and all(t['img'] for t in T) and [t['cur'] for t in T] == [False] * 4 + [True] and T[-1]['bc'] == 'rgb(255, 31, 142)', [(t['text'], t['cur'], t['bc'], t['img']) for t in T])
-        ok(tagn + ' now playing: "+9" for the nine before them, first on the strip', (n.get('more') or {}).get('text') == '+9' and bool(T and n['more']['r'][2] <= T[0]['r'][0]), n.get('more'))
+        ok(tagn + ' now playing: no "+9" chip, the only count is bottom left (Dean, 6 Nov 13:10)', n.get('more') is None, n.get('more'))
         ok(tagn + ' now playing: every tile on the screen, in one row, under "Song 14", the strip within the art\'s margins', bool(T) and all(t['r'] and t['r'][2] <= w - 0.0625 * w + 1 and abs(t['r'][1] - T[0]['r'][1]) <= 1 for t in T) and T[0]['r'][1] >= sn['r'][3], [t['r'] for t in T] + [sn.get('r')])
         ok(tagn + ' now playing: every title whole inside its tile (a long one steps down, never cut)', all(t.get('fit') for t in T), [(t['text'], t.get('fit')) for t in T])
         pl = n.get('playing') or {}
@@ -331,7 +331,7 @@ def tv(B, base, w, h, logo, tag, shots):
         ok(tagn + ' listen: LISTEN, then "Name that tune." for a host who reveals by hand', (L.get('listen') or {}).get('text', '').replace('\n', ' ').strip().lower().startswith('listen'), L.get('listen'))
         ok(tagn + ' listen: no "Song 16" (or NOW PLAYING) label under the game\'s name (Dean, 3 Nov late)', L.get('eye') is None, L.get('eye'))
         ok(tagn + ' listen: the song is not named anywhere on the wall', 'uptown funk' not in L.get('text', '').lower(), L.get('text', '')[-200:])
-        ok(tagn + ' listen: the strip keeps a dashed "Song 16" for it after the four before', (L.get('next') or {}).get('text') == 'Song 16' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
+        ok(tagn + ' listen: the strip keeps a dashed "Up now" for it (no number) after the four before', (L.get('next') or {}).get('text') == 'Up now' and (L.get('next') or {}).get('bs') == 'dashed' and len(L.get('tiles') or []) == 4, [L.get('next'), len(L.get('tiles') or [])])
         ok(tagn + ' listen: "15 songs played" bottom left, and still no player count on the wall', (L.get('songno') or {}).get('text') == '15 songs played' and bool(L.get('wallText')) and '4137' not in L['wallText'] and not re.search(r'\b\d[\d,]*\s+(playing|players?|joined)\b', L['wallText'], re.I), [L.get('songno'), L.get('wallText', '')[-200:]])
         # the listen line as most hosts run it
         P.js(say(chan, [{'t': 'played', 'title': 'Sweet Caroline', 'artist': 'Neil Diamond', 'artworkUrl': '/__fixture/art-305080.svg', 'played': allp + ['Sweet Caroline'], 'reveal': 'end', 'replay': True}]))
