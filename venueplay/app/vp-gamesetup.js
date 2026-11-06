@@ -88,7 +88,7 @@
     P + ".vpgs-none input{width:18px;height:18px;accent-color:" + C.pink + "}",
     P + ".vpgs-add{align-self:flex-start;min-height:44px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer}",
     P + ".vpgs-group{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:10px 0;border-top:1px solid " + C.line + "}",
-    P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}" + P + ".vpgs-group .vpgs-row:last-child{grid-column:1/-1}",
+    P + ".vpgs-group .vpgs-row{border-top:none;padding:0 0 8px;display:block}",
     P + ".vpgs-sec{margin:14px 0 0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.18)}",
     P + ".vpgs-sec h3{margin:0;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-sec .sub{margin:0 0 2px;font-size:14px;color:" + C.faint + "}",
     P + ".vpgs-row{position:relative;padding:10px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-row:first-child,.vpgs-rows>.vpgs-group:first-child{border-top:none;padding-top:0}",
@@ -120,6 +120,12 @@
     P + ".vpgs-hint{margin:6px 0 0;font-size:14px;color:" + C.faint + "}",
     P + ".vpgs-cell{display:flex;flex-direction:column;gap:2px}" + P + ".vpgs-add-s{min-height:36px;font-size:14px;padding:0 4px}",
     P + ".vpgs-music.q3{grid-template-columns:repeat(3,1fr)}",
+    /* THE "?" LINE UP (Dean, round 5): always at the end of its label line */
+    P + ".vpgs-lab{justify-content:space-between}" + P + ".vpgs-lab>span{flex:1;min-width:0}" +
+    /* a number is one compact line on every screen: the question, then a small box (Dean, round 5) */
+    P + ".vpgs-rows .vpgs-row.num{display:grid;grid-template-columns:minmax(0,1fr) 120px;column-gap:12px;align-items:center}" + P + ".vpgs-row.num .vpgs-lab{margin:0}" + P + ".vpgs-row.num .vpgs-pop{grid-column:1/-1}" +
+    P + ".vpgs-tw{display:flex;gap:6px;align-items:center}" + P + ".vpgs-tw .vpgs-in{flex:1;min-width:0}" +
+    P + ".vpgs-rm{flex:none;width:36px;height:44px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:" + C.pinkSoft + ";font:700 18px " + HEAD + ";cursor:pointer}",
     P + ".vpgs-lt b{color:#FFFFFF;font-weight:700}" + P + ".vpgs-list .vpgs-n{margin-top:1px}",
     P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 140px 130px}",
     "@media (max-width:600px){" + P + ".vpgs-go{width:100%}" + P + ".vpgs-foot .vpgs-go{flex:1}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-times .vpgs-time.sess{grid-template-columns:1fr 130px;row-gap:6px}" + P + ".vpgs-times .vpgs-time.sess .vpgs-sess{grid-column:2}}",
@@ -175,7 +181,10 @@
         if (have[key]) return;
         var t = (typeof gm.start === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : "";
         var e = { game: gm.game }; if (nm) e.name = nm; if (t) e.start = t;
-        if (Number.isInteger(gm.count) && gm.count >= 2 && gm.count <= 4) e.count = gm.count;   // sessions that night (bingo, raffles)
+        /* several sessions that night (bingo, raffles), each with its own start time (Dean, round 5) */
+        var st = Array.isArray(gm.starts) ? gm.starts.filter(function (x, k, a) { return typeof x === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(x) && a.indexOf(x) === k; }).sort().slice(0, 4) : [];
+        if (st.length >= 2) { e.starts = st; e.start = st[0]; e.count = st.length; }
+        else if (Number.isInteger(gm.count) && gm.count >= 2 && gm.count <= 4) e.count = gm.count;
         have[key] = e;
       });
     });
@@ -366,10 +375,11 @@
   function settingRow(F, s, ctx, all) {
     var el = F.el;
     var wide = s.kind === "seg" || s.kind === "number" || s.kind === "select" || s.kind === "money";
-    var row = el("div", "vpgs-row" + (wide ? " two" : "")); row.setAttribute("data-key", s.key);
-    if (s.advanced && s.prompt) row.appendChild(el("p", "vpgs-prompt", s.prompt));
+    var num = (s.kind === "number" || s.kind === "money") && !s.group;   // one compact line: the question, then a small box (Dean, round 5)
+    var row = el("div", "vpgs-row" + (wide ? " two" : "") + (num ? " num" : "")); row.setAttribute("data-key", s.key);
     var lab = el("div", "vpgs-lab");
-    lab.appendChild(el("span", null, s.label));
+    /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
+    lab.appendChild(el("span", null, (s.advanced && s.prompt) ? s.prompt : s.label));
     var q = el("button", "vpgs-q", "?"); q.setAttribute("type", "button");
     q.setAttribute("aria-label", "What does " + s.label + " mean?"); q.setAttribute("aria-expanded", "false");
     var popId = "vpGsHelp_" + s.key; q.setAttribute("aria-controls", popId); q.id = "vpGsQ_" + s.key;
@@ -603,9 +613,9 @@
       var md = mw[((opts.instance || 1) - 1) % (mw.length || 1)];
       if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; var mg = md.games.filter(function (x) { return x.game === "members"; })[0]; memTime = timeWords(mg && mg.start); }
     }
-    var lead = g.needsDetails
+    var lead = (g.needsDetails && opts.quickOnly) ? "Two quick questions before your first draw. The rest can wait." : g.needsDetails
       ? "Grab your members draw details. These go on the TV each draw night. Your members list is added on your Account page."
-      : (opts.quickOnly ? "Three quick questions before your first game." : (opts.first ? "A quick setup before your first game, under five minutes. " : "") + "The usual settings are already filled in. Change anything you like, or tap ? to see what a setting means.");
+      : (opts.quickOnly ? (g.needsDetails ? "Two quick questions before your first draw." : "Three quick questions before your first game.") : (opts.first ? "A quick setup before your first game, under five minutes. " : "") + "The usual settings are already filled in. Change anything you like, or tap ? to see what a setting means.");
     var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
     var sec = el("div", "vpgs-sec"); sec.id = "vpGsAdvanced";
@@ -634,21 +644,26 @@
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
       if (s.group) {
         /* settings that sit together in one row (the members draw's day, time and starting jackpot) */
-        if (!groups[s.group]) { groups[s.group] = el("div", "vpgs-group"); groups[s.group].id = "vpGsGroup_" + s.group; (s.advanced ? advRows : list).appendChild(groups[s.group]); }
+        if (!groups[s.group]) {
+          groups[s.group] = el("div", "vpgs-group"); groups[s.group].id = "vpGsGroup_" + s.group; (s.advanced ? advRows : list).appendChild(groups[s.group]);
+          if (ctx.pendingShared && s.pairShared) { groups[s.group].appendChild(ctx.pendingShared); ctx.pendingShared = null; }
+        }
         groups[s.group].appendChild(r.row);
       } else if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
       if (s.prizes && opts.askShared && !s.ownList) {
         var sr = el("div", "vpgs-row two"); sr.id = "vpGsShared";
-        sr.appendChild(el("div", "vpgs-lab", "Do you use these prizes across different games?"));
+        sr.appendChild(el("div", "vpgs-lab", "Do you use these prizes for your other games too?"));
         var sseg = el("div", "vpgs-seg"); sseg.setAttribute("role", "group"); sseg.setAttribute("aria-label", "Prizes across games");
         [[true, "Yes"], [false, "No"]].forEach(function (o) {
           var b = el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", ctx.shared === o[0] ? "true" : "false");
           b.addEventListener("click", function () { ctx.shared = o[0]; Array.prototype.forEach.call(sseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === String(o[0]) ? "true" : "false"); }); });
           sseg.appendChild(b);
         });
-        sr.appendChild(sseg); list.appendChild(sr); opts.askShared = false;
+        sr.appendChild(sseg); opts.askShared = false;
+        if (s.group) { sr.className = "vpgs-row"; ctx.pendingShared = sr; } else list.appendChild(sr);   // trivia: beside "Questions in a round" (Dean, round 5: a 2x2 grid)
       }
     });
+    if (ctx.pendingShared) { list.appendChild(ctx.pendingShared); ctx.pendingShared = null; }
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
     ctx.refresh = function () {
@@ -871,7 +886,7 @@
       var cur = {}, cnt = {};   // key -> { day: "HH:MM" or "" }; key -> { day: sessions }
       (cleanWeek(answers.week) || []).forEach(function (d) { d.games.forEach(function (gm) {
         var k = gm.game === "other" ? "other:" + String(gm.name || "").toLowerCase() : gm.game;
-        (cur[k] = cur[k] || {})[d.day] = gm.start || ""; if (gm.count) (cnt[k] = cnt[k] || {})[d.day] = gm.count; }); });
+        (cur[k] = cur[k] || {})[d.day] = gm.start || ""; if (gm.starts && gm.starts.length > 1) (cnt[k] = cnt[k] || {})[d.day] = gm.starts.slice(1); }); });
       var wrap = F.el("div"); wrap.id = "vpGsWeek";
       items.forEach(function (it) {
         var g = it.key, multi = it.game === "bingo" || it.game === "raffles";
@@ -888,18 +903,32 @@
             var t = F.el("input", "vpgs-in"); t.type = "time"; t.id = "vpGsTime_" + g + "_" + x[0]; t.value = cur[g][x[0]] || "";
             t.setAttribute("required", "required");   // the phone's own scroll-wheel time picker (input type=time)
             if (!cur[g][x[0]]) r.className += " need";
-            function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (multi ? " sess" : "") + (cur[g][x[0]] ? "" : " need"); gate(); }
+            function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (cur[g][x[0]] ? "" : " need"); gate(); }
             t.addEventListener("input", took); t.addEventListener("change", took);
             r.appendChild(t);
-            if (multi) {
-              /* MORE THAN ONE SESSION A NIGHT (Dean, round 4: several bingo sessions or raffle draws a week) */
-              var sel = F.el("select", "vpgs-in vpgs-sess"); sel.id = "vpGsCount_" + g + "_" + x[0]; sel.setAttribute("aria-label", it.title + " sessions on " + x[2]);
-              [1, 2, 3, 4].forEach(function (n) { var o = F.el("option", null, n === 1 ? "1 session" : n + " sessions"); o.value = String(n); sel.appendChild(o); });
-              sel.value = String((cnt[g] && cnt[g][x[0]]) || 1);
-              sel.addEventListener("change", function () { var n = parseInt(sel.value, 10) || 1; cnt[g] = cnt[g] || {}; if (n > 1) cnt[g][x[0]] = n; else delete cnt[g][x[0]]; });
-              r.appendChild(sel); r.className += " sess";
-            }
             times.appendChild(r);
+            if (multi) {
+              /* MORE THAN ONE SESSION A NIGHT, EACH WITH ITS START TIME (Dean, rounds 4 and 5) */
+              var more = (cnt[g] && cnt[g][x[0]]) || [];
+              more.forEach(function (tv, k) {
+                var r2 = F.el("label", "vpgs-time" + (tv ? "" : " need"));
+                r2.appendChild(F.el("span", null, "Session " + (k + 2) + " start time"));
+                var t2 = F.el("input", "vpgs-in"); t2.type = "time"; t2.id = "vpGsTime_" + g + "_" + x[0] + "_" + (k + 2); t2.value = tv || "";
+                function took2() { more[k] = /^\d\d:\d\d$/.test(t2.value) ? t2.value : ""; r2.className = "vpgs-time" + (more[k] ? "" : " need"); gate(); }
+                t2.addEventListener("input", took2); t2.addEventListener("change", took2);
+                var rm = F.el("button", "vpgs-rm", "\u00d7"); rm.setAttribute("type", "button"); rm.setAttribute("aria-label", "Remove session " + (k + 2));
+                rm.addEventListener("click", function (e) { if (e && e.preventDefault) e.preventDefault(); more.splice(k, 1); paint(); gate(); });
+                var tw = F.el("span", "vpgs-tw"); tw.appendChild(t2); tw.appendChild(rm); r2.appendChild(tw);
+                times.appendChild(r2);
+              });
+              if (more.length < 3) {
+                var addS = F.el("button", "vpgs-add vpgs-add-s", "+ Another session on " + x[2]); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
+                addS.addEventListener("click", function () { cnt[g] = cnt[g] || {}; cnt[g][x[0]] = more.concat([""]); paint(); gate(); });
+                times.appendChild(addS);
+              }
+              return;
+            }
+
           });
         }
         WEEK.forEach(function (x) {
@@ -908,7 +937,7 @@
           b.setAttribute("data-day", x[0]); b.setAttribute("aria-label", it.title + " on " + x[2]);
           b.addEventListener("click", function () {
             cur[g] = cur[g] || {};
-            if (cur[g][x[0]] !== undefined) delete cur[g][x[0]]; else cur[g][x[0]] = "";
+            if (cur[g][x[0]] !== undefined) { delete cur[g][x[0]]; if (cnt[g]) delete cnt[g][x[0]]; } else cur[g][x[0]] = "";
             b.setAttribute("aria-pressed", cur[g][x[0]] !== undefined ? "true" : "false"); paint(); gate();
           });
           days.appendChild(b);
@@ -921,7 +950,7 @@
       var nextB = null;
       function gate() {
         var missing = 0;
-        Object.keys(cur).forEach(function (g) { Object.keys(cur[g]).forEach(function (d) { if (!cur[g][d]) missing++; }); });
+        Object.keys(cur).forEach(function (g) { Object.keys(cur[g]).forEach(function (d) { if (!cur[g][d]) missing++; (cnt[g] && cnt[g][d] || []).forEach(function (x) { if (!x) missing++; }); }); });
         if (nextB) nextB.disabled = missing > 0;
         wmsg.textContent = missing ? "Add a start time for each night you ticked." : "";
       }
@@ -936,7 +965,7 @@
           items.forEach(function (it) {
             var k = it.key; if (!cur[k] || cur[k][x[0]] === undefined) return;
             var e = { game: it.game }; if (it.name) e.name = it.name; if (cur[k][x[0]]) e.start = cur[k][x[0]];
-            if (cnt[k] && cnt[k][x[0]] > 1) e.count = cnt[k][x[0]];
+            var ex = (cnt[k] && cnt[k][x[0]]) || []; if (ex.length) e.starts = [cur[k][x[0]]].concat(ex);
             gs.push(e);
           });
           if (gs.length) w.push({ day: x[0], games: gs });
@@ -1046,7 +1075,7 @@
     return new Promise(function (ok) {
       function out(o) { F.close(); ok(o); }
       F.x.addEventListener("click", function () { out("later"); });
-      gameScreen(F, gkey, cx, deps, { first: true, quickOnly: gkey === "musical" }, function (o) {
+      gameScreen(F, gkey, cx, deps, { first: true, quickOnly: gkey === "musical" || gkey === "members" }, function (o) {
         if (o === "saved") {
           l = readLocal(storage, vid); l.setup = cleanSetup(l.setup); l.setup[gkey] = "done"; writeLocal(storage, vid, l);
           sa.setup[gkey] = "done"; saveSa();

@@ -262,6 +262,10 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('Save: raffles settings sent, the console takes them (reload), and it is "done"', (await fo8) === 'saved' && RELOADS === 1 && rp.body.game === 'raffle' && rp.body.prefs.range_max === 150 && rp.body.prefs.prizes.join() === 'Meat Tray' && JSON.parse(STORE['vpGameSetup:V1']).setup.raffles === 'done', rp && rp.body);
   var P9 = page({ answers: { setup: { bingo: 'later' } } }); P9.GS.firstOpen('bingo', P9.deps); await settle();
   check('bingo\'s first open has the same state-aware setup (who draws the numbers, for paper)', !!$(P9, 'vpGsQ_caller') && T(P9, 'vpGsTitle') === 'Set up bingo', T(P9, 'vpGsBody').slice(0, 200));
+  var P15 = page({ answers: { setup: { members: 'later' } } }); P15.GS.firstOpen('members', P15.deps); await settle();
+  var mk = all($(P15, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
+  check('members draws on their first open: just the draw name and the jackpot (Dean, round 5)', mk.join() === 'name,starting_amount_cents' && /Two quick questions before your first draw/.test(T(P15, 'vpGsLead')), mk);
+  check('musical bingo prizes: "A different prize each round" or "The same prize every round"', JSON.stringify(P.H.byKey('musical').settings.filter(function (x) { return x.key === 'prize_same'; })[0].options.map(function (o) { return o[1]; })) === '["A different prize each round","The same prize every round"]');
   check('setup states keep only known games and states', JSON.stringify(P.GS.cleanSetup({ trivia: 'done', musical: 'x', jag: 'done', bingo: 'later' })) === '{"trivia":"done","bingo":"later"}');
 
   section('6b. ROUND 2 (Dean, 6 Nov 2026): something else, prizes per round, raffle prizes, phone or paper bingo, the draw date');
@@ -393,7 +397,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('"Something else" asks "What else do you run?"', /What else do you run\?/.test(T(P, 'vpGsBody')));
   gameBtn(P, 'other').click(); gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
-  check('the first game with prizes asks once: "Do you use these prizes across different games?"', /Do you use these prizes across different games\?/.test(T(P, 'vpGsShared')));
+  check('the first game with prizes asks once: "Do you use these prizes for your other games too?", beside "Questions in a round" (a 2x2 grid with the theme nights and prizes)', /Do you use these prizes for your other games too\?/.test(T(P, 'vpGsShared')) && $(P, 'vpGsShared').parentNode.id === 'vpGsGroup_sc' && all($(P, 'vpGsGroup_tp'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() === 'theme_nights,prize_list');
   check('prizes typed one at a time with Enter, shown as small tags (Dean, round 4: half the size)', /Press Enter after each one\./.test(T(P, 'vpGsNote_prize_list')) && $(P, 'vpGsIn_prize_list').className === 'vpgs-tags');
   addTag(P, 'prize_list', 'Meat tray'); addTag(P, 'prize_list', '$50 bar tab'); addTag(P, 'prize_list', 'meat TRAY');
   walk($(P, 'vpGsShared'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'true'; }).click();
@@ -408,8 +412,8 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('bingo\'s prize buttons saved, 6 tickets a player by default (phone tickets too)', posts('/host/game-prefs')[0].body.prefs.prize_list.join('|') === 'Meat tray|$50 bar tab' && posts('/host/game-prefs')[0].body.prefs.cards === 6, posts('/host/game-prefs')[0].body.prefs);
   $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
-  var grp = $(P, 'vpGsGroup_nametime');
-  check('members draws: draw name and draw time on one line', grp && all(grp, function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() === 'name,draw_time');
+  function keysIn(id) { var g = $(P, id); return g ? all(g, function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() : ''; }
+  check('members draws squashed into two pairs: date and time, name and jackpot (Dean, round 5)', keysIn('vpGsGroup_dt') === 'date_started,draw_time' && keysIn('vpGsGroup_nj') === 'name,starting_amount_cents', [keysIn('vpGsGroup_dt'), keysIn('vpGsGroup_nj')]);
   $(P, 'vpGsIn_date_started').value = '2026-11-13';
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('not named: called "{Day} Members Draw" (the day from the first draw date when the nights step was skipped)', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body.name === 'Friday Members Draw' && posts('/host/members/settings')[0].body.draw_day === 'Friday', posts('/host/members/settings')[0] && posts('/host/members/settings')[0].body);
@@ -437,12 +441,13 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   wday('bingo', 'fri').click(); wday('bingo', 'sun').click(); wday('members', 'fri').click(); wday('members', 'sun').click(); wday('other:karaoke', 'sat').click();
   function wtime(id, t) { $(P, id).value = t; $(P, id).handlers.change.forEach(function (f) { f(); }); }
   wtime('vpGsTime_bingo_fri', '18:00'); wtime('vpGsTime_bingo_sun', '14:00'); wtime('vpGsTime_members_fri', '20:00'); wtime('vpGsTime_members_sun', '17:00'); wtime('vpGsTime_other:karaoke_sat', '21:00');
-  check('bingo asks how many sessions each night; members draws and karaoke do not', !!$(P, 'vpGsCount_bingo_fri') && !$(P, 'vpGsCount_members_fri') && !$(P, 'vpGsCount_other:karaoke_sat'));
-  check('the sessions box keeps its place beside the time once a time is typed', /\bsess\b/.test($(P, 'vpGsCount_bingo_fri').parentNode.className), $(P, 'vpGsCount_bingo_fri').parentNode.className);
-  $(P, 'vpGsCount_bingo_fri').value = '2'; $(P, 'vpGsCount_bingo_fri').handlers.change.forEach(function (f) { f(); });
+  check('bingo can add another session on a night; members draws and karaoke cannot', !!$(P, 'vpGsAddSess_bingo_fri') && !$(P, 'vpGsAddSess_members_fri') && !$(P, 'vpGsAddSess_other:karaoke_sat'));
+  $(P, 'vpGsAddSess_bingo_fri').click();
+  check('the new session asks its own start time (Dean, round 5), and Next waits for it', !!$(P, 'vpGsTime_bingo_fri_2') && $(P, 'vpGsWeekNext').disabled === true);
+  wtime('vpGsTime_bingo_fri_2', '20:00');
   SAVED = []; $(P, 'vpGsWeekNext').click(); await settle();
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
-  check('the week keeps the sessions and the Something else nights', JSON.stringify(sa.week) === '[{"day":"fri","games":[{"game":"bingo","start":"18:00","count":2},{"game":"members","start":"20:00"}]},{"day":"sat","games":[{"game":"other","name":"Karaoke","start":"21:00"}]},{"day":"sun","games":[{"game":"bingo","start":"14:00"},{"game":"members","start":"17:00"}]}]', sa.week);
+  check('the week keeps the sessions and the Something else nights', JSON.stringify(sa.week) === '[{"day":"fri","games":[{"game":"bingo","start":"18:00","starts":["18:00","20:00"],"count":2},{"game":"members","start":"20:00"}]},{"day":"sat","games":[{"game":"other","name":"Karaoke","start":"21:00"}]},{"day":"sun","games":[{"game":"bingo","start":"14:00"},{"game":"members","start":"17:00"}]}]', sa.week);
   check('how many a week: bingo 3 sessions, 2 members draws', JSON.stringify(sa.counts) === '{"bingo":3,"members":2}', sa.counts);
   check('in words: "Fri: Bingo \u00d72 6pm, Members draws 8pm \u00b7 Sat: Karaoke 9pm \u00b7 ..."', /^Fri: Bingo \u00d72 6pm, Members draws 8pm \u00b7 Sat: Karaoke 9pm/.test(P.GS.weekWords(sa.week)), P.GS.weekWords(sa.week));
   $(P, 'vpGsAllYes').click(); await settle();
@@ -464,7 +469,8 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('trivia starts with the usual prizes, and is not asked about them again', tagsOf(P, 'prize_list')[0] === 'Meat tray' && !$(P, 'vpGsShared'));
   $(P, 'vpGsSave').click(); await settle(); $(P, 'vpGsNextYes').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   check('raffles keep their own list (Meat Tray), never the usual-prizes question', $(P, 'vpGsIn_prizes_0').value === 'Meat Tray' && !$(P, 'vpGsShared'), $(P, 'vpGsIn_prizes_0').value);
-  check('"How many prizes" and "usually the same prize?" share one line', all($(P, 'vpGsGroup_count'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() === 'prize_count,prizes_same');
+  check('"How many prizes do you draw?" is one compact line with a small box (Dean, round 5)', / num/.test(walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'prize_count'; }).className));
+  check('so are "Seconds to claim a prize" and every other number', / num/.test(walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'time_to_present'; }).className));
   $(P, 'vpGsUseUsual').click();
   check('"Use my usual prizes" loads them, one box each, to change and add to', $(P, 'vpGsIn_prizes').children.length === 2 && $(P, 'vpGsIn_prizes_0').value === 'Meat tray' && $(P, 'vpGsIn_prizes_1').value === '$50 bar tab', $(P, 'vpGsIn_prizes').children.length);
   var P14 = page({ answers: { games: ['raffles'] } }); P14.GS.run(P14.ctx, Object.assign(P14.deps, { start: 'pick' })); await settle();
