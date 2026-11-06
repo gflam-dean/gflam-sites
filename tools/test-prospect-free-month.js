@@ -152,7 +152,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   section('2. The month starts at the first sign-in, once, and only for the venue');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var A = await prospect({});
-  check('set up while the offer is open: the offer it was set up on is kept ($2.50), and no month has started', A.row().offer_rate === 2.5 && !A.row().first_signin_at, A.row());
+  check('set up while the offer is open: no rate is decided yet (it is decided at the first sign-in, Dean 7 Nov 2026), and no month has started', A.row().offer_rate == null && !A.row().first_signin_at, A.row());
   var va = await call('/account/prospect-start', { venue_id: A.v.id }, AS(ADMIN, A.v.id));
   check('HQ View as never starts anybody\'s month', va.status === 200 && va.body.view_as === true && !A.row().first_signin_at, va.body);
   var t0 = Date.now();
@@ -178,7 +178,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var C = await prospect({ name: 'Walk The Month Hotel' });
   var start = bne(2026, 11, 2, 10, 0);
-  C.row().first_signin_at = new Date(start).toISOString(); C.row().free_month_ends_at = new Date(vpaFreeMonthEnd(start)).toISOString();
+  C.row().first_signin_at = new Date(start).toISOString(); C.row().free_month_ends_at = new Date(vpaFreeMonthEnd(start)).toISOString(); C.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   ENV.FOUNDING_CODES = '';   // the November offer closes during their month
   var got = await walk(start, bne(2026, 12, 2, 16, 0));
   var days = got.map(function (g) { return day(g.at); }).join(' ');
@@ -191,7 +191,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('day 23: the same friendly note, with the end date', !!mid23 && /How's it going\?/.test(mid23.text) && /runs until Wed 2 December/.test(mid23.text), mid23 && mid23.text.slice(0, 500));
   check('day 29, the day before it ends: "2 days left of your free month", ends on Wed 2 December', !!last && /2 days left of your free month/.test(last.text) && /ends on Wed 2 December/.test(last.text), last && last.text.slice(0, 500));
   check('and exactly what happens with no card: paused, games off, the TV keeps the ads, nothing lost, the $2.50 offer goes, our price on the day after that',
-    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. The \$2\.50 a player offer you were set up on ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
+    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. You started your free month in time for \$2\.50 a player\. That price ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
   check('no em dash, no "about" on a price, no urgency words', got.every(function (g) { return !/[—–]/.test(g.msg.text) && !/about \$/.test(g.msg.text) && !/hurry|act now|last chance|don't miss/i.test(g.msg.text); }));
   check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,29]', C.row().reminders_sent);
   var mid = REM().length; await walk(bne(2026, 11, 26, 9, 0), bne(2026, 11, 26, 16, 0));
@@ -225,7 +225,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var D = await prospect({});
   var ds = Date.now() - 5 * 86400000;
-  D.row().first_signin_at = new Date(ds).toISOString(); D.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ds)).toISOString();
+  D.row().first_signin_at = new Date(ds).toISOString(); D.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ds)).toISOString(); D.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   ENV.FOUNDING_CODES = '';
   stripeCalls.length = 0;
   var tk = await vpaCardToken(ENV, D.v.founding_id);
@@ -239,7 +239,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var E = await prospect({});
   var es = bne(2026, 11, 2, 10, 0);
-  E.row().first_signin_at = new Date(es).toISOString(); E.row().free_month_ends_at = new Date(vpaFreeMonthEnd(es)).toISOString();
+  E.row().first_signin_at = new Date(es).toISOString(); E.row().free_month_ends_at = new Date(vpaFreeMonthEnd(es)).toISOString(); E.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   await walk(es, bne(2026, 11, 13, 12, 0));
   check('one reminder by 13 Nov (day 3)', REM().length === 1, REM().length);
   E.founding().stripe_subscription_id = 'sub_on_day_11';
@@ -250,7 +250,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var F = await prospect({});
   var fs = bne(2026, 11, 2, 10, 0);
-  F.row().first_signin_at = new Date(fs).toISOString(); F.row().free_month_ends_at = new Date(vpaFreeMonthEnd(fs)).toISOString();
+  F.row().first_signin_at = new Date(fs).toISOString(); F.row().free_month_ends_at = new Date(vpaFreeMonthEnd(fs)).toISOString(); F.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   var link = await vpaProspectCancelLink(ENV, F.v.founding_id);
   var q = link.split('?')[1];
   function creq(method, qs, bodyTxt) { return { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function () { return null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
@@ -315,7 +315,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
      never the day-23 note it replaces. */
   var H = await prospect({});
   var hs = bne(2026, 11, 2, 10, 0);
-  H.row().first_signin_at = new Date(hs).toISOString(); H.row().free_month_ends_at = new Date(vpaFreeMonthEnd(hs)).toISOString();
+  H.row().first_signin_at = new Date(hs).toISOString(); H.row().free_month_ends_at = new Date(vpaFreeMonthEnd(hs)).toISOString(); H.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   H.row().reminders_sent = [3];
   var hb = sent.length; await vpaProspectReminderSweep(ENV, bne(2026, 12, 1, 9, 0));
   var hm = sent.slice(hb).filter(function (m) { return m.to && m.to[0] === H.row().email; });
