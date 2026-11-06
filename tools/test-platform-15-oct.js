@@ -259,7 +259,7 @@ ok('a mobile typed in shows in the preview and the copy, as M with a tel: link',
 var s3 = sigPage({ mb: '   ' });
 ok('a mobile that is only spaces counts as empty: no mobile line', !hasM(s3.pv) && !hasM(s3.copied), s3.pv.slice(0, 120));
 
-/* 12. THE ACKNOWLEDGEMENT OF COUNTRY IN THE SITE FOOTER (Dean, 2 Nov 2026): the same words as the foot of
+/* 13. THE ACKNOWLEDGEMENT OF COUNTRY IN THE SITE FOOTER (Dean, 2 Nov 2026): the same words as the foot of
    the help desk emails (helpCountry in the billing Worker), one quiet line at the bottom of the shared
    footer on every public page that loads /app/vp-footer.css, and on no game screen, TV, phone or console.
    jsc cannot list a folder, so every page of the site is named here (git ls-files 'venueplay/**.html',

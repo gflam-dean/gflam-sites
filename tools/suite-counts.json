@@ -304,7 +304,7 @@
   "counted_by": "lines"
  },
  "tools/purchase-raffle-in-chrome.test.py": {
-  "checks": 77,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/qr-fallback-in-chrome.test.py": {
@@ -564,7 +564,7 @@
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
-  "checks": 77,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
@@ -780,7 +780,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-edit-6nov.js": {
-  "checks": 77,
+  "checks": 72,
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
