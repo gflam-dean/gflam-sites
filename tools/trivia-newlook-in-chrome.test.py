@@ -381,8 +381,8 @@ def phone(B, base):
     ok('no player name in the header', 'Sarah' not in (q.get('head') or ''), q.get('head'))
     ok('the label is just "QUESTION 8 OF 10" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 8 of 10', q.get('lbl'))
     D_, MB_ = q.get('dotR'), q.get('menu')
-    ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
-    ok('the green connection dot is there, with no "Connected" words beside it', q.get('dot', 0) >= 6 and 0 <= q.get('stw', 9) <= 1, [q.get('dot'), q.get('stw')])
+    ok('no dot by the menu button, top right (Dean, 7 Nov 2026: a connected phone shows nothing)', bool(MB_) and not (D_ and (D_[2] - D_[0]) >= 1), [D_, MB_])
+    ok('and no "Connected" words either', q.get('dot', 9) < 1 and 0 <= q.get('stw', 9) <= 1, [q.get('dot'), q.get('stw')])
     F, V = q.get('foot'), q.get('viewR')
     ok('our venueplay logo is at the bottom, under the game', bool(F and V) and F[1] >= V[3] - 1 and F[2] - F[0] >= 120, [F, V])
     for name, x in (('question', q), ('locked in', lk), ('right', rt), ('wrong', wr)):

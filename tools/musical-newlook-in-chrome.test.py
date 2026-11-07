@@ -428,8 +428,8 @@ def phone_frame_checks(tag, x, logo_kind):
     ok('%s: nothing in the header, the screen or the ad is under 15px' % tag, not x.get('small'), x.get('small'))
     L, M, D = x.get('logo'), x.get('menu'), x.get('dot')
     if logo_kind:
-        ok('%s: the venue\'s logo top left, the menu top right, the green dot beside it' % tag,
-           bool(L and M and D) and L[0] <= 22 and M[2] >= x['W'] - 20 and D[2] <= M[0] and abs((D[1] + D[3]) / 2 - (M[1] + M[3]) / 2) <= 2 and apart(L, D, 6), [L, D, M])
+        ok('%s: the venue\'s logo top left, the menu top right, and no dot (Dean, 7 Nov 2026)' % tag,
+           bool(L and M) and L[0] <= 22 and M[2] >= x['W'] - 20 and not (D and (D[2] - D[0]) >= 1), [L, D, M])
     ok('%s: no player name in the header' % tag, 'sam' not in (x.get('head') or '').lower(), x.get('head'))
     F = x.get('foot')
     ok('%s: our venueplay logo small at the foot, inside the screen' % tag, bool(F) and F[3] <= x['H'] + 0.5 and F[1] > x['H'] * 0.75 and (F[2] - F[0]) <= 140, F)

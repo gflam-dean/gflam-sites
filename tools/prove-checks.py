@@ -11993,7 +11993,10 @@ MUTATIONS = [
     ('ux-fixes-in-chrome.test.py', 'venueplay/nsw.html', '<div class="label" style="justify-content:center">Claim your spot</div>', '<div class="label" style="justify-content:center">Free first month</div>', 'the offer page loses its own words when the homepage changes'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/index.html', '  upd();\n})();\n</script>\n</body>', '  upd(); setTimeout(function(){ vpNoSuchFunction(); }, 0);\n})();\n</script>\n</body>', 'a script error on the homepage goes unseen'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '    else { setConn("none"); if(room)', '    else { $("statusText").textContent="No room"; if(room)', 'the phone says "No room" before a code is tried'),
-    ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '  .venue.nostatus .dot{display:none}', '  .venue.nostatus .dot{}', 'the amber dot shows before a code is tried'),
+    # (the .nostatus dot row retired 7 Nov 2026: vp-connbar.js now hides #statusDot on every phone, so un-hiding it
+    #  here can no longer show a dot; the no-dot rule is proven by the two vp-connbar.js rows below)
+    ('connected-word-in-chrome.test.py', 'venueplay/app/vp-connbar.js', '    "#statusDot{display:none!important}" +', '    "" +', 'a connected phone shows a dot again (Dean, 7 Nov 2026: show nothing)'),
+    ('reconnect-layout-in-chrome.test.py', 'venueplay/app/vp-connbar.js', '    "#statusDot{display:none!important}" +', '    "" +', 'in Chrome: the dot is back in the phone header while connected'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '  function hostNote(){ var n=$("joinHostNote"); if(n) n.classList.toggle("hidden", !!P.hostSeen || !P.room); }', '  function hostNote(){ }', 'a QR scanned before the lobby says nothing about waiting for the host'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', 'state==="ready" ? (P.hostSeen ? "Ready to join" : "Waiting for the host")', 'state==="ready" ? "Ready to join"', 'the phone says "Ready to join" with no host there'),
     ('ux-fixes-in-chrome.test.py', 'venueplay/play.html', '    $("statusText").textContent="Game not found";', '    $("statusText").textContent="No room";', 'a code nobody holds says "No room", not "Game not found"'),
