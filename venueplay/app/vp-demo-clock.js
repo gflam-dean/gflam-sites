@@ -76,7 +76,9 @@
       nt=setTimeout(tick, Math.max(0, nextAt-now())+2);
     }
     var nt=null;
-    tick();
+    /* The first step after the page's own script has finished (the venue logo and the rest of the set-up below
+       the demo block), as the old setTimeout(..., 0) did: a step painted mid-load lands on a half-built wall. */
+    nt=setTimeout(tick, 0);
     iv=setInterval(tick, o.every||1000);   // a safety net under the step timer: a throttled or dropped timeout is caught within a second
     /* A tab that comes back does not wait for a throttled timer: it jumps straight to where the night is. */
     try{ document.addEventListener("visibilitychange", function(){ if(!document.hidden) tick(); }); }catch(err){}

@@ -160,6 +160,8 @@ print('1. the clock: one start, a late frame joins where the night is, a tab bac
                { at: 1500, fn: function () { log.push('r1'); } }, { at: 2000, key: true, fn: function () { log.push('q2'); } }, { at: 2500, fn: function () { log.push('r2'); } }];
   NOW = T0 + 2200;
   var r = C.run({ lap: 3000, steps: steps, epoch: T0 });
+  show('nothing runs while the page is still loading: the first step waits for its script to finish', log.length === 0, log.join());
+  f.pump();
   show('a frame that loads 2.2 s in: the opening (session, mode) and then the question it is on, nothing in between', log.join() === 'setup,q2', log.join());
   show('and the start-of-game show gives way at once, since the night is past it', f.win.VPSting.stopped === 1, f.win.VPSting.stopped);
   NOW = T0 + 2600; f.pump();
@@ -209,7 +211,7 @@ function sameAllAlong(tv, ph, from, to, label) {
 
   // A phone that loads in the middle of the second question, and one that loads after the round.
   NOW = T0 + LAP + C.qAt(1) + 7000;
-  var ph3 = triviaPhone('?demo=1&t0=' + T0);
+  var ph3 = triviaPhone('?demo=1&t0=' + T0); ph3.pump();
   var n3 = now(ph3);
   show('a phone that loads 7 s into question 9 shows question 9 and its answer at once, not question 8 and not a lobby', n3.q && n3.q.qi === 9 && n3.s.t === 'reveal', JSON.stringify(n3.s && n3.s.t) + ' ' + (n3.q && n3.q.qi));
 
@@ -290,7 +292,7 @@ print('\n4. musical bingo: the TV and the phone on the same song');
   show('the win lands on both in the same tick, every lap', wins[0].length === 3 && wins[1].length === 3 && wins[0].every(function (t, i) { return Math.abs(t - wins[1][i]) <= 200; }), JSON.stringify(wins));
   // Late into the third song: the card shows the first two daubed.
   NOW = T0 + LAP + C.songAt(2) + 1000;
-  var ph2 = musicalPhone('?demo=1&t0=' + T0);
+  var ph2 = musicalPhone('?demo=1&t0=' + T0); ph2.pump();
   var d = Object.keys(ph2.P.daubs || {}).length;
   show('a phone that loads during the third song shows the free square and the first two songs daubed', d === 3, d);
 })();
