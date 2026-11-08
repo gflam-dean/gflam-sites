@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Nov 2026, 08:37 · 534a2608';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -223,6 +223,8 @@ export default {
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
       if (request.method === 'POST' && path === '/account/purchase-raffle-export' && typeof vpbPurchaseRaffleExport === 'function') return await vpbPurchaseRaffleExport(request, env, json);
       if (request.method === 'POST' && path === '/account/host-remove' && typeof vpbRemoveHost === 'function')   return await vpbRemoveHost(request, env, json);
+      // Edit on a host: change the mobile they sign in with (INBOX 138, Dean, 8 Nov 2026).
+      if (request.method === 'POST' && path === '/account/host-mobile' && typeof vpbHostMobile === 'function')   return await vpbHostMobile(request, env, json);
       if (request.method === 'POST' && path === '/account/screens-resecure' && typeof vpbResecureScreens === 'function') return await vpbResecureScreens(request, env, json);
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/manager-perms' && typeof vpbSetManagerPerms === 'function') return await vpbSetManagerPerms(request, env, json);
@@ -312,6 +314,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/logins'          && typeof vpaHandleLogins === 'function')         return await vpaHandleLogins(request, env, json);
       if (request.method === 'POST' && path === '/admin/login-find'      && typeof vpaHandleLoginFind === 'function')      return await vpaHandleLoginFind(request, env, json);
       if (request.method === 'POST' && path === '/admin/login-remove'    && typeof vpaHandleLoginRemove === 'function')    return await vpaHandleLoginRemove(request, env, json);
+      if (request.method === 'POST' && path === '/admin/login-mobile'    && typeof vpaHandleLoginMobile === 'function')    return await vpaHandleLoginMobile(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
       return json({ error: 'not found' }, 404);
     } catch (err) {
@@ -8468,7 +8471,9 @@ async function vpaHandleLogins(request, env, json) {
       const u = await vpaAuthGetUser(env, r.auth_user_id);
       const f = await vpaLoginFacts(env, r.auth_user_id, u);
       const why = u ? vpaLoginWhyNot(f, venueId) : 'Its details could not be looked up just now, so it cannot be removed. Try again in a minute.';
-      out.push(Object.assign(f, { role: r.role, can_remove: !why && actor.role === 'owner', why_not: why || (actor.role === 'owner' ? '' : 'Only an Owner can remove a login.') }));
+      out.push(Object.assign(f, { role: r.role, can_remove: !why && actor.role === 'owner', why_not: why || (actor.role === 'owner' ? '' : 'Only an Owner can remove a login.'),
+        // Change mobile (INBOX 138): an Owner, for any venue login that is not a venueplay staff login (vpaHandleLoginMobile checks again).
+        can_change_mobile: !!u && actor.role === 'owner' && !f.is_admin }));
     }
   } catch (e) { return json({ error: 'Could not read the logins just now. Nothing was changed.' }, 503); }
   return json({ ok: true, venue_id: venueId, logins: out });
@@ -8525,6 +8530,45 @@ async function vpaHandleLoginRemove(request, env, json) {
   const venueName = venueId ? ((f.venues.filter(function (v) { return v.id === venueId; })[0] || {}).name || null) : null;
   await vpaAudit(env, actor, 'login_removed', 'login:' + id, { email: name || null, phone_end: f.phone_end, venue_id: venueId, venue_name: venueName, staff_rows: removed.length });
   return json({ ok: true, removed: name || ('the mobile ending ' + (f.phone_end || '?')), venue_id: venueId });
+}
+
+/* POST /admin/login-mobile { auth_user_id, venue_id, mobile, confirm } (INBOX 138, Dean, 8 Nov 2026).
+   HQ changes the mobile a venue login signs in with, for a venue that calls us. Owner only, the same as
+   Remove login: whoever holds the new number can sign in to the venue. The login must be staff at the venue
+   named (so it is changed from that venue's own Details), never a venueplay staff login, and the confirm
+   must name it the way Remove login does (its email, or "ending" and its old last three digits). A number
+   another login has is refused (vpaSetLoginPhone). Audited, naming every venue the login signs in at. */
+async function vpaHandleLoginMobile(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner']);   // Owner only: the new number can sign in to the venue
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const body = _b.body || {};
+  const id = String(body.auth_user_id || ''), venueId = String(body.venue_id || '');
+  if (!VPA_UUID_RE.test(id)) return json({ error: 'auth_user_id is required.' }, 400);
+  if (!VPA_UUID_RE.test(venueId)) return json({ error: 'venue_id is required.' }, 400);
+  const mobile = vpaNormaliseMobileAU(body.mobile);
+  if (!vpaIsAuMobileE164(mobile)) return json({ error: 'Type a valid Australian mobile (04...). Nothing was changed.' }, 400);
+  const u = await vpaAuthGetUser(env, id);
+  if (!u || !u.id) return json({ error: 'That login could not be found just now. Nothing was changed.' }, 404);
+  let f;
+  try { f = await vpaLoginFacts(env, id, u); } catch (e) { return json({ error: 'Could not check that login just now. Nothing was changed.' }, 503); }
+  if (f.is_admin) return json({ error: 'This is a venueplay staff login (HQ). Its mobile is not changed from a venue. Nothing was changed.' }, 409);
+  const at = f.venues.filter(function (v) { return v.id === venueId; })[0];
+  if (!at) return json({ error: 'That login is not on this venue. Nothing was changed.' }, 409);
+  const name = String(u.email || '').toLowerCase();
+  const said = String(body.confirm || '').trim().toLowerCase();
+  const named = name ? said === name : !!(f.phone_end && said === 'ending ' + f.phone_end);
+  if (!said || !named) {
+    return json({ error: 'The confirm did not name this login (' + (name || ('the mobile ending ' + (f.phone_end || '?'))) + '). Nothing was changed.' }, 400);
+  }
+  const done = await vpaSetLoginPhone(env, id, mobile, u.phone);
+  if (!done.ok) return json({ error: done.error }, done.status);
+  await vpaAudit(env, actor, 'login_mobile_changed', 'login:' + id, {
+    email: name || null, venue_id: venueId, venue_name: at.name || null, from_end: done.from_end, to_end: done.to_end,
+    also_at: f.venues.filter(function (v) { return v.id !== venueId; }).map(function (v) { return v.name; }).slice(0, 10),
+  });
+  return json({ ok: true, phone_end: done.to_end, venue_id: venueId });
 }
 
 
@@ -17383,6 +17427,85 @@ async function vpbRemoveHost(request, env, json) {
      pair on its five-minute refresh, and every screen picks the new key up on its own. */
   await vpbRotateScreenKeys(env, venueIds);
   return json({ ok: true, screens_resecured: venueIds.length });
+}
+
+/* CHANGE A LOGIN'S MOBILE (INBOX 138, Dean, 8 Nov 2026). "Edit on each host in the Hosts list: change
+   the host's mobile. HQ: change a paying venue login's mobile for a venue that calls us."
+
+   ONE way to do it, used by both routes below (an owner or manager editing a host, and HQ). The mobile
+   is the login: whoever holds the number signs in with a text code to it. So:
+     - a number another login already has is REFUSED, never merged. Checked with the strict search (a page
+       Auth will not answer throws, so "could not look" never reads as "nobody has it"), and again by
+       Supabase itself, which refuses a phone already on another user.
+     - the change goes through Supabase's admin update with phone_confirm, so the old number stops signing
+       in straight away and the new one works at the next sign-in. Their sign-in today is not ended.
+   Returns { ok, from_end, to_end } or { status, error } in words for the page. */
+async function vpaSetLoginPhone(env, id, e164, currentPhone) {
+  const want = String(e164 || '').replace(/[^\d]/g, '');
+  if (currentPhone && String(currentPhone).replace(/[^\d]/g, '') === want) {
+    return { status: 400, error: 'That is already the mobile on this login. Nothing was changed.' };
+  }
+  let other;
+  try { other = await vpaFindAuthUser(env, { phone: e164 }, true); }
+  catch (e) { return { status: 503, error: 'Could not check that mobile just now. Nothing was changed. Try again in a minute.' }; }
+  if (other && other.id && other.id !== id) {
+    return { status: 409, error: 'That mobile already signs in to venueplay on another login, so it cannot go on this one too. Use a different mobile. Nothing was changed.' };
+  }
+  const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id), {
+    method: 'PUT', headers: vpaHeaders(env), body: JSON.stringify({ phone: e164, phone_confirm: true }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    const said = String((d && (d.msg || d.message || d.error_description || d.error)) || '') + ' ' + String((d && (d.error_code || d.code)) || '');
+    if (/already|registered|exists|taken/i.test(said)) {
+      return { status: 409, error: 'That mobile already signs in to venueplay on another login, so it cannot go on this one too. Use a different mobile. Nothing was changed.' };
+    }
+    return { status: 502, error: 'The mobile could not be changed just now (' + res.status + '). Nothing was changed. Try again in a minute.' };
+  }
+  return { ok: true, from_end: vpaMaskMobile(currentPhone), to_end: vpaMaskMobile(e164) };
+}
+
+/* POST /account/host-mobile { auth_user_id, mobile }: the Edit button on a person in the Hosts list.
+   The same people who may Remove someone may change their mobile (vpbStaffGuard: the owner, or a manager
+   with "Add hosts" for host logins), and only for a login that is staff at a venue on THIS account and
+   nowhere else. A login that also signs in at another business's venue is that business's too, so it is
+   ours to change, through HQ. Never a full-access login, never a venueplay staff login, never your own
+   (your own goes through Change my mobile, which texts a code to the new number first). Audited. */
+async function vpbHostMobile(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const b = await request.json().catch(() => ({}));
+  const target = String(b.auth_user_id || '').trim();
+  if (!VPA_UUID_RE.test(target)) return json({ error: 'Missing host.' }, 400);
+  if (target === o.authUserId) return json({ error: 'To change your own mobile, use Change my mobile. We text a code to the new number first.' }, 400);
+  const mobile = vpaNormaliseMobileAU(b.mobile);
+  if (!vpaIsAuMobileE164(mobile)) return json({ error: 'Enter a valid Australian mobile (04...). They sign in by text code to it.' }, 400);
+
+  /* Every staff row the login holds, ANYWHERE, read so that a failure throws: an empty answer from a read that
+     failed must never pass as "on no other venue". */
+  const mine = new Set(o.venues.map((v) => v.id));
+  let rows, facts, user;
+  try {
+    rows = await vpaReadPage(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(target) + '&select=venue_id,role,permissions&order=venue_id.asc&limit=200');
+    user = await vpaAuthGetUser(env, target);
+    if (!user || !user.id) return json({ error: 'That login could not be found just now. Nothing was changed.' }, 404);
+    facts = await vpaLoginFacts(env, target, user);
+  } catch (e) { return json({ error: 'Could not check that login just now. Nothing was changed. Try again in a minute.' }, 503); }
+  const here = rows.filter((r) => mine.has(r.venue_id));
+  if (!here.length) return json({ error: 'That person is not on any of your venues.' }, 404);
+  { const g = vpbStaffGuard(o, here, json); if (g) return g; }
+  if (here.some((r) => (r.role === 'owner') || (r.role !== 'host' && !r.permissions))) {
+    return json({ error: 'That login has full access to this account, so its mobile cannot be changed here. Email hello@venueplay.com.au and we will help.' }, 403);
+  }
+  if (facts.is_admin || rows.some((r) => !mine.has(r.venue_id))) {
+    return json({ error: 'That person also signs in at a venue that is not on your account, so we change their mobile for you. Email hello@venueplay.com.au and we will sort it.' }, 409);
+  }
+  const done = await vpaSetLoginPhone(env, target, mobile, user.phone);
+  if (!done.ok) return json({ error: done.error }, done.status);
+  await vpaAudit(env, { actorId: o.adminActor ? o.adminActor.id : null, label: (o.adminActor && o.adminActor.label) || (vpbIsOwner(o) ? 'owner' : 'manager') },
+    'staff_mobile_changed', 'login:' + target,
+    { by: o.authUserId, venue_ids: here.map((r) => r.venue_id), role: here[0].role, from_end: done.from_end, to_end: done.to_end });
+  return json({ ok: true, mobile_last3: done.to_end });
 }
 
 /* Rotate the signing key of each venue named: delete the row, and the next legitimate console

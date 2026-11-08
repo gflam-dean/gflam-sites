@@ -515,6 +515,10 @@
   "checks": 3,
   "counted_by": "lines"
  },
+ "tools/test-change-mobile.js": {
+  "checks": 78,
+  "counted_by": "lines"
+ },
  "tools/test-channel-recovery-consoles.js": {
   "checks": 21,
   "counted_by": "lines"

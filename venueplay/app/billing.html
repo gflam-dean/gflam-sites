@@ -345,6 +345,15 @@
   .edv{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
   .edv:hover{border-color:var(--pink);color:#fff}
   .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
+  /* Change my mobile, and Edit on a host (INBOX 138, 8 Nov 2026): the same inline panel as Edit venues. */
+  .cmpanel,.hmpanel{flex-basis:100%;width:100%;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .cmpanel input,.hmpanel input{display:block;width:100%;max-width:280px;box-sizing:border-box;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:10px 12px;font-size:16px;font-family:'Manrope',sans-serif;margin:0 0 10px}
+  .cmpanel .cmcode{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:20px;text-align:center;max-width:200px}
+  .cmactions{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+  .cmnote{margin:0 0 6px;font-size:13px}
+  .cmmsg{margin:6px 0 0;color:var(--pink);font-size:13.5px}
+  .cmmsg.ok{color:#35D07F}
+  .cmmsg:empty{display:none}
   /* THE CANCEL DIALOG. It used to be built from inline styles that named three things
      this page does not have: class "ghost", var(--card) and var(--dim). A missing class is
      not an error, it is a browser-default grey button sitting in the middle of a VenuePlay
@@ -480,6 +489,10 @@
          login. The list shows who can get into the venue chosen at the top of the page, and adding
          someone starts with that venue ticked. -->
     <div class="tabpanel" id="tp-people">
+    <!-- CHANGE MY MOBILE (INBOX 138, Dean, 8 Nov 2026): the mobile this login signs in with, changed only after
+         a text code to the NEW number (vp-change-mobile.js). Not drawn for HQ View as. -->
+    <div class="label" id="mySigninHead" hidden>Your sign-in</div>
+    <div id="myMobile"></div>
     <div class="label" id="peopleHead">People</div>
     <!-- ONE SCREEN, PLAIN (Dean, 3 Nov 2026): one sentence on how everyone signs in, then each role says what it can
          do in one line. "Change the venue at the top" only when there IS a drop-down at the top (peopleVenue). -->
@@ -892,6 +905,9 @@
 <script src="/app/vp-gaming.js"></script>
 <script src="/app/vp-permits.js"></script>
 <script src="/app/vp-room.js"></script>
+<!-- The sign-in page's mobile rules (VPAboutYou.mobileE164, one copy) and Change my mobile (INBOX 138). -->
+<script src="/app/vp-about-you.js"></script>
+<script src="/app/vp-change-mobile.js"></script>
 <script>if(window.VP && VP.guardShift) VP.guardShift();   /* the 4h forced sign-out reaches every page with player data */</script>
 <script>
 (function(){
@@ -1686,11 +1702,13 @@
       var row = document.createElement("div"); row.className = "hostrow";
       row.innerHTML = '<div class="hn"><b>' + esc(h.label || roleWord) + '</b><small>' + esc(sub) + '</small></div>' +
         (locked ? '<span class="own">' + esc(roleWord) + '</span>'
-                : (mayTouch ? '<button class="edv">Edit venues</button><button class="rm">Remove</button>' : ''));
+                : (mayTouch ? '<button class="edv">Edit venues</button><button class="edv edm">Edit mobile</button><button class="rm">Remove</button>' : ''));
       if (mayTouch){
         var ed = venueEditor(h, venues, loadHosts);
-        row.appendChild(ed);
-        row.querySelector(".edv").addEventListener("click", function(){ ed.style.display = (ed.style.display === "none" ? "block" : "none"); });
+        var em = hostMobileEditor(h, api, showMsg, loadHosts);
+        row.appendChild(ed); row.appendChild(em);
+        row.querySelector(".edv").addEventListener("click", function(){ em.style.display = "none"; ed.style.display = (ed.style.display === "none" ? "block" : "none"); });
+        row.querySelector(".edm").addEventListener("click", function(){ ed.style.display = "none"; em.style.display = (em.style.display === "none" ? "block" : "none"); });
       }
       var rm = row.querySelector(".rm");
       if (rm){
@@ -1708,6 +1726,46 @@
       }
       wrap.appendChild(row);
     });
+  }
+  /* EDIT MOBILE on a host (INBOX 138, Dean, 8 Nov 2026): "change the host's mobile; the host signs in with the new
+     number next time." Drawn only where Remove is (the owner, or a manager allowed to add hosts, for a host), and
+     the Worker (/account/host-mobile) checks it all again: staff of a venue on this account and nowhere else, never
+     a full-access login, never a number another login has. Checked first with the sign-in page's rules
+     (VPAboutYou.mobileE164). Built with textContent only. tools/test-change-mobile.js lifts and runs this. */
+  function hostMobileEditor(h, post, say, reloadFn){
+    var who = h.label || "this person";
+    var panel = document.createElement("div"); panel.className = "hmpanel"; panel.style.display = "none";
+    var lab = document.createElement("label"); lab.className = "flabel"; lab.textContent = "New mobile for " + who;
+    var inp = document.createElement("input"); inp.setAttribute("type", "tel"); inp.setAttribute("inputmode", "tel");
+    inp.setAttribute("autocomplete", "off"); inp.setAttribute("placeholder", "0400 000 000");
+    var idn = "hm-" + String(h.auth_user_id || "").replace(/[^a-z0-9-]/gi, ""); inp.id = idn; lab.setAttribute("for", idn);
+    var actions = document.createElement("div"); actions.className = "cmactions";
+    var save = document.createElement("button"); save.className = "go"; save.type = "button"; save.textContent = "Save mobile";
+    var cancel = document.createElement("button"); cancel.className = "canxlink"; cancel.type = "button"; cancel.textContent = "Cancel";
+    actions.appendChild(save); actions.appendChild(cancel);
+    var note = document.createElement("p"); note.className = "note cmnote";
+    note.textContent = "Their old number stops working straight away. They sign in with the new one by text code next time, so let them know.";
+    var msg = document.createElement("p"); msg.className = "note cmmsg"; msg.setAttribute("role", "status");
+    panel.appendChild(lab); panel.appendChild(inp); panel.appendChild(actions); panel.appendChild(note); panel.appendChild(msg);
+    cancel.addEventListener("click", function(){ panel.style.display = "none"; inp.value = ""; msg.textContent = ""; });
+    function go(){
+      var A = window.VPAboutYou, e164 = (A && A.mobileE164) ? A.mobileE164(inp.value) : "";
+      if (!e164){ msg.textContent = String(inp.value || "").trim() ? "That doesn't look like an Australian mobile. It should start 04." : "Type their new mobile first."; return Promise.resolve(false); }
+      if (save.disabled) return Promise.resolve(false);
+      save.disabled = true; save.textContent = "Saving…"; msg.textContent = "";
+      return post("/account/host-mobile", { auth_user_id: h.auth_user_id, mobile: e164 }).then(function(r){
+        save.disabled = false; save.textContent = "Save mobile";
+        if (!r || r.error){ msg.textContent = (r && r.error) || "That didn't save. Try again."; return false; }
+        panel.style.display = "none"; inp.value = "";
+        say(who + " now signs in with " + A.mobileShow(e164) + ". Let them know.", true);
+        reloadFn();
+        return true;
+      });
+    }
+    save.addEventListener("click", go);
+    inp.addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); go(); } });
+    panel._save = go;
+    return panel;
   }
   /* What the ticks add up to, in words, and the exact body the page posts. Kept pure and free of the
      DOM so venueplay-backend/app/billing-hosts.test.js can read this very block out of this very file and run
@@ -3615,6 +3673,18 @@
     });
   }
 
+  /* CHANGE MY MOBILE (INBOX 138). The login's own number, changed only once a code texted to the NEW number is
+     typed (vp-change-mobile.js, Supabase Auth's phone change, as the first sign-in screen does it). Never for HQ
+     View as: the signed-in person there is Gflam staff, and their own login is not the venue's. */
+  function mountMyMobile(ctx){
+    var imp = null; try { imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); } catch (e) {}
+    if (!ctx || ctx.isAdmin || ctx.scope !== "staff" || (imp && imp.id) || !window.VPChangeMobile || !ctx.user) return;
+    var host = $("myMobile"); if (!host || host.firstChild) return;
+    $("mySigninHead").hidden = false;
+    VPChangeMobile.mount(host, { client: VP.getClient(), phone: ctx.user.phone || "",
+      onChanged: function(phone, words){ try { ctx.user.phone = phone; } catch (e) {} showMsg(words, true); loadHosts(); } });
+  }
+
   VP.requireAuth({ roles:['owner','manager'] }).then(function(ctx){
     if (ctx) VP.suspensionBanner(ctx);
     if (ctx && VP.termsCard) VP.termsCard(ctx);   // section 6 of the Terms, asked once (28 Oct 2026)
@@ -3623,6 +3693,7 @@
     pageVenueId = ctx.currentVenueId || null;   // every venue picker below opens on this one
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
+    mountMyMobile(ctx);
     initScreen();
     initRaffles();
     initMembersDraws();
