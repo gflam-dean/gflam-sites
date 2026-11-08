@@ -42,7 +42,10 @@ if (ROUTE) {
   var f = run("?from=offer-xyz");
   ok("a made-up month changes nothing", f.vpNextGo.href === "/#claim", f.vpNextGo.href);
 }
-ok("the offer page opens the demo with its own month", /'\/see-a-night\?from=offer-' \+ key/.test(OFFER) && OFFER.indexOf('/see-a-night?from=offer-oct"') > 0);
+/* Dean, 7 Nov 2026 (round 3, note 25): the offer page no longer links to the full demo at all; the hero's
+   sample night does that job. The demo still sends a visitor who came from an offer back to it (above). */
+ok("the offer page has no link to the full demo (/see-a-night), in its HTML or written in by its script",
+   OFFER.indexOf('href="/see-a-night') === -1 && OFFER.indexOf("'/see-a-night") === -1 && OFFER.indexOf('Play with a full night') === -1);
 ok("no page text on the demo names a state offer", !/on the "\s*\+\s*STATES/.test(PAGE));
 
 if (BAR) {
@@ -79,7 +82,7 @@ ok("then musical bingo, then bingo, as on the homepage", /"musical"/.test(opts[1
 
 /* The offer badge on a phone (27 Sep 2026): the date must sit in the same flex item as its words. */
 ok("the offer line is plain bold text with its date in one span (no pill, no dot)",
-   /<p class="hero-offer">\$2\.50 a player if you join by <span class="vpc-day"[^>]*>\d{1,2} [A-Z][a-z]+<\/span>\.<\/p>/.test(OFFER));
+   /<p class="hero-offer">\$2\.50 a player if you start by <span class="vpc-day"[^>]*>\d{1,2} [A-Z][a-z]+<\/span>\.<\/p>/.test(OFFER));
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");

@@ -186,15 +186,15 @@ try:
         dollars = set(re.findall(r'\$\d(?:[\d,]*\d)?(?:\.\d\d)?', allt))
         ok('%s: every dollar figure on the page is a standard one' % tag, dollars and dollars <= STANDARD_DOLLARS, sorted(dollars - STANDARD_DOLLARS))
         ok('%s: the offer badge is gone and the hero says a 30-player pub pays $90 a month' % tag,
-           v.get('eyebrow') is None and v.get('heroPrice') == 'Sign up and have a play for a month on us. Nothing is charged today. No lock-in, cancel anytime.', (v.get('eyebrow'), v.get('heroPrice')))
-        ok('%s: the pricing card is the homepage\'s: Monthly $3.00, Annual $2.85, under "$3 per player. Simple and flat."' % tag,
-           v.get('rows') == ['Per player, per month=$3.00'] and re.sub(r'\s+', ' ', v.get('title', '')).lower() == '$3 per player. simple and flat.', (v.get('rows'), v.get('title')))
+           v.get('eyebrow') is None and v.get('heroPrice') == 'Nothing is charged today. Play for a month on us.', (v.get('eyebrow'), v.get('heroPrice')))
+        ok('%s: the pricing card is one row, $3.00, under "$3 per player. Flat and simple." (Dean, 7 Nov 2026, round 3 note 5)' % tag,
+           v.get('rows') == ['Per player, per month=$3.00'] and re.sub(r'\s+', ' ', v.get('title', '')).lower() == '$3 per player. flat and simple.', (v.get('rows'), v.get('title')))
         ok('%s: the plan buttons, the FAQ and the page description quote $3 and $2.85' % tag,
            v.get('plans') == ['$3.00 / player', '$2.85 / player'] and 'How much does it cost?' in allt
            and 'Pay monthly at $3 a player, or yearly for $2.85 a player.' in allt
            and '$3 per player, per month' in v.get('meta', '') and '$2.50' not in v.get('og', ''), (v.get('plans'), v.get('meta')))
-        ok('%s: the buttons say "Start your free month", as the homepage does' % tag,
-           v.get('submit') == 'Start my free month' and 'Start your free month' in v.get('float', ''), (v.get('submit'), v.get('float')))
+        ok('%s: the buttons say "Get started", not another "free month" (Dean, 7 Nov 2026, round 3 notes 15 and 21)' % tag,
+           v.get('submit') == 'Get started' and 'Get started' in v.get('float', ''), (v.get('submit'), v.get('float')))
         ok('%s: no script error, nothing scrolls sideways' % tag, not v.get('errs') and v.get('sw', 9999) <= v.get('vw', 0), (v.get('errs'), v.get('sw'), v.get('vw')))
         shot(S, sid, 'offer-ended-1nov-%s-top' % tag)
         shot(S, sid, 'offer-ended-1nov-%s-pricing' % tag, '#offer')
@@ -284,7 +284,7 @@ try:
     print('\nTHE LIVE AND THE ENDED WORDS ARE NEVER ON SCREEN TOGETHER, ON BOTH SIDES OF EVERY DATE (fake clock, Brisbane)')
     def bris(y, m, d, h=12):
         return int(datetime.datetime(y, m, d, h, tzinfo=datetime.timezone.utc).timestamp() * 1000) - 10 * 3600 * 1000
-    LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you join by', re.I)
+    LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you start by', re.I)
     for path, when, ms, want_ended in (('/offer-nov', '9 Nov', bris(2026, 11, 9), False), ('/offer-nov', '11 Nov, after the rollover', bris(2026, 11, 11), False),
                                        ('/offer-nov', '1 Dec', bris(2026, 12, 1), True), ('/offer-dec', '11 Nov', bris(2026, 11, 11), False),
                                        ('/offer-dec', '5 Dec', bris(2026, 12, 5), False), ('/offer-dec', '2 Jan 2027', bris(2027, 1, 2), True)):

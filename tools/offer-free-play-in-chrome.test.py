@@ -4,7 +4,7 @@
 On /offer-nov (venueplay/nsw.html, venueplay/_redirects) the hero's FIRST button is "Have a play for free" and "See
 pricing" is second. Since 6 Nov 2026 (fix/signup-core-10nov) the button goes to the no-card start's five boxes (#start,
 tools/signup-start-in-chrome.test.py), and Friday's stopgap stays as that form's fallback while the start is not switched
-on: window.VPFreeAccountEnquiry opens the EXISTING "Talk to us" form with the topic "Set me up a free account" shown and
+on: window.VPFreeAccountEnquiry opens the EXISTING "Talk to us" form with the topic "Set up a free account" shown and
 the message started the same way, and sending it goes through the
 existing POST /contact, so the enquiry is an ordinary sales help desk ticket (no new route, no Worker change). The
 thank-you line for this topic says when: "Thanks, we'll set up your free account and send it through, usually within
@@ -26,7 +26,8 @@ ap.add_argument('--root', default=ROOT)
 A = ap.parse_args()
 
 PASS, FAIL = [0], [0]
-TOPIC = 'Set me up a free account'
+TOPIC = 'Set up a free account'   # Dean, 7 Nov 2026 (round 3 note 23): it was "Set me up a free account"
+ASK = 'Hi, could you set up a free account for our venue so we can have a play? Thanks.'
 THANKS = 'Thanks, we’ll set up your free account and send it through, usually within one business day.'
 
 
@@ -44,7 +45,9 @@ HERO = ('(function(){var a=[].map.call(document.querySelectorAll("#top .hero-cta
         'l:Math.round(r.left),r:Math.round(r.right),w:Math.round(r.width),h:Math.round(r.height)};});'
         'return {btns:a,vw:document.documentElement.clientWidth};})()')
 FORM = ('(function(){var t=document.getElementById("ct-topic"),m=document.getElementById("ct-message");'
-        'return {topicShown:!!t&&!t.hidden&&t.getBoundingClientRect().height>0,topic:t?t.textContent.trim():"",msg:m?m.value:""};})()')
+        'var pk=document.getElementById("ct-topic-pick");'
+        'return {topicShown:!!t&&!t.hidden&&t.getBoundingClientRect().height>0,topic:pk&&pk.selectedOptions[0]?pk.selectedOptions[0].text:"",'
+        'picks:pk?[].map.call(pk.options,function(o){return o.text;}):[],msg:m?m.value:""};})()')
 FILL = ('(function(){function v(i,x){document.getElementById(i).value=x;}v("ct-name","Kim Offer");v("ct-email","kim@kirrabeachhotel.com.au");'
         'v("ct-venue","Kirra Beach Hotel");v("ct-postcode","4225");document.getElementById("ct-submit").click();return true;})()')
 DONE = ('(function(){var s=document.getElementById("ct-success");return s&&s.classList.contains("show")'
@@ -81,9 +84,9 @@ try:
         S.js(sid, 'window.VPFreeAccountEnquiry({}); true')   # the start's fallback while it is not switched on
         S.until(sid, '!document.getElementById("ct-topic").hidden', 5)
         f = S.json(sid, FORM, {})
-        ok('%s: the fallback shows the topic "Set me up a free account" on the form' % where,
-           f.get('topicShown') and f.get('topic') == 'Topic: ' + TOPIC, f)
-        ok('%s: and starts the message the same way' % where, (f.get('msg') or '').startswith(TOPIC), f.get('msg'))
+        ok('%s: the fallback shows the topic "Set up a free account" on the form, and it can be changed to "Talk to us"' % where,
+           f.get('topicShown') and f.get('topic') == TOPIC and f.get('picks') == [TOPIC, 'Talk to us'], f)
+        ok('%s: and the message is started in friendly words' % where, f.get('msg') == ASK, f.get('msg'))
         S.js(sid, FILL)
         th = S.until(sid, DONE, 15)
         ok('%s: sent, the thank-you says the account comes within one business day, word for word' % where, th == THANKS, th)
@@ -114,6 +117,25 @@ try:
     bodies = contact_bodies(S)[n0:]
     ok('and the message goes as typed, with no topic added', len(bodies) == 1 and bodies[0].get('message') == 'How does trivia work on a Tuesday?', bodies)
     S.close_tab(tid)
+
+    print('\nTHE TOPIC CHANGED TO "TALK TO US" (Dean, 7 Nov 2026, round 3 note 23)')
+    n0 = len(contact_bodies(S))
+    tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
+    S.until(sid, '!!document.getElementById("ct-submit")', 20)
+    time.sleep(0.6)
+    S.js(sid, 'window.VPFreeAccountEnquiry({}); true')
+    S.until(sid, '!document.getElementById("ct-topic").hidden', 5)
+    S.js(sid, 'var p=document.getElementById("ct-topic-pick");p.value="talk";p.dispatchEvent(new Event("change",{bubbles:true}));true')
+    time.sleep(0.3)
+    f = S.json(sid, FORM, {})
+    ok('picking "Talk to us" takes our words out of the message box', f.get('topic') == 'Talk to us' and f.get('msg') == '', f)
+    S.js(sid, 'document.getElementById("ct-message").value="Can we try it at our Friday raffle?"; true')
+    S.js(sid, FILL)
+    th = S.until(sid, DONE, 15)
+    bodies = contact_bodies(S)[n0:]
+    ok('and it sends the message as typed, with no free-account topic and the usual thank-you',
+       len(bodies) == 1 and bodies[0].get('message') == 'Can we try it at our Friday raffle?' and th == 'Thanks, we\'ve got it and we\'ll be in touch soon.', (bodies, th))
+    S.close_tab(tid)
 finally:
     S.close()
 
@@ -121,7 +143,7 @@ print('\nTHE HOME PAGE NEVER CARRIES IT; THE WORDS KEEP THE HOUSE RULES')
 home = open(os.path.join(A.root, 'venueplay', 'index.html'), encoding='utf-8').read()
 ok('index.html has no "Have a play for free" and no free-account topic', 'Have a play for free' not in home and 'free-account' not in home)
 page = open(os.path.join(A.root, 'venueplay', 'nsw.html'), encoding='utf-8').read()
-new = re.findall(r'Have a play for free|Set me up a free account[^\'"<]*|we\\u2019ll set up your free account[^\'"]*', page)
+new = re.findall(r'Have a play for free|Set up a free account[^\'"<]*|Hi, could you set up[^\'"]*|we\\u2019ll set up your free account[^\'"]*', page)
 ok('the new words have no em dash and no capitalised VenuePlay', new and not any('—' in x or 'VenuePlay' in x for x in new), new)
 
 ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it won\'t come back" is gone',

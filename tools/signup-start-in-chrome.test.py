@@ -231,8 +231,8 @@ try:
     fill(sid, 'Lennox Hotel', '2478', 'Lee Off', '0412 555 010', 'lee@lennox.example')
     S.until(sid, '!document.getElementById("ct-topic").hidden', 15)
     ct = S.json(sid, '(function(){function v(i){return document.getElementById(i).value;}return {n:v("ct-name"),e:v("ct-email"),v:v("ct-venue"),p:v("ct-postcode"),ph:v("ct-phone"),m:v("ct-message")};})()', {})
-    ok('the Talk to us form is set to "Set me up a free account", filled with what they typed', ct.get('n') == 'Lee Off' and ct.get('e') == 'lee@lennox.example'
-       and ct.get('v') == 'Lennox Hotel' and ct.get('p') == '2478' and ct.get('ph') == '0412 555 010' and (ct.get('m') or '').startswith('Set me up a free account'), ct)
+    ok('the Talk to us form is set to "Set up a free account", filled with what they typed', ct.get('n') == 'Lee Off' and ct.get('e') == 'lee@lennox.example'
+       and ct.get('v') == 'Lennox Hotel' and ct.get('p') == '2478' and ct.get('ph') == '0412 555 010' and (ct.get('m') or '').startswith('Hi, could you set up a free account'), ct)
     errs = S.js(sid, 'window.__errs') or []
     ok('no script errors on the page', not errs, errs)
     S.close_tab(tid)
