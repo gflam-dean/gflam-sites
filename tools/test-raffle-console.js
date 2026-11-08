@@ -43,7 +43,7 @@ Cls.prototype.add = function (c) { this.s[c] = 1; };
 Cls.prototype.remove = function (c) { delete this.s[c]; };
 Cls.prototype.contains = function (c) { return !!this.s[c]; };
 Cls.prototype.toggle = function (c, on) { if (on === undefined) on = !this.s[c]; if (on) this.s[c] = 1; else delete this.s[c]; };
-function El(id) { this.id = id; this.value = ''; this.checked = false; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.className = ''; }
+function El(id) { this.id = id; this.value = ''; this.checked = false; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.className = ''; this.style = {}; }
 El.prototype.appendChild = function (k) { this.kids.push(k); this.textContent += (k.textContent || ''); };
 var els = {};
 function $(id) { if (!els[id]) els[id] = new El(id); return els[id]; }
@@ -86,6 +86,9 @@ function drawBody() { return {}; }
 function drawingPrize() { return 'Meat Tray'; }
 function addPrize() {}
 function stopCountdown() { intervals = []; }
+// the new look's card (9 Nov 2026): the step, the summary lines and the words are the page's own concern here
+function syncStep() {} function renderAdvSum() {} function renderSkipLine() {}
+function lower(p) { return String(p); } var _redrawArm = null;
 var REDRAW_NOTICE_MS = 3000, CLAIM_CELEBRATE_MS = 30000, _celebrateUntil = 0, _suppressIdle = false;
 
 var G = { min: 1, max: 150, drawn: {}, jackOn: false, jackAmt: 0, allowRedraw: true, time: 180,
@@ -103,7 +106,7 @@ eval(lift('drawnCount')); eval(lift('skippedCount')); eval(lift('remainingCount'
 // the cash jackpot warning (15 Oct 2026): renderRange and startDraw call renderJackWarn
 eval(lift('jackpotWarning')); eval(lift('stateLimit')); eval(lift('renderJackWarn'));
 eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
-eval(lift('updateCd')); eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
+eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle')); eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
 
 function form(o) {
   $('rfPrize').value = ''; $('rfStart').value = '1'; $('rfEnd').value = '150'; $('rfTime').value = '180';
@@ -356,6 +359,28 @@ if (typeof raffleOldPrefs === 'function' && typeof applyRafflePrefs === 'functio
   check('CONTROL: the rest of the template still fills in (range and time to claim)', String($('rfEnd').value) === '400' && String($('rfTime').value) === '120',
         { end: $('rfEnd').value, time: $('rfTime').value });
 }
+
+/* ================= 9. Not here waits for the claim clock (Dean, 6 Nov 2026) ================= */
+section('9. "Not here, draw again" is locked while the claim clock runs, and opens at zero');
+/* A host who taps Not here with 2:41 left voids a ticket whose holder is still walking up. The members draw
+   already waited; the raffle now does too. Run on the page's own revealServer, updateCd and tapRedraw. */
+eval(lift('tapRedraw'));
+var REDRAW_ARM_MS = 4000, redrew = 0;
+var onRedrawReal = onRedraw; onRedraw = function () { redrew++; };
+reset(); form(); readInputs();
+revealServer({ seq: 9, tickets: [20], allow_redraw: true, time_to_present: 180 });
+check('a fresh winner with 3 minutes to claim: Not here is locked', G.round && G.round.locked === true, G.round && G.round.locked);
+tapRedraw(); tapRedraw();
+check('tapping it (twice, as the arm needs) while locked voids nothing', redrew === 0 && G.round && !G.round.resolved, redrew);
+check('the button counts down beside its words', /^Not here, draw again \(in /.test(redrawLabelIdle()), redrawLabelIdle());
+tick(181);
+check('at zero it opens', G.round && G.round.locked === false, G.round && G.round.locked);
+tapRedraw(); tapRedraw();
+check('CONTROL: once open, two taps draw again as before', redrew === 1, redrew);
+reset(); form(); readInputs();
+revealServer({ seq: 10, tickets: [21], allow_redraw: true, time_to_present: 0, recovered: true });
+check('a round picked up after a reload (no clock) is open from the start: the host decides', G.round && G.round.locked === false, G.round && G.round.locked);
+onRedraw = onRedrawReal;
 
 drainMicrotasks();
 print('');

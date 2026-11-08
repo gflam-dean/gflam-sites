@@ -89,7 +89,7 @@ var SPEC = {
              advanced: ['hitsChk'], removed: ['setupCode', 'setupPlayers', 'autoChk'], law: ['paidField', 'paidSel'] },
   raffle: { adv: 'raffleAdv', basic: ['prizePresets', 'rfPrize', 'addPrizeBtn', 'prizeList', 'rfStart', 'rfEnd', 'rfSkip', 'rangeLine'],
             advanced: ['rfTime', 'rfJackOn', 'rfJackAmt', 'rfJackWarn', 'rfAllowRedraw', 'drawLenWrap'], removed: [], law: ['drawBtn', 'freeEntryNote'] },
-  members: { adv: 'membersAdv', basic: ['drawSel', 'drawBtn', 'runJackpot', 'runCap', 'memberList'],
+  members: { adv: 'membersAdv', basic: ['drawSel', 'drawBtn', 'runJackpot', 'runCap'],   // the members list left the console for Your account (Dean, 6 Nov 2026)
              advanced: ['setName', 'setSince', 'setStart', 'setInc', 'setCur', 'setClaim', 'setDay', 'setTime', 'setMax', 'setMaxHint', 'capWarn', 'saveSettingsBtn'],
              removed: ['nameSeg', 'nameLock'], law: [] }
 };
@@ -101,7 +101,10 @@ Object.keys(SPEC).forEach(function (g) {
   ok(g + ': exactly one "Advanced settings" disclosure, the shared one', dets.length === 1 && /\bid="([^"]+)"/.exec(dets[0].attrs)[1] === s.adv, dets.length);
   ok(g + ': it is closed in the markup (no open attribute)', dets.length === 1 && !/\bopen\b/.test(dets[0].attrs), dets[0] && dets[0].attrs);
   var sumIdx = PAGES[g].indexOf('id="' + s.adv + '"');
-  ok(g + ': its summary says "Advanced settings"', /<summary><span>Advanced settings<small class="vp-adv-sub">/.test(PAGES[g].slice(sumIdx, sumIdx + 300)));
+  /* The raffle and members draw name theirs in Dean's words (the new look, 6 Nov 2026): "Draw settings" and "Draw and
+     jackpot settings", with the settings themselves on the line under it. The same shared disclosure all the same. */
+  var SUMMARY = { raffle: 'Draw settings', members: 'Draw and jackpot settings' }[g] || 'Advanced settings';
+  ok(g + ': its summary says "' + SUMMARY + '"', new RegExp('<summary><span>' + SUMMARY + '<small class="vp-adv-sub"').test(PAGES[g].slice(sumIdx, sumIdx + 300)));
   var missing = s.basic.filter(function (id) { return !t.byId[id]; }), inside = s.basic.filter(function (id) { return t.byId[id] && inAdv(t.byId[id]); });
   ok(g + ': every Basic control is on the setup, outside the disclosure', !missing.length && !inside.length, { missing: missing, inside: inside });
   var notIn = s.advanced.filter(function (id) { return !t.byId[id] || !inAdv(t.byId[id]); });
