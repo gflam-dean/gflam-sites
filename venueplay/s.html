@@ -22,7 +22,7 @@
   var m = /^\/s\/([A-Za-z0-9]{12})\/?$/.exec(location.pathname || '');
   var code = m ? m[1].toUpperCase() : '';
   if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/.test(code)) { location.replace('/app/'); return; }
-  try { sessionStorage.removeItem('vpShortAttach'); } catch (e) {}
+  try { sessionStorage.removeItem('vpShortAttach'); sessionStorage.removeItem('vpShortExistingOnly'); } catch (e) {}
   var done = false, go = function (u) { if (done) return; done = true; location.replace(u || '/app/'); };
   setTimeout(function () { go('/app/'); }, 8000);   // the Worker not answering: the normal sign-in, never a dead page
   fetch('https://api.venueplay.com.au/short/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }) })

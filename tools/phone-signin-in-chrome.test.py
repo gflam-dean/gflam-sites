@@ -154,6 +154,7 @@ try:
     S.until(sid, 'document.getElementById("vSignIn") && !document.getElementById("vSignIn").classList.contains("hidden")', 20)
     ok('an old ?signin=email link on a device that last used email: the MOBILE step is showing', visible(sid, 'stepMobile') and visible(sid, 'mobileIn'))
     ok('the email box is not on the screen', not visible(sid, 'stepEmail') and not visible(sid, 'emailIn'))
+    ok('nothing filled in, so no "Not your number?" and no wrong-number line', not visible(sid, 'notMineBtn') and not visible(sid, 'wrongNum'))
     ok('it says "Sign in with a text code to your mobile."', text(sid, 'authSub').strip() == 'Sign in with a text code to your mobile.', text(sid, 'authSub'))
     ok('no "Email address on your VenuePlay login" anywhere you can see', 'Email address' not in (js(sid, 'document.body.innerText') or ''))
     ok('the old device key that opened the email step is gone', js(sid, 'localStorage.getItem("vpSignInWith")') is None)
@@ -193,6 +194,51 @@ try:
     ok('at desktop width the email box is the dark full-width field, styled exactly as the mobile field', fits_dark(sid, 'emailIn') and wide and diff == [], diff)
     shot(sid, '2c-signin-email-fallback-desktop')
     S.close_tab(tid)
+
+    # ------------------------------------------------------------------ 1w. our pre-filled number, changed
+    print('\n1w. Our link filled in their mobile: a different number sends no code (Dean, 12 Nov 2026), at phone, iPad and laptop')
+    CHANGED = "That's not the number we have for your venue. Use that one, or call us on 07 5228 3667 (press 2) to change it."
+    LAYOUT = r"""(function(){ var c=document.querySelector("#vSignIn .authcard").getBoundingClientRect(); var ids=["mobileIn","notMineBtn","wrongNum","mobileErr","sendCodeBtn"], out={card:[c.left,c.right]};
+      ids.forEach(function(i){ var r=document.getElementById(i).getBoundingClientRect(); out[i]=[Math.round(r.left),Math.round(r.top),Math.round(r.right),Math.round(r.bottom)]; }); return out; })()"""
+    for (wname, ww, hh) in (('phone', 390, 844), ('ipad', 820, 1180), ('laptop', 1280, 900)):
+        tw, sw = tab('/app/?signin=sms#m=0452510904', {'signedIn': False}, width=ww, height=hh)
+        S.until(sw, 'document.getElementById("vSignIn") && !document.getElementById("vSignIn").classList.contains("hidden") && document.readyState==="complete"', 20)
+        ok('%s %dpx: our number is in the box with "Not your number?" under it, the number out of the address bar' % (wname, ww),
+           js(sw, 'document.getElementById("mobileIn").value') == '0452 510 904' and visible(sw, 'notMineBtn') and '#m=' not in js(sw, 'location.href'),
+           [js(sw, 'document.getElementById("mobileIn").value'), js(sw, 'location.href')])
+        shot(sw, '1w-%s-prefilled' % wname)
+        type_in(sw, 'mobileIn', '0433 999 888')
+        click(sw, 'sendCodeBtn')
+        S.until(sw, '!document.getElementById("wrongNum").classList.contains("hidden")', 5)
+        time.sleep(0.3)
+        otps = [c for c in auth_calls(sw) if c.get('fn') == 'signInWithOtp']
+        ok('%s: a different number: NO text asked for, still on the mobile step, and the one line says so' % wname,
+           otps == [] and visible(sw, 'stepMobile') and not visible(sw, 'stepCode') and text(sw, 'wrongNum').strip() == CHANGED, [otps, text(sw, 'wrongNum')])
+        L = js(sw, LAYOUT)
+        inside = all(L['card'][0] - 0.5 <= L[k][0] and L[k][2] <= L['card'][1] + 0.5 for k in ('mobileIn', 'notMineBtn', 'wrongNum', 'sendCodeBtn'))
+        order = L['mobileIn'][3] <= L['notMineBtn'][1] and L['notMineBtn'][3] <= L['wrongNum'][1] and L['wrongNum'][3] <= L['sendCodeBtn'][1]
+        gaps = [L['notMineBtn'][1] - L['mobileIn'][3], L['wrongNum'][1] - L['notMineBtn'][3], L['sendCodeBtn'][1] - L['wrongNum'][3]]
+        ok('%s: the box, "Not your number?", the line and Send code stack in order inside the card, evenly spaced (4 to 32px), no sideways scroll, no script errors' % wname,
+           inside and order and all(4 <= g <= 32 for g in gaps) and no_sideways(sw) and not errs(sw), [L, gaps, errs(sw)])
+        shot(sw, '1w-%s-changed' % wname)
+        js(sw, 'document.getElementById("useOursBtn").click()')
+        time.sleep(0.2)
+        ok('%s: "Use that one" puts our number back and the line goes' % wname,
+           js(sw, 'document.getElementById("mobileIn").value') == '0452 510 904' and not visible(sw, 'wrongNum'), js(sw, 'document.getElementById("mobileIn").value'))
+        if wname == 'phone':
+            click(sw, 'notMineBtn')
+            time.sleep(0.2)
+            ok('phone: "Not your number?" shows the help line with the phone to call, and sends nothing',
+               text(sw, 'wrongNum').strip().startswith("That's the number we have for your venue.") and '07 5228 3667 (press 2)' in text(sw, 'wrongNum') and
+               not [c for c in auth_calls(sw) if c.get('fn') == 'signInWithOtp'], text(sw, 'wrongNum'))
+            shot(sw, '1w-phone-help')
+        type_in(sw, 'mobileIn', '+61 452 510 904')
+        click(sw, 'sendCodeBtn')
+        S.until(sw, '!document.getElementById("stepCode").classList.contains("hidden")', 10)
+        otps = [c for c in auth_calls(sw) if c.get('fn') == 'signInWithOtp']
+        ok('%s: our number written another way (+61 452 510 904) is ours: the text goes to +61452510904' % wname,
+           len(otps) == 1 and otps[0]['args'].get('phone') == '+61452510904', otps)
+        S.close_tab(tw)
 
     # ------------------------------------------------------------------ 2. the one-off link
     print('\n2. The one-off link: one tap, signed in, then name and mobile')
