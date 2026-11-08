@@ -1301,7 +1301,7 @@
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
    "using": "(owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))",
-   "with_check": "(owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))"
+   "with_check": "((owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)) AND (visibility = 'private'::text))"
   },
   "vp_questions.vp_questions_admin_all": {
    "cmd": "ALL",
@@ -1321,8 +1321,8 @@
    "cmd": "ALL",
    "permissive": "PERMISSIVE",
    "roles": "authenticated",
-   "using": "(set_id IN ( SELECT vp_question_sets.id\n   FROM vp_question_sets\n  WHERE (vp_question_sets.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))",
-   "with_check": "(set_id IN ( SELECT vp_question_sets.id\n   FROM vp_question_sets\n  WHERE (vp_question_sets.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids))))"
+   "using": "((from_library = false) AND (set_id IN ( SELECT s.id\n   FROM vp_question_sets s\n  WHERE (s.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)))))",
+   "with_check": "((from_library = false) AND (set_id IN ( SELECT s.id\n   FROM vp_question_sets s\n  WHERE (s.owner_venue_id IN ( SELECT vp_staff_venue_ids() AS vp_staff_venue_ids)))))"
   },
   "vp_raffle_entries.vp_raffle_entries_admin_select": {
    "cmd": "SELECT",
@@ -1824,6 +1824,10 @@
    "enabled": true,
    "forced": false
   },
+  "vp_licensed_venues": {
+   "enabled": true,
+   "forced": false
+  },
   "vp_marketing_optins": {
    "enabled": true,
    "forced": false
@@ -1969,6 +1973,10 @@
    "forced": false
   },
   "vp_signin_texts": {
+   "enabled": true,
+   "forced": false
+  },
+  "vp_signup_starts": {
    "enabled": true,
    "forced": false
   },
