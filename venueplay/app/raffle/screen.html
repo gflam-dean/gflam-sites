@@ -854,7 +854,7 @@
       el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
       document.body.appendChild(el); }
 
-    if(!el.__vpYl){ el.__vpYl=true; el.addEventListener("load", function(){ yellowLogo(el); }); }
+    if(!el.__vpYl){ el.__vpYl=true; el.addEventListener("load", function(){ if(typeof yellowLogo==="function") yellowLogo(el); }); }
     el.src=url; el.style.display="block";
     if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
     if(!el.__vpTitleWired){ el.__vpTitleWired=true; el.addEventListener("vp-logo-sized", function(){ setTimeout(alignTitle,0); setTimeout(alignTitle,400); }); }   /* the game's name back on the logos' line */
