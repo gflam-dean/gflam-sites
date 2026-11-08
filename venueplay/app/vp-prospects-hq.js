@@ -105,6 +105,10 @@
     if (st === "cancelled") return "Cancelled " + when(p.cancelled_at);
     return "Not recorded yet";
   }
+  /* THE PRICE THEY GET (Dean, 7 Nov 2026: the offer needs the FIRST sign-in by its date). The Worker words it on its own
+     clock (vpaProspectRateInfo): the rate they got once signed in, or "Gets $2.50 if they sign in by 30 November, else
+     $3.00" while they have not. An older Worker sends no words. */
+  function rateText(p) { return (p && p.rate_words) ? String(p.rate_words) : "Not known yet"; }
   function phoneHtml(p) {
     if (p.phone && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.phone) + "</a>";
     if (p.mobile && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.mobile) + "</a>";
@@ -199,6 +203,7 @@
         (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
+        '<div><span class="k">Price</span><span data-pr-rate="1">' + prEsc(rateText(p)) + "</span></div>" +
         '<div><span class="k">Where</span>' + prEsc([p.postcode, p.state].filter(Boolean).join(" ") || "Not known") + "</div>" +
       "</div>" + called + form + "</div></div>";
   }

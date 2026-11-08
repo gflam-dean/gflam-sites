@@ -105,7 +105,7 @@ function named(res, name) { return prospects(res).filter(function (p) { return p
   check('the welcome still goes as the backup, booked as before', sent.length === 1 && r.body.welcome && r.body.welcome.status === 'scheduled', r.body.welcome);
   var wl = sent[0] || {};
   check('the account email says which address our emails come from, and comes from it (Dean, 6 Nov 2026: "so they look out for it")',
-    /Our emails come from <strong>hello@send\.venueplay\.com\.au<\/strong>, so keep an eye out for them/.test(String(wl.html || '')) && /hello@send\.venueplay\.com\.au/.test(String(wl.from || '')), [wl.from, String(wl.html || '').slice(0, 200)]);
+    /Our emails come from <strong>hello@send\.venueplay\.com\.au<\/strong>\. If one lands in junk, mark it as not junk\./.test(String(wl.html || '')) && /hello@send\.venueplay\.com\.au/.test(String(wl.from || '')), [wl.from, String(wl.html || '').slice(0, 200)]);
   check('the link ends with their 30 days, and says when', r.body.signin.days_left >= 29 && !!r.body.signin.expires_words, r.body.signin);
   check('the token is never written to the audit', JSON.stringify(DB.vp_admin_audit).indexOf(r.body.signin.url.split('#t=')[1].split('&')[0]) === -1);
   world(); N = 10;

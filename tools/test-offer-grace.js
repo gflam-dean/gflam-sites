@@ -176,6 +176,7 @@ async function newProspect(name, offerOpen) {
   world(); ENV.FOUNDING_CODES = offerOpen === false ? '' : 'OFFER-NOV-2099';
   var P = await prospect({ name: name });
   P.row().first_signin_at = new Date(BNE_FIRST).toISOString(); P.row().free_month_ends_at = new Date(MONTH_END).toISOString();
+  P.row().offer_rate = offerOpen === false ? null : 2.5;   // their first sign-in came while the offer was open (decided at the sign-in, 7 Nov 2026)
   ENV.FOUNDING_CODES = '';   // the offer they were set up on has long closed: only THEIR offer_rate can hold the price
   return P;
 }
@@ -322,36 +323,37 @@ async function newProspect(name, offerOpen) {
   var got = await walk(BNE_FIRST, MONTH_END, 3600000);
   check('the settled reminders are untouched: day 3, 23 and 29 only, nothing new for the grace',
     got.map(function (g) { return day(g.at); }).join(' ') === '2026-11-05 2026-11-25 2026-12-01', got.map(function (g) { return day(g.at); }));
-  /* 8. THE EMAILS SAY THE GRACE ONLY WHEN DEAN SWITCHES IT ON (6 Nov 2026, OFFER_GRACE_EMAILS on the billing Worker). */
+  /* 8. THE EMAILS NEVER SAY THE 5 DAYS (Dean, 7 Nov 2026: never mentioned publicly). The 6 Nov switch OFFER_GRACE_EMAILS
+     and its words are gone: set ON, it changes nothing. Same 10 checks as before, now all "never". */
   var html = function (g) { return String((g && g.msg && g.msg.html) || ''); };
+  var NEVER = /5 more days|five more days|5 days after|grace/i;
   var last = got.filter(function (g) { return /ends/.test(g.msg.subject || ''); })[0];
-  check('switch OFF (the default): the day-29 reminder keeps today\'s words (the offer ends with the pause), no 5 days',
-    !!last && /offer you were set up on ends with the pause/.test(html(last)) && !/5 more days/.test(html(last)), last && html(last).slice(0, 200));
+  check('the day-29 reminder says the offer price ends with the pause, and never the 5 days',
+    !!last && /That price ends with the pause/.test(html(last)) && !NEVER.test(html(last)), last && html(last).slice(0, 200));
   ENV.OFFER_GRACE_EMAILS = 'on';
-  var G = await newProspect('Grace Words Hotel');
+  var G = await newProspect('Kept Words Hotel');
   var gotG = await walk(BNE_FIRST, MONTH_END, 3600000);
   var keptWords = vpaBneDateWords(vpaOfferGraceEnd(G.row()));
-  var lastG = gotG.filter(function (g) { return /ends/.test(g.msg.subject || ''); })[0];
-  check('switch ON: every reminder says they keep the $2.50 for 5 more days after the free month, to the grace\'s own last day, then the standard rate',
-    gotG.length === 3 && gotG.every(function (g) { return html(g).indexOf('You keep the $2.50 a player offer for 5 more days after your free month, so add your card by ' + keptWords + ' to keep it. After that, it&#39;s our standard $3.00 a player.') !== -1; }) &&
-    gotG.every(function (g) { return !/ends with the pause/.test(html(g)); }), [keptWords, gotG.length, lastG && html(lastG).slice(0, 200)]);
+  check('the old switch set ON: every reminder still never says the 5 days or the date the offer is kept to',
+    gotG.length === 3 && gotG.every(function (g) { return !NEVER.test(html(g)) && html(g).indexOf(keptWords) === -1 && /That price ends with the pause/.test(html(g)); }), [keptWords, gotG.length]);
   var q = await quote(G, at(4, 12));
-  check('the date in the email is the one the card-link quotes in the grace (one answer, one place)', q.offer_kept_words === keptWords, [q.offer_kept_words, keptWords]);
-  check('switch ON, no date known (no month started): the reminder falls back to today\'s words, never a blank date',
-    /ends with the pause/.test((await vpaRenderProspectReminder(ENV, { kind: 'last', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 2, offerRate: 2.5, cardUrl: 'c', cancelUrl: 'd', graceWords: '' })).html));
+  check('the price still keeps the offer in the 5 days, silently (the card-link quotes it to the console only)', q.rate === 2.5 && q.offer_kept_words === keptWords, [q.rate, q.offer_kept_words, keptWords]);
+  check('a reminder with a keep date handed in still never shows it',
+    !NEVER.test((await vpaRenderProspectReminder(ENV, { kind: 'last', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 2, offerRate: 2.5, cardUrl: 'c', cancelUrl: 'd', graceWords: 'Mon 7 December' })).html));
   var std = await vpaRenderProspectReminder(ENV, { kind: 'last', email: 'a@b.example', venueName: 'X', endsWords: 'Wed', daysLeft: 2, offerRate: 3, cardUrl: 'c', cancelUrl: 'd', graceWords: 'Mon 7 December' });
-  check('switch ON, set up at the standard rate: no offer and no 5 days mentioned', !/5 more days|offer/.test(std.html.replace(/<!--[\s\S]*?-->/g, '')), std.html.slice(0, 100));
+  check('a standard-rate reminder: no offer, no "in time for" price and no 5 days mentioned', !/5 more days|offer|in time for|That price ends/.test(std.html.replace(/<!--[\s\S]*?-->/g, '')), std.html.slice(0, 100));
   var fcWas = ENV.FOUNDING_CODES; ENV.FOUNDING_CODES = 'OFFER-NOV-2099';   // a welcome sent while the offer is open
-  var wOn = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  var wOn = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Welcome Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
   ENV.OFFER_GRACE_EMAILS = '';
-  var wOff = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
-  var wStd = await vpaRenderProspectWelcome((ENV.OFFER_GRACE_EMAILS = 'on', ENV.FOUNDING_CODES = '', ENV), { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Grace Welcome Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  var wOff = await vpaRenderProspectWelcome(ENV, { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Welcome Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
+  var wStd = await vpaRenderProspectWelcome((ENV.OFFER_GRACE_EMAILS = 'on', ENV.FOUNDING_CODES = '', ENV), { email: 'sam@testcharlie.example', firstName: 'Sam', venueName: 'Welcome Words Hotel', signinToken: 'T0K3N', slides: 0, seats: 10 });
   ENV.OFFER_GRACE_EMAILS = ''; ENV.FOUNDING_CODES = fcWas;
   var wh = function (w) { return String((w && w.html) || w || ''); };
-  check('the welcome, switch ON: pauses, then "You keep $2.50 a player for 5 more days after your free month"; never "the offer price goes with it"',
-    /your account simply pauses\. You keep \$2\.50 a player for 5 more days after your free month, so you can still add your card then\./.test(wh(wOn)) && !/goes with it/.test(wh(wOn)), wh(wOn).slice(0, 200));
-  check('the welcome at the standard rate (no offer open): pauses, and no offer or 5 days is mentioned', /your account simply pauses\. If/.test(wh(wStd)) && !/5 more days|goes with it/.test(wh(wStd)), (wh(wStd).match(/simply pauses.{0,80}/) || [''])[0]);
-  check('the welcome, switch OFF: today\'s words, unchanged', /your account simply pauses and the offer price goes with it\. If/.test(wh(wOff)) && !/5 more days/.test(wh(wOff)));
+  var para = function (w) { return (wh(w).match(/There&#39;s no card on your account[^<]*/) || [''])[0]; };
+  check('the welcome, old switch ON: the short no-card line, the offer line, and never the 5 days',
+    !!para(wOn) && /\$2\.50 a player a month, for as long as you&#39;re with us/.test(wh(wOn)) && !NEVER.test(wh(wOn)), para(wOn));
+  check('the welcome at the standard rate (no offer open): $3.00, and no offer or 5 days is mentioned', /Then it&#39;s \$3\.00 a player a month\. No lock-in\./.test(wh(wStd)) && !/5 more days|goes with it|offer/.test(wh(wStd).replace(/<!--[\s\S]*?-->/g, '')), para(wStd));
+  check('the welcome, switch OFF: the same pause words as ON', !!para(wOff) && para(wOff) === para(wOn) && !NEVER.test(wh(wOff)), [para(wOff), para(wOn)]);
 
   var TERMS = readFile('venueplay/terms.html'), t2 = TERMS.slice(TERMS.indexOf('<h2>2. Offer pricing</h2>'), TERMS.indexOf('<h2>3. Pricing and billing</h2>'));
   check('the Terms (section 2) never mention the 5 days (Dean, 6 Nov 2026: never in the Terms or publicly), no em dash, lowercase venueplay',

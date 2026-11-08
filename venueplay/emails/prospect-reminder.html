@@ -5,13 +5,13 @@
   only in Dean's send window (7 Nov 2026): Monday to Friday, 9am to 12 noon and 2pm to 5pm, the venue's own local time (vpaSendAllowedAt). The "final" section (the last day itself) is no longer sent. Their free month started the first time they signed in.
   WHAT HAPPENS, word for word with the code: there is no card on the account, so nothing can be charged. A card
   added during the month is first charged when the month ends. With no card at the end the account PAUSES: the
-  games switch off, the TV keeps showing their ads, nothing is lost, and the offer price they were set up on goes
+  games switch off, the TV keeps showing their ads, nothing is lost, and the offer price they started on goes
   (a card added after that is at our price on that day). "Cancel, it's not for us" switches it off and stops
   these emails; the link opens a page that asks first, so a mail scanner never cancels anybody.
   Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
-  Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (were they
-  set up on an offer price), graceoffer instead of offer when the Worker setting OFFER_GRACE_EMAILS is on (the 5-day
-  offer grace, Dean 6 Nov 2026: they keep the offer for 5 more days after the free month, to {{offer_kept_until}}).
+  Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (did their first
+  sign-in come by their offer's date, Dean 7 Nov 2026: offer_rate is decided then). Anything a paused prospect keeps
+  after the pause is never written here (Dean: never mentioned publicly).
   Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
     {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
@@ -48,13 +48,10 @@
       <tr><td style="padding:20px 28px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">If there's no card by the end</p>
+            <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">If there's no card by the end</p>
 <!--IF:offer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. The {{offer_rate}} a player offer you were set up on ends with the pause, so a card added after that is at our price on the day.</p>
+            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You started your free month in time for {{offer_rate}} a player. That price ends with the pause, so a card added after that is at our price on the day.</p>
 <!--ENDIF:offer-->
-<!--IF:graceoffer-->
-            <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on. You keep the {{offer_rate}} a player offer for 5 more days after your free month, so add your card by {{offer_kept_until}} to keep it. After that, it&#39;s our standard {{standard_rate}} a player.</p>
-<!--ENDIF:graceoffer-->
 <!--IF:nooffer-->
             <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#3a3a44">Your account pauses: your games switch off and your TV keeps showing your ads. Nothing is lost, and adding a card switches it all back on.</p>
 <!--ENDIF:nooffer-->

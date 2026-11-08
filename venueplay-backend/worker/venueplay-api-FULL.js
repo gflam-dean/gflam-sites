@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '7 Nov 2026, 05:38 · bc878d73';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3492,9 +3492,9 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       source: opts.via === 'autopilot_prospect' ? 'autopilot' : (opts.via === 'self_signup' ? 'self' : 'hq'), contact_name: firstName || null, email: email,
       phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
       call_requested: b.call_requested === true, created_label: actor.label || null }, false);
-    /* THE OFFER THEY WERE SET UP ON (migration 127), kept through their free month even if that month's offer
-       closes; a pause takes it away (vpaProspectPrice). Its own write, so a database without 127 still lists them. */
-    if (vpaFoundingOpenNow(env)) await vpaProspectPatch(env, venue.id, { offer_rate: VPA_OFFER_RATE }).catch(() => false);
+    /* NO offer_rate AT SETUP (Dean, 7 Nov 2026): being set up by the offer's date is not enough, the free month must
+       START by it. offer_rate stays null here and is written ONCE, at the first sign-in (vpaProspectStartMonth), from
+       the offer named on the audit row below (offer_code) and that offer's date. */
   } catch (e) {
     warnings.push('HQ > Prospects cannot list them until migration 125 is run' + (callPhone ? ' (their phone, ' + callPhone + ', is kept on the audit row).' : '.'));
   }
@@ -4195,6 +4195,8 @@ async function vpaProspectsData(env, dopts) {
     (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
       ')&select=id,status,stripe_subscription_id,bill_by_invoice,mobile&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
   }
+  /* Which offer each one is on, for the rate HQ shows (Dean, 7 Nov 2026: the rate needs the first sign-in by its date). */
+  const offerCodes = await vpaProspectOfferCodes(env, ids);
   const out = [], cardAdded = [];
   let signedUp = 0;
   const freeMonthReady = rows.length === 0 || rows.some((r) => 'first_signin_at' in r);
@@ -4215,7 +4217,7 @@ async function vpaProspectsData(env, dopts) {
           tel: (r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)) ? 'tel:' + String(r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)).replace(/[^\d+]/g, '') : null,
           website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
           created_at: r.created_at, days_since_setup: Math.floor((now - Date.parse(r.created_at)) / DAY) || 0,
-          flag: null, called: null }, st));
+          flag: null, called: null }, st, vpaProspectRateInfo(env, r, offerCodes[r.venue_id] || null, null, now)));
       }
       continue;
     }
@@ -4257,6 +4259,7 @@ async function vpaProspectsData(env, dopts) {
     const last = out[out.length - 1];
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
     Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
+    Object.assign(last, vpaProspectRateInfo(env, r, offerCodes[r.venue_id] || null, seen.at, now));
   }
   /* WHERE THE ACCOUNT EMAIL GOT TO (Dean, 5 Nov 2026: "I need to be able to make sure our emails are making it
      somewhere"). Only when asked (HQ's list and the autopilot's quiet list), never for a send-time check. */
@@ -4330,7 +4333,14 @@ async function vpaAutopilotQuietProspects(request, env, json) {
        from the link it actually mints when the email goes. A Mac on an older Worker sees neither field. */
     link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
     link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
-    called: !!p.called, call_requested: !!p.call_requested }));
+    called: !!p.called, call_requested: !!p.call_requested,
+    /* THE OFFER'S SIGN-IN DATE (Dean, 7 Nov 2026), so the Mac's follow-up can say "Your free month starts the first time you
+       sign in. Sign in by 30 November to keep $2.50 a player." offer_open is false once that day has passed (then the
+       follow-up names no offer). Null fields: no dated offer. */
+    offer_signin_by: p.offer_signin_by || null, offer_signin_by_at: p.offer_signin_by_at || null,
+    offer_open: !!(p.offer_signin_by && p.rate != null && p.rate < VPA_STANDARD_RATE),
+    offer_rate: VPA_OFFER_RATE, standard_rate: VPA_STANDARD_RATE,
+    offer_words: (p.offer_signin_by && p.rate != null && p.rate < VPA_STANDARD_RATE) ? vpaOfferSigninWords(p.offer_code) : '' }));
   /* Where their account email got to, and the link (5 Nov 2026), so the Mac can catch a bounce or a junked one. */
   const deliveryOf = {};
   (d.prospects || []).forEach((p) => { deliveryOf[p.venue_id] = p.delivery || null; });
@@ -4667,7 +4677,7 @@ const VPA_PROSPECT_LAST_DAYS = 3;
 function vpaProspectStatus(r, cardOn, lastSignInMs, nowMs) {
   const base = { first_signin_at: r.first_signin_at || null, free_month_ends_at: r.free_month_ends_at || null,
     paused_at: r.paused_at || null, cancelled_at: r.cancelled_at || null, card_choice: r.card_choice || null,
-    offer_rate: Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,
+    offer_rate: r.first_signin_at && Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,   // decided at the first sign-in (7 Nov 2026)
     reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false,
     /* THE 5-DAY OFFER GRACE: when a paused prospect's offer price stops being kept (null: no offer, or not paused). */
     offer_kept_until: r.paused_at && vpaProspectOfferRate(r) && isFinite(vpaOfferGraceEnd(r)) ? new Date(vpaOfferGraceEnd(r)).toISOString() : null };
@@ -4919,12 +4929,8 @@ function vpaFreeMonthEnd(firstMs) { return vpaBneDayStartMs(vpaAddDays(vpaBneDay
        rate (the offer is gone, Dean's words).
      - no new email: the settled reminders are day 3, 23 and 29 only (dean-settled-answers-check-first). */
 const VPA_OFFER_GRACE_DAYS = 5;
-/* THE GRACE IN THE EMAILS (Dean, 6 Nov 2026; INBOX 24: "switch it on in the same release as this change, and never
-   before"). The welcome and the card reminders say "you keep $2.50 for 5 more days after your free month" only when
-   the Worker setting OFFER_GRACE_EMAILS is "on". Off (the default), they keep today's words (the offer ends with the
-   pause), which is the stricter promise and never untrue. A Worker setting, not code, so Dean's yes needs no deploy and
-   switching it off again is instant. The grace itself (vpaProspectPrice) does not read this. */
-function vpaGraceEmailWords(env) { return String((env && env.OFFER_GRACE_EMAILS) || '').trim().toLowerCase() === 'on'; }
+/* THE EMAILS NEVER SAY THE 5 DAYS (Dean, 7 Nov 2026: "never mentioned publicly"). The OFFER_GRACE_EMAILS switch that
+   could turn the words on (6 Nov 2026) is gone with its words; setting it now changes nothing. */
 /* The free month's last moment for a prospect row, or NaN when it has never started. */
 function vpaProspectMonthEndMs(prow) {
   if (!prow) return NaN;
@@ -5010,8 +5016,15 @@ function vpaInSendWindow(ms, state) { return vpaSendAllowedAt(state, ms) === Mat
    (vpaOfferGraceEnd). Once the month is over (paused, or past its end) and the grace has run out, it is the
    standard rate. Not a prospect, or a prospect inside a month set up at no offer: as before, whatever is open now.
    nowMs: the moment of the card-add (Date.now() when not given), so the suite can walk the days. */
-function vpaProspectPrice(env, prow, nowMs) {
+function vpaProspectPrice(env, prow, nowMs, notStartedCode) {
   const now = nowMs == null ? Date.now() : nowMs;
+  /* NOT SIGNED IN YET (Dean, 7 Nov 2026): no rate is decided until the first sign-in, so a card added before one is
+     priced from their offer's date at this moment. An offer_rate the old setup wrote is not theirs yet and is ignored.
+     notStartedCode: their offer code (null when none is recorded), given by vpaProspectPriceNow. */
+  if (prow && !prow.first_signin_at && !prow.paused_at && notStartedCode !== undefined) {
+    const r0 = vpaOfferRateAt(env, notStartedCode, now);
+    return { founding: r0 < VPA_STANDARD_RATE, rate: r0 };
+  }
   const offer = vpaProspectOfferRate(prow);
   if (vpaProspectMonthOver(prow, now)) {
     const graceEnd = vpaOfferGraceEnd(prow);
@@ -5019,6 +5032,8 @@ function vpaProspectPrice(env, prow, nowMs) {
     return { founding: false, rate: VPA_STANDARD_RATE, grace: false };
   }
   if (offer) return { founding: true, rate: offer };
+  /* A first sign-in after their offer's date wrote the standard rate: that IS their price, never "whatever is open now". */
+  if (prow && prow.first_signin_at && Number(prow.offer_rate) >= VPA_STANDARD_RATE) return { founding: false, rate: VPA_STANDARD_RATE };
   const open = vpaFoundingOpenNow(env);
   return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE };
 }
@@ -5036,14 +5051,34 @@ async function vpaProspectPatch(env, venueId, patch) {
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify(patch) });
   return !!(res && res.ok);
 }
-/* Start the free month, once. A second call (another sign-in, another device) changes nothing. */
+/* Start the free month, once. A second call (another sign-in, another device) changes nothing.
+   THE RATE IS DECIDED HERE, ONCE (Dean, 7 Nov 2026): offer_rate is written in the SAME conditional write as
+   first_signin_at, the offer rate when this first sign-in is on or before their offer's date (vpaOfferRateAt), else the
+   standard rate. The write only lands while first_signin_at is still empty, so a second sign-in, a second device or
+   the sweep can never change it; an offer_rate the old setup left on a row that had not signed in is overwritten. The
+   row is read back so a racing writer's values are the ones used. */
 async function vpaProspectStartMonth(env, prow, atMs) {
   if (!prow || prow.first_signin_at) return prow;
   const first = new Date(atMs).toISOString(), ends = new Date(vpaFreeMonthEnd(atMs)).toISOString();
+  const code = await vpaProspectOfferCode(env, prow.venue_id);
+  const rate = vpaOfferRateAt(env, code, atMs);
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(prow.venue_id) + '&first_signin_at=is.null', {
-    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ first_signin_at: first, free_month_ends_at: ends }) });
-  if (res && res.ok) { prow.first_signin_at = first; prow.free_month_ends_at = ends; }
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ first_signin_at: first, free_month_ends_at: ends, offer_rate: rate }) });
+  if (res && res.ok) {
+    const now = await vpaProspectRowFor(env, 'venue_id', prow.venue_id);
+    if (now && now.first_signin_at) { prow.first_signin_at = now.first_signin_at; prow.free_month_ends_at = now.free_month_ends_at; prow.offer_rate = now.offer_rate; }
+    else { prow.first_signin_at = first; prow.free_month_ends_at = ends; prow.offer_rate = rate; }
+    if (prow.first_signin_at === first) {
+      await vpaAudit(env, { actorId: null, label: 'first sign-in' }, 'prospect_month_started', 'venue:' + prow.venue_id,
+        { offer_code: code || null, offer_rate: rate, signin_by: vpaOfferDayWords(code) || null });
+    }
+  }
   return prow;
+}
+/* The price of a card added now, for a prospect row: one not signed in yet is priced from their offer's date. */
+async function vpaProspectPriceNow(env, prow, nowMs) {
+  if (prow && !prow.first_signin_at && !prow.paused_at) return vpaProspectPrice(env, prow, nowMs, await vpaProspectOfferCode(env, prow.venue_id));
+  return vpaProspectPrice(env, prow, nowMs);
 }
 /* POST /account/prospect-start { venue_id }   (the venue's owner or a manager; never HQ View as) */
 async function vpbProspectStart(request, env, json) {
@@ -5057,7 +5092,7 @@ async function vpbProspectStart(request, env, json) {
   let prow = await vpaProspectRowFor(env, 'venue_id', venueId);
   if (!prow || !('first_signin_at' in prow)) return json({ ok: true, prospect: false });
   prow = await vpaProspectStartMonth(env, prow, Date.now());
-  const price = vpaProspectPrice(env, prow);
+  const price = await vpaProspectPriceNow(env, prow);
   return json({ ok: true, prospect: true, first_signin_at: prow.first_signin_at, free_month_ends_at: prow.free_month_ends_at,
     ends_words: vpaBneDateWords(Date.parse(prow.free_month_ends_at)), rate: price.rate, card_choice: prow.card_choice || null,
     paused: !!prow.paused_at });
@@ -5185,16 +5220,16 @@ async function vpaRenderProspectReminder(env, o) {
   if (!res.ok) return null;
   const tpl = String(await res.text());
   let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
+  /* The 5 days a paused prospect keeps their offer are never said in an email (Dean, 7 Nov 2026: never mentioned
+     publicly); the price itself still holds them (vpaProspectPrice). */
   const onOffer = o.offerRate < VPA_STANDARD_RATE;
-  const grace = onOffer && vpaGraceEmailWords(env) && !!o.graceWords;   // no date to give: today's words
-  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: onOffer && !grace, graceoffer: grace, nooffer: !onOffer });
+  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: onOffer, nooffer: !onOffer });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
     .replace(/{{ends_on}}/g, vpaEsc(o.endsWords))
     .replace(/{{days_left}} days/g, Number(o.daysLeft) === 1 ? '1 day' : o.daysLeft + ' days')   // never "1 days left" (5 Nov 2026)
     .replace(/{{days_left}}/g, String(o.daysLeft))
-    .replace(/{{offer_kept_until}}/g, vpaEsc(o.graceWords || ''))
     .replace(/{{offer_rate}}/g, '$' + Number(o.offerRate).toFixed(2))
     .replace(/{{standard_rate}}/g, '$' + VPA_STANDARD_RATE.toFixed(2))
     .replace(/{{card_url}}/g, o.cardUrl)
@@ -5257,7 +5292,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (!email || !env.RESEND_API_KEY) continue;
     const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
-      endsWords: vpaBneDateWords(endMs), graceWords: isFinite(vpaOfferGraceEnd(p)) ? vpaBneDateWords(vpaOfferGraceEnd(p)) : '', daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
+      endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
       cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id) });
     if (!msg) continue;
@@ -5745,9 +5780,13 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
+  /* A PROSPECT WHO HAS NOT SIGNED IN YET, before their offer's date (Dean, 7 Nov 2026): the same sentence as the welcome,
+     "Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player." */
+  const offerLine = win ? await vpaProspectSigninOfferWords(env, pick.venue_id, Date.now()) : '';
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
     + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
+    + (offerLine ? '<p style="' + P + '" data-offer-signin="1">' + vpaEsc(offerLine) + '</p>' : '')
     + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
@@ -6159,11 +6198,109 @@ function vpaOfferMonthPhrase(code) {
   return cm ? 'while the ' + VPA_MONTH_NAMES[cm.m] + ' offer runs' : 'while our offer runs';
 }
 
-/* The offer's last day (Dean, 5 Nov 2026): " You just need to start by 30 November." for OFFER-NOV-2026, 31 December for a
-   DEC code. Starts with a space so it sits after a full stop; empty when no month is known. */
-function vpaOfferDeadline(code) {
+/* THE OFFER NEEDS THE FREE MONTH STARTED BY ITS DATE (Dean, 7 Nov 2026, for the Thu 12 Nov release): "to get the $2.50
+   offer rate, a prospect must START the free month, i.e. sign in for the FIRST time, by that offer's deadline. Joining
+   (being set up) by the deadline is NOT enough. If the first sign-in comes AFTER the deadline, the free month still runs,
+   but the rate is the standard $3.00."
+     - the deadline is the LAST DAY of the code's month: OFFER-NOV-2026 30 November, OFFER-DEC-2026 31 December
+       (vp-offer.js rows), to the end of that day in Brisbane (UTC+10 all year), inclusive: 30 Nov 23:59:59.999 is on
+       time, 1 Dec 00:00:00.000 is late. The same end-of-day rule as vpaCodeInDate and the 5-day keep after a pause.
+     - a code with no month in it (none are in use) has no date: the old rule, "is an offer open at that moment".
+   vpaOfferStartDeadlineMs is the one place the moment is worked out; vpaOfferDayWords only words it. */
+function vpaOfferStartDeadlineMs(code) {
   const cm = vpaCodeMonth(code);
-  return cm ? ' You just need to start by ' + new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] + '.' : '';
+  return cm ? Date.UTC(cm.y, cm.m + 1, 1) - 10 * 3600 * 1000 - 1 : NaN;
+}
+function vpaOfferDayWords(code) {
+  const cm = vpaCodeMonth(code);
+  return cm ? new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] : '';
+}
+/* The rate a free month started at atMs gets, for this offer code: the offer by its date, else the standard rate. */
+function vpaOfferRateAt(env, code, atMs) {
+  const end = vpaOfferStartDeadlineMs(code);
+  if (isFinite(end)) return atMs <= end ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
+  return vpaLiveCodes(env, atMs).length ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
+}
+/* Dean's sentence, with the offer's own day: "Your free month starts the first time you sign in. Sign in by 30 November
+   to keep $2.50 a player." Empty when the code has no date. */
+function vpaOfferSigninWords(code) {
+  const day = vpaOfferDayWords(code);
+  return day ? 'Your free month starts the first time you sign in. Sign in by ' + day + ' to keep $' + VPA_OFFER_RATE.toFixed(2) + ' a player.' : '';
+}
+/* WHICH OFFER A PROSPECT IS ON. It is not a column on vp_prospects (no migration): it is written on the setup's audit row
+   (vp_admin_audit prospect_set_up, detail.offer_code) and on every welcome sent (vp_prospect_welcomes detail.offerCode;
+   a resend after the setup's offer ended names this month's). Their offer is the one with the LATEST date among those:
+   the newest promise made to them in writing, never less than an email they were sent. A cancelled or failed welcome
+   never reached them and does not count. { venue_id: code }; a venue with nothing recorded is left out. */
+async function vpaProspectOfferCodes(env, venueIds) {
+  const out = {};
+  const take = function (vid, code) {
+    const c = String(code || '').trim().toUpperCase();
+    if (!vid || !c) return;
+    const have = out[vid];
+    if (!have) { out[vid] = c; return; }
+    const a = vpaOfferStartDeadlineMs(have), b = vpaOfferStartDeadlineMs(c);
+    if (isFinite(b) && (!isFinite(a) || b > a)) out[vid] = c;
+  };
+  const ids = (venueIds || []).filter(Boolean);
+  for (let i = 0; i < ids.length; i += 100) {
+    const part = ids.slice(i, i + 100);
+    try {
+      const targets = part.map(function (id) { return '"venue:' + id + '"'; }).join(',');
+      (await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.prospect_set_up&target=in.(' + encodeURIComponent(targets) + ')&select=target,detail&order=created_at.asc'))
+        .forEach(function (a) { if (a && a.detail && typeof a.detail === 'object') take(String(a.target || '').replace(/^venue:/, ''), a.detail.offer_code); });
+    } catch (_) {}
+    try {
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + part.map(encodeURIComponent).join(',') + ')&select=venue_id,status,detail&order=send_at.asc'))
+        .forEach(function (w) { if (w && w.status !== 'cancelled' && w.status !== 'failed' && w.detail && typeof w.detail === 'object') take(w.venue_id, w.detail.offerCode); });
+    } catch (_) {}
+  }
+  return out;
+}
+/* The sign-in sentence for a prospect's venue, or '' (signed in already, no dated offer, or its day has passed). */
+async function vpaProspectSigninOfferWords(env, venueId, nowMs) {
+  try {
+    const pr = await vpaProspectRowFor(env, 'venue_id', venueId);
+    if (!pr || pr.first_signin_at || pr.paused_at || pr.cancelled_at) return '';
+    const code = await vpaProspectOfferCode(env, venueId);
+    return nowMs <= vpaOfferStartDeadlineMs(code) ? vpaOfferSigninWords(code) : '';
+  } catch (_) { return ''; }
+}
+async function vpaProspectOfferCode(env, venueId) {
+  if (!venueId) return null;
+  return (await vpaProspectOfferCodes(env, [venueId]))[venueId] || null;
+}
+/* WHAT RATE A PROSPECT HAS, OR WILL GET, in HQ's words, on the Worker's clock (Date.now, so the suite can fake it).
+     signed in (first_signin_at): the rate written at that first sign-in, never worked out again
+     not signed in yet: "Gets $2.50 if they sign in by 30 November, else $3.00", until that day has passed
+   lastSignInMs: Auth knows of a sign-in the app has not recorded yet; the sweep starts the month from it. */
+function vpaProspectRateInfo(env, r, code, lastSignInMs, nowMs) {
+  const money = function (n) { return '$' + Number(n).toFixed(2); };
+  const day = vpaOfferDayWords(code), end = vpaOfferStartDeadlineMs(code);
+  const info = { offer_code: code || null, offer_signin_by: day || null, offer_signin_by_at: isFinite(end) ? new Date(end).toISOString() : null,
+    rate: null, rate_decided: false, rate_words: '' };
+  if (r && r.first_signin_at) {
+    const stored = Number(r.offer_rate);
+    info.rate_decided = true;
+    if (!(stored > 0)) { info.rate_words = 'Not recorded'; return info; }
+    info.rate = stored;
+    const onOffer = stored < VPA_STANDARD_RATE;
+    info.rate_words = money(stored) + ' a player' + (day ? (onOffer ? ', first sign-in by ' + day : ', first sign-in after ' + day) : '');
+    return info;
+  }
+  if (lastSignInMs != null && isFinite(lastSignInMs)) {
+    info.rate = vpaOfferRateAt(env, code, Math.min(lastSignInMs, nowMs));
+    info.rate_words = money(info.rate) + ' a player' + (day ? (info.rate < VPA_STANDARD_RATE ? ', signed in by ' + day : ', signed in after ' + day) : '') + ' (being recorded)';
+    return info;
+  }
+  info.rate = vpaOfferRateAt(env, code, nowMs);
+  if (info.rate < VPA_STANDARD_RATE) {
+    info.rate_words = day ? 'Gets ' + money(VPA_OFFER_RATE) + ' if they sign in by ' + day + ', else ' + money(VPA_STANDARD_RATE)
+      : 'Gets ' + money(VPA_OFFER_RATE) + ' if an offer is open when they first sign in, else ' + money(VPA_STANDARD_RATE);
+  } else {
+    info.rate_words = money(VPA_STANDARD_RATE) + (day ? ', the ' + day + ' offer date has passed' : ', no offer open');
+  }
+  return info;
 }
 
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
@@ -6202,8 +6339,17 @@ async function vpaRenderProspectWelcome(env, o) {
   const res = await fetch(site + '/emails/welcome-prospect.html');
   if (!res.ok) return null;
   let html = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the template's notes are for us, not the inbox
-  const founding = vpaFoundingOpenNow(env);
-  const rate = founding ? 2.50 : 3.00;
+  /* THE OFFER IN THE WELCOME (Dean, 7 Nov 2026): their offer code's sign-in date decides it. While that day has not
+     passed, the email offers $2.50 IF they sign in by it ("Your free month starts the first time you sign in. Sign in by
+     30 November to keep $2.50 a player."); after it, the standard rate. A code with no date: whether an offer is open. */
+  const offerCode = o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code;   // a welcome booked before offer_code existed: this month's
+  const signinBy = vpaOfferDayWords(offerCode);
+  /* {{offer_deadline}} is the bare day in the new words ("Sign in by {{offer_deadline}} to keep"). The template on Pages
+     before this release used the same token for a whole sentence; this Worker goes up first (CLAUDE.md), so until Pages
+     serves the new template the old one still gets its old sentence, never "us.30 November". */
+  const newWords = html.indexOf('Sign in by {{offer_deadline}}') !== -1;
+  const founding = vpaOfferRateAt(env, offerCode, Date.now()) < VPA_STANDARD_RATE;
+  const rate = founding ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
   /* HOW THEY SIGN IN (Dean, 29 Oct 2026: "everyone has their phone in their hand"). A login with their
      mobile on it signs in by a texted code (the MobileMessage hook, as every venue login does), and the
      button opens that sign-in with their number filled in. Otherwise the one-click link, else email. */
@@ -6212,8 +6358,8 @@ async function vpaRenderProspectWelcome(env, o) {
   /* The prospect's short link (migration 175) opens the normal sign-in and texts a code (Dean, 6 Nov 2026). */
   const viaCode = !sms && !!o.signinToken && VPA_SHORT_RE.test(String(o.signinToken));
   html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken && !viaCode, viacode: viaCode,
-    nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding,
-    graceoffer: founding && vpaGraceEmailWords(env), offerpause: founding && !vpaGraceEmailWords(env), plainpause: !founding });
+    nooneclick: !sms && !o.signinToken, founding: founding && !!signinBy, foundingnodate: founding && !signinBy, standard: !founding,
+    offerpause: founding, plainpause: !founding });   // offerpause/plainpause: the template before 12 Nov (Pages may lag the Worker)
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
@@ -6223,8 +6369,8 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
-    .replace(/{{offer_deadline}}/g, vpaOfferDeadline(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))
-    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
+    .replace(/{{offer_deadline}}/g, newWords ? vpaEsc(signinBy) : (signinBy ? ' You just need to start by ' + vpaEsc(signinBy) + '.' : ''))   // the offer's own day, "30 November" (Dean, 7 Nov 2026)
+    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(offerCode))
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
@@ -6382,7 +6528,7 @@ async function vpbCardLink(request, env, json) {
   const f = fr && fr[0];
   if (!f) return json({ error: 'This venue has no account record yet. Reply to Dean\'s email and he will sort it.' }, 409);
   const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
-  const pp = vpaProspectPrice(env, prow), rate = pp.rate;   // a prospect keeps the offer they were set up on through the month and the 5-day grace
+  const pp = await vpaProspectPriceNow(env, prow), rate = pp.rate;   // a prospect keeps the offer they were set up on through the month and the 5-day grace
   const seats = parseInt(f.max_seats, 10) || parseInt(vr[0].max_players, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
   const out = { ok: true, has_card: !!f.stripe_subscription_id, rate: rate, seats: seats, monthly: Math.round(seats * rate * 100) / 100 };
   if (prow && prow.free_month_ends_at) { out.free_month_ends_at = prow.free_month_ends_at; out.ends_words = vpaBneDateWords(Date.parse(prow.free_month_ends_at)); }
@@ -9351,7 +9497,7 @@ async function vpaAddCardRedirect(request, env) {
        takes it away (vpaProspectPrice). Anyone else: is the deal open today, as before. */
     const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
     const cardAtMs = Date.now();   // THE moment of the card-add: the price, the grace and the trial are all decided on it
-    const pprice = prow ? vpaProspectPrice(env, prow, cardAtMs) : null;
+    const pprice = prow ? await vpaProspectPriceNow(env, prow, cardAtMs) : null;
     const founding = pprice ? pprice.founding : vpaFoundingOpenNow(env);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
