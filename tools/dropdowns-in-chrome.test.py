@@ -109,7 +109,8 @@ SCENES = [
     ('account-nights', '/app/billing.html', tab('nights'), 'vp'),
     ('hq-venue-details', '/app/hq.html?as=admin', hq_details, 'vp'),
     ('console-bingo-setup', '/app/', console_bingo, 'vp'),
-    ('members-draw', '/app/members/host.html?venue=' + V1, settle, 'vp'),
+    # members-draw left this list on 9 Nov 2026: the new look picks tonight's draw with chips (the drop-down
+    # stays in the page, hidden, for its id), so the console shows no dropdown to measure.
     ('musical-setup', '/app/musical/host.html?venue=' + V1, settle, 'vp'),
     ('trivia-setup', '/app/trivia/host.html?venue=' + V1, settle, 'vp'),
     ('trivia-builder', '/app/trivia/builder.html?venue=' + V1, builder_questions, 'vp'),
