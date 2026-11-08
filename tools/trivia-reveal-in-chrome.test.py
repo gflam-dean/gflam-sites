@@ -216,7 +216,7 @@ def wall(B, base, w, h):
     ok(tag + ': in the picture round\'s smaller ring spot (within 1px)', same(PM.get('r'), pq.get('ring')), [PM.get('r'), pq.get('ring')])
 
     QR, RG, IM = pq.get('qround'), pq.get('ring'), pq.get('img')
-    ok(tag + ': a picture question: "Question 3 of 20" sits under its ring, not behind it, and clear of the picture',
+    ok(tag + ': a picture question: "Question 8 of 10" sits under its ring, not behind it, and clear of the picture',
        bool(QR and RG and IM) and QR[1] >= RG[3] and (QR[0] >= IM[2] or QR[3] <= IM[1]), [QR, RG, IM])
     for nm_, x_ in (('countdown', pq), ('reveal', pr)):
         # on the reveal the ring gives way to the green disc in the same spot (checked above), so the disc is the line
