@@ -160,8 +160,8 @@ spaced = [sel.strip()[:60] for sel, body in rules
 ok('no rule sets monospace, UPPERCASE and wide letter spacing together (the spaced-out capitals)', not spaced, spaced)
 ok('no pill with a pulsing dot: no .eyebrow, no .live-dot, no class="eyebrow" on the offer page', '.eyebrow' not in css and '.live-dot' not in css and 'class="eyebrow"' not in NSW and 'live-dot' not in NSW)
 ok('no pink dash drawn before a heading label (.label has no ::before line)', not re.search(r'\.label::before', css) and not re.search(r'\.vps-swap-k::before', css))
-ok('the offer is one plain bold line in normal type: <p class="hero-offer">$2.50 a player if you start by <date>.</p>',
-   re.search(r'<p class="hero-offer">\$2\.50 a player if you start by <span class="vpc-day"[^>]*>[^<]+</span>\.</p>', NSW) and re.search(r'\.hero-offer\{[^}]*font-weight:700', css) and 'uppercase' not in re.search(r'\.hero-offer\{[^}]*\}', css).group(0))
+ok('the offer is one plain bold line in normal type: <p class="hero-offer">$2.50 a player if you join by <date>.</p>',
+   re.search(r'<p class="hero-offer">\$2\.50 a player if you join by <span class="vpc-day"[^>]*>[^<]+</span>\.</p>', NSW) and re.search(r'\.hero-offer\{[^}]*font-weight:700', css) and 'uppercase' not in re.search(r'\.hero-offer\{[^}]*\}', css).group(0))
 
 print('6. Every copy agrees')
 red = rd('venueplay/_redirects')
@@ -309,8 +309,11 @@ ok('notes 15 and 21: "free month" is said at most four times on the open page (i
 # notes 16, 18, 19: the words match the billing rules
 ok('note 16: the free month starts at the first sign-in, and nothing says the first payment is "one month later"',
    'Your free month starts the first time you sign in.' in VIS and 'one month later' not in NSW, re.findall(r'.{40}one month later.{20}', NSW)[:2])
-ok('note 18: the extra-player line is short and matches the rules: $2 an extra player that night, three big nights in a row moves the plan, at your normal rate',
-   '<p class="overage-note">A bigger night is $2 for each extra player, and your host OKs them first. Three big nights in a row and we move your plan up to fit, at your normal rate.</p>' in NSW)
+ok('note 18: the extra-player line is short, in Dean\'s words, and matches the rules: $2 an extra player that night, three big nights in a row and we adjust your plan, at your normal rate',
+   '<p class="overage-note">A bigger night is $2 for each extra player, and your host OKs them first. Three big nights in a row and we adjust your plan to fit, at your normal rate.</p>' in NSW)
+ok('the first sign-in deadline is for the emails only (Dean, 7 Nov 2026): the page never says "start by" or "sign in by" a date, and the hero says "join by"',
+   not re.search(r'(?:start|sign in) by (?:<span[^>]*>)?\d', NSW, re.I) and '$2.50 a player if you join by <span class="vpc-day"' in NSW,
+   re.findall(r'.{30}(?:start|sign in) by (?:<span[^>]*>)?\d.{20}', NSW, re.I)[:2])
 ok('note 19: nothing promises the per-player rate "never changes", live or ended', not re.search(r'never changes', NSW))
 ok('note 17: the "busy night, not the group total, one bill for the lot" explanations are gone from the card form',
    'not the group total' not in NSW and 'One card, one bill' not in NSW and 'Use your busiest night, not your average' not in NSW)

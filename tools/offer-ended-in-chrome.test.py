@@ -284,7 +284,7 @@ try:
     print('\nTHE LIVE AND THE ENDED WORDS ARE NEVER ON SCREEN TOGETHER, ON BOTH SIDES OF EVERY DATE (fake clock, Brisbane)')
     def bris(y, m, d, h=12):
         return int(datetime.datetime(y, m, d, h, tzinfo=datetime.timezone.utc).timestamp() * 1000) - 10 * 3600 * 1000
-    LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you start by', re.I)
+    LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you join by', re.I)
     for path, when, ms, want_ended in (('/offer-nov', '9 Nov', bris(2026, 11, 9), False), ('/offer-nov', '11 Nov, after the rollover', bris(2026, 11, 11), False),
                                        ('/offer-nov', '1 Dec', bris(2026, 12, 1), True), ('/offer-dec', '11 Nov', bris(2026, 11, 11), False),
                                        ('/offer-dec', '5 Dec', bris(2026, 12, 5), False), ('/offer-dec', '2 Jan 2027', bris(2027, 1, 2), True)):

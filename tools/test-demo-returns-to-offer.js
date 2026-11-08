@@ -82,7 +82,7 @@ ok("then musical bingo, then bingo, as on the homepage", /"musical"/.test(opts[1
 
 /* The offer badge on a phone (27 Sep 2026): the date must sit in the same flex item as its words. */
 ok("the offer line is plain bold text with its date in one span (no pill, no dot)",
-   /<p class="hero-offer">\$2\.50 a player if you start by <span class="vpc-day"[^>]*>\d{1,2} [A-Z][a-z]+<\/span>\.<\/p>/.test(OFFER));
+   /<p class="hero-offer">\$2\.50 a player if you join by <span class="vpc-day"[^>]*>\d{1,2} [A-Z][a-z]+<\/span>\.<\/p>/.test(OFFER));
 print("");
 if (bad) { print(bad + " OF " + ran + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + ran + " CHECKS PASSED");
