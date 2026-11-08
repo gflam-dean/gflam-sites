@@ -73,7 +73,8 @@
      the body sits in the space between the header and the strip and is centred there, so nothing jumps and no
      third of the wall is left black; the strip holds the prize and the claim timer, 4.2cqw off the bottom edge
      (54px at 1280) for TVs that crop their edges. */
-  .body{position:absolute;left:5cqw;right:5cqw;top:8.6cqw;bottom:3.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .body{position:absolute;inset:8.6cqw 5cqw 3.4cqw 5cqw;   /* the frame between the header and the bottom edge, never a corner anchor */
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .layer.hasstrip .body{bottom:12.4cqw}
   .strip{position:absolute;left:6cqw;right:6cqw;bottom:4.2cqw;min-height:6.6cqw;background:var(--sf);border-radius:1.15cqw;display:flex;align-items:center;justify-content:space-between;gap:3cqw;padding:1.3cqw 2.6cqw;overflow:hidden}
   .strip.center{justify-content:center}
@@ -364,7 +365,7 @@
   function setTiles(box, digits){
     var ts=box.querySelectorAll(".tile"); if(ts.length<digits.length){ paintTiles(box, digits, "spin"); return; }
     var lead=ts.length-digits.length;
-    for(var i=0;i<ts.length;i++){ var ch=i<lead ? "" : digits.charAt(i-lead); ts[i].classList.toggle("blank", !ch); ts[i].firstChild.textContent=ch||"0"; }
+    for(var i=0;i<ts.length;i++){ var dg=i<lead ? "" : digits.charAt(i-lead); ts[i].classList.toggle("blank", !dg); ts[i].firstChild.textContent=dg||"0"; }   /* dg, not ch: ch is the channel, and the channel suite finds its block by that name */
   }
   function alignTitle(){ try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){} }   /* one copy, in /app/vp-tvgame.js */
   setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes, as on the musical bingo wall */
