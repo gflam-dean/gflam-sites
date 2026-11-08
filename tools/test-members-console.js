@@ -129,7 +129,7 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  // a claim adds the state's after-win reminder
  'noPresent', 'winReminder',
  // the new look (9 Nov 2026): the step card, the draws as chips, the list's age, the outcome box, the claim button's words
- 'curStep', 'syncStep', 'nextDrawText', 'renderDrawChips', 'renderListAge', 'renderDone', 'minClaim', 'applyPresentRule'];
+ 'curStep', 'syncStep', 'nextDrawText', 'advSumText', 'renderDrawChips', 'renderListAge', 'renderDone', 'minClaim', 'applyPresentRule'];
 /* ...and the SA note those read, lifted as the page writes it. */
 eval(liftVar(/var NO_PRESENT_NOTE=[^\n]*/) || (function () { throw new Error('NO_PRESENT_NOTE is not in the page any more'); })());
 for (var li = 0; li < LIFTED.length; li++) eval(lift(LIFTED[li]));

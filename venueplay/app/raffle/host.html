@@ -973,7 +973,7 @@
   function drawLabel(){
     if(G.lastWin){
       if(G.jackOn) return "Draw again";
-      return (G.prizeIdx < G.prizes.length) ? ("Draw the next prize: "+lower(G.prizes[G.prizeIdx])) : "Add another prize";
+      return (G.prizeIdx < G.prizes.length) ? ("Draw the next prize: "+lower(G.prizes[G.prizeIdx])) : (drawingPrize() ? "Draw the next prize" : "Add another prize");   // a typed prize still draws, as the quick draw always has
     }
     return G.prizeIdx>0 ? "Draw the next prize" : "Draw the winner";
   }
@@ -1433,7 +1433,7 @@
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
   /* Every prize is drawn: the step 3 button reads "Add another prize" and takes the host back to the setup. */
   $("drawBtn").addEventListener("click", function(e){
-    if(G.lastWin && !G.jackOn && G.prizeIdx>=G.prizes.length){ e.stopImmediatePropagation(); G.lastWin=null; drawBtnIdle(); try{ $("prizeField").scrollIntoView({ block:"start" }); }catch(x){} }
+    if(G.lastWin && !G.jackOn && G.prizeIdx>=G.prizes.length && !drawingPrize()){ e.stopImmediatePropagation(); G.lastWin=null; drawBtnIdle(); try{ $("prizeField").scrollIntoView({ block:"start" }); }catch(x){} }
   });
   $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDrawGated, { waitRecord:true, freeEntry: !!G.freeEntry }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);

@@ -636,9 +636,20 @@
       el.appendChild(chip);
     });
   }
+  /* The settings' summary line, in plain words, so the host sees them without opening the box (Dean's mock, 6 Nov 2026). */
+  function advSumText(d){   // needs money() and noPresent()
+    if(!d) return "Set up your first draw here.";
+    var c=d.time_to_claim_seconds, parts=[];
+    if(c!=null && !noPresent()) parts.push(c%60===0 ? ((c/60)+(c===60?" minute":" minutes")+" to claim") : (c+" seconds to claim"));
+    if(d.starting_amount_cents!=null) parts.push("starts at "+money(d.starting_amount_cents));
+    if(d.increment_cents) parts.push("up "+money(d.increment_cents)+" a week");
+    parts.push(d.max_jackpot_cents!=null ? ("maximum "+money(d.max_jackpot_cents)) : "no maximum");
+    var t=parts.join(", "); return t.charAt(0).toUpperCase()+t.slice(1);
+  }
   function renderSettings(){
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
+    var as=$("advSum"); if(as) as.textContent=advSumText(d);
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
     if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); setCurLock(true); renderCapAdvice();
       var adv=$("membersAdv"); if(adv && !G.loadFailed) adv.open=true;   // creating a draw: the form is the job, so it is never folded away
