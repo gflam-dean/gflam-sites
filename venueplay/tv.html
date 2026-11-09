@@ -170,25 +170,26 @@
   /* THE LIST AS TILES (Dean, 9 Nov 2026, Lunatic Hotel's three nights: the rows filled the left half of the wall and
      left the right half empty, and a long title made one row taller than the others). One tile a night across the
      full width, every tile the same size whatever its words: 1 to 3 side by side, 4 as two by two, 5 as three over
-     two. The day and time at the top of the tile, the title and its line at the foot; tonight's tile has the pink
+     two. The day and time, then the title and its line, in each tile; tonight's tile has the pink
      bar along its top. Titles and times are fitted on the wall by VPWhatsOn.fit (one line where they can). */
-  .wo-tiles .wo-list{display:grid;grid-auto-rows:minmax(0,1fr);gap:1.4cqw}
+  .wo-wall.wo-tiles{padding-top:2.6cqw}   /* the header off the top edge: 50px at 1920 */
+  .wo-tiles .wo-list{display:grid;grid-auto-rows:1fr;gap:1.4cqw;flex:none;margin:auto 0}   /* as tall as the words need, every tile the height of the tallest, the set centred in the room under the header */
   .wo-n1 .wo-list{grid-template-columns:minmax(0,1fr)}
   .wo-n2 .wo-list,.wo-n4 .wo-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wo-n3 .wo-list{grid-template-columns:repeat(3,minmax(0,1fr))}
   .wo-n5 .wo-list{grid-template-columns:repeat(6,minmax(0,1fr))}
   .wo-n5 .wo-row{grid-column:span 2}
   .wo-n5 .wo-row:nth-child(n+4){grid-column:span 3}
-  .wo-tiles .wo-row{display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;gap:1cqw;max-height:none;min-height:0;padding:2.2cqw 2.4cqw 2.4cqw;border-radius:1.2cqw}
+  .wo-tiles .wo-row{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:2cqw;max-height:none;min-height:0;padding:2.6cqw 2.6cqw 2.8cqw;border-radius:1.2cqw}
   .wo-tiles .wo-row.tonight::before{right:0;bottom:auto;width:auto;height:6px}
   .wo-tiles .wo-when2{gap:.5cqw}
-  .wo-tiles .wo-what{display:flex;flex-direction:column;justify-content:flex-end}
+  .wo-tiles .wo-what{display:flex;flex-direction:column;justify-content:flex-start}
   .wo-tiles .wo-what b{-webkit-line-clamp:3;line-height:1.1}
   .wo-tiles .wo-what i{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-top:.5cqw}
   /* one row of tiles (1 to 3 nights): tall tiles, big words */
   .wo-tiles.wo-n3 .wo-day{font-size:2.3cqw}
-  .wo-tiles.wo-n3 .wo-time{font-size:6.6cqw}
-  .wo-tiles.wo-n3 .wo-what b{font-size:4cqw}
+  .wo-tiles.wo-n3 .wo-time{font-size:7.4cqw}
+  .wo-tiles.wo-n3 .wo-what b{font-size:4.4cqw}
   .wo-tiles.wo-n3 .wo-what i{font-size:2.3cqw}
   .wo-tiles.wo-n2 .wo-day{font-size:2.7cqw}
   .wo-tiles.wo-n2 .wo-time{font-size:8cqw}
@@ -201,14 +202,14 @@
   .wo-tiles.wo-n1 .wo-what b{font-size:6.4cqw}
   .wo-tiles.wo-n1 .wo-what i{font-size:3.2cqw}
   /* two rows of tiles (4 or 5 nights) */
-  .wo-tiles.wo-n4 .wo-row,.wo-tiles.wo-n5 .wo-row{padding:1.6cqw 2.2cqw 1.8cqw;gap:.6cqw}
+  .wo-tiles.wo-n4 .wo-row,.wo-tiles.wo-n5 .wo-row{padding:1.6cqw 2.2cqw 1.8cqw;gap:1cqw}
   .wo-tiles.wo-n4 .wo-day,.wo-tiles.wo-n5 .wo-day{font-size:1.9cqw}
   .wo-tiles.wo-n4 .wo-time,.wo-tiles.wo-n5 .wo-time{font-size:4.6cqw}
   .wo-tiles.wo-n4 .wo-what b,.wo-tiles.wo-n5 .wo-what b{font-size:3.2cqw;-webkit-line-clamp:2}
   .wo-tiles.wo-n4 .wo-what i,.wo-tiles.wo-n5 .wo-what i{font-size:1.9cqw;-webkit-line-clamp:1}
   /* a long title starts smaller (VPWhatsOn.fit then fine-tunes it) */
   .wo-tiles .wo-row.t2 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .88)}
-  .wo-tiles.wo-n3{--wo-b:4cqw}.wo-tiles.wo-n2{--wo-b:4.8cqw}.wo-tiles.wo-n1{--wo-b:6.4cqw}.wo-tiles.wo-n4,.wo-tiles.wo-n5{--wo-b:3.2cqw}
+  .wo-tiles.wo-n3{--wo-b:4.4cqw}.wo-tiles.wo-n2{--wo-b:4.8cqw}.wo-tiles.wo-n1{--wo-b:6.4cqw}.wo-tiles.wo-n4,.wo-tiles.wo-n5{--wo-b:3.2cqw}
   .wo-tiles .wo-row.t3 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .76)}
   .wo-tiles .wo-row.t4 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .66)}
   /* THE VENUE'S LOGO (9 Nov 2026): shown with its background taken off (VPLogo.forDark); held back while that is
@@ -1845,6 +1846,10 @@
       try{
         var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
         if(e.type==="holding") div.setAttribute("data-fit-self","");   // HOLD_FIT_SELF, see #tvFloor
+        /* The What's on wall keeps its own margins (cqw) and is never under the venue's corner logo, which is off for the
+           ads. Fitted round that logo, it stayed shrunk to 82% once the logo had gone (9 Nov 2026: the tiles stopped at
+           the middle 82% of the TV), so it is fitted only to the screen, as the holding card is. */
+        if(e.type==="auto-whatson") div.setAttribute("data-fit-self","");
         div.innerHTML=entryInner(e); pending.appendChild(div); built++;
       }catch(err){}
     });

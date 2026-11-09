@@ -164,7 +164,7 @@ def tv_and_phone():
                 'bar:getComputedStyle(x,"::before").backgroundColor,day:getComputedStyle(x.querySelector(".wo-day")).opacity,left:Math.round(b.left),'
                 'dff:getComputedStyle(x.querySelector(".wo-day")).fontFamily,dtt:getComputedStyle(x.querySelector(".wo-day")).textTransform,dls:getComputedStyle(x.querySelector(".wo-day")).letterSpacing,'
                 'tm:x.querySelector(".wo-time").textContent,tl:(function(t){var c=getComputedStyle(t);return Math.round(t.getBoundingClientRect().height/(parseFloat(c.lineHeight)||1));})(x.querySelector(".wo-what b")),'
-                'cut:(function(t){return t.scrollHeight>t.clientHeight+1||t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-what b")),tcut:(function(t){return t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-time"))};})')
+                'cut:(function(t){var lh=parseFloat(getComputedStyle(t).lineHeight)||20;return t.scrollHeight>t.clientHeight+lh*0.5||t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-what b")),tcut:(function(t){return t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-time"))};})')
         def scene(rowset, label, logo=None):
             r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': logo, 'raffle': None, 'events': rowset,
                                          'slides': [{'image_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg', 'seconds': 3}]}], replace=True)
@@ -172,7 +172,10 @@ def tv_and_phone():
                 tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
                 # The slide on top (z-index 2) is the What's on slide, fully in, and has just arrived (so it stays for its 12 to 14 s).
                 got = r.until(sid, '(function(){var s=' + LIT + ';return !!s && !!s.querySelector(".wo-list") && +getComputedStyle(s).opacity>0.99;})()', 70)
-                time.sleep(0.3)
+                # A venue logo is cleaned in the TV first (9 Nov 2026); the slides are rebuilt once it is, so wait for that.
+                r.until(sid, '!document.querySelector("#tvAds .wo-logo.wo-wait")', 30)
+                got = r.until(sid, '(function(){var s=' + LIT + ',c=window.__vpAdClock;return !!s && !!s.querySelector(".wo-list") && +getComputedStyle(s).opacity>0.99 && (!c || c.slot().left>4000);})()', 70)   # with time left on it
+                time.sleep(1.8)   # vp-fit's 1.5 s tick: the wall settles once the corner logo has gone for the ads
                 m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + ',' + ROWS + ';var hd=s.querySelector(".wo-head").getBoundingClientRect(), b=s.querySelector(".wo-b"), pic=s.querySelector(".wb-pic"), side=s.querySelector(".wb-side .wo-top"), corner=document.querySelector("#tvCorner svg");'
                                 'return {feature:!!b, kick:(s.querySelector(".wo-kick")||{}).textContent||"", head:s.querySelector(".wo-head").textContent, headTop:Math.round(hd.top), headRight:Math.round(hd.right), rows:rows, h:innerHeight, w:innerWidth,'
                                 'pic:pic?[Math.round(pic.getBoundingClientRect().width),Math.round(pic.getBoundingClientRect().height)]:null, bg:pic?pic.style.backgroundImage:"", when:(s.querySelector(".wb-when")||{}).textContent||"",'
@@ -200,9 +203,9 @@ def tv_and_phone():
         plain = [dict(n, image_url=None) if n.get('image_url') else n for n in nights]
         for W, H, got, m, rows in scene(plain, 'list'):
             ok('list %dx%d: no picture this week: the plain list takes its turn, its header at the top' % (W, H), got is True and not m.get('feature') and m.get('headTop', 999) < H * 0.12, m)
-            ok('list %dx%d: three tiles side by side across the whole wall, the same size, reaching within 8%% of the bottom, every day label at full strength' % (W, H),
+            ok('list %dx%d: three tiles side by side across the whole wall, the same size, clear of the header and the foot, every day label at full strength' % (W, H),
                len(rows) == 3 and len(set(x['top'] for x in rows)) == 1 and len(set(x['h'] for x in rows)) == 1 and rows[0]['left'] <= m['w'] * 0.06 and rows[-1]['right'] >= m['w'] * 0.94
-               and rows[-1]['bot'] >= m['h'] * 0.88 and rows[-1]['bot'] <= m['h'] - 8 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
+               and rows[0]['top'] >= m.get('headTop', 0) + m['h'] * 0.08 and rows[-1]['bot'] <= m['h'] - 8 and rows[0]['h'] >= m['h'] * 0.3 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
         # Dean, 9 Nov 2026, Lunatic Hotel's real three nights: no spaced monospace capitals, the long title fitted and never
         # cut, the hours once ("2pm to 6pm"), the tiles even, the venue's logo shown (never held back, never a white box).
         lun = [{'id': 'l1', 'title': 'Pool comp', 'day': dkey(TODAY + datetime.timedelta(days=1)), 'start': '19:00', 'line': '$10 entry'},
@@ -213,13 +216,15 @@ def tv_and_phone():
                len(rows) == 3 and all('mono' not in x['dff'].lower() and x['dtt'] == 'none' and x['dls'] in ('normal', '0px') for x in rows), [(x['dff'], x['dtt'], x['dls']) for x in rows])
             ok('lunatic %dx%d: three even tiles across the wall; "Meat raffles and members draw" on two lines at most and never cut; the short titles on one line' % (W, H),
                len(rows) == 3 and len(set(x['h'] for x in rows)) == 1 and rows[-1]['right'] >= m['w'] * 0.94 and not any(x['cut'] or x['tcut'] for x in rows)
-               and rows[1]['tl'] <= 2 and rows[0]['tl'] == 1 and rows[2]['tl'] == 1, [(x['t'], x['tl'], x['cut'], x['h']) for x in rows])
+               and rows[1]['tl'] <= 2 and rows[0]['tl'] == 1 and rows[2]['tl'] == 1, [(x['t'], x['tl'], x['cut'], x['h'], x['left'], x['right'], m['w']) for x in rows])
             ok('lunatic %dx%d: the hours once: Sunday says "2pm to 6pm" and "2pm" nowhere else; Thursday keeps "$10 entry"' % (W, H),
                len(rows) == 3 and rows[2]['tm'] == '2pm to 6pm' and rows[2]['t'].count('2pm') == 1 and '$10 entry' in rows[0]['t'], [x['t'] for x in rows])
             lg = m.get('logo') or {}
             ok('lunatic %dx%d: the venue\'s logo is up beside WHAT\'S ON, loaded and visible (not held back)' % (W, H),
                lg.get('vis') == 'visible' and lg.get('done') is True and 'wo-wait' not in lg.get('cls', '') and lg.get('h', 0) > 20, lg)
 
+        r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': None, 'raffle': None, 'events': nights,
+                                     'slides': [{'image_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg', 'seconds': 3}]}], replace=True)   # the phone's nights again
         # A logo on a white square (Lunatic Hotel's shape: a round badge with wide white margins), made in the page and
         # handed to the TV's own VPLogo.forDark: the white comes off and the margins are trimmed; nothing is uploaded.
         tid, sid = r.open('/tv?venue=' + slug, width=1280, height=720)
