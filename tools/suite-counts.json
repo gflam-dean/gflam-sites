@@ -308,7 +308,7 @@
   "counted_by": "lines"
  },
  "tools/phone-signin-in-chrome.test.py": {
-  "checks": 50,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/pickup-in-chrome.test.py": {
@@ -756,7 +756,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 77,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
