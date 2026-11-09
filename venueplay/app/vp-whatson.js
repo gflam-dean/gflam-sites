@@ -55,6 +55,28 @@
     h = h % 12 || 12;
     return h + (m[2] === "00" ? "" : ":" + m[2]) + ap;
   }
+  /* "2pm", "2:30 PM", "2 pm" -> "2pm" / "2:30pm" (the venue's own words in its line); anything else is "". */
+  function normT(s) {
+    var m = /^(\d{1,2})(?::([0-5]\d))?\s*([ap])\.?m\.?$/i.exec(String(s || "").replace(/^\s+|\s+$/g, ""));
+    if (!m || +m[1] < 1 || +m[1] > 12) return "";
+    return +m[1] + (m[2] && m[2] !== "00" ? ":" + m[2] : "") + m[3].toLowerCase() + "m";
+  }
+  /* THE TIME ONCE (Dean, 9 Nov 2026: Lunatic Hotel's "2pm" with "2pm to 6pm" under it). A venue often writes the hours
+     in its one line. When the line starts with the start time, that part moves up beside the start and comes off the
+     line: start 14:00, line "2pm to 6pm" -> time "2pm to 6pm", no line; "2pm till late, free entry" -> "2pm to late"
+     and "Free entry". A line that does not start with the start time is left exactly as the venue wrote it. */
+  var RANGE_RE = /^\s*(?:from\s+)?(\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?)(?:\s*(?:to|-|\u2013|\u2014|until|till|til)\s*(\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?|late|close)\b)?[\s,.;:\u2013\u2014-]*([\s\S]*)$/i;
+  function whenParts(e) {
+    var t = time12(e && e.start), line = String((e && e.line) || "");
+    if (!t || !line) return { time: t, line: line };
+    var m = RANGE_RE.exec(line);
+    if (!m || normT(m[1]) !== t) return { time: t, line: line };
+    var end = m[2] ? (/^(late|close)$/i.test(m[2]) ? m[2].toLowerCase() : normT(m[2])) : "";
+    var rest = m[3] || "";
+    if (/^(starts?|start time|kick ?off|onwards?|on)[.!]?$/i.test(rest)) rest = "";   // "7:30pm start" says no more than 7:30pm
+    if (rest) rest = rest.charAt(0).toUpperCase() + rest.slice(1);
+    return { time: end ? t + " to " + end : t, line: rest };
+  }
   /* An apostrophe inside a word is the curly one, the way the account page and phones set it ("What’s"), so the TV
      never shows two kinds (design review, 6 Nov). */
   function curly(s) { return String(s).replace(/(\w)'(\w)/g, "$1\u2019$2"); }
@@ -213,29 +235,44 @@
      written as people say them, "9pm", never "9PM". (The venue's own colours and background are a later job.) */
   /* logo: the venue's own logo, the one it already uploads for its TV (vp_venue_screen.logo_url, as /screen hands it
      over); with none, its name stands in. Our own mark is tv.html's corner wordmark, always on the wall. */
-  function tvHtml(sl, venue, logo) {
+  /* logoHow (9 Nov 2026, Dean: "a logo with a white background shows as a white square"): tv.html takes the logo's
+     plain background off in the TV itself (VPLogo.forDark, the account page's own Remove background) and hands the
+     result over as a blob: address. "clear": that see-through copy; "wait": still working on it, so the logo is held
+     back rather than flash a white box; "plate": it could not be cleaned (no plain edge, or the picture could not be
+     read), so it sits on a small rounded plate on purpose; anything else: as uploaded (it was see-through already). */
+  var LOCAL_RE = /^(?:blob:https?:\/\/[A-Za-z0-9.:\/_-]+|data:image\/png;base64,[A-Za-z0-9+\/=]+)$/;
+  /* How long a title is, as a class: the TV sets a long one smaller from the start (fit() below then fine-tunes it on
+     the wall), so "Meat raffles and members draw" sits on a line where it can. */
+  function lenClass(t) { var n = String(t || "").length; return n <= 14 ? "t1" : n <= 22 ? "t2" : n <= 32 ? "t3" : "t4"; }
+  function tvHtml(sl, venue, logo, logoHow) {
     if (!sl) return "";
     venue = typeof venue === "string" ? venue : "";
-    var lg = cssUrl(logo), logoHtml = lg ? '<img class="wo-logo" alt="" src="' + lg + '">' : "";
+    var lg = cssUrl(logo) || (LOCAL_RE.test(String(logo || "")) ? String(logo) : "");
+    var lcls = logoHow === "wait" ? " wo-wait" : logoHow === "plate" ? " wo-plate" : "";
+    var logoHtml = lg ? '<img class="wo-logo' + lcls + '" alt="" src="' + lg + '">' : "";
     function rowsHtml(rows) {
       var h = "";
       rows.forEach(function (r) {
-        var tn = r.label === "Tonight";
-        /* The when on the left, day over time, so a row reads left to right with no empty middle (round 4, M2). */
-        h += '<div class="wo-row' + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + '">' +
-          '<span class="wo-when2"><span class="wo-day">' + esc(r.label) + '</span><span class="wo-time">' + esc(time12(r.ev.start)) + '</span></span>' +
-          '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (r.ev.line ? '<i>' + esc(r.ev.line) + '</i>' : '') + '</span></div>';
+        var tn = r.label === "Tonight", wp = whenParts(r.ev);
+        /* Day over time, then the title and its line; the list draws these as tiles across the wall (9 Nov 2026),
+           the feature view as rows beside the picture. The time says the hours once ("2pm to 6pm"). */
+        h += '<div class="wo-row ' + lenClass(r.ev.title) + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + '">' +
+          '<span class="wo-when2"><span class="wo-day">' + esc(r.label) + '</span><span class="wo-time">' + esc(wp.time) + '</span></span>' +
+          '<span class="wo-what"><b>' + esc(r.ev.title) + '</b>' + (wp.line ? '<i>' + esc(wp.line) + '</i>' : '') + '</span></div>';
       });
       return h;
     }
     var head = '<div class="wo-top' + (logoHtml ? '' : ' k') + '">' + (logoHtml || (venue ? '<div class="wo-kick">' + esc(venue) + '</div>' : '')) + '<div class="wo-head">What’s on</div></div>';
     if (sl.type === "list") {
-      return '<div class="wo-wall wo-' + (sl.size || "m") + '"><div class="wo-in">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
+      /* THE LIST AS TILES (Dean, 9 Nov 2026: the rows filled the left half and left the right half empty). One tile a
+         night across the whole width, every tile the same size: 1, 2 or 3 side by side, 4 as two by two, 5 as three
+         over two. */
+      return '<div class="wo-wall wo-tiles wo-' + (sl.size || "m") + ' wo-n' + Math.min(5, sl.rows.length) + '"><div class="wo-in">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
     }
     if (sl.type === "feature") {
       var f = sl.feature, bg = cssUrl(f.ev.image_url);
       if (!bg) return "";
-      var tm = time12(f.ev.start);
+      var tm = whenParts(f.ev).time;   // the hours once (9 Nov 2026)
       return '<div class="wo-wall wo-b wo-b' + (sl.size || "m") + '"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-pic" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
@@ -245,7 +282,32 @@
     return "";
   }
 
+  /* FIT ON THE WALL (9 Nov 2026). Called by tv.html once a slide is in the page (and again when the fonts arrive or
+     the screen changes size). A title or a time wider than its space is set smaller until it fits on one line, down to
+     70% of its size; a title that cannot fit on one line even then goes onto two lines, sized so two are enough. Never
+     cut. Each tile keeps its size whatever its words, so the tiles stay even. Skips anything not laid out yet. */
+  function fit(root) {
+    if (!root || !root.querySelectorAll) return 0;
+    var n = 0, els = root.querySelectorAll(".wo-what b, .wo-time");
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], st = el.style;
+      st.fontSize = ""; st.whiteSpace = ""; st.display = "";
+      var w = el.clientWidth;
+      if (!w || !root.ownerDocument || !root.ownerDocument.defaultView) continue;
+      var fs = parseFloat(root.ownerDocument.defaultView.getComputedStyle(el).fontSize) || 0;
+      if (!fs) continue;
+      st.whiteSpace = "nowrap"; st.display = "block";
+      var sw = el.scrollWidth;
+      if (sw <= w + 1) { n++; continue; }
+      var r = w / sw, title = el.tagName === "B";
+      if (r >= 0.7 || !title) { st.fontSize = Math.max(fs * 0.5, Math.floor(fs * r * 0.97)) + "px"; n++; continue; }
+      st.whiteSpace = ""; st.display = "";
+      st.fontSize = Math.floor(fs * Math.max(0.55, Math.min(0.9, r * 1.8))) + "px"; n++;
+    }
+    return n;
+  }
+
   root.VPWhatsOn = { MAX: MAX, clean: clean, clean1: clean1, isOn: isOn, current: current, on: on, upcoming: upcoming, next: next,
     sorted: sorted, dayLabel: dayLabel, whenText: whenText, time12: time12, today: today, todayIn: todayIn, addDays: addDays,
-    dayKey: dayKey, tvSlides: tvSlides, tvHtml: tvHtml, esc: esc };
+    dayKey: dayKey, tvSlides: tvSlides, tvHtml: tvHtml, esc: esc, whenParts: whenParts, fit: fit };
 })(typeof window !== "undefined" ? window : this);

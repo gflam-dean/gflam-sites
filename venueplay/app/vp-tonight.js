@@ -5,7 +5,7 @@
    "YOU'RE IN" (the lobby):   VPTonight.lobby(box, o)
      "You're in, Sam" beside the green ring tick, centred, then the Tonight spot: this game badged NEXT with "Tonight 7pm"
      (its stored start; its prize after it only when the host set a real one), and any other game stored for tonight
-     badged LATER or EARLIER with its time. Then the "THIS WEEK HERE" strip: today and the next six days, the venue's game
+     badged Later or Earlier with its time. Then the "This week here" strip: today and the next six days, the venue's game
      nights marked. Tap a day and the Tonight spot shows that night's games ("Trivia night, ask for start time",
      "Members draw, 7:30pm"); tap Today to come back. Then the one lobby line. The venue's ad and our logo sit under it,
      drawn by the page (/app/vp-phonead.js, .pfoot).
@@ -26,7 +26,7 @@
 
    THE VENUE'S OWN NIGHTS (INBOX 110, "What's on", 6 Nov 2026): o.events, the venue's DJs, gigs, club nights and
    specials from /join/info (cleaned by the Worker; the date rules are /app/vp-whatson.js, the same file the TV and
-   the account page use). A day with one has a gold dot under its date in the strip; tapping it lists them beside our
+   the account page use). A day with one is lit in the strip (white on the lighter tile; no dot, Dean 9 Nov 2026); tapping it lists them beside our
    games, each badged with its start time. The lobby's Tonight spot lists tonight's after our game (three at most,
    then "+2 more tonight"); the no-game screen lists the picked day's under the strip. No events: nothing changes.
 
@@ -94,7 +94,7 @@
   function eventRows(list, cap) {
     var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
     for (var i = 0; i < n; i++) {
-      var e = list[i], t = time12(e.start);
+      var e = list[i], W = root.VPWhatsOn, t = (W && W.whenParts) ? W.whenParts(e).time : time12(e.start);   // "2pm to 6pm" when the venue wrote its hours (9 Nov 2026)
       rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: "" });   // the title only, on up to two lines (design review, 6 Nov)
     }
     if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more", sub: "" });

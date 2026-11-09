@@ -85,7 +85,7 @@ ok('two nights with pictures and a short week: two views, each featuring one of 
 var ms = W.tvSlides(many, TODAY);
 ok('no picture this week: the plain list, five a slide at most, 12 rows at most (here 5, 5 and 2 balanced to 4 4 4)', ms.every(function (x) { return x.type === 'list'; }) && ms.length === 3 && ms[0].rows.length === 4 && ms[2].rows.length === 4, JSON.stringify(ms.map(function (x) { return x.rows.length; })));
 var seven = W.tvSlides(many.slice(0, 7), TODAY), two = W.tvSlides(many.slice(0, 2), TODAY)[0], three = W.tvSlides(many.slice(0, 3), TODAY)[0];
-ok('the list: seven nights are two balanced slides (4 and 3), one size for the set; fewer rows, bigger words', seven.length === 2 && seven[0].rows.length === 4 && seven[1].rows.length === 3 && seven[0].size === 'm' && seven[1].size === 'm' && two.size === 'xl' && three.size === 'l' && /wo-wall wo-xl/.test(W.tvHtml(two, 'Pub')), JSON.stringify(seven.map(function (x) { return x.rows.length + x.size; })));
+ok('the list: seven nights are two balanced slides (4 and 3), one size for the set; fewer rows, bigger words', seven.length === 2 && seven[0].rows.length === 4 && seven[1].rows.length === 3 && seven[0].size === 'm' && seven[1].size === 'm' && two.size === 'xl' && three.size === 'l' && /wo-wall wo-tiles wo-xl wo-n2/.test(W.tvHtml(two, 'Pub')), JSON.stringify(seven.map(function (x) { return x.rows.length + x.size; })));
 var L = 'https://x.supabase.co/storage/v1/object/public/venue-logos/v/logo.png';
 var fh = W.tvHtml(sl[0], 'Revolver Upstairs', L), lh = W.tvHtml(two, 'Revolver Upstairs', L), nh = W.tvHtml(two, 'Revolver Upstairs');
 ok('the venue\'s own uploaded logo heads both layouts beside WHAT’S ON; with none, its name stands in; a bad address never', /<div class="wo-top"><img class="wo-logo" alt="" src="https:\/\/x\.supabase\.co[^"]*logo\.png"><div class="wo-head">What’s on</.test(lh) && /wb-side"><div class="wo-top"><img class="wo-logo"/.test(fh) && /wo-kick">Revolver Upstairs</.test(nh) && W.tvHtml(two, 'x', 'javascript:alert(1)').indexOf('wo-logo') === -1, lh.slice(0, 220));
@@ -105,6 +105,40 @@ var evil = W.tvHtml(W.tvSlides([{ title: '<img src=x onerror=alert(1)>', day: 't
 ok('every venue word is escaped on the wall', evil.indexOf('<img') === -1 && evil.indexOf('<script') === -1 && evil.indexOf('<b>pub') === -1 && /&lt;img/.test(evil));
 ok('a picture address with an entity in it is refused (the night stays, in the plain list)', W.tvSlides([{ title: 'x', day: 'thu', image_url: 'https://a/b.jpg?x=1&#41;' }], TODAY)[0].type === 'list');
 
+print('\nROUND 9 NOV (Dean, Lunatic Hotel): tiles across the wall, the time once, the logo cleaned, no spaced capitals, no dot');
+var LUN = [{ id: 'l1', title: 'Pool comp', day: 'thu', start: '19:00', line: '$10 entry' },
+           { id: 'l2', title: 'Meat raffles and members draw', day: 'fri', start: '19:30' },
+           { id: 'l3', title: 'Jag the Joker', day: 'sun', start: '14:00', line: '2pm to 6pm' }];
+var lun = W.tvSlides(LUN, '2026-11-09'), lunH = W.tvHtml(lun[0], 'Lunatic Hotel');
+ok('Lunatic\'s three nights: one list slide, three tiles side by side across the wall (wo-tiles wo-n3)', lun.length === 1 && /class="wo-wall wo-tiles wo-l wo-n3"/.test(lunH) && (lunH.match(/class="wo-row /g) || []).length === 3, lunH.slice(0, 120));
+ok('one to five nights: 1, 2, 3 across, 4 as two by two, 5 as three over two (a class each)', [1, 2, 3, 4, 5].every(function (n) { return new RegExp('wo-n' + n + '"').test(W.tvHtml(W.tvSlides(many.slice(0, n), TODAY)[0], 'x')); }));
+ok('a long title is marked to start smaller ("Meat raffles and members draw" t3, "Pool comp" t1, 60 letters t4)', /class="wo-row t3"><span class="wo-when2"><span class="wo-day">Fri 13 Nov/.test(lunH) && /class="wo-row t1"><span class="wo-when2"><span class="wo-day">Thu 12 Nov/.test(lunH) && /wo-row t4/.test(W.tvHtml(W.tvSlides([{ title: new Array(61).join('x'), day: 'thu' }], TODAY)[0], 'x')), lunH);
+ok('the time once: start 2pm with the line "2pm to 6pm" shows "2pm to 6pm" and no line', /<span class="wo-time">2pm to 6pm<\/span><\/span><span class="wo-what"><b>Jag the Joker<\/b><\/span>/.test(lunH) && (lunH.match(/2pm/g) || []).length === 1, lunH.slice(lunH.indexOf('Sun 15')));
+ok('a line that is not the hours stays as written ("$10 entry" under 7pm)', /<span class="wo-time">7pm<\/span><\/span><span class="wo-what"><b>Pool comp<\/b><i>\$10 entry<\/i>/.test(lunH));
+var wp = function (st, ln) { var r = W.whenParts({ start: st, line: ln }); return r.time + '|' + r.line; };
+ok('the hours, however the venue writes them: "2pm till late, free entry", "From 2PM - 6 pm", "7:30pm start"; another time is left alone', wp('14:00', '2pm till late, free entry') === '2pm to late|Free entry' && wp('14:00', 'From 2PM - 6 pm') === '2pm to 6pm|' && wp('19:30', '7:30pm start') === '7:30pm|' && wp('14:00', '3pm to 6pm') === '2pm|3pm to 6pm' && wp('', '2pm to 6pm') === '|2pm to 6pm', [wp('14:00', '2pm till late, free entry'), wp('14:00', 'From 2PM - 6 pm'), wp('19:30', '7:30pm start'), wp('14:00', '3pm to 6pm')].join(' / '));
+var featH = W.tvHtml(W.tvSlides([{ title: 'Gig', day: 'thu', start: '14:00', line: '2pm to 6pm', image_url: 'https://x.supabase.co/storage/v1/object/public/venue-ads/v/g.jpg' }], TODAY)[0], 'x');
+ok('the feature panel says the hours once too ("Tonight · 2pm to 6pm")', /wb-when tn">Tonight · 2pm to 6pm</.test(featH), featH.slice(featH.indexOf('wb-when'), featH.indexOf('wb-when') + 60));
+var BL = 'blob:https://venueplay.com.au/0b1c-22';
+ok('the logo: the cleaned copy (a blob: address) is drawn; "wait" holds it back; "plate" sits it on a plate; a data: page or a script address never', /<img class="wo-logo" alt="" src="blob:https:\/\/venueplay\.com\.au\/0b1c-22">/.test(W.tvHtml(lun[0], 'x', BL, 'clear')) && /class="wo-logo wo-wait"/.test(W.tvHtml(lun[0], 'x', L, 'wait')) && /class="wo-logo wo-plate"/.test(W.tvHtml(lun[0], 'x', L, 'plate')) && W.tvHtml(lun[0], 'x', 'data:text/html;base64,PHNjcmlwdD4=').indexOf('wo-logo') === -1 && W.tvHtml(lun[0], 'x', 'blob:javascript:alert(1)').indexOf('wo-logo') === -1);
+/* VPLogo.cleanDark on known pixels (the same flood fill as the account page's Remove background). */
+function ImageData(data, w, h) { this.data = data; this.width = w; this.height = h; }
+var LG = {}; (function () { var window = LG; eval(readFile('venueplay/app/vp-logo.js')); }).call(LG);
+function px(w, h, f) { var d = new Uint8ClampedArray(w * h * 4); for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var c = f(x, y), i = (y * w + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = c.length > 3 ? c[3] : 255; } return new ImageData(d, w, h); }
+var badge = px(40, 40, function (x, y) { var dx = x - 20, dy = y - 22; return dx * dx + dy * dy <= 64 ? [230, 90, 20] : [255, 255, 255]; });
+var cd = LG.VPLogo.cleanDark(badge);
+ok('a logo on a white square: the white comes off, the badge stays whole, the empty margins are trimmed', cd.how === 'clear' && cd.image.data[3] === 0 && cd.image.data[(22 * 40 + 20) * 4 + 3] === 255 && cd.box.w <= 18 && cd.box.h <= 18 && cd.box.x >= 11, JSON.stringify({ how: cd.how, box: cd.box }));
+ok('a logo already see-through is drawn as it is; one with no plain edge goes on the plate; the stored file is never touched (no upload here)', LG.VPLogo.cleanDark(px(10, 10, function () { return [0, 0, 0, 0]; })).how === 'asis' && LG.VPLogo.cleanDark(px(20, 20, function (x, y) { return [(x * 53 + y * 97) % 256, (x * 11) % 256, (y * 29) % 256]; })).how === 'plate' && !/api\(|fetch\(|XMLHttpRequest/.test(readFile('venueplay/app/vp-logo.js')));
+var TVS = readFile('venueplay/tv.html');
+function rule(src, sel) { var i = src.indexOf(sel + '{'); return i < 0 ? '' : src.slice(i, src.indexOf('}', i)); }
+ok('TV: the day labels and the venue\'s name are plain words: no monospace, no capitals, no letter spacing', ['.wo-day', '.wo-kick', '.wb-side .wo-top.k .wo-kick'].every(function (k) { var r = rule(TVS, k); return r && !/JetBrains|uppercase|letter-spacing/.test(r); }), rule(TVS, '.wo-day'));
+ok('TV: the What\'s on slide asks for the cleaned logo (vp-logo.js loaded, VPLogo.forDark, tvHtml given its state)', /<script src="\/app\/vp-logo\.js"><\/script>/.test(TVS) && /VPLogo\.forDark\(u\)/.test(TVS) && /VPWhatsOn\.tvHtml\(e\.wo, holdVenueName\|\|"", wl\.src, wl\.how\)/.test(TVS) && /woFit\(\);/.test(fnSrc('venueplay/tv.html', 'buildAds')));
+var PC = readFile('venueplay/app/vp-tonight.css');
+ok('phone: no dot on a day (no ::after on .d.ev), and the strip, day heading, badges and NEXT in plain words (no monospace, capitals or spacing)', !/\.d\.ev::after/.test(PC) && !/border-radius:50%;background:#FFC24B/.test(PC) && ['.vpt-week .k', '.vpt-night .nk', '.vpt-night .bd', '.vpt-next .k', '#vpAd .k'].every(function (k) { var r = rule(PC, k); return r && !/JetBrains|uppercase|letter-spacing/.test(r); }));
+var boxJ = new Node('div'), lbJ = T.lobby(boxJ, { name: 'Sam', me: 'trivia', week: WEEK, events: [{ title: 'Sun session', day: 'thu', start: '14:00', line: '2pm to 6pm' }], now: THU });
+lbJ.buttons[0].onclick();
+var chipsJ = byClass(byClass(boxJ, 'vpt-night')[0], 'bd').map(function (c) { return c.textContent; });
+ok('phone: a night\'s chip says its hours once ("2pm to 6pm")', chipsJ.indexOf('2pm to 6pm') !== -1 && chipsJ.indexOf('2pm') === -1, JSON.stringify(chipsJ));
 print('\nTHE PHONE\'S WEEK STRIP (vp-tonight.js with the venue\'s events)');
 var WEEK = [{ day: 'wed', games: [{ game: 'musical', start: '20:00' }] }, { day: 'thu', games: [{ game: 'trivia', start: '19:30' }] }];
 var box = new Node('div');
@@ -116,7 +150,7 @@ lb.buttons[0].onclick();
 rows = byClass(spot, 'row');
 ok('tap Today: TONIGHT once (our game\'s line says 7:30pm, not Tonight 7:30pm), our game first (NEXT), then the venue\'s night badged with its time, its title alone (design review)', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Tonight' && rows.length === 2 && byClass(rows[0], 'bd')[0].textContent === 'Next' && !/Tonight/.test(rows[0].textContent) && /7:30pm/.test(rows[0].textContent) && byClass(rows[1], 'bd')[0].textContent === '9pm' && /I \u2665 3181/.test(rows[1].textContent) && !/Back bar/.test(rows[1].textContent) && /\bev\b/.test(rows[1].className), texts(spot, 'row'));
 var days = lb.buttons;
-ok('a gold dot on the days with one of the venue\'s nights (Thu, Fri, Sat, Sun no)', /\bev\b/.test(days[0].className) && /\bev\b/.test(days[1].className) && /\bev\b/.test(days[2].className) && !/\bev\b/.test(days[3].className), days.map(function (d) { return d.className; }).join('|'));
+ok('the days with one of the venue\'s nights are marked (lit, no dot) (Thu, Fri, Sat, Sun no)', /\bev\b/.test(days[0].className) && /\bev\b/.test(days[1].className) && /\bev\b/.test(days[2].className) && !/\bev\b/.test(days[3].className), days.map(function (d) { return d.className; }).join('|'));
 ok('our game nights keep their own mark beside it', /\bon\b/.test(days[0].className) && /\bon\b/.test(days[6].className) && !/\bon\b/.test(days[1].className));
 days[2].onclick();
 ok('tap Saturday (no game): the card says SATURDAY 14, then the venue\'s two nights, earliest first, and no "No games this night"', byClass(spot, 'nk').length === 1 && byClass(spot, 'nk')[0].textContent === 'Saturday 14' && byClass(spot, 'row').length === 2 && /Rise & Shine/.test(byClass(spot, 'row')[0].textContent) && /7am/.test(byClass(spot, 'row')[0].textContent) && /Mount Kujo/.test(byClass(spot, 'row')[1].textContent) && !/No games this night/.test(spot.textContent), texts(spot, 'row'));

@@ -14,7 +14,7 @@ its TV between games and in the players' week strip. This opens the REAL pages i
            loop; Tonight is gold; every row fits on the wall at 1920x1080 and 1280x720; a past night never shows
   PHONE    the real trivia phone page at 390x664 and 375x667: /join/info with ad:1 hands over the nights with only
            their public fields; the lobby drawn by the page's own vp-tonight.js shows tonight's night under our game,
-           a gold dot on the days that have one, tapping a day lists them; the venue's ad and our logo still fit
+           a day with one is lit (no dot), tapping a day lists them; the venue's ad and our logo still fit
 
 Takes /tmp/vp-heavy.lock first (VP_WAIT_LOCK seconds to wait) and never clears anybody else's.
 VP_SHOTS=<dir> also saves the frames.
@@ -161,9 +161,12 @@ def tv_and_phone():
         print('\nTV: the venue\'s nights between games (round 4: feature and week; the plain list when no night has a picture)')
         LIT = '(function(){var a=[].filter.call(document.querySelectorAll("#tvAds .ad.show"),function(x){return x.style.zIndex==="2";});return a[0]||document.querySelector("#tvAds .ad.show");})()'
         ROWS = ('rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),top:Math.round(b.top),bot:Math.round(b.bottom),right:Math.round(b.right),h:Math.round(b.height),'
-                'bar:getComputedStyle(x,"::before").backgroundColor,day:getComputedStyle(x.querySelector(".wo-day")).opacity};})')
-        def scene(rowset, label):
-            r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': None, 'raffle': None, 'events': rowset,
+                'bar:getComputedStyle(x,"::before").backgroundColor,day:getComputedStyle(x.querySelector(".wo-day")).opacity,left:Math.round(b.left),'
+                'dff:getComputedStyle(x.querySelector(".wo-day")).fontFamily,dtt:getComputedStyle(x.querySelector(".wo-day")).textTransform,dls:getComputedStyle(x.querySelector(".wo-day")).letterSpacing,'
+                'tm:x.querySelector(".wo-time").textContent,tl:(function(t){var c=getComputedStyle(t);return Math.round(t.getBoundingClientRect().height/(parseFloat(c.lineHeight)||1));})(x.querySelector(".wo-what b")),'
+                'cut:(function(t){return t.scrollHeight>t.clientHeight+1||t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-what b")),tcut:(function(t){return t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-time"))};})')
+        def scene(rowset, label, logo=None):
+            r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': logo, 'raffle': None, 'events': rowset,
                                          'slides': [{'image_url': r.base + '/logos/ad-slides/tugun-tuesday.jpg', 'seconds': 3}]}], replace=True)
             for (W, H) in ((1920, 1080), (1280, 720)):
                 tid, sid = r.open('/tv?venue=' + slug, width=W, height=H)
@@ -173,7 +176,8 @@ def tv_and_phone():
                 m = r.json(sid, 'JSON.stringify((function(){var s=' + LIT + ',' + ROWS + ';var hd=s.querySelector(".wo-head").getBoundingClientRect(), b=s.querySelector(".wo-b"), pic=s.querySelector(".wb-pic"), side=s.querySelector(".wb-side .wo-top"), corner=document.querySelector("#tvCorner svg");'
                                 'return {feature:!!b, kick:(s.querySelector(".wo-kick")||{}).textContent||"", head:s.querySelector(".wo-head").textContent, headTop:Math.round(hd.top), headRight:Math.round(hd.right), rows:rows, h:innerHeight, w:innerWidth,'
                                 'pic:pic?[Math.round(pic.getBoundingClientRect().width),Math.round(pic.getBoundingClientRect().height)]:null, bg:pic?pic.style.backgroundImage:"", when:(s.querySelector(".wb-when")||{}).textContent||"",'
-                                'corner:(corner && corner.getBoundingClientRect().width>0)?Math.round(corner.getBoundingClientRect().left):9999};})())', {})
+                                'corner:(corner && corner.getBoundingClientRect().width>0)?Math.round(corner.getBoundingClientRect().left):9999,'
+                                'logo:(function(l){if(!l)return null;var b=l.getBoundingClientRect();return {cls:l.className,src:l.src.slice(0,5),w:Math.round(b.width),h:Math.round(b.height),vis:getComputedStyle(l).visibility,done:l.complete&&l.naturalWidth>0};})(s.querySelector(".wo-logo"))};})())', {})
                 rows = m.get('rows') or []
                 if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-tv-%s-%d.jpg' % (label, W)))
                 yield W, H, got, m, rows
@@ -196,8 +200,38 @@ def tv_and_phone():
         plain = [dict(n, image_url=None) if n.get('image_url') else n for n in nights]
         for W, H, got, m, rows in scene(plain, 'list'):
             ok('list %dx%d: no picture this week: the plain list takes its turn, its header at the top' % (W, H), got is True and not m.get('feature') and m.get('headTop', 999) < H * 0.12, m)
-            ok('list %dx%d: the rows fill the wall below the header (the last ends within 8%% of the bottom), every day label at full strength' % (W, H),
-               len(rows) == 3 and rows[-1]['bot'] >= m['h'] * 0.88 and rows[-1]['bot'] <= m['h'] - 8 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
+            ok('list %dx%d: three tiles side by side across the whole wall, the same size, reaching within 8%% of the bottom, every day label at full strength' % (W, H),
+               len(rows) == 3 and len(set(x['top'] for x in rows)) == 1 and len(set(x['h'] for x in rows)) == 1 and rows[0]['left'] <= m['w'] * 0.06 and rows[-1]['right'] >= m['w'] * 0.94
+               and rows[-1]['bot'] >= m['h'] * 0.88 and rows[-1]['bot'] <= m['h'] - 8 and all(float(x['day']) == 1 for x in rows) and all(x['right'] <= m['w'] for x in rows), rows)
+        # Dean, 9 Nov 2026, Lunatic Hotel's real three nights: no spaced monospace capitals, the long title fitted and never
+        # cut, the hours once ("2pm to 6pm"), the tiles even, the venue's logo shown (never held back, never a white box).
+        lun = [{'id': 'l1', 'title': 'Pool comp', 'day': dkey(TODAY + datetime.timedelta(days=1)), 'start': '19:00', 'line': '$10 entry'},
+               {'id': 'l2', 'title': 'Meat raffles and members draw', 'day': dkey(TODAY + datetime.timedelta(days=2)), 'start': '19:30'},
+               {'id': 'l3', 'title': 'Jag the Joker', 'day': dkey(TODAY + datetime.timedelta(days=4)), 'start': '14:00', 'line': '2pm to 6pm'}]
+        for W, H, got, m, rows in scene(lun, 'lunatic', r.base + '/logos/venue-tugun-bowls.png'):
+            ok('lunatic %dx%d: the day labels are plain words: not monospace, not capitals, no letter spacing' % (W, H),
+               len(rows) == 3 and all('mono' not in x['dff'].lower() and x['dtt'] == 'none' and x['dls'] in ('normal', '0px') for x in rows), [(x['dff'], x['dtt'], x['dls']) for x in rows])
+            ok('lunatic %dx%d: three even tiles across the wall; "Meat raffles and members draw" on two lines at most and never cut; the short titles on one line' % (W, H),
+               len(rows) == 3 and len(set(x['h'] for x in rows)) == 1 and rows[-1]['right'] >= m['w'] * 0.94 and not any(x['cut'] or x['tcut'] for x in rows)
+               and rows[1]['tl'] <= 2 and rows[0]['tl'] == 1 and rows[2]['tl'] == 1, [(x['t'], x['tl'], x['cut'], x['h']) for x in rows])
+            ok('lunatic %dx%d: the hours once: Sunday says "2pm to 6pm" and "2pm" nowhere else; Thursday keeps "$10 entry"' % (W, H),
+               len(rows) == 3 and rows[2]['tm'] == '2pm to 6pm' and rows[2]['t'].count('2pm') == 1 and '$10 entry' in rows[0]['t'], [x['t'] for x in rows])
+            lg = m.get('logo') or {}
+            ok('lunatic %dx%d: the venue\'s logo is up beside WHAT\'S ON, loaded and visible (not held back)' % (W, H),
+               lg.get('vis') == 'visible' and lg.get('done') is True and 'wo-wait' not in lg.get('cls', '') and lg.get('h', 0) > 20, lg)
+
+        # A logo on a white square (Lunatic Hotel's shape: a round badge with wide white margins), made in the page and
+        # handed to the TV's own VPLogo.forDark: the white comes off and the margins are trimmed; nothing is uploaded.
+        tid, sid = r.open('/tv?venue=' + slug, width=1280, height=720)
+        r.until(sid, 'typeof VPLogo==="object" && typeof VPLogo.forDark==="function"', 30)
+        r.ask(sid, '(function(){var c=document.createElement("canvas");c.width=400;c.height=400;var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,400,400);x.fillStyle="#e65a14";x.beginPath();x.arc(200,220,90,0,7);x.fill();'
+                   'window.__fd=null;VPLogo.forDark(c.toDataURL("image/png")).then(function(r){var i=new Image();i.onload=function(){var k=document.createElement("canvas");k.width=i.width;k.height=i.height;var g=k.getContext("2d");g.drawImage(i,0,0);'
+                   'window.__fd={how:r.how,src:r.src.slice(0,5),w:i.width,h:i.height,corner:g.getImageData(1,1,1,1).data[3],mid:g.getImageData(i.width>>1,i.height>>1,1,1).data[3]};};i.src=r.src;});return true;})()')
+        r.until(sid, '!!window.__fd', 20)
+        fd = r.json(sid, 'JSON.stringify(window.__fd)', {})
+        ok('a logo on a white square: the TV takes the white off (a see-through corner, the badge solid) and trims the margins (400 square to about 180)',
+           fd.get('how') == 'clear' and fd.get('src') == 'blob:' and fd.get('corner') == 0 and fd.get('mid') == 255 and fd.get('w', 999) <= 200 and fd.get('h', 999) <= 200, fd)
+        r.close_tab(tid)
 
         print('\nPHONE: the week strip on the real trivia phone page')
         for (W, H) in ((390, 664), (375, 667)):
@@ -215,12 +249,16 @@ def tv_and_phone():
                  'VPPhoneAd.set([{image_url:"https://x.supabase.co/storage/v1/object/public/venue-ads/v/ad.jpg"}],"Test Alpha"); VPPhoneAd.show(true); [].forEach.call(document.querySelectorAll("#vpAd img"),function(i){ i.onerror=null; i.src=location.origin+"/logos/ad-slides/tugun-tuesday.jpg"; }); return true;})(%s)') % (json.dumps(dkey(TODAY)), json.dumps(evs))
             r.ask(sid, S)
             time.sleep(1.2)
-            m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var dot=window.__st.buttons[0]; var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,dot:getComputedStyle(dot,"::after").backgroundColor,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})
+            m = r.json(sid, 'JSON.stringify((function(){var rows=[].map.call(document.querySelectorAll("#vpTonight .vpt-night .row"),function(x){return x.innerText.replace(/\\s+/g," ");}); var d=[].map.call(window.__st.buttons,function(b){return b.className;}); var B=window.__st.buttons, lit=B[1], dim=B[3], ae=[].map.call(B,function(b){return getComputedStyle(b,"::after").content;});'
+                       'var mono=[].filter.call(document.querySelectorAll("#vpTonight *, #vpAd .k"),function(n){if(!n.childNodes.length||!/\\S/.test(n.textContent))return false;var c=getComputedStyle(n);return /mono/i.test(c.fontFamily)||(c.textTransform==="uppercase"&&!/Anton/.test(c.fontFamily))||(parseFloat(c.letterSpacing)>0.5);}).map(function(n){return n.className+":"+n.textContent.slice(0,20);});'
+                       'var dot=B[0]; var ad=document.getElementById("vpAd").getBoundingClientRect(), foot=document.querySelector(".pfoot").getBoundingClientRect(); return {rows:rows,days:d,after:ae,litC:getComputedStyle(lit).color,dimC:getComputedStyle(dim).color,mono:mono,adBottom:Math.round(ad.bottom),adH:Math.round(ad.height),foot:Math.round(foot.bottom),h:innerHeight,doc:document.documentElement.scrollWidth};})())', {})
             rows = m.get('rows') or []
             ok('%dx%d: the lobby opens as Dean\'s round 7 lobby, our trivia alone, and the strip says "Tap a day"' % (W, H),
                len(rows) == 1 and 'Trivia' in rows[0] and 'Tap a day' in (r.ask(sid, 'document.querySelector("#vpTonight .vpt-week .k").innerText') or ''), rows)
-            ok('%dx%d: a dot in the days that have one of the venue\'s nights (white on Today)' % (W, H),
-               ' ev' in m.get('days', [''])[0] and ' ev' in m.get('days', ['', ''])[1] and m.get('dot') == 'rgb(255, 255, 255)', m.get('days'))
+            ok('%dx%d: no dot on any day (Dean, 9 Nov 2026); a day with one of the venue\'s nights is lit (white words), a day with nothing stays dim' % (W, H),
+               ' ev' in m.get('days', [''])[0] and ' ev' in m.get('days', ['', ''])[1] and all(a in ('none', 'normal', '') for a in m.get('after', ['x']))
+               and m.get('litC') == 'rgb(255, 255, 255)' and m.get('dimC') != 'rgb(255, 255, 255)', [m.get('days'), m.get('after'), m.get('litC'), m.get('dimC')])
+            ok('%dx%d: no spaced monospace capitals anywhere in the lobby or the ad heading (THIS WEEK HERE, NEXT, the day heading)' % (W, H), m.get('mono') == [], m.get('mono'))
             ok('%dx%d: the venue\'s ad and our logo still fit on the screen' % (W, H), m.get('adH', 0) > 60 and m.get('foot', 9999) <= m.get('h', 0) and m.get('doc', 9999) <= W, m)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-lobby-%d.jpg' % W))
             r.ask(sid, 'window.__st.buttons[0].click(); true')

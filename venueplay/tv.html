@@ -144,13 +144,13 @@
      the same line as our corner mark (whose middle is about 2.9cqw down). */
   .wo-top{display:flex;align-items:center;justify-content:flex-start;gap:2cqw;min-height:4.2cqw;flex:none;width:91cqw;padding-right:14cqw}
   .wo-logo{display:block;max-height:4.2cqw;max-width:20cqw;width:auto;height:auto;object-fit:contain}
-  .wo-kick{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,1.9cqw,36px);letter-spacing:.12em;text-transform:uppercase;color:#C9C9D2}
+  .wo-kick{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(13px,1.9cqw,36px);color:#C9C9D2}   /* plain words, no spaced capitals (Dean's no-AI-look rule, 9 Nov 2026) */
   .wo-head{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(28px,4.2cqw,80px);line-height:1;color:#fff}
   .wo-list{display:flex;flex-direction:column;gap:1cqw;margin-top:1.8cqw;width:91cqw;flex:1;min-height:0}
   .wo-row{position:relative;flex:1 1 auto;max-height:24cqw;display:grid;grid-template-columns:19cqw minmax(0,1fr);align-items:center;gap:2.4cqw;padding:.8cqw 2.6cqw;border-radius:1.1cqw;background:#1A1A1F;text-align:left;overflow:hidden}
   .wo-row.tonight::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#FF1F8E}
   .wo-when2{display:flex;flex-direction:column;gap:.3cqw;min-width:0}
-  .wo-day{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.7cqw,32px);letter-spacing:.05em;text-transform:uppercase;color:#C9C9D2;white-space:nowrap}
+  .wo-day{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.7cqw,32px);color:#C9C9D2;white-space:nowrap}   /* "Thu 12 Nov" as written: sentence case, no letter spacing (9 Nov 2026) */
   .wo-row.tonight .wo-day{color:#fff}
   .wo-time{font-family:'Anton',sans-serif;font-size:clamp(18px,3.4cqw,66px);color:#fff;line-height:1;white-space:nowrap}
   .wo-what{min-width:0}
@@ -167,6 +167,54 @@
   .wo-xl .wo-time{font-size:clamp(26px,6.3cqw,120px)}
   .wo-xl .wo-what b{font-size:clamp(22px,5cqw,96px)}
   .wo-xl .wo-what i{font-size:clamp(14px,2.5cqw,48px);white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  /* THE LIST AS TILES (Dean, 9 Nov 2026, Lunatic Hotel's three nights: the rows filled the left half of the wall and
+     left the right half empty, and a long title made one row taller than the others). One tile a night across the
+     full width, every tile the same size whatever its words: 1 to 3 side by side, 4 as two by two, 5 as three over
+     two. The day and time at the top of the tile, the title and its line at the foot; tonight's tile has the pink
+     bar along its top. Titles and times are fitted on the wall by VPWhatsOn.fit (one line where they can). */
+  .wo-tiles .wo-list{display:grid;grid-auto-rows:minmax(0,1fr);gap:1.4cqw}
+  .wo-n1 .wo-list{grid-template-columns:minmax(0,1fr)}
+  .wo-n2 .wo-list,.wo-n4 .wo-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wo-n3 .wo-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .wo-n5 .wo-list{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .wo-n5 .wo-row{grid-column:span 2}
+  .wo-n5 .wo-row:nth-child(n+4){grid-column:span 3}
+  .wo-tiles .wo-row{display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;gap:1cqw;max-height:none;min-height:0;padding:2.2cqw 2.4cqw 2.4cqw;border-radius:1.2cqw}
+  .wo-tiles .wo-row.tonight::before{right:0;bottom:auto;width:auto;height:6px}
+  .wo-tiles .wo-when2{gap:.5cqw}
+  .wo-tiles .wo-what{display:flex;flex-direction:column;justify-content:flex-end}
+  .wo-tiles .wo-what b{-webkit-line-clamp:3;line-height:1.1}
+  .wo-tiles .wo-what i{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-top:.5cqw}
+  /* one row of tiles (1 to 3 nights): tall tiles, big words */
+  .wo-tiles.wo-n3 .wo-day{font-size:2.3cqw}
+  .wo-tiles.wo-n3 .wo-time{font-size:6.6cqw}
+  .wo-tiles.wo-n3 .wo-what b{font-size:4cqw}
+  .wo-tiles.wo-n3 .wo-what i{font-size:2.3cqw}
+  .wo-tiles.wo-n2 .wo-day{font-size:2.7cqw}
+  .wo-tiles.wo-n2 .wo-time{font-size:8cqw}
+  .wo-tiles.wo-n2 .wo-what b{font-size:4.8cqw}
+  .wo-tiles.wo-n2 .wo-what i{font-size:2.6cqw}
+  .wo-tiles.wo-n1 .wo-row{align-items:center;text-align:center}
+  .wo-tiles.wo-n1 .wo-when2,.wo-tiles.wo-n1 .wo-what{align-items:center}
+  .wo-tiles.wo-n1 .wo-day{font-size:3.2cqw}
+  .wo-tiles.wo-n1 .wo-time{font-size:10cqw}
+  .wo-tiles.wo-n1 .wo-what b{font-size:6.4cqw}
+  .wo-tiles.wo-n1 .wo-what i{font-size:3.2cqw}
+  /* two rows of tiles (4 or 5 nights) */
+  .wo-tiles.wo-n4 .wo-row,.wo-tiles.wo-n5 .wo-row{padding:1.6cqw 2.2cqw 1.8cqw;gap:.6cqw}
+  .wo-tiles.wo-n4 .wo-day,.wo-tiles.wo-n5 .wo-day{font-size:1.9cqw}
+  .wo-tiles.wo-n4 .wo-time,.wo-tiles.wo-n5 .wo-time{font-size:4.6cqw}
+  .wo-tiles.wo-n4 .wo-what b,.wo-tiles.wo-n5 .wo-what b{font-size:3.2cqw;-webkit-line-clamp:2}
+  .wo-tiles.wo-n4 .wo-what i,.wo-tiles.wo-n5 .wo-what i{font-size:1.9cqw;-webkit-line-clamp:1}
+  /* a long title starts smaller (VPWhatsOn.fit then fine-tunes it) */
+  .wo-tiles .wo-row.t2 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .88)}
+  .wo-tiles.wo-n3{--wo-b:4cqw}.wo-tiles.wo-n2{--wo-b:4.8cqw}.wo-tiles.wo-n1{--wo-b:6.4cqw}.wo-tiles.wo-n4,.wo-tiles.wo-n5{--wo-b:3.2cqw}
+  .wo-tiles .wo-row.t3 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .76)}
+  .wo-tiles .wo-row.t4 .wo-what b{font-size:calc(var(--wo-b,4cqw) * .66)}
+  /* THE VENUE'S LOGO (9 Nov 2026): shown with its background taken off (VPLogo.forDark); held back while that is
+     worked out, so no white box flashes up; on a small rounded plate when it cannot be cleaned. */
+  .wo-logo.wo-wait{visibility:hidden}
+  .wo-logo.wo-plate{border-radius:.7cqw}
   /* FEATURE AND WEEK */
   .wo-b{display:grid;grid-template-columns:41cqw minmax(0,1fr);grid-template-rows:100%;padding:0;align-items:stretch}
   .wb-feat{position:relative;overflow:hidden}
@@ -177,7 +225,7 @@
   .wb-when.tn{color:#FFD93D}
   .wb-side{display:flex;flex-direction:column;padding:.8cqw 3.4cqw 2.6cqw 2.8cqw;min-width:0;min-height:0}
   .wb-side .wo-top{width:auto;padding-right:0;margin-right:12cqw}   /* clear of our corner mark */
-  .wb-side .wo-top.k .wo-kick{font-size:clamp(11px,1.5cqw,28px);letter-spacing:.08em}   /* the venue's name beside WHAT'S ON, on the left, when it has no logo */
+  .wb-side .wo-top.k .wo-kick{font-size:clamp(11px,1.5cqw,28px)}   /* the venue's name beside WHAT'S ON, on the left, when it has no logo */
   .wo-kick,.wo-head{white-space:nowrap}
   .wb-side .wo-list{width:100%;gap:.8cqw;margin-top:1.6cqw}
   .wb-side .wo-row{grid-template-columns:13cqw minmax(0,1fr);gap:1.6cqw;padding:.6cqw 1.8cqw;max-height:13cqw}
@@ -763,6 +811,7 @@
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights, between games (INBOX 110, 6 Nov 2026) -->
+<script src="/app/vp-logo.js"></script>   <!-- the venue's logo with its plain background taken off, for the What's on slide (9 Nov 2026) -->
 <script src="/app/vp-tvtype.js"></script>   <!-- what kind of TV this is, one list (1 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
@@ -1593,6 +1642,22 @@
     if(e.type==="holding") return "ad-hold";
     return accentClass(e.slide.accent);
   }
+  /* THE VENUE'S LOGO ON THE WHAT'S ON SLIDE WITH ITS BACKGROUND TAKEN OFF (Dean, 9 Nov 2026: a logo on a white square
+     showed as a white square). /app/vp-logo.js VPLogo.forDark cleans it in the TV, once per address; until it answers
+     the logo is held back ("wait"), then the slides are rebuilt with the clean copy (buildAds swaps them in whole, and
+     only when they differ). Nothing stored changes. */
+  var woLogoDone={};
+  function woLogo(){
+    var u=venueLogoUrl||"";
+    if(!u) return { src:"", how:"" };
+    if(woLogoDone[u]) return woLogoDone[u];
+    if(!window.VPLogo || typeof VPLogo.forDark!=="function") return { src:u, how:"plate" };
+    if(!woLogoDone["?"+u]){
+      woLogoDone["?"+u]=true;
+      VPLogo.forDark(u).then(function(r){ woLogoDone[u]=r; try{ if(tvMode==="ads" && adBuilt){ if(buildAds()) startAds(); } }catch(e){} });
+    }
+    return { src:u, how:"wait" };
+  }
   function entryInner(e){
     if(e.type==="auto-draws"){
       var rows="", wd=todayAU();   // recompute the day at render so it flips correctly at midnight
@@ -1607,7 +1672,8 @@
     }
     if(e.type==="auto-whatson"){
       if(e.wo && e.wo.type==="feature") probeImg(String(e.wo.feature.ev.image_url||""));   // a broken picture drops off its night, as with slides
-      return VPWhatsOn.tvHtml(e.wo, holdVenueName||"", venueLogoUrl||"");   // the venue's own uploaded logo (round 3); ours is the corner mark
+      var wl=woLogo();   // the venue's own uploaded logo (round 3), its background taken off (9 Nov 2026); ours is the corner mark
+      return VPWhatsOn.tvHtml(e.wo, holdVenueName||"", wl.src, wl.how);
     }
     if(e.type==="auto-raffle"){
       var r=ADS.raffle||{};
@@ -1797,8 +1863,13 @@
     while(pending.firstChild) host.appendChild(pending.firstChild);
     for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
     adBuilt=true; adsSig=sig;
+    woFit();
     return true;
   }
+  /* What's on titles and times fitted to their tiles once they are on the wall, and again when the fonts arrive or the
+     screen changes size (/app/vp-whatson.js fit: one line where it can, never cut). */
+  function woFit(){ try{ var h=$("tvAds"); if(h && window.VPWhatsOn && VPWhatsOn.fit && h.querySelector(".ad-wo")) VPWhatsOn.fit(h); }catch(e){} }
+  try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(woFit); window.addEventListener("resize", function(){ setTimeout(woFit, 60); }); }catch(e){}
   function stopAds(){
     if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; }
     /* The handover timer too. Without this, a rebuild or a game starting could
