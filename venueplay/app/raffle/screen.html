@@ -317,7 +317,7 @@
   /* WHERE TICKETS ARE BOUGHT (Dean, 9 Nov 2026): the console's "Where are tickets sold?" choice, said under GET YOUR
      TICKETS. Only these words ever reach the wall (the message carries a key, not text). Nothing chosen, nothing said:
      the card a venue has always had. Where a WINNER collects is a different thing and is always the host. */
-  var TICKETS_FROM={ host:"from the host", bar:"from the bar", sellers:"from our ticket sellers" };
+  var TICKETS_FROM={ host:"from the host", front:"at the front of the room", entrance:"at the entrance", bar:"from the bar", sellers:"from our ticket sellers" };
   function pad(n){ var s=String(n); while(s.length<S.padW) s="0"+s; return s; }
   function secsToClock(s){ var m=Math.floor(s/60),r=s%60; return m+":"+(r<10?"0":"")+r; }
 

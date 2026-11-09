@@ -291,11 +291,13 @@
         <!-- WHERE TICKETS ARE SOLD (Dean, 9 Nov 2026): said on the TV under GET YOUR TICKETS. Nothing picked, nothing
              said: the card every venue has today. Only where tickets are bought; a winner always goes to the host. -->
         <div class="field2" id="fromField">
-          <span class="flab"><span id="fromNum">3. </span>Where are tickets sold?<small>Shown on the TV as &ldquo;Get your tickets from the bar&rdquo;.</small></span>
+          <span class="flab"><span id="fromNum">3. </span>Where do you sell your tickets?<small>Shown on the TV as &ldquo;Get your tickets from the bar&rdquo;.</small></span>
           <div class="chips" id="fromPick">
             <button type="button" data-from="host">The host</button>
+            <button type="button" data-from="front">The front of the room</button>
+            <button type="button" data-from="entrance">The entrance</button>
             <button type="button" data-from="bar">The bar</button>
-            <button type="button" data-from="sellers">Our ticket sellers</button>
+            <button type="button" data-from="sellers">Roaming ticket sellers</button>
           </div>
         </div>
         <!-- THE DRAW SETTINGS (Dean, 28 Oct 2026; named in his words 6 Nov 2026): set once by the venue, saved for
@@ -443,7 +445,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null, ticketsFrom:"" };   // ticketsFrom: "", "host", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"" };   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -1623,7 +1625,7 @@
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
     var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
-    if(typeof p.tickets_from==="string" && /^(|host|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
+    if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
     if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();
   }

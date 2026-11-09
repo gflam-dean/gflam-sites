@@ -436,7 +436,10 @@ var tf = /var TICKETS_FROM=\{[^}]*\};/.exec(SCR), line = /    if\(m\.t==="idle"\
 check('the TV has its own words for each key, and the line that reads them', !!tf && !!line);
 if (tf && line) {
   var tvSays = new Function('m', 'var S={};' + tf[0] + '\n' + line[0] + '\nreturn S.ticketsFrom;');
-  check('the TV says "from the bar", "from the host", "from our ticket sellers"', tvSays({ t: 'idle', from: 'bar' }) === 'from the bar' && tvSays({ t: 'idle', from: 'host' }) === 'from the host' && tvSays({ t: 'idle', from: 'sellers' }) === 'from our ticket sellers');
+  check('the TV says "from the host", "at the front of the room", "at the entrance", "from the bar", "from our ticket sellers"', tvSays({ t: 'idle', from: 'bar' }) === 'from the bar' && tvSays({ t: 'idle', from: 'host' }) === 'from the host' &&
+        tvSays({ t: 'idle', from: 'front' }) === 'at the front of the room' && tvSays({ t: 'idle', from: 'entrance' }) === 'at the entrance' && tvSays({ t: 'idle', from: 'sellers' }) === 'from our ticket sellers');
+  var HOSTP = readFile('venueplay/app/raffle/host.html'), keys = (HOSTP.match(/data-from="([a-z]+)"/g) || []).map(function (x) { return x.slice(11, -1); });
+  check('every choice on the console has the TV\'s own words (Dean, 9 Nov 2026: five places)', keys.join(',') === 'host,front,entrance,bar,sellers' && keys.every(function (k) { return !!tvSays({ t: 'idle', from: k }); }), keys);
   check('anything else, or nothing, says nothing (never the message\'s own text on the wall)', tvSays({ t: 'idle', from: '<b>free beer</b>' }) === '' && tvSays({ t: 'idle' }) === '' && tvSays({ t: 'idle', from: 'toString' }) === '', tvSays({ t: 'idle', from: '<b>x</b>' }));
 }
 
