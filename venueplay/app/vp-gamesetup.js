@@ -1727,7 +1727,7 @@
     /* AN EXISTING VENUE (Dean, 9 Nov 2026): one screen saying what this is, then the same questions, already answered */
     function reviewIntro() {
       F.clear(); F.step("Your game setup", 3, 1);
-      F.title.textContent = "Check your game setup";
+      F.title.textContent = "Check your game set-up";
       F.body.appendChild(F.el("p", "vpgs-lead", "We have changed some settings within games. Click through now to review these, and change anything you like as you go."));
       var later = F.el("button", "vpgs-btn ghost big vpgs-outline", "Not ready yet, remind me next time"); later.id = "vpGsReviewLater"; later.setAttribute("type", "button");
       later.addEventListener("click", function () { remindLater(); end("later"); });

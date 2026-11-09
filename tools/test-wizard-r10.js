@@ -316,7 +316,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
 
   /* remind me */
   P = oldVenue(); done = P.GS.review(P.ctx, P.deps); await settle();
-  check('it opens with one screen in the round 11 words, never already filled in, "Not ready yet, remind me next time" and "Let\'s go" (Dean 10 Nov)', T(P, 'vpGsTitle') === 'Check your game setup' && T(P, 'vpGsBody').indexOf('We have changed some settings within games. Click through now to review these, and change anything you like as you go.') === 0 && !/filled in|already/i.test(T(P, 'vpGsBody')) && T(P, 'vpGsReviewLater') === 'Not ready yet, remind me next time' && T(P, 'vpGsGo') === "Let's go" && /vpgs-outline/.test($(P, 'vpGsReviewLater').className));
+  check('it opens with one screen in the round 11 words, never already filled in, "Not ready yet, remind me next time" and "Let\'s go" (Dean 10 Nov)', T(P, 'vpGsTitle') === 'Check your game set-up' && T(P, 'vpGsBody').indexOf('We have changed some settings within games. Click through now to review these, and change anything you like as you go.') === 0 && !/filled in|already/i.test(T(P, 'vpGsBody')) && T(P, 'vpGsReviewLater') === 'Not ready yet, remind me next time' && T(P, 'vpGsGo') === "Let's go" && /vpgs-outline/.test($(P, 'vpGsReviewLater').className));
   CALLS = []; $(P, 'vpGsReviewLater').click(); await settle();
   var loc = JSON.parse(STORE['vpGameSetup:V1'] || '{}');
   check('remind me: closed, nothing saved anywhere', (await done) === 'later' && !$(P, 'vpGs') && !posts('/host/').length && !SAVED.length);
