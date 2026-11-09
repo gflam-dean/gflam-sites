@@ -429,7 +429,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   P = oldVenue(); done = P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
   CALLS = []; $(P, 'vpGsAllNo').click(); await settle();
-  check('Not today: "Everything stays as it is", no defaults written, asked again next sign-in', /Everything stays as it is\. We'll ask you again next time you sign in\./.test(T(P, 'vpGsNoWorries')) && posts('/host/game-prefs').length === 0 && JSON.stringify(PREFS) === JSON.stringify(HAVE) && JSON.parse(STORE['vpGameSetup:V1']).reviewLater > NOW);
+  check('Not today (a dismiss): "Everything stays as it is", no defaults written, and it is NOT asked again (setup_reviewed = dismissed, Dean 10 Nov)', /Everything stays as it is\. We won't ask again/.test(T(P, 'vpGsNoWorries')) && posts('/host/game-prefs').length === 0 && JSON.stringify(PREFS) === JSON.stringify(HAVE) && lastAnswers().setup_reviewed.how === 'dismissed' && lastAnswers().setup_reviewed.at === P.GS.brisbaneDate(NOW) && !JSON.parse(STORE['vpGameSetup:V1']).reviewLater);
   P = oldVenue(); done = P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle();
   CALLS = []; $(P, 'vpGsClose').click(); await settle();
@@ -636,6 +636,28 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('note 9: the Worker sends it: vpaMembersReminderSweep is on the hourly trigger (tools/test-members-reminder.js runs it)', /vpaMembersReminderSweep/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')));
 
   check('"Not today" and "That\'s enough for today" stay on screen on a phone: sticky above the footer (Dean 10 Nov, item 119b)', /\.vpgs-answers \.vpgs-outline\{position:sticky;bottom:calc\(84px/.test(GS));
+  section('7b. ASKED ONCE, NEVER AGAIN (Dean, 10 Nov, INBOX 121)');
+  P = oldVenue({ answers: { games: ['trivia'], setup_reviewed: { at: '2026-11-10', how: 'finished' } } });
+  check('a venue with setup_answers.setup_reviewed is never asked, on any device (nothing stored locally), and a malformed flag does not count', P.GS.wantsReview(P.ctx, P.deps.storage, NOW) === false && oldVenue({ answers: { setup_reviewed: { at: 'x', how: 'finished' } } }).GS.wantsReview(P.ctx, { getItem: function () { return null; } }, NOW) === false && (function () { var Q = oldVenue({ answers: { setup_reviewed: { at: 'x', how: 'finished' } } }); return Q.GS.wantsReview(Q.ctx, { getItem: function () { return null; } }, NOW); })() === true);
+  check('and a new venue with no flag is asked as before', (function () { var Q = oldVenue(); return Q.GS.wantsReview(Q.ctx, Q.deps.storage, NOW); })() === true);
+  check('the flag survives the answers clean (it is saved with the venue), and only finished or dismissed with a date', JSON.stringify(P.GS.cleanExtra({ setup_reviewed: { at: '2026-11-10', how: 'dismissed' } }, {}).setup_reviewed) === '{"at":"2026-11-10","how":"dismissed"}' && !P.GS.cleanExtra({ setup_reviewed: { at: '2026-11-10', how: 'later' } }, {}).setup_reviewed);
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllNo').click(); await settle();
+  check('Not today sets it (dismissed) and saves it with the venue\'s answers', lastAnswers().setup_reviewed && lastAnswers().setup_reviewed.how === 'dismissed' && lastAnswers().review === 'done');
+  check('so the next sign-in, on this device or another, does not ask', (function () { var sa = lastAnswers(); var Q = oldVenue({ answers: sa }); return Q.GS.wantsReview(Q.ctx, { getItem: function () { return null; }, setItem: function () {} }, NOW + 86400000 * 30); })() === false);
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsReviewLater').click(); await settle();
+  check('"Not ready yet, remind me next time" does NOT set it (the venue is asked again next sign-in, that venue only)', !(lastAnswers() && lastAnswers().setup_reviewed) && JSON.parse(STORE['vpGameSetup:V1']).reviewLater > NOW && (function () { var Q = oldVenue({ store: JSON.parse(JSON.stringify(STORE)) }); return Q.GS.wantsReview(Q.ctx, { getItem: function () { return null; } }, NOW + 5 * 3600000); })() === true);
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsClose').click(); await settle();
+  check('Close part way does not set it either', !(lastAnswers() && lastAnswers().setup_reviewed));
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
+  var gl = all($(P, 'vpGsGamePicks'), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-game'); }).map(function (e) { return e.getAttribute('data-game'); });
+  for (var gi = 0; gi < gl.length; gi++) { if (gi === 0) $(P, 'vpGsAllYes').click(); else if ($(P, 'vpGsNextYes')) $(P, 'vpGsNextYes').click(); await settle(); $(P, 'vpGsSave').click(); await settle(); }
+  if ($(P, 'vpGsExtrasNo')) { $(P, 'vpGsExtrasNo').click(); await settle(); }
+  check('finishing every game sets it (finished) and saves it', lastAnswers().setup_reviewed && lastAnswers().setup_reviewed.how === 'finished' && lastAnswers().setup_reviewed.at === P.GS.brisbaneDate(NOW), lastAnswers());
+
   section('6. WIRED IN');
   var boot = INDEX.slice(INDEX.indexOf('EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO'), INDEX.indexOf('if(venue && venue.slug && pairToVenue(venue.slug))'));
   check('the console home asks an existing venue on sign-in, with this device\'s own night as busy, in place of the one later question', /VPGameSetup\.wantsReview\(__ctx\)/.test(boot) && /VPGameSetup\.review\(__ctx, \{ client:VP\.getClient\(\), VP:VP, busy:function\(\)\{ return !!liveNightElsewhere\(\); \} \}\)/.test(boot) && /else if\(window\.VPFirstRun && VPFirstRun\.ask/.test(boot));

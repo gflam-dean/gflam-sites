@@ -1240,7 +1240,7 @@
   "counted_by": "lines"
  },
  "tools/test-wizard-r10.js": {
-  "checks": 191,
+  "checks": 199,
   "counted_by": "lines"
  },
  "tools/touring-cards.test.py": {

@@ -477,6 +477,7 @@
     if (a && typeof a.prizes_shared === "boolean") out.prizes_shared = a.prizes_shared;
     var mr = cleanReminder(a && a.members_reminder); if (mr) out.members_reminder = mr;   // the members list reminder (round 11)
     if (a && typeof a.meal_deals === "boolean") out.meal_deals = a.meal_deals;   // advertise their meal deals (round 10)
+    if (a && a.setup_reviewed && typeof a.setup_reviewed === "object" && /^\d{4}-\d{2}-\d{2}$/.test(a.setup_reviewed.at || "") && (a.setup_reviewed.how === "finished" || a.setup_reviewed.how === "dismissed")) out.setup_reviewed = { at: a.setup_reviewed.at, how: a.setup_reviewed.how };   // seen once, never again (Dean, 10 Nov)
     if (a && a.review === "done") out.review = "done";   // the games setup gone through: an existing venue is not asked again
     if (a && ({ keep: 1, second: 1, none: 1 })[a.members_over]) out.members_over = a.members_over;   // members draws over the most (Dean, round 7b point 17)
     if (a && a.counts && typeof a.counts === "object") { var cn = {}; ORDER.forEach(function (g) { var n = a.counts[g]; if (Number.isInteger(n) && n >= 2 && n <= 5) cn[g] = n; }); if (Object.keys(cn).length) out.counts = cn; }
@@ -1429,7 +1430,10 @@
     function left() { if (deps.review) return ticked().filter(function (g) { return !seen[g]; }); var s = cleanSetup(answers.setup); return ticked().filter(function (g) { return s[g] !== "done"; }); }
     /* "NOT READY YET, REMIND ME" (Dean, 9 Nov 2026): asked again on the next sign-in (a sign-in lasts at most 4 hours) */
     function remindLater() { var l = readLocal(storage, vid); l.reviewLater = (now == null ? Date.now() : now) + REVIEW_WAIT; writeLocal(storage, vid, l); }
-    function reviewed() { answers.review = "done"; var l = readLocal(storage, vid); delete l.reviewLater; l.review = "done"; writeLocal(storage, vid, l); }
+    /* SEEN ONCE, NEVER AGAIN (Dean, 10 Nov, INBOX 121): finishing or dismissing sets a per-venue flag in setup_answers
+       (setup_reviewed = { at, how: "finished" | "dismissed" }), saved with the venue's answers so it holds on every device and login.
+       "Not ready yet, remind me next time" and Close do NOT set it. */
+    function reviewed(how) { answers.review = "done"; answers.setup_reviewed = { at: brisbaneDate(now), how: how === "dismissed" ? "dismissed" : "finished" }; var l = readLocal(storage, vid); delete l.reviewLater; l.review = "done"; l.setup_reviewed = answers.setup_reviewed; writeLocal(storage, vid, l); }
     function end(outcome) { F.close(); finish(outcome); }
     F.x.addEventListener("click", function () {
       if (deps.weekOnly) return end("closed");   // the Account page's game nights: closing changes nothing
@@ -1859,13 +1863,13 @@
       F.clear(); F.step("", 0, 0); F.title.textContent = "No worries.";
       if (deps.review) {
         /* an existing venue: nothing changes, and the games not checked come back on the next sign-in */
-        remindLater(); persist();
-        var pr = F.el("p", "vpgs-lead", "Everything stays as it is. We'll ask you again next time you sign in."); pr.id = "vpGsNoWorries"; F.body.appendChild(pr);
+        reviewed("dismissed"); persist();
+        var pr = F.el("p", "vpgs-lead", "Everything stays as it is. We won't ask again. You can change any setting in each game."); pr.id = "vpGsNoWorries"; F.body.appendChild(pr);
         F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
         return;
       }
       rest.forEach(function (g) { mark(g, "later"); });
-      reviewed();
+      reviewed("dismissed");
       var withDefaults = rest.filter(function (g) { return !gameOf(g).needsDetails; });
       Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
       /* members draws alone: one plain line (Dean, round 9 point 21) */
@@ -1885,7 +1889,7 @@
     }
     function allDone() {
       F.clear(); F.step("", 0, 0); F.title.textContent = "You're ready for your week.";
-      reviewed(); persist();
+      reviewed("finished"); persist();
       F.body.appendChild(F.el("p", "vpgs-lead", deps.review ? "Every game you play is checked. You can change any setting in that game's console." : "Every game you play is set up. You can change any setting in that game's console."));
       advertCard();
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
@@ -1951,6 +1955,7 @@
   /* EXISTING VENUES GO THROUGH IT TOO, on their next sign-in: the owner or a manager (never a host), never while a
      game is running, never a venue still on its first-run guide (that guide has the wizard in it), never twice once
      gone through (setup_answers.review), and "Not ready yet? Remind me next time" waits for the next sign-in. */
+  function validReviewed(r) { return !!r && typeof r === "object" && /^\d{4}-\d{2}-\d{2}$/.test(r.at || "") && (r.how === "finished" || r.how === "dismissed"); }
   function wantsReview(cx, storage, now) {
     storage = storage || root.localStorage;
     var v = cx && cx.venue;
@@ -1958,9 +1963,9 @@
     if (!v || !v.id || v.status === "suspended" || v.terms_required === true) return false;
     if (cx.role !== "owner" && cx.role !== "manager") return false;
     var sa = (cx.settings && cx.settings.setup_answers) || {};
-    if (sa.review === "done") return false;
+    if (sa.review === "done" || validReviewed(sa.setup_reviewed)) return false;
     var l = readLocal(storage, v.id);
-    if (l.review === "done") return false;
+    if (l.review === "done" || validReviewed(l.setup_reviewed)) return false;
     if (typeof l.reviewLater === "number" && (now == null ? Date.now() : now) < l.reviewLater) return false;
     return true;
   }
