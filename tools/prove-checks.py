@@ -16476,6 +16476,19 @@ MUTATIONS = [
      '    return list[((wk % list.length) + list.length) % list.length];',
      '    return list[0];',
      'the D148 gate line stays green while the same songs and category play every week'),
+    # wizard round 10 in a real browser (D190 Chrome half)
+    ('wizard-r10-in-chrome.test.py', 'venueplay/app/vp-gamesetup.js',
+     '    Object.keys(vals).forEach(function (k) { if (k.indexOf("__") === 0) { out[k] = vals[k]; return; } if (JSON.stringify(vals[k]) !== JSON.stringify(base[k])) out[k] = vals[k]; });',
+     '    Object.keys(vals).forEach(function (k) { out[k] = vals[k]; });',
+     'in a real browser, an existing venue clicking straight through writes its whole screen over its settings'),
+    ('wizard-r10-in-chrome.test.py', 'venueplay-backend/worker/venueplay-game.js',
+     '    prize_weekly: gpBool,    // the same prizes every week (setup wizard, round 10: Dean "ask it for trivia too")',
+     '',
+     "the real game Worker drops trivia's Same prizes every week answer"),
+    ('wizard-r10-in-chrome.test.py', 'venueplay/app/index.html',
+     'busy:function(){ return !!liveNightElsewhere(); }',
+     'busy:function(){ return false; }',
+     'the real console home opens the setup over a trivia night going on this device'),
 ]
 
 

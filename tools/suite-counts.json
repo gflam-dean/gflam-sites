@@ -620,7 +620,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
-  "checks": 215,
+  "checks": 219,
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
@@ -1231,6 +1231,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-wizard-r10.js": {
+  "checks": 92,
+  "counted_by": "lines"
+ },
  "tools/touring-cards.test.py": {
   "checks": 70,
   "counted_by": "lines"
@@ -1333,6 +1337,10 @@
  },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 376,
+  "counted_by": "lines"
+ },
+ "tools/wizard-r10-in-chrome.test.py": {
+  "checks": 109,
   "counted_by": "lines"
  },
  "tools/wizard-v2-in-chrome.test.py": {
