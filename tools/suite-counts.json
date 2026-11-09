@@ -176,7 +176,7 @@
   "counted_by": "lines"
  },
  "tools/dropdowns-in-chrome.test.py": {
-  "checks": 43,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
@@ -632,7 +632,7 @@
   "counted_by": "lines"
  },
  "tools/test-jackpot-cap-15-oct.js": {
-  "checks": 68,
+  "checks": 69,
   "counted_by": "lines"
  },
  "tools/test-join-cost.js": {
@@ -680,7 +680,7 @@
   "counted_by": "lines"
  },
  "tools/test-members-console.js": {
-  "checks": 42,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-members-paged.js": {
@@ -884,7 +884,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 55,
+  "checks": 61,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {
@@ -1276,7 +1276,7 @@
   "counted_by": "lines"
  },
  "tools/tv-endshow-in-chrome.test.py": {
-  "checks": 76,
+  "checks": 84,
   "counted_by": "lines"
  },
  "tools/tv-first-slide-in-chrome.test.py": {
