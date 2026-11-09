@@ -16528,7 +16528,8 @@ MUTATIONS = [
     ('wizard-r10-in-chrome.test.py', 'venueplay/app/index.html',
      'busy:function(){ return !!liveNightElsewhere(); }',
      'busy:function(){ return false; }',
-     'the real console home opens the setup over a trivia night going on this device'),    # WIZARD ROUND 12 (Dean, 10 Nov 2026, INBOX 118), branch fix/wizard-r12-12nov: the reminder email sender, the ten notes, the members file reader
+     'the real console home opens the setup over a trivia night going on this device'),
+    # WIZARD ROUND 12 (Dean, 10 Nov 2026, INBOX 118), branch fix/wizard-r12-12nov: the reminder email sender, the ten notes, the members file reader
     ('test-members-reminder.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      '    const allowed = vpaSendAllowedAt(state, at);\n    if (nowMs < allowed) { out.held++; continue; }\n    if (!vpaInSendWindow(nowMs, state)) { out.held++; continue; }\n',
      '',
@@ -16805,6 +16806,13 @@ MUTATIONS = [
      'VPMembersCsv.build(rows, ix, plan.from)',
      'VPMembersCsv.build(rows, ix, 0)',
      'the header row is read as a member'),
+    # the gate labels of the two new suites (D191, D192)
+    ('runs vpaMembersReminderSweep', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "    if (prow && prow.no_contact === true) { out.skipped++; continue; }\n", '',
+     'the D191 gate line stays green while a Do not contact venue is emailed'),
+    ('runs vp-memberscsv.js', 'venueplay/app/vp-memberscsv.js',
+     'var SEPS = [",", ";", "\\t", "|"];', 'var SEPS = [","];',
+     'the D192 gate line stays green while semicolon, tab and pipe members files are unreadable'),
 ]
 
 
