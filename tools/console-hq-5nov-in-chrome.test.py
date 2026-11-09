@@ -149,9 +149,14 @@ try:
            all(abs(r['step']['t'] - r['nm']['t']) <= 14 and abs((r['row']['r'] - r['pad']) - r['step']['r']) <= 2 for r in rows_geo), rows_geo)
         ok('%s: C/E. "Cancel this venue" sits under the stepper, never beside it' % where,
            all(r['canx']['t'] >= r['step']['b'] - 1 for r in rows_geo), rows_geo)
-        ok('%s: C/E. the two rows are the same shape and evenly spaced' % where,
-           len(rows_geo) == 2 and abs((rows_geo[0]['row']['b'] - rows_geo[0]['row']['t']) - (rows_geo[1]['row']['b'] - rows_geo[1]['row']['t'])) <= 2
-           and 6 <= rows_geo[1]['row']['t'] - rows_geo[0]['row']['b'] <= 12, rows_geo)
+        # From 1100px the rows sit two across (Dean, round 5, 6 Nov 2026: Billing's venue rows two to a row, 12px apart);
+        # below that one above the other. Either way: the same shape, the same gap.
+        def _evenly(g):
+            if len(g) != 2 or abs((g[0]['row']['b'] - g[0]['row']['t']) - (g[1]['row']['b'] - g[1]['row']['t'])) > 2: return False
+            if abs(g[0]['row']['t'] - g[1]['row']['t']) <= 1:   # side by side
+                return 6 <= g[1]['nm']['l'] - g[0]['row']['r'] - g[1]['pad'] <= 14
+            return 6 <= g[1]['row']['t'] - g[0]['row']['b'] <= 12
+        ok('%s: C/E. the two rows are the same shape and evenly spaced' % where, _evenly(rows_geo), rows_geo)
         shot(sid, 'venues-%d' % w, False)
 
         # D. the add-a-venue words, with the switch OFF (the rig's Worker has no VPB_BILLING_RULES_3NOV)
