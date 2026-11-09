@@ -211,8 +211,9 @@
      the card, B SOFT TILES: 25 rounded tiles with even 8px gaps and 16px sides, as tall as the screen allows above
      the claim button (never under 64px); a marked song a pink tint with a pink edge and a small tick in its own
      corner (the title never sits under it); Free in pink; the claim a pink pill whose words follow the pattern,
-     faint until the player's marks make the pattern. Titles are fitted from 20px down, with ONE hyphen break
-     allowed inside a single long word (Wonder-wall, Sep-tember) and only where the whole word does not fit. The
+     faint until the player's marks make the pattern. Titles are fitted from 20px down to ONE size for the card
+     (smaller only where a title needs it; 9 Nov 2026), with ONE hyphen break allowed inside a single long word
+     (Wonder-wall, Sep-tember) and only where the whole word does not fit. The
      rules above stay for the light screen and the older look's tests; these come later and win. */
   body{background:var(--ink)}
   .app{min-height:100vh;min-height:100dvh}
@@ -221,16 +222,22 @@
   #vCard{padding:2px 16px 0;display:flex;flex-direction:column}
   #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible}
   #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch}
+  /* THE WORDS SIT IN THE MIDDLE OF THEIR SQUARE (Dean, 9 Nov 2026: the song words in the squares were not spaced
+     right). The same 4px all round, marked or not, so a title is centred both ways and never moves when it is
+     tapped; lines 1.15 apart; lines balanced (text-wrap) so a two-line title is two even lines, not a long one and a
+     stub. The tick no longer takes a 19px strip off the top of every square: fitCells() keeps each title's lines
+     clear of the tick's corner instead, measured from the lines as drawn. */
   #vCard .cc{aspect-ratio:auto;position:relative;background:#1C1C21;border:2px solid transparent;border-radius:14px;
-    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:19px 3px 3px;
+    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;letter-spacing:-.01em;padding:4px;line-height:1.15;
     word-break:normal;overflow-wrap:normal;hyphens:manual;-webkit-hyphens:manual}
+  #vCard .cc .ct{text-wrap:balance}
   #vCard .cc.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-weight:700}
-  #vCard .cc.daub::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px 16px no-repeat}   /* in its own corner, above the title's box (padding-top 19px). 16px at 2px in (5 Nov 2026): on a short phone (390x690) the 18px tick's 22px reserve left a long title under 11px and most under 15px; three more pixels of height bring them back */
+  #vCard .cc.daub::after{content:"";position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.4' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px 14px no-repeat}   /* in its own corner, 3px in; the title's lines are kept out of it by fitCells (TICK_IN, TICK_SZ) */
   /* THE FREE SQUARE IS A MARKED SQUARE (Dean, 4 Nov 2026 evening, from the store screenshot review): the near-black
      tile with a faint pink edge and pink "Free" read as unmarked, which is confusing on a winning card. It is now
      exactly #vCard .cc.daub: the same fill, the solid pink border, white text and the same pink tick (the
      .cc.daub::after above, no longer hidden). The light screen matches body.light #vCard .cc.daub below. */
-  #vCard .cc.free,#vCard .cc.free.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em;text-transform:none}
+  #vCard .cc.free,#vCard .cc.free.daub{background:#2B0D1D;border-color:var(--pink);color:#fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;text-transform:none}   /* fitCells sets Free to the card's own size */
   #vCard .cc.early{border-color:var(--roll);box-shadow:0 0 0 2px rgba(245,165,36,.22)}
   #vCard .cc.justdone{animation:justdone 1.1s ease-in-out 3}
   #vCard .pmsg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;min-height:0}   /* for a screen reader; the answer to a tap is the note on the button */
@@ -674,38 +681,74 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      fourth line instead, because a bigger word on four lines reads better than a small one on three.
      A word is never split, so one word wider than its square steps down to 10px and, past that, is
      narrowed whole. */
-  var FIT_MAX=20, FIT_MIN=12, FIT_LH=1.08, _fitPending=false;
+  /* ONE SIZE FOR THE CARD, SMALLER ONLY WHERE A TITLE NEEDS IT (Dean, 9 Nov 2026: the words in the squares were
+     not spaced right). Each title used to take the biggest size ITS square held, so "Hey Ya!" stood at 20px beside
+     "Bohemian Rhapsody" at 11px and the card looked uneven. Now each title's biggest size is found as before, then
+     the card takes ONE size, the size half its titles reach (CARD_SHARE), and a title that cannot reach it takes ONE
+     step down (CARD_STEP of it), or its own smaller size only when it cannot reach that either. So the card reads as
+     one size, a few long titles a little smaller, never a ladder of sizes. Free is drawn at the card's size too.
+     A title breaks only between words. A single word too wide for its square even at HY_MIN gets its one soft
+     hyphen (withSoftBreak: Wonder-wall), and only then; a word with an apostrophe never does.
+     Every size is checked against the lines as drawn: inside the square's 4px padding, and clear of the tick's
+     corner (TICK_IN, TICK_SZ, as #vCard .cc.daub::after), marked or not, so a title never moves when tapped. */
+  var FIT_MAX=20, FIT_MIN=12, FIT_FLOOR=10, FIT_LH=1.15, HY_MIN=13, CARD_SHARE=0.5, CARD_STEP=0.85, FIT_LAST=7, TICK_IN=3, TICK_SZ=14, _fitPending=false;
+  function clearOfTick(el, sp){
+    var tn=sp.firstChild; if(!tn || tn.nodeType!==3) return true;
+    var cb=el.getBoundingClientRect(), x0=cb.right-el.clientLeft-TICK_IN-TICK_SZ-1, y1=cb.top+el.clientTop+TICK_IN+TICK_SZ+1;
+    var rg=document.createRange(); rg.selectNodeContents(tn); var rs=rg.getClientRects();
+    for(var k=0;k<rs.length;k++){ var r=rs[k]; if(r.width>0.5 && r.top<y1 && r.right>x0) return false; }
+    return true;
+  }
+  function cellFits(el, sp, W, H){ return sp.offsetWidth<=W+0.5 && sp.offsetHeight<=H+0.5 && clearOfTick(el, sp); }
+  /* the biggest size, from FIT_MAX down to FIT_FLOOR, where the title fits in three lines (or four, when three
+     would need type 3px smaller than four); 0 when nothing fits */
+  function bestFit(el, sp, W, H){
+    var three=0, four=0;
+    for(var size=FIT_MAX*cz; size>=FIT_FLOOR*cz; size-=0.5){
+      el.style.fontSize=size+"px";
+      if(!cellFits(el, sp, W, H)) continue;
+      var lines=Math.round(sp.offsetHeight/(size*FIT_LH));
+      if(!four && lines<=4) four=size;
+      if(lines<=3){ three=size; break; }
+    }
+    return (three && (three>=14*cz || !four || three>=four-3)) ? three : four;
+  }
   function fitCells(){
     var grid=document.getElementById("cardGrid");
     if(!grid || !grid.clientWidth){ _fitPending=true; return; }   // hidden: fit it when it is shown
     _fitPending=false;
-    var cells=document.querySelectorAll("#cardGrid .cc");
-    for(var i=0;i<cells.length;i++){
+    var cells=document.querySelectorAll("#cardGrid .cc"), todo=[], fits=[], i;
+    for(i=0;i<cells.length;i++){
       var el=cells[i]; if(el.classList.contains("free")) continue;
       var sp=el.querySelector(".ct"); if(!sp) continue;
-      sp.style.transform="";
+      var title=sp.textContent.replace(/\u00AD/g,"");
+      sp.style.transform=""; sp.textContent=title;
       var cs=getComputedStyle(el);
       var W=el.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
       var H=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-      var size=FIT_MAX*cz, three=0, four=0;
-      for(; size>=FIT_MIN*cz; size-=0.5){
-        el.style.fontSize=size+"px";
-        if(sp.offsetWidth>W+0.5 || sp.offsetHeight>H+0.5) continue;
-        var lines=Math.round(sp.offsetHeight/(size*FIT_LH));
-        if(!four && lines<=4) four=size;
-        if(lines<=3){ three=size; break; }
-      }
-      size = (three && (three>=14*cz || !four || three>=four-3)) ? three : (four || FIT_MIN*cz);
-      el.style.fontSize=size+"px";
-      while(size>10*cz && sp.offsetHeight>H+0.5){ size-=0.5; el.style.fontSize=size+"px"; }
-      /* ONE WORD WIDER THAN THE SQUARE ("Misunderstanding", "Californication"): one more step, to
-         10px, and a word still too wide after that is narrowed as a whole. */
-      var floor=10*cz;
-      while(size>floor && sp.offsetWidth>W+0.5){ size-=0.5; el.style.fontSize=size+"px"; }
-      if(sp && sp.offsetWidth>el.clientWidth-2){
-        sp.style.transform="scaleX("+Math.max(0.3, (el.clientWidth-4)/sp.offsetWidth).toFixed(3)+")";
+      var best=bestFit(el, sp, W, H), hy=withSoftBreak(title);
+      if(best<HY_MIN*cz && hy!==title){ sp.textContent=hy; var b2=bestFit(el, sp, W, H); if(b2>best) best=b2; sp.textContent=title; }
+      el._fit=best; todo.push({ el:el, sp:sp, t:title, hy:hy, W:W, H:H, best:best }); fits.push(best||FIT_FLOOR*cz);
+    }
+    if(!todo.length) return;
+    fits.sort(function(a,b){ return a-b; });
+    var card=Math.max(FIT_MIN*cz, fits[Math.floor(fits.length*CARD_SHARE)]);
+    var step=Math.max(FIT_FLOOR*cz, Math.floor(card*CARD_STEP*2)/2);
+    for(i=0;i<todo.length;i++){
+      var c=todo[i], size = c.best>=card ? card : c.best>=step ? step : (c.best||FIT_FLOOR*cz);
+      c.el.style.fontSize=size+"px";
+      /* whole words at this size if they fit; the one hyphen only if they do not */
+      if(!cellFits(c.el, c.sp, c.W, c.H) && c.hy!==c.t){ c.sp.textContent=c.hy; if(!cellFits(c.el, c.sp, c.W, c.H)) c.sp.textContent=c.t; }
+      while(size>FIT_FLOOR*cz && !cellFits(c.el, c.sp, c.W, c.H)){ size-=0.5; c.el.style.fontSize=size+"px"; }
+      /* A VERY LONG TITLE ("I Would Do Anything for Love (But I Won't Do That)") that is still too tall at the floor
+         on a short phone: smaller again, to FIT_LAST, rather than cut off. */
+      while(size>FIT_LAST*cz && c.sp.offsetHeight>c.H+0.5){ size-=0.5; c.el.style.fontSize=size+"px"; }
+      /* ONE WORD WIDER THAN THE SQUARE EVEN AT THE FLOOR ("Supercalifragilisticexpialidocious"): narrowed whole. */
+      if(c.sp.offsetWidth>c.W+0.5){
+        c.sp.style.transform="scaleX("+Math.max(0.3, c.W/c.sp.offsetWidth).toFixed(3)+")";
       }
     }
+    for(i=0;i<cells.length;i++){ if(cells[i].classList.contains("free")) cells[i].style.fontSize=card+"px"; }
   }
   (function(){
     function refit(){ if(P.cells) fitCells(); }
@@ -820,7 +863,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
           wrap.appendChild(cell); continue; }
         cell.className="cc";
         cell.setAttribute("data-i",i);
-        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=withSoftBreak(titles[i]);   // measured by fitCells
+        var ct=document.createElement("span"); ct.className="ct"; ct.textContent=titles[i];   // fitCells sizes it, and adds the one hyphen only where a word cannot fit whole
         cell.appendChild(ct);
         wrap.appendChild(cell);
       }
@@ -900,7 +943,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      Lights" step down a size instead). The browser only breaks there, and shows the hyphen, when the word is
      wider than its tile at the size being tried. */
   function softBreak(word){
-    if(word.length<9 || !/^[A-Za-z']+$/.test(word)) return -1;
+    if(word.length<9 || !/^[A-Za-z]+$/.test(word)) return -1;   // letters only: "Believin'" stays whole, never "Belie-vin'" (9 Nov 2026)
     /* Between syllables: before a lone consonant (Cali-fornia), or inside a run of consonants before the longest
        start a syllable can have (Wonder-wall, Sep-tember, Bright-side, Misunder-standing); the break nearest the
        middle wins, with three letters at least either side. */
