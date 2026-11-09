@@ -88,7 +88,7 @@ var ngw = new Node('div');
 T.noGame(ngw, { week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }], now: new Date(2026, 10, 7, 12, 0, 0) });
 ok('with the week stored: "Next game here: Wednesday, Trivia 7pm"', /Next game here/.test(ngw.children[0].textContent) && /Wednesday, Trivia 7pm/.test(ngw.children[0].textContent), ngw.children[0].textContent);
 byClass(ngw, 'd')[6].onclick();
-ok('tap Friday: the lead line shows Friday\'s games', /Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
+ok('tap Friday: the lead line shows Friday\'s games', /Fri 13 Nov/.test(ngw.children[0].textContent) && !/Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
 byClass(ngw, 'd')[1].onclick();
 ok('tap Saturday: no games', /no games/i.test(ngw.children[0].textContent), ngw.children[0].textContent);
 ok('no sign-up box when the page has no way to send one', byClass(ng, 'vpt-sign').length === 0);

@@ -54,6 +54,7 @@ TODAY = datetime.datetime.now(BNE).date()
 DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 def dkey(d): return DAYS[d.weekday()]
 def iso(d): return d.isoformat()
+def plural(d): return {'mon': 'Mondays', 'tue': 'Tuesdays', 'wed': 'Wednesdays', 'thu': 'Thursdays', 'fri': 'Fridays', 'sat': 'Saturdays', 'sun': 'Sundays'}[dkey(d)]   # a weekly night's day label (Dean, 10 Nov 2026)
 
 def account():
     import admin_site
@@ -188,10 +189,10 @@ def tv_and_phone():
                 r.close_tab(tid)
         for W, H, got, m, rows in scene(nights, 'feature'):
             ok('feature %dx%d: a night with a picture: the feature and week view takes its turn in the loop' % (W, H), got is True and m.get('feature') is True, m)
-            ok('feature %dx%d: the picture large on the left with its day and time under it ("Tomorrow · 10pm"), TEST ALPHA over WHAT’S ON clear of our corner mark' % (W, H),
-               'tugun-friday.jpg' in m.get('bg', '') and (m.get('pic') or [0, 0])[1] > H * 0.6 and m.get('when') == 'Tomorrow · 10pm' and m.get('kick') == 'Test Alpha' and m.get('head') == 'What’s on' and m.get('headRight', 9999) + 12 <= m.get('corner', 0), dict((k, v) for k, v in m.items() if k != 'rows'))
-            ok('feature %dx%d: the week beside it, tonight first with the pink bar, then tomorrow, then the one-off; the past gig never shows' % (W, H),
-               len(rows) == 3 and rows[0]['tn'] and 'TONIGHT' in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t'] and 'TOMORROW' in rows[1]['t'].upper()
+            ok('feature %dx%d: the picture large on the left with its day in the plural and time under it ("Fridays · 10pm"), TEST ALPHA over WHAT’S ON clear of our corner mark' % (W, H),
+               'tugun-friday.jpg' in m.get('bg', '') and (m.get('pic') or [0, 0])[1] > H * 0.6 and m.get('when') == plural(tom) + ' · 10pm' and m.get('kick') == 'Test Alpha' and m.get('head') == 'What’s on' and m.get('headRight', 9999) + 12 <= m.get('corner', 0), dict((k, v) for k, v in m.items() if k != 'rows'))
+            ok('feature %dx%d: the week beside it, tonight first with the pink bar, the weekly nights by their day in the plural (never one date), then the one-off; the past gig never shows' % (W, H),
+               len(rows) == 3 and rows[0]['tn'] and plural(TODAY).upper() in rows[0]['t'].upper() and '3181' in rows[0]['t'] and '9pm' in rows[0]['t'] and plural(tom).upper() in rows[1]['t'].upper()
                and 'Kujo' in rows[2]['t'] and rows[0]['bar'] == 'rgb(255, 31, 142)' and not any('Long gone' in x['t'] for x in rows), rows)
             ok('feature %dx%d: every row fits on the wall' % (W, H), rows and all(x['bot'] <= m['h'] - 8 and x['right'] <= m['w'] for x in rows), rows)
         # Dean, 6 Nov 2026 (round 5 note 12): with only two nights the rows are the same size, a little smaller, dropped
@@ -268,6 +269,10 @@ def tv_and_phone():
                and m.get('litC') == 'rgb(255, 255, 255)' and m.get('dimC') != 'rgb(255, 255, 255)', [m.get('days'), m.get('after'), m.get('litC'), m.get('dimC')])
             ok('%dx%d: no spaced monospace capitals anywhere in the lobby or the ad heading (THIS WEEK HERE, NEXT, the day heading)' % (W, H), m.get('mono') == [], m.get('mono'))
             ok('%dx%d: the venue\'s ad and our logo still fit on the screen' % (W, H), m.get('adH', 0) > 60 and m.get('foot', 9999) <= m.get('h', 0) and m.get('doc', 9999) <= W, m)
+            # Dean, 10 Nov 2026 (INBOX 114): a pink underline under EVERY day; today only a light touch (no pink fill).
+            u = r.json(sid, 'JSON.stringify([].map.call(document.querySelectorAll("#vpTonight .vpt-week .d"),function(b){var c=getComputedStyle(b);return {sh:c.boxShadow,bg:c.backgroundColor,now:/\\bnow\\b/.test(b.className)};}))', [])
+            ok('%dx%d: every one of the seven days has the pink underline, and today has no pink fill (a light touch)' % (W, H),
+               len(u) == 7 and all('rgb(255, 31, 142)' in x['sh'] for x in u) and sum(1 for x in u if x['now']) == 1 and all(x['bg'] != 'rgb(255, 31, 142)' for x in u), u)
             if SHOTS: r.shot(sid, os.path.join(SHOTS, 'whats-on-phone-lobby-%d.jpg' % W))
             r.ask(sid, 'window.__st.buttons[0].click(); true')
             time.sleep(0.3)

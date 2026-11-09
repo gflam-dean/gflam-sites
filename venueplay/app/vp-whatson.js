@@ -149,14 +149,21 @@
       return x < y ? -1 : x > y ? 1 : byStart(a, b);
     });
   }
-  /* "Tonight", "Tomorrow", "Fri 13 Nov" (long: "Friday 13 Nov"). */
-  function dayLabel(s, t, long) {
+  /* "Tonight", "Tomorrow", "Fri 13 Nov": a ONE-OFF date is always short day, date, short month, matching the screen
+     (Dean, 10 Nov 2026: never "Friday 13" without the month). The third argument is kept for old callers and ignored. */
+  function dayLabel(s, t) {
     if (s === t) return "Tonight";
     if (s === addDays(t, 1)) return "Tomorrow";
     var d = parse(s); if (!d) return "";
     var k = DAYS[d.getDay()];
-    return (long ? LONG[k] : SHORT[k]) + " " + d.getDate() + " " + MON[d.getMonth()];
+    return SHORT[k] + " " + d.getDate() + " " + MON[d.getMonth()];
   }
+  /* A REGULAR weekly night says its day in the plural, never one single date (Dean, 10 Nov 2026): "Fridays". */
+  var PLURAL = { sun: "Sundays", mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays" };
+  function weeklyLabel(k) { return PLURAL[k] || ""; }
+  /* The day label of one tvSlides row: "Fridays" for a weekly night (and for our own game nights, which are weekly),
+     else dayLabel's one date. */
+  function rowLabel(date, ev, t) { var k = ev && (ev.game ? dayKey(date) : ev.day); return k && PLURAL[k] ? PLURAL[k] : dayLabel(date, t); }
   /* How a night's "when" reads on the account page: "Every Friday, 10pm (until 18 Dec)", "Sat 14 Nov, 8pm". */
   function whenText(e, t) {
     e = clean1(e); if (!e) return "";
@@ -213,14 +220,14 @@
     }
     var out = [];
     if (!up.some(function (x) { return !x.ev.game; })) return out;   // our games alone are not the venue's What's on
-    function row(x, long) { return { date: x.date, label: dayLabel(x.date, t, long), ev: x.ev }; }
+    function row(x) { return { date: x.date, label: rowLabel(x.date, x.ev, t), tonight: x.date === t, ev: x.ev }; }
     var feats = up.filter(function (x) { return x.ev.image_url && !x.ev.game; }).slice(0, 3);
     if (feats.length) {
       var pages = Math.ceil(up.length / 6), views = Math.max(pages, feats.length);
       for (i = 0; i < views; i++) {
         var p = i % pages;
         var rs = up.slice(p * 6, p * 6 + 6);
-        out.push({ type: "feature", size: rs.length <= 2 ? "xl" : rs.length <= 3 ? "l" : "m", feature: row(feats[i % feats.length], true), rows: rs.map(function (x) { return row(x); }) });   // fewer rows, bigger words
+        out.push({ type: "feature", size: rs.length <= 2 ? "xl" : rs.length <= 3 ? "l" : "m", feature: row(feats[i % feats.length]), rows: rs.map(function (x) { return row(x); }) });   // fewer rows, bigger words
       }
       return out;
     }
@@ -253,7 +260,7 @@
     function rowsHtml(rows) {
       var h = "";
       rows.forEach(function (r) {
-        var tn = r.label === "Tonight", wp = whenParts(r.ev);
+        var tn = r.tonight || r.label === "Tonight", wp = whenParts(r.ev);
         /* Day over time, then the title and its line; the list draws these as tiles across the wall (9 Nov 2026),
            the feature view as rows beside the picture. The time says the hours once ("2pm to 6pm"). */
         h += '<div class="wo-row ' + lenClass(r.ev.title) + (tn ? " tonight" : "") + (r.ev.game ? " game" : "") + '">' +
@@ -275,7 +282,7 @@
       var tm = whenParts(f.ev).time;   // the hours once (9 Nov 2026)
       return '<div class="wo-wall wo-b wo-b' + (sl.size || "m") + '"><div class="wb-feat"><div class="wb-art" style="background-image:url(' + bg + ')"></div>' +
         '<div class="wb-pic" style="background-image:url(' + bg + ')"></div>' +
-        '<div class="wb-when' + (f.label === "Tonight" ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
+        '<div class="wb-when' + ((f.tonight || f.label === "Tonight") ? " tn" : "") + '">' + esc(f.label) + (tm ? " · " + esc(tm) : "") + '</div>' +
         '<div class="wb-title">' + esc(f.ev.title) + '</div></div>' +   // its name too, for a poster with no words on it (round 5)
         '<div class="wb-side">' + head + '<div class="wo-list">' + rowsHtml(sl.rows) + '</div></div></div>';
     }
@@ -335,6 +342,6 @@
   }
 
   root.VPWhatsOn = { MAX: MAX, clean: clean, clean1: clean1, isOn: isOn, current: current, on: on, upcoming: upcoming, next: next,
-    sorted: sorted, dayLabel: dayLabel, whenText: whenText, time12: time12, today: today, todayIn: todayIn, addDays: addDays,
+    sorted: sorted, dayLabel: dayLabel, weeklyLabel: weeklyLabel, rowLabel: rowLabel, whenText: whenText, time12: time12, today: today, todayIn: todayIn, addDays: addDays,
     dayKey: dayKey, tvSlides: tvSlides, tvHtml: tvHtml, esc: esc, whenParts: whenParts, fit: fit };
 })(typeof window !== "undefined" ? window : this);

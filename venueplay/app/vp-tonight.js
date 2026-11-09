@@ -40,6 +40,9 @@
   var DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   var SHORT = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
   var LONG = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  /* A one-off date reads "Fri 13 Nov", short day, date, short month (Dean, 10 Nov 2026); never "Friday 13". */
+  function dateText(dt) { return SHORT[DAYS[dt.getDay()]] + " " + dt.getDate() + " " + MON[dt.getMonth()]; }
   var GAME_NAME = { trivia: "Trivia", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var NIGHT_NAME = { trivia: "Trivia night", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var TICK = '<div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
@@ -95,7 +98,9 @@
     var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
     for (var i = 0; i < n; i++) {
       var e = list[i], W = root.VPWhatsOn, t = (W && W.whenParts) ? W.whenParts(e).time : time12(e.start);   // "2pm to 6pm" when the venue wrote its hours (9 Nov 2026)
-      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: "" });   // the title only, on up to two lines (design review, 6 Nov)
+      /* the title on up to two lines (design review, 6 Nov); a regular weekly night says its day in the plural under it
+         ("Fridays", Dean 10 Nov 2026), a one-off says nothing (the day above it is its date) */
+      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: (e.day && W && W.weeklyLabel) ? W.weeklyLabel(e.day) : "" });
     }
     if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more", sub: "" });
     return rows;
@@ -121,7 +126,7 @@
   }
   /* Another night's rows, for the spot when a day is tapped. */
   function nightRows(o, dt) {
-    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 3);
+    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate() + " " + MON[dt.getMonth()], list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 3);
     if (list && list.length) return list.map(function (x) {
       return { game: x.game, badge: badge, name: x.night, sub: x.time ? x.time : "Ask for start time" };
     }).concat(evs);
@@ -178,6 +183,7 @@
     if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
     else if (days.some(function (x) { return x.ev; })) k.appendChild(el("span", "ask", "Tap a day"));   // the venue's own nights are a tap away
     w.appendChild(k);
+    if (o && typeof o.accent === "string" && /^#[0-9A-Fa-f]{6}$/.test(o.accent)) w.style.setProperty("--vpt-accent", o.accent);   // the venue\u2019s own colour replaces the pink
     var btns = [], row = el("div", "days" + (days.some(function (x) { return x.ev; }) ? " has-ev" : ""));
     days.forEach(function (dd) {
       var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.ev ? " ev" : "") + (dd.i === picked ? " picked" : ""));
@@ -214,8 +220,8 @@
     var s = strip(o, 0, function (dd) {
       if (dd.i === 0) { today(true); return; }
       var rows = nightRows(o, dd.date);
-      /* With the venue's own nights in it, the card says which day it is ("FRIDAY 13"): their rows carry a time, not a day. */
-      paintRows(spot, rows, rows.some(function (r) { return r.ev; }) ? LONG[dd.key] + " " + dd.date.getDate() : "");
+      /* With the venue's own nights in it, the card says which day it is ("Fri 13 Nov"): their rows carry a time, not a day. */
+      paintRows(spot, rows, rows.some(function (r) { return r.ev; }) ? dateText(dd.date) : "");
     });
     box.appendChild(s.el);
     box.appendChild(el("p", "vpt-wait", o.wait || "The game will start here when the host is ready."));
@@ -240,7 +246,7 @@
     var lead = el("div", "vpt-next"), k = el("span", "k"), line = el("span", "l");
     lead.appendChild(k); lead.appendChild(line);
     function paint(dd, picked) {
-      k.textContent = picked ? (dd.i === 0 ? "Today" : LONG[dd.key] + " " + dd.date.getDate()) : "Next game here";
+      k.textContent = picked ? (dd.i === 0 ? "Today" : dateText(dd.date)) : "Next game here";
       line.textContent = nightLine(o, dd).replace(/^(Tonight|[A-Za-z]+day)(, |: )/, picked ? "" : "$1$2");
       if (picked && /^no games$/.test(line.textContent)) line.textContent = "No games on " + (dd.i === 0 ? "today" : LONG[dd.key]);   // one line (design review)
     }
