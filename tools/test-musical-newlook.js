@@ -51,8 +51,10 @@ print('\n== 1. the wall\'s one sentence: "One line wins a meat tray" ==');
   show('a number or a dollar prize gets no "a": "Four corners wins $50 bar tab", "One line wins 2 schooners"', wl('corners', '$50 bar tab') === 'Four corners wins $50 bar tab' && wl('one', '2 schooners') === 'One line wins 2 schooners', [wl('corners', '$50 bar tab'), wl('one', '2 schooners')]);
   show('no prize set yet (or the console\'s "the prize"): the pattern alone, "One line wins"', wl('one', '') === 'One line wins' && wl('one', 'the prize') === 'One line wins', [wl('one', ''), wl('one', 'the prize')]);
   show('it never says BINGO', !/bingo/i.test(['one', 'two', 'corners', 'full', 'odd'].map(function (p) { return wl(p, 'x'); }).join(' ')));
-  var demo = SCREEN.slice(SCREEN.indexOf('function demoNight'), SCREEN.indexOf('function hideChrome'));
-  show('the sales-page and store demo carries no album covers: no artwork address in its songs (Dean, 4 Nov 2026)', demo.indexOf('mzstatic') < 0 && demo.indexOf('"artworkUrl": "http') < 0 && /var SONGS = \[\{"title"/.test(demo));
+  /* The demo's songs live in the shared demo clock since 7 Nov 2026 (the wall and the phone read one list). */
+  var CLK = readFile('venueplay/app/vp-demo-clock.js');
+  var demo = SCREEN.slice(SCREEN.indexOf('function demoNight'), SCREEN.indexOf('function hideChrome')) + CLK.slice(CLK.indexOf('var MUSICAL={'), CLK.indexOf('window.VPDemoClock='));
+  show('the sales-page and store demo carries no album covers: no artwork address in its songs (Dean, 4 Nov 2026)', demo.indexOf('mzstatic') < 0 && !/artworkUrl"?\s*:\s*"http/.test(demo) && /var SONGS = C\.SONGS;/.test(demo) && /SONGS:\[\{ title:"Never Gonna Give You Up", artist:"Rick Astley" \}/.test(demo));
   show('and the wall draws our logo tile in the art spot on the demo, never an image', /if\(VP_DEMO\)\{   \/\* the demo draws our logo tile/.test(SCREEN) && /box\.classList\.toggle\("vplogo", !box\.classList\.contains\("listening"\)\)/.test(SCREEN));
   show('the wall writes it into its sentence line every time the pattern or prize is drawn', /\$\("tvWins"\)\.textContent=winsLine\(state\.pattern, state\.prize\);/.test(SCREEN));
 })();
@@ -73,19 +75,21 @@ print('\n== 2. the played strip: the last five, "+N", and a dashed slot for the 
   var tiles = $('tvBoard').children;
   show('fourteen played: the last five on the strip, oldest first', tiles.length === 5 && tiles[0].textContent === 'Song 10 title' && tiles[4].textContent === 'Song 14 title', tiles.map(function (t) { return t.textContent; }).join('|'));
   show('the current song is the one outlined (class "new")', tiles[4].className === 'ptok new' && tiles[3].className === 'ptok');
-  show('"+9" for the nine before them', $('tvBoardMore').textContent === '+9' && !$('tvBoardMore').classList.contains('hidden'));
-  show('"Song 14" bottom left', $('tvSongNo').textContent === 'Song 14');
+  show('no "+9" chip: the only count on the wall is the one bottom left (Dean, 6 Nov 13:10)', $('tvBoardMore').classList.contains('hidden') && $('tvBoardMore').textContent === '');
+  show('"14 songs played" bottom left (6 Nov: it said "Song 14", which read as the dashed "Song 15" twice)', $('tvSongNo').textContent === '14 songs played');
   show('artwork on a tile only from the library\'s https or this site, never another kind of address', tiles[4]._imgs === 1 && tiles[3]._imgs === 0);
   show('no dashed slot while nothing is held back', $('tvBoardNext').classList.contains('hidden'));
   state.played = songs.concat(['Mystery']); api.draw({ title: 'Mystery' });
   tiles = $('tvBoard').children;
-  show('song 15 held back: four played, then a dashed "Song 15"', tiles.length === 4 && tiles[3].textContent === 'Song 14 title' && $('tvBoardNext').textContent === 'Song 15' && !$('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
+  show('song 15 held back: four played, then a dashed "Up now" with no number', tiles.length === 4 && tiles[3].textContent === 'Song 14 title' && $('tvBoardNext').textContent === 'Up now' && !$('tvBoardNext').classList.contains('hidden'), [tiles.length, $('tvBoardNext').textContent]);
   show('while held, no tile is outlined as current, and the song is not named on the strip', tiles.every(function (t) { return t.className === 'ptok' && t.textContent !== 'Mystery'; }));
-  show('and the number says it is song 15, "+10" for the ten before the four', $('tvSongNo').textContent === 'Song 15' && $('tvBoardMore').textContent === '+10', [$('tvSongNo').textContent, $('tvBoardMore').textContent]);
+  show('and the left says 14 songs played (the held one is not counted yet), and no other number', $('tvSongNo').textContent === '14 songs played' && $('tvBoardMore').classList.contains('hidden'), [$('tvSongNo').textContent, $('tvBoardMore').textContent]);
   state.played = ['A']; api.draw(null);
   show('one song: no "+0" chip', $('tvBoardMore').classList.contains('hidden') && $('tvBoard').children.length === 1);
   state.played = []; api.draw(null);
   show('none yet: no song number', $('tvSongNo').textContent === '');
+  state.played = ['A']; api.draw(null);
+  show('one song: "1 song played", singular', $('tvSongNo').textContent === '1 song played');
 })();
 
 /* ======================================================================================= 3 */

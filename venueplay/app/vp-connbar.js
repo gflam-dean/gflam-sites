@@ -1,4 +1,4 @@
-/* vp-connbar.js  -- THE PHONE'S CONNECTION, AS A DOT, AND A BAR ONLY WHEN IT MATTERS. ONE ANSWER, EVERY PHONE.
+/* vp-connbar.js  -- THE PHONE'S CONNECTION: NOTHING WHILE CONNECTED (no dot since 7 Nov 2026), A BAR ONLY WHEN IT DROPS. ONE ANSWER, EVERY PHONE.
 
    Dean, 1 Nov 2026: the "Connected" line under the logo pushed the game down on every phone. So the line
    becomes a small dot beside the venueplay mark (green when the phone is talking to the host, amber
@@ -25,6 +25,9 @@
     /* The dot hangs just right of the mark, out of the flow, so the mark stays centred. */
     ".brand .venue{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin:0 0 0 8px;gap:0}" +
     ".brand .venue .dot{width:8px;height:8px}" +
+    /* NO DOT AT ALL (Dean, 7 Nov 2026): a connected phone shows nothing; only a real drop shows, as the bar below.
+       #statusDot stays in the page (the pages set it, and the words beside it stay for screen readers). */
+    "#statusDot{display:none!important}" +
     /* The words: kept for screen readers, not drawn. */
     ".brand .venue #statusText{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}" +
     ".vp-connbar{position:absolute;left:0;right:0;top:100%;display:flex;align-items:center;justify-content:center;gap:7px;" +

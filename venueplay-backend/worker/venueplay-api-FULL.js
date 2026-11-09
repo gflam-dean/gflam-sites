@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '6 Nov 2026, 14:44 · 28f1898a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -153,9 +153,15 @@ export default {
       if (request.method === 'POST' && path === '/auth/one-click' && typeof vpaHandleOneClick === 'function') return await vpaHandleOneClick(request, env, json);
       // A used or expired link asks for a new one (Dean, 29 Oct 2026). Public, rate-limited, says the same thing whoever asks.
       if (request.method === 'POST' && path === '/auth/one-click/resend' && typeof vpaHandleOneClickResend === 'function') return await vpaHandleOneClickResend(request, env, json);
+      if (request.method === 'POST' && path === '/short/open'   && typeof vpaShortOpen === 'function')   return await vpaShortOpen(request, env, json);
+      if (request.method === 'POST' && path === '/short/attach' && typeof vpaShortAttach === 'function') return await vpaShortAttach(request, env, json);
+      if (request.method === 'POST' && path === '/venue-signin/lookup' && typeof vpaVenueSigninLookup === 'function') return await vpaVenueSigninLookup(request, env, json);
+      if (request.method === 'POST' && path === '/venue-signin/send'   && typeof vpaVenueSigninSend === 'function')   return await vpaVenueSigninSend(request, env, json);
       // The help desk (migration 106). Submit-only routes for the public and venue staff; every
       // route that READS a ticket is /admin/help/ and HQ only. See helpAdmin.
       if (request.method === 'POST' && path === '/help/ticket')            return await helpPublicTicket(request, env, json);
+      // The follow-up to a phone's "How was that?" (Dean, 1 Nov 2026; migration 137). Public, limited, honeypotted.
+      if (request.method === 'POST' && path === '/help/feedback'          && typeof vpfFeedbackMore === 'function')  return await vpfFeedbackMore(request, env, json);
       if (request.method === 'POST' && path === '/help/venue/ticket')      return await helpVenueTicket(request, env, json);
       // What the console's Help form fills in for a signed-in host (Dean, 4 Nov 2026): their OWN name, email and phone.
       if (request.method === 'POST' && path === '/help/venue/me')          return await helpVenueMe(request, env, json);
@@ -207,6 +213,8 @@ export default {
       if (request.method === 'POST' && path === '/marketing/summary'        && typeof vpmSummary === 'function')         return await vpmSummary(request, env, json);
       // The monthly report, one venue of the caller's own (Dean, 31 Oct 2026). Counts only.
       if (request.method === 'POST' && path === '/account/month-report'     && typeof vpbMonthReport === 'function')     return await vpbMonthReport(request, env, json);
+      // What players thought: favourable counts only, by game and night (Dean, 2 Nov 2026).
+      if (request.method === 'POST' && path === '/account/feedback'         && typeof vpbFeedbackCounts === 'function')  return await vpbFeedbackCounts(request, env, json);
       if (request.method === 'POST' && path === '/account/hosts'       && typeof vpbListHosts === 'function')    return await vpbListHosts(request, env, json);
       if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/host-add'    && typeof vpbAddHost === 'function')      return await vpbAddHost(request, env, json);
@@ -244,6 +252,7 @@ export default {
       if (request.method === 'GET'  && path === '/autopilot/prospects/quiet' && typeof vpaAutopilotQuietProspects === 'function') return await vpaAutopilotQuietProspects(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/prospect/nudge'  && typeof vpaAutopilotProspectNudge === 'function') return await vpaAutopilotProspectNudge(request, env, json);
       if (request.method === 'POST' && path === '/autopilot/prospect/nudge-sms' && typeof vpaAutopilotProspectNudgeSms === 'function') return await vpaAutopilotProspectNudgeSms(request, env, json);
+      if (request.method === 'POST' && path === '/autopilot/prospect/signin-link' && typeof vpaAutopilotThreadSigninLink === 'function') return await vpaAutopilotThreadSigninLink(request, env, json);
       // Website sales enquiries for the same autopilot, answered through the help desk (Dean, 2 Nov 2026).
       if (request.method === 'GET'  && path === '/autopilot/help/sales-tickets' && typeof vpaAutopilotHelpTickets === 'function') return await vpaAutopilotHelpTickets(request, env, json);
       if (request.method === 'GET'  && path === '/autopilot/help/ticket'        && typeof vpaAutopilotHelpTicket === 'function')  return await vpaAutopilotHelpTicket(request, env, json);
@@ -277,6 +286,8 @@ export default {
       // HQ > Reports > What's new: the news in every venue's monthly email, written once (Dean, 31 Oct 2026; migration 133).
       if (request.method === 'POST' && path === '/admin/signup-sources' && typeof vpaHandleSignupSources === 'function') return await vpaHandleSignupSources(request, env, json);
       if (request.method === 'POST' && path === '/admin/month-news'      && typeof vpaHandleMonthNews === 'function')      return await vpaHandleMonthNews(request, env, json);
+      // HQ > Feedback: every rating, tag and word players left, per venue, state, game, month and night (HQ only).
+      if (request.method === 'POST' && path === '/admin/feedback'        && typeof vpaHandleFeedbackHq === 'function')     return await vpaHandleFeedbackHq(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
       if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
@@ -362,7 +373,8 @@ export default {
        so a venue's screen is still checked on a night when either sweep above has thrown. */
     try { await vpaScreenHistoryNightly(env); } catch (e3) { /* tomorrow night will look again */ }
     /* A prospect's card reminders and the pause at the end of their free month (migration 127). Its own try:
-       the sweep keeps its own hours (8am to 5pm Mon to Fri for emails) and remembers what it sent. */
+       the sweep keeps Dean's send window for emails (vpaSendAllowedAt; the pause itself is on time)
+       and remembers what it sent. */
     try { await vpaProspectReminderSweep(env, Date.now()); } catch (e4) { /* the next hour looks again */ }
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
@@ -371,6 +383,8 @@ export default {
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
     /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
     try { await vpaSigninTextSweep(env, Date.now()); } catch (e7) { /* the next tick looks again */ }
+    /* Two or more "Not for me" at a venue in one night (Dean, 2 Nov 2026): one soft alert to HQ's phones (migration 137 not needed for it). */
+    try { await vpfAlertSweep(env, Date.now()); } catch (e8) { /* the next tick looks again */ }
   },
 };
 
@@ -955,6 +969,12 @@ async function vpaHandleStripeEvent(env, event) {
   // On every real payment, email the venue a branded invoice.
   if (event.type === 'invoice.paid' && typeof vpaFireInvoiceEmail === 'function') {
     await vpaFireInvoiceEmail(env, event.data.object);
+  }
+  /* A group's draft invoice, said per venue on Stripe's own invoice (INBOX 44b). Behind
+     VPB_GROUP_INVOICE_LINES, default OFF; description and metadata only; never throws. Stripe sends
+     invoice.created only once the endpoint is set to listen for it. */
+  if (event.type === 'invoice.created' && typeof vpbStampInvoiceVenueLines === 'function') {
+    await vpbStampInvoiceVenueLines(env, event.data.object);
   }
   // Ahead of each renewal (Stripe invoice.upcoming), email the venue a heads-up. STRIPE owns the
   // lead time, not us, and it offers 7 days. The email therefore names the DATE and never a number
@@ -2628,7 +2648,9 @@ async function vpaAutopilotDecisions(request, env, json) {
     try { rows = await q(',edited_postcode,edited_entity_type,edited_login_email'); }
     catch (e) { if (!vpaReviewNoV2(e)) throw e; rows = await q(''); }   // before migration 130: the decisions as before
   } catch (e) { return json({ error: 'Could not read the decisions: ' + String(e.message || e) }, 503); }
-  return json({ ok: true, decisions: rows, features: ['needs_you'] });
+  /* signin_in_reply: /autopilot/prospect hands back the reply's sign-in link (return_signin_link); thread_link:
+     POST /autopilot/prospect/signin-link; delivery: the prospects lists carry delivery (5 Nov 2026). */
+  return json({ ok: true, decisions: rows, features: ['needs_you', 'signin_in_reply', 'thread_link', 'delivery'] });
 }
 
 /* GET /autopilot/holds: the checked replies Dean has opened Edit on and not decided yet (2 Nov 2026). The Mac
@@ -3470,9 +3492,9 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
       source: opts.via === 'autopilot_prospect' ? 'autopilot' : (opts.via === 'self_signup' ? 'self' : 'hq'), contact_name: firstName || null, email: email,
       phone: callPhone || null, auth_user_id: login ? login.id : null, website: website || null,
       call_requested: b.call_requested === true, created_label: actor.label || null }, false);
-    /* THE OFFER THEY WERE SET UP ON (migration 127), kept through their free month even if that month's offer
-       closes; a pause takes it away (vpaProspectPrice). Its own write, so a database without 127 still lists them. */
-    if (vpaFoundingOpenNow(env)) await vpaProspectPatch(env, venue.id, { offer_rate: VPA_OFFER_RATE }).catch(() => false);
+    /* NO offer_rate AT SETUP (Dean, 7 Nov 2026): being set up by the offer's date is not enough, the free month must
+       START by it. offer_rate stays null here and is written ONCE, at the first sign-in (vpaProspectStartMonth), from
+       the offer named on the audit row below (offer_code) and that offer's date. */
   } catch (e) {
     warnings.push('HQ > Prospects cannot list them until migration 125 is run' + (callPhone ? ' (their phone, ' + callPhone + ', is kept on the audit row).' : '.'));
   }
@@ -3516,12 +3538,13 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
        so the follow-ups can count down one true number. Before migration 151 it is 14 days from when the
        email goes, and HQ is told. No table yet, or no login: the button opens the email sign-in instead,
        and HQ is told. */
-    let signinToken = null;
+    let signinToken = null, signinHash = null;
     // A mobile login signs in by text code, so it needs no one-click link (and has none to leak).
     if (login && !login.mobile) {
       try {
-        const minted = await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
-        signinToken = minted.token;
+        const one = await vpaProspectOneLink(env, venue.id, login.id, {});
+        const minted = one || await vpaMintSigninLinkFor(env, login.id, venue.id, sendAtMs, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
+        signinToken = minted.token; signinHash = minted.hash || null;
         if (minted.shortened) warnings.push('Their sign-in link lasts 14 days, not 30 (run migration 151 for the 30 day prospect link).');
       }
       catch (e) { warnings.push('The one-click sign-in button was not made (run migration 123), so their email button opens the email-code sign-in instead.'); }
@@ -3536,10 +3559,22 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     else {
       welcome = { send_at: new Date(sendAtMs).toISOString(), status: delayMin > 0 ? 'scheduled' : 'sent', id: null };
       const rec = await vpaProspectWelcomeRecord(env, actor, venue.id, r.id, sendAtMs, welcome.status,
-        signinToken ? await vpaSigninTokenHash(signinToken) : null, render);
+        signinHash || (signinToken ? await vpaSigninTokenHash(signinToken) : null), render);
       if (rec) welcome.id = rec.id;
       else if (delayMin > 0) warnings.push('Their email is booked for ' + vpaBrisbaneTime(sendAtMs) + ', but HQ cannot cancel it or send it early until migration 124 is run.');
     }
+  }
+
+  /* 5b. THE LINK FOR THEIR OWN EMAIL THREAD (Dean, 5 Nov 2026: "I don't want to lose a lead because my email went to
+     junk"). The welcome comes from an address they have never seen, so it can be junked or bounced; the Mac's reply in
+     the thread they wrote to lands. Only for the autopilot, and only when it asks (return_signin_link): the Mac puts
+     this link in that reply. A mobile login signs in by text code, so its link carries no token (the same address as
+     the welcome's button); an email login gets its OWN one-use token, apart from the welcome's, so either one works
+     and the first used does not spend the other. The welcome still goes, as the backup. */
+  let threadLink = null;
+  if (opts.via === 'autopilot_prospect' && b.return_signin_link === true && login) {
+    threadLink = await vpaProspectThreadLink(env, venue.id, login.id, !!login.mobile, mobileRaw, email, Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000);
+    if (!threadLink.url) { warnings.push('No sign-in link could be made for the reply (' + threadLink.reason + '): the reply goes without one and the welcome email carries it.'); threadLink = null; }
   }
 
   // 6. Who set it up, and what was made.
@@ -3556,8 +3591,29 @@ async function vpaProspectSetUp(env, actor, b, json, opts) {
     login: login ? Object.assign(login.mobile ? { email: email, mobile: mobileRaw } : { email: email }, login.existing ? { existing: true } : {}) : null,
     slides: slideCount, welcome_sent: welcomeSent, phone: callPhone || null, offer_code: offer.code || null };
   if (welcome) out.welcome = welcome;
+  if (threadLink) out.signin = threadLink;
   if (warnings.length) out.warnings = warnings;
   return json(out);
+}
+
+/* The one-tap sign-in for a reply in their own thread (Dean, 5 Nov 2026). The SAME two kinds as the welcome's button
+   (vpaFireProspectWelcome): a mobile login opens the text-code sign-in with their number filled in (no token, nothing
+   to leak), an email login gets a one-use token (vpaMintSigninLinkFor, hash only) that ends with their 30 days.
+   Returns { url, kind: 'sms' | 'link', expires_at, days_left, mobile_ends } or { url: null, reason }. */
+async function vpaProspectThreadLink(env, venueId, authUserId, mobileLogin, mobileRaw, email, endMs) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  if (mobileLogin) {
+    const m = vpaProspectPhone(mobileRaw);
+    if (!m || m[1] !== '4') return { url: null, reason: 'no_mobile' };
+    const digits = m.replace(/\D/g, '');
+    return { url: site + '/app/?signin=sms#m=' + digits, kind: 'sms', expires_at: null, days_left: null, mobile_ends: digits.slice(-3) };
+  }
+  if (!authUserId) return { url: null, reason: 'no_login' };
+  try {
+    const m = (await vpaProspectOneLink(env, venueId, authUserId, {})) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), endMs);
+    return { url: vpaOneClickUrl(site, m.token, email), kind: 'link', expires_at: new Date(m.expiresAt).toISOString(),
+             expires_words: vpaBneDateWords(m.expiresAt), days_left: vpaDaysLeft(m.expiresAt, Date.now()) };
+  } catch (e) { return { url: null, reason: 'no_table' }; }
 }
 
 /* ===========================================================================
@@ -3861,6 +3917,91 @@ async function vpsDone(env, venueId, authUserId) {
   return { venue: r.name || '', tv_code: r.join_code || null, slug: r.slug || null, go_url: go };
 }
 
+/* ACCOUNT READY (Dean, 6 Nov 2026; customer journey problem 3): "send BOTH the text and the email". A venue made
+   straight away is signed in on the screen, so nothing told them how to get back in if they closed the tab. The
+   moment the account is made, ONCE per sign-up:
+     - ONE plain text from the same "venueplay" sender as their sign-in code (Mobile Message, ClickSend as backup:
+       vpaSendSms, the provider the code's SMS hook also uses), to the mobile that has just passed the code, in Dean's
+       words: "Welcome to venueplay! Your account for {venue} is ready. Sign in any time at venueplay.com.au/app,
+       we'll text a code to this mobile." No link in it (they sign in by code). A number that opted out is skipped.
+     - the "Welcome to venueplay" email (emails/welcome-self.html): one sign-in button, which address our emails come
+       from, what to do first. From hello@send.venueplay.com.au, as every account email.
+   QUIET HOURS: none, on purpose. Both answer something the person did seconds ago (the code text goes at any hour
+   too); the 9am to 8pm rule is for texts HQ starts (vp_signin_texts). NEVER TWICE: only the one request that moved
+   the sign-up from pending to made (vpsClaim) gets here, and a ready row for the venue already in the audit, or an
+   audit that will not answer, sends nothing. A held sign-up gets nothing here; HQ's Approve sends the normal welcome.
+   Nothing here can stop the done screen: every failure is caught and only reported in { texted, emailed }. */
+const VPS_READY_ACTION = 'signup_ready_sent';
+function vpsReadyVenueWords(name) {
+  /* Their own typing, into a text from our sender: letters, digits and plain punctuation only (no links), 50 at most. */
+  const w = String(name || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50).trim();
+  return w || 'your venue';
+}
+/* emailed: the Welcome email went first, so the text can say so (Dean, 6 Nov 2026: "one short line that we've also
+   emailed their login and it may be in junk"). Two SMS parts at most: the venue's words are cut to 50. */
+function vpsReadyText(venueName, emailed) {
+  return 'Welcome to venueplay! Your account for ' + vpsReadyVenueWords(venueName) + ' is ready. Sign in any time at venueplay.com.au/app, we\'ll text a code to this mobile.'
+    + (emailed ? ' We\'ve emailed your login too, check junk.' : '');
+}
+/* Has this venue had its ready messages? Fails CLOSED: a read that does not answer counts as yes (never twice). */
+async function vpsReadySentBefore(env, venueId) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_admin_audit?target=eq.' + encodeURIComponent('venue:' + venueId) +
+      '&action=eq.' + VPS_READY_ACTION + '&select=id&limit=1', { method: 'GET', headers: vpaHeaders(env) });
+    if (!res || !res.ok) return true;
+    const rows = await res.json();
+    return !Array.isArray(rows) || rows.length > 0;
+  } catch (e) { return true; }
+}
+async function vpsRenderReady(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const res = await fetch(site + '/emails/welcome-self.html');
+  if (!res || !res.ok) return null;
+  let page = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the notes are for us, not the inbox
+  const first = String(o.contactName || '').trim().split(/\s+/)[0];
+  page = page
+    .replace(/{{greeting}}/g, first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,')
+    .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
+    .replace(/{{login_mobile}}/g, vpaEsc(o.mobileWords))
+    .replace(/{{signin_url}}/g, site + '/app/?signin=sms#m=' + String(o.mobileWords).replace(/\D/g, ''))
+    .replace(/{{tv_code}}/g, vpaEsc(o.tvCode || 'shown on your Screen tab'))
+    .replace(/{{terms_url}}/g, site + '/terms')
+    .replace(/{{privacy_url}}/g, site + '/privacy')
+    .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(o.email))
+    .replace(/{{signoff}}/g, vpaProspectSignoff(''));
+  const subject = 'Welcome to venueplay';
+  return { subject: subject, html: vpaEmailDocument(vpaFillSupport(page), subject) };
+}
+async function vpsAccountReady(env, row, venueId, done) {
+  const out = { texted: false, emailed: false };
+  try {
+    if (!venueId || await vpsReadySentBefore(env, venueId)) return Object.assign(out, { skipped: 'sent before, or could not check' });
+    const venueName = (done && done.venue) || row.venue_name;
+    const to = vpaNormaliseMobileAU(row.mobile);
+    const mobileWords = vpaProspectPhone(to);
+    const email = String(row.email || '').trim();
+    if (email && env.RESEND_API_KEY && mobileWords) {
+      const msg = await vpsRenderReady(env, { venueName: venueName, contactName: row.contact_name, mobileWords: mobileWords, tvCode: done && done.tv_code, email: email });
+      if (msg) {
+        const res = await fetch('https://api.resend.com/emails', { method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ from: VPA_PROSPECT_FROM, to: [email], reply_to: VPA_PROSPECT_REPLY_TO, subject: msg.subject, html: msg.html, text: helpPlainFromHtml(msg.html) }) });
+        out.emailed = !!(res && res.ok);
+        if (out.emailed) { const j = await res.json().catch(() => ({})); out.email_id = (j && typeof j.id === 'string') ? j.id : undefined; }
+      }
+    }
+    if (vpaIsAuMobileE164(to) && (vpaHasMobileMessage(env) || vpaHasClickSend(env)) && !(await vpaSmsOptedOut(env, to))) {
+      let r;
+      try { r = await vpaSendSms(env, to, vpsReadyText(venueName, out.emailed), 'ready-' + String(venueId).slice(0, 8)); } catch (e) { r = { ok: false }; }
+      out.texted = !!(r && r.ok);
+      if (r && r.blocked) await vpaSmsRecordOptOut(env, to, venueId);
+    }
+    await vpaAudit(env, { actorId: null, label: 'Self sign-up (no-card start)' }, VPS_READY_ACTION, 'venue:' + venueId,
+      { start_id: row.id, texted: out.texted, emailed: out.emailed, email_id: out.email_id, to_last3: to ? to.slice(-3) : undefined });
+  } catch (e) { console.log('[start] ready: ' + String((e && e.message) || e).slice(0, 200)); }
+  return { texted: out.texted, emailed: out.emailed };
+}
+
 /* THE DECISION, once the code to their mobile has passed. */
 async function vpsDecide(env, json, row) {
   // 1. One free month per mobile and per email. Fails closed: a read that will not answer makes nothing.
@@ -3888,7 +4029,8 @@ async function vpsDecide(env, json, row) {
   let login = null;
   try { login = made.body.login ? await vpaFindAuthUser(env, { email: row.email }) : null; } catch (e) { login = null; }
   const done = await vpsDone(env, made.body.venue.id, login && login.id);
-  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS });
+  const ready = await vpsAccountReady(env, row, made.body.venue.id, done);
+  return json({ ok: true, outcome: 'made', venue: done.venue, tv_code: done.tv_code, slug: done.slug, go_url: done.go_url, players: VPS_START_PLAYERS, ready: ready });
 }
 
 async function vpsStartVerify(request, env, json) {
@@ -4023,13 +4165,14 @@ async function vpaProspectLastSignIn(env, userIds) {
 async function vpaProspectsList(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
-  const d = await vpaProspectsData(env);
+  const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error, need_migration: d.need_migration }, d.status);
   return json(d);
 }
 /* THE ONE READ BEHIND HQ > Prospects AND THE AUTOPILOT'S FOLLOW-UP (3 Nov 2026). Returns the HQ answer
    ({ ok, prospects, card_added, ... }) or { error, status }. */
-async function vpaProspectsData(env) {
+async function vpaProspectsData(env, dopts) {
+  dopts = dopts || {};
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'select=*&order=created_at.desc,venue_id.asc'); }
   catch (e) { return { error: 'Run migration 125 first (vp_prospects): HQ cannot list prospects without it.', need_migration: 125, status: 503 }; }
@@ -4052,6 +4195,8 @@ async function vpaProspectsData(env) {
     (await vpaSelectAll(env, 'venueplay_founding', 'id=in.(' + fids.slice(i, i + 100).map(encodeURIComponent).join(',') +
       ')&select=id,status,stripe_subscription_id,bill_by_invoice,mobile&order=id.asc')).forEach((f) => { accounts[f.id] = f; });
   }
+  /* Which offer each one is on, for the rate HQ shows (Dean, 7 Nov 2026: the rate needs the first sign-in by its date). */
+  const offerCodes = await vpaProspectOfferCodes(env, ids);
   const out = [], cardAdded = [];
   let signedUp = 0;
   const freeMonthReady = rows.length === 0 || rows.some((r) => 'first_signin_at' in r);
@@ -4072,7 +4217,7 @@ async function vpaProspectsData(env) {
           tel: (r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)) ? 'tel:' + String(r.phone || vpaProspectMobile(acct && acct.mobile, r.phone)).replace(/[^\d+]/g, '') : null,
           website: /^https?:\/\//i.test(String(r.website || '')) ? r.website : null,
           created_at: r.created_at, days_since_setup: Math.floor((now - Date.parse(r.created_at)) / DAY) || 0,
-          flag: null, called: null }, st));
+          flag: null, called: null }, st, vpaProspectRateInfo(env, r, offerCodes[r.venue_id] || null, null, now)));
       }
       continue;
     }
@@ -4114,6 +4259,17 @@ async function vpaProspectsData(env) {
     const last = out[out.length - 1];
     last.flag = (last.call_requested && !r.called_at) ? 'call_requested' : (last.follow_up ? 'no_sign_in' : null);
     Object.assign(last, vpaProspectStatus(r, false, seen.at, now));
+    Object.assign(last, vpaProspectRateInfo(env, r, offerCodes[r.venue_id] || null, seen.at, now));
+  }
+  /* WHERE THE ACCOUNT EMAIL GOT TO (Dean, 5 Nov 2026: "I need to be able to make sure our emails are making it
+     somewhere"). Only when asked (HQ's list and the autopilot's quiet list), never for a send-time check. */
+  if (dopts.delivery) {
+    const welcomeOf = {};
+    Object.keys(welcomes).forEach((k) => { welcomeOf[k] = welcomes[k]; });
+    await Promise.all(out.map(async (p) => {
+      try { p.delivery = await vpaProspectDelivery(env, p, welcomeOf[p.venue_id], now); }
+      catch (_) { p.delivery = { welcome: 'unknown', words: 'Could not check just now' }; }
+    }));
   }
   const RANK = { call_requested: 0, no_sign_in: 1 };
   out.sort((a, b) => ((a.flag ? RANK[a.flag] : 2) - (b.flag ? RANK[b.flag] : 2)) || (Date.parse(b.created_at) - Date.parse(a.created_at)));
@@ -4164,7 +4320,7 @@ async function vpaProspectTappedLink(env, venueId, sinceMs) {
 async function vpaAutopilotQuietProspects(request, env, json) {
   const no = vpaAutopilotKeyRefusal(request, env, json);
   if (no) return no;
-  const d = await vpaProspectsData(env);
+  const d = await vpaProspectsData(env, { delivery: true });
   if (d.error) return json({ error: d.error }, d.status);
   const quiet = (d.prospects || []).filter(vpaQuietProspect).map((p) => ({
     venue_id: p.venue_id, name: p.name, contact_name: p.contact_name, email: p.email, has_phone: !!(p.phone || p.mobile),
@@ -4177,7 +4333,18 @@ async function vpaAutopilotQuietProspects(request, env, json) {
        from the link it actually mints when the email goes. A Mac on an older Worker sees neither field. */
     link_expires_at: p.link_expires_at || null, link_days_left: (p.link_days_left == null) ? null : p.link_days_left,
     link_from: p.link_from || null, nudge_day: (p.nudge_day == null) ? p.days_since_setup : p.nudge_day,
-    called: !!p.called, call_requested: !!p.call_requested }));
+    called: !!p.called, call_requested: !!p.call_requested,
+    /* THE OFFER'S SIGN-IN DATE (Dean, 7 Nov 2026), so the Mac's follow-up can say "Your free month starts the first time you
+       sign in. Sign in by 30 November to keep $2.50 a player." offer_open is false once that day has passed (then the
+       follow-up names no offer). Null fields: no dated offer. */
+    offer_signin_by: p.offer_signin_by || null, offer_signin_by_at: p.offer_signin_by_at || null,
+    offer_open: !!(p.offer_signin_by && p.rate != null && p.rate < VPA_STANDARD_RATE),
+    offer_rate: VPA_OFFER_RATE, standard_rate: VPA_STANDARD_RATE,
+    offer_words: (p.offer_signin_by && p.rate != null && p.rate < VPA_STANDARD_RATE) ? vpaOfferSigninWords(p.offer_code) : '' }));
+  /* Where their account email got to, and the link (5 Nov 2026), so the Mac can catch a bounce or a junked one. */
+  const deliveryOf = {};
+  (d.prospects || []).forEach((p) => { deliveryOf[p.venue_id] = p.delivery || null; });
+  quiet.forEach((q) => { q.delivery = deliveryOf[q.venue_id] || null; });
   return json({ ok: true, prospects: quiet, link_days: VPA_PROSPECT_LINK_DAYS });
 }
 /* THE SAME FOLLOW-UP BY TEXT (Dean, 3 Nov 2026): "if the prospect's mobile came with the lead, ALSO text them
@@ -4254,6 +4421,11 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   const b = _b.body || {};
   const venueId = String(b.venue_id || '').trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  /* THE 'YES' REPLY'S TEXT (Dean, 6 Nov 2026): "we build their account, then they get a reply in their email thread
+     with the sign-in link, and a text message with the link". The same route and the same guards as the nudge (a
+     quiet prospect only, their own mobile, opt-out honoured, a fresh link that leaves the email's working); purpose
+     'yes_reply' only labels it, so the audit and HQ can tell the welcome text from a later nudge. */
+  const purpose = b.purpose === 'yes_reply' ? 'yes_reply' : 'nudge';
   const text = String(b.text || '').replace(/\s+/g, ' ').trim();
   if (text.indexOf('{link}') < 0 || !/venueplay/.test(text) || !(/Reply STOP to opt out/i.test(text) || text.indexOf('{optout}') >= 0) || /[\u2014\u2013]/.test(text) || text.length > VPA_NUDGE_SMS_MAX) {
     return json({ error: 'The text must name venueplay, carry {link} and an opt-out ("Reply STOP to opt out" or {optout}), have no long dash, and be under ' + VPA_NUDGE_SMS_MAX + ' characters.' }, 400);
@@ -4287,24 +4459,24 @@ async function vpaAutopilotProspectNudgeSms(request, env, json) {
   if (win && win.ended) return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(win.end) + ', so no text was sent. Resend from HQ to give them a fresh 30 days.');
   if (await vpaProspectTappedLink(env, venueId, win ? win.from : NaN)) return await refuse('They have opened their sign-in link since, so no text was sent.');
   let token, minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
+  try { minted = (await vpaProspectOneLink(env, venueId, authUserId, { win: win })) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), win ? win.end : null); token = minted.token; }
   catch (e) { return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503); }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', vpaOneClickUrl(site, token, p.email));
+  const body = vpaFillDays(text, vpaDaysLeft(minted.expiresAt, Date.now()), minted.expiresAt).replace('{link}', minted.short ? vpaShortSigninUrl(site, token) : vpaOneClickUrl(site, token, p.email));   // before 175: the long link
   let r;
-  try { r = await vpaSendSms(env, to, body, 'nudge-' + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
+  try { r = await vpaSendSms(env, to, body, (purpose === 'yes_reply' ? 'yes-' : 'nudge-') + venueId.slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok && r.blocked) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    if (!minted.short) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));   // never the prospect's one link
     await vpaSmsRecordOptOut(env, to, venueId);
     return await refuse('They opted out of texts (Mobile Message blocked it), so no text was sent and none will be.');
   }
   if (!r.ok) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));
+    if (!minted.short) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token));   // never the prospect's one link
     await vpaAudit(env, actor, 'prospect_nudge_sms_refused', 'venue:' + venueId, { reason: 'provider ' + (r.status || 'unreachable') });
     return json({ error: 'The text did not send (the SMS provider said ' + (r.status || 'nothing') + '). Nothing reached them.' }, 502);
   }
-  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined });
-  return json({ ok: true, to_last3: to.slice(-3) });
+  await vpaAudit(env, actor, 'prospect_nudge_sms_sent', 'venue:' + venueId, { name: p.name, to_last3: to.slice(-3), id: r.id || undefined, purpose: purpose });
+  return json({ ok: true, to_last3: to.slice(-3), purpose: purpose });
 }
 function vpaNudgeHtml(text) {
   const P = 'margin:0 0 14px;font-size:16px;line-height:1.6;color:#3a3a44';
@@ -4357,6 +4529,137 @@ async function vpaAutopilotProspectNudge(request, env, json) {
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send. Nothing reached them.' }, 502);
   return json({ error: 'There is no email on their login, so nothing was sent (' + r.reason + ').' }, 400);
 }
+/* ===========================================================================
+ * POST /autopilot/prospect/signin-link   X-Autopilot-Key  { venue_id }   (Dean, 5 Nov 2026)
+ *
+ * "I don't want to have to call these people. I don't want to lose a lead because my email went to junk."
+ * A FRESH sign-in link for a prospect who has never signed in, handed back to the Mac so its reply in the
+ * prospect's OWN Instantly thread (the address they wrote to, which lands) can carry it. Nothing is emailed
+ * from here. Only for Dean's tapped Yes: the Mac calls this at send time, inside 8am to 4:30pm on a weekday.
+ *   - a prospect only, still on the quiet list (never signed in, not cancelled, not paused, not signed up):
+ *     anyone else is refused (409) and nothing is made. A key that leaks can never open a customer's account.
+ *   - a mobile login: the text-code sign-in with their number filled in (no token).
+ *   - an email login: vpaSendSigninLink with returnOnly, the SAME rules as HQ's Resend sign-in link (older
+ *     unused links retired first, so only the newest works; the per-day cap) WITHOUT restarting their 30 days.
+ * Recorded in vp_admin_audit (prospect_thread_link_made / _refused), never the link itself.
+ * ======================================================================== */
+async function vpaAutopilotThreadSigninLink(request, env, json) {
+  const no = vpaAutopilotKeyRefusal(request, env, json);
+  if (no) return no;
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body || {};
+  const venueId = String(b.venue_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(venueId)) return json({ error: 'Which venue?' }, 400);
+  const actor = VPA_AUTOPILOT_ACTOR;
+  const refuse = async (why, extra) => {
+    await vpaAudit(env, actor, 'prospect_thread_link_refused', 'venue:' + venueId, { reason: why });
+    return json(Object.assign({ error: why, refused: true }, extra || {}), 409);
+  };
+  const d = await vpaProspectsData(env);
+  if (d.error) return json({ error: d.error }, d.status);
+  const p = (d.prospects || []).find((x) => x.venue_id === venueId);
+  if (!p) return await refuse('They are not a prospect any more (signed up, cancelled or archived), so no link was made.');
+  if (p.last_sign_in_at) return await refuse('Somebody at ' + (p.name || 'the venue') + ' has signed in already, so no link was made.', { signed_in: true });
+  if (!vpaQuietProspect(p)) return await refuse('They are not waiting on a first sign-in any more, so no link was made.');
+  let authUserId = null;
+  try {
+    const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id&limit=1');
+    authUserId = pr && pr[0] && pr[0].auth_user_id;
+  } catch (_) {}
+  const user = authUserId ? await vpaAuthGetUser(env, authUserId) : null;
+  if (!user) return await refuse('There is no login on their account, so no link was made.');
+  const win = await vpaProspectLinkWindow(env, venueId);
+  const tapped = await vpaProspectTappedLink(env, venueId, win ? win.from : NaN);
+  let out;
+  if (user.phone) {
+    const t = await vpaProspectThreadLink(env, venueId, authUserId, true, String(user.phone), user.email || '', null);
+    if (!t.url) return await refuse('Their login has a mobile we cannot read, so no link was made.');
+    out = { ok: true, url: t.url, kind: 'sms', mobile_ends: t.mobile_ends, to: user.email || null, tapped: tapped };
+  } else {
+    const r = await vpaSendSigninLink(env, authUserId, venueId, { hqCap: true, returnOnly: true });
+    if (!r.ok) {
+      if (r.reason === 'ended') return await refuse('Their 30 days from setup ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so no link was made. Resend from HQ to give them a fresh 30 days.', { ended: true });
+      if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have been made for ' + r.to + ' in the last day, so no more were made.' }, 429);
+      return json({ error: 'No link could be made (' + r.reason + ').' }, r.reason === 'no_table' ? 503 : 400);
+    }
+    out = { ok: true, url: r.url, kind: 'link', to: r.to, expires_at: r.expires_at, expires_words: r.expires_words, days_left: r.days_left, tapped: tapped };
+  }
+  await vpaAudit(env, actor, 'prospect_thread_link_made', 'venue:' + venueId, { name: p.name, kind: out.kind, to: out.to || undefined, expires_at: out.expires_at || undefined });
+  return json(out);
+}
+/* WHERE A PROSPECT'S ACCOUNT EMAIL GOT TO, IN PLAIN WORDS (Dean, 5 Nov 2026). Three sources, each said as it is:
+     Resend    the welcome's own record at Resend (GET /emails/{id}, the Worker's full key, never the Mac's
+               send-only one): delivered, bounced, cancelled, still booked, or sent and not confirmed yet.
+               Resend cannot see a junk folder; nothing can. "Delivered" means their mail server took it.
+     webhook   a bounce the Resend webhook recorded (email_bounced), which also carries the reason.
+     our link  signin_link_used (vpaProspectTappedLink's record) and their first sign-in.
+   Returns { welcome, welcome_at, bounce_domain, bounce_reason, link_opened_at, signed_in_at, words }. */
+const VPA_RESEND_STATE = { delivered: 'delivered', opened: 'delivered', clicked: 'delivered', bounced: 'bounced', complained: 'complained',
+  canceled: 'cancelled', cancelled: 'cancelled', scheduled: 'scheduled', sent: 'sent', queued: 'sent', delivery_delayed: 'delayed', failed: 'failed' };
+async function vpaResendLastEvent(env, id) {
+  if (!id || !env.RESEND_API_KEY) return null;
+  try {
+    const res = await fetch('https://api.resend.com/emails/' + encodeURIComponent(id), { headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY } });
+    if (!res || !res.ok) return null;
+    const e = await res.json().catch(() => null);
+    return e && e.last_event ? String(e.last_event).toLowerCase() : null;
+  } catch (_) { return null; }
+}
+async function vpaProspectDelivery(env, p, w, nowMs) {
+  if (w) {
+    // The list's own read keeps to send_at and status; the Resend id and address are read here, for this one.
+    try {
+      const full = await vpaSelect(env, 'vp_prospect_welcomes', 'venue_id=eq.' + encodeURIComponent(p.venue_id) + '&select=resend_id,email,send_at,status&order=send_at.desc&limit=1');
+      if (full && full[0]) w = Object.assign({}, w, { resend_id: full[0].resend_id, email: full[0].email });
+    } catch (_) {}
+  }
+  const out = { welcome: 'none', welcome_at: w ? w.send_at : null, bounce_domain: null, bounce_reason: null, link_opened_at: null, signed_in_at: p.last_sign_in_at || null };
+  const addr = String((w && w.email) || p.email || '').trim().toLowerCase();
+  if (w) {
+    if (w.status === 'cancelled') out.welcome = 'cancelled';
+    else if (w.status === 'failed') out.welcome = 'failed';
+    else if (w.status === 'scheduled' && Date.parse(w.send_at) > nowMs) out.welcome = 'scheduled';
+    else {
+      const ev = await vpaResendLastEvent(env, w.resend_id);
+      out.welcome = ev ? (VPA_RESEND_STATE[ev] || 'sent') : 'unknown';
+    }
+  }
+  try {
+    const targets = ['venue:' + p.venue_id].concat(addr ? ['email:' + addr] : []).map((t) => '"' + t.replace(/"/g, '') + '"').join(',');
+    const bounces = await vpaSelect(env, 'vp_admin_audit', 'action=in.(email_bounced,email_marked_spam)&target=in.(' + encodeURIComponent(targets) + ')&select=action,detail,created_at&order=created_at.desc&limit=5');
+    const hit = (bounces || []).find((x) => !addr || !x.detail || !x.detail.address || String(x.detail.address).toLowerCase() === addr);
+    if (hit && out.welcome !== 'cancelled') {
+      out.welcome = hit.action === 'email_marked_spam' ? 'complained' : 'bounced';
+      out.bounce_reason = (hit.detail && hit.detail.reason) ? String(hit.detail.reason).slice(0, 200) : null;
+    }
+  } catch (_) {}
+  if (out.welcome === 'bounced' || out.welcome === 'complained') out.bounce_domain = addr.indexOf('@') > 0 ? addr.split('@')[1] : null;
+  try {
+    const win = vpaProspectWindowFromMs({ link_from: p.link_from, created_at: p.created_at });
+    const taps = await vpaSelect(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + p.venue_id) + '&action=eq.signin_link_used'
+      + (isFinite(win) ? '&created_at=gt.' + encodeURIComponent(new Date(win).toISOString()) : '') + '&select=created_at&order=created_at.desc&limit=1');
+    if (taps && taps[0]) out.link_opened_at = taps[0].created_at;
+  } catch (_) {}
+  out.words = vpaDeliveryWords(out);
+  return out;
+}
+function vpaDeliveryWords(d) {
+  if (d.signed_in_at) return 'Signed in ' + vpaBneDateWords(Date.parse(d.signed_in_at));
+  if (d.link_opened_at) return 'Link opened ' + vpaBneDateWords(Date.parse(d.link_opened_at)) + ', not signed in yet';
+  switch (d.welcome) {
+    case 'bounced': return 'Bounced' + (d.bounce_domain ? ' at ' + d.bounce_domain : '') + (d.bounce_reason ? ' (' + d.bounce_reason + ')' : '');
+    case 'complained': return 'Marked as spam' + (d.bounce_domain ? ' at ' + d.bounce_domain : '');
+    case 'cancelled': return 'Cancelled, never sent';
+    case 'failed': return 'Did not send';
+    case 'scheduled': return 'Booked, not sent yet';
+    case 'delivered': return 'Delivered, link not opened yet';
+    case 'delayed': return 'Delivery delayed at their end, link not opened yet';
+    case 'sent': return 'Sent, not confirmed delivered yet';
+    case 'unknown': return 'Sent, Resend could not say where it got to';
+    default: return 'No account email recorded';
+  }
+}
 /* A card on file, as opposed to comp, invoice or a group: those are signed up but are not "Card added". */
 function vpaProspectCardOn(founding) {
   return !!(founding && (founding.stripe_subscription_id || founding.status === 'card_on_file'));
@@ -4374,8 +4677,10 @@ const VPA_PROSPECT_LAST_DAYS = 3;
 function vpaProspectStatus(r, cardOn, lastSignInMs, nowMs) {
   const base = { first_signin_at: r.first_signin_at || null, free_month_ends_at: r.free_month_ends_at || null,
     paused_at: r.paused_at || null, cancelled_at: r.cancelled_at || null, card_choice: r.card_choice || null,
-    offer_rate: Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,
-    reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false };
+    offer_rate: r.first_signin_at && Number(r.offer_rate) > 0 ? Number(r.offer_rate) : null,   // decided at the first sign-in (7 Nov 2026)
+    reminders_sent: Array.isArray(r.reminders_sent) ? r.reminders_sent : [], days_left: null, last_days: false,
+    /* THE 5-DAY OFFER GRACE: when a paused prospect's offer price stops being kept (null: no offer, or not paused). */
+    offer_kept_until: r.paused_at && vpaProspectOfferRate(r) && isFinite(vpaOfferGraceEnd(r)) ? new Date(vpaOfferGraceEnd(r)).toISOString() : null };
   if (cardOn) return Object.assign(base, { status: 'card_added' });
   if (r.cancelled_at) return Object.assign(base, { status: 'cancelled' });
   if (r.paused_at) return Object.assign(base, { status: 'paused' });
@@ -4596,8 +4901,9 @@ async function vpaProspectUpdate(request, env, json) {
  *   - a card (or comp, invoice, group) or a cancel stops them all
  *   - the free month over with no card: the venue PAUSES (status suspended, reason free_month_ended):
  *     games off, the TV keeps its ads (venueLookupReply keeps a suspended venue's screen). The offer
- *     price they were set up on (offer_rate) goes with it: a card added after that is at the price of
- *     that day. A card added after the pause switches the venue straight back on.
+ *     price they were set up on (offer_rate) is KEPT FOR 5 DAYS after the free month's last day (THE
+ *     5-DAY OFFER GRACE, vpaOfferGraceEnd); a card added after that is at the standard rate. A card
+ *     added after the pause switches the venue straight back on.
  * ======================================================================== */
 const VPA_FREE_MONTH_DAYS = 30;
 const VPA_REMINDER_DAYS = [3, 23, 29];
@@ -4610,6 +4916,50 @@ function vpaAddDays(day, n) { return new Date(Date.parse(day + 'T00:00:00Z') + n
 function vpaWeekday(day) { return new Date(Date.parse(day + 'T00:00:00Z')).getUTCDay(); }   // 0 Sunday .. 6 Saturday
 /* The free month's last moment: 11:59:59pm Brisbane on the 30th day after the first sign-in. */
 function vpaFreeMonthEnd(firstMs) { return vpaBneDayStartMs(vpaAddDays(vpaBneDay(firstMs), VPA_FREE_MONTH_DAYS + 1)) - 1000; }
+/* THE 5-DAY OFFER GRACE (Dean, 5 Nov 2026, builds INBOX 24): "when a prospect's free month ends with no card, the
+   account pauses (as today), and they have 5 DAYS after that date to add a card and still keep their offer price
+   ($2.50). After 5 days, the offer is gone and the standard rate applies."
+     - "that date" is the free month's last day (free_month_ends_at, 11:59:59pm Brisbane on day 30). Day 1 of the
+       grace is the first paused day; day 5 is the last. The offer holds to 11:59:59pm Brisbane on day 5, the same
+       end-of-day Brisbane rule the free month and the offer codes (vpaCodeInDate) use. Day 6 is the standard rate.
+     - counted from free_month_ends_at, NEVER from paused_at: the hourly sweep can pause late (a missed run, an
+       outage), and a late sweep must not move anybody's deadline.
+     - only an offer they were set up on (offer_rate under the standard rate) is kept. A prospect set up at the
+       standard rate stays on it, and after the grace nobody gets "whatever offer is open today": it is the standard
+       rate (the offer is gone, Dean's words).
+     - no new email: the settled reminders are day 3, 23 and 29 only (dean-settled-answers-check-first). */
+const VPA_OFFER_GRACE_DAYS = 5;
+/* THE EMAILS NEVER SAY THE 5 DAYS (Dean, 7 Nov 2026: "never mentioned publicly"). The OFFER_GRACE_EMAILS switch that
+   could turn the words on (6 Nov 2026) is gone with its words; setting it now changes nothing. */
+/* The free month's last moment for a prospect row, or NaN when it has never started. */
+function vpaProspectMonthEndMs(prow) {
+  if (!prow) return NaN;
+  const e = Date.parse(prow.free_month_ends_at || '');
+  if (isFinite(e)) return e;
+  const f = Date.parse(prow.first_signin_at || '');
+  if (isFinite(f)) return vpaFreeMonthEnd(f);
+  /* Paused with neither date (should not happen: the sweep pauses only a started month): the day before the pause
+     is taken as the last free day, so the grace is still five whole Brisbane days. */
+  const p = Date.parse(prow.paused_at || '');
+  return isFinite(p) ? vpaBneDayStartMs(vpaBneDay(p)) - 1000 : NaN;
+}
+/* The grace's last moment: 11:59:59pm Brisbane on the 5th day after the free month's last day. NaN: no month. */
+function vpaOfferGraceEnd(prow) {
+  const end = vpaProspectMonthEndMs(prow);
+  return isFinite(end) ? vpaBneDayStartMs(vpaAddDays(vpaBneDay(end), VPA_OFFER_GRACE_DAYS + 1)) - 1000 : NaN;
+}
+/* The free month is used up: paused, or simply past its end (the sweep has not run yet). Either way no trial is left. */
+function vpaProspectMonthOver(prow, nowMs) {
+  if (!prow) return false;
+  if (prow.paused_at) return true;
+  const end = vpaProspectMonthEndMs(prow);
+  return isFinite(end) && nowMs > end;
+}
+/* The offer rate a prospect was set up on, or 0 when they were set up at the standard rate. */
+function vpaProspectOfferRate(prow) {
+  const r = Number(prow && prow.offer_rate);
+  return r > 0 && r < VPA_STANDARD_RATE ? r : 0;
+}
 /* Which reminder goes on which Brisbane day, from the first sign-in: [{ day: 3, date: '2026-11-02' }, ...]. */
 function vpaReminderPlan(firstMs) {
   const start = vpaBneDay(firstMs), out = [];
@@ -4622,16 +4972,68 @@ function vpaReminderPlan(firstMs) {
   });
   return out;
 }
-function vpaInSendWindow(ms) {
-  const d = new Date(ms + VPA_BNE_MS), wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
-  return wd >= 1 && wd <= 5 && m >= 8 * 60 && m < 17 * 60;
+/* DEAN'S SEND WINDOW (7 Nov 2026, after a card reminder was reported at midnight): every AUTOMATIC or scheduled
+   email or text to a prospect or venue goes only MONDAY TO FRIDAY, 9am to 12 noon and 2pm to 5pm, in the VENUE'S
+   OWN LOCAL TIME, from its state: QLD Brisbane (+10), NSW and ACT Sydney, VIC Melbourne, TAS Hobart (daylight saving
+   from the first Sunday in October to the first Sunday in April), SA Adelaide (+9:30, +10:30 in daylight saving),
+   NT Darwin (+9:30) and WA Perth (+8), neither with daylight saving. A state we do not know is Brisbane's clock.
+   Outside the window a message is HELD to the next one opening. Answers to what the person just did (the sign-up
+   confirmation, the account-ready text and email, a text code) are not automatic and go at once, at any hour.
+   vpaSendAllowedAt(state, ms): the first moment at or after ms a message may go (ms itself inside a window). */
+const VPA_SEND_TZ = { QLD: 'Australia/Brisbane', NSW: 'Australia/Sydney', ACT: 'Australia/Sydney', VIC: 'Australia/Melbourne',
+  TAS: 'Australia/Hobart', SA: 'Australia/Adelaide', NT: 'Australia/Darwin', WA: 'Australia/Perth' };
+const VPA_SEND_HOURS = [9, 10, 11, 14, 15, 16];   // 9am to 12 noon, 2pm to 5pm: the hours a window covers
+const VPA_SEND_FMT = {};
+function vpaSendTz(state) { return VPA_SEND_TZ[String(state || '').trim().toUpperCase()] || 'Australia/Brisbane'; }
+function vpaSendLocal(tz, ms) {
+  const f = VPA_SEND_FMT[tz] || (VPA_SEND_FMT[tz] = new Intl.DateTimeFormat('en-AU', { timeZone: tz, weekday: 'short',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }));
+  const o = {}; f.formatToParts(new Date(ms)).forEach(function (p) { o[p.type] = p.value; });
+  return { wd: o.weekday, h: parseInt(o.hour, 10) % 24, m: parseInt(o.minute, 10), s: parseInt(o.second, 10) };
 }
+function vpaSendOpen(p) { return p.wd !== 'Sat' && p.wd !== 'Sun' && VPA_SEND_HOURS.indexOf(p.h) !== -1; }
+function vpaSendAllowedAt(state, ms) {
+  const tz = vpaSendTz(state);
+  let t = Math.floor(Number(ms));
+  let p = vpaSendLocal(tz, t);
+  if (vpaSendOpen(p)) return t;
+  // Every Australian offset is a whole or half hour, so the local hour turns over at a whole UTC minute: step to the
+  // next local hour, then an hour at a time (Friday 5pm to Monday 9am is 64 steps; a daylight saving change is fine).
+  t = t - (t % 1000) - (p.m * 60 + p.s) * 1000 + 3600000;
+  for (let i = 0; i < 24 * 8; i++, t += 3600000) { if (vpaSendOpen(vpaSendLocal(tz, t))) return t; }
+  return t;
+}
+/* A venue's state for its sending clock: au_state, else from its postcode, else null (Brisbane's clock). */
+function vpaSendState(venue) {
+  if (!venue) return null;
+  if (venue.au_state) return String(venue.au_state).toUpperCase();
+  try { return venue.postcode ? vpaStateFromPostcode(String(venue.postcode)) || null : null; } catch (_) { return null; }
+}
+/* Inside the window right now, at this venue? */
+function vpaInSendWindow(ms, state) { return vpaSendAllowedAt(state, ms) === Math.floor(Number(ms)); }
 /* THE PRICE A PROSPECT'S CARD IS ADDED AT. The offer they were set up on (offer_rate) holds through
-   their free month even if that month's offer has since closed; a pause takes it away, and then it is
-   whatever is open the day they add the card. Not a prospect: as before, whatever is open now. */
-function vpaProspectPrice(env, prow) {
-  if (prow && prow.paused_at) { const open = vpaFoundingOpenNow(env); return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE }; }
-  if (prow && Number(prow.offer_rate) > 0 && Number(prow.offer_rate) < VPA_STANDARD_RATE) return { founding: true, rate: Number(prow.offer_rate) };
+   their free month even if that month's offer has since closed, and for THE 5-DAY OFFER GRACE after it
+   (vpaOfferGraceEnd). Once the month is over (paused, or past its end) and the grace has run out, it is the
+   standard rate. Not a prospect, or a prospect inside a month set up at no offer: as before, whatever is open now.
+   nowMs: the moment of the card-add (Date.now() when not given), so the suite can walk the days. */
+function vpaProspectPrice(env, prow, nowMs, notStartedCode) {
+  const now = nowMs == null ? Date.now() : nowMs;
+  /* NOT SIGNED IN YET (Dean, 7 Nov 2026): no rate is decided until the first sign-in, so a card added before one is
+     priced from their offer's date at this moment. An offer_rate the old setup wrote is not theirs yet and is ignored.
+     notStartedCode: their offer code (null when none is recorded), given by vpaProspectPriceNow. */
+  if (prow && !prow.first_signin_at && !prow.paused_at && notStartedCode !== undefined) {
+    const r0 = vpaOfferRateAt(env, notStartedCode, now);
+    return { founding: r0 < VPA_STANDARD_RATE, rate: r0 };
+  }
+  const offer = vpaProspectOfferRate(prow);
+  if (vpaProspectMonthOver(prow, now)) {
+    const graceEnd = vpaOfferGraceEnd(prow);
+    if (offer && isFinite(graceEnd) && now <= graceEnd + 999) return { founding: true, rate: offer, grace: true, grace_ends_at: new Date(graceEnd).toISOString() };
+    return { founding: false, rate: VPA_STANDARD_RATE, grace: false };
+  }
+  if (offer) return { founding: true, rate: offer };
+  /* A first sign-in after their offer's date wrote the standard rate: that IS their price, never "whatever is open now". */
+  if (prow && prow.first_signin_at && Number(prow.offer_rate) >= VPA_STANDARD_RATE) return { founding: false, rate: VPA_STANDARD_RATE };
   const open = vpaFoundingOpenNow(env);
   return { founding: open, rate: open ? VPA_OFFER_RATE : VPA_STANDARD_RATE };
 }
@@ -4649,14 +5051,34 @@ async function vpaProspectPatch(env, venueId, patch) {
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify(patch) });
   return !!(res && res.ok);
 }
-/* Start the free month, once. A second call (another sign-in, another device) changes nothing. */
+/* Start the free month, once. A second call (another sign-in, another device) changes nothing.
+   THE RATE IS DECIDED HERE, ONCE (Dean, 7 Nov 2026): offer_rate is written in the SAME conditional write as
+   first_signin_at, the offer rate when this first sign-in is on or before their offer's date (vpaOfferRateAt), else the
+   standard rate. The write only lands while first_signin_at is still empty, so a second sign-in, a second device or
+   the sweep can never change it; an offer_rate the old setup left on a row that had not signed in is overwritten. The
+   row is read back so a racing writer's values are the ones used. */
 async function vpaProspectStartMonth(env, prow, atMs) {
   if (!prow || prow.first_signin_at) return prow;
   const first = new Date(atMs).toISOString(), ends = new Date(vpaFreeMonthEnd(atMs)).toISOString();
+  const code = await vpaProspectOfferCode(env, prow.venue_id);
+  const rate = vpaOfferRateAt(env, code, atMs);
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_prospects?venue_id=eq.' + encodeURIComponent(prow.venue_id) + '&first_signin_at=is.null', {
-    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ first_signin_at: first, free_month_ends_at: ends }) });
-  if (res && res.ok) { prow.first_signin_at = first; prow.free_month_ends_at = ends; }
+    method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ first_signin_at: first, free_month_ends_at: ends, offer_rate: rate }) });
+  if (res && res.ok) {
+    const now = await vpaProspectRowFor(env, 'venue_id', prow.venue_id);
+    if (now && now.first_signin_at) { prow.first_signin_at = now.first_signin_at; prow.free_month_ends_at = now.free_month_ends_at; prow.offer_rate = now.offer_rate; }
+    else { prow.first_signin_at = first; prow.free_month_ends_at = ends; prow.offer_rate = rate; }
+    if (prow.first_signin_at === first) {
+      await vpaAudit(env, { actorId: null, label: 'first sign-in' }, 'prospect_month_started', 'venue:' + prow.venue_id,
+        { offer_code: code || null, offer_rate: rate, signin_by: vpaOfferDayWords(code) || null });
+    }
+  }
   return prow;
+}
+/* The price of a card added now, for a prospect row: one not signed in yet is priced from their offer's date. */
+async function vpaProspectPriceNow(env, prow, nowMs) {
+  if (prow && !prow.first_signin_at && !prow.paused_at) return vpaProspectPrice(env, prow, nowMs, await vpaProspectOfferCode(env, prow.venue_id));
+  return vpaProspectPrice(env, prow, nowMs);
 }
 /* POST /account/prospect-start { venue_id }   (the venue's owner or a manager; never HQ View as) */
 async function vpbProspectStart(request, env, json) {
@@ -4670,7 +5092,7 @@ async function vpbProspectStart(request, env, json) {
   let prow = await vpaProspectRowFor(env, 'venue_id', venueId);
   if (!prow || !('first_signin_at' in prow)) return json({ ok: true, prospect: false });
   prow = await vpaProspectStartMonth(env, prow, Date.now());
-  const price = vpaProspectPrice(env, prow);
+  const price = await vpaProspectPriceNow(env, prow);
   return json({ ok: true, prospect: true, first_signin_at: prow.first_signin_at, free_month_ends_at: prow.free_month_ends_at,
     ends_words: vpaBneDateWords(Date.parse(prow.free_month_ends_at)), rate: price.rate, card_choice: prow.card_choice || null,
     paused: !!prow.paused_at });
@@ -4777,8 +5199,16 @@ async function vpaProspectCancel(request, env, json) {
 async function vpaProspectCardAdded(env, foundingId) {
   const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
   if (!prow || !prow.paused_at) return false;
+  /* ONCE (10 Nov 2026). paused_at stays set after the card (it is history), so the hourly sweep below calls this for
+     every paused-then-carded prospect every hour, and the webhook calls it too. The switch-on is filtered and changes
+     nothing a second time; the audit row is only written when the venue really was still paused. An unreadable venue
+     still gets the switch-on and its audit row, as before. */
+  const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(prow.venue_id) + '&select=id,status,suspended_reason&limit=1');
+  const known = vs && vs[0];
+  const stillPaused = !known || (known.status === 'suspended' && known.suspended_reason === 'free_month_ended');
   await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(prow.venue_id) + '&status=eq.suspended&suspended_reason=eq.free_month_ended', {
     method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'active', suspended_reason: null }) });
+  if (!stillPaused) return false;
   await vpaAudit(env, { actorId: null, label: 'stripe' }, 'prospect_unpaused', 'venue:' + prow.venue_id, { founding_id: foundingId });
   return true;
 }
@@ -4790,7 +5220,10 @@ async function vpaRenderProspectReminder(env, o) {
   if (!res.ok) return null;
   const tpl = String(await res.text());
   let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
-  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: o.offerRate < VPA_STANDARD_RATE, nooffer: !(o.offerRate < VPA_STANDARD_RATE) });
+  /* The 5 days a paused prospect keeps their offer are never said in an email (Dean, 7 Nov 2026: never mentioned
+     publicly); the price itself still holds them (vpaProspectPrice). */
+  const onOffer = o.offerRate < VPA_STANDARD_RATE;
+  html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: onOffer, nooffer: !onOffer });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
@@ -4819,7 +5252,7 @@ async function vpaProspectReminderSweep(env, nowMs) {
   catch (e) { return Object.assign(out, { why: 'migration 127 not run' }); }
   for (const p of rows) {
     if (!('first_signin_at' in p)) return Object.assign(out, { why: 'migration 127 not run' });
-    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id&limit=1');
+    const vr = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(p.venue_id) + '&select=id,name,status,suspended_reason,group_id,founding_id,au_state,postcode&limit=1');
     const v = vr && vr[0];
     if (!v || vpaProspectGone(v)) continue;
     const fr = v.founding_id ? await vpaSelect(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,status,stripe_subscription_id,bill_by_invoice&limit=1') : [];
@@ -4841,12 +5274,16 @@ async function vpaProspectReminderSweep(env, nowMs) {
           method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ status: 'suspended', suspended_reason: 'free_month_ended' }) });
       }
       await vpaProspectPatch(env, p.venue_id, { paused_at: new Date(nowMs).toISOString() });
-      await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null });
+      await vpaAudit(env, { actorId: null, label: 'automatic (free month ended)' }, 'prospect_paused', 'venue:' + v.id, { name: v.name, offer_rate: p.offer_rate || null,
+        offer_kept_until: vpaProspectOfferRate(p) ? new Date(vpaOfferGraceEnd(p)).toISOString() : null });
       out.paused.push(v.id);
       continue;
     }
-    if (!vpaInSendWindow(nowMs)) continue;
-    const sent = Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
+    /* The pause above is on time, at any hour (it sends nothing). An EMAIL waits for DEAN'S SEND WINDOW at the venue
+       (vpaSendAllowedAt: Monday to Friday, 9 to 12 and 2 to 5, its own local time): outside it the reminder stays due
+       (nothing is marked sent), so the first sweep inside a window sends it, once. */
+    if (!vpaInSendWindow(nowMs, vpaSendState(v))) continue;
+    const sent =Array.isArray(p.reminders_sent) ? p.reminders_sent.slice() : [];
     const today = vpaBneDay(nowMs);
     const due = vpaReminderPlan(firstMs).filter((r) => r.date <= today && sent.indexOf(r.day) === -1);
     if (!due.length) continue;
@@ -4969,7 +5406,183 @@ async function vpaMintSigninLink(env, authUserId, venueId, startsAtMs) {
    AND the expiry it was really given, so every sentence about it is written from the row that exists.
    Before migration 151 the table refuses a life over 15 days: then the same link is made again with 14, and
    `shortened` says so (the row that was refused never existed, so nothing is left behind). */
-async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs) {
+/* THE SHORT LINK (Dean, 6 Nov 2026: "shorten the sign-in link in text messages", never a third-party shortener).
+   venueplay.com.au/s/AB2CD7KMNPQR is OUR link. The 12 letters are NOT a login key (security review, 6 Nov 2026):
+   opening them leads to the normal sign-in, where a text code to the account's own mobile is what lets anyone in
+   (OPENING THE SHORT LINK, below). 31 letters and digits with the look-alikes left out (no I, L, O, 0 or 1), about
+   59 bits. Every open costs a guesser against VPA_SHORT_PER_IP an hour per network and VPA_SHORT_ALL_GLOBAL an hour
+   from everywhere together, and a burst of misses files one HQ ticket. Needs migration 175 (NOT RUN): before it,
+   texts carry the long one-tap link as they always have. */
+const VPA_SHORT_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const VPA_SHORT_LEN = 12;               // 31^12, about 59 bits (security review, 6 Nov 2026: 8 letters was about 40)
+const VPA_SHORT_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{12}$/;
+const VPA_SHORT_PER_IP = 15;              // short-link tries per network per hour (a person taps once or twice), on top of VPA_ONECLICK_PER_IP
+const VPA_SHORT_ALL_GLOBAL = 600;         // short-link tries per hour, every network together: a spread-out guesser is stopped too
+const VPA_SHORT_FAIL_ALERT = 100;         // wrong short-link tries in an hour (all networks) that make ONE urgent HQ ticket
+function vpaShortSigninCode() {
+  const n = VPA_SHORT_ALPHA.length, limit = Math.floor(256 / n) * n, out = [];
+  const buf = new Uint8Array(1);
+  while (out.length < VPA_SHORT_LEN) { crypto.getRandomValues(buf); if (buf[0] < limit) out.push(VPA_SHORT_ALPHA[buf[0] % n]); }
+  return out.join('');
+}
+/* In a text the link is written without https:// and www. (12 characters, the difference between one SMS part and
+   two): every phone's Messages app makes venueplay.com.au/s/... a link by itself. */
+function vpaShortSigninUrl(site, code) { return String(site).replace(/^https?:\/\//, '').replace(/^www\./, '') + '/s/' + code; }
+/* A token as typed or tapped: the long one as it is, a short handle in capitals. '' when it is neither. */
+function vpaSigninTokenShape(t) {
+  const v = String(t || '').trim();
+  if (/^[A-Za-z0-9_-]{43}$/.test(v)) return v;
+  const up = v.toUpperCase();
+  return VPA_SHORT_RE.test(up) ? up : '';
+}
+/* ONE LINK PER PROSPECT (Dean, 6 Nov 2026): "the email and the text, and every follow-up email or text for that
+   prospect, use the SAME link, and sending it again must NOT renew the 30 days ... Only an explicit HQ 'start a fresh
+   30 days' action may issue a new window."
+   A prospect inside its 30 days has ONE short link (venueplay.com.au/s/XXXXXXXXXXXX), made the first time we send it and
+   kept on vp_prospects (migration 175): signin_code_hash to find it, signin_code_enc sealed (the 12 letters XOR an
+   HMAC keystream from a Worker secret and a random nonce) so the same letters can go in the next email. Behind it,
+   no token at all: opening it leads to the normal text-code sign-in (OPENING THE SHORT LINK, below). A send we make (the
+   welcome, the thread reply, HQ's Resend, Dean's approved follow-ups) hands out the same short link, ending at the
+   same moment. Self-serve paths ("Send me a new link", /go/{venue code}) never touch it: they email a long one-tap
+   link of their own (single use, the same end). Only HQ's "Start a fresh
+   30 days" makes a new window and new letters. */
+async function vpaCodeKeyStream(env, nonce) {
+  const secret = String(env.SIGNIN_LINK_SECRET || env.CARD_LINK_SECRET || env.SUPABASE_SERVICE_KEY || '');
+  if (!secret) throw new Error('no secret to seal a sign-in code with');
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('vp-signin-code|' + secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('seal|' + nonce)));
+}
+async function vpaSealCode(env, code) {
+  const n = new Uint8Array(12); crypto.getRandomValues(n);
+  const nonce = vpaB64Url(n);
+  const ks = await vpaCodeKeyStream(env, nonce);
+  let hex = '';
+  for (let i = 0; i < code.length; i++) hex += ((code.charCodeAt(i) ^ ks[i]) & 255).toString(16).padStart(2, '0');
+  return 'v1.' + nonce + '.' + hex;
+}
+async function vpaOpenCode(env, sealed) {
+  const m = /^v1\.([A-Za-z0-9_-]{16})\.([0-9a-f]{24})$/.exec(String(sealed || ''));
+  if (!m) return null;
+  try {
+    const ks = await vpaCodeKeyStream(env, m[1]);
+    let code = '';
+    for (let i = 0; i < VPA_SHORT_LEN; i++) code += String.fromCharCode((parseInt(m[2].slice(i * 2, i * 2 + 2), 16) ^ ks[i]) & 255);
+    return VPA_SHORT_RE.test(code) ? code : null;
+  } catch (e) { return null; }
+}
+/* The prospect's one link: { token: the short letters, short: true, expiresAt: the end of their 30 days }, or null when
+   it does not apply (not a prospect, outside the 30 days, another login, or migration 175 not run: the caller then makes
+   a long link of its own, as before). The letters are NOT a login key: see THE FIRST OPEN, below. */
+async function vpaProspectOneLink(env, venueId, authUserId, opts) {
+  opts = opts || {};
+  const win = opts.win !== undefined ? opts.win : await vpaProspectLinkWindow(env, venueId);
+  if (!win || win.ended || !win.row || !('signin_code_enc' in win.row) || !('signin_code_hash' in win.row)) return null;
+  if (win.row.auth_user_id && authUserId && win.row.auth_user_id !== authUserId) return null;
+  if (!(authUserId || win.row.auth_user_id)) return null;
+  let code = win.row.signin_code_enc ? await vpaOpenCode(env, win.row.signin_code_enc) : null;
+  if (!code) {
+    const mine = vpaShortSigninCode(), sealed = await vpaSealCode(env, mine);
+    /* Two sends at the same moment: the first to write wins and both use its letters. */
+    await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&signin_code_enc=is.null',
+      { signin_code_enc: sealed, signin_code_hash: await vpaSigninTokenHash('short|' + mine) });
+    const back = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(venueId) + '&select=signin_code_enc&limit=1');
+    code = (back && back[0] && back[0].signin_code_enc) ? await vpaOpenCode(env, back[0].signin_code_enc) : null;
+    if (!code) return null;
+  }
+  return { token: code, short: true, expiresAt: win.end, hash: null, reused: true };
+}
+/* ===========================================================================
+ * OPENING THE SHORT LINK (Dean, 6 Nov 2026: "keep it as simple as possible"), venueplay/s.html:
+ *   - mobile known: the NORMAL sign-in screen with their mobile filled in (/app/?signin=sms#m=04...). They tap
+ *     Send code, type it, and they are in. The mobile we hold is put on the login first, so the code reaches it.
+ *   - no mobile: the same screen with the mobile empty. The number they type goes on the login (POST
+ *     /short/attach, from the sign-in page) and the text code then proves it is theirs; it is their login from then.
+ *   - once claimed (somebody has signed in to it): the link opens the normal sign-in, nothing filled in.
+ *   - every open records "opened" (signin_link_used), so HQ's history and the follow-ups see it.
+ * The letters are never a login key: the text code is. After the sign-in the usual first-run flow takes over.
+ *   POST /short/open   { code }          { go }  where to send the browser
+ *   POST /short/attach { code, mobile }  { ok }  only while unclaimed and only when we hold no mobile
+ * Limits: VPA_SHORT_PER_IP an hour per network, VPA_SHORT_ALL_GLOBAL from everywhere, a burst of misses files one
+ * HQ ticket. Needs migration 175 (NOT RUN). */
+const VPA_SHORT_WORDS = {
+  busy: 'Too many tries from here. Please try again in an hour.',
+  mobile: 'Please type an Australian mobile, like 0412 345 678.',
+  taken: 'That mobile already has a venueplay login. Sign in with it, or use a different mobile.',
+};
+/* Letters that found nothing: counted for the whole hour, every network together. Past VPA_SHORT_FAIL_ALERT it files
+   ONE urgent HQ ticket an hour, so a guessing burst is seen by a person (the limits have already slowed it). */
+async function vpaShortLinkMiss(env) {
+  try {
+    if (await helpLimit(env, 'oneclick-short-miss', VPA_SHORT_FAIL_ALERT, 3600)) return;
+    if (!(await helpLimit(env, 'oneclick-short-alert', 1, 3600))) return;
+    const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'sales', channel: 'web_form', priority: 'urgent',
+      title: 'Short sign-in links: a burst of wrong tries',
+      message: 'More than ' + VPA_SHORT_FAIL_ALERT + ' venueplay.com.au/s/... links that match nothing were opened in the last hour. Somebody may be guessing. '
+        + 'Each network is held to ' + VPA_SHORT_PER_IP + ' an hour and everyone together to ' + VPA_SHORT_ALL_GLOBAL + ', and a link on its own never signs anyone in '
+        + '(a text code to the account\'s own mobile does), so nothing is needed to stop it; this is so a person knows. No venue, address or link is in this ticket.',
+      contact_email: null, venue_id: null });
+    if (t) { await helpPushNew(env, t).catch(() => null); await helpNotifyStaff(env, t, 'venueplay', null).catch(() => null); }
+    await vpaAudit(env, { actorId: null, label: 'short sign-in links' }, 'short_link_burst', 'signin:short', { misses_over: VPA_SHORT_FAIL_ALERT });
+  } catch (e) {}
+}
+/* The short letters' prospect and where it stands. Every look-up is a short-link try (the limits) and a miss counts. */
+async function vpaShortLookup(request, env, code) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'oneclick-short', ip, VPA_SHORT_PER_IP, 3600))) return { busy: true };
+  if (!(await helpLimit(env, 'oneclick-short-all', VPA_SHORT_ALL_GLOBAL, 3600))) return { busy: true };
+  const c = vpaSigninTokenShape(code);
+  if (!c || c.length !== VPA_SHORT_LEN) { await vpaShortLinkMiss(env); return { state: 'none' }; }
+  let pr = null;
+  try { pr = await vpaSelect(env, 'vp_prospects', 'signin_code_hash=eq.' + (await vpaSigninTokenHash('short|' + c)) + '&select=*&limit=2'); } catch (e) { pr = null; }
+  if (!pr || pr.length !== 1 || !pr[0].auth_user_id) { await vpaShortLinkMiss(env); return { state: 'none' }; }
+  const row = pr[0];
+  const user = await vpaAuthGetUser(env, row.auth_user_id);
+  if (!user) return { state: 'none' };
+  /* Claimed: their free month has started (the first sign-in) or Auth has seen a sign-in on the login. */
+  if (row.first_signin_at || user.last_sign_in_at) return { state: 'claimed', row: row, user: user };
+  const from = vpaProspectWindowFromMs(row);
+  if (!isFinite(from) || from + VPA_PROSPECT_LINK_DAYS * 86400000 <= Date.now()) return { state: 'ended', row: row, user: user };
+  return { state: 'unclaimed', row: row, user: user };
+}
+/* The mobile we hold for a prospect: the account's (Edit details, setup), else the login's own. E.164 or null. */
+async function vpaShortMobileOnFile(env, row, user) {
+  try { const t = await vpaSigninTextTarget(env, row.venue_id, user); return t && t.e164 ? t.e164 : null; } catch (e) { return null; }
+}
+/* Put a mobile on the login (a sole-venue prospect login only), unless another login has it. true when it is there. */
+async function vpaShortPutMobile(env, user, e164) {
+  if (String(user.phone || '').replace(/\D/g, '') === e164.replace(/\D/g, '')) return true;
+  if (user.phone) return false;   // the login already signs in with another mobile: that one stays
+  const taken = await vpaFindAuthUser(env, { phone: e164 }).catch(() => null);
+  if (taken && taken.id !== user.id) return false;
+  try { await vpaAuthUpdateUser(env, user.id, { phone: e164, phone_confirm: true }); return true; } catch (e) { return false; }
+}
+function vpaShortLocal(e164) { return '0' + String(e164).replace(/\D/g, '').slice(2); }
+async function vpaShortOpen(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json({ go: '/app/' });
+  const L = await vpaShortLookup(request, env, _b.body && _b.body.code);
+  if (L.busy) return json({ error: VPA_SHORT_WORDS.busy, busy: true, go: '/app/' }, 429);
+  if (L.state !== 'unclaimed') return json({ go: '/app/', state: L.state });
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'signin_link_used', 'venue:' + L.row.venue_id, { via: 'short' }).catch(() => null);
+  const m = await vpaShortMobileOnFile(env, L.row, L.user);
+  if (m && (await vpaShortPutMobile(env, L.user, m))) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal(m), state: 'unclaimed' });
+  if (L.user.phone) return json({ go: '/app/?signin=sms#m=' + vpaShortLocal('+' + String(L.user.phone).replace(/\D/g, '')), state: 'unclaimed' });
+  return json({ go: '/app/?signin=sms', state: 'unclaimed', attach: true });
+}
+async function vpaShortAttach(request, env, json) {
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const L = await vpaShortLookup(request, env, _b.body && _b.body.code);
+  if (L.busy) return json({ error: VPA_SHORT_WORDS.busy, busy: true }, 429);
+  if (L.state !== 'unclaimed') return json({ ok: false, state: L.state }, 409);
+  if (L.user.phone || (await vpaShortMobileOnFile(env, L.row, L.user))) return json({ ok: false, has_mobile: true }, 409);   // only when we hold none
+  const e164 = vpaNormaliseMobileAU(_b.body && _b.body.mobile);
+  if (!vpaIsAuMobileE164(e164)) return json({ error: VPA_SHORT_WORDS.mobile, field: 'mobile' }, 400);
+  if (!(await vpaShortPutMobile(env, L.user, e164))) return json({ error: VPA_SHORT_WORDS.taken, taken: true }, 409);
+  await vpaAudit(env, { actorId: null, label: 'self (short link)', role: null }, 'prospect_mobile_added', 'venue:' + L.row.venue_id, { to_last3: e164.slice(-3) });
+  return json({ ok: true });
+}
+async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expiresAtMs, opts) {
   const raw = new Uint8Array(32);
   crypto.getRandomValues(raw);
   const token = vpaB64Url(raw);
@@ -4996,6 +5609,7 @@ async function vpaMintSigninLinkFor(env, authUserId, venueId, startsAtMs, expire
    email-code sign-in (Dean, 29 Oct 2026: "it's got to be phone number"). Their own address rides in the
    fragment so that page knows where to send a new link. Fragment only: it is never sent to a server. */
 function vpaOneClickUrl(site, token, email) {
+  if (token && VPA_SHORT_RE.test(String(token))) return site + '/s/' + token;   // the prospect's one link: the same in every email and text
   const e = email ? 'e=' + encodeURIComponent(email) : '';
   return token ? site + '/app/go#t=' + token + (e ? '&' + e : '') : site + '/app/go' + (e ? '#' + e : '');
 }
@@ -5005,8 +5619,10 @@ async function vpaHandleOneClick(request, env, json) {
   if (ip && !(await helpIpLimit(env, 'oneclick', ip, VPA_ONECLICK_PER_IP, 600))) return json({ ok: false, busy: true }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return json(GONE, 410);
-  const token = String((_b.body && _b.body.t) || '');
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return json(GONE, 410);
+  const token = vpaSigninTokenShape(_b.body && _b.body.t);
+  if (!token) return json(GONE, 410);
+  /* The short letters are never a login key (Dean, 6 Nov 2026): they open /s/, which asks for a code first. */
+  if (token.length === VPA_SHORT_LEN) return json(GONE, 410);
   const hash = await vpaSigninTokenHash(token);
   const nowIso = new Date().toISOString();
   let rows = null;
@@ -5079,11 +5695,14 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   if (recent === null || recent === undefined) return { ok: false, reason: 'no_table' };
   const cap = (opts.hq || opts.hqCap) ? VPA_SIGNIN_LINKS_PER_DAY_HQ : VPA_SIGNIN_LINKS_PER_DAY;
   if (recent.length >= cap) return { ok: false, reason: 'limit', to: email, count: recent.length };
-  // Only the newest link works: every unused one for this login is retired before the new one is made.
-  try {
-    await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null', {
-      method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
-  } catch (_) {}
+  /* Only one link works. For anyone else: every unused one for this login is retired and a new one made. For a
+     prospect inside its 30 days: its one link (vpaProspectOneLink) is kept and every OTHER unused one retired. */
+  const retireOthers = async (keepHash) => {
+    try {
+      await fetch(env.SUPABASE_URL + '/rest/v1/vp_signin_links?auth_user_id=eq.' + encodeURIComponent(authUserId) + '&used_at=is.null' + (keepHash ? '&token_hash=neq.' + keepHash : ''), {
+        method: 'PATCH', headers: vpaHeaders(env), body: JSON.stringify({ used_at: new Date().toISOString() }) });
+    } catch (_) {}
+  };
   /* WHEN IT ENDS (Dean, 4 Nov 2026): a prospect's venue inside its 30 days from setup gets a link that ends at
      that same moment, so every link they are sent counts down the one true number; anyone else, or after
      the 30 days (the sign-in page's "Send me a new link" still works then), the ordinary 14 days. */
@@ -5092,17 +5711,37 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   /* AFTER THE 30 DAYS, NO LINK HANDS ITSELF OUT (Dean, 4 Nov 2026: "they already had their one chance", but
      "maybe it just wasn't the right time"). The sign-in page's "Send me a new link" (opts.self) and the
      automatic follow-ups (opts.nudge) stop here; the caller tells the person and opens a sales ticket, and
-     Dean chooses whether to resend from HQ. HQ (opts.hq, below) is the one place a fresh 30 days starts. */
-  if (win && win.ended && !opts.hq) {
+     Dean chooses whether to resend from HQ. HQ's "Start a fresh 30 days" (opts.fresh, below) is the one place a fresh
+     30 days starts (Dean, 6 Nov 2026: a normal resend never renews them, so after the 30 days it is refused too). */
+  if (win && win.ended && !opts.fresh) {
     return { ok: false, reason: 'ended', to: email, venue_id: pick.venue_id, venue_name: (vs0 && vs0[0] && vs0[0].name) || '',
              window_from: new Date(win.from).toISOString(), window_end: new Date(win.end).toISOString() };
   }
   let windowEnd = null, restart = false;
   if (opts.expiresAtMs != null) windowEnd = Number(opts.expiresAtMs);
-  else if (win && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ: a fresh 30 days from now
-  else if (win && !win.ended) windowEnd = win.end;                                                           // automatic: the same end, never reset
-  let token, expiresAt, shortened = false;
-  try { const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened; }
+  else if (win && opts.fresh && opts.hq) { windowEnd = Date.now() + VPA_PROSPECT_LINK_DAYS * 86400000; restart = true; }   // HQ's "Start a fresh 30 days" only
+  else if (win && !win.ended) windowEnd = win.end;                                                                         // every other send: the same end, never reset
+  let token, expiresAt, shortened = false, oneLink = false;
+  try {
+    let one = null;
+    if (restart) {
+      /* A fresh 30 days: link_from moves to now (below), the old code is dropped and a new one made for the new window. */
+      try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { link_from: new Date().toISOString() }); } catch (_) {}
+      try { await vpaPatch(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(pick.venue_id), { signin_code_enc: null }); } catch (_) {}   // before 175: no column, nothing to drop
+      await retireOthers(null);
+      one = await vpaProspectOneLink(env, pick.venue_id, authUserId, {});
+    } else if (win && !win.ended && !opts.self) {
+      /* Sends we make on purpose hand out the prospect's short link. A self-serve ask ("Send me a new link", /go/{code})
+         never does: it emails a long link of its own, same end, so nothing the public can press brings a used
+         short link back to life (security review, 6 Nov 2026). */
+      one = await vpaProspectOneLink(env, pick.venue_id, authUserId, { win: win });
+    }
+    if (one) { token = one.token; expiresAt = one.expiresAt; oneLink = true; await retireOthers(null); }
+    else {
+      await retireOthers(null);
+      const m = await vpaMintSigninLinkFor(env, authUserId, pick.venue_id, Date.now(), windowEnd); token = m.token; expiresAt = m.expiresAt; shortened = m.shortened;
+    }
+  }
   catch (e) { return { ok: false, reason: 'no_table' }; }
   /* THE JOURNEY-1 CLOCK RESTARTS WITH AN HQ RESEND: link_from is what the quiet list and the nudges count
      from. Before migration 151 the column is not there; the link still goes and HQ is told the 30 days
@@ -5124,22 +5763,30 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
   const done = { ok: true, to: email, auth_user_id: authUserId, venue_id: pick.venue_id, venue_name: venueName, has_mobile: !!user.phone,
                  expires_at: new Date(expiresAt).toISOString(), expires_words: expiresWords, days_left: daysLeft, shortened: shortened,
                  prospect: !!win, restarted: restart, redated: redated };
+  /* FOR A REPLY IN THEIR OWN THREAD (opts.returnOnly, Dean 5 Nov 2026): the same fresh link, retired-older-first and
+     capped like any other, handed back to the autopilot to put in its Instantly reply. No email from here: the
+     whole point is that our transactional email was junked or bounced. */
+  if (opts.returnOnly) return Object.assign(done, { url: url, kind: 'link' });
   /* THE FOLLOW-UP (opts.nudge, 3 Nov 2026): the words Dean approved, as he approved them (they carry their
      own hello and sign-off), then the same button. {days} and {expires} in his words are filled from THIS
      link, after it was minted (Dean, 4 Nov 2026: never a number that is not the real expiry). */
   if (opts.nudge) {
     const words = vpaFillDays(opts.nudge, daysLeft, expiresAt);
     const nudgeInner = vpaNudgeHtml(words) + BUTTON
-      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. It works until ' + vpaEsc(expiresWords) + '.</p>';
+      + '<p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a74">The button opens your own account and nothing else. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>';
     const subj = vpaFillDays(opts.subject || 'Your venueplay sign-in link', daysLeft, expiresAt);
     let sentN = false;
     try { sentN = await vpaSendEmail(env, email, subj, vpaVenueEmailCard(subj, nudgeInner, subj), VPA_PROSPECT_REPLY_TO); } catch (_) { sentN = false; }
-    if (!sentN) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+    if (!sentN) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
     return Object.assign(done, { words: words });
   }
+  /* A PROSPECT WHO HAS NOT SIGNED IN YET, before their offer's date (Dean, 7 Nov 2026): the same sentence as the welcome,
+     "Your free month starts the first time you sign in. Sign in by 30 November to keep $2.50 a player." */
+  const offerLine = win ? await vpaProspectSigninOfferWords(env, pick.venue_id, Date.now()) : '';
   const inner = '<h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Your sign-in link</h1>'
     + '<p style="' + P + '">' + (first ? 'Hi ' + vpaEsc(first) + ',' : 'Hi there,') + '</p>'
-    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. It works until ' + vpaEsc(expiresWords) + '.</p>'
+    + '<p style="' + P + '">Here is a fresh link to open your venueplay' + (venueName ? ' for ' + vpaEsc(venueName) : '') + '. Tap the button and you are in. ' + vpaEsc(vpaLinkAvailableWords(expiresAt)) + '</p>'
+    + (offerLine ? '<p style="' + P + '" data-offer-signin="1">' + vpaEsc(offerLine) + '</p>' : '')
     + BUTTON
     + '<p style="' + P + '">' + (user.phone ? 'You can also sign in any time with your mobile, and we will text you a code.' : 'Once you are in, pop in your mobile and from then on you sign in with a text code.') + '</p>'
     + '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#6a6a74">Did not ask for this? You can ignore it. The link only opens your own account, and nothing changes unless you tap it.</p>'
@@ -5149,8 +5796,61 @@ async function vpaSendSigninLink(env, authUserId, venueId, opts) {
     sent = await vpaSendEmail(env, email, 'Your venueplay sign-in link',
       vpaVenueEmailCard('A fresh link to open your venueplay' + (venueName ? ' for ' + venueName : '') + '.', inner, 'Your venueplay sign-in link'), VPA_PROSPECT_REPLY_TO);
   } catch (_) { sent = false; }
-  if (!sent) { await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
+  if (!sent) { if (!oneLink) await vpaProspectRetireLink(env, await vpaSigninTokenHash(token)); return { ok: false, reason: 'email_failed', to: email }; }
   return done;
+}
+/* ===========================================================================
+ * THE EASY WAY BACK IN BY THE VENUE'S CODE (Dean, 6 Nov 2026): venueplay.com.au/go/{venue code}.
+ * The venue's code is PUBLIC (the TV and every player see it), so it is NEVER a login key on its own: the page
+ * (venueplay/go-venue.html) only says "Sign in to {venue}" and offers to send a sign-in link to whatever is ON
+ * THAT ACCOUNT, never saying what that is.
+ *   POST /venue-signin/lookup { code }  -> { ok, venue }  the name only (the TV shows it already), or 404.
+ *   POST /venue-signin/send   { code }  -> { ok: true } WHATEVER happens (no venue, no login, over a limit, sent):
+ *        the login it goes to is the prospect's own, else the owner, else a manager; the link goes to THAT login's
+ *        email (vpaSendSigninLink, opts.self: a long one-tap link of its own, the prospect's same end, never the
+ *        short link). Email only. Nothing the caller typed is ever a destination.
+ * Limits: lookups 30 per network per 10 minutes; sends 6 per network an hour and 3 per venue an hour.
+ * ======================================================================== */
+const VPA_GO_LOOKUP_PER_IP = 30;
+const VPA_GO_SEND_PER_IP = 6;
+const VPA_GO_SEND_PER_VENUE = 3;
+function vpaGoCode(raw) { const c = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return /^[A-Z0-9]{6}$/.test(c) ? c : ''; }
+async function vpaGoVenue(env, code) {
+  if (!code) return null;
+  const v = await vpaSelect(env, 'vp_venues', 'join_code=eq.' + encodeURIComponent(code) + '&select=id,name,status&limit=2');
+  return (v && v.length === 1) ? v[0] : null;
+}
+async function vpaVenueSigninLookup(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'go-lookup', ip, VPA_GO_LOOKUP_PER_IP, 600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json({ ok: false }, 404);
+  const v = await vpaGoVenue(env, vpaGoCode(_b.body && _b.body.code));
+  if (!v || v.status === 'archived') return json({ ok: false }, 404);
+  return json({ ok: true, venue: v.name || 'your venue' });
+}
+async function vpaVenueSigninSend(request, env, json) {
+  const SAME = { ok: true };
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (ip && !(await helpIpLimit(env, 'go-send', ip, VPA_GO_SEND_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return json(SAME);
+  try {
+    const v = await vpaGoVenue(env, vpaGoCode(_b.body && _b.body.code));
+    if (!v || v.status === 'archived') return json(SAME);
+    if (!(await helpLimit(env, 'go-send-venue:' + v.id, VPA_GO_SEND_PER_VENUE, 3600))) return json(SAME);
+    const ids = [];
+    try { const pr = await vpaSelect(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(v.id) + '&select=auth_user_id&limit=1'); if (pr && pr[0] && pr[0].auth_user_id) ids.push(pr[0].auth_user_id); } catch (_) {}
+    const staff = await vpaSelect(env, 'vp_venue_staff', 'venue_id=eq.' + encodeURIComponent(v.id) + '&role=in.(owner,manager)&select=auth_user_id,role&limit=20');
+    (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((x) => { if (ids.indexOf(x.auth_user_id) < 0) ids.push(x.auth_user_id); });
+    let r = { ok: false };
+    for (let i = 0; i < ids.length && i < 4; i++) {
+      r = await vpaSendSigninLink(env, ids[i], v.id, { self: true });
+      if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
+    }
+    await vpaAudit(env, { actorId: null, label: 'self (venue code page)', role: null }, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + v.id, { via: 'go_code', reason: r.ok ? undefined : r.reason });
+  } catch (e) { console.log('[go] ' + String((e && e.message) || e).slice(0, 160)); }
+  return json(SAME);
 }
 async function vpaHandleOneClickResend(request, env, json) {
   const SAME = { ok: true };
@@ -5158,11 +5858,15 @@ async function vpaHandleOneClickResend(request, env, json) {
   if (ip && !(await helpIpLimit(env, 'oneclick-resend', ip, VPA_RESEND_PER_IP, 3600))) return json({ ok: false, busy: true }, 429);
   const _b = await vpaBody(request, json);
   if (!_b.ok) return json(SAME);
-  const t = String((_b.body && _b.body.t) || '');
+  const t = vpaSigninTokenShape(_b.body && _b.body.t);
   const e = String((_b.body && _b.body.e) || '').trim().toLowerCase();
   try {
     let who = null;
-    if (/^[A-Za-z0-9_-]{43}$/.test(t)) {
+    if (t && t.length === VPA_SHORT_LEN) {
+      /* A spent short link: the prospect it belongs to (migration 175). The new link goes by email to THAT login, long. */
+      const pr = await vpaSelect(env, 'vp_prospects', 'signin_code_hash=eq.' + (await vpaSigninTokenHash('short|' + t)) + '&select=auth_user_id,venue_id&limit=2');
+      if (pr && pr.length === 1 && pr[0].auth_user_id) who = { id: pr[0].auth_user_id, venue: pr[0].venue_id };
+    } else if (t) {
       const rows = await vpaSelect(env, 'vp_signin_links', 'token_hash=eq.' + (await vpaSigninTokenHash(t)) + '&select=auth_user_id,venue_id&limit=1');
       if (rows && rows[0]) who = { id: rows[0].auth_user_id, venue: rows[0].venue_id };
     }
@@ -5230,11 +5934,32 @@ function vpaSmsAllowedAt(ms) {
   }
   return t;
 }
+/* DEAN'S WORDING RULE (6 Nov 2026): never explain when the free month starts; say "This link is available for 30
+   days." (urgency), with the date. The number is the link's own, from the row that was made (30 for a fresh one,
+   fewer once their 30 days from setup are partly used), so it is never untrue. */
+function vpaLinkAvailableWords(expiresMs, nowMs) {
+  const n = Math.max(1, vpaDaysLeft(expiresMs, nowMs == null ? Date.now() : nowMs));
+  return 'This link is available for ' + n + (n === 1 ? ' day' : ' days') + ', until ' + vpaBneDateWords(expiresMs) + '.';
+}
+/* ONE SMS PART (Dean, 6 Nov 2026: "the sign-in text is too long"). No "venueplay:" prefix (the sender already shows
+   venueplay); venueplay is named once in the words (Spam Act: who it is from). Dean's words:
+     "Hi {first}, here's your venueplay sign-in link for {venue}: {short link} Available for 30 days. Reply STOP to opt out"
+   (vpaSendSms turns the opt-out into Mobile Message's own link), plus "We've emailed it too, check junk." 160 characters
+   is one part: a text over it drops " for {venue}", then the first name; past that it is two parts (never more: the
+   link and the opt-out are never cut, and every other piece has a fixed length). */
+const VPA_SMS_ONE_PART = 160;
 function vpaSigninTextBody(first, venueName, url, expiresMs) {
-  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 30);
-  const v = String(venueName || '').replace(/\s+/g, ' ').trim().slice(0, 60);
-  return 'venueplay: Hi ' + (f || 'there') + ', here is your new sign-in link' + (v ? ' for ' + v : '') + '. Tap to sign in, no password needed: '
-    + url + ' It works until ' + vpaBneDateWords(expiresMs) + '. Reply STOP to opt out';   // vpaSendSms makes this Mobile Message's {optout} link
+  const f = String(first || '').trim().split(/\s+/)[0].slice(0, 20);
+  const v = String(venueName || '').replace(/[^A-Za-z0-9 &'\u2019()-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+  const n = Math.max(1, vpaDaysLeft(expiresMs, Date.now()));
+  /* Dean, 6 Nov 2026: one short line that the login went by email too, and may be in junk. The text only ever goes
+     with the email (HQ's Resend sends both; a queued text follows the email that already went). */
+  const tail = ': ' + url + ' We\'ve emailed it too, check junk. Available for ' + n + (n === 1 ? ' day' : ' days') + '. Reply STOP to opt out';
+  const make = (who, where) => 'Hi ' + (who || 'there') + ', here\'s your venueplay sign-in link' + (where ? ' for ' + where : '') + tail;
+  let t = make(f, v);
+  if (t.length > VPA_SMS_ONE_PART) t = make(f, '');
+  if (t.length > VPA_SMS_ONE_PART) t = make('', '');
+  return t;
 }
 /* Who to text for this venue's login: the prospect's mobile (Edit details or setup), else the login's own. */
 async function vpaSigninTextTarget(env, venueId, user) {
@@ -5258,15 +5983,15 @@ async function vpaSigninTextTarget(env, venueId, user) {
 /* Make the text's own link and send it now. { ok } or { ok:false, status }. */
 async function vpaSigninTextSend(env, authUserId, venueId, venueName, target, expiresMs) {
   let minted;
-  try { minted = await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs); }
+  try { minted = (await vpaProspectOneLink(env, venueId, authUserId, {})) || await vpaMintSigninLinkFor(env, authUserId, venueId, Date.now(), expiresMs); }
   catch (e) { return { ok: false, status: 'no_table' }; }
   const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-  const user = await vpaAuthGetUser(env, authUserId);
-  const body = vpaSigninTextBody(target.first, venueName, vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);
+  const user = minted.short ? null : await vpaAuthGetUser(env, authUserId);
+  const body = vpaSigninTextBody(target.first, venueName, minted.short ? vpaShortSigninUrl(site, minted.token) : vpaOneClickUrl(site, minted.token, user && user.email), minted.expiresAt);   // before 175: the long link
   let r;
   try { r = await vpaSendSms(env, target.e164, body, 'signin-' + String(venueId).slice(0, 8)); } catch (_) { r = { ok: false }; }
   if (!r.ok) {
-    await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));
+    if (!minted.short) await vpaProspectRetireLink(env, await vpaSigninTokenHash(minted.token));   // never the prospect's one link
     if (r.blocked) await vpaSmsRecordOptOut(env, target.e164, venueId);
     return { ok: false, status: r.blocked ? 'opted_out' : (r.status || 'unreachable') };
   }
@@ -5350,6 +6075,9 @@ async function vpaAdminSigninLink(request, env, json) {
   const vs = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId) + '&select=id,name&limit=1');
   const venue = vs && vs[0];
   if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  /* "Start a fresh 30 days" (Dean, 6 Nov 2026): its own, clearly labelled HQ button, the ONLY thing that gives a
+     prospect a new window and a new link. The normal "Resend sign-in link" sends the same link, same end. */
+  const fresh = !!(_b.body && _b.body.fresh === true);
   // Whose link: the prospect's own login first (HQ > Prospects), then the venue's owner, then a manager.
   const ids = [];
   try {
@@ -5360,10 +6088,10 @@ async function vpaAdminSigninLink(request, env, json) {
   (staff || []).sort((a, b) => (a.role === 'owner' ? 0 : 1) - (b.role === 'owner' ? 0 : 1)).forEach((s) => { if (ids.indexOf(s.auth_user_id) < 0) ids.push(s.auth_user_id); });
   let r = { ok: false, reason: 'no_login' };
   for (let i = 0; i < ids.length && i < 6; i++) {
-    r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true });
+    r = await vpaSendSigninLink(env, ids[i], venueId, { hq: true, fresh: fresh });
     if (r.ok || (r.reason !== 'no_email' && r.reason !== 'no_venue' && r.reason !== 'no_login')) break;
   }
-  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason });
+  await vpaAudit(env, actor, r.ok ? 'signin_link_sent' : 'signin_link_refused', 'venue:' + venueId, { name: venue.name, to: r.to || undefined, reason: r.ok ? undefined : r.reason, fresh_30_days: fresh || undefined });
   /* AND BY TEXT (Dean, 4 Nov 2026), when HQ's one button asks (text: true) and we have their mobile. */
   let text = null;
   if (r.ok && _b.body && _b.body.text === true) {
@@ -5374,6 +6102,7 @@ async function vpaAdminSigninLink(request, env, json) {
                           text: text || undefined, line: text ? vpaSigninSentLine(r, text) : undefined,
                           note: (r.restarted && !r.redated) ? 'Their link lasts ' + r.days_left + ' days, but the follow-up emails could not be re-dated from today (run migration 151).' : undefined });
   const name = venue.name || 'That venue';
+  if (r.reason === 'ended') return json({ error: 'Their 30 days ended ' + vpaBneDateWords(Date.parse(r.window_end)) + ', so the same link cannot be sent again. To give them a new link and a fresh 30 days, press Start a fresh 30 days.', ended: true, window_end: r.window_end }, 409);
   if (r.reason === 'limit') return json({ error: r.count + ' sign-in links have gone to ' + r.to + ' in the last day. Check with them before sending another.' }, 429);
   if (r.reason === 'email_failed') return json({ error: 'The email to ' + r.to + ' did not send, so nothing reached them. Try again in a minute.' }, 502);
   if (r.reason === 'no_table') return json({ error: 'Sign-in links need migration 123, which is not on this database.' }, 503);
@@ -5469,11 +6198,109 @@ function vpaOfferMonthPhrase(code) {
   return cm ? 'while the ' + VPA_MONTH_NAMES[cm.m] + ' offer runs' : 'while our offer runs';
 }
 
-/* The offer's last day (Dean, 5 Nov 2026): " You just need to start by 30 November." for OFFER-NOV-2026, 31 December for a
-   DEC code. Starts with a space so it sits after a full stop; empty when no month is known. */
-function vpaOfferDeadline(code) {
+/* THE OFFER NEEDS THE FREE MONTH STARTED BY ITS DATE (Dean, 7 Nov 2026, for the Thu 12 Nov release): "to get the $2.50
+   offer rate, a prospect must START the free month, i.e. sign in for the FIRST time, by that offer's deadline. Joining
+   (being set up) by the deadline is NOT enough. If the first sign-in comes AFTER the deadline, the free month still runs,
+   but the rate is the standard $3.00."
+     - the deadline is the LAST DAY of the code's month: OFFER-NOV-2026 30 November, OFFER-DEC-2026 31 December
+       (vp-offer.js rows), to the end of that day in Brisbane (UTC+10 all year), inclusive: 30 Nov 23:59:59.999 is on
+       time, 1 Dec 00:00:00.000 is late. The same end-of-day rule as vpaCodeInDate and the 5-day keep after a pause.
+     - a code with no month in it (none are in use) has no date: the old rule, "is an offer open at that moment".
+   vpaOfferStartDeadlineMs is the one place the moment is worked out; vpaOfferDayWords only words it. */
+function vpaOfferStartDeadlineMs(code) {
   const cm = vpaCodeMonth(code);
-  return cm ? ' You just need to start by ' + new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] + '.' : '';
+  return cm ? Date.UTC(cm.y, cm.m + 1, 1) - 10 * 3600 * 1000 - 1 : NaN;
+}
+function vpaOfferDayWords(code) {
+  const cm = vpaCodeMonth(code);
+  return cm ? new Date(Date.UTC(cm.y, cm.m + 1, 0)).getUTCDate() + ' ' + VPA_MONTH_NAMES[cm.m] : '';
+}
+/* The rate a free month started at atMs gets, for this offer code: the offer by its date, else the standard rate. */
+function vpaOfferRateAt(env, code, atMs) {
+  const end = vpaOfferStartDeadlineMs(code);
+  if (isFinite(end)) return atMs <= end ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
+  return vpaLiveCodes(env, atMs).length ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
+}
+/* Dean's sentence, with the offer's own day: "Your free month starts the first time you sign in. Sign in by 30 November
+   to keep $2.50 a player." Empty when the code has no date. */
+function vpaOfferSigninWords(code) {
+  const day = vpaOfferDayWords(code);
+  return day ? 'Your free month starts the first time you sign in. Sign in by ' + day + ' to keep $' + VPA_OFFER_RATE.toFixed(2) + ' a player.' : '';
+}
+/* WHICH OFFER A PROSPECT IS ON. It is not a column on vp_prospects (no migration): it is written on the setup's audit row
+   (vp_admin_audit prospect_set_up, detail.offer_code) and on every welcome sent (vp_prospect_welcomes detail.offerCode;
+   a resend after the setup's offer ended names this month's). Their offer is the one with the LATEST date among those:
+   the newest promise made to them in writing, never less than an email they were sent. A cancelled or failed welcome
+   never reached them and does not count. { venue_id: code }; a venue with nothing recorded is left out. */
+async function vpaProspectOfferCodes(env, venueIds) {
+  const out = {};
+  const take = function (vid, code) {
+    const c = String(code || '').trim().toUpperCase();
+    if (!vid || !c) return;
+    const have = out[vid];
+    if (!have) { out[vid] = c; return; }
+    const a = vpaOfferStartDeadlineMs(have), b = vpaOfferStartDeadlineMs(c);
+    if (isFinite(b) && (!isFinite(a) || b > a)) out[vid] = c;
+  };
+  const ids = (venueIds || []).filter(Boolean);
+  for (let i = 0; i < ids.length; i += 100) {
+    const part = ids.slice(i, i + 100);
+    try {
+      const targets = part.map(function (id) { return '"venue:' + id + '"'; }).join(',');
+      (await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.prospect_set_up&target=in.(' + encodeURIComponent(targets) + ')&select=target,detail&order=created_at.asc'))
+        .forEach(function (a) { if (a && a.detail && typeof a.detail === 'object') take(String(a.target || '').replace(/^venue:/, ''), a.detail.offer_code); });
+    } catch (_) {}
+    try {
+      (await vpaSelectAll(env, 'vp_prospect_welcomes', 'venue_id=in.(' + part.map(encodeURIComponent).join(',') + ')&select=venue_id,status,detail&order=send_at.asc'))
+        .forEach(function (w) { if (w && w.status !== 'cancelled' && w.status !== 'failed' && w.detail && typeof w.detail === 'object') take(w.venue_id, w.detail.offerCode); });
+    } catch (_) {}
+  }
+  return out;
+}
+/* The sign-in sentence for a prospect's venue, or '' (signed in already, no dated offer, or its day has passed). */
+async function vpaProspectSigninOfferWords(env, venueId, nowMs) {
+  try {
+    const pr = await vpaProspectRowFor(env, 'venue_id', venueId);
+    if (!pr || pr.first_signin_at || pr.paused_at || pr.cancelled_at) return '';
+    const code = await vpaProspectOfferCode(env, venueId);
+    return nowMs <= vpaOfferStartDeadlineMs(code) ? vpaOfferSigninWords(code) : '';
+  } catch (_) { return ''; }
+}
+async function vpaProspectOfferCode(env, venueId) {
+  if (!venueId) return null;
+  return (await vpaProspectOfferCodes(env, [venueId]))[venueId] || null;
+}
+/* WHAT RATE A PROSPECT HAS, OR WILL GET, in HQ's words, on the Worker's clock (Date.now, so the suite can fake it).
+     signed in (first_signin_at): the rate written at that first sign-in, never worked out again
+     not signed in yet: "Gets $2.50 if they sign in by 30 November, else $3.00", until that day has passed
+   lastSignInMs: Auth knows of a sign-in the app has not recorded yet; the sweep starts the month from it. */
+function vpaProspectRateInfo(env, r, code, lastSignInMs, nowMs) {
+  const money = function (n) { return '$' + Number(n).toFixed(2); };
+  const day = vpaOfferDayWords(code), end = vpaOfferStartDeadlineMs(code);
+  const info = { offer_code: code || null, offer_signin_by: day || null, offer_signin_by_at: isFinite(end) ? new Date(end).toISOString() : null,
+    rate: null, rate_decided: false, rate_words: '' };
+  if (r && r.first_signin_at) {
+    const stored = Number(r.offer_rate);
+    info.rate_decided = true;
+    if (!(stored > 0)) { info.rate_words = 'Not recorded'; return info; }
+    info.rate = stored;
+    const onOffer = stored < VPA_STANDARD_RATE;
+    info.rate_words = money(stored) + ' a player' + (day ? (onOffer ? ', first sign-in by ' + day : ', first sign-in after ' + day) : '');
+    return info;
+  }
+  if (lastSignInMs != null && isFinite(lastSignInMs)) {
+    info.rate = vpaOfferRateAt(env, code, Math.min(lastSignInMs, nowMs));
+    info.rate_words = money(info.rate) + ' a player' + (day ? (info.rate < VPA_STANDARD_RATE ? ', signed in by ' + day : ', signed in after ' + day) : '') + ' (being recorded)';
+    return info;
+  }
+  info.rate = vpaOfferRateAt(env, code, nowMs);
+  if (info.rate < VPA_STANDARD_RATE) {
+    info.rate_words = day ? 'Gets ' + money(VPA_OFFER_RATE) + ' if they sign in by ' + day + ', else ' + money(VPA_STANDARD_RATE)
+      : 'Gets ' + money(VPA_OFFER_RATE) + ' if an offer is open when they first sign in, else ' + money(VPA_STANDARD_RATE);
+  } else {
+    info.rate_words = money(VPA_STANDARD_RATE) + (day ? ', the ' + day + ' offer date has passed' : ', no offer open');
+  }
+  return info;
 }
 
 /* THE PROSPECT'S ONE EMAIL, emails/welcome-prospect.html (version 2, Dean, 28 Oct 2026). Short and
@@ -5512,15 +6339,27 @@ async function vpaRenderProspectWelcome(env, o) {
   const res = await fetch(site + '/emails/welcome-prospect.html');
   if (!res.ok) return null;
   let html = String(await res.text()).replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // the template's notes are for us, not the inbox
-  const founding = vpaFoundingOpenNow(env);
-  const rate = founding ? 2.50 : 3.00;
+  /* THE OFFER IN THE WELCOME (Dean, 7 Nov 2026): their offer code's sign-in date decides it. While that day has not
+     passed, the email offers $2.50 IF they sign in by it ("Your free month starts the first time you sign in. Sign in by
+     30 November to keep $2.50 a player."); after it, the standard rate. A code with no date: whether an offer is open. */
+  const offerCode = o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code;   // a welcome booked before offer_code existed: this month's
+  const signinBy = vpaOfferDayWords(offerCode);
+  /* {{offer_deadline}} is the bare day in the new words ("Sign in by {{offer_deadline}} to keep"). The template on Pages
+     before this release used the same token for a whole sentence; this Worker goes up first (CLAUDE.md), so until Pages
+     serves the new template the old one still gets its old sentence, never "us.30 November". */
+  const newWords = html.indexOf('Sign in by {{offer_deadline}}') !== -1;
+  const founding = vpaOfferRateAt(env, offerCode, Date.now()) < VPA_STANDARD_RATE;
+  const rate = founding ? VPA_OFFER_RATE : VPA_STANDARD_RATE;
   /* HOW THEY SIGN IN (Dean, 29 Oct 2026: "everyone has their phone in their hand"). A login with their
      mobile on it signs in by a texted code (the MobileMessage hook, as every venue login does), and the
      button opens that sign-in with their number filled in. Otherwise the one-click link, else email. */
   const mobile = vpaProspectPhone(o.mobile);
   const sms = !!(o.mobileLogin && mobile && mobile.indexOf('04') === 0);
-  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken,
-    nooneclick: !sms && !o.signinToken, founding: founding, standard: !founding });
+  /* The prospect's short link (migration 175) opens the normal sign-in and texts a code (Dean, 6 Nov 2026). */
+  const viaCode = !sms && !!o.signinToken && VPA_SHORT_RE.test(String(o.signinToken));
+  html = vpaTplSections(html, { slides: o.slides > 0, noslides: !(o.slides > 0), sms: sms, samelogin: sms && !!o.sameLogin, oneclick: !sms && !!o.signinToken && !viaCode, viacode: viaCode,
+    nooneclick: !sms && !o.signinToken, founding: founding && !!signinBy, foundingnodate: founding && !signinBy, standard: !founding,
+    offerpause: founding, plainpause: !founding });   // offerpause/plainpause: the template before 12 Nov (Pages may lag the Worker)
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
     .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'your venue'))
@@ -5530,8 +6369,8 @@ async function vpaRenderProspectWelcome(env, o) {
     .replace(/{{cancel_url}}/g, (o.foundingId && await vpaProspectCancelLink(env, o.foundingId)) || 'mailto:support@venueplay.com.au?subject=Cancel%20venueplay')
     .replace(/{{login_email}}/g, vpaEsc(email))
     .replace(/{{player_rate}}/g, '$' + rate.toFixed(2))
-    .replace(/{{offer_deadline}}/g, vpaOfferDeadline(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))
-    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(o.offerCode !== undefined ? o.offerCode : vpaProspectOffer(env).code))   // a welcome booked before offer_code existed: this month's
+    .replace(/{{offer_deadline}}/g, newWords ? vpaEsc(signinBy) : (signinBy ? ' You just need to start by ' + vpaEsc(signinBy) + '.' : ''))   // the offer's own day, "30 November" (Dean, 7 Nov 2026)
+    .replace(/{{offer_phrase}}/g, vpaOfferMonthPhrase(offerCode))
     .replace(/{{terms_url}}/g, site + '/terms')
     .replace(/{{privacy_url}}/g, site + '/privacy')
     .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email))
@@ -5644,8 +6483,15 @@ async function vpaProspectWelcomeNow(request, env, json) {
   if (!(await vpaResendCancel(env, g.row.resend_id))) return json({ error: 'Resend would not take back the booked one, so nothing was sent twice. Try again in a minute.' }, 502);
   const render = Object.assign({}, g.row.detail || {});
   let token = null;
-  if (render.authUserId && !render.mobileLogin) { try { token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now()); } catch (_) { token = null; } }
-  await vpaProspectRetireLink(env, g.row.signin_token_hash);
+  let same = false;
+  if (render.authUserId && !render.mobileLogin) {
+    try {
+      const one = await vpaProspectOneLink(env, g.row.venue_id, render.authUserId, {});   // the prospect's one link (Dean, 6 Nov 2026)
+      if (one) { token = one.token; same = one.hash === g.row.signin_token_hash; }
+      else token = await vpaMintSigninLink(env, render.authUserId, g.row.venue_id, Date.now());
+    } catch (_) { token = null; }
+  }
+  if (!same) await vpaProspectRetireLink(env, g.row.signin_token_hash);
   const r = await vpaFireProspectWelcome(env, Object.assign({}, render, { signinToken: token, sendAtMs: null }));
   const at = new Date().toISOString();
   if (!r.ok) {
@@ -5682,11 +6528,12 @@ async function vpbCardLink(request, env, json) {
   const f = fr && fr[0];
   if (!f) return json({ error: 'This venue has no account record yet. Reply to Dean\'s email and he will sort it.' }, 409);
   const prow = await vpaProspectRowFor(env, 'venue_id', venueId);
-  const rate = vpaProspectPrice(env, prow).rate;   // a prospect keeps the offer they were set up on until a pause
+  const pp = await vpaProspectPriceNow(env, prow), rate = pp.rate;   // a prospect keeps the offer they were set up on through the month and the 5-day grace
   const seats = parseInt(f.max_seats, 10) || parseInt(vr[0].max_players, 10) || VPA_PROSPECT_DEFAULT_PLAYERS;
   const out = { ok: true, has_card: !!f.stripe_subscription_id, rate: rate, seats: seats, monthly: Math.round(seats * rate * 100) / 100 };
   if (prow && prow.free_month_ends_at) { out.free_month_ends_at = prow.free_month_ends_at; out.ends_words = vpaBneDateWords(Date.parse(prow.free_month_ends_at)); }
   if (prow && prow.paused_at) out.paused = true;
+  if (pp.grace) { out.offer_grace = true; out.offer_kept_until = pp.grace_ends_at; out.offer_kept_words = vpaBneDateWords(Date.parse(pp.grace_ends_at)); }
   if (!out.has_card) {
     out.card_url = await vpaCardLink(env, fid);
     if (!out.card_url) return json({ error: 'The card link could not be made just now. Try again in a minute.' }, 503);
@@ -5998,7 +6845,7 @@ async function vpaResendProspectWelcome(env, actor, venue, f, which, b, json) {
 
   let token = null;
   if (login && !sms) {
-    try { token = await vpaMintSigninLink(env, login.id, venue.id, sendAtMs || now); }
+    try { const one = await vpaProspectOneLink(env, venue.id, login.id, {}); token = one ? one.token : await vpaMintSigninLink(env, login.id, venue.id, sendAtMs || now); }
     catch (e) { token = null; warnings.push('The one-click sign-in was not made (migration 123), so their button asks for a sign-in link instead.'); }
   }
   const render = { foundingId: f.id, email: email, firstName: String(prow.contact_name || setup.first_name || last.firstName || '').trim().slice(0, 60),
@@ -8649,13 +9496,15 @@ async function vpaAddCardRedirect(request, env) {
     /* A PROSPECT (migration 127): the offer they were set up on holds through their free month, and a pause
        takes it away (vpaProspectPrice). Anyone else: is the deal open today, as before. */
     const prow = await vpaProspectRowFor(env, 'founding_id', foundingId);
-    const founding = prow ? vpaProspectPrice(env, prow).founding : vpaFoundingOpenNow(env);
+    const cardAtMs = Date.now();   // THE moment of the card-add: the price, the grace and the trial are all decided on it
+    const pprice = prow ? await vpaProspectPriceNow(env, prow, cardAtMs) : null;
+    const founding = pprice ? pprice.founding : vpaFoundingOpenNow(env);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
       : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
     if (!price) return page('We could not open the payment page', 'Reply to your welcome email and we will send you another way to pay.');
 
-    const nowTs = Math.floor(Date.now() / 1000);
+    const nowTs = Math.floor(cardAtMs / 1000);
     // Their free month starts when they add the card, not when HQ built the venue: they have not
     // had the product until now. Stripe rejects a trial_end under ~2 days out.
     /* A WHOLE 30 DAYS, TO THE END OF THE 30TH DAY IN BRISBANE (Dean, 29 Oct 2026). Exactly now + 30 days was
@@ -8665,8 +9514,9 @@ async function vpaAddCardRedirect(request, env) {
     const bneToday = Math.floor((nowTs + 10 * 3600) / 86400) * 86400 - 10 * 3600;   // 00:00 today, Brisbane
     let trialTs = Math.max(bneToday + 31 * 24 * 60 * 60 - 1, nowTs + 3 * 24 * 60 * 60);
     /* A prospect's free month started at their first sign-in (migration 127): a card added on day 10 is first
-       charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. */
-    if (prow && prow.paused_at) trialTs = 0;
+       charged when that month ends, not 30 days later. After a pause the month is used: no trial at all. So is a
+       month that has simply run past its end before the hourly sweep paused it (vpaProspectMonthOver). */
+    if (prow && vpaProspectMonthOver(prow, cardAtMs)) trialTs = 0;
     else if (prow && prow.free_month_ends_at) trialTs = Math.max(Math.floor(Date.parse(prow.free_month_ends_at) / 1000), nowTs + 3 * 24 * 60 * 60);
 
     const form = new URLSearchParams();
@@ -8674,6 +9524,13 @@ async function vpaAddCardRedirect(request, env) {
     form.set('line_items[0][price]', price);
     form.set('line_items[0][quantity]', String(seats));
     if (trialTs) form.set('subscription_data[trial_end]', String(trialTs));
+    /* THE 5-DAY OFFER GRACE: a payment page opened inside the grace closes when the grace does (Stripe takes 30
+       minutes to 24 hours), so a page left open on day 5 cannot be finished at the offer price on day 7. */
+    if (pprice && pprice.grace) {
+      const graceEndTs = Math.floor(Date.parse(pprice.grace_ends_at) / 1000) + 1;
+      form.set('expires_at', String(Math.min(Math.max(graceEndTs, nowTs + 31 * 60), nowTs + 23 * 3600)));
+      form.set('metadata[offer_grace]', '1');
+    }
     form.set('subscription_data[metadata][venue]', f.venue_name || '');
     form.set('subscription_data[metadata][row_id]', foundingId);
     form.set('subscription_data[metadata][tier]', founding ? 'founding' : 'standard');
@@ -9197,22 +10054,296 @@ function vpaPlainLineDesc(desc) {
     .trim();
 }
 
-function vpaInvoiceLinesHtml(invoice) {
+/* `split` (optional) is vpbSplitPlanLine's answer. For a group, Stripe's ONE plan line ("45 Players x
+   venueplay plan (monthly)") is printed as one block per venue (Dean, 5 Nov 2026, INBOX 75c):
+       The Royal Hotel: 20 players at $2.50 each   $50.00
+         Extra players: 2 x $2.00 (05/11/2026)     $4.00
+         Total for The Royal Hotel                 $54.00
+   then the next venue, then the account total. Each venue's extras are Stripe's own lines on this invoice,
+   moved under the venue they name and otherwise unchanged; nothing else moves. The rows marked
+   data-vp="line" are every charge on the invoice exactly once, in cents Stripe wrote, so they add up to
+   what they did before (vpbSplitPlanLine checks it before the split is ever handed here). The totals and
+   "less" rows are sums of those, and the account rows only print when they land exactly on what was paid. */
+function vpaInvoiceLinesHtml(invoice, split) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   if (!Array.isArray(lines) || lines.length < 1) return '';
-  const rows = lines.map(function (l) {
+  const usable = !!(split && Array.isArray(split.venues) && split.venues.length);
+  const money = function (cents) { return (cents < 0 ? '-$' : '$') + (Math.abs(cents) / 100).toFixed(2); };
+  const cell = function (desc, cents, kind) {
+    const sub = kind === 'extra', tot = kind === 'sum' || kind === 'total';
+    // The marker only on a split table: an invoice we do not split is printed byte for byte as before.
+    return '<tr' + (usable ? ' data-vp="' + (kind || 'line') + '"' : '') + '>'
+      + '<td style="padding:' + (sub ? '4px 0 4px 14px' : '7px 0') + ';font-size:' + (sub ? '12.5px' : '13.5px') + ';color:'
+      + (sub ? '#4a4a55' : '#0A0A0B') + (tot ? ';font-weight:700' : '') + ';border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
+      + '<td style="padding:' + (sub ? '4px 0' : '7px 0') + ';font-size:' + (sub ? '12.5px' : '13.5px') + ';color:#0A0A0B;text-align:right;white-space:nowrap'
+      + (tot ? ';font-weight:700' : '') + ';border-bottom:1px solid #f0f0f3">' + money(cents) + '</td></tr>';
+  };
+  const taken = {};
+  if (usable) (split.taken || []).forEach(function (i) { taken[i] = true; });
+  const rows = lines.map(function (l, i) {
+    if (usable && split.index === i) {
+      return split.venues.map(function (v) {
+        let h = cell(v.words, Number(v.cents), 'line');
+        (v.extras || []).forEach(function (x) { h += cell(x.words, Number(x.cents), 'extra'); });
+        if ((v.extras || []).length) h += cell('Total for ' + v.label, Number(v.total), 'sum');
+        return h;
+      }).join('');
+    }
+    if (taken[i]) return '';                       // printed under its venue above
     const amt = Number(l.amount || 0);
     const desc = vpaPlainLineDesc((l && l.description) || 'venueplay') || 'venueplay';
-    return '<tr>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
-      + '<td style="padding:7px 0;font-size:13.5px;color:#0A0A0B;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
-      + (amt / 100).toFixed(2) + '</td></tr>';
+    return cell(desc, amt, 'line');
   }).join('');
+  let foot = '';
+  if (usable && split.account) {
+    const a = split.account;
+    foot += cell('Total for all venues', a.lines_cents, 'total');
+    if (a.discount_cents > 0) foot += cell('Discount', -a.discount_cents, 'less');
+    if (a.credit_cents > 0) foot += cell('Credit on your account', -a.credit_cents, 'less');
+  }
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
        + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
        + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">What this is for</p>'
-       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>'
+       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + foot + '</table>'
        + '</td></tr></table>';
+}
+
+/* ====================== GROUP INVOICES BROKEN DOWN PER VENUE (INBOX 44b, 5 Nov 2026) ======================
+   Dean: a group's invoice and receipt should say "<venue>: N players at $X", without changing what is
+   charged.
+
+   HOW A GROUP IS BILLED TODAY. One Stripe subscription per account, with ONE item whose quantity is the
+   total players across every venue (vpbAccountTotal), so Stripe writes ONE line, "45 Players x venueplay
+   plan (monthly) (at $2.50 / month)". The money is that line, less any coupon, less any credit on the
+   customer (a new pub's free month, an annual reduction), plus any invoice items (a big night, added
+   players), which already name their venue.
+
+   WHAT THIS DOES. It reads that one plan line and says it per venue. Nothing about the money moves:
+     - the split is only ever made when the venues' billed players add up EXACTLY to the line's quantity
+       and the line's amount is exactly quantity x one unit price, so the per-venue rows are the same cents
+       as the line, by construction. Any doubt (drift, a venue part-way through a change, a line we do not
+       recognise, a single venue) and the line is printed as Stripe wrote it, exactly as before;
+     - the receipt and the payment reminder print the rows (no Stripe call at all);
+     - behind VPB_GROUP_INVOICE_LINES (default OFF), Stripe's own draft invoice gets the same rows as its
+       memo (the invoice description) and in its metadata, on invoice.created. Description and metadata
+       ONLY: no amount, quantity, price, item, coupon or line is written. Off, nothing reaches Stripe.
+   The coupon and the credits stay single invoice-level amounts, as Stripe applies them.
+
+   WHO COUNTS. vpbBilledPlayers is the one rule for "how many players is this venue billed for", the same
+   one vpbAccountTotal sums to set the Stripe quantity, so the split and the charge cannot disagree. */
+function vpbBilledPlayers(v) {
+  if (!v || v.cancel_at_period_end) return 0;   // venues cancelling at period end are no longer billed
+  const billed = (v.pending_players != null) ? parseInt(v.pending_players, 10) : parseInt(v.max_players, 10);
+  return billed || 0;
+}
+function vpbGroupInvoiceLinesOn(env) { return !!(env && String(env.VPB_GROUP_INVOICE_LINES || '') === '1'); }
+
+/* The ONE line that is the plan itself: the subscription's own recurring line. A proration, an invoice
+   item (big night, added players, a moved extras charge) or anything we cannot recognise is not it. */
+function vpbPlanLineIndex(invoice) {
+  const lines = (invoice && invoice.lines && invoice.lines.data) || [];
+  if (!Array.isArray(lines)) return -1;
+  const hits = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i] || {};
+    if (l.proration === true) continue;
+    if (l.invoice_item || l.type === 'invoiceitem'
+        || (l.parent && l.parent.type === 'invoice_item_details')) continue;
+    const isSub = l.type === 'subscription' || !!l.subscription_item
+      || !!(l.parent && (l.parent.type === 'subscription_item_details' || l.parent.subscription_item_details))
+      || /^\s*\d+\s+Players?\s*[×x]\s/i.test(String(l.description || ''));
+    if (isSub) hits.push(i);
+  }
+  return hits.length === 1 ? hits[0] : -1;
+}
+
+/* Annual or monthly, from the line itself. Words only: never used to work out an amount. */
+function vpbLineInterval(l) {
+  const iv = (l && ((l.price && l.price.recurring && l.price.recurring.interval) || (l.plan && l.plan.interval))) || '';
+  if (iv === 'year') return 'year';
+  if (iv === 'month') return 'month';
+  return /\b(annual|yearly)\b|\/\s*year\b/i.test(String((l && l.description) || '')) ? 'year' : 'month';
+}
+
+/* PURE. The plan line said per venue, or null when it cannot be said exactly.
+   venues: [{ id, name, postcode, max_players, pending_players, cancel_at_period_end }] from our table, or
+   [{ id, name, players }] when read back from the invoice's own metadata. */
+function vpbSplitPlanLine(invoice, venues) {
+  const idx = vpbPlanLineIndex(invoice);
+  if (idx < 0) return null;
+  const l = invoice.lines.data[idx];
+  const qty = parseInt(l.quantity, 10);
+  const amount = Number(l.amount);
+  if (!(qty > 0) || !Number.isInteger(amount) || !(amount > 0)) return null;
+  const unitFromPrice = l.price && Number.isInteger(l.price.unit_amount) ? l.price.unit_amount : null;
+  const unit = unitFromPrice != null ? unitFromPrice : amount / qty;
+  if (!Number.isInteger(unit) || !(unit > 0) || unit * qty !== amount) return null;   // tiered, or not ours
+  const list = (Array.isArray(venues) ? venues : []).map(function (v) {
+    const players = (v && v.players != null) ? (parseInt(v.players, 10) || 0) : vpbBilledPlayers(v);
+    return { id: (v && v.id) || null, name: String((v && v.name) || '').trim() || 'Your venue',
+             postcode: (v && v.postcode) ? String(v.postcode) : '', players: players };
+  }).filter(function (v) { return v.players > 0; });
+  if (list.length < 2) return null;                        // one venue: Stripe's line already says it
+  const sum = list.reduce(function (n, v) { return n + v.players; }, 0);
+  if (sum !== qty) return null;                            // our table and Stripe disagree: say nothing new
+  // Two pubs with one name (there are about a hundred Royal Hotels): the postcode tells them apart.
+  const seen = {};
+  list.forEach(function (v) { const k = v.name.toLowerCase(); seen[k] = (seen[k] || 0) + 1; });
+  list.sort(function (a, b) { return a.name.localeCompare(b.name) || a.postcode.localeCompare(b.postcode); });
+  const per = vpbLineInterval(l) === 'year' ? ' a year' : '';
+  const rate = '$' + (unit / 100).toFixed(2);
+  const rows = list.map(function (v) {
+    const label = v.name + (seen[v.name.toLowerCase()] > 1 && v.postcode ? ' (' + v.postcode + ')' : '');
+    return { id: v.id, name: v.name, postcode: v.postcode, label: label, players: v.players, cents: v.players * unit,
+             words: label + ': ' + v.players + ' player' + (v.players === 1 ? '' : 's') + ' at ' + rate + ' each' + per,
+             extras: [], total: v.players * unit };
+  });
+  // sum === qty and unit * qty === amount above, so these rows add up to the line's amount exactly.
+
+  /* EACH VENUE'S EXTRAS, from Stripe's own lines on THIS invoice (Dean, 5 Nov 2026, INBOX 75c). The game
+     Worker's big night writes "<venue> - Extra Player - DD/MM/YYYY" at $2.00 a head, or at $1.00 with
+     " (3rd big night, plan moved up)" when the third night in a row moved the plan up (chargeNightOverage);
+     an added player on the billing page writes the same "<venue> - Extra Player - <date>" at the plan rate
+     (vpbAdjustPlayerBilling). Most big nights are their own invoice on the night, so a monthly bill carries
+     them only when one could not be collected on the night and rode the renewal. Nothing is worked out
+     here: the quantity, unit and amount are Stripe's. A line is put under a venue only when its name is
+     that venue's, and only one venue has that name; anything else stays where Stripe put it. */
+  const byName = {};
+  rows.forEach(function (r) { const k = r.name.toLowerCase(); byName[k] = (k in byName) ? null : r; });
+  const taken = [];
+  const all = invoice.lines.data;
+  for (let i = 0; i < all.length; i++) {
+    if (i === idx) continue;
+    const x = vpbExtraLine(all[i]);
+    if (!x) continue;
+    const r = byName[x.venue.toLowerCase()];
+    if (!r) continue;
+    r.extras.push({ index: i, words: x.words, cents: x.cents, qty: x.qty, unit_cents: x.unit });
+    r.total += x.cents;
+    taken.push(i);
+  }
+
+  /* THE ACCOUNT TOTAL: every line once, then what came off. Printed only when it lands exactly on what was
+     paid (or is due), so the email can never show a sum that disagrees with Stripe. */
+  const linesCents = all.reduce(function (n, x) { return n + (Number(x && x.amount) || 0); }, 0);
+  const discount = Array.isArray(invoice.total_discount_amounts)
+    ? invoice.total_discount_amounts.reduce(function (n, d) { return n + (Number(d && d.amount) || 0); }, 0) : 0;
+  const due = Number(invoice.amount_paid) > 0 ? Number(invoice.amount_paid) : Number(invoice.amount_due || 0);
+  const credit = linesCents - discount - due;
+  const account = (Number.isInteger(linesCents) && credit >= 0 && Number.isInteger(credit))
+    ? { lines_cents: linesCents, discount_cents: discount, credit_cents: credit, paid_cents: due } : null;
+  return { index: idx, unit_cents: unit, interval: per ? 'year' : 'month', players: qty, cents: amount,
+           rows: rows, venues: rows, taken: taken, account: account };
+}
+
+/* One big-night or added-player line, read back from Stripe's own fields, or null. */
+function vpbExtraLine(l) {
+  if (!l || l.proration === true) return null;
+  const m = /^(.+?) - Extra Player - (\d{2}\/\d{2}\/\d{4})( \(3rd big night, plan moved up\))?\s*$/.exec(String(l.description || ''));
+  if (!m) return null;
+  const qty = parseInt(l.quantity, 10);
+  const cents = Number(l.amount);
+  if (!(qty > 0) || !Number.isInteger(cents) || !(cents > 0) || cents % qty !== 0) return null;
+  const unit = cents / qty;
+  const third = !!m[3];
+  const bigNight = third || unit === 200;
+  return { venue: m[1].trim(), date: m[2], qty: qty, unit: unit, cents: cents, third: third,
+           words: (bigNight ? 'Extra players: ' : 'Players added: ') + qty + ' x $' + (unit / 100).toFixed(2)
+                  + ' (' + m[2] + (third ? ', 3rd big night, plan moved up' : '') + ')' };
+}
+
+/* The rows Stripe was given (metadata written on invoice.created), when they are there and still exact. */
+function vpbSplitFromMetadata(invoice) {
+  const md = (invoice && invoice.metadata) || {};
+  const n = parseInt(md.vp_lines_n, 10);
+  if (!(n >= 2) || n > 40) return null;
+  const venues = [];
+  for (let i = 1; i <= n; i++) {
+    let o = null;
+    try { o = JSON.parse(String(md['vp_venue_' + i] || '')); } catch (_) { return null; }
+    if (!o || typeof o !== 'object') return null;   // a venue with no players drops out in the split
+    venues.push({ id: o.v || null, name: o.n || '', postcode: o.pc || '', players: parseInt(o.p, 10) });
+  }
+  return vpbSplitPlanLine(invoice, venues);
+}
+
+/* The split for one invoice, for the receipt and the reminder. Stripe's own metadata first (what the
+   invoice itself was told), else our table. NEVER THROWS and never blocks an email: any failure is null,
+   and null prints the invoice exactly as before. */
+async function vpbInvoiceVenueSplit(env, invoice) {
+  try {
+    if (vpbPlanLineIndex(invoice) < 0) return null;
+    const fromMd = vpbSplitFromMetadata(invoice);
+    if (fromMd) return fromMd;
+    const cust = invoice && invoice.customer;
+    if (!cust) return null;
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'stripe_customer_id=eq.' + encodeURIComponent(String(cust)) + '&select=id&limit=1');
+    const acct = accts && accts[0];
+    if (!acct || !acct.id) return null;
+    const venues = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(acct.id)
+      + '&select=id,name,postcode,max_players,pending_players,cancel_at_period_end&order=name.asc&limit=500');
+    return vpbSplitPlanLine(invoice, venues);
+  } catch (_) { return null; }
+}
+
+/* The memo a bookkeeper reads at the top of Stripe's invoice and its PDF. */
+const VPB_MEMO_HEAD = 'Players by venue: ';
+function vpbSplitMemo(split) {
+  let out = VPB_MEMO_HEAD;
+  for (let i = 0; i < split.rows.length; i++) {
+    const r = split.rows[i];
+    const piece = r.words + ' ($' + (r.cents / 100).toFixed(2) + ')'
+      + (r.extras || []).map(function (x) { return ', ' + x.words.charAt(0).toLowerCase() + x.words.slice(1) + ' ($' + (x.cents / 100).toFixed(2) + ')'; }).join('')
+      + ((r.extras || []).length ? ', total for ' + r.label + ' $' + (r.total / 100).toFixed(2) : '')
+      + (i < split.rows.length - 1 ? '; ' : '.');
+    if ((out + piece).length > 1400) {
+      out += 'and ' + (split.rows.length - i) + ' more venue' + (split.rows.length - i === 1 ? '' : 's') + ', listed on your venueplay invoice email.';
+      return out;
+    }
+    out += piece;
+  }
+  return out;
+}
+
+/* invoice.created, behind VPB_GROUP_INVOICE_LINES (default OFF). Writes the split onto Stripe's DRAFT
+   invoice as its description (memo) and metadata, and nothing else. Draft only, because a finalised
+   invoice cannot be changed and must not be. Never throws: while an endpoint listens for invoice.created
+   Stripe holds the invoice back until we answer, so a failure here must still answer, and it is written
+   down instead. */
+async function vpbStampInvoiceVenueLines(env, invoice) {
+  if (!vpbGroupInvoiceLinesOn(env)) return { skipped: 'off' };
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'stripe', action: 'invoice_venue_lines',
+    target: 'customer:' + String((invoice && invoice.customer) || ''),
+    detail: Object.assign({ invoice: (invoice && invoice.id) || null, outcome: why }, extra || {}),
+  }, false).catch(() => {});
+  try {
+    if (!invoice || !invoice.id || invoice.status !== 'draft') return { skipped: 'not a draft' };
+    const split = await vpbInvoiceVenueSplit(env, invoice);
+    if (!split) return { skipped: 'no exact split' };
+    const params = {};
+    const had = String(invoice.description || '');
+    if (!had || had.indexOf(VPB_MEMO_HEAD) === 0) params.description = vpbSplitMemo(split);   // never over someone else's memo
+    if (split.rows.length <= 40) {
+      params['metadata[vp_lines_n]'] = String(split.rows.length);
+      params['metadata[vp_lines_unit]'] = String(split.unit_cents);
+      split.rows.forEach(function (r, i) {
+        // Clipped NAME, never clipped JSON: a cut-off JSON would not read back, and the email would fall back.
+        params['metadata[vp_venue_' + (i + 1) + ']'] = JSON.stringify({ v: r.id, n: r.name.slice(0, 200), p: r.players,
+          pc: r.postcode || undefined });
+      });
+    }
+    if (!Object.keys(params).length) return { skipped: 'nothing to write' };
+    const res = await vpbStripePost(env, 'invoices/' + encodeURIComponent(invoice.id), params, 'vplines:' + invoice.id);
+    if (res && res.error) { await say('not written: ' + String(res.error.message || 'Stripe refused it').slice(0, 120)); return { failed: true }; }
+    await say('written', { venues: split.rows.length, players: split.players, cents: split.cents });
+    return { written: true, params: params };
+  } catch (e) {
+    await say('not written: ' + String((e && e.message) || e).slice(0, 120));
+    return { failed: true };
+  }
 }
 
 function vpaOverageFromInvoice(invoice) {
@@ -9363,7 +10494,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
             ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpbInvoiceVenueSplit(env, invoice))
       /* `customer` did not exist here. It was written on 11 Sep 2026 at 05:34 (0d1f1fd),
          the only `customer` in the file is a const inside the UPCOMING-reminder function,
          and vpaUpliftWarningHtml's own parameter is called customerId. So this line threw
@@ -9459,7 +10590,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
-      + vpaInvoiceLinesHtml(invoice)
+      + vpaInvoiceLinesHtml(invoice, await vpbInvoiceVenueSplit(env, invoice))
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
             + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">A busy month: this bill includes extra players.</p>'
@@ -10302,11 +11433,8 @@ async function vpbAccountTotal(env, foundingId) {
   if (!res.ok) throw new Error('vpbAccountTotal: could not read venues (' + res.status + ')');
   const vs = await res.json();
   if (!Array.isArray(vs)) throw new Error('vpbAccountTotal: unexpected response');
-  return vs.reduce((n, v) => {
-    if (v.cancel_at_period_end) return n; // venues cancelling at period end are no longer billed
-    const billed = (v.pending_players != null) ? parseInt(v.pending_players, 10) : parseInt(v.max_players, 10);
-    return n + (billed || 0);
-  }, 0);
+  // vpbBilledPlayers is the one rule; the per-venue invoice lines (INBOX 44b) read the same one.
+  return vs.reduce((n, v) => n + vpbBilledPlayers(v), 0);
 }
 
 /* Point the Stripe subscription at what this account should actually be paying for.
@@ -12809,6 +13937,41 @@ function vpbCleanRaffle(r) {
   return { label: vpbScreenStr(r.label, 60), day: vpbScreenStr(r.day, 20), time: vpbScreenStr(r.time, 20) };
 }
 
+/* MORE THAN ONE RAFFLE (Dean, 24 Oct 2026; migration 117). vp_venue_screen.raffles is the venue's
+   list, each { id, label, day, time }; `raffle` stays and mirrors the first, for anything still reading
+   the single routine. Up to VPB_MAX_RAFFLES, an empty entry is dropped, an id is kept when it is one of
+   ours and made when it is not (a new raffle). */
+const VPB_MAX_RAFFLES = 8;
+function vpbRaffleId() {
+  const b = new Uint8Array(8); crypto.getRandomValues(b);
+  return 'r' + Array.from(b, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+}
+function vpbCleanRaffles(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [], seen = {};
+  list.slice(0, VPB_MAX_RAFFLES).forEach(function (r) {
+    const c = vpbCleanRaffle(r);
+    if (!c) return;
+    let id = (r && typeof r.id === 'string' && /^[A-Za-z0-9-]{6,40}$/.test(r.id)) ? r.id : '';
+    if (!id || seen[id]) id = vpbRaffleId();
+    seen[id] = true;
+    out.push({ id: id, label: c.label, day: c.day, time: c.time });
+  });
+  return out;
+}
+/* Read the list on its OWN trip, so a database migration 117 has not reached yet can only cost the
+   list, never the slides: { ready:false } then, and the page keeps the single routine. */
+async function vpbReadRaffles(env, venueId) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen?venue_id=eq.' + encodeURIComponent(venueId)
+      + '&select=raffles&limit=1', { headers: vpaHeaders(env) });
+    if (!res.ok) return { ready: false, raffles: [] };
+    const rows = await res.json();
+    const r = Array.isArray(rows) && rows[0];
+    return { ready: true, raffles: (r && Array.isArray(r.raffles)) ? r.raffles : [] };
+  } catch (_) { return { ready: false, raffles: [] }; }
+}
+
 async function vpbScreenGet(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -12821,11 +13984,21 @@ async function vpbScreenGet(request, env, json) {
   const cfg = (rows && rows[0]) || {};
   /* No show_logo_on_site here any more: whether the logo is on our website is HQ's choice since
      migration 111, and the Screen tab no longer has the tick. */
+  /* The raffles. Before migration 117 the list is not there (raffles_ready false) and the page keeps the
+     single routine. After it, a venue whose list is still empty but has a routine (saved between the
+     backfill and now) is shown that routine as its first raffle, so it is never lost from the list. */
+  const rl = await vpbReadRaffles(env, venueId);
+  let raffles = rl.raffles;
+  if (rl.ready && !raffles.length && cfg.raffle) {
+    const c = vpbCleanRaffle(cfg.raffle);
+    if (c) raffles = [{ id: 'r-routine', label: c.label, day: c.day, time: c.time }];
+  }
   return json({
     ok: true,
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
     slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
+    raffles: raffles, raffles_ready: rl.ready,
   });
 }
 
@@ -12847,7 +14020,10 @@ async function vpbScreenSave(request, env, json) {
                          + VPB_MAX_SLIDES + '. Remove ' + (b.slides.length - VPB_MAX_SLIDES)
                          + ' and save again.' }, 400);
   }
-  if (b.raffle !== undefined && !vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to change raffles.' }, 403);
+  if ((b.raffle !== undefined || b.raffles !== undefined) && !vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to change raffles.' }, 403);
+  if (b.raffles !== undefined && Array.isArray(b.raffles) && b.raffles.length > VPB_MAX_RAFFLES) {
+    return json({ error: 'A venue can have up to ' + VPB_MAX_RAFFLES + ' raffles. Remove one and save again.' }, 400);
+  }
 
   // Partial update: only the parts sent are changed. The advertising section sends slides;
   // the raffle section sends raffle. That way saving one never wipes the other.
@@ -12855,6 +14031,31 @@ async function vpbScreenSave(request, env, json) {
   if (b.slides !== undefined) row.slides = vpbCleanSlides(b.slides);
   if (b.draws !== undefined) row.draws = vpbCleanDraws(b.draws);
   if (b.raffle !== undefined) row.raffle = vpbCleanRaffle(b.raffle);
+  /* The list wins over a single routine sent alongside it, and `raffle` mirrors its first entry, so a
+     TV still on the single routine shows the first raffle rather than a stale one. Only written once
+     the column is there: before migration 117 the page never sends raffles, and if one does arrive it
+     is refused in words rather than half-saved. */
+  if (b.raffles !== undefined) {
+    const rl = await vpbReadRaffles(env, venueId);
+    if (!rl.ready) return json({ error: 'More than one raffle is not switched on yet (run migration 117 first). Nothing was changed.' }, 409);
+    row.raffles = vpbCleanRaffles(b.raffles);
+    row.raffle = row.raffles[0] ? { label: row.raffles[0].label, day: row.raffles[0].day, time: row.raffles[0].time } : null;
+  } else if (b.raffle !== undefined) {
+    /* THE SINGLE ROUTINE ALONE, once the list is there: an account page loaded before this release
+       (open in a tab) still sends only `raffle`. It is the venue's FIRST raffle, so it is written
+       there too; otherwise the list (which the TV and the page now read) would keep the old words
+       while `raffle` had the new ones. Cleared routine: the first raffle goes. Before migration 117
+       the read says not ready and only `raffle` is written, as it always was. */
+    const rl = await vpbReadRaffles(env, venueId);
+    if (rl.ready) {
+      const list = vpbCleanRaffles(rl.raffles);
+      if (row.raffle) {
+        if (list.length) list[0] = { id: list[0].id, label: row.raffle.label, day: row.raffle.day, time: row.raffle.time };
+        else list.push({ id: vpbRaffleId(), label: row.raffle.label, day: row.raffle.day, time: row.raffle.time });
+      } else if (list.length) list.shift();
+      row.raffles = list;
+    }
+  }
   /* THE LOGO IS NOT A FREE-TEXT ADDRESS. This stored any string starting "http", and the logo is
      painted on every TV the venue has and on the public homepage strip. A logo now goes up
      through /account/logo-upload, which writes the address itself; here it can only be cleared,
@@ -12896,6 +14097,10 @@ const VPA_SCREEN_HISTORY_LIMIT = 100;
 
 function vpaScreenSlidesOf(row) { return row && Array.isArray(row.slides) ? row.slides : []; }
 function vpaScreenRaffleLabel(row) {
+  /* Every raffle, once there is a list (migration 117): HQ's screen history names them all. */
+  if (row && Array.isArray(row.raffles) && row.raffles.length) {
+    return row.raffles.map(function (x) { return [x.label, x.day, x.time].filter(Boolean).join(', ') || '(set)'; }).join(' / ');
+  }
   const r = row && row.raffle;
   if (!r) return null;
   return [r.label, r.day, r.time].filter(Boolean).join(', ') || '(set)';
@@ -13063,6 +14268,9 @@ async function vpaHandleScreenRestore(request, env, json) {
     logo_url: src.logo_url === undefined ? null : src.logo_url,
     updated_at: new Date().toISOString(),
   };
+  /* A version from after migration 117 carries the raffle list; put it back too. An older version
+     has none, and the list is left as it is rather than emptied by a version that never knew it. */
+  if (Array.isArray(src.raffles)) row.raffles = src.raffles;
   const res = await vpbWriteScreen(env, row, { via: 'hq_restore', route: 'screen-restore', admin: actor.actorId || null,
                                                label: actor.label || 'admin', role: actor.role || null, restored_from: hid });
   if (!res.ok) {
@@ -14393,6 +15601,12 @@ async function vprRead(env, venues, month) {
     'venue_id=in.(' + inl + ')&and=(opted_in_at.gte.' + w.from + ',opted_in_at.lt.' + w.to + ')'
     + '&select=venue_id,opted_in_at&order=opted_in_at.asc,email.asc,mobile.asc'));
 
+  /* WHAT PLAYERS THOUGHT (Dean, 2 Nov 2026): counts of the ratings a venue is shown (VPR_VENUE_RATINGS),
+     and nothing else is READ here, so no report can carry a rating HQ keeps, a comment or a name. */
+  const liked = await vpmInChunks(ids, (inl) => vpaSelectAll(env, 'vp_game_feedback',
+    'venue_id=in.(' + inl + ')&source=eq.player&' + vprRatingFilter() + '&and=(created_at.gte.' + w.from + ',created_at.lt.' + w.to + ')'
+    + '&select=venue_id,format,rating,created_at&order=created_at.asc,id.asc'));
+
   /* The slide tally (migration 135). A 404 is the table not being there yet: no counts, said so. */
   let shows = null, screens = [];
   try {
@@ -14409,7 +15623,7 @@ async function vprRead(env, venues, month) {
       'venue_id=in.(' + inl + ')&select=venue_id,slides&order=venue_id.asc'));
   }
   const by = {};
-  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [],
+  venues.forEach((v) => { by[v.id] = { sessions: [], games: [], players: [], boards: [], cards: [], reports: [], optins: [], liked: [],
                                        shows: shows ? [] : null, labels: {} }; });
   const venueOfSession = {}, venueOfGame = {};
   sessions.forEach((s) => { if (by[s.venue_id]) { by[s.venue_id].sessions.push(s); venueOfSession[s.id] = s.venue_id; } });
@@ -14419,12 +15633,49 @@ async function vprRead(env, venues, month) {
   cards.forEach((c) => { const v = venueOfGame[c.game_id]; if (v) by[v].cards.push(c); });
   reports.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].reports.push(r); });
   optins.forEach((o) => { if (by[o.venue_id]) by[o.venue_id].optins.push(o); });
+  liked.forEach((f) => { if (by[f.venue_id]) by[f.venue_id].liked.push(f); });
   if (shows) shows.forEach((r) => { if (by[r.venue_id]) by[r.venue_id].shows.push(r); });
   screens.forEach((sc) => {
     if (!by[sc.venue_id] || !Array.isArray(sc.slides)) return;
     sc.slides.forEach((sl) => { const k = vprSlideKey(sl); if (k) by[sc.venue_id].labels[k] = String((sl && (sl.head || sl.tag)) || '').trim(); });
   });
   return by;
+}
+
+/* THE ROOM'S VERDICT FOR A VENUE (Dean, 2 Nov 2026): how many players tapped each rating a venue is
+   shown, in total, by game and by night (2am to 2am on the venue's clock), labelled as the phone
+   labels them. True counts only, never an average or a percentage, never a comment or a name.
+
+   WHICH RATINGS A VENUE SEES: VPR_VENUE_RATINGS, and nothing else is even read from the database
+   (vprRead, /account/feedback). Today "Loved it" and "Good"; "Not for me" stays HQ's (Dean: "let's
+   see how the negative goes"). To show it to venues later, add 1 to this list: the reads, the
+   monthly email, the report page and the account panel all follow it. */
+var VPR_VENUE_RATINGS = [3, 2];   // a var so tools/test-feedback-consent.js can flip it the way a person would
+const VPR_RATINGS = { 3: { key: 'loved', label: 'Loved it' }, 2: { key: 'good', label: 'Good' }, 1: { key: 'not_for_me', label: 'Not for me' } };
+function vprRatingFilter() { return 'rating=in.(' + VPR_VENUE_RATINGS.join(',') + ')'; }
+function vprLiked(list, tz, month) {
+  const zero = () => { const c = {}; VPR_VENUE_RATINGS.forEach((r) => { c[VPR_RATINGS[r].key] = 0; }); return c; };
+  const out = { shown: VPR_VENUE_RATINGS.map((r) => ({ key: VPR_RATINGS[r].key, label: VPR_RATINGS[r].label })),
+                counts: zero(), total: 0, formats: {}, nights: [] };
+  const per = {};
+  (list || []).forEach((r) => {
+    const rating = Number(r && r.rating);
+    if (VPR_VENUE_RATINGS.indexOf(rating) === -1) return;      // never counted for a venue, whatever a caller passed
+    const night = vprNightKey(r.created_at, tz);
+    if (!night || (month && night.slice(0, 7) !== month)) return;
+    const f = vprFormat(r.format), key = VPR_RATINGS[rating].key;
+    out.counts[key]++; out.total++;
+    (out.formats[f] = out.formats[f] || zero())[key]++;
+    const k = night + '|' + f;
+    (per[k] = per[k] || { night: night, weekday: vprWeekday(night), format: f, counts: zero() }).counts[key]++;
+  });
+  out.nights = Object.keys(per).sort().reverse().map((k) => per[k]);
+  return out;
+}
+const VPR_FORMAT_WORDS = { bingo90: 'Bingo', musical_bingo: 'Musical bingo', trivia: 'Trivia' };
+/* "Loved it: 41 · Good: 12", the phone's own words, in the shown order. */
+function vprLikedWords(l) {
+  return l.shown.map((s) => vpaEsc(s.label) + ': <b>' + (l.counts[s.key] || 0) + '</b>').join(' &middot; ');
 }
 
 /* A slide's key: its uploaded file's name, or its heading for a text slide. The same rule as
@@ -14614,6 +15865,7 @@ function vprFigures(venue, rows, month) {
     night_list: nightList,
     top_teams: topTeams,
     optins: optins,
+    liked: vprLiked(rows.liked, tz, month),
     ads: ads,
     ad_shows: ads ? ads.shows : 0,
   };
@@ -14689,6 +15941,31 @@ async function vpbMonthReport(request, env, json) {
   catch (e) { return json({ error: 'We could not add up that month just now. Please try again in a moment.' }, 503); }
   return json({ ok: true, venue: { id: venue.id, name: venue.name },
     venues: o.venues.map((v) => ({ id: v.id, name: v.name })), months: months, report: rep });
+}
+
+/* --- POST /account/feedback { venue_id } : what players thought, the venue's way (Dean, 2 Nov 2026).
+   The last eight weeks: how many tapped "Loved it" and "Good", by game and night, for one of the
+   caller's OWN venues (owner, manager or marketing login, or HQ through View as, the monthly report's
+   rule). Only the ratings in VPR_VENUE_RATINGS are read: no comment, no name ever leaves here. --- */
+const VPR_LIKED_WEEKS = 8;
+async function vpbFeedbackCounts(request, env, json) {
+  const o = await vpmRequireAny(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const wanted = String(b.venue_id || '').trim();
+  const venue = wanted ? o.venues.find((v) => v.id === wanted) : (o.venues.length === 1 ? o.venues[0] : null);   // only the caller's own
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  const since = new Date(Date.now() - VPR_LIKED_WEEKS * 7 * 86400000).toISOString();
+  let rows;
+  try {
+    rows = await vpaSelectAll(env, 'vp_game_feedback', 'venue_id=eq.' + encodeURIComponent(venue.id) + '&source=eq.player&' + vprRatingFilter()
+      + '&created_at=gte.' + encodeURIComponent(since) + '&select=format,rating,created_at&order=created_at.asc,id.asc');
+  } catch (e) { return json({ error: 'We could not read that just now. Please try again in a moment.' }, 503); }
+  const l = vprLiked(rows, venue.timezone || 'Australia/Brisbane', '');
+  return json({ ok: true, venue: { id: venue.id, name: venue.name }, weeks: VPR_LIKED_WEEKS,
+    shown: l.shown, counts: l.counts, total: l.total, formats: l.formats, nights: l.nights.slice(0, 60) });
 }
 
 /* HQ's test venues: a test slug or name (the homepage rule), or marked test in HQ. */
@@ -15014,6 +16291,12 @@ async function vprEmailHtml(env, venue, rep, opts) {
       body += p('Your adverts and slides were on screen <b>' + n(a.ads.shows) + ' times</b>, ' + onFor + ' in all, across '
         + plural(a.ads.nights, 'day', 'days') + (a.ads.screens > 1 ? ' and up to ' + a.ads.screens + ' screens' : '') + '.');
       body += table(a.ads.slides.slice(0, 5).map((x) => row(vpaEsc(x.label), n(x.shows) + ' times')).join(''));
+    }
+    if (a.liked && a.liked.total) {
+      body += h2('What players thought');
+      body += p('At the end of each game players rate it on their phone. ' + vprLikedWords(a.liked));
+      const lf = Object.keys(a.liked.formats);
+      if (lf.length > 1) body += table(lf.map((f) => row(vpaEsc(VPR_FORMAT_WORDS[f] || f), vprLikedWords({ shown: a.liked.shown, counts: a.liked.formats[f] }))).join(''));
     }
     if (a.optins) {
       body += h2('Your list');
@@ -17806,8 +19089,17 @@ async function helpVapidAuth(env, endpoint) {
   const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, helpUtf8Bytes(unsigned)));
   return 'vapid t=' + unsigned + '.' + helpB64url(sig) + ', k=' + env.VAPID_PUBLIC_KEY;
 }
+/* WHICH TICKETS BUZZ WHICH PHONE (HQ > Help desk > Alerts on this device).
+     all            every ticket
+     urgent_sales   urgent ones and sales, and bad player feedback (Dean, 2 Nov 2026: venue feedback is important)
+     bad_feedback   only bad player feedback (Dean, 2 Nov 2026): the "2 or more Not for me tonight" alert and a
+                    "Not for me" follow-up that asked to be answered. Needs migration 137 to be stored.
+   A ticket is bad feedback by helpIsBadFeedback: the alert sweep's own raised_by, or the flag the follow-up
+   sets on the ticket it hands to the push (never stored, never on anything a player sees). */
+function helpIsBadFeedback(ticket) { return !!(ticket && (ticket.bad_feedback === true || ticket.raised_by === VPF_ALERT_BY)); }
 function helpPushWants(sub, ticket) {
-  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales';
+  if (sub.filter === 'bad_feedback') return helpIsBadFeedback(ticket);
+  if (sub.filter === 'urgent_sales') return ticket.priority === 'urgent' || ticket.category === 'sales' || helpIsBadFeedback(ticket);
   return true;
 }
 async function helpPushNew(env, ticket) {
@@ -17839,14 +19131,24 @@ async function helpAdminPushSubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const endpoint = String(g.body.endpoint || '').trim();
   if (!HELP_PUSH_HOSTS.test(endpoint) || endpoint.length > 1000) return json({ error: 'That is not a push address this desk knows.' }, 400);
-  const filter = g.body.filter === 'urgent_sales' ? 'urgent_sales' : 'all';
+  let filter = ['urgent_sales', 'bad_feedback'].indexOf(g.body.filter) >= 0 ? g.body.filter : 'all';
   const raw = new Uint8Array(32); crypto.getRandomValues(raw);
   const token = helpB64url(raw);
   await vpaDelete(env, 'vp_help_push_subs', 'endpoint=eq.' + encodeURIComponent(endpoint));
-  await vpaInsert(env, 'vp_help_push_subs', { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
+  const row = { endpoint: endpoint, filter: filter, auth_user_id: g.admin.actorId,
     admin_label: g.admin.label, token_hash: await helpSha256Hex(token),   // last_peek_at: the database's now() (migration 108)
-    device_label: helpLine(g.body.device_label, 80) || null }, false);
-  return json({ ok: true, token: token, filter: filter });
+    device_label: helpLine(g.body.device_label, 80) || null };
+  let note = '';
+  try { await vpaInsert(env, 'vp_help_push_subs', row, false); }
+  catch (e) {
+    /* Until migration 137 widens the filter's check, "bad_feedback" is refused. The old setting was
+       already removed above, so the device is never left with no alerts: it gets every ticket, and says so. */
+    if (filter !== 'bad_feedback') throw e;
+    filter = 'all'; row.filter = 'all';
+    await vpaInsert(env, 'vp_help_push_subs', row, false);
+    note = 'This device gets every ticket for now: "Only bad player feedback" needs migration 137 run first.';
+  }
+  return json({ ok: true, token: token, filter: filter, note: note || undefined });
 }
 async function helpAdminPushUnsubscribe(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
@@ -18450,7 +19752,21 @@ async function helpTriageForRange(env, from, to, brand) {
 
    WHO IT IS FOR. A venue owner or manager who likes the look of VenuePlay but is not ready to ring
    us or set up an account. The sales pages (home, the offer page, See a night) carry one small form:
-   their email, and their venue if they like. Nothing else is asked: the email needs nothing else.
+   their email, their venue's name and its postcode. Nothing else is asked.
+
+   THE VENUE AND THE POSTCODE ARE NEEDED (Dean, 2 Nov 2026; migration 141). The venue so we know who
+   we are writing to; the postcode so an offer only goes to the state it is for (a Queensland offer is
+   never sent to a NSW venue). The state is worked out here from the postcode by vpaStateFromPostcode,
+   the same map that sets a venue's gaming rules, and kept beside it (au_state). Both are checked
+   here as well as on the page.
+   TWO GAPS THIS HAS TO SURVIVE, so no sign-up is ever dropped by the change itself:
+     - BEFORE MIGRATION 141 the columns are not there and PostgREST refuses any write naming them.
+       Every write here then tries again without them (vpsNoPc / vpsStripPc), so the person is still
+       on the list; HQ shows that row with no postcode.
+     - THE PAGE LAGS THE WORKER by 3 to 25 minutes on a release, and a page loaded before it is still
+       open somewhere. An old form sends no `postcode` key at all, so a request without one is kept
+       on the old rules (venue optional, no postcode). The new form always sends the key, even empty,
+       and is held to the new rules. Remove the old-form path once the release has settled (9 Nov 2026).
 
    ONE EMAIL A MONTH, AND IT IS THE SAME ONE. Subscribers get the "What's new at VenuePlay" section of
    the monthly venue email (feature/venue-reports-31oct, migration 133), never a second newsletter.
@@ -18461,7 +19777,7 @@ async function helpTriageForRange(env, from, to, brand) {
    all: nobody is contacted because they matched.
 
    ROUTES
-     POST /subscribe                    public: {email, venue, source, utm, website, turnstile}
+     POST /subscribe                    public: {email, venue, postcode, source, utm, website, turnstile}
      POST /admin/subscribers            HQ owner or accounts: the list, counts by week and source, matches
      POST /admin/subscribers/export     HQ owner or accounts: the CSV, audited
 
@@ -18508,6 +19824,36 @@ const VPS_CONSENT_TEXT = 'One short email a month from venueplay to this address
 const VPS_FREE_MAILBOX_RE = /^(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|gmx|bigpond|optusnet|tpg|iinet|internode|westnet|dodo|exemail|ozemail|aapt|adam|iprimus|people|netspace|telstra)\./i;
 
 function vpsNow() { return new Date().toISOString(); }
+/* THE POSTCODE COLUMNS (migration 141). Before it is run, any write or read naming them is refused
+   (PGRST204 on a write, 42703 on a read), and each one here falls back to what it did before. */
+const VPS_PC_COLS = ['postcode', 'au_state'];
+function vpsNoPc(e) {
+  return /PGRST204|42703|Could not find the '?(postcode|au_state)'? column|column [\w.]*(postcode|au_state) does not exist/.test(String((e && (e.message || e.body)) || e || ''));
+}
+function vpsStripPc(o) {
+  const c = Object.assign({}, o);
+  VPS_PC_COLS.forEach(function (k) { delete c[k]; });
+  return c;
+}
+async function vpsPatch(env, id, obj) {
+  try { await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(id), obj); }
+  catch (e) {
+    if (!vpsNoPc(e) || !VPS_PC_COLS.some(function (k) { return k in obj; })) throw e;
+    await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(id), vpsStripPc(obj));
+  }
+}
+/* A venue's postcode: four digits, in a range one Australian state or territory owns. Returns
+   {postcode, state} or {error}, in the same words the page uses. */
+const VPS_PC_NEED = "Put in your venue's postcode, so we only send you what applies in your state.";
+const VPS_PC_BAD = "That postcode does not look right. Use your venue's 4-digit postcode.";
+const VPS_VENUE_NEED = "Put in your venue's name, so we know who we are writing to.";
+function vpsPostcode(v) {
+  const pc = String(v == null ? '' : v).replace(/\s+/g, '');
+  if (!pc) return { error: VPS_PC_NEED };
+  if (!/^\d{4}$/.test(pc)) return { error: VPS_PC_BAD };
+  const st = vpaStateFromPostcode(pc);
+  return st ? { postcode: pc, state: st } : { error: VPS_PC_BAD };
+}
 function vpsEmailOk(e) { return e.length >= 6 && e.length <= 254 && HELP_EMAIL_RE.test(e) && !/[,;()\\"]/.test(e); }
 function vpsDomain(e) { const i = String(e || '').lastIndexOf('@'); return i < 0 ? '' : String(e).slice(i + 1).toLowerCase(); }
 function vpsSource(s) { s = String(s || '').toLowerCase(); return VPS_SOURCES.indexOf(s) >= 0 ? s : 'site'; }
@@ -18596,6 +19942,14 @@ async function vpsHandleSubscribe(request, env, json) {
   if (!vpsEmailOk(email)) return json({ error: 'That email address does not look right.' }, 400);
   const venue = helpLine(b.venue, 200);
   if (venue.length > 120) return json({ error: 'That venue name is too long.' }, 400);
+  // The new form always sends `postcode` (even empty); a page loaded before 2 Nov 2026 sends none.
+  const newForm = Object.prototype.hasOwnProperty.call(b, 'postcode');
+  let pc = { postcode: null, state: null };
+  if (newForm) {
+    if (!venue) return json({ error: VPS_VENUE_NEED }, 400);
+    pc = vpsPostcode(b.postcode);
+    if (pc.error) return json({ error: pc.error }, 400);
+  }
   const ts = await helpTurnstile(env, b.turnstile, ip);
   if (!ts.ok) return json({ error: 'Please complete the check above the button, then try again.', turnstile: true }, 403);
   if (!(await helpLimit(env, 'sub:em:' + email, VPS_MAX_PER_EMAIL, 3600))) {
@@ -18605,7 +19959,7 @@ async function vpsHandleSubscribe(request, env, json) {
   const TRY_AGAIN = { error: 'We could not add you just now. Please try again in a minute.' };
 
   let have;
-  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=id,venue_name,status,consent_at,unsubscribed_at&limit=1'); }
+  try { have = await vpsRead(env, 'vp_subscribers', 'email=eq.' + encodeURIComponent(email) + '&select=*&limit=1'); }   // *: with or without migration 141's columns
   catch (e) { return json(TRY_AGAIN, 503); }
   if (have.missing) return json(NOT_READY, 503);
   let lastStop;
@@ -18617,15 +19971,19 @@ async function vpsHandleSubscribe(request, env, json) {
     const row = have.rows[0];
     if (row.status === 'active' && vpsConsentBeats(row, lastStop)) {
       // Already on the list. Same answer as a new sign-up, no second email; a venue name they left off before is kept now.
-      if (venue && !row.venue_name) {
-        await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id), { venue_name: venue, updated_at: now }).catch(() => null);
+      const fill = {};
+      if (venue && !row.venue_name) fill.venue_name = venue;
+      if (pc.postcode && !row.postcode) { fill.postcode = pc.postcode; fill.au_state = pc.state; }
+      if (Object.keys(fill).length) {
+        await vpsPatch(env, row.id, Object.assign(fill, { updated_at: now })).catch(() => null);
       }
       return json({ ok: true });
     }
     // They unsubscribed since (or were held): this sign-up is fresh consent, so they are back on.
     try {
-      await vpaPatch(env, 'vp_subscribers', 'id=eq.' + encodeURIComponent(row.id),
-        Object.assign({}, fresh, { resubscribed_at: now, venue_name: row.venue_name || venue || null, updated_at: now }));
+      const keepPc = row.postcode ? {} : (pc.postcode ? { postcode: pc.postcode, au_state: pc.state } : {});
+      await vpsPatch(env, row.id,
+        Object.assign({}, fresh, keepPc, { resubscribed_at: now, venue_name: row.venue_name || venue || null, updated_at: now }));
     } catch (e) { return json(TRY_AGAIN, 503); }
     if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) await vpsSendConfirmation(env, email, venue || row.venue_name, row.id).catch(() => null);
     return json({ ok: true });
@@ -18640,14 +19998,17 @@ async function vpsHandleSubscribe(request, env, json) {
     country: where.country,
     region: where.region,
     resubscribed_at: lastStop ? now : null,     // on vp_unsubscribes before: back on, with the old row kept as the record
-  }, fresh);
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
-    method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(row) });
-  if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
-  if (!res.ok) {
-    const t = await res.text().catch(() => '');
-    return json(helpTableMissing(res.status, t) ? NOT_READY : TRY_AGAIN, 503);
+  }, fresh, pc.postcode ? { postcode: pc.postcode, au_state: pc.state } : {});   // an old form's row names no new column
+  const insert = (obj) => fetch(env.SUPABASE_URL + '/rest/v1/vp_subscribers', {
+    method: 'POST', headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' }, body: JSON.stringify(obj) });
+  let res = await insert(row), t = '';
+  if (!res.ok && res.status !== 409) {
+    t = await res.text().catch(() => '');
+    // Before migration 141: keep the sign-up without the postcode rather than lose the person.
+    if (vpsNoPc(t)) { res = await insert(vpsStripPc(row)); t = res.ok ? '' : await res.text().catch(() => ''); }
   }
+  if (res.status === 409) return json({ ok: true });            // two taps at once: the first one is the sign-up
+  if (!res.ok) return json(helpTableMissing(res.status, t) ? NOT_READY : TRY_AGAIN, 503);
   let made = null;
   try { const j = await res.json(); made = Array.isArray(j) ? j[0] : j; } catch (e) { made = null; }
   if (String(env.SUBSCRIBE_EMAILS || '').trim() === VPS_SWITCH) {
@@ -18746,7 +20107,8 @@ function vpsSummary(subs, stops, venues, accounts, prospects, nowMs) {
   const rows = (subs || []).map((s) => {
     const stop = Math.max((stops || {})[String(s.email || '').toLowerCase()] || 0, Date.parse(s.unsubscribed_at || '') || 0);
     const state = s.status === 'held' ? 'held' : !vpsConsentBeats(s, stop) ? 'unsubscribed' : (s.resubscribed_at && stop ? 'resubscribed' : 'active');
-    return { id: s.id, email: s.email, venue_name: s.venue_name || '', source: s.source || 'site', utm: s.utm || {},
+    return { id: s.id, email: s.email, venue_name: s.venue_name || '', postcode: s.postcode || '', au_state: s.au_state || '',
+      source: s.source || 'site', utm: s.utm || {},
       region: s.region || '', country: s.country || '', created_at: s.created_at, consent_at: s.consent_at || null,
       confirm_sent_at: s.confirm_sent_at || null, unsubscribed_at: iso(stop), resubscribed_at: s.resubscribed_at || null,
       state: state, held_reason: state === 'held' ? (s.held_reason || '') : '', match: vpsMatch(s, venues, accounts, prospects) };
@@ -18777,8 +20139,11 @@ async function vpsLoad(env) {
   const probe = await vpsRead(env, 'vp_subscribers', 'select=id&limit=1');
   if (probe.missing) return { missing: true };
   // PAGED: PostgREST stops at 1000 rows in silence, and a short list here is a short export.
-  const subs = await vpaSelectAll(env, 'vp_subscribers',
-    'select=id,email,venue_name,source,utm,region,country,status,held_reason,consent_at,confirm_sent_at,unsubscribed_at,resubscribed_at,created_at&order=created_at.desc,id.asc');
+  const cols = 'id,email,venue_name,source,utm,region,country,status,held_reason,consent_at,confirm_sent_at,unsubscribed_at,resubscribed_at,created_at';
+  const order = '&order=created_at.desc,id.asc';
+  let subs;
+  try { subs = await vpaSelectAll(env, 'vp_subscribers', 'select=' + cols + ',postcode,au_state' + order); }
+  catch (e) { if (!vpsNoPc(e)) throw e; subs = await vpaSelectAll(env, 'vp_subscribers', 'select=' + cols + order); }   // before migration 141
   const unsub = await vpsStopTimes(env);   // throws: a list we cannot check is not shown as "active"
   const venues = await vpaSelectAll(env, 'vp_venues', 'select=id,name,founding_id,status,suspended_reason&order=id.asc');
   const accounts = await vpaSelectAll(env, 'venueplay_founding', 'select=id,contact_email&order=id.asc');
@@ -18808,8 +20173,8 @@ async function vpsHandleAdminExport(request, env, json) {
   catch (e) { return json({ error: 'Could not read the subscribers or the unsubscribe list just now, so nothing was exported.' }, 503); }
   if (d.missing) return json({ error: VPS_NEED_MIGRATION, need_migration: 134 }, 503);
   const s = vpsSummary(d.subs, d.unsub, d.venues, d.accounts, d.prospects, Date.now());
-  const header = ['Email', 'Venue (as typed)', 'State', 'Signed up', 'Consent given', 'Last unsubscribed', 'Re-subscribed', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
-  const lines = s.rows.map((r) => [r.email, r.venue_name, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at,
+  const header = ['Email', 'Venue (as typed)', 'Postcode', 'Venue state', 'State', 'Signed up', 'Consent given', 'Last unsubscribed', 'Re-subscribed', 'Source', 'UTM source', 'UTM campaign', 'Region', 'Matched venue', 'Matched as', 'Matched by'];
+  const lines = s.rows.map((r) => [r.email, r.venue_name, r.postcode, r.au_state, r.state + (r.held_reason ? ' (' + r.held_reason + ')' : ''), r.created_at,
     r.consent_at || '', r.unsubscribed_at || '', r.resubscribed_at || '', r.source,
     (r.utm && r.utm.utm_source) || '', (r.utm && r.utm.utm_campaign) || '', r.region,
     r.match ? r.match.name : '', r.match ? r.match.kind : '', r.match ? r.match.by : '']);
@@ -18859,4 +20224,223 @@ async function vpsBackOn(env) {
   const out = Object.create(null);
   subs.forEach((s) => { const e = String(s.email || '').trim().toLowerCase(); if (e && stops[e] && vpsConsentBeats(s, stops[e])) out[e] = true; });
   return out;
+}
+
+/* =======================================================================================
+   "HOW WAS THAT?" FOLLOWED UP (Dean, 1 Nov 2026; migration 137).
+
+   Every rating on a phone gets one short follow-up, tailored to the answer:
+     Loved it     "What did you love?"            tags and an optional line. Never an email ask.
+     Good         "What would make it better?"    tags, a line, and an optional email with an UNTICKED consent box
+     Not for me   "Sorry to hear that. What went wrong?"   the same
+   POST /help/feedback keeps it in vp_feedback_notes, against the rating the phone just made
+   (vp_game_feedback, by the id the game Worker handed back), at most once per rating and only
+   within an hour of it.
+
+   WHO SEES WHAT. A venue sees only favourable feedback, as true counts (loved it, good), never an
+   average, never "Not for me". HQ sees everything, here, at POST /admin/feedback.
+
+   NO TICKS FOR THE VENUE (Dean, 2 Nov 2026): a player is never asked to tick anything for the venue.
+   A venue sees only COUNTS of "Loved it" and "Good" (vprLiked: the monthly report and the account's
+   feedback panel), never a comment, a tag, a name or a "Not for me". Everything a player writes here
+   is HQ's. A request that sends to_venue, share or first_name has them ignored: nothing stores them.
+
+   THE EMAIL is never kept in this table: with the consent ticked it goes into a help-desk ticket and nowhere else, and it is only ever used
+   to reply about this feedback (the box says so). Venue-collected contact details are never used.
+
+   THE TICKET'S TWO FACES. The subject a player can see is neutral ("Your feedback about venueplay
+   at <venue>"); the label HQ works from ("Bad feedback received" or "Feedback: could be better")
+   is an INTERNAL note on the ticket, which no email ever carries. Positive feedback never makes a
+   ticket or an alert.
+
+   THE SOFT ALERT. Two or more "Not for me" (Dean, 2 Nov 2026; it was three) at one venue on one night (2am to 2am, the venue's
+   clock) opens one internal ticket and wakes HQ's phones through the help desk's push, once per
+   venue per night, with no email. It is checked when such a follow-up arrives and on every
+   scheduled tick (vpfAlertSweep).
+   ======================================================================================= */
+const VPF_TAGS = {
+  3: { host: 'The host', questions: 'The questions', music: 'The music', prizes: 'The prizes', easy_join: 'Easy to join', other: 'Something else' },
+  2: { faster: 'A faster pace', easier_join: 'Easier to join', prizes: 'Better prizes', screen: 'The screen or sound', variety: 'More variety', other: 'Something else' },
+  1: { couldnt_join: "Couldn't join", too_slow: 'Too slow', screen: 'Screen problems', didnt_like: "Didn't like the game", other: 'Something else' },
+};
+const VPF_NOTE_MAX = 300;
+const VPF_WINDOW_MS = 60 * 60 * 1000;   // a follow-up belongs to a rating made in the last hour
+const VPF_ALERT_BY = 'automatic (player feedback)';   // the alert ticket's raised_by: helpIsBadFeedback reads it
+const VPF_ALERT_AT = 2;                 // "Not for me" at one venue on one night before HQ is woken (Dean, 2 Nov 2026)
+const VPF_LABEL = { 1: 'Bad feedback received', 2: 'Feedback: could be better' };
+const VPF_FORMAT_WORDS = { bingo: 'bingo', bingo90: 'bingo', musical: 'musical bingo', musical_bingo: 'musical bingo', trivia: 'trivia' };
+
+function vpfNight(iso, tz) {
+  const t = Date.parse(iso || '');
+  if (!isFinite(t)) return '';
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'Australia/Brisbane', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .format(new Date(t - 2 * 3600 * 1000));
+  } catch (e) { return ''; }
+}
+function vpfTagWords(rating, tags) { return (tags || []).map((k) => (VPF_TAGS[rating] || {})[k] || k); }
+
+async function vpfFeedbackMore(request, env, json) {
+  const ip = request.headers.get('cf-connecting-ip') || '';
+  if (!(await helpIpLimit(env, 'fbm', ip, HELP_MAX_PER_IP, 3600))) return json({ ok: true, throttled: true });   // never an error to a punter
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  if (String(b.website || '').trim()) return json({ ok: true });            // the honeypot: thanked, nothing kept
+  const fid = String(b.feedback_id || '').trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(fid)) return json({ error: 'Which rating is this about?' }, 400);
+  let f;
+  try {
+    f = (await vpaReadPage(env, 'vp_game_feedback', 'id=eq.' + encodeURIComponent(fid) + '&source=eq.player&select=id,venue_id,session_id,game_id,format,rating,created_at&limit=1'))[0];
+  } catch (e) { return json({ error: 'We could not save that just now.' }, 503); }
+  if (!f || Date.now() - Date.parse(f.created_at) > VPF_WINDOW_MS) return json({ ok: true, ignored: true });
+  const rating = parseInt(f.rating, 10);
+  const allowed = VPF_TAGS[rating] || {};
+  const tags = Array.from(new Set((Array.isArray(b.tags) ? b.tags : []).map((t) => String(t)))).filter((t) => allowed[t]).slice(0, 6);
+  const note = helpText(b.note).slice(0, VPF_NOTE_MAX);
+  /* An email only where the page asks for one (good or not for me), only with the box ticked, and
+     then only into the ticket. A "loved it" that sends one has it dropped. */
+  const email = (rating <= 2 && b.consent === true) ? helpLine(b.email, 200).toLowerCase() : '';
+  if (email && !HELP_EMAIL_RE.test(email)) return json({ error: 'That email address does not look right.' }, 400);
+  if (!tags.length && !note && !email) return json({ ok: true, nothing: true });
+  const device = helpLine(b.device, 64);
+  if (device && !(await helpLimit(env, 'fbm:dev:' + device, 10, 3600))) return json({ ok: true, throttled: true });
+  let had;
+  try { had = await vpaReadPage(env, 'vp_feedback_notes', 'feedback_id=eq.' + encodeURIComponent(fid) + '&select=id&limit=1'); }
+  catch (e) {
+    if (e && e.status === 404) return json({ ok: true, missing: true });     // migration 137 not run: the rating itself is kept
+    return json({ error: 'We could not save that just now.' }, 503);
+  }
+  if (had.length) return json({ ok: true, already: true });
+  let ticket = null;
+  if (email) {
+    const vname = await helpVenueName(env, f.venue_id);
+    const venue = await vpaSelect(env, 'vp_venues', 'id=eq.' + encodeURIComponent(f.venue_id) + '&select=timezone,join_code&limit=1');
+    const night = vpfNight(f.created_at, venue && venue[0] && venue[0].timezone);
+    const game = VPF_FORMAT_WORDS[String(f.format || '')] || String(f.format || 'a game');
+    try {
+      ticket = await helpInsertTicket(env, {
+        brand: 'venueplay', category: 'patron_support', channel: 'patron_form',
+        title: 'Your feedback about venueplay at ' + (vname || 'the venue'),
+        message: 'Feedback after ' + game + (vname ? ' at ' + vname : '') + (night ? ' on ' + night : '') + '.\n\n'
+          + (tags.length ? (rating === 1 ? 'What went wrong: ' : 'What would make it better: ') + vpfTagWords(rating, tags).join(', ') + '\n' : '')
+          + (note ? '\n' + note + '\n' : '') + '\nThey asked us to reply about this feedback only.',
+        contact_email: email, venue_id: f.venue_id, session_id: f.session_id || null,
+        room_code: venue && venue[0] ? venue[0].join_code || null : null,
+      });
+      /* THE LABEL IS HQ'S. An internal note, which no email to the player ever carries. */
+      await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: ticket.id, kind: 'note', author: 'Player feedback',
+        body: VPF_LABEL[rating] + '. Rated "' + (rating === 1 ? 'Not for me' : 'Good') + '" after ' + game + (night ? ' on ' + night : '') + '.' }, false).catch(() => null);
+      // A copy marked for the push filter only (helpIsBadFeedback): the ticket itself is never marked.
+      await helpAnnounce(env, Object.assign({}, ticket, { bad_feedback: rating === 1 }), vname);
+      await helpAcknowledge(env, ticket);
+    } catch (e) { ticket = null; }
+  }
+  try {
+    await vpaInsert(env, 'vp_feedback_notes', { feedback_id: f.id, venue_id: f.venue_id, session_id: f.session_id || null,
+      game_id: f.game_id || null, format: f.format || null, rating: rating, tags: tags, note: note || null,
+      wants_reply: !!email, ticket_id: ticket ? ticket.id : null }, false);
+  } catch (e) { return json({ error: 'We could not save that just now.' }, 503); }
+  if (rating === 1) { try { await vpfAlertSweep(env, Date.now()); } catch (e) {} }
+  return json({ ok: true, ticket_no: ticket ? ticket.ticket_no : null });
+}
+
+/* THE SOFT ALERT: three or more "Not for me" at a venue on one night opens ONE internal ticket and
+   pushes HQ's phones, once per venue per night. Reads the last day and a half of "Not for me" only. */
+async function vpfAlertSweep(env, nowMs) {
+  const since = new Date((nowMs || Date.now()) - 36 * 3600 * 1000).toISOString();
+  const bad = await vpaSelectAll(env, 'vp_game_feedback',
+    'source=eq.player&rating=eq.1&created_at=gte.' + encodeURIComponent(since) + '&select=id,venue_id,format,created_at&order=created_at.asc,id.asc');
+  if (!bad.length) return { alerts: 0 };
+  const vids = Array.from(new Set(bad.map((r) => r.venue_id)));
+  const venues = await vpaSelectAll(env, 'vp_venues', 'id=in.(' + vids.map(encodeURIComponent).join(',') + ')&select=id,name,timezone,join_code&order=id.asc');
+  const vOf = {}; venues.forEach((v) => { vOf[v.id] = v; });
+  const groups = {};
+  bad.forEach((r) => {
+    const v = vOf[r.venue_id]; const n = vpfNight(r.created_at, v && v.timezone);
+    const k = r.venue_id + ':' + n;
+    (groups[k] = groups[k] || { venue_id: r.venue_id, night: n, rows: [] }).rows.push(r);
+  });
+  let alerts = 0;
+  for (const k of Object.keys(groups)) {
+    const g = groups[k];
+    if (g.rows.length < VPF_ALERT_AT) continue;
+    const target = 'feedback-alert:' + k;
+    const done = await vpaSelect(env, 'vp_admin_audit', 'action=eq.feedback_alert&target=eq.' + encodeURIComponent(target) + '&select=id&limit=1');
+    if (done && done.length) continue;
+    const v = vOf[g.venue_id] || {};
+    const games = Array.from(new Set(g.rows.map((r) => VPF_FORMAT_WORDS[String(r.format || '')] || String(r.format || 'a game')))).join(', ');
+    /* Written first, so two ticks at once cannot both alert: the audit row is the "once". */
+    await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'automatic (player feedback)', action: 'feedback_alert', target: target,
+      detail: { venue: v.name || '', night: g.night, count: g.rows.length } }, false);
+    try {
+      const t = await helpInsertTicket(env, { brand: 'venueplay', category: 'general', channel: 'manual', raised_by: VPF_ALERT_BY,
+        title: VPF_LABEL[1] + ': ' + g.rows.length + ' players said Not for me at ' + (v.name || 'a venue') + ' on ' + g.night,
+        message: g.rows.length + ' players rated ' + games + ' "Not for me" at ' + (v.name || 'this venue') + ' on the night of ' + g.night
+          + '. Their reasons, where they gave any, are in HQ > Feedback.', venue_id: g.venue_id, room_code: v.join_code || null });
+      await helpPushNew(env, Object.assign({}, t, { bad_feedback: true }));   // a soft alert: HQ's phones, never an email
+    } catch (e) { /* the audit row stands: one try per venue per night */ }
+    alerts++;
+  }
+  return { alerts: alerts };
+}
+
+/* --- POST /admin/feedback { venue_id?, state?, format?, month?, night? } : HQ ONLY, everything.
+   Counts per rating and per tag, per venue, and every note with its words (never an email: that is
+   on the ticket, for the one person who asked to be answered). --- */
+async function vpaHandleFeedbackHq(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const _b = await vpaBody(request, json);
+  if (!_b.ok) return _b.res;
+  const b = _b.body;
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(b.month || '')) ? String(b.month) : vpfNight(new Date().toISOString(), 'Australia/Brisbane').slice(0, 7);
+  const y = +month.slice(0, 4), mo = +month.slice(5, 7);
+  const from = new Date(Date.UTC(y, mo - 1, 1) - 2 * 86400000).toISOString(), to = new Date(Date.UTC(y, mo, 1) + 2 * 86400000).toISOString();
+  const want = {
+    venue: /^[0-9a-fA-F-]{36}$/.test(String(b.venue_id || '')) ? String(b.venue_id) : '',
+    state: /^[A-Z]{2,3}$/.test(String(b.state || '')) ? String(b.state) : '',
+    format: String(b.format || '').toLowerCase().replace(/[^a-z_]/g, ''),
+    night: /^\d{4}-\d{2}-\d{2}$/.test(String(b.night || '')) ? String(b.night) : '',
+  };
+  let ratings, notes = [], venues, missing = false;
+  try {
+    ratings = await vpaSelectAll(env, 'vp_game_feedback', 'source=eq.player&and=(created_at.gte.' + from + ',created_at.lt.' + to + ')'
+      + (want.venue ? '&venue_id=eq.' + want.venue : '') + '&select=id,venue_id,format,rating,created_at&order=created_at.asc,id.asc');
+    try {
+      notes = await vpaSelectAll(env, 'vp_feedback_notes', 'and=(created_at.gte.' + from + ',created_at.lt.' + to + ')'
+        + (want.venue ? '&venue_id=eq.' + want.venue : '') + '&select=feedback_id,venue_id,format,rating,tags,note,wants_reply,ticket_id,created_at&order=created_at.asc,id.asc');
+    } catch (e) { if (e && /: 404 /.test(String(e.message))) missing = true; else throw e; }
+    const vids = Array.from(new Set(ratings.map((r) => r.venue_id).concat(notes.map((n) => n.venue_id))));
+    venues = vids.length ? await vpmInChunks(vids, (inl) => vpaSelectAll(env, 'vp_venues', 'id=in.(' + inl + ')&select=id,name,au_state,timezone&order=id.asc')) : [];
+  } catch (e) { return json({ error: 'Could not read the feedback just now. Please try again.' }, 503); }
+  const vOf = {}; venues.forEach((v) => { vOf[v.id] = v; });
+  const fmt = (f) => (VPF_FORMAT_WORDS[String(f || '')] || String(f || 'game'));
+  const keep = (r) => {
+    const v = vOf[r.venue_id] || {};
+    const n = vpfNight(r.created_at, v.timezone);
+    if (n.slice(0, 7) !== month) return false;
+    if (want.state && v.au_state !== want.state) return false;
+    if (want.format && fmt(r.format).replace(/ /g, '_') !== want.format && String(r.format || '') !== want.format) return false;
+    if (want.night && n !== want.night) return false;
+    r._night = n; return true;
+  };
+  const rs = ratings.filter(keep), ns = notes.filter(keep);
+  const per = {};
+  const blank = (id) => ({ venue_id: id, name: (vOf[id] || {}).name || '', state: (vOf[id] || {}).au_state || '', loved: 0, good: 0, not_for_me: 0, tags: {} });
+  rs.forEach((r) => { const p = per[r.venue_id] = per[r.venue_id] || blank(r.venue_id); if (r.rating === 3) p.loved++; else if (r.rating === 2) p.good++; else p.not_for_me++; });
+  ns.forEach((n) => { const p = per[n.venue_id] = per[n.venue_id] || blank(n.venue_id);
+    (n.tags || []).forEach((t) => { const k = n.rating + ':' + t; p.tags[k] = (p.tags[k] || 0) + 1; }); });
+  const total = { loved: 0, good: 0, not_for_me: 0, tags: {} };
+  Object.keys(per).forEach((id) => { const p = per[id]; total.loved += p.loved; total.good += p.good; total.not_for_me += p.not_for_me;
+    Object.keys(p.tags).forEach((k) => { total.tags[k] = (total.tags[k] || 0) + p.tags[k]; }); });
+  const tagWords = (tags) => Object.keys(tags).sort((a, c) => tags[c] - tags[a]).map((k) => { const r = +k.split(':')[0], t = k.split(':')[1];
+    return { rating: r, tag: t, words: (VPF_TAGS[r] || {})[t] || t, count: tags[k] }; });
+  return json({ ok: true, month: month, filters: want, missing_notes_table: missing,
+    total: { loved: total.loved, good: total.good, not_for_me: total.not_for_me, ratings: total.loved + total.good + total.not_for_me, tags: tagWords(total.tags) },
+    venues: Object.keys(per).map((id) => Object.assign({}, per[id], { tags: tagWords(per[id].tags) }))
+      .sort((a, c) => c.not_for_me - a.not_for_me || (c.loved + c.good) - (a.loved + a.good)),
+    notes: ns.slice().reverse().slice(0, 500).map((n) => ({ venue: (vOf[n.venue_id] || {}).name || '', state: (vOf[n.venue_id] || {}).au_state || '',
+      format: fmt(n.format), night: n._night, at: n.created_at, rating: n.rating, tags: vpfTagWords(n.rating, n.tags), note: n.note || '',
+      wants_reply: !!n.wants_reply, has_ticket: !!n.ticket_id })) });
 }

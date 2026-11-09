@@ -239,7 +239,7 @@
   })();
 
   // ---- screen state ----
-  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[], endDrawn:[], endPend:null,   // endDrawn: tonight's winning tickets, for the end-of-game show
+  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[], endDrawn:[], endPend:null, raffleName:"",   // endDrawn: tonight's winning tickets, for the end-of-game show; raffleName: which raffle (117)
           spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null,
           spinSecs:4, redrawTimer:null, holdUntil:0, pendingIdle:null, holdTimer:null };
 
@@ -341,7 +341,7 @@
     } else {
       // Keep the call-to-action prominent and list the prizes below it, so the room can see what
       // they are playing for (rather than the headline swapping to a single prize name).
-      $("idleEye").textContent="Raffle tonight"; $("idlePrize").textContent="Get your tickets"; $("idleSub").textContent="Drawn tonight";
+      $("idleEye").textContent=S.raffleName ? (S.raffleName+" tonight") : "Raffle tonight"; $("idlePrize").textContent="Get your tickets"; $("idleSub").textContent="Drawn tonight";
     }
     renderPrizeMenu();
     showLayer("tvIdle");
@@ -581,6 +581,10 @@
     // wind-down: they have finished and the room should be looking at the venue again.
     if(m.t==="to_ads"){ raffleEndShow(); if(VENUE_SLUG) endShowThen(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }   // the raffle's goodbye first, if it has not had one
     if(m.t==="idle"){ S.nextUp=!!m.next; if(Array.isArray(m.prizes)) S.prizes=m.prizes.filter(Boolean).slice(0,12); }   // showing the next prize after a draw, vs the raffle's first prize; prizes = what is still to win
+    /* Which raffle (a venue with two or more, migration 117): its name on the idle card. Every idle
+       says it again, so one without it (a one-raffle venue, or an older console) shows the card as it
+       always was. Painted with textContent like the prizes, and kept short. */
+    if(m.t==="idle"){ S.raffleName=(typeof m.raffle==="string") ? m.raffle.replace(/\s+/g," ").trim().slice(0,60) : ""; }
     // pad() loops on this. It arrives over a public broadcast channel, so an absurd value
     // (or a hostile one) used to spin the render thread forever and freeze the TV.
     if(typeof m.pad==="number" && isFinite(m.pad)) S.padW=Math.max(1, Math.min(6, m.pad|0));

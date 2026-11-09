@@ -116,7 +116,7 @@
   "counted_by": "total"
  },
  "tools/account-structure-in-chrome.test.py": {
-  "checks": 58,
+  "checks": 71,
   "counted_by": "lines"
  },
  "tools/account-tabs-in-chrome.test.py": {
@@ -141,6 +141,10 @@
  },
  "tools/caller-winner-in-chrome.test.py": {
   "checks": 107,
+  "counted_by": "lines"
+ },
+ "tools/connected-word-in-chrome.test.py": {
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/consent-split-in-chrome.test.py": {
@@ -176,7 +180,11 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 36,
+  "checks": 39,
+  "counted_by": "lines"
+ },
+ "tools/feedback-followup-in-chrome.test.py": {
+  "checks": 153,
   "counted_by": "lines"
  },
  "tools/game-setup-in-chrome.test.py": {
@@ -204,11 +212,15 @@
   "counted_by": "lines"
  },
  "tools/help-seed-matches-faq.test.py": {
-  "checks": 18,
+  "checks": 19,
   "counted_by": "lines"
  },
  "tools/helpdesk-hq-in-chrome.test.py": {
   "checks": 78,
+  "counted_by": "lines"
+ },
+ "tools/home-hero-in-chrome.test.py": {
+  "checks": 24,
   "counted_by": "lines"
  },
  "tools/hq-lists-in-chrome.test.py": {
@@ -243,6 +255,10 @@
   "checks": 13,
   "counted_by": "lines"
  },
+ "tools/multi-raffle-in-chrome.test.py": {
+  "checks": 32,
+  "counted_by": "lines"
+ },
  "tools/musical-host-titles-in-chrome.test.py": {
   "checks": 18,
   "counted_by": "lines"
@@ -256,7 +272,7 @@
   "counted_by": "lines"
  },
  "tools/no-dev-links.test.py": {
-  "checks": 36,
+  "checks": 37,
   "counted_by": "lines"
  },
  "tools/not-found-in-chrome.test.py": {
@@ -264,11 +280,19 @@
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
-  "checks": 48,
+  "checks": 54,
+  "counted_by": "lines"
+ },
+ "tools/offer-float-done-in-chrome.test.py": {
+  "checks": 9,
   "counted_by": "lines"
  },
  "tools/offer-free-play-in-chrome.test.py": {
-  "checks": 23,
+  "checks": 24,
+  "counted_by": "lines"
+ },
+ "tools/offer-page-start-first.test.py": {
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
@@ -276,11 +300,15 @@
   "counted_by": "lines"
  },
  "tools/old-tv-syntax.test.py": {
-  "checks": 140,
+  "checks": 152,
   "counted_by": "lines"
  },
  "tools/partyplay-resend-in-chrome.test.py": {
   "checks": 20,
+  "counted_by": "lines"
+ },
+ "tools/phone-lobby-fit-in-chrome.test.py": {
+  "checks": 44,
   "counted_by": "lines"
  },
  "tools/phone-signin-in-chrome.test.py": {
@@ -351,6 +379,10 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/session-lifecycle-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/set-worker-secret.test.py": {
   "checks": 32,
   "counted_by": "lines"
@@ -388,7 +420,7 @@
   "counted_by": "lines"
  },
  "tools/subscribe-in-chrome.test.py": {
-  "checks": 74,
+  "checks": 122,
   "counted_by": "lines"
  },
  "tools/support-phone.test.py": {
@@ -401,6 +433,10 @@
  },
  "tools/test-abandoned-lobby.js": {
   "checks": 18,
+  "counted_by": "lines"
+ },
+ "tools/test-account-ready.js": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-account-tabs.js": {
@@ -439,6 +475,10 @@
   "checks": 68,
   "counted_by": "lines"
  },
+ "tools/test-bingo-confirm-shows-win.js": {
+  "checks": 22,
+  "counted_by": "lines"
+ },
  "tools/test-bingo-draw-record-18-oct.js": {
   "checks": 27,
   "counted_by": "lines"
@@ -457,6 +497,10 @@
  },
  "tools/test-bingo-tab-15-oct.js": {
   "checks": 71,
+  "counted_by": "lines"
+ },
+ "tools/test-bingo-tonight.js": {
+  "checks": 11,
   "counted_by": "lines"
  },
  "tools/test-bingo-worker-15-oct.js": {
@@ -519,6 +563,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/test-demo-sync.js": {
+  "checks": 36,
+  "counted_by": "lines"
+ },
  "tools/test-double-points.js": {
   "checks": 24,
   "counted_by": "lines"
@@ -547,6 +595,14 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-feedback-consent.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-feedback-form.js": {
+  "checks": 73,
+  "counted_by": "lines"
+ },
  "tools/test-first-run-guide.js": {
   "checks": 145,
   "counted_by": "lines"
@@ -571,6 +627,10 @@
   "checks": 72,
   "counted_by": "lines"
  },
+ "tools/test-group-invoice-lines.js": {
+  "checks": 141,
+  "counted_by": "lines"
+ },
  "tools/test-help-desk.js": {
   "checks": 429,
   "counted_by": "lines"
@@ -589,6 +649,10 @@
  },
  "tools/test-join-cost.js": {
   "checks": 55,
+  "counted_by": "lines"
+ },
+ "tools/test-join-list.js": {
+  "checks": 21,
   "counted_by": "lines"
  },
  "tools/test-legal-gaps-28-oct.js": {
@@ -639,6 +703,10 @@
   "checks": 125,
   "counted_by": "lines"
  },
+ "tools/test-multi-raffle.js": {
+  "checks": 29,
+  "counted_by": "lines"
+ },
  "tools/test-musical-15-oct.js": {
   "checks": 70,
   "counted_by": "lines"
@@ -648,7 +716,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 61,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -663,6 +731,10 @@
   "checks": 14,
   "counted_by": "lines"
  },
+ "tools/test-musical-tonight.js": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "tools/test-night-pass-hq.js": {
   "checks": 23,
   "counted_by": "lines"
@@ -673,6 +745,14 @@
  },
  "tools/test-no-workersdev-links.js": {
   "checks": 70,
+  "counted_by": "lines"
+ },
+ "tools/test-offer-grace.js": {
+  "checks": 48,
+  "counted_by": "lines"
+ },
+ "tools/test-offer-start-deadline.js": {
+  "checks": 55,
   "counted_by": "lines"
  },
  "tools/test-old-tv-css.js": {
@@ -688,7 +768,7 @@
   "counted_by": "lines"
  },
  "tools/test-one-click-signin.js": {
-  "checks": 63,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-one-room-one-identity.js": {
@@ -744,7 +824,7 @@
   "counted_by": "lines"
  },
  "tools/test-platform-15-oct.js": {
-  "checks": 67,
+  "checks": 77,
   "counted_by": "lines"
  },
  "tools/test-platform-worker-15-oct.js": {
@@ -788,7 +868,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 54,
+  "checks": 80,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -804,7 +884,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospects-tab.js": {
-  "checks": 124,
+  "checks": 125,
   "counted_by": "lines"
  },
  "tools/test-purchase-raffle-hq.js": {
@@ -915,6 +995,14 @@
   "checks": 28,
   "counted_by": "lines"
  },
+ "tools/test-session-lifecycle-client.js": {
+  "checks": 31,
+  "counted_by": "lines"
+ },
+ "tools/test-session-lifecycle.js": {
+  "checks": 21,
+  "counted_by": "lines"
+ },
  "tools/test-set-count.js": {
   "checks": 9,
   "counted_by": "lines"
@@ -931,12 +1019,16 @@
   "checks": 2,
   "counted_by": "lines"
  },
+ "tools/test-signin-in-thread.js": {
+  "checks": 75,
+  "counted_by": "lines"
+ },
  "tools/test-signing-15-oct.js": {
   "checks": 30,
   "counted_by": "lines"
  },
  "tools/test-signup-core.js": {
-  "checks": 89,
+  "checks": 96,
   "counted_by": "lines"
  },
  "tools/test-stale-phone-and-end-once.js": {
@@ -975,8 +1067,12 @@
   "checks": 114,
   "counted_by": "lines"
  },
+ "tools/test-trivia-live-fixes-6nov.js": {
+  "checks": 75,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-newlook.js": {
-  "checks": 59,
+  "checks": 60,
   "counted_by": "lines"
  },
  "tools/test-trivia-no-players.js": {
@@ -993,6 +1089,10 @@
  },
  "tools/test-trivia-question-space.js": {
   "checks": 26,
+  "counted_by": "lines"
+ },
+ "tools/test-trivia-reveal.js": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-trusted-logos.js": {
@@ -1025,6 +1125,10 @@
  },
  "tools/test-tv-room-default.js": {
   "checks": 22,
+  "counted_by": "lines"
+ },
+ "tools/test-tv-setup-slide.js": {
+  "checks": 27,
   "counted_by": "lines"
  },
  "tools/test-tv-slides-in-step.js": {
@@ -1096,7 +1200,11 @@
   "counted_by": "lines"
  },
  "tools/test-vp-subscribers.js": {
-  "checks": 100,
+  "checks": 114,
+  "counted_by": "lines"
+ },
+ "tools/test-vp-tonight.js": {
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/test-webhook-retry-is-not-dropped.js": {
@@ -1143,6 +1251,14 @@
   "checks": 36,
   "counted_by": "lines"
  },
+ "tools/trivia-library-swap-in-chrome.test.py": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
+ "tools/trivia-live-fixes-in-chrome.test.py": {
+  "checks": 84,
+  "counted_by": "lines"
+ },
  "tools/trivia-newlook-in-chrome.test.py": {
   "checks": 204,
   "counted_by": "lines"
@@ -1151,12 +1267,16 @@
   "checks": 62,
   "counted_by": "lines"
  },
+ "tools/trivia-reveal-in-chrome.test.py": {
+  "checks": 54,
+  "counted_by": "lines"
+ },
  "tools/try-demo-in-chrome.test.py": {
   "checks": 52,
   "counted_by": "lines"
  },
  "tools/tv-and-phone-in-chrome.test.py": {
-  "checks": 100,
+  "checks": 105,
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
@@ -1176,7 +1296,7 @@
   "counted_by": "lines"
  },
  "tools/tv-landing-in-chrome.test.py": {
-  "checks": 46,
+  "checks": 53,
   "counted_by": "lines"
  },
  "tools/tv-logo-centre-in-chrome.test.py": {
@@ -1184,7 +1304,7 @@
   "counted_by": "lines"
  },
  "tools/tv-logo-in-chrome.test.py": {
-  "checks": 94,
+  "checks": 106,
   "counted_by": "lines"
  },
  "tools/tv-no-counts-in-chrome.test.py": {
@@ -1228,7 +1348,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-after-the-win.test.js": {
-  "checks": 149,
+  "checks": 150,
   "counted_by": "lines"
  },
  "venueplay-backend/app/bingo-console.test.js": {
@@ -1320,7 +1440,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/trivia/trivia-night.test.js": {
-  "checks": 116,
+  "checks": 111,
   "counted_by": "lines"
  },
  "venueplay-backend/app/tv-ads-rebuild.test.js": {
@@ -1498,6 +1618,10 @@
  "venueplay-backend/worker/trivia-catchup.test.js": {
   "checks": 17,
   "counted_by": "total"
+ },
+ "venueplay-backend/worker/trivia-library-swap.test.js": {
+  "checks": 49,
+  "counted_by": "lines"
  },
  "venueplay-backend/worker/trivia-reveal.test.js": {
   "checks": 19,

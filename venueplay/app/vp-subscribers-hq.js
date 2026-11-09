@@ -61,7 +61,10 @@
       + '<td><b>' + esc(r.email) + "</b>" + (r.venue_name ? '<div class="note" style="margin:2px 0 0">' + esc(r.venue_name) + "</div>" : "") + "</td>"
       + "<td>" + esc(when(r.created_at, true)) + "</td>"
       + "<td>" + esc(sourceText(r.source)) + (utmText(r.utm) ? '<div class="note" style="margin:2px 0 0">' + esc(utmText(r.utm)) + "</div>" : "") + "</td>"
-      + "<td>" + esc(r.region || r.country || "") + "</td>"
+      /* The venue's own postcode and the state it is in (2 Nov 2026, migration 141): what an offer by state
+         is sent on. A sign-up from before then has none, so the network's state shows, marked as a guess. */
+      + '<td data-vps-where>' + (r.postcode ? "<b>" + esc(r.postcode) + "</b> " + esc(r.au_state || "")
+          : '<span class="note" style="margin:0">No postcode' + ((r.region || r.country) ? " (network says " + esc(r.region || r.country) + ")" : "") + "</span>") + "</td>"
       + "<td>" + stateHtml(r) + "</td>"
       + '<td data-vps-match>' + matchHtml(r.match) + "</td></tr>";
   }
@@ -98,7 +101,7 @@
         .map(function (o) { return '<option value="' + o[0] + '"' + (S.filter === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("")
       + '</select><span class="note" id="vpsMsg" style="margin:0"></span></div>'
       + (rows.length
-        ? '<div class="panel"><div class="tscroll"><table class="vpstable"><thead><tr><th>Email and venue</th><th>Signed up</th><th>From</th><th>Where</th><th>Status</th><th>Looks like</th></tr></thead><tbody id="vpsRows">'
+        ? '<div class="panel"><div class="tscroll"><table class="vpstable"><thead><tr><th>Email and venue</th><th>Signed up</th><th>From</th><th>Postcode</th><th>Status</th><th>Looks like</th></tr></thead><tbody id="vpsRows">'
           + rows.map(rowHtml).join("") + "</tbody></table></div></div>"
         : '<div class="panel pad"><div class="empty" style="border:none;background:none">Nobody here yet.</div></div>');
   }

@@ -1,8 +1,9 @@
 /* A PROSPECT'S FREE MONTH, ITS CARD REMINDERS AND THE PAUSE, RUN AND NOT WORD-SEARCHED (Dean, 29 Oct 2026; migration 127).
 
    Dean's decisions: the free month starts at the FIRST SIGN-IN; with no card there are three reminders, day 3,
-   day 23 and the day before it ends (day 29) (Dean, 30 Oct 2026; it was seven: 3, 10, 17, 24, 28, 29, 30), 8am to
-   5pm Monday to Friday Brisbane; a card or a
+   day 23 and the day before it ends (day 29) (Dean, 30 Oct 2026; it was seven: 3, 10, 17, 24, 28, 29, 30), Dean's send
+   window (7 Nov 2026): Monday to Friday, 9am to 12 noon and 2pm to 5pm in the venue's own local time (it was 8am to
+   5pm Monday to Friday Brisbane); a card or a
    cancel stops them; with no card at the end the account PAUSES (games off, the TV keeps its ads) and the offer
    price it was set up on goes, so a card added after that is at the price of the day.
 
@@ -11,11 +12,15 @@
      1. the reminder calendar: weekends moved (day 3 and day 23 on to Monday, day 29 back to Friday)
      2. /account/prospect-start: starts the month once, for the venue's owner or manager only, never View as
      3. a month with no card: every reminder once, on its day, inside the hours, the right words; then the pause
-     4. the offer: held through the month after the offer closes; gone after the pause (card link and Checkout)
+     4. the offer: held through the month after the offer closes; gone after the pause and its 5-day grace (card link
+      and Checkout; the grace itself, day by day, is tools/test-offer-grace.js)
      5. a card stops everything; a card after the pause switches the venue back on
      6. cancel: the link asks first (a mail scanner cancels nobody), then switches off and stops the reminders
      7. a missed week sends one reminder, not a pile; a sign-in the guide never reported is found in Auth
      8. the pause screen says what happened, in the console's own holdWords
+     9. THE SEND WINDOW (Dean, 7 Nov 2026, live fault): vpaSendAllowedAt, per state and across daylight saving; outside
+        it a due reminder waits (never marked sent) and goes once in the next window; the pause is on time and sends
+        nothing at night; the paused-venue card check sends nothing
 
    Run from the repo root:  jsc tools/test-prospect-free-month.js */
 var ran = 0, bad = 0; function badCount() { return bad; }
@@ -151,7 +156,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   section('2. The month starts at the first sign-in, once, and only for the venue');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var A = await prospect({});
-  check('set up while the offer is open: the offer it was set up on is kept ($2.50), and no month has started', A.row().offer_rate === 2.5 && !A.row().first_signin_at, A.row());
+  check('set up while the offer is open: no rate is decided yet (it is decided at the first sign-in, Dean 7 Nov 2026), and no month has started', A.row().offer_rate == null && !A.row().first_signin_at, A.row());
   var va = await call('/account/prospect-start', { venue_id: A.v.id }, AS(ADMIN, A.v.id));
   check('HQ View as never starts anybody\'s month', va.status === 200 && va.body.view_as === true && !A.row().first_signin_at, va.body);
   var t0 = Date.now();
@@ -177,12 +182,12 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var C = await prospect({ name: 'Walk The Month Hotel' });
   var start = bne(2026, 11, 2, 10, 0);
-  C.row().first_signin_at = new Date(start).toISOString(); C.row().free_month_ends_at = new Date(vpaFreeMonthEnd(start)).toISOString();
+  C.row().first_signin_at = new Date(start).toISOString(); C.row().free_month_ends_at = new Date(vpaFreeMonthEnd(start)).toISOString(); C.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   ENV.FOUNDING_CODES = '';   // the November offer closes during their month
   var got = await walk(start, bne(2026, 12, 2, 16, 0));
   var days = got.map(function (g) { return day(g.at); }).join(' ');
   check('three reminders, one on each planned day: 5 Nov, 25 Nov, 1 Dec (none on 12, 19, 26, 30 Nov or 2 Dec)', days === '2026-11-05 2026-11-25 2026-12-01', days);
-  check('every one went 8am to 5pm Brisbane, Monday to Friday', got.every(function (g) { return vpaInSendWindow(g.at); }), got.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
+  check('every one went inside the send window: Monday to Friday, 9 to 12 or 2 to 5, Brisbane (a Queensland venue)', got.every(function (g) { var d = new Date(g.at + 36e6), h = d.getUTCHours(); return d.getUTCDay() >= 1 && d.getUTCDay() <= 5 && ((h >= 9 && h < 12) || (h >= 14 && h < 17)); }), got.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
   check('each to their email, from and replying to hello@ (never Dean), signed by the venueplay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'venueplay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, the venueplay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
   var early = got[0].msg, mid23 = got[1] && got[1].msg, last = got[2] && got[2].msg;
   check('day 3: friendly, the end date, the card not charged until then, Add my card and Cancel', /Your free month at Walk The Month Hotel runs until Wed 2 December\. Whenever suits, you can add your card, and it won't be charged until your free month ends\./.test(early.text) &&
@@ -190,24 +195,31 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('day 23: the same friendly note, with the end date', !!mid23 && /How's it going\?/.test(mid23.text) && /runs until Wed 2 December/.test(mid23.text), mid23 && mid23.text.slice(0, 500));
   check('day 29, the day before it ends: "2 days left of your free month", ends on Wed 2 December', !!last && /2 days left of your free month/.test(last.text) && /ends on Wed 2 December/.test(last.text), last && last.text.slice(0, 500));
   check('and exactly what happens with no card: paused, games off, the TV keeps the ads, nothing lost, the $2.50 offer goes, our price on the day after that',
-    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. The \$2\.50 a player offer you were set up on ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
+    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. You started your free month in time for \$2\.50 a player\. That price ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
   check('no em dash, no "about" on a price, no urgency words', got.every(function (g) { return !/[—–]/.test(g.msg.text) && !/about \$/.test(g.msg.text) && !/hurry|act now|last chance|don't miss/i.test(g.msg.text); }));
   check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,29]', C.row().reminders_sent);
   var mid = REM().length; await walk(bne(2026, 11, 26, 9, 0), bne(2026, 11, 26, 16, 0));
   check('running the same day again sends nothing', REM().length === mid);
+  var realNow0 = Date.now; Date.now = function () { return bne(2026, 12, 2, 12, 0); };   // a fixed clock: the price reads it
   var lr = await call('/account/card-link', { venue_id: C.v.id }, AS(C.login, C.v.id));
+  Date.now = realNow0;
   check('before the pause, with the November offer closed: their card is still added at the $2.50 they were set up on', lr.status === 200 && lr.body.rate === 2.5 && !lr.body.paused, lr.body);
   check('still on: no pause on Wed 2 Dec at noon', C.v.status === 'active' && !C.row().paused_at);
   await walk(bne(2026, 12, 2, 23, 0), bne(2026, 12, 3, 1, 0));
   check('after 11:59:59pm on day 30 with no card: PAUSED (suspended, free_month_ended), recorded and audited', C.v.status === 'suspended' && C.v.suspended_reason === 'free_month_ended' && !!C.row().paused_at &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_paused' && a.target === 'venue:' + C.v.id; }), [C.v.status, C.v.suspended_reason]);
+  /* THE 5-DAY OFFER GRACE (10 Nov 2026): the offer now holds to 11:59pm Brisbane on Mon 7 Dec, so "gone" is asked
+     on day 6, Tue 8 Dec, at a FIXED clock (never the real one: the card-add reads Date.now). tools/test-offer-grace.js
+     walks every day of it. */
+  var realNow = Date.now; Date.now = function () { return bne(2026, 12, 8, 9, 0); };
   var lr2 = await call('/account/card-link', { venue_id: C.v.id }, AS(C.login, C.v.id));
-  check('after the pause the offer has gone: their card is added at $3.00', lr2.body.rate === 3 && lr2.body.paused === true, lr2.body);
+  check('after the pause and its 5-day grace the offer has gone: their card is added at $3.00', lr2.body.rate === 3 && lr2.body.paused === true && !lr2.body.offer_grace, lr2.body);
   stripeCalls.length = 0;
   var tok = await vpaCardToken(ENV, C.v.founding_id);
   await vpaAddCardRedirect({ url: 'https://api.example/add-card?f=' + C.v.founding_id + '&t=' + tok, method: 'GET', headers: { get: function () { return null; } } }, ENV);
+  Date.now = realNow;
   var co = (stripeCalls[0] || {}).body || '';
-  check('Checkout after the pause: the standard price, and no free month left (no trial)', /line_items%5B0%5D%5Bprice%5D=price_S_M/.test(co) && !/trial_end/.test(co), co.slice(0, 400));
+  check('Checkout after the pause and its grace: the standard price, and no free month left (no trial)', /line_items%5B0%5D%5Bprice%5D=price_S_M/.test(co) && !/trial_end/.test(co), co.slice(0, 400));
   var n = REM().length; await walk(bne(2026, 12, 3, 8, 0), bne(2026, 12, 10, 16, 0));
   check('nothing more is sent once it is paused', REM().length === n);
   await vpaProspectCardAdded(ENV, C.v.founding_id);
@@ -217,7 +229,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var D = await prospect({});
   var ds = Date.now() - 5 * 86400000;
-  D.row().first_signin_at = new Date(ds).toISOString(); D.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ds)).toISOString();
+  D.row().first_signin_at = new Date(ds).toISOString(); D.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ds)).toISOString(); D.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   ENV.FOUNDING_CODES = '';
   stripeCalls.length = 0;
   var tk = await vpaCardToken(ENV, D.v.founding_id);
@@ -231,7 +243,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var E = await prospect({});
   var es = bne(2026, 11, 2, 10, 0);
-  E.row().first_signin_at = new Date(es).toISOString(); E.row().free_month_ends_at = new Date(vpaFreeMonthEnd(es)).toISOString();
+  E.row().first_signin_at = new Date(es).toISOString(); E.row().free_month_ends_at = new Date(vpaFreeMonthEnd(es)).toISOString(); E.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   await walk(es, bne(2026, 11, 13, 12, 0));
   check('one reminder by 13 Nov (day 3)', REM().length === 1, REM().length);
   E.founding().stripe_subscription_id = 'sub_on_day_11';
@@ -242,7 +254,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var F = await prospect({});
   var fs = bne(2026, 11, 2, 10, 0);
-  F.row().first_signin_at = new Date(fs).toISOString(); F.row().free_month_ends_at = new Date(vpaFreeMonthEnd(fs)).toISOString();
+  F.row().first_signin_at = new Date(fs).toISOString(); F.row().free_month_ends_at = new Date(vpaFreeMonthEnd(fs)).toISOString(); F.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   var link = await vpaProspectCancelLink(ENV, F.v.founding_id);
   var q = link.split('?')[1];
   function creq(method, qs, bodyTxt) { return { method: method, url: 'https://api.venueplay.com.au/prospect/cancel' + (qs ? '?' + qs : ''), headers: { get: function () { return null; } }, text: function () { return Promise.resolve(bodyTxt || ''); } }; }
@@ -295,19 +307,21 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 19, 10, 0));
   check('nothing on day 17 any more (the old schedule sent one)', REM().length === 1);
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 21, 10, 0));
-  check('a Saturday sends nothing', REM().length === 1);
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 7, 30));
-  check('before 8am sends nothing', REM().length === 1);
+  check('Saturday 21 Nov, before day 23\'s date, sends nothing', REM().length === 1);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 8, 30));
+  check('before 9am sends nothing', REM().length === 1);
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 17, 0));
   check('5pm sends nothing', REM().length === 1);
-  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 8, 0));
-  check('8am Wednesday 25 Nov sends day 23', REM().length === 2 && G.row().reminders_sent.indexOf(23) !== -1);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 12, 30));
+  check('12:30pm (lunch) sends nothing', REM().length === 1);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 0));
+  check('9am Wednesday 25 Nov sends day 23', REM().length === 2 && G.row().reminders_sent.indexOf(23) !== -1);
 
   /* A missed stretch that runs past day 23 into day 29 sends the NEWEST reminder: the "2 days left" one,
      never the day-23 note it replaces. */
   var H = await prospect({});
   var hs = bne(2026, 11, 2, 10, 0);
-  H.row().first_signin_at = new Date(hs).toISOString(); H.row().free_month_ends_at = new Date(vpaFreeMonthEnd(hs)).toISOString();
+  H.row().first_signin_at = new Date(hs).toISOString(); H.row().free_month_ends_at = new Date(vpaFreeMonthEnd(hs)).toISOString(); H.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   H.row().reminders_sent = [3];
   var hb = sent.length; await vpaProspectReminderSweep(ENV, bne(2026, 12, 1, 9, 0));
   var hm = sent.slice(hb).filter(function (m) { return m.to && m.to[0] === H.row().email; });
@@ -319,12 +333,109 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   function liftFn(src, name) { var i = src.indexOf('function ' + name + '('); var d = 0, k = src.indexOf('{', i); do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0); return src.slice(i, k); }
   var holdWords = new Function('isArchived', liftFn(SES, 'holdWords') + '\nreturn holdWords;')(function () { return false; });
   var hw = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'owner');
-  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, the offer price went, nothing to do if it is not for them',
+  check('the owner is told: the free month ended, games paused, the TV keeps its ads, nothing lost, a card switches it back on, nothing to do if it is not for them, and the 5-day leeway is NOT announced (INBOX 55c)',
     hw && hw.reason === 'free_month_ended' && /Your free month has ended, so your games are paused/.test(hw.title) && /Your TV keeps showing your ads and nothing has been lost\./.test(hw.text) &&
-    /The offer price you were set up on ended with your free month/.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
+    !/5 days|offer ends|standard price/.test(hw.text) && /If it is not for you, there is nothing you need to do\./.test(hw.text) && hw.link && hw.link.href === '#vp-card' && hw.link.label === 'Add your card', hw);
   var hh = holdWords({ status: 'suspended', suspended_reason: 'free_month_ended' }, 'host');
   check('a host is told to ask the owner or a manager, with no card button', hh && !hh.link && /Ask the venue owner or a manager to add a card/.test(hh.text), hh);
   check('the console fetches the venue\'s own card link for that button (never a link written into the page)', /w\.link\.href === '#vp-card'/.test(SES) && /\/account\/card-link/.test(liftFn(SES, 'holdGate')));
+
+  section('9. The send window: Monday to Friday, 9 to 12 and 2 to 5, the venue\'s own time; a due reminder waits, once; the pause is on time (Dean, 7 Nov 2026)');
+  /* Every prospect here signs in first at 10am Brisbane Mon 2 Nov, so day 3 is Thu 5 Nov and the month ends 11:59:59pm Wed 2 Dec. */
+  async function started(o) { var P = await prospect(o || {}); var s0 = bne(2026, 11, 2, 10, 0);
+    P.row().first_signin_at = new Date(s0).toISOString(); P.row().free_month_ends_at = new Date(vpaFreeMonthEnd(s0)).toISOString(); return P; }
+  function to(P) { return sent.filter(function (m) { return m.to && m.to[0] === P.row().email; }); }
+  function audits(P, act) { return DB.vp_admin_audit.filter(function (a) { return a.action === act && a.target === 'venue:' + P.v.id; }).length; }
+  async function firstSweepAt(ms, o) { world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099'; var P = await started(o); await vpaProspectReminderSweep(ENV, ms); return to(P).length; }
+
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var I = await started();
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 0, 30));
+  check('day 3 is due from midnight Thu 5 Nov, but at 12:30am NOTHING is sent, and it is not marked sent',
+    to(I).length === 0 && JSON.stringify(I.row().reminders_sent) === '[]' && audits(I, 'prospect_reminder_sent') === 0, [to(I).length, I.row().reminders_sent]);
+  await walk(bne(2026, 11, 5, 1, 30), bne(2026, 11, 5, 8, 30));
+  check('nor at 1:30am to 8:30am (every hourly sweep before 9am)', to(I).length === 0 && JSON.stringify(I.row().reminders_sent) === '[]', to(I).length);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 5, 9, 0));
+  check('9am Thu 5 Nov: the day-3 note goes, and is recorded', to(I).length === 1 && /How is venueplay going/.test(to(I)[0].subject) && JSON.stringify(I.row().reminders_sent) === '[3]', [to(I).length, I.row().reminders_sent]);
+  await walk(bne(2026, 11, 5, 9, 0), bne(2026, 11, 9, 16, 0));
+  check('never twice: the same 9am sweep again, every hour after it, the weekend and the Monday after send nothing more',
+    to(I).length === 1 && audits(I, 'prospect_reminder_sent') === 1 && JSON.stringify(I.row().reminders_sent) === '[3]', to(I).length);
+
+  var e = [await firstSweepAt(bne(2026, 11, 5, 11, 59)), await firstSweepAt(bne(2026, 11, 5, 12, 0)), await firstSweepAt(bne(2026, 11, 5, 13, 59)),
+    await firstSweepAt(bne(2026, 11, 5, 14, 0)), await firstSweepAt(bne(2026, 11, 5, 16, 59)), await firstSweepAt(bne(2026, 11, 5, 17, 0)), await firstSweepAt(bne(2026, 11, 5, 8, 59))];
+  check('the edges, as the first sweep of the day: 11:59am sends, 12 noon does not, 1:59pm does not, 2pm sends, 4:59pm sends, 5pm does not, 8:59am does not',
+    e.join(',') === '1,0,0,1,1,0,0', e.join(','));
+
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var K = await started();
+  await walk(bne(2026, 11, 5, 17, 0), bne(2026, 11, 6, 8, 0));
+  check('first seen at 5pm Thursday: it waits through the evening and the night', to(K).length === 0 && JSON.stringify(K.row().reminders_sent) === '[]', to(K).length);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 6, 9, 0));
+  check('and goes at 9am Friday, once', to(K).length === 1 && JSON.stringify(K.row().reminders_sent) === '[3]', to(K).length);
+
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var L = await started();
+  await walk(bne(2026, 11, 6, 21, 0), bne(2026, 11, 9, 8, 0));
+  check('due since yesterday (Thu 5 Nov), first seen at 9pm Friday: nothing all weekend, nor 8am Monday', to(L).length === 0 && JSON.stringify(L.row().reminders_sent) === '[]', to(L).length);
+  await walk(bne(2026, 11, 9, 9, 0), bne(2026, 11, 9, 12, 0));
+  check('it goes at 9am Monday, once', to(L).length === 1 && JSON.stringify(L.row().reminders_sent) === '[3]', to(L).length);
+
+  /* The venue's own clock. 5 Nov 2026 is in daylight saving: Sydney is Brisbane + 1, Perth is Brisbane - 2. */
+  var nsw = [await firstSweepAt(bne(2026, 11, 5, 7, 59), { postcode: '2000' }), await firstSweepAt(bne(2026, 11, 5, 8, 0), { postcode: '2000' })];
+  var wa = [await firstSweepAt(bne(2026, 11, 5, 10, 59), { postcode: '6000' }), await firstSweepAt(bne(2026, 11, 5, 11, 0), { postcode: '6000' })];
+  var qld = [await firstSweepAt(bne(2026, 11, 5, 8, 0), { postcode: '4000' }), await firstSweepAt(bne(2026, 11, 5, 11, 0), { postcode: '4000' })];
+  check('a Sydney venue gets it at 9am Sydney (8am Brisbane in daylight saving), a Perth venue at 9am Perth (11am Brisbane), a Brisbane venue at 9am Brisbane',
+    nsw.join(',') === '0,1' && wa.join(',') === '0,1' && qld.join(',') === '0,1', [nsw, wa, qld]);
+
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var P = await started();
+  P.row().reminders_sent = [3, 23, 29];
+  await walk(bne(2026, 12, 2, 21, 0), bne(2026, 12, 2, 23, 0));
+  check('still on at 11pm Wed 2 Dec, the last hour of the free month', P.v.status === 'active' && !P.row().paused_at);
+  var pb = sent.length;
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 3, 0, 0));
+  check('the PAUSE is on time: the first sweep after 11:59:59pm (midnight Brisbane) pauses the venue, outside the window',
+    P.v.status === 'suspended' && P.v.suspended_reason === 'free_month_ended' && P.row().paused_at === new Date(bne(2026, 12, 3, 0, 0)).toISOString(), [P.v.status, P.row().paused_at]);
+  check('and sends no email at midnight', sent.length === pb, sent.slice(pb).map(function (m) { return m.subject; }));
+  await walk(bne(2026, 12, 3, 1, 0), bne(2026, 12, 4, 23, 0));
+  check('nothing at all overnight or the next days: the pause has no email of its own, and no reminder goes after it', sent.length === pb && audits(P, 'prospect_paused') === 1, sent.slice(pb).map(function (m) { return m.subject; }));
+
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var Q = await started();
+  Q.row().reminders_sent = [3, 23];   // day 29 missed (no sweep ran on 1 Dec), and the month runs out overnight
+  var qb = sent.length;
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 3, 0, 30));
+  check('a missed day-29 note never goes at night as the month ends: 12:30am pauses, and sends nothing', Q.v.status === 'suspended' && sent.length === qb, sent.slice(qb).map(function (m) { return m.subject; }));
+  Q.founding().stripe_subscription_id = 'sub_added_at_night';
+  await vpaProspectReminderSweep(ENV, bne(2026, 12, 3, 1, 30));
+  check('the paused-venue card check: a card added at night switches the venue back on at once (their own action), and sends no email at 1:30am',
+    Q.v.status === 'active' && Q.v.suspended_reason === null && audits(Q, 'prospect_unpaused') === 1 && sent.length === qb, [Q.v.status, sent.length - qb]);
+  await walk(bne(2026, 12, 3, 2, 30), bne(2026, 12, 3, 12, 30));
+  check('and none at 9am either, nor a second switch-on', sent.length === qb && audits(Q, 'prospect_unpaused') === 1, sent.length - qb);
+
+  /* THE HELPER ITSELF, vpaSendAllowedAt(state, ms): the next moment a message may go, ms itself inside a window. */
+  function at(st, ms) { return vpaSendAllowedAt(st, ms); }
+  function utc(y, mo, d, h, mi) { return Date.UTC(y, mo - 1, d, h, mi || 0); }
+  check('inside a window it is now: 9am, 11:59am, 2pm, 4:59pm Thursday Brisbane',
+    [bne(2026, 11, 5, 9, 0), bne(2026, 11, 5, 11, 59), bne(2026, 11, 5, 14, 0), bne(2026, 11, 5, 16, 59)].every(function (t) { return at('QLD', t) === t; }));
+  check('12 noon waits to 2pm, 1:59pm to 2pm, 5pm to 9am the next day, 12:30am to 9am',
+    at('QLD', bne(2026, 11, 5, 12, 0)) === bne(2026, 11, 5, 14, 0) && at('QLD', bne(2026, 11, 5, 13, 59)) === bne(2026, 11, 5, 14, 0) &&
+    at('QLD', bne(2026, 11, 5, 17, 0)) === bne(2026, 11, 6, 9, 0) && at('QLD', bne(2026, 11, 5, 0, 30)) === bne(2026, 11, 5, 9, 0));
+  check('Friday 5pm rolls to Monday 9am; Saturday and Sunday noon too',
+    at('QLD', bne(2026, 11, 6, 17, 0)) === bne(2026, 11, 9, 9, 0) && at('QLD', bne(2026, 11, 7, 12, 0)) === bne(2026, 11, 9, 9, 0) && at('QLD', bne(2026, 11, 8, 12, 0)) === bne(2026, 11, 9, 9, 0),
+    new Date(at('QLD', bne(2026, 11, 6, 17, 0))).toISOString());
+  /* Daylight saving starts Sun 4 Oct 2026 and ends Sun 4 Apr 2027. Brisbane and Perth never change. */
+  check('before daylight saving (Thu 1 Oct 2026): 9am Sydney is 9am Brisbane (23:00 UTC), 9am Perth is 01:00 UTC, 9am Adelaide is 23:30 UTC',
+    at('NSW', utc(2026, 9, 30, 20)) === utc(2026, 9, 30, 23) && at('QLD', utc(2026, 9, 30, 20)) === utc(2026, 9, 30, 23) &&
+    at('WA', utc(2026, 9, 30, 20)) === utc(2026, 10, 1, 1) && at('SA', utc(2026, 9, 30, 20)) === utc(2026, 9, 30, 23, 30));
+  check('in daylight saving (Mon 5 Oct 2026): 9am Sydney, Melbourne, Hobart and Canberra is 22:00 UTC, Adelaide 22:30 UTC; Brisbane still 23:00, Perth 01:00, Darwin 23:30',
+    ['NSW', 'VIC', 'TAS', 'ACT'].every(function (s) { return at(s, utc(2026, 10, 4, 20)) === utc(2026, 10, 4, 22); }) && at('SA', utc(2026, 10, 4, 20)) === utc(2026, 10, 4, 22, 30) &&
+    at('QLD', utc(2026, 10, 4, 20)) === utc(2026, 10, 4, 23) && at('WA', utc(2026, 10, 4, 20)) === utc(2026, 10, 5, 1) && at('NT', utc(2026, 10, 4, 20)) === utc(2026, 10, 4, 23, 30),
+    new Date(at('NSW', utc(2026, 10, 4, 20))).toISOString());
+  check('daylight saving ends (Fri 2 Apr 2027 9am Sydney is 22:00 UTC; Mon 5 Apr 2027 it is 23:00 UTC again, with Brisbane)',
+    at('NSW', utc(2027, 4, 1, 20)) === utc(2027, 4, 1, 22) && at('NSW', utc(2027, 4, 4, 20)) === utc(2027, 4, 4, 23) && at('QLD', utc(2027, 4, 4, 20)) === utc(2027, 4, 4, 23));
+  check('a state we do not know (or none) keeps Brisbane\'s clock', at(null, bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0) && at('XX', bne(2026, 11, 5, 8, 0)) === bne(2026, 11, 5, 9, 0));
+  check('the venue\'s state comes from au_state, else its postcode', vpaSendState({ au_state: 'wa' }) === 'WA' && vpaSendState({ postcode: '2000' }) === 'NSW' && vpaSendState({}) === null);
 
   if (badCount()) throw new Error('prospect free month: ' + badCount() + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

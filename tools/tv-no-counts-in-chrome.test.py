@@ -172,7 +172,7 @@ SCREENS = [
     # (key, title, path, [(moment, ms, js)])
     ('trivia', 'TRIVIA', '/app/trivia/screen.html?demo=1&sting=0',
      [('lobby', 100, PLAYERS), ('question', 4600, 'S({t:"answered",count:2913})'), ('reveal', 9000, None),
-      ('board', 12500, None), ('question-sentinel', 14000, TRIVIA_Q), ('podium', 44000, PLAYERS)]),
+      ('question-sentinel', 14000, TRIVIA_Q), ('podium', 36000, PLAYERS), ('board', 41000, None)]),   # the board only at the round's end (7 Nov 2026)
     ('musical', 'MUSICAL BINGO', '/app/musical/screen.html?demo=1&sting=0',
      [('lobby', 800, PLAYERS + '; S({t:"state",phase:"lobby",playerCount:4137})'), ('playing', 6000, PLAYERS), ('later', 16000, PLAYERS),
       ('claim', 30000, None), ('end', 60000, PLAYERS)]),

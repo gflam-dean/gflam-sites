@@ -143,11 +143,15 @@ eval(lift('handleJoinInfo'));
 eval(lift('isDemoSession'));
 eval('var DEMO_MAX_PLAYERS=' + (/const DEMO_MAX_PLAYERS = (\d+)/.exec(src)||[,'10'])[1] + ';');   // the try-it demo (migration 172)
 eval(lift('joinInfoLookup'));
+eval(lift('joinNights'));   // the venue's game nights on /join/info (6 Nov 2026)
 /* /play/live keeps its answer a few seconds (the cheaper join, 31 Oct 2026): the cache, then the lookup. */
 eval(liftLine(/^const PLAY_LIVE_TTL_MS[^\n]*/m));
 eval(liftLine(/^const playLiveCache[^\n]*/m));
 eval(lift('handlePlayLive'));
 eval(lift('playLiveLookup'));
+/* a walked-away trivia or musical lobby is not live (6 Nov 2026): both lookups ask this. */
+eval(liftLine(/^const ABANDONED_LOBBY_MS[^\n]*/m));
+eval(lift('sessionAbandoned'));
 eval(lift('venueRowByCode'));
 
 /* The three copies of the hash the pages carry. They must equal the Worker's. */

@@ -375,6 +375,31 @@ async function moreSections() {
      as the line that declares it, the one place that number is set. */
   var cap = /\nconst VP_DEMO_JOINER_CAP = (\d+);/.exec(readFile('venueplay-backend/worker/venueplay-api-FULL.js'));
   check('the demo joiner cap is 10, one constant, for the try-it-now job', !!cap && cap[1] === '10', cap && cap[1]);
+
+  section('13. The sign-up never starts the free month, not even through the hourly sweep (Dean, 7 Nov 2026)');
+  /* The sweep (vpaProspectReminderSweep) backfills first_signin_at from Auth's earliest last_sign_in_at for a prospect
+     whose sign-in the setup guide missed. A login made by the sign-up has signed in to nothing: Supabase's admin
+     create makes a user with last_sign_in_at null, and the fake Auth makes it the same way (no stamp). So after the
+     sign-up and the sweep the clock must still be unset; then a REAL first sign-in (the stamp) starts it, which proves
+     the sweep was looking. */
+  world(); listed();
+  var sw = await start({ venue: 'Sweep Test Hotel', postcode: '4217', mobile: '0412 909 001', email: 'sweep@test.example' });
+  var swv = DB.vp_venues.filter(function (x) { return x.name === 'Sweep Test Hotel'; })[0] || {};
+  var swp = DB.vp_prospects.filter(function (x) { return x.venue_id === swv.id; })[0] || {};
+  // The live table has the columns (migration 127): an unset clock is null there, never a missing key.
+  if (!('first_signin_at' in swp)) swp.first_signin_at = null;
+  if (!('free_month_ends_at' in swp)) swp.free_month_ends_at = null;
+  var swUser = AUTH.filter(function (u) { return u.email === 'sweep@test.example'; })[0] || {};
+  check('the sign-up made the account and its login', sw.verify.body.outcome === 'made' && !!swUser.id && !!swp.venue_id, [sw.verify.body, swUser]);
+  check('the new login carries no sign-in stamp (made by Auth\'s admin create, never signed in)', !swUser.last_sign_in_at, swUser);
+  check('straight after the sign-up the free month has not started', swp.first_signin_at === null && swp.free_month_ends_at === null, swp);
+  var r1 = await vpaProspectReminderSweep(ENV, Date.now() + 3600000);
+  check('the hourly sweep ran over the prospect (it was not skipped as "migration 127 not run")', !r1.why, r1);
+  check('and after the sweep the free month STILL has not started', swp.first_signin_at === null && swp.free_month_ends_at === null && r1.started === 0, [swp, r1]);
+  check('and nothing was sent or paused', r1.sent.length === 0 && r1.paused.length === 0, r1);
+  swUser.last_sign_in_at = new Date(Date.now() + 2 * 3600000).toISOString();   // their real first sign-in, later
+  var r2 = await vpaProspectReminderSweep(ENV, Date.now() + 3 * 3600000);
+  check('control: once they really sign in, the same sweep starts the free month from that sign-in', r2.started === 1 && swp.first_signin_at === swUser.last_sign_in_at, [r2, swp.first_signin_at]);
 }
 
 var done = false;

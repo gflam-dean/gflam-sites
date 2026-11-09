@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 18:00 · 0cb91e8c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '6 Nov 2026, 22:59 · 0bd9f1f7';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -158,6 +158,8 @@ const JOIN_MAX_PER_IP = 300;      // joins per 60s per network. Generous: a whol
 const LIKE_MAX_PER_IP = 30;      // venue-name searches per 60s per network: a screen setting itself up asks a handful of times.
 const FIND_MAX_PER_IP = 20;      // TV-app name searches (?q=) per 60s per network: one per press of Search on a remote.
 const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
+const LIST_MAX_PER_IP = 30;      // /join/list sign-ups per 60s per network (a pub shares one NAT IP)
+const LIST_MAX_PER_DEVICE = 5;   // and per phone, per hour: a phone signs up once, a loop is somebody playing
 const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
 const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined attacker spamming BINGO + the TV overlay.
@@ -274,6 +276,44 @@ async function noteLobbyFormat(env, sessionId, format) {
   if (!format) return;
   try { await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { lobby_format: lobbyFormat(format) }); } catch (e) { /* tolerated */ }
 }
+/* A TRIVIA OR MUSICAL LOBBY NOBODY IS RUNNING IS NOT LIVE (Dean's live play, 6 Nov 2026).
+   A host who leaves the console without End game used to leave the venue's one live session open:
+   the TV fell back to its old lobby QR and /play with the venue code sent phones into a game that
+   was not there. A trivia or musical session that has run no game for ABANDONED_LOBBY_MS is treated
+   as gone: the lookups below answer "nothing on", and the next lobby closes it (billing it exactly
+   as a close does) and opens a fresh one. Only those two formats: a bingo night can be broadcast
+   only for hours with no game row, and must never be judged by this. Cheap by construction: a
+   session younger than the window costs no read at all. Cannot tell (a read fails) = live. */
+const ABANDONED_LOBBY_MS = 30 * 60 * 1000;   // 30 minutes with no game (Dean, 6 Nov 2026, 13:10; it was 3 hours)
+async function sessionAbandoned(env, s) {
+  try {
+    if (!s || !s.id) return false;
+    const lf = String(s.lobby_format || '');
+    if (lf !== 'trivia' && lf !== 'musical_bingo') return false;
+    const born = Date.parse(s.opened_at || s.created_at || '');
+    if (!isFinite(born) || Date.now() - born < ABANDONED_LOBBY_MS) return false;
+    const running = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(s.id) + '&status=eq.running&select=id&limit=1');
+    if (running.length) return false;
+    const last = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(s.id) + '&select=ended_at,started_at&order=seq.desc&limit=1');
+    let at = born;
+    if (last.length) at = Math.max(born, Date.parse(last[0].ended_at || last[0].started_at || '') || 0);
+    return Date.now() - at >= ABANDONED_LOBBY_MS;
+  } catch (e) { return false; }
+}
+/* Close an abandoned session the way the host's close and the 3am sweep do: games finished, session
+   finished, draws ended, the night billed (the overage key makes a second close harmless). Never throws. */
+async function closeAbandonedSession(env, sessionId) {
+  try {
+    const session = await getSession(env, sessionId);
+    if (session.ended_at || session.status === 'finished' || session.status === 'cancelled') return;
+    const at = new Date().toISOString();
+    await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running', { status: 'finished', ended_at: at });
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { status: 'finished', ended_at: at });
+    await bingoFinishDraws(env, 'session_id=eq.' + enc(sessionId));
+    try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) { /* tolerated */ }
+    try { await chargeNightOverage(env, session); } catch (e2) { await recordOverageCrash(env, session, e2, 'abandoned_lobby'); }
+  } catch (e) { console.log('[abandoned] could not close ' + sessionId + ': ' + String((e && e.message) || e)); }
+}
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
 export default {
@@ -335,6 +375,7 @@ export default {
       if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
+      if (method === 'POST' && path === '/join/list')          return await handleJoinList(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/feedback')           return await handleFeedback(request, env, json);
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
@@ -373,6 +414,7 @@ export default {
       if (method === 'GET'  && path === '/host/pr/boards')                 return await handlePRBoards(request, env, json);   // Punters Reckon, staff only
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/update')   return await handleTriviaUpdate(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/swap')     return await handleTriviaSwap(request, env, json);
       if (method === 'POST' && path === '/host/trivia/image-upload')       return await handleTriviaImageUpload(request, env, json);
       if (method === 'POST' && path === '/host/question/add-time')         return await handleHostAddTime(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
@@ -1176,7 +1218,12 @@ async function handleCreateSession(request, env, json) {
   const wantDemo = b.demo === true;
   if (wantDemo && b.format && String(b.format) !== 'trivia') return json({ error: 'The demo is a trivia round.', code: 'demo_trivia_only' }, 400);
   let liveNow = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start,paper,is_demo&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start,paper,is_demo,lobby_format,opened_at,created_at&order=created_at.desc&limit=1');
+  /* A lobby left behind by a host who walked away is closed here, and a fresh one opened below. */
+  if (liveNow.length && await sessionAbandoned(env, liveNow[0])) {
+    await closeAbandonedSession(env, liveNow[0].id);
+    liveNow.length = 0;
+  }
   // Caller mode is a bingo console's choice; an older console sends no caller field and changes nothing.
   const callerAsked = (lobbyFormat(b.format) === 'bingo90' && typeof b.caller === 'boolean') ? b.caller : null;
   /* NEVER ONE INTO THE OTHER. A demo asked for while a real night is live is refused (the real night is
@@ -1406,6 +1453,7 @@ async function joinInfoLookup(env, code, fresh) {
   let liveNow = false;
   let liveSession = null;   // the open session's row, for the caller-mode flag (vp_sessions.paper.bingo)
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=*&limit=1');
+  if (sessions.length && await sessionAbandoned(env, sessions[0])) sessions.length = 0;   // a walked-away trivia or musical lobby is not on (6 Nov 2026)
   if (sessions.length) {
     venueId = sessions[0].venue_id;
     liveNow = true;
@@ -1438,6 +1486,7 @@ async function joinInfoLookup(env, code, fresh) {
     if (venueId) {
       const live = await sbGet(env, 'vp_sessions',
         'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=*&order=created_at.desc&limit=1');
+      if (live.length && await sessionAbandoned(env, live[0])) live.length = 0;
       if (live.length) {
         liveNow = true;
         liveSession = live[0];
@@ -1482,8 +1531,13 @@ async function joinInfoLookup(env, code, fresh) {
     return { keep: !!held, body: { collect: null, format: '', exists: !!held } };
   }
   const cfg = await joinInfoStaticRead('s:' + venueId, async () => {
-    const rows = await sbGet(env, 'vp_venue_settings',
-      'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+    const cols = 'collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin';
+    /* THE VENUE'S GAME NIGHTS (Dean, 6 Nov 2026: the phone's "Tonight" and "Next game night" cards). Only what the venue
+       told the setup wizard (migration 163, setup_answers: which nights, which games). Before 163 has run the column does
+       not exist and PostgREST refuses the read, so it is asked again without it: the phone then shows no nights. */
+    let rows;
+    try { rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=' + cols + ',setup_answers&limit=1'); }
+    catch (e) { rows = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=' + cols + '&limit=1'); }
     return (rows && rows[0]) || {};
   }, fresh);
   /* The venue's NAME, so the join screen can say who is asking for these details. A collection
@@ -1564,7 +1618,55 @@ async function joinInfoLookup(env, code, fresh) {
     email: !!cfg.collect_email,
     mobile: !!cfg.collect_mobile,
     marketing_optin: !!cfg.collect_marketing_optin,
-  } }, venueId: venueId };
+  }, ...joinNights(cfg.setup_answers) }, venueId: venueId };
+}
+/* The phone's copy of the venue's game week (Dean, 6 Nov 2026: the "This week here" strip on the waiting phone). Players
+   are anonymous, so /join/info hands over ONLY this, never any other setup answer:
+     week   [{"day":"wed","games":[{"game":"trivia","start":"19:00"}]}, ...]   which game on which night, an optional start
+            (the wizard's shape, fix/wizard-104-10nov; cleaned by the same rules as VPGameSetup.cleanWeek in
+            /app/vp-gamesetup.js: known days in week order, known games in their order, one of each a night, at most
+            five, "HH:MM" or no start)
+     nights ["wed","fri"], games ["trivia","musical"]   the older answers, when no week was given
+   Nothing at all when the venue never answered. */
+function joinNights(sa) {
+  const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], GAMES = ['trivia', 'musical', 'bingo', 'raffles', 'members'];
+  if (!sa || typeof sa !== 'object') return {};
+  const res = {};
+  if (Array.isArray(sa.week)) {
+    const byDay = {};
+    for (const d of sa.week) {
+      if (!d || typeof d !== 'object' || DAYS.indexOf(d.day) === -1 || !Array.isArray(d.games)) continue;
+      const have = byDay[d.day] = byDay[d.day] || {};
+      for (const gm of d.games) {
+        if (!gm || typeof gm !== 'object') continue;
+        /* "other" is a Something-else night with its own name (Karaoke), one per name; count is 2 to 4 sessions of one
+           game ("Bingo x2"). Both from the wizard's game week (6 Nov 2026), and backwards compatible. */
+        const isOther = gm.game === 'other';
+        const nm = isOther ? String(gm.name == null ? '' : gm.name).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+        if ((!isOther && GAMES.indexOf(gm.game) === -1) || (isOther && !nm)) continue;
+        const key = isOther ? 'other:' + nm.toLowerCase() : gm.game;
+        if (have[key]) continue;
+        const t = (typeof gm.start === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(gm.start)) ? gm.start : '';
+        const o = isOther ? { game: 'other', name: nm } : { game: gm.game };
+        if (t) o.start = t;
+        const n = Number(gm.count);
+        if (!isOther && Number.isInteger(n) && n >= 2 && n <= 4) o.count = n;
+        have[key] = o;
+      }
+    }
+    const week = [];
+    for (const day of DAYS) {
+      const h = byDay[day]; if (!h) continue;
+      const others = Object.keys(h).filter((k) => k.indexOf('other:') === 0).map((k) => h[k]);
+      const gs = GAMES.filter((g) => h[g]).map((g) => h[g]).concat(others).slice(0, 5);
+      if (gs.length) week.push({ day: day, games: gs });
+    }
+    if (week.length) res.week = week;
+  }
+  const nights = Array.isArray(sa.nights) ? DAYS.filter((d) => sa.nights.indexOf(d) !== -1) : [];
+  const games = Array.isArray(sa.games) ? GAMES.filter((g) => sa.games.indexOf(g) !== -1) : [];
+  if (nights.length || games.length) { res.nights = nights; res.games = games; }
+  return res;
 }
 
 /* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a
@@ -1827,15 +1929,19 @@ async function handleFeedback(request, env, json) {
   }
   if (!venueId) return json({ ok: true, ignored: 'unknown code' });   // silent, like /capture
 
-  await sbInsert(env, 'vp_game_feedback', {
+  const ins = await sbInsert(env, 'vp_game_feedback', {
     venue_id: venueId,
     session_id: sessionId || null,
     game_id: b.game_id ? String(b.game_id) : null,
     format: b.format ? String(b.format).slice(0, 24) : null,
     source,
     rating,
-  });
-  return json({ ok: true });
+  }, true);
+  /* The rating's id goes back to the phone, so its one follow-up ("What did you love?", "What went
+     wrong?", Dean 1 Nov 2026) is kept against THIS rating by the billing Worker's /help/feedback,
+     and cannot be posted against a rating nobody made. */
+  const row = Array.isArray(ins) ? ins[0] : ins;
+  return json({ ok: true, id: (row && row.id) || null });
 }
 
 /* What the host sees the moment the game ends: the room's answer, live.
@@ -1843,19 +1949,16 @@ async function handleFeedback(request, env, json) {
 async function handleFeedbackTally(request, env, json) {
   const url = new URL(request.url);
   const sessionId = String(url.searchParams.get('session') || '').trim();
-  if (!sessionId) return json({ ratings: 0 });
+  if (!sessionId) return json({ loved: 0, good: 0 });
   assertUuid(sessionId, 'session');
+  /* ONLY THE FAVOURABLE, AS TRUE COUNTS (Dean, 1 Nov 2026). A venue's console reads this, so it never
+     says how many tapped "Not for me", and never a percentage: a share worked out from the good ones
+     alone would be a number that misleads. HQ sees everything, in HQ > Feedback. One indexed read. */
   const rows = await sbGet(env, 'vp_game_feedback',
-    'session_id=eq.' + enc(sessionId) + '&source=eq.player&select=rating&limit=2000');
-  const n = rows.length;
-  const loved = rows.filter((r) => r.rating === 3).length;
-  const ok = rows.filter((r) => r.rating === 2).length;
+    'session_id=eq.' + enc(sessionId) + '&source=eq.player&rating=in.(2,3)&select=rating&limit=2000');
   return json({
-    ratings: n,
-    loved,
-    ok,
-    poor: n - loved - ok,
-    positive_pct: n ? Math.round((100 * (loved + ok)) / n) : null,
+    loved: rows.filter((r) => r.rating === 3).length,
+    good: rows.filter((r) => r.rating === 2).length,
   });
 }
 
@@ -1919,6 +2022,83 @@ function gatedCapture(cfg, b) {
     out.marketing_optin_at = new Date().toISOString();
   }
   return out;
+}
+
+/* ------------------------------ POST /join/list ------------------------------
+ * "GET A HEADS UP BY EMAIL" ON THE PHONE WITH NO GAME ON (Dean, 6 Nov 2026, round 5): one email, the venue's own optional
+ * "Send me offers from {venue}. I'm 18 or over." tick (/app/vp-consent.js), and the consent words' version.
+ *
+ * body { code, email, mobile, marketing_optin, consent_version, pid }, header X-Player-Token optional (email or mobile, or both).
+ *   code   the room's join code or the venue's permanent code (the QR the phone came from)
+ *   -> { ok:true, stored:true } | { ok:true, stored:false } (the venue does not collect email) | 4xx
+ *
+ * THE SAME WAY A PLAYER'S OPT-IN IS KEPT, through the same gate (gatedCapture: only what the venue has switched on, the
+ * tick only with an address). A phone that played at THIS venue before (it still holds the token /join gave it) has its
+ * own vp_players row brought up to date, which is exactly where a player's opt-in lives and what the venue's export
+ * reads (v_vp_player_optins). A phone that never played here cannot prove it was ever in the room, so its sign-up is
+ * kept in vp_captures marked during_game false, like an unverified /capture: stored, never mailed (the view leaves
+ * those out). The consent version is kept in the consent_version column (migration 174, NOT RUN); until 174 runs it
+ * is dropped rather than losing the sign-up.
+ *
+ * Limits: LIST_MAX_PER_IP per network per minute, LIST_MAX_PER_DEVICE per phone (pid) per hour. */
+async function handleJoinList(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'list:ip:' + ipHash, LIST_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many sign-ups from this network right now' }, 429);
+  }
+  const pid = String(b.pid || '').trim();
+  if (/^[A-Za-z0-9_-]{8,64}$/.test(pid)) {
+    const rd = await rateLimit(env, 'list:dev:' + pid, LIST_MAX_PER_DEVICE, 3600);
+    if (!rd.ok) return json({ error: 'You have already signed up from this phone' }, 429);
+  }
+  /* An email, or a mobile, or both (the menu's "Join {venue}'s list" asks for what the venue collects, 6 Nov 2026). */
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  const mobile = String(b.mobile || '').replace(/[^0-9+]/g, '').slice(0, 20);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return json({ error: 'That email does not look right' }, 400);
+  if (mobile && !/^\+?[0-9]{8,15}$/.test(mobile)) return json({ error: 'That mobile does not look right' }, 400);
+  if (!email && !mobile) return json({ error: 'That email does not look right' }, 400);
+  const consentVersion = String(b.consent_version || '').trim().slice(0, 20);
+  const code = String(b.code || '').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) return json({ error: 'Missing code' }, 400);
+  // The venue: a room's join code (any session, live or not: the night may be over) or the venue's permanent code.
+  let venueId = null;
+  const ss = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&select=venue_id&order=created_at.desc&limit=1');
+  if (ss.length) venueId = ss[0].venue_id;
+  else venueId = await venueByCode(env, code);
+  if (!venueId) return json({ error: 'No venue with that code' }, 404);
+  const cfg = await venueCollectCfg(env, venueId);
+  const cap = gatedCapture(cfg, { email: email || null, mobile: mobile || null, marketing_optin: b.marketing_optin === true });
+  if (!cap.email && !cap.mobile) return json({ ok: true, stored: false });   // the venue collects neither: nothing is kept
+  if (cap.marketing_optin && consentVersion) cap.consent_version = consentVersion;
+
+  /* A phone that played here: its own player row, when the token is real and its session is this venue's. */
+  let player = null;
+  try { player = await verifyPlayerToken(request, env); } catch (e) { player = null; }
+  if (player) {
+    const sv = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&select=venue_id&limit=1');
+    if (!(sv.length && sv[0].venue_id === venueId)) player = null;
+  }
+  /* The write's error reaches here as a generic 502 (dbError keeps the database's words in the log), so a row that carries
+     consent_version is tried once more without it: before migration 174 that is the column the database does not know,
+     and a sign-up is never lost to it. A row without the column, or a second failure, is a real fault and is thrown. */
+  const write = async (fn, row) => {
+    try { return await fn(row); }
+    catch (e) {
+      if (!('consent_version' in row) || (e && e.status && e.status !== 502)) throw e;
+      const r2 = Object.assign({}, row); delete r2.consent_version;
+      return await fn(r2);
+    }
+  };
+  if (player) {
+    await write((row) => sbPatch(env, 'vp_players', 'id=eq.' + enc(player.id), row), cap);
+    return json({ ok: true, stored: true });
+  }
+  const row = Object.assign({ venue_id: venueId, source: 'nogame', during_game: false }, cap);
+  if (ipHash) row.source_ip_hash = ipHash;
+  await write((r) => sbInsert(env, 'vp_captures', r, false), row);
+  return json({ ok: true, stored: true });
 }
 
 async function handleCapture(request, env, json) {
@@ -2999,6 +3179,15 @@ async function handleScreen(request, env, json) {
   const rows = await sbGet(env, 'vp_venue_screen',
     'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
   const cfg = (rows && rows[0]) || null;
+  /* MORE THAN ONE RAFFLE (migration 117). Asked on its own, and a refusal (the column is not there
+     yet) is null, which the TV reads as "use the single routine": never a failed screen. */
+  let raffles = null;
+  if (cfg) {
+    try {
+      const rr = await sbGet(env, 'vp_venue_screen', 'slug=eq.' + enc(slug) + '&select=raffles&limit=1');
+      raffles = (rr && rr[0] && Array.isArray(rr[0].raffles)) ? rr[0].raffles : null;
+    } catch (e) { raffles = null; }
+  }
 
   /* A REAL VENUE THAT HAS NEVER SET UP A SCREEN IS STILL A REAL VENUE.
 
@@ -3051,6 +3240,7 @@ async function handleScreen(request, env, json) {
     logo_url: (cfg && cfg.logo_url) || '',
     slides: (cfg && Array.isArray(cfg.slides)) ? cfg.slides : [],
     raffle: (cfg && cfg.raffle) || null,
+    raffles: raffles,
     draws: draws,
   });
 }
@@ -3133,7 +3323,8 @@ async function playLiveLookup(env, code) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format,paper&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,lobby_format,paper,opened_at,created_at&order=created_at.desc&limit=1');
+  if (sessions.length && await sessionAbandoned(env, sessions[0])) sessions.length = 0;   // same rule as /join/info: a walked-away lobby is not on
   /* A QUIET NIGHT ASKS NOTHING (live audit, 16 Oct 2026). This used to answer phoneRules(''),
      and '' is bingo, so with nothing on at all a Victorian or Tasmanian phone was told "Tonight
      you play on paper" and an ACT phone was asked "Are you 18 or over?", before the host had
@@ -5707,7 +5898,17 @@ async function handleRafflePrizeAdd(request, env, json) {
   if (!staffCan(staff, 'draws_raffles')) {
     return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
   }
-  const made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
+  /* raffle_id (migration 117): which of the venue's raffles this prize is for. Before the column
+     exists the insert with it is refused, so it is tried once without: the prize is the venue's, as
+     it always was, and nothing the venue typed is lost. */
+  const raffleId = (typeof b.raffle_id === 'string' && /^[A-Za-z0-9-]{6,40}$/.test(b.raffle_id)) ? b.raffle_id : null;
+  let made;
+  if (raffleId) {
+    try { made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label, raffle_id: raffleId }, true); }
+    catch (e) { made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true); }
+  } else {
+    made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
+  }
   return json({ ok: true, prize: Array.isArray(made) ? made[0] : made });
 }
 
@@ -5921,6 +6122,24 @@ async function handleTriviaSetDelete(request, env, json) {
   await sbDelete(env, 'vp_question_sets', 'id=eq.' + enc(set.id));
   return json({ ok: true, archived: false });
 }
+/* LIBRARY QUESTIONS ARE NOT THE VENUE'S TO EDIT (Dean, 5 Nov 2026, item 45c). Adding from the library COPIES a question into
+   the venue's own night, word for word, so the copy is told from a question the host wrote by its exact text being in a
+   library set. Returns the Set of those texts among `texts` that are library questions. THROWS if the check cannot be made:
+   the callers that protect the library (update, swap) fail closed on that, rather than let an edit through. */
+async function libraryTextsAmong(env, texts) {
+  const out = new Set();
+  const uniq = [...new Set((texts || []).map((t) => String(t || '')))].filter(Boolean);
+  if (!uniq.length) return out;
+  const lib = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id&limit=200');
+  if (!lib.length) return out;
+  const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
+  for (let i = 0; i < uniq.length; i += 20) {
+    const quoted = uniq.slice(i, i + 20).map((q) => enc('"' + q.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'));
+    const hits = await sbGet(env, 'vp_questions', 'set_id=in.' + inList + '&question=in.(' + quoted.join(',') + ')&select=question&limit=1000');
+    for (let k = 0; k < hits.length; k++) out.add(hits[k].question);
+  }
+  return out;
+}
 async function handleTriviaSetQuestions(request, env, json) {     // list a venue set's questions for editing
   const authUserId = await verifyHostJwt(request, env);
   const setId = new URL(request.url).searchParams.get('set') || '';
@@ -5932,21 +6151,11 @@ async function handleTriviaSetQuestions(request, env, json) {     // list a venu
      "Film & TV" set), so it said YOUR OWN 3 when the host had written one (audit, 14 Oct 2026). A
      copied library question keeps its text word for word, so: any question whose exact text is in a
      library set came from the library, and the rest are the venue's own. Twenty texts a read. If the
-     check cannot be made, `own` is left off and the builder falls back to its old guess. */
+     check cannot be made, `own` is left off and the builder falls back to its old guess.
+     This is the SAME rule the update and swap routes judge by (libraryTextsAmong), so the screen and
+     the server can never disagree about which questions may be edited. */
   let libTexts = null;
-  try {
-    const lib = rows.length ? await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id&limit=200') : [];
-    if (lib.length) {
-      libTexts = new Set();
-      const inList = '(' + lib.map((s) => enc(s.id)).join(',') + ')';
-      const uniq = [...new Set(rows.map((r) => String(r.question || '')))].filter(Boolean);
-      for (let i = 0; i < uniq.length; i += 20) {
-        const quoted = uniq.slice(i, i + 20).map((q) => enc('"' + q.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'));
-        const hits = await sbGet(env, 'vp_questions', 'set_id=in.' + inList + '&question=in.(' + quoted.join(',') + ')&select=question&limit=1000');
-        for (let k = 0; k < hits.length; k++) libTexts.add(hits[k].question);
-      }
-    }
-  } catch (e) { libTexts = null; }
+  try { libTexts = rows.length ? await libraryTextsAmong(env, rows.map((r) => r.question)) : null; } catch (e) { libTexts = null; }
   return json({ questions: libTexts ? rows.map((r) => Object.assign({}, r, { own: !libTexts.has(r.question) })) : rows });
 }
 /* ------------------------- GET /host/pr/boards?venue_id= -------------------------
@@ -6211,14 +6420,18 @@ async function handleTriviaAdd(request, env, json) {              // write your 
   const items = (Array.isArray(b.questions) ? b.questions : []).map(sanitizeQuestion).filter(Boolean);
   if (!items.length) return json({ error: 'No valid questions (each needs 4 answers and a correct one)' }, 400);
   let seq = await nextTriviaSeq(env, set.id);
-  const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q));
-  await sbInsert(env, 'vp_questions', rows);
+  /* A question that is ALREADY a library question (an Undo after removing one) goes back marked as a copy, and is not queued for review. */
+  let already = new Set();
+  try { already = await libraryTextsAmong(env, items.map((q) => q.question)); } catch (e) { already = new Set(); }
+  const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q, already.has(q.question) ? { from_library: true } : {}));
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   // Also queue these host-written questions for review so the weekly run can fact-check +
   // improve them and promote the good ones into the shared library. Best-effort (never blocks
   // the host adding their question, and no-ops if the submissions table is not migrated yet).
   try {
-    const subs = rows.map((r) => ({
+    /* A question that is ALREADY a library question (an Undo after removing one) is not a host-written one to review. */
+    const subs = rows.filter((r) => !r.from_library).map((r) => ({
       venue_id: set.owner_venue_id || null, question: r.question, options: r.options,
       correct_index: r.correct_index, category: r.category || null,
       difficulty: r.difficulty || null, image_url: r.image_url || null, status: 'pending',
@@ -6238,9 +6451,19 @@ async function handleTriviaUpdate(request, env, json) {
   const b = await readJson(request);
   const qid = String(b.question_id || '').trim();
   assertUuid(qid, 'question_id');
-  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id,question');
   if (!qrows.length) return json({ error: 'Question not found' }, 404);
-  await triviaSetForVenue(env, qrows[0].set_id, authUserId);        // ENFORCED: staff at the set's venue
+  await triviaSetForVenue(env, qrows[0].set_id, authUserId);        // ENFORCED: staff at the set's venue, and never a library set (403)
+  /* LIBRARY QUESTIONS CANNOT BE EDITED, BY ANYONE BUT US (Dean, 5 Nov 2026). The shared library rows themselves are already
+     out of reach (triviaSetForVenue refuses a set with no owner); this closes the venue's COPY of one: a host may swap it
+     for another or remove it, never reword it or change its answers. Fails closed: if the library cannot be checked, nothing
+     is written. A host's own question is still theirs to edit. */
+  let libHit;
+  try { libHit = await libraryTextsAmong(env, [qrows[0].question]); }
+  catch (e) { return json({ error: 'Could not check whether that is a library question. Nothing was changed. Try again in a moment.' }, 503); }
+  if (libHit.has(qrows[0].question)) {
+    return json({ error: 'Library questions cannot be edited. Swap it for another library question, or create your own.', code: 'library_question' }, 403);
+  }
   const clean = sanitizeQuestion(b);
   if (!clean) return json({ error: 'Fill the question, all four answers, and tick the correct one.' }, 400);
   if (clean.image_url && !/^https:\/\//i.test(clean.image_url)) {
@@ -6248,6 +6471,54 @@ async function handleTriviaUpdate(request, env, json) {
   }
   await sbPatch(env, 'vp_questions', 'id=eq.' + enc(qid), clean);
   return json({ ok: true });
+}
+
+/* --- POST /host/trivia/questions/swap : replace a LIBRARY question with another of the same category and difficulty. ---
+   body { question_id }, Authorization: host JWT. Staff-gated through the question's own set (a library set, or another
+   venue's, is a 403). Only a library question can be swapped (a host's own is edited or removed). The replacement is a
+   different library question with the same category and difficulty that is not already in this night, written over the
+   old one in place, so the night keeps its order. Refused while a round on this set is running (like remove), and for a
+   question already answered in a past game (its answers belong to the results). */
+async function handleTriviaSwap(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);             // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const qid = String(b.question_id || '').trim();
+  assertUuid(qid, 'question_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id,seq,question,category,difficulty');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  const old = qrows[0];
+  const set = await triviaSetForVenue(env, old.set_id, authUserId); // ENFORCED: staff at the set's venue; a library set is a 403
+  let libHit;
+  try { libHit = await libraryTextsAmong(env, [old.question]); }
+  catch (e) { return json({ error: 'Could not check that question. Nothing was changed. Try again in a moment.' }, 503); }
+  if (!libHit.has(old.question)) return json({ error: 'Only library questions can be swapped. Edit your own question, or remove it.', code: 'not_library' }, 409);
+  const cat = String(old.category || '').trim();
+  if (!cat || !['easy', 'medium', 'hard'].includes(old.difficulty)) {
+    return json({ error: 'That question has no category or difficulty on record, so there is nothing to match. Remove it and add another.' }, 409);
+  }
+  const liveTg = await sbGet(env, 'vp_trivia_games', 'question_set_id=eq.' + enc(set.id) + '&select=game_id&limit=200');
+  if (liveTg.length) {
+    const ids = '(' + liveTg.map((t) => enc(t.game_id)).join(',') + ')';
+    const running = await sbGet(env, 'vp_games', 'id=in.' + ids + '&status=eq.running&select=id&limit=1');
+    if (running.length) return json({ error: 'A trivia round is running on this night. Finish the round, then swap the question.' }, 409);
+  }
+  const answered = await sbGet(env, 'vp_trivia_answers', 'question_id=eq.' + enc(qid) + '&select=question_id&limit=1');
+  if (answered.length) return json({ error: 'This question has already been played in a past round, so it is kept for the results. It cannot be swapped.' }, 409);
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id&limit=200');
+  if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
+  const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
+  const q = 'set_id=in.' + inList + '&parked_at=is.null&category=eq.' + enc(cat) + '&difficulty=eq.' + enc(old.difficulty)
+          + '&select=question,options,correct_index,category,difficulty,image_url';
+  const have = new Set((await sbGetAll(env, 'vp_questions', 'set_id=eq.' + enc(set.id) + '&select=question&order=seq.asc')).map((r) => r.question));
+  const pool = (await randomWindow(env, 'vp_questions', q, 60)).filter((p) => p.question && !have.has(p.question));
+  if (!pool.length) return json({ error: 'There is no other ' + old.difficulty + ' ' + cat + ' library question to swap in that is not already in this night.' }, 404);
+  const pick = pool[randInt(pool.length)];
+  await sbPatch(env, 'vp_questions', 'id=eq.' + enc(qid), {
+    question: pick.question, options: pick.options, correct_index: pick.correct_index,
+    category: pick.category, difficulty: pick.difficulty, image_url: pick.image_url || null,
+  });
+  return json({ ok: true, question: { id: qid, seq: old.seq, question: pick.question, options: pick.options, correct_index: pick.correct_index,
+    category: pick.category, difficulty: pick.difficulty, image_url: pick.image_url || null, own: false } });
 }
 
 /* --- POST /host/trivia/image-upload : the picture round. ---
@@ -6362,7 +6633,7 @@ async function handleAdminResolve(request, env, json) {
   // On approve, copy the (weekly-run-improved) question into the named library theme set.
   if (status === 'approved' && b.question && Array.isArray(b.options) && b.options.length === 4 && b.correct_index >= 0 && b.correct_index <= 3) {
     const theme = String(b.theme || 'General Knowledge').trim();
-    const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&title=eq.' + enc(theme) + '&select=id&limit=1');
+    const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&title=eq.' + enc(theme) + '&select=id&limit=1');
     if (libSets.length) {
       const seq = await nextTriviaSeq(env, libSets[0].id);
       await sbInsert(env, 'vp_questions', [{
@@ -6393,13 +6664,23 @@ async function randomWindow(env, table, query, size) {
   return await sbGet(env, table, query + '&order=id.asc&offset=' + start + '&limit=' + size);
 }
 
+/* A copy of a library question is marked from_library (migration 169) so the database itself refuses a venue's direct edit of it.
+   Written only when the column exists: before 169 has run the insert is retried without it (the Worker still judges a copy by its
+   exact words, libraryTextsAmong, either way). */
+async function insertQuestionRows(env, rows) {
+  try { await sbInsert(env, 'vp_questions', rows); }
+  catch (e) {
+    if (!rows.some((r) => r.from_library)) throw e;
+    await sbInsert(env, 'vp_questions', rows.map((r) => { const c = Object.assign({}, r); delete c.from_library; return c; }));
+  }
+}
 async function handleTriviaFromLibrary(request, env, json) {     // copy N library questions into the set
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
   const set = await triviaSetForVenue(env, b.set_id, authUserId);
   const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
   // library sets are one-per-category, titled by category
-  let setQ = 'visibility=eq.library&select=id';
+  let setQ = 'visibility=eq.library&owner_venue_id=is.null&select=id';
   if (b.category) setQ += '&title=eq.' + enc(String(b.category));
   const libSets = await sbGet(env, 'vp_question_sets', setQ);
   if (!libSets.length) return json({ error: 'No matching library category' }, 404);
@@ -6414,9 +6695,9 @@ async function handleTriviaFromLibrary(request, env, json) {     // copy N libra
   let seq = await nextTriviaSeq(env, set.id);
   const rows = pool.slice(0, count).map((p) => ({
     set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
-    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url, from_library: true,
   }));
-  await sbInsert(env, 'vp_questions', rows);
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length });
 }
@@ -6430,7 +6711,7 @@ async function handleTriviaSearch(request, env, json) {
   const query = String(b.query || '').replace(/[(),]/g, ' ').trim().slice(0, 60);
   if (query.length < 2) return json({ error: 'Type at least 2 characters to search' }, 400);
   const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
-  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id');
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&owner_venue_id=is.null&select=id');
   if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
   const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
   const like = enc('*' + query + '*');
@@ -6445,9 +6726,9 @@ async function handleTriviaSearch(request, env, json) {
   let seq = await nextTriviaSeq(env, set.id);
   const rows = pool.slice(0, count).map((p) => ({
     set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
-    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url, from_library: true,
   }));
-  await sbInsert(env, 'vp_questions', rows);
+  await insertQuestionRows(env, rows);
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length, matched: pool.length });
 }
@@ -8975,7 +9256,7 @@ async function handlePlayerCard(request, env, json) {
   } else {
     const games = await sbGet(env, 'vp_games',
       'session_id=eq.' + enc(player.session_id) + '&format=eq.musical_bingo&status=eq.running&select=id,format&order=seq.desc&limit=1');
-    if (!games.length) return json({ game: null });   // nothing running yet; phone waits
+    if (!games.length) return json(await noCardYet(env, player));   // nothing running yet; phone waits
     gameId = games[0].id;
     fmt = games[0].format;
   }
@@ -8988,6 +9269,21 @@ async function handlePlayerCard(request, env, json) {
      ticket from vp_cards, against the unused vp_bingo_games draw) is gone: one bingo ticket path. */
   if (fmt === 'musical_bingo') return await playerMusicCard(env, json, gameId, player);
   return json({ game: null });
+}
+
+/* "NO CARD YET" IS NOT ALWAYS "WAIT" (Dean's live play, 6 Nov 2026: a phone that joined the musical lobby
+   never got a card while songs played). The token is bound to the SESSION the phone joined. If the host's
+   lobby was closed and opened again, that session is finished, the token still checks out (so no 401 and
+   no re-join), and the game is running in the venue's NEW session where this phone has no row: this
+   answered game:null for ever. Now it says so (stale:true) and the phone re-joins the live night under
+   the same device id. A live session, or one that cannot be read, is the old answer: wait. */
+async function noCardYet(env, player) {
+  try {
+    const rows = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(player.session_id) + '&select=status,ended_at&limit=1');
+    const r = rows[0];
+    if (r && (r.status === 'finished' || r.status === 'cancelled' || r.ended_at)) return { game: null, stale: true };
+  } catch (e) { /* cannot tell: wait */ }
+  return { game: null };
 }
 
 /* ------------------------------ MUSICAL: a player's 5x5 card ------------------------------

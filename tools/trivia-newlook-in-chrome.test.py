@@ -246,13 +246,13 @@ def tv(B, base, w, h, logo=''):
     print('\nTHE TRIVIA WALL at %dx%d%s' % (w, h, ' with a wide logo' if logo else ''))
     if logo:
         m = load(B, base, '/app/trivia/screen.html?demo=1&sting=0&logo=' + logo, w, h, False,
-                 [('question', 4000), ('reveal', 9000), ('board', 12500), ('podium', 44000)], TV_PROBE)
+                 [('question', 4000), ('reveal', 9000), ('podium', 36000), ('board', 41000)], TV_PROBE)   # the scores only at the round's end, after the podium (7 Nov 2026)
         L = (m.get('question') or {}).get('logo')
         ok('%dx%d wide logo: the wide wordmark is up, sized as a wordmark (much wider than tall)' % (w, h), bool(L) and (L[2] - L[0]) > 4 * (L[3] - L[1]), L)
         title_checks('%dx%d wide logo' % (w, h), [(k, m.get(k) or {}) for k in ('question', 'reveal', 'board', 'podium')], w)
         return
     m = load(B, base, '/app/trivia/screen.html?demo=1&sting=0', w, h, False,
-             [('lobby', 500), ('question', 4000), ('reveal', 9000), ('board', 12500), ('long', 15500), ('podium', 44000)], TV_PROBE)
+             [('lobby', 500), ('question', 4000), ('reveal', 9000), ('long', 15500), ('podium', 36000), ('board', 41000)], TV_PROBE)   # the scores only at the round's end, after the podium (7 Nov 2026)
     lb, q, rv, bd, pd, lq = m.get('lobby', {}), m.get('question', {}), m.get('reveal', {}), m.get('board', {}), m.get('podium', {}), m.get('long', {})
     fn = dict(bd, rows=bd.get('rows6') or [], bottom=bd.get('bottom6'))   # the fullest board: the leader and nine more
     tag = '%dx%d' % (w, h)
@@ -308,8 +308,8 @@ def tv(B, base, w, h, logo=''):
     # question centred on the ring's centre line; the answers at a fixed 24.11% of the width, a normal gap under the
     # ring. tools/trivia-question-space-in-chrome.test.py measures the gaps and every question length.
     qc_ = q.get('cards') or []
-    ok(tag + ': "Question 3 of 20" sits under the answers on the right, the same on the countdown and the reveal',
-       bool(QR_ and qc_ and rv.get('qround')) and QR_[1] >= max(c['r'][3] for c in qc_) and abs(QR_[2] - max(c['r'][2] for c in qc_)) <= 2 and QR_[3] <= h and same(QR_, rv['qround']) and 'Question 3 of 20' in q.get('qroundText', ''),
+    ok(tag + ': "Question 8 of 10" sits under the answers on the right, the same on the countdown and the reveal',
+       bool(QR_ and qc_ and rv.get('qround')) and QR_[1] >= max(c['r'][3] for c in qc_) and abs(QR_[2] - max(c['r'][2] for c in qc_)) <= 2 and QR_[3] <= h and same(QR_, rv['qround']) and 'Question 8 of 10' in q.get('qroundText', ''),
        [QR_, qc_ and qc_[-1]['r'], q.get('qroundText')])
     ok(tag + ': the question is centred on the ring\'s centre line (as approved, 5 Nov)', bool(q.get('q') and RG_) and abs((q['q'][1] + q['q'][3]) / 2 - (RG_[1] + RG_[3]) / 2) <= 0.004 * w, [q.get('q'), RG_])
     ok(tag + ': the four answer boxes are big (about 228px tall at 1920) and start a normal gap under the ring (463px at 1920)',
@@ -319,7 +319,7 @@ def tv(B, base, w, h, logo=''):
     ok(tag + ': a long two-line question and long answers fit: the question clear of the boxes, every answer inside its box',
        lq.get('layer') == 'tvQ' and bool(lq.get('q')) and lq['q'][3] <= min(c['r'][1] for c in lq.get('cards') or [[0, 0]]) - 0.005 * w and not any(c['ovf'] for c in lq.get('cards') or []) and len(lq.get('cards') or []) == 4,
        [lq.get('q'), [(c['r'], c['ovf']) for c in lq.get('cards') or []]])
-    ok(tag + ': the scores: the heading is just "After question 3", and no small "Scores" word', bd.get('btitle', '').lower() == 'after question 3' and 'scores' not in bd.get('lblText', '').lower(),
+    ok(tag + ': the scores (now only at the round\'s end, after the podium): the heading is just "Final scores", and no small "Scores" label', bd.get('btitle', '').lower() == 'final scores' and 'scores' not in bd.get('lblText', '').lower(),
        [bd.get('btitle'), bd.get('lblText')])
     ok(tag + ': the podium: "Winners tonight", with the winning yellow on it', pd.get('btitle', '').lower() == 'winners tonight' and pd.get('wcol') == 'rgb(255, 217, 61)', [pd.get('btitle'), pd.get('wcol')])
     ok(tag + ': the answer letters are big again (at least the old wall\'s 4.5% of the width)', len(qc) == 4 and all(c['lfs'] >= 0.045 * w for c in qc), [c['lfs'] for c in qc])
@@ -371,7 +371,7 @@ PHONE_POS = r'''(function(){ var v=[].filter.call(document.querySelectorAll(".vi
 def phone(B, base):
     print('\nTHE TRIVIA PHONE at 375x812')
     m = load(B, base, '/app/trivia/play.html?demo=1&sting=0', 375, 812, True,
-             [('question', 3000), ('locked', 6500), ('right', 9500), ('wrong', 22500)], PHONE_PROBE)
+             [('question', 3000), ('locked', 6500), ('right', 9500), ('wrong', 19000)], PHONE_PROBE)   # question 9's answer, 17.5 to 21.7 s (7 Nov 2026)
     q, lk, rt, wr = (m.get(k, {}) for k in ('question', 'locked', 'right', 'wrong'))
     ok('the demo is on its question, locked in, then its results', (q.get('view'), lk.get('view'), rt.get('view'), wr.get('view')) == ('vQ', 'vQ', 'vRes', 'vRes'),
        [q.get('view'), lk.get('view'), rt.get('view'), wr.get('view')])
@@ -379,10 +379,10 @@ def phone(B, base):
     ok('the venue\'s logo is top left', bool(L) and L[0] <= 20 and L[1] <= 30, L)
     ok('and clear of the menu button', bool(L and q.get('menu')) and L[2] + 8 <= q['menu'][0], [L, q.get('menu')])
     ok('no player name in the header', 'Sarah' not in (q.get('head') or ''), q.get('head'))
-    ok('the label is just "QUESTION 3 OF 20" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 3 of 20', q.get('lbl'))
+    ok('the label is just "QUESTION 8 OF 10" (no "TRIVIA")', (q.get('lbl') or '').strip().lower() == 'question 8 of 10', q.get('lbl'))
     D_, MB_ = q.get('dotR'), q.get('menu')
-    ok('the green dot sits next to the menu button, top right, level with it', bool(D_ and MB_) and D_[2] <= MB_[0] and MB_[0] - D_[2] <= 16 and abs((D_[1] + D_[3]) / 2 - (MB_[1] + MB_[3]) / 2) <= 3, [D_, MB_])
-    ok('the green connection dot is there, with no "Connected" words beside it', q.get('dot', 0) >= 6 and 0 <= q.get('stw', 9) <= 1, [q.get('dot'), q.get('stw')])
+    ok('no dot by the menu button, top right (Dean, 7 Nov 2026: a connected phone shows nothing)', bool(MB_) and not (D_ and (D_[2] - D_[0]) >= 1), [D_, MB_])
+    ok('and no "Connected" words either', q.get('dot', 9) < 1 and 0 <= q.get('stw', 9) <= 1, [q.get('dot'), q.get('stw')])
     F, V = q.get('foot'), q.get('viewR')
     ok('our venueplay logo is at the bottom, under the game', bool(F and V) and F[1] >= V[3] - 1 and F[2] - F[0] >= 120, [F, V])
     for name, x in (('question', q), ('locked in', lk), ('right', rt), ('wrong', wr)):
@@ -403,7 +403,7 @@ def phone(B, base):
     ok('and the other three dim', sum(1 for b in lk.get('btns') or [] if 'picked' not in b['cls'] and b['op'] < 0.6) == 3, [(b['cls'], b['op']) for b in lk.get('btns') or []])
     ok('locked in: no "Watch the TV for the answer" on the phone', 'watch the tv' not in (lk.get('all') or '').lower(), (lk.get('all') or '')[-120:])
     for nm_, x_ in (('question', q), ('result', rt)):
-        ok('"Question 3 of 20" sits centred under the ring and above the question on the %s' % nm_,
+        ok('"Question 8 of 10" sits centred under the ring and above the question on the %s' % nm_,
            bool(x_.get('lblR') and x_.get('ringR') and x_.get('qR')) and x_['lblR'][1] >= x_['ringR'][3] - 0.5 and x_['lblR'][3] <= x_['qR'][1] + 0.5 and abs((x_['lblR'][0] + x_['lblR'][2]) / 2 - (x_['ringR'][0] + x_['ringR'][2]) / 2) <= 2,
            [x_.get('ringR'), x_.get('lblR'), x_.get('qR')])
     P_, RR_ = rt.get('ptsR'), rt.get('ringR')

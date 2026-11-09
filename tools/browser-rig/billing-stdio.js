@@ -116,8 +116,24 @@ globalThis.fetch = function (url, opts) {
     }
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } });
   }
+  /* A COLUMN THE DATABASE DOES NOT HAVE YET (24 Oct 2026, multi-raffle): a read or write naming a column
+     in REFUSE answers PostgREST's 400, so a page can be driven as it is before a migration has run. */
+  var refused = REFUSE.filter(function (c) { return /\/rest\/v1\//.test(u) && (new RegExp('select=[^&]*\\b' + c + '\\b').test(u) || (m !== 'GET' && new RegExp('"' + c + '"').test(String((opts && opts.body) || '')))); });
+  if (refused.length) {
+    var msg = JSON.stringify({ message: 'column ' + refused[0] + ' does not exist' });
+    return Promise.resolve({ ok: false, status: 400, json: function () { return Promise.resolve(JSON.parse(msg)); }, text: function () { return Promise.resolve(msg); } });
+  }
+  /* THE SCREEN ROW IS AN UPSERT ON venue_id (resolution=merge-duplicates): merge it, as PostgREST does.
+     The rig's fake database appends every POST, which left a page reading back the venue's FIRST row. */
+  if (m === 'POST' && /\/rest\/v1\/vp_venue_screen(\?|$)/.test(u)) {
+    var row = JSON.parse(String(opts.body || '{}')), rows = DB.vp_venue_screen || (DB.vp_venue_screen = []);
+    var have = rows.filter(function (x) { return x.venue_id === row.venue_id; })[0];
+    if (have) { for (var k in row) have[k] = row[k]; } else rows.push(row);
+    return Promise.resolve({ ok: true, status: 201, json: function () { return Promise.resolve([]); }, text: function () { return Promise.resolve(''); } });
+  }
   return _rf(url, opts);
 };
+var REFUSE = [];
 
 print(JSON.stringify({ ready: true, uid: UID, venue: VENUE, venue2: VENUE2 }));
 for (;;) {
@@ -133,6 +149,7 @@ for (;;) {
      honours (FOUNDING_CODES), and what was asked of Stripe, so a test can see the price a signup was given. */
   if (rq.ask === 'env') { for (var ek in (rq.set || {})) ENV[ek] = rq.set[ek]; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   if (rq.ask === 'stripe') { print(JSON.stringify({ status: 200, body: stripeCalls })); continue; }
+  if (rq.ask === 'refuse') { REFUSE = rq.cols || []; print(JSON.stringify({ status: 200, body: REFUSE })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning
      (tools/signup-tick-in-chrome.test.py: a signup made in Chrome, provisioned, then read in HQ). */

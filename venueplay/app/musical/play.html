@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the shared phone frame: option 5 header, join screens, menu sheet, the venue's ad (4 Nov 2026) -->
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the trivia and bingo phones (6 Nov 2026) -->   <!-- the shared phone frame: option 5 header, join screens, menu sheet, the venue's ad (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -310,13 +311,16 @@
 
   <!-- WAIT: you're in. The one lobby line every game uses (Dean, 3 Nov 2026 late), then the venue's ad below -->
   <div class="view hidden" id="vWait">
-    <div class="vp-in">
+    <div class="vp-in" id="waitIn">
       <div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="vp-h">You&#39;re in</div>
       <div class="vp-name" id="waitName">Player</div>
       <div class="vp-tiles"><div><div class="k">Up first</div><div class="v">Musical bingo</div></div></div>
       <p class="vp-wait">The game will start here when the host is ready.</p>
     </div>
+    <!-- Dean's round 5 pick (6 Nov 2026): "You're in, <name>", Tonight and This week here, drawn by /app/vp-tonight.js
+         (shared with the trivia phone). The block above is what shows without it. -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- CARD -->
@@ -369,6 +373,7 @@
       <label class="menuitem"><span>Mark songs for me</span><input type="checkbox" class="vp-sw" id="assistChk"></label>
       <button type="button" class="menuitem fs" id="fsBtn"><span>Full screen</span><input type="checkbox" class="vp-sw" id="fsChk" tabindex="-1" aria-hidden="true"></button>
       <label class="menuitem"><span>Light screen</span><input type="checkbox" class="vp-sw" id="lightChk"></label>
+      <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -405,9 +410,11 @@
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
-<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
+<script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-tonight.js"></script>   <!-- the waiting screen, shared with the trivia phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (4 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -460,6 +467,22 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function deadToken(e, path){
     if(e && e.status===401 && P.token && path!=="/join"){ try{ dropStaleJoin(); setTimeout(function(){ rejoinNow(); }, 0); }catch(x){} }
     throw e;
+  }
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026), the same as the trivia phone: /join/list with this phone's
+     token, only where the venue collects the offers tick and a way to reach them, only once in, gone once on the list. */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
+  function setOnList(){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} paintListItem(); }
+  function listSend(email, mobile, optin){
+    var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token;
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email||"", mobile:mobile||"", marketing_optin:optin===true,
+      consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
+      .then(readApi).then(function(r){ if(optin===true && r && r.stored) setOnList(); return r; });
+  }
+  function paintListItem(){
+    var b=$("vpListItem"); if(!b) return;
+    var c=P.collect||{};
+    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
+    VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
   }
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
   function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi).catch(function(e){ return deadToken(e, path); }); }
@@ -597,7 +620,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   /* THE SCREENS THAT CARRY THE VENUE'S AD (Dean, 3 Nov 2026 late): the lobby and after the game, in one place. */
   var AD_VIEWS={ vWait:1, vLost:1, vWon:1 };
   function frame(which){
-    paintRow2(!!P.room && (which==="vWait" || which==="vCard" || which==="vJoin"));
+    /* Not on the lobby any more (Dean, 6 Nov 2026, round 7: every lobby has the same layout, no "One line across" pill). */
+    paintRow2(!!P.room && (which==="vCard" || which==="vJoin"));
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", !!AD_VIEWS[which]);   // the compact ad, the same size wherever it shows (one fixed spot), so it and our logo fit
     try{ if(window.VPPhoneAd) VPPhoneAd.show(!!AD_VIEWS[which]); }catch(e){}
   }
   function route(){
@@ -619,7 +644,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cells){ renderCard(); show("vCard"); return; }
-    $("waitName").textContent=P.name; show("vWait");
+    $("waitName").textContent=P.name;
+    /* THE LOBBY, Dean's round 5 pick: drawn by /app/vp-tonight.js when it is loaded; the plain block otherwise. */
+    var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(tn && inb && typeof VPTonight==="object");
+    if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
+    if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; loadJoinInfo(); }   // a phone already in never asked: the week and the ad
+    if(useT) VPTonight.lobby(tn, { name:P.name, me:"musical", prize:(P.prize && P.prize!=="the prize") ? P.prize : "", week:P.week, nights:P.nights, games:P.games });
+    show("vWait");
   }
 
   // ---- card render ----
@@ -1003,6 +1034,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       try{ VPVenueLogo.headerName($("hdrVenueName"), r&&r.logo_url, r&&r.venue_name); }catch(e){}   // option 5: the name top left when there is no logo
       /* The venue's own TV slides, for its ad on the lobby and after the game (/app/vp-phonead.js). */
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      /* The venue's game week for the This week here strip (/join/info, from the setup answers; nothing when it never gave them). */
+      P.collect=(r&&r.collect)||null; if(r&&r.venue_name) P.venueName=String(r.venue_name); paintListItem();
+      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      if(P.joined && !$("vWait").classList.contains("hidden")) route();
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
@@ -1048,9 +1083,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     return cap;
   }
   // Fetch (or lazily be dealt) this player's 5x5 card for the running game.
+  var _staleAt=0;
   function fetchCard(){
     if(!P.token) return Promise.resolve();
     return playerGet("/player/card").then(function(r){
+      /* THE NIGHT THIS PHONE JOINED HAS ENDED (the Worker says stale:true). The token still checks out, so
+         nothing else ever re-joined: a phone that joined the lobby sat on "You're in" through the whole game
+         with no card (Dean, live play, 6 Nov 2026). Re-join the live night under the same device id, once
+         per twenty seconds so a venue with nothing on cannot make it loop, and ask again. */
+      if(r && r.stale===true && P.joined && (Date.now()-_staleAt)>20000){
+        _staleAt=Date.now(); dropStaleJoin();
+        return rejoinNow().then(function(){ return P.token ? fetchCard() : undefined; });
+      }
       if(!r || r.game===null || !r.game_id){ P.active=false; P.cells=null; route(); return; }
       P.gameId=r.game_id;
       P.cells=r.cells||[];
@@ -1074,6 +1118,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
+      if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();   // said yes when joining: on the list, no menu row
       send({ t:"join", pid:P.pid, name:P.name, did:deviceId() });   // cosmetic roster on the host + TV
       return fetchCard();
     }).catch(function(e){
@@ -1345,7 +1390,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
   // ---- menu (Easy mode / Light mode / Leave game) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
-  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden"); }); }
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); helpFirst(); menuPanel.classList.toggle("hidden");
+    if(P.joined && P.collect===undefined && !P.collectAsked){ P.collectAsked=true; loadJoinInfo(); }   // a phone already in: what the venue collects, for "Join {venue}'s list"
+  }); }
   document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
   /* ONE SHEET FROM THE BOTTOM (Dean, 3 Nov 2026): a tap on the dark round it closes it. Help (put in by /app/vp-help.js)
      goes first, as mocked. */
@@ -1372,8 +1419,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      beside a phone, and until 22 Sep 2026 there was no musical phone to show, so the phone
      stepped aside. Dean: "musical bingo doesnt have a phone screen". Same shape as the trivia
      and bingo phones: every pixel here is driven by onMsg(), so the demo is a SCRIPT OF
-     MESSAGES, in step with the wall's own demo (app/musical/screen.html: first song at 1.2s,
-     one every 5.2s, revealed 2.6s in), and the card is the shape /player/card returns. The
+     MESSAGES, on the wall's own clock and times (/app/vp-demo-clock.js, MUSICAL), and the card is the shape /player/card returns. The
      player marks each song by ear a moment after it is revealed, gets one wrong and fixes it,
      and calls bingo on the fifth. Never connects, never follows a host, never touches a venue. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
@@ -1391,30 +1437,40 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var CELLS=[{"title": "Wonderwall", "song_id": "wonderwall-oasis"}, {"title": "Sweet Caroline", "song_id": "sweet-caroline-neil-diamond"}, {"title": "Never Gonna Give You Up", "song_id": "never-gonna-give-you-up-rick-astley"}, {"title": "Don't Stop Believin'", "song_id": "don-t-stop-believin-journey"}, {"title": "Beds Are Burning", "song_id": "beds-are-burning-midnight-oil"}, {"title": "You're the Voice", "song_id": "you-re-the-voice-john-farnham"}, {"title": "Never Tear Us Apart", "song_id": "never-tear-us-apart-inxs"}, {"title": "Livin' on a Prayer", "song_id": "livin-on-a-prayer-bon-jovi"}, {"title": "Dancing Queen", "song_id": "dancing-queen-abba"}, {"title": "Bohemian Rhapsody", "song_id": "bohemian-rhapsody-queen"}, {"title": "Khe Sanh", "song_id": "khe-sanh-cold-chisel"}, {"title": "Hey Ya!", "song_id": "hey-ya-outkast"}, "FREE", {"title": "Take On Me", "song_id": "take-on-me-a-ha"}, {"title": "Hotel California", "song_id": "hotel-california-remastered-eagles"}, {"title": "Africa", "song_id": "africa-toto"}, {"title": "Mr. Brightside", "song_id": "mr-brightside-the-killers"}, {"title": "Mr. Blue Sky", "song_id": "mr-blue-sky-electric-light-orchestra"}, {"title": "Come On Eileen", "song_id": "come-on-eileen-dexys-midnight-runners"}, {"title": "Don't Dream It's Over", "song_id": "don-t-dream-it-s-over-crowded-house"}, {"title": "Blinding Lights", "song_id": "blinding-lights-the-weeknd"}, {"title": "Uptown Funk", "song_id": "uptown-funk-mark-ronson"}, {"title": "The Horses", "song_id": "the-horses-daryl-braithwaite"}, {"title": "September", "song_id": "september-earth-wind-fire"}, {"title": "Eagle Rock", "song_id": "eagle-rock-daddy-cool"}];
     var IDS={"Never Gonna Give You Up": "never-gonna-give-you-up-rick-astley", "Dancing Queen": "dancing-queen-abba", "Khe Sanh": "khe-sanh-cold-chisel", "Mr. Brightside": "mr-brightside-the-killers", "The Horses": "the-horses-daryl-braithwaite"};
     var ORDER=["Never Gonna Give You Up","Dancing Queen","Khe Sanh","Mr. Brightside","The Horses"];
-    var _dt=[];
-    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
     function fire(o){ try{ onMsg(o); }catch(e){} }
     function tapSong(title){ for(var i=0;i<25;i++){ if(cellTitle(i)===title){ P.daubs[i]=true; renderCard(); return; } } }
-    function round(){
-      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.won=false; P.ended=false; P.claimPending=false;
+    /* IN STEP WITH THE WALL BY CONSTRUCTION (7 Nov 2026). This used to be its own setTimeout chain, started 900 ms
+       after this page loaded while the wall started after its own (slower) load, so the two were a different time
+       apart on every visit and drifted further after a hidden tab. The songs, the times and the clock now come
+       from /app/vp-demo-clock.js, shared with app/musical/screen.html. Each song is a key step that sets the card
+       as it stands by then, so a phone that joins part way through shows the right daubs. No timer here. */
+    var C=VPDemoClock.MUSICAL, steps=[];
+    function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+    at(0, function(){
+      P.won=false; P.ended=false; P.claimPending=false;
       fire({ t:"started", pattern:"one", prize:"Meat tray", played:[] });   // in step with the wall's demo
       P.cells=CELLS.slice(); P.active=true; P.daubs={}; P.daubs[12]=true; route();
-      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[], ids=[];   // the first song waits for the start-of-game show, as on the wall (screen.html, 2 Nov 2026); 1200 as before the show, on a phone with ?sting=0
-      ORDER.forEach(function(title, i){
-        d(t, function(){ played.push(title); ids.push(IDS[title]); fire({ t:"played", title:title, played:played.slice(), played_ids:ids.slice(), reveal:false }); });
-        d(t+3600, function(){ tapSong(title); });
-        if(i===2){ d(t+4300, function(){ tapSong("Wonderwall"); }); d(t+4900, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
-        t+=5200;
-      });
-      /* The real button asks the Worker to verify the card. A demo has no Worker, so it shows the
-         same two screens the real thing does: sent and checking, then the win. */
-      d(t, function(){ P.claimPending=true; $("bingoBtn").disabled=true; setMsg("Sent. The host is checking your card&hellip;","wait"); });
-      d(t+2600, function(){ fire({ t:"winner", name:"Sam", names:["Sam"], pids:["demo"], cardNos:[17] }); });
-      d(t+14000, round);   // = the wall's lap in screen.html: run() reschedules at t + 14000. Change both.
-    }
+    }, true, true);
+    ORDER.forEach(function(title, i){
+      var t=C.songAt(i), played=ORDER.slice(0, i+1), ids=played.map(function(x){ return IDS[x]; });
+      at(t, function(){
+        P.won=false; P.ended=false; P.claimPending=false; P.cells=CELLS.slice(); P.active=true;
+        P.daubs={}; P.daubs[12]=true; for(var k=0;k<i;k++) tapSong(ORDER[k]);   // the card as it stands by this song
+        fire({ t:"played", title:title, played:played, played_ids:ids, reveal:false });
+      }, true);
+      at(t+3600, function(){ tapSong(title); });
+      if(i===2){ at(t+4300, function(){ tapSong("Wonderwall"); }); at(t+4900, function(){ for(var j=0;j<25;j++){ if(cellTitle(j)==="Wonderwall") delete P.daubs[j]; } renderCard(); }); }
+    });
+    /* The real button asks the Worker to verify the card. A demo has no Worker, so it shows the
+       same two screens the real thing does: sent and checking, then the win. */
+    var tc=C.claimAt();
+    at(tc, function(){
+      P.daubs={}; P.daubs[12]=true; ORDER.forEach(tapSong);
+      P.claimPending=true; $("bingoBtn").disabled=true; setMsg("Sent. The host is checking your card&hellip;","wait");
+    }, true);
+    at(tc+C.WIN_AFTER, function(){ fire({ t:"winner", name:"Sam", names:["Sam"], pids:["demo"], cardNos:[17] }); }, true);
     P.assist=false;
-    d(900, round);
+    VPDemoClock.run({ lap:C.lap(), steps:steps });
     return;
   }
 

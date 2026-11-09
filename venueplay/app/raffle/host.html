@@ -101,6 +101,8 @@
   .presets button{border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:20px;padding:5px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s}
   .presets button:hover{border-color:var(--pink);color:#fff}
   .presets .empty{color:var(--faint);font-size:11.5px;padding:2px 0}
+  .rafflepick button{font-size:13px;padding:8px 14px}
+  .rafflepick button.on{border-color:var(--pink);background:var(--pink);color:#fff}
   .presetlbl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:5px}
   .addrow{display:flex;gap:8px;align-items:stretch}
   .addrow input{flex:1}
@@ -228,6 +230,12 @@
     <div class="lbl">Raffle host<span id="roomCode" style="display:none"></span></div>
 
     <div class="panel">
+      <!-- WHICH RAFFLE (Dean, 24 Oct 2026; migration 117). Only a venue with two or more raffles on Your
+           account sees this; a one-raffle venue gets the console it has always had. -->
+      <div class="field hidden" id="raffleField">
+        <label>Which raffle are you drawing?</label>
+        <div class="presets rafflepick" id="rafflePick"></div>
+      </div>
       <div class="field" id="prizeField">
         <label>What are you drawing for?</label>
         <div class="presetlbl">Tap a saved prize to add it, or type your own</div>
@@ -375,7 +383,9 @@
           jackOn:false, jackAmt:500, allowRedraw:true,
           savedPrizes:["Meat Tray","$100 Bar Tab","Seafood Platter","Bottle of Whisky"],
           serverPad:null, drawn:{}, round:null, results:[],
+          raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
+  var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
 
@@ -458,10 +468,11 @@
   function saveRaffle(){
     try{
       if(!G.gameId && !G.prizes.length){ localStorage.removeItem(raffleKey()); return; }
-      localStorage.setItem(raffleKey(), JSON.stringify({ v:2, ts:Date.now(), sessionId:G.sessionId||"", prizes:G.prizes.slice(), prizeIdx:G.prizeIdx|0 }));
+      localStorage.setItem(raffleKey(), JSON.stringify({ v:2, ts:Date.now(), sessionId:G.sessionId||"", prizes:G.prizes.slice(), prizeIdx:G.prizeIdx|0, raffleId:G.raffleId||"" }));
     }catch(e){}
   }
   function restorePrizes(p){
+    if(p && typeof p.raffleId==="string" && p.raffleId){ G.raffleId=p.raffleId; if(G.raffles.length) renderRafflePick(); }
     if(!p || !Array.isArray(p.prizes) || !p.prizes.length) return false;
     G.prizes=p.prizes.map(String).slice(0,40); G.prizeIdx=Math.min(Math.max(0,p.prizeIdx|0), G.prizes.length);
     renderPrizeList(); return true;
@@ -734,8 +745,73 @@
      was kept for the night only (28 Oct 2026 audit). Both go to the venue. ---- */
   function loadSavedPrizes(){
     if(!G.venueId) return;
-    client.from("vp_raffle_prizes").select("label").eq("venue_id",G.venueId).order("created_at",{ascending:false})
-      .then(function(r){ var rows=(r&&r.data)||[]; if(rows.length){ var keep=G.savedPrizes.slice(); G.savedPrizes=rows.map(function(x){ return x.label; }).slice(0,12); mergeSavedPrizes(keep); } renderPresets(); }, function(){});
+    /* raffle_id (migration 117) says which raffle a prize is for. Asked for, and if the database
+       refuses it the prizes are read as before: every prize is the venue's. */
+    function got(r){ var rows=(r&&r.data)||[]; G.prizeRows=rows; filterSavedPrizes(); }
+    client.from("vp_raffle_prizes").select("label,raffle_id").eq("venue_id",G.venueId).order("created_at",{ascending:false})
+      .then(function(r){
+        if(r && r.error){ return client.from("vp_raffle_prizes").select("label").eq("venue_id",G.venueId).order("created_at",{ascending:false}).then(got); }
+        got(r);
+      }).then(null, function(){});
+  }
+  /* The presets shown: the venue's prize table, plus the prizes in game_prefs.raffle.prizes (any staff
+     login saves there). With two or more raffles, the table rows are the picked raffle's own prizes plus
+     (for the venue's FIRST raffle) the prizes saved before raffles had their own list, which is how Your
+     account files them too; a game_prefs prize belongs to no raffle, so it shows on every raffle unless
+     the table files that prize under another one. With one raffle or none, every saved prize shows,
+     exactly as before. */
+  function filterSavedPrizes(){
+    var rows=G.prizeRows, list=[], prefs=G.prefPrizes||[];
+    if(G.raffles.length>1 && G.raffleId){
+      var first=G.raffles[0].id, pick=G.raffleId, elsewhere={};
+      (rows||[]).forEach(function(x){ if(x.raffle_id===pick || (!x.raffle_id && pick===first)) list.push(x.label); else elsewhere[x.label]=1; });
+      prefs.forEach(function(x){ if(!elsewhere[x]) list.push(x); });
+    } else {
+      list=((rows && rows.length) ? rows.map(function(x){ return x.label; }) : DEFAULT_PRIZES.slice()).concat(prefs);
+    }
+    var seen={}; G.savedPrizes=list.filter(function(x){ x=String(x||"").trim(); if(!x || seen[x]) return false; seen[x]=1; return true; }).slice(0,12);
+    renderPresets();
+  }
+  /* THE VENUE'S RAFFLES, from the public /screen the TV reads (the list on Your account > Draws). */
+  function loadRaffles(slug){
+    if(!slug) return;
+    fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug)).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      var list=(d && Array.isArray(d.raffles)) ? d.raffles.filter(function(x){ return x && typeof x.id==="string" && String(x.label||x.day||"").trim(); }) : [];
+      G.raffles=list.slice(0,8);
+      if(G.raffles.length<2){ G.raffleId=""; show("raffleField", false); filterSavedPrizes(); return; }
+      if(!raffleById(G.raffleId)){
+        /* Tonight's raffle first: the one whose draw day is today, else the first on the list. */
+        var today=new Date().toLocaleDateString("en-AU",{weekday:"long"}).toLowerCase(), hit=null;
+        G.raffles.forEach(function(x){ if(!hit && String(x.day||"").trim().toLowerCase()===today) hit=x; });
+        G.raffleId=(hit||G.raffles[0]).id;
+      }
+      renderRafflePick(); filterSavedPrizes();
+      if(!G.round && !G.busy) scheduleIdleBroadcast();
+    }).catch(function(){});
+  }
+  function raffleById(id){ for(var i=0;i<G.raffles.length;i++) if(G.raffles[i].id===id) return G.raffles[i]; return null; }
+  function raffleName(){ var r=G.raffles.length>1 ? raffleById(G.raffleId) : null; return r ? String(r.label||"Raffle").slice(0,60) : ""; }
+  function renderRafflePick(){
+    var w=$("rafflePick"); if(!w) return; w.innerHTML="";
+    show("raffleField", G.raffles.length>1);
+    G.raffles.forEach(function(x){
+      var b=document.createElement("button"); b.type="button"; b.setAttribute("data-raffle", x.id);
+      b.className=(x.id===G.raffleId?"on":""); b.textContent=(x.label||"Raffle")+(x.day?(" \u00b7 "+x.day):"");
+      w.appendChild(b);
+    });
+  }
+  /* Changing raffle part way through is a fresh raffle: the tickets drawn and tonight's prize list
+     belong to the one being drawn, so the host is asked first (New raffle does the same). */
+  function pickRaffle(id){
+    if(id===G.raffleId || !raffleById(id)) return;
+    if(G.busy || G.round){ hostError("Let this draw finish, then change raffle."); return; }
+    var started=!!G.gameId || Object.keys(G.drawn||{}).length>0;
+    (started ? vpAsk("Change to "+(raffleById(id).label||"that raffle")+"?\n\nThe drawn tickets and the prize list are cleared, so it starts as a fresh raffle.") : Promise.resolve(true)).then(function(ok){
+      if(!ok) return;
+      G.raffleId=id;
+      if(started) newRaffleNow();
+      renderRafflePick(); filterSavedPrizes(); saveRaffle(); sendIdle();
+    });
   }
   function renderPresets(){
     var w=$("prizePresets"); w.innerHTML="";
@@ -743,11 +819,20 @@
     for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
   }
   function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); var isNew=(i<0); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets();
-    if(isNew && G.venueId){ apiPost("/host/raffle/prize-add",{ venue_id:G.venueId, label:p }).catch(function(){}); }   // an owner or manager: the venue's prize table too
+    if(isNew && G.prefPrizes && G.prefPrizes.indexOf(p)<0) G.prefPrizes.unshift(p);   // the venue-wide list game_prefs keeps
+    var rid=(G.raffles && G.raffles.length>1) ? (G.raffleId||"") : "";   // filed under the raffle picked (migration 117)
+    if(isNew && G.venueId){
+      var body={ venue_id:G.venueId, label:p }; if(rid) body.raffle_id=rid;
+      apiPost("/host/raffle/prize-add",body).then(function(){ if(G.prizeRows) G.prizeRows.unshift({ label:p, raffle_id:body.raffle_id||null }); }).catch(function(){});
+    }   // an owner or manager: the venue's prize table too
     queueRafflePrefs();   // any staff login: the venue's saved setup (game_prefs.raffle.prizes)
   }
+  /* game_prefs.raffle.prizes onto the buttons. Kept as G.prefPrizes (the venue's, never filtered by raffle)
+     so a venue with two or more raffles shows each raffle its own list (filterSavedPrizes). */
   function mergeSavedPrizes(list){
     if(!Array.isArray(list)) return;
+    if(G.prefPrizes) list.forEach(function(x){ x=String(x||"").trim(); if(x && G.prefPrizes.indexOf(x)<0) G.prefPrizes.push(x); });
+    if(G.raffles && G.raffles.length>1 && G.raffleId){ filterSavedPrizes(); return; }
     list.forEach(function(x){ x=String(x||"").trim(); if(x && G.savedPrizes.indexOf(x)<0) G.savedPrizes.push(x); });
     if(G.savedPrizes.length>12) G.savedPrizes.length=12;
     renderPresets();
@@ -796,7 +881,9 @@
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){
     if(_suppressIdle || celebrating()) return;   /* a celebration is on the wall; do not paint over it */
-    send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) });
+    var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) };
+    var rn=raffleName(); if(rn) m.raffle=rn;   // which raffle, named on the wall; a one-raffle venue sends nothing new
+    send(m);
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:G.drawLength }); }
@@ -1229,6 +1316,7 @@
     addPrize(b.getAttribute("data-p"));   // clicking a saved prize adds it to tonight's list
   });
   $("addPrizeBtn").addEventListener("click", function(){ addPrize($("rfPrize").value); });
+  $("rafflePick").addEventListener("click", function(e){ var b=e.target.closest("button[data-raffle]"); if(b) pickRaffle(b.getAttribute("data-raffle")); });
   $("rfPrize").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addPrize(this.value); } });
   $("prizeList").addEventListener("click", function(e){
     var b=e.target.closest("button[data-rm]"); if(!b) return;
@@ -1253,7 +1341,9 @@
      "Tickets that did not sell": unsold tickets are one night's facts. VP.gamePrefs in /app/vp-session.js
      is the one mechanism for all five games. */
   function rafflePrefs(){
-    var p={ prizes:G.savedPrizes.slice(0,12), jackpot_on:!!$("rfJackOn").checked, allow_redraw:!!$("rfAllowRedraw").checked };
+    /* Two or more raffles: G.savedPrizes is only the picked raffle's buttons, so the venue's whole list is saved. */
+    var multi=!!(G.raffles && G.raffles.length>1 && G.raffleId && G.prefPrizes);
+    var p={ prizes:(multi ? G.prefPrizes : G.savedPrizes).slice(0,12), jackpot_on:!!$("rfJackOn").checked, allow_redraw:!!$("rfAllowRedraw").checked };
     var a=parseInt($("rfStart").value,10), b=parseInt($("rfEnd").value,10);
     if(a>=0 && a<=999999) p.range_min=a;
     if(b>=0 && b<=999999) p.range_max=b;
@@ -1329,6 +1419,7 @@
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       _roomSlug=slug;
+      loadRaffles(slug);   // two or more raffles: the picker, and each raffle's own saved prizes
       restoreRaffle().then(function(recovered){   // recover a live raffle first; only pre-fill if there was none
         G.recovered=!!recovered;
         startRafflePrefs().catch(function(){})   // the venue's setup; a recovered raffle takes only its prize buttons

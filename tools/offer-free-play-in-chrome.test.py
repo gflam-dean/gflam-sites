@@ -103,7 +103,7 @@ try:
     tid, sid = S.open('/offer-nov', 390, 844, mobile=True)
     S.until(sid, '!!document.getElementById("ct-submit")', 20)
     time.sleep(0.6)
-    S.js(sid, 'document.querySelector("#top .hero-cta a[data-cta=hero-contact]").click(); true')
+    S.js(sid, 'document.querySelector("a[href=\\"#contact\\"]:not([data-topic])").click(); true')
     time.sleep(0.4)
     f = S.json(sid, FORM, {})
     ok('Talk to us shows no topic and leaves the message empty', not f.get('topicShown') and f.get('msg') == '', f)
@@ -124,9 +124,13 @@ page = open(os.path.join(A.root, 'venueplay', 'nsw.html'), encoding='utf-8').rea
 new = re.findall(r'Have a play for free|Set me up a free account[^\'"<]*|we\\u2019ll set up your free account[^\'"]*', page)
 ok('the new words have no em dash and no capitalised VenuePlay', new and not any('—' in x or 'VenuePlay' in x for x in new), new)
 
+ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it won\'t come back" is gone',
+   'Trivia and musical bingo, plus bingo, raffles and members draws where your state allows' in page
+   and 'Keep $2.50 by adding your card before your free month ends' in page and 'come back' not in re.sub(r'<[^>]+>', ' ', page.split('<footer')[0].split('id="offer"')[1].split('</section>')[0]))
+
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 23
+EXPECTED = 24
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -80,7 +80,7 @@ var NEED = ["isCustomKey", "customById", "patInfo", "patName", "rememberPat", "p
             "isCalled", "checkPattern",
             "calledArray", "seatOpen", "isSeated", "playerCount", "shownName", "sendState", "sendClaimPending",
             "winnerNames", "renderClaimCard", "renderClaimQueue", "syncNextBtn",
-            "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject",
+            "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject", "winnerMsg", "winShownWid", "showConfirmedWin", "confirmWinner",
             "announce", "keepPlaying", "finishGame", "nextBall", "endGame", "onMsg", "onPhoneMsg",
             "gameOpenHere",
             /* The server checks every claim since 19 Oct 2026. This suite has no server (no draw, no
@@ -289,8 +289,13 @@ MSGS = [];
 ok("the host taps Confirm winner and it goes through the delegated listener", click("confirm", 0));
 ok("the winner is confirmed", G.lastWins.length === 1 && G.lastWins[0].name === "Kate");
 ok("and the queue is empty", G.claims.length === 0);
-ok("NOTHING is broadcast on confirm alone: the host has not decided play on or finish",
-   MSGS.length === 0, MSGS.map(function(m){ return m.t; }).join(","));
+/* CHANGED ON PURPOSE (Dean, live, 6 Nov 2026): this used to require that NOTHING went out on Confirm alone,
+   and the room sat on "BINGO? Checking the card" while the host read the win out. Confirm now puts the win
+   up at once (held, cont false); the host still chooses play on or finish, and nothing else is sent. */
+ok("Confirm winner puts the win on every screen at once, held (cont false), and nothing else goes out",
+   MSGS.length === 1 && MSGS[0].t === "winner" && MSGS[0].held === true && MSGS[0].cont === false && MSGS[0].name === "Kate" && !!MSGS[0].wid,
+   MSGS.map(function(m){ return m.t; }).join(","));
+ok("and no prize is recorded yet: that waits for the host's choice", G.prizesWon.length === 0, JSON.stringify(G.prizesWon));
 
 print("== the Next number button becomes a label, not a way out ==");
 ok("the big button is disabled while a win is unannounced", $("nextBtn").disabled === true);
@@ -437,8 +442,9 @@ MSGS = [];
 ok("the host taps the split button", click("confirmall"));
 ok("both are confirmed", G.lastWins.length === 2 && G.claims.length === 0,
    G.lastWins.length + " win(s), " + G.claims.length + " claim(s)");
-ok("still nothing broadcast until the host decides", MSGS.length === 0,
-   MSGS.map(function(m){ return m.t; }).join(","));
+/* CHANGED ON PURPOSE (Dean, live, 6 Nov 2026): the split goes up at once, as ONE win with both names. */
+ok("the split goes on every screen at once, one held win naming both, shared", MSGS.length === 1 && MSGS[0].t === "winner" &&
+   MSGS[0].held === true && MSGS[0].shared === true && MSGS[0].winners.length === 2, MSGS.map(function(m){ return m.t; }).join(","));
 var tw = $("claimQueue").innerHTML;
 ok("the win card names both winners", tw.indexOf("Kate and Sam won One line") >= 0, tw.slice(0, 200));
 ok("and says the prize is shared", tw.indexOf("2 winners share the prize") >= 0);
