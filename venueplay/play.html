@@ -330,7 +330,8 @@
   #vCard .pagetab .pcount{font-size:15px;background:var(--pink);color:#fff}
   #vCard .colband i.lit{background:var(--pink);box-shadow:none}
   /* the rows the pattern needs, outlined in the gutter when the player turns on "Highlight my lines" (off by default) */
-  .hl{position:absolute;pointer-events:none;border:2.5px dashed rgba(255,31,142,.8);border-radius:10px;z-index:2}
+  .hl{position:absolute;pointer-events:none;border:2.5px dashed rgba(255,255,255,.75);border-radius:10px;z-index:2}
+  .hl.done{border-style:solid;border-color:#FFD93D}   /* a finished line: solid yellow, as in the mock (a win moment) */
   #vCard .tension{font-family:'Manrope',sans-serif;font-weight:800;text-transform:none;letter-spacing:0;margin:10px 0 4px}
   #vCard .tension.hot{font-size:22px;color:var(--pink);text-shadow:none;animation:none}
   #vCard .tension.two{font-size:17px;color:#9A9AA4}
@@ -1367,6 +1368,7 @@
       var a=cells[r*9], z=cells[r*9+8], box=document.createElement("div"); box.className="hl";
       box.style.left=(a.offsetLeft-4)+"px"; box.style.top=(a.offsetTop-4)+"px";
       box.style.width=(z.offsetLeft+z.offsetWidth-a.offsetLeft+8)+"px"; box.style.height=(a.offsetHeight+8)+"px";
+      if(rowMissing(set,cd.cells,r)===0) box.className="hl done";   // a finished line is solid
       grid.appendChild(box);
     });
   }

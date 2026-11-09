@@ -483,6 +483,10 @@
   "checks": 4,
   "counted_by": "lines"
  },
+ "tools/test-bingo-newlook.js": {
+  "checks": 51,
+  "counted_by": "lines"
+ },
  "tools/test-bingo-seat-15-oct.js": {
   "checks": 41,
   "counted_by": "lines"
