@@ -277,7 +277,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   sa = lastAnswers();
   check('the reminder is kept in setup_answers.members_reminder', sa && JSON.stringify(sa.members_reminder) === JSON.stringify({ how: 'calendar', day: 'thu', time: '16:30' }), sa && sa.members_reminder);
   check('members draws: what happens over the most kept in setup_answers', sa && sa.members_over === 'second', sa && sa.members_over);
-  check('the end: "You\'re ready for your week." and the advertising prompt, meal deals named, to the Screen tab (Dean, round 9 point 23)', T(P, 'vpGsTitle') === "You're ready for your week." && /Next, your TV advertising/.test(T(P, 'vpGsAdvert')) && /like your meal deals/.test(T(P, 'vpGsAdvert')) && $(P, 'vpGsAdvertGo').getAttribute('href') === '/app/billing.html#screen');
+  check('the end: "You\'re ready for your week." and the advertising prompt, meal deals named, to the Screen tab (Dean, round 9 point 23)', T(P, 'vpGsTitle') === "You're ready for your week." && T(P, 'vpGsAdvert') === 'Add TV promos on your Account page' && T(P, 'vpGsDone') === 'Go to my console' && $(P, 'vpGsAdvertGo').getAttribute('href') === '/app/billing.html#screen');
   check('a venue that has gone through it is not asked again as an existing venue (setup_answers.review)', sa && sa.review === 'done' && P.GS.wantsReview(Object.assign({}, P.ctx, { settings: { setup_answers: sa } }), P.deps.storage, NOW) === false);
   check('every game marked done', sa && JSON.stringify(sa.setup) === JSON.stringify({ trivia: 'done', musical: 'done', bingo: 'done', raffles: 'done', members: 'done' }), sa && sa.setup);
   $(P, 'vpGsDone').click(); await settle();
@@ -316,7 +316,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
 
   /* remind me */
   P = oldVenue(); done = P.GS.review(P.ctx, P.deps); await settle();
-  check('it opens with one screen in the round 11 words, never already filled in, "Not ready yet? Remind me next time" under it', T(P, 'vpGsTitle') === 'Check your game setup' && T(P, 'vpGsBody').indexOf('We have changed some settings within games. Click through now to review these, and change anything you like as you go.') === 0 && !/filled in|already/i.test(T(P, 'vpGsBody')) && T(P, 'vpGsReviewLater') === 'Not ready yet? Remind me next time');
+  check('it opens with one screen in the round 11 words, never already filled in, "Not ready yet, remind me next time" and "Let\'s go" (Dean 10 Nov)', T(P, 'vpGsTitle') === 'Check your game setup' && T(P, 'vpGsBody').indexOf('We have changed some settings within games. Click through now to review these, and change anything you like as you go.') === 0 && !/filled in|already/i.test(T(P, 'vpGsBody')) && T(P, 'vpGsReviewLater') === 'Not ready yet, remind me next time' && T(P, 'vpGsGo') === "Let's go" && /vpgs-outline/.test($(P, 'vpGsReviewLater').className));
   CALLS = []; $(P, 'vpGsReviewLater').click(); await settle();
   var loc = JSON.parse(STORE['vpGameSetup:V1'] || '{}');
   check('remind me: closed, nothing saved anywhere', (await done) === 'later' && !$(P, 'vpGs') && !posts('/host/').length && !SAVED.length);
@@ -523,6 +523,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('hidden: the keys and defaults are still there for later (picture_round on, draw_style numbers)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'numbers' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === 'wheel');
   UNHIDE = true;
 
+  check('"Not today" and "That\'s enough for today" stay on screen on a phone: sticky above the footer (Dean 10 Nov, item 119b)', /\.vpgs-answers \.vpgs-outline\{position:sticky;bottom:calc\(84px/.test(GS));
   section('6. WIRED IN');
   var boot = INDEX.slice(INDEX.indexOf('EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO'), INDEX.indexOf('if(venue && venue.slug && pairToVenue(venue.slug))'));
   check('the console home asks an existing venue on sign-in, with this device\'s own night as busy, in place of the one later question', /VPGameSetup\.wantsReview\(__ctx\)/.test(boot) && /VPGameSetup\.review\(__ctx, \{ client:VP\.getClient\(\), VP:VP, busy:function\(\)\{ return !!liveNightElsewhere\(\); \} \}\)/.test(boot) && /else if\(window\.VPFirstRun && VPFirstRun\.ask/.test(boot));

@@ -200,7 +200,7 @@
     P + ".vpgs-time.sx{grid-template-columns:1fr 184px}" + P + ".vpgs-tw .vpgs-in{width:130px}" + P + ".vpgs-time{grid-template-columns:1fr 130px}" + P + ".vpgs-times{gap:4px;margin:6px 0 0}" +
     P + ".vpgs-add-s{justify-self:end;min-height:44px;margin:0;padding:6px 12px}" +
     "#vpGs{--bw:560px}" + P + ".vpgs-box{padding-bottom:96px}" +
-    P + ".vpgs-foot{position:fixed;left:0;right:0;bottom:0;z-index:3;margin:0;padding:10px max(16px, calc((100% - var(--bw)) / 2)) calc(12px + env(safe-area-inset-bottom, 0px));background:" + C.ink + ";border-top:1px solid " + C.line + ";display:flex;gap:10px;align-items:center;justify-content:space-between}" +
+    P + ".vpgs-answers .vpgs-outline{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom, 0px));z-index:2;box-shadow:0 0 0 6px " + C.ink2 + ";background:" + C.ink2 + "}" + P + ".vpgs-foot{position:fixed;left:0;right:0;bottom:0;z-index:3;margin:0;padding:10px max(16px, calc((100% - var(--bw)) / 2)) calc(12px + env(safe-area-inset-bottom, 0px));background:" + C.ink + ";border-top:1px solid " + C.line + ";display:flex;gap:10px;align-items:center;justify-content:space-between}" +
     P + ".vpgs-foot .vpgs-btn.pink{margin-left:auto}" + P + ".vpgs-foot>span:empty{display:none}" + P + ".vpgs-foot .vpgs-stack{width:100%}" +
     "@media (min-width:760px){#vpGs{--bw:680px}}" + "@media (min-width:1100px){#vpGs{--bw:820px}}" + P + ".vpgs-foot .vpgs-btn{min-height:48px;padding:10px 20px}" + P + ".vpgs-foot .vpgs-stack .vpgs-btn{min-height:48px}" +
     P + ".vpgs-wideonly{display:none}" + "@media (min-width:1100px){" + P + ".vpgs-wideonly{display:inline-block}}" +
@@ -1712,9 +1712,8 @@
     /* THE ADVERTISING PROMPT AT THE END (Dean, round 9 point 23): their TV shows their promos between games */
     function advertCard() {
       var a = F.el("div", "vpgs-advert"); a.id = "vpGsAdvert";
-      a.appendChild(F.el("b", null, "Next, your TV advertising"));
-      a.appendChild(F.el("p", null, "Add your logo and promo images" + (answers.meal_deals ? ", like your meal deals," : "") + " so your TV advertises your venue between games."));
-      var go = F.el("a", "vpgs-link", "Add them on your Account page, Screen tab"); go.id = "vpGsAdvertGo"; go.setAttribute("href", deps.screenUrl || "/app/billing.html#screen");
+      /* ONE LINE that agrees with the button under it (Dean 10 Nov, item 119a): no "Next, ..." heading, no paragraph */
+      var go = F.el("a", "vpgs-link", "Add TV promos on your Account page"); go.id = "vpGsAdvertGo"; go.setAttribute("href", deps.screenUrl || "/app/billing.html#screen");
       a.appendChild(go); F.body.appendChild(a);
     }
     function allDone() {
@@ -1730,7 +1729,7 @@
       F.clear(); F.step("Your game setup", 3, 1);
       F.title.textContent = "Check your game setup";
       F.body.appendChild(F.el("p", "vpgs-lead", "We have changed some settings within games. Click through now to review these, and change anything you like as you go."));
-      var later = F.el("button", "vpgs-link", "Not ready yet? Remind me next time"); later.id = "vpGsReviewLater"; later.setAttribute("type", "button");
+      var later = F.el("button", "vpgs-btn ghost big vpgs-outline", "Not ready yet, remind me next time"); later.id = "vpGsReviewLater"; later.setAttribute("type", "button");
       later.addEventListener("click", function () { remindLater(); end("later"); });
       F.body.appendChild(later);
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink vpgs-go", "vpGsGo", pick));
