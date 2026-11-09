@@ -500,8 +500,8 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
   check('trivia does not ask "Same prizes for other games?" (Dean, round 7b point 7)', !$(P, 'vpGsShared'));
-  var pr = $(P, 'vpGsHelp_count'); var crow = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'count'; });
-  check('the "?" words sit under the whole setting (under the pair on a two-to-a-line setting), never over the question', pr && pr.parentNode === crow.parentNode && /vpgs-pairs/.test(crow.parentNode.className) && crow.parentNode.children.indexOf(pr) > crow.parentNode.children.indexOf(crow), crow && crow.children.map(function (c) { return c.className; }));
+  var pr = $(P, 'vpGsHelp_prizes'); var crow = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'prizes'; });
+  check('the "?" words sit under the whole setting (under the pair on a two-to-a-line setting), never over the question', pr && crow.children[crow.children.length - 1] === pr && pr.parentNode === crow, crow && crow.children.map(function (c) { return c.className; }));
   check('no unit words after the boxes, so every box lines up (Dean, round 8b points 5 and 16)', all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-unit'; }).length === 0);
   $(P, 'vpGsSave').click(); await settle(); walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'bingo'; }).click(); await settle();
   check('left unanswered on trivia, it is never asked again on bingo (asked once, design review)', !$(P, 'vpGsShared') && T(P, 'vpGsTitle') === 'Set up bingo');
