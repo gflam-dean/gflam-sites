@@ -273,10 +273,10 @@ pass("the one buzz asks whether the page is a demo first",
        iDemo >= 0 && iSlug >= 0 && iDemo < iSlug,
        "decided after, the divert guard bounces the sales page straight to /tv");
   pass(game + " wall: a demo resolves NO venue",
-       /if\(VP_DEMO\) return "";/.test(src),
+       /if\(VP_DEMO( \|\| VP_PREVIEW)?\) return "";/.test(src),
        "otherwise the frame shows whatever pub this browser last looked at");
   pass(game + " wall: a demo subscribes to no channel",
-       /if\(!VP_DEMO\) ch\.subscribe\(/.test(src),
+       /if\(!VP_DEMO( && !VP_PREVIEW)?\) ch\.subscribe\(/.test(src),
        "a subscribed screen answers tv_here, which HQ reads as a living screen");
   pass(game + " wall: stamps data-vp-demo",
        /setAttribute\("data-vp-demo"\s*,\s*"1"\)/.test(src));
