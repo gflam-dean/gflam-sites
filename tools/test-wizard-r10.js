@@ -522,6 +522,119 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('hidden: the keys and defaults are still there for later (picture_round on, draw_style numbers)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'numbers' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === 'wheel');
   UNHIDE = true;
 
+  section('7. ROUND 12 (Dean, 10 Nov 2026, INBOX 118): THE TEN NOTES');
+  function typeOther(P, text) { var i = $(P, 'vpGsOther'); i.value = text; (i.handlers.input || []).forEach(function (f) { f(); }); i.handlers.keydown.forEach(function (f) { f({ key: 'Enter', preventDefault: function () {} }); }); }
+  function dayBtn(P, key, d) { return walk(walk($(P, 'vpGsWeek'), function (e) { return e.getAttribute && e.getAttribute('data-game') === key; }), function (e) { return e.getAttribute && e.getAttribute('data-day') === d; }); }
+  /* NOTE 1: "Wednesday steak night" is a name and a day */
+  P = page({ answers: { games: ['trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  typeOther(P, 'Wednesday steak night');
+  check('note 1: the name is "Steak night" (the day words are taken out) and the tag shows its day', tagsOf(P, 'x').length === 0 && walk($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Steak night'; }) && /Wed/.test(seen($(P, 'vpGsOtherList'))), seen($(P, 'vpGsOtherList')));
+  $(P, 'vpGsNext').click(); await settle();
+  check('note 1: the next step asks the day, already ticked from what they typed (Wednesday), the time still to give', dayBtn(P, 'other:steak night', 'wed').getAttribute('aria-pressed') === 'true' && dayBtn(P, 'other:steak night', 'thu').getAttribute('aria-pressed') === 'false' && !!$(P, 'vpGsWeekNext') && $(P, 'vpGsWeekNext').disabled === true);
+  check('note 1: and it is already kept in the venue\'s answers (the day they typed is an answer)', JSON.stringify(lastAnswers().week) === JSON.stringify([{ day: 'wed', games: [{ game: 'other', name: 'Steak night' }] }]) && lastAnswers().other === 'Steak night', lastAnswers());
+  check('note 1: the name is a box they can edit on this step', !!$(P, 'vpGsRename_1') && $(P, 'vpGsRename_1').value === 'Steak night');
+  box(P, 'vpGsRename_1', 'Parma night'); box(P, 'vpGsTime_other:parma night_wed', '18:00'); dayBtn(P, 'other:parma night', 'fri').click(); box(P, 'vpGsTime_other:parma night_fri', '18:30');
+  $(P, 'vpGsWeekNext').click(); await settle();
+  check('note 1: renamed and given another day: saved as Parma night on Wednesday and Friday with their times, and the other-nights answer follows the new name', JSON.stringify(lastAnswers().week) === JSON.stringify([{ day: 'wed', games: [{ game: 'other', name: 'Parma night', start: '18:00' }] }, { day: 'fri', games: [{ game: 'other', name: 'Parma night', start: '18:30' }] }]) && lastAnswers().other === 'Parma night', lastAnswers());
+  P = page({ answers: { games: ['trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  typeOther(P, 'Karaoke Fri and Sat'); typeOther(P, 'Steak night every Wednesday'); typeOther(P, 'Wednesday');
+  check('note 1: "Karaoke Fri and Sat" is Karaoke on Friday and Saturday, "Steak night every Wednesday" is Steak night, and a lone "Wednesday" is just kept as typed', JSON.stringify(P.GS.cleanOther('x')) !== '' && walk($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Karaoke'; }) && /Fri Sat/.test(seen($(P, 'vpGsOtherList'))) && !!walk($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Steak night'; }) && !!walk($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Wednesday'; }), seen($(P, 'vpGsOtherList')));
+  $(P, 'vpGsNext').click(); await settle();
+  check('note 1: Karaoke is ticked on Friday and Saturday, Steak night on Wednesday', dayBtn(P, 'other:karaoke', 'fri').getAttribute('aria-pressed') === 'true' && dayBtn(P, 'other:karaoke', 'sat').getAttribute('aria-pressed') === 'true' && dayBtn(P, 'other:steak night', 'wed').getAttribute('aria-pressed') === 'true' && dayBtn(P, 'other:wednesday', 'wed').getAttribute('aria-pressed') === 'false');
+  P = page({ answers: { games: ['trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  var oi0 = $(P, 'vpGsOther'); oi0.value = 'wednesday steak'; oi0.handlers.input.forEach(function (f) { f(); }); var sg = walk($(P, 'vpGsOtherSuggest'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Steak night'; });
+  check('note 1: typing "wednesday steak" still suggests Steak night (the day is left out of the match)', !!sg);
+  P = page({ answers: { games: ['trivia'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  var oi = $(P, 'vpGsOther'); oi.value = 'Wed steak'; oi.handlers.input.forEach(function (f) { f(); });
+  var sg2 = walk($(P, 'vpGsOtherSuggest'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Steak night'; }); sg2.click();
+  check('note 1: tapping that suggestion keeps the day they typed', /Wed/.test(seen($(P, 'vpGsOtherList'))) && !!walk($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other') === 'Steak night'; }));
+  /* NOTE 2: the games question */
+  P = page({ answers: { games: ['trivia', 'musical'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
+  check('note 2: the games question says "Now let\'s set up your games." (not a game; the nights and What\'s on were the step before)', T(P, 'vpGsTitle') === 'Now let\'s set up your games.');
+  /* NOTES 3, 4, 5: trivia, then musical bingo */
+  $(P, 'vpGsAllYes').click(); await settle();
+  check('note 3: trivia asks "Same prizes every week?"', /Same prizes every week\?/.test(seen(row(P, 'prize_weekly'))) && !/Same every week\?/.test(seen($(P, 'vpGsBody'))));
+  check('note 3: under More settings, one line: "We\'ll use our defaults for now. You can change these any time in each game."', T(P, 'vpGsAdvDefaults') === 'We\'ll use our defaults for now. You can change these any time in each game.');
+  box(P, 'vpGsIn_rounds', 2); box(P, 'vpGsIn_prizes_0', 'Meat tray'); box(P, 'vpGsIn_prizes_1', '$50 bar tab');
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  $(P, 'vpGsNextYes').click(); await settle();
+  var mi = $(P, 'vpGsIn_prizes_0'); mi.value = 'me'; (mi.handlers.input || []).forEach(function (f) { f(); });
+  var sug = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-suggest') != null; });
+  check('note 4: typing "me" in musical bingo\'s prize box suggests "Meat tray" from the trivia prizes (one shared list)', sug.length === 1 && sug[0].getAttribute('data-suggest') === 'Meat tray', sug.map(function (x) { return x.getAttribute('data-suggest'); }));
+  sug[0].click();
+  check('note 4: a tap fills the box and clears the suggestion', $(P, 'vpGsIn_prizes_0').value === 'Meat tray' && all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-suggest') != null; }).length === 0);
+  var mi2 = $(P, 'vpGsIn_prizes_1'); mi2.value = 'bar'; (mi2.handlers.input || []).forEach(function (f) { f(); });
+  check('note 4: and "bar" finds "$50 bar tab"; a word that matches nothing suggests nothing', all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-suggest') === '$50 bar tab'; }).length === 1);
+  mi2.value = 'zzz'; (mi2.handlers.input || []).forEach(function (f) { f(); });
+  check('note 4: nothing for "zzz"', all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-suggest') != null; }).length === 0);
+  check('note 5: musical bingo\'s "Rounds a night" sits in the LEFT half of its own line (a half-width line, so another field can sit beside it)', /vpgs-pairs/.test(pairOf(P, 'rounds').className) && /half/.test(pairOf(P, 'rounds').className) && pairOf(P, 'rounds').getAttribute('data-half') === '1');
+  /* the venue's own list in the prize bank is kept to 24 and searched */
+  check('note 4: the shared list is the venue\'s own (setup_answers.prize_bank, up to 24)', lastAnswers() && lastAnswers().prize_bank.join() === 'Meat tray,$50 bar tab', lastAnswers() && lastAnswers().prize_bank);
+  /* an existing venue: what its games already hold feeds the suggestions */
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes_musical').click(); await settle();
+  var held = (HAVE.trivia && (HAVE.trivia.prizes || HAVE.trivia.prize_list) || []).filter(function (x) { return x; })[0];
+  check('note 4: an existing venue is offered the prizes its trivia already holds, as one tap', !held || !!walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-item') === held; }), held);
+  /* NOTE 6: bingo games and tickets */
+  P = page({ answers: { games: ['bingo'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  check('note 6: bingo\'s "Games a night" and "Tickets per player" are on the SAME line', pairOf(P, 'rounds') === pairOf(P, 'cards') && /vpgs-pairs/.test(pairOf(P, 'cards').className));
+  /* NOTE 7: raffles */
+  P = page({ answers: { games: ['raffles'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  check('note 7: "How many raffles do you run?" (not "raffles a night"), in the left half', /How many raffles do you run\?/.test(seen(row(P, 'raffles'))) && !/Raffles a night/i.test(seen($(P, 'vpGsBody'))) && /half/.test(pairOf(P, 'raffles').className));
+  box(P, 'vpGsIn_raffles', 2);
+  check('note 7: each raffle has a name or night box ("Friday raffle"), then ONE line: how many prizes + same prizes every week or draw', !!$(P, 'vpGsRafName_0') && $(P, 'vpGsRafName_0').placeholder === 'e.g. Friday raffle' && !!$(P, 'vpGsRafName_1') && /vpgs-pairs/.test($(P, 'vpGsRafN_0').parentNode.parentNode.parentNode.className) && $(P, 'vpGsRafN_0').parentNode.parentNode.parentNode === $(P, 'vpGsRafWeekly_0').parentNode.parentNode.parentNode && /Same prizes every week or draw\?/.test(seen($(P, 'vpGsRafWeekly_0').parentNode.parentNode)));
+  check('note 7: the old global "Same prizes every week?" row is gone (it is asked inside each raffle)', !row(P, 'prizes_weekly'));
+  var tp = row(P, 'time_to_present');
+  check('note 7: "How long do winners have to claim?" has a "No time limit" option (saved as 0)', /How long do winners have to claim\?/.test(seen(tp)) && $(P, 'vpGsIn_time_to_present').children.some(function (o) { return o.textContent === 'No time limit' && o.value === '0'; }));
+  box(P, 'vpGsRafName_0', 'Friday raffle'); box(P, 'vpGsRafName_1', 'Sunday raffle'); box(P, 'vpGsRafN_1', 3); chip(P, 'vpGsRafSame_1', 'data-value', 'false');
+  box(P, 'vpGsRafP_1_0', 'Meat tray'); box(P, 'vpGsRafP_1_1', 'Hamper'); box(P, 'vpGsRafP_1_2', "Winner's choice");
+  check('note 7: "Winner\'s choice" typed as one prize makes EVERY prize slot of that raffle winner\'s choice', $(P, 'vpGsRafP_1_0').value === "Winner's choice" && !$(P, 'vpGsRafP_1_1'), $(P, 'vpGsRafP_1_0') && $(P, 'vpGsRafP_1_0').value);
+  rafWeekly(P, 0, 'false'); box(P, 'vpGsRafP_0_0', 'Voucher'); box(P, 'vpGsIn_time_to_present', 0);
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  var rp2 = lastPost('/host/game-prefs');
+  check('note 7: saved: raffle names, raffle_weekly per raffle, prizes_weekly false while any is not weekly, claim time 0, and the Worker keeps every key', rp2 && JSON.stringify(rp2.prefs.raffle_names) === '["Friday raffle","Sunday raffle"]' && JSON.stringify(rp2.prefs.raffle_weekly) === '[false,true]' && rp2.prefs.prizes_weekly === false && rp2.prefs.time_to_present === 0 && JSON.stringify(rp2.prefs.raffle_prizes) === '[["Voucher"],["Winner\'s choice","Winner\'s choice","Winner\'s choice"]]' && keptByWorker('raffle', rp2.prefs), rp2 && rp2.prefs);
+  check('note 7: the Worker keeps raffle_weekly as true/false only', JSON.stringify(WK.clean('raffle', { raffle_weekly: [true, 'x', false] }).raffle_weekly) === '[true,false]' && WK.clean('raffle', { raffle_weekly: 'no' }).raffle_weekly === undefined);
+  /* an existing venue's raffle: weekly comes from prizes_weekly when raffle_weekly was never saved, and clicking through sends nothing */
+  P = oldVenue({ prefs: Object.assign(JSON.parse(JSON.stringify(HAVE)), { raffle: Object.assign({}, HAVE.raffle, { prizes_weekly: false }) }) }); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes_raffles').click(); await settle();
+  check('note 7: an existing venue that said "not the same every week" sees No on each raffle', $(P, 'vpGsRafWeekly_0').children.filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; })[0].getAttribute('data-value') === 'false');
+  CALLS = []; $(P, 'vpGsSave').click(); await settle();
+  check('note 7: and clicking straight through sends nothing at all', posts('/host/game-prefs').length === 0, posts('/host/game-prefs').map(function (c) { return c.body; }));
+  /* NOTE 8: members draw */
+  P = page({ answers: { games: ['members'] }, venue: { au_state: 'NSW' } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  check('note 8: "Starting jackpot" and "Maximum jackpot" on one line', pairOf(P, 'starting_amount_cents') === pairOf(P, 'max_jackpot_cents') && /Starting jackpot/.test(seen(row(P, 'starting_amount_cents'))) && /Maximum jackpot/.test(seen(row(P, 'max_jackpot_cents'))));
+  check('note 8: in NSW the maximum\'s box shows the state\'s own limit from VPGaming (7,000), and its ? says why', $(P, 'vpGsIn_max_jackpot_cents').placeholder === 'Limit 7,000' && /NSW progressive lottery/.test(seen($(P, 'vpGsHelp_max_jackpot_cents'))), $(P, 'vpGsIn_max_jackpot_cents').placeholder);
+  var lim = {}; ['QLD', 'VIC', 'WA', 'ACT', 'TAS', 'SA', 'NT'].forEach(function (st) { var Q = page({ answers: { games: ['members'] }, venue: { au_state: st } }); lim[st] = Q.W.VPGaming.jackpotLimit({ state: st, entityType: 'for_profit', format: 'members' }).cents; });
+  P = page({ answers: { games: ['members'] }, venue: { au_state: 'QLD' } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  check('note 8: where our table has no figure (QLD: no prize limit) the box says Unlimited; no limit is invented', lim.QLD === null && lim.VIC === null && lim.WA === null && lim.ACT === 300000 && lim.TAS === 500000 && lim.SA === 500000 && lim.NT === 500000 && $(P, 'vpGsIn_max_jackpot_cents').placeholder === 'Unlimited', lim);
+  /* NOTE 9: the reminder */
+  P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
+  check('note 9: "Would you like a weekly reminder to update your members list? We can email you." with Email me first, and the words update, never add', /Would you like a weekly reminder to update your members list\?/.test(T(P, 'vpGsRemind')) && /We can email you/.test(T(P, 'vpGsRemind')) && T(P, 'vpGsRemind').indexOf('Email me') < T(P, 'vpGsRemind').indexOf('My calendar') && !/\badd\b/i.test(T(P, 'vpGsBody')), T(P, 'vpGsBody'));
+  check('note 9: the computer link says update, and is shown from laptop width up only', /Update your members list on your Account page/.test(T(P, 'vpGsExtrasYes')) && /vpgs-wideonly/.test($(P, 'vpGsExtrasYes').className));
+  chip2(P, 'vpGsRemind', 'email').click(); box(P, 'vpGsRemindDay', 'tue'); box(P, 'vpGsRemindTime', '09:30'); $(P, 'vpGsExtrasNo').click(); await settle();
+  check('note 9: Email me saves { how: email, day, time, since: today (Brisbane) }, the shape the billing Worker\'s sender reads', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'tue', time: '09:30', since: P.GS.brisbaneDate(NOW) }), lastAnswers());
+  /* the Account page, on its own: start reminder */
+  P = page({ answers: { games: ['members'], members_reminder: { how: 'email', day: 'tue', time: '09:30', since: '2026-11-01' } } }); var doneR = P.GS.run(P.ctx, Object.assign(P.deps, { start: 'reminder' })); await settle();
+  check('note 9: from the Account page it opens on just the reminder (no draws link), the saved choice ticked', T(P, 'vpGsTitle') === 'Your members list reminder' && chip2(P, 'vpGsRemind', 'email').getAttribute('aria-pressed') === 'true' && $(P, 'vpGsExtrasYes').style.display === 'none' && !!$(P, 'vpGsRemindSave') && !!$(P, 'vpGsRemindCancel'));
+  SAVED.length = 0; $(P, 'vpGsRemindSave').click(); await settle();
+  check('note 9: saving the same choice again keeps its original "since" (the weekly emails do not restart)', (await doneR) === 'done' && lastAnswers().members_reminder.since === '2026-11-01', lastAnswers());
+  P = page({ answers: { games: ['members'], members_reminder: { how: 'email', day: 'tue', time: '09:30', since: '2026-11-01' } } }); doneR = P.GS.run(P.ctx, Object.assign(P.deps, { start: 'reminder' })); await settle();
+  chip2(P, 'vpGsRemind', 'none').click(); SAVED.length = 0; $(P, 'vpGsRemindSave').click(); await settle();
+  check('note 9: No thanks stops it (the key is removed)', !('members_reminder' in lastAnswers()), lastAnswers());
+  P = page({ answers: { games: ['members'], members_reminder: { how: 'email', day: 'tue', time: '09:30', since: '2026-11-01' } } }); doneR = P.GS.run(P.ctx, Object.assign(P.deps, { start: 'reminder' })); await settle(); SAVED.length = 0; $(P, 'vpGsRemindCancel').click(); await settle();
+  check('note 9: Cancel writes nothing', (await doneR) === 'closed' && SAVED.length === 0);
+  var iph = BILL.indexOf('id="md-remind"'), up = BILL.indexOf('id="md-upload"'), phoneRule = /@media \(max-width:700px\)\{#md-upload\.md-nophone\{display:none\}\}/.test(BILL);
+  check('note 9: on the Account page the CSV upload is hidden on a phone (max 700px) and the weekly reminder stands in its place; on a computer both show', phoneRule && up > 0 && iph > up && /class="md-nophone"/.test(BILL) && /Would you like a weekly reminder to update your members list\? We can email you\./.test(BILL) && /VPGameSetup\.run\(cx, \{ start: "reminder", VP: VP \}\)/.test(BILL));
+  check('note 9: no copy anywhere on that card says "add your members list"', !/add your members list/i.test(BILL.slice(BILL.indexOf('id="md-remind"') - 200, BILL.indexOf('id="md-remind"') + 800)));
+  check('note 9: the Worker sends it: vpaMembersReminderSweep is on the hourly trigger (tools/test-members-reminder.js runs it)', /vpaMembersReminderSweep/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')));
+
   section('6. WIRED IN');
   var boot = INDEX.slice(INDEX.indexOf('EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO'), INDEX.indexOf('if(venue && venue.slug && pairToVenue(venue.slug))'));
   check('the console home asks an existing venue on sign-in, with this device\'s own night as busy, in place of the one later question', /VPGameSetup\.wantsReview\(__ctx\)/.test(boot) && /VPGameSetup\.review\(__ctx, \{ client:VP\.getClient\(\), VP:VP, busy:function\(\)\{ return !!liveNightElsewhere\(\); \} \}\)/.test(boot) && /else if\(window\.VPFirstRun && VPFirstRun\.ask/.test(boot));

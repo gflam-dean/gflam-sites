@@ -859,7 +859,7 @@
       /* WINNER'S CHOICE FILLS EVERY PRIZE OF THAT RAFFLE (Dean, round 12 note 7): add it once and every prize slot is winner's choice */
       var allWC = function (blk) {
         var i = Array.prototype.indexOf.call(rp.children, blk), p = plan[i]; if (!p) return;
-        sync(); p.same = true; p.prizes = [WINNERS_CHOICE]; drawR();
+        sync(); p.same = true; p.prizes = [WINNERS_CHOICE]; drawR(true);
         each2(rp.children[i], function (x) { if (x.getAttribute && x.getAttribute("data-prize") != null) flash(x); });   // shows where it landed
       };
       var ucR = usualChips(F, ctx, function (w) {
@@ -884,8 +884,8 @@
         var c = el("div", "vpgs-row pcell"), lb = el("label", "vpgs-lab", labelText); if (forId) lb.setAttribute("for", forId);
         var ct = el("div", "vpgs-ctl"); ct.appendChild(ctlNode); c.appendChild(lb); c.appendChild(ct); return c;
       };
-      var drawR = function () {
-        sync();
+      var drawR = function (skipSync) {
+        if (skipSync !== true) sync();
         var N = Math.max(1, Math.min(12, parseInt(all.value(s.countFrom), 10) || 1));
         while (plan.length < N) plan.push({ n: 1, same: true, prizes: [""], name: "", weekly: true });
         while (rp.firstChild) rp.removeChild(rp.firstChild);
@@ -1096,7 +1096,7 @@
     wrap.className = "vpgs-ctl" + (wrap.className ? " " + wrap.className : "");
     row.appendChild(wrap); row.appendChild(pop);   // the "?" words open under the whole setting, pushing what follows down
     if (stEl) { stEl.id = "vpGsState_" + s.key; row.appendChild(stEl); }
-    return { pop: pop, state: stEl, row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input, select") : (wrap.children[0] && /^(INPUT|SELECT)$/.test(wrap.children[0].tagName) ? wrap.children[0] : null); } };
+    return { pop: pop, state: stEl, row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { if (wrap.querySelector) return wrap.querySelector("input, select"); for (var i = 0; i < wrap.children.length; i++) if (/^(INPUT|SELECT)$/.test(wrap.children[i].tagName)) return wrap.children[i]; return null; } };
   }
   /* Trivia question sets for "Pick categories": the venue's own and the venueplay library, never another venue's private night. */
   function loadSetRows(ctx, paint) {
