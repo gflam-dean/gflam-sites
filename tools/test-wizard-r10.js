@@ -44,7 +44,7 @@ async function settle() { for (var i = 0; i < 30; i++) await Promise.resolve(); 
 
 var GAMING = readFile('venueplay/app/vp-gaming.js'), SETUPUSE = readFile('venueplay/app/vp-setupuse.js'), HELP = readFile('venueplay/app/vp-setup-help.js'), GS = readFile('venueplay/app/vp-gamesetup.js'), GAMEW = readFile('venueplay-backend/worker/venueplay-game.js');
 var NOW = Date.parse('2026-11-06T15:30:00Z');   // 1:30am on Sat 7 Nov in Brisbane: the Brisbane date is the 7th, not the 6th
-var CALLS, PREFS, SAVED, STORE, RELOADS;
+var CALLS, PREFS, SAVED, STORE, RELOADS, UNHIDE = true;
 function page(over) {
   over = over || {};
   CALLS = []; SAVED = []; RELOADS = 0; STORE = over.store || {}; PREFS = over.prefs || {};
@@ -79,6 +79,12 @@ function page(over) {
   var deps = { doc: document, storage: storage, fetch: fetch, client: client, now: NOW, ctx: ctx,
     saveSettings: function (id, patch) { SAVED.push({ id: id, patch: JSON.parse(JSON.stringify(patch)) }); return over.saveFail ? Promise.reject(new Error('no column')) : Promise.resolve({}); },
     onSaved: function () { RELOADS++; } };
+  /* Dean 10 Nov: picture questions, prize swaps, the draw style, raffle names and the email reminder are HIDDEN until the games use them.
+     The older checks below still run with them shown (UNHIDE true, the default); the "hidden" block turns it off and checks nothing is asked. */
+  if (UNHIDE) {
+    window.VPSetupHelp.GAMES.forEach(function (g) { g.settings.forEach(function (x) { if (x.notYet) x.notYet = false; }); });
+    window.VPGameSetup.HIDDEN_FOR_NOW.raffleNames = true; window.VPGameSetup.HIDDEN_FOR_NOW.emailReminder = true;
+  }
   return { doc: document, body: body, W: window, GS: window.VPGameSetup, H: window.VPSetupHelp, ctx: ctx, deps: deps };
 }
 function $(P, id) { return P.doc.getElementById(id); }
@@ -488,6 +494,34 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('a TV that reloads mid-song still knows the venue reveals only in the played list', LR.get() === 'never');
   var stateBranch = MSCREEN.slice(MSCREEN.indexOf('if(_pendingSong){\n            $("tvNowEye")'), MSCREEN.indexOf('renderRun();', MSCREEN.indexOf('if(_pendingSong){\n            $("tvNowEye")')));
   check('so its state refresh never prints the title in the now-playing panel then', /lastRevealMode\(\)==="never"\)\{[\s\S]*tvListen"\)\.classList\.remove\("hidden"\)/.test(stateBranch) && stateBranch.indexOf('lastRevealMode()==="never"') < stateBranch.indexOf('$("tvNowTitle").textContent=t'));
+
+  /* 5b. HIDDEN FOR NOW (Dean, 10 Nov): nothing a venue answers does nothing. Picture questions, prize swaps, raffle names, the draw style and the
+     email reminder are not asked until the games use them; the keys, the saving and the checks above stay for later. */
+  section('5b. HIDDEN UNTIL THE GAMES USE THEM');
+  UNHIDE = false;
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  check('hidden: trivia no longer asks picture questions', !row(P, 'picture_round') && !$(P, 'vpGsState_picture_round') && !!row(P, 'double_points'));
+  seg(P, 'prize_weekly', 'false');
+  check('hidden: trivia, not the same every week, offers no prize swap', !row(P, 'prize_swaps') && !$(P, 'vpGsSwapAdd'));
+  P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
+  $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
+  $(P, 'vpGsAllYes_raffles').click(); await settle();
+  check('hidden: raffles ask no name and no draw style, and still ask the prizes', !$(P, 'vpGsRafName_0') && !row(P, 'draw_style') && !$(P, 'vpGsIn_draw_style') && !!$(P, 'vpGsRafP_0_0'));
+  seg(P, 'prizes_weekly', 'false');
+  check('hidden: raffles, not the same every week, offer no prize swap', !row(P, 'prize_swaps') && !$(P, 'vpGsSwapAdd'));
+  P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
+  check('hidden: the members list reminder offers the calendar and No thanks, no email', !chip2(P, 'vpGsRemind', 'email') && !!chip2(P, 'vpGsRemind', 'calendar') && !!chip2(P, 'vpGsRemind', 'none'));
+  P = page({ answers: { games: ['members'], members_reminder: { how: 'email', day: 'sat', time: '10:30' } } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
+  $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
+  box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
+  $(P, 'vpGsExtrasNo').click(); await settle();
+  check('hidden: an old email-reminder choice is not carried on (no email job exists yet)', !('members_reminder' in lastAnswers()), lastAnswers());
+  P = oldVenue(); 
+  check('hidden: the keys and defaults are still there for later (picture_round on, draw_style numbers)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'numbers' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === 'wheel');
+  UNHIDE = true;
 
   section('6. WIRED IN');
   var boot = INDEX.slice(INDEX.indexOf('EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO'), INDEX.indexOf('if(venue && venue.slug && pairToVenue(venue.slug))'));

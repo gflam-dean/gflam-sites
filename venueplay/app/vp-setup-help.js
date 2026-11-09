@@ -17,6 +17,7 @@
                prizelist (one box, or one per round or prize: countFrom / sameFrom name the settings that decide)
      swaps     a prize swapped for one week (prize_swaps), shown while the prizes are not the same every week
      line      settings sharing a line id sit side by side on one line (round 11)
+     notYet    HIDDEN for now (Dean 10 Nov): the games do not use it yet, so nothing is asked; the key and tests stay for later
      perNight  asked on the night's own start screen, not in one-off setup (trivia's mix or categories)
      showIf    { key: value }: shown only while that setting has that value
      fills     a date that fills another box (members draws: the start date fills the draw day)
@@ -71,7 +72,7 @@
         help: "Yes: these prizes load every night. No: you add them on the night, or swap them for one week below." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $50 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, underPrev: true,
         help: "What each round's winner gets. Tap one of your usual prizes, or type a new one." },
-      { key: "prize_swaps", label: "Swap the prizes for a week", kind: "swaps", def: [], countFrom: "rounds", sameFrom: "prize_same", showIf: { prize_weekly: false },
+      { key: "prize_swaps", notYet: true, label: "Swap the prizes for a week", kind: "swaps", def: [], countFrom: "rounds", sameFrom: "prize_same", showIf: { prize_weekly: false },
         help: SWAP_HELP },
       /* DOUBLE POINTS (Dean, round 9 points 10, 26 and 27): On or Off, off unless they say On. Each round of the night
          is its own game, and the game doubles the last double_last questions of each one. "The whole last round" needs
@@ -79,7 +80,7 @@
       { key: "double_points", label: "Double points", kind: "seg", options: ONOFF2, def: false, line: "dp",
         help: "The last questions of every round score double, so teams at the bottom can catch up. Off unless you switch it on." },
       /* PICTURE QUESTIONS (Dean, round 11 note 4): clear whether they show, because paper teams watch the TV */
-      { key: "picture_round", label: "Picture questions", kind: "seg", options: ONOFF2, def: true, line: "dp",
+      { key: "picture_round", notYet: true, label: "Picture questions", kind: "seg", options: ONOFF2, def: true, line: "dp",
         status: { true: "Picture questions are ON. A question with a picture shows it on the TV and on phones, so paper teams can play too.", false: "Picture questions are OFF. A question with a picture shows without it." },
         help: "On: a question's picture shows on the TV and on phones. Paper teams watch the TV, so keep it on for them." },
       { key: "double_last", label: "How many questions in each round are worth double?", kind: "number", def: 2, min: 1, max: 100, showIf: { double_points: true },
@@ -113,7 +114,7 @@
         help: "Yes: these prizes load every night. No: you add them on the night, or swap them for one week below." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true, underPrev: true,
         help: "What each round's winner gets. \"Same as above\" copies the prize above, for rounds that share one." },
-      { key: "prize_swaps", label: "Swap the prizes for a week", kind: "swaps", def: [], countFrom: "rounds", sameFrom: "prize_same", showIf: { prize_weekly: false }, quick: true,
+      { key: "prize_swaps", notYet: true, label: "Swap the prizes for a week", kind: "swaps", def: [], countFrom: "rounds", sameFrom: "prize_same", showIf: { prize_weekly: false }, quick: true,
         help: SWAP_HELP },
       { key: "reveal", label: "When the TV shows the song name", kind: "select", def: "end", advanced: true,
         options: [["instant", "Straight away"], ["15", "After 15 seconds"], ["end", "When the clip ends"], ["never", "Only in the played-songs list"]],
@@ -163,12 +164,12 @@
         help: "Name each raffle, say how many prizes it has, and what they are. Your prizes become buttons on the raffle console." },
       { key: "prizes_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true,
         help: "Yes: we keep these prizes. No: you add them on the night, or swap them for one week below." },
-      { key: "prize_swaps", label: "Swap the prizes for a week", kind: "swaps", def: [], countPlan: "raffle_plan", showIf: { prizes_weekly: false },
+      { key: "prize_swaps", notYet: true, label: "Swap the prizes for a week", kind: "swaps", def: [], countPlan: "raffle_plan", showIf: { prizes_weekly: false },
         help: "Pick a week and type that week's prizes, in order, raffle by raffle. Other weeks use your usual ones." },
       { key: "time_to_present", label: "How long do winners have to claim?", kind: "select", def: 180,
         options: [[60, "1 minute"], [120, "2 minutes"], [180, "3 minutes"], [300, "5 minutes"], [600, "10 minutes"], [0, "No limit"]],
         help: "How long a winner has to show their ticket before you can draw again." },
-      { key: "draw_style", label: "How the draw looks", kind: "select", def: "numbers", advanced: true, prompt: "How the draw looks",
+      { key: "draw_style", notYet: true, label: "How the draw looks", kind: "select", def: "numbers", advanced: true, prompt: "How the draw looks",
         options: [["numbers", "Spinning numbers"], ["barrel", "A barrel"], ["wheel", "A wheel"]],
         help: "What the TV shows while the winner is drawn. Spinning numbers is how it works today." },
       { key: "jackpot_on", label: "Cash prize", kind: "seg", options: ON_OFF, def: false, advanced: true, prompt: "A cash prize instead of a prize?",

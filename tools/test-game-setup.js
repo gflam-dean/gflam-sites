@@ -184,7 +184,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   $(P, 'vpGsAllYes').click(); await settle();
   check('trivia first, "Game 1 of 3"', T(P, 'vpGsTitle') === 'Set up trivia' && T(P, 'vpGsCount') === 'Trivia, game 1 of 3', [T(P, 'vpGsTitle'), T(P, 'vpGsCount')]);
   var qs = all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-q'; });
-  check('a "?" beside every trivia setting (' + P.H.byKey('trivia').settings.length + '), and no "Same prizes for other games?" (Dean, round 7b point 7)', qs.length === P.H.byKey('trivia').settings.filter(function (x) { return !x.perNight && x.kind !== 'info'; }).length && !$(P, 'vpGsShared'), qs.length);
+  check('a "?" beside every trivia setting (' + P.H.byKey('trivia').settings.length + '), and no "Same prizes for other games?" (Dean, round 7b point 7)', qs.length === P.H.byKey('trivia').settings.filter(function (x) { return !x.perNight && !x.notYet && x.kind !== 'info'; }).length && !$(P, 'vpGsShared'), qs.length);
   check('the advanced ones as short questions', /Faster scores more/.test(T(P, 'vpGsBody')) && /More settings/.test(T(P, 'vpGsBody')));
   var qSpeed = $(P, 'vpGsQ_speed_bonus'), qBuzz = $(P, 'vpGsQ_buzzer');
   qSpeed.click();
@@ -236,7 +236,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('musical bingo\'s own setup opens over its console', T(P, 'vpGsTitle') === 'Set up musical bingo' && T(P, 'vpGsFirstTag') === 'First time in musical bingo', T(P, 'vpGsTitle'));
   check('marked "shown" before anything else, for the venue and this device', SAVED.length && SAVED[0].patch.setup_answers.setup.musical === 'shown' && JSON.parse(STORE['vpGameSetup:V1']).setup.musical === 'shown', SAVED[0]);
   var asked = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
-  check('musical bingo asks its quick questions first: which music, how many rounds, the prizes, and the same prizes every week (Dean, round 8b point 8); the speakers guide lives in More settings', asked.join() === 'playlists,rounds,prize_same,prize_weekly,prizes,prize_swaps' && !$(P, 'vpGsSoundHow'), asked);
+  check('musical bingo asks its quick questions first: which music, how many rounds, the prizes, and the same prizes every week (Dean, round 8b point 8); the speakers guide lives in More settings', asked.join() === 'playlists,rounds,prize_same,prize_weekly,prizes' && !$(P, 'vpGsSoundHow'), asked);
   await settle();
   var music = all($(P, 'vpGsIn_playlists'), function (e) { return e.getAttribute && e.getAttribute('data-id'); }).map(function (e) { return e.getAttribute('data-id'); });
   await settle(); await settle();
@@ -482,7 +482,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('trivia starts empty, the usual prizes one tap away, and no question about them', $(P, 'vpGsIn_prizes_0').value === '' && !!$(P, 'vpGsUsual_prizes') && !$(P, 'vpGsShared'));
   $(P, 'vpGsSave').click(); await settle(); walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'raffles'; }).click(); await settle();
   check('raffles start with nothing filled in (no Meat tray before they type, Dean round 9 point 20), never the usual-prizes question', $(P, 'vpGsRafP_0_0').value === '' && !$(P, 'vpGsShared'), $(P, 'vpGsRafP_0_0').value);
-  check('"Raffles a night" is one compact line with a small box, no unit word (Dean, round 8b point 5); a More settings section with the draw style (Dean, round 11 note 6)', / cmp/.test(walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'raffles'; }).className) && !all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-unit'; }).length && !!$(P, 'vpGsAdvanced') && !!$(P, 'vpGsIn_draw_style'));
+  check('"Raffles a night" is one compact line with a small box, no unit word (Dean, round 8b point 5); a More settings section (the draw style is hidden until the TV draws it, Dean 10 Nov)', / cmp/.test(walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'raffles'; }).className) && !all($(P, 'vpGsBody'), function (e) { return e.className === 'vpgs-unit'; }).length && !!$(P, 'vpGsAdvanced') && !$(P, 'vpGsIn_draw_style'));
   walk($(P, 'vpGsUsual_raffle_plan'), function (e) { return e.getAttribute && e.getAttribute('data-item') === '$50 bar tab'; }).click();
   check('a usual prize is one tap: it goes into the raffle\'s prize box (Dean, round 9 point 20: "it didn\'t add any")', $(P, 'vpGsRafP_0_0').value === '$50 bar tab', $(P, 'vpGsRafP_0_0').value);
   var P14 = page({ answers: { games: ['raffles'] } }); P14.GS.run(P14.ctx, Object.assign(P14.deps, { start: 'pick' })); await settle();

@@ -363,6 +363,9 @@
   }
   /* THIS WEEK'S MUSIC (Dean, 6 Nov 2026): with more than one list, a different one each week, Brisbane weeks from
      Monday, so the same songs are not played every week. */
+  /* Dean 10 Nov: questions the games do not use yet are hidden, so nothing a venue answers does nothing. The keys, the saving and the tests stay;
+     flip a flag to true to show the question again once the game reads it. (picture_round, prize_swaps and draw_style are hidden by notYet in vp-setup-help.js.) */
+  var HIDDEN_FOR_NOW = { raffleNames: false, emailReminder: false };
   /* the Monday of the week a date is in, "YYYY-MM-DD" (a prize swap is for a whole Brisbane week, Monday on) */
   function mondayOf(ymd) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || "")); if (!m) return "";
@@ -804,7 +807,7 @@
           var qn = el("label", "vpgs-rq vpgs-rname"); qn.appendChild(el("span", null, "Name this raffle"));
           var nmBox = el("input", "vpgs-in"); nmBox.type = "text"; nmBox.maxLength = 60; nmBox.placeholder = "e.g. Friday Meat Raffle"; nmBox.id = "vpGsRafName_" + i; nmBox.setAttribute("data-name", "1");
           nmBox.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "name"); nmBox.value = p.name || "";
-          qn.appendChild(nmBox); blk.appendChild(qn);
+          qn.appendChild(nmBox); if (HIDDEN_FOR_NOW.raffleNames) blk.appendChild(qn);   // hidden until the raffle console shows it (Dean 10 Nov)
           var q1 = el("label", "vpgs-rq"); q1.appendChild(el("span", null, "How many prizes?"));
           var nIn = el("input", "vpgs-in"); nIn.type = "number"; nIn.setAttribute("inputmode", "numeric"); nIn.min = String(s.min); nIn.max = String(s.max);
           nIn.id = "vpGsRafN_" + i; nIn.setAttribute("data-n", "1"); nIn.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "how many prizes"); nIn.value = String(p.n);
@@ -1141,6 +1144,7 @@
       if (opts.quickOnly && !s.quick) return;
       if (!opts.quickOnly && s.firstOnly) return;   // asked on a first open only (members draws: the jackpot now)
       if (s.advanced && g.noMore) return;   // left to the console, at its usual setting (spacing review r8)
+      if (s.notYet) return;   // hidden until the games use it (Dean 10 Nov): picture_round, prize_swaps, draw_style
       if (s.perNight) return;   // asked on the night's own start screen (trivia's mix or categories)
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
       var into = s.advanced ? advRows : list;
@@ -1634,6 +1638,7 @@
       F.body.appendChild(go);
       /* THE REMINDER */
       var rem = cleanReminder(answers.members_reminder) || { how: "", day: "mon", time: "09:00" };
+      if (rem.how === "email" && !HIDDEN_FOR_NOW.emailReminder) rem.how = "";   // no email job exists yet: an old email choice shows as not chosen
       var qw = F.el("div", "vpgs-q3"); qw.id = "vpGsRemind";
       qw.appendChild(F.el("h3", "vpgs-h3", "Would you like a reminder to add your members list?"));
       qw.appendChild(F.el("p", "vpgs-sub", "Pick how, and the best day and time to remind you."));
@@ -1653,7 +1658,7 @@
         dayRow.style.display = on ? "" : "none"; cal.style.display = rem.how === "calendar" ? "" : "none";
         if (rem.how === "calendar") cal.setAttribute("href", reminderIcs(vid, { how: rem.how, day: dsel.value, time: tsel.value || "09:00" }, now));
       }
-      [["email", "Email me"], ["calendar", "Calendar"], ["none", "No thanks"]].forEach(function (o) {
+      [["email", "Email me"], ["calendar", "Calendar"], ["none", "No thanks"]].filter(function (o) { return o[0] !== "email" || HIDDEN_FOR_NOW.emailReminder; }).forEach(function (o) {
         var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", o[0]);
         b.addEventListener("click", function () { rem.how = o[0] === "none" ? "" : o[0]; paintRem(); });
         rseg.appendChild(b);
@@ -1843,6 +1848,6 @@
     }, function () { return "busy"; });
   }
 
-  root.VPGameSetup = { wantsReview: wantsReview, review: review, haveDraft: haveDraft, changedOnly: changedOnly, timeSelect: timeSelect, HALF_HOURS: HALF_HOURS, bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, cleanReminder: cleanReminder, reminderIcs: reminderIcs, mondayOf: mondayOf, setupFor: setupFor,
+  root.VPGameSetup = { HIDDEN_FOR_NOW: HIDDEN_FOR_NOW, wantsReview: wantsReview, review: review, haveDraft: haveDraft, changedOnly: changedOnly, timeSelect: timeSelect, HALF_HOURS: HALF_HOURS, bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, cleanReminder: cleanReminder, reminderIcs: reminderIcs, mondayOf: mondayOf, setupFor: setupFor,
     savePrefs: savePrefs, listWords: listWords, brisbaneDate: brisbaneDate, dayOf: dayOf, ORDER: ORDER, LKEY: LKEY, GAME_API: GAME_API, OTHER_MAX: OTHER_MAX };
 })(typeof window !== "undefined" ? window : this);
