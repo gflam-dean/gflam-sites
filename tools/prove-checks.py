@@ -15675,7 +15675,7 @@ MUTATIONS = [
     ('game-setup-in-chrome.test.py', 'venueplay/app/vp-gamesetup.js',
      '    P + ".vpgs-pop{position:static;margin:0 0 8px;',
      '    P + ".vpgs-pop{position:absolute;left:200px;width:380px;margin:0 0 8px;',
-     'on a phone the "?" words float off the side instead of opening under the setting'),
+     'the "?" words float off the side instead of opening under the setting'),
     ('game-setup-in-chrome.test.py', 'venueplay/app/trivia/host.html',
      '<script src="../vp-gamesetup.js"></script>',
      '',

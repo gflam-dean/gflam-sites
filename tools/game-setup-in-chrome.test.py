@@ -54,8 +54,8 @@ def fits(tag, f):
     if f.get('pop'):
         p = f['pop']
         ok(tag + ': the open "?" is fully on screen', p['left'] >= 0 and p['right'] <= p['W'] + 0.5, p)
-        ok(tag + ': on a phone the "?" opens underneath the setting, on a bigger screen as a bubble (Dean, round 2)',
-           p['pos'] == ('static' if p['W'] < 600 else 'absolute'), p)
+        ok(tag + ': the "?" opens underneath its setting at every size, pushing what follows down (Dean, round 7b point 9; round 2 had a bubble on bigger screens)',
+           p['pos'] == 'static', p)
 
 
 def first_open(RIG):
@@ -71,9 +71,10 @@ def first_open(RIG):
            r.ask(sid, '(document.getElementById("vpGsTitle")||{}).textContent'))
         ok('it says it is the first time, and the console is behind it', r.ask(sid, '(document.getElementById("vpGsFirstTag")||{}).textContent') == 'First time in trivia'
            and r.ask(sid, '!!document.getElementById("cfgCount")') is True)
-        r.ask(sid, 'document.getElementById("vpGsQ_speed_bonus").click(); true'); time.sleep(0.3)
+        # speed bonus sits in More settings, folded on every size since round 8 (Dean, round 7b point 8): open it first
+        r.ask(sid, 'document.getElementById("vpGsAdvToggle").click(); document.getElementById("vpGsQ_speed_bonus").click(); true'); time.sleep(0.3)
         f = r.json(sid, FIT)
-        ok('"?" beside Speed bonus opens its plain words', 'scores 150 instead of 100' in ((f.get('pop') or {}).get('text') or ''), f.get('pop'))
+        ok('"?" beside Speed bonus opens its plain words', 'scores up to half as much again' in ((f.get('pop') or {}).get('text') or '') and (f.get('pop') or {}).get('right', 0) > 0, f.get('pop'))
         fits('first open at 820', f)
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'first-open-trivia-820.jpg'))
         r.ask(sid, 'document.getElementById("vpGsIn_count").value="15"; document.getElementById("vpGsSave").click(); true')
