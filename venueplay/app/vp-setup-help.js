@@ -155,7 +155,7 @@
        prizes in each, which can differ; the prizes are the console's buttons. More settings: how the draw looks, a cash
        prize, drawing again. Ticket numbers are not asked: the console starts each raffle after the last. */
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle",
-      moreWords: "How the draw looks, a cash prize, drawing again, and how long the numbers spin.", settings: [
+      moreWords: "A cash prize, drawing again, and how long the numbers spin.", settings: [
       { key: "raffles", label: "Raffles a night", kind: "number", def: 1, min: 1, max: 12,
         help: "How many raffles you draw in a night." },
       /* EACH RAFFLE ASKS THE SAME QUESTIONS (Dean, round 9 point 20): its name, how many prizes, are they all the same,

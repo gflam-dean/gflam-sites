@@ -215,7 +215,7 @@
     P + ".vpgs-in.vpgs-drop{outline:2px dashed " + C.pink + ";outline-offset:2px;background:rgba(255,31,142,.10)}" + P + ".vpgs-uchip.vpgs-dragging{opacity:.45}" + P + ".vpgs-uchip{cursor:grab}" +
     P + ".vpgs-addlink{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0 -12px;padding:0;border:none;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:left}" +
     P + ".vpgs-time>span:first-child{display:flex;flex-direction:column;align-items:flex-start}" +
-    P + ".vpgs-link{display:inline-block;width:auto;border:none;padding:10px 0;min-height:44px;text-align:left;text-decoration:underline;text-underline-offset:3px}" +
+    P + ".vpgs-link{display:inline-block;width:auto;margin-right:24px;border:none;padding:10px 0;min-height:44px;text-align:left;text-decoration:underline;text-underline-offset:3px}" +
     P + ".vpgs-rows>.vpgs-row.under{border-top:none;padding-top:0;grid-template-areas:'ctl ctl' 'pop pop'}" + P + ".vpgs-rows>.vpgs-row.under>.vpgs-lab," + P + ".vpgs-rows>.vpgs-row.under>.vpgs-q{display:none}" +
     P + ".vpgs-rows>.vpgs-row.vpgs-linkrow{grid-template-areas:'ctl ctl'}" + P + ".vpgs-linkrow .vpgs-addlink{margin:0}" +
     "@media (max-width:600px){" + P + ".vpgs-cats{grid-template-columns:1fr 1fr}" + P + ".vpgs-cats .vpgs-chip small{display:none}" + P + ".vpgs-cats .vpgs-chip{align-items:center}}" +
@@ -1377,7 +1377,7 @@
       otherIn.placeholder = "e.g. Karaoke"; otherIn.setAttribute("aria-label", "Your other nights"); otherIn.setAttribute("enterkeyhint", "enter");
       var otherWrap = F.el("div", "vpgs-q3");
       var oq = F.el("label", "vpgs-h3", "Do you run any other regular nights or meal deals?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq);
-      otherWrap.appendChild(F.el("p", "vpgs-sub", "Karaoke, poker, parma night, $10 steaks... type one, or tap a suggestion."));
+      otherWrap.appendChild(F.el("p", "vpgs-sub", "Karaoke, poker, parma night, $10 steaks... type them in."));
       var otherTags = F.el("div", "vpgs-tags"); otherTags.id = "vpGsOtherList";
       otherWrap.appendChild(otherTags); otherWrap.appendChild(otherIn);
       var sug = F.el("div", "vpgs-sug"); sug.id = "vpGsOtherSuggest"; otherWrap.appendChild(sug);
@@ -1641,7 +1641,7 @@
       if (rem.how === "email" && !HIDDEN_FOR_NOW.emailReminder) rem.how = "";   // no email job exists yet: an old email choice shows as not chosen
       var qw = F.el("div", "vpgs-q3"); qw.id = "vpGsRemind";
       qw.appendChild(F.el("h3", "vpgs-h3", "Would you like a reminder to add your members list?"));
-      qw.appendChild(F.el("p", "vpgs-sub", "Pick how, and the best day and time to remind you."));
+      qw.appendChild(F.el("p", "vpgs-sub", "Pick the best day and time to remind you."));
       var rseg = F.el("div", "vpgs-seg"); rseg.setAttribute("role", "group"); rseg.setAttribute("aria-label", "How to remind you"); rseg.style.marginTop = "6px";
       var dayRow = F.el("div", "vpgs-remrow"); dayRow.id = "vpGsRemindWhen";
       var dsel = F.el("select", "vpgs-in vpgs-tsel"); dsel.id = "vpGsRemindDay"; dsel.setAttribute("aria-label", "Best day to remind you");
