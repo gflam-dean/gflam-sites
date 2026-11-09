@@ -321,8 +321,8 @@ async function newProspect(name, offerOpen) {
   check('a card in the month: never paused, even ten days past its end', E.v.status === 'active' && !E.row().paused_at);
   var R = await newProspect('Reminders Unchanged Hotel');
   var got = await walk(BNE_FIRST, MONTH_END, 3600000);
-  check('the settled reminders are untouched: day 3, 23 and 29 only, nothing new for the grace',
-    got.map(function (g) { return day(g.at); }).join(' ') === '2026-11-05 2026-11-25 2026-12-01', got.map(function (g) { return day(g.at); }));
+  check('the settled reminders are untouched: day 3, 23 and 30 only (Dean, 5 Nov 2026 ~7pm: the last day itself), nothing new for the grace',
+    got.map(function (g) { return day(g.at); }).join(' ') === '2026-11-05 2026-11-25 2026-12-02', got.map(function (g) { return day(g.at); }));
   /* 8. THE EMAILS NEVER SAY THE 5 DAYS (Dean, 7 Nov 2026: never mentioned publicly). The 6 Nov switch OFFER_GRACE_EMAILS
      and its words are gone: set ON, it changes nothing. Same 10 checks as before, now all "never". */
   var html = function (g) { return String((g && g.msg && g.msg.html) || ''); };

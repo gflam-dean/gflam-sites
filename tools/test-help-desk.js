@@ -22,7 +22,7 @@ var fails = 0, ran = 0;
 var COUNTRY = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 function oneLogo(html, pp) {
   var imgs = String(html || '').match(/<img\b[^>]*>/gi) || [];
-  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay-email-on-dark.png') !== -1
+  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay-email-header-solid.png') !== -1
     && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#0A0A0B;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
     && imgs[1].indexOf(pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif') !== -1
     && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;

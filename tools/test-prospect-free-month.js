@@ -9,7 +9,7 @@
 
    Runs the REAL billing Worker (tools/rig-billing-worker.js) through its REAL router and its REAL hourly sweep,
    walked an hour at a time across a whole month, and the console's real holdWords:
-     1. the reminder calendar: weekends moved (day 3 and day 23 on to Monday, day 29 back to Friday)
+     1. the reminder calendar: weekends moved (day 3 on to Monday, day 23 and day 30 back to Friday)
      2. /account/prospect-start: starts the month once, for the venue's owner or manager only, never View as
      3. a month with no card: every reminder once, on its day, inside the hours, the right words; then the pause
      4. the offer: held through the month after the offer closes; gone after the pause and its 5-day grace (card link
@@ -143,15 +143,15 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
 (async function () {
   section('1. The reminder calendar, from the first sign-in');
   var plan = vpaReminderPlan(bne(2026, 11, 2, 10, 0)).map(function (r) { return r.day + '@' + r.date; }).join(' ');
-  check('first sign-in Mon 2 Nov: three reminders and no more: 3 Thu 5 Nov, 23 Wed 25 Nov, 29 Tue 1 Dec (the day before it ends)',
-    plan === '3@2026-11-05 23@2026-11-25 29@2026-12-01', plan);
+  check('first sign-in Mon 2 Nov: three reminders and no more: 3 Thu 5 Nov, 23 Wed 25 Nov (a week before the end), 30 Wed 2 Dec (the last day)',
+    plan === '3@2026-11-05 23@2026-11-25 30@2026-12-02', plan);
   check('the free month ends 11:59:59pm Brisbane on Wed 2 Dec', new Date(vpaFreeMonthEnd(bne(2026, 11, 2, 10, 0))).toISOString() === '2026-12-02T13:59:59.000Z', new Date(vpaFreeMonthEnd(bne(2026, 11, 2, 10, 0))).toISOString());
   plan = vpaReminderPlan(bne(2026, 11, 5, 21, 0)).map(function (r) { return r.day + '@' + r.date; }).join(' ');
-  check('first sign-in Thu 5 Nov: day 3 is a Sunday, so Monday 9 Nov; day 23 is a Saturday, so Monday 30 Nov; day 29 is Friday 4 Dec',
-    plan === '3@2026-11-09 23@2026-11-30 29@2026-12-04', plan);
+  check('first sign-in Thu 5 Nov: day 3 is a Sunday, so Monday 9 Nov; day 23 is a Saturday, so the Friday before (27 Nov); day 30 is a Saturday, so Friday 4 Dec',
+    plan === '3@2026-11-09 23@2026-11-27 30@2026-12-04', plan);
   plan = vpaReminderPlan(bne(2026, 11, 6, 9, 0)).map(function (r) { return r.day + '@' + r.date; }).join(' ');
-  check('first sign-in Fri 6 Nov: day 29 is a Saturday, so it goes the Friday before (4 Dec), ahead of the pause',
-    plan === '3@2026-11-09 23@2026-11-30 29@2026-12-04', plan);
+  check('first sign-in Fri 6 Nov: day 23 and day 30 are Sundays, so each goes the Friday before (27 Nov, 4 Dec), ahead of the pause',
+    plan === '3@2026-11-09 23@2026-11-27 30@2026-12-04', plan);
 
   section('2. The month starts at the first sign-in, once, and only for the venue');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
@@ -186,18 +186,25 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   ENV.FOUNDING_CODES = '';   // the November offer closes during their month
   var got = await walk(start, bne(2026, 12, 2, 16, 0));
   var days = got.map(function (g) { return day(g.at); }).join(' ');
-  check('three reminders, one on each planned day: 5 Nov, 25 Nov, 1 Dec (none on 12, 19, 26, 30 Nov or 2 Dec)', days === '2026-11-05 2026-11-25 2026-12-01', days);
+  check('three reminders, one on each planned day: 5 Nov, 25 Nov, 2 Dec, the last day itself (none on 12, 19, 26, 30 Nov or 1 Dec; Dean, 5 Nov 2026 ~7pm)', days === '2026-11-05 2026-11-25 2026-12-02', days);
   check('every one went inside the send window: Monday to Friday, 9 to 12 or 2 to 5, Brisbane (a Queensland venue)', got.every(function (g) { var d = new Date(g.at + 36e6), h = d.getUTCHours(); return d.getUTCDay() >= 1 && d.getUTCDay() <= 5 && ((h >= 9 && h < 12) || (h >= 14 && h < 17)); }), got.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
   check('each to their email, from and replying to hello@ (never Dean), signed by the venueplay team, with a text part', got.every(function (g) { return g.msg.to[0] === C.row().email && g.msg.from === 'venueplay <hello@send.venueplay.com.au>' && g.msg.reply_to === 'hello@venueplay.com.au' && /Cheers, the venueplay team venueplay\.com\.au/.test(g.msg.text.replace(/\s+/g, ' ')) && !/Dean/.test(g.msg.text) && typeof g.msg.text === 'string' && g.msg.text.length > 200; }));
   var early = got[0].msg, mid23 = got[1] && got[1].msg, last = got[2] && got[2].msg;
   check('day 3: friendly, the end date, the card not charged until then, Add my card and Cancel', /Your free month at Walk The Month Hotel runs until Wed 2 December\. Whenever suits, you can add your card, and it won't be charged until your free month ends\./.test(early.text) &&
     /Add my card \(https:\/\/www\.venueplay\.com\.au\/add-card\?f=/.test(early.text) && /Cancel, it's not for us \(https:\/\/www\.venueplay\.com\.au\/prospect\/cancel\/\?f=/.test(early.text) && !/workers\.dev/.test(early.html + early.text), early.text.slice(0, 900));
-  check('day 23: the same friendly note, with the end date', !!mid23 && /How's it going\?/.test(mid23.text) && /runs until Wed 2 December/.test(mid23.text), mid23 && mid23.text.slice(0, 500));
-  check('day 29, the day before it ends: "2 days left of your free month", ends on Wed 2 December', !!last && /2 days left of your free month/.test(last.text) && /ends on Wed 2 December/.test(last.text), last && last.text.slice(0, 500));
-  check('and exactly what happens with no card: paused, games off, the TV keeps the ads, nothing lost, the $2.50 offer goes, our price on the day after that',
-    !!last && /Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. You started your free month in time for \$2\.50 a player\. That price ends with the pause, so a card added after that is at our price on the day\./.test(last.text), last && last.text.slice(0, 1200));
+  /* One week out (Dean, 5 Nov 2026 rounds 5 to 7): "One week left", the end date, their free month in numbers (here,
+     none: it never ran a game, so the gentle first-night version with the sign-in button), "Would you like to keep it
+     going? Add your card." and plainly what a pause does. Nothing about when we charge; no 5-day grace yet. */
+  var wk = mid23 && mid23.text.replace(/\s+/g, ' ');
+  check('day 23, a week before the end: "One week left of your free month", ends on Wed 2 December, the first-night line and its sign-in button, then "Would you like to keep it going? Add your card."',
+    !!wk && /One week left of your free month/.test(wk) && /ends on Wed 2 December\./.test(wk) && /You haven't had your first night yet, and there's still time\./.test(wk) && /Open your venueplay \(https:\/\/www\.venueplay\.com\.au\/app\)/.test(wk) &&
+    /Would you like to keep it going\? Add your card\./.test(wk) && /If there's no card by then Your account pauses: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. You started your free month in time for \$2\.50 a player\./.test(wk) && !/won't be charged|5 days|We keep your paused account/.test(wk), wk && wk.slice(0, 1200));
+  var ld = last && last.text.replace(/\s+/g, ' ');
+  check('the last day: "Today is the last day of your free month", "We\'d be sad to see you go.", it pauses tonight and the $2.50 offer ends, and what they keep for 90 days, then Add my card',
+    !!ld && /Today is the last day of your free month/.test(ld) && /We'd be sad to see you go\./.test(ld) && /If there's no card by tonight Your account pauses tonight: your games switch off and your TV keeps showing your ads\. Nothing is lost, and adding a card switches it all back on\. You started your free month in time for \$2\.50 a player\./.test(ld) &&
+    /Here's what you still have for the next 90 days: .*Your members list .*Your ad slides .*Your raffle and members draw history .*Your billing page, ready for your card .*Add my card/.test(ld) && /^Last day of your free month at Walk The Month Hotel$/.test(last.subject), ld && ld.slice(0, 1400));
   check('no em dash, no "about" on a price, no urgency words', got.every(function (g) { return !/[—–]/.test(g.msg.text) && !/about \$/.test(g.msg.text) && !/hurry|act now|last chance|don't miss/i.test(g.msg.text); }));
-  check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,29]', C.row().reminders_sent);
+  check('all three are recorded, so a restart sends none of them again', JSON.stringify(C.row().reminders_sent) === '[3,23,30]', C.row().reminders_sent);
   var mid = REM().length; await walk(bne(2026, 11, 26, 9, 0), bne(2026, 11, 26, 16, 0));
   check('running the same day again sends nothing', REM().length === mid);
   var realNow0 = Date.now; Date.now = function () { return bne(2026, 12, 2, 12, 0); };   // a fixed clock: the price reads it
@@ -248,7 +255,7 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   check('one reminder by 13 Nov (day 3)', REM().length === 1, REM().length);
   E.founding().stripe_subscription_id = 'sub_on_day_11';
   await walk(bne(2026, 11, 13, 13, 0), bne(2026, 12, 4, 12, 0));
-  check('the card went on: no more reminders (no day 23, no day 29), and no pause at the end', REM().length === 1 && E.v.status === 'active' && !E.row().paused_at, [REM().length, E.v.status]);
+  check('the card went on: no more reminders (no day 23, no last day), and no pause at the end', REM().length === 1 && E.v.status === 'active' && !E.row().paused_at, [REM().length, E.v.status]);
 
   section('6. Cancel, it\'s not for us');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
@@ -317,16 +324,25 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await vpaProspectReminderSweep(ENV, bne(2026, 11, 25, 9, 0));
   check('9am Wednesday 25 Nov sends day 23', REM().length === 2 && G.row().reminders_sent.indexOf(23) !== -1);
 
-  /* A missed stretch that runs past day 23 into day 29 sends the NEWEST reminder: the "2 days left" one,
-     never the day-23 note it replaces. */
+  /* A missed stretch that runs past day 23 into the last day sends the NEWEST reminder: the last-day one, never the
+     day-23 note it replaces. */
   var H = await prospect({});
   var hs = bne(2026, 11, 2, 10, 0);
   H.row().first_signin_at = new Date(hs).toISOString(); H.row().free_month_ends_at = new Date(vpaFreeMonthEnd(hs)).toISOString(); H.row().offer_rate = ENV.FOUNDING_CODES ? 2.5 : null;   /* a first sign-in while the offer is open (7 Nov 2026: decided at the sign-in) */
   H.row().reminders_sent = [3];
-  var hb = sent.length; await vpaProspectReminderSweep(ENV, bne(2026, 12, 1, 9, 0));
+  var hb = sent.length; await vpaProspectReminderSweep(ENV, bne(2026, 12, 2, 9, 0));
   var hm = sent.slice(hb).filter(function (m) { return m.to && m.to[0] === H.row().email; });
-  check('missed day 23 and reached day 29: ONE email, the "2 days left" one, and day 23 is marked so it never goes late',
-    hm.length === 1 && /2 days left of your free month/.test(hm[0].text || '') && JSON.stringify(H.row().reminders_sent) === '[3,23,29]', [hm.length, hm[0] && hm[0].subject, H.row().reminders_sent]);
+  check('missed day 23 and reached the last day: ONE email, the last-day one, and day 23 is marked so it never goes late',
+    hm.length === 1 && /Today is the last day of your free month/.test(hm[0].text || '') && JSON.stringify(H.row().reminders_sent) === '[3,23,30]', [hm.length, hm[0] && hm[0].subject, H.row().reminders_sent]);
+  /* A last day on a weekend goes the Friday before, and then it must not say "today". */
+  var K = await prospect({});
+  var ks = bne(2026, 11, 5, 21, 0);   // day 30 is Saturday 5 Dec, so it goes Friday 4 Dec
+  K.row().first_signin_at = new Date(ks).toISOString(); K.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ks)).toISOString();
+  K.row().reminders_sent = [3, 23];
+  var kb = sent.length; await vpaProspectReminderSweep(ENV, bne(2026, 12, 4, 9, 0));
+  var km = sent.slice(kb).filter(function (m) { return m.to && m.to[0] === K.row().email; });
+  check('a last day that falls on a Saturday goes Friday as a "days left" one, never "Today is the last day"',
+    km.length === 1 && !/Today is the last day/.test(km[0].text || '') && /2 days left of your free month/.test(km[0].text || '') && JSON.stringify(K.row().reminders_sent) === '[3,23,30]', [km.length, km[0] && km[0].subject, K.row().reminders_sent]);
 
   section('8. The pause screen says what happened (the console\'s own holdWords)');
   var SES = readFile('venueplay/app/vp-session.js');

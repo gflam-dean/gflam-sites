@@ -953,6 +953,8 @@
       window.location.href="hq.html"; return;
     }
     if(ctx.scope==="staff"){
+      /* Signed in from an email link to another app page (Manage your plan, 5 Nov 2026): go back to it, once. */
+      try{ var back=VP.afterSignIn && VP.afterSignIn(); if(back){ window.location.replace(back); return; } }catch(e){}
       /* A MARKETING LOGIN HAS NOTHING TO DO HERE. Every button on this page runs a game, and both
          Workers and the database refuse it all of them. So it goes to its own page instead of
          being shown a console that can only say no. Decided by VP.homeHref, in one place. */

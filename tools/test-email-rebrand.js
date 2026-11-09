@@ -17,7 +17,11 @@ function lift(src, name) { var m = new RegExp("(?:async\\s+)?function\\s+" + nam
 var W = find("venueplay-backend/worker/venueplay-api-FULL.js");
 var VP_ABN = (/const VP_ABN = '([^']+)'/.exec(W) || [, ""])[1];
 eval(lift(W, "vpaEsc")); eval(lift(W, "vpaEmailDocument")); eval(lift(W, "vpaVenueEmailCard")); eval(lift(W, "vpaStaffPill")); eval(lift(W, "vpaStaffSubject")); eval(lift(W, "vpaStaffCard")); eval(lift(W, "helpEmailCard"));
-var DARK = "https://venueplay.com.au/logos/venueplay-email-on-dark.png";
+/* THE HEADER LOGO HAS ITS OWN NEAR-BLACK BAKED IN (Dean, 5 Nov 2026): on his iPhone in dark mode the band turned light
+   and the white wordmark on a transparent PNG vanished. So every header uses venueplay-email-header-solid.png (the kit
+   on-dark file on #0A0A0B with padding, no alpha channel) and its cell carries bgcolor="#0A0A0B" as well as the CSS. */
+var DARK = "https://venueplay.com.au/logos/venueplay-email-header-solid.png";
+var HEAD = /<td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px \d+px">\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-header-solid\.png"/;
 var RETIRED = /venueplay_primary_rebuilt|venueplay_primary_dark|#12101a/i;
 
 /* 1. the hosted logo files are real PNGs, 560 wide, one per background */
@@ -26,25 +30,30 @@ var RETIRED = /venueplay_primary_rebuilt|venueplay_primary_dark|#12101a/i;
   pass(f + " is a PNG, 560 px wide (the kit file, trimmed)", b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 && w === 560, "width " + w);
 });
 
+(function () {
+  var f = "venueplay/logos/venueplay-email-header-solid.png", b = bytes(f), w = (b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19];
+  pass(f + " is a PNG with NO alpha channel (colour type 2, truecolour), 600 px wide: the near-black is in the picture", b[0] === 0x89 && b[1] === 0x50 && w === 600 && b[25] === 2, "width " + w + ", colour type " + b[25]);
+})();
+
 /* 2. the Worker: no retired logo file or old ink anywhere, and no Gflam Group on a paper email */
 pass("the Worker names no retired logo file and not the old #12101a", !RETIRED.test(W), (RETIRED.exec(W) || [""])[0]);
 pass("no email says \"Gflam Group, ABN\"", W.indexOf("Gflam Group, ABN") === -1);
-pass("the logos the Worker uses are the on-dark and on-light kit files only", (W.match(/\/logos\/venueplay[-_a-z]*\.png/g) || []).every(function (m) { return /venueplay-email-on-(dark|light)\.png/.test(m); }), (W.match(/\/logos\/venueplay[-_a-z]*\.png/g) || []).join(" "));
+pass("the logos the Worker uses are the solid header and the on-light kit file only, never the transparent on-dark one", (W.match(/\/logos\/venueplay[-_a-z]*\.png/g) || []).every(function (m) { return /venueplay-email-(header-solid|on-light)\.png/.test(m); }), (W.match(/\/logos\/venueplay[-_a-z]*\.png/g) || []).join(" "));
 
 /* 3. the cards, run */
 var card = vpaVenueEmailCard("pre", "<p>Hello</p>", "Title");
-pass("the venue card: kit logo on a near-black band, alt venueplay, a full document", card.indexOf(DARK) !== -1 && /background:#0A0A0B;[^>]*>\s*<img/.test(card) && card.indexOf('alt="venueplay"') !== -1 && /^<!doctype html>/i.test(card));
+pass("the venue card: kit logo on a near-black band, alt venueplay, a full document", card.indexOf(DARK) !== -1 && HEAD.test(card) && card.indexOf('alt="venueplay"') !== -1 && /^<!doctype html>/i.test(card));
 pass("the venue card: Manrope first in the font stack", card.indexOf("font-family:Manrope,") !== -1);
 var staff = vpaStaffCard("<p>x</p>", "Alert");
-pass("a staff alert wears the same card and logo", staff.indexOf(DARK) !== -1 && staff.indexOf("<p>x</p>") !== -1 && staff.indexOf("#0A0A0B") !== -1);
+pass("a staff alert wears the same card and logo", HEAD.test(staff) && staff.indexOf("<p>x</p>") !== -1 && staff.indexOf("#0A0A0B") !== -1);
 var help = helpEmailCard(false, "<p>Hi</p>", "foot", "T", "pre");
-pass("the help desk reply card: kit logo on near-black, pink rule", help.indexOf(DARK) !== -1 && /background:#0A0A0B;/.test(help) && help.indexOf("background:#FF1F8E") !== -1 && !RETIRED.test(help));
-pass("the PartyPlay help card is untouched (its own logo)", helpEmailCard(true, "<p>Hi</p>", "foot", "T", "p").indexOf("partyplay-email-logo.png") !== -1);
+pass("the help desk reply card: kit logo on near-black, pink rule", /<td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 28px"><img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-header-solid\.png"/.test(help) && help.indexOf("background:#FF1F8E") !== -1 && !RETIRED.test(help));
+pass("the PartyPlay help card keeps its own logo (drawn on white, so its band is white), with bgcolor too", /<td bgcolor="#ffffff" style="background:#ffffff;[^>]*><img src="https:\/\/partyplay\.com\.au\/logos\/partyplay-email-logo\.png"/.test(helpEmailCard(true, "<p>Hi</p>", "foot", "T", "p")));
 
 /* 4. every template on the site */
 ["welcome", "welcome-group", "welcome-hq", "welcome-prospect", "venue-onboarding", "prospect-reminder", "upcoming-payment", "upcoming-payment-group"].forEach(function (n) {
   var h = find("venueplay/emails/" + n + ".html");
-  pass(n + ": kit logo on the near-black header, lowercase alt", h.indexOf('<img src="' + DARK + '"') !== -1 && /background:#0A0A0B/.test(h) && h.indexOf('alt="venueplay"') !== -1);
+  pass(n + ": the solid-background logo in a bgcolor near-black header cell, lowercase alt", HEAD.test(h) && h.indexOf('alt="venueplay"') !== -1 && h.indexOf("venueplay-email-on-dark.png") === -1);
   pass(n + ": nothing retired, no Gflam, no dash, no capital VenuePlay in what is sent", !RETIRED.test(h) && !/gflam/i.test(h.replace(/<!--[\s\S]*?-->/g, "")) && !/[—–]|&mdash;|&ndash;/.test(h.replace(/<!--[\s\S]*?-->/g, "")) && !/VenuePlay/.test(h.replace(/<!--[\s\S]*?-->/g, "")));
   pass(n + ": Manrope first, and no .dev link", h.indexOf("Manrope,-apple-system") !== -1 && !/\.dev\b/.test(h));
 });

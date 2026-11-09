@@ -580,7 +580,7 @@
   "counted_by": "lines"
  },
  "tools/test-email-rebrand.js": {
-  "checks": 39,
+  "checks": 40,
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
@@ -889,6 +889,10 @@
  },
  "tools/test-raffle-unsold-server.js": {
   "checks": 5,
+  "counted_by": "lines"
+ },
+ "tools/test-receipt-survey.js": {
+  "checks": 51,
   "counted_by": "lines"
  },
  "tools/test-receipts-plain-words.js": {
@@ -1200,7 +1204,7 @@
   "counted_by": "lines"
  },
  "tools/test-welcome-email-renders.js": {
-  "checks": 22,
+  "checks": 38,
   "counted_by": "lines"
  },
  "tools/test-welcome-is-sent-once.js": {
@@ -1268,7 +1272,7 @@
   "counted_by": "lines"
  },
  "tools/tv-app-setup-line.test.py": {
-  "checks": 36,
+  "checks": 46,
   "counted_by": "lines"
  },
  "tools/tv-bare-setup-in-chrome.test.py": {
@@ -1476,7 +1480,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/cancel-emails.test.js": {
-  "checks": 92,
+  "checks": 93,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/draw-fairness.test.js": {
