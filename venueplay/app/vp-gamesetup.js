@@ -1023,7 +1023,9 @@
   /* What changed from what the screen opened with (an existing venue): only those keys are saved. */
   function changedOnly(vals, base) {
     var out = {};
-    Object.keys(vals).forEach(function (k) { if (k.indexOf("__") === 0) { out[k] = vals[k]; return; } if (JSON.stringify(vals[k]) !== JSON.stringify(base[k])) out[k] = vals[k]; });
+    /* a list of prizes with empty places at the end is the same list (more rounds does not change the prizes they have) */
+    function norm(v) { if (!Array.isArray(v) || !v.every(function (x) { return typeof x === "string"; })) return v; var o = v.slice(); while (o.length && o[o.length - 1] === "") o.pop(); return o; }
+    Object.keys(vals).forEach(function (k) { if (k.indexOf("__") === 0) { out[k] = vals[k]; return; } if (JSON.stringify(norm(vals[k])) !== JSON.stringify(norm(base[k]))) out[k] = vals[k]; });
     return out;
   }
   /* "7:30pm" (how a draw keeps its time) -> "19:30" for the time box */

@@ -767,17 +767,28 @@
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
       <div class="snote" id="mdCount">Loading your members list…</div>
       <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
-      <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
-      <textarea id="md-import" rows="6" placeholder="142, Jane Smith
+      <!-- UPLOAD FIRST (Dean, setup wizard round 11 note 7): choose the file, THEN say which column is which -->
+      <div id="md-upload" style="margin-top:4px">
+        <div class="scardhead" style="font-size:13px">Upload your members list</div>
+        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). Next you pick which column is the member number, the first name and the last name.</p>
+        <button class="go" id="md-csvbtn" type="button">Choose a CSV file</button>
+        <input type="file" id="md-csv" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel" style="display:none">
+        <p class="snote" id="md-csvmsg" role="status" style="margin-top:8px"></p>
+        <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
+        <div id="md-match" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:12px">
+          <div class="scardhead" style="font-size:13px">Which column is which?</div>
+          <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box below for you to check.</p>
+          <p class="snote mono" id="md-matchex" style="margin-top:0"></p>
+          <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
+          <div class="btnrow" style="margin-top:10px"><button class="go" id="md-matchgo" type="button">Use these columns</button><button class="offtv" id="md-matchno" type="button">Cancel</button></div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div class="scardhead" style="font-size:13px">Or paste your members</div>
+        <p class="snote">One per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
+        <textarea id="md-import" rows="6" placeholder="142, Jane Smith
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
-      <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
-      <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
-      <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
-      <div id="md-match" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px">
-        <div class="scardhead" style="font-size:13px">Match your columns</div>
-        <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box above for you to check.</p>
-        <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
-        <div class="btnrow" style="margin-top:10px"><button class="go" id="md-matchgo" type="button">Use these columns</button><button class="offtv" id="md-matchno" type="button">Cancel</button></div>
+        <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
       </div>
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
         <div class="scardhead" style="font-size:13px">Fix a name</div>
@@ -797,7 +808,6 @@
           <button class="offtv" id="mdRemove" type="button">Remove member</button>
         </div>
       </div>
-      <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
 
     <!-- PERMITS FOR DRAWS (Dean, 24 Oct 2026): the raffle and members-draw permits sit with the draws
@@ -2556,7 +2566,7 @@
     var lh = $("mdListForVenue"); if (lh) lh.textContent = many ? n : "";
     var b;
     if ((b = $("mdImport"))) b.textContent = many ? ("Add to " + n + "'s members list") : "Add to members list";
-    if ((b = $("md-csvbtn"))) b.textContent = many ? ("Or upload a CSV file for " + n) : "Or upload a CSV file";
+    if ((b = $("md-csvbtn"))) b.textContent = many ? ("Choose a CSV file for " + n) : "Choose a CSV file";
     if ((b = $("mdSave"))) b.textContent = many ? ("Save draw for " + n) : "Save draw";
   }
   function toCents(v){ if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
@@ -2797,7 +2807,35 @@
     for (var i = 0; i < heads.length; i++) if (CSV_GUESS[kind].test(heads[i]) && !(kind === "number" && /name/i.test(heads[i]))) return i;
     return kind === "number" ? 0 : (kind === "first" ? Math.min(1, heads.length - 1) : -1);
   }
-  function csvRows(text){ return String(text||"").split(/\r?\n/).filter(function(l){ return l.trim(); }).map(unquoteCols); }
+  /* WHY THE UPLOAD FAILED (Dean, round 11): Excel on a Mac saves a CSV whose lines end in a bare CR, not a line feed, so the whole
+     file read as ONE line and "No member numbers" came back; a file from a European or club system separates with a semicolon
+     or a pipe; and "Unicode text" from Excel is UTF-16, unreadable as UTF-8. Every line ending, the separator and the
+     encoding are now worked out from the file itself. */
+  function csvDecode(buf){
+    var u = new Uint8Array(buf), enc = "utf-8", skip = 0;
+    if (u.length >= 3 && u[0] === 0xEF && u[1] === 0xBB && u[2] === 0xBF){ skip = 3; }
+    else if (u.length >= 2 && u[0] === 0xFF && u[1] === 0xFE){ enc = "utf-16le"; skip = 2; }
+    else if (u.length >= 2 && u[0] === 0xFE && u[1] === 0xFF){ enc = "utf-16be"; skip = 2; }
+    else if (u.length >= 4 && u[1] === 0 && u[3] === 0 && u[0] !== 0){ enc = "utf-16le"; }
+    var body = skip ? u.subarray(skip) : u;
+    try { return new TextDecoder(enc, { fatal: true }).decode(body); }
+    catch (e) { try { return new TextDecoder("windows-1252").decode(body); } catch (e2) { var o = ""; for (var i = 0; i < body.length; i++) o += String.fromCharCode(body[i]); return o; } }
+  }
+  function csvDelim(line){
+    var best = ",", most = 0;
+    [",", ";", "\t", "|"].forEach(function(d){
+      var n = 0, q = false;
+      for (var i = 0; i < line.length; i++){ var c = line.charAt(i); if (c === '"') q = !q; else if (!q && c === d) n++; }
+      if (n > most){ most = n; best = d; }
+    });
+    return best;
+  }
+  function csvRows(text){
+    var lines = String(text||"").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n").filter(function(l){ return l.trim(); });
+    if (!lines.length) return [];
+    var d = csvDelim(lines[0]);
+    return lines.map(function(l){ return unquoteCols(l, d); });
+  }
   function csvLines(rows, ix){
     var out = [];
     rows.forEach(function(r){
@@ -2808,9 +2846,22 @@
     });
     return out;
   }
+  /* the upload's own message line sits right under the button, where they are looking */
+  function csvSay(t, ok){ var m = $("md-csvmsg"); if (!m) { if (t) showMsg(t, ok); return; } m.textContent = t || ""; m.style.color = ok ? "var(--ok, #2BD47D)" : (t ? "#FF8CC6" : ""); }
+  function csvFile(f){
+    if (!f) return;
+    if (/\.xlsx?$/i.test(f.name || "")){ csvSay("That is an Excel file. In Excel choose File, Save As, then CSV, and choose that file instead."); return; }
+    if (f.size > 2*1024*1024){ csvSay("That file is a bit big. Keep it under 2MB."); return; }
+    csvSay("Reading your file...", true);
+    var reader = new FileReader();
+    reader.onerror = function(){ csvSay("We could not read that file. Save it again as a CSV and choose it again."); };
+    reader.onload = function(){ var buf = reader.result; csvMatch(typeof buf === "string" ? buf : csvDecode(buf)); };
+    if (reader.readAsArrayBuffer) reader.readAsArrayBuffer(f); else reader.readAsText(f);
+  }
   function csvMatch(text){
     var rows = csvRows(text), box = $("md-match"), list = $("md-matchrows");
-    if (!rows.length){ showMsg("That file looks empty."); return; }
+    if (!rows.length){ csvSay("That file looks empty. Check it has your members in it and choose it again."); return; }
+    csvSay("");
     var hasHead = !/^\s*\d/.test(rows[0][0] || ""), heads = hasHead ? rows[0] : rows[0].map(function(_, i){ return "Column " + (i + 1) + (rows[0][i] ? " (" + String(rows[0][i]).slice(0, 24) + ")" : ""); });
     while (list.firstChild) list.removeChild(list.firstChild);
     var picks = {};
@@ -2824,25 +2875,27 @@
       picks[k[0]] = sel; list.appendChild(lab); list.appendChild(sel);
     });
     box.style.display = "";
+    var ex = $("md-matchex"); if (ex) ex.textContent = "First row: " + (hasHead ? (rows[1] || rows[0]) : rows[0]).map(function(x){ return String(x).slice(0, 18); }).join("  |  ");
     $("md-matchgo").onclick = function(){
       var ix = { number: +picks.number.value, first: +picks.first.value, last: +picks.last.value };
       var lines = csvLines(rows, ix);
-      if (!lines.length){ showMsg("No member numbers in that column. Pick the column that holds the numbers."); return; }
+      if (!lines.length){ csvSay("No member numbers in that column. Pick the column that holds the numbers."); return; }
       var cur = $("md-import").value.trim();
       $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n");
       box.style.display = "none";
-      showMsg(lines.length + " members ready. Check they look right, then Add to members list.", true);
+      csvSay(lines.length + " members ready in the box below. Check they look right, then tap Add to members list.", true);
+      try { $("md-import").scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e){}
     };
     $("md-matchno").onclick = function(){ box.style.display = "none"; };
   }
-  function unquoteCols(line){
+  function unquoteCols(line, delim){
     var cols = [], cur = "", inQ = false;
     for (var i = 0; i < line.length; i++){
       var ch = line.charAt(i);
       if (ch === '"'){
         if (inQ && line.charAt(i+1) === '"'){ cur += '"'; i++; }   // "" inside a quoted field is one quote
         else inQ = !inQ;
-      } else if (!inQ && (ch === "," || ch === "\t")){ cols.push(cur); cur = ""; }
+      } else if (!inQ && (delim ? ch === delim : (ch === "," || ch === "\t"))){ cols.push(cur); cur = ""; }
       else cur += ch;
     }
     cols.push(cur);
@@ -3504,11 +3557,8 @@
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;
-      if (f.size > 2*1024*1024){ showMsg("That file is a bit big. Keep it under 2MB."); this.value=""; return; }
-      var reader = new FileReader();
-      reader.onload = function(){ csvMatch(String(reader.result||"")); };
-      reader.readAsText(f);
-      this.value = "";
+      csvFile(f);
+      this.value = "";   // the same file can be chosen again
     });
     loadMembersPanel();
   }
