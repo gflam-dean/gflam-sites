@@ -556,7 +556,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 429,
+  "checks": 445,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
@@ -620,7 +620,7 @@
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
-  "checks": 125,
+  "checks": 129,
   "counted_by": "lines"
  },
  "tools/test-musical-15-oct.js": {
@@ -772,7 +772,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 54,
+  "checks": 58,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
