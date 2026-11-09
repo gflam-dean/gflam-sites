@@ -288,7 +288,7 @@
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
-  "checks": 46,
+  "checks": 76,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
