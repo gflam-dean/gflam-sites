@@ -620,7 +620,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup.js": {
-  "checks": 219,
+  "checks": 218,
   "counted_by": "lines"
  },
  "tools/test-games-answers.js": {
@@ -1232,7 +1232,7 @@
   "counted_by": "lines"
  },
  "tools/test-wizard-r10.js": {
-  "checks": 92,
+  "checks": 141,
   "counted_by": "lines"
  },
  "tools/touring-cards.test.py": {

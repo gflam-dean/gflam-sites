@@ -246,11 +246,11 @@
        "?" words and any on/off line open under the pair across both. */
     P + ".vpgs-pairs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:stretch;padding:6px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-pairs:first-child{border-top:none;padding-top:0}" +
     P + ".vpgs-pairs.one{grid-template-columns:minmax(0,1fr)}" +
-    P + ".vpgs-pairs>.vpgs-row.pc{display:grid;grid-template-columns:minmax(0,1fr) 40px;grid-template-rows:1fr auto;grid-template-areas:'lab q' 'ctl ctl';align-items:center;column-gap:0;padding:0;border:none;min-width:0}" +
-    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-lab{grid-area:lab;margin:0 0 4px;font-size:15px;line-height:1.25;align-self:end}" +
-    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-q{grid-area:q;display:block;margin:0 -2px 0 0;justify-self:end;align-self:start}" +
-    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-ctl{grid-area:ctl;width:100%;margin:0;min-width:0}" +
-    P + ".vpgs-pairs .vpgs-row.pc .vpgs-ctl .vpgs-seg," + P + ".vpgs-pairs .vpgs-row.pc .vpgs-ctl .vpgs-in{width:100%}" +
+    P + ".vpgs-pairs>.vpgs-row.pcell{display:grid;grid-template-columns:minmax(0,1fr) 40px;grid-template-rows:1fr auto;grid-template-areas:'lab q' 'ctl ctl';align-items:center;column-gap:0;padding:0;border:none;min-width:0}" +
+    P + ".vpgs-pairs>.vpgs-row.pcell>.vpgs-lab{grid-area:lab;margin:0 0 4px;font-size:15px;line-height:1.25;align-self:end}" +
+    P + ".vpgs-pairs>.vpgs-row.pcell>.vpgs-q{grid-area:q;display:block;margin:0 -2px 0 0;justify-self:end;align-self:start}" +
+    P + ".vpgs-pairs>.vpgs-row.pcell>.vpgs-ctl{grid-area:ctl;width:100%;margin:0;min-width:0}" +
+    P + ".vpgs-pairs .vpgs-row.pcell .vpgs-ctl .vpgs-seg," + P + ".vpgs-pairs .vpgs-row.pcell .vpgs-ctl .vpgs-in{width:100%}" +
     P + ".vpgs-pairs>.vpgs-pairpop," + P + ".vpgs-pairs>.vpgs-state{grid-column:1/-1;margin:6px 0 0}" +
     P + ".vpgs-state{margin:6px 0 0;font:600 14.5px/1.4 Manrope,system-ui,sans-serif;color:" + C.muted + "}" + P + ".vpgs-state[data-on=true]{color:#FFFFFF}" + P + ".vpgs-state[data-on=false]{color:" + C.pinkSoft + "}" +
     P + ".vpgs-pairs .vpgs-prew .vpgs-in{padding-left:22px}" +
@@ -267,7 +267,7 @@
     P + ".vpgs-swap{padding:10px 12px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-swap .vpgs-rq{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px;align-items:center;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-swap .vpgs-link{margin:2px 0 0;min-height:40px;padding:6px 0}" +
     P + ".vpgs-raf .vpgs-rname{grid-template-columns:minmax(0,1fr);padding-right:50px}" +
     P + ".vpgs-remrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 0}" + P + ".vpgs-remrow .vpgs-rq{display:flex;flex-direction:column;gap:4px;font:700 15px " + HEAD + ";color:#FFFFFF}" +
-    "@media (max-width:420px){" + P + ".vpgs-pairs{column-gap:8px}" + P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-lab{font-size:14.5px}" + P + ".vpgs-pairs .vpgs-seg button{padding:6px 4px;font-size:14.5px}" + P + ".vpgs-swap .vpgs-rq{grid-template-columns:1fr}}"
+    "@media (max-width:420px){" + P + ".vpgs-pairs{column-gap:8px}" + P + ".vpgs-pairs>.vpgs-row.pcell>.vpgs-lab{font-size:14.5px}" + P + ".vpgs-pairs .vpgs-seg button{padding:6px 4px;font-size:14.5px}" + P + ".vpgs-swap .vpgs-rq{grid-template-columns:1fr}}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -1151,11 +1151,11 @@
         lastW.appendChild(r.row);
         if (r.pop) { r.row.removeChild(r.pop); r.pop.className += " vpgs-pairpop"; lastW.appendChild(r.pop); }
         if (r.state) { r.row.removeChild(r.state); lastW.appendChild(r.state); }
-        r.row.className += " pc";
+        r.row.className += " pcell";
       } else into.appendChild(r.row);
       if (s.advanced) hasAdv = true;
     });
-    [list, advRows].forEach(function (cn) { Array.prototype.forEach.call(cn.children, function (w) { if (/(^| )vpgs-pairs( |$)/.test(w.className || "")) { var n = Array.prototype.filter.call(w.children, function (c) { return /(^| )pc( |$)/.test(c.className || ""); }).length; if (n < 2) w.className += " one"; } }); });
+    [list, advRows].forEach(function (cn) { Array.prototype.forEach.call(cn.children, function (w) { if (/(^| )vpgs-pairs( |$)/.test(w.className || "")) { var n = Array.prototype.filter.call(w.children, function (c) { return /\bpcell\b/.test(c.className || ""); }).length; if (n < 2) w.className += " one"; } }); });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
     ctx.refresh = function () {

@@ -2847,7 +2847,7 @@
     return out;
   }
   /* the upload's own message line sits right under the button, where they are looking */
-  function csvSay(t, ok){ var m = $("md-csvmsg"); if (!m) { if (t) showMsg(t, ok); return; } m.textContent = t || ""; m.style.color = ok ? "var(--ok, #2BD47D)" : (t ? "#FF8CC6" : ""); }
+  function csvSay(t, ok){ var m = $("md-csvmsg"); if (!m) { if (t) showMsg(t, ok); return; } m.textContent = t || ""; m.style.color = ok ? "#2BD47D" : (t ? "#FF8CC6" : ""); }
   function csvFile(f){
     if (!f) return;
     if (/\.xlsx?$/i.test(f.name || "")){ csvSay("That is an Excel file. In Excel choose File, Save As, then CSV, and choose that file instead."); return; }

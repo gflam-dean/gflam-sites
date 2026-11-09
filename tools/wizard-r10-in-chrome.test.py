@@ -7,7 +7,7 @@ Worker in jsc behind a pipe, tools/browser-rig/rig.py) and checks what only the 
   1. A NEW VENUE answers trivia and musical bingo with values that are not the defaults, on the real console home;
      each Save goes through the REAL /host/game-prefs into the venue's game_prefs, and then the REAL trivia and
      musical bingo consoles open with those values in their own boxes (the game reads what the wizard saved)
-  2. AN EXISTING VENUE (Dean, 9 Nov 2026): signing in to the console home opens "Check your games setup" for the
+  2. AN EXISTING VENUE (Dean, 9 Nov 2026): signing in to the console home opens "Check your game setup" for the
      owner; its screens show the venue's own settings; clicking straight through leaves game_prefs exactly as it
      was and records setup_answers.review, so the next sign-in is not asked again
   3. NEVER MID-GAME: with a night going on this device, it does not open; never for a host
@@ -154,8 +154,8 @@ def existing_venue(RIG):
         r.W.seed('vp_venue_settings', [{'venue_id': V, 'game_prefs': json.loads(json.dumps(HAVE)), 'setup_answers': {}}], replace=True)
         r.db['vp_venue_settings'] = [{'venue_id': V, 'setup_answers': {}}]
         tid, sid = r.open('/app/?venue=' + V, before='try{localStorage.clear()}catch(e){}', width=1024, height=768)
-        opened = r.until(sid, '/^Check your games setup(, |$)/.test((document.getElementById("vpGsTitle")||{}).textContent||"")', 40)
-        ok('the owner signing in to the console home is asked: "Check your games setup"', opened is True, r.ask(sid, '(document.getElementById("vpGsTitle")||{}).textContent'))
+        opened = r.until(sid, '/^Check your game setup$/.test((document.getElementById("vpGsTitle")||{}).textContent||"")', 40)
+        ok('the owner signing in to the console home is asked: "Check your game setup"', opened is True, r.ask(sid, '(document.getElementById("vpGsTitle")||{}).textContent'))
         r.ask(sid, JS_HELP)
         fits('1024 existing start', r.json(sid, FIT))
         if SHOTS: r.shot(sid, os.path.join(SHOTS, 'r10-existing-start-1024.jpg'))
