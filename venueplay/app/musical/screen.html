@@ -1098,17 +1098,19 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
           if(_pendingSong){
             $("tvNowEye").textContent="Now playing";
             $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
-          } else if(t !== _shownTitle && lastRevealMode()==="never"){
-            /* "ONLY IN THE PLAYED-SONGS LIST" (Dean, 7 Nov 2026, setup wizard round 9 point 25): the name never shows
-               while the song plays, even on a TV that has just reloaded; it shows in the played list once the next
-               song starts. */
-            $("tvNowEye").textContent="Now playing";
-            $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
-            var _ls=$("tvListenSub"); if(_ls) _ls.innerHTML="Name that tune.";
           } else if(t !== _shownTitle){
-            setArt("");
-            $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
-            _shownTitle=t;
+            if(lastRevealMode()==="never"){
+              /* "ONLY IN THE PLAYED-SONGS LIST" (Dean, 7 Nov 2026, setup wizard round 9 point 25): the name never shows
+                 while the song plays, even on a TV that has just reloaded; it shows in the played list once the next
+                 song starts. */
+              $("tvNowEye").textContent="Now playing";
+              $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
+              var _ls=$("tvListenSub"); if(_ls) _ls.innerHTML="Name that tune.";
+            } else {
+              setArt("");
+              $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
+              _shownTitle=t;
+            }
           }
           renderRun();
         } else { showReady(); }
