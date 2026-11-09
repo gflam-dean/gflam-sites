@@ -49,6 +49,7 @@ eval(lift(BILL,"vpaGoodbyeHtml"));
    shape of the tvStatus fault that reached a venue TV on 16 Sep. Read from the Worker, not
    retyped, so they cannot drift. */
 eval("var VPA_FORMAT_WORDS=" + (/const VPA_FORMAT_WORDS = (\{[\s\S]*?\});/.exec(BILL)||[,"{}"])[1] + ";");
+eval("var VPA_NOT_DEMO=" + (/const VPA_NOT_DEMO = ('[^']*');/.exec(BILL)||[,"''"])[1] + ";");   // the try-it demo filter (migration 172), lifted like the rest
 eval("var VPA_NOT_PLAYED=" + (/const VPA_NOT_PLAYED = (new Set\([^;]*\));/.exec(BILL)||[,"new Set()"])[1] + ";");
 eval("var VPA_OVERAGE_CENTS=" + (/const VPA_OVERAGE_CENTS = (\d+);/.exec(BILL)||[,"200"])[1] + ";");
 eval("var VPA_WRAP_MAX_PER_PLAYER=" + (/const VPA_WRAP_MAX_PER_PLAYER = ([\d.]+);/.exec(BILL)||[,"1"])[1] + ";");

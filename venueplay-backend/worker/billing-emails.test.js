@@ -34,6 +34,13 @@ eval(lift(BILL,"vpaOverageFromInvoice"));
 eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
+/* The receipt prints a group's plan line per venue (INBOX 44b, 5 Nov 2026), so it needs the split. */
+eval(lift(BILL,"vpbBilledPlayers"));
+eval(lift(BILL,"vpbPlanLineIndex"));
+eval(lift(BILL,"vpbLineInterval"));
+eval(lift(BILL,"vpbSplitPlanLine"));
+eval(lift(BILL,"vpbSplitFromMetadata"));
+eval(lift(BILL,"vpbInvoiceVenueSplit"));
 eval(lift(BILL,"vpaFirePlanUpliftEmail"));
 var VPA_CANCEL_ALERTS = (function(){ var m=/VPA_CANCEL_ALERTS = (\[[^\]]*\])/.exec(BILL); return m?JSON.parse(m[1].replace(/'/g,'"')):[]; })();
 var VPA_ALERT_KINDS = (function(){

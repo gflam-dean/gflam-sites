@@ -720,6 +720,7 @@
     <div class="vp-h" style="margin-bottom:4px">Tonight at a glance</div>
     <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">The TV is back on your ads. Here is how the night went.</div>
     <div class="stat" id="nightStats"></div>
+    <div id="nightLoved" style="display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.28);color:var(--win);font-weight:700;font-size:14px"></div>
     <div id="nightPrizes" style="font-size:13.5px;color:var(--text);line-height:1.6"></div>
     <div class="vp-row" style="margin-top:18px">
       <button type="button" id="nightDone" class="btn pink big vp-grow">Done</button>
@@ -730,14 +731,17 @@
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
 <script src="/app/vp-venuepick.js"></script>
+<script src="vp-tvpaired.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
 <script src="vp-gaming.js"></script>
+<script src="vp-permits.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-channel.js"></script>
 <script src="/app/vp-phonekey.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <!-- The venue's logo in the console header, sized by its shape like the player phones (27 Oct 2026). -->
 <script src="/app/vp-venuelogo.js"></script>
@@ -1043,7 +1047,16 @@
     if(!e164){ $("mobileErr").textContent="Pop in a mobile number to get a code."; return; }
     E164=e164; $("mobileErr").textContent="";
     var btn=this; btn.disabled=true; btn.textContent="Sending...";
-    client.auth.signInWithOtp({ phone:e164 }).then(function(res){
+    /* THE SHORT LINK, NO MOBILE YET (Dean, 6 Nov 2026): venueplay.com.au/s/... left its letters here (s.html). The
+       billing Worker puts the number they typed on THAT account's login first, so the code below reaches the right
+       login; the code then proves the number is theirs, and it is their login from then on. One use, then forgotten. */
+    var shortCode=""; try{ shortCode=sessionStorage.getItem("vpShortAttach")||""; }catch(e){}
+    var attach = shortCode ? fetch("https://api.venueplay.com.au/short/attach", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ code:shortCode, mobile:e164 }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ j._status=r.status; return j; }); })
+        .then(function(j){ if(j && j.error && j._status===400 || j && j.taken){ throw { shortMsg: j.error }; } try{ sessionStorage.removeItem("vpShortAttach"); }catch(e){} }, function(){})
+      : Promise.resolve();
+    attach.then(function(){ return client.auth.signInWithOtp({ phone:e164 }); }, function(err){ btn.disabled=false; btn.textContent="Send code"; $("mobileErr").textContent=(err && err.shortMsg) || "Pop in a mobile number to get a code."; return { _stop:true }; }).then(function(res){
+      if(res && res._stop) return;
       btn.disabled=false; btn.textContent="Send code";
       if(res && res.error){ if(otpSendError(res.error)==="ours") showEmailAlt(); return; }
       MODE="sms";
@@ -2446,7 +2459,7 @@
     if(i>=0){
       G.claims.splice(i,1);
       if(!G.claims.length && !G.lastWins.length){ G.claimIdx=-1; send({ t:"resume", pids:[c.pid] }); }
-      else { send({ t:"resume", pid:c.pid }); if(G.claims.length) sendClaimPending(); }
+      else { send({ t:"resume", pid:c.pid }); if(G.claims.length) sendClaimPending(); else if(winShownWid()) showConfirmedWin(); }
     } else {
       send({ t:"resume", pid:c.pid });
     }
@@ -3375,7 +3388,7 @@
       "Extra players are <b>$2 each</b> on your next bill, so right now that is <b>$"+(extra*2).toFixed(2)+"</b>. "+
       "Tap Start game and <b>anyone who joins from here is added too</b>, at the same $2. "+
       "The final number is whoever actually plays tonight. "+
-      "Go over three nights running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up."+
+      "Go over three nights in a row and we adjust your plan to fit, at your normal rate."+
       ovgNames();
     var m=$("ovgModal"); m.classList.remove("hidden");
     $("ovgGo").onclick=function(){
@@ -3704,7 +3717,13 @@
     h+='<div id="nightCounted" style="font-size:12px;color:var(--faint);margin-top:12px">Counted on this tablet. Extra players over your plan are worked out on the bill from the server count.</div>';
     $("nightPrizes").innerHTML=h;
     m.classList.remove("hidden");
-    $("nightDone").onclick=function(){ m.classList.add("hidden"); };
+    /* THE ROOM'S VERDICT, favourable only and as true counts (/app/vp-loved.js): "9 players loved tonight".
+       The ratings land as the phones reach their end screens, so it asks again every 15 seconds while
+       the card is open, one small read each time, and says nothing until somebody has. */
+    var _lv=$("nightLoved"), _lvT=null;
+    function _lvAsk(){ if(window.VPLoved && sessionId) VPLoved.show(VP_GAME_API, sessionId, _lv); }
+    _lvAsk(); _lvT=setInterval(function(){ if(m.classList.contains("hidden")){ clearInterval(_lvT); return; } _lvAsk(); }, 15000);
+    $("nightDone").onclick=function(){ m.classList.add("hidden"); clearInterval(_lvT); };
     /* Up straight away on the tablet's figure, then the server's the moment it lands, which is
        usually well inside a second. Nothing is held up waiting for it. If it never lands the
        tablet number stays and so does the line explaining it. */
@@ -4093,8 +4112,10 @@
       // Someone else is still in the running (or has already won), so the game is NOT resuming.
       // Release just this player's phone, or they sit on "checking your ticket" forever.
       send({ t:"resume", pid:c.pid });
-      // and correct the big screen, which is still naming everyone who called on this ball
+      // and correct the big screen, which is still naming everyone who called on this ball;
+      // once a confirmed win is up, the last one checked puts the win back up instead (no second fanfare)
       if(G.claims.length) sendClaimPending();
+      else if(winShownWid()) showConfirmedWin();
     }
     saveGame();
     renderClaimQueue();
@@ -4112,16 +4133,49 @@
     /* prize is what THIS stage was for, so the TV and the phones announce the line prize on a
        line win rather than the house prize. nextPrize is what the room plays for next. Screens
        built before 9 Sep 2026 ignore both and fall back to the game prize, as they always did. */
-    var msg={ t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:pat, prize:G.prize,
-              winners:ws.map(function(w){ return { pid:w.pid, name:w.name, cardNo:w.cardNo }; }),
-              shared:ws.length>1, cont:!!cont };
+    var msg=winnerMsg(ws, cont);
     if(cont){ msg.next=nxt; if(nextPrize) msg.nextPrize=nextPrize; }
+    /* Already on every screen since Confirm winner (showConfirmedWin below): say so, so the TV and the
+       phones do not celebrate it a second time. Keep playing then just takes the room back to the numbers. */
+    var _wid=winShownWid(); if(_wid){ msg.wid=_wid; msg.shown=true; }
     send(msg);
     ws.forEach(function(w){
       G.prizesWon.push({ pattern:pat, prize:G.prize, winner_name:w.name, card_no:w.cardNo, shared:ws.length>1 });
     });
     G.lastWins=[];
     return pat;
+  }
+  /* CONFIRM WINNER PUTS THE WIN ON EVERY SCREEN, THERE AND THEN (Dean, live, 6 Nov 2026). A confirmed claim
+     used to wait in G.lastWins, unannounced, until the host ALSO chose Keep playing or Finish game: the TV
+     sat on "BINGO? Checking the card" and the winner's phone on "the host is checking your ticket" while
+     the host was already reading the win out. Now Confirm sends the winner straight away (BINGO! and the
+     name on the TV, YOU WON on their phone, who won on everybody else's), cont:false so it stays up, and
+     the host then chooses Keep playing or Finish game as before. The win carries a wid; when the choice
+     is made, announce() sends it again with shown:true, so nothing celebrates twice: Finish leaves it up,
+     Keep playing takes every screen back to the numbers for the next prize. A tie confirmed one by one
+     sends it again with both names. The prizes are still recorded once, at the choice. */
+  function winnerMsg(ws, cont){
+    var first=ws[0];
+    return { t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:first.pattern, prize:G.prize,
+             winners:ws.map(function(w){ return { pid:w.pid, name:w.name, cardNo:w.cardNo }; }),
+              shared:ws.length>1, cont:!!cont };
+  }
+  function winShownWid(){ for(var k=0;k<G.lastWins.length;k++){ if(G.lastWins[k].wid) return G.lastWins[k].wid; } return ""; }
+  function showConfirmedWin(){
+    if(!G.lastWins.length || G.won) return false;
+    var wid=winShownWid() || ("h"+Date.now().toString(36)+"-"+(G.idx+1));
+    G.lastWins.forEach(function(w){ w.wid=wid; });   // kept with the game, so a reloaded console still knows it is shown
+    var ws=G.lastWins.slice(); ws.sort(function(a,b){ return (a.seq||0)-(b.seq||0); });   // who called first, as announce() orders them
+    var msg=winnerMsg(ws, false); msg.wid=wid; msg.held=true;
+    send(msg);
+    saveGame();
+    return true;
+  }
+  // The Confirm winner button (i), or Confirm all (-1): confirm, then put the win on every screen at once.
+  function confirmWinner(i){
+    var n=G.lastWins.length;
+    if(i<0) hostConfirmAll(); else hostConfirm(i);
+    return G.lastWins.length>n ? showConfirmedWin() : false;
   }
   function keepPlaying(){
     if(!G.lastWins.length) return;
@@ -4162,6 +4216,7 @@
         send({ t:"mode", mode:"bingo", caller:!!G.caller });   // running OR an open lobby: replay so the TV shows the game/QR
         sendState();
         if(G.claims.length) sendClaimPending();
+        else if(winShownWid() && !G.won) showConfirmedWin();   // a TV that reloaded after Confirm winner shows the win again
         if(G.caller && G.callerWin) callerSendWin();   // a TV that reloaded mid-win shows the check or the win again
       }
     }
@@ -4630,8 +4685,8 @@
     var b=e.target.closest("button[data-act]"); if(!b) return;
     var act=b.getAttribute("data-act"), i=parseInt(b.getAttribute("data-i"),10);
     if(act==="confirm"||act==="reject") G._resolveAt=Date.now();   // see renderClaimQueue: the next claim's buttons wait a moment
-    if(act==="confirm") hostConfirm(i);
-    else if(act==="confirmall") hostConfirmAll();
+    if(act==="confirm") confirmWinner(i);
+    else if(act==="confirmall") confirmWinner(-1);
     else if(act==="keepplaying") keepPlaying();
     else if(act==="finish") finishGame();
     else if(act==="reject") hostReject(i);

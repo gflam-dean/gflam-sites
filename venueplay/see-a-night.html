@@ -1583,7 +1583,8 @@ block (all classes prefixed .vpa-)
   .vp-mail{margin:28px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.12);max-width:560px}
   .vp-mail-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin:0 0 6px}
   .vp-mail-sub{color:#B9B2C7;font-size:14.5px;margin:0 0 16px}
-  .vp-mail-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+  /* Email, venue name, postcode (2 Nov 2026): three across, the postcode only as wide as four digits. */
+  .vp-mail-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 6.5em;gap:10px;text-align:left}
   .vp-mail-f{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#B9B2C7;font-family:'JetBrains Mono',monospace}
   .vp-mail-f em{font-style:normal;text-transform:none;letter-spacing:0;color:#8E869E}
   .vp-mail-f input{background:#0B0A0F;border:1px solid rgba(255,255,255,.18);border-radius:11px;color:#fff;font-family:'Manrope',sans-serif;
@@ -1602,7 +1603,7 @@ block (all classes prefixed .vpa-)
   .vp-mail-err a,.vp-mail-fine a{color:#FF6FB4}
   .vp-mail-fine{color:#8E869E;font-size:12.5px;line-height:1.5;margin:12px 0 0}
   .vp-mail-done{padding:4px 0}
-  @media (max-width:560px){ .vp-mail-row{grid-template-columns:1fr} }
+  @media (max-width:560px){ .vp-mail-row{grid-template-columns:minmax(0,1fr) 6.5em} .vp-mail-row .vp-mail-f:first-child{grid-column:1 / -1} }
   /* THE BAR THAT IS ALWAYS THERE. Dean, 26 Sep 2026. Both real visitors in a week played with this
      demo for minutes and never scrolled to the block above, so a next step only at the bottom was
      never seen. Pinned to the bottom of the screen, under the demo's own pop-up (z 50). */
@@ -1857,7 +1858,8 @@ block (all classes prefixed .vpa-)
     <form class="vp-mail-form" data-vps data-source="see-a-night" novalidate>
       <div class="vp-mail-row">
         <label class="vp-mail-f"><span>Email</span><input name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required></label>
-        <label class="vp-mail-f"><span>Venue <em>(optional)</em></span><input name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120"></label>
+        <label class="vp-mail-f"><span>Venue name</span><input name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required></label>
+        <label class="vp-mail-f vp-mail-pc"><span>Postcode</span><input name="postcode" type="text" placeholder="4217" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label>
       </div>
       <div class="vp-mail-hp" aria-hidden="true"><label>Leave this empty <input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
       <div class="vp-mail-ts" data-vps-ts></div>
@@ -2015,7 +2017,15 @@ block (all classes prefixed .vpa-)
   var PAGE_EXT = /\.html($|[?#])/.test(window.location.pathname + window.location.search) ? ".html" : "";
   /* ONE PLACE FOR THE ADDRESS. The big-screen view below and the TV in the room scene (sceneTv)
      both ask this, so the scene can never point at a different page from the one a tap opens. */
+  /* ONE START FOR EVERY DEMO FRAME ON THIS PAGE (7 Nov 2026). The trivia and musical bingo wall and phone take the
+     night's step from /app/vp-demo-clock.js and this start, so the TV in the room scene, "The big screen" and
+     "A player's phone" are on the same question whenever each was opened. */
+  var DEMO_T0 = Date.now();
   function realScreenSrc(view) {
+    var u = realScreenPath(view);
+    return u.indexOf("?demo=1") < 0 ? u : u + "&t0=" + DEMO_T0;
+  }
+  function realScreenPath(view) {
     return    view === "tv"        ? "/tv" + PAGE_EXT + "?demo=1"
             : view === "ads-tv"    ? "/tv" + PAGE_EXT + "?demo=1&ads=1"
             /* PAGE_EXT, not (PAGE_EXT || ".html"). PAGE_EXT is "" on Cloudflare Pages, which

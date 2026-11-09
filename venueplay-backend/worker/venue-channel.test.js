@@ -140,6 +140,8 @@ eval(liftLine(/^const joinInfoStatic[^\n]*/m));
 eval(lift('joinInfoKeep'));
 eval(lift('joinInfoStaticRead'));
 eval(lift('handleJoinInfo'));
+eval(lift('isDemoSession'));
+eval('var DEMO_MAX_PLAYERS=' + (/const DEMO_MAX_PLAYERS = (\d+)/.exec(src)||[,'10'])[1] + ';');   // the try-it demo (migration 172)
 eval(lift('joinInfoLookup'));
 eval(lift('joinNights'));   // the venue's game nights on /join/info (6 Nov 2026)
 /* /play/live keeps its answer a few seconds (the cheaper join, 31 Oct 2026): the cache, then the lookup. */

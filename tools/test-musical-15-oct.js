@@ -209,7 +209,7 @@ print('\n== 1b. a stood-down console cannot send or call the Worker ==');
   });
   ok('musical restores its game only after the claim', /Promise\.all\(\[libReady, _oneTab\]\)\.then\(function\(\)\{[^\n]*\n\s*restoreMusic\(\)/.test(MHOST) &&
      /VP_ONETAB\.claim\("musical:"\+G\.venueId\)/.test(MHOST));
-  ok('trivia restores its quiz only after the claim', /VP_ONETAB\.claim\("trivia:"\+G\.venueId\) : Promise\.resolve\(true\)\)\.then\(function\(\)\{ return restoreTrivia\(\)/.test(THOST));
+  ok('trivia restores its quiz only after the claim', /VP_ONETAB\.claim\("trivia:"\+G\.venueId\) : Promise\.resolve\(true\)\)\.then\(function\(\)\{ if\(DEMO\) return false; return restoreTrivia\(\)/.test(THOST));
 })();
 
 /* ---------- 2. the TV leaves a running game nobody is playing ---------- */

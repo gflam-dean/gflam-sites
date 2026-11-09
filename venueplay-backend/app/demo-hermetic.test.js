@@ -342,9 +342,10 @@ pass("the one buzz asks whether the page is a demo first",
   pass("see-a-night: the scene TV has a game-to-wall table", !!m);
   var box = { innerHTML: "", clientWidth: 336, clientHeight: 186, querySelector: function () { return null; } };
   var doc = { getElementById: function (id) { return id === "vpSceneTv" ? box : null; } };
-  var fx = new Function("document", "PAGE_EXT", "var SCENE_TV_VIEW = " + (m ? m[1] : "{}") + ";\n" +
-    lift("realScreenSrc") + lift("sceneTvView") + lift("sceneTvFit") + lift("paintSceneTv") + "; return paintSceneTv;");
-  function srcFor(mode, ext) { box.innerHTML = ""; fx(doc, ext)(mode); var s = /src="([^"]*)"/.exec(box.innerHTML); return s ? s[1] : ""; }
+  /* Every demo frame on the page carries the page's one start, &t0= (the demos' shared clock, 7 Nov 2026). */
+  var fx = new Function("document", "PAGE_EXT", "var DEMO_T0 = 1700000000000; var SCENE_TV_VIEW = " + (m ? m[1] : "{}") + ";\n" +
+    lift("realScreenSrc") + lift("realScreenPath") + lift("sceneTvView") + lift("sceneTvFit") + lift("paintSceneTv") + "; return paintSceneTv;");
+  function srcFor(mode, ext) { box.innerHTML = ""; fx(doc, ext)(mode); var s = /src="([^"]*)"/.exec(box.innerHTML); return s ? s[1].replace(/&amp;/g, "&").replace(/&t0=1700000000000$/, "") : ""; }
   pass("see-a-night: on trivia the TV in the room holds the real trivia wall in demo mode",
        srcFor("trivia", "") === "/app/trivia/screen?demo=1", srcFor("trivia", ""));
   pass("see-a-night: off a plain file server the same wall keeps its .html",

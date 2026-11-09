@@ -77,17 +77,15 @@ def phone_scene(r, path, label):
             # The trivia phone (Dean, 3 Nov 2026), and the musical bingo phone with the same option 5 header (4 Nov 2026):
             # the green dot sits next to the menu button, top right, level with it.
             mb = rect(r, sid, '#menuBtn')
-            ok('%s at %d: a green dot next to the menu button, level with it' % (label, w),
-               dot and dot['vis'] and mb and dot['r'] <= mb['l'] and mb['l'] - dot['r'] <= 16 and abs((dot['t'] + dot['b']) / 2 - (mb['t'] + mb['b']) / 2) <= 3,
-               [dot, mb])
+            ok('%s at %d: no dot beside the menu button while connected (Dean, 7 Nov 2026: show nothing)' % (label, w),
+               bool(mb) and not (dot and dot['vis']), [dot, mb])
         else:
-            ok('%s at %d: a green dot beside the venueplay mark, in the header\'s first row' % (label, w),
-               dot and dot['vis'] and word and dot['l'] >= word['r'] and dot['l'] - word['r'] <= 24 and dot['t'] >= brand['t'] - 2 and dot['b'] <= brand['b'] + 2,
-               [dot, word, brand])
-        ok('%s at %d: the dot is green (Connected) and says so to a screen reader' % (label, w),
-           r.ask(sid, 'document.getElementById("statusDot").classList.contains("on") && document.getElementById("statusDot").getAttribute("aria-label")==="Connected"') is True)
+            ok('%s at %d: no dot beside the venueplay mark while connected (Dean, 7 Nov 2026: show nothing)' % (label, w),
+               bool(word) and not (dot and dot['vis']), [dot, word, brand])
+        ok('%s at %d: the words still say Connected, for a screen reader only' % (label, w),
+           r.ask(sid, 'document.getElementById("statusText").textContent==="Connected"') is True)
         ok('%s at %d: no "Connected" line of its own: the words take no space' % (label, w), line.get('w', 9) <= 1 and line.get('h', 9) <= 1, line)
-        ok('%s at %d: the dot is clear of the menu button and inside the screen' % (label, w), dot and not overlap(dot, menu) and dot['r'] <= w, [dot, menu])
+        ok('%s at %d: nothing is drawn by the menu button: it stands alone, inside the screen' % (label, w), bool(menu) and menu['r'] <= w and not (dot and dot['vis']), [dot, menu])
         ok('%s at %d: no Reconnecting bar while connected' % (label, w), bar is not None and not bar['vis'], bar)
         shot(r, sid, 'phone-%s-%d-connected' % (label.split()[0], w))
         below = r.ask(sid, '(function(){var v=[].filter.call(document.querySelectorAll(".view"),function(x){return !x.classList.contains("hidden")&&x.getBoundingClientRect().height>0;})[0];return v?Math.round(v.getBoundingClientRect().top):null;})()')

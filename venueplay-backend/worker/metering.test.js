@@ -32,6 +32,8 @@ var OVERAGE_ABSOLUTE_MAX = (function () { var m = /OVERAGE_ABSOLUTE_MAX\s*=\s*(\
 eval(lift(GAME, "countPlayers"));
 eval(lift(GAME, "countPlayersWhoPlayed"));
 eval(lift(GAME, "overageCeiling"));
+eval(lift(GAME, "isDemoSession"));
+eval("var DEMO_OFF=" + (/const DEMO_OFF = ('[^']*');/.exec(GAME)||[,"''"])[1] + ";");   // the try-it demo filter (migration 172)
 eval(lift(GAME, "handleMetering"));
 
 pass("the endpoint exists in the Worker at all",

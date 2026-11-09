@@ -404,6 +404,7 @@
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer (3 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
@@ -724,7 +725,8 @@
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
     boardRollTimer=setTimeout(function(){
-      if(state.phase==="reveal"){ show("tvBoard"); renderBoardPaged("Leaderboard", m.leaderboard||[]); }
+      /* Never in the sales-page demo: its script puts the scores up only at the end of the round (7 Nov 2026). */
+      if(state.phase==="reveal" && !VP_DEMO){ show("tvBoard"); renderBoardPaged("Leaderboard", m.leaderboard||[]); }
     }, 5200);
   }
 
@@ -1181,14 +1183,11 @@
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoQuiz(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      var Q = [
-        { text:"Which Australian city hosted the 2000 Summer Olympics?",
-          options:["Melbourne","Sydney","Brisbane","Perth"], correct:1, split:[4,31,6,2] },
-        { text:"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?",   // a long one (3 Nov 2026): the wall is seen with two lines and long answers too
-          options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], correct:1, split:[7,26,9,1] },
-        { text:"Which band released the album Back in Black?",
-          options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], correct:0, split:[33,5,4,1] }
-      ];
+      /* THE SCRIPT AND ITS TIMES ARE /app/vp-demo-clock.js, shared with the demo phone (app/trivia/play.html), and so is
+         the clock: both pages ask it where the night is, so the wall and the phone show the same question at the same
+         moment (Dean, 7 Nov 2026: "the AC/DC question seems to be a different question on the phone"). This page
+         keeps no timer of its own. */
+      var C = VPDemoClock.TRIVIA, Q = C.Q, SECS = C.SECS;
       var BOARD = [
         { name:"The Quiztopher Nolans", points:840 },
         { name:"Sarah",                  points:790 },
@@ -1207,8 +1206,8 @@
         { name:"Quiz Khalifa",          points:255 },
         { name:"Late Arrivals",         points:180 }
       ];   // sixteen teams, a real night's size: the board shows the top ten and pages the rest (3 Nov 2026)
-      var SECS = 20, steps = [], t = 0;   // the demo counts down from 20, like a real night (Dean, 3 Nov 2026)
-      function at(ms, fn){ steps.push([ms, fn]); }
+      var steps = [];
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
 
       /* AT ZERO, not after a pause. Until the first message lands this page shows its ordinary
          pairing lobby, and on a sales page that is the first frame a visitor sees, which is the
@@ -1218,30 +1217,31 @@
         m({ t:"mode", mode:"trivia", title:"Trivia Night" });
         m({ t:"started", title:"Trivia Night", colour:true });
         m({ t:"players", count:43 });   // sent as a real host does; the wall must show no count (tools/tv-no-counts-in-chrome.test.py)
-      });
-      /* The first question waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first question makes it give way, so at 0.9 s the sales-page demo cut it off. */
-      t = (window.VPSting && VPSting.on) ? 4200 : 900;   // 900 as before the show, on a screen with ?sting=0
+      }, true, true);
+      /* The first question waits for the start-of-game show (2 Nov 2026): C.first() is 4.2 s with the show, 0.9 s with ?sting=0. */
       Q.forEach(function(q, i){
-        at(t, function(){
-          m({ t:"question", qseq:i+1, qi:i+3, qtotal:20, text:q.text,   // reads "Question 3 of 20": a night already under way (Dean, 3 Nov 2026)
-              options:q.options, secs:SECS, endsAt:Date.now()+12*1000 });   // joins a 20-second question at 12 left, so the ring shows the time already gone (Dean, 3 Nov 2026)
-        });
+        var t = C.qAt(i);
+        at(t, function(ctx){
+          m({ t:"question", qseq:i+1, qi:C.FIRST_QI+i, qtotal:C.QTOTAL, text:q.text,   // "Question 8 of 10": the round's last three
+              options:q.options, secs:SECS, endsAt:C.endsAt(ctx, i) });   // joins a 20-second question at 12 left, so the ring shows the time already gone (Dean, 3 Nov 2026)
+        }, true);
         // The host's tally, sent as on a real night: the wall must ignore it (no counts on the TV, Dean 4 Nov 2026).
         [1,2,3].forEach(function(n, k){
           at(t + 1200 + k*1100, function(){ m({ t:"answered", count: 14 + n*9 }); });
         });
-        at(t + 5200, function(){ m({ t:"lock", title:"Pens down" }); });
-        at(t + 6200, function(){
+        at(t + C.LOCK, function(){ m({ t:"lock", title:"Pens down" }); });
+        at(t + C.REVEAL, function(){
           m({ t:"reveal", correctIndex:q.correct, options:q.options, split:q.split });
         });
-        at(t + 9400, function(){
-          m({ t:"leaderboard", title:"After question "+(i+3), rows:BOARD });
-        });
-        t += 13200;
+        /* NO LEADERBOARD HERE. After an answer, the next question (Dean, 7 Nov 2026: "The leaderboard running after
+           every question is not good"). The scores come at the end of the round, below. */
       });
-      at(t,        function(){ m({ t:"podium", top:BOARD.slice(0,3), rows:BOARD }); });
-      at(t + 6500, function(){ m({ t:"leaderboard", title:"Final scores", rows:BOARD }); });
-      at(t + 12000, function(){ m({ t:"idle" }); });
+      /* THE END OF THE ROUND, which on a phone night is the end of the game: the podium, then the whole
+         leaderboard, so every team sees where it finished (Dean, 7 Nov 2026). */
+      var tp = C.podiumAt();
+      at(tp,                function(){ m({ t:"podium", top:BOARD.slice(0,3), rows:BOARD }); }, true);
+      at(tp + C.BOARD_AFTER, function(){ m({ t:"leaderboard", title:"Final scores", rows:BOARD, final:true }); }, true);
+      at(tp + C.IDLE_AFTER,  function(){ m({ t:"idle" }); }, true);
 
       /* NO JOIN CORNER ON A SALES PAGE, and the id is tvJoinCorner, the same one tv.html
          hides, which I only found by opening the page and reading the DOM rather than guessing
@@ -1270,14 +1270,8 @@
         else { if(d) d.style.visibility="hidden"; if(t) t.style.visibility="hidden"; }
       })();
 
-      var timers=[];
-      function run(){
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
-        timers.push(setTimeout(run, t + 17000));
-      }
-      run();
+      /* A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap(). */
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 

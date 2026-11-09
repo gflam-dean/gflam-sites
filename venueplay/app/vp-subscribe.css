@@ -11,6 +11,9 @@
 .vps-sub{margin-top:12px;color:var(--muted,#9A9AA4);font-size:var(--fs-base,16px);line-height:1.55;max-width:40ch}
 .vps-form .vps-fields{display:grid;grid-template-columns:1fr;gap:12px}
 .vps-form .field label .vps-opt{text-transform:none;letter-spacing:0;color:var(--muted-2,#8E8E98)}
+/* Venue name and postcode side by side (2 Nov 2026): the postcode only as wide as four digits. */
+.vps-form .vps-pair{display:grid;grid-template-columns:minmax(0,1fr) 7.5em;gap:12px}
+.vps-form .vps-pair .field{min-width:0}
 .vps-form button[type=submit]{width:100%;margin-top:16px;padding:15px;font-size:var(--fs-base,16px)}
 .vps-form button[type=submit]:disabled{opacity:.6;cursor:default}
 .vps-form .form-err{text-align:left}

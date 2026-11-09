@@ -692,10 +692,10 @@
 <script>
 (function(){
   /* THE WALL AND THE PHONE ARE THE PRODUCT'S OWN PAGES in their ?demo=1 mode: no venue, no
-     network, no analytics. Each one plays a scripted night on its own clock, and the two
-     scripts are written to the same clock (see the notes in play.html and screen.html), so
-     they only stay in step if they START together. Both are (re)loaded in the same tick on
-     every chip, never one after the other. Advertising is the wall alone: it is what the
+     network, no analytics. Neither keeps its own time: both read one script and one clock
+     (/app/vp-demo-clock.js) from the start time this page puts on BOTH addresses (?t0=), so the
+     phone shows the TV's question at the TV's moment whichever frame loads first, and after a
+     hidden tab (7 Nov 2026). Advertising is the wall alone: it is what the
      screen does between games. Ported verbatim from qld.html, 23 Sep 2026. */
   var WALL={ bingo:"/tv?demo=1", trivia:"/app/trivia/screen?demo=1", musical:"/app/musical/screen?demo=1", raffle:"/app/raffle/screen?demo=1", members:"/app/members/screen?demo=1", ads:"/tv?demo=1&ads=1" };
   var PHONE={ bingo:"/play?demo=1", trivia:"/app/trivia/play?demo=1", musical:"/app/musical/play?demo=1" };
@@ -710,7 +710,7 @@
   try{ var ro=new ResizeObserver(fit); ro.observe(ph.parentNode); ro.observe(tv.parentNode); }catch(err){}
   window.addEventListener("load", fit); ph.addEventListener("load", fit); tv.addEventListener("load", fit);
   function show(mode){
-    var bust="&t="+Date.now();     // a fresh load each time, so both scripts start from zero together
+    var bust="&t0="+Date.now();    // one start for both frames (and a fresh load each time): the night starts from zero on both
     tv.setAttribute("src", WALL[mode]+bust);
     var stage=document.getElementById("h2Stage");
     if(PHONE[mode]){ wrap.classList.remove("off"); if(stage) stage.classList.remove("nophone"); ph.setAttribute("src", PHONE[mode]+bust); fit(); }
@@ -852,7 +852,7 @@
             <div class="pl"><b>Annual</b>billed yearly · best value</div>
             <div class="pv">$2.85</div>
           </div>
-          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Three big nights in a row and we move your plan up to match, which costs less than paying per head every week. Your rate of $3 per player, per month, never changes. Your monthly bill moves only when your plan moves up.</p>
+          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's $2 per extra player that night. Three big nights in a row and we adjust your plan to fit, at your normal rate. Your rate of $3 per player, per month, never changes. Your monthly bill moves only when your plan moves up.</p>
         </div>
       </div>
       <div class="offer-cta"><a class="btn btn-primary" href="#claim" data-cta="pricing-claim">Start your free month</a></div>
@@ -961,7 +961,7 @@
             </div>
           </div>
           <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
-          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights running and we move you up to a plan that fits, which is cheaper than paying extras. Your rate per player never changes: that plan move is the only thing that changes your monthly bill.</p>
+          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights in a row and we adjust your plan to fit, at your normal rate. Your rate per player never changes: that plan move is the only thing that changes your monthly bill.</p>
           <div class="consent">
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me venueplay news, tips and product updates. You can unsubscribe anytime.</span></label>
@@ -1040,8 +1040,8 @@
       <details class="q"><summary>What about regulars who won't use a phone?<span class="pm"></span></summary><div class="a">They can still play trivia and musical bingo on paper. Print up to ten trivia answer sheets or musical bingo cards a night from the host console, before the night starts. Trivia teams on paper hand their sheet to the host at the end of each round, before the answers go up on the screen, and the host adds their score to the leaderboard. A paper musical bingo card is checked by typing its number into the console. Paper players count towards your players and your bill the same as phones do. Moving a trivia crowd over from paper? In your free month you can print a trivia sheet for every player on your plan, so your regulars can switch across at their own pace. venueplay does not print bingo tickets. For bingo, keep using the paper books you already buy, and the host checks those wins against the board.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $3 a player, or yearly for $2.85 a player. New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.</div></details>
-      <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">Nothing happens without your host. Set your max to your usual room, and the moment a night runs over it your host sees what it costs and taps OK before the game starts, so you are never billed for a night nobody agreed to. Extra players are $2 each for that night. Go over three nights running and that is your crowd, not a big night: the third one is $1 a head and we lift your max to the number you hit all three times, from your next bill. It works out cheaper than paying per head every week. You can drop back any time from your account, and we always email before your bill changes.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $3 a player, or yearly for $2.85 a player. New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If we set your account up for you and your free month ends with no card, your account pauses until you add one. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.</div></details>
+      <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">Nothing happens without your host. Set your max to your usual room, and the moment a night runs over it your host sees what it costs and taps OK before the game starts, so you are never billed for a night nobody agreed to. Extra players are $2 each for that night. Go over three nights running and that is your crowd, not a big night: we adjust your max to the number you hit all three times, at your normal per-player rate, from your next bill. You can drop back any time from your account, and we always email before your bill changes.</div></details>
       <details class="q"><summary>Can I change my max players?<span class="pm"></span></summary><div class="a">Any time, from your account. Adding players applies straight away so you are covered that night, and the extra is on your next bill. Dropping down takes effect at your next renewal, so you keep what you have paid for until then. On an annual plan, added players are charged pro rata to your renewal date, and if you drop your max the unused value is not lost: it is held as a credit against your next renewal.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">venueplay TV app</a>, then put in your screen code. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
       <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your rate stays the same for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
@@ -1115,7 +1115,7 @@
 
 <!-- ===================== THE MONTHLY EMAIL (31 Oct 2026) =====================
      For the venue that is not ready to talk to us yet: one email a month, nothing else asked but
-     the address (the venue is optional). Sits right after "Talk to us" as the softer choice, in this
+     the address, the venue name and its postcode (2 Nov 2026: offers go by state). Sits right after "Talk to us" as the softer choice, in this
      page's own pieces; /app/vp-subscribe.js makes it work and /app/vp-subscribe.css lays it out.
      Never an offer here: the same standard sign-up on every page that has it. -->
 <section class="sec sec-tight" id="monthly">
@@ -1133,9 +1133,15 @@
               <label for="vps-email">Email</label>
               <input id="vps-email" name="email" type="email" placeholder="you@venue.com.au" autocomplete="email" inputmode="email" required>
             </div>
-            <div class="field">
-              <label for="vps-venue">Venue <span class="vps-opt">(optional)</span></label>
-              <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120">
+            <div class="vps-pair">
+              <div class="field">
+                <label for="vps-venue">Venue name</label>
+                <input id="vps-venue" name="venue" type="text" placeholder="The Royal Hotel" autocomplete="organization" maxlength="120" required>
+              </div>
+              <div class="field">
+                <label for="vps-postcode">Postcode</label>
+                <input id="vps-postcode" name="postcode" type="text" placeholder="4217" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+              </div>
             </div>
           </div>
           <div class="vps-hp" aria-hidden="true"><label for="vps-website">Leave this empty</label><input id="vps-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
@@ -1171,6 +1177,7 @@
       &copy; <span id="vp-year"></span> Gflam Group Pty Ltd, trading as venueplay
     </div>
   </div>
+  <p class="wrap foot-country">venueplay and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.</p>
 </footer>
 
 <!-- ===================== SCRIPT ===================== -->
@@ -1697,7 +1704,7 @@
      deliberately left alone: centring three or four lines of running text inside a box is the
      one place this stops looking designed and starts looking like a school project. */
   .hero > .wrap{text-align:center}
-  .hero .lede{margin-left:auto;margin-right:auto;max-width:62ch}
+  .hero:not(.hero2) .lede{margin-left:auto;margin-right:auto;max-width:62ch}
   .hero-cta{justify-content:center}
   .sec-head{text-align:center}
   .sec-sub{margin-left:auto;margin-right:auto}
@@ -1732,8 +1739,13 @@
      breaks. It never re-centres the box afterwards, so once the text inside was centred the
      balanced heading still sat about 175px left of true centre while everything around it was
      dead centre, which is the kind of near-miss that looks worse than no centring at all.
-     Any capped-width block inside a centred head gets its box centred too. */
-  .hero h1{margin-left:auto;margin-right:auto}
+     Any capped-width block inside a centred head gets its box centred too.
+     NOT the two-column hero (.hero2, "Run a packed Tuesday"): beside the demo its copy is LEFT
+     aligned, and centring the 14ch heading box in that column pushed the heading about 54px in
+     from the wordmark, the lede and the buttons, all of which start hard left (Dean, 2 Nov 2026:
+     "looks out of alignment with a logo in the corner"). On a phone .hero2 centres its own
+     heading in its 900px media block. */
+  .hero:not(.hero2) h1{margin-left:auto;margin-right:auto}
   .sec-head .sec-title,.sec-head .sec-sub,.sec-head .vps-balance{margin-left:auto;margin-right:auto}
   .offer-grid > div:first-child .sec-title{margin-left:auto;margin-right:auto}
 

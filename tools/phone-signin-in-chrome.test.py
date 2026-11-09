@@ -298,8 +298,10 @@ try:
     # sign-in link?", says one tap opens their account and any older link stops working, and promises no day count.
     ask = js(sid, 'document.body.innerText') or ''
     ok('it asks first, saying what the link does (on a test venue: no real venue name in any fixture)',
-       'One tap opens their account' in ask and 'Any older link stops working' in ask and
-       '14 days' not in ask and 'Send Test Alpha a new sign-in link' in ask and 'Deepwater' not in ask, ask[-400:])
+       'One tap opens their account' in ask and '14 days' not in ask and 'Deepwater' not in ask and
+       # Dean, 6 Nov 2026: a prospect's resend is the same link and never more time; anyone else gets a new link.
+       (('Send Test Alpha a new sign-in link' in ask and 'Any older link stops working' in ask) or
+        ('Send Test Alpha their sign-in link again' in ask and 'It is the same link as before, and it does not give them more time' in ask)), ask[-400:])
     shot(sid, '9-hq-resend-ask')
     click(sid, 'vpAskGo')
     S.until(sid, '/The email went to owner@test\\.local/.test(document.body.innerText)', 10)

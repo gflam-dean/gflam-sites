@@ -385,6 +385,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-buzzer.js"></script>   <!-- the time's-up buzzer, when it plays on this device (3 Nov 2026) -->
 <script src="/app/vp-room.js"></script>
+<script src="/app/vp-loved.js"></script>
 <script src="/app/vp-print.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
@@ -392,10 +393,19 @@
 <!-- Punters Reckon's boards are NOT a script: the console asks the game Worker for them (prLoadBoards). -->
 <script src="/app/topanswers/pr-game.js"></script>
 <script src="/app/vp-phonekey.js"></script>
+<script src="/app/vp-demo.js"></script>   <!-- the try-it demo's rules: ?demo=auto runs the 5 questions itself, ?demo=host is this console for them (INBOX 82, 84b) -->
 <script>
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
+  /* THE TRY-IT DEMO ON THIS CONSOLE (Dean, 5 Nov 2026; INBOX 82, 84b). ?demo=auto: /app/try.html runs this page
+     out of sight and it plays 5 questions by itself (each answer up when the 30 s run out or everyone in has
+     answered, VPDemo.shouldReveal), then the leaderboard. ?demo=host: the normal controls, for the same 5
+     questions, on a tablet or second phone. Either way the session is asked for with demo:true, which the game
+     Worker marks is_demo: never billed, nothing remembered (migration 172). Off without ?demo=, and then this
+     console is exactly as it was. */
+  var DEMO=(function(){ var m=/[?&]demo=(auto|host)(&|$)/.exec(window.location.search||""); return (m && window.VPDemo) ? m[1] : ""; })();
+  var DEMO_N=(function(){ var m=/[?&]n=([0-9]{1,3})(&|$)/.exec(window.location.search||""); return window.VPDemo ? VPDemo.clampPlayers(m ? m[1] : 1) : 1; })();
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
@@ -624,7 +634,7 @@
   // The Worker's /snapshot is the source of truth, so we only stash a pointer (the session id)
   // plus a timestamp. A stale pointer from an earlier night, or a game that has since ended, is ignored.
   var TRIVIA_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
-  function triviaKey(){ return "vpTriviaGame-"+(G.venueId||""); }
+  function triviaKey(){ return "vpTriviaGame-"+(G.venueId||"")+(DEMO ? "-demo" : ""); }   // a demo never overwrites, or picks up, a real night's save
   function saveTrivia(){
     try{
       if(G.gameId && G.sessionId && G.status!=="setup" && G.status!=="lobby"){
@@ -749,7 +759,8 @@
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
-      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      if(DEMO){ _ob.style.display=""; _ob.textContent="This is your demo: "+VPDemo.QUESTIONS+" questions, up to "+VPDemo.MAX+" players. Nothing is charged."; }
+      else if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
     renderPlayers();
@@ -762,7 +773,8 @@
     paintRoundQs();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
-      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      if(DEMO){ _ob.style.display=""; _ob.textContent="This is your demo: "+VPDemo.QUESTIONS+" questions, up to "+VPDemo.MAX+" players. Nothing is charged."; }
+      else if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
     $("playerCount").textContent=playerCount();
@@ -934,6 +946,10 @@
       done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
         '<div class="qtext-h">The winners are on the big screen.</div>';
       body.appendChild(done);
+      /* The room's verdict, favourable only and as true counts (/app/vp-loved.js), once phones have rated. */
+      var lv=el("div","",""); lv.id="triviaLoved"; lv.style.cssText="display:none;margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(53,208,127,.08);border:1px solid rgba(53,208,127,.28);color:var(--win);font-weight:700;font-size:14px";
+      body.appendChild(lv);
+      if(window.VPLoved && G.sessionId) VPLoved.show(VP_GAME_API, G.sessionId, lv);
       var PLACE={3:"third",2:"second",1:"first"};
       var nxt = (!G.endBoard && G.endReveal>1) ? G.endRanks[G.endRanks.indexOf(G.endReveal)+1]||1 : 0;
       if(!G.endBoard && G.endReveal>1){ done.querySelector(".qtext-h").textContent="On the big screen: "+PLACE[G.endReveal]+" place. The rest are still covered."; }
@@ -1039,6 +1055,7 @@
     G.setId=$("setSel").value||"";
     var so=$("setSel").options[$("setSel").selectedIndex];
     G.setTitle=(so && so.getAttribute("data-title"))||"";
+    if(DEMO){ G.timePerQ=VPDemo.SECONDS; G.count=VPDemo.QUESTIONS; G.roundSize=G.count; G.doublePoints=false; G.paperRound=false; }   // the Worker holds a demo to these anyway
   }
   function openSession(){
     if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
@@ -1047,7 +1064,7 @@
          (a bingo lobby on another tablet). Say "trivia" again, or /join/info answers bingo and phones
          off the QR sit on the bingo page through this whole lobby (break test, 14 Oct 2026). The
          server reuses this same session; nothing waits on it. */
-      apiPost("/session",{ venue_id:G.venueId, format:"trivia", road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "trivia") : "supabase") }).then(function(r){
+      apiPost("/session",{ venue_id:G.venueId, format:"trivia", demo:(DEMO ? true : undefined), road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "trivia") : "supabase") }).then(function(r){
         /* The server may have closed the night this console remembers (a Close lobby that landed late) and
            opened a fresh one on the same code. Adopt it, or this console runs a night phones cannot join. */
         if(r && r.session_id && r.session_id!==G.sessionId && !G.gameId){   // never swapped under a round that is running
@@ -1061,10 +1078,10 @@
       return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode });
     }
     var _slug=(G.venue && G.venue.slug) || "";
-    var _ask=(window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);
+    var _ask=(!DEMO && window.VP && VP.confirmTakeover) ? VP.confirmTakeover(_slug) : Promise.resolve(true);   // a demo never takes over a real night: the Worker refuses one (demo_night_live)
     return _ask.then(function(ok){
       if(!ok){ var e=new Error("Left as it is. The game on the other device is still running."); e.takeoverDeclined=true; throw e; }
-      return apiPost("/session",{ venue_id:G.venueId, format:"trivia", road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "trivia") : "supabase") });
+      return apiPost("/session",{ venue_id:G.venueId, format:"trivia", demo:(DEMO ? true : undefined), road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, _roomSlug, "trivia") : "supabase") });
     }).then(function(r){
       G.sessionId=r.session_id;
       // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
@@ -1094,6 +1111,7 @@
      null simply hides the line: nothing here can stop a round starting. */
   var lobbyWatch=null;
   function paintLobbyWait(n){
+    if(typeof n==="number") G.lobbyN=n;   // the server's count, for the demo's auto start
     var el=$("lobbyWait"); if(!el) return;
     if(G.status!=="lobby" || typeof n!=="number" || n<1){ el.style.display="none"; el.textContent=""; return; }
     el.style.display="";
@@ -1861,6 +1879,7 @@
      first round after a print whose sheets match the round; a sheet already played is not reused
      unless the host ticks the box. */
   function paperThisRound(){
+    if(DEMO) return false;   // no paper in a demo
     var info=paperPrintedInfo(), n=info.teams|0;
     if(!n) return false;
     if(typeof G.paperRound==="boolean") return G.paperRound;
@@ -2244,6 +2263,36 @@
   }
 
   // ---- boot: resolve the host login, then let them pair + run ----
+  /* THE DEMO RUNS ITSELF (?demo=auto). One small loop over the console's own steps, so it is the same game a
+     host runs: open the lobby, start when the players they said have joined (or when /app/try.html says
+     "start now"), each question until VPDemo.shouldReveal, the answer and the leaderboard, the next one, and
+     after the last the podium. It tells the page that runs it what is happening (postMessage, same origin). */
+  var _demo={ last:"", at:0, start:false, told:false, closed:false, opened:false };
+  function demoSay(o){ try{ if(window.parent && window.parent!==window) window.parent.postMessage(Object.assign({ vpDemo:true }, o), window.location.origin); }catch(e){} }
+  function demoStep(){
+    var now=Date.now();
+    if(G.status!==_demo.last){ _demo.last=G.status; _demo.at=now; }
+    var since=now-_demo.at, joined=Math.max(playerCount(), G.lobbyN|0);
+    demoSay({ status:G.status, joined:joined, expected:DEMO_N, answered:answeredCount(), qi:(G.current && (G.current.qi||G.current.qseq))||0,
+              qtotal:G.qtotal||VPDemo.QUESTIONS, left:(G.status==="question" ? remainingSecs() : null), joinCode:G.joinCode||"", error:(($("hostErrBar") && $("hostErrBar").classList.contains("show")) ? (($("hostErrText")||{}).textContent||"").trim() : "") });   // only a shown error, in its own words
+    if(G.busy) return;
+    if(G.status==="setup"){ if(G.questionCount>0 && since>800 && !_demo.opened){ _demo.opened=true; openLobby(); } return; }
+    if(G.status==="lobby"){ if(joined>=1 && (joined>=DEMO_N || _demo.start)) startRound(); return; }
+    if(G.status==="ready"){ if(since>=3000) nextQuestion(); return; }
+    if(G.status==="question"){ if(VPDemo.shouldReveal(remainingSecs(), answeredCount(), DEMO_N, joined)) reveal(); return; }   // joined: the server's count as well as this console's roster, so one answer never stands for two phones
+    if(G.status==="reveal"){
+      var last=G.qtotal && G.current && (G.current.qi||G.current.qseq)>=G.qtotal;
+      if(last){ if(since>=6000 && now-(_demo.fin||0)>=6000){ _demo.fin=now; finish(); } }   // finish() can stay on reveal (a board that did not load): try again every 6 s, never in a burst
+      else if(since>=10500) nextQuestion();
+      return;
+    }
+    if(G.status==="ended" && !_demo.told){ _demo.told=true; demoSay({ status:"done", board:(G.board||[]).slice(0,10) }); }
+    if(G.status==="ended" && since>=20000 && !_demo.closed){ _demo.closed=true; closeNight(null); }   // the podium has had its moment; the demo session closes (never billed)
+  }
+  function demoDrive(){
+    window.addEventListener("message", function(e){ if(e.origin===window.location.origin && e.data && e.data.vpDemo && e.data.cmd==="start") _demo.start=true; });
+    setInterval(demoStep, 500);
+  }
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
   function setFromUrl(){ var m=/[?&]set=([^&]+)/.exec(window.location.search); if(!m) return ""; var v=decodeURIComponent(m[1]); return /^[0-9a-f-]{36}$/i.test(v)?v:""; }
   function tvFromUrl(){ var m=/[?&]tv=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
@@ -2262,7 +2311,7 @@
       loadWinners();      // how the winners show, as this venue left it (staged by default)
       loadAutoReveal();   // auto reveal, as this venue left it (on, 10 seconds, by default)
       loadBuzzer();    // the time's-up buzzer switch, as this venue left it (on by default)
-      weeklyPreCheck(ctx.venue);
+      if(!DEMO) weeklyPreCheck(ctx.venue);   // a demo is not the week's trivia night
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week trivia slot.
@@ -2273,7 +2322,7 @@
       Promise.resolve(loadQuestionSets()).then(startTriviaPrefs, startTriviaPrefs).catch(function(){});
       /* ONE CONSOLE PER TABLET: a second tab used to restore this same quiz as a second live
          console. Ask the other tabs first (/app/vp-onetab.js, 14 Oct 2026). */
-      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+      (window.VP_ONETAB ? VP_ONETAB.claim("trivia:"+G.venueId) : Promise.resolve(true)).then(function(){ if(DEMO) return false; return restoreTrivia().then(function(ok){ return ok || restorePR(); }); }).then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
         /* Picked up on another device: stand down (/app/vp-pickup.js). Asks only while a quiz is on. */
         if(window.VP_PICKUP) VP_PICKUP.arm({ post:apiPost, venueId:G.venueId, format:"trivia",
           sessionId:function(){ return (G.gameId && G.status!=="setup" && G.status!=="ended") ? G.sessionId : ""; },
@@ -2286,6 +2335,7 @@
         if(tv){ connect(tv); }
         else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("trivia-"+slug)); }   // auto-pair by venue (game-namespaced so it can't collide with bingo)
         else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
+        if(DEMO==="auto") demoDrive();
       });
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {

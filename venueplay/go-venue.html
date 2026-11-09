@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="/favicon.ico?v=f4" sizes="any">
+<link rel="icon" href="/favicon.svg?v=f4" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png?v=f4" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-48.png?v=f4" type="image/png" sizes="48x48">
+<link rel="icon" href="/icon-192.png?v=f4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=f4">
+<title>Sign in to venueplay</title>
+<!-- THE EASY WAY BACK IN (Dean, 6 Nov 2026): venueplay.com.au/go/{venue code}. The venue's code is public (the TV and the
+     players see it), so it is NEVER a login key: this page only names the venue and offers to send a sign-in link to
+     whatever email and mobile are ON THAT ACCOUNT, without ever saying what they are (billing Worker
+     /venue-signin/lookup and /venue-signin/send, rate limited). The secret one-tap link is venueplay.com.au/s/... -->
+<style>
+  body{margin:0;background:#0A0A0B;color:#fff;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+  .card{background:#16151b;border-radius:16px;padding:28px 24px;max-width:420px;width:100%;box-sizing:border-box}
+  h1{font-size:24px;line-height:1.25;margin:0 0 12px;font-weight:800}
+  p{font-size:16px;line-height:1.6;color:#d6d6de;margin:0 0 16px}
+  button,.alt{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:17px;font-weight:700;border-radius:12px;padding:15px 18px;text-align:center;text-decoration:none;cursor:pointer}
+  button{background:#FF1F8E;color:#fff;border:0}
+  button[disabled]{opacity:.6;cursor:default}
+  .alt{margin-top:12px;background:transparent;color:#fff;border:1px solid #3a3946}
+  .msg{margin-top:16px;font-size:15px;color:#d6d6de}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="card">
+  <h1 id="goTitle">Sign in to venueplay</h1>
+  <p id="goSub">We'll send a sign-in link to the email and mobile on this venue's account.</p>
+  <button type="button" id="goSend">Send me a sign-in link</button>
+  <a class="alt" href="/app/">Sign in with my mobile</a>
+  <p class="msg" id="goMsg" hidden></p>
+</main>
+<script>
+(function (w) {
+  var API = "https://api.venueplay.com.au";
+  var m = /^\/go\/([A-Za-z0-9]{6})\/?$/.exec(w.location.pathname || "");
+  var code = m ? m[1].toUpperCase() : "";
+  var $ = function (id) { return w.document.getElementById(id); };
+  function post(path) {
+    return w.fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code }) })
+      .then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
+  }
+  function say(t) { var e = $("goMsg"); e.textContent = t; e.hidden = false; }
+  if (!code) { $("goSend").hidden = true; say("That link is not quite right. Sign in with your mobile instead."); return; }
+  post("/venue-signin/lookup").then(function (r) {
+    if (r && r.ok && r.venue) $("goTitle").textContent = "Sign in to " + r.venue;
+    else { $("goSend").hidden = true; say("We couldn't find that venue. Sign in with your mobile instead."); }
+  }, function () {});
+  $("goSend").addEventListener("click", function () {
+    var b = $("goSend"); b.disabled = true; b.textContent = "Sending...";
+    post("/venue-signin/send").then(function (r) {
+      b.textContent = "Send me a sign-in link";
+      if (r && r._status === 429) { b.disabled = false; say("Too many tries from here. Please try again in an hour."); return; }
+      say("Done. If this venue's account has an email or mobile, a sign-in link is on its way there now. Check your junk folder too.");
+    }, function () { b.disabled = false; b.textContent = "Send me a sign-in link"; say("That didn't go through. Check your connection and try again."); });
+  });
+})(window);
+</script>
+</body>
+</html>

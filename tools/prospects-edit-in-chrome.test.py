@@ -165,8 +165,8 @@ try:
     time.sleep(0.2)
     q = row(sid, QUIET)
     ok('pressing the chip opens the details and actions (aria-expanded true)', q.get('open') is True and q.get('expanded') == 'true' and q.get('edit') is True, q)
-    ok('ONE send button, and with no mobile it says so: "email only, add a mobile to text it too"',
-       q.get('send') == 'Send them a new sign-in linkemail only, add a mobile to text it too' and q.get('sendShown') is True and not q.get('welcome'), q)
+    ok('ONE send button, "Send their sign-in link again" (the same link, Dean 6 Nov 2026), and with no mobile it says so: "email only, add a mobile to text it too"',
+       q.get('send') == 'Send their sign-in link againthe same link, email only, add a mobile to text it too' and q.get('sendShown') is True and not q.get('welcome'), q)
     ok('no "Resend their account email" or "Resend sign-in link" anywhere on the tab',
        not S.js(sid, '/Resend their account email|Resend sign-in link/.test(document.getElementById("paneProspects").innerText)'))
     shot(sid, 'after-1440-open', full=False)
@@ -198,7 +198,7 @@ try:
     ok('...and straight onto the call list: "Call them", a Call button that rings it, the tab count up by one',
        q.get('flag') == 'Call them' and q.get('call') == 'Call 0412 999 888' and
        int(S.js(sid, '(document.querySelector("#prTab .tabcount")||{}).textContent||"0"') or 0) == int(count0 or 0) + 1, [q, count0])
-    ok('...the send button now says "by email and text"', q.get('send') == 'Send them a new sign-in linkby email and text', q.get('send'))
+    ok('...the send button now says "by email and text"', q.get('send') == 'Send their sign-in link againthe same link, by email and text', q.get('send'))
     aud = [a for a in S.W.table('vp_admin_audit') if a.get('action') == 'prospect_details_changed']
     ok('...and one audit row says who changed what, from and to', len(aud) == 1 and aud[0].get('actor_label') == 'Dean'
        and aud[0]['detail']['changes']['mobile']['to'] == '0412 999 888', aud)

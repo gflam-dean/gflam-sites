@@ -379,6 +379,37 @@ def games(r):
     ok('the corner logo over a live game is the plain venueplay wordmark, never "venueplay tv"', c.get('plain') and not c.get('tv') and not c.get('words'), c)
     r.close_tab(tid)
 
+def setup_slide(r):
+    print('\n7. THE SET-UP SLIDE (item 102): a venue with no slides AND no logo gets "welcome to venueplay / Please set up your screen" with a QR and the link; any other venue keeps the card')
+    slug = r.W.info['slug']
+    logo = r.base + '/logos/ad-slides/tugun-tuesday.jpg'
+    def seed(slides, logo_url):
+        r.W.seed('vp_venue_screen', [{'venue_id': r.W.info['venue'], 'slug': slug, 'slides': slides, 'raffle': None, 'logo_url': logo_url}], replace=True)
+    probe = 'JSON.stringify({setup:!!document.querySelector("#tvAds .ad.show .tvsetup"),line:(document.querySelector("#tvAds .ad.show .tvline")||{}).textContent||"",link:(document.querySelector("#tvAds .ad.show .tvs-link")||{}).textContent||"",canvas:!!document.querySelector("#tvAds .ad.show .tvs-qr canvas")})'
+    for (w, h) in ((1920, 1080), (1280, 720)):
+        seed([], '')
+        tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=w, height=h)
+        ok('%dx%d: NO slides and NO logo: the set-up slide is on the wall' % (w, h), r.until(t, '!!document.querySelector("#tvAds .ad.show .tvsetup")', 40) is True, r.ask(t, probe))
+        time.sleep(1.0)
+        v = r.json(t, probe, {})
+        ok('%dx%d: the link is written out in full, the QR is drawn, and it is not the "Waiting for the host" card' % (w, h),
+           v.get('link') == 'venueplay.com.au/app/billing#screen' and v.get('canvas') is True and v.get('line') == '', v)
+        box = r.ask(t, '(function(){var e=document.querySelector("#tvAds .ad.show .tvs-in"),b=e.getBoundingClientRect(),W=innerWidth,H=innerHeight;return [b.left>=W*0.05,b.right<=W*0.95,b.top>=H*0.05,b.bottom<=H*0.95]})()')
+        ok('%dx%d: nothing in the outer 5%% overscan' % (w, h), box == [True, True, True, True], box)
+        fs = r.ask(t, 'parseFloat(getComputedStyle(document.querySelector("#tvAds .ad.show .tvs-h")).fontSize)')
+        ok('%dx%d: the headline is large (3.5%% of the width or more)' % (w, h), fs and fs >= w * 0.035, fs)
+        shot(r, t, 'tv-logo-7-setup-slide-%d' % w)
+        ok('no script errors on the TV', r.ask(t, 'window.__errs.length') == 0, r.ask(t, 'JSON.stringify(window.__errs)'))
+        r.close_tab(tid)
+    seed([], logo)
+    tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=W, height=H)
+    ok('a LOGO and no slides: today\'s "Waiting for the host" card, no set-up slide', r.until(t, '(function(){var s=document.querySelector("#tvAds .ad.show .tvline");return s&&s.textContent==="Waiting for the host"})()', 40) is True and r.ask(t, '!document.querySelector(".tvsetup")') is True)
+    r.close_tab(tid)
+    seed([{'tag': 'Raffle', 'head': 'Meat raffle', 'sub': 'Tickets at the bar'}], '')
+    tid, t = r.open('/tv?venue=' + slug, before=WATCH, width=W, height=H)
+    ok('SLIDES and no logo: the slides, no set-up slide', r.until(t, '!!document.querySelector("#tvAds .ad.show .adbig")', 40) is True and r.ask(t, '!document.querySelector(".tvsetup")') is True)
+    r.close_tab(tid)
+
 def main():
     if not take_lock():
         return 2
@@ -391,6 +422,7 @@ def main():
         games(r)
         stores(r)
         lobbies(r)
+        setup_slide(r)
         handover(r, pos)   # last: it ends by taking the venue off the books
     except Exception:
         import traceback; traceback.print_exc()

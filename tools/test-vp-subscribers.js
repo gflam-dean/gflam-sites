@@ -55,12 +55,21 @@ crypto = { subtle: {
 if (typeof AbortController === 'undefined') { AbortController = function () { this.signal = {}; this.abort = function () {}; }; }
 
 /* EVERY ADDRESS THE WORKER ASKED FOR, all suite long, so section 13 can say what was never called. */
-var ASKED = [], MISSING = {}, TURNSTILE_SAYS = null;
+var ASKED = [], MISSING = {}, TURNSTILE_SAYS = null, NO_PC = false, PC_REFUSED = 0;
 function RS(status, body) { return Promise.resolve({ ok: status >= 200 && status < 300, status: status, json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)); } }); }
 var rigFetch = globalThis.fetch;
 globalThis.fetch = function (url, opts) {
   var u = String(url); ASKED.push(u);
   var t = /\/rest\/v1\/([a-z_]+)/.exec(u);
+  /* BEFORE MIGRATION 141 (2 Nov 2026): vp_subscribers is there but has no postcode or au_state, and PostgREST
+     refuses any write naming them (PGRST204) and any read selecting them (42703), as it does live. */
+  if (t && t[1] === 'vp_subscribers' && NO_PC) {
+    var m0 = (opts && opts.method) || 'GET';
+    if ((m0 === 'POST' || m0 === 'PATCH') && /"(postcode|au_state)"\s*:/.test(String(opts.body || ''))) {
+      PC_REFUSED++; return RS(400, { code: 'PGRST204', message: "Could not find the 'postcode' column of 'vp_subscribers' in the schema cache" });
+    }
+    if (m0 === 'GET' && /select=[^&]*(postcode|au_state)/.test(decodeURIComponent(u))) { PC_REFUSED++; return RS(400, { code: '42703', message: 'column vp_subscribers.postcode does not exist' }); }
+  }
   if (t && MISSING[t[1]]) return RS(404, { code: 'PGRST205', message: "Could not find the table 'public." + t[1] + "' in the schema cache" });
   if (/challenges\.cloudflare\.com\/turnstile/.test(u)) { var tb = JSON.parse(opts.body); return RS(200, { success: TURNSTILE_SAYS === tb.response }); }
   return rigFetch(url, opts);
@@ -68,7 +77,7 @@ globalThis.fetch = function (url, opts) {
 function U(n) { return '54000000-0000-4000-8000-' + ('000000000000' + n).slice(-12); }
 var ADMIN = U(9), ACCTS = U(8), STAFF = U(7), OWNER = U(6);
 function world() {
-  DB = {}; sent.length = 0; FAIL = {}; MISSING = {}; TURNSTILE_SAYS = null;
+  DB = {}; sent.length = 0; FAIL = {}; MISSING = {}; TURNSTILE_SAYS = null; NO_PC = false; PC_REFUSED = 0;
   delete ENV.SUBSCRIBE_EMAILS; delete ENV.TURNSTILE_SECRET;
   ENV.VP_UNSUB_SECRET = 'subscribers-suite-secret';
   DB.vp_platform_admins = [{ auth_user_id: ADMIN, label: 'Dean', role: 'owner' }, { auth_user_id: ACCTS, label: 'Accounts', role: 'accounts' }, { auth_user_id: STAFF, label: 'Helper', role: 'staff' }];
@@ -322,10 +331,10 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
   check('HQ staff role: 403 and no file', ex0.status === 403 && !ex0.body.csv, ex0.status);
   var X = await call('/admin/subscribers/export', {}, AS(ACCTS));
   var lines = String(X.body.csv || '').trim().split('\n');
-  check('the accounts role gets every row plus a header', X.status === 200 && X.body.count === 9 && lines.length === 10 && /^Email,Venue \(as typed\),State,Signed up,Consent given,Last unsubscribed,Re-subscribed,Source/.test(lines[0]), lines[0]);
-  check('each row says its state and its match', lines.some(function (l) { return /^olive@deepwaterhotel\.com\.au,,active,.*,Deepwater Hotel,venue,email$/.test(l); })
-    && lines.some(function (l) { return /^held@pub\.com\.au,,held \(by hand\),/.test(l); })
-    && lines.some(function (l) { return /^came\.back@pub\.com\.au,,resubscribed,[^,]+,([^,]+),2026-09-01T00:00:00\.000Z,\1,/.test(l); }), lines.slice(0, 4));
+  check('the accounts role gets every row plus a header', X.status === 200 && X.body.count === 9 && lines.length === 10 && /^Email,Venue \(as typed\),Postcode,Venue state,State,Signed up,Consent given,Last unsubscribed,Re-subscribed,Source/.test(lines[0]), lines[0]);
+  check('each row says its state and its match', lines.some(function (l) { return /^olive@deepwaterhotel\.com\.au,,,,active,.*,Deepwater Hotel,venue,email$/.test(l); })
+    && lines.some(function (l) { return /^held@pub\.com\.au,,,,held \(by hand\),/.test(l); })
+    && lines.some(function (l) { return /^came\.back@pub\.com\.au,,,,resubscribed,[^,]+,([^,]+),2026-09-01T00:00:00\.000Z,\1,/.test(l); }), lines.slice(0, 4));
   check('a formula in a typed venue name is defused for the spreadsheet', lines.some(function (l) { return l.indexOf('"\'=HYPERLINK(""http://x"",""click"")"') >= 0; }), lines.filter(function (l) { return /formula/.test(l); }));
   check('the export is audited, with no addresses in the audit', DB.vp_admin_audit.some(function (a) { return a.action === 'subscribers_exported' && a.detail && a.detail.rows === 9; })
     && JSON.stringify(DB.vp_admin_audit).indexOf('@') < 0, DB.vp_admin_audit);
@@ -389,6 +398,75 @@ var VPS_CONSENT_TEXT = K('VPS_CONSENT_TEXT'), VPS_CONSENT_VERSION = K('VPS_CONSE
     && /add column if not exists last_unsubscribed_at/.test(sql) && !/delete from public\.vp_unsubscribes/i.test(sql));
   check('the routes are in the router, /subscribe public and both HQ routes behind vpaRequireAdmin(owner, accounts)',
     /path === '\/subscribe'\) return await vpsHandleSubscribe/.test(SRC) && /async function vpsHandleAdminList[^]*?vpaRequireAdmin\(request, env, \['owner', 'accounts'\]\)/.test(SRC));
+
+  section('15. THE VENUE NAME AND THE POSTCODE ARE NEEDED, AND THE STATE COMES FROM THE POSTCODE (2 Nov 2026, migration 141)');
+  var VENUE_NEED = K('VPS_VENUE_NEED'), PC_NEED = K('VPS_PC_NEED'), PC_BAD = K('VPS_PC_BAD');
+  world();
+  var nv = await sub({ email: 'jo@thebowlo.com.au', venue: '  ', postcode: '4217' });
+  check('the new form with no venue name: 400 with the friendly words, nothing kept', nv.status === 400 && nv.body.error === VENUE_NEED && rows().length === 0, nv);
+  var np = await sub({ email: 'jo@thebowlo.com.au', venue: "Jo's Bowlo", postcode: ' ' });
+  check('the new form with no postcode: 400, asked for it and told why, nothing kept', np.status === 400 && np.body.error === PC_NEED && /state/.test(PC_NEED) && rows().length === 0, np);
+  var badPcs = ['12', '42170', 'abcd', '4a17', '-421', '0000', '0123', '4217x'], badSaid = [];
+  for (var bi = 0; bi < badPcs.length; bi++) { var bp = await sub({ email: 'jo@thebowlo.com.au', venue: "Jo's Bowlo", postcode: badPcs[bi] }); badSaid.push(bp.status === 400 && bp.body.error === PC_BAD ? 'refused' : bp.status + ' ' + JSON.stringify(bp.body)); }
+  check('each of ' + badPcs.length + ' bad postcodes (too short, too long, letters, not a range any state owns) is refused, nothing kept',
+    badSaid.every(function (x) { return x === 'refused'; }) && rows().length === 0, badSaid);
+  var good = [['4217', 'QLD'], ['2000', 'NSW'], ['0800', 'NT'], ['2600', 'ACT'], [' 3 000 ', 'VIC'], ['5000', 'SA'], ['6000', 'WA'], ['7000', 'TAS'], ['9726', 'QLD']], goodSaw = [];
+  for (var gi = 0; gi < good.length; gi++) {
+    var gr = await sub({ email: 'g' + gi + '@pub' + gi + '.com.au', venue: 'Pub ' + gi, postcode: good[gi][0], au_state: 'WA' });
+    var grow = rows().filter(function (x) { return x.email === 'g' + gi + '@pub' + gi + '.com.au'; })[0] || {};
+    goodSaw.push(gr.status === 200 && grow.postcode === good[gi][0].replace(/\s/g, '') && grow.au_state === good[gi][1] ? 'ok' : [good[gi][0], gr.status, grow.postcode, grow.au_state].join(' '));
+  }
+  check('a good postcode is kept as 4 digits (a leading 0 kept, spaces gone) with the state worked out from it, whatever state the request claims',
+    goodSaw.every(function (x) { return x === 'ok'; }), goodSaw);
+  check('the venue name is kept with it', (rows()[0] || {}).venue_name === 'Pub 0', rows()[0]);
+  var leg = await sub({ email: 'old@page.com.au' });
+  var lrow = rows().filter(function (x) { return x.email === 'old@page.com.au'; })[0] || {};
+  check('a page loaded before the change (no postcode key at all) is still kept the old way, and its row names no new column',
+    leg.status === 200 && !!lrow.email && !('postcode' in lrow) && !('au_state' in lrow), [leg, lrow]);
+  // Already on the list without a postcode: the new form fills it in, once.
+  world();
+  DB.vp_subscribers.push({ id: 'p1', email: 'fill@pub.com.au', venue_name: null, source: 'home', utm: {}, status: 'active', created_at: '2026-10-31T00:00:00Z', consent_at: '2026-10-31T00:00:00Z' });
+  var f1 = await sub({ email: 'fill@pub.com.au', venue: 'Fill Pub', postcode: '2480' });
+  var f2 = await sub({ email: 'fill@pub.com.au', venue: 'Other Pub', postcode: '4000' });
+  var frow = rows()[0] || {};
+  check('already on the list: the new form fills in the missing venue and postcode, and a later one never overwrites them',
+    f1.status === 200 && f2.status === 200 && rows().length === 1 && frow.venue_name === 'Fill Pub' && frow.postcode === '2480' && frow.au_state === 'NSW', frow);
+  // BEFORE MIGRATION 141: nothing is dropped.
+  world(); NO_PC = true; ENV.SUBSCRIBE_EMAILS = 'on';
+  var b1 = await sub({ email: 'early@pub.com.au', venue: 'Early Pub', postcode: '4217' });
+  var erow = rows()[0] || {};
+  check('before migration 141: the sign-up is still {ok:true} and kept, without the postcode (the column is not there to hold it)',
+    b1.status === 200 && b1.body.ok === true && rows().length === 1 && erow.email === 'early@pub.com.au' && erow.venue_name === 'Early Pub' && !('postcode' in erow) && PC_REFUSED >= 1, [b1, erow, PC_REFUSED]);
+  check('and the confirmation still goes', sent.length === 1, sent.length);
+  DB.vp_subscribers.push({ id: 'h1', email: 'held@early.com.au', venue_name: null, source: 'home', utm: {}, status: 'held', held_reason: 'by hand', created_at: '2026-10-31T00:00:00Z', consent_at: '2026-10-31T00:00:00Z' });
+  var b2 = await sub({ email: 'held@early.com.au', venue: 'Held Pub', postcode: '3000' });
+  var hrow = rows().filter(function (x) { return x.id === 'h1'; })[0] || {};
+  check('before migration 141: signing up again (fresh consent) still puts them back on', b2.status === 200 && hrow.status === 'active' && hrow.venue_name === 'Held Pub', [b2, hrow]);
+  var L0 = await call('/admin/subscribers', {}, AS(ADMIN));
+  var X0 = await call('/admin/subscribers/export', {}, AS(ACCTS));
+  check('before migration 141: HQ > Subscribers and its CSV still answer, with the postcode blank',
+    L0.status === 200 && (L0.body.subscribers || []).length === 2 && (L0.body.subscribers || []).every(function (r) { return r.postcode === '' && r.au_state === ''; })
+    && X0.status === 200 && /^Email,Venue \(as typed\),Postcode,Venue state,/.test(X0.body.csv || ''), [L0.status, X0.status, (L0.body.subscribers || []).length]);
+  // After it: HQ shows them.
+  world();
+  await sub({ email: 'shown@pub.com.au', venue: 'Shown Pub', postcode: '4217' });
+  var L1 = await call('/admin/subscribers', {}, AS(ADMIN));
+  var X1 = await call('/admin/subscribers/export', {}, AS(ACCTS));
+  var s1 = (L1.body.subscribers || [])[0] || {};
+  check('after migration 141: HQ lists the postcode and its state, and the CSV carries both', s1.postcode === '4217' && s1.au_state === 'QLD'
+    && /\nshown@pub\.com\.au,Shown Pub,4217,QLD,active,/.test(X1.body.csv || ''), [s1, (X1.body.csv || '').slice(0, 300)]);
+  // The migration holds both, guarded, and the view carries them.
+  var sql141 = readFile('venueplay-backend/supabase/venueplay-141-subscriber-postcode.sql');
+  check('migration 141 adds postcode (4 digits) and au_state (one of the eight) if not there, does nothing before 134, and the monthly view carries both',
+    /add column if not exists postcode text/.test(sql141) && /add column if not exists au_state text/.test(sql141)
+    && /postcode is null or postcode ~ '\^\[0-9\]\{4\}\$'/.test(sql141) && /au_state in \('ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'\)/.test(sql141)
+    && /to_regclass\('public\.vp_subscribers'\) is null[\s\S]*?return;/.test(sql141)
+    && /select s\.id, s\.email, s\.venue_name, s\.source, s\.created_at, s\.postcode, s\.au_state/.test(sql141)
+    && /revoke all on public\.v_vp_subscribers_monthly from public, anon, authenticated;/.test(sql141) && !/create policy|grant [a-z, ]+ to (anon|authenticated)/i.test(sql141));
+  // The page says the same words as the Worker.
+  var pageJs = readFile('venueplay/app/vp-subscribe.js');
+  check("the form's own words for a missing venue, a missing postcode and a bad one are the Worker's, word for word",
+    [VENUE_NEED, PC_NEED, PC_BAD].every(function (w) { return pageJs.indexOf(JSON.stringify(w)) >= 0; }), [VENUE_NEED, PC_NEED, PC_BAD]);
 
   if (bad) throw new Error('subscribers: ' + bad + ' of ' + ran + ' failed');
   print(''); print('ALL ' + ran + ' CHECKS PASSED');

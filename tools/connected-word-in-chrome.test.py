@@ -48,8 +48,8 @@ def main():
             r.until(sid, '!!document.getElementById("statusText") && !!document.getElementById("statusDot")', 20)
             time.sleep(1.0)
             m = r.json(sid, PROBE_ON, {})
-            ok('%s: connected is the green dot alone, the word "Connected" is not seen' % page,
-               m.get('dot', 0) >= 6 and m.get('w', 9) <= 1 and m.get('said') == 'Connected', m)
+            ok('%s: connected shows nothing: no dot, and the word "Connected" is not seen (Dean, 7 Nov 2026)' % page,
+               m.get('dot', 9) < 1 and m.get('w', 9) <= 1 and m.get('said') == 'Connected', m)
             r.ask(sid, '(function(){var d=document.getElementById("statusDot"); d.classList.remove("on"); document.getElementById("statusText").textContent="Reconnecting"; return true;})()')
             time.sleep(0.4)   # vp-connbar.js follows the words through a MutationObserver
             b = r.json(sid, PROBE_BAR, {})

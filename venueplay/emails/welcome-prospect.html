@@ -14,11 +14,12 @@
   Everything else (the Terms tick, their TV, a first game, their card) lives in the app's first-run setup.
   It is transactional: they asked for it. Who we are and how to stop product emails are in the footer.
   Sections kept or stripped by vpaTplSections in the Worker: slides / noslides (did HQ load their screen
-  ads), sms / oneclick / nooneclick (how they sign in; exactly one is kept), samelogin (their mobile and email
-  are already one VenuePlay login at another venue), founding / standard (offer).
+  ads), sms / oneclick / viacode / nooneclick (how they sign in; exactly one is kept; viacode is the short link, which opens the text-code sign-in), samelogin (their mobile and email
+  are already one VenuePlay login at another venue), founding / foundingnodate / standard (offer: founding while their offer's
+  sign-in date has not passed, Dean 7 Nov 2026: the free month must START by that date to keep the offer price).
   Merge fields:
     {{greeting}} {{venue_name}} {{signin_url}} {{login_email}} {{login_mobile}} {{player_count}} (their plan's players, 10 unless told) {{cancel_url}}
-    {{player_rate}} {{offer_phrase}} {{offer_deadline}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
+    {{player_rate}} {{offer_phrase}} {{offer_deadline}} (the offer's own day, "30 November") {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (Dean, 29 Oct 2026: "Cheers," then whoever's mailbox the venue
     wrote to (sender_name from the autopilot), then VenuePlay, then venueplay.com.au; "The VenuePlay team"
     without one. The email itself always comes from hello@ and replies go to hello@.)
@@ -50,7 +51,7 @@
       <tr><td style="padding:22px 28px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
+            <p style="margin:0;font-size:16px;font-weight:700;color:#0A0A0B">Your login</p>
 <!--IF:sms-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's your mobile, <strong>{{login_mobile}}</strong>. Sign in with your mobile and we'll text you a code. No password, and no app to download.</p>
 <!--ENDIF:sms-->
@@ -60,6 +61,9 @@
 <!--IF:oneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The button below opens your account for you. No password, and no app to download.</p>
 <!--ENDIF:oneclick-->
+<!--IF:viacode-->
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we&#39;ll text a code to your mobile to sign you in. No password, and no app to download.</p>
+<!--ENDIF:viacode-->
 <!--IF:nooneclick-->
             <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Tap the button below and we'll email {{login_email}} a link that opens your account. No password, and no app to download.</p>
 <!--ENDIF:nooneclick-->
@@ -71,14 +75,18 @@
       </td></tr>
       <tr><td style="padding:22px 28px 0">
         <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">It takes about 5 minutes and walks you through everything.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Our emails come from <strong>hello@send.venueplay.com.au</strong>. If one lands in junk, mark it as not junk.</p>
 <!--IF:founding-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">To lock in the {{player_rate}} deal we have on at the moment, we&#39;ve set your account up at {{player_rate}} a player a month on your usual crowd, and it stays at {{player_rate}} for as long as you&#39;re with us.{{offer_deadline}} Your first month is free, and there&#39;s no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Sign in by {{offer_deadline}} to keep {{player_rate}} a player a month, for as long as you&#39;re with us. No lock-in.</p>
 <!--ENDIF:founding-->
+<!--IF:foundingnodate-->
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Then it&#39;s {{player_rate}} a player a month, for as long as you&#39;re with us. No lock-in.</p>
+<!--ENDIF:foundingnodate-->
 <!--IF:standard-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It's {{player_rate}} a player a month on your usual crowd, first month free, no lock-in.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month starts the first time you sign in. Then it&#39;s {{player_rate}} a player a month. No lock-in.</p>
 <!--ENDIF:standard-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is set up for {{player_count}} players to start with, and you can change that any time.</p>
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month is free, and it starts the first time you sign in. There&#39;s no card on your account, so nothing can be charged. You can add your card whenever suits, and we&#39;ll send you a reminder before your free month ends. If you don&#39;t add one, your account simply pauses and the offer price goes with it. If it&#39;s not for you, just hit <a href="{{cancel_url}}" style="color:#0A0A0B;font-weight:700">cancel</a>.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">There&#39;s no card on your account, so nothing can be charged. We&#39;ll remind you before your free month ends. Not for you? Just hit <a href="{{cancel_url}}" style="color:#0A0A0B;font-weight:700">cancel</a>.</p>
         <p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">{{signoff}}</p>
       </td></tr>
       <tr><td style="padding:26px 28px 26px">

@@ -51,8 +51,10 @@ print('\n== 1. the wall\'s one sentence: "One line wins a meat tray" ==');
   show('a number or a dollar prize gets no "a": "Four corners wins $50 bar tab", "One line wins 2 schooners"', wl('corners', '$50 bar tab') === 'Four corners wins $50 bar tab' && wl('one', '2 schooners') === 'One line wins 2 schooners', [wl('corners', '$50 bar tab'), wl('one', '2 schooners')]);
   show('no prize set yet (or the console\'s "the prize"): the pattern alone, "One line wins"', wl('one', '') === 'One line wins' && wl('one', 'the prize') === 'One line wins', [wl('one', ''), wl('one', 'the prize')]);
   show('it never says BINGO', !/bingo/i.test(['one', 'two', 'corners', 'full', 'odd'].map(function (p) { return wl(p, 'x'); }).join(' ')));
-  var demo = SCREEN.slice(SCREEN.indexOf('function demoNight'), SCREEN.indexOf('function hideChrome'));
-  show('the sales-page and store demo carries no album covers: no artwork address in its songs (Dean, 4 Nov 2026)', demo.indexOf('mzstatic') < 0 && demo.indexOf('"artworkUrl": "http') < 0 && /var SONGS = \[\{"title"/.test(demo));
+  /* The demo's songs live in the shared demo clock since 7 Nov 2026 (the wall and the phone read one list). */
+  var CLK = readFile('venueplay/app/vp-demo-clock.js');
+  var demo = SCREEN.slice(SCREEN.indexOf('function demoNight'), SCREEN.indexOf('function hideChrome')) + CLK.slice(CLK.indexOf('var MUSICAL={'), CLK.indexOf('window.VPDemoClock='));
+  show('the sales-page and store demo carries no album covers: no artwork address in its songs (Dean, 4 Nov 2026)', demo.indexOf('mzstatic') < 0 && !/artworkUrl"?\s*:\s*"http/.test(demo) && /var SONGS = C\.SONGS;/.test(demo) && /SONGS:\[\{ title:"Never Gonna Give You Up", artist:"Rick Astley" \}/.test(demo));
   show('and the wall draws our logo tile in the art spot on the demo, never an image', /if\(VP_DEMO\)\{   \/\* the demo draws our logo tile/.test(SCREEN) && /box\.classList\.toggle\("vplogo", !box\.classList\.contains\("listening"\)\)/.test(SCREEN));
   show('the wall writes it into its sentence line every time the pattern or prize is drawn', /\$\("tvWins"\)\.textContent=winsLine\(state\.pattern, state\.prize\);/.test(SCREEN));
 })();

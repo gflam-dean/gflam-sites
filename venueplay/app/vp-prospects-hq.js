@@ -36,7 +36,7 @@
   var API = root.VP_PROSPECTS_API || "https://api.venueplay.com.au";
   /* expanded: the rows opened by their status chip (Dean, 4 Nov 2026: compact rows); editing: the row whose Edit details
      form is open; byId: every row the tab shows, for hq.html's one send button (it words the email and text from it). */
-  var S = { data: null, ids: {}, byId: {}, open: null, editing: null, expanded: {}, loading: false, filter: "all", sort: "call" };
+  var S = { data: null, held: [], ids: {}, byId: {}, open: null, editing: null, expanded: {}, loading: false, filter: "all", sort: "call" };
 
   function prEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(id) { return doc.getElementById(id); }
@@ -105,6 +105,10 @@
     if (st === "cancelled") return "Cancelled " + when(p.cancelled_at);
     return "Not recorded yet";
   }
+  /* THE PRICE THEY GET (Dean, 7 Nov 2026: the offer needs the FIRST sign-in by its date). The Worker words it on its own
+     clock (vpaProspectRateInfo): the rate they got once signed in, or "Gets $2.50 if they sign in by 30 November, else
+     $3.00" while they have not. An older Worker sends no words. */
+  function rateText(p) { return (p && p.rate_words) ? String(p.rate_words) : "Not known yet"; }
   function phoneHtml(p) {
     if (p.phone && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.phone) + "</a>";
     if (p.mobile && p.tel) return '<a class="prtel" href="' + prEsc(p.tel) + '">' + prEsc(p.mobile) + "</a>";
@@ -121,7 +125,7 @@
     if (p.last_sign_in_at) return when(p.last_sign_in_at, true);
     return p.sign_in_known === false ? "Could not check just now" : "Never";
   }
-  function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : "HQ"; }
+  function sourceText(p) { return p.source === "autopilot" ? "Instantly autopilot" : (p.source === "self" ? "Signed up on the website" : "HQ"); }
   function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").replace(/\/.*$/, ""); }
   /* Edit details (Dean, 4 Nov 2026): name, email, mobile and phone, checked again by the Worker (POST /admin/prospect/update). */
   function editHtml(p) {
@@ -161,8 +165,10 @@
              "Send them a new sign-in link" (hq.html hqSigninLink) emails it and, with a mobile, texts it too; a fresh
              30 days. Not after Cancel (they said no). View as is hq.html's own viewAs (window.hqViewAs). */
           var acts = (p.tel ? '<a class="mini prcall" href="' + prEsc(p.tel) + '">Call ' + prEsc(p.phone || p.mobile || "") + "</a>" : "") +
-            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send them a new sign-in link' +
-              '<span class="prvia">' + (p.mobile ? "by email and text" : "email only, add a mobile to text it too") + "</span></button>" : "") +
+            (st !== "cancelled" ? '<button type="button" class="mini prsend" data-pr-signin="' + prEsc(p.venue_id) + '">Send their sign-in link again' +
+              '<span class="prvia">' + (p.mobile ? "the same link, by email and text" : "the same link, email only, add a mobile to text it too") + "</span></button>" : "") +
+            /* Dean, 6 Nov 2026: the ONLY way to give them more time, kept apart and labelled so it is never pressed by mistake. */
+            (st === "not_signed_in" ? '<button type="button" class="mini" data-pr-fresh="' + prEsc(p.venue_id) + '">Start a fresh 30 days</button>' : "") +
             '<button type="button" class="mini" data-pr-edit="' + prEsc(p.venue_id) + '">Edit details</button>' +
             (!p.called && !done ? '<button type="button" class="mini' + (p.flag ? " win" : "") + '" data-pr-called="' + prEsc(p.venue_id) + '">Called</button>' : "") +
             (p.venue_id ? '<button type="button" class="mini" data-pr-viewas="' + prEsc(p.venue_id) + '">View as</button>' : "");
@@ -189,9 +195,15 @@
         '<div><span class="k">Website</span>' + (/^https?:\/\//i.test(String(p.website || "")) ? '<a href="' + prEsc(p.website) + '" target="_blank" rel="noopener">' + prEsc(siteHost(p.website)) + "</a>" : "None") + "</div>" +
         '<div><span class="k">Set up</span>' + prEsc(when(p.created_at)) + " (" + prEsc(ago(p.days_since_setup)) + "), by " + prEsc(sourceText(p)) + "</div>" +
         '<div><span class="k">Welcome email</span>' + prEsc(welcomeText(p.welcome)) + "</div>" +
+        /* Where it got to (Dean, 5 Nov 2026: "make sure our emails are making it somewhere"): the Worker's words, from
+           Resend, the bounce record and their own sign-in link. A bounce or a cancel is red, a sign-in green. */
+        (p.delivery && p.delivery.words ? '<div><span class="k">Delivery</span><span data-pr-delivery="' + prEsc(p.delivery.welcome || "") + '" style="' +
+          (/^(bounced|complained|cancelled|failed)$/.test(p.delivery.welcome || "") && !p.delivery.signed_in_at && !p.delivery.link_opened_at ? "color:#b3261e;font-weight:700" :
+           p.delivery.signed_in_at ? "color:#1b7a3a;font-weight:700" : "") + '">' + prEsc(p.delivery.words) + "</span></div>" : "") +
         (done ? "" : '<div><span class="k">Last sign-in</span>' + prEsc(signInText(p)) + "</div>") +
         '<div><span class="k">First sign-in</span><span data-pr-first="1">' + prEsc(firstSignInText(p)) + "</span></div>" +
         '<div><span class="k">Free month ends</span><span data-pr-ends="1">' + prEsc(freeMonthText(p)) + "</span></div>" +
+        '<div><span class="k">Price</span><span data-pr-rate="1">' + prEsc(rateText(p)) + "</span></div>" +
         '<div><span class="k">Where</span>' + prEsc([p.postcode, p.state].filter(Boolean).join(" ") || "Not known") + "</div>" +
       "</div>" + called + form + "</div></div>";
   }
@@ -206,6 +218,27 @@
       " its last " + prEsc(d.last_days || 3) + " days are highlighted." +
       (d.free_month_ready === false ? " Free months are not recorded until migration 127 is run." : "") +
       (d.signed_up ? " " + prEsc(d.signed_up) + " earlier prospect" + (d.signed_up === 1 ? " has" : "s have") + " signed up." : "") + "</div>";
+  }
+  /* SIGN-UPS TO CHECK (Dean, 5 and 6 Nov 2026, INBOX 81): from the offer page's no-card start. An account made for a
+     venue NOT on our licensed list (a name and a postcode are enough for now) waits here until HQ taps Checked; a start
+     held because the mobile or email is already on venueplay (one free month per mobile and per email) waits for
+     Approve or Refuse. The text code to their mobile has passed. Approve makes the
+     normal prospect account (10 players, no card) and sends the normal welcome; Refuse makes nothing. One tap each,
+     owner or accounts only (POST /admin/signup-starts, /admin/signup-start/decide). Each also has a help desk ticket. */
+  function heldHtml(h) {
+    if (!h || !h.length) return "";
+    return '<div class="panel pad prheld" id="prHeld"><div class="lblk" style="margin:0 0 6px">Sign-ups to check <span class="mono">' + h.length + "</span></div>" +
+      '<div class="note" style="margin:0 0 10px">From "Have a play for free" on the offer page. Their mobile is proven by the text code. A venue not on our licensed list already has its account: look it over and tap Checked. A held one (its mobile or email is already on venueplay) has nothing made yet: Approve makes the normal account and sends the welcome.</div>' +
+      h.map(function (r) {
+        return '<div class="prheldrow"><div class="prname">' + prEsc(r.venue_name) + ' <span class="mono">' + prEsc(r.postcode) + (r.au_state ? " " + prEsc(r.au_state) : "") + "</span>" +
+          '<span class="prsub">' + prEsc(r.contact_name) + ", " + prEsc(r.email) + ", " + prEsc(r.mobile) + " &middot; " + prEsc(when(r.created_at, true)) +
+          (r.ticket_no ? " &middot; ticket #" + prEsc(r.ticket_no) : "") + "</span>" +
+          '<span class="prwhy">' + prEsc(r.why) + "</span></div>" +
+          (r.made
+            ? '<div class="practs" style="margin-top:6px"><button class="btn ghost sp" type="button" data-st-checked="' + prEsc(r.id) + '">Checked</button></div></div>'
+            : '<div class="practs" style="margin-top:6px"><button class="btn sp" type="button" data-st-approve="' + prEsc(r.id) + '">Approve</button>' +
+              '<button class="btn ghost sp" type="button" data-st-refuse="' + prEsc(r.id) + '">Refuse</button></div></div>');
+      }).join("") + "</div>";
   }
   /* Everyone the tab can show: the prospects (the Worker's order, who to ring first), then Card added. */
   function allOf(d) { return (d.prospects || []).concat(d.card_added || []); }
@@ -241,6 +274,9 @@
   }
   function listHtml(d) {
     if (d.error) return '<div class="panel pad"><div class="empty" style="border:none;background:none">' + prEsc(d.error) + "</div></div>";
+    return heldHtml(S.held) + listOnly(d);
+  }
+  function listOnly(d) {
     var all = allOf(d);
     if (!all.length) return headHtml(d) + '<div class="panel pad"><div class="empty" style="border:none;background:none">No prospects waiting. Set one up from Venues.</div></div>';
     if (FILTERS.indexOf(S.filter) === -1) S.filter = "all";
@@ -313,6 +349,8 @@
       ".badge.prst-paused{background:rgba(229,72,77,.12);color:#FF8A8E;border:1px solid rgba(229,72,77,.4)}" +
       ".badge.prst-cancel{background:rgba(154,154,164,.10);color:var(--faint);border:1px solid rgba(154,154,164,.3);text-decoration:line-through}" +
       ".prcard.last3{border-left-color:var(--roll);box-shadow:inset 0 0 0 1px rgba(245,165,36,.35)}" +
+      ".prheld{margin:0 0 14px;border-left:3px solid var(--pink)}.prheldrow{padding:10px 0;border-top:1px solid var(--line-2,rgba(255,255,255,.08))}" +
+      ".prheldrow .prname{display:block}" +
       ".prlast{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:8px;background:rgba(245,165,36,.14);color:var(--roll);font-weight:700;font-size:13px}" +
       "@media (max-width:560px){.prbar select{max-width:none;flex-basis:100%}.prlbl{flex-basis:100%;margin-top:4px}.prname{flex-basis:100%}.practs > *{flex:1 1 auto}}" +
       "</style><div id=\"prBody\"><div class=\"note\">Loading prospects...</div></div>";
@@ -330,7 +368,9 @@
   }
   function load() {
     if (S.loading) return S.loading;
-    S.loading = post("/admin/prospects", {}).then(function (d) {
+    S.loading = Promise.all([post("/admin/prospects", {}), post("/admin/signup-starts", {})]).then(function (both) {
+      var d = both[0], h = both[1] || {};
+      S.held = (h && h.ok && Array.isArray(h.held)) ? h.held : [];   // before migration 170: none, and nothing said
       S.loading = false;
       var tab = $("prTab");
       if (d._status === 401 || d._status === 403) { if (tab) tab.hidden = true; return d; }   // not for this HQ role
@@ -340,7 +380,7 @@
       (d.prospects || []).forEach(function (p) { S.ids[p.venue_id] = true; });
       S.byId = {};
       allOf(d).forEach(function (p) { S.byId[p.venue_id] = p; });
-      setCount(d.error ? 0 : (d.follow_up_count || 0));
+      setCount(d.error ? 0 : (d.follow_up_count || 0) + S.held.length);
       draw();
       try { doc.dispatchEvent(new root.CustomEvent("vp-prospects")); } catch (e) {}
       return d;
@@ -362,12 +402,27 @@
       load().then(function () { if (j.warnings && j.warnings.length && root.vpTell) root.vpTell("Saved.\n\n" + j.warnings.join("\n")); });
     });
   }
+  function decide(t) {
+    var yes = t.hasAttribute("data-st-approve"), chk = t.hasAttribute("data-st-checked");
+    var sid = t.getAttribute(yes ? "data-st-approve" : chk ? "data-st-checked" : "data-st-refuse");
+    var label = yes ? "Approve" : chk ? "Checked" : "Refuse";
+    t.disabled = true; t.textContent = yes ? "Approving..." : chk ? "Saving..." : "Refusing...";
+    post("/admin/signup-start/decide", { start_id: sid, decision: yes ? "approve" : chk ? "checked" : "refuse" }).then(function (j) {
+      if (j.error) { t.disabled = false; t.textContent = label; if (root.vpTell) root.vpTell(j.error); else t.title = j.error; return; }
+      S.loading = false;
+      load().then(function () {
+        if (yes && root.vpTell) root.vpTell("Approved. The account is made" + (j.welcome_sent ? " and the welcome is on its way." : ".") +
+          (j.warnings && j.warnings.length ? "\n\n" + j.warnings.join("\n") : ""));
+      });
+    });
+  }
   function onClick(e) {
     var t = e.target.closest && e.target.closest("button"); if (!t) return;
     if (t.hasAttribute("data-pr-toggle")) { var tid = t.getAttribute("data-pr-toggle"); if (S.expanded[tid]) delete S.expanded[tid]; else S.expanded[tid] = true; draw(); return; }
     if (t.hasAttribute("data-pr-edit")) { S.editing = t.getAttribute("data-pr-edit"); S.open = null; draw(); if ($("prEdName")) $("prEdName").focus(); return; }
     if (t.hasAttribute("data-pr-edit-close")) { S.editing = null; draw(); return; }
     if (t.hasAttribute("data-pr-edit-save")) { editSave(t); return; }
+    if (t.hasAttribute("data-st-approve") || t.hasAttribute("data-st-refuse") || t.hasAttribute("data-st-checked")) { decide(t); return; }
     if (t.hasAttribute("data-pr-called")) { S.open = t.getAttribute("data-pr-called"); S.editing = null; draw(); if ($("prNote")) $("prNote").focus(); return; }
     if (t.hasAttribute("data-pr-close")) { S.open = null; draw(); return; }
     // View as: hq.html's own viewAs (window.hqViewAs), the one the Venues row calls. Never a second copy here.
@@ -375,6 +430,7 @@
     // The same function as the Venues row's button (hq.html hqSigninLink), so both say the same thing; the row tells it
     // their email, mobile and booked welcome, so it can say how the link will go before it goes.
     if (t.hasAttribute("data-pr-signin")) { var sid = t.getAttribute("data-pr-signin"); if (typeof root.hqSigninLink === "function") root.hqSigninLink(sid, t, S.byId[sid]); return; }
+    if (t.hasAttribute("data-pr-fresh")) { var fid = t.getAttribute("data-pr-fresh"); if (typeof root.hqFreshWindow === "function") root.hqFreshWindow(fid, t, S.byId[fid]); return; }
     var id = t.getAttribute("data-pr-save") || t.getAttribute("data-pr-undo");
     if (!id) return;
     var undo = t.hasAttribute("data-pr-undo");
@@ -401,6 +457,6 @@
   }
 
   root.VPProspects = { load: load, isProspect: function (id) { return !!S.ids[id]; }, get: function (id) { return S.byId[id] || null; },
-    _t: { cardHtml: cardHtml, listHtml: listHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick, editHtml: editHtml } };
+    _t: { cardHtml: cardHtml, listHtml: listHtml, heldHtml: heldHtml, when: when, S: S, statusLabel: statusLabel, onClick: onClick, editHtml: editHtml } };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", start); else if (doc) start();
 })(typeof window !== "undefined" ? window : this);
