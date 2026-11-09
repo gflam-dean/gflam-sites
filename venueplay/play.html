@@ -2620,7 +2620,7 @@
       /* The demo venue is Tugun Bowls Club, as on the wall: its logo top left (the new look's header). */
       (function(){ var lg=$("venueLogo"); if(!lg) return; var src="/logos/venue-tugun-bowls.png";
         lg.src=src; lg.classList.remove("hidden");
-        if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone");
+        try{ VPVenueLogo.fit(lg,"phone"); }catch(e){}
         try{ VPVenueLogo.headerName($("hdrVenueName"), src, "Tugun Bowls Club"); }catch(e){} })();
       var CELLS=[[5,null,23,null,42,null,64,null,88],
                  [null,13,null,31,null,53,null,71,90],
