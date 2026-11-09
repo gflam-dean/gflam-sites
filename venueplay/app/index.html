@@ -1532,7 +1532,14 @@
     /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new
        venue's owner or manager may be asked ONE short optional thing the Account page lacks, as a sheet over the
        console. Never more than one a sign-in; "Not now" always works. It never blocks the console. */
-    if(window.VPFirstRun && VPFirstRun.ask && window.VP && VP.getClient){ try{ VPFirstRun.ask(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); }catch(e){} }
+    /* EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO (Dean, 9 Nov 2026): on a sign-in, the owner or a manager only,
+       never while a game is running here or on another device, already filled in with the venue's own settings so
+       clicking through changes nothing; "Not ready yet? Remind me next time" waits for the next sign-in. It takes the
+       place of the one later-sign-in question; the console carries on underneath. */
+    if(window.VPGameSetup && VPGameSetup.wantsReview && VPGameSetup.wantsReview(__ctx) && window.VP && VP.getClient){
+      try{ VPGameSetup.review(__ctx, { client:VP.getClient(), VP:VP, busy:function(){ return !!liveNightElsewhere(); } }).catch(function(){}); }catch(e){}
+    }
+    else if(window.VPFirstRun && VPFirstRun.ask && window.VP && VP.getClient){ try{ VPFirstRun.ask(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); }catch(e){} }
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();

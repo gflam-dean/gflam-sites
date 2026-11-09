@@ -36,6 +36,14 @@
   var ORDER = ["trivia", "musical", "bingo", "raffles", "members"];
   var SETUP_STATES = { done: 1, later: 1, shown: 1 };
   var OTHER_MAX = 120, OTHER_EACH = 40;
+  var REVIEW_WAIT = 4 * 3600 * 1000;   // "remind me": the next sign-in (a sign-in lasts at most 4 hours)
+  /* the website scan's venue type (vp_venues.venue_type, next week's scan field): pub or club when it says so */
+  function scanKind(v) {
+    var t = String((v && v.venue_type) || "").toLowerCase();
+    if (/\b(club|rsl|bowls|leagues|sailing|golf|surf)\b/.test(t)) return "club";
+    if (/\b(pub|hotel|tavern|inn|bar)\b/.test(t)) return "pub";
+    return null;
+  }
   /* WHAT VENUES TELL US THEY RUN BESIDES OUR GAMES (Dean, round 7b point 1): suggested as they type, spelt properly
      ("karaoke" becomes "Karaoke"). Anything else they type is kept as typed, first letter capital. */
   var OTHER_KNOWN = ["Karaoke", "Pool comp", "Darts", "Poker night", "Live music", "Chase the Ace", "Jokers wild", "Keno", "Footy tipping", "Bowls", "Meat raffle", "Open mic", "Comedy night", "Line dancing"];
@@ -62,9 +70,9 @@
     P + "*{box-sizing:border-box}",
     P + ".vpgs-box{max-width:560px;margin:0 auto;padding:12px 0 28px}",
     P + ".vpgs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:0 0 10px}",
-    P + ".vpgs-logo{display:block;height:20px;width:auto}",
+    P + ".vpgs-logo{display:block;height:26px;width:auto}",   /* a touch bigger (Dean, round 9 point 2) */
     P + ".vpgs-step{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px}",
-    P + ".vpgs-count{margin:0;font:800 14px " + HEAD + ";letter-spacing:.08em;text-transform:uppercase;color:" + C.pink + "}",
+    P + ".vpgs-count{margin:0;font:800 15px " + HEAD + ";color:" + C.pinkSoft + "}",   /* sentence case, no spaced capitals (no AI look) */
     P + ".vpgs-bar{display:flex;gap:4px;margin:0 0 12px}" + P + ".vpgs-bar i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.14)}" + P + ".vpgs-bar i.on{background:" + C.pink + "}",
     P + ".vpgs-card{background:" + C.ink2 + ";border:1px solid " + C.line + ";border-radius:16px;padding:18px 16px}",
     P + "h2.vpgs-title{margin:0 0 6px;font:800 21px/1.25 " + HEAD + ";color:#FFFFFF}",
@@ -120,7 +128,7 @@
     P + ".vpgs-msg{margin:10px 0 0;font-size:15px;line-height:1.45;color:" + C.pinkSoft + "}" + P + ".vpgs-msg:empty{display:none}",
     /* "Not ready yet?" on a phone: a full-width quiet button, easy to hit with a thumb (Dean, round 3) */
     P + ".vpgs-link{display:block;width:100%;margin:12px 0 0;padding:10px 12px;min-height:44px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:center}",
-    P + ".vpgs-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + ";letter-spacing:.04em;text-transform:uppercase}",
+    P + ".vpgs-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + "}",
     P + ".vpgs-note{margin:0 0 10px;font-size:15px;line-height:1.45;color:" + C.faint + "}",
     P + ".vpgs-ask{margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
     P + ".vpgs-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}" + P + ".vpgs-tags:empty{display:none}",
@@ -216,7 +224,20 @@
     "@media (min-width:760px){" + P + ".vpgs-box{max-width:680px;padding-top:16px}" + P + ".vpgs-card{padding:20px 24px}" + P + "h2.vpgs-title{font-size:24px}}" +
     "@media (min-width:1100px){" + P + ".vpgs-box{max-width:820px;padding-top:20px}" + P + ".vpgs-card{padding:24px 32px}" + P + "h2.vpgs-title{font-size:28px}" + P + ".vpgs-lead{font-size:16.5px;margin:0 0 10px}" +
       P + ".vpgs-rows>.vpgs-row>.vpgs-lab{font-size:17px}" + P + ".vpgs-rows>.vpgs-row{padding:7px 0}" + P + ".vpgs-in{min-height:44px;font-size:16px}" + P + ".vpgs-seg button{min-height:44px;font-size:15.5px}" + P + ".vpgs-chip{min-height:46px;font-size:15.5px}" +
-      P + ".vpgs-sec h3{font-size:16px}" + P + ".vpgs-sec .sub{font-size:15px}" + P + ".vpgs-btn{min-height:46px;font-size:16px}" + P + ".vpgs-btn.big{min-height:50px}" + P + ".vpgs-list li{font-size:16px;padding:9px 0}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{width:340px}}"
+      P + ".vpgs-sec h3{font-size:16px}" + P + ".vpgs-sec .sub{font-size:15px}" + P + ".vpgs-btn{min-height:46px;font-size:16px}" + P + ".vpgs-btn.big{min-height:50px}" + P + ".vpgs-list li{font-size:16px;padding:9px 0}" + P + ".vpgs-rows>.vpgs-row.cmpw>.vpgs-ctl{width:340px}}" +
+      "@media (min-width:760px){" + P + ".vpgs-logo{height:30px}}",
+    /* ROUND 10 (Dean, feedback 9). Time boxes are a list of times on the hour and half hour, pm first, so typing 7 gives
+       7:00 pm (point 5); no clock icon to lose in dark mode. */
+    P + "select.vpgs-tsel{-webkit-appearance:none;appearance:none;color-scheme:dark;padding-right:28px;background:" + C.ink + " url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E\") right 10px center/12px no-repeat;cursor:pointer}" +
+    /* a usual prize dropping onto its line (point 14): the box glows pink for a moment */
+    "@keyframes vpgsFill{0%{background:rgba(255,31,142,.45);border-color:" + C.pink + "}100%{background:" + C.ink + ";border-color:rgba(255,255,255,.18)}}" + P + ".vpgs-in.vpgs-filled{animation:vpgsFill .9s ease-out}" +
+    "@media (prefers-reduced-motion:reduce){" + P + ".vpgs-in.vpgs-filled{animation:none;border-color:" + C.pink + "}}" +
+    /* More settings: the whole line opens it, an easy thumb target (point 16) */
+    P + ".vpgs-sech{cursor:pointer;min-height:52px;padding:4px 0}" + P + ".vpgs-sech .vpgs-add{min-height:44px;min-width:92px}" +
+    P + ".vpgs-time .vpgs-addlink{margin:0;grid-column:1/-1;justify-self:start}" +
+    P + ".vpgs-raf{padding:8px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-raf:first-child{border-top:none;padding-top:0}" + P + ".vpgs-raf h4{margin:0 0 6px;font:800 15px " + HEAD + ";color:#FFFFFF}" +
+    P + ".vpgs-raf .vpgs-rq{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-raf .vpgs-rq .vpgs-in{width:88px}" + P + ".vpgs-raf .vpgs-rq .vpgs-seg{width:136px}" +
+    P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -329,6 +350,26 @@
   }
   /* "19:30" -> "7:30pm" */
   function timeWords(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); if (!m) return ""; var h = +m[1], ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return h + (m[2] === "00" ? "" : ":" + m[2]) + ap; }
+  /* A TIME BOX (Dean, round 9 point 5): the hour and the half hour only, pm first, so typing "7" picks 7:00 pm and
+     typing "10" picks 10:00 pm; a time saved before that is not on the half hour is kept as its own choice. Its value is
+     "HH:MM" (24 hour) or "" until one is picked, the same as the time input it replaces. */
+  var HALF_HOURS = (function () { var out = []; for (var i = 0; i < 48; i++) { var m = (i + 24) % 48, hh = Math.floor(m / 2); out.push((hh < 10 ? "0" : "") + hh + ":" + (m % 2 ? "30" : "00")); } return out; })();   // 12:00 (noon) .. 23:30, then 00:00 .. 11:30
+  function timeLabel(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); if (!m) return ""; var h = +m[1], ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12; return h + ":" + m[2] + " " + ap; }
+  function timeSelect(el, value, id, label) {
+    var sel = el("select", "vpgs-in vpgs-tsel"); if (id) sel.id = id; sel.setAttribute("aria-label", label || "Start time");
+    var list = HALF_HOURS.slice(); if (/^\d\d:\d\d$/.test(value || "") && list.indexOf(value) < 0) list.unshift(value);
+    var ph = el("option", null, "Pick a time"); ph.value = ""; if (!value) ph.selected = true; sel.appendChild(ph);
+    list.forEach(function (t) { var o = el("option", null, timeLabel(t)); o.value = t; if (t === value) o.selected = true; sel.appendChild(o); });
+    sel.value = value && list.indexOf(value) >= 0 ? value : "";
+    return sel;
+  }
+  /* A box's value, for a time list too: a time not in the list becomes its own choice rather than being lost */
+  function setBox(box, v) {
+    if (box && box.tagName === "SELECT" && v && !Array.prototype.some.call(box.children, function (o) { return o.value === v; })) {
+      var o = (box.ownerDocument || root.document).createElement("option"); o.value = v; o.textContent = timeLabel(v) || v; box.insertBefore(o, box.children[1] || null);
+    }
+    if (box) box.value = v;
+  }
   /* the prizes typed on a game's screen, for the shared list */
   function bankOf(vals) { return ((vals && (vals.prize_list || vals.prizes)) || []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 8); }
   function otherList(t) {
@@ -352,6 +393,8 @@
     if (o) out.other = o;
     if (a && (a.venue_kind === "pub" || a.venue_kind === "club" || a.venue_kind === "other")) out.venue_kind = a.venue_kind;
     if (a && typeof a.prizes_shared === "boolean") out.prizes_shared = a.prizes_shared;
+    if (a && typeof a.meal_deals === "boolean") out.meal_deals = a.meal_deals;   // advertise their meal deals (round 10)
+    if (a && a.review === "done") out.review = "done";   // the games setup gone through: an existing venue is not asked again
     if (a && ({ keep: 1, second: 1, none: 1 })[a.members_over]) out.members_over = a.members_over;   // members draws over the most (Dean, round 7b point 17)
     if (a && a.counts && typeof a.counts === "object") { var cn = {}; ORDER.forEach(function (g) { var n = a.counts[g]; if (Number.isInteger(n) && n >= 2 && n <= 5) cn[g] = n; }); if (Object.keys(cn).length) out.counts = cn; }
     if (a && Array.isArray(a.prize_bank)) { var pb = a.prize_bank.filter(function (x) { return typeof x === "string" && x.trim(); }).map(function (x) { return x.trim().slice(0, 80); }).slice(0, 8); if (pb.length) out.prize_bank = pb; }
@@ -411,7 +454,8 @@
   function saveMembers(deps, vid, vals) {
     var body = { venue_id: vid };
     Object.keys(vals).forEach(function (k) { if (k.indexOf("__") !== 0 && vals[k] !== "" && vals[k] != null) body[k] = vals[k]; });
-    if (!body.name) return Promise.resolve({ ok: false, error: "Add your draw day (or a name) first." });
+    if (!body.name && !body.draw_id) return Promise.resolve({ ok: false, error: "Add your draw day (or a name) first." });
+    if (body.draw_id) delete body.venue_id;   // an existing draw is updated by its id
     return gameApi(deps, "POST", "/host/members/settings", body).then(function (r) {
       if (r.ok) return { ok: true };
       return { ok: false, error: (r.json && r.json.error) || "We could not save the draw just now. Try again, or set it up in the members draw console." };
@@ -447,8 +491,9 @@
     var hdr = doc.querySelector ? doc.querySelector("header") : null, hdrWas = hdr && hdr.style ? hdr.style.visibility : null;
     if (hdr && hdr.style) hdr.style.visibility = "hidden";
     function mainOf(n) { var kids = n.children || []; for (var i = 0; i < kids.length; i++) { var k = kids[i]; if (k.tagName === "BUTTON" && /(^| )pink( |$)/.test(k.className || "")) return k; var d = mainOf(k); if (d) return d; } return null; }
+    var solo = false;   // the first screen: its one main button only, no top Next and no Close (Dean, round 9 point 1)
     function syncTop() {
-      var m = mainOf(foot);
+      var m = solo ? null : mainOf(foot);
       topNext.style.visibility = m ? "" : "hidden";
       topNext.textContent = m && /^Go to my console/.test(m.textContent) ? "Done" : "Next";
       topNext.disabled = !!(m && m.disabled);
@@ -456,7 +501,8 @@
     }
     topNext.addEventListener("click", function () { var m = mainOf(foot); if (m && !m.disabled) m.click(); });
     if (root.setInterval) root.setInterval(function () { var m = mainOf(foot); if (m) topNext.disabled = !!m.disabled; }, 400);   // follows the bottom button when it waits for an answer
-    function clear() { while (body.firstChild) body.removeChild(body.firstChild); while (foot.firstChild) foot.removeChild(foot.firstChild); if (shell.scrollTop) shell.scrollTop = 0; Promise.resolve().then(syncTop); }
+    function only(on) { solo = !!on; x.style.visibility = solo ? "hidden" : ""; syncTop(); }
+    function clear() { solo = false; x.style.visibility = ""; while (body.firstChild) body.removeChild(body.firstChild); while (foot.firstChild) foot.removeChild(foot.firstChild); if (shell.scrollTop) shell.scrollTop = 0; Promise.resolve().then(syncTop); }
     function btn(label, kind, id, onClick) { var b = el("button", "vpgs-btn " + kind, label); b.setAttribute("type", "button"); if (id) b.id = id; b.addEventListener("click", onClick); return b; }
     function close() { if (shell.parentNode) shell.parentNode.removeChild(shell); if (hdr && hdr.style) hdr.style.visibility = hdrWas || ""; }
     /* the step line: words, and a bar of n parts with the first `on` lit */
@@ -465,16 +511,28 @@
       while (bar.firstChild) bar.removeChild(bar.firstChild);
       for (var i = 0; i < (n || 0); i++) { var s = el("i", i < on ? "on" : ""); bar.appendChild(s); }
     }
-    return { el: el, shell: shell, count: count, title: title, body: body, foot: foot, x: x, clear: clear, btn: btn, close: close, step: step, topNext: topNext, syncTop: syncTop };
+    return { el: el, shell: shell, count: count, title: title, body: body, foot: foot, x: x, clear: clear, btn: btn, close: close, step: step, topNext: topNext, syncTop: syncTop, only: only };
   }
 
   /* YOUR USUAL PRIZES, ONE TAP EACH (Dean, round 7b points 10 and 15): the prizes typed in an earlier game show as small
      buttons above a prize list; a tap adds that prize, in the order tapped. Nothing is filled in for them. */
-  function usualChips(F, ctx, onPick, id) {
-    if (!ctx.usual || !ctx.usual.length) return null;
+  /* A PRIZE THAT DROPS ONTO ITS LINE SHOWS IT (Dean, round 9 point 14): the box glows pink for a moment */
+  function flash(box) {
+    if (!box) return;
+    box.className = String(box.className || "").replace(/ ?vpgs-filled/g, "");
+    void box.offsetWidth;   // a reflow, so the glow plays again on a second tap
+    box.className += " vpgs-filled";
+  }
+  function each2(n, fn) { fn(n); Array.prototype.forEach.call(n.children || [], function (c) { each2(c, fn); }); }
+  function findIn(n, attr) { var hit = null; each2(n, function (x) { if (!hit && x.getAttribute && x.getAttribute(attr) != null) hit = x; }); return hit; }
+  var WINNERS_CHOICE = "Winner's choice";   // the winner picks their own prize (Dean, round 9 point 20)
+  function usualChips(F, ctx, onPick, id, extra) {
+    var words = (ctx.usual || []).slice(0, 8);
+    (extra || []).forEach(function (w) { if (words.indexOf(w) < 0) words.push(w); });
+    if (!words.length) return null;
     var box = F.el("div", "vpgs-usual"); box.id = id;
-    box.appendChild(F.el("span", "vpgs-usual-l", "Tap to add a usual prize:"));
-    ctx.usual.slice(0, 8).forEach(function (w) {
+    box.appendChild(F.el("span", "vpgs-usual-l", ctx.usual && ctx.usual.length ? "Tap to add a usual prize:" : "Tap to add:"));
+    words.forEach(function (w) {
       var b = F.el("button", "vpgs-uchip", "+ " + w); b.setAttribute("type", "button"); b.setAttribute("data-item", w);
       b.setAttribute("draggable", "true");   // on a computer: drag it onto a round's box (Dean, round 8b point 8)
       b.addEventListener("dragstart", function (e) { b.className = "vpgs-uchip vpgs-dragging"; if (e && e.dataTransfer) { e.dataTransfer.setData("text/plain", w); e.dataTransfer.effectAllowed = "copy"; } });
@@ -536,12 +594,15 @@
     } else if (s.kind === "select") {
       var sel = el("select", "vpgs-in"); sel.id = "vpGsIn_" + s.key; sel.setAttribute("aria-label", s.label);
       var opts = s.options || [];
+      /* a saved value that is not one of the choices (an existing venue's 240 seconds) stays theirs, as its own choice */
+      if (s.def !== "" && s.def != null && !opts.some(function (o) { return o[0] === s.def; })) opts = opts.concat([[s.def, String(s.def) + (s.key === "time_to_present" ? " seconds" : "")]]);
+      var selOpts = opts;
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = String(o[0]); if (o[0] === s.def) op.selected = true; sel.appendChild(op); });
       sel.addEventListener("change", changed);
       wrap.appendChild(sel);
       get = function () {
         var v = sel.value;
-        var hit = (s.options || []).filter(function (o) { return String(o[0]) === v; })[0];
+        var hit = selOpts.filter(function (o) { return String(o[0]) === v; })[0];
         return hit ? hit[0] : undefined;
       };
     } else if (s.kind === "playlists") {
@@ -585,7 +646,7 @@
       var draw = function () {
         var n = parseInt(all.value(s.countFrom), 10) || 1, same = s.sameFrom ? all.value(s.sameFrom) !== false : false;
         var want = same ? 1 : Math.max(1, Math.min(n, 12));
-        Array.prototype.forEach.call(plist.children, function (pr, i) { var inp = pr.children[1]; if (inp) vals[i] = inp.value; });
+        Array.prototype.forEach.call(plist.children, function (pr, i) { var inp = pr.children[1]; if (inp) vals[i] = nones[i] ? (inp._was || "") : inp.value; });
         while (plist.firstChild) plist.removeChild(plist.firstChild);
         for (var i = 0; i < want; i++) {
           var pr = el("div", "vpgs-prow");
@@ -603,7 +664,12 @@
           if (s.none) {
             var nl = el("label", "vpgs-none"); var cb = el("input"); cb.type = "checkbox"; cb.id = "vpGsNone_" + i; cb.checked = !!nones[i];
             inp.disabled = !!nones[i];
-            (function (cb, inp, k) { cb.addEventListener("change", function () { nones[k] = !!cb.checked; inp.disabled = !!cb.checked; }); })(cb, inp, i);
+            /* "No prize" says No prize in the box, never the prize it had (Dean, round 9 point 15); unticking brings it back */
+            if (nones[i]) { inp._was = inp.value; inp.value = "No prize"; }
+            (function (cb, inp, k) { cb.addEventListener("change", function () {
+              nones[k] = !!cb.checked; inp.disabled = !!cb.checked;
+              if (cb.checked) { inp._was = inp.value === "No prize" ? "" : inp.value; inp.value = "No prize"; } else { inp.value = inp._was || ""; }
+            }); })(cb, inp, i);
             nl.appendChild(cb); nl.appendChild(el("span", null, "No prize")); pr.appendChild(nl);
           } else pr.className += " nonone";
           plist.appendChild(pr);
@@ -616,8 +682,8 @@
       var lastBox = null;
       plist.addEventListener("focusin", function (e) { if (e && e.target && e.target.tagName === "INPUT" && e.target.type === "text") lastBox = e.target; });
       var uc = usualChips(F, ctx, function (w) {
-        if (lastBox && lastBox.parentNode && lastBox.parentNode.parentNode === plist && !lastBox.disabled) { lastBox.value = w; var nx = lastBox.parentNode.nextSibling; lastBox = nx ? nx.children[1] : null; return; }   // the box they tapped, then the next one
-        for (var k = 0; k < plist.children.length; k++) { var inp = plist.children[k].children[1]; if (inp && !inp.disabled && !String(inp.value || "").trim()) { inp.value = w; return; } }
+        if (lastBox && lastBox.parentNode && lastBox.parentNode.parentNode === plist && !lastBox.disabled) { lastBox.value = w; flash(lastBox); var nx = lastBox.parentNode.nextSibling; lastBox = nx ? nx.children[1] : null; return; }   // the box they tapped, then the next one
+        for (var k = 0; k < plist.children.length; k++) { var inp = plist.children[k].children[1]; if (inp && !inp.disabled && !String(inp.value || "").trim()) { inp.value = w; flash(inp); return; } }
       }, "vpGsUsual_" + s.key);
       if (uc) wrap.insertBefore(uc, plist);
       ctx.redraw.push(draw);
@@ -627,6 +693,76 @@
         return (out.some(function (x) { return x; }) || nones.some(function (x) { return x; })) ? out : undefined;
       };
       ctx.noneOf = function () { var o = []; for (var i = 0; i < (plist._want || 0); i++) if (nones[i]) o.push(i + 1); return o; };
+    } else if (s.kind === "raffleplan") {
+      /* EACH RAFFLE ASKS THE SAME QUESTIONS (Dean, round 9 point 20): how many prizes; with more than one, "Are all the
+         prizes the same?"; then one box, or one per prize. Nothing filled in for them. A usual prize, or "Winner's
+         choice", is one tap: it goes in the box they are on, else the next empty one, and the box shows it landed. */
+      var rp = el("div", "vpgs-rplan"); rp.id = "vpGsIn_" + s.key;
+      var plan = (s.draftPlan || []).map(function (x) { return { n: x.n, same: x.same, prizes: (x.prizes || []).slice() }; });
+      var rLast = null;
+      rp.addEventListener("focusin", function (e) { if (e && e.target && e.target.getAttribute && e.target.getAttribute("data-prize") != null) rLast = e.target; });
+      var rpBoxes = function () { var out = []; each2(rp, function (x) { if (x.getAttribute && x.getAttribute("data-prize") != null) out.push(x); }); return out; };
+      var ucR = usualChips(F, ctx, function (w) {
+        var boxes = rpBoxes(), at = rLast ? boxes.indexOf(rLast) : -1;
+        if (at >= 0) { rLast.value = w; flash(rLast); rLast = boxes[at + 1] || null; sync(); return; }
+        for (var k = 0; k < boxes.length; k++) if (!String(boxes[k].value || "").trim()) { boxes[k].value = w; flash(boxes[k]); sync(); return; }
+      }, "vpGsUsual_" + s.key, [WINNERS_CHOICE]);
+      if (ucR) wrap.appendChild(ucR);
+      wrap.appendChild(rp);
+      var sync = function () {
+        Array.prototype.forEach.call(rp.children, function (blk, i) {
+          var p = plan[i]; if (!p) return;
+          var nIn = blk.querySelector ? blk.querySelector("[data-n]") : findIn(blk, "data-n");
+          var n = parseInt(nIn && nIn.value, 10); p.n = isNaN(n) ? p.n : Math.max(s.min, Math.min(s.max, n));
+          var bx = []; each2(blk, function (x) { if (x.getAttribute && x.getAttribute("data-prize") != null) bx.push(x); });
+          bx.forEach(function (b, k) { p.prizes[k] = String(b.value || ""); });
+        });
+      };
+      var drawR = function () {
+        sync();
+        var N = Math.max(1, Math.min(12, parseInt(all.value(s.countFrom), 10) || 1));
+        while (plan.length < N) plan.push({ n: 1, same: true, prizes: [""] });
+        while (rp.firstChild) rp.removeChild(rp.firstChild);
+        for (var i = 0; i < N; i++) (function (i) {
+          var p = plan[i], blk = el("div", "vpgs-raf"); blk.setAttribute("data-raffle", String(i + 1));
+          if (N > 1) blk.appendChild(el("h4", null, "Raffle " + (i + 1)));
+          var q1 = el("label", "vpgs-rq"); q1.appendChild(el("span", null, "How many prizes?"));
+          var nIn = el("input", "vpgs-in"); nIn.type = "number"; nIn.setAttribute("inputmode", "numeric"); nIn.min = String(s.min); nIn.max = String(s.max);
+          nIn.id = "vpGsRafN_" + i; nIn.setAttribute("data-n", "1"); nIn.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "how many prizes"); nIn.value = String(p.n);
+          nIn.addEventListener("change", function () { drawR(); });
+          q1.appendChild(nIn); blk.appendChild(q1);
+          if (p.n > 1) {
+            var q2 = el("div", "vpgs-rq"); q2.appendChild(el("span", null, "Are all the prizes the same?"));
+            var sg = el("div", "vpgs-seg"); sg.setAttribute("role", "group"); sg.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "are all the prizes the same"); sg.id = "vpGsRafSame_" + i;
+            [[true, "Yes"], [false, "No"]].forEach(function (o) {
+              var b = el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", p.same === o[0] ? "true" : "false");
+              b.addEventListener("click", function () { sync(); p.same = o[0]; drawR(); });
+              sg.appendChild(b);
+            });
+            q2.appendChild(sg); blk.appendChild(q2);
+          }
+          var boxes = (p.n > 1 && !p.same) ? p.n : 1, pl = el("div", "vpgs-plist");
+          for (var k = 0; k < boxes; k++) {
+            var pr = el("div", "vpgs-prow nonone" + (boxes === 1 ? " solo" : ""));
+            pr.appendChild(el("span", null, boxes > 1 ? "Prize " + (k + 1) : ""));
+            var inp = el("input", "vpgs-in"); inp.type = "text"; inp.maxLength = 80; inp.placeholder = s.placeholder || "";
+            inp.id = "vpGsRafP_" + i + "_" + k; inp.setAttribute("data-prize", String(k));
+            inp.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + (boxes > 1 ? "prize " + (k + 1) : (p.n > 1 ? "the prize for all " + p.n : "the prize")));
+            inp.value = p.prizes[k] || "";
+            pr.appendChild(inp); pl.appendChild(pr);
+          }
+          blk.appendChild(pl); rp.appendChild(blk);
+        })(i);
+        plan.length = N;
+      };
+      ctx.redraw.push(drawR);
+      get = function () {
+        sync();
+        return plan.map(function (p) {
+          var one = (p.n > 1 && !p.same) ? p.prizes.slice(0, p.n) : [p.prizes[0] || ""];
+          return { n: p.n, same: p.n > 1 ? !!p.same : true, prizes: one.map(function (x) { return String(x || "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 80); }) };
+        });
+      };
     } else if (s.kind === "countlist") {
       /* "RAFFLE 1 HAS 2 PRIZES, RAFFLE 2 HAS 5" (Dean, round 8b point 7): one small box for each raffle of the night */
       var clist = el("div", "vpgs-clist"); clist.id = "vpGsIn_" + s.key; wrap.appendChild(clist);
@@ -710,13 +846,13 @@
       wrap.appendChild(el("p", "vpgs-info", s.words || ""));
 
     } else {
-      var inp1 = el("input", "vpgs-in"); inp1.id = "vpGsIn_" + s.key; inp1.setAttribute("aria-label", s.label);
-      inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : (s.kind === "time" ? "time" : "text"));
+      var inp1 = s.kind === "time" ? timeSelect(el, "", "vpGsIn_" + s.key, s.label) : el("input", "vpgs-in"); inp1.id = "vpGsIn_" + s.key; inp1.setAttribute("aria-label", s.label);
+      if (s.kind !== "time") inp1.type = s.kind === "number" || s.kind === "money" ? "number" : (s.kind === "date" ? "date" : "text");
       if (s.kind === "number") { inp1.setAttribute("inputmode", "numeric"); if (s.min != null) inp1.min = String(s.min); if (s.max != null) inp1.max = String(s.max); }
       if (s.kind === "money") { inp1.setAttribute("inputmode", "decimal"); inp1.step = "0.01"; inp1.min = "0"; }
       if (s.placeholder) inp1.placeholder = s.placeholder;
       if (s.max && s.kind === "text") inp1.maxLength = s.max;
-      if (s.def !== "" && s.def != null) inp1.value = s.kind === "money" ? String(s.def / 100) : String(s.def);
+      if (s.def !== "" && s.def != null) setBox(inp1, s.kind === "money" ? String(s.def / 100) : String(s.def));
       inp1.addEventListener("input", changed); inp1.addEventListener("change", changed);
       /* THE FIRST DRAW DATE FILLS IN THE DRAW DAY (Dean, round 2), unless they typed a day of their own. */
       if (s.pre) { wrap.className = "vpgs-prew"; wrap.appendChild(el("span", "vpgs-pre", s.pre)); }   // "$" inside the front of the box, so every box is the same width
@@ -732,7 +868,7 @@
     }
     wrap.className = "vpgs-ctl" + (wrap.className ? " " + wrap.className : "");
     row.appendChild(wrap); row.appendChild(pop);   // the "?" words open under the whole setting, pushing what follows down
-    return { row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input") : (wrap.children[0] && wrap.children[0].tagName === "INPUT" ? wrap.children[0] : null); } };
+    return { row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input, select") : (wrap.children[0] && /^(INPUT|SELECT)$/.test(wrap.children[0].tagName) ? wrap.children[0] : null); } };
   }
   /* Trivia question sets for "Pick categories": the venue's own and the venueplay library, never another venue's private night. */
   function loadSetRows(ctx, paint) {
@@ -756,6 +892,55 @@
     }).catch(function () {});
   }
 
+  /* What changed from what the screen opened with (an existing venue): only those keys are saved. */
+  function changedOnly(vals, base) {
+    var out = {};
+    Object.keys(vals).forEach(function (k) { if (k.indexOf("__") === 0) { out[k] = vals[k]; return; } if (JSON.stringify(vals[k]) !== JSON.stringify(base[k])) out[k] = vals[k]; });
+    return out;
+  }
+  /* "7:30pm" (how a draw keeps its time) -> "19:30" for the time box */
+  function time24(t) {
+    var m = /^(\d{1,2})(?::(\d\d))?\s*(am|pm)$/i.exec(String(t || "").trim()); if (!m) return /^\d\d:\d\d$/.test(t || "") ? t : "";
+    var h = (+m[1]) % 12 + (/pm/i.test(m[3]) ? 12 : 0); return (h < 10 ? "0" : "") + h + ":" + (m[2] || "00");
+  }
+  /* AN EXISTING VENUE'S OWN SETTINGS, in the shape a game screen opens with (the same shape Back keeps), so every box,
+     tick and choice shows what the venue has today (Dean, 9 Nov 2026). have: game_prefs for that game; draw: their
+     members draw (vp_member_draws). */
+  function haveDraft(gkey, have, draw) {
+    var g = gameOf(gkey), d = {};
+    if (!g) return null;
+    if (g.needsDetails) {
+      if (!draw) return null;
+      ["name", "date_started", "current_jackpot_cents", "starting_amount_cents", "increment_cents", "max_jackpot_cents", "time_to_claim_seconds"].forEach(function (k) { if (draw[k] != null && draw[k] !== "") d[k] = draw[k]; });
+      var t = time24(draw.draw_time); if (t) d.draw_time = t;
+      return d;
+    }
+    have = have || {};
+    g.settings.forEach(function (s) {
+      var k = s.key;
+      if (!k || s.kind === "info" || s.kind === "fixed") return;
+      if (s.kind === "playlists") { var pl = Array.isArray(have.playlists) && have.playlists.length ? have.playlists : (have.playlist ? [have.playlist] : null); if (pl) d.playlists = pl.slice(); return; }
+      if (s.kind === "categories") { if (Array.isArray(have.set_ids) && have.set_ids.length) d[k] = have.set_ids.slice(); else if (have.set_id) d[k] = [have.set_id]; return; }
+      if (s.kind === "prizelist") {
+        var list = Array.isArray(have[k]) ? have[k] : (gkey === "musical" && have.prize ? [have.prize] : null);
+        if (list) { d[k] = list.slice(); if (gkey === "musical" && Array.isArray(have.prize_none)) d.__nones = have.prize_none.slice(); }
+        return;
+      }
+      if (s.kind === "raffleplan") {
+        var counts = Array.isArray(have.raffle_counts) && have.raffle_counts.length ? have.raffle_counts : (have.prize_count ? [have.prize_count] : null);
+        if (!counts) return;
+        var rp = Array.isArray(have.raffle_prizes) ? have.raffle_prizes : [];
+        d[k] = counts.map(function (n, i) {
+          var pz = (rp[i] || []).slice(0, n), same = n > 1 && pz.length > 0 && !!pz[0] && pz.every(function (x) { return x === pz[0]; });
+          if (n > 1 && !pz.length && have.prizes_same === true) same = true;
+          return { n: n, same: n > 1 ? same : true, prizes: same ? [pz[0] || ""] : pz };
+        });
+        return;
+      }
+      if (have[k] !== undefined && have[k] !== null) d[k] = have[k];
+    });
+    return d;
+  }
   /* ONE GAME'S SCREEN, used by the first run and by firstOpen. opts: { count, n, on, back, first, quickOnly }.
      done(outcome, vals): "saved" | "later" | "defaults". */
   function gameScreen(F, gkey, cx, deps, opts, done) {
@@ -777,10 +962,12 @@
       var md = mw[((opts.instance || 1) - 1) % (mw.length || 1)];
       if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; memTime = md.start || ""; }
     }
+    /* no "the usual settings are already filled in" (Dean, round 9 point 20: it means nothing); an existing venue is told
+       these are its own settings today */
     var lead = (g.needsDetails && opts.quickOnly) ? "A few quick questions before your first draw. Add your member numbers later, on a computer." : g.needsDetails
-      ? "Your draw's details for the TV."
-      : (opts.quickOnly ? "Three quick questions before your first game." : (opts.first ? "A quick setup before your first game. " : "") + "The usual settings are already filled in. Change anything you like.");
-    var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; F.body.appendChild(lp);
+      ? (opts.review && opts.draw ? "Your draw as it is today. Change anything you like." : "Your draw's details for the TV.")
+      : (opts.quickOnly ? "Three quick questions before your first game." : opts.first ? "A quick setup before your first game." : opts.review ? "These are your settings today. Change anything you like." : "");
+    var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; if (lead) F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
     var sec = el("div", "vpgs-sec folded"); sec.id = "vpGsAdvanced";
     /* MORE SETTINGS, FOLDED THE SAME WAY ON EVERY SCREEN, SAYING WHAT IS IN THERE (Dean, round 7b point 8: "I don't know
@@ -789,7 +976,9 @@
     var secWords = el("div", "vpgs-secw"); secWords.appendChild(el("h3", null, "More settings"));
     var secSum = el("p", "sub"); secSum.id = "vpGsAdvSummary"; secWords.appendChild(secSum); secHead.appendChild(secWords);
     var advT = el("button", "vpgs-add", "Change"); advT.setAttribute("type", "button"); advT.id = "vpGsAdvToggle"; advT.setAttribute("aria-expanded", "false");
-    advT.addEventListener("click", function () { var open = /folded/.test(sec.className); sec.className = open ? "vpgs-sec" : "vpgs-sec folded"; advT.textContent = open ? "Done" : "Change"; advT.setAttribute("aria-expanded", open ? "true" : "false"); });
+    function toggleAdv() { var open = /folded/.test(sec.className); sec.className = open ? "vpgs-sec" : "vpgs-sec folded"; advT.textContent = open ? "Done" : "Change"; advT.setAttribute("aria-expanded", open ? "true" : "false"); if (open && sec.scrollIntoView) { try { sec.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) {} } }
+    advT.addEventListener("click", function (e) { if (e && e.stopPropagation) e.stopPropagation(); toggleAdv(); });
+    secHead.addEventListener("click", toggleAdv);   // the whole line opens it, an easy target (Dean, round 9 point 16)
     secHead.appendChild(advT); sec.appendChild(secHead);
     var advRows = el("div", "vpgs-rows"); sec.appendChild(advRows);
     var hasAdv = false;
@@ -807,12 +996,13 @@
        first game that has prizes: "do you use these across different games?" Yes: the next games start with them. */
     ctx.bank = (opts.bank && opts.bank.length) ? opts.bank : null;
     /* BACK KEEPS WHAT THEY DID (design review r7): coming back to a game shows the prizes, ticks and answers they left. */
-    var draft = opts.draft || null;
+    var draft = opts.draft || (opts.review ? haveDraft(gkey, opts.have, opts.draw) : null);   // an existing venue: its own settings today
     if (draft) settings = settings.map(function (s) {
       var k = s.key || (s.keys || []).join(), dv = draft[k];
       if (dv === undefined || s.kind === "fixed" || s.kind === "info") return s;
       var c = Object.assign({}, s, { def: dv, fromDraft: true });
       if (s.kind === "prizelist") { c.def = s.def; c.draftList = dv; c.draftNones = draft.__nones || []; }
+      if (s.kind === "raffleplan") { c.def = s.def; c.draftPlan = dv; }
       return c;
     });
     ctx.usual = (opts.usual && opts.usual.length) ? opts.usual : null;
@@ -845,7 +1035,7 @@
       var nmIn = all.input("name"), tmIn = all.input("draw_time");
       if (nmIn) nmIn.placeholder = (memDay || "Friday") + " Members Draw";
       if (tmIn && memTime && !tmIn.value) {
-        tmIn.value = memTime;   // "20:00" from the nights step, in the time picker
+        setBox(tmIn, memTime);   // "20:00" from the nights step, in the time box
         var tmRow = byKey.draw_time && byKey.draw_time.row; if (tmRow) tmRow.setAttribute("data-from", "night");   // the label stays "Draw time" (Dean, round 8b point 10); its "?" says where it came from
       }
     }
@@ -865,6 +1055,15 @@
           return;
         }
         if (r.s.kind === "categories") { vals.set_ids = v; vals.set_id = v[0]; return; }
+        if (r.s.kind === "raffleplan") {
+          vals.raffle_counts = v.map(function (p) { return p.n; });
+          vals.raffle_prizes = v.map(function (p) { var out = []; for (var k = 0; k < p.n; k++) out.push(p.same ? p.prizes[0] : (p.prizes[k] || "")); return out; });
+          var un = []; vals.raffle_prizes.forEach(function (l) { l.forEach(function (x) { if (x && un.indexOf(x) < 0) un.push(x); }); });
+          if (un.length) vals.prizes = un.slice(0, 12);   // the raffle console's prize buttons
+          vals.prize_count = Math.max.apply(null, vals.raffle_counts);
+          vals.prizes_same = v.every(function (p) { return p.same; });
+          return;
+        }
         if (r.s.kind === "countlist") { vals[r.s.key] = v; if (gkey === "raffles") { vals.prize_count = Math.max.apply(null, v); vals.prizes_same = false; } return; }
         vals[r.s.key] = v;
       });
@@ -886,11 +1085,18 @@
       var mlater = el("button", "vpgs-link", "Not ready yet? Set it up later"); mlater.id = "vpGsLater"; mlater.setAttribute("type", "button");
       mlater.addEventListener("click", function () { done("later"); }); F.body.appendChild(mlater);
     }
-    var saveWords = opts.first ? (g.needsDetails ? "Save the draw" : "Save and play") : "Save " + g.name;
+    /* AN EXISTING VENUE CLICKING THROUGH CHANGES NOTHING (Dean, 9 Nov 2026): the screen opens with its own settings,
+       and only what they change is sent. A setting the venue never had and did not touch stays unsaved, so a new
+       setting stays off for an existing venue. */
+    var base = opts.review ? collect() : null;
+    /* one label for going on, top and bottom (Dean, round 9 point 12): Next on the first run, Save on a first open */
+    var saveWords = opts.first ? (g.needsDetails ? "Save the draw" : "Save and play") : "Next";
     var save = F.btn(saveWords, "pink", "vpGsSave", function () {
       save.disabled = true; msg.textContent = "";
-      var vals = collect();
-      var p = g.needsDetails ? saveMembers(deps, vid, vals) : savePrefs(deps, vid, gkey, vals, false).then(function (ok) { return { ok: ok }; });
+      var vals = collect(), send = base ? changedOnly(vals, base) : vals;
+      if (g.needsDetails && opts.review && opts.draw && opts.draw.id) send.draw_id = opts.draw.id;   // their draw, updated in place
+      var nothing = base && !Object.keys(send).filter(function (k) { return k !== "draw_id" && k.indexOf("__") !== 0; }).length;
+      var p = nothing ? Promise.resolve({ ok: true }) : g.needsDetails ? saveMembers(deps, vid, send) : savePrefs(deps, vid, gkey, send, false).then(function (ok) { return { ok: ok }; });
       return p.then(function (r) {
         if (r.ok) return done("saved", vals);
         save.disabled = false;
@@ -947,11 +1153,17 @@
     }
     function mark(g, state) { answers.setup = cleanSetup(answers.setup); answers.setup[g] = state; var l = readLocal(storage, vid); l.setup = cleanSetup(l.setup); l.setup[g] = state; writeLocal(storage, vid, l); }
     function ticked() { return ORDER.filter(function (g) { return (answers.games || []).indexOf(g) >= 0 && GAMES.indexOf(g) >= 0; }); }
-    function left() { var s = cleanSetup(answers.setup); return ticked().filter(function (g) { return s[g] !== "done"; }); }
+    var seen = {};   // an existing venue's check: the games gone through this time
+    function left() { if (deps.review) return ticked().filter(function (g) { return !seen[g]; }); var s = cleanSetup(answers.setup); return ticked().filter(function (g) { return s[g] !== "done"; }); }
+    /* "NOT READY YET, REMIND ME" (Dean, 9 Nov 2026): asked again on the next sign-in (a sign-in lasts at most 4 hours) */
+    function remindLater() { var l = readLocal(storage, vid); l.reviewLater = (now == null ? Date.now() : now) + REVIEW_WAIT; writeLocal(storage, vid, l); }
+    function reviewed() { answers.review = "done"; var l = readLocal(storage, vid); delete l.reviewLater; l.review = "done"; writeLocal(storage, vid, l); }
     function end(outcome) { F.close(); finish(outcome); }
     F.x.addEventListener("click", function () {
       if (deps.weekOnly) return end("closed");   // the Account page's game nights: closing changes nothing
-      /* Closing part way: whatever is not set up keeps its defaults and opens its own setup the first time. */
+      /* Closing part way: whatever is not set up keeps its defaults and opens its own setup the first time. An existing
+         venue closing its check keeps everything as it is and is asked again on its next sign-in. */
+      if (deps.review) { remindLater(); return end("closed"); }
       var rest = left(); rest.forEach(function (g) { mark(g, "later"); });
       Promise.all(rest.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
       end("closed");
@@ -975,6 +1187,7 @@
       F.body.appendChild(ul);
       F.body.appendChild(F.el("p", "vpgs-ready", "Then you're ready for your week."));
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink vpgs-go", "vpGsGo", pick));
+      F.only(true);   // one button, one label; Close comes from the second screen
     }
     function pick() {
       /* THREE QUESTIONS, ONE AFTER THE OTHER (Dean, round 8b points 2 and 3): are you a pub or a club (or something
@@ -989,7 +1202,11 @@
          what you are here") */
       if (!answers.venue_kind && v.entity_type === "for_profit") answers.venue_kind = "pub";
       if (!answers.venue_kind && v.entity_type === "non_profit") answers.venue_kind = "club";
-      {
+      /* ASKED ONLY WHEN NOBODY KNOWS (Dean, round 9 point 3): the venue's record, the website scan's venue type when it
+         lands (vp_venues.venue_type), or their own earlier answer fill it in and the question is left out */
+      if (!answers.venue_kind && scanKind(v)) answers.venue_kind = scanKind(v);
+      var kindKnown = !!answers.venue_kind && !deps.review;   // an existing venue checking its setup sees it, already ticked
+      if (!kindKnown) {
         kindWrap = F.el("div", "vpgs-kind"); kindWrap.id = "vpGsKind";
         var kseg = F.el("div", "vpgs-seg"); kseg.setAttribute("role", "group"); kseg.setAttribute("aria-label", "Pub, club or something else");
         [["pub", "Pub or hotel"], ["club", "Club"], ["other", "Other"]].forEach(function (o) {
@@ -1030,9 +1247,13 @@
       }
       function addOther() { var w = otherWord(otherList(otherIn.value)[0]); if (w) { others = otherList(others.concat([w]).join(",")); otherIn.value = ""; drawOthers(); if (typeof suggest === "function") suggest(); } paint(); }
       otherIn.addEventListener("keydown", function (e) { if (e && (e.key === "Enter" || e.keyCode === 13)) { if (e.preventDefault) e.preventDefault(); addOther(); } });
+      /* KEPT WITHOUT ENTER (Dean, round 9 point 4): leaving the box keeps what they typed. A moment later, so a tapped
+         suggestion wins over the half-typed word. */
+      otherIn.addEventListener("blur", function () { var later = root.setTimeout ? root.setTimeout : function (f) { f(); }; later(function () { if (String(otherIn.value || "").trim()) addOther(); }, 150); });
       drawOthers();
       var next = F.btn("Next", "pink", "vpGsNext", function () {
         var had = Array.isArray(answers.games) && answers.games.length;
+        if (meal != null) answers.meal_deals = meal;
         answers.games = ORDER.filter(function (g) { return cur.indexOf(g) >= 0; });
         if (otherOn && otherIn.value) addOther();   // a last one typed without Enter still counts
         var o = otherOn ? cleanOther(others.join(",")) : "";
@@ -1067,16 +1288,30 @@
       }
       otherIn.addEventListener("input", paint);
       if (kindWrap) F.body.appendChild(kindWrap);
-      var gq = F.el("div", "vpgs-q3"); gq.appendChild(F.el("h3", "vpgs-h3", "What games do you play?")); gq.appendChild(F.el("p", "vpgs-sub", "Tick all you run, even now and then.")); F.body.appendChild(gq);
-      F.body.appendChild(box); F.body.appendChild(otherWrap); F.body.appendChild(bnote); drawChips();
-      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", headsUp)); F.foot.appendChild(next);
+      else F.title.textContent = "What games do you play?";
+      var gq = F.el("div", "vpgs-q3"); if (kindWrap) gq.appendChild(F.el("h3", "vpgs-h3", "What games do you play?")); gq.appendChild(F.el("p", "vpgs-sub", "Tick all you run, even now and then.")); if (!kindWrap) gq.style.marginTop = "0"; F.body.appendChild(gq);
+      /* "DO YOU WANT TO ADVERTISE YOUR MEAL DEALS?" (Dean, round 9 point 7): kept as setup_answers.meal_deals, and the
+         TV step at the end points them to it */
+      var meal = typeof answers.meal_deals === "boolean" ? answers.meal_deals : null;
+      var mealWrap = F.el("div", "vpgs-q3"); mealWrap.id = "vpGsMeal";
+      mealWrap.appendChild(F.el("h3", "vpgs-h3", "Do you want to advertise your meal deals?"));
+      mealWrap.appendChild(F.el("p", "vpgs-sub", "Specials and meal deals show on your TV between games."));
+      var mseg = F.el("div", "vpgs-seg"); mseg.setAttribute("role", "group"); mseg.setAttribute("aria-label", "Advertise your meal deals"); mseg.style.marginTop = "6px";
+      [[true, "Yes"], [false, "No"]].forEach(function (o) {
+        var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", meal === o[0] ? "true" : "false");
+        b.addEventListener("click", function () { meal = o[0]; Array.prototype.forEach.call(mseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === String(meal) ? "true" : "false"); }); });
+        mseg.appendChild(b);
+      });
+      mealWrap.appendChild(mseg);
+      F.body.appendChild(box); F.body.appendChild(otherWrap); F.body.appendChild(mealWrap); F.body.appendChild(bnote); drawChips();
+      F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", deps.review ? reviewIntro : headsUp)); F.foot.appendChild(next);
     }
     /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026), right after the games question, skippable: for each game they
        ticked, the nights it runs, and an optional start time for each. Saved as setup_answers.week (see WEEK above),
        and the nights as setup_answers.nights, the shape the Account page card already reads. */
     function weekStep() {
       F.clear(); F.step("Your games", 3, 2); F.title.textContent = "Which nights do you run them?";
-      F.body.appendChild(F.el("p", "vpgs-lead", "Tap every night you run each game. Each night gets its own start time. Two on one night? Tap \u201c+ another session\u201d."));
+      F.body.appendChild(F.el("p", "vpgs-lead", "Tap every night you run each game, and give it a start time."));   // one line (Dean, round 9 point 8)
       /* rows: each ticked game, then each "Something else" they run (Dean, round 4: karaoke and poker get nights too) */
       var items = ticked().map(function (g) { return { key: g, game: g, title: gameOf(g).title }; })
         .concat(otherList(answers.other).map(function (nm) { return { key: "other:" + nm.toLowerCase(), game: "other", name: nm, title: nm }; }));
@@ -1097,8 +1332,8 @@
             if (!cur[g] || cur[g][x[0]] === undefined) return;
             var r = F.el("label", "vpgs-time");
             r.appendChild(F.el("span", null, x[2] + " start time"));
-            var t = F.el("input", "vpgs-in"); t.type = "time"; t.id = "vpGsTime_" + g + "_" + x[0]; t.value = cur[g][x[0]] || "";
-            t.setAttribute("required", "required");   // the phone's own scroll-wheel time picker (input type=time)
+            var t = timeSelect(F.el, cur[g][x[0]] || "", "vpGsTime_" + g + "_" + x[0], it.title + " on " + x[2] + ", start time");   // the hour and half hour, pm first (Dean, round 9 point 5)
+            t.setAttribute("required", "required");
             if (!cur[g][x[0]]) r.className += " need";
             function took() { cur[g][x[0]] = /^\d\d:\d\d$/.test(t.value) ? t.value : ""; r.className = "vpgs-time" + (cur[g][x[0]] ? "" : " need"); gate(); }
             t.addEventListener("input", took); t.addEventListener("change", took);
@@ -1110,7 +1345,7 @@
               more.forEach(function (tv, k) {
                 var r2 = F.el("label", "vpgs-time sx" + (tv ? "" : " need"));
                 r2.appendChild(F.el("span", null, "Session " + (k + 2) + " start time"));
-                var t2 = F.el("input", "vpgs-in"); t2.type = "time"; t2.id = "vpGsTime_" + g + "_" + x[0] + "_" + (k + 2); t2.value = tv || "";
+                var t2 = timeSelect(F.el, tv || "", "vpGsTime_" + g + "_" + x[0] + "_" + (k + 2), it.title + " on " + x[2] + ", session " + (k + 2) + " start time");
                 function took2() { more[k] = /^\d\d:\d\d$/.test(t2.value) ? t2.value : ""; r2.className = "vpgs-time sx" + (more[k] ? "" : " need"); gate(); }
                 t2.addEventListener("input", took2); t2.addEventListener("change", took2);
                 var rm = F.el("button", "vpgs-rm", "\u00d7"); rm.setAttribute("type", "button"); rm.setAttribute("aria-label", "Remove session " + (k + 2));
@@ -1124,7 +1359,9 @@
                 var addS = F.el("button", "vpgs-addlink", "+ another session"); addS.setAttribute("type", "button"); addS.id = "vpGsAddSess_" + g + "_" + x[0];
                 addS.setAttribute("aria-label", "Add another session on " + x[2]);
                 addS.addEventListener("click", function (e) { if (e && e.preventDefault) e.preventDefault(); cnt[g] = cnt[g] || {}; cnt[g][x[0]] = more.concat([""]); paint(); gate(); });
-                r.firstChild.appendChild(addS);
+                /* AFTER the time box, so Tab goes night, time, next night's time; the optional link comes last (Dean, round 9 point 6) */
+                addS.setAttribute("tabindex", "-1");
+                times.appendChild(addS);
               }
               return;
             }
@@ -1183,17 +1420,21 @@
       gate();
     }
     function allToday() {
-      F.clear(); F.step("Your games", 3, 3); F.title.textContent = "Would you like to set them all up today?";
+      F.clear(); F.step("Your games", 3, 3);
       if (!ticked().length) return end("done");
-      F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". We'll go through them one at a time, each in under five minutes."));
-      var nt = F.el("p", "vpgs-note", "Not today is fine: each game keeps the usual settings, and walks you through its setup the first time you open it.");
+      var first = left()[0] || ticked()[0];
+      /* ONE GAME AT A TIME, SAID ONCE (Dean, round 9 point 9) */
+      F.title.textContent = deps.review ? "Would you like to check your first game now?" : "Would you like to set up your first game now?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". We'll go through them one at a time."));
+      var nt = F.el("p", "vpgs-note", deps.review ? "Not today keeps every setting as it is." : "Each game walks you through its setup the first time you open it. Do it before your first night.");
+      nt.id = "vpGsAllNote";
       F.body.appendChild(nt);
       var ans2 = F.el("div", "vpgs-stack vpgs-answers");
-      var allYes = F.btn("Yes, set them all up", "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }); ans2.appendChild(allYes);
+      var allYes = F.btn("Yes, " + (deps.review ? "check " : "set up ") + gameOf(first).name, "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }); ans2.appendChild(allYes);
       ans2.appendChild(F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }));
       F.body.insertBefore(ans2, nt);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
-      F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { allYes.click(); }));   // Next is "Yes, set them all up"
+      F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { allYes.click(); }));   // Next is Yes
     }
     var drafts = {};   // what they left on a game when they pressed Back, by game and draw
     function oneGame(g, inst) {
@@ -1201,7 +1442,9 @@
       var memNights = memDraws(answers.week).length;   // a draw for each members session
       var all = ticked(), i = all.indexOf(g), many = (g === "members" && memNights > 1) ? memNights : 1;   // a draw for each members night
       var dk = g + "#" + inst, dr = drafts[dk] || null;
-      gameScreen(F, g, cx, deps, { count: "Game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
+      /* the step line names the game (Dean, round 9 point 12): "Trivia, game 1 of 3" */
+      gameScreen(F, g, cx, deps, { count: gameOf(g).title + ", game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
+          review: !!deps.review, have: (deps.have || {})[g] || null, draw: deps.review && g === "members" ? ((deps.draws || [])[inst - 1] || null) : null,
           draft: dr, onDraft: function (d) { drafts[dk] = d; },
           usual: answers.prize_bank || null }, function (outcome, vals) {
         if (outcome === "saved") {
@@ -1209,9 +1452,11 @@
              usual prizes the next games offer as one-tap buttons, nothing filled in for them. */
           if (vals && vals.__setup && vals.__setup.over_max) answers.members_over = vals.__setup.over_max;
           var pb = bankOf(vals); if (pb.length) answers.prize_bank = (answers.prize_bank || []).concat(pb.filter(function (w) { return (answers.prize_bank || []).indexOf(w) < 0; })).slice(0, 8);
+          if (inst >= many) seen[g] = true;
           if (inst < many) { persist(); return oneGame(g, inst + 1); }   // the next members draw (Dean, round 3: "Add another")
           mark(g, "done"); persist(); afterGame(g); return;
         }
+        if (deps.review) { seen[g] = true; persist(); return afterGame(g); }   // an existing venue: nothing written, nothing marked
         mark(g, "later");
         return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true).then(function () { persist(); afterGame(g); });
       });
@@ -1229,14 +1474,14 @@
       F.clear(); F.step("Members draws", 0, 0); F.title.textContent = "Add your members list later";
       F.body.appendChild(F.el("p", "vpgs-lead", "Your member numbers let the TV draw a real member. It's easiest on a computer: Account page, Members list."));
       var go = F.el("a", "vpgs-link vpgs-wideonly", "On a computer now? Add it on your Account page"); go.id = "vpGsExtrasYes";
-      go.setAttribute("href", deps.membersListUrl || "/app/billing.html#acc-members");
+      go.setAttribute("href", deps.membersListUrl || "/app/billing.html#draws");   // the Draws tab opens from #draws (#acc-members never did)
       go.addEventListener("click", function (e) {
         if (e && e.preventDefault) e.preventDefault();
         /* the games left keep their usual settings and open their own setup the first time, as when closing part way */
         var rest = left(); rest.forEach(function (x) { mark(x, "later"); });
         Promise.all(rest.map(function (x) { return savePrefs(deps, vid, x, help().defaults(x, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
         end("members-list");
-        var url = deps.membersListUrl || "/app/billing.html#acc-members";
+        var url = deps.membersListUrl || "/app/billing.html#draws";
         try { if (typeof deps.go === "function") deps.go(url); else if (root.location) root.location.href = url; } catch (x2) {}
       });
       F.body.appendChild(go);
@@ -1270,23 +1515,55 @@
     /* "No worries." The defaults are written for each game left (never over a saved value). Members draws have no
        defaults, so they get their own line rather than being called saved (Dean, round 2). */
     function noWorries(rest) {
+      F.clear(); F.step("", 0, 0); F.title.textContent = "No worries.";
+      if (deps.review) {
+        /* an existing venue: nothing changes, and the games not checked come back on the next sign-in */
+        remindLater(); persist();
+        var pr = F.el("p", "vpgs-lead", "Everything stays as it is. We'll ask you again next time you sign in."); pr.id = "vpGsNoWorries"; F.body.appendChild(pr);
+        F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
+        return;
+      }
       rest.forEach(function (g) { mark(g, "later"); });
+      reviewed();
       var withDefaults = rest.filter(function (g) { return !gameOf(g).needsDetails; });
       Promise.all(withDefaults.map(function (g) { return savePrefs(deps, vid, g, help().defaults(g, { bingo: bingoRules(v, answers) }), true); })).then(persist, persist);
-      F.clear(); F.step("", 0, 0); F.title.textContent = "No worries.";
-      var line = "We'll remind you when you open each of those games.";
+      /* members draws alone: one plain line (Dean, round 9 point 21) */
+      var line = (rest.length === 1 && rest[0] === "members") ? "We'll remind you when you're ready for members draws." : "We'll remind you when you open each of those games.";
       if (withDefaults.length) line += " Your default settings have been saved for " + listWords(withDefaults) + ".";
       var p = F.el("p", "vpgs-lead", line); p.id = "vpGsNoWorries"; F.body.appendChild(p);
-      if (rest.indexOf("members") >= 0) { var m = F.el("p", "vpgs-note", "Members draws still need your draw details (the draw name, time and jackpot), so we'll ask for those when you open it."); m.id = "vpGsMembersNote"; F.body.appendChild(m); }
+      if (rest.indexOf("members") >= 0 && rest.length > 1) { var m = F.el("p", "vpgs-note", "Members draws still need your draw details (the draw name, time and jackpot), so we'll ask for those when you open it."); m.id = "vpGsMembersNote"; F.body.appendChild(m); }
+      advertCard();
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
+    }
+    /* THE ADVERTISING PROMPT AT THE END (Dean, round 9 point 23): their TV shows their promos between games */
+    function advertCard() {
+      var a = F.el("div", "vpgs-advert"); a.id = "vpGsAdvert";
+      a.appendChild(F.el("b", null, "Next, your TV advertising"));
+      a.appendChild(F.el("p", null, "Add your logo and promo images" + (answers.meal_deals ? ", like your meal deals," : "") + " so your TV advertises your venue between games."));
+      var go = F.el("a", "vpgs-link", "Add them on your Account page, Screen tab"); go.id = "vpGsAdvertGo"; go.setAttribute("href", deps.screenUrl || "/app/billing.html#screen");
+      a.appendChild(go); F.body.appendChild(a);
     }
     function allDone() {
       F.clear(); F.step("", 0, 0); F.title.textContent = "You're ready for your week.";
-      F.body.appendChild(F.el("p", "vpgs-lead", "Every game you play is set up. You can change any setting in that game's console."));
+      reviewed(); persist();
+      F.body.appendChild(F.el("p", "vpgs-lead", deps.review ? "Every game you play is checked. You can change any setting in that game's console." : "Every game you play is set up. You can change any setting in that game's console."));
+      advertCard();
       F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Go to my console", "pink", "vpGsDone", function () { end("done"); }));
     }
     /* The Account page's "Set your game nights" opens just the week (deps.weekOnly, start "week"). */
-    if (deps.start === "week") weekStep(); else if (deps.start === "pick") pick(); else headsUp();
+    /* AN EXISTING VENUE (Dean, 9 Nov 2026): one screen saying what this is, then the same questions, already answered */
+    function reviewIntro() {
+      F.clear(); F.step("Your games setup", 3, 1);
+      var who = firstName(cx);
+      F.title.textContent = "Check your games setup" + (who ? ", " + who : "");
+      F.body.appendChild(F.el("p", "vpgs-lead", "We've made setting up your games simpler. Your settings are already filled in, so clicking through changes nothing. Change anything you like as you go."));
+      var later = F.el("button", "vpgs-link", "Not ready yet? Remind me next time"); later.id = "vpGsReviewLater"; later.setAttribute("type", "button");
+      later.addEventListener("click", function () { remindLater(); end("later"); });
+      F.body.appendChild(later);
+      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Let's go", "pink vpgs-go", "vpGsGo", pick));
+      F.only(true);
+    }
+    if (deps.start === "week") weekStep(); else if (deps.start === "pick") pick(); else if (deps.review) reviewIntro(); else headsUp();
     return finished;
   }
 
@@ -1331,6 +1608,72 @@
     });
   }
 
-  root.VPGameSetup = { bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
+  // ---------------------------------------------------------------- existing venues (Dean, 9 Nov 2026)
+  /* EXISTING VENUES GO THROUGH IT TOO, on their next sign-in: the owner or a manager (never a host), never while a
+     game is running, never a venue still on its first-run guide (that guide has the wizard in it), never twice once
+     gone through (setup_answers.review), and "Not ready yet? Remind me next time" waits for the next sign-in. */
+  function wantsReview(cx, storage, now) {
+    storage = storage || root.localStorage;
+    var v = cx && cx.venue;
+    if (!v || !v.id || v.status === "suspended" || v.terms_required === true) return false;
+    if (cx.role !== "owner" && cx.role !== "manager") return false;
+    var sa = (cx.settings && cx.settings.setup_answers) || {};
+    if (sa.review === "done") return false;
+    var l = readLocal(storage, v.id);
+    if (l.review === "done") return false;
+    if (typeof l.reviewLater === "number" && (now == null ? Date.now() : now) < l.reviewLater) return false;
+    return true;
+  }
+  /* A GAME RUNNING NOW at this venue (the game Worker's own /host/running, trivia and musical bingo, the games that hold
+     a console; plus deps.busy(), the console's own record of a night on this device). Any doubt counts as running. */
+  function gameRunning(deps, vid) {
+    if (typeof deps.busy === "function") { try { if (deps.busy()) return Promise.resolve(true); } catch (e) { return Promise.resolve(true); } }
+    return Promise.all(["trivia", "musical_bingo"].map(function (f) {
+      return gameApi(deps, "POST", "/host/running", { venue_id: vid, format: f }).then(function (r) { return !r.ok || !r.json || !!r.json.running; });
+    })).then(function (xs) { return xs.some(function (x) { return x; }); });
+  }
+  /* What the venue has today: each game's saved settings, and its members draws. null when any read fails (the
+     screens would open with the wrong values, so it waits for another sign-in). */
+  function loadHave(deps, vid) {
+    var games = ORDER.filter(function (g) { return !gameOf(g).needsDetails; });
+    var reads = games.map(function (g) {
+      return gameApi(deps, "GET", "/host/game-prefs?venue_id=" + encodeURIComponent(vid) + "&game=" + encodeURIComponent(gameOf(g).prefs)).then(function (r) { if (!r.ok) throw new Error("prefs"); return (r.json && r.json.prefs) || {}; });
+    });
+    var c = deps.client || (deps.VP && deps.VP.getClient && deps.VP.getClient());
+    var draws = (c && c.from) ? new Promise(function (ok) { ok(c.from("vp_member_draws").select("*").eq("venue_id", vid).order("created_at", { ascending: true })); }).then(function (r) { if (!r || r.error) throw new Error("draws"); return r.data || []; }) : Promise.resolve([]);
+    return Promise.all(reads.concat([draws])).then(function (xs) {
+      var have = {}; games.forEach(function (g, i) { have[g] = xs[i]; });
+      return { have: have, draws: xs[xs.length - 1].filter(function (d) { return d && d.archived_at == null; }) };
+    }, function () { return null; });
+  }
+  /* The games an existing venue plays, when it never told us: the ones it has settings for, has played, or has a draw. */
+  function playedGames(cx, have, draws) {
+    var v = cx.venue || {}, out = [];
+    function some(o) { return o && Object.keys(o).length > 0; }
+    if (some(have.trivia) || v.last_trivia_at) out.push("trivia");
+    if (some(have.musical) || v.last_musical_at) out.push("musical");
+    if (some(have.bingo)) out.push("bingo");
+    if (some(have.raffles)) out.push("raffles");
+    if (draws && draws.length) out.push("members");
+    return out;
+  }
+  /* review(cx, deps): resolves "busy" (a game is on), "none" (could not read what they have), or run()'s outcome. */
+  function review(cx, deps) {
+    deps = deps || {};
+    var vid = cx && cx.venue && cx.venue.id;
+    if (!vid) return Promise.resolve("none");
+    return gameRunning(deps, vid).then(function (busy) {
+      if (busy) return "busy";
+      return loadHave(deps, vid).then(function (got) {
+        if (!got) return "none";
+        var cx2 = Object.assign({}, cx, { settings: Object.assign({}, cx.settings || {}, { setup_answers: JSON.parse(JSON.stringify((cx.settings && cx.settings.setup_answers) || {})) }) });
+        var sa = cx2.settings.setup_answers;
+        if (!Array.isArray(sa.games) || !sa.games.length) { var pg = playedGames(cx, got.have, got.draws); if (pg.length) sa.games = pg; }
+        return run(cx2, Object.assign({}, deps, { review: true, have: got.have, draws: got.draws }));
+      });
+    }, function () { return "busy"; });
+  }
+
+  root.VPGameSetup = { wantsReview: wantsReview, review: review, haveDraft: haveDraft, changedOnly: changedOnly, timeSelect: timeSelect, HALF_HOURS: HALF_HOURS, bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
     savePrefs: savePrefs, listWords: listWords, brisbaneDate: brisbaneDate, dayOf: dayOf, ORDER: ORDER, LKEY: LKEY, GAME_API: GAME_API, OTHER_MAX: OTHER_MAX };
 })(typeof window !== "undefined" ? window : this);

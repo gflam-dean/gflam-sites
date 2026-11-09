@@ -772,6 +772,13 @@
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
       <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
       <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
+      <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
+      <div id="md-match" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px">
+        <div class="scardhead" style="font-size:13px">Match your columns</div>
+        <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box above for you to check.</p>
+        <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
+        <div class="btnrow" style="margin-top:10px"><button class="go" id="md-matchgo" type="button">Use these columns</button><button class="offtv" id="md-matchno" type="button">Cancel</button></div>
+      </div>
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
         <div class="scardhead" style="font-size:13px">Fix a name</div>
         <p class="snote">A pasted name is split at the first space, so "Mary Anne Smith" is stored with the surname "Anne Smith" and that is what goes on the TV when she wins. Fix it here without taking her off the list.</p>
@@ -2782,6 +2789,52 @@
   /* Split one pasted line into columns and take the quote marks off.
      `0142,"Smith, John"` is one number and one name, so a quoted field keeps its comma; anything
      not inside quotes splits on a comma or a tab as before. */
+  /* MATCH THE COLUMNS (Dean, setup wizard round 9 point 24): the venue picks which column is the member number, the
+     first name and the last name; a header row names them (our best guess picked), a file without one says Column 1,
+     2, 3 with its first row as the example. The box above is then filled as "number, first last", one a line. */
+  var CSV_GUESS = { number: /(member|mem|card|badge)?\s*(no|num|number|#|id)\b|^number$|member/i, first: /first|given|fore|^name$|full/i, last: /last|sur|family/i };
+  function csvGuess(heads, kind){
+    for (var i = 0; i < heads.length; i++) if (CSV_GUESS[kind].test(heads[i]) && !(kind === "number" && /name/i.test(heads[i]))) return i;
+    return kind === "number" ? 0 : (kind === "first" ? Math.min(1, heads.length - 1) : -1);
+  }
+  function csvRows(text){ return String(text||"").split(/\r?\n/).filter(function(l){ return l.trim(); }).map(unquoteCols); }
+  function csvLines(rows, ix){
+    var out = [];
+    rows.forEach(function(r){
+      var num = String(r[ix.number] == null ? "" : r[ix.number]).replace(/\s+/g, "");
+      if (!/^\d+$/.test(num)) return;   // a header row, or a row with no member number
+      var nm = [ix.first >= 0 ? r[ix.first] : "", ix.last >= 0 && ix.last !== ix.first ? r[ix.last] : ""].map(function(x){ return String(x||"").replace(/[\u0000-\u001f<>,]/g, " ").replace(/\s+/g, " ").trim(); }).filter(Boolean).join(" ");
+      out.push(num + ", " + nm);
+    });
+    return out;
+  }
+  function csvMatch(text){
+    var rows = csvRows(text), box = $("md-match"), list = $("md-matchrows");
+    if (!rows.length){ showMsg("That file looks empty."); return; }
+    var hasHead = !/^\s*\d/.test(rows[0][0] || ""), heads = hasHead ? rows[0] : rows[0].map(function(_, i){ return "Column " + (i + 1) + (rows[0][i] ? " (" + String(rows[0][i]).slice(0, 24) + ")" : ""); });
+    while (list.firstChild) list.removeChild(list.firstChild);
+    var picks = {};
+    [["number", "Member number"], ["first", "First name"], ["last", "Last name"]].forEach(function(k){
+      var lab = document.createElement("label"); lab.textContent = k[1]; lab.setAttribute("for", "md-col-" + k[0]); lab.className = "snote"; lab.style.margin = "0";
+      var sel = document.createElement("select"); sel.id = "md-col-" + k[0];
+      sel.setAttribute("style", "width:100%;min-height:44px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 10px;font:inherit");
+      if (k[0] === "last"){ var o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = "None (the name is in one column)"; sel.appendChild(o0); }
+      heads.forEach(function(h, i){ var o = document.createElement("option"); o.value = String(i); o.textContent = String(h || ("Column " + (i + 1))).slice(0, 60); sel.appendChild(o); });
+      sel.value = String(csvGuess(heads, k[0]));
+      picks[k[0]] = sel; list.appendChild(lab); list.appendChild(sel);
+    });
+    box.style.display = "";
+    $("md-matchgo").onclick = function(){
+      var ix = { number: +picks.number.value, first: +picks.first.value, last: +picks.last.value };
+      var lines = csvLines(rows, ix);
+      if (!lines.length){ showMsg("No member numbers in that column. Pick the column that holds the numbers."); return; }
+      var cur = $("md-import").value.trim();
+      $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n");
+      box.style.display = "none";
+      showMsg(lines.length + " members ready. Check they look right, then Add to members list.", true);
+    };
+    $("md-matchno").onclick = function(){ box.style.display = "none"; };
+  }
   function unquoteCols(line){
     var cols = [], cur = "", inQ = false;
     for (var i = 0; i < line.length; i++){
@@ -3453,15 +3506,7 @@
       var f = this.files && this.files[0]; if (!f) return;
       if (f.size > 2*1024*1024){ showMsg("That file is a bit big. Keep it under 2MB."); this.value=""; return; }
       var reader = new FileReader();
-      reader.onload = function(){
-        var lines = String(reader.result||"").split(/\r?\n/);
-        // Drop a header row (a first line that does not start with a member number). The quote
-        // has to be allowed for, or a file that quotes every field loses its first real member.
-        if (lines.length && !/^\s*"?\s*\d/.test(lines[0])) lines.shift();
-        var cur = $("md-import").value.trim();
-        $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n").trim();
-        showMsg("CSV loaded. Check it looks right, then Add to members list.", true);
-      };
+      reader.onload = function(){ csvMatch(String(reader.result||"")); };
       reader.readAsText(f);
       this.value = "";
     });

@@ -595,6 +595,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      it always did, so nothing regresses on a half-deployed night. Whatever happens the screen
      is painted: the mystery panel holds the space, it never goes blank. */
   var _pendingSong=null, _revealMode="legacy";
+  function lastRevealMode(){ if(_revealMode!=="legacy") return _revealMode; try{ return localStorage.getItem("vpMusRevealMode")||""; }catch(e){ return ""; } }
   var REVEAL_END_FALLBACK_MS=32000;   // a blocked or missing clip has no "ended" to wait for
   /* THE TITLE FITS THE WALL WHOLE. Every path that puts a title up sets #tvNowTitle's text, so this
      watches the text (and the layer coming into view, when it can first be measured) and steps the
@@ -638,6 +639,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     noteArt(title, artwork);
     if(!mode){ mode="legacy"; }
     _revealMode=mode;
+    try{ localStorage.setItem("vpMusRevealMode", mode); }catch(e){}   // a TV that reloads mid-song still knows (below)
     if(mode==="instant"){ $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden"); renderRun(); doReveal(); return; }
     var sub=$("tvListenSub");
     if(sub) sub.innerHTML = (mode==="never") ? "Name that tune." : "Know it?<br>Mark it on your card.";
@@ -1096,6 +1098,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
           if(_pendingSong){
             $("tvNowEye").textContent="Now playing";
             $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
+          } else if(t !== _shownTitle && lastRevealMode()==="never"){
+            /* "ONLY IN THE PLAYED-SONGS LIST" (Dean, 7 Nov 2026, setup wizard round 9 point 25): the name never shows
+               while the song plays, even on a TV that has just reloaded; it shows in the played list once the next
+               song starts. */
+            $("tvNowEye").textContent="Now playing";
+            $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden"); setListening(true);
+            var _ls=$("tvListenSub"); if(_ls) _ls.innerHTML="Name that tune.";
           } else if(t !== _shownTitle){
             setArt("");
             $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";

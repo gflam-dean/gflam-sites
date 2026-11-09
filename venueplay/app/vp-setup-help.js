@@ -57,6 +57,20 @@
         help: "How many questions in each round. Most venues use 10." },
       { key: "prize_list", label: "Usual prizes", kind: "prizebank", def: [], prizes: true, placeholder: "e.g. $50 bar tab",
         help: "Your prizes become buttons on the night, so you tap instead of type." },
+      /* asked for trivia too, as for musical bingo (Dean, round 9 point 13) */
+      { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true,
+        help: "Yes: these prizes load every night. No: you add them on the night." },
+      /* DOUBLE POINTS (Dean, round 9 points 10, 26 and 27): Yes or No, off unless they say Yes. Each round of the night
+         is its own game, and the game doubles the last double_last questions of each one, so Yes asks how many in each
+         round. "The whole last round" needs the double points round (feature/trivia-countdown-double-9nov): later. */
+      { key: "double_points", label: "Double points?", kind: "seg", options: YES_NO, def: false,
+        help: "The last questions of every round score double, so teams at the bottom can catch up. Off unless you say Yes." },
+      { key: "double_last", label: "How many questions in each round are worth double?", kind: "number", def: 2, min: 1, max: 100, showIf: { double_points: true },
+        help: "For example 2: the last 2 questions of every round score double." },
+      /* PICTURE ROUNDS (Dean, round 9 point 28) */
+      { key: "picture_note", label: "Picture rounds", kind: "info",
+        words: "A picture question shows its picture on the TV and on phones. Paper teams look at the TV.",
+        help: "Add a picture to any question in the question builder. Paper teams play it too, from the TV." },
       { key: "time_s", label: "Seconds to answer", kind: "number", def: 30, min: 5, max: 60, advanced: true,
         prompt: "Seconds to answer each question",
         help: "How long everyone has to answer. 30 seconds suits most rooms." },
@@ -65,13 +79,7 @@
         help: "Points for each right answer. A wrong answer scores nothing." },
       { key: "speed_bonus", label: "Faster answers score more", kind: "seg", options: ON_OFF, def: true, advanced: true,
         prompt: "Faster answers score more",
-        help: "A quick right answer scores up to half as much again." },
-      { key: "double_points", label: "Double points at the end", kind: "seg", options: ON_OFF, def: false, advanced: true,
-        prompt: "Double points at the end",
-        help: "The last questions are worth double, so teams at the bottom can catch up." },
-      { key: "double_last", label: "How many questions are worth double", kind: "number", def: 10, min: 1, max: 100, advanced: true, showIf: { double_points: true },
-        prompt: "Questions worth double",
-        help: "How many of the last questions count double." },
+        help: "A quick right answer scores up to half as much again. Paper teams don't get the speed bonus." },
       { key: "buzzer", label: "A buzz when time is up", kind: "seg", options: ON_OFF, def: false, advanced: true, prompt: "Buzz when time is up",
         help: "A short buzz when time runs out, so the room knows answers are closed." },
       { key: "buzzer_where", label: "Where the buzz plays", kind: "seg", options: [["tv", "TV"], ["device", "This device"]], def: "tv", showIf: { buzzer: true }, advanced: true, prompt: "Where the buzz plays",
@@ -93,14 +101,14 @@
       { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true, quick: true,
         help: "Yes: these prizes load every night. No: you add them on the night." },
       { key: "reveal", label: "When the TV shows the song name", kind: "select", def: "end", advanced: true,
-        options: [["instant", "Straight away"], ["15", "After 15 seconds"], ["end", "When the clip ends"], ["never", "Never, I call it"]],
+        options: [["instant", "Straight away"], ["15", "After 15 seconds"], ["end", "When the clip ends"], ["never", "Only in the played-songs list"]],
         prompt: "When the TV shows the song name",
-        help: "Until then the TV shows a question mark, so players have to know the song." },
+        help: "Until then the TV shows a question mark, so players have to know the song. Only in the played-songs list: the name never shows while the song plays, only in the TV's list of songs already played." },
       { key: "hits_only", label: "Well-known songs only", kind: "seg", options: ON_OFF, def: true, advanced: true,
         prompt: "Only songs everyone knows",
         help: "On: songs everyone knows. Off: any song in your music." },
       { key: "sound", label: "Your speakers", kind: "info", soundHelp: true, advanced: true, prompt: "Your speakers",
-        help: "How to play the TV's sound through your venue's speakers." }
+        help: "The TV's own speakers play it already. This is for a venue whose sound runs through a separate amp or PA." }
     ], popovers: ["playlists", "prize_same", "hits_only"] },
 
     /* BINGO FOLLOWS THE VENUE'S STATE AND WHETHER IT IS A PUB OR A CLUB (Dean, 6 Nov 2026), from the rules in
@@ -131,14 +139,15 @@
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle", noMore: true, settings: [
       { key: "raffles", label: "Raffles a night", kind: "number", def: 1, min: 1, max: 12,
         help: "How many raffles you draw in a night." },
-      { key: "raffle_counts", label: "Prizes in each raffle", kind: "countlist", def: 1, min: 1, max: 12, countFrom: "raffles", each: "Raffle",
-        help: "How many prizes each raffle has. They can be different." },
-      { key: "prizes", label: "Your prizes", kind: "prizebank", def: ["Meat Tray"], prizes: true, ownList: true, placeholder: "e.g. Meat tray",
-        help: "Your prizes become buttons on the raffle console, one tap each." },
+      /* EACH RAFFLE ASKS THE SAME QUESTIONS (Dean, round 9 point 20): how many prizes, are they all the same, and the
+         prizes. Nothing filled in for them; a usual prize or "Winner's choice" is one tap. */
+      { key: "raffle_plan", label: "Your raffles", kind: "raffleplan", def: [], countFrom: "raffles", min: 1, max: 12, placeholder: "e.g. Meat tray",
+        help: "How many prizes each raffle has, and what they are. Your prizes become buttons on the raffle console." },
+      { key: "time_to_present", label: "How long do winners have to claim?", kind: "select", def: 180,
+        options: [[60, "1 minute"], [120, "2 minutes"], [180, "3 minutes"], [300, "5 minutes"], [600, "10 minutes"], [0, "No limit"]],
+        help: "How long a winner has to show their ticket before you can draw again." },
       { key: "prizes_weekly", label: "The same prizes each week?", kind: "seg", options: YES_NO, def: true, advanced: true, prompt: "The same prizes each week?",
         help: "Yes: we keep these prizes. No: you add them on the night." },
-      { key: "time_to_present", label: "Seconds to claim a prize", kind: "number", def: 180, min: 0, max: 3600, advanced: true,
-        help: "How long a winner has to show their ticket. 0 means no limit." },
       { key: "jackpot_on", label: "Cash jackpot", kind: "seg", options: ON_OFF, def: false, advanced: true, prompt: "A cash jackpot instead of a prize?",
         help: "For a cash jackpot instead of a prize. We warn you if it's over your state's limit." },
       { key: "jackpot_amount_cents", label: "Jackpot amount ($)", kind: "money", def: 50000, advanced: true, showIf: { jackpot_on: true },
@@ -148,7 +157,7 @@
       { key: "spin_seconds", label: "How long the numbers spin", kind: "select", def: 4, advanced: true, prompt: "How long the numbers spin",
         options: [[3, "3 seconds"], [4, "4 seconds"], [5, "5 seconds"], [6, "6 seconds"], [8, "8 seconds"]],
         help: "How long the numbers spin on the TV before the winner shows." }
-    ], popovers: ["raffles", "raffle_counts", "prizes"] },
+    ], popovers: ["raffles", "raffle_plan", "time_to_present"] },
 
     /* MEMBERS DRAWS: no defaults (every box starts empty), and the draw's own settings are saved by
        /host/members/settings (manager or owner), which makes the draw. A skipped members draw is never called saved. */
@@ -187,12 +196,14 @@
     g.settings.forEach(function (s) {
       /* the venue's usual prizes, when they said they use them across games (Dean, round 3): every game's buttons */
       if (s.kind === "prizebank") { if (opts && Array.isArray(opts.bank) && opts.bank.length) out[s.key] = opts.bank.slice(0, 8); else if (Array.isArray(s.def) && s.def.length) out[s.key] = s.def.slice(); return; }
-      if (s.kind === "countlist") return;   // how many prizes in each raffle: theirs to give
+      if (s.kind === "countlist" || s.kind === "raffleplan") return;   // how many prizes in each raffle, and which: theirs to give
       if (s.kind === "info" || s.kind === "sets" || s.kind === "categories" || s.kind === "taglist") return;   // words only, or theirs to give
       if (s.kind === "range") { out[s.keys[0]] = s.def[0]; out[s.keys[1]] = s.def[1]; return; }
       if (s.kind === "playlists") { out.playlists = s.def.slice(); out.playlist = s.def[0]; return; }
       if (s.kind === "prizelist") { if (s.def) { out[s.key] = [s.def]; if (k === "musical") out.prize = s.def; } return; }
       if (s.def === "" || s.def == null) return;   // an empty prize is "not set", the console's own empty box
+      /* a setting shown only after another answer (double_last after double points Yes) is not written as a default */
+      if (s.showIf && k !== "bingo" && Object.keys(s.showIf).some(function (w) { var o = g.settings.filter(function (x) { return x.key === w; })[0]; return !o || o.def !== s.showIf[w]; })) return;
       if (s.showIf && k === "bingo" && br && !br.phones && s.showIf.ticket_kind === "phone") return;
       if (s.showIf && k === "bingo" && (!br || br.phones) && s.showIf.ticket_kind === "paper") return;
       out[s.key] = s.def;

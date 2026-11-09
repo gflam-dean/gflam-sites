@@ -4105,6 +4105,7 @@ const GAME_PREFS_KEYS = {
     theme_nights:  gpWords(6, 60),
     prize_list:    gpWords(8, 80),
     rounds:        gpInt(1, 20),   // rounds a night (setup wizard, round 8: Dean "it never asks how many rounds")
+    prize_weekly: gpBool,    // the same prizes every week (setup wizard, round 10: Dean "ask it for trivia too")
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
@@ -4129,6 +4130,8 @@ const GAME_PREFS_KEYS = {
        each. The raffle console does not read these yet (noted for the raffle new look). */
     raffles:       gpInt(1, 12),
     raffle_counts: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const n = parseInt(x, 10); if (Number.isInteger(n) && n >= 1 && n <= 12) out.push(n); if (out.length === 12) break; } return out.length ? out : undefined; },
+    /* round 10 (Dean, feedback 9 point 20): each raffle's own prizes, in order, a list per raffle ("" = not given yet) */
+    raffle_prizes: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const r of v) { if (!Array.isArray(r)) break; const one = []; for (const x of r) { one.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 80) : ''); if (one.length >= 12) break; } out.push(one); if (out.length >= 12) break; } return out.length ? out : undefined; },
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
