@@ -1615,6 +1615,7 @@
   function wantsReview(cx, storage, now) {
     storage = storage || root.localStorage;
     var v = cx && cx.venue;
+    if (root.__vpRigNoReview === true) return false;   // the browser rig's own pages, unless a suite asks for it (tools/browser-rig/rig.py)
     if (!v || !v.id || v.status === "suspended" || v.terms_required === true) return false;
     if (cx.role !== "owner" && cx.role !== "manager") return false;
     var sa = (cx.settings && cx.settings.setup_answers) || {};
