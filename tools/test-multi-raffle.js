@@ -164,7 +164,8 @@ function screen() { var o = {}; DB.vp_venue_screen.filter(function (r) { return 
       'var EL={ rfJackOn:{checked:false}, rfAllowRedraw:{checked:true}, rfStart:{value:"1"}, rfEnd:{value:"200"}, rfTime:{value:"60"}, rfJackAmt:{value:""} };\n' +
       'function $(id){ return EL[id]; } function renderPresets(){} function queueRafflePrefs(){ QUEUED++; }\n' +
       'function apiPost(path, body){ POSTS.push(body); return Promise.resolve({}); }\n' +
-      grabH('filterSavedPrizes') + grabH('mergeSavedPrizes') + grabH('savePrize') + grabH('rafflePrefs') +
+      grabH('filterSavedPrizes') + grabH('mergeSavedPrizes') + grabH('savePrize') + grabH('pickOrder') + grabH('announcing') + grabH('rafflePrefs') +   // rafflePrefs reads Dean's two choices (9 Nov 2026)
+     
       'return { G:G, POSTS:POSTS, filterSavedPrizes:filterSavedPrizes, mergeSavedPrizes:mergeSavedPrizes, savePrize:savePrize, rafflePrefs:rafflePrefs };';
     return (new Function('RAFFLES', 'RID', src))(raffles, raffleId);
   }
