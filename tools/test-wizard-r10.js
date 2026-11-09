@@ -109,6 +109,7 @@ function chip(P, groupId, attr, val) { var b = walk($(P, groupId), function (e) 
 function chip2(P, groupId, val) { return walk($(P, groupId), function (e) { return e.getAttribute && e.getAttribute('data-value') === val; }); }
 function lastPost(path) { var p = posts(path); return p.length ? p[p.length - 1].body : null; }
 function lastAnswers() { return SAVED.length ? SAVED[SAVED.length - 1].patch.setup_answers : null; }
+function rafWeekly(P, i, v) { var b = walk($(P, 'vpGsRafWeekly_' + i), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-value') === String(v); }); if (!b) throw new Error('no weekly ' + i); b.click(); }
 function shown(P, key) { var r = row(P, key); return !!r && r.style.display !== 'none'; }
 function keptByWorker(game, prefs) { return srtj(WK.clean(game, prefs)) === srtj(prefs); }
 var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/app/index.html'), MSCREEN = readFile('venueplay/app/musical/screen.html'), SOUND = readFile('venueplay/app/sound-help.html');
@@ -141,8 +142,8 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   $(P, 'vpGsWeekNext').click(); await settle();
   sa = lastAnswers();
   check('saved: the week with each start time', sa && JSON.stringify(sa.week) === JSON.stringify([{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'members', start: '20:30' }] }, { day: 'sat', games: [{ game: 'other', name: 'Karaoke', start: '21:00' }] }]), sa && sa.week);
-  check('one Yes for each game they picked, in game order: trivia, musical bingo, bingo, raffles, members draws (Dean, round 11 note 2)', T(P, 'vpGsTitle') === 'Would you like to set up a game now?' && all($(P, 'vpGsGamePicks'), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-game'); }).map(function (e) { return seen(e); }).join('|') === 'Yes, set up trivia|Yes, set up musical bingo|Yes, set up bingo|Yes, set up raffles|Yes, set up members draws');
-  check('"Would you like to set up a game now?" with Yes naming it, and one line under Not today (Dean, round 9 point 9)', T(P, 'vpGsTitle') === 'Would you like to set up a game now?' && T(P, 'vpGsAllYes') === 'Yes, set up trivia' && T(P, 'vpGsAllNo') === 'Not today' && T(P, 'vpGsAllNote') === 'Each game walks you through its setup the first time you open it. Do it before your first night.');
+  check('one Yes for each game they picked, in game order: trivia, musical bingo, bingo, raffles, members draws (Dean, round 11 note 2)', T(P, 'vpGsTitle') === 'Now let\'s set up your games.' && all($(P, 'vpGsGamePicks'), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-game'); }).map(function (e) { return seen(e); }).join('|') === 'Yes, set up trivia|Yes, set up musical bingo|Yes, set up bingo|Yes, set up raffles|Yes, set up members draws');
+  check('"Now let\'s set up your games." with Yes naming it, and one line under Not today (Dean, round 9 point 9)', T(P, 'vpGsTitle') === 'Now let\'s set up your games.' && T(P, 'vpGsAllYes') === 'Yes, set up trivia' && T(P, 'vpGsAllNo') === 'Not today' && T(P, 'vpGsAllNote') === 'Each game walks you through its setup the first time you open it. Do it before your first night.');
   $(P, 'vpGsAllYes').click(); await settle();
 
   /* TRIVIA: every question */
@@ -151,7 +152,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   function pairOf(P, key) { var r = row(P, key); return r && r.parentNode; }
   function firstKey(P) { var r = walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }); return r && r.getAttribute('data-key'); }
   check('trivia: Rounds a night and Questions a round on ONE line, and first (Dean, round 11 note 4)', pairOf(P, 'rounds') === pairOf(P, 'count') && /vpgs-pairs/.test(pairOf(P, 'rounds').className) && firstKey(P) === 'rounds' && /Questions a round/.test(seen(row(P, 'count'))));
-  check('trivia: Round prizes (different or the same) and Same every week? on one line', pairOf(P, 'prize_same') === pairOf(P, 'prize_weekly') && /vpgs-pairs/.test(pairOf(P, 'prize_weekly').className) && /Same every week\?/.test(seen(row(P, 'prize_weekly'))));
+  check('trivia: Round prizes (different or the same) and Same every week? on one line', pairOf(P, 'prize_same') === pairOf(P, 'prize_weekly') && /vpgs-pairs/.test(pairOf(P, 'prize_weekly').className) && /Same prizes every week\?/.test(seen(row(P, 'prize_weekly'))));
   check('trivia: Double points and Picture questions are On/Off toggles side by side, Double points Off to start (Dean, round 11 note 4)', pairOf(P, 'double_points') === pairOf(P, 'picture_round') && row(P, 'double_points').children[2].children[0].children.map(function (b) { return seen(b); }).join('|') === 'On|Off' && !shown(P, 'double_last'));
   check('trivia: picture questions say plainly they are ON, for the TV and phones, so paper teams can play (Dean, round 11 note 4)', /Picture questions are ON\. A question with a picture shows it on the TV and on phones, so paper teams can play too\./.test(T(P, 'vpGsState_picture_round')));
   check('trivia: Seconds to answer + Faster answers score more on one line, Points + the buzz on the next, in More settings', pairOf(P, 'time_s') === pairOf(P, 'speed_bonus') && pairOf(P, 'base_points') === pairOf(P, 'buzzer') && pairOf(P, 'time_s') !== pairOf(P, 'base_points') && pairOf(P, 'time_s').parentNode.parentNode.id === 'vpGsAdvanced');
@@ -237,14 +238,14 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   box(P, 'vpGsRafP_0_0', 'Meat tray');
   box(P, 'vpGsRafP_1_0', "Winner's choice");
   box(P, 'vpGsIn_time_to_present', 300);
-  seg(P, 'prizes_weekly', 'false');
+  rafWeekly(P, 0, 'false');
   check('raffles: not the same every week, so a week can be swapped, one box for each prize in order', shown(P, 'prize_swaps') && !!$(P, 'vpGsSwapAdd'));
   $(P, 'vpGsSwapAdd').click(); box(P, 'vpGsSwapWeek_0', '2026-12-09'); box(P, 'vpGsSwapP_0_0', 'Hamper'); box(P, 'vpGsSwapP_0_1', 'Voucher');
   check('raffles: draw style has a barrel and a wheel; the cash prize asks its amount', $(P, 'vpGsIn_draw_style').children.map(function (o) { return o.value; }).join() === 'numbers,barrel,wheel' && !shown(P, 'jackpot_amount_cents'));
   box(P, 'vpGsIn_draw_style', 'barrel'); seg(P, 'jackpot_on', 'true'); box(P, 'vpGsIn_jackpot_amount_cents', '250'); seg(P, 'allow_redraw', 'false'); box(P, 'vpGsIn_spin_seconds', 6);
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   var rp = lastPost('/host/game-prefs');
-  var wantR = { raffles: 2, raffle_counts: [3, 1], raffle_names: ['Friday Meat Raffle', 'Hamper Draw'], raffle_prizes: [['Meat tray', 'Meat tray', 'Meat tray'], ["Winner's choice"]], prizes: ['Meat tray', "Winner's choice"], prize_count: 3, prizes_same: true, time_to_present: 300, prizes_weekly: false, prize_swaps: [{ week: '2026-12-07', prizes: ['Hamper', 'Voucher'] }], draw_style: 'barrel', jackpot_on: true, jackpot_amount_cents: 25000, allow_redraw: false, spin_seconds: 6 };
+  var wantR = { raffles: 2, raffle_counts: [3, 1], raffle_names: ['Friday Meat Raffle', 'Hamper Draw'], raffle_prizes: [['Meat tray', 'Meat tray', 'Meat tray'], ["Winner's choice"]], prizes: ['Meat tray', "Winner's choice"], prize_count: 3, prizes_same: true, time_to_present: 300, prizes_weekly: false, raffle_weekly: [false, true], prize_swaps: [{ week: '2026-12-07', prizes: ['Hamper', 'Voucher'] }], draw_style: 'barrel', jackpot_on: true, jackpot_amount_cents: 25000, allow_redraw: false, spin_seconds: 6 };
   var missR = Object.keys(wantR).filter(function (k) { return !rp || JSON.stringify(rp.prefs[k]) !== JSON.stringify(wantR[k]); });
   check('raffles: every answer saved to game_prefs.raffle (' + Object.keys(wantR).length + ' settings)', rp && rp.game === 'raffle' && missR.length === 0, { missing: missR, sent: rp && rp.prefs });
   check('raffles: the game Worker keeps every one', rp && keptByWorker('raffle', rp.prefs), rp && WK.clean('raffle', rp.prefs));
@@ -255,7 +256,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   box(P, 'vpGsIn_name', 'Friday Jackpot'); box(P, 'vpGsIn_date_started', '2026-01-09'); box(P, 'vpGsIn_draw_time', '21:00');
   box(P, 'vpGsIn_current_jackpot_cents', '1250'); box(P, 'vpGsIn_starting_amount_cents', '250'); box(P, 'vpGsIn_increment_cents', '50'); box(P, 'vpGsIn_max_jackpot_cents', '5000');
   seg(P, 'over_max', 'second');
-  check('members draws: compact, two to a line (start and time, jackpot now and back to, weekly and most)', pairOf(P, 'date_started') === pairOf(P, 'draw_time') && pairOf(P, 'current_jackpot_cents') === pairOf(P, 'starting_amount_cents') && pairOf(P, 'increment_cents') === pairOf(P, 'max_jackpot_cents'));
+  check('members draws: compact, two to a line (start and time, starting and maximum jackpot, jackpot now and weekly)', pairOf(P, 'date_started') === pairOf(P, 'draw_time') && pairOf(P, 'starting_amount_cents') === pairOf(P, 'max_jackpot_cents') && pairOf(P, 'current_jackpot_cents') === pairOf(P, 'increment_cents'));
   check('members draws: "Add another draw" is offered', T(P, 'vpGsAddDraw') === 'Add another draw');
   CALLS = []; $(P, 'vpGsAddDraw').click(); await settle();
   var ms = lastPost('/host/members/settings');
@@ -269,13 +270,13 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   $(P, 'vpGsSave').click(); await settle();
   var ms2 = lastPost('/host/members/settings');
   check('the second draw is saved as its own draw', posts('/host/members/settings').length === 2 && ms2.name === 'Sunday Jackpot' && ms2.draw_time === '5pm' && ms2.current_jackpot_cents === 50000 && ms2.date_started === '2026-02-01' && !('draw_id' in ms2), ms2);
-  check('then the members list reminder: how, the best day and the best time (Dean, round 11 note 7)', /Would you like a reminder to add your members list\?/.test(T(P, 'vpGsBody')) && ['email', 'calendar', 'none'].every(function (v) { return !!chip2(P, 'vpGsRemind', v); }) && $(P, 'vpGsRemindWhen').style.display === 'none');
+  check('then the members list reminder: how, the best day and the best time (Dean, round 11 note 7)', /Would you like a weekly reminder to update your members list\?/.test(T(P, 'vpGsBody')) && /We can email you/.test(T(P, 'vpGsBody')) && !/add your members list/i.test(T(P, 'vpGsBody')) && T(P, 'vpGsTitle') === 'Update your members list later' && ['email', 'calendar', 'none'].every(function (v) { return !!chip2(P, 'vpGsRemind', v); }) && $(P, 'vpGsRemindWhen').style.display === 'none');
   chip2(P, 'vpGsRemind', 'calendar').click(); box(P, 'vpGsRemindDay', 'thu'); box(P, 'vpGsRemindTime', '16:30');
   var ics = decodeURIComponent(($(P, 'vpGsRemindCal').attrs.href || '').replace(/^data:text\/calendar;charset=utf-8,/, ''));
   check('the weekly calendar entry is a real .ics: Thursdays at 4:30pm, repeating weekly', $(P, 'vpGsRemindWhen').style.display === '' && /RRULE:FREQ=WEEKLY;BYDAY=TH/.test(ics) && /DTSTART:20261112T163000/.test(ics) && /BEGIN:VEVENT/.test(ics) && $(P, 'vpGsRemindCal').attrs.download === 'venueplay-members-list-reminder.ics', ics);
   $(P, 'vpGsExtrasNo').click(); await settle();
   sa = lastAnswers();
-  check('the reminder is kept in setup_answers.members_reminder', sa && JSON.stringify(sa.members_reminder) === JSON.stringify({ how: 'calendar', day: 'thu', time: '16:30' }), sa && sa.members_reminder);
+  check('the reminder is kept in setup_answers.members_reminder', sa && JSON.stringify(sa.members_reminder) === JSON.stringify({ how: 'calendar', day: 'thu', time: '16:30', since: P.GS.brisbaneDate(NOW) }), sa && sa.members_reminder);
   check('members draws: what happens over the most kept in setup_answers', sa && sa.members_over === 'second', sa && sa.members_over);
   check('the end: "You\'re ready for your week." and the advertising prompt, meal deals named, to the Screen tab (Dean, round 9 point 23)', T(P, 'vpGsTitle') === "You're ready for your week." && /Next, your TV advertising/.test(T(P, 'vpGsAdvert')) && /like your meal deals/.test(T(P, 'vpGsAdvert')) && $(P, 'vpGsAdvertGo').getAttribute('href') === '/app/billing.html#screen');
   check('a venue that has gone through it is not asked again as an existing venue (setup_answers.review)', sa && sa.review === 'done' && P.GS.wantsReview(Object.assign({}, P.ctx, { settings: { setup_answers: sa } }), P.deps.storage, NOW) === false);
@@ -329,7 +330,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('their games already ticked from what they play (settings, nights played, a members draw)', ['trivia', 'musical', 'bingo', 'raffles', 'members'].every(function (g) { return gameBtn(P, g).getAttribute('aria-checked') === 'true'; }));
   check('pub or club left out, already known from their record (Dean, round 9 point 3)', !$(P, 'vpGsKind') && T(P, 'vpGsTitle') === 'What games do you play?');
   $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
-  check('"Would you like to check a game now?" with a Yes for each game, Not today keeps everything', T(P, 'vpGsTitle') === 'Would you like to check a game now?' && all($(P, 'vpGsGamePicks'), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-game'); }).length === 5 && T(P, 'vpGsAllNote') === 'Not today keeps every setting as it is.');
+  check('"Now let\'s check your games." with a Yes for each game, Not today keeps everything', T(P, 'vpGsTitle') === 'Now let\'s check your games.' && all($(P, 'vpGsGamePicks'), function (e) { return e.tagName === 'BUTTON' && e.getAttribute('data-game'); }).length === 5 && T(P, 'vpGsAllNote') === 'Not today keeps every setting as it is.');
   CALLS = []; $(P, 'vpGsAllYes').click(); await settle();
   check('trivia opens with THEIR settings: rounds 5, 15 a round, double points Yes with 5, 45 seconds, 200 points, their prize', $(P, 'vpGsIn_rounds').value === '5' && $(P, 'vpGsIn_count').value === '15' && row(P, 'double_points').children[2].children[0].children[0].getAttribute('aria-pressed') === 'true' && $(P, 'vpGsIn_double_last').value === '5' && $(P, 'vpGsIn_time_s').value === '45' && $(P, 'vpGsIn_base_points').value === '200' && $(P, 'vpGsIn_prizes_0').value === 'Bar tab', [$(P, 'vpGsIn_rounds').value, $(P, 'vpGsIn_double_last').value, $(P, 'vpGsIn_time_s').value]);
   check('it asks them to have a look through, and never says anything is already filled in (Dean, round 11 note 8)', T(P, 'vpGsLead') === 'Have a look through, and change anything you like.' && !/filled in|already/i.test(T(P, 'vpGsBody')));
@@ -415,8 +416,8 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   chip2(P, 'vpGsRemind', 'email').click(); box(P, 'vpGsRemindDay', 'sat'); box(P, 'vpGsRemindTime', '10:30');
   check('email reminder: no calendar link, the day and time shown', $(P, 'vpGsRemindCal').style.display === 'none' && $(P, 'vpGsRemindWhen').style.display === '');
   $(P, 'vpGsExtrasNo').click(); await settle();
-  check('email reminder saved: { how: email, day: sat, time: 10:30 }', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'sat', time: '10:30' }), lastAnswers());
-  check('and setup_answers keeps it after a clean (vp-firstrun cleans through cleanExtra)', JSON.stringify(P.GS.cleanExtra({ members_reminder: { how: 'email', day: 'sat', time: '10:30' } }, {}).members_reminder) === '{"how":"email","day":"sat","time":"10:30"}' && !P.GS.cleanExtra({ members_reminder: { how: 'sms', day: 'sat' } }, {}).members_reminder);
+  check('email reminder saved: { how: email, day: sat, time: 10:30 }', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'sat', time: '10:30', since: P.GS.brisbaneDate(NOW) }), lastAnswers());
+  check('and setup_answers keeps it after a clean (vp-firstrun cleans through cleanExtra)', JSON.stringify(P.GS.cleanExtra({ members_reminder: { how: 'email', day: 'sat', time: '10:30' } }, {}).members_reminder) === '{"how":"email","day":"sat","time":"10:30"}' && P.GS.cleanExtra({ members_reminder: { how: 'email', day: 'sat', time: '10:30', since: '2026-11-10' } }, {}).members_reminder.since === '2026-11-10' && !P.GS.cleanExtra({ members_reminder: { how: 'email', day: 'sat', time: '10:30', since: 'x' } }, {}).members_reminder.since && !P.GS.cleanExtra({ members_reminder: { how: 'sms', day: 'sat' } }, {}).members_reminder);
   P = page({ answers: { games: ['members'], members_reminder: { how: 'calendar', day: 'tue', time: '08:00' } } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
   box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
@@ -507,18 +508,18 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   P = oldVenue(); P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle(); $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
   $(P, 'vpGsAllYes_raffles').click(); await settle();
-  check('hidden: raffles ask no name and no draw style, and still ask the prizes', !$(P, 'vpGsRafName_0') && !row(P, 'draw_style') && !$(P, 'vpGsIn_draw_style') && !!$(P, 'vpGsRafP_0_0'));
-  seg(P, 'prizes_weekly', 'false');
+  check('hidden: raffles ask no draw style, still ask the prizes, and DO ask each raffle\'s name now (Dean, round 12 note 7)', !!$(P, 'vpGsRafName_0') && !row(P, 'draw_style') && !$(P, 'vpGsIn_draw_style') && !!$(P, 'vpGsRafP_0_0'));
+  rafWeekly(P, 0, 'false');
   check('hidden: raffles, not the same every week, offer no prize swap', !row(P, 'prize_swaps') && !$(P, 'vpGsSwapAdd'));
   P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
   box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
-  check('hidden: the members list reminder offers the calendar and No thanks, no email', !chip2(P, 'vpGsRemind', 'email') && !!chip2(P, 'vpGsRemind', 'calendar') && !!chip2(P, 'vpGsRemind', 'none'));
+  check('the members list reminder offers Email me, the calendar and No thanks (Dean, round 12 note 9: a real sender exists now)', !!chip2(P, 'vpGsRemind', 'email') && !!chip2(P, 'vpGsRemind', 'calendar') && !!chip2(P, 'vpGsRemind', 'none'));
   P = page({ answers: { games: ['members'], members_reminder: { how: 'email', day: 'sat', time: '10:30' } } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle(); $(P, 'vpGsAllYes').click(); await settle();
   box(P, 'vpGsIn_name', 'Friday Draw'); $(P, 'vpGsSave').click(); await settle();
   $(P, 'vpGsExtrasNo').click(); await settle();
-  check('hidden: an old email-reminder choice is not carried on (no email job exists yet)', !('members_reminder' in lastAnswers()), lastAnswers());
+  check('an earlier email choice is kept, and gets today as its "since" so the sender\'s first email is after today', JSON.stringify(lastAnswers().members_reminder) === JSON.stringify({ how: 'email', day: 'sat', time: '10:30', since: P.GS.brisbaneDate(NOW) }), lastAnswers());
   P = oldVenue(); 
   check('hidden: the keys and defaults are still there for later (picture_round on, draw_style numbers)', P.H.byKey('trivia').settings.some(function (x) { return x.key === 'picture_round' && x.def === true && x.notYet; }) && P.H.byKey('raffles').settings.some(function (x) { return x.key === 'draw_style' && x.def === 'numbers' && x.notYet; }) && WK.clean('trivia', { picture_round: false }).picture_round === false && WK.clean('raffle', { draw_style: 'wheel' }).draw_style === 'wheel');
   UNHIDE = true;

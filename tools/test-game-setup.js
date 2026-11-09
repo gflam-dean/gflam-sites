@@ -161,7 +161,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('saved for the venue it is for, only', SAVED.every(function (s) { return s.id === 'V1'; }));
 
   section('4. "Would you like to set them all up today?" Not today, then "No worries."');
-  check('the second question, naming their games', T(P, 'vpGsTitle') === 'Would you like to set up a game now?' && /You picked trivia, musical bingo and members draws\./.test(T(P, 'vpGsBody')), T(P, 'vpGsBody'));
+  check('the second question, naming their games', T(P, 'vpGsTitle') === 'Now let\'s set up your games.' && /You picked trivia, musical bingo and members draws\./.test(T(P, 'vpGsBody')), T(P, 'vpGsBody'));
   PREFS.trivia = { count: 20 };   // a value the venue already chose
   $(P, 'vpGsAllNo').click(); await settle();
   check('"No worries." in Dean\'s words, naming the games with defaults', T(P, 'vpGsTitle') === 'No worries.' && T(P, 'vpGsNoWorries') === "We'll remind you when you open each of those games. Your default settings have been saved for trivia and musical bingo.", T(P, 'vpGsNoWorries'));
@@ -215,7 +215,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   var ms = posts('/host/members/settings')[0];
   check('the draw is made through /host/members/settings: name, $250 as 25000 cents; the time to reach the host is left to the console (spacing review r8)', ms && ms.body.venue_id === 'V1' && ms.body.name === 'Friday Members Draw' && ms.body.starting_amount_cents === 25000 && !('time_to_claim_seconds' in ms.body) && !$(P, 'vpGsIn_time_to_claim_seconds') && !ms.body.draw_id, ms && ms.body);
   check('blank boxes are not sent (members draws have no defaults to invent)', ms && !('increment_cents' in ms.body) && !('max_jackpot_cents' in ms.body));
-  check('after members draws: "Add your members list later", easiest on a computer, nothing pushed (Dean, round 8b point 14)', T(P, 'vpGsTitle') === 'Add your members list later' && /on a computer/.test(T(P, 'vpGsBody')) && /vpgs-wideonly/.test($(P, 'vpGsExtrasYes').className), T(P, 'vpGsTitle'));
+  check('after members draws: "Update your members list later", easiest on a computer, nothing pushed (Dean, round 8b point 14)', T(P, 'vpGsTitle') === 'Update your members list later' && /on a computer/.test(T(P, 'vpGsBody')) && /vpgs-wideonly/.test($(P, 'vpGsExtrasYes').className), T(P, 'vpGsTitle'));
   $(P, 'vpGsExtrasNo').click(); await settle();
   check('one game left: asked again, between games of this first run', T(P, 'vpGsTitle') === 'Would you like to set up another game?' && /musical bingo\./.test(T(P, 'vpGsBody')));
   $(P, 'vpGsNextNo').click(); await settle();
@@ -341,12 +341,12 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   sa = SAVED[SAVED.length - 1].patch.setup_answers;
   check('stored as setup_answers.week: Wednesday trivia 7pm; Friday musical bingo 7:30pm, members draw 8pm', JSON.stringify(sa.week) === '[{"day":"wed","games":[{"game":"trivia","start":"19:00"}]},{"day":"fri","games":[{"game":"musical","start":"19:30"},{"game":"members","start":"20:00"}]}]', sa.week);
   check('and the nights, the shape the Account page card already reads', JSON.stringify(sa.nights) === '["wed","fri"]', sa.nights);
-  check('then "Would you like to set them all up today?"', T(P, 'vpGsTitle') === 'Would you like to set up a game now?');
+  check('then "Would you like to set them all up today?"', T(P, 'vpGsTitle') === 'Now let\'s set up your games.');
   $(P, 'vpGsBack').click(); await settle();
   check('Back shows what they picked, with the times', day('trivia', 'wed').getAttribute('aria-pressed') === 'true' && $(P, 'vpGsTime_trivia_wed').value === '19:00');
   var P10 = page(); P10.GS.run(P10.ctx, Object.assign(P10.deps, { start: 'pick' })); await settle();
   gameBtn(P10, 'bingo').click(); SAVED = []; P10.doc.getElementById('vpGsNext').click(); await settle(); $(P10, 'vpGsWeekSkip').click(); await settle();
-  check('skippable: "Skip for now" goes on with nothing stored for the week', T(P10, 'vpGsTitle') === 'Would you like to set up a game now?' && !SAVED.some(function (x) { return x.patch.setup_answers.week; }));
+  check('skippable: "Skip for now" goes on with nothing stored for the week', T(P10, 'vpGsTitle') === 'Now let\'s set up your games.' && !SAVED.some(function (x) { return x.patch.setup_answers.week; }));
   check('the week is cleaned: unknown days, games and times dropped, each game once a day, week order', JSON.stringify(P.GS.cleanWeek([{ day: 'fri', games: [{ game: 'members', start: '25:00' }, { game: 'trivia', start: '20:15' }, { game: 'trivia' }, { game: 'jag' }] }, { day: 'funday', games: [{ game: 'trivia' }] }, { day: 'mon', games: [{ game: 'bingo', start: '7pm' }] }])) === '[{"day":"mon","games":[{"game":"bingo"}]},{"day":"fri","games":[{"game":"trivia","start":"20:15"},{"game":"members"}]}]', P.GS.cleanWeek([{ day: 'fri', games: [{ game: 'members', start: '25:00' }, { game: 'trivia', start: '20:15' }, { game: 'trivia' }, { game: 'jag' }] }, { day: 'funday', games: [{ game: 'trivia' }] }, { day: 'mon', games: [{ game: 'bingo', start: '7pm' }] }]));
   check('cleanExtra keeps the week for the guide\'s own saves', JSON.stringify(P.GS.cleanExtra({ week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }] }).week) === '[{"day":"wed","games":[{"game":"trivia","start":"19:00"}]}]');
   check('times in plain words for the phones: 19:30 is 7:30pm, 19:00 is 7pm', P.GS.timeWords('19:30') === '7:30pm' && P.GS.timeWords('19:00') === '7pm' && P.GS.timeWords('00:15') === '12:15am');
@@ -423,7 +423,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   function keysIn(id) { var g = $(P, id); return g ? all(g, function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); }).join() : ''; }
   var mrows = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).filter(function (e) { return e.style.display !== 'none'; }).map(function (e) { return e.getAttribute('data-key'); });
-  check('members draws: one row each, the name, when it started, the time (the time picker), the starting jackpot ($ before the box, empty), how much it goes up and the most it can reach (Dean, round 7b points 17 and 19)', mrows.slice(0, 7).join() === 'name,date_started,draw_time,current_jackpot_cents,starting_amount_cents,increment_cents,max_jackpot_cents' && $(P, 'vpGsIn_draw_time').tagName === 'SELECT' && $(P, 'vpGsIn_starting_amount_cents').value === '' && $(P, 'vpGsIn_starting_amount_cents').parentNode.children[0].textContent === '$' && /jackpot now/i.test(T(P, 'vpGsBody')) && mrows.indexOf('over_max') < 0, mrows);
+  check('members draws: one row each, the name, when it started, the time (the time picker), the starting jackpot ($ before the box, empty), how much it goes up and the most it can reach (Dean, round 7b points 17 and 19)', mrows.slice(0, 7).join() === 'name,date_started,draw_time,starting_amount_cents,max_jackpot_cents,current_jackpot_cents,increment_cents' && $(P, 'vpGsIn_draw_time').tagName === 'SELECT' && $(P, 'vpGsIn_starting_amount_cents').value === '' && $(P, 'vpGsIn_starting_amount_cents').parentNode.children[0].textContent === '$' && /jackpot now/i.test(T(P, 'vpGsBody')) && mrows.indexOf('over_max') < 0, mrows);
   $(P, 'vpGsIn_max_jackpot_cents').value = '5000'; $(P, 'vpGsIn_max_jackpot_cents').handlers.input.forEach(function (f) { f(); });
   check('a most amount typed: "what happens to the weekly amount" is asked (kept, another draw, or not added)', walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key') === 'over_max'; }).style.display === '' && /Another draw/.test(T(P, 'vpGsBody')));
   walk($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'second'; }).click();
@@ -565,7 +565,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
   var mo = posts('/host/members/settings')[0]; sa = SAVED.length ? SAVED[SAVED.length - 1].patch.setup_answers : {};
   check('over the most: "another draw" is kept in setup_answers for later, never sent to the draw (the draw only knows "kept")', mo && mo.body.max_jackpot_cents === 500000 && !('over_max' in mo.body) && !('__setup' in mo.body) && sa.members_over === 'second', [mo && mo.body, sa.members_over]);
-  check('then "Add your members list later"', T(P, 'vpGsTitle') === 'Add your members list later');
+  check('then "Update your members list later"', T(P, 'vpGsTitle') === 'Update your members list later');
   var went = ''; P.deps.go = function (u) { went = u; };
   $(P, 'vpGsExtrasYes').click(); await settle();
   check('"Add my members list" goes to the Account page\'s members list', went === '/app/billing.html#draws', went);
@@ -598,7 +598,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   P = page({ answers: { games: ['members'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
   var mk9 = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
-  check('members: "After a win it goes back to" right under "Current jackpot for the next draw", and the member numbers said once (design review r9)', mk9.indexOf('starting_amount_cents') === mk9.indexOf('current_jackpot_cents') + 1 && /After a win, back to/.test(T(P, 'vpGsBody')) && !/member numbers/.test(T(P, 'vpGsLead')), mk9);
+  check('members: "Starting jackpot" and "Maximum jackpot" side by side, then "Jackpot now" and the weekly rise (Dean, round 12 note 8), and the member numbers said once (design review r9)', mk9.indexOf('max_jackpot_cents') === mk9.indexOf('starting_amount_cents') + 1 && mk9.indexOf('current_jackpot_cents') === mk9.indexOf('max_jackpot_cents') + 1 && /Starting jackpot/.test(T(P, 'vpGsBody')) && /Maximum jackpot/.test(T(P, 'vpGsBody')) && !/member numbers/.test(T(P, 'vpGsLead')), mk9);
   check('every screen\'s buttons sit in one bar fixed to the bottom, the main one on the right', (function () { var st = walk($(P, 'vpGs'), function (e) { return e.tagName === 'STYLE'; }); var css = st ? st.textContent : ''; return /\.vpgs-foot\{position:fixed;left:0;right:0;bottom:0/.test(css) && /\.vpgs-foot \.vpgs-btn\.pink\{margin-left:auto\}/.test(css); })());
 
   P = page({ answers: { games: ['trivia', 'musical'] } }); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();

@@ -17,6 +17,8 @@
                prizelist (one box, or one per round or prize: countFrom / sameFrom name the settings that decide)
      swaps     a prize swapped for one week (prize_swaps), shown while the prizes are not the same every week
      line      settings sharing a line id sit side by side on one line (round 11)
+     half      a setting alone on its line sits in the LEFT half, so another can sit beside it later (round 12)
+     fromPlan  saved from the raffle plan, not asked as its own row (round 12)
      notYet    HIDDEN for now (Dean 10 Nov): the games do not use it yet, so nothing is asked; the key and tests stay for later
      perNight  asked on the night's own start screen, not in one-off setup (trivia's mix or categories)
      showIf    { key: value }: shown only while that setting has that value
@@ -68,7 +70,7 @@
       { key: "prize_same", label: "Round prizes", kind: "seg", options: [[false, "Different"], [true, "The same"]], def: false, line: "pw",
         help: "Different: a prize for each round. The same: one prize for every round." },
       /* asked for trivia too, as for musical bingo (Dean, round 9 point 13) */
-      { key: "prize_weekly", label: "Same every week?", kind: "seg", options: YES_NO, def: true, line: "pw",
+      { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true, line: "pw",
         help: "Yes: these prizes load every night. No: you add them on the night, or swap them for one week below." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $50 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, underPrev: true,
         help: "What each round's winner gets. Tap one of your usual prizes, or type a new one." },
@@ -106,11 +108,11 @@
       moreWords: "When the song name shows, which songs play, and where the music plays.", settings: [
       { key: "playlists", label: "Your music", kind: "playlists", def: POPULAR, quick: true,
         help: "Pick one or more. With more than one, a different one plays each week." },
-      { key: "rounds", label: "Rounds a night", kind: "number", def: 3, min: 1, max: 10, quick: true,
+      { key: "rounds", label: "Rounds a night", kind: "number", def: 3, min: 1, max: 10, quick: true, line: "rn", half: true,
         help: "How many games you play in a night." },
       { key: "prize_same", label: "Round prizes", kind: "seg", options: [[false, "Different"], [true, "The same"]], def: false, quick: true, line: "pw",
         help: "Different: a prize for each round. The same: one prize for every round." },
-      { key: "prize_weekly", label: "Same every week?", kind: "seg", options: YES_NO, def: true, quick: true, line: "pw",
+      { key: "prize_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true, quick: true, line: "pw",
         help: "Yes: these prizes load every night. No: you add them on the night, or swap them for one week below." },
       { key: "prizes", label: "Prize", kind: "prizelist", def: "", placeholder: "e.g. $20 bar tab", max: 120, countFrom: "rounds", sameFrom: "prize_same", each: "Round", none: true, prizes: true, quick: true, underPrev: true,
         help: "What each round's winner gets. \"Same as above\" copies the prize above, for rounds that share one." },
@@ -139,9 +141,9 @@
         help: "The numbers show on the TV either way." },
       { key: "caller", label: "Who draws the numbers?", kind: "seg", options: [[false, "We can draw them for you"], [true, "You draw real balls"]], def: false, showIf: { ticket_kind: "paper" },
         help: "We draw on the TV, or your caller draws real balls and taps each one in." },
-      { key: "rounds", label: "Games a night", kind: "number", def: 3, min: 1, max: 30,
+      { key: "rounds", label: "Games a night", kind: "number", def: 3, min: 1, max: 30, line: "gt", half: true,
         help: "How many games of bingo you play in a night." },
-      { key: "cards", label: "Tickets per player", kind: "select", def: 6, showIf: { ticket_kind: "phone" }, inline: true,
+      { key: "cards", label: "Tickets per player", kind: "select", def: 6, showIf: { ticket_kind: "phone" }, line: "gt",
         options: [[1, "1 ticket"], [2, "2 tickets"], [3, "3 tickets"], [4, "4 tickets"], [5, "5 tickets"], [6, "6 tickets"]],
         help: "How many phone tickets each player gets. 6 is a full book and the usual." },
       { key: "round_prizes", label: "Prize for each game", kind: "prizelist", def: "", placeholder: "e.g. Meat tray", max: 80, countFrom: "rounds", each: "Game", none: true, prizes: true,
@@ -151,24 +153,27 @@
         help: "A wrong call comes to you and you just tap Play on." }
     ], popovers: ["ticket_kind", "caller", "round_prizes"] },
 
-    /* RAFFLES (Dean, round 8b point 7 and round 11 note 6): a name for each raffle, how many raffles a night and how many
-       prizes in each, which can differ; the prizes are the console's buttons. More settings: how the draw looks, a cash
-       prize, drawing again. Ticket numbers are not asked: the console starts each raffle after the last. */
+    /* RAFFLES (Dean, round 8b point 7, round 11 note 6 and round 12 note 7): how many raffles they run, a NAME or NIGHT for each
+       ("Friday raffle"), and for each one on a single line how many prizes and whether the prizes are the same every week (or
+       draw); the prizes are the console's buttons. Then how long winners have to claim, with No time limit. More settings:
+       how the draw looks, a cash prize, drawing again. Ticket numbers are not asked: the console starts each raffle after the last. */
     { key: "raffles", name: "raffles", title: "Raffles", console: "/app/raffle/host.html", prefs: "raffle",
       moreWords: "A cash prize, drawing again, and how long the numbers spin.", settings: [
-      { key: "raffles", label: "Raffles a night", kind: "number", def: 1, min: 1, max: 12,
-        help: "How many raffles you draw in a night." },
+      { key: "raffles", label: "How many raffles do you run?", kind: "number", def: 1, min: 1, max: 12, line: "rc", half: true,
+        help: "How many separate raffles you run, for example a Friday raffle and a Sunday raffle. Each one gets its own name and prizes below." },
       /* EACH RAFFLE ASKS THE SAME QUESTIONS (Dean, round 9 point 20): its name, how many prizes, are they all the same,
          and the prizes. Nothing filled in for them; a usual prize or "Winner's choice" is one tap. */
       { key: "raffle_plan", label: "Your raffles", kind: "raffleplan", def: [], countFrom: "raffles", min: 1, max: 12, placeholder: "e.g. Meat tray",
-        help: "Name each raffle, say how many prizes it has, and what they are. Your prizes become buttons on the raffle console." },
-      { key: "prizes_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true,
+        help: "Name each raffle, say how many prizes it has and what they are. Winner's choice fills every prize in that raffle." },
+      /* asked inside each raffle now (round 12 note 7); this key is saved as true only while every raffle says yes */
+      { key: "prizes_weekly", label: "Same prizes every week?", kind: "seg", options: YES_NO, def: true, fromPlan: true,
         help: "Yes: we keep these prizes. No: you add them on the night, or swap them for one week below." },
-      { key: "prize_swaps", notYet: true, label: "Swap the prizes for a week", kind: "swaps", def: [], countPlan: "raffle_plan", showIf: { prizes_weekly: false },
+      { key: "prize_swaps", notYet: true, label: "Swap the prizes for a week", kind: "swaps", def: [], countPlan: "raffle_plan",
+        showWhen: function (all) { var p = all.value("raffle_plan") || []; return p.some(function (x) { return x.weekly === false; }); },
         help: "Pick a week and type that week's prizes, in order, raffle by raffle. Other weeks use your usual ones." },
       { key: "time_to_present", label: "How long do winners have to claim?", kind: "select", def: 180,
-        options: [[60, "1 minute"], [120, "2 minutes"], [180, "3 minutes"], [300, "5 minutes"], [600, "10 minutes"], [0, "No limit"]],
-        help: "How long a winner has to show their ticket before you can draw again." },
+        options: [[60, "1 minute"], [120, "2 minutes"], [180, "3 minutes"], [300, "5 minutes"], [600, "10 minutes"], [0, "No time limit"]],
+        help: "How long a winner has to show their ticket before you can draw again. No time limit: you draw again when you are ready." },
       { key: "draw_style", notYet: true, label: "How the draw looks", kind: "select", def: "numbers", advanced: true, prompt: "How the draw looks",
         options: [["numbers", "Spinning numbers"], ["barrel", "A barrel"], ["wheel", "A wheel"]],
         help: "What the TV shows while the winner is drawn. Spinning numbers is how it works today." },
@@ -193,14 +198,16 @@
         help: "Your first draw. The TV says how long the draw has been running." },
       { key: "draw_time", label: "Draw time", kind: "time", def: "", line: "dt",
         help: "The time you draw. It comes from the night you picked." },
-      { key: "current_jackpot_cents", label: "Jackpot now", pre: "$", kind: "money", def: "", placeholder: "e.g. 1250", quick: true, line: "jp",
+      /* round 12 note 8: the Starting jackpot and the Maximum jackpot on one line; the maximum's box says Unlimited, or the state's
+         legal limit where there is one (VPGaming.jackpotLimit, filled in by the screen) */
+      { key: "starting_amount_cents", label: "Starting jackpot", pre: "$", kind: "money", def: "", placeholder: "e.g. 250", line: "sm",
+        help: "What the jackpot starts at, and goes back to after someone wins it." },
+      { key: "max_jackpot_cents", label: "Maximum jackpot", pre: "$", kind: "money", def: "", placeholder: "Unlimited", line: "sm",
+        help: "The most it can reach. Leave it empty for no limit." },
+      { key: "current_jackpot_cents", label: "Jackpot now", pre: "$", kind: "money", def: "", placeholder: "e.g. 1250", quick: true, line: "ci",
         help: "What the next draw is worth, so the TV starts from the right amount." },
-      { key: "starting_amount_cents", label: "After a win, back to", pre: "$", kind: "money", def: "", placeholder: "e.g. 250", line: "jp",
-        help: "What the jackpot goes back to after someone wins it." },
-      { key: "increment_cents", label: "Goes up each week by", pre: "$", kind: "money", def: "", placeholder: "e.g. 50", quick: true, line: "mx",
+      { key: "increment_cents", label: "Goes up each week by", pre: "$", kind: "money", def: "", placeholder: "e.g. 50", quick: true, line: "ci",
         help: "How much it goes up each week nobody wins." },
-      { key: "max_jackpot_cents", label: "Most it can reach", pre: "$", kind: "money", def: "", placeholder: "None", line: "mx",
-        help: "Leave it empty for no limit. We warn you about your state's limit." },
       { key: "over_max", label: "Once it hits the most, the weekly amount is", kind: "seg", def: "keep", setupOnly: true,
         options: [["keep", "Kept for later"], ["second", "Another draw"], ["none", "Not added"]],
         showWhen: function (all) { var v = all.value("max_jackpot_cents"); return v != null && v > 0; },
