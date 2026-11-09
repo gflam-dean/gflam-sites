@@ -107,7 +107,7 @@ function atWords(list, tz) { return list.map(function (x) { var p = local(tz, x.
   world(); venue({ email: '' }); got = await walk(FROM, WEEK3);
   check('no email address on file: nothing', got.length === 0);
   world(); venue({}); ENV.RESEND_API_KEY = ''; got = await walk(FROM, WEEK3); ENV.RESEND_API_KEY = 'k';
-  check('no Resend key: nothing', got.length === 0);
+  check('no Resend key: nothing sent and no record written either', got.length === 0 && DB.vp_admin_audit.length === 0);
   world(); B = venue({ email: '' }); DB.venueplay_founding[0].contact_name = ''; DB.vp_prospects.push({ venue_id: B.id, email: 'prospect@x.example', contact_name: 'Pat Prospect' });
   got = await walk(FROM, WEEK3);
   check('a prospect with no account contact: the prospect\'s own email', got.length === 2 && got[0].msg.to[0] === 'prospect@x.example' && /Hi Pat,/.test(got[0].msg.html));
