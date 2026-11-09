@@ -238,6 +238,26 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await walk(bne(2026, 11, 13, 13, 0), bne(2026, 12, 4, 12, 0));
   check('the card went on: no more reminders (no day 23, no day 29), and no pause at the end', REM().length === 1 && E.v.status === 'active' && !E.row().paused_at, [REM().length, E.v.status]);
 
+  /* THEIR UNSUBSCRIBE IS KEPT (9 Nov 2026 audit): every reminder carries "Unsubscribe from product emails" and the
+     page promises "we will not contact you again", but the sweep never read vp_unsubscribes. */
+  section('5b. An unsubscribe stops the reminders; an unreadable list holds them, never sends blind');
+  world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
+  var U9 = await prospect({});
+  var us = bne(2026, 11, 2, 10, 0);
+  U9.row().first_signin_at = new Date(us).toISOString(); U9.row().free_month_ends_at = new Date(vpaFreeMonthEnd(us)).toISOString();
+  tbl('vp_unsubscribes').push({ email: String(U9.row().email).toUpperCase() });
+  await walk(us, bne(2026, 11, 30, 16, 0));
+  check('they clicked unsubscribe: no day 3, no day 23 (whatever case the address is in)', REM().length === 0 && (U9.row().reminders_sent || []).length === 0, [REM().length, U9.row().reminders_sent]);
+  check('...but the free month still runs and the pause still comes at its time (the account is not touched)', !U9.row().paused_at && U9.v.status === 'active');
+  DB.vp_unsubscribes = [];
+  var unsubDown = globalThis.fetch;
+  globalThis.fetch = function (u, o) { if (/\/rest\/v1\/vp_unsubscribes/.test(String(u))) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } }); return unsubDown(u, o); };
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 30, 10, 0));
+  globalThis.fetch = unsubDown;
+  check('the unsubscribe list cannot be read: nothing goes, and nothing is marked sent', REM().length === 0 && (U9.row().reminders_sent || []).length === 0, REM().length);
+  await vpaProspectReminderSweep(ENV, bne(2026, 11, 30, 11, 0));
+  check('the list readable again and they never unsubscribed: the due reminder goes on the next sweep', REM().length === 1, REM().length);
+
   section('6. Cancel, it\'s not for us');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var F = await prospect({});

@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 21:31 · cc77c28d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Nov 2026, 18:19 · acf9f068';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4374,6 +4374,7 @@ async function vpaRenderProspectReminder(env, o) {
 /* THE HOURLY SWEEP (scheduled). nowMs is passed in so the suite can walk a whole month. */
 async function vpaProspectReminderSweep(env, nowMs) {
   const out = { started: 0, sent: [], paused: [], stopped: 0 };
+  let unsub;   // vp_unsubscribes, read the first time a reminder is due (undefined: not read yet; null: could not be read)
   let rows;
   try { rows = await vpaSelectAll(env, 'vp_prospects', 'cancelled_at=is.null&paused_at=is.null&select=*&order=venue_id.asc'); }
   catch (e) { return Object.assign(out, { why: 'migration 127 not run' }); }
@@ -4413,6 +4414,13 @@ async function vpaProspectReminderSweep(env, nowMs) {
     const r = due[due.length - 1];
     const email = p.email;
     if (!email || !env.RESEND_API_KEY) continue;
+    /* THEIR UNSUBSCRIBE IS KEPT (9 Nov 2026 audit). Every reminder carries "Unsubscribe from product emails",
+       and the page says "we will not contact you again", but nothing here read vp_unsubscribes, so the next
+       reminder still went. Read once a sweep; a list that cannot be read holds every reminder this hour
+       (it stays due, so it goes on a later sweep), never sends blind. */
+    if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
+    if (unsub === null) { out.unsub_unread = true; continue; }
+    if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
     const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
       endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
@@ -14706,12 +14714,19 @@ async function vpaHandleMonthNews(request, env, json) {
    a month (the audit row is the record, written before the next venue is started). It reads
    nothing at all while the switch is off, so turning the feature on costs a variable, not a deploy.
    Skips: a test venue, a venue that ran nothing in either month, a contact who unsubscribed. */
+function vprInSendWindow(ms) {
+  const b = new Date(Number(ms) + 10 * 3600 * 1000), wd = b.getUTCDay(), h = b.getUTCHours();
+  return b.getUTCDate() <= 7 && wd >= 1 && wd <= 5 && ((h >= 9 && h < 12) || (h >= 14 && h < 17));
+}
 async function vprMonthlySweep(env, nowMs, opts) {
   const o = opts || {};
   if (String(env.MONTHLY_REPORTS || '').trim() !== VPR_SWITCH) return { off: true, sent: 0 };
   const now = nowMs || Date.now();
   const bris = new Date(now + 10 * 3600 * 1000);
-  if (!o.anyTime && (bris.getUTCDate() > 3 || bris.getUTCHours() < 2 || bris.getUTCHours() >= 7)) return { off: false, waiting: true, sent: 0 };
+  /* DEAN'S SEND WINDOW (7 Nov 2026), not the middle of the night: it was the 1st to the 3rd, 2am to 7am, so the
+     first send (Tue 1 Dec 2026) would have gone at 2am. Now the first 7 days of the month, Monday to Friday,
+     9am to 12 noon or 2pm to 5pm Brisbane, so a 1st on a weekend goes the Monday after. */
+  if (!o.anyTime && !vprInSendWindow(now)) return { off: false, waiting: true, sent: 0 };
   const month = vprLastMonth(now);
   const batch = parseInt(env.MONTHLY_REPORTS_BATCH, 10) > 0 ? parseInt(env.MONTHLY_REPORTS_BATCH, 10) : VPR_BATCH;
   const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
@@ -16815,12 +16830,25 @@ function helpAckHtml(t, signer) {
 function helpAckSubject(t) {
   return 'Thanks, we\'ve got your message' + (t.ticket_no ? ' ' + helpReplyTag(t) : '');
 }
+/* A ROBOT IS NEVER THANKED (9 Nov 2026 audit). Five acknowledgements bounced between 1 and 7 Nov: three to
+   notifications@nt1.instantly.ai (Instantly alerts that were not "interested" ones) and one to
+   donotreply_ushello@secure.net, which the old ^do-?not-?reply@ pattern let through. Each bounce costs the
+   sending domain. The ticket is still made; only the thank-you is not sent. */
+function helpRobotAddress(addr) {
+  const a = String(addr || '').trim().toLowerCase();
+  const local = a.split('@')[0] || '', dom = a.split('@')[1] || '';
+  if (/(^|[._+-])(no-?reply|do-?not-?reply|donotreply|mailer-daemon|postmaster|bounces?)([._+-]|$)/.test(local)) return true;
+  if (/^(noreply|donotreply|do-not-reply|no-reply)/.test(local)) return true;
+  if (/(^|\.)instantly\.ai$/.test(dom)) return true;
+  return false;
+}
 async function helpAcknowledge(env, t) {
   try {
     if (!t || !env.RESEND_API_KEY) return false;
     const to = String(t.contact_email || '').trim().toLowerCase();
     if (!to || !HELP_EMAIL_RE.test(to)) return false;
     if (t.channel === 'phone' || t.channel === 'manual' || t.contact_typed) return false;
+    if (helpRobotAddress(to)) return false;
     if (t.id) {
       const had = await vpaSelect(env, 'vp_help_ticket_notes', 'ticket_id=eq.' + encodeURIComponent(t.id) +
         '&kind=eq.change&body=like.' + encodeURIComponent('Acknowledgement sent*') + '&select=id&limit=1');
@@ -16858,6 +16886,32 @@ async function helpSendTicketReply(env, t, body, signer, authorLabel, authorExtr
     author: authorLabel + ' (from ' + f.reply_to + ' to ' + to + (authorExtra || '') + ')', author_id: authorId || null }, false);
   return f.reply_to;
 }
+const HELP_REPLY_GAP_HOURS = 12;
+/* The words HQ is shown when a reply carries a link a customer must never get, or '' when it is fine. */
+function helpReplyBadLink(body) {
+  const s = String(body || '');
+  if (/\/tv\/?\?[^\s]*\bvenue=/i.test(s)) return 'Take out the /tv?venue= link: a venue\'s TV is venueplay.com.au/tv and their venue code.';
+  if (/[a-z0-9-]\.(workers|pages)\.dev\b/i.test(s)) return 'Take out the workers.dev or pages.dev link: use a venueplay.com.au address.';
+  return '';
+}
+/* When did this address last get a reply from us, on any ticket, within the gap? ms, 0 for not within it,
+   -1 when the check could not be made (the caller then asks, never sends blind). */
+async function helpLastReplyTo(env, email, nowMs) {
+  try {
+    const to = String(email || '').trim().toLowerCase();
+    if (!to) return 0;
+    const ts = await vpaReadPage(env, 'vp_help_tickets', 'contact_email=' + vpaEmailIs(to) + '&select=id&order=created_at.desc&limit=200');   // throws on a failed read: never "no replies"
+    if (!Array.isArray(ts)) return -1;
+    if (!ts.length) return 0;
+    const since = new Date(Number(nowMs) - HELP_REPLY_GAP_HOURS * 3600000).toISOString();
+    const ns = await vpaReadPage(env, 'vp_help_ticket_notes', 'ticket_id=in.(' + ts.map((x) => encodeURIComponent(x.id)).join(',') + ')&kind=eq.reply'
+      + '&created_at=gt.' + encodeURIComponent(since) + '&select=created_at&order=created_at.desc&limit=1');
+    if (!Array.isArray(ns)) return -1;
+    if (!ns.length) return 0;
+    const at = Date.parse(ns[0].created_at);
+    return isFinite(at) ? at : -1;
+  } catch (e) { return -1; }
+}
 async function helpAdminReply(request, env, json) {
   const g = await helpAdmin(request, env, json); if (g.res) return g.res;
   const t = await helpFindTicket(env, g.body.id);
@@ -16885,8 +16939,24 @@ async function helpAdminReply(request, env, json) {
     return json({ error: 'This address was typed in by HQ, not given to us by the customer. Check it is right, then confirm to send.',
                   confirm_needed: true, address: to }, 409);
   }
+  /* NO SLUG LINKS, NO .dev LINKS (Dean, 9 Nov 2026, the Lunatic Hotel replies). A venue's TV is
+     venueplay.com.au/tv and its code, never /tv?venue=<slug>; and a workers.dev or pages.dev address
+     gets the whole email junked (Lakeside Tavern, 31 Oct 2026). */
+  const badLink = helpReplyBadLink(body);
+  if (badLink) return json({ error: badLink + ' Nothing was sent.', bad_link: true }, 400);
+  /* ONE REPLY PER CUSTOMER A DAY (Dean, 9 Nov 2026: "Sent four emails to one customer basically saying
+     the same thing"). A second reply to the same address within HELP_REPLY_GAP_HOURS, on any ticket, is
+     held until whoever is sending says "send anyway". A check that cannot be made holds it too. */
+  if (g.body.send_anyway !== true) {
+    const last = await helpLastReplyTo(env, to, Date.now());
+    if (last !== 0) {
+      const when = last > 0 ? vpaBrisbaneTime(last) : '';
+      return json({ error: (last > 0 ? to + ' already had a reply from us at ' + when + '.' : 'Could not check when ' + to + ' last heard from us.')
+        + ' One reply a day: add anything new to the next one. Send this one anyway?', already_replied: true, last_at: last > 0 ? new Date(last).toISOString() : null, address: to }, 409);
+    }
+  }
   const sentFrom = await helpSendTicketReply(env, t, body, helpSigner(env, g.admin.label),
-    g.admin.label, (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : ''), g.admin.actorId);
+    g.admin.label, (t.contact_typed && g.admin.role !== 'owner' ? ', typed address confirmed' : '') + (g.body.send_anyway === true ? ', sent anyway after a recent reply' : ''), g.admin.actorId);
   if (!sentFrom) return json({ error: 'The email did not send, so nothing was recorded. Try again in a minute.' }, 502);
   const f = { reply_to: sentFrom };
   const patch = { updated_at: helpNow() }, was = t.status;
@@ -17439,8 +17509,9 @@ async function helpTicketFromEmail(env, to, mail) {
     throw e;
   }
   await helpAnnounce(env, t, await helpVenueName(env, venueId));
-  // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked.
-  if (!instantlyLead) await helpAcknowledge(env, t);
+  // A new ticket by email is acknowledged too; a reply on one is not. Instantly's robot is not thanked:
+  // helpAcknowledge refuses every instantly.ai address itself (helpRobotAddress, 9 Nov 2026), one place for it.
+  await helpAcknowledge(env, t);
   return { action: 'ticket', ticket_no: t.ticket_no };
 }
 async function helpInboundEmail(message, env) {

@@ -535,20 +535,29 @@
       /* A reply to an address HQ typed in: the Worker asks for that exact address to be confirmed
          (unless the owner is sending). The question is asked here, on the page, never in a native
          dialog, which can freeze a tab. */
-      function sendReply(confirmTo, close) {
+      function sendReply(confirmTo, close, anyway) {
         var text = $("hdtReply").value;
         var left = FILLIN.exec(text); if (left) { say("Fill in " + left[0] + " before sending."); return; }
         if (!phoneOk(t) && hasPhone(text)) { say("The support line is for venues only. Take the phone number out of this reply before sending."); return; }
         var b = $(close ? "hdtReplyClose" : "hdtReplyGo"), label = b.textContent; b.disabled = true; b.textContent = "Sending...";
         var body = { id: t.id, body: $("hdtReply").value }; if (confirmTo) body.confirm_to = confirmTo;
         if (close) body.close = true;
+        if (anyway) body.send_anyway = true;
         post("/admin/help/reply", body).then(function (r) {
           b.disabled = false; b.textContent = label;
+          /* ONE REPLY A DAY (Dean, 9 Nov 2026): a second reply to the same person within 12 hours is held. */
+          if (r.already_replied) {
+            var box3 = $("hdAgain") || doc.createElement("div"); box3.id = "hdAgain"; box3.className = "restrict";
+            box3.innerHTML = hdEsc(r.error) + ' <button class="btn" id="hdAgainGo" style="padding:7px 12px;margin-left:8px">Send anyway</button>';
+            $("hdtReplyGo").parentNode.appendChild(box3);
+            $("hdAgainGo").addEventListener("click", function () { box3.parentNode.removeChild(box3); sendReply(confirmTo, close, true); });
+            return;
+          }
           if (r.confirm_needed) {
             var box2 = $("hdConfirm") || doc.createElement("div"); box2.id = "hdConfirm"; box2.className = "restrict";
             box2.innerHTML = hdEsc(r.error) + '<br><b>' + hdEsc(r.address) + '</b> <button class="btn pink" id="hdConfirmGo" style="padding:7px 12px;margin-left:8px">Yes, send it to this address</button>';
             $("hdtReplyGo").parentNode.appendChild(box2);
-            $("hdConfirmGo").addEventListener("click", function () { box2.parentNode.removeChild(box2); sendReply(r.address, close); });
+            $("hdConfirmGo").addEventListener("click", function () { box2.parentNode.removeChild(box2); sendReply(r.address, close, anyway); });
             return;
           }
           if (r.error) { say(r.error); return; }

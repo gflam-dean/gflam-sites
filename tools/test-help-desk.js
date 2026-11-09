@@ -448,7 +448,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
 
   print('HQ: REPLYING BY EMAIL, FROM THE RIGHT ADDRESS');
   sent.length = 0;
-  var rp = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Refunded the second charge.' });
+  var rp = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Refunded the second charge.', send_anyway: true });
   var m = sent[0];
   check('an accounts reply goes from venueplay accounts, replies to accounts@', rp.status === 200 && m && m.from === 'venueplay Accounts <accounts@send.venueplay.com.au>' && m.reply_to === 'accounts@venueplay.com.au', m && [m.from, m.reply_to]);
   check('to the contact, the subject a person would write: "Re: <their subject> (ticket 1002, ref XXXX-XXXX)", the reference made from its secret', m && m.to.join() === 'owner@royalhotel.com.au' && m.subject === 'Re: ' + T(1002).subject + ' (ticket 1002, ref ' + helpRef(T(1002).reply_token) + ')' && m.subject.indexOf(T(1002).reply_token) === -1 && T(1002).reply_token.length === 12 && helpRef(T(1002).reply_token) !== helpRef(T(1001).reply_token), m && [m.subject, T(1002).reply_token]);
@@ -461,7 +461,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
     { id: 'n3', ticket_id: tk.id, kind: 'reply', body: 'Earlier reply from us: looking into it', author: 'Dean (from accounts@venueplay.com.au to x)', created_at: new Date(nowT - 4000).toISOString() },
     { id: 'n4', ticket_id: tk.id, kind: 'change', body: 'Status: new to waiting', author: 'Dean', created_at: new Date(nowT - 1000).toISOString() });
   sent.length = 0;
-  var rk = await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000k', { id: tk.id, body: 'All sorted now.' });
+  var rk = await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000k', { id: tk.id, body: 'All sorted now.', send_anyway: true });
   var mk = sent[0] || {};
   check('a reply is signed with the sender\'s FIRST name only, in the text and the signature, never the surname or the team', rk.status === 200 && /\nKind regards,\n\nKayla\nvenueplay\n/.test(mk.text || '') && !/Brown/.test(mk.html || '') && !/The venueplay team/.test(mk.html || ''), mk.text);
   var th = mk.html || '', iNew = th.indexOf('Customer follow-up'), iOld = th.indexOf('Earlier reply from us'), iFirst = th.indexOf(tk.message.slice(0, 20));
@@ -470,10 +470,10 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('an internal note and a status change are never in what the customer reads', th.indexOf('INTERNAL') === -1 && th.indexOf('Status: new to waiting') === -1 && (mk.text || '').indexOf('INTERNAL') === -1);
   check('what is quoted is escaped, and the thread is in the text part too', (mk.text || '').indexOf('still charged twice on the 3rd') !== -1);
   for (var q = 0; q < 14; q++) DB.vp_help_ticket_notes.push({ id: 'q' + q, ticket_id: tk.id, kind: 'email_in', body: 'extra message number ' + q, author: 'email', created_at: new Date(nowT + q * 1000).toISOString() });
-  sent.length = 0; await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000k', { id: tk.id, body: 'One more thing.' });
+  sent.length = 0; await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000k', { id: tk.id, body: 'One more thing.', send_anyway: true });
   check('the thread is capped at about the last 10 messages', ((sent[0] || {}).html.match(/ wrote:<\/p>/g) || []).length === 10, ((sent[0] || {}).html || '').match(/ wrote:<\/p>/g));
   sent.length = 0; var nNm = DB.vp_help_ticket_notes.length;
-  var rn = await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000n', { id: tk.id, body: 'Hello again.' });
+  var rn = await call(helpAdminReply, 'aaaaaaaa-0000-4000-8000-00000000000n', { id: tk.id, body: 'Hello again.', send_anyway: true });
   check('a sender with no name on their HQ login is stopped with "add your name to your profile first": nothing sent, nothing recorded, no fallback signer', rn.status === 400 && /Add your name to your profile first/.test(rn.body.error) && sent.length === 0 && DB.vp_help_ticket_notes.length === nNm, [rn.status, rn.body]);
   check('the signature name is near-black on a light card and WHITE on a dark one (dark mode in Apple Mail and Outlook)', /<strong class="hd-ink" style="color:#0A0A0B;/.test(th) && ((/prefers-color-scheme: dark\)\{.*?\.hd-a\{[^}]*\}\}/.exec(th) || [''])[0].indexOf('.hd-ink{color:#ffffff !important}') !== -1) && /\[data-ogsc\] \.hd-ink\{color:#ffffff !important\}/.test(th), th.slice(0, 200));
   check('the sign-off is "Kind regards," with no name under it, and the name is once, in the signature block, first name only', /<p style="margin:22px 0 0">Kind regards,<\/p>/.test(th) && (th.match(/>Kayla</g) || []).length === 1, (th.match(/Kayla/g) || []).length);
@@ -489,19 +489,66 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('it carries the ABN and a way to reach us', m && /ABN 35 679 383 049/.test(m.html) && /accounts@venueplay\.com\.au/.test(m.html));
   check('the reply is recorded on the ticket, which now waits on them', notesOf(T(1002)).some(function (n) { return n.kind === 'reply' && /Refunded/.test(n.body); }) && T(1002).status === 'waiting');
   sent.length = 0;
-  await call(helpAdminReply, ADMIN, { id: T(1001).id, body: 'Fixed.' });
+  await call(helpAdminReply, ADMIN, { id: T(1001).id, body: 'Fixed.', send_anyway: true });
   check('a support reply goes from venueplay support', sent[0] && sent[0].from === 'venueplay Support <support@send.venueplay.com.au>' && sent[0].reply_to === 'support@venueplay.com.au');
   sent.length = 0;
-  await call(helpAdminReply, ADMIN, { id: T(1003).id, body: 'Try the code again.' });
+  await call(helpAdminReply, ADMIN, { id: T(1003).id, body: 'Try the code again.', send_anyway: true });
   check('a PartyPlay reply goes from PartyPlay support, in PartyPlay branding', sent[0] && sent[0].from === 'PartyPlay Support <support@send.partyplay.com.au>' && sent[0].reply_to === 'support@partyplay.com.au' && /PartyPlay/.test(sent[0].html) && !/VenuePlay/.test(sent[0].html), sent[0] && sent[0].from);
   await call(helpAdminUpdate, ADMIN, { id: T(1003).id, category: 'sales' }); sent.length = 0;
-  await call(helpAdminReply, ADMIN, { id: T(1003).id, body: 'Here is the pricing.' });
+  await call(helpAdminReply, ADMIN, { id: T(1003).id, body: 'Here is the pricing.', send_anyway: true });
   check('a sales or general reply goes from hello@', sent[0] && sent[0].from === 'PartyPlay <hello@send.partyplay.com.au>' && sent[0].reply_to === 'hello@partyplay.com.au', sent[0] && sent[0].from);
   var resendDown = globalThis.fetch; var nNotes = DB.vp_help_ticket_notes.length;
   globalThis.fetch = function (u, o) { if (/resend/.test(String(u))) return Promise.resolve({ ok: false, status: 500 }); return resendDown(u, o); };
-  var fail = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Will not arrive' });
+  var fail = await call(helpAdminReply, ADMIN, { id: T(1002).id, body: 'Will not arrive', send_anyway: true });
   globalThis.fetch = resendDown;
   check('if the email does not send, HQ is told and nothing is recorded as sent', fail.status === 502 && DB.vp_help_ticket_notes.length === nNotes, fail);
+
+  /* ONE REPLY A DAY, NO SLUG OR .dev LINKS (Dean, 9 Nov 2026: Lunatic Hotel had the acknowledgement, then three
+     replies in 76 minutes, one with venueplay.com.au/tv?venue=lunatic-hotel). */
+  print('HQ: ONE REPLY PER CUSTOMER A DAY, AND NO LINK A CUSTOMER MUST NEVER GET');
+  var lt9 = await helpInsertTicket(ENV, { brand: 'venueplay', category: 'venue_support', channel: 'venue_form', title: 'Our venue name is wrong', message: 'It says Lunatic Hotel & Motel', contact_name: 'Nicole', contact_email: 'nicole@lunatic.example' });
+  var lt9b = await helpInsertTicket(ENV, { brand: 'venueplay', category: 'venue_support', channel: 'venue_form', title: 'Slides', message: 'Can you add our nights', contact_name: 'Nicole', contact_email: 'Nicole@Lunatic.example' });
+  sent.length = 0;
+  var g1 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Hi Nicole, all done.' });
+  check('the first reply of the day goes', g1.status === 200 && sent.length === 1, g1);
+  /* The fake database stamps rows with the machine's clock and this suite moves Date.now on 3 hours a scenario,
+     so the reply is put at "a minute ago" on the suite's clock, which is what the live database would say. */
+  notesOf(lt9).forEach(function (n) { if (n.kind === 'reply') n.created_at = new Date(Date.now() - 60000).toISOString(); });
+  sent.length = 0; var nN9 = DB.vp_help_ticket_notes.length;
+  var g2 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Hi Nicole, one more thing.' });
+  check('a second reply to the same person within 12 hours is HELD: 409, nothing sent, nothing written, and HQ is told when the last one went', g2.status === 409 && g2.body.already_replied === true && sent.length === 0 && DB.vp_help_ticket_notes.length === nN9 && !!g2.body.last_at && /Send this one anyway\?/.test(g2.body.error), g2);
+  var g3 = await call(helpAdminReply, ADMIN, { id: lt9b.id, body: 'Hi Nicole, your slides are in.' });
+  check('...on ANY of their tickets, whatever case the address is in', g3.status === 409 && g3.body.already_replied === true && sent.length === 0, g3);
+  var g4 = await call(helpAdminReply, ADMIN, { id: lt9b.id, body: 'Hi Nicole, your slides are in.', send_anyway: true });
+  check('"Send anyway" sends it, and the note on the ticket says it was sent anyway', g4.status === 200 && sent.length === 1 && notesOf(lt9b).some(function (n) { return n.kind === 'reply' && /sent anyway after a recent reply/.test(n.author); }), g4);
+  DB.vp_help_ticket_notes.forEach(function (n) { if (n.ticket_id === lt9.id || n.ticket_id === lt9b.id) n.created_at = new Date(Date.now() - 13 * 3600000).toISOString(); });
+  sent.length = 0;
+  var g5 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Hi Nicole, a new day.' });
+  check('13 hours on, the next reply goes without asking', g5.status === 200 && sent.length === 1, g5);
+  check('the hold reads replies only: their own emails in and our internal notes do not count', (await helpLastReplyTo(ENV, 'nobody-replied@x.example', Date.now())) === 0);
+  var sbDown = globalThis.fetch;
+  globalThis.fetch = function (u, o) { if (/vp_help_ticket_notes\?ticket_id=in/.test(String(u))) return Promise.resolve({ ok: false, status: 503, json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } }); return sbDown(u, o); };
+  sent.length = 0;
+  var g6 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Hi Nicole.' });
+  globalThis.fetch = sbDown;
+  check('if the last reply cannot be looked up, it asks rather than sending blind', g6.status === 409 && g6.body.already_replied === true && sent.length === 0, g6);
+  sent.length = 0;
+  var g7 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Your TV: venueplay.com.au/tv?venue=lunatic-hotel', send_anyway: true });
+  check('a /tv?venue= link is refused, even with send anyway, and says use /tv and their code', g7.status === 400 && g7.body.bad_link === true && /venueplay\.com\.au\/tv and their venue code/.test(g7.body.error) && sent.length === 0, g7);
+  var g8 = await call(helpAdminReply, ADMIN, { id: lt9.id, body: 'Cancel here: https://venueplay-api.dean-tindale.workers.dev/prospect/cancel', send_anyway: true });
+  check('a workers.dev link is refused too', g8.status === 400 && g8.body.bad_link === true && sent.length === 0, g8);
+  check('plain venueplay.com.au/tv with a code is fine', helpReplyBadLink('Open venueplay.com.au/tv and type 4821') === '' && helpReplyBadLink('https://venueplay.com.au/tv/?venue=x') !== '');
+
+  /* A ROBOT IS NEVER THANKED (9 Nov 2026 audit: 5 acknowledgements bounced, Instantly's alerts and a donotreply_ address). */
+  print('THE ACKNOWLEDGEMENT NEVER GOES TO A ROBOT');
+  sent.length = 0;
+  var robots = ['notifications@nt1.instantly.ai', 'donotreply_ushello@secure.net', 'no-reply@x.example', 'noreply.billing@x.example', 'bounces+123@x.example'];
+  for (var ri = 0; ri < robots.length; ri++) {
+    var rt = await helpInsertTicket(ENV, { brand: 'venueplay', category: 'general', channel: 'email', title: 'Auto', message: 'x', contact_email: robots[ri] });
+    check('no acknowledgement to ' + robots[ri], (await helpAcknowledge(ENV, rt)) === false && sent.length === 0, sent.map(function (m) { return m.to; }));
+  }
+  var person = await helpInsertTicket(ENV, { brand: 'venueplay', category: 'general', channel: 'email', title: 'Hello', message: 'x', contact_name: 'Rey', contact_email: 'reynolds@pub.example' });
+  check('a person whose name merely contains the letters (reynolds@) is still thanked', (await helpAcknowledge(ENV, person)) === true && sent.length === 1);
 
   print('HQ: LOGGING A PHONE CALL');
   sent.length = 0; pushes.length = 0;
@@ -622,7 +669,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var rtt = T(rt.ticket_no);
   check('a new email whose Reply-To differs from its From: the ticket answers the From, and holds the Reply-To for HQ', rtt.contact_email === 'real@example.com' && rtt.contact_email_pending === 'elsewhere@evil.example', [rtt.contact_email, rtt.contact_email_pending]);
   sent.length = 0;
-  await call(helpAdminReply, ADMIN, { id: rtt.id, body: 'Hello' });
+  await call(helpAdminReply, ADMIN, { id: rtt.id, body: 'Hello', send_anyway: true });
   check('so an HQ reply goes to the From, never the unconfirmed Reply-To', sent.length === 1 && sent[0].to.join() === 'real@example.com', sent.map(function (x) { return x.to; }));
   check('a venue owner cannot confirm a new reply address', (await call(helpAdminContactConfirm, OWNER_A, { id: rtt.id, use: true })).status === 403 && rtt.contact_email === 'real@example.com');
   var cf = await call(helpAdminContactConfirm, ADMIN, { id: rtt.id, use: true });
@@ -942,15 +989,15 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   var lt = lcall.body.ticket;
   check('a logged call\'s address is marked as typed by HQ', lt.contact_typed === true);
   sent.length = 0;
-  var r1 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi' });
+  var r1 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', send_anyway: true });
   check('a staff login cannot send brand mail to an address it typed in without confirming it', r1.status === 409 && r1.body.confirm_needed === true && r1.body.address === 'someone@anywhere.example' && sent.length === 0, r1);
-  check('confirming a different address does not count', (await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'other@x.example' })).status === 409 && sent.length === 0);
-  var r2 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'Someone@Anywhere.example' });
+  check('confirming a different address does not count', (await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'other@x.example', send_anyway: true })).status === 409 && sent.length === 0);
+  var r2 = await call(helpAdminReply, STAFF_ADMIN, { id: lt.id, body: 'Hi', confirm_to: 'Someone@Anywhere.example', send_anyway: true });
   check('confirming that exact address sends it, and the note says it was confirmed', r2.status === 200 && sent.length === 1 && notesOf(lt).some(function (x) { return x.kind === 'reply' && /typed address confirmed/.test(x.author); }), r2);
-  var r3 = await call(helpAdminReply, ADMIN, { id: lt.id, body: 'From the owner' });
+  var r3 = await call(helpAdminReply, ADMIN, { id: lt.id, body: 'From the owner', send_anyway: true });
   check('the owner role can send without the extra step', r3.status === 200 && sent.length === 2);
   var pt = await call(helpPublicTicket, null, Object.assign({}, PATRON, { device: 'typ-1', email: 'given@example.com' }));
-  check('an address the customer gave us themselves needs no confirm, for staff either', (await call(helpAdminReply, STAFF_ADMIN, { id: T(pt.body.ticket_no).id, body: 'Hi' })).status === 200);
+  check('an address the customer gave us themselves needs no confirm, for staff either', (await call(helpAdminReply, STAFF_ADMIN, { id: T(pt.body.ticket_no).id, body: 'Hi', send_anyway: true })).status === 200);
 
   print('THE PHONE ALERT CURSOR IS THE DATABASE\'S CLOCK');
   world();
@@ -1182,7 +1229,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   FAIL = {};
   check('a database blip is a 503, never a list that looks like "no replies yet", and no reply goes', blip.status === 503 && blipR.status === 503 && !blip.body.tickets, [blip.status, blipR.status]);
   sent.length = 0;
-  var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.' });
+  var hq = await call(helpAdminReply, ADMIN, { id: helpT.id, body: 'Hi Sue, thanks for your enquiry. Happy to help.', send_anyway: true });
   check('HQ\'s own Reply still works through the same one sender, and is noted as Dean\'s', hq.status === 200 && sent.length === 1 && notesOf(T(helpT.ticket_no)).some(function (n) { return n.kind === 'reply' && /^Dean \(from hello@venueplay\.com\.au to /.test(n.author); }), [hq, notesOf(T(helpT.ticket_no))]);
 
   print('AUTO-SOLVE: THE SALES TICKET CLOSES ITSELF ONCE THE PROSPECT IS ANSWERED (Dean, 3 Nov 2026)');
