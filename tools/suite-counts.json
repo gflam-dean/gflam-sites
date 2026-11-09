@@ -391,6 +391,10 @@
   "checks": 23,
   "counted_by": "lines"
  },
+ "tools/setup-use-in-chrome.test.py": {
+  "checks": 16,
+  "counted_by": "lines"
+ },
  "tools/share-card-in-chrome.test.py": {
   "checks": 30,
   "counted_by": "lines"
@@ -1009,6 +1013,10 @@
  },
  "tools/test-settings-asks-only-what-applies.js": {
   "checks": 19,
+  "counted_by": "lines"
+ },
+ "tools/test-setup-use.js": {
+  "checks": 28,
   "counted_by": "lines"
  },
  "tools/test-shared-links-absolute.js": {

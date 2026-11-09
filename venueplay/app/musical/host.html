@@ -367,6 +367,7 @@
               <div class="compliance">
                 <div class="ct">How the music plays</div>
                 <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
+                <p style="margin:6px 0 0"><a id="soundHelpLink" href="/app/sound-help.html" target="_blank" rel="noopener" style="color:var(--pink-soft,#FF8CC6);font-weight:700">How to get the sound through your speakers</a></p>
               </div>
             </div>
           </details>
@@ -1775,6 +1776,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       $("carryTitle").innerHTML="&#127881; "+esc(joinNames(names))+" won!";
       $("carryBody").innerHTML=(winners.length>1?"They split <b>":"They took <b>")+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going for <b>"+esc(PATTERN_NAMES[np]||np)+"</b> with a new prize, or end the game.";
       $("carryPrize").value="";
+      if(window.VPSetupUse && G.setupPrefs){   // the next round's prize from the setup wizard, if they saved one
+        var _rr=VPSetupUse.round(localStorage, G.venueId, "musical"); _rr.next();
+        var _nx=VPSetupUse.roundPrize(G.setupPrefs, _rr.index); if(_nx && !_nx.past) $("carryPrize").value=_nx.prize;
+        VPSetupUse.prizeButtons(document, $("carryPrize"), [G.setupPrefs.prize].concat(G.setupPrefs.prizes||[]).filter(function(x){ return x!==VPSetupUse.NO_PRIZE; }), function(x){ $("carryPrize").value=x; }, "carryPrizeBtns");
+      }
       $("carryModal").classList.remove("hidden");
       stopAudio();   // pause the music between rounds
     } else {
@@ -1782,6 +1788,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          the screen handles by clearing the winner and returning to the lobby. Called here it
          wiped the winner card milliseconds after it appeared. Wait for the screen's own
          celebration (celebrate(9000)) to finish, then release the room. */
+      if(window.VPSetupUse && G.setupPrefs) VPSetupUse.round(localStorage, G.venueId, "musical").next();   // that round's prize is won
       var _gidWon=G.gameId;
       setTimeout(function(){ endGameNow(_gidWon); }, 9000);
     }
@@ -1860,6 +1867,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
     closeNight(G.gameId ? apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}) : null);
     renderConsole();   // back to setup for the next game
+    fillRoundPrize();  // and the next round's prize, from the setup wizard
   }
   function carryOn(){
     if(!G._nextPat || G.busy) return;
@@ -2121,7 +2129,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     if(typeof p.hits_only==="boolean"){ var hc=$("hitsChk"); G.hitsOnly=p.hits_only; if(hc) hc.checked=p.hits_only; used=true; }
     if(p.pattern){ var ps=$("patternSel"); if(ps && ps.querySelector('option[value="'+p.pattern+'"]')){ ps.value=p.pattern; G.pattern=p.pattern; used=true; } }
-    if(p.prize){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
+    var _rounds=(window.VPSetupUse && VPSetupUse.roundPrize(p,0)) ? true : false;   // the night's prize rounds fill the box instead (fillRoundPrize)
+    if(p.prize && !_rounds){ var pi=$("prizeInput"); if(pi && !String(pi.value||"").trim()){ pi.value=p.prize; used=true; } }
+    G.setupPrefs=p;   // the setup wizard's prize rounds, read again between games (fillRoundPrize)
+    fillRoundPrize();
     if(p.reveal && REVEAL_MODES[p.reveal]){ setRevealMode(p.reveal); used=true; }
     return used;
   }
@@ -2138,6 +2149,19 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     api:function(){ return VP_GAME_API; }, token:getToken, collect:musicalPrefs, apply:applyMusicalPrefs, local:musicalLocalPrefs }) : null;
   function queuePrefsSave(){ if(_prefs) _prefs.queue(); }
   // Once the themes are on the page: the venue's choices, or this browser's sent up once.
+  /* THE NIGHT'S PRIZE ROUNDS (the setup wizard, Dean 6 Nov 2026): a prize for each round, one under the other, and
+     rounds played for no prize. A round is each prize won tonight (a new pattern on the same cards or a new game),
+     counted on this device for tonight (VPSetupUse.round). The prize box shows this round's prize, and the venue's
+     usual prizes sit under it as tap-and-go buttons. Anything the host types wins. */
+  function fillRoundPrize(){
+    var p=G.setupPrefs, pi=$("prizeInput"), note=$("roundNote");
+    if(!p || !pi || !window.VPSetupUse || G.status!=="setup") return;
+    var r=VPSetupUse.round(localStorage, G.venueId, "musical"), rp=VPSetupUse.roundPrize(p, r.index);
+    if(rp && !rp.past && (!String(pi.value||"").trim() || pi.value===pi._round)){ pi.value=rp.prize; pi._round=rp.prize; }
+    if(!note){ note=document.createElement("div"); note.id="roundNote"; note.className="note"; note.style.marginTop="6px"; pi.parentNode.insertBefore(note, pi.nextSibling); }
+    note.textContent=(rp && rp.of>1 && !rp.past) ? ("Round "+rp.number+" of "+rp.of+" tonight"+(rp.none?": played for fun, no prize.":".")) : "";
+    VPSetupUse.prizeButtons(document, note, [p.prize].concat(p.prizes||[]).filter(function(x){ return x!==VPSetupUse.NO_PRIZE; }), function(x){ pi.value=x; pi._round=null; }, "musicalPrizeBtns");
+  }
   function startVenuePrefs(){ return _prefs ? _prefs.start() : Promise.resolve(null); }
 
   // ---- events ----
