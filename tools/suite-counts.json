@@ -575,12 +575,20 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/test-email-backup.js": {
+  "checks": 18,
+  "counted_by": "lines"
+ },
  "tools/test-email-outcomes-recorded.js": {
   "checks": 10,
   "counted_by": "lines"
  },
  "tools/test-email-rebrand.js": {
   "checks": 39,
+  "counted_by": "lines"
+ },
+ "tools/test-email-step.js": {
+  "checks": 29,
   "counted_by": "lines"
  },
  "tools/test-fail-closed-batch.js": {
@@ -1420,7 +1428,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/app/signin-email-fallback.test.js": {
-  "checks": 42,
+  "checks": 38,
   "counted_by": "lines"
  },
  "venueplay-backend/app/song-excluded-acts.test.js": {

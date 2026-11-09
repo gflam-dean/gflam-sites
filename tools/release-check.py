@@ -3900,6 +3900,16 @@ def local_checks(which):
              'test-account-ready.js',
              'runs /start/begin and /start/verify on the billing Worker with a fake Mobile Message and Resend: ONE text from the venueplay sender to the mobile that passed the code in Dean\'s words, no link; ONE Welcome to venueplay email from hello@send.venueplay.com.au with one sign-in button (the text-code sign-in, their mobile filled in, no token), the sender address, the screen code and what to do first; an unlisted venue the same, a held one nothing; never twice (the same code, a second call, an audit that will not answer sends nothing); a provider down, no provider, an opted-out number or no email key never stops the done screen; a link typed as the venue name never reaches the text; what they typed is escaped in the email; the audit keeps the last 3 digits only; the email goes first so the text can say it was emailed too (check junk), two SMS parts at most; the email gives venueplay.com.au/go/{screen code} as the easy way back in', 28,
              'A venue that closed the tab at the bar with nothing in its inbox, or a sign-up texted and emailed twice'),
+            # D197/D198: the email backup for phone sign-in (Dean, 5 Nov 2026 items 63 to 67; 9 Nov item 102), branch fix/email-backup-15nov.
+            ('D197. The sign-in page\'s email backup sends a link only to the email already saved on that login, says the same thing whatever the truth, and is limited',
+             'test-email-backup.js',
+             'runs POST /auth/email-backup on the billing Worker: it reads only the mobile, an address in any field (or in the mobile field) never receives anything; no email saved, banned, off every venue, ended, no login, a landline, nothing: the same { ok:true } as a send; every answer waits the same minimum time; 6 an hour per network (429, same for any number), 3 an hour per mobile, 4 links a day per login; HQ gets an audit row with only the last 3 digits, no address and no token; the handler cannot reach vpaSendEmail by itself', 18,
+             'A typed address that is sent a sign-in link to someone else\'s account, a stranger told which mobiles have an email saved, '
+             'or a free email cannon aimed at one inbox'),
+            ('D198. A host adds their own email at first sign-in, saved on their login only, optional, and never re-asked',
+             'test-email-step.js',
+             'a login with a mobile and no email is asked once per sign-in after name and mobile; one Auth email change on their own login (a confirmation goes to the address, so a typo or someone else\'s address never becomes the place a link goes); Not now holds for this sign-in only; a login with an email or one pending is never re-asked; an address Auth refuses gets one line that does not say why; My email reopens it in the console header', 29,
+             'A host with no way in when texts stop, an unconfirmed typo that receives their sign-in links, or the same question every shift'),
             # D115: the sign-in link in the prospect's own thread, and where the account email got to (Dean, 5 Nov 2026),
             # branch feature/signin-in-thread-6nov.
             ('D115. A prospect\'s sign-in link can go in their own email thread, and HQ shows where the account email got to',
