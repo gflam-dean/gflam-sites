@@ -338,7 +338,7 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
   var calls = [];
   var env = { G: { gameId: "", status: "running" }, endBtnReset: function(){ calls.push("reset"); }, postMusicReport: function(){}, clearMusic: function(){}, stopAudio: function(){},
     $: function(){ return { classList: { add: function(){} } }; }, bcast: function(){}, sendState: function(){}, send: function(){}, closeNight: function(){}, apiPost: function(){}, renderConsole: function(){},
-    endBtnHold: function(){} };
+    endBtnHold: function(){}, fillRoundPrize: function(){} };   // fillRoundPrize: the next round's prize (consoles branch, merged 9 Nov)
   var names = Object.keys(env);
   (new Function(names.join(","), fn + "\n endGameNow();")).apply(null, names.map(function(k){ return env[k]; }));
   pass("a full-house end resets End game", calls.length === 1, calls);
@@ -364,7 +364,7 @@ print("8. ONE PHONE IS ONE PLAYER, WHICHEVER PAGE IT IS ON (live play test, 24 O
     bcast: function(m){ said.push(m.t); }, send: function(m){ said.push(m.t); }, sendState: function(){},
     closeNight: function(){}, renderConsole: function(){}, clearErrForAction: function(){}, clearMusic: function(){}, stopAudio: function(){},
     postMusicReport: function(){}, clearClaims: function(){}, showRoomVerdict: function(){}, hostError: function(){},
-    endBtnReset: function(){}, nextPat: function(){ return null; }, joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; },
+    endBtnReset: function(){}, nextPat: function(){ return null; }, joinNames: function(n){ return n.join(" & "); }, esc: function(x){ return x; }, fillRoundPrize: function(){}, window: {},
     setTimeout: function(f, ms){ timers.push({ f: f, ms: ms }); return timers.length; } };
   var keys = Object.keys(env);
   var api = (new Function(keys.join(","), src + "\n return { now: endGameNow, asked: endGameAsked, won: afterWin, hold: endBtnHold };")).apply(null, keys.map(function(k){ return env[k]; }));
