@@ -409,7 +409,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   check('three questions in order: pub or club (or Other), what games, any other nights (Dean, round 8b points 2 and 3)', T(P, 'vpGsTitle') === 'Are you a pub or a club?' && /What games do you play\?/.test(T(P, 'vpGsBody')) && /Do you run any other nights\?/.test(T(P, 'vpGsBody')) && !!walk($(P, 'vpGsKind'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'other'; }));
   gameBtn(P, 'trivia').click(); gameBtn(P, 'bingo').click(); gameBtn(P, 'members').click();
   $(P, 'vpGsNext').click(); $(P, 'vpGsWeekSkip').click(); $(P, 'vpGsAllYes').click(); await settle();
-  check('no "Same prizes for other games?" any more (Dean, round 7b point 7); prizes typed one at a time, the box says "then Enter"', !$(P, 'vpGsShared') && /then Enter/.test($(P, 'vpGsIn_prize_list_new').placeholder) && $(P, 'vpGsIn_prize_list').className === 'vpgs-tags');
+  check('no "Same prizes for other games?" any more (Dean, round 7b point 7); prizes typed one at a time, no "then Enter" (Dean, round 9 point 4: leaving the box keeps it)', !$(P, 'vpGsShared') && !/then Enter/.test($(P, 'vpGsIn_prize_list_new').placeholder) && $(P, 'vpGsIn_prize_list').className === 'vpgs-tags');
   addTag(P, 'prize_list', 'Meat tray'); addTag(P, 'prize_list', '$50 bar tab'); addTag(P, 'prize_list', 'meat TRAY');
   CALLS = []; SAVED = []; $(P, 'vpGsSave').click(); await settle();
   var tp3 = posts('/host/game-prefs')[0];
@@ -443,7 +443,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
 
   section('6f. ROUND 4 (Dean, 6 Nov 2026): several "something else", more than one of a game, raffles keep their own prizes');
   P = page(); P.GS.run(P.ctx, Object.assign(P.deps, { start: 'pick' })); await settle();
-  check('the box says "then Enter"', /then Enter/.test($(P, 'vpGsOther').placeholder));
+  check('the box no longer says "then Enter" (Dean, round 9 point 4: leaving it keeps what they typed)', !/then Enter/.test($(P, 'vpGsOther').placeholder) && /Karaoke/.test($(P, 'vpGsOther').placeholder));
   function typeOther(t) { $(P, 'vpGsOther').value = t; $(P, 'vpGsOther').handlers.keydown.forEach(function (f) { f({ key: 'Enter', preventDefault: function () {} }); }); }
   typeOther('Karaoke'); typeOther('karaoke'); typeOther('Poker <night>');
   check('each one becomes a tag, a repeat once, no markup', all($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other'); }).map(function (e) { return e.getAttribute('data-other'); }).join('|') === 'Karaoke|Poker night', all($(P, 'vpGsOtherList'), function (e) { return e.getAttribute && e.getAttribute('data-other'); }).map(function (e) { return e.getAttribute('data-other'); }));

@@ -276,7 +276,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   P = oldVenue(); done = P.GS.review(P.ctx, P.deps); await settle();
   $(P, 'vpGsGo').click(); await settle();
   check('their games already ticked from what they play (settings, nights played, a members draw)', ['trivia', 'musical', 'bingo', 'raffles', 'members'].every(function (g) { return gameBtn(P, g).getAttribute('aria-checked') === 'true'; }));
-  check('pub or club shown, already answered from their record', !!$(P, 'vpGsKind') && walk($(P, 'vpGsKind'), function (e) { return e.getAttribute && e.getAttribute('data-value') === 'pub'; }).getAttribute('aria-pressed') === 'true');
+  check('pub or club left out, already known from their record (Dean, round 9 point 3)', !$(P, 'vpGsKind') && T(P, 'vpGsTitle') === 'What games do you play?');
   $(P, 'vpGsNext').click(); await settle(); $(P, 'vpGsWeekSkip').click(); await settle();
   check('"Would you like to check your first game now?", Not today keeps everything', T(P, 'vpGsTitle') === 'Would you like to check your first game now?' && T(P, 'vpGsAllNote') === 'Not today keeps every setting as it is.');
   CALLS = []; $(P, 'vpGsAllYes').click(); await settle();

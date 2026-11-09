@@ -128,7 +128,7 @@
     P + ".vpgs-msg{margin:10px 0 0;font-size:15px;line-height:1.45;color:" + C.pinkSoft + "}" + P + ".vpgs-msg:empty{display:none}",
     /* "Not ready yet?" on a phone: a full-width quiet button, easy to hit with a thumb (Dean, round 3) */
     P + ".vpgs-link{display:block;width:100%;margin:12px 0 0;padding:10px 12px;min-height:44px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:none;font:700 15px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";cursor:pointer;text-align:center}",
-    P + ".vpgs-tag{display:inline-block;margin:0 0 8px;padding:3px 10px;border-radius:20px;background:" + C.ok + ";color:" + C.ink + ";font:800 14px " + HEAD + "}",
+    P + ".vpgs-tag{display:block;margin:0 0 6px;padding:0;font:700 15px " + HEAD + ";color:" + C.pinkSoft + "}",   /* plain words, not a badge (design review r10) */
     P + ".vpgs-note{margin:0 0 10px;font-size:15px;line-height:1.45;color:" + C.faint + "}",
     P + ".vpgs-ask{margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}",
     P + ".vpgs-tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}" + P + ".vpgs-tags:empty{display:none}",
@@ -237,6 +237,9 @@
     P + ".vpgs-time .vpgs-addlink{margin:0;grid-column:1/-1;justify-self:start}" +
     P + ".vpgs-raf{padding:8px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-raf:first-child{border-top:none;padding-top:0}" + P + ".vpgs-raf h4{margin:0 0 6px;font:800 15px " + HEAD + ";color:#FFFFFF}" +
     P + ".vpgs-raf .vpgs-rq{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-raf .vpgs-rq .vpgs-in{width:88px}" + P + ".vpgs-raf .vpgs-rq .vpgs-seg{width:136px}" +
+    P + ".vpgs-raf .vpgs-rq{padding-right:50px}" +   /* in the same column as every other box, the "?" column kept clear (design review r10) */
+    "@media (max-width:380px){#vpGs{padding:0 12px!important}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:0}}" +   /* Mon to Sun inside the card on a 375 phone */
+    P + "input[type=date]{color-scheme:light}" +   /* the light scheme draws a dark calendar icon, which the invert above turns white (design review r10) */
     P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}"
   ].join("");
 
@@ -495,7 +498,7 @@
     function syncTop() {
       var m = solo ? null : mainOf(foot);
       topNext.style.visibility = m ? "" : "hidden";
-      topNext.textContent = m && /^Go to my console/.test(m.textContent) ? "Done" : "Next";
+      topNext.textContent = m ? m.textContent : "Next";   // one label for one action, top and bottom (Dean, round 9 points 1, 12, 22)
       topNext.disabled = !!(m && m.disabled);
       topNext.setAttribute("aria-label", m ? m.textContent : "Next");
     }
@@ -792,7 +795,7 @@
       var tagBox = el("div", "vpgs-tags"); tagBox.id = "vpGsIn_" + s.key; wrap.appendChild(tagBox);
       var tin = el("input", "vpgs-in"); tin.type = "text"; tin.maxLength = each; tin.placeholder = s.placeholder || ""; tin.id = "vpGsIn_" + s.key + "_new";
       tin.setAttribute("aria-label", s.label); tin.setAttribute("enterkeyhint", "enter"); wrap.appendChild(tin);
-      tin.placeholder = (s.placeholder || "Type one") + ", then Enter";   // one line less than a "Press Enter" note (Dean, round 7b: spacing)
+      tin.placeholder = (s.placeholder || "Type one");   // no "then Enter": leaving the box keeps it too (Dean, round 9 point 4)
       var drawTags = function () {
         while (tagBox.firstChild) tagBox.removeChild(tagBox.firstChild);
         items2.forEach(function (w, k) {
@@ -1205,7 +1208,7 @@
       /* ASKED ONLY WHEN NOBODY KNOWS (Dean, round 9 point 3): the venue's record, the website scan's venue type when it
          lands (vp_venues.venue_type), or their own earlier answer fill it in and the question is left out */
       if (!answers.venue_kind && scanKind(v)) answers.venue_kind = scanKind(v);
-      var kindKnown = !!answers.venue_kind && !deps.review;   // an existing venue checking its setup sees it, already ticked
+      var kindKnown = !!answers.venue_kind;   // known: left out, for an existing venue too (design review r10)
       if (!kindKnown) {
         kindWrap = F.el("div", "vpgs-kind"); kindWrap.id = "vpGsKind";
         var kseg = F.el("div", "vpgs-seg"); kseg.setAttribute("role", "group"); kseg.setAttribute("aria-label", "Pub, club or something else");
@@ -1219,7 +1222,7 @@
       /* SOMETHING ELSE, ONE AT A TIME (Dean, round 3): type one, press Enter, type the next. */
       var others = otherList(other);
       var otherIn = F.el("input", "vpgs-in"); otherIn.id = "vpGsOther"; otherIn.type = "text"; otherIn.maxLength = OTHER_EACH;
-      otherIn.placeholder = "e.g. Karaoke, then Enter"; otherIn.setAttribute("aria-label", "Your other nights"); otherIn.setAttribute("enterkeyhint", "enter");
+      otherIn.placeholder = "e.g. Karaoke"; otherIn.setAttribute("aria-label", "Your other nights"); otherIn.setAttribute("enterkeyhint", "enter");
       var otherWrap = F.el("div", "vpgs-q3");
       var oq = F.el("label", "vpgs-h3", "Do you run any other nights?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq);
       otherWrap.appendChild(F.el("p", "vpgs-sub", "Karaoke, poker, darts, live music... type one, or tap a suggestion."));

@@ -16425,7 +16425,7 @@ MUTATIONS = [
      'later(function () {}, 150);',
      'another night typed without Enter is lost (Dean, round 9 point 4)'),
     ('test-wizard-r10.js', 'venueplay/app/vp-gamesetup.js',
-     '      var kindKnown = !!answers.venue_kind && !deps.review;',
+     '      var kindKnown = !!answers.venue_kind;',
      '      var kindKnown = false;',
      'pub or club asked even when the venue type is known (Dean, round 9 point 3)'),
     ('test-wizard-r10.js', 'venueplay/app/vp-gamesetup.js',
