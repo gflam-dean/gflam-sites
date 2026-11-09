@@ -238,6 +238,8 @@
   .form-shell .inner{position:relative}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px;margin-top:26px}
   .field{display:flex;flex-direction:column;gap:8px}
+  /* Two boxes side by side line up even when one label has a help line under it (round 3 review, note 7). */
+  .form-grid .field > input, .form-grid .field > select{margin-top:auto}
   .field.full{grid-column:1 / -1}
   .field[hidden]{display:none}
   .field label{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--muted)}

@@ -152,7 +152,7 @@ ok('the hero line and the card form line carry Dean\'s 6 Nov words, and "and it 
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 24
+EXPECTED = 26   # round 3 (7 Nov 2026) added the "Talk to us" checks
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

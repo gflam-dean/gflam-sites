@@ -191,7 +191,7 @@ try:
            v.get('rows') == ['Per player, per month=$3.00'] and re.sub(r'\s+', ' ', v.get('title', '')).lower() == '$3 per player. flat and simple.', (v.get('rows'), v.get('title')))
         ok('%s: the plan buttons, the FAQ and the page description quote $3 and $2.85' % tag,
            v.get('plans') == ['$3.00 / player', '$2.85 / player'] and 'How much does it cost?' in allt
-           and 'Pay monthly at $3 a player, or yearly for $2.85 a player.' in allt
+           and 'Pay monthly at $3 a player, or yearly at $2.85 a player.' in allt
            and '$3 per player, per month' in v.get('meta', '') and '$2.50' not in v.get('og', ''), (v.get('plans'), v.get('meta')))
         ok('%s: the buttons say "Get started", not another "free month" (Dean, 7 Nov 2026, round 3 notes 15 and 21)' % tag,
            v.get('submit') == 'Get started' and 'Get started' in v.get('float', ''), (v.get('submit'), v.get('float')))
