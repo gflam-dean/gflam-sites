@@ -410,6 +410,36 @@ timers.forEach(function (t) { t(); });
 check('and the spin starts after it', drew.length === 1, drew);
 sendDrawing = sendDrawingReal; ensureRaffleGame = ensureReal; $('rfAnnounce').checked = false; G.busy = false;
 
+/* ================= 11. The draw order and where tickets are sold (Dean, 9 Nov 2026) ================= */
+section('11. Twenty prizes put in order before the draw; "Get your tickets from the bar"');
+eval(lift('moveP'));
+reset(); form(); readInputs();
+G.prizes = []; for (var pi = 1; pi <= 20; pi++) G.prizes.push('Prize ' + pi); G.prizeIdx = 0;
+moveP(19, -1); moveP(18, -1);
+check('a prize moves up one place at a time (20 prizes)', G.prizes[17] === 'Prize 20' && G.prizes[18] === 'Prize 18' && G.prizes[19] === 'Prize 19', G.prizes.slice(16));
+moveP(0, 1);
+check('and down', G.prizes[0] === 'Prize 2' && G.prizes[1] === 'Prize 1', G.prizes.slice(0, 3));
+moveP(0, -1); moveP(19, 1);
+check('nothing moves past the top or the bottom', G.prizes[0] === 'Prize 2' && G.prizes[19] === 'Prize 19' && G.prizes.length === 20, [G.prizes[0], G.prizes[19]]);
+G.prizeIdx = 2; moveP(2, -1); moveP(1, 1);
+check('a prize already drawn never moves, and nothing moves into its place', G.prizes[0] === 'Prize 2' && G.prizes[1] === 'Prize 1' && G.prizes[2] === 'Prize 3', G.prizes.slice(0, 3));
+G.prizeIdx = 0;
+eval(lift('sendIdle'));
+var celebrating = function () { return false; };
+sent = []; G.ticketsFrom = ''; sendIdle();
+check('nothing chosen: the TV is told nothing about where tickets are sold (the card every venue has today)', sent.length === 1 && !('from' in sent[0]), sent);
+sent = []; G.ticketsFrom = 'bar'; sendIdle();
+check('"The bar" chosen: the TV is sent the key, not words', sent.length === 1 && sent[0].from === 'bar', sent);
+G.ticketsFrom = '';
+var SCR = readFile('venueplay/app/raffle/screen.html');
+var tf = /var TICKETS_FROM=\{[^}]*\};/.exec(SCR), line = /    if\(m\.t==="idle"\)\{ S\.ticketsFrom=[^\n]*?; \}/.exec(SCR);   // the statement, without its comment
+check('the TV has its own words for each key, and the line that reads them', !!tf && !!line);
+if (tf && line) {
+  var tvSays = new Function('m', 'var S={};' + tf[0] + '\n' + line[0] + '\nreturn S.ticketsFrom;');
+  check('the TV says "from the bar", "from the host", "from our ticket sellers"', tvSays({ t: 'idle', from: 'bar' }) === 'from the bar' && tvSays({ t: 'idle', from: 'host' }) === 'from the host' && tvSays({ t: 'idle', from: 'sellers' }) === 'from our ticket sellers');
+  check('anything else, or nothing, says nothing (never the message\'s own text on the wall)', tvSays({ t: 'idle', from: '<b>free beer</b>' }) === '' && tvSays({ t: 'idle' }) === '' && tvSays({ t: 'idle', from: 'toString' }) === '', tvSays({ t: 'idle', from: '<b>x</b>' }));
+}
+
 drainMicrotasks();
 print('');
 print(PASS + ' passed, ' + FAIL + ' failed');

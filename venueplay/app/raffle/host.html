@@ -264,6 +264,13 @@
             <input type="text" id="rfPrize" placeholder="e.g. Meat tray" aria-label="Type a prize">
             <button type="button" class="addbtn" id="addPrizeBtn">Add</button>
           </div>
+          <!-- THE DRAW ORDER (Dean, 9 Nov 2026): a raffle with 20 prizes is put in order here, before the first draw,
+               and the draw runs in that order. Up and down on every row (a thumb on a phone, a finger on an iPad,
+               a mouse on a laptop); the number is the order it is drawn in. -->
+          <div class="orderwrap hidden" id="orderWrap">
+            <span class="flab osub">Draw order<small>First drawn at the top. Move a prize up or down.</small></span>
+            <div class="plist" id="orderList"></div>
+          </div>
         </div>
         <div class="field2" id="ticketsField">
           <span class="flab"><span id="ticketsNum">2. </span>Which tickets did you sell?</span>
@@ -280,6 +287,16 @@
             <div class="note" style="margin-top:5px">These are never drawn. A dash for a block, commas between them, like 240-320, 512. Anything it cannot read is shown before you draw.</div>
           </div>
           <div class="rangeline" id="rangeLine"></div>
+        </div>
+        <!-- WHERE TICKETS ARE SOLD (Dean, 9 Nov 2026): said on the TV under GET YOUR TICKETS. Nothing picked, nothing
+             said: the card every venue has today. Only where tickets are bought; a winner always goes to the host. -->
+        <div class="field2" id="fromField">
+          <span class="flab">Where are tickets sold?<small>Shown on the TV under Get your tickets.</small></span>
+          <div class="chips" id="fromPick">
+            <button type="button" data-from="host">The host</button>
+            <button type="button" data-from="bar">The bar</button>
+            <button type="button" data-from="sellers">Our ticket sellers</button>
+          </div>
         </div>
         <!-- THE DRAW SETTINGS (Dean, 28 Oct 2026; named in his words 6 Nov 2026): set once by the venue, saved for
              the venue, closed until opened. The shared disclosure, VP.advanced in /app/vp-session.js. A cash jackpot
@@ -426,7 +443,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null };   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"" };   // ticketsFrom: "", "host", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -943,8 +960,33 @@
     var p=G.prizes.splice(i,1)[0]; G.prizes.splice(G.prizeIdx,0,p);
     renderPrizeList(); saveRaffle();
   }
+  /* Move an undrawn prize one place up (-1) or down (+1) in the draw order. Drawn prizes never move. */
+  function moveP(i, d){
+    var j=i+d;
+    if(G.round || G.busy || !(i>=G.prizeIdx && i<G.prizes.length && j>=G.prizeIdx && j<G.prizes.length)) return;
+    var t=G.prizes[i]; G.prizes[i]=G.prizes[j]; G.prizes[j]=t;
+    renderPrizeList(); saveRaffle();
+  }
+  function renderOrderList(){
+    var w=$("orderList"); if(!w) return; w.innerHTML="";
+    var first=G.prizeIdx, last=G.prizes.length-1;
+    for(var i=first;i<=last;i++){
+      var row=document.createElement("div"); row.className="prow"+(i===first?" next":"");
+      row.innerHTML='<span class="pi">'+(i-first+1)+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+
+        '<button class="mv" type="button" data-up="'+i+'" aria-label="Move '+esc(G.prizes[i])+' up"'+(i===first?' disabled':'')+'>&#8593;</button>'+
+        '<button class="mv" type="button" data-down="'+i+'" aria-label="Move '+esc(G.prizes[i])+' down"'+(i===last?' disabled':'')+'>&#8595;</button>'+
+        '<button class="px" type="button" data-rm="'+i+'" aria-label="Take '+esc(G.prizes[i])+' off">&times;</button>';
+      w.appendChild(row);
+    }
+    show("orderWrap", !G.jackOn && (last-first+1)>=2);
+  }
+  function renderFrom(){
+    var b=document.querySelectorAll("#fromPick button[data-from]");
+    for(var i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-from")===G.ticketsFrom);
+  }
   function renderPrizeList(){
     var w=$("prizeList"); if(!w) return;
+    renderOrderList();
     w.innerHTML="";
     var order=[], i;
     for(i=G.prizeIdx;i<G.prizes.length;i++) order.push(i);
@@ -970,6 +1012,7 @@
     if(_suppressIdle || celebrating()) return;   /* a celebration is on the wall; do not paint over it */
     var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) };
     var rn=raffleName(); if(rn) m.raffle=rn;   // which raffle, named on the wall; a one-raffle venue sends nothing new
+    if(G.ticketsFrom) m.from=G.ticketsFrom;    // where tickets are sold: a key the TV turns into its own words
     send(m);
   }
   var ANNOUNCE_MS=4000;
@@ -1510,6 +1553,17 @@
     if(lit>=0){ removePrize(lit); return; }   // a lit chip, tapped again: off tonight's list
     addPrize(b.getAttribute("data-p"));   // clicking a saved prize adds it to tonight's list
   });
+  $("orderList").addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b || b.disabled) return;
+    if(b.hasAttribute("data-up")) moveP(parseInt(b.getAttribute("data-up"),10), -1);
+    else if(b.hasAttribute("data-down")) moveP(parseInt(b.getAttribute("data-down"),10), 1);
+    else if(b.hasAttribute("data-rm")) removePrize(parseInt(b.getAttribute("data-rm"),10));
+  });
+  $("fromPick").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-from]"); if(!b) return;
+    var v=b.getAttribute("data-from"); G.ticketsFrom=(G.ticketsFrom===v) ? "" : v;   // tapping the lit one again says nothing, as today
+    renderFrom(); queueRafflePrefs(); if(!G.round && !G.busy) sendIdle();
+  });
   $("typePrizeChip").addEventListener("click", function(){ show("addRow", true); try{ $("rfPrize").focus(); }catch(x){} });
   /* "Tickets not sold: None / Add" opens the box; once something is in it, the line says what. */
   $("skipChg").addEventListener("click", function(){ show("skipField", true); try{ $("rfSkip").focus(); }catch(x){} });
@@ -1552,7 +1606,7 @@
     var ja=String($("rfJackAmt").value==null?"":$("rfJackAmt").value).trim();
     if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
     if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
-    p.pick_order=pickOrder(); p.announce_prize=announcing();
+    p.pick_order=pickOrder(); p.announce_prize=announcing(); p.tickets_from=G.ticketsFrom||"";
     return p;
   }
   function applyRafflePrefs(p){
@@ -1568,6 +1622,7 @@
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
     var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
+    if(typeof p.tickets_from==="string" && /^(|host|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
     if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();
   }

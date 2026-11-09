@@ -474,16 +474,19 @@ ok('a venue that never touched them: "choose the next prize" and "show each priz
    r1.els.rfPickOrder.checked === false && r1.els.rfAnnounce.checked === false && (saved('raffle') || {}).pick_order === false && (saved('raffle') || {}).announce_prize === false, saved('raffle'));
 r1.els.rfAllowRedraw.checked = false; r1.G.drawLength = 6; r1.els.rfSkip.value = '150-200, 312';
 r1.els.rfPickOrder.checked = true; r1.els.rfAnnounce.checked = true;
+ok('nothing chosen: where tickets are sold is saved as not said (the TV card every venue has today)', (saved('raffle') || {}).tickets_from === '', saved('raffle'));
+r1.G.ticketsFrom = 'bar';
 r1.queueRafflePrefs(); flush();
 var sr = saved('raffle') || {};
 ok('switched on, both are kept for the venue (the game Worker keeps pick_order and announce_prize)', sr.pick_order === true && sr.announce_prize === true, sr);
+ok('"The bar" is kept for the venue as where tickets are sold', sr.tickets_from === 'bar', sr);
 ok('the venue holds the range, claim time, cash jackpot to the cent, redraw and spin length', sr.range_min === 100 && sr.range_max === 400 && sr.time_to_present === 30 &&
    sr.jackpot_on === true && sr.jackpot_amount_cents === 75050 && sr.allow_redraw === false && sr.spin_seconds === 6, sr);
 ok('"Tickets that did not sell" is NEVER saved', !/150-200|312|excluded|unsold|skip/.test(JSON.stringify(POSTS)), POSTS);
 var r2 = raffleTablet(null); r2.startRafflePrefs(); flush();
 ok('a second tablet opens on all of it, prizes included', r2.els.rfStart.value === '100' && r2.els.rfEnd.value === '400' && r2.els.rfTime.value === '30' && r2.els.rfJackOn.checked === true &&
    r2.els.rfJackAmt.value === '750.50' && r2.els.rfAllowRedraw.checked === false && r2.G.drawLength === 6 && r2.G.savedPrizes[0] === 'Meat Tray' &&
-   r2.els.rfPickOrder.checked === true && r2.els.rfAnnounce.checked === true,
+   r2.els.rfPickOrder.checked === true && r2.els.rfAnnounce.checked === true && r2.G.ticketsFrom === 'bar',
    { s: r2.els.rfStart.value, e: r2.els.rfEnd.value, t: r2.els.rfTime.value, j: r2.els.rfJackAmt.value, p: r2.G.savedPrizes });
 ok('with its unsold box empty', r2.els.rfSkip.value === '');
 ok('a cash jackpot on: the prize list folds and the amount shows', !r2.els.rfJackWrap.classList.contains('hidden') && r2.els.prizeField.classList.contains('hidden'));

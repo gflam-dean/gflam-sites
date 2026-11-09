@@ -198,3 +198,9 @@ body{background:var(--ink)}                                            /* flat, 
 .btn.xl.pulse{animation:none}                                          /* the big buttons hold their colour; nothing on the card fades */
 .since{text-wrap:balance}
 .plist .prow .pnext{min-height:44px;font-size:13.5px;white-space:nowrap}
+/* raffle: the draw order, put right before the first draw (Dean, 9 Nov 2026) */
+.orderwrap{margin-top:14px}
+.flab.osub{font-size:15px}
+.plist .prow .mv{flex:none;min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--ink-2);color:#fff;font:800 18px/1 'Hanken Grotesk',sans-serif;cursor:pointer}
+.plist .prow .mv:disabled{opacity:.3;cursor:default}
+.plist .prow .mv+.mv{margin-left:-4px}
