@@ -10,8 +10,9 @@
    The trap the fix must not fall into: the billing page writes an ADDED PLAYER with the very same
    words, "<venue> - Extra Player - DD/MM/YYYY", at the plan rate ($2.50 or $3.00). That is a plan
    change, not a big night. The only thing that tells them apart is Stripe's own unit price
-   ($2.00 a big night, $1.00 the third in a row), which is also the rule fix/group-invoice-lines-10nov
-   uses (vpbExtraLine), so the receipt and the group split can never disagree on a line.
+   ($2.00 a big night, $1.00 the third in a row), which is also the rule the group split uses
+   (vpbExtraLine, same file), so the receipt and the group split can never disagree on a line
+   (section 9 holds them to it).
 
    It RUNS the shipped billing Worker (the receipt and the reminder, with only fetch and the
    database replaced) and reads what a venue would read. The descriptions are made by running the
@@ -199,6 +200,28 @@ async function main() {
   await vpaFireInvoiceEmail(ENV, inv([L(PLAN, 1, 250)]));
   var rp = visible(last().html);
   check('a plain plan receipt has no extra-players note', !!last().html && rp.indexOf('extra player') === -1 && rp.indexOf('big night') === -1, rp.slice(0, 400));
+
+  print('\n9. The receipt note and the group split read every line the same (vpbExtraLine)');
+  /* vpbExtraLine (group invoices per venue, INBOX 44b) says "Extra players:" for a big night and
+     "Players added:" for a plan change. vpaBigNightLine must call exactly the same lines big nights,
+     with the same venue, quantity and cents, or a group's receipt would list a line under a venue
+     as an added player while the note above counts it as a big night. The one line only the note
+     reads is a third night with no quantity (vpbExtraLine leaves it where Stripe put it). */
+  var battery = [L(ROYAL_NIGHT, 12, 2400), L(ROYAL_THIRD, 15, 1500), L(DASHED_NIGHT, 4, 800),
+                 L(ROYAL_ADDED, 2, 500), L(ROYAL_ADDED, 1, 300), L(ROYAL_ADDED, 3, 750),
+                 L(bigNightDesc('Big Night', '02/11/2026', false), 16, 3200), L(ROYAL_NIGHT, 7, 1501),
+                 L(OLD, 1, 2400), L(PLAN, 100, 25000), L(ROYAL_NIGHT, 12, 2400, { proration: true })];
+  var disagree = [];
+  battery.forEach(function (l) {
+    var a = vpaBigNightLine(l), g = vpbExtraLine(l);
+    var gBig = !!g && /^Extra players: /.test(g.words);
+    var same1 = (!!a === gBig) && (!a || (a.venue === g.venue && a.players === g.qty && a.cents === g.cents && a.third === g.third));
+    if (!same1) disagree.push(l.description + ' x' + l.quantity + ' ' + l.amount);
+  });
+  check('every line in the battery: a big night to one is a big night to the other, same venue, players and cents', disagree.length === 0, disagree);
+  var noQty = L(ROYAL_THIRD, undefined, 1500);
+  check('the one documented difference: a third night with no quantity is a big night to the note, and the split leaves it as Stripe wrote it',
+        !!vpaBigNightLine(noQty) && vpaBigNightLine(noQty).players === 15 && vpbExtraLine(noQty) === null);
 }
 
 main().then(function () {}, function (e) { fails++; print('  FAIL threw: ' + (e && e.stack || e)); });
