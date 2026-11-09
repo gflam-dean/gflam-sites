@@ -1083,6 +1083,10 @@
   "checks": 100,
   "counted_by": "lines"
  },
+ "tools/test-vp-tonight.js": {
+  "checks": 62,
+  "counted_by": "lines"
+ },
  "tools/test-webhook-retry-is-not-dropped.js": {
   "checks": 11,
   "counted_by": "lines"
@@ -1093,6 +1097,10 @@
  },
  "tools/test-welcome-is-sent-once.js": {
   "checks": 8,
+  "counted_by": "lines"
+ },
+ "tools/test-whats-on.js": {
+  "checks": 97,
   "counted_by": "lines"
  },
  "tools/test-winner-screen-survives.js": {
@@ -1189,6 +1197,10 @@
  },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 376,
+  "counted_by": "lines"
+ },
+ "tools/whats-on-in-chrome.test.py": {
+  "checks": 64,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {
