@@ -283,26 +283,53 @@
   }
 
   /* FIT ON THE WALL (9 Nov 2026). Called by tv.html once a slide is in the page (and again when the fonts arrive or
-     the screen changes size). A title or a time wider than its space is set smaller until it fits on one line, down to
-     70% of its size; a title that cannot fit on one line even then goes onto two lines, sized so two are enough. Never
-     cut. Each tile keeps its size whatever its words, so the tiles stay even. Skips anything not laid out yet. */
+     the screen changes size). A title or a time wider than its space is set smaller until it fits on one line; a title
+     that cannot fit on one line at 70% goes onto two lines, sized so two are enough. Never cut.
+     TILES MATCH (design review, 9 Nov 2026): on the tiles, every time on a slide is one size and every title one size,
+     the size the tightest one needs, so the times and titles line up across the wall ("2pm to 6pm" no longer sets
+     smaller than "7:30pm" beside it). The feature view's rows are fitted one by one, as before. Skips anything not
+     laid out yet. */
+  function measure(el, view) {
+    var st = el.style;
+    st.fontSize = ""; st.whiteSpace = ""; st.display = "";
+    var w = el.clientWidth, fs = parseFloat(view.getComputedStyle(el).fontSize) || 0;
+    if (!w || !fs) return null;
+    st.whiteSpace = "nowrap"; st.display = "block";
+    var sw = el.scrollWidth;
+    return { el: el, fs: fs, r: sw <= w + 1 ? 1 : w / sw };
+  }
+  function oneLine(m, px) { m.el.style.whiteSpace = "nowrap"; m.el.style.display = "block"; m.el.style.fontSize = px + "px"; }
+  function twoLines(m, px) { m.el.style.whiteSpace = ""; m.el.style.display = ""; m.el.style.fontSize = px + "px"; }
   function fit(root) {
     if (!root || !root.querySelectorAll) return 0;
-    var n = 0, els = root.querySelectorAll(".wo-what b, .wo-time");
-    for (var i = 0; i < els.length; i++) {
-      var el = els[i], st = el.style;
-      st.fontSize = ""; st.whiteSpace = ""; st.display = "";
-      var w = el.clientWidth;
-      if (!w || !root.ownerDocument || !root.ownerDocument.defaultView) continue;
-      var fs = parseFloat(root.ownerDocument.defaultView.getComputedStyle(el).fontSize) || 0;
-      if (!fs) continue;
-      st.whiteSpace = "nowrap"; st.display = "block";
-      var sw = el.scrollWidth;
-      if (sw <= w + 1) { n++; continue; }
-      var r = w / sw, title = el.tagName === "B";
-      if (r >= 0.7 || !title) { st.fontSize = Math.max(fs * 0.5, Math.floor(fs * r * 0.97)) + "px"; n++; continue; }
-      st.whiteSpace = ""; st.display = "";
-      st.fontSize = Math.floor(fs * Math.max(0.55, Math.min(0.9, r * 1.8))) + "px"; n++;
+    var doc = root.ownerDocument || root, view = doc.defaultView;
+    if (!view) return 0;
+    var n = 0, i, j;
+    var lists = root.querySelectorAll(".wo-tiles .wo-list");
+    for (i = 0; i < lists.length; i++) {
+      var ts = [], bs = [], els, m;
+      els = lists[i].querySelectorAll(".wo-time"); for (j = 0; j < els.length; j++) if ((m = measure(els[j], view))) ts.push(m);
+      els = lists[i].querySelectorAll(".wo-what b"); for (j = 0; j < els.length; j++) if ((m = measure(els[j], view))) bs.push(m);
+      if (ts.length) {
+        var tpx = Infinity;
+        ts.forEach(function (x) { tpx = Math.min(tpx, x.fs * Math.max(0.5, x.r) * (x.r < 1 ? 0.97 : 1)); });
+        ts.forEach(function (x) { oneLine(x, Math.floor(tpx)); n++; });
+      }
+      if (bs.length) {
+        var top = 0, one = Infinity, two = Infinity;
+        bs.forEach(function (x) { top = Math.max(top, x.fs); one = Math.min(one, x.fs * x.r * (x.r < 1 ? 0.97 : 1)); two = Math.min(two, x.fs * Math.max(0.55, Math.min(1, x.r * 1.8))); });
+        if (one >= top * 0.7) bs.forEach(function (x) { oneLine(x, Math.floor(one)); n++; });
+        else bs.forEach(function (x) { twoLines(x, Math.floor(Math.min(two, top * 0.9))); n++; });
+      }
+    }
+    var rest = root.querySelectorAll(".wo-b .wo-what b, .wo-b .wo-time");
+    for (i = 0; i < rest.length; i++) {
+      var q = measure(rest[i], view);
+      if (!q) continue;
+      n++;
+      if (q.r >= 1) continue;
+      if (q.r >= 0.7 || rest[i].tagName !== "B") { oneLine(q, Math.max(q.fs * 0.5, Math.floor(q.fs * q.r * 0.97))); continue; }
+      twoLines(q, Math.floor(q.fs * Math.max(0.55, Math.min(0.9, q.r * 1.8))));
     }
     return n;
   }

@@ -172,7 +172,7 @@
      full width, every tile the same size whatever its words: 1 to 3 side by side, 4 as two by two, 5 as three over
      two. The day and time, then the title and its line, in each tile; tonight's tile has the pink
      bar along its top. Titles and times are fitted on the wall by VPWhatsOn.fit (one line where they can). */
-  .wo-wall.wo-tiles{padding-top:2.6cqw}   /* the header off the top edge: 50px at 1920 */
+  .wo-wall.wo-tiles{padding-top:2.6cqw;padding-bottom:2.6cqw}   /* the header off the top edge: 50px at 1920 */
   .wo-tiles .wo-list{display:grid;grid-auto-rows:1fr;gap:1.4cqw;flex:none;margin:auto 0}   /* as tall as the words need, every tile the height of the tallest, the set centred in the room under the header */
   .wo-n1 .wo-list{grid-template-columns:minmax(0,1fr)}
   .wo-n2 .wo-list,.wo-n4 .wo-list{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -182,11 +182,12 @@
   .wo-n5 .wo-row:nth-child(n+4){grid-column:span 3}
   .wo-tiles .wo-row{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:2cqw;max-height:none;min-height:0;padding:2.6cqw 2.6cqw 2.8cqw;border-radius:1.2cqw}
   .wo-tiles .wo-row.tonight::before{right:0;bottom:auto;width:auto;height:6px}
-  .wo-tiles .wo-when2{gap:.5cqw}
+  .wo-tiles .wo-when2{gap:1cqw}
   .wo-tiles .wo-what{display:flex;flex-direction:column;justify-content:flex-start}
   .wo-tiles .wo-what b{-webkit-line-clamp:3;line-height:1.1}
   .wo-tiles .wo-what i{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-top:.5cqw}
   /* one row of tiles (1 to 3 nights): tall tiles, big words */
+  .wo-tiles.wo-n1 .wo-row,.wo-tiles.wo-n2 .wo-row,.wo-tiles.wo-n3 .wo-row{min-height:30cqw}   /* one row of tiles: tall enough to hold the wall (design review, 9 Nov 2026) */
   .wo-tiles.wo-n3 .wo-day{font-size:2.3cqw}
   .wo-tiles.wo-n3 .wo-time{font-size:7.4cqw}
   .wo-tiles.wo-n3 .wo-what b{font-size:4.4cqw}

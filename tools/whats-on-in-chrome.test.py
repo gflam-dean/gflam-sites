@@ -163,7 +163,7 @@ def tv_and_phone():
         ROWS = ('rows=[].map.call(s.querySelectorAll(".wo-row"),function(x){var b=x.getBoundingClientRect();return {t:x.innerText.replace(/\\s+/g," "),tn:x.classList.contains("tonight"),top:Math.round(b.top),bot:Math.round(b.bottom),right:Math.round(b.right),h:Math.round(b.height),'
                 'bar:getComputedStyle(x,"::before").backgroundColor,day:getComputedStyle(x.querySelector(".wo-day")).opacity,left:Math.round(b.left),'
                 'dff:getComputedStyle(x.querySelector(".wo-day")).fontFamily,dtt:getComputedStyle(x.querySelector(".wo-day")).textTransform,dls:getComputedStyle(x.querySelector(".wo-day")).letterSpacing,'
-                'tm:x.querySelector(".wo-time").textContent,tl:(function(t){var c=getComputedStyle(t);return Math.round(t.getBoundingClientRect().height/(parseFloat(c.lineHeight)||1));})(x.querySelector(".wo-what b")),'
+                'tm:x.querySelector(".wo-time").textContent,tfs:getComputedStyle(x.querySelector(".wo-time")).fontSize,bfs:getComputedStyle(x.querySelector(".wo-what b")).fontSize,btop:Math.round(x.querySelector(".wo-what b").getBoundingClientRect().top),tl:(function(t){var c=getComputedStyle(t);return Math.round(t.getBoundingClientRect().height/(parseFloat(c.lineHeight)||1));})(x.querySelector(".wo-what b")),'
                 'cut:(function(t){var lh=parseFloat(getComputedStyle(t).lineHeight)||20;return t.scrollHeight>t.clientHeight+lh*0.5||t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-what b")),tcut:(function(t){return t.scrollWidth>t.clientWidth+1;})(x.querySelector(".wo-time"))};})')
         def scene(rowset, label, logo=None):
             r.W.seed('vp_venue_screen', [{'venue_id': venue, 'slug': slug, 'logo_url': logo, 'raffle': None, 'events': rowset,
@@ -219,6 +219,9 @@ def tv_and_phone():
                and rows[1]['tl'] <= 2 and rows[0]['tl'] == 1 and rows[2]['tl'] == 1, [(x['t'], x['tl'], x['cut'], x['h'], x['left'], x['right'], m['w']) for x in rows])
             ok('lunatic %dx%d: the hours once: Sunday says "2pm to 6pm" and "2pm" nowhere else; Thursday keeps "$10 entry"' % (W, H),
                len(rows) == 3 and rows[2]['tm'] == '2pm to 6pm' and rows[2]['t'].count('2pm') == 1 and '$10 entry' in rows[0]['t'], [x['t'] for x in rows])
+            ok('lunatic %dx%d: the tiles match (design review): one time size and one title size on every tile, the three titles starting at the same height' % (W, H),
+               len(rows) == 3 and len(set(x['tfs'] for x in rows)) == 1 and len(set(x['bfs'] for x in rows)) == 1 and max(x['btop'] for x in rows) - min(x['btop'] for x in rows) <= 2,
+               [(x['tfs'], x['bfs'], x['btop']) for x in rows])
             lg = m.get('logo') or {}
             ok('lunatic %dx%d: the venue\'s logo is up beside WHAT\'S ON, loaded and visible (not held back)' % (W, H),
                lg.get('vis') == 'visible' and lg.get('done') is True and 'wo-wait' not in lg.get('cls', '') and lg.get('h', 0) > 20, lg)
