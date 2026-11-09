@@ -1864,11 +1864,12 @@
     entries.forEach(function(e){
       try{
         var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
-        if(e.type==="holding") div.setAttribute("data-fit-self","");   // HOLD_FIT_SELF, see #tvFloor
-        /* The What's on wall keeps its own margins (cqw) and is never under the venue's corner logo, which is off for the
-           ads. Fitted round that logo, it stayed shrunk to 82% once the logo had gone (9 Nov 2026: the tiles stopped at
-           the middle 82% of the TV), so it is fitted only to the screen, as the holding card is. */
-        if(e.type==="auto-whatson") div.setAttribute("data-fit-self","");
+        /* EVERY SLIDE FILLS THE SCREEN (Dean, 9 Nov 2026: "Why would I want slides with a black border?"). A slide is
+           the whole wall: the venue's corner logo is off for the ads and, when it is on (a holding card), it sits ON
+           TOP. So no slide is ever shrunk to keep clear of a corner (vp-fit's data-fit-avoid); each is fitted only to
+           the screen, as the holding card always was (HOLD_FIT_SELF, see #tvFloor). They were shrunk to 82% and kept
+           there after the logo had gone (vp-fit kept one shared entry for every slide; fixed there too). */
+        div.setAttribute("data-fit-self","");
         div.innerHTML=entryInner(e); pending.appendChild(div); built++;
       }catch(err){}
     });
