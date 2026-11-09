@@ -35,6 +35,10 @@ eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
 eval(lift(BILL,"vpaFirePlanUpliftEmail"));
+/* The billing window, 7am to 5pm Brisbane (Dean, 9 Nov 2026): every billing sender now asks it when to go. */
+eval(/const VPA_BILLING_FROM_H = [^;]+;/.exec(BILL)[0].replace(/^const/, "var"));
+eval(lift(BILL,"vpaBillingSendAt"));
+eval(lift(BILL,"vpaBillingHold"));
 var VPA_CANCEL_ALERTS = (function(){ var m=/VPA_CANCEL_ALERTS = (\[[^\]]*\])/.exec(BILL); return m?JSON.parse(m[1].replace(/'/g,'"')):[]; })();
 var VPA_ALERT_KINDS = (function(){
   var m=/const VPA_ALERT_KINDS = \{([\s\S]*?)\};/.exec(BILL); if(!m) return {};

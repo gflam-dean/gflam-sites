@@ -11,7 +11,8 @@
   Friendly, no pressure, never "about" on a price. Same frame as every VenuePlay email.
   Sections kept or stripped by vpaTplSections: early / last / final (which reminder), offer / nooffer (were they
   set up on an offer price).
-  Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{days_left}} {{offer_rate}} {{standard_rate}}
+  Merge fields: {{greeting}} {{venue_name}} {{ends_on}} {{ends_when}} ("on Thu 26 Nov", or "this Sunday, 13 Dec" when a
+    weekend last day is told on the Friday before: Dean, 9 Nov 2026) {{days_left}} {{offer_rate}} {{standard_rate}}
     {{card_url}} {{cancel_url}} {{terms_url}} {{privacy_url}} {{support_email}} {{support_phone}}
     {{support_tel}} {{unsubscribe_url}} {{signoff}} (the team sign-off; from and replying to hello@, Dean 29 Oct 2026)
   House rules: no em dashes, ACT not "the ACT", never "roster".
@@ -38,7 +39,7 @@
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Just a quick note from venueplay. Your free month at {{venue_name}} runs until {{ends_on}}. Whenever suits, you can add your card, and it won't be charged until your free month ends.</p>
 <!--ENDIF:early-->
 <!--IF:last-->
-        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends on {{ends_on}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
+        <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends {{ends_when}}. If you'd like to keep going, add your card before then and it won't be charged until your free month ends.</p>
 <!--ENDIF:last-->
 <!--IF:final-->
         <p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your free month at {{venue_name}} ends tonight. If you'd like to keep going, add your card today.</p>

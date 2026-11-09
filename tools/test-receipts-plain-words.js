@@ -143,6 +143,49 @@ async function main() {
   clean('welcome', wt + ' ' + (w.subject || ''));
   check('it names venueplay and the ABN', /venueplay · ABN 35 679 383 049|venueplay, ABN 35 679 383 049/.test(wt), wt.slice(-300));
 
+  /* BILLING EMAILS ONLY 7AM TO 5PM QUEENSLAND TIME (Dean, 9 Nov 2026: "send only 7am to 5pm. Anything that would go
+     outside that is held to 7am"). Brisbane is UTC+10 with no daylight saving. Every day, weekends included.
+     Held means Resend's scheduled_at, so the four senders are run at a fixed clock and the message they hand
+     Resend is read. */
+  print('\nBilling emails go 7am to 5pm Brisbane, every day; anything outside is held to 7am');
+  var realNow = Date.now, AUD = [];
+  var realInsert = vpaInsert;
+  vpaInsert = function (env, table, row) { AUD.push(row); return Promise.resolve({}); };
+  function bne(ymd, hm) { return Date.parse(ymd + 'T' + hm + ':00Z') - 10 * 3600000; }   // a Brisbane wall clock as ms
+  function at(ms) { Date.now = function () { return ms; }; }
+  var S = vpaBillingSendAt;
+  check('06:59 Brisbane is held to 7:00 the same morning', S(bne('2026-11-10', '06:59')) === bne('2026-11-10', '07:00'), new Date(S(bne('2026-11-10', '06:59'))).toISOString());
+  check('07:00 Brisbane goes now', S(bne('2026-11-10', '07:00')) === null);
+  check('16:59 Brisbane goes now', S(bne('2026-11-10', '16:59')) === null);
+  check('17:00 Brisbane is held to 7:00 the next morning', S(bne('2026-11-10', '17:00')) === bne('2026-11-11', '07:00'), new Date(S(bne('2026-11-10', '17:00'))).toISOString());
+  check('11:30pm Brisbane is held to 7:00 the next morning', S(bne('2026-11-10', '23:30')) === bne('2026-11-11', '07:00'));
+  check('2am Brisbane (14:00 UTC the day before) is held to 7:00 that Brisbane morning', S(bne('2026-11-10', '02:00')) === bne('2026-11-10', '07:00'));
+  check('a Saturday at 10am goes now (its own window, every day, not the Monday to Friday one)', S(bne('2026-11-14', '10:00')) === null);
+  check('a Saturday at 9pm is held to Sunday 7am, not Monday', S(bne('2026-11-14', '21:00')) === bne('2026-11-15', '07:00'));
+  check('the 31st at 8pm is held to 7am on the 1st of the next month', S(bne('2026-12-31', '20:00')) === bne('2027-01-01', '07:00'));
+
+  var four = [
+    ['the receipt', function () { return vpaFireInvoiceEmail(ENV, invoice()); }, 'invoice_receipt_email'],
+    ['the payment coming up', function () { return vpaFireUpcomingEmail(ENV, invoice({ amount_paid: 0 })); }, 'invoice_upcoming_email'],
+    ['the payment that did not go through', function () { return vpaFirePaymentFailedEmail(ENV, invoice({ billing_reason: 'subscription_cycle' }), undefined, { code: 'expired_card', message: '' }); }, 'payment_failed_email'],
+    ['the plan moved up', function () { return vpaFirePlanUpliftEmail(ENV, 'cus_1'); }, 'plan_uplift_email'],
+  ];
+  for (var q = 0; q < four.length; q++) {
+    var nm = four[q][0];
+    at(bne('2026-11-10', '02:00')); sent = []; AUD = [];
+    await four[q][1]();
+    var held = last(), row = AUD.filter(function (x) { return x.action === four[q][2]; })[0] || {};
+    check(nm + ' at 2am Brisbane is handed to Resend held to 7:00am (scheduled_at 2026-11-09T21:00:00.000Z)', sent.length === 1 && held.scheduled_at === '2026-11-09T21:00:00.000Z', [sent.length, held.scheduled_at]);
+    check(nm + ': the audit row says when it goes (held_until)', row.detail && row.detail.held_until === '2026-11-09T21:00:00.000Z', row.detail);
+    at(bne('2026-11-10', '10:00')); sent = []; AUD = [];
+    await four[q][1]();
+    check(nm + ' at 10am Brisbane goes straight away (no scheduled_at)', sent.length === 1 && !('scheduled_at' in last()), last().scheduled_at);
+    at(bne('2026-11-10', '17:05')); sent = [];
+    await four[q][1]();
+    check(nm + ' at 5:05pm Brisbane is held to 7:00am tomorrow', last().scheduled_at === new Date(bne('2026-11-11', '07:00')).toISOString(), last().scheduled_at);
+  }
+  Date.now = realNow; vpaInsert = realInsert;
+
   print('');
   print(fails ? (fails + ' FAILED, ' + ran + ' run') : ('ALL ' + ran + ' CHECKS PASSED'));
 }

@@ -213,6 +213,26 @@ async function walk(fromMs, toMs, stepMs) { var out = []; for (var t = fromMs; t
   await vpaProspectCardAdded(ENV, C.v.founding_id);
   check('a card after the pause switches it straight back on, audited', C.v.status === 'active' && C.v.suspended_reason === null && DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_unpaused'; }), [C.v.status, C.v.suspended_reason]);
 
+  section('3b. A last day on a weekend is told on the Friday, first thing, and says "ends this Sunday" (Dean, 9 Nov 2026)');
+  check('the words: a Sunday end told on the Friday reads "this Sunday, 13 December"', vpaEndsWhen(vpaFreeMonthEnd(bne(2026, 11, 13, 10, 0)), '2026-12-11') === 'this Sunday, 13 December', vpaEndsWhen(vpaFreeMonthEnd(bne(2026, 11, 13, 10, 0)), '2026-12-11'));
+  check('a Saturday end told on the Friday reads "this Saturday, 12 December"', vpaEndsWhen(vpaFreeMonthEnd(bne(2026, 11, 12, 10, 0)), '2026-12-11') === 'this Saturday, 12 December');
+  check('a weekday end keeps its date ("on Wed 2 December"): no "this" for a Wednesday', vpaEndsWhen(vpaFreeMonthEnd(bne(2026, 11, 2, 10, 0)), '2026-12-01') === '');
+  check('a Sunday end a week away is not "this Sunday"', vpaEndsWhen(vpaFreeMonthEnd(bne(2026, 11, 13, 10, 0)), '2026-12-04') === '');
+  var wk = [['Sunday', bne(2026, 11, 13, 10, 0), 'this Sunday, 13 December', '3 days left'], ['Saturday', bne(2026, 11, 12, 10, 0), 'this Saturday, 12 December', '2 days left']];
+  for (var wi = 0; wi < wk.length; wi++) {
+    world();
+    var W = await prospect({ name: 'Weekend End Hotel ' + wi });
+    var ws = wk[wi][1];
+    W.row().first_signin_at = new Date(ws).toISOString(); W.row().free_month_ends_at = new Date(vpaFreeMonthEnd(ws)).toISOString();
+    W.row().reminders_sent = [3, 23];   // day 3 and day 23 have gone; only the last one is left
+    var wg = await walk(bne(2026, 12, 10, 0, 0), bne(2026, 12, 13, 23, 0));
+    var wl = wg[wg.length - 1];
+    check('a free month ending on a ' + wk[wi][0] + ': the last reminder goes on Friday 11 Dec at 8am Brisbane, the first hour of the window, and nothing goes that weekend',
+      wg.length === 1 && day(wl.at) === '2026-12-11' && wl.at === bne(2026, 12, 11, 8, 0), wg.map(function (g) { return new Date(g.at + 36e6).toISOString(); }));
+    check('its subject says it ends ' + wk[wi][2] + ' (Dean: "saying it ends that day of the weekend")', !!wl && wl.msg.subject === 'Your free month at Weekend End Hotel ' + wi + ' ends ' + wk[wi][2], wl && wl.msg.subject);
+    check('and so does the email: "ends ' + wk[wi][2] + '", "' + wk[wi][3] + ' of your free month", never "ends tonight"', !!wl && wl.msg.text.indexOf('Weekend End Hotel ' + wi + ' ends ' + wk[wi][2] + '. If you') !== -1 && wl.msg.text.indexOf(wk[wi][3] + ' of your free month') !== -1 && !/ends tonight|ends on this/.test(wl.msg.text), wl && wl.msg.text.slice(0, 600));
+  }
+
   section('4. During the month, Checkout keeps the offer and charges nothing until the month ends');
   world(); ENV.FOUNDING_CODES = 'OFFER-NOV-2099';
   var D = await prospect({});

@@ -556,7 +556,7 @@
   "counted_by": "lines"
  },
  "tools/test-help-desk.js": {
-  "checks": 445,
+  "checks": 446,
   "counted_by": "lines"
  },
  "tools/test-help-saved-replies.js": {
@@ -772,7 +772,7 @@
   "counted_by": "lines"
  },
  "tools/test-prospect-free-month.js": {
-  "checks": 58,
+  "checks": 68,
   "counted_by": "lines"
  },
  "tools/test-prospect-setup.js": {
@@ -808,7 +808,7 @@
   "counted_by": "lines"
  },
  "tools/test-receipts-plain-words.js": {
-  "checks": 42,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/test-reconnect-fast.js": {

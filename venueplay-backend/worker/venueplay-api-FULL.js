@@ -4182,6 +4182,15 @@ function vpaReminderPlan(firstMs) {
   });
   return out;
 }
+/* A LAST DAY ON A WEEKEND IS TOLD ON THE FRIDAY, AND SAYS SO (Dean, 9 Nov 2026: "send it on the Friday, first
+   thing in the window, saying it ends that day of the weekend"). vpaReminderPlan already moves the last one back
+   to the Friday; this is the words. Sent on the Thursday or Friday before a Saturday or Sunday end: "this
+   Sunday, 13 Dec". Any other day: '' (the email keeps "on Sun 13 Dec"). */
+function vpaEndsWhen(endMs, todayYmd) {
+  const endDay = vpaBneDay(endMs), wd = vpaWeekday(endDay), gap = vpaDaysBetween(todayYmd, endDay);
+  if ((wd === 6 || wd === 0) && gap >= 1 && gap <= 2) return 'this ' + (wd === 6 ? 'Saturday' : 'Sunday') + ', ' + vpaBneDateWords(endMs).slice(4);
+  return '';
+}
 function vpaInSendWindow(ms) {
   const d = new Date(ms + VPA_BNE_MS), wd = d.getUTCDay(), m = d.getUTCHours() * 60 + d.getUTCMinutes();
   return wd >= 1 && wd <= 5 && m >= 8 * 60 && m < 17 * 60;
@@ -4350,6 +4359,9 @@ async function vpaRenderProspectReminder(env, o) {
   if (!res.ok) return null;
   const tpl = String(await res.text());
   let html = tpl.replace(/^\s*<!--[\s\S]*?-->\s*/, '');   // its notes are for us, not the inbox
+  /* "ends this Sunday" (vpaEndsWhen). The template on the site before 11 Nov says "ends on {{ends_on}}"; both read right. */
+  const endsWhen = o.endsWhen ? o.endsWhen : 'on ' + (o.endsWords || '');
+  html = html.replace(/ends on \{\{ends_on\}\}/g, 'ends {{ends_when}}').replace(/\{\{ends_when\}\}/g, vpaEsc(endsWhen));
   html = vpaTplSections(html, { early: o.kind === 'early', last: o.kind === 'last', final: o.kind === 'final', offer: o.offerRate < VPA_STANDARD_RATE, nooffer: !(o.offerRate < VPA_STANDARD_RATE) });
   html = html
     .replace(/{{greeting}}/g, o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,')
@@ -4367,7 +4379,7 @@ async function vpaRenderProspectReminder(env, o) {
     .replace(/{{support_email}}/g, 'support@venueplay.com.au')
     .replace(/{{signoff}}/g, vpaProspectSignoff(''));   // a card reminder: from hello@, signed by the team (Dean, 29 Oct 2026)
   const subject = o.kind === 'final' ? 'Last day of your free month at ' + (o.venueName || 'your venue')
-    : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + o.endsWords
+    : o.kind === 'last' ? 'Your free month at ' + (o.venueName || 'your venue') + ' ends ' + (o.endsWhen || o.endsWords)
     : 'How is venueplay going at ' + (o.venueName || 'your venue') + '?';
   return { html: vpaEmailDocument(vpaFillSupport(html), subject), subject: subject };
 }
@@ -4421,9 +4433,10 @@ async function vpaProspectReminderSweep(env, nowMs) {
     if (unsub === undefined) { try { unsub = await vpaUnsubscribedSet(env); } catch (e) { unsub = null; } }
     if (unsub === null) { out.unsub_unread = true; continue; }
     if (unsub[String(email).trim().toLowerCase()]) { out.unsubscribed = (out.unsubscribed || 0) + 1; continue; }
-    const kind = r.day >= VPA_FREE_MONTH_DAYS ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
+    /* 'final' ("ends tonight") only ON the last day: a last day on a weekend is told on the Friday (Dean, 9 Nov 2026), and then it is 'last'. */
+    const kind = r.day >= VPA_FREE_MONTH_DAYS && today === vpaBneDay(endMs) ? 'final' : r.day >= VPA_LAST_REMINDER_FROM ? 'last' : 'early';
     const msg = await vpaRenderProspectReminder(env, { kind: kind, email: email, firstName: p.contact_name || '', venueName: v.name,
-      endsWords: vpaBneDateWords(endMs), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
+      endsWords: vpaBneDateWords(endMs), endsWhen: vpaEndsWhen(endMs, today), daysLeft: Math.max(1, Math.round((vpaBneDayStartMs(vpaBneDay(endMs)) - vpaBneDayStartMs(today)) / 86400000) + 1),
       offerRate: Number(p.offer_rate) > 0 ? Number(p.offer_rate) : VPA_STANDARD_RATE,
       cardUrl: await vpaCardLink(env, v.founding_id), cancelUrl: await vpaProspectCancelLink(env, v.founding_id) });
     if (!msg) continue;
@@ -8324,13 +8337,37 @@ function vpaAlertSubject(kind, rest) {
   return vpaStaffSubject(kind === 'check' || kind === 'enquiry' ? 'action' : 'fyi', tail ? tag + ': ' + tail : tag);
 }
 
+/* BILLING EMAILS GO 7AM TO 5PM QUEENSLAND TIME (Dean, 9 Nov 2026: "send only 7am to 5pm"). The receipt, the
+   payment coming up, the plan moved up and the payment that did not go through all come off a Stripe webhook,
+   which fires whenever Stripe likes: a 2am renewal used to mean a 2am receipt. Inside 7:00 to 16:59 Brisbane
+   (UTC+10, no daylight saving, for every venue in every state) it goes now; outside, Resend holds it
+   (scheduled_at) until the next 7:00am. EVERY DAY, weekends included: this is its own window, not the
+   Monday to Friday 9-12 and 2-5 one the card reminders and the welcomes keep (a receipt is the answer to a
+   payment that has happened, so Saturday's payment gets Saturday's receipt, just not at night).
+   Returns null for "now", else the ms it is held to. */
+const VPA_BILLING_FROM_H = 7, VPA_BILLING_TO_H = 17;
+function vpaBillingSendAt(nowMs) {
+  const now = Number(nowMs) || Date.now();
+  const b = new Date(now + 10 * 3600000), m = b.getUTCHours() * 60 + b.getUTCMinutes();
+  if (m >= VPA_BILLING_FROM_H * 60 && m < VPA_BILLING_TO_H * 60) return null;
+  const seven = Date.parse(b.toISOString().slice(0, 10) + 'T00:00:00Z') - 10 * 3600000 + VPA_BILLING_FROM_H * 3600000;
+  return m < VPA_BILLING_FROM_H * 60 ? seven : seven + 86400000;
+}
+/* Puts the hold on a Resend message; returns the ms it is held to, or null when it goes now. */
+function vpaBillingHold(msg) {
+  const at = vpaBillingSendAt(Date.now());
+  if (at) msg.scheduled_at = new Date(at).toISOString();
+  return at;
+}
+
 /* One place that actually posts to Resend, so the three emails below cannot
    drift on the from address or the reply-to. Returns true if it went. */
 /* replyTo: where a reply lands. hello@ unless the sender says otherwise; the HQ welcome and the
    onboarding guide say support@, because a reply to either is a setup question.
    headers: extra message headers, only ever vpUnsubHeaders() for a MARKETING email (26 Oct 2026).
-   A transactional email passes nothing and goes out exactly as before. */
-async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
+   A transactional email passes nothing and goes out exactly as before.
+   opts.sendAtMs: hold it at Resend until then (scheduled_at); a billing email passes vpaBillingSendAt(). */
+async function vpaSendEmail(env, to, subject, html, replyTo, headers, opts) {
   if (!env.RESEND_API_KEY || !to) return false;
   const msg = {
     from: 'venueplay <hello@send.venueplay.com.au>',
@@ -8343,6 +8380,7 @@ async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
     text: helpPlainFromHtml(html),
   };
   if (headers && typeof headers === 'object' && Object.keys(headers).length) msg.headers = headers;
+  if (opts && opts.sendAtMs && opts.sendAtMs > Date.now()) msg.scheduled_at = new Date(opts.sendAtMs).toISOString();
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
@@ -8874,11 +8912,14 @@ async function vpaFirePlanUpliftEmail(env, customerId) {
       + 'See your plan</a></p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
+    const heldTo = vpaBillingSendAt(Date.now());   // 7am to 5pm Brisbane (Dean, 9 Nov 2026)
     const ok = await vpaSendEmail(env, email, 'Your venueplay plan has moved up',
-      vpaVenueEmailCard((venue.name || 'Your venue') + ' moved from ' + d.from + ' to ' + d.to + ' players. Nothing extra is charged today.', html, 'Your venueplay plan has moved up'));
+      vpaVenueEmailCard((venue.name || 'Your venue') + ' moved from ' + d.from + ' to ' + d.to + ' players. Nothing extra is charged today.', html, 'Your venueplay plan has moved up'),
+      undefined, undefined, { sendAtMs: heldTo });
     await say(ok ? 'sent' : 'not sent: Resend refused it',
               { uplift_row: up.id, to: email, venue: venue.name || null,
-                from_players: d.from, to_players: d.to, nights: nights, sent: !!ok });
+                from_players: d.from, to_players: d.to, nights: nights, sent: !!ok,
+                held_until: heldTo ? new Date(heldTo).toISOString() : null });
   } catch (e) {
     await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
   }
@@ -8953,22 +8994,24 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
+    const msg = {
+      from: 'venueplay <hello@send.venueplay.com.au>',
+      reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
+      to: [email],
+      subject: 'Your venueplay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
+      html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your venueplay invoice'),
+    };
+    const heldTo = vpaBillingHold(msg);   // the receipt: 7am to 5pm Brisbane (Dean, 9 Nov 2026)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'venueplay <hello@send.venueplay.com.au>',
-        reply_to: 'accounts@venueplay.com.au', // replies reach the real monitored inbox
-        to: [email],
-        subject: 'Your venueplay invoice' + (number ? ' ' + number : '') + ' - ' + amount,
-        html: vpaVenueEmailCard('Paid ' + amount + '. Your tax invoice' + (number ? ' ' + number : '') + ' and what it covers are inside.', html, 'Your venueplay invoice'),
-      }),
+      body: JSON.stringify(msg),
     });
     let resendId = null;
     try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}
     await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',
               { to: email, amount: amount, sent: !!(res && res.ok), resend_id: resendId,
-                status: (res && res.status) || null });
+                status: (res && res.status) || null, held_until: heldTo ? new Date(heldTo).toISOString() : null });
   } catch (e) {
     // Best effort still, but no longer silent: a receipt that threw is a receipt nobody got.
     await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
@@ -9044,22 +9087,24 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)
       + '</div>';
+    const msg = {
+      from: 'venueplay <hello@send.venueplay.com.au>',
+      reply_to: 'accounts@venueplay.com.au',
+      to: [email],
+      subject: 'Your venueplay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
+      html: vpaVenueEmailCard(amount + (when ? ' on ' + when : ' shortly') + '. Nothing to do unless you want to change your plan.', html, 'Your venueplay payment is coming up'),
+    };
+    const heldTo = vpaBillingHold(msg);   // the payment coming up: 7am to 5pm Brisbane (Dean, 9 Nov 2026)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'venueplay <hello@send.venueplay.com.au>',
-        reply_to: 'accounts@venueplay.com.au',
-        to: [email],
-        subject: 'Your venueplay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
-        html: vpaVenueEmailCard(amount + (when ? ' on ' + when : ' shortly') + '. Nothing to do unless you want to change your plan.', html, 'Your venueplay payment is coming up'),
-      }),
+      body: JSON.stringify(msg),
     });
     let resendId = null;
     try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}
     await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',
               { to: email, amount: amount, sent: !!(res && res.ok), resend_id: resendId,
-                status: (res && res.status) || null });
+                status: (res && res.status) || null, held_until: heldTo ? new Date(heldTo).toISOString() : null });
   } catch (e) {
     await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
   }
@@ -9464,16 +9509,20 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact accounts@venueplay.com.au</p>'
       + vpaVenueEmailFoot(true)   // a billing email: "venueplay, ABN ..." like the receipt (Dean, 30 Oct 2026)
       + '</div>';
+    const msg = {
+      from: 'venueplay <hello@send.venueplay.com.au>',
+      reply_to: 'accounts@venueplay.com.au',
+      to: [email],
+      subject: 'Your venueplay payment did not go through',
+      html: vpaVenueEmailCard('We could not charge ' + amount + '. Your games are running as normal. Here is what happens next.', html, 'Your venueplay payment did not go through'),
+    };
+    /* 7am to 5pm Brisbane like the other three (Dean, 9 Nov 2026). Nothing is lost by the wait: the games
+       keep running and Stripe's next try is days away, so a 2am decline is told at 7am. */
+    const heldTo = vpaBillingHold(msg);   // the payment that did not go through
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'venueplay <hello@send.venueplay.com.au>',
-        reply_to: 'accounts@venueplay.com.au',
-        to: [email],
-        subject: 'Your venueplay payment did not go through',
-        html: vpaVenueEmailCard('We could not charge ' + amount + '. Your games are running as normal. Here is what happens next.', html, 'Your venueplay payment did not go through'),
-      }),
+      body: JSON.stringify(msg),
     });
     /* RECORD WHAT WAS SAID. Nobody here can read Resend's outbox, and on 11 Sep 2026 this email
        went out to a venue with its date placeholder empty and nothing but the venue's inbox knew.
@@ -9490,6 +9539,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
         reason_code: (decline && decline.code) || null, reason_line: why.line, ours: !!why.ours,
         outcome: moved ? (moved.moved ? 'moved to next invoice' : 'stays open') : 'subscription',
         next: (moved && moved.next) || null, sent: res.ok, resend_id: resendId,
+        held_until: heldTo ? new Date(heldTo).toISOString() : null,
       },
     }, false).catch(() => {});
   } catch (_) { /* best-effort */ }
@@ -15932,7 +15982,8 @@ function helpBareSubject(s) {
   return String(s || '').replace(/\s*\[#[^\]]*\]\s*/g, ' ').replace(/\s*\(ticket \d{3,9}(, ref [A-Za-z2-9-]{8,9})?\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
 }
 /* WHO SIGNS. A person, never a department: "Dean" over "VenuePlay support". An HQ reply is signed by
-   the admin who sent it when their HQ label is a name; the acknowledgement by HELP_SIGNER, else Dean. */
+   the admin who sent it when their HQ label is a name. The acknowledgement is never signed by a person: it is
+   "The venueplay team" (Dean, 9 Nov 2026, helpAckHtml). */
 function helpFirstName(label) {
   const l = helpLine(label, 40);
   return /^[A-Za-z][A-Za-z' -]{1,39}$/.test(l) ? l.split(/\s+/)[0] : '';
@@ -16809,7 +16860,11 @@ function helpReplyHtml(ticket, body, replyTo, signer, thread) {
        support@ mailbox. The subject carries the ticket's reference, so the reply threads back on.
      - become a flood. Its own daily cap, beside the staff alerts' one, on the same Resend account
        as every invoice; past it the ticket still exists and HQ still sees it. */
-function helpAckHtml(t, signer) {
+/* THE ACKNOWLEDGEMENT IS SIGNED BY THE TEAM, NEVER A PERSON (Dean, 9 Nov 2026: "never signed by a person. Sign
+   it 'The venueplay team'. Only a real person's own reply carries their name."). Nobody wrote it, so no name is
+   put to it: helpSignatureHtml with no signer prints "The venueplay team" (PartyPlay: "The PartyPlay team").
+   HQ's replies (helpAdminReply) still carry the sender's own first name. */
+function helpAckHtml(t) {
   const pp = t.brand === 'partyplay';
   const site = pp ? 'partyplay.com.au' : 'venueplay.com.au';
   const support = 'support@' + site;
@@ -16823,7 +16878,7 @@ function helpAckHtml(t, signer) {
     + (!pp && ['venue_support', 'accounts', 'sales'].indexOf(t.category) !== -1
         ? P + 'If a game is on right now and something has gone wrong, call <a href="tel:' + VP_SUPPORT_TEL + '" ' + HELP_LINK + '>' + VP_SUPPORT_PHONE + '</a> and press 2.</p>' : '')
     + P + 'To add anything, just reply to this email.</p>'
-    + helpSignatureHtml(t, signer || 'Dean', support, false);
+    + helpSignatureHtml(t, '', support, false);
   return helpEmailCard(pp, inner, helpBrandFooter(pp) + '.', 'Thanks, we\'ve got your message');
 }
 /* The number, then the ticket's reference so a reply threads back onto it (helpTicketFromEmail). */
@@ -16860,7 +16915,7 @@ async function helpAcknowledge(env, t) {
     const ok = await helpSendEmail(env, {
       to: to, from: HELP_BRAND_LABEL[b] + ' Support <support@send.' + b + '.com.au>', reply_to: 'support@' + b + '.com.au',
       subject: helpAckSubject(t),
-      html: helpAckHtml(t, helpSigner(env, '')),
+      html: helpAckHtml(t),
       headers: { 'X-VP-Help': 'ack', 'Auto-Submitted': 'auto-replied', 'X-Auto-Response-Suppress': 'All' } });
     if (ok && t.id) {
       await vpaInsert(env, 'vp_help_ticket_notes', { ticket_id: t.id, kind: 'change', body: 'Acknowledgement sent to ' + to, author: 'Help desk' }, false).catch(() => null);
