@@ -4057,6 +4057,17 @@ const gpWords = (most, len) => (v) => {
   for (const x of v) { const t = (typeof x === 'string') ? x.trim().slice(0, len) : ''; if (t && out.indexOf(t) < 0) out.push(t); if (out.length >= most) break; }
   return out;
 };
+/* The setup wizard, round 11 (Dean, 9 Nov): a prize swapped for one week. [{ week: 'YYYY-MM-DD' (the Monday), prizes: [..] }], at most 8 weeks, 12 prizes each. */
+const gpSwaps = (v) => {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  for (const x of v) {
+    if (!x || typeof x !== 'object' || typeof x.week !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.week) || !Array.isArray(x.prizes)) continue;
+    const pz = []; for (const y of x.prizes) { pz.push(typeof y === 'string' ? y.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 80) : ''); if (pz.length >= 12) break; }
+    out.push({ week: x.week, prizes: pz }); if (out.length >= 8) break;
+  }
+  return out;
+};
 /* Every game's keys (28 Oct 2026). A key not listed here is dropped, whatever a console sends. */
 const GAME_PREFS_KEYS = {
   bingo: {
@@ -4106,6 +4117,12 @@ const GAME_PREFS_KEYS = {
     prize_list:    gpWords(8, 80),
     rounds:        gpInt(1, 20),   // rounds a night (setup wizard, round 8: Dean "it never asks how many rounds")
     prize_weekly: gpBool,    // the same prizes every week (setup wizard, round 10: Dean "ask it for trivia too")
+    /* round 11 (Dean, 9 Nov): a prize for each round (or the same for all), rounds played for fun, a prize swapped for one week, and whether picture questions show */
+    prizes:        (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120) : ''); if (out.length >= 20) break; } return out; },
+    prize_same:    gpBool,
+    prize_none:    (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (Number.isInteger(x) && x >= 1 && x <= 20 && out.indexOf(x) < 0) out.push(x); } return out; },
+    prize_swaps:   gpSwaps,
+    picture_round: gpBool,   // OFF: a question's picture stays off the TV and phones (the console reads it later)
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
@@ -4132,6 +4149,11 @@ const GAME_PREFS_KEYS = {
     raffle_counts: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const n = parseInt(x, 10); if (Number.isInteger(n) && n >= 1 && n <= 12) out.push(n); if (out.length === 12) break; } return out.length ? out : undefined; },
     /* round 10 (Dean, feedback 9 point 20): each raffle's own prizes, in order, a list per raffle ("" = not given yet) */
     raffle_prizes: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const r of v) { if (!Array.isArray(r)) break; const one = []; for (const x of r) { one.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 80) : ''); if (one.length >= 12) break; } out.push(one); if (out.length >= 12) break; } return out.length ? out : undefined; },
+    /* round 11 (Dean, 9 Nov): name each raffle (one per raffle, in order), how the draw looks, and a prize swapped for one week.
+       The raffle console does not read these yet (noted for the raffle new look). */
+    raffle_names:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : ''); if (out.length >= 12) break; } return out; },
+    draw_style:    (v) => ({ numbers: 1, barrel: 1, wheel: 1 }[v] ? v : undefined),
+    prize_swaps:   gpSwaps,
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
@@ -4161,6 +4183,7 @@ const GAME_PREFS_KEYS = {
     },
     prize_same:    gpBool,
     prize_weekly:  gpBool,
+    prize_swaps:   gpSwaps,   // round 11: a prize swapped for one week
     // rounds played for fun, with no prize (Dean, round 3): round numbers 1 to 10
     prize_none:    (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (Number.isInteger(x) && x >= 1 && x <= 10 && out.indexOf(x) < 0) out.push(x); } return out; },
   },

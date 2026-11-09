@@ -36,6 +36,7 @@
   var ORDER = ["trivia", "musical", "bingo", "raffles", "members"];
   var SETUP_STATES = { done: 1, later: 1, shown: 1 };
   var OTHER_MAX = 120, OTHER_EACH = 40;
+  var MEAL_WORDS = /meal|deal|special|parma|steak|schnitzel|lunch|dinner|happy hour|eat free|\$\d|wings|burger|pizza/i;
   var REVIEW_WAIT = 4 * 3600 * 1000;   // "remind me": the next sign-in (a sign-in lasts at most 4 hours)
   /* the website scan's venue type (vp_venues.venue_type, next week's scan field): pub or club when it says so */
   function scanKind(v) {
@@ -46,7 +47,7 @@
   }
   /* WHAT VENUES TELL US THEY RUN BESIDES OUR GAMES (Dean, round 7b point 1): suggested as they type, spelt properly
      ("karaoke" becomes "Karaoke"). Anything else they type is kept as typed, first letter capital. */
-  var OTHER_KNOWN = ["Karaoke", "Pool comp", "Darts", "Poker night", "Live music", "Chase the Ace", "Jokers wild", "Keno", "Footy tipping", "Bowls", "Meat raffle", "Open mic", "Comedy night", "Line dancing"];
+  var OTHER_KNOWN = ["Karaoke", "Pool comp", "Darts", "Poker night", "Live music", "Chase the Ace", "Jokers wild", "Keno", "Footy tipping", "Bowls", "Meat raffle", "Open mic", "Comedy night", "Line dancing", "Parma night", "Steak night", "Meal deals", "Happy hour", "Kids eat free", "Lunch specials"];
   function otherWord(w) {
     var t = String(w || "").replace(/\s+/g, " ").trim(); if (!t) return "";
     var k = OTHER_KNOWN.filter(function (x) { return x.toLowerCase() === t.toLowerCase(); })[0];
@@ -240,7 +241,33 @@
     P + ".vpgs-raf .vpgs-rq{padding-right:50px}" +   /* in the same column as every other box, the "?" column kept clear (design review r10) */
     "@media (max-width:380px){#vpGs{padding:0 12px!important}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:0}}" +   /* Mon to Sun inside the card on a 375 phone */
     P + "input[type=date]{color-scheme:light}" +   /* the light scheme draws a dark calendar icon, which the invert above turns white (design review r10) */
-    P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}"
+    P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}",
+    /* ROUND 11 (Dean, 9 Nov). TWO TO A LINE: each setting is a half-width cell, its label on top, its box underneath; the
+       "?" words and any on/off line open under the pair across both. */
+    P + ".vpgs-pairs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:stretch;padding:6px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-pairs:first-child{border-top:none;padding-top:0}" +
+    P + ".vpgs-pairs.one{grid-template-columns:minmax(0,1fr)}" +
+    P + ".vpgs-pairs>.vpgs-row.pc{display:grid;grid-template-columns:minmax(0,1fr) 40px;grid-template-rows:1fr auto;grid-template-areas:'lab q' 'ctl ctl';align-items:center;column-gap:0;padding:0;border:none;min-width:0}" +
+    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-lab{grid-area:lab;margin:0 0 4px;font-size:15px;line-height:1.25;align-self:end}" +
+    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-q{grid-area:q;display:block;margin:0 -2px 0 0;justify-self:end;align-self:start}" +
+    P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-ctl{grid-area:ctl;width:100%;margin:0;min-width:0}" +
+    P + ".vpgs-pairs .vpgs-row.pc .vpgs-ctl .vpgs-seg," + P + ".vpgs-pairs .vpgs-row.pc .vpgs-ctl .vpgs-in{width:100%}" +
+    P + ".vpgs-pairs>.vpgs-pairpop," + P + ".vpgs-pairs>.vpgs-state{grid-column:1/-1;margin:6px 0 0}" +
+    P + ".vpgs-state{margin:6px 0 0;font:600 14.5px/1.4 Manrope,system-ui,sans-serif;color:" + C.muted + "}" + P + ".vpgs-state[data-on=true]{color:#FFFFFF}" + P + ".vpgs-state[data-on=false]{color:" + C.pinkSoft + "}" +
+    P + ".vpgs-pairs .vpgs-prew .vpgs-in{padding-left:22px}" +
+    /* a short list (bingo tickets per player) sits on its label line */
+    P + ".vpgs-rows>.vpgs-row.cmp.wide>.vpgs-ctl{width:150px}" + P + ".vpgs-row.cmp.wide select.vpgs-in{width:100%}" +
+    /* the drop-down arrow on every list: white, with room, a bigger target (Dean, round 11 note 5) */
+    P + "select.vpgs-in{-webkit-appearance:none;appearance:none;color-scheme:dark;padding-right:34px;cursor:pointer;background:" + C.ink + " url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E\") right 12px center/13px no-repeat;border-color:rgba(255,255,255,.28);font-weight:600}" +
+    P + "select.vpgs-in:focus{border-color:" + C.pink + "}" +
+    /* prizes: No prize and Same as above share the third cell */
+    P + ".vpgs-popts{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}" +
+    P + ".vpgs-same{min-height:44px;padding:0 10px;border:none;border-radius:10px;background:none;font:700 14px Manrope,system-ui,sans-serif;color:" + C.pinkSoft + ";text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}" +
+    P + ".vpgs-prow.solo>.vpgs-popts{grid-column:2!important;grid-row:1!important}" +
+    P + ".vpgs-swaps{display:flex;flex-direction:column;gap:8px}" + P + ".vpgs-swaps:empty{display:none}" +
+    P + ".vpgs-swap{padding:10px 12px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-swap .vpgs-rq{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px;align-items:center;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-swap .vpgs-link{margin:2px 0 0;min-height:40px;padding:6px 0}" +
+    P + ".vpgs-raf .vpgs-rname{grid-template-columns:minmax(0,1fr);padding-right:50px}" +
+    P + ".vpgs-remrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 0}" + P + ".vpgs-remrow .vpgs-rq{display:flex;flex-direction:column;gap:4px;font:700 15px " + HEAD + ";color:#FFFFFF}" +
+    "@media (max-width:420px){" + P + ".vpgs-pairs{column-gap:8px}" + P + ".vpgs-pairs>.vpgs-row.pc>.vpgs-lab{font-size:14.5px}" + P + ".vpgs-pairs .vpgs-seg button{padding:6px 4px;font-size:14.5px}" + P + ".vpgs-swap .vpgs-rq{grid-template-columns:1fr}}"
   ].join("");
 
   function help() { return root.VPSetupHelp || null; }
@@ -336,6 +363,13 @@
   }
   /* THIS WEEK'S MUSIC (Dean, 6 Nov 2026): with more than one list, a different one each week, Brisbane weeks from
      Monday, so the same songs are not played every week. */
+  /* the Monday of the week a date is in, "YYYY-MM-DD" (a prize swap is for a whole Brisbane week, Monday on) */
+  function mondayOf(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || "")); if (!m) return "";
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])); if (isNaN(d.getTime())) return "";
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  }
   function weekPick(list, now) { return root.VPSetupUse ? root.VPSetupUse.weekPick(list, now) : ((list && list[0]) || ""); }   // one answer: vp-setupuse.js
 
   /* "Wed: Trivia 7pm · Fri: Musical bingo 7:30pm, Members draws" */
@@ -396,6 +430,7 @@
     if (o) out.other = o;
     if (a && (a.venue_kind === "pub" || a.venue_kind === "club" || a.venue_kind === "other")) out.venue_kind = a.venue_kind;
     if (a && typeof a.prizes_shared === "boolean") out.prizes_shared = a.prizes_shared;
+    var mr = cleanReminder(a && a.members_reminder); if (mr) out.members_reminder = mr;   // the members list reminder (round 11)
     if (a && typeof a.meal_deals === "boolean") out.meal_deals = a.meal_deals;   // advertise their meal deals (round 10)
     if (a && a.review === "done") out.review = "done";   // the games setup gone through: an existing venue is not asked again
     if (a && ({ keep: 1, second: 1, none: 1 })[a.members_over]) out.members_over = a.members_over;   // members draws over the most (Dean, round 7b point 17)
@@ -404,6 +439,23 @@
     var w = cleanWeek(a && a.week);
     if (w && w.length) out.week = w;
     return out;
+  }
+  /* The members list reminder (Dean, round 11 note 7): setup_answers.members_reminder = { how: "email" | "calendar", day: "mon".."sun", time: "HH:MM" } */
+  function cleanReminder(r) {
+    if (!r || typeof r !== "object" || (r.how !== "email" && r.how !== "calendar")) return null;
+    var day = WEEK.filter(function (x) { return x[0] === r.day; })[0] ? r.day : "mon", time = /^\d\d:\d\d$/.test(r.time || "") ? r.time : "09:00";
+    return { how: r.how, day: day, time: time };
+  }
+  /* A weekly calendar entry (an .ics file, local time) for the next such day */
+  function reminderIcs(vid, r, now) {
+    var di = WEEK.map(function (x) { return x[0]; }).indexOf(r.day); if (di < 0) di = 0;
+    var d0 = new Date(brisbaneDate(now) + "T00:00:00Z"), want = (di + 1) % 7, add = (want - d0.getUTCDay() + 7) % 7;   // 0 Sunday, 1 Monday
+    d0.setUTCDate(d0.getUTCDate() + add);
+    var ymd = d0.toISOString().slice(0, 10).replace(/-/g, ""), hm = String(r.time || "09:00").replace(":", "");
+    var by = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"][di];
+    var ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//venueplay//members list reminder//EN", "BEGIN:VEVENT", "UID:members-list-" + vid + "@venueplay.com.au", "DTSTAMP:" + ymd + "T000000Z",
+      "DTSTART:" + ymd + "T" + hm + "00", "DTEND:" + ymd + "T" + hm + "00", "RRULE:FREQ=WEEKLY;BYDAY=" + by, "SUMMARY:Add your members list to venueplay", "DESCRIPTION:Keep your members list up to date so the TV draws a real member. Account page, Members list.", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    return "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
   }
   function readLocal(storage, vid) { try { var s = JSON.parse(storage.getItem(LKEY + vid) || "{}"); return (s && typeof s === "object") ? s : {}; } catch (e) { return {}; } }
   function writeLocal(storage, vid, s) { try { storage.setItem(LKEY + vid, JSON.stringify(s)); } catch (e) {} }
@@ -555,6 +607,7 @@
       var sctl = el("div", "vpgs-ctl"); srow.appendChild(sctl);
       /* A GUIDE THEY CAN FOLLOW ON THEIR OWN (Dean, round 8b point 9: "I don't wanna talk people through that"): the
          five usual setups, each with a picture and short steps, on its own page. */
+      if (s.words) { sctl.appendChild(el("div", "vpgs-lab", s.label)); sctl.appendChild(el("p", "vpgs-info", s.words)); }   // how it works, said plainly (Dean, round 11 note 5)
       var sl = el("a", "vpgs-addlink", "How to get the sound through your speakers"); sl.id = "vpGsSoundHow";
       sl.setAttribute("href", deps0.soundHelpUrl || "/app/sound-help.html"); sl.setAttribute("target", "_blank"); sl.setAttribute("rel", "noopener");
       sctl.appendChild(sl);
@@ -564,9 +617,10 @@
        don't line up"). A small control (a number, a time, a date, On/Off) sits on the label's own line; a big one (a
        list, prizes, music) goes underneath, full width. A two-word choice sits on the line from iPad width up. */
     var shortSeg = s.kind === "seg" && (s.options || []).reduce(function (n, o) { return n + String(o[1]).length; }, 0) <= 8;
-    var cmp = s.kind === "number" || s.kind === "money" || s.kind === "time" || s.kind === "date" || s.kind === "range" || shortSeg;   // one box width for all of them, so they line up (Dean, round 8b points 5, 10, 16)
-    var cmpw = !cmp && (s.kind === "seg" || s.kind === "select");
-    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : "")) + (s.underPrev ? " under" : "")); row.setAttribute("data-key", s.key); row.setAttribute("data-kind", s.kind);
+    var cmp = s.inline || s.kind === "number" || s.kind === "money" || s.kind === "time" || s.kind === "date" || s.kind === "range" || shortSeg;   // one box width for all of them, so they line up (Dean, round 8b points 5, 10, 16)
+    var inl = s.kind === "select" && s.inline;   /* a short list on its label line (bingo tickets per player) */
+    var cmpw = !cmp && !inl && (s.kind === "seg" || s.kind === "select");
+    var row = el("div", "vpgs-row" + (cmp ? " cmp" : (cmpw ? " cmpw" : "")) + (s.inline ? " wide" : "") + (s.underPrev ? " under" : "")); row.setAttribute("data-key", s.key); row.setAttribute("data-kind", s.kind);
     var lab = el("div", "vpgs-lab");
     /* an advanced setting asks its short question as its label, with the setting's own name for screen readers */
     lab.appendChild(el("span", null, String((s.advanced && s.prompt) ? s.prompt : s.label)));
@@ -584,18 +638,20 @@
     var wrap = el("div"), get = function () { return undefined; }, cur = s.def, onChange = [];
     var setter = null;   // a seg's way to be set from outside (raffles' "Use my usual prizes")
     function changed() { onChange.forEach(function (f) { f(); }); if (ctx.refresh) ctx.refresh(); }
+    var stEl = s.status ? el("p", "vpgs-state") : null;   // says plainly whether it is on or off (picture questions)
+    function paintSt() { if (stEl) stEl.textContent = s.status[String(cur)] || ""; if (stEl) stEl.setAttribute("data-on", String(cur)); }
     if (s.kind === "seg") {
       var seg = el("div", "vpgs-seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", s.label);
       s.options.forEach(function (o) {
         var b = el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("aria-pressed", o[0] === cur ? "true" : "false");
         b.setAttribute("data-value", String(o[0]));
-        b.addEventListener("click", function () { cur = o[0]; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); changed(); });
+        b.addEventListener("click", function () { cur = o[0]; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); paintSt(); changed(); });
         seg.appendChild(b);
       });
-      wrap.appendChild(seg); get = function () { return cur; };
-      setter = function (v) { cur = v; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); };
+      wrap.appendChild(seg); get = function () { return cur; }; paintSt();
+      setter = function (v) { cur = v; Array.prototype.forEach.call(seg.children, function (c, i) { c.setAttribute("aria-pressed", s.options[i][0] === cur ? "true" : "false"); }); paintSt(); };
     } else if (s.kind === "select") {
-      var sel = el("select", "vpgs-in"); sel.id = "vpGsIn_" + s.key; sel.setAttribute("aria-label", s.label);
+      var sel = el("select", "vpgs-in vpgs-tsel"); sel.id = "vpGsIn_" + s.key; sel.setAttribute("aria-label", s.label);
       var opts = s.options || [];
       /* a saved value that is not one of the choices (an existing venue's 240 seconds) stays theirs, as its own choice */
       if (s.def !== "" && s.def != null && !opts.some(function (o) { return o[0] === s.def; })) opts = opts.concat([[s.def, String(s.def) + (s.key === "time_to_present" ? " seconds" : "")]]);
@@ -669,11 +725,25 @@
             inp.disabled = !!nones[i];
             /* "No prize" says No prize in the box, never the prize it had (Dean, round 9 point 15); unticking brings it back */
             if (nones[i]) { inp._was = inp.value; inp.value = "No prize"; }
-            (function (cb, inp, k) { cb.addEventListener("change", function () {
-              nones[k] = !!cb.checked; inp.disabled = !!cb.checked;
-              if (cb.checked) { inp._was = inp.value === "No prize" ? "" : inp.value; inp.value = "No prize"; } else { inp.value = inp._was || ""; }
-            }); })(cb, inp, i);
-            nl.appendChild(cb); nl.appendChild(el("span", null, "No prize")); pr.appendChild(nl);
+            var setNone = function (k, on, inp, cb) {
+              nones[k] = !!on; cb.checked = !!on; inp.disabled = !!on;
+              if (on) { inp._was = inp.value === "No prize" ? "" : inp.value; inp.value = "No prize"; } else if (inp.value === "No prize") { inp.value = inp._was || ""; }
+            };
+            (function (cb, inp, k) { cb.addEventListener("change", function () { setNone(k, cb.checked, inp, cb); }); })(cb, inp, i);
+            nl.appendChild(cb); nl.appendChild(el("span", null, "No prize"));
+            var po = el("div", "vpgs-popts");
+            /* WHICH ONES ARE THE SAME (Dean, round 11 note 5): one tap copies the prize above into this round */
+            if (i > 0) {
+              var sm = el("button", "vpgs-same", "Same as above"); sm.setAttribute("type", "button"); sm.id = "vpGsSame_" + s.key + "_" + i; sm.setAttribute("aria-label", s.each + " " + (i + 1) + ": same prize as above");
+              (function (sm, inp, cb, k) { sm.addEventListener("click", function () {
+                var prev = plist.children[k - 1], pin = prev && prev.children[1]; if (!pin) return;
+                if (nones[k - 1]) { setNone(k, true, inp, cb); return; }
+                if (nones[k]) setNone(k, false, inp, cb);
+                inp.value = pin.value; flash(inp);
+              }); })(sm, inp, cb, i);
+              po.appendChild(sm);
+            }
+            po.appendChild(nl); pr.appendChild(po);
           } else pr.className += " nonone";
           plist.appendChild(pr);
         }
@@ -701,7 +771,7 @@
          prizes the same?"; then one box, or one per prize. Nothing filled in for them. A usual prize, or "Winner's
          choice", is one tap: it goes in the box they are on, else the next empty one, and the box shows it landed. */
       var rp = el("div", "vpgs-rplan"); rp.id = "vpGsIn_" + s.key;
-      var plan = (s.draftPlan || []).map(function (x) { return { n: x.n, same: x.same, prizes: (x.prizes || []).slice() }; });
+      var plan = (s.draftPlan || []).map(function (x) { return { n: x.n, same: x.same, prizes: (x.prizes || []).slice(), name: x.name || "" }; });
       var rLast = null;
       rp.addEventListener("focusin", function (e) { if (e && e.target && e.target.getAttribute && e.target.getAttribute("data-prize") != null) rLast = e.target; });
       var rpBoxes = function () { var out = []; each2(rp, function (x) { if (x.getAttribute && x.getAttribute("data-prize") != null) out.push(x); }); return out; };
@@ -717,6 +787,7 @@
           var p = plan[i]; if (!p) return;
           var nIn = blk.querySelector ? blk.querySelector("[data-n]") : findIn(blk, "data-n");
           var n = parseInt(nIn && nIn.value, 10); p.n = isNaN(n) ? p.n : Math.max(s.min, Math.min(s.max, n));
+          var nmIn = findIn(blk, "data-name"); if (nmIn) p.name = String(nmIn.value || "");
           var bx = []; each2(blk, function (x) { if (x.getAttribute && x.getAttribute("data-prize") != null) bx.push(x); });
           bx.forEach(function (b, k) { p.prizes[k] = String(b.value || ""); });
         });
@@ -724,11 +795,16 @@
       var drawR = function () {
         sync();
         var N = Math.max(1, Math.min(12, parseInt(all.value(s.countFrom), 10) || 1));
-        while (plan.length < N) plan.push({ n: 1, same: true, prizes: [""] });
+        while (plan.length < N) plan.push({ n: 1, same: true, prizes: [""], name: "" });
         while (rp.firstChild) rp.removeChild(rp.firstChild);
         for (var i = 0; i < N; i++) (function (i) {
           var p = plan[i], blk = el("div", "vpgs-raf"); blk.setAttribute("data-raffle", String(i + 1));
           if (N > 1) blk.appendChild(el("h4", null, "Raffle " + (i + 1)));
+          /* NAME THE RAFFLE (Dean, round 11 note 6): shown on the TV and the raffle console */
+          var qn = el("label", "vpgs-rq vpgs-rname"); qn.appendChild(el("span", null, "Name this raffle"));
+          var nmBox = el("input", "vpgs-in"); nmBox.type = "text"; nmBox.maxLength = 60; nmBox.placeholder = "e.g. Friday Meat Raffle"; nmBox.id = "vpGsRafName_" + i; nmBox.setAttribute("data-name", "1");
+          nmBox.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "name"); nmBox.value = p.name || "";
+          qn.appendChild(nmBox); blk.appendChild(qn);
           var q1 = el("label", "vpgs-rq"); q1.appendChild(el("span", null, "How many prizes?"));
           var nIn = el("input", "vpgs-in"); nIn.type = "number"; nIn.setAttribute("inputmode", "numeric"); nIn.min = String(s.min); nIn.max = String(s.max);
           nIn.id = "vpGsRafN_" + i; nIn.setAttribute("data-n", "1"); nIn.setAttribute("aria-label", (N > 1 ? "Raffle " + (i + 1) + ", " : "") + "how many prizes"); nIn.value = String(p.n);
@@ -763,8 +839,56 @@
         sync();
         return plan.map(function (p) {
           var one = (p.n > 1 && !p.same) ? p.prizes.slice(0, p.n) : [p.prizes[0] || ""];
-          return { n: p.n, same: p.n > 1 ? !!p.same : true, prizes: one.map(function (x) { return String(x || "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 80); }) };
+          return { n: p.n, same: p.n > 1 ? !!p.same : true, name: String(p.name || "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60), prizes: one.map(function (x) { return String(x || "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 80); }) };
         });
+      };
+    } else if (s.kind === "swaps") {
+      /* A PRIZE SWAPPED FOR ONE WEEK (Dean, round 11 note 3): shown while the prizes are not the same every week. Pick the
+         week, then the prizes for just that week. Saved as prize_swaps = [{ week: Monday "YYYY-MM-DD", prizes: [..] }]. */
+      var swl = el("div", "vpgs-swaps"); swl.id = "vpGsIn_" + s.key; wrap.appendChild(swl);
+      var swItems = (Array.isArray(s.def) ? s.def : []).map(function (x) { return { date: x.week || "", prizes: (x.prizes || []).slice() }; });
+      var swCount = function () {
+        if (s.countPlan) { var pl = all.value(s.countPlan) || [], t = 0; pl.forEach(function (p) { t += (p.n > 1 && p.same) ? 1 : p.n; }); return Math.max(1, Math.min(12, t)); }
+        var same = s.sameFrom ? all.value(s.sameFrom) !== false : false;
+        return same ? 1 : Math.max(1, Math.min(12, parseInt(all.value(s.countFrom), 10) || 1));
+      };
+      var swRead = function () { Array.prototype.forEach.call(swl.children, function (cd, i) { var d = findIn(cd, "data-swdate"); if (d && swItems[i]) swItems[i].date = String(d.value || ""); var k = 0; each2(cd, function (x) { if (x.getAttribute && x.getAttribute("data-swprize") != null && swItems[i]) { swItems[i].prizes[k++] = String(x.value || ""); } }); }); };
+      var swDraw = function () {
+        swRead();
+        while (swl.firstChild) swl.removeChild(swl.firstChild);
+        var n = swCount();
+        swItems.forEach(function (it, i) {
+          var cd = el("div", "vpgs-swap");
+          var top = el("label", "vpgs-rq"); top.appendChild(el("span", null, "Week starting"));
+          var dIn = el("input", "vpgs-in"); dIn.type = "date"; dIn.id = "vpGsSwapWeek_" + i; dIn.setAttribute("data-swdate", "1"); dIn.setAttribute("aria-label", "Swap " + (i + 1) + ", week starting"); dIn.value = it.date || "";
+          top.appendChild(dIn); cd.appendChild(top);
+          var pl2 = el("div", "vpgs-plist");
+          for (var k = 0; k < n; k++) {
+            var pr = el("div", "vpgs-prow nonone" + (n === 1 ? " solo" : ""));
+            pr.appendChild(el("span", null, n > 1 ? "Prize " + (k + 1) : ""));
+            var pi = el("input", "vpgs-in"); pi.type = "text"; pi.maxLength = 80; pi.placeholder = "e.g. Meat tray"; pi.id = "vpGsSwapP_" + i + "_" + k; pi.setAttribute("data-swprize", String(k));
+            pi.setAttribute("aria-label", "Swap " + (i + 1) + (n > 1 ? ", prize " + (k + 1) : ", prize")); pi.value = it.prizes[k] || "";
+            pr.appendChild(pi); pl2.appendChild(pr);
+          }
+          cd.appendChild(pl2);
+          var rmv = el("button", "vpgs-link", "Take this week out"); rmv.id = "vpGsSwapRm_" + i; rmv.setAttribute("type", "button");
+          rmv.addEventListener("click", function () { swRead(); swItems.splice(i, 1); swDraw(); });
+          cd.appendChild(rmv); swl.appendChild(cd);
+        });
+        swAdd.style.display = swItems.length >= 8 ? "none" : "";
+      };
+      var swAdd = el("button", "vpgs-add", "Swap a week's prizes"); swAdd.id = "vpGsSwapAdd"; swAdd.setAttribute("type", "button");
+      swAdd.addEventListener("click", function () { swRead(); swItems.push({ date: "", prizes: [] }); swDraw(); });
+      wrap.appendChild(swAdd);
+      ctx.redraw.push(swDraw);
+      get = function () {
+        swRead();
+        var out = [];
+        swItems.forEach(function (it) {
+          var w = mondayOf(it.date), pz = it.prizes.slice(0, swCount()).map(function (x) { return String(x || "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, 80); });
+          if (w && pz.some(function (x) { return x; })) out.push({ week: w, prizes: pz });
+        });
+        return out;
       };
     } else if (s.kind === "countlist") {
       /* "RAFFLE 1 HAS 2 PRIZES, RAFFLE 2 HAS 5" (Dean, round 8b point 7): one small box for each raffle of the night */
@@ -871,7 +995,8 @@
     }
     wrap.className = "vpgs-ctl" + (wrap.className ? " " + wrap.className : "");
     row.appendChild(wrap); row.appendChild(pop);   // the "?" words open under the whole setting, pushing what follows down
-    return { row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input, select") : (wrap.children[0] && /^(INPUT|SELECT)$/.test(wrap.children[0].tagName) ? wrap.children[0] : null); } };
+    if (stEl) { stEl.id = "vpGsState_" + s.key; row.appendChild(stEl); }
+    return { pop: pop, state: stEl, row: row, get: get, setTo: function (v) { if (setter) setter(v); }, s: s, input: function () { return wrap.querySelector ? wrap.querySelector("input, select") : (wrap.children[0] && /^(INPUT|SELECT)$/.test(wrap.children[0].tagName) ? wrap.children[0] : null); } };
   }
   /* Trivia question sets for "Pick categories": the venue's own and the venueplay library, never another venue's private night. */
   function loadSetRows(ctx, paint) {
@@ -925,8 +1050,8 @@
       if (s.kind === "playlists") { var pl = Array.isArray(have.playlists) && have.playlists.length ? have.playlists : (have.playlist ? [have.playlist] : null); if (pl) d.playlists = pl.slice(); return; }
       if (s.kind === "categories") { if (Array.isArray(have.set_ids) && have.set_ids.length) d[k] = have.set_ids.slice(); else if (have.set_id) d[k] = [have.set_id]; return; }
       if (s.kind === "prizelist") {
-        var list = Array.isArray(have[k]) ? have[k] : (gkey === "musical" && have.prize ? [have.prize] : null);
-        if (list) { d[k] = list.slice(); if (gkey === "musical" && Array.isArray(have.prize_none)) d.__nones = have.prize_none.slice(); }
+        var list = Array.isArray(have[k]) ? have[k] : (gkey === "musical" && have.prize ? [have.prize] : (gkey === "trivia" && k === "prizes" && Array.isArray(have.prize_list) && have.prize_list.length ? have.prize_list : null));
+        if (list) { d[k] = list.slice(); if ((gkey === "musical" || gkey === "trivia") && Array.isArray(have.prize_none)) d.__nones = have.prize_none.slice(); }
         return;
       }
       if (s.kind === "raffleplan") {
@@ -936,7 +1061,7 @@
         d[k] = counts.map(function (n, i) {
           var pz = (rp[i] || []).slice(0, n), same = n > 1 && pz.length > 0 && !!pz[0] && pz.every(function (x) { return x === pz[0]; });
           if (n > 1 && !pz.length && have.prizes_same === true) same = true;
-          return { n: n, same: n > 1 ? same : true, prizes: same ? [pz[0] || ""] : pz };
+          return { n: n, same: n > 1 ? same : true, prizes: same ? [pz[0] || ""] : pz, name: (Array.isArray(have.raffle_names) && have.raffle_names[i]) || "" };
         });
         return;
       }
@@ -959,9 +1084,9 @@
     };
     if (opts.first) { var tag = el("p", "vpgs-tag", "First time in " + g.name); tag.id = "vpGsFirstTag"; F.body.appendChild(tag); }
     /* MEMBERS DRAWS: the draw night and time come from the nights step (Dean, round 3: no draw-day question). */
-    var memDay = "", memTime = "";
+    var memDay = "", memTime = "", memNights = 0;
     if (g.needsDetails) {
-      var mw = memDraws((opts.answers || (cx.settings && cx.settings.setup_answers) || {}).week);
+      var mw = memDraws((opts.answers || (cx.settings && cx.settings.setup_answers) || {}).week); memNights = mw.length;
       var md = mw[((opts.instance || 1) - 1) % (mw.length || 1)];
       if (md) { memDay = WEEK.filter(function (x) { return x[0] === md.day; })[0][2]; memTime = md.start || ""; }
     }
@@ -969,7 +1094,7 @@
        these are its own settings today */
     var lead = (g.needsDetails && opts.quickOnly) ? "A few quick questions before your first draw. Add your member numbers later, on a computer." : g.needsDetails
       ? (opts.review && opts.draw ? "Your draw as it is today. Change anything you like." : "Your draw's details for the TV.")
-      : (opts.quickOnly ? "Three quick questions before your first game." : opts.first ? "A quick setup before your first game." : opts.review ? "These are your settings today. Change anything you like." : "");
+      : (opts.quickOnly ? "Three quick questions before your first game." : opts.first ? "A quick setup before your first game." : opts.review ? "Have a look through, and change anything you like." : "");
     var lp = el("p", "vpgs-lead", lead); lp.id = "vpGsLead"; if (lead) F.body.appendChild(lp);
     var list = el("div", "vpgs-rows"); F.body.appendChild(list);
     var sec = el("div", "vpgs-sec folded"); sec.id = "vpGsAdvanced";
@@ -1014,9 +1139,21 @@
       if (opts.quickOnly && !s.quick) return;
       if (!opts.quickOnly && s.firstOnly) return;   // asked on a first open only (members draws: the jackpot now)
       if (s.advanced && g.noMore) return;   // left to the console, at its usual setting (spacing review r8)
+      if (s.perNight) return;   // asked on the night's own start screen (trivia's mix or categories)
       var r = settingRow(F, s, ctx, all); rows.push(r); byKey[s.key] = r;
-      if (s.advanced) { advRows.appendChild(r.row); hasAdv = true; } else list.appendChild(r.row);
+      var into = s.advanced ? advRows : list;
+      /* TWO TO A LINE (Dean, round 11 note 4): settings sharing a line id sit side by side in one box; their "?" words open under the pair */
+      if (s.line) {
+        var lastW = into._pairs;
+        if (!lastW || lastW.getAttribute("data-line") !== s.line || into.children[into.children.length - 1] !== lastW) { lastW = el("div", "vpgs-pairs"); lastW.setAttribute("data-line", s.line); into.appendChild(lastW); into._pairs = lastW; }
+        lastW.appendChild(r.row);
+        if (r.pop) { r.row.removeChild(r.pop); r.pop.className += " vpgs-pairpop"; lastW.appendChild(r.pop); }
+        if (r.state) { r.row.removeChild(r.state); lastW.appendChild(r.state); }
+        r.row.className += " pc";
+      } else into.appendChild(r.row);
+      if (s.advanced) hasAdv = true;
     });
+    [list, advRows].forEach(function (cn) { Array.prototype.forEach.call(cn.children, function (w) { if (/(^| )vpgs-pairs( |$)/.test(w.className || "")) { var n = Array.prototype.filter.call(w.children, function (c) { return /(^| )pc( |$)/.test(c.className || ""); }).length; if (n < 2) w.className += " one"; } }); });
     if (hasAdv) F.body.appendChild(sec);
     /* SHOWN ONLY WHEN IT APPLIES (showIf), and the prize boxes follow the counts. */
     ctx.refresh = function () {
@@ -1053,13 +1190,15 @@
         if (r.s.kind === "playlists") { vals.playlists = v; vals.playlist = v[0]; return; }
         if (r.s.kind === "prizelist") {
           vals[r.s.key] = v;
-          if (gkey === "bingo") { var pl = []; v.forEach(function (x) { if (x && pl.indexOf(x) < 0) pl.push(x); }); if (pl.length) vals.prize_list = pl.slice(0, 8); }   // each game's prize, and the console's prize buttons
+          if (gkey === "trivia" && r.s.none && ctx.noneOf) vals.prize_none = ctx.noneOf();
+          if (gkey === "bingo" || gkey === "trivia") { var pl = []; v.forEach(function (x) { if (x && !pl.some(function (y) { return y.toLowerCase() === x.toLowerCase(); })) pl.push(x); }); if (pl.length) vals.prize_list = pl.slice(0, 8); }   // each game's prize, and the console's prize buttons
           if (gkey === "musical") { var firstP = v.filter(function (x) { return x; })[0]; if (firstP) vals.prize = firstP; if (r.s.none && ctx.noneOf) vals.prize_none = ctx.noneOf(); }
           return;
         }
         if (r.s.kind === "categories") { vals.set_ids = v; vals.set_id = v[0]; return; }
         if (r.s.kind === "raffleplan") {
           vals.raffle_counts = v.map(function (p) { return p.n; });
+          vals.raffle_names = v.map(function (p) { return p.name || ""; });
           vals.raffle_prizes = v.map(function (p) { var out = []; for (var k = 0; k < p.n; k++) out.push(p.same ? p.prizes[0] : (p.prizes[k] || "")); return out; });
           var un = []; vals.raffle_prizes.forEach(function (l) { l.forEach(function (x) { if (x && un.indexOf(x) < 0) un.push(x); }); });
           if (un.length) vals.prizes = un.slice(0, 12);   // the raffle console's prize buttons
@@ -1074,7 +1213,7 @@
       if (g.needsDetails) {
         if (!vals.draw_day) vals.draw_day = memDay || (vals.date_started ? dayOf(vals.date_started) : "");
         if (!vals.draw_day) delete vals.draw_day;
-        if (!vals.name && vals.draw_day) vals.name = vals.draw_day + " Members Draw";
+        if (!vals.name && vals.draw_day) vals.name = vals.draw_day + " Members Draw" + ((opts.instance || 1) > Math.max(1, memNights) ? " " + opts.instance : "");   // a draw added beyond the nights: "Friday Members Draw 2"
       }
       /* the settings this screen leaves to the console keep their usual values (spacing review r8) */
       if (g.noMore && !g.needsDetails) { var dft = help().defaults(gkey, { bingo: bingoRules(cx.venue, opts.answers || (cx.settings && cx.settings.setup_answers)) }); g.settings.forEach(function (st) {
@@ -1084,6 +1223,12 @@
       }); }
       return vals;
     }
+    /* ONLY ONE DRAW TODAY? (Dean, round 11 note 7): "Add another draw" saves this one and opens a blank one */
+    if (g.needsDetails && !opts.first && !opts.quickOnly && (opts.instance || 1) < 5) {
+      var more = el("button", "vpgs-link", "Add another draw"); more.id = "vpGsAddDraw"; more.setAttribute("type", "button");
+      more.addEventListener("click", function () { again = true; save.click(); });
+      F.body.appendChild(more);
+    }
     if (!opts.first && g.needsDetails) {
       var mlater = el("button", "vpgs-link", "Not ready yet? Set it up later"); mlater.id = "vpGsLater"; mlater.setAttribute("type", "button");
       mlater.addEventListener("click", function () { done("later"); }); F.body.appendChild(mlater);
@@ -1091,9 +1236,10 @@
     /* AN EXISTING VENUE CLICKING THROUGH CHANGES NOTHING (Dean, 9 Nov 2026): the screen opens with its own settings,
        and only what they change is sent. A setting the venue never had and did not touch stays unsaved, so a new
        setting stays off for an existing venue. */
-    var base = opts.review ? collect() : null;
+    var base = (opts.review && !opts.newDraw) ? collect() : null;   // a draw they ADD is sent whole; there is nothing to compare it with
     /* one label for going on, top and bottom (Dean, round 9 point 12): Next on the first run, Save on a first open */
     var saveWords = opts.first ? (g.needsDetails ? "Save the draw" : "Save and play") : "Next";
+    var again = false;   // "Add another draw": save this one, then a blank draw
     var save = F.btn(saveWords, "pink", "vpGsSave", function () {
       save.disabled = true; msg.textContent = "";
       var vals = collect(), send = base ? changedOnly(vals, base) : vals;
@@ -1101,8 +1247,8 @@
       var nothing = base && !Object.keys(send).filter(function (k) { return k !== "draw_id" && k.indexOf("__") !== 0; }).length;
       var p = nothing ? Promise.resolve({ ok: true }) : g.needsDetails ? saveMembers(deps, vid, send) : savePrefs(deps, vid, gkey, send, false).then(function (ok) { return { ok: ok }; });
       return p.then(function (r) {
-        if (r.ok) return done("saved", vals);
-        save.disabled = false;
+        if (r.ok) return done("saved", vals, again);
+        save.disabled = false; again = false;
         msg.textContent = r.error || "We could not save that just now. Check your connection and try again.";
       });
     });
@@ -1224,8 +1370,8 @@
       var otherIn = F.el("input", "vpgs-in"); otherIn.id = "vpGsOther"; otherIn.type = "text"; otherIn.maxLength = OTHER_EACH;
       otherIn.placeholder = "e.g. Karaoke"; otherIn.setAttribute("aria-label", "Your other nights"); otherIn.setAttribute("enterkeyhint", "enter");
       var otherWrap = F.el("div", "vpgs-q3");
-      var oq = F.el("label", "vpgs-h3", "Do you run any other nights?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq);
-      otherWrap.appendChild(F.el("p", "vpgs-sub", "Karaoke, poker, darts, live music... type one, or tap a suggestion."));
+      var oq = F.el("label", "vpgs-h3", "Do you run any other regular nights or meal deals?"); oq.setAttribute("for", "vpGsOther"); otherWrap.appendChild(oq);
+      otherWrap.appendChild(F.el("p", "vpgs-sub", "Karaoke, poker, parma night, $10 steaks... type one, or tap a suggestion."));
       var otherTags = F.el("div", "vpgs-tags"); otherTags.id = "vpGsOtherList";
       otherWrap.appendChild(otherTags); otherWrap.appendChild(otherIn);
       var sug = F.el("div", "vpgs-sug"); sug.id = "vpGsOtherSuggest"; otherWrap.appendChild(sug);
@@ -1256,11 +1402,12 @@
       drawOthers();
       var next = F.btn("Next", "pink", "vpGsNext", function () {
         var had = Array.isArray(answers.games) && answers.games.length;
-        if (meal != null) answers.meal_deals = meal;
         answers.games = ORDER.filter(function (g) { return cur.indexOf(g) >= 0; });
         if (otherOn && otherIn.value) addOther();   // a last one typed without Enter still counts
         var o = otherOn ? cleanOther(others.join(",")) : "";
         if (o) answers.other = o; else delete answers.other;
+        /* ONE QUESTION for other nights and meal deals, no time asked so they can be split later (Dean, round 11 note 1); the TV advertising step still names meal deals when they gave one */
+        if (others.some(function (w) { return MEAL_WORDS.test(w); })) answers.meal_deals = true; else delete answers.meal_deals;
         if (!had && answers.games.length && !answers.games_at) answers.games_at = brisbaneDate(now);
         persist();
         if (!answers.games.length) return end("done");
@@ -1293,20 +1440,7 @@
       if (kindWrap) F.body.appendChild(kindWrap);
       else F.title.textContent = "What games do you play?";
       var gq = F.el("div", "vpgs-q3"); if (kindWrap) gq.appendChild(F.el("h3", "vpgs-h3", "What games do you play?")); gq.appendChild(F.el("p", "vpgs-sub", "Tick all you run, even now and then.")); if (!kindWrap) gq.style.marginTop = "0"; F.body.appendChild(gq);
-      /* "DO YOU WANT TO ADVERTISE YOUR MEAL DEALS?" (Dean, round 9 point 7): kept as setup_answers.meal_deals, and the
-         TV step at the end points them to it */
-      var meal = typeof answers.meal_deals === "boolean" ? answers.meal_deals : null;
-      var mealWrap = F.el("div", "vpgs-q3"); mealWrap.id = "vpGsMeal";
-      mealWrap.appendChild(F.el("h3", "vpgs-h3", "Do you want to advertise your meal deals?"));
-      mealWrap.appendChild(F.el("p", "vpgs-sub", "Specials and meal deals show on your TV between games."));
-      var mseg = F.el("div", "vpgs-seg"); mseg.setAttribute("role", "group"); mseg.setAttribute("aria-label", "Advertise your meal deals"); mseg.style.marginTop = "6px";
-      [[true, "Yes"], [false, "No"]].forEach(function (o) {
-        var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", String(o[0])); b.setAttribute("aria-pressed", meal === o[0] ? "true" : "false");
-        b.addEventListener("click", function () { meal = o[0]; Array.prototype.forEach.call(mseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === String(meal) ? "true" : "false"); }); });
-        mseg.appendChild(b);
-      });
-      mealWrap.appendChild(mseg);
-      F.body.appendChild(box); F.body.appendChild(otherWrap); F.body.appendChild(mealWrap); F.body.appendChild(bnote); drawChips();
+      F.body.appendChild(box); F.body.appendChild(otherWrap); F.body.appendChild(bnote); drawChips();
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", deps.review ? reviewIntro : headsUp)); F.foot.appendChild(next);
     }
     /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026), right after the games question, skippable: for each game they
@@ -1426,31 +1560,38 @@
       F.clear(); F.step("Your games", 3, 3);
       if (!ticked().length) return end("done");
       var first = left()[0] || ticked()[0];
-      /* ONE GAME AT A TIME, SAID ONCE (Dean, round 9 point 9) */
-      F.title.textContent = deps.review ? "Would you like to check your first game now?" : "Would you like to set up your first game now?";
-      F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". We'll go through them one at a time."));
+      /* ONE GAME AT A TIME, SAID ONCE (Dean, round 9 point 9); one choice for each game they picked, in game order (Dean, round 11 note 2) */
+      F.title.textContent = deps.review ? "Would you like to check a game now?" : "Would you like to set up a game now?";
+      F.body.appendChild(F.el("p", "vpgs-lead", "You picked " + listWords(ticked()) + ". Do one today and leave the others, or do them all, one at a time."));
       var nt = F.el("p", "vpgs-note", deps.review ? "Not today keeps every setting as it is." : "Each game walks you through its setup the first time you open it. Do it before your first night.");
       nt.id = "vpGsAllNote";
       F.body.appendChild(nt);
-      var ans2 = F.el("div", "vpgs-stack vpgs-answers");
-      var allYes = F.btn("Yes, " + (deps.review ? "check " : "set up ") + gameOf(first).name, "pink big", "vpGsAllYes", function () { var nx = left()[0]; if (nx) oneGame(nx); else allDone(); }); ans2.appendChild(allYes);
+      var ans2 = F.el("div", "vpgs-stack vpgs-answers"); ans2.id = "vpGsGamePicks";
+      var allYes = null, offered = left().length ? left() : [first];
+      offered.forEach(function (g) {
+        var b = F.btn("Yes, " + (deps.review ? "check " : "set up ") + gameOf(g).name, "pink big", g === first ? "vpGsAllYes" : "vpGsAllYes_" + g, function () { if (left().length) oneGame(g); else allDone(); });
+        b.setAttribute("data-game", g); if (g === first) allYes = b; ans2.appendChild(b);
+      });
       ans2.appendChild(F.btn("Not today", "ghost big vpgs-outline", "vpGsAllNo", function () { noWorries(left()); }));
       F.body.insertBefore(ans2, nt);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", weekStep));
-      F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { allYes.click(); }));   // Next is Yes
+      F.foot.appendChild(F.btn("Next", "pink", "vpGsAllNext", function () { if (allYes) allYes.click(); }));   // Next is Yes to the first game
     }
     var drafts = {};   // what they left on a game when they pressed Back, by game and draw
+    var extraDraws = 0;   // members draws added with "Add another draw"
     function oneGame(g, inst) {
       inst = inst || 1;
       var memNights = memDraws(answers.week).length;   // a draw for each members session
       var all = ticked(), i = all.indexOf(g), many = (g === "members" && memNights > 1) ? memNights : 1;   // a draw for each members night
+      if (g === "members") many = Math.min(5, Math.max(many, extraDraws, deps.review ? (deps.draws || []).length : 1));   // and the ones they added with "Add another draw"
       var dk = g + "#" + inst, dr = drafts[dk] || null;
       /* the step line names the game (Dean, round 9 point 12): "Trivia, game 1 of 3" */
       gameScreen(F, g, cx, deps, { count: gameOf(g).title + ", game " + (i + 1) + " of " + all.length + (many > 1 ? ", draw " + inst + " of " + many : ""), n: all.length, on: i + 1, back: allToday, answers: answers, instance: inst,
           review: !!deps.review, have: (deps.have || {})[g] || null, draw: deps.review && g === "members" ? ((deps.draws || [])[inst - 1] || null) : null,
-          draft: dr, onDraft: function (d) { drafts[dk] = d; },
-          usual: answers.prize_bank || null }, function (outcome, vals) {
+          draft: dr, onDraft: function (d) { drafts[dk] = d; }, newDraw: !!(deps.review && g === "members" && inst > Math.max(1, (deps.draws || []).length)),
+          usual: answers.prize_bank || null }, function (outcome, vals, again) {
         if (outcome === "saved") {
+          if (again && g === "members" && inst >= many && many < 5) { extraDraws = many + 1; many = extraDraws; }   // "Add another draw": a blank one next
           /* NO "SAME PRIZES FOR OTHER GAMES?" QUESTION (Dean, round 7b point 7): the prizes typed in a game become the
              usual prizes the next games offer as one-tap buttons, nothing filled in for them. */
           if (vals && vals.__setup && vals.__setup.over_max) answers.members_over = vals.__setup.over_max;
@@ -1473,7 +1614,8 @@
     }
     var extrasAsked = false;
     function extras(next) {
-      /* THE MEMBERS LIST IS A COMPUTER JOB (Dean, round 8b point 14): say so, never push an upload on a phone or iPad */
+      /* THE MEMBERS LIST IS A COMPUTER JOB (Dean, round 8b point 14): say so, never push an upload on a phone or iPad.
+         Round 11 note 7: a reminder to upload it, by email or a weekly calendar entry, on the day and time that suits them. */
       F.clear(); F.step("Members draws", 0, 0); F.title.textContent = "Add your members list later";
       F.body.appendChild(F.el("p", "vpgs-lead", "Your member numbers let the TV draw a real member. It's easiest on a computer: Account page, Members list."));
       var go = F.el("a", "vpgs-link vpgs-wideonly", "On a computer now? Add it on your Account page"); go.id = "vpGsExtrasYes";
@@ -1488,32 +1630,54 @@
         try { if (typeof deps.go === "function") deps.go(url); else if (root.location) root.location.href = url; } catch (x2) {}
       });
       F.body.appendChild(go);
-      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Next", "pink", "vpGsExtrasNo", next));
+      /* THE REMINDER */
+      var rem = cleanReminder(answers.members_reminder) || { how: "", day: "mon", time: "09:00" };
+      var qw = F.el("div", "vpgs-q3"); qw.id = "vpGsRemind";
+      qw.appendChild(F.el("h3", "vpgs-h3", "Would you like a reminder to add your members list?"));
+      qw.appendChild(F.el("p", "vpgs-sub", "Pick how, and the best day and time to remind you."));
+      var rseg = F.el("div", "vpgs-seg"); rseg.setAttribute("role", "group"); rseg.setAttribute("aria-label", "How to remind you"); rseg.style.marginTop = "6px";
+      var dayRow = F.el("div", "vpgs-remrow"); dayRow.id = "vpGsRemindWhen";
+      var dsel = F.el("select", "vpgs-in vpgs-tsel"); dsel.id = "vpGsRemindDay"; dsel.setAttribute("aria-label", "Best day to remind you");
+      WEEK.forEach(function (x) { var o = F.el("option", null, x[2]); o.value = x[0]; if (x[0] === rem.day) o.selected = true; dsel.appendChild(o); });
+      dsel.value = rem.day;
+      var tsel = timeSelect(F.el, rem.time, "vpGsRemindTime", "Best time to remind you");
+      var dl = F.el("label", "vpgs-rq"); dl.appendChild(F.el("span", null, "Best day")); dl.appendChild(dsel);
+      var tl = F.el("label", "vpgs-rq"); tl.appendChild(F.el("span", null, "Best time")); tl.appendChild(tsel);
+      dayRow.appendChild(dl); dayRow.appendChild(tl);
+      var cal = F.el("a", "vpgs-link", "Add the weekly reminder to my calendar"); cal.id = "vpGsRemindCal"; cal.setAttribute("download", "venueplay-members-list-reminder.ics");
+      function paintRem() {
+        Array.prototype.forEach.call(rseg.children, function (c) { c.setAttribute("aria-pressed", c.getAttribute("data-value") === (rem.how || "none") ? "true" : "false"); });
+        var on = rem.how === "email" || rem.how === "calendar";
+        dayRow.style.display = on ? "" : "none"; cal.style.display = rem.how === "calendar" ? "" : "none";
+        if (rem.how === "calendar") cal.setAttribute("href", reminderIcs(vid, { how: rem.how, day: dsel.value, time: tsel.value || "09:00" }, now));
+      }
+      [["email", "Email me"], ["calendar", "Calendar"], ["none", "No thanks"]].forEach(function (o) {
+        var b = F.el("button", null, o[1]); b.setAttribute("type", "button"); b.setAttribute("data-value", o[0]);
+        b.addEventListener("click", function () { rem.how = o[0] === "none" ? "" : o[0]; paintRem(); });
+        rseg.appendChild(b);
+      });
+      ["change", "input"].forEach(function (ev) { dsel.addEventListener(ev, function () { rem.day = dsel.value; paintRem(); }); tsel.addEventListener(ev, function () { rem.time = tsel.value || "09:00"; paintRem(); }); });
+      qw.appendChild(rseg); qw.appendChild(dayRow); qw.appendChild(cal); F.body.appendChild(qw); paintRem();
+      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Next", "pink", "vpGsExtrasNo", function () {
+        var r = (rem.how === "email" || rem.how === "calendar") ? { how: rem.how, day: dsel.value || rem.day, time: tsel.value || rem.time || "09:00" } : null;
+        if (r) answers.members_reminder = r; else delete answers.members_reminder;
+        persist(); next();
+      }));
     }
     function afterGame2(g) {
       var rest = left().filter(function (x) { return cleanSetup(answers.setup)[x] !== "later"; });
       if (!rest.length) return allDone();
       var all = ticked();
       F.clear(); F.step("Game " + (all.indexOf(g) + 1) + " of " + all.length, all.length, all.indexOf(g) + 1);
-      F.title.textContent = "Do you want to set up your next game?";
+      F.title.textContent = deps.review ? "Would you like to check another game?" : "Would you like to set up another game?";
       F.body.appendChild(F.el("p", "vpgs-lead", "You still have " + listWords(rest) + "."));
       /* A QUESTION'S ANSWERS SIT RIGHT UNDER IT, not at the bottom of an empty screen (Dean, round 9b); the bar keeps Back */
-      var ans = F.el("div", "vpgs-stack vpgs-answers");
-      ans.appendChild(F.btn("Yes, set up " + gameOf(rest[0]).name, "pink big", "vpGsNextYes", function () { oneGame(rest[0]); }));
+      var ans = F.el("div", "vpgs-stack vpgs-answers"); ans.id = "vpGsGamePicks";
+      rest.forEach(function (x, k) { var yb = F.btn("Yes, " + (deps.review ? "check " : "set up ") + gameOf(x).name, "pink big", k === 0 ? "vpGsNextYes" : "vpGsNextYes_" + x, function () { oneGame(x); }); yb.setAttribute("data-game", x); ans.appendChild(yb); });
       ans.appendChild(F.btn("That's enough for today", "ghost big vpgs-outline", "vpGsNextNo", function () { noWorries(rest); }));   // Dean, round 8b point 12
-      var other = F.el("button", "vpgs-link", "Or pick a different game"); other.id = "vpGsNextPick"; other.setAttribute("type", "button");
-      other.addEventListener("click", function () { whichNext(rest); }); if (rest.length < 2) other.style.display = "none";
-      ans.appendChild(other); F.body.appendChild(ans);
+      F.body.appendChild(ans);
       F.foot.appendChild(F.btn("Back", "ghost", "vpGsBack", function () { oneGame(g); }));
       F.foot.appendChild(F.btn("Next", "pink", "vpGsNextGo", function () { oneGame(rest[0]); }));   // Next is "Yes" (Dean, round 9b)
-    }
-    function whichNext(rest) {
-      F.clear(); F.step("Next game", 0, 0); F.title.textContent = "What would you like to set up next?";
-      F.body.appendChild(F.el("p", "vpgs-lead", "Pick one. You can come back for the others."));
-      var stack = F.el("div", "vpgs-stack"); stack.id = "vpGsWhich";
-      rest.forEach(function (g) { var b = F.btn(gameOf(g).title, "ghost big vpgs-outline", null, function () { oneGame(g); }); b.setAttribute("data-game", g); stack.appendChild(b); });
-      F.body.appendChild(stack);
-      F.foot.appendChild(F.el("span")); F.foot.appendChild(F.btn("Next", "pink", "vpGsWhichNext", function () { oneGame(rest[0]); }));
     }
     /* "No worries." The defaults are written for each game left (never over a saved value). Members draws have no
        defaults, so they get their own line rather than being called saved (Dean, round 2). */
@@ -1556,10 +1720,9 @@
     /* The Account page's "Set your game nights" opens just the week (deps.weekOnly, start "week"). */
     /* AN EXISTING VENUE (Dean, 9 Nov 2026): one screen saying what this is, then the same questions, already answered */
     function reviewIntro() {
-      F.clear(); F.step("Your games setup", 3, 1);
-      var who = firstName(cx);
-      F.title.textContent = "Check your games setup" + (who ? ", " + who : "");
-      F.body.appendChild(F.el("p", "vpgs-lead", "We've made setting up your games simpler. Your settings are already filled in, so clicking through changes nothing. Change anything you like as you go."));
+      F.clear(); F.step("Your game setup", 3, 1);
+      F.title.textContent = "Check your game setup";
+      F.body.appendChild(F.el("p", "vpgs-lead", "We have changed some settings within games. Click through now to review these, and change anything you like as you go."));
       var later = F.el("button", "vpgs-link", "Not ready yet? Remind me next time"); later.id = "vpGsReviewLater"; later.setAttribute("type", "button");
       later.addEventListener("click", function () { remindLater(); end("later"); });
       F.body.appendChild(later);
@@ -1678,6 +1841,6 @@
     }, function () { return "busy"; });
   }
 
-  root.VPGameSetup = { wantsReview: wantsReview, review: review, haveDraft: haveDraft, changedOnly: changedOnly, timeSelect: timeSelect, HALF_HOURS: HALF_HOURS, bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, setupFor: setupFor,
+  root.VPGameSetup = { wantsReview: wantsReview, review: review, haveDraft: haveDraft, changedOnly: changedOnly, timeSelect: timeSelect, HALF_HOURS: HALF_HOURS, bingoRules: bingoRules, kindOf: kindOf, weekPick: weekPick, cleanWeek: cleanWeek, timeWords: timeWords, weekWords: weekWords, WEEK: WEEK, run: run, firstOpen: firstOpen, cleanExtra: cleanExtra, cleanSetup: cleanSetup, cleanOther: cleanOther, cleanReminder: cleanReminder, reminderIcs: reminderIcs, mondayOf: mondayOf, setupFor: setupFor,
     savePrefs: savePrefs, listWords: listWords, brisbaneDate: brisbaneDate, dayOf: dayOf, ORDER: ORDER, LKEY: LKEY, GAME_API: GAME_API, OTHER_MAX: OTHER_MAX };
 })(typeof window !== "undefined" ? window : this);

@@ -316,7 +316,7 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('one change, one key saved: { rounds: 6 }', JSON.stringify(lastPost('/host/game-prefs') && lastPost('/host/game-prefs').prefs) === '{"rounds":6}', lastPost('/host/game-prefs'));
   check('and the rest of their trivia settings untouched', PREFS.trivia.double_last === 5 && PREFS.trivia.time_s === 45 && PREFS.trivia.rounds === 6);
-  $(P, 'vpGsNextPick').click(); await settle(); walk($(P, 'vpGsWhich'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
+  walk($(P, 'vpGsGamePicks'), function (e) { return e.getAttribute && e.getAttribute('data-game') === 'members'; }).click(); await settle();
   box(P, 'vpGsIn_current_jackpot_cents', '1000');
   CALLS = []; $(P, 'vpGsSave').click(); await settle();
   check('members draw: only the jackpot sent, to THEIR draw by its id (never a second draw)', srtj(lastPost('/host/members/settings')) === srtj({ draw_id: 'D1', current_jackpot_cents: 100000 }), lastPost('/host/members/settings'));
