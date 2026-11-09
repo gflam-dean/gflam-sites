@@ -608,7 +608,7 @@
   "counted_by": "lines"
  },
  "tools/test-game-setup-advanced.js": {
-  "checks": 171,
+  "checks": 173,
   "counted_by": "lines"
  },
  "tools/test-gaming-rules-letters-15-oct.js": {
@@ -884,7 +884,7 @@
   "counted_by": "lines"
  },
  "tools/test-raffle-console.js": {
-  "checks": 61,
+  "checks": 67,
   "counted_by": "lines"
  },
  "tools/test-raffle-unsold-server.js": {

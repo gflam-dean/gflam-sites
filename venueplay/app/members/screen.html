@@ -117,7 +117,7 @@
   body.ylogo .wonamt{color:#fff} body.ylogo .resmsg .yl{color:var(--pink)}
   body.ylogo .tiles.isname{border-top-color:var(--pink);box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,31,142,.5)}
   body.ylogo .pstep.roll{background:transparent;box-shadow:none;border-top:none}
-  body.ylogo .roll .rlab{color:#A6A6B0} body.ylogo .roll .rstep{border-top-color:#fff} body.ylogo .maxband{background:#fff;color:#0A0A0B}
+  body.ylogo .roll .rlab{color:#A6A6B0} body.ylogo .roll .rstep{border-top-color:#fff}
 
   /* THE FRAME'S BOTTOM AND THE CONFETTI (design review 5, 6 Nov 2026) */
   .body{bottom:4.4cqw}                                  /* 56px at 1280 under the last line, for TVs that crop */
@@ -163,9 +163,7 @@
   .board{gap:1.3cqw} .drow{padding:1.6cqw 2.6cqw} .drow .dn{font-size:2.8cqw} .drow .dc{font-size:1.8cqw} .drow .dj{font-size:5.4cqw}
   #idleBoardWrap .jsub{font-size:2.2cqw}
   .drow{position:relative}
-  .drow.max{box-shadow:inset 0 0 0 .21cqw var(--pink);padding-top:4.1cqw}
-  .drow.max.hot{box-shadow:inset 0 0 0 .21cqw var(--pink),inset .73cqw 0 0 var(--pink)}
-  .drow .mx{position:absolute;left:0;right:0;top:0;background:var(--pink);color:#0A0A0B;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.75cqw;line-height:1;padding:.55cqw 2.6cqw;border-radius:1.35cqw 1.35cqw 0 0;text-align:left;letter-spacing:.02em}
+  .drow .dc.mxl{color:#fff;font-weight:700}   /* a draw at its maximum: one plain line, no frame or banner (Dean, 9 Nov 2026) */
   /* the rollover: its own moment, in the sans face and its own words, the figure counting up */
   .rhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:6.2cqw;line-height:1;color:#fff;letter-spacing:-.01em}
   .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:2.4cqw;color:#B4B4BE;margin-top:1.6cqw;line-height:1.25;max-width:88cqw}
@@ -175,7 +173,7 @@
   .pstep.roll .wonamt{font-size:17cqw;color:#fff;margin-top:.4cqw}
   .pstep.roll.capped{margin-top:1.4cqw;padding-top:.8cqw} .pstep.roll.capped .wonamt{font-size:11cqw}
   .rhead.capped{font-size:5cqw}
-  .maxband{margin-top:2.6cqw;background:var(--pink);color:#0A0A0B;border-radius:1.15cqw;padding:1.4cqw 3.2cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.6cqw;line-height:1.2}
+  .maxband{margin-top:2.6cqw;color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.8cqw;line-height:1.2}
   .maxband b{display:block;font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:3.4cqw;letter-spacing:.02em;margin-bottom:.4cqw}
   /* advertising idle */
   .ad{opacity:0;transition:opacity .8s ease}
@@ -395,8 +393,10 @@
       var badge=d.tonight?'<span class="tn">Tonight</span>':(d.drawnToday?'<span class="tn done">Drawn</span>':'');
       /* atMax (migration 101): the venue set a maximum and the jackpot is at it. Said on the board
          so the room is never told a figure that will grow when it will not. */
-      var sub=clock?'<div class="dc">'+esc(clock)+'</div>':'';
-      html+='<div class="drow'+(d.tonight?' hot':'')+(d.atMax?' max':'')+'">'+(d.atMax?'<div class="mx">Jackpot at its maximum. It stays here until it\u2019s won.</div>':'')+
+      /* Said in plain words on the draw's own line (Dean, 9 Nov 2026: the pink banner and frame were a highlight he
+         could not read): "Max jackpot. It stays at $300 until it's won." */
+      var sub=(clock?'<div class="dc">'+esc(clock)+'</div>':'')+(d.atMax?'<div class="dc mxl">Max jackpot. It stays at '+money(d.jackpotCents)+' until it\u2019s won.</div>':'');
+      html+='<div class="drow'+(d.tonight?' hot':'')+(d.atMax?' max':'')+'">'+
               '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+sub+'</div>'+
               '<div class="dj">'+money(d.jackpotCents)+'</div>'+
             '</div>';
@@ -627,7 +627,7 @@
     if(capped){ $("resJack").textContent=money(nextJackpotCents||0); } else { countFromTo($("resJack"), fromCents, nextJackpotCents||0, 2600); }
     $("resSub").className="hidden"; $("resSub").textContent="";   /* no "up $50, be here next week" (Dean) */
     var mx=$("resMax"); mx.classList.toggle("hidden", !capped); $("resStep").classList.toggle("capped", !!capped); $("resRollHead").classList.toggle("capped", !!capped);
-    if(capped) mx.innerHTML="<b>Jackpot at its maximum</b>It stays at "+money(nextJackpotCents||0)+" until someone wins it";
+    if(capped) mx.textContent="Max jackpot reached. It stays at "+money(nextJackpotCents||0)+" until it\u2019s won.";   // plain words, no banner (Dean, 9 Nov 2026)
     holdResult(ROLLOVER_HOLD_MS);
   }
 

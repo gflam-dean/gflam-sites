@@ -197,3 +197,4 @@ details.fold .fb{padding:4px 16px 16px;border-top:1px solid var(--line-2)}
 body{background:var(--ink)}                                            /* flat, as the mock: no pink glow in the corner */
 .btn.xl.pulse{animation:none}                                          /* the big buttons hold their colour; nothing on the card fades */
 .since{text-wrap:balance}
+.plist .prow .pnext{min-height:44px;font-size:13.5px;white-space:nowrap}

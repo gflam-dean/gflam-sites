@@ -297,6 +297,10 @@
               <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
             </div>
             <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
+            <!-- TWO CHOICES DEAN ASKED FOR (9 Nov 2026), off unless the venue switches them on: a venue that never touches
+                 them draws exactly as it always has (prizes in the order on the list, no prize card before a draw). -->
+            <label class="check"><input type="checkbox" id="rfPickOrder"> Let me choose which prize to draw next</label>
+            <label class="check"><input type="checkbox" id="rfAnnounce"> Show each prize on the TV before its draw</label>
             <div class="field">
               <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
                 <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
@@ -712,6 +716,8 @@
     parts.push(G.time===0 ? "no time limit to claim" : (isNaN(G.time) ? "time to claim not set" : ((G.time%60===0 ? (G.time/60)+(G.time===60?" minute":" minutes") : G.time+" seconds")+" to claim")));
     parts.push(G.allowRedraw ? "draw again if they\u2019re not here" : "no draw again");
     parts.push(G.jackOn ? ("cash jackpot "+(isNaN(G.jackAmt)?"not set":money(G.jackAmt))) : "no cash jackpot");
+    if(pickOrder()) parts.push("you choose the next prize");
+    if(announcing()) parts.push("each prize shown first");
     var t=parts.join(", "); el.textContent=t.charAt(0).toUpperCase()+t.slice(1);
   }
   function renderSkipLine(){
@@ -928,6 +934,15 @@
   /* Tonight's prizes in the order they will be drawn, and a prize already won drops to the bottom with its
      ticket beside it (Dean, 6 Nov 2026), so the host sees what is next at the top. */
   function wonTicket(label){ for(var i=0;i<G.results.length;i++){ var r=G.results[i]; if(r.prize===label && r.outcome!=="no_show") return r.numText; } return ""; }
+  /* LET ME CHOOSE WHICH PRIZE TO DRAW NEXT (Dean, 9 Nov 2026; off unless switched on). Off, the prizes go in the
+     order on the list, as they always have. On, any prize still to come has "Draw this next", which moves it to
+     the front of what is left; the TV's list and the big button follow, because both read the same list. */
+  function pickOrder(){ var c=$("rfPickOrder"); return !!(c && c.checked); }
+  function prizeNext(i){
+    if(!pickOrder() || G.round || G.busy || G.jackOn || !(i>G.prizeIdx && i<G.prizes.length)) return;
+    var p=G.prizes.splice(i,1)[0]; G.prizes.splice(G.prizeIdx,0,p);
+    renderPrizeList(); saveRaffle();
+  }
   function renderPrizeList(){
     var w=$("prizeList"); if(!w) return;
     w.innerHTML="";
@@ -940,7 +955,8 @@
       var row=document.createElement("div");
       row.className="prow"+(done?" done":"")+(nx?" next":"");
       var tk=done ? wonTicket(G.prizes[i]) : "";
-      row.innerHTML='<span class="pi">'+(done?"&#10003;":(i-G.prizeIdx+1))+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+
+      var pick=(!done && i>G.prizeIdx && pickOrder() && !G.round && !G.busy) ? '<button class="chg pnext" type="button" data-next="'+i+'">Draw this next</button>' : '';
+      row.innerHTML='<span class="pi">'+(done?"&#10003;":(i-G.prizeIdx+1))+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+pick+
         (done?'<span class="pd">'+(tk?"Ticket "+esc(tk):"Drawn")+'</span>':'<button class="px" type="button" data-rm="'+i+'" aria-label="Take '+esc(G.prizes[i])+' off">&times;</button>');
       w.appendChild(row);
     }
@@ -954,6 +970,13 @@
     if(_suppressIdle || celebrating()) return;   /* a celebration is on the wall; do not paint over it */
     var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) };
     var rn=raffleName(); if(rn) m.raffle=rn;   // which raffle, named on the wall; a one-raffle venue sends nothing new
+    send(m);
+  }
+  var ANNOUNCE_MS=4000;
+  function announcing(){ var c=$("rfAnnounce"); return !!(c && c.checked); }
+  function sendAnnounce(){
+    var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:true, prizes:G.prizes.slice(G.prizeIdx) };
+    if(raffleName()) m.raffle=raffleName();   // which raffle, as sendIdle says it
     send(m);
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
@@ -1147,9 +1170,14 @@
     G.busy=true; clearTimers(); G.lastWin=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
     drawBtnBusy();
-    sendDrawing(); startLocalSpin();
+    /* SHOW EACH PRIZE ON THE TV BEFORE ITS DRAW (Dean, 9 Nov 2026; off unless switched on): the wall puts up
+       "Next prize: Seafood platter" (the card it already shows between prizes) for ANNOUNCE_MS, then spins.
+       Off, the spin starts at once, as it always has. */
+    var ann=announcing() ? ANNOUNCE_MS : 0;
+    if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); }, ann); } else { sendDrawing(); }
+    startLocalSpin();
 
-    var wait=new Promise(function(res){ setTimeout(res, Math.max(1200, G.drawLength*1000)); });
+    var wait=new Promise(function(res){ setTimeout(res, ann + Math.max(1200, G.drawLength*1000)); });
     ensureRaffleGame()
       .then(function(){ return apiPost("/host/draw", drawBody()); })
       .then(function(r){ return wait.then(function(){ return r; }); })
@@ -1489,6 +1517,7 @@
   $("rafflePick").addEventListener("click", function(e){ var b=e.target.closest("button[data-raffle]"); if(b) pickRaffle(b.getAttribute("data-raffle")); });
   $("rfPrize").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addPrize(this.value); } });
   $("prizeList").addEventListener("click", function(e){
+    var nx=e.target.closest("button[data-next]"); if(nx){ prizeNext(parseInt(nx.getAttribute("data-next"),10)); return; }
     var b=e.target.closest("button[data-rm]"); if(!b) return;
     removePrize(parseInt(b.getAttribute("data-rm"),10));
   });
@@ -1502,6 +1531,7 @@
     if(!isNaN(v) && v>0 && v<30){ $("rfTime").value=30; renderRange(); }
   });
   $("rfAllowRedraw").addEventListener("change", function(){ readInputs(); renderAdvSum(); queueRafflePrefs(); });
+  ["rfPickOrder","rfAnnounce"].forEach(function(id){ $(id).addEventListener("change", function(){ renderAdvSum(); renderPrizeList(); queueRafflePrefs(); }); });
   ["rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", queueRafflePrefs); });   // never rfSkip
 
   /* THE SETUP IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). Saved prizes and the ticket range (Basic), time to
@@ -1522,6 +1552,7 @@
     var ja=String($("rfJackAmt").value==null?"":$("rfJackAmt").value).trim();
     if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
     if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
+    p.pick_order=pickOrder(); p.announce_prize=announcing();
     return p;
   }
   function applyRafflePrefs(p){
@@ -1535,6 +1566,9 @@
     if(typeof p.jackpot_on==="boolean"){ var jo=$("rfJackOn"); if(jo){ jo.checked=p.jackpot_on; show("rfJackWrap", p.jackpot_on); show("prizeField", !p.jackpot_on); } }
     if(p.jackpot_amount_cents!=null) setv("rfJackAmt", dollarsText(p.jackpot_amount_cents));
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
+    var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
+    var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
+    if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();
   }
   // Migration 51's template, read only while game_prefs is empty.

@@ -106,7 +106,9 @@ eval(lift('drawnCount')); eval(lift('skippedCount')); eval(lift('remainingCount'
 // the cash jackpot warning (15 Oct 2026): renderRange and startDraw call renderJackWarn
 eval(lift('jackpotWarning')); eval(lift('stateLimit')); eval(lift('renderJackWarn'));
 eval(lift('renderRange')); eval(lift('startDraw')); eval(lift('revealServer'));
-eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle')); eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
+eval(lift('updateCd')); eval(lift('ticketWords')); eval(lift('redrawLabelIdle'));
+eval(lift('pickOrder')); eval(lift('prizeNext')); eval(lift('announcing')); eval(lift('sendAnnounce')); var ANNOUNCE_MS = 4000;   // Dean's two choices (9 Nov 2026)
+eval(lift('onClaim')); eval(lift('onRedraw')); eval(lift('money'));
 
 function form(o) {
   $('rfPrize').value = ''; $('rfStart').value = '1'; $('rfEnd').value = '150'; $('rfTime').value = '180';
@@ -381,6 +383,32 @@ reset(); form(); readInputs();
 revealServer({ seq: 10, tickets: [21], allow_redraw: true, time_to_present: 0, recovered: true });
 check('a round picked up after a reload (no clock) is open from the start: the host decides', G.round && G.round.locked === false, G.round && G.round.locked);
 onRedraw = onRedrawReal;
+
+/* ================= 10. Two choices, off unless switched on (Dean, 9 Nov 2026) ================= */
+section('10. "Let me choose which prize to draw next" and "Show each prize on the TV before its draw"');
+if (typeof saveRaffle !== 'function') { var saveRaffle = function () {}; }
+var raffleName = function () { return ''; };
+reset(); form(); readInputs();
+G.prizes = ['Meat tray', 'Seafood platter', 'Fruit box']; G.prizeIdx = 0;
+$('rfPickOrder').checked = false; prizeNext(2);
+check('off (every venue that has not switched it on): the prizes stay in the order on the list', G.prizes.join('|') === 'Meat tray|Seafood platter|Fruit box', G.prizes);
+$('rfPickOrder').checked = true; prizeNext(2);
+check('on: "Draw this next" moves that prize to the front of what is left', G.prizes.join('|') === 'Fruit box|Meat tray|Seafood platter', G.prizes);
+G.prizeIdx = 1; prizeNext(0);
+check('a prize already drawn is never moved back', G.prizes.join('|') === 'Fruit box|Meat tray|Seafood platter', G.prizes);
+G.prizeIdx = 0; $('rfPickOrder').checked = false;
+var drew = []; var sendDrawingReal = sendDrawing; sendDrawing = function () { drew.push(sent.length); };
+var ensureReal = ensureRaffleGame; ensureRaffleGame = function () { return new Promise(function () {}); };
+reset(); form(); readInputs(); G.prizes = ['Meat tray']; G.prizeIdx = 0; timers = [];
+$('rfAnnounce').checked = false; startDraw();
+check('off: the spin starts at once and nothing is shown first, as always', drew.length === 1 && !sent.some(function (m) { return m.t === 'idle'; }), { drew: drew, sent: sent });
+reset(); form(); readInputs(); G.prizes = ['Meat tray']; G.prizeIdx = 0; timers = []; drew = [];
+$('rfAnnounce').checked = true; startDraw();
+var card = sent.filter(function (m) { return m.t === 'idle'; })[0];
+check('on: the TV is shown the prize first ("Next prize", the card it already knows)', !!card && card.next === true && drew.length === 0, sent);
+timers.forEach(function (t) { t(); });
+check('and the spin starts after it', drew.length === 1, drew);
+sendDrawing = sendDrawingReal; ensureRaffleGame = ensureReal; $('rfAnnounce').checked = false; G.busy = false;
 
 drainMicrotasks();
 print('');

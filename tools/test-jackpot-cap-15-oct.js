@@ -234,7 +234,7 @@ function moneyStub(cents) { return '$' + ((cents || 0) / 100).toLocaleString('en
   var showRollover = new Function('$', 'money', 'esc', 'stopAds', 'stopSpin', 'stopCelebrate', 'hideAll', 'holdResult', 'state', 'ROLLOVER_HOLD_MS', 'countFromTo',
     lift('venueplay/app/members/screen.html', 'function showRollover(') + '\nreturn showRollover;')(el, moneyStub, String, noop, noop, noop, noop, noop, { drawName: 'Friday' }, 30000, countFromTo);
   showRollover(65000, 10000, 104, 'Member N4', true);
-  show('capped: the wall says the jackpot is at its maximum, in its own band, not "Up $100"', /Jackpot at its maximum/.test(el('resMax').innerHTML) && !el('resMax').has.hidden && !/Up /.test(el('resSub').innerHTML + el('resSub').textContent), el('resMax').innerHTML);
+  show('capped: the wall says, in plain words, the jackpot is at its maximum and stays there (not "Up $100")', /^Max jackpot reached\. It stays at \$650 until it\u2019s won\.$/.test(el('resMax').textContent) && !el('resMax').has.hidden && !/Up /.test(el('resSub').innerHTML + el('resSub').textContent), el('resMax').textContent);
   show('capped: the figure stays still (it does not count up), and says the maximum', counted.length === 0 && el('resJack').textContent === moneyStub(65000), el('resJack').textContent);
   showRollover(60000, 10000, 104, 'Member N4', false);
   show('CONTROL: not capped, no maximum band, and the figure counts up from tonight\'s to next week\'s', !!el('resMax').has.hidden && counted.length === 1 && counted[0][0] === 50000 && counted[0][1] === 60000, JSON.stringify(counted));
@@ -242,7 +242,7 @@ function moneyStub(cents) { return '$' + ((cents || 0) / 100).toLocaleString('en
   var fillBoard = new Function('$', 'esc', 'money', 'state', lift('venueplay/app/members/screen.html', 'function fillBoard(') + '\nreturn fillBoard;');
   var boardEl = { innerHTML: '', classList: { toggle: function () {} } };   // the board marks many draws with a class (new look, 6 Nov 2026)
   fillBoard(function () { return boardEl; }, String, moneyStub, { draws: [{ name: 'Friday', jackpotCents: 65000, atMax: true }, { name: 'Sunday', jackpotCents: 20000 }] })();
-  show('the draws board marks the draw that sits at its maximum, and only that one', (boardEl.innerHTML.match(/Jackpot at its maximum/g) || []).length === 1 && boardEl.innerHTML.indexOf('Jackpot at its maximum') < boardEl.innerHTML.indexOf('Sunday'), boardEl.innerHTML);
+  show('the draws board marks the draw that sits at its maximum, and only that one', (boardEl.innerHTML.match(/Max jackpot\. It stays at \$650 until it\u2019s won\./g) || []).length === 1 && boardEl.innerHTML.indexOf('Max jackpot') < boardEl.innerHTML.indexOf('Sunday'), boardEl.innerHTML);
   var MHOST = readFile('venueplay/app/members/host.html');
   var dfs = MHOST.indexOf('function drawsForScreen(){'), dfsEnd = MHOST.indexOf('\n  }\n', dfs);
   show('the console sends atMax with each draw on the board', /atMax: d\.max_jackpot_cents!=null && \(d\.current_jackpot_cents\|\|0\)>=d\.max_jackpot_cents/.test(MHOST.slice(dfs, dfsEnd)));
