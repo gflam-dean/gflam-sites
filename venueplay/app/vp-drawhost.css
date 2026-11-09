@@ -204,3 +204,9 @@ body{background:var(--ink)}                                            /* flat, 
 .plist .prow .mv{flex:none;min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--ink-2);color:#fff;font:800 18px/1 'Hanken Grotesk',sans-serif;cursor:pointer}
 .plist .prow .mv:disabled{opacity:.3;cursor:default}
 .plist .prow .mv+.mv{margin-left:-4px}
+/* second review (9 Nov 2026): plain sentence-case titles, no letter-spaced capitals; the remove button kept apart */
+.bar>.tag{text-transform:none;letter-spacing:0;font-size:14px;font-weight:800}
+.toprow .lbl{text-transform:none;letter-spacing:0;font-size:14px;color:var(--muted)}
+.plist .prow .px{margin-left:6px;font-size:22px;color:var(--muted)}
+.osub small,.rangeline{color:#A6A6B0}
+@media (max-width:640px){ .plist .prow{gap:8px;padding-left:10px} .plist .prow .mv+.mv{margin-left:0} }

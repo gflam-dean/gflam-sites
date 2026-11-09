@@ -291,7 +291,7 @@
         <!-- WHERE TICKETS ARE SOLD (Dean, 9 Nov 2026): said on the TV under GET YOUR TICKETS. Nothing picked, nothing
              said: the card every venue has today. Only where tickets are bought; a winner always goes to the host. -->
         <div class="field2" id="fromField">
-          <span class="flab">Where are tickets sold?<small>Shown on the TV under Get your tickets.</small></span>
+          <span class="flab"><span id="fromNum">3. </span>Where are tickets sold?<small>Shown on the TV as &ldquo;Get your tickets from the bar&rdquo;.</small></span>
           <div class="chips" id="fromPick">
             <button type="button" data-from="host">The host</button>
             <button type="button" data-from="bar">The bar</button>
@@ -741,7 +741,8 @@
     var v=($("rfSkip").value||"").trim();
     $("skipSum").textContent = v || "None"; $("skipChg").textContent = v ? "Change" : "Add";
     if(v) show("skipField", true);
-    $("ticketsNum").textContent = G.jackOn ? "" : "2. ";   // a cash jackpot has no prize list, so the tickets are the only question
+    $("ticketsNum").textContent = G.jackOn ? "1. " : "2. ";   // a cash jackpot has no prize list, so the tickets come first
+    if($("fromNum")) $("fromNum").textContent = G.jackOn ? "2. " : "3. ";   // a cash jackpot has no prize list, so the tickets are the only question
   }
   function renderRange(){
     readInputs();
