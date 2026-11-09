@@ -146,13 +146,13 @@ function tvRig(opts) {
     document: { createElement: function (t) { return dom.mk(t, ''); } },
     window: win, Date: clk.Date, setTimeout: clk.setTimeout, clearTimeout: clk.clearTimeout, setInterval: clk.setInterval, clearInterval: clk.clearInterval,
     state: { phase: 'lobby', hostSeen: false, colour: true, title: '' },
-    VENUE_SLUG: opts.slug === undefined ? 'test-alpha' : opts.slug, VP_PREVIEW: !!opts.preview, VP_DEMO: false,
+    VENUE_SLUG: opts.slug === undefined ? 'test-alpha' : opts.slug, VP_PREVIEW: !!opts.preview, VP_DEMO: false, JOIN_ON_RESULTS: false,
     LAYERS: ['tvLobby', 'tvQ', 'tvReveal', 'tvPaper', 'tvBoard', 'tvPodium', 'tvPR'],
     _router: { seen: function () {} }, _adsKeep: { idle: 1, tv_here: 1, host_here: 1, session: 1, players: 1 },
     CODE_RE: /^[A-Z0-9]{6}$/,
     celebrateHook: function () { celebrated++; }, soundHook: function () { sounds++; }
   };
-  var src = 'var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null, FIN=null, BOARD_PAGE_MS=10000, boardPageTimer=null, TV_BOARD_ROWS=10, joinCode="", _prBoard=null, _endSaw=false, _ac=null;\n' +
+  var src = 'var curQ=null, celebrateTimer=null, answeredPids={}, ringTimer=null, boardRollTimer=null, FIN=null, BOARD_PAGE_MS=10000, boardPageTimer=null, TV_BOARD_ROWS=10, joinCode="", _prBoard=null, _endSaw=false, _ac=null;\n' +
     'var HOST_TYPES={}; var BUZZ={ on:false, said:"" };\n' +
     'function stopRing(){} function setRing(){} function tickRing(){} function applyColour(){} function unlockAudio(){} function paintNight(){} function alignTitle(){}\n' +
     'function celebrate(){ celebrateHook(); } function triviaEndShow(){} function timesUp(){} function noteHost(){} function tvSend(){} function cancelBackToAds(){} function scheduleBackToAds(){}\n' +
@@ -197,6 +197,7 @@ function lastReveal(s, e, rows) { return { t: 'reveal', qseq: 10, correctIndex: 
   show('ON: 7 s later "In second place", 2nd uncovered', a.title() === 'In second place' && a.covered() === '1', a.title() + ' / ' + a.covered());
   a.clk.advance(7000);
   show('ON: then "And the winner is...", the winner still covered', a.title() === 'And the winner is...' && a.covered() === '1', a.title() + ' / ' + a.covered());
+  show('no fanfare or confetti yet at "And the winner is..."', a.celebrated() === 0, a.celebrated());
   a.clk.advance(5000);
   show('ON: then "Winners tonight", every step uncovered', a.title() === 'Winners tonight' && a.covered() === '', a.title() + ' / ' + a.covered());
   show('the winner gets the confetti, once', a.celebrated() === 1, a.celebrated());
@@ -333,17 +334,17 @@ function hostRig(opts) {
     gsend: function (o) { phones.push(JSON.parse(JSON.stringify(o))); },
     VPTriviaFinale: win.VPTriviaFinale
   };
-  var src = 'var _pv={ win:null, ready:false };\n' +
+  var src = 'var _pv={ win:null, ready:false }; var DEMO=false;\n' +
     'function bcast(o){ send(o); gsend(o); } function clearTick(){} function hostError(m){ throw new Error("hostError: "+m); } function renderConsole(){ renderRun(); }\n' +
     'function isDouble(){ return false; } function nextUpPanel(){ return null; } function endBtn(l){ return el("button","btn ghost",l); } function answeredCount(){ return 0; }\n' +
     'function playerCount(){ return G.order.length; } function remainingSecs(){ return 0; } function renderPRRun(){} function renderPaperRun(){ return false; }\n' +
     'function reveal(){} function addTime(){} function nextQuestion(){} function vpAsk(){ return { then:function(){} }; } var endRoundCalls=0; function endRound(){ endRoundCalls++; stopFinale(); G.status="setup"; }\n' +
     'function apiPost(){ throw new Error("no network in this suite"); }\n' +
     'function paintBuzzer(){} function buzzKey(){ return "b"; } function whereKey(){ return "w"; }\n' +
-    liftAll(HOST, ['send', 'triviaKey', 'saveTrivia', 'renderRun', 'finish', 'finishNow', 'replayState', 'applyTriviaPrefs',
+    liftAll(HOST, ['send', 'triviaKey', 'saveTrivia', 'renderRun', 'finish', 'finishOutcome', 'finishNow', 'replayState', 'applyTriviaPrefs',
                    'finSuspense', 'finSteps', 'finStage', 'finPastAds', 'finMsg', 'withFin', 'sendFinale', 'armFinale', 'restoreFinale', 'startFinale',
                    'finTap', 'autoFinish', 'finSkip', 'finTicker', 'stopFinale', 'finTick', 'finLineText', 'paintFinLine', 'previewFeed', 'previewShow'], 'trivia/host.html') +
-    '; return { render: renderRun, arm: armFinale, withFin: withFin, replay: replayState, prefs: applyTriviaPrefs, restore: restoreFinale, tick: finTick, save: saveTrivia, ends: function(){ return endRoundCalls; } };';
+    '; return { tap: finTap, render: renderRun, arm: armFinale, withFin: withFin, replay: replayState, prefs: applyTriviaPrefs, restore: restoreFinale, tick: finTick, save: saveTrivia, ends: function(){ return endRoundCalls; } };';
   var names = Object.keys(env);
   var api = new Function(names.join(','), src).apply(null, names.map(function (k) { return env[k]; }));
   api.G = G; api.dom = dom; api.clk = clk; api.tv = tv; api.phones = phones; api.posted = posted; api.store = store; api.win = win;
@@ -405,6 +406,9 @@ function hostRig(opts) {
   show('the phones hear how they placed once the winner is on the TV, once', pp.length === 1 && pp[0].rows.length === BOARD.length, pp.length);
   h.clk.advance(5000);
   show('the phones are told only once', h.phones.filter(function (p) { return p.t === 'podium'; }).length === 1);
+  var runAtAfterTap = h.G.finale.runAt;
+  h.clk.advance(3000); h.tap();
+  show('a second tap while the reveal runs never restarts it (the start only moves forward)', h.G.finale.runAt === runAtAfterTap, h.G.finale.runAt - runAtAfterTap);
   var saved = JSON.parse(h.store['vpTriviaGame-v1'] || '{}');
   show('the end-of-night clock is saved on this tablet (a reload carries on)', saved.fin && saved.fin.runAt === h.G.finale.runAt && saved.fin.ended === true && saved.fin.ph === true, JSON.stringify(saved.fin));
   h.btn('finSkip').on.click();
@@ -495,6 +499,12 @@ show('the console loads the shared timeline', /<script src="\/app\/vp-trivia-fin
 show('the TV loads the shared timeline', /<script src="\/app\/vp-trivia-finale\.js"><\/script>/.test(SCREEN));
 show('closing the console mid-show does not pull the TV off it (pagehide leaves it)', /if\(G\.finale && !finPastAds\(\)\) return;\s*\/\/ the end-of-night show/.test(HOST));
 
+(function () {
+  var m = SCREEN.match(/var HOST_TYPES=\{[^}]*\};\s*HOST_TYPES\.finale=\d;/);
+  var HT = m ? new Function(m[0] + '; return HOST_TYPES;')() : {};
+  show('the TV listens to the console\'s finale message (it is a host message type)', !!m && HT.finale === 1 && HT.reveal === 1 && HT.podium === 1, m && JSON.stringify(HT.finale));
+})();
+
 /* =================================================================================== 4 */
 print('\n== 4. Game settings: two switches, both ON (settings.html) ==');
 function setRig(saved, opts) {
@@ -539,6 +549,9 @@ function setRig(saved, opts) {
   c.load(); c.flip(c.sw1);
   show('flicking a switch saves at once, the two keys only (never the console\'s trivia setup)',
        c.saves.length === 1 && c.saves[0].game === 'trivia' && JSON.stringify(c.saves[0].prefs) === '{"end_suspense":true,"round_board":false}', JSON.stringify(c.saves));
+  var junkSw = c.dom.mk('div', 'sw on'); junkSw.setAttribute('data-tk', 'time_s');
+  c.flip(junkSw);
+  show('a switch with any other key writes nothing and saves nothing', c.saves.length === 1 && c.now().time_s === undefined, c.saves.length + ' ' + JSON.stringify(c.now()));
   show('and says "Saved."', c.dom.$('trMsg').textContent === 'Saved.', c.dom.$('trMsg').textContent);
   var d = setRig({}, { group: true });
   d.load(); d.flip(d.sw2);

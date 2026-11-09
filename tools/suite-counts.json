@@ -1055,8 +1055,12 @@
   "checks": 114,
   "counted_by": "lines"
  },
+ "tools/test-trivia-endnight.js": {
+  "checks": 140,
+  "counted_by": "lines"
+ },
  "tools/test-trivia-live-fixes-6nov.js": {
-  "checks": 75,
+  "checks": 47,
   "counted_by": "lines"
  },
  "tools/test-trivia-newlook.js": {
