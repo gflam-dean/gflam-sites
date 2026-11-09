@@ -154,7 +154,7 @@ def existing_venue(RIG):
         r.W.seed('vp_venue_settings', [{'venue_id': V, 'game_prefs': json.loads(json.dumps(HAVE)), 'setup_answers': {}}], replace=True)
         r.db['vp_venue_settings'] = [{'venue_id': V, 'setup_answers': {}}]
         tid, sid = r.open('/app/?venue=' + V, before='try{localStorage.clear()}catch(e){}', width=1024, height=768)
-        opened = r.until(sid, '(document.getElementById("vpGsTitle")||{}).textContent==="Check your games setup"', 40)
+        opened = r.until(sid, '/^Check your games setup(, |$)/.test((document.getElementById("vpGsTitle")||{}).textContent||"")', 40)
         ok('the owner signing in to the console home is asked: "Check your games setup"', opened is True, r.ask(sid, '(document.getElementById("vpGsTitle")||{}).textContent'))
         r.ask(sid, JS_HELP)
         fits('1024 existing start', r.json(sid, FIT))
@@ -170,12 +170,11 @@ def existing_venue(RIG):
         ok('"You\'re ready for your week."', r.until(sid, '(document.getElementById("vpGsTitle")||{}).textContent==="You\'re ready for your week."', 10) is True)
         after = prefs_of(r, V)
         ok('the venue\'s saved settings are exactly as they were (nothing written)', json.dumps(after, sort_keys=True) == json.dumps(HAVE, sort_keys=True), after)
+        # the rig's fake database keeps no client writes (tools/browser-rig/fake-supabase.js), so the record is read where the
+        # page keeps it too: this device's copy, written with the setup_answers save (test-wizard-r10.js checks the save itself)
+        loc = r.ask(sid, 'JSON.parse(localStorage.getItem("vpGameSetup:%s")||"{}").review||""' % V)
+        ok('gone through: recorded as done (review), so it is not asked again', loc == 'done' and r.ask(sid, 'VPGameSetup.wantsReview(VP.getContext())') is False, loc)
         step(r, sid, '__w.c("vpGsDone")', 1.5)
-        rows = [x for x in r_table(r, 'vp_venue_settings') if x.get('venue_id') == V]
-        sa = (rows[0].get('setup_answers') if rows else None) or {}
-        sa_db = [x for x in r.db.get('vp_venue_settings', []) if x.get('venue_id') == V]
-        sa2 = (sa_db[0].get('setup_answers') if sa_db else None) or {}
-        ok('setup_answers.review is "done", so it is not asked again', sa.get('review') == 'done' or sa2.get('review') == 'done', [sa, sa2])
         ok('no script errors', r.ask(sid, 'window.__errs.length') == 0, r.ask(sid, 'JSON.stringify(window.__errs)'))
         r.close_tab(tid)
         tid, sid = r.open('/app/?venue=' + V, width=1024, height=768)
