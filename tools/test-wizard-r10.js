@@ -450,39 +450,37 @@ var BILL = readFile('venueplay/app/billing.html'), INDEX = readFile('venueplay/a
   check('the logo a touch bigger (Dean, round 9 point 2) and the step line in sentence case, no spaced capitals', /\.vpgs-logo\{display:block;height:26px/.test(GS) && !/vpgs-count\{[^}]*letter-spacing/.test(GS) && !/vpgs-count\{[^}]*uppercase/.test(GS));
 
   section('4. THE MEMBERS LIST: WHICH COLUMN IS WHICH (Dean, round 9 point 24)');
-  var csvSrc = BILL.slice(BILL.indexOf('  var CSV_GUESS'), BILL.indexOf('  function csvMatch'));
-  var uq = BILL.slice(BILL.indexOf('  function unquoteCols'), BILL.indexOf('  function importMembers'));
-  var CSV = (new Function(csvSrc + uq + '; return { guess: csvGuess, rows: csvRows, lines: csvLines, decode: csvDecode, delim: csvDelim };'))();
-  var file = 'Surname,Given name,Member No,Joined\nSmith,Jane,142,2020\n"Nguyen, Jr",Sam,143,2021\nBrown,Al,,2022\n';
-  var rows = CSV.rows(file), heads = rows[0];
-  var ix = { number: CSV.guess(heads, 'number'), first: CSV.guess(heads, 'first'), last: CSV.guess(heads, 'last') };
-  check('a club system\'s columns guessed: member number, first name, last name', ix.number === 2 && ix.first === 1 && ix.last === 0, ix);
-  var made = CSV.lines(rows, ix);
-  check('the box filled as "number, first last", the header and a row with no number left out, a comma in a name never splits it', JSON.stringify(made) === JSON.stringify(['142, Jane Smith', '143, Sam Nguyen Jr']), made);
-  check('a different pick is what is used (the venue decides)', JSON.stringify(CSV.lines(rows, { number: 2, first: 0, last: -1 })) === JSON.stringify(['142, Smith', '143, Nguyen Jr']));
-  check('the billing page shows the column picker for an uploaded CSV', /csvMatch\(typeof buf === "string" \? buf : csvDecode\(buf\)\)/.test(BILL) && /id="md-match"/.test(BILL) && /\$\("md-csv"\)\.addEventListener\("change"[\s\S]{0,200}csvFile\(f\)/.test(BILL));
-  function guessAll(file) { var r = CSV.rows(file), hasHead = !/^\s*\d/.test((r[0] || [''])[0] || ''); var ix = { number: CSV.guess(r[0], 'number'), first: CSV.guess(r[0], 'first'), last: CSV.guess(r[0], 'last') }; return CSV.lines(r, ix); }
-  /* THE UPLOAD THAT WAS NOT WORKING (Dean, round 11 note 7): the cause, and each shape of file that failed */
-  var good = ['142, Jane Smith', '143, Sam Taylor'];
-  check('CAUSE 1: Excel on a Mac ends every line with a bare CR; the old reader saw one line and found no member numbers. Now read', JSON.stringify(guessAll('Member No,First Name,Surname\r142,Jane,Smith\r143,Sam,Taylor\r')) === JSON.stringify(good), guessAll('Member No,First Name,Surname\r142,Jane,Smith\r143,Sam,Taylor\r'));
-  check('CAUSE 2: a semicolon separated file (club systems, European Excel) is read', JSON.stringify(guessAll('Member No;First Name;Surname\n142;Jane;Smith\n143;Sam;Taylor\n')) === JSON.stringify(good), guessAll('Member No;First Name;Surname\n142;Jane;Smith\n143;Sam;Taylor\n'));
-  check('a tab separated file, a pipe separated file and a Windows (CRLF) file with a BOM are read', JSON.stringify(guessAll('Member No\tFirst Name\tSurname\n142\tJane\tSmith\n143\tSam\tTaylor')) === JSON.stringify(good) && JSON.stringify(guessAll('Member No|First Name|Surname\n142|Jane|Smith\n143|Sam|Taylor')) === JSON.stringify(good) && JSON.stringify(guessAll('﻿Member No,First Name,Surname\r\n142,Jane,Smith\r\n143,Sam,Taylor\r\n')) === JSON.stringify(good));
-  check('a comma inside quotes still never splits (a semicolon file with "Smith, Jr")', JSON.stringify(guessAll('Member No;First Name;Surname\n142;Jane;"Smith, Jr"\n')) === JSON.stringify(['142, Jane Smith Jr']));
-  /* jsc has no TextDecoder; a small stand-in with the browser's behaviour for the three encodings the reader uses (a real browser has its own) */
+  /* the file reading moved to venueplay/app/vp-memberscsv.js in round 12; tools/test-members-csv.js runs it on real messy files. Here: the old shapes still read, through the same module. */
+  var TDsrc = typeof TextDecoder;
   if (typeof TextDecoder === 'undefined') this.TextDecoder = function (enc, o) { this.enc = String(enc).toLowerCase(); this.fatal = !!(o && o.fatal); };
   if (!this.TextDecoder.prototype.decode) this.TextDecoder.prototype.decode = function (u) {
     var out = '', i = 0, e = this.enc;
     if (e === 'utf-16le' || e === 'utf-16be') { for (; i + 1 < u.length; i += 2) out += String.fromCharCode(e === 'utf-16le' ? u[i] | (u[i + 1] << 8) : (u[i] << 8) | u[i + 1]); return out; }
-    if (e === 'utf-8') { while (i < u.length) { var c = u[i++]; if (c < 128) out += String.fromCharCode(c); else if (c >= 194 && c < 224 && (u[i] & 192) === 128) out += String.fromCharCode(((c & 31) << 6) | (u[i++] & 63)); else if (this.fatal) throw new TypeError('invalid utf-8'); else out += '�'; } return out; }
+    if (e === 'utf-8') { while (i < u.length) { var c = u[i++]; if (c < 128) out += String.fromCharCode(c); else if (c >= 194 && c < 224 && (u[i] & 192) === 128) out += String.fromCharCode(((c & 31) << 6) | (u[i++] & 63)); else if (this.fatal) throw new TypeError('invalid utf-8'); else out += '\ufffd'; } return out; }
     for (; i < u.length; i++) out += String.fromCharCode(u[i]); return out;
   };
+  var CSVW = {}; (new Function('window', readFile('venueplay/app/vp-memberscsv.js')))(CSVW);
+  var CSV = CSVW.VPMembersCsv;
+  function guessAll(file) { return CSV.read(file).lines; }
+  var file = 'Surname,Given name,Member No,Joined\nSmith,Jane,142,2020\n"Nguyen, Jr",Sam,143,2021\nBrown,Al,,2022\n';
+  var pl = CSV.read(file).plan;
+  check('a club system\'s columns guessed: member number, first name, last name', pl.ix.number === 2 && pl.ix.first === 1 && pl.ix.last === 0, pl.ix);
+  check('the box filled as "number, first last", the header and a row with no number left out, a comma in a name never splits it', JSON.stringify(guessAll(file)) === JSON.stringify(['142, Jane Smith', '143, Sam Nguyen Jr']), guessAll(file));
+  var rowsX = CSV.parse(file);
+  check('a different pick is what is used (the venue decides)', JSON.stringify(CSV.build(rowsX, { number: 2, first: 0, last: -1 }, 1).lines) === JSON.stringify(['142, Smith', '143, Nguyen Jr']));
+  check('the billing page shows the column picker for an uploaded CSV', /csvMatch\(typeof buf === "string" \? buf : VPMembersCsv\.decode\(buf\)\)/.test(BILL) && /id="md-match"/.test(BILL) && /\$\("md-csv"\)\.addEventListener\("change"[\s\S]{0,200}csvFile\(f\)/.test(BILL));
+  var good = ['142, Jane Smith', '143, Sam Taylor'];
+  check('CAUSE 1: Excel on a Mac ends every line with a bare CR. Now read', JSON.stringify(guessAll('Member No,First Name,Surname\r142,Jane,Smith\r143,Sam,Taylor\r')) === JSON.stringify(good));
+  check('CAUSE 2: a semicolon separated file is read', JSON.stringify(guessAll('Member No;First Name;Surname\n142;Jane;Smith\n143;Sam;Taylor\n')) === JSON.stringify(good));
+  check('a tab, a pipe and a CRLF file with a BOM are read', JSON.stringify(guessAll('Member No\tFirst Name\tSurname\n142\tJane\tSmith\n143\tSam\tTaylor')) === JSON.stringify(good) && JSON.stringify(guessAll('Member No|First Name|Surname\n142|Jane|Smith\n143|Sam|Taylor')) === JSON.stringify(good) && JSON.stringify(guessAll('\ufeffMember No,First Name,Surname\r\n142,Jane,Smith\r\n143,Sam,Taylor\r\n')) === JSON.stringify(good));
+  check('a comma inside quotes still never splits (a semicolon file with "Smith, Jr")', JSON.stringify(guessAll('Member No;First Name;Surname\n142;Jane;"Smith, Jr"\n')) === JSON.stringify(['142, Jane Smith Jr']));
   function bytes(arr) { var b = new Uint8Array(arr.length); for (var i = 0; i < arr.length; i++) b[i] = arr[i]; return b.buffer; }
   function utf16(str, be) { var a = be ? [0xFE, 0xFF] : [0xFF, 0xFE]; for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); if (be) a.push(c >> 8, c & 255); else a.push(c & 255, c >> 8); } return bytes(a); }
   var txt = 'Member No\tFirst Name\tSurname\r\n142\tJane\tSmith\r\n143\tSam\tTaylor\r\n';
   check('CAUSE 3: Excel "Unicode Text" is UTF-16 (little or big endian); it is decoded and read', JSON.stringify(guessAll(CSV.decode(utf16(txt, false)))) === JSON.stringify(good) && JSON.stringify(guessAll(CSV.decode(utf16(txt, true)))) === JSON.stringify(good));
   var latin = bytes([77, 101, 109, 98, 101, 114, 44, 78, 97, 109, 101, 10, 49, 52, 50, 44, 74, 111, 115, 233, 10]);
   check('a Windows (Latin-1) file with a name like José is read, not dropped', JSON.stringify(guessAll(CSV.decode(latin))) === JSON.stringify(['142, José']), guessAll(CSV.decode(latin)));
-  check('the delimiter is worked out from the header line', CSV.delim('a;b;c') === ';' && CSV.delim('a,b,c') === ',' && CSV.delim('a\tb') === '\t' && CSV.delim('"a;b",c,d') === ',');
+  check('the delimiter is worked out from the lines', CSV.delim('a;b;c') === ';' && CSV.delim('a,b,c') === ',' && CSV.delim('a\tb') === '\t' && CSV.delim('"a;b",c,d') === ',');
   var upAt = BILL.indexOf('id="md-csvbtn"'), pasteAt = BILL.indexOf('id="md-import"'), matchAt = BILL.indexOf('id="md-match"');
   check('UPLOAD FIRST: the Choose a CSV file button comes before the paste box, and the column question comes after the choice (Dean, round 11 note 7)', upAt > 0 && upAt < matchAt && matchAt < pasteAt && /Choose a CSV file<\/button>/.test(BILL) && /Which column is which\?/.test(BILL));
   check('an Excel .xlsx file gets a plain "Save As CSV" message, and a file that cannot be read says so, next to the button', /That is an Excel file\. In Excel choose File, Save As, then CSV/.test(BILL) && /reader\.onerror = function\(\)\{ csvSay\(/.test(BILL) && /id="md-csvmsg"/.test(BILL));
