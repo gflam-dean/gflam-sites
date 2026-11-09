@@ -34,8 +34,8 @@
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
-  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
-  .navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:14px;color:var(--pink)}
+  .navlink{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
   .navlink:hover{color:#fff}
   .venue{margin-left:auto;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
 
@@ -46,8 +46,8 @@
   header{padding-top:env(safe-area-inset-top,0px)}
   .bar,.wrap{padding-left:calc(22px + env(safe-area-inset-left,0px));padding-right:calc(22px + env(safe-area-inset-right,0px))}
   .wrap{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px}
-  .note{font-size:12.5px;color:var(--faint);line-height:1.5}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:14px;color:var(--faint);margin-bottom:9px}
+  .note{font-size:14px;color:var(--faint);line-height:1.5}
   .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px}
   .h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(26px,5vw,38px);color:#fff;line-height:1.02;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:14px}
@@ -68,7 +68,7 @@
   input:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   input[type=date],input[type=time]{color-scheme:dark}
   .field{margin-bottom:14px}
-  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .field label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:600}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   @media (max-width:640px){ .two,.three{grid-template-columns:1fr} }
@@ -81,7 +81,7 @@
   /* stats */
   .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
   .stat{background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:12px 14px;min-width:0}
-  .stat .k{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .stat .k{font-size:14px;color:var(--faint);text-transform:none;letter-spacing:0;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .stat .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:24px;color:#fff;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .v.g{color:var(--gold)}
 
@@ -117,18 +117,18 @@
   .recent li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-2);font-size:14px}
   .recent li:last-child{border-bottom:none}
   .recent .who{font-weight:700;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .recent .meta{color:var(--faint);font-size:12.5px;white-space:nowrap}
+  .recent .meta{color:var(--faint);font-size:14px;white-space:nowrap}
   .recent .void{text-decoration:line-through;opacity:.5}
-  .undo{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;padding:6px 10px;min-height:34px;cursor:pointer}
+  .undo{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);font:inherit;font-size:14px;font-weight:700;padding:6px 10px;min-height:34px;cursor:pointer}
   .undo:hover{border-color:var(--pink);color:#fff}
 
   /* entries list */
   .tbl{width:100%;border-collapse:collapse;font-size:14px}
-  .tbl th{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);padding:8px 8px;border-bottom:1px solid var(--line)}
+  .tbl th{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--faint);padding:8px 8px;border-bottom:1px solid var(--line)}
   .tbl td{padding:10px 8px;border-bottom:1px solid var(--line-2);vertical-align:middle}
   .tbl td.n{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);text-align:right}
   .tbl td.ph{font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap}
-  .pill{display:inline-block;font-size:11px;font-weight:800;border-radius:20px;padding:2px 9px;font-family:'Hanken Grotesk',sans-serif}
+  .pill{display:inline-block;font-size:14px;font-weight:800;border-radius:20px;padding:2px 9px;font-family:'Hanken Grotesk',sans-serif}
   .pill.y{background:rgba(53,208,127,.16);color:var(--win)}
   .pill.n{background:var(--ink-3);color:var(--faint)}
   @media (max-width:640px){ .tbl .hide-s{display:none} }
@@ -138,14 +138,14 @@
   .terms{white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:16px;max-height:420px;overflow:auto}
 
   .winner{text-align:center;padding:22px 16px;border-radius:16px;border:1px solid rgba(255,194,75,.5);background:radial-gradient(500px 200px at 50% 0, rgba(255,194,75,.14), transparent 70%), var(--ink-3)}
-  .winner .eye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--gold)}
+  .winner .eye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;letter-spacing:0;font-size:14px;color:var(--gold)}
   .winner .nm{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,7vw,56px);color:#fff;line-height:1;margin-top:6px}
   .winner .pz{font-weight:700;color:var(--text);margin-top:6px}
   .winner .contact{margin:16px auto 0;max-width:420px;text-align:left;background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;padding:12px 14px;font-size:14px}
   .winner .contact div{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
   .winner .contact b{color:#fff}
   .hist li{display:flex;gap:10px;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-2);font-size:14px;list-style:none}
-  .tvline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:12px}
+  .tvline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-top:12px}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll);flex:none}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
   .warn{padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:14px;line-height:1.5;font-weight:600}
@@ -390,7 +390,7 @@
             <button type="button" class="btn ghost" id="downloadRecordBtn">Download the draw record</button>
             <div class="note" id="downloadRecordMsg" style="margin-top:6px">Every draw at this venue, for your records. Keep it for 7 years.</div>
           </div>
-          <p class="note" style="margin-top:14px">The draw runs on the venueplay server. Every live entry is one equal ticket, so a person with 12 entries is 12 times as likely as a person with one. Each person can win one prize. If a winner cannot be reached, redraw with the reason; it stays on the record.</p>
+          <p class="note" style="margin-top:14px">The draw runs on venueplay. Every live entry is one equal ticket, so a person with 12 entries is 12 times as likely as a person with one. Each person can win one prize. If a winner cannot be reached, redraw with the reason; it stays on the record.</p>
         </div>
       </div>
     </section>
@@ -426,7 +426,7 @@
       var o={ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
       if(ac) o.signal=ac.signal;
       return fetch(VP_GAME_API+path, o).then(function(r){ clearTimeout(to); return r; },
-        function(){ clearTimeout(to); var e=new Error("The venueplay server did not answer. Check the venue wifi and try again."); e.status=0; e.body={}; throw e; });
+        function(){ clearTimeout(to); var e=new Error("venueplay did not answer. Check the venue wifi and try again."); e.status=0; e.body={}; throw e; });
     }).then(function(r){
       return r.json().catch(function(){ return {}; }).then(function(d){
         if(!r.ok){ var e=new Error((window.VP&&VP.hostRefusal?VP.hostRefusal(r.status,d&&d.error):(d&&d.error))||("Something went wrong ("+r.status+")")); e.status=r.status; e.body=d||{}; throw e; }

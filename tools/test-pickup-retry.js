@@ -48,7 +48,7 @@ function slowPost(n, answer) {
   var calls = { n: 0 };
   calls.post = function (path, body) {
     calls.n++; calls.last = { path: path, body: body };
-    if (calls.n <= n) return Promise.reject(new Error('The game server did not answer. Check the venue wifi and try again.'));
+    if (calls.n <= n) return Promise.reject(new Error('venueplay did not answer. Check the venue wifi and try again.'));
     return Promise.resolve({ running: answer });
   };
   return calls;

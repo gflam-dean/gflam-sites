@@ -2033,7 +2033,7 @@
     /* The biggest button on the screen has to say what the game is doing. It used to read "Next
        number" after Finish game (a tap only produced a toast) and while a claim sat waiting (a
        fumbled tap was refused, but the button did not say why). */
-    if(G.status==="running" && G.halt){ b.disabled=true; b.textContent="Stopped by the server: see the message"; }
+    if(G.status==="running" && G.halt){ b.disabled=true; b.textContent="The game stopped: see the message"; }
     else if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
     else if(G.status==="running" && G.claims.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Claim waiting"; }
     /* Not orange, and not "Announce the win". It read like the button that announces the win, so
@@ -2107,16 +2107,16 @@
   function serverRefused(r, what){
     var st=r && r.status, err=(r && r.json && r.json.error) || "";
     var msg = st===401 ? "You have been signed out (that happens after 4 hours). Sign in again, then reload this page: the game comes back where it was."
-            : st===403 ? (err || "The server will not run this game for the venue right now.")
-            : st===409 ? (err || "The server says this game is finished. Start a new game.")
-            : (err || ("The server refused ("+st+")."));
+            : st===403 ? (err || "venueplay will not run this game for the venue right now.")
+            : st===409 ? (err || "This game is finished. Start a new game.")
+            : (err || ("venueplay refused ("+st+")."));
     G.halt={ status:st, msg:msg, what:String(what||"") };
     showToast(msg); syncNextBtn(); setCoach(); saveGame();
   }
   /* THE TABLET FALLBACK SWITCH (19 Oct 2026) is a constant in /app/vp-draw.js, the same list as the
      Worker's. Nothing the server, a venue or a host sends can change it on this tablet. */
   function tabletMayStandIn(){ return window.VPDraw.standInAllowed((__ctx && __ctx.venue && __ctx.venue.au_state) || ""); }
-  var NO_STAND_IN="The server is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
+  var NO_STAND_IN="venueplay is not answering, and this venue does not let the tablet stand in for it. Try again in a moment.";
   function openServerDraw(){
     G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy=G.caller ? "caller" : "";
     G.drawRefused=false;   // the server ANSWERED no: asking again for the tickets' sake is pointless
@@ -2138,7 +2138,7 @@
     if(G.caller){ G.drawMode="local"; saveGame(); return; }
     if(!tabletMayStandIn()) return;   // switched off for this venue's state: the server is asked again next tap
     G.drawMode="local"; G.drawWhy=String(why||"").slice(0,200);
-    showToast("Server not answering. Calling from this tablet for the rest of this game.");
+    showToast("venueplay is not answering. Calling from this tablet for the rest of this game.");
     saveGame();
   }
   /* Resolves {number} from the server, {wait:msg} when the server says the last ball is still
@@ -2363,7 +2363,7 @@
   function goTabletDeal(why){
     if(G.dealMode==="tablet") return;
     G.dealMode="tablet"; G.dealWhy=String(why||"").slice(0,200); G.dealSince=0;
-    showToast("Server not answering. Dealing tickets from this tablet for the rest of this game.");
+    showToast("venueplay is not answering. Dealing tickets from this tablet for the rest of this game.");
     dealOnTablet(); saveGame(); syncNextBtn(); setCoach();
   }
   // The outage path: the tablet's own strips, exactly as every night before 19 Oct 2026.
@@ -2484,7 +2484,7 @@
       var named=claimShown(c);
       claimRefuse(c);
       recordDecision(c, "rejected");
-      if(named || was==="tablet") showToast(c.name+"'s ticket was checked by the server: not a win yet.");
+      if(named || was==="tablet") showToast(c.name+"'s ticket was checked: not a win yet.");
     } else if(!claimShow(c)){
       claimRefuse(c); recordDecision(c, "rejected");
     }

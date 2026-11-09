@@ -203,7 +203,7 @@
       <div class="big">Sign in to run the draw</div>
       <div class="sub" id="signinSub">You need your venue host login to run a members draw.</div>
       <a class="btn pink big vp-inl" id="signinLink" href="../index.html">Go to sign in</a>
-      <p class="note" style="margin-top:14px">The draw runs on the venueplay server so the winning member is picked fairly and logged. Your members list and draws load from your venue automatically.</p>
+      <p class="note" style="margin-top:14px">The draw runs on venueplay so the winning member is picked fairly and logged. Your members list and draws load from your venue automatically.</p>
     </div>
   </div>
 
@@ -325,7 +325,7 @@
         <div class="panel">
           <div class="lbl" style="margin-bottom:0">In the draw <span class="mono vp-gold">(<span id="memberCount">0</span> active)</span></div>
           <div class="members" id="memberList"></div>
-          <p class="note" style="margin-top:10px">Tap a member to enable or disable them. Disabled members (barred or not financial) are skipped. The winner is picked at random on the server from the active members.</p>
+          <p class="note" style="margin-top:10px">Tap a member to enable or disable them. Disabled members (barred or not financial) are skipped. The winner is picked at random by venueplay from the active members.</p>
         </div>
       </div>
 
@@ -403,7 +403,7 @@
       var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
       if(_ac) _opts.signal=_ac.signal;
       return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
-        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+        function(e){ clearTimeout(_to); var te=new Error("venueplay did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
     }).then(readApi); }
 
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----

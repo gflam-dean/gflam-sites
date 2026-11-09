@@ -320,7 +320,7 @@
   function req(method, path, body){ return getToken().then(function(t){
     var opts={ method:method, headers:{ "Authorization":"Bearer "+t } };
     if(body){ opts.headers["Content-Type"]="application/json"; opts.body=JSON.stringify(body); }
-    return fetch(VP_GAME_API+path, opts).catch(function(){ var e=new Error("The game server did not answer. Check the venue wifi and try again."); e.status=0; throw e; });
+    return fetch(VP_GAME_API+path, opts).catch(function(){ var e=new Error("venueplay did not answer. Check the venue wifi and try again."); e.status=0; throw e; });
   }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }); }
 
   var G={ venueId:null, setId:"", title:"", questions:[], editingId:null, step:1, quickDiff:"", libraryTitles:{} };

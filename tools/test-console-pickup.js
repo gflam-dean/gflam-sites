@@ -227,7 +227,7 @@ function sess() { return DB.vp_sessions.filter(function (s) { return s.id === SE
   VP_PICKUP.heard('cTABLET00001');
   show('hearing its OWN heartbeat asks nothing', moved === 0);
   await take(GAME, 'cPHONE000002');   // the host picks it up on their phone
-  var failing = async function () { throw new Error('The game server did not answer.'); };
+  var failing = async function () { throw new Error('venueplay did not answer.'); };
   VP_PICKUP.arm({ post: failing, venueId: VENUE, format: 'trivia', sessionId: function () { return mySession; },
                   cid: function () { return 'cTABLET00001'; }, onMoved: function () { moved++; } });
   still = await VP_PICKUP.check();
