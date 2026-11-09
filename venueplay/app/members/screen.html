@@ -75,8 +75,8 @@
      (54px at 1280) for TVs that crop their edges. */
   .body{position:absolute;inset:8.6cqw 5cqw 3.4cqw 5cqw;   /* the frame between the header and the bottom edge, never a corner anchor */
     display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .layer.hasstrip .body{bottom:12.4cqw}
-  .strip{position:absolute;left:6cqw;right:6cqw;bottom:4.2cqw;min-height:6.6cqw;background:var(--sf);border-radius:1.15cqw;display:flex;align-items:center;justify-content:space-between;gap:3cqw;padding:1.3cqw 2.6cqw;overflow:hidden}
+  .layer.hasstrip .body{bottom:12.8cqw}   /* the strip 4.6cqw off the bottom edge: 59px at 1280, 88px at 1920 */
+  .strip{position:absolute;left:6cqw;right:6cqw;bottom:4.6cqw;min-height:6.6cqw;background:var(--sf);border-radius:1.15cqw;display:flex;align-items:center;justify-content:space-between;gap:3cqw;padding:1.3cqw 2.6cqw;overflow:hidden}
   .strip.center{justify-content:center}
   .strip .sl{display:flex;flex-direction:column;gap:.5cqw;text-align:left;min-width:0}
   .strip .sr{display:flex;flex-direction:column;gap:.5cqw;text-align:right;align-items:flex-end;min-width:0}
@@ -151,7 +151,7 @@
   .resname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:10cqw;line-height:.95;color:#fff;margin-top:1.8cqw;max-width:88cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .wonamt{font-family:'Anton',sans-serif;font-size:13cqw;line-height:.95;color:var(--yl);margin-top:1.2cqw}
   .pstep.roll .wonamt{color:#fff}
-  .pstep .present{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#C9C9D1;margin-top:1.3cqw}
+  .pstep .present{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#C9C9D1;margin-top:2.2cqw}
   .upchip{display:inline-block;margin-top:1.8cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.2cqw;color:#fff;border:.16cqw solid var(--pink);border-radius:.8cqw;padding:.7cqw 1.5cqw}
   .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:3cqw;color:#fff;margin-top:2cqw;line-height:1.2;max-width:88cqw}
   .missed b{font-weight:800}
@@ -173,9 +173,9 @@
   .pstep.roll{background:transparent;border-top:none;box-shadow:none;padding:1.6cqw 0 0;margin-top:2.2cqw;animation:none}
   .roll .rlab{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.6cqw;color:var(--pink);letter-spacing:.02em}
   .pstep.roll .wonamt{font-size:17cqw;color:#fff;margin-top:.4cqw}
-  .pstep.roll.capped{margin-top:1.4cqw;padding-top:.8cqw} .pstep.roll.capped .wonamt{font-size:12.5cqw}
+  .pstep.roll.capped{margin-top:1.4cqw;padding-top:.8cqw} .pstep.roll.capped .wonamt{font-size:11cqw}
   .rhead.capped{font-size:5cqw}
-  .maxband{margin-top:1.6cqw;background:var(--pink);color:#0A0A0B;border-radius:1.15cqw;padding:1.4cqw 3.2cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.6cqw;line-height:1.2}
+  .maxband{margin-top:2.6cqw;background:var(--pink);color:#0A0A0B;border-radius:1.15cqw;padding:1.4cqw 3.2cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.6cqw;line-height:1.2}
   .maxband b{display:block;font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:3.4cqw;letter-spacing:.02em;margin-bottom:.4cqw}
   /* advertising idle */
   .ad{opacity:0;transition:opacity .8s ease}

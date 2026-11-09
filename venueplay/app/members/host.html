@@ -478,7 +478,7 @@
     G.draws.forEach(function(d){ if(d.id===G.currentDrawId) return; var k=days.indexOf(String(d.draw_day||"").toLowerCase()); if(k<0) return;
       var n=(k-wd+7)%7; if(n===0) n=7; if(n<bestN){ bestN=n; best=d; } });
     if(!best) return "";
-    return "Next: <b>"+esc(best.name)+", "+money(best.current_jackpot_cents||0)+"</b>, "+esc(best.draw_day)+(best.draw_time?" "+esc(best.draw_time):"");
+    return "Next: <b>"+esc(best.name)+"</b><br>"+money(best.current_jackpot_cents||0)+", "+esc(best.draw_day)+(best.draw_time?" "+esc(best.draw_time):"");   // two lines on purpose, never broken mid-name
   }
 
   /* SOUTH AUSTRALIA, A PUB (22 Oct 2026 research; Lotteries Regulations 2021 reg 9(2)): a pub's

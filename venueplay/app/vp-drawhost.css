@@ -192,3 +192,8 @@ details.fold .fb{padding:4px 16px 16px;border-top:1px solid var(--line-2)}
 .btn.xl.nextmode:hover{background:var(--pink-deep);filter:none}
 .wcard .pz{text-transform:none;letter-spacing:0;margin-bottom:0}
 .ok b,.hint,.nextp,.flab{text-wrap:balance}
+
+/* design review of the built pages (9 Nov 2026) */
+body{background:var(--ink)}                                            /* flat, as the mock: no pink glow in the corner */
+.btn.xl.pulse{animation:none}                                          /* the big buttons hold their colour; nothing on the card fades */
+.since{text-wrap:balance}

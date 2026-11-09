@@ -1042,7 +1042,7 @@
     if(rs){
       var draws=G.results.length, last=G.results[0];
       rs.textContent = !draws ? "No draws yet" : (draws+(draws===1?" draw. ":" draws. ")+"Last: ticket "+last.numText+
-        (last.outcome==="no_show" ? " was not here" : (last.outcome==="claimed" ? " collected the "+lower(last.prize) : " won the "+lower(last.prize))));
+        ", "+lower(last.prize)+(last.outcome==="no_show" ? ", not here" : ""));
     }
   }
 
