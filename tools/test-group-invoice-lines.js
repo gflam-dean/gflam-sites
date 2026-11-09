@@ -248,6 +248,7 @@ async function main() {
          planLine(5, 2760, 'Remaining time on 5 × Founding Membership (Annual) after 10 Nov 2026', { id: 'il_pr', proration: true, amount: 11040, price: { unit_amount: 2760, recurring: { interval: 'year' } } })]),
     [ROYAL, GRAND, TUGUN], ['The Royal Hotel: 20 players at $27.60 each a year', 'Remaining time on 5 × venueplay plan (annual) after 10 Nov 2026']);
   await sameMoney('drift (our table 44, Stripe 45)', 'receipt', inv([planLine(45, 250, PLAN_M)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)], null);
+  await sameMoney('drift with a big-night line beside the plan line (two lines, not split)', 'receipt', inv([planLine(45, 250, PLAN_M), itemLine('The Royal Hotel - Extra Player - 01/11/2026', 400, 2)]), [ROYAL, GRAND, V('v-tugun', 'Tugun Tavern', 9)], null);
   await sameMoney('a single venue', 'receipt', inv([planLine(20, 250, '20 Players × Founding Membership (Monthly) (at $2.50 / month)')]), [ROYAL], null);
   await sameMoney('the payment reminder, 3-venue group', 'reminder', inv([planLine(45, 250, PLAN_M)], { amount_paid: 0, status: 'draft' }), [ROYAL, GRAND, TUGUN], ROWS3);
   await sameMoney('the payment reminder, with a discount and a big night', 'reminder',
