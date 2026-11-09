@@ -379,6 +379,8 @@ export default {
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
+    /* The weekly members list reminder EMAIL a venue asked for in its game setup (Dean, 10 Nov 2026): Dean's send window, never to a Do not contact venue, once a week. */
+    try { await vpaMembersReminderSweep(env, Date.now()); } catch (e5b) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
     /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
@@ -5313,6 +5315,115 @@ async function vpaProspectReminderSweep(env, nowMs) {
       if (vpaProspectSignedUp(null, fr && fr[0]) && await vpaProspectCardAdded(env, p.founding_id)) out.unpaused = (out.unpaused || 0) + 1;
     }
   } catch (_) {}
+  return out;
+}
+
+/* ===========================================================================
+ * THE WEEKLY MEMBERS LIST REMINDER EMAIL (Dean, 10 Nov 2026, setup wizard round 12 note 9)
+ *
+ * "Would you like a weekly reminder to update your members list? We can email you." A venue that says Email me in the
+ * wizard (or on its Account page) has vp_venue_settings.setup_answers.members_reminder = { how: 'email', day: 'mon'..'sun',
+ * time: 'HH:MM', since: 'YYYY-MM-DD' } (since: the Brisbane day they chose it). This sweep rides the hourly scheduled() trigger
+ * and sends ONE email per venue per week, with these rules:
+ *   - DEAN'S SEND WINDOW: only Monday to Friday, 9am to 12 noon and 2pm to 5pm, the VENUE'S own local time
+ *     (vpaSendAllowedAt). A day or time outside it (a Saturday, 6am) is HELD to the next window, not dropped.
+ *   - NEVER to a venue marked Do not contact (vp_prospects.no_contact = true), and never to a venue that is not active
+ *   - never the day it was chosen: the first email is the first chosen day AFTER that Brisbane day
+ *   - once per week: an audit row (members_reminder_sent) is written BEFORE the send, so a failed audit write sends
+ *     nothing and a retry in the next hour finds the row. Any read that fails means no send (never a second email).
+ * It sends nothing without RESEND_API_KEY. The address is the account's contact email (venueplay_founding), else the
+ * prospect's own.
+ * ======================================================================== */
+const VPA_MR_WEEKDAY = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+const VPA_MR_DAYWORDS = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
+/* the reminder a venue chose by email, cleaned, or null */
+function vpaMembersReminderChoice(answers) {
+  const r = answers && typeof answers === 'object' ? answers.members_reminder : null;
+  if (!r || typeof r !== 'object' || r.how !== 'email') return null;
+  if (!VPA_MR_WEEKDAY[r.day]) return null;
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(r.time || ''));
+  if (!m) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r.since || ''))) return null;   // no day recorded: never guess, send nothing
+  return { day: r.day, time: m[0], hour: parseInt(m[1], 10), since: String(r.since) };
+}
+/* The most recent moment (the start of that local hour) the venue's chosen day and time came round, at or before nowMs, or null */
+function vpaMembersReminderOccurrence(state, ch, nowMs) {
+  const tz = vpaSendTz(state);
+  const p = vpaSendLocal(tz, nowMs);
+  const start = Math.floor(nowMs) - (Math.floor(nowMs) % 1000) - (p.m * 60 + p.s) * 1000;   // the start of this local hour
+  for (let i = 0; i < 24 * 8; i++) {
+    const t = start - i * 3600000, q = vpaSendLocal(tz, t);
+    if (q.wd === VPA_MR_WEEKDAY[ch.day] && q.h === ch.hour) return t;
+  }
+  return null;
+}
+async function vpaMrGet(env, table, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { method: 'GET', headers: vpaHeaders(env) });
+  if (res.status === 404) return { ok: true, rows: [] };   // a table that is not there (migration not run) has no rows
+  if (!res.ok) return { ok: false, rows: [] };
+  const rows = await res.json();
+  return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
+}
+function vpaRenderMembersReminder(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const link = site + '/app/billing.html#draws';
+  const subject = 'Time to update your members list at ' + (o.venueName || 'your venue');
+  const inner =
+    '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Time to update your members list</h1>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
+    + '<p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Here is your weekly reminder to update the members list at ' + vpaEsc(o.venueName || 'your venue')
+    + '. A list that is up to date means the TV draws a real member on your draw night.</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr><td>'
+    + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Update my members list</a>'
+    + '</td></tr></table>'
+    + '<p style="margin:20px 0 0;font-size:14px;line-height:1.6;color:#6a6a75">You asked for this reminder when you set up your games, every ' + VPA_MR_DAYWORDS[o.day] + '. To stop it, open your Account page, then Members draws, and choose No thanks under the weekly reminder.</p>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venueplay team</p>'
+    + '<p style="margin:18px 0 0;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:14px">Need a hand? Just reply to this email, or call ' + VP_SUPPORT_PHONE + ' and press 2.</p>';
+  return { subject: subject, html: vpaVenueEmailCard('Your weekly members list reminder', inner, subject) };
+}
+async function vpaMembersReminderSweep(env, nowMs) {
+  const out = { checked: 0, sent: [], held: 0, skipped: 0 };
+  if (!env.RESEND_API_KEY) return Object.assign(out, { why: 'no RESEND_API_KEY on this Worker' });
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
+  catch (e) { return Object.assign(out, { why: 'could not read the venue settings' }); }
+  for (const r of rows) {
+    const ch = vpaMembersReminderChoice(r.setup_answers);
+    if (!ch) continue;
+    out.checked++;
+    const vq = await vpaMrGet(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue_id) + '&select=id,name,status,au_state,postcode,founding_id&limit=1');
+    const v = vq.ok && vq.rows[0];
+    if (!v || v.status !== 'active') { out.skipped++; continue; }
+    const state = vpaSendState(v);
+    const at = vpaMembersReminderOccurrence(state, ch, nowMs);
+    if (at == null) { out.skipped++; continue; }
+    if (at < vpaBneDayStartMs(ch.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
+    const allowed = vpaSendAllowedAt(state, at);
+    if (nowMs < allowed) { out.held++; continue; }
+    if (!vpaInSendWindow(nowMs, state)) { out.held++; continue; }
+    /* DO NOT CONTACT, read strictly: a read that fails is a no */
+    const pq = await vpaMrGet(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(r.venue_id) + '&select=*&limit=1');
+    if (!pq.ok) { out.skipped++; continue; }
+    const prow = pq.rows[0] || null;
+    if (prow && prow.no_contact === true) { out.skipped++; continue; }
+    let to = '', first = '';
+    if (v.founding_id) {
+      const fq = await vpaMrGet(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1');
+      if (!fq.ok) { out.skipped++; continue; }
+      const f = fq.rows[0]; if (f) { to = String(f.contact_email || '').trim(); first = String(f.contact_name || '').trim().split(/\s+/)[0] || ''; }
+    }
+    if (!to && prow) { to = String(prow.email || '').trim(); first = first || String(prow.contact_name || '').trim().split(/\s+/)[0] || ''; }
+    if (!to) { out.skipped++; continue; }
+    /* ONCE A WEEK: a row since this week's moment means it has gone */
+    const done = await vpaMrGet(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + v.id) + '&action=eq.members_reminder_sent&created_at=gte.' + encodeURIComponent(new Date(at).toISOString()) + '&select=id&limit=1');
+    if (!done.ok || done.rows.length) { out.skipped++; continue; }
+    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: ch.day, time: ch.time });
+    if (!claimed) { out.skipped++; continue; }
+    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: ch.day });
+    let ok = false;
+    try { ok = await vpaSendEmail(env, to, msg.subject, msg.html); } catch (_) { ok = false; }
+    if (ok) out.sent.push(v.id); else out.skipped++;
+  }
   return out;
 }
 

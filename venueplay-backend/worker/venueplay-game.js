@@ -4153,6 +4153,9 @@ const GAME_PREFS_KEYS = {
        The raffle console does not read these yet (noted for the raffle new look). */
     raffle_names:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : ''); if (out.length >= 12) break; } return out; },
     draw_style:    (v) => ({ numbers: 1, barrel: 1, wheel: 1 }[v] ? v : undefined),
+    /* round 12 (Dean, 10 Nov): each raffle says on its own line whether its prizes are the same every week (or draw), one true/false per raffle in order.
+       prizes_weekly above stays: true only while every raffle's is. The raffle console does not read raffle_weekly yet. */
+    raffle_weekly: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (typeof x === 'boolean') out.push(x); if (out.length >= 12) break; } return out.length ? out : undefined; },
     prize_swaps:   gpSwaps,
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
