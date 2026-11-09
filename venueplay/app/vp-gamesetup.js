@@ -1087,7 +1087,7 @@
       input: function (k) { var r = byKey[k]; return r ? r.input() : null; },
       set: function (k, v) { var r = byKey[k]; if (r) r.setTo(v); }
     };
-    if (opts.first) { var tag = el("p", "vpgs-tag", "First time in " + g.name); tag.id = "vpGsFirstTag"; F.body.appendChild(tag); }
+    /* no "First time in <game>" pink line (Dean 10 Nov: no AI look): the title already says which game */
     /* MEMBERS DRAWS: the draw night and time come from the nights step (Dean, round 3: no draw-day question). */
     var memDay = "", memTime = "", memNights = 0;
     if (g.needsDetails) {

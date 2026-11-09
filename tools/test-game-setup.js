@@ -233,7 +233,7 @@ var membersFn = GAMEW.slice(GAMEW.indexOf('async function handleMembersSettings'
   section('6. THE FIRST TIME A SKIPPED GAME IS OPENED');
   P = page({ answers: { games: ['musical'], setup: { musical: 'later' } } });
   var fo = P.GS.firstOpen('musical', P.deps); await settle();
-  check('musical bingo\'s own setup opens over its console', T(P, 'vpGsTitle') === 'Set up musical bingo' && T(P, 'vpGsFirstTag') === 'First time in musical bingo', T(P, 'vpGsTitle'));
+  check('musical bingo\'s own setup opens over its console', T(P, 'vpGsTitle') === 'Set up musical bingo' && !$(P, 'vpGsFirstTag'), T(P, 'vpGsTitle'));
   check('marked "shown" before anything else, for the venue and this device', SAVED.length && SAVED[0].patch.setup_answers.setup.musical === 'shown' && JSON.parse(STORE['vpGameSetup:V1']).setup.musical === 'shown', SAVED[0]);
   var asked = all($(P, 'vpGsBody'), function (e) { return e.getAttribute && e.getAttribute('data-key'); }).map(function (e) { return e.getAttribute('data-key'); });
   check('musical bingo asks its quick questions first: which music, how many rounds, the prizes, and the same prizes every week (Dean, round 8b point 8); the speakers guide lives in More settings', asked.join() === 'playlists,rounds,prize_same,prize_weekly,prizes' && !$(P, 'vpGsSoundHow'), asked);

@@ -69,7 +69,7 @@ def first_open(RIG):
         tid, sid = r.open('/app/trivia/host.html?venue=' + V, width=820, height=1180)
         ok('trivia\'s own setup opens over its console', r.until(sid, '(document.getElementById("vpGsTitle")||{}).textContent==="Set up trivia"', 25) is True,
            r.ask(sid, '(document.getElementById("vpGsTitle")||{}).textContent'))
-        ok('it says it is the first time, and the console is behind it', r.ask(sid, '(document.getElementById("vpGsFirstTag")||{}).textContent') == 'First time in trivia'
+        ok('it opens with no pink "First time in" line, and the console is behind it', r.ask(sid, '!document.getElementById("vpGsFirstTag")') is True
            and r.ask(sid, '!!document.getElementById("cfgCount")') is True)
         # speed bonus sits in More settings, folded on every size since round 8 (Dean, round 7b point 8): open it first
         r.ask(sid, 'document.getElementById("vpGsAdvToggle").click(); document.getElementById("vpGsQ_speed_bonus").click(); true'); time.sleep(0.3)
