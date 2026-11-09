@@ -1887,8 +1887,8 @@
     while(pending.firstChild) host.appendChild(pending.firstChild);
     for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
     adBuilt=true; adsSig=sig;
-    woFit();
     try{ if(window.VPTvHold && window.VPTvHold.drawSetupQr) window.VPTvHold.drawSetupQr(host); }catch(e){}   // the set-up slide's QR, once it is in the page
+    if(typeof woFit==="function") woFit();   // What's on titles and times fitted to their tiles (the suites that lift buildAds alone have no woFit)
     return true;
   }
   /* What's on titles and times fitted to their tiles once they are on the wall, and again when the fonts arrive or the

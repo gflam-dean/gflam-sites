@@ -26,7 +26,7 @@
    that has one (Dean, 3 Nov 2026): the header's top padding is max(12px, env(safe-area-inset-top)), the
    footer's max(14px, env(safe-area-inset-bottom)), never a fixed reserved height, so a phone with no
    island or home bar loses no space. Nothing here is under 15px. The menu button keeps the right-hand corner. */
-.ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 64px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
+.ptop{padding:max(12px, env(safe-area-inset-top, 0px)) 66px 10px 16px;text-align:left;position:sticky;top:0;background:rgba(10,10,11,.92);backdrop-filter:blur(8px);z-index:10;display:flex;align-items:center}
 .ptop .brand{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-left:0;margin-right:auto;max-width:100%;position:static}
 /* THE GREEN DOT BESIDE THE MENU BUTTON, top right (Dean, 3 Nov 2026). The header is its frame (the brand is
    static, so .venue is placed in the header), level with the ≡ button's middle, just left of it. */
@@ -43,6 +43,7 @@
 .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 .venue.nostatus .dot{display:none}   /* no amber dot before a code is tried: it read as "game full" */
 /* the menu button, top right */
+/* 44px (tap size, design review 6 Nov 2026); the header's lane (.ptop padding-right 66px) stops 8px short of it: 14 + 44 + 8. */
 .menubtn{position:absolute;top:calc(max(12px, env(safe-area-inset-top, 0px)) + 6px);right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
 
 /* 2. THE SECOND HEADER ROW */
