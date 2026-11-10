@@ -39,6 +39,8 @@ var cardTitle = new Function(lift(PLAY, 'cardTitle', 'play.html') + 'return card
  ["Thunderstruck", "Thunderstruck"],
  ["(Remastered)", "(Remastered)"],
  ["", ""]].forEach(function (p) { show(JSON.stringify(p[0]) + ' -> ' + JSON.stringify(p[1]), cardTitle(p[0]) === p[1], cardTitle(p[0])); });
+show('a hyphen the title already has gets a word joiner, so the line never breaks there ("My Coo-Ca-Choo")', cardTitle('My Coo-Ca-Choo') === 'My Coo-\u2060Ca-\u2060Choo' && cardTitle('Ob-La-Di Ob-La-Da').split('\u2060').length === 5, JSON.stringify(cardTitle('My Coo-Ca-Choo')));
+show('a lone dash between words is left alone ("Song - Live" style spacing is untouched)', cardTitle('A - B') === 'A - B');
 show('the square is built from cardTitle, and the full title stays as its label', /ct\.textContent=cardTitle\(titles\[i\]\); cell\.setAttribute\("aria-label", titles\[i\]\);/.test(PLAY));
 
 print('\n== 3. the fitter: one size, 15px floor, wider before smaller ==');
@@ -84,10 +86,9 @@ show('the note text is 15px in the slot', /#vCard \.noteslot \.bingonote\{[^}]*f
   while ((m = re.exec(PLAY))) notes.push(m[1]);
   var lits = [];
   notes.forEach(function (n) { (n.match(/"[^"]*"/g) || []).forEach(function (x) { lits.push(x.slice(1, -1)); }); });
-  /* the longest note as a player sees it: two lines of about 34 characters at 15px on a 360 phone */
-  var early = (function () { var f = '1 marked song has not played yet. Tap the orange one to unmark it.'; return f; })();
-  var longest = ['Not yet. The songs for that pattern have not all played. Keep listening!', 'The host checked your card and it is not a winner yet. Keep playing!', 'One moment, your card is still connecting. Try again in a few seconds.', early, '12 marked songs have not played yet. Tap an orange one to unmark it.'];
-  show('every note is short enough for two lines at 360 (72 characters or fewer)', longest.every(function (t) { return t.length <= 72; }), longest.map(function (t) { return t.length; }));
+  /* every sentence a note can show, as written in the page: two lines of about 36 characters at 15px on a 360 phone */
+  var long = lits.filter(function (t) { return t.length > 72; });
+  show('every note is short enough for two lines at 360 (72 characters or fewer; ' + lits.length + ' sentences read from the page)', lits.length >= 8 && !long.length, long);
   show('the early-mark note is the short one now', PLAY.indexOf('" not played yet. Tap "+(early.length===1?"the":"an")+" orange one to unmark it."') > 0);
   show('no note says "bingo"', !/bingo/i.test(lits.join(' ')), lits.join(' | '));
 })();

@@ -220,7 +220,7 @@
   .ptop{border-bottom:none}
   .view{padding:0}
   #vCard{padding:2px 16px 0;display:flex;flex-direction:column}
-  #vCard #cardWrap{position:relative;flex:1 1 0;min-height:0;margin:0;display:flex;overflow-x:auto;overflow-y:visible;scrollbar-width:none}
+  #vCard #cardWrap{position:relative;flex:1 1 0;min-height:352px;margin:0;display:flex;overflow-x:auto;overflow-y:visible;scrollbar-width:none}
   #vCard #cardWrap::-webkit-scrollbar{display:none}
   #vCard .card5{gap:8px;grid-template-rows:repeat(5,minmax(64px,1fr));min-height:352px;flex:none;align-self:stretch;width:calc(100% * var(--aw,1))}
   /* THE CARD NEVER CHANGES SIZE FOR A NOTE (Dean, 10 Nov 2026 live sign-off: the orange "marked songs not played yet"
@@ -766,7 +766,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!size){
       setAw(grid, WIDEN_MAX);
       for(s=min-0.5; s>=floor; s-=0.5){ if(cardFits(todo, s)){ size=s; break; } }
-      if(!size){ size=floor; cardFits(todo, floor); }
+      if(!size){
+        size=floor; cardFits(todo, floor);
+        /* A WORD NO PHONE CAN HOLD ("Supercalifragilisticexpialidocious", 34 letters): at the floor on the widest card,
+           that one word is narrowed whole, never split and never spilling out of its square. */
+        for(i=0;i<todo.length;i++){
+          var t=todo[i], tcs=getComputedStyle(t.el), tW=t.el.clientWidth-parseFloat(tcs.paddingLeft)-parseFloat(tcs.paddingRight);
+          if(t.sp.offsetWidth>tW+0.5) t.sp.style.transform="scaleX("+Math.max(0.3, tW/t.sp.offsetWidth).toFixed(3)+")";
+        }
+      }
     }
     grid._fit=size;
     for(i=0;i<cells.length;i++){ cells[i]._fit=size; if(cells[i].classList.contains("free")) cells[i].style.fontSize=size+"px"; }
@@ -969,7 +977,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function cardTitle(t){
     var s=String(t||"").trim(), prev;
     do{ prev=s; s=s.replace(/\s+[\(\[][^\(\)\[\]]*[\)\]]\s*$/, "").trim(); } while(s!==prev && s);
-    return s || String(t||"").trim();
+    s = s || String(t||"").trim();
+    /* A hyphen the title already has ("My Coo-Ca-Choo", "Ob-La-Di") is not a place to break the line either: a word
+       joiner after it keeps the word whole (Dean, 10 Nov 2026: no hyphen breaks, ever). */
+    return s.replace(/-(?=\S)/g, "-\u2060");
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
   /* The answer to a BINGO! tap: in the line under the card AND in the note on the button, where the player is

@@ -510,7 +510,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      at most two lines, and steps down in size (to 60%) until the longest word fits the tile's width and the lines fit its
      height. Never "..." and never a hyphen. In the strip only, a trailing bracket ("(Hot Summer Night)", "[Radio Edit]")
      is dropped so the main title can be read whole. */
-  function stripTitle(t){ var s=String(t||""), m=s.replace(/\s*[\(\[][^\)\]]*[\)\]]\s*$/, ""); return m.trim() ? m : s; }
+  /* the same rule as the phone square's cardTitle() (app/musical/play.html): every trailing bracketed part goes,
+     a title that is only brackets or starts with them keeps them */
+  function stripTitle(t){ var s=String(t||"").trim(), prev; do{ prev=s; s=s.replace(/\s+[\(\[][^\(\)\[\]]*[\)\]]\s*$/, "").trim(); } while(s!==prev && s); return s || String(t||"").trim(); }
   function fitStrip(b){
     try{
       var ts=b.querySelectorAll ? b.querySelectorAll(".ptok") : [];
