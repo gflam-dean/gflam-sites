@@ -319,6 +319,8 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setup-help.js"></script>
+<script src="../vp-gamesetup.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
@@ -1420,7 +1422,8 @@
       loadRaffles(slug);   // two or more raffles: the picker, and each raffle's own saved prizes
       restoreRaffle().then(function(recovered){   // recover a live raffle first; only pre-fill if there was none
         G.recovered=!!recovered;
-        startRafflePrefs().catch(function(){});   // the venue's setup; a recovered raffle takes only its prize buttons
+        startRafflePrefs().catch(function(){})   // the venue's setup; a recovered raffle takes only its prize buttons
+          .then(function(){ if(!G.recovered && window.VPGameSetup) VPGameSetup.firstOpen("raffles", { onSaved:function(){ location.reload(); } }); });   // INBOX 104: a skipped game's own setup, the first time
         var tv=tvFromUrl();
         if(tv){ connect(tv); }
         else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+slug)); }

@@ -54,6 +54,15 @@ fetch = async function (url, opts) {
     DB.vp_bingo_draw_balls.push({ draw_id: p, ordinal: d.draw_index, number: d.draw_order[d.draw_index - 1], source: 'server', drawn_at: new Date().toISOString(), withdrawn_at: null });
     return resp(200, [{ number: d.draw_order[d.draw_index - 1], new_index: d.draw_index }]);
   }
+  /* vp_set_game_prefs (migration 121): MERGES one game's keys into vp_venue_settings.game_prefs, as the live
+     function does, so a console or the setup wizard (tools/game-setup-in-chrome.test.py, 6 Nov 2026) saves for real. */
+  if (m === 'POST' && /\/rest\/v1\/rpc\/vp_set_game_prefs/.test(u)) {
+    var gp = JSON.parse(opts.body), row = DB.vp_venue_settings.filter(function (x) { return x.venue_id === gp.p_venue_id; })[0];
+    if (!row) { row = { venue_id: gp.p_venue_id }; DB.vp_venue_settings.push(row); }
+    row.game_prefs = row.game_prefs || {};
+    row.game_prefs[gp.p_game] = Object.assign({}, row.game_prefs[gp.p_game] || {}, gp.p_prefs);
+    return resp(200, row.game_prefs);
+  }
   if (m === 'POST' && /\/rest\/v1\/(\w+)/.test(u)) {
     var t = /\/rest\/v1\/(\w+)/.exec(u)[1], b = JSON.parse(opts.body);
     (Array.isArray(b) ? b : [b]).forEach(function (r) {

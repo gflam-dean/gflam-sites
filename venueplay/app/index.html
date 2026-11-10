@@ -730,7 +730,10 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-setupuse.js"></script>
 <script src="/app/vp-venuepick.js"></script>
+<script src="vp-setup-help.js"></script>
+<script src="vp-gamesetup.js"></script>
 <script src="vp-tvpaired.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="vp-about-you.js"></script>
@@ -1529,7 +1532,14 @@
     /* ONE MORE QUESTION ON A LATER SIGN-IN (Dean, 5 Nov 2026, INBOX 46): once the guide is done or closed, a new
        venue's owner or manager may be asked ONE short optional thing the Account page lacks, as a sheet over the
        console. Never more than one a sign-in; "Not now" always works. It never blocks the console. */
-    if(window.VPFirstRun && VPFirstRun.ask && window.VP && VP.getClient){ try{ VPFirstRun.ask(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); }catch(e){} }
+    /* EXISTING VENUES GO THROUGH THE NEW GAMES SETUP TOO (Dean, 9 Nov 2026): on a sign-in, the owner or a manager only,
+       never while a game is running here or on another device, already filled in with the venue's own settings so
+       clicking through changes nothing; "Not ready yet? Remind me next time" waits for the next sign-in. It takes the
+       place of the one later-sign-in question; the console carries on underneath. */
+    if(window.VPGameSetup && VPGameSetup.wantsReview && VPGameSetup.wantsReview(__ctx) && window.VP && VP.getClient){
+      try{ VPGameSetup.review(__ctx, { client:VP.getClient(), VP:VP, busy:function(){ return !!liveNightElsewhere(); } }).catch(function(){}); }catch(e){}
+    }
+    else if(window.VPFirstRun && VPFirstRun.ask && window.VP && VP.getClient){ try{ VPFirstRun.ask(__ctx, { client:VP.getClient(), VP:VP, onClose:function(){} }); }catch(e){} }
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
     // Fallback (no venue slug / helper missing): the old type-the-code screen.
     go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();
@@ -3038,6 +3048,9 @@
     if(p && p.prizes && typeof p.prizes==="object"){   // known for the whole night, even in a game brought back
       Object.keys(p.prizes).forEach(function(k){ if(typeof p.prizes[k]==="string" && p.prizes[k] && !Object.prototype.hasOwnProperty.call(BPRIZES, k)) BPRIZES[k]=p.prizes[k]; });
     }
+    /* THE USUAL PRIZES AS TAP-AND-GO BUTTONS (the setup wizard, Dean 6 Nov 2026), under the prize box and the new game
+       box, like the raffle's. Known for the whole night. */
+    if(p && Array.isArray(p.prize_list)){ G.prizeList=p.prize_list; paintBingoPrizeButtons(); }
     if(!p || G.status!=="setup") return;   // a lobby or game brought back keeps its own choices
     if(typeof p.caller==="boolean"){ var cc=$("callerChk"); if(cc && !cc.disabled) cc.checked=p.caller; }
     if(p.pattern){ var ps=$("patternSel"), k=String(p.pattern).replace(/"/g,"");
@@ -3047,6 +3060,11 @@
     if(p.cards!=null){ var cs=$("cardsSel"); if(cs) cs.value=String(clampCards(p.cards)); }
     if(typeof p.allow_early==="boolean"){ G.allowEarly=p.allow_early; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=p.allow_early; if(b) b.checked=p.allow_early; }
     syncPatEdit(); renderConsole();
+  }
+  function paintBingoPrizeButtons(){
+    if(!window.VPSetupUse || !G.prizeList) return;
+    VPSetupUse.prizeButtons(document, $("prizeInput"), G.prizeList, function(x){ var pi=$("prizeInput"); pi.value=x; pi._auto=null; notePrize($("patternSel").value, x); queueBingoPrefs(); }, "bingoPrizeBtns");
+    VPSetupUse.prizeButtons(document, $("ngPrize"), G.prizeList, function(x){ var ng=$("ngPrize"); ng.value=x; ng._auto=null; }, "ngPrizeBtns");
   }
   var _bingoPrefs=(window.VP && VP.gamePrefs) ? VP.gamePrefs("bingo", { venueId:function(){ return (__ctx && __ctx.venue && __ctx.venue.id) || ""; },
     api:function(){ return VP_GAME_API; }, token:vpHostToken, collect:bingoPrefs, apply:applyBingoPrefs }) : null;
@@ -4555,6 +4573,7 @@
     $("headerTag").textContent="Bingo";
     // the venue's own patterns into every pattern list (nothing shows until migration 118 is live), then its saved setup
     Promise.resolve(loadCustomPatterns()).then(startBingoPrefs, startBingoPrefs).catch(function(){});
+    if(window.VPGameSetup) VPGameSetup.firstOpen("bingo", { onSaved:function(){ location.reload(); } });   // a game skipped in the setup wizard opens its own setup the first time (INBOX 104)
     syncBingoPaidChoice();
   }
 

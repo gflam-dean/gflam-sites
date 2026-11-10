@@ -187,6 +187,10 @@
   "checks": 153,
   "counted_by": "lines"
  },
+ "tools/game-setup-in-chrome.test.py": {
+  "checks": 158,
+  "counted_by": "lines"
+ },
  "tools/gate-record.test.py": {
   "checks": 60,
   "counted_by": "lines"
@@ -385,6 +389,10 @@
  },
  "tools/settings-and-logos-in-chrome.test.py": {
   "checks": 23,
+  "counted_by": "lines"
+ },
+ "tools/setup-use-in-chrome.test.py": {
+  "checks": 16,
   "counted_by": "lines"
  },
  "tools/share-card-in-chrome.test.py": {
@@ -611,6 +619,14 @@
   "checks": 171,
   "counted_by": "lines"
  },
+ "tools/test-game-setup.js": {
+  "checks": 218,
+  "counted_by": "lines"
+ },
+ "tools/test-games-answers.js": {
+  "checks": 91,
+  "counted_by": "lines"
+ },
  "tools/test-gaming-rules-letters-15-oct.js": {
   "checks": 72,
   "counted_by": "lines"
@@ -683,8 +699,16 @@
   "checks": 42,
   "counted_by": "lines"
  },
+ "tools/test-members-csv.js": {
+  "checks": 34,
+  "counted_by": "lines"
+ },
  "tools/test-members-paged.js": {
   "checks": 14,
+  "counted_by": "lines"
+ },
+ "tools/test-members-reminder.js": {
+  "checks": 33,
   "counted_by": "lines"
  },
  "tools/test-monthly-report.js": {
@@ -999,6 +1023,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "tools/test-setup-use.js": {
+  "checks": 28,
+  "counted_by": "lines"
+ },
  "tools/test-shared-links-absolute.js": {
   "checks": 6,
   "counted_by": "lines"
@@ -1211,6 +1239,10 @@
   "checks": 10,
   "counted_by": "lines"
  },
+ "tools/test-wizard-r10.js": {
+  "checks": 199,
+  "counted_by": "lines"
+ },
  "tools/touring-cards.test.py": {
   "checks": 70,
   "counted_by": "lines"
@@ -1315,8 +1347,12 @@
   "checks": 376,
   "counted_by": "lines"
  },
+ "tools/wizard-r10-in-chrome.test.py": {
+  "checks": 109,
+  "counted_by": "lines"
+ },
  "tools/wizard-v2-in-chrome.test.py": {
-  "checks": 30,
+  "checks": 36,
   "counted_by": "lines"
  },
  "touring-backend/lib/touring-api.test.js": {

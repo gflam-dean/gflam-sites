@@ -20,7 +20,7 @@ globalThis.crypto = { getRandomValues:function(b){ for(var i=0;i<b.length;i++) b
                       subtle:{ digest: async function(){ return new ArrayBuffer(32); } } };
 function TextEncoder(){} TextEncoder.prototype.encode = function(s){ return new Uint8Array(0); };
 function setTimeout(f){ return 0; } function clearTimeout(){}
-function URL(u){ this.href=u; var q=u.indexOf('?'); this.pathname=(q<0?u:u.slice(0,q)).replace(/^https?:\/\/[^\/]+/,''); var sp={}; if(q>=0) u.slice(q+1).split('&').forEach(function(p){ var i=p.indexOf('='); sp[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); this.searchParams={ get:function(k){ return sp[k]==null?null:sp[k]; } }; }
+function URL(u){ this.href=u; var q=u.indexOf('?'); this.pathname=(q<0?u:u.slice(0,q)).replace(/^https?:\/\/[^\/]+/,''); var sp={}; if(q>=0) u.slice(q+1).split('&').forEach(function(p){ var i=p.indexOf('='); sp[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); this.searchParams={ get:function(k){ return sp[k]==null?null:sp[k]; } }; this.searchParams[Symbol.iterator]=function(){ return Object.keys(sp).map(function(k){ return [k, sp[k]]; })[Symbol.iterator](); }; }   // iterable like the real one: Object.fromEntries(url.searchParams) (/host/game-prefs GET)
 
 function cmp(a,b){ if(a===b) return 0; if(a==null) return 1; if(b==null) return -1; return a>b?1:-1; }
 function query(table, qs){

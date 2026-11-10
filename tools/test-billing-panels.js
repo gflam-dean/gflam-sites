@@ -230,6 +230,8 @@ function makePage(opts) {
   var renderHosts = function (h) { hostRenders.push(h); };
   var buildHostVenuePicker = function () {};
   /* Not under test: how a night is drawn. Record what it was handed. */
+  /* Not under test: the members list reminder card under the draw (round 11, 12; covered by test-wizard-r10.js and test-members-reminder.js). */
+  var mdRemindLoad = function () {}, mdRemindOpen = function () {};
   var renderNights = function (n) { $('nights').innerHTML = 'rendered ' + (n || []).length; };
 
   eval(SRC);

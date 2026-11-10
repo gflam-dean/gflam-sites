@@ -68,7 +68,7 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class Rig(object):
-    def __init__(self, hold=None, host_pages=()):
+    def __init__(self, hold=None, host_pages=(), review=False):
         """`hold` is {path: seconds}: the local site sits on that file for that long before serving it,
         as slow pub wifi does, so a test can look at a page whose scripts have not all arrived.
         `host_pages` adds pages served with the host signed in, beside /app/index.html and the purchase
@@ -76,6 +76,10 @@ class Rig(object):
         ask sees exactly what it saw before."""
         self.hold = dict(hold or {})
         self.host_pages = tuple(host_pages or ())
+        # The rig's venue is months old, so its owner would be asked to check the new games setup (VPGameSetup.review,
+        # Dean 9 Nov 2026) on every console it opens. Suites that are not about that say so, as every rig page always
+        # has; review=True (tools/wizard-r10-in-chrome.test.py) lets it open.
+        self.review = bool(review)
         self.W = Worker()
         W = self.W
         self.db = {
@@ -164,6 +168,8 @@ class Rig(object):
         self.B.call('Page.enable', {}, session=sid)
         if width:
             self.B.call('Emulation.setDeviceMetricsOverride', {'width': width, 'height': height or 800, 'deviceScaleFactor': 1, 'mobile': width < 600}, session=sid)
+        if not self.review:
+            self.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': 'window.__vpRigNoReview=true;'}, session=sid)
         if before:
             self.B.call('Page.addScriptToEvaluateOnNewDocument', {'source': before}, session=sid)
         self.B.call('Page.navigate', {'url': self.base + path}, session=sid)

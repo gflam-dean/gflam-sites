@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 08:36 · afbd1bd4';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -379,6 +379,8 @@ export default {
     /* The monthly report email (31 Oct 2026). OFF: it returns before reading anything unless
        MONTHLY_REPORTS is 'on', and then only acts on the 1st to the 3rd, 2am to 7am Brisbane. */
     try { await vprMonthlySweep(env, Date.now()); } catch (e5) { /* the next tick looks again */ }
+    /* The weekly members list reminder EMAIL a venue asked for in its game setup (Dean, 10 Nov 2026): Dean's send window, never to a Do not contact venue, once a week. */
+    try { await vpaMembersReminderSweep(env, Date.now()); } catch (e5b) { /* the next tick looks again */ }
     /* HQ's stored copy of last month (migration 136): 2am to 7am on the 1st, once. Sends nothing. */
     try { await vprStoreHqMonth(env, Date.now()); } catch (e6) { /* the next tick looks again */ }
     /* HQ's sign-in texts queued outside 9am to 8pm (migration 152, 4 Nov 2026). Off until texts are switched on. */
@@ -5317,6 +5319,115 @@ async function vpaProspectReminderSweep(env, nowMs) {
 }
 
 /* ===========================================================================
+ * THE WEEKLY MEMBERS LIST REMINDER EMAIL (Dean, 10 Nov 2026, setup wizard round 12 note 9)
+ *
+ * "Would you like a weekly reminder to update your members list? We can email you." A venue that says Email me in the
+ * wizard (or on its Account page) has vp_venue_settings.setup_answers.members_reminder = { how: 'email', day: 'mon'..'sun',
+ * time: 'HH:MM', since: 'YYYY-MM-DD' } (since: the Brisbane day they chose it). This sweep rides the hourly scheduled() trigger
+ * and sends ONE email per venue per week, with these rules:
+ *   - DEAN'S SEND WINDOW: only Monday to Friday, 9am to 12 noon and 2pm to 5pm, the VENUE'S own local time
+ *     (vpaSendAllowedAt). A day or time outside it (a Saturday, 6am) is HELD to the next window, not dropped.
+ *   - NEVER to a venue marked Do not contact (vp_prospects.no_contact = true), and never to a venue that is not active
+ *   - never the day it was chosen: the first email is the first chosen day AFTER that Brisbane day
+ *   - once per week: an audit row (members_reminder_sent) is written BEFORE the send, so a failed audit write sends
+ *     nothing and a retry in the next hour finds the row. Any read that fails means no send (never a second email).
+ * It sends nothing without RESEND_API_KEY. The address is the account's contact email (venueplay_founding), else the
+ * prospect's own.
+ * ======================================================================== */
+const VPA_MR_WEEKDAY = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+const VPA_MR_DAYWORDS = { mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday', sun: 'Sunday' };
+/* the reminder a venue chose by email, cleaned, or null */
+function vpaMembersReminderChoice(answers) {
+  const r = answers && typeof answers === 'object' ? answers.members_reminder : null;
+  if (!r || typeof r !== 'object' || r.how !== 'email') return null;
+  if (!VPA_MR_WEEKDAY[r.day]) return null;
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(r.time || ''));
+  if (!m) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r.since || ''))) return null;   // no day recorded: never guess, send nothing
+  return { day: r.day, time: m[0], hour: parseInt(m[1], 10), since: String(r.since) };
+}
+/* The most recent moment (the start of that local hour) the venue's chosen day and time came round, at or before nowMs, or null */
+function vpaMembersReminderOccurrence(state, ch, nowMs) {
+  const tz = vpaSendTz(state);
+  const p = vpaSendLocal(tz, nowMs);
+  const start = Math.floor(nowMs) - (Math.floor(nowMs) % 1000) - (p.m * 60 + p.s) * 1000;   // the start of this local hour
+  for (let i = 0; i < 24 * 8; i++) {
+    const t = start - i * 3600000, q = vpaSendLocal(tz, t);
+    if (q.wd === VPA_MR_WEEKDAY[ch.day] && q.h === ch.hour) return t;
+  }
+  return null;
+}
+async function vpaMrGet(env, table, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { method: 'GET', headers: vpaHeaders(env) });
+  if (res.status === 404) return { ok: true, rows: [] };   // a table that is not there (migration not run) has no rows
+  if (!res.ok) return { ok: false, rows: [] };
+  const rows = await res.json();
+  return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
+}
+function vpaRenderMembersReminder(env, o) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const link = site + '/app/billing.html#draws';
+  const subject = 'Time to update your members list at ' + (o.venueName || 'your venue');
+  const inner =
+    '<h1 style="margin:0;font-size:24px;line-height:1.25;color:#0A0A0B;font-weight:800">Time to update your members list</h1>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
+    + '<p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Here is your weekly reminder to update the members list at ' + vpaEsc(o.venueName || 'your venue')
+    + '. A list that is up to date means the TV draws a real member on your draw night.</p>'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr><td>'
+    + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Update my members list</a>'
+    + '</td></tr></table>'
+    + '<p style="margin:20px 0 0;font-size:14px;line-height:1.6;color:#6a6a75">You asked for this reminder when you set up your games, every ' + VPA_MR_DAYWORDS[o.day] + '. To stop it, open your Account page, then Members draws, and choose No thanks under the weekly reminder.</p>'
+    + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venueplay team</p>'
+    + '<p style="margin:18px 0 0;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:14px">Need a hand? Just reply to this email, or call ' + VP_SUPPORT_PHONE + ' and press 2.</p>';
+  return { subject: subject, html: vpaVenueEmailCard('Your weekly members list reminder', inner, subject) };
+}
+async function vpaMembersReminderSweep(env, nowMs) {
+  const out = { checked: 0, sent: [], held: 0, skipped: 0 };
+  if (!env.RESEND_API_KEY) return Object.assign(out, { why: 'no RESEND_API_KEY on this Worker' });
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
+  catch (e) { return Object.assign(out, { why: 'could not read the venue settings' }); }
+  for (const r of rows) {
+    const ch = vpaMembersReminderChoice(r.setup_answers);
+    if (!ch) continue;
+    out.checked++;
+    const vq = await vpaMrGet(env, 'vp_venues', 'id=eq.' + encodeURIComponent(r.venue_id) + '&select=id,name,status,au_state,postcode,founding_id&limit=1');
+    const v = vq.ok && vq.rows[0];
+    if (!v || v.status !== 'active') { out.skipped++; continue; }
+    const state = vpaSendState(v);
+    const at = vpaMembersReminderOccurrence(state, ch, nowMs);
+    if (at == null) { out.skipped++; continue; }
+    if (at < vpaBneDayStartMs(ch.since) + 86400000) { out.skipped++; continue; }   // not the day they chose it: the first one is after that
+    const allowed = vpaSendAllowedAt(state, at);
+    if (nowMs < allowed) { out.held++; continue; }
+    if (!vpaInSendWindow(nowMs, state)) { out.held++; continue; }
+    /* DO NOT CONTACT, read strictly: a read that fails is a no */
+    const pq = await vpaMrGet(env, 'vp_prospects', 'venue_id=eq.' + encodeURIComponent(r.venue_id) + '&select=*&limit=1');
+    if (!pq.ok) { out.skipped++; continue; }
+    const prow = pq.rows[0] || null;
+    if (prow && prow.no_contact === true) { out.skipped++; continue; }
+    let to = '', first = '';
+    if (v.founding_id) {
+      const fq = await vpaMrGet(env, 'venueplay_founding', 'id=eq.' + encodeURIComponent(v.founding_id) + '&select=contact_email,contact_name&limit=1');
+      if (!fq.ok) { out.skipped++; continue; }
+      const f = fq.rows[0]; if (f) { to = String(f.contact_email || '').trim(); first = String(f.contact_name || '').trim().split(/\s+/)[0] || ''; }
+    }
+    if (!to && prow) { to = String(prow.email || '').trim(); first = first || String(prow.contact_name || '').trim().split(/\s+/)[0] || ''; }
+    if (!to) { out.skipped++; continue; }
+    /* ONCE A WEEK: a row since this week's moment means it has gone */
+    const done = await vpaMrGet(env, 'vp_admin_audit', 'target=eq.' + encodeURIComponent('venue:' + v.id) + '&action=eq.members_reminder_sent&created_at=gte.' + encodeURIComponent(new Date(at).toISOString()) + '&select=id&limit=1');
+    if (!done.ok || done.rows.length) { out.skipped++; continue; }
+    const claimed = await vpaAudit(env, { actorId: null, label: 'automatic (members list reminder)' }, 'members_reminder_sent', 'venue:' + v.id, { day: ch.day, time: ch.time });
+    if (!claimed) { out.skipped++; continue; }
+    const msg = vpaRenderMembersReminder(env, { venueName: v.name, firstName: first, day: ch.day });
+    let ok = false;
+    try { ok = await vpaSendEmail(env, to, msg.subject, msg.html); } catch (_) { ok = false; }
+    if (ok) out.sent.push(v.id); else out.skipped++;
+  }
+  return out;
+}
+
+/* ===========================================================================
  * ONE-CLICK SIGN-IN: "Open your VenuePlay" in the prospect welcome (migration 123)
  *
  * Dean, 28 Oct 2026: "Can we do a link to click that automatically goes to that page so there's no
@@ -9618,8 +9729,10 @@ function vpaAlertSubject(kind, rest) {
 /* replyTo: where a reply lands. hello@ unless the sender says otherwise; the HQ welcome and the
    onboarding guide say support@, because a reply to either is a setup question.
    headers: extra message headers, only ever vpUnsubHeaders() for a MARKETING email (26 Oct 2026).
-   A transactional email passes nothing and goes out exactly as before. */
-async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
+   A transactional email passes nothing and goes out exactly as before.
+   attachments: optional [{ filename, content }] with content already base64, as Resend takes it. Only
+   the internal "What venues play" email to Dean passes one (its CSV); every other caller passes none. */
+async function vpaSendEmail(env, to, subject, html, replyTo, headers, attachments) {
   if (!env.RESEND_API_KEY || !to) return false;
   const msg = {
     from: 'venueplay <hello@send.venueplay.com.au>',
@@ -9632,6 +9745,7 @@ async function vpaSendEmail(env, to, subject, html, replyTo, headers) {
     text: helpPlainFromHtml(html),
   };
   if (headers && typeof headers === 'object' && Object.keys(headers).length) msg.headers = headers;
+  if (Array.isArray(attachments) && attachments.length) msg.attachments = attachments.map((a) => ({ filename: String(a.filename), content: String(a.content) }));
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
@@ -16135,6 +16249,27 @@ async function vpaHandleMonthReport(request, env, json) {
   let month = String(_b.body.month || '').trim() || vprLastMonth(now);
   if (!vprMonthOk(month) || month > vprThisMonth(now)) return json({ error: 'Pick a month that has started.' }, 400);
   const canRefresh = ['owner', 'accounts'].indexOf(actor.role) !== -1;
+  /* action 'games-preview': exactly what the monthly "What venues play" email to Dean would say, built
+     from the answers as they stand. Owner only. Sends nothing, writes nothing. */
+  if (_b.body.action === 'games-preview') {
+    if (actor.role !== 'owner') return json({ error: 'Only an owner login can preview the games email.' }, 403);
+    let run;
+    try { run = await vprGamesDryRun(env, month); }
+    catch (e) { return json({ error: 'Could not build the preview just now. Please try again.' }, 503); }
+    if (run.skipped) return json({ ok: true, month: month, sent: false, skipped: run.skipped });
+    return json({ ok: true, month: month, sent: false, to: run.to, subject: run.subject, html: run.html, tally: run.tally, csv: run.csv, csv_name: run.csv_name });
+  }
+  /* action 'games': HQ > Reports' "What venues play" section, any day: the tally as it stands, "new"
+     meaning answered in the month picked. Owner only. Reads only; sends and writes nothing. */
+  if (_b.body.action === 'games') {
+    if (actor.role !== 'owner') return json({ error: 'Only an owner login can see what venues play.' }, 403);
+    let run;
+    try { run = await vprGamesDryRun(env, month); }
+    catch (e) { return json({ error: 'Could not count the answers just now. Please try again.' }, 503); }
+    if (run.missing) return json({ ok: true, month: month, waiting: true, note: VPR_GAMES_WAITING });
+    if (run.skipped) return json({ error: 'Could not count the answers just now. Please try again.' }, 503);
+    return json({ ok: true, month: month, tally: run.tally, csv: run.csv, csv_name: run.csv_name });
+  }
   if (_b.body.refresh === true) {
     if (!canRefresh) return json({ error: 'Only an owner or accounts login can refresh the report.' }, 403);
     let data;
@@ -16424,6 +16559,217 @@ async function vpaHandleMonthNews(request, env, json) {
   return json({ error: 'Unknown action.' }, 400);
 }
 
+/* WHAT VENUES PLAY, ONE INTERNAL EMAIL A MONTH TO DEAN (INBOX 104a, Nov 2026).
+   The setup wizard asks "What games do you play at your venue?" and keeps the answer in
+   vp_venue_settings.setup_answers (migration 163): games is a list of trivia, musical, bingo,
+   raffles, members; games_at is the Brisbane date (YYYY-MM-DD) the games answer was first saved;
+   setup is { trivia: 'done' | 'later' | 'shown', ... }, one per game. Counted over ACTIVE venues
+   that are not test venues. "New" means games_at falls in the month being reported.
+   One email to dean@venueplay.com.au only, never a venue contact, sent from vprMonthlySweep (so it is
+   off unless MONTHLY_REPORTS is on, and only on the 1st to the 3rd, 2am to 7am Brisbane), once a
+   month by its vp_admin_audit row (games_answers_sent, target games-answers:<month>). Before
+   migration 163 the read answers 400 and nothing is sent, with the venue reports untouched.
+   Round 2 (Dean, Nov 2026): the same counts state by state (vp_venues.au_state; empty or unknown is
+   "State not set"), and setup_answers.other, the "Something else" tick's own words (60 characters at
+   most), listed once each, case left as first typed, with a count. other is the venue's own typing:
+   it is escaped wherever it is shown and never goes in a subject. HQ > Reports shows the same tally
+   any day (POST /admin/month-report { action: 'games' }, owner only), and that never sends. */
+const VPR_GAMES_STATES = ['NSW', 'QLD', 'VIC', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
+const VPR_GAMES_NO_STATE = 'State not set';
+/* Round 3 (Dean's note 12): other is SEVERAL entries, comma separated, 120 characters in all and 40 each.
+   An entry that names one of our games is still listed, and anything else is also listed under
+   "Games we don't run yet". */
+const VPR_GAMES_OTHER_MAX = 120;
+const VPR_GAMES_OTHER_ONE = 40;
+const VPR_GAMES_OURS = /\b(trivia|musical bingo|bingo|raffles?|meat raffles?|members draws?|jag the joker)\b/i;
+const VPR_GAMES_WAITING = 'Waiting for the setup answers to be switched on (migration 163).';
+function vprGamesOther(x) {
+  const all = String(x == null ? '' : x).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, VPR_GAMES_OTHER_MAX);
+  const out = [], had = {};
+  all.split(',').forEach((e) => {
+    const one = e.trim().slice(0, VPR_GAMES_OTHER_ONE).trim();
+    if (!one || had[one.toLowerCase()]) return;           // the same thing twice from one venue counts once
+    had[one.toLowerCase()] = true; out.push(one);
+  });
+  return out;
+}
+const VPR_GAMES = [['trivia', 'Trivia'], ['musical', 'Musical bingo'], ['bingo', 'Bingo'], ['raffles', 'Raffles'], ['members', 'Members draws']];
+const VPR_GAMES_TO = 'dean@venueplay.com.au';
+function vprGamesTally(rows, venues, tests, month) {
+  const live = {}, stateOf = {};
+  (venues || []).forEach((v) => { if (v && v.status === 'active' && !(tests && tests.has(v.id))) live[v.id] = true; });
+  const t = { month: month, venues: Object.keys(live).length, answered: 0, answered_month: 0, games: {}, states: [], other: [] };
+  VPR_GAMES.forEach((g) => { t.games[g[0]] = { name: g[1], plays: 0, new_month: 0, set_up: 0 }; });
+  const byState = {};
+  VPR_GAMES_STATES.concat(['']).forEach((k) => {
+    const st = byState[k] = { state: k, name: k || VPR_GAMES_NO_STATE, venues: 0, answered: 0, answered_month: 0, games: {}, games_month: {} };
+    VPR_GAMES.forEach((g) => { st.games[g[0]] = 0; st.games_month[g[0]] = 0; });
+  });
+  (venues || []).forEach((v) => {
+    if (!v || !live[v.id] || stateOf[v.id] !== undefined) return;
+    const k = String(v.au_state || '').trim().toUpperCase();
+    stateOf[v.id] = VPR_GAMES_STATES.indexOf(k) !== -1 ? k : '';
+    byState[stateOf[v.id]].venues++;
+  });
+  const other = {};
+  const seen = {};
+  (rows || []).forEach((r) => {
+    if (!r || !live[r.venue_id] || seen[r.venue_id]) return;
+    const a = (r.setup_answers && typeof r.setup_answers === 'object') ? r.setup_answers : {};
+    if (!Array.isArray(a.games)) return;                 // never answered the games question
+    seen[r.venue_id] = true;
+    const at = /^\d{4}-\d{2}-\d{2}$/.test(String(a.games_at || '')) ? String(a.games_at) : '';
+    const fresh = !!at && at.slice(0, 7) === month;
+    t.answered++; if (fresh) t.answered_month++;
+    const st = byState[stateOf[r.venue_id]];
+    st.answered++; if (fresh) st.answered_month++;
+    const setup = (a.setup && typeof a.setup === 'object') ? a.setup : {};
+    VPR_GAMES.forEach((g) => {
+      const c = t.games[g[0]];
+      if (a.games.indexOf(g[0]) !== -1) { c.plays++; st.games[g[0]]++; if (fresh) { c.new_month++; st.games_month[g[0]]++; } }
+      if (setup[g[0]] === 'done') c.set_up++;
+    });
+    (typeof a.other === 'string' ? vprGamesOther(a.other) : []).forEach((o) => {
+      const key = o.toLowerCase();
+      if (!other[key]) other[key] = { text: o, count: 0, count_month: 0, ours: VPR_GAMES_OURS.test(o) };
+      other[key].count++; if (fresh) other[key].count_month++;
+    });
+  });
+  t.states = VPR_GAMES_STATES.concat(['']).map((k) => byState[k]).filter((x) => x.venues > 0);
+  t.other = Object.keys(other).map((k) => other[k]).sort((x, y) => y.count - x.count || (x.text.toLowerCase() < y.text.toLowerCase() ? -1 : 1));
+  t.not_ours = t.other.filter((o) => !o.ours);
+  return t;
+}
+function vprGamesEmail(env, month, tally) {
+  const words = vprMonthWords(month);
+  const subject = 'What venues play: ' + words;
+  const cell = 'padding:8px 10px;border-bottom:1px solid #E4E4EA;font-size:14px;color:#0A0A0B';
+  const head = 'padding:8px 10px;border-bottom:2px solid #0A0A0B;font-size:12px;text-align:left;color:#3a3a44';
+  let rows = '';
+  VPR_GAMES.forEach((g) => {
+    const c = tally.games[g[0]];
+    rows += '<tr><td style="' + cell + '">' + vpaEsc(g[1]) + '</td><td style="' + cell + ';text-align:right">' + c.plays
+      + '</td><td style="' + cell + ';text-align:right">' + c.new_month + '</td><td style="' + cell + ';text-align:right">' + c.set_up + '</td></tr>';
+  });
+  const inner = '<h2 style="margin:0 0 12px">What venues play: ' + vpaEsc(words) + '</h2>'
+    + '<p style="margin:0 0 12px">This is an internal email for the venueplay team. It is not sent to any venue.</p>'
+    + '<p style="margin:0 0 4px"><b>Running total:</b> ' + tally.answered + ' of ' + tally.venues + ' active venues have told us which games they play.</p>'
+    + '<p style="margin:0 0 12px"><b>New in ' + vpaEsc(vprMonthName(month)) + ':</b> ' + tally.answered_month + ' answered in ' + vpaEsc(words) + '.</p>'
+    + '<p style="margin:0 0 16px;font-size:13px;color:#6a6a75">Total is the running total: every venue that has ever told us, all time. New means it answered in ' + vpaEsc(words) + '. Set up is a running total too.</p>'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
+    /* short headings that never break mid-word on a phone (design review, 6 Nov): Total, New in <Mon>, Set up */
+    + '<tr><th style="' + head + '">Game</th><th style="' + head + ';text-align:right;white-space:nowrap">Total</th>'
+    + '<th style="' + head + ';text-align:right;white-space:nowrap">New in ' + vpaEsc(vprMonthName(month).slice(0, 3)) + '</th><th style="' + head + ';text-align:right;white-space:nowrap">Set up</th></tr>'
+    + rows + '</table>'
+    + vprGamesStatesHtml(tally, cell, head, month)
+    + vprGamesOtherHtml(tally, month)
+    + '<p style="margin:0;font-size:13px;color:#6a6a75">Counted from the answers in the setup wizard. Test venues and venues that are not active are left out. '
+    + 'Set up means the venue finished that game\'s setup step in the wizard.</p>';
+  return { to: VPR_GAMES_TO, subject: subject, html: vpaStaffCard(inner, subject, 'fyi') };
+}
+/* Each state cell is the running total, with the month's new ones small underneath ("2" over "1 new"),
+   so seven columns still fit a phone. */
+function vprGamesStatesHtml(tally, cell, head, month) {
+  if (!(tally.states || []).length) return '';
+  /* Seven narrow columns: words wrap between words only, never mid-word ("Answere d"), and sit a little smaller. */
+  head += ';word-break:normal;overflow-wrap:normal;hyphens:none;font-size:11px;padding-left:4px;padding-right:4px;vertical-align:bottom';
+  cell += ';padding-left:4px;padding-right:4px;white-space:nowrap';
+  const mname = vpaEsc(vprMonthName(month));
+  const sub = (x) => '<br><span style="font-size:11px;color:#6a6a75">' + x + ' new</span>';
+  let h = '<p style="margin:0 0 4px;font-weight:700">State by state</p>'
+    + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">Each number is the running total. Underneath: new in ' + mname + '.</p>'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px">'
+    + '<tr><th style="' + head + '">State</th><th style="' + head + ';text-align:right">Answered</th>';
+  VPR_GAMES.forEach((g) => { h += '<th style="' + head + ';text-align:right">' + vpaEsc(g[1]) + '</th>'; });
+  h += '</tr>';
+  tally.states.forEach((st) => {
+    h += '<tr><td style="' + cell + '">' + vpaEsc(st.name) + '</td><td style="' + cell + ';text-align:right">' + st.answered + ' of ' + st.venues + sub(st.answered_month) + '</td>';
+    VPR_GAMES.forEach((g) => { h += '<td style="' + cell + ';text-align:right">' + st.games[g[0]] + sub(st.games_month[g[0]]) + '</td>'; });
+    h += '</tr>';
+  });
+  return h + '</table>';
+}
+function vprGamesOtherHtml(tally, month) {
+  const list = tally.other || [];
+  const mname = vpaEsc(vprMonthName(month));
+  const both = (o) => '<li style="margin:0 0 4px">' + vpaEsc(o.text) + ': running total ' + o.count + ', new in ' + mname + ' ' + (o.count_month || 0) + '</li>';
+  return '<p style="margin:0 0 8px;font-weight:700">Something else they run</p>'
+    + (list.length
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + list.map(both).join('') + '</ul>'
+      : '<p style="margin:0 0 16px">Nobody has written anything else yet.</p>')
+    + '<p style="margin:0 0 8px;font-weight:700">Games we don\'t run yet</p>'
+    + ((tally.not_ours || []).length
+      ? '<ul style="margin:0 0 16px;padding:0 0 0 20px">' + tally.not_ours.map(both).join('') + '</ul>'
+      : '<p style="margin:0 0 16px">None so far.</p>');
+}
+/* The same numbers as a spreadsheet (CSV, Excel opens it): the games, the totals, state by state, something
+   else, and the games we don't run yet. Every cell through vpbCsvCell, so a venue's own words starting
+   with = + - @ open as text, never as a formula. */
+function vprGamesCsvName(month) { return 'what-venues-play-' + month + '.csv'; }
+function vprGamesCsv(month, tally) {
+  const L = [], row = (cells) => L.push(cells.map(vpbCsvCell).join(','));
+  const mname = vprMonthName(month);
+  row(['What venues play: ' + vprMonthWords(month) + ' (internal, venueplay)']);
+  row([]);
+  row(['Running total means every venue that has ever told us, all time. New in ' + mname + ' means it answered in ' + vprMonthWords(month) + '.']);
+  row([]);
+  row(['Game', 'Running total', 'New in ' + mname, 'Set up (running total)']);
+  VPR_GAMES.forEach((g) => { const c = tally.games[g[0]]; row([g[1], c.plays, c.new_month, c.set_up]); });
+  row([]);
+  row(['Active venues', tally.venues]);
+  row(['Answered, running total', tally.answered]);
+  row(['Answered, new in ' + mname, tally.answered_month]);
+  row([]);
+  const pair = (w) => [w + ', running total', w + ', new in ' + mname];
+  row(['State', 'Active venues'].concat(pair('Answered')).concat([].concat.apply([], VPR_GAMES.map((g) => pair(g[1])))));
+  (tally.states || []).forEach((st) => row([st.name, st.venues, st.answered, st.answered_month]
+    .concat([].concat.apply([], VPR_GAMES.map((g) => [st.games[g[0]], st.games_month[g[0]]])))));
+  row([]);
+  row(['Something else they run', 'Running total', 'New in ' + mname, 'One of our games']);
+  (tally.other || []).forEach((o) => row([o.text, o.count, o.count_month || 0, o.ours ? 'Yes' : 'No']));
+  row([]);
+  row(["Games we don't run yet", 'Running total', 'New in ' + mname]);
+  (tally.not_ours || []).forEach((o) => row([o.text, o.count, o.count_month || 0]));
+  return L.join('\r\n') + '\r\n';
+}
+/* Reads and builds, sends nothing. { month, to, subject, html, tally } or { month, skipped: why }.
+   venues/tests may be passed in by the sweep, which has them already. */
+async function vprGamesDryRun(env, month, venues, tests) {
+  const vs = venues || await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
+  const ts = tests || await vprTestVenueIds(env, vs);
+  let rows;
+  try { rows = await vpaSelectAll(env, 'vp_venue_settings', 'select=venue_id,setup_answers&order=venue_id.asc'); }
+  catch (e) {
+    /* No setup_answers column yet (migration 163 not run) is a 400 from PostgREST; anything else is a failed read. */
+    const missing = /: 40[04] /.test(String(e && e.message));
+    return { month: month, missing: missing, skipped: missing ? 'no setup_answers column yet (migration 163)' : 'could not read the answers' };
+  }
+  const tally = vprGamesTally(rows, vs, ts, month);
+  const mail = vprGamesEmail(env, month, tally);
+  return { month: month, to: mail.to, subject: mail.subject, html: mail.html, tally: tally,
+    csv: vprGamesCsv(month, tally), csv_name: vprGamesCsvName(month) };
+}
+/* The once-a-month send, from inside the sweep. Never throws: the venue reports must go regardless. */
+async function vprGamesSend(env, month, venues, tests) {
+  try {
+    const target = 'games-answers:' + month;
+    const had = await vpaSelectAll(env, 'vp_admin_audit', 'action=eq.games_answers_sent&target=eq.' + encodeURIComponent(target) + '&select=id&order=id.asc');
+    if (had.length) return { already: true, sent: 0 };
+    const run = await vprGamesDryRun(env, month, venues, tests);
+    if (run.skipped) return { skipped: run.skipped, sent: 0 };
+    if (!run.tally.answered) return { skipped: 'no venue has answered yet', sent: 0 };
+    /* The record goes in FIRST: if it cannot be written, nothing is sent, so a failed write can
+       never turn into a second email on the next tick. */
+    const detail = { month: month, accepted: null, answered: run.tally.answered, answered_month: run.tally.answered_month };
+    const row = await vpaInsert(env, 'vp_admin_audit', { actor_admin: null, actor_label: 'automatic (monthly report)', action: 'games_answers_sent', target: target, detail: detail });
+    /* The CSV goes as an attachment on this email only, with a byte order mark so Excel reads it as UTF-8. */
+    const csvFile = { filename: run.csv_name, content: vpsB64(new TextEncoder().encode('\ufeff' + run.csv)) };
+    const accepted = await vpaSendEmail(env, run.to, run.subject, run.html, null, null, [csvFile]).catch(() => false);
+    if (row && row.id != null) await vpaPatch(env, 'vp_admin_audit', 'id=eq.' + encodeURIComponent(row.id), { detail: Object.assign({}, detail, { accepted: !!accepted }) }).catch(() => {});
+    return { sent: 1 };
+  } catch (e) { return { failed: true, sent: 0 }; }
+}
+
 /* THE SENDER, OFF UNTIL DEAN SAYS. env.MONTHLY_REPORTS must be exactly 'on'. Even then it only
    acts on the 1st to the 3rd of a month, 2am to 7am Brisbane, a batch a tick, and each venue once
    a month (the audit row is the record, written before the next venue is started). It reads
@@ -16437,13 +16783,15 @@ async function vprMonthlySweep(env, nowMs, opts) {
   if (!o.anyTime && (bris.getUTCDate() > 3 || bris.getUTCHours() < 2 || bris.getUTCHours() >= 7)) return { off: false, waiting: true, sent: 0 };
   const month = vprLastMonth(now);
   const batch = parseInt(env.MONTHLY_REPORTS_BATCH, 10) > 0 ? parseInt(env.MONTHLY_REPORTS_BATCH, 10) : VPR_BATCH;
-  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at&order=id.asc');
+  const venues = await vpaSelectAll(env, 'vp_venues', 'status=eq.active&select=id,name,slug,status,timezone,founding_id,created_at,au_state&order=id.asc');
   const tests = await vprTestVenueIds(env, venues);
+  /* What venues play, to Dean only, once a month. Never throws, so it cannot hold up a venue's report. */
+  const games = await vprGamesSend(env, month, venues, tests);
   const done = new Set((await vpaSelectAll(env, 'vp_admin_audit',
     'action=in.(monthly_report_sent,monthly_report_skipped)&target=like.' + encodeURIComponent('month-report:*:' + month) + '&select=target&order=id.asc'))
     .map((r) => String(r.target || '').split(':')[1]));
   const todo = venues.filter((v) => !done.has(v.id)).slice(0, batch);
-  const out = { month: month, sent: 0, skipped: 0, left: Math.max(0, venues.filter((v) => !done.has(v.id)).length - todo.length) };
+  const out = { month: month, games: games, sent: 0, skipped: 0, left: Math.max(0, venues.filter((v) => !done.has(v.id)).length - todo.length) };
   if (!todo.length) return out;
   const unsub = await vpaUnsubscribedSet(env);
   const reps = await vprMonth(env, todo, month, now);

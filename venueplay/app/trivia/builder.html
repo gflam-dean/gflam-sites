@@ -349,8 +349,17 @@
     restoreDraft();
     goStep(2);
     loadQuestions();
+    /* A THEME NIGHT FROM THE TRIVIA CONSOLE (?topic=, the setup wizard's theme nights, Dean 6 Nov 2026): the topic
+       search opens with it typed in, one tap from questions about it. */
+    var topic=topicParam();
+    if(topic){ try{ showPanel("search"); }catch(e){} $("searchQ").value=topic; }
+  }
+  /* ?topic= from the trivia console's theme nights: plain text only, at most 60 characters; a broken one is ignored. */
+  function topicParam(){
+    try{ var m=/[?&]topic=([^&]{2,200})/.exec(window.location.search); return m ? decodeURIComponent(m[1].replace(/\+/g," ")).replace(/[<>]/g,"").trim().slice(0,60) : ""; }catch(e){ return ""; }
   }
   function defaultName(){
+    var t=topicParam(); if(t) return t;   // a theme night is named after its theme
     var d=new Date(), days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     return days[d.getDay()]+" Quiz "+d.getDate()+" "+months[d.getMonth()];
   }

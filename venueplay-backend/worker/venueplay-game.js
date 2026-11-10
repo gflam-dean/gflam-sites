@@ -145,7 +145,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '6 Nov 2026, 22:59 · 0bd9f1f7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 08:36 · 3a379f18';   // tools/stamp-workers.py, do not edit by hand
 /* The regulated bingo code (VP-DRAW, venueplay-backend/worker/vp-draw.js) and the hash of its manifest
    (tools/regulated-manifest.json). Both on /health. tools/regulated.py writes this line; never by hand. */
 const VP_DRAW_MANIFEST = '5a38cc075ab78ca7f8454df47914fc862b204b86c0bdd44471bd7a7f1001f244';
@@ -4050,6 +4050,24 @@ const gpBool = (v) => (typeof v === 'boolean') ? v : undefined;
 const gpText = (n) => (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, n) : undefined;
 const gpInt = (lo, hi) => (v) => (typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi) ? v : undefined;
 const gpUuid = (v) => (typeof v === 'string' && GP_UUID.test(v)) ? v.toLowerCase() : undefined;
+/* A short list of short words (the setup wizard, INBOX 104 round 3): prize buttons, theme nights. Empties dropped, each once. */
+const gpWords = (most, len) => (v) => {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  for (const x of v) { const t = (typeof x === 'string') ? x.trim().slice(0, len) : ''; if (t && out.indexOf(t) < 0) out.push(t); if (out.length >= most) break; }
+  return out;
+};
+/* The setup wizard, round 11 (Dean, 9 Nov): a prize swapped for one week. [{ week: 'YYYY-MM-DD' (the Monday), prizes: [..] }], at most 8 weeks, 12 prizes each. */
+const gpSwaps = (v) => {
+  if (!Array.isArray(v)) return undefined;
+  const out = [];
+  for (const x of v) {
+    if (!x || typeof x !== 'object' || typeof x.week !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.week) || !Array.isArray(x.prizes)) continue;
+    const pz = []; for (const y of x.prizes) { pz.push(typeof y === 'string' ? y.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 80) : ''); if (pz.length >= 12) break; }
+    out.push({ week: x.week, prizes: pz }); if (out.length >= 8) break;
+  }
+  return out;
+};
 /* Every game's keys (28 Oct 2026). A key not listed here is dropped, whatever a console sends. */
 const GAME_PREFS_KEYS = {
   bingo: {
@@ -4074,6 +4092,13 @@ const GAME_PREFS_KEYS = {
     },
     cards:         gpInt(1, 6),
     allow_early:   gpBool,
+    // phone tickets or the venue's own paper books (the setup wizard, INBOX 104 round 2): venueplay never checks paper
+    ticket_kind:   (v) => ({ phone: 1, paper: 1 }[v] ? v : undefined),
+    prize_list:    gpWords(8, 80),   // the usual prize buttons (setup wizard, round 3)
+    /* the setup wizard, round 9 (Dean: "prizes per round, set on the game"): games a night and each game's prize, in
+       order, "" for a game played for no prize. The bingo console does not read these yet. */
+    rounds:        gpInt(1, 30),
+    round_prizes:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.trim().slice(0, 80) : ''); if (out.length >= 30) break; } return out; },
   },
   trivia: {
     set_id:        gpUuid,
@@ -4085,6 +4110,19 @@ const GAME_PREFS_KEYS = {
     double_last:   gpInt(1, 100),
     buzzer:        gpBool,   // the time's-up buzzer, OFF unless the venue switches it on (3 Nov 2026)
     buzzer_where:  (v) => ({ tv: 1, device: 1 }[v] ? v : undefined),   // where it plays: the TV, or the host's own device
+    // the setup wizard (INBOX 104 round 3): a mix or picked categories, one-off theme nights, the usual prize buttons
+    set_mode:      (v) => ({ mix: 1, pick: 1 }[v] ? v : undefined),
+    set_ids:       (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const u = gpUuid(x); if (u && out.indexOf(u) < 0) out.push(u); if (out.length >= 20) break; } return out; },
+    theme_nights:  gpWords(6, 60),
+    prize_list:    gpWords(8, 80),
+    rounds:        gpInt(1, 20),   // rounds a night (setup wizard, round 8: Dean "it never asks how many rounds")
+    prize_weekly: gpBool,    // the same prizes every week (setup wizard, round 10: Dean "ask it for trivia too")
+    /* round 11 (Dean, 9 Nov): a prize for each round (or the same for all), rounds played for fun, a prize swapped for one week, and whether picture questions show */
+    prizes:        (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 120) : ''); if (out.length >= 20) break; } return out; },
+    prize_same:    gpBool,
+    prize_none:    (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (Number.isInteger(x) && x >= 1 && x <= 20 && out.indexOf(x) < 0) out.push(x); } return out; },
+    prize_swaps:   gpSwaps,
+    picture_round: gpBool,   // OFF: a question's picture stays off the TV and phones (the console reads it later)
   },
   raffle: {
     // the venue's saved prize buttons: any staff login adds to them (a Host's /host/raffle/prize-add is refused)
@@ -4101,6 +4139,24 @@ const GAME_PREFS_KEYS = {
     jackpot_amount_cents: gpInt(0, 100000000),
     allow_redraw:  gpBool,
     spin_seconds:  (v) => ({ 3: 1, 4: 1, 5: 1, 6: 1, 8: 1 }[v] && typeof v === 'number') ? v : undefined,
+    // the setup wizard's prize questions (INBOX 104 round 2): how many prizes, all the same, the same each week
+    prize_count:   gpInt(1, 12),
+    prizes_same:   gpBool,
+    prizes_weekly: gpBool,
+    /* the setup wizard, round 9 (Dean: "raffle 1 has 2 prizes, raffle 2 has 5"): raffles a night and the prizes in
+       each. The raffle console does not read these yet (noted for the raffle new look). */
+    raffles:       gpInt(1, 12),
+    raffle_counts: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { const n = parseInt(x, 10); if (Number.isInteger(n) && n >= 1 && n <= 12) out.push(n); if (out.length === 12) break; } return out.length ? out : undefined; },
+    /* round 10 (Dean, feedback 9 point 20): each raffle's own prizes, in order, a list per raffle ("" = not given yet) */
+    raffle_prizes: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const r of v) { if (!Array.isArray(r)) break; const one = []; for (const x of r) { one.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 80) : ''); if (one.length >= 12) break; } out.push(one); if (out.length >= 12) break; } return out.length ? out : undefined; },
+    /* round 11 (Dean, 9 Nov): name each raffle (one per raffle, in order), how the draw looks, and a prize swapped for one week.
+       The raffle console does not read these yet (noted for the raffle new look). */
+    raffle_names:  (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { out.push(typeof x === 'string' ? x.replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : ''); if (out.length >= 12) break; } return out; },
+    draw_style:    (v) => ({ numbers: 1, barrel: 1, wheel: 1 }[v] ? v : undefined),
+    /* round 12 (Dean, 10 Nov): each raffle says on its own line whether its prizes are the same every week (or draw), one true/false per raffle in order.
+       prizes_weekly above stays: true only while every raffle's is. The raffle console does not read raffle_weekly yet. */
+    raffle_weekly: (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (typeof x === 'boolean') out.push(x); if (out.length >= 12) break; } return out.length ? out : undefined; },
+    prize_swaps:   gpSwaps,
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
@@ -4113,6 +4169,26 @@ const GAME_PREFS_KEYS = {
     pattern:       (v) => ({ one: 1, two: 1, corners: 1, full: 1 }[v] ? v : undefined),
     prize:         (v) => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 120) : undefined,
     reveal:        (v) => ({ instant: 1, '15': 1, end: 1, never: 1 }[v] ? v : undefined),
+    /* The setup wizard (INBOX 104 round 2): the music they picked (one or many playlists, the first is the console's
+       playlist), rounds a night, a prize for each round or one for all, and whether the prizes are the same each week. */
+    playlists:     (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { if (typeof x === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(x) && out.indexOf(x) < 0) out.push(x); if (out.length >= 30) break; }
+      return out.length ? out : undefined;
+    },
+    rounds:        gpInt(1, 10),
+    prizes:        (v) => {
+      if (!Array.isArray(v)) return undefined;
+      const out = [];
+      for (const x of v) { out.push(typeof x === 'string' ? x.trim().slice(0, 120) : ''); if (out.length >= 10) break; }
+      return out;
+    },
+    prize_same:    gpBool,
+    prize_weekly:  gpBool,
+    prize_swaps:   gpSwaps,   // round 11: a prize swapped for one week
+    // rounds played for fun, with no prize (Dean, round 3): round numbers 1 to 10
+    prize_none:    (v) => { if (!Array.isArray(v)) return undefined; const out = []; for (const x of v) { if (Number.isInteger(x) && x >= 1 && x <= 10 && out.indexOf(x) < 0) out.push(x); } return out; },
   },
 };
 function cleanGamePrefs(game, raw) {

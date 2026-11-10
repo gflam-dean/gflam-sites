@@ -335,6 +335,8 @@
 
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-setup-help.js"></script>
+<script src="../vp-gamesetup.js"></script>
 <script src="../vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
@@ -1184,7 +1186,8 @@
         loadFailed();
       }).then(function(){
         applyRoleGates();
-        if(!G.loadFailed) startMembersPrefs().catch(function(){});   // the venue's last draw, once the draws are in
+        if(!G.loadFailed) startMembersPrefs().catch(function(){})   // the venue's last draw, once the draws are in
+          .then(function(){ if(window.VPGameSetup) VPGameSetup.firstOpen("members", { onSaved:function(){ location.reload(); } }); });   // INBOX 104: a skipped game's own setup, the first time
         var tv=tvFromUrl();
         var _slug=(ctx.venue && ctx.venue.slug) || "";
         if(_slug && window.VPSign){ VPSign.initHost(VP_GAME_API, _slug, vpHostToken); }   // this venue's signing key

@@ -189,7 +189,15 @@
       if (Array.isArray(a[k])) out[k] = all.filter(function (x) { return a[k].indexOf(x) >= 0; });
     });
     if (a.name_ok === true) out.name_ok = true;
+    /* games_at and setup (INBOX 104, vp-gamesetup.js): the date the games were first answered, for Dean's monthly
+       email, and which games are set up. Kept here so a save from this wizard never drops them. */
+    if (root.VPGameSetup && root.VPGameSetup.cleanExtra) root.VPGameSetup.cleanExtra(a, out);
     return out;
+  }
+  /* The ticked games not set up yet (setup_answers.setup, INBOX 104). */
+  function gamesToSetUp(a) {
+    var st = (root.VPGameSetup && root.VPGameSetup.cleanSetup) ? root.VPGameSetup.cleanSetup(a && a.setup) : {};
+    return ((a && a.games) || []).filter(function (g) { return !st[g]; });
   }
   /* The venue's saved answers (vp_venue_settings.setup_answers, once migration 163 is run) and this device's. */
   function answersFor(ctx, state) {
@@ -277,7 +285,9 @@
       var rm = answers.remind || [];
       return (answers.games || []).filter(function (g) { return rm.indexOf(g) < 0; });
     }
-    var pickNeeded = !answered("games", answers) && !Array.isArray(state.only);   // the one opening question, until it is answered
+    /* the one opening question, until it is answered; with the games setup (INBOX 104), also while a game they play is not set up */
+    var setupGames = !!(root.VPGameSetup && root.VPSetupHelp);
+    var pickNeeded = (!answered("games", answers) || (setupGames && gamesToSetUp(answers).length > 0)) && !Array.isArray(state.only);
     var dropped = {};
     function build() {
       var out = [], p = plan();
@@ -285,7 +295,7 @@
         if (dropped[s]) return;
         if (s === "pick") { if (pickNeeded) out.push(s); return; }
         if (s === "tv" || s === "hosts") { if (p.length && !state.tvDone) out.push(s); return; }   // inside the FIRST ticked game's setup
-        if (GAME_STEPS.indexOf(s) >= 0) { if (p.indexOf(s) >= 0) out.push(s); return; }
+        if (GAME_STEPS.indexOf(s) >= 0) { if (!setupGames && p.indexOf(s) >= 0) out.push(s); return; }   // the games setup does each game itself (INBOX 104)
         out.push(s);
       });
       return out;
@@ -509,6 +519,20 @@
        order trivia, musical bingo, bingo, raffles, members draws. Each tap is kept (this device, and the venue's
        setup_answers where the column exists) and the steps are rebuilt, so only the ticked games get a setup. */
     STEP.pick = function () {
+      /* THE GAMES SETUP (Dean, 6 Nov 2026, INBOX 104; it replaces this step's own question and the per-game steps where
+         vp-gamesetup.js is loaded): the heads-up, "What games do you play at your venue?", which nights, "Would you like
+         to set them all up today?", then each ticked game one at a time, over this guide. It saves through this
+         guide's own answers, so setup_answers has one saving path. Then the guide carries on: Put it on your TV
+         (with "Is this the same TV as your demo?") and Who's hosting? for the games they ticked. */
+      if (root.VPGameSetup && root.VPSetupHelp) {
+        body.appendChild(el("p", TEXT, "Your games setup is open."));
+        setNext("Next", false);   // until the games setup closes
+        return root.VPGameSetup.run(ctx, { doc: doc, storage: storage, client: client, VP: VP, fetch: fetchFn, answers: answers,
+          saveAnswers: function () { return saveAnswer("games"); } }).then(function (outcome) {
+          if (outcome === "closed") { close(false); return "closed"; }
+          steps = build(); setNext("Next", true); return api.next();
+        });
+      }
       body.appendChild(el("p", TEXT, "Tick every game you want to set up now. We set up only those, one at a time, and the first one also gets your TV and your host."));
       setNext(answered("games", answers) ? "Next" : "Skip for now", true);
       var gb = el("div", ""); gb.id = "vpFrGamesBox";

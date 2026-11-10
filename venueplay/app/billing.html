@@ -378,6 +378,8 @@
   .dlgbtn.go:hover{background:var(--pink-deep);border-color:var(--pink-deep)}
   @media(max-width:420px){ .dlgacts{flex-direction:column-reverse;align-items:stretch}
     .dlgacts .dlgbtn{width:100%} }
+/* NO CSV UPLOAD ON A PHONE (Dean, round 12 note 9): nobody picks a CSV on a phone; the weekly reminder stands in its place */
+@media (max-width:700px){#md-upload.md-nophone{display:none}}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
@@ -767,11 +769,35 @@
       <div class="scardhead">Your members list<span class="forvenue" id="mdListForVenue"></span></div>
       <div class="snote" id="mdCount">Loading your members list…</div>
       <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
-      <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
-      <textarea id="md-import" rows="6" placeholder="142, Jane Smith
+      <!-- UPLOAD FIRST (Dean, setup wizard round 11 note 7): choose the file, THEN say which column is which -->
+      <div id="md-upload" class="md-nophone" style="margin-top:4px">
+        <div class="scardhead" style="font-size:13px">Upload your members list</div>
+        <p class="snote">Choose a CSV file from your club system or Excel (File, Save As, CSV). Next you pick which column is the member number, the first name and the last name.</p>
+        <button class="go" id="md-csvbtn" type="button">Choose a CSV file</button>
+        <input type="file" id="md-csv" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values,application/vnd.ms-excel" style="display:none">
+        <p class="snote" id="md-csvmsg" role="status" style="margin-top:8px"></p>
+        <!-- WHICH COLUMN IS WHICH (Dean, setup wizard round 9 point 24): a CSV from a club system has its own columns -->
+        <div id="md-match" style="display:none;margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:12px">
+          <div class="scardhead" style="font-size:13px">Which column is which?</div>
+          <p class="snote" id="md-matchnote">Pick which column holds each one. We fill the box below for you to check.</p>
+          <p class="snote mono" id="md-matchex" style="margin-top:0"></p>
+          <div id="md-matchrows" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px;align-items:center"></div>
+          <div class="btnrow" style="margin-top:10px"><button class="go" id="md-matchgo" type="button">Use these columns</button><button class="offtv" id="md-matchno" type="button">Cancel</button></div>
+        </div>
+      </div>
+      <!-- A WEEKLY REMINDER (Dean, setup wizard round 12 note 9): on a phone nobody picks a CSV, so this stands where the upload is; on a computer it sits beside it -->
+      <div id="md-remind" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div class="scardhead" style="font-size:13px">Weekly reminder</div>
+        <p class="snote" id="md-remindnote">Would you like a weekly reminder to update your members list? We can email you.</p>
+        <button class="go" id="md-remindbtn" type="button">Set a weekly reminder</button>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div class="scardhead" style="font-size:13px">Or paste your members</div>
+        <p class="snote">One per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
+        <textarea id="md-import" rows="6" placeholder="142, Jane Smith
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
-      <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
-      <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
+        <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
+      </div>
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
         <div class="scardhead" style="font-size:13px">Fix a name</div>
         <p class="snote">A pasted name is split at the first space, so "Mary Anne Smith" is stored with the surname "Anne Smith" and that is what goes on the TV when she wins. Fix it here without taking her off the list.</p>
@@ -790,7 +816,6 @@
           <button class="offtv" id="mdRemove" type="button">Remove member</button>
         </div>
       </div>
-      <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
 
     <!-- PERMITS FOR DRAWS (Dean, 24 Oct 2026): the raffle and members-draw permits sit with the draws
@@ -886,6 +911,9 @@
 <script src="/app/vendor/supabase-js-2.118.0.min.js"></script>
 <script src="/app/vp-ask.js"></script>
 <script src="vp-session.js"></script>
+<script src="vp-setup-help.js"></script>
+<script src="vp-memberscsv.js"></script>
+<script src="vp-gamesetup.js"></script>
 <script src="vp-firstrun.js"></script>
 <script src="/app/vp-venuepick.js"></script>
 <script src="/app/vp-logo.js"></script>
@@ -1325,7 +1353,20 @@
         if (w.nights) bits.push("Games on " + w.nights);
         if (w.games) bits.push(w.games);
         var row = document.createElement("div"); row.className = "venue";
-        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small></div>';
+        /* WHICH GAME RUNS ON WHICH NIGHT (Dean, 6 Nov 2026): the week in words, and a button that opens the setup
+           wizard's own week step (vp-gamesetup.js) for this venue, saved to setup_answers.week. */
+        var wk = (window.VPGameSetup && VPGameSetup.weekWords) ? VPGameSetup.weekWords((by[v.id] || {}).week) : "";
+        row.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>' + (bits.length ? esc(bits.join(" \u00b7 ")) : "Not filled in yet") + '</small>' +
+          (wk ? '<small class="aboutWeek">' + esc(wk) + '</small>' : '') + '</div>';
+        if (window.VPGameSetup && VPGameSetup.run && (by[v.id] || {}).games && (by[v.id].games || []).length) {
+          var eb = document.createElement("button"); eb.type = "button"; eb.className = "canxlink aboutWeekBtn"; eb.setAttribute("data-venue", v.id);
+          eb.textContent = wk ? "Change game nights" : "Set your game nights";
+          eb.addEventListener("click", function(){
+            var cx = { role: "owner", venue: v, settings: { setup_answers: JSON.parse(JSON.stringify(by[v.id] || {})) } };
+            VPGameSetup.run(cx, { start: "week", weekOnly: true, VP: VP }).then(function(){ renderAbout(venues); });
+          });
+          row.appendChild(eb);
+        }
         box.appendChild(row);
       });
       wrap.style.display = "";
@@ -2534,7 +2575,7 @@
     var lh = $("mdListForVenue"); if (lh) lh.textContent = many ? n : "";
     var b;
     if ((b = $("mdImport"))) b.textContent = many ? ("Add to " + n + "'s members list") : "Add to members list";
-    if ((b = $("md-csvbtn"))) b.textContent = many ? ("Or upload a CSV file for " + n) : "Or upload a CSV file";
+    if ((b = $("md-csvbtn"))) b.textContent = many ? ("Choose a CSV file for " + n) : "Choose a CSV file";
     if ((b = $("mdSave"))) b.textContent = many ? ("Save draw for " + n) : "Save draw";
   }
   function toCents(v){ if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
@@ -2620,6 +2661,36 @@
      failed) nothing in the panel may write: with no draw loaded, Save would CREATE a second
      draw instead of editing the real one, and an import would go in against no draw. */
   var mdReady = false, mdSeq = 0;
+  /* THE WEEKLY MEMBERS LIST REMINDER (Dean, round 12 note 9): saved as setup_answers.members_reminder by the wizard's own reminder screen
+     (VPGameSetup.run with start "reminder"); an email one is sent by the billing Worker, a calendar one is a weekly .ics. */
+  var MD_DAYS = { mon:"Monday", tue:"Tuesday", wed:"Wednesday", thu:"Thursday", fri:"Friday", sat:"Saturday", sun:"Sunday" };
+  var mdAnswers = {};
+  function mdRemindPaint(){
+    var r = mdAnswers && mdAnswers.members_reminder, n = $("md-remindnote"), b = $("md-remindbtn");
+    if (!n || !b) return;
+    if (r && (r.how === "email" || r.how === "calendar") && MD_DAYS[r.day]){
+      var t = /^(\d\d):(\d\d)$/.exec(r.time || "09:00") || ["", "09", "00"], h = +t[1], ap = h >= 12 ? "pm" : "am"; h = h % 12 || 12;
+      n.textContent = (r.how === "email" ? "We email you every " : "Your calendar reminds you every ") + MD_DAYS[r.day] + " at " + h + (t[2] === "00" ? "" : ":" + t[2]) + ap + " to update your members list.";
+      b.textContent = "Change or stop the reminder";
+    } else {
+      n.textContent = "Would you like a weekly reminder to update your members list? We can email you.";
+      b.textContent = "Set a weekly reminder";
+    }
+  }
+  function mdRemindLoad(venueId){
+    mdAnswers = {}; mdRemindPaint();
+    try {
+      VP.getClient().from("vp_venue_settings").select("setup_answers").eq("venue_id", venueId).then(function(r){
+        if (venueId !== mdCurrent || !r || r.error) return;
+        mdAnswers = (r.data && r.data[0] && r.data[0].setup_answers) || {}; mdRemindPaint();
+      }, function(){});
+    } catch(e){}
+  }
+  function mdRemindOpen(){
+    if (!mdCurrent || !window.VPGameSetup || !VPGameSetup.run) return;
+    var cx = { role: "owner", venue: { id: mdCurrent, name: mdVenueName() }, settings: { setup_answers: JSON.parse(JSON.stringify(mdAnswers || {})) } };
+    VPGameSetup.run(cx, { start: "reminder", VP: VP }).then(function(){ mdRemindLoad(mdCurrent); });
+  }
   function mdNotReady(){
     if (!mdCurrent){ showMsg("Pick a venue first."); return true; }
     if (!mdReady){ showMsg("The members draw for " + (mdVenueName() || "this venue") + " has not loaded. Press Try again first."); return true; }
@@ -2633,7 +2704,7 @@
   function loadMembersDrawFor(venueId){
     var seq = ++mdSeq;
     mdCurrent = venueId; mdDraw = null; mdDraws = []; mdReady = false;
-    paintMdVenue();
+    paintMdVenue(); mdRemindLoad(venueId);
     showLoadFailed("mdLoadErr", null);
     $("mdCount").hidden = false;
     $("mdCount").className = "snote";
@@ -2767,14 +2838,61 @@
   /* Split one pasted line into columns and take the quote marks off.
      `0142,"Smith, John"` is one number and one name, so a quoted field keeps its comma; anything
      not inside quotes splits on a comma or a tab as before. */
-  function unquoteCols(line){
+  /* MATCH THE COLUMNS (Dean, setup wizard round 9 point 24): the venue picks which column is the member number, the
+     first name and the last name; a header row names them (our best guess picked), a file without one says Column 1,
+     2, 3 with its first row as the example. The box above is then filled as "number, first last", one a line. */
+  /* The file reading itself (encoding, line endings, separators, quotes, blank rows, the header row, which column is which) is
+     venueplay/app/vp-memberscsv.js (VPMembersCsv), tested with messy real files by tools/test-wizard-r12.js (Dean, round 12 note 10). */
+  /* the upload's own message line sits right under the button, where they are looking */
+  function csvSay(t, ok){ var m = $("md-csvmsg"); if (!m) { if (t) showMsg(t, ok); return; } m.textContent = t || ""; m.style.color = ok ? "#2BD47D" : (t ? "#FF8CC6" : ""); }
+  function csvFile(f){
+    if (!f) return;
+    if (/\.xlsx?$/i.test(f.name || "")){ csvSay("That is an Excel file. In Excel choose File, Save As, then CSV, and choose that file instead."); return; }
+    if (f.size > 2*1024*1024){ csvSay("That file is a bit big. Keep it under 2MB."); return; }
+    csvSay("Reading your file...", true);
+    var reader = new FileReader();
+    reader.onerror = function(){ csvSay("We could not read that file. Save it again as a CSV and choose it again."); };
+    reader.onload = function(){ var buf = reader.result; csvMatch(typeof buf === "string" ? buf : VPMembersCsv.decode(buf)); };
+    if (reader.readAsArrayBuffer) reader.readAsArrayBuffer(f); else reader.readAsText(f);
+  }
+  function csvMatch(text){
+    var plan = VPMembersCsv.plan(VPMembersCsv.parse(text)), rows = plan.rows, box = $("md-match"), list = $("md-matchrows");
+    if (!rows.length){ csvSay("That file looks empty. Check it has your members in it and choose it again."); return; }
+    csvSay("");
+    var heads = plan.heads;
+    while (list.firstChild) list.removeChild(list.firstChild);
+    var picks = {};
+    [["number", "Member number"], ["first", "First name"], ["last", "Last name"]].forEach(function(k){
+      var lab = document.createElement("label"); lab.textContent = k[1]; lab.setAttribute("for", "md-col-" + k[0]); lab.className = "snote"; lab.style.margin = "0";
+      var sel = document.createElement("select"); sel.id = "md-col-" + k[0];
+      sel.setAttribute("style", "width:100%;min-height:44px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:8px 10px;font:inherit");
+      if (k[0] !== "number"){ var o0 = document.createElement("option"); o0.value = "-1"; o0.textContent = k[0] === "last" ? "None (the name is in one column)" : "None"; sel.appendChild(o0); }
+      heads.forEach(function(h, i){ var o = document.createElement("option"); o.value = String(i); o.textContent = String(h || ("Column " + (i + 1))).slice(0, 60); sel.appendChild(o); });
+      sel.value = String(plan.ix[k[0]]);
+      picks[k[0]] = sel; list.appendChild(lab); list.appendChild(sel);
+    });
+    box.style.display = "";
+    var ex = $("md-matchex"); if (ex) ex.textContent = "First row: " + (rows[plan.from] || rows[0]).map(function(x){ return String(x).slice(0, 18); }).join("  |  ");
+    $("md-matchgo").onclick = function(){
+      var ix = { number: +picks.number.value, first: +picks.first.value, last: +picks.last.value };
+      var made = VPMembersCsv.build(rows, ix, plan.from), lines = made.lines;
+      if (!lines.length){ csvSay("No member numbers in that column. Pick the column that holds the numbers."); return; }
+      var cur = $("md-import").value.trim();
+      $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n");
+      box.style.display = "none";
+      csvSay(lines.length + " members ready in the box below." + (made.skipped ? " " + made.skipped + (made.skipped === 1 ? " row" : " rows") + " had no member number and " + (made.skipped === 1 ? "was" : "were") + " left out." : "") + " Check they look right, then tap Add to members list.", true);
+      try { $("md-import").scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e){}
+    };
+    $("md-matchno").onclick = function(){ box.style.display = "none"; };
+  }
+  function unquoteCols(line, delim){
     var cols = [], cur = "", inQ = false;
     for (var i = 0; i < line.length; i++){
       var ch = line.charAt(i);
       if (ch === '"'){
         if (inQ && line.charAt(i+1) === '"'){ cur += '"'; i++; }   // "" inside a quoted field is one quote
         else inQ = !inQ;
-      } else if (!inQ && (ch === "," || ch === "\t")){ cols.push(cur); cur = ""; }
+      } else if (!inQ && (delim ? ch === delim : (ch === "," || ch === "\t"))){ cols.push(cur); cur = ""; }
       else cur += ch;
     }
     cols.push(cur);
@@ -3434,21 +3552,11 @@
     $("mdCalcJp").addEventListener("click", mdWorkOutJackpot);
     $("mdCurFix").addEventListener("click", mdCurFix);
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
+    $("md-remindbtn").addEventListener("click", mdRemindOpen);
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;
-      if (f.size > 2*1024*1024){ showMsg("That file is a bit big. Keep it under 2MB."); this.value=""; return; }
-      var reader = new FileReader();
-      reader.onload = function(){
-        var lines = String(reader.result||"").split(/\r?\n/);
-        // Drop a header row (a first line that does not start with a member number). The quote
-        // has to be allowed for, or a file that quotes every field loses its first real member.
-        if (lines.length && !/^\s*"?\s*\d/.test(lines[0])) lines.shift();
-        var cur = $("md-import").value.trim();
-        $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n").trim();
-        showMsg("CSV loaded. Check it looks right, then Add to members list.", true);
-      };
-      reader.readAsText(f);
-      this.value = "";
+      csvFile(f);
+      this.value = "";   // the same file can be chosen again
     });
     loadMembersPanel();
   }

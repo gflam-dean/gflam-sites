@@ -5,13 +5,11 @@ After the try-it demo a new venue lands on its console home, where the wizard op
 console (/app/) on the browser rig (tools/browser-rig/rig.py), signed in as the owner of a venue made today, on a laptop
 that has just played the demo (localStorage vpDemoPlayed-<venue> = "1", as /app/try.html leaves it), and checks:
 
-  - the wizard opens on "What games do you want to set up today?" with five ticks in this order: Trivia, Musical
-    bingo, Bingo, Raffles, Members draws (jag the joker is not offered: not live)
-  - tick trivia and raffles: "Put it on your TV" comes next, as part of setting up trivia (the first game), and asks
-    "Is this the same TV you played the demo on?"; Yes keeps the pairing with no code (vpTvPaired is this venue's)
-  - "Who's hosting?" next, then trivia's own step, then raffles' step with "Not ready yet? Remind me next time I sign
-    in"; tapping it takes raffles out of tonight's run
-  - the NEXT sign-in (a new window: its own session) asks ONE question first: "Ready to set up raffles now?"
+  - the wizard opens on "What games do you want to set up today?" (jag the joker is not offered: not live)
+  - the wizard is the games setup (10 Nov: it replaced the five ticks and the per-game steps): heads-up, the games in
+    order, the nights, "set them all up today?", "Not today"; then the guide carries on with "Put it on your TV"
+    ("Is this the same TV you played the demo on?"; Yes keeps the pairing with no code), "Who's hosting?", "About you"
+  - the NEXT sign-in does not ask the old "Ready to set up raffles now?" (each game's own setup opens the first time)
   - a venue that has only played the demo is not "a venue that has played": the wizard still opens
   - laid out at 375 and 1366: nothing wider than the screen
 
@@ -54,13 +52,27 @@ def play(RIG, width, height, label):
         t1, c = r.open('/app/', width=width, height=height, before=before)
         ok('the wizard opens, after the demo, on "What games do you want to set up today?"',
            r.until(c, TITLE + '==="What games do you want to set up today?"', 30) is True, r.ask(c, TITLE))
-        chips = r.json(c, 'JSON.stringify([].map.call(document.querySelectorAll("#vpFrChips-games button"),function(b){ return b.textContent.trim(); }))')
-        ok('  five ticks, in order: trivia, musical bingo, bingo, raffles, members draws', chips == ['Trivia', 'Musical bingo', 'Bingo', 'Raffles', 'Members draws'], chips)
+        ok('  with the heads-up and its one button over the guide (the games setup, INBOX 104)', r.until(c, '!!document.getElementById("vpGsGo")', 15) is True)
         ok('  laid out: nothing wider than the screen', (r.ask(c, WIDE) or 0) <= 0, r.ask(c, WIDE))
+        click(r, c, 'vpGsGo')
+        ok('then the games, in order: trivia, musical bingo, bingo, raffles, members draws',
+           r.until(c, '!!document.getElementById("vpGsGames")', 15) is True and
+           r.json(c, 'JSON.stringify([].map.call(document.querySelectorAll("#vpGsGames [data-game]"),function(b){ return b.getAttribute("data-game"); }))') == ['trivia', 'musical', 'bingo', 'raffles', 'members'],
+           r.ask(c, 'document.getElementById("vpGsBody").innerText'))
         if SHOTS: r.shot(c, os.path.join(SHOTS, 'wizard-pick-%d.jpg' % width))
-        click(r, c, 'vpFrChip-games-trivia'); click(r, c, 'vpFrChip-games-raffles')
-        click(r, c, 'vpFrNext')
-        ok('trivia and raffles ticked: next is "Put it on your TV"', r.until(c, TITLE + '==="Put it on your TV"', 10) is True, r.ask(c, TITLE))
+        r.ask(c, 'document.querySelector("#vpGsGames [data-game=trivia]").click(); document.querySelector("#vpGsGames [data-game=raffles]").click(); true')
+        click(r, c, 'vpGsNext')
+        ok('trivia and raffles ticked: next is "Which nights do you run them?"', r.until(c, '(document.getElementById("vpGsTitle")||{}).textContent==="Which nights do you run them?"', 10) is True,
+           r.ask(c, '(document.getElementById("vpGsTitle")||{}).textContent'))
+        click(r, c, 'vpGsWeekSkip')
+        ok('skipping the nights asks "set them all up today?"', r.until(c, '!!document.getElementById("vpGsAllNo")', 10) is True, r.ask(c, '(document.getElementById("vpGsTitle")||{}).textContent'))
+        click(r, c, 'vpGsAllNo')
+        ok('"Not today" says no worries and that each game asks the first time it is opened',
+           r.until(c, '!!document.getElementById("vpGsNoWorries") && /remind you when you open each of those games/.test(document.getElementById("vpGsNoWorries").innerText)', 10) is True,
+           r.ask(c, 'document.getElementById("vpGsBody").innerText'))
+        ok('  and the defaults are kept for trivia and raffles', 'saved for trivia and raffles' in (r.ask(c, 'document.getElementById("vpGsNoWorries").innerText') or ''))
+        click(r, c, 'vpGsDone')
+        ok('the guide carries on: "Put it on your TV"', r.until(c, TITLE + '==="Put it on your TV"', 15) is True, r.ask(c, TITLE))
         ok('  as part of setting up trivia, the first game', 'setting up trivia, your first game' in (r.ask(c, 'document.getElementById("vpFrBody").innerText') or ''))
         ok('  it asks "Is this the same TV you played the demo on?"', r.ask(c, '!!document.getElementById("vpFrSameTv") && /Is this the same TV you played the demo on\\?/.test(document.getElementById("vpFrSameTv").innerText)') is True)
         click(r, c, 'vpFrSameYes')
@@ -70,20 +82,15 @@ def play(RIG, width, height, label):
         click(r, c, 'vpFrNext')
         ok('then "Who\'s hosting?"', r.until(c, TITLE + '==="Who\'s hosting?"', 10) is True, r.ask(c, TITLE))
         click(r, c, 'vpFrNext')
-        ok('then trivia\'s own setup', r.until(c, TITLE + '==="Set up trivia"', 10) is True, r.ask(c, TITLE))
-        ok('  with "Not ready yet? Remind me next time I sign in"', r.ask(c, '(document.getElementById("vpFrRemind")||{}).textContent') == 'Not ready yet? Remind me next time I sign in')
-        click(r, c, 'vpFrNext')
-        ok('then raffles\' setup (bingo, musical bingo and members draws were not ticked, so they get no step)', r.until(c, TITLE + '==="Set up raffles"', 10) is True, r.ask(c, TITLE))
-        click(r, c, 'vpFrRemind')
-        ok('"Remind me next time": raffles leaves tonight\'s run', r.until(c, TITLE + '!=="Set up raffles"', 10) is True, r.ask(c, TITLE))
-        ok('  and is kept to ask about next time', 'raffles' in (r.ask(c, '(function(){ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k.indexOf("vpFirstRun:")===0) return localStorage.getItem(k); } return ""; })()') or ''))
+        ok('then no per-game steps (the games setup did them): "About you and your venue"', r.until(c, TITLE + '==="About you and your venue"', 10) is True, r.ask(c, TITLE))
+        ok('  laid out: nothing wider than the screen', (r.ask(c, WIDE) or 0) <= 0, r.ask(c, WIDE))
+        ok('no script errors', r.ask(c, 'window.__errs.length') == 0, r.ask(c, 'JSON.stringify(window.__errs)'))
         click(r, c, 'vpFrClose')
         r.close_tab(t1)
         t2, c2 = r.open('/app/', width=width, height=height)
-        ok('the NEXT sign-in asks ONE question first: "Ready to set up raffles now?"',
-           r.until(c2, '!!document.getElementById("vpAsk") && /Ready to set up raffles now\\?/.test(document.getElementById("vpAsk").innerText)', 30) is True,
+        ok('the NEXT sign-in does not ask the old "Ready to set up raffles now?" (each game asks on its own first open)',
+           r.until(c2, 'document.readyState==="complete"', 30) is True and (time.sleep(3) or r.ask(c2, '!(document.getElementById("vpAsk") && /Ready to set up/.test(document.getElementById("vpAsk").innerText))')) is True,
            r.ask(c2, '(document.getElementById("vpAsk")||{}).innerText || ' + TITLE))
-        if SHOTS: r.shot(c2, os.path.join(SHOTS, 'wizard-remind-%d.jpg' % width))
         ok('no script errors', r.ask(c2, 'window.__errs.length') == 0, r.ask(c2, 'JSON.stringify(window.__errs)'))
         r.close_tab(t2)
     finally:
