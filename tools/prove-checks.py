@@ -6023,11 +6023,11 @@ MUTATIONS = [
     # That is a check nobody is proving, dressed up as a tidy line of output. Caught 17 Sep 2026.
     # If a date in the copy moves, move it here too.
     ('every founding page agrees with its own code', 'venueplay/nsw.html',
-     '<<ALL:30 November 2026>>', '31 November 2026',
+     '<<ALL:31 December 2026>>', '31 November 2026',
      'a founding page carries a date that does not exist'),
     # 20 Oct 2026: /offer-nov's HTML said 31 October while its script said 30 November.
     ('the offer page types the dates of the month it is written for', 'venueplay/nsw.html',
-     'join by <span class="vpc-day" style="white-space:nowrap">30 November</span>',
+     'join by <span class="vpc-day" style="white-space:nowrap">31 December</span>',
      'join by <span class="vpc-day" style="white-space:nowrap">31 October</span>',
      'the offer page goes back to typing last month\'s closing date, so anything that reads '
      'the HTML without the script (a crawler, a link preview) is told the wrong deadline'),
