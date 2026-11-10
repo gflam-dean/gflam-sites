@@ -288,24 +288,40 @@ try:
     def bris(y, m, d, h=12):
         return int(datetime.datetime(y, m, d, h, tzinfo=datetime.timezone.utc).timestamp() * 1000) - 10 * 3600 * 1000
     LIVE = re.compile(r'\$2\.50|\$75\b|lock in your price|locked for life|if you join by', re.I)
+    # 10 Nov 2026 (INBOX 159): the live page is the JANUARY one (31 January 2027, OFFER-JAN-2027). /offer-dec is already in
+    # inboxes and serves it too, so a venue emailed in November or December has until 31 January. OFFER-DEC-2026 just
+    # ends on 31 December with no page of its own. Month edges are tested on both sides (31 Dec -> 1 Jan, 31 Jan -> 1 Feb).
+    ok('venueplay/_redirects serves /offer-dec and /offer-jan from /nsw', bool(re.search(r'^/offer-dec\s+/nsw\s+200\s*$', REDIRECTS, re.M)) and bool(re.search(r'^/offer-jan\s+/nsw\s+200\s*$', REDIRECTS, re.M)))
     for path, when, ms, want_ended in (('/offer-nov', '9 Nov', bris(2026, 11, 9), False), ('/offer-nov', '11 Nov, after the rollover', bris(2026, 11, 11), False),
-                                       ('/offer-nov', '1 Dec', bris(2026, 12, 1), True), ('/offer-dec', '11 Nov', bris(2026, 11, 11), False),
-                                       ('/offer-dec', '5 Dec', bris(2026, 12, 5), False), ('/offer-dec', '2 Jan 2027', bris(2027, 1, 2), True)):
+                                       ('/offer-nov', '1 Dec', bris(2026, 12, 1), True),
+                                       ('/offer-dec', '11 Nov', bris(2026, 11, 11), False), ('/offer-dec', '5 Dec', bris(2026, 12, 5), False),
+                                       ('/offer-dec', '31 Dec 23:30', bris(2026, 12, 31, 23), False), ('/offer-dec', '1 Jan 2027 00:30', bris(2027, 1, 1, 0), False),
+                                       ('/offer-dec', '31 Jan 23:30', bris(2027, 1, 31, 23), False), ('/offer-dec', '1 Feb 00:30', bris(2027, 2, 1, 0), True),
+                                       ('/offer-jan', '31 Dec 23:30', bris(2026, 12, 31, 23), False), ('/offer-jan', '1 Jan 2027 00:30', bris(2027, 1, 1, 0), False),
+                                       ('/offer-jan', '31 Jan 23:30', bris(2027, 1, 31, 23), False), ('/offer-jan', '1 Feb 00:30', bris(2027, 2, 1, 0), True)):
         tid, sid = load(S, path, 'open', 375, 812, True, clock_ms=ms, ends=want_ended)
         v = see(S, sid)
         t = v.get('all', '')
         is_ended = 'This offer ended' in t
         is_live = bool(LIVE.search(t))
-        ok('%s on %s: %s, and the live and ended words are never visible together' % (path, when, 'ended' if want_ended else 'live'),
-           is_ended == want_ended and is_live != want_ended and not (is_ended and is_live) and (v.get('eyebrow') is None) == want_ended,
-           (is_ended, is_live, v.get('eyebrow'), re.findall(r'.{25}(?:This offer ended|\$2\.50).{25}', t)[:3]))
+        jan_page = path in ('/offer-dec', '/offer-jan')
+        # a live dec/jan page: asks about OFFER-JAN-2027 (never OFFER-DEC-2026) and says 31 January; an ended one says it ended on 31 January
+        right_page = True
+        if jan_page and not want_ended:
+            right_page = (any('OFFER-JAN-2027' in a for a in v.get('asked', [])) and not any('OFFER-DEC-2026' in a for a in v.get('asked', []))
+                          and (v.get('eyebrow') or '').lower().rstrip('.').endswith('31 january') and 'December' not in t)
+        elif jan_page:
+            right_page = v.get('banner', '').startswith('This offer ended on 31 January.')
+        ok('%s on %s: %s, and the live and ended words are never visible together%s' % (path, when, 'ended' if want_ended else 'live', ' (the January page and code)' if jan_page else ''),
+           is_ended == want_ended and is_live != want_ended and not (is_ended and is_live) and (v.get('eyebrow') is None) == want_ended and right_page,
+           (is_ended, is_live, v.get('eyebrow'), v.get('asked'), v.get('banner'), re.findall(r'.{25}(?:This offer ended|\$2\.50).{25}', t)[:3]))
         S.close_tab(tid)
 finally:
     S.close()
 
 total = PASS[0] + FAIL[0]
 print('')
-EXPECTED = 54
+EXPECTED = 62
 if total != EXPECTED:
     print('EXPECTED %d checks and ran %d.' % (EXPECTED, total))
     sys.exit(1)

@@ -6023,11 +6023,11 @@ MUTATIONS = [
     # That is a check nobody is proving, dressed up as a tidy line of output. Caught 17 Sep 2026.
     # If a date in the copy moves, move it here too.
     ('every founding page agrees with its own code', 'venueplay/nsw.html',
-     '<<ALL:31 December 2026>>', '31 November 2026',
+     '<<ALL:31 January 2027>>', '31 November 2026',
      'a founding page carries a date that does not exist'),
     # 20 Oct 2026: /offer-nov's HTML said 31 October while its script said 30 November.
     ('the offer page types the dates of the month it is written for', 'venueplay/nsw.html',
-     'join by <span class="vpc-day" style="white-space:nowrap">31 December</span>',
+     'join by <span class="vpc-day" style="white-space:nowrap">31 January</span>',
      'join by <span class="vpc-day" style="white-space:nowrap">31 October</span>',
      'the offer page goes back to typing last month\'s closing date, so anything that reads '
      'the HTML without the script (a crawler, a link preview) is told the wrong deadline'),
@@ -11993,6 +11993,10 @@ MUTATIONS = [
      "vpTrack('start_submit', {",
      "vpTrack('start_submit_x', {",
      'the submit step stops being counted'),
+    # 10 Nov 2026 (INBOX 159): /offer-dec is already in about 250 inboxes and serves the JANUARY page and code.
+    ('offer-ended-in-chrome.test.py', 'venueplay/app/vp-offer.js',
+     "    if (SERVES[key]) key = SERVES[key];\n", '',
+     '/offer-dec goes back to its own December row, so the venues already emailed are quoted 31 December and OFFER-DEC-2026 instead of January'),
     ('offer-page-start-first.test.py', 'venueplay/_redirects',
      '/offer-dec  /nsw  200',
      '/offer-dec  /nsw-dec  200',
@@ -12091,7 +12095,7 @@ MUTATIONS = [
      'Three big nights in a row and we adjust your plan to fit, at $1 a player.</p>',
      'note 18: the extra-player line promises a number the billing rules do not charge'),
     ('offer-page-start-first.test.py', 'venueplay/nsw.html',
-     'Venues that join before <span class="vpc-date">31 December 2026</span> lock in',
+     'Venues that join before <span class="vpc-date">31 January 2027</span> lock in',
      'Sign in by <span class="vpc-date">30 November 2026</span> and lock in',
      'the page carries the first sign-in deadline, which Dean keeps for the emails only'),
     ('offer-page-start-first.test.py', 'venueplay/nsw.html',

@@ -1568,7 +1568,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/signup-source.test.js": {
-  "checks": 39,
+  "checks": 41,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {
