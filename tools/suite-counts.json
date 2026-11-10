@@ -180,7 +180,7 @@
   "counted_by": "lines"
  },
  "tools/email-fit-in-chrome.test.py": {
-  "checks": 39,
+  "checks": 45,
   "counted_by": "lines"
  },
  "tools/feedback-followup-in-chrome.test.py": {
