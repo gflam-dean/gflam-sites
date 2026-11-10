@@ -260,7 +260,7 @@
     P + ".vpgs-raf .vpgs-rq{padding-right:50px}" +   /* in the same column as every other box, the "?" column kept clear (design review r10) */
     "@media (max-width:380px){#vpGs{padding:0 12px!important}" + P + ".vpgs-days{gap:2px}" + P + ".vpgs-day{min-width:0}}" +   /* Mon to Sun inside the card on a 375 phone */
     P + "input[type=date]{color-scheme:light}" +   /* the light scheme draws a dark calendar icon, which the invert above turns white (design review r10) */
-    P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}",
+    P + ".vpgs-advert{margin:12px 0 0;padding:12px 14px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-advert b{display:block;margin:0 0 2px;font:800 16px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-advert p{margin:0;font-size:15px;line-height:1.45;color:" + C.muted + "}" + P + ".vpgs-advert{padding:0;border:0;background:none}" + P + ".vpgs-advert a.vpgs-link{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:52px;margin:0;padding:10px 16px;text-align:center;border:2px solid rgba(255,255,255,.28);border-radius:12px;text-decoration:none}",
     /* ROUND 11 (Dean, 9 Nov). TWO TO A LINE: each setting is a half-width cell, its label on top, its box underneath; the
        "?" words and any on/off line open under the pair across both. */
     P + ".vpgs-pairs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:stretch;padding:6px 0;border-top:1px solid " + C.line + "}" + P + ".vpgs-rows>.vpgs-pairs:first-child{border-top:none;padding-top:0}" +
@@ -284,7 +284,7 @@
     P + ".vpgs-prow.solo>.vpgs-popts{grid-column:2!important;grid-row:1!important}" +
     P + ".vpgs-swaps{display:flex;flex-direction:column;gap:8px}" + P + ".vpgs-swaps:empty{display:none}" +
     P + ".vpgs-swap{padding:10px 12px;border:1px solid " + C.line + ";border-radius:12px;background:rgba(255,255,255,.03)}" + P + ".vpgs-swap .vpgs-rq{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px;align-items:center;margin:0 0 6px;font:700 15px " + HEAD + ";color:#FFFFFF}" + P + ".vpgs-swap .vpgs-link{margin:2px 0 0;min-height:40px;padding:6px 0}" +
-    P + ".vpgs-raf .vpgs-rname{grid-template-columns:minmax(0,1fr);padding-right:50px}" +
+    P + ".vpgs-raf .vpgs-rname{grid-template-columns:minmax(0,1fr);padding-right:50px}" + P + ".vpgs-raf .vpgs-rq.vpgs-rname .vpgs-in{width:100%}" +
     P + ".vpgs-remrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 0}" + P + ".vpgs-remrow .vpgs-rq{display:flex;flex-direction:column;gap:4px;font:700 15px " + HEAD + ";color:#FFFFFF}" +
     "@media (max-width:420px){" + P + ".vpgs-pairs{column-gap:8px}" + P + ".vpgs-pairs>.vpgs-row.pcell>.vpgs-lab{font-size:14.5px}" + P + ".vpgs-pairs .vpgs-seg button{padding:6px 4px;font-size:14.5px}" + P + ".vpgs-swap .vpgs-rq{grid-template-columns:1fr}}",
     /* ROUND 12 (Dean, 10 Nov). A setting alone on its line sits in the LEFT half (rounds a night, how many raffles), so another can sit beside it later;
