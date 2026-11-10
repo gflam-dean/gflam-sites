@@ -4209,6 +4209,13 @@ def local_checks(which):
              'test-undo-cancel-rolls-back.js',
              'a refused undo puts back every field it wrote, the 90-day clock included', 12,
              'A venue left active with no subscription behind it plays for nothing, for ever'),
+            # D190: why are you cancelling (Dean, 10 Nov 2026). venueplay/app/billing.html askWhy, the Worker's
+            # VPA_CANCEL_REASONS and vpbCancelVenue, and HQ's cxReasonHtml on the venue Details panel.
+            ('D190. A venue that cancels is asked why; the reason and note are kept for HQ and the cancellation is the same whatever they say',
+             'test-cancel-reason.js',
+             'seven plain reasons and an optional note, stored word for word; the same Stripe sync, emails and dates as skipping; shown on the venue in HQ', 56,
+             'A reason that changed what happens to the money, or a form field that stopped a venue leaving, is a billing '
+             'fault; a reason nobody can read in HQ was never worth asking'),
         ):
             head(label)
             t = os.path.join(ROOT, 'tools', fn)

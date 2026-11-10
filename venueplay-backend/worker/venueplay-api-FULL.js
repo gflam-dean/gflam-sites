@@ -36,7 +36,7 @@
    every player (find a person, the 90-day player deletion, the opt-in export) do not use it, on purpose.
    The game Worker's twin is DEMO_OFF. */
 const VPA_NOT_DEMO = '&is_demo=not.is.true';
-const BUILD = '8 Nov 2026, 15:41 · af7425de';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 11:45 · 73c91457';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -12434,10 +12434,23 @@ const VPA_CANCEL_ALERTS = ['dean@venueplay.com.au', 'hello@venueplay.com.au'];
    than rejected: a venue must ALWAYS be able to leave, and a cancellation is never
    refused because a form field did not validate. */
 const VPA_CANCEL_REASONS = {
-  expensive: 'venueplay is too expensive',
+  /* THE SEVEN THE PAGE SHOWS (Dean, 10 Nov 2026: "ASK them why they're cancelling, a short
+     reason picker plus an optional note"). Plain words, in the order billing.html lists them.
+     None of them leads anywhere near a price: a venue that picks "costs too much" or "just
+     pausing" is not offered a discount or a different rate (memory venue-comeback-pricing,
+     the leeway is never published). HQ reads the reason and decides whether to ring. */
+  not_using: 'We weren’t using it enough',
+  expensive: 'It costs too much for us',
+  players: 'Our players didn’t take to it',
+  closing: 'We’re closing or changing hands',
+  switched: 'We’re using something else',
+  pausing: 'Just pausing for now',
+  other: 'Something else',
+  /* THE TWO RETIRED ONES, still accepted with their old words. A billing page loaded before
+     the release can still post them, and their audit rows already carry these labels. The
+     page no longer offers them. */
   trial: 'We just wanted to trial it',
   dislike: 'We do not like it',
-  other: 'Something else',
 };
 
 async function vpaFireCancelAlert(env, opts) {
@@ -13408,7 +13421,7 @@ async function vpbCancelVenue(request, env, json) {
   const undo = b.undo === true;
   /* Never reject a cancellation over a form field. An unknown reason becomes 'other'
      and a missing one becomes null; neither stops them leaving. */
-  const reason = (!undo && VPA_CANCEL_REASONS[String(b.reason || '')]) ? String(b.reason)
+  const reason = (!undo && Object.prototype.hasOwnProperty.call(VPA_CANCEL_REASONS, String(b.reason || ''))) ? String(b.reason)
                : (!undo && b.reason ? 'other' : null);
   const reasonDetail = (!undo && b.reason_detail)
     ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
