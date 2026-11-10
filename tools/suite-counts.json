@@ -127,6 +127,10 @@
   "checks": 19,
   "counted_by": "lines"
  },
+ "tools/ai-look-cleanup.test.py": {
+  "checks": 19,
+  "counted_by": "lines"
+ },
  "tools/billing-words-in-chrome.test.py": {
   "checks": 62,
   "counted_by": "lines"

@@ -60,10 +60,9 @@
      The comment above tvStatus records the same class of fault the other way round:
      an element that could never be SEEN because of a conflicting style. */
   .tv-status[hidden]{display:none}
-  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .sdot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
 
-  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
   .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
@@ -79,7 +78,7 @@
   .lobbyname.long{font-size:clamp(18px,4.2cqw,46px);line-height:1.04}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
   .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
-  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
 
   /* THE NEW LOOK (Dean, 3 Nov 2026; mock-ups in venue-enrich/reports/new-look-games-3nov). Flat near-black,
@@ -196,7 +195,7 @@
   .ans.correct .al{background:#0A0A0B;color:var(--c);text-shadow:none}
   .answers.neutral .ans.correct .al{color:#fff}
   .ans.correct .at{color:#0A0A0B}
-  .ans .rtag{position:absolute;left:2.3cqw;top:-1.15cqw;background:#0A0A0B;color:#fff;border:.16cqw solid #fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.25cqw;line-height:1;letter-spacing:.16em;text-transform:uppercase;padding:.5cqw .83cqw;border-radius:.42cqw;white-space:nowrap}
+  .ans .rtag{position:absolute;left:2.3cqw;top:-1.15cqw;background:#0A0A0B;color:#fff;border:.16cqw solid #fff;font-family:'Manrope',sans-serif;font-weight:700;font-size:1.25cqw;line-height:1;text-transform:none;padding:.5cqw .83cqw;border-radius:.42cqw;white-space:nowrap}
   .ans .sc{position:absolute;right:2.3cqw;top:1.3cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.67cqw;line-height:1;color:#8A8A95;white-space:nowrap}
   .ans.correct .sc{color:#0A0A0B;font-size:2.08cqw;top:1.1cqw}
   .ans .split{position:absolute;left:2.3cqw;right:2.3cqw;bottom:1cqw}
@@ -252,7 +251,7 @@
   .brow .n{flex:1;min-width:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:1.85cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .brow .s{flex:none;margin-left:1.6cqw;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75cqw;color:#fff}
   .brow.pinned{margin-bottom:1.1cqw}   /* the leader kept at the top of a later page, a gap under it */
-  .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:49.3cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:1.15cqw;color:#8A8A95}
+  .boardpage{position:absolute;left:calc(23.5cqw);right:23.5cqw;top:49.3cqw;text-align:center;font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;font-size:1.15cqw;color:#8A8A95}
 
   /* THE WINNERS SCREEN: three steps, second, first, third, the team names and scores standing on them,
      first in Anton yellow with a yellow top and a soft yellow glow (yellow is for winning moments only).
@@ -281,7 +280,7 @@
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
   .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
   .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,26px);color:var(--gold);letter-spacing:.08em}
   /* NOTHING UNDER THE CARD (14 Oct 2026). The card above, the VenuePlay corner and the venue's
      logo are marked data-fit-avoid, and /app/vp-fit.js moves and scales each wall the least it

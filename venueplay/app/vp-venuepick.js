@@ -73,8 +73,8 @@
   }
 
   var STYLE = ".vpvp{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}" +
-    ".vpvp label{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.08em;" +
-    "text-transform:uppercase;color:var(--faint,#8a8a96)}" +
+    ".vpvp label{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-size:11px;" +
+    "text-transform:none;color:var(--faint,#8a8a96)}" +
     ".vpvp select{width:100%;max-width:420px;min-height:46px;padding:11px 14px;font-size:15px;font-weight:700}" +
     ".vpvp .vpvp-note{margin:0;font-size:13px;color:var(--muted,#a6a6b0);line-height:1.45}" +
     "@media(max-width:520px){.vpvp select{max-width:none;font-size:16px}}";

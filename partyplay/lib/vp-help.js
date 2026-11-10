@@ -152,7 +152,7 @@
       ".vph .vph-issue:active{border-color:#FF1F8E}" +
       ".vph .vph-issuename{font-size:13px;color:#9A9AA4;margin:4px 0 10px}" +
       ".vph .vph-step{background:#1B1B20;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:18px 16px}" +
-      ".vph .vph-stepno{font:800 12px/1 'Hanken Grotesk',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;margin-bottom:10px}" +
+      ".vph .vph-stepno{font:800 12px/1 'Hanken Grotesk',system-ui,sans-serif;text-transform:none;color:#FF1F8E;margin-bottom:10px}" +
       ".vph .vph-stepbody{font-size:17px;line-height:1.45;color:#fff}" +
       ".vph .vph-steprow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}" +
       ".vph .vph-steprow .vph-go{margin-top:0;flex:1;min-width:130px}" +

@@ -39,8 +39,7 @@
   .setup .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .setup .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em}
   .setup .brand .div{width:1px;height:18px;background:rgba(255,255,255,.2)}
-  .setup .brand .tag{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--pink)}
+  .setup .brand .tag{font-family:'Manrope',sans-serif;font-weight:700;font-size:10px;text-transform:none;color:var(--pink)}
   /* THE WAY BACK. The console opens this in a NEW TAB, so there is no history behind it and
      the browser's own back button is greyed out. A venue that got here had no way back to
      their account except retyping the address. Reported by Dean, 17 Sep 2026. */
@@ -56,8 +55,7 @@
 
   .row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;align-items:flex-end}
   .fld{display:flex;flex-direction:column;gap:5px;flex:1 1 210px;min-width:180px}
-  .fld label{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;
-    letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4}
+  .fld label{font-family:'Manrope',sans-serif;font-weight:700;font-size:9.5px;text-transform:none;color:#9A9AA4}
   .fld input{background:#17171A;border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:10px;
     padding:11px 13px;font-family:'Manrope',sans-serif;font-size:14.5px;outline:none;transition:.15s;width:100%}
   .fld input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.16)}
@@ -74,13 +72,13 @@
   .venue-ro{margin-top:18px;padding:14px 16px;background:#17171A;border:1px solid rgba(255,255,255,.14);border-radius:12px;
     display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
   .venue-ro .vname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;color:#fff;flex:1 1 100%}
-  .venue-ro .vlbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;display:block;margin-bottom:3px}
+  .venue-ro .vlbl{font-family:'Manrope',sans-serif;font-weight:700;font-size:9.5px;text-transform:none;color:#9A9AA4;display:block;margin-bottom:3px}
   .venue-ro .vlink{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:#fff;letter-spacing:.02em;overflow-wrap:anywhere}
   .venue-ro .vgo{flex:0 0 auto}
   .venue-ro .vgo .btn{display:inline-block;text-decoration:none;padding:10px 16px;font-size:13px}
   .novenue{margin-top:18px;font-size:14.5px;color:#fff}
   .novenue b{color:var(--pink)}
-  .plbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;margin:18px 0 0}
+  .plbl{font-family:'Manrope',sans-serif;font-weight:700;font-size:9.5px;text-transform:none;color:#9A9AA4;margin:18px 0 0}
   /* WHAT TO PRINT: one row of three equal tiles in the same style as the Design picker (Dean, 24 Oct
      2026: the pills "do not look any good"). Each tile shows the sheet it prints. */
   .picks{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
@@ -128,8 +126,8 @@
   .sign{height:100%;position:relative;overflow:hidden;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:calc(var(--u)*1.2);text-align:center;padding:calc(var(--u)*3) calc(var(--u)*2.6)}
-  .sign .kick{font-family:'JetBrains Mono',monospace;font-weight:700;
-    font-size:calc(var(--u)*1);letter-spacing:.2em;text-transform:uppercase;color:var(--pink-deep);line-height:1.4}
+  .sign .kick{font-family:'Manrope',sans-serif;font-weight:700;
+    font-size:calc(var(--u)*1);text-transform:none;color:var(--pink-deep);line-height:1.4}
   .sign .venue{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
     font-size:calc(var(--u)*2);letter-spacing:-.02em;color:var(--ink);line-height:1.1;
     margin-top:calc(var(--u)*.35);overflow-wrap:anywhere}
@@ -196,8 +194,7 @@
   #sheetTents .sign{--u:3.3mm}
   #sheetTents .foldline{position:absolute;left:0;right:0;top:50%;border-top:.25mm dashed #B9B9C2;z-index:3}
   #sheetTents .foldlbl{position:absolute;left:2.5mm;top:50%;transform:translateY(-50%);
-    background:#fff;padding:0 1.6mm;font-family:'JetBrains Mono',monospace;font-size:6.4pt;
-    letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;z-index:4}
+    background:#fff;padding:0 1.6mm;font-family:'Manrope',sans-serif;font-size:6.4pt;text-transform:none;color:#9A9AA4;z-index:4}
 
   /* The venue's own logo, pulled from their screen settings so they never upload it twice.
      Sits above the name; the sign is theirs, we are the small mark at the bottom.
@@ -291,8 +288,7 @@
   .art.wide.d-band .sign h2{font-size:calc(var(--u)*3.8)}
   .art.d-band .chrome .accent{display:none}
   /* the eyebrow in the band: pink, never under 10pt (it was grey on beige at 8pt), and the venue's own words */
-  .art.d-band .ckick{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:max(1.25cqh,10pt);
-    letter-spacing:.2em;text-transform:uppercase;color:var(--pkb);max-width:92%;text-align:center;text-wrap:balance}
+  .art.d-band .ckick{display:block;font-family:'Manrope',sans-serif;font-weight:700;font-size:max(1.25cqh,10pt);text-transform:none;color:var(--pkb);max-width:92%;text-align:center;text-wrap:balance}
   .art.v-light.d-band .ckick{color:var(--pk)}
   .art.d-band .sign .vlogo,.art.d-band .sign .kick{display:none!important}
   .art.d-band.nl .cname{display:block;font-family:'Anton',sans-serif;text-transform:uppercase;color:#fff;
@@ -323,8 +319,8 @@
     font-size:2.3cqh;line-height:1.12;color:var(--ink);overflow-wrap:anywhere;align-self:end}
   .art.d-ticket .cstub{display:block;grid-area:stub;align-self:start}
   /* stub type never under 8pt on a card or a tent (it was 6pt and 5pt) */
-  .art.d-ticket .clbl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:max(1.05cqh,8pt);letter-spacing:.28em;
-    text-transform:uppercase;color:var(--muted)}
+  .art.d-ticket .clbl{font-family:'Manrope',sans-serif;font-weight:700;font-size:max(1.05cqh,8pt);
+    text-transform:none;color:var(--muted)}
   .art.d-ticket .ccode{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.2cqh;letter-spacing:.14em;
     color:var(--pk);line-height:1.15}
   .art.d-ticket .curl{font-family:'JetBrains Mono',monospace;font-size:max(1.15cqh,8pt);color:var(--muted)}

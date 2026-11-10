@@ -98,7 +98,7 @@
   .key{min-height:62px;border-radius:14px;border:1px solid var(--line);background:var(--ink-3);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;cursor:pointer;touch-action:manipulation;user-select:none}
   .key:active{background:#24242a;border-color:var(--pink)}
   .key.fn{font-family:'Hanken Grotesk',sans-serif;font-size:15px;color:var(--muted)}
-  .addbtn{margin-top:12px;min-height:66px;font-size:20px;text-transform:uppercase;letter-spacing:.05em}
+  .addbtn{margin-top:12px;min-height:66px;font-size:20px;text-transform:none}
   .msg{min-height:20px;margin-top:10px;font-size:14px;font-weight:700;color:var(--roll);text-align:center}
 
   .done{text-align:center;padding:26px 16px;border-radius:16px;background:rgba(53,208,127,.10);border:1px solid rgba(53,208,127,.45)}
@@ -146,8 +146,7 @@
   .winner .contact b{color:#fff}
   .hist li{display:flex;gap:10px;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-2);font-size:14px;list-style:none}
   .tvline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-top:12px}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll);flex:none}
-  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .dot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
   .warn{padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:14px;line-height:1.5;font-weight:600}
 
   /* A PHONE TURNED SIDEWAYS AT THE BAR (Dean, 3 Nov 2026: "looks awful in landscape"). 844x390 and 932x430:

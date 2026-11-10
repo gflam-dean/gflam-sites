@@ -69,25 +69,12 @@
   }
 
   .vp-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 12px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--pink);
-    background: rgba(255,31,142,0.08);
-    border: 1px solid rgba(255,31,142,0.28);
-    padding: 6px 12px;
-    border-radius: 999px;
-    margin-bottom: 18px;
-  }
-
-  .vp-eyebrow .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--pink);
-    box-shadow: 0 0 8px 1px var(--pink);
+    display: block;
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 14px;
   }
 
   .vp-h1 {
@@ -165,24 +152,9 @@
     display: grid;
     place-items: center;
   }
-  .vp-ring::before, .vp-ring::after {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: 50%;
-    border: 2px solid var(--pink);
-    animation: vp-pulse 2.2s ease-out infinite;
-  }
-  .vp-ring::after { animation-delay: 1.1s; }
-  .vp-ring .core {
-    width: 11px; height: 11px; border-radius: 50%;
-    background: var(--pink);
-    box-shadow: 0 0 12px 2px var(--pink);
-  }
-  @keyframes vp-pulse {
-    0%   { transform: scale(1); opacity: 0.9; }
-    100% { transform: scale(2.4); opacity: 0; }
-  }
+  /* A plain ring marks where to tap. No pulse and no centre dot (Dean, 7 Nov 2026: pulsing and glowing dots look AI-made). */
+  .vp-ring::before, .vp-ring::after { display: none; }
+  .vp-ring .core { display: none; }
 
   .vp-tag {
     font-size: 12px;
@@ -256,8 +228,7 @@
   }
   .vp-modal-title {
     font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    text-transform:none;
     color: var(--pink);
     font-weight: 700;
   }
@@ -303,21 +274,17 @@
     pointer-events:none;
   }
   .vps-tv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1;flex-wrap:wrap}
-  .vps-tv-venue{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .vps-tv-venue{font-family:'Manrope',sans-serif;font-size:clamp(9px,1.4vw,12px);text-transform:none;color:var(--muted)}
   .vps-pill{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);
-    letter-spacing:.08em;text-transform:uppercase;
+    font-family:'Manrope',sans-serif;font-size:clamp(8.5px,1.2vw,11px);text-transform:none;
     padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
     color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
   }
   .vps-pill.vps-live{color:var(--pink);border-color:rgba(255,31,142,.45)}
   .vps-pill.vps-prize{color:#fff;background:rgba(255,31,142,.12);border-color:rgba(255,31,142,.4)}
-  .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
   @media(prefers-reduced-motion:no-preference){
-    .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
     .vps-tv.vps-inview .vps-ball{animation:vps-ballreveal 1.9s cubic-bezier(.16,1,.3,1) both,vps-ballglow 2.8s ease-in-out 1.9s infinite}
   }
-  @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
   @keyframes vps-ballreveal{
     0%{transform:scale(.35);opacity:0}
     32%{transform:scale(2.25);opacity:1}
@@ -330,7 +297,7 @@
   }
   .vps-tv-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,2.6vw,24px);flex:1;z-index:1;min-height:0;align-items:center}
   .vps-ball-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-  .vps-ball-idx{font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-ball-idx{font-family:'Manrope',sans-serif;font-size:clamp(8.5px,1.2vw,11px);text-transform:none;color:var(--muted-2)}
   .vps-ball{
     width:clamp(78px,13vw,148px);height:clamp(78px,13vw,148px);border-radius:50%;
     background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
@@ -348,7 +315,7 @@
   .vps-ball-prev{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
   .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
   .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
-  .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-chip-lbl{font-family:'Manrope',sans-serif;font-size:clamp(8px,1.1vw,10px);text-transform:none;color:var(--muted-2)}
   .vps-board{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;align-content:center;min-width:0}
   .vps-board .vps-col{display:flex;flex-direction:column;gap:4px}
   .vps-cell{
@@ -368,7 +335,7 @@
   .vps-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
   .vps-qr canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
   .vps-join{flex:1;min-width:0}
-  .vps-join .vps-l{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-join .vps-l{font-family:'Manrope',sans-serif;font-size:clamp(8px,1.1vw,10.5px);text-transform:none;color:var(--muted-2)}
   .vps-join .vps-u{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.6vw,15px);margin-top:2px;color:#fff;display:flex;align-items:center;gap:7px}
   .vps-u-mark{width:11px;height:13px;flex:none;overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9))}
   .vps-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(16px,3vw,28px);letter-spacing:.14em;color:var(--pink);text-shadow:0 0 18px var(--glow)}
@@ -382,7 +349,7 @@
   }
   .vps-notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:21px;background:#050506;border-radius:0 0 13px 13px;z-index:3}
   .vps-ph-head{display:flex;align-items:center;justify-content:space-between;padding-top:15px}
-  .vps-ph-head .vps-v{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .vps-ph-head .vps-v{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--muted)}
   .vps-mini-mark{display:flex;align-items:center;gap:6px}
   .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
   .vps-mini-mark .vps-wm{height:13px;width:auto;display:block;overflow:visible;color:#fff;filter:none}
@@ -430,7 +397,7 @@
   .vps-con-brand .vps-mini-mark{display:flex;align-items:center;gap:6px}
   .vps-con-brand .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
   .vps-con-brand .vps-mini-mark .vps-wm{height:13px;width:auto;display:block;overflow:visible;color:#fff;filter:none}
-  .vps-con-venue{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .vps-con-venue{font-family:'Manrope',sans-serif;font-size:11px;text-transform:none;color:var(--muted)}
   .vps-con-top .vps-g{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.02em}
   .vps-con-top .vps-g small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);text-transform:none;margin-top:4px}
   .vps-con-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
@@ -443,7 +410,7 @@
   .vps-next-ball .vps-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
   .vps-next-ball .vps-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85}
   .vps-recent{margin-top:12px}
-  .vps-recent .vps-rl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+  .vps-recent .vps-rl{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--muted-2);margin-bottom:7px}
   .vps-recent .vps-balls{display:flex;gap:6px;flex-wrap:wrap}
   .vps-rb{
     font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
@@ -452,7 +419,7 @@
   }
   .vps-rb.vps-cur{background:rgba(255,31,142,.16);border-color:rgba(255,31,142,.45);color:#fff}
   .vps-claim{background:var(--ink-3);border:1px solid rgba(47,210,122,.32);border-radius:12px;padding:14px}
-  .vps-claim .vps-cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#2FD27A;margin-bottom:8px}
+  .vps-claim .vps-cl{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:#2FD27A;margin-bottom:8px}
   .vps-claim .vps-who{font-family:'Anton',sans-serif;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
   .vps-claim .vps-verdict{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2FD27A;margin-top:6px;display:flex;align-items:center;gap:6px}
   .vps-claim .vps-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
@@ -653,7 +620,7 @@
   .vp-ph-mode{ font-size:22px;font-weight:800;letter-spacing:-0.01em;color:var(--white); }
   .vp-ph-sub{ font-size:13px;color:var(--grey); }
   .vp-ph-badge{
-    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    font-size:11px;text-transform:none;
     color:var(--pink);
     background:rgba(255,31,142,0.08);
     border:1px solid rgba(255,31,142,0.32);
@@ -774,8 +741,7 @@
   /* ---- Trivia player ---- */
   .vps-tq-phone{ font-size:15px;padding:0 4px; }
   .vps-tsub{
-    align-self:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;
-    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    align-self:center;font-family:'Manrope',sans-serif;font-size:9.5px;text-transform:none;color:var(--muted);
     border:1px solid var(--line-2);border-radius:999px;padding:4px 10px;
   }
   .vps-opts-phone{ grid-template-columns:1fr;gap:9px; }
@@ -823,8 +789,7 @@ block (all classes prefixed .vpm-)
   .vpm-vinyl svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 18px var(--glow))}
   .vpm-now-txt{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
   .vpm-nowlabel{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
-    letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
+    font-family:'Manrope',sans-serif;font-size:clamp(9px,1.2vw,12px);text-transform:none;color:var(--pink);
     display:inline-flex;align-items:center;gap:8px;
   }
   .vpm-song{
@@ -860,8 +825,7 @@ block (all classes prefixed .vpm-)
 
   .vpm-tv-recent{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;z-index:1}
   .vpm-rlbl{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,11px);
-    letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:clamp(8px,1.1vw,11px);text-transform:none;color:var(--muted-2);
   }
   .vpm-schip{
     font-family:'Manrope',sans-serif;font-weight:700;font-size:clamp(10px,1.3vw,14px);color:#e8e8ec;
@@ -890,8 +854,8 @@ block (all classes prefixed .vpm-)
   .vpm-nextbtn .vpm-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85;display:block}
   .vpm-queue{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:13px}
   .vpm-qhead{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted-2);margin-bottom:9px;
+    font-family:'Manrope',sans-serif;font-size:10px;
+    text-transform:none;color:var(--muted-2);margin-bottom:9px;
   }
   .vpm-qrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
   .vpm-qrow:first-of-type{border-top:0;padding-top:0}
@@ -902,16 +866,15 @@ block (all classes prefixed .vpm-)
   .vpm-qtitle{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;color:#e8e8ec;line-height:1.15;min-width:0}
   .vpm-qtitle small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10px;color:var(--muted);margin-top:2px}
   .vpm-qnext{
-    margin-left:auto;flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--pink);
+    margin-left:auto;flex:none;font-family:'Manrope',sans-serif;font-size:9px;text-transform:none;color:var(--pink);
     border:1px solid rgba(255,31,142,.4);border-radius:999px;padding:3px 8px;
   }
 
   /* ---- Player: song-title card ---- */
   .vpm-cardlbl{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:9.5px;
+    text-transform:none;color:var(--muted-2);
   }
   .vpm-cardlbl b{color:var(--pink);font-weight:700}
   .vpm-card{
@@ -966,8 +929,7 @@ block (all classes prefixed .vpr-)
     gap:clamp(8px,1.8vw,18px);flex:1;min-height:0;z-index:1;text-align:center;
   }
   .vpr-drawlabel{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
-    letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
+    font-family:'Manrope',sans-serif;font-size:clamp(9px,1.2vw,12px);text-transform:none;color:var(--pink);
     display:inline-flex;align-items:center;gap:8px;
   }
 
@@ -981,8 +943,7 @@ block (all classes prefixed .vpr-)
     box-shadow:0 0 60px -18px var(--glow),inset 0 -8px 22px rgba(0,0,0,.28);
   }
   .vpr-winner-cap{
-    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
-    letter-spacing:.14em;color:#fff;line-height:1;font-size:clamp(11px,1.6vw,16px);opacity:.9;
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:none;color:#fff;line-height:1;font-size:clamp(11px,1.6vw,16px);opacity:.9;
   }
   .vpr-winner-num{
     font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:.9;
@@ -1026,8 +987,7 @@ block (all classes prefixed .vpr-)
   /* Other winners as chips */
   .vpr-tv-more{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;z-index:1}
   .vpr-mlbl{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,11px);
-    letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:clamp(8px,1.1vw,11px);text-transform:none;color:var(--muted-2);
   }
   .vpr-chip{
     font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(15px,2.1vw,24px);
@@ -1044,8 +1004,8 @@ block (all classes prefixed .vpr-)
 
   /* ---- Host: number entry + drawn results ---- */
   .vpr-entry-lbl{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted-2);margin-bottom:8px;
+    font-family:'Manrope',sans-serif;font-size:10px;
+    text-transform:none;color:var(--muted-2);margin-bottom:8px;
   }
   /* Raffle name field, reads like a filled text input */
   .vpr-name-field{margin-bottom:14px}
@@ -1059,8 +1019,8 @@ block (all classes prefixed .vpr-)
     padding:9px 12px;display:flex;flex-direction:column;gap:4px;
   }
   .vpr-field .vpr-flbl{
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:9.5px;
+    text-transform:none;color:var(--muted-2);
   }
   .vpr-field .vpr-fval{
     font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:#fff;
@@ -1090,8 +1050,8 @@ block (all classes prefixed .vpr-)
     display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px;
   }
   .vpr-drawn-head .vpr-dh{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:10px;
+    text-transform:none;color:var(--muted-2);
   }
   .vpr-drawn-head .vpr-range-note{
     font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
@@ -1102,8 +1062,8 @@ block (all classes prefixed .vpr-)
     background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);
   }
   .vpr-drawn-row .vpr-place{
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--pink);flex:none;width:56px;
+    font-family:'Manrope',sans-serif;font-size:9.5px;
+    text-transform:none;color:var(--pink);flex:none;width:56px;
   }
   .vpr-drawn-row .vpr-dnum{
     font-family:'Anton',sans-serif;font-weight:400;font-size:26px;letter-spacing:.03em;color:#fff;
@@ -1123,8 +1083,8 @@ block (all classes prefixed .vpr-)
   }
   .vpr-p-note b{color:var(--pink)}
   .vpr-p-winlbl{
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted-2);text-align:center;margin-top:2px;
+    font-family:'Manrope',sans-serif;font-size:9.5px;
+    text-transform:none;color:var(--muted-2);text-align:center;margin-top:2px;
   }
   .vpr-p-wins{display:flex;flex-direction:column;gap:9px}
   .vpr-p-win{
@@ -1133,8 +1093,8 @@ block (all classes prefixed .vpr-)
     border:1px solid rgba(255,31,142,.38);
   }
   .vpr-p-place{
-    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--pink);flex:none;width:52px;
+    font-family:'Manrope',sans-serif;font-size:9.5px;
+    text-transform:none;color:var(--pink);flex:none;width:52px;
   }
   .vpr-p-num{
     font-family:'Anton',sans-serif;font-weight:400;font-size:38px;line-height:.9;
@@ -1180,8 +1140,7 @@ block (all classes prefixed .vpd-)
     padding:clamp(12px,2.4vw,26px) clamp(14px,3vw,30px);
   }
   .vpd-jlabel{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.3vw,13px);
-    letter-spacing:.2em;text-transform:uppercase;color:var(--pink);
+    font-family:'Manrope',sans-serif;font-size:clamp(9px,1.3vw,13px);text-transform:none;color:var(--pink);
     display:inline-flex;align-items:center;gap:8px;
   }
   .vpd-jamount{font-size:clamp(46px,10vw,120px)}
@@ -1202,8 +1161,7 @@ block (all classes prefixed .vpd-)
   .vpd-token .vpd-tk-num{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(30px,5.6vw,60px);line-height:.9;letter-spacing:.01em}
   .vpd-drawn-txt{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0}
   .vpd-drawn-lbl{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
-    letter-spacing:.18em;text-transform:uppercase;color:var(--muted-2);
+    font-family:'Manrope',sans-serif;font-size:clamp(9px,1.2vw,12px);text-transform:none;color:var(--muted-2);
   }
   .vpd-name{font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:1;letter-spacing:.01em;font-size:clamp(28px,5.4vw,60px)}
   .vpd-present{
@@ -1224,7 +1182,7 @@ block (all classes prefixed .vpd-)
     border:1px solid rgba(255,31,142,.3);border-radius:12px;padding:13px 15px;
   }
   .vpd-hjackpot .vpd-hj-l{min-width:0}
-  .vpd-hj-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .vpd-hj-lbl{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--pink);display:flex;align-items:center;gap:7px;margin-bottom:5px}
   .vpd-hj-amount{font-size:34px}
   .vpd-hj-note{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--muted-2);text-align:right;line-height:1.5;flex:none}
   .vpd-hj-note b{color:#e8e8ec;font-weight:700}
@@ -1249,7 +1207,7 @@ block (all classes prefixed .vpd-)
   .vpd-htoken .vpd-htk-lt{font-family:'Anton',sans-serif;font-size:8px;letter-spacing:.12em;opacity:.9}
   .vpd-htoken .vpd-htk-num{font-family:'Anton',sans-serif;font-size:22px}
   .vpd-hresult-txt{min-width:0}
-  .vpd-hresult-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:3px}
+  .vpd-hresult-lbl{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--muted-2);margin-bottom:3px}
   .vpd-hresult-name{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:20px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
   .vpd-hresult-sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:3px}
 
@@ -1309,21 +1267,20 @@ block (all classes prefixed .vpd-)
     border:1px solid rgba(255,31,142,.32);border-radius:14px;
     padding:16px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
   }
-  .vpd-p-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+  .vpd-p-eyebrow{font-family:'Manrope',sans-serif;font-size:9.5px;text-transform:none;color:var(--pink)}
   .vpd-p-draw{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:22px;line-height:1.06;text-transform:uppercase;letter-spacing:.01em}
   .vpd-p-in{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
-  .vpd-p-in .vpd-dot-ok{width:7px;height:7px;border-radius:50%;background:#2FD27A;box-shadow:0 0 8px #2FD27A}
   .vpd-p-num{
     display:flex;flex-direction:column;align-items:center;gap:4px;
     background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:14px 12px;
   }
-  .vpd-p-num-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vpd-p-num-lbl{font-family:'Manrope',sans-serif;font-size:9.5px;text-transform:none;color:var(--muted-2)}
   .vpd-p-num-val{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:52px;line-height:.9;letter-spacing:.02em}
   .vpd-p-jackpot{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:13px 15px;
   }
-  .vpd-p-jackpot .vpd-pj-l{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vpd-p-jackpot .vpd-pj-l{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--muted-2)}
   .vpd-p-jackpot .vpd-pj-v{font-family:'Anton',sans-serif;font-weight:400;color:var(--pink);font-size:30px;line-height:1;text-shadow:0 0 18px var(--glow)}
   .vpd-p-foot{
     margin-top:auto;text-align:center;
@@ -1360,7 +1317,7 @@ block (all classes prefixed .vpd-)
   .vps-allballs-btn:hover{background:rgba(255,31,142,.1)}
   .vps-allballs{margin-top:12px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:12px}
   .vps-allballs[hidden]{display:none}
-  .vps-allballs-h{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-bottom:8px}
+  .vps-allballs-h{font-family:'Manrope',sans-serif;font-size:10px;text-transform:none;color:var(--muted-2);margin-bottom:8px}
   .vps-allballs .vps-board{gap:4px}
   .vps-allballs .vps-cell{font-size:10px;min-height:16px;padding:2px 0}
 
@@ -1391,8 +1348,7 @@ block (all classes prefixed .vpa-)
     padding:clamp(10px,2.4vw,26px) clamp(8px,2vw,20px);
   }
   .vpa-tag{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.3vw,13px);
-    letter-spacing:.2em;text-transform:uppercase;color:var(--pink);
+    font-family:'Manrope',sans-serif;font-size:clamp(9px,1.3vw,13px);text-transform:none;color:var(--pink);
     background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.4);
     border-radius:999px;padding:6px 14px;
   }
@@ -1418,8 +1374,7 @@ block (all classes prefixed .vpa-)
     font-size:clamp(14px,2.2vw,26px);line-height:1.15;text-align:center;
   }
   .vpa-venue{
-    font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.5vw,14px);
-    letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    font-family:'Manrope',sans-serif;font-size:clamp(10px,1.5vw,14px);text-transform:none;color:var(--muted);
     display:inline-flex;align-items:center;gap:9px;
   }
   .vpa-venue::before,.vpa-venue::after{
@@ -1461,8 +1416,8 @@ block (all classes prefixed .vpa-)
   /* ---- Host: slide manager ---- */
   .vpa-panel{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:13px}
   .vpa-phead{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted-2);margin-bottom:11px;
+    font-family:'Manrope',sans-serif;font-size:10px;
+    text-transform:none;color:var(--muted-2);margin-bottom:11px;
     display:flex;align-items:center;justify-content:space-between;gap:8px;
   }
   .vpa-phead b{color:var(--pink);font-weight:700}
@@ -1515,8 +1470,8 @@ block (all classes prefixed .vpa-)
 
   /* Show-when segmented toggle */
   .vpa-when-l{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted-2);margin-bottom:9px;
+    font-family:'Manrope',sans-serif;font-size:10px;
+    text-transform:none;color:var(--muted-2);margin-bottom:9px;
   }
   .vpa-seg{
     display:grid;grid-template-columns:1fr 1fr;gap:6px;
@@ -1585,7 +1540,7 @@ block (all classes prefixed .vpa-)
   .vp-mail-sub{color:#B9B2C7;font-size:14.5px;margin:0 0 16px}
   /* Email, venue name, postcode (2 Nov 2026): three across, the postcode only as wide as four digits. */
   .vp-mail-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) 6.5em;gap:10px;text-align:left}
-  .vp-mail-f{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#B9B2C7;font-family:'JetBrains Mono',monospace}
+  .vp-mail-f{display:flex;flex-direction:column;gap:6px;font-size:12px;text-transform:none;color:#B9B2C7;font-family:'Manrope',sans-serif}
   .vp-mail-f em{font-style:normal;text-transform:none;letter-spacing:0;color:#8E869E}
   .vp-mail-f input{background:#0B0A0F;border:1px solid rgba(255,255,255,.18);border-radius:11px;color:#fff;font-family:'Manrope',sans-serif;
     font-size:16px;letter-spacing:0;text-transform:none;padding:13px 14px;width:100%}
@@ -1680,7 +1635,7 @@ block (all classes prefixed .vpa-)
 
 <div class="vp-wrap">
   <div class="vp-inner">
-    <span class="vp-eyebrow"><span class="dot"></span>The real screens</span>
+    <span class="vp-eyebrow">The real screens</span>
     <h1 class="vp-h1">See a night on <span class="accent">venueplay</span></h1>
     <p class="vp-intro">One room, one platform. Tap the big screen, the host and a player to see each view.</p>
     <!-- The "interactive concept prototype, not a live game" line went when the drawings did.
@@ -2141,7 +2096,7 @@ block (all classes prefixed .vpa-)
         '<div class="vps-tv-top">' +
           '<span class="vps-tv-venue">Tugun Bowls Club &middot; Trivia Night</span>' +
           '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Trivia</span>' +
+            '<span class="vps-pill vps-live">Trivia</span>' +
             '<span class="vps-pill">Q4 of 10</span>' +
           '</span>' +
         '</div>' +
@@ -2190,7 +2145,7 @@ block (all classes prefixed .vpa-)
             '<div class="vps-con-venue">Tugun Bowls Club</div>' +
             '<div class="vps-g">Trivia, Game 2<small>Question 4 of 10</small></div>' +
           '</div>' +
-          '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+          '<span class="vps-pill vps-live">Live</span>' +
         '</div>' +
         '<div class="vps-thost-q">' + triviaQuestion + '</div>' +
         '<div class="vps-hopts">' +
@@ -2368,7 +2323,7 @@ block (all classes prefixed .vpa-)
           '<div class="vps-tv-top">' +
             '<span class="vps-tv-venue">Tugun Bowls Club &middot; Musical Bingo</span>' +
             '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Musical Bingo</span>' +
+              '<span class="vps-pill vps-live">Musical Bingo</span>' +
               '<span class="vps-pill">Song 12 of 25</span>' +
             '</span>' +
           '</div>' +
@@ -2388,7 +2343,7 @@ block (all classes prefixed .vpa-)
                 '</svg>' +
               '</span>' +
               '<div class="vpm-now-txt">' +
-                '<span class="vpm-nowlabel"><span class="vps-dot"></span>Now playing</span>' +
+                '<span class="vpm-nowlabel">Now playing</span>' +
                 '<span class="vpm-song">Mr Brightside</span>' +
                 '<span class="vpm-artist">by <b>The Killers</b></span>' +
                 '<span class="vpm-eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>' +
@@ -2433,7 +2388,7 @@ block (all classes prefixed .vpa-)
               '<div class="vps-con-venue">Tugun Bowls Club</div>' +
               '<div class="vps-g">Musical Bingo, Game 3<small>Song 12 of 25 &middot; titles only, no audio</small></div>' +
             '</div>' +
-            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+            '<span class="vps-pill vps-live">Live</span>' +
           '</div>' +
           '<div class="vps-con-grid">' +
             '<div>' +
@@ -2450,7 +2405,7 @@ block (all classes prefixed .vpa-)
                   '</svg>' +
                 '</span>' +
                 '<div class="vpm-hnow-txt">' +
-                  '<span class="vpm-nowlabel"><span class="vps-dot"></span>Now playing</span>' +
+                  '<span class="vpm-nowlabel">Now playing</span>' +
                   '<div class="vpm-hnow-song">Mr Brightside</div>' +
                   '<div class="vpm-hnow-artist">by The Killers</div>' +
                 '</div>' +
@@ -2538,7 +2493,7 @@ block (all classes prefixed .vpa-)
       '<div class="vp-tvframe">' +
         '<div class="vps-tv">' +
           '<div class="vpr-tv-body">' +
-            '<span class="vpr-drawlabel"><span class="vps-dot"></span>Winning ticket</span>' +
+            '<span class="vpr-drawlabel">Winning ticket</span>' +
             '<div class="vpr-stage">' +
               '<span class="vpr-spark s1" aria-hidden="true"></span>' +
               '<span class="vpr-spark s2" aria-hidden="true"></span>' +
@@ -2588,7 +2543,7 @@ block (all classes prefixed .vpa-)
               '<div class="vps-con-venue">Tugun Bowls Club</div>' +
               '<div class="vps-g">Raffle, Game 4<small>Enter the range of paper tickets you sold, then draw</small></div>' +
             '</div>' +
-            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+            '<span class="vps-pill vps-live">Live</span>' +
           '</div>' +
           '<div class="vps-con-grid">' +
             '<div>' +
@@ -2693,7 +2648,7 @@ block (all classes prefixed .vpa-)
         '<div class="vps-tv">' +
           '<div class="vpd-tv-body">' +
             '<div class="vpd-jackpot">' +
-              '<span class="vpd-jlabel"><span class="vps-dot"></span>Live jackpot</span>' +
+              '<span class="vpd-jlabel">Live jackpot</span>' +
               '<span class="vpd-money vpd-jamount">$1,240</span>' +
               '<span class="vpd-jsub">Starts at $500, grows $80 a week</span>' +
             '</div>' +
@@ -2741,13 +2696,13 @@ block (all classes prefixed .vpa-)
               '<div class="vps-con-venue">Tugun Bowls Club</div>' +
               '<div class="vps-g">Friday Members Jackpot<small>Must be present to win &middot; 3 minute time limit</small></div>' +
             '</div>' +
-            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+            '<span class="vps-pill vps-live">Live</span>' +
           '</div>' +
           '<div class="vps-con-grid vpd-host-single">' +
             '<div>' +
               '<div class="vpd-hjackpot">' +
                 '<div class="vpd-hj-l">' +
-                  '<div class="vpd-hj-lbl"><span class="vps-dot"></span>Live jackpot</div>' +
+                  '<div class="vpd-hj-lbl">Live jackpot</div>' +
                   '<div class="vpd-money vpd-hj-amount">$1,240</div>' +
                 '</div>' +
                 '<div class="vpd-hj-note">Starts <b>$500</b><br>Grows <b>$80</b> a week</div>' +
@@ -2882,7 +2837,7 @@ block (all classes prefixed .vpa-)
               '<div class="vps-con-venue">Tugun Bowls Club</div>' +
               '<div class="vps-g">Screen ads<small>Your own promo slides on loop, no host needed</small></div>' +
             '</div>' +
-            '<span class="vps-pill vps-live"><span class="vps-dot"></span>On the screen</span>' +
+            '<span class="vps-pill vps-live">On the screen</span>' +
           '</div>' +
           '<div class="vps-con-grid">' +
             '<div>' +

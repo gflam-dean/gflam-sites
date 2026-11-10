@@ -85,7 +85,7 @@
       ["Different phones", n(t.unique_phones), delta(c.unique_phones)],
       ["Came back", n(t.returning), t.returning_pct + "% of phones, 2+ nights"],
       ["Opt-ins", n(t.optins), delta(c.optins)],
-      ["Slides shown", t.ads_counted ? n(t.ad_shows) : "&ndash;", t.ads_counted ? n(t.ad_venues) + " venues, about " + n(Math.round((t.ad_minutes || 0) / 60)) + " hours" : "not counted yet"]
+      ["Slides shown", t.ads_counted ? n(t.ad_shows) : "-", t.ads_counted ? n(t.ad_venues) + " venues, about " + n(Math.round((t.ad_minutes || 0) / 60)) + " hours" : "not counted yet"]
     ];
     var fk = Object.keys(t.formats || {}).sort(function (a, b) { return t.formats[b].nights - t.formats[a].nights; });
     var sales = [];
@@ -111,7 +111,7 @@
       + (rows.length ? rows.map(function (v) {
           return '<tr><td><div class="vn">' + rpEsc(v.name) + (v.test ? ' <span class="vt">(test)</span>' : '') + '</div><div class="vt">' + rpEsc(Object.keys(v.formats || {}).map(function (f) { return WORDS[f] || f; }).join(", ")) + '</div></td>'
             + '<td class="mono">' + n(v.nights) + '<div class="vt">was ' + n(v.last.nights) + '</div></td><td class="mono">' + n(v.player_visits) + '<div class="vt">was ' + n(v.last.player_visits) + '</div></td>'
-            + '<td class="mono">' + n(v.avg_per_night) + '</td><td class="mono">' + n(v.unique_phones) + '</td><td class="mono">' + n(v.returning) + '</td><td class="mono">' + n(v.new_phones) + '</td><td class="mono">' + n(v.optins) + '</td><td class="mono">' + (v.ads ? n(v.ads.shows) : "&ndash;") + '</td>'
+            + '<td class="mono">' + n(v.avg_per_night) + '</td><td class="mono">' + n(v.unique_phones) + '</td><td class="mono">' + n(v.returning) + '</td><td class="mono">' + n(v.new_phones) + '</td><td class="mono">' + n(v.optins) + '</td><td class="mono">' + (v.ads ? n(v.ads.shows) : "-") + '</td>'
             + '<td>' + trend(v) + '</td><td>' + rpEsc(v.top_team || "") + '</td></tr>';
         }).join("") : '<tr><td colspan="11" class="note">No venue ran a game in this month.</td></tr>')
       + '</tbody></table></div></div>'

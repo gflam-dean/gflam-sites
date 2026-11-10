@@ -60,10 +60,9 @@
      The comment above tvStatus records the same class of fault the other way round:
      an element that could never be SEEN because of a conflicting style. */
   .tv-status[hidden]{display:none}
-  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
-  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .sdot{display:none} /* no status dot: the word alone says it (Dean, 7 Nov 2026) */
 
-  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
   .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
@@ -77,7 +76,7 @@
   .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,52px);color:#fff;line-height:1}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
   .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
-  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
   /* No player count on the wall (locked design call), so the style that drew it is gone too. */
 
@@ -133,14 +132,14 @@
   #tvRun .pboard{flex-shrink:0}
   .ptok{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,2.4cqw,26px);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:20px;padding:.6cqw 1.6cqw;white-space:nowrap;max-width:44cqw;overflow:hidden;text-overflow:ellipsis}
   .ptok.new{background:rgba(255,31,142,.16);border-color:var(--pink);color:#fff;box-shadow:0 0 14px rgba(255,31,142,.3)}
-  .pblabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.18em;
+  .pblabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;
     font-size:clamp(9px,1.5cqw,15px);color:var(--muted);margin-top:2cqw}
 
   /* join corner (running only) */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,96px);height:clamp(44px,8cqw,96px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
   .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
-  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
   .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,24px);color:var(--gold);letter-spacing:.08em}
 
   /* claim / win */
@@ -207,7 +206,7 @@
   @keyframes mTriBreath{0%,100%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 1.095cqw rgba(255,31,142,.55))}50%{filter:drop-shadow(0 0 .365cqw rgba(255,31,142,.95)) drop-shadow(0 0 2.2cqw rgba(255,31,142,.9))}}
   @media (prefers-reduced-motion:reduce){.mart.listening .mtri{animation:none}}
   .mcol{position:absolute;left:calc(43.75cqw);right:6.25cqw;top:9.9cqw;height:31.4cqw;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
-  #tvRun .eyebrow{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.25cqw;line-height:1.2;color:var(--pink);margin:0}
+  #tvRun .eyebrow{font-family:'Manrope',sans-serif;font-weight:700;text-transform:none;font-size:1.25cqw;line-height:1.2;color:var(--pink);margin:0}
   #tvRun .nowtitle{font-size:9.9cqw;line-height:1;margin:1cqw 0 0;max-width:none;width:100%;max-height:19.4cqw;overflow:hidden;animation:none;text-wrap:balance}
   #tvRun .nowartist{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:3.75cqw;line-height:1.15;color:#B4B4BE;letter-spacing:0;margin-top:.8cqw;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
   #tvRun .mystery{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}

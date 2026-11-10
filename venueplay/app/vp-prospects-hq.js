@@ -334,14 +334,14 @@
       ".predit input{width:100%}.predit .note{margin-top:3px;font-size:12px}.prerr{color:#FF8A8E;font-weight:700;font-size:13px}" +
       ".prwhy{color:var(--roll);font-size:13px;margin-top:4px}" +
       ".prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 18px;margin-top:12px;font-size:13.5px}" +
-      ".prgrid > div{min-width:0;overflow-wrap:anywhere}.prgrid .k{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}" +
+      ".prgrid > div{min-width:0;overflow-wrap:anywhere}.prgrid .k{display:block;font-size:11px;text-transform:none;color:var(--faint);margin-bottom:2px}" +
       ".prgrid a{color:var(--text)}.prtel{font-weight:800;color:var(--pink)!important;text-decoration:none;font-size:15px}" +
       ".prnophone{color:var(--muted)}.prquiet{color:var(--muted);font-size:13px;margin-top:4px}.prcalled{margin-top:12px;font-size:13px;color:var(--win)}.prnote{color:var(--text)}" +
       ".practs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}.prform{margin-top:12px}.prform textarea{width:100%;margin-top:4px}" +
       ".prsum{color:var(--roll);letter-spacing:0;text-transform:none;font-weight:700;margin-left:6px}" +
       ".badge.roll{background:rgba(245,165,36,.14);color:var(--roll);border:1px solid rgba(245,165,36,.4)}" +
       ".badge.prreq{background:rgba(229,72,77,.16);color:#FF8A8E;border:1px solid rgba(229,72,77,.55)}.prcard.req{border-left-color:#E5484D}" +
-      ".prbar{margin:0 0 14px}.prbar select{min-width:0;flex:1 1 180px;max-width:280px}.prlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}" +
+      ".prbar{margin:0 0 14px}.prbar select{min-width:0;flex:1 1 180px;max-width:280px}.prlbl{font-size:11px;text-transform:none;color:var(--faint)}" +
       ".badge.prst-none{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.14)}" +
       ".badge.prst-free{background:rgba(53,208,127,.12);color:var(--win);border:1px solid rgba(53,208,127,.4)}" +
       ".badge.prst-free.prst-last{background:rgba(245,165,36,.18);color:var(--roll);border-color:rgba(245,165,36,.65)}" +

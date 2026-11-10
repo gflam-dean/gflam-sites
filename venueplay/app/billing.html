@@ -39,7 +39,7 @@
   .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
-  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:none;font-size:11px;color:var(--pink)}
   .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
   .hact:hover{border-color:var(--pink);color:#fff}
@@ -53,19 +53,19 @@
   #lede[hidden] ~ #content{margin-top:18px}   /* the billing intro is hidden off the Billing tab: keep the heading clear of what follows */
   .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:18px 20px;margin:12px 0}
   .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;text-transform:none;color:var(--faint)}
   .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px;color:#fff}
   .sumgrid .v.pink{color:var(--pink)}
-  .sumgrid .whenlbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:1px}
+  .sumgrid .whenlbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;text-transform:none;color:var(--faint);margin-top:1px}
   .sumgrid .nextrow{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px}
-  .sumgrid .nextrow .nl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumgrid .nextrow .nl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;text-transform:none;color:var(--faint)}
   .sumgrid .nextrow b{color:var(--text);font-weight:800;font-size:14px}
   /* THE BILLING CARD AS ROWS (Dean, 3 Nov 2026): "This month: 2 players" on one line, "Next month:
      5 players" just below, then "Next payment". Each number sits beside its own label. */
   .sumrows{display:flex;flex-direction:column;gap:0}
   .sumrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--line-2)}
   .sumrow:first-child{border-top:0;padding-top:2px}
-  .sumrow .k{flex:0 0 132px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumrow .k{flex:0 0 132px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;text-transform:none;color:var(--faint)}
   .sumrow .v{font-size:17px;font-weight:800;color:#fff}
   .sumrow .v.pink{color:var(--pink)}
   .sumrow .sub{font-size:13.5px;color:var(--muted)}
@@ -86,17 +86,17 @@
   .night .nfigs{display:flex;gap:18px;flex-wrap:wrap}
   .night .nfig{text-align:right;min-width:58px}
   .night .nfig b{display:block;font-size:18px;font-weight:800;color:#fff;line-height:1.15}
-  .night .nfig span{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .night .nfig span{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;text-transform:none;color:var(--faint)}
   @media (max-width:520px){ .night .nfigs{flex-basis:100%} .night .nfig{text-align:left} }
   /* The draw and raffle log: a plain list, one line each, that scrolls sideways on a phone
      rather than squashing a member number into two characters. */
   .logwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:10px}
   .logtable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
-  .logtable th{text-align:left;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--faint);font-weight:400;padding:0 12px 8px 0;white-space:nowrap}
+  .logtable th{text-align:left;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;
+    text-transform:none;color:var(--faint);font-weight:400;padding:0 12px 8px 0;white-space:nowrap}
   .logtable td{padding:9px 12px 9px 0;border-top:1px solid var(--line-2);color:var(--text);vertical-align:top}
   .logtable td b{color:#fff}
-  .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;text-transform:none;color:var(--muted);margin:26px 0 10px}
   /* THE DRAWS TAB, FOLDED (Dean, 3 Nov 2026: "DRAWS section is huge"). Raffles, Members draws and Permits are
      three folds; one is open at a time, its heading says what is set in a few words, and the open one is
      remembered. The headings keep the .label class so a manager's gating (gateSections) still hides a whole fold. */
@@ -165,7 +165,7 @@
   .screenpick{margin:0 0 16px;background:rgba(255,31,142,0.07);border:1px solid rgba(255,31,142,0.32);
     border-radius:14px;padding:13px 15px}
   .screenpick .flabel{display:block;margin:0 0 7px;font-family:'JetBrains Mono',ui-monospace,monospace;
-    font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--pink)}
+    font-size:10.5px;text-transform:none;color:var(--pink)}
   .screenpick select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;
     padding:13px 12px;font-size:17px;font-weight:600;font-family:'Manrope',sans-serif}
   .screenpick .pickfine{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
@@ -219,7 +219,7 @@
   #slides{counter-reset:adslide}
   .adcol{display:flex;flex-direction:column;gap:8px;min-width:0}
   .adthumb{width:100%;aspect-ratio:16/9;border-radius:10px;background-color:#050506;background-size:contain;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;position:relative}
-  .adthumb::before{content:"Slide " counter(adslide);position:absolute;top:6px;left:6px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
+  .adthumb::before{content:"Slide " counter(adslide);position:absolute;top:6px;left:6px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;text-transform:none;color:#fff;background:rgba(0,0,0,.6);border-radius:6px;padding:2px 6px}
   .adthumbbtns{display:flex;flex-direction:row;gap:10px;align-items:center;justify-content:space-between}
   .adthumbbtns .ad-change{flex:1 1 auto;margin:0}
   .adfields{min-width:0}
@@ -261,7 +261,7 @@
   .drow .dn{flex:1 1 220px;min-width:0}
   .drow .dn b{display:block;color:#fff;font-size:14.5px;overflow-wrap:anywhere}
   .drow .dn small{display:block;color:var(--muted);font-size:12.5px}
-  .drow .tvtag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .drow .tvtag{font-size:11px;font-weight:700;text-transform:none;color:var(--muted)}
   .drow .tvtag.on{color:var(--win)}
   .drow.editing{box-shadow:inset 3px 0 0 var(--pink);padding-left:10px}
   .drow .drowbtns{display:flex;gap:8px}
@@ -360,8 +360,7 @@
   .dlg h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:23px;
     color:#fff;letter-spacing:.005em;line-height:1.1;margin:0 0 8px}
   .dlg .dtext{color:var(--muted);font-size:13.5px;line-height:1.55;margin:0 0 18px}
-  .dlg .flabel{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;
-    letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 7px}
+  .dlg .flabel{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;text-transform:none;color:var(--faint);margin:0 0 7px}
   .dlg select,.dlg textarea{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;
     border-radius:12px;padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif;line-height:1.45}
   .dlg textarea{resize:vertical;min-height:78px}
@@ -436,11 +435,11 @@
 
     <div class="card">
       <div class="sumrows">
-        <div class="sumrow"><span class="k">Your plan</span><b class="v" id="s-plan">–</b><span class="sub" id="s-plan-sub"></span></div>
-        <div class="sumrow"><span class="k">This month</span><b class="v" id="s-players">–</b><span class="sub" id="s-total">–</span></div>
-        <div class="sumrow"><span class="k">Next month</span><b class="v" id="s-players-next">–</b><span class="sub" id="s-total-next">–</span></div>
-        <div class="sumrow"><span class="k">Next payment</span><b class="v pink" id="s-next-amt">–</b><span class="sub" id="s-next">–</span></div>
-        <div class="sumrow" id="s-credit-tile" style="display:none"><span class="k">Credit held</span><b class="v" id="s-credit" style="color:#35D07F">–</b></div>
+        <div class="sumrow"><span class="k">Your plan</span><b class="v" id="s-plan">-</b><span class="sub" id="s-plan-sub"></span></div>
+        <div class="sumrow"><span class="k">This month</span><b class="v" id="s-players">-</b><span class="sub" id="s-total">-</span></div>
+        <div class="sumrow"><span class="k">Next month</span><b class="v" id="s-players-next">-</b><span class="sub" id="s-total-next">-</span></div>
+        <div class="sumrow"><span class="k">Next payment</span><b class="v pink" id="s-next-amt">-</b><span class="sub" id="s-next">-</span></div>
+        <div class="sumrow" id="s-credit-tile" style="display:none"><span class="k">Credit held</span><b class="v" id="s-credit" style="color:#35D07F">-</b></div>
       </div>
       <div class="note" id="s-credit-note" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
     </div>

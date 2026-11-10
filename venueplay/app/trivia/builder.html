@@ -52,7 +52,7 @@
 
   /* progress: 1 Start, 2 Questions, 3 Ready */
   .steps{display:flex;gap:6px;margin:6px 0 18px}
-  .step{flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line-2);color:var(--faint);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+  .step{flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line-2);color:var(--faint);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;text-transform:none}
   .step .n{width:24px;height:24px;border-radius:50%;background:var(--ink);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;flex:none}
   .step.on{color:#fff;border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.10)}
   .step.on .n{background:var(--pink);border-color:var(--pink);color:#fff}
@@ -99,7 +99,7 @@
   .qrow .qthumb{width:56px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none;background:#000}
   .qrow .qt{flex:1;font-size:13.5px;min-width:0;overflow-wrap:anywhere}
   .qrow .qa{color:var(--win);font-size:12px;margin-top:2px}
-  .qrow .qmeta{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  .qrow .qmeta{color:var(--faint);font-size:11px;text-transform:none;margin-top:2px}
   .qrow .qact{display:flex;flex-direction:column;gap:4px;flex:none}
   .qrow .qx,.qrow .qe{background:none;border:1px solid transparent;border-radius:8px;color:var(--faint);font-size:16px;cursor:pointer;line-height:1;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center}
   .qrow .qe:hover{color:#fff;border-color:var(--line)}
@@ -115,7 +115,7 @@
   .picpre{display:none;height:60px;max-width:110px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#000}
   .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
   .summary .box{background:var(--ink);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px}
-  .summary .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .summary .k{font-size:10px;color:var(--faint);text-transform:none;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
   .summary .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:#fff;margin-top:3px}
   .hidden{display:none!important}
   .signin{text-align:center;padding:60px 20px;color:var(--muted)}
