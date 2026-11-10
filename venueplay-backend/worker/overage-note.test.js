@@ -144,8 +144,8 @@ async function main() {
   check('it says "Includes 12 extra players over 1 big night · $24.00 at $2/head."',
         rt.indexOf('Includes 12 extra players over 1 big night · $24.00 at $2/head.') !== -1, rt.slice(0, 500));
   check('it suggests a bigger plan, as it always has under a big night', rt.indexOf('Running over most weeks?') !== -1);
-  check('the amount paid is still $24.00 and the subject unchanged', rt.indexOf('Amount paid $24.00') !== -1 && r.subject === 'Your venueplay invoice ABC-0001 - $24.00', r.subject);
-  check('Stripe\'s own line is printed as Stripe wrote it', rt.indexOf('The Royal Hotel - Extra Player - 07/11/2026 $24.00') !== -1, rt);
+  check('the amount paid is still $24.00 and the subject unchanged', rt.indexOf('Amount paid $24.00') !== -1 && r.subject === 'Your venueplay receipt: $24.00 paid', r.subject);
+  check('Stripe\'s own line is printed as Stripe wrote it', rt.indexOf('The Royal Hotel - Extra Player - 07/11/2026 Subtotal') !== -1, rt);   // a single line carries no repeated amount (email round 8: one column, no repeated total)
 
   sent = [];
   await vpaFireInvoiceEmail(ENV, third);
@@ -188,7 +188,7 @@ async function main() {
   check('the note\'s $30.00 is exactly the big-night lines, no more and no less', vpaOverageFromInvoice(renewal).cents === bigCents && bigCents === 3000, bigCents);
   check('the note\'s 18 players is exactly the quantities on those lines', vpaOverageFromInvoice(renewal).players === 5 + 3 + 4 + 6);
   var rc = lineCells(r.html);
-  check('the receipt\'s lines add up to what was paid', sum(rc) === night.amount_paid && rc.length === 1, rc);
+  check('the receipt\'s one line is the amount paid (no repeated amount beside it, round 8)', rc.length === 0 && rt.indexOf('Amount paid $24.00') !== -1, rc);
 
   print('\n8. Old invoices read exactly as before');
   sent = [];

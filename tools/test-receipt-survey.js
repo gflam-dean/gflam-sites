@@ -206,7 +206,7 @@ async function main() {
   var ST = { ok: true, nights: 4, totalGames: 6, totalPlayers: 148, regulars: 21, biggest: { players: 47, at: '2026-11-27T09:30:00Z' } };
   var wk = rem('last', ST, 8);
   check('one week out, with numbers: "One week left", then "In your free month, The Royal ran:" over the tiles (6 games, 148 players), "Your biggest night had 47 players. Don\'t let that stop now." then the ask',
-    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. In your free month, The Royal ran: 6 games 148 players Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
+    wk.indexOf('One week left of your free month') !== -1 && wk.indexOf("ends on Wed 2 December. If you'd like to keep going, add your card before then and it won't be charged until your free month ends. In your free month, The Royal ran: 6 games 148 players Your biggest night had 47 players. Don't let that stop now. Would you like to keep it going? Add your card.") !== -1, wk.slice(0, 700));
   /* SUBSCRIBERS ARE COUNTED FROM THE SAME VIEW THE MONTHLY REPORT READS (v_vp_player_optins), run through vpaVenueStats. */
   var SEL0 = vpaSelect, SELA0 = vpaSelectAll, asked = [];
   vpaSelect = function (env, table) {
