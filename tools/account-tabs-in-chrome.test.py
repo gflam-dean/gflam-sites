@@ -78,7 +78,7 @@ MEASURE = r'''(function(){
   return JSON.stringify({vw:innerWidth, dsw:de.scrollWidth, dcw:de.clientWidth, rsw:row.scrollWidth, rcw:row.clientWidth,
     rows:Object.keys(tops).length, tabs:tabs, panel:(document.querySelector(".tabpanel.on")||{}).id||"",
     summary:seen(sum), intro:seen(document.getElementById("lede")), introText:(document.getElementById("lede")||{}).textContent||"",
-    pick:seen(document.getElementById("acctPick"))});
+    pick:seen(document.getElementById("acctPick")), group:seen(document.getElementById("acctGroup"))});
 })()'''
 # A tap in the middle of a tab: what is under the finger there, and does it open that tab.
 TAP = r'''(function(id){
@@ -120,7 +120,9 @@ try:
             ok('%d %s: the plan summary is %s' % (w, tab, 'shown' if want else 'not shown'), m.get('summary') is want, m.get('summary'))
             ok('%d %s: the billing intro ("Your plan, venues, hosts and next payment") is %s' % (w, tab, 'shown' if want else 'not shown'),
                m.get('intro') is want and (not want or 'next payment' in m.get('introText', '')), (m.get('intro'), m.get('introText', '')[:60]))
-            ok('%d %s: the venue drop-down above the tabs is still there' % (w, tab), m.get('pick') is True, m.get('pick'))
+            # Billing alone is about the group (Dean, 6 Nov 2026): the drop-down gives way there to "You're looking at the group".
+            ok('%d %s: %s' % (w, tab, 'the drop-down gives way to "You\'re looking at the group"' if tab == 'billing' else 'the venue drop-down above the tabs is still there'),
+               (m.get('pick') is False and m.get('group') is True) if tab == 'billing' else (m.get('pick') is True and m.get('group') is False), [m.get('pick'), m.get('group')])
             if A.shots and w in (375, 1280) and tab in ('billing', 'people'):
                 S.shot(sid, os.path.join(A.shots, 'account-tabs-%s-%d.png' % (tab, w)), False)
         errs = S.js(sid, 'JSON.stringify(window.__errs||[])')

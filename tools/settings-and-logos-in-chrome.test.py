@@ -152,7 +152,7 @@ try:
     print('\nYour account > Screen no longer lets a venue put itself on our website')
     tid, sid = S.open('/app/billing.html')
     S.until(sid, 'document.getElementById("content").style.display!=="none" && !!document.querySelector(\'[data-tab="screen"]\')', 20)
-    S.js(sid, 'document.querySelector(\'[data-tab="screen"]\').click(); true')
+    S.js(sid, 'document.querySelector(\'[data-tab="screen"]\').click(); [].forEach.call(document.querySelectorAll(".scard.fold.folded > .scardhead"),function(h){h.click();}); true')   # the Screen tab's cards fold (Dean, 6 Nov 2026): open them
     S.until(sid, '!!document.getElementById("logoFile")', 10)
     time.sleep(1.0)
     ok('no "Show our logo on the VenuePlay website" tick', S.js(sid, '!document.getElementById("logoOnSite") && !/Show our logo on the VenuePlay website/.test(document.body.innerText)') is True)

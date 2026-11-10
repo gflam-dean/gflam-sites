@@ -118,17 +118,20 @@ try:
         tm, nm, np = by.get('This month', {}), by.get('Next month', {}), by.get('Next payment', {})
         ok('%s: 4. the player numbers say "players" and sit beside their labels' % where,
            tm.get('v', '').endswith(('players', 'player')) and nm.get('v', '').endswith(('players', 'player')) and tm.get('side') and nm.get('side'), [tm, nm])
-        ok('%s: 4. "Next payment: $X per month", the amount beside its label' % where,
-           np.get('v', '').startswith('$') and np.get('v', '').endswith('per month') and np.get('side'), np)
+        # Dean, 6 Nov 2026: "Next payment $350 on <date>"; with no date yet (no card) it is "$350 per month".
+        ok('%s: 4. "Next payment $X on <date>" (or "$X per month" before there is a date), the amount beside its label' % where,
+           np.get('v', '').startswith('$') and np.get('side') and (np.get('v', '').endswith('per month') or (str(np.get('sub', '')).startswith('on ') and 'per month' not in np.get('v', ''))), np)
         ok('%s: 7. no lock-out card anywhere on the page' % where,
            S.js(sid, '!document.getElementById("resecureCard") && !/lock (old )?devices|lock out/i.test(document.body.innerText)') is True)
         pick = S.js(sid, 'JSON.stringify({n:document.querySelectorAll("#acctPick select").length,opts:[].map.call(document.querySelectorAll("#acctPick option"),function(o){return o.textContent}),'
                          'shown:(function(){var s=document.querySelector("#acctPick select");return !!(s&&s.offsetParent)})(),'
                          'panels:[].filter.call(document.querySelectorAll(".screenpick"),function(e){return e.offsetParent!==null}).length,'
-                         'aboveTabs:(function(){var a=document.getElementById("acctPick"),t=document.querySelector(".tabs");return !!(a&&t&&(a.compareDocumentPosition(t)&4))})()})')
+                         'aboveTabs:(function(){var a=document.getElementById("acctPick"),t=document.querySelector(".tabs");return !!(a&&t&&(a.compareDocumentPosition(t)&4))})(),'
+                         'group:(function(){var g=document.getElementById("acctGroup");return g&&g.offsetParent?g.textContent:""})()})')
         pick = json.loads(pick or '{}')
-        ok('%s: 8/12. ONE venue drop-down, above the tabs, listing both venues' % where,
-           pick.get('n') == 1 and pick.get('shown') and pick.get('aboveTabs') and sorted(pick.get('opts') or []) == ['Deepwater Hotel', 'The Royal Arms'], pick)
+        # Dean, 6 Nov 2026 (round 5 note 4): Billing is about the whole group, so there the drop-down gives way to one line.
+        ok('%s: 8/12. ONE venue drop-down, above the tabs, listing both venues; on Billing it gives way to "You\'re looking at the group"' % where,
+           pick.get('n') == 1 and not pick.get('shown') and pick.get('group') == "You're looking at the group" and pick.get('aboveTabs') and sorted(pick.get('opts') or []) == ['Deepwater Hotel', 'The Royal Arms'], pick)
         ok('%s: 8/12. and no panel shows a drop-down of its own' % where, pick.get('panels') == 0, pick)
         shot(sid, 'account-billing-%d' % w)
 
@@ -146,9 +149,14 @@ try:
            all(abs(r['step']['t'] - r['nm']['t']) <= 14 and abs((r['row']['r'] - r['pad']) - r['step']['r']) <= 2 for r in rows_geo), rows_geo)
         ok('%s: C/E. "Cancel this venue" sits under the stepper, never beside it' % where,
            all(r['canx']['t'] >= r['step']['b'] - 1 for r in rows_geo), rows_geo)
-        ok('%s: C/E. the two rows are the same shape and evenly spaced' % where,
-           len(rows_geo) == 2 and abs((rows_geo[0]['row']['b'] - rows_geo[0]['row']['t']) - (rows_geo[1]['row']['b'] - rows_geo[1]['row']['t'])) <= 2
-           and 6 <= rows_geo[1]['row']['t'] - rows_geo[0]['row']['b'] <= 12, rows_geo)
+        # From 1100px the rows sit two across (Dean, round 5, 6 Nov 2026: Billing's venue rows two to a row, 12px apart);
+        # below that one above the other. Either way: the same shape, the same gap.
+        def _evenly(g):
+            if len(g) != 2 or abs((g[0]['row']['b'] - g[0]['row']['t']) - (g[1]['row']['b'] - g[1]['row']['t'])) > 2: return False
+            if abs(g[0]['row']['t'] - g[1]['row']['t']) <= 1:   # side by side
+                return 6 <= g[1]['nm']['l'] - g[0]['row']['r'] - g[1]['pad'] <= 14
+            return 6 <= g[1]['row']['t'] - g[0]['row']['b'] <= 12
+        ok('%s: C/E. the two rows are the same shape and evenly spaced' % where, _evenly(rows_geo), rows_geo)
         shot(sid, 'venues-%d' % w, False)
 
         # D. the add-a-venue words, with the switch OFF (the rig's Worker has no VPB_BILLING_RULES_3NOV)
@@ -174,17 +182,20 @@ try:
         # 6. People
         tab(sid, 'people')
         ppl = S.json(sid, 'JSON.stringify({on:document.getElementById("tp-people").classList.contains("on"),hosts:!!document.querySelector("#tp-people #hosts"),'
-                                    'notInBilling:!document.querySelector("#tp-billing #hosts"),at:document.getElementById("peopleAt").textContent,'
+                                    'notInBilling:!document.querySelector("#tp-billing #hosts"),at:document.getElementById("peopleAt").textContent,atHidden:document.getElementById("peopleAt").hidden,pick:(document.querySelector("#acctPick select")||{}).value||"",'
                                     'ticked:[].map.call(document.querySelectorAll("#host-venues .host-v:checked"),function(c){return c.value})})', {})
         cur = S.js(sid, 'document.querySelector("#acctPick select").value')
         ok('%s: 6. a People tab holds the hosts list, and Billing no longer does' % where, ppl.get('on') and ppl.get('hosts') and ppl.get('notInBilling'), ppl)
-        ok('%s: 6. it says whose people it is showing: the venue chosen at the top' % where, ('Showing who can sign in at ' in (ppl.get('at') or '')), ppl)
-        ok('%s: G. "Change the venue at the top" is said, because there IS a drop-down at the top (two venues)' % where, 'Change the venue at the top of the page' in (ppl.get('at') or ''), ppl)
-        g = S.json(sid, """(function(){var t=document.getElementById("tp-people").innerText;var notes=[].map.call(document.querySelectorAll("#tp-people .label:not(#peopleHead) + .note"),function(n){return {b:(n.querySelector("b")||{}).textContent||"",len:n.textContent.length}});
-            return JSON.stringify({signins:(t.match(/with a text code/g)||[]).length,theySign:/They sign in at/.test(t),notes:notes});})()""", {})
-        ok('%s: G. ONE sign-in sentence for everyone, not one per role' % where, g.get('signins') == 1 and not g.get('theySign'), g)
-        ok('%s: G. each role says what it can do in one line, the doing first in bold: Host, Manager, Marketing' % where,
-           [n['b'] for n in (g.get('notes') or [])][:3] == ['Run the games on the night.', 'Run and set up the venues you give them.', 'See your numbers, the brand kit, your signs and your TV slides'] and all(n['len'] < 240 for n in (g.get('notes') or [])), g)
+        # Dean, 6 Nov 2026 (round 5 note 1: "people who can sign in... change the venue at the top" is self-explanatory):
+        # the venue is the one in the drop-down at the top, and the line that said so is gone.
+        ok('%s: 6. the people shown are the venue chosen at the top, with no line explaining it' % where, ppl.get('at') == '' and ppl.get('atHidden') is True, ppl)
+        ok('%s: G. the drop-down at the top is there and names the venue (two venues)' % where, bool(ppl.get('pick')), ppl)
+        g = S.json(sid, """(function(){var t=document.getElementById("tp-people").innerText;var notes=[].map.call(document.querySelectorAll("#tp-people .label:not(#peopleHead) + .note"),function(n){return {t:n.textContent,len:n.textContent.length}});
+            return JSON.stringify({signins:(t.match(/sign in at/g)||[]).length,notes:notes});})()""", {})
+        # Dean, 6 Nov 2026 (round 5 note 1): one short line each, nothing more.
+        ok('%s: G. ONE sign-in sentence for everyone, not one per role' % where, g.get('signins') == 1, g)
+        ok('%s: G. each role says what it can do in one short line: Host, Manager, Marketing' % where,
+           [n['t'] for n in (g.get('notes') or [])][:2] == ['Run the games on the night.', 'Run and set up the venues you give them. Never billing.'] and len(g.get('notes') or []) >= 3 and all(n['len'] < 90 for n in (g.get('notes') or [])), g)
         ok('%s: 6. adding a person starts with that venue ticked' % where, ppl.get('ticked') == [cur], [ppl.get('ticked'), cur])
         S.js(sid, 'var s=document.querySelector("#acctPick select"); s.value="%s"; s.dispatchEvent(new Event("change",{bubbles:true})); true' % V1); time.sleep(0.8)
         at1 = S.js(sid, 'document.getElementById("hosts").innerText')
@@ -217,16 +228,17 @@ try:
             bodies:[].map.call(document.querySelectorAll("#tp-draws .accbody"),function(b){return {id:b.id,shown:b.offsetParent!==null}}),remembered:localStorage.getItem("vpDrawsFold"),
             h:document.getElementById("tp-draws").getBoundingClientRect().height})"""
         f = S.json(sid, FOLDS, {})
-        ok('%s: F. three folds: Raffles, Members draws, Permits' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits'] and all(x['shown'] for x in f.get('heads', [])), f)
-        ok('%s: F. only Raffles is open to start; the other two bodies are folded away' % where,
-           [x['open'] for x in f.get('heads', [])] == [True, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False], f)
-        ok('%s: F. the headings say what is set: "Not on the TV yet" and "No draw yet" at this venue' % where,
-           [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', 'No draw yet'], f)
+        # Dean, 6 Nov 2026: "who won what" is a fold of its own at the BOTTOM, and an empty members draw says nothing.
+        ok('%s: F. four folds: Raffles, Members draws, Permits, then Who won what at the bottom' % where, [x['acc'] for x in f.get('heads', [])] == ['raffles', 'members', 'permits', 'winners'] and all(x['shown'] for x in f.get('heads', [])), f)
+        ok('%s: F. only Raffles is open to start; the other bodies are folded away' % where,
+           [x['open'] for x in f.get('heads', [])] == [True, False, False, False] and [b['shown'] for b in f.get('bodies', [])] == [True, False, False, False], f)
+        ok('%s: F. the headings say what is set: "Not on the TV yet" for the raffle, and nothing at all for no members draw' % where,
+           [x['sum'] for x in f.get('heads', [])][:2] == ['Not on the TV yet', ''], f)
         tall = f.get('h', 0)
         S.js(sid, 'document.querySelector(\'#tp-draws .acchead[data-acc="members"]\').click(); true'); time.sleep(0.4)
         f2 = S.json(sid, FOLDS, {})
         ok('%s: F. opening Members draws closes Raffles: one fold open at a time' % where,
-           [x['open'] for x in f2.get('heads', [])] == [False, True, False] and [b['shown'] for b in f2.get('bodies', [])] == [False, True, False], f2)
+           [x['open'] for x in f2.get('heads', [])] == [False, True, False, False] and [b['shown'] for b in f2.get('bodies', [])] == [False, True, False, False], f2)
         ok('%s: F. the open fold is remembered' % where, f2.get('remembered') == 'members', f2)
         ok('%s: F. the Draws tab is a fraction of its old height with the rest folded (under 2,600px here, was over 11,000 on a phone)' % where, 0 < tall < 2600 and 0 < f2.get('h', 0) < 3200, [tall, f2.get('h')])
         shot(sid, 'draws-folded-%d' % w)
@@ -237,9 +249,10 @@ try:
         ok('%s: 10. after a reload the Draws tab is still the one open' % where,
            S.js(sid, 'document.getElementById("tp-draws").classList.contains("on") && document.querySelector(\'.tabs button[data-tab="draws"]\').classList.contains("on")') is True)
         f3 = S.json(sid, FOLDS, {})
-        ok('%s: F. and after the reload Members draws is still the open fold' % where, [x['open'] for x in f3.get('heads', [])] == [False, True, False], f3)
+        ok('%s: F. and after the reload Members draws is still the open fold' % where, [x['open'] for x in f3.get('heads', [])] == [False, True, False, False], f3)
         S.js(sid, 'localStorage.removeItem("vpDrawsFold"); true')
         tab(sid, 'screen')
+        S.js(sid, '[].forEach.call(document.querySelectorAll(".scard.fold.folded > .scardhead"),function(h){h.click();}); true')   # the cards fold (Dean, 6 Nov 2026)
         S.js(sid, 'document.getElementById("addSlide").click(); document.getElementById("addSlide").click(); true'); time.sleep(0.6)
         geo = S.json(sid, '(function(){var r=document.querySelector("#slides .adslide"),t=r.querySelector(".adthumb").getBoundingClientRect(),f=r.querySelector(".adfields").getBoundingClientRect(),rr=r.getBoundingClientRect();'
                                    'return JSON.stringify({ratio:t.width/t.height,tw:t.width,rw:rr.width,fieldsBelow:f.top>=t.bottom-1,label:getComputedStyle(r.querySelector(".adthumb"),"::before").content});})()', {})

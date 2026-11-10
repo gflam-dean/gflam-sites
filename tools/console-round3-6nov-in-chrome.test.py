@@ -159,6 +159,9 @@ try:
             up = S.until(sid, UP, 30)
             S.until(sid, '!!document.querySelector("#acctPick select")', 10); time.sleep(0.8)
             ok('%s: CONTROL: Your account is up, from the real Worker' % where, up is True)
+            # R. Billing alone shows the group ("You're looking at the group", round 5 note 9: the drop-down is
+            # hidden there on purpose), so the drop-down is judged on a per-venue tab, Game settings.
+            tab(S, sid, 'settings')
             # R
             r = S.json(sid, '(function(){var a=document.getElementById("acctPick"),t=document.querySelector(".tabs"),h=document.querySelector("h1");'
                                      'var between=[];var n=h?h.nextElementSibling:null;while(n&&n!==a&&n.id!=="content"){if(n.offsetParent)between.push(n.tagName+"#"+n.id);n=n.nextElementSibling;}'

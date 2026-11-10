@@ -182,7 +182,7 @@ check('the training walkthrough\'s TV caption names the VenuePlay TV app',
       bool(cap) and SHORT in cap.group(0), cap and cap.group(0)[:200])
 
 bh = re.sub(r'<!--.*?-->', ' ', read('venueplay/app/billing.html'), flags=re.S)
-note = re.search(r'<p class="note"[^>]*>Upload your own promo images to play on the venue TV(.*?)</p>', bh, re.S)
+note = re.search(r'<p class="note"[^>]*>What your TV shows between games(.*?)</p>', bh, re.S)   # Dean, 6 Nov 2026: the note cut to its short form
 nw = text(note.group(1)) if note else ''
 check('the Account page\'s TV note (where the TV link is) names the VenuePlay TV app, linked to its Google Play page',
       SHORT in nw and bool(note) and linked(note.group(1)) == PLAY, [nw[-200:], note and linked(note.group(1))])

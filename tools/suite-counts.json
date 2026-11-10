@@ -1243,6 +1243,10 @@
   "checks": 8,
   "counted_by": "lines"
  },
+ "tools/test-whats-on.js": {
+  "checks": 103,
+  "counted_by": "lines"
+ },
  "tools/test-winner-screen-survives.js": {
   "checks": 10,
   "counted_by": "lines"
@@ -1339,6 +1343,10 @@
   "checks": 61,
   "counted_by": "lines"
  },
+ "tools/tv-slides-fill-in-chrome.test.py": {
+  "checks": 15,
+  "counted_by": "lines"
+ },
  "tools/tv-sting-in-chrome.test.py": {
   "checks": 150,
   "counted_by": "lines"
@@ -1353,6 +1361,10 @@
  },
  "tools/venue-logo-in-chrome.test.py": {
   "checks": 376,
+  "counted_by": "lines"
+ },
+ "tools/whats-on-in-chrome.test.py": {
+  "checks": 66,
   "counted_by": "lines"
  },
  "tools/wizard-r10-in-chrome.test.py": {

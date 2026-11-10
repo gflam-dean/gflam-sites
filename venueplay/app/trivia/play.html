@@ -391,6 +391,7 @@
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-whatson.js"></script>   <!-- the venue's own What's on nights: one set of date rules (INBOX 110) -->
 <script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
@@ -652,7 +653,7 @@
     if(tn && inb){
       var useT = !head && !(P.total>0) && typeof VPTonight==="object";
       tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT);
-      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, week:P.week }); }
+      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, week:P.week, events:P.events }); }
     }
     $("waitHead").textContent = head || "You\u2019re in";
     /* The tick and the "Up first" chip belong to the lobby's YOU'RE IN only; a heading for any other moment stands alone. */
@@ -708,7 +709,7 @@
     var tn=$("vpTonight"), inb=$("waitIn");
     if(tn && inb && typeof VPTonight==="object"){
       inb.classList.add("hidden"); tn.classList.remove("hidden");
-      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, venue:P.venueName,
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, events:P.events, venue:P.venueName,
         signup: (P.collect && P.collect.email) ? headsUp : null, offers: !!(P.collect && P.collect.marketing_optin), signedUp: headsUpDone() });
     }
   }
@@ -1370,7 +1371,7 @@
       headerVenue(r&&r.logo_url, r&&r.venue_name);
       try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
       /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
-      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null;
+      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null; P.events=(r&&Array.isArray(r.events))?r.events:[];   // the venue's own What's on nights (INBOX 110)
       if(r&&r.venue_name) P.venueName=String(r.venue_name);
       P.collect=(r&&r.collect)||null;   // what this venue collects: the heads-up sign-up shows only when it collects email
       paintListItem();

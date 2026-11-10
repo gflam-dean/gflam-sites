@@ -45,7 +45,12 @@
     if (q) SAFE = Math.max(0, Math.min(20, parseInt(q[1], 10) || 0));
   } catch (e) {}
 
-  var applied = {};                               /* id -> last scale written */
+  /* The last transform written, kept ON THE LAYER (9 Nov 2026). It was a map keyed by layer.id, and the TV's slides
+     have no id, so every slide shared one entry: a slide shrunk once (round a corner logo that was showing) was later
+     judged "already right" from another slide's entry and kept its old scale, so a slide sat at 82% in a black border
+     long after the logo had gone (Dean, 9 Nov 2026: "Why would I want slides with a black border?"). */
+  function prevOf(layer) { return layer.__vpFitKey || 1; }
+  function setPrev(layer, k) { layer.__vpFitKey = k; }
 
   function visibleLayers() {
     var out = [], all = d.querySelectorAll(".layer");
@@ -166,7 +171,7 @@
   }
 
   function fitOne(layer) {
-    var prev = applied[layer.id] || 1;
+    var prev = prevOf(layer);
 
     /* Measure UNSCALED, or every pass would measure its own last answer and creep. */
     if (prev !== 1) {
@@ -175,7 +180,7 @@
     }
 
     var box = contentBox(layer);
-    if (!box || box.h <= 0) { layer.style.transform = ""; applied[layer.id] = 1; return; }
+    if (!box || box.h <= 0) { layer.style.transform = ""; setPrev(layer, 1); return; }
 
     var inset = SAFE / 100;
     var availH = w.innerHeight * (1 - inset * 2);
@@ -210,7 +215,7 @@
       layer.style.transformOrigin = "center center";
       layer.style.transform = tf;
     }
-    applied[layer.id] = key;
+    setPrev(layer, key);
   }
 
   /* SCHEDULING, AND WHY IT IS NOT JUST requestAnimationFrame.

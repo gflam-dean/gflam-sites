@@ -176,6 +176,63 @@
     });
   }
 
-  root.VPLogo = { MAX_SIDE: MAX_SIDE, MAX_BYTES: MAX_BYTES, load: load, toCanvas: toCanvas, hasAlpha: hasAlpha,
+  /* A LOGO ON A DARK WALL (Dean, 9 Nov 2026: Lunatic Hotel's logo, a round badge on a white square, showed as a white
+     square on the What's on TV). Venue logos show with their background removed. The TV does it for itself, with the
+     same flood fill from the edges the account page's Remove background uses, so EVERY logo already uploaded is
+     covered and nothing stored changes (the venue's file and its database row stay exactly as they are).
+
+     cleanDark(id) is the decision, plain pixels in and out (tools/test-whats-on.js runs it):
+       already see-through          -> { how: 'asis' }           drawn as uploaded
+       a plain edge (most of the border one colour) taken off -> { how: 'clear', image, box }
+                                       box: the part left, so a logo with wide margins is not drawn tiny
+       no plain edge, or nothing left -> { how: 'plate' }         drawn on a small rounded plate, on purpose
+     forDark(url) reads the picture (cross-origin, the storage answers with Access-Control-Allow-Origin: *), shrinks it
+     to 480px first so an old TV is not asked to fill four million pixels, runs cleanDark, and resolves
+     { src, how }: a blob: address of the see-through copy, or the address it was given. It never rejects: a picture
+     it cannot read is { src: url, how: 'plate' }. One answer per address, kept for the life of the page. */
+  var DARK_SIDE = 480, darkMemo = {};
+  function cleanDark(id) {
+    if (!id || !id.width || !id.height) return { how: 'plate' };
+    if (hasAlpha(id)) return { how: 'asis' };
+    var r = removeBackground(id, 20), all = id.width * id.height;
+    if (!r.removed || r.share < 0.6 || r.removed > all * 0.97) return { how: 'plate' };
+    var d = r.image.data, w = id.width, h = id.height, x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return { how: 'plate' };
+    return { how: 'clear', image: r.image, box: { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 } };
+  }
+  function forDark(url) {
+    url = String(url || '');
+    if (darkMemo[url]) return darkMemo[url];
+    return (darkMemo[url] = new Promise(function (resolve) {
+      var asked = url, done = false;
+      function give(src, how) { if (!done) { done = true; resolve({ src: src, how: how }); } }
+      try {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function () {
+          try {
+            var c = toCanvas(img, DARK_SIDE), id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+            var r = cleanDark(id);
+            if (r.how !== 'clear') return give(asked, r.how);
+            var o = document.createElement('canvas'); o.width = r.box.w; o.height = r.box.h;
+            o.getContext('2d').putImageData(r.image, -r.box.x, -r.box.y);
+            if (o.toBlob && root.URL && URL.createObjectURL) {
+              o.toBlob(function (b) { give(b ? URL.createObjectURL(b) : o.toDataURL('image/png'), 'clear'); }, 'image/png');
+            } else give(o.toDataURL('image/png'), 'clear');
+          } catch (e) { give(asked, 'plate'); }   // a picture the browser will not let us read: the plate
+        };
+        img.onerror = function () { give(asked, 'plate'); };
+        /* Its own address for this read, so a copy the TV already holds from the corner logo (fetched without
+           cross-origin) cannot be handed back unreadable. The storage ignores the query. */
+        img.src = /^https?:/i.test(url) ? url + (url.indexOf('?') === -1 ? '?' : '&') + 'vp=dark' : url;
+        setTimeout(function () { give(asked, 'plate'); }, 15000);
+      } catch (e) { give(asked, 'plate'); }
+    }));
+  }
+
+  root.VPLogo = { cleanDark: cleanDark, forDark: forDark, MAX_SIDE: MAX_SIDE, MAX_BYTES: MAX_BYTES, load: load, toCanvas: toCanvas, hasAlpha: hasAlpha,
                   borderColour: borderColour, removeBackground: removeBackground, encode: encode, dataUrlBytes: dataUrlBytes };
 }(typeof window !== 'undefined' ? window : this));

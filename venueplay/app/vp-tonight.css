@@ -6,13 +6,15 @@
    compact. Nothing here is under 15px. */
 
 /* THE VENUE'S AD: one place, just above our logo at the foot (moved from /app/vp-phone.css section 5) */
-#vpAd{padding:8px 20px 0}
+#vpAd{padding:8px 16px 0}   /* the same 16px sides as the waiting screen's cards above it */
 #vpAd[hidden]{display:none}
-#vpAd .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;text-align:center;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vpAd .k{font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:#8A8A95;text-align:center;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #vpAd .rail{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:16px}
 #vpAd .rail::-webkit-scrollbar{display:none}
 #vpAd .slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#141418}
-#vpAd .slide img{display:block;width:100%;height:100%;object-fit:cover}
+#vpAd .slide{position:relative}
+#vpAd .slide img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+#vpAd .slide img.bg{position:absolute;inset:0;object-fit:cover;filter:blur(16px) brightness(.55);transform:scale(1.1)}
 #vpAd .dots{display:flex;justify-content:center;gap:6px;margin-top:10px;height:8px}
 #vpAd .dots i{width:7px;height:7px;border-radius:4px;background:#3A3A44}
 #vpAd .dots i.on{width:22px;background:#fff}
@@ -20,7 +22,7 @@ body.light #vpAd .dots i.on{background:#191420}
 
 
 /* THE WAITING SCREENS */
-.vpt{display:flex;flex-direction:column;align-items:stretch;padding:4px 20px 4px;text-align:left}
+.vpt{display:flex;flex-direction:column;align-items:stretch;padding:4px 16px 4px;text-align:left}
 .vpt-head{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center}
 .vpt-head .vp-tick{width:34px;height:34px;margin:0;flex:none;border-radius:50%;border:2.5px solid #2FD08A;background:rgba(47,208,138,.12);display:flex;align-items:center;justify-content:center}
 .vpt-head .vp-tick svg{width:16px;height:16px}
@@ -28,7 +30,7 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-night{margin-top:10px;background:#1A1A1F;border-radius:16px;padding:4px 14px}
 .vpt-night .row{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px solid rgba(255,255,255,.07)}
 .vpt-night .row:first-child{border-top:0}
-.vpt-night .bd{flex:none;min-width:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:7px;background:#26262C;color:#9A9AA4}
+.vpt-night .bd{flex:none;min-width:64px;text-align:center;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:4px 8px;border-radius:7px;background:#26262C;color:#9A9AA4}
 .vpt-night .bd.next{background:#FF1F8E;color:#0A0A0B}
 .vpt-night .g{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}   /* the game and "Tonight 7pm" on one line where they fit (round 7: the ad and our logo must fit) */
 .vpt-night .g b{display:inline;font-family:'Manrope',sans-serif;font-weight:800;font-size:18px;line-height:1.2;color:#fff}
@@ -37,17 +39,17 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-wait{font-family:'Manrope',sans-serif;font-weight:500;font-size:15px;line-height:1.35;color:#9A9AA4;margin:8px 0 0;text-align:center}
 /* NEXT GAME HERE (the no-game screen leads with it, Dean's round 7) */
 .vpt-next{font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;line-height:1.3;color:#fff;text-align:center;margin:4px 0 0}
-.vpt-next .k{display:block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:#FF1F8E;margin-bottom:2px}
-/* THIS WEEK HERE: seven tappable days, today pink, the venue's game nights underlined */
-.vpt-week{margin-top:8px;background:#1A1A1F;border-radius:16px;padding:9px 8px 8px}
-.vpt-week .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A95}
+.vpt-next .k{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;color:#FF1F8E;margin-bottom:2px}
+/* THIS WEEK HERE: seven tappable days, each underlined in pink (the venue's colour replaces it), days with something on lit, today a light outline */
+.vpt-week{margin-top:8px;background:#1A1A1F;border-radius:16px;padding:9px 5px 6px}
+.vpt-week .k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 6px;font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;color:#8A8A95}
 .vpt-week .k .ask{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;letter-spacing:0;text-transform:none;text-align:right}
-.vpt-week .days{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(6,minmax(0,1fr));gap:3px}   /* "Today" is the widest word: its cell is wider */
-.vpt-week .d{min-width:0;overflow:hidden;border:0;cursor:pointer;text-align:center;padding:5px 0 4px;border-radius:9px;background:#232329;color:#6E6E78;font-family:'Manrope',sans-serif}
+.vpt-week .days{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(6,minmax(0,1fr));gap:2px}   /* every day at least 44px wide on a 375px phone (design review, 6 Nov 2026) */   /* "Today" is the widest word: its cell is wider */
+.vpt-week .d{box-shadow:inset 0 -3px 0 var(--vpt-accent,#FF1F8E);min-width:0;min-height:48px;overflow:hidden;border:0;cursor:pointer;text-align:center;padding:5px 0 4px;border-radius:9px;background:#232329;color:#6E6E78;font-family:'Manrope',sans-serif}
 .vpt-week .d b{display:block;font-weight:700;font-size:15px;line-height:1.15;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .vpt-week .d small{display:block;font-weight:600;font-size:15px;line-height:1.15;margin-top:1px}
-.vpt-week .d.on{background:#2B2B33;color:#fff;box-shadow:inset 0 -3px 0 #FF1F8E}
-.vpt-week .d.now{background:#FF1F8E;color:#0A0A0B}
+.vpt-week .d.on{background:#2B2B33;color:#fff}
+.vpt-week .d.now{outline:1px solid rgba(255,255,255,.28);outline-offset:-1px}   /* today: a light touch, no heavy fill */
 .vpt-week .d.picked{outline:2px solid #fff;outline-offset:-2px}
 /* "Get a heads up by email": small and optional, at the top of the no-game screen (Dean's round 7) */
 .vpt-sign{margin-top:8px;background:#1A1A1F;border-radius:16px;padding:8px 10px}
@@ -59,12 +61,20 @@ body.light #vpAd .dots i.on{background:#191420}
 .vpt-sign .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
 .vpt-sign .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;min-height:0;margin-top:6px}
 /* The ad under a waiting screen is a little shorter than 16:9, so it and our logo fit a 664px screen. */
+/* THE AD IN ONE FIXED SPOT (Dean's round 7: the same place and size on every screen that shows it, so it and our logo fit a
+   664px screen). Design review, 6 Nov 2026: the picture now shows whole over a blurred copy of itself (the banner's last
+   line was cut) and our logo has 12px above and below. A bigger, growing ad was tried and dropped: it moved the ad
+   between the lobby and the end of the game, which the one-fixed-spot rule forbids. */
 .vpt-on #vpAd{padding-top:6px}
 .vpt-on #vpAd .k{margin-bottom:6px}
 .vpt-on #vpAd .slide{aspect-ratio:5/2}
 .vpt-on #vpAd .dots{margin-top:6px}
 .vpt-on #vWait{padding-top:4px;padding-bottom:0;justify-content:flex-start}   /* the lobby starts at the top, so the ad below it is not pushed off */
-.vpt-on .pfoot{padding-top:6px}
+/* The waiting screen starts straight under the header on every lobby state, at the same height (Dean, 6 Nov 2026: "the
+   you're in can move up"); any spare room sits above the WHAT'S ON AT section, so the ad and our logo stay at the foot. */
+.vpt-on.vpt-tight #vpAd .slide{aspect-ratio:3/1}
+.vpt-on.vpt-tight .pfoot{padding-top:10px}
+.vpt-on .pfoot{padding-top:12px;padding-bottom:max(12px, env(safe-area-inset-bottom, 0px))}
 body.light .vpt-head .t,body.light .vpt-next,body.light .vpt-night .g b,body.light .vpt-sign .lb{color:#191420}
 body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFFFF}
 /* "Join {venue}'s list" in the menu (Dean, 6 Nov 2026), the same on every game's phone */
@@ -75,3 +85,17 @@ body.light .vpt-night,body.light .vpt-week,body.light .vpt-sign{background:#FFFF
 .vpt-listform .tk input{width:20px;height:20px;flex:none;accent-color:#FF1F8E}
 .vpt-listform .go{width:100%;min-height:46px;margin-top:10px;border:0;border-radius:12px;background:#FF1F8E;color:#0A0A0B;font-family:'Manrope',sans-serif;font-weight:800;font-size:16px}
 .vpt-listform .err{font-family:'Manrope',sans-serif;font-size:15px;color:#F5A524;margin-top:6px}
+/* THE VENUE'S OWN NIGHTS (INBOX 110, "What's on"). Dean, 9 Nov 2026: no gold dot ("we weren't doing the yellow dot";
+   dots are the banned AI look). A day with something on is LIT instead: its day and date in white on the lighter
+   tile, where an empty day stays dim; our game nights keep their pink bar along the foot. Their rows in the house grey
+   chip with the time as people say it ("9pm", "2pm to 6pm"), the title alone on up to two lines. The venue's ad stays
+   anchored above our logo at the foot (Dean's round 7 rule: it and our logo fit a 664px screen), so a busy tapped day
+   may scroll rather than push the logo off. */
+.vpt-week .d.ev{background:#2B2B33;color:#fff}
+.vpt-night .bd.t{font-weight:700}
+.vpt-night .row.ev{align-items:flex-start}
+.vpt-night .row.ev .g b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;padding-top:2px}
+.vpt-night .row.more .g b{font-size:15px;font-weight:700;color:#9A9AA4}
+.vpt-night .row.more .bd{visibility:hidden}
+.vpt-night .nk{font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;color:#C9C9D2;padding:8px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vpt-evs[hidden]{display:none}

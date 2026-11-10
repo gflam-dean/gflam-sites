@@ -1390,16 +1390,60 @@ async function joinInfoStaticRead(key, load, fresh) {
    venue, and a fresh:1 lookup does NOT bypass it: a picture a few seconds old is harmless, unlike the age and paper
    rules the fresh read is for. So a busy room costs one read every 30 s, not one a phone. A failed read, or no venue,
    is no slides: the ad is a nicety and must never cost a phone its join. */
+/* AND THE VENUE'S OWN "WHAT'S ON" NIGHTS (INBOX 110, migration 177), in the same read of the same row and the same 30 s
+   copy: the phone's week strip shows them beside our games. Only the cleaned public fields (publicEvents). Before 177
+   runs the column does not exist and PostgREST refuses the read, so it is asked again for the slides alone. */
 async function joinInfoWithSlides(env, body, venueId) {
-  let slides = [];
+  let slides = [], events = [];
   if (venueId) {
     try {
-      const rows = await joinInfoStaticRead('a:' + venueId,
-        () => sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(venueId) + '&select=slides&limit=1'), false);
+      const rows = await joinInfoStaticRead('a:' + venueId, async () => {
+        try { return await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(venueId) + '&select=slides,events&limit=1'); }
+        catch (e) { return await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(venueId) + '&select=slides&limit=1'); }
+      }, false);
       slides = phoneSlides(rows && rows[0] && rows[0].slides);
-    } catch (e) { slides = []; }
+      events = publicEvents(rows && rows[0] && rows[0].events);
+    } catch (e) { slides = []; events = []; }
   }
-  return Object.assign({}, body, { slides: slides });
+  return Object.assign({}, body, { slides: slides, events: events });
+}
+/* The venue's game week for its What's on slide: joinNights' week, or nothing. */
+function screenWeek(rows) {
+  const sa = rows && rows[0] && rows[0].setup_answers;
+  const w = joinNights(sa).week;
+  return Array.isArray(w) ? w : [];
+}
+/* A venue's What's on nights as anyone may see them (the TV's /screen and the phone's /join/info): still to come,
+   title, the date or the weekday (and its last date), the start, the short line and a plain https picture, nothing
+   else (no id, no who-saved-it). The billing Worker cleaned them on save; this cleans them again on the way out, by
+   the rules of /app/vp-whatson.js. "Still to come" is judged a day behind UTC (Australia is ahead of it); the TV and
+   phones drop the rest on the venue's own date. At most 30. */
+function publicEvents(raw, now) {
+  const out = [];
+  if (!Array.isArray(raw)) return out;
+  const cutoff = new Date((now || Date.now()) - 24 * 3600 * 1000).toISOString().slice(0, 10);
+  const DATE = /^\d{4}-\d{2}-\d{2}$/, DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const str = (v, n) => String(v == null ? '' : v).replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+  for (const e of raw) {
+    if (out.length >= 30) break;
+    if (!e || typeof e !== 'object') continue;
+    const title = str(e.title, 60);
+    if (!title) continue;
+    const o = { title: title };
+    if (typeof e.date === 'string' && DATE.test(e.date)) { if (e.date < cutoff) continue; o.date = e.date; }
+    else if (DAYS.indexOf(e.day) !== -1) {
+      o.day = e.day;
+      if (typeof e.until === 'string' && DATE.test(e.until)) { if (e.until < cutoff) continue; o.until = e.until; }
+    } else continue;
+    if (typeof e.start === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(e.start)) o.start = e.start;
+    const line = str(e.line, 48); if (line) o.line = line;
+    if (typeof e.image_url === 'string') {
+      const u = e.image_url.trim();
+      if (u.length <= 600 && /^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf('&#') === -1) o.image_url = u;   // tv.html's rule for a slide
+    }
+    out.push(o);
+  }
+  return out;
 }
 /* The phone's copy of a venue's slides: pictures only, a plain https address (the rule tv.html applies before a
    picture reaches the wall), the slide's own dates kept so the phone can leave out one not on yet or finished,
@@ -3128,7 +3172,7 @@ async function handleScreenReload(request, env, json, body) {
  * page just waits on the venue code, which is exactly right for broadcast bingo.
  */
 /* GET /screen?venue=<slug>   (anon)
- *   -> { exists, name, logo_url, slides[], raffle, draws[] }
+ *   -> { exists, name, logo_url, slides[], raffle, draws[], events[] }   (events: the What's on nights, migration 177)
  *
  * Everything a venue TV needs to paint itself, for ONE venue, by slug.
  *
@@ -3176,8 +3220,12 @@ async function handleScreen(request, env, json) {
     'slug=eq.' + enc(slug) + '&select=name,current_jackpot_cents,draw_day,draw_time,timezone')
     .catch(() => null);
 
-  const rows = await sbGet(env, 'vp_venue_screen',
-    'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
+  /* With the venue's What's on nights (INBOX 110, migration 177). Before 177 runs the column does not exist and PostgREST
+     refuses the read, so it is asked again without it, exactly the read this was: a column we have not migrated must
+     never take the ads down. */
+  let rows;
+  try { rows = await sbGet(env, 'vp_venue_screen', 'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id,events&limit=1'); }
+  catch (e) { rows = await sbGet(env, 'vp_venue_screen', 'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1'); }
   const cfg = (rows && rows[0]) || null;
   /* MORE THAN ONE RAFFLE (migration 117). Asked on its own, and a refusal (the column is not there
      yet) is null, which the TV reads as "use the single routine": never a failed screen. */
@@ -3215,6 +3263,12 @@ async function handleScreen(request, env, json) {
       joinCode = v0[0].join_code || '';
     }
   }
+  /* The venue's game nights for the What's on slide (Dean, 6 Nov 2026: "list our game nights too"), from its setup
+     answers (migration 163), read beside the venue row and only for a venue that has What's on nights at all. A failed
+     or missing read is no game nights, never a failed screen. */
+  const weekPromise = (cfg && cfg.venue_id && Array.isArray(cfg.events) && cfg.events.length)
+    ? sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(cfg.venue_id) + '&select=setup_answers&limit=1').catch(() => null)
+    : Promise.resolve(null);
   if (cfg && cfg.venue_id) {
     const v = await sbGet(env, 'vp_venues',
       'id=eq.' + enc(cfg.venue_id) + '&select=name,join_code&limit=1').catch(() => null);
@@ -3242,6 +3296,8 @@ async function handleScreen(request, env, json) {
     raffle: (cfg && cfg.raffle) || null,
     raffles: raffles,
     draws: draws,
+    events: publicEvents(cfg && cfg.events),
+    week: screenWeek(await weekPromise),
   });
 }
 

@@ -30,6 +30,7 @@ var intervals = [];
 var window = { document: { createElement: function (t) { return new Node(t); } } };
 var setInterval = function (f, ms) { intervals.push({ f: f, ms: ms }); return intervals.length; };
 var clearInterval = function () {};
+(function () { eval(readFile('venueplay/app/vp-whatson.js')); }).call(window);   // the venue's own events' date rules (INBOX 110)
 var SRC = readFile('venueplay/app/vp-tonight.js');
 (function () { eval(SRC); }).call(window);
 var T = window.VPTonight;
@@ -87,9 +88,9 @@ var ngw = new Node('div');
 T.noGame(ngw, { week: [{ day: 'wed', games: [{ game: 'trivia', start: '19:00' }] }, { day: 'fri', games: [{ game: 'musical', start: '19:30' }, { game: 'members' }] }], now: new Date(2026, 10, 7, 12, 0, 0) });
 ok('with the week stored: "Next game here: Wednesday, Trivia 7pm"', /Next game here/.test(ngw.children[0].textContent) && /Wednesday, Trivia 7pm/.test(ngw.children[0].textContent), ngw.children[0].textContent);
 byClass(ngw, 'd')[6].onclick();
-ok('tap Friday: the lead line shows Friday\'s games', /Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
+ok('tap Friday: the lead line shows Friday\'s games', /Fri 13 Nov/.test(ngw.children[0].textContent) && !/Friday 13/.test(ngw.children[0].textContent) && /Musical bingo 7:30pm and Members draw/.test(ngw.children[0].textContent) && /picked/.test(byClass(ngw, 'd')[6].className), ngw.children[0].textContent);
 byClass(ngw, 'd')[1].onclick();
-ok('tap Saturday: no games', /no games/.test(ngw.children[0].textContent), ngw.children[0].textContent);
+ok('tap Saturday: no games', /no games/i.test(ngw.children[0].textContent), ngw.children[0].textContent);
 ok('no sign-up box when the page has no way to send one', byClass(ng, 'vpt-sign').length === 0);
 ok('then the week strip, on the next game night (Wednesday)', byClass(ng, 'vpt-week').length === 1 && /picked/.test(byClass(ng, 'd')[4].className), texts(ng, 'd'));
 ok('never "you\'re on the list"', !/on .*list/i.test(ng.textContent));
@@ -124,9 +125,9 @@ ok('"Bingo ×2 6pm" tonight (count 2 to 4 sessions)', /Tonight, Bingo ×2 6pm/.t
 byClass(kx, 'd')[1].onclick();
 ok('a Something-else night by its own name: "Karaoke 9pm"', /Karaoke 9pm/.test(kx.children[0].textContent) && /\bon\b/.test(byClass(kx, 'd')[1].className), kx.children[0].textContent);
 var ev = new Node('div');
-T.lobby(ev, { name: 'Sam', me: 'trivia', events: { wed: [{ name: 'Live music', start: '20:00' }] }, now: FRI });
+T.lobby(ev, { name: 'Sam', me: 'trivia', events: [{ title: 'Live music', day: 'wed', start: '20:00' }], now: FRI });   // the What's on shape (feature/whats-on-12nov)
 byClass(byClass(ev, 'vpt-week')[0], 'd')[5].onclick();
-ok('a third kind of row is ready: the venue\'s own event on a night shows with its time, and marks the day', /Live music/.test(byClass(ev, 'vpt-night')[0].textContent) && /8pm/.test(byClass(ev, 'vpt-night')[0].textContent) && /\bon\b/.test(byClass(byClass(ev, 'vpt-week')[0], 'd')[5].className), byClass(ev, 'vpt-night')[0].textContent);
+ok('a third kind of row: the venue\'s own event on a night shows with its time, and the day carries its dot', /Live music/.test(byClass(ev, 'vpt-night')[0].textContent) && /8pm/.test(byClass(ev, 'vpt-night')[0].textContent) && /\bev\b/.test(byClass(byClass(ev, 'vpt-week')[0], 'd')[5].className), byClass(ev, 'vpt-night')[0].textContent);
 var ng2 = new Node('div');
 T.noGame(ng2, { week: [{ day: 'fri', games: [{ game: 'other', name: '' }, { game: 'poker' }] }], now: FRI });
 ok('a Something-else night with no name, or a game nobody knows, is left out', /Ask at the bar for the next game night/.test(ng2.children[0].textContent), ng2.children[0].textContent);
@@ -152,7 +153,7 @@ var CSS = readFile('venueplay/app/vp-tonight.css');
 ok('the shared look holds the ad and the waiting screens (one copy, moved out of vp-phone.css)', /#vpAd\{/.test(CSS) && /\.vpt-week \.days\{/.test(CSS) && !/#vpAd\{/.test(readFile('venueplay/app/vp-phone.css')));
 ok('the ad under a waiting screen is shorter (5:2), so it and our logo fit 664px', /\.vpt-on #vpAd \.slide\{aspect-ratio:5\/2\}/.test(CSS) && /ap\.classList\.toggle\("vpt-on", which==="vWait" \|\| which==="vFinal"\)/.test(PLAY));
 ok('the plain lobby (no other heading, nothing scored) is option C', /var useT = !head && !\(P\.total>0\) && typeof VPTonight==="object";/.test(PLAY) && /VPTonight\.lobby\(tn, \{ name:P\.name, me:"trivia"/.test(PLAY));
-ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, venue:P\.venueName,/.test(PLAY));
+ok('"No game on right now" is the round 5 pick, with the week', /VPTonight\.noGame\(tn, \{ name:P\.name, nights:P\.nights, games:P\.games, week:P\.week, events:P\.events, venue:P\.venueName,/.test(PLAY));
 ok('the nights come from /join/info', /P\.nights=\(r&&Array\.isArray\(r\.nights\)\)\?r\.nights:\[\]; P\.games=\(r&&Array\.isArray\(r\.games\)\)\?r\.games:\[\]; P\.week=/.test(PLAY));
 
 print('\n"JOIN {VENUE}\'S LIST" IN THE MENU (Dean, 6 Nov 2026)');

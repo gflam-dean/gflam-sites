@@ -68,11 +68,13 @@ var NAMES = [
   // 21 Oct 2026: the screen panel now tracks unsaved changes (a chosen logo saves itself)
   'logoDirty', 'renderUnsaved', 'markScreenDirty', 'logoEditShow',
   // 3 Nov 2026 (Dean): ONE venue drop-down moves every panel; prizes said as cash and other, apart
-  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines'
+  'money', 'switchAccountVenue', 'paintNightsLink', 'prizeTallyLines',
+  // 6 Nov 2026 (Dean): one venue per tab, outside Billing
+  'showOnlyPageVenue'
 ];
 var SRC = '', MISSING = [];
 /* ...and the two page variables those read, lifted as they are written, never restated here. */
-['  var logoEd = {', '  var screenDirty = '].forEach(function (head) {
+['  var logoEd = {', '  var screenDirty = ', '  var acctPick = '].forEach(function (head) {
   var at = SCRIPT.indexOf('\n' + head);
   if (at < 0) throw new Error(head.trim() + ' is not in the page any more');
   SRC += SCRIPT.slice(at + 1, SCRIPT.indexOf('\n', at + 1)) + '\n';
@@ -157,7 +159,7 @@ function makePage(opts) {
   opts = opts || {};
   var els = {};
   var $ = function (id) { return els[id] || (els[id] = new El(id, SELECTS[id] ? 'select' : 'div')); };
-  var document = { createElement: function (t) { return new El(null, t); }, body: new El('body') };
+  var document = { createElement: function (t) { return new El(null, t); }, body: new El('body'), querySelectorAll: function () { return []; } };
   var store = opts.storage || {};
   var localStorage = { getItem: function (k) { return store[k] == null ? null : store[k]; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
   var window = { location: { origin: 'https://venueplay.com.au' } };
@@ -578,7 +580,7 @@ Promise.resolve()
   check('cash said on its own: $800.00 across 3 prizes', /Cash: \$800\.00 across 3 prizes/.test(both), both);
   check('other prizes apart: 2 worth $150.00, never the cash counted twice', /Other prizes with a value entered: 2 prizes, worth \$150\.00/.test(both) && both.indexOf('$1,750') < 0 && both.indexOf('1750') < 0, both);
   check('no line adds them into one dollar total ($950 or "given away in prizes")', both.indexOf('950') < 0 && !/given away in prizes/.test(both), both);
-  check('before migration 150: says a prize with no value is not counted here, and where they all are', /not counted here\. Every one is listed under Draws and raffles: who won what/.test(both), both);
+  check('before migration 150: says a prize with no value is not counted here, and where they all are', /not counted here\. Every one is listed under Who won what/.test(both), both);
   var un = L({ venue_id: 'v-A', prizes_given_count: 3, prizes_given_value_cents: 80000, cash_given_count: 3, cash_given_value_cents: 80000, unvalued_given_count: 4 });
   check('after migration 150: 4 with no value, counted and never priced', /no value entered, like a meat tray: 4 prizes\. They are counted, never priced\./.test(un) && /Other prizes with a value entered: none yet/.test(un), un);
   var only = L({ venue_id: 'v-A', prizes_given_count: 0, prizes_given_value_cents: 0, cash_given_count: 0, cash_given_value_cents: 0, unvalued_given_count: 2 });

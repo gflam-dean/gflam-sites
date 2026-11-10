@@ -5,7 +5,7 @@
    "YOU'RE IN" (the lobby):   VPTonight.lobby(box, o)
      "You're in, Sam" beside the green ring tick, centred, then the Tonight spot: this game badged NEXT with "Tonight 7pm"
      (its stored start; its prize after it only when the host set a real one), and any other game stored for tonight
-     badged LATER or EARLIER with its time. Then the "THIS WEEK HERE" strip: today and the next six days, the venue's game
+     badged Later or Earlier with its time. Then the "This week here" strip: today and the next six days, the venue's game
      nights marked. Tap a day and the Tonight spot shows that night's games ("Trivia night, ask for start time",
      "Members draw, 7:30pm"); tap Today to come back. Then the one lobby line. The venue's ad and our logo sit under it,
      drawn by the page (/app/vp-phonead.js, .pfoot).
@@ -24,7 +24,13 @@
    With no week, the strip marks the nights only and says "Ask at the bar for start times". Nothing is invented.
    Every word from the venue or a player is set as text, never as HTML.
 
-   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, week, nights, games, signup(email, optin) -> Promise,
+   THE VENUE'S OWN NIGHTS (INBOX 110, "What's on", 6 Nov 2026): o.events, the venue's DJs, gigs, club nights and
+   specials from /join/info (cleaned by the Worker; the date rules are /app/vp-whatson.js, the same file the TV and
+   the account page use). A day with one is lit in the strip (white on the lighter tile; no dot, Dean 9 Nov 2026); tapping it lists them beside our
+   games, each badged with its start time. The lobby's Tonight spot lists tonight's after our game (three at most,
+   then "+2 more tonight"); the no-game screen lists the picked day's under the strip. No events: nothing changes.
+
+   o = { name, me:"trivia"|"musical"|"bingo", prize, wait, week, nights, games, events, signup(email, optin) -> Promise,
          signedUp, venue, now }   (now: a Date, for the suites; the phone's clock otherwise)
 
    ES5, no dependencies. Its look is /app/vp-phone.css section 6. tools/test-vp-tonight.js runs it. */
@@ -34,6 +40,9 @@
   var DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   var SHORT = { sun: "Sun", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat" };
   var LONG = { sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday" };
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  /* A one-off date reads "Fri 13 Nov", short day, date, short month (Dean, 10 Nov 2026); never "Friday 13". */
+  function dateText(dt) { return SHORT[DAYS[dt.getDay()]] + " " + dt.getDate() + " " + MON[dt.getMonth()]; }
   var GAME_NAME = { trivia: "Trivia", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var NIGHT_NAME = { trivia: "Trivia night", musical: "Musical bingo", bingo: "Bingo", raffles: "Raffle", members: "Members draw" };
   var TICK = '<div class="vp-tick" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
@@ -55,9 +64,7 @@
      is stored: unknown, never guessed. */
   function gamesOn(o, key) {
     var wk = o && o.week;
-    var hasEv = !!(o && o.events && Array.isArray(o.events[key]) && o.events[key].length);
-    if ((!Array.isArray(wk) || !wk.length) && !hasEv) return null;
-    wk = Array.isArray(wk) ? wk : [];
+    if (!Array.isArray(wk) || !wk.length) return null;   // the venue's own events are not games: eventsOn() below
     var out = [];
     wk.forEach(function (dd) {
       if (!dd || dd.day !== key || !Array.isArray(dd.games)) return;
@@ -72,19 +79,31 @@
                    time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" });
       });
     });
-    /* A THIRD KIND OF ROW, READY (the What's On work, feature/whats-on-12nov): the venue's own events for the night, as
-       o.events = { wed: [{ name: "Live music", start: "20:00" }] }, shown under the games with the same badge and time. */
-    var ev = o && o.events && Array.isArray(o.events[key]) ? o.events[key] : [];
-    ev.forEach(function (x) {
-      var nm = x && String(x.name || "").trim().slice(0, 40);
-      if (nm) out.push({ game: "event", label: nm, night: nm, time: time12(x.start), start: time12(x.start) ? String(x.start).replace(/^(\d):/, "0$1:") : "" });
-    });
     return out;
   }
   function isNight(o, key) {
     var ng = gamesOn(o, key);
     if (ng) return ng.length > 0;
     return ((o && o.nights) || []).indexOf(key) !== -1;
+  }
+  /* The venue's own nights on that date (vp-whatson.js), or none when the page has not loaded it. */
+  function eventsOn(o, dt) {
+    var W = root.VPWhatsOn;
+    if (!W || !o || !Array.isArray(o.events) || !o.events.length) return [];
+    return W.on(o.events, W.today(dt));
+  }
+  /* The venue's nights as rows, one line each (title, then its line, cut with an ellipsis). cap: at most that many rows,
+     the last saying "+N more" when there are more. */
+  function eventRows(list, cap) {
+    var rows = [], n = cap && list.length > cap ? cap - 1 : list.length;
+    for (var i = 0; i < n; i++) {
+      var e = list[i], W = root.VPWhatsOn, t = (W && W.whenParts) ? W.whenParts(e).time : time12(e.start);   // "2pm to 6pm" when the venue wrote its hours (9 Nov 2026)
+      /* the title on up to two lines (design review, 6 Nov); a regular weekly night says its day in the plural under it
+         ("Fridays", Dean 10 Nov 2026), a one-off says nothing (the day above it is its date) */
+      rows.push({ game: "", ev: true, badge: t || "On", name: e.title, sub: (e.day && W && W.weeklyLabel) ? W.weeklyLabel(e.day) : "" });
+    }
+    if (n < list.length) rows.push({ game: "", ev: true, more: true, badge: "", name: "+" + (list.length - n) + " more", sub: "" });
+    return rows;
   }
   function hasTimes(o) {
     var any = false;
@@ -107,11 +126,12 @@
   }
   /* Another night's rows, for the spot when a day is tapped. */
   function nightRows(o, dt) {
-    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate(), list = gamesOn(o, key);
+    var key = dayKey(dt), badge = SHORT[key] + " " + dt.getDate() + " " + MON[dt.getMonth()], list = gamesOn(o, key), evs = eventRows(eventsOn(o, dt), 3);
     if (list && list.length) return list.map(function (x) {
       return { game: x.game, badge: badge, name: x.night, sub: x.time ? x.time : "Ask for start time" };
-    });
-    if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }];
+    }).concat(evs);
+    if (!list && isNight(o, key)) return [{ game: "", badge: badge, name: "Game night", sub: "Ask at the bar for what’s on and start times" }].concat(evs);
+    if (evs.length) return evs;   // the venue's own nights, and no game: no "No games this night" over them
     return [{ game: "", badge: badge, name: "No games this night", sub: "" }];
   }
   /* The seven days from today. */
@@ -119,11 +139,27 @@
     var t = now(o), out = [];
     for (var i = 0; i < 7; i++) {
       var dt = addDays(t, i), k = dayKey(dt);
-      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: String(dt.getDate()), on: isNight(o, k) });
+      out.push({ i: i, date: dt, key: k, label: i ? SHORT[k] : "Today", small: String(dt.getDate()), on: isNight(o, k), ev: eventsOn(o, dt).length > 0 });
     }
     return out;
   }
 
+  /* TIGHT (design review, 6 Nov 2026): on a short phone, a tapped day with the venue's nights can be taller than the room
+     above the ad. Then #app gets .vpt-tight and the banner is a little shorter at its bottom (its top stays where the
+     content puts it), so our logo at the foot keeps its 12px. Measured after the browser has laid the page out. */
+  function fit() {
+    var go = function () {
+      try {
+        var app = d.getElementById && d.getElementById("app");
+        if (!app || !app.classList) return;
+        app.classList.remove("vpt-tight");
+        var foot = d.querySelector && d.querySelector(".pfoot");   // our logo at the foot: is it past the bottom of the screen?
+        if (foot && root.innerHeight && foot.getBoundingClientRect().bottom > root.innerHeight + 1) app.classList.add("vpt-tight");
+      } catch (e) {}
+    };
+    if (root.requestAnimationFrame) root.requestAnimationFrame(go); else if (root.setTimeout) root.setTimeout(go, 0);
+    if (root.setTimeout) root.setTimeout(go, 500);   // and once the venue's ad and the fonts have arrived
+  }
   function head(name) {
     var h = el("div", "vpt-head"); h.innerHTML = TICK;
     h.appendChild(el("div", "t", "You’re in" + (name ? ", " + name : "")));
@@ -133,8 +169,8 @@
     spot.innerHTML = "";
     if (title) spot.appendChild(el("div", "nk", title));
     rows.forEach(function (r, i) {
-      var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "")); row.setAttribute("data-game", r.game || "");
-      row.appendChild(el("span", "bd" + (i === 0 && r.badge === "Next" ? " next" : ""), r.badge));
+      var row = el("div", "row" + (r.badge === "Later" || r.badge === "Earlier" ? " later" : "") + (r.ev ? " ev" : "") + (r.more ? " more" : "")); row.setAttribute("data-game", r.game || "");
+      row.appendChild(el("span", "bd" + (i === 0 && r.badge === "Next" ? " next" : "") + (r.ev ? " t" : ""), r.badge));
       var g = el("div", "g"); g.appendChild(el("b", "", r.name)); if (r.sub) g.appendChild(el("span", "", r.sub));
       row.appendChild(g); spot.appendChild(row);
     });
@@ -143,17 +179,21 @@
   function strip(o, picked, onPick) {
     var w = el("div", "vpt-week"), k = el("div", "k");
     k.appendChild(el("span", "", "This week here"));
+    var days = week(o);
     if (!hasTimes(o)) k.appendChild(el("span", "ask", "Ask at the bar for start times"));
+    else if (days.some(function (x) { return x.ev; })) k.appendChild(el("span", "ask", "Tap a day"));   // the venue's own nights are a tap away
     w.appendChild(k);
-    var row = el("div", "days"), days = week(o), btns = [];
+    if (o && typeof o.accent === "string" && /^#[0-9A-Fa-f]{6}$/.test(o.accent)) w.style.setProperty("--vpt-accent", o.accent);   // the venue\u2019s own colour replaces the pink
+    var btns = [], row = el("div", "days" + (days.some(function (x) { return x.ev; }) ? " has-ev" : ""));
     days.forEach(function (dd) {
-      var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.i === picked ? " picked" : ""));
+      var b = el("button", "d" + (dd.i === 0 ? " now" : "") + (dd.on ? " on" : "") + (dd.ev ? " ev" : "") + (dd.i === picked ? " picked" : ""));
       b.setAttribute("type", "button"); b.setAttribute("data-day", dd.key);
       b.setAttribute("aria-pressed", dd.i === picked ? "true" : "false");
       b.appendChild(el("b", "", dd.label)); b.appendChild(el("small", "", dd.small));
       b.onclick = function () {
         btns.forEach(function (x, j) { x.className = x.className.replace(/ picked\b/g, "") + (j === dd.i ? " picked" : ""); x.setAttribute("aria-pressed", j === dd.i ? "true" : "false"); });
         onPick(dd);
+        fit();
       };
       btns.push(b); row.appendChild(b);
     });
@@ -166,12 +206,26 @@
     o = o || {}; box.innerHTML = "";
     box.appendChild(head(o.name));
     var spot = el("div", "vpt-night");
-    function today() { paintRows(spot, tonight(o), ""); }
+    /* The lobby as it opens is exactly Dean's round 7 lobby, so the venue's ad and our logo still fit a 664px screen.
+       The venue's own nights are one tap away: the strip says "Tap a day", Today has its dot, and tapping Today lists
+       tonight's beside our game (design review, 6 Nov 2026). */
+    function today(tapped) {
+      var evs = tapped ? eventsOn(o, now(o)) : [];
+      var rows = tonight(o);
+      if (evs.length) rows.forEach(function (r) { r.sub = String(r.sub || "").replace(/^Tonight,? ?/, ""); });   // the kicker says Tonight once
+      paintRows(spot, rows.concat(eventRows(evs, 3)), evs.length ? "Tonight" : "");
+    }
     today();
     box.appendChild(spot);
-    var s = strip(o, 0, function (dd) { if (dd.i === 0) today(); else paintRows(spot, nightRows(o, dd.date), ""); });
+    var s = strip(o, 0, function (dd) {
+      if (dd.i === 0) { today(true); return; }
+      var rows = nightRows(o, dd.date);
+      /* With the venue's own nights in it, the card says which day it is ("Fri 13 Nov"): their rows carry a time, not a day. */
+      paintRows(spot, rows, rows.some(function (r) { return r.ev; }) ? dateText(dd.date) : "");
+    });
     box.appendChild(s.el);
     box.appendChild(el("p", "vpt-wait", o.wait || "The game will start here when the host is ready."));
+    fit();
     return s;
   }
 
@@ -192,15 +246,27 @@
     var lead = el("div", "vpt-next"), k = el("span", "k"), line = el("span", "l");
     lead.appendChild(k); lead.appendChild(line);
     function paint(dd, picked) {
-      k.textContent = picked ? (dd.i === 0 ? "Today" : LONG[dd.key] + " " + dd.date.getDate()) : "Next game here";
+      k.textContent = picked ? (dd.i === 0 ? "Today" : dateText(dd.date)) : "Next game here";
       line.textContent = nightLine(o, dd).replace(/^(Tonight|[A-Za-z]+day)(, |: )/, picked ? "" : "$1$2");
+      if (picked && /^no games$/.test(line.textContent)) line.textContent = "No games on " + (dd.i === 0 ? "today" : LONG[dd.key]);   // one line (design review)
     }
     if (first >= 0) paint(days[first], false);
     else { k.textContent = "Next game here"; line.textContent = "Ask at the bar for the next game night"; }
     box.appendChild(lead);
     if (typeof o.signup === "function" && !o.signedUp) box.appendChild(signupBox(o));
-    var s = strip(o, first >= 0 ? first : 0, function (dd) { paint(dd, true); });
+    /* The venue's own nights for the picked day, under the strip (the first game night's to start, else today's). */
+    var evBox = el("div", "vpt-night vpt-evs");
+    function paintEvents(dd) {
+      var list = eventsOn(o, dd.date);
+      evBox.hidden = !list.length;
+      if (list.length) paintRows(evBox, eventRows(list, 3), "");   // no label: the lead line names the day, and the ad below says What's on at <venue>
+    }
+    var start = first >= 0 ? first : 0;
+    var s = strip(o, start, function (dd) { paint(dd, true); paintEvents(dd); });
     box.appendChild(s.el);
+    paintEvents(days[start]);
+    box.appendChild(evBox);
+    fit();
     return s;
   }
   /* "Get a heads up by email": one field, the venue's optional offers tick, Sign me up. Closes once sent. */
@@ -274,5 +340,5 @@
     return { row: row, form: f };
   }
 
-  root.VPTonight = { lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12 };
+  root.VPTonight = { fit: fit, lobby: lobby, noGame: noGame, menuList: menuList, tonight: tonight, nightRows: nightRows, week: week, time12: time12, eventsOn: eventsOn };
 })(typeof window !== "undefined" ? window : this);

@@ -164,7 +164,8 @@ try:
     ok('Q: "Record a permit anyway" brings the raffle card up, and only the raffle card (a free members draw is a category 4 game, no licence)', kinds == 'raffle', kinds)
     # Since 3 Nov 2026 Draws is three folds (Dean, round 2 F): the heading is the Permits fold's, whose words come before
     # its summary span (the same reading billing.html's own section() gating uses), so read the words, not the summary.
-    ok('under a "Permits and authorities for draws" heading at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));var l=ls[ls.length-1];var w=l&&l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent.trim():"";return l&&l.getAttribute("data-acc")==="permits"&&w==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
+    # Since 6 Nov 2026 "Who won what" is the last fold (Dean, round 5 note 7), so Permits is the one before it.
+    ok('under a "Permits and authorities for draws" heading, just above Who won what at the bottom of the tab', S.js(sid, '(function(){var ls=[].slice.call(document.querySelectorAll("#tp-draws .label"));if(!ls.length||ls[ls.length-1].getAttribute("data-acc")!=="winners")return false;var l=ls[ls.length-2];var w=l&&l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent.trim():"";return l&&l.getAttribute("data-acc")==="permits"&&w==="Permits and authorities for draws"&&document.getElementById("drawPermits").compareDocumentPosition(l)===2;})()') is True)
     ok('Game settings on this page says nothing of "Permits" beyond pointing at its own bingo permit', S.js(sid, '!document.querySelector("#tp-settings .permit") && /bingo permit/.test(document.getElementById("tp-settings").innerText)') is True)
     ok('the card names the state the venue is in (Queensland) and no musical bingo', S.js(sid, '/In Queensland/.test(document.getElementById("drawPermits").innerText) && !/musical/i.test(document.getElementById("drawPermits").innerText)') is True)
     headings = S.js(sid, '[].map.call(document.querySelectorAll("#drawPermits .permit .lbl"),function(l){return l.firstChild.textContent.trim();}).join("|")')
@@ -384,15 +385,16 @@ try:
     ok('the Table signs card is here, and its link carries the venue', sg.endswith('/signage.html?venue=deepwater-hotel') and S.js(sid, '!!document.querySelector("#tp-marketing #signageLink") && !document.querySelector("#tp-screen #signageLink")') is True, sg)
     ok('the opt-in CSV export is here, not under Game settings', S.js(sid, '!!document.querySelector("#tp-marketing #optinExport") && !document.querySelector("#tp-settings #optinExport")') is True)
     sp = S.js(sid, 'document.getElementById("optinSignpost").innerText.replace(/\\s+/g," ").trim() + " | " + document.getElementById("optinSettingsLink").getAttribute("href")')
-    ok('one line says the opt-in tick and what players are asked for are set under Game settings, and links to that venue\'s settings',
-       sp == 'The opt-in tick on the join screen, and what players are asked for, are set under Game settings. | settings.html?venue=' + V1, sp)
+    ok('one short line says what players are asked is changed in Game settings, and links to that venue\'s settings',
+       sp == 'Change what players are asked in Game settings. | settings.html?venue=' + V1, sp)
     shot(sid, 'billing-marketing')
     S.js(sid, 'var s=document.getElementById("mkVenue"); s.value=%s; s.dispatchEvent(new Event("change")); true' % json.dumps(V2))
     time.sleep(0.3)
     l2 = S.js(sid, 'document.getElementById("venueLinkVal").textContent + " " + document.getElementById("signageLink").href.split("?")[1]')
     ok('picking The Royal Arms changes the link and the signs link together', l2 == 'https://venueplay.com.au/play?venue=the-royal-arms venue=the-royal-arms', l2)
     S.js(sid, 'document.querySelector(\'.tabs button[data-tab="settings"]\').click(); true'); time.sleep(0.3)
-    ok('Game settings says where the opt-in list went', S.js(sid, '/opt-in list is under the Marketing tab/.test(document.getElementById("tp-settings").innerText)') is True)
+    # Dean, 6 Nov 2026 (round 5 note 1): the "your opt-in list is under the Marketing tab" signpost was cut; the tabs say it.
+    ok('Game settings carries no opt-in export of its own and no signpost line about it', S.js(sid, '!document.querySelector("#tp-settings #optinExport") && !/opt-in list is under/.test(document.getElementById("tp-settings").innerText)') is True)
     errs = S.js(sid, 'JSON.stringify(window.__errs||[])')
     ok('no script error on the Marketing tab', errs == '[]', errs)
     S.close_tab(tid)
@@ -427,9 +429,10 @@ try:
       var out={over:[],seen:0,folds:{}};
       function dates(){[].forEach.call(document.querySelectorAll('input[type=date]'),function(d){if(!d.offsetParent)return;var c=d.closest('.vpp-card,.scard,.card');if(!c)return;out.seen++;
         var r=d.getBoundingClientRect(),cr=c.getBoundingClientRect();if(r.right>cr.right-1||r.left<cr.left)out.over.push((d.id||d.name||'date')+':'+Math.round(r.right)+'>'+Math.round(cr.right));});}
-      out.folds.raffles=fold('raffles'); out.show=box('dlMonths'); dates();
+      out.folds.raffles=fold('raffles'); dates();
       out.folds.members=fold('members'); out.fix=['md-fixnum','md-fixfirst','md-fixlast','md-remove'].map(box); dates();
       out.folds.permits=fold('permits'); dates();
+      out.folds.winners=fold('winners'); out.show=box('dlMonths'); dates();
       var h=getComputedStyle(document.querySelector('header'));out.hdr={bg:h.backgroundColor,bf:h.backdropFilter||h.webkitBackdropFilter||'none'};
       out.sw=document.documentElement.scrollWidth;return JSON.stringify(out);})()''', {})
     # Since 3 Nov 2026 Draws is three folds (one open at a time, Dean round 2 F): each box is measured with ITS fold
@@ -439,7 +442,7 @@ try:
        len(fx) == 4 and all(b and b['bg'] not in ('rgb(255, 255, 255)', 'rgba(0, 0, 0, 0)') and b['h'] >= 40 and b['rad'] >= 10 for b in fx), fx)
     sh = m.get('show') or {}
     ok('the "Show" select\'s text fits its box (a finger-high box, text no taller than it allows)', sh.get('h', 0) >= 40 and sh.get('fs', 99) + 16 <= sh.get('h', 0), sh)
-    ok('every date box (permit Authorised on / Expires) stays inside its card, and nothing scrolls sideways', m.get('over') == [] and m.get('seen', 0) >= 1 and m.get('folds') == {'raffles': True, 'members': True, 'permits': True} and m.get('sw', 9999) <= 390, (m.get('over'), m.get('seen'), m.get('folds')))
+    ok('every date box (permit Authorised on / Expires) stays inside its card, and nothing scrolls sideways', m.get('over') == [] and m.get('seen', 0) >= 1 and m.get('folds') == {'raffles': True, 'members': True, 'permits': True, 'winners': True} and m.get('sw', 9999) <= 390, (m.get('over'), m.get('seen'), m.get('folds')))
     hd = m.get('hdr') or {}
     ok('the sticky header is solid, not see-through and blurred over the page', hd.get('bf') in ('none', '', None) and hd.get('bg', '').startswith('rgb(') and not hd.get('bg', '').startswith('rgba('), hd)
     shot(sid, 'billing-draws-390')

@@ -708,3 +708,14 @@ the welcome, the reply in their thread, every follow-up email and text and HQ's 
 end; only HQ's "Start a fresh 30 days" makes a new one. No table, policy, grant or function, so RLS-BASELINE.json does not
 change. Either order with the billing Worker (before it, each send makes its own link as today). NUMBER: 175 (the main
 session's; 173 is fix/signup-core-10nov's). Branch `fix/signin-thread-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-177-whats-on.sql` (Dean, 6 Nov 2026, INBOX 110, the venue's own "What's on" guide, promised to Revolver
+Upstairs for the Thu 12 Nov release): ONE column, `vp_venue_screen.events` (jsonb list, at most 60 entries and 40,000
+characters; the billing Worker keeps 30 upcoming), plus one 'baseline' row per screen in `vp_venue_screen_history` so
+migration 114's nightly check does not report every venue as drift because of the new key. Chosen over a new
+vp_venue_events table: the TV's /screen and the phones' /join/info already read this row, 114 already records every
+change to it, and it is already Worker-only (RLS on, no grant to anon or authenticated), so no new policy, grant or
+function and RLS-BASELINE.json does not change. Either order with the Workers: before it runs the billing Worker answers
+events_off (the account page says What's on is being switched on) and the game Worker asks again without the column (no
+events on the TV or phones). NUMBER: 177 (the coordinator's number, 6 Nov 2026; 176 and below are taken). Branch
+`feature/whats-on-12nov`. NOT RUN. Read-back and rollback in the file.
