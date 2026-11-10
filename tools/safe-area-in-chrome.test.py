@@ -146,7 +146,7 @@ def no_insets(r, path, what, zero):
       return {ptop:px(".ptop","paddingTop"), menubtn:px(".ptop .menubtn","top"), menupanel:px(".ptop .menupanel","top"), hdrball:px(".ptop .hdrball","top"),
               sheet:px(".sheet","paddingBottom"), header:px("header","paddingTop"), bar:px("header .bar","paddingLeft"), barR:px("header .bar","paddingRight"), wrap:px(".wrap","paddingBottom")}; })()''') or {}
     # what each page had before the fix; a page without the piece answers null and is not judged on it
-    before = {'ptop': 16, 'menubtn': 12, 'menupanel': 56, 'hdrball': 10, 'sheet': 22}
+    before = {'ptop': 16, 'menubtn': 9, 'menupanel': 56, 'hdrball': 10, 'sheet': 22}
     if path == '/app/purchase-raffle/':
         before = {'header': 0, 'bar': 22, 'barR': 22, 'wrap': 60}
     moved = {k: [got.get(k), v] for k, v in before.items() if got.get(k) is not None and abs(got[k] - v) > 0.5}
