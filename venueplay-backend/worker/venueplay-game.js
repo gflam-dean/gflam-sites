@@ -10337,6 +10337,7 @@ async function chargeNightOverage(env, session) {
    show the host if blocked, otherwise stamps this session as the current night
    and returns null. */
 async function checkWeeklyFormatLimit(env, session, isTrivia) {
+  if (isDemoSession(session)) return null;   // a try-it demo never uses the week (INBOX 168/170), whatever calls this
   const col = isTrivia ? 'last_trivia' : 'last_musical';
   const label = isTrivia ? 'Trivia' : 'Musical bingo';
   const base = 'id=eq.' + enc(session.venue_id) + '&select=id,' + col + '_at,' + col + '_session_id';
@@ -10412,6 +10413,7 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
 // Stamp this session as the venue's current trivia/musical night. Called AFTER the game row
 // is inserted, so a start that fails validation never burns the once-a-week slot.
 async function stampWeeklyFormat(env, session, isTrivia) {
+  if (isDemoSession(session)) return;   // ...and never stamps it
   const col = isTrivia ? 'last_trivia' : 'last_musical';
   const fmt = isTrivia ? 'trivia' : 'musical_bingo';
   /* THIS NIGHT RAN ON A PASS: use the pass up, and leave last_*_at where it was, so the venue's
