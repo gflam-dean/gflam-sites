@@ -169,7 +169,13 @@ def judged_pass(rc, out, timed_out=False):
     if 'ALL' in last and 'PASSED' in last:
         return True
     m = re.match(r'^(\d+) of (\d+) checks? passed', last)
-    return bool(m) and m.group(1) == m.group(2) and int(m.group(1)) > 0
+    if m:
+        return m.group(1) == m.group(2) and int(m.group(1)) > 0
+    # the older jsc style: "<n> passed, 0 failed" then a closing "PASS" (test-analytics-ignores-robots.js)
+    if last == 'PASS' and len(lines) > 1:
+        m = re.match(r'^(\d+) passed, 0 failed$', lines[-2].strip())
+        return bool(m) and int(m.group(1)) > 0
+    return False
 
 
 # ---------------------------------------------------------------- running
