@@ -16,6 +16,11 @@ tools/musical-newlook-in-chrome.test.py (shared, imported), and measures every t
   - tapped: the title clear of its tick, not moved and not resized by the tap
   - the card and the claim on screen without scrolling
 at 360x740, 375x812, 390x844, 430x932 and a short phone (375x664), with the review card and a card of very long titles.
+10 NOV 2026 (Dean's live sign-off, builds INBOX 140) REPLACES the 9 Nov size and hyphen rules: ONE size for the whole card,
+15px or more, NO hyphen ever (a title's own hyphen is not a break either), a card that cannot hold 15px on the screen's
+width made wider and swiped, nothing cut; a note under the card (the early-mark note) moves and resizes no square; Free
+has its own look. Also the card from the live check (Test Charlie, "Sur-render", "Thunder-struck").
+Drives a real headless Chrome through verify-live.py's browser (imported via musical-newlook-in-chrome.test.py).
 Takes /tmp/vp-heavy.lock (VP_WAIT_LOCK seconds to wait).
 
     python3 tools/musical-card-spacing-in-chrome.test.py
