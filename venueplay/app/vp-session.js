@@ -117,6 +117,29 @@
      which does not exist, and a missing page on this site answers with the MARKETING HOMEPAGE. So a
      host whose login ran out mid-night was dropped on the sales site (found 30 Sep 2026). */
   var SIGNIN    = "/app/";            // the sign-in shell
+  /* BACK WHERE THE LINK WAS GOING, AFTER THE TEXT CODE (Dean, 5 Nov 2026: "Manage your plan must link to the
+     right place, the Account > Billing page"). An email link to /app/billing.html#billing opened signed out
+     went to the sign-in and then the console, so the owner never saw Billing. requireAuth notes the page
+     (one /app/*.html page and an optional #tab, nothing else) in this tab for 30 minutes, and the console
+     reads it ONCE, straight after sign-in, and goes there. The page still checks who may see it. */
+  /* Pages serves /app/billing.html as /app/billing (a 308, the # kept), so the page is noted with or without .html. */
+  var AFTER_KEY = "vpAfterSignIn", AFTER_RE = /^\/app\/[a-z][a-z0-9-]*(\.html)?(#[a-zA-Z]{1,20})?$/, AFTER_MS = 30 * 60 * 1000;
+  function rememberAfterSignIn() {
+    try {
+      var to = String(root.location.pathname || "") + (/^#[a-zA-Z]{1,20}$/.test(String(root.location.hash || "")) ? root.location.hash : "");
+      if (!AFTER_RE.test(to) || /^\/app\/(index|hq)(\.html)?(#|$)/.test(to)) return;
+      root.sessionStorage.setItem(AFTER_KEY, JSON.stringify({ to: to, at: Date.now() }));
+    } catch (e) {}
+  }
+  function afterSignIn() {
+    try {
+      var raw = root.sessionStorage.getItem(AFTER_KEY);
+      if (!raw) return null;
+      root.sessionStorage.removeItem(AFTER_KEY);
+      var o = JSON.parse(raw);
+      return (o && AFTER_RE.test(String(o.to)) && Date.now() - Number(o.at) >= 0 && Date.now() - Number(o.at) < AFTER_MS) ? String(o.to) : null;
+    } catch (e) { return null; }
+  }
 
   var _client  = null;   // the Supabase client singleton
   var _ctx     = null;   // last resolved Context
@@ -622,7 +645,7 @@
   function requireAuth(opts) {
     opts = opts || {};
     return ready().then(function (ctx) {
-      if (!ctx.authed) { root.location.href = SIGNIN; return new Promise(function () {}); }
+      if (!ctx.authed) { rememberAfterSignIn(); root.location.href = SIGNIN; return new Promise(function () {}); }
       if (opts.venue && !ctx.currentVenueId) { root.location.href = homeHref(ctx); return new Promise(function () {}); }
       if (opts.roles && opts.roles.length) {
         var ok = ctx.isAdmin || (ctx.role && opts.roles.indexOf(ctx.role) >= 0);
@@ -699,14 +722,35 @@
     var c = _ctx && _ctx.user && _ctx.user.id;
     return c || null;
   }
+  /* WHO IS HOLDING A NIGHT RIGHT NOW (6 Nov 2026). The list above lives in localStorage, which every tab of
+     this browser shares, and closing used to mean "every night this login ever noted". A console tab left
+     open and idle could sign itself out, or retry an old close, and close the night a NEWER tab was
+     running: the lobby ended under the room and every phone was told "No active game with that code"
+     (Dean, live play, finding I). So a page that notes a night also stamps it (seen) every 20 seconds
+     while it stays open, and a close that is not for the page's own night skips a night another page
+     stamped in the last minute. A night nobody has stamped for a minute is still closed as before. */
+  var HELD_FOR_MS = 60000, STAMP_EVERY_MS = 20000;
+  var _mine = {}, _stampIv = null;
+  function stampMine() {
+    var ids = Object.keys(_mine);
+    if (!ids.length) { if (_stampIv) { clearInterval(_stampIv); _stampIv = null; } return; }
+    var list = readOpenSessions(), now = Date.now(), changed = false;
+    for (var i = 0; i < list.length; i++) { if (_mine[list[i].id]) { list[i].seen = now; changed = true; } }
+    if (changed) writeOpenSessions(list);
+  }
+  function heldByAnotherPage(rec) {
+    return !_mine[rec.id] && !rec.closing && typeof rec.seen === 'number' && (Date.now() - rec.seen) < HELD_FOR_MS;
+  }
   // Called when a console opens a night. Idempotent per session id.
   function noteOpenSession(id, venueId) {
     if (!id) return;
+    _mine[id] = true;
+    if (!_stampIv && typeof setInterval === 'function') { _stampIv = setInterval(stampMine, STAMP_EVERY_MS); }
     var list = readOpenSessions();
-    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = false; writeOpenSessions(list); return; } }
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = false; list[i].seen = Date.now(); writeOpenSessions(list); return; } }
     // uid so a shared bar tablet does not try to close the previous host's night with the
     // current host's token (the Worker correctly refuses, and the id would be lost doing it).
-    list.push({ id: id, venue: venueId || null, uid: currentUid(), closing: false });
+    list.push({ id: id, venue: venueId || null, uid: currentUid(), closing: false, seen: Date.now() });
     writeOpenSessions(list);
   }
 
@@ -733,8 +777,14 @@
       var uid = (sess && sess.user && sess.user.id) || null;
       if (!tok) return 0;   // no token: keep everything stored and try again later
       var mine = [], keep = [];
+      /* RE-READ AFTER THE TOKEN ARRIVES. A night flagged closing when this started may have been opened
+         again while the token was fetched (the lobby taken over on another tab, or the next Open lobby
+         reusing it): noteOpenSession clears the flag, and a close sent anyway ended the night under the
+         room. Only a record still flagged closing is closed by a pending sweep. */
+      all = readOpenSessions();
       all.forEach(function (rec) {
         var ours = !rec.uid || !uid || rec.uid === uid;
+        if (ours && !onlyPending && heldByAnotherPage(rec)) { keep.push(rec); return; }   // another tab is running this night
         if (ours && (!onlyPending || rec.closing)) mine.push(rec); else keep.push(rec);
       });
       if (!mine.length) return 0;
@@ -766,6 +816,7 @@
      closed. "New game" and the next round never call this: they reuse the session. */
   function closeSession(id) {
     if (!id) return Promise.resolve(0);
+    delete _mine[id];
     var list = readOpenSessions(), found = false;
     for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = true; found = true; } }
     if (!found) list.push({ id: id, venue: null, uid: currentUid(), closing: true });
@@ -933,27 +984,43 @@
     _takeoverAsk = confirmTakeoverOnce(slug).then(function (v) { _takeoverAsk = null; return v; });
     return _takeoverAsk;
   }
+  /* THE GHOST "OTHER DEVICE" (6 Nov 2026, finding I). A Close lobby that did not reach the server stays
+     flagged closing in this browser and the night stays live there. The next console to open then asked
+     "already open on another device" about the host's OWN earlier tab, and the retry of that same close
+     landed a moment after "Open the lobby here", ending the new lobby and kicking every phone. So the
+     close that is waiting is sent, and answered, before the server is asked (capped, so a dead network
+     never holds the host up). */
+  function drainPendingCloses(capMs) {
+    return new Promise(function (resolve) {
+      var t = setTimeout(function () { resolve(0); }, capMs || 1800);
+      var p; try { p = retryPendingCloses(); } catch (e) { p = Promise.resolve(0); }
+      p.then(function (n) { clearTimeout(t); resolve(n); }, function () { clearTimeout(t); resolve(0); });
+    });
+  }
   function confirmTakeoverOnce(slug) {
     return new Promise(function (resolve) {
       if (!slug) { resolve(true); return; }
       var done = false;
       function finish(v) { if (!done) { done = true; resolve(v); } }
-      setTimeout(function () { finish(true); }, 3000);
-      /* fresh=1 (31 Oct 2026): the Worker keeps /play/live a few seconds for the room's phones. This
-         question is "did another tablet open a lobby a second ago", so it is asked of the database. */
-      fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)) + "&fresh=1")
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-          if (done) return;
-          if (!d || !d.live) { finish(true); return; }
-          var f = String(d.format || "");
-          var what = f.indexOf("trivia") === 0 ? "trivia night" : f.indexOf("musical") === 0 ? "musical bingo game"
-                   : f.indexOf("bingo") === 0 ? "bingo game" : "game";
-          done = true;
-          askOnPage("A " + what + " is already open at this venue on another device.",
-            "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.",
-            "Open the lobby here", "Cancel").then(resolve);
-        }, function () { finish(true); });
+      setTimeout(function () { finish(true); }, 5000);   // 1.8 s of draining, then the 3 s the question always had
+      drainPendingCloses(1800).then(function () {
+        if (done) return;
+        /* fresh=1 (31 Oct 2026): the Worker keeps /play/live a few seconds for the room's phones. This
+           question is "did another tablet open a lobby a second ago", so it is asked of the database. */
+        fetch(GAME_API + "/play/live?code=" + encodeURIComponent(venueCode(slug)) + "&fresh=1")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (done) return;
+            if (!d || !d.live) { finish(true); return; }
+            var f = String(d.format || "");
+            var what = f.indexOf("trivia") === 0 ? "trivia night" : f.indexOf("musical") === 0 ? "musical bingo game"
+                     : f.indexOf("bingo") === 0 ? "bingo game" : "game";
+            done = true;
+            askOnPage("A " + what + " is already open at this venue on another device.",
+              "Opening a lobby here takes the TV and every phone away from it, and starting a round here ends it.",
+              "Open the lobby here", "Cancel").then(resolve);
+          }, function () { finish(true); });
+      });
     });
   }
   /* ASKED ON THE PAGE, NEVER WITH window.confirm() (19 Oct 2026). A native dialog stops the whole page
@@ -1025,13 +1092,14 @@
         link: owner ? { href: '/app/billing.html#pastDue', label: 'Update your card' } : null };
     }
     /* A PROSPECT'S FREE MONTH RAN OUT WITH NO CARD (Dean, 29 Oct 2026; migration 127). Paused, not ended:
-       their TV keeps its ads, nothing is lost, a card switches it straight back on. The offer price they
-       were set up on went with the pause, so a card added now is at the price of the day. */
+       their TV keeps its ads, nothing is lost, a card switches it straight back on. The billing Worker still
+       keeps the offer price for 5 days after the free month ends (vpaOfferGraceEnd), but the screen does NOT
+       say so: the leeway is not announced (Dean, 5 Nov 2026, builds INBOX 55c). */
     if (r === 'free_month_ended') {
       return { reason: 'free_month_ended',
         title: 'Your free month has ended, so your games are paused',
         text: owner
-          ? 'Your TV keeps showing your ads and nothing has been lost. Add your card and everything comes straight back on, exactly as you left it. The offer price you were set up on ended with your free month, so your card is added at our price on the day you add it. If it is not for you, there is nothing you need to do.'
+          ? 'Your TV keeps showing your ads and nothing has been lost. Add your card and everything comes straight back on, exactly as you left it. If it is not for you, there is nothing you need to do.'
           : 'Your TV keeps showing your ads and nothing has been lost. Ask the venue owner or a manager to add a card, and everything comes straight back on.',
         link: owner ? { href: '#vp-card', label: 'Add your card' } : null };
     }
@@ -1565,6 +1633,7 @@
     loadSettings: loadSettings,
     saveSettings: saveSettings,
     requireAuth: requireAuth,
+    afterSignIn: afterSignIn,
     signOut: signOut,
     homeHref: homeHref,
     venueCode: venueCode,

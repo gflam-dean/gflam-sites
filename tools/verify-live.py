@@ -265,7 +265,7 @@ class Browser(object):
         self.profile = tempfile.mkdtemp(prefix='verify-live-')
         self.port = self._free_port()
         self.proc = subprocess.Popen(
-            [CHROME, '--headless=new', '--disable-gpu', '--mute-audio', '--no-first-run',
+            [CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio', '--no-first-run',
              '--no-default-browser-check', '--window-size=1280,800',
              '--user-data-dir=' + self.profile,
              '--remote-debugging-port=%d' % self.port, 'about:blank'],

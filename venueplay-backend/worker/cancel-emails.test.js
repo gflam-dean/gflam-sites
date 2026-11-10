@@ -40,6 +40,10 @@ eval(lift(BILL,"vpaFireDeliveryFailure"));
 eval(lift(BILL,"vpaGreeting"));
 eval(lift(BILL,"vpaFirstName"));
 eval(lift(BILL,"vpaHello"));
+eval(lift(BILL,"vpaCustomerSite"));
+eval(lift(BILL,"vpaEmailButton"));
+eval(lift(BILL,"vpaTimeWithUsHtml"));
+eval(lift(BILL,"vpaStatTilesHtml"));
 eval(lift(BILL,"vpaGoodbyeHtml"));
 /* THE CONSTANTS TOO, and this is not housekeeping. vpaVenueStats reads VPA_NOT_PLAYED and
    is wrapped in its own try/catch so a goodbye email still goes out when the numbers cannot
@@ -49,6 +53,7 @@ eval(lift(BILL,"vpaGoodbyeHtml"));
    shape of the tvStatus fault that reached a venue TV on 16 Sep. Read from the Worker, not
    retyped, so they cannot drift. */
 eval("var VPA_FORMAT_WORDS=" + (/const VPA_FORMAT_WORDS = (\{[\s\S]*?\});/.exec(BILL)||[,"{}"])[1] + ";");
+eval("var VPA_NOT_DEMO=" + (/const VPA_NOT_DEMO = ('[^']*');/.exec(BILL)||[,"''"])[1] + ";");   // the try-it demo filter (migration 172), lifted like the rest
 eval("var VPA_NOT_PLAYED=" + (/const VPA_NOT_PLAYED = (new Set\([^;]*\));/.exec(BILL)||[,"new Set()"])[1] + ";");
 eval("var VPA_OVERAGE_CENTS=" + (/const VPA_OVERAGE_CENTS = (\d+);/.exec(BILL)||[,"200"])[1] + ";");
 eval("var VPA_WRAP_MAX_PER_PLAYER=" + (/const VPA_WRAP_MAX_PER_PLAYER = ([\d.]+);/.exec(BILL)||[,"1"])[1] + ";");
@@ -231,9 +236,10 @@ pass("and ONLY that one: no confirmation goes with it",
 pass("each address gets it exactly once",
      SENT.length >= 2 && new Set(SENT.map(function(m){ return String(m.to||"").toLowerCase(); })).size === SENT.length,
      SENT.map(function(m){ return m.to; }).join(" | "));
-pass("and it carries the appeal the confirmation does not",
-     near.html.indexOf("We are sorry to see you go")!==-1
-     && near.html.indexOf("a player a month")!==-1, "sorry + price warning");
+/* Dean, 5 Nov 2026 round 6: the goodbye is rewritten short, warm and plain, true facts only. No price box. */
+pass("and it carries the warm goodbye the confirmation does not, with no price talk",
+     near.html.indexOf("We&#39;re sorry to see you go, and thank you.")!==-1
+     && near.html.indexOf("a player a month")===-1, "sorry, thanks, no price box");
 pass("it is logged under the SWEEP's action so the sweep cannot send a second one",
      AUDIT.some(function(a){ return a.action==="venue_last_day_emailed"; }),
      JSON.stringify(AUDIT.map(function(a){return a.action;})));
@@ -307,8 +313,12 @@ var d=SENT[0]||{subject:"",html:""};
 pass("the subject NAMES THE DAY, which is what a publican plans around",
      d.subject==="Friday is your last day on venueplay", d.subject);
 pass("the body names the day too", d.html.indexOf("Friday is your last day")!==-1);
-pass("it says they keep that night in full, right through to close",
-     d.html.indexOf("keep that night in full")!==-1);
+pass("it says the account stays on until the last day, games and ads included",
+     /Your account stays on until <b>Friday \d{1,2} September 2026<\/b>\. Keep running games, and your screens keep showing your ads until then\./.test(d.html),
+     (d.html.match(/Your account stays on[^.]*\./)||[""])[0]);
+pass("and that they can undo it, with ONE button, any time until close that day",
+     /<b>Changed your mind\?<\/b> You can undo this any time until close on Friday \d{1,2} September 2026\./.test(d.html)
+     && (d.html.match(/<a href="[^"]*" style="display:inline-block;background:#FF1F8E/g)||[]).length===1);
 /* The "two days seemed fairer" line was cut on Dean's instruction, 17 Sep 2026. What
    replaced it as the opening is the thing worth protecting: this email exists to be warm
    before it is administrative, so it must still open by being sorry they are going and
@@ -328,32 +338,39 @@ pass("a first name is used, a trading name is not",
      && vpaFirstName("manager","The Pub")===""
      && vpaFirstName("","The Pub")==="",
      "contact_name holds whatever was typed at signup");
-pass("it opens by being sorry to see them go",
-     d.html.indexOf("We are sorry to see you go")!==-1);
+pass("it opens by being sorry to see them go, and thanks them",
+     d.html.indexOf("We&#39;re sorry to see you go, and thank you.")!==-1);
 pass("and says how long they have been with us",
-     /pleasure having [^<]*with us for the last <b>/.test(d.html));
-pass("it says the screens keep earning to close, not just the games",
-     d.html.indexOf("keep playing your advertising until you shut")!==-1);
-/* Dean, 16 Sep: "can we put a warning about not getting the same price point?" It is the
-   truest reason to think twice, so it must actually be in the email and it must carry
-   THEIR rate, read off their own Stripe subscription. */
-/* The default fixture is a STANDARD venue at $3, because that is what Wellshot is:
-   Stripe has them on STRIPE_PRICE_STANDARD_MONTHLY. Dean caught this. */
-pass("a standard venue is quoted ITS OWN rate", d.html.indexOf("$3.00 a player a month")!==-1,
-     "a venue on $3 must never be told it is losing $2.50");
-pass("a standard venue is NOT promised its rate is held",
-     d.html.indexOf("held for as long as you stay")===-1,
-     "only the founding rate is locked; saying otherwise invents a promise");
-pass("a standard venue is warned the price will not wait",
-     d.html.indexOf("the price will not wait for you")!==-1);
+     /It&#39;s been a pleasure having The Pub with us for the last (\d+ months|month|year|few weeks)\./.test(d.html), (d.html.match(/pleasure having[^.]*\./)||[""])[0]);
+pass("it never asks why they are leaving (they were asked when they cancelled), and drops the old repeats",
+     !/why|what went wrong|did not work|stays yours|one click/i.test(d.html.replace(/<[^>]+>/g," ")));
+/* THE PRICE BOX IS GONE (Dean, 5 Nov 2026 round 6). It printed whatever o.rate held, and one email read "you are on
+   true a player a month". The goodbye now says no price at all, and nothing it prints can be a stray value. */
+pass("no price, no rate warning", d.html.indexOf("a player a month")===-1 && d.html.indexOf("the price will not wait")===-1 && d.html.indexOf("the rate does not come back")===-1);
+var junk = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", hello: "Hi Sam,", tenure: true, rate: true, founding: true, wrap: "", stats: { ok: true, nights: "x" } });
+var junkText = junk.replace(/<!--[\s\S]*?-->/g," ").replace(/<style[\s\S]*?<\/style>/g," ").replace(/<[^>]+>/g," ");
+pass("THE FILL BUG: given true, undefined or junk for the rate, the tenure or the stats, no stray value reaches the words",
+     !/\b(true|false|undefined|null|NaN)\b|\[object/.test(junkText) && junkText.indexOf("for the last")===-1 && junkText.indexOf("Your time with venueplay")===-1, junkText.slice(0,400));
+var none = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", hello: "Hi Sam,", tenure: "7 months", stats: { ok: true, nights: 0, totalGames: 0, totalPlayers: 0 } });
+pass("a venue that never ran a night gets the goodbye without a \"time with venueplay\" box", none.indexOf("Your time with venueplay")===-1 && none.indexOf("for the last 7 months")!==-1);
+var withStats = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", tenure: "7 months",
+  stats: { ok: true, nights: 13, totalGames: 31, totalPlayers: 1204, regulars: 88, subscribers: 236, biggest: { players: 74, at: "2026-08-14T09:30:00Z" } } }).replace(/<[^>]+>/g," ").replace(/&#9656;/g,"▸").replace(/&#39;/g,"'").replace(/\s+/g," ");
+/* Round 8: the numbers as tiles (games, players, subscribers), then nights, regulars and the biggest night. */
+pass("with their numbers, right after the thank you: tiles for games, players and subscribers, then nights, regulars and the biggest night",
+     withStats.indexOf("for the last 7 months. Your time with venueplay 31 games 1,204 players 236 subscribers ▸ 13 nights of games ▸ 88 regulars came back for another night ▸ Your biggest night: 74 players on 14 August 2026") !== -1, withStats.slice(0, 600));
+var noSubs = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub", tenure: "7 months", stats: { ok: true, nights: 2, totalGames: 3, totalPlayers: 40, subscribers: null } });
+pass("subscribers that could not be read get no tile (never a 0)", noSubs.indexOf("subscriber") === -1 && noSubs.indexOf(">3</div>") !== -1);
+var keep = vpaGoodbyeHtml(env, { day: "Friday", dated: "18 September 2026", name: "The Pub" }).replace(/<[^>]+>/g," ").replace(/&#9656;/g,"▸").replace(/&#39;/g,"'").replace(/\s+/g," ");
+pass("the pink box says what they still have for 90 days: members list, ad slides, draw history, billing page",
+     keep.indexOf("Here's what you still have for 90 days ▸ Your members list ▸ Your ad slides ▸ Your raffle and members draw history ▸ Your billing page Come back in that time and everything is where you left it.") !== -1, keep.slice(0, 900));
 /* Dean: "remove gflam group from the bottom of it." */
 pass("the holding company and the ABN are NOT on a leaving email",
      d.html.indexOf("Gflam Group")===-1 && d.html.indexOf("ABN")===-1);
 pass("it promises 90 days", d.html.indexOf("90 days")!==-1);
 /* The wrap is the last appeal, so it has to actually be in there. Counted rather than
    matched on wording, because the copy inside it will keep changing. */
-pass("it carries the wrap", d.html.indexOf("And that is a wrap")!==-1);
-pass("it offers the one click that keeps them", d.html.indexOf("Keep the venue running")!==-1);
+pass("it carries their time with venueplay, from the same numbers the wrap read", d.html.indexOf("Your time with venueplay")!==-1);
+pass("its one button keeps the account", d.html.indexOf(">Keep my account</a>")!==-1);
 pass("the warning carries NO unsubscribe", d.html.toLowerCase().indexOf("unsubscribe")===-1);
 
 /* And now the founding case, which is the only one allowed to promise the rate is held. */
@@ -367,13 +384,8 @@ LASTDAY="2026-09-18"; FAKE_HOUR=8;
 STRIPE={ sub_1:{ cancel_at: END_TS, items:{data:[{price:{id:"price_founding_m",unit_amount:250}}]} } };
 var rF=await vpaLastDaySweep(env);
 var f=SENT[0]||{html:""};
-pass("a founding venue IS told its rate is held while it stays",
-     rF.sent===1 && f.html.indexOf("held for as long as you stay with us")!==-1);
-pass("and it is quoted $2.50, not the standard $3", f.html.indexOf("$2.50 a player a month")!==-1);
-pass("a founding venue gets the stronger heading",
-     f.html.indexOf("the rate does not come back")!==-1);
-pass("and never the standard wording",
-     f.html.indexOf("the price will not wait for you")===-1);
+pass("a founding venue gets the same plain goodbye: no rate promise and no price box",
+     rF.sent===1 && f.html.indexOf("a player a month")===-1 && f.html.indexOf("held for as long as you stay")===-1 && f.html.indexOf("We&#39;re sorry to see you go")!==-1);
 
 /* A QUIET RUN MUST SAY WHY IT WAS QUIET. The first hour this was live was spent unable
    to tell "the cron has not fired" from "it fired and decided not to send". */

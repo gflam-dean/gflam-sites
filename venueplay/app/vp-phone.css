@@ -101,15 +101,5 @@
 .vp-sw:checked::after{transform:translateX(24px)}
 .vp-menu .menuitem input.vp-sw{width:56px;height:32px}
 
-/* 5. THE VENUE'S AD: one place, just above our logo at the foot */
-#vpAd{padding:8px 20px 0}
-#vpAd[hidden]{display:none}
-#vpAd .k{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;text-align:center;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#vpAd .rail{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:16px}
-#vpAd .rail::-webkit-scrollbar{display:none}
-#vpAd .slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#141418}
-#vpAd .slide img{display:block;width:100%;height:100%;object-fit:cover}
-#vpAd .dots{display:flex;justify-content:center;gap:6px;margin-top:10px;height:8px}
-#vpAd .dots i{width:7px;height:7px;border-radius:4px;background:#3A3A44}
-#vpAd .dots i.on{width:22px;background:#fff}
-body.light #vpAd .dots i.on{background:#191420}
+/* 5 and 6 (the venue's ad, and the waiting screens) moved to /app/vp-tonight.css on 6 Nov 2026, so the bingo phone, which
+   does not use this file, shares them with the trivia and musical phones. */

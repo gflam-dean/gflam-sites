@@ -78,7 +78,9 @@ class Site(http.server.BaseHTTPRequestHandler):
             t = t.replace('/app/vendor/qrcode-1.4.4.min.js', '/__fake/qrcode.js')
             t = t.replace('https://game.venueplay.com.au', '/__worker')
             q1 = urllib.parse.parse_qs(u.query or '').get('q1', [''])[0]
-            if ext == '.html' and q1 in ('short', 'long'):
+            if ext == '.html' and q1 in ('short', 'long'):   # the demo's questions are in its shared clock (7 Nov 2026): ask for that with the same q1
+                t = t.replace('/app/vp-demo-clock.js"', '/app/vp-demo-clock.js?q1=' + q1 + '"')
+            if ext in ('.html', '.js') and q1 in ('short', 'long'):
                 SWAPPED[0] += t.count(DEMO_Q1)
                 t = t.replace(DEMO_Q1, SHORT_Q1 if q1 == 'short' else LONG_Q1)
             if ext == '.html' and 'pic=1' in (u.query or ''):
@@ -213,7 +215,7 @@ def wall(B, base, w, h):
         QR, RQ = q.get('qround'), rv.get('qround')
         ok('%s, %s: "Question N of 20" is under the answers, on the right, the same on the reveal' % (tag, lbl),
            bool(QR and qc) and QR[1] >= max(c['r'][3] for c in qc) and abs(QR[2] - max(c['r'][2] for c in qc)) <= 2 and QR[3] <= h and same(QR, RQ)
-           and 'Question 3 of 20' in (q.get('qroundText') or ''), [QR, RQ, q.get('qroundText')])
+           and 'Question 8 of 10' in (q.get('qroundText') or ''), [QR, RQ, q.get('qroundText')])
     oc, tc, lc = oq.get('cards') or [], tq.get('cards') or [], lq.get('cards') or []
     ok(tag + ': the answers sit at the same fixed spot for every question length',
        len(oc) == len(tc) == len(lc) == 4 and all(same(oc[i]['r'], tc[i]['r']) and same(lc[i]['r'], tc[i]['r']) for i in range(4)),

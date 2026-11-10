@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app/vp-phone.css">   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
+<link rel="stylesheet" href="/app/vp-phone.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screens and the venue's ad, shared with the musical and bingo phones (6 Nov 2026) -->   <!-- the option 5 header, shared by the player phones (4 Nov 2026) -->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
@@ -189,6 +190,32 @@
   .dform .dpriv a{color:var(--text)}
   .dhp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}
   body.light .dform label.dl, body.light .dform .dpriv a{color:#191420}
+  /* A SHORT PHONE (Dean, 6 Nov 2026, live at Test Alpha: "the screen on the trivia isn't fitted for an iPhone ... I expected it a
+     little bit further up so you could see the logo like the mock ups"). Safari's visible area on an iPhone is about 664px tall
+     once its bars are up, and the question screen needs about 800: the ring scrolled under the header, the fourth answer was
+     off the bottom and our logo was never seen. Under 830px tall the game itself tightens (a smaller ring and answers, the same colours, letters and
+     order; the header and our logo are left exactly as they are) so the header, the ring, the question, all four answers and our logo sit in one screen
+     with no scrolling. Measured at 390x664 and 375x664 by tools/trivia-live-fixes-in-chrome.test.py. A taller phone is untouched. */
+  @media (max-height:830px){
+    .view{padding:8px 16px 8px}
+    #vRes{padding-bottom:6px}
+    .pq-head{gap:6px;margin-bottom:10px}
+    .pq-ring{width:56px;height:56px}
+    .pq-ring .n b,.presult .pq-ring .n b,.pq-ring .n .pts{font-size:23px}
+    .pq-ring .n span{font-size:15px}
+    .pq-ring.done{border-width:5px}
+    .pq-text{font-size:20px;line-height:1.18}
+    .pq-text.long{font-size:18px}
+    .panswers{gap:10px}
+    .pans{min-height:72px;padding:6px 14px 6px 12px;border-radius:14px;gap:12px}
+    .pans .pl{font-size:36px;min-width:30px}
+    .pstatus{margin-top:8px;font-size:15px}
+    #vRes .pcard,.pcard{margin-top:8px;padding:7px 16px}
+    .pfoot{padding:6px 16px max(6px, env(safe-area-inset-bottom, 0px))}
+    .finalwrap{padding-top:16px}
+    .finalwrap #finalBig{font-size:52px;margin-bottom:8px}
+    .winner #finalBig{font-size:72px}
+  }
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
 </head>
@@ -202,6 +229,7 @@
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -226,14 +254,21 @@
     <div class="pnote">No app and no account. Pick a team name, then questions pop up here when the host starts.</div>
   </div>
 
-  <!-- WAIT -->
-  <div class="view center hidden" id="vWait">
-    <div style="font-size:44px" id="waitIcon">&#9989;</div>
-    <div class="pbig" style="color:var(--win)" id="waitHead">You&#39;re in</div>
-    <div class="psub" id="waitSub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
-    <div class="pnote" id="waitMsg">Watch the big screen. Your questions will pop up here.</div>
-    <div class="scorebox hidden" id="waitScore"></div>
-    <div class="rankline hidden" id="waitRank"></div>
+  <!-- WAIT: you're in. The new look, as the musical phone's (mock-ups newlook-musical-5nov/final/13-phone-youre-in.png): the green ring
+       tick, YOU'RE IN in Anton, the name, an "Up first" chip, the one lobby line every game uses, then the venue's ad (6 Nov 2026) -->
+  <div class="view hidden" id="vWait">
+    <div class="vp-in" id="waitIn">
+      <div class="vp-tick" id="waitIcon" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M6 13.5l4.6 4.6L20 8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="vp-h" id="waitHead">You&#39;re in</div>
+      <div class="vp-name" id="waitName">Player</div>
+      <div class="vp-tiles" id="waitTiles"><div><div class="k">Up first</div><div class="v">Trivia</div></div></div>
+      <p class="vp-wait" id="waitMsg">The game will start here when the host is ready.</p>
+      <div class="scorebox hidden" id="waitScore"></div>
+      <div class="rankline hidden" id="waitRank"></div>
+    </div>
+    <!-- Dean's round 5 picks (6 Nov 2026): "You're in, <name>" with Tonight and This week here, or "No game here right now".
+         Drawn by /app/vp-tonight.js; the block above is what shows without it, and for any other heading. -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- QUESTION -->
@@ -329,6 +364,8 @@
     <div class="rankline" id="finalRank"></div>
     <div class="pnote">The winners are up on the big screen.</div>
   </div>
+  <!-- THE VENUE'S AD: one place on every screen that shows one, just above our logo (/app/vp-phonead.js) -->
+  <div id="vpAd" hidden></div>
   <!-- our logo, small, at the bottom (option 5, 3 Nov 2026) -->
   <div class="pfoot"><svg class="vp-wm" height="16.1" width="80.4" viewBox="-1 -729 4676 936" fill="none" aria-label="venueplay" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></div>
 </div>
@@ -349,10 +386,14 @@
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
-<script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
+<script src="/app/vp-details.js"></script>
+<script src="/app/vp-demo.js"></script>   <!-- the try-it demo: their own name, email and mobile from sign-up, never the tick (INBOX 82) -->   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
+<script src="/app/vp-phonead.js"></script>
+<script src="/app/vp-tonight.js"></script>   <!-- the waiting screens, shared with the musical phone (6 Nov 2026) -->   <!-- the venue's ad, in one place on every screen that shows one (6 Nov 2026) -->
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-connbar.js"></script>   <!-- the status dot beside the logo, and a slim Reconnecting bar only while down (2 Nov 2026) -->
 <script src="/app/vp-phonekey.js"></script>
@@ -561,7 +602,7 @@
     token:"", sessionId:"", gameId:"",
     colour:true, total:0, rank:0, playersCount:0,
     q:null, choice:null, locked:false,
-    lastPts:0, cdTimer:null, ended:false
+    lastPts:0, cdTimer:null, ended:false, hostAt:0, noGameT:null
   };
 
     /* localStorage, not sessionStorage. iOS discards a backgrounded tab routinely over a three
@@ -592,7 +633,10 @@
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal","vPR","vDemoEnd","vCall"];   // the last two: the scanned demo only (4 Nov 2026)
-  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
+    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait" || which==="vFinal"); }catch(e){}
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait" || which==="vFinal");   // the compact ad, the same size wherever it shows (one fixed spot), so it and our logo fit (Dean, 6 Nov 2026)
+  }   // the venue's ad: the lobby, the waits and the end of the night, never a question
 
   // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
   /* "3rd", never "3rd of 16" (Dean, 4 Nov 2026: "no player counts anywhere"). P.playersCount is still read from the
@@ -602,10 +646,18 @@
      take out the "You're in" above "Answer locked in"; mid-game it reads like a join screen. */
   function showWait(msg, head){
     show("vWait");
-    $("waitName").textContent=P.name;
+    $("waitName").textContent=P.name; $("waitName").classList.remove("hidden");
+    /* THE LOBBY, OPTION C: the plain "You're in" (no other heading, nothing scored yet) is drawn by /app/vp-tonight.js. */
+    var tn=$("vpTonight"), inb=$("waitIn");
+    if(tn && inb){
+      var useT = !head && !(P.total>0) && typeof VPTonight==="object";
+      tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT);
+      if(useT){ VPTonight.lobby(tn, { name:P.name, me:"trivia", prize:P.prize||"", wait:msg||$("waitMsg").textContent, nights:P.nights, games:P.games, week:P.week }); }
+    }
     $("waitHead").textContent = head || "You\u2019re in";
+    /* The tick and the "Up first" chip belong to the lobby's YOU'RE IN only; a heading for any other moment stands alone. */
     $("waitIcon").classList.toggle("hidden", !!head);
-    $("waitSub").classList.toggle("hidden", !!head);
+    $("waitTiles").classList.toggle("hidden", !!head);
     if(msg) $("waitMsg").textContent=msg;
     /* Points first, then a place. With nothing scored yet the place is just where a 0 sorts: a new
        joiner was told "1st of 1" before the first question (audit, 14 Oct 2026). */
@@ -613,6 +665,62 @@
       $("waitScore").classList.remove("hidden"); $("waitScore").textContent=P.total+" points";
       var rt=rankText(); $("waitRank").classList.toggle("hidden", !rt); $("waitRank").textContent=rt;
     } else { $("waitScore").classList.add("hidden"); $("waitRank").classList.add("hidden"); }
+  }
+
+  /* NO GAME ON RIGHT NOW (Dean, live, 6 Nov 2026: a phone reloaded on /app/trivia/play?room=4NJPNQ read YOU'RE IN, Good
+     luck, "You're back in. Next question coming up on the big screen", 131 points, 2nd, hours after the night had
+     ended and with the host signed out). Said plainly, with no score and no promise of a question. A host message
+     (a heartbeat, a question, a lobby) takes the phone out of it again. */
+  /* "GET A HEADS UP BY EMAIL" (Dean, 6 Nov 2026): the venue's list, through /join/list, only when the venue collects email.
+     The token this phone joined with (even a finished night's) goes with it, so a regular's sign-up lands on their own
+     player row, where the venue's list is read from. Once sent, this phone is not asked again at this venue. */
+  function headsUpKey(){ return "vp-headsup-"+P.room; }
+  function headsUpDone(){ try{ return localStorage.getItem(headsUpKey())==="1"; }catch(e){ return false; } }
+  function headsUp(email, optin){
+    return listSend(email, "", optin).then(function(r){ try{ localStorage.setItem(headsUpKey(),"1"); }catch(e){} return r; });
+  }
+  /* One way onto the venue's list for every door on this phone (the heads-up, the menu): /join/list, with the token this
+     phone joined with, so a player's opt-in lands on their own player row. A ticked send puts this phone on the list. */
+  function listSend(email, mobile, optin){
+    var h={ "Content-Type":"application/json" }, t=P.token||P.lastToken; if(t) h["X-Player-Token"]=t;
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email||"", mobile:mobile||"", marketing_optin:optin===true,
+      consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
+      .then(readApi).then(function(r){ if(optin===true && r && r.stored) setOnList(); return r; });
+  }
+  /* ON THE VENUE'S LIST (kept on the phone per room code): ticked the offers when joining, or joined the list since. */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
+  function setOnList(){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} paintListItem(); }
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026): only where the venue collects the offers tick and a way to reach
+     them, only for a phone that is in, and gone once it is on the list. */
+  function paintListItem(){
+    var b=$("vpListItem"); if(!b) return;
+    var c=P.collect||{};
+    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
+    VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
+  }
+  var NO_GAME_MSG="Ask the host, or scan the code when the next game starts.";
+  function showNoGame(){
+    if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; }
+    P.q=null; P.total=0; P.rank=0; P.playersCount=0; stopCd();
+    showWait(NO_GAME_MSG, "No game on right now");
+    $("waitName").classList.add("hidden");   // no name and no score: nothing is being played
+    /* "NO GAME ON RIGHT NOW" (Dean's round 5 pick): "You're in, <name>", "No game here right now", the week strip, then its ad. */
+    var tn=$("vpTonight"), inb=$("waitIn");
+    if(tn && inb && typeof VPTonight==="object"){
+      inb.classList.add("hidden"); tn.classList.remove("hidden");
+      VPTonight.noGame(tn, { name:P.name, nights:P.nights, games:P.games, week:P.week, venue:P.venueName,
+        signup: (P.collect && P.collect.email) ? headsUp : null, offers: !!(P.collect && P.collect.marketing_optin), signedUp: headsUpDone() });
+    }
+  }
+  /* A phone that comes back between questions is told "watch the big screen", and if no host is heard on the channel
+     within 75 s (the console speaks every 30 s while a game or lobby is open) there is no game: say so. */
+  var NO_HOST_MS=75000;
+  function armNoGame(){
+    if(P.noGameT) clearTimeout(P.noGameT);
+    P.hostAt=P.hostAt||0;
+    var armedAt=Date.now();
+    P.noGameT=setTimeout(function(){ P.noGameT=null;
+      if(P.joined && !P.q && !P.ended && !(P.hostAt>=armedAt)) showNoGame(); }, NO_HOST_MS);
   }
 
   /* The question's size rules and the ring, one copy each, used by the question and the result alike. */
@@ -955,11 +1063,16 @@
                        gameId:P.gameId, format:"trivia" });
     }catch(e){}
   }
-  function showFinal(){
+  /* showFinal(quiet): quiet puts the final-score screen up WITHOUT the celebration, the fanfare, the buzz or the
+     rating prompt, and without saying where the player came. Used while the host has the podium up but has not yet
+     announced first place (Dean, 6 Nov 2026: "the sound played before you push the buttons to announce the first"),
+     and when the host ends the game (finding A: it used to show "You're in / Good luck" under "Thanks for playing").
+     note is the line under the score. */
+  function showFinal(quiet, note){
     P.ended=true; show("vFinal");
     $("finalScore").textContent=P.total+" points";
     var done=false;
-    function finish(){ if(done) return; done=true; decorateFinal(); }
+    function finish(){ if(done) return; done=true; if(quiet) quietFinal(note); else decorateFinal(); }
     // Decorate from the AUTHORITATIVE rank so we only ever fire the winner celebration for a real 1st.
     if(P.gameId){
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
@@ -970,11 +1083,23 @@
       }).catch(finish);
     } else { finish(); }
   }
+  function quietFinal(note){
+    var wrap=$("vFinal"); if(wrap) wrap.classList.remove("winner");
+    $("finalScore").textContent=P.total+" points";
+    $("finalEmoji").innerHTML="&#127881;";
+    $("finalBig").textContent="That's a wrap";
+    $("finalSub").textContent="Thanks for playing tonight";
+    $("finalRank").textContent="";
+    var n=document.querySelector("#vFinal .pnote"); if(n) n.textContent=note||"";
+  }
 
   // ---- incoming ----
   var _prPhone=null;   // Punters Reckon, mounted on first use
   function onMsg(m){
     if(!m||!m.t) return;
+    /* A host is on the channel: the console's heartbeat every 30 s, or anything it sends. Heard, the "no game" timer is moot. */
+    var HOST_WORDS={ host_here:1, session:1, mode:1, started:1, state:1, question:1, lock:1, time:1, reveal:1, leaderboard:1, podium:1, idle:1, closed:1, handin:1, roundanswers:1 };
+    if(HOST_WORDS[m.t]){ P.hostAt=Date.now(); if(P.noGameT){ clearTimeout(P.noGameT); P.noGameT=null; } }
     /* The start-of-game show on the phone (/app/vp-sting.js, on unless ?sting=0), with the name it joined with. */
     if(window.VPSting && VPSting.on && P.joined){ try{ VPSting.forGame(m, VPSting.phoneWords(/punters/i.test(String(m.title||m.fmt||"")) ? "PUNTERS RECKON" : "TRIVIA", P.name), { question:1, ta_board:1 }, "phone"); }catch(e){} }
     if(m.t==="ta_board" || m.t==="pr_result" || m.t==="ta_showall" || m.t==="ta_reveal"){
@@ -994,7 +1119,7 @@
          (play.html joinServerSession), and leaves last night's final screen for the lobby wait. A phone
          with no token yet joins the night it has just been told about. */
       if(P.joined){
-        if(nightChanged(m)){ stopCd(); P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0; showWait("Watch the big screen. Your questions will pop up here."); }
+        if(nightChanged(m)){ stopCd(); P.q=null; P.ended=false; P.celebrated=false; P.total=0; P.rank=0; P.playersCount=0; showWait("Watch the big screen. Your questions will pop up here."); }
         else if(m.session_id && !P.token) rejoinNow();
         announce();
       }
@@ -1006,13 +1131,13 @@
     if(m.t==="state"){
       if(typeof m.colour==="boolean") P.colour=m.colour;
       useGame(m.game_id);
-      if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
+      if(m.phase==="lobby"){ P.q=null; P.ended=false; P.celebrated=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
     }
     else if(m.t==="started"){
       if(!nightChanged(m) && P.joined && !P.token) rejoinNow();   // the night began after this phone arrived: join it now
       useGame(m.game_id);
       if(typeof m.colour==="boolean") P.colour=m.colour;
-      P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
+      P.q=null; P.ended=false; P.celebrated=false; P.total=0; P.rank=0; P.playersCount=0;
       if(P.joined) showWait("The quiz is starting. Your questions will pop up here.");
     }
     else if(m.t==="question"){ sayAlive();
@@ -1026,7 +1151,7 @@
          reconnecting would re-render the live question on forty phones and wipe the
          answer they had already given. */
       if(m.to && m.to !== P.pid) return;
-      P.ended=false;
+      P.ended=false; P.celebrated=false;
       renderQuestion(m);
     }
     else if(m.t==="time"){
@@ -1076,10 +1201,17 @@
     else if(m.t==="podium"){
       if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
-      showFinal();
+      /* reveal 3 or 2: the TV is still revealing third and second place. A quiet screen, no sound, no result.
+         reveal 1 (or none, an older console): the winner is up, so the celebration is allowed now. */
+      if(m.reveal>1){ if(!P.celebrated) showFinal(true, "The winners are going up on the big screen."); }
+      else { P.celebrated=true; showFinal(); }
     }
     else if(m.t==="idle"){
-      if(P.joined){ P.q=null; showWait("Thanks for playing. Sit tight, the host may start another round."); }
+      /* The host ended the game (finding A, 6 Nov 2026). This used to show "YOU'RE IN / Good luck" over "Thanks for
+         playing" and the score: a join screen at the end of a night. Now the quiet final-score screen, no sound. */
+      if(P.joined){ P.q=null; stopCd();
+        if(P.total>0 || P.ended) showFinal(true, "The host has ended this game.");
+        else showWait("The host has ended this game. Sit tight, another round may start.", "Game ended"); }
     }
   }
 
@@ -1092,6 +1224,7 @@
     if(g && g.format==="trivia" && g.game_id){
       useGame(g.game_id);
       if(typeof g.colour==="boolean") P.colour=g.colour;
+      if(g.prize) P.prize=String(g.prize).slice(0,80);   // the Tonight card shows it
       /* A phone that slept through a question comes back into whatever is on: the open question
          (asking), the same question with the buttons locked (locked), or its own score while the
          room is between questions. Before, only "asking" was handled and the rest saw "You're in". */
@@ -1119,7 +1252,9 @@
   function applyPending(fresh){
     if(!P.joined) return;
     if(P.pendingQ){ var q=P.pendingQ, lk=P.pendingLocked; P.pendingQ=null; P.pendingLocked=false; renderQuestion(q); if(lk){ stopCd(); lockOut(); } refreshTotals(); return; }
-    if(P.pendingScore){ P.pendingScore=false; pullScore(fresh===true ? "You’re in. Next question coming up on the big screen." : "You're back in. Next question coming up on the big screen."); }
+    if(P.pendingScore){ P.pendingScore=false;
+      if(fresh===true){ pullScore("You’re in. Next question coming up on the big screen."); }
+      else { pullScore("Watch the big screen. If a game is on, the next question pops up here.", "Welcome back"); armNoGame(); } }
   }
   // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
   /* A NIGHT THAT HAS ENDED IS NOT THE NIGHT YOU ARE IN. The room code is the venue's permanent
@@ -1129,6 +1264,7 @@
      playing, 25 Sep 2026. The bingo phone already re-joins whenever the night changes
      (joinServerSession); this is the same rule. Same pid, so the Worker keeps one player. */
   function dropStaleJoin(){
+    if(P.token) P.lastToken=P.token;   // kept in memory only, for the "heads up by email" sign-up (/join/list)
     P.token=""; P.sessionId=""; AR.hash="";   // the answers room knows a phone by its token's hash
     // and a socket keeps the first hash it answered with, so the old token's socket goes too (ansRoom reopens one)
     if(AR.room){ try{ AR.room.close(); }catch(e){} AR.room=null; AR.gameId=""; }
@@ -1200,7 +1336,7 @@
       .then(function(s){
         if(gen!==_snapGen) return;
         var live = s && !s.error && (s.status==="lobby" || s.status==="running" || s.status==="paused");
-        if(!live){ dropStaleJoin(); return rejoinNow().then(applyPending); }
+        if(!live){ dropStaleJoin(); return rejoinNow().then(function(){ if(!P.token){ showNoGame(); return; } applyPending(); }); }
         applySnap(s);
         applyPending();
       }).catch(function(){
@@ -1228,10 +1364,19 @@
   function headerVenue(logo, name){ try{ VPVenueLogo.headerName($("hdrVenueName"), logo, name); }catch(e){} }   /* one copy, in /app/vp-venuelogo.js (4 Nov 2026) */
   function loadJoinInfo(){
     if(!P.room) return;
-    playerPost("/join/info",{ code:P.room }).then(function(r){
+    playerPost("/join/info",{ code:P.room, ad:1 }).then(function(r){   // ad:1: the venue's slides too, for its ad
       // Venue logo in the header (same one as the TV), so the phone shows whose game this is.
       var lg=$("venueLogo"); if(lg){ if(r&&r.logo_url){ lg.src=r.logo_url; lg.classList.remove("hidden"); if(typeof VPVenueLogo==="object") VPVenueLogo.fit(lg,"phone"); } else { lg.classList.add("hidden"); } }
       headerVenue(r&&r.logo_url, r&&r.venue_name);
+      try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      /* The venue's game nights for the Tonight and Next game night cards (setup answers; nothing when it never gave them). */
+      P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[]; P.week=(r&&Array.isArray(r.week))?r.week:null;
+      if(r&&r.venue_name) P.venueName=String(r.venue_name);
+      P.collect=(r&&r.collect)||null;   // what this venue collects: the heads-up sign-up shows only when it collects email
+      paintListItem();
+      if(window.VPTonight && !$("vWait").classList.contains("hidden") && !$("vpTonight").classList.contains("hidden")){
+        if($("waitHead").textContent==="No game on right now") showNoGame(); else showWait();
+      }
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       /* The boxes come from /app/vp-details.js, shared by all three phones: name= and autocomplete on each, so iPhone and Android autofill them. */
@@ -1240,6 +1385,11 @@
       /* ONE optional tick, "Send me offers from {venue}. I'm 18 or over." (Dean, 4 Nov 2026): /app/vp-consent.js,
          shared by all three phones. Not ticking it changes nothing about playing. */
       if(typeof VPConsent==="object") VPConsent.render(box, c, { venueName:P.venueName });
+      /* THE TRY-IT DEMO (INBOX 82): their own details from sign-up, carried in the address's #fragment by
+         /app/try.html and read once (VPDemo.takePrefill), go into the boxes. The offers tick stays theirs to tap. */
+      if(typeof VPDemo==="object") VPDemo.applyPrefill(document);
+      if(r && r.demo){ var dn=document.createElement("p"); dn.id="demoNote"; dn.setAttribute("style","font-size:14px;line-height:1.5;color:#B9B9C6;margin:8px 0 0");
+        dn.textContent="This is a demo game. Up to "+((r.demo_max|0)||10)+" for the demo. Tick the box to see how you land on "+(P.venueName||"the venue")+"'s list."; box.appendChild(dn); }
       /* Collection notice. Australian privacy law wants people told what is being collected and
          who gets it AT THE POINT they are asked, not only in a policy page they never open. This
          screen asked for last name, postcode, email and mobile with no notice and no link to the
@@ -1277,6 +1427,7 @@
     var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
+      if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();   // said yes when joining: on the list, no menu row
       announce();   // cosmetic roster on the host + TV
       if(P.pendingQ || P.pendingScore){ applyPending(true); }   // true: a name just typed in, not a phone coming back
       else showWait("Watch the big screen. Your questions will pop up here.");
@@ -1329,7 +1480,7 @@
     ch=(typeof VPRoom!=="undefined" && VPRoom.venue) ? VPRoom.venue(VP_GAME_API, "").channel("vp-"+room, "phone", make, { fmt:"trivia" }) : make();
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(onChannelStatus);
-    if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); try{ loadJoinInfo(); }catch(e){} }   // the header's venue logo or name, for a phone that is already in
+    if(P.joined){ showWait("Watch the big screen. If a game is on, your questions pop up here.", "Welcome back"); armNoGame(); try{ loadJoinInfo(); }catch(e){} }   // the header's venue logo or name, for a phone that is already in
     else { loadJoinInfo(); show("vJoin"); }
   }
 
@@ -1352,6 +1503,7 @@
   takeHopName();
   /* Join is the submit button of a real form (autofill, and Enter joins): /app/vp-details.js. Old listeners only if that file did not load. */
   if(typeof VPDetails==="object") VPDetails.wire({ join:join, kind:"team" });
+  if(typeof VPDemo==="object" && VPDemo.takePrefill()) VPDemo.applyPrefill(document);   // read once, then out of the address
   else { $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); }); $("joinBtn").addEventListener("click", join); }
   // ---- menu (Light mode / Leave) ----
   var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
@@ -1388,8 +1540,8 @@
      scans it wants to play, not watch it play itself. So the round above plays itself only inside
      a frame (the sales pages: index.html, nsw.html, see-a-night.html all iframe it). Opened on its
      own, it is a round of five the person answers (soloIntro below), then an end card with a
-     call-back form. The TV and this phone are not linked (both are scripts joined to nothing), so
-     the phone keeps its own clock and only borrows the wall's first three questions.
+     call-back form. That solo round keeps its own clock (the person sets the pace); the embedded
+     round below runs on the wall's clock (/app/vp-demo-clock.js).
      window.__vpDemoAutoplay is a test's hook, set by script before the page runs (as
      __vpStingManual is): no address can set it, so a phone that scanned the QR never auto-answers. */
   var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
@@ -1453,7 +1605,7 @@
         sd((window.VPSting && VPSting.on) ? 4200 : 900, function(){ soloAsk(0); });
       };
       var soloIntro=function(){
-        soloClear(); stopCd(); P.q=null; P.total=0; P.rank=0; P.ended=false; P.choice=null; P.locked=false; _right=0;
+        soloClear(); stopCd(); P.q=null; P.total=0; P.rank=0; P.ended=false; P.celebrated=false; P.choice=null; P.locked=false; _right=0;
         showWait("Five quick questions, the way a night at your venue plays them. Tap your answer before the clock runs out.", "Have a go");
         var go=$("demoGo");
         if(!go){ go=el("button","btn pink dgo"); go.id="demoGo"; go.type="button"; go.textContent="Start the demo"; $("vWait").appendChild(go); go.addEventListener("click", soloStart); }
@@ -1519,37 +1671,35 @@
       soloIntro();
       return;                    /* never connect, never follow a host, never touch a venue */
     }
-    var _dt=[];
-    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
-    function q(qi, text, options, secs){
-      return { t:"question", qseq:qi, qi:qi+2, qtotal:20, text:text, options:options,   // "Question 3 of 20", the wall's numbers
-               secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
-    }
-    function round(){
-      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
-      _dt=[]; P.total=515; P.rank=0; P.ended=false;   /* "Question 3 of 20": two questions already played. 515 + 130 + 145 = 790, Sarah's score on the wall's final scores */
+    /* IN STEP WITH THE WALL BY CONSTRUCTION (Dean, 7 Nov 2026: "the AC/DC question seems to be a different question
+       on the phone", "seems to be lagging"). This phone used to run its own setTimeout chain, started 900 ms after
+       its own load, while the wall started after ITS load (which waits on a dozen more scripts), and nothing ever
+       pulled the two back together; a hidden tab pushed them further apart. Now both pages take the questions,
+       the times and the clock from /app/vp-demo-clock.js, and the sales page gives both frames the same start
+       (?t0=), so they are on the same step at the same moment, every lap. No timer here. */
+    var C=VPDemoClock.TRIVIA, Q=C.Q, steps=[];
+    function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
+    /* Sarah's night: right, wrong, right. Her total and place BEFORE each question, so a phone that joins the
+       night part way through (a late frame) still shows the right numbers: 515 + 130 + 145 = 790, her score on
+       the wall's final scores. */
+    var TAP=[1,2,0], TAP_AT=[3400,3600,3400], PTS=[130,0,145], BEFORE=[[515,0],[645,3],[645,4]], AFTER=[[645,3],[645,4],[790,2]];
+    at(0, function(){
+      P.total=515; P.rank=0; P.ended=false; P.celebrated=false;
       fire({ t:"started" });
-      /* IN STEP WITH THE WALL. app/trivia/screen.html asks its three questions at 4200ms (900ms until the start-of-game show, 2 Nov 2026) and
-         then every 13200ms, reveals at +6200, and runs a 60800ms lap (t + 17000). This used to run its own
-         clock and a 50000ms lap, so the phone answered questions the wall had not asked yet.
-         Dean, 22 Sep 2026: "the tv and phone seem to be unsynced". The numbers below are the
-         wall's; change both. */
-      // T0 was 900: the first question waits for the start-of-game show, as on the wall (screen.html t = 4200, 2 Nov 2026)
-      var T0=(window.VPSting && VPSting.on) ? 4200 : 900, GAP=13200, REV=6200;   // 900 as before the show, on a phone with ?sting=0
-      d(T0,           function(){ fire(q(1,"Which Australian city hosted the 2000 Summer Olympics?", ["Melbourne","Sydney","Brisbane","Perth"],15)); });
-      d(T0+3400,      function(){ answer(1); });
-      d(T0+REV,       function(){ P.total=645; P.rank=3; fire({ t:"reveal", qseq:1, correctIndex:1, options:["Melbourne","Sydney","Brisbane","Perth"], split:[4,31,6,2], demoPts:130 }); });
-      d(T0+GAP,       function(){ fire(q(2,"Which Australian animal can sleep for up to 22 hours a day and eats almost nothing but eucalyptus leaves?", ["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"],15)); });
-      d(T0+GAP+3600,  function(){ answer(2); });
-      d(T0+GAP+REV,   function(){ P.rank=4; fire({ t:"reveal", qseq:2, correctIndex:1, options:["The common wombat","The koala","The short-beaked echidna","The red-necked wallaby"], split:[7,26,9,1], demoPts:0 }); });
-      d(T0+2*GAP,     function(){ fire(q(3,"Which band released the album Back in Black?", ["AC/DC","Cold Chisel","INXS","Midnight Oil"],15)); });
-      d(T0+2*GAP+3400,function(){ answer(0); });
-      d(T0+2*GAP+REV, function(){ P.total=790; P.rank=2; fire({ t:"reveal", qseq:3, correctIndex:0, options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], split:[33,5,4,1], demoPts:145 }); });
-      d(T0+3*GAP,     function(){ P.total=790; P.rank=2; fire({ t:"podium" }); });
-      d(T0+3*GAP+17000, round);
-    }
+    }, true, true);
+    Q.forEach(function(q, i){
+      var t=C.qAt(i);
+      at(t, function(ctx){
+        P.total=BEFORE[i][0]; P.rank=BEFORE[i][1]; P.ended=false;
+        fire({ t:"question", qseq:i+1, qi:C.FIRST_QI+i, qtotal:C.QTOTAL, text:q.text, options:q.options,   // the wall's numbers: "Question 8 of 10"
+               secs:C.SECS, endsAt:C.endsAt(ctx, i) });                                                       // and the wall's clock, to the second
+      }, true);
+      at(t+TAP_AT[i], function(){ answer(TAP[i]); });
+      at(t+C.REVEAL, function(){ P.total=AFTER[i][0]; P.rank=AFTER[i][1]; fire({ t:"reveal", qseq:i+1, correctIndex:q.correct, options:q.options, split:q.split, demoPts:PTS[i] }); });
+    });
+    at(C.podiumAt(), function(){ P.total=790; P.rank=2; fire({ t:"podium" }); }, true);
     showWait("The quiz is starting. Your questions will pop up here.");
-    d(900, round);
+    VPDemoClock.run({ lap:C.lap(), steps:steps });
     return;                      /* never connect, never follow a host, never touch a venue */
   }
 

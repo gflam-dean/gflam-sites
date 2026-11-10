@@ -22,7 +22,7 @@ var fails = 0, ran = 0;
 var COUNTRY = ' and The Gflam Group of Companies acknowledge the Traditional Owners of the land on which we work and create. We pay our respects to Elders past and present.';
 function oneLogo(html, pp) {
   var imgs = String(html || '').match(/<img\b[^>]*>/gi) || [];
-  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay-email-on-dark.png') !== -1
+  return imgs.length === 2 && imgs[0].indexOf(pp ? 'https://partyplay.com.au/logos/partyplay-email-logo.png' : 'https://venueplay.com.au/logos/venueplay-email-header-solid.png') !== -1
     && imgs[0].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1 && (pp ? /background:#ffffff;[^>]*><img/ : /background:#0A0A0B;[^>]*><img/).test(html) && /background:#FF1F8E/.test(html)
     && imgs[1].indexOf(pp ? 'https://partyplay.com.au/logos/email-signature-partyplay.png' : 'https://venueplay.com.au/logos/email-signature-venueplay.gif') !== -1
     && imgs[1].indexOf('width="120"') !== -1 && imgs[1].indexOf('alt="' + (pp ? 'PartyPlay' : 'venueplay') + '"') !== -1;
@@ -408,7 +408,7 @@ var PATRON = { brand: 'venueplay', kind: 'patron', name: 'Jo', email: 'Jo@Exampl
   check('there is no route that lists tickets for a venue (the earlier "my requests" route is gone)', typeof helpVenueMine === 'undefined');
   var routes = readFile('venueplay-backend/worker/venueplay-api-FULL.js').match(/path === '\/[a-z\/-]*help[a-z\/-]*'/g) || [];
   var publicHelp = routes.filter(function (p) { return !/'\/admin\/help\/|'\/autopilot\/help\//.test(p); }).map(function (p) { return p.replace(/path === /, ''); }).sort().join();
-  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer), the help words and settings, the phone peek, and a login\'s own details', publicHelp === "'/help/config','/help/content','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/me','/help/venue/ticket'", publicHelp);
+  check('the only non-HQ help routes: submit (ticket, venue ticket, triage answer, a player\'s feedback follow-up), the help words and settings, the phone peek, and a login\'s own details', publicHelp === "'/help/config','/help/content','/help/feedback','/help/push/peek','/help/ticket','/help/triage','/help/venue-match','/help/venue/me','/help/venue/ticket'", publicHelp);
   /* THE ONE OTHER READER (2 Nov 2026): the prospect autopilot's key, for website SALES tickets only. Its four
      routes are exactly these (3 Nov 2026: + solve, which closes a sales ticket once the prospect is answered),
      and each one's first line is the autopilot key's door. */

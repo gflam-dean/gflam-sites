@@ -30,6 +30,7 @@ function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; pri
 
 var BINGO = find('venueplay/play.html');
 var TRIVIA = find('venueplay/app/trivia/play.html');
+var DEMO = '';   // trivia host.html's try-it demo switch (?demo=), off: a real night's openSession is what is lifted below
 var MUSICAL = find('venueplay/app/musical/play.html');
 var SESSION = find('venueplay/app/vp-session.js');
 
@@ -108,6 +109,7 @@ print('\n== a second console is asked before it takes the room ==');
     var GAME_API = 'https://w';
     function venueCode() { return 'CODE12'; }
     function setTimeout() {}
+    function drainPendingCloses() { return { then: function (f) { f(0); } }; }   // the waiting-close drain (6 Nov 2026) is tested in test-session-lifecycle-client.js
     function fetch() {
       return { then: function (f) { var v = f({ ok: true, json: function () { return answer; } });
         return { then: function (g) { g(v); } }; } };
@@ -129,6 +131,7 @@ print('\n== a second console is asked before it takes the room ==');
     var GAME_API = 'https://w';
     function venueCode() { return 'CODE12'; }
     function setTimeout() {}
+    function drainPendingCloses() { return { then: function (f) { f(0); } }; }
     function fetch() { return { then: function (f) { var v = f({ ok: true, json: function () { return { live: true, format: 'trivia' }; } }); return { then: function (g) { g(v); } }; } }; }
     function askOnPage() { asks++; return { then: function (f) { held = f; } }; }
     eval(lift(SESSION, 'confirmTakeover', 'vp-session.js').replace('function confirmTakeover', 'var _takeoverAsk = null; function confirmTakeover'));
@@ -148,7 +151,7 @@ print('\n== a console re-opening its own night says which game it is ==');
 [['trivia', find('venueplay/app/trivia/host.html')], ['musical', find('venueplay/app/musical/host.html')]].forEach(function (c) {
   var posted = [];
   var G = { sessionId: 's1', joinCode: 'ABC', venueId: 'v1' };
-  function apiPost(path, body) { posted.push(path + ':' + body.format); return { catch: function () {} }; }
+  function apiPost(path, body) { posted.push(path + ':' + body.format); var c = { catch: function () {} }; return { then: function () { return c; }, catch: function () {} }; }
   var Promise = { resolve: function (v) { return v; } };
   eval(lift(c[1], 'openSession', c[0] + ' host'));
   var r = openSession();

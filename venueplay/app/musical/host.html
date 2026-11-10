@@ -300,7 +300,7 @@
         <div id="setupBlock">
           <div class="field hidden" id="fbBlock" style="background:rgba(53,208,127,.07);border:1px solid rgba(53,208,127,.25);border-radius:12px;padding:12px 14px">
             <div class="lbl" style="margin-bottom:6px">How the room found it</div>
-            <div id="fbSummary" style="font-size:14px;color:var(--text)">No ratings yet</div>
+            <div id="fbSummary" style="font-size:14px;color:var(--win);font-weight:700;display:none"></div>
             <div style="font-size:12px;color:var(--faint);margin-top:8px">And you? One tap, it goes with the night's record.</div>
             <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
               <button class="btn ghost vp-rate" data-hostrate="3">&#128516; Great</button>
@@ -411,6 +411,7 @@
               <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
             </div>
             <button class="btn ghost vp-wbtn" id="monitorBtn">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
+            <div class="clipwarn hidden" id="tvAudioNote" role="status"></div>
             <div class="clipwarn hidden" id="clipWarn">No clip for this one. Play it yourself through your sound system. It is already marked as called, and the TV reveals it when you tap Reveal on TV now.</div>
             <button class="btn ghost vp-wbtn" id="flagSongBtn" disabled>&#9873; This song did not work</button>
             <div class="flagnote hidden" id="flagNote"></div>
@@ -515,6 +516,7 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<script src="/app/vp-loved.js"></script>
 <script src="/app/vp-onetab.js"></script>
 <script src="/app/vp-pickup.js"></script>
 <script src="/app/vp-print.js"></script>
@@ -1523,7 +1525,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          (a bingo lobby on another tablet). Say "musical" again, or /join/info answers bingo and phones
          off the QR sit on the bingo page through this whole lobby (break test, 14 Oct 2026). The
          server reuses this same session; nothing waits on it. */
-      apiPost("/session",{ venue_id:G.venueId, format:"musical", road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, G.slug, "musical") : "supabase") }).catch(function(){});
+      apiPost("/session",{ venue_id:G.venueId, format:"musical", road:((typeof VPRoom!=="undefined" && VPRoom.roadFor) ? VPRoom.roadFor(VP_GAME_API, G.slug, "musical") : "supabase") }).then(function(r){
+        /* The server may have closed the night this console remembers (a Close lobby that landed late) and
+           opened a fresh one on the same code. Adopt it, or this console runs a night phones cannot join. */
+        if(r && r.session_id && r.session_id!==G.sessionId && !G.gameId){   // never swapped under a round that is running
+          G.sessionId=r.session_id; G.joinCode=r.join_code||G.joinCode;
+          try{ VP.noteOpenSession(G.sessionId, G.venueId); }catch(e){}
+          try{ send({ t:"session", session_id:G.sessionId, join_code:G.joinCode }); }catch(e){}
+        }
+      }).catch(function(){});
+      try{ VP.noteOpenSession(G.sessionId, G.venueId); }catch(e){}   // still ours: stamp it so another tab's sign-out does not close it (vp-session.js)
       return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode });
     }
     var _slug=(G.venue && G.venue.slug) || "";
@@ -1721,23 +1732,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     _fbTimers.forEach(clearTimeout); _fbTimers=[];
     var blk=$("fbBlock"); if(!blk) return;
     blk.classList.remove("hidden");
-    $("fbSummary").textContent="No ratings yet";
+    $("fbSummary").textContent=""; $("fbSummary").style.display="none";
     [1500, 15000, 45000].forEach(function(ms){
       _fbTimers.push(setTimeout(readVerdict, ms));
     });
   }
   function readVerdict(){
     var sid=G.sessionId||_fbSid; if(!sid) return;   // the night may be closed by now: its ratings are still its own
-    fetch(VP_GAME_API+"/feedback/tally?session="+encodeURIComponent(sid))
-      .then(function(r){ return r.ok?r.json():null; })
-      .then(function(d){
-        if(!d || !d.ratings) return;
-        var el=$("fbSummary"); if(!el) return;
-        el.innerHTML = "<b>"+d.ratings+"</b> "+(d.ratings===1?"person":"people")+" rated it"+
-          (d.positive_pct!=null ? (", <b>"+d.positive_pct+"%</b> positive") : "")+
-          (d.loved ? " &middot; "+d.loved+" loved it" : "");
-      })
-      .catch(function(){});
+    /* Favourable only, as true counts (/app/vp-loved.js): never "Not for me", never a percentage. */
+    if(window.VPLoved) VPLoved.show(VP_GAME_API, sid, $("fbSummary"));
   }
   document.addEventListener("click", function(e){
     var b=e.target && e.target.closest && e.target.closest("[data-hostrate]");
@@ -1887,9 +1890,49 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // ---- incoming messages ----
   // Screen presence arrives on the pairing channel; player join + claim arrive on the game
   // channel. Both flow through onMsg.
+  /* THE TV SAYS WHETHER IT CAN PLAY SOUND (screen.html audioState), on every reply, from the lobby on, so a blocked TV is known
+     at once (Dean saw it only after song 2, 6 Nov 2026). The host is ASKED, never switched over (Dean, 6 Nov 2026, 13:10):
+     "The TV can't play sound. Play the songs on this device?" Yes turns this device's sound on (the tap also lets the browser
+     play it); No leaves it off and says how to fix the TV. When the TV recovers, a switch the Yes turned on is put back. */
+  var _tvAudio="unknown", _autoMonitor=false, _soundAsked=false;
+  function tvSoundYes(){
+    if(!G.hostMonitor){ G.hostMonitor=true; _autoMonitor=true; }
+    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    try{ if(audio.paused && audio.src && G.status==="running") audio.play().catch(function(){}); }catch(e){}
+    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound, so the songs are coming out of THIS device. Put it through the PA, or press any key on the TV remote once."; }
+    syncMonitorBtn();
+  }
+  function tvSoundNo(){
+    var n=$("tvAudioNote"); if(n){ n.textContent="The TV can\u2019t play sound. Press any key on the TV remote once to turn it on."; }
+  }
+  function askTvSound(n){
+    n.textContent="";
+    n.appendChild(document.createTextNode("The TV can\u2019t play sound. Play the songs on this device? "));
+    var y=document.createElement("button"), no=document.createElement("button");
+    y.type="button"; y.id="tvSoundYes"; y.className="btn pink"; y.textContent="Yes";
+    no.type="button"; no.id="tvSoundNo"; no.className="btn ghost"; no.textContent="No";
+    y.style.cssText=no.style.cssText="width:auto;min-width:72px;padding:8px 16px;margin:8px 8px 0 0";
+    y.addEventListener("click", tvSoundYes); no.addEventListener("click", tvSoundNo);
+    n.appendChild(y); n.appendChild(no);
+  }
+  function noteTvAudio(state){
+    if(state!=="blocked" && state!=="ok") return;
+    if(state===_tvAudio) return;
+    _tvAudio=state;
+    var n=$("tvAudioNote");
+    if(state==="blocked"){
+      audio.muted = !(G.hostMonitor || soundIsOnlyHere());   // a TV is there (it just spoke): quiet here until the host answers
+      if(n){ if(G.hostMonitor) n.textContent="The TV can\u2019t play sound; the songs are coming out of this device."; else askTvSound(n); n.classList.remove("hidden"); }
+    } else {
+      if(_autoMonitor){ G.hostMonitor=false; _autoMonitor=false; audio.muted = !(G.hostMonitor || soundIsOnlyHere()); }
+      if(n) n.classList.add("hidden");
+    }
+    syncMonitorBtn();
+  }
   function tvHere(m){
     G.tvLastSeen = Date.now();          // proof something is out there to make the noise
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    if(m) noteTvAudio(m.audio);
     syncMonitorBtn();
     // A freshly (re)loaded screen announces itself with hello:true. Re-hand the session and,
     // if a game is live, replay state + the current song so the TV catches up.
@@ -1917,7 +1960,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     /* The screen could not start the audio. This console is muted by design, so without this the
        host has no way to know the room is hearing nothing until somebody complains. */
     if(m.t==="tv_audio_blocked"){
-      hostError("The TV cannot play the music (autoplay is blocked on that screen). Turn on the monitor switch here and put this device through the PA, or allow autoplay on the TV.");
+      noteTvAudio("blocked");
+      hostError("The TV cannot play the music (autoplay is blocked on that screen). This device is playing it instead: put it through the PA, or allow autoplay on the TV.");
       return;
     }
     /* Another console's presence ping. Never acted on by itself (anybody can send one): it only makes
@@ -2333,7 +2377,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function syncMonitorBtn(){
     var b=$("monitorBtn"); if(!b) return;
-    if(G.hostMonitor)          b.innerHTML="&#128266; Also playing here &middot; tap to mute this device";
+    if(G.hostMonitor && _tvAudio==="blocked") b.innerHTML="&#128266; Playing on THIS device only, the TV is blocked &middot; tap to mute";
+    else if(G.hostMonitor)     b.innerHTML="&#128266; Also playing here &middot; tap to mute this device";
     else if(soundIsOnlyHere()) b.innerHTML="&#128266; Playing here, no screen connected &middot; tap to mute";
     else                       b.innerHTML="&#128263; Sound is on the TV &middot; tap to also hear it here";
   }

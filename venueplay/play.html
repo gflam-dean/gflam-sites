@@ -262,6 +262,7 @@
   @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
 </style>
 <link rel="stylesheet" href="/app/vp-safe-area.css">
+<link rel="stylesheet" href="/app/vp-tonight.css">   <!-- the waiting screen and the venue's ad, shared with the trivia and musical phones (6 Nov 2026) -->
 </head>
 <body>
 <div class="app" id="app">
@@ -282,6 +283,7 @@
           <option value="pages">Three at a time</option>
           <option value="align">Columns lined up</option>
         </select></label>
+      <div id="vpListItem"></div>   <!-- "Join {venue}'s list", for a player who said no when joining (/app/vp-tonight.js, 6 Nov 2026) -->
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -315,10 +317,16 @@
 
   <!-- WAIT -->
   <div class="view center hidden" id="vWait">
+    <div id="waitIn">
     <div style="font-size:44px">&#127921;</div>
     <div class="pbig" style="color:var(--gold)">You&#39;re in</div>
     <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
     <div class="pnote" id="waitNote">Waiting for the host to start. Your game will appear here.</div>
+    </div>
+    <!-- Dean's round 7 (6 Nov 2026): every lobby has the same layout, drawn by /app/vp-tonight.js (shared with the trivia and
+         musical phones): "You're in, Sam", Next / Tonight, This week here, then the venue's ad. The block above shows without
+         it, and for anything this screen has to say instead (a ticket on its way, a claim the game ended on, a prize owed). -->
+    <div class="vpt hidden" id="vpTonight"></div>
   </div>
 
   <!-- CARD -->
@@ -356,6 +364,8 @@
     <div class="psub" id="lostSub">Good luck next round.</div>
     <div class="pnote">Sit tight, the host may start another round.</div>
   </div>
+  <!-- THE VENUE'S AD: the same slot as the trivia and musical phones, under the lobby (/app/vp-phonead.js, 6 Nov 2026) -->
+  <div id="vpAd" hidden></div>
 </div>
 
 <!-- A DEMO DOES NOT WAIT FOR THE REALTIME LIBRARY. It is 219KB from a CDN and this page cannot
@@ -380,7 +390,9 @@
 <script src="/app/vp-venueurl.js"></script>
 <script src="/app/vp-consent.js"></script>   <!-- "Your details": one tick, "Send me offers from {venue}. I'm 18 or over." (6 Nov 2026) -->
 <script src="/app/vp-details.js"></script>   <!-- "Your details" as a real form with name= and autocomplete on every box, so iPhone and Android autofill work (5 Nov 2026) -->
-<script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-sting.js"></script>
+<script src="/app/vp-phonead.js"></script>   <!-- the venue's ad under the lobby (6 Nov 2026) -->
+<script src="/app/vp-tonight.js"></script>   <!-- the lobby and "Join the list", shared with the trivia and musical phones (6 Nov 2026) -->   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
 <script>
 (function(){
   "use strict";
@@ -561,6 +573,22 @@
   // deployed venueplay-game Worker URL (see its header for wrangler deploy).
   var VP_GAME_API='https://game.venueplay.com.au';
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  /* "JOIN {VENUE}'S LIST" IN THE MENU (Dean, 6 Nov 2026), the same as the trivia and musical phones: /join/list, only where
+     the venue collects the offers tick and a way to reach them, only once in, gone once on the list. */
+  function onList(){ try{ return localStorage.getItem("vp-onlist-"+P.room)==="1"; }catch(e){ return false; } }
+  function setOnList(){ try{ localStorage.setItem("vp-onlist-"+P.room,"1"); }catch(e){} paintListItem(); }
+  function listSend(email, mobile, optin){
+    var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token;
+    return fetch(VP_GAME_API+"/join/list",{ method:"POST", headers:h, body:JSON.stringify({ code:P.room, email:email||"", mobile:mobile||"", marketing_optin:optin===true,
+      consent_version:(typeof VPConsent==="object" ? VPConsent.VERSION : ""), pid:deviceId() }) })
+      .then(readApi).then(function(r){ if(optin===true && r && r.stored) setOnList(); return r; });
+  }
+  function paintListItem(){
+    var b=$("vpListItem"); if(!b) return;
+    var c=P.collect||{};
+    if(typeof VPTonight!=="object" || !P.joined || onList() || !(c.marketing_optin && (c.email || c.mobile))){ b.innerHTML=""; return; }
+    VPTonight.menuList(b, { venue:P.venueName, collect:{ email:!!c.email, mobile:!!c.mobile }, send:function(f){ return listSend(f.email, f.mobile, true); }, done:function(){} });
+  }
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
   // A flat 27-value ticket from the Worker (blanks = 0) becomes a 3x9 grid.
 
@@ -845,7 +873,10 @@
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost","vPaper"];
   function show(which){ if(_paper) which="vPaper";   /* nothing paints over the paper notice while it stands */
-    for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+    for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); }
+    try{ if(window.VPPhoneAd) VPPhoneAd.show(which==="vWait"); }catch(e){}   // the venue's ad: under the lobby (Dean, 6 Nov 2026)
+    var ap=$("app"); if(ap && ap.classList) ap.classList.toggle("vpt-on", which==="vWait");
+  }
   /* "How was that?", one tap, on the screen the punter is already looking at.
 
      Broadcast bingo has no game id and no session id on the phone, so the widget
@@ -931,6 +962,12 @@
           ? "You won <b>"+esc(patName(P.stageWins[P.stageWins.length-1].pattern, "a line"))+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
           : "Waiting for the host to start the game. Your card will appear here.");
     }
+    /* THE PLAIN LOBBY (nothing else to say) is the shared round 7 layout (Dean, 6 Nov 2026). */
+    var plain = !P.droppedClaim && !P.active && !(P.stageWins && P.stageWins.length);
+    var tn=$("vpTonight"), inb=$("waitIn"), useT=!!(plain && tn && inb && typeof VPTonight==="object");
+    if(tn && inb){ tn.classList.toggle("hidden", !useT); inb.classList.toggle("hidden", useT); }
+    if(useT && P.week===undefined && !P.weekAsked){ P.weekAsked=true; setTimeout(loadJoinInfo, 1500); }   // once in: the week and the ad, after the seat
+    if(useT) VPTonight.lobby(tn, { name:P.name, me:"bingo", prize:"", week:P.week, nights:P.nights, games:P.games, wait:"Waiting for the host to start the game. Your card will appear here." });
     show("vWait");
   }
 
@@ -1318,6 +1355,12 @@
       if(r && r.paper_bingo){ showPaperBingo(r.paper_reason); return; }
       ageAnswer(r);                // "I am 18 or over" where the state asks for it; releases the join otherwise
       if(r && r.exists===false){ unknownCode(); return; }
+      /* For the lobby (round 7) and "Join {venue}'s list" in the menu, a phone that is in as much as one that is joining. */
+      try{ if(window.VPPhoneAd) VPPhoneAd.set((r&&r.slides)||[], (r&&r.venue_name)||""); }catch(e){}
+      P.week=(r&&Array.isArray(r.week))?r.week:null; P.nights=(r&&Array.isArray(r.nights))?r.nights:[]; P.games=(r&&Array.isArray(r.games))?r.games:[];
+      P.collect=(r&&r.collect)||null; if(r&&r.venue_name) P.venueName=String(r.venue_name);
+      paintListItem();
+      if(P.joined && $("vWait") && !$("vWait").classList.contains("hidden")) route();
       /* A phone that has joined before still asks (the paper check above is the point: a regular
          back at an SA, ACT or Tasmanian venue was dealt phone tickets, 14 Oct 2026), but its name
          box is not on screen, so there is nothing to add to it. */
@@ -1384,6 +1427,7 @@
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     P.joined=true; saveName(P.room, P.name);
+    if(P.capture && P.capture.marketing_optin===true) setOnList(); else paintListItem();   // said yes when joining: on the list, no menu row
     // Bingo runs on the live link: tell the host we're here and how many tickets we want.
     // It adds us to the night and deals our tickets straight back (t:"cards").
     sendJoin();
@@ -1417,7 +1461,8 @@
     if(s && now-s.at<250 && (s.fresh || !fresh)) return s.p;
     var p=go(); _shared[key]={ at:now, fresh:!!fresh, p:p }; return p;
   }
-  function askJoinInfo(code, fresh){ return askOnce("ji:"+code, fresh, function(){ return playerPost("/join/info", fresh ? { code:code, fresh:1 } : { code:code }); }); }
+  /* ad:1 (the venue's slides for the lobby's ad, 6 Nov 2026) only once this phone is in: the join itself stays as cheap as it was. */
+  function askJoinInfo(code, fresh){ return askOnce("ji:"+code, fresh, function(){ var b = fresh ? { code:code, fresh:1 } : { code:code }; if(P.joined) b.ad=1; return playerPost("/join/info", b); }); }
   function askLive(code, fresh){ return askOnce("pl:"+code, fresh, function(){ return fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code)+(fresh?"&fresh=1":"")).then(function(r){ return r.ok?r.json():null; }); }); }
   var _liveCode="";   // the code of the live session this phone holds a server identity in (noteJoined)
   var _claimP=null;   // the identity claim made on load, while it is still settling (claimIdentity)
@@ -1772,15 +1817,21 @@
       // An older host sends none, so the game prize stands in, exactly as before.
       var stagePrize = (typeof m.prize==="string" && m.prize) ? m.prize : P.prize;
       var pn=patName(m.pattern, "a prize");
+      /* Confirm winner shows the win at once (held:true), and Keep playing sends it again (shown:true, same
+         wid) to take the room back to the numbers (Dean, 6 Nov 2026). This phone has already celebrated it
+         and is on YOU WON or "who won": it leaves that screen for its tickets and does not celebrate twice. */
+      var _seen=!!(m.wid && (P.heldWid===m.wid || m.shown));
+      if(m.held && m.wid) P.heldWid=m.wid;
       if(m.cont){
         // a stage was won; the game plays on for the next prize with the same tickets
+        if(_seen){ P.won=false; P.ended=false; P.lostBy=""; clearWin(P.room); _celebrated=false; }
         if(m.next) P.pattern=m.next;
         if(typeof m.nextPrize==="string" && m.nextPrize) P.prize=m.nextPrize;
         P.wonCardNo=0;
         if(me){
           P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
           P.stageNote="";
-          celebrateStage();
+          if(!_seen) celebrateStage();
         } else {
           P.stageNote=esc(list(names))+" won "+esc(pn)+".";
         }

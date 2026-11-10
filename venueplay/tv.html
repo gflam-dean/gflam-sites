@@ -1355,7 +1355,8 @@
     rotationSecs:7,
     slides:[],
     draws:[],
-    raffle:null
+    raffle:null,
+    raffles:null   // the venue's raffle list (migration 117); null = not there yet, use `raffle`
   };
   /* HAS THIS SCREEN'S ADDRESS BEEN CONFIRMED YET?
 
@@ -1388,6 +1389,12 @@
   })();
   /* The venue's own name, for its default loop while it has no slides (setVenueName fills it). */
   var holdVenueName="";
+  /* THE SET-UP SLIDE (item 102, 6 Nov 2026): has this venue's own screen answered once? Only then do we know it
+     has no logo, so only then can the set-up slide stand in for the "Waiting for the host" card. */
+  var venueScreenKnown=false;
+  function setupSlideWanted(){
+    try{ return !!(venueScreenKnown && VENUE_SLUG && !VP_DEMO && !venueLogoUrl && !screenLoading() && window.VPTvHold && window.VPTvHold.setupHtml); }catch(e){ return false; }
+  }
   /* THE SUPPORT LINE, ONLY FOR WHOEVER IS SETTING UP. On while the address is unconfirmed, and for
      thirty seconds after a pointer move, a touch or a key; otherwise the room never sees an email
      address on its wall. A class on <body>, so the slides themselves never change and never rebuild. */
@@ -1471,6 +1478,16 @@
     for(var i=0;i<k.length;i++){ if(String(r[k[i]]||"").trim()) return true; }
     return false;
   }
+  /* THE RAFFLES ON THE WALL (Dean, 24 Oct 2026: more than one raffle a venue). Once the venue has a list,
+     every raffle with a night set gets its own card, in the order the venue keeps them; before the list
+     exists (migration 117 not run) the single routine is shown exactly as it always was. */
+  function rafflesOnWall(){
+    /* One raffle on the list is the single routine as it always was: shown when anything is set, the
+       same test as before. Two or more: each needs its night, or the wall cannot say which is which. */
+    if(Array.isArray(ADS.raffles) && ADS.raffles.length>1) return ADS.raffles.filter(function(r){ return hasRaffle(r) && String(r.day||"").trim(); });
+    if(Array.isArray(ADS.raffles) && ADS.raffles.length===1) return hasRaffle(ADS.raffles[0]) ? [ADS.raffles[0]] : [];
+    return ADS.raffle ? [ADS.raffle] : [];
+  }
   function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function slideVisible(s){
     var t=todayStr();
@@ -1487,9 +1504,10 @@
       try{ if(s && typeof s==="object" && slideVisible(s) && !(s.image_url && BAD_IMG[String(s.image_url)])) arr.push({type:"slide",slide:s}); }catch(e){}
     });
     if(Array.isArray(ADS.draws) && ADS.draws.length) arr.push({type:"auto-draws"});
-    if(ADS.raffle) arr.push({type:"auto-raffle"});
+    rafflesOnWall().forEach(function(r){ arr.push({type:"auto-raffle", raffle:r}); });
     /* never leave the screen blank/black. A venue with nothing of its own yet gets a loop made from
        its own name and logo (two slides), once the Worker has told us who it is. */
+    if(!arr.length && setupSlideWanted()) arr.push({type:"holding", v:"setup"});   // no slides, draws or raffle AND no logo: welcome, set up your screen, with a QR (item 102)
     if(!arr.length){
       if(holdVenueName && !venuePending()){ arr.push({type:"holding", v:"venue"}); }   // one card: the tv logo and the venue name (3 Nov 2026)
       else arr.push({type:"holding"});
@@ -1519,7 +1537,7 @@
       return '<div class="adtag">This week’s members draws</div><div class="adweek">'+rows+'</div>';
     }
     if(e.type==="auto-raffle"){
-      var r=ADS.raffle||{};
+      var r=e.raffle||ADS.raffle||{};
       // Raffle "routine" set on the Account page: {label, day, time}. (Older screens used
       // {tag, head, sub}; fall back to those so an un-migrated venue still renders.)
       if(r.label || r.day || r.time){
@@ -1552,6 +1570,7 @@
       /* "Setting up this screen" until the venue's screen answers (screenLoading, time boxed); then set up, and
          no game on: "Waiting for the host" (Dean, 3 Nov 2026: "so the venue knows it's on them"). */
       if(screenLoading()) return tvHoldHtml(TV_SETUP_LINE, true, { kind:"loading" })+help;
+      if(e.v==="setup"){ try{ return window.VPTvHold.setupHtml()+help; }catch(err){} }
       return tvHoldHtml(TV_WAITING_LINE, true, { kind: e.v ? "venue" : "holding" })+help;
     }
     var s=e.slide;
@@ -1706,6 +1725,7 @@
     while(pending.firstChild) host.appendChild(pending.firstChild);
     for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
     adBuilt=true; adsSig=sig;
+    try{ if(window.VPTvHold && window.VPTvHold.drawSetupQr) window.VPTvHold.drawSetupQr(host); }catch(e){}   // the set-up slide's QR, once it is in the page
     return true;
   }
   function stopAds(){
@@ -2765,6 +2785,20 @@
       /* The same real-balls win said again (a screen that reloaded asked the console to catch it
          up): every other wall is already showing it, so it is not a second fanfare. */
       var again=!!(m.caller && m.wid && state.phase==="win" && state.winner && state.winner.wid===m.wid);
+      /* A WIN THE HOST CONFIRMED IS ALREADY UP (Dean, 6 Nov 2026): Confirm winner sends it at once, then the
+         host's Keep playing or Finish game sends it again with shown:true, and a tie partner checked after it
+         puts it back up. Same wid and the same names: no second fanfare. Keep playing takes the wall back to
+         the numbers with the next pattern and prize. */
+      var wk=function(w){ return ((w&&w.winners)||[]).map(function(x){ return x.pid||x.name; }).join(",")+"|"+((w&&w.pattern)||""); };
+      var seen=!!(!m.caller && m.wid && state.winner && state.winner.wid===m.wid && wk(state.winner)===wk(m));
+      if(seen && m.cont){
+        state.winner=m;
+        if(m.next) state.pattern=m.next;
+        if(typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
+        if(state.phase==="win"){ stopCelebrate(); clearConfetti(); }
+        state.phase="running"; applyBingo(); return;
+      }
+      if(seen){ state.winner=m; state.phase="win"; applyBingo(); return; }
       state.winner=m;
       if(again){ applyBingo(); return; }
       noteEndWin(m);   // for the end-of-game show
@@ -3362,7 +3396,9 @@
              without this the screen rotated a card with no words on it and the venue had no way
              to get rid of it. */
           ADS.raffle = hasRaffle(d.raffle) ? d.raffle : null;
+          ADS.raffles = Array.isArray(d.raffles) ? d.raffles : null;
           setVenueLogo(d.logo_url || "");
+          venueScreenKnown=true;   // the logo is known now (set-up slide, item 102)
           setVenueName(d.name || "");
           var draws = Array.isArray(d.draws) ? d.draws : [];
           if(draws[0] && draws[0].timezone) VENUE_TZ=draws[0].timezone;   // "Tonight" in the VENUE's time

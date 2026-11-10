@@ -346,6 +346,7 @@ function makeDom(search, pathname) {
     postMessage: function (m) { posted.push(m); }, requestAnimationFrame: function (f) { return fSetTimeout(f, 16); }, cancelAnimationFrame: fClear,
     scrollTo: function () {}, open: function () { return null; }, print: function () {} };
   window.top = window; window.self = window; window.parent = window;
+  window.document = document;   // a browser's window always has its document (shared scripts such as vp-tonight.js read window.document)
   return { document: document, window: window, localStorage: ls, sessionStorage: ss, made: made,
            $: function (id) { return document.getElementById(id); } };
 }

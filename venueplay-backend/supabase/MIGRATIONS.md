@@ -355,6 +355,14 @@ hidden for SA and NT venues not recorded as a club; this switch, set only from H
 it. Not security definer, no new policy or grant, so RLS-BASELINE.json does not change. Either order with the Workers is safe
 (both read the column fail-safe). Branch `feature/sant-bingo`. NOT RUN. Rollback: in the file.
 
+`venueplay-117-multi-raffle.sql` (Dean, 24 Oct 2026: "Absolutely" to more than one raffle a venue): `vp_venue_screen.raffles`
+(jsonb list of { id, label, day, time }, default '[]', backfilled from the single routine in `raffle`, which stays and is
+mirrored to the first raffle by the billing Worker) and `vp_raffle_prizes.raffle_id` (which raffle a usual prize is for; null
+is a prize from before, shown under the first raffle). No new table, policy, grant or function, so RLS-BASELINE.json does not
+change; the screen history trigger (114) records the new column with the rest of the row. Either order with the Workers is safe:
+both read `raffles` on a query of its own and fall back to the single routine; a raffles save before it is run is refused with
+"run migration 117 first". Branch `fix/multi-raffle`, brought onto main as `fix/multi-raffle-8nov` (5 Nov 2026) with its number kept: it is already in the live database. RUN by Dean 26 Oct 2026. Rollback: in the file.
+
 `venueplay-118-custom-bingo-patterns.sql` (Dean, 24 Oct 2026, after a Drag Bingo show played "any 5 numbers on the card"): a
 venue's own NAMED winning patterns for number bingo. New table `vp_bingo_patterns` (venue_id, name 1 to 30 characters, rule
 jsonb `{"type":"any","n":1..15}` or `{"type":"shape","cells":[0..26]}`, deleted_at kept so a game playing a deleted pattern is
@@ -372,7 +380,7 @@ No grant or policy change, so RLS-BASELINE.json does not change. Branch `feature
 unsubscribe train (train/unsub-27-oct). RUN on the live database: the 28 Oct unsubscribe audit found it live, and on 3 Nov 2026
 `gflam_customers?select=unsubscribe_source` answered 200 to the service key (one transaction, so the index came with it).
 Rollback: `alter table public.gflam_customers drop column unsubscribe_source; drop index gflam_customers_unsubscribed_idx;`
-(117 is fix/multi-raffle, unmerged; 118 is on main, above.)
+(117 is multi-raffle and 118 is custom patterns, both above.)
 
 `venueplay-121-game-prefs.sql` (Dean, 28 Oct 2026): every game's setup saved for the VENUE in one place.
 `vp_venue_settings.game_prefs` (jsonb, not null, default `{}`, an object of at most 20,000 characters) keyed by game
@@ -444,7 +452,7 @@ the end of the free month with no card, PAUSE the account ... Pausing also makes
 `vp_prospects` (125): first_signin_at, free_month_ends_at (11:59:59pm Brisbane on the 30th day after it), offer_rate (the price
 open when they were set up, kept through the month), card_choice/_at (Now or Later at the setup guide's card step),
 reminders_sent (jsonb, the days already sent), paused_at, cancelled_at. The billing Worker's hourly sweep
-(`vpaProspectReminderSweep`) sends the reminders on day 3, 23 and 29 (three, since 30 Oct 2026; it was day 3, 10, 17, 24, 28, 29 and 30), 8am to 5pm Mon to Fri Brisbane, and
+(`vpaProspectReminderSweep`) sends the reminders on day 3, 23 and 29 (three, since 30 Oct 2026; it was day 3, 10, 17, 24, 28, 29 and 30), Mon to Fri 9am to 12 noon and 2pm to 5pm in the venue's local time (Dean's send window, 7 Nov 2026; it was 8am to 5pm Brisbane), and
 pauses the venue (status suspended, reason free_month_ended; the TV keeps its ads) when the month ends with no card; a pause
 drops the offer price, and a card after it switches the venue back on (webhook and sweep). `/account/prospect-start`,
 `/account/card-choice`, `/prospect/cancel`. No new table or grant: RLS-BASELINE.json does not change. Run BEFORE the billing
@@ -533,8 +541,20 @@ definer with its own search_path. Either order with the billing Worker: until it
 keeps nothing, HQ > Subscribers says run it. After running: dump RLS-BASELINE.json. Branch `feature/vp-subscribers-31oct`.
 NOT RUN. Rollback: in the file.
 
-(137 is spent: the end-screen ratings work, `feature/end-screen-ratings-1nov`, claims "migration 137" in its Worker code, not yet
-committed on 1 Nov 2026. 138 is the next free number on every branch.)
+`venueplay-137-feedback-notes.sql` (Dean, 1 Nov 2026: every "How was that?" rating on a phone gets one short follow-up):
+one new table `vp_feedback_notes`, HQ's only (one row per rating in `vp_game_feedback`, unique feedback_id; venue, session,
+game, format, rating, up to six tags, a line of up to 300 characters, wants_reply, the help-desk ticket it made if any).
+Never an email: a consented email goes only into a help-desk ticket. No name and no "share" column: Dean, 2 Nov 2026, removed
+the ticks; a venue sees only counts of "Loved it" and "Good", read from `vp_game_feedback` (migration 60), which needs no new
+column. It also widens `vp_help_push_subs.filter` to allow 'bad_feedback' ("Only bad player feedback" alerts). Service role
+only (RLS on, no policies, anon/authenticated revoked). Any order with the billing Worker: until it is run, POST /help/feedback
+keeps the rating and answers `missing: true` for the words, and HQ's /admin/feedback says the notes table is not there.
+Built on `feature/player-screens-2nov`, approved by Dean 1 and 2 Nov 2026 on `release/tue-3nov`, which never reached main;
+brought back on `fix/recover-3nov-10nov` (6 Nov 2026). STATUS: LIVE. RLS-BASELINE.json, dumped read-only from live on
+3 Nov 2026 (commit 1ee4cbd7), records `vp_feedback_notes`, and the 3 Nov job list has Dean running 137. Which revision of the
+file ran is not recorded; the Worker copes either way (it never writes the removed columns, and keeps a device on 'all' if
+the filter check refuses 'bad_feedback'). DO NOT RUN AGAIN: migration 144 (`feature/help-alerts-by-team-2nov`) widens the
+same filter check further, and 137 run after it would narrow it back. Read-back (read-only) in the file.
 
 `venueplay-138-help-faq-lowercase-name.sql` (Dean, 1 Nov 2026: the name is "venueplay", lowercase, in all customer text): two
 Help answers that live only in the database get the name in lowercase, one word each. The venue answer "Setting up the TV"
@@ -593,6 +613,14 @@ or grant changes, so RLS-BASELINE.json does not change. Either order with the bi
 and prints the days that link really has. NUMBER: 140 to 150 are taken, so 151. Branch `fix/console-hq-5nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50).
 Read-back and rollback in the file.
 
+`venueplay-162-help-faq-offer-grace.sql` (Dean, 5 Nov 2026, THE 5-DAY OFFER GRACE): words only. The help FAQ's "Billing and
+players" answer (vp_help_faq, id d3a64ff4-...) now says a free month that ends with no card pauses the games, and a card
+switches them back on. The 5-day grace is NOT announced (Dean, 5 Nov 2026, builds INBOX 55c; changed on fix/self-serve-restart-10nov). Guarded: it changes the
+row only if the answer is still migration 106's, so an HQ edit is never overwritten. The grace itself needs NO column or table
+(the Worker counts five days from vp_prospects.free_month_ends_at, migration 127), and no Worker waits for this file. No
+policy or grant changes, so RLS-BASELINE.json does not change. NUMBER: 162 given by the main session (153 live-here-now, 155
+security, 160 account-review, 161 venue rating). Branch `fix/offer-grace-10nov`. NOT RUN. Read-back and rollback in the file.
+
 `venueplay-152-signin-texts-queue.sql` (Dean, 4 Nov 2026, HQ > Prospects: "Send them a new sign-in link" goes by email AND
 text when we have a mobile): one new table, `vp_signin_texts`, the texts HQ asked for outside 9am to 8pm Brisbane (or on a
 Sunday), queued for the next allowed time and sent by the billing Worker's hourly trigger, which makes the one-use link at
@@ -603,6 +631,8 @@ off until PROSPECT_SMS_ON and the ClickSend login are set, either way. NUMBER: 1
 `fix/hq-prospects-6nov`. RUN live by Dean, Thu 5 Nov 2026 (read back OK, 20:50). Read-back and rollback in the file.
 
 RUN LIVE, Thu 5 Nov 2026 (Dean, read back OK by 20:50): 150, 151, 152, 154 and 161. 154 (`venueplay-154-prospect-details.sql`, branch `fix/prospect-details-10nov`) and 161 (`venueplay-161-venue-ratings.sql`, branch `fix/venue-rating-8nov`) are not in the 6 Nov release: their files and entries come with those branches, and both numbers are TAKEN. RLS-BASELINE.json was dumped after all five (152 and 161 each add one table, RLS on, service role only) and committed with the 6 Nov release.
+
+RUN LIVE, confirmed Fri 6 Nov 2026: 150, 151, 152, 154, 161, 163, 166, 167, 170, 171 and 172 (all of these are live; their files and entries come with their own branches where not yet on main). 162 (this branch) and 169 (trivia library swap) are NOT RUN.
 
 `venueplay-156-saved-reply-lowercase-name.sql` (Dean, 1 and 4 Nov 2026: "venueplay" lowercase in all customer text): one
 word in one help desk saved reply, seed_key 'player-prize' ("venueplay supplies the game software only"), only if it still
@@ -617,4 +647,64 @@ many TVs, which nights it runs games, which games it plays, and that its name is
 `VP.saveSettings`, which the existing owner and manager policies (migration 77) already allow, so there is no new policy,
 grant or function and RLS-BASELINE.json does not change. Either order with the site: before it runs, the wizard keeps the
 answers on the device and says nothing, and the Account page card shows nothing. NUMBER: 160 to 162 are taken on other
-branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. NOT RUN. Read-back and rollback in the file.
+branches, so 163 (Dean's number). Branch `fix/first-run-guide-10nov`. RUN LIVE (see the RUN LIVE line for 163, 166, 167, 170, 171, 172 above). Read-back and rollback in the file.
+
+`venueplay-170-signup-starts.sql` (Dean, 5 Nov 2026, INBOX 80B and 81 as changed by 97: the no-card start, "Have a play for
+free" on /offer-nov): ONE new table, `vp_signup_starts`, one row per sign-up attempt holding the five boxes and the text code's
+HASH (never the code), and what came of it (pending, made, held_unlisted, held_known, approved, refused). Not an account:
+nothing is made from a row until the code to THEIR mobile passes. RLS on, service role only. Also lets `vp_prospects.source`
+say 'self'. Before it runs, /start/* answers "not switched on yet" (503) and makes nothing. NUMBER: 166 and 167 are prospect
+details, 168 is reserved, 169 is the library questions, so 170. Branch `fix/signup-core-10nov`. RUN on the live database 6 Nov 2026 (Dean; read back OK, vp_prospects_source_check is hq/autopilot/self). (A copy on the
+parked branch `fix/same-pub-later` has extra columns for item 61, known_login_id and code_to; this one does not, and that
+branch must renumber or reconcile before it is ever picked up.)
+
+`venueplay-171-licensed-venues.sql` (Dean, 5 Nov 2026, INBOX 81: "stop fake sign-ups getting a free month"): ONE new table,
+`vp_licensed_venues`, our licensed venues keyed by the one matcher (vpVenueKey) and postcode, for the no-card start's check.
+The rows are NOT in the migration: `python3 tools/build-licensed-venues.py --sql OUT.sql` writes them from the two files on
+the Mac (~/venue-enrich/venueplay-SEND-pubs-and-clubs.csv and ~/venue-enrich/partyplay-fit-2026-10-27/master.csv, the
+state registers), 32,415 name and postcode rows on 6 Nov 2026. Missing or empty, every start is held for HQ (the safe way
+round). RLS on, service role only. NUMBER: 171 (172 is the try-it demo's, `fix/try-demo-10nov`). Branch
+`fix/signup-core-10nov`. RUN on the live database 6 Nov 2026 (Dean; read back OK). Its ROWS are not loaded yet (the load file is in the branch's NOTES).
+
+`venueplay-173-signup-starts-pub-or-club.sql` (Dean, 6 Nov 2026: ask pub or club at the no-card start): ONE nullable column,
+`vp_signup_starts.entity_type` ('for_profit' or 'non_profit'), so a sign-up HQ approves later keeps the answer. The venue's
+own entity_type is set when the account is made either way. 170 and 171 unchanged. Before it runs, the start still works.
+NUMBER: 172 is the try-it demo's, so 173. Branch `fix/signup-core-10nov`. NOT RUN. Run after 170.
+
+`venueplay-172-demo-sessions.sql` (Dean, 5 Nov 2026, INBOX 82 and 84b: the try-it demo is never billed): ONE new column,
+`vp_sessions.is_demo boolean not null default false`, and a small partial index. Written once by the game Worker at
+POST /session {demo:true}; honoured by chargeNightOverage (no charge, no streak change), the overage ask, the once-a-week
+trivia check and stamp, vp_asked_questions, saved trivia prefs, metering, group overage and the billing Worker's stats
+reads (VPA_NOT_DEMO). A demo's players stay on its venue's opt-in list and in the privacy paths on purpose. RUN IT BEFORE
+deploying either Worker from this branch: their reads filter is_demo=not.is.true, which PostgREST refuses while the column
+is missing. Additive; every existing row reads false. NUMBER: 172. Branch `fix/try-demo-10nov`. RUN LIVE (see the RUN LIVE line above).
+
+`venueplay-169-library-questions-read-only.sql` (Dean, 5 Nov 2026, items 45c and 75d): a venue can no longer edit or delete a copy of a library question straight through the database, and can no longer set its own question set to the library. Adds `vp_questions.from_library` (backfilled for every existing copy by exact words, the Worker's own rule), replaces `vp_questions_host_write` (a venue writes only the questions it created) and `vp_question_sets_host_write` (a venue's own set must be `private`). Library reads, swap and remove are unchanged (the Worker uses the service key). Either order with the Worker. RLS-BASELINE.json policy TEXT changes: re-dump it after this runs. NUMBER: 169 is Dean's. Branch `fix/trivia-library-swap-10nov`. NOT RUN. Read-back and rollback in the file.
+
+`venueplay-174-optin-consent-version.sql` (Dean, 6 Nov 2026, the "Get a heads up by email" sign-up on the phone with no
+game on): two columns, `vp_players.consent_version` and `vp_captures.consent_version` (text, 20 characters at most), the
+version of the offers + 18+ consent words the person ticked (VPConsent.VERSION). No new policy, grant or function, so
+RLS-BASELINE.json does not change. Either order with the game Worker: before it runs, /join/list stores the sign-up
+without the version. NUMBER: 174 (the coordinator's number, 6 Nov 2026). Branch `fix/trivia-live-fixes-6nov`. NOT RUN.
+Read-back and rollback in the file.
+
+`venueplay-141-subscriber-postcode.sql` (Dean, 2 Nov 2026: the monthly email sign-up asks for the venue's name and
+postcode, needed, "so offers can be sent by state. We won't send a Queensland offer to a NSW venue"): two new columns on
+134's `vp_subscribers`, `postcode` (4 digits, checked) and `au_state` (ACT | NSW | NT | QLD | SA | TAS | VIC | WA, checked,
+indexed), the state worked out by the billing Worker from the postcode with `vpaStateFromPostcode`, and 134's view
+`v_vp_subscribers_monthly` recreated with the two columns added at the end. Guarded: does nothing (with a notice) if 134 has
+not been run, so run 134 first. Columns only, no new table, policy or grant: RLS-BASELINE.json records views by name, so a
+re-dump after running shows no change from this one (134's own additions aside). Either order with the billing Worker:
+before it is run, every write naming the columns is retried without them, so sign-ups are kept with no postcode and HQ
+shows "No postcode". NUMBER: 137 to 139 spent, 140 earmarked for the help saved-reply lowercase fix, checked every branch
+and worktree 2 Nov 2026. Branch `fix/signup-postcode-2nov`. NOT RUN. Rollback: in the file.
+Brought back 6 Nov 2026 on `fix/recover-3nov-10nov` for the Tue 10 Nov release (Dean's yes); 134 is live (RLS-BASELINE.json
+lists `vp_subscribers` and `v_vp_subscribers_monthly`). Still NOT RUN: run it before or with the billing Worker that carries it.
+
+`venueplay-175-prospect-one-signin-link.sql` (Dean, 6 Nov 2026, ONE sign-in link per prospect): two columns,
+`vp_prospects.signin_code_enc` (the short letters, sealed) and `vp_prospects.signin_code_hash`. The short link
+venueplay.com.au/s/XXXXXXXXXXXX is never a login key: it opens the normal text-code sign-in with their mobile filled in, so
+the welcome, the reply in their thread, every follow-up email and text and HQ's Resend all carry the same link with the same
+end; only HQ's "Start a fresh 30 days" makes a new one. No table, policy, grant or function, so RLS-BASELINE.json does not
+change. Either order with the billing Worker (before it, each send makes its own link as today). NUMBER: 175 (the main
+session's; 173 is fix/signup-core-10nov's). Branch `fix/signin-thread-10nov`. NOT RUN. Read-back and rollback in the file.

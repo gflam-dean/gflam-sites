@@ -144,7 +144,9 @@
               if (!r || r.error || !r.data || !r.data.session) { showGone(); return; }
               try { ls.setItem("vpShiftStart", String(Date.now())); } catch (e) {}   // a fresh 4h shift starts now
               try { if (d.venue_id) ls.setItem("vpCurrentVenue", String(d.venue_id)); ls.removeItem("vpVenuePick"); } catch (e) {}
-              w.location.replace("/app/");
+              /* The try-it demo, if they chose it on the done screen in the last 30 minutes (/app/vp-try-slot.js);
+                 otherwise the console, as always. Only two fixed addresses can come out of it. */
+              w.location.replace((w.VPTrySlot && w.VPTrySlot.nextAfterSignIn) ? w.VPTrySlot.nextAfterSignIn(ls) : "/app/");
             });
           });
         })

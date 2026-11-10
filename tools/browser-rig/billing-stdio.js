@@ -50,9 +50,9 @@ if (typeof crypto === 'undefined') {
 ENV.VP_UNSUB_SECRET = 'billing-rig-test-secret';
 load('partyplay-backend/worker/_test-sha256.js');   // a real HMAC for the unsubscribe token
 if (typeof TextEncoder === 'undefined') globalThis.TextEncoder = function () { this.encode = function (s) { return { _s: String(s) }; }; };
-if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: k._s }); };
+if (!crypto.subtle.importKey) crypto.subtle.importKey = function (fmt, k) { return Promise.resolve({ _k: (k && k._s != null) ? k._s : String.fromCharCode.apply(null, Array.prototype.slice.call(k || [])) }); };   // raw bytes too (the no-card start signs its SMS hook call with a base64 secret)
 if (!crypto.subtle.sign) crypto.subtle.sign = function (alg, key, msg) { return Promise.resolve(new Uint8Array(SHA.hmac(key._k, msg._s)).buffer); };
-var STORED = [];
+var STORED = [], TEXTS = [];
 /* A TABLE THAT IS NOT THERE YET (29 Oct 2026, tools/helpdesk-hq-in-chrome.test.py): {ask:'missing', table, on}
    makes every request to it answer the way live PostgREST answered for vp_help_saved_replies before
    migration 126 (read-only check, 29 Oct 2026): 404, code PGRST205. The fake database would otherwise
@@ -72,6 +72,37 @@ globalThis.fetch = function (url, opts) {
     tbl('vp_signin_links').forEach(function (r) { if (match(r, q)) { for (var k in set) r[k] = set[k]; got.push({ auth_user_id: r.auth_user_id, venue_id: r.venue_id }); } });
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(got); } });
   }
+  /* THE NO-CARD START (6 Nov 2026, tools/signup-start-in-chrome.test.py). Its code goes out through the SMS hook, which
+     this rig takes and keeps ({ask:'texts'}), never sends. Its one-request-wins claim is a conditional PATCH asking for
+     return=representation, answered with the rows it changed, as PostgREST does. Auth's user list is paged as Auth
+     pages it (page from 1, per_page), because the start's strict search reads to an EMPTY page. */
+  if (u.indexOf('sms-hook.rig') !== -1) {
+    TEXTS.push(JSON.parse(opts.body));
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } });
+  }
+  /* Every new venue gets its join code from the database (migration 91's trigger); the TV code on the start's done screen
+     reads it. The rig's database has no trigger, so it is given here, the same shape. */
+  if (m === 'POST' && /\/rest\/v1\/vp_venues$/.test(u)) {
+    var vb0 = JSON.parse(opts.body);
+    if (vb0 && !Array.isArray(vb0) && !vb0.join_code) { vb0.join_code = 'RG' + ('0000' + (tbl('vp_venues').length + 1)).slice(-4); opts = Object.assign({}, opts, { body: JSON.stringify(vb0) }); }
+  }
+  if (/\/rest\/v1\/vp_signup_starts\?/.test(u) && m === 'PATCH' && /return=representation/.test(((opts && opts.headers) || {}).Prefer || '')) {
+    var sq = parseQ(u.split('?')[1] || ''), sset = JSON.parse(opts.body), sgot = [];
+    tbl('vp_signup_starts').forEach(function (r) { if (match(r, sq)) { for (var k in sset) r[k] = sset[k]; sgot.push({ id: r.id }); } });
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(sgot); } });
+  }
+  if (m === 'POST' && /\/auth\/v1\/admin\/users$/.test(u)) {
+    var nb0 = JSON.parse(opts.body), ph0 = nb0.phone ? String(nb0.phone).replace('+', '') : '', em0 = String(nb0.email || '').toLowerCase();
+    var clash = tbl('auth').filter(function (x) { return (ph0 && x.phone === ph0) || (em0 && x.email === em0); })[0];
+    if (clash) return Promise.resolve({ ok: false, status: 422, json: function () { return Promise.resolve({ msg: 'already registered', error_code: ph0 && clash.phone === ph0 ? 'phone_exists' : 'email_exists' }); } });
+    var nu0 = { id: newId(), phone: ph0, email: em0 }; tbl('auth').push(nu0);
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve(nu0); } });
+  }
+  if (m === 'GET' && /\/auth\/v1\/admin\/users\?/.test(u)) {
+    var pg = /[?&]page=(\d+)/.exec(u), pp = /[?&]per_page=(\d+)/.exec(u), per = pp ? +pp[1] : 50, from = ((pg ? +pg[1] : 1) - 1) * per;
+    var ul = tbl('auth').slice(from, from + per);
+    return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({ users: ul }); } });
+  }
   var mt = /\/rest\/v1\/([a-z_]+)/.exec(u);
   if (mt && MISSING[mt[1]]) {
     var nb = JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public." + mt[1] + "' in the schema cache" });
@@ -85,8 +116,24 @@ globalThis.fetch = function (url, opts) {
     }
     return Promise.resolve({ ok: true, status: 200, json: function () { return Promise.resolve({}); }, text: function () { return Promise.resolve('{}'); } });
   }
+  /* A COLUMN THE DATABASE DOES NOT HAVE YET (24 Oct 2026, multi-raffle): a read or write naming a column
+     in REFUSE answers PostgREST's 400, so a page can be driven as it is before a migration has run. */
+  var refused = REFUSE.filter(function (c) { return /\/rest\/v1\//.test(u) && (new RegExp('select=[^&]*\\b' + c + '\\b').test(u) || (m !== 'GET' && new RegExp('"' + c + '"').test(String((opts && opts.body) || '')))); });
+  if (refused.length) {
+    var msg = JSON.stringify({ message: 'column ' + refused[0] + ' does not exist' });
+    return Promise.resolve({ ok: false, status: 400, json: function () { return Promise.resolve(JSON.parse(msg)); }, text: function () { return Promise.resolve(msg); } });
+  }
+  /* THE SCREEN ROW IS AN UPSERT ON venue_id (resolution=merge-duplicates): merge it, as PostgREST does.
+     The rig's fake database appends every POST, which left a page reading back the venue's FIRST row. */
+  if (m === 'POST' && /\/rest\/v1\/vp_venue_screen(\?|$)/.test(u)) {
+    var row = JSON.parse(String(opts.body || '{}')), rows = DB.vp_venue_screen || (DB.vp_venue_screen = []);
+    var have = rows.filter(function (x) { return x.venue_id === row.venue_id; })[0];
+    if (have) { for (var k in row) have[k] = row[k]; } else rows.push(row);
+    return Promise.resolve({ ok: true, status: 201, json: function () { return Promise.resolve([]); }, text: function () { return Promise.resolve(''); } });
+  }
   return _rf(url, opts);
 };
+var REFUSE = [];
 
 print(JSON.stringify({ ready: true, uid: UID, venue: VENUE, venue2: VENUE2 }));
 for (;;) {
@@ -94,6 +141,7 @@ for (;;) {
   if (!line) break;
   var rq = JSON.parse(line), out = null;
   if (rq.ask === 'stored') { print(JSON.stringify({ status: 200, body: STORED })); continue; }
+  if (rq.ask === 'texts') { print(JSON.stringify({ status: 200, body: TEXTS })); continue; }   // the codes the no-card start texted (6 Nov 2026)
   if (rq.ask === 'sent') { print(JSON.stringify({ status: 200, body: sent })); continue; }   // the emails the fake Resend took (29 Oct 2026)
   if (rq.ask === 'missing') { MISSING[rq.table] = !!rq.on; print(JSON.stringify({ status: 200, body: { missing: !!rq.on } })); continue; }
   if (rq.ask === 'db') { print(JSON.stringify({ status: 200, body: DB[rq.table] || [] })); continue; }
@@ -101,6 +149,7 @@ for (;;) {
      honours (FOUNDING_CODES), and what was asked of Stripe, so a test can see the price a signup was given. */
   if (rq.ask === 'env') { for (var ek in (rq.set || {})) ENV[ek] = rq.set[ek]; print(JSON.stringify({ status: 200, body: { ok: true } })); continue; }
   if (rq.ask === 'stripe') { print(JSON.stringify({ status: 200, body: stripeCalls })); continue; }
+  if (rq.ask === 'refuse') { REFUSE = rq.cols || []; print(JSON.stringify({ status: 200, body: REFUSE })); continue; }
   if (rq.ask === 'seed') { DB[rq.table] = rq.rows || []; print(JSON.stringify({ status: 200, body: DB[rq.table] })); continue; }
   /* What Stripe's checkout.session.completed hands the Worker, run through the REAL provisioning
      (tools/signup-tick-in-chrome.test.py: a signup made in Chrome, provisioned, then read in HQ). */

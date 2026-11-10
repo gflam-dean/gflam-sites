@@ -4,7 +4,6 @@
   Trimmed 23 Oct 2026 (email audit): every setup step and every billing fact kept, the plan
   stated once, below the steps; ends on "If you need any help, let us know" and the support line.
   Simple merge fields:
-    {{venue_count}}       e.g. "3"
     {{total_players}}     total players across all venues, e.g. "210"
     {{monthly_total}}     group total, e.g. "$504.00"
     {{first_charge_date}} e.g. "24 September 2026"
@@ -16,55 +15,52 @@
   Repeatable block:
     VENUE_BLOCKS (written in double braces below) the Worker replaces with one block per venue,
                           each built from this template (see the commented block below):
-      venue name, its player count, its monthly cost, its host-console link and its TV link.
-      Per-venue tokens: {{venue_name}} {{player_count}} {{venue_monthly}} {{console_url}} {{tv_url}}
+      the venue's name, one per line (Dean, 5 Nov 2026 round 4: "Your venues", a list, no buttons)
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:Manrope,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <tr><td align="center" style="padding:24px 12px">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your venues are set up. Here is how to get each screen live.</div>
 
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;table-layout:fixed;word-break:break-word;overflow-wrap:anywhere;background:#ffffff;border-radius:14px;overflow:hidden">
-      <tr><td style="background:#0A0A0B;padding:20px 32px">
-        <img src="https://venueplay.com.au/logos/venueplay-email-on-dark.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
+      <tr><td bgcolor="#0A0A0B" style="background:#0A0A0B;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay-email-header-solid.png" width="168" alt="venueplay" style="display:block;border:0;height:auto">
       </td></tr>
 
       <tr><td style="padding:36px 32px 8px">
-        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#0A0A0B;font-weight:800">Welcome to venueplay.</h1>
-        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">All {{venue_count}} of your venues are set up. Each venue below has its own screen link and host login. Here is how to get them live.</p>
+        <h1 style="margin:0;font-size:21px;line-height:1.25;color:#0A0A0B;font-weight:800;white-space:nowrap">Welcome to venueplay</h1>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Each of your venues has its own screen code, and your login works at every one of them. Here&#39;s how to get them live.</p>
       </td></tr>
 
       <!-- login box -->
       <tr><td style="padding:24px 32px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
           <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
-            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It is your <strong>mobile number</strong>. No password. From your console you can switch between all {{venue_count}} venues, and each venue can have its own host added.</p>
+            <p style="margin:0;font-size:14px;font-weight:700;color:#FF1F8E">Your login</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It&#39;s your <strong>mobile number</strong>, with no password. You can switch between your venues from your host console, and each venue can have its own hosts.</p>
           </td></tr>
         </table>
       </td></tr>
 
       <!-- per-venue blocks -->
       <tr><td style="padding:26px 32px 0">
-        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#0A0A0B">Your venues</p>
+        <p style="margin:0 0 14px;font-size:14px;font-weight:700;color:#0A0A0B">Your venues</p>
         {{VENUE_BLOCKS}}
         <!--
-          VENUE BLOCK TEMPLATE (Worker repeats this once per venue, tokens per venue:
-          {{venue_name}} {{player_count}} {{console_url}} {{tv_url}}):
-
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px">
-            <tr><td style="padding:16px 20px">
-              <p style="margin:0;font-size:17px;font-weight:700;color:#0A0A0B">{{venue_name}}</p>
-              <p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">{{player_count}} players &middot; {{venue_monthly}} a month</p>
-              <a href="{{console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>
-              <a href="{{tv_url}}" style="display:inline-block;color:#0A0A0B;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #0A0A0B;padding:8.5px 20px;border-radius:8px">TV screen</a>
-            </td></tr>
-          </table>
+          VENUE LIST (Dean, 5 Nov 2026 round 4): the Worker writes one line per venue, its name only, in place of the
+          venue-blocks tag above, in this shape:
+          <p style="margin:0 0 6px;font-size:16px;line-height:1.5;font-weight:700;color:#0A0A0B">venue name</p>
         -->
       </td></tr>
 
-      <!-- billing summary -->
-      <tr><td style="padding:22px 32px 0">
-        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">{{free_intro}}, so you are <strong>free until {{first_charge_date}}</strong>. Your first payment then is {{total_players}} players across your group at {{player_rate}} each, {{payment_total}}. Nothing is charged before then, and you can cancel any time before it.</p>
+      <!-- the pink plan box, the same in every welcome (Dean, 5 Nov 2026 round 8) -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#fff6fb" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:14px;font-weight:700;color:#C70F69">Your plan</p>
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#0A0A0B">{{free_title}}</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">You can enjoy everything venueplay does until <strong>{{first_charge_date}}</strong>. Your first payment then is {{payment_total}} for {{total_players}} players across your venues. Nothing is charged before then, and you can change or cancel any time.</p>
+          </td></tr>
+        </table>
       </td></tr>
 
 <!--IF:nobingo-->
@@ -72,7 +68,7 @@
       <tr><td style="padding:22px 32px 0">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #f1d39a;border-radius:12px;background:#fff9ec">
           <tr><td style="padding:16px 18px">
-            <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9a6a00">A note on bingo in {{nobingo_places}}</p>
+            <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#9a6a00">A note on bingo in {{nobingo_places}}</p>
             <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">In {{nobingo_places}}, only a not-for-profit organisation may run bingo, so number bingo is switched off for pubs and hotels there and you will not see it in your console. That is the state's rule, not a fault, and we would rather tell you now than have you go looking for it.</p>
             <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">Everything else is ready for you: <strong>trivia, musical bingo and members draws</strong>, with your state's rules shown to your host before each night.</p>
             <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3a3a44">If a club or charity runs the bingo at your venue, just reply to this email and tell us who runs it. Once we have seen their licence or approval, we will switch it on for you.</p>
@@ -80,63 +76,53 @@
         </table>
       </td></tr>
 <!--ENDIF:nobingo-->
-      <!-- 3 steps -->
+      <!-- 3 steps, in this order (Dean, 5 Nov 2026): sign in, add hosts, then the TV. No app detail. -->
       <tr><td style="padding:26px 32px 0">
-        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#0A0A0B">Three steps at each venue</p>
+        <p style="margin:0 0 14px;font-size:14px;font-weight:700;color:#0A0A0B">Three steps to your first night</p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Set up each screen.</strong> Any TV works, a Fire Stick, a smart TV, or an HDMI cable. Got a TV with Google Play? Download the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" style="color:#0A0A0B;font-weight:700;text-decoration:underline">venueplay TV app</a> and put in your screen code. Otherwise open venueplay.com.au/tv in the TV's web browser. Open that venue's TV link and its join code appears. Keep that browser window full screen with nothing over it: a TV page hidden behind another window slows down and shows RECONNECTING.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone.</strong> Go to <a href="https://venueplay.com.au/app" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and enter your mobile. We text you a code, and you&#39;re in. Pick a venue, or tap <strong>Switch venue</strong> to change. Each venue&#39;s host console shows its own six-character screen code.</td>
           </tr></table></td></tr>
           <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Add each host.</strong> Whoever runs the night at each venue gets their own login.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Add each host.</strong> In Account &gt; People, add each host&#39;s name and mobile and tick the venues they run. We text them where to sign in, and they sign in with their own mobile.</td>
           </tr></table></td></tr>
           <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
-            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Run a test game.</strong> Play a quick round at each venue so it all feels familiar before the first real night.</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Put venueplay on each TV.</strong> Go to <a href="https://venueplay.com.au/tv" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/tv</a> on each venue&#39;s screen and enter that venue&#39;s six-character screen code. Keep it full screen with nothing covering it, or the TV can fall behind.</td>
           </tr></table></td></tr>
         </table>
       </td></tr>
 
       <!-- CTA -->
-      <tr><td align="center" style="padding:30px 32px 4px">
-        <a href="https://venueplay.com.au/app/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open your setup guide</a>
+      <tr><td align="center" style="padding:12px 32px 0">
+        <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:20px auto 0"><tr><td align="center"><a href="https://venueplay.com.au/app/?guide=1" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:17px;font-weight:700;line-height:1.2;padding:16px 34px;border-radius:10px">Open your setup guide</a></td></tr></table>
       </td></tr>
-      <tr><td align="center" style="padding:10px 32px 0"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">It walks you through your TV, a first game and the rest, one step at a time.</p></td></tr>
-
-      <!-- Your screens & sign-in -->
-      <tr><td style="padding:16px 32px 0">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
-          <tr><td style="padding:20px 22px">
-            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your screens</p>
-            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>On each TV:</strong> open venueplay.com.au/tv (or the venueplay TV app), then type that venue's six-character screen code from its host console. The TV remembers its venue after that.</p>
-            <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#3a3a44"><strong>To sign in:</strong> you, your managers and your hosts all sign in at <a href="https://venueplay.com.au/app" style="color:#0A0A0B;font-weight:700;text-decoration:none">venueplay.com.au/app</a> with a text code to your mobile, no app to install. One login switches between all {{venue_count}} venues.</p>
-          </td></tr>
-        </table>
-      </td></tr>
+      <tr><td align="center" style="padding:14px 20px 4px"><p style="margin:0;font-size:14px;line-height:1.55;color:#6a6a75">When you first sign in, we'll walk you through it.</p></td></tr>
 
       <!-- what you agreed to, in plain terms: once, after the setup -->
       <tr><td style="padding:22px 32px 0">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
           <tr><td style="padding:16px 18px">
-            <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">Your plan, in plain terms</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay per player, on the maximum players per session you set. Prices include GST.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If a night runs over your maximum</strong>, each extra player that night is $2. Your host sees what it costs and has to tap OK on the screen before the game starts, so nothing is ever charged without someone at your venue agreeing to it.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If you run over three times in a row</strong>, that is your crowd rather than a big night. The third one is $1 per extra player and we lift your maximum to the smallest of those three crowds. On monthly that starts from your next invoice; on annual the extra players are charged pro rata to your renewal, since your year is already paid for. It costs less than paying per head every week.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Changing your maximum</strong> is self-service in your account. Adding applies straight away and lands on your next bill. On monthly, dropping takes effect at your next renewal, so you keep what you have paid for.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, added players are pro rata to your renewal. If you drop your maximum part way through the year the lower maximum starts that day and we do not refund it, but the value of the players you release for the rest of the year is held as a credit and comes off your next renewal on its own. There is nothing to claim and nothing to spend. The credit is the part of the year you have not used, so the sooner you drop players you are not getting, the more of it there is. Your billing page shows what you are holding.</p>
+            <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#8a8a95">Your plan, in plain terms</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay {{player_rate}} a month for each player. Each venue has its own player limit: {{venue_limits}}. That&#39;s {{total_players}} players, so {{payment_total}}. You can change them any time. Prices include GST.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Busy night?</strong> If more people turn up at a venue than its limit covers, each extra player that night is $2, and your host OKs it on screen first. If that happens three nights in a row at the same venue, we move that venue&#39;s limit up to fit the crowd, at your normal per-player rate.</p>
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">To change a venue&#39;s player limit, go to <a href="https://venueplay.com.au/app/billing.html#billing" style="color:#C70F69;font-weight:600">Account &gt; Billing</a>.</p>
+<!--IF:annual-->
+            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, added players are pro rata to your renewal. If you drop your maximum part way through the year, the lower maximum starts that day, and the value of the players you release for the rest of the year is held as a credit that comes off your next renewal on its own. There is nothing to claim. Your billing page shows what you are holding.</p>
+<!--ENDIF:annual-->
             <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3a3a44">No lock-in. Cancel any time before your first payment and you are never charged.</p>
-            <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">This is a summary. The full <a href="{{terms_url}}" style="color:#C70F69;font-weight:600">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#C70F69;font-weight:600">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
+            <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">Full details in our <a href="{{terms_url}}" style="color:#C70F69;font-weight:600">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#C70F69;font-weight:600">Privacy Policy</a>.</p>
           </td></tr>
         </table>
       </td></tr>
 
       <!-- footer: the one ask, then the support line -->
       <tr><td style="padding:28px 32px 34px">
-        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
-        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
-        <p style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#b3b3bb">venueplay &middot; ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">If you need any help, let us know. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#C70F69;font-weight:600;text-decoration:none;font-size:14px;white-space:nowrap">{{support_email}}</a> and a person answers, usually the same day. If a game is on and you need us right now, call <a href="tel:{{support_tel}}" style="color:#FF1F8E;text-decoration:none;font-weight:700">{{support_phone}}</a> and press 2.</p>
+        <p style="margin:16px 0 0;font-size:13px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+        <p style="margin:14px 0 0;font-size:13px;line-height:1.7;color:#b3b3bb">venueplay &middot; ABN 35 679 383 049. <a href="https://venueplay.com.au/privacy" style="color:#b3b3bb;text-decoration:underline">Privacy</a> &middot; <a href="https://venueplay.com.au/terms" style="color:#b3b3bb;text-decoration:underline">Terms</a> &middot; <a href="{{unsubscribe_url}}" style="color:#b3b3bb;text-decoration:underline">Unsubscribe from product emails</a></p>
       </td></tr>
     </table>
   </td></tr>

@@ -73,7 +73,7 @@ function grabBranch(marker){
 }
 
 var NEED = ["adsSignature","buildAds","stopAds","startAds","adSlotAt","loopEntries","entryClass","entryInner",
-            "slideVisible","todayStr","hasRaffle","accentClass","accentHex","esc","escBr",
+            "slideVisible","todayStr","hasRaffle","rafflesOnWall","accentClass","accentHex","esc","escBr",
             "landBall","revealBall","bingoCall","restBall","renderRun","calledSet","updateBoard","hideBingoLayers",
             "showBingoLayer","applyBingo","hideGameFrame","applyVenueLogo","alignCorner","stopCelebrate",
             "cancelHolding","cancelEmbedWatch","gameLabel","forgetLastGame","enterAds","enterBingo","enterEmbed",

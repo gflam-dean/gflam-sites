@@ -181,7 +181,7 @@
      on the right a pink NOW PLAYING label, the title in Anton, the artist, and ONE sentence for the pattern and the
      prize ("One line wins a meat tray"). LISTEN: the kit's neon triangle breathing (2.6s, glow only) where the art
      goes, "Know it? Mark it on your card." and the same sentence, with no "Song 15" label (Dean, 3 Nov late). Along the
-     bottom: "Song 14" on the left over a played-so-far strip of the last five, with artwork, the current song outlined
+     bottom: "14 songs played" on the left (6 Nov: it said "Song 14") over a played-so-far strip of the last five, with artwork, the current song outlined
      in pink and "+9" for the earlier ones. NO player count anywhere on the wall (Dean, 4 Nov 2026 evening: counts
      stay on the host console). Sizes in cqw, so
      /app/vp-oldtv.js can work them out on an older set; inner places are written calc(Ncqw) so the corner check
@@ -327,6 +327,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-demo-clock.js"></script>   <!-- the sales-page demo's one clock, shared by the wall and the phone (7 Nov 2026) -->
 <script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (2 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
@@ -515,7 +516,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        redraws this once the song is shown. */
     var held=!!(_pendingSong && all.length && all[all.length-1]===_pendingSong.title);
     if(held) all=all.slice(0, -1);
-    /* While a song is held back the strip keeps one slot for it, dashed, "Song 15": four played and the next. */
+    /* While a song is held back the strip keeps one slot for it, dashed, "Up now": four played and the next. */
     var room = held ? TV_BOARD_MAX-1 : TV_BOARD_MAX;
     var start=Math.max(0, all.length-room), last=all.length-1;
     for(var i=start;i<all.length;i++){
@@ -528,12 +529,19 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     if(typeof fitStrip==="function") fitStrip(b);
     var total=all.length+(held?1:0);
+    /* ONE SONG COUNT ON THE WALL (Dean, 6 Nov 2026, 13:10): "14 songs played" bottom left and nothing else that counts.
+       The "+9" chip before the strip and the dashed "Song 15" slot were numbers too, and read as different counts. The
+       chip is gone; the dashed slot says "Up now". */
     var more=$("tvBoardMore");
-    if(more){ more.classList.toggle("hidden", start<=0); more.textContent="+"+start; }
+    if(more){ more.classList.toggle("hidden", true); more.textContent=""; }
     var nx=$("tvBoardNext");
-    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Song "+total; }
+    if(nx){ nx.classList.toggle("hidden", !held); nx.textContent="Up now"; }
     var no=$("tvSongNo");
-    if(no) no.textContent = total>0 ? ("Song "+total) : "";
+    /* "14 songs played", NOT "Song 14" (Dean, live play, 6 Nov 2026: "Song N" bottom left over the last song's
+       cover and a dashed "Song N" bottom right read as the same thing twice). The left says how many have
+       played; the dashed slot, while one is held back, is the one playing now. A song held back is not
+       counted as played yet. */
+    if(no) no.textContent = all.length>0 ? (all.length+" song"+(all.length===1?"":"s")+" played") : "";
     var lbl=$("tvBoardLbl");
     if(lbl){
       lbl.classList.toggle("hidden", true);   // the song number says it now
@@ -781,7 +789,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      tv_here, which is what HQ reads to decide a screen is alive. A demo must never make a dead
      TV look healthy. */
   if(!VP_DEMO) ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true, audio:(typeof audioState==="function" ? audioState() : "unknown") }); tvStatus(true); }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
@@ -928,9 +936,20 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      used to be swallowed by an empty catch. If the kiosk's autoplay setting is off, name that tune
      runs in complete silence while the screen cheerfully shows "Now playing". Say so on the wall,
      and tell the host console, so somebody knows within one song rather than one round. */
-  var _audioWarned=false;
+  var _audioWarned=false, _audioHeard=false;
+  /* WHAT THIS SCREEN CAN SAY ABOUT ITS OWN SOUND, before and after song 1 (Dean's live play, 6 Nov 2026:
+     song 1 was silent and the host was only told after song 2). 'blocked' = a play was refused or never
+     started; 'ok' = a clip has really played here; 'unknown' = nothing tried yet. Where the browser can say
+     in advance (navigator.getAutoplayPolicy), it does, so the host hears about it from the lobby. Every
+     tv_here carries it, so a one-off warning that was missed is repeated on the next reply. */
+  function audioState(){
+    if(_audioWarned) return "blocked";
+    if(_audioHeard) return "ok";
+    try{ if(navigator.getAutoplayPolicy && navigator.getAutoplayPolicy("mediaelement")==="disallowed") return "blocked"; }catch(e){}
+    return "unknown";
+  }
   function audioBlocked(){
-    if(_audioWarned) return; _audioWarned=true;
+    if(_audioWarned) { try{ tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){} return; } _audioWarned=true;
     var w=document.getElementById("audioWarn");
     if(!w){
       /* TOP CENTRE, AND IT GOES (live play audit, 20 Oct 2026). Bottom left it sat on the JOIN NOW
@@ -944,9 +963,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       document.body.appendChild(w);
     }
     setTimeout(function(){ var x=document.getElementById("audioWarn"); if(x) x.remove(); }, 8000);
-    try{ tvSend({ t:"tv_audio_blocked" }); }catch(e){}
+    try{ tvSend({ t:"tv_audio_blocked" }); tvSend({ t:"tv_here", audio:"blocked" }); }catch(e){}
   }
-  function audioOk(){ _audioWarned=false; var w=document.getElementById("audioWarn"); if(w) w.remove(); }
+  function audioOk(){
+    var was=_audioWarned; _audioWarned=false; _audioHeard=true;
+    var w=document.getElementById("audioWarn"); if(w) w.remove();
+    if(was){ try{ tvSend({ t:"tv_here", audio:"ok" }); }catch(e){} }   // the host stops playing it here
+  }
   /* ============ LOUDER THAN THE LAPTOP CAN GO ============================
 
      An <audio> element's volume is a fraction of the source, so 1.0 IS the file,
@@ -996,6 +1019,10 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
       clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
       var pr=clipAudio.play();
+      /* A play() that neither rejects nor starts (the clip sat at 0:00 on Dean's TV for song 1): look again
+         after three seconds and call a clip that has not moved blocked, instead of waiting for song 2. */
+      var _src=url;
+      setTimeout(function(){ if(clipAudio.getAttribute("src")===_src || clipAudio.src===_src){ if(clipAudio.paused || clipAudio.currentTime<0.2) audioBlocked(); } }, 3000);
       if(pr&&pr.then) pr.then(function(){
         audioOk();
         if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} }
@@ -1017,7 +1044,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(window.VPSting && VPSting.on){ try{ VPSting.forGame(m, { l1:"LET\u2019S PLAY", l2:"MUSICAL BINGO" }, { played:1 }); }catch(e){} }
     /* The end-of-game show (/app/vp-endshow.js, off unless ?endshow=1): the next game's first word stops it. */
     if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); if(m.t==="played" && !m.replay) _endArmed=true; }catch(e){} }
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here", audio:audioState() }); try{ if(window.VPTvHold) VPTvHold.lobby($("tv"), false); }catch(e){} }   // a host: the lobby, not the waiting card
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     // Which night and which game this wall is showing, so a silent console can be checked (checkRunningGame).
     if(typeof m.game_id==="string" && m.game_id && (m.t==="started" || m.t==="state")) _gameId=m.game_id;
@@ -1188,10 +1215,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
       function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
-      var steps=[]; function at(ms, fn){ steps.push([ms, fn]); }
+      /* THE SONGS, THE TIMES AND THE CLOCK ARE /app/vp-demo-clock.js, shared with the demo phone (app/musical/play.html),
+         so the wall and the phone are on the same song at the same moment, every lap (7 Nov 2026). No timer here. */
+      var C=VPDemoClock.MUSICAL, steps=[];
+      function at(ms, fn, key, always){ steps.push({ at:ms, fn:fn, key:!!key, always:!!always }); }
       /* The songs as the library names them. Their artwork is NOT here any more (Dean, 4 Nov 2026): third-party album
          covers may not appear in store screenshots, so the demo wall shows our venueplay logo tile in the art spot. */
-      var SONGS = [{"title": "Never Gonna Give You Up", "artist": "Rick Astley"}, {"title": "Dancing Queen", "artist": "ABBA"}, {"title": "Khe Sanh", "artist": "Cold Chisel"}, {"title": "Mr. Brightside", "artist": "The Killers"}, {"title": "The Horses", "artist": "Daryl Braithwaite"}];   /* no album covers on a sales page or a store screenshot (Dean, 4 Nov 2026): the wall draws our logo tile */
+      var SONGS = C.SONGS;
       at(0, function(){
         m({ t:"session", join_code:DEMO_JOIN_CODE });
         m({ t:"mode" });
@@ -1199,24 +1229,23 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
            I wrote "one_line" first and the wall printed it verbatim. tv.html's demo carries the
            same note for the same reason. */
         m({ t:"started", title:"Musical Bingo", pattern:"one", prize:"Meat tray", played:[] });   /* a prize as a host types it; no dollar prize on a sales page (3 Nov 2026) */
-      });
-      /* The first song waits for the start-of-game show (2 Nov 2026): "started" plays it for about 4 s (/app/vp-sting.js) and the first song makes it give way, so at 1.2 s the sales-page demo cut it off. */
-      var t=(window.VPSting && VPSting.on) ? 4200 : 1200, played=[];   // 1200 as before the show, on a screen with ?sting=0
+      }, true, true);
+      /* The first song waits for the start-of-game show (2 Nov 2026): C.first() is 4.2 s with the show, 1.2 s with ?sting=0. */
       SONGS.forEach(function(sg, i){
-        at(t, function(){
-          /* played is a list of TITLES, not song objects: renderBoard paints each entry straight
-             into textContent, so an object arrives on the wall as "[object Object]". It did. */
-          played.push(sg.title);
-          // reveal:false first, so the wall shows the card filling in without naming the song
-          m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played.slice(), reveal:false });
-        });
-        at(t+2600, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
+        var t=C.songAt(i);
+        /* played is a list of TITLES, not song objects: renderBoard paints each entry straight
+           into textContent, so an object arrives on the wall as "[object Object]". It did. And it is
+           the songs so far, made fresh each time: it used to be one list pushed onto every lap. */
+        var played=SONGS.slice(0, i+1).map(function(x){ return x.title; });
+        // reveal:false first, so the wall shows the card filling in without naming the song
+        at(t, function(){ m({ t:"played", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, played:played, reveal:false }); }, true);
+        at(t+C.REVEAL, function(){ m({ t:"reveal", title:sg.title, artist:sg.artist, artworkUrl:sg.artworkUrl, level:"full" }); });
         at(t+3400, function(){ m({ t:"players", count: 22 + i*4 }); });
-        t += 5200;
       });
-      at(t,        function(){ m({ t:"claim_pending", name:"Sam", count:1 });   /* the name a player joined with, never a table (we do not collect tables) */ });
-      at(t+2600,   function(){ m({ t:"winner", name:"Sam", cardNos:[17] });   /* the demo phone's own player and card */ });
-      at(t+9000,   function(){ m({ t:"idle" }); });
+      var t=C.claimAt();
+      at(t,              function(){ m({ t:"claim_pending", name:"Sam", count:1 });   /* the name a player joined with, never a table (we do not collect tables) */ }, true);
+      at(t+C.WIN_AFTER,  function(){ m({ t:"winner", name:"Sam", cardNos:[17] });   /* the demo phone's own player and card */ }, true);
+      at(t+C.IDLE_AFTER, function(){ m({ t:"idle" }); }, true);
 
       /* NO JOIN OR PAIRING CORNER ON A SALES PAGE: the code is one this browser invented, so
          scanning it leads to a room that does not exist. Watched, not hidden once, because the
@@ -1246,14 +1275,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         try{ new MutationObserver(hide).observe(document.body,{ childList:true, subtree:true }); }catch(e){}
       })();
 
-      var timers=[];
-      function run(){
-        timers.forEach(clearTimeout); timers=[];
-        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
-        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
-        timers.push(setTimeout(run, t + 14000));
-      }
-      run();
+      // A sales page is left sitting open on a desk, so it loops for as long as it is up: one lap is C.lap().
+      VPDemoClock.run({ lap:C.lap(), steps:steps });
     })();
   }
 

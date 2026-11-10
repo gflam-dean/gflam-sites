@@ -168,6 +168,7 @@ check('index.html: any other venue goes on to the plain card and the TV, as befo
 
 /* =============================================================================================== */
 load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
 vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 /* jsc has no WebCrypto, TextEncoder, atob or URL. Stand-ins that are pure functions of their input are
    enough for what is claimed here (the link the email carries is the one /add-card accepts); the
@@ -383,12 +384,13 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
       check(c[0] + ': and no "this link works once, next time sign in with your email" story', !/works once|straight in, once|Next time|After that/i.test(txt), txt.slice(0, 700));
     }
     check(c[0] + ': it says it takes about 5 minutes and walks them through everything', /It takes about 5 minutes and walks you through everything\./.test(txt), txt);
-    check(c[0] + ': the offer in words: locked in at $2.50 for as long as they are with us, start by 30 November, first month free, no lock-in', /To lock in the \$2\.50 deal we have on at the moment, we've set your account up at \$2\.50 a player a month on your usual crowd, and it stays at \$2\.50 for as long as you're with us\. You just need to start by 30 November\. Your first month is free, and there's no lock-in\./.test(txt) && !/offer runs|Our November offer/.test(txt), txt);
+    check(c[0] + ': the offer in words (Dean, 7 Nov 2026): the free month starts at the first sign-in, sign in by 30 November to keep $2.50, for as long as they are with us, no lock-in', /Your free month starts the first time you sign in\. Sign in by 30 November to keep \$2\.50 a player a month, for as long as you're with us\. No lock-in\./.test(txt) && !/offer runs|Our November offer|lock in the|lock it in/i.test(txt), txt);
+    check(c[0] + ': the plan in plain words (Dean, 5 Nov 2026 round 5): the plan\'s players and its total (60 at $150.00, 120 at $300.00), changeable any time, and the no-card line short (Dean, 7 Nov 2026)', /Your plan is set to (60|120) players ?, so that's \$(150|300)\.00 a month\. You can change it any time\./.test(txt) && /There's no card on your account, so nothing can be charged\. We'll remind you before your free month ends\. Not for you\? Just hit cancel\./.test(txt) && !/simply pauses|5 days/.test(txt), txt);
     check(c[0] + ': with no sender given (HQ), signed "the venueplay team" with a lowercase t, then the website', /Cheers, the venueplay team venueplay\.com\.au/.test(txt) && !/The venueplay team/.test(txt) && !/Cheers, Dean/.test(txt), txt);
-    check(c[0] + ': the button is centred in the login box (centred table with auto margins, centred cell), for Outlook and Gmail', /<table role="presentation" align="center"[^>]*style="margin:16px auto 0"><tr>\s*<td align="center"><a href="[^"]+" style="display:inline-block;background:#FF1F8E[^>]*>Open your venueplay<\/a>/.test(html), html.slice(html.indexOf('Open your venueplay') - 500, html.indexOf('Open your venueplay') + 30));
+    check(c[0] + ': the button is centred in the login box (centred table with auto margins, centred cell), for Outlook and Gmail', /<table role="presentation" align="center"[^>]*style="margin:20px auto 0"><tr><td align="center"><a href="[^"]+" style="display:inline-block;background:#FF1F8E[^>]*>Open your venueplay<\/a>/.test(html), html.slice(html.indexOf('Open your venueplay') - 500, html.indexOf('Open your venueplay') + 30));
     check(c[0] + ': no long instructions any more: no TV address, no game steps, no card link, no tick (they live in the app)', !/\/tv\?|Open lobby|add-card|tick one box|Number bingo|Musical bingo/i.test(html), L);
     check(c[0] + ': on brand (version 3): the venueplay logo in the dark header, as every venueplay email, and nothing else as an image', (html.match(/<img/gi) || []).length === 1 &&
-      /background:#0A0A0B[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-on-dark\.png"[^>]*alt="venueplay"/.test(html));
+      /background:#0A0A0B[^>]*>\s*<img src="https:\/\/venueplay\.com\.au\/logos\/venueplay-email-header-solid\.png"[^>]*alt="venueplay"/.test(html));
     check(c[0] + ': who we are (venueplay and its ABN, never Gflam: Dean, 29 Oct 2026), the call line and how to stop (Spam Act, as every venue email)', /You are getting this because you asked us to set up venueplay for/.test(txt) && /venueplay\s*\.\s*ABN 35 679 383 049/.test(txt) && !/Gflam/i.test(html) &&
       L.indexOf('https://www.venueplay.com.au/unsubscribe?e=' + encodeURIComponent(c[2])) !== -1 && L.indexOf('tel:+61752283667') !== -1 && L.indexOf('https://www.venueplay.com.au/terms') !== -1 && L.indexOf('https://www.venueplay.com.au/privacy') !== -1, L);
     check(c[0] + ': a text part, made from the same HTML', typeof msg.text === 'string' && msg.text === helpPlainFromHtml(html) && msg.text.indexOf('Open your venueplay (https://www.venueplay.com.au/app/' + (c[0] === 'VIC' ? '?signin=sms#m=0452510904' : 'go#t=')) !== -1, msg.text);
@@ -401,10 +403,11 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   world(); ENV.FOUNDING_CODES = '';
   await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: '' })), ENV, J);
   var std = sent[0] ? visible(sent[0].html) : '';
-  check('with no offer running, the email quotes the standard $3.00 and names no offer month', /It's \$3\.00 a player a month on your usual crowd, first month free, no lock-in\./.test(std) && !/offer runs/.test(std) && !/lock in the/.test(std), std);
+  check('with no offer running, the email quotes the standard $3.00 and names no offer month', /Your free month starts the first time you sign in\. Then it's \$3\.00 a player a month\. No lock-in\./.test(std) && !/offer runs/.test(std) && !/lock in the/.test(std), std);
+  check('with no offer running, the plan line says the players and the total at the standard rate', (function () { var m = /Your plan is set to (\d+) players ?, so that's \$([0-9,]+\.\d\d) a month\. You can change it any time\./.exec(std); return !!m && Number(m[2].replace(/,/g, '')) === Number(m[1]) * 3; })(), std);
   check('the offer deadline: the last day of the code\'s month (30 November, 31 December, 28 February in 2027), nothing when no month is known, and the phrase helper is untouched',
-    vpaOfferDeadline('OFFER-NOV-2026') === ' You just need to start by 30 November.' && vpaOfferDeadline('OFFER-DEC-2026') === ' You just need to start by 31 December.' && vpaOfferDeadline('OFFER-FEB-2027') === ' You just need to start by 28 February.' &&
-    vpaOfferDeadline(null) === '' && vpaOfferDeadline('junk') === '' && vpaOfferMonthPhrase('OFFER-NOV-2026') === 'while the November offer runs');
+    vpaOfferDayWords('OFFER-NOV-2026') === '30 November' && vpaOfferDayWords('OFFER-DEC-2026') === '31 December' && vpaOfferDayWords('OFFER-FEB-2027') === '28 February' &&
+    vpaOfferDayWords(null) === '' && vpaOfferDayWords('junk') === '' && vpaOfferMonthPhrase('OFFER-NOV-2026') === 'while the November offer runs');
   check('the sign-off is the sender\'s FIRST name only, then "the venueplay team" with a lowercase t; no sender gives the team alone',
     vpaProspectSignoff('Kayla Prentice').replace(/<br>/g, '|').replace(/<[^>]+>/g, '') === 'Cheers,|Kayla|the venueplay team|venueplay.com.au' && vpaProspectSignoff('Kayla Prentice').indexOf('Prentice') === -1 &&
     vpaProspectSignoff(null).replace(/<br>/g, '|').replace(/<[^>]+>/g, '') === 'Cheers,|the venueplay team|venueplay.com.au' && vpaProspectSignoff('').indexOf('Dean') === -1 && vpaProspectSignoff('<b>Sam</b>').indexOf('<b>') === -1);
@@ -426,7 +429,7 @@ function hrefs(html) { var out = [], re = /href="([^"]+)"/g, m; while ((m = re.e
   world();
   r = await vpaHandleProspect(as(ADMIN, with_({ slides: [], offer_code: 'QLD-OCT-2099' })), ENV, J);
   var oct = sent[0] ? visible(sent[0].html) : '';
-  check('end to end: the code sent decides the month in the email (QLD-OCT-2099 while NSW-NOV-2099 is also listed), and is kept on the audit row', /You just need to start by 31 October\./.test(oct) && !/November/.test(oct) && r.body.offer_code === 'QLD-OCT-2099' &&
+  check('end to end: the code sent decides the month in the email (QLD-OCT-2099 while NSW-NOV-2099 is also listed), and is kept on the audit row', /Sign in by 31 October to keep \$2\.50 a player a month/.test(oct) && !/November/.test(oct) && r.body.offer_code === 'QLD-OCT-2099' &&
     DB.vp_admin_audit.some(function (a) { return a.action === 'prospect_set_up' && a.detail.offer_code === 'QLD-OCT-2099'; }), oct.slice(0, 300));
 
   /* "Reducing to 1 players at your next renewal" (Dean's own test account, 29 Oct 2026). The Account page's

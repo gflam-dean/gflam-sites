@@ -23,7 +23,20 @@ eval(lift(BILL,"vpaVenueEmailCard"));
 eval(lift(BILL,"vpaStaffCard"));
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaPlainLineDesc"));   // the lines in plain words (31 Oct 2026)
+eval(lift(BILL,"vpaFmtDate"));
+eval(lift(BILL,"vpaEmailButton"));   // one centred button style (Dean, 5 Nov 2026 round 5)
+eval(lift(BILL,"vpaDayMonth"));
+eval(lift(BILL,"vpaLineParts"));
+eval(lift(BILL,"vpaInvoiceVenues"));       // each line in two plain lines (Dean, 5 Nov 2026)
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
+/* The receipt's "Let us know how we're going" faces (5 Nov 2026). jsc has no crypto.subtle, so here they
+   render as nothing, which is the receipt's own fallback; tools/test-receipt-survey.js runs them. */
+eval(lift(BILL,"vpaCardSecret"));
+eval(lift(BILL,"vpaCustomerSite"));
+eval(lift(BILL,"vpaRateToken"));
+eval(lift(BILL,"vpaRateHtml"));
+eval(lift(BILL,"vpaRateFeedbackLink"));
+var VPA_RATE_FACES = [];
 eval(lift(BILL,"vpaTaxSummaryHtml"));
 /* The receipt and the helpers it calls. These must be lifted at TOP LEVEL: an eval inside a
    function does not leak its declarations. Twice: first inside receiptChecks, then inside a
@@ -34,6 +47,13 @@ eval(lift(BILL,"vpaOverageFromInvoice"));
 eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
+/* The receipt prints a group's plan line per venue (INBOX 44b, 5 Nov 2026), so it needs the split. */
+eval(lift(BILL,"vpbBilledPlayers"));
+eval(lift(BILL,"vpbPlanLineIndex"));
+eval(lift(BILL,"vpbLineInterval"));
+eval(lift(BILL,"vpbSplitPlanLine"));
+eval(lift(BILL,"vpbSplitFromMetadata"));
+eval(lift(BILL,"vpbInvoiceVenueSplit"));
 eval(lift(BILL,"vpaFirePlanUpliftEmail"));
 /* The billing window, 7am to 5pm Brisbane (Dean, 9 Nov 2026): every billing sender now asks it when to go. */
 eval(/const VPA_BILLING_FROM_H = [^;]+;/.exec(BILL)[0].replace(/^const/, "var"));
@@ -66,7 +86,7 @@ pass("every line on her bill is listed", (lines.match(/full month/g)||[]).length
      "found " + ((lines.match(/full month/g)||[]).length) + " of the 3 extra-player lines");
 /* In plain words since 31 Oct 2026 (Dean: never "founding" on anything a venue sees). Stripe's
    product keeps its name; tools/test-receipts-plain-words.js runs the rest of that rule. */
-pass("the subscription line is there too, in plain words", lines.indexOf("venueplay plan (monthly)") !== -1 && !/founding/i.test(lines));
+pass("the subscription line is there too, in plain words", lines.indexOf("1 player at $2.50 each") !== -1 && lines.indexOf("venueplay plan") === -1 && !/founding/i.test(lines));
 pass("each venue is named, which is what a group account needs", lines.indexOf("Not jess") !== -1 && lines.indexOf("The Jolly Jess") !== -1);
 /* Count the AMOUNT CELLS, not the string. The subscription line's own description
    contains "(at $2.50 / month)", so a naive search finds five and the check failed on
@@ -81,8 +101,9 @@ pass("GST is the INCLUSIVE component, $0.91 of $10", tax.indexOf("$0.91") !== -1
      "prices include GST, so it is total/11, not 10% added on top");
 pass("the ex-GST subtotal is $9.09", tax.indexOf("$9.09") !== -1);
 pass("the total paid is $10.00", tax.indexOf("$10.00") !== -1);
-/* It delivers Stripe's tax invoice, so it says so (Dean, 31 Oct 2026). */
-pass("it calls itself a tax invoice", tax.indexOf("Tax invoice. venueplay, ABN") !== -1);
+/* The email is the RECEIPT and links Stripe's tax invoice (Dean, 5 Nov 2026: "don't call the email itself a
+   tax invoice unless it is one"), so the GST box names the business and never calls itself one. */
+pass("the GST box says prices include GST and names the business, and never calls the email a tax invoice", tax.indexOf("Prices include GST. venueplay, ABN") !== -1 && !/tax invoice/i.test(tax));
 pass("the ABN is on it", tax.indexOf(VP_ABN) !== -1);
 
 pass("a $0 trial invoice gets no tax block at all",
@@ -205,6 +226,7 @@ eval(lift(BILL,"vpaIsExtrasInvoice"));
 eval(lift(BILL,"vpaMoveExtrasToMonthly"));
 eval(lift(BILL,"vpaPaymentFailedNextStep"));
 eval(lift(BILL,"vpaFmtDate"));
+eval(lift(BILL,"vpaEmailButton"));   // one centred button style (Dean, 5 Nov 2026 round 5)
 eval(lift(BILL,"vpaFirePaymentFailedEmail"));
 var limit = /const VPA_EXTRAS_MOVE_MAX_CENTS = ([0-9]+);/.exec(BILL);
 var VPA_EXTRAS_MOVE_MAX_CENTS = limit ? Number(limit[1]) : NaN;
@@ -452,7 +474,7 @@ function alertSubjectChecks() {
   var CUSTOMER_SUBJECTS = [
     "Your venues are set up. Welcome to venueplay",
     "You are in. Welcome to venueplay",
-    "Your venueplay invoice",
+    "Your venueplay receipt",   // the paid-invoice email is the receipt and links the tax invoice (Dean, 5 Nov 2026)
     "Your venueplay payment is coming up",
     "Your venueplay payment did not go through",
     "Your venueplay plan has moved up",

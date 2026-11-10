@@ -95,7 +95,7 @@ var __rnd = 11;
 (async function () {
   section('1. THE FIRST RUN: who gets it');
   var P = page();
-  check('vp-firstrun.js exports VPFirstRun with the nine steps in order (the questions and About you are left out below: these venues have answered, have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,venue,games,tv,hosts,game,account,card', P.FR && P.FR.STEPS);
+  check('vp-firstrun.js exports VPFirstRun with the twelve steps in order (the one question and About you are left out below: these venues have answered, have a logo and their name)', P.FR && P.FR.STEPS.join() === 'mobile,terms,pick,tv,hosts,trivia,musical,bingo,raffles,members,account,card', P.FR && P.FR.STEPS);
   check('a prospect venue (terms_required), its manager: it opens', P.FR.wants(ctxFor('manager'), P.deps.storage) === true);
   check('its owner too', P.FR.wants(ctxFor('owner'), P.deps.storage) === true);
   check('a host: no (the tick and the card are not theirs)', P.FR.wants(ctxFor('host'), P.deps.storage) === false);
@@ -151,7 +151,7 @@ var __rnd = 11;
   await R.next();
   /* Dean, 5 Nov 2026: "Everywhere should say venueplay.com.au/tv" with the screen code, never a slug link.
      This venue has no join_code of its own, so the code is the derived one, as the console chip shows. */
-  check('step 3: "Your TV", their screen code (the console chip\'s code), and no slug address anywhere', T(P, 'vpFrTitle') === 'Your TV' && T(P, 'vpFrTvCode') === P.VP.venueCode('caz-reitop-s-dirty-secrets') &&
+  check('step 3: "Your TV", their screen code (the console chip\'s code), and no slug address anywhere', T(P, 'vpFrTitle') === 'Put it on your TV' && T(P, 'vpFrTvCode') === P.VP.venueCode('caz-reitop-s-dirty-secrets') &&
     !/tv\?/.test(T(P, 'vpFrBody')) && !$(P, 'vpFrTvUrl') && !$(P, 'vpFrCopy'), T(P, 'vpFrTvCode'));
   check('it says to open venueplay.com.au/tv on the TV\'s browser, go full screen and leave it running', /Go to venueplay\.com\.au\/tv on the TV/.test(T(P, 'vpFrTvWeb')) && /Go full screen and leave it running/.test(T(P, 'vpFrTvWeb')));
   // Dean, 31 Oct 2026, then 5 Nov: the venueplay TV app, for a Google TV, in every setup guide.
@@ -169,16 +169,14 @@ var __rnd = 11;
 
   section('1d. Step 4 of 6: add your hosts (tools/test-first-run-guide.js runs it in full), then step 5 of 6: a first test game');
   await R.next();
-  check('step 4: Add your hosts', T(P, 'vpFrTitle') === 'Add your hosts' && T(P, 'vpFrCount') === 'Step 4 of 6', T(P, 'vpFrTitle'));
+  check('step 4: Who\'s hosting?', T(P, 'vpFrTitle') === "Who's hosting?" && T(P, 'vpFrCount') === 'Step 4 of 6', T(P, 'vpFrTitle'));
   check('leaving step 3 stopped its slideshow', TIMERS.filter(function (t) { return t.on; }).length === 0);
   await R.next();
-  check('step 5: trivia in three taps, said in words', T(P, 'vpFrTitle') === 'Run your first game' && /Trivia takes three taps: pick a question set, tap Open lobby, then Start/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
-  check('musical bingo is offered as musical bingo, never as bingo or gaming', /Or try musical bingo/.test(T(P, 'vpFrMusical')) && !/gaming|permit/i.test(T(P, 'vpFrBody')));
+  check('step 5: trivia in three taps, said in words', T(P, 'vpFrTitle') === 'Set up trivia' && /Trivia takes three taps: pick a question set, tap Open lobby, then Start/.test(T(P, 'vpFrBody')), T(P, 'vpFrBody'));
+  check('the trivia step is trivia alone: no musical bingo button, and never gaming or a permit', !$(P, 'vpFrMusical') && !/gaming|permit|bingo/i.test(T(P, 'vpFrBody').replace(/Not ready yet\?[^.]*\./i, '')), T(P, 'vpFrBody'));
   $(P, 'vpFrTrivia').click();
   check('Open trivia opens the trivia console for THEIR venue', OPENED.length === 1 && OPENED[0] === '/app/trivia/host.html?venue=caz-reitop-s-dirty-secrets', OPENED);
   check('and the guide remembers to come back on the last step', JSON.parse(STORE['vpFirstRun:V1']).step === 'card', STORE['vpFirstRun:V1']);
-  await R.go('game'); $(P, 'vpFrMusical').click();
-  check('Or try musical bingo opens that console for their venue', OPENED[1] === '/app/musical/host.html?venue=caz-reitop-s-dirty-secrets', OPENED);
 
   section('1e. Step 6 of 6: your card when you\'re ready, and "Dean will call"');
   await R.go('card');
@@ -213,7 +211,7 @@ var __rnd = 11;
   /* STEPS ALREADY DONE ARE LEFT OUT (Dean, 30 Oct 2026; UX audit 2.3): a login with its mobile is never asked for it
      again, and a venue that has ticked the Terms is not shown the tick. */
   check('a login that already has its mobile, at a venue that has ticked: no mobile step, no Terms step; it opens on Your TV, step 1 of 4',
-    R2.steps().join() === 'tv,hosts,game,card' && R2.step() === 'tv' && T(P2, 'vpFrTitle') === 'Your TV' && T(P2, 'vpFrCount') === 'Step 1 of 4' && $(P2, 'vpFrDots').children.length === 4 && !$(P2, 'vpFrMobile') && !$(P2, 'vpTermsCard'), [R2.steps(), T(P2, 'vpFrCount')]);
+    R2.steps().join() === 'tv,hosts,trivia,card' && R2.step() === 'tv' && T(P2, 'vpFrTitle') === 'Put it on your TV' && T(P2, 'vpFrCount') === 'Step 1 of 4' && $(P2, 'vpFrDots').children.length === 4 && !$(P2, 'vpFrMobile') && !$(P2, 'vpTermsCard'), [R2.steps(), T(P2, 'vpFrCount')]);
   check('so Back is hidden on its first step', $(P2, 'vpFrBack').style.visibility === 'hidden');
   $(P2, 'vpFrClose').click();
   check('closed, the header is back exactly as it was', HDR.style.visibility === '' && HDR.getAttribute('data-vpfr') === null, HDR.style.visibility);
@@ -227,9 +225,9 @@ var __rnd = 11;
   check('opened twice, still one guide', n === 1, n);
   var P4 = page(); P4.deps.fetch = function (url, opts) { CALLS.push({ url: String(url), body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ ok: true, has_card: true, rate: 2.5, seats: 60, monthly: 150, logo_url: 'https://db/storage/v1/object/public/venue-logos/V1/l.png' }); } }); };
   var R4 = P4.FR.open(ctxFor('manager'), P4.deps); await R4.ready;
-  check('a venue whose card is on (every self sign-up that added one at Stripe): no card step at all', R4.steps().indexOf('card') === -1 && R4.go('card') === null && R4.steps().join() === 'mobile,terms,tv,hosts,game', R4.steps());
-  await R4.go('game');
-  check('and its last step, Run your first game, reads Finish', $(P4, 'vpFrNext').textContent === 'Finish', $(P4, 'vpFrNext').textContent);
+  check('a venue whose card is on (every self sign-up that added one at Stripe): no card step at all', R4.steps().indexOf('card') === -1 && R4.go('card') === null && R4.steps().join() === 'mobile,terms,tv,hosts,trivia', R4.steps());
+  await R4.go('trivia');
+  check('and its last step, Set up trivia, reads Finish', $(P4, 'vpFrNext').textContent === 'Finish', $(P4, 'vpFrNext').textContent);
   await R4.go('tv');
   check('no slides yet: the TV step says how to add them, no broken image', hiddenEl($(P4, 'vpFrSlide')) && !$(P4, 'vpFrSlide').getAttribute('src') && /No slides yet\. Add your own ads any time under Account/.test(T(P4, 'vpFrCaption')));
   var P5 = page(); var R5 = P5.FR.open(ctxFor('manager'), P5.deps); await R5.go('card');
@@ -276,8 +274,8 @@ var __rnd = 11;
   check('a venue 60 days old that is not a prospect: never (Tugun and every venue already running are left alone)', PS.FR.wants(ctxFor('owner', selfV({ created_at: '2026-08-31T00:00:00Z' })), PS.deps.storage, NOW) === false);
   check('a venue with no created_at: never', PS.FR.wants(ctxFor('owner', selfV({ created_at: null })), PS.deps.storage, NOW) === false);
   check('a host at a new venue: no', PS.FR.wants(ctxFor('host', selfV()), PS.deps.storage, NOW) === false);
-  function sessClient(rows, fail) { return { from: function (t) { var q = { t: t, f: {} }; var b = { select: function () { return b; }, eq: function (k, v) { q.f[k] = v; return b; }, limit: function (n) { q.limit = n; CK.push(q);
-    return fail ? Promise.reject(new Error('offline')) : Promise.resolve({ data: rows.filter(function (r) { return r.venue_id === q.f.venue_id; }).slice(0, n), error: null }); } }; return b; } }; }
+  function sessClient(rows, fail) { return { from: function (t) { var q = { t: t, f: {} }; var b = { select: function () { return b; }, eq: function (k, v) { q.f[k] = v; return b; }, neq: function (k, v) { q.n = q.n || {}; q.n[k] = v; return b; }, limit: function (n) { q.limit = n; CK.push(q);
+    return fail ? Promise.reject(new Error('offline')) : Promise.resolve({ data: rows.filter(function (r) { if (r.venue_id !== q.f.venue_id) return false; for (var k in (q.n || {})) if (r[k] === q.n[k]) return false; return true; }).slice(0, n), error: null }); } }; return b; } }; }
   var CK = [];
   var nv = selfV({ id: 'VN1', created_at: new Date(Date.now() - 2 * 86400000).toISOString() });
   var ok1 = await PS.FR.check(ctxFor('owner', nv), sessClient([{ venue_id: 'OTHER' }]), PS.deps.storage);
@@ -286,6 +284,9 @@ var __rnd = 11;
   var ok2 = await PS.FR.check(ctxFor('owner', nv2), sessClient([{ venue_id: 'VN2' }]), PS.deps.storage);
   check('a venue that has had its first game: does not open, and is marked done on this device so it is never asked again',
     ok2 === false && JSON.parse(STORE['vpFirstRun:VN2']).done === true && PS.FR.wants(ctxFor('owner', nv2), PS.deps.storage) === false, STORE['vpFirstRun:VN2']);
+  var nv5 = selfV({ id: 'VN5', created_at: new Date(Date.now() - 2 * 86400000).toISOString() });
+  var ok5 = await PS.FR.check(ctxFor('owner', nv5), sessClient([{ venue_id: 'VN5', is_demo: true }]), PS.deps.storage);
+  check('a venue that has only played the try-it demo still gets the wizard (a demo is not a first game, migration 172)', ok5 === true && CK[CK.length - 1].n && CK[CK.length - 1].n.is_demo === true, CK[CK.length - 1]);
   var nv3 = selfV({ id: 'VN3', created_at: new Date(Date.now() - 2 * 86400000).toISOString(), last_trivia_at: '2026-10-29T09:00:00Z' });
   var n0 = CK.length, ok3 = await PS.FR.check(ctxFor('owner', nv3), sessClient([]), PS.deps.storage);
   check('a venue whose row says it ran trivia: does not open, without asking', ok3 === false && CK.length === n0);
@@ -300,10 +301,10 @@ var __rnd = 11;
     return Promise.resolve({ ok: true, json: function () { return Promise.resolve(ans); } }); };
   var RSU = PSU.FR.open(ctxFor('owner', selfV()), PSU.deps); await RSU.ready;
   check('a self sign-up with its mobile, the Terms ticked at checkout and a card at Stripe: just Your TV, hosts and a first game, step 1 of 3',
-    RSU.steps().join() === 'tv,hosts,game' && T(PSU, 'vpFrTitle') === 'Your TV' && T(PSU, 'vpFrCount') === 'Step 1 of 3', [RSU.steps(), T(PSU, 'vpFrCount')]);
+    RSU.steps().join() === 'tv,hosts,trivia' && T(PSU, 'vpFrTitle') === 'Put it on your TV' && T(PSU, 'vpFrCount') === 'Step 1 of 3', [RSU.steps(), T(PSU, 'vpFrCount')]);
   check('it never starts a prospect free month for a venue that is not one', !CALLS.some(function (c) { return /prospect-start$/.test(c.url); }));
   await RSU.next(); await RSU.next();
-  check('Run your first game is the last step and reads Finish', T(PSU, 'vpFrTitle') === 'Run your first game' && $(PSU, 'vpFrNext').textContent === 'Finish');
+  check('Set up trivia is the last step and reads Finish', T(PSU, 'vpFrTitle') === 'Set up trivia' && $(PSU, 'vpFrNext').textContent === 'Finish');
   await RSU.next();
   check('Finish closes it as done', !$(PSU, 'vpFirstRun') && JSON.parse(STORE['vpFirstRun:V1']).done === true);
 
@@ -340,11 +341,13 @@ var __rnd = 11;
   check('welcome-group.html: the same', /<a href="https:\/\/venueplay\.com\.au\/app\/\?guide=1"[^>]*>Open your setup guide<\/a>/.test(readFile('venueplay/emails/welcome-group.html')));
   var WP = readFile('venueplay/emails/welcome-prospect.html');
   check('the prospect welcome\'s button signs them in to the console (/app/go or ?signin=sms), where the guide opens first', /<a href="\{\{signin_url\}\}"/.test(WP) && /vpaOneClickUrl\(site, o\.signinToken, email\)/.test(readFile('venueplay-backend/worker/venueplay-api-FULL.js')) &&
-    /w\.location\.replace\("\/app\/"\)/.test(readFile('venueplay/app/vp-oneclick.js')));
+    /w\.location\.replace\(\(w\.VPTrySlot && w\.VPTrySlot\.nextAfterSignIn\) \? w\.VPTrySlot\.nextAfterSignIn\(ls\) : "\/app\/"\)/.test(readFile('venueplay/app/vp-oneclick.js')) &&
+    /if \(!raw\) return "\/app\/";/.test(readFile('venueplay/app/vp-try-slot.js')));   // the console unless the try-it demo was chosen in the last 30 minutes
 
   /* ============================================================================================= */
   section('2. THE DELAYED EMAIL, on the real billing Worker');
   load('tools/rig-billing-worker.js');
+MIG175 = false;   // the database before migration 175 (NOT RUN): every send mints its own link, as live today. The one-link world: test-signin-in-thread.js section 7.
   vpaVerifyJWT = async function (tk) { return tk ? { sub: tk } : null; };
 if (typeof TextEncoder === 'undefined') { TextEncoder = function () {}; TextEncoder.prototype.encode = function (s) { s = unescape(encodeURIComponent(String(s))); var a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }; }
 function fnv(bytes, seed) { var out = new Uint8Array(32), h = (2166136261 ^ seed) >>> 0; for (var r = 0; r < 32; r++) { for (var i = 0; i < bytes.length; i++) { h ^= bytes[i] + r; h = Math.imul(h, 16777619) >>> 0; } out[r] = h & 255; } return out; }
@@ -567,7 +570,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   check('a prospect who pressed Cancel: refused, saying so, and nothing goes', rw.status === 409 && /Cancel/.test(rw.body.error) && sent.length === 1, rw.body);
   DB.vp_prospects[0].cancelled_at = null; DB.vp_prospects[0].paused_at = '2026-11-28T14:00:00Z';
   rw = await resend({ venue_id: v.id });
-  check('a prospect whose free month ran out (paused) gets the add-your-card email, the card being what brings them back', rw.status === 200 && rw.body.template === 'card' && (sent[1] || {}).subject === 'Your venueplay account is ready. One thing left.', rw.body);
+  check('a prospect whose free month ran out (paused) gets the add-your-card email, the card being what brings them back', rw.status === 200 && rw.body.template === 'card' && (sent[1] || {}).subject === 'Your venueplay account is ready', rw.body);
   DB.vp_prospects[0].paused_at = null; DB.venueplay_founding[0].stripe_subscription_id = 'sub_1';
   var n0 = sent.length;
   rw = await resend({ venue_id: v.id });
@@ -607,9 +610,9 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var dc = await resend({ venue_id: U(201), dry_run: true });
   rw = await resend({ venue_id: U(201) });
   again = sent[0] || {};
-  check('an ordinary account still gets the add-your-card email ("One thing left."), with its card link, to its contact only, and the dry run said so first',
-    dc.status === 200 && dc.body.template === 'card' && dc.body.subject === 'Your venueplay account is ready. One thing left.' && rw.status === 200 && rw.body.template === 'card' && sent.length === 1 &&
-    again.subject === 'Your venueplay account is ready. One thing left.' && onlyTo(again, 'owner@ordinary.example') && /\/add-card\?f=/.test(again.html) && /\/add-card\?f=/.test(rw.body.card_url || ''), [dc.body, rw.body, again.subject]);
+  check('an ordinary account still gets the add-your-card email ("Your venueplay account is ready", 5 Nov 2026), with its card link, to its contact only, and the dry run said so first',
+    dc.status === 200 && dc.body.template === 'card' && dc.body.subject === 'Your venueplay account is ready' && rw.status === 200 && rw.body.template === 'card' && sent.length === 1 &&
+    again.subject === 'Your venueplay account is ready' && onlyTo(again, 'owner@ordinary.example') && /\/add-card\?f=/.test(again.html) && /\/add-card\?f=/.test(rw.body.card_url || ''), [dc.body, rw.body, again.subject]);
   check('and no sign-in link is made for it, the audit row says the card template', DB.vp_signin_links.length === 0 && DB.vp_admin_audit.some(function (a) { return a.action === 'welcome_resent' && a.detail.template === 'card'; }) &&
     vpaAuditSentence(DB.vp_admin_audit.filter(function (a) { return a.action === 'welcome_resent'; })[0], 'Ordinary') === 'Sent Ordinary the add-your-card email again.');
   var sa = await resend({ venue_id: U(201), send_at: new Date(Date.now() + 3600000).toISOString() });
@@ -628,7 +631,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var hqWin = { VPProspects: { isProspect: function (id) { return !!PROSPECT_IDS[id]; } } };
   var fakePost = function (path, body) { POSTS.push({ path: path, body: body });
     if (body.dry_run) return Promise.resolve(body.venue_id === 'P1' ? { ok: true, dry_run: true, template: 'prospect', to: 'laketavern@ozemail.com.au', subject: 'Your venueplay account for Lakeside Tavern', signin: 'one_click', sender: 'Harry', slides: 4 }
-      : { ok: true, dry_run: true, template: 'card', to: 'owner@ordinary.example', subject: 'Your venueplay account is ready. One thing left.', comp: false });
+      : { ok: true, dry_run: true, template: 'card', to: 'owner@ordinary.example', subject: 'Your venueplay account is ready', comp: false });
     return Promise.resolve({ ok: true, sent: true, template: 'prospect', to: 'laketavern@ozemail.com.au' }); };
   var hqFns = (new Function('window', 'S', 'workerPost', 'vpAsk', 'vpTell',
     liftFn(HQ, 'resendLabel') + '\n' + liftFn(HQ, 'resendSignInWords') + '\n' + liftFn(HQ, 'hqResendWelcome') + '\nreturn { label: resendLabel, go: hqResendWelcome };'))(
@@ -643,7 +646,7 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
     /one-tap sign-in link/.test(ASKED[0]) && /4 slides/.test(ASKED[0]) && /signed Harry/.test(ASKED[0]) && !/card/i.test(ASKED[0]), [POSTS, ASKED[0]]);
   ANSWER = true;
   await hqFns.go('C1', hqBtn);
-  check('for an ordinary venue the confirm names the add-your-card email, and Yes then sends it (no dry run)', /the add-your-card email again/.test(ASKED[1]) && /One thing left/.test(ASKED[1]) &&
+  check('for an ordinary venue the confirm names the add-your-card email, and Yes then sends it (no dry run)', /the add-your-card email again/.test(ASKED[1]) && /Your venueplay account is ready/.test(ASKED[1]) &&
     POSTS.length === 3 && POSTS[2].path === '/admin/resend-welcome' && !POSTS[2].body.dry_run && POSTS[2].body.venue_id === 'C1' && /Sent to/.test(TOLD[0] || ''), [ASKED[1], POSTS, TOLD]);
   var PANE2 = readFile('venueplay/app/vp-prospects-hq.js');
   var PW = { VP: null, fetch: function () { return Promise.resolve({ ok: true, json: function () { return Promise.resolve({}); } }); }, setTimeout: function () {}, CustomEvent: function () {} };
@@ -653,8 +656,8 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   var hNot = PW.VPProspects._t.cardHtml(prow0), hCx = PW.VPProspects._t.cardHtml(Object.assign({}, prow0, { status: 'cancelled', cancelled_at: '2026-10-31T02:00:00Z' }));
   /* ONE BUTTON (Dean, 4 Nov 2026): "Resend their account email" and "Resend sign-in link" looked the same, so a prospect
      row has only "Send them a new sign-in link" now; one who cancelled has neither. */
-  check('HQ > Prospects: each prospect row has ONE send button, "Send them a new sign-in link", and no "Resend their account email"; one who cancelled has none',
-    /data-pr-signin="[^"]+">Send them a new sign-in link<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
+  check('HQ > Prospects: each prospect row has ONE send button, "Send their sign-in link again", and no "Resend their account email"; one who cancelled has none',
+    /data-pr-signin="[^"]+">Send their sign-in link again<span class="prvia">/.test(hNot) && !/data-pr-welcome|Resend their account email/.test(hNot) && !/data-pr-signin|data-pr-welcome/.test(hCx), hNot);
 
   section('3. "Please call me": the exact request the first run sends, through the real /help/venue/ticket');
   world();
@@ -669,6 +672,11 @@ if (typeof Response === 'undefined') { Response = function (body, init) { this.b
   check('a ticket "Please call me", venue support, for that venue, with their mobile in it and on the ticket', hr.status === 200 && tkt.subject === 'Please call me' && tkt.category === 'venue_support' && tkt.venue_id === U(101) &&
     /Please call me on 0452 510 904/.test(tkt.message) && tkt.contact_phone === '+61452510904' && tkt.contact_email === 'cazreitop@gmail.com', tkt);
   check('staff are alerted, and the venue gets its number back', hr.body.ticket_no && sent.some(function (x) { return /^venueplay \u00b7 Action needed: Venue support \[#\d+\]/.test(x.subject); }), sent.map(function (x) { return x.subject; }));
+
+  section('9. MUSICAL BINGO HAS ITS OWN STEP');
+  var cm = ctxFor('manager'); cm.settings.setup_answers.games = ['musical'];
+  var PMu = page(); var RMu = PMu.FR.open(cm, PMu.deps); await RMu.ready; await RMu.go('musical'); $(PMu, 'vpFrMusical').click();
+  check('Open musical bingo (its own step, offered as musical bingo, never as bingo) opens that console for their venue', OPENED[OPENED.length - 1] === '/app/musical/host.html?venue=caz-reitop-s-dirty-secrets' && /Open musical bingo/.test(T(PMu, 'vpFrMusical')), OPENED);
 
   if (bad) throw new Error('prospect welcome v2: ' + bad + ' of ' + ran + ' failed');
   print(''); print('PASS ' + ran + ' checks');

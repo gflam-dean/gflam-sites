@@ -881,7 +881,10 @@ def local_checks(which):
     # screens, and the reason it has to stay that way is that the fault it fixes was
     # exactly this: five screens each deciding for themselves when to show the
     # Reconnecting pill, and all five getting it wrong in two different directions.
-    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus']
+    # vpVenueKey, vpVenuePostcode and vpVenueMatch joined on 5 Nov 2026 (INBOX 62, 81): "is this the same
+    # venue?" is asked by the no-card start's licensed list and later (item 62) the coaster round.
+    # The source is venueplay-backend/worker/vp-venue-match.js; each Worker carries a copy.
+    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus', 'vpVenueKey', 'vpVenuePostcode', 'vpVenueMatch']
     def fnbody(src, name):
         m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
         if not m:
@@ -3869,9 +3872,41 @@ def local_checks(which):
             # D92: a prospect's free month, its card reminders and the pause (Dean, 29 Oct 2026; migration 127).
             ('D92. A prospect\'s free month starts at first sign-in, reminds them on its days, and pauses with the offer gone if no card',
              'test-prospect-free-month.js',
-             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 and 29 only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
+             'the month starts once at the first sign-in (never View as); reminders on day 3, 23 (a week out) and 30 (the last day) only, inside 8am to 5pm weekdays, weekends moved, one at a time, never twice; a card or a cancel stops them; no card at the end pauses the venue with its ads on; the offer held through the month and gone after the pause; cancel asks first; the pause screen says it', 48,
              'A reminder at 3am or on a Sunday, the same email twice, a venue switched off with a card on it, a '
              'scanner cancelling a venue, or a paused venue still charged the offer it lost'),
+            # D145: the no-card start (Dean, 5 Nov 2026; INBOX 80B, 81, 84, as changed by 97), branch fix/signup-core-10nov.
+            # Items 60 and 61 (the same pub across accounts, the known-person prefill) are parked on fix/same-pub-later.
+            ('D145. The no-card start makes an account after the text code from a venue name, postcode and pub or club, flags one not on our licensed list, one free month per mobile and email, and never bills',
+             'test-signup-core.js',
+             'runs the billing Worker: the five boxes and pub or club checked (a blank name, a postcode that is not 4 digits, or no pub or club refused), the honeypot and the bot check, eight code requests an hour per network, a 6-digit code texted through the SMS hook and kept only as a hash, five wrong tries spend it; nothing made before the code passes; then the prospect account at 10 players with no card, no Stripe and the free month not started, a club as non_profit with its paid entry open by state; a venue on our licensed list (vpVenueMatch) carries its match, one not on it (or a list that will not answer) is made AND flagged for HQ until Checked (owner or accounts, once); a mobile or email already on venueplay (a login, an account typed any way, an earlier sign-up) is held with Dean\'s words and one ticket, Approve (as the pub or club they chose, with the welcome) or Refuse in one tap; a login or account read that fails makes nothing; a double tap makes one account; no session, no seats above 10, no uplift on any path; HQ\'s list escapes what the public typed; the parked items 60 and 61 are absent', 96,
+             'A stranger, a bot or a returning venue given a free month, or a sign-up that reaches Stripe or a bill'),
+            # D160/D161: the try-it demo on the one trivia engine is never billed (Dean, 5 Nov 2026; INBOX 82, 84b; migration 172),
+            # branch fix/try-demo-10nov.
+            ('D160. The try-it demo runs on the real trivia engine and is never billed, never metered and never remembered',
+             'test-try-demo.js',
+             'runs the game Worker: a demo session carries is_demo, a real night never runs on one and a demo never takes over a real night, 3 a day, trivia only; its join screen asks name, email, mobile and the one tick; 50 phones and 10 get in; ticked, the player is on that venue\'s list and nowhere else, not ticked no contact is kept; 5 questions of 30 s whatever is sent, no weekly check or stamp, no asked-question memory, no saved prefs, no 402; never charged with 50 players and approval, the streak untouched; a real night beside it does all of those; metering leaves it out; a venue plays it before the Terms tick, its real night still waits', 49,
+             'A venue billed, moved up a plan or locked out of its trivia night by a demo, a real night run unbilled as a demo, or a demo player\'s details kept without their tick'),
+            ('D162. The try-it demo asks how many players (up to 10), reveals at 30 s or when all have answered, and pre-fills only their own details',
+             'test-vp-demo.js',
+             'runs vp-demo.js and vp-try-slot.js: default 1 and up to 10 players (50 typed is 10); an answer goes up when the 30 s run out or everyone in has answered, whichever comes first, all of them when fewer joined; which screens each choice and device shows (two-screen, the TV code, the host link; no second device skips the demo into the account; the phone-only demo switched off); their name, email and mobile through the #fragment only, wiped once read, never over what was typed, never the offers tick; links on our origin, never .dev; after sign-in the demo only if chosen in the last 30 minutes and only its two fixed addresses', 49,
+             'A demo that waits for players who never come, a prefill that ticks the offers box for them, or a sign-in page that redirects anywhere'),
+            ('D161. The billing Worker leaves the try-it demo out of every stats, activity and "has it played" read',
+             'test-try-demo-billing.js',
+             'runs the billing Worker with a demo beside a real night: quiet venues, venue history, auto-archive, set players\' "played since", venue stats, metering stats, the monthly report read, the draw log and the nights list each ask vp_sessions with is_demo=not.is.true and show only the real night; find a person still sees demo players', 22,
+             'A demo counted as a night in a venue\'s stats or report, keeping a cancelling venue alive, or closing the one-hour undo on a players change'),
+            # D176: account ready after a self sign-up, the text and the Welcome email (Dean, 6 Nov 2026), branch fix/account-ready-10nov.
+            ('D176. A venue made by the no-card start gets one text and one Welcome to venueplay email, once',
+             'test-account-ready.js',
+             'runs /start/begin and /start/verify on the billing Worker with a fake Mobile Message and Resend: ONE text from the venueplay sender to the mobile that passed the code in Dean\'s words, no link; ONE Welcome to venueplay email from hello@send.venueplay.com.au with one sign-in button (the text-code sign-in, their mobile filled in, no token), the sender address, the screen code and what to do first; an unlisted venue the same, a held one nothing; never twice (the same code, a second call, an audit that will not answer sends nothing); a provider down, no provider, an opted-out number or no email key never stops the done screen; a link typed as the venue name never reaches the text; what they typed is escaped in the email; the audit keeps the last 3 digits only; the email goes first so the text can say it was emailed too (check junk), two SMS parts at most; the email gives venueplay.com.au/go/{screen code} as the easy way back in', 28,
+             'A venue that closed the tab at the bar with nothing in its inbox, or a sign-up texted and emailed twice'),
+            # D115: the sign-in link in the prospect's own thread, and where the account email got to (Dean, 5 Nov 2026),
+            # branch feature/signin-in-thread-6nov.
+            ('D115. A prospect\'s sign-in link can go in their own email thread, and HQ shows where the account email got to',
+             'test-signin-in-thread.js',
+             'the autopilot setup hands back the reply\'s own one-use link (or the text-code sign-in for a mobile login) only when asked, never from HQ or a dry run; the thread-link route is the key only, a quiet prospect only, nothing emailed, older links retired, the 30 days not restarted; delivered, bounced at their domain, cancelled, link opened and signed in in plain words, Resend down never read as delivered; a \'yes\' reply\'s text goes to their own mobile only when texts are on, with a fresh link and an opt-out, labelled yes_reply; the account email names the address our emails come from; ONE link per prospect (migration 175): the welcome, the thread reply, every follow-up and HQ\'s Resend carry the same short link with the same end, never a login key (opening it leads to the normal text-code sign-in with their mobile filled in, or empty when we hold none and the number they type goes on their login; plain sign-in once claimed or past the 30 days; opened is recorded; 12 letters, 15 an hour per network, 600 from everywhere, one HQ ticket on a burst), only HQ\'s Start a fresh 30 days renews; venueplay.com.au/go/{venue code} only sends a link to what is on the account, rate limited, never saying what', 75,
+             'A sign-in link handed out for a customer who already signs in, a link emailed again through the '
+             'address that was junked, or HQ saying delivered when nobody knows'),
             # D98: no email a venue or a player gets carries a workers.dev address (31 Oct 2026, the Ozemail bounce
             # "550 5.7.1 Policy-DT510"), branch fix/no-workersdev-links-31oct. (D94 and D96 left free, as D97 says.)
             # Extended the same day (fix/own-domains-31oct) to every .dev host, the headers too, once the Workers
@@ -3885,11 +3920,13 @@ def local_checks(which):
             # never Gflam Group, never founding; 31 Oct: the paid-invoice email delivers Stripe's tax invoice and
             # says "Tax invoice"), branch
             # fix/receipts-and-host-titles-31oct. The billing page's words: tools/billing-words-in-chrome.test.py.
-            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email says Tax invoice',
+            # 5 Nov 2026 (fix/email-copy-8nov): the paid-invoice email is the RECEIPT and links Stripe's tax invoice
+            # (Dean: "don't call the email itself a tax invoice unless it is one").
+            ('D99. Billing emails say venueplay plan and "venueplay, ABN", never founding or Gflam; the paid-invoice email is a receipt that links the tax invoice',
              'test-receipts-plain-words.js',
-             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan (monthly)" with Stripe\'s quantity, rate and dates; the paid-invoice email delivers Stripe\'s tax invoice and says so ("Tax invoice. venueplay, ABN 35 679 383 049. Prices include GST.", its subject, preview, body and title as before), View invoice opening Stripe\'s hosted invoice; the tax invoice, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
-             'A venue reading "Founding Membership" or Gflam Group on its tax invoice email, or that email no longer '
-             'saying it is the tax invoice it delivers'),
+             'Stripe\'s "Founding Membership" lines are printed as "venueplay plan, monthly" over "N players at $x each" with Stripe\'s quantity, rate and dates; the paid-invoice email is the receipt ("Your venueplay receipt: $x paid", "Prices include GST. venueplay, ABN 35 679 383 049.", never "Tax invoice." in its small print), "View your tax invoice" opening Stripe\'s hosted invoice and the PDF beside it, ending "Thank you for being with us."; the receipt, reminder, declined card (both kinds), plan moved up and welcome carry no founding or Gflam, and the billing emails the "venueplay, ABN 35 679 383 049" line; the big-night count still reads Stripe\'s own line', 42,
+             'A venue reading "Founding Membership" or Gflam Group on a billing email, a receipt calling itself a tax '
+             'invoice, or the tax invoice no longer one tap away'),
             # D100: the lobby poll answered from the Worker's memory (31 Oct 2026, after the 30 Oct live ramp bent the
             # database gateway at about 43 calls a second), branch fix/lobby-poll-31oct.
             ('D100. A lobby full of phones costs the database one read per few seconds, and still moves with the host',
@@ -3985,6 +4022,30 @@ def local_checks(which):
              'runs vp-firstrun.js: the TV, hosts, a first game, then the card; the venue\'s own screen code (its join code or the console\'s derived one), the Google TV app linked to its Play page then the code, or venueplay.com.au/tv in the TV\'s browser, the code and full screen, Google TV first, no slug link; hosts at this venue listed, a name and an Australian mobile asked for before anything is sent, /account/host-add for this venue only, the Worker\'s refusal shown, never an email; trivia first and pink, musical bingo never called bingo; nothing under 15px, nothing wider than a phone, the Terms card lifted on a phone; the wizard asks first: is the venue name right (a wrong one goes to HQ as a ticket), how many TVs, which nights, which games (trivia, musical bingo, bingo, raffles, members draws), each optional and saved to vp_venue_settings.setup_answers (migration 163, NOT RUN) through saveSettings with only the known keys and values, kept on the device too, a question already answered left out, the answers shaping the TV step and the test game step, an Account page card reading them, and ONE more optional question on a later sign-in (never two, skippable, never again after two skips, never for a venue the guide is not for); then About you: their name while it is still "<venue> manager" (/account/my-name) and a logo while there is none (/account/logo-upload, this venue, PNG, WebP or JPEG, 1MB), each optional and only when empty, the Worker\'s refusal shown, the step left out when both are done; lowercase venueplay, no dashes', 123,
              'A new venue told to type a slug link the TV no longer takes, a host added to every venue on the account '
              'or never texted, or a guide too small to read on the owner\'s phone'),
+            # D172: Confirm winner shows the win at once (Dean, live, 6 Nov 2026), branch fix/recover-3nov-10nov.
+            ('D172. Confirm winner puts BINGO and the name on the TV and YOU WON on the phone at once, then the host chooses Keep playing or Finish game',
+             'test-bingo-confirm-shows-win.js',
+             'runs the real bingo console and real phones: the host\'s Confirm winner tap sends the win straight away (held, with a wid), the winner\'s phone goes to YOU WON and everyone else\'s says who won, the console still offers Keep playing or Finish game and records no prize yet; Keep playing sends the same win once more marked shown with the next pattern and prize, every phone back to its ticket, the line kept, the prize recorded once; Finish game leaves the win up; a tie confirmed one by one goes out as one win with both names', 22,
+             'A room left staring at "BINGO? Checking the card" after the host has confirmed the win, a winner '
+             'celebrated twice, a prize recorded twice, or a phone stuck on YOU WON while the game plays on'),
+            # D170, D171: the player's feedback follow-up and Dean's 2 Nov rules (approved 1 and 2 Nov 2026 on
+            # release/tue-3nov, never merged; brought back 6 Nov 2026 on fix/recover-3nov-10nov; migration 137, live).
+            ('D170. After "How was that?" every player phone asks one optional follow-up, for Loved it, Good and Not for me alike, with only the venueplay email-me tick',
+             'test-feedback-form.js',
+             'runs vp-feedback.js on a stand-in page for all three ratings: the follow-up opens once the game Worker hands back the rating\'s id, What did you love / What would make it better / Sorry to hear that. What went wrong?, the chips (the billing Worker\'s VPF_TAGS word for word), an optional line, the one unticked "venueplay can email me about this feedback (only about this)" on Good and Not for me only with the email box hidden until ticked, "Only the venueplay team reads this.", Send posts to /help/feedback against that rating, No thanks posts nothing, no id means no form, asked once; bingo, musical and trivia phones all load it and ask; the real game Worker answers the id; the bingo, musical and trivia consoles say "9 players loved tonight" through vp-loved.js from a tally of Loved it and Good only, never Not for me or a percentage', 73,
+             'A player who taps Good or Not for me and is never asked why, an email sent without its tick, '
+             'a form that offers to pass words to the venue, or chips the Worker silently drops'),
+            ('D171. A player\'s follow-up reaches HQ only, a venue sees counts of Loved it and Good, and HQ is alerted at two Not for me a night',
+             'test-feedback-consent.js',
+             'runs the billing Worker: ticks a phone sends are ignored and nothing for the venue is stored; the email only on Good or Not for me, only with its tick, only into a help desk ticket and never in vp_feedback_notes; one HQ alert at two Not for me at one venue on one night, once; a venue reads counts of Loved it and Good only (account panel, monthly report and email), never another venue; Only bad player feedback alerts on a device, kept on every ticket before migration 137; HQ sees every note, never an email', 48,
+             'A venue shown a player\'s words or a Not for me count, an email kept where it should not be, or HQ '
+             'never told when a room did not enjoy the night'),
+            # D115: Dean's 5 Nov 2026 evening email notes, branch fix/email-copy-8nov.
+            ('D115. The receipt asks how we are going with signed faces, Manage your plan opens Account > Billing, the reminders carry real numbers, one button style, and the grace and kept-days words stay OFF',
+             'test-receipt-survey.js',
+             'runs the receipt: "View your tax invoice", the paid date, three faces signed for that invoice to venueplay.com.au/rate/ (never .dev, never unsigned) and "or tap Send feedback", "Thank you for being with us."; runs the /rate/ page: nothing sent on load, Send POSTs /venue-rating once, and until that route answers ok the mail app takes it to support@; Manage your plan is venueplay.com.au/app/billing.html#billing and a signed-out owner is brought back to it once after sign-in (30 minutes, /app pages only); the plan line in one plain line, a group split venue by venue only when it adds up; VPA_OFFER_GRACE_LIVE and VPA_PAUSED_KEEP_DAYS are off and the emails say today\'s rule; the one-week and last-day reminders carry their real numbers, the first-night version, or nothing; every button in every email is the one centred button', 54,
+             'A rating page a mail scanner fills in, a survey link anyone can forge, Manage your plan landing on the '
+             'console, or the emails promising a grace the billing does not give'),
             ('D47. The Terms put gaming compliance, permits, attendance, age, records and an indemnity on the venue',
              'test-terms-put-compliance-on-the-venue.js',
              'section 6 carries every clause the lawyer asked for, and the onboarding tick is one sentence everywhere', 40,
@@ -4012,6 +4073,19 @@ def local_checks(which):
              'a new lobby in a multi-game night sends phones to that game, not the last one played', 6,
              'After trivia, the whole room typing the code into the bingo lobby lands on a dead trivia '
              'page, and after bingo a musical lobby shows last game\'s YOU WON'),
+            # D140 and D141: Dean's live play at Test Alpha, 6 Nov 2026 (findings B, C, C2, D, F, G, I), branch
+            # fix/session-lifecycle-6nov. Worker half (needs a restamp and a deploy) and console, phone and TV half.
+            ('D140. A trivia or musical lobby nobody is running is not live, and a phone on a dead night is told to re-join',
+             'test-session-lifecycle.js',
+             'a walked-away trivia or musical lobby is gone for /play, /join/info and the next lobby, which closes it and opens a fresh one; a bingo night, a running game and a young lobby are never touched; a finished night answers stale:true on /player/card', 19,
+             'A host who leaves without End game keeps the venue\'s one live session answering "musical" to /play for the '
+             'rest of the night, a bingo lobby is sent to "Up first: Musical bingo", and a phone that joined a lobby '
+             'sits on "You\'re in" with no card for the whole game'),
+            ('D141. A closed tab leaves no ghost "other device", a takeover keeps the room, the bingo console says bingo, and the musical wall and console say what they hear',
+             'test-session-lifecycle-client.js',
+             'a night another page holds is not closed by this page, a waiting close is sent before the other-device question, a reopened night is not closed, the bingo console re-posts its format, the musical phone re-joins on stale, the TV reports blocked sound from the lobby and on song 1, the console plays it at once, and the wall counts songs played', 28,
+             'A takeover that ends the lobby under the room ("No active game with that code"), a bingo lobby that '
+             'still says musical, a silent first song nobody was told about, or a wall that says "Song 14" twice'),
             ('D44. A paper card or team is one player, printing is capped, and a paper night holds its answers',
              'test-paper-players.js',
              'paper cards and sheets bill once, stop at ten, and keep a paper round\'s answers off every screen', 45,

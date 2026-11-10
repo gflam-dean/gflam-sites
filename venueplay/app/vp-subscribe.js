@@ -8,7 +8,10 @@
 
      <form data-vps data-source="home">        source: home | offer | see-a-night
        input[name=email]                       required
-       input[name=venue]                       optional
+       input[name=venue]                       required (2 Nov 2026): who we are writing to
+       input[name=postcode]                    required (2 Nov 2026): the venue's 4 digits, so an offer only
+                                               goes to the state it is for. The Worker works out the state
+                                               and checks both again; the words here are the Worker's own.
        input[name=website]                     the honeypot: hidden from people, a bot fills it
        [data-vps-ts]                           where Turnstile goes, only when the Worker has a key
        button[type=submit]
@@ -106,6 +109,7 @@
     if (f.getAttribute("data-vps-wired")) return;
     f.setAttribute("data-vps-wired", "1");
     var email = f.querySelector('input[name="email"]'), venue = f.querySelector('input[name="venue"]');
+    var pc = f.querySelector('input[name="postcode"]');
     var hp = f.querySelector('input[name="website"]'), btn = f.querySelector('button[type="submit"]');
     var done = f.parentNode && f.parentNode.querySelector("[data-vps-done]");
     var label = btn ? btn.textContent : "";
@@ -129,9 +133,15 @@
       var e = String((email && email.value) || "").trim();
       if (!e) { showErr(f, "Put in your email first."); if (email) email.focus(); return; }
       if (!EMAIL_RE.test(e) || e.length > 254) { showErr(f, "That email address does not look right."); if (email) email.focus(); return; }
+      var v = String((venue && venue.value) || "").trim();
+      if (venue && !v) { showErr(f, "Put in your venue's name, so we know who we are writing to."); venue.focus(); return; }
+      var p = pc ? String(pc.value || "").replace(/\s+/g, "") : null;
+      if (pc && !p) { showErr(f, "Put in your venue's postcode, so we only send you what applies in your state."); pc.focus(); return; }
+      if (pc && !/^\d{4}$/.test(p)) { showErr(f, "That postcode does not look right. Use your venue's 4-digit postcode."); pc.focus(); return; }
       showErr(f, "");
-      var body = { email: e, venue: String((venue && venue.value) || "").trim(), source: f.getAttribute("data-source") || "site",
+      var body = { email: e, venue: v, source: f.getAttribute("data-source") || "site",
                    utm: utm(), website: String((hp && hp.value) || "") };
+      if (pc) body.postcode = p;   // the Worker holds a form that sends this to the new rules
       try { if (root.turnstile && ts.id !== null) body.turnstile = root.turnstile.getResponse(ts.id) || ""; } catch (x) {}
       if (btn) { btn.disabled = true; btn.textContent = "Adding you..."; }
       root.fetch(API + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
