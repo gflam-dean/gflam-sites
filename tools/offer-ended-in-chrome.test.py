@@ -217,10 +217,13 @@ try:
         S.close_tab(tid)
 
     print('\n/offer-nov, THE WORKER SAYS THE NOVEMBER CODE IS OPEN')
-    tid, sid = load(S, '/offer-nov', 'never', 390, 844, True)
+    # 10 Nov 2026: WRITTEN_FOR is now 'dec', so INSIDE_MS is a day in December. This section is about the
+    # November page while November is still open, so it pins its own clock inside November (25 Nov, Brisbane).
+    NOV_INSIDE_MS = int((datetime.datetime(2026, 11, 25, tzinfo=datetime.timezone.utc) - datetime.timedelta(hours=10)).timestamp() * 1000)
+    tid, sid = load(S, '/offer-nov', 'never', 390, 844, True, clock_ms=NOV_INSIDE_MS)
     base = see(S, sid)
     S.close_tab(tid)
-    tid, sid = load(S, '/offer-nov', 'open', 390, 844, True)
+    tid, sid = load(S, '/offer-nov', 'open', 390, 844, True, clock_ms=NOV_INSIDE_MS)
     v = see(S, sid)
     ok('/offer-nov asked about OFFER-NOV-2026 and shows no ended banner',
        any('OFFER-NOV-2026' in a for a in v.get('asked', [])) and v.get('ended') is None and 'This offer ended' not in v.get('all', ''), v.get('asked'))
