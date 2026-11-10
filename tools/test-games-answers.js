@@ -49,7 +49,7 @@ var V1 = 'b0000000-0000-4000-8000-000000000001', V2 = 'b0000000-0000-4000-8000-0
 var fails = 0, ran = 0;
 function check(name, ok, saw) { ran++; if (ok) print('  ok   ' + name); else { print('  FAIL ' + name + (saw === undefined ? '' : '   saw: ' + JSON.stringify(saw).slice(0, 400))); fails++; } }
 vpaVerifyJWT = async function (t) { return t ? { sub: t } : null; };
-var NOW = Date.parse('2026-10-31T17:00:00Z');              // 3am on Sun 1 Nov in Brisbane
+var NOW = Date.parse('2026-11-02T00:00:00Z');              // 10am Mon 2 Nov in Brisbane, inside the send window (Mon-Fri 9-12, first 7 days)
 Date.now = function () { return NOW; };
 var ADMIN = '60000000-0000-4000-8000-000000000009', STAFF_ADMIN = '60000000-0000-4000-8000-000000000010';
 function as(user, body) { var h = { Authorization: 'Bearer ' + user };
@@ -137,7 +137,7 @@ function row(html, name) {
   check('the totals in words, each labelled', /<b>Running total:<\/b> 3 of 4 active venues have told us which games they play\./.test(mail.html) && /<b>New in October:<\/b> 2 answered in October 2026\./.test(mail.html));
   check('the game table says Total, New in Oct and Set up, short enough never to break on a phone, and says Total is the running total', />Total<\/th>/.test(mail.html) && />New in Oct<\/th>/.test(mail.html) && />Set up<\/th>/.test(mail.html) && /Total is the running total/.test(mail.html) && !/Venues that play it/.test(mail.html));
   check('no long dash, venueplay in lower case, never Gflam', !/[\u2014\u2013]|&mdash;|&ndash;/.test(mail.html + mail.subject) && !/VenuePlay|Venueplay|VENUEPLAY/.test(mail.html.replace(/alt="[^"]*"/g, '')) && !/gflam/i.test(mail.html));
-  check('the new-look staff card (logo band and the for-your-info pill)', /venueplay-email-on-dark\.png/.test(mail.html) && /FOR YOUR INFO/.test(mail.html));
+  check('the new-look staff card (logo band and the for-your-info pill)', /venueplay-email-header-solid\.png/.test(mail.html) && /FOR YOUR INFO/.test(mail.html));
 
   print('state by state, and something else');
   var sn = t.states.map(function (x) { return x.name; }).join('|');
@@ -237,9 +237,9 @@ function row(html, name) {
   var ga = gamesAudits();
   check('one record, target games-answers:2026-10, with what was sent', ga.length === 1 && ga[0].target === 'games-answers:2026-10' && ga[0].detail.answered === 3 && ga[0].detail.accepted === true, ga);
   var before = sent.length;
-  var run2 = await vprMonthlySweep(ENVON, Date.parse('2026-10-31T18:00:00Z'));
+  var run2 = await vprMonthlySweep(ENVON, Date.parse('2026-11-02T01:00:00Z'));
   check('the next tick the same month sends nothing more', sent.length === before && gamesMail().length === 1 && gamesAudits().length === 1 && run2.games.already === true, [sent.length, run2.games]);
-  await vprMonthlySweep(ENVON, Date.parse('2026-11-02T19:00:00Z'));
+  await vprMonthlySweep(ENVON, Date.parse('2026-11-03T01:00:00Z'));
   check('nor on the 3rd', gamesMail().length === 1 && gamesAudits().length === 1);
 
   print('before migration 163');
@@ -249,7 +249,7 @@ function row(html, name) {
   check('and it says why', miss.games && /163/.test(miss.games.skipped || ''), miss.games);
   check('the venue reports still go', sent.some(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }) && DB.vp_admin_audit.some(function (a) { return a.action === 'monthly_report_sent'; }), [miss, sent.length]);
   COLUMN_MISSING = false;
-  await vprMonthlySweep(ENVON, Date.parse('2026-10-31T19:00:00Z'));
+  await vprMonthlySweep(ENVON, Date.parse('2026-11-02T02:00:00Z'));
   check('once the column is there, the next tick sends it, once', gamesMail().length === 1 && gamesAudits().length === 1);
 
   print('nobody has answered yet, or the record cannot be written');
@@ -262,7 +262,7 @@ function row(html, name) {
   var nowrite = await vprMonthlySweep(ENVON, NOW);
   check('a record that cannot be written means no email (so it can never go twice)', gamesMail().length === 0 && nowrite.games.failed === true, nowrite.games);
   check('and the venue reports still go', sent.some(function (m) { return m.to[0] === 'owner@royalhotel.com.au'; }));
-  await vprMonthlySweep(ENVON, Date.parse('2026-10-31T18:00:00Z'));
+  await vprMonthlySweep(ENVON, Date.parse('2026-11-02T01:00:00Z'));
   check('the next tick sends it, once', gamesMail().length === 1 && gamesAudits().length === 1);
 
   print('HQ > Reports: What venues play, any day (owner only, never sends)');

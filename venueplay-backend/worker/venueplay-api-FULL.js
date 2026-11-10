@@ -5480,9 +5480,7 @@ function vpaRenderMembersReminder(env, o) {
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">' + (o.firstName ? 'Hi ' + vpaEsc(o.firstName) + ',' : 'Hi there,') + '</p>'
     + '<p style="margin:12px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Here is your weekly reminder to update the members list at ' + vpaEsc(o.venueName || 'your venue')
     + '. A list that is up to date means the TV draws a real member on your draw night.</p>'
-    + '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr><td>'
-    + '<a href="' + link + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 26px;border-radius:10px">Update my members list</a>'
-    + '</td></tr></table>'
+    + vpaEmailButton(link, 'Update my members list')
     + '<p style="margin:20px 0 0;font-size:14px;line-height:1.6;color:#6a6a75">You asked for this reminder when you set up your games, every ' + VPA_MR_DAYWORDS[o.day] + '. To stop it, open your Account page, then Members draws, and choose No thanks under the weekly reminder.</p>'
     + '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venueplay team</p>'
     + '<p style="margin:18px 0 0;font-size:12.5px;line-height:1.6;color:#8a8a95;border-top:1px solid #eee;padding-top:14px">Need a hand? Just reply to this email, or call ' + VP_SUPPORT_PHONE + ' and press 2.</p>';
