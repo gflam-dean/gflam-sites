@@ -255,6 +255,10 @@
   "checks": 32,
   "counted_by": "lines"
  },
+ "tools/musical-card-spacing-in-chrome.test.py": {
+  "checks": 378,
+  "counted_by": "lines"
+ },
  "tools/musical-host-titles-in-chrome.test.py": {
   "checks": 18,
   "counted_by": "lines"
@@ -699,12 +703,16 @@
   "checks": 70,
   "counted_by": "lines"
  },
+ "tools/test-musical-card-10nov.js": {
+  "checks": 41,
+  "counted_by": "lines"
+ },
  "tools/test-musical-host.js": {
-  "checks": 94,
+  "checks": 119,
   "counted_by": "lines"
  },
  "tools/test-musical-newlook.js": {
-  "checks": 62,
+  "checks": 54,
   "counted_by": "lines"
  },
  "tools/test-musical-phone.js": {
@@ -721,6 +729,10 @@
  },
  "tools/test-musical-tonight.js": {
   "checks": 16,
+  "counted_by": "lines"
+ },
+ "tools/test-musical-tv-10nov.js": {
+  "checks": 23,
   "counted_by": "lines"
  },
  "tools/test-night-pass-hq.js": {
