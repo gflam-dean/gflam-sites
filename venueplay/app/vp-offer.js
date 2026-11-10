@@ -32,7 +32,7 @@
      /offer-<mon> address is that one file, so the dates typed into its HTML are what a reader
      without JavaScript (a crawler, a link preview, curl) sees on ALL of them. The gate holds the
      typed dates to this row, and goes red once this row's month has ended. */
-  var WRITTEN_FOR = 'nov';
+  var WRITTEN_FOR = 'dec';
 
   /* THE ROW FOR TODAY (Dean, 4 Nov 2026). The row whose code belongs to this calendar month in
      Brisbane (UTC+10 all year, no daylight saving): the code the billing Worker honours today
