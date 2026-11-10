@@ -1535,6 +1535,10 @@
   "checks": 104,
   "counted_by": "lines"
  },
+ "venueplay-backend/worker/overage-note.test.js": {
+  "checks": 39,
+  "counted_by": "lines"
+ },
  "venueplay-backend/worker/owner-only-routes.test.js": {
   "checks": 42,
   "counted_by": "lines"

@@ -9908,8 +9908,8 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
    Links to the Stripe-hosted invoice + PDF (which carry your Stripe branding).
    Skips $0 trial invoices and is best-effort so it never affects the webhook. */
 // Read the busy-night overage off an invoice's own line items. chargeNightOverage (game worker)
-// adds one Stripe invoiceitem per over-cap night, described "Big night extra players ...", at the
-// flat $2/head rate. So the invoice itself is the source of truth - no re-aggregation, no double
+// adds one Stripe invoiceitem per over-cap night, described "<venue> - Extra Player - DD/MM/YYYY"
+// since 11 Sep 2026 ("Big night extra players ..." before), quantity x $2.00 or $1.00 (vpaBigNightLine). So the invoice itself is the source of truth - no re-aggregation, no double
 // count. Returns { nights, players (total extra player-nights), cents }.
 /* Which invoice lines are BIG-NIGHT OVERAGE, for the "busy month" line in the customer's email.
 
@@ -9920,9 +9920,9 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
    charged ($2.50 or $3.00 for a plan increase, and $1.00 on a third consecutive big night), so the
    headcount in that sentence was wrong too.
 
-   chargeNightOverage in the game Worker writes exactly one shape: "Big night extra players - ...".
-   Anchor on that and nothing else can be mistaken for it. The per-night rate is read back out of
-   the description rather than assumed. */
+   chargeNightOverage in the game Worker wrote "Big night extra players - ..." until 11 Sep 2026 and
+   "<venue> - Extra Player - DD/MM/YYYY" since; both are read, and an added player in the same
+   words is told apart by Stripe's unit price (vpaBigNightLine, INBOX 94). */
 /* EVERY LINE ON THE BILL, NOT JUST THE BIG NIGHTS.
 
    The reminder showed a bare "Amount due $10.00" and nothing else, because the only
@@ -10452,15 +10452,59 @@ async function vpbStampInvoiceVenueLines(env, invoice) {
   }
 }
 
+/* THE BIG NIGHT AS THE GAME WORKER WRITES IT TODAY (INBOX 94, Dean's yes 5 Nov 2026).
+
+   Since 11 Sep 2026 chargeNightOverage writes "<venue> - Extra Player - DD/MM/YYYY" with Stripe's
+   quantity and a unit of $2.00, or $1.00 plus " (3rd big night, plan moved up)" on the third night
+   in a row. vpaOverageFromInvoice still only knew "Big night extra players - ...", so from then on
+   no receipt said "Includes N extra players" and no reminder said it was a busy month.
+
+   The billing page writes an ADDED PLAYER with the very same words at the plan rate ($2.50 or
+   $3.00, vpbRateStrict), so the words alone cannot tell them apart. Stripe's own unit price can:
+   a big night is the third-night marker or a $2.00 unit, which is the rule vpbExtraLine (above, the
+   group split) uses, so the receipt note and the group split read every line the same.
+   The venue is everything before the first " - Extra Player - ", so "Bar - Grill" stays whole.
+   Returns { venue, date, players, unit, cents, third } or null. */
+function vpaBigNightLine(l) {
+  if (!l || l.proration === true) return null;
+  const cents = Number(l.amount);
+  if (!Number.isInteger(cents) || !(cents > 0)) return null;
+  const desc = String(l.description || '');
+  const m = /^(.+?) - Extra Player - (\d{2}\/\d{2}\/\d{4})( \(3rd big night, plan moved up\))?\s*$/.exec(desc);
+  if (!m) return null;
+  const third = !!m[3];
+  let qty = parseInt(l.quantity, 10);
+  if (!(qty > 0)) {
+    if (!third || cents % 100 !== 0) return null;   // no quantity: only the $1.00 third night is certain
+    qty = cents / 100;
+  }
+  if (cents % qty !== 0) return null;
+  const unit = cents / qty;
+  if (!third && unit !== 200) return null;           // an added player at the plan rate, not a big night
+  return { venue: m[1].trim(), date: m[2], players: qty, unit: unit, cents: cents, third: third };
+}
+
+/* Returns { nights, players (total extra player-nights), cents, half (nights at $1.00), full }.
+   Both wordings are read: today's line above, and the old "Big night extra players - <venue> -
+   <date> - 12 over 100 at $2.00" that invoices from before 11 Sep 2026 still carry. */
 function vpaOverageFromInvoice(invoice) {
-  const out = { nights: 0, players: 0, cents: 0 };
+  const out = { nights: 0, players: 0, cents: 0, half: 0, full: 0 };
   const lines = invoice && invoice.lines && invoice.lines.data;
   if (!Array.isArray(lines)) return out;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     const desc = String((l && l.description) || '');
+    const now = vpaBigNightLine(l);
+    if (now) {
+      out.nights += 1;
+      out.cents += now.cents;
+      out.players += now.players;
+      if (now.unit === 100) out.half += 1; else out.full += 1;
+      continue;
+    }
     if (!/^Big night extra players/i.test(desc) || !(Number(l.amount) > 0)) continue;
     out.nights += 1;
+    out.full += 1;
     out.cents += Number(l.amount);
     // "... - 12 over 100 at $2.00" : take the count from the line itself.
     const m = desc.match(/-\s*(\d+)\s+over\s+\d+\s+at\s+\$/i);
@@ -10468,6 +10512,13 @@ function vpaOverageFromInvoice(invoice) {
     else out.players += Math.round(Number(l.amount) / 200);   // older line format: assume $2
   }
   return out;
+}
+
+/* "at $2/head", true to what was charged: a third night in a row is $1.00 a head. */
+function vpaOverageRateWords(ov) {
+  if (!ov || !ov.half) return 'at $2/head';
+  if (!ov.full) return 'at $1/head (3rd big night in a row)';
+  return 'at $2/head ($1/head on the 3rd big night in a row)';
 }
 
 /* "I SAID YOU NEEDED A NOTIFICATION THIS MORNING THAT THEIR PLAN WAS GOING UP."
@@ -10654,7 +10705,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#0A0A0B">' + amount + '</p>'
       +   (paidTs ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">Paid on ' + vpaEsc(vpaFmtDate(paidTs)) + '</p>' : '')
       +   (ov.nights > 0
-            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
+            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#0A0A0B">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#0A0A0B">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' ' + vpaOverageRateWords(ov) + '.</p>'
             : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice, await vpbInvoiceVenueSplit(env, invoice))
@@ -10763,7 +10814,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
             + '<p style="margin:0;font-size:14px;font-weight:700;color:#0A0A0B">A busy month: this bill includes extra players.</p>'
-            + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper. You can change it on your billing page before this charge.</p>'
+            + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> ' + vpaOverageRateWords(ov) + '. If that\'s your normal, a bigger plan usually works out cheaper. You can change it on your billing page before this charge.</p>'
             + '</td></tr></table>'
           : '')
       + (creditApplied > 0
