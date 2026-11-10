@@ -335,6 +335,33 @@
   .vp-rate.vp-rate{flex:1;min-width:88px;font-size:13px}
   .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
   .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
+  /* ============ THE NEW LOOK, NUMBER BINGO CALLER CONSOLE (12 Nov 2026) ============
+     The caller console wears the same pieces as the phone and the wall (Dean, 3 Nov 2026): the last ball in a flat pink ring,
+     the last five as small tiles, the board with called numbers solid pink and the newest white, and nothing under 15px.
+     Scoped to #bingoView so no other game's console moves; presentation only, no draw, claim or win logic. The rules above
+     stay and these come later and win. */
+  #bingoView .lastball{background:var(--ink-3);border:none;border-radius:16px}
+  #bingoView .lbeye{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.14em;color:#8A8A95}
+  #bingoView .lbval{display:flex;align-items:center;justify-content:center;width:112px;height:112px;margin:10px auto;border-radius:50%;border:4px solid var(--pink);background:#0A0A0B;font-size:50px;color:#fff}
+  #bingoView .prevball{font-size:16px;color:#fff;background:#1A1A1F;border:none;border-radius:9px;padding:4px 11px}
+  #bingoView .prizeline2{font-family:'Manrope',sans-serif;font-weight:600;font-size:16px;color:var(--muted)}
+  #bingoView .prizeline2 b{color:#fff}
+  #bingoView .stat .box .k{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.06em;text-transform:none}
+  #bingoView .stat .box .v{font-size:19px}
+  #bingoView #livePattern{font-size:17px!important}
+  #bingoView .bnum{font-size:15px;padding:5px 0;background:#141418;color:#52525C;border:none}
+  #bingoView .bnum.lit{background:var(--pink);color:#fff}
+  #bingoView .bnum.cur{background:#fff;color:#0A0A0B;box-shadow:0 0 0 2px #0A0A0B,0 0 0 4px #fff}
+  #bingoView .callergrid .cg{font-size:15px}
+  #bingoView .callergrid .cg.on{background:var(--pink);color:#fff;border-color:transparent}
+  #bingoView .callergrid .cg.cur{background:#fff;color:#0A0A0B;box-shadow:0 0 0 2px #0A0A0B,0 0 0 4px #fff}
+  #bingoView .callerhead .cs,#bingoView .callernote{font-size:15px;line-height:1.45}
+  #bingoView .callerwinbar .cwh{font-size:15px;letter-spacing:.1em}
+  #bingoView .callerwinbar .cwn{font-size:15px}
+  #bingoView .callerwinbar .cwprize label{font-size:15px}
+  #bingoView .callerwinbar .cwt{font-family:'Manrope',sans-serif;font-weight:800;font-size:26px}
+  #bingoView #coach{font-size:15px!important;background:#17171A!important;border-color:#2A2A31!important}
+  #bingoView .fieldnote,#bingoView .note{font-size:15px}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">

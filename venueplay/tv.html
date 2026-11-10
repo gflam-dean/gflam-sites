@@ -452,6 +452,60 @@
   .winburst.show{opacity:1}
   .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  /* ============ THE NEW LOOK, NUMBER BINGO (Dean, 3 Nov 2026; mocks new-look-games-3nov/new/5-bingo-called, 5b, and v3/tv/09 winner F; built 12 Nov 2026) ============
+     Flat near-black, no pink haze. The game's name and the round ("One line . Meat tray") in the shared title line
+     (/app/vp-tvgame.js) on the corner logos' centre line; the join is the shared join screen. RUNNING: the called number in a flat
+     pink ring (no glossy ball), the last five under it, "12 of 90 called", and the 1 to 90 board with called numbers solid
+     pink, the newest white, the rest well back. WIN, F: "BINGO ON 23" in a yellow ring beside the winner's name and the prize,
+     no card number on the wall (it stays on the phone and the console). NO player count anywhere on this wall (Dean, 4 Nov
+     2026 evening). Presentation only: no draw, claim or win logic is touched here. Sizes in cqw, so /app/vp-oldtv.js can work
+     them out on an older set. */
+  #tvLobby,#tvRun,#tvClaim,#tvWin{background:#0A0A0B}
+  .tl-round{display:inline-block;margin-left:1.4cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:1.9cqw;line-height:1.15;color:#CFCFD6;letter-spacing:0;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:30cqw;vertical-align:baseline}
+  .tl-round b{font-weight:700;color:#fff}
+  .tl-round .tl-dot{color:#8A8A95}
+  /* the join screen's "at <venue>" line sits under the code */
+  .layer.join .lobbyat{margin-top:1.2cqw;max-width:40cqw;text-align:center}
+  /* running */
+  #tvRun.runlayer{padding:calc(9cqw) 5% 3% 5%;gap:3cqw}
+  #tvRun .runleft{flex:0 0 34%;padding-bottom:calc(5.1cqw + clamp(44px,8cqw,110px))}
+  #tvRun .balleye{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;text-indent:.3em;font-size:1.3cqw;line-height:1.2;color:#8A8A95}
+  #tvRun .lastlbl{margin-top:min(2.2cqw,3vh)}
+  #tvRun .curball{width:min(23cqw,32vh);aspect-ratio:1;border-radius:50%;margin:min(1.2cqw,1.6vh) 0 0;background:#0A0A0B;border:.85cqw solid var(--pink);box-shadow:none}
+  #tvRun .cbnum{font-size:min(12.5cqw,17vh);color:#fff}
+  #tvRun .cbnum.ready{font-size:min(3.4cqw,4.6vh);letter-spacing:.14em;text-indent:.14em;color:#8A8A95}
+  #tvRun .prevballs{gap:.8cqw;margin-top:.8cqw}
+  #tvRun .prevball{width:clamp(34px,min(4.8cqw,6.5vh),92px);border-radius:.8cqw;background:#1A1A1F;border:none;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(15px,2.2cqw,44px);color:#fff}
+  #tvRun .prevball:first-child{background:#1A1A1F;color:#fff;border:none}
+  #tvRun .prevball:nth-child(n+3){color:#fff}
+  #tvRun .ballcount{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(15px,1.55cqw,30px);letter-spacing:.14em;text-transform:uppercase;color:#8A8A95;margin-top:min(1.6cqw,2.2vh)}
+  #tvRun .ballcount b{color:#fff}
+  #tvRun .tvboard{gap:.6cqw}
+  #tvRun .bcol{gap:.5cqw}
+  #tvRun .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(14px,2.2cqw,56px);line-height:1.15;padding:.5cqw 0;border-radius:.5cqw;background:#141418;color:#52525C;border:none}
+  #tvRun .bnum.lit{background:var(--pink);color:#fff}
+  #tvRun .bnum.cur{background:#fff;color:#0A0A0B;box-shadow:0 0 0 .2cqw #0A0A0B,0 0 0 .4cqw #fff}
+  /* the reveal ball is the same flat ring, so it settles onto the resting ring with no handoff */
+  .brball{background:#0A0A0B;border:1.2cqw solid var(--pink);color:#fff;box-shadow:none}
+  .brdim{background:rgba(5,5,6,.9)}
+  .brcall{text-shadow:none}
+  /* claim */
+  #tvClaim .eyebrow{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.3em;font-size:1.3cqw;color:#8A8A95}
+  #tvClaim .claimbig{color:var(--pink);text-shadow:none}
+  #tvClaim .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#8A8A95}
+  /* win, F */
+  #tvWin .winrow{display:flex;align-items:center;justify-content:center;gap:5cqw;text-align:left;margin-top:3cqw}
+  #tvWin .winring{flex:none;width:min(29cqw,42vh);aspect-ratio:1;border-radius:50%;border:.85cqw solid #FFD93D;background:#0A0A0B;box-shadow:0 0 3cqw rgba(255,217,61,.28);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:min(15cqw,22vh);line-height:1;color:#fff}
+  #tvWin .wincol{min-width:0;max-width:44cqw}
+  #tvWin .wineye{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.5cqw;line-height:1.2;color:#FFD93D}
+  #tvWin .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:min(11cqw,16vh);line-height:1.02;color:#fff;margin-top:1cqw;text-shadow:none;overflow-wrap:anywhere}
+  #tvWin .winline{display:flex;align-items:baseline;gap:1.6cqw;margin-top:1.4cqw;flex-wrap:wrap}
+  #tvWin .winslabel{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.3em;font-size:1.4cqw;color:#8A8A95;margin:0}
+  #tvWin .winprize{font-family:'Manrope',sans-serif;font-weight:800;font-size:min(5cqw,7.5vh);line-height:1.1;color:#fff;margin:0;filter:none}
+  #tvWin .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.4cqw;color:#8A8A95;margin-top:2cqw}
+  #tvWin #winCardPart{display:none!important}
+  /* no confetti, no burst, no shimmer on the wall (Dean, 3 Nov 2026: no spotlights, no flashing; the winner is the ring) */
+  #tv .confetti,#tv .winburst{display:none!important}
   .in-tvapp #tvFsBtn{display:none!important}   /* never in an app: see IN_APP (4 Nov 2026) */
 </style>
 <script src="/app/vp-venueurl.js"></script>   <!-- which venue is in the address: here in <head> so the paired-screen step below can ask it -->
@@ -477,6 +531,7 @@
     VPTvHold.intro({ t0:t0 });
   }catch(e){} })();
 </script>
+<script src="/app/vp-tvgame.js"></script>   <!-- the game name and the join screen, shared with trivia and musical bingo (number bingo, 12 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 <script src="/app/vp-tvapp.js"></script>   <!-- the Samsung and LG apps (&app=tizen|webos); does nothing anywhere else -->
 </head>
@@ -609,23 +664,28 @@
   <div class="ballreveal hidden" id="ballReveal"><div class="brdim"></div>
     <div class="brwrap"><div class="brrings"><i></i><i></i><i></i></div><div class="brball" id="brBall"></div><div class="brcall" id="brCall"></div></div></div>
 
-  <!-- BINGO: lobby -->
-  <div class="layer hidden" id="tvLobby">
-    <div class="eyebrow">Join the game</div>
+  <!-- BINGO: lobby. THE JOIN SCREEN, the same as trivia's and musical bingo's (/app/vp-tvgame.js; Dean, 3 Nov 2026): BINGO on the
+       logos' line, the QR big on the left, SCAN TO PLAY, the address and the code in a pink-edged box. No player count on the
+       wall (Dean, 4 Nov 2026 evening). -->
+  <div class="layer join hidden" id="tvLobby">
+    <div class="toplbl jtitle"><span class="tl-night">Bingo</span></div>
     <div class="lobbyrow">
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
-      <div class="lobbytxt">
-        <div class="lobbyname">Bingo</div>
-        <div class="joinurl">venueplay.com.au/play</div>
-        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
-        <div class="lobbyat" id="lobbyAt" style="display:none">at <b id="lobbyAtName"></b></div>
-      </div>
+    </div>
+    <div class="jright">
+      <div class="scanplay">Scan to play</div>
+      <div class="joinurl"><span class="jor">or go to </span><b id="lobbyJoinUrl">venueplay.com.au/play</b></div>
+      <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+      <div class="lobbyat" id="lobbyAt" style="display:none">at <b id="lobbyAtName"></b></div>
     </div>
     <div class="jsub" id="lobbySub">Grab your phone and scan to play&hellip;</div>
   </div>
 
-  <!-- BINGO: running -->
+  <!-- BINGO: running. THE NEW LOOK (Dean, 3 Nov 2026; mock new-look-games-3nov/new/5-bingo-called): the game name and the
+       pattern and prize in the title line, the called number in a flat pink ring with the last five under it, the board
+       of 1 to 90 on the right. No player count anywhere. -->
   <div class="layer runlayer hidden" id="tvRun">
+    <div class="toplbl"><span class="tl-night">Bingo</span><span class="tl-round"><b id="tvPattern">One line</b><span class="tl-dot"> &middot; </span><span id="tvPrize">the prize</span></span></div>
     <div class="runleft">
       <!-- A REAL-BALLS NIGHT (caller mode) has no join code anywhere: the room plays paper books.
            The game's name and the venue's take the code's place. Styled inline so a normal
@@ -634,12 +694,11 @@
         <div class="lobbyname" style="font-size:clamp(20px,4.2cqw,60px)">Bingo</div>
         <div class="lobbyat" id="tvRunAt" style="display:none;margin-top:.6cqw;max-width:36cqw">at <b id="tvRunAtName"></b></div>
       </div>
-      <div class="balleye">Number called</div>
+      <div class="balleye">Number</div>
       <div class="curball"><span class="cbnum ready" id="cbNum">Ready</span></div>
+      <div class="balleye lastlbl">Last five</div>
       <div class="prevballs" id="tvPrev"></div>
       <div class="ballcount" id="tvBallCount"><b>0</b> of 90 called</div>
-      <div class="patline"><span class="patlbl">Pattern</span> <span class="patval" id="tvPattern">One line</span></div>
-      <div class="prizeline">Playing for <b id="tvPrize">the prize</b></div>
     </div>
     <div class="runright">
       <div class="tvboard" id="tvBoard"></div>
@@ -648,21 +707,26 @@
 
   <!-- BINGO: claim suspense -->
   <div class="layer hidden" id="tvClaim">
+    <div class="toplbl"><span class="tl-night">Bingo</span></div>
     <div class="eyebrow">Bingo claimed</div>
     <div class="claimbig" id="claimBig">BINGO?</div>
     <div class="claimname" id="claimName">Player</div>
     <div class="jsub" id="claimSub">Checking the card against the called numbers&hellip;</div>
   </div>
 
-  <!-- BINGO: win -->
+  <!-- BINGO: win. F, "BINGO ON 23" in a ring with the winner's name and prize, no card number on the wall (Dean, 3 Nov 2026) -->
   <div class="layer hidden" id="tvWin">
-    <div class="eyebrow">&#127881; We have a winner</div>
-    <div class="winbingo">BINGO!</div>
-    <div class="wname" id="winName">Player</div>
-    <div class="winslabel" id="winsLabel">Wins</div>
-    <div class="winprize" id="winPrizeVal">the prize</div>
-    <div class="jsub" id="winSubPhone"><span id="winCardPart">Card <b id="winCard"></b> &middot; </span>show your phone to the host</div>
-    <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">See the host to collect your prize</div>
+    <div class="toplbl"><span class="tl-night">Bingo</span><span class="tl-round" id="winRound"></span></div>
+    <div class="winrow">
+      <div class="winring" id="winRing"><span id="winOn">&nbsp;</span></div>
+      <div class="wincol">
+        <div class="wineye" id="winEye">Bingo</div>
+        <div class="wname" id="winName">Player</div>
+        <div class="winline"><span class="winslabel" id="winsLabel">Wins</span><span class="winprize" id="winPrizeVal">the prize</span></div>
+        <div class="jsub" id="winSubPhone"><span id="winCardPart">Card <b id="winCard"></b> &middot; </span>show your phone to the host</div>
+        <div class="jsub" id="winSubPaper" style="display:none;font-size:clamp(14px,2.6cqw,34px);color:#fff">See the host to collect your prize</div>
+      </div>
+    </div>
   </div>
 
   <!-- BINGO: persistent join corner -->
@@ -2038,7 +2102,9 @@
     if(n.length===1) return n[0];
     return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
   }
+  function lastCalledNo(){ return state.called && state.called.length ? state.called[state.called.length-1] : 0; }
   function renderClaim(){
+    state.claimOn=lastCalledNo();   // the number on the board when bingo was called: the win screen's ring (presentation only)
     $("claimName").textContent=state.claimName||"Player";
     $("claimBig").textContent=(state.claimCount>1) ? "TIE?" : "BINGO?";
     /* A real-balls night (caller mode) has no phone: the name line is the pattern being claimed
@@ -2050,6 +2116,15 @@
     /* A REAL-BALLS WIN (caller mode). Nobody's phone holds the ticket, so there is no name and no
        card number: the stage and its prize, and the paper book goes to the host to be checked. */
     var paper=!!m.caller;
+    /* THE RING (Dean, 3 Nov 2026, F): "BINGO ON 23", the number on the board when bingo was called, and no card number on the
+       wall. A real-balls night has no number to show (the host checks a paper book), so it has no ring. Words only: nothing
+       here touches the draw, a claim or a win. */
+    var onNo = paper ? 0 : (+m.number || +state.claimOn || lastCalledNo() || 0);
+    $("winRing").style.display = onNo ? "" : "none";
+    $("winOn").textContent = onNo ? onNo : "";
+    $("winEye").textContent = onNo ? "Bingo on "+onNo : "Bingo";
+    $("winRound").innerHTML = "";
+    try{ $("winRound").textContent = patName(m.pattern || state.pattern) || ""; }catch(e){}
     $("winSubPhone").style.display = paper ? "none" : "";
     $("winSubPaper").style.display = paper ? "" : "none";
     if(paper){
