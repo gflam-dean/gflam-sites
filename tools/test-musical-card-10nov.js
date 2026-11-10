@@ -100,6 +100,8 @@ show('a marked song is still the dark pink tile with the pink edge', /#vCard \.c
 show('the light screen: Free gold too, never the marked pink', /body\.light #vCard \.cc\.free\{background:var\(--gold\)/.test(PLAY) && !/body\.light #vCard \.cc\.free\{background:#FFE3F0/.test(PLAY));
 show('no spaced mono capitals on this phone (kicker and lobby tile label in Manrope, no letter-spacing, as written)', /\.vp-kicker,\.vp-tiles \.k\{font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0;text-transform:none\}/.test(PLAY));
 
+show('the lobby\'s shared pieces lose their spaced mono capitals on this phone too ("Next", "This week here", "What\'s on at")', /#vpAd \.k,\.vpt-next \.k,\.vpt-week \.k,\.vpt-night \.bd\{font-family:'Manrope',sans-serif;letter-spacing:0;text-transform:none\}/.test(PLAY));
+
 print('\n== 6. after End game the phone moves on ==');
 (function () {
   var src = PLAY.slice(PLAY.indexOf('    else if(m.t==="idle"){'), PLAY.indexOf('  // ---- connect ----'));

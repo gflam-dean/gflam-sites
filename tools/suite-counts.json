@@ -704,7 +704,7 @@
   "counted_by": "lines"
  },
  "tools/test-musical-card-10nov.js": {
-  "checks": 41,
+  "checks": 42,
   "counted_by": "lines"
  },
  "tools/test-musical-host.js": {

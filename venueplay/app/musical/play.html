@@ -261,6 +261,9 @@
   /* NO SPACED MONO CAPITALS ON THIS PHONE (Dean's brand rule; 10 Nov 2026 sign-off: "MUSICAL BINGO" on the win screen,
      "UP FIRST" in the lobby, the code step's kicker). Plain words in Manrope, as written. */
   .vp-kicker,.vp-tiles .k{font-family:'Manrope',sans-serif;font-weight:700;letter-spacing:0;text-transform:none}
+  /* and the lobby's shared pieces (/app/vp-tonight.css: "NEXT", "THIS WEEK HERE", "WHAT'S ON AT", the night badge), on this
+     phone only; the trivia and bingo phones keep the shared file until it changes for every game */
+  #vpAd .k,.vpt-next .k,.vpt-week .k,.vpt-night .bd{font-family:'Manrope',sans-serif;letter-spacing:0;text-transform:none}
   /* HIGHLIGHT MY LINES (a Menu option, off by default): a finished line gets a solid pink outline in the gutter
      round its tiles, a line still needed a dashed one; measured from the real tiles (drawLines). */
   .hl{position:absolute;pointer-events:none;border:2.5px solid var(--pink);border-radius:18px;z-index:2}
