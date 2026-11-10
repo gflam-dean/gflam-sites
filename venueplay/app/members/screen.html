@@ -230,8 +230,8 @@
   <!-- THE NEW DRAW LOOKS (10 Nov 2026): flip board / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look with
        the draw; a venue that has not chosen one keeps the drawing and winner cards. -->
   <div id="tvStyle" class="layer hidden" style="padding:0">
-    <div class="toplbl"><span class="tl-night" id="styleTitle">Members draw</span></div>
     <div id="tvStyleHost" style="position:absolute;inset:0"></div>
+    <div class="toplbl"><span class="tl-night" id="styleTitle">Members draw</span></div>   <!-- after the stage, so the stage never covers it -->
   </div>
 
   <!-- winner reveal -->
@@ -847,7 +847,8 @@
       state.kind=(m.kind==="entries") ? "entries" : ""; state.entriesTotal=(m.entriesTotal|0);
       state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0); state.spinSecs=(m.spinSecs|0)||4;
       state.styleKey=(m.style==="flip"||m.style==="race") ? m.style : "";
-      if(state.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026) state.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; state.pick=null;
+      if(state.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026)
+      state.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; state.pick=null;
       state.phase="drawing"; if(styleOn() && state.kind!=="entries") showStyleDrawing(); else showDrawing();
     }
     else if(m.t==="pick"){ if(styleOn() && m.number!=null){ state.pick={ number:m.number, name:(typeof m.name==="string" ? m.name : "") }; if(styleStage) styleStage.setPick(state.pick); } }

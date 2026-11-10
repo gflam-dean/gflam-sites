@@ -90,12 +90,12 @@ def ticket():
         txt = r.ask(s, STAGE_TEXT) or ''
         ok('the claim clock is under it', 'Claim within 0:' in txt, txt)
         ok('the old winner card is not showing', r.ask(s, vis('tvWin')) is False)
-        ok('the winner line says ticket once', txt.count('ticket') == 1, txt)
+        ok('the winner line says ticket once', txt.count('Bring ticket 047 to the host.') == 1 and 'bring your ticket' not in txt.lower(), txt)
         shot(r, s, 'drawstyle-ticket-win')
         ok('nothing sticks out of the screen', inside(r, s) == [], inside(r, s))
+        ok('SILENT through the whole draw and win: no audio made, no page errors', r.ask(s, AUDIO) == 0 and not (r.ask(s, 'window.__errs') or []), [r.ask(s, AUDIO), r.ask(s, 'window.__errs')])
         says(r, s, [{'t': 'claimed', 'prizeLabel': 'Meat tray', 'numbers': [47]}])
         ok('a claim goes back to the old result card and the stage is gone', r.until(s, vis('tvResult'), 4) is True and r.ask(s, 'document.getElementById("tvStyleHost").children.length') == 0)
-        ok('SILENT: no audio made, no page errors', r.ask(s, AUDIO) == 0 and not (r.ask(s, 'window.__errs') or []), [r.ask(s, AUDIO), r.ask(s, 'window.__errs')])
     finally:
         r.close()
 
@@ -119,9 +119,9 @@ def flip():
         ok('the claim clock is on the wall', 'Claim within 0:' in txt, txt)
         shot(r, s, 'drawstyle-flip-win')
         ok('nothing sticks out of the screen', inside(r, s) == [], inside(r, s))
+        ok('SILENT through the whole draw and win: no audio made, no page errors', r.ask(s, AUDIO) == 0 and not (r.ask(s, 'window.__errs') or []), [r.ask(s, AUDIO), r.ask(s, 'window.__errs')])
         says(r, s, [{'t': 'claimed', 'name': 'J. Hollis', 'amountCents': 145000, 'nextResetCents': 20000}])
         ok('a claim goes back to the old result card', r.until(s, vis('tvResult'), 4) is True)
-        ok('SILENT: no audio made, no page errors', r.ask(s, AUDIO) == 0 and not (r.ask(s, 'window.__errs') or []))
     finally:
         r.close()
 

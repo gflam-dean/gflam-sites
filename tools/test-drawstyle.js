@@ -57,6 +57,8 @@ show('the winner item shows no number until picked', /var show = \(i === N && !s
 show('the raffle host sends t:"pick" with the server ticket as soon as the API answers', /function sendPick\(r\)/.test(RH) && (RH.match(/sendPick\(r\); return wait/g) || []).length === 2);
 show('the members host sends t:"pick" the same way', /t:"pick", number:r\.member_number, name:r\.winner_name/.test(MH));
 show('the raffle TV shows the look when the draw names one, and the members TV too', /if\(styleOn\(\)\)\{ stopSpin\(\); showLayer\("tvStyle"\); makeStage\(\)\.start\(\)/.test(RS) && /if\(styleOn\(\) && state\.kind!=="entries"\) showStyleDrawing\(\)/.test(MS));
+show('the draw time and the pick reset sit on their own line after the end-show call (a comment once swallowed them)', /\n\s+S\.styleSecs=\(typeof m\.drawSecs/.test(RS) && /\n\s+state\.styleSecs=\(typeof m\.drawSecs/.test(MS));
+show('the title line sits after the stage, so the stage never covers it', RS.indexOf('id="tvStyleHost"') < RS.indexOf('tl-night">Raffle</span></div>   <!-- after the stage') && MS.indexOf('id="tvStyleHost"') < MS.indexOf('id="styleTitle"'));
 show('the raffle TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(RS) && /setPick\(\{ number:S\.pick \}\)/.test(RS));
 show('the members TV takes the pick from t:"pick" only', /m\.t==="pick"/.test(MS) && /styleStage\.setPick\(state\.pick\)/.test(MS));
 

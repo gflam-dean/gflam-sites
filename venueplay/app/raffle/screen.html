@@ -201,8 +201,8 @@
   <!-- THE NEW DRAW LOOKS (10 Nov 2026): ticket roll / race plate, drawn by /app/vp-drawstyle.js. Only when the host sends a look
        with the draw; every venue that has not chosen one keeps the drawing and winner cards above and below. -->
   <div class="layer hidden vpds-layer" id="tvStyle" style="padding:0">
-    <div class="toplbl"><span class="tl-night">Raffle</span></div>
     <div class="vpds-host" id="tvStyleHost" style="position:absolute;inset:0"></div>
+    <div class="toplbl"><span class="tl-night">Raffle</span></div>   <!-- after the stage, so the stage never covers it -->
   </div>
 
   <!-- redraw notice (between a no-show and the next spin) -->
@@ -754,7 +754,8 @@
       // own fallback timer, so the spin starts once, here.
       S.phase="drawing";
       S.styleKey=(m.style==="ticket"||m.style==="race") ? m.style : "";
-      if(S.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026) S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
+      if(S.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026)
+      S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
       renderDrawing();
     }
     else if(m.t==="pick"){ if(styleOn() && Array.isArray(m.numbers) && m.numbers.length===1){ S.pick=m.numbers[0]; if(S.stage) S.stage.setPick({ number:S.pick }); } }
