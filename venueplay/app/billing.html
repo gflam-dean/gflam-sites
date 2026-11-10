@@ -1610,11 +1610,17 @@
     if (q.kind === "group") return { label: "Bring " + (q.venue_name || "this venue") + " back",
       note: pl + " at " + money(q.rate) + " a player. " + (q.trialing ? "Nothing extra this cycle, " : (q.stub + " for the rest of this cycle (" + q.stub_words + ") goes on your next bill, ")) +
             "on " + q.next_bill_words + ", then " + q.monthly + " a month." + until };
+    /* BACK WITHIN 90 DAYS (Dean, 10 Nov 2026, INBOX 142): the Worker kept their previous plan and price, and says so.
+       A kept ongoing discount: the Worker does not work out the charge (Stripe applies the discount), so no figure. */
+    var same = q.kept_previous ? " Same plan and price as before" + (q.discount_kept ? ", with your discount." : ".") : "";
+    var disc = q.today == null;
     if (q.mode === "card") return { label: q.kind === "prospect" ? "Add your card and come back" : "Add a card and come back",
-      note: pl + " at " + money(q.rate) + " a player, " + q.monthly + " a month" + (q.kind === "prospect" ? "" : (", " + q.today + " today")) + "." + until };
+      note: pl + " at " + money(q.rate) + " a player" + (disc ? "" : (", " + q.monthly + " a month")) + (q.kind === "prospect" || disc ? "" : (", " + q.today + " today")) + "." + same + until };
     var c = q.card || {}, cw = (c.brand ? (c.brand.charAt(0).toUpperCase() + c.brand.slice(1)) : "Card") + (c.last4 ? " ending " + c.last4 : "");
+    if (disc) return { label: "Come back on " + cw,
+      note: pl + " at " + money(q.rate) + " a player, less your discount, charged now for your first month." + same + until };
     return { label: "Come back: " + q.today + " today on " + cw,
-      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + until };
+      note: pl + " at " + money(q.rate) + " a player. " + q.today + " is charged now for your first month, then " + q.monthly + " a month." + same + until };
   }
   /* Which left venue the restart is for: the one the leaving email named (?venue=), else the first that has left. */
   function restartVenueId(d){

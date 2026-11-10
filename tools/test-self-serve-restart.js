@@ -274,15 +274,17 @@ function newSubs() { return ST.created.length; }
   check('a prospect with no closed_at (migration 160 not run) counts from its pause', vpbRestartClockMs({ closed_at: null }, { paused_at: '2026-12-03T00:00:00.000Z' }) === Date.parse('2026-12-03T00:00:00.000Z'));
 
   section('2. A cancelled one-venue account, subscription ended, card on file: day by day');
-  /* With us since 1 Mar 2026 (9 months), on the $2.50 offer: the old rate to 3pm Tue 2 Feb 2027, then $3. */
+  /* With us since 1 Mar 2026, on the $2.50 offer. BACK WITHIN 90 DAYS (Dean, 10 Nov 2026, INBOX 142: "they keep their
+     existing plan if they re-sign within the next 90 days"): its previous rate, every day of the 90, to the last ms.
+     (Before 10 Nov this walk switched to $3 at 2 months; the 90-day promise replaced that inside the window.) */
   var days = [
     ['day 0 (the afternoon it left)', at2(2026, 12, 2, 17, 0), 'price_F_M', true],
     ['day 3', at2(2026, 12, 5, 11, 0), 'price_F_M', true],
     ['day 6 (no 5-day cut-off for a cancelled venue)', at2(2026, 12, 8, 9, 0), 'price_F_M', true],
-    ['day 60, the last old-rate instant (2 months less 1 ms)', at2(2027, 2, 2, 15, 0) - 1, 'price_F_M', true],
-    ['day 62, 2 months to the instant: the standard rate', at2(2027, 2, 2, 15, 0), 'price_S_M', false],
-    ['day 89', at2(2027, 3, 1, 15, 0), 'price_S_M', false],
-    ['the last millisecond of day 90', LEFT0 + 90 * DAY - 1, 'price_S_M', false],
+    ['day 60, 2 months less 1 ms', at2(2027, 2, 2, 15, 0) - 1, 'price_F_M', true],
+    ['day 62, 2 months to the instant: still its previous rate (the 90-day promise)', at2(2027, 2, 2, 15, 0), 'price_F_M', true],
+    ['day 89', at2(2027, 3, 1, 15, 0), 'price_F_M', true],
+    ['the last millisecond of day 90', LEFT0 + 90 * DAY - 1, 'price_F_M', true],
   ];
   for (var di = 0; di < days.length; di++) {
     var dd = days[di];
@@ -291,7 +293,8 @@ function newSubs() { return ST.created.length; }
     var q = await quoteAt(A, dd[1]);
     check(dd[0] + ': the quote says it can restart, on the card ending 4242, ' + (dd[3] ? '$2.50 (its old rate)' : '$3.00 (standard)') + ', charged today, with no keep-by date said',
       q.status === 200 && q.body.can_restart === true && q.body.kind === 'new_sub' && q.body.mode === 'confirm' && q.body.card && q.body.card.last4 === '4242' &&
-      q.body.rate === (dd[3] ? 2.5 : 3) && q.body.offer === dd[3] && q.body.today_cents === 20 * (dd[3] ? 250 : 300) && !('offer_kept_until' in q.body) && !('offer_kept_words' in q.body), q.body);
+      q.body.rate === (dd[3] ? 2.5 : 3) && q.body.offer === dd[3] && q.body.today_cents === 20 * (dd[3] ? 250 : 300) && !('offer_kept_until' in q.body) && !('offer_kept_words' in q.body)
+      && q.body.kept_previous === true, q.body);
     check(dd[0] + ': the quote wrote nothing anywhere', writes().length === 0 && A.v.status === 'suspended', writes());
     var r = await restartAt(A, dd[1]);
     var c = ST.created[0] || { form: {} };
@@ -318,7 +321,7 @@ function newSubs() { return ST.created.length; }
   check('player details already purged (inside the 90 days by date): refused as held', rp.status === 410 && rp.body.held === true && newSubs() === 0, rp.body);
   var SH = paidLeft({ name: 'Short Stay Hotel', joined: '2026-08-01T00:00:00.000Z' });
   var sh = await restartAt(SH, at2(2026, 12, 3, 10, 0));
-  check('with us only 4 months, on the offer, back the next day: the standard rate (no 5-day keep-the-offer for a cancelled venue)', sh.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M', ST.created[0] && ST.created[0].form);
+  check('with us only 4 months, on the offer, back the next day: its previous rate all the same (the 90-day promise has no tenure rule)', sh.status === 200 && ST.created[0].form['items[0][price]'] === 'price_F_M' && sh.body.kept_previous === true, ST.created[0] && ST.created[0].form);
   var AS1 = paidLeft({ name: 'Standard Before Hotel', price: 'price_S_M' });
   var rs1 = await restartAt(AS1, at2(2026, 12, 3, 10, 0));
   check('a long-tenure venue that was on the standard rate goes back on the standard rate (its old rate), never the offer', rs1.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M', ST.created[0] && ST.created[0].form);
@@ -381,8 +384,13 @@ function newSubs() { return ST.created.length; }
   var FE = paidLeft({ name: 'Edge Of Old Rate Hotel' });
   ST.customers[FE.cus].invoice_settings.default_payment_method = null; ST.subs[FE.oldSub].default_payment_method = null;
   var fe = await restartAt(FE, at2(2027, 2, 2, 12, 0));
-  check('a card page opened 3 hours before the old rate ends closes when it does (Stripe\'s 31-minute floor aside), so it cannot be paid at the old rate later',
-    fe.body.mode === 'card' && Number(ST.sessions[0].form.expires_at) === Math.floor(at2(2027, 2, 2, 15, 0) / 1000) && ST.sessions[0].form['line_items[0][price]'] === 'price_F_M', ST.sessions[0] && ST.sessions[0].form);
+  check('a card page opened on day 62 (past the old 2-month cut-off): its previous rate, and the page closes within Stripe\'s 24 hours, never after the 90 days',
+    fe.body.mode === 'card' && Number(ST.sessions[0].form.expires_at) === Math.floor(at2(2027, 2, 2, 12, 0) / 1000) + 23 * 3600 && ST.sessions[0].form['line_items[0][price]'] === 'price_F_M', ST.sessions[0] && ST.sessions[0].form);
+  var FD = paidLeft({ name: 'Last Day Card Hotel' });
+  ST.customers[FD.cus].invoice_settings.default_payment_method = null; ST.subs[FD.oldSub].default_payment_method = null;
+  await restartAt(FD, LEFT0 + 90 * DAY - 3 * 3600000);
+  check('a card page opened 3 hours before the 90 days end closes when they do (Stripe\'s 31-minute floor aside), so the previous rate cannot be paid later',
+    Number(ST.sessions[0].form.expires_at) === Math.floor((LEFT0 + 90 * DAY) / 1000) && ST.sessions[0].form['line_items[0][price]'] === 'price_F_M', ST.sessions[0] && ST.sessions[0].form);
   var FN = paidLeft({ name: 'No Card Hotel', card: false });
   var qn = await quoteAt(FN, at2(2026, 12, 4, 10, 0));
   var rn = await restartAt(FN, at2(2026, 12, 4, 10, 0));
@@ -576,7 +584,7 @@ function newSubs() { return ST.created.length; }
   check('a card on file: "Come back: $50.00 today on Visa ending 4242", with the price and the last day to come back, and no keep-by date for the rate',
     v2.label === 'Come back: $50.00 today on Visa ending 4242' && /20 players at \$2\.50 a player/.test(v2.note) && !/kept|offer/.test(v2.note) && /until Tue 2 Mar/.test(v2.note), v2);
   var v3 = restartView((await quoteAt(paidLeft({ name: 'Words Card Hotel', card: false, joined: '2026-09-01T00:00:00.000Z' }), at2(2026, 12, 9, 10, 0))).body);
-  check('no card: "Add a card and come back", at the standard rate (a short-tenure venue)', v3.label === 'Add a card and come back' && /\$3\.00 a player/.test(v3.note) && !/offer/.test(v3.note), v3);
+  check('no card: "Add a card and come back", at their previous rate even for a short stay, and it says so', v3.label === 'Add a card and come back' && /\$2\.50 a player/.test(v3.note) && /Same plan and price as before\./.test(v3.note) && !/offer/.test(v3.note), v3);
   var v4 = restartView(gq.body);
   check('a group venue: "Bring Group Comeback Hotel back", the stub, its days and the bill date', v4.label === 'Bring Group Comeback Hotel back' && /\$15\.83 for the rest of this cycle \(19 of 30 days/.test(v4.note) && /23 Dec/.test(v4.note), v4);
   var v5 = restartView(q91.body);
@@ -591,6 +599,64 @@ function newSubs() { return ST.created.length; }
     /__vpWantComeBack = \/\[\?&\]come-back=1/.test(SHELL) && cbAt > 0 && /billing\.html\?come-back=1/.test(SHELL.slice(cbAt, cbAt + 400)) && /&venue=/.test(SHELL.slice(cbAt, cbAt + 400)));
 
   if (badCount()) throw new Error('self-serve restart: ' + badCount() + ' of ' + ran + ' failed');
+  section('9. Back within 90 days: the previous plan, rate and players (Dean, 10 Nov 2026, INBOX 142)');
+  var K1 = paidLeft({ name: 'Standard Seventy Hotel', price: 'price_S_M', joined: '2026-10-01T00:00:00.000Z', players: 35 });
+  var k1 = await restartAt(K1, at2(2027, 2, 10, 10, 0));
+  check('a standard-rate venue back on day 70: its own standard price, its own 35 players, never the offer',
+    k1.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M' && ST.created[0].form['items[0][quantity]'] === '35' && k1.body.kept_previous === true, [k1.body, ST.created[0] && ST.created[0].form]);
+  var K2 = paidLeft({ name: 'Annual Seventy Hotel', plan: 'annual', price: 'price_F_A' });
+  var k2 = await restartAt(K2, at2(2027, 2, 10, 10, 0));
+  check('an annual account back on day 70: annual again, its annual offer price', k2.status === 200 && ST.created[0].form['items[0][price]'] === 'price_F_A' && k2.body.kept_previous === true, ST.created[0] && ST.created[0].form);
+  var K3 = paidLeft({ name: 'Legacy Price Hotel', price: 'price_retired_2025' });
+  var k3 = await restartAt(K3, at2(2026, 12, 10, 10, 0));
+  check('a previous price that is no longer one of ours is never charged again: the 5 Nov rules decide (standard here)',
+    k3.status === 200 && ST.created[0].form['items[0][price]'] === 'price_S_M' && k3.body.kept_previous === false, [k3.body, ST.created[0] && ST.created[0].form]);
+  var K4 = paidLeft({ name: 'Forever Discount Hotel' });
+  ST.subs[K4.oldSub].discounts = [{ coupon: { id: 'c_forever', percent_off: 20, duration: 'forever', valid: true } }];
+  var k4q = await quoteAt(K4, at2(2027, 1, 20, 10, 0));
+  var k4 = await restartAt(K4, at2(2027, 1, 20, 10, 0));
+  var k4T = (DB.vp_help_tickets || []).filter(function (t) { return t.venue_id === K4.vid; });
+  check('an ongoing ("forever") discount comes back with them: the same price, the same coupon, no "special discount" alert',
+    k4.status === 200 && ST.created[0].form['items[0][price]'] === 'price_F_M' && ST.created[0].form['discounts[0][coupon]'] === 'c_forever' && k4T.length === 0
+    && /:c_forever$/.test(ST.posts.filter(function (p) { return p.path === 'subscriptions'; })[0].key || ''), [k4.body, ST.created[0] && ST.created[0].form, k4T]);
+  check('and the page names no figure Stripe will work out: "Come back on Visa ending 4242", less your discount, same plan and price',
+    k4q.body.today === null && k4q.body.discount_kept === true && restartView(k4q.body).label === 'Come back on Visa ending 4242'
+    && /less your discount/.test(restartView(k4q.body).note) && /Same plan and price as before, with your discount\./.test(restartView(k4q.body).note), [k4q.body, restartView(k4q.body)]);
+  var K5 = paidLeft({ name: 'Forever No Card Hotel', card: false });
+  ST.subs[K5.oldSub].discounts = [{ coupon: { id: 'c_forever', percent_off: 20, duration: 'forever', valid: true } }];
+  await restartAt(K5, at2(2027, 1, 20, 10, 0));
+  check('no card: the card page carries the same coupon (and no promotion-code box, which Stripe will not take with it)',
+    ST.sessions[0] && ST.sessions[0].form['discounts[0][coupon]'] === 'c_forever' && !('allow_promotion_codes' in ST.sessions[0].form) && ST.sessions[0].form['line_items[0][price]'] === 'price_F_M', ST.sessions[0] && ST.sessions[0].form);
+  var K6 = paidLeft({ name: 'Repeating Discount Hotel' });
+  ST.subs[K6.oldSub].discounts = [{ coupon: { id: 'c_rep', percent_off: 50, duration: 'repeating', valid: true } }];
+  await restartAt(K6, at2(2026, 12, 10, 10, 0));
+  check('a discount that was running out (repeating) is not kept: the standard rate and HQ told, as on 5 Nov',
+    ST.created[0] && ST.created[0].form['items[0][price]'] === 'price_S_M' && !('discounts[0][coupon]' in ST.created[0].form)
+    && (DB.vp_help_tickets || []).some(function (t) { return t.venue_id === K6.vid && /re-signed up/.test(t.subject || t.title || ''); }), ST.created[0] && ST.created[0].form);
+  var K7 = paidLeft({ name: 'Day Ninety One Again Hotel' });
+  var k7 = await restartAt(K7, LEFT0 + 91 * DAY);
+  check('after the 90 days: still held, never restarted at any price', k7.status === 410 && newSubs() === 0, k7.body);
+  var K8 = paidLeft({ name: 'Disputed Seventy Hotel' });
+  DB.vp_admin_audit.push({ action: 'payment_disputed', target: 'account:' + K8.fid, detail: {} });
+  var k8 = await restartAt(K8, at2(2027, 1, 10, 10, 0));
+  check('a chargeback inside the 90 days: no restart (unchanged)', k8.status === 409 && newSubs() === 0 && K8.v.status === 'suspended', k8.body);
+  var K9 = paidLeft({ name: 'HQ Reactivate Hotel' });
+  var k9 = await withClock(at2(2027, 2, 15, 10, 0), function () { return call('/account/cancel-venue', { venue_id: K9.vid, undo: true }, AS(K9.owner, K9.vid)); });
+  check('HQ\'s Reactivate (the owner\'s "Keep this venue" on day 75) goes through the same plan: the previous rate',
+    k9.status === 200 && K9.v.status === 'active' && ST.created[0] && ST.created[0].form['items[0][price]'] === 'price_F_M', [k9.body, ST.created[0] && ST.created[0].form]);
+  /* A free-month venue that pressed Cancel keeps the rate it was set up on for 90 days from the press. */
+  var CX = Date.parse('2026-11-12T00:00:00.000Z'), PR = { offer_rate: 2.5, cancelled_at: new Date(CX).toISOString(), paused_at: null,
+    first_signin_at: '2026-11-01T00:00:00.000Z', free_month_ends_at: '2026-12-01T13:59:59.000Z' };
+  ENV.VPB_SELF_RESTART = '1';
+  var pp1 = vpaProspectPrice(ENV, PR, CX + 60 * DAY), pp2 = vpaProspectPrice(ENV, PR, CX + 90 * DAY);
+  check('a cancelled free-month venue back on day 60: the $2.50 it was set up on, long after its month and any grace',
+    pp1.founding === true && pp1.rate === 2.5 && pp1.kept === true, pp1);
+  check('and at 90 days to the instant: the standard rule again', pp2.rate === 3 && !pp2.kept, pp2);
+  var PZ = { offer_rate: 2.5, cancelled_at: null, paused_at: '2026-12-01T14:00:00.000Z', first_signin_at: '2026-11-01T00:00:00.000Z', free_month_ends_at: '2026-12-01T13:59:59.000Z' };
+  check('a PAUSED prospect (never pressed Cancel) is not covered: past its grace, the standard rate', vpaProspectPrice(ENV, PZ, Date.parse('2027-01-10T00:00:00.000Z')).rate === 3);
+  ENV.VPB_SELF_RESTART = '';
+  check('with the restart switched off, a cancelled prospect is priced exactly as before', !vpaProspectPrice(ENV, PR, CX + 60 * DAY).kept && vpaProspectPrice(ENV, PR, CX + 60 * DAY).rate === 3);
+
   print(''); print('PASS ' + ran + ' checks');
 })().catch(function (e) { print('  FAIL ' + (e && e.message) + ' ' + (e && e.stack || e)); throw e; });
 drainMicrotasks();

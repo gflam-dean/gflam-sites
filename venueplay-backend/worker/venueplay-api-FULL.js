@@ -31,7 +31,7 @@
  *                               subscriber (POST /subscribe, migration 134). Anything else: kept, never sent
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Nov 2026, 20:14 · 99576d7d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Nov 2026, 14:34 · 7e667e2f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4016,6 +4016,15 @@ function vpaInSendWindow(ms) {
 function vpaProspectPrice(env, prow, nowMs) {
   const now = nowMs == null ? Date.now() : nowMs;
   const offer = vpaProspectOfferRate(prow);
+  /* CANCELLED, BACK WITHIN 90 DAYS (Dean, 10 Nov 2026, INBOX 142; the free-month cancel page says "Change your mind
+     within 90 days and you keep your current plan and price"): a prospect who pressed Cancel keeps the rate they were
+     set up on for 90 days from that moment, wherever their free month got to. With the self-serve restart switched on
+     (VPB_SELF_RESTART), like the rest of the restart. A pause (no card when the month ended) is not a cancel: the
+     5-day grace below still applies to it. */
+  const cxMs = Date.parse((prow && prow.cancelled_at) || '');
+  if (offer && vpbRestartOn(env) && isFinite(cxMs) && now < cxMs + VPB_RETENTION_DAYS * 86400000) {
+    return { founding: true, rate: offer, kept: true };
+  }
   if (vpaProspectMonthOver(prow, now)) {
     const graceEnd = vpaOfferGraceEnd(prow);
     if (offer && isFinite(graceEnd) && now <= graceEnd + 999) return { founding: true, rate: offer, grace: true, grace_ends_at: new Date(graceEnd).toISOString() };
@@ -11888,7 +11897,9 @@ function vpbAddMonthsMs(ms, n) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, Math.min(d.getUTCDate(), last),
     d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds()) - VPA_BNE_MS;
 }
-/* The last instant the old rate is kept, or NaN when the venue does not qualify (6 months or less with us). */
+/* The last instant the old rate is kept, or NaN when the venue does not qualify (6 months or less with us).
+   Since 10 Nov 2026 (INBOX 142) the self-serve restart does not call this: inside the 90 days a venue keeps its
+   previous price outright, and after them the account is held. It is HQ's rule for a venue it restarts by hand later. */
 function vpbOldRateUntilMs(joinedMs, leftMs) {
   if (!isFinite(joinedMs) || !isFinite(leftMs)) return NaN;
   if (!(leftMs > vpbAddMonthsMs(joinedMs, VPB_OLD_RATE_TENURE_MONTHS))) return NaN;
@@ -12006,12 +12017,30 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
      at the standard rate, or their old rate under the 6-months-in, 2-months-out exception (INBOX 55a). A special
      discount or a free account restarts on the standard rate and support@ is told (INBOX 57). */
   const sub0 = (info && info.sub && !info.sub.error) ? info.sub : null;
-  const deal = vpbDealWords(sub0, comp);
+  /* BACK WITHIN 90 DAYS: THEIR PREVIOUS PLAN, RATE AND PLAYERS (Dean, 10 Nov 2026, INBOX 142: "tell them that they
+     keep their existing plan if they re-sign within the next 90 days"; the cancel screen says "Change your mind within
+     90 days and you keep your current plan and price."). The 90 days run from closed_at, the same clock as the
+     restart window and the retention sweep (and never shorter than from the day they pressed Cancel, which is earlier).
+     Their previous price is the old subscription's own price, when it is one of ours for this plan; an ongoing
+     ("forever") special discount on it is kept too. A discount that was running out (once, repeating) and a free
+     account are not a price they were on for good: those keep the 5 Nov rules below (standard rate, HQ told). */
+  const within90 = nowMs < deadlineMs;
+  const oldDisc = sub0 && ((sub0.discounts && sub0.discounts.length && sub0.discounts[0]) || sub0.discount);
+  const oldCoupon = oldDisc && typeof oldDisc === 'object' && oldDisc.coupon && typeof oldDisc.coupon === 'object' ? oldDisc.coupon : null;
+  const keepCoupon = within90 && !comp && oldCoupon && oldCoupon.id && oldCoupon.duration === 'forever' && oldCoupon.valid !== false
+    && (sub0.discounts || []).length <= 1 ? oldCoupon.id : null;
+  const deal = keepCoupon ? null : vpbDealWords(sub0, comp);
   const oldPrice = info && info.priceId;
   if (!oldPrice && !deal) return refuse(503, 'We could not check your price just now. Nothing has been charged. Please try again in a minute.');
+  /* "Their previous price" is its TIER (the offer or the standard rate) on the account's own plan: one of our four prices. */
+  const knownPrices = [env.STRIPE_PRICE_MONTHLY, env.STRIPE_PRICE_ANNUAL, env.STRIPE_PRICE_STANDARD_MONTHLY, env.STRIPE_PRICE_STANDARD_ANNUAL].filter(Boolean);
+  const keepPrevious = within90 && !deal && !!oldPrice && knownPrices.indexOf(oldPrice) !== -1;
   const wasOffer = !deal && vpbIsFoundingPrice(env, oldPrice);
-  const oldRateUntilMs = deal ? NaN : vpbOldRateUntilMs(Date.parse(venue.created_at || ''), clockMs);
-  const keepOffer = wasOffer && isFinite(oldRateUntilMs) && nowMs < oldRateUntilMs;
+  /* NOT KEPT (a running-out discount, a free account, or an old price that is no longer one of ours): the standard
+     rate. The 5 Nov old-rate exception (more than 6 months with us, back within 2 months) sits wholly inside these
+     90 days, so the promise above covers it; after the 90 days the account is held and HQ restarts it by hand,
+     applying that rule (vpbOldRateUntilMs, never published). */
+  const keepOffer = keepPrevious && wasOffer;
   const priceId = keepOffer
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -12026,23 +12055,28 @@ async function vpbRestartPlan(env, o, venueId, nowMs) {
   const cust = customer ? await vpbStripeGet(env, 'customers/' + encodeURIComponent(customer) + '?expand[]=invoice_settings.default_payment_method') : null;
   if (cust && !cust.error && cust.invoice_settings) card = vpbCardOf(cust.invoice_settings.default_payment_method);
   if (!card && sub0) card = vpbCardOf(sub0.default_payment_method);
-  const perPeriodCents = Math.round(rate * 100) * players * (plan === 'annual' ? 12 : 1);
+  /* With a kept discount the charge today is Stripe's to work out (the coupon applies to it); the page says the
+     rate and that their discount carries on, never a number we did not compute. */
+  const perPeriodCents = keepCoupon ? null : Math.round(rate * 100) * players * (plan === 'annual' ? 12 : 1);
   return Object.assign(base, { kind: 'new_sub', mode: card ? 'confirm' : 'card', plan: plan, rate: rate, price_id: priceId,
-    offer: keepOffer, was_offer: wasOffer, old_rate: keepOffer, old_rate_until_ms: keepOffer ? oldRateUntilMs : NaN, deal: deal,
+    offer: keepOffer, was_offer: wasOffer, deal: deal,
+    kept_previous: keepPrevious, coupon: keepCoupon,
     contact_email: o.account.contact_email || null, customer: customer, card: card, today_cents: perPeriodCents, monthly_cents: Math.round(rate * 100) * players });
 }
 
 /* What the page shows: the plan, without the internals. */
 function vpbRestartPublic(p) {
   const out = { ok: true, available: true, can_restart: true, kind: p.kind, mode: p.mode, venue_id: p.venue.id, venue_name: p.venue.name || '',
-    players: p.players, rate: p.rate, monthly: vpbRestartMoney(p.monthly_cents), today: vpbRestartMoney(p.today_cents || 0),
-    today_cents: p.today_cents || 0, restart_until: new Date(p.deadlineMs).toISOString(), restart_until_words: p.deadline_words };
+    players: p.players, rate: p.rate, monthly: vpbRestartMoney(p.monthly_cents),
+    today: p.today_cents == null ? null : vpbRestartMoney(p.today_cents || 0), today_cents: p.today_cents == null ? null : (p.today_cents || 0),
+    restart_until: new Date(p.deadlineMs).toISOString(), restart_until_words: p.deadline_words };
   if (p.kind === 'group') {
     Object.assign(out, { stub: vpbRestartMoney(p.stub_cents), stub_cents: p.stub_cents, stub_words: p.stub_words,
       next_bill_at: p.next_bill_at, next_bill_words: p.next_bill_words, trialing: p.trialing });
   }
   /* The rate is said (it is what they pay); the leeway behind it is never announced (Dean, INBOX 55c): no keep-by date. */
   if (p.kind === 'new_sub' || p.kind === 'prospect') out.offer = !!p.offer;
+  if (p.kind === 'new_sub') { out.kept_previous = !!p.kept_previous; if (p.coupon) out.discount_kept = true; }
   if (p.card) out.card = { brand: p.card.brand, last4: p.card.last4 };
   return out;
 }
@@ -12085,16 +12119,17 @@ async function vpbRestartCheckout(env, o, p, nowMs) {
     'subscription_data[metadata][vp_restart]': '1', 'subscription_data[metadata][venue_id]': p.venue.id,
     'subscription_data[metadata][row_id]': o.account.id, 'subscription_data[metadata][venue]': p.venue.name || '',
     'subscription_data[metadata][tier]': p.offer ? 'founding' : 'standard',
-    /* Open no longer than the offer or the 90 days allow (Stripe: 30 minutes to 24 hours). */
-    expires_at: String(Math.max(nowS + 31 * 60, Math.min(nowS + 23 * 3600,
-      Math.floor((p.old_rate && isFinite(p.old_rate_until_ms) ? Math.min(p.old_rate_until_ms, p.deadlineMs) : p.deadlineMs) / 1000)))),
+    /* Open no longer than the 90 days allow (Stripe: 30 minutes to 24 hours): the previous price is never paid after them. */
+    expires_at: String(Math.max(nowS + 31 * 60, Math.min(nowS + 23 * 3600, Math.floor(p.deadlineMs / 1000)))),
     success_url: site + '/app/billing.html?restarted=1',
     cancel_url: site + '/app/billing.html',
   };
   if (p.customer) form.customer = p.customer; else if (p.contact_email) form.customer_email = p.contact_email;
   if (p.deal) { form['metadata[vp_restart_deal]'] = p.deal; form['subscription_data[metadata][vp_restart_deal]'] = p.deal; }
+  /* Their ongoing discount, kept (Stripe takes discounts OR allow_promotion_codes, never both). */
+  if (p.coupon) { delete form.allow_promotion_codes; form['discounts[0][coupon]'] = p.coupon; }
   const hour = Math.floor(nowMs / 3600000);
-  const s = await vpbStripePost(env, 'checkout/sessions', form, 'restartcs:' + p.venue.id + ':' + p.clockMs + ':' + p.price_id + ':' + hour);
+  const s = await vpbStripePost(env, 'checkout/sessions', form, 'restartcs:' + p.venue.id + ':' + p.clockMs + ':' + p.price_id + ':' + (p.coupon || '') + ':' + hour);
   return (s && !s.error && s.url) ? s.url : null;
 }
 
@@ -12184,12 +12219,15 @@ async function vpbRestartRun(env, o, venueId, nowMs, json) {
     if (!url) return json({ error: 'The payment page could not be opened just now. Nothing has been charged. Please try again in a minute.' }, 502);
     return json({ ok: true, mode: 'card', card_url: url, kind: 'new_sub' });
   }
-  const sub = await vpbStripePost(env, 'subscriptions', {
+  const subForm = {
     customer: p.customer, 'items[0][price]': p.price_id, 'items[0][quantity]': String(p.players),
     default_payment_method: p.card.id, payment_behavior: 'error_if_incomplete',
     'metadata[vp_restart]': '1', 'metadata[venue_id]': p.venue.id, 'metadata[row_id]': o.account.id,
     'metadata[venue]': p.venue.name || '', 'metadata[tier]': p.offer ? 'founding' : 'standard',
-  }, 'restart:' + p.venue.id + ':' + p.clockMs + ':' + p.card.id + ':' + p.price_id);
+  };
+  if (p.coupon) subForm['discounts[0][coupon]'] = p.coupon;   // their ongoing discount, kept (INBOX 142)
+  const sub = await vpbStripePost(env, 'subscriptions', subForm,
+    'restart:' + p.venue.id + ':' + p.clockMs + ':' + p.card.id + ':' + p.price_id + (p.coupon ? ':' + p.coupon : ''));
   if (!sub || sub.error) {
     const e = (sub && sub.error) || {};
     if (/idempotency/i.test(String(e.type || '') + ' ' + String(e.code || ''))) return json({ error: 'That is already on its way. Give it a moment and refresh the page.' }, 409);
@@ -12209,9 +12247,11 @@ async function vpbRestartRun(env, o, venueId, nowMs, json) {
     return json({ ok: false, card_failed: true, error: 'Your card was not accepted, so nothing has been charged. Use another card to come back.', card_url: url, mode: 'card' }, 402);
   }
   await vpbRestartSwitchOn(env, o.account.id, p.venue.id, 'new_sub', sub.id);
-  await audit('venue_restarted', { subscription: sub.id, price: p.price_id, offer: p.offer, charged_cents: p.today_cents, deal: p.deal || null });
+  await audit('venue_restarted', { subscription: sub.id, price: p.price_id, offer: p.offer, charged_cents: p.today_cents, deal: p.deal || null,
+    kept_previous: !!p.kept_previous, coupon: p.coupon || null });
   if (p.deal) await vpbRestartDealAlert(env, p.venue, o.account, p.deal);
-  return json({ ok: true, restarted: true, kind: 'new_sub', charged: vpbRestartMoney(p.today_cents), offer: p.offer });
+  return json({ ok: true, restarted: true, kind: 'new_sub', charged: p.today_cents == null ? null : vpbRestartMoney(p.today_cents), offer: p.offer,
+    kept_previous: !!p.kept_previous });
 }
 
 /* The webhook's half: a restart Checkout (metadata vp_restart) has been paid. Signed by Stripe before it gets
