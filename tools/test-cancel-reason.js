@@ -13,6 +13,9 @@
    4. HQ's Details panel shows the reason and their note for a venue that is leaving.
    5. The free-month cancel page (venueplay/prospect/cancel/) asks the same seven, from the Worker's
       one list, optional; recorded the same way; shown on the prospect in HQ (Dean, 10 Nov 2026).
+   6. Both cancel screens show what venueplay has done for them over their whole history, what they'd
+      lose, and a main button: the hand-over for closing, the keep plan (OFF behind VPB_KEEP_PLAN)
+      otherwise; Cancel never hidden (Dean, 10 Nov 2026, INBOX 136 and 137).
 
    Run:  jsc tools/test-cancel-reason.js
 */
@@ -338,6 +341,166 @@ check('a cancelled prospect carries its newest reason and note',
 check('one that skipped it carries null (HQ: Not given); another action\'s row is never read as the reason',
       byV.pb && byV.pb.cancel_reason === null, byV.pb && byV.pb.cancel_reason);
 check('a prospect still in its free month carries no cancel reason', byV.pc && !('cancel_reason' in byV.pc), byV.pc);
+
+/* ---------- 6. the cancel screen: their numbers, what they'd lose, the main button (Dean, 10 Nov 2026, INBOX 136 and 137) ---------- */
+print('the cancel screen: numbers, what they would lose, the main button');
+var DEAN = { games: 66, by_type: { trivia: 38, musical_bingo: 28 }, people: 146, came_back: 72, opt_ins: 62, raffles: 0, draws: 0, prizes: 0, members: 0 };
+check('Dean\'s own example, word for word', JSON.stringify(vpaVenueStatsLines(DEAN)) === JSON.stringify([
+  'You ran 38 trivia games and 28 musical bingo games.', '146 people played, and 72 of them came back more than three times.',
+  '62 players asked to hear more about your venue.']), vpaVenueStatsLines(DEAN));
+check('no games: no block at all', vpaVenueStatsLines({ games: 0, by_type: {}, people: 9, opt_ins: 3 }).length === 0 && vpaVenueStatsLines(null).length === 0);
+var L2 = vpaVenueStatsLines({ games: 4, by_type: { trivia: 1, bingo: 2, topanswers: 1 }, people: 1, came_back: 0, opt_ins: 0, raffles: 3, draws: 1, prizes: 2 });
+check('singular words, other games named last, a 0 part dropped, draws and prizes on their own lines', JSON.stringify(L2) === JSON.stringify([
+  'You ran 1 trivia game, 2 bingo games and 1 other game.', '1 person played.', 'You drew 3 raffles and 1 members draw.', 'You gave away 2 prizes.']), L2);
+check('no prizes given: no prizes line; nothing drawn: no draws line; no opt-ins: no opt-in line',
+      vpaVenueStatsLines({ games: 3, by_type: { trivia: 3 }, people: 0, came_back: 0, opt_ins: 0, raffles: 0, draws: 0, prizes: 0 }).join('|') === 'You ran 3 trivia games.');
+check('what they would lose: the members list only when they have one',
+      vpaLoseWords({ members: 62 }) === 'your members list of 62, your results and your slides' && vpaLoseWords({ members: 0 }) === 'your results and your slides' && vpaLoseWords(null) === 'your results and your slides');
+
+/* The builder, against a fake database that answers by table and records every query. */
+var Q = [];
+var DBS = {
+  vp_sessions: [{ id: 's1', created_at: '2026-10-01T09:00:00Z' }, { id: 's2', created_at: '2026-10-02T09:00:00Z' }, { id: 's3', created_at: '2026-10-03T09:00:00Z' },
+                { id: 's4', created_at: '2026-10-04T09:00:00Z' }, { id: 's5', created_at: '2026-10-05T09:00:00Z' }],
+  vp_games: [{ id: 'g1', session_id: 's1', format: 'trivia' }, { id: 'g2', session_id: 's2', format: 'musical_bingo' }, { id: 'g3', session_id: 's3', format: 'bingo90' },
+             { id: 'g4', session_id: 's4', format: 'raffle' }, { id: 'g5', session_id: 's5', format: 'trivia' }],
+  vp_players: [].concat(['s1', 's2', 's3', 's4', 's5'].map(function (sid, i) { return { id: 'pa' + i, session_id: sid, device_id: 'A' }; }),
+                        ['s1', 's2'].map(function (sid, i) { return { id: 'pb' + i, session_id: sid, device_id: 'B' }; }),
+                        ['s1', 's2', 's3', 's4'].map(function (sid, i) { return { id: 'pc' + i, session_id: sid, device_id: 'C' }; }),
+                        [{ id: 'pt', session_id: 's1', device_id: 'T', is_test: true }, { id: 'pk', session_id: 's1', device_id: 'K', kicked: true },
+                         { id: 'pn', session_id: 's3', device_id: null }]),
+  v_vp_player_optins: [{ venue_id: 'v9' }, { venue_id: 'v9' }],
+  vp_raffle_results: [{ id: 'r1', game_id: 'g4' }],
+  vp_member_draws: [{ id: 'd1' }], vp_member_draw_results: [{ id: 'dr1' }, { id: 'dr2' }],
+  v_vp_prizes_given: [{ venue_id: 'v9', prizes_given_count: 3, unvalued_given_count: 1 }],
+  vp_member_rosters: [{ id: 'ro1' }], vp_members: [{ id: 'm1' }, { id: 'm2' }, { id: 'm3' }]
+};
+vpaSelectAll = function (env, table, q) { Q.push(table + '?' + q); return Promise.resolve((DBS[table] || []).slice()); };
+function runP(pr) { var out = null; pr.then(function (r) { out = r; }, function (e) { out = { THREW: String(e) }; }); drainMicrotasks(); return out; }
+var ST = runP(vpaVenueHistory(ENV, 'v9'));
+check('whole history: games without the raffle, by type, bingo90 read as bingo',
+      ST && ST.games === 4 && ST.by_type.trivia === 2 && ST.by_type.musical_bingo === 1 && ST.by_type.bingo === 1, ST);
+check('people: test and kicked players never counted, a phone counted once, a player with no phone counted once',
+      ST && ST.people === 4, ST && ST.people);
+check('came back more than three times: a phone seen on 5 or more nights (4 nights is not)', ST && ST.came_back === 1, ST && ST.came_back);
+check('opt-ins, raffles drawn, members draws, prizes (valued and unvalued) and members, all counted',
+      ST && ST.opt_ins === 2 && ST.raffles === 1 && ST.draws === 2 && ST.prizes === 4 && ST.members === 3, ST);
+check('demo sessions are never read (the same filter as the monthly report), and only this venue',
+      Q.some(function (q) { return q.indexOf('vp_sessions?venue_id=eq.v9&is_demo=not.is.true') === 0; }), Q[0]);
+check('whole history means no date filter on any read', !Q.some(function (q) { return /created_at=gte|opted_in_at=gte/.test(q); }), Q);
+Q = [];
+var SW = runP(vpaVenueHistory(ENV, 'v9', { from: '2026-10-01T00:00:00Z', to: '2026-11-01T00:00:00Z' }));
+check('a window (for the reminder emails) narrows sessions and opt-ins, and leaves draws and prizes off rather than guess',
+      SW && Q[0].indexOf('created_at=gte.2026-10-01T00%3A00%3A00Z&created_at=lt.2026-11-01T00%3A00%3A00Z') !== -1
+      && Q.some(function (q) { return /^v_vp_player_optins\?.*opted_in_at=gte\./.test(q); }) && SW.raffles === null && SW.draws === null && SW.prizes === null, [Q, SW]);
+
+var SC_OFF = runP(vpaCancelScreen({}, { id: 'v9', name: 'The Royal' }));
+var SC_ON = runP(vpaCancelScreen({ VPB_KEEP_PLAN: '1' }, { id: 'v9', name: 'The Royal' }));
+check('the keep plan is OFF unless VPB_KEEP_PLAN is 1: no words, no button', SC_OFF && SC_OFF.keep_plan === null && SC_OFF.lines.length > 0 && /members list of 3/.test(SC_OFF.lose), SC_OFF);
+check('switched on, its words are Dean\'s', SC_ON && SC_ON.keep_plan && SC_ON.keep_plan.title === 'Keep the basics for $10 a month'
+      && SC_ON.keep_plan.sub === '$10 a month, whatever the number of players. Our cheapest plan.', SC_ON && SC_ON.keep_plan);
+vpaSelectAll = function () { return Promise.reject(new Error('down')); };
+var SC_BAD = runP(vpaCancelScreen({}, { id: 'v9', name: 'X' }));
+check('a failed read never stops a cancel: no numbers, the plain words', SC_BAD && SC_BAD.lines.length === 0 && SC_BAD.lose === 'your results and your slides', SC_BAD);
+vpaSelectAll = function (env, table) { return Promise.resolve((DBS[table] || []).slice()); };
+
+/* The free-month page's question carries the screen; "Hand the account to the new owner" sends HQ a ticket and cancels nothing. */
+var TICKETS = [];
+helpInsertTicket = function (env, t) { TICKETS.push(t); return Promise.resolve({ id: 'tk1', ticket_no: 1001 }); };
+helpAnnounce = function () { return Promise.resolve(); };
+parm();
+var ask2 = pcall('GET', 'f=fid1&t=tokfid1&reply=json');
+check('the free-month question carries the screen: numbers, what they would lose, keep plan off',
+      ask2 && ask2.json && ask2.json.screen && ask2.json.screen.lines.length > 0 && ask2.json.screen.keep_plan === null && /your slides/.test(ask2.json.screen.lose), ask2 && ask2.json);
+parm(); TICKETS = [];
+var tr = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json&action=transfer&reason=closing&new_name=Sam+Lee&new_email=sam%40pub.com&new_mobile=0400000000');
+check('the hand-over: a "Transfer ownership" request to HQ with the new owner\'s name, email and mobile',
+      TICKETS.length === 1 && TICKETS[0].title === 'Transfer ownership' && TICKETS[0].category === 'accounts' && TICKETS[0].venue_id === 'pv1'
+      && /New owner: Sam Lee/.test(TICKETS[0].message) && /sam@pub\.com/.test(TICKETS[0].message) && /0400000000/.test(TICKETS[0].message), TICKETS);
+check('and nothing is cancelled by it', tr && tr.json && tr.json.state === 'transfer_sent' && !pRow.cancelled_at && pVenue.status === 'active'
+      && !pAudit.some(function (x) { return x.action === 'prospect_cancelled'; }) && pAudit.some(function (x) { return x.action === 'transfer_requested'; }), [tr && tr.json, pVenue.status]);
+parm(); TICKETS = [];
+var tb = pcall('POST', '', 'f=fid1&t=tokfid1&reply=json&action=transfer&new_email=sam%40pub.com');
+check('no new owner name: asked for it, no ticket, nothing cancelled', tb && tb.json && tb.json.state === 'transfer_bad' && TICKETS.length === 0 && !pRow.cancelled_at, tb && tb.json);
+parm(); TICKETS = [];
+var tw = pcall('POST', '', 'f=fid1&t=WRONG&reply=json&action=transfer&new_name=Sam&new_email=sam%40pub.com');
+check('a wrong token sends no hand-over request', TICKETS.length === 0 && tw && tw.json && tw.json.state === 'bad', tw && tw.json);
+
+/* The paid side: /account/transfer-request, owner only, the same ticket. */
+arm(); TICKETS = [];
+function bpost(fn, body) { var req = { json: function () { return Promise.resolve(body); }, text: function () { return Promise.resolve(JSON.stringify(body)); } };
+  return runP(fn(req, ENV, function (b, st) { return { body: b, status: st || 200 }; })); }
+var bt = bpost(vpbTransferRequest, { venue_id: 'v1', new_name: 'Sam Lee', new_mobile: '0400 000 000' });
+check('billing\'s hand-over: one "Transfer ownership" ticket for that venue, and the venue is not touched',
+      bt && bt.status === 200 && bt.body.ok && TICKETS.length === 1 && TICKETS[0].title === 'Transfer ownership' && TICKETS[0].venue_id === 'v1'
+      && row.cancel_at_period_end === false && calls.length === 0, [bt, calls]);
+var bx = bpost(vpbTransferRequest, { venue_id: 'v1', new_name: 'Sam' });
+check('no email or mobile for the new owner: asked for one, no ticket', bx && bx.status === 400 && TICKETS.length === 1, bx);
+var by = bpost(vpbTransferRequest, { venue_id: 'nope', new_name: 'Sam', new_email: 'a@b.com' });
+check('a venue that is not theirs is refused', by && by.status === 403 && TICKETS.length === 1, by);
+var bs = bpost(vpbCancelScreen, { venue_id: 'v1' });
+check('billing\'s cancel screen answers for their own venue only', bs && bs.status === 200 && Array.isArray(bs.body.lines) && bpost(vpbCancelScreen, { venue_id: 'x' }).status === 403, bs);
+
+/* The free-month page, run: the screen drawn, the main button by reason, Cancel always there. */
+function crun2(answers, steps) {
+  var els = {}, calls = [], q = answers.slice();
+  ['head', 'lede', 'ask', 'go', 'err', 'foot', 'why', 'whyPick', 'whyMore', 'stats', 'statsHead', 'statsList', 'lose', 'hand', 'acts', 'main', 'nwName', 'nwEmail', 'nwMobile'].forEach(function (id) {
+    els[id] = { id: id, textContent: '', className: '', innerHTML: '', value: '', disabled: false, on: {}, attrs: {},
+                setAttribute: function (k, v) { this.attrs[k] = String(v); }, getAttribute: function (k) { return k in this.attrs ? this.attrs[k] : null; },
+                addEventListener: function (t, fn) { this.on[t] = fn; } };
+  });
+  var doc = { getElementById: function (id) { return els[id] || null; } };
+  var win = { location: { search: '?f=fid1&t=tokfid1', href: '' } };
+  var net = function (url, o) { calls.push({ url: String(url), method: (o && o.method) || 'GET', body: o && o.body });
+    var a = q.length ? q.shift() : null; return Promise.resolve({ ok: true, json: function () { return Promise.resolve(a); } }); };
+  new Function('document', 'window', 'location', 'fetch', ccode)(doc, win, win.location, net);
+  drainMicrotasks();
+  return { els: els, calls: calls, win: win };
+}
+var SCR = { venue_name: 'Lakeside Tavern', lines: ['You ran 9 trivia games.', '41 people played.'], lose: 'your members list of 18, your results and your slides', keep_plan: null };
+var R1 = crun2([{ ok: true, state: 'ask', title: 'Cancel?', text: 'x', reasons: vpaCancelReasonList(), screen: SCR }]);
+check('their numbers show under Dean\'s heading, one line each, escaped',
+      R1.els.stats.className === 'stats' && R1.els.statsHead.textContent === 'Before you go, here’s what venueplay has done for Lakeside Tavern:'
+      && R1.els.statsList.innerHTML === '<li>You ran 9 trivia games.</li><li>41 people played.</li>', [R1.els.stats.className, R1.els.statsHead.textContent]);
+check('and what they would lose', R1.els.lose.className === 'lose' && R1.els.lose.innerHTML === 'If you cancel, you lose <b>your members list of 18, your results and your slides</b>.', R1.els.lose.innerHTML);
+check('keep plan off, any reason but closing: no main button, Cancel alone as before', /hidden/.test(R1.els.main.className) && R1.els.acts.className === 'acts');
+R1.els.whyPick.value = 'closing'; R1.els.whyPick.on.change(); drainMicrotasks();
+check('closing or changing hands: "Hand the account to the new owner" is the main button, with the new owner\'s fields, and Cancel stays',
+      R1.els.main.className === 'main' && R1.els.main.innerHTML === 'Hand the account to the new owner' && R1.els.hand.className === 'why hand'
+      && R1.els.acts.className === 'acts two' && !/hidden/.test(R1.els.go.className) && !R1.els.go.disabled, [R1.els.main.className, R1.els.main.innerHTML, R1.els.hand.className]);
+R1.els.nwName.value = ' Sam Lee '; R1.els.nwEmail.value = 'sam@pub.com';
+R1.els.main.on.click(); drainMicrotasks();
+var tpost = R1.calls.filter(function (c) { return c.method === 'POST'; })[0] || {};
+var tform = {}; String(tpost.body || '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) tform[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); });
+check('it posts the hand-over (action=transfer) with the new owner, never the cancel',
+      tform.action === 'transfer' && tform.new_name === 'Sam Lee' && tform.new_email === 'sam@pub.com' && tform.f === 'fid1' && tform.t === 'tokfid1'
+      && R1.calls.filter(function (c) { return c.method === 'POST'; }).length === 1, tform);
+var R2 = crun2([{ ok: true, state: 'ask', title: 'Cancel?', text: 'x', reasons: vpaCancelReasonList(), screen: { lines: [], lose: 'your results and your slides',
+  keep_plan: { title: 'Keep the basics for $10 a month', sub: '$10 a month, whatever the number of players. Our cheapest plan.' } } }]);
+check('no games: no numbers block', R2.els.stats.className === '' && R2.els.statsList.innerHTML === '');
+['not_using', 'expensive', 'players', 'switched', 'pausing', 'other'].forEach(function (k) {
+  R2.els.whyPick.value = k; R2.els.whyPick.on.change();
+  check('keep plan switched on, "' + k + '": Keep the basics is the main button, Cancel beside it',
+        R2.els.main.className === 'main' && R2.els.main.innerHTML.indexOf('Keep the basics for $10 a month') === 0 && R2.els.acts.className === 'acts two' && /hand hidden/.test(R2.els.hand.className));
+});
+R2.els.whyPick.value = 'closing'; R2.els.whyPick.on.change();
+check('keep plan on, closing or changing hands: no $10 button, the hand-over instead', R2.els.main.innerHTML === 'Hand the account to the new owner');
+var CP2 = CPAGE.replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+check('the free-month page has no price words of its own, the 90-day line, and no members list download',
+      !/\$\d/.test(CP2) && CP2.indexOf('Change your mind within 90 days and you keep your current plan and price.') !== -1 && !/download|export/i.test(CP2));
+
+/* billing.html's dialog. */
+var DLG2 = (function () { var a = PAGE.indexOf('function askWhy('), b = PAGE.indexOf('function showMsg(', a); return PAGE.slice(a, b); })();
+var DLG2c = DLG2.replace(/\/\*[\s\S]*?\*\//g, '');
+check('billing\'s dialog asks the Worker for the screen and draws the numbers and what they would lose',
+      /api\("\/account\/cancel-screen", \{ venue_id:v\.id \}\)/.test(DLG2) && /Before you go, here\\u2019s what venueplay has done for /.test(DLG2) && /If you cancel, you lose <b>/.test(DLG2));
+check('the hand-over is the main button for closing, the keep plan only from the Worker\'s words, Cancel never hidden',
+      /var closing = pick\.value === "closing", kp = SCREEN && SCREEN\.keep_plan;/.test(DLG2) && /mainBtn\.innerHTML = "Hand the account to the new owner"/.test(DLG2)
+      && /'<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue<\/button>'/.test(DLG2) && !/id="whyGo"[^>]*hidden/.test(DLG2) && !/goBtn\.hidden/.test(DLG2));
+check('billing\'s dialog: the 90-day line, no price words, no members list download',
+      DLG2.indexOf('Change your mind within 90 days and you keep your current plan and price.') !== -1 && !/\$\d/.test(DLG2c) && !/download|export/i.test(DLG2c));
+check('the hand-over posts to /account/transfer-request with the new owner',
+      /api\("\/account\/transfer-request", \{ venue_id:v\.id, new_name:val\("nwName"\), new_email:val\("nwEmail"\), new_mobile:val\("nwMobile"\) \}\)/.test(DLG2));
 
 if (fails) { throw new Error('cancel reason: ' + fails + ' failed'); }
 print('PASS');

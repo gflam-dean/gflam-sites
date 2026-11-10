@@ -512,7 +512,7 @@
   "counted_by": "lines"
  },
  "tools/test-cancel-reason.js": {
-  "checks": 79,
+  "checks": 121,
   "counted_by": "lines"
  },
  "tools/test-cant-sign-warns.js": {

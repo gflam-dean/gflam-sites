@@ -378,6 +378,20 @@
   .dlgbtn.go:hover{background:var(--pink-deep);border-color:var(--pink-deep)}
   @media(max-width:420px){ .dlgacts{flex-direction:column-reverse;align-items:stretch}
     .dlgacts .dlgbtn{width:100%} }
+  /* THE CANCEL SCREEN (Dean, 10 Nov 2026, INBOX 136 and 137): their numbers, what they'd lose, and a main
+     button beside Cancel, the same size, Cancel never hidden. */
+  .cxstats{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px}
+  .cxstats p{color:#fff;font-weight:700;font-size:14.5px;margin:0 0 6px}
+  .cxstats ul{margin:0 0 0 18px;font-size:14px;color:var(--text);line-height:1.5}
+  .cxlose{font-size:14px;color:var(--text);margin:0 0 16px} .cxlose b{color:#fff}
+  .cxback{font-size:13.5px;color:#fff;margin:14px 0 0}
+  .dlg input.cxin{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;
+    padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif;margin:0 0 10px}
+  .dlgacts.stack{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:10px}
+  .dlgacts.stack .dlgbtn{width:100%}
+  .dlgacts.stack .dlgbtn.go{background:transparent;border:1.5px solid rgba(255,255,255,.7)}
+  .dlgbtn.main{background:var(--pink);border:1px solid var(--pink);color:#fff}
+  .dlgbtn.main small{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;margin-top:2px}
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
@@ -948,6 +962,10 @@
             ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
             : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
         '</p>' +
+        /* Their numbers over their whole history, and what they'd lose: filled from /account/cancel-screen
+           below. Hidden until it answers, and hidden for a venue with no games. */
+        '<div id="whyStats" class="cxstats" hidden><p id="whyStatsHead"></p><ul id="whyStatsList"></ul></div>' +
+        '<p id="whyLose" class="cxlose" hidden></p>' +
         '<label class="flabel" for="whyPick">Before you go, what\u2019s the main reason?</label>' +
         '<select id="whyPick">' +
           '<option value="" selected disabled>Pick one&hellip;</option>' +
@@ -963,7 +981,16 @@
           '<label class="flabel" id="whyMoreLbl" for="whyMore">Anything you\u2019d like to tell us? (optional)</label>' +
           '<textarea id="whyMore" rows="3" maxlength="2000"></textarea>' +
         '</div>' +
-        '<div class="dlgacts">' +
+        /* Closing or changing hands: the new owner, for a help request to HQ. NO members list download is
+           offered on this path (Dean, 10 Nov 2026: if they've sold, the list is not theirs to use). */
+        '<div id="whyHand" class="dlgmore" hidden>' +
+          '<label class="flabel" for="nwName">New owner\u2019s name</label><input id="nwName" class="cxin" type="text" maxlength="120" autocomplete="off">' +
+          '<label class="flabel" for="nwEmail">Their email</label><input id="nwEmail" class="cxin" type="email" maxlength="200" autocomplete="off">' +
+          '<label class="flabel" for="nwMobile">Their mobile</label><input id="nwMobile" class="cxin" type="tel" inputmode="tel" maxlength="30" autocomplete="off">' +
+        '</div>' +
+        '<p class="cxback">Change your mind within 90 days and you keep your current plan and price.</p>' +
+        '<div class="dlgacts" id="whyActs">' +
+          '<button type="button" id="whyMain" class="dlgbtn main" hidden></button>' +
           '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
           '<button type="button" id="whyGo" class="dlgbtn go" disabled>Cancel this venue</button>' +
         '</div>' +
@@ -989,8 +1016,45 @@
        "Rather not say" is gone as an option, but "Something else" takes anything, so nobody
        is actually trapped into a reason they do not hold. */
     var goBtn = w.querySelector("#whyGo");
+    /* THE MAIN BUTTON (Dean, 10 Nov 2026): "Hand the account to the new owner" for closing or changing
+       hands; otherwise the keep plan, only while the Worker says it is switched on (its words come from
+       the Worker, so this page has no price of its own); otherwise none. Cancel is never hidden. */
+    var mainBtn = w.querySelector("#whyMain"), hand = w.querySelector("#whyHand"), acts = w.querySelector("#whyActs");
+    var SCREEN = null;
+    function cxPaintActs(){
+      var closing = pick.value === "closing", kp = SCREEN && SCREEN.keep_plan;
+      hand.hidden = !closing;
+      if (closing) { mainBtn.innerHTML = "Hand the account to the new owner"; mainBtn.setAttribute("data-do", "transfer"); }
+      else if (kp) { mainBtn.innerHTML = esc(kp.title) + "<small>" + esc(kp.sub) + "</small>"; mainBtn.setAttribute("data-do", "keep"); }
+      var on = closing || !!kp;
+      mainBtn.hidden = !on;
+      acts.className = on ? "dlgacts stack" : "dlgacts";
+    }
     pick.addEventListener("change", function(){
       goBtn.disabled = !pick.value;
+      cxPaintActs();
+    });
+    api("/account/cancel-screen", { venue_id:v.id }).then(function(sc){
+      if (!sc || sc.error || !document.getElementById("whyWrap")) return;
+      SCREEN = sc;
+      var lines = sc.lines || [];
+      if (lines.length) {
+        w.querySelector("#whyStatsHead").textContent = "Before you go, here\u2019s what venueplay has done for " + (sc.venue_name || v.name) + ":";
+        w.querySelector("#whyStatsList").innerHTML = lines.map(function(l){ return "<li>" + esc(l) + "</li>"; }).join("");
+        w.querySelector("#whyStats").hidden = false;
+      }
+      if (sc.lose) { var lo = w.querySelector("#whyLose"); lo.innerHTML = "If you cancel, you lose <b>" + esc(sc.lose) + "</b>."; lo.hidden = false; }
+      cxPaintActs();
+    });
+    mainBtn.addEventListener("click", function(){
+      if (mainBtn.getAttribute("data-do") === "keep") { if (SCREEN && SCREEN.keep_plan && SCREEN.keep_plan.url) location.href = SCREEN.keep_plan.url; return; }
+      var val = function(id){ return String(w.querySelector("#" + id).value || "").trim(); };
+      mainBtn.disabled = true;
+      api("/account/transfer-request", { venue_id:v.id, new_name:val("nwName"), new_email:val("nwEmail"), new_mobile:val("nwMobile") }).then(function(r){
+        mainBtn.disabled = false;
+        if (r && r.ok) { close(); showMsg("Thanks. We have your request to hand " + v.name + " to its new owner, and we\u2019ll be in touch. Nothing has been cancelled.", true); return; }
+        showMsg((r && r.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.", false);
+      });
     });
     function close(){ w.remove(); }
     w.querySelector("#whyBack").addEventListener("click", close);

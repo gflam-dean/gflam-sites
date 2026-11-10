@@ -57,6 +57,19 @@
        border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:12px 12px;margin:0 0 14px}
   .why textarea{resize:vertical;min-height:84px}
   .why select:focus,.why textarea:focus{outline:2px solid var(--pink);outline-offset:1px}
+  /* THEIR NUMBERS, WHAT THEY'D LOSE, THE TWO BUTTONS (Dean, 10 Nov 2026, INBOX 136 and 137). */
+  .stats{background:#1A1A1E;border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 14px}
+  .stats p{color:#fff;font-weight:700;font-size:16px;margin:0 0 8px}
+  .stats ul{margin:0 0 0 20px;font-size:16px;color:var(--text)} .stats li{margin:0 0 4px}
+  .lose{font-size:16px;color:var(--text);margin:0 0 16px} .lose b{color:#fff}
+  .back90{font-size:15px;color:#fff;margin:0 0 12px}
+  .hand{margin:0 0 6px}
+  .acts{display:grid;gap:12px;grid-auto-rows:1fr}
+  .acts button{margin-top:0}
+  button.main{width:100%;padding:14px 20px;border:0;border-radius:10px;background:var(--pink);color:#fff;
+              font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  button.main small{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:14px;margin-top:3px}
+  .acts.two button.go{background:transparent;border:1.5px solid rgba(255,255,255,0.7)}
 </style>
 </head>
 <body>
@@ -68,13 +81,28 @@
       <!-- THE SAME SEVEN REASONS AS billing.html (Dean, 10 Nov 2026). The choices come from the Worker's answer
            (VPA_CANCEL_REASONS, one list), so this page never has words of its own for them. Both optional:
            the button cancels with or without them. Hidden until the Worker has sent the list. -->
+      <!-- What venueplay has done for them, over their whole history (the Worker's vpaVenueHistory). Hidden
+           when they have no games, and any line that would be 0 never comes from the Worker. -->
+      <div id="stats" class="stats hidden"><p id="statsHead"></p><ul id="statsList"></ul></div>
+      <p id="lose" class="lose hidden"></p>
       <div id="why" class="why hidden">
         <label for="whyPick">Before you go, what&rsquo;s the main reason? (optional)</label>
         <select id="whyPick"><option value="">Pick one (optional)</option></select>
         <label for="whyMore">Anything you&rsquo;d like to tell us? (optional)</label>
         <textarea id="whyMore" rows="3" maxlength="2000"></textarea>
       </div>
-      <button type="button" class="go" id="go">Yes, cancel it</button>
+      <!-- CLOSING OR CHANGING HANDS: the new owner's details, for a help request to HQ. No members list
+           download is offered here, on purpose (Dean: if they've sold, the list is not theirs to use). -->
+      <div id="hand" class="why hand hidden">
+        <label for="nwName">New owner&rsquo;s name</label><input id="nwName" type="text" maxlength="120" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 12px">
+        <label for="nwEmail">Their email</label><input id="nwEmail" type="email" maxlength="200" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 12px">
+        <label for="nwMobile">Their mobile</label><input id="nwMobile" type="tel" inputmode="tel" maxlength="30" autocomplete="off" style="width:100%;font-size:16px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:var(--ink);color:var(--text);margin:0 0 14px">
+      </div>
+      <p class="back90" id="back90">Change your mind within 90 days and you keep your current plan and price.</p>
+      <div id="acts" class="acts">
+        <button type="button" class="main hidden" id="main"></button>
+        <button type="button" class="go" id="go">Yes, cancel it</button>
+      </div>
     </div>
     <p id="err" class="err hidden" role="alert"></p>
     <noscript><p class="err">This page needs JavaScript to cancel. Reply to the email with the word cancel and we will do it for you.</p></noscript>
@@ -98,7 +126,36 @@
     if (a.foot) $("foot").textContent = a.foot;
     $("ask").className = a.state === "ask" ? "" : "hidden";
     $("err").className = "err hidden";
-    if (a.state === "ask") whyList(a.reasons);
+    if (a.state === "ask") { whyList(a.reasons); paintScreen(a.screen); }
+  }
+  /* THE SCREEN (Dean, 10 Nov 2026): their numbers, what they'd lose, and the main button. The keep plan's
+     words come from the Worker only while its switch is on; this page has none of its own. */
+  var SCREEN = null;
+  function paintScreen(sc) {
+    SCREEN = sc || null;
+    if (!sc) return;
+    var st = $("stats"), sl = $("statsList"), sh = $("statsHead");
+    if (st && sl && sh && sc.lines && sc.lines.length) {
+      sh.textContent = "Before you go, here\u2019s what venueplay has done for " + (sc.venue_name || "your venue") + ":";
+      var h = ""; for (var i = 0; i < sc.lines.length; i++) h += "<li>" + whyEsc(sc.lines[i]) + "</li>";
+      sl.innerHTML = h; st.className = "stats";
+    }
+    var lo = $("lose");
+    if (lo && sc.lose) { lo.innerHTML = "If you cancel, you lose <b>" + whyEsc(sc.lose) + "</b>."; lo.className = "lose"; }
+    paintActs();
+  }
+  /* The main button: "Hand the account to the new owner" for closing or changing hands, else the keep
+     plan when it is switched on, else none (Cancel alone, as before). Cancel is never hidden. */
+  function paintActs() {
+    var pick = $("whyPick"), main = $("main"), hand = $("hand"), acts = $("acts");
+    if (!main || !acts) return;
+    var closing = !!(pick && pick.value === "closing"), kp = SCREEN && SCREEN.keep_plan;
+    if (hand) hand.className = closing ? "why hand" : "why hand hidden";
+    if (closing) { main.innerHTML = "Hand the account to the new owner"; main.setAttribute("data-do", "transfer"); }
+    else if (kp) { main.innerHTML = whyEsc(kp.title) + "<small>" + whyEsc(kp.sub) + "</small>"; main.setAttribute("data-do", "keep"); }
+    var on = closing || !!kp;
+    main.className = on ? "main" : "main hidden";
+    acts.className = on ? "acts two" : "acts";
   }
   function whyEsc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   /* The Worker's seven, in its order and its words. No list (an older Worker, or it was out of reach): no
@@ -133,6 +190,31 @@
     .then(function (r) { return r.json(); })
     .then(function (a) { if (a && a.state) show(a); })
     .catch(function () { /* the question is already on the page; the button still works */ });
+  var pickEl = $("whyPick");
+  if (pickEl && pickEl.addEventListener) pickEl.addEventListener("change", paintActs);
+  var mainEl = $("main");
+  if (mainEl && mainEl.addEventListener) mainEl.addEventListener("click", function () {
+    if (mainEl.getAttribute("data-do") === "keep") { if (SCREEN && SCREEN.keep_plan && SCREEN.keep_plan.url) location.href = SCREEN.keep_plan.url; return; }
+    /* A help request to HQ titled "Transfer ownership". Nothing is cancelled by it. */
+    var val = function (id) { var e = $(id); return e && e.value ? String(e.value).trim() : ""; };
+    mainEl.disabled = true;
+    fetch(VP_WORKER + "/prospect/cancel", { method: "POST", credentials: "omit",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "f=" + encodeURIComponent(f) + "&t=" + encodeURIComponent(t) + "&reply=json&action=transfer" + whySaid() +
+            "&new_name=" + encodeURIComponent(val("nwName")) + "&new_email=" + encodeURIComponent(val("nwEmail")) + "&new_mobile=" + encodeURIComponent(val("nwMobile")) })
+      .then(function (r) { return r.json(); })
+      .then(function (a) {
+        mainEl.disabled = false;
+        if (a && a.state === "transfer_sent") { show({ state: "done", title: a.title, text: a.text, foot: a.foot }); return; }
+        $("err").textContent = (a && a.error) || "That did not go through. Please try again, or call us on 07 5228 3667, press 2.";
+        $("err").className = "err";
+      })
+      .catch(function () {
+        mainEl.disabled = false;
+        $("err").textContent = "That did not go through. Please try again, or call us on 07 5228 3667, press 2.";
+        $("err").className = "err";
+      });
+  });
   /* THE BUTTON is the only thing that cancels. A form post, so the browser sends it without a preflight. */
   $("go").addEventListener("click", function () {
     var go = $("go");
