@@ -300,7 +300,7 @@
             <!-- THE DRAW LOOK AND DRAW TIME (Dean, 10 Nov 2026), saved for the venue like the rest of the console's choices. "As now" is
                  the draw every venue has today. Silent for now. -->
             <div class="field2" id="styleField">
-              <span class="flab">How the draw looks on the TV<small>Flip board is a split-flap board with the winner's name on its own flap. Race plate suits racing and footy rooms. As now is the draw you have today.</small></span>
+              <span class="flab">Your usual draw look on the TV<small>Flip board is a split-flap board with the winner's name on its own flap. Race plate suits racing and footy rooms. As now is the draw you have today. You can change it for one draw above the Draw button.</small></span>
               <div class="chips" id="styleChips">
                 <button type="button" data-style="">As now</button>
                 <button type="button" data-style="flip">Flip board</button>
@@ -310,6 +310,7 @@
             <div class="field2" id="timeField">
               <span class="flab">How long the draw takes</span>
               <div class="chips" id="timeChips">
+                <button type="button" data-dt="fast">Fast, 3 seconds</button>
                 <button type="button" data-dt="short">Short, 6 seconds</button>
                 <button type="button" data-dt="normal">Normal, 9 seconds</button>
                 <button type="button" data-dt="long">Long, 12 seconds</button>
@@ -345,6 +346,16 @@
         <div class="ok" id="doneBox"><span class="tick" id="doneTick" aria-hidden="true">&#10003;</span><b id="doneHead"></b><span class="sub" id="doneSub"></span></div>
       </div>
 
+      <!-- THE LOOK FOR THIS DRAW (Dean, 11 Nov 2026): the usual look is in Draw and jackpot settings; this changes one draw (and stays until changed back). -->
+      <div class="field2" id="onceField">
+        <span class="flab">Look for this draw</span>
+        <div class="chips" id="onceChips">
+          <button type="button" data-once="">Usual</button>
+          <button type="button" data-once="classic">As now</button>
+          <button type="button" data-once="flip">Flip board</button>
+          <button type="button" data-once="race">Race plate</button>
+        </div>
+      </div>
       <button class="btn pink xl" id="drawBtn">Draw</button>
       <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button>
         <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
@@ -455,7 +466,7 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
-    drawStyle:"", drawTime:"normal",   // the TV draw look ("", "flip", "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
+    drawStyle:"", drawTime:"normal", styleOnce:null,   // the TV draw look ("", "flip", "race") and time, a venue choice saved with game_prefs (10 Nov 2026)
     round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null,
     lastResult:null   // the draw just paid or rolled over ({ won, name, amountCents, nextCents, capped }): step 3 until the host moves on
   };
@@ -849,14 +860,14 @@
     G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
-    var styled=(G.drawStyle==="flip" || G.drawStyle==="race");
+    var look=(G.styleOnce==null ? G.drawStyle : (G.styleOnce==="classic" ? "" : G.styleOnce)), styled=(look==="flip" || look==="race");
     /* A new look builds for the intro plus the draw time (short 6, normal 9, long 12); "As now" keeps the draw's own length. */
     var len=styled ? Math.round((VPDrawStyle.secs(G.drawTime)+VPDrawStyle.INTRO)*1000) : Math.max(2000, ((d.draw_length_seconds||4))*1000);
     var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
     var lo=nums.length?Math.min.apply(null,nums):0, hi=nums.length?Math.max.apply(null,nums):0;
     // minNumber/maxNumber let the TV spin through numbers that exist in this draw instead of 101 to 500 every week
     var dm={ t:"drawing", drawName:d.name, minNumber:lo, maxNumber:hi, spinSecs:Math.round(len/1000) };
-    if(styled){ dm.style=G.drawStyle; dm.drawSecs=VPDrawStyle.secs(G.drawTime); }
+    if(styled){ dm.style=look; dm.drawSecs=VPDrawStyle.secs(G.drawTime); }
     send(dm); sendState();
 
     var wait=new Promise(function(res){ setTimeout(res, len); });
@@ -1249,9 +1260,12 @@
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); G.lookSet=true; renderLook(); queueMembersPrefs(); });
   renderLook();
+  function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce); }
+  $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
+  renderOnce();
   function applyMembersPrefs(p){
     if(p && typeof p.draw_style==="string" && /^(|flip|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style, G.lookSet=true;
-    if(p && typeof p.draw_time==="string" && /^(short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
+    if(p && typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
     renderLook();
     if(!p || !p.draw_id || G.round || G.busy) return;
     var wd=todayWeekday().toLowerCase(), tonight=false, found=false;

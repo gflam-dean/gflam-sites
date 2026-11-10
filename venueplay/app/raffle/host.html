@@ -324,7 +324,7 @@
                  builds (short 6, normal 9, long 12 seconds). "As now" is what every venue has today and stays lit until the venue
                  picks another. Silent for now. -->
             <div class="field2" id="styleField">
-              <span class="flab">How the draw looks on the TV<small>Ticket roll is a paper raffle roll. Race plate suits racing and footy rooms. As now is the draw you have today.</small></span>
+              <span class="flab">Your usual draw look on the TV<small>Ticket roll is a paper raffle roll. Race plate suits racing and footy rooms. As now is the draw you have today. You can change it for one draw above the Draw button.</small></span>
               <div class="chips" id="styleChips">
                 <button type="button" data-style="">As now</button>
                 <button type="button" data-style="ticket">Ticket roll</button>
@@ -334,6 +334,7 @@
             <div class="field2" id="timeField">
               <span class="flab">How long the draw takes</span>
               <div class="chips" id="timeChips">
+                <button type="button" data-dt="fast">Fast, 3 seconds</button>
                 <button type="button" data-dt="short">Short, 6 seconds</button>
                 <button type="button" data-dt="normal">Normal, 9 seconds</button>
                 <button type="button" data-dt="long">Long, 12 seconds</button>
@@ -370,6 +371,16 @@
         <div class="ok"><span class="tick" aria-hidden="true">&#10003;</span><b id="doneLine"></b><span class="sub" id="doneSub"></span></div>
       </div>
 
+      <!-- THE LOOK FOR THIS DRAW (Dean, 11 Nov 2026): the venue's usual look is set in Draw settings; this changes one draw (and stays until changed back). -->
+      <div class="field2" id="onceField">
+        <span class="flab">Look for this draw</span>
+        <div class="chips" id="onceChips">
+          <button type="button" data-once="">Usual</button>
+          <button type="button" data-once="classic">As now</button>
+          <button type="button" data-once="ticket">Ticket roll</button>
+          <button type="button" data-once="race">Race plate</button>
+        </div>
+      </div>
       <button class="btn pink xl" id="drawBtn">Draw the winner</button>
       <p class="hint" id="drawHint"></p>
       <p class="note hidden" id="freeEntryNote" style="margin-top:10px">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
@@ -465,7 +476,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
-          lastWin:null, ticketsFrom:"", drawStyle:"", drawTime:"normal" };   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
+          lastWin:null, ticketsFrom:"", drawStyle:"", drawTime:"normal", styleOnce:null };   // styleOnce: this draw's own look (null = the venue's usual), 11 Nov 2026   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -1050,11 +1061,14 @@
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   /* THE DRAW LOOK (10 Nov 2026). A draw of more than one winning ticket keeps the draw every venue has always had; so does "As now".
      A new look builds for INTRO + the draw time, and the TV is told the winner (t:"pick") the moment the server has it. */
-  function styleKey(){ return (G.drawStyle==="ticket" || G.drawStyle==="race") && !(G.winnersCount>1) ? G.drawStyle : ""; }
+  function lookNow(){ return G.styleOnce==null ? G.drawStyle : (G.styleOnce==="classic" ? "" : G.styleOnce); }
+  function styleKey(){ var k=lookNow(); return (k==="ticket" || k==="race") && !(G.winnersCount>1) ? k : ""; }
+  /* THE RAFFLE'S OWN NAME, said on the ticket and as the wall's heading ("Sunday meats"); empty when the venue has not named one */
+  function raffleTitle(){ var r=G.raffleId ? raffleById(G.raffleId) : (G.raffles.length ? G.raffles[0] : null); return r && r.label ? String(r.label).replace(/\s+/g," ").trim().slice(0,60) : ""; }
   function drawSecsNow(){ return window.VPDrawStyle ? VPDrawStyle.secs(G.drawTime) : 9; }
   function drawMs(){ return styleKey() ? Math.round((drawSecsNow()+(window.VPDrawStyle ? VPDrawStyle.INTRO : 1.2))*1000) : Math.max(1200, G.drawLength*1000); }
   function sendPick(r){ if(styleKey() && r && r.tickets && r.tickets.length===1) send({ t:"pick", numbers:[r.tickets[0]], pad:padWidth(), min:G.min, max:G.max }); }
-  function sendDrawing(){ var m={ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:(styleKey() ? drawMs()/1000 : G.drawLength) }; if(styleKey()){ m.style=styleKey(); m.drawSecs=drawSecsNow(); } send(m); }
+  function sendDrawing(){ var m={ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:(styleKey() ? drawMs()/1000 : G.drawLength) }; if(styleKey()){ m.style=styleKey(); m.drawSecs=drawSecsNow(); var rt=raffleTitle(); if(rt) m.raffle=rt; if(!G.jackOn && G.prizes.length>1){ m.prizeNo=G.prizeIdx+1; m.prizeOf=G.prizes.length; } } send(m); }
   /* HOW LONG THE WALL CELEBRATES A CLAIM, and how long it announces a redraw before the next spin.
      Both MUST match screen.html (renderClaimed celebrates for CLAIM_CELEBRATE_MS; the redraw card
      shows for REDRAW_NOTICE_MS). The console used to send idle 9 seconds after a claim while the
@@ -1600,6 +1614,9 @@
   $("styleChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-style]"); if(!b) return; G.drawStyle=b.getAttribute("data-style"); renderLook(); queueRafflePrefs(); });
   $("timeChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-dt]"); if(!b) return; G.drawTime=b.getAttribute("data-dt"); renderLook(); queueRafflePrefs(); });
   renderLook();
+  function renderOnce(){ var b=document.querySelectorAll("#onceChips button"); for(var i=0;i<b.length;i++) b[i].classList.toggle("on", (b[i].getAttribute("data-once")||null)===G.styleOnce); }
+  $("onceChips").addEventListener("click", function(e){ var b=e.target.closest("button[data-once]"); if(!b) return; G.styleOnce=b.getAttribute("data-once")||null; renderOnce(); });
+  renderOnce();
   $("fromPick").addEventListener("click", function(e){
     var b=e.target.closest("button[data-from]"); if(!b) return;
     var v=b.getAttribute("data-from"); G.ticketsFrom=(G.ticketsFrom===v) ? "" : v;   // tapping the lit one again says nothing, as today
@@ -1665,7 +1682,7 @@
     var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
     var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
     if(typeof p.draw_style==="string" && /^(|ticket|race)$/.test(p.draw_style)) G.drawStyle=p.draw_style;
-    if(typeof p.draw_time==="string" && /^(short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
+    if(typeof p.draw_time==="string" && /^(fast|short|normal|long)$/.test(p.draw_time)) G.drawTime=p.draw_time;
     renderLook();
     if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
     if(typeof renderPrizeList==="function") renderPrizeList();

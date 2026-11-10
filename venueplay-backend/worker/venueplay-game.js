@@ -4109,13 +4109,13 @@ const GAME_PREFS_KEYS = {
     tickets_from:  (v) => (['', 'host', 'front', 'entrance', 'bar', 'sellers'].indexOf(v) >= 0 ? v : undefined),
     // the TV's draw look and draw time (Dean, 10 Nov 2026); '' / absent is the draw every venue already has
     draw_style:    (v) => (['', 'ticket', 'race'].indexOf(v) >= 0 ? v : undefined),
-    draw_time:     (v) => (['short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
+    draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
     // NEVER unsold tickets: one night's facts (28 Oct 2026 audit).
   },
   members: {
     draw_id:       gpUuid,   // which draw the console opens on; the draw's own settings live in vp_member_draws
     draw_style:    (v) => (['', 'flip', 'race'].indexOf(v) >= 0 ? v : undefined),   // the TV's draw look and time (Dean, 10 Nov 2026)
-    draw_time:     (v) => (['short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
+    draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),
   },
   musical: {
     playlist:      (v) => (typeof v === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(v)) ? v : undefined,

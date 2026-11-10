@@ -15780,7 +15780,7 @@ MUTATIONS = [
      "draw_style:    (v) => (['', 'ticket', 'race'].indexOf(v) >= 0 ? v : undefined),", "draw_style:    (v) => (typeof v === 'string' ? v : undefined),",
      'the Worker saves any draw look'),
     ('test-drawstyle.js', 'venueplay-backend/worker/venueplay-game.js',
-     "draw_time:     (v) => (['short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),\n    // NEVER", "draw_time:     (v) => (typeof v === 'string' ? v : undefined),\n    // NEVER",
+     "draw_time:     (v) => (['fast', 'short', 'normal', 'long'].indexOf(v) >= 0 ? v : undefined),\n    // NEVER", "draw_time:     (v) => (typeof v === 'string' ? v : undefined),\n    // NEVER",
      'the Worker saves any draw time'),
 ]
 

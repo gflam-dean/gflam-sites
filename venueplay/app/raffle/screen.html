@@ -202,7 +202,7 @@
        with the draw; every venue that has not chosen one keeps the drawing and winner cards above and below. -->
   <div class="layer hidden vpds-layer" id="tvStyle" style="padding:0">
     <div class="vpds-host" id="tvStyleHost" style="position:absolute;inset:0"></div>
-    <div class="toplbl"><span class="tl-night">Raffle</span></div>   <!-- after the stage, so the stage never covers it -->
+    <div class="toplbl"><span class="tl-night" id="tvStyleTitle">Raffle</span></div>   <!-- the raffle's own name while a look is up; after the stage, so the stage never covers it -->
   </div>
 
   <!-- redraw notice (between a no-show and the next spin) -->
@@ -481,7 +481,9 @@
   function makeStage(){
     destroyStyle();
     var nt=$("venueNameTag");
-    S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", digits:S.padW, min:S.min, max:S.max,
+    var drawn=[]; for(var di=0; di<S.endDrawn.length; di++){ var dn=S.endDrawn[di].nums||[]; for(var dj=0; dj<dn.length; dj++) drawn.push(pad(dn[dj])); }
+    $("tvStyleTitle").textContent=S.styleName || "Raffle";   // the raffle's own name ("Sunday meats"); the word Raffle only when it has none
+    S.stage=VPDrawStyle.create($("tvStyleHost"), { style:S.styleKey, mode:"raffle", digits:S.padW, min:S.min, max:S.max, name:S.styleName, prizeNo:S.prizeNo, prizeOf:S.prizeOf, drawn:drawn,
       drawSecs:S.styleSecs||9, prize:S.prizeLabel, venueName:(nt && !nt.hidden && nt.textContent) ? nt.textContent : "" });
     return S.stage;
   }
@@ -755,7 +757,9 @@
       S.phase="drawing";
       S.styleKey=(m.style==="ticket"||m.style==="race") ? m.style : "";
       if(S.styleKey && window.VPEndShow && VPEndShow.enable) VPEndShow.enable();   // a new-look draw has its end show (12 Nov 2026)
-      S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=3 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
+      S.styleName=(typeof m.raffle==="string") ? m.raffle.replace(/\s+/g," ").trim().slice(0,60) : (S.raffleName||"");
+      S.prizeNo=(typeof m.prizeNo==="number") ? (m.prizeNo|0) : 0; S.prizeOf=(typeof m.prizeOf==="number") ? (m.prizeOf|0) : 0;
+      S.styleSecs=(typeof m.drawSecs==="number" && m.drawSecs>=2 && m.drawSecs<=12) ? m.drawSecs : 9; S.pick=null;
       renderDrawing();
     }
     else if(m.t==="pick"){ if(styleOn() && Array.isArray(m.numbers) && m.numbers.length===1){ S.pick=m.numbers[0]; if(S.stage) S.stage.setPick({ number:S.pick }); } }

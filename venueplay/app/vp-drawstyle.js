@@ -6,6 +6,8 @@
 
      var ctl = VPDrawStyle.create(layerEl, { style:"ticket"|"flip"|"race", mode:"raffle"|"members", digits:3, min:1, max:150,
                                              drawSecs:9, prize:"Meat tray", venueName:"The Mini Bar", logo:"https://..." });
+     (more options: name = the raffle's or draw's own name, said on the ticket, the card and by the screen's title; prizeNo, prizeOf = "Prize 1 of 32";
+      drawn = the numbers already drawn tonight, shown in a row along the bottom of the flip board, up to 10 with this draw's)
      ctl.start();                       the build-up begins (1.2 s of intro, then the draw time, then the win)
      ctl.setPick({ number:147, name:"Jan H." })   the server's winner, as soon as the host has it. Until it is known the
                                         roll holds on its last near miss, so the winner is never invented on the wall
@@ -21,7 +23,7 @@
    setting, VPDrawStyle.secs(key)). ES5 on purpose (older Samsung and LG sets). Every name and prize is set as TEXT. */
 (function (root) {
   "use strict";
-  var LEN = { short: 6, normal: 9, long: 12 };
+  var LEN = { fast: 3, short: 6, normal: 9, long: 12 };
   var INTRO = 1.2, WIN = 7.0, K = 4;
   var STYLES = { ticket: 1, flip: 1, race: 1 };
   function secs(key) { return LEN[key] || LEN.normal; }
@@ -66,6 +68,10 @@
     ".vpds-world{position:absolute;inset:0;transform-origin:960px 520px}",
     ".vpds-prize{position:absolute;left:0;right:0;text-align:center;font:400 120px/1 Anton,sans-serif;color:#fff}",
     ".vpds-claim{position:absolute;left:0;right:0;opacity:0;text-align:center;font:700 100px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;color:#fff}",
+    ".vpds-pno{position:absolute;left:0;right:0;top:118px;text-align:center;font:700 40px/1 'Hanken Grotesk',sans-serif;color:#C9C9D1;z-index:2}",
+    ".vpds-drawn{position:absolute;left:0;right:0;bottom:14px;text-align:center;white-space:nowrap;font:700 30px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
+    ".vpds-drawn span{display:inline-block;margin:0 6px;padding:8px 18px;border-radius:10px;background:#1F1F24;border:2px solid #34343C;color:#fff;font:400 44px/1 Anton,sans-serif;letter-spacing:1px;vertical-align:middle}",
+    ".vpds-drawn span.new{border-color:#FF1F8E}",
     ".vpds-clock{position:absolute;left:0;right:0;bottom:34px;text-align:center;font:700 44px/1 'Hanken Grotesk',sans-serif;color:#FFD93D;opacity:0}",
     /* ticket roll */
     ".vpds-strip{position:absolute;left:0;top:0;width:1920px;height:1080px}",
@@ -73,17 +79,22 @@
     ".vpds-tk{width:600px;height:320px;background:#F1EDE6;border-left:3px dashed rgba(10,10,11,.28);box-sizing:border-box;display:flex;color:#0A0A0B}",
     ".vpds-tk .body{position:relative;flex:1;padding:26px 34px 0 38px;box-sizing:border-box;min-width:0}",
     ".vpds-tk .body:before{content:'';position:absolute;top:14px;right:12px;bottom:14px;left:16px;border:3px solid #FF1F8E;border-radius:4px}",
-    ".vpds-tk .vn{position:relative;font:800 27px/1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-tk .lb{position:relative;font:600 22px/1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:8px}",
-    ".vpds-tk .no{position:relative;font:400 178px/1 Anton,sans-serif;margin-top:6px;letter-spacing:2px;white-space:nowrap}",
+    ".vpds-tk .vn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-tk .rn{position:relative;font:800 26px/1.1 'Hanken Grotesk',sans-serif;color:#C70F69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-tk .lb{position:relative;font:600 20px/1.1 'Hanken Grotesk',sans-serif;color:#55555E;margin-top:3px}",
+    ".vpds-tk .no{position:relative;font:400 150px/1 Anton,sans-serif;margin-top:4px;letter-spacing:2px;white-space:nowrap}",
     ".vpds-tk .stub{position:relative;width:150px;border-left:3px dashed rgba(10,10,11,.34);display:flex;align-items:center;justify-content:center}",
     ".vpds-tk .stub:before,.vpds-tk .stub:after{content:'';position:absolute;left:-15px;width:26px;height:26px;border-radius:50%;background:#0A0A0B}",
     ".vpds-tk .stub:before{top:-13px}.vpds-tk .stub:after{bottom:-13px}",
     ".vpds-tk .sno{transform:rotate(-90deg);font:400 66px/1 Anton,sans-serif;white-space:nowrap}",
-    ".vpds-tk .sl{position:absolute;top:22px;left:0;right:0;text-align:center;font:600 19px/1 'Hanken Grotesk',sans-serif;color:#55555E}",
+    ".vpds-tk .sl{position:absolute;top:20px;left:8px;right:8px;text-align:center;font:700 16px/1.25 'Hanken Grotesk',sans-serif;color:#55555E;overflow:hidden}",
+    ".vpds-tk .sl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#0A0A0B}",
+    ".vpds-tk .sl i{display:block;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#C70F69}",
     ".vpds-cd{width:560px;height:353px;border-radius:26px;background:#1B1B20;border:2px solid #34343C;box-sizing:border-box;position:relative;overflow:hidden;color:#fff}",
     ".vpds-cd img{position:absolute;left:30px;top:24px;height:74px;max-width:250px;object-fit:contain;object-position:left top}",
-    ".vpds-cd .ml{position:absolute;right:32px;top:34px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
+    ".vpds-cd .ml{position:absolute;right:30px;top:36px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
+    ".vpds-cd .vt{position:absolute;left:30px;top:34px;max-width:300px;font:800 30px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-cd .dnm{position:absolute;left:30px;right:30px;top:106px;font:700 28px/1.1 'Hanken Grotesk',sans-serif;color:#FF6BB8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".vpds-cd .nm{position:absolute;left:32px;right:32px;bottom:192px;font:700 54px/1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden}",
     ".vpds-cd .no{position:absolute;left:30px;bottom:28px;font:400 168px/1 Anton,sans-serif;letter-spacing:2px;white-space:nowrap}",
     ".vpds-cd .band{position:absolute;left:0;right:0;bottom:0;height:12px;background:#FF1F8E}",
@@ -100,9 +111,9 @@
     ".vpds-pin{position:absolute;width:8px;background:#3A3A42;border-radius:2px;z-index:3}",
     /* race plate */
     ".vpds-grp{position:absolute;left:240px;top:228px;width:1440px;transform-origin:720px 323px}",
-    ".vpds-tier{position:absolute;left:0;width:1440px;-webkit-clip-path:polygon(28px 0,100% 0,calc(100% - 28px) 100%,0 100%);clip-path:polygon(28px 0,100% 0,calc(100% - 28px) 100%,0 100%)}",
+    ".vpds-tier{position:absolute;left:0;width:1440px}",
     ".vpds-top{top:0;height:100px;background:#1A1A1F}",
-    ".vpds-top span{position:absolute;left:80px;top:0;font:400 76px/100px Anton,sans-serif;color:#fff;white-space:nowrap}",
+    ".vpds-top span{position:absolute;left:110px;top:0;font:400 76px/100px Anton,sans-serif;color:#fff;white-space:nowrap}",
     ".vpds-stripe{top:100px;height:16px;background:#FF1F8E}",
     ".vpds-plate{top:116px;height:380px;background:#FFFFFF;overflow:hidden}",
     ".vpds-reel{position:absolute;top:0;right:0;bottom:0;left:0}",
@@ -112,7 +123,7 @@
     ".vpds-members .vpds-ri .no{left:110px}",
     ".vpds-wname{position:absolute;right:120px;top:0;font:400 180px/380px Anton,sans-serif;color:#0A0A0B;opacity:0;white-space:nowrap}",
     ".vpds-bot{top:496px;height:150px;background:#1A1A1F}",
-    ".vpds-bot>.vpds-claim{position:absolute;left:80px;right:auto;top:0;line-height:150px;text-align:left}"
+    ".vpds-bot>.vpds-claim{position:absolute;left:110px;right:auto;top:0;line-height:150px;text-align:left}"
   ].join("\n");
   function addCss() {
     var d = root.document; if (!d || d.getElementById("vpdsCss")) return;
@@ -145,6 +156,9 @@
     var prizeEl = el("div", "vpds-prize", stage);
     var claimEl = el("div", "vpds-claim", style === "race" ? null : stage);
     var clockEl = el("div", "vpds-clock", stage);
+    var pnoEl = el("div", "vpds-pno", stage);
+    if (o.prizeOf > 1 && o.prizeNo > 0) pnoEl.textContent = "Prize " + (o.prizeNo | 0) + " of " + (o.prizeOf | 0); else pnoEl.style.display = "none";
+    var drawnEl = (style === "flip") ? el("div", "vpds-drawn", stage) : null;
     var C = { members: members, n: n, DRAW: DRAW, R: R, st: st, world: world, prizeEl: prizeEl, claimEl: claimEl, o: o };
     var view = null;
 
@@ -169,7 +183,7 @@
     function applyClaim() {
       var line = claimLine(o.mode, st.winNo);
       claimEl.textContent = ""; var sp = el("span", "", claimEl); sp.style.whiteSpace = "nowrap"; sp.textContent = line;
-      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, 100, 56);
+      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, style === "flip" ? 64 : 100, 40);
     }
 
     function render(t) {
@@ -177,6 +191,22 @@
       view.render(t);
       prizeEl.style.opacity = ease.out(seg(t, 0.2, 0.8));
       clockEl.style.opacity = (st.clockText && t >= R + 1.5) ? ease.out(seg(t, R + 1.5, R + 2.1)) : 0;
+      if (drawnEl) paintDrawn(t);
+    }
+    /* THE NUMBERS DRAWN SO FAR (flip board): they stay along the bottom, this draw's added when it lands; at most 10 */
+    var drawnKey = "";
+    function paintDrawn(t) {
+      var prev = (o.drawn || []).slice(-9), showNew = st.picked && t >= R + 1.0, list = prev.slice();
+      if (showNew) list.push(st.winNo.replace(/^\s+/, ""));
+      list = list.slice(-10);
+      var key = list.join(",") + "|" + (showNew ? 1 : 0);
+      if (key !== drawnKey) {
+        drawnKey = key; drawnEl.innerHTML = "";
+        if (list.length) { var lb = el("b", "", drawnEl); lb.style.cssText = "margin-right:10px;font-weight:700"; lb.textContent = "Drawn"; }
+        for (var i = 0; i < list.length; i++) { var c = el("span", showNew && i === list.length - 1 ? "new" : "", drawnEl); c.textContent = list[i]; }
+      }
+      drawnEl.style.opacity = list.length ? 1 : 0;
+      if (showNew) { var last = drawnEl.lastChild; if (last && last.className) last.style.opacity = ease.out(seg(t, R + 1.0, R + 1.5)); }
     }
     function tick(now) {
       if (st.dead) return;
@@ -226,17 +256,21 @@
     function ticketView(c) {
       var POOL = 9, pitch = members ? 608 : 600, W = members ? 560 : 600, H = members ? 353 : 320;
       var v = { N: Math.round(c.DRAW * 5.2), moveDur: 0.26, freezeT: 1e9, S: null }, strip = el("div", "vpds-strip", c.world), els = [], k;
-      var logo = o.logo || "", vname = o.venueName || "Raffle";
-      var numFs = Math.min(178, Math.round(178 * 4 / Math.max(4, n)));
+      var logo = o.logo || "", vname = o.venueName || "";
+      var numFs = Math.min(150, Math.round(150 * 4 / Math.max(4, n)));
       for (k = 0; k < POOL; k++) {
         var d = el("div", "vpds-it", strip);
         if (members) {
-          d.innerHTML = '<div class="vpds-cd"><img alt="" style="display:none"><div class="ml">Member</div><div class="nm"></div><div class="no"></div><div class="band"></div></div>';
-          var im = d.querySelector("img"); if (logo) { im.src = logo; im.style.display = ""; }
+          d.innerHTML = '<div class="vpds-cd"><img alt="" style="display:none"><div class="vt"></div><div class="ml">Members draw</div><div class="dnm"></div><div class="nm"></div><div class="no"></div><div class="band"></div></div>';
+          var im = d.querySelector("img"); if (logo) { im.src = logo; im.style.display = ""; } else d.querySelector(".vt").textContent = vname;
+          d.querySelector(".dnm").textContent = o.name || ""; d.querySelector(".ml").style.top = logo ? "36px" : "40px";
+          if (o.name) d.querySelector(".ml").style.display = "none";
           d.querySelector(".no").style.fontSize = Math.min(168, Math.round(168 * 4 / Math.max(4, n))) + "px";
         } else {
-          d.innerHTML = '<div class="vpds-tk"><div class="body"><div class="vn"></div><div class="lb">Raffle ticket</div><div class="no"></div></div><div class="stub"><div class="sl">No.</div><div class="sno"></div></div></div>';
-          d.querySelector(".vn").textContent = vname; d.querySelector(".no").style.fontSize = numFs + "px";
+          d.innerHTML = '<div class="vpds-tk"><div class="body"><div class="vn"></div><div class="lb">Raffle ticket</div><div class="rn"></div><div class="no"></div></div><div class="stub"><div class="sl"><b></b><i></i></div><div class="sno"></div></div></div>';
+          d.querySelector(".vn").textContent = vname; d.querySelector(".rn").textContent = o.name || "";
+          d.querySelector(".sl b").textContent = vname; d.querySelector(".sl i").textContent = o.name || "";
+          if (!vname) d.querySelector(".vn").style.display = "none"; if (!o.name) d.querySelector(".rn").style.display = "none"; d.querySelector(".no").style.fontSize = numFs + "px";
           d.querySelector(".sno").style.fontSize = Math.min(66, Math.round(66 * 4 / Math.max(4, n))) + "px";
         }
         els.push({ d: d, idx: -1, key: "", no: d.querySelector(".no"), s: d.querySelector(".sno"), nm: d.querySelector(".nm"), card: d.firstChild });
@@ -312,8 +346,9 @@
         nmods.push(makeMod(nr, rowW, nh, 96, false, -17));
       }
       var bottom = (members ? 160 : 168) + H;
-      prizeEl.style.top = (bottom + (members ? 20 : 24)) + "px"; if (members) prizeEl.style.fontSize = "90px";
-      claimEl.style.top = (bottom + (members ? 132 : 174)) + "px";
+      prizeEl.style.top = (bottom + 16) + "px"; prizeEl.style.fontSize = (members ? 76 : 90) + "px";
+      claimEl.style.top = (bottom + (members ? 16 + 76 + 12 : 16 + 90 + 12)) + "px"; claimEl.style.fontSize = "64px"; claimEl.setAttribute("data-maxw", "1700");
+      clockEl.style.bottom = "88px"; clockEl.style.fontSize = "38px";
       v.after = function () {};
       v.refresh = function () {};
       v.render = function (t) {
@@ -350,11 +385,23 @@
     function raceView(c) {
       var PITCH = 380, POOL = 5, v = { N: Math.round(c.DRAW * 4.6), moveDur: 0.2, freezeT: 1e9, S: null }, els = [];
       var grp = el("div", "vpds-grp", c.world);
+      /* ONE SLANT for the whole plate (Dean, 11 Nov: the bands did not line up). Every tier is cut from the same two slanted lines,
+         so the top band, the pink rule, the white plate and the bottom band share left and right edges. The group is 646 tall;
+         the lines lean SHIFT px over that height. clip(top, height, wipe) gives a tier's polygon (wipe 1 = full width). */
+      var GH = 646, SHIFT = 64, GW = 1440;
+      function lx(y) { return SHIFT * (1 - y / GH); }
+      function rx(y) { return GW - SHIFT * (y / GH); }
+      function clip(y0, h, w) {
+        var a = lx(y0), b = a + (rx(y0) - a) * w, d = lx(y0 + h), e = d + (rx(y0 + h) - d) * w;
+        return "polygon(" + a + "px 0," + b + "px 0," + e + "px 100%," + d + "px 100%)";
+      }
+      v.clip = clip; v.lx = lx; v.rx = rx;
       var top = el("div", "vpds-tier vpds-top", grp), tspan = el("span", "", top);
       var stripe = el("div", "vpds-tier vpds-stripe", grp);
       var plate = el("div", "vpds-tier vpds-plate", grp), reel = el("div", "vpds-reel", plate), wnm = el("div", "vpds-wname", plate);
       var bot = el("div", "vpds-tier vpds-bot", grp);
-      claimEl.parentNode && claimEl.parentNode.removeChild(claimEl); bot.appendChild(claimEl); claimEl.setAttribute("data-maxw", "1290");
+      [[top, 0, 100], [stripe, 100, 16], [plate, 116, 380], [bot, 496, 150]].forEach(function (q) { q[0].style.webkitClipPath = q[0].style.clipPath = clip(q[1], q[2], 1); });
+      claimEl.parentNode && claimEl.parentNode.removeChild(claimEl); bot.appendChild(claimEl); claimEl.setAttribute("data-maxw", "1190");
       prizeEl.parentNode.removeChild(prizeEl); tspan.appendChild(prizeEl);
       prizeEl.style.cssText = "position:static;display:inline;font:400 76px/100px Anton,sans-serif;text-align:left";
       var numFs = members ? Math.min(320, Math.floor(700 / (n * 0.47))) : Math.min(320, Math.floor(1300 / (n * 0.47)));
@@ -375,7 +422,7 @@
         plate.style.transform = "translateX(" + ((1 - a2) * -60) + "px)"; plate.style.opacity = a2;
         var wn = ease.brand(seg(t, R + 0.15, R + 0.6)); wnm.style.opacity = wn; wnm.style.transform = "translateX(" + ((1 - wn) * 40) + "px)";
         var w = ease.brand(seg(t, R + 0.35, R + 0.85));
-        bot.style.webkitClipPath = bot.style.clipPath = "polygon(28px 0," + (28 + 1412 * w) + "px 0," + (1412 * w) + "px 100%,0 100%)"; bot.style.visibility = w > 0 ? "visible" : "hidden";
+        bot.style.webkitClipPath = bot.style.clipPath = clip(496, 150, w); bot.style.visibility = w > 0 ? "visible" : "hidden";
         claimEl.style.opacity = ease.out(seg(t, R + 0.6, R + 1.0));
         var base = Math.floor(p) - 2;
         for (var q = 0; q < POOL; q++) {
