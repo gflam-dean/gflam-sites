@@ -68,17 +68,31 @@ def inside(r, s):
         var t=(e.textContent||"").trim(); if(!t||!(o>0.5))return; if(b.left<-1||b.right>W+1||b.bottom>H+1||b.top<-1)bad.push([e.className,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]);});
       return bad;})()''')
 
+TIERS = '''(function(){var o=[];["vpds-top","vpds-stripe","vpds-plate","vpds-bot"].forEach(function(c){var e=document.querySelector("#tvStyleHost ."+c);var m=/polygon\\(([^)]*)\\)/.exec(e.style.clipPath||e.style.webkitClipPath||"");
+  o.push(m?m[1].split(",").map(function(p){return p.trim().split(" ").map(parseFloat);}):null);});return o;})()'''
+def slant_ok(r, s):
+    t = r.ask(s, TIERS)
+    if not t or any(x is None for x in t): return False
+    for a, b in zip(t, t[1:]):
+        # a: [TL, TR, BR, BL]; the bottom edge of a is the top edge of b, left and right
+        if abs(a[3][0] - b[0][0]) > 0.6 or abs(a[2][0] - b[1][0]) > 0.6: return False
+    # one slope: left edge x at the very top minus x at the very bottom equals the right edge's
+    return abs((t[0][0][0] - t[3][3][0]) - (t[0][1][0] - t[3][2][0])) < 0.6
+
 def ticket():
     print('\n1. TICKET ROLL on the raffle wall: builds, holds without a pick, lands on the server\'s ticket')
     r = RIG.Rig()
     try:
         s = screen(r, '/app/raffle/screen')
         says(r, s, [{'t': 'state', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 150}])
-        says(r, s, [{'t': 'drawing', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 150, 'spinSecs': 7.2, 'style': 'ticket', 'drawSecs': 6}])
+        says(r, s, [{'t': 'drawing', 'prizeLabel': 'Meat tray', 'pad': 3, 'min': 1, 'max': 150, 'spinSecs': 7.2, 'style': 'ticket', 'drawSecs': 6, 'raffle': 'Sunday meats', 'prizeNo': 1, 'prizeOf': 32}])
         ok('the new look is up and the old drawing card is not', r.until(s, vis('tvStyle'), 5) is True and r.ask(s, vis('tvDraw')) is False, r.ask(s, vis('tvDraw')))
         ok('the end show is on for a new-look draw', r.ask(s, 'VPEndShow.on') is True, r.ask(s, 'VPEndShow.on'))
         ok('the roll is paper tickets', (r.ask(s, 'document.querySelectorAll("#tvStyleHost .vpds-tk").length') or 0) >= 5)
         ok('the prize is named', 'Meat tray' in (r.ask(s, STAGE_TEXT) or ''), r.ask(s, STAGE_TEXT))
+        ok('the wall\'s heading is the raffle\'s own name, not the word Raffle', r.ask(s, 'document.getElementById("tvStyleTitle").textContent') == 'Sunday meats', r.ask(s, 'document.getElementById("tvStyleTitle").textContent'))
+        ok('Prize 1 of 32 is said', 'Prize 1 of 32' in (r.ask(s, STAGE_TEXT) or ''), r.ask(s, STAGE_TEXT))
+        ok('every ticket carries Raffle ticket and the raffle\'s name, and the stub repeats venue and name', r.ask(s, '(function(){var t=document.querySelector("#tvStyleHost .vpds-tk");return !!t && /Raffle ticket/.test(t.textContent) && t.querySelector(".rn").textContent==="Sunday meats" && t.querySelector(".sl i").textContent==="Sunday meats";})()') is True)
         time.sleep(8.5)
         t = r.ask(s, STAGE_T); w = r.ask(s, STAGE_WIN); time.sleep(1.2); t2 = r.ask(s, STAGE_T)
         ok('with no pick the roll HOLDS before its last move (never invents the winner)', 0 < t < w and abs(t2 - t) < 0.02, [t, t2, w])
@@ -106,6 +120,7 @@ def flip():
         s = screen(r, '/app/members/screen')
         says(r, s, [{'t': 'state', 'drawName': 'Friday members draw', 'jackpotCents': 145000, 'playing': False}])
         says(r, s, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 7.2, 'style': 'flip', 'drawSecs': 6}])
+        ok('the wall\'s heading is the draw\'s own name', r.ask(s, 'document.getElementById("styleTitle").textContent') == 'Friday members draw')
         ok('the flip board is up and the old drawing card is not', r.until(s, vis('tvStyle'), 5) is True and r.ask(s, vis('tvDraw')) is False)
         ok('a flap for each digit (3) and one for the name', r.ask(s, 'document.querySelectorAll("#tvStyleHost .vpds-m").length') == 4, r.ask(s, 'document.querySelectorAll("#tvStyleHost .vpds-m").length'))
         says(r, s, [{'t': 'pick', 'number': 418, 'name': 'J. Hollis'}])
@@ -120,7 +135,13 @@ def flip():
         shot(r, s, 'drawstyle-flip-win')
         ok('nothing sticks out of the screen', inside(r, s) == [], inside(r, s))
         ok('SILENT through the whole draw and win: no audio made, no page errors', r.ask(s, AUDIO) == 0 and not (r.ask(s, 'window.__errs') or []), [r.ask(s, AUDIO), r.ask(s, 'window.__errs')])
-        says(r, s, [{'t': 'claimed', 'name': 'J. Hollis', 'amountCents': 145000, 'nextResetCents': 20000}])
+        time.sleep(1.5)
+        says(r, s, [{'t': 'drawing', 'drawName': 'Friday members draw', 'minNumber': 1, 'maxNumber': 900, 'spinSecs': 4.2, 'style': 'flip', 'drawSecs': 3}, {'t': 'pick', 'number': 206, 'name': 'K. Whitely'}])
+        time.sleep(5.2)
+        says(r, s, [{'t': 'winner', 'number': 206, 'name': 'K. Whitely', 'claimSecs': 30}])
+        time.sleep(3)
+        ok('FAST (3 seconds): the second draw is on its win inside 8 seconds, and the numbers drawn stay along the bottom, this one added', r.ask(s, 'Array.prototype.map.call(document.querySelectorAll("#tvStyleHost .vpds-drawn span"),function(e){return e.textContent;}).join(",")') == '418,206', r.ask(s, 'document.querySelector("#tvStyleHost .vpds-drawn").textContent'))
+        says(r, s, [{'t': 'claimed', 'name': 'K. Whitely', 'amountCents': 145000, 'nextResetCents': 20000}])
         ok('a claim goes back to the old result card', r.until(s, vis('tvResult'), 4) is True)
     finally:
         r.close()
@@ -147,6 +168,7 @@ def race():
         txt = r.ask(s2, STAGE_TEXT) or ''
         ok('members: 418, J. Hollis and the member card line', '418' in txt and 'Hollis' in txt and 'Bring your member card to the host.' in txt, txt)
         shot(r, s2, 'drawstyle-race-members')
+        ok('race plate: ONE slant, the four tiers\' edges line up (bottom of each is the top of the next, same lean)', slant_ok(r, s2), r.ask(s2, TIERS))
     finally:
         r.close()
 

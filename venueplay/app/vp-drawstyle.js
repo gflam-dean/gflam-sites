@@ -94,9 +94,9 @@
     ".vpds-cd img{position:absolute;left:30px;top:24px;height:74px;max-width:250px;object-fit:contain;object-position:left top}",
     ".vpds-cd .ml{position:absolute;right:30px;top:36px;font:600 26px/1 'Hanken Grotesk',sans-serif;color:#A4A4AE}",
     ".vpds-cd .vt{position:absolute;left:30px;top:34px;max-width:300px;font:800 30px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-cd .dnm{position:absolute;left:30px;right:30px;top:106px;font:700 28px/1.1 'Hanken Grotesk',sans-serif;color:#FF6BB8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".vpds-cd .nm{position:absolute;left:32px;right:32px;bottom:192px;font:700 54px/1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden}",
-    ".vpds-cd .no{position:absolute;left:30px;bottom:28px;font:400 168px/1 Anton,sans-serif;letter-spacing:2px;white-space:nowrap}",
+    ".vpds-cd .dnm{position:absolute;left:30px;right:30px;top:94px;font:700 28px/1.1 'Hanken Grotesk',sans-serif;color:#FF6BB8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".vpds-cd .nm{position:absolute;left:32px;right:32px;top:128px;font:700 46px/1.1 'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden}",
+    ".vpds-cd .no{position:absolute;left:30px;bottom:16px;font:400 150px/1 Anton,sans-serif;letter-spacing:2px;white-space:nowrap}",
     ".vpds-cd .band{position:absolute;left:0;right:0;bottom:0;height:12px;background:#FF1F8E}",
     /* flip board */
     ".vpds-board{position:absolute;left:50%;background:#121215;border:2px solid #26262C;border-radius:16px;box-sizing:border-box;transform:translateX(-50%)}",
@@ -183,7 +183,7 @@
     function applyClaim() {
       var line = claimLine(o.mode, st.winNo);
       claimEl.textContent = ""; var sp = el("span", "", claimEl); sp.style.whiteSpace = "nowrap"; sp.textContent = line;
-      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, style === "flip" ? 64 : 100, 40);
+      if (claimEl.parentNode) fitText(claimEl, +claimEl.getAttribute("data-maxw") || 1800, style === "flip" ? 64 : (style === "ticket" ? 84 : 100), 40);
     }
 
     function render(t) {
@@ -265,7 +265,7 @@
           var im = d.querySelector("img"); if (logo) { im.src = logo; im.style.display = ""; } else d.querySelector(".vt").textContent = vname;
           d.querySelector(".dnm").textContent = o.name || ""; d.querySelector(".ml").style.top = logo ? "36px" : "40px";
           if (o.name) d.querySelector(".ml").style.display = "none";
-          d.querySelector(".no").style.fontSize = Math.min(168, Math.round(168 * 4 / Math.max(4, n))) + "px";
+          d.querySelector(".no").style.fontSize = Math.min(150, Math.round(150 * 4 / Math.max(4, n))) + "px";
         } else {
           d.innerHTML = '<div class="vpds-tk"><div class="body"><div class="vn"></div><div class="lb">Raffle ticket</div><div class="rn"></div><div class="no"></div></div><div class="stub"><div class="sl"><b></b><i></i></div><div class="sno"></div></div></div>';
           d.querySelector(".vn").textContent = vname; d.querySelector(".rn").textContent = o.name || "";
@@ -275,7 +275,7 @@
         }
         els.push({ d: d, idx: -1, key: "", no: d.querySelector(".no"), s: d.querySelector(".sno"), nm: d.querySelector(".nm"), card: d.firstChild });
       }
-      claimEl.style.top = (members ? 914 : 902) + "px"; prizeEl.style.top = (members ? 810 : 768) + "px"; if (members) prizeEl.style.fontSize = "90px";
+      claimEl.style.top = (members ? 906 : 896) + "px"; clockEl.style.bottom = "12px"; clockEl.style.fontSize = "38px"; prizeEl.style.top = (members ? 810 : 768) + "px"; if (members) prizeEl.style.fontSize = "90px";
       v.after = function () {};
       v.refresh = function () { for (var i = 0; i < els.length; i++) els[i].idx = -1; };
       v.render = function (t) {
