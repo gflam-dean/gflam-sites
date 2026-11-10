@@ -54,6 +54,7 @@ function hideWinnerCard() {}
 function hostError() {}
 function revealWinner() {}
 function apiPost() { return new Promise(function () {}); }
+function syncStep() {}   // the new look's step card (9 Nov 2026): the page's own, not what this test is about
 var subscribed = true;
 
 var TODAY = new Date().toISOString().slice(0, 10);

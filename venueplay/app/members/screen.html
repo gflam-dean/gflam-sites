@@ -17,16 +17,16 @@
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
     --pink:#FF1F8E; --pink-deep:#C70F69;
-    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --gold:#FFC24B; --yl:#FFD93D; --sf:#1A1A1F; --win:#35D07F; --roll:#F5A524;
     --white:#FFFFFF; --text:#E7E7EC; --muted:#8A8A95; --faint:#8A8A94;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:clip}
-  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body{background:#0A0A0B;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 
-  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #050506;overflow:hidden}
+  .tv{position:fixed;inset:0;container-type:inline-size;background:#0A0A0B;overflow:hidden}
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   .hidden{display:none!important}
 
@@ -63,75 +63,127 @@
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
-  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,26px);color:var(--muted)}
-  .drawname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,74px);color:#fff;line-height:1;margin:1.4cqw 0 .4cqw}
-  .jack{font-family:'Anton',sans-serif;font-size:clamp(52px,16cqw,300px);line-height:.9;
-    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 30%,#FFF0C6 48%,#FFC24B 66%,#E9A93A 100%);background-size:220% auto;
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-    filter:drop-shadow(0 0 24px rgba(255,194,75,.32));animation:shimmer 4.5s linear infinite}
-  @keyframes shimmer{to{background-position:220% center}}
-  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,30px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
-  .jsub b{color:var(--gold)}
-  .hostline{position:absolute;left:0;right:0;bottom:2.6cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.5cqw,20px);color:var(--faint);z-index:6}
-  .hostline b{color:var(--pink)}
 
-  /* members-draws advertising board (auto-includes the week's draws) */
-  .boardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(12px,2.4cqw,34px);color:var(--pink);margin-bottom:2.4cqw}
-  .board{width:min(88cqw,1500px);display:flex;flex-direction:column;gap:1.4cqw}
-  .drow{display:flex;align-items:center;justify-content:space-between;gap:2cqw;background:var(--ink-2);border:1px solid var(--line-2);border-radius:2cqw;padding:2cqw 3cqw}
-  .drow.hot{border-color:var(--pink);background:linear-gradient(100deg,rgba(255,31,142,.12),rgba(255,31,142,.02));box-shadow:0 0 34px rgba(255,31,142,.18)}
-  .drow .dn{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(14px,2.8cqw,40px);color:#fff;line-height:1.05;display:flex;flex-direction:column;gap:.5cqw}
-  .drow .dc{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:clamp(10px,1.6cqw,22px);color:var(--muted);letter-spacing:.02em}
-  .drow .tn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(8px,1.2cqw,16px);letter-spacing:.14em;color:#fff;background:var(--pink);border-radius:1cqw;padding:.4cqw 1cqw;margin-left:1.2cqw;vertical-align:middle}
+  /* THE NEW LOOK (members draw, 6 Nov 2026 mock, built 9 Nov 2026), the same system as trivia and musical bingo: flat near-black, the
+     venue's logo top left and ours top right, the DRAW'S NAME in the shared title line (/app/vp-tvgame.js), the
+     member number in the raffle's tiles, the jackpot in Anton. Pink is the one accent, yellow is for the win only
+     (the jackpot is white until it is won), no gradients or shimmer. */
+
+  /* THE FIXED FRAME (new look, 6 Nov 2026). The title line is pinned to the logos' line by /app/vp-tvgame.js on every screen;
+     the body sits in the space between the header and the strip and is centred there, so nothing jumps and no
+     third of the wall is left black; the strip holds the prize and the claim timer, 4.2cqw off the bottom edge
+     (54px at 1280) for TVs that crop their edges. */
+  .body{position:absolute;inset:8.6cqw 5cqw 3.4cqw 5cqw;   /* the frame between the header and the bottom edge, never a corner anchor */
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .layer.hasstrip .body{bottom:12.8cqw}   /* the strip 4.6cqw off the bottom edge: 59px at 1280, 88px at 1920 */
+  .strip{position:absolute;left:6cqw;right:6cqw;bottom:4.6cqw;min-height:6.6cqw;background:var(--sf);border-radius:1.15cqw;display:flex;align-items:center;justify-content:space-between;gap:3cqw;padding:1.3cqw 2.6cqw;overflow:hidden}
+  .strip.center{justify-content:center}
+  .strip .sl{display:flex;flex-direction:column;gap:.5cqw;text-align:left;min-width:0}
+  .strip .sr{display:flex;flex-direction:column;gap:.5cqw;text-align:right;align-items:flex-end;min-width:0}
+  .strip .sv{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.9cqw;line-height:1.05;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .strip .sm{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2cqw;line-height:1.15;color:#C9C9D1}
+  .strip .sm b{color:#fff;font-weight:800}
+  .strip .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:3.4cqw;line-height:1;color:var(--pink)}
+  .claim .t{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-variant-numeric:tabular-nums;font-size:2.3cqw;line-height:1;color:#fff;white-space:nowrap}
+  .claim .t b{color:var(--yl)}
+  .claim.over .t{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.2cqw;color:#fff}
+  .strip .bar2{position:absolute;left:0;right:0;bottom:0;height:.52cqw;background:#2A2A31;display:none;margin:0}   /* margin:0: an old set turns the strip's gap into margins on its children, and this bar is not in the row */
+  .strip.timed .bar2{display:block}
+  .strip .bar2 span{display:block;height:100%;width:100%;background:var(--yl);transition:width 1s linear}
+  /* labels: the mono label over each moment, 1.4cqw (18px at 1280), a brighter grey for a pub */
+  .lab{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:1.4cqw;line-height:1;color:#A6A6B0}
+  .lab:empty{display:none}
+  .lab.pk{color:var(--pink)} .lab.yl{color:var(--yl)}
+  /* the number tiles: one a digit, sized in px by sizeTiles() from the wall's width AND height */
+  .tiles{display:flex;justify-content:center;gap:2.08cqw;margin-top:2cqw}
+  .tile{flex:none;width:15.6cqw;height:21.9cqw;border-radius:1.35cqw;background:var(--sf);display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-variant-numeric:tabular-nums;font-size:15.6cqw;line-height:1;color:#fff;border-bottom:.52cqw solid #2A2A31;overflow:hidden;box-sizing:border-box}
+  .tile span{display:block}
+  .tile.spin span{filter:blur(.45cqw);opacity:.75;transform:translateY(-.7cqw)}
+  .tile.blank span{opacity:0}
+  .tile.gone{opacity:.35}
+  .tile.win{border:.31cqw solid var(--yl);border-bottom-width:.52cqw;box-shadow:0 0 2.6cqw -.5cqw rgba(255,217,61,.6);animation:tilein .4s cubic-bezier(.22,1,.36,1) both}
+  @keyframes tilein{from{transform:translateY(1cqw);opacity:0}to{transform:none;opacity:1}}
+  /* the win step, the trivia podium's: a yellow top and a soft yellow glow (yellow is for winning moments only) */
+  .pstep{margin-top:3cqw;min-width:40cqw;max-width:80cqw;background:var(--sf);border-radius:1.15cqw;border-top:.42cqw solid var(--yl);box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,217,61,.55);padding:2.4cqw 4.4cqw 2.8cqw;animation:tilein .55s cubic-bezier(.22,1,.36,1) .35s both}
+  .pstep.roll{border-top-color:var(--pink);box-shadow:none}
+  /* PLAIN ZEROS (Dean, 6 Nov 2026): no number on the wall is set in the mono face, whose zero has a dot in it */
+  .num0,.missedline b,.strip .sv,.prizemenu .pmi .pn{font-family:'Hanken Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+  /* THE WIN IN WHITE AND PINK (body.ylogo, set by yellowLogo() for a venue whose logo is mostly yellow), the miss
+     in plain white and grey. */
+  body.ylogo .tile.win{border-color:#fff;box-shadow:0 0 2.6cqw -.5cqw rgba(255,31,142,.65)}
+  body.ylogo .lab.yl{color:var(--pink)}
+  body.ylogo .claim .t b{color:var(--pink)} body.ylogo .strip .bar2 span{background:var(--pink)}
+  body.ylogo .pstep{border-top-color:var(--pink);box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,31,142,.5)}
+  body.ylogo .wonamt{color:#fff} body.ylogo .resmsg .yl{color:var(--pink)}
+  body.ylogo .tiles.isname{border-top-color:var(--pink);box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,31,142,.5)}
+  body.ylogo .pstep.roll{background:transparent;box-shadow:none;border-top:none}
+  body.ylogo .roll .rlab{color:#A6A6B0} body.ylogo .roll .rstep{border-top-color:#fff}
+
+  /* THE FRAME'S BOTTOM AND THE CONFETTI (design review 5, 6 Nov 2026) */
+  .body{bottom:4.4cqw}                                  /* 56px at 1280 under the last line, for TVs that crop */
+  .layer{z-index:1}                                     /* confetti behind the words, never across them */
+  .confetti{z-index:0 !important}
+  @media (prefers-reduced-motion:reduce){.tile.win,.pstep{animation:none}}
+
+  .jack{font-family:'Anton',sans-serif;font-size:22cqw;line-height:.92;color:#fff;margin-top:1.6cqw}
+  .jsub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.6cqw;line-height:1.2;color:#C9C9D1;margin-top:3cqw}
+  .jsub b{color:#fff}
+  .hostline{position:absolute;left:2cqw;right:2cqw;bottom:2cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.3cqw,25px);color:#A6A6B0;z-index:6;background:var(--sf);border-radius:1.15cqw;padding:1cqw 1.6cqw}
+  .hostline b{color:#fff;border:.16cqw solid var(--pink);border-radius:.7cqw;padding:.2cqw 1cqw;letter-spacing:.08em}
+
+  /* the week's draws: big rows that fill the frame, tonight's with a pink edge */
+  .board{width:min(88cqw,1700px);display:flex;flex-direction:column;gap:1.6cqw;margin-top:2.4cqw}
+  .drow{display:flex;align-items:center;justify-content:space-between;gap:2cqw;background:var(--sf);border-radius:1.35cqw;padding:2.1cqw 3cqw}
+  .drow.hot{box-shadow:inset .73cqw 0 0 var(--pink)}
+  .drow .dn{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3.3cqw;color:#fff;line-height:1.05;display:flex;flex-direction:column;gap:.7cqw;min-width:0}
+  .drow .dn>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .drow .dc{font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:2cqw;color:#B4B4BE}
+  .drow .tn{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;font-size:1.4cqw;letter-spacing:.16em;color:#0A0A0B;background:var(--pink);border-radius:.6cqw;padding:.5cqw 1cqw;margin-left:1.4cqw;vertical-align:.3em}
   .drow .tn.done{background:rgba(53,208,127,.18);color:var(--win)}   /* already drawn tonight: shows next week's jackpot */
-  .drow .dj{font-family:'Anton',sans-serif;font-size:clamp(26px,6cqw,96px);line-height:.9;white-space:nowrap;
-    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 32%,#FFF0C6 50%,#FFC24B 68%,#E9A93A 100%);background-size:220% auto;
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-    filter:drop-shadow(0 0 16px rgba(255,194,75,.28));animation:shimmer 4.5s linear infinite}
+  .drow .dj{font-family:'Anton',sans-serif;font-size:6.6cqw;line-height:.95;white-space:nowrap;color:#fff}
+  .board.many .drow{padding:1.3cqw 2.6cqw} .board.many .drow .dn{font-size:2.6cqw} .board.many .drow .dj{font-size:4.6cqw}
 
-  .spin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(56px,20cqw,360px);color:#fff;line-height:1;text-shadow:0 0 40px rgba(255,255,255,.2)}
-  .drawing{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(16px,3.4cqw,48px);color:var(--pink);letter-spacing:.1em;margin-top:1.4cqw}
-  .winnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(60px,22cqw,380px);color:#fff;line-height:.95;text-shadow:0 0 60px rgba(255,31,142,.35)}
-  .winnum.pop{animation:numpop .75s cubic-bezier(.2,.9,.3,1.2)}
-  @keyframes numpop{0%{transform:scale(.6);opacity:0;filter:blur(6px)}55%{transform:scale(1.08);opacity:1;filter:blur(0)}100%{transform:scale(1)}}
-  .spin{display:inline-block;font-variant-numeric:tabular-nums}
-  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,96px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
-  .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,38px);color:#fff;margin-top:2.4cqw}
-  .present b{color:var(--gold)}
-  /* The purchase raffle's reveal (migration 115): a name, not a badge number, so it is set in the
-     display face at a size a long first name still fits, and the mobile only ever as its last three. */
-  .winnum.isname{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:clamp(44px,13cqw,230px);line-height:1;letter-spacing:.01em}
-  .spin.isphone{font-size:clamp(34px,9cqw,170px);letter-spacing:.04em}
+  .srt{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  /* the purchase raffle (migration 115): a phone ending while it spins, the winner's name on the win step */
+  .tiles.isphone{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9cqw;line-height:1;color:#fff;background:var(--sf);border-radius:1.35cqw;padding:3.6cqw 4.6cqw;letter-spacing:.04em}
+  .tiles.isname{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:13cqw;line-height:1;color:#fff;letter-spacing:.01em;background:var(--sf);border-radius:1.15cqw;border-top:.42cqw solid var(--yl);box-shadow:0 -.94cqw 3.1cqw -1cqw rgba(255,217,61,.55);padding:2.2cqw 5cqw 2.6cqw}
+  .wname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:5cqw;line-height:1.05;color:#fff;margin-top:2.4cqw;max-width:88cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .resname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:10cqw;line-height:.95;color:#fff;margin-top:1.8cqw;max-width:88cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wonamt{font-family:'Anton',sans-serif;font-size:13cqw;line-height:.95;color:var(--yl);margin-top:1.2cqw}
+  .pstep.roll .wonamt{color:#fff}
+  .pstep .present{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:2.2cqw;color:#C9C9D1;margin-top:2.2cqw}
+  .upchip{display:inline-block;margin-top:1.8cqw;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.2cqw;color:#fff;border:.16cqw solid var(--pink);border-radius:.8cqw;padding:.7cqw 1.5cqw}
+  .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:3cqw;color:#fff;margin-top:2cqw;line-height:1.2;max-width:88cqw}
+  .missed b{font-weight:800}
 
-  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(11px,2.2cqw,28px);margin-top:1.4cqw}
-  .wonamt{font-family:'Anton',sans-serif;font-size:clamp(56px,19cqw,340px);line-height:.85;
-    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-    filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
-  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
-  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
-  .winburst.show{opacity:1}
-  /* Readable from the back of the room: this used to cap at 24px in the faint grey, so the
-     one line that told the member they had just missed the jackpot could not be read at 3m. */
-  .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(16px,3.2cqw,46px);color:var(--text);margin-top:2cqw;line-height:1.2}
-  .missed b{color:var(--gold);font-family:'JetBrains Mono',monospace}
-
+  /* Dean's notes on the new look (6 Nov 2026) */
+  /* the draw's name, big, while it draws: FRIDAY NIGHT'S MEMBERS DRAW */
+  .drawbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:5.8cqw;line-height:1;color:#fff;margin-top:1.4cqw;max-width:88cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* the board a little smaller; a draw at its maximum gets a banner */
+  .board{gap:1.3cqw} .drow{padding:1.6cqw 2.6cqw} .drow .dn{font-size:2.8cqw} .drow .dc{font-size:1.8cqw} .drow .dj{font-size:5.4cqw}
+  #idleBoardWrap .jsub{font-size:2.2cqw}
+  .drow{position:relative}
+  .drow .dc.mxl{color:#fff;font-weight:700}   /* a draw at its maximum: one plain line, no frame or banner (Dean, 9 Nov 2026) */
+  /* the rollover: its own moment, in the sans face and its own words, the figure counting up */
+  .rhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:6.2cqw;line-height:1;color:#fff;letter-spacing:-.01em}
+  .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:2.4cqw;color:#B4B4BE;margin-top:1.6cqw;line-height:1.25;max-width:88cqw}
+  .missed b{color:#fff;font-weight:800}
+  .pstep.roll{background:transparent;border-top:none;box-shadow:none;padding:1.6cqw 0 0;margin-top:2.2cqw;animation:none}
+  .roll .rlab{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.6cqw;color:var(--pink);letter-spacing:.02em}
+  .pstep.roll .wonamt{font-size:17cqw;color:#fff;margin-top:.4cqw}
+  .pstep.roll.capped{margin-top:1.4cqw;padding-top:.8cqw} .pstep.roll.capped .wonamt{font-size:11cqw}
+  .rhead.capped{font-size:5cqw}
+  .maxband{margin-top:2.6cqw;color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.8cqw;line-height:1.2}
+  .maxband b{display:block;font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:3.4cqw;letter-spacing:.02em;margin-bottom:.4cqw}
   /* advertising idle */
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
-  .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(10px,1.9cqw,24px);color:var(--pink)}
-  .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(28px,7cqw,120px);color:#fff;line-height:.98;margin:2cqw 0}
-  .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,2.4cqw,34px);color:var(--text)}
-  .ad-a{background:radial-gradient(760px 420px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
-  .ad-b{background:radial-gradient(760px 420px at 30% 30%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
-  .ad-c{background:radial-gradient(760px 420px at 70% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
-  .ad-d{background:radial-gradient(760px 420px at 50% 30%, rgba(120,140,255,.16), transparent 60%), linear-gradient(160deg,#080a16,#050506)}
-
+  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,217,61,.10), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
+  .winburst.show{opacity:1}
   .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
   @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
-  .pulse{animation:pulse 1.4s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 </style>
+<script src="/app/vp-tvgame.js"></script>   <!-- the draw's name in the shared title line (4 Nov 2026) -->
 <script src="/app/vp-oldtv.js"></script>
 </head>
 <body>
@@ -146,57 +198,67 @@
 
   <!-- idle / advertising -->
   <div id="tvIdle">
-    <!-- ad-a: members draws board (auto-includes the week's draws + live jackpots + drawn time) -->
+    <!-- the members draws board (the week's draws, live jackpots, drawn tonight) -->
     <div class="layer ad ad-a" id="adBoard">
+      <div class="toplbl"><span class="tl-night">Members draw</span></div>
       <!-- single-draw fallback (used until the host sends the draws list) -->
-      <div id="idleSingle">
-        <div class="eyebrow">Members draw</div>
-        <div class="drawname" id="idleDrawName">Members Draw</div>
+      <div id="idleSingle" class="body">
+        <div class="lab pk" id="idleDrawName">Members Draw</div>
         <div class="jack" id="idleJack">$0</div>
         <div class="jsub">Be here when your number is drawn</div>
       </div>
       <!-- multi-draw board -->
-      <div id="idleBoardWrap" class="hidden">
-        <div class="boardhead">This week&rsquo;s members draws</div>
+      <div id="idleBoardWrap" class="body hidden">
+        <div class="lab pk">This week&rsquo;s members draws</div>
         <div class="board" id="idleBoard"></div>
-        <div class="jsub" style="margin-top:2.4cqw">Be here when your number is drawn</div>
+        <div class="jsub">Be here when your number is drawn</div>
       </div>
     </div>
-<!-- demo ad slides removed 2026-08-06: they were baked-in placeholders (Schnitzel/Live music/Join
-     at the bar) that showed on live venue screens with no way to turn them off. The idle screen now
-     shows only the real members-draw board; the venue's own promo images are a follow-up. -->
   </div>
 
   <!-- drawing -->
-  <div id="tvDraw" class="layer hidden">
-    <div class="drawname" id="drawTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
-    <div class="eyebrow">Drawing now</div>
-    <div class="spin" id="tvSpin">00</div>
-    <div class="drawing pulse">Good luck&hellip;</div>
-    <div class="jsub" id="drawJack"></div>
+  <div id="tvDraw" class="layer hasstrip hidden">
+    <div class="toplbl"><span class="tl-night">Members draw</span></div>
+    <div class="body">
+      <div class="lab pk">Drawing now</div>
+      <div class="drawbig" id="drawTitle">Members Draw</div>
+      <div class="tiles" id="tvSpin"></div>
+    </div>
+    <div class="strip"><div class="sm" id="drawJack"></div><div class="sm">Good luck</div></div>
   </div>
 
   <!-- winner reveal -->
-  <div id="tvWin" class="layer hidden">
-    <div class="drawname" id="winTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
-    <div class="eyebrow" id="winEye">Winning number</div>
-    <div class="winnum" id="tvWinNum">00</div>
-    <div class="wname hidden" id="tvWinName">&middot;</div>
-    <div class="present hidden" id="tvPresent">Come to the host now to claim your <b>jackpot</b></div>
-    <div class="present hidden" id="tvClaimCd" style="margin-top:.5cqw;opacity:.92">Claim within <b id="tvClaimT">0:00</b></div>
+  <div id="tvWin" class="layer hasstrip hidden">
+    <div class="toplbl"><span class="tl-night" id="winTitle">Members Draw</span></div>
+    <div class="body">
+      <div class="lab yl" id="winEye">Winning number</div>
+      <div class="tiles" id="tvWinNum"></div>
+      <div class="wname hidden" id="tvWinName">&middot;</div>
+    </div>
+    <div class="strip" id="tvWinStrip">
+      <div class="sm hidden" id="tvPresent">Come to the host now to claim your <b>jackpot</b></div>
+      <div class="claim hidden" id="tvClaimCd"><div class="t" id="tvClaimLine"><span>Claim within</span> <b id="tvClaimT">0:00</b></div></div>
+      <div class="bar2"><span id="tvClaimBar"></span></div>
+    </div>
   </div>
 
   <!-- result: claimed or rollover -->
   <div id="tvResult" class="layer hidden">
-    <div class="drawname" id="resTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
-    <div class="eyebrow" id="resEye">Winner</div>
-    <div class="wname hidden" id="resWinName">&middot;</div>
-    <div class="winslabel hidden" id="resWinsLabel">Wins</div>
-    <div class="wonamt hidden" id="resWon">$0</div>
-    <div class="drawname hidden" id="resNext">Next jackpot</div>
-    <div class="jack hidden" id="resJack">$0</div>
-    <div class="jsub" id="resSub"></div>
-    <div class="missed hidden" id="resMissed"></div>
+    <div class="toplbl"><span class="tl-night" id="resTitle">Members Draw</span></div>
+    <div class="body">
+      <div class="lab yl" id="resEye">Winner</div>
+      <div class="rhead hidden" id="resRollHead">Not claimed tonight</div>
+      <div class="resname hidden" id="resWinName">&middot;</div>
+      <div class="missed hidden" id="resMissed"></div>
+      <div class="pstep" id="resStep">
+        <div class="lab hidden" id="resWinsLabel">Wins</div>
+        <div class="rlab hidden" id="resNext">Next jackpot</div>
+        <div class="wonamt hidden" id="resWon">$0</div>
+        <div class="wonamt hidden" id="resJack">$0</div>
+        <div class="upchip" id="resSub"></div>
+      </div>
+      <div class="maxband hidden" id="resMax"></div>
+    </div>
   </div>
 
   <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/members/host and enter code <b id="hostCode">------</b></div>
@@ -210,6 +272,7 @@
 <script src="/app/vp-screen-router.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script src="/app/vp-sting.js"></script>   <!-- the start-of-game show; on unless ?sting=0 (1 Nov 2026) -->
+<script src="/app/vp-endshow.js"></script>   <!-- the end-of-game show; off unless ?endshow=1 (members draw, 9 Nov 2026) -->
 <script src="/app/vp-fit.js"></script>
 <script src="/app/vp-venuelogo.js"></script>
 <script src="/app/vp-venueurl.js"></script>
@@ -275,11 +338,42 @@
   var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[], hostSeen:false,
               spinMin:0, spinMax:0, spinSecs:4, holdUntil:0, pendingIdle:null };
   var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null, claimCdTimer=null;
+  /* THE NUMBER TILES (new look, 6 Nov 2026): one tile a digit, sized from the wall's width AND height so the number fills the
+     space between the header and the strip (hf: the share of the wall's height the tiles may take). Painted with
+     textContent; a winner's tiles carry a hidden "#" where the old text had one, so the text still reads the same. */
+  function sizeTiles(box, hf){
+    if(!box) return;
+    if(hf) box.__hf=hf; hf=box.__hf||0.5;
+    var tv=$("tv"), w=(tv&&tv.clientWidth)||600, h=(tv&&tv.clientHeight)||(w*9/16), ts=box.querySelectorAll(".tile"), n=ts.length||1, gap=w*0.0208;
+    var tw=Math.max(18, Math.min(w*0.22, (w*0.86-(n-1)*gap)/n, h*hf/1.4));
+    for(var i=0;i<ts.length;i++){ ts[i].style.width=tw+"px"; ts[i].style.height=(tw*1.4)+"px"; ts[i].style.fontSize=(tw*0.92)+"px"; ts[i].style.borderRadius=(tw*0.087)+"px"; }
+  }
+  function paintTiles(box, digits, cls, n, hash){
+    box.innerHTML=""; box.classList.remove("isname","isphone");
+    if(hash){ var hs=document.createElement("span"); hs.className="srt"; hs.textContent="#"; box.appendChild(hs); }
+    n=Math.max(n||0, digits.length); var lead=n-digits.length;
+    for(var i=0;i<n;i++){
+      var t=document.createElement("div"), ch=i<lead ? "" : digits.charAt(i-lead);
+      t.className="tile"+(cls?" "+cls:"")+(ch?"":" blank");
+      if(cls==="win") t.style.animationDelay=(i*0.12)+"s";
+      var sp=document.createElement("span"); sp.textContent=ch||"0"; t.appendChild(sp); box.appendChild(t);
+    }
+    sizeTiles(box);
+  }
+  function setTiles(box, digits){
+    var ts=box.querySelectorAll(".tile"); if(ts.length<digits.length){ paintTiles(box, digits, "spin"); return; }
+    var lead=ts.length-digits.length;
+    for(var i=0;i<ts.length;i++){ var dg=i<lead ? "" : digits.charAt(i-lead); ts[i].classList.toggle("blank", !dg); ts[i].firstChild.textContent=dg||"0"; }   /* dg, not ch: ch is the channel, and the channel suite finds its block by that name */
+  }
+  function alignTitle(){ try{ if(window.VPTvGame) VPTvGame.alignTitles(); }catch(e){} }   /* one copy, in /app/vp-tvgame.js */
+  setInterval(alignTitle, 1000);   /* the mark moves when the venue's logo arrives or changes, as on the musical bingo wall */
+  window.addEventListener("resize", function(){ sizeTiles($("tvSpin")); sizeTiles($("tvWinNum")); alignTitle(); });
   function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
-  function stopClaimCd(){ if(claimCdTimer){ clearInterval(claimCdTimer); claimCdTimer=null; } $("tvClaimCd").classList.add("hidden"); }
+  function stopClaimCd(){ if(claimCdTimer){ clearInterval(claimCdTimer); claimCdTimer=null; } $("tvClaimCd").classList.add("hidden"); $("tvWinStrip").classList.remove("timed"); }
+  function claimBar(left, total){ var b=$("tvClaimBar"); if(b && total>0) b.style.width=Math.max(0,Math.min(100,100*left/total))+"%"; }
 
   // ---- layers ----
-  function hideAll(){ stopClaimCd(); ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); }
+  function hideAll(){ stopClaimCd(); ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); setTimeout(alignTitle,0); }
 
   // ---- idle / ads ----
   function fillIdle(){
@@ -299,13 +393,15 @@
       var badge=d.tonight?'<span class="tn">Tonight</span>':(d.drawnToday?'<span class="tn done">Drawn</span>':'');
       /* atMax (migration 101): the venue set a maximum and the jackpot is at it. Said on the board
          so the room is never told a figure that will grow when it will not. */
-      var sub=(clock?'<div class="dc">'+esc(clock)+'</div>':'')+(d.atMax?'<div class="dc">Jackpot at its maximum</div>':'');
-      html+='<div class="drow'+(d.tonight?' hot':'')+'">'+
+      /* Said in plain words on the draw's own line (Dean, 9 Nov 2026: the pink banner and frame were a highlight he
+         could not read): "Max jackpot. It stays at $300 until it's won." */
+      var sub=(clock?'<div class="dc">'+esc(clock)+'</div>':'')+(d.atMax?'<div class="dc mxl">Max jackpot. It stays at '+money(d.jackpotCents)+' until it\u2019s won.</div>':'');
+      html+='<div class="drow'+(d.tonight?' hot':'')+(d.atMax?' max':'')+'">'+
               '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+sub+'</div>'+
               '<div class="dj">'+money(d.jackpotCents)+'</div>'+
             '</div>';
     }
-    wrap.innerHTML=html;
+    wrap.innerHTML=html; wrap.classList.toggle("many", state.draws.length>3);
   }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
   /* The other three screens drift back to the venue's own advertising when nothing is on; this
@@ -351,17 +447,19 @@
     hideAll(); $("drawTitle").textContent=state.drawName; $("tvDraw").classList.remove("hidden");
     $("drawJack").innerHTML=state.jackpotCents>0 ? "Playing for <b>"+money(state.jackpotCents)+"</b>" : "";
     var spin=$("tvSpin"), r=spinRange(), span=r.hi-r.lo+1;
-    spin.style.minWidth=(String(r.hi).length+1)+"ch";
+    paintTiles(spin, String(r.hi), "spin"); sizeTiles(spin, 0.40);
     spin.classList.toggle("isphone", state.kind==="entries");
     if(state.kind==="entries"){
       /* THE PURCHASE RAFFLE: the wall flicks through mobile endings, never a whole number. The winner is
          already picked on the server. It no longer says "From 214 entries": no counts on the TV (Dean, 4 Nov
          2026), the host console has the number. The line stays empty (a members-draw jackpot is not this prize). */
-      spin.style.minWidth="";
+      spin.innerHTML=""; spin.classList.add("isphone");
       $("drawJack").innerHTML="";
       var t1=Date.now(), tot=Math.max(2000,(state.spinSecs||4)*1000);
       (function flick(){
-        spin.textContent="04xx xxx "+String(cryptoInt(1000)+1000).slice(1);
+        spin.textContent="";   /* no phone endings while it spins either (Dean, 6 Nov 2026) */
+        var L="ABCDEFGHIJKLMNOPRSTW", nm3=L.charAt(cryptoInt(L.length))+". "+L.charAt(cryptoInt(L.length))+".";
+        spin.textContent=nm3;
         var fr=Math.min(1,(Date.now()-t1)/tot);
         spinTimer=setTimeout(flick, 70+Math.round(260*fr*fr));
       })();
@@ -369,7 +467,7 @@
     }
     var total=Math.max(2000,(state.spinSecs||4)*1000), t0=Date.now();
     function tick(){
-      spin.textContent="#"+(r.lo+cryptoInt(span));
+      setTiles(spin, String(r.lo+cryptoInt(span)));
       var frac=Math.min(1,(Date.now()-t0)/total);
       spinTimer=setTimeout(tick, 70+Math.round(260*frac*frac));   // 70ms flicks easing out to about 330ms
     }
@@ -382,28 +480,28 @@
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
     $("winEye").textContent="Winning number"; $("tvWinNum").classList.remove("isname");
     $("tvPresent").innerHTML='Come to the host now to claim your <b>jackpot</b>';
-    var wn=$("tvWinNum"); wn.textContent = (number==null?"--":("#"+number));
-    wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");   // restart the reveal animation every draw
+    var wn=$("tvWinNum"); paintTiles(wn, (number==null?"--":String(number)), "win", 0, true); sizeTiles(wn, 0.40); $("tvWinStrip").classList.remove("center");   // the tiles land left to right
     var nm=$("tvWinName"), pr=$("tvPresent"), cd=$("tvClaimCd"), cdT=$("tvClaimT");
     nm.classList.add("hidden"); pr.classList.add("hidden"); cd.classList.add("hidden");
     var secs=(claimSecs|0);
-    nameTimer=setTimeout(function(){
-      nm.textContent=name||"·"; nm.classList.remove("hidden");
-      pr.classList.remove("hidden"); spawnBurst(36);
+    nameTimer=setTimeout(function(){ nm.textContent=name||"·"; nm.classList.remove("hidden"); spawnBurst(36); }, 1500);
+    (function(){
+      pr.classList.remove("hidden");
       if(secs>0){
-        cd.innerHTML='Claim within <b id="tvClaimT">0:00</b>'; cdT=$("tvClaimT");
-        cdT.textContent=mmss(secs); cd.classList.remove("hidden");
+        var total=secs; cd.classList.remove("over"); $("tvWinStrip").classList.add("timed");
+        $("tvClaimLine").innerHTML='<span>Claim within</span> <b id="tvClaimT">0:00</b>'; cdT=$("tvClaimT");
+        cdT.textContent=mmss(secs); claimBar(secs,total); cd.classList.remove("hidden");
         claimCdTimer=setInterval(function(){
-          secs--; cdT.textContent=mmss(secs);
+          secs--; cdT.textContent=mmss(secs); claimBar(secs,total);
           if(secs<=0){
             clearInterval(claimCdTimer); claimCdTimer=null;
             /* Used to stop dead on 0:00 and sit there. The host decides what happens next (claim
                or roll over), so the room is told that, not left reading a frozen clock. */
-            cd.innerHTML="Time is up. Waiting on the host";
+            cd.classList.add("over"); $("tvClaimLine").textContent="Time is up. Waiting on the host."; $("tvWinStrip").classList.remove("timed");
           }
         }, 1000);
       }
-    }, 1500);
+    })();
   }
 
   /* THE PURCHASE RAFFLE WINNER (migration 115). First name and last initial, the last three digits
@@ -412,14 +510,13 @@
     stopAds(); stopSpin(); stopClaimCd(); clearHold(); $("hostLine").classList.add("hidden");
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
     $("winEye").textContent=(m.prizeNo>1 ? "Prize "+(m.prizeNo|0)+" winner" : "Our winner");
-    var wn=$("tvWinNum"); wn.classList.add("isname"); wn.textContent=m.name||"Winner";
-    wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");
+    var wn=$("tvWinNum"); wn.innerHTML=""; wn.classList.remove("isphone"); wn.classList.add("isname"); wn.textContent=m.name||"Winner"; $("tvWinStrip").classList.add("center");   /* one line: centred in the strip */
     var nm=$("tvWinName"), pr=$("tvPresent");
     nm.classList.add("hidden"); pr.classList.add("hidden"); $("tvClaimCd").classList.add("hidden");
     var ent=(m.entries|0);
     var last3=String(m.last3||"").replace(/\D/g,"").slice(-3);
     nameTimer=setTimeout(function(){
-      nm.textContent=(last3 ? "Mobile ending "+last3 : "")+(last3 && ent ? " \u00b7 " : "")+(ent ? ent+(ent===1?" entry":" entries") : "");
+      nm.textContent="";   /* never any phone digits on a public screen; the name is enough (Dean, 6 Nov 2026) */
       nm.classList.toggle("hidden", !nm.textContent);
       pr.innerHTML=m.prize ? "Wins <b>"+esc(m.prize)+"</b>. We will be in touch." : "We will be in touch.";
       pr.classList.remove("hidden"); spawnBurst(36);
@@ -428,6 +525,9 @@
 
   // ---- confetti ----
   function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  /* THE CONFETTI KEEPS OFF THE WORDS (Dean, 6 Nov 2026 new look): it falls from the two outside bands of the wall
+     only (a fifth each side), for five seconds, behind the layers, so it never cuts across a number or a name. */
+  function edgeRand(n){ if(n===100){ var v=cryptoInt(22); return cryptoInt(2) ? v : 99-v; } return cryptoInt(n); }
   function spawnBurst(count){
     /* One copy, in /app/vp-celebrate.js. This existed five times in two
        versions, and the entire difference was data: this screen's colours
@@ -435,8 +535,9 @@
        about how this screen looks has changed. cryptoInt goes with them
        because these pages draw from a CSPRNG, and a shared helper has no
        business quietly downgrading that. */
+    count=Math.ceil(count*0.4);   /* fewer pieces, from the two edges only (edgeRand), behind the words */
     try{ if(window.VPCelebrate) VPCelebrate.burst($("tv"), count, {
-      colours: ["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"], lifeMs: 3800, rand: cryptoInt }); }catch(e){}
+      colours: ["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"], lifeMs: 3800, rand: edgeRand }); }catch(e){}
   }
   // ---- win fanfare through the venue PA (synthesised, no audio file; Fully Kiosk must allow autoplay to sound) ----
   var _ac=null;
@@ -451,10 +552,18 @@
        is cosmetic, an exception during a win is not. */
     try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"pa", ctx:_ac }); }catch(e){}
   }
-  function celebrate(ms){
+  function celebrate(ms){ ms=Math.min(ms||0, 5000);
     playFanfare();
     stopCelebrate(); $("winBurst").classList.add("show"); spawnBurst(90);
     var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms) stopCelebrate(); },1300);
+  }
+  /* the rollover counts up from tonight's jackpot to next week's (Dean: "the number rolling up") */
+  function countFromTo(el, fromCents, toCents, ms){
+    if(countTimer){ clearInterval(countTimer); countTimer=null; }
+    var t0=Date.now(); el.textContent=money(fromCents);
+    countTimer=setInterval(function(){ var f=Math.min(1,(Date.now()-t0)/(ms||2400)); var e=1-Math.pow(1-f,3);
+      el.textContent=money(Math.round((fromCents+(toCents-fromCents)*e)/100)*100);
+      if(f>=1){ el.textContent=money(toCents); clearInterval(countTimer); countTimer=null; } },40);
   }
   function countUp(el, targetCents){
     if(countTimer){ clearInterval(countTimer); countTimer=null; }
@@ -490,12 +599,12 @@
     stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
     if(typeof nextResetCents==="number") state.jackpotCents=nextResetCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
-    $("resEye").innerHTML="&#127881; We have a winner";
+    $("resEye").textContent="We have a winner"; $("resEye").className="lab yl"; $("resEye").classList.remove("hidden"); $("resStep").classList.remove("roll","hidden"); $("resRollHead").classList.add("hidden"); $("resMax").classList.add("hidden");
     var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=name||"·";
     $("resWinsLabel").classList.remove("hidden");
     var won=$("resWon"); won.classList.remove("hidden"); countUp(won, amountCents||0);
     $("resNext").classList.add("hidden"); $("resJack").classList.add("hidden"); $("resMissed").classList.add("hidden");
-    $("resSub").textContent="See the host to collect";
+    $("resSub").textContent="See the host to collect"; $("resSub").className="present";
     celebrate(CLAIM_HOLD_MS); holdResult(CLAIM_HOLD_MS);
   }
 
@@ -508,15 +617,17 @@
     stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     if(typeof nextJackpotCents==="number") state.jackpotCents=nextJackpotCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
-    $("resEye").innerHTML="Not claimed tonight";
+    var fromCents=(typeof nextJackpotCents==="number" && typeof incrementCents==="number") ? Math.max(0,nextJackpotCents-incrementCents) : 0;
+    $("resEye").classList.add("hidden"); $("resRollHead").classList.remove("hidden"); $("resStep").classList.add("roll"); $("resStep").classList.remove("hidden");
     $("resWinName").classList.add("hidden"); $("resWinsLabel").classList.add("hidden"); $("resWon").classList.add("hidden");
     var mm=$("resMissed"); mm.classList.remove("hidden");
-    mm.innerHTML="<b>#"+(missedNumber==null?"--":esc(missedNumber))+" "+esc(missedName||"")+"</b> was drawn and was not here in time";
-    $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week's jackpot";
-    $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
-    $("resSub").innerHTML = capped
-      ? "<b>Jackpot at its maximum</b> &middot; be here next week"
-      : "Up <b>"+money(incrementCents||0)+"</b> &middot; be here next week";
+    mm.innerHTML="<b>"+esc(missedName||"")+"</b> (number "+(missedNumber==null?"--":esc(missedNumber))+") was drawn and was not here in time";
+    $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week\u2019s jackpot";
+    $("resJack").classList.remove("hidden");
+    if(capped){ $("resJack").textContent=money(nextJackpotCents||0); } else { countFromTo($("resJack"), fromCents, nextJackpotCents||0, 2600); }
+    $("resSub").className="hidden"; $("resSub").textContent="";   /* no "up $50, be here next week" (Dean) */
+    var mx=$("resMax"); mx.classList.toggle("hidden", !capped); $("resStep").classList.toggle("capped", !!capped); $("resRollHead").classList.toggle("capped", !!capped);
+    if(capped) mx.textContent="Max jackpot reached. It stays at "+money(nextJackpotCents||0)+" until it\u2019s won.";   // plain words, no banner (Dean, 9 Nov 2026)
     holdResult(ROLLOVER_HOLD_MS);
   }
 
@@ -640,11 +751,28 @@
 
   function applyDraws(m){ if(Array.isArray(m.draws)) state.draws=m.draws; }
 
+  /* The members draw's goodbye: the winner and what they won, or next week's jackpot when nobody claimed it. */
+  function membersEndShow(){
+    var x=state.endRes; state.endRes=null;
+    if(!(window.VPEndShow && VPEndShow.on) || !x) return false;
+    var o=x.won ? { kind:"members", eye:"WE HAVE A WINNER", big:x.name||"Our winner", sub:"Wins "+money(x.cents) }
+                : { kind:"members", eye:"NOT CLAIMED TONIGHT", big:money(x.cents), sub:x.capped ? "The jackpot stays at its maximum" : "Next week\u2019s jackpot" };
+    try{ VPEndShow.play(o); }catch(e){ return false; }
+    return !!VPEndShow.playing();
+  }
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     /* The start-of-game show (/app/vp-sting.js, on unless ?sting=0). */
     if(window.VPSting && VPSting.on && m.t!=="tv_here"){ try{ VPSting.forDraw(m, { line:"MEMBERS DRAW <i>TIME</i>" }); }catch(e){} }
+    /* THE END-OF-GAME SHOW ON THE MEMBERS WALL TOO (/app/vp-endshow.js, off unless ?endshow=1; 9 Nov 2026, Dean:
+       "make sure they're alive on the new games"). The draw's result is kept as it lands; when the host finishes
+       (Back to ads), the show says it once, then the wall goes to the venue's ads. A new draw stops it. */
+    if(window.VPEndShow && VPEndShow.on){ try{ VPEndShow.heard(m); }catch(e){} }
+    if(m.t==="drawing") state.endRes=null;
+    else if(m.t==="claimed") state.endRes={ won:true, name:String(m.name||""), cents:(m.amountCents|0) };
+    else if(m.t==="rollover") state.endRes={ won:false, cents:(m.nextJackpotCents|0), capped:!!m.capped };
+    if(m.t==="to_ads" && membersEndShow()){ VPEndShow.after(function(){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }); return; }
     // Any word from the host means pairing is done: never put the setup line back on the wall.
     state.hostSeen=true;
     // The host tapped "Back to ads". Go now rather than wait for a timeout.
@@ -780,14 +908,31 @@
     if(dnt0){ dnt0.textContent="Tugun Bowls Club"; dnt0.hidden=true; }
     paintVenueLogo(demoLogo);
   }
+  /* A MOSTLY YELLOW VENUE LOGO (Dean, 6 Nov 2026 new look): yellow on this wall means "a win", so a venue whose own
+     logo is mostly yellow gets the white and pink win look instead (body.ylogo). Measured once per logo; a logo
+     this page cannot read (another origin, no CORS) changes nothing. */
+  function yellowLogo(img){
+    try{
+      var c=document.createElement("canvas"), w=c.width=64, h=c.height=Math.max(1,Math.round(64*img.naturalHeight/Math.max(1,img.naturalWidth)));
+      var x=c.getContext("2d"); x.drawImage(img,0,0,w,h); var d=x.getImageData(0,0,w,h).data, op=0, yl=0;
+      for(var i=0;i<d.length;i+=4){ if(d[i+3]<128) continue; op++;
+        var r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255, mx=Math.max(r,g,b), mn=Math.min(r,g,b), s=mx?((mx-mn)/mx):0, hh=0;
+        if(mx>mn){ if(mx===r) hh=60*((g-b)/(mx-mn)); else if(mx===g) hh=60*(2+(b-r)/(mx-mn)); else hh=60*(4+(r-g)/(mx-mn)); if(hh<0) hh+=360; }
+        if(s>0.45 && mx>0.6 && hh>=40 && hh<=70) yl++; }
+      document.body.classList.toggle("ylogo", op>0 && yl/op>0.4);
+    }catch(e){}
+  }
   function paintVenueLogo(url){
     var el=document.getElementById("venueLogo");
     if(!url){ if(el) el.style.display="none"; try{ VPVenueLogo.alignMark(document.querySelector(".tv-corner"), el, false); }catch(e){} return; }   // logo removed: take it off the wall, and the venueplay mark back to its place
     if(!el){ el=document.createElement("img"); el.id="venueLogo"; el.setAttribute("data-fit-avoid","");   /* vp-fit keeps the wall out from under it */
       el.style.cssText="position:fixed;top:14px;left:14px;max-width:120px;max-height:56px;width:auto;height:auto;object-fit:contain;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
       document.body.appendChild(el); }
+
+    if(!el.__vpYl){ el.__vpYl=true; el.addEventListener("load", function(){ if(typeof yellowLogo==="function") yellowLogo(el); }); }
     el.src=url; el.style.display="block";
     if(typeof VPVenueLogo==="object") VPVenueLogo.fit(el,"tv");   /* sized by its shape: /app/vp-venuelogo.js */
+    if(!el.__vpTitleWired){ el.__vpTitleWired=true; el.addEventListener("vp-logo-sized", function(){ setTimeout(alignTitle,0); setTimeout(alignTitle,400); }); }   /* the game's name back on the logos' line */
     try{ VPVenueLogo.keepAligned(el, document.querySelector(".tv-corner"), function(){ return el.style.display!=="none"; }); }catch(e){}   /* the venueplay mark centred on a square logo (2 Nov 2026) */
   }
   (function venueLogo(){

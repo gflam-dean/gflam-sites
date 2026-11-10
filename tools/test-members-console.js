@@ -44,7 +44,7 @@ Cls.prototype.add = function (c) { this.s[c] = 1; };
 Cls.prototype.remove = function (c) { delete this.s[c]; };
 Cls.prototype.contains = function (c) { return !!this.s[c]; };
 Cls.prototype.toggle = function (c, on) { if (on === undefined) on = !this.s[c]; if (on) this.s[c] = 1; else delete this.s[c]; };
-function El(id) { this.id = id; this.value = ''; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.selected = false; this.title = ''; }
+function El(id) { this.id = id; this.style = {}; this.className = ''; this.value = ''; this.disabled = false; this.textContent = ''; this.innerHTML = ''; this.kids = []; this.classList = new Cls(); this.selected = false; this.title = ''; }
 El.prototype.appendChild = function (k) { this.kids.push(k); };
 El.prototype.focus = function () {};
 El.prototype.setAttribute = function (k, v) { this[k] = v; };
@@ -127,7 +127,9 @@ var LIFTED = ['money', 'todayWeekday', 'mmss', 'stopClaimTimer', 'updateClaimCd'
  'revealWinner', 'onClaim', 'onRollover',
  // SA/NT (22 Oct 2026): an SA pub's drawn member has won with no present-to-win countdown, and
  // a claim adds the state's after-win reminder
- 'noPresent', 'winReminder'];
+ 'noPresent', 'winReminder',
+ // the new look (9 Nov 2026): the step card, the draws as chips, the list's age, the outcome box, the claim button's words
+ 'curStep', 'syncStep', 'nextDrawText', 'advSumText', 'renderDrawChips', 'renderListAge', 'renderDone', 'minClaim', 'applyPresentRule'];
 /* ...and the SA note those read, lifted as the page writes it. */
 eval(liftVar(/var NO_PRESENT_NOTE=[^\n]*/) || (function () { throw new Error('NO_PRESENT_NOTE is not in the page any more'); })());
 for (var li = 0; li < LIFTED.length; li++) eval(lift(LIFTED[li]));
@@ -302,6 +304,22 @@ closeDrawAgain();
 G.draws[0].last_drawn_date = '2020-01-01'; apiCalls = [];
 startDraw();
 check('CONTROL: a draw not yet drawn tonight is not asked and goes straight to the server', $('drawAgainAsk').classList.contains('hidden') === true && apiCalls.indexOf('/host/members/draw') >= 0, apiCalls);
+G.busy = false; G.round = null;
+
+/* ================= 8. Not here waits for the claim clock (Dean, 6 Nov 2026) ================= */
+section('8. "Not here" is locked while the claim clock runs, and opens at zero');
+freshG(); FAILS = {}; boot();
+G.busy = true; apiCalls = [];
+revealWinner({ draw_id: 'd1', member_id: 'm204', member_number: 1204, winner_name: 'Sam T', jackpot_cents: 50000 });
+check('a fresh winner with time to claim: Not here is locked, and says how long', $('rollBtn').disabled === true && /^Not here \(in /.test($('rollBtn').textContent), [$('rollBtn').disabled, $('rollBtn').textContent]);
+onRollover(); drainMicrotasks();
+check('tapping it while locked rolls nothing over', apiCalls.indexOf('/host/members/draw/resolve') < 0 && !!G.round, apiCalls);
+check('the claim button names the jackpot it pays', /\$500/.test($('claimBtn').textContent), $('claimBtn').textContent);
+tick(31);
+check('at zero it opens', $('rollBtn').disabled === false && $('rollBtn').textContent === 'Not here', [$('rollBtn').disabled, $('rollBtn').textContent]);
+apiReply = { new_jackpot_cents: 55000, increment_cents: 5000 };
+onRollover(); drainMicrotasks();
+check('CONTROL: once open, Not here rolls the jackpot over as before', apiCalls.indexOf('/host/members/draw/resolve') >= 0, apiCalls);
 G.busy = false; G.round = null;
 
 drainMicrotasks();

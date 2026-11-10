@@ -37,6 +37,7 @@
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .who #statusDot{display:none}   /* no "it works" dot (Dean, 8 Nov 2026): the header only ever names a problem */
 
   .wrap{max-width:760px;margin:0 auto;padding:22px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
@@ -181,12 +182,14 @@
   .vp-wbtn.vp-wbtn{width:100%;margin-top:8px;font-size:13px}
   .vp-check.vp-check{width:18px;height:18px;flex:none;accent-color:var(--pink)}
 </style>
+<!-- The raffle and members draw consoles' new look, one copy (9 Nov 2026). Linked last so it is the answer. -->
+<link rel="stylesheet" href="/app/vp-drawhost.css">
 </head>
 <body>
 <header>
   <div class="bar">
     <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
-    <a class="vp-navlink" href="/app" title="Back to Play">&#8592; Play</a>
+    <a class="vp-navlink" href="/app" title="Back to Play" aria-label="Back to Play">&#8592;<span class="pl">&nbsp;Play</span></a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
@@ -225,93 +228,152 @@
     </div>
   </div>
 
-  <!-- CONSOLE -->
+  <!-- CONSOLE: the new look (Dean's agreed mocks, 6 Nov 2026). One column on every device: the step the host is
+       on (Set up, Draw, Prize) in one card with ONE big button, the rare actions as links above it, and tonight's
+       prizes and results folded under it. syncStep() shows the part of the card for the step; every control below
+       is the one the console has always had, under the same id. -->
   <div id="consoleView" class="hidden">
-    <div class="lbl">Raffle host<span id="roomCode" style="display:none"></span></div>
+    <div class="toprow">
+      <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
+      <div class="links">
+        <button type="button" class="tlink hidden" id="newRaffleBtn">Start a new raffle</button>
+        <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
+             This hands them the file: every raffle and members draw result at the venue, as CSV. -->
+        <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
+      </div>
+    </div>
+    <div class="note" id="downloadRecordMsg"></div>
 
-    <div class="panel">
-      <!-- WHICH RAFFLE (Dean, 24 Oct 2026; migration 117). Only a venue with two or more raffles on Your
-           account sees this; a one-raffle venue gets the console it has always had. -->
-      <div class="field hidden" id="raffleField">
-        <label>Which raffle are you drawing?</label>
-        <div class="presets rafflepick" id="rafflePick"></div>
-      </div>
-      <div class="field" id="prizeField">
-        <label>What are you drawing for?</label>
-        <div class="presetlbl">Tap a saved prize to add it, or type your own</div>
-        <div class="presets" id="prizePresets"></div>
-        <div class="addrow">
-          <input type="text" id="rfPrize" placeholder="e.g. Meat Tray">
-          <button type="button" class="addbtn" id="addPrizeBtn">+ Add</button>
+    <div class="one">
+    <div class="panel" id="rafflePanel">
+      <p class="stepline" id="stepLine"></p>
+      <div class="steps" id="stepTiles"></div>
+
+      <!-- STEP 1, SET UP: prizes first, then the tickets sold (Dean, 6 Nov 2026) -->
+      <div id="setupStep">
+        <!-- WHICH RAFFLE (Dean, 24 Oct 2026; migration 117). Only a venue with two or more raffles on Your
+             account sees this; a one-raffle venue gets the console it has always had. -->
+        <div class="field2 hidden" id="raffleField">
+          <span class="flab">Which raffle are you drawing?</span>
+          <div class="chips rafflepick" id="rafflePick"></div>
         </div>
-        <div class="prizelist" id="prizeList"></div>
-      </div>
-      <div class="two">
-        <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
-        <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
-      </div>
-      <div class="field">
-        <label>Tickets that did not sell (optional)</label>
-        <input type="text" id="rfSkip" placeholder="e.g. 240-320, 512">
-        <div class="note" style="margin-top:5px">Two sellers working one book leaves a gap. Anything you put here is never drawn, so you are not re-drawing in front of the room. Use a dash for a block and commas between them, like 240-320, 512. Anything it cannot read is shown before you draw.</div>
-      </div>
-      <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): set once by the venue, saved for the venue, closed until opened.
-           The shared disclosure, VP.advanced in /app/vp-session.js. A cash jackpot keeps its state warning beside
-           the amount, and the line above Draw says "Cash jackpot $..." whenever one is on, open or closed. The
-           state rules screen on Draw and the free-entry note never go in here. -->
-      <details class="vp-adv" id="raffleAdv">
-        <summary><span>Advanced settings<small class="vp-adv-sub">Saved for your venue. Set once, rarely changed.</small></span></summary>
-        <div class="vp-adv-body">
-          <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
-          <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
-          <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
-            <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
-                 keep; the software should not display a figure the venue's own rules do not allow). The
-                 figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
-            <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
+        <div class="field2" id="prizeField">
+          <span class="flab">1. What are you giving away tonight?<small>Tap each prize, in the order you will draw them.</small></span>
+          <div class="chips"><div class="presets" id="prizePresets" style="display:contents"></div><button type="button" class="add" id="typePrizeChip">+ Type a prize</button></div>
+          <div class="addrow hidden" id="addRow">
+            <input type="text" id="rfPrize" placeholder="e.g. Meat tray" aria-label="Type a prize">
+            <button type="button" class="addbtn" id="addPrizeBtn">Add</button>
           </div>
-          <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
-          <div class="field">
-            <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
-              <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
-            </button>
+          <!-- THE DRAW ORDER (Dean, 9 Nov 2026): a raffle with 20 prizes is put in order here, before the first draw,
+               and the draw runs in that order. Up and down on every row (a thumb on a phone, a finger on an iPad,
+               a mouse on a laptop); the number is the order it is drawn in. -->
+          <div class="orderwrap hidden" id="orderWrap">
+            <span class="flab osub">Draw order<small>First drawn at the top. Move a prize up or down.</small></span>
+            <div class="plist" id="orderList"></div>
+          </div>
+        </div>
+        <div class="field2" id="ticketsField">
+          <span class="flab"><span id="ticketsNum">2. </span>Which tickets did you sell?</span>
+          <div class="rangewrap">
+            <div class="nums">
+              <label class="nbox"><span>First number sold</span><input type="number" id="rfStart" value="1" min="0" inputmode="numeric"></label>
+              <label class="nbox"><span>Last number sold</span><input type="number" id="rfEnd" value="150" min="0" max="999999" inputmode="numeric"></label>
+            </div>
+            <div class="opt-line" id="skipLine"><span>Tickets not sold: <b id="skipSum">None</b></span><button type="button" class="chg" id="skipChg">Add</button></div>
+          </div>
+          <div class="field hidden" id="skipField" style="margin:10px 0 0">
+            <label for="rfSkip">Tickets not sold</label>
+            <input type="text" id="rfSkip" placeholder="e.g. 240-320, 512">
+            <div class="note" style="margin-top:5px">These are never drawn. A dash for a block, commas between them, like 240-320, 512. Anything it cannot read is shown before you draw.</div>
+          </div>
+          <div class="rangeline" id="rangeLine"></div>
+        </div>
+        <!-- WHERE TICKETS ARE SOLD (Dean, 9 Nov 2026): said on the TV under GET YOUR TICKETS. Nothing picked, nothing
+             said: the card every venue has today. Only where tickets are bought; a winner always goes to the host. -->
+        <div class="field2" id="fromField">
+          <span class="flab"><span id="fromNum">3. </span>Where do you sell your tickets?<small>Shown on the TV as &ldquo;Get your tickets from the bar&rdquo;.</small></span>
+          <div class="chips" id="fromPick">
+            <button type="button" data-from="host">The host</button>
+            <button type="button" data-from="front">The front of the room</button>
+            <button type="button" data-from="entrance">The entrance</button>
+            <button type="button" data-from="bar">The bar</button>
+            <button type="button" data-from="sellers">Roaming ticket sellers</button>
+          </div>
+        </div>
+        <!-- THE DRAW SETTINGS (Dean, 28 Oct 2026; named in his words 6 Nov 2026): set once by the venue, saved for
+             the venue, closed until opened. The shared disclosure, VP.advanced in /app/vp-session.js. A cash jackpot
+             keeps its state warning beside the amount, and the line above Draw says "Cash jackpot $..." whenever one
+             is on, open or closed. The state rules screen on Draw and the free-entry note never go in here. -->
+        <details class="vp-adv" id="raffleAdv">
+          <summary><span>Draw settings<small class="vp-adv-sub" id="advSum">Saved for your venue. Set once, rarely changed.</small></span></summary>
+          <div class="vp-adv-body">
+            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" placeholder="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit. Left empty, it is 180.</div></div>
+            <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
+            <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0" step="0.01">
+              <!-- A warning, never a block (Anisimoff Legal, 1 Oct 2026, point 10: the limits are the venue's to
+                   keep; the software should not display a figure the venue's own rules do not allow). The
+                   figure comes from VPGaming.jackpotLimit, the letters' threshold tables. -->
+              <div class="note hidden" id="rfJackWarn" style="margin-top:5px;color:var(--roll,#F5A524)"></div>
+            </div>
+            <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
+            <!-- TWO CHOICES DEAN ASKED FOR (9 Nov 2026), off unless the venue switches them on: a venue that never touches
+                 them draws exactly as it always has (prizes in the order on the list, no prize card before a draw). -->
+            <label class="check"><input type="checkbox" id="rfPickOrder"> Let me choose which prize to draw next</label>
+            <label class="check"><input type="checkbox" id="rfAnnounce"> Show each prize on the TV before its draw</label>
+            <div class="field">
+              <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left;width:100%">
+                <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- STEP 2, DRAW: the winning ticket where the setup was, the claim clock, and the two answers -->
+      <div id="drawStep" class="hidden">
+        <div class="winner-card wcard" id="winnerCard">
+          <div class="k" id="wcK">Winning ticket</div>
+          <div class="num" id="wcNum">0</div>
+          <div class="wlist hidden" id="wcList"></div>
+          <div class="pz" id="wcPrize">Meat Tray</div>
+          <div class="cdrow" id="wcCdRow"><div class="t" id="wcCd"></div><div class="b"><span id="wcBar"></span></div></div>
+        </div>
+        <div id="wcResolve">
+          <button class="btn xl green" id="claimBtn">We have a winner</button>
+          <p class="sublbl" id="claimSub"></p>
+          <button class="btn ghost second" id="redrawBtn">Not here, draw again</button>
+        </div>
+        <p class="nextp" id="nextPrizeLine"></p>
+      </div>
+
+      <!-- STEP 3, PRIZE: the tick, then the next prize is the one big button -->
+      <div id="prizeStep" class="hidden">
+        <div class="ok"><span class="tick" aria-hidden="true">&#10003;</span><b id="doneLine"></b><span class="sub" id="doneSub"></span></div>
+      </div>
+
+      <button class="btn pink xl" id="drawBtn">Draw the winner</button>
+      <p class="hint" id="drawHint"></p>
+      <p class="note hidden" id="freeEntryNote" style="margin-top:10px">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
+    </div>
+
+    <div class="folds">
+      <details class="fold" id="prizesFold">
+        <summary><span class="t">Tonight&rsquo;s prizes<small id="prizesSum">None yet</small></span><span class="chev"></span></summary>
+        <div class="fb"><div class="prizelist plist" id="prizeList"></div><div class="empty" id="prizesEmpty">Tap a prize above to add it.</div></div>
+      </details>
+      <details class="fold" id="resultsFold">
+        <summary><span class="t">Results<small id="resultsSum">No draws yet</small></span><span class="chev"></span></summary>
+        <div class="fb">
+          <div class="empty" id="winnersEmpty">No draws yet. Every winning ticket is logged here with the prize and result.</div>
+          <div class="tablewrap">
+            <table id="winnersTable" class="tbl hidden">
+              <thead><tr><th>When</th><th>Prize</th><th>Ticket</th><th style="text-align:right">Result</th></tr></thead>
+              <tbody id="winnersBody"></tbody>
+            </table>
           </div>
         </div>
       </details>
-      <div class="rangeline" id="rangeLine"></div>
-      <p class="note" style="margin:0 0 10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
-      <button class="btn pink big" id="drawBtn">Draw the winner</button>
-      <p class="note hidden" id="freeEntryNote">Free-entry raffle tonight: nobody pays for a ticket. That is what you chose on the rules screen, because your state does not let this venue sell tickets for it (or no permit is on record). Give the tickets away and draw as normal.</p>
-
-      <div class="winner-card" id="winnerCard">
-        <div class="pz" id="wcPrize">Meat Tray</div>
-        <div class="num" id="wcNum">0</div>
-        <div class="wlist hidden" id="wcList"></div>
-        <div class="cd" id="wcCd"></div>
-        <div class="resolve" id="wcResolve">
-          <button class="btn win" id="claimBtn">They are here: claim</button>
-          <button class="btn roll" id="redrawBtn">Not here &middot; redraw</button>
-        </div>
-      </div>
-
-      <div class="resolve" style="margin-top:16px">
-        <button class="btn ghost" id="newRaffleBtn">New raffle &middot; clear drawn</button>
-      </div>
-      <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
-           This hands them the file: every raffle and members draw result at the venue, as CSV. -->
-      <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
-      <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
     </div>
-
-    <div class="panel">
-      <div class="lbl" style="margin-bottom:10px">Raffle results &middot; audit log</div>
-      <div id="winnersEmpty" style="color:var(--faint);font-size:13px;padding:6px 2px">No draws yet. Every winning ticket is logged here with the prize and result.</div>
-      <div class="tablewrap">
-        <table id="winnersTable" class="hidden">
-          <thead><tr><th>When</th><th>Prize</th><th>Ticket</th><th>Range</th><th style="text-align:right">Result</th></tr></thead>
-          <tbody id="winnersBody"></tbody>
-        </table>
-      </div>
     </div>
   </div>
 </div>
@@ -382,7 +444,8 @@
           savedPrizes:["Meat Tray","$100 Bar Tab","Seafood Platter","Bottle of Whisky"],
           serverPad:null, drawn:{}, round:null, results:[],
           raffles:[], raffleId:"", prizeRows:null, prefPrizes:[],   // the venue's raffles (2+ shows the picker), the one picked, every saved prize with its raffle_id, game_prefs' prizes
-          busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
+          busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null,
+          lastWin:null, ticketsFrom:"" };   // ticketsFrom: "", "host", "front", "entrance", "bar" or "sellers" (Dean, 9 Nov 2026)   // the prize just won ({ nums, prize, claimed }): the console is on step 3 until the next draw
   var DEFAULT_PRIZES=G.savedPrizes.slice();   // shown until the venue has saved prizes of its own
 
   /* "240-320, 512" becomes [[240,320],[512,512]].
@@ -665,8 +728,27 @@
     w.textContent=t; w.classList.toggle("hidden", !t);
     return t;
   }
+  /* The settings' summary line, in plain words, so the host sees them without opening the box. */
+  function renderAdvSum(){
+    var el=$("advSum"); if(!el) return;
+    var parts=[];
+    parts.push(G.time===0 ? "no time limit to claim" : (isNaN(G.time) ? "time to claim not set" : ((G.time%60===0 ? (G.time/60)+(G.time===60?" minute":" minutes") : G.time+" seconds")+" to claim")));
+    parts.push(G.allowRedraw ? "draw again if they\u2019re not here" : "no draw again");
+    parts.push(G.jackOn ? ("cash jackpot "+(isNaN(G.jackAmt)?"not set":money(G.jackAmt))) : "no cash jackpot");
+    if(pickOrder()) parts.push("you choose the next prize");
+    if(announcing()) parts.push("each prize shown first");
+    var t=parts.join(", "); el.textContent=t.charAt(0).toUpperCase()+t.slice(1);
+  }
+  function renderSkipLine(){
+    var v=($("rfSkip").value||"").trim();
+    $("skipSum").textContent = v || "None"; $("skipChg").textContent = v ? "Change" : "Add";
+    if(v) show("skipField", true);
+    $("ticketsNum").textContent = G.jackOn ? "1. " : "2. ";   // a cash jackpot has no prize list, so the tickets come first
+    if($("fromNum")) $("fromNum").textContent = G.jackOn ? "2. " : "3. ";   // a cash jackpot has no prize list, so the tickets are the only question
+  }
   function renderRange(){
     readInputs();
+    renderAdvSum(); renderSkipLine();
     var jw=renderJackWarn();
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
@@ -687,6 +769,7 @@
     if(skProblem){ var w=document.createElement("span"); w.className="warn"; w.textContent=" "+skProblem.replace(/ Nothing has been drawn\./,""); line.appendChild(w); }
     else clearHostErrorIf("skips");
     scheduleIdleBroadcast();
+    syncStep();
   }
 
   /* ONE BROADCAST WHEN THE TYPING STOPS, not one per keystroke.
@@ -811,10 +894,15 @@
       renderRafflePick(); filterSavedPrizes(); saveRaffle(); sendIdle();
     });
   }
+  /* THE PRIZES AS CHIPS (Dean, 6 Nov 2026: "work out what prizes they're giving away first"). The venue's saved
+     prizes, each lit pink while it is on tonight's list and not drawn yet; tapping a lit one takes it off again.
+     "+ Type a prize" opens the box for one that is not saved yet (it is saved for your venue when added). */
+  function undrawnIndex(label){ for(var i=G.prizeIdx;i<G.prizes.length;i++){ if(G.prizes[i]===label) return i; } return -1; }
   function renderPresets(){
     var w=$("prizePresets"); w.innerHTML="";
-    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it is saved for your venue.</span>'; return; }
-    for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
+    if(!G.savedPrizes.length){ var e=document.createElement("span"); e.className="empty"; e.textContent="None yet. Type a prize and it is saved for your venue."; w.appendChild(e); }
+    for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p;
+      if(undrawnIndex(p)>=0) b.className="on"; w.appendChild(b); }
   }
   function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); var isNew=(i<0); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets();
     if(isNew && G.prefPrizes && G.prefPrizes.indexOf(p)<0) G.prefPrizes.unshift(p);   // the venue-wide list game_prefs keeps
@@ -852,7 +940,8 @@
     label=(label||"").trim(); if(!label || G.jackOn) return;
     if(liquorBlocked(label)){ hostError(VPGaming.LIQUOR_PRIZE_MSG, "liquor"); return; }
     clearHostErrorIf("liquor");
-    G.prizes.push(label); savePrize(label);   // also remember it as a saved preset for next time
+    G.prizes.push(label);
+    if(G.savedPrizes.indexOf(label)<0) savePrize(label);   // a new prize is remembered as a saved one for next time; a saved one tapped keeps its place among the chips
     $("rfPrize").value="";
     renderPrizeList(); saveRaffle();
   }
@@ -862,18 +951,63 @@
     renderPrizeList(); saveRaffle();
   }
   function advancePrize(){ if(!G.jackOn && G.prizeIdx < G.prizes.length){ G.prizeIdx++; renderPrizeList(); saveRaffle(); } }
-  function renderPrizeList(){
-    var w=$("prizeList"); if(!w) return;
-    w.innerHTML="";
-    for(var i=0;i<G.prizes.length;i++){
-      var done=(i<G.prizeIdx);
-      var row=document.createElement("div");
-      row.className="prow"+(done?" done":"")+(i===G.prizeIdx?" next":"");
-      row.innerHTML='<span class="pi">'+(i+1)+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+
-        (done?'<span class="pd">drawn</span>':'<button class="px" type="button" data-rm="'+i+'">&times;</button>');
+  /* Tonight's prizes in the order they will be drawn, and a prize already won drops to the bottom with its
+     ticket beside it (Dean, 6 Nov 2026), so the host sees what is next at the top. */
+  function wonTicket(label){ for(var i=0;i<G.results.length;i++){ var r=G.results[i]; if(r.prize===label && r.outcome!=="no_show") return r.numText; } return ""; }
+  /* LET ME CHOOSE WHICH PRIZE TO DRAW NEXT (Dean, 9 Nov 2026; off unless switched on). Off, the prizes go in the
+     order on the list, as they always have. On, any prize still to come has "Draw this next", which moves it to
+     the front of what is left; the TV's list and the big button follow, because both read the same list. */
+  function pickOrder(){ var c=$("rfPickOrder"); return !!(c && c.checked); }
+  function prizeNext(i){
+    if(!pickOrder() || G.round || G.busy || G.jackOn || !(i>G.prizeIdx && i<G.prizes.length)) return;
+    var p=G.prizes.splice(i,1)[0]; G.prizes.splice(G.prizeIdx,0,p);
+    renderPrizeList(); saveRaffle();
+  }
+  /* Move an undrawn prize one place up (-1) or down (+1) in the draw order. Drawn prizes never move. */
+  function moveP(i, d){
+    var j=i+d;
+    if(G.round || G.busy || !(i>=G.prizeIdx && i<G.prizes.length && j>=G.prizeIdx && j<G.prizes.length)) return;
+    var t=G.prizes[i]; G.prizes[i]=G.prizes[j]; G.prizes[j]=t;
+    renderPrizeList(); saveRaffle();
+  }
+  function renderOrderList(){
+    var w=$("orderList"); if(!w) return; w.innerHTML="";
+    var first=G.prizeIdx, last=G.prizes.length-1;
+    for(var i=first;i<=last;i++){
+      var row=document.createElement("div"); row.className="prow"+(i===first?" next":"");
+      row.innerHTML='<span class="pi">'+(i-first+1)+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+
+        '<button class="mv" type="button" data-up="'+i+'" aria-label="Move '+esc(G.prizes[i])+' up"'+(i===first?' disabled':'')+'>&#8593;</button>'+
+        '<button class="mv" type="button" data-down="'+i+'" aria-label="Move '+esc(G.prizes[i])+' down"'+(i===last?' disabled':'')+'>&#8595;</button>'+
+        '<button class="px" type="button" data-rm="'+i+'" aria-label="Take '+esc(G.prizes[i])+' off">&times;</button>';
       w.appendChild(row);
     }
+    show("orderWrap", !G.jackOn && (last-first+1)>=2);
+  }
+  function renderFrom(){
+    var b=document.querySelectorAll("#fromPick button[data-from]");
+    for(var i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-from")===G.ticketsFrom);
+  }
+  function renderPrizeList(){
+    var w=$("prizeList"); if(!w) return;
+    renderOrderList();
+    w.innerHTML="";
+    var order=[], i;
+    for(i=G.prizeIdx;i<G.prizes.length;i++) order.push(i);
+    for(i=0;i<Math.min(G.prizeIdx,G.prizes.length);i++) order.push(i);
+    for(var k=0;k<order.length;k++){
+      i=order[k];
+      var done=(i<G.prizeIdx), nx=(i===G.prizeIdx);
+      var row=document.createElement("div");
+      row.className="prow"+(done?" done":"")+(nx?" next":"");
+      var tk=done ? wonTicket(G.prizes[i]) : "";
+      var pick=(!done && i>G.prizeIdx && pickOrder() && !G.round && !G.busy) ? '<button class="chg pnext" type="button" data-next="'+i+'">Draw this next</button>' : '';
+      row.innerHTML='<span class="pi">'+(done?"&#10003;":(i-G.prizeIdx+1))+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+pick+
+        (done?'<span class="pd">'+(tk?"Ticket "+esc(tk):"Drawn")+'</span>':'<button class="px" type="button" data-rm="'+i+'" aria-label="Take '+esc(G.prizes[i])+' off">&times;</button>');
+      w.appendChild(row);
+    }
+    renderPresets();
     if(!G.round && !G.busy){ drawBtnIdle(); sendIdle(); }   // keep the Draw button + TV showing the next prize
+    syncStep();
   }
 
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
@@ -881,6 +1015,14 @@
     if(_suppressIdle || celebrating()) return;   /* a celebration is on the wall; do not paint over it */
     var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) };
     var rn=raffleName(); if(rn) m.raffle=rn;   // which raffle, named on the wall; a one-raffle venue sends nothing new
+    if(G.ticketsFrom) m.from=G.ticketsFrom;    // where tickets are sold: a key the TV turns into its own words
+    send(m);
+  }
+  var ANNOUNCE_MS=4000;
+  function announcing(){ var c=$("rfAnnounce"); return !!(c && c.checked); }
+  function sendAnnounce(){
+    var m={ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:true, prizes:G.prizes.slice(G.prizeIdx) };
+    if(raffleName()) m.raffle=raffleName();   // which raffle, as sendIdle says it
     send(m);
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
@@ -895,19 +1037,83 @@
   function celebrating(){ return Date.now()<_celebrateUntil; }
 
   // ---- draw button modes ----
+  /* A prize said in the middle of a sentence: "the meat tray", but "the BBQ pack" keeps its capitals. */
+  function lower(p){ p=String(p||""); return /^[A-Z][a-z]/.test(p) ? p.charAt(0).toLowerCase()+p.slice(1) : p; }
   function drawLabel(){
-    if(!G.jackOn && G.prizeIdx < G.prizes.length){
-      return "Draw: "+G.prizes[G.prizeIdx]+"  ("+(G.prizeIdx+1)+" of "+G.prizes.length+")";
+    if(G.lastWin){
+      if(G.jackOn) return "Draw again";
+      return (G.prizeIdx < G.prizes.length) ? ("Draw the next prize: "+lower(G.prizes[G.prizeIdx])) : (drawingPrize() ? "Draw the next prize" : "Add another prize");   // a typed prize still draws, as the quick draw always has
     }
     return G.prizeIdx>0 ? "Draw the next prize" : "Draw the winner";
   }
-  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.remove("nextmode"); }
-  function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.add("nextmode"); }
-  function drawBtnBusy(){ var b=$("drawBtn"); b.disabled=true; b.textContent="Drawing…"; b.classList.remove("nextmode"); }
+  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.remove("nextmode"); syncStep(); }
+  function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.add("nextmode"); syncStep(); }
+  function drawBtnBusy(){ var b=$("drawBtn"); b.disabled=true; b.textContent="Drawing…"; b.classList.remove("nextmode"); syncStep(); }
   /* The winner is up and the host must Claim or redraw before the next draw. This used to keep
      reading "Drawing…" for the whole claim window, which looks like a hang to a host on a phone.
      Say what it is waiting on instead. */
-  function drawBtnWaiting(nums){ var b=$("drawBtn"); b.disabled=true; b.textContent="Waiting on ticket "+nums.map(pad).join(", ")+" \u00b7 claim or redraw below"; b.classList.remove("nextmode"); }
+  function drawBtnWaiting(nums){ var b=$("drawBtn"); b.disabled=true; b.textContent="Waiting on ticket "+nums.map(pad).join(", ")+" \u00b7 claim or redraw below"; b.classList.remove("nextmode"); syncStep(); }
+
+  /* THE STEP THE HOST IS ON (the new look, 6 Nov 2026). 1 Set up until the first draw; 2 Draw from the tap until
+     the winner is claimed or redrawn; 3 Prize once a prize is won, until the next draw. Only what the card shows
+     follows the step: every control keeps its own state and its own handler. The fold under the card opens
+     itself on an iPad or a laptop when a step has room for it; a host who closes one keeps it closed. */
+  var _step=0;
+  function curStep(){ return (G.busy || G.round) ? 2 : (G.lastWin ? 3 : 1); }
+  function stepTiles(now){
+    var names=["Set up","Draw","Prize"], t="";
+    for(var i=0;i<3;i++){ var c=(i+1<now)?"done":((i+1===now)?"now":"");
+      t+='<div class="st '+c+'"><span class="n">'+(i+1<now?"&#10003;":(i+1))+'</span>'+names[i]+'</div>'; }
+    return t;
+  }
+  function prizesLeft(){ return G.jackOn ? 0 : Math.max(0, G.prizes.length-G.prizeIdx); }
+  function syncStep(){
+    var st=curStep(), names=["Set up","Draw","Prize"];
+    if($("stepTiles")) $("stepTiles").innerHTML=stepTiles(st);
+    if($("stepLine")) $("stepLine").innerHTML='<span class="sn">Step '+st+' of 3</span>'+names[st-1]+'<span class="gm"> &middot; Raffle</span>';
+    show("setupStep", st===1); show("drawStep", st===2); show("prizeStep", st===3);
+    show("drawBtn", st!==2);
+    var nb=$("newRaffleBtn"); if(nb) nb.classList.toggle("hidden", st===2 || (st===1 && !G.gameId && !drawnCount()));
+    // the busy card while the TV spins (the winner card is written by revealServer once it lands)
+    if(st===2 && !G.round){
+      $("wcK").textContent="Drawing now"; $("wcK").classList.add("drawing");
+      $("wcNum").textContent="\u00b7 \u00b7 \u00b7"; show("wcNum",true); show("wcList",false);
+      $("wcPrize").textContent=prizeLabel(); $("wcCd").textContent=""; $("wcCdRow").classList.add("hidden");
+      show("wcResolve", false); $("nextPrizeLine").textContent="";
+    }
+    var h=$("drawHint"), left=prizesLeft();
+    if(h){
+      if(st===1){
+        var first=G.jackOn ? ("the cash jackpot of "+money(G.jackAmt||0)) : (drawingPrize() ? "the <b>"+esc(lower(drawingPrize()))+"</b>" : "");
+        h.innerHTML = (first && validRange()) ? ("First up: "+first+", from tickets "+G.min+" to "+G.max+".") : (first ? "" : "Add a prize, then draw.");
+      } else if(st===3){
+        h.textContent = G.jackOn ? "" : (left>1 ? (left+" prizes left. After the last one the TV says thanks and goes back to your ads.")
+          : (left===1 ? "1 prize left. After it the TV says thanks and goes back to your ads." : "That was the last prize. End game puts your ads back on the TV."));
+      } else h.textContent="";
+    }
+    renderFoldSums(st);
+    if(st!==_step){
+      var wide=(window.innerWidth||0)>=768;
+      if($("prizesFold")) $("prizesFold").open = wide && st===3;
+      if($("resultsFold")) $("resultsFold").open = wide && G.results.length>0 && st!==1;
+      _step=st;
+    }
+  }
+  function renderFoldSums(st){
+    var ps=$("prizesSum"), rs=$("resultsSum"), n=G.prizes.length, left=prizesLeft(), nx=drawingPrize();
+    if(ps){
+      if(G.jackOn) ps.textContent="Cash jackpot "+money(G.jackAmt||0);
+      else if(!n) ps.textContent="None yet";
+      else if(G.prizeIdx>0) ps.textContent=G.prizeIdx+" won, "+left+" left."+(left?(" Next: "+lower(nx)):"");
+      else ps.textContent=n+(n===1?" prize. ":" prizes. ")+((st===2)?"Drawing: ":"First: ")+lower(G.prizes[0]);
+    }
+    show("prizesEmpty", !n);
+    if(rs){
+      var draws=G.results.length, last=G.results[0];
+      rs.textContent = !draws ? "No draws yet" : (draws+(draws===1?" draw. ":" draws. ")+"Last: ticket "+last.numText+
+        ", "+lower(last.prize)+(last.outcome==="no_show" ? ", not here" : ""));
+    }
+  }
 
   // ---- timers ----
   function stopSpin(){ if(G.spinTimer){ clearInterval(G.spinTimer); G.spinTimer=null; } }
@@ -1007,12 +1213,17 @@
     if(!G.jackOn && liquorBlocked(drawingPrize())){ hostError(VPGaming.LIQUOR_PRIZE_MSG, "liquor"); return; }
     if(remainingCount()<1){ hostError("No undrawn tickets left. Tap New raffle to start again."); return; }
 
-    G.busy=true; clearTimers();
+    G.busy=true; clearTimers(); G.lastWin=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
     drawBtnBusy();
-    sendDrawing(); startLocalSpin();
+    /* SHOW EACH PRIZE ON THE TV BEFORE ITS DRAW (Dean, 9 Nov 2026; off unless switched on): the wall puts up
+       "Next prize: Seafood platter" (the card it already shows between prizes) for ANNOUNCE_MS, then spins.
+       Off, the spin starts at once, as it always has. */
+    var ann=announcing() ? ANNOUNCE_MS : 0;
+    if(ann){ sendAnnounce(); setTimeout(function(){ if(G.busy) sendDrawing(); }, ann); } else { sendDrawing(); }
+    startLocalSpin();
 
-    var wait=new Promise(function(res){ setTimeout(res, Math.max(1200, G.drawLength*1000)); });
+    var wait=new Promise(function(res){ setTimeout(res, ann + Math.max(1200, G.drawLength*1000)); });
     ensureRaffleGame()
       .then(function(){ return apiPost("/host/draw", drawBody()); })
       .then(function(r){ return wait.then(function(){ return r; }); })
@@ -1036,13 +1247,22 @@
 
     // local winner card
     var wc=$("winnerCard"); wc.classList.add("show"); $("wcPrize").textContent=G.round.prize;
+    $("wcK").textContent=multi?"Winning tickets":"Winning ticket"; $("wcK").classList.remove("drawing");
+    $("wcCdRow").classList.remove("hidden","nobar"); $("wcBar").style.width="100%";
+    $("claimSub").textContent=G.jackOn ? "Marks the jackpot as paid" : ("Marks the "+lower(G.round.prize)+" as collected");
+    var nx=(!G.jackOn && G.prizeIdx+1<G.prizes.length) ? G.prizes[G.prizeIdx+1] : "";
+    $("nextPrizeLine").innerHTML = nx ? ("Next prize: <b>"+esc(nx)+"</b>") : "";
+    /* NOT HERE WAITS FOR THE CLOCK (Dean, 6 Nov 2026, the same as the members draw): a host cannot void a ticket
+       whose holder still has time to reach them. It counts down on the button, and opens at zero. No time limit,
+       or a round picked up after a reload (claim clock 0), and it is open from the start: the host decides. */
+    G.round.total=t; G.round.locked=!!(allowRedraw && t>0);
     if(multi){
       show("wcNum",false); var wl=$("wcList"); show("wcList",true); wl.innerHTML="";
       for(var i=0;i<nums.length;i++){ var sp=document.createElement("span"); sp.textContent=pad(nums[i]); wl.appendChild(sp); }
     } else { show("wcNum",true); show("wcList",false); $("wcNum").textContent=pad(nums[0]); }
 
     if(allowRedraw){
-      show("wcResolve",true);
+      show("wcResolve",true); show("redrawBtn",true); disarmRedraw();
       drawBtnWaiting(nums);
       $("claimBtn").classList.add("pulse");   // the safe action is the one that moves
       /* NO LIMIT MEANS NO LIMIT. Time to claim 0 ("Put 0 for no time limit") used to start this
@@ -1050,6 +1270,7 @@
          wall, which treats 0 as no countdown, said nothing. A recovered round is also sent here
          with 0: the clock is not restarted and the host decides now. */
       if(!(t>0)){
+        $("wcCdRow").classList.add("nobar"); $("wcCd").className="t msg";
         $("wcCd").textContent = r.recovered
           ? "Picked up where you left off. Claim if they are here, or Not here to redraw."
           : "No time limit. Claim if they are here, or Not here to redraw.";
@@ -1064,13 +1285,14 @@
       G.countdownTimer=setInterval(function(){ G.round.remaining--; updateCd();
         if(G.round.remaining<=0){
           stopCountdown();
+          G.round.locked=false; disarmRedraw();   // the clock is done: Not here opens
           /* Re-arm the SCREEN too. Its return-to-ads timer was sized to the claim window plus 30
              seconds, so a host who takes longer than that to find the ticket holder watched the
              wall drop to advertising mid-decision. Re-sending the winner with time:0 restarts
              that timer from now and keeps the number up while they decide. */
           try{ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:true,
                       pad:padWidth(), min:G.min, max:G.max, time:0 }); }catch(e){}
-          hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.join(", "):"")+". Tap \u201cNot here, redraw\u201d if nobody has come forward, or \u201cClaim\u201d if they have.", "timeup");
+          hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.map(pad).join(", "):"")+". Tap \u201cNot here, draw again\u201d if nobody has come forward, or \u201cWe have a winner\u201d if they have.", "timeup");
         }
       },1000);
     } else {
@@ -1078,7 +1300,15 @@
       finalizeSimple();
     }
   }
-  function updateCd(){ var t=secsToClock(Math.max(0,G.round.remaining)); $("wcCd").innerHTML="Claim within <b>"+t+"</b>"; }
+  function updateCd(){
+    var left=Math.max(0,G.round.remaining), t=secsToClock(left), cd=$("wcCd");
+    if(left>0){ cd.className="t"; cd.innerHTML="<span>Claim within</span><b>"+t+"</b>"; }
+    else { cd.className="t msg"; cd.textContent="Time is up. Your call."; $("wcCdRow").classList.add("nobar"); }
+    if(G.round.total>0) $("wcBar").style.width=Math.max(0,Math.min(100,100*left/G.round.total))+"%";
+    if(G.round.locked && !_redrawArm){ var rb=$("redrawBtn"); if(rb) rb.textContent=redrawLabelIdle(); }
+  }
+  /* "Ticket 020 collected their meat tray" (Dean, 6 Nov 2026): the same Ticket 020 as on the TV and in Results. */
+  function ticketWords(nums){ return (nums.length>1?"Tickets ":"Ticket ")+nums.map(pad).join(", "); }
 
   // no redraw allowed: the draw already recorded outcome 'drawn' (counts as given). Celebrate.
   function finalizeSimple(){
@@ -1087,6 +1317,9 @@
     for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
     var nums=G.round.numbers.slice(), pz=G.round.prize;
     $("wcCd").innerHTML='<span style="color:var(--win)">Winner drawn. Hand over the prize.</span>';
+    G.lastWin={ nums:nums, prize:pz, claimed:false };
+    $("doneLine").textContent=ticketWords(nums)+(nums.length>1?" win ":" wins ")+(G.jackOn?"the jackpot":"the "+lower(pz));
+    $("doneSub").textContent="Hand over the prize.";
     G.round=null; advancePrize(); renderRange(); drawBtnNext();
     stopWait(); G.celebrateWait=setTimeout(function(){ send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max }); }, 1200);
   }
@@ -1103,6 +1336,9 @@
     send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
     $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
     show("wcResolve",false);
+    G.lastWin={ nums:nums, prize:pz, claimed:true };
+    $("doneLine").textContent=ticketWords(nums)+" collected "+(nums.length>1?"the ":"their ")+(G.jackOn?"jackpot":lower(pz));
+    $("doneSub").textContent="";
     G.round=null;
     /* Let the room SEE the win. advancePrize() and renderRange() both broadcast idle when there is
        no live round, and running them here sent idle in the same tick as "claimed": the screen's
@@ -1149,7 +1385,7 @@
   }
   function newRaffleNow(){
     clearRaffle();
-    clearTimers(); G.round=null; G.drawn={}; clearHostErrorIf("timeup");
+    clearTimers(); G.round=null; G.drawn={}; G.lastWin=null; clearHostErrorIf("timeup");
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse"); drawBtnIdle(); renderRange(); sendIdle();
@@ -1171,11 +1407,12 @@
     if(!G.results.length){ show("winnersEmpty",true); show("winnersTable",false); return; }
     show("winnersEmpty",false); show("winnersTable",true);
     for(var i=0;i<G.results.length;i++){ var r=G.results[i];
-      var res=r.outcome==="claimed"?'<span class="res-claim">Claimed</span>':(r.outcome==="drawn"?'<span class="res-claim">Won</span>':'<span class="res-no">No show, redrawn</span>');
+      var res=r.outcome==="claimed"?'<span class="res-claim">Collected</span>':(r.outcome==="drawn"?'<span class="res-claim">Won</span>':'<span class="res-no">Not here</span>');
       var tr=document.createElement("tr");
-      tr.innerHTML='<td style="white-space:nowrap">'+r.date+' '+r.when+'</td><td>'+esc(r.prize)+'</td><td class="num">'+r.numText+'</td><td class="mono" style="color:var(--muted)">'+r.range+'</td><td style="text-align:right">'+res+'</td>';
+      tr.innerHTML='<td style="white-space:nowrap">'+r.when+'</td><td>'+esc(r.prize)+'</td><td class="num">'+r.numText+'</td><td style="text-align:right">'+res+'</td>';
       b.appendChild(tr);
     }
+    syncStep();
   }
 
   // ---- pair with the venue screen ----
@@ -1268,6 +1505,10 @@
   $("connectBtn").addEventListener("click", tryConnect);
   /* State gaming rules, once a night, before the first draw. */
   /* waitRecord: the draw is refused by the Worker until tonight's acceptance is on the record (14 Oct 2026). */
+  /* Every prize is drawn: the step 3 button reads "Add another prize" and takes the host back to the setup. */
+  $("drawBtn").addEventListener("click", function(e){
+    if(G.lastWin && !G.jackOn && G.prizeIdx>=G.prizes.length && !drawingPrize()){ e.stopImmediatePropagation(); G.lastWin=null; drawBtnIdle(); try{ $("prizeField").scrollIntoView({ block:"start" }); }catch(x){} }
+  });
   $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDrawGated, { waitRecord:true, freeEntry: !!G.freeEntry }); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   /* "Not here, redraw" was one tap and final: the ticket is marked no_show, taken out of the pool
@@ -1277,14 +1518,14 @@
      about to void, the second fires. Not a browser confirm(): those block a kiosk tablet and the
      TV countdown keeps running behind them. */
   var REDRAW_ARM_MS=4000, _redrawArm=null;
-  function redrawLabelIdle(){ return "Not here \u00b7 redraw"; }
+  function redrawLabelIdle(){ return (G.round && G.round.locked) ? ("Not here, draw again (in "+secsToClock(Math.max(0,G.round.remaining))+")") : "Not here, draw again"; }
   function disarmRedraw(){
     if(_redrawArm){ clearTimeout(_redrawArm); _redrawArm=null; }
-    var b=$("redrawBtn"); if(b){ b.textContent=redrawLabelIdle(); b.classList.remove("armed"); }
+    var b=$("redrawBtn"); if(b){ b.textContent=redrawLabelIdle(); b.classList.remove("armed"); b.disabled=!!(G.round && G.round.locked); }
     var c=$("claimBtn"); if(c){ c.classList.remove("pulse"); if(G.round && !G.round.resolved && !G.busy) c.classList.add("pulse"); }
   }
   function tapRedraw(){
-    if(!G.round||G.round.resolved||G.busy) return;
+    if(!G.round||G.round.resolved||G.busy||G.round.locked) return;   // locked until the claim clock is done
     if(_redrawArm){ disarmRedraw(); onRedraw(false); return; }
     var b=$("redrawBtn");
     b.textContent="Tap again to void ticket "+G.round.numbers.map(pad).join(", ");
@@ -1311,12 +1552,29 @@
   $("prizePresets").addEventListener("click", function(e){
     var b=e.target.closest("button[data-p]"); if(!b) return;
     $("rfJackOn").checked=false; show("rfJackWrap",false); show("prizeField",true);
+    var lit=undrawnIndex(b.getAttribute("data-p"));
+    if(lit>=0){ removePrize(lit); return; }   // a lit chip, tapped again: off tonight's list
     addPrize(b.getAttribute("data-p"));   // clicking a saved prize adds it to tonight's list
   });
+  $("orderList").addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b || b.disabled) return;
+    if(b.hasAttribute("data-up")) moveP(parseInt(b.getAttribute("data-up"),10), -1);
+    else if(b.hasAttribute("data-down")) moveP(parseInt(b.getAttribute("data-down"),10), 1);
+    else if(b.hasAttribute("data-rm")) removePrize(parseInt(b.getAttribute("data-rm"),10));
+  });
+  $("fromPick").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-from]"); if(!b) return;
+    var v=b.getAttribute("data-from"); G.ticketsFrom=(G.ticketsFrom===v) ? "" : v;   // tapping the lit one again says nothing, as today
+    renderFrom(); queueRafflePrefs(); if(!G.round && !G.busy) sendIdle();
+  });
+  $("typePrizeChip").addEventListener("click", function(){ show("addRow", true); try{ $("rfPrize").focus(); }catch(x){} });
+  /* "Tickets not sold: None / Add" opens the box; once something is in it, the line says what. */
+  $("skipChg").addEventListener("click", function(){ show("skipField", true); try{ $("rfSkip").focus(); }catch(x){} });
   $("addPrizeBtn").addEventListener("click", function(){ addPrize($("rfPrize").value); });
   $("rafflePick").addEventListener("click", function(e){ var b=e.target.closest("button[data-raffle]"); if(b) pickRaffle(b.getAttribute("data-raffle")); });
   $("rfPrize").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addPrize(this.value); } });
   $("prizeList").addEventListener("click", function(e){
+    var nx=e.target.closest("button[data-next]"); if(nx){ prizeNext(parseInt(nx.getAttribute("data-next"),10)); return; }
     var b=e.target.closest("button[data-rm]"); if(!b) return;
     removePrize(parseInt(b.getAttribute("data-rm"),10));
   });
@@ -1329,7 +1587,8 @@
     var v=parseInt($("rfTime").value,10);
     if(!isNaN(v) && v>0 && v<30){ $("rfTime").value=30; renderRange(); }
   });
-  $("rfAllowRedraw").addEventListener("change", function(){ readInputs(); queueRafflePrefs(); });
+  $("rfAllowRedraw").addEventListener("change", function(){ readInputs(); renderAdvSum(); queueRafflePrefs(); });
+  ["rfPickOrder","rfAnnounce"].forEach(function(id){ $(id).addEventListener("change", function(){ renderAdvSum(); renderPrizeList(); queueRafflePrefs(); }); });
   ["rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", queueRafflePrefs); });   // never rfSkip
 
   /* THE SETUP IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). Saved prizes and the ticket range (Basic), time to
@@ -1350,6 +1609,7 @@
     var ja=String($("rfJackAmt").value==null?"":$("rfJackAmt").value).trim();
     if(/^\d+(\.\d{1,2})?$/.test(ja)) p.jackpot_amount_cents=Math.round(parseFloat(ja)*100);
     if([3,4,5,6,8].indexOf(G.drawLength)>=0) p.spin_seconds=G.drawLength;
+    p.pick_order=pickOrder(); p.announce_prize=announcing(); p.tickets_from=G.ticketsFrom||"";
     return p;
   }
   function applyRafflePrefs(p){
@@ -1363,6 +1623,10 @@
     if(typeof p.jackpot_on==="boolean"){ var jo=$("rfJackOn"); if(jo){ jo.checked=p.jackpot_on; show("rfJackWrap", p.jackpot_on); show("prizeField", !p.jackpot_on); } }
     if(p.jackpot_amount_cents!=null) setv("rfJackAmt", dollarsText(p.jackpot_amount_cents));
     var ar=$("rfAllowRedraw"); if(ar && typeof p.allow_redraw==="boolean") ar.checked=p.allow_redraw;
+    var po=$("rfPickOrder"); if(po && typeof p.pick_order==="boolean") po.checked=p.pick_order;
+    var an=$("rfAnnounce"); if(an && typeof p.announce_prize==="boolean") an.checked=p.announce_prize;
+    if(typeof p.tickets_from==="string" && /^(|host|front|entrance|bar|sellers)$/.test(p.tickets_from)){ G.ticketsFrom=p.tickets_from; if(typeof renderFrom==="function") renderFrom(); }
+    if(typeof renderPrizeList==="function") renderPrizeList();
     if(typeof renderRange==="function") renderRange();
   }
   // Migration 51's template, read only while game_prefs is empty.

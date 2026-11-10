@@ -12,7 +12,8 @@ tools/account-structure-in-chrome.test.py; this is the night itself:
                 shows ITS prizes (the first raffle also has the prizes saved before raffles had a list),
                 a new prize typed there is filed under it; drawn and claimed; End game asks, closes the
                 night (the venue is not live) and the TV goes back to the venue's ads
-  one raffle    no question about which raffle, every saved prize, the TV card says "Raffle tonight"
+  one raffle    no question about which raffle, every saved prize, the TV card names no raffle (the new look,
+                6 Nov 2026: RAFFLE is in the title line; GET YOUR TICKETS and the prizes, nothing over them)
                 exactly as before, and a new prize is filed with no raffle
   no errors     no page threw anything along the way
 
@@ -101,7 +102,7 @@ def draw_and_claim(host, tv, prize):
     R.until(host, '!document.getElementById("claimBtn").disabled && document.getElementById("claimBtn").offsetParent!==null', 20)
     js(host, 'document.getElementById("claimBtn").click(); true')
     ok('claimed: the results list has %s' % prize,
-       R.until(host, '/%s/.test(document.getElementById("winnersBody").textContent) && /Claimed/.test(document.getElementById("winnersBody").textContent)' % prize, 20) is True,
+       R.until(host, '/%s/.test(document.getElementById("winnersBody").textContent) && /Collected/.test(document.getElementById("winnersBody").textContent)' % prize, 20) is True,
        js(host, 'document.getElementById("winnersBody").textContent'))
 
 
@@ -173,7 +174,7 @@ try:
     ok('no "Which raffle" question', js(host, 'document.getElementById("raffleField").classList.contains("hidden") && document.querySelectorAll("#rafflePick button").length===0') is True,
        js(host, PICKS))
     js(host, 'document.querySelector("#prizePresets button").click(); true')
-    ok('the TV card says "Raffle tonight", as it always has', R.until(tv, '/Meat tray/.test(' + TVPRIZES + ')', 30) is True and js(tv, EYE) == 'Raffle tonight', js(tv, EYE))
+    ok('the TV card names no raffle over GET YOUR TICKETS (RAFFLE is in the title line)', R.until(tv, '/Meat tray/.test(' + TVPRIZES + ')', 30) is True and js(tv, EYE) == '', js(tv, EYE))
     shot(host, 'host-one-raffle.jpg'); shot(tv, 'tv-one-raffle.jpg')
     js(host, 'document.getElementById("rfPrize").value="Bar tab"; document.getElementById("addPrizeBtn").click(); true')
     t = time.time() + 15; filed = []

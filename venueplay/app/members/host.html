@@ -37,6 +37,7 @@
   .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+  .who #statusDot{display:none}   /* no "it works" dot (Dean, 8 Nov 2026): the header only ever names a problem */
 
   .wrap{max-width:1100px;margin:0 auto;padding:22px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
@@ -174,12 +175,14 @@
 </style>
 <!-- On-brand dropdowns: one shared rule set, linked last so it is the answer (19 Oct 2026). -->
 <link rel="stylesheet" href="/app/vp-select.css">
+<!-- The raffle and members draw consoles' new look, one copy (9 Nov 2026). Linked last so it is the answer. -->
+<link rel="stylesheet" href="/app/vp-drawhost.css">
 </head>
 <body>
 <header>
   <div class="bar">
     <button class="vp-hdrbtn" type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV">End game</button>
-    <a class="vp-navlink" href="/app" title="Back to Play">&#8592; Play</a>
+    <a class="vp-navlink" href="/app" title="Back to Play" aria-label="Back to Play">&#8592;<span class="pl">&nbsp;Play</span></a>
     <div class="brand">
       <span class="word"><svg class="vp-wm" height="19.6" width="97.9" viewBox="-1 -729 4676 936" fill="none" aria-hidden="true" style="vertical-align:middle;filter:none;overflow:visible" data-vp-mark="wordmark"><path fill="currentColor" d="M198 -0L-1 -489L185 -489L312 -77L241 -77L367 -489L551 -489L352 -0L198 -0ZM821 11Q739 11 676 -22Q613 -54 577 -112Q541 -170 541 -245Q541 -319 576 -376Q611 -434 672 -468Q732 -501 808 -501Q882 -501 940 -470Q997 -438 1030 -382Q1062 -327 1062 -256Q1062 -241 1060 -226Q1059 -210 1054 -190L623 -188L623 -300L985 -303L907 -254Q906 -295 895 -322Q884 -348 863 -362Q842 -376 810 -376Q777 -376 753 -360Q729 -344 716 -315Q703 -286 703 -245Q703 -203 717 -174Q731 -144 757 -129Q783 -114 821 -114Q857 -114 884 -126Q912 -138 934 -163L1025 -72Q989 -31 938 -10Q886 11 821 11ZM1429 -0L1429 -276Q1429 -310 1409 -330Q1389 -349 1358 -349Q1337 -349 1320 -340Q1304 -331 1295 -315Q1286 -299 1286 -276L1218 -308Q1218 -367 1244 -410Q1270 -452 1316 -476Q1361 -499 1419 -499Q1472 -499 1514 -474Q1555 -450 1579 -409Q1603 -368 1603 -316L1603 -0L1429 -0ZM1112 -0L1112 -489L1286 -489L1286 -0L1112 -0ZM1903 11Q1834 11 1780 -16Q1727 -44 1696 -94Q1666 -143 1666 -206L1666 -489L1840 -489L1840 -206Q1840 -186 1848 -171Q1856 -156 1870 -148Q1884 -140 1903 -140Q1931 -140 1948 -158Q1966 -176 1966 -206L1966 -489L2140 -489L2140 -206Q2140 -142 2110 -93Q2080 -44 2026 -16Q1973 11 1903 11ZM2460 11Q2378 11 2315 -22Q2252 -54 2216 -112Q2180 -170 2180 -245Q2180 -319 2215 -376Q2250 -434 2310 -468Q2371 -501 2447 -501Q2521 -501 2578 -470Q2636 -438 2668 -382Q2701 -327 2701 -256Q2701 -241 2700 -226Q2698 -210 2693 -190L2262 -188L2262 -300L2624 -303L2546 -254Q2545 -295 2534 -322Q2523 -348 2502 -362Q2481 -376 2449 -376Q2416 -376 2392 -360Q2368 -344 2355 -315Q2342 -286 2342 -245Q2342 -203 2356 -174Q2370 -144 2396 -129Q2422 -114 2460 -114Q2496 -114 2524 -126Q2551 -138 2573 -163L2664 -72Q2628 -31 2576 -10Q2525 11 2460 11ZM3042 10Q2995 10 2955 -7Q2915 -24 2889 -54Q2863 -83 2857 -122L2857 -360Q2863 -399 2890 -430Q2916 -462 2956 -480Q2995 -499 3042 -499Q3113 -499 3167 -466Q3221 -434 3252 -376Q3282 -318 3282 -244Q3282 -171 3252 -114Q3221 -56 3167 -23Q3113 10 3042 10ZM2751 207L2751 -489L2925 -489L2925 -366L2896 -248L2921 -129L2921 207L2751 207ZM3009 -145Q3038 -145 3060 -158Q3082 -171 3094 -194Q3106 -216 3106 -245Q3106 -274 3094 -296Q3082 -318 3060 -331Q3038 -344 3010 -344Q2983 -344 2961 -332Q2939 -319 2927 -296Q2915 -274 2915 -245Q2915 -216 2927 -194Q2939 -171 2960 -158Q2982 -145 3009 -145ZM3338 -0L3338 -729L3512 -729L3512 -0L3338 -0ZM4331 1L4135 -489L4321 -489L4441 -86L4368 -86L4489 -489L4675 -489L4474 1L4331 1ZM4215 207L4360 -112L4474 1L4390 207L4215 207ZM3802 10Q3734 10 3681 -23Q3628 -56 3598 -114Q3568 -171 3568 -244Q3568 -318 3598 -376Q3628 -434 3681 -466Q3734 -499 3802 -499Q3848 -499 3886 -482Q3924 -466 3948 -436Q3973 -406 3978 -368L3978 -122Q3973 -83 3948 -54Q3924 -24 3886 -7Q3848 10 3802 10ZM3721 -113C3721 -107 3724 -102 3729 -99C3734 -96 3740 -96 3745 -99L3966 -231C3971 -234 3974 -239 3974 -245C3974 -251 3971 -256 3966 -259L3745 -391C3740 -394 3734 -394 3729 -391C3724 -388 3721 -383 3721 -377L3721 -113ZM3928 -0L3928 -131L3978 -140L3978 -360L3928 -369L3928 -489L4099 -489L4099 -0L3928 -0Z"/><path fill="#FF1F8E" d="M3720 -113C3720 -107 3724 -101 3729 -98C3734 -95 3741 -95 3746 -98L3966 -231C3971 -234 3975 -239 3975 -245C3975 -251 3971 -256 3966 -259L3746 -392C3741 -395 3734 -395 3729 -392C3724 -389 3720 -383 3720 -377L3720 -113Z"/></svg></span>
     </div>
@@ -219,16 +222,32 @@
     </div>
   </div>
 
-  <!-- CONSOLE -->
+  <!-- CONSOLE: the new look (Dean's agreed mocks, 6 Nov 2026). One column on every device: Pick, Draw, Pay in one
+       card with ONE big button. The members list is not on the console any more (Dean, 6 Nov 2026: nobody takes a
+       member out on the night; the list is kept on Your account). syncStep() shows the part of the card for the
+       step; every control below is the one the console has always had, under the same id. -->
   <div id="consoleView" class="hidden">
-    <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
-    <div class="console">
+    <div class="toprow">
+      <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
+      <div class="links">
+        <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
+             This hands them the file: every members draw and raffle result at the venue, as CSV. -->
+        <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
+      </div>
+    </div>
+    <div class="note" id="downloadRecordMsg"></div>
 
-      <!-- left: run the draw -->
-      <div class="panel">
-        <div class="field">
-          <label>Which draw</label>
-          <select id="drawSel"></select>
+    <div class="one">
+    <div class="panel" id="membersPanel">
+      <p class="stepline" id="stepLine"></p>
+      <div class="steps" id="stepTiles"></div>
+
+      <!-- STEP 1, PICK: tonight's draw is picked for the host by the day (Dean, 6 Nov 2026) -->
+      <div id="pickStep">
+        <div class="field2">
+          <span class="flab">Tonight&rsquo;s draw<small id="drawPicked"></small></span>
+          <div class="chips" id="drawChips"></div>
+          <select id="drawSel" aria-label="Which draw"></select>
         </div>
         <div class="stat">
           <div class="box"><div class="k">Jackpot</div><div class="v g" id="runJackpot">$0</div></div>
@@ -237,38 +256,13 @@
         <div class="since" id="runSince"></div>
         <!-- Shown only when the draw has a maximum: whether the jackpot sits at it, and the reserve. -->
         <div class="since hidden" id="runCap"></div>
-        <button class="btn pink big" id="drawBtn">Draw</button>
-        <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
-             on a kiosk tablet behind its lock screen blocks the whole console (live audit, 16 Oct 2026). -->
-        <div class="ask hidden" id="drawAgainAsk" role="dialog" aria-modal="true" aria-labelledby="drawAgainTitle">
-          <div class="askbox">
-            <h3 id="drawAgainTitle">This draw has already been drawn tonight</h3>
-            <p>Only draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.</p>
-            <div class="askbtns">
-              <button type="button" class="btn ghost" id="drawAgainNo">Not now</button>
-              <button type="button" class="btn pink" id="drawAgainYes">Draw again</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="winner-card" id="winnerCard">
-          <div class="eye" id="wcEye">Winning number</div>
-          <div class="num" id="wcNum">&middot;</div>
-          <div class="nm" id="wcName">&middot;</div>
-          <div class="cd" id="wcCd"></div>
-          <div class="resolve">
-            <button class="btn win" id="claimBtn">They are here: pay the jackpot</button>
-            <button class="btn ghost" id="rollBtn">Not here: jackpot to next week</button>
-          </div>
-        </div>
-        <div class="drawnote" id="drawNote">The TV spins, reveals the winning member, then waits on your call.</div>
-        <!-- ADVANCED SETTINGS (Dean, 28 Oct 2026): the draw and jackpot settings, set once and saved for the venue
+        <!-- THE DRAW AND JACKPOT SETTINGS (Dean, 28 Oct 2026; named in his words 6 Nov 2026): the draw and jackpot settings, set once and saved for the venue
              in vp_member_draws (MANAGER-ONLY write path, /host/members/settings), closed until opened. The shared
              disclosure, VP.advanced in /app/vp-session.js. The maximum jackpot keeps its state hint and warning
              beside it; the line above Draw shows the maximum whenever one is set. The state rules screen on Draw
              never goes in here. -->
         <details class="vp-adv" id="membersAdv">
-          <summary><span>Advanced settings<small class="vp-adv-sub">Draw and jackpot settings, saved for your venue.</small></span></summary>
+          <summary><span>Draw and jackpot settings<small class="vp-adv-sub" id="advSum">Saved for your venue.</small></span></summary>
           <div class="vp-adv-body">
             <div class="field"><label>Draw name</label><input type="text" id="setName" placeholder="e.g. Friday Members Draw"></div>
             <!-- Running since: the code has always read and written #setSince, and the input was
@@ -309,26 +303,50 @@
               Only a manager or owner can change the jackpot and draw settings.
             </div>
             <div class="note" id="settingsMsg" style="margin-top:8px"></div>
-            <div class="note" style="margin-top:10px">Adding or removing members, and removing a draw altogether, is done on your Account page.</div>
+            <div class="note" style="margin-top:10px">Your members list, and removing a draw altogether, are on your Account page.</div>
           </div>
         </details>
-        <!-- The venue keeps its own winner and draw records (Anisimoff Legal, 1 Oct 2026, points 8 and 14).
-             This hands them the file: every members draw and raffle result at the venue, as CSV. -->
-        <button type="button" class="vp-foot-link" id="downloadRecordBtn">Download draw record</button>
-        <div class="note" id="downloadRecordMsg" style="margin-top:4px"></div>
       </div>
 
-      <!-- right: the members list -->
-      <div>
-        <!-- "How names show on the TV" lives on Your account > On the big screen only (28 Oct 2026 audit): it covers
-             the whole venue, and the console copy was a second place to change it. G.nameDisplay is still read. -->
-        <div class="panel">
-          <div class="lbl" style="margin-bottom:0">In the draw <span class="mono vp-gold">(<span id="memberCount">0</span> active)</span></div>
-          <div class="members" id="memberList"></div>
-          <p class="note" style="margin-top:10px">Tap a member to enable or disable them. Disabled members (barred or not financial) are skipped. The winner is picked at random on the server from the active members.</p>
+      <!-- STEP 2, DRAW: the winning number where the draw was; Not here waits for the claim clock -->
+      <div id="drawStep" class="hidden">
+        <div class="winner-card wcard" id="winnerCard">
+          <div class="k" id="wcEye">Winning number</div>
+          <div class="num" id="wcNum">&middot;</div>
+          <div class="wn" id="wcName">&middot;</div>
+          <div class="cdrow" id="wcCdRow"><div class="t" id="wcCd"></div><div class="b"><span id="wcBar"></span></div></div>
+        </div>
+        <div class="resolve">
+          <button class="btn xl green" id="claimBtn">They&rsquo;re here, pay the jackpot</button>
+          <button class="btn ghost second" id="rollBtn">Not here</button>
         </div>
       </div>
 
+      <!-- STEP 3, PAY: the outcome, centred, and next week's jackpot -->
+      <div id="payStep" class="hidden">
+        <div class="ok" id="doneBox"><span class="tick" id="doneTick" aria-hidden="true">&#10003;</span><b id="doneHead"></b><span class="sub" id="doneSub"></span></div>
+      </div>
+
+      <button class="btn pink xl" id="drawBtn">Draw</button>
+      <button class="btn pink xl hidden" id="finishBtn" type="button">Finish, back to ads</button>
+        <!-- "Drawn tonight, draw again?" is asked HERE, never with window.confirm(): a native dialog
+             on a kiosk tablet behind its lock screen blocks the whole console (live audit, 16 Oct 2026). -->
+        <div class="ask hidden" id="drawAgainAsk" role="dialog" aria-modal="true" aria-labelledby="drawAgainTitle">
+          <div class="askbox">
+            <h3 id="drawAgainTitle">This draw has already been drawn tonight</h3>
+            <p>Only draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.</p>
+            <div class="askbtns">
+              <button type="button" class="btn ghost" id="drawAgainNo">Not now</button>
+              <button type="button" class="btn pink" id="drawAgainYes">Draw again</button>
+            </div>
+          </div>
+        </div>
+
+      <p class="hint" id="drawNote">The TV spins, shows the winning number and name, then waits for you.</p>
+      <p class="nextp hidden" id="nextDrawLine"></p>
+      <p class="nudge1 hidden" id="listAge"></p>
+      <p class="hint hidden" id="anotherWrap"><button type="button" class="tlink" id="anotherDrawBtn">Run another draw</button></p>
+    </div>
     </div>
   </div>
 </div>
@@ -418,16 +436,49 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
-    round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null
+    round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null,
+    lastResult:null   // the draw just paid or rolled over ({ won, name, amountCents, nextCents, capped }): step 3 until the host moves on
   };
   function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
   function stopClaimTimer(){ if(G.claimTimer){ clearInterval(G.claimTimer); G.claimTimer=null; } }
   function updateClaimCd(){
     if(!G.round) return;
-    var base="Playing for <b>"+money(G.round.prizeCents)+"</b>";
-    $("wcCd").innerHTML = G.round.remaining>0
-      ? base+" &middot; claim within <b>"+mmss(G.round.remaining)+"</b>"
-      : base+" &middot; time is up, your call";
+    var cd=$("wcCd"), left=G.round.remaining;
+    if(left>0){ cd.className="t"; cd.innerHTML="<span>Claim within</span><b>"+mmss(left)+"</b>"; $("wcCdRow").classList.remove("nobar"); }
+    else { cd.className="t msg"; cd.textContent = noPresent() ? ("Playing for "+money(G.round.prizeCents)) : "Time is up. Your call."; $("wcCdRow").classList.add("nobar"); }
+    if(G.round.total>0) $("wcBar").style.width=Math.max(0,Math.min(100,100*left/G.round.total))+"%";
+    var rb=$("rollBtn"); if(rb) rb.textContent = G.round.locked ? ("Not here (in "+mmss(left)+")") : "Not here";
+  }
+  /* THE STEP THE HOST IS ON (the new look, 6 Nov 2026): 1 Pick, 2 Draw from the tap until they are paid or the
+     jackpot rolls over, 3 Pay with the outcome centred, until the host moves on. Only what the card shows follows
+     the step; every control keeps its own state and handler. */
+  function curStep(){ return (G.busy || G.round) ? 2 : (G.lastResult ? 3 : 1); }
+  function syncStep(){
+    var st=curStep(), names=["Pick","Draw","Pay"], t="";
+    for(var i=0;i<3;i++){ var c=(i+1<st || st===3)?"done":((i+1===st)?"now":""); if(st===3 && i===2) c="now";
+      t+='<div class="st '+c+'"><span class="n">'+((c==="done")?"&#10003;":(i+1))+'</span>'+names[i]+'</div>'; }
+    if($("stepTiles")) $("stepTiles").innerHTML=t;
+    if($("stepLine")) $("stepLine").innerHTML='<span class="sn">Step '+st+' of 3</span>'+names[st-1]+'<span class="gm"> &middot; Members draw</span>';
+    show("pickStep", st===1); show("drawStep", st===2); show("payStep", st===3);
+    show("drawBtn", st===1); show("finishBtn", st===3); show("anotherWrap", st===3 && G.draws.length>1);
+    show("listAge", st===1 && !!$("listAge").innerHTML);
+    var nx=$("nextDrawLine"); if(nx){ nx.innerHTML = st===3 ? nextDrawText() : ""; nx.classList.toggle("hidden", !nx.innerHTML); }
+    if(st===2 && !G.round){   // the TV is spinning: the card says so until the number lands
+      $("wcEye").textContent="Drawing now"; $("wcEye").classList.add("drawing");
+      $("wcNum").textContent="\u00b7 \u00b7 \u00b7"; $("wcName").textContent=""; $("wcCd").textContent=""; $("wcCdRow").classList.add("hidden");
+      var rs=document.querySelector("#drawStep .resolve"); if(rs) rs.classList.add("hidden");
+    } else if(st===2){
+      $("wcEye").textContent="Winning number"; $("wcEye").classList.remove("drawing"); $("wcCdRow").classList.remove("hidden");
+      var rv=document.querySelector("#drawStep .resolve"); if(rv) rv.classList.remove("hidden");
+    }
+  }
+  /* "Next: Sunday arvo draw, $620, Sunday 4pm": the venue's next draw after tonight's, by its draw day. */
+  function nextDrawText(){
+    var days=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"], wd=days.indexOf(todayWeekday().toLowerCase()), best=null, bestN=99;
+    G.draws.forEach(function(d){ if(d.id===G.currentDrawId) return; var k=days.indexOf(String(d.draw_day||"").toLowerCase()); if(k<0) return;
+      var n=(k-wd+7)%7; if(n===0) n=7; if(n<bestN){ bestN=n; best=d; } });
+    if(!best) return "";
+    return "Next: <b>"+esc(best.name)+"</b><br>"+money(best.current_jackpot_cents||0)+", "+esc(best.draw_day)+(best.draw_time?" "+esc(best.draw_time):"");   // two lines on purpose, never broken mid-name
   }
 
   /* SOUTH AUSTRALIA, A PUB (22 Oct 2026 research; Lotteries Regulations 2021 reg 9(2)): a pub's
@@ -446,7 +497,7 @@
     var np=noPresent();
     var rb=$("rollBtn"), cb=$("claimBtn");
     if(rb) rb.classList.toggle("hidden", np);
-    if(cb) cb.textContent = np ? "Record the win" : "They are here: pay the jackpot";
+    if(cb) cb.textContent = np ? "Record the win" : ("They\u2019re here, pay "+((G.round && G.round.prizeCents!=null) ? money(G.round.prizeCents) : "the jackpot"));
     var wrap=document.querySelector("#winnerCard .resolve"); if(wrap) wrap.style.gridTemplateColumns = np ? "1fr" : "";
     var mc=minClaim(), sc=$("setClaim"), hint=$("setClaimHint");
     if(sc) sc.min=String(mc);
@@ -511,12 +562,12 @@
     var d=curDraw();
     if(G.loadFailed){   // a count we could not load is not 0
       $("runJackpot").textContent = d ? money(d.current_jackpot_cents) : "?";
-      $("runValid").textContent="?"; $("memberCount").textContent="?"; $("runSince").textContent="Could not load";
+      $("runValid").textContent="?"; if($("memberCount")) $("memberCount").textContent="?"; $("runSince").textContent="Could not load";
       return;
     }
     $("runJackpot").textContent=money(d?d.current_jackpot_cents:0);
     var act=activeMembers(d).length;
-    $("runValid").textContent=act; $("memberCount").textContent=act;
+    $("runValid").textContent=act; if($("memberCount")) $("memberCount").textContent=act;
     var day=(d&&d.draw_day)?d.draw_day+"s ":""; var tm=(d&&d.draw_time)?d.draw_time:"";
     var since=(d&&d.date_started)?" &middot; running since "+fmtDate(d.date_started):"";
     $("runSince").innerHTML=(day||tm)?("Drawn "+day+tm+since):(since?since.replace(/^ &middot; /,""):"");
@@ -539,6 +590,18 @@
     var t=capLineText(d);
     el.innerHTML=t; el.classList.toggle("hidden", !t);
   }
+  /* TONIGHT'S DRAW AS CHIPS (Dean, 6 Nov 2026), one per draw, the picked one lit. Each chip sets the old
+     drop-down (#drawSel, still in the page) and fires its change, so picking a draw is exactly what it was. */
+  function renderDrawChips(){
+    var w=$("drawChips"), sel=$("drawSel"); if(!w || !sel) return; w.innerHTML="";
+    if(G.loadFailed && !G.draws.length){ var e=document.createElement("span"); e.className="empty"; e.textContent="Could not load your draws"; w.appendChild(e); }
+    G.draws.forEach(function(d){ var b=document.createElement("button"); b.type="button"; b.setAttribute("data-draw", d.id); b.textContent=d.name||"Members draw";
+      var cd=curDraw(); if(cd && d.id===cd.id && G.currentDrawId!=="__new") b.className="on"; w.appendChild(b); });
+    if(G.canManage || !G.draws.length){ var nw=document.createElement("button"); nw.type="button"; nw.setAttribute("data-draw","__new");
+      nw.className="add"+(G.currentDrawId==="__new"?" on":""); nw.textContent=G.draws.length?"+ New draw":"+ Set up your first draw"; w.appendChild(nw); }
+    var d=curDraw(), pk=$("drawPicked"), wd=todayWeekday();
+    if(pk) pk.textContent = (d && G.currentDrawId!=="__new" && String(d.draw_day||"").toLowerCase()===wd.toLowerCase()) ? ("Picked for you: it\u2019s "+wd+".") : "";
+  }
   function renderDrawSelect(){
     var sel=$("drawSel"); sel.innerHTML="";
     if(G.loadFailed && !G.draws.length){ var lf=document.createElement("option"); lf.value=""; lf.textContent="Could not load your draws"; lf.selected=true; sel.appendChild(lf); return; }
@@ -546,9 +609,22 @@
     var nw=document.createElement("option"); nw.value="__new"; nw.textContent=(G.draws.length?"+ New draw":"+ Set up your first draw");
     if(G.currentDrawId==="__new" || !G.draws.length) nw.selected=true;
     sel.appendChild(nw);
+    renderDrawChips();
+  }
+  /* The members list is not on the console any more (Dean, 6 Nov 2026); it lives on Your account. What the
+     console still says about it is one line under Draw: when the list was last updated, and where to update it. */
+  function renderListAge(){
+    var el=$("listAge"); if(!el) return; var newest="";
+    for(var i=0;i<G.members.length;i++){ var m=G.members[i], t=String(m.updated_at||m.created_at||""); if(t>newest) newest=t; }
+    var d=newest ? new Date(newest) : null;
+    if(!d || isNaN(d.getTime()) || G.loadFailed){ el.innerHTML=""; show("listAge", false); return; }
+    var when=d.toLocaleDateString("en-AU",{ day:"numeric", month:"short" });
+    el.innerHTML="Member list last updated "+esc(when)+"."+(G.canManage ? ' <a class="chg" href="/app/billing.html#draws">Update</a>' : "");
+    show("listAge", curStep()===1);
   }
   function renderMembers(){
-    var el=$("memberList"); el.innerHTML=""; var d=curDraw();
+    renderListAge();
+    var el=$("memberList"); if(!el) return; el.innerHTML=""; var d=curDraw();
     var ms=drawMembers(d).slice().sort(function(a,b){ return (a.member_number||0)-(b.member_number||0); });
     if(G.loadFailed){ el.innerHTML='<span class="note">Could not load your members list. Tap Try again at the top.</span>'; return; }
     if(!ms.length){ el.innerHTML='<span class="note">No members saved for this draw yet.</span>'; return; }
@@ -560,9 +636,20 @@
       el.appendChild(chip);
     });
   }
+  /* The settings' summary line, in plain words, so the host sees them without opening the box (Dean's mock, 6 Nov 2026). */
+  function advSumText(d){   // needs money() and noPresent()
+    if(!d) return "Set up your first draw here.";
+    var c=d.time_to_claim_seconds, parts=[];
+    if(c!=null && !noPresent()) parts.push(c%60===0 ? ((c/60)+(c===60?" minute":" minutes")+" to claim") : (c+" seconds to claim"));
+    if(d.starting_amount_cents!=null) parts.push("starts at "+money(d.starting_amount_cents));
+    if(d.increment_cents) parts.push("up "+money(d.increment_cents)+" a week");
+    parts.push(d.max_jackpot_cents!=null ? ("maximum "+money(d.max_jackpot_cents)) : "no maximum");
+    var t=parts.join(", "); return t.charAt(0).toUpperCase()+t.slice(1);
+  }
   function renderSettings(){
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
+    var as=$("advSum"); if(as) as.textContent=advSumText(d);
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : (G.loadFailed ? "Could not load your draws" : "Create draw");
     if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime","setMax"].forEach(function(id){ $(id).value=""; }); setCurLock(true); renderCapAdvice();
       var adv=$("membersAdv"); if(adv && !G.loadFailed) adv.open=true;   // creating a draw: the form is the job, so it is never folded away
@@ -624,6 +711,7 @@
     // it. The Worker refuses either way; this stops the console offering something that fails.
     var ml=document.querySelector(".members");
     if(ml){ ml.classList.toggle("mchipLock", !G.canManage); ml.title = G.canManage ? "" : "Your manager edits the members list on the Account page"; }
+    renderDrawChips(); renderListAge();
     var lock=!G.canManage;
     // setSince was in the clear list but not this one, so a host could type into "Running since"
     // and it silently never saved.
@@ -656,6 +744,7 @@
     if(p.drawId) G.currentDrawId=p.drawId;
     G.round=p.round;
     G.round.remaining=0;            // the claim clock is not restarted; the host decides now
+    G.round.total=0; G.round.locked=false;   // so Not here is open: the host decides now
     var d=curDraw();
     // The saved round belongs to a draw; put that draw back in the dropdown and redraw the jackpot,
     // members and settings panels for it, or the console shows one draw's winner over another's numbers.
@@ -666,7 +755,7 @@
     updateClaimCd();
     $("winnerCard").classList.add("show");
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
-    $("claimBtn").disabled=false; $("rollBtn").disabled=false;
+    $("claimBtn").disabled=false; $("rollBtn").disabled=false; syncStep(); applyPresentRule(); updateClaimCd();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
     $("drawNote").textContent= noPresent() ? ("Picked up where you left off. "+NO_PRESENT_NOTE) : "Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
     send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:0 });
@@ -685,6 +774,7 @@
     var b=$("drawBtn"); b.disabled=false;
     b.classList.toggle("again", alreadyDrawnTonight());
     b.textContent = alreadyDrawnTonight() ? "Drawn tonight \u00b7 draw again?" : "Draw";
+    syncStep();
   }
 
   /* THE SERVER HAS NO ACCEPTANCE FOR TONIGHT (428, 14 Oct 2026): the record of "I understand" never
@@ -736,7 +826,7 @@
     }
     if(activeMembers(d).length < 1){ hostError("No active members to draw from. Enable at least one member."); return; }
     clearTimers(); hideWinnerCard();
-    G.busy=true;
+    G.busy=true; G.lastResult=null; syncStep();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent = subscribed ? "Drawing now on the TV…" : "Drawing now. The TV link is reconnecting and the TV catches up as soon as it is back.";
     var len=Math.max(2000, ((d.draw_length_seconds||4))*1000);
@@ -760,7 +850,9 @@
     if(d) d.last_drawn_date=new Date().toISOString().slice(0,10);   // mark drawn-today so the board drops its "tonight" badge when it returns to idle
     var claimSecs = (d && d.time_to_claim_seconds!=null) ? (d.time_to_claim_seconds|0) : 0;
     if(noPresent()) claimSecs=0;   // SA pub: the drawn member has won; nothing to count down to
-    G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)), remaining:claimSecs };
+    G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)), remaining:claimSecs,
+              total:claimSecs, locked:claimSecs>0 };   // NOT HERE WAITS FOR THE CLAIM CLOCK (Dean, 6 Nov 2026): it opens at zero
+    syncStep(); applyPresentRule();
     // broadcast the winner to the TV (claimSecs drives the TV countdown too)
     send({ t:"winner", number:r.member_number, name:r.winner_name, claimSecs:claimSecs });
     // console winner card
@@ -770,8 +862,9 @@
     $("winnerCard").classList.add("show");
     $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
     saveRound();   // so a locked tablet does not strand the jackpot
+    $("rollBtn").disabled=!!G.round.locked; updateClaimCd();
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
-    $("drawNote").textContent= noPresent() ? NO_PRESENT_NOTE : "Confirm below: Claim if they are present, or roll the jackpot to next week.";
+    $("drawNote").textContent= noPresent() ? NO_PRESENT_NOTE : ("Check their member card says "+r.member_number+" before you pay.");
     // if a claim time is set, count it down and auto-roll to next week when it runs out
     stopClaimTimer();
     if(claimSecs>0){
@@ -785,7 +878,8 @@
            as the raffle now does. */
         if(G.round.remaining<=0){
           stopClaimTimer();
-          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap Claim if they are here, or Jackpot to next week if not.", "timeup");
+          G.round.locked=false; $("rollBtn").disabled=false; updateClaimCd();   // the clock is done: Not here opens
+          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap \u201cThey\u2019re here\u201d if they are, or \u201cNot here\u201d if not.", "timeup");
         }
       }, 1000);
     }
@@ -800,12 +894,13 @@
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
         if(d && r.reserve_cents!=null) d.reserve_cents=r.reserve_cents;
         send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents, capped:!!r.capped });
-        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
+        G.lastResult={ won:true, name:round.name, amountCents:r.amount_cents, nextCents:(d?d.current_jackpot_cents:r.new_jackpot_cents) };
+        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings(); renderDone();
         clearHostErrorIf("timeup");   // claimed: "Time is up on #N" is no longer true
-        $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week."+(r.held_cents>0 ? " "+money(r.held_cents)+" of the reserve did not fit under the maximum and stays in reserve." : "")+(winReminder() ? " "+winReminder() : "");
+        $("drawNote").textContent=(r.held_cents>0 ? money(r.held_cents)+" of the reserve did not fit under the maximum and stays in reserve." : "")+(winReminder() ? " "+winReminder() : "");
         scheduleIdle(CLAIM_HOLD_MS);
       })
-      .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
+      .catch(function(e){ cb.disabled=false; rb.disabled=!!(G.round && G.round.locked); hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
   }
   function onRollover(){
     if(!G.round) return;
@@ -819,14 +914,13 @@
         /* capped: the jackpot sits at the venue's maximum (migration 101). The TV says so instead
            of "Up $X", because the number on the wall did not move and the room can see that. */
         send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name, capped:!!r.capped, reserveCents:r.reserve_cents });
-        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
+        G.lastResult={ won:false, name:round.name, nextCents:(d?d.current_jackpot_cents:r.new_jackpot_cents), capped:!!r.capped };
+        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings(); renderDone();
         clearHostErrorIf("timeup");   // rolled over: the host has made the call
-        $("drawNote").textContent = r.capped
-          ? "Not claimed. The jackpot is at its maximum of "+money(d?d.current_jackpot_cents:0)+(r.held_cents>0 ? "; this week's "+money(r.held_cents)+" went to the reserve (now "+money(r.reserve_cents)+")." : ".")
-          : "Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
+        $("drawNote").textContent = (r.capped && r.held_cents>0) ? ("This week\u2019s "+money(r.held_cents)+" went to the reserve (now "+money(r.reserve_cents)+").") : "";
         scheduleIdle(ROLLOVER_HOLD_MS);
       })
-      .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not roll the jackpot over. Try again."); });
+      .catch(function(e){ cb.disabled=false; rb.disabled=!!(G.round && G.round.locked); hostError(e.message||"Could not roll the jackpot over. Try again."); });
   }
   /* HOW LONG THE TV KEEPS THE RESULT UP. These MUST match screen.html: showClaimed() celebrates
      for CLAIM_HOLD_MS and showRollover() holds for ROLLOVER_HOLD_MS. The console used to send
@@ -835,13 +929,22 @@
      and vanish. The screen also refuses idle during its result hold, so this is belt and
      braces, not the only guard. */
   var CLAIM_HOLD_MS=60000, ROLLOVER_HOLD_MS=30000;
+  /* "Jan Hollis won $1,450. Next week's jackpot is $200." or "Not claimed. Next week's jackpot is $1,500."
+     (Dean, 6 Nov 2026), centred, in place of the winner card. */
+  function renderDone(){
+    var x=G.lastResult; if(!x) return;
+    $("doneBox").classList.toggle("roll", !x.won); $("doneTick").innerHTML = x.won ? "&#10003;" : "&#8635;";
+    $("doneHead").textContent = x.won ? ((x.name||"The winner")+" won "+money(x.amountCents||0)+".") : "Not claimed.";
+    $("doneSub").textContent = (x.capped ? "Next week\u2019s jackpot stays at its maximum, " : "Next week\u2019s jackpot is ")+money(x.nextCents||0)+".";
+    syncStep();
+  }
   function scheduleIdle(delay){
     drawBtnIdle();
     if(G.idleTimer){ clearTimeout(G.idleTimer); }
     G.idleTimer=setTimeout(function(){
       if(G.busy || G.round) return;
       sendIdle();
-      $("drawNote").textContent="The TV spins, reveals the winning member, then waits on your call.";
+      if(!G.lastResult) $("drawNote").textContent="The TV spins, shows the winning number and name, then waits for you.";
     }, delay||ROLLOVER_HOLD_MS);
   }
 
@@ -1086,11 +1189,20 @@
   $("connectBtn").addEventListener("click", tryConnect);
 
   $("drawSel").addEventListener("change", function(){
-    if(G.round){ this.value=G.currentDrawId; hostError("Finish this draw first: tap Claim, or Jackpot to next week."); return; }
+    if(G.round){ this.value=G.currentDrawId; hostError("Finish this draw first: tap \u201cThey\u2019re here\u201d, or \u201cNot here\u201d."); return; }
     if(G.busy){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
-    G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
+    G.currentDrawId=this.value; G.lastResult=null; renderStats(); renderMembers(); renderSettings(); renderDrawChips(); sendIdle();
     queueMembersPrefs();
   });
+  $("drawChips").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-draw]"); if(!b) return;
+    var sel=$("drawSel"), v=b.getAttribute("data-draw"); if(sel.value===v && v!=="__new") return;
+    sel.value=v; var ev; try{ ev=new Event("change"); }catch(x){ ev=document.createEvent("Event"); ev.initEvent("change", false, false); }
+    sel.dispatchEvent(ev);
+  });
+  /* Step 3: "Finish, back to ads" is End game's own button; "Run another draw" goes back to Pick. */
+  $("finishBtn").addEventListener("click", function(){ G.lastResult=null; var b=$("toAdsBtn"); if(b) b.click(); drawBtnIdle(); });
+  $("anotherDrawBtn").addEventListener("click", function(){ G.lastResult=null; drawBtnIdle(); });
 
   /* WHICH DRAW IS SAVED FOR THE VENUE (Dean, 28 Oct 2026). The draw's own settings (name, jackpot, claim time,
      day, maximum) were already the venue's, per draw, in vp_member_draws. The one choice the console made
@@ -1153,7 +1265,7 @@
     if(!window.VPDrawRecord){ $("downloadRecordMsg").textContent="The download helper did not load. Reload the page and try again."; return; }
     VPDrawRecord.download({ api:VP_GAME_API, venueId:G.venueId, getToken:getToken, button:$("downloadRecordBtn"), message:$("downloadRecordMsg") });
   });
-  $("memberList").addEventListener("click", function(e){ var chip=e.target.closest(".mchip"); if(!chip) return; toggleMember(chip.getAttribute("data-mid")); });
+  if($("memberList")) $("memberList").addEventListener("click", function(e){ var chip=e.target.closest(".mchip"); if(!chip) return; toggleMember(chip.getAttribute("data-mid")); });
   // ---- boot: resolve the host login, load the venue's roster + draws, then pair ----
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
   function tvFromUrl(){ var m=/[?&](?:tv|room)=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }

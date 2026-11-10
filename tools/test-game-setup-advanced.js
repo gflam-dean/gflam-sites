@@ -88,8 +88,8 @@ var SPEC = {
   musical: { adv: 'musicalAdv', basic: ['plSearch', 'plGrid', 'patternSel', 'revealSel', 'prizeInput', 'paperPrintBtn', 'startBtn'],
              advanced: ['hitsChk'], removed: ['setupCode', 'setupPlayers', 'autoChk'], law: ['paidField', 'paidSel'] },
   raffle: { adv: 'raffleAdv', basic: ['prizePresets', 'rfPrize', 'addPrizeBtn', 'prizeList', 'rfStart', 'rfEnd', 'rfSkip', 'rangeLine'],
-            advanced: ['rfTime', 'rfJackOn', 'rfJackAmt', 'rfJackWarn', 'rfAllowRedraw', 'drawLenWrap'], removed: [], law: ['drawBtn', 'freeEntryNote'] },
-  members: { adv: 'membersAdv', basic: ['drawSel', 'drawBtn', 'runJackpot', 'runCap', 'memberList'],
+            advanced: ['rfTime', 'rfJackOn', 'rfJackAmt', 'rfJackWarn', 'rfAllowRedraw', 'drawLenWrap', 'rfPickOrder', 'rfAnnounce'], removed: [], law: ['drawBtn', 'freeEntryNote'] },
+  members: { adv: 'membersAdv', basic: ['drawSel', 'drawBtn', 'runJackpot', 'runCap'],   // the members list left the console for Your account (Dean, 6 Nov 2026)
              advanced: ['setName', 'setSince', 'setStart', 'setInc', 'setCur', 'setClaim', 'setDay', 'setTime', 'setMax', 'setMaxHint', 'capWarn', 'saveSettingsBtn'],
              removed: ['nameSeg', 'nameLock'], law: [] }
 };
@@ -101,7 +101,10 @@ Object.keys(SPEC).forEach(function (g) {
   ok(g + ': exactly one "Advanced settings" disclosure, the shared one', dets.length === 1 && /\bid="([^"]+)"/.exec(dets[0].attrs)[1] === s.adv, dets.length);
   ok(g + ': it is closed in the markup (no open attribute)', dets.length === 1 && !/\bopen\b/.test(dets[0].attrs), dets[0] && dets[0].attrs);
   var sumIdx = PAGES[g].indexOf('id="' + s.adv + '"');
-  ok(g + ': its summary says "Advanced settings"', /<summary><span>Advanced settings<small class="vp-adv-sub">/.test(PAGES[g].slice(sumIdx, sumIdx + 300)));
+  /* The raffle and members draw name theirs in Dean's words (the new look, 6 Nov 2026): "Draw settings" and "Draw and
+     jackpot settings", with the settings themselves on the line under it. The same shared disclosure all the same. */
+  var SUMMARY = { raffle: 'Draw settings', members: 'Draw and jackpot settings' }[g] || 'Advanced settings';
+  ok(g + ': its summary says "' + SUMMARY + '"', new RegExp('<summary><span>' + SUMMARY + '<small class="vp-adv-sub"').test(PAGES[g].slice(sumIdx, sumIdx + 300)));
   var missing = s.basic.filter(function (id) { return !t.byId[id]; }), inside = s.basic.filter(function (id) { return t.byId[id] && inAdv(t.byId[id]); });
   ok(g + ': every Basic control is on the setup, outside the disclosure', !missing.length && !inside.length, { missing: missing, inside: inside });
   var notIn = s.advanced.filter(function (id) { return !t.byId[id] || !inAdv(t.byId[id]); });
@@ -453,12 +456,12 @@ ok('a game already running is never re-set from the saved setup', m5.G.playlistI
 /* ---------------- raffle ---------------- */
 function raffleTablet(template, recovered) {
   var els = {}; ['rfStart', 'rfEnd', 'rfTime', 'rfJackAmt', 'rfSkip', 'drawLenLbl', 'rfJackWrap', 'prizeField', 'prizePresets'].forEach(function (id) { els[id] = new E(''); });
-  els.rfStart.value = '1'; els.rfEnd.value = '150'; els.rfTime.value = '180'; els.rfJackAmt.value = '500'; els.rfJackOn = new E(); els.rfAllowRedraw = new E(); els.rfAllowRedraw.checked = true;
+  els.rfStart.value = '1'; els.rfEnd.value = '150'; els.rfTime.value = '180'; els.rfJackAmt.value = '500'; els.rfJackOn = new E(); els.rfAllowRedraw = new E(); els.rfAllowRedraw.checked = true; els.rfPickOrder = new E(); els.rfAnnounce = new E(); els.rfPickOrder.checked = false; els.rfAnnounce.checked = false;
   els.rfJackWrap.classList.add('hidden');
   var sc = { G: { venueId: VENUE, savedPrizes: [], drawLength: 4, recovered: !!recovered }, $: function (id) { return els[id] || null; }, getToken: getToken,
     renderPresets: function () {}, renderRange: function () {}, apiPost: function () { return Promise.reject(new Error('Only an owner or manager can save prizes')); },
     VP: vpWith({ loadSettings: function () { return Promise.resolve(template ? { raffle_template: template } : null); } }) };
-  tablet('raffle', sc, ['show', 'dollarsText', 'mergeSavedPrizes', 'rafflePrefs', 'applyRafflePrefs', 'raffleOldPrefs'], '_rafflePrefs', ['queueRafflePrefs', 'startRafflePrefs', 'savePrize']);
+  tablet('raffle', sc, ['show', 'dollarsText', 'mergeSavedPrizes', 'pickOrder', 'announcing', 'rafflePrefs', 'applyRafflePrefs', 'raffleOldPrefs'], '_rafflePrefs', ['queueRafflePrefs', 'startRafflePrefs', 'savePrize']);
   sc.els = els; return sc;
 }
 section('3. raffle: every setting round-trips; a Host\'s saved prize now reaches the venue; unsold tickets never saved');
@@ -467,15 +470,23 @@ var r1 = raffleTablet(null); r1.startRafflePrefs(); flush();
 r1.savePrize('Meat Tray'); flush();
 ok('a prize a Host-role login types is saved for the venue (prize-add refuses a Host; game_prefs does not)', saved('raffle') && JSON.stringify(saved('raffle').prizes) === '["Meat Tray"]', saved('raffle'));
 r1.els.rfStart.value = '100'; r1.els.rfEnd.value = '400'; r1.els.rfTime.value = '15'; r1.els.rfJackOn.checked = true; r1.els.rfJackAmt.value = '750.50';
+ok('a venue that never touched them: "choose the next prize" and "show each prize first" are off (Dean, 9 Nov 2026)',
+   r1.els.rfPickOrder.checked === false && r1.els.rfAnnounce.checked === false && (saved('raffle') || {}).pick_order === false && (saved('raffle') || {}).announce_prize === false, saved('raffle'));
 r1.els.rfAllowRedraw.checked = false; r1.G.drawLength = 6; r1.els.rfSkip.value = '150-200, 312';
+r1.els.rfPickOrder.checked = true; r1.els.rfAnnounce.checked = true;
+ok('nothing chosen: where tickets are sold is saved as not said (the TV card every venue has today)', (saved('raffle') || {}).tickets_from === '', saved('raffle'));
+r1.G.ticketsFrom = 'bar';
 r1.queueRafflePrefs(); flush();
 var sr = saved('raffle') || {};
+ok('switched on, both are kept for the venue (the game Worker keeps pick_order and announce_prize)', sr.pick_order === true && sr.announce_prize === true, sr);
+ok('"The bar" is kept for the venue as where tickets are sold', sr.tickets_from === 'bar', sr);
 ok('the venue holds the range, claim time, cash jackpot to the cent, redraw and spin length', sr.range_min === 100 && sr.range_max === 400 && sr.time_to_present === 30 &&
    sr.jackpot_on === true && sr.jackpot_amount_cents === 75050 && sr.allow_redraw === false && sr.spin_seconds === 6, sr);
 ok('"Tickets that did not sell" is NEVER saved', !/150-200|312|excluded|unsold|skip/.test(JSON.stringify(POSTS)), POSTS);
 var r2 = raffleTablet(null); r2.startRafflePrefs(); flush();
 ok('a second tablet opens on all of it, prizes included', r2.els.rfStart.value === '100' && r2.els.rfEnd.value === '400' && r2.els.rfTime.value === '30' && r2.els.rfJackOn.checked === true &&
-   r2.els.rfJackAmt.value === '750.50' && r2.els.rfAllowRedraw.checked === false && r2.G.drawLength === 6 && r2.G.savedPrizes[0] === 'Meat Tray',
+   r2.els.rfJackAmt.value === '750.50' && r2.els.rfAllowRedraw.checked === false && r2.G.drawLength === 6 && r2.G.savedPrizes[0] === 'Meat Tray' &&
+   r2.els.rfPickOrder.checked === true && r2.els.rfAnnounce.checked === true && r2.G.ticketsFrom === 'bar',
    { s: r2.els.rfStart.value, e: r2.els.rfEnd.value, t: r2.els.rfTime.value, j: r2.els.rfJackAmt.value, p: r2.G.savedPrizes });
 ok('with its unsold box empty', r2.els.rfSkip.value === '');
 ok('a cash jackpot on: the prize list folds and the amount shows', !r2.els.rfJackWrap.classList.contains('hidden') && r2.els.prizeField.classList.contains('hidden'));
