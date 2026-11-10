@@ -32,7 +32,14 @@
      /offer-<mon> address is that one file, so the dates typed into its HTML are what a reader
      without JavaScript (a crawler, a link preview, curl) sees on ALL of them. The gate holds the
      typed dates to this row, and goes red once this row's month has ended. */
-  var WRITTEN_FOR = 'nov';
+  var WRITTEN_FOR = 'jan';
+
+  /* AN ADDRESS ALREADY IN INBOXES THAT SERVES A LATER MONTH'S PAGE (Dean, 10 Nov 2026: "use a January code
+     for what we're starting to send tomorrow"). /offer-dec went to about 250 inboxes on 10 Nov, so it
+     serves the JANUARY page and OFFER-JAN-2027 (31 January 2027), the same way /offer-oct was moved on to
+     November. OFFER-DEC-2026 stays a code in FOUNDING_CODES and simply ends on 31 December with no page
+     of its own. The Worker is untouched: each code still ends with its own month. */
+  var SERVES = { dec: 'jan' };
 
   /* THE ROW FOR TODAY (Dean, 4 Nov 2026). The row whose code belongs to this calendar month in
      Brisbane (UTC+10 all year, no daylight saving): the code the billing Worker honours today
@@ -64,11 +71,13 @@
   function forPath(pathname, nowMs) {
     if (isGflam(pathname)) {
       var today = forDate(nowMs);
+      if (today && SERVES[today]) today = SERVES[today];
       return { key: today || 'oct', row: OFFERS[today || 'oct'] };
     }
     var m = /^\/offer-([a-z]{3})\b/i.exec(pathname || '');
     var key = (m && OFFERS[m[1].toLowerCase()]) ? m[1].toLowerCase() : 'oct';
+    if (SERVES[key]) key = SERVES[key];
     return { key: key, row: OFFERS[key] };
   }
-  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, isGflam: isGflam };
+  root.VPOffer = { OFFERS: OFFERS, WRITTEN_FOR: WRITTEN_FOR, forPath: forPath, forDate: forDate, SERVES: SERVES, isGflam: isGflam };
 })(typeof window !== 'undefined' ? window : this);

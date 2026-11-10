@@ -280,7 +280,7 @@
   "counted_by": "lines"
  },
  "tools/offer-ended-in-chrome.test.py": {
-  "checks": 54,
+  "checks": 62,
   "counted_by": "lines"
  },
  "tools/offer-float-done-in-chrome.test.py": {
@@ -288,11 +288,11 @@
   "counted_by": "lines"
  },
  "tools/offer-free-play-in-chrome.test.py": {
-  "checks": 24,
+  "checks": 26,
   "counted_by": "lines"
  },
  "tools/offer-page-start-first.test.py": {
-  "checks": 46,
+  "checks": 76,
   "counted_by": "lines"
  },
  "tools/old-tv-in-chrome.test.py": {
@@ -1604,7 +1604,7 @@
   "counted_by": "lines"
  },
  "venueplay-backend/worker/signup-source.test.js": {
-  "checks": 39,
+  "checks": 41,
   "counted_by": "lines"
  },
  "venueplay-backend/worker/slug-ladder.test.js": {

@@ -359,7 +359,7 @@ async function newProspect(name, offerOpen) {
   check('the Terms (section 2) never mention the 5 days (Dean, 6 Nov 2026: never in the Terms or publicly), no em dash, lowercase venueplay',
     t2.length > 50 && !/5 days after|five days|fifth day|grace/i.test(TERMS) && !/[\u2014\u2013]/.test(t2) && !/VenuePlay/.test(t2), t2.slice(0, 300));
   var NSW = readFile('venueplay/nsw.html');
-  check('no public page mentions the 5 days (offer page FAQ and home page FAQ), and the offer page\'s billing FAQ still says a free month with no card pauses', /your free month ends with no card, your account pauses until you add one/.test(NSW) && !/5 days after your free month|5 more days/.test(NSW) && !/5 days after your free month|5 more days/.test(readFile('venueplay/index.html')));
+  check('no public page mentions the 5 days (offer page FAQ and home page FAQ), and the offer page\'s billing FAQ still says a free month with no card pauses', /free month starts the first time you sign in\. If it ends with no card on file, your account pauses until you add one/.test(NSW) && !/5 days after your free month|5 more days/.test(NSW) && !/5 days after your free month|5 more days/.test(readFile('venueplay/index.html')));
   var Z = await newProspect('Pause Screen Hotel');
   var SES = readFile('venueplay/app/vp-session.js');
   check('the console\'s pause screen does not announce the 5 days (Dean, INBOX 55c), nor say the offer ended with the free month',

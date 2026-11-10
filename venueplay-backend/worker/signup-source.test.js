@@ -41,10 +41,12 @@ pass('November 2027 does not reuse the 2026 November row', VO.forDate(utc(2027, 
 pass('a month with no row (April 2027) gives no offer', VO.forDate(utc(2027, 4, 4)) === null);
 var g = VO.forPath('/gflam', utc(2026, 11, 4, 2));
 pass('/gflam on 4 November shows the November row and its code', g.key === 'nov' && g.row.code === 'OFFER-NOV-2026', g);
-pass('/gflam/ (trailing slash) is the same', VO.forPath('/gflam/', utc(2026, 12, 3)).key === 'dec');
+pass('/gflam/ (trailing slash) is the same, and in December it shows the January page (INBOX 159: OFFER-DEC-2026 has no page of its own)', VO.forPath('/gflam/', utc(2026, 12, 3)).key === 'jan' && VO.forPath('/gflam/', utc(2026, 12, 3)).row.code === 'OFFER-JAN-2027');
+pass('/gflam month edges: 11:59pm 31 Dec and 12:01am 1 Jan Brisbane are both January; 12:01am 1 Feb is February', VO.forPath('/gflam', utc(2026, 12, 31, 13, 59)).key === 'jan' && VO.forPath('/gflam', utc(2026, 12, 31, 14, 1)).key === 'jan' && VO.forPath('/gflam', utc(2027, 1, 31, 14, 1)).key === 'feb');
 var past = VO.forPath('/gflam', utc(2027, 4, 4));
 pass('/gflam past the last row shows an ENDED row (the page then quotes the standard rate)', past.row && past.row.ended === true, past);
-pass('/offer-dec still shows December whatever the date', VO.forPath('/offer-dec', utc(2026, 11, 4)).key === 'dec');
+pass('/offer-dec serves the JANUARY page and OFFER-JAN-2027 whatever the date (INBOX 159, like /offer-oct moving on to November)', ['2026-11-04', '2026-12-31', '2027-01-02'].every(function (d) { var t = Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10), 2); var r = VO.forPath('/offer-dec', t); return r.key === 'jan' && r.row.code === 'OFFER-JAN-2027' && r.row.day === '31 January'; }));
+pass('/offer-jan is January, and the December row is still there for the code that ends 31 Dec', VO.forPath('/offer-jan', utc(2026, 11, 4)).key === 'jan' && VO.OFFERS.dec.code === 'OFFER-DEC-2026');
 pass('/nsw is still October', VO.forPath('/nsw', utc(2026, 11, 4)).key === 'oct');
 pass('/gflamx is not the gflam link', VO.isGflam('/gflamx') === false && VO.isGflam('/gflam') === true);
 

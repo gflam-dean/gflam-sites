@@ -29,7 +29,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -74,7 +74,7 @@
 
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 
-  .mono{font-family:'JetBrains Mono',monospace}
+  .mono{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums}
 
   /* ---------- HEADER ---------- */
   header{
@@ -115,9 +115,9 @@
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:5px}
   .seg button{border:0;cursor:pointer;border-radius:8px;padding:12px 10px;background:transparent;color:var(--muted);
     font-family:'Manrope',sans-serif;font-weight:700;font-size:var(--fs-sm);transition:background .15s ease,color .15s ease;text-align:center;line-height:1.2}
-  .seg button small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:var(--fs-xs);margin-top:3px;opacity:.85}
+  .seg button small{display:block;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:400;font-size:var(--fs-xs);margin-top:3px;opacity:.85}
   .seg button.on{background:var(--pink);color:#0A0A0B}
-  .estimate{font-family:'JetBrains Mono',monospace;font-size:var(--fs-sm);color:var(--muted);margin-top:14px;text-align:center}
+  .estimate{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted);margin-top:14px;text-align:center}
   .estimate b{color:#fff;font-weight:700}
   .overage-note{font-size:var(--fs-sm);color:var(--muted-2);text-align:center;margin-top:10px;max-width:46ch;margin-left:auto;margin-right:auto;line-height:1.5}
   .field textarea{
@@ -169,7 +169,7 @@
   .sec{padding:84px 0}
   .sec-head{margin-bottom:46px}
   .label{
-    font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted);font-weight:600;
+    font-family:'Manrope',sans-serif;font-size:var(--fs-base);color:#C9C9D1;font-weight:600;
     display:flex;align-items:center;gap:12px;margin-bottom:12px;
   }
   .sec-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;
@@ -202,8 +202,8 @@
   .offer::before{display:none}
   .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
 
-  .counter{font-family:'JetBrains Mono',monospace;margin-top:8px}
-  .counter .big{font-size:var(--fs-hero);font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+  .counter{font-family:'Hanken Grotesk',system-ui,sans-serif;font-variant-numeric:tabular-nums;margin-top:8px}
+  .counter .big{font-size:var(--fs-hero);font-weight:800;color:#fff;line-height:1;letter-spacing:-.02em}
   .counter .big .of{color:var(--pink)}
   .counter .sub{color:var(--muted);font-size:var(--fs-sm);margin-top:12px}
   .bar{height:8px;border-radius:999px;background:var(--ink-3);overflow:hidden;margin-top:22px;border:1px solid var(--line)}
@@ -216,7 +216,7 @@
   .price-row:first-child{padding-top:0}
   .price-row .pl{font-size:var(--fs-sm);color:var(--muted)}
   .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:var(--fs-base);letter-spacing:-.01em}
-  .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:var(--fs-lg)}
+  .price-row .pv{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-lg)}
   .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
   .price-row.found .pv{color:var(--pink)}
   .price-foot{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2);margin-top:20px;line-height:1.6}
@@ -236,9 +236,12 @@
     padding:clamp(28px,4vw,48px);max-width:680px;margin:0 auto;position:relative;overflow:hidden}
   .form-shell::before{display:none}
   .form-shell .inner{position:relative}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
-  .field{display:flex;flex-direction:column;gap:7px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px;margin-top:26px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  /* Two boxes side by side line up even when one label has a help line under it (round 3 review, note 7). */
+  .form-grid .field > input, .form-grid .field > select{margin-top:auto}
   .field.full{grid-column:1 / -1}
+  .field[hidden]{display:none}
   .field label{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
   /* SELECTS TOO. The club-or-pub dropdown had no styling at all, so it rendered as a native
      white 19px control with black Arial text and square corners, sitting in the middle of a
@@ -282,13 +285,20 @@
     transition:background-color 9999s ease-in-out 0s;
   }
   #vp-submit,#ct-submit{width:100%;margin-top:20px;padding:16px;font-size:var(--fs-base)}
-  .ct-topic{margin:0 0 16px;font-size:var(--fs-base);color:var(--muted)} .ct-topic b{color:#fff}
+  .ct-topic{margin:0 0 18px;display:flex;align-items:center;gap:12px;font-size:var(--fs-base);color:var(--muted)}
+  .ct-topic[hidden]{display:none}
+  /* The topic can be changed (Dean, 7 Nov 2026, round 3 note 23): a free account, or just a chat. */
+  .ct-topic select{flex:1 1 auto;max-width:300px;height:48px;background:var(--ink) url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23ffffff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 16px center;
+    -webkit-appearance:none;-moz-appearance:none;appearance:none;border:1px solid var(--line-2);border-radius:11px;color:#fff;
+    font-family:'Manrope',sans-serif;font-size:var(--fs-base);font-weight:600;padding:0 42px 0 15px;cursor:pointer}
+  .ct-topic select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .ct-topic select option{background:var(--ink);color:#fff}
   #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
   a.vp-tel{color:var(--pink);white-space:nowrap}
-  .form-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);text-align:center;margin-top:16px}
-  .consent{margin-top:16px;display:flex;flex-direction:column;gap:9px}
-  .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:var(--fs-xs);color:var(--muted);line-height:1.45;cursor:pointer}
-  .consent .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+  .form-fine{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted-2);text-align:center;margin-top:16px}
+  .consent{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  .consent .ck{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-sm);color:var(--muted);line-height:1.45;cursor:pointer}
+  .consent .ck input{margin-top:3px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
   .consent .ck a{color:var(--pink)}
   /* SA and NT pubs: number bingo is not available there. An in-page note, never a pop-up. */
   .state-note{margin-top:12px;padding:14px 16px;border:1px solid rgba(255,176,32,.45);background:rgba(255,176,32,.08);border-radius:12px;text-align:left}
@@ -308,9 +318,9 @@
 
   /* ---------- THE NO-CARD START (#start, app/vp-start.js; Dean, 5 Nov 2026) ---------- */
   #start{padding-top:56px}
-  #start .form-grid{margin-top:6px}
+  #start .form-grid{margin-top:0}
   .st-step[hidden]{display:none}
-  .st-help{font-family:'Manrope',sans-serif;font-size:var(--fs-xs);color:var(--muted);text-transform:none;letter-spacing:normal}
+  .st-help{display:block;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:500;color:var(--muted-2);text-transform:none;letter-spacing:normal;margin-top:2px}
   .st-hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
   /* Pub or club (Dean, 6 Nov 2026): one honest two-way choice, nothing preselected, the same size as the boxes. */
   .st-kind-lbl{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:600;color:var(--muted)}
@@ -321,7 +331,7 @@
     color:#fff;font-size:var(--fs-base);font-weight:700}
   .st-kind-opt input:checked + span{border-color:var(--pink);background:rgba(255,31,142,.14);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
   .st-kind-opt input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
-  .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:18px 0 0;text-align:center}
+  .st-legal{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:22px 0 0;text-align:center}
   .st-legal a{color:#fff}
   #st-go,#st-check{width:100%;margin-top:18px;padding:16px;font-size:var(--fs-base)}
   #st-go:disabled,#st-check:disabled{opacity:.6;cursor:default;transform:none}
@@ -329,13 +339,13 @@
   .st-p{color:#D8D8DD;font-size:var(--fs-base);line-height:1.5;margin:0 0 6px}
   /* The six code boxes, spaced out so the code is easy to read and type (Dean, INBOX 80B). */
   .st-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;max-width:420px;margin:20px auto 6px}
-  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--fs-lg);font-weight:700;
+  .st-boxes input{width:100%;min-width:0;height:64px;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-lg);font-weight:700;
     color:#fff;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:0;caret-color:var(--pink)}
   .st-boxes input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
   .st-small{font-size:var(--fs-sm);color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
   .st-link{background:none;border:0;padding:0;color:#fff;text-decoration:underline;font-family:'Manrope',sans-serif;font-size:var(--fs-sm);font-weight:inherit;line-height:inherit;cursor:pointer;min-height:24px}
   .st-tv{margin-top:18px;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#D8D8DD;line-height:1.5}
-  .st-tv b{display:block;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xl);letter-spacing:.14em;color:#fff;margin-top:8px}
+  .st-tv b{display:block;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-weight:800;font-size:var(--fs-xl);letter-spacing:.04em;color:#fff;margin-top:8px}
   #st-open{display:block;width:100%;text-align:center;margin-top:18px;padding:16px}
   #st-done,#st-held{text-align:center}
   @media(max-width:560px){ #start{padding-bottom:120px} }   /* room under the done card for the floating button, so it can never sit on the TV code */
@@ -364,7 +374,7 @@
   .foot-brand svg{display:block;filter:drop-shadow(0 0 7px var(--glow))}
   .foot-brand .div{width:1px;height:20px;background:var(--line-2)}
   .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:var(--fs-md);letter-spacing:-.03em;color:#fff;line-height:1}
-  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted);line-height:1.9;text-align:right}
+  .foot-meta{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-xs);color:var(--muted);line-height:1.9;text-align:right}
   .foot-meta a:hover{color:var(--pink)}
   .powered{font-family:'Manrope',sans-serif;font-size:var(--fs-sm);color:var(--muted-2)}
   .powered b{color:var(--muted);font-weight:500}
@@ -395,7 +405,7 @@
   }
 
   /* Number-of-venues field hint + group-enquiry note */
-  .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--muted-2);letter-spacing:.01em}
+  .field-hint{display:block;margin-top:6px;font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);color:var(--muted-2)}
   /* Group signup: repeatable venue rows */
   #vp-venue-list{display:flex;flex-direction:column;gap:9px}
   .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
@@ -602,16 +612,18 @@
 <section class="hero hero2" id="top">
   <div class="wrap h2-grid">
     <div class="h2-copy">
-      <p class="hero-offer">$2.50 a player if you join by <span class="vpc-day" style="white-space:nowrap">30 November</span>.</p>
+      <p class="hero-offer">$2.50 a player if you join by <span class="vpc-day" style="white-space:nowrap">31 January</span>.</p>
       <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
-      <p class="lede">Trivia and musical bingo, plus bingo, raffles and members draws where your state allows, on the screen you already own. Your crowd plays on their own phones, and the regulars who won't can play trivia and musical bingo on paper. <b>No app, no login, no host to hire.</b></p>
+      <p class="lede">Trivia and musical bingo, plus bingo, raffles and members draws where your state allows, on the screen you already own. Your crowd plays on their own phones, and paper still works for the regulars who want it. <b>No app, no login.</b></p>
       <div class="hero-cta">
         <!-- THE START BUTTON. Its destination is this one href (today the start section below, #start). The no-card start (job signup-core) changes only this href. -->
         <a class="btn btn-primary" href="#start" data-cta="hero-start">Have a play for free</a>
         <a class="btn btn-ghost" href="#offer" data-cta="hero-pricing">See pricing</a>
       </div>
-      <p class="h2-price"><b>Sign up and have a play for a month on us.</b> Nothing is charged today. No lock-in, cancel anytime.</p>
-      <p class="hero-note">Built by Gflam Touring, who run live entertainment nights in venues across Australia.</p>
+      <!-- Dean, 7 Nov 2026 (round 3, note 2): the line under the hero is lower, shorter and in the page's own type. -->
+      <p class="h2-price">Nothing is charged today. Play for a month on us.</p>
+      <!-- Only an ended link fills this (showEnded below), as the hero's last line (note 3). -->
+      <p class="hero-note hero-ended" hidden></p>
     </div>
     <div class="h2-show" aria-label="venueplay running a sample night">
       <div class="h2-stage" id="h2Stage">
@@ -629,7 +641,6 @@
       </div>
       <div class="h2-under">
         <p class="h2-cap">The real screens, playing a sample night. Pick a game, or see the screen between games.</p>
-        <a class="btn btn-primary h2-watch" href="/see-a-night?from=offer-oct" data-cta="hero-see-a-night">Play with a full night</a>
       </div>
     </div>
   </div>
@@ -647,10 +658,21 @@
   var tv=document.getElementById("h2Tv"), ph=document.getElementById("h2Phone"), wrap=document.getElementById("h2PhoneWrap"), modes=document.getElementById("h2Modes");
   if(!tv||!ph||!modes) return;
   /* The phone box's CSS sits lower in the file than this script, so a measurement taken now
-     sees the box at full width. Measure again whenever the box's size settles. */
+     sees the box at full width. Measure again whenever the box's size settles.
+     FIT BOTH WAYS (Dean, 7 Nov 2026, round 3 note 1: "the TV picture doesn't fit its screen" on his
+     phone). Scaling by width alone assumed the frame stays 1280 x 720 inside, and Safari on a phone
+     can grow a frame to its page's own size. So each frame is scaled to fit its box by width AND
+     height, from the size it really is, and centred in the box: never cut off, never spilling. */
+  function fitOne(f, box, w0, h0){
+    var bw=box.clientWidth, bh=box.clientHeight; if(!bw||!bh) return;
+    var fw=Math.max(w0, f.offsetWidth||w0), fh=Math.max(h0, f.offsetHeight||h0);
+    var k=Math.min(bw/fw, bh/fh);
+    var dx=Math.max(0,(bw-fw*k)/2), dy=Math.max(0,(bh-fh*k)/2);
+    f.style.transform="translate("+dx.toFixed(1)+"px,"+dy.toFixed(1)+"px) scale("+k.toFixed(5)+")";
+  }
   function fit(){
-    var pw=ph.parentNode.clientWidth; if(pw) ph.style.transform="scale("+(pw/390)+")";
-    var tw=tv.parentNode.clientWidth; if(tw) tv.style.transform="scale("+(tw/1280)+")";
+    fitOne(ph, ph.parentNode, 390, 844);
+    fitOne(tv, tv.parentNode, 1280, 720);
   }
   try{ var ro=new ResizeObserver(fit); ro.observe(ph.parentNode); ro.observe(tv.parentNode); }catch(err){}
   window.addEventListener("load", fit); ph.addEventListener("load", fit); tv.addEventListener("load", fit);
@@ -765,6 +787,25 @@
   </div>
 </section>
 <script src="/app/vp-start.js"></script>
+<script>
+/* PUB OR CLUB, ONLY WHEN WE DO NOT ALREADY KNOW (Dean, 7 Nov 2026, round 3 note 8). An email link that
+   carries the venue's type (?vt=pub or ?vt=club, from the website scan's venue_type) answers the
+   question for them, so the start form and the card form do not ask it. Without it, both still ask. */
+(function(){
+  var m = /[?&]vt=(pub|club)(?:&|$)/i.exec(location.search || ''); if (!m) return;
+  var kind = m[1].toLowerCase();
+  var r = document.getElementById('st-kind-' + kind);
+  if (r) { r.checked = true; var f = r.closest ? r.closest('.field') : null; if (f) f.hidden = true; }
+  function card(){   /* the card form is further down the page than this script */
+    var sel = document.getElementById('vp-entity'); if (!sel) return;
+    sel.value = kind === 'club' ? 'non_profit' : 'for_profit';
+    var g = sel.closest ? sel.closest('.field') : null; if (g) g.hidden = true;
+    var mob = document.getElementById('vp-mobile'), mf = mob && mob.closest ? mob.closest('.field') : null;
+    if (mf) mf.classList.add('full');   /* Mobile had shared its row with pub or club */
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', card); else card();
+})();
+</script>
 <script src="/app/vp-try-slot.js"></script>   <!-- the try-it demo's first question in #st-try-slot (JOB B1, INBOX 82) -->
 
 <!-- ===================== GAME MODES ===================== -->
@@ -821,12 +862,12 @@
     <div class="vps-strip">
       <div class="vps-strip-inner">
         <div class="label">Less to set up, less to pack down</div>
-        <h2 class="vps-strip-title">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
+        <h2 class="vps-strip-title">One screen runs <span class="vps-accent">the whole night</span>.</h2>
         <div class="vps-swaps">
           <div class="vps-swap">
             <div class="vps-swap-k">The host</div>
-            <h3>Any bar staff member</h3>
-            <p>Whoever's on shift presses go. Calls, cards and winner checks are handled, so nobody needs a mic voice or a run sheet.</p>
+            <h3>Whoever's on shift can host</h3>
+            <p>The screen calls the game, deals the cards and checks the wins, so your host can stay on the mic with the room. Got a trivia host you love? They can run it on venueplay too.</p>
           </div>
           <div class="vps-swap">
             <div class="vps-swap-k">The formats</div>
@@ -836,7 +877,7 @@
           <div class="vps-swap">
             <div class="vps-swap-k">The bill</div>
             <h3>Per player, no lock-in</h3>
-            <p>Priced per player on your usual max, and you can cancel anytime. Big night? Extra players are $2 each for that night, and your host OKs it on screen first.</p>
+            <p>Priced per player on your usual crowd, and you can cancel any time. Big night? Extra players are $2 each for that night, and your host OKs them on screen first.</p>
           </div>
         </div>
       </div>
@@ -876,17 +917,17 @@
     <div class="offer">
       <div class="offer-grid">
         <div>
-          <div class="label">Open now</div>
-          <h2 class="sec-title">First month free.<br>Then your rate is locked for life.</h2>
-          <p class="sec-sub">Venues that join before <span class="vpc-date">30 November 2026</span> keep this rate for as long as they stay, with the first month free. After <span class="vpc-day">30 November</span> this offer ends for you.</p>
-          <div class="offer-cta"><a class="btn btn-primary" href="#start" data-cta="offer-lock">Lock in your price</a></div>
+          <div class="label">Pricing</div>
+          <h2 class="sec-title">Your rate, locked for life.</h2>
+          <p class="sec-sub">Venues that join before <span class="vpc-date">31 January 2027</span> keep this rate for as long as they stay. After <span class="vpc-day">31 January</span> this offer ends for you.</p>
         </div>
         <div class="price-card">
           <div class="price-row found">
-            <div class="pl"><b>Per player, per month</b>first month free. Standard rate $3.00. A room of thirty is $75.</div>
+            <div class="pl"><b>Per player, per month</b>Standard rate $3.00. A room of thirty is $75.</div>
             <div class="pv">$2.50</div>
           </div>
         </div>
+        <div class="offer-cta"><a class="btn btn-primary" href="#start" data-cta="offer-lock">Lock in your price</a></div>
       </div>
     </div>
   </div>
@@ -902,7 +943,7 @@
     <ul class="incl">
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Every game mode</strong><span>Trivia, musical bingo, bingo, raffles, members draws and screen ads on one screen.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Players join by phone</strong><span>Scan a code and play, no app to download, no account to make.</span></div></li>
-      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>A smart TV, a projector, a laptop via HDMI, or a streaming stick, your call. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">venueplay TV app</a>, then put in your screen code.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>A smart TV, a projector, a laptop via HDMI, or a streaming stick, your call. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">venueplay TV app</a>, then put in your screen code. Samsung and LG TV apps are coming soon.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Run it your way</strong><span>Bingo, raffles and members draws as often as you like. Trivia and musical bingo, a fresh night once a week.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Built for your bar staff</strong><span>Set up and run a round without a tech in the room.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Your price, locked</strong><span>Your price stays for as long as you're with us.</span></div></li>
@@ -918,14 +959,14 @@
     </div>
     <div class="vps-note">
       <div class="vps-note-inner">
-        <p>We're Gflam Touring. We run bingo, live music and entertainment at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staff member can run it</b>. That's venueplay.</p>
+        <p>We run bingo, live music and entertainment nights at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staff member can run it</b>. That's venueplay.</p>
         <div class="vps-note-sign">
           <span class="vps-note-mark">
             <svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true" data-vp-mark="mark"><path fill="#FF1F8E" d="M1.12 27.35C1.12 27.92 1.42 28.44 1.91 28.72C2.40 29 3.01 28.99 3.49 28.70L24.12 16.35C24.59 16.06 24.88 15.55 24.88 15C24.88 14.45 24.59 13.94 24.12 13.65L3.49 1.30C3.01 1.01 2.40 1 1.91 1.28C1.42 1.56 1.12 2.08 1.12 2.65L1.12 27.35Z"/></svg>
           </span>
           <span>
             <span class="vps-sig-name" style="display:block">Dean</span>
-            <span class="vps-sig-role" style="display:block">Gflam Touring</span>
+            <span class="vps-sig-role" style="display:block">and the team behind Gflam Touring</span>
           </span>
         </div>
       </div>
@@ -967,7 +1008,7 @@
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
       <h2 class="sec-title">Rather add your card now?</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Keep $2.50 by adding your card before your free month ends. Nothing is charged today, your first payment is one month later, and you can cancel any time before then.</p>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Keep $2.50 by adding your card before your free month ends. Nothing is charged today, and there's no lock-in.</p>
       <p class="form-fine"><a href="#contact" data-cta="claim-set-me-up" data-topic="free-account" class="vp-tel">Rather we set up a free account for you? Ask us.</a></p>
     </div>
 
@@ -1019,8 +1060,7 @@
                 <p id="vp-nobingo-body"></p>
                 <label class="ck"><input type="checkbox" id="vp-nobingo-ask"> <span>Our bingo is run by a not-for-profit organisation, such as a club or charity. Please look at switching it on for us.</span></label>
               </div>
-              <span class="field-hint" style="text-align:center">For each venue, the most players it would have in one game on a busy night. That venue's own number, not the group total. One card, one bill for the lot.</span>
-            </div>
+                          </div>
             <div class="field full">
               <label>Plan</label>
               <div class="seg" id="vp-plan">
@@ -1029,15 +1069,15 @@
               </div>
             </div>
           </div>
-          <p class="estimate" id="vp-estimate">Put in your busiest night and we will price it.</p>
-          <p class="overage-note">Use your busiest night, not your average. Go over and your host okays it on screen first: $2 per extra player, that night only. Three big nights in a row and we adjust your plan to fit, at your normal rate. Your rate per player never changes: that plan move is the only thing that changes your monthly bill.</p>
+          <p class="estimate" id="vp-estimate">Add your players on a big night for a price.</p>
+          <p class="overage-note">A bigger night is $2 for each extra player, and your host OKs them first. Three big nights in a row and we adjust your plan to fit, at your normal rate.</p>
           <div class="consent">
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We are responsible for complying with the gaming laws that apply to our venue, including any permit, licence or authority, age limits and attendance rules. venueplay supplies the software only.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing"> <span>Send me venueplay news, tips and product updates. You can unsubscribe anytime.</span></label>
           </div>
           <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
           <p class="form-err" id="vp-err"></p>
-          <p class="form-fine" id="vp-fine">Secured by Stripe · first month free for new venues · cancel anytime before your first payment</p>
+          <p class="form-fine" id="vp-fine">Your card details are kept by Stripe, never by us.</p>
         </div>
 
         <div class="success" id="vp-success">
@@ -1057,7 +1097,7 @@
                goes there. We do NOT redirect automatically, because this panel carries the one
                line people want in writing, that nothing is charged for a month. -->
           <h3>You're in</h3>
-          <p>Your price is locked in and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.</p>
+          <p>Your price is locked in and your card is on file. Nothing is charged today, and your first payment is a month from now. Your setup steps are on their way by email.</p>
           <a class="btn btn-primary success-go" href="/app">Sign in and set up your screen</a>
           <p class="success-fine">Sign in with the mobile you just gave us. No password, we text you a code.</p>
         </div>
@@ -1075,23 +1115,22 @@
       <h2 class="sec-title">Questions</h2>
     </div>
     <div class="faq">
-      <details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Is tonight too soon? You can sign up and start straight away.</div></details>
-      <details class="q"><summary>What does locked for life actually mean?<span class="pm"></span></summary><div class="a">Venues that join before <span class="vpc-date">30 November 2026</span> lock in $2.50 per player a month instead of $3, for life. It stays locked while you are subscribed. If you cancel, that rate ends for good, and rejoining later is at the standard rate.</div></details>
-      <details class="q"><summary>What about regulars who won't use a phone?<span class="pm"></span></summary><div class="a">They can still play trivia and musical bingo on paper. Print up to ten trivia answer sheets or musical bingo cards a night from the host console, before the night starts. Trivia teams on paper hand their sheet to the host at the end of each round, before the answers go up on the screen, and the host adds their score to the leaderboard. A paper musical bingo card is checked by typing its number into the console. Paper players count towards your players and your bill the same as phones do. Moving a trivia crowd over from paper? In your free month you can print a trivia sheet for every player on your plan, so your regulars can switch across at their own pace. venueplay does not print bingo tickets. For bingo, keep using the paper books you already buy, and the host checks those wins against the board.</div></details>
+      <details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Tonight, if you like. Sign up above and you can start straight away.</div></details>
+      <details class="q"><summary>What does locked for life actually mean?<span class="pm"></span></summary><div class="a">Venues that join before <span class="vpc-date">31 January 2027</span> lock in $2.50 per player a month instead of $3, for as long as they stay subscribed. If you cancel, that rate ends, and rejoining later is at the standard rate.</div></details>
+      <details class="q"><summary>What about regulars who won't use a phone?<span class="pm"></span></summary><div class="a">Paper still works. Print up to ten trivia answer sheets or musical bingo cards a night from the host console. The host adds paper trivia scores to the leaderboard, and checks a paper musical bingo card by typing in its number. Paper players count towards your players, the same as phones. venueplay does not print bingo tickets: keep using the paper books you already buy, and the host checks those wins against the board.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.50 a player, or yearly for $2.30 a player, and your pricing is locked for life either way. New venues get a free first month, then billing recurs at that rate. Cancel any time before your first payment and you are never charged. If we set your account up for you and your free month ends with no card, your account pauses until you add one.</div></details>
-      <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">Nothing happens without your host. Set your max to your usual room, and the moment a night runs over it your host sees what it costs and taps OK before the game starts, so you are never billed for a night nobody agreed to. Extra players are $2 each for that night. Go over three nights running and that is your crowd, not a big night: we adjust your max to the number you hit all three times, at your normal per-player rate, from your next bill. You can drop back any time from your account, and we always email before your bill changes.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">Per player, per month, based on your players on a big night. Pay monthly at $2.50 a player, or yearly at $2.30, and your rate is locked for life either way. Your free month starts the first time you sign in. If it ends with no card on file, your account pauses until you add one.</div></details>
+      <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">Nothing is added without your host's OK. When a night runs over your plan, your host sees you have extra players and taps OK before the game starts. Extra players are $2 each, for that night only. Three big nights in a row and we adjust your plan to fit, at your normal per-player rate, from your next bill. You can drop back any time from your account, and we always email before your bill changes.</div></details>
       <details class="q"><summary>Can I change my max players?<span class="pm"></span></summary><div class="a">Any time, from your account. Adding players applies straight away so you are covered that night, and the extra is on your next bill. Dropping down takes effect at your next renewal, so you keep what you have paid for until then. On an annual plan, added players are charged pro rata to your renewal date, and if you drop your max the unused value is not lost: it is held as a credit against your next renewal.</div></details>
-      <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">venueplay TV app</a>, then put in your screen code. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
-      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your price stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
+      <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the game onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Got a TV with Google Play? Get the <a href="https://play.google.com/store/apps/details?id=au.com.venueplay.tv" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">venueplay TV app</a>, then put in your screen code. Samsung and LG TV apps are coming soon. Players bring their own phones. For a rock-solid night, use a stick or a cable rather than wireless casting, so you are not leaning on the venue wifi.</div></details>
+      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No. It's a rolling subscription you can cancel any time.</div></details>
       <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">We get your first night running with you, and after that we are on the end of an email or the phone whenever something comes up: the number is on our <a href="/help">Help page</a>, and if a game is on right now, press 2. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
       <details class="q"><summary>Can players win prizes?<span class="pm"></span></summary><div class="a">Yep, you set the prizes, exactly like you do now. Bar tabs, meat trays, members jackpots, vouchers, whatever suits your venue. Your venue conducts the game and venueplay supplies the software: your host runs it on the night, confirms each winner, and winners claim their prize from the host. The prizes are yours to decide.</div></details>
       <details class="q"><summary>Is players' data safe?<span class="pm"></span></summary><div class="a">Players join with just a name, no account, no login, nothing they have to hand over. Anything captured is opt-in and handled under Australian privacy rules.</div></details>
       <details class="q"><summary>I am a trivia host at multiple venues. Do I keep the players' details?<span class="pm"></span></summary><div class="a">No, and that's by design. A venue's player data belongs to that venue. If you run games at a venue you don't own, venueplay only ever collects a player's first and last name for the game itself: it can't switch on email, mobile, postcode or marketing opt-in, so there's no marketing list to take. Nothing is held on the side or handed over later. Each venue's opt-in players stay with that venue.</div></details>
       <details class="q"><summary>We are a pub in South Australia or the Northern Territory. Can we run bingo?<span class="pm"></span></summary><div class="a">Not number bingo, and that comes from the law rather than from us. In South Australia only a not-for-profit organisation may run bingo, and in the Northern Territory only an approved association, so pubs and hotels there will not see number bingo in venueplay. Musical bingo is a music game, not bingo, so it is yours, along with trivia and members draws, and the price is the same. If a club or charity runs the bingo at your venue, tick the box when you sign up or email hello@venueplay.com.au, and we will switch it on once we have seen who runs it.</div></details>
-      <details class="q"><summary>What else is different in South Australia and the Northern Territory?<span class="pm"></span></summary><div class="a">A few things around members draws and raffles, and your host is shown your state's rules before each night. In South Australia a pub's members draw is a trade promotion: up to $5,000 in prizes, jackpot included, and the member drawn wins whether or not they are in the room, so at a pub the jackpot never rolls over because the winner is not there. Only not-for-profits may sell raffle tickets there, so a pub's raffle is free entry. In the Northern Territory a prize cannot be only alcohol, nobody under 18 can win, staff and their families cannot enter a pub's members draw, and the winners are named in a newspaper. Trivia is a game of skill in both, and venueplay never breaks a trivia tie at random.</div></details>
-      <details class="q"><summary>Who's behind it?<span class="pm"></span></summary><div class="a">venueplay is built by Gflam Touring, who run bingo, live music and entertainment across Australia. It's the same show experience, built into a platform any venue can run.</div></details>
+      <details class="q"><summary>Who's behind it?<span class="pm"></span></summary><div class="a">People who run bingo, live music and entertainment nights in venues across Australia. Our note above says why we built it.</div></details>
     </div>
   </div>
 </section>
@@ -1108,7 +1147,7 @@
     <div class="form-shell">
       <div class="inner">
         <div id="ct-form">
-          <p class="ct-topic" id="ct-topic" hidden>Topic: <b>Set me up a free account</b></p>
+          <p class="ct-topic" id="ct-topic" hidden><label for="ct-topic-pick">Topic</label><select id="ct-topic-pick"><option value="free">Set up a free account</option><option value="talk">Talk to us</option></select></p>
           <div class="form-grid">
             <div class="field">
               <label for="ct-name">Your name</label>
@@ -1191,7 +1230,6 @@
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>You're on the list</h3>
           <p>Your first email lands early <span data-vps-month>next month</span>. Nobody will ring you.</p>
-          <p><a href="/see-a-night">While you wait, see how a night runs</a></p>
         </div>
       </div>
     </div>
@@ -1239,7 +1277,6 @@
   var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
   var _SBU = 'https://ijkzgmdtwtgfkedqspxm.supabase.co';
   var _SBK = 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb';
-  var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
   var PRICE = { monthly: 2.50, annual: 2.30 };
   /* THE OFFER HAS ENDED (1 Nov 2026). When the billing Worker says this page's code is shut, the
      script at the bottom of the page calls window.VPStandardRate(): from then on the estimate and the
@@ -1256,92 +1293,21 @@
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();
 
-  /* ---------- Live founding counter (secure RPC, no PII exposed) ---------- */
-  // Roll a number up from 0 to target (used so the counters animate rather than snap).
-  function rollCount(el, target, dur){
+  /* ---------- The two bank counters: the real number, once, in plain type ----------
+     Dean, 7 Nov 2026 (round 3, note 4): the zero had a dot in it and the number "flicked up".
+     No roll-up now and no mono face: the HTML number shows until the live count lands, then the
+     live count replaces it once. */
+  function showCount(id, url){
+    var el = document.getElementById(id);
     if (!el) return;
-    el.textContent = String(target); return;   // the real number, at once (design review, 1 Oct 2026)
-    var t0 = null;
-    function step(ts){
-      if (!t0) t0 = ts;
-      var p = Math.min(1, (ts - t0) / dur);
-      var ease = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(target * ease);
-      if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
-  (function(){
-    var el = document.getElementById('vp-trivia-count');
-    var sec = document.getElementById('banks');
-    if (!el) return;
-    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-    var done = false;
-    function animateTo(target){
-      if (done) return; done = true;
-      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026)
-      function step(ts){
-        if (!t0) t0 = ts;
-        var p = Math.min(1, (ts - t0) / dur);
-        var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    fetch('/data/trivia-count.json').then(function(r){ return r.json(); }).then(function(d){
+    fetch(url).then(function(r){ return r.json(); }).then(function(d){
       var n = parseInt(d && d.count, 10) || 0;
-      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
-      el.textContent = n.toLocaleString('en-AU');
-      if (sec && 'IntersectionObserver' in window){
-        var io = new IntersectionObserver(function(entries){
-          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
-        }, { threshold: 0.4 });
-        io.observe(sec);
-      } else {
-        animateTo(n);
-      }
-    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
-  })();
-
-  /* ---------- Live music library counter (counts /data/musical-library.json songs) ---------- */
-  (function(){
-    var el = document.getElementById('vp-music-count');
-    var sec = document.getElementById('banks');
-    if (!el) return;
-    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
-    var done = false;
-    function animateTo(target){
-      if (done) return; done = true;
-      var start = target, t0 = null, dur = COUNT_DUR;   // no roll-up from 0 (design review, 1 Oct 2026)
-      function step(ts){
-        if (!t0) t0 = ts;
-        var p = Math.min(1, (ts - t0) / dur);
-        var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    // Live count: read the small backend count file (the same one the homepage reads), so this
-    // page never downloads the whole 760 KB song library just to show a number (23 Oct 2026 audit:
-    // it did, and the homepage showed a stale 5,146 while this page counted 6,661).
-    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = (d && d.count) || 0;
-      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
-      el.textContent = n.toLocaleString('en-AU');
-      if (sec && 'IntersectionObserver' in window){
-        var io = new IntersectionObserver(function(entries){
-          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
-        }, { threshold: 0.4 });
-        io.observe(sec);
-      } else {
-        animateTo(n);
-      }
-    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
-  })();
+      if (n) el.textContent = n.toLocaleString('en-AU');
+    }).catch(function(){});
+  }
+  showCount('vp-trivia-count', '/data/trivia-count.json');
+  // the small count file the homepage reads, never the 760 KB song library (23 Oct 2026 audit)
+  showCount('vp-music-count', '/data/music-count.json');
 
   /* ---------- Plan toggle ---------- */
   var planWrap = document.getElementById('vp-plan');
@@ -1432,7 +1398,7 @@
     if (postcode) pc.value = postcode;
     pc.addEventListener('input', renderNoBingo);
     var st = document.createElement('input');
-    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players'; st.setAttribute('aria-label', 'Max players on a busy night');
+    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Players'; st.setAttribute('aria-label', 'Players on a big night');
     if (seats) st.value = seats;
     var rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
@@ -1455,17 +1421,17 @@
     var seats = totalSeats();
     var n = venueRows().length;
     var suffix = n > 1 ? ' across ' + n + ' venues' : '';
-    if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
+    if (!seats){ estEl.innerHTML = 'Add your players on a big night for a price.'; return; }
     // Founding link: the Worker applies no volume tier on top of a founding rate. Standard: it does.
     var tier = standardRate ? groupTier(seats) : null;
     var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
     var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
     var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
     if (plan === 'monthly'){
-      estEl.innerHTML = '<b>$' + (seats * mRate).toFixed(2) + '</b> / month after your free first month (' + seats + ' players × $' + mRate.toFixed(2) + suffix + ')' + reason;
+      estEl.innerHTML = '<b>$' + (seats * mRate).toFixed(2) + '</b> a month (' + seats + ' players × $' + mRate.toFixed(2) + suffix + ')' + reason;
     } else {
       var perYear = seats * aRate * 12;
-      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year after your free first month (' + seats + ' players × $' + aRate.toFixed(2) + ' × 12' + suffix + ')' + reason;
+      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> a year (' + seats + ' players × $' + aRate.toFixed(2) + ' × 12' + suffix + ')' + reason;
     }
   }
   renderEstimate();
@@ -1475,7 +1441,7 @@
     var sm = planWrap.querySelectorAll('button small');
     if (sm[0]) sm[0].textContent = '$3.00 / player';
     if (sm[1]) sm[1].textContent = '$2.85 / player';
-    SUBMIT_TEXT = 'Start my free month';
+    SUBMIT_TEXT = 'Get started';
     if (!submitBtn.disabled) submitBtn.textContent = SUBMIT_TEXT;
     renderEstimate();
   };
@@ -1520,7 +1486,7 @@
       var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
       if (!vn) { showErr('Please enter a name for every venue.', 'venue'); return; }
       if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.', 'postcode'); return; }
-      if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.', 'seats'); return; }
+      if (!vs || vs < 1) { showErr('Please enter how many players ' + vn + ' has on a big night.', 'seats'); return; }
       if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.', 'seats'); return; }
       if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.', 'venue'); return; }
       namesLower[vn.toLowerCase()] = true;
@@ -1632,15 +1598,24 @@
      A page-only stopgap until the no-card sign-up: the hero's first button opens the "Talk to us" form below with
      the topic set and the message started, and the same /contact route makes it a sales ticket. We set the account
      up in business hours, so the thank-you line says when. */
-  var CT_TOPIC = 'Set me up a free account';
+  var CT_TOPIC = 'Set up a free account';
+  var CT_ASK = 'Hi, could you set up a free account for our venue so we can have a play? Thanks.';
   var CT_FREE_THANKS = 'Thanks, we\u2019ll set up your free account and send it through, usually within one business day.';
   var ctTopic = '';
   function ctFreeAccount(){
     ctTopic = CT_TOPIC;
     var t = document.getElementById('ct-topic'); if (t) t.hidden = false;
+    var pk = document.getElementById('ct-topic-pick'); if (pk) pk.value = 'free';
     var m = document.getElementById('ct-message');
-    if (m && !m.value.trim()) m.value = CT_TOPIC + ', so I can have a play at my venue.';
+    if (m && !m.value.trim()) m.value = CT_ASK;
   }
+  /* "Talk to us" instead: no topic on the ticket, and our own words come out of the message box. */
+  var ctPick = document.getElementById('ct-topic-pick');
+  if (ctPick) ctPick.addEventListener('change', function(){
+    var m = document.getElementById('ct-message');
+    if (ctPick.value === 'free') { ctTopic = CT_TOPIC; if (m && !m.value.trim()) m.value = CT_ASK; }
+    else { ctTopic = ''; if (m && m.value.trim() === CT_ASK) m.value = ''; }
+  });
   [].forEach.call(document.querySelectorAll('[data-topic="free-account"]'), function(a){
     a.addEventListener('click', ctFreeAccount);
   });
@@ -1740,6 +1715,8 @@
 })();
 </script>
 <style>
+/* The shared footer's "powered by" was the mono face; on this page every line is in the page's own type. */
+footer .powered .powered-by-text{font-family:'Manrope',system-ui,sans-serif}
 .vp-float-cta{position:fixed;right:22px;bottom:22px;z-index:60;display:inline-flex;align-items:center;gap:9px;
   padding:14px 24px;border-radius:999px;background:#FF1F8E;color:#fff;font-weight:800;font-size:var(--fs-base);
   font-family:'Hanken Grotesk',sans-serif;text-decoration:none;box-shadow:0 12px 34px rgba(255,31,142,.45);
@@ -1813,7 +1790,7 @@
 
   /* The confirmation now has somewhere to go. See the comment on the panel itself. */
   .success .success-go{margin-top:24px;min-width:280px;justify-content:center}
-  .success .success-fine{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);letter-spacing:.04em;
+  .success .success-fine{font-family:'Manrope',system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:var(--fs-sm);letter-spacing:normal;
     color:var(--muted-2);margin-top:14px;text-transform:none}
 
   /* ---- trial hero (New South Wales only, 22 Sep 2026): the product in the first screen ---- */
@@ -1823,7 +1800,9 @@
   .hero2 .hero-offer{margin-bottom:14px} .hero2 .lede{font-size:var(--fs-md);margin-top:14px}
   .hero2 .lede{margin-left:0;margin-right:0;max-width:46ch}
   .hero2 .hero-cta{justify-content:flex-start;margin-top:26px}
-  .h2-price{margin-top:20px;color:var(--muted);font-size:var(--fs-base)} .h2-price b{color:#fff}
+  .h2-price{margin-top:20px;font-family:'Manrope',system-ui,sans-serif;font-weight:500;color:var(--muted);font-size:var(--fs-base)}
+  .hero-ended{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2);font-size:var(--fs-base);color:#D8D8DD;line-height:1.5}
+  .hero-ended b{color:#fff;font-weight:700}
   .h2-stage{position:relative;padding-bottom:6%}
   /* The phone stands beside the telly, over the bezel only, so no score or ball is hidden. */
   /* The SCREEN is the 16:9 element and the bezel wraps it. With the ratio on the bezel, its 9px
@@ -1916,6 +1895,19 @@
   #offer .offer-grid > div:first-child .sec-sub{margin-left:0;max-width:48ch}
   #offer .offer-cta{text-align:left;margin-top:26px}
   #offer .offer-cta .btn{min-width:0}
+  /* THE PRICE IS PLAIN (Dean, 7 Nov 2026, round 3 note 5: "a weird little font", and a lot of empty
+     space on the right). One column, no wider than its words: the heading, one line, the price in
+     the page's own headline face at a size you can read across a bar, then the button. */
+  #offer .offer{max-width:760px;margin-left:auto;margin-right:auto}
+  #offer .offer-grid{grid-template-columns:minmax(0,1fr);gap:26px;align-items:start}
+  #offer .offer-grid > div:first-child .sec-title{max-width:none}
+  #offer .offer-grid > div:first-child .sec-sub{max-width:none}
+  #offer .offer-cta{margin-top:0}
+  #offer .price-card{padding:22px 24px}
+  #offer .price-row{align-items:center}
+  #offer .price-row .pl{font-size:var(--fs-base);color:var(--muted)}
+  #offer .price-row .pl b{font-size:var(--fs-md);margin-bottom:2px}
+  #offer .price-row .pv{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;font-size:var(--fs-xl);letter-spacing:-.02em;line-height:1}
   /* A price never breaks onto two lines ("$2.85" over "$2.30" read as two prices). */
   .price-row .pv{white-space:nowrap;flex:none;margin-left:14px}
   /* "How a night runs": three steps read across, not three tall boxes (design review, 1 Oct 2026). */
@@ -1977,10 +1969,7 @@
   window.VP_OFFER = o;
   function put(cls, txt){ var els = document.querySelectorAll('.' + cls); for (var i = 0; i < els.length; i++) els[i].textContent = txt; }
   put('vpc-date', o.date); put('vpc-day', o.day); put('vpc-month', o.month);
-  /* The demo sends them back to THIS month's offer (see-a-night reads ?from=offer-<mon>). */
-  var key = picked.key;
-  var w = document.querySelectorAll('a[href^="/see-a-night?from="]');
-  for (var wi = 0; wi < w.length; wi++) w[wi].setAttribute('href', '/see-a-night?from=offer-' + key);
+  /* No link to the full demo from here (Dean, 7 Nov 2026, round 3 note 25): the hero's sample night does that job. */
 })();
 </script>
 
@@ -2071,15 +2060,15 @@
 
     // The hero: the offer badge goes (the banner says it ended), and the price line is the homepage's.
     all('#top .hero-offer', function (el) { el.hidden = true; el.style.display = 'none'; });
-    html('#top .h2-price', '<b>Sign up and have a play for a month on us.</b> Nothing is charged today. No lock-in, cancel anytime.');
+    html('#top .h2-price', 'Nothing is charged today. Play for a month on us.');
 
     // The pricing section.
     html('#offer .label', 'Pricing');
-    html('#offer .sec-title', '$3 per player.<br>Simple and flat.');
+    html('#offer .sec-title', '$3 per player. Flat and simple.');
     html('#offer .offer-grid .sec-sub', STD);
-    all('#offer .offer-cta a', function (a) { a.textContent = 'Start your free month'; });
+    all('#offer .offer-cta a', function (a) { a.textContent = 'Get started'; });
     html('#offer .price-card',
-      '<div class="price-row found"><div class="pl"><b>Per player, per month</b>first month free. A room of thirty is $90.</div><div class="pv">$3.00</div></div>');
+      '<div class="price-row found"><div class="pl"><b>Per player, per month</b>A room of thirty is $90.</div><div class="pv">$3.00</div></div>');
 
     // What you get.
     all('#included .incl li > div', function (d) {
@@ -2088,20 +2077,19 @@
     });
 
     // The signup.
-    html('#claim .sec-head .label', 'Free first month');
+    html('#claim .sec-head .label', 'Add your card');
     html('#claim .sec-head .sec-title', 'Set up your venue');
-    html('#claim .sec-head .sec-sub', 'Add your card to get set up. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.');
-    html('#vp-success > p:not(.success-fine)', 'Everything is set up and your card is on file. Nothing is charged today: your first month is free, your first payment is one month from now, and you can cancel any time before then. Your setup steps are on their way by email.');
+    html('#claim .sec-head .sec-sub', 'Add your card to get set up. Nothing is charged today, and there\'s no lock-in.');
+    html('#vp-success > p:not(.success-fine)', 'Everything is set up and your card is on file. Nothing is charged today, and your first payment is a month from now. Your setup steps are on their way by email.');
 
     // The questions.
     faq('What does locked for life', 'How much does it cost?', "$3 per player a month, based on your venue's max players per session. Pay monthly, or save with annual at $2.85 a player. No setup fees, no packs to buy, no lock-in.");
-    faq('How does billing work', null, "A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $3 a player, or yearly for $2.85 a player. New venues get a free first month, then billing recurs at your rate. Cancel any time before your first payment and you are never charged. If we set your account up for you and your free month ends with no card, your account pauses until you add one. If a night runs over your max, each extra player that night is $2, and your host has to tap OK on the screen before anything is added, so a busy night can never bill you by surprise.");
-    faq('Is there a lock-in contract', null, "No lock-in. It's a rolling subscription you can cancel anytime. Your rate stays the same for as long as you're with us, and if you cancel before your first payment, you're never charged.");
+    faq('How does billing work', null, "Per player, per month, based on your players on a big night. Pay monthly at $3 a player, or yearly at $2.85 a player. Your free month starts the first time you sign in. If it ends with no card on file, your account pauses until you add one.");
 
     // The floating button.
     all('#vpFloatCta', function (a) {
-      a.setAttribute('aria-label', 'Start your free month');
-      for (var n = a.lastChild; n; n = n.previousSibling) if (n.nodeType === 3 && n.nodeValue.trim()) { n.nodeValue = ' Start your free month\n'; break; }
+      a.setAttribute('aria-label', 'Get started');
+      for (var n = a.lastChild; n; n = n.previousSibling) if (n.nodeType === 3 && n.nodeValue.trim()) { n.nodeValue = ' Get started\n'; break; }
     });
   }
 
@@ -2119,21 +2107,16 @@
 
   function showEnded() {
     document.documentElement.setAttribute('data-offer', 'ended');   /* first, so the CSS hides every live-only line even if a later step throws */
-    var bar = document.createElement('div');
-    bar.setAttribute('data-offer-banner', 'ended');   /* the hook tools/offer-ended-in-chrome.test.py reads it by (4 Nov 2026) */
-    bar.setAttribute('style',
-      'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
-      'font-family:Manrope,system-ui,sans-serif;font-size:var(--fs-base);line-height:1.5;' +
-      'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
-    bar.innerHTML = '<b>This offer ended on ' + OFFER.day + '.</b> ' +
-      'You can still sign up today at the standard rate of $3.00 per player a month, ' +
-      'and everything else works exactly the same.';
-    document.body.insertBefore(bar, document.body.firstChild);
+    /* THE ENDED LINE SITS AT THE BOTTOM OF THE HERO (Dean, 7 Nov 2026, round 3 note 3), not as a bar
+       over the top of the page: the hero's last line, in the page's own type. */
+    var bar = document.querySelector('#top .hero-ended');
+    if (bar) {
+      bar.setAttribute('data-offer-banner', 'ended');   /* the hook tools/offer-ended-in-chrome.test.py reads it by (4 Nov 2026) */
+      bar.innerHTML = '<b>This offer ended on ' + OFFER.day + '.</b> ' +
+        'You can still sign up at the standard rate of $3.00 per player a month.';
+      bar.hidden = false;
+    }
 
-    // Stop the page promising a price it will not be charged.
-    document.querySelectorAll('.hero-note').forEach(function (el) {
-      el.textContent = 'This offer ended on ' + OFFER.day + '. Standard rate, $3.00 per player a month.';
-    });
     document.querySelectorAll('a.btn-primary').forEach(function (el) {
       if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
     });
